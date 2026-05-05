@@ -6,6 +6,7 @@ import {
   type ReportInput,
 } from "@/lib/reports/complianceReport";
 import { buildHtmlDoc, hsPage, hsFinis } from "@/lib/reportHtml";
+import { disposition, inferIndustryHints, type DispositionResult } from "@/lib/intelligence/dispositionEngine";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -142,18 +143,35 @@ function renderHtmlReport(text: string, input: ReportInput): string {
   const amCompositeScore: number = sb?.adverseMediaScored?.compositeScore ?? -1;
   const pepTier = sb?.pep && sb.pep.salience > 0 ? sb.pep.tier : null;
 
-  // Apply the MLRO policy override — adverse media moderate+, PEP, sanctions
-  // hits, redlines, and CAHRA jurisdictions force the headline up regardless
-  // of the raw composite math. Stops a 28/100 composite from reading "LOW"
-  // when the CDD card concurrently says EDD/zero-tolerance.
-  const headlineBand = effectiveBand(composite, {
+  // Run the full intelligence engine — produces band, recommendation,
+  // typology fingerprints, FATF predicate-offence chain, MLRO interview
+  // script, document requests, anomaly flags, calibrated confidence, and
+  // a counterfactual narrative. Surfaces in the dossier so the MLRO sees
+  // not just the band but the *why*.
+  const intel: DispositionResult = disposition({
+    composite,
     sanctionsHits: r.hits.length,
+    topSanctionsScore: r.hits.length > 0 ? Math.max(...r.hits.map((h) => h.score)) : 0,
+    sanctionsLists: Array.from(new Set(r.hits.map((h) => h.listId))),
     pepTier,
-    ...(amCompositeScore >= 0 ? { amCompositeScore } : {}),
+    pepSalience: sb?.pep?.salience,
+    amCompositeScore,
     amCount,
+    amCategoriesTripped:
+      sb?.adverseMediaScored?.categoriesTripped ??
+      Array.from(new Set((sb?.adverseMedia ?? []).map((a) => a.categoryId))),
     redlinesFired: sb?.redlines?.fired?.length ?? 0,
+    jurisdictionIso2: sb?.jurisdiction?.iso2,
     cahra: sb?.jurisdiction?.cahra ?? false,
+    crossRegimeSplit: Boolean((sb as { crossRegimeConflict?: { split?: boolean } } | null | undefined)?.crossRegimeConflict?.split),
+    entityType: s.entityType as "individual" | "organisation" | "vessel" | "aircraft" | "other" | undefined,
+    industryHints: inferIndustryHints(s.name, s.aliases ?? []),
+    ...((sb as { newsDossier?: { articleCount?: number } } | null | undefined)?.newsDossier?.articleCount !== undefined
+      ? { totalAdverseCount: (sb as { newsDossier?: { articleCount?: number } } | null | undefined)!.newsDossier!.articleCount }
+      : {}),
+    brainDegraded: Boolean((sb as { degradation?: unknown[] } | null | undefined)?.degradation?.length),
   });
+  const headlineBand = intel.band;
   const sev = headlineBand;
   const sevColor = SEV_COLOR[sev] ?? "#888";
   const safeTitle = escapeHtml(`Hawkeye Sterling — ${s.name}`);
@@ -503,12 +521,97 @@ function renderHtmlReport(text: string, input: ReportInput): string {
   const regs  = "FDL 10/2025 · 10-year retention";
   const label = "SUBJECT SCREENING DOSSIER";
 
+  // ── page 3: Intelligence Pack — typologies, predicates, interview script ──
+  const intelTypologies = intel.typologies.length > 0
+    ? `<div class="scr-sh">Typology fingerprints (FATF / Egmont)</div>
+       <table class="scr-tbl">
+         <thead><tr><th>Typology</th><th>Family</th><th>Match</th><th>Evidence</th></tr></thead>
+         <tbody>
+           ${intel.typologies.map((t) => `
+             <tr>
+               <td>${e(t.name)}</td>
+               <td class="muted">${e(t.family.toUpperCase())}</td>
+               <td class="mono">${Math.round(t.match * 100)}%</td>
+               <td class="muted">${t.evidence.map((ev) => e(ev)).join(" · ")}</td>
+             </tr>`).join("")}
+         </tbody>
+       </table>` : "";
+
+  const intelPredicates = intel.predicateOffences.length > 0
+    ? `<div class="scr-sh">FATF predicate offences implied</div>
+       <ul class="scr-regl">
+         ${intel.predicateOffences.map((p) => `<li><strong>${e(p.label)}</strong> — ${e(p.fatfReference)} · ${e(p.uaeBasis)}</li>`).join("")}
+       </ul>` : "";
+
+  const intelInterview = intel.interviewScript.length > 0
+    ? `<div class="scr-sh">MLRO interview script — questions to put to the customer</div>
+       <ol style="padding-left:18px;margin:6px 0">
+         ${intel.interviewScript.map((q) => `
+           <li style="margin-bottom:6px">
+             <p class="scr-para" style="font-size:9.5px;margin:0 0 2px">${e(q.question)}</p>
+             <p style="font:7px/1.4 var(--mono);color:var(--ink-3);margin:0">Why: ${e(q.rationale)}</p>
+           </li>`).join("")}
+       </ol>` : "";
+
+  const intelDocs = intel.documentRequests.length > 0
+    ? `<div class="scr-sh">Documents to request</div>
+       <ul style="padding-left:14px;margin:6px 0">
+         ${intel.documentRequests.map((d) => `
+           <li style="margin-bottom:4px;font-size:9px">
+             <strong>${e(d.document)}</strong> — <span class="muted">${e(d.why)}</span>
+           </li>`).join("")}
+       </ul>` : "";
+
+  const intelEvidence = intel.requiredEvidence.length > 0
+    ? `<div class="scr-sh">Required evidence to clear / dispose</div>
+       <ul style="padding-left:14px;margin:6px 0">
+         ${intel.requiredEvidence.map((ev) => `<li style="margin-bottom:3px;font-size:9px">${e(ev)}</li>`).join("")}
+       </ul>` : "";
+
+  const intelAnomalies = intel.anomalies.length > 0
+    ? `<div class="scr-sh">Anomaly flags — unusual signal combinations</div>
+       <ul style="padding-left:14px;margin:6px 0">
+         ${intel.anomalies.map((a) => `<li style="margin-bottom:3px;font-size:9px;color:#b45309">${e(a)}</li>`).join("")}
+       </ul>` : "";
+
+  const intelEscalations = intel.escalations.length > 0
+    ? `<div class="scr-sh">Band-escalation chain</div>
+       <ol style="padding-left:18px;margin:6px 0">
+         ${intel.escalations.map((esc) => `
+           <li style="margin-bottom:3px;font-size:9px">
+             <span class="mono">${e(esc.from.toUpperCase())} → ${e(esc.to.toUpperCase())}</span> · ${e(esc.reason)}
+           </li>`).join("")}
+       </ol>` : "";
+
+  const intelConfidence = `
+    <div class="scr-sh">Calibrated confidence + counterfactual</div>
+    <p class="scr-para" style="font-size:9.5px">${e(intel.confidence.basis)}</p>
+    <p class="scr-para" style="font-size:9.5px;color:var(--ink-2);font-style:italic">Counterfactual: ${e(intel.counterfactual)}</p>`;
+
+  const p3 = `
+    <div class="scr-sh" style="margin-top:0">3. Intelligence Pack</div>
+    <p class="scr-para" style="font-size:9.5px;color:var(--ink-2);margin-bottom:8px">
+      Cross-signal reasoning over sanctions, PEP, adverse media, redlines, jurisdiction, industry, and recency. The recommended
+      disposition is <strong>${e(intel.recommendation.replace(/_/g, " ").toUpperCase())}</strong>; ${intel.escalations.length} band escalation(s)
+      were applied above the raw composite ${composite}/100.
+    </p>
+    ${intelEscalations}
+    ${intelTypologies}
+    ${intelPredicates}
+    ${intelAnomalies}
+    ${intelEvidence}
+    ${intelDocs}
+    ${intelInterview}
+    ${intelConfidence}
+    ${hsFinis(reportId, 3, 3)}`;
+
   return buildHtmlDoc({
     title: safeTitle,
     autoprint: true,
     pages: [
-      extraCss + hsPage({ reportId, pageNum: 1, pageTotal: 2, regs, label, content: p1 }),
-      hsPage({ reportId, pageNum: 2, pageTotal: 2, regs, label, content: p2extended }),
+      extraCss + hsPage({ reportId, pageNum: 1, pageTotal: 3, regs, label, content: p1 }),
+      hsPage({ reportId, pageNum: 2, pageTotal: 3, regs, label, content: p2extended }),
+      hsPage({ reportId, pageNum: 3, pageTotal: 3, regs, label, content: p3 }),
     ],
   });
 }
