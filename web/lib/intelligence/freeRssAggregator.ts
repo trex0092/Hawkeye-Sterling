@@ -38,6 +38,84 @@ const FREE_RSS_FEEDS: RssFeed[] = [
   { source: "ap-business-rss", outlet: "apnews.com", url: "https://feeds.apnews.com/rss/apf-business" },
   { source: "afp-rss", outlet: "afp.com", url: "https://www.afp.com/en/rss.xml" },
 
+  // ── Investigative journalism (the BIG MISS for niche AML reporting)
+  { source: "occrp-rss", outlet: "occrp.org", url: "https://www.occrp.org/en/feed/rss" },
+  { source: "icij-rss", outlet: "icij.org", url: "https://www.icij.org/feed/" },
+  { source: "bellingcat-rss", outlet: "bellingcat.com", url: "https://www.bellingcat.com/feed/" },
+  { source: "intercept-rss", outlet: "theintercept.com", url: "https://theintercept.com/feed/" },
+  { source: "reporterbrasil-rss", outlet: "reporterbrasil.org.br", url: "https://reporterbrasil.org.br/feed/" },
+  { source: "publica-rss", outlet: "apublica.org", url: "https://apublica.org/feed/" },
+  { source: "abraji-rss", outlet: "abraji.org.br", url: "https://www.abraji.org.br/feed" },
+
+  // ── Brazil + Lusophone
+  { source: "folha-rss", outlet: "folha.uol.com.br", url: "https://feeds.folha.uol.com.br/poder/rss091.xml" },
+  { source: "estadao-rss", outlet: "estadao.com.br", url: "https://www.estadao.com.br/rss/economia.xml" },
+  { source: "g1-rss", outlet: "g1.globo.com", url: "https://g1.globo.com/rss/g1/economia/" },
+  { source: "valor-rss", outlet: "valor.globo.com", url: "https://valor.globo.com/rss/feed.xml" },
+  { source: "veja-rss", outlet: "veja.abril.com.br", url: "https://veja.abril.com.br/feed" },
+  { source: "uol-rss", outlet: "uol.com.br", url: "https://rss.uol.com.br/feed/economia.xml" },
+  { source: "publico-pt-rss", outlet: "publico.pt", url: "https://www.publico.pt/rss" },
+
+  // ── Turkey
+  { source: "hurriyet-rss", outlet: "hurriyet.com.tr", url: "https://www.hurriyet.com.tr/rss/ekonomi" },
+  { source: "milliyet-rss", outlet: "milliyet.com.tr", url: "https://www.milliyet.com.tr/rss/rssNew/ekonomiRss.xml" },
+  { source: "sabah-rss", outlet: "sabah.com.tr", url: "https://www.sabah.com.tr/rss/ekonomi.xml" },
+  { source: "sozcu-rss", outlet: "sozcu.com.tr", url: "https://www.sozcu.com.tr/feed/" },
+  { source: "cumhuriyet-rss", outlet: "cumhuriyet.com.tr", url: "https://www.cumhuriyet.com.tr/rss/son_dakika.xml" },
+  { source: "t24-rss", outlet: "t24.com.tr", url: "https://t24.com.tr/rss" },
+  { source: "bianet-rss", outlet: "bianet.org", url: "https://bianet.org/bianet.rss" },
+  { source: "patronlardunyasi-rss", outlet: "patronlardunyasi.com", url: "https://www.patronlardunyasi.com/rss" },
+  { source: "diken-rss", outlet: "diken.com.tr", url: "https://www.diken.com.tr/feed/" },
+
+  // ── Spanish-language LATAM + Spain
+  { source: "elpais-es-rss", outlet: "elpais.com", url: "https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/portada" },
+  { source: "elmundo-rss", outlet: "elmundo.es", url: "https://e00-elmundo.uecdn.es/elmundo/rss/portada.xml" },
+  { source: "clarin-rss", outlet: "clarin.com", url: "https://www.clarin.com/rss/lo-ultimo/" },
+  { source: "lanacion-ar-rss", outlet: "lanacion.com.ar", url: "https://www.lanacion.com.ar/arc/outboundfeeds/rss/" },
+  { source: "eluniversal-mx-rss", outlet: "eluniversal.com.mx", url: "https://www.eluniversal.com.mx/rss.xml" },
+  { source: "elespectador-rss", outlet: "elespectador.com", url: "https://www.elespectador.com/arc/outboundfeeds/rss/?outputType=xml" },
+  { source: "infobae-rss", outlet: "infobae.com", url: "https://www.infobae.com/feeds/rss/" },
+  { source: "elfaro-rss", outlet: "elfaro.net", url: "https://elfaro.net/es/rss" },
+
+  // ── French
+  { source: "lemonde-rss", outlet: "lemonde.fr", url: "https://www.lemonde.fr/rss/une.xml" },
+  { source: "lefigaro-rss", outlet: "lefigaro.fr", url: "https://www.lefigaro.fr/rss/figaro_economie.xml" },
+  { source: "liberation-rss", outlet: "liberation.fr", url: "https://www.liberation.fr/arc/outboundfeeds/rss-all/?outputType=xml" },
+  { source: "mediapart-rss", outlet: "mediapart.fr", url: "https://www.mediapart.fr/articles/feed" },
+
+  // ── German
+  { source: "spiegel-rss", outlet: "spiegel.de", url: "https://www.spiegel.de/wirtschaft/index.rss" },
+  { source: "sz-rss", outlet: "sueddeutsche.de", url: "https://rss.sueddeutsche.de/rss/Wirtschaft" },
+  { source: "faz-rss", outlet: "faz.net", url: "https://www.faz.net/rss/aktuell/wirtschaft/" },
+  { source: "handelsblatt-rss", outlet: "handelsblatt.com", url: "https://www.handelsblatt.com/contentexport/feed/top-themen" },
+
+  // ── Italian
+  { source: "repubblica-rss", outlet: "repubblica.it", url: "https://www.repubblica.it/rss/economia/rss2.0.xml" },
+  { source: "corriere-rss", outlet: "corriere.it", url: "https://xml2.corriereobjects.it/rss/economia.xml" },
+  { source: "ilfatto-rss", outlet: "ilfattoquotidiano.it", url: "https://www.ilfattoquotidiano.it/feed/" },
+  { source: "ilsole24ore-rss", outlet: "ilsole24ore.com", url: "https://www.ilsole24ore.com/rss/economia.xml" },
+
+  // ── Russian / CIS (non-state where possible)
+  { source: "novayagazeta-rss", outlet: "novayagazeta.eu", url: "https://novayagazeta.eu/feed" },
+  { source: "meduza-rss", outlet: "meduza.io", url: "https://meduza.io/rss/all" },
+  { source: "kommersant-rss", outlet: "kommersant.ru", url: "https://www.kommersant.ru/RSS/news.xml" },
+  { source: "vedomosti-rss", outlet: "vedomosti.ru", url: "https://www.vedomosti.ru/rss/news" },
+  { source: "interfax-rss", outlet: "interfax.com", url: "https://www.interfax.com/rss.asp" },
+
+  // ── Arabic / MENA (with editorial independence where available)
+  { source: "alarabiya-ar-rss", outlet: "alarabiya.net", url: "https://www.alarabiya.net/.mrss/ar.xml" },
+  { source: "aljazeera-ar-rss", outlet: "aljazeera.net", url: "https://www.aljazeera.net/aljazeerarss" },
+  { source: "alqabas-rss", outlet: "alqabas.com", url: "https://www.alqabas.com/rss" },
+  { source: "youm7-rss", outlet: "youm7.com", url: "https://www.youm7.com/rss/SectionRss?SectionID=88" },
+  { source: "alarab-rss", outlet: "alarab.co.uk", url: "https://alarab.co.uk/rss.xml" },
+
+  // ── Africa (investigative)
+  { source: "amabhungane-rss", outlet: "amabhungane.org", url: "https://amabhungane.org/feed/" },
+  { source: "premiumtimes-rss", outlet: "premiumtimesng.com", url: "https://www.premiumtimesng.com/feed" },
+  { source: "thecitizen-rss", outlet: "thecitizen.co.tz", url: "https://www.thecitizen.co.tz/rss" },
+  { source: "thecontinent-rss", outlet: "mg.co.za", url: "https://mg.co.za/feed/" },
+  { source: "dailymaverick-rss", outlet: "dailymaverick.co.za", url: "https://www.dailymaverick.co.za/section/business-maverick/feed/" },
+
   // ── UK
   { source: "bbc-rss", outlet: "bbc.co.uk", url: "http://feeds.bbci.co.uk/news/business/rss.xml" },
   { source: "bbc-world-rss", outlet: "bbc.co.uk", url: "http://feeds.bbci.co.uk/news/world/rss.xml" },
@@ -154,11 +232,13 @@ async function fetchOne(feed: RssFeed): Promise<string | null> {
  * snippet. Returns a single NewsAdapter so the caller can plug it
  * into searchAllNews's flow.
  *
- * Toggle with FREE_RSS_ENABLED=1.
+ * DEFAULT-ON: this is now active out-of-the-box because operators
+ * shouldn't need to flip a flag to get baseline adverse-media coverage
+ * across 60+ jurisdictions. Set FREE_RSS_DISABLED=1 to opt out.
  */
 export function freeRssAdapter(): NewsAdapter {
-  const enabled = process.env["FREE_RSS_ENABLED"];
-  if (!enabled || enabled === "0" || enabled.toLowerCase() === "false") return NULL_NEWS_ADAPTER;
+  const disabled = process.env["FREE_RSS_DISABLED"];
+  if (disabled === "1" || disabled?.toLowerCase() === "true") return NULL_NEWS_ADAPTER;
   return {
     isAvailable: () => true,
     search: async (subjectName, opts) => {

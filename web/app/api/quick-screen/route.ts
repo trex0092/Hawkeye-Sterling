@@ -25,6 +25,8 @@ import { activeRegistryProviders } from "@/lib/intelligence/registryAdapters";
 import { activeKycProviders } from "@/lib/intelligence/kycVendorAdapters";
 import { activeOnChainProviders } from "@/lib/intelligence/liveAdapters";
 import { activeFreeProviders } from "@/lib/intelligence/freeAlwaysOnAdapters";
+import { searchAllNews } from "@/lib/intelligence/newsAdapters";
+import { ingestUrls } from "@/lib/intelligence/urlIngestion";
 
 // Compiled backend entry point. The root `tsc` build (npm run build at the repo root)
 // must run before this API route is bundled. Netlify build order is encoded in
@@ -47,6 +49,7 @@ interface QuickScreenRequestBody {
   subject?: QuickScreenSubject;
   candidates?: QuickScreenCandidate[];
   options?: QuickScreenOptions;
+  evidenceUrls?: string[];        // operator-provided adverse-media URLs to ingest as evidence
 }
 
 const MAX_CANDIDATES = 5_000;
@@ -180,6 +183,32 @@ export async function POST(req: Request): Promise<NextResponse> {
         freeAdapterResults = await searchFreeAdapters(subject.name, subject.jurisdiction ?? undefined, 10);
       } catch { /* best-effort */ }
     }
+
+    // Adverse-media news pull for temporal velocity + co-occurrence
+    // — best-effort; failure does not affect screening rating.
+    let newsArticles: Awaited<ReturnType<typeof searchAllNews>> = { articles: [], providersUsed: [] };
+    if (subject.name.length >= 3) {
+      try {
+        newsArticles = await searchAllNews(subject.name, { limit: 50 });
+      } catch { /* best-effort */ }
+    }
+
+    // URL-direct ingestion: when the operator passes evidenceUrls[]
+    // the route fetches each URL, extracts metadata, and counts each
+    // as adverse-media evidence. Bypasses the discovery problem when
+    // the operator already knows the article (e.g. a niche outlet
+    // GDELT didn't index).
+    if (Array.isArray(body.evidenceUrls) && body.evidenceUrls.length > 0) {
+      try {
+        const ingested = await ingestUrls(body.evidenceUrls);
+        if (ingested.length > 0) {
+          newsArticles = {
+            articles: [...ingested, ...newsArticles.articles],
+            providersUsed: [...newsArticles.providersUsed, "url-ingest"],
+          };
+        }
+      } catch { /* best-effort */ }
+    }
     // ── Reasoning layer ────────────────────────────────────────────────
     // Multi-source consensus + contradiction + coverage gap + audit
     // rationale. Pure-function — never fails the screening even if
@@ -216,6 +245,9 @@ export async function POST(req: Request): Promise<NextResponse> {
       countrySanctionsLists: countrySanctionsResults.lists,
       freeProviders: freeAdapterResults.providersUsed,
       freeCount: freeAdapterResults.records.length,
+      adverseMediaArticles: newsArticles.articles.map((a) => ({
+        source: a.source, outlet: a.outlet, title: a.title, url: a.url,
+      })),
     });
     const reasoning = buildScreeningReasoning({
       subject,
@@ -223,6 +255,18 @@ export async function POST(req: Request): Promise<NextResponse> {
       consensusInputs,
       contradictionItems,
       coverage,
+      articles: newsArticles.articles.map((a) => ({
+        publishedAt: a.publishedAt,
+        source: a.source,
+        outlet: a.outlet,
+        title: a.title,
+      })),
+      coOccurrenceArticles: newsArticles.articles.map((a) => ({
+        title: a.title,
+        snippet: a.snippet,
+        url: a.url,
+      })),
+      knownSanctioned: result.hits.map((h) => ({ name: h.candidateName, listId: h.listId })),
     });
 
     return respond(

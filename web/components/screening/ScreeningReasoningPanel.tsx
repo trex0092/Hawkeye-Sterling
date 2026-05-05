@@ -35,6 +35,30 @@ export interface ScreeningReasoning {
   rationale: string;
   evidenceTrail: Array<{ source: string; weight: number; outcome: string; detail?: string }>;
   art19NegativeFinding?: string;
+  temporalVelocity?: {
+    totalArticles: number;
+    recentVolume: number;
+    baselineVolume: number;
+    escalationRatio: number;
+    escalationLevel: "none" | "emerging" | "elevated" | "spiking";
+    sustainedDays: number;
+    signal: string;
+  };
+  counterfactual?: {
+    baselineBucket: "clear" | "possible" | "positive";
+    decisiveSources: Array<{ source: string; counterfactualBucket: string; deltaScore: number; flipsRating: boolean }>;
+    robustSources: number;
+    fragility: "robust" | "moderate" | "fragile";
+    signal: string;
+  };
+  coOccurrence?: {
+    associates: Array<{ name: string; mentions: number }>;
+    sanctionedAssociates: Array<{ name: string; mentions: number; matchedListId?: string }>;
+    geographicRisk: Array<{ country: string; mentions: number }>;
+    signal: string;
+  };
+  transliteration?: { script: string; transliterated: string; variants: string[] };
+  phoneticTier?: Array<{ candidateName: string; result: { doubleMetaphone: boolean; nysiis: boolean; matchRating: boolean; compositeScore: number } }>;
 }
 
 interface Props {
@@ -142,6 +166,119 @@ export function ScreeningReasoningPanel({ reasoning }: Props): React.ReactElemen
       {reasoning.art19NegativeFinding && (
         <div className="text-11 px-2.5 py-1.5 rounded bg-emerald-500/5 border border-emerald-500/20 text-emerald-200/90 mb-2">
           {reasoning.art19NegativeFinding}
+        </div>
+      )}
+
+      {/* Temporal velocity */}
+      {reasoning.temporalVelocity && (
+        <div className="mb-2 rounded-md bg-bg-1/60 p-3 border border-white/5">
+          <div className="flex items-center justify-between mb-1">
+            <div className="text-10 uppercase tracking-wide text-ink-3">Temporal velocity</div>
+            <span className={`text-10 font-bold uppercase px-2 py-0.5 rounded border ${
+              reasoning.temporalVelocity.escalationLevel === "spiking" ? "bg-red-500/15 text-red-300 border-red-500/40" :
+              reasoning.temporalVelocity.escalationLevel === "elevated" ? "bg-amber-500/15 text-amber-300 border-amber-500/40" :
+              reasoning.temporalVelocity.escalationLevel === "emerging" ? "bg-orange-500/10 text-orange-300 border-orange-500/30" :
+              "bg-zinc-500/10 text-zinc-300 border-zinc-500/30"
+            }`}>{reasoning.temporalVelocity.escalationLevel}</span>
+          </div>
+          <p className="text-12 text-ink-2 leading-relaxed">{reasoning.temporalVelocity.signal}</p>
+          <div className="text-11 text-ink-3 mt-1">
+            {reasoning.temporalVelocity.totalArticles} article(s) · {reasoning.temporalVelocity.sustainedDays}d sustained ·
+            {" "}recent {reasoning.temporalVelocity.recentVolume} vs baseline {reasoning.temporalVelocity.baselineVolume}/wk
+          </div>
+        </div>
+      )}
+
+      {/* Counterfactual */}
+      {reasoning.counterfactual && (
+        <div className="mb-2 rounded-md bg-bg-1/60 p-3 border border-white/5">
+          <div className="flex items-center justify-between mb-1">
+            <div className="text-10 uppercase tracking-wide text-ink-3">Counterfactual (leave-one-out)</div>
+            <span className={`text-10 font-bold uppercase px-2 py-0.5 rounded border ${
+              reasoning.counterfactual.fragility === "fragile" ? "bg-red-500/15 text-red-300 border-red-500/40" :
+              reasoning.counterfactual.fragility === "moderate" ? "bg-amber-500/15 text-amber-300 border-amber-500/40" :
+              "bg-emerald-500/10 text-emerald-300 border-emerald-500/30"
+            }`}>{reasoning.counterfactual.fragility}</span>
+          </div>
+          <p className="text-12 text-ink-2 leading-relaxed">{reasoning.counterfactual.signal}</p>
+          {reasoning.counterfactual.decisiveSources.length > 0 && (
+            <ul className="mt-1.5 space-y-1">
+              {reasoning.counterfactual.decisiveSources.slice(0, 5).map((d, i) => (
+                <li key={i} className="text-11 flex items-center gap-2">
+                  <span className="font-mono text-ink-2">{d.source}</span>
+                  <span className={d.flipsRating ? "text-red-300 font-semibold" : "text-amber-300"}>
+                    Δ {d.deltaScore > 0 ? "+" : ""}{d.deltaScore} → {d.counterfactualBucket}
+                  </span>
+                  {d.flipsRating && <span className="text-10 px-1.5 py-0.5 rounded bg-red-500/20 text-red-300">FLIPS RATING</span>}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
+      {/* Co-occurrence */}
+      {reasoning.coOccurrence && (reasoning.coOccurrence.associates.length > 0 || reasoning.coOccurrence.sanctionedAssociates.length > 0 || reasoning.coOccurrence.geographicRisk.length > 0) && (
+        <div className="mb-2 rounded-md bg-bg-1/60 p-3 border border-white/5">
+          <div className="text-10 uppercase tracking-wide text-ink-3 mb-1">Co-occurrence in adverse media</div>
+          <p className="text-12 text-ink-2 leading-relaxed mb-1.5">{reasoning.coOccurrence.signal}</p>
+          {reasoning.coOccurrence.sanctionedAssociates.length > 0 && (
+            <div className="mb-1">
+              <div className="text-11 text-red-300 font-semibold mb-0.5">Sanctioned associates:</div>
+              <ul className="text-11 text-ink-2 space-y-0.5">
+                {reasoning.coOccurrence.sanctionedAssociates.map((s, i) => (
+                  <li key={i}>{s.name} ({s.mentions} mention{s.mentions === 1 ? "" : "s"}) · matched {s.matchedListId ?? "list"}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {reasoning.coOccurrence.geographicRisk.length > 0 && (
+            <div className="mb-1">
+              <div className="text-11 text-amber-300 font-semibold mb-0.5">High-risk geographies:</div>
+              <ul className="text-11 text-ink-2 space-y-0.5">
+                {reasoning.coOccurrence.geographicRisk.map((g, i) => (
+                  <li key={i}>{g.country} ({g.mentions} mention{g.mentions === 1 ? "" : "s"})</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {reasoning.coOccurrence.associates.length > 0 && (
+            <div>
+              <div className="text-11 text-ink-3 font-semibold mb-0.5">Likely associates:</div>
+              <ul className="text-11 text-ink-2 space-y-0.5">
+                {reasoning.coOccurrence.associates.slice(0, 5).map((a, i) => (
+                  <li key={i}>{a.name} ({a.mentions})</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Transliteration + Phonetic tier */}
+      {(reasoning.transliteration || reasoning.phoneticTier) && (
+        <div className="mb-2 rounded-md bg-bg-1/60 p-3 border border-white/5">
+          <div className="text-10 uppercase tracking-wide text-ink-3 mb-1">Cross-language + phonetic tier</div>
+          {reasoning.transliteration && (
+            <div className="text-12 text-ink-2 mb-1">
+              Detected script: <span className="font-mono">{reasoning.transliteration.script}</span> ·
+              transliterated: <span className="font-mono">{reasoning.transliteration.transliterated}</span> ·
+              {reasoning.transliteration.variants.length} spelling variant(s) checked
+            </div>
+          )}
+          {reasoning.phoneticTier && reasoning.phoneticTier.length > 0 && (
+            <ul className="text-11 space-y-0.5">
+              {reasoning.phoneticTier.map((p, i) => (
+                <li key={i} className="flex items-center gap-2">
+                  <span className="font-mono text-ink-2">{p.candidateName}</span>
+                  <span className="text-ink-3">composite {(p.result.compositeScore * 100).toFixed(0)}%</span>
+                  {p.result.doubleMetaphone && <span className="text-10 px-1 rounded bg-sky-500/20 text-sky-300">DM</span>}
+                  {p.result.nysiis && <span className="text-10 px-1 rounded bg-sky-500/20 text-sky-300">NYSIIS</span>}
+                  {p.result.matchRating && <span className="text-10 px-1 rounded bg-sky-500/20 text-sky-300">MRA</span>}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
 
