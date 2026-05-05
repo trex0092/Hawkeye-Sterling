@@ -86,8 +86,110 @@ export function BrainIntelligencePack({ subject, screen, superBrain }: Props) {
     critical: "text-red",
   };
 
+  // Live server-side intelligence (phonetic / cultural / sub-national /
+  // stress tests / industry / geography). Populated by /api/super-brain.
+  const serverIntel = superBrain?.intelligence;
+  const degradation = superBrain?.degradation ?? [];
+
   return (
     <div className="space-y-5 mt-4">
+      {/* DEGRADATION WARNINGS */}
+      {degradation.length > 0 && (
+        <div className="rounded-lg border border-amber/40 bg-amber-dim/40 p-3">
+          <div className="text-11 font-semibold text-amber mb-1">
+            ⚠ Brain modules degraded ({degradation.length})
+          </div>
+          <ul className="space-y-0.5 text-10 text-ink-1">
+            {degradation.map((d, i) => (
+              <li key={i}>
+                <span className="font-mono">{d.module}</span>: {d.reason}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* SERVER-INTELLIGENCE PHONETIC + CULTURAL */}
+      {serverIntel && (
+        <div className="rounded-lg border border-hair-2 bg-bg-1 p-4 space-y-3">
+          <div className="text-10 uppercase tracking-wide-3 text-ink-3 font-semibold">
+            Server intelligence (live pipeline)
+          </div>
+
+          {/* Phonetic fingerprint */}
+          <div>
+            <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">
+              Phonetic fingerprint
+            </div>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-10 font-mono">
+              <div>
+                <span className="text-ink-3">Caverphone</span>{" "}
+                <span className="text-ink-0">{serverIntel.phonetic.caverphone || "—"}</span>
+              </div>
+              <div>
+                <span className="text-ink-3">Beider-Morse</span>{" "}
+                <span className="text-ink-0">{serverIntel.phonetic.beiderMorseLite || "—"}</span>
+              </div>
+              <div>
+                <span className="text-ink-3">Arabic</span>{" "}
+                <span className="text-ink-0">{serverIntel.phonetic.arabicPhonetic || "—"}</span>
+              </div>
+              <div>
+                <span className="text-ink-3">Pinyin</span>{" "}
+                <span className="text-ink-0">{serverIntel.phonetic.pinyinCanonical || "—"}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Cultural-name parse */}
+          <div>
+            <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">
+              Cultural-name parse · {serverIntel.parsedName.culture}
+            </div>
+            <div className="text-11 text-ink-1">
+              {serverIntel.parsedName.given && <span><strong>Given:</strong> {serverIntel.parsedName.given}</span>}
+              {serverIntel.parsedName.surname && <span> · <strong>Surname:</strong> {serverIntel.parsedName.surname}</span>}
+              {serverIntel.parsedName.nasab && <span> · <strong>Nasab:</strong> {serverIntel.parsedName.nasab}</span>}
+              {serverIntel.parsedName.kunya && <span> · <strong>Kunya:</strong> {serverIntel.parsedName.kunya}</span>}
+              {serverIntel.parsedName.patronymic && <span> · <strong>Patronymic:</strong> {serverIntel.parsedName.patronymic}</span>}
+            </div>
+            <div className="text-10 text-ink-3 font-mono mt-0.5">
+              Canonical key: {serverIntel.canonicalKey}
+            </div>
+          </div>
+
+          {/* Sub-national region match */}
+          {serverIntel.subnational.matched && (
+            <div>
+              <div className="text-10 uppercase tracking-wide-3 text-red mb-1">
+                Sub-national region match
+              </div>
+              <div className="text-11 text-red">{serverIntel.subnational.rationale}</div>
+            </div>
+          )}
+
+          {/* Sanctions stress tests */}
+          {serverIntel.stressTestsFiredCount > 0 && (
+            <div>
+              <div className="text-10 uppercase tracking-wide-3 text-red mb-1">
+                Sanctions stress tests fired ({serverIntel.stressTestsFiredCount})
+              </div>
+              <ul className="space-y-1 text-10">
+                {serverIntel.stressTests
+                  .filter((s) => s.fired)
+                  .map((s) => (
+                    <li key={s.regime} className="text-ink-1">
+                      <span className="font-semibold text-red">{s.regime}</span>:{" "}
+                      {s.rationale}
+                      <div className="text-ink-3 font-mono">{s.citation}</div>
+                    </li>
+                  ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* HEADLINE */}
       <div className="rounded-lg border border-hair-2 bg-bg-1 p-4">
         <div className="flex items-baseline gap-3 flex-wrap">
