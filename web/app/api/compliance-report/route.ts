@@ -5,6 +5,7 @@ import {
   buildComplianceReportStructured,
   type ReportInput,
 } from "@/lib/reports/complianceReport";
+import { buildHtmlDoc, hsPage, hsFinis } from "@/lib/reportHtml";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -67,9 +68,9 @@ function bandForScore(score: number): "clear" | "low" | "medium" | "high" | "cri
 
 function renderHtmlReport(text: string, input: ReportInput): string {
   const now = input.now ?? new Date();
-  const s = input.subject;
-  const r = input.result;
-  const sb = input.superBrain;
+  const s   = input.subject;
+  const r   = input.result;
+  const sb  = input.superBrain;
   // Composite drives the headline — same number rendered in the UI
   // gauge. r.topScore (sanctions vector only) was the source of the
   // 0/100-CLEAR-vs-42/100 discrepancy in earlier exports.
@@ -112,43 +113,7 @@ function renderHtmlReport(text: string, input: ReportInput): string {
   const amResult = amCount >= 4 ? "POSITIVE — extensive" : amCount >= 1 ? "Limited signal" : "NEGATIVE";
   const amRc = amCount >= 4 ? "#ef4444" : amCount >= 1 ? "#f59e0b" : "#22c55e";
 
-  // Adverse media rows
-  const amRows = [
-    ...(sb?.adverseKeywordGroups ?? []).map(g =>
-      `<li><span class="chip chip-red">${e(g.label)}</span> <span class="muted">${g.count} keyword${g.count === 1 ? "" : "s"}</span></li>`
-    ),
-    ...(sb?.adverseMedia ?? []).map(a =>
-      `<li><span class="chip chip-amber">${e(a.categoryId.replace(/_/g, " "))}</span> <span class="muted">keyword: ${e(a.keyword)}</span></li>`
-    ),
-  ];
 
-  // ── Adverse-media findings — full evidence block for the PDF ───
-  // The .txt has emitted this for several PRs already (hit volume,
-  // categories with counts, keyword groups, top keywords, per-hit
-  // evidence with offsets, news dossier with article links). The
-  // PDF render historically only showed the chip overlay above and
-  // dropped everything else. Operator can't take that to a regulator
-  // — every adverse-media disposition needs the EVIDENCE in the
-  // file, not a category badge. Rebuilt below.
-  const amScored = sb?.adverseMediaScored ?? null;
-  const amTotalHits =
-    amScored?.total ??
-    (sb?.adverseKeywordGroups ?? []).reduce((s, g) => s + g.count, 0) +
-      (sb?.adverseMedia?.length ?? 0);
-  const amDistinctKw = amScored?.distinctKeywords ?? (sb?.adverseMedia?.length ?? 0);
-  const amCategoriesTripped =
-    amScored?.categoriesTripped && amScored.categoriesTripped.length > 0
-      ? amScored.categoriesTripped
-      : Array.from(new Set((sb?.adverseMedia ?? []).map((a) => a.categoryId)));
-  const amVectorScore =
-    amScored?.compositeScore != null ? Math.round(amScored.compositeScore) : null;
-  const amTopKeywords = amScored?.topKeywords ?? [];
-  const newsArticles = (
-    sb as { newsDossier?: { articles?: Array<{ title: string; link: string; pubDate?: string; source?: string; snippet?: string; severity?: string; keywordGroups?: string[] }>; articleCount?: number; topSeverity?: string; source?: string; languages?: string[] } } | null | undefined
-  )?.newsDossier?.articles ?? [];
-  const newsDossierMeta = (
-    sb as { newsDossier?: { articleCount?: number; topSeverity?: string; source?: string; languages?: string[] } } | null | undefined
-  )?.newsDossier;
 
   // Recommendation
   let rec = "";
@@ -162,25 +127,7 @@ function renderHtmlReport(text: string, input: ReportInput): string {
     rec = "Proceed with standard CDD. Subject enrolled in ongoing screening (thrice-daily — 08:30 / 15:00 / 17:30 Dubai) and any delta will be filed to the MLRO automatically.";
   }
 
-  const recRows = [
-    `► ${rec}`,
-    sev === "clear" || sev === "low" ? "► PROCEED WITH STANDARD CDD" : "",
-    sev === "clear" || sev === "low" ? "► SDD ELIGIBLE (MoE Circular 6/2025) — MLRO DISCRETION APPLIES" : "",
-    "► NO goAML FILING REQUIRED",
-    "► STANDARD ONGOING MONITORING",
-  ].filter(Boolean).map(line => `<div class="rec-line">${e(line)}</div>`).join("");
 
-  const regFramework = [
-    "Federal Decree-Law No. (10) of 2025 — UAE AML/CFT/CPF primary law",
-    "Cabinet Resolution No. (134) of 2025 — Executive Regulations",
-    "Cabinet Resolution No. (156) of 2025 — Goods Subject to Non-Proliferation (Controlled Items Schedule)",
-    "MoE Circular No. (3) of 2025 — TFS / sanctions screening",
-    "MoE Circular No. (2) of 2024 — Responsible sourcing (DPMS)",
-    "MoE Circular No. (6) of 2025 — Risk-based CDD / SDD",
-    "FATF Recommendations 10, 12, 20, 22",
-    "LBMA Responsible Gold Guidance v9",
-    "OECD Due Diligence Guidance — Gold Supplement",
-  ].map(f => `<li>${e(f)}</li>`).join("");
 
   // Extract audit-trail fields from the canonical text the report
   // builder produced. Renders them as a small styled panel in the
@@ -201,689 +148,246 @@ function renderHtmlReport(text: string, input: ReportInput): string {
   const edSig = grab(/report\.signature_ed25519\s+([a-f0-9]+)/);
   const edFp = grab(/signing\.pubkey_fp\s+([a-f0-9]+)/);
 
-  const auditCell = (label: string, value: string): string =>
-    value
-      ? `<div class="audit-row"><span class="audit-label">${e(label)}</span><span class="audit-value">${e(value)}</span></div>`
-      : "";
-  const auditGridRows = [
-    auditCell("Run ID", runId),
-    auditCell("Brain generated", generatedAtIso),
-    auditCell("Engine version", engineVersion),
-    auditCell("Schema version", schemaVersion),
-    auditCell("Build SHA", buildSha),
-    auditCell("Operator", operatorRole),
-    auditCell("Payload SHA-256", payloadSha),
-    auditCell("Report SHA-256", reportSha),
-  ]
-    .filter(Boolean)
-    .join("");
 
-  const signatureBlock =
-    hmacSig || edSig
-      ? `<div class="audit-signatures">
-          <div class="audit-sig-title">Signatures</div>
-          ${
-            hmacSig
-              ? `<div class="audit-sig"><span class="audit-sig-label">HMAC-SHA256</span><span class="audit-sig-fp">key fp ${e(hmacFp)}</span><code class="audit-sig-hex">${e(hmacSig)}</code></div>`
-              : ""
-          }
-          ${
-            edSig
-              ? `<div class="audit-sig"><span class="audit-sig-label">Ed25519</span><span class="audit-sig-fp">pubkey fp ${e(edFp)}</span><code class="audit-sig-hex">${e(edSig)}</code></div>`
-              : ""
-          }
-        </div>`
-      : "";
 
   const integrityNote =
     hmacSig || edSig
       ? "Signatures cover report.sha256. Verify with the matching key — recipes in the .txt export. All timestamps UTC."
       : "Report is hash-protected (SHA-256) but unsigned. Set REPORT_SIGNING_KEY and/or REPORT_ED25519_PRIVATE_KEY to enable authenticity proof. All timestamps UTC.";
 
-  return `<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>${safeTitle}</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&family=Inter+Tight:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <style>
-    /* ── HAWKEYE STERLING · SUBJECT SCREENING DOSSIER ─────────
-       Reference design: editorial luxury · audit-grade typography */
-    :root{
-      --bg:oklch(97.5% 0.008 85);
-      --paper:oklch(97.5% 0.008 85);
-      --card:oklch(98% 0.005 85);
-      --border:oklch(22% 0.012 250 / 0.18);
-      --hairline:oklch(22% 0.012 250 / 0.18);
-      --hairline-strong:oklch(22% 0.012 250 / 0.3);
-      --rule:oklch(22% 0.012 250);
-      --brand:#d61e6f;
-      --brand-dim:rgba(214,30,111,0.08);
-      --ink0:oklch(22% 0.012 250);
-      --ink1:oklch(30% 0.012 250);
-      --ink2:oklch(38% 0.012 250);
-      --ink3:oklch(55% 0.012 250);
-      --green:oklch(45% 0.06 155);
-      --green-dim:oklch(45% 0.06 155 / 0.08);
-      --red:#d61e6f;
-      --red-dim:rgba(214,30,111,0.08);
-      --amber:oklch(60% 0.11 70);
-      --amber-dim:oklch(60% 0.11 70 / 0.08);
-      --serif:'Cormorant Garamond','GT Sectra',Georgia,serif;
-      --sans:'Inter Tight','Inter',system-ui,sans-serif;
-      --mono:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,monospace;
-    }
-    *{box-sizing:border-box;margin:0;padding:0}
-    html,body{
-      background:var(--paper);color:var(--ink1);
-      font-family:var(--sans);font-size:10.5pt;line-height:1.55;
-      font-feature-settings:"kern","liga";
-      -webkit-font-smoothing:antialiased;
-      text-rendering:optimizeLegibility;
-    }
-    body{padding:18mm 14mm;max-width:920px;margin:0 auto}
+  // ── helpers ────────────────────────────────────────────────────────
+  const subjectMeta = [
+    e(s.id),
+    s.entityType ? e(s.entityType.toUpperCase()) : null,
+    s.nationality ? e(s.nationality.toUpperCase()) : null,
+    s.jurisdiction ? e(s.jurisdiction.toUpperCase()) : null,
+    s.dob ? `DOB ${e(s.dob)}` : null,
+  ].filter(Boolean).join(" · ");
 
-    /* toolbar — screen only */
-    .toolbar{display:flex;gap:8px;justify-content:flex-end;margin-bottom:14mm}
-    .toolbar button{
-      font:600 9.5pt/1 var(--sans);
-      padding:9px 18px;border-radius:2px;
-      border:1px solid var(--hairline-strong);background:#fff;
-      color:var(--ink0);cursor:pointer;
-      letter-spacing:.1em;text-transform:uppercase;
-    }
-    .toolbar button.primary{background:var(--ink0);color:#fff;border-color:var(--ink0)}
-    .toolbar button:hover{opacity:.82}
+  const recLines = [
+    `► ${rec}`,
+    sev === "clear" || sev === "low" ? "► PROCEED WITH STANDARD CDD" : "",
+    sev === "clear" || sev === "low" ? "► SDD ELIGIBLE (MoE Circular 6/2025) — MLRO DISCRETION APPLIES" : "",
+    "► NO goAML FILING REQUIRED",
+    "► STANDARD ONGOING MONITORING",
+  ].filter(Boolean);
 
-    /* ── report header ────────────────────────────────────── */
-    .report-header{
-      border:none;border-radius:0;background:none;padding:0;
-      border-top:2px solid var(--brand);
-      padding-top:14px;margin-bottom:20px;
-    }
-    .report-header-top{
-      display:grid;grid-template-columns:1fr auto;gap:24px;
-      align-items:flex-end;
-      padding-bottom:14px;
-      border-bottom:1px solid var(--hairline);
-      margin-bottom:14px;
-    }
-    .logo{
-      font-family:var(--serif);font-size:22pt;font-weight:500;
-      color:var(--ink0);letter-spacing:0.38em;line-height:1;
-    }
-    .logo span{color:var(--ink2);font-weight:400}
-    .logo-sub{font-size:7.5pt;letter-spacing:0.28em;color:var(--ink3);text-transform:uppercase;margin-top:4px}
-    .report-id{
-      text-align:right;
-      font:500 8.5pt/1.65 var(--mono);
-      color:var(--ink2);letter-spacing:.02em;
-    }
-    .meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px 40px}
-    .meta-row{display:grid;grid-template-columns:128px 1fr;gap:14px;align-items:baseline}
-    .meta-label{
-      color:var(--ink3);min-width:0;flex-shrink:0;
-      font:600 7.5pt/1.5 var(--sans);
-      text-transform:uppercase;letter-spacing:.12em;
-    }
-    .meta-value{color:var(--ink0);font:500 10pt/1.5 var(--sans)}
+  const regItems = [
+    "Federal Decree-Law No. (10) of 2025 — UAE AML/CFT/CPF primary law",
+    "Cabinet Resolution No. (134) of 2025 — Executive Regulations",
+    "Cabinet Resolution No. (156) of 2025 — Goods Subject to Non-Proliferation (Controlled Items Schedule)",
+    "MoE Circular No. (3) of 2025 — TFS / sanctions screening",
+    "MoE Circular No. (2) of 2024 — Responsible sourcing (DPMS)",
+    "MoE Circular No. (6) of 2025 — Risk-based CDD / SDD",
+    "FATF Recommendations 10, 12, 20, 22",
+    "LBMA Responsible Gold Guidance v9",
+    "OECD Due Diligence Guidance — Gold Supplement",
+  ];
 
-    /* ── subject strip ────────────────────────────────────── */
-    .subject-block{
-      display:grid;grid-template-columns:1fr auto;gap:28px;
-      align-items:center;
-      padding:14px 0 16px;margin:0 0 22px;
-      border-top:1px solid var(--hairline);
-      border-bottom:1px solid var(--hairline);
-      background:none;border-radius:0;
-    }
-    .subject-name{
-      font:600 19pt/1.2 var(--serif);
-      color:var(--ink0);letter-spacing:-.005em;margin-bottom:5px;
-    }
-    .subject-meta{
-      color:var(--ink2);
-      font:500 9pt/1.55 var(--sans);letter-spacing:.02em;
-    }
-    .subject-block > div:last-child{
-      text-align:right;
-      border-left:1px solid var(--hairline);
-      padding-left:28px;align-self:stretch;
-      display:flex;flex-direction:column;justify-content:center;align-items:flex-end;
-    }
-    .sev-badge{
-      display:inline-block;
-      padding:3px 11px;
-      border:1px solid currentColor;border-radius:2px;
-      font:700 8pt/1 var(--sans);
-      letter-spacing:.18em;text-transform:uppercase;
-      align-self:flex-end;
-    }
-    .score-display{
-      font:600 28pt/1 var(--serif);
-      margin-top:8px;letter-spacing:-.015em;
-      font-variant-numeric:tabular-nums;
-    }
-    .score-suffix{
-      font:500 11pt/1 var(--sans);
-      color:var(--ink3);margin-left:1px;letter-spacing:0;
-    }
-    .score-caption{
-      margin-top:3px;
-      font:600 7.5pt/1 var(--sans);
-      color:var(--ink3);
-      text-transform:uppercase;letter-spacing:.12em;
-    }
+  const amScored = sb?.adverseMediaScored ?? null;
+  const amTotalHits = amScored?.total
+    ?? ((sb?.adverseKeywordGroups ?? []).reduce((acc, g) => acc + g.count, 0) + (sb?.adverseMedia?.length ?? 0));
+  const amCategoriesTripped =
+    amScored?.categoriesTripped?.length
+      ? amScored.categoriesTripped
+      : Array.from(new Set((sb?.adverseMedia ?? []).map((a) => a.categoryId)));
+  const amVectorScore = amScored?.compositeScore != null ? Math.round(amScored.compositeScore) : null;
+  const newsArticles = (sb as { newsDossier?: { articles?: Array<{ title: string; link: string; pubDate?: string; source?: string; snippet?: string; severity?: string }> } } | null | undefined)?.newsDossier?.articles ?? [];
 
-    /* ── sections ─────────────────────────────────────────── */
-    .section{margin-bottom:22px;page-break-inside:avoid}
-    .section-title{
-      font:700 7.5pt/1 var(--sans);
-      color:var(--brand);
-      letter-spacing:.2em;text-transform:uppercase;
-      padding-bottom:7px;margin-bottom:12px;
-      border-bottom:1px solid var(--hairline);
-    }
+  // ── extra CSS (scr-* classes) ──────────────────────────────────────
+  const extraCss = `<style>
+.scr-logo{display:grid;grid-template-columns:1fr auto;align-items:start;gap:16px;margin-bottom:12px}
+.scr-logo-name{font-family:var(--serif);font-size:22px;letter-spacing:0.38em;font-weight:500;color:var(--ink);line-height:1.15}
+.scr-logo-sub{font-size:7px;letter-spacing:0.26em;color:var(--ink-3);text-transform:uppercase;margin-top:3px}
+.scr-stamp{border:1px solid var(--pink);padding:5px 9px;text-align:center;transform:rotate(-2deg);background:var(--pink-soft)}
+.scr-stamp-l{font-family:var(--serif);font-size:10px;letter-spacing:0.3em;color:var(--pink);font-weight:600}
+.scr-stamp-s{font-size:5px;letter-spacing:0.3em;color:var(--pink);text-transform:uppercase;margin-top:2px}
+.scr-meta{display:grid;grid-template-columns:1fr 1fr;gap:4px 28px;padding:8px 0}
+.scr-meta-row{display:grid;grid-template-columns:110px 1fr;gap:6px;align-items:baseline}
+.scr-ml{font:700 6.5px/1.5 var(--sans);text-transform:uppercase;letter-spacing:0.12em;color:var(--ink-3)}
+.scr-mv{font:500 9px/1.5 var(--sans);color:var(--ink)}
+.scr-subj{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center;padding:9px 0;margin:9px 0;border-top:0.5px solid var(--hair);border-bottom:0.5px solid var(--hair)}
+.scr-subj-name{font-family:var(--serif);font-size:22px;font-weight:600;color:var(--ink);line-height:1.1;margin-bottom:3px}
+.scr-subj-meta{font:500 8px/1.5 var(--sans);color:var(--ink-2);letter-spacing:0.03em;text-transform:uppercase}
+.scr-verdict{text-align:right;border-left:0.5px solid var(--hair);padding-left:14px;flex-shrink:0}
+.scr-badge{display:inline-block;padding:3px 8px;border:1px solid currentColor;font:700 7px/1 var(--sans);letter-spacing:0.18em;text-transform:uppercase}
+.scr-score{font-family:var(--serif);font-size:26px;font-weight:600;margin-top:4px;line-height:1}
+.scr-score-cap{font:600 6.5px/1 var(--sans);color:var(--ink-3);text-transform:uppercase;letter-spacing:0.12em;margin-top:2px}
+.scr-sh{font:700 7px/1 var(--sans);color:var(--pink);letter-spacing:0.2em;text-transform:uppercase;padding-bottom:5px;margin:10px 0 7px;border-bottom:0.5px solid var(--hair)}
+.scr-tbl{width:100%;border-collapse:collapse}
+.scr-tbl thead th{text-align:left;font:700 6px/1 var(--sans);letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-3);padding:0 6px 5px;border-bottom:0.5px solid var(--ink)}
+.scr-tbl thead th:nth-child(3),.scr-tbl thead th:nth-child(4){text-align:right}
+.scr-tbl tbody td{padding:5px 6px;border-bottom:0.5px solid var(--hair);color:var(--ink);font-size:8px}
+.scr-tbl tbody td:nth-child(1){font-weight:500}
+.scr-tbl tbody td:nth-child(2){color:var(--ink-3)}
+.scr-tbl tbody td:nth-child(3),.scr-tbl tbody td:nth-child(4){text-align:right}
+.scr-tbl tbody tr:last-child td{border-bottom:0.5px solid var(--ink)}
+.scr-comp{display:flex;justify-content:space-between;font:8px var(--sans);color:var(--ink-3);margin-top:4px;padding-top:3px;border-top:0.5px solid var(--hair)}
+.scr-jur{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px 20px;margin-top:6px}
+.scr-jl{font:700 6px/1 var(--sans);text-transform:uppercase;letter-spacing:0.12em;color:var(--ink-3);margin-bottom:2px}
+.scr-jv{font:500 8px/1.4 var(--sans);color:var(--ink)}
+.scr-para{font-family:var(--serif);font-size:10.5px;line-height:1.6;color:var(--ink)}
+.scr-rec{padding:2px 0 2px 10px;border-left:1.5px solid var(--pink)}
+.scr-rl{padding:5px 0;border-bottom:0.5px dotted var(--hair);font:8px/1.5 var(--sans);color:var(--ink)}
+.scr-rl:last-child{border-bottom:none}
+.scr-cbg{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:12px}
+.scr-cb{display:flex;align-items:center;gap:7px;padding:8px 10px;border:0.5px solid var(--hair)}
+.scr-cbb{width:9px;height:9px;border:0.5px solid var(--ink-2);flex-shrink:0}
+.scr-cbl{font:500 8px/1.4 var(--sans);color:var(--ink)}
+.scr-sigb{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:14px}
+.scr-sigl{border-bottom:0.5px solid var(--ink);margin-top:22px;margin-bottom:4px}
+.scr-siglabel{font:600 6.5px/1 var(--sans);text-transform:uppercase;letter-spacing:0.14em;color:var(--ink-3)}
+.scr-regl{list-style:none;column-count:2;column-gap:18px;column-rule:0.5px solid var(--hair);margin-top:6px}
+.scr-regl li{font:8px/1.55 var(--sans);color:var(--ink);padding-left:9px;position:relative;break-inside:avoid;margin-bottom:3px}
+.scr-regl li::before{content:'';position:absolute;left:0;top:0.65em;width:5px;height:0.5px;background:var(--pink)}
+.scr-ag{display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;padding:10px 12px;background:var(--pink-soft);border:0.5px solid var(--hair);margin-bottom:8px}
+.scr-ar{display:flex;justify-content:space-between;gap:8px;line-height:1.5}
+.scr-al{font:700 6px/1.5 var(--sans);text-transform:uppercase;letter-spacing:0.1em;color:var(--ink-3);flex-shrink:0}
+.scr-av{font-family:var(--mono);font-size:7.5px;text-align:right;word-break:break-all;max-width:58%;color:var(--ink)}
+.scr-sigs{padding:10px 12px;border:0.5px solid var(--hair);margin-bottom:8px}
+.scr-sigs-t{font:700 6.5px/1 var(--sans);text-transform:uppercase;letter-spacing:0.14em;color:var(--ink-3);margin-bottom:8px}
+.scr-se{display:flex;flex-direction:column;gap:2px;margin-bottom:8px;padding-bottom:8px;border-bottom:0.5px dotted var(--hair)}
+.scr-se:last-child{margin-bottom:0;padding-bottom:0;border-bottom:none}
+.scr-sen{font:700 8px/1 var(--sans);color:var(--pink);letter-spacing:0.04em}
+.scr-sep{font:7px/1.5 var(--mono);color:var(--ink-3)}
+.scr-sex{font:7px/1.4 var(--mono);color:var(--ink);word-break:break-all}
+.scr-note{font:7.5px/1.5 var(--sans);color:var(--ink-3);font-style:italic;margin-top:6px}
+.scr-am-brief{background:rgba(214,30,111,0.04);border:0.5px solid var(--hair);padding:7px 9px;margin:7px 0;font:8px/1.5 var(--sans);color:var(--ink)}
+.scr-am-chip{display:inline-block;padding:1px 5px;border:0.5px solid #f59e0b;background:rgba(245,158,11,0.06);font:700 6.5px/1.4 var(--sans);text-transform:uppercase;letter-spacing:0.1em;color:#b45309;margin:1px 2px}
+</style>`;
 
-    /* ── tables ───────────────────────────────────────────── */
-    table{width:100%;border-collapse:collapse;font-size:9.5pt}
-    thead th{
-      text-align:left;
-      color:var(--ink3);
-      font:700 7pt/1 var(--sans);
-      letter-spacing:.16em;text-transform:uppercase;
-      padding:0 10px 7px;
-      border-bottom:1px solid var(--ink0);
-    }
-    thead th:nth-child(3),thead th:nth-child(4){text-align:right}
-    tbody td{
-      padding:8px 10px;
-      border-bottom:1px solid var(--hairline);
-      color:var(--ink1);
-      font-size:9.5pt;
-    }
-    tbody td:nth-child(1){color:var(--ink0);font-weight:500}
-    tbody td:nth-child(3),tbody td:nth-child(4){text-align:right;font-variant-numeric:tabular-nums}
-    tbody tr:last-child td{border-bottom:1px solid var(--ink0)}
-    .muted{color:var(--ink3)}
-    .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
-    .status-tag{
-      font:700 8pt/1 var(--sans);
-      letter-spacing:.16em;text-transform:uppercase;
-    }
+  // ── page 1: cover / screening ──────────────────────────────────────
+  const jurBlock = sb?.jurisdiction ? `
+  <div class="scr-sh">Jurisdiction Risk</div>
+  <div class="scr-jur">
+    <div><div class="scr-jl">Jurisdiction</div><div class="scr-jv">${e(sb.jurisdiction.name)} (${e(sb.jurisdiction.iso2)})</div></div>
+    <div><div class="scr-jl">CAHRA</div><div class="scr-jv">${sb.jurisdiction.cahra ? '<span style="color:#d61e6f;font-weight:700">YES</span>' : "no"}</div></div>
+    ${sb.jurisdiction.region ? `<div><div class="scr-jl">Region</div><div class="scr-jv">${e(sb.jurisdiction.region)}</div></div>` : ""}
+  </div>` : "";
 
-    /* ── risk score row ───────────────────────────────────── */
-    .risk-bar-wrap{background:var(--hairline);border-radius:0;height:3px;margin-top:8px;overflow:hidden}
-    .risk-bar{height:100%}
+  const factsText = `On ${e(now.toUTCString().replace(" GMT"," UTC"))}, Hawkeye Sterling screened the ${e(s.entityType ?? "subject")} <strong>${e(s.name)}</strong>${s.nationality ? ` (${e(s.nationality)} national)` : ""}${s.caseId ? ` under case ${e(s.caseId)}` : ""}, returning a composite risk score of <strong style="color:${sevColor}">${composite}/100</strong> (band: ${e(sev.toUpperCase())}). The sanctions vector ${r.hits.length === 0 ? `returned <strong>CLEAR</strong> (0 hits across the screened corpora)` : `returned <strong>${r.hits.length}</strong> possible match(es) at top match strength ${r.topScore}/100`}.${amCount > 0 ? ` Adverse-media overlay fired ${amCount} categor${amCount === 1 ? "y" : "ies"}.` : ""}${pepTier ? ` Possible PEP (${e(pepTier)}) — requires independent verification.` : ""}`;
 
-    /* ── jurisdiction grid ────────────────────────────────── */
-    .jur-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px 40px}
-    .jur-grid .meta-row{grid-template-columns:128px 1fr}
-
-    /* ── chips ────────────────────────────────────────────── */
-    .chip{
-      display:inline-block;padding:1px 7px;border-radius:2px;
-      font:700 7.5pt/1.5 var(--sans);
-      letter-spacing:.1em;text-transform:uppercase;
-      border:1px solid;
-    }
-    .chip-red{color:var(--red);background:var(--red-dim);border-color:rgba(180,35,24,.28)}
-    .chip-amber{color:var(--amber);background:var(--amber-dim);border-color:rgba(181,71,8,.28)}
-    .chip-green{color:var(--green);background:var(--green-dim);border-color:rgba(14,124,58,.28)}
-    .chip-brand{color:var(--brand);background:var(--brand-dim);border-color:rgba(163,19,79,.28)}
-
-    /* ── adverse media ────────────────────────────────────── */
-    .am-list{list-style:none;display:flex;flex-direction:column;gap:6px}
-    .am-list li{display:flex;align-items:center;gap:8px}
-
-    .am-metrics{
-      display:grid;grid-template-columns:repeat(4,1fr);gap:0;
-      margin-bottom:14px;
-      border-top:1px solid var(--ink0);
-      border-bottom:1px solid var(--ink0);
-    }
-    .am-metric{padding:10px 14px;border-right:1px solid var(--hairline)}
-    .am-metric:last-child{border-right:none}
-    .am-metric-label{
-      font:700 7pt/1 var(--sans);
-      text-transform:uppercase;letter-spacing:.16em;
-      color:var(--ink3);margin-bottom:6px;
-    }
-    .am-metric-value{
-      font:600 15pt/1.05 var(--serif);
-      color:var(--ink0);font-variant-numeric:tabular-nums;
-    }
-
-    .am-block{
-      margin:12px 0;padding:2px 0 4px 14px;
-      border:none;border-left:2px solid var(--brand);
-      border-radius:0;background:none;
-    }
-    .am-block-title{
-      font:700 7.5pt/1 var(--sans);
-      text-transform:uppercase;letter-spacing:.16em;
-      color:var(--ink2);margin-bottom:8px;
-    }
-    .am-bullets{list-style:none;display:flex;flex-direction:column;gap:5px;font-size:9.5pt;color:var(--ink1);line-height:1.55}
-    .am-bullets li{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-    .am-bullets.mono{font-family:var(--mono);font-size:9pt}
-
-    .am-posture{
-      margin-top:14px;padding:10px 14px;
-      border:1px solid var(--hairline);border-radius:0;
-      font:9pt/1.55 var(--sans);color:var(--ink2);
-      background:var(--brand-dim);
-    }
-    .am-posture strong{color:var(--ink0);font-weight:600}
-
-    /* ── news dossier ─────────────────────────────────────── */
-    .news-list{display:flex;flex-direction:column;gap:10px;margin-top:8px}
-    .news-item{
-      padding:6px 0 8px 14px;
-      border:none;border-left:2px solid var(--hairline);
-      border-radius:0;background:none;
-    }
-    .news-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:8pt;color:var(--ink3);margin-bottom:4px}
-    .news-source{font-weight:700;color:var(--ink1);text-transform:uppercase;letter-spacing:.08em}
-    .news-title{font:600 10.5pt/1.4 var(--serif);color:var(--ink0);margin-bottom:3px;letter-spacing:-.005em}
-    .news-snippet{font-size:9pt;color:var(--ink2);line-height:1.55;margin-top:4px}
-    .news-link{font:8.5pt/1.5 var(--mono);color:var(--brand);text-decoration:none;word-break:break-all;display:inline-block;margin-top:4px}
-    .news-link:hover{text-decoration:underline}
-
-    /* ── recommendation ───────────────────────────────────── */
-    .rec-block{padding:2px 0 2px 14px;border-left:2px solid var(--brand)}
-    .rec-line{
-      padding:7px 0;border-bottom:1px dotted var(--hairline);
-      color:var(--ink0);font-size:10pt;line-height:1.5;
-    }
-    .rec-line:last-child{border-bottom:none}
-
-    /* ── decision checkboxes ──────────────────────────────── */
-    .decision-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px}
-    .checkbox-item{
-      display:flex;align-items:center;gap:10px;
-      padding:11px 14px;
-      border:1px solid var(--hairline);border-radius:0;background:none;
-    }
-    .checkbox-box{width:11px;height:11px;border:1px solid var(--ink2);border-radius:0;flex-shrink:0}
-    .checkbox-label{font:500 9.5pt/1.4 var(--sans);color:var(--ink0)}
-
-    /* ── signature block ──────────────────────────────────── */
-    .sig-block{margin-top:24px;padding-top:0;border-top:none;display:grid;grid-template-columns:1fr 1fr;gap:32px}
-    .sig-line{border-bottom:1px solid var(--ink0);margin-top:36px;margin-bottom:6px;height:0}
-    .sig-label{font:600 7.5pt/1 var(--sans);color:var(--ink3);text-transform:uppercase;letter-spacing:.14em}
-
-    /* ── reg framework list ───────────────────────────────── */
-    .reg-list{
-      list-style:none;display:block;
-      column-count:2;column-gap:32px;column-rule:1px solid var(--hairline);
-    }
-    .reg-list li{
-      font:9pt/1.55 var(--sans);color:var(--ink1);
-      padding-left:12px;position:relative;
-      break-inside:avoid;margin-bottom:5px;
-    }
-    .reg-list li::before{
-      content:"";position:absolute;left:0;top:.7em;
-      width:6px;height:1px;background:var(--brand);
-    }
-
-    /* ── audit trail ──────────────────────────────────────── */
-    .audit-grid{
-      display:grid;grid-template-columns:1fr 1fr;gap:7px 28px;
-      padding:14px 16px;background:var(--brand-dim);
-      border:1px solid var(--hairline);border-radius:0;margin-bottom:10px;
-    }
-    .audit-row{display:flex;justify-content:space-between;gap:12px;font-size:9pt;line-height:1.5}
-    .audit-label{color:var(--ink3);text-transform:uppercase;letter-spacing:.12em;font:700 7.5pt/1.5 var(--sans);flex-shrink:0;padding-top:1px}
-    .audit-value{
-      color:var(--ink0);font-family:var(--mono);
-      font-size:9pt;text-align:right;word-break:break-all;max-width:62%;
-      font-variant-numeric:tabular-nums;
-    }
-    .audit-signatures{
-      padding:14px 16px;background:#fafafa;
-      border:1px solid var(--hairline);border-radius:0;margin-bottom:10px;
-    }
-    .audit-sig-title{font:700 7.5pt/1 var(--sans);text-transform:uppercase;letter-spacing:.16em;color:var(--ink3);margin-bottom:10px}
-    .audit-sig{display:flex;flex-direction:column;gap:3px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px dotted var(--hairline)}
-    .audit-sig:last-child{margin-bottom:0;padding-bottom:0;border-bottom:none}
-    .audit-sig-label{font:700 9.5pt/1 var(--sans);color:var(--brand);letter-spacing:.04em}
-    .audit-sig-fp{font:8.5pt/1.5 var(--mono);color:var(--ink3)}
-    .audit-sig-hex{font:8.5pt/1.45 var(--mono);color:var(--ink1);word-break:break-all}
-    .audit-note{font:8.5pt/1.5 var(--sans);color:var(--ink3);margin-top:8px;font-style:italic}
-
-    /* ── footer ───────────────────────────────────────────── */
-    .footer{
-      margin-top:28px;padding-top:12px;
-      border-top:1px solid var(--hairline);
-      display:flex;justify-content:space-between;
-      font:600 7.5pt/1 var(--sans);
-      color:var(--ink3);
-      text-transform:uppercase;letter-spacing:.14em;
-    }
-
-    /* ── print: edge-to-edge, page-margin chrome ──────────── */
-    @media print{
-      html,body{background:#fff}
-      body{padding:0;max-width:none;margin:0}
-      .toolbar{display:none}
-      a,a:visited{color:inherit;text-decoration:none}
-      .news-link{color:var(--brand);text-decoration:underline}
-      .canonical a{color:var(--ink0);text-decoration:underline}
-      @page{
-        margin:14mm 12mm 16mm 12mm;
-        @top-left{
-          content:"HAWKEYE STERLING · CONFIDENTIAL";
-          font-family:-apple-system,'Segoe UI',Roboto,sans-serif;
-          font-size:7.5pt;font-weight:600;
-          letter-spacing:.18em;color:#9a9a9a;
-        }
-        @top-right{
-          content:"${e(reportId)}";
-          font-family:ui-monospace,Menlo,Consolas,monospace;
-          font-size:7.5pt;font-weight:500;
-          letter-spacing:.04em;color:#9a9a9a;
-        }
-        @bottom-left{
-          content:"FDL 10/2025 · 10-year retention";
-          font-family:-apple-system,'Segoe UI',Roboto,sans-serif;
-          font-size:7.5pt;font-weight:600;
-          letter-spacing:.16em;color:#9a9a9a;
-        }
-        @bottom-right{
-          content:"Page " counter(page) " / " counter(pages);
-          font-family:-apple-system,'Segoe UI',Roboto,sans-serif;
-          font-size:7.5pt;font-weight:600;
-          letter-spacing:.08em;color:#9a9a9a;
-        }
-      }
-      .section,.subject-block,.report-header,.am-block,.checkbox-item,.news-item{page-break-inside:avoid}
-    }
-  </style>
-</head>
-<body>
-  <div class="toolbar">
-    <button onclick="window.print()" class="primary">⬇ Save as PDF</button>
-    <button onclick="window.close()">Close</button>
-  </div>
-
-  <!-- HEADER -->
-  <div class="report-header">
-    <div class="report-header-top">
-      <div>
-        <div class="logo">HAWKEYE <span>·</span> STERLING</div>
-        <div class="logo-sub">SUBJECT SCREENING DOSSIER</div>
-      </div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
-        <div style="border:1px solid var(--brand);padding:6px 10px;text-align:center;transform:rotate(-1deg);background:var(--brand-dim)">
-          <div style="font-family:var(--serif);font-size:12px;letter-spacing:0.3em;color:var(--brand);font-weight:600">CONFIDENTIAL</div>
-          <div style="font-size:6px;letter-spacing:0.32em;color:var(--brand);text-transform:uppercase;margin-top:2px">MLRO USE ONLY</div>
-        </div>
-        <div class="report-id">${e(reportId)}</div>
-      </div>
-    </div>
-    <div class="meta-grid">
-      <div class="meta-row"><span class="meta-label">Date and Time</span><span class="meta-value">${e(now.toUTCString().replace(" GMT", " UTC"))}</span></div>
-      <div class="meta-row"><span class="meta-label">Place</span><span class="meta-value">Dubai, United Arab Emirates</span></div>
-      <div class="meta-row"><span class="meta-label">MLRO assigned</span><span class="meta-value">${e(input.mlro ?? "L. Fernanda")}</span></div>
-      <div class="meta-row"><span class="meta-label">FIU registration</span><span class="meta-value">FIU-AE-DMCC-0428</span></div>
-      ${s.caseId ? `<div class="meta-row"><span class="meta-label">Case ID</span><span class="meta-value">${e(s.caseId)}</span></div>` : ""}
-      ${s.group ? `<div class="meta-row"><span class="meta-label">Group</span><span class="meta-value">${e(s.group)}</span></div>` : ""}
-    </div>
-  </div>
-
-  <!-- SUBJECT -->
-  <div class="subject-block">
+  const p1 = `
+  <div class="scr-logo">
     <div>
-      <div class="subject-name">${e(s.name)}</div>
-      <div class="subject-meta">
-        ${e(s.id)} · ${e(s.entityType?.toUpperCase())}
-        ${s.nationality ? ` · ${e(s.nationality)}` : ""}
-        ${s.jurisdiction ? ` · ${e(s.jurisdiction)}` : ""}
-        ${s.dob ? ` · DOB ${e(s.dob)}` : ""}
-      </div>
-      ${s.aliases?.length ? `<div class="subject-meta" style="margin-top:4px">Aliases: ${s.aliases.map(a => e(a)).join(" · ")}</div>` : ""}
+      <div class="scr-logo-name">HAWKEYE&nbsp;&nbsp;STERLING</div>
+      <div class="scr-logo-sub">Subject Screening Dossier</div>
     </div>
+    <div class="scr-stamp">
+      <div class="scr-stamp-l">CONFIDENTIAL</div>
+      <div class="scr-stamp-s">MLRO USE ONLY</div>
+    </div>
+  </div>
+  <div class="hs-rule"></div>
+  <div class="scr-meta">
+    <div class="scr-meta-row"><span class="scr-ml">Date and Time</span><span class="scr-mv">${e(now.toUTCString().replace(" GMT"," UTC"))}</span></div>
+    <div class="scr-meta-row"><span class="scr-ml">Place</span><span class="scr-mv">Dubai, United Arab Emirates</span></div>
+    <div class="scr-meta-row"><span class="scr-ml">MLRO Assigned</span><span class="scr-mv">${e(input.mlro ?? "L. Fernanda")}</span></div>
+    <div class="scr-meta-row"><span class="scr-ml">FIU Registration</span><span class="scr-mv">FIU-AE-DMCC-0428</span></div>
+  </div>
+  <div class="hs-doublerule"><div></div><div></div></div>
+  <div class="scr-subj">
     <div>
-      <div class="sev-badge" style="color:${sevColor};border-color:${sevColor}">
-        ${e(sev.toUpperCase())}
-      </div>
-      <div class="score-display" style="color:${sevColor}">${composite}<span class="score-suffix">/100</span></div>
-      <div class="score-caption">composite · sanctions vector ${r.topScore}/100</div>
+      <div class="scr-subj-name">${e(s.name)}</div>
+      <div class="scr-subj-meta">${subjectMeta}</div>
+      ${s.aliases?.length ? `<div class="scr-subj-meta" style="margin-top:3px">Aliases: ${s.aliases.map(a => e(a)).join(" · ")}</div>` : ""}
+    </div>
+    <div class="scr-verdict">
+      <div class="scr-badge" style="color:${sevColor};border-color:${sevColor}">${e(sev.toUpperCase())}</div>
+      <div class="scr-score" style="color:${sevColor}">${composite}<span style="font-family:var(--sans);font-size:12px;font-weight:500;color:var(--ink-3)">/100</span></div>
+      <div class="scr-score-cap">COMPOSITE · SANCTIONS VECTOR ${r.topScore}/100</div>
     </div>
   </div>
-
-  <!-- SCREENING MATRIX -->
-  <div class="section">
-    <div class="section-title">Screening Result Matrix</div>
-    <table>
-      <thead><tr><th>Vector</th><th>Engine</th><th>Score</th><th>Result</th></tr></thead>
-      <tbody>
-        ${matrixRows}
-        <tr>
-          <td>PEP</td>
-          <td class="muted">World-Check</td>
-          <td class="mono">${pepScore}</td>
-          <td style="color:${pepRc};font-weight:600">${pepResult}</td>
-        </tr>
-        <tr>
-          <td>Adverse media</td>
-          <td class="muted">Multi-source</td>
-          <td class="mono">${amScore}</td>
-          <td style="color:${amRc};font-weight:600">${amResult}</td>
-        </tr>
-      </tbody>
-    </table>
-    <div style="margin-top:10px">
-      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-        <span style="font-size:10px;color:var(--ink3)">Composite risk score</span>
-        <span style="font-size:10px;color:${sevColor};font-weight:600">${composite}/100 · ${e(sev.toUpperCase())}</span>
-      </div>
-      <div class="risk-bar-wrap">
-        <div class="risk-bar" style="width:${Math.min(composite, 100)}%;background:${sevColor}"></div>
-      </div>
-    </div>
+  <div class="scr-sh">Screening Result Matrix</div>
+  <table class="scr-tbl">
+    <thead><tr><th>Vector</th><th>Engine</th><th>Score</th><th>Result</th></tr></thead>
+    <tbody>
+      ${matrixRows}
+      <tr><td>PEP</td><td>World-Check</td><td style="text-align:right;font-family:var(--mono)">${pepScore}</td><td style="text-align:right;font-weight:600;color:${pepRc}">${pepResult}</td></tr>
+      <tr><td>Adverse media</td><td>Multi-source</td><td style="text-align:right;font-family:var(--mono)">${amScore}</td><td style="text-align:right;font-weight:600;color:${amRc}">${amResult}</td></tr>
+    </tbody>
+  </table>
+  <div class="scr-comp">
+    <span>Composite risk score</span>
+    <span style="color:${sevColor};font-weight:600">${composite}/100 · ${e(sev.toUpperCase())}</span>
   </div>
+  ${jurBlock}
+  <div class="scr-sh" style="margin-top:12px">1. Facts</div>
+  <p class="scr-para">${factsText}</p>`;
 
-  <!-- JURISDICTION -->
-  ${sb?.jurisdiction ? `
-  <div class="section">
-    <div class="section-title">Jurisdiction Risk</div>
-    <div class="jur-grid">
-      <div class="meta-row"><span class="meta-label">Jurisdiction</span><span class="meta-value">${e(sb.jurisdiction.name)} (${e(sb.jurisdiction.iso2)}) · ${e(sb.jurisdiction.region)}</span></div>
-      <div class="meta-row"><span class="meta-label">CAHRA</span><span class="meta-value">${sb.jurisdiction.cahra ? '<span class="chip chip-red">YES</span>' : "no"}</span></div>
-      ${sb.jurisdiction.regimes?.length ? `<div class="meta-row" style="grid-column:1/-1"><span class="meta-label">Active regimes</span><span class="meta-value">${sb.jurisdiction.regimes.map(r2 => `<span class="chip chip-amber" style="margin-right:4px">${e(r2)}</span>`).join("")}</span></div>` : ""}
-    </div>
-  </div>` : ""}
+  // ── page 2: analysis + decision ───────────────────────────────────
+  const analysisText = `The composite score sits in the <strong style="color:${sevColor}">${e(sev)}</strong> band. ${r.hits.length > 0 ? `Possible matches concentrate on ${Array.from(new Set(r.hits.map(h => h.listId))).slice(0, 3).map(l => `<strong>${e(l)}</strong>`).join(", ")}.` : "The subject does not appear on any monitored sanctions regime."} ${sb?.jurisdiction ? `Jurisdictional risk for ${e(sb.jurisdiction.name)} is assessed as ${sb.jurisdiction.cahra ? '<strong style="color:#d61e6f">CAHRA</strong>' : "non-CAHRA"}.` : ""} ${amCount > 0 ? `The adverse-media signal requires analyst review and live-news corroboration before constructive knowledge can be asserted under FDL 10/2025 Art.2(3). Categories tripped: ${amCategoriesTripped.slice(0, 5).map(c => e(c.replace(/_/g, " "))).join(", ")}${amCategoriesTripped.length > 5 ? ` +${amCategoriesTripped.length - 5} more` : ""}.` : ""}`;
 
-  <!-- ADVERSE MEDIA — FINDINGS & EVIDENCE -->
-  ${amCount > 0 || amTotalHits > 0 ? `
-  <div class="section">
-    <div class="section-title">Adverse Media — Findings &amp; Evidence</div>
+  const amBrief = amCount > 0 ? `
+  <div class="scr-am-brief">
+    <strong>Adverse Media:</strong> ${amTotalHits} keyword hit${amTotalHits === 1 ? "" : "s"} · ${amCategoriesTripped.length} categor${amCategoriesTripped.length === 1 ? "y" : "ies"}${amVectorScore != null ? ` · vector score ${amVectorScore}/100` : ""}${newsArticles.length > 0 ? ` · ${newsArticles.length} news article${newsArticles.length === 1 ? "" : "s"}` : ""}<br>
+    ${amCategoriesTripped.slice(0, 6).map(c => `<span class="scr-am-chip">${e(c.replace(/_/g, " "))}</span>`).join("")}
+  </div>` : "";
 
-    <!-- Hit-volume metrics -->
-    <div class="am-metrics">
-      <div class="am-metric">
-        <div class="am-metric-label">Hit volume</div>
-        <div class="am-metric-value">${amTotalHits} keyword hit${amTotalHits === 1 ? "" : "s"}</div>
-      </div>
-      <div class="am-metric">
-        <div class="am-metric-label">Distinct terms</div>
-        <div class="am-metric-value">${amDistinctKw}</div>
-      </div>
-      <div class="am-metric">
-        <div class="am-metric-label">Categories tripped</div>
-        <div class="am-metric-value">${amCategoriesTripped.length}</div>
-      </div>
-      ${amVectorScore != null ? `
-      <div class="am-metric">
-        <div class="am-metric-label">Vector score</div>
-        <div class="am-metric-value">${amVectorScore}/100</div>
-      </div>` : ""}
-    </div>
-
-    <!-- Categories tripped (with counts when scored) -->
-    ${amCategoriesTripped.length > 0 ? `
-    <div class="am-block">
-      <div class="am-block-title">Categories tripped</div>
-      <ul class="am-bullets">
-        ${amCategoriesTripped.map((c) => {
-          const count = amScored?.byCategory?.[c];
-          return `<li><span class="chip chip-amber">${e(c.replace(/_/g, " "))}</span>${count != null ? ` <span class="muted">${count} hit${count === 1 ? "" : "s"}</span>` : ""}</li>`;
-        }).join("")}
-      </ul>
-    </div>` : ""}
-
-    <!-- Keyword groups fired (operator-friendly AML doctrine grouping) -->
-    ${(sb?.adverseKeywordGroups ?? []).length > 0 ? `
-    <div class="am-block">
-      <div class="am-block-title">Keyword groups fired</div>
-      <ul class="am-bullets">
-        ${(sb!.adverseKeywordGroups ?? []).map((g) =>
-          `<li><span class="chip chip-red">${e(g.label)}</span> <span class="muted">${g.count} hit${g.count === 1 ? "" : "s"}</span> <span class="mono muted">[${e(g.group)}]</span></li>`
-        ).join("")}
-      </ul>
-    </div>` : ""}
-
-    <!-- Top keywords -->
-    ${amTopKeywords.length > 0 ? `
-    <div class="am-block">
-      <div class="am-block-title">Top keywords</div>
-      <ul class="am-bullets">
-        ${amTopKeywords.slice(0, 10).map((k) =>
-          `<li><span class="mono" style="color:var(--ink0)">"${e(k.keyword)}"</span> → <span class="muted">${e(k.categoryId)}</span> <span class="muted">(${k.count} occurrence${k.count === 1 ? "" : "s"})</span></li>`
-        ).join("")}
-      </ul>
-    </div>` : ""}
-
-    <!-- Per-hit evidence — exact match locations -->
-    ${(sb?.adverseMedia ?? []).length > 0 ? `
-    <div class="am-block">
-      <div class="am-block-title">Per-hit evidence (first 15)</div>
-      <ul class="am-bullets mono">
-        ${(sb!.adverseMedia ?? []).slice(0, 15).map((a) =>
-          `<li><span class="muted">[${e(a.categoryId)}]</span> "${e(a.keyword)}"${a.offset != null ? ` <span class="muted">@${a.offset}</span>` : ""}</li>`
-        ).join("")}
-      </ul>
-      ${(sb?.adverseMedia ?? []).length > 15 ? `<div class="muted" style="font-size:10px;margin-top:4px">…and ${(sb!.adverseMedia ?? []).length - 15} more — see attached evidence pack.</div>` : ""}
-    </div>` : ""}
-
-    <!-- News dossier with clickable article links -->
-    ${newsArticles.length > 0 ? `
-    <div class="am-block">
-      <div class="am-block-title">News dossier ${newsArticles.length} article${newsArticles.length === 1 ? "" : "s"}${newsDossierMeta?.topSeverity ? ` · top severity ${e(newsDossierMeta.topSeverity.toUpperCase())}` : ""}${newsDossierMeta?.source ? ` · source ${e(newsDossierMeta.source)}` : ""}${newsDossierMeta?.languages?.length ? ` · ${e(newsDossierMeta.languages.join(", "))}` : ""}</div>
-      <div class="news-list">
-        ${newsArticles.slice(0, 10).map((a) => {
-          const sevTone = a.severity === "critical" || a.severity === "high"
-            ? "chip-red"
-            : a.severity === "medium"
-              ? "chip-amber"
-              : "chip-green";
-          const sevChip = a.severity ? `<span class="chip ${sevTone}">${e(a.severity.toUpperCase())}</span>` : "";
-          const dateBit = a.pubDate ? ` <span class="muted mono">${e(a.pubDate)}</span>` : "";
-          const groups = (a.keywordGroups ?? []).slice(0, 3);
-          const groupsBit = groups.length > 0 ? ` <span class="muted">· ${e(groups.join(" · "))}</span>` : "";
-          const snippetTrim = a.snippet && a.snippet.length > 220 ? a.snippet.slice(0, 220) + "…" : (a.snippet ?? "");
-          return `<div class="news-item">
-            <div class="news-meta">${sevChip} <span class="news-source">${e(a.source ?? "—")}</span>${dateBit}${groupsBit}</div>
-            <div class="news-title">${e(a.title)}</div>
-            ${snippetTrim ? `<div class="news-snippet">${e(snippetTrim)}</div>` : ""}
-            ${a.link ? `<a class="news-link" href="${e(a.link)}" target="_blank" rel="noopener noreferrer">${e(a.link)}</a>` : ""}
-          </div>`;
-        }).join("")}
-      </div>
-      ${newsArticles.length > 10 ? `<div class="muted" style="font-size:10px;margin-top:6px">…and ${newsArticles.length - 10} more article(s) — full dossier in JSON sidecar / .txt export.</div>` : ""}
-    </div>` : ""}
-
-    <!-- Source posture / constructive-knowledge limit -->
-    <div class="am-posture">
-      <strong>Source posture:</strong> open-source / classifier-derived. Constructive-knowledge threshold (FDL 10/2025 Art.2(3)) requires analyst review and live-news corroboration before SAR / EDD action.
-    </div>
-  </div>` : ""}
-
-  <!-- FACTS -->
-  <div class="section">
-    <div class="section-title">1. Facts</div>
-    <p style="color:var(--ink1);font-size:11.5px;line-height:1.7">
-      On ${e(now.toUTCString().replace(" GMT", " UTC"))}, Hawkeye Sterling screened the ${e(s.entityType)} <strong style="color:var(--ink0)">${e(s.name)}</strong>${s.nationality ? ` (${e(s.nationality)} national)` : ""}${s.caseId ? ` under case ${e(s.caseId)}` : ""}, returning a composite risk score of <strong style="color:${sevColor}">${composite}/100</strong> (band: ${e(sev.toUpperCase())}).
-      The sanctions vector ${r.hits.length === 0 ? `returned <strong>CLEAR</strong> (0 hits across the screened corpora)` : `returned <strong>${r.hits.length}</strong> possible match(es) at top match strength ${r.topScore}/100 — a name-similarity result does not constitute a confirmed designation`}.
-      ${amCount > 0 ? `Adverse-media overlay fired ${amCount} categor${amCount === 1 ? "y" : "ies"} — see findings section above for evidence.` : ""}
-      ${pepTier ? `Subject classified as possible PEP (${e(pepTier)}) — requires independent verification.` : ""}
-    </p>
+  const p2 = `
+  <div class="scr-sh" style="margin-top:0">2. Analysis</div>
+  <p class="scr-para">${analysisText}</p>
+  ${amBrief}
+  <div class="scr-sh">Recommendation (System)</div>
+  <div class="scr-rec">
+    ${recLines.map(l => `<div class="scr-rl">${e(l)}</div>`).join("")}
   </div>
-
-  <!-- ANALYSIS -->
-  <div class="section">
-    <div class="section-title">2. Analysis</div>
-    <p style="color:var(--ink1);font-size:11.5px;line-height:1.7">
-      The composite score sits in the <strong style="color:${sevColor}">${e(sev)}</strong> band.
-      ${r.hits.length > 0 ? `Possible matches concentrate on ${Array.from(new Set(r.hits.map(h => h.listId))).map(l => `<span class="chip chip-red">${e(l)}</span>`).join(" ")}.` : "The subject does not appear on any monitored sanctions regime."}
-      ${sb?.jurisdiction ? `Jurisdictional risk for ${e(sb.jurisdiction.name)} is assessed as ${sb.jurisdiction.cahra ? '<span class="chip chip-red">CAHRA</span>' : "non-CAHRA"}.` : ""}
-      ${amCount > 0 ? `The adverse-media signal requires analyst review and live-news corroboration before constructive knowledge can be asserted under FDL 10/2025 Art.2(3).` : ""}
-    </p>
+  <div class="scr-sh">MLRO Decision</div>
+  <div class="scr-cbg">
+    <div class="scr-cb"><div class="scr-cbb"></div><div class="scr-cbl">Apply Standard CDD — proceed</div></div>
+    <div class="scr-cb"><div class="scr-cbb"></div><div class="scr-cbl">Apply SDD — proceed</div></div>
+    <div class="scr-cb"><div class="scr-cbb"></div><div class="scr-cbl">Override to EDD — record reason</div></div>
+    <div class="scr-cb"><div class="scr-cbb"></div><div class="scr-cbl">File STR via goAML</div></div>
   </div>
-
-  <!-- RECOMMENDATION -->
-  <div class="section">
-    <div class="section-title">Recommendation (System)</div>
-    <div class="rec-block">${recRows}</div>
+  <div class="scr-sigb">
+    <div><div class="scr-sigl"></div><div class="scr-siglabel">MLRO Signature</div></div>
+    <div><div class="scr-sigl"></div><div class="scr-siglabel">Date</div></div>
   </div>
+  <div class="scr-sh">Regulatory Framework Applied</div>
+  <ul class="scr-regl">${regItems.map(f => `<li>${e(f)}</li>`).join("")}</ul>`;
 
-  <!-- MLRO DECISION -->
-  <div class="section">
-    <div class="section-title">MLRO Decision</div>
-    <div class="decision-grid">
-      <div class="checkbox-item"><div class="checkbox-box"></div><div class="checkbox-label">Apply Standard CDD — proceed</div></div>
-      <div class="checkbox-item"><div class="checkbox-box"></div><div class="checkbox-label">Apply SDD — proceed</div></div>
-      <div class="checkbox-item"><div class="checkbox-box"></div><div class="checkbox-label">Override to EDD — record reason</div></div>
-      <div class="checkbox-item"><div class="checkbox-box"></div><div class="checkbox-label">File STR via goAML</div></div>
-    </div>
-    <div class="sig-block">
-      <div>
-        <div class="sig-line"></div>
-        <div class="sig-label">MLRO signature</div>
-      </div>
-      <div>
-        <div class="sig-line"></div>
-        <div class="sig-label">Date</div>
-      </div>
-    </div>
+  // ── page 3: audit trail ───────────────────────────────────────────
+  const auditRows: Array<[string, string]> = ([
+    ["Run ID", runId],
+    ["Brain Generated", generatedAtIso],
+    ["Engine Version", engineVersion],
+    ["Schema Version", schemaVersion],
+    ["Build SHA", buildSha],
+    ["Operator", operatorRole],
+    ["Payload SHA-256", payloadSha],
+    ["Report SHA-256", reportSha],
+  ] as Array<[string, string]>).filter(([, v]) => !!v);
+
+  const sigBlock = (hmacSig || edSig) ? `
+  <div class="scr-sigs">
+    <div class="scr-sigs-t">Signatures</div>
+    ${hmacSig ? `<div class="scr-se"><div class="scr-sen">HMAC-SHA256</div><div class="scr-sep">key fp ${e(hmacFp)}</div><div class="scr-sex">${e(hmacSig)}</div></div>` : ""}
+    ${edSig   ? `<div class="scr-se"><div class="scr-sen">Ed25519</div><div class="scr-sep">pubkey fp ${e(edFp)}</div><div class="scr-sex">${e(edSig)}</div></div>` : ""}
+  </div>` : "";
+
+  const p3 = `
+  <div class="scr-sh" style="margin-top:0">Audit Trail &amp; Integrity</div>
+  <div class="scr-ag">
+    ${auditRows.map(([k, v]) => `<div class="scr-ar"><span class="scr-al">${e(k)}</span><span class="scr-av">${e(v)}</span></div>`).join("")}
   </div>
+  ${sigBlock}
+  <div class="scr-note">${e(integrityNote)}</div>
+  ${hsFinis(reportId, 3, 3)}`;
 
-  <!-- REGULATORY FRAMEWORK -->
-  <div class="section">
-    <div class="section-title">Regulatory Framework Applied</div>
-    <ul class="reg-list">${regFramework}</ul>
-  </div>
+  const regs  = "FDL 10/2025 · 10-year retention";
+  const label = "SUBJECT SCREENING DOSSIER";
 
-  <!-- AUDIT TRAIL & INTEGRITY -->
-  <div class="section">
-    <div class="section-title">Audit trail &amp; integrity</div>
-    <div class="audit-grid">
-      ${auditGridRows}
-    </div>
-    ${signatureBlock}
-    <div class="audit-note">${e(integrityNote)}</div>
-  </div>
-
-  <!-- FOOTER -->
-  <div class="footer">
-    <span>Hawkeye Sterling · hawkeye-sterling.netlify.app</span>
-    <span>${e(reportId)} · CONFIDENTIAL · 10-year retention</span>
-  </div>
-
-  <script>
-    window.addEventListener("load", function () {
-      setTimeout(function () { window.print(); }, 300);
-    });
-  </script>
-</body>
-</html>`;
+  return buildHtmlDoc({
+    title: safeTitle,
+    autoprint: true,
+    pages: [
+      extraCss + hsPage({ reportId, pageNum: 1, pageTotal: 3, regs, label, content: p1 }),
+      hsPage({ reportId, pageNum: 2, pageTotal: 3, regs, label, content: p2 }),
+      hsPage({ reportId, pageNum: 3, pageTotal: 3, regs, label, content: p3 }),
+    ],
+  });
 }
+
 
 async function handleComplianceReport(req: Request): Promise<Response> {
   const gate = await enforce(req);
@@ -896,7 +400,7 @@ async function handleComplianceReport(req: Request): Promise<Response> {
   const gateHeaders: Record<string, string> = gate.ok ? gate.headers : {};
 
   const url = new URL(req.url);
-  const format = (url.searchParams.get("format") ?? "text").toLowerCase();
+  const format = (url.searchParams.get("format") ?? "html").toLowerCase();
 
   let body: ReportInput;
   try {
