@@ -187,7 +187,7 @@ export function kvRows(doc: jsPDF, rows: Array<[string,string]>, y: number, labe
 
 export function dropCapPara(doc: jsPDF, text: string, y: number): number {
   if (!text) return y;
-  const cap=text[0], rest=text.slice(1);
+  const cap=text.charAt(0), rest=text.slice(1);
   doc.setFont("times","italic"); doc.setFontSize(30); t(doc,GRAY_D);
   const capW = doc.getTextWidth(cap); doc.text(cap, ML, y+12);
   doc.setFont("helvetica","normal"); doc.setFontSize(9); t(doc,BLACK);
