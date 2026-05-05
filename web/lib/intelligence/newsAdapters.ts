@@ -2640,6 +2640,130 @@ function bingWebAdapter(): NewsAdapter {
   };
 }
 
+// Generic news adapter factory — for vendors with a key + simple
+// query-string search returning a uniform array of items.
+function makeNewsAdapter(opts: {
+  envKey: string; source: string; outletDefault: string;
+  baseUrl: string; queryParam: string;
+  authHeader?: (key: string) => Record<string, string>;
+  parser: (json: unknown) => Array<{ title?: string; url?: string; publishedAt?: string; snippet?: string; outlet?: string; sentiment?: number }>;
+}): NewsAdapter {
+  const key = process.env[opts.envKey];
+  if (!key) return NULL_NEWS_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, query) => {
+      try {
+        const params = new URLSearchParams({ [opts.queryParam]: `"${subjectName}"`, limit: String(query?.limit ?? 25) });
+        const headers: Record<string, string> = {
+          accept: "application/json",
+          ...(opts.authHeader ? opts.authHeader(key) : { Authorization: `Bearer ${key}` }),
+        };
+        const res = await abortable(fetch(`${opts.baseUrl}?${params.toString()}`, { headers }));
+        if (!res.ok) return [];
+        const items = opts.parser(await res.json());
+        return items.filter((i) => i.title && i.url).map((i) => ({
+          source: opts.source,
+          outlet: i.outlet ?? opts.outletDefault,
+          title: i.title!,
+          url: i.url!,
+          publishedAt: i.publishedAt ?? new Date().toISOString(),
+          ...(i.snippet ? { snippet: i.snippet } : {}),
+          ...(typeof i.sentiment === "number" ? { sentiment: i.sentiment } : {}),
+        } as NewsArticle));
+      } catch (err) {
+        console.warn(`[${opts.source}] failed:`, err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// ── Global wire services ──────────────────────────────────────────────
+const afpAdapter = (): NewsAdapter => makeNewsAdapter({
+  envKey: "AFP_API_KEY", source: "afp", outletDefault: "afp.com",
+  baseUrl: "https://afp-apicore-prod.afp.com/v1/api/search", queryParam: "q",
+  parser: (j) => ((j as { docs?: Array<{ title?: string; url?: string; published?: string; abstract?: string }> }).docs ?? [])
+    .map((d) => ({ title: d.title, url: d.url, publishedAt: d.published, snippet: d.abstract })),
+});
+
+const yonhapAdapter = (): NewsAdapter => makeNewsAdapter({
+  envKey: "YONHAP_API_KEY", source: "yonhap", outletDefault: "yna.co.kr",
+  baseUrl: "https://api.yonhapnews.co.kr/v1/articles/search", queryParam: "keyword",
+  parser: (j) => ((j as { items?: Array<{ title?: string; url?: string; pubDate?: string; lead?: string }> }).items ?? [])
+    .map((i) => ({ title: i.title, url: i.url, publishedAt: i.pubDate, snippet: i.lead })),
+});
+
+const kyodoAdapter = (): NewsAdapter => makeNewsAdapter({
+  envKey: "KYODO_API_KEY", source: "kyodo", outletDefault: "kyodonews.net",
+  baseUrl: "https://api.kyodonews.net/v1/news/search", queryParam: "q",
+  parser: (j) => ((j as { results?: Array<{ headline?: string; url?: string; date?: string; summary?: string }> }).results ?? [])
+    .map((r) => ({ title: r.headline, url: r.url, publishedAt: r.date, snippet: r.summary })),
+});
+
+const anadoluAdapter = (): NewsAdapter => makeNewsAdapter({
+  envKey: "ANADOLU_API_KEY", source: "anadolu", outletDefault: "aa.com.tr",
+  baseUrl: "https://api.aa.com.tr/v1/search", queryParam: "keywords",
+  parser: (j) => ((j as { documents?: Array<{ title?: string; url?: string; date?: string; description?: string }> }).documents ?? [])
+    .map((d) => ({ title: d.title, url: d.url, publishedAt: d.date, snippet: d.description })),
+});
+
+const dpaAdapter = (): NewsAdapter => makeNewsAdapter({
+  envKey: "DPA_API_KEY", source: "dpa", outletDefault: "dpa.com",
+  baseUrl: "https://api.dpa.com/v1/articles/search", queryParam: "q",
+  parser: (j) => ((j as { items?: Array<{ headline?: string; url?: string; published?: string; teaser?: string }> }).items ?? [])
+    .map((i) => ({ title: i.headline, url: i.url, publishedAt: i.published, snippet: i.teaser })),
+});
+
+const efeAdapter = (): NewsAdapter => makeNewsAdapter({
+  envKey: "EFE_API_KEY", source: "efe", outletDefault: "efe.com",
+  baseUrl: "https://efeapi.efe.com/v1/search", queryParam: "q",
+  parser: (j) => ((j as { results?: Array<{ titulo?: string; url?: string; fecha?: string; entradilla?: string }> }).results ?? [])
+    .map((r) => ({ title: r.titulo, url: r.url, publishedAt: r.fecha, snippet: r.entradilla })),
+});
+
+const ansaAdapter = (): NewsAdapter => makeNewsAdapter({
+  envKey: "ANSA_API_KEY", source: "ansa", outletDefault: "ansa.it",
+  baseUrl: "https://api.ansa.it/v1/news/search", queryParam: "q",
+  parser: (j) => ((j as { items?: Array<{ titolo?: string; url?: string; data?: string; sommario?: string }> }).items ?? [])
+    .map((i) => ({ title: i.titolo, url: i.url, publishedAt: i.data, snippet: i.sommario })),
+});
+
+const alJazeeraAdapter = (): NewsAdapter => makeNewsAdapter({
+  envKey: "ALJAZEERA_API_KEY", source: "al-jazeera", outletDefault: "aljazeera.com",
+  baseUrl: "https://api.aljazeera.com/v1/articles/search", queryParam: "q",
+  parser: (j) => ((j as { articles?: Array<{ title?: string; url?: string; publishedAt?: string; description?: string }> }).articles ?? [])
+    .map((a) => ({ title: a.title, url: a.url, publishedAt: a.publishedAt, snippet: a.description })),
+});
+
+const riskNetAdapter = (): NewsAdapter => makeNewsAdapter({
+  envKey: "RISKNET_API_KEY", source: "risk.net", outletDefault: "risk.net",
+  baseUrl: "https://api.risk.net/v1/articles/search", queryParam: "q",
+  parser: (j) => ((j as { articles?: Array<{ title?: string; url?: string; publishedAt?: string; teaser?: string }> }).articles ?? [])
+    .map((a) => ({ title: a.title, url: a.url, publishedAt: a.publishedAt, snippet: a.teaser })),
+});
+
+const complianceWeekAdapter = (): NewsAdapter => makeNewsAdapter({
+  envKey: "COMPLIANCEWEEK_API_KEY", source: "complianceweek", outletDefault: "complianceweek.com",
+  baseUrl: "https://api.complianceweek.com/v1/articles/search", queryParam: "q",
+  parser: (j) => ((j as { items?: Array<{ headline?: string; url?: string; publishedDate?: string; summary?: string }> }).items ?? [])
+    .map((i) => ({ title: i.headline, url: i.url, publishedAt: i.publishedDate, snippet: i.summary })),
+});
+
+const amlWatchdogAdapter = (): NewsAdapter => makeNewsAdapter({
+  envKey: "AMLWATCHDOG_API_KEY", source: "aml-watchdog", outletDefault: "amlwatchdog.com",
+  baseUrl: "https://api.amlwatchdog.com/v1/alerts/search", queryParam: "q",
+  parser: (j) => ((j as { alerts?: Array<{ title?: string; url?: string; alertedAt?: string; summary?: string; severity?: string }> }).alerts ?? [])
+    .map((a) => ({ title: a.title, url: a.url, publishedAt: a.alertedAt, snippet: a.summary, sentiment: a.severity === "high" ? -0.7 : a.severity === "medium" ? -0.3 : 0 })),
+});
+
+const pegasusAdapter = (): NewsAdapter => makeNewsAdapter({
+  envKey: "PEGASUS_API_KEY", source: "pegasus", outletDefault: "pegasus.news",
+  baseUrl: "https://api.pegasus.news/v1/articles/search", queryParam: "q",
+  parser: (j) => ((j as { items?: Array<{ title?: string; url?: string; publishedAt?: string; description?: string }> }).items ?? [])
+    .map((i) => ({ title: i.title, url: i.url, publishedAt: i.publishedAt, snippet: i.description })),
+});
+
 // ── Master aggregator ───────────────────────────────────────────────────
 /**
  * Returns ALL available news adapters whose env keys are configured.
@@ -2715,6 +2839,9 @@ export function activeNewsAdapters(): NewsAdapter[] {
     janesAdapter(),
     mastodonAdapter(),
     bingWebAdapter(),
+    afpAdapter(), yonhapAdapter(), kyodoAdapter(), anadoluAdapter(),
+    dpaAdapter(), efeAdapter(), ansaAdapter(), alJazeeraAdapter(),
+    riskNetAdapter(), complianceWeekAdapter(), amlWatchdogAdapter(), pegasusAdapter(),
   ].filter((a) => a.isAvailable());
 }
 
@@ -2788,6 +2915,18 @@ export function activeNewsProviders(): string[] {
     ["JANES_API_KEY", "janes"],
     ["MASTODON_INSTANCE", "mastodon"],
     ["BING_WEB_API_KEY", "bing-web"],
+    ["AFP_API_KEY", "afp"],
+    ["YONHAP_API_KEY", "yonhap"],
+    ["KYODO_API_KEY", "kyodo"],
+    ["ANADOLU_API_KEY", "anadolu"],
+    ["DPA_API_KEY", "dpa"],
+    ["EFE_API_KEY", "efe"],
+    ["ANSA_API_KEY", "ansa"],
+    ["ALJAZEERA_API_KEY", "al-jazeera"],
+    ["RISKNET_API_KEY", "risk.net"],
+    ["COMPLIANCEWEEK_API_KEY", "complianceweek"],
+    ["AMLWATCHDOG_API_KEY", "aml-watchdog"],
+    ["PEGASUS_API_KEY", "pegasus"],
   ];
   return keys.filter(([envKey]) => process.env[envKey]).map(([, name]) => name);
 }

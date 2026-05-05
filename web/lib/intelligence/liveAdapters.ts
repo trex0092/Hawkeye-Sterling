@@ -258,23 +258,175 @@ function ellipticAdapter(): OnChainAdapter {
   };
 }
 
-/** Returns the first available on-chain adapter (Chainalysis → TRM → Elliptic → null). */
+// ── Crystal Intelligence — premium on-chain ────────────────────────
+function crystalAdapter(): OnChainAdapter {
+  const key = process.env["CRYSTAL_API_KEY"];
+  if (!key) return NULL_ONCHAIN_ADAPTER;
+  return {
+    isAvailable: () => true,
+    analyse: async (address, chain) => {
+      try {
+        const res = await abortable(
+          fetch(`https://apiv2.crystalblockchain.com/${encodeURIComponent(chain)}/address/${encodeURIComponent(address)}`, {
+            headers: { "x-api-key": key, accept: "application/json" },
+          }),
+        );
+        if (!res.ok) return null;
+        const j = (await res.json()) as { data?: { riskscore?: number; entityName?: string; riskSummary?: string } };
+        return {
+          address,
+          riskScore: j.data?.riskscore ?? 0,
+          ...(j.data?.entityName ? { cluster: j.data.entityName } : {}),
+          exposureSummary: j.data?.riskSummary ?? "Crystal baseline analysis",
+        };
+      } catch (err) { console.warn("[crystal] failed:", err instanceof Error ? err.message : err); return null; }
+    },
+  };
+}
+
+// ── Coinfirm — premium on-chain ────────────────────────────────────
+function coinfirmAdapter(): OnChainAdapter {
+  const key = process.env["COINFIRM_API_KEY"];
+  if (!key) return NULL_ONCHAIN_ADAPTER;
+  return {
+    isAvailable: () => true,
+    analyse: async (address, chain) => {
+      try {
+        const res = await abortable(
+          fetch(`https://api.coinfirm.com/v2/aml/address/${encodeURIComponent(chain)}/${encodeURIComponent(address)}`, {
+            headers: { Authorization: `Bearer ${key}`, accept: "application/json" },
+          }),
+        );
+        if (!res.ok) return null;
+        const j = (await res.json()) as { riskScore?: number; cluster?: string; description?: string };
+        return {
+          address,
+          riskScore: j.riskScore ?? 0,
+          ...(j.cluster ? { cluster: j.cluster } : {}),
+          exposureSummary: j.description ?? "Coinfirm baseline analysis",
+        };
+      } catch (err) { console.warn("[coinfirm] failed:", err instanceof Error ? err.message : err); return null; }
+    },
+  };
+}
+
+// ── Merkle Science — premium on-chain ──────────────────────────────
+function merkleScienceAdapter(): OnChainAdapter {
+  const key = process.env["MERKLESCIENCE_API_KEY"];
+  if (!key) return NULL_ONCHAIN_ADAPTER;
+  return {
+    isAvailable: () => true,
+    analyse: async (address, chain) => {
+      try {
+        const res = await abortable(
+          fetch(`https://api.merklescience.com/v3/tracker/${encodeURIComponent(chain)}/${encodeURIComponent(address)}`, {
+            headers: { Authorization: `Token ${key}`, accept: "application/json" },
+          }),
+        );
+        if (!res.ok) return null;
+        const j = (await res.json()) as { risk_level?: string; risk_score?: number; entity_name?: string; reason?: string };
+        return {
+          address,
+          riskScore: j.risk_score ?? (j.risk_level === "high" ? 80 : j.risk_level === "medium" ? 50 : 10),
+          ...(j.entity_name ? { cluster: j.entity_name } : {}),
+          exposureSummary: j.reason ?? "Merkle Science baseline analysis",
+        };
+      } catch (err) { console.warn("[merklescience] failed:", err instanceof Error ? err.message : err); return null; }
+    },
+  };
+}
+
+// ── Scorechain — premium on-chain ──────────────────────────────────
+function scorechainAdapter(): OnChainAdapter {
+  const key = process.env["SCORECHAIN_API_KEY"];
+  if (!key) return NULL_ONCHAIN_ADAPTER;
+  return {
+    isAvailable: () => true,
+    analyse: async (address, chain) => {
+      try {
+        const params = new URLSearchParams({ address, asset: chain });
+        const res = await abortable(
+          fetch(`https://api.scorechain.com/v1/scoring/address?${params.toString()}`, {
+            headers: { "x-api-key": key, accept: "application/json" },
+          }),
+        );
+        if (!res.ok) return null;
+        const j = (await res.json()) as { score?: number; entity?: string; analysis?: string };
+        return {
+          address,
+          riskScore: typeof j.score === "number" ? Math.round(j.score) : 0,
+          ...(j.entity ? { cluster: j.entity } : {}),
+          exposureSummary: j.analysis ?? "Scorechain baseline analysis",
+        };
+      } catch (err) { console.warn("[scorechain] failed:", err instanceof Error ? err.message : err); return null; }
+    },
+  };
+}
+
+// ── AnChain.AI — premium on-chain ──────────────────────────────────
+function anChainAdapter(): OnChainAdapter {
+  const key = process.env["ANCHAIN_API_KEY"];
+  if (!key) return NULL_ONCHAIN_ADAPTER;
+  return {
+    isAvailable: () => true,
+    analyse: async (address, chain) => {
+      try {
+        const body = { address, network: chain };
+        const res = await abortable(
+          fetch("https://api.anchainai.com/v1/aml/risk", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${key}`, "content-type": "application/json", accept: "application/json" },
+            body: JSON.stringify(body),
+          }),
+        );
+        if (!res.ok) return null;
+        const j = (await res.json()) as { risk_score?: number; entity?: string; summary?: string };
+        return {
+          address,
+          riskScore: j.risk_score ?? 0,
+          ...(j.entity ? { cluster: j.entity } : {}),
+          exposureSummary: j.summary ?? "AnChain.AI baseline analysis",
+        };
+      } catch (err) { console.warn("[anchain] failed:", err instanceof Error ? err.message : err); return null; }
+    },
+  };
+}
+
+/** Returns the first available on-chain adapter, in priority order. */
 export function bestOnChainAdapter(): OnChainAdapter {
-  const c = chainalysisAdapter();
-  if (c.isAvailable()) return c;
-  const t = trmAdapter();
-  if (t.isAvailable()) return t;
-  const e = ellipticAdapter();
-  if (e.isAvailable()) return e;
+  const candidates = [
+    chainalysisAdapter(), trmAdapter(), ellipticAdapter(),
+    crystalAdapter(), coinfirmAdapter(), merkleScienceAdapter(),
+    scorechainAdapter(), anChainAdapter(),
+  ];
+  for (const c of candidates) if (c.isAvailable()) return c;
   return NULL_ONCHAIN_ADAPTER;
 }
 
-// Convenience exports for callers that want to know which provider is on.
-export function activeOnChainProvider(): "chainalysis" | "trm" | "elliptic" | "none" {
+export type OnChainProvider =
+  | "chainalysis" | "trm" | "elliptic" | "crystal" | "coinfirm"
+  | "merklescience" | "scorechain" | "anchain" | "none";
+
+export function activeOnChainProvider(): OnChainProvider {
   if (process.env["CHAINALYSIS_API_KEY"]) return "chainalysis";
   if (process.env["TRM_API_KEY"]) return "trm";
   if (process.env["ELLIPTIC_API_KEY"]) return "elliptic";
+  if (process.env["CRYSTAL_API_KEY"]) return "crystal";
+  if (process.env["COINFIRM_API_KEY"]) return "coinfirm";
+  if (process.env["MERKLESCIENCE_API_KEY"]) return "merklescience";
+  if (process.env["SCORECHAIN_API_KEY"]) return "scorechain";
+  if (process.env["ANCHAIN_API_KEY"]) return "anchain";
   return "none";
+}
+
+export function activeOnChainProviders(): OnChainProvider[] {
+  const checks: Array<[string, OnChainProvider]> = [
+    ["CHAINALYSIS_API_KEY", "chainalysis"], ["TRM_API_KEY", "trm"],
+    ["ELLIPTIC_API_KEY", "elliptic"], ["CRYSTAL_API_KEY", "crystal"],
+    ["COINFIRM_API_KEY", "coinfirm"], ["MERKLESCIENCE_API_KEY", "merklescience"],
+    ["SCORECHAIN_API_KEY", "scorechain"], ["ANCHAIN_API_KEY", "anchain"],
+  ];
+  return checks.filter(([k]) => !!process.env[k]).map(([, n]) => n);
 }
 
 export { NULL_GLEIF_ADAPTER, NULL_CORPORATE_ADAPTER, NULL_ONCHAIN_ADAPTER, NULL_HS_CODE_ADAPTER };

@@ -13,6 +13,7 @@ import { bestCommercialAdapter, activeCommercialProvider } from "@/lib/intellige
 import { searchAllRegistries } from "@/lib/intelligence/registryAdapters";
 import { searchCountryRegistries } from "@/lib/intelligence/countryRegistries";
 import { searchCountrySanctions } from "@/lib/intelligence/countrySanctions";
+import { searchFreeAdapters } from "@/lib/intelligence/freeAlwaysOnAdapters";
 
 // Compiled backend entry point. The root `tsc` build (npm run build at the repo root)
 // must run before this API route is bundled. Netlify build order is encoded in
@@ -155,12 +156,17 @@ export async function POST(req: Request): Promise<NextResponse> {
     // these are the authoritative sources operators are auditioned on.
     let countryRegistryResults: Awaited<ReturnType<typeof searchCountryRegistries>> = { records: [], jurisdictions: [] };
     let countrySanctionsResults: Awaited<ReturnType<typeof searchCountrySanctions>> = { records: [], lists: [] };
+    let freeAdapterResults: Awaited<ReturnType<typeof searchFreeAdapters>> = { records: [], providersUsed: [] };
     if (subject.name.length >= 3) {
       try {
         countryRegistryResults = await searchCountryRegistries(subject.name, subject.jurisdiction ?? undefined, 10);
       } catch { /* best-effort */ }
       try {
         countrySanctionsResults = await searchCountrySanctions(subject.name, subject.jurisdiction ?? undefined, 10);
+      } catch { /* best-effort */ }
+      // Free always-on layer (Wikidata + World Bank Debarred Firms + FATF)
+      try {
+        freeAdapterResults = await searchFreeAdapters(subject.name, subject.jurisdiction ?? undefined, 10);
       } catch { /* best-effort */ }
     }
     return respond(
@@ -193,6 +199,12 @@ export async function POST(req: Request): Promise<NextResponse> {
           ? {
               countrySanctionsAugmentation: countrySanctionsResults.records.slice(0, 15),
               countrySanctionsLists: countrySanctionsResults.lists,
+            }
+          : {}),
+        ...(freeAdapterResults.records.length > 0
+          ? {
+              freeAdapterAugmentation: freeAdapterResults.records.slice(0, 15),
+              freeAdapterProviders: freeAdapterResults.providersUsed,
             }
           : {}),
       } as QuickScreenResponse,

@@ -650,6 +650,91 @@ function themisAdapter(): CorporateRegistryAdapter {
   };
 }
 
+// ── Sigma Ratings — premium AML risk ratings ─────────────────────────
+function sigmaRatingsAdapter(): CorporateRegistryAdapter {
+  const key = process.env["SIGMA_RATINGS_API_KEY"];
+  if (!key) return NULL_CORPORATE_ADAPTER;
+  return {
+    isAvailable: () => true,
+    lookup: async (name, jurisdiction) => {
+      if (!name.trim()) return [];
+      try {
+        const params = new URLSearchParams({ name, ...(jurisdiction ? { country: jurisdiction } : {}), limit: "25" });
+        const res = await abortable(
+          fetch(`https://api.sigmaratings.com/v1/entities/search?${params.toString()}`, {
+            headers: { Authorization: `Bearer ${key}`, accept: "application/json" },
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as { results?: Array<{ name?: string; country?: string; entityId?: string; rating?: string }> };
+        return (json.results ?? []).filter((r) => r.name).map((r) => ({
+          source: "sigma-ratings", jurisdiction: r.country ?? jurisdiction ?? "?", legalName: r.name!,
+          ...(r.entityId ? { registrationNumber: r.entityId } : {}),
+          ...(r.rating ? { status: `rating:${r.rating}` } : {}),
+        } satisfies CorporateRecord));
+      } catch (err) { console.warn("[sigma-ratings] failed:", err instanceof Error ? err.message : err); return []; }
+    },
+  };
+}
+
+// ── Polixis — premium PEP / sanctions screening ──────────────────────
+function polixisAdapter(): CorporateRegistryAdapter {
+  const key = process.env["POLIXIS_API_KEY"];
+  if (!key) return NULL_CORPORATE_ADAPTER;
+  return {
+    isAvailable: () => true,
+    lookup: async (name, jurisdiction) => {
+      if (!name.trim()) return [];
+      try {
+        const body = { query: name, ...(jurisdiction ? { country: jurisdiction } : {}), limit: 25 };
+        const res = await abortable(
+          fetch("https://api.polixis.com/v1/screening/search", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${key}`, "content-type": "application/json", accept: "application/json" },
+            body: JSON.stringify(body),
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as { hits?: Array<{ name?: string; country?: string; reference?: string; categories?: string[] }> };
+        return (json.hits ?? []).filter((h) => h.name).map((h) => ({
+          source: "polixis", jurisdiction: h.country ?? jurisdiction ?? "?", legalName: h.name!,
+          ...(h.reference ? { registrationNumber: h.reference } : {}),
+          ...(h.categories?.length ? { status: h.categories.join(",") } : {}),
+        } satisfies CorporateRecord));
+      } catch (err) { console.warn("[polixis] failed:", err instanceof Error ? err.message : err); return []; }
+    },
+  };
+}
+
+// ── Salv — premium AML / sanctions ───────────────────────────────────
+function salvAdapter(): CorporateRegistryAdapter {
+  const key = process.env["SALV_API_KEY"];
+  if (!key) return NULL_CORPORATE_ADAPTER;
+  return {
+    isAvailable: () => true,
+    lookup: async (name, jurisdiction) => {
+      if (!name.trim()) return [];
+      try {
+        const body = { name, ...(jurisdiction ? { countryIso: jurisdiction } : {}), maxResults: 25 };
+        const res = await abortable(
+          fetch("https://api.salv.com/v1/screening/search", {
+            method: "POST",
+            headers: { "x-api-key": key, "content-type": "application/json", accept: "application/json" },
+            body: JSON.stringify(body),
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as { matches?: Array<{ name?: string; country?: string; entityId?: string; status?: string }> };
+        return (json.matches ?? []).filter((m) => m.name).map((m) => ({
+          source: "salv", jurisdiction: m.country ?? jurisdiction ?? "?", legalName: m.name!,
+          ...(m.entityId ? { registrationNumber: m.entityId } : {}),
+          ...(m.status ? { status: m.status } : {}),
+        } satisfies CorporateRecord));
+      } catch (err) { console.warn("[salv] failed:", err instanceof Error ? err.message : err); return []; }
+    },
+  };
+}
+
 /**
  * Returns the first available commercial adapter (priority order).
  */
@@ -670,6 +755,9 @@ export function bestCommercialAdapter(): CorporateRegistryAdapter {
     smartSearchAdapter(),
     encompassAdapter(),
     themisAdapter(),
+    sigmaRatingsAdapter(),
+    polixisAdapter(),
+    salvAdapter(),
   ];
   for (const c of candidates) if (c.isAvailable()) return c;
   return NULL_CORPORATE_ADAPTER;
@@ -679,7 +767,7 @@ export type CommercialProvider =
   | "lseg-world-check" | "dowjones-rc" | "sayari" | "complyadvantage"
   | "acuris-rdc" | "quantexa" | "castellum" | "kompany" | "namescan"
   | "bridger-insight" | "sanctions.io" | "opensanctions-pro" | "smartsearch"
-  | "encompass" | "themis" | "none";
+  | "encompass" | "themis" | "sigma-ratings" | "polixis" | "salv" | "none";
 
 export function activeCommercialProvider(): CommercialProvider {
   if (process.env["LSEG_WORLDCHECK_API_KEY"] && process.env["LSEG_WORLDCHECK_API_SECRET"]) return "lseg-world-check";
@@ -697,6 +785,9 @@ export function activeCommercialProvider(): CommercialProvider {
   if (process.env["SMARTSEARCH_API_KEY"]) return "smartsearch";
   if (process.env["ENCOMPASS_API_KEY"]) return "encompass";
   if (process.env["THEMIS_API_KEY"]) return "themis";
+  if (process.env["SIGMA_RATINGS_API_KEY"]) return "sigma-ratings";
+  if (process.env["POLIXIS_API_KEY"]) return "polixis";
+  if (process.env["SALV_API_KEY"]) return "salv";
   return "none";
 }
 
@@ -717,6 +808,9 @@ export function activeCommercialProviders(): CommercialProvider[] {
     [!!process.env["SMARTSEARCH_API_KEY"], "smartsearch"],
     [!!process.env["ENCOMPASS_API_KEY"], "encompass"],
     [!!process.env["THEMIS_API_KEY"], "themis"],
+    [!!process.env["SIGMA_RATINGS_API_KEY"], "sigma-ratings"],
+    [!!process.env["POLIXIS_API_KEY"], "polixis"],
+    [!!process.env["SALV_API_KEY"], "salv"],
   ];
   return all.filter(([on]) => on).map(([, n]) => n);
 }
