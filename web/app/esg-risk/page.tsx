@@ -245,11 +245,29 @@ export default function EsgRiskPage() {
           employeeCount: form.employeeCount ? parseInt(form.employeeCount, 10) : undefined,
           notes: form.notes || undefined,
         }),
+        signal: AbortSignal.timeout(60_000),
       });
-      const data = (await res.json()) as EsgRiskResult;
+      // Read the body once as text — Netlify 502s return HTML, not JSON. We
+      // surface a clean error in that case rather than letting the user see
+      // a raw "Unexpected token '<'" SyntaxError.
+      const raw = await res.text().catch(() => "");
+      const isHtml = raw.trimStart().toLowerCase().startsWith("<");
+      if (!res.ok || isHtml) {
+        const detail = isHtml
+          ? `Server returned HTML (HTTP ${res.status}) — likely a Netlify 502 / function timeout. Please retry; if it persists, set ANTHROPIC_API_KEY in the deployment.`
+          : raw.slice(0, 240) || `HTTP ${res.status}`;
+        setError(`ESG scorer unavailable: ${detail}`);
+        return;
+      }
+      let data: EsgRiskResult;
+      try { data = JSON.parse(raw) as EsgRiskResult; }
+      catch { setError("ESG scorer returned a malformed response. Please retry."); return; }
       setResult(data);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Request failed");
+      const isTimeout = e instanceof Error && (e.name === "AbortError" || e.name === "TimeoutError");
+      setError(isTimeout
+        ? "ESG scorer timed out after 60s — please retry."
+        : `Request failed: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
       setLoading(false);
     }
