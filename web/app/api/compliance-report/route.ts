@@ -672,6 +672,52 @@ function renderHtmlReport(text: string, input: ReportInput): string {
     ${intelDocs}
     ${intelInterview}
     ${intelConfidence}
+    ${(() => {
+      // Live server pipeline (phonetic / cultural / sub-national / stress
+      // tests) carried on superBrain.intelligence. Render only when the
+      // server actually attached it.
+      const si = (sb as { intelligence?: {
+        phonetic?: { caverphone?: string; beiderMorseLite?: string; arabicPhonetic?: string; pinyinCanonical?: string };
+        parsedName?: { culture?: string; given?: string; surname?: string; nasab?: string; kunya?: string; patronymic?: string };
+        canonicalKey?: string;
+        subnational?: { matched?: boolean; rationale?: string };
+        stressTests?: Array<{ regime: string; fired: boolean; severity: string; rationale: string; citation: string }>;
+        stressTestsFiredCount?: number;
+      } } | null | undefined)?.intelligence;
+      if (!si) return "";
+      const fired = (si.stressTests ?? []).filter((s) => s.fired);
+      return `
+        <div class="scr-sh">Server intelligence (live pipeline)</div>
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px 18px;font:9.5px var(--mono);color:var(--ink-1);margin-bottom:8px">
+          ${si.phonetic?.caverphone ? `<div><span class="muted">Caverphone:</span> ${e(si.phonetic.caverphone)}</div>` : ""}
+          ${si.phonetic?.beiderMorseLite ? `<div><span class="muted">Beider-Morse:</span> ${e(si.phonetic.beiderMorseLite)}</div>` : ""}
+          ${si.phonetic?.arabicPhonetic ? `<div><span class="muted">Arabic phonetic:</span> ${e(si.phonetic.arabicPhonetic)}</div>` : ""}
+          ${si.phonetic?.pinyinCanonical ? `<div><span class="muted">Pinyin:</span> ${e(si.phonetic.pinyinCanonical)}</div>` : ""}
+          ${si.parsedName?.culture ? `<div><span class="muted">Culture:</span> ${e(si.parsedName.culture)}</div>` : ""}
+          ${si.canonicalKey ? `<div><span class="muted">Canonical key:</span> ${e(si.canonicalKey)}</div>` : ""}
+          ${si.parsedName?.kunya ? `<div><span class="muted">Kunya:</span> ${e(si.parsedName.kunya)}</div>` : ""}
+          ${si.parsedName?.nasab ? `<div><span class="muted">Nasab:</span> ${e(si.parsedName.nasab)}</div>` : ""}
+          ${si.parsedName?.patronymic ? `<div><span class="muted">Patronymic:</span> ${e(si.parsedName.patronymic)}</div>` : ""}
+        </div>
+        ${si.subnational?.matched ? `<p class="scr-para" style="font-size:10px;color:var(--pink)">Sub-national match: ${e(si.subnational.rationale ?? "")}</p>` : ""}
+        ${fired.length > 0 ? `
+          <div class="scr-sh">Sanctions stress tests fired (${fired.length})</div>
+          <ul class="scr-regl">
+            ${fired.map((t) => `<li><strong>${e(t.regime)}</strong> · ${e(t.severity.toUpperCase())} — ${e(t.rationale)} <span class="muted">(${e(t.citation)})</span></li>`).join("")}
+          </ul>` : ""}
+      `;
+    })()}
+    ${(() => {
+      // Server-flagged module degradation. If anything degraded, surface
+      // it explicitly so the regulator sees the integrity boundary.
+      const deg = (sb as { degradation?: Array<{ module: string; reason: string }> } | null | undefined)?.degradation;
+      if (!deg || deg.length === 0) return "";
+      return `
+        <div class="scr-sh" style="color:#b45309">⚠ Brain module degradation (${deg.length})</div>
+        <ul class="scr-regl">
+          ${deg.map((d) => `<li><strong>${e(d.module)}</strong>: ${e(d.reason)}</li>`).join("")}
+        </ul>`;
+    })()}
     ${hsFinis(reportId, 3, 3)}`;
 
   return buildHtmlDoc({
