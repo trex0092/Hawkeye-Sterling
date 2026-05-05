@@ -59,7 +59,8 @@ export type AdverseMediaRiskTier =
   | 'low'         // ESG/soft controversy only
   | 'medium'      // legal/cyber/regulatory — enhanced monitoring
   | 'high'        // ML/corruption/organised crime — EDD trigger
-  | 'critical';   // TF/PF/sanctions violation — immediate escalation
+  | 'critical'    // TF/PF/sanctions violation — immediate escalation
+  | 'unknown';    // live feed unavailable — MLRO must manually review (NEVER treat as clear)
 
 export interface AdverseMediaSubjectVerdict {
   subject: string;
