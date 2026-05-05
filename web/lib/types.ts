@@ -222,6 +222,7 @@ export interface SubjectDetail {
   uboEntries: UboEntry[];
   evidenceItems: EvidenceEntry[];
   timelineEvents: TimelineEvent[];
+  hitResolutions?: HitResolution[];
 }
 
 export type FilterKey =
@@ -281,6 +282,17 @@ export interface EvidenceEntry {
 export interface TimelineEvent {
   timestamp: string;
   event: string;
+}
+
+export type HitResolutionVerdict = "false_positive" | "possible_match" | "confirmed_positive";
+
+export interface HitResolution {
+  hitRef: string;
+  verdict: HitResolutionVerdict;
+  reason: string;
+  resolvedAt: string;
+  resolvedBy?: string;
+  enrolledInMonitoring?: boolean;
 }
 
 export type Faculty =

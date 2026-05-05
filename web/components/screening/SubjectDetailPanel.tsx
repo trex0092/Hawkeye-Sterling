@@ -77,6 +77,12 @@ import {
   attachEvidenceToSubject,
   buildCaseRecord,
 } from "@/lib/data/case-store";
+import {
+  loadHitResolution,
+  saveHitResolution,
+  type HitResolution,
+  type HitResolutionVerdict,
+} from "@/lib/data/subject-store";
 
 // Timeline tab removed — its content was a placeholder + the same
 // adverse-media dossier rendered below the tabs unconditionally,
@@ -1208,6 +1214,7 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
             adverseMedia={subject.adverseMedia}
             rca={subject.rca}
             subjectCtx={{
+              id: subject.id,
               name: subject.name,
               nationality: subject.country || subject.jurisdiction || undefined,
             }}
@@ -1838,6 +1845,7 @@ const RECOMMENDATION_STYLE: Record<ConfidenceScoreResult["recommendation"], stri
 };
 
 interface SubjectContext {
+  id?: string;
   name: string;
   dob?: string;
   nationality?: string;
@@ -1866,6 +1874,20 @@ function HitRow({ hit, subjectCtx }: { hit: QuickScreenHit; subjectCtx?: Subject
   const [csLoading, setCsLoading] = useState(false);
   const [csResult, setCsResult] = useState<ConfidenceScoreResult | null>(null);
   const [csError, setCsError] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState(false);
+
+  // Resolution state — persisted in localStorage keyed by subject + hit ref
+  const hitKey = `${hit.listId}:${hit.listRef}`;
+  const [resolution, setResolution] = useState<HitResolution | null>(() =>
+    subjectCtx?.id ? loadHitResolution(subjectCtx.id, hitKey) : null,
+  );
+  const [verdictInput, setVerdictInput] = useState<HitResolutionVerdict>("false_positive");
+  const [reasonInput, setReasonInput] = useState("");
+  const [resolving, setResolving] = useState(false);
+  const [enrollStatus, setEnrollStatus] = useState<"idle" | "enrolling" | "enrolled" | "error">("idle");
+
+  const monitoringActive =
+    resolution?.verdict === "confirmed_positive" || enrollStatus === "enrolled";
 
   const runConfidenceScore = async () => {
     setCsLoading(true);
@@ -1894,16 +1916,53 @@ function HitRow({ hit, subjectCtx }: { hit: QuickScreenHit; subjectCtx?: Subject
           },
         }),
       });
-      if (!res.ok) {
-        setCsError("API error — please retry");
-        return;
-      }
+      if (!res.ok) { setCsError("API error — please retry"); return; }
       const data = (await res.json()) as ConfidenceScoreResult;
       if (data.ok) setCsResult(data);
-    } catch {
-      setCsError("Request failed");
+    } catch { setCsError("Request failed"); }
+    finally { setCsLoading(false); }
+  };
+
+  const handleResolve = async () => {
+    if (!reasonInput.trim() || resolving) return;
+    setResolving(true);
+    try {
+      const rec: HitResolution = {
+        hitRef: hitKey,
+        verdict: verdictInput,
+        reason: reasonInput.trim(),
+        resolvedAt: new Date().toISOString(),
+      };
+      if (subjectCtx?.id) saveHitResolution(subjectCtx.id, rec);
+      setResolution(rec);
+
+      if (verdictInput === "confirmed_positive" && subjectCtx?.id) {
+        setEnrollStatus("enrolling");
+        try {
+          const r = await fetch("/api/ongoing", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              id: subjectCtx.id,
+              name: subjectCtx.name,
+              cadence: "thrice_daily",
+            }),
+          });
+          if (r.ok) {
+            setEnrollStatus("enrolled");
+            // Update persisted record with confirmed monitoring flag
+            const enrolled = { ...rec, enrolledInMonitoring: true };
+            saveHitResolution(subjectCtx.id, enrolled);
+            setResolution(enrolled);
+          } else {
+            setEnrollStatus("error");
+          }
+        } catch {
+          setEnrollStatus("error");
+        }
+      }
     } finally {
-      setCsLoading(false);
+      setResolving(false);
     }
   };
 
@@ -1923,101 +1982,304 @@ function HitRow({ hit, subjectCtx }: { hit: QuickScreenHit; subjectCtx?: Subject
         : "bg-red-dim border-red/30"
     : "";
 
-  return (
-    <li className="py-2.5 border-b border-hair last:border-b-0">
-      <div className="flex justify-between items-baseline mb-1">
-        <span className="font-mono text-11 font-semibold text-ink-0">{hit.listId}</span>
-        <div className="flex items-center gap-2">
-          <span className="font-mono text-11 text-ink-2">{pct}%</span>
-          {subjectCtx && !csResult && (
-            <button
-              type="button"
-              onClick={() => void runConfidenceScore()}
-              disabled={csLoading}
-              className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-10 font-semibold bg-brand-dim text-brand border border-brand/30 hover:opacity-80 disabled:opacity-40 transition-opacity"
-            >
-              {csLoading ? "Scoring…" : "✦AI"}
-            </button>
-          )}
-          {csResult && (
-            <button
-              type="button"
-              onClick={() => setCsResult(null)}
-              className="text-10 text-ink-3 hover:text-ink-0"
-              title="Dismiss"
-            >
-              ✕
-            </button>
-          )}
+  const resolutionBadge = resolution
+    ? resolution.verdict === "false_positive"
+      ? { cls: "bg-green-dim text-green border border-green/30", label: "False Positive" }
+      : resolution.verdict === "possible_match"
+        ? { cls: "bg-amber-dim text-amber border border-amber/30", label: "Possible Match" }
+        : { cls: "bg-red-dim text-red border border-red/30", label: "Confirmed Positive" }
+    : null;
+
+  const csCard = csResult ? (
+    <div className={`rounded-lg border p-3 ${fpBg}`}>
+      <div className="flex items-center gap-3 mb-2">
+        <div className="relative w-12 h-12 flex-shrink-0">
+          <svg viewBox="0 0 36 36" className="w-12 h-12 -rotate-90">
+            <circle cx="18" cy="18" r="14" fill="none" className="stroke-bg-2" strokeWidth="4" />
+            <circle
+              cx="18" cy="18" r="14" fill="none"
+              className={fpColor}
+              strokeWidth="4"
+              strokeDasharray={`${csResult.falsePositiveProbability * 0.88} 88`}
+              strokeLinecap="round"
+            />
+          </svg>
+          <div className={`absolute inset-0 flex items-center justify-center font-mono text-10 font-bold ${fpColor.split(" ")[0]}`}>
+            {csResult.falsePositiveProbability}%
+          </div>
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-0.5">FP Probability</div>
+          <div className="text-11 font-semibold text-ink-0">
+            Confidence: {csResult.confidenceScore}/100 true match
+          </div>
+          <span className={`inline-flex items-center px-2 py-0.5 rounded text-10 font-semibold mt-1 border ${RECOMMENDATION_STYLE[csResult.recommendation]}`}>
+            {RECOMMENDATION_LABEL[csResult.recommendation]}
+          </span>
         </div>
       </div>
-      <div className="text-12.5 text-ink-0 mb-1">
-        {hit.candidateName}
-        {hit.matchedAlias ? (
-          <span className="text-ink-2"> · alias "{hit.matchedAlias}"</span>
-        ) : null}
-      </div>
-      <div className="text-11 text-ink-2">
-        {hit.listRef} · {hit.reason}
-      </div>
+      {csResult.keyFactors.length > 0 && (
+        <ul className="space-y-0.5 mb-2">
+          {csResult.keyFactors.map((f, i) => (
+            <li key={i} className="text-11 text-ink-1 flex gap-1.5">
+              <span className="text-ink-3">·</span><span>{f}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+      <p className="text-11 text-ink-2 leading-relaxed italic">{csResult.reasoning}</p>
+    </div>
+  ) : null;
+
+  return (
+    <li className="py-2.5 border-b border-hair last:border-b-0">
+      {/* ── Clickable hit header ─────────────────────────────────── */}
+      <button
+        type="button"
+        className="w-full text-left"
+        onClick={() => setExpanded((v) => !v)}
+      >
+        <div className="flex justify-between items-center mb-1">
+          <span className="font-mono text-11 font-semibold text-ink-0">{hit.listId}</span>
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-11 text-ink-2">{pct}%</span>
+            <span className="text-10 text-ink-3 select-none">{expanded ? "▲" : "▼"}</span>
+          </div>
+        </div>
+        <div className="text-12.5 text-ink-0 mb-1">
+          {hit.candidateName}
+          {hit.matchedAlias && (
+            <span className="text-ink-2"> · alias &ldquo;{hit.matchedAlias}&rdquo;</span>
+          )}
+        </div>
+        <div className="text-11 text-ink-2">{hit.listRef} · {hit.reason}</div>
+      </button>
+
+      {/* Programs (always visible) */}
       {hit.programs && hit.programs.length > 0 && (
         <div className="flex flex-wrap gap-1 mt-1">
           {hit.programs.map((p) => (
-            <span
-              key={p}
-              className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 bg-red-dim text-red tracking-wide-1"
-            >
+            <span key={p} className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 bg-red-dim text-red tracking-wide-1">
               {p}
             </span>
           ))}
         </div>
       )}
-      {csError && (
+
+      {/* Resolution badge (always visible once resolved) */}
+      {resolutionBadge && (
+        <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+          <span className={`inline-flex items-center px-2 py-0.5 rounded text-10 font-bold ${resolutionBadge.cls}`}>
+            {resolutionBadge.label}
+          </span>
+          {monitoringActive && (
+            <span className="inline-flex items-center gap-1 text-10 font-mono text-green">
+              <span className="w-1.5 h-1.5 rounded-full bg-green inline-block" />
+              Monitoring active
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Inline AI score & error when collapsed */}
+      {!expanded && csError && (
         <div className="mt-2 text-11 text-red bg-red-dim rounded px-2 py-1">{csError}</div>
       )}
-      {csResult && (
-        <div className={`mt-2 rounded-lg border p-3 ${fpBg}`}>
-          {/* Donut-style FP display */}
-          <div className="flex items-center gap-3 mb-2">
-            <div className="relative w-12 h-12 flex-shrink-0">
-              <svg viewBox="0 0 36 36" className="w-12 h-12 -rotate-90">
-                <circle cx="18" cy="18" r="14" fill="none" className="stroke-bg-2" strokeWidth="4" />
-                <circle
-                  cx="18" cy="18" r="14" fill="none"
-                  className={fpColor}
-                  strokeWidth="4"
-                  strokeDasharray={`${csResult.falsePositiveProbability * 0.88} 88`}
-                  strokeLinecap="round"
-                />
-              </svg>
-              <div className={`absolute inset-0 flex items-center justify-center font-mono text-10 font-bold ${fpColor.split(" ")[0]}`}>
-                {csResult.falsePositiveProbability}%
-              </div>
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-0.5">FP Probability</div>
-              <div className="text-11 font-semibold text-ink-0">
-                Confidence: {csResult.confidenceScore}/100 true match
-              </div>
-              <span className={`inline-flex items-center px-2 py-0.5 rounded text-10 font-semibold mt-1 border ${RECOMMENDATION_STYLE[csResult.recommendation]}`}>
-                {RECOMMENDATION_LABEL[csResult.recommendation]}
-              </span>
+      {!expanded && csResult && (
+        <div className="mt-2">
+          {csCard}
+          <button type="button" onClick={() => setCsResult(null)} className="text-10 text-ink-3 hover:text-ink-0 mt-1">✕ Dismiss</button>
+        </div>
+      )}
+      {!expanded && !csResult && subjectCtx && (
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); void runConfidenceScore(); }}
+          disabled={csLoading}
+          className="mt-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded text-10 font-semibold bg-brand-dim text-brand border border-brand/30 hover:opacity-80 disabled:opacity-40 transition-opacity"
+        >
+          {csLoading ? "Scoring…" : "✦ AI"}
+        </button>
+      )}
+
+      {/* ── Expanded detail + resolution panel ───────────────────── */}
+      {expanded && (
+        <div className="mt-3 pt-3 border-t border-hair-2 space-y-3">
+
+          {/* Full profile card */}
+          <div className="bg-bg-1 border border-hair-2 rounded-lg p-3">
+            <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-2.5">Full Profile</div>
+            <div className="space-y-1.5">
+              <ProfileRow label="List">{hit.listId}</ProfileRow>
+              <ProfileRow label="Reference">{hit.listRef}</ProfileRow>
+              <ProfileRow label="Matched name">{hit.candidateName}</ProfileRow>
+              {hit.matchedAlias && (
+                <ProfileRow label="Alias matched">{hit.matchedAlias}</ProfileRow>
+              )}
+              <ProfileRow label="Match score">
+                <span className="font-mono">{pct}%</span>
+              </ProfileRow>
+              <ProfileRow label="Match method">
+                {hit.method.replace(/-/g, " ")}
+              </ProfileRow>
+              <ProfileRow label="Phonetic">
+                {hit.phoneticAgreement ? "✓ Phonetic agreement" : "No phonetic agreement"}
+              </ProfileRow>
+              {hit.programs && hit.programs.length > 0 && (
+                <ProfileRow label="Programs">
+                  <div className="flex flex-wrap gap-1">
+                    {hit.programs.map((p) => (
+                      <span key={p} className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 bg-red-dim text-red">
+                        {p}
+                      </span>
+                    ))}
+                  </div>
+                </ProfileRow>
+              )}
+              <ProfileRow label="Reason">{hit.reason}</ProfileRow>
             </div>
           </div>
-          {csResult.keyFactors.length > 0 && (
-            <ul className="space-y-0.5 mb-2">
-              {csResult.keyFactors.map((f, i) => (
-                <li key={i} className="text-11 text-ink-1 flex gap-1.5">
-                  <span className="text-ink-3">·</span>
-                  <span>{f}</span>
-                </li>
-              ))}
-            </ul>
+
+          {/* AI confidence score */}
+          {!csResult && (
+            <button
+              type="button"
+              onClick={() => void runConfidenceScore()}
+              disabled={csLoading}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-11 font-semibold bg-brand-dim text-brand border border-brand/30 hover:opacity-80 disabled:opacity-40 transition-opacity"
+            >
+              {csLoading ? "Scoring…" : "✦ Run AI Confidence Score"}
+            </button>
           )}
-          <p className="text-11 text-ink-2 leading-relaxed italic">{csResult.reasoning}</p>
+          {csError && <div className="text-11 text-red bg-red-dim rounded px-2 py-1">{csError}</div>}
+          {csResult && (
+            <div>
+              {csCard}
+              <button type="button" onClick={() => setCsResult(null)} className="text-10 text-ink-3 hover:text-ink-0 mt-1.5">✕ Dismiss score</button>
+            </div>
+          )}
+
+          {/* ── Resolution panel ─────────────────────────────────── */}
+          {resolution ? (
+            <div className="border border-hair-2 rounded-lg p-3">
+              <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-2">Resolution Record</div>
+              <div className="flex items-center gap-2 flex-wrap mb-2">
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded text-11 font-bold ${resolutionBadge!.cls}`}>
+                  {resolutionBadge!.label}
+                </span>
+                {monitoringActive && (
+                  <span className="inline-flex items-center gap-1 text-10 font-mono text-green">
+                    <span className="w-1.5 h-1.5 rounded-full bg-green inline-block" />
+                    Enrolled in daily monitoring
+                  </span>
+                )}
+                {enrollStatus === "error" && (
+                  <span className="text-10 text-red font-mono">Monitoring enrolment failed — retry manually via Ongoing Monitoring</span>
+                )}
+              </div>
+              <p className="text-11 text-ink-1 italic mb-1">&ldquo;{resolution.reason}&rdquo;</p>
+              <p className="text-10 text-ink-3 font-mono">{new Date(resolution.resolvedAt).toLocaleString()}</p>
+              <button
+                type="button"
+                onClick={() => { setResolution(null); setReasonInput(""); setEnrollStatus("idle"); }}
+                className="text-10 text-ink-3 hover:text-brand mt-2 underline"
+              >
+                Revise resolution
+              </button>
+            </div>
+          ) : (
+            <div className="border border-hair-2 rounded-lg p-3">
+              <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-3">Resolve This Hit</div>
+              <div className="space-y-2 mb-3">
+                {(
+                  [
+                    {
+                      v: "false_positive" as const,
+                      label: "FALSE POSITIVE",
+                      desc: "Not the same person or entity — no further action required",
+                      activeCls: "border-green/50 bg-green-dim/30 text-green",
+                    },
+                    {
+                      v: "possible_match" as const,
+                      label: "POSSIBLE MATCH",
+                      desc: "Requires further investigation before a clearance decision",
+                      activeCls: "border-amber/50 bg-amber-dim/30 text-amber",
+                    },
+                    {
+                      v: "confirmed_positive" as const,
+                      label: "CONFIRMED POSITIVE",
+                      desc: "This is the listed person or entity — subject will be enrolled in daily monitoring",
+                      activeCls: "border-red/50 bg-red-dim/30 text-red",
+                    },
+                  ] as { v: HitResolutionVerdict; label: string; desc: string; activeCls: string }[]
+                ).map(({ v, label, desc, activeCls }) => (
+                  <label
+                    key={v}
+                    className={`flex items-start gap-2.5 px-3 py-2.5 rounded-lg border cursor-pointer transition-colors ${
+                      verdictInput === v ? activeCls : "border-hair-2 text-ink-2 hover:border-hair-3"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name={`verdict-${hitKey}`}
+                      value={v}
+                      checked={verdictInput === v}
+                      onChange={() => setVerdictInput(v)}
+                      className="mt-0.5 shrink-0"
+                    />
+                    <div>
+                      <div className="text-11 font-bold tracking-wide-2">{label}</div>
+                      <div className="text-10 text-ink-3 mt-0.5">{desc}</div>
+                    </div>
+                  </label>
+                ))}
+              </div>
+              <div className="mb-3">
+                <label className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1 block">
+                  Reason / basis for determination *
+                </label>
+                <textarea
+                  className="w-full px-3 py-2 border border-hair-2 rounded text-12 bg-bg-panel focus:outline-none focus:border-brand text-ink-0 resize-none"
+                  placeholder="State the basis for your determination (required for regulatory audit trail)…"
+                  rows={2}
+                  value={reasonInput}
+                  onChange={(e) => setReasonInput(e.target.value)}
+                  maxLength={1000}
+                />
+              </div>
+              <div className="flex items-center gap-3 flex-wrap">
+                <button
+                  type="button"
+                  disabled={!reasonInput.trim() || resolving}
+                  onClick={() => void handleResolve()}
+                  className="px-4 py-1.5 bg-brand text-white rounded text-12 font-semibold hover:opacity-90 disabled:opacity-40 transition-opacity"
+                >
+                  {resolving
+                    ? enrollStatus === "enrolling"
+                      ? "Enrolling in monitoring…"
+                      : "Saving…"
+                    : "Resolve →"}
+                </button>
+                {verdictInput === "confirmed_positive" && (
+                  <span className="text-10 text-ink-3 font-mono italic">
+                    Subject will be enrolled in daily monitoring upon resolution
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </li>
+  );
+}
+
+function ProfileRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex gap-3 items-start">
+      <span className="text-10 uppercase tracking-wide-2 text-ink-3 w-28 shrink-0 pt-0.5">{label}</span>
+      <span className="text-11 text-ink-0 flex-1">{children}</span>
+    </div>
   );
 }
 
