@@ -150,9 +150,11 @@ function RegulatoryFeedPanel() {
             type="button"
             onClick={() => void load()}
             disabled={loading}
-            className="text-12 font-mono px-2 py-0.5 rounded border border-green/40 bg-green-dim text-green hover:bg-green-dim/70 disabled:opacity-40"
+            title="Refresh feed"
+            className="inline-flex items-center gap-1.5 text-11 font-mono font-semibold px-3 py-1.5 rounded border border-green/40 bg-green-dim text-green hover:bg-green-dim/70 disabled:opacity-40"
           >
-            ↻
+            <span className="text-13 leading-none">↻</span>
+            <span className="uppercase tracking-wide-2">{loading ? "Refreshing…" : "Refresh"}</span>
           </button>
         </div>
       </div>

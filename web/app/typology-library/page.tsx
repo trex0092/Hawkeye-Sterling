@@ -364,12 +364,14 @@ export default function TypologyLibraryPage() {
   const [activeFilter, setActiveFilter] = useState<FilterKey>("all");
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<TypologySearchResponse | null>(null);
+  const [searchError, setSearchError] = useState<string | null>(null);
   const [deepDiveTarget, setDeepDiveTarget] = useState<string | null>(null);
 
   const handleSearch = async (overrideQuery?: string, overrideFilter?: FilterKey) => {
     const q = overrideQuery ?? query;
     const f = overrideFilter ?? activeFilter;
     setLoading(true);
+    setSearchError(null);
     try {
       const res = await fetch("/api/typology-library/search", {
         method: "POST",
@@ -378,11 +380,29 @@ export default function TypologyLibraryPage() {
           query: q || `Show ${f === "all" ? "most common" : f} typologies`,
           filters: { sector: CATEGORY_SECTOR_MAP[f] },
         }),
+        signal: AbortSignal.timeout(45_000),
       });
-      const json = (await res.json()) as TypologySearchResponse;
+      const raw = await res.text().catch(() => "");
+      const isHtml = raw.trimStart().toLowerCase().startsWith("<");
+      if (!res.ok || isHtml) {
+        setSearchError(
+          res.status === 503
+            ? "Typology-library AI service unavailable — set ANTHROPIC_API_KEY or retry in a moment."
+            : isHtml
+              ? `Server returned HTML (HTTP ${res.status}) — likely a Netlify 502 / function timeout.`
+              : `Search failed (HTTP ${res.status}).`,
+        );
+        return;
+      }
+      let json: TypologySearchResponse;
+      try { json = JSON.parse(raw) as TypologySearchResponse; }
+      catch { setSearchError("Typology-library returned a malformed response."); return; }
       setResults(json);
-    } catch {
-      /* ignore */
+    } catch (err) {
+      const isTimeout = err instanceof Error && (err.name === "AbortError" || err.name === "TimeoutError");
+      setSearchError(isTimeout
+        ? "Typology search timed out after 45s — please retry or use a tighter query."
+        : `Network error — ${err instanceof Error ? err.message : String(err)}.`);
     } finally {
       setLoading(false);
     }
@@ -466,6 +486,20 @@ export default function TypologyLibraryPage() {
             />
             <span className="font-mono text-11 text-ink-2 uppercase tracking-wide">Searching typology database…</span>
           </div>
+        </div>
+      )}
+
+      {searchError && !loading && (
+        <div className="rounded-lg border border-red/40 bg-red-dim/40 p-4 my-4">
+          <div className="text-12 font-semibold text-red mb-1">Search failed</div>
+          <p className="text-11 text-ink-1 leading-relaxed mb-2">{searchError}</p>
+          <button
+            type="button"
+            onClick={() => void handleSearch()}
+            className="text-10 font-semibold px-3 py-1 rounded border border-red/40 text-red hover:bg-red/10"
+          >
+            Retry
+          </button>
         </div>
       )}
 
