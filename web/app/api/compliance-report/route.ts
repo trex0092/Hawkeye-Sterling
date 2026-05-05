@@ -365,14 +365,34 @@ function renderHtmlReport(text: string, input: ReportInput): string {
     ${edSig   ? `<div class="scr-se"><div class="scr-sen">Ed25519</div><div class="scr-sep">pubkey fp ${e(edFp)}</div><div class="scr-sex">${e(edSig)}</div></div>` : ""}
   </div>` : "";
 
-  const p3 = `
-  <div class="scr-sh" style="margin-top:0">Audit Trail &amp; Integrity</div>
+  const p2extended = `
+  <div class="scr-sh" style="margin-top:0">2. Analysis</div>
+  <p class="scr-para">${analysisText}</p>
+  ${amBrief}
+  <div class="scr-sh">Recommendation (System)</div>
+  <div class="scr-rec">
+    ${recLines.map(l => `<div class="scr-rl">${e(l)}</div>`).join("")}
+  </div>
+  <div class="scr-sh">MLRO Decision</div>
+  <div class="scr-cbg">
+    <div class="scr-cb"><div class="scr-cbb"></div><div class="scr-cbl">Apply Standard CDD — proceed</div></div>
+    <div class="scr-cb"><div class="scr-cbb"></div><div class="scr-cbl">Apply SDD — proceed</div></div>
+    <div class="scr-cb"><div class="scr-cbb"></div><div class="scr-cbl">Override to EDD — record reason</div></div>
+    <div class="scr-cb"><div class="scr-cbb"></div><div class="scr-cbl">File STR via goAML</div></div>
+  </div>
+  <div class="scr-sigb">
+    <div><div class="scr-sigl"></div><div class="scr-siglabel">MLRO Signature</div></div>
+    <div><div class="scr-sigl"></div><div class="scr-siglabel">Date</div></div>
+  </div>
+  <div class="scr-sh">Regulatory Framework Applied</div>
+  <ul class="scr-regl">${regItems.map(f => `<li>${e(f)}</li>`).join("")}</ul>
+  <div class="scr-sh" style="margin-top:10px">Audit Trail &amp; Integrity</div>
   <div class="scr-ag">
     ${auditRows.map(([k, v]) => `<div class="scr-ar"><span class="scr-al">${e(k)}</span><span class="scr-av">${e(v)}</span></div>`).join("")}
   </div>
   ${sigBlock}
   <div class="scr-note">${e(integrityNote)}</div>
-  ${hsFinis(reportId, 3, 3)}`;
+  ${hsFinis(reportId, 2, 2)}`;
 
   const regs  = "FDL 10/2025 · 10-year retention";
   const label = "SUBJECT SCREENING DOSSIER";
@@ -381,9 +401,8 @@ function renderHtmlReport(text: string, input: ReportInput): string {
     title: safeTitle,
     autoprint: true,
     pages: [
-      extraCss + hsPage({ reportId, pageNum: 1, pageTotal: 3, regs, label, content: p1 }),
-      hsPage({ reportId, pageNum: 2, pageTotal: 3, regs, label, content: p2 }),
-      hsPage({ reportId, pageNum: 3, pageTotal: 3, regs, label, content: p3 }),
+      extraCss + hsPage({ reportId, pageNum: 1, pageTotal: 2, regs, label, content: p1 }),
+      hsPage({ reportId, pageNum: 2, pageTotal: 2, regs, label, content: p2extended }),
     ],
   });
 }
