@@ -13,6 +13,11 @@
 //   - Audit-grade rationale (deterministic narrative; LLM optional)
 
 import type { QuickScreenHit, QuickScreenResult, QuickScreenSubject } from "@/lib/api/quickScreen.types";
+import { analyseTemporalVelocity, type TemporalVelocity, type DatedArticle } from "./temporalVelocity";
+import { counterfactualAnalysis, type CounterfactualResult } from "./counterfactualAnalysis";
+import { detectCoOccurrence, type CoOccurrenceResult, type CoOccurrenceArticle } from "./coOccurrence";
+import { transliterate, transliterationVariants } from "./transliteration";
+import { comparePhoneticTier, type PhoneticTierResult } from "./phoneticTier";
 
 // ── Source credibility tiering ────────────────────────────────────────
 //
@@ -322,6 +327,11 @@ export interface ScreeningReasoning {
   rationale: string;
   evidenceTrail: Array<{ source: string; weight: number; outcome: "match" | "no_match" | "delisted" | "uncertain"; detail?: string }>;
   art19NegativeFinding?: string;     // populated when no hits
+  temporalVelocity?: TemporalVelocity;
+  counterfactual?: CounterfactualResult;
+  coOccurrence?: CoOccurrenceResult;
+  transliteration?: { script: string; transliterated: string; variants: string[] };
+  phoneticTier?: Array<{ candidateName: string; result: PhoneticTierResult }>;
 }
 
 export function buildScreeningReasoning(opts: {
@@ -330,6 +340,9 @@ export function buildScreeningReasoning(opts: {
   consensusInputs: ConsensusInput[];
   contradictionItems: Array<{ source: string; topic?: string; stance: "affirm" | "deny"; detail?: string }>;
   coverage: CoverageGapReport;
+  articles?: DatedArticle[];                         // for temporal velocity
+  coOccurrenceArticles?: CoOccurrenceArticle[];      // for co-occurrence
+  knownSanctioned?: Array<{ name: string; listId: string }>;
 }): ScreeningReasoning {
   const consensus = multiSourceConsensus(opts.consensusInputs);
   const contradictions = detectContradictions(opts.contradictionItems);
@@ -340,6 +353,33 @@ export function buildScreeningReasoning(opts: {
     outcome: i.evidence,
     ...(typeof i.rawScore === "number" ? { detail: `score=${i.rawScore}` } : {}),
   }));
+
+  // Temporal velocity (only when we have dated articles)
+  const temporalVelocity = opts.articles && opts.articles.length > 0
+    ? analyseTemporalVelocity(opts.articles)
+    : undefined;
+
+  // Counterfactual leave-one-out — always run; cheap
+  const counterfactual = counterfactualAnalysis(opts.consensusInputs);
+
+  // Co-occurrence — only when we have article text
+  const coOccurrence = opts.coOccurrenceArticles && opts.coOccurrenceArticles.length > 0
+    ? detectCoOccurrence(opts.subject.name, opts.coOccurrenceArticles, opts.knownSanctioned)
+    : undefined;
+
+  // Transliteration of the subject name (only meaningful for non-Latin)
+  const tr = transliterate(opts.subject.name);
+  const transliteration = tr.scriptDetected !== "latin" && tr.scriptDetected !== "unknown"
+    ? { script: tr.scriptDetected, transliterated: tr.transliterated, variants: transliterationVariants(opts.subject.name) }
+    : undefined;
+
+  // Phonetic-tier comparison against the top hits' candidate names
+  const phoneticTier = opts.result.hits.length > 0
+    ? opts.result.hits.slice(0, 5).map((h) => ({
+        candidateName: h.candidateName,
+        result: comparePhoneticTier(opts.subject.name, h.candidateName),
+      }))
+    : undefined;
 
   const lines: string[] = [];
   lines.push(`Subject "${opts.subject.name}"${opts.subject.jurisdiction ? ` (${opts.subject.jurisdiction})` : ""} screened against ${opts.coverage.totalConfigured}/${opts.coverage.totalAvailable} configured intelligence sources.`);
@@ -368,13 +408,36 @@ export function buildScreeningReasoning(opts: {
     art19NegativeFinding = `[Art.19] Negative finding logged ${new Date().toISOString()}: subject "${opts.subject.name}" screened against ${opts.coverage.totalConfigured} sources; zero affirming evidence. Documented per FDL 10/2025 Art.19 evidence-of-search obligation.`;
   }
 
+  // Append signals to the rationale
+  const extraSignals: string[] = [];
+  if (temporalVelocity && temporalVelocity.escalationLevel !== "none") {
+    extraSignals.push(temporalVelocity.signal);
+  }
+  if (counterfactual.fragility !== "robust") {
+    extraSignals.push(counterfactual.signal);
+  }
+  if (coOccurrence && (coOccurrence.sanctionedAssociates.length > 0 || coOccurrence.geographicRisk.length > 0)) {
+    extraSignals.push(coOccurrence.signal);
+  }
+  if (transliteration) {
+    extraSignals.push(`Subject name detected as ${transliteration.script}; transliterated as "${transliteration.transliterated}" (matcher fans out to ${transliteration.variants.length} spelling variant(s)).`);
+  }
+  const fullRationale = extraSignals.length > 0
+    ? `${rationale} ${extraSignals.join(" ")}`
+    : rationale;
+
   return {
     consensus,
     contradictions,
     coverage: opts.coverage,
-    rationale,
+    rationale: fullRationale,
     evidenceTrail,
     ...(art19NegativeFinding ? { art19NegativeFinding } : {}),
+    ...(temporalVelocity ? { temporalVelocity } : {}),
+    counterfactual,
+    ...(coOccurrence ? { coOccurrence } : {}),
+    ...(transliteration ? { transliteration } : {}),
+    ...(phoneticTier ? { phoneticTier } : {}),
   };
 }
 
@@ -396,6 +459,7 @@ export interface BuildConsensusInputsArgs {
   countrySanctionsLists: string[];
   freeProviders: string[];
   freeCount: number;
+  adverseMediaArticles?: Array<{ source: string; outlet: string; title: string; url: string }>;
 }
 
 export function buildConsensusInputsFromAugmentation(a: BuildConsensusInputsArgs): {
@@ -438,6 +502,23 @@ export function buildConsensusInputsFromAugmentation(a: BuildConsensusInputsArgs
   }
   for (const p of a.freeProviders) {
     consensusInputs.push({ source: p, evidence: a.freeCount > 0 ? "match" : "no_match" });
+  }
+
+  // Adverse-media articles count as match-evidence — when ANY
+  // article from a credible outlet mentions the subject in an
+  // AML-relevant context, we surface it. World Check's gap is that
+  // it ignores articles unless they're already in its risk-tagged
+  // corpus; we treat the article volume itself as a signal.
+  if (a.adverseMediaArticles && a.adverseMediaArticles.length > 0) {
+    for (const art of a.adverseMediaArticles.slice(0, 25)) {
+      consensusInputs.push({ source: art.source, evidence: "match", rawScore: 70 });
+      contradictionItems.push({
+        source: art.source,
+        topic: "adverse-media",
+        stance: "affirm",
+        detail: art.title.slice(0, 120),
+      });
+    }
   }
 
   return { consensusInputs, contradictionItems };

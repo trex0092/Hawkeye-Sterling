@@ -126,7 +126,31 @@ function inferCategories(title: string, domain: string): string[] {
 }
 
 async function queryGdelt(subjectName: string): Promise<GdeltArticle[]> {
-  const rawQuery = `"${subjectName}" AND (sanctions OR fraud OR "money laundering" OR corruption OR crime OR arrest OR investigation)`;
+  // Multilingual AML keyword fan-out — World Check is English-anchored;
+  // we cover the languages where adverse-media first surfaces (Turkish,
+  // Portuguese, Spanish, Russian, French, German, Arabic, Italian).
+  // GDELT supports these natively via their multi-lingual indexing.
+  const aml = [
+    // English
+    "sanctions", "fraud", "\"money laundering\"", "corruption", "crime", "arrest", "investigation", "indictment", "convicted", "bribery",
+    // Turkish
+    "tutuklandı", "gözaltı", "soruşturma", "yolsuzluk", "kara para", "rüşvet", "dolandırıcılık", "iddianame",
+    // Portuguese
+    "preso", "lavagem de dinheiro", "investigação", "corrupção", "fraude", "denúncia", "operação", "indiciado",
+    // Spanish
+    "detenido", "lavado de dinero", "investigación", "corrupción", "fraude", "denuncia", "operativo", "imputado",
+    // Russian
+    "арест", "коррупция", "отмывание", "следствие", "мошенничество", "взятка",
+    // French
+    "arrêté", "blanchiment", "corruption", "fraude", "enquête", "mise en examen",
+    // German
+    "verhaftet", "Geldwäsche", "Korruption", "Betrug", "Ermittlung", "Anklage",
+    // Arabic
+    "اعتقال", "غسيل أموال", "فساد", "احتيال", "تحقيق", "رشوة",
+    // Italian
+    "arrestato", "riciclaggio", "corruzione", "frode", "indagine",
+  ].join(" OR ");
+  const rawQuery = `"${subjectName}" AND (${aml})`;
   // Art.19 rolling 10-year window — anchored to "now" at request time
   // so the lookback advances day-by-day. Earlier revisions hard-coded
   // timespan=7d, which silently scored decade-old prosecutions as CLEAR
