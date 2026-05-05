@@ -65,6 +65,7 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "📖 Playbook", href: "/playbook", hint: "Typology guides + AI Q&A assistant" },
       { label: "📚 Typology Library", href: "/typology-library", hint: "500+ ML typologies · AI search · deep-dive" },
       { label: "🚫 Sanctions Evasion", href: "/sanctions-evasion", hint: "AI evasion pattern detector · FATF typologies" },
+      { label: "🧪 Intelligence Tools", href: "/governance/intelligence-tools", hint: "OFAC 50% walker · Crypto exposure · Synthetic-identity cluster" },
       { label: "✏️ Corrections", href: "/corrections", hint: "Data-subject access & correction requests" },
       { label: "🔐 Access Control", href: "/access-control", hint: "User management · permission matrix · session monitor · audit log" },
     ],
