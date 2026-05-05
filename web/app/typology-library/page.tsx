@@ -431,9 +431,9 @@ export default function TypologyLibraryPage() {
             type="button"
             onClick={() => void handleSearch()}
             disabled={loading}
-            className="px-5 py-2.5 rounded-lg bg-brand text-white text-13 font-semibold hover:bg-brand/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+            className="px-5 py-2.5 rounded-lg bg-green-dim text-green text-13 font-semibold border border-green/40 hover:bg-green/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
           >
-            {loading ? "Searching…" : "Search"}
+            {loading ? "⌕…" : "⌕"}
           </button>
         </div>
       </div>

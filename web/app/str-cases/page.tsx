@@ -773,8 +773,8 @@ export default function StrCasesPage() {
                               saveCases(updated);
                               setCases((prev) => prev.map((x) => x.id === c.id ? { ...x, title: editCaseDraft.title || x.title, subject: editCaseDraft.subject || x.subject, status: editCaseDraft.status || x.status } : x));
                               setEditingCaseId(null);
-                            }} className="text-11 font-semibold px-3 py-1 rounded bg-ink-0 text-bg-0">Save</button>
-                            <button type="button" onClick={() => setEditingCaseId(null)} className="text-11 font-medium px-3 py-1 rounded text-ink-2">Cancel</button>
+                            }} className="text-11 font-semibold px-3 py-1 rounded bg-ink-0 text-bg-0">✓</button>
+                            <button type="button" onClick={() => setEditingCaseId(null)} className="text-11 font-medium px-3 py-1 rounded text-red">✕</button>
                           </div>
                         </td>
                       </tr>

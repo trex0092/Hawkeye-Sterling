@@ -82,7 +82,7 @@ export function BulkActionsBar({
                 className="w-full px-2 py-1 text-12 border border-hair-2 rounded bg-bg-1 text-ink-0"
               />
               <div className="flex justify-end gap-1 mt-1.5">
-                <button type="button" onClick={() => setShowAssign(false)} className="text-11 text-ink-3 px-2 py-1">Cancel</button>
+                <button type="button" onClick={() => setShowAssign(false)} className="text-11 text-red px-2 py-1">✕</button>
                 <button
                   type="button"
                   disabled={!assignDraft.trim()}
@@ -121,7 +121,7 @@ export function BulkActionsBar({
                 className="w-full px-2 py-1 text-12 border border-hair-2 rounded bg-bg-1 text-ink-0"
               />
               <div className="flex justify-end gap-1 mt-1.5">
-                <button type="button" onClick={() => setShowSnooze(false)} className="text-11 text-ink-3 px-2 py-1">Cancel</button>
+                <button type="button" onClick={() => setShowSnooze(false)} className="text-11 text-red px-2 py-1">✕</button>
                 <button
                   type="button"
                   disabled={!snoozeDraft.until || !snoozeDraft.reason.trim()}

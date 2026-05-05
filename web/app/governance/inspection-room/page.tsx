@@ -265,9 +265,10 @@ export default function InspectionRoomPage() {
         <button
           type="button"
           onClick={handlePrint}
-          className="text-11 font-mono uppercase tracking-wide-3 px-3 py-1.5 border border-brand bg-brand-dim text-brand-deep hover:bg-brand hover:text-white rounded font-semibold"
+          className="text-11 font-mono px-3 py-1.5 rounded border font-semibold"
+          style={{ color: "#7c3aed", borderColor: "#7c3aed", background: "rgba(124,58,237,0.07)" }}
         >
-          Generate inspection PDF
+          PDF
         </button>
         <button
           type="button"

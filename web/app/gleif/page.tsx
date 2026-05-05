@@ -50,7 +50,7 @@ const STATUS_TONE: Record<string, string> = {
 
 const inputCls = "px-3 py-2 border border-hair-2 rounded text-13 bg-bg-1 focus:outline-none focus:border-brand text-ink-0";
 const monoInputCls = `${inputCls} font-mono`;
-const btnCls = "px-4 py-1.5 rounded bg-brand text-white text-12 font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity";
+const btnCls = "px-4 py-1.5 rounded bg-green-dim text-green text-12 font-semibold border border-green/40 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-green/20 transition-colors";
 const tabCls = (active: boolean) =>
   `px-3 py-1 rounded text-11 font-medium border transition-colors ${
     active
@@ -160,7 +160,7 @@ export default function GleifPage() {
               onKeyDown={(e) => e.key === "Enter" && searchGleif()}
             />
             <button type="button" onClick={searchGleif} disabled={loading || !query.trim()} className={btnCls}>
-              {loading ? "Searching…" : "Search"}
+              {loading ? "⌕…" : "⌕"}
             </button>
           </div>
         )}

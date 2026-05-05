@@ -728,8 +728,8 @@ function EditShipmentForm({ initial, onSave, onCancel }: { initial: Consignment;
         </div>
 
         <div className="flex gap-2 pt-3 border-t border-hair-2">
-          <button type="button" onClick={submit} className="text-11 font-semibold px-4 py-1.5 rounded bg-brand text-white hover:bg-brand/90">Save changes</button>
-          <button type="button" onClick={onCancel} className="text-11 font-semibold px-4 py-1.5 rounded border border-hair-2 text-ink-1 hover:bg-bg-2">Cancel</button>
+          <button type="button" onClick={submit} className="text-11 font-semibold px-4 py-1.5 rounded bg-brand text-white hover:bg-brand/90">✓</button>
+          <button type="button" onClick={onCancel} className="text-11 font-semibold px-4 py-1.5 rounded border border-red/30 text-red hover:bg-red-dim/30">✕</button>
           <span className="ml-auto self-center text-10 text-ink-3 font-mono">Chain-of-custody ledger is WORM and not editable here.</span>
         </div>
       </div>
@@ -947,7 +947,7 @@ function AddShipmentForm({ onAdd, onCancel }: { onAdd: (c: Consignment) => void;
 
       <div className="flex gap-2">
         <button type="button" onClick={submit} className="text-11 font-semibold px-3 py-1.5 rounded bg-brand text-white hover:bg-brand/90">Add</button>
-        <button type="button" onClick={onCancel} className="text-11 font-semibold px-3 py-1.5 rounded border border-hair-2 text-ink-1 hover:bg-bg-2">Cancel</button>
+        <button type="button" onClick={onCancel} className="text-11 font-semibold px-3 py-1.5 rounded border border-red/30 text-red hover:bg-red-dim/30">✕</button>
       </div>
     </div>
   );

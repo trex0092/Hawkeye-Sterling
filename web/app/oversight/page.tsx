@@ -510,7 +510,7 @@ function AddApprovalForm({ onAdd, onCancel }: { onAdd: (a: Approval) => void; on
       </div>
       <div className="flex gap-2">
         <button type="button" onClick={submit} className="text-11 font-semibold px-3 py-1.5 rounded bg-brand text-white hover:bg-brand/90">Add</button>
-        <button type="button" onClick={onCancel} className="text-11 font-semibold px-3 py-1.5 rounded border border-hair-2 text-ink-1 hover:bg-bg-2">Cancel</button>
+        <button type="button" onClick={onCancel} className="text-11 font-semibold px-3 py-1.5 rounded border border-red/30 text-red hover:bg-red-dim/30">✕</button>
       </div>
     </div>
   );
@@ -589,7 +589,7 @@ function AddMinuteForm({ onAdd, onCancel }: { onAdd: (m: Minute) => void; onCanc
       </div>
       <div className="flex gap-2">
         <button type="button" onClick={submit} className="text-11 font-semibold px-3 py-1.5 rounded bg-brand text-white hover:bg-brand/90">Add</button>
-        <button type="button" onClick={onCancel} className="text-11 font-semibold px-3 py-1.5 rounded border border-hair-2 text-ink-1 hover:bg-bg-2">Cancel</button>
+        <button type="button" onClick={onCancel} className="text-11 font-semibold px-3 py-1.5 rounded border border-red/30 text-red hover:bg-red-dim/30">✕</button>
       </div>
     </div>
   );
@@ -671,7 +671,7 @@ function AddCircularForm({ onAdd, onCancel }: { onAdd: (c: Circular) => void; on
       </div>
       <div className="flex gap-2">
         <button type="button" onClick={submit} className="text-11 font-semibold px-3 py-1.5 rounded bg-brand text-white hover:bg-brand/90">Add</button>
-        <button type="button" onClick={onCancel} className="text-11 font-semibold px-3 py-1.5 rounded border border-hair-2 text-ink-1 hover:bg-bg-2">Cancel</button>
+        <button type="button" onClick={onCancel} className="text-11 font-semibold px-3 py-1.5 rounded border border-red/30 text-red hover:bg-red-dim/30">✕</button>
       </div>
     </div>
   );
@@ -1298,9 +1298,9 @@ export default function OversightPage() {
                   />
                   <div className="flex gap-2">
                     <button type="button" onClick={() => saveEditApproval(a.id)}
-                      className="text-11 font-semibold px-3 py-1 rounded bg-ink-0 text-bg-0">Save</button>
+                      className="text-11 font-semibold px-3 py-1 rounded bg-ink-0 text-bg-0">✓</button>
                     <button type="button" onClick={() => setEditingApprovalId(null)}
-                      className="text-11 font-medium px-3 py-1 rounded text-ink-2">Cancel</button>
+                      className="text-11 font-medium px-3 py-1 rounded text-red">✕</button>
                   </div>
                 </div>
               )}
@@ -1417,9 +1417,9 @@ export default function OversightPage() {
                     />
                     <div className="flex gap-2">
                       <button type="button" onClick={() => saveEditMinute(m.id)}
-                        className="text-11 font-semibold px-3 py-1 rounded bg-ink-0 text-bg-0">Save</button>
+                        className="text-11 font-semibold px-3 py-1 rounded bg-ink-0 text-bg-0">✓</button>
                       <button type="button" onClick={() => setEditingMinuteId(null)}
-                        className="text-11 font-medium px-3 py-1 rounded text-ink-2">Cancel</button>
+                        className="text-11 font-medium px-3 py-1 rounded text-red">✕</button>
                     </div>
                   </div>
                 )}
@@ -1552,7 +1552,7 @@ export default function OversightPage() {
                       <td className="px-2 py-2.5">
                         {editingCircularId === c.id ? (
                           <div className="flex gap-1">
-                            <button type="button" onClick={() => saveEditCircular(c.id)} className="text-10 font-semibold px-2 py-0.5 rounded bg-ink-0 text-bg-0">Save</button>
+                            <button type="button" onClick={() => saveEditCircular(c.id)} className="text-10 font-semibold px-2 py-0.5 rounded bg-ink-0 text-bg-0">✓</button>
                             <button type="button" onClick={() => setEditingCircularId(null)} className="text-10 px-2 py-0.5 rounded text-ink-2">✕</button>
                           </div>
                         ) : (

@@ -338,7 +338,7 @@ export default function SarQaPage() {
                         </button>
                         {editingCaseId === c.id && (
                           <button type="button" onClick={() => setEditingCaseId(null)}
-                            className="text-11 font-medium px-3 py-1.5 rounded text-ink-2">Cancel</button>
+                            className="text-11 font-medium px-3 py-1.5 rounded text-red">✕</button>
                         )}
                       </div>
                     </>

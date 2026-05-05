@@ -6007,7 +6007,7 @@ export default function PlaybookPage() {
               {qaLoading ? "Asking…" : "Ask"}
             </button>
             {(simResult || qaAnswer) && (
-              <button type="button" onClick={() => { setSimResult(null); setQaAnswer(null); }} className="text-11 text-ink-3 hover:text-ink-1 px-2 py-1.5">Clear</button>
+              <button type="button" onClick={() => { setSimResult(null); setQaAnswer(null); }} className="text-11 text-blue-400 hover:text-blue-300 px-2 py-1.5">✕</button>
             )}
           </div>
 

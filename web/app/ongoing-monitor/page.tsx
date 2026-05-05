@@ -503,8 +503,8 @@ export default function OngoingMonitorPage() {
                         <div className="flex gap-2 items-center">
                           <input value={editDraft.notes} onChange={setE("notes")} placeholder="Notes" className="text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0 w-56" />
                           <input value={editDraft.enrolledBy} onChange={setE("enrolledBy")} placeholder="Enrolled by" className="text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0 w-32" />
-                          <button type="button" onClick={() => saveSubjectEdit(s.id)} className="text-11 font-semibold px-3 py-1 rounded bg-ink-0 text-bg-0">Save</button>
-                          <button type="button" onClick={() => setEditingId(null)} className="text-11 font-medium px-3 py-1 rounded text-ink-2">Cancel</button>
+                          <button type="button" onClick={() => saveSubjectEdit(s.id)} className="text-11 font-semibold px-3 py-1 rounded bg-ink-0 text-bg-0">✓</button>
+                          <button type="button" onClick={() => setEditingId(null)} className="text-11 font-medium px-3 py-1 rounded text-red">✕</button>
                         </div>
                       </td>
                     </tr>
