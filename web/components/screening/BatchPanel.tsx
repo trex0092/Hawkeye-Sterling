@@ -12,6 +12,7 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
+import { exportToPdf } from "@/lib/pdf/exportPdf";
 
 interface NameVariants {
   ok: boolean;
@@ -189,88 +190,64 @@ function toCsv(results: RowResult[]): string {
   return [header, ...rows].join("\r\n");
 }
 
-async function exportPdf(results: RowResult[], summary: Summary) {
-  const { jsPDF } = await import("jspdf");
-  const autoTable = (await import("jspdf-autotable")).default;
-  const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
-
+function exportPdf(results: RowResult[], summary: Summary) {
   const now = new Date();
-  const dateStr = now.toISOString().slice(0, 19).replace("T", " ") + " UTC";
   const reportId = `HWK-BATCH-${now.getUTCFullYear()}${String(now.getUTCMonth()+1).padStart(2,"0")}${String(now.getUTCDate()).padStart(2,"0")}-${String(now.getUTCHours()).padStart(2,"0")}${String(now.getUTCMinutes()).padStart(2,"0")}`;
 
-  doc.setFillColor(12, 12, 14);
-  doc.rect(0, 0, 297, 210, "F");
-  doc.setTextColor(242, 242, 245);
-  doc.setFontSize(18);
-  doc.setFont("helvetica", "bold");
-  doc.text("HAWKEYE STERLING", 14, 16);
-  doc.setFontSize(11);
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(236, 72, 153);
-  doc.text("Batch Screening Audit Report", 14, 23);
-  doc.setTextColor(136, 136, 148);
-  doc.setFontSize(8);
-  doc.text(`Report ID: ${reportId}    Generated: ${dateStr}    Subjects: ${summary.total}    Duration: ${(summary.totalDurationMs/1000).toFixed(1)}s`, 14, 29);
-
-  doc.setTextColor(242, 242, 245);
-  doc.setFontSize(9);
-  const stats = [
-    `Critical: ${summary.critical}`,
-    `High: ${summary.high}`,
-    `Medium: ${summary.medium}`,
-    `Low: ${summary.low}`,
-    `Clear: ${summary.clear}`,
-    `Errors: ${summary.errors}`,
-    `Duplicates: ${summary.duplicates}`,
-  ].join("   |   ");
-  doc.text(stats, 14, 35);
-
-  const sevColor = (sev: string): [number, number, number] => {
-    const map: Record<string, [number,number,number]> = {
-      critical: [239,68,68], high: [249,115,22], medium: [245,158,11],
-      low: [59,130,246], clear: [34,197,94], error: [239,68,68],
-    };
-    return map[sev] ?? [136,136,148];
+  const sevTone = (sev: string): "red" | "amber" | "green" | "neutral" => {
+    if (sev === "critical" || sev === "high" || sev === "error") return "red";
+    if (sev === "medium") return "amber";
+    if (sev === "low" || sev === "clear") return "green";
+    return "neutral";
   };
 
-  autoTable(doc, {
-    startY: 40,
-    head: [["Name","Type","Jurisdiction","Severity","Score","Hits","Lists","Keywords","Signals","Error"]],
-    body: results.map((r) => [
-      r.name + (r.isDuplicate ? " [DUP]" : ""),
-      r.entityType ?? "—",
-      r.jurisdiction ?? "—",
-      r.severity.toUpperCase(),
-      String(r.topScore),
-      String(r.hitCount),
-      r.listCoverage.slice(0,3).join(", ") || "—",
-      r.keywordGroups.slice(0,3).join(", ") || "—",
-      (r.checkpoints ?? []).slice(0,4).join(", ") || "—",
-      r.error ?? "—",
-    ]),
-    styles: { fontSize: 7, cellPadding: 1.5, textColor: [242,242,245], fillColor: [18,18,21], lineColor: [30,30,36], lineWidth: 0.1 },
-    headStyles: { fillColor: [30,30,36], textColor: [136,136,148], fontStyle: "bold", fontSize: 7 },
-    alternateRowStyles: { fillColor: [14,14,16] },
-    didParseCell: (data) => {
-      if (data.column.index === 3 && data.section === "body") {
-        const sev = (data.cell.raw as string).toLowerCase();
-        const [r,g,b] = sevColor(sev);
-        data.cell.styles.textColor = [r,g,b];
-        data.cell.styles.fontStyle = "bold";
-      }
-    },
-    margin: { left: 14, right: 14 },
+  exportToPdf({
+    title: "Batch Screening Audit Report",
+    moduleName: "Batch Screening · FDL 10/2025 Art.9",
+    reportRef: reportId,
+    institution: "Hawkeye Sterling DPMS",
+    regulatoryBasis: "UAE FDL 10/2025 · Cabinet Res 134/2025 · MoE Resolution 3/2025",
+    confidential: true,
+    sections: [
+      { type: "header", content: "Population Summary" },
+      {
+        type: "keyvalue",
+        pairs: [
+          { label: "Total Subjects", value: String(summary.total) },
+          { label: "Duration", value: `${(summary.totalDurationMs / 1000).toFixed(1)}s` },
+          { label: "Critical", value: String(summary.critical), tone: summary.critical > 0 ? "red" : "green" },
+          { label: "High", value: String(summary.high), tone: summary.high > 0 ? "red" : "green" },
+          { label: "Medium", value: String(summary.medium), tone: summary.medium > 0 ? "amber" : "green" },
+          { label: "Low / Clear", value: `${summary.low} / ${summary.clear}`, tone: "green" },
+          { label: "Errors", value: String(summary.errors), tone: summary.errors > 0 ? "red" : "neutral" },
+          { label: "Duplicates", value: String(summary.duplicates) },
+        ],
+      },
+      { type: "divider" },
+      { type: "header", content: "Screening Results" },
+      {
+        type: "table",
+        columns: ["Name", "Type", "Jurisdiction", "Severity", "Score", "Hits", "Lists", "Keywords", "Error"],
+        rows: results.map((r) => [
+          r.name + (r.isDuplicate ? " [DUP]" : ""),
+          r.entityType ?? "—",
+          r.jurisdiction ?? "—",
+          r.severity.toUpperCase(),
+          String(r.topScore),
+          String(r.hitCount),
+          r.listCoverage.slice(0, 3).join(", ") || "—",
+          r.keywordGroups.slice(0, 3).join(", ") || "—",
+          r.error ?? "—",
+        ]),
+      },
+      { type: "divider" },
+      {
+        type: "badge",
+        content: summary.critical > 0 || summary.high > 0 ? "ESCALATION REQUIRED" : "CLEAR",
+        tone: summary.critical > 0 || summary.high > 0 ? "red" : "green",
+      },
+    ],
   });
-
-  const pageCount = (doc as unknown as { internal: { getNumberOfPages: () => number } }).internal.getNumberOfPages();
-  for (let i = 1; i <= pageCount; i++) {
-    doc.setPage(i);
-    doc.setTextColor(82,82,94);
-    doc.setFontSize(7);
-    doc.text(`${reportId} — CONFIDENTIAL — FDL 10/2025 · CR 134/2025 · MoE 3/2025 — Page ${i}/${pageCount}`, 14, 205);
-  }
-
-  doc.save(`hawkeye-batch-${reportId}.pdf`);
 }
 
 const SEVERITY_CLS: Record<string, string> = {
