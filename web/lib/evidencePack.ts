@@ -213,11 +213,17 @@ export function renderAdvisorEvidencePack(entry: EvidencePackEntry): Blob {
 }
 
 export function downloadEvidencePack(entry: EvidencePackEntry): void {
-  const blob = renderAdvisorEvidencePack(entry);
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement("a");
-  a.href = url;
-  a.download = `mlro-evidence-${makeRef(entry.askedAt)}-${Date.now()}.pdf`;
-  a.click();
-  URL.revokeObjectURL(url);
+  void fetch("/api/evidence-pack-report", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(entry),
+  }).then(async res => {
+    if (!res.ok) return;
+    const html = await res.text();
+    const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const w = window.open(url, "_blank", "noopener,noreferrer");
+    setTimeout(() => URL.revokeObjectURL(url), 30_000);
+    if (!w) alert("Pop-up blocked — allow pop-ups to open the PDF report.");
+  });
 }

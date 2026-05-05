@@ -38,7 +38,7 @@ import {
   type OperatorRole,
 } from "@/lib/data/operator-role";
 import { writeAuditEvent } from "@/lib/audit";
-import { exportStrDraft } from "@/lib/pdf/exporters";
+import { openReportWindow } from "@/lib/reportOpen";
 import type { PatternDetectResult, DetectedPattern } from "@/app/api/str-cases/pattern-detect/route";
 
 type FlashTone = "success" | "error";
@@ -415,7 +415,7 @@ export default function StrCasesPage() {
                   variant="ghost"
                   onClick={() => {
                     const open = cases.filter((c) => c.status === "open" || c.status === "under_review");
-                    exportStrDraft({
+                    openReportWindow("/api/str-report", {
                       subject: open[0]?.subject ?? "Multiple subjects",
                       narrative: `STR case register export — ${cases.length} total cases, ${open.length} open. Generated for MLRO review.`,
                       transactions: [],
@@ -424,7 +424,7 @@ export default function StrCasesPage() {
                     });
                   }}
                 >
-                  ↓ Export PDF
+                  <span style={{ color: "#7c3aed", fontWeight: 600 }}>PDF</span>
                 </Btn>
                 <Btn variant="ghost">+ New case</Btn>
               </div>

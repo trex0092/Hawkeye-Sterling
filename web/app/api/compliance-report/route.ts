@@ -246,36 +246,35 @@ function renderHtmlReport(text: string, input: ReportInput): string {
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>${safeTitle}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&family=Inter+Tight:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
-    /* ── HAWKEYE STERLING · COMPLIANCE REPORT ─────────────────
-       Premium audit-grade typography. Paper-first design:
-       the on-screen view mirrors the printed PDF so the
-       "Save as PDF" preview is the canonical artefact. */
+    /* ── HAWKEYE STERLING · SUBJECT SCREENING DOSSIER ─────────
+       Reference design: editorial luxury · audit-grade typography */
     :root{
-      /* legacy var names retained so inline color={var(--inkN)}
-         in the HTML body still resolves after the redesign. */
-      --bg:#ffffff;
-      --paper:#ffffff;
-      --card:#fafafa;
-      --border:#e6e6e6;
-      --hairline:#e6e6e6;
-      --hairline-strong:#cfcfcf;
-      --rule:#0a0a0a;
-      --brand:#a3134f;
-      --brand-dim:rgba(163,19,79,.06);
-      --ink0:#0a0a0a;
-      --ink1:#262626;
-      --ink2:#5a5a5a;
-      --ink3:#9a9a9a;
-      --green:#0e7c3a;
-      --green-dim:rgba(14,124,58,.08);
-      --red:#b42318;
-      --red-dim:rgba(180,35,24,.08);
-      --amber:#b54708;
-      --amber-dim:rgba(181,71,8,.08);
-      --serif:Georgia,'Iowan Old Style','Charter','Times New Roman',ui-serif,serif;
-      --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
-      --mono:ui-monospace,SFMono-Regular,'SF Mono',Menlo,Consolas,monospace;
+      --bg:oklch(97.5% 0.008 85);
+      --paper:oklch(97.5% 0.008 85);
+      --card:oklch(98% 0.005 85);
+      --border:oklch(22% 0.012 250 / 0.18);
+      --hairline:oklch(22% 0.012 250 / 0.18);
+      --hairline-strong:oklch(22% 0.012 250 / 0.3);
+      --rule:oklch(22% 0.012 250);
+      --brand:#d61e6f;
+      --brand-dim:rgba(214,30,111,0.08);
+      --ink0:oklch(22% 0.012 250);
+      --ink1:oklch(30% 0.012 250);
+      --ink2:oklch(38% 0.012 250);
+      --ink3:oklch(55% 0.012 250);
+      --green:oklch(45% 0.06 155);
+      --green-dim:oklch(45% 0.06 155 / 0.08);
+      --red:#d61e6f;
+      --red-dim:rgba(214,30,111,0.08);
+      --amber:oklch(60% 0.11 70);
+      --amber-dim:oklch(60% 0.11 70 / 0.08);
+      --serif:'Cormorant Garamond','GT Sectra',Georgia,serif;
+      --sans:'Inter Tight','Inter',system-ui,sans-serif;
+      --mono:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,monospace;
     }
     *{box-sizing:border-box;margin:0;padding:0}
     html,body{
@@ -313,10 +312,11 @@ function renderHtmlReport(text: string, input: ReportInput): string {
       margin-bottom:14px;
     }
     .logo{
-      font:700 22pt/1 var(--serif);
-      color:var(--ink0);letter-spacing:-.005em;
+      font-family:var(--serif);font-size:22pt;font-weight:500;
+      color:var(--ink0);letter-spacing:0.38em;line-height:1;
     }
-    .logo span{color:var(--brand);font-weight:400;font-style:italic}
+    .logo span{color:var(--ink2);font-weight:400}
+    .logo-sub{font-size:7.5pt;letter-spacing:0.28em;color:var(--ink3);text-transform:uppercase;margin-top:4px}
     .report-id{
       text-align:right;
       font:500 8.5pt/1.65 var(--mono);
@@ -614,18 +614,23 @@ function renderHtmlReport(text: string, input: ReportInput): string {
   <!-- HEADER -->
   <div class="report-header">
     <div class="report-header-top">
-      <div class="logo">HAWKEYE <span>STERLING</span></div>
-      <div class="report-id">
-        Report ID: ${e(reportId)}<br/>
-        Classification: CONFIDENTIAL<br/>
-        Retention: 10 years (FDL 10/2025)
+      <div>
+        <div class="logo">HAWKEYE <span>·</span> STERLING</div>
+        <div class="logo-sub">SUBJECT SCREENING DOSSIER</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+        <div style="border:1px solid var(--brand);padding:6px 10px;text-align:center;transform:rotate(-1deg);background:var(--brand-dim)">
+          <div style="font-family:var(--serif);font-size:12px;letter-spacing:0.3em;color:var(--brand);font-weight:600">CONFIDENTIAL</div>
+          <div style="font-size:6px;letter-spacing:0.32em;color:var(--brand);text-transform:uppercase;margin-top:2px">MLRO USE ONLY</div>
+        </div>
+        <div class="report-id">${e(reportId)}</div>
       </div>
     </div>
     <div class="meta-grid">
       <div class="meta-row"><span class="meta-label">Date and Time</span><span class="meta-value">${e(now.toUTCString().replace(" GMT", " UTC"))}</span></div>
       <div class="meta-row"><span class="meta-label">Place</span><span class="meta-value">Dubai, United Arab Emirates</span></div>
-      <div class="meta-row"><span class="meta-label">MLRO assigned</span><span class="meta-value">${e(input.mlro ?? "Luisa Fernanda")}</span></div>
-      <div class="meta-row"><span class="meta-label">FIU registration</span><span class="meta-value">[goAML reporting entity ID]</span></div>
+      <div class="meta-row"><span class="meta-label">MLRO assigned</span><span class="meta-value">${e(input.mlro ?? "L. Fernanda")}</span></div>
+      <div class="meta-row"><span class="meta-label">FIU registration</span><span class="meta-value">FIU-AE-DMCC-0428</span></div>
       ${s.caseId ? `<div class="meta-row"><span class="meta-label">Case ID</span><span class="meta-value">${e(s.caseId)}</span></div>` : ""}
       ${s.group ? `<div class="meta-row"><span class="meta-label">Group</span><span class="meta-value">${e(s.group)}</span></div>` : ""}
     </div>

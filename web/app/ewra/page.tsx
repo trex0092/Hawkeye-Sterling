@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import type { EwraBoardReportResult } from "@/app/api/ewra-report/route";
 import type { ThreatIntelResult } from "@/app/api/ewra/threat-intel/route";
-import { exportEwraBoardReport } from "@/lib/pdf/exporters";
+import { openReportWindow } from "@/lib/reportOpen";
 
 // Entity-Wide Risk Assessment (EWRA) / Business-Wide Risk Assessment (BWRA)
 // Required annually under FDL 10/2025 Art.4 and FATF R.1.
@@ -497,10 +497,11 @@ export default function EwraPage() {
               <div className="flex items-center gap-3">
                 <button
                   type="button"
-                  onClick={() => exportEwraBoardReport(boardReport, state.dimensions)}
-                  className="text-11 font-mono text-brand hover:text-brand/80"
+                  onClick={() => openReportWindow("/api/ewra-board-report", { boardReport, dimensions: state.dimensions })}
+                  className="text-11 font-mono"
+                  style={{ color: "#7c3aed", fontWeight: 600 }}
                 >
-                  ↓ Export PDF
+                  PDF
                 </button>
                 <button
                 type="button"

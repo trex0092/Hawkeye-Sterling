@@ -113,15 +113,18 @@ function RegulatoryFeedPanel() {
   const [filterTone, setFilterTone] = useState<string>("all");
   const [triageMap, setTriageMap] = useState<Record<string, TriageEntry>>({});
   const [triageLoading, setTriageLoading] = useState(false);
+  const [triageError, setTriageError] = useState<string | null>(null);
 
   const runTriage = async (feedItems: RegulatoryItem[]) => {
     if (feedItems.length === 0) return;
     setTriageLoading(true);
+    setTriageError(null);
     try {
       const map = await fetchTriage(feedItems);
       setTriageMap(map);
     } catch (err) {
       console.error("Triage failed:", err);
+      setTriageError("AI triage unavailable — API key not configured.");
     } finally {
       setTriageLoading(false);
     }
@@ -177,14 +180,19 @@ function RegulatoryFeedPanel() {
               synced {new Date(fetchedAt).toLocaleTimeString("en-GB", { timeZone: "Asia/Dubai", hour: "2-digit", minute: "2-digit" })}
             </span>
           )}
-          <button
-            type="button"
-            onClick={() => void runTriage(items)}
-            disabled={triageLoading || items.length === 0}
-            className="text-10 font-mono px-2 py-0.5 rounded border border-brand/50 bg-brand-dim text-brand-deep hover:bg-brand-dim/70 disabled:opacity-40"
-          >
-            {triageLoading ? "Triaging…" : "Triage with AI"}
-          </button>
+          <div className="flex flex-col items-end gap-0.5">
+            <button
+              type="button"
+              onClick={() => void runTriage(items)}
+              disabled={triageLoading || items.length === 0}
+              className="text-10 font-mono px-2 py-0.5 rounded border border-brand/50 bg-brand-dim text-brand-deep hover:bg-brand-dim/70 disabled:opacity-40"
+            >
+              {triageLoading ? "Triaging…" : "Triage with AI"}
+            </button>
+            {triageError && (
+              <span className="text-9 font-mono text-red-400">{triageError}</span>
+            )}
+          </div>
           <button
             type="button"
             onClick={() => void load()}

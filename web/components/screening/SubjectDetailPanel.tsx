@@ -981,9 +981,15 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
           <p className="text-16 font-semibold text-ink-0 m-0">{subject.name}</p>
           <div className="flex gap-1.5 flex-wrap">
             <PanelBtn onClick={handleCopy} title="Copy subject ID">⎙</PanelBtn>
-            <PanelBtn onClick={handleDownloadPdf} title="Download PDF report">
-              💾
-            </PanelBtn>
+            <button
+              type="button"
+              onClick={handleDownloadPdf}
+              title="Download PDF report"
+              className="inline-flex items-center gap-1.5 rounded border px-2.5 py-[5px] text-11.5 font-semibold transition-colors cursor-pointer"
+              style={{ color: "#7c3aed", borderColor: "#7c3aed", background: "rgba(124,58,237,0.07)" }}
+            >
+              PDF
+            </button>
             <PanelBtn onClick={handleDownloadGoaml} title="Download goAML STR XML">
               goAML
             </PanelBtn>
