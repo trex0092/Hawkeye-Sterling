@@ -556,6 +556,297 @@ function moodysOrbisAdapter(): NewsAdapter {
   };
 }
 
+// ── The Guardian Open Platform — free tier ─────────────────────────────
+function guardianAdapter(): NewsAdapter {
+  const key = process.env["GUARDIAN_API_KEY"];
+  if (!key) return NULL_NEWS_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({
+          q: `"${subjectName}"`,
+          "page-size": String(opts?.limit ?? 25),
+          "show-fields": "trailText",
+          "order-by": "newest",
+          "api-key": key,
+        });
+        const res = await abortable(
+          fetch(`https://content.guardianapis.com/search?${params.toString()}`),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as {
+          response?: { results?: Array<{ webTitle?: string; webUrl?: string; webPublicationDate?: string; fields?: { trailText?: string } }> };
+        };
+        return (json.response?.results ?? [])
+          .filter((a) => a.webUrl && a.webTitle)
+          .map((a) => ({
+            source: "guardian",
+            outlet: "theguardian.com",
+            title: a.webTitle!,
+            url: a.webUrl!,
+            publishedAt: a.webPublicationDate ?? new Date().toISOString(),
+            ...(a.fields?.trailText ? { snippet: a.fields.trailText } : {}),
+          } as NewsArticle));
+      } catch (err) {
+        console.warn("[guardian] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// ── New York Times Article Search — free tier ──────────────────────────
+function nytAdapter(): NewsAdapter {
+  const key = process.env["NYT_API_KEY"];
+  if (!key) return NULL_NEWS_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, _opts) => {
+      void _opts;
+      try {
+        const params = new URLSearchParams({
+          q: `"${subjectName}"`,
+          sort: "newest",
+          "api-key": key,
+        });
+        const res = await abortable(
+          fetch(`https://api.nytimes.com/svc/search/v2/articlesearch.json?${params.toString()}`),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as {
+          response?: { docs?: Array<{ headline?: { main?: string }; web_url?: string; pub_date?: string; abstract?: string; source?: string }> };
+        };
+        return (json.response?.docs ?? [])
+          .filter((d) => d.web_url && d.headline?.main)
+          .map((d) => ({
+            source: "nyt",
+            outlet: d.source ?? "nytimes.com",
+            title: d.headline!.main!,
+            url: d.web_url!,
+            publishedAt: d.pub_date ?? new Date().toISOString(),
+            ...(d.abstract ? { snippet: d.abstract } : {}),
+          } as NewsArticle));
+      } catch (err) {
+        console.warn("[nyt] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// ── Aylien News API — premium ──────────────────────────────────────────
+function aylienAdapter(): NewsAdapter {
+  const appId = process.env["AYLIEN_APP_ID"];
+  const apiKey = process.env["AYLIEN_API_KEY"];
+  if (!appId || !apiKey) return NULL_NEWS_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({
+          title: `"${subjectName}"`,
+          per_page: String(opts?.limit ?? 25),
+          sort_by: "published_at",
+          language: "en",
+        });
+        const res = await abortable(
+          fetch(`https://api.aylien.com/news/stories?${params.toString()}`, {
+            headers: {
+              "X-AYLIEN-NewsAPI-Application-ID": appId,
+              "X-AYLIEN-NewsAPI-Application-Key": apiKey,
+              accept: "application/json",
+            },
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as {
+          stories?: Array<{ id?: number; title?: string; links?: { permalink?: string }; published_at?: string; summary?: { sentences?: string[] }; source?: { name?: string; domain?: string }; sentiment?: { title?: { polarity?: string; score?: number } } }>;
+        };
+        return (json.stories ?? [])
+          .filter((s) => s.title && s.links?.permalink)
+          .map((s) => ({
+            source: "aylien",
+            outlet: s.source?.domain ?? s.source?.name ?? "aylien",
+            title: s.title!,
+            url: s.links!.permalink!,
+            publishedAt: s.published_at ?? new Date().toISOString(),
+            ...(s.summary?.sentences?.[0] ? { snippet: s.summary.sentences[0] } : {}),
+            ...(typeof s.sentiment?.title?.score === "number" ? { sentiment: s.sentiment.title.score } : {}),
+          } as NewsArticle));
+      } catch (err) {
+        console.warn("[aylien] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// ── Webz.io (Webhose) — premium ────────────────────────────────────────
+function webzAdapter(): NewsAdapter {
+  const key = process.env["WEBZ_API_KEY"];
+  if (!key) return NULL_NEWS_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({
+          token: key,
+          q: `"${subjectName}" language:english`,
+          size: String(opts?.limit ?? 25),
+        });
+        const res = await abortable(
+          fetch(`https://api.webz.io/newsApiLite?${params.toString()}`),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as {
+          posts?: Array<{ title?: string; url?: string; published?: string; text?: string; thread?: { site?: string; site_full?: string } }>;
+        };
+        return (json.posts ?? [])
+          .filter((p) => p.title && p.url)
+          .map((p) => ({
+            source: "webz",
+            outlet: p.thread?.site ?? p.thread?.site_full ?? "webz.io",
+            title: p.title!,
+            url: p.url!,
+            publishedAt: p.published ?? new Date().toISOString(),
+            ...(p.text ? { snippet: p.text.slice(0, 240) } : {}),
+          } as NewsArticle));
+      } catch (err) {
+        console.warn("[webz] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// ── Event Registry / NewsAPI.ai — premium ──────────────────────────────
+function eventRegistryAdapter(): NewsAdapter {
+  const key = process.env["EVENTREGISTRY_API_KEY"];
+  if (!key) return NULL_NEWS_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const body = {
+          action: "getArticles",
+          keyword: subjectName,
+          articlesSortBy: "date",
+          articlesCount: opts?.limit ?? 25,
+          lang: "eng",
+          apiKey: key,
+        };
+        const res = await abortable(
+          fetch("https://eventregistry.org/api/v1/article/getArticles", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify(body),
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as {
+          articles?: { results?: Array<{ title?: string; url?: string; dateTime?: string; body?: string; source?: { uri?: string; title?: string }; sentiment?: number }> };
+        };
+        return (json.articles?.results ?? [])
+          .filter((a) => a.title && a.url)
+          .map((a) => ({
+            source: "eventregistry",
+            outlet: a.source?.uri ?? a.source?.title ?? "eventregistry",
+            title: a.title!,
+            url: a.url!,
+            publishedAt: a.dateTime ?? new Date().toISOString(),
+            ...(a.body ? { snippet: a.body.slice(0, 240) } : {}),
+            ...(typeof a.sentiment === "number" ? { sentiment: a.sentiment } : {}),
+          } as NewsArticle));
+      } catch (err) {
+        console.warn("[eventregistry] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// ── Polygon.io news — premium (also financial data) ────────────────────
+function polygonAdapter(): NewsAdapter {
+  const key = process.env["POLYGON_API_KEY"];
+  if (!key) return NULL_NEWS_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({
+          "ticker.any_of": subjectName,
+          limit: String(opts?.limit ?? 25),
+          order: "desc",
+          sort: "published_utc",
+          apiKey: key,
+        });
+        const res = await abortable(
+          fetch(`https://api.polygon.io/v2/reference/news?${params.toString()}`),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as {
+          results?: Array<{ id?: string; title?: string; article_url?: string; published_utc?: string; description?: string; publisher?: { name?: string; homepage_url?: string } }>;
+        };
+        return (json.results ?? [])
+          .filter((a) => a.title && a.article_url)
+          .map((a) => ({
+            source: "polygon",
+            outlet: a.publisher?.name ?? a.publisher?.homepage_url ?? "polygon.io",
+            title: a.title!,
+            url: a.article_url!,
+            publishedAt: a.published_utc ?? new Date().toISOString(),
+            ...(a.description ? { snippet: a.description } : {}),
+          } as NewsArticle));
+      } catch (err) {
+        console.warn("[polygon] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// ── Tiingo News — premium ──────────────────────────────────────────────
+function tiingoAdapter(): NewsAdapter {
+  const key = process.env["TIINGO_API_KEY"];
+  if (!key) return NULL_NEWS_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({
+          tickers: subjectName,
+          limit: String(opts?.limit ?? 25),
+          sortBy: "publishedDate",
+          token: key,
+        });
+        const res = await abortable(
+          fetch(`https://api.tiingo.com/tiingo/news?${params.toString()}`, {
+            headers: { accept: "application/json" },
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as Array<{
+          id?: number; title?: string; url?: string; publishedDate?: string; description?: string; source?: string;
+        }>;
+        return (Array.isArray(json) ? json : [])
+          .filter((a) => a.title && a.url)
+          .map((a) => ({
+            source: "tiingo",
+            outlet: a.source ?? "tiingo",
+            title: a.title!,
+            url: a.url!,
+            publishedAt: a.publishedDate ?? new Date().toISOString(),
+            ...(a.description ? { snippet: a.description } : {}),
+          } as NewsArticle));
+      } catch (err) {
+        console.warn("[tiingo] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
 // ── Master aggregator ───────────────────────────────────────────────────
 /**
  * Returns ALL available news adapters whose env keys are configured.
@@ -575,6 +866,13 @@ export function activeNewsAdapters(): NewsAdapter[] {
     factsetAdapter(),
     spGlobalAdapter(),
     moodysOrbisAdapter(),
+    guardianAdapter(),
+    nytAdapter(),
+    aylienAdapter(),
+    webzAdapter(),
+    eventRegistryAdapter(),
+    polygonAdapter(),
+    tiingoAdapter(),
   ].filter((a) => a.isAvailable());
 }
 
@@ -592,6 +890,13 @@ export function activeNewsProviders(): string[] {
     ["SPGLOBAL_API_KEY", "spglobal"],
     ["MOODYS_ORBIS_API_KEY", "moodys-orbis"],
     ["BLOOMBERG_API_KEY", "bloomberg"],
+    ["GUARDIAN_API_KEY", "guardian"],
+    ["NYT_API_KEY", "nyt"],
+    ["AYLIEN_API_KEY", "aylien"],
+    ["WEBZ_API_KEY", "webz"],
+    ["EVENTREGISTRY_API_KEY", "eventregistry"],
+    ["POLYGON_API_KEY", "polygon"],
+    ["TIINGO_API_KEY", "tiingo"],
   ];
   return keys.filter(([envKey]) => process.env[envKey]).map(([, name]) => name);
 }

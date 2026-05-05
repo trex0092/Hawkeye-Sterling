@@ -10,6 +10,7 @@ import { enforce } from "@/lib/server/enforce";
 import { loadCandidates } from "@/lib/server/candidates-loader";
 import { LIVE_OPENSANCTIONS_ADAPTER } from "@/lib/intelligence/liveAdapters";
 import { bestCommercialAdapter, activeCommercialProvider } from "@/lib/intelligence/commercialAdapters";
+import { searchAllRegistries } from "@/lib/intelligence/registryAdapters";
 
 // Compiled backend entry point. The root `tsc` build (npm run build at the repo root)
 // must run before this API route is bundled. Netlify build order is encoded in
@@ -116,6 +117,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     // watchlists. Best-effort: failure here doesn't 5xx the screening.
     let openSanctionsResults: Awaited<ReturnType<typeof LIVE_OPENSANCTIONS_ADAPTER.lookup>> = [];
     let commercialResults: Awaited<ReturnType<ReturnType<typeof bestCommercialAdapter>["lookup"]>> = [];
+    let registryResults: Awaited<ReturnType<typeof searchAllRegistries>> = { records: [], providersUsed: [] };
     if (result.hits.length < 3 && subject.name.length >= 3) {
       try {
         openSanctionsResults = await LIVE_OPENSANCTIONS_ADAPTER.lookup(
@@ -134,6 +136,14 @@ export async function POST(req: Request): Promise<NextResponse> {
           );
         } catch { /* best-effort */ }
       }
+      // Corporate-registry adapters (OpenCorporates, UK Companies House,
+      // SEC EDGAR, ICIJ Offshore Leaks, Crunchbase, PitchBook) — env-gated.
+      try {
+        registryResults = await searchAllRegistries(
+          subject.name,
+          subject.jurisdiction ? { jurisdiction: subject.jurisdiction, limit: 10 } : { limit: 10 },
+        );
+      } catch { /* best-effort */ }
     }
     return respond(
       200,
@@ -147,6 +157,12 @@ export async function POST(req: Request): Promise<NextResponse> {
           ? {
               commercialAugmentation: commercialResults.slice(0, 10),
               commercialProvider: activeCommercialProvider(),
+            }
+          : {}),
+        ...(registryResults.records.length > 0
+          ? {
+              registryAugmentation: registryResults.records.slice(0, 15),
+              registryProviders: registryResults.providersUsed,
             }
           : {}),
       } as QuickScreenResponse,
