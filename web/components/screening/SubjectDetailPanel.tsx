@@ -57,6 +57,7 @@ import {
   BrainCoverageGap,
 } from "@/components/screening/BrainIntelPack";
 import { OwnershipTab } from "@/components/screening/OwnershipTab";
+import { BrainIntelligencePack } from "@/components/screening/BrainIntelligencePack";
 import { CrossRegimeConflictCard } from "@/components/screening/CrossRegimeConflictCard";
 import { PepClassificationsList } from "@/components/screening/PepClassificationsList";
 import { StrDraftPreview } from "@/components/screening/StrDraftPreview";
@@ -90,7 +91,7 @@ import { riskLevelForVerdict, type HitResolutionReasonCategory } from "@/lib/typ
 // which made it visually identical to the Screening tab. Real
 // per-event timeline can return as its own panel when the engine
 // is wired.
-const TABS = ["Screening", "CDD/EDD", "Ownership", "Live reasoning", "Evidence", "AI Ethics", "Disambiguate"] as const;
+const TABS = ["Screening", "Intelligence", "CDD/EDD", "Ownership", "Live reasoning", "Evidence", "AI Ethics", "Disambiguate"] as const;
 type Tab = (typeof TABS)[number];
 
 // ── Hit Disambiguator types ───────────────────────────────────────────────────
@@ -1295,6 +1296,14 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
               name: subject.name,
               nationality: subject.country || subject.jurisdiction || undefined,
             }}
+          />
+        )}
+
+        {activeTab === "Intelligence" && (
+          <BrainIntelligencePack
+            subject={subject}
+            screen={screening.status === "success" ? screening.result : null}
+            superBrain={superBrain.status === "success" ? superBrain.result : null}
           />
         )}
 
