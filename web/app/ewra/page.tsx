@@ -245,13 +245,33 @@ export default function EwraPage() {
           reportingPeriod: new Date().getFullYear().toString(),
           context: `Last approved: ${state.lastApproved || "not recorded"}. Approved by: ${state.approvedBy || "pending"}. Board minutes ref: ${state.boardMinutes || "none"}.`,
         }),
+        signal: AbortSignal.timeout(60_000),
       });
-      const data = (await res.json()) as { ok: boolean; error?: string } & EwraBoardReportResult;
+      // Read body once — Lambda 502 returns HTML; we surface a clean error
+      // rather than the raw "Unexpected token <" parse failure.
+      const raw = await res.text().catch(() => "");
+      const isHtml = raw.trimStart().toLowerCase().startsWith("<");
+      if (!res.ok || isHtml) {
+        setBoardError(
+          res.status === 503
+            ? "Board-report service temporarily unavailable. Set ANTHROPIC_API_KEY on the deployment, or retry in a moment."
+            : isHtml
+              ? `Board-report server returned HTML (HTTP ${res.status}) — likely a Netlify 502 / function timeout. Please retry.`
+              : `Board-report failed (HTTP ${res.status}). Please retry.`,
+        );
+        return;
+      }
+      let data: { ok: boolean; error?: string } & EwraBoardReportResult;
+      try { data = JSON.parse(raw); }
+      catch { setBoardError("Board-report returned a malformed response. Please retry."); return; }
       if (!data.ok) { setBoardError(data.error ?? "Report generation failed"); return; }
       setBoardReport(data);
       setBoardOpen(true);
-    } catch {
-      setBoardError("Network error — try again");
+    } catch (err) {
+      const isTimeout = err instanceof Error && (err.name === "AbortError" || err.name === "TimeoutError");
+      setBoardError(isTimeout
+        ? "Board-report timed out after 60s — please retry."
+        : `Network error — ${err instanceof Error ? err.message : String(err)}.`);
     } finally {
       setBoardLoading(false);
     }
