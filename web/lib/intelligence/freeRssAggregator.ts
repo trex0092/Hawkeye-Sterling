@@ -33,11 +33,33 @@ interface RssFeed {
 // All public, no key required, terms-of-service permit aggregation
 // when properly attributed (we always preserve the canonical link).
 const FREE_RSS_FEEDS: RssFeed[] = [
-  // ── Wire services
+  // ── Wire services + flagship news (multi-channel)
   { source: "reuters-rss", outlet: "reuters.com", url: "https://www.reutersagency.com/feed/?best-topics=business-finance&post_type=best" },
+  { source: "reuters-world-rss", outlet: "reuters.com", url: "https://www.reutersagency.com/feed/?best-topics=world&post_type=best" },
+  { source: "reuters-markets-rss", outlet: "reuters.com", url: "https://www.reutersagency.com/feed/?best-topics=markets&post_type=best" },
+  { source: "reuters-regulation-rss", outlet: "reuters.com", url: "https://www.reutersagency.com/feed/?best-topics=regulation&post_type=best" },
   { source: "ap-rss", outlet: "apnews.com", url: "https://feeds.apnews.com/rss/apf-topnews" },
   { source: "ap-business-rss", outlet: "apnews.com", url: "https://feeds.apnews.com/rss/apf-business" },
   { source: "afp-rss", outlet: "afp.com", url: "https://www.afp.com/en/rss.xml" },
+  // Bloomberg — limited public RSS via Bloomberg syndication
+  { source: "bloomberg-rss", outlet: "bloomberg.com", url: "https://feeds.bloomberg.com/markets/news.rss" },
+  { source: "bloomberg-politics-rss", outlet: "bloomberg.com", url: "https://feeds.bloomberg.com/politics/news.rss" },
+  { source: "bloomberg-business-rss", outlet: "bloomberg.com", url: "https://feeds.bloomberg.com/business/news.rss" },
+  // BBC — multi-channel
+  { source: "bbc-politics-rss", outlet: "bbc.co.uk", url: "http://feeds.bbci.co.uk/news/politics/rss.xml" },
+  { source: "bbc-uk-rss", outlet: "bbc.co.uk", url: "http://feeds.bbci.co.uk/news/uk/rss.xml" },
+  { source: "bbc-tech-rss", outlet: "bbc.co.uk", url: "http://feeds.bbci.co.uk/news/technology/rss.xml" },
+  // Amazon-region environmental + AML investigations (catches the
+  // illegal-gold / wildlife-trafficking / TBML stories that hit
+  // Brazilian DTVMs like Ourominas).
+  { source: "amazoniareal-rss", outlet: "amazoniareal.com.br", url: "https://amazoniareal.com.br/feed/" },
+  { source: "infoamazonia-rss", outlet: "infoamazonia.org", url: "https://infoamazonia.org/feed/" },
+  { source: "mongabay-rss", outlet: "mongabay.com", url: "https://news.mongabay.com/feed/" },
+  // Insight / regulatory + business-intelligence specialists
+  { source: "ensia-rss", outlet: "ensia.com", url: "https://ensia.com/feed/" },
+  { source: "engineeringnews-rss", outlet: "engineeringnews.co.za", url: "https://www.engineeringnews.co.za/rss" },
+  { source: "intelligenceonline-rss", outlet: "intelligenceonline.com", url: "https://www.intelligenceonline.com/rss" },
+  { source: "africaintelligence-rss", outlet: "africaintelligence.com", url: "https://www.africaintelligence.com/rss" },
 
   // ── Investigative journalism (the BIG MISS for niche AML reporting)
   { source: "occrp-rss", outlet: "occrp.org", url: "https://www.occrp.org/en/feed/rss" },
@@ -169,6 +191,140 @@ const FREE_RSS_FEEDS: RssFeed[] = [
   // ── International / agencies
   { source: "un-news-rss", outlet: "news.un.org", url: "https://news.un.org/feed/subscribe/en/news/all/rss.xml" },
   { source: "ec-press-rss", outlet: "ec.europa.eu", url: "https://ec.europa.eu/commission/presscorner/api/rss?language=en&pageType=press_release" },
+
+  // ─────────────────────────────────────────────────────────────────
+  // EXPANDED COVERAGE
+  // ─────────────────────────────────────────────────────────────────
+
+  // ── US + Canada extended
+  { source: "cnbc-rss", outlet: "cnbc.com", url: "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=10000664" },
+  { source: "msnbc-rss", outlet: "msnbc.com", url: "https://www.msnbc.com/feeds/latest" },
+  { source: "foxbusiness-rss", outlet: "foxbusiness.com", url: "https://moxie.foxbusiness.com/google-publisher/latest.xml" },
+  { source: "usatoday-rss", outlet: "usatoday.com", url: "https://www.usatoday.com/marketing/rss/news/" },
+  { source: "latimes-rss", outlet: "latimes.com", url: "https://www.latimes.com/business/rss2.0.xml" },
+  { source: "chicagotribune-rss", outlet: "chicagotribune.com", url: "https://www.chicagotribune.com/arc/outboundfeeds/rss/" },
+  { source: "bostonglobe-rss", outlet: "bostonglobe.com", url: "https://www.bostonglobe.com/rss/business" },
+  { source: "torontostar-rss", outlet: "thestar.com", url: "https://www.thestar.com/feeds.articles.business.rss" },
+  { source: "globeandmail-rss", outlet: "theglobeandmail.com", url: "https://www.theglobeandmail.com/business/?service=rss" },
+  { source: "marshallproject-rss", outlet: "themarshallproject.org", url: "https://www.themarshallproject.org/rss/recent.rss" },
+
+  // ── UK extended
+  { source: "thetimes-rss", outlet: "thetimes.co.uk", url: "https://www.thetimes.co.uk/business/rss" },
+  { source: "dailymail-rss", outlet: "dailymail.co.uk", url: "https://www.dailymail.co.uk/articles.rss?columnname=mol-fe-channel-money" },
+  { source: "thesun-rss", outlet: "thesun.co.uk", url: "https://www.thesun.co.uk/feed/" },
+  { source: "mirror-rss", outlet: "mirror.co.uk", url: "https://www.mirror.co.uk/news/?service=rss" },
+  { source: "dailyexpress-rss", outlet: "express.co.uk", url: "https://www.express.co.uk/posts/rss/1/uk" },
+
+  // ── Continental Europe extended
+  { source: "diezeit-rss", outlet: "zeit.de", url: "https://newsfeed.zeit.de/wirtschaft/index" },
+  { source: "welt-rss", outlet: "welt.de", url: "https://www.welt.de/feeds/section/wirtschaft.rss" },
+  { source: "bild-rss", outlet: "bild.de", url: "https://www.bild.de/rssfeeds/vw-wirtschaft/vw-wirtschaft-16728880,view=rss2.bild.xml" },
+  { source: "tagesspiegel-rss", outlet: "tagesspiegel.de", url: "https://www.tagesspiegel.de/contentexport/feed/wirtschaft" },
+  { source: "nrc-rss", outlet: "nrc.nl", url: "https://www.nrc.nl/rss/" },
+  { source: "volkskrant-rss", outlet: "volkskrant.nl", url: "https://www.volkskrant.nl/economie/rss.xml" },
+  { source: "fd-rss", outlet: "fd.nl", url: "https://fd.nl/?widget=rss" },
+  { source: "hs-rss", outlet: "hs.fi", url: "https://www.hs.fi/rss/talous.xml" },
+  { source: "aftonbladet-rss", outlet: "aftonbladet.se", url: "https://www.aftonbladet.se/nyheter/rss.xml" },
+  { source: "dagensnyheter-rss", outlet: "dn.se", url: "https://www.dn.se/ekonomi/rss/" },
+  { source: "vg-rss", outlet: "vg.no", url: "https://www.vg.no/rss/feed/?categories=Næringsliv&format=rss" },
+  { source: "aftenposten-rss", outlet: "aftenposten.no", url: "https://www.aftenposten.no/rss" },
+  { source: "berlingske-rss", outlet: "berlingske.dk", url: "https://www.berlingske.dk/business/rss" },
+  { source: "politiken-rss", outlet: "politiken.dk", url: "https://politiken.dk/rss/erhverv.rss" },
+
+  // ── East Asia extended
+  { source: "asahi-rss", outlet: "asahi.com", url: "https://www.asahi.com/rss/asahi/business.rdf" },
+  { source: "mainichi-rss", outlet: "mainichi.jp", url: "https://mainichi.jp/rss/etc/economy.rss" },
+  { source: "yomiuri-rss", outlet: "yomiuri.co.jp", url: "https://www.yomiuri.co.jp/rss/yol/economy/feed.xml" },
+  { source: "japantimes-rss", outlet: "japantimes.co.jp", url: "https://www.japantimes.co.jp/news/business/feed/" },
+  { source: "koreaherald-rss", outlet: "koreaherald.com", url: "https://www.koreaherald.com/common/rss_xml.php?ct=102" },
+  { source: "joongang-rss", outlet: "koreajoongangdaily.joins.com", url: "https://koreajoongangdaily.joins.com/section/business/rss" },
+  { source: "chosun-rss", outlet: "english.chosun.com", url: "https://english.chosun.com/svc/rss/rss.xml" },
+  { source: "hankyoreh-rss", outlet: "hani.co.kr", url: "https://www.hani.co.kr/rss/economy/" },
+  { source: "channelnewsasia-rss", outlet: "channelnewsasia.com", url: "https://www.channelnewsasia.com/api/v1/rss-outbound-feed?_format=xml&category=6511" },
+  { source: "straitstimes-rss", outlet: "straitstimes.com", url: "https://www.straitstimes.com/news/business/rss.xml" },
+  { source: "bangkokpost-rss", outlet: "bangkokpost.com", url: "https://www.bangkokpost.com/rss/data/business.xml" },
+  { source: "thestar-my-rss", outlet: "thestar.com.my", url: "https://www.thestar.com.my/rss/news" },
+  { source: "todayonline-rss", outlet: "todayonline.com", url: "https://www.todayonline.com/feed/rss" },
+  { source: "inquirer-rss", outlet: "inquirer.net", url: "https://newsinfo.inquirer.net/feed" },
+  { source: "rappler-rss", outlet: "rappler.com", url: "https://www.rappler.com/feed/" },
+
+  // ── India extended
+  { source: "livemint-rss", outlet: "livemint.com", url: "https://www.livemint.com/rss/news" },
+  { source: "businessstandard-rss", outlet: "business-standard.com", url: "https://www.business-standard.com/rss/home_page_top_stories.rss" },
+  { source: "economictimes-rss", outlet: "economictimes.indiatimes.com", url: "https://economictimes.indiatimes.com/rssfeeds/1977021501.cms" },
+  { source: "tribuneindia-rss", outlet: "tribuneindia.com", url: "https://www.tribuneindia.com/rss/feed?catId=23" },
+
+  // ── LATAM extended
+  { source: "globo-rss", outlet: "oglobo.globo.com", url: "https://oglobo.globo.com/rss/economia.xml" },
+  { source: "exame-rss", outlet: "exame.com", url: "https://exame.com/feed/" },
+  { source: "cartacapital-rss", outlet: "cartacapital.com.br", url: "https://www.cartacapital.com.br/feed/" },
+  { source: "brasil247-rss", outlet: "brasil247.com", url: "https://www.brasil247.com/rss" },
+  { source: "piaui-rss", outlet: "piaui.folha.uol.com.br", url: "https://piaui.folha.uol.com.br/feed/" },
+  { source: "aristegui-rss", outlet: "aristeguinoticias.com", url: "https://aristeguinoticias.com/feed/" },
+  { source: "animalpolitico-rss", outlet: "animalpolitico.com", url: "https://www.animalpolitico.com/feed" },
+  { source: "reforma-rss", outlet: "reforma.com", url: "https://www.reforma.com/rss/portada.xml" },
+  { source: "milenio-rss", outlet: "milenio.com", url: "https://www.milenio.com/rss/negocios" },
+  { source: "excelsior-rss", outlet: "excelsior.com.mx", url: "https://www.excelsior.com.mx/rss.xml" },
+  { source: "eltiempo-co-rss", outlet: "eltiempo.com", url: "https://www.eltiempo.com/rss/economia.xml" },
+  { source: "elcomercio-pe-rss", outlet: "elcomercio.pe", url: "https://elcomercio.pe/feed/" },
+  { source: "elmercurio-cl-rss", outlet: "elmercurio.com", url: "https://www.elmercurio.com/blogs/rss.xml" },
+  { source: "latercera-rss", outlet: "latercera.com", url: "https://www.latercera.com/feed/" },
+
+  // ── Russian + CIS independent extended
+  { source: "moscowtimes-rss", outlet: "themoscowtimes.com", url: "https://www.themoscowtimes.com/rss/news" },
+  { source: "theinsider-rss", outlet: "theins.ru", url: "https://theins.ru/feed" },
+  { source: "istories-rss", outlet: "istories.media", url: "https://istories.media/rss" },
+  { source: "verstka-rss", outlet: "verstka.media", url: "https://verstka.media/rss" },
+  { source: "holod-rss", outlet: "holod.media", url: "https://holod.media/feed/" },
+  { source: "mediazona-rss", outlet: "zona.media", url: "https://zona.media/rss" },
+  { source: "bell-rss", outlet: "thebell.io", url: "https://thebell.io/rss" },
+  { source: "ng-rss", outlet: "ng.ru", url: "https://www.ng.ru/rss/economics.xml" },
+
+  // ── MENA extended
+  { source: "daraj-rss", outlet: "daraj.media", url: "https://daraj.media/feed/" },
+  { source: "madamasr-rss", outlet: "madamasr.com", url: "https://www.madamasr.com/en/feed/" },
+  { source: "thenewarab-rss", outlet: "thenewarab.com", url: "https://www.thenewarab.com/news.xml" },
+  { source: "middleeasteye-rss", outlet: "middleeasteye.net", url: "https://www.middleeasteye.net/rss" },
+  { source: "amwaj-rss", outlet: "amwaj.media", url: "https://amwaj.media/feed/" },
+  { source: "hespress-rss", outlet: "hespress.com", url: "https://en.hespress.com/feed" },
+  { source: "tunisienumerique-rss", outlet: "tunisienumerique.com", url: "https://www.tunisienumerique.com/feed/" },
+
+  // ── Africa extended
+  { source: "saharareporters-rss", outlet: "saharareporters.com", url: "https://saharareporters.com/feed" },
+  { source: "africaconfidential-rss", outlet: "africa-confidential.com", url: "https://www.africa-confidential.com/feed/" },
+  { source: "iss-rss", outlet: "issafrica.org", url: "https://issafrica.org/iss-today/feed" },
+  { source: "thecitizen-tz-rss", outlet: "thecitizen.co.tz", url: "https://www.thecitizen.co.tz/tanzania/rss" },
+  { source: "businesslive-rss", outlet: "businesslive.co.za", url: "https://www.businesslive.co.za/feeds/businessday/business/" },
+  { source: "newsday-zw-rss", outlet: "newsday.co.zw", url: "https://www.newsday.co.zw/feed/" },
+  { source: "businessday-ng-rss", outlet: "businessday.ng", url: "https://businessday.ng/feed/" },
+  { source: "cipesa-rss", outlet: "cipesa.org", url: "https://cipesa.org/feed/" },
+
+  // ── Turkey independent extended
+  { source: "halktv-rss", outlet: "halktv.com.tr", url: "https://www.halktv.com.tr/service/rss.php" },
+  { source: "birgun-rss", outlet: "birgun.net", url: "https://www.birgun.net/rss" },
+  { source: "evrensel-rss", outlet: "evrensel.net", url: "https://www.evrensel.net/rss/haber.xml" },
+  { source: "karar-rss", outlet: "karar.com", url: "https://www.karar.com/rss/anasayfa.xml" },
+  { source: "ahval-rss", outlet: "ahvalnews.com", url: "https://ahvalnews.com/rss" },
+  { source: "stockholm-cf-rss", outlet: "stockholmcf.org", url: "https://stockholmcf.org/feed/" },
+  { source: "turkishminute-rss", outlet: "turkishminute.com", url: "https://www.turkishminute.com/feed/" },
+
+  // ── Asia investigative + regional
+  { source: "asiasentinel-rss", outlet: "asiasentinel.com", url: "https://www.asiasentinel.com/feed" },
+  { source: "thediplomat-rss", outlet: "thediplomat.com", url: "https://thediplomat.com/feed/" },
+  { source: "foreignpolicy-rss", outlet: "foreignpolicy.com", url: "https://foreignpolicy.com/feed/" },
+  { source: "globalvoices-rss", outlet: "globalvoices.org", url: "https://globalvoices.org/feed/" },
+
+  // ── Tech & financial niche (catches crypto + market manipulation cases)
+  { source: "techcrunch-rss", outlet: "techcrunch.com", url: "https://techcrunch.com/feed/" },
+  { source: "wired-rss", outlet: "wired.com", url: "https://www.wired.com/feed/rss" },
+  { source: "verge-rss", outlet: "theverge.com", url: "https://www.theverge.com/rss/index.xml" },
+  { source: "arstechnica-rss", outlet: "arstechnica.com", url: "https://feeds.arstechnica.com/arstechnica/index" },
+  { source: "venturebeat-rss", outlet: "venturebeat.com", url: "https://venturebeat.com/feed/" },
+  { source: "coindesk-rss", outlet: "coindesk.com", url: "https://www.coindesk.com/arc/outboundfeeds/rss/" },
+  { source: "theblock-rss", outlet: "theblock.co", url: "https://www.theblock.co/rss.xml" },
+  { source: "decrypt-rss", outlet: "decrypt.co", url: "https://decrypt.co/feed" },
+  { source: "cointelegraph-rss", outlet: "cointelegraph.com", url: "https://cointelegraph.com/rss" },
+  { source: "krebsonsecurity-rss", outlet: "krebsonsecurity.com", url: "https://krebsonsecurity.com/feed/" },
 ];
 
 // Cheap RSS / Atom parser — extracts <item> or <entry> blocks; we don't
