@@ -645,6 +645,136 @@ function idMeAdapter(): KycVendorAdapter {
   };
 }
 
+// ── IDology — premium IDV ────────────────────────────────────────────
+function idologyAdapter(): KycVendorAdapter {
+  const username = process.env["IDOLOGY_USERNAME"];
+  const password = process.env["IDOLOGY_PASSWORD"];
+  if (!username || !password) return NULL_KYC_ADAPTER;
+  return {
+    isAvailable: () => true,
+    createCheck: async (req) => {
+      try {
+        const params = new URLSearchParams({
+          username, password,
+          firstName: req.subjectName.split(/\s+/)[0] ?? req.subjectName,
+          lastName: req.subjectName.split(/\s+/).slice(1).join(" "),
+          ...(req.email ? { email: req.email } : {}),
+          ...(req.countryCode ? { country: req.countryCode } : {}),
+          output: "json",
+        });
+        const res = await abortable(
+          fetch(`https://web.idologylive.com/api/idiq.svc?${params.toString()}`, {
+            method: "POST",
+            headers: { accept: "application/json" },
+          }),
+        );
+        if (!res.ok) return { ok: false, provider: "idology", error: `lookup failed (${res.status})` };
+        const json = (await res.json()) as { response?: { id?: string; results?: { key?: string } } };
+        const k = json.response?.results?.key;
+        const status = k === "result.match" ? "approved" : k === "result.no.match" ? "declined" : "review";
+        return { ok: true, provider: "idology", sessionId: json.response?.id, status };
+      } catch (err) { return { ok: false, provider: "idology", error: err instanceof Error ? err.message : String(err) }; }
+    },
+  };
+}
+
+// ── LexisNexis ThreatMetrix — premium device + identity risk ────────
+function threatMetrixAdapter(): KycVendorAdapter {
+  const orgId = process.env["THREATMETRIX_ORG_ID"];
+  const apiKey = process.env["THREATMETRIX_API_KEY"];
+  if (!orgId || !apiKey) return NULL_KYC_ADAPTER;
+  return {
+    isAvailable: () => true,
+    createCheck: async (req) => {
+      try {
+        const params = new URLSearchParams({
+          org_id: orgId,
+          api_key: apiKey,
+          full_name: req.subjectName,
+          ...(req.email ? { email: req.email } : {}),
+          ...(req.phone ? { phone: req.phone } : {}),
+          ...(req.countryCode ? { country: req.countryCode } : {}),
+          service_type: "session-policy",
+        });
+        const res = await abortable(
+          fetch(`https://h.online-metrix.net/api?${params.toString()}`, {
+            headers: { accept: "application/json" },
+          }),
+        );
+        if (!res.ok) return { ok: false, provider: "threatmetrix", error: `lookup failed (${res.status})` };
+        const json = (await res.json()) as { request_id?: string; review_status?: string };
+        const status = json.review_status === "pass" ? "approved" : json.review_status === "reject" ? "declined" : "review";
+        return { ok: true, provider: "threatmetrix", sessionId: json.request_id, status };
+      } catch (err) { return { ok: false, provider: "threatmetrix", error: err instanceof Error ? err.message : String(err) }; }
+    },
+  };
+}
+
+// ── Sift — premium fraud / risk decisioning ─────────────────────────
+function siftAdapter(): KycVendorAdapter {
+  const key = process.env["SIFT_API_KEY"];
+  const accountId = process.env["SIFT_ACCOUNT_ID"];
+  if (!key || !accountId) return NULL_KYC_ADAPTER;
+  return {
+    isAvailable: () => true,
+    createCheck: async (req) => {
+      try {
+        const body = {
+          $type: "$create_account",
+          $api_key: key,
+          $user_id: `hs-${Date.now()}`,
+          $name: req.subjectName,
+          ...(req.email ? { $user_email: req.email } : {}),
+          ...(req.phone ? { $phone: req.phone } : {}),
+          ...(req.countryCode ? { $country: req.countryCode } : {}),
+        };
+        const res = await abortable(
+          fetch("https://api.sift.com/v205/events", {
+            method: "POST",
+            headers: { "content-type": "application/json", accept: "application/json" },
+            body: JSON.stringify(body),
+          }),
+        );
+        if (!res.ok) return { ok: false, provider: "sift", error: `event failed (${res.status})` };
+        const json = (await res.json()) as { request?: string; status?: number; score?: number };
+        const status = typeof json.score === "number" && json.score < 30 ? "approved" : typeof json.score === "number" && json.score > 70 ? "declined" : "review";
+        return { ok: true, provider: "sift", sessionId: json.request, status };
+      } catch (err) { return { ok: false, provider: "sift", error: err instanceof Error ? err.message : String(err) }; }
+    },
+  };
+}
+
+// ── HyperVerge — premium IDV (APAC focus) ────────────────────────────
+function hyperVergeAdapter(): KycVendorAdapter {
+  const appId = process.env["HYPERVERGE_APP_ID"];
+  const appKey = process.env["HYPERVERGE_APP_KEY"];
+  if (!appId || !appKey) return NULL_KYC_ADAPTER;
+  return {
+    isAvailable: () => true,
+    createCheck: async (req) => {
+      try {
+        const body = {
+          fullName: req.subjectName,
+          ...(req.email ? { email: req.email } : {}),
+          ...(req.phone ? { phone: req.phone } : {}),
+          ...(req.countryCode ? { country: req.countryCode } : {}),
+          callbackUrl: process.env["HYPERVERGE_CALLBACK_URL"] ?? "",
+        };
+        const res = await abortable(
+          fetch("https://ind.idv.hyperverge.co/v1/link-kyc/sessions", {
+            method: "POST",
+            headers: { appId, appKey, "content-type": "application/json", accept: "application/json" },
+            body: JSON.stringify(body),
+          }),
+        );
+        if (!res.ok) return { ok: false, provider: "hyperverge", error: `session failed (${res.status})` };
+        const json = (await res.json()) as { result?: { transactionId?: string; url?: string } };
+        return { ok: true, provider: "hyperverge", sessionId: json.result?.transactionId, redirectUrl: json.result?.url, status: "pending" };
+      } catch (err) { return { ok: false, provider: "hyperverge", error: err instanceof Error ? err.message : String(err) }; }
+    },
+  };
+}
+
 // ── Aggregator ────────────────────────────────────────────────────────
 export function activeKycAdapters(): KycVendorAdapter[] {
   return [
@@ -666,6 +796,10 @@ export function activeKycAdapters(): KycVendorAdapter[] {
     stripeIdentityAdapter(),
     plaidIdentityAdapter(),
     idMeAdapter(),
+    idologyAdapter(),
+    threatMetrixAdapter(),
+    siftAdapter(),
+    hyperVergeAdapter(),
   ].filter((a) => a.isAvailable());
 }
 
@@ -689,6 +823,10 @@ export function activeKycProviders(): string[] {
     ["STRIPE_SECRET_KEY", "stripe-identity"],
     ["PLAID_CLIENT_ID", "plaid-identity"],
     ["IDME_CLIENT_ID", "idme"],
+    ["IDOLOGY_USERNAME", "idology"],
+    ["THREATMETRIX_ORG_ID", "threatmetrix"],
+    ["SIFT_API_KEY", "sift"],
+    ["HYPERVERGE_APP_ID", "hyperverge"],
   ];
   return checks.filter(([k]) => process.env[k]).map(([, n]) => n);
 }

@@ -577,6 +577,119 @@ function lexisNexisDiligenceAdapter(): RegistryAdapter {
   };
 }
 
+// ── Northdata.com — DE/EU corporate registry, premium ──────────────
+function northdataAdapter(): RegistryAdapter {
+  const key = process.env["NORTHDATA_API_KEY"];
+  if (!key) return NULL_REGISTRY_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({ name: subjectName, limit: String(opts?.limit ?? 25) });
+        const res = await abortable(
+          fetch(`https://www.northdata.com/_api/company/v1/search?${params.toString()}`, {
+            headers: { Authorization: `Bearer ${key}`, accept: "application/json" },
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as { results?: Array<{ name?: string; address?: { country?: string }; id?: string; status?: string; firstSeen?: string; url?: string }> };
+        return (json.results ?? []).filter((r) => r.name).map((r) => ({
+          source: "northdata", name: r.name!,
+          ...(r.address?.country ? { jurisdiction: r.address.country } : {}),
+          ...(r.id ? { registrationNumber: r.id } : {}),
+          ...(r.status ? { status: r.status } : {}),
+          ...(r.firstSeen ? { incorporationDate: r.firstSeen } : {}),
+          ...(r.url ? { url: r.url } : {}),
+        } satisfies RegistryRecord));
+      } catch (err) { console.warn("[northdata] failed:", err instanceof Error ? err.message : err); return []; }
+    },
+  };
+}
+
+// ── BoardEx — premium executive / board registry ───────────────────
+function boardExAdapter(): RegistryAdapter {
+  const key = process.env["BOARDEX_API_KEY"];
+  if (!key) return NULL_REGISTRY_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({ companyName: subjectName, max: String(opts?.limit ?? 25) });
+        const res = await abortable(
+          fetch(`https://api.boardex.com/v2/companies/search?${params.toString()}`, {
+            headers: { Authorization: `Bearer ${key}`, accept: "application/json" },
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as { items?: Array<{ companyName?: string; companyId?: string; country?: string; status?: string; foundedYear?: string }> };
+        return (json.items ?? []).filter((i) => i.companyName).map((i) => ({
+          source: "boardex", name: i.companyName!,
+          ...(i.country ? { jurisdiction: i.country } : {}),
+          ...(i.companyId ? { registrationNumber: i.companyId } : {}),
+          ...(i.status ? { status: i.status } : {}),
+          ...(i.foundedYear ? { incorporationDate: i.foundedYear } : {}),
+        } satisfies RegistryRecord));
+      } catch (err) { console.warn("[boardex] failed:", err instanceof Error ? err.message : err); return []; }
+    },
+  };
+}
+
+// ── Mergent Online (FactSet) — premium ─────────────────────────────
+function mergentAdapter(): RegistryAdapter {
+  const key = process.env["MERGENT_API_KEY"];
+  if (!key) return NULL_REGISTRY_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({ name: subjectName, limit: String(opts?.limit ?? 25) });
+        const res = await abortable(
+          fetch(`https://api.mergent.com/v3/companies/search?${params.toString()}`, {
+            headers: { Authorization: `Bearer ${key}`, accept: "application/json" },
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as { data?: Array<{ name?: string; mergent_id?: string; country?: string; status?: string; incorporation_date?: string }> };
+        return (json.data ?? []).filter((d) => d.name).map((d) => ({
+          source: "mergent", name: d.name!,
+          ...(d.country ? { jurisdiction: d.country } : {}),
+          ...(d.mergent_id ? { registrationNumber: d.mergent_id } : {}),
+          ...(d.status ? { status: d.status } : {}),
+          ...(d.incorporation_date ? { incorporationDate: d.incorporation_date } : {}),
+        } satisfies RegistryRecord));
+      } catch (err) { console.warn("[mergent] failed:", err instanceof Error ? err.message : err); return []; }
+    },
+  };
+}
+
+// ── Refinitiv Workspace Companies — premium ────────────────────────
+function refinitivWorkspaceAdapter(): RegistryAdapter {
+  const key = process.env["REFINITIV_WORKSPACE_API_KEY"];
+  if (!key) return NULL_REGISTRY_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({ q: subjectName, limit: String(opts?.limit ?? 25) });
+        const res = await abortable(
+          fetch(`https://api.refinitiv.com/data/companies/v1/search?${params.toString()}`, {
+            headers: { Authorization: `Bearer ${key}`, accept: "application/json" },
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as { results?: Array<{ name?: string; permId?: string; country?: string; status?: string; incorporationDate?: string }> };
+        return (json.results ?? []).filter((r) => r.name).map((r) => ({
+          source: "refinitiv-workspace", name: r.name!,
+          ...(r.country ? { jurisdiction: r.country } : {}),
+          ...(r.permId ? { registrationNumber: `PermID-${r.permId}` } : {}),
+          ...(r.status ? { status: r.status } : {}),
+          ...(r.incorporationDate ? { incorporationDate: r.incorporationDate } : {}),
+        } satisfies RegistryRecord));
+      } catch (err) { console.warn("[refinitiv-workspace] failed:", err instanceof Error ? err.message : err); return []; }
+    },
+  };
+}
+
 // ── Aggregator ────────────────────────────────────────────────────────
 export function activeRegistryAdapters(): RegistryAdapter[] {
   return [
@@ -592,6 +705,10 @@ export function activeRegistryAdapters(): RegistryAdapter[] {
     zoomInfoAdapter(),
     capitalIqAdapter(),
     lexisNexisDiligenceAdapter(),
+    northdataAdapter(),
+    boardExAdapter(),
+    mergentAdapter(),
+    refinitivWorkspaceAdapter(),
   ].filter((a) => a.isAvailable());
 }
 
@@ -609,6 +726,10 @@ export function activeRegistryProviders(): string[] {
     ["ZOOMINFO_API_KEY", "zoominfo"],
     ["CAPITALIQ_API_KEY", "capitaliq"],
     ["LEXISNEXIS_DILIGENCE_API_KEY", "lexisnexis-diligence"],
+    ["NORTHDATA_API_KEY", "northdata"],
+    ["BOARDEX_API_KEY", "boardex"],
+    ["MERGENT_API_KEY", "mergent"],
+    ["REFINITIV_WORKSPACE_API_KEY", "refinitiv-workspace"],
   ];
   return keys
     .filter(([envKey]) => {
