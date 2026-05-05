@@ -318,7 +318,20 @@ export async function POST(req: Request) {
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "typology-library/search temporarily unavailable - please retry." }, { status: 503 });
+  // Deterministic fallback — returns a minimal but valid empty-results
+  // response with a clear degraded note instead of 503ing the page.
+  const buildTemplate = (): TypologySearchResponse => ({
+    results: [],
+    totalFound: 0,
+    relatedCategories: [],
+  });
+  if (!apiKey) {
+    return NextResponse.json({
+      ...buildTemplate(),
+      degraded: true,
+      degradedReason: "ANTHROPIC_API_KEY not configured — typology-library AI search disabled. Set the key on the deployment to enable.",
+    });
+  }
 
   try {
     const client = getAnthropicClient(apiKey, 55_000);
@@ -353,7 +366,12 @@ Find the most relevant AML/CFT typologies matching this search. Return comprehen
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as TypologySearchResponse;
     return NextResponse.json(result);
-  } catch {
-    return NextResponse.json({ ok: false, error: "typology-library/search temporarily unavailable - please retry." }, { status: 503 });
+  } catch (err) {
+    console.warn("[typology-library/search] LLM failed:", err instanceof Error ? err.message : err);
+    return NextResponse.json({
+      ...buildTemplate(),
+      degraded: true,
+      degradedReason: `Typology search AI call failed: ${err instanceof Error ? err.message : String(err)}.`,
+    });
   }
 }
