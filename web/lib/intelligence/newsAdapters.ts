@@ -10,6 +10,8 @@
 // Every adapter degrades to a NULL fallback when keys are absent so
 // the surrounding code never has to branch on availability.
 
+import { freeRssAdapter } from "./freeRssAggregator";
+
 const FETCH_TIMEOUT_MS = 12_000;
 
 function abortable<T>(p: Promise<T>, ms = FETCH_TIMEOUT_MS): Promise<T> {
@@ -2842,6 +2844,7 @@ export function activeNewsAdapters(): NewsAdapter[] {
     afpAdapter(), yonhapAdapter(), kyodoAdapter(), anadoluAdapter(),
     dpaAdapter(), efeAdapter(), ansaAdapter(), alJazeeraAdapter(),
     riskNetAdapter(), complianceWeekAdapter(), amlWatchdogAdapter(), pegasusAdapter(),
+    freeRssAdapter(),
   ].filter((a) => a.isAvailable());
 }
 
@@ -2927,6 +2930,7 @@ export function activeNewsProviders(): string[] {
     ["COMPLIANCEWEEK_API_KEY", "complianceweek"],
     ["AMLWATCHDOG_API_KEY", "aml-watchdog"],
     ["PEGASUS_API_KEY", "pegasus"],
+    ["FREE_RSS_ENABLED", "free-rss-aggregator"],
   ];
   return keys.filter(([envKey]) => process.env[envKey]).map(([, name]) => name);
 }
