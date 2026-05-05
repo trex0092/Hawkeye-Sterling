@@ -179,9 +179,14 @@ async function liveAdverseMedia(subject: string) {
   if (!gdeltResult.ok) {
     console.warn(`[adverse-media] GDELT unavailable for "${subject}": ${gdeltResult.error}`);
     const now = new Date().toISOString();
-    return {
+    const degraded: ReturnType<typeof analyseAdverseMediaResult> & {
+      gdeltSource: boolean;
+      gdeltArticleCount: number;
+      gdeltFailed: boolean;
+      gdeltError?: string;
+    } = {
       subject,
-      riskTier: "unknown" as const,
+      riskTier: "unknown",
       riskDetail: `Adverse media search incomplete — GDELT live feed unavailable (${gdeltResult.error}). Manual MLRO review required.`,
       totalItems: 0,
       adverseItems: 0,
@@ -191,7 +196,7 @@ async function liveAdverseMedia(subject: string) {
       lowCount: 0,
       sarRecommended: false,
       sarBasis: "Cannot determine — live news feed unavailable",
-      confidenceTier: "low" as const,
+      confidenceTier: "low",
       confidenceBasis: "GDELT query failed; no articles analysed",
       counterfactual: "Restore GDELT connectivity and re-run to get a reliable assessment",
       investigationLines: ["Perform manual adverse-media search via Google, Reuters, Bloomberg"],
@@ -203,8 +208,9 @@ async function liveAdverseMedia(subject: string) {
       gdeltSource: true,
       gdeltArticleCount: 0,
       gdeltFailed: true,
-      gdeltError: gdeltResult.error,
-    } as ReturnType<typeof analyseAdverseMediaResult>;
+      ...(gdeltResult.error ? { gdeltError: gdeltResult.error } : {}),
+    };
+    return degraded;
   }
 
   const now = new Date().toISOString();

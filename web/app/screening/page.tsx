@@ -56,7 +56,7 @@ const RESCREEN_SEV_STYLE: Record<NewHit["severity"], string> = {
 
 // ── Adverse Media types ───────────────────────────────────────────────────────
 
-type AdverseRiskTier = "clear" | "low" | "medium" | "high" | "critical";
+type AdverseRiskTier = "clear" | "low" | "medium" | "high" | "critical" | "unknown";
 
 interface AdverseMediaFinding {
   itemId: string;
@@ -113,6 +113,8 @@ const ADVERSE_TIER_STYLE: Record<AdverseRiskTier, string> = {
   medium:   "bg-amber-dim text-amber border border-amber/30",
   low:      "bg-amber-dim text-amber border border-amber/30",
   clear:    "bg-green-dim text-green border border-green/30",
+  // Live feed unavailable — explicit degraded state, never treat as clear.
+  unknown:  "bg-amber-dim text-amber border border-amber/40",
 };
 
 const ADVERSE_SEV_STYLE: Record<string, string> = {
