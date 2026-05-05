@@ -2209,6 +2209,158 @@ function theNewsApiAdapter(): NewsAdapter {
   };
 }
 
+// ── ICE Connect News ────────────────────────────────────────────────
+function iceConnectAdapter(): NewsAdapter {
+  const key = process.env["ICE_CONNECT_API_KEY"];
+  if (!key) return NULL_NEWS_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({ q: `"${subjectName}"`, limit: String(opts?.limit ?? 25) });
+        const res = await abortable(
+          fetch(`https://api.theice.com/connect/v1/news/search?${params.toString()}`, {
+            headers: { Authorization: `Bearer ${key}`, accept: "application/json" },
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as { items?: Array<{ headline?: string; link?: string; publishedAt?: string; summary?: string; source?: string }> };
+        return (json.items ?? []).filter((i) => i.headline && i.link).map((i) => ({
+          source: "ice-connect", outlet: i.source ?? "ice", title: i.headline!, url: i.link!,
+          publishedAt: i.publishedAt ?? new Date().toISOString(), ...(i.summary ? { snippet: i.summary } : {}),
+        } as NewsArticle));
+      } catch (err) { console.warn("[ice-connect] failed:", err instanceof Error ? err.message : err); return []; }
+    },
+  };
+}
+
+// ── Stocktwits — social-finance feed ────────────────────────────────
+function stocktwitsAdapter(): NewsAdapter {
+  const key = process.env["STOCKTWITS_API_KEY"];
+  if (!key) return NULL_NEWS_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({ access_token: key, limit: String(opts?.limit ?? 25) });
+        const res = await abortable(
+          fetch(`https://api.stocktwits.com/api/2/streams/symbol/${encodeURIComponent(subjectName)}.json?${params.toString()}`),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as { messages?: Array<{ id?: number; body?: string; created_at?: string; user?: { username?: string }; entities?: { sentiment?: { basic?: string } }; links?: Array<{ url?: string }> }> };
+        return (json.messages ?? []).filter((m) => m.body).slice(0, opts?.limit ?? 25).map((m) => ({
+          source: "stocktwits", outlet: m.user?.username ?? "stocktwits",
+          title: m.body!.slice(0, 120),
+          url: m.links?.[0]?.url ?? `https://stocktwits.com/message/${m.id}`,
+          publishedAt: m.created_at ?? new Date().toISOString(),
+          ...(m.body ? { snippet: m.body.slice(0, 240) } : {}),
+          ...(m.entities?.sentiment?.basic === "Bullish" ? { sentiment: 0.5 } : m.entities?.sentiment?.basic === "Bearish" ? { sentiment: -0.5 } : {}),
+        } as NewsArticle));
+      } catch (err) { console.warn("[stocktwits] failed:", err instanceof Error ? err.message : err); return []; }
+    },
+  };
+}
+
+// ── Investing.com (RapidAPI) ────────────────────────────────────────
+function investingComAdapter(): NewsAdapter {
+  const key = process.env["INVESTING_COM_API_KEY"];
+  if (!key) return NULL_NEWS_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({ symbol: subjectName, limit: String(opts?.limit ?? 25) });
+        const res = await abortable(
+          fetch(`https://investing-com.p.rapidapi.com/news/search?${params.toString()}`, {
+            headers: { "x-rapidapi-key": key, "x-rapidapi-host": "investing-com.p.rapidapi.com" },
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as { data?: Array<{ title?: string; link?: string; date?: string; description?: string; source?: string }> };
+        return (json.data ?? []).filter((d) => d.title && d.link).map((d) => ({
+          source: "investing.com", outlet: d.source ?? "investing.com", title: d.title!, url: d.link!,
+          publishedAt: d.date ?? new Date().toISOString(), ...(d.description ? { snippet: d.description } : {}),
+        } as NewsArticle));
+      } catch (err) { console.warn("[investing.com] failed:", err instanceof Error ? err.message : err); return []; }
+    },
+  };
+}
+
+// ── Lexology — legal news ───────────────────────────────────────────
+function lexologyAdapter(): NewsAdapter {
+  const key = process.env["LEXOLOGY_API_KEY"];
+  if (!key) return NULL_NEWS_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({ q: `"${subjectName}"`, max: String(opts?.limit ?? 25) });
+        const res = await abortable(
+          fetch(`https://api.lexology.com/v1/articles/search?${params.toString()}`, {
+            headers: { Authorization: `Bearer ${key}`, accept: "application/json" },
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as { items?: Array<{ title?: string; url?: string; publishedAt?: string; abstract?: string; firm?: string }> };
+        return (json.items ?? []).filter((i) => i.title && i.url).map((i) => ({
+          source: "lexology", outlet: i.firm ?? "lexology.com", title: i.title!, url: i.url!,
+          publishedAt: i.publishedAt ?? new Date().toISOString(), ...(i.abstract ? { snippet: i.abstract } : {}),
+        } as NewsArticle));
+      } catch (err) { console.warn("[lexology] failed:", err instanceof Error ? err.message : err); return []; }
+    },
+  };
+}
+
+// ── ProPublica investigations ───────────────────────────────────────
+function proPublicaAdapter(): NewsAdapter {
+  const key = process.env["PROPUBLICA_API_KEY"];
+  if (!key) return NULL_NEWS_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({ q: `"${subjectName}"`, limit: String(opts?.limit ?? 25) });
+        const res = await abortable(
+          fetch(`https://www.propublica.org/api/v1/search?${params.toString()}`, {
+            headers: { "x-api-key": key, accept: "application/json" },
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as { results?: Array<{ title?: string; url?: string; publishedAt?: string; snippet?: string }> };
+        return (json.results ?? []).filter((r) => r.title && r.url).map((r) => ({
+          source: "propublica", outlet: "propublica.org", title: r.title!, url: r.url!,
+          publishedAt: r.publishedAt ?? new Date().toISOString(), ...(r.snippet ? { snippet: r.snippet } : {}),
+        } as NewsArticle));
+      } catch (err) { console.warn("[propublica] failed:", err instanceof Error ? err.message : err); return []; }
+    },
+  };
+}
+
+// ── OCCRP Aleph — investigative journalism + leaks corpus ───────────
+function alephAdapter(): NewsAdapter {
+  const key = process.env["ALEPH_API_KEY"];
+  if (!key) return NULL_NEWS_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({ q: `"${subjectName}"`, limit: String(opts?.limit ?? 25), filter: "schema:Article" });
+        const res = await abortable(
+          fetch(`https://aleph.occrp.org/api/2/entities?${params.toString()}`, {
+            headers: { Authorization: `ApiKey ${key}`, accept: "application/json" },
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as { results?: Array<{ properties?: { title?: string[]; sourceUrl?: string[]; publishedAt?: string[]; description?: string[]; publisher?: string[] } }> };
+        return (json.results ?? []).map((r) => r.properties).filter((p): p is NonNullable<typeof p> => !!p?.title?.[0] && !!p?.sourceUrl?.[0]).map((p) => ({
+          source: "occrp-aleph", outlet: p.publisher?.[0] ?? "occrp", title: p.title![0]!, url: p.sourceUrl![0]!,
+          publishedAt: p.publishedAt?.[0] ?? new Date().toISOString(), ...(p.description?.[0] ? { snippet: p.description[0] } : {}),
+        } as NewsArticle));
+      } catch (err) { console.warn("[occrp-aleph] failed:", err instanceof Error ? err.message : err); return []; }
+    },
+  };
+}
+
 // ── Master aggregator ───────────────────────────────────────────────────
 /**
  * Returns ALL available news adapters whose env keys are configured.
@@ -2268,6 +2420,12 @@ export function activeNewsAdapters(): NewsAdapter[] {
     yahooFinanceAdapter(),
     stockNewsAdapter(),
     theNewsApiAdapter(),
+    iceConnectAdapter(),
+    stocktwitsAdapter(),
+    investingComAdapter(),
+    lexologyAdapter(),
+    proPublicaAdapter(),
+    alephAdapter(),
   ].filter((a) => a.isAvailable());
 }
 
@@ -2325,6 +2483,12 @@ export function activeNewsProviders(): string[] {
     ["YAHOO_FINANCE_API_KEY", "yahoo-finance"],
     ["STOCKNEWS_API_KEY", "stocknews"],
     ["THENEWSAPI_API_KEY", "thenewsapi"],
+    ["ICE_CONNECT_API_KEY", "ice-connect"],
+    ["STOCKTWITS_API_KEY", "stocktwits"],
+    ["INVESTING_COM_API_KEY", "investing.com"],
+    ["LEXOLOGY_API_KEY", "lexology"],
+    ["PROPUBLICA_API_KEY", "propublica"],
+    ["ALEPH_API_KEY", "occrp-aleph"],
   ];
   return keys.filter(([envKey]) => process.env[envKey]).map(([, name]) => name);
 }
