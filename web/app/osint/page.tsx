@@ -471,9 +471,10 @@ export default function OsintPage() {
                   <button
                     type="button"
                     onClick={() => window.print()}
-                    className="text-11 font-semibold px-3 py-1.5 rounded border border-hair-2 text-ink-2 hover:border-brand hover:text-brand transition-colors"
+                    className="text-11 font-mono px-3 py-1.5 rounded border font-semibold"
+                    style={{ color: "#7c3aed", borderColor: "#7c3aed", background: "rgba(124,58,237,0.07)" }}
                   >
-                    Export Intelligence Report
+                    PDF
                   </button>
                 </div>
               </div>

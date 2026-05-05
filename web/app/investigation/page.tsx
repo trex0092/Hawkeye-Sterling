@@ -439,8 +439,9 @@ export default function InvestigationPage() {
             </button>
             {packReady && (
               <button type="button" onClick={() => window.print()}
-                className="w-full text-11 font-semibold py-2 rounded bg-amber/10 border border-amber/40 text-amber hover:bg-amber/20 transition-colors">
-                ↓ Print / Export PDF
+                className="text-11 font-mono px-3 py-1.5 rounded border font-semibold"
+                style={{ color: "#7c3aed", borderColor: "#7c3aed", background: "rgba(124,58,237,0.07)" }}>
+                PDF
               </button>
             )}
           </div>

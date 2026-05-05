@@ -474,8 +474,9 @@ export default function BatchPage() {
                   CSV
                 </button>
                 <button onClick={downloadPdf}
-                  className="px-3 py-1.5 bg-bg-0/20 text-bg-0 border border-bg-0/30 rounded text-11 font-semibold hover:bg-bg-0/30">
-                  PDF audit
+                  className="text-11 font-mono px-3 py-1.5 rounded border font-semibold"
+                  style={{ color: "#7c3aed", borderColor: "#7c3aed", background: "rgba(124,58,237,0.07)" }}>
+                  PDF
                 </button>
               </div>
             </div>
