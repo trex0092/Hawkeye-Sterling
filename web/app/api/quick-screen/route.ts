@@ -10,6 +10,9 @@ import { enforce } from "@/lib/server/enforce";
 import { loadCandidates } from "@/lib/server/candidates-loader";
 import { LIVE_OPENSANCTIONS_ADAPTER } from "@/lib/intelligence/liveAdapters";
 import { bestCommercialAdapter, activeCommercialProvider } from "@/lib/intelligence/commercialAdapters";
+import { searchAllRegistries } from "@/lib/intelligence/registryAdapters";
+import { searchCountryRegistries } from "@/lib/intelligence/countryRegistries";
+import { searchCountrySanctions } from "@/lib/intelligence/countrySanctions";
 
 // Compiled backend entry point. The root `tsc` build (npm run build at the repo root)
 // must run before this API route is bundled. Netlify build order is encoded in
@@ -116,6 +119,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     // watchlists. Best-effort: failure here doesn't 5xx the screening.
     let openSanctionsResults: Awaited<ReturnType<typeof LIVE_OPENSANCTIONS_ADAPTER.lookup>> = [];
     let commercialResults: Awaited<ReturnType<ReturnType<typeof bestCommercialAdapter>["lookup"]>> = [];
+    let registryResults: Awaited<ReturnType<typeof searchAllRegistries>> = { records: [], providersUsed: [] };
     if (result.hits.length < 3 && subject.name.length >= 3) {
       try {
         openSanctionsResults = await LIVE_OPENSANCTIONS_ADAPTER.lookup(
@@ -134,6 +138,30 @@ export async function POST(req: Request): Promise<NextResponse> {
           );
         } catch { /* best-effort */ }
       }
+      // Corporate-registry adapters (OpenCorporates, UK Companies House,
+      // SEC EDGAR, ICIJ Offshore Leaks, Crunchbase, PitchBook) — env-gated.
+      try {
+        registryResults = await searchAllRegistries(
+          subject.name,
+          subject.jurisdiction ? { jurisdiction: subject.jurisdiction, limit: 10 } : { limit: 10 },
+        );
+      } catch { /* best-effort */ }
+    }
+
+    // Country-specific public registries (Companies House, FCA, INSEE,
+    // ZEFIX, KVK, Brønnøysund, CVR, YTJ, ABR, ACRA, NZBN, etc.) and
+    // country-issued sanctions lists (OFAC, HMT-OFSI, EU EBA, UN-SC,
+    // DFAT, SECO, SEMA, MAS, EOCN, METI). Always run when configured —
+    // these are the authoritative sources operators are auditioned on.
+    let countryRegistryResults: Awaited<ReturnType<typeof searchCountryRegistries>> = { records: [], jurisdictions: [] };
+    let countrySanctionsResults: Awaited<ReturnType<typeof searchCountrySanctions>> = { records: [], lists: [] };
+    if (subject.name.length >= 3) {
+      try {
+        countryRegistryResults = await searchCountryRegistries(subject.name, subject.jurisdiction ?? undefined, 10);
+      } catch { /* best-effort */ }
+      try {
+        countrySanctionsResults = await searchCountrySanctions(subject.name, subject.jurisdiction ?? undefined, 10);
+      } catch { /* best-effort */ }
     }
     return respond(
       200,
@@ -147,6 +175,24 @@ export async function POST(req: Request): Promise<NextResponse> {
           ? {
               commercialAugmentation: commercialResults.slice(0, 10),
               commercialProvider: activeCommercialProvider(),
+            }
+          : {}),
+        ...(registryResults.records.length > 0
+          ? {
+              registryAugmentation: registryResults.records.slice(0, 15),
+              registryProviders: registryResults.providersUsed,
+            }
+          : {}),
+        ...(countryRegistryResults.records.length > 0
+          ? {
+              countryRegistryAugmentation: countryRegistryResults.records.slice(0, 15),
+              countryRegistryJurisdictions: countryRegistryResults.jurisdictions,
+            }
+          : {}),
+        ...(countrySanctionsResults.records.length > 0
+          ? {
+              countrySanctionsAugmentation: countrySanctionsResults.records.slice(0, 15),
+              countrySanctionsLists: countrySanctionsResults.lists,
             }
           : {}),
       } as QuickScreenResponse,
