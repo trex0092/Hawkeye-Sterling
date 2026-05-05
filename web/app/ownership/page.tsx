@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import type { OwnershipResult } from "@/app/api/ownership/route";
+import { walkOwnershipChain, type OwnershipGraph } from "@/lib/intelligence/ownershipChain";
 
 // Module 37 — Corporate Ownership Explorer
 // Ultimate Beneficial Owner mapping, ownership tree visualisation, and
@@ -72,6 +73,40 @@ export default function OwnershipPage() {
   };
 
   const shellCfg = result ? SHELL_RISK_CONFIG[result.shellCompanyRisk] : null;
+
+  // ── Deterministic OFAC 50% rule walker ────────────────────────────────
+  // Parses the shareholders textarea into an ownership graph, treats any
+  // line containing "[SANCTIONED]" or "[OFAC]" or "[UN]" or "[EOCN]" as a
+  // designated party, and walks the chain to compute the cumulative
+  // designated-party stake at the root entity. Independent of the AI
+  // result — runs the moment shareholders are typed.
+  const ofacWalk = useMemo(() => {
+    if (!entityName.trim() || !shareholders.trim()) return null;
+    const nodes: OwnershipGraph["nodes"] = [
+      { id: "root", name: entityName.trim(), designated: false },
+    ];
+    const lines = shareholders.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+    for (let i = 0; i < lines.length; i += 1) {
+      const line = lines[i]!;
+      // Match "<name> — <pct>%" with optional "[SANCTIONED]" tag
+      const m = line.match(/^(.*?)\s*[—\-:]\s*(\d+(?:\.\d+)?)\s*%/);
+      if (!m) continue;
+      const name = m[1]!.replace(/\[(?:SANCTIONED|OFAC|UN|EOCN|EU|UK)\]/gi, "").trim();
+      const pct = Number(m[2]) / 100;
+      const designated = /\[(?:SANCTIONED|OFAC|UN|EOCN|EU|UK)\]/i.test(line);
+      const regimes = Array.from(line.matchAll(/\[(SANCTIONED|OFAC|UN|EOCN|EU|UK)\]/gi)).map((x) => x[1] ?? "");
+      const id = `sh-${i}`;
+      nodes.push({
+        id,
+        name,
+        designated,
+        ...(designated && regimes.length ? { regimes } : {}),
+        owns: [{ toId: "root", pct }],
+      });
+    }
+    if (nodes.length <= 1) return null;
+    return walkOwnershipChain({ rootId: "root", nodes });
+  }, [entityName, shareholders]);
 
   return (
     <ModuleLayout
@@ -415,6 +450,65 @@ export default function OwnershipPage() {
             <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2 mb-2">Summary</div>
             <p className="text-13 text-ink-1 leading-relaxed m-0">{result.summary}</p>
           </div>
+        </div>
+      )}
+
+      {/* Deterministic OFAC 50% rule walker */}
+      {ofacWalk && (
+        <div className={`mt-6 rounded-xl border p-5 ${
+          ofacWalk.blocked
+            ? "border-red/40 bg-red/5"
+            : "border-green/40 bg-green/5"
+        }`}>
+          <div className="flex items-baseline justify-between gap-3 mb-3 flex-wrap">
+            <div>
+              <div className="text-11 font-semibold uppercase tracking-wide-3 text-brand mb-0.5">
+                OFAC 50% rule walker (deterministic)
+              </div>
+              <div className="text-10 text-ink-3 font-mono">
+                Independent walk over the shareholder graph — flags any cumulative designated-party stake ≥ 50% at the root.
+                Tag a shareholder line with <code className="text-ink-1">[SANCTIONED]</code>, <code className="text-ink-1">[OFAC]</code>, <code className="text-ink-1">[UN]</code>, <code className="text-ink-1">[EOCN]</code>, <code className="text-ink-1">[EU]</code>, or <code className="text-ink-1">[UK]</code> to mark them as designated.
+              </div>
+            </div>
+            <span className={`text-12 font-bold uppercase ${ofacWalk.blocked ? "text-red" : "text-green"}`}>
+              {ofacWalk.blocked ? "BLOCKED" : "CLEAR"}
+            </span>
+          </div>
+          <div className="text-11 font-mono text-ink-2 mb-2">
+            Cumulative designated-party stake: <strong className="text-ink-0">{(ofacWalk.cumulativePct * 100).toFixed(1)}%</strong>
+            {" · "}{ofacWalk.examinedPaths} paths examined · max depth {ofacWalk.maxDepth}
+          </div>
+          {ofacWalk.traces.length > 0 && (
+            <div className="mt-3">
+              <div className="text-10 uppercase tracking-wide-3 text-ink-3 font-semibold mb-1.5">
+                Designated-party paths
+              </div>
+              <ul className="space-y-1.5">
+                {ofacWalk.traces.map((t, i) => (
+                  <li key={i} className="text-11 text-ink-1">
+                    <strong>{t.designatedName}</strong>
+                    <span className="font-mono text-ink-2">
+                      {" "}→ {(t.effectivePct * 100).toFixed(1)}% effective stake
+                    </span>
+                    <div className="text-10 text-ink-3 font-mono">
+                      path: {t.path.join(" → ")}
+                    </div>
+                    {t.regimes.length > 0 && (
+                      <div className="text-10 text-ink-3">
+                        regimes: {t.regimes.join(", ")}
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {ofacWalk.blocked && (
+            <p className="mt-3 text-11 text-red">
+              <strong>Action:</strong> OFAC 50% rule is engaged — refuse the relationship absent a specific licence. Verify any
+              ownership-chain documentation against the {ofacWalk.traces.length} designated-party path(s) above.
+            </p>
+          )}
         </div>
       )}
     </ModuleLayout>
