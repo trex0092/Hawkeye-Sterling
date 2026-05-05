@@ -126,7 +126,7 @@ export function exportEwraBoardReport(
       doc.setFont("times","italic"); doc.setFontSize(10); doc.setTextColor(PINK[0],PINK[1],PINK[2]);
       const nw = doc.getTextWidth(numStr+"  "); doc.text(numStr, ML+20, y);
       doc.setFont("helvetica","normal"); doc.setFontSize(9); doc.setTextColor(BLACK[0],BLACK[1],BLACK[2]);
-      const rl = doc.splitTextToSize(boardReport.boardRecommendations[i], CW-nw-20);
+      const rl = doc.splitTextToSize(boardReport.boardRecommendations[i] ?? "", CW-nw-20);
       doc.text(rl, ML+20+nw, y); y += rl.length*12+6;
     }
     y+=6;
