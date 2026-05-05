@@ -175,7 +175,7 @@ function buildInitialScreeningNotes(b: ReportBody): string {
   const listsHit = Array.from(new Set(hits.map((h) => h.listId)));
   const amFiring = esg.map((e) => e.label);
 
-  const reportId = `HWK-SCR-${gen.getUTCFullYear()}${String(gen.getUTCMonth() + 1).padStart(2, "0")}${String(gen.getUTCDate()).padStart(2, "0")}-INITIAL-${String(gen.getUTCHours()).padStart(2, "0")}${String(gen.getUTCMinutes()).padStart(2, "0")}`;
+  const reportId = `HWK-SCR-${String(gen.getUTCDate()).padStart(2, "0")}-${String(gen.getUTCMonth() + 1).padStart(2, "0")}-${gen.getUTCFullYear()}-INITIAL-${String(gen.getUTCHours()).padStart(2, "0")}${String(gen.getUTCMinutes()).padStart(2, "0")}`;
 
   const factsBits: string[] = [];
   const subjectDescriptor =

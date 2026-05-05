@@ -18,7 +18,7 @@ export async function POST(req: Request) {
 
   const { dateStr, time } = nowMeta();
   const dd = dateStr.slice(0,2), mm = dateStr.slice(3,5), yyyy = dateStr.slice(6);
-  const reportId = `SCR-${yyyy}-${mm}-${dd}`;
+  const reportId = `SCR-${dd}-${mm}-${yyyy}`;
   const regs = "UAE FDL 10/2025 · CBUAE AML STANDARDS · FATF R.10";
 
   const cover: CoverData = {
