@@ -122,6 +122,17 @@ export const CREDIBILITY_TIER: Record<string, number> = {
 
   // Local matcher (always trusted - it's our deterministic engine)
   "local": 1.0,
+
+  // LLM-prompt-based adverse-media recall (Claude). We weight it 0.65
+  // — strong enough to escalate from CLEAR to POSSIBLE on its own, but
+  // never enough to drive a POSITIVE rating without corroboration from
+  // a higher-tier source. Operators should manually verify LLM-only
+  // hits since model recall isn't perfect.
+  "claude-adverse-media": 0.65,
+
+  // URL-direct ingestion: trust matches the outlet domain we extract;
+  // baseline 0.75 since the operator explicitly pointed us at it.
+  "url-ingest": 0.75,
 };
 
 export function credibilityFor(source: string): number {

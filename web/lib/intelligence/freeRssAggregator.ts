@@ -10,6 +10,7 @@
 
 import type { NewsArticle, NewsAdapter } from "./newsAdapters";
 import { NULL_NEWS_ADAPTER } from "./newsAdapters";
+import { textMentionsAml, matchAmlKeywords } from "./amlKeywords";
 
 const FETCH_TIMEOUT_MS = 8_000;
 
@@ -250,8 +251,20 @@ export function freeRssAdapter(): NewsAdapter {
         if (!xml) continue;
         const parsed = parseFeed(xml, feed.source, feed.outlet);
         for (const a of parsed) {
-          const hay = `${a.title} ${a.snippet ?? ""}`.toLowerCase();
-          if (hay.includes(needle)) articles.push(a);
+          const hay = `${a.title} ${a.snippet ?? ""}`;
+          const lower = hay.toLowerCase();
+          if (!lower.includes(needle)) continue;
+          // Boost: when the article ALSO mentions an AML keyword
+          // (FATF predicate / sanctions / CFT terms), tag it. We
+          // still surface name-only matches but mark adversely-tagged
+          // ones so the consensus engine weights them higher.
+          const amlHit = textMentionsAml(hay);
+          articles.push({
+            ...a,
+            ...(amlHit ? {
+              snippet: `[AML-tagged: ${matchAmlKeywords(hay).slice(0, 3).join(", ")}] ${a.snippet ?? ""}`.trim(),
+            } : {}),
+          });
         }
       }
       // Dedupe by URL

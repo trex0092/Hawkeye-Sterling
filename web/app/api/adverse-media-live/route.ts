@@ -11,6 +11,7 @@
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { searchAllNews } from "@/lib/intelligence/newsAdapters";
+import { gdeltKeywordOr } from "@/lib/intelligence/amlKeywords";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 45;
@@ -126,31 +127,10 @@ function inferCategories(title: string, domain: string): string[] {
 }
 
 async function queryGdelt(subjectName: string): Promise<GdeltArticle[]> {
-  // Multilingual AML keyword fan-out — World Check is English-anchored;
-  // we cover the languages where adverse-media first surfaces (Turkish,
-  // Portuguese, Spanish, Russian, French, German, Arabic, Italian).
-  // GDELT supports these natively via their multi-lingual indexing.
-  const aml = [
-    // English
-    "sanctions", "fraud", "\"money laundering\"", "corruption", "crime", "arrest", "investigation", "indictment", "convicted", "bribery",
-    // Turkish
-    "tutuklandı", "gözaltı", "soruşturma", "yolsuzluk", "kara para", "rüşvet", "dolandırıcılık", "iddianame",
-    // Portuguese
-    "preso", "lavagem de dinheiro", "investigação", "corrupção", "fraude", "denúncia", "operação", "indiciado",
-    // Spanish
-    "detenido", "lavado de dinero", "investigación", "corrupción", "fraude", "denuncia", "operativo", "imputado",
-    // Russian
-    "арест", "коррупция", "отмывание", "следствие", "мошенничество", "взятка",
-    // French
-    "arrêté", "blanchiment", "corruption", "fraude", "enquête", "mise en examen",
-    // German
-    "verhaftet", "Geldwäsche", "Korruption", "Betrug", "Ermittlung", "Anklage",
-    // Arabic
-    "اعتقال", "غسيل أموال", "فساد", "احتيال", "تحقيق", "رشوة",
-    // Italian
-    "arrestato", "riciclaggio", "corruzione", "frode", "indagine",
-  ].join(" OR ");
-  const rawQuery = `"${subjectName}" AND (${aml})`;
+  // Canonical FATF-aligned multilingual keyword set lives in
+  // lib/intelligence/amlKeywords.ts — same source feeds the Claude LLM
+  // prompt and the free-RSS aggregator's filter.
+  const rawQuery = `"${subjectName}" AND (${gdeltKeywordOr()})`;
   // Art.19 rolling 10-year window — anchored to "now" at request time
   // so the lookback advances day-by-day. Earlier revisions hard-coded
   // timespan=7d, which silently scored decade-old prosecutions as CLEAR
