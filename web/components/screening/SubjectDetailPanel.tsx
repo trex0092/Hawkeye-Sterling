@@ -85,6 +85,7 @@ import {
   type HitResolutionVerdict,
 } from "@/lib/data/subject-store";
 import { riskLevelForVerdict, type HitResolutionReasonCategory } from "@/lib/types";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 // Timeline tab removed — its content was a placeholder + the same
 // adverse-media dossier rendered below the tabs unconditionally,
@@ -1056,7 +1057,7 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
   };
 
   return (
-    <aside className="bg-bg-panel border-l border-hair-2 p-6 overflow-y-auto">
+    <aside className="bg-bg-panel border-l border-hair-2 p-4 sm:p-6 overflow-y-auto overflow-x-hidden break-words">
       <div className="mb-5 pb-4 border-b border-hair">
         <div className="flex justify-between items-center mb-2">
           <p className="text-16 font-semibold text-ink-0 m-0">{subject.name}</p>
@@ -1948,6 +1949,7 @@ type HitStatusFilter = "unresolved" | "positive" | "possible" | "false" | "unspe
 
 function HitsList({ hits, subjectCtx }: { hits: QuickScreenHit[]; subjectCtx?: SubjectContext }) {
   const [filter, setFilter] = useState<HitStatusFilter>("all");
+  const { strings } = useLocale();
 
   // Read every hit's resolution (if any) so the counter tabs can show
   // Unresolved / Positive / Possible / False / Unspecified counts à la
@@ -2006,14 +2008,14 @@ function HitsList({ hits, subjectCtx }: { hits: QuickScreenHit[]; subjectCtx?: S
     );
   }
 
-  // World-Check-style status tabs.
+  // World-Check-style status tabs — labels translated per active locale.
   const tabs: Array<{ key: HitStatusFilter; label: string; count: number; cls: string }> = [
-    { key: "all",         label: "All",         count: counts.total,       cls: "text-ink-1" },
-    { key: "unresolved",  label: "Unresolved",  count: counts.unresolved,  cls: "text-amber" },
-    { key: "positive",    label: "Positive",    count: counts.positive,    cls: "text-red" },
-    { key: "possible",    label: "Possible",    count: counts.possible,    cls: "text-amber" },
-    { key: "false",       label: "False",       count: counts.false,       cls: "text-green" },
-    { key: "unspecified", label: "Unspecified", count: counts.unspecified, cls: "text-ink-2" },
+    { key: "all",         label: strings.all,           count: counts.total,       cls: "text-ink-1" },
+    { key: "unresolved",  label: strings.unresolved,    count: counts.unresolved,  cls: "text-amber" },
+    { key: "positive",    label: strings.positive,      count: counts.positive,    cls: "text-red" },
+    { key: "possible",    label: strings.possible,      count: counts.possible,    cls: "text-amber" },
+    { key: "false",       label: strings.falsePositive, count: counts.false,       cls: "text-green" },
+    { key: "unspecified", label: strings.unspecified,   count: counts.unspecified, cls: "text-ink-2" },
   ];
 
   return (

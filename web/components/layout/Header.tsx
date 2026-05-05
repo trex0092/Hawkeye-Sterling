@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { RegulatoryTicker } from "./RegulatoryTicker";
 import { InstallAppButton } from "./InstallAppButton";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 const NAV_TABS = [
   { key: "nav.screening", label: "🔎 Screening", href: "/screening" },
@@ -119,10 +120,23 @@ function applyTheme(theme: "light" | "dark"): void {
 
 export function Header() {
   const pathname = usePathname();
+  const { strings } = useLocale();
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [moreOpen, setMoreOpen] = useState(false);
   const moreButtonRef = useRef<HTMLDivElement>(null);
   const [dropdownPos, setDropdownPos] = useState<{ left: number; top: number } | null>(null);
+
+  // Top-nav labels resolved per active locale. Emoji prefixes are
+  // language-neutral so they stay across all locales.
+  const NAV_TABS_I18N = [
+    { label: `🔎 ${strings.screening}`, href: "/screening" },
+    { label: `🛰️ ${strings.liveIntel}`, href: "/intel" },
+    { label: `🗂️ ${strings.cases}`, href: "/cases" },
+    { label: `💸 ${strings.transactionMonitor}`, href: "/transaction-monitor" },
+    { label: `📁 ${strings.strCases}`, href: "/str-cases" },
+    { label: `👁️ ${strings.ongoingMonitor}`, href: "/ongoing-monitor" },
+    { label: `🧠 ${strings.mlroAdvisor}`, href: "/mlro-advisor" },
+  ];
 
   useEffect(() => {
     const storedTheme =
@@ -157,7 +171,7 @@ export function Header() {
         </a>
 
         <div className="flex gap-0.5 ml-2 md:ml-8">
-          {NAV_TABS.map((tab) => {
+          {NAV_TABS_I18N.map((tab) => {
             const active = isActive(pathname, tab.href);
             return (
               <a
@@ -195,7 +209,7 @@ export function Header() {
                   : "text-ink-2 hover:bg-bg-2 hover:text-ink-0"
               }`}
             >
-              More
+              {strings.more}
               <span className="text-10 text-ink-3">▾</span>
             </button>
             {moreOpen && dropdownPos && (
