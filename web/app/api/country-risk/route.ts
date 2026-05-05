@@ -119,29 +119,18 @@ export async function POST(req: Request) {
   const depth = body.analysisDepth ?? "quick";
   const detailInstruction =
     depth === "full"
-      ? "Provide comprehensive analysis with detailed context for each dimension, full regulatory obligations list, and at least 5 recent developments."
+      ? "Provide analysis with context for each dimension, regulatory obligations, and 3-5 recent developments."
       : "Provide a concise but complete analysis covering all required fields.";
 
-  // We extended this route to maxDuration=60. Construct an Anthropic client
-  // with a matching per-instance timeout (the default 22s would fire before
-  // our budget runs out and force fallback even on slowly-completing
-  // jurisdictions like Iran/Russia which routinely take 25-40s).
-  const sdkTimeoutMs = depth === "full" ? 55_000 : 30_000;
+  // Netlify edge gateway has a 26s inactivity timeout. Keep both modes well
+  // under that ceiling: Haiku at ≤1800 tokens reliably responds in 8-15s.
+  const sdkTimeoutMs = 22_000;
 
   try {
     const client = getAnthropicClient(apiKey, sdkTimeoutMs);
     const response = await client.messages.create({
-      // Quick mode (default) uses Haiku for sub-Lambda-timeout latency;
-      // full mode keeps Sonnet for richer analysis. Token budgets need to be
-      // generous enough that high-risk jurisdictions (Iran/Russia/etc) can
-      // emit a complete JSON object — too low a ceiling truncates mid-object,
-      // JSON.parse fails, and the catch surfaces a misleading "service
-      // unavailable" 503 even though the API call itself succeeded.
-      // Both modes now use Haiku 4.5 — Sonnet 4.6 with 4000 tokens for full
-      // mode reliably exceeded Netlify's 30s edge gateway "Inactivity Timeout"
-      // and 504-ed. Haiku at 2500–4000 tokens fits inside the window.
       model: "claude-haiku-4-5-20251001",
-      max_tokens: depth === "full" ? 4000 : 2500,
+      max_tokens: depth === "full" ? 1800 : 1200,
       system: [
         {
           type: "text",

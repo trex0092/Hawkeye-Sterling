@@ -27,7 +27,7 @@ export function CasesToolbar({ query, onQueryChange }: CasesToolbarProps) {
           <span className="font-semibold">Active</span>
         </button>
         <button className="inline-flex items-center gap-1.5 rounded bg-bg-panel border border-hair-2 px-2.5 py-[5px] text-11.5 font-medium text-ink-0 hover:border-hair-3 hover:bg-bg-2">
-          <span>Export:</span>
+          <span style={{color:"#22c55e"}}>↓</span>
           <span className="font-semibold">goAML</span>
         </button>
       </div>

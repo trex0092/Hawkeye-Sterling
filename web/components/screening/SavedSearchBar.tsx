@@ -132,8 +132,8 @@ export function SavedSearchBar({ active, onApply, appliedId }: Props) {
             placeholder="search name"
             className="bg-transparent text-11 text-ink-0 px-1 py-0 border-none focus:outline-none w-28"
           />
-          <button type="button" onClick={() => { void save(); }} className="text-11 text-brand font-semibold px-1">Save</button>
-          <button type="button" onClick={() => { setAdding(false); setDraftLabel(""); }} className="text-11 text-ink-3 px-1">Cancel</button>
+          <button type="button" onClick={() => { void save(); }} className="text-11 text-brand font-semibold px-1">✓</button>
+          <button type="button" onClick={() => { setAdding(false); setDraftLabel(""); }} className="text-11 text-red px-1">✕</button>
         </div>
       ) : (
         <button

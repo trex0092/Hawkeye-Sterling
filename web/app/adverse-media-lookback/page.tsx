@@ -416,7 +416,7 @@ export default function AdverseMediaLookbackPage() {
             className="text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-ink-0 w-64" />
           {filterSubject && (
             <button type="button" onClick={() => setFilterSubject("")}
-              className="text-11 text-ink-3 hover:text-ink-0">clear</button>
+              className="text-11 text-blue-400 hover:text-blue-300">✕</button>
           )}
           <span className="text-11 text-ink-3 ml-auto">{visible.length} finding{visible.length !== 1 ? "s" : ""}</span>
         </div>
@@ -669,8 +669,8 @@ export default function AdverseMediaLookbackPage() {
                         </div>
                         <div className="flex gap-2 items-center">
                           <input value={editDraft.url} onChange={setE("url")} placeholder="URL (optional)" className="text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0 w-64" />
-                          <button type="button" onClick={() => saveEntryEdit(e.id)} className="text-11 font-semibold px-3 py-1 rounded bg-ink-0 text-bg-0">Save</button>
-                          <button type="button" onClick={() => setEditingId(null)} className="text-11 font-medium px-3 py-1 rounded text-ink-2">Cancel</button>
+                          <button type="button" onClick={() => saveEntryEdit(e.id)} className="text-11 font-semibold px-3 py-1 rounded bg-ink-0 text-bg-0">✓</button>
+                          <button type="button" onClick={() => setEditingId(null)} className="text-11 font-medium px-3 py-1 rounded text-red">✕</button>
                         </div>
                       </td>
                     </tr>

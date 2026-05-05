@@ -326,7 +326,7 @@ export default function InvestigationPage() {
                   <button type="button" onClick={addParty}
                     className="flex-1 text-11 font-semibold py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1">Add</button>
                   <button type="button" onClick={() => setAddingParty(false)}
-                    className="flex-1 text-11 py-1.5 rounded border border-hair-2 text-ink-2 hover:text-ink-0">Cancel</button>
+                    className="flex-1 text-11 py-1.5 rounded border border-red/30 text-red hover:text-red/80">✕</button>
                 </div>
               </div>
             )}
@@ -395,7 +395,7 @@ export default function InvestigationPage() {
                   <button type="button" onClick={addEvent}
                     className="flex-1 text-11 font-semibold py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1">Add</button>
                   <button type="button" onClick={() => setAddingEvent(false)}
-                    className="flex-1 text-11 py-1.5 rounded border border-hair-2 text-ink-2 hover:text-ink-0">Cancel</button>
+                    className="flex-1 text-11 py-1.5 rounded border border-red/30 text-red hover:text-red/80">✕</button>
                 </div>
               </div>
             )}

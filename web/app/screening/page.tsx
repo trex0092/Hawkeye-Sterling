@@ -1579,9 +1579,9 @@ export default function ScreeningPage() {
                 type="button"
                 onClick={() => { void searchAdverseMedia(); }}
                 disabled={amLoading || !amSubject.trim()}
-                className="px-4 py-1.5 rounded bg-brand text-white text-12 font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+                className="px-4 py-1.5 rounded bg-green-dim text-green text-12 font-semibold border border-green/40 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-green/20 transition-colors"
               >
-                {amLoading ? "Searching…" : "Search"}
+                {amLoading ? "⌕…" : "⌕"}
               </button>
             </div>
           </div>
