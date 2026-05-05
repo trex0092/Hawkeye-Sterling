@@ -54,6 +54,15 @@ import { sowCoherence, familyWealthBenchmark } from "../../../web/lib/intelligen
 import { un1267Delta, ofacSdnDelta } from "../../../web/lib/intelligence/liveLookupDeltas.js";
 import { npoTfRisk, casinoChipOut, shellBankCheck } from "../../../web/lib/intelligence/sectorRiskDeep.js";
 import { trainNb, classifyNb, bayesUpdate, ewmaAnomaly } from "../../../web/lib/intelligence/statisticalLearning.js";
+import { bestCommercialAdapter, activeCommercialProvider } from "../../../web/lib/intelligence/commercialAdapters.js";
+import {
+  LIVE_GLEIF_ADAPTER,
+  LIVE_OPENSANCTIONS_ADAPTER,
+  LIVE_HS_CODE_ADAPTER,
+  bestOnChainAdapter,
+  activeOnChainProvider,
+} from "../../../web/lib/intelligence/liveAdapters.js";
+import { LOCALES, detectLocaleFromBrowser } from "../../../web/lib/i18n/locales.js";
 
 describe("intelligence smoke — every module returns a sane shape", () => {
   it("dispositionEngine + inferIndustryHints", () => {
@@ -331,6 +340,37 @@ describe("intelligence smoke — every module returns a sane shape", () => {
     expect(npoTfRisk({ jurisdictionIso2: "AF", cashIntensiveOps: true }).score).toBeGreaterThan(50);
     expect(casinoChipOut({ dailyChipOutUsd: 20_000 }).breached).toBe(true);
     expect(shellBankCheck({ isCorrespondent: true, hasPhysicalPresence: false }).refused).toBe(true);
+  });
+
+  it("commercialAdapters — gracefully fall back when keys absent", () => {
+    // Without env keys, bestCommercialAdapter returns the NULL adapter.
+    const adapter = bestCommercialAdapter();
+    expect(typeof adapter.isAvailable).toBe("function");
+    expect(typeof adapter.lookup).toBe("function");
+    // activeCommercialProvider should reflect what's configured.
+    const provider = activeCommercialProvider();
+    expect(["lseg-world-check", "dowjones-rc", "sayari", "none"]).toContain(provider);
+  });
+
+  it("liveAdapters — GLEIF / OpenSanctions / HS-code are always available", () => {
+    expect(LIVE_GLEIF_ADAPTER.isAvailable()).toBe(true);
+    expect(LIVE_OPENSANCTIONS_ADAPTER.isAvailable()).toBe(true);
+    expect(LIVE_HS_CODE_ADAPTER.isAvailable()).toBe(true);
+    // bestOnChainAdapter falls back to NULL when no provider key is set.
+    const adapter = bestOnChainAdapter();
+    expect(typeof adapter.isAvailable).toBe("function");
+    expect(["chainalysis", "trm", "elliptic", "none"]).toContain(activeOnChainProvider());
+  });
+
+  it("i18n locales — three locales registered with full string sets", () => {
+    expect(LOCALES.en.dir).toBe("ltr");
+    expect(LOCALES.ar.dir).toBe("rtl");
+    expect(LOCALES.zh.dir).toBe("ltr");
+    // Every locale must carry the same key set.
+    const enKeys = Object.keys(LOCALES.en.strings).sort();
+    expect(Object.keys(LOCALES.ar.strings).sort()).toEqual(enKeys);
+    expect(Object.keys(LOCALES.zh.strings).sort()).toEqual(enKeys);
+    expect(detectLocaleFromBrowser()).toMatch(/^(en|ar|zh)$/);
   });
 
   it("statisticalLearning", () => {
