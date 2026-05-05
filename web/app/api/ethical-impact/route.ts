@@ -6,6 +6,7 @@
 
 import { NextResponse } from "next/server";
 import { writeAuditEvent } from "@/lib/audit";
+import { withLlmFallback } from "@/lib/server/llm-fallback";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -92,25 +93,69 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   writeAuditEvent("mlro", "ai.ethical-impact-assessment", subjectName);
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    return NextResponse.json({ ok: false, error: "ethical-impact temporarily unavailable - please retry." }, { status: 503 });
-  }
+  // Deterministic template — used when ANTHROPIC_API_KEY is missing OR
+  // the live call fails. Produces a regulator-grade EIA shaped from the
+  // input fields alone; the MLRO must still review and customise.
+  const buildTemplate = (): EthicalImpactResponse => {
+    const score = body.riskScore ?? 0;
+    const impactLevel: "high" | "medium" | "low" =
+      score >= 60 ? "high" : score >= 30 ? "medium" : "low";
+    return {
+      impactLevel,
+      impactNarrative: `Automated ethical-impact assessment for "${subjectName}" (risk score ${score}/100, posture ${body.cddPosture ?? "CDD"}). Subject ${body.nationality ? `is a ${body.nationality} national. ` : ""}AI-driven decision-making materially affects this subject's access to financial services and warrants ${impactLevel}-impact governance.`,
+      rightsImpacted: [
+        "Right to non-discrimination (UAE PDPL Art.19, UNESCO Recommendation §22)",
+        "Right to explanation of automated decision (UAE PDPL Art.20)",
+        "Right to human review (FDL 10/2025 Art.16)",
+        "Right to data correction (UAE PDPL Art.18)",
+      ],
+      proportionalityAssessment: `Risk-band ${impactLevel} — automated processing is proportionate to the AML/CFT compliance objective when combined with mandatory MLRO review at any escalation.`,
+      humanOversightStatus: "All adverse dispositions require human MLRO sign-off; AI is advisory only (UNESCO §32).",
+      mitigationMeasures: [
+        "MLRO four-eyes review on every escalation",
+        "10-year audit retention (FDL 10/2025 Art.24)",
+        "Quarterly bias-monitoring across nationality / gender / age",
+        "Right-to-explanation responses delivered within 30 days",
+      ],
+      subjectRights: [
+        "Access — request the data the platform holds about you",
+        "Correction — challenge inaccurate records",
+        "Erasure — limited where AML retention applies",
+        "Human review — every adverse decision is reviewed by an MLRO",
+        "Complaint — escalate to the UAE Data Office",
+      ],
+      documentationRequired: [
+        "AI decision log entry (auto-generated)",
+        "MLRO sign-off (four-eyes)",
+        "Bias-monitoring report (quarterly)",
+      ],
+      unescoAlignment: "Aligned with UNESCO Recommendation on the Ethics of AI (2021), §22 (non-discrimination), §32 (human oversight), §44 (transparency).",
+      reviewRecommendation: impactLevel === "high"
+        ? "Mandatory MLRO review before any disposition. Document the decision basis in the audit chain."
+        : impactLevel === "medium"
+          ? "Standard MLRO review. Bias-monitoring sample includes this case."
+          : "Routine processing acceptable. Periodic review under the bias-monitoring sampling plan.",
+    };
+  };
 
-  try {
-    const res = await fetch(ANTHROPIC_API_URL, {
-      method: "POST",
-      headers: {
-        "x-api-key": apiKey,
-        "anthropic-version": ANTHROPIC_VERSION,
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 800,
-        system: SYSTEM_PROMPT,
-        messages: [
-          {
+  const fallback = await withLlmFallback<EthicalImpactResponse>({
+    label: "ethical-impact",
+    timeoutMs: 25_000,
+    templateFallback: buildTemplate,
+    aiCall: async () => {
+      const apiKey = process.env["ANTHROPIC_API_KEY"]!;
+      const res = await fetch(ANTHROPIC_API_URL, {
+        method: "POST",
+        headers: {
+          "x-api-key": apiKey,
+          "anthropic-version": ANTHROPIC_VERSION,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "claude-haiku-4-5-20251001",
+          max_tokens: 800,
+          system: SYSTEM_PROMPT,
+          messages: [{
             role: "user",
             content: JSON.stringify({
               subjectName,
@@ -120,27 +165,22 @@ export async function POST(req: Request): Promise<NextResponse> {
               nationality: body.nationality,
               context: body.context,
             }),
-          },
-        ],
-      }),
-    });
+          }],
+        }),
+      });
+      if (!res.ok) throw new Error(`Anthropic API error ${res.status}`);
+      const data = (await res.json()) as AnthropicResponse;
+      const raw = (data.content[0]?.text ?? "{}").trim();
+      const stripped = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "");
+      return JSON.parse(stripped) as EthicalImpactResponse;
+    },
+  });
 
-    if (!res.ok) {
-      throw new Error(`Anthropic API error ${res.status}`);
-    }
+  if (fallback.degraded) writeAuditEvent("mlro", "ai.ethical-impact-assessment.degraded", fallback.degradedReason ?? "");
 
-    const data = (await res.json()) as AnthropicResponse;
-    const raw = (data.content[0]?.text ?? "{}").trim();
-
-    // Strip markdown fences before JSON.parse
-    const stripped = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "");
-
-    const parsed = JSON.parse(stripped) as EthicalImpactResponse;
-
-    return NextResponse.json({ ok: true, ...parsed });
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    writeAuditEvent("mlro", "ai.ethical-impact-assessment.error", msg);
-    return NextResponse.json({ ok: false, error: "ethical-impact temporarily unavailable - please retry." }, { status: 503 });
-  }
+  return NextResponse.json({
+    ok: true,
+    ...fallback.result,
+    ...(fallback.degraded ? { degraded: true, degradedReason: fallback.degradedReason } : {}),
+  });
 }
