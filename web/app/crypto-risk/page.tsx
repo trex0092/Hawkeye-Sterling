@@ -1,8 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ModuleLayout, ModuleHero } from "@/components/layout/ModuleLayout";
 import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
+import { analyzeCrypto, type WalletNode } from "@/lib/intelligence/cryptoExposure";
+import { walletAgeScore, mixerExposure, type WalletProfile } from "@/lib/intelligence/cryptoIntel";
+import { activeOnChainProvider } from "@/lib/intelligence/liveAdapters";
 
 interface WalletRisk {
   ok: boolean;
@@ -66,6 +69,51 @@ export default function CryptoRiskPage() {
   const [error, setError] = useState<string | null>(null);
   const [threat, setThreat] = useState<CryptoThreat | null>(null);
   const [threatLoading, setThreatLoading] = useState(false);
+
+  // ── Deterministic crypto-exposure baseline ─────────────────────────────
+  // Runs the local pure-function analyser against the API result to
+  // surface direct/1-hop/indirect cluster exposure without an LLM call.
+  const detExposure = useMemo(() => {
+    if (!result) return null;
+    // Convert provider's exposure-percent breakdown into cluster tags so
+    // analyzeCrypto() can render the same severity buckets as our /
+    // governance/intelligence-tools widget.
+    const tags: WalletNode["cluster"][] = [];
+    if ((result.exposure?.directSanctioned ?? 0) > 0) tags.push("ofac_sdn_wallet");
+    if ((result.exposure?.mixing ?? 0) > 0) tags.push("mixer_unspecified");
+    if ((result.exposure?.darknet ?? 0) > 0) tags.push("darknet_market");
+    const wallet: WalletNode = {
+      address: result.address,
+      chain: result.chain as WalletNode["chain"],
+      ...(tags[0] ? { cluster: tags[0] } : {}),
+      providerRisk: result.riskScore,
+      ...(tags.slice(1).length > 0
+        ? { oneHopCounterparties: tags.slice(1).map((t) => ({ address: "indirect", cluster: t })) }
+        : {}),
+    };
+    return analyzeCrypto([wallet]);
+  }, [result]);
+
+  // Wallet-age + mixer scorers from cryptoIntel.ts
+  const detIntel = useMemo(() => {
+    if (!result) return null;
+    const profile: WalletProfile = {
+      address: result.address,
+      chain: result.chain,
+      ...(result.firstSeen ? { firstSeenAt: result.firstSeen } : {}),
+      txCount: result.totalTransactions ?? 0,
+      exposureTags: [
+        ...((result.exposure?.mixing ?? 0) > 0 ? ["mixer_unspecified"] : []),
+        ...((result.exposure?.directSanctioned ?? 0) > 0 ? ["ofac_sdn_wallet"] : []),
+        ...((result.exposure?.darknet ?? 0) > 0 ? ["darknet_market"] : []),
+      ],
+    };
+    return {
+      age: walletAgeScore(profile),
+      mixer: mixerExposure(profile),
+      provider: activeOnChainProvider(),
+    };
+  }, [result]);
 
   const analyzeWalletThreat = async (w: WalletRisk) => {
     setThreatLoading(true);
@@ -187,6 +235,57 @@ export default function CryptoRiskPage() {
                 <ExposureBar label="Darknet Markets" value={result.exposure.darknet} colour="bg-brand" />
               </div>
             </div>
+
+            {/* Deterministic baseline analysis (no LLM) */}
+            {detExposure && detIntel && (
+              <div className={cardCls}>
+                <div className="flex items-baseline justify-between mb-3 flex-wrap gap-2">
+                  <p className="text-10 font-semibold text-ink-2 uppercase tracking-wide-3">
+                    Deterministic baseline
+                  </p>
+                  <span className="text-10 font-mono text-ink-3">
+                    on-chain provider: <strong className="text-ink-1">{detIntel.provider}</strong>
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-12">
+                  <div>
+                    <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-0.5">Exposure tier</div>
+                    <div className={`font-bold ${
+                      detExposure.exposureTier === "direct" ? "text-red"
+                      : detExposure.exposureTier === "one_hop" ? "text-orange"
+                      : detExposure.exposureTier === "indirect" ? "text-amber"
+                      : "text-green"
+                    }`}>
+                      {detExposure.exposureTier.replace(/_/g, " ").toUpperCase()}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-0.5">Wallet age</div>
+                    <div className="font-medium text-ink-0">
+                      {detIntel.age.tier.replace(/_/g, " ")} <span className="text-ink-3 font-mono text-10">({detIntel.age.ageDays}d)</span>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-0.5">Mixer exposure</div>
+                    <div className={`font-medium ${
+                      detIntel.mixer.severity === "critical" ? "text-red"
+                      : detIntel.mixer.severity === "high" ? "text-orange"
+                      : "text-ink-0"
+                    }`}>
+                      {detIntel.mixer.severity.toUpperCase()}
+                    </div>
+                  </div>
+                </div>
+                {detExposure.redFlags.length > 0 && (
+                  <ul className="mt-3 space-y-1 text-11 text-ink-1">
+                    {detExposure.redFlags.map((f, i) => (
+                      <li key={i}>● {f}</li>
+                    ))}
+                  </ul>
+                )}
+                <p className="mt-3 text-10 text-ink-3 italic">{detExposure.rationale}</p>
+              </div>
+            )}
 
             {(result.taintedTransactions != null || result.firstSeen) && (
               <div className={`${cardCls} grid grid-cols-1 md:grid-cols-2 gap-3 text-12`}>
