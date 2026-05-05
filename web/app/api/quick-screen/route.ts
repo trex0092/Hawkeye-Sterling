@@ -9,6 +9,7 @@ import type {
 import { enforce } from "@/lib/server/enforce";
 import { loadCandidates } from "@/lib/server/candidates-loader";
 import { LIVE_OPENSANCTIONS_ADAPTER } from "@/lib/intelligence/liveAdapters";
+import { bestCommercialAdapter, activeCommercialProvider } from "@/lib/intelligence/commercialAdapters";
 
 // Compiled backend entry point. The root `tsc` build (npm run build at the repo root)
 // must run before this API route is bundled. Netlify build order is encoded in
@@ -114,6 +115,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     // few/no hits — adds a free additional signal layer beyond the bundled
     // watchlists. Best-effort: failure here doesn't 5xx the screening.
     let openSanctionsResults: Awaited<ReturnType<typeof LIVE_OPENSANCTIONS_ADAPTER.lookup>> = [];
+    let commercialResults: Awaited<ReturnType<ReturnType<typeof bestCommercialAdapter>["lookup"]>> = [];
     if (result.hits.length < 3 && subject.name.length >= 3) {
       try {
         openSanctionsResults = await LIVE_OPENSANCTIONS_ADAPTER.lookup(
@@ -121,6 +123,17 @@ export async function POST(req: Request): Promise<NextResponse> {
           subject.jurisdiction ?? undefined,
         );
       } catch { /* best-effort */ }
+      // Commercial adapters (LSEG World-Check / Dow Jones R&C / Sayari)
+      // — only fires when the operator has dropped a key into Netlify env.
+      const commAdapter = bestCommercialAdapter();
+      if (commAdapter.isAvailable()) {
+        try {
+          commercialResults = await commAdapter.lookup(
+            subject.name,
+            subject.jurisdiction ?? undefined,
+          );
+        } catch { /* best-effort */ }
+      }
     }
     return respond(
       200,
@@ -129,6 +142,12 @@ export async function POST(req: Request): Promise<NextResponse> {
         ...result,
         ...(openSanctionsResults.length > 0
           ? { openSanctionsAugmentation: openSanctionsResults.slice(0, 10) }
+          : {}),
+        ...(commercialResults.length > 0
+          ? {
+              commercialAugmentation: commercialResults.slice(0, 10),
+              commercialProvider: activeCommercialProvider(),
+            }
           : {}),
       } as QuickScreenResponse,
       gateHeaders,

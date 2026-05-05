@@ -3,6 +3,7 @@ import "./globals.css";
 import { CaseVaultSyncer } from "@/components/CaseVaultSyncer";
 import { ServiceWorkerRegistrar } from "@/components/layout/ServiceWorkerRegistrar";
 import { SiteFooter } from "@/components/layout/SiteFooter";
+import { LocaleProvider } from "@/lib/i18n/LocaleProvider";
 
 export const metadata: Metadata = {
   title: "Hawkeye Sterling",
@@ -51,12 +52,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="flex flex-col min-h-screen">
-        <CaseVaultSyncer />
-        <ServiceWorkerRegistrar />
-        <div className="flex-1">
-          {children}
-        </div>
-        <SiteFooter />
+        <LocaleProvider>
+          <CaseVaultSyncer />
+          <ServiceWorkerRegistrar />
+          <div className="flex-1">
+            {children}
+          </div>
+          <SiteFooter />
+        </LocaleProvider>
       </body>
     </html>
   );
