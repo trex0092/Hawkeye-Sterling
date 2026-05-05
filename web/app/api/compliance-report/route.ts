@@ -89,7 +89,7 @@ function renderHtmlReport(text: string, input: ReportInput): string {
   const hh    = String(now.getUTCHours()).padStart(2, "0");
   const mm    = String(now.getUTCMinutes()).padStart(2, "0");
   const reportType = r.hits.length > 0 ? "SANCTIONS" : pepTier ? "PEP" : amCount > 0 ? "AM" : "STANDARD";
-  const reportId = `HWK-SCR-${year}${month}${day}-${reportType}-${hh}${mm}`;
+  const reportId = `HWK-SCR-${day}${month}${year}-${reportType}-${hh}${mm}`;
 
   // Screening matrix rows
   const matrixRows = SCREEN_VECTORS.map((v) => {
