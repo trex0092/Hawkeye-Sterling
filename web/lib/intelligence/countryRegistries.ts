@@ -586,23 +586,465 @@ function uaeDedAdapter(): CountryAdapter {
   };
 }
 
+// ─────────────────────────────────────────────────────────────────────
+// LATIN AMERICA
+// ─────────────────────────────────────────────────────────────────────
+
+// ── Brazil Receita Federal CNPJ — free public ───────────────────────
+function brReceitaAdapter(): CountryAdapter {
+  if (!envOn("BR_RECEITA_ENABLED")) return nullCountry("BR");
+  return {
+    jurisdiction: "BR",
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const res = await abortable(
+          fetch(`https://brasilapi.com.br/api/cnpj/v1/search?razao_social=${encodeURIComponent(subjectName)}&limit=${opts?.limit ?? 25}`, {
+            headers: { accept: "application/json", "user-agent": "HawkeyeSterling/1.0" },
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as { items?: Array<{ razao_social?: string; cnpj?: string; situacao_cadastral?: string; data_inicio_atividade?: string }> };
+        return (json.items ?? [])
+          .filter((i) => i.razao_social)
+          .map((i) => ({
+            source: "br-receita",
+            name: i.razao_social!,
+            jurisdiction: "BR",
+            ...(i.cnpj ? { registrationNumber: i.cnpj } : {}),
+            ...(i.situacao_cadastral ? { status: i.situacao_cadastral } : {}),
+            ...(i.data_inicio_atividade ? { incorporationDate: i.data_inicio_atividade } : {}),
+            ...(i.cnpj ? { url: `https://cnpj.biz/${i.cnpj.replace(/\D/g, "")}` } : {}),
+          } satisfies RegistryRecord));
+      } catch (err) {
+        console.warn("[br-receita] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+function genericKeyAdapter(opts: {
+  envKey: string; jurisdiction: string; source: string; baseUrl: string; queryParam: string;
+  parser: (json: unknown) => RegistryRecord[];
+  authHeader?: (key: string) => Record<string, string>;
+}): CountryAdapter {
+  const key = process.env[opts.envKey];
+  if (!key) return nullCountry(opts.jurisdiction);
+  return {
+    jurisdiction: opts.jurisdiction,
+    isAvailable: () => true,
+    search: async (subjectName, query) => {
+      try {
+        const params = new URLSearchParams({ [opts.queryParam]: subjectName, limit: String(query?.limit ?? 25) });
+        const headers: Record<string, string> = {
+          accept: "application/json",
+          ...(opts.authHeader ? opts.authHeader(key) : { Authorization: `Bearer ${key}` }),
+        };
+        const res = await abortable(fetch(`${opts.baseUrl}?${params.toString()}`, { headers }));
+        if (!res.ok) return [];
+        const json = await res.json();
+        return opts.parser(json);
+      } catch (err) {
+        console.warn(`[${opts.source}] failed:`, err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+const mxSatAdapter = (): CountryAdapter => genericKeyAdapter({
+  envKey: "MX_SAT_API_KEY", jurisdiction: "MX", source: "mx-sat",
+  baseUrl: "https://api.sat.gob.mx/v1/contribuyentes/search", queryParam: "razon_social",
+  parser: (j) => ((j as { results?: Array<{ razon_social?: string; rfc?: string; estatus?: string; fecha_alta?: string }> }).results ?? [])
+    .filter((r) => r.razon_social).map((r) => ({
+      source: "mx-sat", name: r.razon_social!, jurisdiction: "MX",
+      ...(r.rfc ? { registrationNumber: r.rfc } : {}),
+      ...(r.estatus ? { status: r.estatus } : {}),
+      ...(r.fecha_alta ? { incorporationDate: r.fecha_alta } : {}),
+    } satisfies RegistryRecord)),
+});
+
+const arIgjAdapter = (): CountryAdapter => genericKeyAdapter({
+  envKey: "AR_IGJ_API_KEY", jurisdiction: "AR", source: "ar-igj",
+  baseUrl: "https://api.igj.gob.ar/v1/sociedades/search", queryParam: "denominacion",
+  parser: (j) => ((j as { results?: Array<{ denominacion?: string; cuit?: string; estado?: string; fecha_inscripcion?: string }> }).results ?? [])
+    .filter((r) => r.denominacion).map((r) => ({
+      source: "ar-igj", name: r.denominacion!, jurisdiction: "AR",
+      ...(r.cuit ? { registrationNumber: r.cuit } : {}),
+      ...(r.estado ? { status: r.estado } : {}),
+      ...(r.fecha_inscripcion ? { incorporationDate: r.fecha_inscripcion } : {}),
+    } satisfies RegistryRecord)),
+});
+
+function coRuesAdapter(): CountryAdapter {
+  if (!envOn("CO_RUES_ENABLED")) return nullCountry("CO");
+  return {
+    jurisdiction: "CO",
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({ razon_social: subjectName, page_size: String(opts?.limit ?? 25) });
+        const res = await abortable(
+          fetch(`https://www.rues.org.co/api/empresas/search?${params.toString()}`, {
+            headers: { accept: "application/json", "user-agent": "HawkeyeSterling/1.0" },
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as { results?: Array<{ razon_social?: string; nit?: string; estado_matricula?: string; fecha_matricula?: string }> };
+        return (json.results ?? [])
+          .filter((r) => r.razon_social)
+          .map((r) => ({
+            source: "co-rues",
+            name: r.razon_social!,
+            jurisdiction: "CO",
+            ...(r.nit ? { registrationNumber: r.nit } : {}),
+            ...(r.estado_matricula ? { status: r.estado_matricula } : {}),
+            ...(r.fecha_matricula ? { incorporationDate: r.fecha_matricula } : {}),
+          } satisfies RegistryRecord));
+      } catch (err) {
+        console.warn("[co-rues] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+const clSiiAdapter = (): CountryAdapter => genericKeyAdapter({
+  envKey: "CL_SII_API_KEY", jurisdiction: "CL", source: "cl-sii",
+  baseUrl: "https://api.sii.cl/v1/contribuyentes", queryParam: "razon_social",
+  parser: (j) => ((j as { resultados?: Array<{ razon_social?: string; rut?: string; estado?: string; fecha_inicio_actividades?: string }> }).resultados ?? [])
+    .filter((r) => r.razon_social).map((r) => ({
+      source: "cl-sii", name: r.razon_social!, jurisdiction: "CL",
+      ...(r.rut ? { registrationNumber: r.rut } : {}),
+      ...(r.estado ? { status: r.estado } : {}),
+      ...(r.fecha_inicio_actividades ? { incorporationDate: r.fecha_inicio_actividades } : {}),
+    } satisfies RegistryRecord)),
+});
+
+const peSunatAdapter = (): CountryAdapter => genericKeyAdapter({
+  envKey: "PE_SUNAT_API_KEY", jurisdiction: "PE", source: "pe-sunat",
+  baseUrl: "https://api.sunat.gob.pe/v1/contribuyentes", queryParam: "razon_social",
+  parser: (j) => ((j as { results?: Array<{ razonSocial?: string; ruc?: string; estado?: string; fechaInscripcion?: string }> }).results ?? [])
+    .filter((r) => r.razonSocial).map((r) => ({
+      source: "pe-sunat", name: r.razonSocial!, jurisdiction: "PE",
+      ...(r.ruc ? { registrationNumber: r.ruc } : {}),
+      ...(r.estado ? { status: r.estado } : {}),
+      ...(r.fechaInscripcion ? { incorporationDate: r.fechaInscripcion } : {}),
+    } satisfies RegistryRecord)),
+});
+
+// ─────────────────────────────────────────────────────────────────────
+// EAST ASIA
+// ─────────────────────────────────────────────────────────────────────
+
+const jpEdinetAdapter = (): CountryAdapter => genericKeyAdapter({
+  envKey: "JP_EDINET_API_KEY", jurisdiction: "JP", source: "jp-edinet",
+  baseUrl: "https://api.edinet-fsa.go.jp/api/v2/documents", queryParam: "filer",
+  authHeader: (k) => ({ "Subscription-Key": k }),
+  parser: (j) => ((j as { results?: Array<{ filerName?: string; edinetCode?: string; status?: string; submitDateTime?: string }> }).results ?? [])
+    .filter((r) => r.filerName).map((r) => ({
+      source: "jp-edinet", name: r.filerName!, jurisdiction: "JP",
+      ...(r.edinetCode ? { registrationNumber: r.edinetCode } : {}),
+      ...(r.status ? { status: r.status } : {}),
+      ...(r.submitDateTime ? { incorporationDate: r.submitDateTime } : {}),
+    } satisfies RegistryRecord)),
+});
+
+function krDartAdapter(): CountryAdapter {
+  const key = process.env["KR_DART_API_KEY"];
+  if (!key) return nullCountry("KR");
+  return {
+    jurisdiction: "KR",
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({ corp_name: subjectName, page_count: String(opts?.limit ?? 25), crtfc_key: key });
+        const res = await abortable(fetch(`https://opendart.fss.or.kr/api/list.json?${params.toString()}`));
+        if (!res.ok) return [];
+        const json = (await res.json()) as { list?: Array<{ corp_name?: string; corp_code?: string; corp_cls?: string; rcept_dt?: string }> };
+        return (json.list ?? []).filter((r) => r.corp_name).map((r) => ({
+          source: "kr-dart", name: r.corp_name!, jurisdiction: "KR",
+          ...(r.corp_code ? { registrationNumber: r.corp_code } : {}),
+          ...(r.corp_cls ? { status: r.corp_cls } : {}),
+          ...(r.rcept_dt ? { incorporationDate: r.rcept_dt } : {}),
+        } satisfies RegistryRecord));
+      } catch (err) {
+        console.warn("[kr-dart] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+const cnNecipsAdapter = (): CountryAdapter => genericKeyAdapter({
+  envKey: "CN_NECIPS_API_KEY", jurisdiction: "CN", source: "cn-necips",
+  baseUrl: "https://api.gsxt.gov.cn/v1/enterprise/search", queryParam: "name",
+  authHeader: (k) => ({ "x-api-key": k }),
+  parser: (j) => ((j as { results?: Array<{ name?: string; uniscid?: string; status?: string; estDate?: string }> }).results ?? [])
+    .filter((r) => r.name).map((r) => ({
+      source: "cn-necips", name: r.name!, jurisdiction: "CN",
+      ...(r.uniscid ? { registrationNumber: r.uniscid } : {}),
+      ...(r.status ? { status: r.status } : {}),
+      ...(r.estDate ? { incorporationDate: r.estDate } : {}),
+    } satisfies RegistryRecord)),
+});
+
+const twMoeaAdapter = (): CountryAdapter => genericKeyAdapter({
+  envKey: "TW_MOEA_API_KEY", jurisdiction: "TW", source: "tw-moea",
+  baseUrl: "https://data.gcis.nat.gov.tw/od/data/api/companysearch", queryParam: "companyName",
+  parser: (j) => (Array.isArray(j) ? (j as Array<{ Company_Name?: string; Business_Accounting_NO?: string; Company_Status_Desc?: string; Company_Setup_Date?: string }>) : [])
+    .filter((r) => r.Company_Name).map((r) => ({
+      source: "tw-moea", name: r.Company_Name!, jurisdiction: "TW",
+      ...(r.Business_Accounting_NO ? { registrationNumber: r.Business_Accounting_NO } : {}),
+      ...(r.Company_Status_Desc ? { status: r.Company_Status_Desc } : {}),
+      ...(r.Company_Setup_Date ? { incorporationDate: r.Company_Setup_Date } : {}),
+    } satisfies RegistryRecord)),
+});
+
+// ─────────────────────────────────────────────────────────────────────
+// EASTERN EUROPE / CIS / TURKEY
+// ─────────────────────────────────────────────────────────────────────
+
+const ruEgrulAdapter = (): CountryAdapter => genericKeyAdapter({
+  envKey: "RU_EGRUL_API_KEY", jurisdiction: "RU", source: "ru-egrul",
+  baseUrl: "https://api.egrul.nalog.ru/v1/search", queryParam: "q",
+  parser: (j) => ((j as { results?: Array<{ name?: string; ogrn?: string; inn?: string; status?: string; regDate?: string }> }).results ?? [])
+    .filter((r) => r.name).map((r) => ({
+      source: "ru-egrul", name: r.name!, jurisdiction: "RU",
+      ...(r.ogrn ? { registrationNumber: `OGRN-${r.ogrn}` } : r.inn ? { registrationNumber: `INN-${r.inn}` } : {}),
+      ...(r.status ? { status: r.status } : {}),
+      ...(r.regDate ? { incorporationDate: r.regDate } : {}),
+    } satisfies RegistryRecord)),
+});
+
+function uaYedrAdapter(): CountryAdapter {
+  if (!envOn("UA_YEDR_ENABLED")) return nullCountry("UA");
+  return {
+    jurisdiction: "UA",
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({ q: subjectName, limit: String(opts?.limit ?? 25) });
+        const res = await abortable(
+          fetch(`https://opendatabot.ua/api/v3/companies?${params.toString()}`, {
+            headers: { accept: "application/json", "user-agent": "HawkeyeSterling/1.0" },
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as { items?: Array<{ name?: string; code?: string; status?: string; date_registration?: string }> };
+        return (json.items ?? []).filter((r) => r.name).map((r) => ({
+          source: "ua-yedr", name: r.name!, jurisdiction: "UA",
+          ...(r.code ? { registrationNumber: r.code } : {}),
+          ...(r.status ? { status: r.status } : {}),
+          ...(r.date_registration ? { incorporationDate: r.date_registration } : {}),
+        } satisfies RegistryRecord));
+      } catch (err) {
+        console.warn("[ua-yedr] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+const kzMneAdapter = (): CountryAdapter => genericKeyAdapter({
+  envKey: "KZ_MNE_API_KEY", jurisdiction: "KZ", source: "kz-mne",
+  baseUrl: "https://api.stat.gov.kz/api/v1/enterprises/search", queryParam: "name",
+  parser: (j) => ((j as { items?: Array<{ name?: string; bin?: string; status?: string; regDate?: string }> }).items ?? [])
+    .filter((r) => r.name).map((r) => ({
+      source: "kz-mne", name: r.name!, jurisdiction: "KZ",
+      ...(r.bin ? { registrationNumber: r.bin } : {}),
+      ...(r.status ? { status: r.status } : {}),
+      ...(r.regDate ? { incorporationDate: r.regDate } : {}),
+    } satisfies RegistryRecord)),
+});
+
+const trMersisAdapter = (): CountryAdapter => genericKeyAdapter({
+  envKey: "TR_MERSIS_API_KEY", jurisdiction: "TR", source: "tr-mersis",
+  baseUrl: "https://api.mersis.gov.tr/v1/firma/search", queryParam: "unvan",
+  parser: (j) => ((j as { results?: Array<{ unvan?: string; mersisNo?: string; durum?: string; tescilTarihi?: string }> }).results ?? [])
+    .filter((r) => r.unvan).map((r) => ({
+      source: "tr-mersis", name: r.unvan!, jurisdiction: "TR",
+      ...(r.mersisNo ? { registrationNumber: r.mersisNo } : {}),
+      ...(r.durum ? { status: r.durum } : {}),
+      ...(r.tescilTarihi ? { incorporationDate: r.tescilTarihi } : {}),
+    } satisfies RegistryRecord)),
+});
+
+// ─────────────────────────────────────────────────────────────────────
+// MENA
+// ─────────────────────────────────────────────────────────────────────
+
+const saMocAdapter = (): CountryAdapter => genericKeyAdapter({
+  envKey: "SA_MOC_API_KEY", jurisdiction: "SA", source: "sa-moc",
+  baseUrl: "https://api.mc.gov.sa/v1/businesses/search", queryParam: "name",
+  parser: (j) => ((j as { results?: Array<{ name?: string; crNumber?: string; status?: string; issueDate?: string }> }).results ?? [])
+    .filter((r) => r.name).map((r) => ({
+      source: "sa-moc", name: r.name!, jurisdiction: "SA",
+      ...(r.crNumber ? { registrationNumber: r.crNumber } : {}),
+      ...(r.status ? { status: r.status } : {}),
+      ...(r.issueDate ? { incorporationDate: r.issueDate } : {}),
+    } satisfies RegistryRecord)),
+});
+
+const qaQfcAdapter = (): CountryAdapter => genericKeyAdapter({
+  envKey: "QA_QFC_API_KEY", jurisdiction: "QA", source: "qa-qfc",
+  baseUrl: "https://api.qfc.qa/v1/firms/search", queryParam: "entityName",
+  parser: (j) => ((j as { firms?: Array<{ name?: string; qfcNumber?: string; status?: string; licensingDate?: string }> }).firms ?? [])
+    .filter((r) => r.name).map((r) => ({
+      source: "qa-qfc", name: r.name!, jurisdiction: "QA",
+      ...(r.qfcNumber ? { registrationNumber: r.qfcNumber } : {}),
+      ...(r.status ? { status: r.status } : {}),
+      ...(r.licensingDate ? { incorporationDate: r.licensingDate } : {}),
+    } satisfies RegistryRecord)),
+});
+
+const bhMoictAdapter = (): CountryAdapter => genericKeyAdapter({
+  envKey: "BH_MOICT_API_KEY", jurisdiction: "BH", source: "bh-moict",
+  baseUrl: "https://api.moic.gov.bh/v1/sijilat/search", queryParam: "name",
+  parser: (j) => ((j as { results?: Array<{ name?: string; cr?: string; status?: string; date?: string }> }).results ?? [])
+    .filter((r) => r.name).map((r) => ({
+      source: "bh-moict", name: r.name!, jurisdiction: "BH",
+      ...(r.cr ? { registrationNumber: r.cr } : {}),
+      ...(r.status ? { status: r.status } : {}),
+      ...(r.date ? { incorporationDate: r.date } : {}),
+    } satisfies RegistryRecord)),
+});
+
+const egGafiAdapter = (): CountryAdapter => genericKeyAdapter({
+  envKey: "EG_GAFI_API_KEY", jurisdiction: "EG", source: "eg-gafi",
+  baseUrl: "https://api.gafi.gov.eg/v1/companies/search", queryParam: "companyName",
+  parser: (j) => ((j as { results?: Array<{ name?: string; commercialRegister?: string; status?: string; incorporationDate?: string }> }).results ?? [])
+    .filter((r) => r.name).map((r) => ({
+      source: "eg-gafi", name: r.name!, jurisdiction: "EG",
+      ...(r.commercialRegister ? { registrationNumber: r.commercialRegister } : {}),
+      ...(r.status ? { status: r.status } : {}),
+      ...(r.incorporationDate ? { incorporationDate: r.incorporationDate } : {}),
+    } satisfies RegistryRecord)),
+});
+
+// ─────────────────────────────────────────────────────────────────────
+// SUB-SAHARAN AFRICA
+// ─────────────────────────────────────────────────────────────────────
+
+const zaCipcAdapter = (): CountryAdapter => genericKeyAdapter({
+  envKey: "ZA_CIPC_API_KEY", jurisdiction: "ZA", source: "za-cipc",
+  baseUrl: "https://api.cipc.co.za/v1/enterprises/search", queryParam: "enterpriseName",
+  parser: (j) => ((j as { enterprises?: Array<{ enterpriseName?: string; enterpriseNumber?: string; enterpriseStatus?: string; registrationDate?: string }> }).enterprises ?? [])
+    .filter((r) => r.enterpriseName).map((r) => ({
+      source: "za-cipc", name: r.enterpriseName!, jurisdiction: "ZA",
+      ...(r.enterpriseNumber ? { registrationNumber: r.enterpriseNumber } : {}),
+      ...(r.enterpriseStatus ? { status: r.enterpriseStatus } : {}),
+      ...(r.registrationDate ? { incorporationDate: r.registrationDate } : {}),
+    } satisfies RegistryRecord)),
+});
+
+const ngCacAdapter = (): CountryAdapter => genericKeyAdapter({
+  envKey: "NG_CAC_API_KEY", jurisdiction: "NG", source: "ng-cac",
+  baseUrl: "https://api.cac.gov.ng/v2/companies/search", queryParam: "companyName",
+  parser: (j) => ((j as { results?: Array<{ companyName?: string; rcNumber?: string; status?: string; dateOfRegistration?: string }> }).results ?? [])
+    .filter((r) => r.companyName).map((r) => ({
+      source: "ng-cac", name: r.companyName!, jurisdiction: "NG",
+      ...(r.rcNumber ? { registrationNumber: r.rcNumber } : {}),
+      ...(r.status ? { status: r.status } : {}),
+      ...(r.dateOfRegistration ? { incorporationDate: r.dateOfRegistration } : {}),
+    } satisfies RegistryRecord)),
+});
+
+const keBrsAdapter = (): CountryAdapter => genericKeyAdapter({
+  envKey: "KE_BRS_API_KEY", jurisdiction: "KE", source: "ke-brs",
+  baseUrl: "https://api.brs.go.ke/v1/businesses/search", queryParam: "businessName",
+  parser: (j) => ((j as { results?: Array<{ businessName?: string; registrationNumber?: string; status?: string; registrationDate?: string }> }).results ?? [])
+    .filter((r) => r.businessName).map((r) => ({
+      source: "ke-brs", name: r.businessName!, jurisdiction: "KE",
+      ...(r.registrationNumber ? { registrationNumber: r.registrationNumber } : {}),
+      ...(r.status ? { status: r.status } : {}),
+      ...(r.registrationDate ? { incorporationDate: r.registrationDate } : {}),
+    } satisfies RegistryRecord)),
+});
+
+const ghRgdAdapter = (): CountryAdapter => genericKeyAdapter({
+  envKey: "GH_RGD_API_KEY", jurisdiction: "GH", source: "gh-rgd",
+  baseUrl: "https://api.rgd.gov.gh/v1/companies/search", queryParam: "name",
+  parser: (j) => ((j as { results?: Array<{ name?: string; tin?: string; status?: string; registrationDate?: string }> }).results ?? [])
+    .filter((r) => r.name).map((r) => ({
+      source: "gh-rgd", name: r.name!, jurisdiction: "GH",
+      ...(r.tin ? { registrationNumber: r.tin } : {}),
+      ...(r.status ? { status: r.status } : {}),
+      ...(r.registrationDate ? { incorporationDate: r.registrationDate } : {}),
+    } satisfies RegistryRecord)),
+});
+
+// ─────────────────────────────────────────────────────────────────────
+// OFFSHORE CARIBBEAN  (high-AML-risk centres)
+// ─────────────────────────────────────────────────────────────────────
+
+const kyCimaAdapter = (): CountryAdapter => genericKeyAdapter({
+  envKey: "KY_CIMA_API_KEY", jurisdiction: "KY", source: "ky-cima",
+  baseUrl: "https://api.cima.ky/v1/entities/search", queryParam: "entityName",
+  parser: (j) => ((j as { entities?: Array<{ name?: string; licenceNumber?: string; status?: string; licenceDate?: string }> }).entities ?? [])
+    .filter((r) => r.name).map((r) => ({
+      source: "ky-cima", name: r.name!, jurisdiction: "KY",
+      ...(r.licenceNumber ? { registrationNumber: r.licenceNumber } : {}),
+      ...(r.status ? { status: r.status } : {}),
+      ...(r.licenceDate ? { incorporationDate: r.licenceDate } : {}),
+    } satisfies RegistryRecord)),
+});
+
+const bmBmaAdapter = (): CountryAdapter => genericKeyAdapter({
+  envKey: "BM_BMA_API_KEY", jurisdiction: "BM", source: "bm-bma",
+  baseUrl: "https://api.bma.bm/v1/entities/search", queryParam: "entityName",
+  parser: (j) => ((j as { results?: Array<{ entityName?: string; registrationNumber?: string; status?: string; incorporationDate?: string }> }).results ?? [])
+    .filter((r) => r.entityName).map((r) => ({
+      source: "bm-bma", name: r.entityName!, jurisdiction: "BM",
+      ...(r.registrationNumber ? { registrationNumber: r.registrationNumber } : {}),
+      ...(r.status ? { status: r.status } : {}),
+      ...(r.incorporationDate ? { incorporationDate: r.incorporationDate } : {}),
+    } satisfies RegistryRecord)),
+});
+
+const vgFscAdapter = (): CountryAdapter => genericKeyAdapter({
+  envKey: "VG_FSC_API_KEY", jurisdiction: "VG", source: "vg-fsc",
+  baseUrl: "https://api.bvifsc.vg/v1/entities/search", queryParam: "companyName",
+  parser: (j) => ((j as { results?: Array<{ companyName?: string; bcNumber?: string; status?: string; incorporationDate?: string }> }).results ?? [])
+    .filter((r) => r.companyName).map((r) => ({
+      source: "vg-fsc", name: r.companyName!, jurisdiction: "VG",
+      ...(r.bcNumber ? { registrationNumber: r.bcNumber } : {}),
+      ...(r.status ? { status: r.status } : {}),
+      ...(r.incorporationDate ? { incorporationDate: r.incorporationDate } : {}),
+    } satisfies RegistryRecord)),
+});
+
+const bsScbAdapter = (): CountryAdapter => genericKeyAdapter({
+  envKey: "BS_SCB_API_KEY", jurisdiction: "BS", source: "bs-scb",
+  baseUrl: "https://api.scb.gov.bs/v1/registrants/search", queryParam: "entityName",
+  parser: (j) => ((j as { results?: Array<{ entityName?: string; registrationNumber?: string; status?: string; registrationDate?: string }> }).results ?? [])
+    .filter((r) => r.entityName).map((r) => ({
+      source: "bs-scb", name: r.entityName!, jurisdiction: "BS",
+      ...(r.registrationNumber ? { registrationNumber: r.registrationNumber } : {}),
+      ...(r.status ? { status: r.status } : {}),
+      ...(r.registrationDate ? { incorporationDate: r.registrationDate } : {}),
+    } satisfies RegistryRecord)),
+});
+
 // ── ALL country adapters list ────────────────────────────────────────
 const COUNTRY_ADAPTERS: Array<() => CountryAdapter> = [
-  fcaRegisterAdapter,
-  zefixAdapter,
-  kvkAdapter,
-  bronnoysundAdapter,
-  cvrAdapter,
-  ytjAdapter,
-  nzCompaniesAdapter,
-  abrAdapter,
-  acraAdapter,
-  hkCompaniesAdapter,
-  croIeAdapter,
-  deBundesanzeigerAdapter,
-  inseeAdapter,
-  inMcaAdapter,
-  uaeDedAdapter,
+  // Original 15
+  fcaRegisterAdapter, zefixAdapter, kvkAdapter, bronnoysundAdapter, cvrAdapter,
+  ytjAdapter, nzCompaniesAdapter, abrAdapter, acraAdapter, hkCompaniesAdapter,
+  croIeAdapter, deBundesanzeigerAdapter, inseeAdapter, inMcaAdapter, uaeDedAdapter,
+  // Latin America
+  brReceitaAdapter, mxSatAdapter, arIgjAdapter, coRuesAdapter, clSiiAdapter, peSunatAdapter,
+  // East Asia
+  jpEdinetAdapter, krDartAdapter, cnNecipsAdapter, twMoeaAdapter,
+  // Eastern Europe / CIS / Turkey
+  ruEgrulAdapter, uaYedrAdapter, kzMneAdapter, trMersisAdapter,
+  // MENA
+  saMocAdapter, qaQfcAdapter, bhMoictAdapter, egGafiAdapter,
+  // Sub-Saharan Africa
+  zaCipcAdapter, ngCacAdapter, keBrsAdapter, ghRgdAdapter,
+  // Offshore Caribbean
+  kyCimaAdapter, bmBmaAdapter, vgFscAdapter, bsScbAdapter,
 ];
 
 /** All configured country adapters whose env keys are present. */
