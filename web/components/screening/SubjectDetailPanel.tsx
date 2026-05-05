@@ -83,6 +83,7 @@ import {
   type HitResolution,
   type HitResolutionVerdict,
 } from "@/lib/data/subject-store";
+import { riskLevelForVerdict, type HitResolutionReasonCategory } from "@/lib/types";
 
 // Timeline tab removed — its content was a placeholder + the same
 // adverse-media dossier rendered below the tabs unconditionally,
@@ -1894,7 +1895,60 @@ interface SubjectContext {
   idNumber?: string;
 }
 
+type HitStatusFilter = "unresolved" | "positive" | "possible" | "false" | "unspecified" | "all";
+
 function HitsList({ hits, subjectCtx }: { hits: QuickScreenHit[]; subjectCtx?: SubjectContext }) {
+  const [filter, setFilter] = useState<HitStatusFilter>("all");
+
+  // Read every hit's resolution (if any) so the counter tabs can show
+  // Unresolved / Positive / Possible / False / Unspecified counts à la
+  // World-Check's "Showing 409 of 2502 matches" pattern.
+  const resolutions = useMemo(() => {
+    if (!subjectCtx?.id) return new Map<string, HitResolution>();
+    const m = new Map<string, HitResolution>();
+    for (const h of hits) {
+      const key = `${h.listId}:${h.listRef}`;
+      const r = loadHitResolution(subjectCtx.id, key);
+      if (r) m.set(key, r);
+    }
+    return m;
+  }, [subjectCtx?.id, hits]);
+
+  const counts = useMemo(() => {
+    let positive = 0, possible = 0, falsePos = 0, unspecified = 0;
+    for (const h of hits) {
+      const r = resolutions.get(`${h.listId}:${h.listRef}`);
+      if (!r) continue;
+      if (r.verdict === "confirmed_positive") positive += 1;
+      else if (r.verdict === "possible_match") possible += 1;
+      else if (r.verdict === "false_positive") falsePos += 1;
+      else if (r.verdict === "unspecified") unspecified += 1;
+    }
+    const resolved = positive + possible + falsePos + unspecified;
+    return {
+      total: hits.length,
+      unresolved: hits.length - resolved,
+      positive,
+      possible,
+      false: falsePos,
+      unspecified,
+    };
+  }, [hits, resolutions]);
+
+  const filtered = useMemo(() => {
+    if (filter === "all") return hits;
+    return hits.filter((h) => {
+      const r = resolutions.get(`${h.listId}:${h.listRef}`);
+      if (filter === "unresolved") return !r;
+      if (!r) return false;
+      if (filter === "positive") return r.verdict === "confirmed_positive";
+      if (filter === "possible") return r.verdict === "possible_match";
+      if (filter === "false") return r.verdict === "false_positive";
+      if (filter === "unspecified") return r.verdict === "unspecified";
+      return true;
+    });
+  }, [hits, resolutions, filter]);
+
   if (hits.length === 0) {
     return (
       <div className="text-11 text-ink-2 py-2.5">
@@ -1902,12 +1956,50 @@ function HitsList({ hits, subjectCtx }: { hits: QuickScreenHit[]; subjectCtx?: S
       </div>
     );
   }
+
+  // World-Check-style status tabs.
+  const tabs: Array<{ key: HitStatusFilter; label: string; count: number; cls: string }> = [
+    { key: "all",         label: "All",         count: counts.total,       cls: "text-ink-1" },
+    { key: "unresolved",  label: "Unresolved",  count: counts.unresolved,  cls: "text-amber" },
+    { key: "positive",    label: "Positive",    count: counts.positive,    cls: "text-red" },
+    { key: "possible",    label: "Possible",    count: counts.possible,    cls: "text-amber" },
+    { key: "false",       label: "False",       count: counts.false,       cls: "text-green" },
+    { key: "unspecified", label: "Unspecified", count: counts.unspecified, cls: "text-ink-2" },
+  ];
+
   return (
-    <ul className="list-none p-0 m-0">
-      {hits.map((hit, idx) => (
-        <HitRow key={`${hit.listId}-${hit.listRef}-${idx}`} hit={hit} subjectCtx={subjectCtx} />
-      ))}
-    </ul>
+    <div>
+      <div className="flex items-center gap-1 flex-wrap mb-2 pb-2 border-b border-hair-2 text-11">
+        {tabs.map((t) => {
+          const active = filter === t.key;
+          return (
+            <button
+              key={t.key}
+              type="button"
+              onClick={() => setFilter(t.key)}
+              className={`inline-flex items-center gap-1.5 px-2 py-1 rounded transition-colors ${active ? "bg-bg-2 text-ink-0 font-semibold" : "text-ink-2 hover:text-ink-0"}`}
+            >
+              <span className={active ? "" : t.cls}>{t.label}</span>
+              <span className={`font-mono text-10 ${active ? "text-ink-1" : "text-ink-3"}`}>({t.count})</span>
+            </button>
+          );
+        })}
+      </div>
+      {filter !== "all" && (
+        <div className="text-10 text-ink-3 mb-2 font-mono">
+          Showing {filtered.length} of {counts.total} matches
+        </div>
+      )}
+      {filtered.length === 0 ? (
+        <div className="text-11 text-ink-2 py-2.5">No hits in this status.</div>
+      ) : (
+        <ul className="list-none p-0 m-0">
+          {filtered.map((hit, idx) => (
+            <HitRow key={`${hit.listId}-${hit.listRef}-${idx}`} hit={hit} subjectCtx={subjectCtx} />
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
 
@@ -1925,6 +2017,7 @@ function HitRow({ hit, subjectCtx }: { hit: QuickScreenHit; subjectCtx?: Subject
   );
   const [verdictInput, setVerdictInput] = useState<HitResolutionVerdict>("false_positive");
   const [reasonInput, setReasonInput] = useState("");
+  const [reasonCategoryInput, setReasonCategoryInput] = useState<HitResolutionReasonCategory>("no_match");
   const [resolving, setResolving] = useState(false);
   const [enrollStatus, setEnrollStatus] = useState<"idle" | "enrolling" | "enrolled" | "error">("idle");
 
@@ -1972,6 +2065,8 @@ function HitRow({ hit, subjectCtx }: { hit: QuickScreenHit; subjectCtx?: Subject
       const rec: HitResolution = {
         hitRef: hitKey,
         verdict: verdictInput,
+        reasonCategory: reasonCategoryInput,
+        riskLevel: riskLevelForVerdict(verdictInput),
         reason: reasonInput.trim(),
         resolvedAt: new Date().toISOString(),
       };
@@ -2026,10 +2121,12 @@ function HitRow({ hit, subjectCtx }: { hit: QuickScreenHit; subjectCtx?: Subject
 
   const resolutionBadge = resolution
     ? resolution.verdict === "false_positive"
-      ? { cls: "bg-green-dim text-green border border-green/30", label: "False Positive" }
+      ? { cls: "bg-green-dim text-green border border-green/30", label: "False · Low risk" }
       : resolution.verdict === "possible_match"
-        ? { cls: "bg-amber-dim text-amber border border-amber/30", label: "Possible Match" }
-        : { cls: "bg-red-dim text-red border border-red/30", label: "Confirmed Positive" }
+        ? { cls: "bg-amber-dim text-amber border border-amber/30", label: "Possible · Medium risk" }
+        : resolution.verdict === "confirmed_positive"
+          ? { cls: "bg-red-dim text-red border border-red/30", label: "Positive · High risk" }
+          : { cls: "bg-bg-2 text-ink-2 border border-hair-3", label: "Unspecified · Unknown risk" }
     : null;
 
   const csCard = csResult ? (
@@ -2236,25 +2333,35 @@ function HitRow({ hit, subjectCtx }: { hit: QuickScreenHit; subjectCtx?: Subject
                 {(
                   [
                     {
-                      v: "false_positive" as const,
-                      label: "FALSE POSITIVE",
-                      desc: "Not the same person or entity — no further action required",
-                      activeCls: "border-green/50 bg-green-dim/30 text-green",
+                      v: "confirmed_positive" as const,
+                      label: "POSITIVE",
+                      risk: "HIGH",
+                      desc: "This is the listed person or entity — subject will be enrolled in daily monitoring",
+                      activeCls: "border-red/50 bg-red-dim/30 text-red",
                     },
                     {
                       v: "possible_match" as const,
-                      label: "POSSIBLE MATCH",
+                      label: "POSSIBLE",
+                      risk: "MEDIUM",
                       desc: "Requires further investigation before a clearance decision",
                       activeCls: "border-amber/50 bg-amber-dim/30 text-amber",
                     },
                     {
-                      v: "confirmed_positive" as const,
-                      label: "CONFIRMED POSITIVE",
-                      desc: "This is the listed person or entity — subject will be enrolled in daily monitoring",
-                      activeCls: "border-red/50 bg-red-dim/30 text-red",
+                      v: "false_positive" as const,
+                      label: "FALSE",
+                      risk: "LOW",
+                      desc: "Not the same person or entity — no further action required",
+                      activeCls: "border-green/50 bg-green-dim/30 text-green",
                     },
-                  ] as { v: HitResolutionVerdict; label: string; desc: string; activeCls: string }[]
-                ).map(({ v, label, desc, activeCls }) => (
+                    {
+                      v: "unspecified" as const,
+                      label: "UNSPECIFIED",
+                      risk: "UNKNOWN",
+                      desc: "Insufficient information to determine — keep on the unresolved queue",
+                      activeCls: "border-hair-3 bg-bg-2/30 text-ink-2",
+                    },
+                  ] as { v: HitResolutionVerdict; label: string; risk: string; desc: string; activeCls: string }[]
+                ).map(({ v, label, risk, desc, activeCls }) => (
                   <label
                     key={v}
                     className={`flex items-start gap-2.5 px-3 py-2.5 rounded-lg border cursor-pointer transition-colors ${
@@ -2269,14 +2376,35 @@ function HitRow({ hit, subjectCtx }: { hit: QuickScreenHit; subjectCtx?: Subject
                       onChange={() => setVerdictInput(v)}
                       className="mt-0.5 shrink-0"
                     />
-                    <div>
-                      <div className="text-11 font-bold tracking-wide-2">{label}</div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="text-11 font-bold tracking-wide-2">{label}</div>
+                        <span className="text-10 font-mono opacity-70">{risk} RISK</span>
+                      </div>
                       <div className="text-10 text-ink-3 mt-0.5">{desc}</div>
                     </div>
                   </label>
                 ))}
               </div>
               <div className="mb-3">
+                <label className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1 block">
+                  Reason category *
+                </label>
+                <select
+                  className="w-full px-3 py-2 border border-hair-2 rounded text-12 bg-bg-panel focus:outline-none focus:border-brand text-ink-0 mb-3"
+                  value={reasonCategoryInput}
+                  onChange={(e) => setReasonCategoryInput(e.target.value as HitResolutionReasonCategory)}
+                >
+                  <option value="no_match">No Match — sanctioned subject is clearly not the customer</option>
+                  <option value="partial_match">Partial Match — some identifiers align, others don&apos;t</option>
+                  <option value="full_match">Full Match — all decisive identifiers match (DOB / passport / biometric)</option>
+                  <option value="name_only">Name Only — matched on name alone, no other identifiers to compare</option>
+                  <option value="duplicate_record">Duplicate Record — same listing already resolved under another hit</option>
+                  <option value="verified_negative">Verified Negative — independent verification rules out the subject</option>
+                  <option value="data_quality_issue">Data Quality Issue — record is incomplete or corrupted</option>
+                  <option value="stale_listing">Stale Listing — listing is no longer in force</option>
+                  <option value="other">Other (explain in reason)</option>
+                </select>
                 <label className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1 block">
                   Reason / basis for determination *
                 </label>
