@@ -161,6 +161,17 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   try {
+    // Track every module that degraded — surfaced in the response so the
+    // MLRO and the compliance report show "this run was incomplete in
+    // these specific ways" instead of returning a green verdict on top of
+    // a silently-zeroed signal.
+    const degradation: Array<{ module: string; reason: string }> = [];
+    const noteDegradation = (mod: string, err: unknown): void => {
+      const reason = err instanceof Error ? err.message.slice(0, 200) : String(err).slice(0, 200);
+      console.error(`[super-brain] ${mod} failed:`, reason);
+      degradation.push({ module: mod, reason });
+    };
+
     // 0 · Known-entity fixtures — household-name PEPs and documented
     //     adverse-media subjects auto-flag even without roleText or live
     //     external feeds (so demo subjects render a realistic posture).
@@ -302,7 +313,14 @@ export async function POST(req: Request): Promise<NextResponse> {
       .filter((s) => s.length > 0)
       .join("\n");
     const adverseMediaScoredEarly = mediaTextEarly
-      ? (() => { try { return scoreAdverseMedia(mediaTextEarly, []); } catch { return null; } })()
+      ? (() => {
+          try {
+            return scoreAdverseMedia(mediaTextEarly, []);
+          } catch (err) {
+            noteDegradation("scoreAdverseMedia(early)", err);
+            return null;
+          }
+        })()
       : null;
     const HIGH_SEVERITY_CATS = new Set([
       "terrorist_financing",
@@ -351,7 +369,8 @@ export async function POST(req: Request): Promise<NextResponse> {
       ? (() => {
           try {
             return jurisdictionProfile(jurisdictionIso.toUpperCase());
-          } catch {
+          } catch (err) {
+            noteDegradation("jurisdictionProfile", err);
             return null;
           }
         })()
@@ -362,7 +381,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     const rawTypologyHits: ReturnType<typeof matchTypologies> = (() => {
       try {
         return matchTypologies(fullText);
-      } catch {
+      } catch (err) {
+        noteDegradation("matchTypologies", err);
         return [];
       }
     })();
@@ -443,7 +463,8 @@ export async function POST(req: Request): Promise<NextResponse> {
         const syntheticBoost = syntheticTypologyHits.reduce((acc, h) => acc + h.typology.weight * 100, 0);
         const amCatBoost = amCategoryTypologyHits.reduce((acc: any, h: any) => acc + h.typology.weight * 100, 0);
         return Math.min(100, baseScore + syntheticBoost * 0.5 + amCatBoost * 0.4);
-      } catch {
+      } catch (err) {
+        noteDegradation("typologyCompositeScore", err);
         return 0;
       }
     })();
@@ -456,7 +477,8 @@ export async function POST(req: Request): Promise<NextResponse> {
       ? (() => {
           try {
             return scoreAdverseMedia(mediaText, []);
-          } catch {
+          } catch (err) {
+            noteDegradation("scoreAdverseMedia(full)", err);
             return adverseMediaScoredEarly;
           }
         })()
@@ -469,7 +491,8 @@ export async function POST(req: Request): Promise<NextResponse> {
       ? (() => {
           try {
             return assessPEP(pepRoleText ?? "", body.subject.name);
-          } catch {
+          } catch (err) {
+            noteDegradation("assessPEP", err);
             return null;
           }
         })()
@@ -480,7 +503,8 @@ export async function POST(req: Request): Promise<NextResponse> {
       ? (() => {
           try {
             return analyseText(mediaText);
-          } catch {
+          } catch (err) {
+            noteDegradation("stylometry", err);
             return null;
           }
         })()
@@ -498,6 +522,10 @@ export async function POST(req: Request): Promise<NextResponse> {
 
     return NextResponse.json({
       ok: true,
+      // When non-empty, downstream consumers (compliance report, MLRO UI)
+      // MUST surface this list. Each entry means a brain module silently
+      // degraded — the composite score is missing that signal.
+      ...(degradation.length > 0 ? { degradation } : {}),
       audit,
       screen,
       pep,

@@ -19,8 +19,6 @@ export function SiteFooter() {
           <FooterLink href="/contact">Contact Us</FooterLink>
           <span className="text-white/30 text-10 select-none">·</span>
           <FooterLink href="/privacy">Privacy</FooterLink>
-          <span className="text-white/30 text-10 select-none">·</span>
-          <FooterLink href="/status">System Status</FooterLink>
         </div>
       </div>
     </footer>

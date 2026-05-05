@@ -66,6 +66,60 @@ function bandForScore(score: number): "clear" | "low" | "medium" | "high" | "cri
   return "clear";
 }
 
+// MLRO POLICY: certain signals MUST escalate the dossier regardless of the
+// raw composite. A subject with confirmed adverse media at moderate+ severity
+// is HIGH-risk, full stop — even if the composite math hasn't crossed the
+// 60-point threshold yet. Same rule for any-tier PEP and any sanctions hit.
+// Without this override, a single "Istanbul Gold Refinery — bribery
+// indictment" article scores composite ~28 (LOW) and the dossier reads as
+// LOW while the CDD card simultaneously says EDD/zero-tolerance — that
+// inconsistency is exactly what the regulator flags as "negligent screening".
+function effectiveBand(
+  rawScore: number,
+  signals: {
+    sanctionsHits: number;
+    pepTier?: string | null;
+    amCompositeScore?: number;       // 0..1 from structured scorer
+    amCount?: number;                 // count fallback
+    redlinesFired?: number;
+    cahra?: boolean;
+  },
+): "clear" | "low" | "medium" | "high" | "critical" {
+  const base = bandForScore(rawScore);
+  const order = ["clear", "low", "medium", "high", "critical"] as const;
+  let band: typeof order[number] = base;
+  const escalateTo = (target: typeof order[number]): void => {
+    if (order.indexOf(target) > order.indexOf(band)) band = target;
+  };
+
+  // Sanctions hits — any positive match escalates immediately.
+  if (signals.sanctionsHits >= 1) escalateTo("high");
+  if (signals.sanctionsHits >= 2) escalateTo("critical");
+
+  // Adverse media — severity-weighted scorer dominates when available.
+  if (typeof signals.amCompositeScore === "number" && signals.amCompositeScore >= 0) {
+    if (signals.amCompositeScore >= 0.7) escalateTo("critical");
+    else if (signals.amCompositeScore >= 0.4) escalateTo("high");
+    else if (signals.amCompositeScore >= 0.1) escalateTo("high");  // any moderate signal → EDD
+    else if (signals.amCompositeScore > 0)   escalateTo("medium"); // limited signal → at least medium
+  } else if (typeof signals.amCount === "number" && signals.amCount > 0) {
+    // Count-only fallback when the structured scorer didn't run.
+    if (signals.amCount >= 4) escalateTo("high");
+    else escalateTo("medium");
+  }
+
+  // Any PEP tier triggers EDD per FATF R.12 / FDL 10/2025 Art.17.
+  if (signals.pepTier) escalateTo("high");
+
+  // Redlines — hard charter prohibitions. Any fire = critical.
+  if ((signals.redlinesFired ?? 0) > 0) escalateTo("critical");
+
+  // CAHRA jurisdiction adds at least medium pressure.
+  if (signals.cahra) escalateTo("medium");
+
+  return band;
+}
+
 function renderHtmlReport(text: string, input: ReportInput): string {
   const now = input.now ?? new Date();
   const s   = input.subject;
@@ -74,17 +128,35 @@ function renderHtmlReport(text: string, input: ReportInput): string {
   // Composite drives the headline — same number rendered in the UI
   // gauge. r.topScore (sanctions vector only) was the source of the
   // 0/100-CLEAR-vs-42/100 discrepancy in earlier exports.
-  const composite = sb?.composite?.score ?? r.topScore;
-  const headlineBand = bandForScore(composite);
-  const sev = headlineBand;
-  const sevColor = SEV_COLOR[sev] ?? "#888";
-  const safeTitle = escapeHtml(`Hawkeye Sterling — ${s.name}`);
+  // ?? only narrows null/undefined, so a real 0 survives. Both paths
+  // can still legitimately be undefined on the very first ever run
+  // before any screening has happened — clamp to a number so
+  // bandForScore never receives NaN/undefined and silently ranks the
+  // subject as CLEAR by accident.
+  const rawComposite = sb?.composite?.score ?? r.topScore;
+  const composite = typeof rawComposite === "number" && Number.isFinite(rawComposite) ? rawComposite : 0;
 
   const amCount = (sb?.adverseKeywordGroups?.length ?? 0) + (sb?.adverseMedia?.length ?? 0);
   // Severity-weighted adverse-media score from the structured scorer (0..1).
   // Falls back to count-based classification when unavailable.
   const amCompositeScore: number = sb?.adverseMediaScored?.compositeScore ?? -1;
   const pepTier = sb?.pep && sb.pep.salience > 0 ? sb.pep.tier : null;
+
+  // Apply the MLRO policy override — adverse media moderate+, PEP, sanctions
+  // hits, redlines, and CAHRA jurisdictions force the headline up regardless
+  // of the raw composite math. Stops a 28/100 composite from reading "LOW"
+  // when the CDD card concurrently says EDD/zero-tolerance.
+  const headlineBand = effectiveBand(composite, {
+    sanctionsHits: r.hits.length,
+    pepTier,
+    ...(amCompositeScore >= 0 ? { amCompositeScore } : {}),
+    amCount,
+    redlinesFired: sb?.redlines?.fired?.length ?? 0,
+    cahra: sb?.jurisdiction?.cahra ?? false,
+  });
+  const sev = headlineBand;
+  const sevColor = SEV_COLOR[sev] ?? "#888";
+  const safeTitle = escapeHtml(`Hawkeye Sterling — ${s.name}`);
 
   const year  = now.getUTCFullYear();
   const month = String(now.getUTCMonth() + 1).padStart(2, "0");
@@ -318,7 +390,6 @@ function renderHtmlReport(text: string, input: ReportInput): string {
     <div class="scr-meta-row"><span class="scr-ml">Date and Time</span><span class="scr-mv">${e(now.toUTCString().replace(" GMT"," UTC"))}</span></div>
     <div class="scr-meta-row"><span class="scr-ml">Place</span><span class="scr-mv">Dubai, United Arab Emirates</span></div>
     <div class="scr-meta-row"><span class="scr-ml">MLRO Assigned</span><span class="scr-mv">${e(input.mlro ?? "L. Fernanda")}</span></div>
-    <div class="scr-meta-row"><span class="scr-ml">FIU Registration</span><span class="scr-mv">FIU-AE-DMCC-0428</span></div>
   </div>
   <div class="hs-doublerule"><div></div><div></div></div>
   <div class="scr-subj">

@@ -139,11 +139,21 @@ export function isInMemoryFallback(): boolean {
 
 export async function getJson<T>(key: string): Promise<T | null> {
   const store = getStore();
+  let raw: string | null = null;
   try {
-    const raw = await store.get(key);
-    if (!raw || typeof raw !== "string") return null;
+    raw = await store.get(key);
+  } catch (err) {
+    console.warn(`[store] getJson(${key}) read failed:`, err instanceof Error ? err.message : err);
+    return null;
+  }
+  if (!raw || typeof raw !== "string") return null;
+  try {
     return JSON.parse(raw) as T;
-  } catch {
+  } catch (err) {
+    // Distinguish "missing" from "corrupted" — silent null on a parse
+    // error hides on-disk corruption from ops. Loud-log and still return
+    // null so the caller's existing null-check path runs.
+    console.error(`[store] getJson(${key}) JSON parse failed (corrupted blob):`, err instanceof Error ? err.message : err);
     return null;
   }
 }
@@ -172,7 +182,14 @@ export async function listKeys(prefix?: string): Promise<string[]> {
     const opts = prefix ? { prefix } : {};
     const result = await store.list(opts);
     return result.blobs.map((b) => b.key);
-  } catch {
+  } catch (err) {
+    // Loud-log: silently returning [] hides outages and makes "no data"
+    // indistinguishable from "store unreachable". Callers still see the
+    // empty array so existing flows don't break, but ops sees the cause.
+    console.warn(
+      `[store] listKeys(prefix=${prefix ?? "—"}) failed — returning empty list. Reason:`,
+      err instanceof Error ? err.message : err,
+    );
     return [];
   }
 }

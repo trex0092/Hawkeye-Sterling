@@ -217,7 +217,12 @@ async function enrichWithClaude(
 
   const articleSummaries = articles
     .slice(0, 8)
-    .map((a, i) => `[${i + 1}] "${a.title}" (${a.source}, tone: ${a.tone.toFixed(1)})`)
+    .map((a, i) => {
+      // Defensive: GDELT can return articles without a tone, even though our
+      // mapper defaults to 0. Don't assume a number.
+      const tone = typeof a.tone === "number" && Number.isFinite(a.tone) ? a.tone : 0;
+      return `[${i + 1}] "${a.title}" (${a.source}, tone: ${tone.toFixed(1)})`;
+    })
     .join("\n");
 
   const systemPrompt = `You are an AML compliance analyst at a UAE-regulated financial institution.
@@ -246,18 +251,27 @@ Generate the JSON response.`;
     });
 
     const text = msg.content.find((b) => b.type === "text")?.text ?? "";
-    // Extract JSON from response
+    // Extract JSON from response — null match goes through the catch
+    // below as "no JSON in response", never as a TypeError.
     const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error("no JSON in response");
+    if (!jsonMatch?.[0]) throw new Error("Claude returned no JSON object");
 
     const parsed = JSON.parse(jsonMatch[0]) as {
       summary?: string;
       articleCategories?: Array<{ index: number; categories: string[] }>;
     };
 
+    // Validate articleCategories shape before consuming — Claude can
+    // occasionally drop the categories field or return malformed entries.
     const catMap = new Map<number, string[]>();
-    for (const ac of parsed.articleCategories ?? []) {
-      catMap.set(ac.index, ac.categories ?? []);
+    if (Array.isArray(parsed.articleCategories)) {
+      for (const ac of parsed.articleCategories) {
+        if (!ac || typeof ac.index !== "number") continue;
+        const cats = Array.isArray(ac.categories)
+          ? ac.categories.filter((c): c is string => typeof c === "string")
+          : [];
+        catMap.set(ac.index, cats);
+      }
     }
 
     const enrichedArticles = articles.map((a, i) => ({

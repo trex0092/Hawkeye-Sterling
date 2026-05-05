@@ -28,17 +28,34 @@ type FilingType =
   | "PEPR"
   | "FTFR";
 
-// Phrases that constitute tipping-off under FDL 10/2025 Art.29
+// Phrases that constitute tipping-off under FDL 10/2025 Art.29.
+// The list is broad on purpose: false-positive flagging an MLRO draft is
+// a recoverable inconvenience; a true-positive that slipped through is a
+// criminal disclosure. Patterns cover synonyms, abbreviations, and
+// common circumvention phrasings.
 const TIPPING_OFF_PATTERNS = [
-  /\byou\s+are\s+(being\s+)?investigated\b/i,
-  /\bSTR\s+has\s+been\s+filed\b/i,
-  /\bsuspicious\s+transaction\s+report\b/i,
-  /\bwe\s+have\s+reported\s+you\b/i,
-  /\bauthorities\s+have\s+been\s+notified\b/i,
-  /\bFIU\s+has\s+been\s+informed\b/i,
-  /\bgoAML\s+filing\b/i,
-  /\banti.?money\s+laundering\s+investigation\b/i,
-  /\byour\s+account.{0,30}(suspended|blocked|flagged)\b/i,
+  // Direct STR/SAR/CTR references and synonyms
+  /\bSTR\s+(?:has\s+been|was|is being)\s+(?:filed|raised|submitted|lodged)\b/i,
+  /\bSAR\s+(?:has\s+been|was|is being)\s+(?:filed|raised|submitted|lodged)\b/i,
+  /\bSIR\s+(?:has\s+been|was|is being)\s+(?:filed|raised|submitted|lodged)\b/i,
+  /\bCTR\s+(?:has\s+been|was|is being)\s+(?:filed|raised|submitted|lodged)\b/i,
+  /\bsuspicious\s+(?:transaction|activity)\s+report\b/i,
+  /\bsuspicion\s+report\b/i,
+  /\bgoAML\s+(?:filing|report|submission|lodgement)\b/i,
+  // Investigation / reporting language
+  /\byou\s+are\s+(?:being\s+)?(?:investigat|examin|review|scrutiniz|scrutinis)/i,
+  /\b(?:we|the\s+bank|the\s+firm|compliance)\s+(?:have|has)\s+reported\s+you\b/i,
+  /\bauthorities\s+(?:have\s+been|are\s+being)\s+(?:notified|informed|alerted|told)\b/i,
+  /\b(?:FIU|EOCN|CBUAE|FATF|regulator)\s+(?:has\s+been|have\s+been|is\s+being|are\s+being)\s+(?:notified|informed|alerted|told)\b/i,
+  /\banti.?money\s+laundering\s+(?:investigation|inquiry|review|case)\b/i,
+  /\bAML\s+(?:investigation|inquiry|review|case|alert|flag)\b/i,
+  /\bcompliance\s+(?:investigation|inquiry|alert|flag|hold)\b/i,
+  // Account-status disclosures that imply a suspicion was raised
+  /\byour\s+account.{0,40}(?:suspend|block|freez|flag|hold|restrict|escalat)/i,
+  /\b(?:suspended|blocked|frozen|flagged|on hold|restricted)\s+(?:due to|because of|pending)\s+(?:AML|compliance|investigation|review|suspicion)/i,
+  // Circumvention phrasings — "between you and me", "off the record"
+  /\b(?:off\s+the\s+record|between\s+you\s+and\s+me|don'?t\s+tell\s+anyone).{0,80}\b(?:STR|SAR|FIU|investigat|report|fil)/i,
+  /\bI\s+shouldn'?t\s+(?:tell|say)\s+you.{0,80}\b(?:STR|SAR|FIU|investigat|report|fil)/i,
 ];
 
 function checkTippingOff(text: string): string | null {
@@ -270,18 +287,43 @@ async function handleSarReport(req: Request): Promise<NextResponse> {
     charterIntegrityHash: process.env["CHARTER_HASH"] ?? "hawkeye-sterling-v1",
   };
 
-  // Validate the envelope before serialising.
+  // Validate the envelope before serialising. If validation produces ANY
+  // errors we refuse the filing — pushing a broken envelope to the FIU
+  // is worse than refusing to file: the FIU rejects it silently and the
+  // MLRO believes the STR was lodged when it wasn't.
   const validationErrors = validateGoamlEnvelope(envelope);
   let goamlXml = "";
   let goamlValidationWarnings: string[] = [];
+  let goamlSerialiseError: string | null = null;
   try {
     goamlXml = serialiseGoamlXml(envelope);
     goamlValidationWarnings = validationErrors;
   } catch (xmlErr) {
+    goamlSerialiseError = xmlErr instanceof Error ? xmlErr.message : String(xmlErr);
     goamlValidationWarnings = [
-      `XML serialisation failed: ${xmlErr instanceof Error ? xmlErr.message : String(xmlErr)}`,
+      `XML serialisation failed: ${goamlSerialiseError}`,
       ...validationErrors,
     ];
+  }
+  // Hard refusal: serialisation failure or validator returned errors.
+  // The MLRO sees the warnings and must fix them before the filing can
+  // proceed — the goAML XML never leaves the building unsigned.
+  if (goamlSerialiseError || validationErrors.length > 0) {
+    console.error("[sar-report] refusing to file invalid goAML envelope", {
+      subject: body.subject.id,
+      filingType: body.filingType,
+      validationErrors,
+      goamlSerialiseError,
+    });
+    return NextResponse.json(
+      {
+        ok: false,
+        error: "goaml_envelope_invalid",
+        detail: "goAML envelope failed validation — fix the listed warnings and re-submit. The FIU rejects malformed XML; filing was NOT created.",
+        validationWarnings: goamlValidationWarnings,
+      },
+      { status: 422 },
+    );
   }
 
   lines.push("");
@@ -322,6 +364,11 @@ async function handleSarReport(req: Request): Promise<NextResponse> {
 
   // Wrap the Asana call in try-catch so a network failure returns a clean
   // JSON error instead of letting Next.js surface an unformatted 500.
+  // 10s timeout matches screening-report so a hung api.asana.com can't burn
+  // the whole 60s function budget.
+  const ASANA_TIMEOUT_MS = 10_000;
+  const asanaCtl = new AbortController();
+  const asanaTimer = setTimeout(() => asanaCtl.abort(), ASANA_TIMEOUT_MS);
   let taskRes: Response;
   let asanaPayload: {
     data?: { gid?: string; permalink_url?: string };
@@ -344,14 +391,17 @@ async function handleSarReport(req: Request): Promise<NextResponse> {
           assignee: process.env["ASANA_ASSIGNEE_GID"] ?? DEFAULT_ASSIGNEE_GID,
         },
       }),
+      signal: asanaCtl.signal,
     });
     asanaPayload = (await taskRes.json().catch(() => null)) as typeof asanaPayload;
   } catch (err) {
+    const detail = err instanceof Error ? err.message : String(err);
+    const isAbort = err instanceof Error && (err.name === "AbortError" || asanaCtl.signal.aborted);
     return NextResponse.json({
       ok: true,
       filingType: body.filingType,
       asanaSkipped: true,
-      asanaNote: `Asana request failed: ${err instanceof Error ? err.message : String(err)}. Report generated successfully.`,
+      asanaNote: `Asana request ${isAbort ? `timed out after ${ASANA_TIMEOUT_MS}ms` : "failed"}: ${detail}. Report generated successfully.`,
       reportText: lines.join("\n"),
       goaml: {
         internalReference: internalRef,
@@ -360,6 +410,8 @@ async function handleSarReport(req: Request): Promise<NextResponse> {
         xmlBase64: goamlXml ? Buffer.from(goamlXml, "utf8").toString("base64") : null,
       },
     });
+  } finally {
+    clearTimeout(asanaTimer);
   }
   if (!taskRes.ok || !asanaPayload?.data?.gid) {
     return NextResponse.json({

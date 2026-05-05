@@ -82,7 +82,24 @@ export async function POST(req: Request): Promise<NextResponse> {
   } else {
     // No candidates provided → use the live watchlist corpus.
     try {
-      candidates = await loadCandidates() as QuickScreenCandidate[];
+      const loaded = await loadCandidates();
+      // Validate shape at runtime — a corrupt blob/static fixture must NOT
+      // silently propagate into the matcher and produce nonsense hits.
+      if (!Array.isArray(loaded)) {
+        return respond(503, { ok: false, error: "watchlist corpus unavailable", detail: "loadCandidates returned non-array" }, gateHeaders);
+      }
+      candidates = loaded.filter(
+        (c): c is QuickScreenCandidate =>
+          !!c && typeof c === "object" &&
+          typeof (c as QuickScreenCandidate).listId === "string" &&
+          typeof (c as QuickScreenCandidate).listRef === "string" &&
+          typeof (c as QuickScreenCandidate).name === "string",
+      );
+      if (candidates.length === 0) {
+        // Empty corpus is a real concern — sanctions screening with zero
+        // candidates ALWAYS returns CLEAR. Fail loud rather than degrade.
+        return respond(503, { ok: false, error: "watchlist corpus unavailable", detail: "no valid candidates loaded" }, gateHeaders);
+      }
     } catch (err) {
       const detail = err instanceof Error ? err.message : String(err);
       console.error("[quick-screen] loadCandidates failed", detail);
