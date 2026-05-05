@@ -10,6 +10,7 @@
 
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { searchAllNews } from "@/lib/intelligence/newsAdapters";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 45;
@@ -381,8 +382,6 @@ export async function POST(req: Request): Promise<NextResponse> {
     } satisfies AdverseMediaLiveResult);
   }
 
-  const totalHits = rawArticles.length;
-
   // Map GDELT articles to our schema
   const articles: AdverseMediaLiveResult["articles"] = rawArticles.map((a) => ({
     title: a.title ?? "",
@@ -395,10 +394,42 @@ export async function POST(req: Request): Promise<NextResponse> {
     snippet: "", // GDELT artlist mode doesn't return snippets
   }));
 
+  // Augment with vendor news adapters (NewsAPI, MarketAux, GNews, Mediastack,
+  // Currents, NewsCatcher, Reuters/RDP, ComplyAdvantage, FactSet, S&P Global,
+  // Moody's Orbis, Bloomberg). Each adapter is env-key gated; absent keys
+  // degrade silently to NULL_NEWS_ADAPTER. Failures from any single vendor
+  // never break the GDELT-anchored result.
+  let vendorProviders: string[] = [];
+  try {
+    const { articles: vendorArticles, providersUsed } = await searchAllNews(subjectName, { limit: 25 });
+    vendorProviders = providersUsed;
+    if (vendorArticles.length > 0) {
+      const seen = new Set(articles.map((a) => a.url.toLowerCase()));
+      for (const va of vendorArticles) {
+        const key = va.url.toLowerCase();
+        if (!key || seen.has(key)) continue;
+        seen.add(key);
+        articles.push({
+          title: va.title,
+          source: va.outlet || va.source,
+          url: va.url,
+          publishedAt: va.publishedAt,
+          tone: typeof va.sentiment === "number" ? va.sentiment : 0,
+          relevanceScore: 60,
+          categories: inferCategories(va.title, va.outlet || va.source),
+          snippet: va.snippet ?? "",
+        });
+      }
+    }
+  } catch (err) {
+    console.warn("[adverse-media-live] vendor news augmentation failed:", err instanceof Error ? err.message : String(err));
+  }
+
   // Sort by tone ascending (most negative first)
   articles.sort((a, b) => a.tone - b.tone);
 
-  const riskScore = computeRiskScore(rawArticles, totalHits);
+  const aggregatedTotal = articles.length;
+  const riskScore = computeRiskScore(rawArticles, aggregatedTotal);
   const riskRating = scoreToRating(riskScore);
 
   // Optionally enrich with Claude
@@ -410,16 +441,17 @@ export async function POST(req: Request): Promise<NextResponse> {
     riskRating,
   );
 
-  const result: AdverseMediaLiveResult & { enriched?: boolean; enrichmentNote?: string } = {
+  const result: AdverseMediaLiveResult & { enriched?: boolean; enrichmentNote?: string; vendorProviders?: string[] } = {
     ok: true,
     subject: subjectName,
-    totalHits,
+    totalHits: aggregatedTotal,
     riskScore,
     riskRating,
     articles: articlesWithCategories,
     summary,
     regulatoryBasis: "FATF R.10 (CDD), FDL 10/2025 Art.10 (ongoing monitoring)",
     enriched,
+    ...(vendorProviders.length > 0 ? { vendorProviders } : {}),
     ...(enriched === false
       ? { enrichmentNote: "Claude enrichment unavailable — article categories are regex-inferred only. Review findings manually for nuance." }
       : {}),
