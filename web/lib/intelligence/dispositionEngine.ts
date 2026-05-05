@@ -6,11 +6,31 @@
 //   - rationale:      ordered list of human-readable reasoning steps
 //   - redFlags:       named typology / pattern matches that fired
 //   - requiredEvidence: what the MLRO must collect before disposition
+//   - typologies:     FATF/Egmont fingerprints
+//   - playbooks:      per-typology MLRO action chains
+//   - geography:      jurisdiction tier + inherent geographic risk
+//   - industry:       sector inherent risk + sector-specific evidence
+//   - network:        contagion from related parties (RCA / family / group)
+//   - temporal:       velocity, recency-weighted score, dormancy
+//   - predicates:     FATF predicate-offence chain
+//   - interview:      tailored MLRO interview script
+//   - documents:      itemised document-request list
+//   - anomalies:      unusual signal combinations
+//   - confidence:     calibrated 0..1 confidence + uncertainty
+//   - counterfactual: what would flip the verdict
 //
 // The engine encodes MLRO common-sense rules that no single sub-module
 // can express alone. It is the ONLY place where cross-signal escalation
 // happens, so the panel, the report, and the Asana task all read the
 // same band and the same rationale.
+
+import { jurisdictionRisk, chainGeographyRisk, type GeographicRiskEntry, type GeographyChain } from "./geographicRisk";
+import { industryRisk, inferIndustrySegment, type IndustryRiskEntry, type IndustrySegment } from "./industryRisk";
+import { playbookFor, type TypologyPlaybook } from "./typologyPlaybooks";
+import { networkContagion, hasSanctionedRelative, type RelatedParty } from "./networkRisk";
+import { recencyWeightedScore, velocityScore, decayedSeverity, type AdverseEvent } from "./temporalRisk";
+
+export type { GeographicRiskEntry, IndustryRiskEntry, IndustrySegment, RelatedParty, AdverseEvent, GeographyChain, TypologyPlaybook };
 
 export type Band = "clear" | "low" | "medium" | "high" | "critical";
 export type Recommendation =
@@ -74,6 +94,21 @@ export interface DispositionInputs {
 
   /** Brain reported any module degradation (silent-failure audit trail). */
   brainDegraded?: boolean;
+
+  /** Related parties (RCA / family / business associates / group cos). */
+  relatedParties?: RelatedParty[];
+
+  /** Industry segment (auto-inferred when omitted). */
+  industrySegment?: IndustrySegment;
+
+  /** Origin / destination / intermediary jurisdictions for transactional context. */
+  geographyChain?: GeographyChain;
+
+  /** Time-stamped adverse-media events for recency / velocity analysis. */
+  adverseEvents?: AdverseEvent[];
+
+  /** Subject onboarded date — used for tenure-vs-risk calibration. */
+  onboardedAt?: string;
 }
 
 export interface TypologyMatch {
@@ -117,6 +152,24 @@ export interface ConfidenceBand {
   bandUncertainty: number;
 }
 
+export interface NetworkAnalysis {
+  score: number;
+  topContributors: Array<{ partyName: string; partyKind: string; contribution: number; reason: string }>;
+  flaggedCount: number;
+}
+
+export interface TemporalAnalysis {
+  /** 0..1 recency-weighted adverse-event score. */
+  recencyScore: number;
+  /** 0..100 velocity score: how active is the adverse signal right now. */
+  velocity: number;
+  /** Severity band derived from recency-weighted scoring. */
+  decayedSeverity: Band;
+  eventsLast30d: number;
+  eventsLast90d: number;
+  eventsLast365d: number;
+}
+
 export interface DispositionResult {
   band: Band;
   recommendation: Recommendation;
@@ -127,6 +180,19 @@ export interface DispositionResult {
   escalations: Array<{ from: Band; to: Band; reason: string }>;
   /** FATF / Egmont typology fingerprint matches. */
   typologies: TypologyMatch[];
+  /** Per-typology MLRO action playbooks (only for typologies that fired). */
+  playbooks: TypologyPlaybook[];
+  /** Geographic risk profile of subject's jurisdiction + transaction chain. */
+  geography: {
+    subject: GeographicRiskEntry;
+    chain?: { inherentRisk: number; hops: GeographicRiskEntry[]; worstTier: string };
+  };
+  /** Industry risk profile (DPMS / NPO / banking / real estate / etc.). */
+  industry: IndustryRiskEntry;
+  /** Network / RCA contagion. */
+  network?: NetworkAnalysis;
+  /** Temporal analysis (velocity / recency / dormancy). */
+  temporal?: TemporalAnalysis;
   /** FATF predicate offences implied by the fired signals. */
   predicateOffences: PredicateOffence[];
   /** Specific MLRO interview questions tailored to this subject. */
@@ -373,8 +439,148 @@ export function disposition(input: DispositionInputs): DispositionResult {
     "Legal basis applied: FATF R.10/R.12/R.20 · FDL 10/2025 Art.17/Art.20/Art.26-27 · Cabinet Resolution 134/2025 Art.18.",
   );
 
+  // ── Geographic risk ────────────────────────────────────────────────────
+  const geographySubject = jurisdictionRisk(input.jurisdictionIso2);
+  const geographyChain = input.geographyChain
+    ? chainGeographyRisk(input.geographyChain)
+    : undefined;
+
+  // Comprehensive sanctions = automatic critical (jurisdiction-level red line).
+  if (geographySubject.tiers.includes("comprehensive_sanctions")) {
+    redFlags.push(`Comprehensive-sanctions jurisdiction (${geographySubject.iso2})`);
+    escalate(
+      "critical",
+      `Subject in comprehensive-sanctions jurisdiction (${geographySubject.iso2}) — direct dealings prohibited absent specific licence`,
+    );
+    requiredEvidence.push("Specific OFAC / OFSI / EU general licence covering the relationship");
+  } else if (geographySubject.tiers.includes("fatf_black")) {
+    redFlags.push(`FATF call-for-action jurisdiction (${geographySubject.iso2})`);
+    escalate("critical", `Subject in FATF call-for-action jurisdiction (${geographySubject.iso2}) — counter-measures required`);
+  } else if (geographySubject.tiers.includes("fatf_grey")) {
+    escalate("high", `Subject in FATF grey-list jurisdiction (${geographySubject.iso2}) — EDD mandatory`);
+    redFlags.push(`FATF grey-list (${geographySubject.iso2})`);
+  } else if (geographySubject.tiers.includes("eu_aml_high_risk")) {
+    escalate("high", `Subject in EU 2015/849 high-risk third country (${geographySubject.iso2}) — Article 18a EDD`);
+  } else if (geographySubject.tiers.includes("secrecy_high")) {
+    escalate("medium", `Subject in top-tier secrecy / financial-haven jurisdiction (${geographySubject.iso2}) — UBO transparency limited`);
+  }
+
+  // Geography chain (transaction routing) — escalate if any hop is restricted.
+  if (geographyChain && geographyChain.worstTier === "comprehensive_sanctions") {
+    redFlags.push("Transaction routes through a comprehensive-sanctions jurisdiction");
+    escalate("critical", "Transaction chain hops a comprehensive-sanctions jurisdiction — refuse the leg");
+  } else if (geographyChain && (geographyChain.worstTier === "fatf_black" || geographyChain.worstTier === "fatf_grey")) {
+    escalate("high", `Transaction chain includes FATF-listed jurisdiction (worst tier: ${geographyChain.worstTier})`);
+  }
+
+  // ── Industry / sector risk ─────────────────────────────────────────────
+  const segment: IndustrySegment =
+    input.industrySegment ?? inferIndustrySegment(""); // caller-supplied or default
+  const industry = industryRisk(segment);
+  if (industry.inherentRisk >= 70) {
+    rationale.push(
+      `Sector "${industry.label}" carries inherent risk ${industry.inherentRisk}/100 — ${industry.rationale}`,
+    );
+    escalate("medium", `High-risk sector: ${industry.label}`);
+    for (const ev of industry.requiredEvidence) requiredEvidence.push(ev);
+  } else if (industry.inherentRisk >= 50) {
+    rationale.push(`Sector "${industry.label}" carries inherent risk ${industry.inherentRisk}/100 — apply enhanced ID + SoW.`);
+    for (const ev of industry.requiredEvidence) requiredEvidence.push(ev);
+  }
+
+  // Sector + jurisdiction combo escalation — gold trader in CAHRA, crypto in
+  // FATF grey, real-estate in secrecy haven, etc.
+  if (
+    (industry.inherentRisk >= 70) &&
+    (geographySubject.inherentRisk >= 60 ||
+      geographySubject.tiers.includes("cahra") ||
+      geographySubject.tiers.includes("fatf_grey"))
+  ) {
+    escalate(
+      "high",
+      `Combo: high-risk sector (${industry.label}) operating in elevated-risk jurisdiction (${geographySubject.name}) — known typology cluster`,
+    );
+    redFlags.push(`Sector-jurisdiction combo: ${industry.segment} in ${geographySubject.iso2}`);
+  }
+
+  // ── Network / RCA contagion ────────────────────────────────────────────
+  let networkAnalysis: NetworkAnalysis | undefined;
+  if (input.relatedParties && input.relatedParties.length > 0) {
+    const cont = networkContagion(input.relatedParties);
+    networkAnalysis = {
+      score: cont.score,
+      flaggedCount: cont.flaggedCount,
+      topContributors: cont.topContributors.map((c) => ({
+        partyName: c.party.name,
+        partyKind: c.party.kind,
+        contribution: c.contribution,
+        reason: c.reason,
+      })),
+    };
+    if (cont.score >= 60) {
+      escalate("high", `Network contagion score ${cont.score}/100 from ${cont.flaggedCount} flagged related parties`);
+      redFlags.push(`Network contagion (${cont.flaggedCount} flagged related parties)`);
+      for (const c of cont.topContributors.slice(0, 3)) {
+        rationale.push(`  · related party: ${c.party.name} (${c.party.kind}) — ${c.reason}`);
+      }
+    } else if (cont.score >= 30) {
+      escalate("medium", `Moderate network contagion score ${cont.score}/100`);
+    }
+    if (hasSanctionedRelative(input.relatedParties)) {
+      redFlags.push("Sanctioned related party");
+      escalate(
+        "critical",
+        "Sanctioned related party identified — apply OFAC 50% rule across the ownership / control chain",
+      );
+      requiredEvidence.push("OFAC 50% rule analysis: cumulative designated-party ownership across all layers");
+    }
+  }
+
+  // ── Temporal analysis ──────────────────────────────────────────────────
+  let temporalAnalysis: TemporalAnalysis | undefined;
+  if (input.adverseEvents && input.adverseEvents.length > 0) {
+    const recencyScore = recencyWeightedScore(input.adverseEvents);
+    const vel = velocityScore(input.adverseEvents);
+    const decayedBand = decayedSeverity(input.adverseEvents);
+    const last30 = input.adverseEvents.filter((e) => Date.now() - Date.parse(e.at) <= 30 * 86400000).length;
+    const last90 = input.adverseEvents.filter((e) => Date.now() - Date.parse(e.at) <= 90 * 86400000).length;
+    const last365 = input.adverseEvents.filter((e) => Date.now() - Date.parse(e.at) <= 365 * 86400000).length;
+    temporalAnalysis = {
+      recencyScore,
+      velocity: vel,
+      decayedSeverity: decayedBand,
+      eventsLast30d: last30,
+      eventsLast90d: last90,
+      eventsLast365d: last365,
+    };
+    if (vel >= 60) {
+      escalate("high", `Adverse-event velocity score ${vel}/100 — active reputational pattern`);
+      redFlags.push("Adverse-event burst (velocity ≥60)");
+    }
+    if (decayedBand === "critical") {
+      escalate("critical", "Recency-weighted adverse-event severity is CRITICAL — sustained recent critical reporting");
+    } else if (decayedBand === "high") {
+      escalate("high", "Recency-weighted adverse-event severity is HIGH");
+    }
+    rationale.push(
+      `Temporal: ${last30} events in last 30d, ${last90} in last 90d, ${last365} in last 365d — velocity ${vel}/100, decayed-severity ${decayedBand.toUpperCase()}.`,
+    );
+  }
+
   // ── Typology fingerprinting ────────────────────────────────────────────
   const typologies = matchTypologies(input);
+
+  // ── Per-typology MLRO playbooks ────────────────────────────────────────
+  const playbooks: TypologyPlaybook[] = [];
+  for (const t of typologies) {
+    const pb = playbookFor(t.id);
+    if (pb && !playbooks.find((p) => p.typologyId === pb.typologyId)) playbooks.push(pb);
+  }
+  // Pull each playbook's required-evidence items into the engine output so
+  // the report's evidence list is automatically tailored to the typology.
+  for (const pb of playbooks) {
+    for (const e of pb.immediate.slice(0, 2)) requiredEvidence.push(`[playbook ${pb.typologyId}] ${e}`);
+  }
 
   // ── FATF predicate-offence chain ───────────────────────────────────────
   const predicateOffences = derivePredicateOffences(input.amCategoriesTripped);
@@ -403,6 +609,14 @@ export function disposition(input: DispositionInputs): DispositionResult {
     requiredEvidence: Array.from(new Set(requiredEvidence)),
     escalations,
     typologies,
+    playbooks,
+    geography: {
+      subject: geographySubject,
+      ...(geographyChain ? { chain: { ...geographyChain, worstTier: geographyChain.worstTier } } : {}),
+    },
+    industry,
+    ...(networkAnalysis ? { network: networkAnalysis } : {}),
+    ...(temporalAnalysis ? { temporal: temporalAnalysis } : {}),
     predicateOffences,
     interviewScript,
     documentRequests,
