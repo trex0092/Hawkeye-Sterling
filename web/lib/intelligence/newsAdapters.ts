@@ -2765,6 +2765,86 @@ const pegasusAdapter = (): NewsAdapter => makeNewsAdapter({
     .map((i) => ({ title: i.title, url: i.url, publishedAt: i.publishedAt, snippet: i.description })),
 });
 
+// ── 13 additional news / adverse-media adapters (89 → 102) ───────────────
+const refinitivConnectAdapter = (): NewsAdapter => makeNewsAdapter({
+  envKey: "REFINITIV_CONNECT_API_KEY", source: "refinitiv-connect", outletDefault: "refinitiv.com",
+  baseUrl: "https://api.refinitiv.com/data/news/v1/headlines", queryParam: "query",
+  parser: (j) => ((j as { data?: Array<{ storyId?: string; headline?: string; firstCreated?: string; sourceName?: string }> }).data ?? [])
+    .map((d) => ({ title: d.headline, url: `https://refinitiv.com/news/${d.storyId ?? ""}`, publishedAt: d.firstCreated, outlet: d.sourceName })),
+});
+const businessWireAdapter = (): NewsAdapter => makeNewsAdapter({
+  envKey: "BUSINESSWIRE_API_KEY", source: "businesswire", outletDefault: "businesswire.com",
+  baseUrl: "https://api.businesswire.com/v1/releases/search", queryParam: "q",
+  parser: (j) => ((j as { releases?: Array<{ headline?: string; url?: string; date?: string; teaser?: string }> }).releases ?? [])
+    .map((r) => ({ title: r.headline, url: r.url, publishedAt: r.date, snippet: r.teaser })),
+});
+const prNewswireAdapter = (): NewsAdapter => makeNewsAdapter({
+  envKey: "PRNEWSWIRE_API_KEY", source: "pr-newswire", outletDefault: "prnewswire.com",
+  baseUrl: "https://api.prnewswire.com/releases/search", queryParam: "q",
+  parser: (j) => ((j as { items?: Array<{ title?: string; url?: string; published?: string; summary?: string }> }).items ?? [])
+    .map((r) => ({ title: r.title, url: r.url, publishedAt: r.published, snippet: r.summary })),
+});
+const globeNewswireAdapter = (): NewsAdapter => makeNewsAdapter({
+  envKey: "GLOBENEWSWIRE_API_KEY", source: "globe-newswire", outletDefault: "globenewswire.com",
+  baseUrl: "https://api.globenewswire.com/v1/releases/search", queryParam: "q",
+  parser: (j) => ((j as { items?: Array<{ headline?: string; link?: string; date?: string; lead?: string }> }).items ?? [])
+    .map((r) => ({ title: r.headline, url: r.link, publishedAt: r.date, snippet: r.lead })),
+});
+const acuityKnowledgeAdapter = (): NewsAdapter => makeNewsAdapter({
+  envKey: "ACUITY_KNOWLEDGE_API_KEY", source: "acuity-knowledge", outletDefault: "acuitykp.com",
+  baseUrl: "https://api.acuitykp.com/v1/research/search", queryParam: "q",
+  parser: (j) => ((j as { results?: Array<{ title?: string; url?: string; publishedAt?: string; abstract?: string }> }).results ?? [])
+    .map((r) => ({ title: r.title, url: r.url, publishedAt: r.publishedAt, snippet: r.abstract })),
+});
+const moodysAnalyticsAdapter = (): NewsAdapter => makeNewsAdapter({
+  envKey: "MOODYS_ANALYTICS_API_KEY", source: "moodys-analytics", outletDefault: "moodysanalytics.com",
+  baseUrl: "https://api.moodysanalytics.com/v1/insights/search", queryParam: "q",
+  parser: (j) => ((j as { items?: Array<{ headline?: string; url?: string; publishedAt?: string; summary?: string }> }).items ?? [])
+    .map((r) => ({ title: r.headline, url: r.url, publishedAt: r.publishedAt, snippet: r.summary })),
+});
+const omfifAdapter = (): NewsAdapter => makeNewsAdapter({
+  envKey: "OMFIF_API_KEY", source: "omfif", outletDefault: "omfif.org",
+  baseUrl: "https://api.omfif.org/v1/articles/search", queryParam: "q",
+  parser: (j) => ((j as { articles?: Array<{ title?: string; url?: string; date?: string; summary?: string }> }).articles ?? [])
+    .map((r) => ({ title: r.title, url: r.url, publishedAt: r.date, snippet: r.summary })),
+});
+const centralBankingAdapter = (): NewsAdapter => makeNewsAdapter({
+  envKey: "CENTRALBANKING_API_KEY", source: "centralbanking", outletDefault: "centralbanking.com",
+  baseUrl: "https://api.centralbanking.com/v1/news/search", queryParam: "q",
+  parser: (j) => ((j as { items?: Array<{ title?: string; url?: string; publishedAt?: string; teaser?: string }> }).items ?? [])
+    .map((r) => ({ title: r.title, url: r.url, publishedAt: r.publishedAt, snippet: r.teaser })),
+});
+const globalFinanceAdapter = (): NewsAdapter => makeNewsAdapter({
+  envKey: "GLOBAL_FINANCE_API_KEY", source: "global-finance", outletDefault: "gfmag.com",
+  baseUrl: "https://api.gfmag.com/v1/articles/search", queryParam: "q",
+  parser: (j) => ((j as { articles?: Array<{ headline?: string; link?: string; date?: string; abstract?: string }> }).articles ?? [])
+    .map((r) => ({ title: r.headline, url: r.link, publishedAt: r.date, snippet: r.abstract })),
+});
+const eurofinasAdapter = (): NewsAdapter => makeNewsAdapter({
+  envKey: "EUROFINAS_API_KEY", source: "eurofinas", outletDefault: "eurofinas.org",
+  baseUrl: "https://api.eurofinas.org/v1/news/search", queryParam: "q",
+  parser: (j) => ((j as { items?: Array<{ title?: string; url?: string; publishedAt?: string }> }).items ?? [])
+    .map((r) => ({ title: r.title, url: r.url, publishedAt: r.publishedAt })),
+});
+const ihsMarkitAdapter = (): NewsAdapter => makeNewsAdapter({
+  envKey: "IHS_MARKIT_API_KEY", source: "ihs-markit", outletDefault: "ihsmarkit.com",
+  baseUrl: "https://api.ihsmarkit.com/v1/news/search", queryParam: "q",
+  parser: (j) => ((j as { items?: Array<{ title?: string; url?: string; publishedAt?: string; description?: string }> }).items ?? [])
+    .map((r) => ({ title: r.title, url: r.url, publishedAt: r.publishedAt, snippet: r.description })),
+});
+const eikonNewsAdapter = (): NewsAdapter => makeNewsAdapter({
+  envKey: "EIKON_NEWS_API_KEY", source: "eikon-news", outletDefault: "eikon.refinitiv.com",
+  baseUrl: "https://api.eikon.refinitiv.com/v1/news/headlines", queryParam: "q",
+  parser: (j) => ((j as { headlines?: Array<{ headline?: string; storyId?: string; firstCreated?: string }> }).headlines ?? [])
+    .map((r) => ({ title: r.headline, url: `https://eikon.refinitiv.com/news/${r.storyId ?? ""}`, publishedAt: r.firstCreated })),
+});
+const nikkeiAsiaAdapter = (): NewsAdapter => makeNewsAdapter({
+  envKey: "NIKKEI_ASIA_API_KEY", source: "nikkei-asia", outletDefault: "asia.nikkei.com",
+  baseUrl: "https://api.asia.nikkei.com/v1/articles/search", queryParam: "q",
+  parser: (j) => ((j as { articles?: Array<{ title?: string; url?: string; published_at?: string; description?: string }> }).articles ?? [])
+    .map((r) => ({ title: r.title, url: r.url, publishedAt: r.published_at, snippet: r.description })),
+});
+
 // ── Master aggregator ───────────────────────────────────────────────────
 /**
  * Returns ALL available news adapters whose env keys are configured.
@@ -2843,6 +2923,10 @@ export function activeNewsAdapters(): NewsAdapter[] {
     afpAdapter(), yonhapAdapter(), kyodoAdapter(), anadoluAdapter(),
     dpaAdapter(), efeAdapter(), ansaAdapter(), alJazeeraAdapter(),
     riskNetAdapter(), complianceWeekAdapter(), amlWatchdogAdapter(), pegasusAdapter(),
+    refinitivConnectAdapter(), businessWireAdapter(), prNewswireAdapter(),
+    globeNewswireAdapter(), acuityKnowledgeAdapter(), moodysAnalyticsAdapter(),
+    omfifAdapter(), centralBankingAdapter(), globalFinanceAdapter(),
+    eurofinasAdapter(), ihsMarkitAdapter(), eikonNewsAdapter(), nikkeiAsiaAdapter(),
     freeRssAdapter(),
   ].filter((a) => a.isAvailable());
 }

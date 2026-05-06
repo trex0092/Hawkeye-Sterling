@@ -735,6 +735,86 @@ function salvAdapter(): CorporateRegistryAdapter {
   };
 }
 
+// ── 6 more sanctions/PEP screening vendors (18 → 24) ────────────────────
+function refineIntelligenceAdapter(): CorporateRegistryAdapter {
+  const key = process.env["REFINE_INTELLIGENCE_API_KEY"];
+  if (!key) return NULL_CORPORATE_ADAPTER;
+  return { isAvailable: () => true, lookup: async (name, j) => {
+    if (!name.trim()) return [];
+    try {
+      const res = await abortable(fetch(`https://api.refineintelligence.com/v1/screen?q=${encodeURIComponent(name)}${j ? `&country=${j}` : ""}`, { headers: { Authorization: `Bearer ${key}`, accept: "application/json" }}));
+      if (!res.ok) return [];
+      const data = (await res.json()) as { matches?: Array<{ name?: string; country?: string; entityId?: string; status?: string }> };
+      return (data.matches ?? []).filter((m) => m.name).map((m) => ({ source: "refine-intelligence", jurisdiction: m.country ?? j ?? "?", legalName: m.name!, ...(m.entityId ? { registrationNumber: m.entityId } : {}), ...(m.status ? { status: m.status } : {}) } satisfies CorporateRecord));
+    } catch (err) { console.warn("[refine-intelligence] failed:", err instanceof Error ? err.message : err); return []; }
+  }};
+}
+function lucinityAdapter(): CorporateRegistryAdapter {
+  const key = process.env["LUCINITY_API_KEY"];
+  if (!key) return NULL_CORPORATE_ADAPTER;
+  return { isAvailable: () => true, lookup: async (name, j) => {
+    if (!name.trim()) return [];
+    try {
+      const res = await abortable(fetch("https://api.lucinity.com/v1/screening/search", { method: "POST", headers: { Authorization: `Bearer ${key}`, "content-type": "application/json", accept: "application/json" }, body: JSON.stringify({ name, country: j ?? null }) }));
+      if (!res.ok) return [];
+      const data = (await res.json()) as { results?: Array<{ name?: string; country?: string; reference?: string; categories?: string[] }> };
+      return (data.results ?? []).filter((r) => r.name).map((r) => ({ source: "lucinity", jurisdiction: r.country ?? j ?? "?", legalName: r.name!, ...(r.reference ? { registrationNumber: r.reference } : {}), ...(r.categories?.length ? { status: r.categories.join(",") } : {}) } satisfies CorporateRecord));
+    } catch (err) { console.warn("[lucinity] failed:", err instanceof Error ? err.message : err); return []; }
+  }};
+}
+function hummingbirdAdapter(): CorporateRegistryAdapter {
+  const key = process.env["HUMMINGBIRD_API_KEY"];
+  if (!key) return NULL_CORPORATE_ADAPTER;
+  return { isAvailable: () => true, lookup: async (name, j) => {
+    if (!name.trim()) return [];
+    try {
+      const res = await abortable(fetch(`https://api.hummingbird.co/v1/screen?q=${encodeURIComponent(name)}${j ? `&country=${j}` : ""}`, { headers: { Authorization: `Bearer ${key}`, accept: "application/json" }}));
+      if (!res.ok) return [];
+      const data = (await res.json()) as { matches?: Array<{ name?: string; country?: string; entityId?: string; designation?: string }> };
+      return (data.matches ?? []).filter((m) => m.name).map((m) => ({ source: "hummingbird", jurisdiction: m.country ?? j ?? "?", legalName: m.name!, ...(m.entityId ? { registrationNumber: m.entityId } : {}), ...(m.designation ? { status: m.designation } : {}) } satisfies CorporateRecord));
+    } catch (err) { console.warn("[hummingbird] failed:", err instanceof Error ? err.message : err); return []; }
+  }};
+}
+function salvaresAdapter(): CorporateRegistryAdapter {
+  const key = process.env["SALVARES_API_KEY"];
+  if (!key) return NULL_CORPORATE_ADAPTER;
+  return { isAvailable: () => true, lookup: async (name, j) => {
+    if (!name.trim()) return [];
+    try {
+      const res = await abortable(fetch(`https://api.salvares.com/v2/search?q=${encodeURIComponent(name)}${j ? `&country=${j}` : ""}`, { headers: { "x-api-key": key, accept: "application/json" }}));
+      if (!res.ok) return [];
+      const data = (await res.json()) as { hits?: Array<{ name?: string; country?: string; entityId?: string; lists?: string[] }> };
+      return (data.hits ?? []).filter((h) => h.name).map((h) => ({ source: "salvares", jurisdiction: h.country ?? j ?? "?", legalName: h.name!, ...(h.entityId ? { registrationNumber: h.entityId } : {}), ...(h.lists?.length ? { status: h.lists.join(",") } : {}) } satisfies CorporateRecord));
+    } catch (err) { console.warn("[salvares] failed:", err instanceof Error ? err.message : err); return []; }
+  }};
+}
+function fenergoAdapter(): CorporateRegistryAdapter {
+  const key = process.env["FENERGO_API_KEY"];
+  if (!key) return NULL_CORPORATE_ADAPTER;
+  return { isAvailable: () => true, lookup: async (name, j) => {
+    if (!name.trim()) return [];
+    try {
+      const res = await abortable(fetch("https://api.fenergo.com/v1/screening/customer-screen", { method: "POST", headers: { Authorization: `Bearer ${key}`, "content-type": "application/json", accept: "application/json" }, body: JSON.stringify({ name, country: j ?? null }) }));
+      if (!res.ok) return [];
+      const data = (await res.json()) as { matches?: Array<{ name?: string; country?: string; refId?: string; severity?: string }> };
+      return (data.matches ?? []).filter((m) => m.name).map((m) => ({ source: "fenergo", jurisdiction: m.country ?? j ?? "?", legalName: m.name!, ...(m.refId ? { registrationNumber: m.refId } : {}), ...(m.severity ? { status: m.severity } : {}) } satisfies CorporateRecord));
+    } catch (err) { console.warn("[fenergo] failed:", err instanceof Error ? err.message : err); return []; }
+  }};
+}
+function napierAdapter(): CorporateRegistryAdapter {
+  const key = process.env["NAPIER_API_KEY"];
+  if (!key) return NULL_CORPORATE_ADAPTER;
+  return { isAvailable: () => true, lookup: async (name, j) => {
+    if (!name.trim()) return [];
+    try {
+      const res = await abortable(fetch("https://api.napier.ai/v2/screening/search", { method: "POST", headers: { "x-api-key": key, "content-type": "application/json", accept: "application/json" }, body: JSON.stringify({ query: name, country: j ?? null }) }));
+      if (!res.ok) return [];
+      const data = (await res.json()) as { results?: Array<{ name?: string; country?: string; entityId?: string; lists?: string[] }> };
+      return (data.results ?? []).filter((r) => r.name).map((r) => ({ source: "napier", jurisdiction: r.country ?? j ?? "?", legalName: r.name!, ...(r.entityId ? { registrationNumber: r.entityId } : {}), ...(r.lists?.length ? { status: r.lists.join(",") } : {}) } satisfies CorporateRecord));
+    } catch (err) { console.warn("[napier] failed:", err instanceof Error ? err.message : err); return []; }
+  }};
+}
+
 /**
  * Returns the first available commercial adapter (priority order).
  */
@@ -758,6 +838,12 @@ export function bestCommercialAdapter(): CorporateRegistryAdapter {
     sigmaRatingsAdapter(),
     polixisAdapter(),
     salvAdapter(),
+    refineIntelligenceAdapter(),
+    lucinityAdapter(),
+    hummingbirdAdapter(),
+    salvaresAdapter(),
+    fenergoAdapter(),
+    napierAdapter(),
   ];
   for (const c of candidates) if (c.isAvailable()) return c;
   return NULL_CORPORATE_ADAPTER;

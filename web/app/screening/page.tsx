@@ -15,7 +15,7 @@ import {
 } from "@/components/screening/NewScreeningForm";
 import { QUEUE_FILTERS, SUBJECTS } from "@/lib/data/subjects";
 import { lookupKnownPEP } from "@/lib/data/known-entities";
-import type { CDDPosture, FilterKey, QueueFilter, SavedSearch, SortKey, Subject, TableColumnKey } from "@/lib/types";
+import type { CDDPosture, FilterKey, QueueFilter, SanctionSource, SavedSearch, SortKey, Subject, TableColumnKey } from "@/lib/types";
 import type { NlSearchFilter } from "@/app/api/cases/nl-search/route";
 import { fetchJson } from "@/lib/api/fetchWithRetry";
 import { ActivityFeed } from "@/components/screening/ActivityFeed";
@@ -982,7 +982,10 @@ export default function ScreeningPage() {
             freeAdapterProviders?: string[];
             commonNameExpansion?: boolean;
           }
-          const res = await fetchJson<QuickScreenAPIResponse>(
+          // One-shot retry on transient failures (network blip, 5xx, timeout).
+          // Many screen-failed states on the queue come from a single
+          // hiccup — retrying once recovers cleanly without operator action.
+          let res = await fetchJson<QuickScreenAPIResponse>(
             "/api/quick-screen",
             {
               method: "POST",
@@ -991,6 +994,18 @@ export default function ScreeningPage() {
               label: "Auto-screen failed",
             },
           );
+          if (!res.ok) {
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+            res = await fetchJson<QuickScreenAPIResponse>(
+              "/api/quick-screen",
+              {
+                method: "POST",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify({ subject: subjectPayload }),
+                label: "Auto-screen failed (retry)",
+              },
+            );
+          }
           if (res.ok && res.data?.ok && res.data.reasoning) {
             setLatestReasoning({ subjectName: subject.name, reasoning: res.data.reasoning });
             // Build the unified triage list from every augmentation array
@@ -1040,10 +1055,49 @@ export default function ScreeningPage() {
             setTriageResolutions({});
           }
           if (res.ok && res.data?.ok && res.data.topScore !== undefined) {
+            // Derive list coverage from the hits + augmentations so the
+            // LISTS column shows what fired instead of staying empty.
+            const coverage = new Set<SanctionSource>();
+            const mapListId = (raw: string | undefined): SanctionSource | null => {
+              if (!raw) return null;
+              const v = raw.toLowerCase();
+              if (v.includes("ofac") || v.includes("sdn") || v.includes("us_")) return "OFAC";
+              if (v.includes("un_") || v.includes("1267") || v.includes("1988") || v.includes("2231") || v.includes("unsc")) return "UN";
+              if (v.includes("eu_") || v.includes("cfsp") || v.includes("eu-cons")) return "EU";
+              if (v.includes("uk_") || v.includes("ofsi") || v.includes("hmt")) return "UK";
+              if (v.includes("eocn") || v.includes("uae_")) return "EOCN";
+              if (v.includes("dfat") || v.includes("au_")) return "AU";
+              if (v.includes("seco") || v.includes("ch_")) return "CH";
+              if (v.includes("seam") || v.includes("ca_") || v.includes("osfi")) return "CA";
+              if (v.includes("jp_") || v.includes("meti") || v.includes("japan")) return "JP";
+              if (v.includes("fatf")) return "FATF";
+              if (v.includes("interpol") || v.includes("red_notice") || v.includes("notice")) return "INTERPOL";
+              if (v.includes("world_bank") || v.includes("worldbank") || v.includes("wb_") || v.includes("debar")) return "WB";
+              if (v.includes("adb")) return "ADB";
+              return null;
+            };
+            for (const h of res.data.hits ?? []) {
+              const src = mapListId(h.listId) ?? mapListId(h.listRef);
+              if (src) coverage.add(src);
+              for (const p of h.programs ?? []) {
+                const ps = mapListId(p);
+                if (ps) coverage.add(ps);
+              }
+            }
+            for (const a of res.data.countrySanctionsAugmentation ?? []) {
+              const src = mapListId(a.source);
+              if (src) coverage.add(src);
+            }
+            const nextCoverage = Array.from(coverage);
             setSubjects((prev) =>
               prev.map((s) =>
                 s.id === subject.id
-                  ? { ...s, riskScore: res.data!.topScore ?? 0, mostSerious: res.data!.severity ?? s.mostSerious }
+                  ? {
+                      ...s,
+                      riskScore: res.data!.topScore ?? 0,
+                      mostSerious: res.data!.severity ?? s.mostSerious,
+                      listCoverage: nextCoverage.length > 0 ? nextCoverage : s.listCoverage,
+                    }
                   : s,
               ),
             );

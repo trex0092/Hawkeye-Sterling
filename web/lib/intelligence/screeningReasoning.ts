@@ -19,6 +19,19 @@ import { detectCoOccurrence, type CoOccurrenceResult, type CoOccurrenceArticle }
 import { transliterate, transliterationVariants } from "./transliteration";
 import { comparePhoneticTier, type PhoneticTierResult } from "./phoneticTier";
 import { assessCommonName, discriminatorPenalty, type CommonNameAssessment } from "./commonNames";
+import {
+  articleToneClassifier,
+  classifyPepTier,
+  bayesianUpdate,
+  rationaleConsistency,
+  correlateCrisis,
+} from "./reasoningExtensionsBatch3";
+
+// Re-export the full Batch-3 module surface so downstream callers
+// (dossier construction, Action Tracker, ESG quick-flow) can pull any
+// of the 50 reasoning helpers without bouncing through this file's
+// dependency tree.
+export * from "./reasoningExtensionsBatch3";
 
 // ── Source credibility tiering ────────────────────────────────────────
 //
@@ -375,6 +388,22 @@ export interface ScreeningReasoning {
     rawScoreBeforeDiscount: number;
     discriminatorsFound: { dob: boolean; nationality: boolean; idNumber: boolean };
   };
+  // Batch-3 wired modules (subset that can run at quick-screen time)
+  articleToneSummary?: {
+    negative: number;
+    neutral: number;
+    positive: number;
+    avgSeverity: number;
+    signal: string;
+  };
+  pepTier?: { tier: 1 | 2 | 3 | null; signal: string };
+  bayesianAdjustment?: {
+    priorOdds: number;
+    likelihoodRatio: number;
+    posteriorProbability: number;
+    signal: string;
+  };
+  crisisCorrelation?: { correlatedToCrisis: boolean; signal: string };
 }
 
 export function buildScreeningReasoning(opts: {
@@ -386,6 +415,9 @@ export function buildScreeningReasoning(opts: {
   articles?: DatedArticle[];                         // for temporal velocity
   coOccurrenceArticles?: CoOccurrenceArticle[];      // for co-occurrence
   knownSanctioned?: Array<{ name: string; listId: string }>;
+  pepRole?: string;                                  // for PEP tier classification
+  regionalCrisisActive?: boolean;                    // for crisis correlation
+  baselineArticleVolume?: number;                    // for crisis correlation
 }): ScreeningReasoning {
   const consensus = multiSourceConsensus(opts.consensusInputs);
   const contradictions = detectContradictions(opts.contradictionItems);
@@ -451,6 +483,63 @@ export function buildScreeningReasoning(opts: {
     ? { ...cna, discriminatorPenalty: penalty, rawScoreBeforeDiscount, discriminatorsFound }
     : undefined;
 
+  // ── Batch-3 wired modules ────────────────────────────────────────────
+  // articleToneClassifier: aggregate tones across co-occurrence articles
+  let articleToneSummary: ScreeningReasoning["articleToneSummary"];
+  if (opts.coOccurrenceArticles && opts.coOccurrenceArticles.length > 0) {
+    const buckets = { negative: 0, neutral: 0, positive: 0 };
+    let severitySum = 0;
+    for (const a of opts.coOccurrenceArticles) {
+      const text = `${a.title ?? ""} ${(a as { snippet?: string }).snippet ?? ""}`.trim();
+      if (!text) continue;
+      const cls = articleToneClassifier(text);
+      buckets[cls.tone] += 1;
+      severitySum += cls.severity;
+    }
+    const totalArticles = buckets.negative + buckets.neutral + buckets.positive;
+    if (totalArticles > 0) {
+      const avgSeverity = severitySum / totalArticles;
+      articleToneSummary = {
+        ...buckets,
+        avgSeverity,
+        signal: `Article-tone scan: ${buckets.negative} negative / ${buckets.neutral} neutral / ${buckets.positive} positive across ${totalArticles} articles. Avg severity ${avgSeverity.toFixed(2)}.`,
+      };
+    }
+  }
+
+  // classifyPepTier: derive FATF R.12 tier from operator-supplied role
+  const pepTierResult = opts.pepRole ? classifyPepTier(opts.pepRole) : undefined;
+
+  // correlateCrisis: when temporal velocity gives us article volume
+  let crisisCorrelation: ScreeningReasoning["crisisCorrelation"];
+  if (
+    temporalVelocity &&
+    typeof opts.baselineArticleVolume === "number" &&
+    opts.regionalCrisisActive !== undefined
+  ) {
+    const articleVolume = opts.articles?.length ?? 0;
+    const cc = correlateCrisis(articleVolume, opts.baselineArticleVolume, opts.regionalCrisisActive);
+    crisisCorrelation = cc;
+  }
+
+  // bayesianUpdate: prior odds from base rate, likelihood ratio from
+  // weighted-for / weighted-against ratio of consensus
+  let bayesianAdjustment: ScreeningReasoning["bayesianAdjustment"];
+  if (consensus.weightedFor > 0 || consensus.weightedAgainst > 0) {
+    // Conservative prior: 5% chance any random subject is genuinely listed
+    const priorOdds = 0.05 / 0.95;
+    const likelihoodRatio = consensus.weightedAgainst > 0
+      ? Math.max(0.01, consensus.weightedFor / consensus.weightedAgainst)
+      : Math.max(1, consensus.weightedFor * 2);
+    const upd = bayesianUpdate(priorOdds, likelihoodRatio);
+    bayesianAdjustment = {
+      priorOdds,
+      likelihoodRatio,
+      posteriorProbability: upd.posteriorProbability,
+      signal: upd.signal,
+    };
+  }
+
   const lines: string[] = [];
   lines.push(`Subject "${opts.subject.name}"${opts.subject.jurisdiction ? ` (${opts.subject.jurisdiction})` : ""} screened against ${opts.coverage.totalConfigured}/${opts.coverage.totalAvailable} configured intelligence sources.`);
   lines.push(`Local watchlist matcher: ${opts.result.hits.length} hit(s); top score ${opts.result.topScore}; severity "${opts.result.severity}".`);
@@ -509,11 +598,21 @@ export function buildScreeningReasoning(opts: {
     ? `${rationale} ${extraSignals.join(" ")}`
     : rationale;
 
+  // Append Batch-3 signals to the rationale
+  const batch3Signals: string[] = [];
+  if (articleToneSummary) batch3Signals.push(articleToneSummary.signal);
+  if (pepTierResult) batch3Signals.push(pepTierResult.signal);
+  if (crisisCorrelation) batch3Signals.push(crisisCorrelation.signal);
+  if (bayesianAdjustment) batch3Signals.push(bayesianAdjustment.signal);
+  const finalRationale = batch3Signals.length > 0
+    ? `${fullRationale} ${batch3Signals.join(" ")}`
+    : fullRationale;
+
   return {
     consensus,
     contradictions,
     coverage: opts.coverage,
-    rationale: fullRationale,
+    rationale: finalRationale,
     evidenceTrail,
     ...(art19NegativeFinding ? { art19NegativeFinding } : {}),
     ...(temporalVelocity ? { temporalVelocity } : {}),
@@ -522,6 +621,10 @@ export function buildScreeningReasoning(opts: {
     ...(transliteration ? { transliteration } : {}),
     ...(phoneticTier ? { phoneticTier } : {}),
     ...(commonNameAssessment ? { commonNameAssessment } : {}),
+    ...(articleToneSummary ? { articleToneSummary } : {}),
+    ...(pepTierResult ? { pepTier: pepTierResult } : {}),
+    ...(bayesianAdjustment ? { bayesianAdjustment } : {}),
+    ...(crisisCorrelation ? { crisisCorrelation } : {}),
   };
 }
 
