@@ -60,7 +60,7 @@ export function ReportModal({
     const ctl = new AbortController();
     (async () => {
       try {
-        const res = await fetch("/api/compliance-report", {
+        const res = await fetch("/api/compliance-report?format=text", {
           method: "POST",
           headers: {
             "content-type": "application/json",

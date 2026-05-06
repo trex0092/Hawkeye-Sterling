@@ -143,13 +143,36 @@ export async function POST(req: Request): Promise<NextResponse> {
   writeAuditEvent("analyst", "screening.smart-disambiguate", client.name);
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    return NextResponse.json({ ok: false, error: "smart-disambiguate temporarily unavailable - please retry." }, { status: 503 });
-  }
 
   // Process max 20 hits
   const hitsToProcess = hits.slice(0, 20);
   const truncated = hits.length > 20;
+
+  // Deterministic template — applied when no API key is set OR the LLM fails.
+  const buildTemplate = (): DisambiguationResult => ({
+    overallAssessment: `Deterministic disambiguation for "${client.name}" against ${hits.length} hit(s). Set ANTHROPIC_API_KEY for AI-graded scoring.`,
+    clientRiskProfile: `${client.name}${client.nationality ? ` (${client.nationality})` : ""} — supplied identifiers: ${[client.dob ? "DOB" : "", client.gender ? "gender" : "", client.occupation ? "role" : ""].filter(Boolean).join(", ") || "name only"}.`,
+    disambiguationStrategy: "Score each hit on identifier overlap (name, DOB, country, role). Without DOB/passport the engine cannot definitively distinguish — refer to MLRO with all hits as 'possible'.",
+    hits: hitsToProcess.map((h) => ({
+      hitId: h.hitId,
+      verdict: "possible_match",
+      confidenceScore: 50,
+      primaryDifferentiator: client.dob ? "Compare DOB to disambiguate." : "DOB missing — request from client.",
+      canAutoDispose: false,
+      dispositionText: `Hit ${h.hitId} (${h.hitName}) requires manual review — strong identifiers absent.`,
+      requiresClientClarification: !client.dob,
+      clarificationQuestion: !client.dob ? "Could you confirm your full date of birth?" : "",
+    })),
+    clarificationQuestions: !client.dob ? ["Date of birth (full DD-MM-YYYY)"] : [],
+    bulkDispositionText: "All hits require manual MLRO review — deterministic baseline cannot auto-dispose without strong identifiers.",
+    escalationItems: [],
+    regulatoryNote: "FATF R.10 — disambiguation must rely on decisive identifiers (DOB, passport, biometric).",
+    processingTime: "deterministic",
+  });
+
+  if (!apiKey) {
+    return NextResponse.json({ ...buildTemplate(), degraded: true, degradedReason: "ANTHROPIC_API_KEY not configured — deterministic template used." });
+  }
 
   const userMessage = `Disambiguate these screening hits for client: ${JSON.stringify(client)}. Hits to assess: ${JSON.stringify(hitsToProcess)}${truncated ? ` (Note: only first 20 of ${hits.length} hits processed due to batch limit)` : ""}`;
 
@@ -190,6 +213,6 @@ export async function POST(req: Request): Promise<NextResponse> {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     writeAuditEvent("analyst", "screening.smart-disambiguate.error", `${client.name} — ${msg}`);
-    return NextResponse.json({ ok: false, error: "smart-disambiguate temporarily unavailable - please retry." }, { status: 503 });
+    return NextResponse.json({ ...buildTemplate(), degraded: true, degradedReason: `LLM call failed: ${msg}` });
   }
 }

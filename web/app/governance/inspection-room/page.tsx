@@ -4,6 +4,17 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { formatDMYTime } from "@/lib/utils/dateFormat";
+import {
+  buildHtmlDoc,
+  hsCover,
+  hsPage,
+  hsFinis,
+  hsTable,
+  hsSeverityCell,
+  hsNarrative,
+  hsScorebox,
+  type CoverData,
+} from "@/lib/reportHtml";
 
 type Status = "ready" | "partial" | "missing";
 
@@ -224,7 +235,120 @@ export default function InspectionRoomPage() {
   };
 
   const handlePrint = () => {
-    if (typeof window !== "undefined") window.print();
+    if (typeof window === "undefined") return;
+    const now = new Date();
+    const dd = String(now.getUTCDate()).padStart(2, "0");
+    const mm = String(now.getUTCMonth() + 1).padStart(2, "0");
+    const yyyy = now.getUTCFullYear();
+    const hh = String(now.getUTCHours()).padStart(2, "0");
+    const mi = String(now.getUTCMinutes()).padStart(2, "0");
+    const reportId = `HWK-INSP-${dd}-${mm}-${yyyy}-${hh}${mi}`;
+    const regs = "FDL 10/2025 · 10-year retention · Cabinet Res 134/2025 Art.18";
+    const label = "INSPECTION ROOM DOSSIER";
+
+    const overall = overallStatus;
+    const verdictBand = overall === "ready" ? "sage" : overall === "partial" ? "amber" : "ember";
+    const verdictLabel = STATUS_BADGE[overall].label.replace(/[^A-Za-z ]/g, "").trim();
+
+    const coverData: CoverData = {
+      reportId,
+      regs,
+      module: "MODULE 30 · INSPECTION ROOM",
+      title: "Regulator-Ready Evidence Dossier",
+      subtitle: "Six evidence areas aggregated for CBUAE / MoE / FIU inspection.",
+      subjectLabel: "INSTITUTION",
+      subjectName: "Hawkeye Sterling FZE",
+      subjectMeta: "DMCC Free Zone · Dubai · United Arab Emirates",
+      verdictLabel,
+      verdictBand,
+      verdictNote: `${readyCount} ready · ${partialCount} partial · ${missingCount} missing`,
+      meta: [
+        { label: "Generated", value: now.toUTCString().replace(" GMT", " UTC") },
+        { label: "Place", value: "Dubai, UAE" },
+        { label: "MLRO", value: "L. Fernanda" },
+        { label: "Ready panels", value: String(readyCount), sub: "of 6" },
+        { label: "Partial panels", value: String(partialCount), sub: "of 6" },
+        { label: "Missing panels", value: String(missingCount), sub: "of 6" },
+      ],
+    };
+
+    const summaryRows: string[][] = panels.map((p) => [
+      p.title,
+      hsSeverityCell(p.status === "ready" ? "Pass" : p.status === "partial" ? "Review" : "Hit"),
+      p.detail,
+    ]);
+
+    const cover = hsCover(coverData);
+    const summaryPage = hsPage({
+      reportId, pageNum: 1, pageTotal: 3, regs, label,
+      content: `
+        <div class="hs-rule"></div>
+        ${hsNarrative(
+          `On ${now.toUTCString().replace(" GMT", " UTC")}, Hawkeye Sterling assembled a regulator-ready evidence dossier for inspection by the CBUAE / MoE / FIU. Six evidence areas were checked: Policy stack, Enterprise-Wide Risk Assessment, Case files (CDD/EDD/STR), Audit chain, Training register, and Onboarding records. Overall readiness: <strong>${verdictLabel}</strong>.`,
+          true,
+        )}
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:14px 0">
+          ${hsScorebox(String(readyCount), "READY", "sage")}
+          ${hsScorebox(String(partialCount), "PARTIAL", partialCount > 0 ? "amber" : "")}
+          ${hsScorebox(String(missingCount), "MISSING", missingCount > 0 ? "ember" : "")}
+        </div>
+        <div class="hs-rule"></div>
+        <h2 class="hs-section-h" style="margin-top:14px">Evidence Areas — Summary</h2>
+        ${hsTable(["Area", "Status", "Detail"], summaryRows)}
+      `,
+    });
+
+    const detailContent = panels.map((p) => `
+      <div style="border:0.5px solid var(--hair);padding:14px 18px;margin-bottom:14px;border-radius:4px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:14px;margin-bottom:8px">
+          <h3 style="font-family:var(--serif);font-size:16px;margin:0">${p.title}</h3>
+          ${hsSeverityCell(p.status === "ready" ? "Pass" : p.status === "partial" ? "Review" : "Hit")}
+        </div>
+        <p style="font-size:11px;color:var(--ink-2);margin:0 0 6px;line-height:1.5">${p.description}</p>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--ink-2)">${p.detail}</div>
+        ${p.lastUpdatedAt ? `<div style="font-family:var(--mono);font-size:9px;color:var(--ink-3);margin-top:4px">Last updated: ${new Date(p.lastUpdatedAt).toLocaleString()}</div>` : ""}
+        <div style="font-family:var(--mono);font-size:9px;color:var(--ink-3);margin-top:4px">Source module: ${p.href}</div>
+      </div>
+    `).join("");
+
+    const detailPage = hsPage({
+      reportId, pageNum: 2, pageTotal: 3, regs, label,
+      content: `<h2 style="margin-top:0">Evidence Areas — Detail</h2>${detailContent}`,
+    });
+
+    const provenance = `
+      <h2 style="margin-top:0">Audit Trail &amp; Integrity</h2>
+      ${hsNarrative(
+        "This dossier was assembled deterministically from live operator data at the moment of generation. Each panel deep-links to the underlying source module so an inspector can verify every line item against the operating system of record.",
+      )}
+      <ul class="hs-findings">
+        <li>Generated at <strong>${now.toUTCString().replace(" GMT", " UTC")}</strong>.</li>
+        <li>Report ID: <code>${reportId}</code>.</li>
+        <li>Retention: 10 years (UAE FDL 10/2025 Art.24).</li>
+        <li>Implementing regulation: Cabinet Resolution 134/2025 Art.18.</li>
+        <li>FATF baseline: R.1 (EWRA), R.10 (CDD), R.18 (records), R.20 (STR), R.24-25 (UBO).</li>
+      </ul>
+      ${hsFinis(reportId, 3, 3)}
+    `;
+    const auditPage = hsPage({
+      reportId, pageNum: 3, pageTotal: 3, regs, label, content: provenance,
+    });
+
+    const html = buildHtmlDoc({
+      title: `Hawkeye Sterling — Inspection Room Dossier ${reportId}`,
+      autoprint: true,
+      pages: [cover, summaryPage, detailPage, auditPage],
+    });
+
+    const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const opened = window.open(url, "_blank", "noopener,noreferrer");
+    setTimeout(() => URL.revokeObjectURL(url), 30_000);
+    if (!opened) {
+      // Pop-up blocked — fall back to native print of the live page so the
+      // user always gets *something*.
+      window.print();
+    }
   };
 
   const readyCount = panels.filter((p) => p.status === "ready").length;
@@ -265,16 +389,17 @@ export default function InspectionRoomPage() {
         <button
           type="button"
           onClick={handlePrint}
-          className="text-11 font-mono uppercase tracking-wide-3 px-3 py-1.5 border border-brand bg-brand-dim text-brand-deep hover:bg-brand hover:text-white rounded font-semibold"
+          className="text-11 font-mono px-3 py-1.5 rounded border font-semibold"
+          style={{ color: "#7c3aed", borderColor: "#7c3aed", background: "rgba(124,58,237,0.07)" }}
         >
-          Generate inspection PDF
+          PDF
         </button>
         <button
           type="button"
           onClick={refresh}
-          className="text-11 font-mono uppercase tracking-wide-3 px-3 py-1.5 border border-hair-2 rounded text-ink-2 hover:text-brand hover:border-brand"
+          className="px-2 py-1 text-12 font-mono border border-green/40 rounded text-green bg-green-dim hover:bg-green-dim/70"
         >
-          Refresh
+          ↻
         </button>
         <span className="text-11 text-ink-3 font-mono ml-auto">
           generated {generatedAt}

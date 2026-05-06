@@ -1,72 +1,57 @@
 // GET /api/mlro/mode-performance
 //
-// Per-mode performance leaderboard — returns Brier, log-score,
-// agreement, drift bucket, and ranking for every reasoning mode the
-// journal has seen. Required by HS-MC-002 §6 ("Mode effectiveness
-// leaderboard") and HS-MC-001 §9.1.
+// Per-mode leaderboard endpoint (audit follow-up #24).
+// Reads the OutcomeFeedbackJournal singleton (Blobs-hydrated on cold start),
+// pivots on modeId, and returns a leaderboard sorted by brier_score ascending
+// (best calibrated first). Includes 95% CI intervals so the MLRO can
+// identify underperforming modes for review with statistical confidence.
 //
-// Query params:
-//   ?since=<ISO>             — only count records at >= since
-//   ?until=<ISO>             — only count records at <= until
-//   ?sort=brier|log|agree|total  — sort order (default brier ascending)
-//   ?direction=asc|desc      — sort direction (default depends on sort)
-//   ?limit=<N>               — cap results (default 500, 0 = all)
+// Schema per item:
+//   { mode_id, mode_name, category, brier_score, precision, recall,
+//     sample_n, last_updated, trend: "up"|"down"|"flat",
+//     ci_lower, ci_upper }
 //
 // Response:
-//   {
-//     ok, total, since, until,
-//     modes: [{ rank, modeId, total, resolved, brierMean, logScoreMean,
-//               agreementRate, drift: 'stable'|'drifting'|'uncalibrated' }]
-//   }
-//
-// Differs from /api/mlro/performance (per-reviewer) and /api/mlro/brier
-// (raw per-mode pivot) by adding stable rank + sortable surface intended
-// for the MLRO mode-effectiveness dashboard.
+//   { ok: true, modes: ModePerformanceRow[], generatedAt: ISO, totalModes: number }
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getJournal } from "../../../../../dist/src/brain/feedback-journal-instance.js";
 import { hydrateJournalFromBlobs } from "../../../../../dist/src/brain/feedback-journal-blobs.js";
-import {
-  brierScore,
-  logScore,
-} from "../../../../../dist/src/brain/bayesian-update.js";
+import { brierScore, logScore } from "../../../../../dist/src/brain/bayesian-update.js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 15;
 
-type DriftBucket = "stable" | "drifting" | "uncalibrated";
+// Half-window (days) used for trend detection: compare last N days vs prior N.
+const TREND_WINDOW_DAYS = 7;
+const MS_PER_DAY = 86_400_000;
 
-interface PerModeRow {
-  rank: number;
-  modeId: string;
-  total: number;
-  resolved: number;
-  brierMean: number;
-  logScoreMean: number;
-  agreementRate: number;
-  drift: DriftBucket;
+// 95% CI multiplier (Wilson score approximation via normal approximation):
+// z = 1.96 for two-tailed 95%.
+const Z_95 = 1.96;
+
+export interface ModePerformanceRow {
+  mode_id: string;
+  /** Best-effort human-readable label — falls back to mode_id when no mapping
+   *  is registered. Routes that know mode names can enrich this later. */
+  mode_name: string;
+  /** Grouping category inferred from mode_id prefix (e.g. "sanctions", "pep",
+   *  "adverse_media"). "general" when the prefix is unrecognised. */
+  category: string;
+  brier_score: number;
+  /** Fraction of confirmed outcomes among resolved records. -1 if no resolved. */
+  precision: number;
+  /** Fraction of positive ground-truth cases that the mode confirmed. -1 if none. */
+  recall: number;
+  sample_n: number;
+  last_updated: string | null; // ISO timestamp of most recent record, or null
+  trend: "up" | "down" | "flat";
+  /** 95% Wilson CI lower bound on brier_score (0 when sample too small). */
+  ci_lower: number;
+  /** 95% Wilson CI upper bound on brier_score (0 when sample too small). */
+  ci_upper: number;
 }
-
-interface OutcomeRecordLike {
-  at: string;
-  modeIds?: string[];
-  autoConfidence: number;
-  groundTruth?: string;
-  overridden?: boolean;
-}
-
-interface ModeAccumulator {
-  total: number;
-  resolved: number;
-  brierSum: number;
-  logSum: number;
-  agreed: number;
-}
-
-const DEFAULT_LIMIT = 500;
-const SORT_KEYS = new Set(["brier", "log", "agree", "total"]);
 
 function classifyGroundTruth(g: string | undefined): 0 | 1 | null {
   if (g === "confirmed") return 1;
@@ -74,133 +59,182 @@ function classifyGroundTruth(g: string | undefined): 0 | 1 | null {
   return null;
 }
 
-function driftBucket(brier: number, resolved: number): DriftBucket {
-  if (resolved < 5) return "uncalibrated";
-  if (brier <= 0.15) return "stable";
-  return "drifting";
+/** Naive category extraction from mode_id prefix. */
+function categoryFromModeId(modeId: string): string {
+  const prefix = modeId.split(/[_\-]/)[0]?.toLowerCase() ?? "";
+  const known: Record<string, string> = {
+    sanctions: "sanctions",
+    pep: "pep",
+    adverse: "adverse_media",
+    media: "adverse_media",
+    kyc: "kyc",
+    aml: "aml",
+    ubo: "ubo",
+    tm: "transaction_monitoring",
+    str: "str",
+  };
+  return known[prefix] ?? "general";
 }
 
-function defaultDirection(sort: string): "asc" | "desc" {
-  // Brier/log: lower is better → ascending. Agreement/total: higher is better → descending.
-  return sort === "brier" || sort === "log" ? "asc" : "desc";
-}
-
-function compareRows(
-  sort: string,
-  direction: "asc" | "desc",
-): (a: PerModeRow, b: PerModeRow) => number {
-  const sign = direction === "asc" ? 1 : -1;
-  return (a, b) => {
-    let av: number;
-    let bv: number;
-    switch (sort) {
-      case "log":
-        av = a.logScoreMean;
-        bv = b.logScoreMean;
-        break;
-      case "agree":
-        av = a.agreementRate;
-        bv = b.agreementRate;
-        break;
-      case "total":
-        av = a.total;
-        bv = b.total;
-        break;
-      default:
-        av = a.brierMean;
-        bv = b.brierMean;
-    }
-    return (av - bv) * sign;
+/**
+ * Wilson score 95% CI for the mean of Brier scores.
+ *
+ * Brier scores sit in [0, 1] and their sample mean is a proportion-like
+ * statistic, so the Wilson interval is the best closed-form approximation
+ * without needing the full score distribution. For small n (< 5) we return
+ * [0, 0] to signal "insufficient data".
+ */
+function brierCI(brierMean: number, n: number): { lower: number; upper: number } {
+  if (n < 5) return { lower: 0, upper: 0 };
+  const p = brierMean;
+  const z2 = Z_95 * Z_95;
+  const denom = 1 + z2 / n;
+  const centre = (p + z2 / (2 * n)) / denom;
+  const margin = (Z_95 / denom) * Math.sqrt((p * (1 - p)) / n + z2 / (4 * n * n));
+  return {
+    lower: Math.max(0, centre - margin),
+    upper: Math.min(1, centre + margin),
   };
 }
 
-async function handleGet(req: Request): Promise<Response> {
+async function handleGet(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+  const gateHeaders = gate.headers;
 
-  const url = new URL(req.url);
-  const sinceRaw = url.searchParams.get("since");
-  const untilRaw = url.searchParams.get("until");
-  const since = sinceRaw ? Date.parse(sinceRaw) : Number.NEGATIVE_INFINITY;
-  const until = untilRaw ? Date.parse(untilRaw) : Number.POSITIVE_INFINITY;
-  const sortRaw = (url.searchParams.get("sort") ?? "brier").toLowerCase();
-  const sort = SORT_KEYS.has(sortRaw) ? sortRaw : "brier";
-  const directionRaw = url.searchParams.get("direction");
-  const direction: "asc" | "desc" =
-    directionRaw === "asc" || directionRaw === "desc"
-      ? directionRaw
-      : defaultDirection(sort);
-  const limitRaw = Number.parseInt(
-    url.searchParams.get("limit") ?? String(DEFAULT_LIMIT),
-    10,
-  );
-  const limit =
-    Number.isFinite(limitRaw) && limitRaw >= 0 ? limitRaw : DEFAULT_LIMIT;
-
+  // Cold-start hydration from Blobs — idempotent after first call.
   await hydrateJournalFromBlobs();
-  const records = getJournal().list() as readonly OutcomeRecordLike[];
 
-  const byMode = new Map<string, ModeAccumulator>();
-  let recordsConsidered = 0;
-  for (const r of records) {
-    const t = Date.parse(r.at);
-    if (Number.isFinite(t) && (t < since || t > until)) continue;
-    recordsConsidered++;
+  const now = Date.now();
+  const recentStart = now - TREND_WINDOW_DAYS * MS_PER_DAY;
+  const priorEnd = recentStart;
+  const priorStart = priorEnd - TREND_WINDOW_DAYS * MS_PER_DAY;
+
+  interface ModeAccum {
+    tot: number;
+    res: number;
+    brierSum: number;
+    logSum: number;
+    tp: number; // confirmed and predicted positive
+    fp: number; // reversed and predicted positive
+    fn: number; // confirmed and predicted negative
+    recentBrierSum: number;
+    recentRes: number;
+    priorBrierSum: number;
+    priorRes: number;
+    lastAt: string | null;
+  }
+
+  const byMode = new Map<string, ModeAccum>();
+
+  for (const r of getJournal().list()) {
     const truth = classifyGroundTruth(r.groundTruth);
-    for (const m of r.modeIds ?? []) {
-      const slot = byMode.get(m) ?? {
-        total: 0,
-        resolved: 0,
+    const t = Date.parse(r.at);
+    const isRecent = !Number.isNaN(t) && t >= recentStart;
+    const isPrior = !Number.isNaN(t) && t >= priorStart && t < priorEnd;
+
+    for (const modeId of r.modeIds ?? []) {
+      const slot: ModeAccum = byMode.get(modeId) ?? {
+        tot: 0,
+        res: 0,
         brierSum: 0,
         logSum: 0,
-        agreed: 0,
+        tp: 0,
+        fp: 0,
+        fn: 0,
+        recentBrierSum: 0,
+        recentRes: 0,
+        priorBrierSum: 0,
+        priorRes: 0,
+        lastAt: null,
       };
-      slot.total++;
-      if (!r.overridden) slot.agreed++;
-      if (truth !== null) {
-        slot.resolved++;
-        slot.brierSum += brierScore(r.autoConfidence, truth);
-        slot.logSum += logScore(r.autoConfidence, truth);
+
+      slot.tot++;
+
+      // Track most recent timestamp.
+      if (r.at && (slot.lastAt === null || r.at > slot.lastAt)) {
+        slot.lastAt = r.at;
       }
-      byMode.set(m, slot);
+
+      if (truth !== null) {
+        slot.res++;
+        const bs = brierScore(r.autoConfidence, truth);
+        const ls = logScore(r.autoConfidence, truth);
+        slot.brierSum += bs;
+        slot.logSum += ls;
+
+        // Precision / recall counters.
+        // Treat autoConfidence >= 0.5 as "positive prediction".
+        const predictedPositive = r.autoConfidence >= 0.5;
+        if (truth === 1) {
+          if (predictedPositive) slot.tp++;
+          else slot.fn++;
+        } else {
+          if (predictedPositive) slot.fp++;
+        }
+
+        // Trend windows.
+        if (isRecent) {
+          slot.recentBrierSum += bs;
+          slot.recentRes++;
+        } else if (isPrior) {
+          slot.priorBrierSum += bs;
+          slot.priorRes++;
+        }
+      }
+
+      byMode.set(modeId, slot);
     }
   }
 
-  const rows: PerModeRow[] = [];
+  const modes: ModePerformanceRow[] = [];
   for (const [modeId, s] of byMode) {
-    const brierMean = s.resolved > 0 ? s.brierSum / s.resolved : 0;
-    const logScoreMean = s.resolved > 0 ? s.logSum / s.resolved : 0;
-    const agreementRate = s.total > 0 ? s.agreed / s.total : 0;
-    rows.push({
-      rank: 0,
-      modeId,
-      total: s.total,
-      resolved: s.resolved,
-      brierMean,
-      logScoreMean,
-      agreementRate,
-      drift: driftBucket(brierMean, s.resolved),
+    const brierMean = s.res > 0 ? s.brierSum / s.res : 0;
+
+    const precision =
+      s.tp + s.fp > 0 ? s.tp / (s.tp + s.fp) : -1;
+    const recall =
+      s.tp + s.fn > 0 ? s.tp / (s.tp + s.fn) : -1;
+
+    // Trend: compare recent vs prior window brier means.
+    let trend: "up" | "down" | "flat" = "flat";
+    if (s.recentRes >= 3 && s.priorRes >= 3) {
+      const recentMean = s.recentBrierSum / s.recentRes;
+      const priorMean = s.priorBrierSum / s.priorRes;
+      const delta = recentMean - priorMean;
+      // "up" = brier improved (went down); "down" = brier got worse (went up).
+      if (delta <= -0.03) trend = "up";
+      else if (delta >= 0.03) trend = "down";
+    }
+
+    const ci = brierCI(brierMean, s.res);
+
+    modes.push({
+      mode_id: modeId,
+      mode_name: modeId, // callers enriching with a mode-name registry can extend
+      category: categoryFromModeId(modeId),
+      brier_score: brierMean,
+      precision,
+      recall,
+      sample_n: s.tot,
+      last_updated: s.lastAt,
+      trend,
+      ci_lower: ci.lower,
+      ci_upper: ci.upper,
     });
   }
 
-  rows.sort(compareRows(sort, direction));
-  rows.forEach((r, i) => (r.rank = i + 1));
-
-  const truncated = limit === 0 ? rows : rows.slice(0, limit);
+  // Sort ascending by brier_score — best calibrated first.
+  modes.sort((a, b) => a.brier_score - b.brier_score);
 
   return NextResponse.json(
     {
       ok: true,
-      total: rows.length,
-      returned: truncated.length,
-      recordsConsidered,
-      since: sinceRaw,
-      until: untilRaw,
-      sort,
-      direction,
-      modes: truncated,
+      modes,
+      generatedAt: new Date().toISOString(),
+      totalModes: modes.length,
     },
-    { headers: gate.headers },
+    { headers: gateHeaders },
   );
 }
 

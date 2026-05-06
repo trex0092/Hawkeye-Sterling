@@ -348,7 +348,7 @@ export default function EmployeesPage() {
             disabled={employees.length === 0 || empRiskLoading}
             className="text-11 font-semibold px-3 py-1.5 rounded border border-amber text-amber hover:bg-amber-dim disabled:opacity-40 transition-colors"
           >
-            {empRiskLoading ? "Scanning…" : "AI Risk Scan"}
+            {empRiskLoading ? "Scanning…" : "✦AI"}
           </button>
           <button
             type="button"
@@ -687,8 +687,8 @@ export default function EmployeesPage() {
                               </div>
                             </div>
                             <div className="flex gap-2">
-                              <button type="button" onClick={() => saveEmpEdit(emp.id)} className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0">Save</button>
-                              <button type="button" onClick={() => setEditingId(null)} className="text-11 font-medium px-3 py-1.5 rounded text-ink-2">Cancel</button>
+                              <button type="button" onClick={() => saveEmpEdit(emp.id)} className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0">✓</button>
+                              <button type="button" onClick={() => setEditingId(null)} className="text-11 font-medium px-3 py-1.5 rounded text-red">✕</button>
                             </div>
                           </td>
                         </tr>

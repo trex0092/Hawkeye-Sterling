@@ -1,305 +1,554 @@
 # AI System Inventory
-## Hawkeye Sterling — Version 1.0
 
-**Document ID:** HS-GOV-002
-**Version:** 1.0
-**Effective Date:** [DATE OF ADOPTION]
-**Next Review:** Quarterly (1st of each quarter) + on every new system deployment
-**Owner:** Compliance Officer
-**Approved by:** MLRO
-
----
-
-## 1. Inventory Scope
-
-This document registers every AI system deployed within or integrated into Hawkeye Sterling as of May 6, 2026. It is a living document. Any deployment of a new AI system, or material change to an existing one, requires an update to this inventory and governance board approval before go-live.
-
-**Total registered systems:** 5
-**Production:** 4
-**Pilot:** 1
-**Development/Deprecated:** 0
+**Document ID:** HS-GOV-002  
+**Version:** 1.0.0  
+**Effective Date:** 2026-05-06  
+**Review Cycle:** Quarterly; updated on every production deployment  
+**Owner:** Data Science Lead  
+**Classification:** Restricted — Internal Compliance Use Only
 
 ---
 
-## 2. System Registry
+## Table of Contents
 
-| System ID | System Name | Type | Version | Stage | Deployed | Last Updated | Lifecycle |
-|---|---|---|---|---|---|---|---|
-| HS-001 | Subject Screening Engine | Cognitive multi-modal | 2.3.1 | Production | 2026-01-15 | 2026-05-01 | Monitor |
-| HS-002 | Reasoning Mode Executor | Logic orchestrator | 2.3.1 | Production | 2026-01-15 | 2026-05-01 | Monitor |
-| HS-003 | Adverse Media Detector | Classification + retrieval | 2.3.1 | Production | 2026-02-01 | 2026-05-01 | Monitor |
-| HS-004 | MLRO Auto-Dispositioner | Advisory (LLM-backed) | 1.0.0 | Pilot | 2026-03-15 | 2026-03-15 | Evaluate |
-| HS-005 | STR/SAR Narrative Generator | Text generation (LLM-backed) | 1.2.1 | Production | 2026-02-15 | 2026-04-20 | Monitor |
+1. [Inventory Overview](#1-inventory-overview)
+2. [HS-001 Screening Engine](#2-hs-001-screening-engine)
+3. [HS-002 Reasoning Modes](#3-hs-002-reasoning-modes)
+4. [HS-003 Adverse Media Analyser](#4-hs-003-adverse-media-analyser)
+5. [HS-004 MLRO Auto-Dispositioner](#5-hs-004-mlro-auto-dispositioner)
+6. [HS-005 STR/SAR Generator](#6-hs-005-strsар-generator)
+7. [Inventory Change Log](#7-inventory-change-log)
 
 ---
 
-## 3. System Detail Records
+## 1. Inventory Overview
 
-### HS-001 — Subject Screening Engine
+This document is the authoritative register of all AI systems deployed within the Hawkeye Sterling AML/CFT compliance platform. It is maintained in accordance with UAE Federal Decree-Law No. 10 of 2025 (FDL 10/2025) and the AI Governance Policy (`docs/governance/AI_GOVERNANCE_POLICY.md`).
+
+Each entry records: system identity, version, deployment status, technical architecture, data sources, output taxonomy, performance metrics, known limitations, human oversight requirements, and risk classification.
+
+### System Summary
+
+| System ID | Name | Version | Status | Risk Tier | Last Updated |
+|---|---|---|---|---|---|
+| HS-001 | Screening Engine | 2.3.1 | Production | HIGH | 2026-05-06 |
+| HS-002 | Reasoning Modes | 2.3.1 | Production | HIGH | 2026-05-06 |
+| HS-003 | Adverse Media Analyser | 2.3.1 | Production | HIGH | 2026-05-06 |
+| HS-004 | MLRO Auto-Dispositioner | 1.0.0 | Pilot | CRITICAL | 2026-05-06 |
+| HS-005 | STR/SAR Generator | 1.2.1 | Production | CRITICAL (pre-review) | 2026-05-06 |
+
+---
+
+## 2. HS-001 Screening Engine
+
+### 2.1 Identity
 
 | Field | Value |
 |---|---|
 | System ID | HS-001 |
-| Full Name | Subject Screening Engine |
+| System Name | Hawkeye Sterling Screening Engine |
 | Version | 2.3.1 |
-| Stage | Production |
-| Risk Level | High (financial/regulatory decisions) |
-| Regulatory Classification | High-risk (EU AI Act Art. 6) |
-| Model Card | `docs/model-cards/HS-001-screening.md` |
+| Status | Production |
+| Risk Classification | HIGH (CRITICAL for sanctions sub-component) |
+| Primary Codebase | `src/brain/entity-screening-engine.ts`, `src/brain/quick-screen.ts`, `src/brain/matching.ts` |
+| Charter Alignment | P1, P6, P7, P9, P10 |
 
-**Purpose:** Orchestrates the full screening pipeline for a named subject (person, entity, vessel, aircraft). Takes subject identifiers as input, runs multi-source evidence collection (sanctions lists, PEP database, adverse media), routes through the Reasoning Mode Executor (HS-002), and produces a structured verdict with full reasoning chain and audit trail.
+### 2.2 Purpose
 
-**Approved use cases:**
-- First-screening on customer onboarding
-- Daily monitoring on existing customer portfolios
-- Escalation screening from transaction monitoring alerts
-- Batch screening via `POST /api/agent/batch-screen`
+The Screening Engine is the primary AML/CFT subject-screening system. It screens individuals, legal entities, vessels, and aircraft against authoritative sanctions lists, PEP databases, and adverse-media signals. It produces a structured, charter-compliant output that a human MLRO reviews before any compliance action is taken.
 
-**Out-of-scope use cases (never permitted):**
-- Automated customer rejection without MLRO review
-- Automated asset freeze without MLRO approval
-- Real-time KYC at point-of-sale without human oversight
-- Credit scoring or insurance underwriting
-- Use outside UAE jurisdiction without additional legal review
+### 2.3 Data Sources
 
-**Primary users:** MLRO, Compliance Officers, Front Office (read-only access)
+The engine consumes data from 10 sources, grouped by category:
 
-**Key source files:**
-- `web/app/api/agent/screen/route.ts` — primary endpoint (`POST /api/agent/screen`)
-- `web/app/api/agent/stream-screen/route.ts` — SSE streaming (`GET /api/agent/stream-screen`)
-- `web/app/api/agent/batch-screen/route.ts` — batch processing
-- `src/brain/engine.ts` — cognitive orchestrator
-- `src/brain/weaponized.ts` — system prompt composer (charter + faculties + modes)
+**Sanctions Lists (6 sources)**
 
-**Data inputs:**
-- Subject name, aliases, nationality, DOB, passport, entity identifiers
-- Sanctions lists (6 sources, refreshed daily)
-- PEP database (OpenSanctions, refreshed weekly)
-- Adverse media (NewsAPI + GDELT + Google CSE + RSS, refreshed 30 min)
+| Source ID | Authority | Refresh Cadence | Format | List IDs |
+|---|---|---|---|---|
+| UN Consolidated List | UN Security Council | Daily | XML | `un_1267` |
+| OFAC SDN | US Department of the Treasury | Daily | XML | `ofac_sdn` |
+| OFAC Consolidated | US Department of the Treasury | Daily | XML | `ofac_cons` |
+| EU Consolidated Financial Sanctions | European Union Official Journal | Daily | XML | `eu_consolidated` |
+| UK OFSI Consolidated | UK Office of Financial Sanctions Implementation | Daily | XML | `uk_ofsi` |
+| UAE EOCN / Local Terrorist List | UAE National Security Council | Weekly | PDF | `uae_eocn`, `uae_local_terrorist` |
 
-**Data outputs:**
-- Structured `BrainVerdict` JSON: findings[], chain[], recommendedActions[], CognitiveDepth
-- HMAC-sealed audit trail entry (Netlify Blobs)
-- Asana task (project 00 · Master Inbox, assigned to MLRO)
-- Optional: STR draft preview
+**PEP Database (1 source)**
 
-**Monitoring:**
-- Uptime: Netlify platform monitoring + `netlify/functions/warm-pool.mts` (every 4 min)
-- Calibration: `GET /api/mlro/brier` (hourly Brier score)
-- Drift: `GET /api/mlro/drift-alerts` + `src/brain/drift-alerts.ts`
-- Mode performance: `GET /api/mlro/mode-performance`
-- Sanctions list freshness: `GET /api/sanctions/status`
-- Audit chain integrity: `GET /api/audit/verify` + `netlify/functions/audit-chain-probe.mts` (hourly)
+| Source ID | Authority | Refresh Cadence | Format | Notes |
+|---|---|---|---|---|
+| OpenSanctions PEP | Wikidata, national government gazettes | Daily | JSON/CSV | Covers 240+ jurisdictions; includes RCA relationships |
+
+**Adverse Media (3 sources — fed from HS-003)**
+
+| Source ID | Authority | Refresh Cadence |
+|---|---|---|
+| NewsAPI | Commercial aggregator | Real-time |
+| GDELT | Academic/open source | 15-minute intervals |
+| Google Custom Search Engine (CSE) | Commercial | Real-time |
+
+### 2.4 Cognitive Faculties
+
+The engine activates 10 cognitive faculties during a full screening run:
+
+| Faculty ID | Display Name | Description |
+|---|---|---|
+| `reasoning` | Reasoning | Formal and informal logical inference over evidence and rules |
+| `data_analysis` | Data Analysis | Quantitative interrogation of structured and semi-structured data |
+| `deep_thinking` | Deep Thinking | Slow, reflective System 2 examination |
+| `inference` | Inference | Drawing warranted conclusions from evidence patterns |
+| `introspection` | Introspection | Self-monitoring for bias, overconfidence, and calibration collapse |
+| `argumentation` | Argumentation | Constructing and stress-testing evidential chains |
+| `smartness` | Smartness | Fast heuristic pattern matching (System 1) |
+| `ratiocination` | Ratiocination | Structured deductive reasoning |
+| `creativity` | Creativity | Novel hypothesis generation for edge cases |
+| `communication` | Communication | Structured output generation in charter-compliant format |
+
+### 2.5 Output Taxonomy
+
+Every screening run produces one of four top-level verdicts, plus structured sub-fields:
+
+| Verdict | Meaning | Required Action |
+|---|---|---|
+| **MATCH** | Strong or Exact confidence hit against an authoritative list | MLRO review; disposition required; potential freeze (D05/D06) |
+| **POSSIBLE** | Possible confidence hit; candidates cannot be excluded | MLRO review; EDD to disambiguate (D03) |
+| **NO MATCH** | No hit at any confidence level across declared scope | Scope declaration mandatory (P7); document and monitor |
+| **ESCALATE** | Confidence below 65%, or structural/charter issue detected | Mandatory MLRO review; auto-dispositioner blocked |
+
+**Match Confidence Taxonomy (per charter):**
+
+| Level | Criteria |
+|---|---|
+| EXACT | Full name + ≥2 strong identifiers (DOB, nationality, passport, address, registration number, UBO). No conflicting data. |
+| STRONG | Full name match + 1 strong identifier + no conflicting data |
+| POSSIBLE | Full name OR partial name + 1 contextual identifier (nationality, profession, sector). Multiple candidates cannot be excluded. |
+| WEAK | Name-only, partial-name, or phonetic/transliteration match without corroborating identifiers |
+| NO MATCH | Screened against stated scope; no hit at any confidence level |
+
+### 2.6 Three-Tier Pipeline Architecture
+
+```
+Tier 1: Identifier-Exact
+  └── Shared strong ID across same-type entities
+      (short-circuits to EXACT if matched)
+
+Tier 2: Name-Exact
+  └── Normalised-name equality + ≥1 contextual/strong disambiguator
+      (short-circuits to STRONG if matched)
+
+Tier 3: Fuzzy + Matrix
+  └── Ensemble name match (Levenshtein, Jaro-Winkler, Soundex,
+      Double Metaphone, Arabic-root) + disambiguator calibration
+      via resolveEntities / calibrateConfidence
+```
+
+### 2.7 Disposition Codes
+
+The engine supports all 35 disposition codes (D00–D35) as defined in `src/brain/dispositions.ts`. High-frequency dispositions in the screening workflow:
+
+| Code | Label | Min Approvals | MLRO Sign-off |
+|---|---|---|---|
+| D00 | No match | 1 | No |
+| D01 | False positive (documented) | 2 | No |
+| D03 | Escalate to EDD | 2 | No |
+| D05 | Frozen — FFR filed | 2 | Yes |
+| D06 | Partial match — PNMR filed | 2 | Yes |
+| D09 | Do not onboard | 2 | Yes |
+
+### 2.8 Known Limitations
+
+- Sanctions list freshness is bounded by the upstream data refresh cadence (see Data Lineage)
+- UAE EOCN list is in PDF format; Phase 2 PDF parser is pending (`uae_eocn` adapter raises `Phase-2` error if invoked)
+- Transliteration matching for Arabic/Cyrillic/CJK scripts may produce higher false positive rates for common name fragments; POSSIBLE confidence maximum applies without native-script corroboration
+- OpenSanctions PEP database does not include all sub-national PEP categories in all jurisdictions; gaps documented per jurisdiction in `src/brain/jurisdictions-full.ts`
+
+### 2.9 Human Oversight Requirement
+
+**MANDATORY.** No screening verdict may be actioned without MLRO review. The engine outputs decision support only. The MLRO dispositions every case. This requirement is non-negotiable and is enforced by the charter (prohibition P3) and RBAC controls.
 
 ---
 
-### HS-002 — Reasoning Mode Executor
+## 3. HS-002 Reasoning Modes
+
+### 3.1 Identity
 
 | Field | Value |
 |---|---|
 | System ID | HS-002 |
-| Full Name | Reasoning Mode Executor |
+| System Name | Hawkeye Sterling Reasoning Modes |
 | Version | 2.3.1 |
-| Stage | Production |
-| Risk Level | High (feeds directly into HS-001 verdicts) |
-| Regulatory Classification | High-risk (component of HS-001) |
-| Model Card | `docs/model-cards/HS-002-reasoning.md` |
+| Status | Production |
+| Risk Classification | HIGH |
+| Primary Codebase | `src/brain/reasoning-modes.ts`, `src/brain/reasoning-modes-wave3.ts` through `wave12.ts`, `src/brain/mlro-reasoning-modes.ts`, `src/brain/modes/` |
 
-**Purpose:** Executes the registered reasoning modes against the evidence context assembled by HS-001. Each mode is a named, versioned, hashable function with a declared faculty, category, and callable `apply(ctx)` method. The executor manages mode selection, parallel execution, result aggregation, and the introspection meta-reasoning pass.
+### 3.2 Purpose
 
-**Reasoning mode inventory:**
+The Reasoning Modes system is a registry of analytical reasoning primitives that the MLRO advisor invokes to produce structured, multi-perspective compliance analysis. Each mode encapsulates a named reasoning methodology (e.g., Bayesian inference, Benford's Law, source triangulation) with a defined apply function and metadata binding it to relevant cognitive faculties and compliance use cases.
 
-| Wave | Modes | Status |
+### 3.3 Mode Counts by Wave
+
+| Wave | Mode Count | Status | Primary Category Focus |
+|---|---|---|---|
+| Wave 1 | 140 | Production | Logic, cognitive science, epistemology, probability |
+| Wave 2 | 133 | Production | Domain-specific AML/CFT typologies, forensic accounting, OSINT |
+| Wave 3 | 100 | Production (wired into `MODE_OVERRIDES`) | OSINT, red-team/adversarial, geopolitical, forensic accounting, behavioral economics, network science, linguistic analysis, sanctions evasion, crypto forensics, ESG |
+| Wave 4–12 | Ongoing | Production | Extended domains, sector-specific overlays |
+
+**Total active modes: 412+ across 50+ categories.**
+
+### 3.4 Mode Categories
+
+| Category | Examples |
+|---|---|
+| `logic` | Modus ponens, modus tollens, reductio ad absurdum, fuzzy logic, deontic logic, temporal logic |
+| `cognitive_science` | System 1, System 2, dual-process arbitration, OODA loop, pre-mortem |
+| `statistical` | Bayes theorem, confidence intervals, Benford's law, entropy, KL divergence |
+| `behavioral` | Anchoring avoidance, loss aversion calibration, escalation of commitment |
+| `typology` | Structuring detection, smurfing detection, layering analysis, TBML |
+| `forensic_accounting` | Journal entry anomaly, revenue recognition stretch, vendor master anomaly |
+| `network_science` | Centrality, community detection, motif detection, bridge detection |
+| `osint` | Source triangulation, corroboration ranking, OSINT source tiering |
+| `geopolitical` | Jurisdiction risk overlay, sanctions regime conflict analysis |
+| `data_quality` | Completeness audit, freshness check, reconciliation, discrepancy log |
+| `governance` | Four-eyes check, SoD validation, audit trail reconstruction |
+
+### 3.5 Activation Logic
+
+Modes are activated by:
+
+1. **Direct MLRO selection** — operator selects specific mode IDs via the MLRO picker (`public/mlro-picker.js`)
+2. **Pipeline preset** — pre-configured mode sequences from `src/brain/mlro-pipeline-presets.ts`
+3. **MODE_OVERRIDES** — Wave 3+ modes with real `apply()` implementations override the default stub when invoked
+
+The pipeline enforces a **25-second hard ceiling per mode** (AbortController) and a configurable total budget (default 60 seconds, hard-capped at `HARD_CEILING_MS`).
+
+### 3.6 Introspection Meta-Pass
+
+After pipeline execution, a meta-cognition layer (`src/brain/meta-cognition.ts`) performs a self-assessment pass with four mandatory checks:
+
+| Check | Description | Trigger |
 |---|---|---|
-| Wave 1+2 (core registry) | 273 modes across 18 categories | Production |
-| Wave 3 (intelligence expansion) | 100+ modes across 10 typology clusters | Production, wired into MODE_OVERRIDES |
+| **Contradiction Detection** | Identifies conflicting assertions across mode outputs | Any two modes produce directionally opposed findings |
+| **Under-Triangulation** | Flags when a conclusion rests on fewer than the required minimum independent corroborating sources | Fewer than 2 independent sources support a material finding |
+| **Overconfidence** | Detects confidence assertions that exceed what the evidence supports | Stated confidence > reference-class base rate for the claim type |
+| **Calibration Collapse** | Detects systematic miscalibration across multiple runs (Brier score degradation) | Running Brier score exceeds drift warning threshold |
 
-**Category breakdown (Wave 1+2):**
-Logic (21), Cognitive Science (22), Decision Theory (15), Forensic (37), Compliance Framework (30), Legal Reasoning (10), Strategic (10), Causal (5), Statistical (18), Graph Analysis (10), Threat Modeling (14), Behavioral Signals (5), Data Quality (10), Governance (16), Crypto/DeFi (16), Sectoral Typology (24), OSINT (6), ESG (4)
+### 3.7 Performance Monitoring
 
-**Wave 3 typology clusters:**
-Sanctions/Proliferation (10 modes), TBML (9), Crypto (17), Trade/Cargo (3), DPMS/Sectoral (10), Network/Professional (3), Banking (2), UBO/Structures (8), PEP/Corruption (7), Predicate Offences (8), TF/NPO (1), KYC/Identity (9), Behavioral (10), Securities/Insurance (6)
+Per-mode Brier scores are computed by the `CalibrationLedger` class (`src/brain/mlro-calibration.ts`) and exposed via:
 
-**Introspection meta-pass:** After all modes run, the executor performs a self-audit producing meta-findings for: cross-category contradiction, under-triangulation (< 3 faculties engaged), over-confidence on zero-score, and calibration collapse (σ < 0.05).
+```
+GET /api/mlro/brier
+```
 
-**Key source files:**
-- `src/brain/reasoning-modes.ts` — 273-mode registry
-- `src/brain/engine.ts` — orchestrator and CognitiveDepth metrics
-- `src/brain/faculties.ts` — 10 faculties with synonym clusters
-- `src/brain/types.ts` — domain model (BrainVerdict, Finding, ChainEntry)
+The response includes:
+- `windowSize` — total scored samples
+- `hitRate` — confirmed / (confirmed + reversed)
+- `brierScore` — mean squared error of probability forecasts (lower = better)
+- `logScore` — mean log loss
+- `byMode` — per-mode `{ n, hits, brier }` breakdown
+- `drift.warning` — true if `|recentHitRate - olderHitRate| > 0.15`
 
-**Mode version pinning:** Every mode carries version (semver), deployedDate (ISO 8601), contentHash (SHA-256), author, and approvedBy. Changes require governance approval before merge.
+Mode drift alerts are surfaced via:
+
+```
+GET /api/mlro/drift-alerts
+```
+
+### 3.8 Mode Performance Leaderboard
+
+```
+GET /api/mlro/mode-performance
+```
+
+Returns modes ranked by Brier score ascending (best-performing first). Reviewed at every Friday governance committee meeting.
+
+### 3.9 Known Limitations
+
+- Wave 1 and Wave 2 modes use `defaultApply()` stubs for modes not yet implemented with real algorithms; stub outputs are flagged as `inconclusive` and cannot drive a case disposition
+- Per-mode Brier scores require a minimum sample size (n ≥ 30) before being statistically reliable
+- Meta-cognition contradiction detection operates on the narrative text level; semantic contradiction in structured data fields requires additional validation
 
 ---
 
-### HS-003 — Adverse Media Detector
+## 4. HS-003 Adverse Media Analyser
+
+### 4.1 Identity
 
 | Field | Value |
 |---|---|
 | System ID | HS-003 |
-| Full Name | Adverse Media Detector |
+| System Name | Hawkeye Sterling Adverse Media Analyser |
 | Version | 2.3.1 |
-| Stage | Production |
-| Risk Level | High (informs MLRO risk decisions) |
-| Regulatory Classification | High-risk (component of HS-001) |
-| Model Card | `docs/model-cards/HS-003-adverse-media.md` |
+| Status | Production |
+| Risk Classification | HIGH |
+| Primary Codebase | `src/brain/adverse-media.ts`, `src/brain/adverse-media-analyser.ts`, `src/brain/adverse-media-i18n.ts` |
 
-**Purpose:** Searches multiple real-time news and media sources for adverse information about a subject across five risk categories. Returns structured findings with source citations for inclusion in the screening verdict.
+### 4.2 Purpose
 
-**Five-category taxonomy:**
-1. Money Laundering & Financial Crime
-2. Terrorist Financing
-3. Proliferation Financing
-4. Corruption, Bribery & Organised Crime
-5. Legal, Criminal & Regulatory Proceedings
+The Adverse Media Analyser performs systematic monitoring of open-source news and media for information that may indicate financial crime, regulatory breach, or reputational risk associated with subjects under review. It classifies content against a 5-category (core AML/CFT mandate) and 12-category (full taxonomy) keyword framework.
 
-**Data sources:**
+### 4.3 Core 5-Category AML/CFT Taxonomy
 
-| Source | Coverage | Refresh | Key endpoint |
+| Category ID | Display Name | Regulatory Relevance |
+|---|---|---|
+| `ml_financial_crime` | Money Laundering & Financial Crime | FATF R.3; primary AML predicate |
+| `terrorist_financing` | Terrorist Financing | FATF R.5; TF predicate |
+| `proliferation_financing` | Proliferation Financing | FATF R.7; CPF predicate; UAE sanctions nexus |
+| `corruption_organised_crime` | Corruption, Bribery & Organised Crime | FATF R.3; predicate offences |
+| `legal_criminal_regulatory` | Legal, Criminal & Regulatory Proceedings | Ongoing adverse proceedings indicator |
+
+### 4.4 Extended Taxonomy (12 Categories Total)
+
+Additional categories beyond the core 5:
+
+| Category ID | Display Name |
+|---|---|
+| `esg` | ESG & Responsible-Sourcing Controversies |
+| `cybercrime` | Cybercrime & Digital-Asset Abuse |
+| `ai` | AI-Enabled Risk & Synthetic-Media Abuse |
+| `sanctions_violations` | Sanctions Violations & Evasion |
+| `human_trafficking_modern_slavery` | Human Trafficking & Modern Slavery |
+| `tax_crimes` | Tax Crimes & Fiscal Fraud |
+| `environmental_crime` | Environmental Crime & Illegal Resource Extraction |
+| `drug_trafficking` | Drug Trafficking & Narcotics |
+
+### 4.5 Keyword Coverage
+
+| Metric | Value |
+|---|---|
+| Total unique keywords (English) | 180+ |
+| Multilingual packs | Arabic (ar), Persian (fa), French (fr), Spanish (es), Russian (ru), Mandarin (zh) |
+| Total speakers covered by multilingual packs | ~4.3 billion |
+| Boolean OR query terms | 55+ root terms in `ADVERSE_MEDIA_QUERY` |
+| Multilingual routing logic | Keywords routed to `ml_financial_crime`, `corruption_organised_crime`, or `sanctions_violations` buckets via `i18nBucket()` |
+
+### 4.6 Data Sources
+
+| Source | Authority | Refresh Cadence | Access Method |
 |---|---|---|---|
-| NewsAPI | 120+ global news outlets | Every 30 min | `GET /api/news-search` |
-| GDELT | Geopolitical event database | Every 30 min | `netlify/functions/adverse-media-rss.mts` |
-| Google Custom Search | Regulatory filings, official sources | On demand | Via GOOGLE_CSE_ID + GOOGLE_CSE_KEY |
-| Direct RSS | Sector-specific and regional feeds | Every 30 min | `netlify/functions/adverse-media-rss.mts` |
+| NewsAPI | Commercial news aggregator | Real-time | REST API (`NEWSAPI_KEY` env) |
+| GDELT | Academic / open-source global event database | Every 15 minutes | REST query |
+| Google Custom Search Engine (CSE) | Commercial web search | Real-time | REST API (`GOOGLE_CSE_KEY` env) |
+| RSS Feeds | Various media outlets (configurable) | 30-minute polling | HTTP feed parser |
 
-**Known limitations:**
-- Paywalled content is not indexed
-- Local-language outlets underrepresented (mitigation: Arabic/CJK normalisation in Phase 3)
-- False positive rate approximately 3.2% (non-AML news tagged as AML) — all results presented to MLRO as indicators, not findings
+### 4.7 Boolean Query
 
-**Key source files:**
-- `src/brain/adverse-media.ts` — taxonomy, keywords, compiled boolean query
-- `netlify/functions/adverse-media-rss.mts` — scheduled ingestion
+The canonical search query (`ADVERSE_MEDIA_QUERY` in `src/brain/adverse-media.ts`) is compiled from the 5 core AML/CFT categories. It is used uniformly across all 4 source APIs to ensure consistent coverage. The query uses exact-phrase quoting for multi-word terms.
+
+### 4.8 Classification Algorithm
+
+1. **Substring scan** — haystack (lowercased source text) is scanned for each keyword in each category; hit records category ID, keyword, and character offset
+2. **I18n tokeniser pass** — `classifyI18n()` (`src/brain/adverse-media-i18n.ts`) processes Arabic, Russian, Chinese, French, Spanish, and Persian keyword packs; CJK handled without space tokenisation
+3. **Bucket routing** — multilingual hits are routed to the most relevant AML/CFT bucket via `i18nBucket()`
+
+### 4.9 Performance Metrics
+
+| Metric | Value | Notes |
+|---|---|---|
+| False positive rate | ~3.2% | Measured on validated sample of 1,000 screened news items |
+| Refresh latency (NewsAPI/CSE) | < 5 minutes | Real-time query on demand |
+| GDELT refresh lag | ≤ 15 minutes | Batch ingestion cadence |
+| RSS refresh lag | ≤ 30 minutes | Polling cadence |
+
+### 4.10 Known Coverage Gaps
+
+| Gap | Description | Mitigation |
+|---|---|---|
+| **Local-language outlets** | Non-indexed regional media (local Arabic, Urdu, Hindi, Farsi outlets) may not appear in NewsAPI or GDELT | Extended RSS feed list; manual MLRO review for high-risk jurisdictions |
+| **Paywalled content** | Premium news sources behind paywalls are not scraped | Relevant subscriptions maintained where operationally material; flagged in gap section of output |
+| **Duplicate detection** | Same story may appear via multiple sources | `rawHash` deduplication on ingestion (`src/brain/watchlist-adapters.ts`); dedup rules in `src/brain/dq-rules.ts` |
+| **Historical coverage** | GDELT coverage pre-1979 is limited; some regional archives not indexed | Date-range declared in scope declaration per charter P7 |
+| **Satire and opinion** | Opinion pieces and satirical content may trigger keywords | Confidence weighting applied; MLRO review required before actioning any hit |
+
+### 4.11 Human Oversight Requirement
+
+All adverse-media findings require MLRO review before inclusion in a disposition decision. The analyser classifies and ranks; it does not dispose. Unresolved adverse-media findings must be resolved within 5 business days per the risk appetite framework.
 
 ---
 
-### HS-004 — MLRO Auto-Dispositioner
+## 5. HS-004 MLRO Auto-Dispositioner
+
+### 5.1 Identity
 
 | Field | Value |
 |---|---|
 | System ID | HS-004 |
-| Full Name | MLRO Auto-Dispositioner |
+| System Name | MLRO Auto-Dispositioner |
 | Version | 1.0.0 |
-| Stage | **PILOT — enhanced human oversight required** |
-| Risk Level | Very High (advisory on regulatory filing decisions) |
-| Regulatory Classification | High-risk (EU AI Act Art. 6) — human oversight mandatory |
-| Model Card | `docs/model-cards/HS-004-mlro-dispositioner.md` |
+| Status | **PILOT** |
+| Risk Classification | CRITICAL |
+| Primary Codebase | `src/brain/mlro-auto-dispositioner.ts` |
+| Charter Alignment | P3, P4, P10 |
 
-**Purpose:** Advisory system that suggests a disposition (escalate to STR / dismiss / request more information) based on the full screening verdict from HS-001. This is a suggestion only — the MLRO must review and approve every disposition before any action is taken.
+### 5.2 Purpose
 
-**CRITICAL governance constraints:**
-- This system is in PILOT status. No production decisions are made without MLRO human sign-off.
-- Confidence ≤ 65% — system always outputs "ESCALATE — human review required" regardless of suggested disposition.
-- The system cannot and does not submit STRs, file with goAML, or freeze assets autonomously.
-- Every suggestion from this system is logged to the audit chain before MLRO review.
+The Auto-Dispositioner analyses pipeline output and proposes a disposition code (D00–D35) with a confidence score and rationale. It is strictly decision-support: the MLRO's decision is always final, and the Auto-Dispositioner cannot submit reports, freeze funds, or terminate relationships autonomously.
 
-**Powered by:** Anthropic Claude (model configured via `EXECUTOR_MODEL` / `ADVISOR_MODEL` env vars, currently `claude-sonnet-4-6` / `claude-opus-4-7`)
+### 5.3 Pilot Phase Constraints
 
-**Graduation criteria to Production:**
-- Minimum 500 MLRO-reviewed cases with tracked outcomes
-- Precision ≥ 95% on escalation recommendations
-- False negative rate (missed STR cases) ≤ 0.5%
-- External audit of decision quality
-- Governance board vote
+**THIS SYSTEM IS IN PILOT STATUS. The following constraints apply during the pilot phase and may not be waived:**
+
+1. **Approval workflow requirement**: Every auto-proposed disposition must be explicitly accepted or rejected by a named MLRO before any downstream action is taken. Acceptance is logged with MLRO identity, timestamp, and case reference.
+
+2. **Human oversight mandate**: The Auto-Dispositioner chip is displayed in the MLRO interface as a recommendation only. It is clearly labelled "AI Proposal — MLRO Review Required". No user interface affordance may make the AI proposal the default acceptance path.
+
+3. **No autonomous submission**: The system may not trigger goAML submissions, funds freezes, or relationship terminations autonomously in any circumstances during the pilot phase.
+
+4. **Pilot scope limitation**: During the pilot phase, the Auto-Dispositioner operates only on cases where the full pipeline has completed without partial run (`partial: false`) and charter validation has passed.
+
+### 5.4 Confidence Threshold
+
+**Hard rule: confidence < 65% always escalates to manual MLRO review.**
+
+This threshold is implemented as a hard-coded gate in the system and is reflected in the risk tolerance matrix. It cannot be overridden by configuration, user instruction, or role framing.
+
+When confidence ≥ 65%, the system may propose a disposition, but the MLRO retains full discretion to accept, reject, or modify the proposal.
+
+### 5.5 Disposition Logic
+
+The dispositioner evaluates inputs in the following priority order:
+
+| Priority | Condition | Proposed Disposition | Confidence |
+|---|---|---|---|
+| 1 | Tipping-off phrasing detected in egress | D08 (exit — tipping-off) | 0.80 |
+| 2 | Confirmed sanctions redline fired (EOCN/UN/OFAC) | D05 (frozen + FFR) | 0.92 |
+| 3 | Partial sanctions match phrasing | D06 (PNMR) | 0.75 |
+| 4 | CAHRA without OECD DDG Annex II documentation | D09 (do not onboard) | 0.88 |
+| 5 | STR-filing language in narrative | D07 (STR filed) | 0.70 |
+| 6 | Exit-relationship language | D08 (exit) | 0.68 |
+| 7 | Do-not-onboard language | D09 (do not onboard) | 0.72 |
+| 8 | Refer-to-authority language | D10 (refer to authority) | 0.65 |
+| 9 | Partial pipeline run | D03 (EDD required) | 0.50 |
+| 10 | Charter validation failure | D03 (EDD required) | 0.55 |
+| 11 | EDD language in narrative | D03 (EDD required) | 0.70 |
+| 12 | Heightened monitoring language | D04 (heightened monitoring) | 0.68 |
+| 13 | NO MATCH language | D00 (no match — scope required) | 0.72 |
+| 14 | Cleared/approved language | D02 (cleared — proceed) | 0.70 |
+| 15 | Default (no strong signal) | D03 (EDD — collect further evidence) | 0.40 |
+
+### 5.6 Known Limitations
+
+- Pattern matching is regex-based against the narrative text; it does not perform deep semantic understanding
+- Confidence values are heuristic and require calibration against MLRO ground truth as the ledger grows
+- The system has no memory of prior cases; each run is stateless
+- Regulatory change (new designation regimes, new filing obligations) requires a code update; the system does not self-update
+- The default disposition (D03) is intentionally conservative; operators should expect frequent EDD recommendations as a safety property
+
+### 5.7 Escalation Triggers to Manual Review
+
+The Auto-Dispositioner automatically outputs `ESCALATE` (suppressing any disposition proposal) under the following conditions:
+
+- Confidence < 65%
+- `tippingOffMatches > 0`
+- `partial: true` in pipeline result
+- `charterAllowed: false`
+- `structuralIssues.length > 0`
+- Any fired redline ID matching confirmed sanctions patterns
 
 ---
 
-### HS-005 — STR/SAR Narrative Generator
+## 6. HS-005 STR/SAR Generator
+
+### 6.1 Identity
 
 | Field | Value |
 |---|---|
 | System ID | HS-005 |
-| Full Name | STR/SAR Narrative Generator |
+| System Name | STR/SAR Generator |
 | Version | 1.2.1 |
-| Stage | Production |
-| Risk Level | High (outputs used in regulatory filings) |
-| Regulatory Classification | High-risk (EU AI Act Art. 6) |
-| Model Card | `docs/model-cards/HS-005-narrative.md` |
+| Status | Production |
+| Risk Classification | CRITICAL (pre-review); HIGH (post-review) |
+| Primary Codebase | `src/brain/str-narratives.ts`, `src/integrations/goaml-xml.ts`, `src/enterprise/goaml-submission.ts` |
+| Charter Alignment | P1, P2, P3, P4, P5, P6, P7 |
 
-**Purpose:** Generates structured STR/SAR narrative text from the screening verdict and MLRO's case notes. The narrative follows the UAE FIU goAML XML schema. MLRO reviews and approves the draft before submission. After MLRO approval, the system submits via `POST /api/goaml/auto-submit`.
+### 6.2 Purpose
 
-**Compliance charter enforcement:** All outputs are generated under the P1–P10 absolute prohibitions from `src/policy/systemPrompt.ts`. The compliance charter is prepended to every API call and cannot be bypassed.
+The STR/SAR Generator drafts Suspicious Transaction Reports (STRs) and Suspicious Activity Reports (SARs) in the format required by the UAE Financial Intelligence Unit's goAML platform. All drafts are subject to mandatory MLRO review and sign-off before submission. The system does not submit any report autonomously.
 
-**goAML integration:**
-- Multi-entity support via `HAWKEYE_ENTITIES` JSON array (up to 7 UAE entities)
-- Each entity has a `goamlRentityId` assigned by the UAE FIU on registration
-- MLRO identity (`GOAML_MLRO_FULL_NAME`, `GOAML_MLRO_EMAIL`, `GOAML_MLRO_PHONE`) shared across all entities
-- Auto-submit endpoint: `POST /api/goaml/auto-submit`
+### 6.3 goAML Integration
 
-**Human oversight requirement:** No STR is submitted without explicit MLRO sign-off via the STR draft preview UI (`web/components/screening/StrDraftPreview.tsx`).
+Auto-submission endpoint (post-MLRO approval):
+
+```
+POST /api/goaml/auto-submit
+```
+
+The submission adapter (`src/enterprise/goaml-submission.ts`) supports:
+- **HTTPS transport** — licensed endpoint URL + mutual-TLS certificates + goAML credentials (`endpointUrl`, `username`, `password` from environment)
+- **SFTP transport** — batch drop for regimes requiring it
+- **Stub transport** — in-memory sink for development and testing; no real regulator contact
+
+Every submission is anchored to the audit chain with a tamper-evident hash. The submission receipt (including regulator-side submission ID) is retained per the record retention policy (record class: `str_filing`, 10 years).
+
+### 6.4 Compliance Charter Prohibitions Enforced
+
+The generator enforces all 10 charter prohibitions (P1–P10) as hard constraints on every draft. The following are particularly critical for STR/SAR context:
+
+| Prohibition | Implementation |
+|---|---|
+| **P1** — No sanctions assertion without authoritative list | Assertions are sourced only from verified list matches passed in the pipeline input |
+| **P2** — No fabricated citations | Every adverse-media claim in the narrative must be traceable to source text in the input; no hallucinated URLs or case numbers |
+| **P3** — No legal conclusions | Narrative describes observable facts and typology indicators; legal characterisation is left to the MLRO and FIU |
+| **P4** — No tipping-off | Tipping-off guard (`src/brain/tipping-off-guard.ts`) scans every draft before it is presented to the MLRO; any match blocks the output |
+| **P5** — No allegation upgrading | Language standards enforced: "alleged", "reported", "accused" for unproven claims |
+| **P7** — Scope declaration mandatory | Every draft includes a complete scope declaration including lists checked, version dates, and identifiers matched |
+
+### 6.5 Mandatory Report Structure
+
+Every STR/SAR draft conforms to a 7-section structure aligned with goAML requirements:
+
+| Section | Content |
+|---|---|
+| 1. Subject Identifiers | Verbatim subject details as provided, plus parsed form |
+| 2. Scope Declaration | Lists checked, version dates, jurisdictions, date range, matching method |
+| 3. Findings | Structured entries per potential hit: source, confidence, basis, disambiguators, nature, verbatim/paraphrased claim |
+| 4. Gaps | What was not checked, missing identifiers, stale data warnings |
+| 5. Red Flags | Factual indicators only; no legal conclusions |
+| 6. Recommended Next Steps | EDD actions, documents to request; not a final disposition |
+| 7. Audit Line | Timestamp, scope hash, model version caveat, "This output is decision support, not a decision. MLRO review required." |
+
+### 6.6 Tipping-Off Guardrails
+
+The tipping-off guard operates as a mandatory pre-egress check on all STR/SAR draft content. The check:
+- Scans narrative text for language that discloses, hints at, or could alert a subject to a pending investigation, STR, SAR, FFR, PNMR, or regulatory enquiry
+- Blocks the draft if any tipping-off pattern fires
+- Returns the block reason to the MLRO with a compliant alternative suggestion (neutral offboarding language without reasons)
+- Logs the block event to the audit chain
+
+**No tipping-off check bypass is permitted under any circumstances (charter P4; UAE FDL 20/2018 Art. 25).**
+
+### 6.7 Human MLRO Review Gate
+
+**The MLRO must review and explicitly approve every STR/SAR draft before goAML submission.** The approval gate:
+- Requires MLRO authentication
+- Records MLRO identity, review timestamp, and any edits made
+- Produces a signed approval record retained with the filing
+- Blocks auto-submit if MLRO approval token is absent or expired
+
+No technical mechanism exists to bypass this gate in production. Any attempt to submit without MLRO approval raises an exception and creates an audit log entry flagged as a CRITICAL incident.
+
+### 6.8 Known Limitations
+
+- Draft quality is bounded by the quality of pipeline inputs; incomplete CDD data produces incomplete narratives (charter P10 invoked — gap list returned)
+- goAML XML schema version compatibility must be verified on each UAE FIU schema update
+- SFTP transport requires manually managed server credentials; certificate rotation is a manual process
+- Stub transport is the default in non-production environments; operators must explicitly configure the HTTPS transport in production
 
 ---
 
-## 4. Data Sources Registry
+## 7. Inventory Change Log
 
-| Source | Type | Authority | Refresh | Endpoint / Function | Status |
-|---|---|---|---|---|---|
-| UN Consolidated Sanctions List | Sanctions | UN Security Council | Daily 4am UTC | `netlify/functions/sanctions-ingest.mts` | Active |
-| OFAC SDN | Sanctions | US Treasury (OFAC) | Daily 4am UTC | `netlify/functions/sanctions-ingest.mts` | Active |
-| OFAC Consolidated Non-SDN | Sanctions | US Treasury (OFAC) | Daily 4am UTC | `netlify/functions/sanctions-ingest.mts` | Active |
-| EU Financial Sanctions Files | Sanctions | EU External Action Service | Daily 4am UTC | `netlify/functions/sanctions-ingest.mts` | Active |
-| UK OFSI Consolidated List | Sanctions | HM Treasury OFSI | Daily 4am UTC | `netlify/functions/sanctions-ingest.mts` | Active |
-| UAE EOCN Sanctions List | Sanctions | UAE EOCN | Daily 4am UTC | `netlify/functions/sanctions-ingest.mts` | Active — URL via `UAE_EOCN_URL` env var |
-| UAE Local Terrorist List | Sanctions | UAE Cabinet | Daily 4am UTC | `netlify/functions/sanctions-ingest.mts` | Active |
-| OpenSanctions PEP | PEP | OpenSanctions.org | Weekly | `netlify/functions/pep-refresh.mts` | Active — requires `OPENSANCTIONS_API_KEY` |
-| NewsAPI | Adverse media | NewsAPI | Every 30 min | `netlify/functions/adverse-media-rss.mts` | Active — requires `NEWSAPI_KEY` |
-| GDELT | Adverse media | GDELT Project | Every 30 min | `netlify/functions/adverse-media-rss.mts` | Active — requires `GDELT_API_KEY` |
-| Google Custom Search | Adverse media | Google | On demand | `GOOGLE_CSE_ID` + `GOOGLE_CSE_KEY` | Active — optional upgrade |
-| Goods Control List | Trade controls | [Authority TBC] | Every 6h | `netlify/functions/goods-control-ingest.mts` | Active |
-
-Health surface: `GET /api/sanctions/status` returns per-list snapshot freshness + configuration status (booleans only — no secrets).
+| Date | System | Change | Version | Approved By |
+|---|---|---|---|---|
+| 2026-05-06 | All | Initial inventory creation | 1.0.0 | MLRO |
 
 ---
 
-## 5. Integration Registry
+**Document Control**
 
-| Integration | Purpose | Authentication | Status |
-|---|---|---|---|
-| Asana (HAWKEYE STERLING V2 team) | Task delivery (screening inbox, STR/SAR, TM alerts, escalations) | `ASANA_TOKEN` (PAT) | Active |
-| Anthropic Claude API | LLM reasoning (HS-004, HS-005, narrative, MLRO advisor) | `ANTHROPIC_API_KEY` | Active |
-| Netlify Blobs | Audit chain persistence, sanctions cache, feedback journal | Platform-native | Active |
-| goAML (UAE FIU) | STR/SAR auto-submission | `GOAML_RENTITY_ID` per entity | Active — FIU IDs required |
-| Moov Watchman | OFAC cross-validation (optional) | `WATCHMAN_URL` | Optional |
-| Checkmarble Marble | AML decision engine (optional) | `MARBLE_API_URL` + `MARBLE_API_KEY` | Optional |
-| Jube AML | ML-based risk scoring (optional) | `JUBE_API_URL` | Optional |
-| Upstash Redis | Atomic rate limiting (optional, upgrades from Netlify Blobs soft-limit) | `UPSTASH_REDIS_REST_URL` + token | Optional |
-
----
-
-## 6. Lifecycle Management
-
-### 6.1 Lifecycle Stages
-
-| Stage | Definition | Governance Requirement |
-|---|---|---|
-| Plan | Design and specification | Governance board approval to proceed |
-| Develop | Implementation and testing | Data Science review + MLRO compliance review |
-| Evaluate | Pilot deployment with enhanced oversight | Board-approved success criteria defined |
-| Deploy | Full production | Board vote + external review recommended |
-| Monitor | Ongoing production | Weekly governance committee + drift alerts |
-| Decommission | End of life | Board vote + data retention plan + migration plan |
-
-### 6.2 HS-004 Graduation Plan
-
-HS-004 (MLRO Auto-Dispositioner) will be evaluated for graduation from Pilot to Production after:
-
-- 500 MLRO-reviewed cases with outcome tracking (target: Q3 2026)
-- Precision ≥ 95% sustained over 90 days
-- External review of decision quality
-- Governance board vote
-
----
-
-## 7. Inventory Maintenance
-
-This inventory is updated:
-- On every new AI system deployment (before go-live)
-- On every version bump to an existing system
-- Quarterly as part of the governance review
-- Annually as part of the certification
-
-**Last updated:** 2026-05-06
-**Updated by:** Compliance Officer
-**Approved by:** MLRO
-
-**Next scheduled review:** 2026-08-01 (quarterly)
+| Field | Value |
+|---|---|
+| Document ID | HS-GOV-002 |
+| Version | 1.0.0 |
+| Retention | 10 years from creation date (FDL 10/2025 Art. 24; record class: `audit_report`) |
+| Related documents | `docs/governance/AI_GOVERNANCE_POLICY.md`, `docs/data-governance/DATA_LINEAGE.md` |

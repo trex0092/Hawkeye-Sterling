@@ -487,7 +487,7 @@ export default function ClientPortalPage() {
                 disabled={!canRunRisk || clientRiskLoading}
                 className="whitespace-nowrap text-12 font-semibold px-4 py-2 rounded border border-brand text-brand hover:bg-brand-dim disabled:opacity-40 transition-colors"
               >
-                {clientRiskLoading ? "Assessing…" : "Get AI Risk Assessment"}
+                {clientRiskLoading ? "Assessing…" : "✦AI"}
               </button>
               <button type="submit" disabled={!entity.name || !sharesValid}
                 className="whitespace-nowrap text-12 font-semibold px-5 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">

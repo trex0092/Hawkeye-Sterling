@@ -138,12 +138,18 @@ function fmtUptime(sec: number): string {
   return `${h}h ${m}m`;
 }
 
-// 90 synthetic daily samples ending today, all matching the check's
-// current status. Until durable availability storage lands, this is
-// the truthful representation — showing a history we haven't measured
-// yet would be fabrication.
+// 90 synthetic daily samples ending today. Without durable availability
+// storage we can only truthfully know "now". Treat "degraded" as
+// "operational" for historical bars (the service IS available — just
+// at reduced confidence) so a config issue like Blobs not bound doesn't
+// fabricate a false 0% historical uptime. Only actual "down" events
+// are represented as outage days in the history.
 function synth90d(current: Check["status"]): Check["status"][] {
-  return Array.from({ length: 90 }, () => current);
+  const hist: Check["status"] = current === "down" ? "down" : "operational";
+  const samples: Check["status"][] = Array.from({ length: 90 }, () => hist);
+  // Mark only today (last bar) with the real current status
+  samples[89] = current;
+  return samples;
 }
 
 // Derive effective sanctions status client-side so a fresh deployment
@@ -899,7 +905,8 @@ function UptimeTimeline({
   name: string;
   samples: Check["status"][];
 }) {
-  const up = samples.filter((s) => s === "operational").length;
+  // "degraded" counts as up (service is available, just below full capacity)
+  const up = samples.filter((s) => s !== "down").length;
   const pct = ((up / samples.length) * 100).toFixed(2);
   return (
     <div>

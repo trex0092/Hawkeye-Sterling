@@ -10,6 +10,8 @@
 
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { searchAllNews } from "@/lib/intelligence/newsAdapters";
+import { gdeltKeywordOr } from "@/lib/intelligence/amlKeywords";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 45;
@@ -42,6 +44,53 @@ interface AdverseMediaLiveBody {
   subjectName: string;
   entityType?: string;
   jurisdiction?: string;
+  aliases?: string[];
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Name-variant generator — fan-out so transliterations + suffix-stripped
+// variants don't get missed (Istanbul Gold Refinery / İstanbul Altın
+// Rafinerisi / Istanbul Refinery, etc).
+// ─────────────────────────────────────────────────────────────────────────────
+
+const CORP_SUFFIX_RE = /\b(LIMITED|LTD\.?|INCORPORATED|INC\.?|CORPORATION|CORP\.?|COMPANY|CO\.?|HOLDINGS?|GROUP|S\.?A\.?S?|SAS|GMBH|MBH|AG|PJSC|OJSC|JSC|LLP|PLC|N\.?V\.?|B\.?V\.?|PTE\.?|PTY\.?|S\.?R\.?L\.?|SRL|SP\.?\s?Z\.?O\.?O\.?|SDN\.?\s?BHD\.?|FZ-?LLC|FZE|FZ-?CO|TRADING|REFINERY|REFINING|HOLDING|TECHNOLOGIES|INDUSTRIES|ENTERPRISES?|MINING|RESOURCES|EXPORT|IMPORT)\b/gi;
+
+function generateNameVariants(name: string, aliases?: string[]): string[] {
+  const variants = new Set<string>();
+  const base = name.trim();
+  if (!base) return [];
+  variants.add(base);
+  // Title-cased version (helps if the analyst typed ALL CAPS)
+  const titled = base
+    .toLowerCase()
+    .split(/\s+/)
+    .map((w) => (w.length > 0 ? w[0]!.toUpperCase() + w.slice(1) : ""))
+    .join(" ");
+  if (titled !== base) variants.add(titled);
+  // Strip corporate suffixes — keeps the meaningful brand stem
+  const stripped = base.replace(CORP_SUFFIX_RE, "").replace(/\s+/g, " ").trim();
+  if (stripped && stripped !== base && stripped.split(/\s+/).length >= 2) {
+    variants.add(stripped);
+  }
+  // Strip non-ASCII diacritics (İ → I, ç → c, ş → s, ğ → g, ö → o, ü → u, etc)
+  const ascii = base
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/İ/g, "I")
+    .replace(/ı/g, "i")
+    .replace(/Ş/g, "S").replace(/ş/g, "s")
+    .replace(/Ğ/g, "G").replace(/ğ/g, "g")
+    .replace(/Ç/g, "C").replace(/ç/g, "c")
+    .replace(/Ö/g, "O").replace(/ö/g, "o")
+    .replace(/Ü/g, "U").replace(/ü/g, "u");
+  if (ascii !== base) variants.add(ascii);
+  // Add caller-provided aliases verbatim
+  for (const a of aliases ?? []) {
+    const t = a.trim();
+    if (t) variants.add(t);
+  }
+  // Cap fan-out so we don't hammer GDELT (max 6 variants total)
+  return Array.from(variants).slice(0, 6);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -125,7 +174,10 @@ function inferCategories(title: string, domain: string): string[] {
 }
 
 async function queryGdelt(subjectName: string): Promise<GdeltArticle[]> {
-  const rawQuery = `"${subjectName}" AND (sanctions OR fraud OR "money laundering" OR corruption OR crime OR arrest OR investigation)`;
+  // Canonical FATF-aligned multilingual keyword set lives in
+  // lib/intelligence/amlKeywords.ts — same source feeds the Claude LLM
+  // prompt and the free-RSS aggregator's filter.
+  const rawQuery = `"${subjectName}" AND (${gdeltKeywordOr()})`;
   // Art.19 rolling 10-year window — anchored to "now" at request time
   // so the lookback advances day-by-day. Earlier revisions hard-coded
   // timespan=7d, which silently scored decade-old prosecutions as CLEAR
@@ -207,17 +259,22 @@ async function enrichWithClaude(
   articles: AdverseMediaLiveResult["articles"],
   riskScore: number,
   riskRating: string,
-): Promise<{ summary: string; articlesWithCategories: AdverseMediaLiveResult["articles"] }> {
+): Promise<{ summary: string; articlesWithCategories: AdverseMediaLiveResult["articles"]; enriched: boolean }> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey || articles.length === 0) {
-    return { summary: buildFallbackSummary(subjectName, articles, riskScore, riskRating), articlesWithCategories: articles };
+    return { summary: buildFallbackSummary(subjectName, articles, riskScore, riskRating), articlesWithCategories: articles, enriched: false };
   }
 
-  const client = getAnthropicClient(apiKey, 55_000);
+  const client = getAnthropicClient(apiKey, 22_000);
 
   const articleSummaries = articles
     .slice(0, 8)
-    .map((a, i) => `[${i + 1}] "${a.title}" (${a.source}, tone: ${a.tone.toFixed(1)})`)
+    .map((a, i) => {
+      // Defensive: GDELT can return articles without a tone, even though our
+      // mapper defaults to 0. Don't assume a number.
+      const tone = typeof a.tone === "number" && Number.isFinite(a.tone) ? a.tone : 0;
+      return `[${i + 1}] "${a.title}" (${a.source}, tone: ${tone.toFixed(1)})`;
+    })
     .join("\n");
 
   const systemPrompt = `You are an AML compliance analyst at a UAE-regulated financial institution.
@@ -246,18 +303,27 @@ Generate the JSON response.`;
     });
 
     const text = msg.content.find((b) => b.type === "text")?.text ?? "";
-    // Extract JSON from response
+    // Extract JSON from response — null match goes through the catch
+    // below as "no JSON in response", never as a TypeError.
     const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error("no JSON in response");
+    if (!jsonMatch?.[0]) throw new Error("Claude returned no JSON object");
 
     const parsed = JSON.parse(jsonMatch[0]) as {
       summary?: string;
       articleCategories?: Array<{ index: number; categories: string[] }>;
     };
 
+    // Validate articleCategories shape before consuming — Claude can
+    // occasionally drop the categories field or return malformed entries.
     const catMap = new Map<number, string[]>();
-    for (const ac of parsed.articleCategories ?? []) {
-      catMap.set(ac.index, ac.categories ?? []);
+    if (Array.isArray(parsed.articleCategories)) {
+      for (const ac of parsed.articleCategories) {
+        if (!ac || typeof ac.index !== "number") continue;
+        const cats = Array.isArray(ac.categories)
+          ? ac.categories.filter((c): c is string => typeof c === "string")
+          : [];
+        catMap.set(ac.index, cats);
+      }
     }
 
     const enrichedArticles = articles.map((a, i) => ({
@@ -268,11 +334,18 @@ Generate the JSON response.`;
     return {
       summary: parsed.summary ?? buildFallbackSummary(subjectName, articles, riskScore, riskRating),
       articlesWithCategories: enrichedArticles,
+      enriched: true,
     };
-  } catch {
+  } catch (err) {
+    // Claude enrichment failed — return regex-inferred categories only.
+    // Mark enriched:false so callers can surface a degradation note to operators:
+    // regex categories are shallow (keyword presence) and may misclassify articles
+    // where adverse keywords appear in a denying/counter context.
+    console.warn("[adverse-media-live] Claude enrichment failed, using regex categories:", err instanceof Error ? err.message : String(err));
     return {
       summary: buildFallbackSummary(subjectName, articles, riskScore, riskRating),
       articlesWithCategories: articles,
+      enriched: false,
     };
   }
 }
@@ -341,12 +414,25 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   }
 
-  // Query GDELT — fallback gracefully on any failure
+  // Fan-out GDELT queries across name variants (suffix-stripped,
+  // transliteration-folded, caller-provided aliases). Transliterated
+  // brand names (e.g. ISTANBUL GOLD REFINERY ↔ İstanbul Altın Rafinerisi)
+  // and suffix-stripped variants (FZE / LIMITED dropped) used to be
+  // silently dropped by the exact-phrase match.
+  const variants = generateNameVariants(subjectName, body.aliases);
   let rawArticles: GdeltArticle[] = [];
   try {
-    rawArticles = await queryGdelt(subjectName);
+    const results = await Promise.all(variants.map((v) => queryGdelt(v).catch(() => [] as GdeltArticle[])));
+    const seenUrls = new Set<string>();
+    for (const arr of results) {
+      for (const a of arr) {
+        const key = (a.url ?? "").toLowerCase();
+        if (!key || seenUrls.has(key)) continue;
+        seenUrls.add(key);
+        rawArticles.push(a);
+      }
+    }
   } catch {
-    // Return fallback on complete failure
     return NextResponse.json({
       ...FALLBACK,
       subject: subjectName,
@@ -360,8 +446,6 @@ export async function POST(req: Request): Promise<NextResponse> {
     } satisfies AdverseMediaLiveResult);
   }
 
-  const totalHits = rawArticles.length;
-
   // Map GDELT articles to our schema
   const articles: AdverseMediaLiveResult["articles"] = rawArticles.map((a) => ({
     title: a.title ?? "",
@@ -374,14 +458,46 @@ export async function POST(req: Request): Promise<NextResponse> {
     snippet: "", // GDELT artlist mode doesn't return snippets
   }));
 
+  // Augment with vendor news adapters (NewsAPI, MarketAux, GNews, Mediastack,
+  // Currents, NewsCatcher, Reuters/RDP, ComplyAdvantage, FactSet, S&P Global,
+  // Moody's Orbis, Bloomberg). Each adapter is env-key gated; absent keys
+  // degrade silently to NULL_NEWS_ADAPTER. Failures from any single vendor
+  // never break the GDELT-anchored result.
+  let vendorProviders: string[] = [];
+  try {
+    const { articles: vendorArticles, providersUsed } = await searchAllNews(subjectName, { limit: 25 });
+    vendorProviders = providersUsed;
+    if (vendorArticles.length > 0) {
+      const seen = new Set(articles.map((a) => a.url.toLowerCase()));
+      for (const va of vendorArticles) {
+        const key = va.url.toLowerCase();
+        if (!key || seen.has(key)) continue;
+        seen.add(key);
+        articles.push({
+          title: va.title,
+          source: va.outlet || va.source,
+          url: va.url,
+          publishedAt: va.publishedAt,
+          tone: typeof va.sentiment === "number" ? va.sentiment : 0,
+          relevanceScore: 60,
+          categories: inferCategories(va.title, va.outlet || va.source),
+          snippet: va.snippet ?? "",
+        });
+      }
+    }
+  } catch (err) {
+    console.warn("[adverse-media-live] vendor news augmentation failed:", err instanceof Error ? err.message : String(err));
+  }
+
   // Sort by tone ascending (most negative first)
   articles.sort((a, b) => a.tone - b.tone);
 
-  const riskScore = computeRiskScore(rawArticles, totalHits);
+  const aggregatedTotal = articles.length;
+  const riskScore = computeRiskScore(rawArticles, aggregatedTotal);
   const riskRating = scoreToRating(riskScore);
 
   // Optionally enrich with Claude
-  const { summary, articlesWithCategories } = await enrichWithClaude(
+  const { summary, articlesWithCategories, enriched } = await enrichWithClaude(
     subjectName,
     body.entityType,
     articles,
@@ -389,15 +505,20 @@ export async function POST(req: Request): Promise<NextResponse> {
     riskRating,
   );
 
-  const result: AdverseMediaLiveResult = {
+  const result: AdverseMediaLiveResult & { enriched?: boolean; enrichmentNote?: string; vendorProviders?: string[] } = {
     ok: true,
     subject: subjectName,
-    totalHits,
+    totalHits: aggregatedTotal,
     riskScore,
     riskRating,
     articles: articlesWithCategories,
     summary,
     regulatoryBasis: "FATF R.10 (CDD), FDL 10/2025 Art.10 (ongoing monitoring)",
+    enriched,
+    ...(vendorProviders.length > 0 ? { vendorProviders } : {}),
+    ...(enriched === false
+      ? { enrichmentNote: "Claude enrichment unavailable — article categories are regex-inferred only. Review findings manually for nuance." }
+      : {}),
   };
 
   return NextResponse.json(result);

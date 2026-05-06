@@ -5,6 +5,17 @@ import { getEntity } from "@/lib/config/entities";
 import { serialiseGoamlXml } from "../../../../dist/src/integrations/goaml-xml.js";
 import { validateGoamlEnvelope } from "../../../../dist/src/brain/goaml-shapes.js";
 import type { GoAmlEnvelope, GoAmlPerson, GoAmlEntity, GoAmlReportCode } from "../../../../dist/src/brain/goaml-shapes.js";
+import {
+  buildHtmlDoc,
+  hsCover,
+  hsPage,
+  hsFinis,
+  hsTable,
+  hsKvGrid,
+  hsNarrative,
+  hsSeverityCell,
+  type CoverData,
+} from "@/lib/reportHtml";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -28,17 +39,34 @@ type FilingType =
   | "PEPR"
   | "FTFR";
 
-// Phrases that constitute tipping-off under FDL 10/2025 Art.29
+// Phrases that constitute tipping-off under FDL 10/2025 Art.29.
+// The list is broad on purpose: false-positive flagging an MLRO draft is
+// a recoverable inconvenience; a true-positive that slipped through is a
+// criminal disclosure. Patterns cover synonyms, abbreviations, and
+// common circumvention phrasings.
 const TIPPING_OFF_PATTERNS = [
-  /\byou\s+are\s+(being\s+)?investigated\b/i,
-  /\bSTR\s+has\s+been\s+filed\b/i,
-  /\bsuspicious\s+transaction\s+report\b/i,
-  /\bwe\s+have\s+reported\s+you\b/i,
-  /\bauthorities\s+have\s+been\s+notified\b/i,
-  /\bFIU\s+has\s+been\s+informed\b/i,
-  /\bgoAML\s+filing\b/i,
-  /\banti.?money\s+laundering\s+investigation\b/i,
-  /\byour\s+account.{0,30}(suspended|blocked|flagged)\b/i,
+  // Direct STR/SAR/CTR references and synonyms
+  /\bSTR\s+(?:has\s+been|was|is being)\s+(?:filed|raised|submitted|lodged)\b/i,
+  /\bSAR\s+(?:has\s+been|was|is being)\s+(?:filed|raised|submitted|lodged)\b/i,
+  /\bSIR\s+(?:has\s+been|was|is being)\s+(?:filed|raised|submitted|lodged)\b/i,
+  /\bCTR\s+(?:has\s+been|was|is being)\s+(?:filed|raised|submitted|lodged)\b/i,
+  /\bsuspicious\s+(?:transaction|activity)\s+report\b/i,
+  /\bsuspicion\s+report\b/i,
+  /\bgoAML\s+(?:filing|report|submission|lodgement)\b/i,
+  // Investigation / reporting language
+  /\byou\s+are\s+(?:being\s+)?(?:investigat|examin|review|scrutiniz|scrutinis)/i,
+  /\b(?:we|the\s+bank|the\s+firm|compliance)\s+(?:have|has)\s+reported\s+you\b/i,
+  /\bauthorities\s+(?:have\s+been|are\s+being)\s+(?:notified|informed|alerted|told)\b/i,
+  /\b(?:FIU|EOCN|CBUAE|FATF|regulator)\s+(?:has\s+been|have\s+been|is\s+being|are\s+being)\s+(?:notified|informed|alerted|told)\b/i,
+  /\banti.?money\s+laundering\s+(?:investigation|inquiry|review|case)\b/i,
+  /\bAML\s+(?:investigation|inquiry|review|case|alert|flag)\b/i,
+  /\bcompliance\s+(?:investigation|inquiry|alert|flag|hold)\b/i,
+  // Account-status disclosures that imply a suspicion was raised
+  /\byour\s+account.{0,40}(?:suspend|block|freez|flag|hold|restrict|escalat)/i,
+  /\b(?:suspended|blocked|frozen|flagged|on hold|restricted)\s+(?:due to|because of|pending)\s+(?:AML|compliance|investigation|review|suspicion)/i,
+  // Circumvention phrasings — "between you and me", "off the record"
+  /\b(?:off\s+the\s+record|between\s+you\s+and\s+me|don'?t\s+tell\s+anyone).{0,80}\b(?:STR|SAR|FIU|investigat|report|fil)/i,
+  /\bI\s+shouldn'?t\s+(?:tell|say)\s+you.{0,80}\b(?:STR|SAR|FIU|investigat|report|fil)/i,
 ];
 
 function checkTippingOff(text: string): string | null {
@@ -94,7 +122,7 @@ interface Body {
   entityId?: string;
 }
 
-async function handleSarReport(req: Request): Promise<NextResponse> {
+async function handleSarReport(req: Request): Promise<Response> {
   const token = process.env["ASANA_TOKEN"];
   const asanaEnabled = !!token;
 
@@ -270,18 +298,43 @@ async function handleSarReport(req: Request): Promise<NextResponse> {
     charterIntegrityHash: process.env["CHARTER_HASH"] ?? "hawkeye-sterling-v1",
   };
 
-  // Validate the envelope before serialising.
+  // Validate the envelope before serialising. If validation produces ANY
+  // errors we refuse the filing — pushing a broken envelope to the FIU
+  // is worse than refusing to file: the FIU rejects it silently and the
+  // MLRO believes the STR was lodged when it wasn't.
   const validationErrors = validateGoamlEnvelope(envelope);
   let goamlXml = "";
   let goamlValidationWarnings: string[] = [];
+  let goamlSerialiseError: string | null = null;
   try {
     goamlXml = serialiseGoamlXml(envelope);
     goamlValidationWarnings = validationErrors;
   } catch (xmlErr) {
+    goamlSerialiseError = xmlErr instanceof Error ? xmlErr.message : String(xmlErr);
     goamlValidationWarnings = [
-      `XML serialisation failed: ${xmlErr instanceof Error ? xmlErr.message : String(xmlErr)}`,
+      `XML serialisation failed: ${goamlSerialiseError}`,
       ...validationErrors,
     ];
+  }
+  // Hard refusal: serialisation failure or validator returned errors.
+  // The MLRO sees the warnings and must fix them before the filing can
+  // proceed — the goAML XML never leaves the building unsigned.
+  if (goamlSerialiseError || validationErrors.length > 0) {
+    console.error("[sar-report] refusing to file invalid goAML envelope", {
+      subject: body.subject.id,
+      filingType: body.filingType,
+      validationErrors,
+      goamlSerialiseError,
+    });
+    return NextResponse.json(
+      {
+        ok: false,
+        error: "goaml_envelope_invalid",
+        detail: "goAML envelope failed validation — fix the listed warnings and re-submit. The FIU rejects malformed XML; filing was NOT created.",
+        validationWarnings: goamlValidationWarnings,
+      },
+      { status: 422 },
+    );
   }
 
   lines.push("");
@@ -303,6 +356,134 @@ async function handleSarReport(req: Request): Promise<NextResponse> {
   );
   lines.push("Source: Hawkeye Sterling — https://hawkeye-sterling.netlify.app");
 
+  // ── Branded HTML PDF — when caller requests ?format=html ────────────────
+  const url = new URL(req.url);
+  if ((url.searchParams.get("format") ?? "").toLowerCase() === "html") {
+    const ts = new Date();
+    const dd = String(ts.getUTCDate()).padStart(2, "0");
+    const mm = String(ts.getUTCMonth() + 1).padStart(2, "0");
+    const yyyy = ts.getUTCFullYear();
+    const hh = String(ts.getUTCHours()).padStart(2, "0");
+    const mi = String(ts.getUTCMinutes()).padStart(2, "0");
+    const reportId = `HWK-${body.filingType}-${dd}-${mm}-${yyyy}-${hh}${mi}`;
+    const regs = "FDL 10/2025 Art.26-27 · Art.29 · Art.24 (10-yr retention) · Cabinet Res 134/2025 Art.18";
+    const label = `${body.filingType} FILING — goAML`;
+    const sev = (body.result?.severity ?? "review").toLowerCase();
+    const verdictBand = sev === "critical" ? "ember" : sev === "high" ? "ember" : sev === "medium" ? "amber" : "sage";
+
+    const coverData: CoverData = {
+      reportId, regs,
+      module: `MODULE · ${body.filingType} FILING`,
+      title: `${body.filingType} Filing Dossier`,
+      subtitle: `${body.filingType} draft prepared for goAML submission. MLRO review required before lodgement.`,
+      subjectLabel: "SUBJECT",
+      subjectName: body.subject.name,
+      subjectMeta: [
+        body.subject.id,
+        body.subject.entityType ?? "individual",
+        body.subject.jurisdiction ?? null,
+        body.subject.dob ? `DOB ${body.subject.dob}` : null,
+      ].filter(Boolean).join(" · "),
+      verdictLabel: body.filingType,
+      verdictBand,
+      verdictNote: `Brain severity ${(body.result?.severity ?? "—").toUpperCase()}; top score ${body.result?.topScore ?? "—"}/100`,
+      meta: [
+        { label: "Filing type", value: body.filingType },
+        { label: "MLRO", value: mlro },
+        { label: "Four-eyes approver", value: body.approver ?? "—" },
+        { label: "Generated", value: ts.toUTCString().replace(" GMT", " UTC") },
+        { label: "Internal reference", value: internalRef },
+        { label: "Reporting entity", value: reportingEntity.goamlRentityId },
+      ],
+    };
+
+    const hitsTable = body.result && body.result.hits.length > 0
+      ? hsTable(
+          ["List", "Match", "Score", "Method", "Programs"],
+          body.result.hits.slice(0, 20).map((h) => [
+            h.listId,
+            h.candidateName,
+            `${Math.round(h.score * 100)}%`,
+            h.method,
+            (h.programs ?? []).join(", ") || "—",
+          ]),
+        )
+      : "<p class='hs-narrative'>No sanctions hits returned.</p>";
+
+    const facts = `
+      <div class="hs-rule"></div>
+      <h2 class="hs-section-h">Facts</h2>
+      ${hsNarrative(
+        `Hawkeye Sterling has flagged ${body.subject.name} (${body.subject.id}) as requiring a <strong>${body.filingType}</strong> filing. Brain severity ${(body.result?.severity ?? "—").toUpperCase()}; top score ${body.result?.topScore ?? "—"}/100 across ${body.result?.listsChecked ?? 0} lists.`,
+        true,
+      )}
+      <h2 class="hs-section-h" style="margin-top:14px">Brain verdict</h2>
+      ${hsKvGrid([
+        { k: "Severity", v: hsSeverityCell((body.result?.severity ?? "review").toUpperCase()) },
+        { k: "Top score", v: `${body.result?.topScore ?? "—"} / 100` },
+        { k: "Lists checked", v: String(body.result?.listsChecked ?? "—") },
+        { k: "Candidates", v: String(body.result?.candidatesChecked ?? "—") },
+        { k: "Duration", v: `${body.result?.durationMs ?? 0} ms` },
+      ])}
+      <h2 class="hs-section-h" style="margin-top:14px">Hits (${body.result?.hits.length ?? 0})</h2>
+      ${hitsTable}
+      ${body.superBrain?.jurisdiction ? `
+        <h2 class="hs-section-h">Jurisdiction risk</h2>
+        ${hsKvGrid([
+          { k: "Country", v: `${body.superBrain.jurisdiction.name} (${body.superBrain.jurisdiction.iso2})${body.superBrain.jurisdiction.cahra ? " · CAHRA" : ""}` },
+          { k: "Active regimes", v: (body.superBrain.jurisdiction.regimes ?? []).join(", ") || "—" },
+        ])}
+      ` : ""}
+      ${body.superBrain?.pep && body.superBrain.pep.salience > 0 ? `
+        <h2 class="hs-section-h">PEP</h2>
+        ${hsKvGrid([
+          { k: "Type", v: body.superBrain.pep.type.replace(/_/g, " ") },
+          { k: "Tier", v: body.superBrain.pep.tier },
+          { k: "Salience", v: `${Math.round(body.superBrain.pep.salience * 100)}%` },
+        ])}
+      ` : ""}
+      ${body.superBrain?.adverseKeywordGroups?.length ? `
+        <h2 class="hs-section-h">Adverse-media groups</h2>
+        <ul class="hs-findings">${body.superBrain.adverseKeywordGroups.map((g) => `<li>${g.label} (${g.count})</li>`).join("")}</ul>
+      ` : ""}
+    `;
+
+    const narrativePage = `
+      <h2 class="hs-section-h" style="margin-top:0">Narrative (MLRO review required)</h2>
+      <p class="hs-narrative">${narrative.replace(/\n/g, "</p><p class='hs-narrative'>")}</p>
+      <h2 class="hs-section-h" style="margin-top:14px">goAML envelope</h2>
+      ${hsKvGrid([
+        { k: "Internal reference", v: internalRef },
+        { k: "Report code", v: body.filingType },
+        { k: "Reporting entity ID", v: reportingEntity.goamlRentityId },
+        { k: "Validation", v: goamlValidationWarnings.length === 0 ? "PASSED" : `${goamlValidationWarnings.length} warnings` },
+      ])}
+      ${goamlValidationWarnings.length > 0 ? `
+        <p class="hs-narrative" style="color:#b45309"><strong>Validation warnings:</strong></p>
+        <ul class="hs-findings">${goamlValidationWarnings.map((w) => `<li>${w}</li>`).join("")}</ul>
+      ` : ""}
+      ${hsFinis(reportId, 2, 2)}
+    `;
+
+    const html = buildHtmlDoc({
+      title: `Hawkeye Sterling — ${body.filingType} Filing ${reportId}`,
+      autoprint: true,
+      pages: [
+        hsCover(coverData),
+        hsPage({ reportId, pageNum: 1, pageTotal: 2, regs, label, content: facts }),
+        hsPage({ reportId, pageNum: 2, pageTotal: 2, regs, label, content: narrativePage }),
+      ],
+    });
+    return new Response(html, {
+      status: 200,
+      headers: {
+        "content-type": "text/html; charset=utf-8",
+        "content-disposition": `inline; filename="hawkeye-${body.filingType.toLowerCase()}-${body.subject.id}.html"`,
+        "cache-control": "no-store",
+      },
+    });
+  }
+
   // Asana filing — if ASANA_TOKEN not set, return the report without filing
   if (!asanaEnabled) {
     return NextResponse.json({
@@ -322,6 +503,11 @@ async function handleSarReport(req: Request): Promise<NextResponse> {
 
   // Wrap the Asana call in try-catch so a network failure returns a clean
   // JSON error instead of letting Next.js surface an unformatted 500.
+  // 10s timeout matches screening-report so a hung api.asana.com can't burn
+  // the whole 60s function budget.
+  const ASANA_TIMEOUT_MS = 10_000;
+  const asanaCtl = new AbortController();
+  const asanaTimer = setTimeout(() => asanaCtl.abort(), ASANA_TIMEOUT_MS);
   let taskRes: Response;
   let asanaPayload: {
     data?: { gid?: string; permalink_url?: string };
@@ -344,14 +530,17 @@ async function handleSarReport(req: Request): Promise<NextResponse> {
           assignee: process.env["ASANA_ASSIGNEE_GID"] ?? DEFAULT_ASSIGNEE_GID,
         },
       }),
+      signal: asanaCtl.signal,
     });
     asanaPayload = (await taskRes.json().catch(() => null)) as typeof asanaPayload;
   } catch (err) {
+    const detail = err instanceof Error ? err.message : String(err);
+    const isAbort = err instanceof Error && (err.name === "AbortError" || asanaCtl.signal.aborted);
     return NextResponse.json({
       ok: true,
       filingType: body.filingType,
       asanaSkipped: true,
-      asanaNote: `Asana request failed: ${err instanceof Error ? err.message : String(err)}. Report generated successfully.`,
+      asanaNote: `Asana request ${isAbort ? `timed out after ${ASANA_TIMEOUT_MS}ms` : "failed"}: ${detail}. Report generated successfully.`,
       reportText: lines.join("\n"),
       goaml: {
         internalReference: internalRef,
@@ -360,6 +549,8 @@ async function handleSarReport(req: Request): Promise<NextResponse> {
         xmlBase64: goamlXml ? Buffer.from(goamlXml, "utf8").toString("base64") : null,
       },
     });
+  } finally {
+    clearTimeout(asanaTimer);
   }
   if (!taskRes.ok || !asanaPayload?.data?.gid) {
     return NextResponse.json({

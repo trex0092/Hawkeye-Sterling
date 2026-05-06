@@ -24,7 +24,7 @@ export const POLICIES: Policy[] = [
   { id: 'pol_ubo', title: 'Beneficial Ownership Standard', owner: 'mlro', reviewMonths: 12, approvedBy: 'senior_management', anchors: ['FATF R.24/25'] },
   { id: 'pol_pep', title: 'PEP / RCA Management', owner: 'mlro', reviewMonths: 12, approvedBy: 'senior_management', anchors: ['FATF R.12', 'Wolfsberg'] },
   { id: 'pol_training', title: 'AML/CFT Training Curriculum', owner: 'compliance', reviewMonths: 12, approvedBy: 'senior_management', anchors: ['FATF R.18'] },
-  { id: 'pol_tipping_off', title: 'Tipping-off Prevention', owner: 'mlro', reviewMonths: 12, approvedBy: 'board', anchors: ['FDL 20/2018 Art.25'] },
+  { id: 'pol_tipping_off', title: 'Tipping-off Prevention', owner: 'mlro', reviewMonths: 12, approvedBy: 'board', anchors: ['FDL 10/2025 Art.25'] },
   { id: 'pol_four_eyes', title: 'Four-eyes / Separation of Duties', owner: 'mlro', reviewMonths: 12, approvedBy: 'board', anchors: ['CR 134/2025 Art.19'] },
   { id: 'pol_pdpl_privacy', title: 'Data Protection (PDPL)', owner: 'data_protection_officer', reviewMonths: 12, approvedBy: 'board', anchors: ['FDL 45/2021 (PDPL)'] },
   { id: 'pol_vendor_risk', title: 'Vendor / Third-Party Risk', owner: 'operations', reviewMonths: 12, approvedBy: 'senior_management', anchors: ['FATF R.17'] },

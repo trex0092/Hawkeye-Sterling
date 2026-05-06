@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { RegulatoryTicker } from "./RegulatoryTicker";
 import { InstallAppButton } from "./InstallAppButton";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 const NAV_TABS = [
   { key: "nav.screening", label: "🔎 Screening", href: "/screening" },
@@ -26,12 +27,13 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "🪄 Onboarding Wizard", href: "/operations/onboard", hint: "Guided new-customer flow" },
       { label: "🪪 Client Portal", href: "/client-portal", hint: "Entity KYC + AI risk assessment" },
       { label: "👥 UBO Declaration", href: "/ubo-declaration", hint: "Beneficial ownership form + AI risk" },
+      { label: "👤 PEP Profiles", href: "/pep-profile", hint: "PEP tier · SOW · network map · EDD measures" },
+      { label: "🌱 ESG Risk", href: "/esg-risk", hint: "ESG scoring · ML risk overlay · regulatory exposure" },
       { label: "🤝 Supplier DD", href: "/vendor-dd", hint: "Third-party due diligence + AI risk" },
       { label: "📋 CDD Review", href: "/cdd-review", hint: "Periodic re-KYC + AI adequacy check" },
       { label: "✅ Data Quality", href: "/data-quality", hint: "CDD completeness + AI remediation plan" },
       { label: "🧑‍💼 Employees", href: "/employees", hint: "HR registry · doc expiry · AI risk scan" },
       { label: "🎓 Training", href: "/training", hint: "Staff AML certification tracker" },
-      { label: "✏️ Corrections", href: "/corrections", hint: "Data-subject access & correction requests" },
     ],
   },
   {
@@ -64,6 +66,8 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "📖 Playbook", href: "/playbook", hint: "Typology guides + AI Q&A assistant" },
       { label: "📚 Typology Library", href: "/typology-library", hint: "500+ ML typologies · AI search · deep-dive" },
       { label: "🚫 Sanctions Evasion", href: "/sanctions-evasion", hint: "AI evasion pattern detector · FATF typologies" },
+      { label: "🧪 Intelligence Tools", href: "/governance/intelligence-tools", hint: "OFAC 50% walker · Crypto exposure · Synthetic-identity cluster" },
+      { label: "✏️ Corrections", href: "/corrections", hint: "Data-subject access & correction requests" },
       { label: "🔐 Access Control", href: "/access-control", hint: "User management · permission matrix · session monitor · audit log" },
     ],
   },
@@ -85,10 +89,8 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
     title: "Intelligence",
     items: [
       { label: "📰 News Intelligence", href: "/news-intel", hint: "Entity news analysis · sentiment · risk themes" },
-      { label: "🌱 ESG Risk", href: "/esg-risk", hint: "ESG scoring · ML risk overlay · regulatory exposure" },
       { label: "📈 Analytics", href: "/analytics", hint: "MLRO KPI digest + AI board insights" },
       { label: "🕵️ Investigation", href: "/investigation", hint: "Link-analysis canvas · network mapping" },
-      { label: "👤 PEP Profiles", href: "/pep-profile", hint: "PEP tier · SOW · network map · EDD measures" },
       { label: "🏢 Ownership Explorer", href: "/ownership", hint: "UBO mapping · shell risk · jurisdiction layering" },
       { label: "🌍 Country Risk", href: "/country-risk", hint: "Basel AML · FATF · sanctions · political risk · heatmap" },
       { label: "🌏 Geopolitical", href: "/geopolitical", hint: "Live risk events · portfolio impact · regional map" },
@@ -118,10 +120,23 @@ function applyTheme(theme: "light" | "dark"): void {
 
 export function Header() {
   const pathname = usePathname();
+  const { strings } = useLocale();
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [moreOpen, setMoreOpen] = useState(false);
   const moreButtonRef = useRef<HTMLDivElement>(null);
   const [dropdownPos, setDropdownPos] = useState<{ left: number; top: number } | null>(null);
+
+  // Top-nav labels resolved per active locale. Emoji prefixes are
+  // language-neutral so they stay across all locales.
+  const NAV_TABS_I18N = [
+    { label: `🔎 ${strings.screening}`, href: "/screening" },
+    { label: `🛰️ ${strings.liveIntel}`, href: "/intel" },
+    { label: `🗂️ ${strings.cases}`, href: "/cases" },
+    { label: `💸 ${strings.transactionMonitor}`, href: "/transaction-monitor" },
+    { label: `📁 ${strings.strCases}`, href: "/str-cases" },
+    { label: `👁️ ${strings.ongoingMonitor}`, href: "/ongoing-monitor" },
+    { label: `🧠 ${strings.mlroAdvisor}`, href: "/mlro-advisor" },
+  ];
 
   useEffect(() => {
     const storedTheme =
@@ -156,7 +171,7 @@ export function Header() {
         </a>
 
         <div className="flex gap-0.5 ml-2 md:ml-8">
-          {NAV_TABS.map((tab) => {
+          {NAV_TABS_I18N.map((tab) => {
             const active = isActive(pathname, tab.href);
             return (
               <a
@@ -194,7 +209,7 @@ export function Header() {
                   : "text-ink-2 hover:bg-bg-2 hover:text-ink-0"
               }`}
             >
-              More
+              {strings.more}
               <span className="text-10 text-ink-3">▾</span>
             </button>
             {moreOpen && dropdownPos && (

@@ -57,6 +57,7 @@ import {
   BrainCoverageGap,
 } from "@/components/screening/BrainIntelPack";
 import { OwnershipTab } from "@/components/screening/OwnershipTab";
+import { BrainIntelligencePack } from "@/components/screening/BrainIntelligencePack";
 import { CrossRegimeConflictCard } from "@/components/screening/CrossRegimeConflictCard";
 import { PepClassificationsList } from "@/components/screening/PepClassificationsList";
 import { StrDraftPreview } from "@/components/screening/StrDraftPreview";
@@ -77,13 +78,21 @@ import {
   attachEvidenceToSubject,
   buildCaseRecord,
 } from "@/lib/data/case-store";
+import {
+  loadHitResolution,
+  saveHitResolution,
+  type HitResolution,
+  type HitResolutionVerdict,
+} from "@/lib/data/subject-store";
+import { riskLevelForVerdict, type HitResolutionReasonCategory } from "@/lib/types";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 // Timeline tab removed — its content was a placeholder + the same
 // adverse-media dossier rendered below the tabs unconditionally,
 // which made it visually identical to the Screening tab. Real
 // per-event timeline can return as its own panel when the engine
 // is wired.
-const TABS = ["Screening", "CDD/EDD", "Ownership", "Live reasoning", "Evidence", "AI Ethics", "Disambiguate"] as const;
+const TABS = ["Screening", "Intelligence", "CDD/EDD", "Ownership", "Live reasoning", "Evidence", "AI Ethics", "Disambiguate"] as const;
 type Tab = (typeof TABS)[number];
 
 // ── Hit Disambiguator types ───────────────────────────────────────────────────
@@ -148,6 +157,28 @@ const SEVERITY_TONE: Record<QuickScreenSeverity, string> = {
   critical: "text-red",
 };
 
+/**
+ * Operator's per-hit triage decisions (Positive / Possible / False).
+ * When provided and matching the active subject, the compliance-report
+ * PDF appends a TRIAGE & DISPOSITION block listing every candidate with
+ * the operator's decision + reason — the audit trail for FATF R.10 /
+ * FDL Art.19 evidence-of-search.
+ */
+export interface TriageResolutionForReport {
+  hitId: string;
+  matchedName: string;
+  sourceList: string;
+  matchStrength: number;
+  type?: string;
+  citizenship?: string;
+  dob?: string;
+  listRef?: string;
+  resolution: "positive" | "possible" | "false" | "unspecified";
+  reason?: string;
+  resolvedAt?: string;
+  resolvedBy?: string;
+}
+
 interface SubjectDetailPanelProps {
   subject: Subject;
   onUpdate?: (id: string, update: Partial<Subject>) => void;
@@ -155,9 +186,11 @@ interface SubjectDetailPanelProps {
   allSubjects?: Subject[];
   /** Switch the active subject (used by cross-subject link clicks). */
   onSelectSubject?: (id: string) => void;
+  /** Operator-attested per-hit decisions for this subject — flow into the PDF audit trail. */
+  triageResolutions?: TriageResolutionForReport[];
 }
 
-export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSubject }: SubjectDetailPanelProps) {
+export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSubject, triageResolutions }: SubjectDetailPanelProps) {
   const [activeTab, setActiveTab] = useState<Tab>("Screening");
   const [escalated, setEscalated] = useState(false);
   const [strRaised, setStrRaised] = useState(false);
@@ -224,10 +257,12 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
   const [narrativeOverride, setNarrativeOverride] = useState("");
   const [eiaResult, setEiaResult] = useState<EthicalImpact | null>(null);
   const [eiaLoading, setEiaLoading] = useState(false);
+  const [eiaError, setEiaError] = useState<string | null>(null);
   useEffect(() => {
     setRoleOverride("");
     setNarrativeOverride("");
     setEiaResult(null);
+    setEiaError(null);
   }, [subject.id]);
 
   // ── Hit Disambiguator state ─────────────────────────────────────────────────
@@ -287,6 +322,7 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
   const runEIA = async () => {
     setEiaLoading(true);
     setEiaResult(null);
+    setEiaError(null);
     try {
       const res = await fetch("/api/ethical-impact", {
         method: "POST",
@@ -298,12 +334,40 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
           nationality: subject.country,
           aiDecisions: [],
         }),
+        signal: AbortSignal.timeout(45_000),
       });
-      if (!res.ok) return;
-      const data = (await res.json()) as { ok: boolean } & EthicalImpact;
-      if (data.ok) setEiaResult(data);
-    } catch { /* silent */ }
-    finally { setEiaLoading(false); }
+      // Parse the response body once — we may need its error message even on
+      // a non-OK status. Tolerate empty / non-JSON bodies (Lambda 502s).
+      const raw = await res.text().catch(() => "");
+      let payload: { ok?: boolean; error?: string; detail?: string } & Partial<EthicalImpact> = {};
+      if (raw) {
+        try { payload = JSON.parse(raw); } catch { /* leave empty */ }
+      }
+      if (!res.ok) {
+        const msg = payload.detail ?? payload.error ?? `Ethical Impact API returned HTTP ${res.status}`;
+        setEiaError(
+          res.status === 503
+            ? `${msg} — set ANTHROPIC_API_KEY on the deployment to enable EIA.`
+            : msg,
+        );
+        return;
+      }
+      if (payload.ok) {
+        setEiaResult(payload as EthicalImpact);
+      } else {
+        setEiaError(payload.error ?? "Ethical Impact returned ok:false");
+      }
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : String(err);
+      const isTimeout = err instanceof Error && (err.name === "AbortError" || err.name === "TimeoutError");
+      setEiaError(
+        isTimeout
+          ? "Ethical Impact assessment timed out after 45s — please retry."
+          : `Ethical Impact request failed: ${detail}`,
+      );
+    } finally {
+      setEiaLoading(false);
+    }
   };
   const effectiveAdverseMediaText =
     narrativeOverride.trim() || adverseMediaText;
@@ -326,8 +390,50 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
       : screening.status === "success"
         ? screening.result.topScore
         : null;
-  const brainSeverity =
-    screening.status === "success" ? screening.result.severity : null;
+  // MLRO POLICY: the displayed severity badge must reflect ALL fired signals,
+  // not just the sanctions vector. screening.result.severity comes from
+  // quickScreen and is "clear" when no sanctions hit — so a PEP / adverse-
+  // media / redline fire would otherwise paint the badge "Clear" while the
+  // CDD card simultaneously shows EDD/zero-tolerance. Compute an effective
+  // severity here using the same band rules the compliance report applies.
+  const brainSeverity = (() => {
+    if (screening.status !== "success") return null;
+    const sanctionsHits = screening.result.hits.length;
+    const sb = superBrain.status === "success" ? superBrain.result : null;
+    const amCompositeScore: number = sb?.adverseMediaScored?.compositeScore ?? -1;
+    const amCount =
+      (sb?.adverseKeywordGroups?.length ?? 0) + (sb?.adverseMedia?.length ?? 0);
+    const pepFired = Boolean(
+      (sb?.pep?.salience ?? 0) > 0 ||
+        sb?.pepAssessment?.isLikelyPEP ||
+        subject.pep,
+    );
+    const redlinesFired = sb?.redlines?.fired?.length ?? 0;
+    const cahra = sb?.jurisdiction?.cahra ?? false;
+
+    const score = brainScore ?? screening.result.topScore;
+    const order = ["clear", "low", "medium", "high", "critical"] as const;
+    let band: typeof order[number] =
+      score >= 80 ? "critical"
+      : score >= 60 ? "high"
+      : score >= 40 ? "medium"
+      : score >= 20 ? "low"
+      : "clear";
+    const escalateTo = (t: typeof order[number]): void => {
+      if (order.indexOf(t) > order.indexOf(band)) band = t;
+    };
+    if (sanctionsHits >= 1) escalateTo("high");
+    if (sanctionsHits >= 2) escalateTo("critical");
+    if (amCompositeScore >= 0.7) escalateTo("critical");
+    else if (amCompositeScore >= 0.1) escalateTo("high");
+    else if (amCompositeScore > 0) escalateTo("medium");
+    else if (amCount >= 4) escalateTo("high");
+    else if (amCount > 0) escalateTo("medium");
+    if (pepFired) escalateTo("high");
+    if (redlinesFired > 0) escalateTo("critical");
+    if (cahra) escalateTo("medium");
+    return band;
+  })();
   const effectiveScore = brainScore ?? subject.riskScore;
   const barWidth = `${Math.min(effectiveScore, 100)}%`;
 
@@ -791,6 +897,9 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
       ...(subject.aliases ? { aliases: subject.aliases } : {}),
     },
     operator: { role },
+    ...(triageResolutions && triageResolutions.length > 0
+      ? { triageResolutions }
+      : {}),
     result:
       screening.status === "success"
         ? {
@@ -975,15 +1084,21 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
   };
 
   return (
-    <aside className="bg-bg-panel border-l border-hair-2 p-6 overflow-y-auto">
+    <aside className="bg-bg-panel border-l border-hair-2 p-4 sm:p-6 overflow-y-auto overflow-x-hidden break-words">
       <div className="mb-5 pb-4 border-b border-hair">
         <div className="flex justify-between items-center mb-2">
           <p className="text-16 font-semibold text-ink-0 m-0">{subject.name}</p>
           <div className="flex gap-1.5 flex-wrap">
             <PanelBtn onClick={handleCopy} title="Copy subject ID">⎙</PanelBtn>
-            <PanelBtn onClick={handleDownloadPdf} title="Download PDF report">
-              💾
-            </PanelBtn>
+            <button
+              type="button"
+              onClick={handleDownloadPdf}
+              title="Download PDF report"
+              className="inline-flex items-center gap-1.5 rounded border px-2.5 py-[5px] text-11.5 font-semibold transition-colors cursor-pointer"
+              style={{ color: "#7c3aed", borderColor: "#7c3aed", background: "rgba(124,58,237,0.07)" }}
+            >
+              PDF
+            </button>
             <PanelBtn onClick={handleDownloadGoaml} title="Download goAML STR XML">
               goAML
             </PanelBtn>
@@ -1107,6 +1222,11 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
               : []
           }
           adverseMediaText={adverseMediaText}
+          stressTests={
+            superBrain.status === "success"
+              ? superBrain.result.intelligence?.stressTests ?? []
+              : []
+          }
         />
       </Section>
 
@@ -1180,12 +1300,15 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
       )}
 
       <div className="mb-6">
-        <div className="flex gap-1 mb-4 border-b border-hair">
+        {/* Tab strip — horizontally scrollable when the panel is narrow so
+            no tab label is ever clipped. flex-wrap fallback keeps long
+            labels visible on wider viewports. */}
+        <div className="flex gap-1 mb-4 border-b border-hair overflow-x-auto flex-nowrap snap-x scrollbar-thin -mx-1 px-1">
           {TABS.map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-3 py-2 text-12 font-medium bg-transparent border-none border-b-2 cursor-pointer ${
+              className={`shrink-0 snap-start px-3 py-2 text-12 font-medium bg-transparent border-none border-b-2 cursor-pointer whitespace-nowrap ${
                 activeTab === tab
                   ? "text-ink-0 border-brand"
                   : "text-ink-2 border-transparent hover:text-ink-0"
@@ -1202,9 +1325,18 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
             adverseMedia={subject.adverseMedia}
             rca={subject.rca}
             subjectCtx={{
+              id: subject.id,
               name: subject.name,
               nationality: subject.country || subject.jurisdiction || undefined,
             }}
+          />
+        )}
+
+        {activeTab === "Intelligence" && (
+          <BrainIntelligencePack
+            subject={subject}
+            screen={screening.status === "success" ? screening.result : null}
+            superBrain={superBrain.status === "success" ? superBrain.result : null}
           />
         )}
 
@@ -1237,6 +1369,7 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
             subject={subject}
             eiaResult={eiaResult}
             eiaLoading={eiaLoading}
+            eiaError={eiaError}
             onRun={() => void runEIA()}
           />
         )}
@@ -1832,13 +1965,68 @@ const RECOMMENDATION_STYLE: Record<ConfidenceScoreResult["recommendation"], stri
 };
 
 interface SubjectContext {
+  id?: string;
   name: string;
   dob?: string;
   nationality?: string;
   idNumber?: string;
 }
 
+type HitStatusFilter = "unresolved" | "positive" | "possible" | "false" | "unspecified" | "all";
+
 function HitsList({ hits, subjectCtx }: { hits: QuickScreenHit[]; subjectCtx?: SubjectContext }) {
+  const [filter, setFilter] = useState<HitStatusFilter>("all");
+  const { strings } = useLocale();
+
+  // Read every hit's resolution (if any) so the counter tabs can show
+  // Unresolved / Positive / Possible / False / Unspecified counts à la
+  // World-Check's "Showing 409 of 2502 matches" pattern.
+  const resolutions = useMemo(() => {
+    if (!subjectCtx?.id) return new Map<string, HitResolution>();
+    const m = new Map<string, HitResolution>();
+    for (const h of hits) {
+      const key = `${h.listId}:${h.listRef}`;
+      const r = loadHitResolution(subjectCtx.id, key);
+      if (r) m.set(key, r);
+    }
+    return m;
+  }, [subjectCtx?.id, hits]);
+
+  const counts = useMemo(() => {
+    let positive = 0, possible = 0, falsePos = 0, unspecified = 0;
+    for (const h of hits) {
+      const r = resolutions.get(`${h.listId}:${h.listRef}`);
+      if (!r) continue;
+      if (r.verdict === "confirmed_positive") positive += 1;
+      else if (r.verdict === "possible_match") possible += 1;
+      else if (r.verdict === "false_positive") falsePos += 1;
+      else if (r.verdict === "unspecified") unspecified += 1;
+    }
+    const resolved = positive + possible + falsePos + unspecified;
+    return {
+      total: hits.length,
+      unresolved: hits.length - resolved,
+      positive,
+      possible,
+      false: falsePos,
+      unspecified,
+    };
+  }, [hits, resolutions]);
+
+  const filtered = useMemo(() => {
+    if (filter === "all") return hits;
+    return hits.filter((h) => {
+      const r = resolutions.get(`${h.listId}:${h.listRef}`);
+      if (filter === "unresolved") return !r;
+      if (!r) return false;
+      if (filter === "positive") return r.verdict === "confirmed_positive";
+      if (filter === "possible") return r.verdict === "possible_match";
+      if (filter === "false") return r.verdict === "false_positive";
+      if (filter === "unspecified") return r.verdict === "unspecified";
+      return true;
+    });
+  }, [hits, resolutions, filter]);
+
   if (hits.length === 0) {
     return (
       <div className="text-11 text-ink-2 py-2.5">
@@ -1846,12 +2034,50 @@ function HitsList({ hits, subjectCtx }: { hits: QuickScreenHit[]; subjectCtx?: S
       </div>
     );
   }
+
+  // World-Check-style status tabs — labels translated per active locale.
+  const tabs: Array<{ key: HitStatusFilter; label: string; count: number; cls: string }> = [
+    { key: "all",         label: strings.all,           count: counts.total,       cls: "text-ink-1" },
+    { key: "unresolved",  label: strings.unresolved,    count: counts.unresolved,  cls: "text-amber" },
+    { key: "positive",    label: strings.positive,      count: counts.positive,    cls: "text-red" },
+    { key: "possible",    label: strings.possible,      count: counts.possible,    cls: "text-amber" },
+    { key: "false",       label: strings.falsePositive, count: counts.false,       cls: "text-green" },
+    { key: "unspecified", label: strings.unspecified,   count: counts.unspecified, cls: "text-ink-2" },
+  ];
+
   return (
-    <ul className="list-none p-0 m-0">
-      {hits.map((hit, idx) => (
-        <HitRow key={`${hit.listId}-${hit.listRef}-${idx}`} hit={hit} subjectCtx={subjectCtx} />
-      ))}
-    </ul>
+    <div>
+      <div className="flex items-center gap-1 flex-wrap mb-2 pb-2 border-b border-hair-2 text-11">
+        {tabs.map((t) => {
+          const active = filter === t.key;
+          return (
+            <button
+              key={t.key}
+              type="button"
+              onClick={() => setFilter(t.key)}
+              className={`inline-flex items-center gap-1.5 px-2 py-1 rounded transition-colors ${active ? "bg-bg-2 text-ink-0 font-semibold" : "text-ink-2 hover:text-ink-0"}`}
+            >
+              <span className={active ? "" : t.cls}>{t.label}</span>
+              <span className={`font-mono text-10 ${active ? "text-ink-1" : "text-ink-3"}`}>({t.count})</span>
+            </button>
+          );
+        })}
+      </div>
+      {filter !== "all" && (
+        <div className="text-10 text-ink-3 mb-2 font-mono">
+          Showing {filtered.length} of {counts.total} matches
+        </div>
+      )}
+      {filtered.length === 0 ? (
+        <div className="text-11 text-ink-2 py-2.5">No hits in this status.</div>
+      ) : (
+        <ul className="list-none p-0 m-0">
+          {filtered.map((hit, idx) => (
+            <HitRow key={`${hit.listId}-${hit.listRef}-${idx}`} hit={hit} subjectCtx={subjectCtx} />
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
 
@@ -1860,6 +2086,21 @@ function HitRow({ hit, subjectCtx }: { hit: QuickScreenHit; subjectCtx?: Subject
   const [csLoading, setCsLoading] = useState(false);
   const [csResult, setCsResult] = useState<ConfidenceScoreResult | null>(null);
   const [csError, setCsError] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState(false);
+
+  // Resolution state — persisted in localStorage keyed by subject + hit ref
+  const hitKey = `${hit.listId}:${hit.listRef}`;
+  const [resolution, setResolution] = useState<HitResolution | null>(() =>
+    subjectCtx?.id ? loadHitResolution(subjectCtx.id, hitKey) : null,
+  );
+  const [verdictInput, setVerdictInput] = useState<HitResolutionVerdict>("false_positive");
+  const [reasonInput, setReasonInput] = useState("");
+  const [reasonCategoryInput, setReasonCategoryInput] = useState<HitResolutionReasonCategory>("no_match");
+  const [resolving, setResolving] = useState(false);
+  const [enrollStatus, setEnrollStatus] = useState<"idle" | "enrolling" | "enrolled" | "error">("idle");
+
+  const monitoringActive =
+    resolution?.verdict === "confirmed_positive" || enrollStatus === "enrolled";
 
   const runConfidenceScore = async () => {
     setCsLoading(true);
@@ -1888,16 +2129,55 @@ function HitRow({ hit, subjectCtx }: { hit: QuickScreenHit; subjectCtx?: Subject
           },
         }),
       });
-      if (!res.ok) {
-        setCsError("API error — please retry");
-        return;
-      }
+      if (!res.ok) { setCsError("API error — please retry"); return; }
       const data = (await res.json()) as ConfidenceScoreResult;
       if (data.ok) setCsResult(data);
-    } catch {
-      setCsError("Request failed");
+    } catch { setCsError("Request failed"); }
+    finally { setCsLoading(false); }
+  };
+
+  const handleResolve = async () => {
+    if (!reasonInput.trim() || resolving) return;
+    setResolving(true);
+    try {
+      const rec: HitResolution = {
+        hitRef: hitKey,
+        verdict: verdictInput,
+        reasonCategory: reasonCategoryInput,
+        riskLevel: riskLevelForVerdict(verdictInput),
+        reason: reasonInput.trim(),
+        resolvedAt: new Date().toISOString(),
+      };
+      if (subjectCtx?.id) saveHitResolution(subjectCtx.id, rec);
+      setResolution(rec);
+
+      if (verdictInput === "confirmed_positive" && subjectCtx?.id) {
+        setEnrollStatus("enrolling");
+        try {
+          const r = await fetch("/api/ongoing", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              id: subjectCtx.id,
+              name: subjectCtx.name,
+              cadence: "thrice_daily",
+            }),
+          });
+          if (r.ok) {
+            setEnrollStatus("enrolled");
+            // Update persisted record with confirmed monitoring flag
+            const enrolled = { ...rec, enrolledInMonitoring: true };
+            saveHitResolution(subjectCtx.id, enrolled);
+            setResolution(enrolled);
+          } else {
+            setEnrollStatus("error");
+          }
+        } catch {
+          setEnrollStatus("error");
+        }
+      }
     } finally {
-      setCsLoading(false);
+      setResolving(false);
     }
   };
 
@@ -1917,101 +2197,337 @@ function HitRow({ hit, subjectCtx }: { hit: QuickScreenHit; subjectCtx?: Subject
         : "bg-red-dim border-red/30"
     : "";
 
-  return (
-    <li className="py-2.5 border-b border-hair last:border-b-0">
-      <div className="flex justify-between items-baseline mb-1">
-        <span className="font-mono text-11 font-semibold text-ink-0">{hit.listId}</span>
-        <div className="flex items-center gap-2">
-          <span className="font-mono text-11 text-ink-2">{pct}%</span>
-          {subjectCtx && !csResult && (
-            <button
-              type="button"
-              onClick={() => void runConfidenceScore()}
-              disabled={csLoading}
-              className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-10 font-semibold bg-brand-dim text-brand border border-brand/30 hover:opacity-80 disabled:opacity-40 transition-opacity"
-            >
-              {csLoading ? "Scoring…" : "🎯 AI Confidence Score"}
-            </button>
-          )}
-          {csResult && (
-            <button
-              type="button"
-              onClick={() => setCsResult(null)}
-              className="text-10 text-ink-3 hover:text-ink-0"
-              title="Dismiss"
-            >
-              ✕
-            </button>
-          )}
+  const resolutionBadge = resolution
+    ? resolution.verdict === "false_positive"
+      ? { cls: "bg-green-dim text-green border border-green/30", label: "False · Low risk" }
+      : resolution.verdict === "possible_match"
+        ? { cls: "bg-amber-dim text-amber border border-amber/30", label: "Possible · Medium risk" }
+        : resolution.verdict === "confirmed_positive"
+          ? { cls: "bg-red-dim text-red border border-red/30", label: "Positive · High risk" }
+          : { cls: "bg-bg-2 text-ink-2 border border-hair-3", label: "Unspecified · Unknown risk" }
+    : null;
+
+  const csCard = csResult ? (
+    <div className={`rounded-lg border p-3 ${fpBg}`}>
+      <div className="flex items-center gap-3 mb-2">
+        <div className="relative w-12 h-12 flex-shrink-0">
+          <svg viewBox="0 0 36 36" className="w-12 h-12 -rotate-90">
+            <circle cx="18" cy="18" r="14" fill="none" className="stroke-bg-2" strokeWidth="4" />
+            <circle
+              cx="18" cy="18" r="14" fill="none"
+              className={fpColor}
+              strokeWidth="4"
+              strokeDasharray={`${csResult.falsePositiveProbability * 0.88} 88`}
+              strokeLinecap="round"
+            />
+          </svg>
+          <div className={`absolute inset-0 flex items-center justify-center font-mono text-10 font-bold ${fpColor.split(" ")[0]}`}>
+            {csResult.falsePositiveProbability}%
+          </div>
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-0.5">FP Probability</div>
+          <div className="text-11 font-semibold text-ink-0">
+            Confidence: {csResult.confidenceScore}/100 true match
+          </div>
+          <span className={`inline-flex items-center px-2 py-0.5 rounded text-10 font-semibold mt-1 border ${RECOMMENDATION_STYLE[csResult.recommendation]}`}>
+            {RECOMMENDATION_LABEL[csResult.recommendation]}
+          </span>
         </div>
       </div>
-      <div className="text-12.5 text-ink-0 mb-1">
-        {hit.candidateName}
-        {hit.matchedAlias ? (
-          <span className="text-ink-2"> · alias "{hit.matchedAlias}"</span>
-        ) : null}
-      </div>
-      <div className="text-11 text-ink-2">
-        {hit.listRef} · {hit.reason}
-      </div>
+      {csResult.keyFactors.length > 0 && (
+        <ul className="space-y-0.5 mb-2">
+          {csResult.keyFactors.map((f, i) => (
+            <li key={i} className="text-11 text-ink-1 flex gap-1.5">
+              <span className="text-ink-3">·</span><span>{f}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+      <p className="text-11 text-ink-2 leading-relaxed italic">{csResult.reasoning}</p>
+    </div>
+  ) : null;
+
+  return (
+    <li className="py-2.5 border-b border-hair last:border-b-0">
+      {/* ── Clickable hit header ─────────────────────────────────── */}
+      <button
+        type="button"
+        className="w-full text-left"
+        onClick={() => setExpanded((v) => !v)}
+      >
+        <div className="flex justify-between items-center mb-1">
+          <span className="font-mono text-11 font-semibold text-ink-0">{hit.listId}</span>
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-11 text-ink-2">{pct}%</span>
+            <span className="text-10 text-ink-3 select-none">{expanded ? "▲" : "▼"}</span>
+          </div>
+        </div>
+        <div className="text-12.5 text-ink-0 mb-1">
+          {hit.candidateName}
+          {hit.matchedAlias && (
+            <span className="text-ink-2"> · alias &ldquo;{hit.matchedAlias}&rdquo;</span>
+          )}
+        </div>
+        <div className="text-11 text-ink-2">{hit.listRef} · {hit.reason}</div>
+      </button>
+
+      {/* Programs (always visible) */}
       {hit.programs && hit.programs.length > 0 && (
         <div className="flex flex-wrap gap-1 mt-1">
           {hit.programs.map((p) => (
-            <span
-              key={p}
-              className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 bg-red-dim text-red tracking-wide-1"
-            >
+            <span key={p} className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 bg-red-dim text-red tracking-wide-1">
               {p}
             </span>
           ))}
         </div>
       )}
-      {csError && (
+
+      {/* Resolution badge (always visible once resolved) */}
+      {resolutionBadge && (
+        <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+          <span className={`inline-flex items-center px-2 py-0.5 rounded text-10 font-bold ${resolutionBadge.cls}`}>
+            {resolutionBadge.label}
+          </span>
+          {monitoringActive && (
+            <span className="inline-flex items-center gap-1 text-10 font-mono text-green">
+              <span className="w-1.5 h-1.5 rounded-full bg-green inline-block" />
+              Monitoring active
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Inline AI score & error when collapsed */}
+      {!expanded && csError && (
         <div className="mt-2 text-11 text-red bg-red-dim rounded px-2 py-1">{csError}</div>
       )}
-      {csResult && (
-        <div className={`mt-2 rounded-lg border p-3 ${fpBg}`}>
-          {/* Donut-style FP display */}
-          <div className="flex items-center gap-3 mb-2">
-            <div className="relative w-12 h-12 flex-shrink-0">
-              <svg viewBox="0 0 36 36" className="w-12 h-12 -rotate-90">
-                <circle cx="18" cy="18" r="14" fill="none" className="stroke-bg-2" strokeWidth="4" />
-                <circle
-                  cx="18" cy="18" r="14" fill="none"
-                  className={fpColor}
-                  strokeWidth="4"
-                  strokeDasharray={`${csResult.falsePositiveProbability * 0.88} 88`}
-                  strokeLinecap="round"
-                />
-              </svg>
-              <div className={`absolute inset-0 flex items-center justify-center font-mono text-10 font-bold ${fpColor.split(" ")[0]}`}>
-                {csResult.falsePositiveProbability}%
-              </div>
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-0.5">FP Probability</div>
-              <div className="text-11 font-semibold text-ink-0">
-                Confidence: {csResult.confidenceScore}/100 true match
-              </div>
-              <span className={`inline-flex items-center px-2 py-0.5 rounded text-10 font-semibold mt-1 border ${RECOMMENDATION_STYLE[csResult.recommendation]}`}>
-                {RECOMMENDATION_LABEL[csResult.recommendation]}
-              </span>
+      {!expanded && csResult && (
+        <div className="mt-2">
+          {csCard}
+          <button type="button" onClick={() => setCsResult(null)} className="text-10 text-ink-3 hover:text-ink-0 mt-1">✕ Dismiss</button>
+        </div>
+      )}
+      {!expanded && !csResult && subjectCtx && (
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); void runConfidenceScore(); }}
+          disabled={csLoading}
+          className="mt-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded text-10 font-semibold bg-brand-dim text-brand border border-brand/30 hover:opacity-80 disabled:opacity-40 transition-opacity"
+        >
+          {csLoading ? "Scoring…" : "✦ AI"}
+        </button>
+      )}
+
+      {/* ── Expanded detail + resolution panel ───────────────────── */}
+      {expanded && (
+        <div className="mt-3 pt-3 border-t border-hair-2 space-y-3">
+
+          {/* Full profile card */}
+          <div className="bg-bg-1 border border-hair-2 rounded-lg p-3">
+            <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-2.5">Full Profile</div>
+            <div className="space-y-1.5">
+              <ProfileRow label="List">{hit.listId}</ProfileRow>
+              <ProfileRow label="Reference">{hit.listRef}</ProfileRow>
+              <ProfileRow label="Matched name">{hit.candidateName}</ProfileRow>
+              {hit.matchedAlias && (
+                <ProfileRow label="Alias matched">{hit.matchedAlias}</ProfileRow>
+              )}
+              <ProfileRow label="Match score">
+                <span className="font-mono">{pct}%</span>
+              </ProfileRow>
+              <ProfileRow label="Match method">
+                {hit.method.replace(/-/g, " ")}
+              </ProfileRow>
+              <ProfileRow label="Phonetic">
+                {hit.phoneticAgreement ? "✓ Phonetic agreement" : "No phonetic agreement"}
+              </ProfileRow>
+              {hit.programs && hit.programs.length > 0 && (
+                <ProfileRow label="Programs">
+                  <div className="flex flex-wrap gap-1">
+                    {hit.programs.map((p) => (
+                      <span key={p} className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 bg-red-dim text-red">
+                        {p}
+                      </span>
+                    ))}
+                  </div>
+                </ProfileRow>
+              )}
+              <ProfileRow label="Reason">{hit.reason}</ProfileRow>
             </div>
           </div>
-          {csResult.keyFactors.length > 0 && (
-            <ul className="space-y-0.5 mb-2">
-              {csResult.keyFactors.map((f, i) => (
-                <li key={i} className="text-11 text-ink-1 flex gap-1.5">
-                  <span className="text-ink-3">·</span>
-                  <span>{f}</span>
-                </li>
-              ))}
-            </ul>
+
+          {/* AI confidence score */}
+          {!csResult && (
+            <button
+              type="button"
+              onClick={() => void runConfidenceScore()}
+              disabled={csLoading}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-11 font-semibold bg-brand-dim text-brand border border-brand/30 hover:opacity-80 disabled:opacity-40 transition-opacity"
+            >
+              {csLoading ? "Scoring…" : "✦ Run AI Confidence Score"}
+            </button>
           )}
-          <p className="text-11 text-ink-2 leading-relaxed italic">{csResult.reasoning}</p>
+          {csError && <div className="text-11 text-red bg-red-dim rounded px-2 py-1">{csError}</div>}
+          {csResult && (
+            <div>
+              {csCard}
+              <button type="button" onClick={() => setCsResult(null)} className="text-10 text-ink-3 hover:text-ink-0 mt-1.5">✕ Dismiss score</button>
+            </div>
+          )}
+
+          {/* ── Resolution panel ─────────────────────────────────── */}
+          {resolution ? (
+            <div className="border border-hair-2 rounded-lg p-3">
+              <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-2">Resolution Record</div>
+              <div className="flex items-center gap-2 flex-wrap mb-2">
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded text-11 font-bold ${resolutionBadge!.cls}`}>
+                  {resolutionBadge!.label}
+                </span>
+                {monitoringActive && (
+                  <span className="inline-flex items-center gap-1 text-10 font-mono text-green">
+                    <span className="w-1.5 h-1.5 rounded-full bg-green inline-block" />
+                    Enrolled in daily monitoring
+                  </span>
+                )}
+                {enrollStatus === "error" && (
+                  <span className="text-10 text-red font-mono">Monitoring enrolment failed — retry manually via Ongoing Monitoring</span>
+                )}
+              </div>
+              <p className="text-11 text-ink-1 italic mb-1">&ldquo;{resolution.reason}&rdquo;</p>
+              <p className="text-10 text-ink-3 font-mono">{new Date(resolution.resolvedAt).toLocaleString()}</p>
+              <button
+                type="button"
+                onClick={() => { setResolution(null); setReasonInput(""); setEnrollStatus("idle"); }}
+                className="text-10 text-ink-3 hover:text-brand mt-2 underline"
+              >
+                Revise resolution
+              </button>
+            </div>
+          ) : (
+            <div className="border border-hair-2 rounded-lg p-3">
+              <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-3">Resolve This Hit</div>
+              <div className="space-y-2 mb-3">
+                {(
+                  [
+                    {
+                      v: "confirmed_positive" as const,
+                      label: "POSITIVE",
+                      risk: "HIGH",
+                      desc: "This is the listed person or entity — subject will be enrolled in daily monitoring",
+                      activeCls: "border-red/50 bg-red-dim/30 text-red",
+                    },
+                    {
+                      v: "possible_match" as const,
+                      label: "POSSIBLE",
+                      risk: "MEDIUM",
+                      desc: "Requires further investigation before a clearance decision",
+                      activeCls: "border-amber/50 bg-amber-dim/30 text-amber",
+                    },
+                    {
+                      v: "false_positive" as const,
+                      label: "FALSE",
+                      risk: "LOW",
+                      desc: "Not the same person or entity — no further action required",
+                      activeCls: "border-green/50 bg-green-dim/30 text-green",
+                    },
+                    {
+                      v: "unspecified" as const,
+                      label: "UNSPECIFIED",
+                      risk: "UNKNOWN",
+                      desc: "Insufficient information to determine — keep on the unresolved queue",
+                      activeCls: "border-hair-3 bg-bg-2/30 text-ink-2",
+                    },
+                  ] as { v: HitResolutionVerdict; label: string; risk: string; desc: string; activeCls: string }[]
+                ).map(({ v, label, risk, desc, activeCls }) => (
+                  <label
+                    key={v}
+                    className={`flex items-start gap-2.5 px-3 py-2.5 rounded-lg border cursor-pointer transition-colors ${
+                      verdictInput === v ? activeCls : "border-hair-2 text-ink-2 hover:border-hair-3"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name={`verdict-${hitKey}`}
+                      value={v}
+                      checked={verdictInput === v}
+                      onChange={() => setVerdictInput(v)}
+                      className="mt-0.5 shrink-0"
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="text-11 font-bold tracking-wide-2">{label}</div>
+                        <span className="text-10 font-mono opacity-70">{risk} RISK</span>
+                      </div>
+                      <div className="text-10 text-ink-3 mt-0.5">{desc}</div>
+                    </div>
+                  </label>
+                ))}
+              </div>
+              <div className="mb-3">
+                <label className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1 block">
+                  Reason category *
+                </label>
+                <select
+                  className="w-full px-3 py-2 border border-hair-2 rounded text-12 bg-bg-panel focus:outline-none focus:border-brand text-ink-0 mb-3"
+                  value={reasonCategoryInput}
+                  onChange={(e) => setReasonCategoryInput(e.target.value as HitResolutionReasonCategory)}
+                >
+                  <option value="no_match">No Match — sanctioned subject is clearly not the customer</option>
+                  <option value="partial_match">Partial Match — some identifiers align, others don&apos;t</option>
+                  <option value="full_match">Full Match — all decisive identifiers match (DOB / passport / biometric)</option>
+                  <option value="name_only">Name Only — matched on name alone, no other identifiers to compare</option>
+                  <option value="duplicate_record">Duplicate Record — same listing already resolved under another hit</option>
+                  <option value="verified_negative">Verified Negative — independent verification rules out the subject</option>
+                  <option value="data_quality_issue">Data Quality Issue — record is incomplete or corrupted</option>
+                  <option value="stale_listing">Stale Listing — listing is no longer in force</option>
+                  <option value="other">Other (explain in reason)</option>
+                </select>
+                <label className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1 block">
+                  Reason / basis for determination *
+                </label>
+                <textarea
+                  className="w-full px-3 py-2 border border-hair-2 rounded text-12 bg-bg-panel focus:outline-none focus:border-brand text-ink-0 resize-none"
+                  placeholder="State the basis for your determination (required for regulatory audit trail)…"
+                  rows={2}
+                  value={reasonInput}
+                  onChange={(e) => setReasonInput(e.target.value)}
+                  maxLength={1000}
+                />
+              </div>
+              <div className="flex items-center gap-3 flex-wrap">
+                <button
+                  type="button"
+                  disabled={!reasonInput.trim() || resolving}
+                  onClick={() => void handleResolve()}
+                  className="px-4 py-1.5 bg-brand text-white rounded text-12 font-semibold hover:opacity-90 disabled:opacity-40 transition-opacity"
+                >
+                  {resolving
+                    ? enrollStatus === "enrolling"
+                      ? "Enrolling in monitoring…"
+                      : "Saving…"
+                    : "Resolve →"}
+                </button>
+                {verdictInput === "confirmed_positive" && (
+                  <span className="text-10 text-ink-3 font-mono italic">
+                    Subject will be enrolled in daily monitoring upon resolution
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </li>
+  );
+}
+
+function ProfileRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex gap-3 items-start">
+      <span className="text-10 uppercase tracking-wide-2 text-ink-3 w-28 shrink-0 pt-0.5">{label}</span>
+      <span className="text-11 text-ink-0 flex-1">{children}</span>
+    </div>
   );
 }
 
@@ -2919,11 +3435,13 @@ function EthicsTab({
   subject,
   eiaResult,
   eiaLoading,
+  eiaError,
   onRun,
 }: {
   subject: Subject;
   eiaResult: EthicalImpact | null;
   eiaLoading: boolean;
+  eiaError: string | null;
   onRun: () => void;
 }) {
   const [copied, setCopied] = useState(false);
@@ -2946,8 +3464,11 @@ function EthicsTab({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
+      {/* Header stacks on narrow panels (flex-col) and only goes side-by-
+          side on wider viewports (sm:flex-row) — stops the EIA button from
+          overflowing the right-hand subject panel. */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <div className="min-w-0">
           <div className="text-11 font-semibold uppercase tracking-wide-4 text-ink-2 mb-0.5">
             Ethical Impact Assessment
           </div>
@@ -2959,14 +3480,28 @@ function EthicsTab({
           type="button"
           onClick={onRun}
           disabled={eiaLoading}
-          className="text-11 font-semibold px-3 py-1.5 rounded border border-violet/50 bg-violet-dim text-violet hover:bg-violet/20 disabled:opacity-40"
+          className="self-start sm:self-auto shrink-0 text-11 font-semibold px-3 py-1.5 rounded border border-violet/50 bg-violet-dim text-violet hover:bg-violet/20 disabled:opacity-40 whitespace-nowrap"
         >
-          {eiaLoading ? "Assessing…" : eiaResult ? "Re-run EIA" : "Run Ethical Impact Assessment"}
+          {eiaLoading ? "Assessing…" : eiaResult ? "Re-run EIA" : "Run EIA"}
         </button>
       </div>
 
       {eiaLoading && (
         <div className="text-12 text-ink-2 animate-pulse">Running assessment for {subject.name}…</div>
+      )}
+
+      {eiaError && !eiaLoading && (
+        <div className="rounded-lg border border-red/40 bg-red-dim/40 p-3">
+          <div className="text-11 font-semibold text-red mb-1">Ethical Impact Assessment failed</div>
+          <p className="text-11 text-ink-1 leading-relaxed">{eiaError}</p>
+          <button
+            type="button"
+            onClick={onRun}
+            className="mt-2 text-10 font-semibold px-2 py-1 rounded border border-red/40 text-red hover:bg-red/10"
+          >
+            Retry
+          </button>
+        </div>
       )}
 
       {eiaResult && (

@@ -340,9 +340,9 @@ export default function SupplierDdPage() {
                 </div>
                 <div className="flex gap-2">
                   <button type="button" onClick={() => saveEdit(v.id)}
-                    className="text-11 font-semibold px-3 py-1 rounded bg-ink-0 text-bg-0">Save</button>
+                    className="text-11 font-semibold px-3 py-1 rounded bg-ink-0 text-bg-0">✓</button>
                   <button type="button" onClick={() => setEditingId(null)}
-                    className="text-11 font-medium px-3 py-1 rounded text-ink-2">Cancel</button>
+                    className="text-11 font-medium px-3 py-1 rounded text-red">✕</button>
                 </div>
               </div>
             ) : (
@@ -357,7 +357,7 @@ export default function SupplierDdPage() {
                     </span>
                     <button type="button" onClick={() => void runVendorRisk(v)} disabled={riskLoading[v.id] === true}
                       className="text-9 font-mono px-1.5 py-px rounded border border-brand/50 bg-brand-dim text-brand-deep hover:bg-brand/20 disabled:opacity-40">
-                      {riskLoading[v.id] === true ? "…" : "AI Risk"}
+                      {riskLoading[v.id] === true ? "…" : "✦AI"}
                     </button>
                     <RowActions
                       label={v.name}

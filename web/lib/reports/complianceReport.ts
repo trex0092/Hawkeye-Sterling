@@ -137,6 +137,21 @@ export interface ReportOperator {
   id?: string;
 }
 
+export interface TriageResolutionEntry {
+  hitId: string;
+  matchedName: string;
+  sourceList: string;
+  matchStrength: number;
+  type?: string;
+  citizenship?: string;
+  dob?: string;
+  listRef?: string;
+  resolution: "positive" | "possible" | "false" | "unspecified";
+  reason?: string;
+  resolvedAt?: string;
+  resolvedBy?: string;
+}
+
 export interface ReportInput {
   subject: ReportSubject;
   result: ReportScreeningResult;
@@ -144,6 +159,13 @@ export interface ReportInput {
   reportingEntity?: string;
   mlro?: string;
   operator?: ReportOperator | null;
+  /**
+   * Operator's per-hit triage decisions. When supplied, the report
+   * dossier appends a TRIAGE & DISPOSITION section listing every
+   * possible-match candidate alongside the operator's decision +
+   * reason — so the audit trail is self-contained inside the PDF.
+   */
+  triageResolutions?: TriageResolutionEntry[];
   now?: Date;
 }
 

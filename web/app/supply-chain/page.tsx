@@ -131,6 +131,7 @@ function SupplierList({
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); add(); } }}
           placeholder="Supplier name"
           className="flex-[3] bg-bg-1 border border-hair-2 rounded px-3 py-1.5 text-13 text-ink-0 outline-none focus:border-brand"
         />
@@ -141,6 +142,15 @@ function SupplierList({
           placeholder="Country (ISO-2)"
           className="flex-1 bg-bg-1 border border-hair-2 rounded px-3 py-1.5 text-13 text-ink-0 outline-none focus:border-brand"
         />
+        <button
+          type="button"
+          onClick={add}
+          disabled={!name.trim() || !country.trim()}
+          className="px-5 py-2 rounded-lg border-2 border-brand bg-brand/10 text-brand text-13 font-bold hover:bg-brand/20 disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap shadow-[0_0_12px_rgba(236,72,153,0.15)] hover:shadow-[0_0_18px_rgba(236,72,153,0.30)] transition-all"
+          title="Add supplier"
+        >
+          + Add
+        </button>
       </div>
       {suppliers.length > 0 && (
         <div className="flex flex-col gap-1">

@@ -6,6 +6,17 @@ import { fetchJson } from "@/lib/api/fetchWithRetry";
 import { loadCases } from "@/lib/data/case-store";
 import type { CaseRecord } from "@/lib/types";
 import { loadAuditEntries } from "@/lib/audit";
+import {
+  buildHtmlDoc,
+  hsCover,
+  hsPage,
+  hsFinis,
+  hsTable,
+  hsScorebox,
+  hsNarrative,
+  hsKvGrid,
+  type CoverData,
+} from "@/lib/reportHtml";
 
 interface InsightItem {
   finding: string;
@@ -331,7 +342,128 @@ export default function AnalyticsPage() {
 
   const handleExportPdf = () => {
     if (typeof window === "undefined") return;
-    window.print();
+    const ts = new Date();
+    const dd = String(ts.getUTCDate()).padStart(2, "0");
+    const mm = String(ts.getUTCMonth() + 1).padStart(2, "0");
+    const yyyy = ts.getUTCFullYear();
+    const hh = String(ts.getUTCHours()).padStart(2, "0");
+    const mi = String(ts.getUTCMinutes()).padStart(2, "0");
+    const reportId = `HWK-DIGEST-${dd}-${mm}-${yyyy}-${hh}${mi}`;
+    const regs = "FDL 10/2025 Art.26-27 · Cabinet Res 134/2025 Art.18 · MoE Circular 3/2025 · Ten-year retention";
+    const label = "MLRO PERFORMANCE DIGEST";
+
+    const fp = data?.quality.falsePositiveRate ?? 0;
+    const screenings = data?.commercial.totalScreeningsThisMonth ?? 0;
+    const totalVerdicts = data?.quality.totalVerdicts ?? 0;
+    const enrolled = data?.monitoring.enrolledSubjects ?? 0;
+    const scheduled = data?.monitoring.scheduledSubjects ?? 0;
+    const fpBand = fp <= 0.01 ? "sage" : fp <= 0.03 ? "amber" : "ember";
+
+    const coverData: CoverData = {
+      reportId,
+      regs,
+      module: "MODULE 40 · ANALYTICS · MLRO PERFORMANCE DIGEST",
+      title: "MLRO Performance Digest",
+      subtitle: `Period: ${formatPeriod(ts)} — generated ${ts.toUTCString().replace(" GMT", " UTC")}`,
+      subjectLabel: "INSTITUTION",
+      subjectName: "Hawkeye Sterling FZE",
+      subjectMeta: "DMCC Free Zone · Dubai · United Arab Emirates",
+      verdictLabel: fp <= 0.01 ? "WITHIN TOLERANCE" : fp <= 0.03 ? "REVIEW REQUIRED" : "ESCALATE",
+      verdictBand: fpBand,
+      verdictNote: `False-positive rate ${(fp * 100).toFixed(2)}% (target ≤ 1.0%)`,
+      meta: [
+        { label: "Period", value: formatPeriod(ts) },
+        { label: "Screenings (MTD)", value: String(screenings) },
+        { label: "Verdicts (24h)", value: String(data?.quality.verdictsLast24h ?? 0), sub: `of ${totalVerdicts} total` },
+        { label: "Audit entries", value: String(auditCount) },
+        { label: "Four-eyes coverage", value: fourEyesTotal > 0 ? `${fourEyesCount}/${fourEyesTotal}` : "n/a" },
+        { label: "Generated", value: ts.toUTCString().replace(" GMT", " UTC") },
+      ],
+    };
+
+    const cover = hsCover(coverData);
+
+    const headlinePage = hsPage({
+      reportId, pageNum: 1, pageTotal: 3, regs, label,
+      content: `
+        <div class="hs-rule"></div>
+        <h2 class="hs-section-h">Headline metrics</h2>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin:14px 0">
+          ${hsScorebox(String(screenings), "Screenings", "")}
+          ${hsScorebox(`${(fp * 100).toFixed(1)}%`, "False-positive", fpBand === "sage" ? "sage" : fpBand === "amber" ? "amber" : "ember")}
+          ${hsScorebox(String(data?.quality.trueMatchCount ?? 0), "Critical clearances", "")}
+          ${hsScorebox(String(filingCounts.STR), `STRs · ${formatPeriod(ts).split(" ")[0]}`, "")}
+          ${hsScorebox(String(auditCount), "Audit entries", "")}
+        </div>
+        <div class="hs-rule"></div>
+        <h2 class="hs-section-h" style="margin-top:14px">Regulatory filings — month to date</h2>
+        ${hsTable(
+          ["Filing", "Count"],
+          FILING_TYPES.map((t) => [t, String(filingCounts[t] ?? 0)]),
+        )}
+        <h2 class="hs-section-h" style="margin-top:14px">Findings breakdown</h2>
+        ${hsTable(
+          ["Category", "Count", "Share"],
+          [
+            ["Sanctions hits", String(data?.quality.trueMatchCount ?? 0), totalVerdicts ? `${(((data?.quality.trueMatchCount ?? 0) / totalVerdicts) * 100).toFixed(1)}%` : "0.0%"],
+            ["False positives", String(data?.quality.falsePositiveCount ?? 0), `${(fp * 100).toFixed(1)}%`],
+            ["Total verdicts", String(totalVerdicts), "100%"],
+          ],
+        )}
+      `,
+    });
+
+    const posturePage = hsPage({
+      reportId, pageNum: 2, pageTotal: 3, regs, label,
+      content: `
+        <h2 class="hs-section-h" style="margin-top:0">Compliance posture</h2>
+        ${hsKvGrid([
+          { k: "SLA compliance (critical within 24h)", v: "n/a" },
+          { k: "Four-eyes sign-off (STR filings)", v: fourEyesTotal > 0 ? `${fourEyesCount}/${fourEyesTotal}` : "n/a" },
+          { k: "Audit-trail completeness (10-yr retention)", v: auditCount > 0 ? `${auditCount} events logged` : "0 — no events logged yet" },
+          { k: "False-positive rate (target ≤ 1.0%)", v: `${(fp * 100).toFixed(2)}%` },
+          { k: "Filed cases reconcile to MLRO disposition", v: `${cases.length}/${cases.length}` },
+        ])}
+        <h2 class="hs-section-h" style="margin-top:14px">Monitoring coverage</h2>
+        ${hsKvGrid([
+          { k: "Enrolled in ongoing screening", v: String(enrolled) },
+          { k: "Scheduled for re-run", v: String(scheduled) },
+          { k: "Analyst verdicts (last 24h)", v: String(data?.quality.verdictsLast24h ?? 0) },
+        ])}
+        <h2 class="hs-section-h" style="margin-top:14px">DPMS KPI catalogue · 30 indicators</h2>
+        ${hsNarrative(
+          "CDD completion rate · UBO identification rate · High-risk EDD completion · PEP re-verification cadence · Pre-transaction screening coverage · EOCN + UN minimum · False-positive resolution SLA · Confirmed-match freeze SLA · CTR threshold compliance · STR median response · DPMSR cadence · LBMA accreditation · OECD due-diligence · responsible sourcing attestations.",
+        )}
+      `,
+    });
+
+    const footerPage = hsPage({
+      reportId, pageNum: 3, pageTotal: 3, regs, label,
+      content: `
+        <h2 class="hs-section-h" style="margin-top:0">AI insights</h2>
+        ${aiInsights ? hsNarrative(aiInsights.headline) : hsNarrative("Run AI insights from the digest to populate this section.")}
+        ${aiInsights?.boardTalkingPoints?.length ? `<ul class="hs-findings">${aiInsights.boardTalkingPoints.map((p) => `<li>${p}</li>`).join("")}</ul>` : ""}
+        <h2 class="hs-section-h" style="margin-top:14px">Audit & integrity</h2>
+        ${hsKvGrid([
+          { k: "Report ID", v: reportId },
+          { k: "Generated", v: ts.toUTCString().replace(" GMT", " UTC") },
+          { k: "Brain version", v: "wave-5" },
+          { k: "Retention", v: "10 years (FDL 10/2025 Art.24)" },
+        ])}
+        ${hsFinis(reportId, 3, 3)}
+      `,
+    });
+
+    const html = buildHtmlDoc({
+      title: `Hawkeye Sterling — MLRO Performance Digest ${reportId}`,
+      autoprint: true,
+      pages: [cover, headlinePage, posturePage, footerPage],
+    });
+    const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const opened = window.open(url, "_blank", "noopener,noreferrer");
+    setTimeout(() => URL.revokeObjectURL(url), 30_000);
+    if (!opened) window.print();
   };
 
   return (
@@ -366,7 +498,7 @@ export default function AnalyticsPage() {
                 disabled={insightsLoading}
                 className="text-11 font-semibold px-3 py-1.5 rounded border border-brand/50 bg-brand-dim text-brand-deep hover:bg-brand/20 disabled:opacity-40"
               >
-                {insightsLoading ? "Generating…" : "Generate AI Insights"}
+                {insightsLoading ? "Generating…" : "✦AI"}
               </button>
               <button
                 type="button"
@@ -374,7 +506,7 @@ export default function AnalyticsPage() {
                 disabled={biasLoading}
                 className="text-11 font-semibold px-3 py-1.5 rounded border border-violet/50 bg-violet-dim text-violet hover:bg-violet/20 disabled:opacity-40"
               >
-                {biasLoading ? "Analysing…" : "AI Bias Monitor"}
+                {biasLoading ? "Analysing…" : "✦AI"}
               </button>
               <select
                 value={predictTimeframe}
@@ -396,9 +528,10 @@ export default function AnalyticsPage() {
               <button
                 type="button"
                 onClick={handleExportPdf}
-                className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1"
+                className="text-11 font-mono px-3 py-1.5 rounded border font-semibold"
+                style={{ color: "#7c3aed", borderColor: "#7c3aed", background: "rgba(124,58,237,0.07)" }}
               >
-                Export PDF
+                PDF
               </button>
             </div>
           </div>

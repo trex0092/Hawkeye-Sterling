@@ -1,253 +1,286 @@
-# Audit Preparation Checklist and Regulator Response Runbook
-## Hawkeye Sterling — Version 1.0
+# Audit Preparation Checklist — Regulator Response Runbook
 
-**Document ID:** HS-OPS-003
-**Version:** 1.0
-**Effective Date:** [DATE]
-**Owner:** MLRO
-**Approved by:** MLRO + CEO
-
----
-
-## PART 1 — IF A REGULATOR CONTACTS YOU TODAY
-
-### Step 1: Do Not Panic. Do Not Delay.
-
-When you receive a regulatory inquiry (UAE FIU, MoE, CBUAE, or EU AI Office), the clock starts immediately.
-
-**First 30 minutes:**
-1. Call Legal Counsel — before responding to the regulator
-2. Call CEO — immediately
-3. Do not confirm or deny anything to the regulator until Legal Counsel has advised
-4. Record the date, time, name of regulator contact, and exact request
-5. Acknowledge receipt only — do not provide documents yet
-
-**Within 2 hours:**
-- Legal Counsel, MLRO, CEO, and Compliance Officer convene (in person or call)
-- Agree response strategy
-- Identify which documents are requested
-- Confirm timeline the regulator has set (typical UAE FIU: 5 business days; EU AI Office: 14 days)
+| Field | Value |
+|---|---|
+| **Document Version** | v1.0.0 |
+| **Status** | Active |
+| **Owner** | MLRO (primary) / Legal / Engineering |
+| **Last Updated** | 2026-05-06 |
+| **Next Review** | 2026-11-06 |
+| **Applicable Regulators** | UAE FIU (goAML); Ministry of Economy DNFBP Supervision; CBUAE |
+| **Target Response Window** | Full package within **48 hours** of UAE FIU / MoE inspector request |
+| **Regulatory Framework** | UAE FDL 20/2018 (as amended by FDL 10/2025); Cabinet Decision 10/2019; FATF R.15, R.27, R.29 |
 
 ---
 
-### Step 2: Produce the Documentation Package
+> **USE THIS RUNBOOK WHEN**: A UAE FIU inspector, MoE DNFBP supervisor, CBUAE examiner, or any other competent authority requests access to records, AI documentation, or audit materials relating to Hawkeye Sterling's AML/CFT compliance programme. Activate this checklist immediately upon receipt of the request.
 
-The following documents can be produced within **48 hours** from any system with access to the Hawkeye Sterling repository and Netlify deployment:
+---
 
-| Document | Location | Estimated Time to Produce |
+## 1. Emergency Contacts
+
+| Role | Name | Contact | Availability |
+|---|---|---|---|
+| **MLRO** | [MLRO Name] | [Phone] / [Email] | 24/7 — primary contact for all regulatory requests |
+| **Legal (General Counsel / External Counsel)** | [Legal Name] | [Phone] / [Email] | Business hours; 24/7 emergency line |
+| **CEO** | [CEO Name] | [Phone] / [Email] | 24/7 — notify for any on-site inspection or formal enforcement action |
+| **Engineering Lead** | [Engineering Lead Name] | [Phone] / [Email] | Business hours; on-call for technical production requests |
+| **Head of Data Science** | [DS Lead Name] | [Phone] / [Email] | Business hours; on-call for AI model documentation requests |
+| **External Auditors** | [Firm Name] | [Contact] | Business hours |
+
+**First call**: Always notify the MLRO first. The MLRO is the single point of contact for all regulatory communications. No member of staff may respond directly to a regulatory request without MLRO coordination.
+
+---
+
+## 2. Immediate Response Protocol (0–4 Hours)
+
+- [ ] **Notify MLRO** within 30 minutes of receiving any regulatory contact.
+- [ ] **Notify Legal** within 1 hour.
+- [ ] **Notify CEO** if the request involves an on-site inspection, formal notice, or potential enforcement action.
+- [ ] **Do not provide any documents, data, or access** until MLRO and Legal have reviewed the request and confirmed scope.
+- [ ] **Preserve all records**: Issue a litigation hold — suspend any automated data-retention deletions relating to the subject period.
+- [ ] **Log the request**: Create an entry in the Incident Register (date, time, inspector name, badge/credential number, regulatory body, nature of request, documents requested).
+- [ ] **Request formal written notice** if the request was made verbally or by telephone. A formal written request is required before producing documents.
+- [ ] **Confirm inspector credentials**: Verify inspector identity and authorisation with the regulatory body directly (not via contact details provided by the inspector).
+
+---
+
+## 3. Documents to Produce — Checklist
+
+The following documents form the standard audit package for an AI governance inspection under UAE FDL 10/2025 and FATF R.15. Confirm with Legal which documents are within scope before production.
+
+### 3.1 AI Governance and Inventory
+
+- [ ] **AI_INVENTORY.md** — Complete inventory of all AI systems in production and pilot
+  - Location: `docs/governance/AI_INVENTORY.md`
+  - Owner: Head of Data Science
+  - Export method: Direct file export from repository
+
+- [ ] **AI_GOVERNANCE_POLICY.md** — Board-approved AI governance policy
+  - Location: `docs/governance/AI_GOVERNANCE_POLICY.md`
+  - Owner: MLRO + CRO
+  - Export method: Direct file export from repository
+
+### 3.2 Model Cards (All Five Systems)
+
+- [ ] **HS-001 Screening Engine Model Card**
+  - Location: `docs/model-cards/hs-001-screening.md`
+  - Owner: Data Science + MLRO (signed)
+
+- [ ] **HS-002 Reasoning Mode Executor Model Card**
+  - Location: `docs/model-cards/hs-002-reasoning.md`
+  - Owner: Data Science + MLRO (signed)
+
+- [ ] **HS-003 Adverse Media Detector Model Card**
+  - Location: `docs/model-cards/hs-003-adverse-media.md`
+  - Owner: Data Science + MLRO (signed)
+
+- [ ] **HS-004 MLRO Auto-Dispositioner Model Card** *(PILOT)*
+  - Location: `docs/model-cards/hs-004-mlro-dispositioner.md`
+  - Owner: Data Science + MLRO + CRO (signed)
+
+- [ ] **HS-005 STR/SAR Narrative Generator Model Card**
+  - Location: `docs/model-cards/hs-005-narrative.md`
+  - Owner: Data Science + MLRO (signed)
+
+### 3.3 Data Governance
+
+- [ ] **DATA_LINEAGE.md** — Data lineage for all watchlist and training data sources
+  - Location: `docs/data-governance/DATA_LINEAGE.md`
+  - Owner: Engineering + Data Science
+  - Export method: Direct file export from repository
+
+### 3.4 Fairness and Testing
+
+- [ ] **FAIRNESS_TESTING_RESULTS.md** — Disaggregated fairness metrics and bias register
+  - Location: `docs/testing/FAIRNESS_TESTING_RESULTS.md`
+  - Owner: Data Science + MLRO (signed quarterly)
+
+- [ ] **TEST_PROCEDURES.md** — Full test procedure documentation
+  - Location: `docs/testing/TEST_PROCEDURES.md`
+  - Owner: Engineering + Data Science + MLRO (signed)
+
+### 3.5 Operations and Incident Management
+
+- [ ] **INCIDENT_RESPONSE_PLAYBOOK.md** — Incident response procedures
+  - Location: `docs/operations/INCIDENT_RESPONSE_PLAYBOOK.md`
+  - Owner: MLRO + Engineering
+
+- [ ] **CHANGE_CONTROL_LOG.md** — Complete change history for all AI systems
+  - Location: `docs/operations/CHANGE_CONTROL_LOG.md`
+  - Owner: Engineering + MLRO
+
+### 3.6 Compliance and Regulatory
+
+- [ ] **SOC2.md** — SOC2 Type II compliance documentation
+  - Location: `docs/SOC2.md`
+
+- [ ] **GDPR.md** — GDPR / PDPL compliance documentation
+  - Location: `docs/GDPR.md`
+
+- [ ] **ISO27001.md** — ISO 27001 compliance documentation
+  - Location: `docs/ISO27001.md`
+
+---
+
+## 4. How to Export the Audit Trail
+
+The immutable audit trail records all screening runs, MLRO decisions, goAML submissions, and system events with HMAC signatures. It is the primary evidentiary record for regulatory inspection.
+
+### 4.1 Audit Trail Viewer
+
+The audit trail is viewable in the browser at:
+- URL: `/docs/audit-trail.html` (production instance)
+- The viewer provides date-range filtering, subject-name search, and event-type filtering.
+
+### 4.2 JSON Export
+
+To export the audit trail as a JSON file:
+
+```bash
+# Via the compliance export API (requires MLRO-level authentication)
+curl -X GET \
+  -H "Authorization: Bearer <MLRO_JWT>" \
+  -H "Content-Type: application/json" \
+  "https://<PRODUCTION_HOST>/api/compliance/audit-export?from=<ISO_DATE>&to=<ISO_DATE>" \
+  -o audit-trail-export-<DATE>.json
+```
+
+The exported JSON includes: run ID, timestamp, subject hash (not plaintext PII — confirm with Legal before producing subject-identifiable data), verdict, confidence, MLRO decision, HMAC signature, and disposition code.
+
+### 4.3 Filtering for Specific Subjects or Time Windows
+
+The `AuditTrailViewer.tsx` component supports the following filters:
+- Date range: `from` / `to` ISO 8601 dates
+- Subject reference: internal case ID or subject hash
+- Event type: `SCREENING_RUN` / `MLRO_DECISION` / `GOAML_SUBMISSION` / `LIST_INGEST` / `SYSTEM_ALERT`
+- Verdict: `MATCH` / `POSSIBLE` / `NO MATCH` / `ESCALATE`
+
+---
+
+## 5. How to Verify HMAC Signatures
+
+Every audit chain entry is signed with HMAC-SHA256. To verify integrity:
+
+```bash
+# Retrieve the HMAC key from the secure key store (requires Engineering access)
+HMAC_KEY=$(vault kv get -field=hmac_key secret/hawkeye/audit-chain)
+
+# Verify a single audit record (replace RECORD_JSON with the JSON object)
+echo -n '<CANONICAL_RECORD_JSON>' | \
+  openssl dgst -sha256 -hmac "$HMAC_KEY" | \
+  awk '{print $2}'
+```
+
+The computed digest must match the `hmac` field in the audit record. Any mismatch indicates tampering and must be escalated immediately to the MLRO and Engineering Lead.
+
+**Important**: The HMAC key is held in the secure key store (HashiCorp Vault). Only the Engineering Lead and MLRO have access. Do not expose the key to inspectors; verify signatures in their presence if required and provide the output digest only.
+
+---
+
+## 6. How to Run SOC2 Export
+
+The SOC2 export generates a compliance evidence package suitable for external auditor review:
+
+```bash
+# Requires MLRO-level authentication + Engineering co-authorisation
+curl -X GET \
+  -H "Authorization: Bearer <MLRO_JWT>" \
+  -H "X-Engineering-Token: <ENGINEERING_TOKEN>" \
+  "https://<PRODUCTION_HOST>/api/compliance/soc2-export?period=<YYYY-QN>" \
+  -o soc2-export-<PERIOD>.zip
+```
+
+The ZIP package includes:
+- Access control logs (who accessed what, when)
+- Encryption-at-rest and in-transit configuration evidence
+- Backup and recovery test records
+- Vulnerability scan results
+- Penetration test summary (redacted)
+- Change management log (links to CHANGE_CONTROL_LOG.md entries)
+- Incident log for the period
+
+**Note**: The SOC2 export does not include PII or individual subject screening records. For subject-specific data, use the audit trail export (§4.2).
+
+---
+
+## 7. How to Perform GDPR / PDPL Erasure
+
+If a regulator or data subject requests erasure of personal data under GDPR / UAE PDPL:
+
+```bash
+# Step 1: Confirm erasure eligibility with Legal before proceeding.
+# Step 2: Obtain MLRO written authorisation.
+# Step 3: Execute erasure (irreversible — dual authorisation required)
+curl -X POST \
+  -H "Authorization: Bearer <MLRO_JWT>" \
+  -H "X-Legal-Token: <LEGAL_AUTHORISATION_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{"subjectId": "<INTERNAL_SUBJECT_ID>", "reason": "<ERASURE_REASON>", "authorisedBy": "<MLRO_NAME>"}' \
+  "https://<PRODUCTION_HOST>/api/compliance/gdpr-erasure"
+```
+
+**Important caveats**:
+1. AML/CFT retention obligations (UAE FDL 20/2018 Art. 23: 5-year minimum retention after relationship end) **supersede** erasure requests. Legal must confirm that the retention period has elapsed before erasure is executed.
+2. Erasure of audit chain records relating to STR/SAR/FFR/PNMR filings is prohibited while regulatory proceedings are ongoing.
+3. Every erasure is logged in the audit chain (the erasure event record itself is retained even if the subject data is removed).
+4. Notify the relevant DPA / TDRA if the erasure relates to a subject complaint.
+
+---
+
+## 8. Time-Boxed 48-Hour Package Preparation
+
+Upon receipt of a formal UAE FIU or MoE inspector request, the full audit package must be assembled and verified within **48 hours**. Use the following timeline:
+
+| Time | Action | Owner |
 |---|---|---|
-| AI Governance Policy (board-signed) | `docs/governance/AI_GOVERNANCE_POLICY.md` | < 5 minutes (print/export) |
-| AI System Inventory | `docs/governance/AI_INVENTORY.md` | < 5 minutes |
-| Model Cards (all 5) | `docs/model-cards/HS-001 through HS-005` | < 10 minutes |
-| Data Lineage | `docs/data-governance/DATA_LINEAGE.md` | < 5 minutes |
-| Fairness Testing Results | `docs/testing/FAIRNESS_TESTING_RESULTS.md` | < 5 minutes |
-| Incident Playbook | `docs/operations/INCIDENT_RESPONSE_PLAYBOOK.md` | < 5 minutes |
-| Change Control Log | `docs/operations/CHANGE_CONTROL_LOG.md` | < 5 minutes |
-| Audit trail (specific screening IDs) | `GET /api/audit/view?screening_id=XXX` — Export JSON or CSV | < 10 minutes per screening |
-| Audit chain integrity check | `GET /api/audit/verify` | < 5 minutes |
-| SOC2-ready audit log export | `GET /api/compliance/soc2-export` | < 15 minutes |
-| Brier score calibration report | `GET /api/mlro/brier` — export | < 5 minutes |
-| Drift alerts | `GET /api/mlro/drift-alerts` | < 5 minutes |
-| Mode performance leaderboard | `GET /api/mlro/mode-performance` | < 5 minutes |
-| Sanctions list freshness | `GET /api/sanctions/status` | < 5 minutes |
-| Compliance charter (P1–P10) | `src/policy/systemPrompt.ts` | < 5 minutes |
-| goAML submission records | `POST /api/goaml/auto-submit` logs in Netlify Blobs | < 15 minutes |
+| **T+0** | Receive formal written request | MLRO |
+| **T+1h** | Notify Legal, CEO; issue litigation hold; log request in Incident Register | MLRO |
+| **T+2h** | Confirm scope with Legal; identify which documents are within scope | MLRO + Legal |
+| **T+4h** | Begin document collection (§3 checklist); assign owners for each item | MLRO |
+| **T+8h** | Engineering exports audit trail for requested period (§4) | Engineering |
+| **T+12h** | MLRO reviews all documents for completeness and accuracy | MLRO |
+| **T+16h** | Legal reviews documents for privilege and legal-professional privilege claims | Legal |
+| **T+24h** | First-pass package assembled; MLRO and Legal sign off | MLRO + Legal |
+| **T+36h** | Engineering verifies HMAC signatures on audit trail (§5) | Engineering |
+| **T+40h** | SOC2 export generated if in scope (§6) | Engineering + MLRO |
+| **T+44h** | Final package review; CEO briefed if enforcement risk identified | MLRO + Legal + CEO |
+| **T+48h** | Package produced to inspector in agreed format (encrypted ZIP + delivery receipt) | MLRO |
 
-**Total estimated time to full package: < 2 hours**
+**If any item cannot be produced within 48 hours**: Notify the inspector proactively, state the reason, and provide a revised date. Do not miss the deadline without communication.
 
 ---
 
-### Step 3: Verification Checks Before Submission
+## 9. Document Version Control Confirmation
 
-Before sending any document to a regulator, verify:
+Before producing any document, confirm:
 
-- [ ] AI Governance Policy has CEO/Board signature and effective date
-- [ ] All model cards have MLRO and Data Science Lead signatures
-- [ ] Audit trail HMAC signatures are verifiable (`GET /api/audit/verify`)
-- [ ] All screening IDs requested by regulator are present in the audit chain
-- [ ] All goAML submissions referenced have a corresponding audit trail entry
-- [ ] Data lineage document reflects current data sources (not stale)
-- [ ] Legal Counsel has reviewed the package before submission
+- [ ] The document is the **current signed version** (check signature date vs. last git commit).
+- [ ] The document has **not been amended** since the last signature (git diff).
+- [ ] If the document has been amended since the last signature, the MLRO re-signs before production.
+- [ ] All model cards carry the **MLRO and Data Science signatures** required by the AI Governance Policy.
 
 ---
 
-## PART 2 — PRE-INSPECTION SELF-AUDIT CHECKLIST
+## 10. Post-Inspection Actions
 
-Run this checklist quarterly and before any known inspection.
-
-### Section A: Governance Documentation (NIST AI RMF — GOVERN)
-
-| # | Check | Pass Criteria | Status |
-|---|---|---|---|
-| A1 | AI Governance Policy exists and is board-signed | Signed by CEO/Board with date ≤ 12 months ago | |
-| A2 | AI System Inventory is current | All 5 systems listed; versions current; no new unregistered systems | |
-| A3 | Governance committee has met in the last 30 days | Meeting minutes on file | |
-| A4 | Change Control Log is current | Last entry within 7 days or confirmed no changes | |
-| A5 | Incident log is current | All incidents logged; all CRITICAL/HIGH incidents have post-incident review | |
-| A6 | Annual recertification is current | CEO/Board re-signature within the last 12 months | |
-
-### Section B: Model Documentation (NIST AI RMF — MAP / EU AI Act Art. 30)
-
-| # | Check | Pass Criteria | Status |
-|---|---|---|---|
-| B1 | Model card HS-001 exists and is signed | MLRO + Data Science Lead signatures; version matches current deployment | |
-| B2 | Model card HS-002 exists and is signed | Signed; mode count accurate (273 wave-1/2 + 100+ wave-3) | |
-| B3 | Model card HS-003 exists and is signed | Signed; data sources current | |
-| B4 | Model card HS-004 exists and is signed | PILOT status correctly stated; human oversight requirement documented | |
-| B5 | Model card HS-005 exists and is signed | Signed; goAML integration documented; REPLACE_ME values resolved | |
-| B6 | Data lineage document is current | All active data sources documented; quality SLAs current | |
-| B7 | Mode version registry is populated | Every mode has version, deployedDate, contentHash, author, approvedBy | |
-
-### Section C: Performance Monitoring (NIST AI RMF — MEASURE)
-
-| # | Check | Pass Criteria | Status |
-|---|---|---|---|
-| C1 | Brier score is within tolerance | ECE ≤ 4% (check `GET /api/mlro/brier`) | |
-| C2 | No active drift alerts | `GET /api/mlro/drift-alerts` returns empty or resolved alerts only | |
-| C3 | Fairness testing results are current | Results within the last 90 days; no group exceeding tolerance | |
-| C4 | Last monthly stress-test passed | `src/brain/stress-test-runner.ts` result: detection rate ≥ 97% | |
-| C5 | Last monthly red-team simulation passed | `src/brain/evader-simulator.ts` result: detection rate ≥ 97% | |
-| C6 | Disaggregated precision within tolerance | All entity-type groups within ±3% delta of overall precision | |
-
-### Section D: Risk Management (NIST AI RMF — MANAGE)
-
-| # | Check | Pass Criteria | Status |
-|---|---|---|---|
-| D1 | Audit chain has no gaps | `GET /api/audit/verify` returns ok=true; no broken links / sequence gaps | |
-| D2 | Audit trail viewer is functional | `GET /api/audit/view?screening_id=XXX` returns valid JSON for any recent screening | |
-| D3 | HMAC signatures are verifiable | `GET /api/audit/verify` confirms integrity for last 10 random screenings | |
-| D4 | Incident response playbook is current | Tested in last 90 days via dry-run | |
-| D5 | Data retention policy is enforced | `netlify/functions/retention-scheduler.mts` last ran successfully | |
-| D6 | GDPR/PDPL erasure is functional | `POST /api/compliance/gdpr-erasure` endpoint tested in last 90 days | |
-
-### Section E: Security and Configuration
-
-| # | Check | Pass Criteria | Status |
-|---|---|---|---|
-| E1 | All required env vars are set | `AUDIT_CHAIN_SECRET` (64 hex), `ADMIN_TOKEN`, `ONGOING_RUN_TOKEN`, `SANCTIONS_CRON_TOKEN` — all set in Netlify | |
-| E2 | No secrets in git history | `git log -S "password" -p` returns no credential-looking strings | |
-| E3 | npm audit clean | `npm audit --production` returns 0 critical vulnerabilities | |
-| E4 | All goAML entity IDs are set | No `REPLACE_ME` values in `HAWKEYE_ENTITIES` | |
-| E5 | CSP headers are active | `netlify.toml` CSP header present; `X-Frame-Options: SAMEORIGIN` active | |
-| E6 | All fail-closed endpoints verified | `SANCTIONS_CRON_TOKEN` unset → 503 confirmed; `ADMIN_TOKEN` unset → 503 confirmed | |
-
-### Section F: Human Oversight
-
-| # | Check | Pass Criteria | Status |
-|---|---|---|---|
-| F1 | No STR submitted without MLRO sign-off | goAML submission logs show MLRO approval timestamp for every submission | |
-| F2 | HS-004 (Auto-Dispositioner) PILOT constraints observed | No autonomous actions taken; all dispositions have MLRO override record | |
-| F3 | Confidence ≤ 65% cases always escalated | Sample check: 10 random low-confidence cases all show "ESCALATE" verdict | |
-| F4 | MLRO training is current | Annual AI governance training completed; attendance record on file | |
+- [ ] **Debrief**: MLRO, Legal, and Engineering debrief within 5 business days of inspection completion.
+- [ ] **Findings log**: Document any findings, improvement requests, or follow-up commitments from the inspector.
+- [ ] **Remediation plan**: For any findings, create a remediation plan with committed dates and owners.
+- [ ] **Board notification**: Notify the Board Risk Committee of any material findings within 10 business days.
+- [ ] **Update runbook**: Update this checklist if the inspection revealed gaps in the preparation process.
+- [ ] **CHANGE_CONTROL_LOG entry**: Log any system changes made in response to inspection findings.
 
 ---
 
-## PART 3 — DAY-BY-DAY REGULATOR INSPECTION GUIDE
+## 11. Document Custodian Sign-off
 
-### Day 1 Morning — Documentation Review
-
-**What auditors ask:** "Show us your AI governance framework."
-
-**What to produce (target: < 10 minutes):**
-
-1. Open `docs/governance/AI_GOVERNANCE_POLICY.md` — present signed policy
-2. Open `docs/governance/AI_INVENTORY.md` — show all 5 registered systems
-3. Walk through the risk classification (high-risk, EU AI Act)
-4. Show the compliance charter P1–P10 from `src/policy/systemPrompt.ts`
-
-**What to say:** "We operate Hawkeye Sterling under a board-signed AI Governance Policy, effective [date]. It covers risk classification, risk tolerance, change management, human oversight, and annual recertification. Our MLRO is the designated responsible officer. The governance committee meets weekly."
-
-### Day 1 Afternoon — Model Transparency
-
-**What auditors ask:** "Explain how this system makes decisions."
-
-**What to produce:**
-
-1. Open model card HS-001 — walk through the 10 faculties and 373+ reasoning modes
-2. Show the output structure (7 mandatory sections)
-3. Show match confidence taxonomy (EXACT → NO MATCH)
-4. Run a live demonstration screening and show the reasoning chain in real time
-5. Show the introspection meta-reasoning pass (how the system audits itself)
-
-**Key point to make:** "Every verdict traces every finding to the named reasoning mode that produced it. There is no black box. The MLRO can inspect every step of the reasoning chain for every decision, years after the fact."
-
-### Day 2 Morning — Audit Trail
-
-**What auditors ask:** "Show us your audit trail for the last 30 days."
-
-**What to produce:**
-
-1. Open the AuditTrailViewer panel in the MLRO portal
-2. Query a specific screening by ID — show decision envelope, reasoning chain, HMAC seal
-3. Click "Verify signatures" — show the chain is intact and tamper-evident (calls `GET /api/audit/verify`)
-4. Export a sample screening as JSON or CSV — hand to auditor
-5. Show `GET /api/compliance/soc2-export` for the bulk log
-
-**Key point to make:** "Every screening decision is sealed with HMAC-SHA256 into an append-only chain in Netlify Blobs. The chain can be verified at any time. 10-year retention is enforced under FDL 10/2025 Art. 24."
-
-### Day 2 Afternoon — Performance and Monitoring
-
-**What auditors ask:** "How do you know the system is working correctly?"
-
-**What to produce:**
-
-1. Open the PerformanceMonitoringDashboard — show live Brier score, mode performance, fairness metrics
-2. Open `docs/testing/FAIRNESS_TESTING_RESULTS.md` — walk through disaggregated results
-3. Show drift alert thresholds via `GET /api/mlro/drift-alerts` and explain what fires when
-4. Show the monthly stress-test and red-team simulation results
-5. Show `src/brain/drift-alerts.ts` — explain continuous self-monitoring
-
-**Key point to make:** "We do not deploy and forget. The system monitors its own calibration hourly, runs adversarial simulations monthly, and the governance committee reviews performance data every Friday."
-
-### Day 3 Morning — End-to-End Walk-Through
-
-**What auditors ask:** "Walk us through a single screening decision from start to finish."
-
-**What to produce:**
-
-1. Take a subject name (use a known designated entity from a public list for demonstration)
-2. Submit via the screening interface (Module 01)
-3. Show: sanctions check → PEP check → adverse media → reasoning mode execution → introspection pass → verdict → Asana task created
-4. Open the audit trail for that screening — show the full chain
-5. Show the MLRO disposition process (how the MLRO reviews and approves)
-
-**What to say:** "From submission to MLRO-reviewed verdict takes approximately 45 seconds. The full reasoning chain — every inference, every mode that ran, every piece of evidence considered — is logged and sealed before the MLRO sees the result."
-
-### Day 3 Afternoon — Human Oversight Demonstration
-
-**What auditors ask:** "How do you ensure humans remain in control?"
-
-**What to produce:**
-
-1. Show HS-004 model card — PILOT status, human review mandatory
-2. Show the confidence threshold: ≤ 65% always escalates
-3. Show the goAML submission flow: AI drafts → MLRO reviews → MLRO approves → submission fires
-4. Show the `DispositionButton.tsx` — MLRO must actively approve before any action
-5. Show the STR draft review UI (`StrDraftPreview.tsx`)
-
-**Key point to make:** "No STR is filed, no customer is offboarded, and no asset is frozen without explicit MLRO sign-off. The AI provides evidence and recommendations. Every consequential decision is made by a licensed human professional."
+| Role | Name | Signature | Date |
+|---|---|---|---|
+| **MLRO** | [MLRO Name] | [Signature on file] | 2026-05-06 |
+| **Legal (General Counsel)** | [Legal Name] | [Signature on file] | 2026-05-06 |
+| **CEO** | [CEO Name] | [Signature on file] | 2026-05-06 |
 
 ---
 
-## PART 4 — FREQUENTLY ASKED REGULATOR QUESTIONS
-
-**Q: Can you demonstrate that this system does not produce tipping-off content?**
-A: Yes. The compliance charter (`src/policy/systemPrompt.ts`) contains prohibition P4, which is content-frozen and cannot be overridden. We can demonstrate a test input that attempts to generate tipping-off content and show that the system refuses and proposes a compliant alternative.
-
-**Q: What happens if the system gives a wrong answer?**
-A: The system produces recommendations for MLRO review, not decisions. If the MLRO disagrees with a verdict, they override it and the override is logged to the audit chain. The introspection pass also flags low-confidence results and under-triangulated findings automatically.
-
-**Q: How do you handle data from sanctioned jurisdictions?**
-A: All sanctions lists (UN, OFAC, EU, UK, UAE EOCN, UAE Local Terrorist List) are ingested daily. We screen against all lists simultaneously. The system cannot assert sanctions status unless the designation appears in a currently ingested authoritative list (prohibition P1 in the compliance charter).
-
-**Q: Is this system compliant with UAE FDL 10/2025?**
-A: The system is designed for and operated by a UAE DNFBP. It references FDL 10/2025 throughout. Item #38 (FDL 20/2018 — 10/2025 article crosswalk) is pending legal counsel verification and will be completed by [DATE]. Until complete, the system references both the old and new framework where articles overlap.
-
-**Q: Can we take a copy of your audit trail?**
-A: Yes. `GET /api/compliance/soc2-export` generates a full export. `GET /api/audit/view` exports individual screenings in JSON or CSV. We can provide any date range requested. Legal Counsel will review the export before delivery per our regulator response procedure.
-
----
-
-**Document maintained by:** MLRO
-**Last Updated:** 2026-05-06
-**Next Review:** 2026-08-01
+*Document ID: APC-v1.0.0 | Classification: Strictly Confidential — Regulatory | Review: Semi-annual or immediately following any inspection*

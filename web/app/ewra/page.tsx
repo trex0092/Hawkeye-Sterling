@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import type { EwraBoardReportResult } from "@/app/api/ewra-report/route";
 import type { ThreatIntelResult } from "@/app/api/ewra/threat-intel/route";
-import { exportEwraBoardReport } from "@/lib/pdf/exporters";
+import { openReportWindow } from "@/lib/reportOpen";
 
 // Entity-Wide Risk Assessment (EWRA) / Business-Wide Risk Assessment (BWRA)
 // Required annually under FDL 10/2025 Art.4 and FATF R.1.
@@ -245,13 +245,33 @@ export default function EwraPage() {
           reportingPeriod: new Date().getFullYear().toString(),
           context: `Last approved: ${state.lastApproved || "not recorded"}. Approved by: ${state.approvedBy || "pending"}. Board minutes ref: ${state.boardMinutes || "none"}.`,
         }),
+        signal: AbortSignal.timeout(60_000),
       });
-      const data = (await res.json()) as { ok: boolean; error?: string } & EwraBoardReportResult;
+      // Read body once — Lambda 502 returns HTML; we surface a clean error
+      // rather than the raw "Unexpected token <" parse failure.
+      const raw = await res.text().catch(() => "");
+      const isHtml = raw.trimStart().toLowerCase().startsWith("<");
+      if (!res.ok || isHtml) {
+        setBoardError(
+          res.status === 503
+            ? "Board-report service temporarily unavailable. Set ANTHROPIC_API_KEY on the deployment, or retry in a moment."
+            : isHtml
+              ? `Board-report server returned HTML (HTTP ${res.status}) — likely a Netlify 502 / function timeout. Please retry.`
+              : `Board-report failed (HTTP ${res.status}). Please retry.`,
+        );
+        return;
+      }
+      let data: { ok: boolean; error?: string } & EwraBoardReportResult;
+      try { data = JSON.parse(raw); }
+      catch { setBoardError("Board-report returned a malformed response. Please retry."); return; }
       if (!data.ok) { setBoardError(data.error ?? "Report generation failed"); return; }
       setBoardReport(data);
       setBoardOpen(true);
-    } catch {
-      setBoardError("Network error — try again");
+    } catch (err) {
+      const isTimeout = err instanceof Error && (err.name === "AbortError" || err.name === "TimeoutError");
+      setBoardError(isTimeout
+        ? "Board-report timed out after 60s — please retry."
+        : `Network error — ${err instanceof Error ? err.message : String(err)}.`);
     } finally {
       setBoardLoading(false);
     }
@@ -497,10 +517,11 @@ export default function EwraPage() {
               <div className="flex items-center gap-3">
                 <button
                   type="button"
-                  onClick={() => exportEwraBoardReport(boardReport, state.dimensions)}
-                  className="text-11 font-mono text-brand hover:text-brand/80"
+                  onClick={() => openReportWindow("/api/ewra-board-report", { boardReport, dimensions: state.dimensions })}
+                  className="text-11 font-mono"
+                  style={{ color: "#7c3aed", fontWeight: 600 }}
                 >
-                  ↓ Export PDF
+                  PDF
                 </button>
                 <button
                 type="button"

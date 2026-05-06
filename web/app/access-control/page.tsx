@@ -411,7 +411,7 @@ function UserSidePanel({ user, onClose, onRoleChanged }: SidePanelProps) {
                 disabled={aiLoading}
                 className="px-3 py-1.5 rounded bg-bg-panel border border-brand text-brand text-11 font-mono font-semibold hover:bg-brand/10 transition-colors disabled:opacity-40"
               >
-                {aiLoading ? "Analysing…" : "AI Recommend Role"}
+                {aiLoading ? "Analysing…" : "✦AI"}
               </button>
             </div>
             {aiError && <div className="text-red text-12">{aiError}</div>}
@@ -939,9 +939,9 @@ export default function AccessControlPage() {
             </h2>
             <button
               onClick={() => void fetchLog()}
-              className="px-3 py-1.5 text-11 font-mono border border-hair-2 rounded text-ink-2 hover:text-ink-0 hover:border-ink-2 transition-colors"
+              className="px-2 py-1 text-12 font-mono border border-green/40 rounded text-green bg-green-dim hover:bg-green-dim/70 transition-colors"
             >
-              Refresh
+              ↻
             </button>
           </div>
           <div className="border border-hair-2 rounded-md overflow-hidden">

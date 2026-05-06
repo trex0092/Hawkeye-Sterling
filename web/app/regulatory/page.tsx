@@ -649,9 +649,9 @@ function FeedPanel({
             type="button"
             onClick={onRefresh}
             disabled={status === "loading"}
-            className="font-mono text-10 px-2 py-0.5 rounded border border-hair-2 text-ink-2 hover:bg-bg-2 disabled:opacity-40"
+            className="font-mono text-12 px-2 py-0.5 rounded border border-green/40 text-green bg-green-dim hover:bg-green-dim/70 disabled:opacity-40"
           >
-            refresh
+            ↻
           </button>
         </div>
       </div>
