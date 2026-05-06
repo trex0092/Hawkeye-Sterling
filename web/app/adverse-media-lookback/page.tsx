@@ -369,45 +369,11 @@ export default function AdverseMediaLookbackPage() {
           </p>
         </div>
 
-        {/* Log new entry */}
-        <div className="bg-bg-panel border border-hair-2 rounded-lg p-4 mt-4">
-          <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2 mb-3">
-            Log new finding
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-2">
-            <input value={draft.subject} onChange={set("subject")}
-              placeholder="Subject name" className={inputCls} />
-            <input value={draft.headline} onChange={set("headline")}
-              placeholder="Article headline" className={inputCls} />
-            <input value={draft.source} onChange={set("source")}
-              placeholder="Source (e.g. Reuters)" className={inputCls} />
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-2">
-            <input value={draft.articleDate} onChange={set("articleDate")}
-              placeholder="Article date dd/mm/yyyy" className={inputCls} />
-            <select value={draft.category} onChange={set("category")} className={inputCls}>
-              {Object.entries(CAT_LABELS).map(([k, v]) => (
-                <option key={k} value={k}>{v}</option>
-              ))}
-            </select>
-            <select value={draft.severity} onChange={set("severity")} className={inputCls}>
-              {(["critical", "high", "medium", "low", "clear"] as AmSeverity[]).map((s) => (
-                <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
-              ))}
-            </select>
-            <input value={draft.loggedBy} onChange={set("loggedBy")}
-              placeholder="Logged by (analyst name)" className={inputCls} />
-          </div>
-          <div className="mb-2">
-            <input value={draft.url} onChange={set("url")}
-              placeholder="URL / reference (optional)" className={`${inputCls}`} />
-          </div>
-          <button type="button" onClick={add}
-            disabled={!draft.subject || !draft.headline || !draft.articleDate}
-            className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
-            + Log finding
-          </button>
-        </div>
+        {/* Manual "Log new finding" form removed per operator direction.
+            Findings now flow in automatically from the screening pipeline
+            (searchAllNews + Claude adverse-media adapter + URL ingestion);
+            this page is read-only audit-trail for the rolling 10-year
+            coverage window. */}
 
         {/* Filter */}
         <div className="mt-4 flex gap-2 items-center">
