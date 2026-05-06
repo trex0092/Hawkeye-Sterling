@@ -137,8 +137,8 @@ async function handleGet(req: Request): Promise<NextResponse> {
 
   for (const r of all) {
     const truth = classifyGroundTruth(r.groundTruth);
-    const entityType: string = (r as Record<string, unknown>).entityType as string ?? "unknown";
-    const jurisdiction: string = (r as Record<string, unknown>).jurisdiction as string ?? "unknown";
+    const entityType: string = ((r as unknown) as Record<string, unknown>)["entityType"] as string ?? "unknown";
+    const jurisdiction: string = ((r as unknown) as Record<string, unknown>)["jurisdiction"] as string ?? "unknown";
 
     for (const group of [["entity", entityType, byEntityType], ["juris", jurisdiction, byJurisdiction]] as const) {
       const key = group[1];
@@ -195,7 +195,7 @@ async function handleGet(req: Request): Promise<NextResponse> {
 
   // ── Under-triangulation percentage ───────────────────────────────────────
   const underTriangulated = all.filter((r) => {
-    const sources = (r as Record<string, unknown>).sourcesCount as number | undefined;
+    const sources = ((r as unknown) as Record<string, unknown>)["sourcesCount"] as number | undefined;
     return sources !== undefined ? sources < 3 : false;
   });
   const under_triangulation_pct = all.length > 0 ? underTriangulated.length / all.length : 0;
