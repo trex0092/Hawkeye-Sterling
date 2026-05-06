@@ -89,7 +89,11 @@ export function ScreeningReasoningPanel({ reasoning }: Props): React.ReactElemen
           Reasoning · multi-source consensus
         </h3>
         <span className={`text-10 font-bold uppercase px-2 py-0.5 rounded border ${AGREEMENT_STYLE[c.agreementLevel]}`}>
-          {c.agreementLevel} agreement
+          {c.sourcesFor === 0 && c.sourcesAgainst === 0
+            ? "no positive evidence"
+            : c.sourcesFor > 0
+              ? `${c.agreementLevel} positive`
+              : `${c.agreementLevel} clear`}
         </span>
       </header>
 
@@ -101,14 +105,14 @@ export function ScreeningReasoningPanel({ reasoning }: Props): React.ReactElemen
           <div className="text-11 text-ink-3 mt-1">95% CI [{c.confidence.low}, {c.confidence.high}]</div>
         </div>
         <div className="rounded-md bg-bg-1/60 p-3 border border-white/5">
-          <div className="text-10 uppercase tracking-wide text-ink-3 mb-1">Source vote</div>
+          <div className="text-10 uppercase tracking-wide text-ink-3 mb-1">Evidence</div>
           <div className="text-sm text-ink-1">
-            <span className="text-emerald-300 font-semibold">{c.sourcesFor}</span> for ·{" "}
-            <span className="text-red-300 font-semibold">{c.sourcesAgainst}</span> against ·{" "}
-            <span className="text-zinc-400">{c.sourcesUncertain}</span> uncertain
+            <span className="text-amber-300 font-semibold">{c.sourcesFor}</span> affirming ·{" "}
+            <span className="text-emerald-300 font-semibold">{c.sourcesAgainst}</span> denying ·{" "}
+            <span className="text-zinc-400">{c.sourcesUncertain}</span> no data
           </div>
           <div className="text-11 text-ink-3 mt-1">
-            Weighted: {c.weightedFor.toFixed(2)} vs {c.weightedAgainst.toFixed(2)}
+            Affirming weight: {c.weightedFor.toFixed(2)}
           </div>
         </div>
         <div className="rounded-md bg-bg-1/60 p-3 border border-white/5">

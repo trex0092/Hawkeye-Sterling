@@ -200,24 +200,50 @@ export function multiSourceConsensus(inputs: ConsensusInput[]): ConsensusOutput 
     }
   }
 
-  const fractionFor = weightedTotal > 0 ? weightedFor / weightedTotal : 0;
-  const unified = Math.round(fractionFor * 100);
+  // Unified score is driven by the weighted strength of POSITIVE
+  // evidence relative to a fixed normalising constant (the credibility
+  // weight of a single tier-1 authority = 1.0). This matches the way
+  // a human analyst reasons — one credible affirming source already
+  // takes you past CLEAR; multiple corroborating sources push higher.
+  // Absence of hits (uncertain) does NOT push the score down.
+  const POSITIVE_NORMALISER = 1.5;     // ~ 1.5 tier-1-credibility units = saturation
+  const unified = Math.min(100, Math.round((weightedFor / POSITIVE_NORMALISER) * 100));
 
-  // Wilson 95% CI on the binomial proxy (matches/total counted at full weight).
+  // Wilson 95% CI: only meaningful when we have explicit deny signals.
+  // Otherwise the band is [unified, 100] reflecting "we know the floor,
+  // ceiling is uncertain because absent vendors might surface evidence".
   const n = sourcesFor + sourcesAgainst;
-  const p = n > 0 ? sourcesFor / n : 0;
-  const z = 1.96;
-  const denom = 1 + (z * z) / Math.max(1, n);
-  const center = (p + (z * z) / (2 * Math.max(1, n))) / denom;
-  const margin = (z * Math.sqrt((p * (1 - p)) / Math.max(1, n) + (z * z) / (4 * Math.max(1, n) * Math.max(1, n)))) / denom;
-  const low = Math.max(0, Math.round((center - margin) * 100));
-  const high = Math.min(100, Math.round((center + margin) * 100));
+  let low: number;
+  let high: number;
+  if (n === 0) {
+    low = unified;
+    high = 100;
+  } else {
+    const p = sourcesFor / n;
+    const z = 1.96;
+    const denom = 1 + (z * z) / n;
+    const center = (p + (z * z) / (2 * n)) / denom;
+    const margin = (z * Math.sqrt((p * (1 - p)) / n + (z * z) / (4 * n * n))) / denom;
+    low = Math.max(0, Math.round((center - margin) * 100));
+    high = Math.min(100, Math.round((center + margin) * 100));
+  }
 
   let agreementLevel: ConsensusOutput["agreementLevel"];
-  if (n === 0) agreementLevel = "weak";
-  else if (fractionFor > 0.85 || fractionFor < 0.15) agreementLevel = "strong";
-  else if (fractionFor > 0.65 || fractionFor < 0.35) agreementLevel = "moderate";
-  else agreementLevel = "split";
+  if (sourcesFor === 0 && sourcesAgainst === 0) {
+    // No explicit evidence either way — say so honestly.
+    agreementLevel = "weak";
+  } else if (sourcesFor > 0 && sourcesAgainst === 0) {
+    // Multiple affirming sources, no contradictions
+    agreementLevel = sourcesFor >= 3 ? "strong" : sourcesFor >= 2 ? "moderate" : "weak";
+  } else if (sourcesAgainst > 0 && sourcesFor === 0) {
+    agreementLevel = sourcesAgainst >= 3 ? "strong" : "moderate";
+  } else {
+    // Mixed evidence
+    const fractionFor = sourcesFor / (sourcesFor + sourcesAgainst);
+    if (fractionFor > 0.85 || fractionFor < 0.15) agreementLevel = "strong";
+    else if (fractionFor > 0.65 || fractionFor < 0.35) agreementLevel = "moderate";
+    else agreementLevel = "split";
+  }
 
   return {
     unified,
@@ -395,7 +421,13 @@ export function buildScreeningReasoning(opts: {
   const lines: string[] = [];
   lines.push(`Subject "${opts.subject.name}"${opts.subject.jurisdiction ? ` (${opts.subject.jurisdiction})` : ""} screened against ${opts.coverage.totalConfigured}/${opts.coverage.totalAvailable} configured intelligence sources.`);
   lines.push(`Local watchlist matcher: ${opts.result.hits.length} hit(s); top score ${opts.result.topScore}; severity "${opts.result.severity}".`);
-  lines.push(`Cross-source consensus: ${consensus.sourcesFor} affirming, ${consensus.sourcesAgainst} denying, ${consensus.sourcesUncertain} uncertain (weighted ${consensus.weightedFor.toFixed(2)} vs ${consensus.weightedAgainst.toFixed(2)}). Unified score ${consensus.unified}/100 (95% CI [${consensus.confidence.low},${consensus.confidence.high}]). Agreement: ${consensus.agreementLevel}.`);
+  if (consensus.sourcesFor === 0 && consensus.sourcesAgainst === 0) {
+    lines.push(`Cross-source evidence: no positive hits across ${consensus.sourcesUncertain} consulted sources. Unified score ${consensus.unified}/100. This is the typical CLEAR signature — absence of evidence is documented per FDL Art.19, but does NOT prove absence of risk; review adverse-media articles below before disposing.`);
+  } else if (consensus.sourcesFor > 0) {
+    lines.push(`Cross-source evidence: ${consensus.sourcesFor} affirming source(s) (weighted ${consensus.weightedFor.toFixed(2)}), ${consensus.sourcesAgainst} explicit denial(s), ${consensus.sourcesUncertain} no-data. Unified score ${consensus.unified}/100 (95% CI [${consensus.confidence.low},${consensus.confidence.high}]). Agreement: ${consensus.agreementLevel}.`);
+  } else {
+    lines.push(`Cross-source evidence: ${consensus.sourcesAgainst} explicit denial(s), 0 affirming. Unified score ${consensus.unified}/100. Subject appears CLEAR.`);
+  }
   if (contradictions.length > 0) {
     const critical = contradictions.filter((c) => c.severity === "critical");
     if (critical.length > 0) {
@@ -480,46 +512,65 @@ export function buildConsensusInputsFromAugmentation(a: BuildConsensusInputsArgs
   const consensusInputs: ConsensusInput[] = [];
   const contradictionItems: Array<{ source: string; topic?: string; stance: "affirm" | "deny"; detail?: string }> = [];
 
+  // ── DESIGN NOTE ────────────────────────────────────────────────────
+  // Absence of a sanctions/registry hit is the NORMAL case for the vast
+  // majority of subjects. We don't count it as denying evidence — only
+  // explicit positive hits count toward "match", and absence is logged
+  // as "uncertain" so the consensus engine doesn't flood with anti-
+  // signal that masks real adverse-media findings.
+  //
+  // Only "delisted" (vendor explicitly says subject was previously
+  // listed and was removed) counts as denying.
+
+  // Local watchlist hits → affirming
   for (const h of a.hits) {
     consensusInputs.push({ source: h.listId, evidence: "match", rawScore: h.score });
     contradictionItems.push({ source: h.listId, topic: "sanctions-listing", stance: "affirm", detail: `${h.candidateName} (${h.method})` });
   }
+
+  // OpenSanctions: affirming on hit, uncertain (not denying) on absence
+  consensusInputs.push({
+    source: "opensanctions",
+    evidence: a.openSanctionsCount > 0 ? "match" : "uncertain",
+  });
   if (a.openSanctionsCount > 0) {
-    consensusInputs.push({ source: "opensanctions", evidence: "match" });
     contradictionItems.push({ source: "opensanctions", topic: "sanctions-listing", stance: "affirm", detail: `${a.openSanctionsCount} live result(s)` });
-  } else if (a.openSanctionsCount === 0) {
-    consensusInputs.push({ source: "opensanctions", evidence: "no_match" });
-    contradictionItems.push({ source: "opensanctions", topic: "sanctions-listing", stance: "deny", detail: "no live result" });
   }
 
-  if (a.commercialCount > 0 && a.commercialProvider !== "none") {
-    consensusInputs.push({ source: a.commercialProvider, evidence: "match" });
-    contradictionItems.push({ source: a.commercialProvider, topic: "pep-sanctions-status", stance: "affirm", detail: `${a.commercialCount} hit(s)` });
-  } else if (a.commercialProvider !== "none") {
-    consensusInputs.push({ source: a.commercialProvider, evidence: "no_match" });
-    contradictionItems.push({ source: a.commercialProvider, topic: "pep-sanctions-status", stance: "deny" });
+  // Commercial PEP/sanctions vendor (only when configured)
+  if (a.commercialProvider !== "none") {
+    consensusInputs.push({
+      source: a.commercialProvider,
+      evidence: a.commercialCount > 0 ? "match" : "uncertain",
+    });
+    if (a.commercialCount > 0) {
+      contradictionItems.push({ source: a.commercialProvider, topic: "pep-sanctions-status", stance: "affirm", detail: `${a.commercialCount} hit(s)` });
+    }
   }
 
+  // Registry providers — only emit affirming on hit; absence = uncertain
   for (const p of a.registryProviders) {
-    consensusInputs.push({ source: p, evidence: a.registryCount > 0 ? "match" : "no_match" });
+    consensusInputs.push({ source: p, evidence: a.registryCount > 0 ? "match" : "uncertain" });
   }
   for (const j of a.countryRegistryJurisdictions) {
-    consensusInputs.push({ source: `country-${j.toLowerCase()}`, evidence: a.countryRegistryCount > 0 ? "match" : "no_match" });
+    consensusInputs.push({ source: `country-${j.toLowerCase()}`, evidence: a.countryRegistryCount > 0 ? "match" : "uncertain" });
   }
   for (const l of a.countrySanctionsLists) {
     const src = l.toLowerCase().replace(/_/g, "-");
-    consensusInputs.push({ source: src, evidence: a.countrySanctionsCount > 0 ? "match" : "no_match" });
-    contradictionItems.push({ source: src, topic: "sanctions-listing", stance: a.countrySanctionsCount > 0 ? "affirm" : "deny" });
+    consensusInputs.push({ source: src, evidence: a.countrySanctionsCount > 0 ? "match" : "uncertain" });
+    if (a.countrySanctionsCount > 0) {
+      contradictionItems.push({ source: src, topic: "sanctions-listing", stance: "affirm" });
+    }
   }
   for (const p of a.freeProviders) {
-    consensusInputs.push({ source: p, evidence: a.freeCount > 0 ? "match" : "no_match" });
+    consensusInputs.push({ source: p, evidence: a.freeCount > 0 ? "match" : "uncertain" });
   }
 
-  // Adverse-media articles count as match-evidence — when ANY
-  // article from a credible outlet mentions the subject in an
-  // AML-relevant context, we surface it. World Check's gap is that
-  // it ignores articles unless they're already in its risk-tagged
-  // corpus; we treat the article volume itself as a signal.
+  // Adverse-media articles count as match-evidence — when ANY article
+  // from a credible outlet mentions the subject in an AML-relevant
+  // context, we surface it. World Check's gap is that it ignores
+  // articles unless they're already in its risk-tagged corpus; we
+  // treat the article volume itself as a signal.
   if (a.adverseMediaArticles && a.adverseMediaArticles.length > 0) {
     for (const art of a.adverseMediaArticles.slice(0, 25)) {
       consensusInputs.push({ source: art.source, evidence: "match", rawScore: 70 });
