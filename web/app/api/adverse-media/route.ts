@@ -294,23 +294,19 @@ async function liveAdverseMedia(subject: string) {
   const response = await client.messages.create({
     model: "claude-haiku-4-5-20251001",
     max_tokens: 3000,
-    messages: [
+    system: [
       {
-        role: "user",
-        content: `You are an MLRO adverse-media intelligence system operating for a UAE-regulated financial institution. You have been given REAL live news articles fetched from the GDELT global news corpus (Art.19 FDL 10/2025 — 10-year lookback, anchored to today ${now.slice(0, 10)}).
+        type: "text",
+        text: `You are an MLRO adverse-media intelligence system operating for a UAE-regulated financial institution. You have been given REAL live news articles fetched from the GDELT global news corpus (Art.19 FDL 10/2025 — 10-year lookback).
 
-Subject: "${subject}"
-Live articles retrieved from GDELT (${items.length} total):
-${articleBlock}
-
-CRITICAL INSTRUCTION: Base your assessment SOLELY on the articles listed above. Do NOT use your training knowledge to add, invent, or assume facts not present in the article list. If no articles were found, return riskTier "clear" with zero counts.
+CRITICAL INSTRUCTION: Base your assessment SOLELY on the articles provided by the user. Do NOT use your training knowledge to add, invent, or assume facts not present in the article list. If no articles were found, return riskTier "clear" with zero counts.
 
 Return ONLY valid JSON matching this exact shape (no markdown, no explanation):
 {
-  "subject": "${subject}",
+  "subject": "string",
   "riskTier": "clear|low|medium|high|critical",
   "riskDetail": "one sentence summary citing specific article dates/sources found above",
-  "totalItems": ${items.length},
+  "totalItems": number,
   "adverseItems": number,
   "criticalCount": number,
   "highCount": number,
@@ -341,11 +337,21 @@ Return ONLY valid JSON matching this exact shape (no markdown, no explanation):
   ],
   "fatfRecommendations": ["R.20"],
   "categoryBreakdown": [{"categoryId":"sanctions","displayName":"Sanctions","count":0,"severity":"clear"}],
-  "analysedAt": "${now}",
+  "analysedAt": "ISO timestamp",
   "modesCited": ["mode"],
   "gdeltSource": true,
-  "gdeltArticleCount": ${items.length}
+  "gdeltArticleCount": number
 }`,
+        cache_control: { type: "ephemeral" },
+      },
+    ],
+    messages: [
+      {
+        role: "user",
+        content: `Analyse adverse media for subject: "${subject}"
+GDELT lookback anchored to: ${now.slice(0, 10)}
+Live articles retrieved from GDELT (${items.length} total):
+${articleBlock}`,
       },
     ],
   });

@@ -89,7 +89,7 @@ surface area; none are abandoned.
 | # | Item | Status | Notes |
 |---|------|--------|-------|
 | 34 | Smart model routing | ✅ | `src/integrations/model-router.ts`. |
-| 35 | Anthropic prompt caching tuning | 🟡 | `cache_control` already on every agent endpoint's system prompt. |
+| 35 | Anthropic prompt caching tuning | ✅ | `cache_control: { type: "ephemeral" }` now on all 74 LLM-calling routes. Last 4 gaps (`/api/ai-decision`, `/api/adverse-media-live`, `/api/four-eyes`, `/api/adverse-media`) closed. `ai-decision` split into static-cached + dynamic-learning-context blocks for maximum cache hit rate. |
 | 36 | Batch screening queue | ✅ | `POST /api/agent/batch-screen`. |
 | 37 | Pre-warmed Lambda pool | ✅ | `netlify/functions/warm-pool.mts` — every 4min, pings hot-path routes. |
 
@@ -138,7 +138,7 @@ surface area; none are abandoned.
 | 56 | End-to-end SOC2-ready audit log export | ✅ | `GET /api/compliance/soc2-export`. |
 | 57 | GDPR / right-to-erasure handling | ✅ | `POST /api/compliance/gdpr-erasure`. |
 
-## Items shipped: 56 of 57 (catalogue) + 100 of ~100 wave-3 modes
+## Items shipped: 57 of 57 (catalogue) + 100 of ~100 wave-3 modes
 
 18+ commits, ~13,000+ LoC of real working code (not stubs). All
 100 wave-3 modes wired into `MODE_OVERRIDES` so they take effect
@@ -151,3 +151,10 @@ when the brain runs.
   counsel before bulk citation rewrite is safe.
 
 Each is a real future PR. Pick them up next session in priority order.
+
+## Infrastructure fixes (2026-05-06)
+
+- Installed `web/` npm dependencies (node_modules was absent — caused 43,000+ TS errors)
+- Generated `web/next-env.d.ts` (was missing — caused all JSX type errors)
+- Compiled root `src/` → `dist/` via `npm run build` at repo root (dist was absent — caused all module-not-found errors in routes importing from `dist/src/brain/`)
+- TypeScript typecheck: **zero errors** after all three fixes
