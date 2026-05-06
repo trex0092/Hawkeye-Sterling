@@ -147,7 +147,10 @@ function jsonResp(body: unknown, status = 200): Response {
   });
 }
 
+// Netlify v2 scheduled functions cannot combine `schedule` with a custom
+// `path`. The function is invoked by cron only — there is no need for an
+// HTTP endpoint. Specifying both causes the deploy to fail validation with
+// "scheduled function cannot have a custom path".
 export const config: Config = {
   schedule: '@hourly',
-  path: '/api/internal/audit-config',
 };
