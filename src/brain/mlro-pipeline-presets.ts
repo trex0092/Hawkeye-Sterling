@@ -125,7 +125,7 @@ export const PIPELINE_PRESETS: readonly PipelinePreset[] = [
     when: 'tipping_off_guard fires',
     budgetMs: B(12),
     steps: ['red_team' as MlroModeId, 'reflective' as MlroModeId],
-    primaryAnchors: ['FDL 20/2018 Art.25'],
+    primaryAnchors: ['FDL 10/2025 Art.25'],
   },
   {
     id: 'pp_audit_lookback',

@@ -48,7 +48,7 @@ export const ANCHOR_LIBRARY: AnchorEntry[] = [
     anchors: [
       { citation: 'FATF R.12 INR.12', topic: 'PEP CDD obligations + family/close associate scope', jurisdiction: 'FATF/Global' },
       { citation: 'EU 5AMLD Art.20-23', topic: 'PEP definition + EDD measures + 12-month declassification window', jurisdiction: 'EU' },
-      { citation: 'FDL 20/2018 Art.16(1)(b)', topic: 'PEP enhanced due diligence — UAE statutory mandate', jurisdiction: 'UAE' },
+      { citation: 'FDL 10/2025 Art.16(1)(b)', topic: 'PEP enhanced due diligence — UAE statutory mandate', jurisdiction: 'UAE' },
       { citation: 'Cabinet Decision 10/2019 Art.15', topic: 'PEP EDD operational requirements + senior-management approval', jurisdiction: 'UAE' },
       { citation: 'MLR 2017 Reg.35', topic: 'UK domestic + foreign PEP CDD measures', jurisdiction: 'UK' },
     ],
@@ -58,7 +58,7 @@ export const ANCHOR_LIBRARY: AnchorEntry[] = [
     anchors: [
       { citation: 'FATF R.10 INR.10(b)', topic: 'EDD trigger conditions and measures', jurisdiction: 'FATF/Global' },
       { citation: 'EU 5AMLD Art.18-18a', topic: 'High-risk-third-country EDD + PEP EDD', jurisdiction: 'EU' },
-      { citation: 'FDL 20/2018 Art.16', topic: 'UAE EDD statutory requirements', jurisdiction: 'UAE' },
+      { citation: 'FDL 10/2025 Art.16', topic: 'UAE EDD statutory requirements', jurisdiction: 'UAE' },
       { citation: 'Cabinet Decision 10/2019 Art.6', topic: 'UAE EDD operational measures', jurisdiction: 'UAE' },
     ],
   },
@@ -67,7 +67,7 @@ export const ANCHOR_LIBRARY: AnchorEntry[] = [
     anchors: [
       { citation: 'FATF R.10', topic: 'CDD core obligations', jurisdiction: 'FATF/Global' },
       { citation: 'EU 4AMLD Art.13', topic: 'EU CDD identification + verification + ongoing monitoring', jurisdiction: 'EU' },
-      { citation: 'FDL 20/2018 Art.15', topic: 'UAE CDD statutory mandate', jurisdiction: 'UAE' },
+      { citation: 'FDL 10/2025 Art.15', topic: 'UAE CDD statutory mandate', jurisdiction: 'UAE' },
       { citation: 'Cabinet Decision 10/2019 Art.5', topic: 'UAE CDD operational requirements', jurisdiction: 'UAE' },
       { citation: 'MLR 2017 Reg.27-28', topic: 'UK CDD obligations + simplified CDD scope', jurisdiction: 'UK' },
     ],
@@ -76,8 +76,8 @@ export const ANCHOR_LIBRARY: AnchorEntry[] = [
     keywords: ['str', 'sar', 'suspicious transaction', 'suspicious activity'],
     anchors: [
       { citation: 'FATF R.20', topic: 'STR filing trigger and timing', jurisdiction: 'FATF/Global' },
-      { citation: 'FDL 20/2018 Art.15(4)', topic: 'UAE STR filing obligation to FIU', jurisdiction: 'UAE' },
-      { citation: 'FDL 20/2018 Art.26-27', topic: 'UAE STR filing deadlines + content requirements', jurisdiction: 'UAE' },
+      { citation: 'FDL 10/2025 Art.15(4)', topic: 'UAE STR filing obligation to FIU', jurisdiction: 'UAE' },
+      { citation: 'FDL 10/2025 Art.26-27', topic: 'UAE STR filing deadlines + content requirements', jurisdiction: 'UAE' },
       { citation: 'BSA 31 USC §5318(g)', topic: 'US SAR filing under the Bank Secrecy Act', jurisdiction: 'US' },
       { citation: 'POCA 2002 s.330', topic: 'UK regulated-sector SAR obligation', jurisdiction: 'UK' },
     ],
@@ -85,7 +85,7 @@ export const ANCHOR_LIBRARY: AnchorEntry[] = [
   {
     keywords: ['tipping-off', 'tipping off', 'disclosure'],
     anchors: [
-      { citation: 'FDL 20/2018 Art.29', topic: 'UAE tipping-off prohibition', jurisdiction: 'UAE' },
+      { citation: 'FDL 10/2025 Art.29', topic: 'UAE tipping-off prohibition', jurisdiction: 'UAE' },
       { citation: 'EU 4AMLD Art.39', topic: 'EU tipping-off prohibition', jurisdiction: 'EU' },
       { citation: 'POCA 2002 s.333A', topic: 'UK tipping-off offence', jurisdiction: 'UK' },
     ],
@@ -125,7 +125,7 @@ export const ANCHOR_LIBRARY: AnchorEntry[] = [
     anchors: [
       { citation: 'FATF R.22-23', topic: 'DNFBP CDD + STR obligations (incl. dealers in precious metals/stones)', jurisdiction: 'FATF/Global' },
       { citation: 'MoE Circular 08/2021', topic: 'UAE DPMS cash-transaction reporting threshold (AED 55,000)', jurisdiction: 'UAE' },
-      { citation: 'FDL 20/2018 Art.4', topic: 'UAE DNFBP scope incl. dealers in precious metals/stones', jurisdiction: 'UAE' },
+      { citation: 'FDL 10/2025 Art.4', topic: 'UAE DNFBP scope incl. dealers in precious metals/stones', jurisdiction: 'UAE' },
       { citation: 'OECD Due Diligence Guidance', topic: 'Responsible supply chain due diligence for gold', jurisdiction: 'FATF/Global' },
       { citation: 'LBMA Responsible Gold Guidance', topic: 'Industry-standard gold-supply-chain due diligence', jurisdiction: 'FATF/Global' },
     ],
@@ -134,7 +134,7 @@ export const ANCHOR_LIBRARY: AnchorEntry[] = [
     keywords: ['record', 'retention', 'recordkeeping', 'record-keeping'],
     anchors: [
       { citation: 'FATF R.11', topic: 'Five-year record-retention requirement', jurisdiction: 'FATF/Global' },
-      { citation: 'FDL 20/2018 Art.16(3)', topic: 'UAE 5-year record retention (extended to 10y under FDL 10/2025)', jurisdiction: 'UAE' },
+      { citation: 'FDL 10/2025 Art.24(1)', topic: 'UAE 10-year record retention (updated from FDL 20/2018 Art.16(3) via crosswalk)', jurisdiction: 'UAE' },
       { citation: 'EU 4AMLD Art.40', topic: 'EU 5-year retention (extendable to 10y)', jurisdiction: 'EU' },
     ],
   },
