@@ -775,6 +775,83 @@ function hyperVergeAdapter(): KycVendorAdapter {
   };
 }
 
+// ── 6 more KYC vendors (22 → 28) ─────────────────────────────────────────
+function ekataAdapter(): KycVendorAdapter {
+  const key = process.env["EKATA_API_KEY"];
+  if (!key) return NULL_KYC_ADAPTER;
+  return { isAvailable: () => true, createCheck: async (req) => {
+    try {
+      const res = await abortable(fetch("https://api.ekata.com/3.0/identity_check", { method: "POST", headers: { Authorization: `Bearer ${key}`, "content-type": "application/json", accept: "application/json" }, body: JSON.stringify({ name: req.subjectName, email: req.email, phone: req.phone, country_code: req.countryCode }) }));
+      if (!res.ok) return { ok: false, provider: "ekata", error: `lookup failed (${res.status})` };
+      const json = (await res.json()) as { id?: string; identity_check_score?: number };
+      const status: KycCheckResult["status"] = (json.identity_check_score ?? 0) > 700 ? "approved" : (json.identity_check_score ?? 0) < 300 ? "declined" : "review";
+      return { ok: true, provider: "ekata", sessionId: json.id, status };
+    } catch (err) { return { ok: false, provider: "ekata", error: err instanceof Error ? err.message : String(err) }; }
+  }};
+}
+function fourthlineAdapter(): KycVendorAdapter {
+  const key = process.env["FOURTHLINE_API_KEY"];
+  if (!key) return NULL_KYC_ADAPTER;
+  return { isAvailable: () => true, createCheck: async (req) => {
+    try {
+      const [first, ...rest] = req.subjectName.split(/\s+/);
+      const res = await abortable(fetch("https://api.fourthline.com/v3/identifications", { method: "POST", headers: { "x-api-key": key, "content-type": "application/json", accept: "application/json" }, body: JSON.stringify({ firstName: first, lastName: rest.join(" "), email: req.email, country: req.countryCode }) }));
+      if (!res.ok) return { ok: false, provider: "fourthline", error: `start failed (${res.status})` };
+      const j = (await res.json()) as { id?: string; sessionUrl?: string };
+      return { ok: true, provider: "fourthline", sessionId: j.id, redirectUrl: j.sessionUrl, status: "pending" };
+    } catch (err) { return { ok: false, provider: "fourthline", error: err instanceof Error ? err.message : String(err) }; }
+  }};
+}
+function microblinkAdapter(): KycVendorAdapter {
+  const key = process.env["MICROBLINK_API_KEY"];
+  if (!key) return NULL_KYC_ADAPTER;
+  return { isAvailable: () => true, createCheck: async (req) => {
+    try {
+      const res = await abortable(fetch("https://api.microblink.com/v1/sessions", { method: "POST", headers: { Authorization: `Bearer ${key}`, "content-type": "application/json", accept: "application/json" }, body: JSON.stringify({ name: req.subjectName, country: req.countryCode }) }));
+      if (!res.ok) return { ok: false, provider: "microblink", error: `session failed (${res.status})` };
+      const j = (await res.json()) as { sessionId?: string; sessionUrl?: string };
+      return { ok: true, provider: "microblink", sessionId: j.sessionId, redirectUrl: j.sessionUrl, status: "pending" };
+    } catch (err) { return { ok: false, provider: "microblink", error: err instanceof Error ? err.message : String(err) }; }
+  }};
+}
+function regulaAdapter(): KycVendorAdapter {
+  const key = process.env["REGULA_API_KEY"];
+  if (!key) return NULL_KYC_ADAPTER;
+  return { isAvailable: () => true, createCheck: async (req) => {
+    try {
+      const res = await abortable(fetch("https://api.regulaforensics.com/v1/process", { method: "POST", headers: { Authorization: `Bearer ${key}`, "content-type": "application/json", accept: "application/json" }, body: JSON.stringify({ subjectName: req.subjectName, country: req.countryCode }) }));
+      if (!res.ok) return { ok: false, provider: "regula", error: `process failed (${res.status})` };
+      const j = (await res.json()) as { transactionId?: string; status?: string };
+      const status: KycCheckResult["status"] = j.status === "approved" ? "approved" : j.status === "declined" ? "declined" : "pending";
+      return { ok: true, provider: "regula", sessionId: j.transactionId, status };
+    } catch (err) { return { ok: false, provider: "regula", error: err instanceof Error ? err.message : String(err) }; }
+  }};
+}
+function veridasAdapter(): KycVendorAdapter {
+  const key = process.env["VERIDAS_API_KEY"];
+  if (!key) return NULL_KYC_ADAPTER;
+  return { isAvailable: () => true, createCheck: async (req) => {
+    try {
+      const res = await abortable(fetch("https://api.veridas.com/v1/onboarding/sessions", { method: "POST", headers: { Authorization: `Bearer ${key}`, "content-type": "application/json", accept: "application/json" }, body: JSON.stringify({ user: { name: req.subjectName, email: req.email, country: req.countryCode } }) }));
+      if (!res.ok) return { ok: false, provider: "veridas", error: `session failed (${res.status})` };
+      const j = (await res.json()) as { id?: string; url?: string };
+      return { ok: true, provider: "veridas", sessionId: j.id, redirectUrl: j.url, status: "pending" };
+    } catch (err) { return { ok: false, provider: "veridas", error: err instanceof Error ? err.message : String(err) }; }
+  }};
+}
+function passbaseAdapter(): KycVendorAdapter {
+  const key = process.env["PASSBASE_API_KEY"];
+  if (!key) return NULL_KYC_ADAPTER;
+  return { isAvailable: () => true, createCheck: async (req) => {
+    try {
+      const res = await abortable(fetch("https://api.passbase.com/verification/v1/identities", { method: "POST", headers: { "X-API-KEY": key, "content-type": "application/json", accept: "application/json" }, body: JSON.stringify({ external_user_id: `hs-${Date.now()}`, name: req.subjectName, country: req.countryCode }) }));
+      if (!res.ok) return { ok: false, provider: "passbase", error: `start failed (${res.status})` };
+      const j = (await res.json()) as { id?: string; redirect_url?: string };
+      return { ok: true, provider: "passbase", sessionId: j.id, redirectUrl: j.redirect_url, status: "pending" };
+    } catch (err) { return { ok: false, provider: "passbase", error: err instanceof Error ? err.message : String(err) }; }
+  }};
+}
+
 // ── Aggregator ────────────────────────────────────────────────────────
 export function activeKycAdapters(): KycVendorAdapter[] {
   return [
@@ -800,6 +877,12 @@ export function activeKycAdapters(): KycVendorAdapter[] {
     threatMetrixAdapter(),
     siftAdapter(),
     hyperVergeAdapter(),
+    ekataAdapter(),
+    fourthlineAdapter(),
+    microblinkAdapter(),
+    regulaAdapter(),
+    veridasAdapter(),
+    passbaseAdapter(),
   ].filter((a) => a.isAvailable());
 }
 

@@ -686,6 +686,79 @@ function refinitivWorkspaceAdapter(): RegistryAdapter {
   };
 }
 
+// ── 6 more registry adapters (16 → 22) ──────────────────────────────────
+function altaresDnbAdapter(): RegistryAdapter {
+  const key = process.env["ALTARES_DNB_API_KEY"];
+  if (!key) return NULL_REGISTRY_ADAPTER;
+  return { isAvailable: () => true, search: async (name, opts) => {
+    try {
+      const res = await abortable(fetch(`https://api.altares.com/v1/companies/search?name=${encodeURIComponent(name)}&limit=${opts?.limit ?? 25}`, { headers: { Authorization: `Bearer ${key}`, accept: "application/json" }}));
+      if (!res.ok) return [];
+      const j = (await res.json()) as { results?: Array<{ name?: string; duns?: string; country?: string; status?: string; foundedYear?: string }> };
+      return (j.results ?? []).filter((r) => r.name).map((r) => ({ source: "altares-dnb", name: r.name!, ...(r.country ? { jurisdiction: r.country } : {}), ...(r.duns ? { registrationNumber: `DUNS-${r.duns}` } : {}), ...(r.status ? { status: r.status } : {}), ...(r.foundedYear ? { incorporationDate: r.foundedYear } : {}) } satisfies RegistryRecord));
+    } catch (err) { console.warn("[altares-dnb] failed:", err instanceof Error ? err.message : err); return []; }
+  }};
+}
+function infogreffeAdapter(): RegistryAdapter {
+  const key = process.env["INFOGREFFE_API_KEY"];
+  if (!key) return NULL_REGISTRY_ADAPTER;
+  return { isAvailable: () => true, search: async (name, opts) => {
+    try {
+      const res = await abortable(fetch(`https://api.infogreffe.fr/v1/entreprises?nom=${encodeURIComponent(name)}&max=${opts?.limit ?? 25}`, { headers: { Authorization: `Bearer ${key}`, accept: "application/json" }}));
+      if (!res.ok) return [];
+      const j = (await res.json()) as { entreprises?: Array<{ denomination?: string; siren?: string; statut?: string; dateCreation?: string }> };
+      return (j.entreprises ?? []).filter((e) => e.denomination).map((e) => ({ source: "infogreffe", name: e.denomination!, jurisdiction: "FR", ...(e.siren ? { registrationNumber: e.siren } : {}), ...(e.statut ? { status: e.statut } : {}), ...(e.dateCreation ? { incorporationDate: e.dateCreation } : {}) } satisfies RegistryRecord));
+    } catch (err) { console.warn("[infogreffe] failed:", err instanceof Error ? err.message : err); return []; }
+  }};
+}
+function creditSafeAdapter(): RegistryAdapter {
+  const key = process.env["CREDITSAFE_API_KEY"];
+  if (!key) return NULL_REGISTRY_ADAPTER;
+  return { isAvailable: () => true, search: async (name, opts) => {
+    try {
+      const res = await abortable(fetch(`https://api.creditsafe.com/v1/companies?name=${encodeURIComponent(name)}&pageSize=${opts?.limit ?? 25}${opts?.jurisdiction ? `&countries=${opts.jurisdiction}` : ""}`, { headers: { Authorization: `Bearer ${key}`, accept: "application/json" }}));
+      if (!res.ok) return [];
+      const j = (await res.json()) as { companies?: Array<{ name?: string; country?: string; companyNumber?: string; status?: string; dateOfLatestAccounts?: string }> };
+      return (j.companies ?? []).filter((c) => c.name).map((c) => ({ source: "creditsafe", name: c.name!, ...(c.country ? { jurisdiction: c.country } : {}), ...(c.companyNumber ? { registrationNumber: c.companyNumber } : {}), ...(c.status ? { status: c.status } : {}), ...(c.dateOfLatestAccounts ? { incorporationDate: c.dateOfLatestAccounts } : {}) } satisfies RegistryRecord));
+    } catch (err) { console.warn("[creditsafe] failed:", err instanceof Error ? err.message : err); return []; }
+  }};
+}
+function veridusAdapter(): RegistryAdapter {
+  const key = process.env["VERIDUS_API_KEY"];
+  if (!key) return NULL_REGISTRY_ADAPTER;
+  return { isAvailable: () => true, search: async (name, opts) => {
+    try {
+      const res = await abortable(fetch(`https://api.veridus.com/v1/companies/search?q=${encodeURIComponent(name)}&max=${opts?.limit ?? 25}`, { headers: { "x-api-key": key, accept: "application/json" }}));
+      if (!res.ok) return [];
+      const j = (await res.json()) as { results?: Array<{ name?: string; country?: string; id?: string; status?: string }> };
+      return (j.results ?? []).filter((r) => r.name).map((r) => ({ source: "veridus", name: r.name!, ...(r.country ? { jurisdiction: r.country } : {}), ...(r.id ? { registrationNumber: r.id } : {}), ...(r.status ? { status: r.status } : {}) } satisfies RegistryRecord));
+    } catch (err) { console.warn("[veridus] failed:", err instanceof Error ? err.message : err); return []; }
+  }};
+}
+function corpwatchAdapter(): RegistryAdapter {
+  if (!flagOn("icij-offshore-leaks") && !process.env["CORPWATCH_ENABLED"]) return NULL_REGISTRY_ADAPTER;
+  return { isAvailable: () => true, search: async (name, opts) => {
+    try {
+      const res = await abortable(fetch(`http://api.corpwatch.org/companies.json?company_name=${encodeURIComponent(name)}&limit=${opts?.limit ?? 25}`));
+      if (!res.ok) return [];
+      const j = (await res.json()) as { result?: { companies?: Array<{ company_name?: string; cik?: string; country_code?: string; sic_code?: string }> } };
+      return (j.result?.companies ?? []).filter((c) => c.company_name).map((c) => ({ source: "corpwatch", name: c.company_name!, ...(c.country_code ? { jurisdiction: c.country_code } : {}), ...(c.cik ? { registrationNumber: `CIK-${c.cik}` } : {}), ...(c.sic_code ? { status: `SIC-${c.sic_code}` } : {}) } satisfies RegistryRecord));
+    } catch (err) { console.warn("[corpwatch] failed:", err instanceof Error ? err.message : err); return []; }
+  }};
+}
+function dataAxleAdapter(): RegistryAdapter {
+  const key = process.env["DATA_AXLE_API_KEY"];
+  if (!key) return NULL_REGISTRY_ADAPTER;
+  return { isAvailable: () => true, search: async (name, opts) => {
+    try {
+      const res = await abortable(fetch(`https://api.data-axle.com/v1/companies/search?q=${encodeURIComponent(name)}&limit=${opts?.limit ?? 25}`, { headers: { "x-api-key": key, accept: "application/json" }}));
+      if (!res.ok) return [];
+      const j = (await res.json()) as { items?: Array<{ name?: string; address_country?: string; usdot_number?: string; year_started?: string }> };
+      return (j.items ?? []).filter((i) => i.name).map((i) => ({ source: "data-axle", name: i.name!, ...(i.address_country ? { jurisdiction: i.address_country } : {}), ...(i.usdot_number ? { registrationNumber: i.usdot_number } : {}), ...(i.year_started ? { incorporationDate: i.year_started } : {}) } satisfies RegistryRecord));
+    } catch (err) { console.warn("[data-axle] failed:", err instanceof Error ? err.message : err); return []; }
+  }};
+}
+
 // ── Aggregator ────────────────────────────────────────────────────────
 export function activeRegistryAdapters(): RegistryAdapter[] {
   return [
@@ -705,6 +778,12 @@ export function activeRegistryAdapters(): RegistryAdapter[] {
     boardExAdapter(),
     mergentAdapter(),
     refinitivWorkspaceAdapter(),
+    altaresDnbAdapter(),
+    infogreffeAdapter(),
+    creditSafeAdapter(),
+    veridusAdapter(),
+    corpwatchAdapter(),
+    dataAxleAdapter(),
   ].filter((a) => a.isAvailable());
 }
 

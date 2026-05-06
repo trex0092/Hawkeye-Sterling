@@ -392,12 +392,63 @@ function anChainAdapter(): OnChainAdapter {
   };
 }
 
+// ── 4 more on-chain analytics vendors (8 → 12) ─────────────────────────
+function ciphertraceAdapter(): OnChainAdapter {
+  const key = process.env["CIPHERTRACE_API_KEY"];
+  if (!key) return NULL_ONCHAIN_ADAPTER;
+  return { isAvailable: () => true, analyse: async (address, chain) => {
+    try {
+      const res = await abortable(fetch(`https://api.ciphertrace.com/v1/risk?asset=${chain}&address=${encodeURIComponent(address)}`, { headers: { Authorization: `Bearer ${key}`, accept: "application/json" }}));
+      if (!res.ok) return null;
+      const j = (await res.json()) as { riskScore?: number; entityName?: string; analysis?: string };
+      return { address, riskScore: j.riskScore ?? 0, ...(j.entityName ? { cluster: j.entityName } : {}), exposureSummary: j.analysis ?? "Ciphertrace baseline analysis" };
+    } catch (err) { console.warn("[ciphertrace] failed:", err instanceof Error ? err.message : err); return null; }
+  }};
+}
+function lukkaAdapter(): OnChainAdapter {
+  const key = process.env["LUKKA_API_KEY"];
+  if (!key) return NULL_ONCHAIN_ADAPTER;
+  return { isAvailable: () => true, analyse: async (address, chain) => {
+    try {
+      const res = await abortable(fetch(`https://api.lukka.tech/v1/blockchain/${encodeURIComponent(chain)}/address/${encodeURIComponent(address)}`, { headers: { "x-api-key": key, accept: "application/json" }}));
+      if (!res.ok) return null;
+      const j = (await res.json()) as { risk?: { score?: number; entity?: string; summary?: string } };
+      return { address, riskScore: j.risk?.score ?? 0, ...(j.risk?.entity ? { cluster: j.risk.entity } : {}), exposureSummary: j.risk?.summary ?? "Lukka baseline analysis" };
+    } catch (err) { console.warn("[lukka] failed:", err instanceof Error ? err.message : err); return null; }
+  }};
+}
+function solidusLabsAdapter(): OnChainAdapter {
+  const key = process.env["SOLIDUS_LABS_API_KEY"];
+  if (!key) return NULL_ONCHAIN_ADAPTER;
+  return { isAvailable: () => true, analyse: async (address, chain) => {
+    try {
+      const res = await abortable(fetch("https://api.soliduslabs.com/v1/risk-rating", { method: "POST", headers: { "x-api-key": key, "content-type": "application/json", accept: "application/json" }, body: JSON.stringify({ address, chain }) }));
+      if (!res.ok) return null;
+      const j = (await res.json()) as { rating?: number; entity?: string; reason?: string };
+      return { address, riskScore: j.rating ?? 0, ...(j.entity ? { cluster: j.entity } : {}), exposureSummary: j.reason ?? "Solidus Labs baseline analysis" };
+    } catch (err) { console.warn("[solidus-labs] failed:", err instanceof Error ? err.message : err); return null; }
+  }};
+}
+function blockTraceAdapter(): OnChainAdapter {
+  const key = process.env["BLOCKTRACE_API_KEY"];
+  if (!key) return NULL_ONCHAIN_ADAPTER;
+  return { isAvailable: () => true, analyse: async (address, chain) => {
+    try {
+      const res = await abortable(fetch(`https://api.blocktrace.com/v1/wallet?address=${encodeURIComponent(address)}&chain=${encodeURIComponent(chain)}`, { headers: { Authorization: `Bearer ${key}`, accept: "application/json" }}));
+      if (!res.ok) return null;
+      const j = (await res.json()) as { score?: number; cluster?: string; summary?: string };
+      return { address, riskScore: j.score ?? 0, ...(j.cluster ? { cluster: j.cluster } : {}), exposureSummary: j.summary ?? "BlockTrace baseline analysis" };
+    } catch (err) { console.warn("[blocktrace] failed:", err instanceof Error ? err.message : err); return null; }
+  }};
+}
+
 /** Returns the first available on-chain adapter, in priority order. */
 export function bestOnChainAdapter(): OnChainAdapter {
   const candidates = [
     chainalysisAdapter(), trmAdapter(), ellipticAdapter(),
     crystalAdapter(), coinfirmAdapter(), merkleScienceAdapter(),
     scorechainAdapter(), anChainAdapter(),
+    ciphertraceAdapter(), lukkaAdapter(), solidusLabsAdapter(), blockTraceAdapter(),
   ];
   for (const c of candidates) if (c.isAvailable()) return c;
   return NULL_ONCHAIN_ADAPTER;
@@ -405,7 +456,8 @@ export function bestOnChainAdapter(): OnChainAdapter {
 
 export type OnChainProvider =
   | "chainalysis" | "trm" | "elliptic" | "crystal" | "coinfirm"
-  | "merklescience" | "scorechain" | "anchain" | "none";
+  | "merklescience" | "scorechain" | "anchain"
+  | "ciphertrace" | "lukka" | "solidus-labs" | "blocktrace" | "none";
 
 export function activeOnChainProvider(): OnChainProvider {
   if (process.env["CHAINALYSIS_API_KEY"]) return "chainalysis";
@@ -416,6 +468,10 @@ export function activeOnChainProvider(): OnChainProvider {
   if (process.env["MERKLESCIENCE_API_KEY"]) return "merklescience";
   if (process.env["SCORECHAIN_API_KEY"]) return "scorechain";
   if (process.env["ANCHAIN_API_KEY"]) return "anchain";
+  if (process.env["CIPHERTRACE_API_KEY"]) return "ciphertrace";
+  if (process.env["LUKKA_API_KEY"]) return "lukka";
+  if (process.env["SOLIDUS_LABS_API_KEY"]) return "solidus-labs";
+  if (process.env["BLOCKTRACE_API_KEY"]) return "blocktrace";
   return "none";
 }
 
@@ -425,6 +481,8 @@ export function activeOnChainProviders(): OnChainProvider[] {
     ["ELLIPTIC_API_KEY", "elliptic"], ["CRYSTAL_API_KEY", "crystal"],
     ["COINFIRM_API_KEY", "coinfirm"], ["MERKLESCIENCE_API_KEY", "merklescience"],
     ["SCORECHAIN_API_KEY", "scorechain"], ["ANCHAIN_API_KEY", "anchain"],
+    ["CIPHERTRACE_API_KEY", "ciphertrace"], ["LUKKA_API_KEY", "lukka"],
+    ["SOLIDUS_LABS_API_KEY", "solidus-labs"], ["BLOCKTRACE_API_KEY", "blocktrace"],
   ];
   return checks.filter(([k]) => !!process.env[k]).map(([, n]) => n);
 }
