@@ -3,8 +3,11 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 import { USERS, PERMISSION_LOG } from "../_store";
+import { adminAuth } from "@/lib/server/admin-auth";
 
 export async function POST(req: Request) {
+  const deny = adminAuth(req);
+  if (deny) return deny;
   let body: { userId: string; reason: string; revokedBy?: string };
   try {
     body = (await req.json()) as typeof body;

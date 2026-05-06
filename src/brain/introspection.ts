@@ -16,6 +16,9 @@ import type {
 export interface IntrospectOptions {
   conflicts: FindingConflict[];
   firepower: CognitiveFirepower;
+  /** Used for Over-confidence-on-zero-score check (meta-check #3). */
+  aggregateScore?: number;
+  aggregateConfidence?: number;
 }
 
 export function introspect(findings: Finding[], opts: IntrospectOptions): IntrospectionReport {
@@ -80,6 +83,52 @@ export function introspect(findings: Finding[], opts: IntrospectOptions): Intros
   else if (chainQuality <= 0.4) confidenceAdjustment = -0.05 - 0.15 * (0.4 - chainQuality) / 0.4;
   confidenceAdjustment = Math.max(-0.2, Math.min(0.2, confidenceAdjustment));
 
+  // ── Four mandatory meta-checks (HS-GOV-001 Part 5) ──────────────────────
+  const metaCheckWarnings: string[] = [];
+
+  // MC-1: Cross-category contradiction — same category has both clear and non-clear verdict.
+  const byCategory = new Map<string, { hasClear: boolean; hasNonClear: boolean }>();
+  for (const f of contributors) {
+    const entry = byCategory.get(f.category) ?? { hasClear: false, hasNonClear: false };
+    if (f.verdict === 'clear') entry.hasClear = true;
+    else entry.hasNonClear = true;
+    byCategory.set(f.category, entry);
+  }
+  for (const [cat, entry] of byCategory) {
+    if (entry.hasClear && entry.hasNonClear) {
+      metaCheckWarnings.push(`MC-1:cross_category_contradiction:category=${cat}`);
+    }
+  }
+
+  // MC-2: Under-triangulation — fewer than 3 distinct faculties engaged on substantive evidence.
+  const activeFaculties = new Set<string>();
+  for (const f of contributors) {
+    if (f.score > 0) {
+      for (const fac of f.faculties) activeFaculties.add(fac);
+    }
+  }
+  if (activeFaculties.size < 3) {
+    metaCheckWarnings.push(`MC-2:under_triangulation:active_faculties=${activeFaculties.size}`);
+  }
+
+  // MC-3: Over-confidence on zero score — tight high-confidence clear when aggregate score is 0.
+  const aggScore = opts.aggregateScore ?? 0;
+  const aggConf = opts.aggregateConfidence ?? 0;
+  if (aggScore === 0 && aggConf > 0.8) {
+    metaCheckWarnings.push(`MC-3:overconfidence_on_zero_score:confidence=${aggConf.toFixed(2)}`);
+  }
+
+  // MC-4: Calibration collapse — σ of finding confidences < 0.05.
+  if (contributors.length >= 2) {
+    const confs = contributors.map((f) => f.confidence);
+    const mean = confs.reduce((s, c) => s + c, 0) / confs.length;
+    const variance = confs.reduce((s, c) => s + (c - mean) ** 2, 0) / confs.length;
+    const sigma = Math.sqrt(variance);
+    if (sigma < 0.05) {
+      metaCheckWarnings.push(`MC-4:calibration_collapse:sigma=${sigma.toFixed(4)}`);
+    }
+  }
+
   const notes: string[] = [
     `meta_pass_rate=${(metaPassRate * 100).toFixed(0)}%`,
     `firepower=${opts.firepower.firepowerScore.toFixed(2)}`,
@@ -90,6 +139,7 @@ export function introspect(findings: Finding[], opts: IntrospectOptions): Intros
   ];
   if (biasesDetected.length > 0) notes.push(`biases:${biasesDetected.join(',')}`);
   for (const g of coverageGaps) notes.push(g);
+  for (const w of metaCheckWarnings) notes.push(w);
 
   return {
     chainQuality,
@@ -99,6 +149,7 @@ export function introspect(findings: Finding[], opts: IntrospectOptions): Intros
     confidenceAdjustment,
     notes,
     producedAt: Date.now(),
+    metaCheckWarnings,
   };
 }
 

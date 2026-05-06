@@ -34,6 +34,10 @@ const RX_CLEARED = /\b(CLEARED|APPROVED|PROCEED)\b/i;
 const RX_REFER_AUTHORITY = /\b(REFER[_ ]TO[_ ]AUTHORITY|COMPETENT[_ ]AUTHORITY)\b/i;
 
 export function proposeDisposition(input: AutoDispositionInput): AutoDispositionProposal {
+  return escalateIfLowConfidence(_proposeDisposition(input));
+}
+
+function _proposeDisposition(input: AutoDispositionInput): AutoDispositionProposal {
   const flags: string[] = [];
 
   // Hard redline — tipping-off draft detected → block everything, suggest
@@ -196,4 +200,16 @@ export function proposeDisposition(input: AutoDispositionInput): AutoDisposition
     rationale: 'No strong signal detected either way. Default to EDD to collect further evidence before the MLRO dispositions.',
     flags,
   };
+}
+
+// HS-004 hard constraint (Part 13, Prohibition #11):
+// Any proposal with confidence ≤ 0.65 must prepend "ESCALATE — human review required".
+function escalateIfLowConfidence(proposal: AutoDispositionProposal): AutoDispositionProposal {
+  if (proposal.confidence <= 0.65) {
+    return {
+      ...proposal,
+      rationale: `ESCALATE — human review required. ${proposal.rationale}`,
+    };
+  }
+  return proposal;
 }

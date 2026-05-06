@@ -35,6 +35,9 @@ export interface ApiKeyRecord {
   // optimistic lock — Netlify Blobs has no CAS, so quota enforcement
   // is a best-effort soft limit under high concurrency).
   _version?: number;
+  // Optional role for role-based access control on sensitive endpoints
+  // (e.g. 'mlro' required for disposition recording per Cabinet Res 134/2025).
+  role?: string;
 }
 
 export interface IssuedKey {

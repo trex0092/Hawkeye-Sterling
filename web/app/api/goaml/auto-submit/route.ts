@@ -87,6 +87,28 @@ async function handlePost(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "submitter and authoriser must be distinct (Cabinet Res 134/2025 Art.19)" }, { status: 400, headers: gateHeaders });
   }
 
+  // Guard: reject live submissions if any goamlRentityId is still the placeholder
+  // value — submitting REPLACE_ME will be rejected by the UAE FIU goAML gateway.
+  const entitiesEnv = process.env["HAWKEYE_ENTITIES"];
+  if (entitiesEnv && body.mode === "live") {
+    try {
+      const entities = JSON.parse(entitiesEnv) as Array<{ goamlRentityId?: string }>;
+      const hasPlaceholder = entities.some((e) => e.goamlRentityId === "REPLACE_ME");
+      if (hasPlaceholder) {
+        return NextResponse.json(
+          { ok: false, error: "goamlRentityId not configured — replace REPLACE_ME with FIU-assigned entity IDs before live submission" },
+          { status: 503, headers: gateHeaders },
+        );
+      }
+    } catch {
+      // Malformed HAWKEYE_ENTITIES is a configuration error — block live submission.
+      return NextResponse.json(
+        { ok: false, error: "HAWKEYE_ENTITIES is not valid JSON — live submission blocked" },
+        { status: 503, headers: gateHeaders },
+      );
+    }
+  }
+
   const draftSha256 = createHash("sha256").update(body.xml).digest("hex");
   const expected = expectedSignature(secret, draftSha256);
 

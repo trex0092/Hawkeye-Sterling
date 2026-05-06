@@ -4,8 +4,11 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { USERS, PERMISSION_LOG, ROLE_MODULES, type UserRole } from "../_store";
 import { generateSalt, hashPassword } from "@/lib/server/auth";
+import { adminAuth } from "@/lib/server/admin-auth";
 
 export async function POST(req: Request) {
+  const deny = adminAuth(req);
+  if (deny) return deny;
   let body: { name: string; email: string; role: UserRole; username?: string; password?: string; addedBy?: string };
   try {
     body = (await req.json()) as typeof body;
