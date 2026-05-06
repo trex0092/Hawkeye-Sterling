@@ -11,6 +11,7 @@
 import type { NewsArticle, NewsAdapter } from "./newsAdapters";
 import { NULL_NEWS_ADAPTER } from "./newsAdapters";
 import { textMentionsAml, matchAmlKeywords } from "./amlKeywords";
+import { flagOn } from "./featureFlags";
 
 const FETCH_TIMEOUT_MS = 8_000;
 
@@ -394,8 +395,7 @@ async function fetchOne(feed: RssFeed): Promise<string | null> {
  * across 60+ jurisdictions. Set FREE_RSS_DISABLED=1 to opt out.
  */
 export function freeRssAdapter(): NewsAdapter {
-  const disabled = process.env["FREE_RSS_DISABLED"];
-  if (disabled === "1" || disabled?.toLowerCase() === "true") return NULL_NEWS_ADAPTER;
+  if (!flagOn("free-rss")) return NULL_NEWS_ADAPTER;
   return {
     isAvailable: () => true,
     search: async (subjectName, opts) => {

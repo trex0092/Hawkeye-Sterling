@@ -9,6 +9,7 @@
 
 import type { RegistryAdapter, RegistryRecord } from "./registryAdapters";
 import { NULL_REGISTRY_ADAPTER } from "./registryAdapters";
+import { flagOn } from "./featureFlags";
 
 const FETCH_TIMEOUT_MS = 12_000;
 
@@ -21,16 +22,9 @@ function abortable<T>(p: Promise<T>, ms = FETCH_TIMEOUT_MS): Promise<T> {
   ]);
 }
 
-function envOn(envKey: string): boolean {
-  const v = process.env[envKey];
-  if (!v) return false;
-  if (v === "0" || v.toLowerCase() === "false") return false;
-  return true;
-}
-
 // ── Wikidata SPARQL — free, no key ───────────────────────────────────
 export function wikidataAdapter(): RegistryAdapter {
-  if (!envOn("WIKIDATA_ENABLED")) return NULL_REGISTRY_ADAPTER;
+  if (!flagOn("wikidata")) return NULL_REGISTRY_ADAPTER;
   return {
     isAvailable: () => true,
     search: async (subjectName, opts) => {
@@ -88,7 +82,7 @@ export function wikidataAdapter(): RegistryAdapter {
 
 // ── World Bank Listing of Ineligible Firms (Debarment list) — free ──
 export function worldBankSanctionsAdapter(): RegistryAdapter {
-  if (!envOn("WORLDBANK_DEBAR_ENABLED")) return NULL_REGISTRY_ADAPTER;
+  if (!flagOn("worldbank-debar")) return NULL_REGISTRY_ADAPTER;
   return {
     isAvailable: () => true,
     search: async (subjectName, opts) => {
@@ -124,7 +118,7 @@ export function worldBankSanctionsAdapter(): RegistryAdapter {
 
 // ── FATF high-risk / monitored jurisdictions — free public ──────────
 export function fatfHighRiskAdapter(): RegistryAdapter {
-  if (!envOn("FATF_ENABLED")) return NULL_REGISTRY_ADAPTER;
+  if (!flagOn("fatf")) return NULL_REGISTRY_ADAPTER;
   // FATF doesn't offer a JSON API; we use OpenSanctions' fatf_blacklist
   // and fatf_greylist datasets which mirror the official PDF lists.
   return {
@@ -161,12 +155,11 @@ export function activeFreeAdapters(): RegistryAdapter[] {
 }
 
 export function activeFreeProviders(): string[] {
-  const checks: Array<[string, string]> = [
-    ["WIKIDATA_ENABLED", "wikidata"],
-    ["WORLDBANK_DEBAR_ENABLED", "worldbank-debar"],
-    ["FATF_ENABLED", "fatf"],
-  ];
-  return checks.filter(([k]) => envOn(k)).map(([, n]) => n);
+  const out: string[] = [];
+  if (flagOn("wikidata")) out.push("wikidata");
+  if (flagOn("worldbank-debar")) out.push("worldbank-debar");
+  if (flagOn("fatf")) out.push("fatf");
+  return out;
 }
 
 export async function searchFreeAdapters(subjectName: string, jurisdiction?: string, limit?: number): Promise<{ records: RegistryRecord[]; providersUsed: string[] }> {

@@ -12,6 +12,7 @@
 
 import type { RegistryAdapter, RegistryRecord } from "./registryAdapters";
 import { NULL_REGISTRY_ADAPTER } from "./registryAdapters";
+import { flagOn } from "./featureFlags";
 
 const FETCH_TIMEOUT_MS = 12_000;
 
@@ -30,13 +31,6 @@ interface CountryAdapter extends RegistryAdapter {
 
 function nullCountry(jurisdiction: string): CountryAdapter {
   return { ...NULL_REGISTRY_ADAPTER, jurisdiction };
-}
-
-function envOn(envKey: string): boolean {
-  const v = process.env[envKey];
-  if (!v) return false;
-  if (v === "0" || v.toLowerCase() === "false") return false;
-  return true;
 }
 
 // ── UK FCA Register — free, key-gated ─────────────────────────────────
@@ -77,7 +71,7 @@ function fcaRegisterAdapter(): CountryAdapter {
 
 // ── Switzerland ZEFIX (Federal Commercial Registry) — free ────────────
 function zefixAdapter(): CountryAdapter {
-  if (!envOn("ZEFIX_ENABLED")) return nullCountry("CH");
+  if (!flagOn("zefix")) return nullCountry("CH");
   return {
     jurisdiction: "CH",
     isAvailable: () => true,
@@ -147,7 +141,7 @@ function kvkAdapter(): CountryAdapter {
 
 // ── Norway Brønnøysund Registers — free, no key ──────────────────────
 function bronnoysundAdapter(): CountryAdapter {
-  if (!envOn("BRONNOYSUND_ENABLED")) return nullCountry("NO");
+  if (!flagOn("bronnoysund")) return nullCountry("NO");
   return {
     jurisdiction: "NO",
     isAvailable: () => true,
@@ -224,7 +218,7 @@ function cvrAdapter(): CountryAdapter {
 
 // ── Finland YTJ Open Data — free, no key ─────────────────────────────
 function ytjAdapter(): CountryAdapter {
-  if (!envOn("YTJ_ENABLED")) return nullCountry("FI");
+  if (!flagOn("ytj")) return nullCountry("FI");
   return {
     jurisdiction: "FI",
     isAvailable: () => true,
@@ -592,7 +586,7 @@ function uaeDedAdapter(): CountryAdapter {
 
 // ── Brazil Receita Federal CNPJ — free public ───────────────────────
 function brReceitaAdapter(): CountryAdapter {
-  if (!envOn("BR_RECEITA_ENABLED")) return nullCountry("BR");
+  if (!flagOn("br-receita")) return nullCountry("BR");
   return {
     jurisdiction: "BR",
     isAvailable: () => true,
@@ -678,7 +672,7 @@ const arIgjAdapter = (): CountryAdapter => genericKeyAdapter({
 });
 
 function coRuesAdapter(): CountryAdapter {
-  if (!envOn("CO_RUES_ENABLED")) return nullCountry("CO");
+  if (!flagOn("co-rues")) return nullCountry("CO");
   return {
     jurisdiction: "CO",
     isAvailable: () => true,
@@ -819,7 +813,7 @@ const ruEgrulAdapter = (): CountryAdapter => genericKeyAdapter({
 });
 
 function uaYedrAdapter(): CountryAdapter {
-  if (!envOn("UA_YEDR_ENABLED")) return nullCountry("UA");
+  if (!flagOn("ua-yedr")) return nullCountry("UA");
   return {
     jurisdiction: "UA",
     isAvailable: () => true,

@@ -22,12 +22,7 @@ function abortable<T>(p: Promise<T>, ms = FETCH_TIMEOUT_MS): Promise<T> {
   ]);
 }
 
-function envOn(envKey: string): boolean {
-  const v = process.env[envKey];
-  if (!v) return false;
-  if (v === "0" || v.toLowerCase() === "false") return false;
-  return true;
-}
+import { flagOn } from "./featureFlags";
 
 interface CountrySanctionAdapter extends RegistryAdapter {
   jurisdiction: string;     // ISO-2 of the issuing authority
@@ -40,7 +35,7 @@ function nullSanction(jurisdiction: string, listName: string): CountrySanctionAd
 
 // ── UK HM Treasury OFSI Consolidated List — free CSV/JSON ────────────
 function hmtOfsiAdapter(): CountrySanctionAdapter {
-  if (!envOn("HMT_OFSI_ENABLED")) return nullSanction("GB", "HMT-OFSI");
+  if (!flagOn("hmt-ofsi")) return nullSanction("GB", "HMT-OFSI");
   return {
     jurisdiction: "GB",
     listName: "HMT-OFSI",
@@ -80,7 +75,7 @@ function hmtOfsiAdapter(): CountrySanctionAdapter {
 
 // ── US OFAC SDN Consolidated List — free JSON ────────────────────────
 function ofacSdnAdapter(): CountrySanctionAdapter {
-  if (!envOn("OFAC_SDN_ENABLED")) return nullSanction("US", "OFAC-SDN");
+  if (!flagOn("ofac-sdn")) return nullSanction("US", "OFAC-SDN");
   return {
     jurisdiction: "US",
     listName: "OFAC-SDN",
@@ -119,7 +114,7 @@ function ofacSdnAdapter(): CountrySanctionAdapter {
 
 // ── EU EBA Consolidated Sanctions List — free XML/JSON ──────────────
 function euEbaAdapter(): CountrySanctionAdapter {
-  if (!envOn("EU_EBA_ENABLED")) return nullSanction("EU", "EU-EBA");
+  if (!flagOn("eu-eba")) return nullSanction("EU", "EU-EBA");
   // Note: Official EU list is on the Financial Sanctions endpoint
   // requiring an EU Login API key for raw XML; we use OpenSanctions'
   // EU subset as the public mirror here.
@@ -157,7 +152,7 @@ function euEbaAdapter(): CountrySanctionAdapter {
 
 // ── UN Security Council Consolidated List — free XML ─────────────────
 function unScAdapter(): CountrySanctionAdapter {
-  if (!envOn("UN_SC_ENABLED")) return nullSanction("UN", "UN-SC");
+  if (!flagOn("un-sc")) return nullSanction("UN", "UN-SC");
   return {
     jurisdiction: "UN",
     listName: "UN-SC",
@@ -204,7 +199,7 @@ function unScAdapter(): CountrySanctionAdapter {
 
 // ── Australia DFAT Consolidated List — free Excel→JSON via OS ───────
 function dfatAdapter(): CountrySanctionAdapter {
-  if (!envOn("AU_DFAT_ENABLED")) return nullSanction("AU", "AU-DFAT");
+  if (!flagOn("au-dfat")) return nullSanction("AU", "AU-DFAT");
   return {
     jurisdiction: "AU",
     listName: "AU-DFAT",
@@ -237,7 +232,7 @@ function dfatAdapter(): CountrySanctionAdapter {
 
 // ── Swiss SECO Sanctions — free, OpenSanctions mirror ────────────────
 function secoAdapter(): CountrySanctionAdapter {
-  if (!envOn("CH_SECO_ENABLED")) return nullSanction("CH", "CH-SECO");
+  if (!flagOn("ch-seco")) return nullSanction("CH", "CH-SECO");
   return {
     jurisdiction: "CH",
     listName: "CH-SECO",
@@ -270,7 +265,7 @@ function secoAdapter(): CountrySanctionAdapter {
 
 // ── Canada SEMA / Justice — free, OpenSanctions mirror ──────────────
 function caSemaAdapter(): CountrySanctionAdapter {
-  if (!envOn("CA_SEMA_ENABLED")) return nullSanction("CA", "CA-SEMA");
+  if (!flagOn("ca-sema")) return nullSanction("CA", "CA-SEMA");
   return {
     jurisdiction: "CA",
     listName: "CA-SEMA",
@@ -303,7 +298,7 @@ function caSemaAdapter(): CountrySanctionAdapter {
 
 // ── New Zealand DPMC Designated Persons — free mirror ───────────────
 function nzDpmcAdapter(): CountrySanctionAdapter {
-  if (!envOn("NZ_DPMC_ENABLED")) return nullSanction("NZ", "NZ-DPMC");
+  if (!flagOn("nz-dpmc")) return nullSanction("NZ", "NZ-DPMC");
   return {
     jurisdiction: "NZ",
     listName: "NZ-DPMC",
@@ -372,7 +367,7 @@ function masAdapter(): CountrySanctionAdapter {
 
 // ── UAE EOCN (Executive Office for Control & Non-proliferation) ─────
 function eocnAdapter(): CountrySanctionAdapter {
-  if (!envOn("AE_EOCN_ENABLED")) return nullSanction("AE", "AE-EOCN");
+  if (!flagOn("ae-eocn")) return nullSanction("AE", "AE-EOCN");
   return {
     jurisdiction: "AE",
     listName: "AE-EOCN",
@@ -405,7 +400,7 @@ function eocnAdapter(): CountrySanctionAdapter {
 
 // ── Japan METI End-User List — free mirror ──────────────────────────
 function metiAdapter(): CountrySanctionAdapter {
-  if (!envOn("JP_METI_ENABLED")) return nullSanction("JP", "JP-METI");
+  if (!flagOn("jp-meti")) return nullSanction("JP", "JP-METI");
   return {
     jurisdiction: "JP",
     listName: "JP-METI",
