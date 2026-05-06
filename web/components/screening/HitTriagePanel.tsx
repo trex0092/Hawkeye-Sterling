@@ -40,6 +40,10 @@ interface Props {
   hits: TriageHit[];
   resolutions?: Record<string, Resolution>;
   onResolve?: (hitId: string, resolution: Resolution, reason?: string) => Promise<void>;
+  /** True when the API expanded the hit caps because the subject name
+   *  was detected as common (Mohamed Ali, John Smith, etc.). Triggers
+   *  the "common-name expansion" banner above the table. */
+  commonNameExpansion?: boolean;
 }
 
 const TYPE_STYLE: Record<string, string> = {
@@ -68,7 +72,7 @@ const RESOLUTION_LABEL: Record<Resolution, string> = {
 
 type ResolutionTab = "unresolved" | Resolution;
 
-export function HitTriagePanel({ subjectId, subjectName, hits, resolutions = {}, onResolve }: Props): React.ReactElement {
+export function HitTriagePanel({ subjectId, subjectName, hits, resolutions = {}, onResolve, commonNameExpansion }: Props): React.ReactElement {
   const [activeTab, setActiveTab] = useState<ResolutionTab>("unresolved");
   const [expandedHitId, setExpandedHitId] = useState<string | null>(null);
   const [filterType, setFilterType] = useState<string | "all">("all");
@@ -76,6 +80,8 @@ export function HitTriagePanel({ subjectId, subjectName, hits, resolutions = {},
   const [filterMinStrength, setFilterMinStrength] = useState<number>(0);
   const [resolveReason, setResolveReason] = useState<Record<string, string>>({});
   const [busyHitId, setBusyHitId] = useState<string | null>(null);
+  const [page, setPage] = useState<number>(0);
+  const PAGE_SIZE = 50;
 
   // Bucket counts
   const bucketCounts: Record<ResolutionTab, number> = useMemo(() => {
@@ -116,6 +122,14 @@ export function HitTriagePanel({ subjectId, subjectName, hits, resolutions = {},
     });
   }, [hits, resolutions, activeTab, filterType, filterCitizenship, filterMinStrength]);
 
+  const totalPages = Math.max(1, Math.ceil(filteredHits.length / PAGE_SIZE));
+  const pagedHits = useMemo(
+    () => filteredHits.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE),
+    [filteredHits, page],
+  );
+  // Reset page on filter change
+  useMemo(() => { setPage(0); }, [activeTab, filterType, filterCitizenship, filterMinStrength]);
+
   async function handleResolve(hitId: string, resolution: Resolution) {
     if (!onResolve) return;
     setBusyHitId(hitId);
@@ -148,6 +162,20 @@ export function HitTriagePanel({ subjectId, subjectName, hits, resolutions = {},
         </div>
         <div className="text-11 text-ink-3 font-mono">case#{subjectId}</div>
       </header>
+
+      {/* Common-name expansion banner */}
+      {commonNameExpansion && (
+        <div className="mx-4 mt-3 rounded-md bg-amber-500/10 border border-amber-500/30 px-3 py-2">
+          <div className="text-10 uppercase tracking-wide text-amber-300 font-bold mb-0.5">
+            ⚠️ Common name detected — expanded match population
+          </div>
+          <p className="text-11 text-ink-2">
+            Subject is a common name; hit caps were lifted to surface every name-similar candidate
+            ({hits.length} total). Use the filter sidebar to narrow by citizenship / type / strength,
+            then triage each match individually. World-Check displays the same number; we now match it.
+          </p>
+        </div>
+      )}
 
       {/* Tabs */}
       <nav className="flex items-center gap-1 px-3 pt-2 border-b border-white/5">
@@ -232,7 +260,7 @@ export function HitTriagePanel({ subjectId, subjectName, hits, resolutions = {},
               </tr>
             </thead>
             <tbody>
-              {filteredHits.map((h) => {
+              {pagedHits.map((h) => {
                 const r = resolutions[h.id] ?? "unspecified";
                 const expanded = expandedHitId === h.id;
                 return (
@@ -400,6 +428,36 @@ export function HitTriagePanel({ subjectId, subjectName, hits, resolutions = {},
               )}
             </tbody>
           </table>
+          {/* Pagination footer */}
+          {filteredHits.length > PAGE_SIZE && (
+            <div className="flex items-center justify-between gap-3 px-3 py-2 border-t border-white/5 bg-bg-1/30">
+              <div className="text-11 text-ink-3">
+                Showing <span className="text-ink-2 font-mono">{page * PAGE_SIZE + 1}</span>–
+                <span className="text-ink-2 font-mono">{Math.min((page + 1) * PAGE_SIZE, filteredHits.length)}</span>{" "}
+                of <span className="text-ink-2 font-mono">{filteredHits.length}</span> filtered ·{" "}
+                <span className="text-ink-3">{hits.length} total</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setPage((p) => Math.max(0, p - 1))}
+                  disabled={page === 0}
+                  className="text-11 px-2 py-1 rounded border border-white/10 text-ink-2 hover:border-white/30 disabled:opacity-40"
+                >
+                  ← Prev
+                </button>
+                <span className="text-11 text-ink-3 px-2">
+                  Page <span className="text-ink-2 font-mono">{page + 1}</span> / {totalPages}
+                </span>
+                <button
+                  onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+                  disabled={page >= totalPages - 1}
+                  className="text-11 px-2 py-1 rounded border border-white/10 text-ink-2 hover:border-white/30 disabled:opacity-40"
+                >
+                  Next →
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </section>

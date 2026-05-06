@@ -28,6 +28,7 @@ import { activeFreeProviders } from "@/lib/intelligence/freeAlwaysOnAdapters";
 import { searchAllNews } from "@/lib/intelligence/newsAdapters";
 import { ingestUrls } from "@/lib/intelligence/urlIngestion";
 import { llmAdverseMediaAdapter } from "@/lib/intelligence/llmAdverseMedia";
+import { assessCommonName } from "@/lib/intelligence/commonNames";
 
 // Compiled backend entry point. The root `tsc` build (npm run build at the repo root)
 // must run before this API route is bundled. Netlify build order is encoded in
@@ -129,14 +130,32 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   try {
-    const result = quickScreen(subject, candidates, body.options ?? {});
+    // Common-name detection — when subject name is in the high-frequency
+    // registry (Mohamed Ali, John Smith, Wang, Kim, etc.) we expand every
+    // hit cap so the operator can triage the FULL candidate population.
+    // Unique names stay at the tight default for performance.
+    const cna = assessCommonName(subject.name);
+    const isCommonName = cna.isCommon;
+    const HIT_LIMIT_LOCAL = isCommonName ? 200 : 25;          // brain quickScreen
+    const HIT_LIMIT_AUG_HIGH = isCommonName ? 100 : 15;        // per-vendor cap
+    const HIT_LIMIT_AUG_LOW = isCommonName ? 100 : 10;
+    const ADAPTER_QUERY_LIMIT = isCommonName ? 100 : 25;       // passed into adapters
+
+    const screenOptions = {
+      ...(body.options ?? {}),
+      maxHits: body.options?.maxHits ?? HIT_LIMIT_LOCAL,
+    };
+    const result = quickScreen(subject, candidates, screenOptions);
     // Augment with OpenSanctions live results when local matcher returns
     // few/no hits — adds a free additional signal layer beyond the bundled
     // watchlists. Best-effort: failure here doesn't 5xx the screening.
     let openSanctionsResults: Awaited<ReturnType<typeof LIVE_OPENSANCTIONS_ADAPTER.lookup>> = [];
     let commercialResults: Awaited<ReturnType<ReturnType<typeof bestCommercialAdapter>["lookup"]>> = [];
     let registryResults: Awaited<ReturnType<typeof searchAllRegistries>> = { records: [], providersUsed: [] };
-    if (result.hits.length < 3 && subject.name.length >= 3) {
+    // For common names we ALWAYS run the augmentation layers (not just
+    // when local hits < 3), because the operator needs the full picture
+    // to disambiguate.
+    if ((result.hits.length < 3 || isCommonName) && subject.name.length >= 3) {
       try {
         openSanctionsResults = await LIVE_OPENSANCTIONS_ADAPTER.lookup(
           subject.name,
@@ -159,7 +178,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       try {
         registryResults = await searchAllRegistries(
           subject.name,
-          subject.jurisdiction ? { jurisdiction: subject.jurisdiction, limit: 10 } : { limit: 10 },
+          subject.jurisdiction ? { jurisdiction: subject.jurisdiction, limit: ADAPTER_QUERY_LIMIT } : { limit: ADAPTER_QUERY_LIMIT },
         );
       } catch { /* best-effort */ }
     }
@@ -174,14 +193,14 @@ export async function POST(req: Request): Promise<NextResponse> {
     let freeAdapterResults: Awaited<ReturnType<typeof searchFreeAdapters>> = { records: [], providersUsed: [] };
     if (subject.name.length >= 3) {
       try {
-        countryRegistryResults = await searchCountryRegistries(subject.name, subject.jurisdiction ?? undefined, 10);
+        countryRegistryResults = await searchCountryRegistries(subject.name, subject.jurisdiction ?? undefined, ADAPTER_QUERY_LIMIT);
       } catch { /* best-effort */ }
       try {
-        countrySanctionsResults = await searchCountrySanctions(subject.name, subject.jurisdiction ?? undefined, 10);
+        countrySanctionsResults = await searchCountrySanctions(subject.name, subject.jurisdiction ?? undefined, ADAPTER_QUERY_LIMIT);
       } catch { /* best-effort */ }
       // Free always-on layer (Wikidata + World Bank Debarred Firms + FATF)
       try {
-        freeAdapterResults = await searchFreeAdapters(subject.name, subject.jurisdiction ?? undefined, 10);
+        freeAdapterResults = await searchFreeAdapters(subject.name, subject.jurisdiction ?? undefined, ADAPTER_QUERY_LIMIT);
       } catch { /* best-effort */ }
     }
 
@@ -297,38 +316,41 @@ export async function POST(req: Request): Promise<NextResponse> {
         ...result,
         reasoning,
         ...(openSanctionsResults.length > 0
-          ? { openSanctionsAugmentation: openSanctionsResults.slice(0, 10) }
+          ? { openSanctionsAugmentation: openSanctionsResults.slice(0, HIT_LIMIT_AUG_LOW) }
           : {}),
         ...(commercialResults.length > 0
           ? {
-              commercialAugmentation: commercialResults.slice(0, 10),
+              commercialAugmentation: commercialResults.slice(0, HIT_LIMIT_AUG_LOW),
               commercialProvider: activeCommercialProvider(),
             }
           : {}),
         ...(registryResults.records.length > 0
           ? {
-              registryAugmentation: registryResults.records.slice(0, 15),
+              registryAugmentation: registryResults.records.slice(0, HIT_LIMIT_AUG_HIGH),
               registryProviders: registryResults.providersUsed,
             }
           : {}),
         ...(countryRegistryResults.records.length > 0
           ? {
-              countryRegistryAugmentation: countryRegistryResults.records.slice(0, 15),
+              countryRegistryAugmentation: countryRegistryResults.records.slice(0, HIT_LIMIT_AUG_HIGH),
               countryRegistryJurisdictions: countryRegistryResults.jurisdictions,
             }
           : {}),
         ...(countrySanctionsResults.records.length > 0
           ? {
-              countrySanctionsAugmentation: countrySanctionsResults.records.slice(0, 15),
+              countrySanctionsAugmentation: countrySanctionsResults.records.slice(0, HIT_LIMIT_AUG_HIGH),
               countrySanctionsLists: countrySanctionsResults.lists,
             }
           : {}),
         ...(freeAdapterResults.records.length > 0
           ? {
-              freeAdapterAugmentation: freeAdapterResults.records.slice(0, 15),
+              freeAdapterAugmentation: freeAdapterResults.records.slice(0, HIT_LIMIT_AUG_HIGH),
               freeAdapterProviders: freeAdapterResults.providersUsed,
             }
           : {}),
+        // Tell the operator UI whether common-name expansion fired so the
+        // triage panel can show the appropriate banner.
+        commonNameExpansion: isCommonName,
       } as QuickScreenResponse,
       gateHeaders,
     );
