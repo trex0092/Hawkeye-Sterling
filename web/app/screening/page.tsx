@@ -577,7 +577,7 @@ export default function ScreeningPage() {
   const [latestReasoning, setLatestReasoning] = useState<{ subjectName: string; reasoning: ScreeningReasoning } | null>(null);
   // Hit-triage state — World-Check-style match list with resolution
   // workflow. Populated from the same auto-screen response.
-  const [latestTriage, setLatestTriage] = useState<{ subjectId: string; subjectName: string; hits: TriageHit[] } | null>(null);
+  const [latestTriage, setLatestTriage] = useState<{ subjectId: string; subjectName: string; hits: TriageHit[]; commonNameExpansion?: boolean } | null>(null);
   const [triageResolutions, setTriageResolutions] = useState<Record<string, Resolution>>({});
 
   // Adverse Media state
@@ -980,6 +980,7 @@ export default function ScreeningPage() {
             countrySanctionsLists?: string[];
             freeAdapterAugmentation?: AugmentationRecord[];
             freeAdapterProviders?: string[];
+            commonNameExpansion?: boolean;
           }
           const res = await fetchJson<QuickScreenAPIResponse>(
             "/api/quick-screen",
@@ -1035,7 +1036,7 @@ export default function ScreeningPage() {
                 });
               }
             }
-            setLatestTriage({ subjectId: subject.id, subjectName: subject.name, hits: triageHits });
+            setLatestTriage({ subjectId: subject.id, subjectName: subject.name, hits: triageHits, commonNameExpansion: res.data.commonNameExpansion });
             setTriageResolutions({});
           }
           if (res.ok && res.data?.ok && res.data.topScore !== undefined) {
@@ -1479,6 +1480,7 @@ export default function ScreeningPage() {
                 subjectId={latestTriage.subjectId}
                 subjectName={latestTriage.subjectName}
                 hits={latestTriage.hits}
+                commonNameExpansion={latestTriage.commonNameExpansion}
                 resolutions={triageResolutions}
                 onResolve={async (hitId, resolution, reason) => {
                   // Optimistic UI update
