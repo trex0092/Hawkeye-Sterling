@@ -102,9 +102,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   // make this a public endpoint (Netlify cron jobs always inject the token).
   const expected = process.env["ONGOING_RUN_TOKEN"];
   if (!expected) {
-    return NextResponse.json(
-      { ok: true, runAt: new Date().toISOString(), total: 0, rescreened: 0, withNewHits: 0, escalations: 0, results: [] },
-    );
+    return NextResponse.json({ ok: false, error: "service unavailable" }, { status: 503 });
   }
   const got = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "";
   // Timing-safe comparison — use TextEncoder for Uint8Array compatibility.

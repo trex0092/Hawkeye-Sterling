@@ -311,11 +311,14 @@ function safeTokenEqual(got: string, expected: string): boolean {
 // the next GET sees the fresh snapshot without an extra round-trip.
 async function handlePost(req: Request): Promise<NextResponse> {
   const cronToken = process.env["SANCTIONS_CRON_TOKEN"];
+  if (!cronToken) {
+    return NextResponse.json({ ok: false, error: "service unavailable" }, { status: 503 });
+  }
   const presented = req.headers
     .get("authorization")
     ?.replace(/^Bearer\s+/i, "");
   const cronMatch =
-    !!cronToken && !!presented && safeTokenEqual(presented, cronToken);
+    !!presented && safeTokenEqual(presented, cronToken);
 
   let gateHeaders: Record<string, string> = {};
   if (!cronMatch) {

@@ -33,7 +33,21 @@ const RX_NO_MATCH = /\bNO[ _]MATCH(?!\w)/i;
 const RX_CLEARED = /\b(CLEARED|APPROVED|PROCEED)\b/i;
 const RX_REFER_AUTHORITY = /\b(REFER[_ ]TO[_ ]AUTHORITY|COMPETENT[_ ]AUTHORITY)\b/i;
 
-export function proposeDisposition(input: AutoDispositionInput): AutoDispositionProposal {
+// HS-004 hard constraint (PART 13): any proposal with confidence ≤ 0.65 must
+// signal that human review is required. Applied as a post-processing gate so
+// all code paths above the gate are unmodified.
+function applyConfidenceGate(proposal: AutoDispositionProposal): AutoDispositionProposal {
+  if (proposal.confidence <= 0.65) {
+    return {
+      ...proposal,
+      flags: [...proposal.flags, 'ESCALATE — human review required'],
+      rationale: proposal.rationale + ' ESCALATE — human review required.',
+    };
+  }
+  return proposal;
+}
+
+function _proposeDispositionInner(input: AutoDispositionInput): AutoDispositionProposal {
   const flags: string[] = [];
 
   // Hard redline — tipping-off draft detected → block everything, suggest
@@ -196,4 +210,8 @@ export function proposeDisposition(input: AutoDispositionInput): AutoDisposition
     rationale: 'No strong signal detected either way. Default to EDD to collect further evidence before the MLRO dispositions.',
     flags,
   };
+}
+
+export function proposeDisposition(input: AutoDispositionInput): AutoDispositionProposal {
+  return applyConfidenceGate(_proposeDispositionInner(input));
 }

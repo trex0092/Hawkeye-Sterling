@@ -150,6 +150,19 @@ export interface ReasoningMode {
   apply: (ctx: BrainContext) => Promise<Finding>;
 }
 
+// PART 5 — Version metadata for every deployed reasoning mode. Required for
+// governance audit trail: which version of which mode was active at the time
+// of a screening run.
+export interface ReasoningModeVersion {
+  modeId: string;
+  version: string;
+  deployedDate: string;
+  contentHash: string;
+  author: string;
+  approvedBy: string;
+  changeLog: string;
+}
+
 export interface Faculty {
   id: FacultyId;
   displayName: string;
