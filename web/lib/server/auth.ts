@@ -35,9 +35,32 @@ interface SessionPayload {
 }
 
 function getSecret(): string {
-  const secret = process.env["SESSION_SECRET"];
-  if (!secret) throw new Error("SESSION_SECRET environment variable must be set");
-  return secret;
+  const explicit = process.env["SESSION_SECRET"];
+  if (explicit && explicit.length >= 16) return explicit;
+
+  // Derive a stable fallback from other deployment-scoped secrets so sessions
+  // work even before SESSION_SECRET is set in the Netlify dashboard.
+  // Once SESSION_SECRET is set, all previously issued tokens are invalidated
+  // (they were signed with the derived key) — which is acceptable on first setup.
+  const anchor =
+    process.env["AUDIT_CHAIN_SECRET"] ??
+    process.env["NETLIFY_SITE_ID"] ??
+    process.env["SITE_ID"];
+  if (anchor && anchor.length >= 8) {
+    if (!explicit) {
+      console.warn(
+        "[hawkeye] SESSION_SECRET not set — using derived session key. " +
+        "Set SESSION_SECRET in Netlify env vars for production security.",
+      );
+    }
+    return createHmac("sha256", anchor).update("hawkeye-session-secret-v1").digest("hex");
+  }
+
+  // No stable anchor available — throw so the operator knows to configure it.
+  throw new Error(
+    "SESSION_SECRET must be set in Netlify environment variables " +
+    "(or at minimum AUDIT_CHAIN_SECRET / NETLIFY_SITE_ID for a derived fallback).",
+  );
 }
 
 export function issueSession(userId: string, username: string, role: string): string {

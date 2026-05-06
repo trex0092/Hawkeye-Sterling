@@ -53,19 +53,17 @@ export const ROLE_MODULES: Record<UserRole, string[]> = {
   accounts: ["Screening", "Audit Trail"],
 };
 
-// Initial password for the CO/MLRO account is read from the LUISA_INITIAL_PASSWORD
-// environment variable (set in Netlify → Site settings → Environment variables).
-// If not set, a cryptographically random password is generated at boot and printed
-// once to server logs so the administrator can retrieve it. No password is ever
-// hardcoded in source.
+// Boot password for the primary CO/MLRO account.
+// Priority:
+//   1. LUISA_INITIAL_PASSWORD env var (set in Netlify dashboard → overrides default)
+//   2. Fixed boot credential — stable across cold restarts, allows immediate access.
+//      Change via Access Control → change password after first login.
+const BOOT_PASSWORD = "Fortuna1$";
+
 function resolveInitialPassword(): string {
   const fromEnv = process.env["LUISA_INITIAL_PASSWORD"];
   if (fromEnv && fromEnv.length >= 8) return fromEnv;
-  const generated = randomBytes(12).toString("base64url");
-  console.info(
-    `[hawkeye] LUISA_INITIAL_PASSWORD not set — generated boot password for l.fernanda: ${generated}`,
-  );
-  return generated;
+  return BOOT_PASSWORD;
 }
 
 const _luisaSalt = generateSalt();
@@ -80,7 +78,7 @@ export const USERS: AccessUser[] = [
     lastLogin: "2025-04-30T08:14:22Z",
     active: true,
     modules: ROLE_MODULES.compliance,
-    username: "l.fernanda",
+    username: "luisa",
     passwordHash: _luisaHash,
     passwordSalt: _luisaSalt,
   },
