@@ -1622,12 +1622,29 @@ export default function ScreeningPage() {
               }
             }
             if (selected && !formOpen) {
+              // Build triage-resolutions payload for the report PDF —
+              // only when the latest triage matches the selected subject.
+              const triageForReport = latestTriage && latestTriage.subjectId === selected.id
+                ? latestTriage.hits.map((h) => ({
+                    hitId: h.id,
+                    matchedName: h.name,
+                    sourceList: h.sourceList,
+                    matchStrength: h.matchStrength,
+                    type: h.type,
+                    citizenship: h.citizenship,
+                    dob: h.dob,
+                    listRef: h.listRef,
+                    resolution: triageResolutions[h.id] ?? "unspecified" as const,
+                    resolvedAt: triageResolutions[h.id] ? new Date().toISOString() : undefined,
+                  }))
+                : undefined;
               return (
                 <SubjectDetailPanel
                   subject={selected}
                   onUpdate={handleUpdateSubject}
                   allSubjects={subjects}
                   onSelectSubject={setSelectedId}
+                  triageResolutions={triageForReport}
                 />
               );
             }

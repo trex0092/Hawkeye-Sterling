@@ -157,6 +157,28 @@ const SEVERITY_TONE: Record<QuickScreenSeverity, string> = {
   critical: "text-red",
 };
 
+/**
+ * Operator's per-hit triage decisions (Positive / Possible / False).
+ * When provided and matching the active subject, the compliance-report
+ * PDF appends a TRIAGE & DISPOSITION block listing every candidate with
+ * the operator's decision + reason — the audit trail for FATF R.10 /
+ * FDL Art.19 evidence-of-search.
+ */
+export interface TriageResolutionForReport {
+  hitId: string;
+  matchedName: string;
+  sourceList: string;
+  matchStrength: number;
+  type?: string;
+  citizenship?: string;
+  dob?: string;
+  listRef?: string;
+  resolution: "positive" | "possible" | "false" | "unspecified";
+  reason?: string;
+  resolvedAt?: string;
+  resolvedBy?: string;
+}
+
 interface SubjectDetailPanelProps {
   subject: Subject;
   onUpdate?: (id: string, update: Partial<Subject>) => void;
@@ -164,9 +186,11 @@ interface SubjectDetailPanelProps {
   allSubjects?: Subject[];
   /** Switch the active subject (used by cross-subject link clicks). */
   onSelectSubject?: (id: string) => void;
+  /** Operator-attested per-hit decisions for this subject — flow into the PDF audit trail. */
+  triageResolutions?: TriageResolutionForReport[];
 }
 
-export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSubject }: SubjectDetailPanelProps) {
+export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSubject, triageResolutions }: SubjectDetailPanelProps) {
   const [activeTab, setActiveTab] = useState<Tab>("Screening");
   const [escalated, setEscalated] = useState(false);
   const [strRaised, setStrRaised] = useState(false);
@@ -873,6 +897,9 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
       ...(subject.aliases ? { aliases: subject.aliases } : {}),
     },
     operator: { role },
+    ...(triageResolutions && triageResolutions.length > 0
+      ? { triageResolutions }
+      : {}),
     result:
       screening.status === "success"
         ? {

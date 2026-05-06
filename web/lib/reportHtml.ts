@@ -38,7 +38,17 @@ html,body{margin:0;padding:0;background:oklch(28% 0.012 250);font-family:var(--s
 .hs-page::before{top:0}
 .hs-page::after{bottom:0;transform:scaleY(-1)}
 
-.hs-pg-body{position:absolute;inset:56px;display:flex;flex-direction:column}
+.hs-pg-body{position:absolute;top:62px;left:56px;right:56px;bottom:78px;display:flex;flex-direction:column;overflow:hidden}
+.hs-pg-body>*:last-child{margin-bottom:0}
+/* Print pagination — keep blocks together where it matters and allow
+   long content to flow naturally onto a new sheet rather than clipping. */
+@media print {
+  .hs-page{height:auto;min-height:1123px;break-inside:avoid-page}
+  .scr-sh,.hs-section-h{break-after:avoid;break-inside:avoid}
+  .scr-rec,.scr-cbg,.scr-sigb,.scr-ag,.scr-sigs,.scr-table,.hs-finis-row{break-inside:avoid}
+  ul,ol,table,.scr-regl{break-inside:auto}
+  li,tr{break-inside:avoid}
+}
 
 /* Page header */
 .hs-pgheader{position:absolute;top:22px;left:56px;right:56px;display:flex;justify-content:space-between;align-items:center;font-size:8.5px;letter-spacing:0.32em;text-transform:uppercase;color:var(--ink-2);border-bottom:0.5px solid var(--hair);padding-bottom:10px;font-weight:500}

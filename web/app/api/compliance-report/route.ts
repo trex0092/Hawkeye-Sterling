@@ -491,6 +491,63 @@ function renderHtmlReport(text: string, input: ReportInput): string {
     ${edSig   ? `<div class="scr-se"><div class="scr-sen">Ed25519</div><div class="scr-sep">pubkey fp ${e(edFp)}</div><div class="scr-sex">${e(edSig)}</div></div>` : ""}
   </div>` : "";
 
+  // ── Triage & disposition (per-hit operator decisions) ──────────────
+  // When the caller passes triageResolutions[], the dossier renders an
+  // immutable record of every name-similar candidate alongside the
+  // operator's decision (positive/possible/false) and reason. This is
+  // the audit trail the regulator examines for FATF R.10 / FDL Art.19
+  // negative-finding evidence-of-search.
+  const triage = input.triageResolutions ?? [];
+  const triagePos = triage.filter((t) => t.resolution === "positive");
+  const triagePos2 = triage.filter((t) => t.resolution === "possible");
+  const triageNeg = triage.filter((t) => t.resolution === "false");
+  const triageOpen = triage.filter((t) => t.resolution === "unspecified");
+  const RES_COLOR: Record<string, string> = {
+    positive: "#d61e6f", possible: "#f59e0b", false: "#22c55e", unspecified: "#94a3b8",
+  };
+  const RES_LABEL: Record<string, string> = {
+    positive: "POSITIVE — same person", possible: "POSSIBLE — needs review",
+    false: "FALSE — different person", unspecified: "UNRESOLVED",
+  };
+  const triageRow = (t: typeof triage[number]): string => `
+    <tr>
+      <td style="padding:4px 6px;border-top:1px solid #e2e8f0;font-weight:500">${e(t.matchedName)}</td>
+      <td style="padding:4px 6px;border-top:1px solid #e2e8f0;font-family:var(--mono,monospace);font-size:10px;color:#64748b">${e(t.sourceList)}${t.listRef ? ` · ${e(t.listRef)}` : ""}</td>
+      <td style="padding:4px 6px;border-top:1px solid #e2e8f0;text-align:right;font-family:var(--mono,monospace)">${e(t.matchStrength)}/100</td>
+      <td style="padding:4px 6px;border-top:1px solid #e2e8f0;font-size:10px">${e(t.dob ?? "—")}</td>
+      <td style="padding:4px 6px;border-top:1px solid #e2e8f0;font-size:10px">${e(t.citizenship ?? "—")}</td>
+      <td style="padding:4px 6px;border-top:1px solid #e2e8f0;color:${RES_COLOR[t.resolution] ?? "#000"};font-weight:600;font-size:10px;white-space:nowrap">${e(RES_LABEL[t.resolution] ?? t.resolution)}</td>
+      <td style="padding:4px 6px;border-top:1px solid #e2e8f0;font-style:italic;color:#475569;font-size:10px">${e(t.reason ?? "—")}</td>
+    </tr>`;
+  const triageTable = triage.length > 0 ? `
+    <div class="scr-sh">Triage &amp; Disposition</div>
+    <p class="scr-para" style="margin-bottom:6px">
+      ${triage.length} candidate match(es) reviewed; <strong style="color:${RES_COLOR.positive}">${triagePos.length} positive</strong>,
+      <strong style="color:${RES_COLOR.possible}">${triagePos2.length} possible</strong>,
+      <strong style="color:${RES_COLOR.false}">${triageNeg.length} false</strong>,
+      ${triageOpen.length} unresolved.
+      Each disposition is operator-attested per FDL 10/2025 Art.19; reasons recorded below form the negative-finding evidence-of-search obligation.
+    </p>
+    <table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:8px">
+      <thead style="background:#f8fafc">
+        <tr>
+          <th style="text-align:left;padding:5px 6px;font-weight:700;font-size:9px;letter-spacing:0.5px;text-transform:uppercase;color:#475569">Matched name</th>
+          <th style="text-align:left;padding:5px 6px;font-weight:700;font-size:9px;letter-spacing:0.5px;text-transform:uppercase;color:#475569">Source · ref</th>
+          <th style="text-align:right;padding:5px 6px;font-weight:700;font-size:9px;letter-spacing:0.5px;text-transform:uppercase;color:#475569">Strength</th>
+          <th style="text-align:left;padding:5px 6px;font-weight:700;font-size:9px;letter-spacing:0.5px;text-transform:uppercase;color:#475569">DOB</th>
+          <th style="text-align:left;padding:5px 6px;font-weight:700;font-size:9px;letter-spacing:0.5px;text-transform:uppercase;color:#475569">Citizen.</th>
+          <th style="text-align:left;padding:5px 6px;font-weight:700;font-size:9px;letter-spacing:0.5px;text-transform:uppercase;color:#475569">Disposition</th>
+          <th style="text-align:left;padding:5px 6px;font-weight:700;font-size:9px;letter-spacing:0.5px;text-transform:uppercase;color:#475569">Reason / note</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${triagePos.map(triageRow).join("")}
+        ${triagePos2.map(triageRow).join("")}
+        ${triageOpen.map(triageRow).join("")}
+        ${triageNeg.map(triageRow).join("")}
+      </tbody>
+    </table>` : "";
+
   const p2extended = `
   <div class="scr-sh" style="margin-top:0">2. Analysis</div>
   <p class="scr-para">${analysisText}</p>
@@ -499,6 +556,7 @@ function renderHtmlReport(text: string, input: ReportInput): string {
   <div class="scr-rec">
     ${recLines.map(l => `<div class="scr-rl">${e(l)}</div>`).join("")}
   </div>
+  ${triageTable}
   <div class="scr-sh">MLRO Decision</div>
   <div class="scr-cbg">
     <div class="scr-cb"><div class="scr-cbb"></div><div class="scr-cbl">Apply Standard CDD — proceed</div></div>

@@ -18,6 +18,7 @@ import { counterfactualAnalysis, type CounterfactualResult } from "./counterfact
 import { detectCoOccurrence, type CoOccurrenceResult, type CoOccurrenceArticle } from "./coOccurrence";
 import { transliterate, transliterationVariants } from "./transliteration";
 import { comparePhoneticTier, type PhoneticTierResult } from "./phoneticTier";
+import { assessCommonName, discriminatorPenalty, type CommonNameAssessment } from "./commonNames";
 
 // ── Source credibility tiering ────────────────────────────────────────
 //
@@ -369,6 +370,11 @@ export interface ScreeningReasoning {
   coOccurrence?: CoOccurrenceResult;
   transliteration?: { script: string; transliterated: string; variants: string[] };
   phoneticTier?: Array<{ candidateName: string; result: PhoneticTierResult }>;
+  commonNameAssessment?: CommonNameAssessment & {
+    discriminatorPenalty: number;
+    rawScoreBeforeDiscount: number;
+    discriminatorsFound: { dob: boolean; nationality: boolean; idNumber: boolean };
+  };
 }
 
 export function buildScreeningReasoning(opts: {
@@ -418,6 +424,33 @@ export function buildScreeningReasoning(opts: {
       }))
     : undefined;
 
+  // Common-name assessment + discriminator penalty
+  const cna = assessCommonName(opts.subject.name);
+  const discriminatorsFound = {
+    dob: !!opts.subject.dateOfBirth,
+    nationality: !!(opts.subject.nationality ?? opts.subject.jurisdiction),
+    idNumber: !!(opts.subject.passportNumber ?? opts.subject.nationalIdNumber),
+  };
+  const penalty = discriminatorPenalty({
+    isCommonName: cna.isCommon,
+    hasDob: discriminatorsFound.dob,
+    hasNationality: discriminatorsFound.nationality,
+    hasIdNumber: discriminatorsFound.idNumber,
+  });
+  const rawScoreBeforeDiscount = consensus.unified;
+  if (penalty < 1.0) {
+    consensus.unified = Math.round(consensus.unified * penalty);
+    // Tighten the CI band downward too — operator should know the rating
+    // is artificially constrained by missing identifiers.
+    consensus.confidence = {
+      low: Math.round(consensus.confidence.low * penalty),
+      high: Math.min(consensus.confidence.high, Math.round(consensus.confidence.high * (penalty + 0.2))),
+    };
+  }
+  const commonNameAssessment = cna.isCommon
+    ? { ...cna, discriminatorPenalty: penalty, rawScoreBeforeDiscount, discriminatorsFound }
+    : undefined;
+
   const lines: string[] = [];
   lines.push(`Subject "${opts.subject.name}"${opts.subject.jurisdiction ? ` (${opts.subject.jurisdiction})` : ""} screened against ${opts.coverage.totalConfigured}/${opts.coverage.totalAvailable} configured intelligence sources.`);
   lines.push(`Local watchlist matcher: ${opts.result.hits.length} hit(s); top score ${opts.result.topScore}; severity "${opts.result.severity}".`);
@@ -453,6 +486,13 @@ export function buildScreeningReasoning(opts: {
 
   // Append signals to the rationale
   const extraSignals: string[] = [];
+  if (commonNameAssessment) {
+    const missing: string[] = [];
+    if (!discriminatorsFound.dob) missing.push("date of birth");
+    if (!discriminatorsFound.nationality) missing.push("nationality");
+    if (!discriminatorsFound.idNumber) missing.push("passport / national-ID number");
+    extraSignals.push(`COMMON-NAME MATCH: ${commonNameAssessment.reason} Subject record is missing: ${missing.join(", ") || "no critical identifiers"}. Score discounted from ${rawScoreBeforeDiscount}/100 to ${consensus.unified}/100 (×${penalty.toFixed(2)}). Manual disambiguation required against each candidate's DOB / citizenship / passport before any POSITIVE disposition.`);
+  }
   if (temporalVelocity && temporalVelocity.escalationLevel !== "none") {
     extraSignals.push(temporalVelocity.signal);
   }
@@ -481,6 +521,7 @@ export function buildScreeningReasoning(opts: {
     ...(coOccurrence ? { coOccurrence } : {}),
     ...(transliteration ? { transliteration } : {}),
     ...(phoneticTier ? { phoneticTier } : {}),
+    ...(commonNameAssessment ? { commonNameAssessment } : {}),
   };
 }
 

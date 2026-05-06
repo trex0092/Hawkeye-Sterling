@@ -59,6 +59,16 @@ export interface ScreeningReasoning {
   };
   transliteration?: { script: string; transliterated: string; variants: string[] };
   phoneticTier?: Array<{ candidateName: string; result: { doubleMetaphone: boolean; nysiis: boolean; matchRating: boolean; compositeScore: number } }>;
+  commonNameAssessment?: {
+    isCommon: boolean;
+    ambiguityScore: number;
+    matchedTokens: string[];
+    reason: string;
+    recommendation: string;
+    discriminatorPenalty: number;
+    rawScoreBeforeDiscount: number;
+    discriminatorsFound: { dob: boolean; nationality: boolean; idNumber: boolean };
+  };
 }
 
 interface Props {
@@ -166,6 +176,37 @@ export function ScreeningReasoningPanel({ reasoning }: Props): React.ReactElemen
         <div className="text-10 uppercase tracking-wide text-ink-3 mb-1">Audit rationale</div>
         <p className="text-12 text-ink-2 leading-relaxed">{reasoning.rationale}</p>
       </div>
+
+      {/* Common-name warning — sits at the top of the body so it's the first thing operators see */}
+      {reasoning.commonNameAssessment?.isCommon && (
+        <div className="mb-3 rounded-md bg-red-500/10 border border-red-500/30 p-3">
+          <div className="flex items-center justify-between mb-1">
+            <div className="text-10 uppercase tracking-wide text-red-300 font-bold">⚠️ Common-name match — disambiguation required</div>
+            <span className="text-10 font-bold uppercase px-2 py-0.5 rounded border bg-red-500/15 text-red-300 border-red-500/40">
+              ×{reasoning.commonNameAssessment.discriminatorPenalty.toFixed(2)} score discount
+            </span>
+          </div>
+          <p className="text-12 text-ink-2 leading-relaxed mb-2">{reasoning.commonNameAssessment.reason}</p>
+          <div className="text-11 text-ink-3 mb-1.5">
+            <span className="text-amber-300">Discriminators found: </span>
+            <span className={reasoning.commonNameAssessment.discriminatorsFound.dob ? "text-emerald-300" : "text-red-300"}>
+              {reasoning.commonNameAssessment.discriminatorsFound.dob ? "✓" : "✗"} DOB
+            </span>{" · "}
+            <span className={reasoning.commonNameAssessment.discriminatorsFound.nationality ? "text-emerald-300" : "text-red-300"}>
+              {reasoning.commonNameAssessment.discriminatorsFound.nationality ? "✓" : "✗"} Nationality
+            </span>{" · "}
+            <span className={reasoning.commonNameAssessment.discriminatorsFound.idNumber ? "text-emerald-300" : "text-red-300"}>
+              {reasoning.commonNameAssessment.discriminatorsFound.idNumber ? "✓" : "✗"} Passport / ID
+            </span>
+          </div>
+          <div className="text-11 text-ink-3 mb-1">
+            Raw score: <span className="font-mono text-ink-2">{reasoning.commonNameAssessment.rawScoreBeforeDiscount}/100</span>
+            {" → "}
+            Discounted: <span className="font-mono text-red-300">{c.unified}/100</span>
+          </div>
+          <p className="text-11 text-ink-3 italic">{reasoning.commonNameAssessment.recommendation}</p>
+        </div>
+      )}
 
       {reasoning.art19NegativeFinding && (
         <div className="text-11 px-2.5 py-1.5 rounded bg-emerald-500/5 border border-emerald-500/20 text-emerald-200/90 mb-2">
