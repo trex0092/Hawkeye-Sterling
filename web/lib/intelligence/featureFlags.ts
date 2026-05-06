@@ -19,6 +19,7 @@ export type FreeFlag =
   | "au-dfat" | "ch-seco" | "ca-sema" | "nz-dpmc"
   | "ae-eocn" | "jp-meti"
   | "wikidata" | "worldbank-debar" | "fatf"
+  | "gleif" | "opensanctions-free" | "opencorporates-free"
   | "sec-edgar" | "icij-offshore-leaks"
   | "br-receita" | "co-rues" | "ua-yedr"
   | "zefix" | "bronnoysund" | "ytj"
@@ -40,6 +41,9 @@ const LEGACY_ENV_VAR: Record<FreeFlag, string> = {
   "wikidata": "WIKIDATA_ENABLED",
   "worldbank-debar": "WORLDBANK_DEBAR_ENABLED",
   "fatf": "FATF_ENABLED",
+  "gleif": "GLEIF_ENABLED",
+  "opensanctions-free": "OPENSANCTIONS_FREE_ENABLED",
+  "opencorporates-free": "OPENCORPORATES_FREE_ENABLED",
   "sec-edgar": "SEC_EDGAR_ENABLED",
   "icij-offshore-leaks": "ICIJ_OFFSHORE_LEAKS_ENABLED",
   "br-receita": "BR_RECEITA_ENABLED",

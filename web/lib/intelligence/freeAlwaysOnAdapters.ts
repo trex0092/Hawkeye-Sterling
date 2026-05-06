@@ -149,9 +149,126 @@ export function fatfHighRiskAdapter(): RegistryAdapter {
   };
 }
 
+// ── GLEIF Global Legal Entity Identifier — free, no key, always on ──
+//
+// GLEIF publishes the canonical LEI registry (ISO 17442) at api.gleif.org.
+// Free, no auth, no rate-limit advertised — perfect for always-on.
+export function gleifAdapter(): RegistryAdapter {
+  if (!flagOn("gleif")) return NULL_REGISTRY_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({
+          "filter[entity.legalName]": subjectName,
+          "page[size]": String(opts?.limit ?? 10),
+        });
+        const res = await abortable(
+          fetch(`https://api.gleif.org/api/v1/lei-records?${params.toString()}`, {
+            headers: { accept: "application/vnd.api+json", "user-agent": "HawkeyeSterling/1.0" },
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as { data?: Array<{ id?: string; attributes?: { entity?: { legalName?: { name?: string }; legalAddress?: { country?: string }; registeredAt?: { id?: string } }; registration?: { initialRegistrationDate?: string; status?: string } } }> };
+        return (json.data ?? []).map((d) => ({
+          source: "gleif",
+          name: d.attributes?.entity?.legalName?.name ?? subjectName,
+          ...(d.attributes?.entity?.legalAddress?.country ? { jurisdiction: d.attributes.entity.legalAddress.country } : {}),
+          ...(d.id ? { registrationNumber: d.id } : {}),
+          ...(d.attributes?.registration?.initialRegistrationDate ? { incorporationDate: d.attributes.registration.initialRegistrationDate } : {}),
+          ...(d.attributes?.registration?.status ? { status: d.attributes.registration.status } : {}),
+          url: `https://search.gleif.org/#/record/${d.id ?? ""}`,
+        } satisfies RegistryRecord));
+      } catch (err) {
+        console.warn("[gleif] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// ── OpenSanctions default — free public sanctions/PEP/POI consolidated ──
+//
+// api.opensanctions.org offers the public consolidated dataset for free
+// (the paid "Pro" tier just adds enrichment APIs). Always on.
+export function openSanctionsFreeAdapter(): RegistryAdapter {
+  if (!flagOn("opensanctions-free")) return NULL_REGISTRY_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({ q: subjectName, limit: String(opts?.limit ?? 25) });
+        const res = await abortable(
+          fetch(`https://api.opensanctions.org/search/default?${params.toString()}`, {
+            headers: { accept: "application/json", "user-agent": "HawkeyeSterling/1.0" },
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as { results?: Array<{ id?: string; caption?: string; schema?: string; properties?: { country?: string[]; idNumber?: string[]; topics?: string[]; incorporationDate?: string[] } }> };
+        return (json.results ?? []).filter((r) => r.caption).map((r) => ({
+          source: "opensanctions-free",
+          name: r.caption!,
+          ...(r.properties?.country?.[0] ? { jurisdiction: r.properties.country[0].toUpperCase() } : {}),
+          ...(r.properties?.idNumber?.[0] ? { registrationNumber: r.properties.idNumber[0] } : { registrationNumber: r.id }),
+          ...(r.properties?.incorporationDate?.[0] ? { incorporationDate: r.properties.incorporationDate[0] } : {}),
+          ...(r.properties?.topics?.length ? { status: r.properties.topics.join(",") } : {}),
+          url: `https://www.opensanctions.org/entities/${r.id ?? ""}/`,
+        } satisfies RegistryRecord));
+      } catch (err) {
+        console.warn("[opensanctions-free] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// ── OpenCorporates free reconcile — basic company-name resolver ─────
+//
+// OpenCorporates' reconciliation endpoint is free and key-less for low
+// volume; we rate-limit ourselves to keep within the free quota.
+export function openCorporatesFreeAdapter(): RegistryAdapter {
+  if (!flagOn("opencorporates-free")) return NULL_REGISTRY_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({ q: subjectName, format: "json" });
+        const res = await abortable(
+          fetch(`https://api.opencorporates.com/v0.4/companies/search?${params.toString()}`, {
+            headers: { accept: "application/json", "user-agent": "HawkeyeSterling/1.0" },
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as { results?: { companies?: Array<{ company?: { name?: string; jurisdiction_code?: string; company_number?: string; incorporation_date?: string; current_status?: string; opencorporates_url?: string } }> } };
+        const companies = json.results?.companies ?? [];
+        const lim = opts?.limit ?? 25;
+        return companies.slice(0, lim).map((c) => ({
+          source: "opencorporates-free",
+          name: c.company?.name ?? subjectName,
+          ...(c.company?.jurisdiction_code ? { jurisdiction: c.company.jurisdiction_code.toUpperCase() } : {}),
+          ...(c.company?.company_number ? { registrationNumber: c.company.company_number } : {}),
+          ...(c.company?.incorporation_date ? { incorporationDate: c.company.incorporation_date } : {}),
+          ...(c.company?.current_status ? { status: c.company.current_status } : {}),
+          ...(c.company?.opencorporates_url ? { url: c.company.opencorporates_url } : {}),
+        } satisfies RegistryRecord));
+      } catch (err) {
+        console.warn("[opencorporates-free] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
 // Convenience aggregator — every free always-on source in this file.
 export function activeFreeAdapters(): RegistryAdapter[] {
-  return [wikidataAdapter(), worldBankSanctionsAdapter(), fatfHighRiskAdapter()].filter((a) => a.isAvailable());
+  return [
+    wikidataAdapter(),
+    worldBankSanctionsAdapter(),
+    fatfHighRiskAdapter(),
+    gleifAdapter(),
+    openSanctionsFreeAdapter(),
+    openCorporatesFreeAdapter(),
+  ].filter((a) => a.isAvailable());
 }
 
 export function activeFreeProviders(): string[] {
@@ -159,6 +276,9 @@ export function activeFreeProviders(): string[] {
   if (flagOn("wikidata")) out.push("wikidata");
   if (flagOn("worldbank-debar")) out.push("worldbank-debar");
   if (flagOn("fatf")) out.push("fatf");
+  if (flagOn("gleif")) out.push("gleif");
+  if (flagOn("opensanctions-free")) out.push("opensanctions-free");
+  if (flagOn("opencorporates-free")) out.push("opencorporates-free");
   return out;
 }
 
