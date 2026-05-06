@@ -7,12 +7,6 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const nextConfig = {
   reactStrictMode: true,
 
-  // @netlify/plugin-nextjs@5 sets NEXT_PRIVATE_STANDALONE=true in onPreBuild,
-  // which implicitly enables standalone. Declaring it explicitly here ensures
-  // the same behaviour in local builds and avoids any ambiguity between the
-  // NEXT_PRIVATE_STANDALONE env var and the config value.
-  output: "standalone",
-
   eslint: {
     // ESLint is not installed in web/node_modules — skip lint during build.
     ignoreDuringBuilds: true,
