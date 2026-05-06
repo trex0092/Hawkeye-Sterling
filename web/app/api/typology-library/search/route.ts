@@ -334,7 +334,9 @@ export async function POST(req: Request) {
   }
 
   try {
-    const client = getAnthropicClient(apiKey, 55_000);
+    // Netlify Functions cap at 26s gateway timeout; SDK timeout must
+    // sit comfortably below or callers see HTTP 504.
+    const client = getAnthropicClient(apiKey, 22_000);
 
     const filterStr = body.filters
       ? `Filters: sector=${body.filters.sector ?? "any"}, jurisdiction=${body.filters.jurisdictionType ?? "any"}, riskLevel=${body.filters.riskLevel ?? "any"}, fatfCategory=${body.filters.fatfCategory ?? "any"}`
@@ -342,7 +344,10 @@ export async function POST(req: Request) {
 
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 4096,
+      // Reduced from 4096 → 2000 to fit the 22s SDK budget. Each
+      // typology entry is ~200 tokens; 2000 covers 8-10 entries which
+      // is the cap requested in the system prompt anyway.
+      max_tokens: 2000,
       system: [
         {
           type: "text",
@@ -364,7 +369,14 @@ Find the most relevant AML/CFT typologies matching this search. Return comprehen
     });
 
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
-    const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as TypologySearchResponse;
+    // Defensive JSON extraction — strip code-fences and pull the first
+    // {...} block. Claude occasionally wraps the JSON in prose despite
+    // the system prompt; we don't want a parse failure to flag the
+    // whole search as 'degraded'.
+    const cleaned = raw.replace(/```json\n?|\n?```/g, "").trim();
+    const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+    const jsonStr = jsonMatch ? jsonMatch[0] : cleaned;
+    const result = JSON.parse(jsonStr) as TypologySearchResponse;
     return NextResponse.json(result);
   } catch (err) {
     console.warn("[typology-library/search] LLM failed:", err instanceof Error ? err.message : err);

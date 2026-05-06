@@ -218,7 +218,7 @@ async function enrichWithClaude(
     return { summary: buildFallbackSummary(subjectName, articles, riskScore, riskRating), articlesWithCategories: articles, enriched: false };
   }
 
-  const client = getAnthropicClient(apiKey, 55_000);
+  const client = getAnthropicClient(apiKey, 22_000);
 
   const articleSummaries = articles
     .slice(0, 8)
