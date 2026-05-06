@@ -16,8 +16,6 @@ const nextConfig = {
     return [
       { source: "/adverse-media", destination: "/screening", permanent: true },
       { source: "/compliance-qa", destination: "/mlro-advisor", permanent: true },
-      // Workbench Brain merge — /weaponized-brain folded into /workbench tabs.
-      { source: "/weaponized-brain", destination: "/workbench", permanent: true },
     ];
   },
 
