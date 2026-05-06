@@ -15,6 +15,8 @@ import {
   hsScorebox,
   type CoverData,
 } from "@/lib/reportHtml";
+import { AuditTrailViewer } from "@/components/screening/AuditTrailViewer";
+import { PerformanceMonitoringDashboard } from "@/components/screening/PerformanceMonitoringDashboard";
 
 type Status = "ready" | "partial" | "missing";
 
@@ -432,6 +434,11 @@ export default function InspectionRoomPage() {
             </div>
           </div>
         ))}
+      </div>
+
+      <div className="mt-8 grid grid-cols-1 gap-4">
+        <PerformanceMonitoringDashboard />
+        <AuditTrailViewer />
       </div>
 
       <div className="mt-6 text-11 text-ink-3 font-mono">
