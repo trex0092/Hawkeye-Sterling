@@ -125,6 +125,51 @@ const PROVIDER_CATALOG: ProviderStatus[] = [
   { id: "trm", category: "onchain", tier: "commercial", configured: false, envVars: ["TRM_API_KEY"], signupUrl: "https://www.trmlabs.com/contact" },
   { id: "elliptic", category: "onchain", tier: "commercial", configured: false, envVars: ["ELLIPTIC_API_KEY"], signupUrl: "https://www.elliptic.co/contact-us" },
 
+  // ── Premium news / research (Nov 2026 expansion +13) ─────────────
+  { id: "refinitiv-connect", category: "news", tier: "commercial", configured: false, envVars: ["REFINITIV_CONNECT_API_KEY"], signupUrl: "https://developers.refinitiv.com/" },
+  { id: "businesswire", category: "news", tier: "commercial", configured: false, envVars: ["BUSINESSWIRE_API_KEY"], signupUrl: "https://www.businesswire.com/portal/site/home/" },
+  { id: "pr-newswire", category: "news", tier: "commercial", configured: false, envVars: ["PRNEWSWIRE_API_KEY"], signupUrl: "https://www.prnewswire.com/" },
+  { id: "globe-newswire", category: "news", tier: "commercial", configured: false, envVars: ["GLOBENEWSWIRE_API_KEY"], signupUrl: "https://www.globenewswire.com/" },
+  { id: "acuity-knowledge", category: "news", tier: "commercial", configured: false, envVars: ["ACUITY_KNOWLEDGE_API_KEY"], signupUrl: "https://www.acuitykp.com/" },
+  { id: "moodys-analytics", category: "news", tier: "commercial", configured: false, envVars: ["MOODYS_ANALYTICS_API_KEY"], signupUrl: "https://www.moodysanalytics.com/" },
+  { id: "omfif", category: "news", tier: "commercial", configured: false, envVars: ["OMFIF_API_KEY"], signupUrl: "https://www.omfif.org/" },
+  { id: "centralbanking", category: "news", tier: "commercial", configured: false, envVars: ["CENTRALBANKING_API_KEY"], signupUrl: "https://www.centralbanking.com/" },
+  { id: "global-finance", category: "news", tier: "commercial", configured: false, envVars: ["GLOBAL_FINANCE_API_KEY"], signupUrl: "https://gfmag.com/" },
+  { id: "eurofinas", category: "news", tier: "commercial", configured: false, envVars: ["EUROFINAS_API_KEY"], signupUrl: "https://www.eurofinas.org/" },
+  { id: "ihs-markit", category: "news", tier: "commercial", configured: false, envVars: ["IHS_MARKIT_API_KEY"], signupUrl: "https://ihsmarkit.com/" },
+  { id: "eikon-news", category: "news", tier: "commercial", configured: false, envVars: ["EIKON_NEWS_API_KEY"], signupUrl: "https://eikon.refinitiv.com/" },
+  { id: "nikkei-asia", category: "news", tier: "commercial", configured: false, envVars: ["NIKKEI_ASIA_API_KEY"], signupUrl: "https://asia.nikkei.com/" },
+
+  // ── Sanctions / PEP commercial (Nov 2026 expansion +6) ───────────
+  { id: "refine-intelligence", category: "sanctions", tier: "commercial", configured: false, envVars: ["REFINE_INTELLIGENCE_API_KEY"], signupUrl: "https://www.refine-intelligence.com/" },
+  { id: "lucinity", category: "sanctions", tier: "commercial", configured: false, envVars: ["LUCINITY_API_KEY"], signupUrl: "https://www.lucinity.com/" },
+  { id: "hummingbird", category: "sanctions", tier: "commercial", configured: false, envVars: ["HUMMINGBIRD_API_KEY"], signupUrl: "https://hummingbird.co/" },
+  { id: "salvares", category: "sanctions", tier: "commercial", configured: false, envVars: ["SALVARES_API_KEY"], signupUrl: "https://salv.com/" },
+  { id: "fenergo", category: "sanctions", tier: "commercial", configured: false, envVars: ["FENERGO_API_KEY"], signupUrl: "https://www.fenergo.com/" },
+  { id: "napier", category: "sanctions", tier: "commercial", configured: false, envVars: ["NAPIER_API_KEY"], signupUrl: "https://www.napier.ai/" },
+
+  // ── Registry / UBO (Nov 2026 expansion +6) ───────────────────────
+  { id: "altares-dnb", category: "registry", tier: "commercial", configured: false, envVars: ["ALTARES_DNB_API_KEY"], signupUrl: "https://www.altares.com/" },
+  { id: "infogreffe", category: "registry", tier: "commercial", configured: false, envVars: ["INFOGREFFE_API_KEY"], signupUrl: "https://www.infogreffe.fr/" },
+  { id: "creditsafe", category: "registry", tier: "commercial", configured: false, envVars: ["CREDITSAFE_API_KEY"], signupUrl: "https://www.creditsafe.com/" },
+  { id: "veridus", category: "registry", tier: "commercial", configured: false, envVars: ["VERIDUS_API_KEY"], signupUrl: "https://www.veridus.com/" },
+  { id: "corpwatch", category: "registry", tier: "free-toggle", configured: false, envVars: ["CORPWATCH_ENABLED"], signupUrl: "https://corpwatch.org/api" },
+  { id: "data-axle", category: "registry", tier: "commercial", configured: false, envVars: ["DATA_AXLE_API_KEY"], signupUrl: "https://www.data-axle.com/" },
+
+  // ── KYC / IDV (Nov 2026 expansion +6) ────────────────────────────
+  { id: "ekata", category: "kyc", tier: "commercial", configured: false, envVars: ["EKATA_API_KEY"], signupUrl: "https://ekata.com/" },
+  { id: "fourthline", category: "kyc", tier: "commercial", configured: false, envVars: ["FOURTHLINE_API_KEY"], signupUrl: "https://www.fourthline.com/" },
+  { id: "microblink", category: "kyc", tier: "commercial", configured: false, envVars: ["MICROBLINK_API_KEY"], signupUrl: "https://microblink.com/" },
+  { id: "regula", category: "kyc", tier: "commercial", configured: false, envVars: ["REGULA_API_KEY"], signupUrl: "https://regulaforensics.com/" },
+  { id: "veridas", category: "kyc", tier: "commercial", configured: false, envVars: ["VERIDAS_API_KEY"], signupUrl: "https://veridas.com/" },
+  { id: "passbase", category: "kyc", tier: "commercial", configured: false, envVars: ["PASSBASE_API_KEY"], signupUrl: "https://www.passbase.com/" },
+
+  // ── On-chain (Nov 2026 expansion +4) ─────────────────────────────
+  { id: "ciphertrace", category: "onchain", tier: "commercial", configured: false, envVars: ["CIPHERTRACE_API_KEY"], signupUrl: "https://ciphertrace.com/" },
+  { id: "lukka", category: "onchain", tier: "commercial", configured: false, envVars: ["LUKKA_API_KEY"], signupUrl: "https://lukka.tech/" },
+  { id: "solidus-labs", category: "onchain", tier: "commercial", configured: false, envVars: ["SOLIDUS_LABS_API_KEY"], signupUrl: "https://www.soliduslabs.com/" },
+  { id: "blocktrace", category: "onchain", tier: "commercial", configured: false, envVars: ["BLOCKTRACE_API_KEY"], signupUrl: "https://www.blocktrace.com/" },
+
   // ── LLM (operator already has this for AI features) ─────────────
   { id: "claude-adverse-media", category: "news", tier: "free", configured: false, envVars: ["ANTHROPIC_API_KEY"], signupUrl: "https://console.anthropic.com/" },
 ];
