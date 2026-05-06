@@ -100,7 +100,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const client = getAnthropicClient(apiKey, 55_000);
+    const client = getAnthropicClient(apiKey, 22_000);
 
     const userContent = `Subject Details:
 - Name: ${body.subject.name}
