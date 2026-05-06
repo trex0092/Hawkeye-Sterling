@@ -3,7 +3,7 @@
 // NormalisedEntity[], writes the dataset + report to Blobs, and logs a JSON
 // summary to the function log. Invoked by cron (see netlify.toml).
 
-import type { Handler } from '@netlify/functions';
+import type { Config } from '@netlify/functions';
 import { SOURCE_ADAPTERS } from '../../src/ingestion/index.js';
 import type { IngestionReport } from '../../src/ingestion/types.js';
 import { getBlobsStore } from '../../src/ingestion/blobs-store.js';
@@ -31,7 +31,7 @@ function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
   });
 }
 
-export const handler: Handler = async () => {
+export default async (): Promise<Response> => {
   const store = await getBlobsStore();
   const summary: IngestionReport[] = [];
 
@@ -70,11 +70,10 @@ export const handler: Handler = async () => {
     summary.push(report);
   }
 
-  return {
-    statusCode: 200,
-    headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' },
-    body: JSON.stringify({ at: new Date().toISOString(), summary }),
-  };
+  return new Response(
+    JSON.stringify({ at: new Date().toISOString(), summary }),
+    { status: 200, headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' } },
+  );
 };
 
-export const config = { schedule: '0 3 * * *' };
+export const config: Config = { schedule: '0 3 * * *' };
