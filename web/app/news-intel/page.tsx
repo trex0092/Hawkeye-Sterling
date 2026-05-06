@@ -173,17 +173,64 @@ function SentimentGauge({ score }: { score: number }) {
 // Tab: Entity Analysis
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Accepts YYYY-MM-DD, DD/MM/YYYY, DD-MM-YYYY, MM/DD/YYYY (US) — returns
+// canonical YYYY-MM-DD or empty string when input is empty / unparseable.
+function normaliseDate(input: string): string {
+  const s = input.trim();
+  if (!s) return "";
+  // Already ISO
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  // DD/MM/YYYY or DD-MM-YYYY (assume DD first, common internationally)
+  const dmyMatch = /^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/.exec(s);
+  if (dmyMatch) {
+    const [, dd, mm, yyyy] = dmyMatch;
+    return `${yyyy}-${mm!.padStart(2, "0")}-${dd!.padStart(2, "0")}`;
+  }
+  // YYYY/MM/DD
+  const ymdMatch = /^(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})$/.exec(s);
+  if (ymdMatch) {
+    const [, yyyy, mm, dd] = ymdMatch;
+    return `${yyyy}-${mm!.padStart(2, "0")}-${dd!.padStart(2, "0")}`;
+  }
+  // Last resort: let JS parse it (handles "06 Oct 2025", "October 6, 2025")
+  const parsed = new Date(s);
+  if (!isNaN(parsed.getTime())) {
+    return parsed.toISOString().slice(0, 10);
+  }
+  return s;     // give back original — server will reject if invalid
+}
+
 function ArticleRow({
   idx,
   article,
   onChange,
   onRemove,
+  onAutoFill,
 }: {
   idx: number;
   article: Partial<ArticleInput>;
   onChange: (field: keyof ArticleInput, val: string) => void;
   onRemove: () => void;
+  onAutoFill: (url: string) => Promise<void>;
 }) {
+  const [pasteUrl, setPasteUrl] = useState("");
+  const [autoFilling, setAutoFilling] = useState(false);
+  const [pasteError, setPasteError] = useState<string | null>(null);
+
+  async function handleAutoFill() {
+    if (!pasteUrl.trim()) return;
+    setAutoFilling(true);
+    setPasteError(null);
+    try {
+      await onAutoFill(pasteUrl.trim());
+      setPasteUrl("");
+    } catch (err) {
+      setPasteError(err instanceof Error ? err.message : "Could not fetch URL");
+    } finally {
+      setAutoFilling(false);
+    }
+  }
+
   return (
     <div className="bg-bg-1 border border-hair-2 rounded-lg p-4 space-y-2">
       <div className="flex items-center justify-between mb-1">
@@ -192,34 +239,65 @@ function ArticleRow({
           Remove
         </button>
       </div>
+
+      {/* URL auto-fetch row — paste URL → auto-populate source/headline/date/content */}
+      <div className="bg-bg-panel/60 border border-pink-500/20 rounded p-2.5 mb-1">
+        <div className="text-10 uppercase tracking-wide text-pink-400 font-bold mb-1.5">
+          📎 Paste URL — auto-fetch metadata
+        </div>
+        <div className="flex gap-2">
+          <input
+            type="url"
+            placeholder="https://www.reuters.com/article-url-here"
+            value={pasteUrl}
+            onChange={(e) => setPasteUrl(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleAutoFill(); } }}
+            className="flex-1 bg-bg-panel border border-hair-2 rounded px-2 py-1.5 text-12 text-ink-0 outline-none focus:border-brand"
+          />
+          <button
+            type="button"
+            onClick={handleAutoFill}
+            disabled={autoFilling || !pasteUrl.trim()}
+            className="text-12 px-3 py-1.5 rounded bg-pink-500/20 text-pink-300 border border-pink-500/40 hover:bg-pink-500/30 disabled:opacity-50 whitespace-nowrap"
+          >
+            {autoFilling ? "Fetching…" : "Auto-fill"}
+          </button>
+        </div>
+        {pasteError && <div className="text-10 text-red mt-1">{pasteError}</div>}
+        <div className="text-10 text-ink-3 mt-1">
+          Or fill the fields manually below.
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
         <input
-          placeholder="Source (e.g. Reuters)"
+          placeholder="Source / outlet (e.g. Reuters, BBC)"
           value={article.source ?? ""}
           onChange={(e) => onChange("source", e.target.value)}
           className="bg-bg-panel border border-hair-2 rounded px-2 py-1.5 text-12 text-ink-0 outline-none focus:border-brand"
         />
         <input
-          placeholder="Date (YYYY-MM-DD)"
+          placeholder="Date (DD/MM/YYYY or YYYY-MM-DD)"
           value={article.date ?? ""}
           onChange={(e) => onChange("date", e.target.value)}
+          onBlur={(e) => onChange("date", normaliseDate(e.target.value))}
           className="bg-bg-panel border border-hair-2 rounded px-2 py-1.5 text-12 text-ink-0 outline-none focus:border-brand"
         />
         <input
-          placeholder="Language (e.g. en)"
+          placeholder="Language (en, ar, tr, pt, ...)"
           value={article.language ?? "en"}
           onChange={(e) => onChange("language", e.target.value)}
           className="bg-bg-panel border border-hair-2 rounded px-2 py-1.5 text-12 text-ink-0 outline-none focus:border-brand"
         />
       </div>
       <input
-        placeholder="Headline"
+        placeholder="Headline (article title) — REQUIRED"
         value={article.headline ?? ""}
         onChange={(e) => onChange("headline", e.target.value)}
         className="w-full bg-bg-panel border border-hair-2 rounded px-2 py-1.5 text-12 text-ink-0 outline-none focus:border-brand"
       />
       <textarea
-        placeholder="Article content or summary..."
+        placeholder="Article content / body / summary — REQUIRED. Paste the article text or 1-2 sentence summary."
         rows={3}
         value={article.content ?? ""}
         onChange={(e) => onChange("content", e.target.value)}
@@ -313,6 +391,20 @@ function AnalysisTab() {
               article={a}
               onChange={(f, v) => updateArticle(i, f, v)}
               onRemove={() => removeArticle(i)}
+              onAutoFill={async (url: string) => {
+                // Server-side url ingestion → auto-populate source/headline/date/content
+                const res = await fetch("/api/url-ingest", {
+                  method: "POST",
+                  headers: { "content-type": "application/json" },
+                  body: JSON.stringify({ url }),
+                });
+                if (!res.ok) throw new Error(`Could not fetch (${res.status})`);
+                const data = (await res.json()) as { source?: string; outlet?: string; title?: string; publishedAt?: string; snippet?: string; url?: string };
+                if (data.outlet) updateArticle(i, "source", data.outlet);
+                if (data.title) updateArticle(i, "headline", data.title);
+                if (data.publishedAt) updateArticle(i, "date", data.publishedAt.slice(0, 10));
+                if (data.snippet) updateArticle(i, "content", data.snippet);
+              }}
             />
           ))}
         </div>

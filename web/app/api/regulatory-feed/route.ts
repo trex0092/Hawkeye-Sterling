@@ -773,10 +773,17 @@ const STATIC_ITEMS: RegulatoryItem[] = [
 // Main handler
 // ─────────────────────────────────────────────────────────────────────────────
 
-export async function GET(_req: Request): Promise<NextResponse> {
-  // Return cached payload if still fresh (15-minute TTL)
+export async function GET(req: Request): Promise<NextResponse> {
+  // Operator-pressed refresh button passes ?force=1 to bypass the
+  // 15-min module-level cache. Auto-refresh (timer) doesn't pass it,
+  // so the cache still spares the upstream sites in steady state.
+  const url = new URL(req.url);
+  const force = url.searchParams.get("force") === "1";
+
+  // Return cached payload if still fresh (15-minute TTL) — but only
+  // when the caller didn't explicitly ask for a fresh fetch.
   const cached = _cache[CACHE_KEY];
-  if (cached && Date.now() - cached.ts < CACHE_TTL_MS) {
+  if (!force && cached && Date.now() - cached.ts < CACHE_TTL_MS) {
     return NextResponse.json(cached.payload, {
       headers: { "Cache-Control": "s-maxage=900, stale-while-revalidate=1800", "X-Cache": "HIT" },
     });
