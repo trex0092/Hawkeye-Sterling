@@ -8,6 +8,7 @@ import { ScreeningToolbar } from "@/components/screening/ScreeningToolbar";
 import { ScreeningTable } from "@/components/screening/ScreeningTable";
 import { SubjectDetailPanel } from "@/components/screening/SubjectDetailPanel";
 import { ScreeningReasoningPanel, type ScreeningReasoning } from "@/components/screening/ScreeningReasoningPanel";
+import { HitTriagePanel, type TriageHit, type Resolution } from "@/components/screening/HitTriagePanel";
 import {
   NewScreeningForm,
   type ScreeningFormData,
@@ -574,6 +575,10 @@ export default function ScreeningPage() {
   // populated when an auto-screen completes; rendered as a full-width
   // panel above the screening table.
   const [latestReasoning, setLatestReasoning] = useState<{ subjectName: string; reasoning: ScreeningReasoning } | null>(null);
+  // Hit-triage state — World-Check-style match list with resolution
+  // workflow. Populated from the same auto-screen response.
+  const [latestTriage, setLatestTriage] = useState<{ subjectId: string; subjectName: string; hits: TriageHit[] } | null>(null);
+  const [triageResolutions, setTriageResolutions] = useState<Record<string, Resolution>>({});
 
   // Adverse Media state
   const [amSubject, setAmSubject] = useState("");
@@ -947,7 +952,36 @@ export default function ScreeningPage() {
           };
           if (data.alternateNames.length > 0) subjectPayload.aliases = data.alternateNames;
           if (jurisdictionField.trim()) subjectPayload.jurisdiction = jurisdictionField.trim();
-          const res = await fetchJson<{ ok: boolean; topScore?: number; severity?: string; reasoning?: ScreeningReasoning }>(
+          interface AugmentationRecord {
+            source?: string;
+            name?: string;
+            legalName?: string;
+            jurisdiction?: string;
+            registrationNumber?: string;
+            status?: string;
+            incorporatedAt?: string;
+            incorporationDate?: string;
+            url?: string;
+          }
+          interface QuickScreenAPIResponse {
+            ok: boolean;
+            topScore?: number;
+            severity?: string;
+            reasoning?: ScreeningReasoning;
+            hits?: Array<{ listId: string; listRef: string; candidateName: string; matchedAlias?: string; score: number; method: string; programs?: string[] }>;
+            openSanctionsAugmentation?: AugmentationRecord[];
+            commercialAugmentation?: AugmentationRecord[];
+            commercialProvider?: string;
+            registryAugmentation?: AugmentationRecord[];
+            registryProviders?: string[];
+            countryRegistryAugmentation?: AugmentationRecord[];
+            countryRegistryJurisdictions?: string[];
+            countrySanctionsAugmentation?: AugmentationRecord[];
+            countrySanctionsLists?: string[];
+            freeAdapterAugmentation?: AugmentationRecord[];
+            freeAdapterProviders?: string[];
+          }
+          const res = await fetchJson<QuickScreenAPIResponse>(
             "/api/quick-screen",
             {
               method: "POST",
@@ -958,6 +992,51 @@ export default function ScreeningPage() {
           );
           if (res.ok && res.data?.ok && res.data.reasoning) {
             setLatestReasoning({ subjectName: subject.name, reasoning: res.data.reasoning });
+            // Build the unified triage list from every augmentation array
+            const triageHits: TriageHit[] = [];
+            for (const h of res.data.hits ?? []) {
+              triageHits.push({
+                id: `local-${h.listId}-${h.listRef}`,
+                source: h.listId,
+                sourceList: h.listId.toUpperCase(),
+                name: h.candidateName,
+                matchedAlias: h.matchedAlias,
+                matchStrength: h.score,
+                programs: h.programs,
+                listRef: h.listRef,
+                type: "OTHER",
+              });
+            }
+            const augLists: Array<[AugmentationRecord[] | undefined, string, string]> = [
+              [res.data.openSanctionsAugmentation, "opensanctions", "OpenSanctions"],
+              [res.data.commercialAugmentation, res.data.commercialProvider ?? "commercial", res.data.commercialProvider ?? "Commercial"],
+              [res.data.countrySanctionsAugmentation, "country-sanctions", "Country sanctions"],
+              [res.data.registryAugmentation, "registry", "Registry"],
+              [res.data.countryRegistryAugmentation, "country-registry", "Country registry"],
+              [res.data.freeAdapterAugmentation, "free", "Free adapter"],
+            ];
+            for (const [arr, sourceId, sourceLabel] of augLists) {
+              if (!arr) continue;
+              for (let i = 0; i < arr.length; i++) {
+                const r = arr[i];
+                if (!r) continue;
+                triageHits.push({
+                  id: `${sourceId}-${i}-${r.registrationNumber ?? r.name ?? r.legalName ?? "unknown"}`,
+                  source: r.source ?? sourceId,
+                  sourceList: sourceLabel,
+                  name: (r.legalName ?? r.name ?? "Unknown record"),
+                  matchStrength: 75,
+                  type: sourceId.includes("sanctions") ? "LE" : sourceId.includes("registry") ? "OB" : "OTHER",
+                  citizenship: r.jurisdiction,
+                  countryLocation: r.jurisdiction,
+                  listRef: r.registrationNumber,
+                  enteredDate: r.incorporatedAt ?? r.incorporationDate,
+                  url: r.url,
+                });
+              }
+            }
+            setLatestTriage({ subjectId: subject.id, subjectName: subject.name, hits: triageHits });
+            setTriageResolutions({});
           }
           if (res.ok && res.data?.ok && res.data.topScore !== undefined) {
             setSubjects((prev) =>
@@ -1392,6 +1471,43 @@ export default function ScreeningPage() {
             <div className="mb-4">
               <div className="text-11 text-ink-3 mb-1">Latest reasoning · <span className="text-ink-2 font-medium">{latestReasoning.subjectName}</span></div>
               <ScreeningReasoningPanel reasoning={latestReasoning.reasoning} />
+            </div>
+          )}
+          {latestTriage && latestTriage.hits.length > 0 && (
+            <div className="mb-4">
+              <HitTriagePanel
+                subjectId={latestTriage.subjectId}
+                subjectName={latestTriage.subjectName}
+                hits={latestTriage.hits}
+                resolutions={triageResolutions}
+                onResolve={async (hitId, resolution, reason) => {
+                  // Optimistic UI update
+                  setTriageResolutions((p) => ({ ...p, [hitId]: resolution }));
+                  // Find hit context for the audit trail
+                  const hit = latestTriage.hits.find((h) => h.id === hitId);
+                  try {
+                    await fetch("/api/screening/resolve", {
+                      method: "POST",
+                      headers: { "content-type": "application/json" },
+                      body: JSON.stringify({
+                        subjectId: latestTriage.subjectId,
+                        subjectName: latestTriage.subjectName,
+                        hitId,
+                        resolution,
+                        reason,
+                        hitContext: hit ? {
+                          sourceList: hit.sourceList,
+                          matchedName: hit.name,
+                          matchStrength: hit.matchStrength,
+                          listRef: hit.listRef,
+                        } : undefined,
+                      }),
+                    });
+                  } catch (err) {
+                    console.warn("[screening] resolve failed:", err);
+                  }
+                }}
+              />
             </div>
           )}
 
