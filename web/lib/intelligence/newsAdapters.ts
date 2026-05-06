@@ -11,6 +11,7 @@
 // the surrounding code never has to branch on availability.
 
 import { freeRssAdapter } from "./freeRssAggregator";
+import { flagOn } from "./featureFlags";
 
 const FETCH_TIMEOUT_MS = 12_000;
 
@@ -1819,10 +1820,9 @@ function bingNewsAdapter(): NewsAdapter {
   };
 }
 
-// ── Google News RSS — free, no key (toggle) ───────────────────────────
+// ── Google News RSS — free, no key. Default-on (HS_DISABLED=google-news-rss to opt out).
 function googleNewsRssAdapter(): NewsAdapter {
-  const enabled = process.env["GOOGLE_NEWS_RSS_ENABLED"];
-  if (!enabled || enabled === "0" || enabled.toLowerCase() === "false") return NULL_NEWS_ADAPTER;
+  if (!flagOn("google-news-rss")) return NULL_NEWS_ADAPTER;
   return {
     isAvailable: () => true,
     search: async (subjectName, opts) => {
@@ -1860,10 +1860,9 @@ function googleNewsRssAdapter(): NewsAdapter {
   };
 }
 
-// ── Hacker News (Algolia) — free, no key (toggle) ─────────────────────
+// ── Hacker News (Algolia) — free, no key. Default-on (HS_DISABLED=hacker-news to opt out).
 function hackerNewsAdapter(): NewsAdapter {
-  const enabled = process.env["HACKER_NEWS_ENABLED"];
-  if (!enabled || enabled === "0" || enabled.toLowerCase() === "false") return NULL_NEWS_ADAPTER;
+  if (!flagOn("hacker-news")) return NULL_NEWS_ADAPTER;
   return {
     isAvailable: () => true,
     search: async (subjectName, opts) => {

@@ -9,6 +9,8 @@
 // ICIJ Offshore Leaks Database (free, no key — toggle).
 // Paid: Crunchbase, PitchBook.
 
+import { flagOn } from "./featureFlags";
+
 const FETCH_TIMEOUT_MS = 12_000;
 
 function abortable<T>(p: Promise<T>, ms = FETCH_TIMEOUT_MS): Promise<T> {
@@ -125,12 +127,9 @@ function companiesHouseAdapter(): RegistryAdapter {
   };
 }
 
-// ── SEC EDGAR — public, no key. Toggle with SEC_EDGAR_ENABLED=1 ───────
+// ── SEC EDGAR — public, no key. Default-on (HS_DISABLED=sec-edgar to opt out).
 function secEdgarAdapter(): RegistryAdapter {
-  const enabled = process.env["SEC_EDGAR_ENABLED"];
-  if (!enabled || enabled === "0" || enabled.toLowerCase() === "false") {
-    return NULL_REGISTRY_ADAPTER;
-  }
+  if (!flagOn("sec-edgar")) return NULL_REGISTRY_ADAPTER;
   // SEC requires a User-Agent identifying the requestor
   const ua = process.env["SEC_EDGAR_USER_AGENT"] ?? "Hawkeye Sterling compliance@hawkeye-sterling.netlify.app";
   return {
@@ -181,12 +180,9 @@ function secEdgarAdapter(): RegistryAdapter {
   };
 }
 
-// ── ICIJ Offshore Leaks — public DB, toggle ───────────────────────────
+// ── ICIJ Offshore Leaks — public DB. Default-on (HS_DISABLED=icij-offshore-leaks to opt out).
 function icijOffshoreLeaksAdapter(): RegistryAdapter {
-  const enabled = process.env["ICIJ_OFFSHORE_LEAKS_ENABLED"];
-  if (!enabled || enabled === "0" || enabled.toLowerCase() === "false") {
-    return NULL_REGISTRY_ADAPTER;
-  }
+  if (!flagOn("icij-offshore-leaks")) return NULL_REGISTRY_ADAPTER;
   // ICIJ offers offshoreleaks.icij.org search; programmatic access is via
   // their public Neo4j export. This adapter performs a server-side search
   // and parses the basic-results JSON the search endpoint returns.
@@ -713,11 +709,15 @@ export function activeRegistryAdapters(): RegistryAdapter[] {
 }
 
 export function activeRegistryProviders(): string[] {
+  // Free flags handled via featureFlags (default-on)
+  const flags: Array<[boolean, string]> = [
+    [flagOn("sec-edgar"), "sec-edgar"],
+    [flagOn("icij-offshore-leaks"), "icij-offshore-leaks"],
+  ];
+  // Keyed providers — env var must be present
   const keys: Array<[string, string]> = [
     ["OPENCORPORATES_API_KEY", "opencorporates"],
     ["COMPANIES_HOUSE_API_KEY", "companies-house"],
-    ["SEC_EDGAR_ENABLED", "sec-edgar"],
-    ["ICIJ_OFFSHORE_LEAKS_ENABLED", "icij-offshore-leaks"],
     ["CRUNCHBASE_API_KEY", "crunchbase"],
     ["PITCHBOOK_API_KEY", "pitchbook"],
     ["DNB_API_KEY", "dnb"],
@@ -731,14 +731,11 @@ export function activeRegistryProviders(): string[] {
     ["MERGENT_API_KEY", "mergent"],
     ["REFINITIV_WORKSPACE_API_KEY", "refinitiv-workspace"],
   ];
-  return keys
-    .filter(([envKey]) => {
-      const v = process.env[envKey];
-      if (!v) return false;
-      if (v === "0" || v.toLowerCase() === "false") return false;
-      return true;
-    })
-    .map(([, name]) => name);
+  const out: string[] = flags.filter(([on]) => on).map(([, n]) => n);
+  for (const [envKey, name] of keys) {
+    if (process.env[envKey]) out.push(name);
+  }
+  return out;
 }
 
 export async function searchAllRegistries(
