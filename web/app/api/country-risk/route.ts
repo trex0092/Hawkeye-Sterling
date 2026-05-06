@@ -210,17 +210,37 @@ Provide a complete country risk intelligence assessment covering AML/CFT risk, F
     });
 
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
-    const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as CountryRiskResult;
+    // Defensive JSON extraction — strip code-fences and find the first
+    // top-level {...} object. Claude occasionally wraps JSON in prose
+    // even when instructed not to; pulling the JSON out beats failing.
+    const cleaned = raw.replace(/```json\n?|\n?```/g, "").trim();
+    const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+    const jsonStr = jsonMatch ? jsonMatch[0] : cleaned;
+    let result: CountryRiskResult;
+    try {
+      result = JSON.parse(jsonStr) as CountryRiskResult;
+    } catch (parseErr) {
+      console.warn("[country-risk] JSON parse failed:", parseErr instanceof Error ? parseErr.message : parseErr, "raw:", cleaned.slice(0, 200));
+      return NextResponse.json(
+        {
+          ok: false,
+          error: `Country-risk analysis returned invalid JSON for ${country}. Retry, or escalate if persistent.`,
+          detail: parseErr instanceof Error ? parseErr.message : String(parseErr),
+        },
+        { status: 502 },
+      );
+    }
     return NextResponse.json(result);
-  } catch {
-    // Honest 503 instead of dressing up the UAE FALLBACK with the requested
-    // country name — that was misleading users with UAE risk scores labelled
-    // as their chosen country. Frontend already handles non-2xx by showing
-    // the error message in the red toast.
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : String(err);
+    console.warn("[country-risk] LLM call failed:", detail);
+    // Honest 503 with surfaced detail so the operator sees the real
+    // cause (timeout / rate-limit / auth) rather than a generic message.
     return NextResponse.json(
       {
         ok: false,
-        error: `Real-time analysis temporarily unavailable for ${country}. Please retry in a moment.`,
+        error: `Real-time analysis temporarily unavailable for ${country}. ${detail.includes("timeout") ? "(timeout — try again with shorter depth)" : detail.includes("rate") ? "(rate limit — wait 60s)" : "Please retry in a moment."}`,
+        detail,
       },
       { status: 503 },
     );
