@@ -69,6 +69,22 @@ export interface ScreeningReasoning {
     rawScoreBeforeDiscount: number;
     discriminatorsFound: { dob: boolean; nationality: boolean; idNumber: boolean };
   };
+  // Batch-3 wired modules
+  articleToneSummary?: {
+    negative: number;
+    neutral: number;
+    positive: number;
+    avgSeverity: number;
+    signal: string;
+  };
+  pepTier?: { tier: 1 | 2 | 3 | null; signal: string };
+  bayesianAdjustment?: {
+    priorOdds: number;
+    likelihoodRatio: number;
+    posteriorProbability: number;
+    signal: string;
+  };
+  crisisCorrelation?: { correlatedToCrisis: boolean; signal: string };
 }
 
 interface Props {
@@ -324,6 +340,53 @@ export function ScreeningReasoningPanel({ reasoning }: Props): React.ReactElemen
               ))}
             </ul>
           )}
+        </div>
+      )}
+
+      {/* Batch-3 reasoning: article tone / PEP tier / Bayesian / crisis */}
+      {(reasoning.articleToneSummary || reasoning.pepTier || reasoning.bayesianAdjustment || reasoning.crisisCorrelation) && (
+        <div className="rounded-lg border border-violet-500/30 bg-violet-500/5 p-3 mb-3">
+          <h3 className="text-11 font-semibold uppercase tracking-wide-2 text-violet-300 mb-2">
+            Extended reasoning
+          </h3>
+          <ul className="space-y-2 text-12 text-ink-2">
+            {reasoning.articleToneSummary && (
+              <li className="flex items-start gap-2">
+                <span className="text-10 px-1.5 py-0.5 rounded bg-violet-500/20 text-violet-200 font-mono shrink-0">TONE</span>
+                <span>
+                  <span className="text-red-300">{reasoning.articleToneSummary.negative} neg</span>
+                  {" / "}
+                  <span className="text-zinc-400">{reasoning.articleToneSummary.neutral} neutral</span>
+                  {" / "}
+                  <span className="text-emerald-300">{reasoning.articleToneSummary.positive} pos</span>
+                  <span className="text-ink-3"> · severity {reasoning.articleToneSummary.avgSeverity.toFixed(2)}</span>
+                </span>
+              </li>
+            )}
+            {reasoning.pepTier && reasoning.pepTier.tier && (
+              <li className="flex items-start gap-2">
+                <span className="text-10 px-1.5 py-0.5 rounded bg-violet-500/20 text-violet-200 font-mono shrink-0">PEP</span>
+                <span>FATF R.12 tier <span className="font-semibold">{reasoning.pepTier.tier}</span> — {reasoning.pepTier.signal}</span>
+              </li>
+            )}
+            {reasoning.bayesianAdjustment && (
+              <li className="flex items-start gap-2">
+                <span className="text-10 px-1.5 py-0.5 rounded bg-violet-500/20 text-violet-200 font-mono shrink-0">BAYES</span>
+                <span>
+                  Posterior P(listed) = <span className="font-mono text-ink-1">{(reasoning.bayesianAdjustment.posteriorProbability * 100).toFixed(1)}%</span>
+                  <span className="text-ink-3"> · LR {reasoning.bayesianAdjustment.likelihoodRatio.toFixed(2)}</span>
+                </span>
+              </li>
+            )}
+            {reasoning.crisisCorrelation && (
+              <li className="flex items-start gap-2">
+                <span className={`text-10 px-1.5 py-0.5 rounded font-mono shrink-0 ${reasoning.crisisCorrelation.correlatedToCrisis ? "bg-red-500/20 text-red-200" : "bg-violet-500/20 text-violet-200"}`}>
+                  CRISIS
+                </span>
+                <span>{reasoning.crisisCorrelation.signal}</span>
+              </li>
+            )}
+          </ul>
         </div>
       )}
 
