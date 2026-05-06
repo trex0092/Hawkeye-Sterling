@@ -1664,7 +1664,7 @@ export default function OversightPage() {
                 </div>
                 <div className="col-span-1">
                   <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Due date</label>
-                  <input type="date" value={newActionDue} onChange={(e) => setNewActionDue(e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" />
+                  <DateParts value={newActionDue} onChange={setNewActionDue} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" ariaLabel="Due date (dd/mm/yyyy)" />
                 </div>
                 <div className="col-span-1" />
               </div>

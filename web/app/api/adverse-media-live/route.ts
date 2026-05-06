@@ -44,6 +44,53 @@ interface AdverseMediaLiveBody {
   subjectName: string;
   entityType?: string;
   jurisdiction?: string;
+  aliases?: string[];
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Name-variant generator — fan-out so transliterations + suffix-stripped
+// variants don't get missed (Istanbul Gold Refinery / İstanbul Altın
+// Rafinerisi / Istanbul Refinery, etc).
+// ─────────────────────────────────────────────────────────────────────────────
+
+const CORP_SUFFIX_RE = /\b(LIMITED|LTD\.?|INCORPORATED|INC\.?|CORPORATION|CORP\.?|COMPANY|CO\.?|HOLDINGS?|GROUP|S\.?A\.?S?|SAS|GMBH|MBH|AG|PJSC|OJSC|JSC|LLP|PLC|N\.?V\.?|B\.?V\.?|PTE\.?|PTY\.?|S\.?R\.?L\.?|SRL|SP\.?\s?Z\.?O\.?O\.?|SDN\.?\s?BHD\.?|FZ-?LLC|FZE|FZ-?CO|TRADING|REFINERY|REFINING|HOLDING|TECHNOLOGIES|INDUSTRIES|ENTERPRISES?|MINING|RESOURCES|EXPORT|IMPORT)\b/gi;
+
+function generateNameVariants(name: string, aliases?: string[]): string[] {
+  const variants = new Set<string>();
+  const base = name.trim();
+  if (!base) return [];
+  variants.add(base);
+  // Title-cased version (helps if the analyst typed ALL CAPS)
+  const titled = base
+    .toLowerCase()
+    .split(/\s+/)
+    .map((w) => (w.length > 0 ? w[0]!.toUpperCase() + w.slice(1) : ""))
+    .join(" ");
+  if (titled !== base) variants.add(titled);
+  // Strip corporate suffixes — keeps the meaningful brand stem
+  const stripped = base.replace(CORP_SUFFIX_RE, "").replace(/\s+/g, " ").trim();
+  if (stripped && stripped !== base && stripped.split(/\s+/).length >= 2) {
+    variants.add(stripped);
+  }
+  // Strip non-ASCII diacritics (İ → I, ç → c, ş → s, ğ → g, ö → o, ü → u, etc)
+  const ascii = base
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/İ/g, "I")
+    .replace(/ı/g, "i")
+    .replace(/Ş/g, "S").replace(/ş/g, "s")
+    .replace(/Ğ/g, "G").replace(/ğ/g, "g")
+    .replace(/Ç/g, "C").replace(/ç/g, "c")
+    .replace(/Ö/g, "O").replace(/ö/g, "o")
+    .replace(/Ü/g, "U").replace(/ü/g, "u");
+  if (ascii !== base) variants.add(ascii);
+  // Add caller-provided aliases verbatim
+  for (const a of aliases ?? []) {
+    const t = a.trim();
+    if (t) variants.add(t);
+  }
+  // Cap fan-out so we don't hammer GDELT (max 6 variants total)
+  return Array.from(variants).slice(0, 6);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -367,12 +414,25 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   }
 
-  // Query GDELT — fallback gracefully on any failure
+  // Fan-out GDELT queries across name variants (suffix-stripped,
+  // transliteration-folded, caller-provided aliases). Transliterated
+  // brand names (e.g. ISTANBUL GOLD REFINERY ↔ İstanbul Altın Rafinerisi)
+  // and suffix-stripped variants (FZE / LIMITED dropped) used to be
+  // silently dropped by the exact-phrase match.
+  const variants = generateNameVariants(subjectName, body.aliases);
   let rawArticles: GdeltArticle[] = [];
   try {
-    rawArticles = await queryGdelt(subjectName);
+    const results = await Promise.all(variants.map((v) => queryGdelt(v).catch(() => [] as GdeltArticle[])));
+    const seenUrls = new Set<string>();
+    for (const arr of results) {
+      for (const a of arr) {
+        const key = (a.url ?? "").toLowerCase();
+        if (!key || seenUrls.has(key)) continue;
+        seenUrls.add(key);
+        rawArticles.push(a);
+      }
+    }
   } catch {
-    // Return fallback on complete failure
     return NextResponse.json({
       ...FALLBACK,
       subject: subjectName,
