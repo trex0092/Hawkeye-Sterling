@@ -9,7 +9,7 @@
 # must complete before step 2.
 
 [build]
-  command = "npm ci --include=dev && npm run build && node scripts/gen-weaponized-brain.cjs && cd web && npm ci --include=dev && npm run build"
+  command = "echo 'Node' $(node -v) 'NPM' $(npm -v) && echo '[1] root npm ci' && npm ci --include=dev && echo '[2] root tsc' && npm run build && echo '[3] gen-brain' && node scripts/gen-weaponized-brain.cjs && echo '[4] web npm ci' && cd web && npm ci --include=dev && echo '[5] next build' && npm run build && echo '[6] done'"
   publish = "web/.next"
 
 [build.environment]
