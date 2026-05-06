@@ -19,6 +19,12 @@ export interface QuickScreenSubject {
   aliases?: string[];
   entityType?: EntityType;
   jurisdiction?: string;
+  // Disambiguation discriminators — when present, allow the consensus
+  // engine to penalise common-name-only matches less aggressively.
+  dateOfBirth?: string;
+  nationality?: string;
+  passportNumber?: string;
+  nationalIdNumber?: string;
 }
 
 export interface QuickScreenCandidate {

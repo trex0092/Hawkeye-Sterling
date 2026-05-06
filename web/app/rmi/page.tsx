@@ -403,7 +403,7 @@ export default function RmiPage() {
           disabled={rmiAssessLoading}
           className="px-4 py-2 text-12 font-semibold rounded border border-brand bg-brand-dim text-brand hover:bg-brand hover:text-white transition-colors disabled:opacity-50"
         >
-          {rmiAssessLoading ? "Assessing…" : "AI Supply Chain Assessment"}
+          {rmiAssessLoading ? "Assessing…" : "✦AI"}
         </button>
         {rmiAssess && (
           <button

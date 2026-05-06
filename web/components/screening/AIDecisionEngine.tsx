@@ -35,6 +35,12 @@ interface Props {
   screeningSeverity?: string;
   sanctionsHits?: Array<{ list: string; score: number; details?: string }>;
   adverseMediaText?: string;
+  /** Live super-brain stress-test output (EU 8th, UK SAMLA, Russia oil
+   *  cap, DPRK overseas labour, Iran nuclear, Syria reconstruction,
+   *  Cuba CACR, comprehensive regions, Belarus dual-use, Venezuela oil).
+   *  When any test fired, the engine surfaces them ahead of the LLM
+   *  decision so the analyst sees the regime-specific reasoning. */
+  stressTests?: Array<{ regime: string; fired: boolean; severity: "critical" | "high" | "medium" | "low"; rationale: string; citation: string }>;
 }
 
 type EngineState =
@@ -52,7 +58,13 @@ export function AIDecisionEngine({
   screeningSeverity,
   sanctionsHits = [],
   adverseMediaText,
+  stressTests = [],
 }: Props) {
+  // Pre-LLM signal: any sanctions stress test that fired against the
+  // declared jurisdiction / industry context. Rendered above the
+  // decision so the analyst sees regime-specific reasoning even when
+  // the AI flow is degraded.
+  const firedStressTests = stressTests.filter((t) => t.fired);
   const [state, setState] = useState<EngineState>({ phase: "idle" });
   const [overrideChoice, setOverrideChoice] = useState<AIDecision>("edd");
   const [overrideNotes, setOverrideNotes] = useState("");
@@ -196,6 +208,25 @@ export function AIDecisionEngine({
       </div>
 
       <div className="p-4">
+        {/* Pre-LLM stress-test alerts — visible regardless of phase */}
+        {firedStressTests.length > 0 && (
+          <div className="mb-3 rounded-lg border border-red/40 bg-red/5 p-3">
+            <div className="text-10 font-semibold uppercase tracking-wide-3 text-red mb-2">
+              ⚠ {firedStressTests.length} sanctions stress test{firedStressTests.length === 1 ? "" : "s"} fired
+            </div>
+            <ul className="space-y-1.5">
+              {firedStressTests.map((t) => (
+                <li key={t.regime} className="text-11 text-ink-1">
+                  <strong className="text-red">{t.regime}</strong>{" "}
+                  <span className="text-10 font-mono uppercase text-ink-2">{t.severity}</span>
+                  <div className="text-10 text-ink-2">{t.rationale}</div>
+                  <div className="text-10 text-ink-3 font-mono">{t.citation}</div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         {/* Idle */}
         {state.phase === "idle" && (
           <div className="text-center py-6">

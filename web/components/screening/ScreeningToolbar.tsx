@@ -189,13 +189,9 @@ export const ScreeningToolbar = forwardRef<HTMLInputElement, ScreeningToolbarPro
 
           <ColumnChooser visible={columns} onChange={onColumnsChange} />
 
-          <ToolbarButton small onClick={onExport} title="Export filtered queue as CSV">
-            Export
-          </ToolbarButton>
+          <ToolbarButton small onClick={onExport} title="Export filtered queue as CSV"><span style={{color:"#22c55e"}}>↓</span></ToolbarButton>
 
-          <ToolbarButton small onClick={onBulkImport} title="Import a CSV of subjects">
-            Bulk import
-          </ToolbarButton>
+          <ToolbarButton small onClick={onBulkImport} title="Import a CSV of subjects"><span style={{color:"#f59e0b"}}>↑</span></ToolbarButton>
 
           <ToolbarButton small primary onClick={onNewScreening}>
             <span>+</span>
@@ -226,7 +222,7 @@ export const ScreeningToolbar = forwardRef<HTMLInputElement, ScreeningToolbarPro
               disabled={aiLoading || !aiQuery.trim()}
               className="px-4 py-2 text-11.5 font-semibold rounded bg-brand text-white hover:bg-brand-hover disabled:opacity-40 transition-colors"
             >
-              {aiLoading ? "Searching…" : "Search"}
+              {aiLoading ? "⌕…" : "⌕"}
             </button>
             {aiFilterLabel && (
               <button

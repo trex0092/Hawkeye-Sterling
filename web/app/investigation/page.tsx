@@ -326,7 +326,7 @@ export default function InvestigationPage() {
                   <button type="button" onClick={addParty}
                     className="flex-1 text-11 font-semibold py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1">Add</button>
                   <button type="button" onClick={() => setAddingParty(false)}
-                    className="flex-1 text-11 py-1.5 rounded border border-hair-2 text-ink-2 hover:text-ink-0">Cancel</button>
+                    className="flex-1 text-11 py-1.5 rounded border border-red/30 text-red hover:text-red/80">✕</button>
                 </div>
               </div>
             )}
@@ -395,7 +395,7 @@ export default function InvestigationPage() {
                   <button type="button" onClick={addEvent}
                     className="flex-1 text-11 font-semibold py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1">Add</button>
                   <button type="button" onClick={() => setAddingEvent(false)}
-                    className="flex-1 text-11 py-1.5 rounded border border-hair-2 text-ink-2 hover:text-ink-0">Cancel</button>
+                    className="flex-1 text-11 py-1.5 rounded border border-red/30 text-red hover:text-red/80">✕</button>
                 </div>
               </div>
             )}
@@ -439,8 +439,9 @@ export default function InvestigationPage() {
             </button>
             {packReady && (
               <button type="button" onClick={() => window.print()}
-                className="w-full text-11 font-semibold py-2 rounded bg-amber/10 border border-amber/40 text-amber hover:bg-amber/20 transition-colors">
-                ↓ Print / Export PDF
+                className="text-11 font-mono px-3 py-1.5 rounded border font-semibold"
+                style={{ color: "#7c3aed", borderColor: "#7c3aed", background: "rgba(124,58,237,0.07)" }}>
+                PDF
               </button>
             )}
           </div>

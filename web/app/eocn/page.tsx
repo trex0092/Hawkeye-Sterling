@@ -242,21 +242,11 @@ export default function EocnPage() {
             type="button"
             onClick={handleRefresh}
             disabled={refreshing}
-            className="flex items-center gap-1.5 px-3 py-1 rounded border border-blue/40 text-11 font-medium text-blue bg-blue/10 hover:bg-blue/20 transition-colors disabled:opacity-50"
+            title="Refresh list"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded border border-green/40 text-11 font-mono font-semibold text-green bg-green-dim hover:bg-green-dim/70 transition-colors disabled:opacity-50"
           >
-            <svg
-              className={`w-3 h-3 ${refreshing ? "animate-spin" : ""}`}
-              viewBox="0 0 16 16"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M13.5 8A5.5 5.5 0 1 1 10 3.07" />
-              <path d="M10 1v3h3" />
-            </svg>
-            {refreshing ? "Refreshing…" : "Refresh"}
+            <span className="text-13 leading-none">↻</span>
+            <span className="uppercase tracking-wide-2">{refreshing ? "Refreshing…" : "Refresh"}</span>
           </button>
         </div>
       </div>
@@ -443,8 +433,8 @@ export default function EocnPage() {
                         onChange={(e) => setEditMatchDraft((d) => ({ ...d, mlroSignedOff: e.target.checked }))} />
                       MLRO signed off
                     </label>
-                    <button type="button" onClick={() => saveMatchEdit(m)} className="text-11 font-semibold px-3 py-1 rounded bg-ink-0 text-bg-0">Save</button>
-                    <button type="button" onClick={() => setEditingMatchId(null)} className="text-11 font-medium px-3 py-1 rounded text-ink-2">Cancel</button>
+                    <button type="button" onClick={() => saveMatchEdit(m)} className="text-11 font-semibold px-3 py-1 rounded bg-ink-0 text-bg-0">✓</button>
+                    <button type="button" onClick={() => setEditingMatchId(null)} className="text-11 font-medium px-3 py-1 rounded text-red">✕</button>
                   </div>
                 </div>
               )}

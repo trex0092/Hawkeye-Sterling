@@ -7,6 +7,9 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
 import { NextResponse } from "next/server";
+import { searchAllRegistries } from "@/lib/intelligence/registryAdapters";
+import { searchCountryRegistries } from "@/lib/intelligence/countryRegistries";
+import { bestCommercialAdapter, activeCommercialProvider } from "@/lib/intelligence/commercialAdapters";
 
 const CORS: Record<string, string> = {
   "access-control-allow-origin": "*",
@@ -366,16 +369,41 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   }
 
-  // Fan out to OpenCorporates and GLEIF in parallel
-  const [ocResults, gleifResults] = await Promise.all([
-    queryOpenCorporates(companyName, body.jurisdiction, body.companyNumber),
-    queryGleifFuzzy(companyName),
-  ]);
+  // Fan out to OpenCorporates + GLEIF + every configured registry adapter
+  // (Sayari, BvD Orbis, D&B, Kyckr, Crunchbase, PitchBook, ZoomInfo,
+  //  Capital IQ, LexisNexis Diligence, Northdata, BoardEx, Mergent,
+  //  Refinitiv Workspace) AND every active country-specific registry
+  //  (UAE DED, ZEFIX, KVK, Bronnoysund, ABR, ACRA, INSEE Sirene, ...).
+  // For UAE/GCC entities that aren't in OpenCorporates, these are the
+  //  only sources that will return real data.
+  const commAdapter = bestCommercialAdapter();
+  const [ocResults, gleifResults, registryAgg, countryRegistryAgg, commercialResults] =
+    await Promise.all([
+      queryOpenCorporates(companyName, body.jurisdiction, body.companyNumber),
+      queryGleifFuzzy(companyName),
+      searchAllRegistries(companyName, body.jurisdiction ? { jurisdiction: body.jurisdiction, limit: 25 } : { limit: 25 }).catch(() => ({ records: [], providersUsed: [] })),
+      searchCountryRegistries(companyName, body.jurisdiction, 25).catch(() => ({ records: [], jurisdictions: [] })),
+      commAdapter.isAvailable()
+        ? commAdapter.lookup(companyName, body.jurisdiction).catch(() => [])
+        : Promise.resolve([]),
+    ]);
 
-  // If no external data is available, return the UAE DPMS fallback
-  if (ocResults.length === 0 && gleifResults.length === 0) {
+  // If no external data is available across ANY source, return the UAE
+  // DPMS fallback — and tell the operator exactly which keys they could
+  // configure to improve coverage.
+  if (
+    ocResults.length === 0 &&
+    gleifResults.length === 0 &&
+    registryAgg.records.length === 0 &&
+    countryRegistryAgg.records.length === 0 &&
+    commercialResults.length === 0
+  ) {
     return NextResponse.json(
-      { ...UAE_DPMS_FALLBACK, subject: companyName },
+      {
+        ...UAE_DPMS_FALLBACK,
+        subject: companyName,
+        coverageHint: `No corporate registry data found for "${companyName}"${body.jurisdiction ? ` in ${body.jurisdiction}` : ""}. Configure UAE_DED_API_KEY (UAE DED), SAYARI_API_KEY (commercial UBO), or DNB_API_KEY (D&B) for fuller coverage.`,
+      },
       { status: 200, headers: CORS },
     );
   }

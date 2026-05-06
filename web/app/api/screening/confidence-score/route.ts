@@ -75,10 +75,32 @@ export async function POST(req: Request) {
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "screening/confidence-score temporarily unavailable - please retry." }, { status: 503 });
+  // Deterministic template — returns a defensible confidence score
+  // computed from the fuzzy-match score alone when no API key is set.
+  const buildTemplate = (): ConfidenceScoreResult => {
+    const fuzzy = body.hit?.score ?? 50;
+    const hasFullId = Boolean(body.subject?.dob && body.subject?.idNumber);
+    const fp = hasFullId ? Math.max(0, 100 - fuzzy) : Math.max(20, 100 - fuzzy);
+    const conf = 100 - fp;
+    return {
+      ok: true,
+      confidenceScore: conf,
+      falsePositiveProbability: fp,
+      keyFactors: [
+        `Fuzzy match strength ${fuzzy}/100`,
+        hasFullId ? "Subject DOB + ID supplied — strong identifiers" : "Identifiers missing — disambiguation required",
+        `List: ${body.hit?.listName ?? "unknown"}`,
+      ],
+      recommendation: conf >= 70 ? "escalate" : conf >= 40 ? "manual_review" : "clear",
+      reasoning: `Deterministic baseline assessment from fuzzy-match score (${fuzzy}) and supplied identifiers. Set ANTHROPIC_API_KEY for AI-graded analysis.`,
+    };
+  };
+  if (!apiKey) {
+    return NextResponse.json({ ...buildTemplate(), degraded: true, degradedReason: "ANTHROPIC_API_KEY not configured — deterministic template used." });
+  }
 
   try {
-    const client = getAnthropicClient(apiKey, 55_000);
+    const client = getAnthropicClient(apiKey, 22_000);
 
     const userContent = `Subject Details:
 - Name: ${body.subject.name}
@@ -118,7 +140,12 @@ Assess whether this is a true sanctions/PEP/watchlist match or a false positive.
       raw.replace(/```json\n?|\n?```/g, "").trim(),
     ) as ConfidenceScoreResult;
     return NextResponse.json(result);
-  } catch {
-    return NextResponse.json({ ok: false, error: "screening/confidence-score temporarily unavailable - please retry." }, { status: 503 });
+  } catch (err) {
+    console.warn("[confidence-score] LLM failed, using deterministic template:", err instanceof Error ? err.message : err);
+    return NextResponse.json({
+      ...buildTemplate(),
+      degraded: true,
+      degradedReason: `LLM call failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
   }
 }

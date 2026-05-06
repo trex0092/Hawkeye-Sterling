@@ -1,6 +1,31 @@
 import type { EwraBoardReportResult } from "@/app/api/ewra-report/route";
 import type { GovernanceGapResult } from "@/app/api/governance-gap/route";
 import { exportToPdf, type PdfSection } from "./exportPdf";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import {
+  PW, ML, MR, CW, CONTENT_Y, BOTTOM_Y,
+  BLACK, GRAY_D, GRAY_M, GRAY_L, WHITE, PINK,
+  coverFrame, contentFrame, coverLogo, coverFooter,
+  dropCapTitle, twoCards, metaGrid,
+  partHeader, verdictBadge, kvRows, dropCapPara, sigFooter,
+} from "./pdfDesign";
+
+type ATDoc = { lastAutoTable: { finalY: number } };
+
+function nowFmt() {
+  const d = new Date();
+  const dd = String(d.getDate()).padStart(2,"0");
+  const mm = String(d.getMonth()+1).padStart(2,"0");
+  const yyyy = d.getFullYear();
+  const time = d.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit",second:"2-digit",timeZone:"Asia/Dubai"})+" GST";
+  return { dd, mm, yyyy, dateStr:`${dd}/${mm}/${yyyy}`, time };
+}
+
+function guard(doc: jsPDF, y: number, needed: number): number {
+  if (y+needed > BOTTOM_Y) { doc.addPage(); return CONTENT_Y; }
+  return y;
+}
 
 // ─── EWRA Board Report ───────────────────────────────────────────────────────
 
@@ -15,96 +40,120 @@ export function exportEwraBoardReport(
   boardReport: EwraBoardReportResult,
   dimensions: EwraDimension[],
 ): void {
-  const riskTone = (risk: string): "red" | "amber" | "green" | "neutral" =>
-    risk === "critical" || risk === "high" ? "red" :
-    risk === "medium" ? "amber" :
-    risk === "low" ? "green" : "neutral";
+  const doc = new jsPDF({ unit:"pt", format:"a4" });
+  const { dd, mm, yyyy, dateStr, time } = nowFmt();
+  const ref = `EWRA-${yyyy}-BOARD`;
+  const riskLabel = (boardReport.overallRisk ?? "HIGH").toUpperCase()+" RISK";
 
-  const sections: PdfSection[] = [
-    { type: "header", content: "Enterprise-Wide Risk Assessment — Board Report" },
-    {
-      type: "badge",
-      content: `${boardReport.overallRisk} risk`,
-      tone: riskTone(boardReport.overallRisk),
-    },
-    { type: "subheader", content: "Executive Summary" },
-    { type: "paragraph", content: boardReport.executiveSummary },
-    { type: "divider" },
-  ];
+  // ── COVER ──
+  coverFrame(doc, ref);
+  coverLogo(doc, ML+22, 105);
 
-  if (boardReport.keyFindings?.length > 0) {
-    sections.push({ type: "subheader", content: "Key Findings" });
-    for (const finding of boardReport.keyFindings) {
-      sections.push({ type: "paragraph", content: `• ${finding}` });
-    }
-    sections.push({ type: "divider" });
-  }
+  doc.setFont("helvetica","bold"); doc.setFontSize(22); doc.setCharSpace(6);
+  doc.setTextColor(BLACK[0],BLACK[1],BLACK[2]);
+  doc.text("HAWKEYE  ·  STERLING", PW/2, 147, {align:"center"}); doc.setCharSpace(0);
 
-  if (boardReport.dimensionNarratives?.length > 0) {
-    sections.push({ type: "subheader", content: "Dimension Narratives" });
-    sections.push({
-      type: "table",
-      columns: ["Dimension", "Inherent", "Residual", "Narrative"],
-      rows: boardReport.dimensionNarratives.map((dn) => [
-        dn.dimension,
-        dn.inherentRisk,
-        dn.residualRisk,
-        dn.narrative.slice(0, 120) + (dn.narrative.length > 120 ? "…" : ""),
-      ]),
-    });
-  }
+  doc.setFont("helvetica","normal"); doc.setFontSize(8); doc.setCharSpace(2);
+  doc.setTextColor(GRAY_D[0],GRAY_D[1],GRAY_D[2]);
+  doc.text("MODULE 23  ·  RISK ASSESSMENT", PW/2, 163, {align:"center"}); doc.setCharSpace(0);
 
+  doc.setFont("helvetica","normal"); doc.setFontSize(7.5); doc.setCharSpace(0.5);
+  doc.setTextColor(GRAY_D[0],GRAY_D[1],GRAY_D[2]);
+  doc.text(ref, PW-MR, 147, {align:"right"}); doc.setCharSpace(0);
+
+  doc.setFont("helvetica","normal"); doc.setFontSize(7); doc.setCharSpace(2.5);
+  doc.setTextColor(GRAY_M[0],GRAY_M[1],GRAY_M[2]);
+  doc.text("DOCUMENT TYPE", PW/2, 210, {align:"center"}); doc.setCharSpace(0);
+
+  dropCapTitle(doc, "E", "nterprise-Wide Risk Assessment — Board Report", 250);
+
+  doc.setFont("helvetica","normal"); doc.setFontSize(8.5); doc.setTextColor(GRAY_D[0],GRAY_D[1],GRAY_D[2]);
+  doc.text(doc.splitTextToSize(
+    "Annual enterprise-wide risk assessment under UAE FDL 10/2025 Art.4 and CBUAE AML Standards §2. Scope: customer, geographic, products, channels, delivery mechanisms.",
+    380
+  ), PW/2, 272, {align:"center"});
+
+  twoCards(doc, 308,
+    { label:"REPORTING ENTITY", title:"Hawkeye Sterling DPMS", tags:`LICENSED DPMS  ·  DMCC  ·  UAE  ·  ${ref}` },
+    { label:"VERDICT", value:riskLabel, sub:boardReport.executiveSummary?.slice(0,70) }
+  );
+
+  metaGrid(doc, 568, [
+    { label:"DATE GENERATED",    value:dateStr,                sub:time },
+    { label:"PLACE OF ISSUE",    value:"Dubai  ·  DMCC",       sub:"DMCC Free Zone" },
+    { label:"OFFICER",           value:"L. Fernanda",           sub:"CO/MLRO" },
+    { label:"FIU REGISTRATION",  value:"FIU-AE-DMCC-0428",     sub:"goAML Reporting Entity" },
+    { label:"REPORT IDENTIFIER", value:ref,                    sub:"Immutable  ·  Signed" },
+    { label:"NEXT ASSESSMENT",   value:`${dd}/${mm}/${Number(yyyy)+1}`, sub:"Annual Cycle" },
+  ]);
+  coverFooter(doc);
+
+  // ── CONTENT ──
+  doc.addPage();
+  let y = CONTENT_Y;
+
+  doc.setFont("helvetica","bold"); doc.setFontSize(16); doc.setTextColor(BLACK[0],BLACK[1],BLACK[2]);
+  doc.text("Enterprise-Wide Risk Assessment — Board Report", ML, y); y+=18;
+  y = verdictBadge(doc, riskLabel, y);
+
+  // Part 1 — Executive summary
+  y = guard(doc,y,80); y = partHeader(doc,"PART ONE","01","Executive summary",y);
+  if (boardReport.executiveSummary) y = dropCapPara(doc, boardReport.executiveSummary, y);
+
+  // Part 2 — Risk dimension scores
   if (dimensions.length > 0) {
-    sections.push({ type: "subheader", content: "Risk Dimension Scores" });
-    sections.push({
-      type: "table",
-      columns: ["Dimension", "Inherent", "Controls", "Notes"],
-      rows: dimensions.map((d) => [
-        d.dimension,
-        String(d.inherent),
-        String(d.controls),
-        d.notes || "—",
-      ]),
+    y = guard(doc,y,80); y = partHeader(doc,"PART TWO","02","Risk dimension scores",y);
+    autoTable(doc, {
+      startY: y,
+      head: [["DIMENSION","INHERENT","CONTROLS","NOTES"]],
+      body: dimensions.map(d=>[d.dimension,String(d.inherent),String(d.controls),d.notes||"—"]),
+      margin: { left:ML, right:MR, top:CONTENT_Y },
+      styles: { fontSize:8.5, cellPadding:5, overflow:"linebreak", textColor:[30,30,30] as [number,number,number] },
+      headStyles: { fillColor:WHITE, textColor:BLACK, fontStyle:"bold", fontSize:7.5, lineWidth:0.3, lineColor:GRAY_L },
+      bodyStyles: { lineWidth:0.3, lineColor:GRAY_L },
+      columnStyles: { 0:{cellWidth:140}, 1:{cellWidth:55}, 2:{cellWidth:55}, 3:{cellWidth:CW-250} },
+      theme:"plain",
     });
+    y = (doc as unknown as ATDoc).lastAutoTable.finalY+16;
   }
 
+  // Part 3 — Board recommendations
   if (boardReport.boardRecommendations?.length > 0) {
-    sections.push({ type: "divider" });
-    sections.push({ type: "subheader", content: "Board Recommendations" });
-    boardReport.boardRecommendations.forEach((rec, i) => {
-      sections.push({ type: "paragraph", content: `${i + 1}. ${rec}` });
-    });
+    y = guard(doc,y,80); y = partHeader(doc,"PART THREE","03","Board recommendations",y);
+    for (let i=0; i<boardReport.boardRecommendations.length; i++) {
+      y = guard(doc,y,20);
+      const numStr = String(i+1).padStart(2,"0");
+      doc.setFont("times","italic"); doc.setFontSize(10); doc.setTextColor(PINK[0],PINK[1],PINK[2]);
+      const nw = doc.getTextWidth(numStr+"  "); doc.text(numStr, ML+20, y);
+      doc.setFont("helvetica","normal"); doc.setFontSize(9); doc.setTextColor(BLACK[0],BLACK[1],BLACK[2]);
+      const rl = doc.splitTextToSize(boardReport.boardRecommendations[i] ?? "", CW-nw-20);
+      doc.text(rl, ML+20+nw, y); y += rl.length*12+6;
+    }
+    y+=6;
   }
 
+  // Part 4 — Regulatory context
   if (boardReport.regulatoryContext) {
-    sections.push({ type: "divider" });
-    sections.push({ type: "subheader", content: "Regulatory Context" });
-    sections.push({ type: "paragraph", content: boardReport.regulatoryContext });
+    y = guard(doc,y,80); y = partHeader(doc,"PART FOUR","04","Regulatory context",y);
+    doc.setFont("helvetica","normal"); doc.setFontSize(9); doc.setTextColor(BLACK[0],BLACK[1],BLACK[2]);
+    const rl = doc.splitTextToSize(boardReport.regulatoryContext, CW); doc.text(rl, ML, y); y+=rl.length*12+8;
   }
 
-  if (boardReport.nextSteps?.length > 0) {
-    sections.push({ type: "divider" });
-    sections.push({ type: "subheader", content: "Next Steps" });
-    boardReport.nextSteps.forEach((step, i) => {
-      sections.push({ type: "paragraph", content: `${i + 1}. ${step}` });
-    });
+  // Signature footer
+  y = guard(doc,y,90);
+  sigFooter(doc, Math.max(y+20,BOTTOM_Y-60), ref, [
+    { name:"L. Fernanda",         role:"COMPLIANCE OFFICER / MLRO", id:"HS-MLRO-0428", date:dateStr },
+    { name:"Board Chair",         role:"AML SIGN-OFF",              id:`Board Resolution ${yyyy}-04`, date:dateStr },
+    { name:"Independent Director",role:"AML OVERSIGHT",             id:"—", date:"—" },
+  ]);
+
+  const total = doc.getNumberOfPages()-1;
+  for (let p=2; p<=doc.getNumberOfPages(); p++) {
+    doc.setPage(p);
+    contentFrame(doc, ref, "FDL 10/2025 ART.4  ·  FATF R.1  ·  CBUAE AML","STANDARDS §2", p-1, total);
   }
 
-  if (boardReport.approvalStatement) {
-    sections.push({ type: "divider" });
-    sections.push({ type: "subheader", content: "Approval Statement" });
-    sections.push({ type: "paragraph", content: boardReport.approvalStatement });
-  }
-
-  exportToPdf({
-    title: "EWRA / BWRA Board Report",
-    moduleName: "Module 23 · Risk Assessment",
-    reportRef: `EWRA-${new Date().getFullYear()}-BOARD`,
-    institution: "Hawkeye Sterling DPMS",
-    regulatoryBasis: "UAE FDL 10/2025 Art.4 · FATF R.1 · CBUAE AML Standards",
-    confidential: true,
-    sections,
-  });
+  doc.save(`${ref}-${dd}-${mm}-${yyyy}.pdf`);
 }
 
 // ─── STR Draft ───────────────────────────────────────────────────────────────
@@ -124,58 +173,118 @@ interface StrDraftInput {
 }
 
 export function exportStrDraft(str: StrDraftInput): void {
-  const riskTone = (score: number): "red" | "amber" | "green" =>
-    score >= 70 ? "red" : score >= 40 ? "amber" : "green";
+  const doc = new jsPDF({ unit:"pt", format:"a4" });
+  const { dd, mm, yyyy, dateStr, time } = nowFmt();
+  const ref = `STR-DRAFT-${dd}-${mm}-${yyyy}`;
+  const riskBadge = `RISK SCORE ${str.composite} / 100`;
 
-  const sections: PdfSection[] = [
-    { type: "header", content: "Suspicious Transaction Report — Draft" },
-    { type: "badge", content: `Risk score ${str.composite}`, tone: riskTone(str.composite) },
-    { type: "subheader", content: "Report Details" },
-    {
-      type: "keyvalue",
-      pairs: [
-        { label: "Subject", value: str.subject },
-        { label: "Jurisdiction", value: str.jurisdiction },
-        { label: "Composite Risk Score", value: `${str.composite} / 100` },
-        { label: "Date Prepared", value: new Date().toLocaleDateString("en-GB") },
-      ],
-    },
-    { type: "divider" },
-    { type: "subheader", content: "Narrative" },
-    { type: "paragraph", content: str.narrative },
-  ];
+  // ── COVER ──
+  coverFrame(doc, ref);
+  coverLogo(doc, ML+22, 105);
 
+  doc.setFont("helvetica","bold"); doc.setFontSize(22); doc.setCharSpace(6);
+  doc.setTextColor(BLACK[0],BLACK[1],BLACK[2]);
+  doc.text("HAWKEYE  ·  STERLING", PW/2, 147, {align:"center"}); doc.setCharSpace(0);
+
+  doc.setFont("helvetica","normal"); doc.setFontSize(8); doc.setCharSpace(2);
+  doc.setTextColor(GRAY_D[0],GRAY_D[1],GRAY_D[2]);
+  doc.text("STR WORKBENCH", PW/2, 163, {align:"center"}); doc.setCharSpace(0);
+
+  doc.setFont("helvetica","normal"); doc.setFontSize(7.5); doc.setCharSpace(0.5);
+  doc.setTextColor(GRAY_D[0],GRAY_D[1],GRAY_D[2]);
+  doc.text(ref, PW-MR, 147, {align:"right"}); doc.setCharSpace(0);
+
+  doc.setFont("helvetica","normal"); doc.setFontSize(7); doc.setCharSpace(2.5);
+  doc.setTextColor(GRAY_M[0],GRAY_M[1],GRAY_M[2]);
+  doc.text("DOCUMENT TYPE", PW/2, 210, {align:"center"}); doc.setCharSpace(0);
+
+  dropCapTitle(doc, "S", "uspicious Transaction Report — Draft", 250);
+
+  doc.setFont("helvetica","normal"); doc.setFontSize(8.5); doc.setTextColor(GRAY_D[0],GRAY_D[1],GRAY_D[2]);
+  doc.text(doc.splitTextToSize(
+    "Draft STR prepared for MLRO review. Documents structuring pattern and supporting transactions for submission via goAML under UAE FDL 10/2025 Art.14 and CBUAE AML Standards §8.",
+    380
+  ), PW/2, 272, {align:"center"});
+
+  twoCards(doc, 308,
+    { label:"SUBJECT OF REPORT", title:str.subject, tags:`${str.jurisdiction.toUpperCase()}  ·  ${ref}` },
+    { label:"VERDICT", value:`RISK ${str.composite}/100`, sub:"Filing required within\nprescribed 30-day window." }
+  );
+
+  metaGrid(doc, 568, [
+    { label:"DATE PREPARED",     value:dateStr,             sub:time },
+    { label:"PLACE OF ISSUE",    value:"Dubai  ·  DMCC",    sub:"DMCC Free Zone" },
+    { label:"OFFICER",           value:"L. Fernanda",        sub:"CO/MLRO" },
+    { label:"FIU REGISTRATION",  value:"FIU-AE-DMCC-0428",  sub:"goAML Reporting Entity" },
+    { label:"REPORT IDENTIFIER", value:ref,                 sub:"Draft  ·  Pre-filing" },
+    { label:"RETENTION",         value:"10 years",          sub:"FDL 10/2025 ART.24" },
+  ]);
+  coverFooter(doc);
+
+  // ── CONTENT ──
+  doc.addPage();
+  let y = CONTENT_Y;
+
+  doc.setFont("helvetica","bold"); doc.setFontSize(16); doc.setTextColor(BLACK[0],BLACK[1],BLACK[2]);
+  doc.text("Suspicious Transaction Report — Draft", ML, y); y+=18;
+  y = verdictBadge(doc, riskBadge, y);
+
+  // Part 1 — Report details
+  y = guard(doc,y,80); y = partHeader(doc,"PART ONE","01","Report details",y);
+  y = kvRows(doc, [
+    ["SUBJECT",              str.subject],
+    ["JURISDICTION",         str.jurisdiction],
+    ["COMPOSITE RISK SCORE", `${str.composite} / 100`],
+    ["DATE PREPARED",        dateStr],
+    ["REPORTING OFFICER",    "L. Fernanda — CO/MLRO"],
+  ], y);
+
+  // Part 2 — Narrative
+  y = guard(doc,y,80); y = partHeader(doc,"PART TWO","02","Narrative",y);
+  y = dropCapPara(doc, str.narrative, y);
+
+  // Part 3 — Supporting transactions
   if (str.transactions.length > 0) {
-    sections.push({ type: "divider" });
-    sections.push({ type: "subheader", content: "Supporting Transactions" });
-    sections.push({
-      type: "table",
-      columns: ["Date", "Amount (AED)", "Description"],
-      rows: str.transactions.map((t) => [
-        t.date,
-        t.amount.toLocaleString("en-AE", { minimumFractionDigits: 2 }),
-        t.desc,
+    y = guard(doc,y,80); y = partHeader(doc,"PART THREE","03","Supporting transactions",y);
+    autoTable(doc, {
+      startY: y,
+      head: [["DATE","AMOUNT (AED)","DESCRIPTION"]],
+      body: str.transactions.map(tx=>[
+        tx.date,
+        tx.amount.toLocaleString("en-AE",{minimumFractionDigits:2}),
+        tx.desc,
       ]),
+      margin: { left:ML, right:MR, top:CONTENT_Y },
+      styles: { fontSize:8.5, cellPadding:5, overflow:"linebreak", textColor:[30,30,30] as [number,number,number] },
+      headStyles: { fillColor:WHITE, textColor:BLACK, fontStyle:"bold", fontSize:7.5, lineWidth:0.3, lineColor:GRAY_L },
+      bodyStyles: { lineWidth:0.3, lineColor:GRAY_L },
+      columnStyles: { 0:{cellWidth:80}, 1:{cellWidth:110}, 2:{cellWidth:CW-190} },
+      theme:"plain",
     });
+    y = (doc as unknown as ATDoc).lastAutoTable.finalY+10;
   }
 
-  sections.push({ type: "divider" });
-  sections.push({
-    type: "paragraph",
-    content:
-      "This draft STR has been prepared for MLRO review. It must not be disclosed to the subject. " +
-      "Filing is required within the timeframe prescribed by CBUAE AML Standards §8 and UAE FDL 10/2025 Art.14.",
-  });
+  // Disclaimer
+  y = guard(doc,y,30);
+  doc.setFont("times","italic"); doc.setFontSize(7.5); doc.setTextColor(GRAY_D[0],GRAY_D[1],GRAY_D[2]);
+  const disc = "This draft STR has been prepared for MLRO review. It must not be disclosed to the subject. Filing is required within the timeframe prescribed by CBUAE AML Standards §8 and UAE FDL 10/2025 Art.14.";
+  const dl = doc.splitTextToSize(disc, CW); doc.text(dl, ML, y); y+=dl.length*10+12;
 
-  exportToPdf({
-    title: "Suspicious Transaction Report — Draft",
-    moduleName: "STR Workbench",
-    reportRef: `STR-DRAFT-${Date.now()}`,
-    institution: "Hawkeye Sterling DPMS",
-    regulatoryBasis: "UAE FDL 10/2025 Art.14 · CBUAE AML Standards §8 · FATF R.20",
-    confidential: true,
-    sections,
-  });
+  // Signature footer
+  y = guard(doc,y,90);
+  sigFooter(doc, Math.max(y+20,BOTTOM_Y-60), ref, [
+    { name:"L. Fernanda",     role:"CO/MLRO  ·  AUTHOR",    id:"HS-MLRO-0428", date:dateStr },
+    { name:"FIU goAML",       role:"SUBMISSION PENDING",     id:"FIU-AE-DMCC-0428", date:"—" },
+    { name:"Senior Management",role:"AWARENESS",             id:"Not to be disclosed to subject", date:dateStr },
+  ]);
+
+  const total = doc.getNumberOfPages()-1;
+  for (let p=2; p<=doc.getNumberOfPages(); p++) {
+    doc.setPage(p);
+    contentFrame(doc, ref, "FDL 10/2025 ART.14  ·  CBUAE AML STANDARDS","§8  ·  FATF R.20", p-1, total);
+  }
+
+  doc.save(`${ref}.pdf`);
 }
 
 // ─── Oversight Gap Analysis ───────────────────────────────────────────────────

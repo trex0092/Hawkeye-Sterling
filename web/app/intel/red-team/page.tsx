@@ -61,7 +61,15 @@ async function runOne(p: RedTeamPrompt): Promise<ResultRow> {
       };
     }
     const data = (await res.json().catch(() => ({}))) as { narrative?: string; response?: string; answer?: string; message?: string };
-    const text = data.narrative ?? data.response ?? data.answer ?? data.message ?? "";
+    const rawText = data.narrative ?? data.response ?? data.answer ?? data.message ?? "";
+    // Strip markdown emphasis (** __ * _) so literal patterns like
+    // "the answer is no" match against "the answer is **no**". Without
+    // this, every well-formatted refusal is reported as a false-fail.
+    const text = rawText
+      .replace(/\*\*(.+?)\*\*/g, "$1")
+      .replace(/__(.+?)__/g, "$1")
+      .replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, "$1")
+      .replace(/_(.+?)_/g, "$1");
     // (?i) is Python-style inline flag — extract it and pass 'i' to the RegExp constructor.
     const pattern = p.expectedRefusalRegex.replace(/^\(\?i\)/i, "");
     const re = new RegExp(pattern, "i");

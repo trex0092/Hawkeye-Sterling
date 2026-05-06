@@ -7,13 +7,15 @@ import { ScreeningHero } from "@/components/screening/ScreeningHero";
 import { ScreeningToolbar } from "@/components/screening/ScreeningToolbar";
 import { ScreeningTable } from "@/components/screening/ScreeningTable";
 import { SubjectDetailPanel } from "@/components/screening/SubjectDetailPanel";
+import { ScreeningReasoningPanel, type ScreeningReasoning } from "@/components/screening/ScreeningReasoningPanel";
+import { HitTriagePanel, type TriageHit, type Resolution } from "@/components/screening/HitTriagePanel";
 import {
   NewScreeningForm,
   type ScreeningFormData,
 } from "@/components/screening/NewScreeningForm";
 import { QUEUE_FILTERS, SUBJECTS } from "@/lib/data/subjects";
 import { lookupKnownPEP } from "@/lib/data/known-entities";
-import type { CDDPosture, FilterKey, QueueFilter, SavedSearch, SortKey, Subject, TableColumnKey } from "@/lib/types";
+import type { CDDPosture, FilterKey, QueueFilter, SanctionSource, SavedSearch, SortKey, Subject, TableColumnKey } from "@/lib/types";
 import type { NlSearchFilter } from "@/app/api/cases/nl-search/route";
 import { fetchJson } from "@/lib/api/fetchWithRetry";
 import { ActivityFeed } from "@/components/screening/ActivityFeed";
@@ -56,7 +58,7 @@ const RESCREEN_SEV_STYLE: Record<NewHit["severity"], string> = {
 
 // ── Adverse Media types ───────────────────────────────────────────────────────
 
-type AdverseRiskTier = "clear" | "low" | "medium" | "high" | "critical";
+type AdverseRiskTier = "clear" | "low" | "medium" | "high" | "critical" | "unknown";
 
 interface AdverseMediaFinding {
   itemId: string;
@@ -113,6 +115,8 @@ const ADVERSE_TIER_STYLE: Record<AdverseRiskTier, string> = {
   medium:   "bg-amber-dim text-amber border border-amber/30",
   low:      "bg-amber-dim text-amber border border-amber/30",
   clear:    "bg-green-dim text-green border border-green/30",
+  // Live feed unavailable — explicit degraded state, never treat as clear.
+  unknown:  "bg-amber-dim text-amber border border-amber/40",
 };
 
 const ADVERSE_SEV_STYLE: Record<string, string> = {
@@ -567,6 +571,14 @@ export default function ScreeningPage() {
   const [rescreenLoading, setRescreenLoading] = useState(false);
   const [rescreenResult, setRescreenResult] = useState<BulkRescreenResult | null>(null);
   const [rescreenError, setRescreenError] = useState<string | null>(null);
+  // Latest reasoning from the most recent /api/quick-screen call —
+  // populated when an auto-screen completes; rendered as a full-width
+  // panel above the screening table.
+  const [latestReasoning, setLatestReasoning] = useState<{ subjectName: string; reasoning: ScreeningReasoning } | null>(null);
+  // Hit-triage state — World-Check-style match list with resolution
+  // workflow. Populated from the same auto-screen response.
+  const [latestTriage, setLatestTriage] = useState<{ subjectId: string; subjectName: string; hits: TriageHit[]; commonNameExpansion?: boolean } | null>(null);
+  const [triageResolutions, setTriageResolutions] = useState<Record<string, Resolution>>({});
 
   // Adverse Media state
   const [amSubject, setAmSubject] = useState("");
@@ -940,7 +952,40 @@ export default function ScreeningPage() {
           };
           if (data.alternateNames.length > 0) subjectPayload.aliases = data.alternateNames;
           if (jurisdictionField.trim()) subjectPayload.jurisdiction = jurisdictionField.trim();
-          const res = await fetchJson<{ ok: boolean; topScore?: number; severity?: string }>(
+          interface AugmentationRecord {
+            source?: string;
+            name?: string;
+            legalName?: string;
+            jurisdiction?: string;
+            registrationNumber?: string;
+            status?: string;
+            incorporatedAt?: string;
+            incorporationDate?: string;
+            url?: string;
+          }
+          interface QuickScreenAPIResponse {
+            ok: boolean;
+            topScore?: number;
+            severity?: string;
+            reasoning?: ScreeningReasoning;
+            hits?: Array<{ listId: string; listRef: string; candidateName: string; matchedAlias?: string; score: number; method: string; programs?: string[] }>;
+            openSanctionsAugmentation?: AugmentationRecord[];
+            commercialAugmentation?: AugmentationRecord[];
+            commercialProvider?: string;
+            registryAugmentation?: AugmentationRecord[];
+            registryProviders?: string[];
+            countryRegistryAugmentation?: AugmentationRecord[];
+            countryRegistryJurisdictions?: string[];
+            countrySanctionsAugmentation?: AugmentationRecord[];
+            countrySanctionsLists?: string[];
+            freeAdapterAugmentation?: AugmentationRecord[];
+            freeAdapterProviders?: string[];
+            commonNameExpansion?: boolean;
+          }
+          // One-shot retry on transient failures (network blip, 5xx, timeout).
+          // Many screen-failed states on the queue come from a single
+          // hiccup — retrying once recovers cleanly without operator action.
+          let res = await fetchJson<QuickScreenAPIResponse>(
             "/api/quick-screen",
             {
               method: "POST",
@@ -949,11 +994,110 @@ export default function ScreeningPage() {
               label: "Auto-screen failed",
             },
           );
+          if (!res.ok) {
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+            res = await fetchJson<QuickScreenAPIResponse>(
+              "/api/quick-screen",
+              {
+                method: "POST",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify({ subject: subjectPayload }),
+                label: "Auto-screen failed (retry)",
+              },
+            );
+          }
+          if (res.ok && res.data?.ok && res.data.reasoning) {
+            setLatestReasoning({ subjectName: subject.name, reasoning: res.data.reasoning });
+            // Build the unified triage list from every augmentation array
+            const triageHits: TriageHit[] = [];
+            for (const h of res.data.hits ?? []) {
+              triageHits.push({
+                id: `local-${h.listId}-${h.listRef}`,
+                source: h.listId,
+                sourceList: h.listId.toUpperCase(),
+                name: h.candidateName,
+                matchedAlias: h.matchedAlias,
+                matchStrength: h.score,
+                programs: h.programs,
+                listRef: h.listRef,
+                type: "OTHER",
+              });
+            }
+            const augLists: Array<[AugmentationRecord[] | undefined, string, string]> = [
+              [res.data.openSanctionsAugmentation, "opensanctions", "OpenSanctions"],
+              [res.data.commercialAugmentation, res.data.commercialProvider ?? "commercial", res.data.commercialProvider ?? "Commercial"],
+              [res.data.countrySanctionsAugmentation, "country-sanctions", "Country sanctions"],
+              [res.data.registryAugmentation, "registry", "Registry"],
+              [res.data.countryRegistryAugmentation, "country-registry", "Country registry"],
+              [res.data.freeAdapterAugmentation, "free", "Free adapter"],
+            ];
+            for (const [arr, sourceId, sourceLabel] of augLists) {
+              if (!arr) continue;
+              for (let i = 0; i < arr.length; i++) {
+                const r = arr[i];
+                if (!r) continue;
+                triageHits.push({
+                  id: `${sourceId}-${i}-${r.registrationNumber ?? r.name ?? r.legalName ?? "unknown"}`,
+                  source: r.source ?? sourceId,
+                  sourceList: sourceLabel,
+                  name: (r.legalName ?? r.name ?? "Unknown record"),
+                  matchStrength: 75,
+                  type: sourceId.includes("sanctions") ? "LE" : sourceId.includes("registry") ? "OB" : "OTHER",
+                  citizenship: r.jurisdiction,
+                  countryLocation: r.jurisdiction,
+                  listRef: r.registrationNumber,
+                  enteredDate: r.incorporatedAt ?? r.incorporationDate,
+                  url: r.url,
+                });
+              }
+            }
+            setLatestTriage({ subjectId: subject.id, subjectName: subject.name, hits: triageHits, commonNameExpansion: res.data.commonNameExpansion });
+            setTriageResolutions({});
+          }
           if (res.ok && res.data?.ok && res.data.topScore !== undefined) {
+            // Derive list coverage from the hits + augmentations so the
+            // LISTS column shows what fired instead of staying empty.
+            const coverage = new Set<SanctionSource>();
+            const mapListId = (raw: string | undefined): SanctionSource | null => {
+              if (!raw) return null;
+              const v = raw.toLowerCase();
+              if (v.includes("ofac") || v.includes("sdn") || v.includes("us_")) return "OFAC";
+              if (v.includes("un_") || v.includes("1267") || v.includes("1988") || v.includes("2231") || v.includes("unsc")) return "UN";
+              if (v.includes("eu_") || v.includes("cfsp") || v.includes("eu-cons")) return "EU";
+              if (v.includes("uk_") || v.includes("ofsi") || v.includes("hmt")) return "UK";
+              if (v.includes("eocn") || v.includes("uae_")) return "EOCN";
+              if (v.includes("dfat") || v.includes("au_")) return "AU";
+              if (v.includes("seco") || v.includes("ch_")) return "CH";
+              if (v.includes("seam") || v.includes("ca_") || v.includes("osfi")) return "CA";
+              if (v.includes("jp_") || v.includes("meti") || v.includes("japan")) return "JP";
+              if (v.includes("fatf")) return "FATF";
+              if (v.includes("interpol") || v.includes("red_notice") || v.includes("notice")) return "INTERPOL";
+              if (v.includes("world_bank") || v.includes("worldbank") || v.includes("wb_") || v.includes("debar")) return "WB";
+              if (v.includes("adb")) return "ADB";
+              return null;
+            };
+            for (const h of res.data.hits ?? []) {
+              const src = mapListId(h.listId) ?? mapListId(h.listRef);
+              if (src) coverage.add(src);
+              for (const p of h.programs ?? []) {
+                const ps = mapListId(p);
+                if (ps) coverage.add(ps);
+              }
+            }
+            for (const a of res.data.countrySanctionsAugmentation ?? []) {
+              const src = mapListId(a.source);
+              if (src) coverage.add(src);
+            }
+            const nextCoverage = Array.from(coverage);
             setSubjects((prev) =>
               prev.map((s) =>
                 s.id === subject.id
-                  ? { ...s, riskScore: res.data!.topScore ?? 0, mostSerious: res.data!.severity ?? s.mostSerious }
+                  ? {
+                      ...s,
+                      riskScore: res.data!.topScore ?? 0,
+                      mostSerious: res.data!.severity ?? s.mostSerious,
+                      listCoverage: nextCoverage.length > 0 ? nextCoverage : s.listCoverage,
+                    }
                   : s,
               ),
             );
@@ -1378,6 +1522,51 @@ export default function ScreeningPage() {
           </div>
           {/* ─────────────────────────────────────────────────────────────── */}
 
+          {latestReasoning && (
+            <div className="mb-4">
+              <div className="text-11 text-ink-3 mb-1">Latest reasoning · <span className="text-ink-2 font-medium">{latestReasoning.subjectName}</span></div>
+              <ScreeningReasoningPanel reasoning={latestReasoning.reasoning} />
+            </div>
+          )}
+          {latestTriage && latestTriage.hits.length > 0 && (
+            <div className="mb-4">
+              <HitTriagePanel
+                subjectId={latestTriage.subjectId}
+                subjectName={latestTriage.subjectName}
+                hits={latestTriage.hits}
+                commonNameExpansion={latestTriage.commonNameExpansion}
+                resolutions={triageResolutions}
+                onResolve={async (hitId, resolution, reason) => {
+                  // Optimistic UI update
+                  setTriageResolutions((p) => ({ ...p, [hitId]: resolution }));
+                  // Find hit context for the audit trail
+                  const hit = latestTriage.hits.find((h) => h.id === hitId);
+                  try {
+                    await fetch("/api/screening/resolve", {
+                      method: "POST",
+                      headers: { "content-type": "application/json" },
+                      body: JSON.stringify({
+                        subjectId: latestTriage.subjectId,
+                        subjectName: latestTriage.subjectName,
+                        hitId,
+                        resolution,
+                        reason,
+                        hitContext: hit ? {
+                          sourceList: hit.sourceList,
+                          matchedName: hit.name,
+                          matchStrength: hit.matchStrength,
+                          listRef: hit.listRef,
+                        } : undefined,
+                      }),
+                    });
+                  } catch (err) {
+                    console.warn("[screening] resolve failed:", err);
+                  }
+                }}
+              />
+            </div>
+          )}
+
           <ScreeningToolbar
             ref={searchInputRef}
             query={query}
@@ -1489,12 +1678,29 @@ export default function ScreeningPage() {
               }
             }
             if (selected && !formOpen) {
+              // Build triage-resolutions payload for the report PDF —
+              // only when the latest triage matches the selected subject.
+              const triageForReport = latestTriage && latestTriage.subjectId === selected.id
+                ? latestTriage.hits.map((h) => ({
+                    hitId: h.id,
+                    matchedName: h.name,
+                    sourceList: h.sourceList,
+                    matchStrength: h.matchStrength,
+                    type: h.type,
+                    citizenship: h.citizenship,
+                    dob: h.dob,
+                    listRef: h.listRef,
+                    resolution: triageResolutions[h.id] ?? "unspecified" as const,
+                    resolvedAt: triageResolutions[h.id] ? new Date().toISOString() : undefined,
+                  }))
+                : undefined;
               return (
                 <SubjectDetailPanel
                   subject={selected}
                   onUpdate={handleUpdateSubject}
                   allSubjects={subjects}
                   onSelectSubject={setSelectedId}
+                  triageResolutions={triageForReport}
                 />
               );
             }
@@ -1579,9 +1785,9 @@ export default function ScreeningPage() {
                 type="button"
                 onClick={() => { void searchAdverseMedia(); }}
                 disabled={amLoading || !amSubject.trim()}
-                className="px-4 py-1.5 rounded bg-brand text-white text-12 font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+                className="px-4 py-1.5 rounded bg-green-dim text-green text-12 font-semibold border border-green/40 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-green/20 transition-colors"
               >
-                {amLoading ? "Searching…" : "Search"}
+                {amLoading ? "⌕…" : "⌕"}
               </button>
             </div>
           </div>

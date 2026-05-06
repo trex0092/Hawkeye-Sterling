@@ -150,9 +150,11 @@ function RegulatoryFeedPanel() {
             type="button"
             onClick={() => void load()}
             disabled={loading}
-            className="text-10 font-mono px-2 py-0.5 rounded border border-hair-2 bg-bg-panel text-ink-1 hover:bg-bg-1 disabled:opacity-40"
+            title="Refresh feed"
+            className="inline-flex items-center gap-1.5 text-11 font-mono font-semibold px-3 py-1.5 rounded border border-green/40 bg-green-dim text-green hover:bg-green-dim/70 disabled:opacity-40"
           >
-            {loading ? "Fetching…" : "↻ Refresh"}
+            <span className="text-13 leading-none">↻</span>
+            <span className="uppercase tracking-wide-2">{loading ? "Refreshing…" : "Refresh"}</span>
           </button>
         </div>
       </div>
@@ -447,9 +449,9 @@ export default function AdverseMediaLivePage() {
           <button
             type="submit"
             disabled={loading || !subjectName.trim()}
-            className="font-mono text-10.5 uppercase tracking-wide-3 font-medium px-5 py-2 rounded border bg-brand text-white border-brand hover:bg-brand-hover hover:border-brand-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+            className="font-mono text-10.5 uppercase tracking-wide-3 font-medium px-5 py-2 rounded border bg-green-dim text-green border-green/40 hover:bg-green/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
           >
-            {loading ? "Searching…" : "Search"}
+            {loading ? "⌕…" : "⌕"}
           </button>
           {lastSearched && !loading && (
             <span className="inline-flex items-center gap-1.5 text-10 font-mono text-green font-semibold">

@@ -17,7 +17,7 @@ const TIMEOUT_MS = 4_000;
 
 // Hot-path routes whose Lambda containers we keep warm.
 const KEEPALIVE_ROUTES: ReadonlyArray<{ path: string; method: 'GET' | 'HEAD' }> = [
-  { path: '/api/health', method: 'GET' },
+  { path: '/api/status', method: 'GET' },
   { path: '/api/agent/screen', method: 'HEAD' },
   { path: '/api/agent/stream-screen', method: 'HEAD' },
   { path: '/api/agent/batch-screen', method: 'HEAD' },

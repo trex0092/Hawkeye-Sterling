@@ -1,8 +1,8 @@
 // Platform authentication helpers — no external dependencies, uses Node.js crypto.
-// Password hashing: SHA-256(salt + ":" + password)
+// Password hashing: scrypt(password, salt, 64) — work factor ~100ms, GPU-resistant
 // Session signing:  HMAC-SHA256 over base64url(payload) using SESSION_SECRET env var
 
-import { createHash, createHmac, randomBytes } from "node:crypto";
+import { scryptSync, timingSafeEqual, createHmac, randomBytes } from "node:crypto";
 
 const SESSION_COOKIE = "hs_session";
 const SESSION_TTL_S = 8 * 60 * 60; // 8 hours
@@ -14,18 +14,14 @@ export function generateSalt(): string {
 }
 
 export function hashPassword(password: string, salt: string): string {
-  return createHash("sha256").update(`${salt}:${password}`).digest("hex");
+  return scryptSync(password, salt, 64).toString("hex");
 }
 
 export function verifyPassword(password: string, salt: string, storedHash: string): boolean {
-  const candidate = hashPassword(password, salt);
-  // constant-time comparison to prevent timing attacks
-  if (candidate.length !== storedHash.length) return false;
-  let diff = 0;
-  for (let i = 0; i < candidate.length; i++) {
-    diff |= candidate.charCodeAt(i) ^ storedHash.charCodeAt(i);
-  }
-  return diff === 0;
+  const candidate = scryptSync(password, salt, 64);
+  const stored = Buffer.from(storedHash, "hex");
+  if (candidate.length !== stored.length) return false;
+  return timingSafeEqual(new Uint8Array(candidate), new Uint8Array(stored));
 }
 
 // ── Session token helpers ────────────────────────────────────────────────────
@@ -39,7 +35,9 @@ interface SessionPayload {
 }
 
 function getSecret(): string {
-  return process.env["SESSION_SECRET"] ?? "hawkeye-sterling-dev-secret-change-in-prod";
+  const secret = process.env["SESSION_SECRET"];
+  if (!secret) throw new Error("SESSION_SECRET environment variable must be set");
+  return secret;
 }
 
 export function issueSession(userId: string, username: string, role: string): string {

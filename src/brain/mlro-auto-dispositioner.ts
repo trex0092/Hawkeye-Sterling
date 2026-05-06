@@ -208,6 +208,7 @@ function escalateIfLowConfidence(proposal: AutoDispositionProposal): AutoDisposi
   if (proposal.confidence <= 0.65) {
     return {
       ...proposal,
+      flags: [...proposal.flags, 'ESCALATE — human review required'],
       rationale: `ESCALATE — human review required. ${proposal.rationale}`,
     };
   }

@@ -374,7 +374,7 @@ export default function CddReviewPage() {
             disabled={adequacyLoading || sorted.length === 0}
             className="text-11 font-semibold px-3 py-1.5 rounded bg-brand text-white border border-brand hover:bg-brand-hover hover:border-brand-hover disabled:opacity-40 transition-colors"
           >
-            {adequacyLoading ? "Assessing…" : "Run AI Adequacy Check"}
+            {adequacyLoading ? "Assessing…" : "✦AI"}
           </button>
         </div>
 
@@ -554,9 +554,10 @@ export default function CddReviewPage() {
                     <button
                       type="button"
                       onClick={() => window.print()}
-                      className="text-10 font-semibold px-2.5 py-1 rounded border border-hair-2 text-ink-2 hover:border-brand hover:text-brand transition-colors"
+                      className="text-10 font-mono px-2.5 py-1 rounded border font-semibold"
+                      style={{ color: "#7c3aed", borderColor: "#7c3aed", background: "rgba(124,58,237,0.07)" }}
                     >
-                      Export Checklist
+                      PDF
                     </button>
                   </div>
                 </div>
@@ -687,8 +688,8 @@ export default function CddReviewPage() {
                         <input value={editDraft.notes} onChange={setE("notes")} placeholder="Notes" className="text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0" />
                       </div>
                       <div className="flex gap-2">
-                        <button type="button" onClick={() => saveRecordEdit(r.id)} className="text-11 font-semibold px-3 py-1 rounded bg-ink-0 text-bg-0">Save</button>
-                        <button type="button" onClick={() => setEditingId(null)} className="text-11 font-medium px-3 py-1 rounded text-ink-2">Cancel</button>
+                        <button type="button" onClick={() => saveRecordEdit(r.id)} className="text-11 font-semibold px-3 py-1 rounded bg-ink-0 text-bg-0">✓</button>
+                        <button type="button" onClick={() => setEditingId(null)} className="text-11 font-medium px-3 py-1 rounded text-red">✕</button>
                       </div>
                     </td>
                   </tr>

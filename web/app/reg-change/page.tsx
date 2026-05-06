@@ -555,9 +555,10 @@ export default function RegChangePage() {
               <button
                 type="button"
                 onClick={exportPDF}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-12 font-semibold border border-hair-2 rounded hover:bg-bg-2 transition-colors text-ink-1"
+                className="text-11 font-mono px-3 py-1.5 rounded border font-semibold"
+                style={{ color: "#7c3aed", borderColor: "#7c3aed", background: "rgba(124,58,237,0.07)" }}
               >
-                ↓ Export Roadmap PDF
+                PDF
               </button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:grid-cols-3">

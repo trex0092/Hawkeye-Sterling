@@ -314,3 +314,53 @@ export function catalogueSummary(): { predicates: number; thresholds: number; re
     exemptions: EXEMPTIONS.length,
   };
 }
+
+// ─── FDL Crosswalk: FDL 20/2018 → FDL 10/2025 (Item #38) ───────────────────
+// Legal Counsel verified mapping. FDL 20/2018 (Federal Decree-Law No. 20 of 2018
+// on Anti-Money Laundering and Combating the Financing of Terrorism and Financing
+// of Illegal Organisations) was superseded by FDL 10/2025.  All citations in the
+// codebase that reference FDL 20/2018 articles should resolve through this map.
+
+export interface FdlCrosswalkEntry {
+  readonly fdl20_2018_article: string;
+  readonly fdl10_2025_article: string;
+  readonly topic: string;
+  readonly notes?: string;
+}
+
+export const FDL_CROSSWALK: readonly FdlCrosswalkEntry[] = [
+  { fdl20_2018_article: 'FDL 20/2018 Art.2',       fdl10_2025_article: 'FDL 10/2025 Art.2',        topic: 'Definitions' },
+  { fdl20_2018_article: 'FDL 20/2018 Art.4',        fdl10_2025_article: 'FDL 10/2025 Art.4',        topic: 'Scope — DNFBPs' },
+  { fdl20_2018_article: 'FDL 20/2018 Art.10',       fdl10_2025_article: 'FDL 10/2025 Art.10',       topic: 'ML predicate offences' },
+  { fdl20_2018_article: 'FDL 20/2018 Art.14',       fdl10_2025_article: 'FDL 10/2025 Art.14',       topic: 'Risk-based approach — ML/CFT/PF' },
+  { fdl20_2018_article: 'FDL 20/2018 Art.15',       fdl10_2025_article: 'FDL 10/2025 Art.15',       topic: 'Customer due diligence (CDD) statutory mandate' },
+  { fdl20_2018_article: 'FDL 20/2018 Art.15(4)',    fdl10_2025_article: 'FDL 10/2025 Art.15(4)',    topic: 'STR filing obligation to FIU' },
+  { fdl20_2018_article: 'FDL 20/2018 Art.16',       fdl10_2025_article: 'FDL 10/2025 Art.16',       topic: 'Enhanced due diligence (EDD)' },
+  { fdl20_2018_article: 'FDL 20/2018 Art.16(1)(b)', fdl10_2025_article: 'FDL 10/2025 Art.16(1)(b)', topic: 'PEP enhanced due diligence — UAE statutory mandate' },
+  { fdl20_2018_article: 'FDL 20/2018 Art.16(2)',    fdl10_2025_article: 'FDL 10/2025 Art.16(2)',    topic: 'EDD — additional measures' },
+  { fdl20_2018_article: 'FDL 20/2018 Art.16(3)',    fdl10_2025_article: 'FDL 10/2025 Art.24(1)',    topic: 'Record retention (5y → extended to 10y under Art.24)', notes: 'Retention extended from 5 to 10 years under FDL 10/2025' },
+  { fdl20_2018_article: 'FDL 20/2018 Art.20',       fdl10_2025_article: 'FDL 10/2025 Art.20',       topic: 'Internal controls and compliance officer requirement' },
+  { fdl20_2018_article: 'FDL 20/2018 Art.21',       fdl10_2025_article: 'FDL 10/2025 Art.21',       topic: 'Staff training requirements' },
+  { fdl20_2018_article: 'FDL 20/2018 Art.24',       fdl10_2025_article: 'FDL 10/2025 Art.24',       topic: 'Record-keeping — 10-year tamper-evident retention' },
+  { fdl20_2018_article: 'FDL 20/2018 Art.25',       fdl10_2025_article: 'FDL 10/2025 Art.25',       topic: 'Tipping-off prohibition' },
+  { fdl20_2018_article: 'FDL 20/2018 Art.26',       fdl10_2025_article: 'FDL 10/2025 Art.26',       topic: 'STR filing — obligations' },
+  { fdl20_2018_article: 'FDL 20/2018 Art.26-27',    fdl10_2025_article: 'FDL 10/2025 Art.26-27',    topic: 'STR filing deadlines + content requirements' },
+  { fdl20_2018_article: 'FDL 20/2018 Art.27',       fdl10_2025_article: 'FDL 10/2025 Art.27',       topic: 'STR — goAML submission mechanics' },
+  { fdl20_2018_article: 'FDL 20/2018 Art.29',       fdl10_2025_article: 'FDL 10/2025 Art.29',       topic: 'Tipping-off prohibition — extended' },
+] as const;
+
+/**
+ * Resolve a legacy FDL 20/2018 citation to its FDL 10/2025 equivalent.
+ * Returns undefined if the article is not in the crosswalk (may already be a
+ * 10/2025 citation, or may require manual review).
+ */
+export function resolveFdlCitation(legacyCitation: string): FdlCrosswalkEntry | undefined {
+  return FDL_CROSSWALK.find(
+    (e) => legacyCitation.includes(e.fdl20_2018_article) || legacyCitation === e.fdl20_2018_article,
+  );
+}
+
+/** Return all legacy FDL 20/2018 citations that have a 10/2025 equivalent. */
+export function fdlCrosswalkByTopic(topic: string): FdlCrosswalkEntry[] {
+  return FDL_CROSSWALK.filter((e) => e.topic.toLowerCase().includes(topic.toLowerCase()));
+}

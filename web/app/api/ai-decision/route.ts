@@ -89,8 +89,7 @@ function buildLearningContext(feedback: FeedbackRecord[]): string {
 
 // ── Decision prompt ───────────────────────────────────────────────────────────
 
-function buildSystemPrompt(learningCtx: string): string {
-  return `You are the Hawkeye Sterling AI Decision Engine — an AML compliance automation agent for a UAE-regulated gold trading firm operating under FDL 20/2018, FDL 10/2025, and CBUAE AML Standards.
+const STATIC_SYSTEM_PROMPT = `You are the Hawkeye Sterling AI Decision Engine — an AML compliance automation agent for a UAE-regulated gold trading firm operating under FDL 20/2018, FDL 10/2025, and CBUAE AML Standards.
 
 Your role is to AUTOMATICALLY decide the disposition for each screened subject. You must output a single JSON object with no markdown fences.
 
@@ -107,7 +106,6 @@ DECISION RULES (mandatory):
 4. Risk score ≥ 65 or soft flags → "edd"
 5. No hits + risk score < 50 + no PEP + no adverse media → "approve"
 6. When uncertain, escalate — never approve a borderline case
-${learningCtx}
 
 Return ONLY valid JSON (no markdown, no prose):
 {
@@ -119,6 +117,15 @@ Return ONLY valid JSON (no markdown, no prose):
   "nextSteps": ["action 1", "action 2"],
   "regulatoryBasis": "cite relevant FDL articles"
 }`;
+
+function buildSystemBlocks(learningCtx: string): Array<{ type: "text"; text: string; cache_control?: { type: "ephemeral" } }> {
+  const blocks: Array<{ type: "text"; text: string; cache_control?: { type: "ephemeral" } }> = [
+    { type: "text", text: STATIC_SYSTEM_PROMPT, cache_control: { type: "ephemeral" } },
+  ];
+  if (learningCtx) {
+    blocks.push({ type: "text", text: learningCtx });
+  }
+  return blocks;
 }
 
 function buildUserMessage(req: DecisionRequest): string {
@@ -274,7 +281,7 @@ export async function POST(req: Request) {
       const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 800,
-        system: buildSystemPrompt(learningCtx),
+        system: buildSystemBlocks(learningCtx),
         messages: [{ role: "user", content: buildUserMessage(body) }],
       });
       const raw = response.content[0]?.type === "text" ? response.content[0].text.trim() : "{}";

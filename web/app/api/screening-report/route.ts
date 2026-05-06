@@ -165,17 +165,28 @@ function buildTaskName(b: ReportBody): string {
 }
 
 // Sample B — MLRO dossier. Prose-led, regulator-ready, no invented facts.
+function safeClassifyEsg(text: string): ReturnType<typeof classifyEsg> {
+  try {
+    return classifyEsg(text);
+  } catch (err) {
+    // ESG classifier is best-effort metadata for the dossier; a thrown
+    // taxonomy error must NOT take down the whole report. Log loud, return [].
+    console.error("[screening-report] classifyEsg failed:", err instanceof Error ? err.message : String(err));
+    return [];
+  }
+}
+
 function buildInitialScreeningNotes(b: ReportBody): string {
   const gen = new Date(b.result.generatedAt);
   const hits = b.result.hits;
   const sev = b.result.severity.toUpperCase();
   const esgText = [b.subject.name, ...(b.subject.aliases ?? [])].join(" ");
-  const esg = classifyEsg(esgText);
+  const esg = safeClassifyEsg(esgText);
 
   const listsHit = Array.from(new Set(hits.map((h) => h.listId)));
   const amFiring = esg.map((e) => e.label);
 
-  const reportId = `HWK-SCR-${gen.getUTCFullYear()}${String(gen.getUTCMonth() + 1).padStart(2, "0")}${String(gen.getUTCDate()).padStart(2, "0")}-INITIAL-${String(gen.getUTCHours()).padStart(2, "0")}${String(gen.getUTCMinutes()).padStart(2, "0")}`;
+  const reportId = `HWK-SCR-${String(gen.getUTCDate()).padStart(2, "0")}-${String(gen.getUTCMonth() + 1).padStart(2, "0")}-${gen.getUTCFullYear()}-INITIAL-${String(gen.getUTCHours()).padStart(2, "0")}${String(gen.getUTCMinutes()).padStart(2, "0")}`;
 
   const factsBits: string[] = [];
   const subjectDescriptor =
@@ -313,13 +324,21 @@ function buildOngoingSnapshotNotes(b: ReportBody): string {
   const hits = b.result.hits;
   const sev = b.result.severity.toUpperCase();
   const esgText = [b.subject.name, ...(b.subject.aliases ?? [])].join(" ");
-  const esg = classifyEsg(esgText);
+  const esg = safeClassifyEsg(esgText);
 
   const windowEnd = new Date(gen);
   const windowStart = new Date(gen);
   windowStart.setUTCDate(windowStart.getUTCDate() - 30);
-  const fmt = (d: Date): string =>
-    d.toISOString().slice(0, 10).replace(/-/g, "-");
+  // House standard for human-readable dates is DD-MM-YYYY (matches reportId
+  // and the rest of the dossier). The previous implementation called a
+  // no-op .replace(/-/g, "-") that left ISO YYYY-MM-DD dates inconsistent
+  // with the report header.
+  const fmt = (d: Date): string => {
+    const dd = String(d.getUTCDate()).padStart(2, "0");
+    const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+    const yyyy = d.getUTCFullYear();
+    return `${dd}-${mm}-${yyyy}`;
+  };
 
   const lines: string[] = [];
   lines.push(`HAWKEYE STERLING · ONGOING MONITORING SNAPSHOT`);

@@ -119,29 +119,18 @@ export async function POST(req: Request) {
   const depth = body.analysisDepth ?? "quick";
   const detailInstruction =
     depth === "full"
-      ? "Provide comprehensive analysis with detailed context for each dimension, full regulatory obligations list, and at least 5 recent developments."
+      ? "Provide analysis with context for each dimension, regulatory obligations, and 3-5 recent developments."
       : "Provide a concise but complete analysis covering all required fields.";
 
-  // We extended this route to maxDuration=60. Construct an Anthropic client
-  // with a matching per-instance timeout (the default 22s would fire before
-  // our budget runs out and force fallback even on slowly-completing
-  // jurisdictions like Iran/Russia which routinely take 25-40s).
-  const sdkTimeoutMs = depth === "full" ? 55_000 : 30_000;
+  // Netlify edge gateway has a 26s inactivity timeout. Keep both modes well
+  // under that ceiling: Haiku at ≤1800 tokens reliably responds in 8-15s.
+  const sdkTimeoutMs = 22_000;
 
   try {
     const client = getAnthropicClient(apiKey, sdkTimeoutMs);
     const response = await client.messages.create({
-      // Quick mode (default) uses Haiku for sub-Lambda-timeout latency;
-      // full mode keeps Sonnet for richer analysis. Token budgets need to be
-      // generous enough that high-risk jurisdictions (Iran/Russia/etc) can
-      // emit a complete JSON object — too low a ceiling truncates mid-object,
-      // JSON.parse fails, and the catch surfaces a misleading "service
-      // unavailable" 503 even though the API call itself succeeded.
-      // Both modes now use Haiku 4.5 — Sonnet 4.6 with 4000 tokens for full
-      // mode reliably exceeded Netlify's 30s edge gateway "Inactivity Timeout"
-      // and 504-ed. Haiku at 2500–4000 tokens fits inside the window.
       model: "claude-haiku-4-5-20251001",
-      max_tokens: depth === "full" ? 4000 : 2500,
+      max_tokens: depth === "full" ? 1800 : 1200,
       system: [
         {
           type: "text",
@@ -221,17 +210,37 @@ Provide a complete country risk intelligence assessment covering AML/CFT risk, F
     });
 
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
-    const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as CountryRiskResult;
+    // Defensive JSON extraction — strip code-fences and find the first
+    // top-level {...} object. Claude occasionally wraps JSON in prose
+    // even when instructed not to; pulling the JSON out beats failing.
+    const cleaned = raw.replace(/```json\n?|\n?```/g, "").trim();
+    const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+    const jsonStr = jsonMatch ? jsonMatch[0] : cleaned;
+    let result: CountryRiskResult;
+    try {
+      result = JSON.parse(jsonStr) as CountryRiskResult;
+    } catch (parseErr) {
+      console.warn("[country-risk] JSON parse failed:", parseErr instanceof Error ? parseErr.message : parseErr, "raw:", cleaned.slice(0, 200));
+      return NextResponse.json(
+        {
+          ok: false,
+          error: `Country-risk analysis returned invalid JSON for ${country}. Retry, or escalate if persistent.`,
+          detail: parseErr instanceof Error ? parseErr.message : String(parseErr),
+        },
+        { status: 502 },
+      );
+    }
     return NextResponse.json(result);
-  } catch {
-    // Honest 503 instead of dressing up the UAE FALLBACK with the requested
-    // country name — that was misleading users with UAE risk scores labelled
-    // as their chosen country. Frontend already handles non-2xx by showing
-    // the error message in the red toast.
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : String(err);
+    console.warn("[country-risk] LLM call failed:", detail);
+    // Honest 503 with surfaced detail so the operator sees the real
+    // cause (timeout / rate-limit / auth) rather than a generic message.
     return NextResponse.json(
       {
         ok: false,
-        error: `Real-time analysis temporarily unavailable for ${country}. Please retry in a moment.`,
+        error: `Real-time analysis temporarily unavailable for ${country}. ${detail.includes("timeout") ? "(timeout — try again with shorter depth)" : detail.includes("rate") ? "(rate limit — wait 60s)" : "Please retry in a moment."}`,
+        detail,
       },
       { status: 503 },
     );

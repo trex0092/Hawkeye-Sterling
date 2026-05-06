@@ -7,6 +7,11 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const nextConfig = {
   reactStrictMode: true,
 
+  eslint: {
+    // ESLint is not installed in web/node_modules — skip lint during build.
+    ignoreDuringBuilds: true,
+  },
+
   async redirects() {
     return [
       { source: "/adverse-media", destination: "/screening", permanent: true },

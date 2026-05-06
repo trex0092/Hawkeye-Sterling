@@ -35,16 +35,24 @@ let cached: MinimalStore | null = null;
 let usingInMemoryFallback = false;
 
 function buildStoreOptions(): Parameters<typeof getNetlifyStore>[0] {
-  // Prefer Netlify's auto-injected Blobs context (present when the Lambda is
-  // invoked by the @netlify/plugin-nextjs runtime with auto-binding on).
-  // Fall back to explicit siteID + token so deployments where the plugin
-  // does not inject context (monorepos, custom builds, background functions)
-  // still land on the real store instead of the in-memory fallback.
+  // On Netlify's own runtime the plugin (@netlify/plugin-nextjs) auto-injects
+  // NETLIFY_BLOBS_CONTEXT so getNetlifyStore({ name }) works without any
+  // explicit credentials. Passing a custom NETLIFY_BLOBS_TOKEN that is NOT a
+  // proper Netlify PAT bypasses the auto-injection and causes every Blobs
+  // operation to return 401, which triggers the in-memory fallback and makes
+  // the status page show "storage degraded". Therefore: on Netlify's own
+  // infrastructure (NETLIFY=true), always trust the auto-injected context.
+  const onNetlify = Boolean(process.env["NETLIFY"]) || Boolean(process.env["NETLIFY_LOCAL"]);
+  if (onNetlify) {
+    return { name: "hawkeye-sterling" };
+  }
+  // Outside of Netlify (local dev with a real PAT, CI, etc.) fall back to
+  // explicit credentials so the same store is accessible.
   const siteID = process.env["NETLIFY_SITE_ID"] ?? process.env["SITE_ID"];
   const token =
-    process.env["NETLIFY_BLOBS_TOKEN"] ??
     process.env["NETLIFY_API_TOKEN"] ??
-    process.env["NETLIFY_AUTH_TOKEN"];
+    process.env["NETLIFY_AUTH_TOKEN"] ??
+    process.env["NETLIFY_BLOBS_TOKEN"];
   if (siteID && token) {
     return { name: "hawkeye-sterling", siteID, token, consistency: "strong" };
   }
@@ -55,19 +63,29 @@ export function getStore(): MinimalStore {
   if (cached) return cached;
   try {
     const ns = getNetlifyStore(buildStoreOptions());
-    const markFallback = (op: string, err: unknown) => {
-      const detail = err instanceof Error ? err.message : String(err);
-      console.warn(`[store] ${op} failed (${detail}) — degrading to in-memory store for this process.`);
-      cached = buildMemoryStore();
-      usingInMemoryFallback = true;
-    };
+    // IMPORTANT — do NOT flip `usingInMemoryFallback` based on per-operation
+    // failures. A single failing read (transient network blip, key-not-found
+    // edge case in @netlify/blobs) used to permanently degrade the entire
+    // function instance, which surfaced as "storage degraded" on /status
+    // even though Blobs was actually healthy. Per-op errors are now passed
+    // through to the wrappers (getJson / setJson / del / listKeys) which
+    // already log loudly and return null/empty. usingInMemoryFallback is
+    // ONLY set when getNetlifyStore() itself throws on init.
+    const onNetlify = Boolean(process.env["NETLIFY"]) || Boolean(process.env["NETLIFY_LOCAL"]);
     cached = {
       get: async (key) => {
         try {
           const v = await ns.get(key);
           return typeof v === "string" ? v : v == null ? null : String(v);
         } catch (err) {
-          markFallback("get", err);
+          // On Netlify, log + propagate. Off Netlify (dev), fall back to
+          // in-memory so local routes still work without a Blobs binding.
+          if (onNetlify) throw err;
+          console.warn(`[store] get(${key}) failed in dev — using in-memory:`, err instanceof Error ? err.message : err);
+          if (!usingInMemoryFallback) {
+            cached = buildMemoryStore();
+            usingInMemoryFallback = true;
+          }
           return cached!.get(key);
         }
       },
@@ -75,7 +93,11 @@ export function getStore(): MinimalStore {
         try {
           await ns.set(key, data);
         } catch (err) {
-          markFallback("set", err);
+          if (onNetlify) throw err;
+          if (!usingInMemoryFallback) {
+            cached = buildMemoryStore();
+            usingInMemoryFallback = true;
+          }
           await cached!.set(key, data);
         }
       },
@@ -83,7 +105,11 @@ export function getStore(): MinimalStore {
         try {
           await ns.delete(key);
         } catch (err) {
-          markFallback("delete", err);
+          if (onNetlify) throw err;
+          if (!usingInMemoryFallback) {
+            cached = buildMemoryStore();
+            usingInMemoryFallback = true;
+          }
           await cached!.delete(key);
         }
       },
@@ -92,7 +118,11 @@ export function getStore(): MinimalStore {
           const r = await ns.list({ ...(opts?.prefix ? { prefix: opts.prefix } : {}) });
           return { blobs: r.blobs.map((b) => ({ key: b.key })) };
         } catch (err) {
-          markFallback("list", err);
+          if (onNetlify) throw err;
+          if (!usingInMemoryFallback) {
+            cached = buildMemoryStore();
+            usingInMemoryFallback = true;
+          }
           return cached!.list(opts);
         }
       },
@@ -131,11 +161,21 @@ export function isInMemoryFallback(): boolean {
 
 export async function getJson<T>(key: string): Promise<T | null> {
   const store = getStore();
+  let raw: string | null = null;
   try {
-    const raw = await store.get(key);
-    if (!raw || typeof raw !== "string") return null;
+    raw = await store.get(key);
+  } catch (err) {
+    console.warn(`[store] getJson(${key}) read failed:`, err instanceof Error ? err.message : err);
+    return null;
+  }
+  if (!raw || typeof raw !== "string") return null;
+  try {
     return JSON.parse(raw) as T;
-  } catch {
+  } catch (err) {
+    // Distinguish "missing" from "corrupted" — silent null on a parse
+    // error hides on-disk corruption from ops. Loud-log and still return
+    // null so the caller's existing null-check path runs.
+    console.error(`[store] getJson(${key}) JSON parse failed (corrupted blob):`, err instanceof Error ? err.message : err);
     return null;
   }
 }
@@ -164,7 +204,14 @@ export async function listKeys(prefix?: string): Promise<string[]> {
     const opts = prefix ? { prefix } : {};
     const result = await store.list(opts);
     return result.blobs.map((b) => b.key);
-  } catch {
+  } catch (err) {
+    // Loud-log: silently returning [] hides outages and makes "no data"
+    // indistinguishable from "store unreachable". Callers still see the
+    // empty array so existing flows don't break, but ops sees the cause.
+    console.warn(
+      `[store] listKeys(prefix=${prefix ?? "—"}) failed — returning empty list. Reason:`,
+      err instanceof Error ? err.message : err,
+    );
     return [];
   }
 }

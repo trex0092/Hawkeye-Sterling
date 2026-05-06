@@ -108,6 +108,22 @@ export interface SuperBrainResult {
     recommendedAction: "block" | "freeze" | "escalate" | "review" | "proceed_with_scope_declaration";
     rationale: string[];
   } | null;
+  /** Live intelligence pipeline output — phonetic, cultural names,
+   *  sub-national sanctions, geography + industry risk, sanctions
+   *  stress tests. Populated by /api/super-brain on every screening. */
+  intelligence?: {
+    phonetic: { caverphone: string; beiderMorseLite: string; arabicPhonetic: string; pinyinCanonical: string };
+    parsedName: { culture: string; given?: string; surname?: string; nasab?: string; kunya?: string; patronymic?: string; maternalSurname?: string; tokens: string[] };
+    canonicalKey: string;
+    subnational: { matched: boolean; region?: { iso2: string; region: string; regimes: string[] }; rationale: string };
+    geography: { iso2: string; name: string; tiers: string[]; inherentRisk: number; activeRegimes: string[]; notes: string[] };
+    industry: { segment: string; inherentRisk: number; label: string; rationale: string; typologyReferences: string[]; requiredEvidence: string[] };
+    inferredSegment: string;
+    stressTests: Array<{ regime: string; fired: boolean; severity: "critical" | "high" | "medium" | "low"; rationale: string; citation: string }>;
+    stressTestsFiredCount: number;
+  };
+  /** Server-flagged module degradation list — surfaces silent failures. */
+  degradation?: Array<{ module: string; reason: string }>;
 }
 
 export type SuperBrainState =

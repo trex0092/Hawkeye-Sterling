@@ -98,7 +98,7 @@ export async function POST(req: Request) {
   if (!apiKey) return NextResponse.json(buildFallback(subjects));
 
   try {
-    const client = getAnthropicClient(apiKey, 55_000);
+    const client = getAnthropicClient(apiKey, 22_000);
 
     // Slim the payload to keep tokens reasonable — names and nationalities
     // are the only differentiators the engine needs for a realistic simulation.

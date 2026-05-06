@@ -245,11 +245,29 @@ export default function EsgRiskPage() {
           employeeCount: form.employeeCount ? parseInt(form.employeeCount, 10) : undefined,
           notes: form.notes || undefined,
         }),
+        signal: AbortSignal.timeout(60_000),
       });
-      const data = (await res.json()) as EsgRiskResult;
+      // Read the body once as text — Netlify 502s return HTML, not JSON. We
+      // surface a clean error in that case rather than letting the user see
+      // a raw "Unexpected token '<'" SyntaxError.
+      const raw = await res.text().catch(() => "");
+      const isHtml = raw.trimStart().toLowerCase().startsWith("<");
+      if (!res.ok || isHtml) {
+        const detail = isHtml
+          ? `Server returned HTML (HTTP ${res.status}) — likely a Netlify 502 / function timeout. Please retry; if it persists, set ANTHROPIC_API_KEY in the deployment.`
+          : raw.slice(0, 240) || `HTTP ${res.status}`;
+        setError(`ESG scorer unavailable: ${detail}`);
+        return;
+      }
+      let data: EsgRiskResult;
+      try { data = JSON.parse(raw) as EsgRiskResult; }
+      catch { setError("ESG scorer returned a malformed response. Please retry."); return; }
       setResult(data);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Request failed");
+      const isTimeout = e instanceof Error && (e.name === "AbortError" || e.name === "TimeoutError");
+      setError(isTimeout
+        ? "ESG scorer timed out after 60s — please retry."
+        : `Request failed: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
       setLoading(false);
     }
@@ -268,6 +286,62 @@ export default function EsgRiskPage() {
         kpis={KPIS}
         intro="AI-powered ESG scoring with money laundering risk overlay — maps environmental, social, and governance failures to financial crime exposure under FATF, UAE FDL, and international ESG frameworks."
       />
+
+      {/* Quick-action buttons */}
+      <div className="flex items-center gap-3 mb-4">
+        <button
+          type="button"
+          onClick={() => {
+            setField("entity", "Meridian Resources Ltd");
+            setField("sector", "mining");
+            setField("jurisdiction", "GH");
+            setField("employeeCount", "850");
+            setField("operations", "Gold mining and refining operations across West Africa, with downstream LBMA-accredited refinery in Dubai. Tier-1 suppliers include artisanal mining cooperatives in DRC and Ghana.");
+            setField("supplierCountries", "Ghana, DRC, Mali, Burkina Faso");
+            setField("notes", "Recent CAHRA exposure flagged in 2024 conflict-minerals audit; remediation plan in progress.");
+          }}
+          className="px-5 py-2 rounded-lg border-2 border-brand bg-brand/10 text-brand text-13 font-bold hover:bg-brand/20 whitespace-nowrap shadow-[0_0_12px_rgba(236,72,153,0.15)] hover:shadow-[0_0_18px_rgba(236,72,153,0.30)] transition-all"
+          title="Pre-fill with a sample entity profile"
+        >
+          + Add
+        </button>
+        <button
+          type="button"
+          onClick={async () => {
+            // AI-suggest: ask Claude to generate a representative
+            // high-risk entity profile so the operator can demo the
+            // ESG scoring pipeline without typing.
+            try {
+              const res = await fetch("/api/mlro-advisor-quick", {
+                method: "POST",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify({
+                  question: "Suggest a representative high-risk ESG entity profile to assess. Return ONLY a JSON object with fields: entityName, sector, jurisdiction (ISO-2), employeeCount (number), operations (string, 2 sentences), supplierCountries (comma-separated string), notes (string).",
+                  redTeamMode: false,
+                }),
+              });
+              const data = (await res.json()) as { answer?: string; message?: string };
+              const text = data.answer ?? data.message ?? "";
+              const jsonMatch = text.match(/\{[\s\S]*\}/);
+              if (!jsonMatch) return;
+              const parsed = JSON.parse(jsonMatch[0]) as Record<string, string | number>;
+              if (parsed.entity) setField("entity", String(parsed.entity));
+              if (parsed.sector) setField("sector", String(parsed.sector).toLowerCase());
+              if (parsed.jurisdiction) setField("jurisdiction", String(parsed.jurisdiction).toUpperCase());
+              if (parsed.employeeCount) setField("employeeCount", String(parsed.employeeCount));
+              if (parsed.operations) setField("operations", String(parsed.operations));
+              if (parsed.supplierCountries) setField("supplierCountries", String(parsed.supplierCountries));
+              if (parsed.notes) setField("notes", String(parsed.notes));
+            } catch (err) {
+              console.warn("[esg ai-suggest] failed:", err);
+            }
+          }}
+          className="px-5 py-2 rounded-lg border-2 border-amber-400 bg-amber-400/10 text-amber-300 text-13 font-bold hover:bg-amber-400/20 whitespace-nowrap shadow-[0_0_12px_rgba(251,191,36,0.15)] hover:shadow-[0_0_18px_rgba(251,191,36,0.30)] transition-all"
+          title="AI-suggest a representative entity profile"
+        >
+          ✨ AI
+        </button>
+      </div>
 
       {/* Input Form */}
       <div className="bg-bg-panel border border-hair-2 rounded-lg p-6 mb-6">

@@ -8,7 +8,7 @@ import { formatDMY } from "@/lib/utils/dateFormat";
 import type { GovernanceGapResult } from "@/app/api/governance-gap/route";
 import type { BoardAmlReportResult } from "@/app/api/board-aml-report/route";
 import type { BoardPackResult } from "@/app/api/oversight/board-pack/route";
-import { exportGapAnalysis } from "@/lib/pdf/exporters";
+import { openReportWindow } from "@/lib/reportOpen";
 
 // Management Oversight — four-eyes approvals, board minutes, regulatory circulars.
 // Implements UAE FDL 10/2025 Art.20 (senior management accountability) and
@@ -510,7 +510,7 @@ function AddApprovalForm({ onAdd, onCancel }: { onAdd: (a: Approval) => void; on
       </div>
       <div className="flex gap-2">
         <button type="button" onClick={submit} className="text-11 font-semibold px-3 py-1.5 rounded bg-brand text-white hover:bg-brand/90">Add</button>
-        <button type="button" onClick={onCancel} className="text-11 font-semibold px-3 py-1.5 rounded border border-hair-2 text-ink-1 hover:bg-bg-2">Cancel</button>
+        <button type="button" onClick={onCancel} className="text-11 font-semibold px-3 py-1.5 rounded border border-red/30 text-red hover:bg-red-dim/30">✕</button>
       </div>
     </div>
   );
@@ -589,7 +589,7 @@ function AddMinuteForm({ onAdd, onCancel }: { onAdd: (m: Minute) => void; onCanc
       </div>
       <div className="flex gap-2">
         <button type="button" onClick={submit} className="text-11 font-semibold px-3 py-1.5 rounded bg-brand text-white hover:bg-brand/90">Add</button>
-        <button type="button" onClick={onCancel} className="text-11 font-semibold px-3 py-1.5 rounded border border-hair-2 text-ink-1 hover:bg-bg-2">Cancel</button>
+        <button type="button" onClick={onCancel} className="text-11 font-semibold px-3 py-1.5 rounded border border-red/30 text-red hover:bg-red-dim/30">✕</button>
       </div>
     </div>
   );
@@ -671,7 +671,7 @@ function AddCircularForm({ onAdd, onCancel }: { onAdd: (c: Circular) => void; on
       </div>
       <div className="flex gap-2">
         <button type="button" onClick={submit} className="text-11 font-semibold px-3 py-1.5 rounded bg-brand text-white hover:bg-brand/90">Add</button>
-        <button type="button" onClick={onCancel} className="text-11 font-semibold px-3 py-1.5 rounded border border-hair-2 text-ink-1 hover:bg-bg-2">Cancel</button>
+        <button type="button" onClick={onCancel} className="text-11 font-semibold px-3 py-1.5 rounded border border-red/30 text-red hover:bg-red-dim/30">✕</button>
       </div>
     </div>
   );
@@ -1114,7 +1114,7 @@ export default function OversightPage() {
             disabled={gapLoading}
             className="text-12 font-semibold px-4 py-2 rounded bg-brand text-white hover:bg-brand/90 disabled:opacity-60 transition-colors"
           >
-            {gapLoading ? "◌ Analysing…" : "✦ Run AI Gap Analysis"}
+            {gapLoading ? "◌ Analysing…" : "✦AI"}
           </button>
           {gapOpen && gapResult && (
             <button type="button" onClick={() => setGapOpen(false)} className="text-11 text-ink-2 hover:text-ink-0">
@@ -1240,10 +1240,11 @@ export default function OversightPage() {
             <div className="border-t border-hair-2 pt-3 flex justify-end">
               <button
                 type="button"
-                onClick={() => exportGapAnalysis(gapResult, "Hawkeye Sterling DPMS")}
-                className="text-11 font-mono text-brand hover:text-brand/80"
+                onClick={() => openReportWindow("/api/gap-report", { gapResult, institution: "Hawkeye Sterling DPMS" })}
+                className="text-11 font-mono"
+                style={{ color: "#7c3aed", fontWeight: 600 }}
               >
-                ↓ Export PDF
+                PDF
               </button>
             </div>
           </div>
@@ -1297,9 +1298,9 @@ export default function OversightPage() {
                   />
                   <div className="flex gap-2">
                     <button type="button" onClick={() => saveEditApproval(a.id)}
-                      className="text-11 font-semibold px-3 py-1 rounded bg-ink-0 text-bg-0">Save</button>
+                      className="text-11 font-semibold px-3 py-1 rounded bg-ink-0 text-bg-0">✓</button>
                     <button type="button" onClick={() => setEditingApprovalId(null)}
-                      className="text-11 font-medium px-3 py-1 rounded text-ink-2">Cancel</button>
+                      className="text-11 font-medium px-3 py-1 rounded text-red">✕</button>
                   </div>
                 </div>
               )}
@@ -1416,9 +1417,9 @@ export default function OversightPage() {
                     />
                     <div className="flex gap-2">
                       <button type="button" onClick={() => saveEditMinute(m.id)}
-                        className="text-11 font-semibold px-3 py-1 rounded bg-ink-0 text-bg-0">Save</button>
+                        className="text-11 font-semibold px-3 py-1 rounded bg-ink-0 text-bg-0">✓</button>
                       <button type="button" onClick={() => setEditingMinuteId(null)}
-                        className="text-11 font-medium px-3 py-1 rounded text-ink-2">Cancel</button>
+                        className="text-11 font-medium px-3 py-1 rounded text-red">✕</button>
                     </div>
                   </div>
                 )}
@@ -1551,7 +1552,7 @@ export default function OversightPage() {
                       <td className="px-2 py-2.5">
                         {editingCircularId === c.id ? (
                           <div className="flex gap-1">
-                            <button type="button" onClick={() => saveEditCircular(c.id)} className="text-10 font-semibold px-2 py-0.5 rounded bg-ink-0 text-bg-0">Save</button>
+                            <button type="button" onClick={() => saveEditCircular(c.id)} className="text-10 font-semibold px-2 py-0.5 rounded bg-ink-0 text-bg-0">✓</button>
                             <button type="button" onClick={() => setEditingCircularId(null)} className="text-10 px-2 py-0.5 rounded text-ink-2">✕</button>
                           </div>
                         ) : (
@@ -1663,7 +1664,7 @@ export default function OversightPage() {
                 </div>
                 <div className="col-span-1">
                   <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Due date</label>
-                  <input type="date" value={newActionDue} onChange={(e) => setNewActionDue(e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" />
+                  <DateParts value={newActionDue} onChange={setNewActionDue} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" ariaLabel="Due date (dd/mm/yyyy)" />
                 </div>
                 <div className="col-span-1" />
               </div>
@@ -1818,9 +1819,10 @@ export default function OversightPage() {
                   <button
                     type="button"
                     onClick={() => window.print()}
-                    className="text-11 font-mono text-brand hover:text-brand/80"
+                    className="text-11 font-mono"
+                    style={{ color: "#7c3aed", fontWeight: 600 }}
                   >
-                    ↓ Export PDF
+                    PDF
                   </button>
                 </div>
 

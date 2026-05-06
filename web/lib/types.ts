@@ -222,6 +222,7 @@ export interface SubjectDetail {
   uboEntries: UboEntry[];
   evidenceItems: EvidenceEntry[];
   timelineEvents: TimelineEvent[];
+  hitResolutions?: HitResolution[];
 }
 
 export type FilterKey =
@@ -281,6 +282,50 @@ export interface EvidenceEntry {
 export interface TimelineEvent {
   timestamp: string;
   event: string;
+}
+
+export type HitResolutionVerdict =
+  | "false_positive"     // World-Check: False / Low risk
+  | "possible_match"     // World-Check: Possible / Medium risk
+  | "confirmed_positive" // World-Check: Positive / High risk
+  | "unspecified";       // World-Check: Unspecified / Unknown risk
+
+// Structured reason category (mirrors Refinitiv World-Check's "REASON" dropdown).
+// Drives the regulator-readable rationale on the audit trail; the free-text
+// reason captures the analyst's specific basis on top of this.
+export type HitResolutionReasonCategory =
+  | "no_match"               // sanctioned subject is clearly not the customer
+  | "partial_match"          // some identifiers align, others don't
+  | "full_match"             // all decisive identifiers match (DOB / passport / biometric)
+  | "name_only"              // matched on name alone — no other identifiers to compare
+  | "duplicate_record"       // same listing already resolved under a different hit
+  | "verified_negative"      // independent verification rules out the subject
+  | "data_quality_issue"     // record's data is incomplete / corrupted
+  | "stale_listing"          // listing is no longer in force
+  | "other";
+
+// Risk level derived from verdict (World-Check parity).
+export type HitResolutionRiskLevel = "high" | "medium" | "low" | "unknown";
+
+export interface HitResolution {
+  hitRef: string;
+  verdict: HitResolutionVerdict;
+  /** Structured reason category from a fixed taxonomy (audit-trail). */
+  reasonCategory?: HitResolutionReasonCategory;
+  /** Derived risk level (Positive=high, Possible=medium, False=low, Unspecified=unknown). */
+  riskLevel?: HitResolutionRiskLevel;
+  /** Free-text rationale supplied by the analyst. */
+  reason: string;
+  resolvedAt: string;
+  resolvedBy?: string;
+  enrolledInMonitoring?: boolean;
+}
+
+export function riskLevelForVerdict(v: HitResolutionVerdict): HitResolutionRiskLevel {
+  if (v === "confirmed_positive") return "high";
+  if (v === "possible_match") return "medium";
+  if (v === "false_positive") return "low";
+  return "unknown";
 }
 
 export type Faculty =
