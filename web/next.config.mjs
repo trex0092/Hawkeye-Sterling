@@ -7,13 +7,6 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const nextConfig = {
   reactStrictMode: true,
 
-  typescript: {
-    // Type-checking runs cleanly locally; ignoreBuildErrors prevents
-    // environment-specific TS differences (e.g. Node 20 vs 22) from
-    // blocking production deployments.
-    ignoreBuildErrors: true,
-  },
-
   eslint: {
     // ESLint is not installed in web/node_modules — skip lint during build.
     ignoreDuringBuilds: true,

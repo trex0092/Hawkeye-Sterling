@@ -2,6 +2,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
+import { randomBytes } from "node:crypto";
 import { USERS, PERMISSION_LOG, ROLE_MODULES, type UserRole } from "../_store";
 import { generateSalt, hashPassword } from "@/lib/server/auth";
 
@@ -29,7 +30,7 @@ export async function POST(req: Request) {
   }
 
   const salt = generateSalt();
-  const initialPassword = password?.trim() || `Hawkeye@${new Date().getFullYear()}!`;
+  const initialPassword = password?.trim() || randomBytes(16).toString("base64url");
   const hash = hashPassword(initialPassword, salt);
 
   const id = `usr-${String(Date.now()).slice(-6)}`;

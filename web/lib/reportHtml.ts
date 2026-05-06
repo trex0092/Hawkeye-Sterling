@@ -1,6 +1,10 @@
 // Hawkeye Sterling — shared HTML report generator.
 // All 8 PDF reports use this design system (reference: Google Drive design files).
 
+function escHtml(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
 export const REPORT_CSS = `
 /* Hawkeye Sterling — Report design system
    Aesthetic: editorial luxury · audit-grade typography · A4 portrait
@@ -376,13 +380,13 @@ export function hsKvGrid(rows: Array<{k: string; v: string}>): string {
 }
 
 export function hsNarrative(text: string, lead = false): string {
-  return `<p class="hs-narrative${lead ? " hs-narrative-lead" : ""}">${text}</p>`;
+  return `<p class="hs-narrative${lead ? " hs-narrative-lead" : ""}">${escHtml(text)}</p>`;
 }
 
 export function hsTable(headers: string[], rows: string[][]): string {
   return `<table class="hs-table">
-  <thead><tr>${headers.map(h => `<th>${h}</th>`).join("")}</tr></thead>
-  <tbody>${rows.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join("")}</tr>`).join("")}</tbody>
+  <thead><tr>${headers.map(h => `<th>${escHtml(h)}</th>`).join("")}</tr></thead>
+  <tbody>${rows.map(r => `<tr>${r.map(c => `<td>${escHtml(c)}</td>`).join("")}</tr>`).join("")}</tbody>
 </table>`;
 }
 
