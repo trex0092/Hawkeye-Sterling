@@ -34,6 +34,7 @@ interface Props {
   autoProposed: DispositionCode | string;
   autoConfidence: number;
   reviewerId?: string;
+  userRole?: string;
   onSubmit?: (result: { ok: boolean; recorded?: boolean; overridden?: boolean; persisted?: boolean; error?: string }) => void;
 }
 
@@ -44,6 +45,7 @@ export function DispositionButton({
   autoProposed,
   autoConfidence,
   reviewerId,
+  userRole,
   onSubmit,
 }: Props): JSX.Element {
   const [open, setOpen] = useState(false);
@@ -109,6 +111,19 @@ export function DispositionButton({
     } finally {
       setBusy(false);
     }
+  }
+
+  if (userRole !== undefined && userRole !== "mlro") {
+    return (
+      <button
+        type="button"
+        disabled
+        title="MLRO sign-off required — only users with the MLRO role may record dispositions"
+        className="rounded-md border border-zinc-300 bg-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-400 cursor-not-allowed"
+      >
+        MLRO sign-off required
+      </button>
+    );
   }
 
   if (!open) {

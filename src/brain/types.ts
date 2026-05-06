@@ -148,6 +148,14 @@ export interface ReasoningMode {
   wave: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
   description: string;
   apply: (ctx: BrainContext) => Promise<Finding>;
+  // Governance metadata (HS-GOV-001 §5) — required on new/modified modes;
+  // optional here so existing registrations are not broken before review.
+  version?: string;       // semver e.g. "2.1.0"
+  deployedDate?: string;  // ISO 8601
+  contentHash?: string;   // SHA-256 of apply() implementation
+  author?: string;        // team or individual
+  approvedBy?: string;    // MLRO or governance board sign-off
+  changeLog?: string;     // one-line description of change
 }
 
 // PART 5 — Version metadata for every deployed reasoning mode. Required for
@@ -270,6 +278,8 @@ export interface IntrospectionReport {
   confidenceAdjustment: number;        // delta applied to aggregateConfidence in [-0.2, 0.2]
   notes: string[];
   producedAt: number;
+  // Four mandatory meta-checks (HS-GOV-001 Part 5). Populated by introspect().
+  metaCheckWarnings?: string[];
 }
 
 export interface EvidenceWeightedSummary {

@@ -53,6 +53,18 @@ async function handlePost(
 ): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+
+  // Disposition recording is restricted to MLRO role (Cabinet Res 134/2025 Art.19;
+  // CLAUDE.md Part 13). Portal admin calls (ADMIN_TOKEN path) are trusted as they
+  // are same-origin authenticated sessions; external API callers need role='mlro'.
+  const isMlro = gate.keyId === "portal_admin" || gate.record?.role === "mlro";
+  if (!isMlro) {
+    return NextResponse.json(
+      { ok: false, error: "MLRO role required for disposition recording (Cabinet Res 134/2025)" },
+      { status: 403, headers: gate.headers },
+    );
+  }
+
   const tenant = tenantIdFromGate(gate);
   const { id } = await ctx.params;
 

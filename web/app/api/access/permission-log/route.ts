@@ -3,12 +3,17 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 import { PERMISSION_LOG, type PermissionLogEntry } from "../_store";
+import { adminAuth } from "@/lib/server/admin-auth";
 
-export function GET() {
+export function GET(req: Request) {
+  const deny = adminAuth(req);
+  if (deny) return deny;
   return NextResponse.json({ ok: true, log: PERMISSION_LOG });
 }
 
 export async function POST(req: Request) {
+  const deny = adminAuth(req);
+  if (deny) return deny;
   let body: Partial<PermissionLogEntry>;
   try {
     body = (await req.json()) as Partial<PermissionLogEntry>;

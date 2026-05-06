@@ -88,9 +88,44 @@ export function verdictToMarkdown(v: BrainVerdict, opts: ExportOptions = {}): st
     lines.push('');
   }
 
-  // 5. Gaps (posteriorsByHypothesis acts as a breadcrumb for under-explored hypotheses).
+  // 5. Gaps — evidence gaps and faculty blind spots (mandatory section per HS-GOV-001).
+  {
+    const gapFindings = v.findings.filter((f) => f.verdict === 'inconclusive' && f.score === 0);
+    const coverageGaps = v.introspection?.coverageGaps ?? [];
+    const metaWarnings = (v.introspection?.metaCheckWarnings ?? []).filter((w) => w.startsWith('MC-2:'));
+    if (gapFindings.length > 0 || coverageGaps.length > 0 || metaWarnings.length > 0) {
+      lines.push(`## 5. Gaps`);
+      lines.push('');
+      for (const f of gapFindings) {
+        lines.push(`- **[${f.modeId}]** ${shorten(f.rationale, 200)}`);
+      }
+      for (const g of coverageGaps) lines.push(`- ${g}`);
+      for (const w of metaWarnings) lines.push(`- ${w}`);
+      lines.push('');
+    }
+  }
+
+  // 6. Red flags — typology indicators with score > 0.5 (mandatory section per HS-GOV-001).
+  {
+    const RED_FLAG_CATEGORIES = new Set<string>([
+      'sectoral_typology', 'predicate_crime', 'proliferation', 'behavioral_signals',
+    ]);
+    const redFlags = v.findings.filter(
+      (f) => RED_FLAG_CATEGORIES.has(f.category) && f.score > 0.5,
+    );
+    if (redFlags.length > 0) {
+      lines.push(`## 6. Red Flags`);
+      lines.push('');
+      for (const f of redFlags) {
+        lines.push(`- **[${f.modeId}]** ${f.category} · score ${f.score.toFixed(2)} · ${shorten(f.rationale, 200)}`);
+      }
+      lines.push('');
+    }
+  }
+
+  // 7. Hypothesis posteriors (breadcrumb for under-explored hypotheses).
   if (v.posteriorsByHypothesis && Object.keys(v.posteriorsByHypothesis).length > 0) {
-    lines.push(`## 5. Hypothesis posteriors`);
+    lines.push(`## 7. Hypothesis Posteriors`);
     lines.push('');
     lines.push(`| Hypothesis | Posterior |`);
     lines.push(`|------------|-----------|`);
@@ -100,17 +135,17 @@ export function verdictToMarkdown(v: BrainVerdict, opts: ExportOptions = {}): st
     lines.push('');
   }
 
-  // 6. Conflicts.
+  // 8. Conflicts.
   if (o.includeConflicts && v.conflicts && v.conflicts.length > 0) {
-    lines.push(`## 6. Conflicts (escalate rather than average away)`);
+    lines.push(`## 8. Conflicts (escalate rather than average away)`);
     lines.push('');
     for (const c of v.conflicts) lines.push(`- ${renderConflict(c)}`);
     lines.push('');
   }
 
-  // 7. Firepower.
+  // 9. Firepower.
   if (o.includeFirepower && v.firepower) {
-    lines.push(`## 7. Cognitive Firepower`);
+    lines.push(`## 9. Cognitive Firepower`);
     lines.push('');
     lines.push(`- **Modes fired:** ${v.firepower.modesFired}`);
     lines.push(`- **Faculties engaged:** ${v.firepower.facultiesEngaged} / ${v.firepower.activations.length}`);
@@ -126,9 +161,9 @@ export function verdictToMarkdown(v: BrainVerdict, opts: ExportOptions = {}): st
     lines.push('');
   }
 
-  // 8. Introspection.
+  // 10. Introspection.
   if (o.includeIntrospection && v.introspection) {
-    lines.push(`## 8. Introspection`);
+    lines.push(`## 10. Introspection`);
     lines.push('');
     lines.push(`- **Chain quality:** ${v.introspection.chainQuality.toFixed(3)}`);
     lines.push(`- **Calibration gap:** ${v.introspection.calibrationGap.toFixed(3)}`);
@@ -146,9 +181,9 @@ export function verdictToMarkdown(v: BrainVerdict, opts: ExportOptions = {}): st
     }
   }
 
-  // 9. Reasoning chain (optional, can be long).
+  // 11. Reasoning chain (optional, can be long).
   if (o.includeChain && v.chain.length > 0) {
-    lines.push(`## 9. Reasoning Chain`);
+    lines.push(`## 11. Reasoning Chain`);
     lines.push('');
     for (const node of v.chain) {
       lines.push(`${node.step}. [${node.faculty}] \`${node.modeId}\` — ${shorten(node.summary, 180)}`);
@@ -156,13 +191,13 @@ export function verdictToMarkdown(v: BrainVerdict, opts: ExportOptions = {}): st
     lines.push('');
   }
 
-  // 10. Recommended next steps.
-  lines.push(`## 10. Recommended Next Steps`);
+  // 12. Recommended next steps.
+  lines.push(`## 12. Recommended Next Steps`);
   for (const a of v.recommendedActions) lines.push(`- ${a}`);
   lines.push('');
 
-  // 11. Audit line.
-  lines.push(`## 11. Audit Line`);
+  // 13. Audit line.
+  lines.push(`## 13. Audit Line`);
   lines.push(`- Produced by Hawkeye Sterling brain engine, run \`${v.runId}\`, ${new Date(v.generatedAt).toISOString()}.`);
   if (opts.auditLine) lines.push(`- ${opts.auditLine}`);
   lines.push('');

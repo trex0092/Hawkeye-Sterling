@@ -4,6 +4,7 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { USERS, PERMISSION_LOG, ROLE_MODULES, type UserRole } from "../_store";
+import { adminAuth } from "@/lib/server/admin-auth";
 
 const FALLBACK_ASSESSMENT: Record<string, string> = {
   "trading→compliance": "Upgrading from Trading to Compliance Department grants full platform access including MLRO Advisor, STR Cases, Playbook and Access Control. Verify the user's AML certification and obtain senior management approval before activation per FDL 10/2025 Art.20.",
@@ -14,6 +15,8 @@ const FALLBACK_ASSESSMENT: Record<string, string> = {
 };
 
 export async function POST(req: Request) {
+  const deny = adminAuth(req);
+  if (deny) return deny;
   let body: { userId: string; newRole: UserRole; reason: string; assignedBy: string };
   try {
     body = (await req.json()) as typeof body;

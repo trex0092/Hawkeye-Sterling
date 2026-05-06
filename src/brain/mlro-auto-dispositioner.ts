@@ -33,21 +33,11 @@ const RX_NO_MATCH = /\bNO[ _]MATCH(?!\w)/i;
 const RX_CLEARED = /\b(CLEARED|APPROVED|PROCEED)\b/i;
 const RX_REFER_AUTHORITY = /\b(REFER[_ ]TO[_ ]AUTHORITY|COMPETENT[_ ]AUTHORITY)\b/i;
 
-// HS-004 hard constraint (PART 13): any proposal with confidence ≤ 0.65 must
-// signal that human review is required. Applied as a post-processing gate so
-// all code paths above the gate are unmodified.
-function applyConfidenceGate(proposal: AutoDispositionProposal): AutoDispositionProposal {
-  if (proposal.confidence <= 0.65) {
-    return {
-      ...proposal,
-      flags: [...proposal.flags, 'ESCALATE — human review required'],
-      rationale: proposal.rationale + ' ESCALATE — human review required.',
-    };
-  }
-  return proposal;
+export function proposeDisposition(input: AutoDispositionInput): AutoDispositionProposal {
+  return escalateIfLowConfidence(_proposeDisposition(input));
 }
 
-function _proposeDispositionInner(input: AutoDispositionInput): AutoDispositionProposal {
+function _proposeDisposition(input: AutoDispositionInput): AutoDispositionProposal {
   const flags: string[] = [];
 
   // Hard redline — tipping-off draft detected → block everything, suggest
@@ -212,6 +202,15 @@ function _proposeDispositionInner(input: AutoDispositionInput): AutoDispositionP
   };
 }
 
-export function proposeDisposition(input: AutoDispositionInput): AutoDispositionProposal {
-  return applyConfidenceGate(_proposeDispositionInner(input));
+// HS-004 hard constraint (Part 13, Prohibition #11):
+// Any proposal with confidence ≤ 0.65 must prepend "ESCALATE — human review required".
+function escalateIfLowConfidence(proposal: AutoDispositionProposal): AutoDispositionProposal {
+  if (proposal.confidence <= 0.65) {
+    return {
+      ...proposal,
+      flags: [...proposal.flags, 'ESCALATE — human review required'],
+      rationale: `ESCALATE — human review required. ${proposal.rationale}`,
+    };
+  }
+  return proposal;
 }

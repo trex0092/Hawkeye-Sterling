@@ -93,6 +93,8 @@ export async function run(options: RunOptions): Promise<BrainVerdict> {
   const introspection = introspect(findings, {
     conflicts: fusion.conflicts,
     firepower: fusion.firepower,
+    aggregateScore: fusion.score,
+    aggregateConfidence: fusion.confidence,
   });
 
   // Evidence-weighted adjunct: credibility×freshness blend, Charter P8 cap on

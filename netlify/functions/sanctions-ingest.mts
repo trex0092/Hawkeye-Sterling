@@ -234,7 +234,29 @@ function safeParseJson(text: string): unknown {
   try { return JSON.parse(text); } catch { return null; }
 }
 
-export default async function handler(_req: Request): Promise<Response> {
+export default async function handler(req: Request): Promise<Response> {
+  // Fail-closed: SANCTIONS_CRON_TOKEN must be set and must match the
+  // Authorization Bearer token on non-scheduled invocations (Prohibition #10).
+  const cronToken = process.env["SANCTIONS_CRON_TOKEN"];
+  if (!cronToken) {
+    return jsonResponse({ ok: false, label: RUN_LABEL, error: "SANCTIONS_CRON_TOKEN not configured — ingest halted" }, 503);
+  }
+  const auth = req.headers.get("authorization");
+  if (auth !== null) {
+    // When invoked via HTTP (not scheduled), verify the bearer token.
+    const supplied = auth.replace(/^Bearer\s+/i, "").trim();
+    const enc = new TextEncoder();
+    const a = enc.encode(cronToken);
+    const b = enc.encode(supplied);
+    const match = a.byteLength === b.byteLength &&
+      (await import("node:crypto").then(({ timingSafeEqual }) =>
+        timingSafeEqual(new Uint8Array(a.buffer), new Uint8Array(b.buffer)),
+      ).catch(() => false));
+    if (!match) {
+      return jsonResponse({ ok: false, label: RUN_LABEL, error: "Unauthorized" }, 401);
+    }
+  }
+
   const startedAt = Date.now();
   let store: ReturnType<typeof getStore>;
   try {
