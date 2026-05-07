@@ -744,24 +744,6 @@ export default function GrievancesWhistleblowingPage() {
                     Download policy PDF
                     <span style={mono({ fontSize: 10, border: `1px solid ${V.line2}`, padding: "1px 5px", color: V.ink2, background: "transparent" })}>↓</span>
                   </button>
-                  <AsanaReportButton
-                    payload={{
-                      module: "grievances-whistleblowing",
-                      label: "Grievances & Whistleblowing",
-                      summary: `Grievances & Whistleblowing programme report — FG/GVW/004 v004. Programme stats (30d): ${stats.open} open · ${stats.resolved} resolved · ${stats.escalated} escalated · ${stats.slaHitPct}% SLA hit. Routed to 19 · Incidents & Grievances board.`,
-                      url: "/governance/grievances-whistleblowing",
-                      metadata: {
-                        policyCode: "FG/GVW/004",
-                        version: "004",
-                        effective: "28 NOV 2025",
-                        owner: "Compliance Dpt",
-                        openCases: stats.open,
-                        resolvedCases: stats.resolved,
-                        escalatedCases: stats.escalated,
-                        slaHitPct: stats.slaHitPct,
-                      },
-                    }}
-                  />
                 </div>
               </div>
             </section>
