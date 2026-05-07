@@ -303,14 +303,16 @@ function AdverseMediaPanel() {
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
       setWatch(raw ? JSON.parse(raw) : DEFAULTS);
-    } catch {
+    } catch (err) {
+      console.warn("[hawkeye] intel watchlist parse failed — using defaults:", err);
       setWatch(DEFAULTS);
     }
   }, []);
 
   const save = (list: string[]) => {
     setWatch(list);
-    try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); } catch { /* */ }
+    try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); }
+    catch (err) { console.error("[hawkeye] intel watchlist persist failed — entries will be lost:", err); }
   };
 
   const add = () => {

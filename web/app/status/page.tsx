@@ -172,9 +172,15 @@ export default function StatusPage() {
     const load = async () => {
       try {
         const r = await fetch("/api/status", { cache: "no-store" });
+        if (!r.ok) {
+          console.error(`[hawkeye] status HTTP ${r.status}`);
+          if (active) setErr(`HTTP ${r.status}`);
+          return;
+        }
         const payload = (await r.json()) as StatusPayload;
         if (active) setData(payload);
       } catch (e) {
+        console.error("[hawkeye] status threw:", e);
         if (active) setErr(e instanceof Error ? e.message : String(e));
       }
     };
@@ -562,6 +568,7 @@ function AsanaRebuildSection() {
     setErrMsg("");
     try {
       const res = await fetch("/api/asana-rebuild-sections", { method: "POST" });
+      if (!res.ok) console.error(`[hawkeye] asana-rebuild-sections HTTP ${res.status}`);
       const data = await res.json() as { ok: boolean; results?: typeof results; error?: string };
       if (data.ok) {
         setResults(data.results ?? []);
