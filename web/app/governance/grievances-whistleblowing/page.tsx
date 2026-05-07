@@ -656,7 +656,7 @@ export default function GrievancesWhistleblowingPage() {
                         placeholder="What happened, who was involved, when and where. Avoid speculation — facts only. Attach evidence in next step."
                         style={{ width: "100%", background: V.bg, border: `1px solid ${V.line}`, color: V.ink, padding: "8px 10px", fontFamily: "'Inter',sans-serif", fontSize: 12, borderRadius: 1, resize: "vertical", minHeight: 70, lineHeight: 1.5 }}
                       />
-                      <div style={mono({ fontSize: 9, color: V.muted, marginTop: 4, letterSpacing: ".04em", lineHeight: 1.5 })}>Tipping-off prohibition: do not discuss this matter with any subject, customer or third party (FDL No.10/2025 Art.11).</div>
+
                     </div>
 
                     {/* Severity */}
