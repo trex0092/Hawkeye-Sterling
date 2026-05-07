@@ -345,7 +345,9 @@ function recordStepTransition(fromStep: Step, toStep: Step, draft: Draft): void 
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ fromStep, toStep, draftSnapshot }),
-  }).catch(() => {});
+  }).catch((err: unknown) => {
+    console.warn("[hawkeye] onboarding-audit fire-and-forget failed:", err);
+  });
 }
 
 // Step 5 — generate a regulator-grade onboarding-decision narrative

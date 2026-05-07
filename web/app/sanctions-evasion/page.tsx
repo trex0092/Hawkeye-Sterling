@@ -193,7 +193,8 @@ export default function SanctionsEvasionPage() {
       });
       const json = (await res.json()) as SanctionsEvasionResult;
       setResult(json);
-    } catch {
+    } catch (err) {
+      console.error("[hawkeye] sanctions-evasion threw:", err);
       setError("Analysis failed. Please try again.");
     } finally {
       setLoading(false);
