@@ -5,6 +5,7 @@
 
 export type { BayesTrace, LikelihoodRatio } from './bayesian-update.js';
 import type { BayesTrace, LikelihoodRatio } from './bayesian-update.js';
+import type { CorroborationResult } from './evidence-corroboration.js';
 
 export type FacultyId =
   | 'reasoning'
@@ -268,6 +269,12 @@ export interface FusionResult {
   contributorCount: number;
   methodology: string;                 // plain-text description per charter P9
   firepower: CognitiveFirepower;       // per-faculty activation + composite firepower score
+  /** Multi-source corroboration score over all evidence cited by the
+   *  contributing findings. Diagnostic only — does NOT affect verdict math.
+   *  UI / MLRO can read multi-source vs single-source backing per finding
+   *  without re-deriving the metric. Optional: undefined when no
+   *  evidenceIndex was supplied to fuseFindings(). */
+  corroboration?: CorroborationResult;
 }
 
 export interface IntrospectionReport {
