@@ -18,7 +18,7 @@ function isPublic(pathname: string): boolean {
 // We replicate the HMAC check from lib/server/auth.ts using the SubtleCrypto
 // API available in the Edge runtime.
 
-async function hmacSha256(key: string, data: string): Promise<string> {
+async function hmacSha256Base64url(key: string, data: string): Promise<string> {
   const enc = new TextEncoder();
   const cryptoKey = await crypto.subtle.importKey(
     "raw",
@@ -34,13 +34,47 @@ async function hmacSha256(key: string, data: string): Promise<string> {
     .replace(/=+$/, "");
 }
 
+async function hmacSha256Hex(key: string, data: string): Promise<string> {
+  const enc = new TextEncoder();
+  const cryptoKey = await crypto.subtle.importKey(
+    "raw",
+    enc.encode(key),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const sig = await crypto.subtle.sign("HMAC", cryptoKey, enc.encode(data));
+  return Array.from(new Uint8Array(sig))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+// Mirrors auth.ts getSecret() so middleware and login route always agree on the signing key.
+async function resolveSessionSecret(): Promise<string> {
+  const explicit = process.env["SESSION_SECRET"] ?? "";
+  if (explicit.length >= 16) return explicit;
+
+  // Derive the same key auth.ts produces: HMAC-SHA256(anchor, "hawkeye-session-secret-v1") → hex
+  const anchor =
+    process.env["AUDIT_CHAIN_SECRET"] ??
+    process.env["NETLIFY_SITE_ID"] ??
+    process.env["SITE_ID"] ??
+    "";
+  if (anchor.length >= 8) {
+    return hmacSha256Hex(anchor, "hawkeye-session-secret-v1");
+  }
+
+  // Last resort — same literal fallback used by the dev server (no anchor available).
+  return "hawkeye-sterling-dev-secret-change-in-prod";
+}
+
 async function isValidSession(token: string): Promise<boolean> {
   const dot = token.lastIndexOf(".");
   if (dot === -1) return false;
   const encoded = token.slice(0, dot);
   const sig = token.slice(dot + 1);
-  const secret = process.env["SESSION_SECRET"] ?? "hawkeye-sterling-dev-secret-change-in-prod";
-  const expected = await hmacSha256(secret, encoded);
+  const secret = await resolveSessionSecret();
+  const expected = await hmacSha256Base64url(secret, encoded);
   if (expected !== sig) return false;
   try {
     const payload = JSON.parse(atob(encoded.replace(/-/g, "+").replace(/_/g, "/"))) as { exp?: number };
