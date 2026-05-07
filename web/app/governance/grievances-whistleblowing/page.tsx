@@ -869,22 +869,22 @@ export default function GrievancesWhistleblowingPage() {
                 {/* B · Reportable Matters */}
                 <div style={{ marginTop: 22 }}>
                   <SectionHead index="B · Reportable Matters" title="What should be raised" em="through this channel." meta="categorised · routed" />
-                  <div className="gw-matters-grid" style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 3 }}>
+                  <div className="gw-matters-grid" style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 2 }}>
                     {CATEGORIES.map((cat) => (
                       <div
                         key={cat.title}
                         onClick={() => setActiveCategory(cat)}
-                        style={{ border: `1px solid ${V.line}`, background: V.panel, padding: "5px 10px", display: "grid", gridTemplateColumns: "auto 1fr auto", gap: 8, alignItems: "center", cursor: "pointer", transition: "border-color .15s" }}
+                        style={{ border: `1px solid ${V.line}`, background: V.panel, padding: "3px 8px", display: "grid", gridTemplateColumns: "auto 1fr auto", gap: 7, alignItems: "center", cursor: "pointer", transition: "border-color .15s" }}
                         className="gw-tr"
                       >
-                        <div style={{ width: 22, height: 22, border: `1px solid ${V.line2}`, display: "grid", placeItems: "center", fontFamily: "'JetBrains Mono','IBM Plex Mono',monospace", fontSize: 10, color: V.ember, background: V.bg2 }}>{cat.ico}</div>
+                        <div style={{ width: 18, height: 18, border: `1px solid ${V.line2}`, display: "grid", placeItems: "center", fontFamily: "'JetBrains Mono','IBM Plex Mono',monospace", fontSize: 9, color: V.ember, background: V.bg2, flexShrink: 0 }}>{cat.ico}</div>
                         <div>
-                          <div style={{ fontSize: 12, color: V.ink, fontWeight: 500 }}>{cat.title}</div>
-                          <div style={mono({ fontSize: 8.5, color: V.muted, letterSpacing: ".06em", marginTop: 2, textTransform: "uppercase" })}>{cat.sub}</div>
+                          <div style={{ fontSize: 11.5, color: V.ink, fontWeight: 500, lineHeight: 1.2 }}>{cat.title}</div>
+                          <div style={mono({ fontSize: 8, color: V.muted, letterSpacing: ".06em", marginTop: 1, textTransform: "uppercase" })}>{cat.sub}</div>
                         </div>
                         <div style={mono({ fontSize: 11, color: V.ink2, textAlign: "right" })}>
                           {cat.ytd}
-                          <span style={mono({ fontSize: 8.5, color: V.muted, letterSpacing: ".16em", textTransform: "uppercase", display: "block", marginTop: 2 })}>YTD</span>
+                          <span style={mono({ fontSize: 8, color: V.muted, letterSpacing: ".16em", textTransform: "uppercase", display: "block" })}>YTD</span>
                         </div>
                       </div>
                     ))}
