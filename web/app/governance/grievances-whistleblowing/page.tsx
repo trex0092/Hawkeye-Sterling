@@ -724,7 +724,7 @@ export default function GrievancesWhistleblowingPage() {
         <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 1, backgroundImage: "radial-gradient(rgba(255,255,255,.012) 1px,transparent 1px)", backgroundSize: "3px 3px", mixBlendMode: "overlay" }} />
 
         {/* ── SIDEBAR + MAIN GRID ── */}
-        <div className="gw-outer-grid" style={{ display: "grid", gridTemplateColumns: "268px 1fr", minHeight: "calc(100vh - 54px - 28px - 30px)", position: "relative", zIndex: 2 }}>
+        <div className="gw-outer-grid" style={{ display: "grid", gridTemplateColumns: "180px 1fr", minHeight: "calc(100vh - 54px - 28px - 30px)", position: "relative", zIndex: 2 }}>
 
           {/* ══ SIDEBAR ══ */}
           <aside className="gw-sidebar-panel" style={{ borderRight: `1px solid ${V.line}`, padding: "22px 18px 30px", background: "linear-gradient(180deg,rgba(28,26,21,.35),transparent 220px)" }}>
@@ -884,18 +884,18 @@ export default function GrievancesWhistleblowingPage() {
                 {/* B · Reportable Matters */}
                 <div style={{ marginTop: 36 }}>
                   <SectionHead index="B · Reportable Matters" title="What should be raised" em="through this channel." meta="categorised · routed" />
-                  <div className="gw-matters-grid" style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 12 }}>
+                  <div className="gw-matters-grid" style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 4 }}>
                     {CATEGORIES.map((cat) => (
                       <div
                         key={cat.title}
                         onClick={() => setActiveCategory(cat)}
-                        style={{ border: `1px solid ${V.line}`, background: V.panel, padding: "14px 16px", display: "grid", gridTemplateColumns: "auto 1fr auto", gap: 14, alignItems: "center", cursor: "pointer", transition: "border-color .15s" }}
+                        style={{ border: `1px solid ${V.line}`, background: V.panel, padding: "8px 12px", display: "grid", gridTemplateColumns: "auto 1fr auto", gap: 10, alignItems: "center", cursor: "pointer", transition: "border-color .15s" }}
                         className="gw-tr"
                       >
-                        <div style={{ width: 36, height: 36, border: `1px solid ${V.line2}`, display: "grid", placeItems: "center", fontFamily: "'JetBrains Mono','IBM Plex Mono',monospace", fontSize: 13, color: V.ember, background: V.bg2 }}>{cat.ico}</div>
+                        <div style={{ width: 28, height: 28, border: `1px solid ${V.line2}`, display: "grid", placeItems: "center", fontFamily: "'JetBrains Mono','IBM Plex Mono',monospace", fontSize: 11, color: V.ember, background: V.bg2 }}>{cat.ico}</div>
                         <div>
-                          <div style={{ fontSize: 13, color: V.ink, fontWeight: 500 }}>{cat.title}</div>
-                          <div style={mono({ fontSize: 9.5, color: V.muted, letterSpacing: ".06em", marginTop: 3, textTransform: "uppercase" })}>{cat.sub}</div>
+                          <div style={{ fontSize: 12, color: V.ink, fontWeight: 500 }}>{cat.title}</div>
+                          <div style={mono({ fontSize: 8.5, color: V.muted, letterSpacing: ".06em", marginTop: 2, textTransform: "uppercase" })}>{cat.sub}</div>
                         </div>
                         <div style={mono({ fontSize: 11, color: V.ink2, textAlign: "right" })}>
                           {cat.ytd}
