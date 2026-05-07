@@ -85,7 +85,8 @@ export default function PepProfilePage() {
       });
       const data = (await res.json()) as PepProfileResult;
       setResult(data);
-    } catch {
+    } catch (err) {
+      console.error("[hawkeye] pep-profile threw:", err);
       setError("Request failed — please try again.");
     } finally {
       setLoading(false);

@@ -78,7 +78,8 @@ function loadReviews(): Record<string, QaReview> {
   try {
     const raw = window.localStorage.getItem(QA_STORAGE_KEY);
     return raw ? JSON.parse(raw) : {};
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] sar-qa reviews parse failed — returning empty:", err);
     return {};
   }
 }
@@ -86,8 +87,8 @@ function loadReviews(): Record<string, QaReview> {
 function saveReviews(r: Record<string, QaReview>) {
   try {
     window.localStorage.setItem(QA_STORAGE_KEY, JSON.stringify(r));
-  } catch {
-    /* */
+  } catch (err) {
+    console.error("[hawkeye] sar-qa reviews persist failed — review edits will be lost:", err);
   }
 }
 
