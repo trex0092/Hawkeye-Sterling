@@ -55,7 +55,8 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const { entity, registered, ubos } = body;
 
-  try { writeAuditEvent("analyst", "ubo.ai-risk-assessment", entity); } catch { /* non-fatal */ }
+  try { writeAuditEvent("analyst", "ubo.ai-risk-assessment", entity); }
+  catch (err) { console.warn("[hawkeye] ubo-risk writeAuditEvent failed:", err); }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {

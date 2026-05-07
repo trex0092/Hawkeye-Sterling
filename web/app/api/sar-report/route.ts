@@ -532,7 +532,10 @@ async function handleSarReport(req: Request): Promise<Response> {
       }),
       signal: asanaCtl.signal,
     });
-    asanaPayload = (await taskRes.json().catch(() => null)) as typeof asanaPayload;
+    asanaPayload = (await taskRes.json().catch((err: unknown) => {
+      console.warn("[hawkeye] sar-report Asana response parse failed:", err);
+      return null;
+    })) as typeof asanaPayload;
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);
     const isAbort = err instanceof Error && (err.name === "AbortError" || asanaCtl.signal.aborted);

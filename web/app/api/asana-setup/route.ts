@@ -203,7 +203,7 @@ async function handleSetup(req: Request): Promise<NextResponse> {
   const dry = new URL(req.url).searchParams.get("dry") === "true";
 
   // Verify token
-  const me = await asanaGet(token, "/users/me").catch(() => null) as { name?: string; email?: string } | null;
+  const me = await asanaGet(token, "/users/me").catch((err: unknown) => { console.warn("[hawkeye] asana-setup fetch failed:", err); return null; }) as { name?: string; email?: string } | null;
   if (!me?.name) {
     return NextResponse.json({ ok: false, error: "ASANA_TOKEN is invalid or expired." }, { status: 401 });
   }
@@ -212,7 +212,7 @@ async function handleSetup(req: Request): Promise<NextResponse> {
   const projects = await asanaGet(
     token,
     `/workspaces/${WORKSPACE_GID}/projects?limit=100`,
-  ).catch(() => null) as ProjectRecord[] | null;
+  ).catch((err: unknown) => { console.warn("[hawkeye] asana-setup fetch failed:", err); return null; }) as ProjectRecord[] | null;
 
   if (!projects) {
     return NextResponse.json({ ok: false, error: "Failed to fetch workspace projects." }, { status: 502 });

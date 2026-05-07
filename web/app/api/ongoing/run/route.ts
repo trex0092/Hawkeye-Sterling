@@ -294,7 +294,7 @@ export async function POST(req: Request): Promise<NextResponse> {
           },
         );
         if (newsRes.ok) {
-          const newsPayload = (await newsRes.json().catch(() => null)) as
+          const newsPayload = (await newsRes.json().catch((err: unknown) => { console.warn("[hawkeye] ongoing/run JSON parse failed:", err); return null; })) as
             | NewsResponseShape
             | null;
           const articles = newsPayload?.articles ?? [];
@@ -379,7 +379,7 @@ export async function POST(req: Request): Promise<NextResponse> {
                     `[ongoing/run] adverse-media alert POST rejected for ${s.id}: HTTP ${r.status}${detail ? ` — ${detail.slice(0, 200)}` : ""}`,
                   );
                 } else {
-                  const data = (await r.json().catch(() => null)) as
+                  const data = (await r.json().catch((err: unknown) => { console.warn("[hawkeye] ongoing/run JSON parse failed:", err); return null; })) as
                     | { data?: { permalink_url?: string } }
                     | null;
                   if (data?.data?.permalink_url) {
@@ -475,7 +475,7 @@ export async function POST(req: Request): Promise<NextResponse> {
               `[ongoing/run] /api/screening-report rejected for ${s.id}: HTTP ${asanaRes.status}${detail ? ` — ${detail.slice(0, 200)}` : ""}`,
             );
           } else {
-            const payload = (await asanaRes.json().catch(() => null)) as
+            const payload = (await asanaRes.json().catch((err: unknown) => { console.warn("[hawkeye] ongoing/run JSON parse failed:", err); return null; })) as
               | { ok?: boolean; taskUrl?: string }
               | null;
             if (payload?.taskUrl) {
@@ -572,7 +572,7 @@ export async function POST(req: Request): Promise<NextResponse> {
                 `[ongoing/run] asana rejected escalation task for ${s.id}: ${detail}`,
               );
             } else {
-              const data = (await r.json().catch(() => null)) as
+              const data = (await r.json().catch((err: unknown) => { console.warn("[hawkeye] ongoing/run JSON parse failed:", err); return null; })) as
                 | { data?: { gid?: string; permalink_url?: string } }
                 | null;
               if (data?.data?.permalink_url) {

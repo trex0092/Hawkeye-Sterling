@@ -243,7 +243,10 @@ async function handleTmReport(req: Request): Promise<NextResponse> {
         },
       }),
     });
-    payload = (await taskRes.json().catch(() => null)) as typeof payload;
+    payload = (await taskRes.json().catch((err: unknown) => {
+      console.warn("[hawkeye] tm-report Asana response parse failed:", err);
+      return null;
+    })) as typeof payload;
   } catch (err) {
     return NextResponse.json({
       ok: true,

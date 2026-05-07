@@ -496,7 +496,10 @@ async function handleScreeningReport(req: Request): Promise<NextResponse> {
     } finally {
       clearTimeout(taskTimer);
     }
-    const payload = (await asanaRes.json().catch(() => null)) as
+    const payload = (await asanaRes.json().catch((err: unknown) => {
+      console.warn("[hawkeye] screening-report Asana response parse failed:", err);
+      return null;
+    })) as
       | { data?: { gid?: string; permalink_url?: string }; errors?: { message?: string }[] }
       | null;
     if (!asanaRes.ok || !payload?.data?.gid) {

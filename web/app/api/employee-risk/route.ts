@@ -68,7 +68,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "employees array is required" }, { status: 400 });
   }
 
-  try { writeAuditEvent("mlro", "employees.ai-risk-scan", "employee-portfolio"); } catch { /* non-fatal */ }
+  try { writeAuditEvent("mlro", "employees.ai-risk-scan", "employee-portfolio"); }
+  catch (err) { console.warn("[hawkeye] employee-risk writeAuditEvent failed:", err); }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {

@@ -116,7 +116,7 @@ export async function GET(): Promise<Response> {
             const newest = keys[keys.length - 1];
             if (newest) lastSeenIso = newest.replace(/^engine-events\//, "");
           }
-        } catch { /* best-effort */ }
+        } catch (err) { console.warn("[hawkeye] activity-stream listKeys best-effort failed:", err); }
 
         if (closed) return;
 
