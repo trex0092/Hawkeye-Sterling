@@ -728,8 +728,8 @@ function load(): Policy[] {
 function save(policies: Policy[]) {
   try {
     window.localStorage.setItem(STORAGE, JSON.stringify(policies));
-  } catch {
-    /* */
+  } catch (err) {
+    console.error("[hawkeye] policies persist failed — policy edits will be lost on reload:", err);
   }
 }
 
