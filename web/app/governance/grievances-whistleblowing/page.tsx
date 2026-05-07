@@ -832,7 +832,7 @@ export default function GrievancesWhistleblowingPage() {
             </section>
 
             {/* ── TWO-COLUMN CONTENT ── */}
-            <div className="gw-content-grid" style={{ display: "grid", gridTemplateColumns: "1fr 220px", gap: 28, marginTop: 32 }}>
+            <div className="gw-content-grid" style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: 24, marginTop: 32 }}>
 
               {/* ── LEFT COLUMN ── */}
               <div>
@@ -843,7 +843,7 @@ export default function GrievancesWhistleblowingPage() {
                   {PIPELINE.map((step, i) => (
                     <div
                       key={i}
-                      style={{ padding: "16px 16px 20px", borderRight: i < PIPELINE.length - 1 ? `1px solid ${V.line}` : "none", position: "relative", minHeight: 140, display: "flex", flexDirection: "column" as const, background: step.active ? "linear-gradient(180deg,var(--gw-ember-soft),transparent 60%)" : "transparent" }}
+                      style={{ padding: "10px 12px 14px", borderRight: i < PIPELINE.length - 1 ? `1px solid ${V.line}` : "none", position: "relative", minHeight: 108, display: "flex", flexDirection: "column" as const, background: step.active ? "linear-gradient(180deg,var(--gw-ember-soft),transparent 60%)" : "transparent" }}
                     >
                       <div style={mono({ fontSize: 10, color: V.ember, letterSpacing: ".14em", fontWeight: step.active ? 600 : 400 })}>
                         {step.active ? `${step.num} · ACTIVE` : step.num}
@@ -867,17 +867,17 @@ export default function GrievancesWhistleblowingPage() {
                 </div>
 
                 {/* B · Reportable Matters */}
-                <div style={{ marginTop: 36 }}>
+                <div style={{ marginTop: 22 }}>
                   <SectionHead index="B · Reportable Matters" title="What should be raised" em="through this channel." meta="categorised · routed" />
-                  <div className="gw-matters-grid" style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 4 }}>
+                  <div className="gw-matters-grid" style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 3 }}>
                     {CATEGORIES.map((cat) => (
                       <div
                         key={cat.title}
                         onClick={() => setActiveCategory(cat)}
-                        style={{ border: `1px solid ${V.line}`, background: V.panel, padding: "8px 12px", display: "grid", gridTemplateColumns: "auto 1fr auto", gap: 10, alignItems: "center", cursor: "pointer", transition: "border-color .15s" }}
+                        style={{ border: `1px solid ${V.line}`, background: V.panel, padding: "5px 10px", display: "grid", gridTemplateColumns: "auto 1fr auto", gap: 8, alignItems: "center", cursor: "pointer", transition: "border-color .15s" }}
                         className="gw-tr"
                       >
-                        <div style={{ width: 28, height: 28, border: `1px solid ${V.line2}`, display: "grid", placeItems: "center", fontFamily: "'JetBrains Mono','IBM Plex Mono',monospace", fontSize: 11, color: V.ember, background: V.bg2 }}>{cat.ico}</div>
+                        <div style={{ width: 22, height: 22, border: `1px solid ${V.line2}`, display: "grid", placeItems: "center", fontFamily: "'JetBrains Mono','IBM Plex Mono',monospace", fontSize: 10, color: V.ember, background: V.bg2 }}>{cat.ico}</div>
                         <div>
                           <div style={{ fontSize: 12, color: V.ink, fontWeight: 500 }}>{cat.title}</div>
                           <div style={mono({ fontSize: 8.5, color: V.muted, letterSpacing: ".06em", marginTop: 2, textTransform: "uppercase" })}>{cat.sub}</div>
