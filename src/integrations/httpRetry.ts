@@ -116,7 +116,15 @@ async function readBodyWithIdleTimeout(
       // sync throws — without attaching .catch() to the returned
       // Promise, the async rejection escapes and crashes the Lambda
       // with Runtime.UnhandledPromiseRejection.
-      try { reader.cancel().catch(() => {}); } catch { /* ignore */ }
+      try {
+        reader.cancel().catch((err: unknown) => {
+          // Reader cancellation rejection — usually a stale stream cleanup
+          // race. Logged for observability but expected during normal abort.
+          console.warn("[hawkeye] httpRetry: reader.cancel() rejected:", err);
+        });
+      } catch (err) {
+        console.warn("[hawkeye] httpRetry: reader.cancel() threw synchronously:", err);
+      }
       if (value instanceof Error) reject(value);
       else resolve(value);
     };
@@ -199,7 +207,15 @@ async function readAnthropicSSEBody(
       // sync throws — without attaching .catch() to the returned
       // Promise, the async rejection escapes and crashes the Lambda
       // with Runtime.UnhandledPromiseRejection.
-      try { reader.cancel().catch(() => {}); } catch { /* ignore */ }
+      try {
+        reader.cancel().catch((err: unknown) => {
+          // Reader cancellation rejection — usually a stale stream cleanup
+          // race. Logged for observability but expected during normal abort.
+          console.warn("[hawkeye] httpRetry: reader.cancel() rejected:", err);
+        });
+      } catch (err) {
+        console.warn("[hawkeye] httpRetry: reader.cancel() threw synchronously:", err);
+      }
       if (value instanceof Error) reject(value);
       else resolve(value);
     };

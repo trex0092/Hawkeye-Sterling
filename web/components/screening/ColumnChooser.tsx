@@ -36,7 +36,8 @@ export function loadColumnVisibility(): Record<TableColumnKey, boolean> {
 
 export function persistColumnVisibility(v: Record<TableColumnKey, boolean>): void {
   if (typeof window === "undefined") return;
-  try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(v)); } catch { /* quota */ }
+  try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(v)); }
+  catch (err) { console.warn("[hawkeye] ColumnChooser persist failed (storage quota):", err); }
 }
 
 export function ColumnChooser({ visible, onChange }: Props) {

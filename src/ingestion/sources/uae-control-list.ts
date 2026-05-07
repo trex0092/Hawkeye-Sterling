@@ -85,7 +85,10 @@ async function loadFromBlobs(hsCode: string): Promise<ControlledGoodsEntry[] | n
     const listIds = ["uae_156_2025", "eu_dual_use", "us_ccl"];
     const matched: ControlledGoodsEntry[] = [];
     for (const lid of listIds) {
-      const raw = await store.get(`current/${lid}.json`, { type: "text" }).catch(() => null);
+      const raw = await store.get(`current/${lid}.json`, { type: "text" }).catch((err: unknown) => {
+        console.warn(`[hawkeye] uae-control-list: Blobs read failed for ${lid}:`, err);
+        return null;
+      });
       if (!raw) continue;
       let entries: ControlledGoodsEntry[];
       try { entries = JSON.parse(raw as string) as ControlledGoodsEntry[]; }

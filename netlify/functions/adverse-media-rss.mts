@@ -160,10 +160,12 @@ export default async function handler(_req: Request): Promise<Response> {
   // Persist + alert.
   if (all.length > 0) {
     const ts = new Date().toISOString().replace(/[:.]/g, "-");
-    try { await store.set(`hits/${ts}.json`, JSON.stringify(all)); } catch { /* best-effort */ }
+    try { await store.set(`hits/${ts}.json`, JSON.stringify(all)); }
+    catch (err) { console.warn("[hawkeye] adverse-media-rss: hits blob write failed:", err); }
     const critical = all.filter((x) => x.severity === "critical");
     if (critical.length > 0) {
-      try { await emit("audit_drift", { kind: "adverse_media_critical", count: critical.length, sample: critical.slice(0, 5) }); } catch { /* best-effort */ }
+      try { await emit("audit_drift", { kind: "adverse_media_critical", count: critical.length, sample: critical.slice(0, 5) }); }
+      catch (err) { console.warn("[hawkeye] adverse-media-rss: audit_drift emit failed:", err); }
     }
   }
 

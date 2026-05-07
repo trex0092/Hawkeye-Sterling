@@ -74,7 +74,7 @@ async function findDuplicate(
       ) {
         return a.id;
       }
-    } catch { /* skip */ }
+    } catch (err) { console.warn("[hawkeye] alerts-store iteration item failed (skipping):", err); }
   }
   return null;
 }
@@ -246,7 +246,7 @@ export async function dismissAllUnread(dismissedBy?: string): Promise<number> {
         if (dismissedBy !== undefined) alert.dismissedBy = dismissedBy;
         await store.set(alertKey(id), JSON.stringify(alert));
         count++;
-      } catch { /* skip */ }
+      } catch (err) { console.warn("[hawkeye] alerts-store iteration item failed (skipping):", err); }
     }
     return count;
   } catch {

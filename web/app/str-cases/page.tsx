@@ -261,11 +261,15 @@ export default function StrCasesPage() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ cases }),
       });
-      if (!res.ok) return;
+      if (!res.ok) {
+        console.error(`[hawkeye] str-cases briefing HTTP ${res.status}`);
+        return;
+      }
       const data = await res.json() as { ok: boolean; briefing: MlroBriefing };
       if (data.ok) setBriefing(data.briefing);
-    } catch { /* silent */ }
-    finally { setBriefingLoading(false); }
+    } catch (err) {
+      console.error("[hawkeye] str-cases briefing threw:", err);
+    } finally { setBriefingLoading(false); }
   };
 
   const runPatternDetection = async () => {

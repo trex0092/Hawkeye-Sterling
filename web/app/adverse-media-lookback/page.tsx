@@ -236,8 +236,12 @@ export default function AdverseMediaLookbackPage() {
       if (res.ok) {
         const data = (await res.json()) as AmAssessment;
         setAssessment((prev) => ({ ...prev, [subject]: data }));
+      } else {
+        console.error(`[hawkeye] adverse-media-lookback assess HTTP ${res.status} for ${subject}`);
       }
-    } catch { /* non-fatal */ } finally {
+    } catch (err) {
+      console.error(`[hawkeye] adverse-media-lookback assess threw for ${subject}:`, err);
+    } finally {
       setAssessing((prev) => ({ ...prev, [subject]: false }));
     }
   };
@@ -262,8 +266,12 @@ export default function AdverseMediaLookbackPage() {
       if (res.ok) {
         const data = (await res.json()) as CrossCorrelateResult;
         setCorrelations((prev) => ({ ...prev, [subject]: data }));
+      } else {
+        console.error(`[hawkeye] adverse-media-lookback cross-correlate HTTP ${res.status} for ${subject}`);
       }
-    } catch { /* non-fatal */ } finally {
+    } catch (err) {
+      console.error(`[hawkeye] adverse-media-lookback cross-correlate threw for ${subject}:`, err);
+    } finally {
       setCorrelating((prev) => ({ ...prev, [subject]: false }));
     }
   };
