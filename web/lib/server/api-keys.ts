@@ -138,7 +138,9 @@ export async function validateAndConsume(plaintext: string | null): Promise<KeyV
     if (found) {
       match = found;
       // Backfill index so next call is O(1).
-      await setJson(`${HASH_IDX_PREFIX}${hash}`, match.id).catch(() => undefined);
+      await setJson(`${HASH_IDX_PREFIX}${hash}`, match.id).catch((err: unknown) => {
+        console.warn("[hawkeye] api-keys: hash-index backfill failed (next call will be O(N) scan):", err);
+      });
     }
   }
 

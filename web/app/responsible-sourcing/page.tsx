@@ -99,22 +99,24 @@ export default function ResponsibleSourcingPage() {
         const data = (await res.json()) as { ok: boolean; workflow: ResponsibleSourcingState };
         if (data.ok) { setWorkflow(data.workflow); return; }
       }
-    } catch { /* localStorage fallback */ }
+    } catch (err) { console.warn("[hawkeye] responsible-sourcing server load failed — falling back to localStorage:", err); }
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) setWorkflow(JSON.parse(raw) as ResponsibleSourcingState);
-    } catch { /* ignore */ }
+    } catch (err) { console.warn("[hawkeye] responsible-sourcing localStorage parse failed:", err); }
   }, []);
 
   useEffect(() => { void loadWorkflow(); }, [loadWorkflow]);
 
   const autosave = useCallback(async (updated: ResponsibleSourcingState) => {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(updated)); } catch { /* ignore */ }
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(updated)); }
+    catch (err) { console.warn("[hawkeye] responsible-sourcing localStorage persist failed:", err); }
     setSaving(true);
     try {
       const res = await fetch("/api/responsible-sourcing", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(updated) });
       if (res.ok) setLastSaved(new Date());
-    } catch { /* ignore */ }
+      else console.error(`[hawkeye] responsible-sourcing autosave HTTP ${res.status}`);
+    } catch (err) { console.error("[hawkeye] responsible-sourcing autosave threw:", err); }
     finally { setSaving(false); }
   }, []);
 
@@ -377,7 +379,7 @@ export default function ResponsibleSourcingPage() {
         <div className="flex flex-wrap gap-3">
           <button type="button" disabled={!isComplete}
             className="inline-flex items-center gap-2 px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-40"
-            onClick={() => { try { const blob = new Blob([JSON.stringify(workflow, null, 2)], { type: "application/json" }); const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = `responsible-sourcing-${workflow.reportingYear}.json`; a.click(); URL.revokeObjectURL(url); } catch { /* ignore */ } }}>
+            onClick={() => { try { const blob = new Blob([JSON.stringify(workflow, null, 2)], { type: "application/json" }); const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = `responsible-sourcing-${workflow.reportingYear}.json`; a.click(); URL.revokeObjectURL(url); } catch (err) { console.error("[hawkeye] responsible-sourcing JSON export failed:", err); } }}>
             Export documentation package
           </button>
           <a href="/rmi" className="inline-flex items-center gap-2 px-4 py-2 rounded border border-hair-2 text-ink-1 text-12 font-medium hover:bg-bg-2 no-underline">

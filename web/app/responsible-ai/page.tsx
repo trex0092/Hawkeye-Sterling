@@ -1366,7 +1366,8 @@ export default function ResponsibleAIPage() {
   const saveRao = () => {
     const name = draftRao.trim() || RAO_DEFAULT;
     setRaoName(name);
-    try { window.localStorage.setItem(RAO_STORAGE, name); } catch { /* ignore */ }
+    try { window.localStorage.setItem(RAO_STORAGE, name); }
+    catch (err) { console.warn("[hawkeye] responsible-ai RAO name persist failed:", err); }
   };
 
   const tabs: Array<{ key: Tab; label: string }> = [

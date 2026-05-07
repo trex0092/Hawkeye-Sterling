@@ -285,7 +285,10 @@ export function activeFreeProviders(): string[] {
 export async function searchFreeAdapters(subjectName: string, jurisdiction?: string, limit?: number): Promise<{ records: RegistryRecord[]; providersUsed: string[] }> {
   const adapters = activeFreeAdapters();
   if (adapters.length === 0) return { records: [], providersUsed: [] };
-  const results = await Promise.all(adapters.map((a) => a.search(subjectName, { jurisdiction, limit }).catch(() => [])));
+  const results = await Promise.all(adapters.map((a) => a.search(subjectName, { jurisdiction, limit }).catch((err: unknown) => {
+    console.warn(`[hawkeye] freeAlwaysOnAdapters[${a.id ?? 'unknown'}] search failed:`, err);
+    return [];
+  })));
   const merged = results.flat();
   const seen = new Set<string>();
   const records = merged.filter((r) => {

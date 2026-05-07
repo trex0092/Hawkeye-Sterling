@@ -467,7 +467,10 @@ export async function searchCountrySanctions(
       })
     : adapters;
   if (targets.length === 0) return { records: [], lists: [] };
-  const results = await Promise.all(targets.map((a) => a.search(subjectName, { jurisdiction, limit }).catch(() => [])));
+  const results = await Promise.all(targets.map((a) => a.search(subjectName, { jurisdiction, limit }).catch((err: unknown) => {
+    console.warn(`[hawkeye] countrySanctions[${a.jurisdiction}] search failed:`, err);
+    return [];
+  })));
   const merged = results.flat();
   const seen = new Set<string>();
   const records = merged.filter((r) => {

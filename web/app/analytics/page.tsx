@@ -286,7 +286,7 @@ export default function AnalyticsPage() {
       if (!res.ok) return;
       const result = await res.json() as { ok: boolean } & AnalyticsInsights;
       if (result.ok) setAiInsights(result);
-    } catch { /* silent */ }
+    } catch (err) { console.error("[hawkeye] analytics handler threw:", err); }
     finally { setInsightsLoading(false); }
   };
 
@@ -307,7 +307,7 @@ export default function AnalyticsPage() {
       if (!res.ok) return;
       const result = (await res.json()) as { ok: boolean } & BiasMonitor;
       if (result.ok) setBiasMonitor(result);
-    } catch { /* silent */ }
+    } catch (err) { console.error("[hawkeye] analytics handler threw:", err); }
     finally { setBiasLoading(false); }
   };
 
@@ -336,7 +336,7 @@ export default function AnalyticsPage() {
       if (!res.ok) return;
       const result = (await res.json()) as PredictRiskResult;
       if (result.ok) setPredictRisk(result);
-    } catch { /* silent */ }
+    } catch (err) { console.error("[hawkeye] analytics handler threw:", err); }
     finally { setPredictLoading(false); }
   };
 

@@ -345,8 +345,12 @@ export default function RmiPage() {
       if (res.ok) {
         const data = (await res.json()) as RmiAssessment;
         setRmiAssess(data);
+      } else {
+        console.error(`[hawkeye] rmi-assess HTTP ${res.status}`);
       }
-    } catch { /* non-fatal */ } finally {
+    } catch (err) {
+      console.error("[hawkeye] rmi-assess threw:", err);
+    } finally {
       setRmiAssessLoading(false);
     }
   };

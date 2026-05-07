@@ -177,9 +177,12 @@ export default function DpmsrPage() {
       if (res.ok) {
         const data = (await res.json()) as { ok: boolean; obligations: DpmsrObligation[] };
         if (data.ok) setObligations(data.obligations);
+      } else {
+        console.error(`[hawkeye] dpmsr-trigger HTTP ${res.status}`);
       }
-    } catch { /* ignore */ }
-    finally { setLoading(false); }
+    } catch (err) {
+      console.error("[hawkeye] dpmsr loadObligations threw:", err);
+    } finally { setLoading(false); }
   }, []);
 
   useEffect(() => { void loadObligations(); }, [loadObligations]);
