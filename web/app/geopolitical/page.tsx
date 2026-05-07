@@ -131,8 +131,8 @@ export default function GeopoliticalPage() {
         setEvents(data.events);
       }
       setLastRefresh(new Date());
-    } catch {
-      // keep existing
+    } catch (err) {
+      console.error("[hawkeye] geopolitical fetchEvents threw — keeping existing events:", err);
     } finally {
       setLoading(false);
     }
@@ -186,8 +186,8 @@ export default function GeopoliticalPage() {
       });
       const data = await res.json() as PortfolioImpactResult;
       setImpactResult(data);
-    } catch {
-      // keep existing
+    } catch (err) {
+      console.error("[hawkeye] geopolitical assessImpact threw:", err);
     } finally {
       setImpactLoading(false);
     }
