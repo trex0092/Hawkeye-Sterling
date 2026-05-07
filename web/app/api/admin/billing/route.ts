@@ -119,9 +119,11 @@ async function handleGet(req: Request): Promise<NextResponse> {
             totals[m as BillingMetric] = (totals[m as BillingMetric] ?? 0) + (n ?? 0);
           }
         }
-      } catch { /* ignore */ }
+      } catch (err) { console.warn("[hawkeye] admin/billing: bucket parse failed (skipping):", err); }
     }
-  } catch { /* getBillingStore() threw — return empty counters */ }
+  } catch (err) {
+    console.error("[hawkeye] admin/billing: getBillingStore() threw — returning empty counters:", err);
+  }
 
   const report: BillingReport = {
     tenant: allTenants ? null : tenantFilter,

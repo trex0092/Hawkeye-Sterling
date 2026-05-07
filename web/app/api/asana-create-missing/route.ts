@@ -71,9 +71,9 @@ async function discoverTeamGid(token: string): Promise<string | null> {
   const res = await fetch(
     `${API}/projects/${REFERENCE_PROJECT_GID}?opt_fields=team`,
     { headers: authHeaders(token), signal: AbortSignal.timeout(8_000) },
-  ).catch(() => null);
+  ).catch((err: unknown) => { console.warn("[hawkeye] asana-create-missing fetch/parse failed:", err); return null; });
   if (!res?.ok) return null;
-  const json = (await res.json().catch(() => null)) as
+  const json = (await res.json().catch((err: unknown) => { console.warn("[hawkeye] asana-create-missing fetch/parse failed:", err); return null; })) as
     | { data?: { team?: { gid?: string } } }
     | null;
   return json?.data?.team?.gid ?? null;
@@ -86,9 +86,9 @@ async function listExistingProjects(
   const res = await fetch(
     `${API}/workspaces/${workspace}/projects?limit=100&opt_fields=name,gid`,
     { headers: authHeaders(token), signal: AbortSignal.timeout(10_000) },
-  ).catch(() => null);
+  ).catch((err: unknown) => { console.warn("[hawkeye] asana-create-missing fetch/parse failed:", err); return null; });
   if (!res?.ok) return [];
-  const json = (await res.json().catch(() => null)) as
+  const json = (await res.json().catch((err: unknown) => { console.warn("[hawkeye] asana-create-missing fetch/parse failed:", err); return null; })) as
     | { data?: ProjectRecord[] }
     | null;
   return json?.data ?? [];
@@ -108,9 +108,9 @@ async function createProject(
     headers: authHeaders(token),
     body: JSON.stringify({ data }),
     signal: AbortSignal.timeout(10_000),
-  }).catch(() => null);
+  }).catch((err: unknown) => { console.warn("[hawkeye] asana-create-missing fetch/parse failed:", err); return null; });
   if (!res) return { gid: null, error: "network error" };
-  const json = (await res.json().catch(() => null)) as
+  const json = (await res.json().catch((err: unknown) => { console.warn("[hawkeye] asana-create-missing fetch/parse failed:", err); return null; })) as
     | { data?: { gid?: string }; errors?: { message?: string }[] }
     | null;
   if (!res.ok || !json?.data?.gid) {
@@ -148,7 +148,7 @@ export async function POST(): Promise<NextResponse> {
     signal: AbortSignal.timeout(8_000),
   })
     .then((r) => (r.ok ? r.json() : null))
-    .catch(() => null) as { data?: { name?: string } } | null;
+    .catch((err: unknown) => { console.warn("[hawkeye] asana-create-missing fetch/parse failed:", err); return null; }) as { data?: { name?: string } } | null;
   if (!me?.data?.name) {
     return NextResponse.json(
       { ok: false, error: "ASANA_TOKEN is invalid or expired." },

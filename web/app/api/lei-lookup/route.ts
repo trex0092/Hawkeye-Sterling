@@ -167,7 +167,7 @@ async function fetchLeiRecord(lei: string): Promise<LeiLookupResult | null> {
       const relships = d.relationships;
       if (relships?.["direct-parent"]?.data?.id) {
         const parentLei = relships["direct-parent"].data.id;
-        const parentRecord = await fetchLeiRecord(parentLei).catch(() => null);
+        const parentRecord = await fetchLeiRecord(parentLei).catch((err: unknown) => { console.warn("[hawkeye] lei-lookup parent-record fetch failed:", err); return null; });
         if (parentRecord) {
           record.directParent = {
             lei: parentLei,
@@ -179,7 +179,7 @@ async function fetchLeiRecord(lei: string): Promise<LeiLookupResult | null> {
       if (relships?.["ultimate-parent"]?.data?.id) {
         const uParentLei = relships["ultimate-parent"].data.id;
         if (uParentLei !== relships?.["direct-parent"]?.data?.id) {
-          const uParentRecord = await fetchLeiRecord(uParentLei).catch(() => null);
+          const uParentRecord = await fetchLeiRecord(uParentLei).catch((err: unknown) => { console.warn("[hawkeye] lei-lookup parent-record fetch failed:", err); return null; });
           if (uParentRecord) {
             record.ultimateParent = {
               lei: uParentLei,

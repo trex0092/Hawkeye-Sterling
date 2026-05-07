@@ -398,7 +398,10 @@ async function handleModuleReport(req: Request): Promise<NextResponse> {
       clearTimeout(timer);
     }
 
-    const payload = (await asanaRes.json().catch(() => null)) as
+    const payload = (await asanaRes.json().catch((err: unknown) => {
+      console.warn("[hawkeye] module-report Asana response parse failed:", err);
+      return null;
+    })) as
       | { data?: { gid?: string; permalink_url?: string }; errors?: { message?: string }[] }
       | null;
 

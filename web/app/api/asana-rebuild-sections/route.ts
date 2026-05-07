@@ -170,7 +170,7 @@ export async function POST(): Promise<NextResponse> {
   const me = await fetch(`${API}/users/me`, {
     headers: headers(token),
     signal: AbortSignal.timeout(8_000),
-  }).then((r) => r.ok ? r.json() : null).catch(() => null) as { data?: { name: string } } | null;
+  }).then((r) => r.ok ? r.json() : null).catch((err: unknown) => { console.warn("[hawkeye] asana-rebuild-sections fetch failed:", err); return null; }) as { data?: { name: string } } | null;
 
   if (!me?.data?.name) {
     return NextResponse.json({ ok: false, error: "ASANA_TOKEN is invalid or expired." }, { status: 401 });
