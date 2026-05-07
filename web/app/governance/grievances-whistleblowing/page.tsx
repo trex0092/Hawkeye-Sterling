@@ -670,12 +670,6 @@ export default function GrievancesWhistleblowingPage() {
                     </div>
                   </div>
 
-                  {/* Tipping-off warning */}
-                  <div style={{ margin: "0 18px 16px", border: `1px solid oklch(66% 0.20 20)`, background: "linear-gradient(90deg,var(--gw-rose-soft),transparent)", padding: "11px 13px" }}>
-                    <div style={mono({ fontSize: 9, letterSpacing: ".18em", color: V.rose, fontWeight: 700, textTransform: "uppercase" })}>Tipping-off warning</div>
-                    <div style={{ marginTop: 4, fontSize: 11, color: V.ink2, lineHeight: 1.5 }}>Where the matter may relate to ML/TF, do <strong>not</strong> disclose, confirm or discuss the existence of any report, investigation or internal review with any third party.</div>
-                  </div>
-
                   {/* Submit row */}
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 18px", borderTop: `1px solid ${V.line}`, background: V.bg2 }}>
                     <div style={mono({ fontSize: 9, color: V.muted, letterSpacing: ".04em", lineHeight: 1.5, maxWidth: 170 })}>
@@ -689,6 +683,12 @@ export default function GrievancesWhistleblowingPage() {
                     >
                       {submitting ? "Submitting…" : "Submit · sealed"}
                     </button>
+                  </div>
+
+                  {/* Tipping-off warning */}
+                  <div style={{ margin: "0 18px 16px", border: `1px solid oklch(66% 0.20 20)`, background: "linear-gradient(90deg,var(--gw-rose-soft),transparent)", padding: "11px 13px", marginTop: 14 }}>
+                    <div style={mono({ fontSize: 9, letterSpacing: ".18em", color: V.rose, fontWeight: 700, textTransform: "uppercase" })}>Tipping-off warning</div>
+                    <div style={{ marginTop: 4, fontSize: 11, color: V.ink2, lineHeight: 1.5 }}>Where the matter may relate to ML/TF, do <strong>not</strong> disclose, confirm or discuss the existence of any report, investigation or internal review with any third party.</div>
                   </div>
 
                 </div>
