@@ -1080,14 +1080,8 @@ export default function GrievancesWhistleblowingPage() {
         </div>
 
         {/* ── PAGE FOOTER ── */}
-        <footer className="gw-footer" style={{ borderTop: `1px solid ${V.line}`, padding: "0 22px", display: "flex", justifyContent: "space-between", alignItems: "center", height: 30, position: "relative", zIndex: 2 }}>
-          <div style={mono({ fontSize: 9.5, color: V.muted, letterSpacing: ".06em" })}>FG/GVW/004 · v004 · Effective 28 NOV 2025 · Next review JUN 2026</div>
-          <div style={{ display: "flex", gap: 18 }}>
-            {["Retention 10y", "MOE Production ≤48h", "Audit-trail · HMAC chain"].map((t) => (
-              <span key={t} style={mono({ fontSize: 9.5, color: V.muted, letterSpacing: ".06em" })}>{t}</span>
-            ))}
-            <span style={mono({ fontSize: 9.5, color: V.rose, letterSpacing: ".18em", fontWeight: 600 })}>CONFIDENTIAL</span>
-          </div>
+        <footer className="gw-footer" style={{ borderTop: `1px solid ${V.line}`, padding: "0 22px", display: "flex", justifyContent: "flex-end", alignItems: "center", height: 30, position: "relative", zIndex: 2 }}>
+          <span style={mono({ fontSize: 9.5, color: V.rose, letterSpacing: ".18em", fontWeight: 600 })}>CONFIDENTIAL</span>
         </footer>
 
       </div>{/* /gw-root */}
