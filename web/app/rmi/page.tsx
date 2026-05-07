@@ -258,13 +258,16 @@ export default function RmiPage() {
       if (raw) setDeletedIds(JSON.parse(raw) as string[]);
       const editsRaw = localStorage.getItem(RMI_EDITS_KEY);
       if (editsRaw) setEdits(JSON.parse(editsRaw) as Record<string, SmelterEdit>);
-    } catch { /* ignore */ }
+    } catch (err) {
+      console.warn("[hawkeye] rmi overlay parse failed:", err);
+    }
   }, []);
 
   const deleteEntry = (id: string) => {
     const next = [...deletedIds, id];
     setDeletedIds(next);
-    try { localStorage.setItem(RMI_DELETED_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+    try { localStorage.setItem(RMI_DELETED_KEY, JSON.stringify(next)); }
+    catch (err) { console.error("[hawkeye] rmi delete persist failed:", err); }
   };
 
   const restoreAll = () => {
@@ -273,7 +276,9 @@ export default function RmiPage() {
     try {
       localStorage.removeItem(RMI_DELETED_KEY);
       localStorage.removeItem(RMI_EDITS_KEY);
-    } catch { /* ignore */ }
+    } catch (err) {
+      console.warn("[hawkeye] rmi restore-all removeItem failed:", err);
+    }
   };
 
   const startEdit = (s: Smelter) => {
@@ -298,7 +303,8 @@ export default function RmiPage() {
   const saveEdit = (id: string) => {
     const next = { ...edits, [id]: { ...edits[id], ...editDraft } };
     setEdits(next);
-    try { localStorage.setItem(RMI_EDITS_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+    try { localStorage.setItem(RMI_EDITS_KEY, JSON.stringify(next)); }
+    catch (err) { console.error("[hawkeye] rmi edit persist failed — smelter edits will be lost:", err); }
     setEditingId(null);
   };
 
