@@ -92,12 +92,14 @@ function evaluateObligations(txns: DpmsrTransaction[]): Omit<DpmsrObligation, "i
   for (const [customerId, cts] of byCustomer) {
     const sorted = [...cts].sort((a, b) => Date.parse(a.at) - Date.parse(b.at));
     for (let i = 0; i < sorted.length; i++) {
-      const window = [sorted[i]];
-      let total = sorted[i].amountAed;
+      const anchor = sorted[i]!;
+      const window = [anchor];
+      let total = anchor.amountAed;
       for (let j = i + 1; j < sorted.length; j++) {
-        if (daysBetween(sorted[i].at, sorted[j].at) <= LINK_WINDOW_DAYS) {
-          window.push(sorted[j]);
-          total += sorted[j].amountAed;
+        const next = sorted[j]!;
+        if (daysBetween(anchor.at, next.at) <= LINK_WINDOW_DAYS) {
+          window.push(next);
+          total += next.amountAed;
         }
       }
       if (window.length >= 2 && total >= THRESHOLD) {
@@ -108,7 +110,7 @@ function evaluateObligations(txns: DpmsrTransaction[]): Omit<DpmsrObligation, "i
             totalAmountAed: total,
             transactionIds: txnIds,
             customerId,
-            customerName: sorted[i].customerName,
+            customerName: anchor.customerName,
             detectedAt: now.toISOString(),
             legalBasis: LEGAL_BASIS,
             deadlineDate: addHours(now, 24).toISOString(),
@@ -130,13 +132,14 @@ function evaluateObligations(txns: DpmsrTransaction[]): Omit<DpmsrObligation, "i
     const total = gts.reduce((s, t) => s + t.amountAed, 0);
     if (total >= THRESHOLD) {
       const txnIds = gts.map((t) => t.txnId);
+      const firstGts = gts[0];
       if (!results.some((r) => txnIds.some((id) => r.transactionIds.includes(id)))) {
         results.push({
           triggerType: "linked",
           totalAmountAed: total,
           transactionIds: txnIds,
-          customerId: gts[0].customerId,
-          customerName: gts[0].customerName,
+          customerId: firstGts?.customerId,
+          customerName: firstGts?.customerName,
           detectedAt: now.toISOString(),
           legalBasis: LEGAL_BASIS,
           deadlineDate: addHours(now, 24).toISOString(),
@@ -192,9 +195,10 @@ export async function POST(req: Request): Promise<NextResponse> {
     const obligations = await loadObligations(tenant);
     const idx = obligations.findIndex((o) => o.id === body.patch!.id);
     if (idx === -1) return NextResponse.json({ ok: false, error: "not found" }, { status: 404, headers: gate.headers });
-    const updated: DpmsrObligation = { ...obligations[idx], ...body.patch };
-    if (body.patch.mlroSignedOff && !obligations[idx].mlroSignedOff) updated.mlroSignedOffAt = new Date().toISOString();
-    if (body.patch.status === "filed" && !obligations[idx].filedAt) updated.filedAt = new Date().toISOString();
+    const existingObl = obligations[idx]!;
+    const updated: DpmsrObligation = { ...existingObl, ...body.patch } as DpmsrObligation;
+    if (body.patch.mlroSignedOff && !existingObl.mlroSignedOff) updated.mlroSignedOffAt = new Date().toISOString();
+    if (body.patch.status === "filed" && !existingObl.filedAt) updated.filedAt = new Date().toISOString();
     obligations[idx] = updated;
     await saveObligations(tenant, obligations);
     return NextResponse.json({ ok: true, obligation: updated }, { headers: gate.headers });

@@ -330,8 +330,8 @@ export default function ResponsibleSourcingPage() {
                             <option value="regulatory">Regulatory submission only</option>
                             <option value="internal">Internal only</option>
                           </select></div>
-                        {s.reportUrl !== undefined && (
-                          <div><label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">Report URL</label>
+                        {s.disclosureScope === "public" && (
+                          <div><label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">Report URL (public disclosure)</label>
                             <input value={s.reportUrl ?? ""} onChange={(e) => updateStep(stepKey, { reportUrl: e.target.value })} className={inputCls} placeholder="https://…" /></div>
                         )}
                       </div>

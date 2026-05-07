@@ -139,11 +139,12 @@ export async function PATCH(req: Request): Promise<NextResponse> {
   const idx = cases.findIndex((c) => c.id === body.id);
   if (idx === -1) return NextResponse.json({ ok: false, error: "case not found" }, { status: 404, headers: gate.headers });
 
-  const updated: CnmrCase = { ...cases[idx], ...body };
-  if (body.mlroSignedOff && !cases[idx].mlroSignedOff) {
+  const existing = cases[idx]!;
+  const updated: CnmrCase = { ...existing, ...body } as CnmrCase;
+  if (body.mlroSignedOff && !existing.mlroSignedOff) {
     updated.mlroSignedOffAt = new Date().toISOString();
   }
-  if (body.status === "filed" && !cases[idx].filedAt) {
+  if (body.status === "filed" && !existing.filedAt) {
     updated.filedAt = new Date().toISOString();
   }
   cases[idx] = updated;
