@@ -15,28 +15,23 @@ function isPublic(pathname: string): boolean {
 }
 
 // ── Session verification in Edge ─────────────────────────────────────────────
-// The Edge runtime cannot reliably access all Netlify env vars (SESSION_SECRET
-// is a Node.js Lambda concern). We do NOT attempt HMAC verification here.
-// Instead we just check that the session cookie exists and hasn't expired.
+// The Edge runtime is only a UX gate, not a security boundary. Full HMAC
+// verification happens in auth.ts (Node.js runtime) on every API call and in
+// /api/auth/me — so spoofing the cookie only buys an attacker the (empty) app
+// shell; they cannot load any real data.
 //
-// Full HMAC verification happens in auth.ts (Node.js runtime) for every API
-// call and in the /api/auth/me route — so spoofing the cookie only lets an
-// attacker see the (empty) app shell; they cannot load any real data.
+// Earlier versions tried to decode the token in Edge to check expiry. That
+// produced repeated redirect-loop bugs (Edge atob/JSON.parse silently throws
+// on certain runtimes, and the catch block then redirected the user back to
+// /login). We now do the bare minimum here: confirm the cookie exists and has
+// the expected `<encoded>.<sig>` shape. Expiry is enforced when any API call
+// is made, at which point the user is forced to re-auth via the API 401.
 
-function isValidSession(token: string): boolean {
+function looksLikeSessionToken(token: string): boolean {
   if (!token) return false;
-  try {
-    const dot = token.lastIndexOf(".");
-    if (dot === -1) return false;
-    const encoded = token.slice(0, dot);
-    // Restore base64 padding that base64url strips — Deno's atob requires it.
-    const b64 = encoded.replace(/-/g, "+").replace(/_/g, "/");
-    const padded = b64 + "=".repeat((4 - (b64.length % 4)) % 4);
-    const payload = JSON.parse(atob(padded)) as { exp?: number };
-    return typeof payload.exp === "number" && payload.exp > Math.floor(Date.now() / 1000);
-  } catch {
-    return false;
-  }
+  const dot = token.lastIndexOf(".");
+  // Require both halves to be non-empty.
+  return dot > 0 && dot < token.length - 1;
 }
 
 // ── Same-origin hostname helper ───────────────────────────────────────────────
@@ -54,10 +49,10 @@ export function middleware(req: NextRequest): NextResponse {
   // ── 1. Session guard (non-API routes) ──────────────────────────────────────
   if (!pathname.startsWith("/api/") && !isPublic(pathname)) {
     const token = req.cookies.get(SESSION_COOKIE)?.value ?? "";
-    if (!isValidSession(token)) {
+    if (!looksLikeSessionToken(token)) {
       const loginUrl = req.nextUrl.clone();
       loginUrl.pathname = "/login";
-      loginUrl.search = "";
+      loginUrl.search = token ? "?__hs_dbg=malformed" : "?__hs_dbg=no-cookie";
       return NextResponse.redirect(loginUrl);
     }
   }
