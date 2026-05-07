@@ -35,12 +35,12 @@ interface ProgrammeStats {
 const MOCK_STATS: ProgrammeStats = { open: 14, resolved: 31, escalated: 2, slaHitPct: 100 };
 
 const MOCK_CASES: GwCase[] = [
-  { id: "FG-WB-2026-014", receivedAt: "02 MAY · 09:14", channel: "EMAIL",   category: "AML/CFT",    categoryVariant: "aml",     stage: "Investigation",    stageStatus: "open",      slaPct: 36,  slaVariant: "warn",   owner: "CO" },
-  { id: "FG-WB-2026-013", receivedAt: "28 APR · 16:02", channel: "DIRECT",  category: "BRIBERY",    categoryVariant: "eth",     stage: "Decision",         stageStatus: "review",    slaPct: 88,  slaVariant: "ok",     owner: "CO"   },
-  { id: "FG-WB-2026-012", receivedAt: "22 APR · 11:48", channel: "WRITTEN", category: "HARASSMENT", categoryVariant: "hr",      stage: "Escalated · MD",   stageStatus: "escalated", slaPct: 94,  slaVariant: "danger", owner: "MD"   },
-  { id: "FG-WB-2026-011", receivedAt: "18 APR · 08:30", channel: "MEETING", category: "PROCESS",    categoryVariant: "ops",     stage: "Closed · resolved",stageStatus: "closed",    slaPct: 100, slaVariant: "ok",     owner: "CO"   },
-  { id: "FG-WB-2026-010", receivedAt: "11 APR · 14:21", channel: "EMAIL",   category: "SANCTIONS",  categoryVariant: "aml",     stage: "Closed · STR filed",stageStatus: "closed",   slaPct: 100, slaVariant: "ok",     owner: "CO" },
-  { id: "FG-WB-2026-009", receivedAt: "04 APR · 10:55", channel: "EMAIL",   category: "CONFLICT",   categoryVariant: "eth",     stage: "Closed · coaching",stageStatus: "closed",    slaPct: 100, slaVariant: "ok",     owner: "CO"   },
+  { id: "FG-WB-2026-014", receivedAt: "02 MAY · 09:14", channel: "EMAIL",   category: "AML/CFT",    categoryVariant: "aml",     stage: "Investigation",    stageStatus: "open",      slaPct: 36,  slaVariant: "warn",   owner: "Compliance Dpt" },
+  { id: "FG-WB-2026-013", receivedAt: "28 APR · 16:02", channel: "DIRECT",  category: "BRIBERY",    categoryVariant: "eth",     stage: "Decision",         stageStatus: "review",    slaPct: 88,  slaVariant: "ok",     owner: "Compliance Dpt" },
+  { id: "FG-WB-2026-012", receivedAt: "22 APR · 11:48", channel: "WRITTEN", category: "HARASSMENT", categoryVariant: "hr",      stage: "Escalated · MD",   stageStatus: "escalated", slaPct: 94,  slaVariant: "danger", owner: "MD"             },
+  { id: "FG-WB-2026-011", receivedAt: "18 APR · 08:30", channel: "MEETING", category: "PROCESS",    categoryVariant: "ops",     stage: "Closed · resolved",stageStatus: "closed",    slaPct: 100, slaVariant: "ok",     owner: "Compliance Dpt" },
+  { id: "FG-WB-2026-010", receivedAt: "11 APR · 14:21", channel: "EMAIL",   category: "SANCTIONS",  categoryVariant: "aml",     stage: "Closed · STR filed",stageStatus: "closed",   slaPct: 100, slaVariant: "ok",     owner: "Compliance Dpt" },
+  { id: "FG-WB-2026-009", receivedAt: "04 APR · 10:55", channel: "EMAIL",   category: "CONFLICT",   categoryVariant: "eth",     stage: "Closed · coaching",stageStatus: "closed",    slaPct: 100, slaVariant: "ok",     owner: "Compliance Dpt" },
 ];
 
 const PIPELINE = [
@@ -59,13 +59,13 @@ const CATEGORIES = [
     steps: ["Document the suspicious activity with dates, amounts, and parties involved", "Do NOT alert the subject — tipping-off is a criminal offence (FDL Art.11)", "Compliance Dpt reviews and decides on STR filing within 5 business days", "Goaml submission if STR confirmed · retain records 10 years"],
   },
   {
-    ico: "§", title: "Bribery, gifts & influence", sub: "ABC · ROUTED TO CO", ytd: 3,
+    ico: "§", title: "Bribery, gifts & influence", sub: "ABC · ROUTED TO COMPLIANCE DPT", ytd: 3,
     about: "Any offer, payment, or receipt of a bribe, kickback, or improper gift intended to influence a business decision or obtain an unfair advantage. Includes facilitation payments, lavish entertainment, and conflicts arising from third-party relationships.",
     regs: ["FDL No.10/2025 Art.22", "UAE Penal Code Art.237–239", "UNCAC Art.15–16", "ABC Policy"],
     steps: ["Record full details of the offer or transaction", "Compliance Officer investigates under ABC procedure", "Disclosure to authorities if criminal threshold met", "Disciplinary action up to termination for perpetrators"],
   },
   {
-    ico: "⌘", title: "Fraud, theft & falsification", sub: "INV · ROUTED TO CO", ytd: 5,
+    ico: "⌘", title: "Fraud, theft & falsification", sub: "INV · ROUTED TO COMPLIANCE DPT", ytd: 5,
     about: "Intentional deception, asset misappropriation, document forgery, or false reporting by employees, clients, or third parties. Includes expense fraud, false KYC documentation, fictitious invoicing, and embezzlement of company funds.",
     regs: ["UAE Penal Code Arts.399–404", "FDL No.10/2025 Art.20", "CR 134/2025", "INV Policy"],
     steps: ["Preserve all documentary evidence without alteration", "CO leads internal investigation with HR and Legal", "Police report filed if financial loss exceeds AED 10,000", "Recovery action and disciplinary proceedings initiated"],
@@ -83,7 +83,7 @@ const CATEGORIES = [
     steps: ["Compliance Dpt flags the deficiency and pauses transactions if risk is high", "CDD team re-contacts the customer within 5 business days", "Enhanced review applied · escalate to MD if PEP or high-risk", "Update system records and document remediation actions"],
   },
   {
-    ico: "⌬", title: "Data & IT security breach", sub: "CIS · ROUTED TO IT + CO", ytd: 1,
+    ico: "⌬", title: "Data & IT security breach", sub: "CIS · ROUTED TO IT + COMPLIANCE DPT", ytd: 1,
     about: "Unauthorised access to personal data, system intrusions, data leakage, loss of devices containing sensitive information, or misuse of confidential client records. Includes both external cyberattacks and insider threats.",
     regs: ["PDPL FDL No.45/2021", "UAE Cybercrime Law FDL 34/2021", "ISO 27001", "CBUAE IT Risk Framework"],
     steps: ["IT isolates affected systems immediately to prevent further exposure", "CO notifies UAE PDPF within 72 hours if personal data affected", "Forensic investigation to determine scope and root cause", "Affected individuals notified where required by PDPL Art.16"],
@@ -95,13 +95,13 @@ const CATEGORIES = [
     steps: ["Immediate containment — secure area or halt process if risk is live", "Manager completes incident report within 24 hours", "Root cause analysis conducted within 5 business days", "Corrective action plan documented and tracked to closure"],
   },
   {
-    ico: "∂", title: "Customer service & grievance", sub: "GVW · ROUTED TO CO", ytd: 9,
+    ico: "∂", title: "Customer service & grievance", sub: "GVW · ROUTED TO COMPLIANCE DPT", ytd: 9,
     about: "Formal complaints from customers regarding service quality, transaction disputes, unfair treatment, delays, or failure to follow commitments. Also covers complaints escalated from the CBUAE Consumer Protection Unit.",
     regs: ["CBUAE Consumer Protection Reg. 2020", "FDL No.10/2025 Art.27", "GVW/004", "ISO 10002"],
     steps: ["Acknowledge complaint to customer within 2 business days", "CO investigates and proposes resolution within 10 business days", "Escalate to MD if unresolved or involves potential regulatory breach", "Regulator notification if required · record retained 5 years"],
   },
   {
-    ico: "⚖", title: "Conflict of interest", sub: "ETH · ROUTED TO CO", ytd: 0,
+    ico: "⚖", title: "Conflict of interest", sub: "ETH · ROUTED TO COMPLIANCE DPT", ytd: 0,
     about: "Undisclosed personal, financial, or professional relationships that could improperly influence business decisions. Includes staff holding interests in clients or suppliers, family members in regulated transactions, and board-level related-party dealings.",
     regs: ["UAE Companies Law FDL 32/2021 Art.162", "CBUAE Governance Standards", "ETH Policy", "ISO 37001 §6.4"],
     steps: ["Disclose the relationship in writing to the Compliance Officer immediately", "CO assesses materiality and decides on recusal or restriction", "Disclosed conflicts logged in the Conflicts Register", "Annual attestation required from all staff and board members"],
@@ -113,13 +113,13 @@ const CATEGORIES = [
     steps: ["Compliance Dpt logs the breach and notifies the MD within 24 hours", "Voluntary self-disclosure to the regulator assessed within 48 hours", "Remediation plan drafted with clear deadlines and ownership", "Regulatory correspondence retained · lessons-learned documented"],
   },
   {
-    ico: "◈", title: "Third-party / supplier misconduct", sub: "VDD · ROUTED TO CO", ytd: 0,
+    ico: "◈", title: "Third-party / supplier misconduct", sub: "VDD · ROUTED TO COMPLIANCE DPT", ytd: 0,
     about: "Fraudulent, unethical, or non-compliant behaviour by vendors, agents, introducers, or outsourced service providers. Includes sanctions-linked suppliers, inflated invoicing, misrepresentation of services, and failure to meet contractual compliance obligations.",
     regs: ["OECD Due Diligence Guidance", "FDL No.10/2025 Art.19", "CSDDD (EU import mirror)", "VDD Policy"],
     steps: ["Document all evidence of the misconduct without alerting the supplier", "CO reviews supplier file and suspends payments if risk is high", "Full re-due-diligence conducted; contract termination if warranted", "Blacklist entry raised for internal procurement register"],
   },
   {
-    ico: "⬡", title: "Environmental & ESG violation", sub: "ESG · ROUTED TO CO", ytd: 0,
+    ico: "⬡", title: "Environmental & ESG violation", sub: "ESG · ROUTED TO COMPLIANCE DPT", ytd: 0,
     about: "Gold or precious metals sourced from conflict zones, illegal mining operations, or child-labour supply chains. Also covers failure to apply OECD 5-step supply chain due diligence, greenwashing claims, or breaches of the UAE's responsible sourcing commitments.",
     regs: ["OECD 5-Step DDG (Minerals)", "MD 68/2024 Responsible Sourcing", "UFLPA (import mirror)", "ESG Policy"],
     steps: ["Suspend procurement from the flagged source immediately", "CO initiates supply chain investigation under OECD 5-step process", "Findings reported to MD and board ESG committee within 10 days", "Remediation or supplier exit plan documented and disclosed"],
@@ -754,7 +754,7 @@ export default function GrievancesWhistleblowingPage() {
                         policyCode: "FG/GVW/004",
                         version: "004",
                         effective: "28 NOV 2025",
-                        owner: "Compliance Officer / MLRO",
+                        owner: "Compliance Dpt",
                         openCases: stats.open,
                         resolvedCases: stats.resolved,
                         escalatedCases: stats.escalated,
