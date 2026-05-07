@@ -245,10 +245,14 @@ async function fetchLocaleFeed(
       signal: controller.signal,
       next: { revalidate: 300 },
     });
-    if (!res.ok) return [];
+    if (!res.ok) {
+      console.warn(`[hawkeye] news-search/fetchLocaleFeed ${locale.code} HTTP ${res.status}`);
+      return [];
+    }
     const xml = await res.text();
     return parseRss(xml, q, variants, locale.code);
-  } catch {
+  } catch (err) {
+    console.warn(`[hawkeye] news-search/fetchLocaleFeed ${locale.code} threw:`, err);
     return [];
   } finally {
     clearTimeout(timer);
@@ -360,8 +364,8 @@ export async function GET(req: Request): Promise<NextResponse> {
     try {
       const v = variantsOf(q);
       for (const x of v) if (x && x !== q) rawVariants.push(x);
-    } catch {
-      /* ignore */
+    } catch (err) {
+      console.warn("[hawkeye] news-search/variantsOf failed — using base query only:", err);
     }
     const variants = Array.from(new Set(rawVariants)).slice(0, 8);
 
@@ -424,11 +428,16 @@ export async function GET(req: Request): Promise<NextResponse> {
       languages: langCoverage,
     };
     return NextResponse.json(payload, { headers: gateHeaders });
-  } catch {
+  } catch (err) {
     // Last-resort safety net. The fan-out already uses allSettled +
     // per-feed timeouts so this branch should be unreachable, but if
     // variantsOf() or keyword classification ever throws we still return
     // a clean empty dossier rather than a 5xx that paints the panel red.
+    console.error(
+      "[hawkeye] news-search: top-level catch fired (was supposed to be unreachable). " +
+      "Returning empty dossier; investigate variantsOf / keyword classification.",
+      err,
+    );
     return NextResponse.json(emptyResponse(q), { headers: gateHeaders });
   }
 }

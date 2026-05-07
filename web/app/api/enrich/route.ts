@@ -63,25 +63,33 @@ export async function POST(req: Request): Promise<NextResponse> {
   // If no LEI provided, attempt to find one via GLEIF name search
   let resolvedLei = body.lei?.trim().toUpperCase();
   if (!resolvedLei) {
-    const gleifSearch = await searchGleif(name, 3).catch(() => []);
+    const gleifSearch = await searchGleif(name, 3).catch((err: unknown) => {
+      console.warn("[hawkeye] enrich/searchGleif failed:", err);
+      return [];
+    });
     resolvedLei = gleifSearch[0]?.lei;
   }
 
-  // Run all enrichment sources in parallel — all fail-soft
+  // Run all enrichment sources in parallel — all fail-soft, but each
+  // failure is logged so degraded enrichment is diagnosable in deploy logs.
+  const logFail = (name: string) => (err: unknown) => {
+    console.warn(`[hawkeye] enrich/${name} failed:`, err);
+    return null;
+  };
   const [gleifResult, domainResult, yenteResult, osintResult, adverseMediaResult, harvesterResult] = await Promise.all([
     resolvedLei
-      ? lookupLei(resolvedLei, { maxDepth: 5 }).catch(() => null)
+      ? lookupLei(resolvedLei, { maxDepth: 5 }).catch(logFail("lookupLei"))
       : Promise.resolve(null),
     body.domain
-      ? domainIntel(body.domain).catch(() => null)
+      ? domainIntel(body.domain).catch(logFail("domainIntel"))
       : Promise.resolve(null),
-    yenteMatch([{ name, schema: "LegalEntity" }]).catch(() => null),
+    yenteMatch([{ name, schema: "LegalEntity" }]).catch(logFail("yenteMatch")),
     body.enableOsint && body.domain
-      ? spiderFootScan(body.domain, { moduleSet: "passive", maxWaitMs: 90_000 }).catch(() => null)
+      ? spiderFootScan(body.domain, { moduleSet: "passive", maxWaitMs: 90_000 }).catch(logFail("spiderFootScan"))
       : Promise.resolve(null),
-    searchAdverseMedia(name, { limit: 20, minRelevance: 0 }).catch(() => null),
+    searchAdverseMedia(name, { limit: 20, minRelevance: 0 }).catch(logFail("searchAdverseMedia")),
     body.domain
-      ? harvesterScan(body.domain).catch(() => null)
+      ? harvesterScan(body.domain).catch(logFail("harvesterScan"))
       : Promise.resolve(null),
   ]);
 

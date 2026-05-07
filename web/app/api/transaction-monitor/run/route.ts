@@ -70,8 +70,8 @@ function detectStructuring(txs: Transaction[]): number {
       const result = fn(txs) as { alerts?: unknown[] } | unknown[];
       if (Array.isArray(result)) return result.length;
       if (Array.isArray(result?.alerts)) return result.alerts.length;
-    } catch {
-      /* fall through */
+    } catch (err) {
+      console.warn("[hawkeye] tm-run/structuringDetect brain fn threw — falling back to inline rule:", err);
     }
   }
   // Conservative fallback: count clusters of ≥3 transactions within
@@ -108,8 +108,8 @@ function detectSmurfing(txs: Transaction[], subject: EnrolledSubject): number {
       const result = fn(txs, subject) as { alerts?: unknown[] } | unknown[];
       if (Array.isArray(result)) return result.length;
       if (Array.isArray(result?.alerts)) return result.alerts.length;
-    } catch {
-      /* fall through */
+    } catch (err) {
+      console.warn("[hawkeye] tm-run/smurfingDetect brain fn threw — falling back to inline rule:", err);
     }
   }
   // Fallback: ≥5 distinct counterparties in the same 24-hour window.

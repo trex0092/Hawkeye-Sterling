@@ -154,8 +154,12 @@ async function handlePost(req: Request): Promise<NextResponse> {
     // Also persist the snapshot as an append-only artefact for audit.
     try {
       await setJson(`profile-snapshot/${id}/${snap.at}`, snap);
-    } catch {
-      /* append-only store is best-effort; the consolidated record wins */
+    } catch (err) {
+      console.warn(
+        `[hawkeye] subject-profile snapshot persist failed for ${id}/${snap.at} ` +
+        "(append-only artefact lost; consolidated record still wins):",
+        err,
+      );
     }
   }
 
