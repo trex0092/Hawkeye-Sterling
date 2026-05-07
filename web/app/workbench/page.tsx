@@ -196,12 +196,14 @@ export default function WorkbenchPage() {
       const data = (await res.json()) as BrainResult & { error?: string };
       if (ac.signal.aborted) return;
       if (!res.ok || !data.ok) {
+        console.error(`[hawkeye] workbench brain HTTP ${res.status}: ${data.error ?? '(no error)'}`);
         setBrainError(data.error ?? `HTTP ${res.status}`);
       } else {
         setBrainResult(data);
       }
     } catch (err) {
       if (ac.signal.aborted) return;
+      console.error("[hawkeye] workbench brain threw:", err);
       setBrainError(err instanceof Error ? err.message : "Network error");
     } finally {
       setIsRunning(false);

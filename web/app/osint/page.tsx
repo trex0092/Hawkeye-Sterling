@@ -118,11 +118,15 @@ export default function OsintPage() {
           ...(socialResult ? { social: { person: socialResult.person, profiles: socialResult.profiles } } : {}),
         }),
       });
-      if (!res.ok) return;
+      if (!res.ok) {
+        console.error(`[hawkeye] osint/synthesis HTTP ${res.status}`);
+        return;
+      }
       const data = await res.json() as { ok: boolean } & OsintSynthesis;
       if (data.ok) setSynthesis(data);
-    } catch { /* silent */ }
-    finally { setSynthLoading(false); }
+    } catch (err) {
+      console.error("[hawkeye] osint/synthesis threw:", err);
+    } finally { setSynthLoading(false); }
   };
 
   const runIntelSynthesis = async () => {
@@ -172,11 +176,15 @@ export default function OsintPage() {
           subjectType: mode === "domain" ? "corporate" : "individual",
         }),
       });
-      if (!res.ok) return;
+      if (!res.ok) {
+        console.error(`[hawkeye] osint/intel-synthesize HTTP ${res.status}`);
+        return;
+      }
       const data = (await res.json()) as IntelSynthesis;
       if (data.ok) setIntelSynthesis(data);
-    } catch { /* silent */ }
-    finally { setIntelSynthLoading(false); }
+    } catch (err) {
+      console.error("[hawkeye] osint/intel-synthesize threw:", err);
+    } finally { setIntelSynthLoading(false); }
   };
 
   const hasResults = domainResult || sherlockResult || socialResult;

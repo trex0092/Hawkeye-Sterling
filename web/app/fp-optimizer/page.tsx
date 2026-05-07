@@ -99,8 +99,8 @@ export default function FpOptimizerPage() {
       });
       const data = await res.json() as FpAnalysisResult;
       setAnalysisResult(data);
-    } catch {
-      // keep existing
+    } catch (err) {
+      console.error("[hawkeye] fp-optimizer/analyze threw:", err);
     } finally {
       setAnalysisLoading(false);
     }
@@ -116,8 +116,8 @@ export default function FpOptimizerPage() {
       });
       const data = await res.json() as PredictResult;
       setPredictResult(data);
-    } catch {
-      // keep existing
+    } catch (err) {
+      console.error("[hawkeye] fp-optimizer/predict threw:", err);
     } finally {
       setPredictLoading(false);
     }
