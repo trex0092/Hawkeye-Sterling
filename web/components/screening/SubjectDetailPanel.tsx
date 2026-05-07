@@ -58,6 +58,7 @@ import {
 } from "@/components/screening/BrainIntelPack";
 import { OwnershipTab } from "@/components/screening/OwnershipTab";
 import { BrainIntelligencePack } from "@/components/screening/BrainIntelligencePack";
+import { DeepIntelPanel } from "@/components/screening/DeepIntelPanel";
 import { CrossRegimeConflictCard } from "@/components/screening/CrossRegimeConflictCard";
 import { PepClassificationsList } from "@/components/screening/PepClassificationsList";
 import { StrDraftPreview } from "@/components/screening/StrDraftPreview";
@@ -92,7 +93,7 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 // which made it visually identical to the Screening tab. Real
 // per-event timeline can return as its own panel when the engine
 // is wired.
-const TABS = ["Screening", "Intelligence", "CDD/EDD", "Ownership", "Live reasoning", "Evidence", "AI Ethics", "Disambiguate"] as const;
+const TABS = ["Screening", "Intelligence", "Deep Intel", "CDD/EDD", "Ownership", "Live reasoning", "Evidence", "AI Ethics", "Disambiguate"] as const;
 type Tab = (typeof TABS)[number];
 
 // ── Hit Disambiguator types ───────────────────────────────────────────────────
@@ -1348,6 +1349,14 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
 
         {activeTab === "Intelligence" && (
           <BrainIntelligencePack
+            subject={subject}
+            screen={screening.status === "success" ? screening.result : null}
+            superBrain={superBrain.status === "success" ? superBrain.result : null}
+          />
+        )}
+
+        {activeTab === "Deep Intel" && (
+          <DeepIntelPanel
             subject={subject}
             screen={screening.status === "success" ? screening.result : null}
             superBrain={superBrain.status === "success" ? superBrain.result : null}
