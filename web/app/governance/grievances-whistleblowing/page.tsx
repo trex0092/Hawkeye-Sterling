@@ -744,24 +744,6 @@ export default function GrievancesWhistleblowingPage() {
                     Download policy PDF
                     <span style={mono({ fontSize: 10, border: `1px solid ${V.line2}`, padding: "1px 5px", color: V.ink2, background: "transparent" })}>↓</span>
                   </button>
-                  <AsanaReportButton
-                    payload={{
-                      module: "grievances-whistleblowing",
-                      label: "Grievances & Whistleblowing",
-                      summary: `Grievances & Whistleblowing programme report — FG/GVW/004 v004. Programme stats (30d): ${stats.open} open · ${stats.resolved} resolved · ${stats.escalated} escalated · ${stats.slaHitPct}% SLA hit. Routed to 19 · Incidents & Grievances board.`,
-                      url: "/governance/grievances-whistleblowing",
-                      metadata: {
-                        policyCode: "FG/GVW/004",
-                        version: "004",
-                        effective: "28 NOV 2025",
-                        owner: "Compliance Dpt",
-                        openCases: stats.open,
-                        resolvedCases: stats.resolved,
-                        escalatedCases: stats.escalated,
-                        slaHitPct: stats.slaHitPct,
-                      },
-                    }}
-                  />
                 </div>
               </div>
             </section>
@@ -865,14 +847,23 @@ export default function GrievancesWhistleblowingPage() {
                               type="button"
                               title="Edit case"
                               onClick={() => formRef.current?.scrollIntoView({ behavior: "smooth" })}
-                              style={{ background: "transparent", border: `1px solid ${V.line2}`, color: V.ink2, padding: "3px 7px", fontSize: 11, cursor: "pointer", borderRadius: 1, marginRight: 5 }}
-                            >✏</button>
+                              style={{ background: "transparent", border: `1px solid ${V.line2}`, color: "oklch(60% 0.15 240)", padding: "4px 7px", cursor: "pointer", borderRadius: 1, marginRight: 5, lineHeight: 0, display: "inline-flex", alignItems: "center", justifyContent: "center" }}
+                            >
+                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                              </svg>
+                            </button>
                             <button
                               type="button"
                               title="Delete case"
                               onClick={() => setCases((prev) => prev.filter((r) => r.id !== c.id))}
-                              style={{ background: "transparent", border: `1px solid ${V.line2}`, color: "oklch(65% 0.22 25)", padding: "3px 7px", fontSize: 11, cursor: "pointer", borderRadius: 1 }}
-                            >×</button>
+                              style={{ background: "transparent", border: `1px solid oklch(65% 0.22 25 / .5)`, color: "oklch(65% 0.22 25)", padding: "4px 7px", cursor: "pointer", borderRadius: 1, lineHeight: 0, display: "inline-flex", alignItems: "center", justifyContent: "center" }}
+                            >
+                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                              </svg>
+                            </button>
                           </td>
                         </tr>
                       ))}
