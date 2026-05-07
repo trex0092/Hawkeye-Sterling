@@ -45,6 +45,7 @@ export default function ReplayPage() {
         { label: "Replay history load failed" },
       );
       if (!res.ok || !res.data?.ok) {
+        console.error("[hawkeye] screening/replay history load failed:", res.error, res.data);
         setError(res.error ?? "history unavailable");
         return;
       }
@@ -73,6 +74,7 @@ export default function ReplayPage() {
     });
     setLoadingToday(false);
     if (!res.ok || !res.data?.ok) {
+      console.error("[hawkeye] screening/replay quick-screen re-run failed:", res.error, res.data);
       setError(res.error ?? "re-run failed");
       return;
     }

@@ -71,6 +71,7 @@ export default function AbTestPage() {
     });
     setRunning(false);
     if (!res.ok || !res.data?.ok) {
+      console.error("[hawkeye] ab-test/ab-threshold failed:", res.error, res.data);
       setError(res.error ?? res.data?.error ?? "run failed");
       return;
     }

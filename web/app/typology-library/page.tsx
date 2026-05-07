@@ -595,9 +595,13 @@ export default function TypologyLibraryPage() {
         }),
         signal: AbortSignal.timeout(45_000),
       });
-      const raw = await res.text().catch(() => "");
+      const raw = await res.text().catch((err: unknown) => {
+        console.warn("[hawkeye] typology-library search res.text() failed:", err);
+        return "";
+      });
       const isHtml = raw.trimStart().toLowerCase().startsWith("<");
       if (!res.ok || isHtml) {
+        console.error(`[hawkeye] typology-library search HTTP ${res.status} isHtml=${isHtml}`);
         setSearchError(
           res.status === 503
             ? "Typology-library AI service unavailable — set ANTHROPIC_API_KEY or retry in a moment."
@@ -609,7 +613,11 @@ export default function TypologyLibraryPage() {
       }
       let json: TypologySearchResponse;
       try { json = JSON.parse(raw) as TypologySearchResponse; }
-      catch { setSearchError("Typology-library returned a malformed response."); return; }
+      catch (err) {
+        console.error("[hawkeye] typology-library search JSON.parse failed:", err, raw.slice(0, 200));
+        setSearchError("Typology-library returned a malformed response.");
+        return;
+      }
       setResults(json);
     } catch (err) {
       const isTimeout = err instanceof Error && (err.name === "AbortError" || err.name === "TimeoutError");
