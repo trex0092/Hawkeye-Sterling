@@ -847,7 +847,7 @@ export default function GrievancesWhistleblowingPage() {
             </section>
 
             {/* ── TWO-COLUMN CONTENT ── */}
-            <div className="gw-content-grid" style={{ display: "grid", gridTemplateColumns: "1fr", gap: 28, marginTop: 32 }}>
+            <div className="gw-content-grid" style={{ display: "grid", gridTemplateColumns: "1fr 220px", gap: 28, marginTop: 32 }}>
 
               {/* ── LEFT COLUMN ── */}
               <div>
@@ -972,7 +972,7 @@ export default function GrievancesWhistleblowingPage() {
 
               {/* ── INTAKE FORM (below left column) ── */}
               <aside ref={formRef}>
-                <div className="gw-field" style={{ border: `1px solid ${V.line}`, background: V.panel, maxWidth: 520 }}>
+                <div className="gw-field" style={{ border: `1px solid ${V.line}`, background: V.panel, position: "sticky", top: 82 }}>
 
                   {/* Form header */}
                   <div style={{ padding: "14px 18px", borderBottom: `1px solid ${V.line}`, display: "flex", justifyContent: "space-between", alignItems: "center", background: "linear-gradient(180deg,var(--gw-ember-soft),transparent)" }}>
