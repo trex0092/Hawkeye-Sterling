@@ -52,14 +52,54 @@ const PIPELINE = [
 ];
 
 const CATEGORIES = [
-  { ico: "¶", title: "AML / CFT & Sanctions",       sub: "FG/GVW · ROUTED TO MLRO",    ytd: 12 },
-  { ico: "§", title: "Bribery, gifts & influence",  sub: "FG/ABC · ROUTED TO CO",      ytd: 3  },
-  { ico: "⌘", title: "Fraud, theft & falsification",sub: "FG/INV · ROUTED TO CO",      ytd: 5  },
-  { ico: "∇", title: "Misconduct & harassment",     sub: "FG/HR · ROUTED TO MD",       ytd: 2  },
-  { ico: "⊟", title: "KYC / EDD failures",          sub: "FG/CDD · ROUTED TO MLRO",    ytd: 7  },
-  { ico: "⌬", title: "Data & IT security breach",   sub: "FG/CIS · ROUTED TO IT + CO", ytd: 1  },
-  { ico: "⊞", title: "Operational / safety",        sub: "FG/OPS · ROUTED TO MGR",     ytd: 4  },
-  { ico: "∂", title: "Customer service & grievance",sub: "FG/GVW · ROUTED TO CO",      ytd: 9  },
+  {
+    ico: "¶", title: "AML / CFT & Sanctions", sub: "FG/GVW · ROUTED TO MLRO", ytd: 12,
+    about: "Reports concerning suspicious financial activity, money laundering, terrorist financing, or sanctions breaches. This covers unusual transaction patterns, structured payments, high-risk jurisdictions, and any activity that may require an STR/SAR filing under UAE AML law.",
+    regs: ["FDL No.10/2025 Arts.16–20", "CR 134/2025 Art.50", "FATF R.20", "CBUAE AML Standards"],
+    steps: ["Document the suspicious activity with dates, amounts, and parties involved", "Do NOT alert the subject — tipping-off is a criminal offence (FDL Art.11)", "MLRO reviews and decides on STR filing within 5 business days", "Goaml submission if STR confirmed · retain records 10 years"],
+  },
+  {
+    ico: "§", title: "Bribery, gifts & influence", sub: "FG/ABC · ROUTED TO CO", ytd: 3,
+    about: "Any offer, payment, or receipt of a bribe, kickback, or improper gift intended to influence a business decision or obtain an unfair advantage. Includes facilitation payments, lavish entertainment, and conflicts arising from third-party relationships.",
+    regs: ["FDL No.10/2025 Art.22", "UAE Penal Code Art.237–239", "UNCAC Art.15–16", "FG/ABC Policy"],
+    steps: ["Record full details of the offer or transaction", "Compliance Officer investigates under FG/ABC procedure", "Disclosure to authorities if criminal threshold met", "Disciplinary action up to termination for perpetrators"],
+  },
+  {
+    ico: "⌘", title: "Fraud, theft & falsification", sub: "FG/INV · ROUTED TO CO", ytd: 5,
+    about: "Intentional deception, asset misappropriation, document forgery, or false reporting by employees, clients, or third parties. Includes expense fraud, false KYC documentation, fictitious invoicing, and embezzlement of company funds.",
+    regs: ["UAE Penal Code Arts.399–404", "FDL No.10/2025 Art.20", "CR 134/2025", "FG/INV Policy"],
+    steps: ["Preserve all documentary evidence without alteration", "CO leads internal investigation with HR and Legal", "Police report filed if financial loss exceeds AED 10,000", "Recovery action and disciplinary proceedings initiated"],
+  },
+  {
+    ico: "∇", title: "Misconduct & harassment", sub: "FG/HR · ROUTED TO MD", ytd: 2,
+    about: "Workplace bullying, sexual harassment, discrimination on protected grounds (nationality, gender, religion), verbal or physical abuse, or any behaviour creating a hostile work environment. Also covers retaliation against whistleblowers.",
+    regs: ["UAE Labour Law FDL 33/2021", "MoHRE Ministerial Resolution 47/2022", "FG/HR Policy", "ISO 37002:2021 §6.4"],
+    steps: ["MD and HR jointly investigate within 10 business days", "Interim protective measures applied immediately if needed", "Mediation offered where appropriate; formal hearing otherwise", "Outcome in writing · corrective action up to termination"],
+  },
+  {
+    ico: "⊟", title: "KYC / EDD failures", sub: "FG/CDD · ROUTED TO MLRO", ytd: 7,
+    about: "Incomplete or inaccurate customer due diligence, failure to apply enhanced measures for high-risk clients or PEPs, missing beneficial ownership data, expired documents, or inadequate ongoing monitoring of existing relationships.",
+    regs: ["FDL No.10/2025 Arts.9–14", "CBUAE CDD Standards §3", "FATF R.10–12", "CR 57/2017"],
+    steps: ["MLRO flags the deficiency and pauses transactions if risk is high", "CDD team re-contacts the customer within 5 business days", "Enhanced review applied · escalate to MD if PEP or high-risk", "Update system records and document remediation actions"],
+  },
+  {
+    ico: "⌬", title: "Data & IT security breach", sub: "FG/CIS · ROUTED TO IT + CO", ytd: 1,
+    about: "Unauthorised access to personal data, system intrusions, data leakage, loss of devices containing sensitive information, or misuse of confidential client records. Includes both external cyberattacks and insider threats.",
+    regs: ["PDPL FDL No.45/2021", "UAE Cybercrime Law FDL 34/2021", "ISO 27001", "CBUAE IT Risk Framework"],
+    steps: ["IT isolates affected systems immediately to prevent further exposure", "CO notifies UAE PDPF within 72 hours if personal data affected", "Forensic investigation to determine scope and root cause", "Affected individuals notified where required by PDPL Art.16"],
+  },
+  {
+    ico: "⊞", title: "Operational / safety", sub: "FG/OPS · ROUTED TO MGR", ytd: 4,
+    about: "Process failures, regulatory deadline misses, workplace safety incidents, non-compliance with internal SOPs, or near-miss events that could result in harm to staff, clients, or the business. Includes fire safety, equipment failures, and procedural breaches.",
+    regs: ["UAE OSH Law FDL 8/1980", "MoHRE OSH Regulations", "FG/OPS Policy", "ISO 45001"],
+    steps: ["Immediate containment — secure area or halt process if risk is live", "Manager completes incident report within 24 hours", "Root cause analysis conducted within 5 business days", "Corrective action plan documented and tracked to closure"],
+  },
+  {
+    ico: "∂", title: "Customer service & grievance", sub: "FG/GVW · ROUTED TO CO", ytd: 9,
+    about: "Formal complaints from customers regarding service quality, transaction disputes, unfair treatment, delays, or failure to follow FG's commitments. Also covers complaints escalated from the CBUAE Consumer Protection Unit.",
+    regs: ["CBUAE Consumer Protection Reg. 2020", "FDL No.10/2025 Art.27", "FG/GVW/004", "ISO 10002"],
+    steps: ["Acknowledge complaint to customer within 2 business days", "CO investigates and proposes resolution within 10 business days", "Escalate to MD if unresolved or involves potential regulatory breach", "Regulator notification if required · record retained 5 years"],
+  },
 ];
 
 const PENALTIES = [
@@ -240,6 +280,7 @@ export default function GrievancesWhistleblowingPage() {
 
   const formRef     = useRef<HTMLDivElement>(null);
   const registerRef = useRef<HTMLDivElement>(null);
+  const [activeCategory, setActiveCategory] = useState<typeof CATEGORIES[number] | null>(null);
 
   // Keyboard shortcuts: N → intake form, R → case register
   useEffect(() => {
@@ -318,6 +359,68 @@ export default function GrievancesWhistleblowingPage() {
         <div style={{ position: "fixed", bottom: toast ? 80 : 24, right: 24, zIndex: 9999, background: "#15130f", border: `1px solid oklch(65% 0.22 25)`, color: "#efece4", padding: "12px 18px", fontFamily: "'JetBrains Mono','IBM Plex Mono',monospace", fontSize: 12, maxWidth: 360, boxShadow: "0 8px 32px rgba(0,0,0,.7)" }}>
           <span style={{ color: "oklch(65% 0.22 25)" }}>⚠</span> {toastErr}
         </div>
+      )}
+
+      {/* ── Category detail modal ── */}
+      {activeCategory && (
+        <>
+          <div onClick={() => setActiveCategory(null)} style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,.55)", backdropFilter: "blur(2px)" }} />
+          <div style={{ position: "fixed", top: 0, right: 0, bottom: 0, zIndex: 201, width: "min(520px,100vw)", background: "#0d0c0a", borderLeft: `1px solid ${V.line}`, overflowY: "auto", display: "flex", flexDirection: "column" as const }}>
+            {/* Header */}
+            <div style={{ padding: "20px 24px 16px", borderBottom: `1px solid ${V.line}`, display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, background: "linear-gradient(180deg,rgba(28,26,21,.6),transparent)" }}>
+              <div>
+                <div style={mono({ fontSize: 9.5, color: V.ember, letterSpacing: ".2em", textTransform: "uppercase", marginBottom: 6 })}>{activeCategory.sub}</div>
+                <div style={{ fontFamily: "'Newsreader','Georgia',serif", fontSize: 22, fontWeight: 500, color: V.ink, lineHeight: 1.15 }}>{activeCategory.title}</div>
+              </div>
+              <button type="button" onClick={() => setActiveCategory(null)} style={{ background: "transparent", border: `1px solid ${V.line2}`, color: V.ink2, width: 28, height: 28, display: "grid", placeItems: "center", fontSize: 16, cursor: "pointer", flexShrink: 0, marginTop: 2 }}>×</button>
+            </div>
+
+            {/* Body */}
+            <div style={{ padding: "20px 24px", flex: 1, display: "flex", flexDirection: "column" as const, gap: 22 }}>
+
+              {/* About */}
+              <div style={{ background: V.panel, border: `1px solid ${V.line}`, padding: "14px 16px", borderLeft: `3px solid ${V.ember}` }}>
+                <div style={mono({ fontSize: 9, letterSpacing: ".2em", color: V.ember, textTransform: "uppercase", marginBottom: 8, fontWeight: 700 })}>About this category</div>
+                <div style={{ fontSize: 12.5, color: V.ink2, lineHeight: 1.65 }}>{activeCategory.about}</div>
+              </div>
+
+              {/* Regulatory basis */}
+              <div>
+                <div style={mono({ fontSize: 9, letterSpacing: ".2em", color: V.muted, textTransform: "uppercase", marginBottom: 10 })}>Regulatory basis</div>
+                <div style={{ display: "flex", flexWrap: "wrap" as const, gap: 6 }}>
+                  {activeCategory.regs.map((r) => (
+                    <span key={r} style={mono({ fontSize: 10, border: `1px solid ${V.line2}`, padding: "3px 9px", color: V.ink2, background: V.bg2 })}>{r}</span>
+                  ))}
+                </div>
+              </div>
+
+              {/* What happens */}
+              <div>
+                <div style={mono({ fontSize: 9, letterSpacing: ".2em", color: V.muted, textTransform: "uppercase", marginBottom: 10 })}>What happens when reported</div>
+                <div style={{ display: "flex", flexDirection: "column" as const, gap: 8 }}>
+                  {activeCategory.steps.map((s, i) => (
+                    <div key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                      <div style={mono({ fontSize: 9.5, color: V.ember, fontWeight: 700, minWidth: 18 })}>{i + 1}.</div>
+                      <div style={{ fontSize: 12, color: V.ink2, lineHeight: 1.6 }}>{s}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* CTA */}
+              <div style={{ marginTop: "auto", paddingTop: 16, borderTop: `1px solid ${V.line}` }}>
+                <button
+                  type="button"
+                  onClick={() => { setActiveCategory(null); formRef.current?.scrollIntoView({ behavior: "smooth" }); }}
+                  style={{ width: "100%", border: `1px solid oklch(74% 0.18 350)`, background: "oklch(74% 0.18 350)", color: "#1a0613", padding: "11px 18px", fontFamily: "'Inter',sans-serif", fontSize: 12.5, fontWeight: 600, letterSpacing: ".02em", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 9, borderRadius: 1 }}
+                >
+                  File a disclosure for this category →
+                </button>
+              </div>
+
+            </div>
+          </div>
+        </>
       )}
 
       <Header />
@@ -493,7 +596,12 @@ export default function GrievancesWhistleblowingPage() {
                   <SectionHead index="B · Reportable Matters" title="What should be raised" em="through this channel." meta="categorised · routed" />
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 12 }}>
                     {CATEGORIES.map((cat) => (
-                      <div key={cat.title} style={{ border: `1px solid ${V.line}`, background: V.panel, padding: "14px 16px", display: "grid", gridTemplateColumns: "auto 1fr auto", gap: 14, alignItems: "center" }}>
+                      <div
+                        key={cat.title}
+                        onClick={() => setActiveCategory(cat)}
+                        style={{ border: `1px solid ${V.line}`, background: V.panel, padding: "14px 16px", display: "grid", gridTemplateColumns: "auto 1fr auto", gap: 14, alignItems: "center", cursor: "pointer", transition: "border-color .15s" }}
+                        className="gw-tr"
+                      >
                         <div style={{ width: 36, height: 36, border: `1px solid ${V.line2}`, display: "grid", placeItems: "center", fontFamily: "'JetBrains Mono','IBM Plex Mono',monospace", fontSize: 13, color: V.ember, background: V.bg2 }}>{cat.ico}</div>
                         <div>
                           <div style={{ fontSize: 13, color: V.ink, fontWeight: 500 }}>{cat.title}</div>
