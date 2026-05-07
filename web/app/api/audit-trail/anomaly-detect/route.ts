@@ -107,7 +107,8 @@ ${JSON.stringify(events, null, 2)}`,
       anomalies: Array.isArray(parsed.anomalies) ? parsed.anomalies : [],
       riskScore: typeof parsed.riskScore === "number" ? Math.min(100, Math.max(0, parsed.riskScore)) : 0,
     } satisfies AnomalyDetectResult);
-  } catch {
+  } catch (err) {
+    console.error("[hawkeye] audit-trail/anomaly-detect: LLM call or parse failed — returning empty fallback:", err);
     return NextResponse.json(buildFallback());
   }
 }

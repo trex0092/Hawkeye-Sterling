@@ -404,7 +404,8 @@ export function AuditTrailViewer({
       const blob = await res.blob();
       const text = await blob.text();
       downloadBlob(text, `audit-${screeningId}.json`, "application/json");
-    } catch {
+    } catch (err) {
+      console.warn("[hawkeye] audit/export JSON failed — falling back to in-memory serialise:", err);
       // Fallback: serialise the in-memory data we already have
       if (data) {
         downloadBlob(
@@ -432,8 +433,8 @@ export function AuditTrailViewer({
       a.download = `audit-${screeningId}.pdf`;
       a.click();
       URL.revokeObjectURL(url);
-    } catch {
-      // Non-fatal — PDF export is best-effort
+    } catch (err) {
+      console.error("[hawkeye] audit/export PDF failed — no fallback available, user got nothing:", err);
     } finally {
       setExporting(false);
     }

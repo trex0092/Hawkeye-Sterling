@@ -165,11 +165,15 @@ export default function CasesPage() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ cases: activeCases }),
       });
-      if (!res.ok) return;
+      if (!res.ok) {
+        console.error(`[hawkeye] cases/triage HTTP ${res.status}`);
+        return;
+      }
       const data = await res.json() as TriageResult;
       if (data.ok) setTriageResult(data);
-    } catch { /* silent */ }
-    finally { setTriageLoading(false); }
+    } catch (err) {
+      console.error("[hawkeye] cases/triage threw:", err);
+    } finally { setTriageLoading(false); }
   };
 
   return (
