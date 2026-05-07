@@ -17,7 +17,6 @@ import type { EvidenceItem } from './evidence.js';
 import { credibilityScore, freshnessFactor } from './evidence.js';
 import { bayesUpdate } from './bayesian-update.js';
 import { FACULTIES } from './faculties.js';
-import { corroborate, type CorroborationResult } from './evidence-corroboration.js';
 
 const EPS = 1e-9;
 const DEFAULT_PRIOR = 0.10;             // base rate for illicit_risk absent strong signal
@@ -145,37 +144,7 @@ export function fuseFindings(findings: Finding[], opts: FuseOptions = {}): Fusio
     firepower,
   };
   if (primaryBayesTrace !== undefined) result.bayesTrace = primaryBayesTrace;
-
-  // Diagnostic: compute multi-source corroboration over all cited evidence.
-  // Charter P6 / P8 transparency — does NOT alter verdict math (a follow-up
-  // PR can opt to feed this into the qualities map once the lift weight is
-  // calibrated against historical cases).
-  if (idx) {
-    const cited = collectCitedEvidence(contributors, idx);
-    if (cited.length > 0) {
-      const corr: CorroborationResult = corroborate(cited);
-      result.corroboration = corr;
-    }
-  }
-
   return result;
-}
-
-function collectCitedEvidence(
-  findings: readonly Finding[],
-  idx: Map<string, EvidenceItem>,
-): EvidenceItem[] {
-  const seen = new Set<string>();
-  const out: EvidenceItem[] = [];
-  for (const f of findings) {
-    for (const id of f.evidence) {
-      if (seen.has(id)) continue;
-      seen.add(id);
-      const ev = idx.get(id);
-      if (ev) out.push(ev);
-    }
-  }
-  return out;
 }
 
 // ── helpers ──────────────────────────────────────────────────────────────
