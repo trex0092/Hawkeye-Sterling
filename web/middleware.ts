@@ -8,7 +8,21 @@ import { NextRequest, NextResponse } from "next/server";
 const SESSION_COOKIE = "hs_session";
 
 // Paths that are always public (no session required).
-const PUBLIC_PREFIXES = ["/login", "/api/auth/login", "/api/auth/logout", "/_next", "/favicon"];
+// Static PWA assets must be reachable without a session — otherwise the SW
+// registration silently fails and the manifest fetch returns the /login HTML
+// (which the browser parses as JSON and logs as "Manifest: Syntax error").
+const PUBLIC_PREFIXES = [
+  "/login",
+  "/api/auth/login",
+  "/api/auth/logout",
+  "/_next",
+  "/favicon",
+  "/manifest.webmanifest",
+  "/sw.js",
+  "/icon-192.svg",
+  "/icon-512.svg",
+  "/icon-maskable.svg",
+];
 
 function isPublic(pathname: string): boolean {
   return PUBLIC_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/") || pathname.startsWith(p + "?"));
