@@ -194,6 +194,22 @@ function FieldLabel({ children, required }: { children: React.ReactNode; require
   );
 }
 
+// ── Option selector (language / severity) ─────────────────────────────────────
+
+function Opt({ label, selected, onClick }: { label: string; selected: boolean; onClick: () => void }) {
+  return (
+    <div
+      onClick={onClick}
+      style={{ border: `1px solid ${selected ? V.ember : V.line}`, background: selected ? V.emberSoft : V.bg2, padding: "9px 10px", fontSize: 11.5, color: selected ? V.ember : V.ink2, cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}
+    >
+      <div style={{ width: 12, height: 12, border: `1px solid ${selected ? V.ember : V.muted}`, display: "grid", placeItems: "center", flexShrink: 0, background: selected ? V.ember : "transparent" }}>
+        {selected && <div style={{ width: 5, height: 9, border: "solid #1a0613", borderWidth: "0 1.6px 1.6px 0", transform: "rotate(45deg) translate(-1px,-1px)" }} />}
+      </div>
+      {label}
+    </div>
+  );
+}
+
 // ── Main page ──────────────────────────────────────────────────────────────────
 
 export default function GrievancesWhistleblowingPage() {
@@ -264,22 +280,6 @@ export default function GrievancesWhistleblowingPage() {
     "--gw-rose":      "oklch(66% 0.20 20)",
     "--gw-rose-soft": "oklch(66% 0.20 20 / .14)",
   } as React.CSSProperties;
-
-  // ── Option selector (language / severity) ────────────────────────────────────
-  function Opt({ label, selected, onClick }: { label: string; selected: boolean; onClick: () => void }) {
-    return (
-      <div
-        onClick={onClick}
-        className="gw-opt"
-        style={{ border: `1px solid ${selected ? V.ember : V.line}`, background: selected ? V.emberSoft : V.bg2, padding: "9px 10px", fontSize: 11.5, color: selected ? V.ember : V.ink2, cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}
-      >
-        <div style={{ width: 12, height: 12, border: `1px solid ${selected ? V.ember : V.muted}`, display: "grid", placeItems: "center", flexShrink: 0, background: selected ? V.ember : "transparent" }}>
-          {selected && <div style={{ width: 5, height: 9, border: "solid #1a0613", borderWidth: "0 1.6px 1.6px 0", transform: "rotate(45deg) translate(-1px,-1px)" }} />}
-        </div>
-        {label}
-      </div>
-    );
-  }
 
   return (
     <>
