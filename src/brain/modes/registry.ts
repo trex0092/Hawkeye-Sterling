@@ -77,6 +77,19 @@ import { oecdAnnexIIDisciplineApply } from './wave3-oecd-annex-ii.js';
 import { lbmaFiveStepGateApply } from './wave3-lbma-five-step.js';
 import { cargoManifestCrossCheckApply } from './wave3-cargo-manifest-cross-check.js';
 
+// Wave-3 batch-2 modules (PR feat/wave3-implement-batch-2).
+// See WAVE_3_SPEC_DRAFTS_BATCH_2.md for citations.
+import { reGoldenVisaInvestmentApply } from './wave3-re-golden-visa.js';
+import { reShellOwnerCheckApply } from './wave3-re-shell-owner.js';
+import { npoConflictZoneFlowApply } from './wave3-npo-conflict-zone.js';
+import { npoProgrammeVsCashRatioApply } from './wave3-npo-programme-vs-cash.js';
+import { modernSlaveryIndicatorApply } from './wave3-modern-slavery.js';
+import { childLabourIndicatorApply } from './wave3-child-labour.js';
+import { conflictMineralDocumentationApply } from './wave3-conflict-mineral-doc.js';
+import { chainOfCustodyBreakApply } from './wave3-chain-of-custody-break.js';
+import { assayCertificateAuditApply } from './wave3-assay-certificate.js';
+import { vesselBeneficialOwnerApply } from './wave3-vessel-beneficial-owner.js';
+
 export type ModeApply = (ctx: BrainContext) => Promise<Finding>;
 
 const WAVE3_MODE_APPLIES: Record<string, ModeApply> = {
@@ -143,6 +156,21 @@ const WAVE3_MODE_APPLIES: Record<string, ModeApply> = {
   oecd_annex_ii_discipline: oecdAnnexIIDisciplineApply,
   lbma_five_step_gate: lbmaFiveStepGateApply,
   cargo_manifest_cross_check: cargoManifestCrossCheckApply,
+
+  // ── Wave-3 batch-2 modules (PR feat/wave3-implement-batch-2) ──
+  // Each implementation cites public regulatory anchors in its top-of-file
+  // docstring. Lines marked ⚠️ VERIFY in WAVE_3_SPEC_DRAFTS_BATCH_2.md
+  // are interpolations pending MLRO sign-off.
+  re_golden_visa_investment: reGoldenVisaInvestmentApply,
+  re_shell_owner_check: reShellOwnerCheckApply,
+  npo_conflict_zone_flow: npoConflictZoneFlowApply,
+  npo_programme_vs_cash_ratio: npoProgrammeVsCashRatioApply,
+  modern_slavery_indicator: modernSlaveryIndicatorApply,
+  child_labour_indicator: childLabourIndicatorApply,
+  conflict_mineral_documentation: conflictMineralDocumentationApply,
+  chain_of_custody_break: chainOfCustodyBreakApply,
+  assay_certificate_audit: assayCertificateAuditApply,
+  vessel_beneficial_owner: vesselBeneficialOwnerApply,
 
   ...SANCTIONS_BATCH_APPLIES,
   ...TBML_BATCH_APPLIES,
