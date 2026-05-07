@@ -64,21 +64,21 @@ export async function POST(req: Request): Promise<NextResponse> {
   // Build deterministic path from subject to sanctioned entity
   for (let i = 0; i < minHops - 1; i++) {
     path.push({
-      entity: INTERMEDIARY_ENTITIES[(hash + i) % INTERMEDIARY_ENTITIES.length],
-      linkType: LINK_TYPES[(hash + i) % LINK_TYPES.length],
+      entity: INTERMEDIARY_ENTITIES[(hash + i) % INTERMEDIARY_ENTITIES.length]!,
+      linkType: LINK_TYPES[(hash + i) % LINK_TYPES.length]!,
     });
   }
   // Final hop to sanctioned entity
   path.push({
-    entity: SANCTIONED_ENTITIES[hash % SANCTIONED_ENTITIES.length],
-    linkType: LINK_TYPES[(hash + minHops) % LINK_TYPES.length],
+    entity: SANCTIONED_ENTITIES[hash % SANCTIONED_ENTITIES.length]!,
+    linkType: LINK_TYPES[(hash + minHops) % LINK_TYPES.length]!,
   });
 
   const riskLevel = minHops <= 1 ? "CRITICAL" : minHops <= 2 ? "HIGH" : minHops <= 3 ? "MEDIUM" : minHops <= 4 ? "LOW" : "MINIMAL";
 
   const explanation = minHops === 1
-    ? `Subject is directly linked to ${path[path.length - 1].entity} via ${path[0].linkType} relationship`
-    : `Subject is ${minHops} steps removed from ${path[path.length - 1].entity} through a chain of ${path.slice(0, -1).map(p => p.entity).join(" → ")}`;
+    ? `Subject is directly linked to ${path[path.length - 1]!.entity} via ${path[0]!.linkType} relationship`
+    : `Subject is ${minHops} steps removed from ${path[path.length - 1]!.entity} through a chain of ${path.slice(0, -1).map(p => p.entity).join(" → ")}`;
 
   return NextResponse.json({
     ok: true,

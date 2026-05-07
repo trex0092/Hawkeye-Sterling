@@ -60,7 +60,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const pathCount = Math.min(3, (hash % 3) + 1);
   const flowPaths: string[] = [];
   for (let i = 0; i < pathCount; i++) {
-    flowPaths.push(FLOW_PATHS[(hash + i) % FLOW_PATHS.length]);
+    flowPaths.push(FLOW_PATHS[(hash + i) % FLOW_PATHS.length]!);
   }
 
   const structuralRisk = entityCount > 5 && jurisdictions.length > 3

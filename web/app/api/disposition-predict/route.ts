@@ -74,7 +74,7 @@ function computePredictions(body: DispositionPredictBody): Prediction[] {
   let strProb = 10;
   let rejectProb = 5;
 
-  const drivers: Record<string, string[]> = {
+  const drivers: { clear: string[]; monitor: string[]; edd: string[]; str: string[]; reject: string[] } = {
     clear: [],
     monitor: [],
     edd: [],
@@ -168,38 +168,38 @@ function computePredictions(body: DispositionPredictBody): Prediction[] {
   const rawTotal = clearProb + monitorProb + eddProb + strProb + rejectProb;
   const factor = rawTotal > 0 ? 100 / rawTotal : 1;
 
-  const predictions: Prediction[] = [
+  const predictions: Prediction[] = ([
     {
       disposition: "Clear",
       probability: Math.max(0, Math.round(clearProb * factor)),
-      confidence: score < 20 ? "high" : "medium",
+      confidence: (score < 20 ? "high" : "medium") as Prediction["confidence"],
       drivers: drivers.clear.length > 0 ? drivers.clear : ["No major risk factors"],
     },
     {
       disposition: "Monitor",
       probability: Math.max(0, Math.round(monitorProb * factor)),
-      confidence: "medium",
+      confidence: "medium" as Prediction["confidence"],
       drivers: drivers.monitor.length > 0 ? drivers.monitor : ["Routine monitoring threshold"],
     },
     {
       disposition: "Enhanced Due Diligence",
       probability: Math.max(0, Math.round(eddProb * factor)),
-      confidence: isPep || isHighRiskJurisdiction ? "high" : "medium",
+      confidence: (isPep || isHighRiskJurisdiction ? "high" : "medium") as Prediction["confidence"],
       drivers: drivers.edd.length > 0 ? drivers.edd : ["Standard EDD triggers"],
     },
     {
       disposition: "Suspicious Transaction Report",
       probability: Math.max(0, Math.round(strProb * factor)),
-      confidence: score >= 80 ? "high" : "low",
+      confidence: (score >= 80 ? "high" : "low") as Prediction["confidence"],
       drivers: drivers.str.length > 0 ? drivers.str : ["STR threshold analysis"],
     },
     {
       disposition: "Reject / Exit",
       probability: Math.max(0, Math.round(rejectProb * factor)),
-      confidence: "low",
+      confidence: "low" as Prediction["confidence"],
       drivers: drivers.reject.length > 0 ? drivers.reject : ["Extreme risk scenario only"],
     },
-  ].sort((a, b) => b.probability - a.probability);
+  ] as Prediction[]).sort((a, b) => b.probability - a.probability);
 
   return predictions;
 }
@@ -213,7 +213,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   const predictions = computePredictions(body);
-  const primary = predictions[0];
+  const primary = predictions[0]!;
 
   const regulatoryBasis =
     "UAE FDL 10/2025 Art.11–14; FATF R.1 (RBA); FATF R.20 (STR); CBUAE AML Standards §2 (Risk Classification)";

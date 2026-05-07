@@ -147,7 +147,7 @@ function NameVariantSection({ subject, screen }: { subject: Subject; screen: Qui
   }
 
   const screeningHits = new Set<string>(
-    (screen?.hits ?? []).map((h) => h.matchedName?.toLowerCase() ?? ""),
+    (screen?.hits ?? []).map((h) => h.candidateName?.toLowerCase() ?? ""),
   );
 
   return (
@@ -654,7 +654,7 @@ function getRegulatoryDeadlines(subject: Subject) {
   if (subject.openedAt) {
     openedDate = new Date(subject.openedAt);
   } else if (subject.openedAgo && /\d{2}\/\d{2}\/\d{4}/.test(subject.openedAgo)) {
-    const [d, m, y] = subject.openedAgo.split("/").map(Number);
+    const [d, m, y] = subject.openedAgo.split("/").map(Number) as [number, number, number];
     openedDate = new Date(y, m - 1, d);
   }
 
@@ -669,8 +669,8 @@ function getRegulatoryDeadlines(subject: Subject) {
   }
 
   const cddPosture = subject.cddPosture ?? "standard";
-  const rescreenDays = cddPosture === "enhanced" ? 180 : cddPosture === "simplified" ? 730 : 365;
-  const cddReviewDays = cddPosture === "enhanced" ? 90 : 365;
+  const rescreenDays = cddPosture === "EDD" ? 180 : cddPosture === "SDD" ? 730 : 365;
+  const cddReviewDays = cddPosture === "EDD" ? 90 : 365;
   const retentionYears = 5;
 
   const rescreenDate = addDays(openedDate, rescreenDays);
@@ -813,7 +813,19 @@ function VoiceToCaseSection({ subject }: { subject: Subject }) {
   const [recording, setRecording] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string>("");
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  type SpeechRecResult = { transcript: string };
+  type SpeechRecEvent = { results: ArrayLike<ArrayLike<SpeechRecResult>> };
+  type SpeechRecErrorEvent = { error: string };
+  type SpeechRecInstance = {
+    lang: string; continuous: boolean; interimResults: boolean;
+    onresult: ((e: SpeechRecEvent) => void) | null;
+    onerror: ((e: SpeechRecErrorEvent) => void) | null;
+    onend: (() => void) | null;
+    start(): void; stop(): void;
+  };
+  type SpeechRecCtor = new () => SpeechRecInstance;
+
+  const recognitionRef = useRef<SpeechRecInstance | null>(null);
 
   const speechSupported =
     typeof window !== "undefined" &&
@@ -824,9 +836,8 @@ function VoiceToCaseSection({ subject }: { subject: Subject }) {
       setError("Web Speech API not supported in this browser.");
       return;
     }
-    const SpeechRecognitionCtor =
-      (window as Window & { SpeechRecognition?: typeof SpeechRecognition; webkitSpeechRecognition?: typeof SpeechRecognition }).SpeechRecognition ??
-      (window as Window & { webkitSpeechRecognition?: typeof SpeechRecognition }).webkitSpeechRecognition;
+    const win = window as unknown as Record<string, unknown>;
+    const SpeechRecognitionCtor = (win["SpeechRecognition"] ?? win["webkitSpeechRecognition"]) as SpeechRecCtor | undefined;
     if (!SpeechRecognitionCtor) {
       setError("Speech recognition unavailable.");
       return;
@@ -835,14 +846,14 @@ function VoiceToCaseSection({ subject }: { subject: Subject }) {
     rec.lang = "en-US";
     rec.continuous = true;
     rec.interimResults = true;
-    rec.onresult = (e: SpeechRecognitionEvent) => {
+    rec.onresult = (e: SpeechRecEvent) => {
       let t = "";
       for (let i = 0; i < e.results.length; i++) {
-        t += e.results[i][0].transcript;
+        t += (e.results[i]!)[0]!.transcript;
       }
       setTranscript(t);
     };
-    rec.onerror = (e: SpeechRecognitionErrorEvent) => {
+    rec.onerror = (e: SpeechRecErrorEvent) => {
       setError(`Speech error: ${e.error}`);
       setRecording(false);
     };
@@ -6011,7 +6022,7 @@ function MultiModelConsensusSection({ subject, superBrain }: { subject: Subject;
   async function run() {
     setStatus("loading"); setError("");
     try {
-      const res = await fetch("/api/super-brain", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, multiModel: true, superBrainSummary: superBrain?.summary ?? null }) });
+      const res = await fetch("/api/super-brain", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, multiModel: true, superBrainSummary: superBrain?.redlines?.summary ?? null }) });
       const data = (await res.json()) as unknown;
       setResult(data); setStatus("done");
     } catch (e) { setError(String(e)); setStatus("error"); }
