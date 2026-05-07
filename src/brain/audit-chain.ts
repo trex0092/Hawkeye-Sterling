@@ -30,7 +30,16 @@ function getCreateHash() {
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     _cryptoCreateHash = (require('node:crypto') as { createHash: typeof _cryptoCreateHash }).createHash;
-  } catch {
+  } catch (err) {
+    // CRITICAL: tamper-evident audit chain falls back to FNV-1a (non-cryptographic)
+    // when node:crypto isn't reachable. Operators MUST see this — a forged
+    // chain entry may not be detectable. Loud warn (not silent) every time
+    // the fallback is selected.
+    console.warn(
+      "[hawkeye] audit-chain: node:crypto unavailable — falling back to FNV-1a hash. " +
+      "Tamper-evidence guarantees are DEGRADED. Investigate runtime environment.",
+      err,
+    );
     _cryptoCreateHash = null;
   }
   return _cryptoCreateHash;
