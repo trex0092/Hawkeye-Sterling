@@ -52,7 +52,8 @@ function loadExposure(): Record<string, number> {
       map[iso] = (map[iso] ?? 0) + 1;
     }
     return Object.keys(map).length > 0 ? map : DEMO_EXPOSURE;
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] heatmap exposure parse failed — using demo seed:", err);
     return DEMO_EXPOSURE;
   }
 }

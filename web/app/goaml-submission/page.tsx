@@ -244,7 +244,11 @@ export default function GoAmlSubmissionPage() {
         body: JSON.stringify(payload),
       });
       if (!res.ok) {
-        const j = (await res.json().catch(() => ({}))) as { error?: string };
+        const j = (await res.json().catch((parseErr: unknown) => {
+          console.warn("[hawkeye] goaml-xml error-body parse failed:", parseErr);
+          return {};
+        })) as { error?: string };
+        console.error(`[hawkeye] goaml-xml HTTP ${res.status}: ${j.error ?? '(no error body)'}`);
         setGen({ status: "error", message: j.error ?? `HTTP ${res.status}` });
         return;
       }
@@ -278,8 +282,8 @@ export default function GoAmlSubmissionPage() {
       await navigator.clipboard.writeText(gen.result.xml);
       setCopied(true);
       setTimeout(() => setCopied(false), 2_000);
-    } catch {
-      /* clipboard API blocked — silently fail */
+    } catch (err) {
+      console.warn("[hawkeye] goaml-submission clipboard write blocked:", err);
     }
   };
 
