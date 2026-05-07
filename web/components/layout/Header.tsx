@@ -14,6 +14,7 @@ const NAV_TABS = [
   { key: "nav.str", label: "📁 STR Cases", href: "/str-cases" },
   { key: "nav.monitor", label: "👁️ Ongoing Monitor", href: "/ongoing-monitor" },
   { key: "nav.mlro", label: "🧠 MLRO Advisor", href: "/mlro-advisor" },
+  { key: "nav.gvw", label: "🛡️ Grievances", href: "/governance/grievances-whistleblowing" },
 ] as const;
 
 // Secondary modules — rendered under a "More" dropdown so the top-row
