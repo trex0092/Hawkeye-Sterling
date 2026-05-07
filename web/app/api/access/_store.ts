@@ -54,16 +54,41 @@ export const ROLE_MODULES: Record<UserRole, string[]> = {
 };
 
 // Boot password for the primary CO/MLRO account.
-// Priority:
-//   1. LUISA_INITIAL_PASSWORD env var (set in Netlify dashboard → overrides default)
-//   2. Fixed boot credential — stable across cold restarts, allows immediate access.
-//      Change via Access Control → change password after first login.
-const BOOT_PASSWORD = "Fortuna1$";
-
+// Set LUISA_INITIAL_PASSWORD in Netlify dashboard (Site → Environment variables).
+// If not set, a stable password is derived from deployment-scoped env vars and
+// printed to Netlify function logs on first request — never hardcoded here.
 function resolveInitialPassword(): string {
   const fromEnv = process.env["LUISA_INITIAL_PASSWORD"];
   if (fromEnv && fromEnv.length >= 8) return fromEnv;
-  return BOOT_PASSWORD;
+
+  // Derive a stable, deployment-specific password so it survives cold restarts
+  // without requiring a new env var. Same anchor used by auth.ts getSecret().
+  const { createHmac } = require("node:crypto") as typeof import("node:crypto");
+  const anchor =
+    process.env["AUDIT_CHAIN_SECRET"] ??
+    process.env["SESSION_SECRET"] ??
+    process.env["NETLIFY_SITE_ID"] ??
+    process.env["SITE_ID"];
+
+  if (anchor && anchor.length >= 8) {
+    const pw = createHmac("sha256", anchor)
+      .update("hawkeye-boot-password-v1")
+      .digest("base64url")
+      .slice(0, 16);
+    console.info(
+      `[hawkeye] BOOT PASSWORD for luisa: ${pw}  ` +
+      `(derived — stable across restarts. Set LUISA_INITIAL_PASSWORD in Netlify to override.)`,
+    );
+    return pw;
+  }
+
+  // Last resort — random, changes on every cold-start.
+  const generated = randomBytes(12).toString("base64url");
+  console.warn(
+    `[hawkeye] TEMPORARY boot password for luisa: ${generated}\n` +
+    `[hawkeye] THIS CHANGES ON EVERY COLD START — set LUISA_INITIAL_PASSWORD in Netlify.`,
+  );
+  return generated;
 }
 
 const _luisaSalt = generateSalt();
