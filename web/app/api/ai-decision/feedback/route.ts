@@ -107,7 +107,20 @@ export async function GET() {
       acceptanceRate: records.length > 0 ? Math.round((accepted / records.length) * 100) : null,
       recentDecisions: records.slice(-5).reverse(),
     });
-  } catch {
-    return NextResponse.json({ ok: true, total: 0, accepted: 0, overridden: 0, acceptanceRate: null, recentDecisions: [] });
+  } catch (err) {
+    console.error(
+      "[hawkeye] ai-decision/feedback GET: store read failed — returning empty stats with fallback:true",
+      err,
+    );
+    return NextResponse.json({
+      ok: true,
+      total: 0,
+      accepted: 0,
+      overridden: 0,
+      acceptanceRate: null,
+      recentDecisions: [],
+      fallback: true,
+      fallbackReason: "store_read_failed",
+    });
   }
 }
