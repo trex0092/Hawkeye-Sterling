@@ -83,6 +83,20 @@ const WAVE3_MODE_APPLIES: Record<string, ModeApply> = {
   professional_enabler_pattern: professionalEnablerApply,
   tbml_invoice_manipulation: tbmlInvoiceApply,
   utxo_clustering: utxoClusteringApply,
+  // Roadmap aliases — `WAVE_3_ROADMAP_IDS` enumerates four sub-heuristics
+  // that the utxoClusteringApply module already detects as core signals
+  // (per top-of-file docstring in wave3-utxo-clustering.ts):
+  //   address_reuse_analysis  → ADDRESS_REUSE heuristic (counts ≥5 reuses).
+  //   heuristic_common_input  → COMMON_INPUT_OWNERSHIP (Meiklejohn 2013).
+  //   heuristic_change_address → CHANGE_ADDRESS round-vs-remainder split.
+  //   peel_chain               → PEEL_CHAIN_LINKAGE residual cluster pattern.
+  // Aliasing routes the roadmap IDs to the same proven implementation
+  // (no new code, no fabrication) so callers using the longer roadmap
+  // names get the same finding the canonical mode produces.
+  address_reuse_analysis: utxoClusteringApply,
+  heuristic_common_input: utxoClusteringApply,
+  heuristic_change_address: utxoClusteringApply,
+  peel_chain: utxoClusteringApply,
   vessel_ais_gap: vesselAisGapApply,
   // Roadmap alias — `WAVE_3_ROADMAP_IDS` lists this mode as
   // `vessel_ais_gap_analysis`. Same vesselAisGapApply implementation
