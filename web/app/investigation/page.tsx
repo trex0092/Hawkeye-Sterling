@@ -190,8 +190,9 @@ export default function InvestigationPage() {
           : lower.includes("low risk") || lower.includes("minimal") ? "low"
           : "medium",
       });
-    } catch { /* silent */ }
-    finally { setBrainLoading(false); }
+    } catch (err) {
+      console.error("[hawkeye] investigation brain (mlro-advisor) threw:", err);
+    } finally { setBrainLoading(false); }
   }, [committed, matchedCases]);
 
   const runPack = useCallback(async () => {
@@ -213,8 +214,9 @@ export default function InvestigationPage() {
         }),
       });
       setPackReady(true);
-    } catch { /* silent */ }
-    finally { setExportingPack(false); }
+    } catch (err) {
+      console.error("[hawkeye] investigation/evidence-pack threw — pack NOT generated:", err);
+    } finally { setExportingPack(false); }
   }, [committed, parties, brainAnalysis]);
 
   const sortedEvents = useMemo(() =>

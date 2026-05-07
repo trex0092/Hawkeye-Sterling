@@ -285,9 +285,11 @@ function UserSidePanel({ user, onClose, onRoleChanged }: SidePanelProps) {
       if (data.ok && data.user) {
         setImpact(data.impactAssessment ?? null);
         onRoleChanged(data.user);
+      } else {
+        console.error("[hawkeye] access-control role-change rejected:", data);
       }
-    } catch {
-      // silent
+    } catch (err) {
+      console.error("[hawkeye] access-control role-change threw — UI may show stale role:", err);
     } finally {
       setSaving(false);
     }
@@ -604,8 +606,8 @@ export default function AccessControlPage() {
       setSessions((prev) => prev.map((s) => (s.id === session.id ? { ...s, active: false } : s)));
       setUsers((prev) => prev.map((u) => (u.id === session.userId ? { ...u, active: false } : u)));
       void fetchLog();
-    } catch {
-      // silent
+    } catch (err) {
+      console.error("[hawkeye] access-control session-revoke threw — UI optimistic update may diverge from server:", err);
     }
   };
 

@@ -280,12 +280,15 @@ export default function OngoingMonitorPage() {
     save(next); setSubjects(next); setDraft(BLANK);
     writeAuditEvent(draft.enrolledBy || "analyst", "ongoing.enrolled", `${subject.name} — ${subject.cadence} cadence`);
     try {
-      await fetch("/api/ongoing", {
+      const res = await fetch("/api/ongoing", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ id: subject.id, name: subject.name, ...(subject.caseId ? { caseId: subject.caseId } : {}), cadence: subject.cadence }),
       });
-    } catch { /* non-fatal */ }
+      if (!res.ok) console.error(`[hawkeye] ongoing enrol HTTP ${res.status} — backend out of sync with UI`);
+    } catch (err) {
+      console.error("[hawkeye] ongoing enrol threw — backend out of sync with UI:", err);
+    }
   };
 
   const togglePause = (id: string) => {
@@ -299,10 +302,13 @@ export default function OngoingMonitorPage() {
     const next = subjects.filter((s) => s.id !== id);
     save(next); setSubjects(next);
     try {
-      await fetch(`/api/ongoing?id=${encodeURIComponent(id)}`, {
+      const res = await fetch(`/api/ongoing?id=${encodeURIComponent(id)}`, {
         method: "DELETE",
       });
-    } catch { /* non-fatal */ }
+      if (!res.ok) console.error(`[hawkeye] ongoing DELETE HTTP ${res.status} — backend row may persist as orphan`);
+    } catch (err) {
+      console.error("[hawkeye] ongoing DELETE threw — backend row may persist as orphan:", err);
+    }
   };
 
   const screenNow = async (s: MonitoredSubject) => {
@@ -323,8 +329,9 @@ export default function OngoingMonitorPage() {
         setLastResults((prev) => ({ ...prev, [s.id]: { severity: data.severity ?? "low", topScore: data.topScore ?? 0 } }));
         writeAuditEvent("system", "screening.completed", `${s.name} (${s.id}) — score ${data.topScore} · ${data.severity ?? "low"}`);
       }
-    } catch { /* non-fatal */ }
-    finally { setScreening((prev) => ({ ...prev, [s.id]: false })); }
+    } catch (err) {
+      console.error("[hawkeye] quick-screen threw — UI lastRun timestamp NOT updated:", err);
+    } finally { setScreening((prev) => ({ ...prev, [s.id]: false })); }
   };
 
   const enrich = async () => {
@@ -368,8 +375,9 @@ export default function OngoingMonitorPage() {
       });
       const data = (await res.json()) as MonitorAlertsResult;
       setMonitorAlerts(data);
-    } catch { /* non-fatal */ }
-    finally { setMonitorAlertsLoading(false); }
+    } catch (err) {
+      console.error("[hawkeye] ongoing-monitor-ai threw — portfolio-health KPI NOT refreshed, escalations may be missed:", err);
+    } finally { setMonitorAlertsLoading(false); }
   };
 
   const active = subjects.filter((s) => s.status === "active").length;
