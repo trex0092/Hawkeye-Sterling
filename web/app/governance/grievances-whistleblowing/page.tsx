@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Header } from "@/components/layout/Header";
+import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -389,6 +390,29 @@ export default function GrievancesWhistleblowingPage() {
               </div>
             </div>
 
+            {/* Report to Asana */}
+            <div style={{ marginTop: 18 }}>
+              <div style={mono({ fontSize: 9.5, letterSpacing: ".22em", textTransform: "uppercase", color: V.muted, marginBottom: 10 })}>Report</div>
+              <AsanaReportButton
+                payload={{
+                  module: "grievances-whistleblowing",
+                  label: "Grievances & Whistleblowing",
+                  summary: `Grievances & Whistleblowing programme report — FG/GVW/004 v004. Programme stats (30d): ${stats.open} open · ${stats.resolved} resolved · ${stats.escalated} escalated · ${stats.slaHitPct}% SLA hit. Routed to 19 · Incidents & Grievances board.`,
+                  url: "/governance/grievances-whistleblowing",
+                  metadata: {
+                    policyCode: "FG/GVW/004",
+                    version: "004",
+                    effective: "28 NOV 2025",
+                    owner: "Compliance Officer / MLRO",
+                    openCases: stats.open,
+                    resolvedCases: stats.resolved,
+                    escalatedCases: stats.escalated,
+                    slaHitPct: stats.slaHitPct,
+                  },
+                }}
+              />
+            </div>
+
           </aside>
 
           {/* ══ MAIN ══ */}
@@ -435,6 +459,24 @@ export default function GrievancesWhistleblowingPage() {
                     Download policy PDF
                     <span style={mono({ fontSize: 10, border: `1px solid ${V.line2}`, padding: "1px 5px", color: V.ink2, background: "transparent" })}>↓</span>
                   </button>
+                  <AsanaReportButton
+                    payload={{
+                      module: "grievances-whistleblowing",
+                      label: "Grievances & Whistleblowing",
+                      summary: `Grievances & Whistleblowing programme report — FG/GVW/004 v004. Programme stats (30d): ${stats.open} open · ${stats.resolved} resolved · ${stats.escalated} escalated · ${stats.slaHitPct}% SLA hit. Routed to 19 · Incidents & Grievances board.`,
+                      url: "/governance/grievances-whistleblowing",
+                      metadata: {
+                        policyCode: "FG/GVW/004",
+                        version: "004",
+                        effective: "28 NOV 2025",
+                        owner: "Compliance Officer / MLRO",
+                        openCases: stats.open,
+                        resolvedCases: stats.resolved,
+                        escalatedCases: stats.escalated,
+                        slaHitPct: stats.slaHitPct,
+                      },
+                    }}
+                  />
                 </div>
               </div>
 
