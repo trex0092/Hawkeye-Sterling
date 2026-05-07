@@ -35,11 +35,11 @@ interface ProgrammeStats {
 const MOCK_STATS: ProgrammeStats = { open: 14, resolved: 31, escalated: 2, slaHitPct: 100 };
 
 const MOCK_CASES: GwCase[] = [
-  { id: "FG-WB-2026-014", receivedAt: "02 MAY · 09:14", channel: "EMAIL",   category: "AML/CFT",    categoryVariant: "aml",     stage: "Investigation",    stageStatus: "open",      slaPct: 36,  slaVariant: "warn",   owner: "MLRO" },
+  { id: "FG-WB-2026-014", receivedAt: "02 MAY · 09:14", channel: "EMAIL",   category: "AML/CFT",    categoryVariant: "aml",     stage: "Investigation",    stageStatus: "open",      slaPct: 36,  slaVariant: "warn",   owner: "CO" },
   { id: "FG-WB-2026-013", receivedAt: "28 APR · 16:02", channel: "DIRECT",  category: "BRIBERY",    categoryVariant: "eth",     stage: "Decision",         stageStatus: "review",    slaPct: 88,  slaVariant: "ok",     owner: "CO"   },
   { id: "FG-WB-2026-012", receivedAt: "22 APR · 11:48", channel: "WRITTEN", category: "HARASSMENT", categoryVariant: "hr",      stage: "Escalated · MD",   stageStatus: "escalated", slaPct: 94,  slaVariant: "danger", owner: "MD"   },
   { id: "FG-WB-2026-011", receivedAt: "18 APR · 08:30", channel: "MEETING", category: "PROCESS",    categoryVariant: "ops",     stage: "Closed · resolved",stageStatus: "closed",    slaPct: 100, slaVariant: "ok",     owner: "CO"   },
-  { id: "FG-WB-2026-010", receivedAt: "11 APR · 14:21", channel: "EMAIL",   category: "SANCTIONS",  categoryVariant: "aml",     stage: "Closed · STR filed",stageStatus: "closed",   slaPct: 100, slaVariant: "ok",     owner: "MLRO" },
+  { id: "FG-WB-2026-010", receivedAt: "11 APR · 14:21", channel: "EMAIL",   category: "SANCTIONS",  categoryVariant: "aml",     stage: "Closed · STR filed",stageStatus: "closed",   slaPct: 100, slaVariant: "ok",     owner: "CO" },
   { id: "FG-WB-2026-009", receivedAt: "04 APR · 10:55", channel: "EMAIL",   category: "CONFLICT",   categoryVariant: "eth",     stage: "Closed · coaching",stageStatus: "closed",    slaPct: 100, slaVariant: "ok",     owner: "CO"   },
 ];
 
@@ -53,10 +53,10 @@ const PIPELINE = [
 
 const CATEGORIES = [
   {
-    ico: "¶", title: "AML / CFT & Sanctions", sub: "GVW · ROUTED TO MLRO", ytd: 12,
+    ico: "¶", title: "AML / CFT & Sanctions", sub: "GVW · ROUTED TO COMPLIANCE", ytd: 12,
     about: "Reports concerning suspicious financial activity, money laundering, terrorist financing, or sanctions breaches. This covers unusual transaction patterns, structured payments, high-risk jurisdictions, and any activity that may require an STR/SAR filing under UAE AML law.",
     regs: ["FDL No.10/2025 Arts.16–20", "CR 134/2025 Art.50", "FATF R.20", "CBUAE AML Standards"],
-    steps: ["Document the suspicious activity with dates, amounts, and parties involved", "Do NOT alert the subject — tipping-off is a criminal offence (FDL Art.11)", "MLRO reviews and decides on STR filing within 5 business days", "Goaml submission if STR confirmed · retain records 10 years"],
+    steps: ["Document the suspicious activity with dates, amounts, and parties involved", "Do NOT alert the subject — tipping-off is a criminal offence (FDL Art.11)", "Compliance Dpt reviews and decides on STR filing within 5 business days", "Goaml submission if STR confirmed · retain records 10 years"],
   },
   {
     ico: "§", title: "Bribery, gifts & influence", sub: "ABC · ROUTED TO CO", ytd: 3,
@@ -77,10 +77,10 @@ const CATEGORIES = [
     steps: ["MD and HR jointly investigate within 10 business days", "Interim protective measures applied immediately if needed", "Mediation offered where appropriate; formal hearing otherwise", "Outcome in writing · corrective action up to termination"],
   },
   {
-    ico: "⊟", title: "KYC / EDD failures", sub: "CDD · ROUTED TO MLRO", ytd: 7,
+    ico: "⊟", title: "KYC / EDD failures", sub: "CDD · ROUTED TO COMPLIANCE", ytd: 7,
     about: "Incomplete or inaccurate customer due diligence, failure to apply enhanced measures for high-risk clients or PEPs, missing beneficial ownership data, expired documents, or inadequate ongoing monitoring of existing relationships.",
     regs: ["FDL No.10/2025 Arts.9–14", "CBUAE CDD Standards §3", "FATF R.10–12", "CR 57/2017"],
-    steps: ["MLRO flags the deficiency and pauses transactions if risk is high", "CDD team re-contacts the customer within 5 business days", "Enhanced review applied · escalate to MD if PEP or high-risk", "Update system records and document remediation actions"],
+    steps: ["Compliance Dpt flags the deficiency and pauses transactions if risk is high", "CDD team re-contacts the customer within 5 business days", "Enhanced review applied · escalate to MD if PEP or high-risk", "Update system records and document remediation actions"],
   },
   {
     ico: "⌬", title: "Data & IT security breach", sub: "CIS · ROUTED TO IT + CO", ytd: 1,
@@ -107,10 +107,10 @@ const CATEGORIES = [
     steps: ["Disclose the relationship in writing to the Compliance Officer immediately", "CO assesses materiality and decides on recusal or restriction", "Disclosed conflicts logged in the Conflicts Register", "Annual attestation required from all staff and board members"],
   },
   {
-    ico: "⚑", title: "Regulatory non-compliance", sub: "REG · ROUTED TO MLRO", ytd: 0,
+    ico: "⚑", title: "Regulatory non-compliance", sub: "REG · ROUTED TO COMPLIANCE", ytd: 0,
     about: "Missed regulatory filing deadlines, failure to respond to authority requests, licence condition breaches, or non-implementation of regulatory changes within required timelines. Includes CBUAE, VARA, MoE, and MoHRE obligations.",
     regs: ["FDL No.10/2025 Art.26", "CR 134/2025 Art.48", "CBUAE Supervisory Standards", "MoE AML Guidelines §8"],
-    steps: ["MLRO logs the breach and notifies the MD within 24 hours", "Voluntary self-disclosure to the regulator assessed within 48 hours", "Remediation plan drafted with clear deadlines and ownership", "Regulatory correspondence retained · lessons-learned documented"],
+    steps: ["Compliance Dpt logs the breach and notifies the MD within 24 hours", "Voluntary self-disclosure to the regulator assessed within 48 hours", "Remediation plan drafted with clear deadlines and ownership", "Regulatory correspondence retained · lessons-learned documented"],
   },
   {
     ico: "◈", title: "Third-party / supplier misconduct", sub: "VDD · ROUTED TO CO", ytd: 0,
@@ -207,6 +207,50 @@ const PAGE_CSS = `
   .gw-root * { box-sizing: border-box; }
   .gw-serif { font-family: 'Newsreader', 'Cormorant Garamond', Georgia, serif !important; }
   .gw-mono  { font-family: 'JetBrains Mono', 'IBM Plex Mono', monospace !important; }
+
+  /* ── Responsive ── */
+  @media (max-width: 768px) {
+    /* Outer sidebar+main: stack vertically, hide sidebar */
+    .gw-outer-grid { grid-template-columns: 1fr !important; }
+    .gw-sidebar-panel { display: none !important; }
+
+    /* Main content padding */
+    .gw-main-panel { padding: 16px 14px 40px !important; }
+
+    /* Hero title smaller */
+    .gw-hero-title { font-size: 36px !important; line-height: 1.1 !important; }
+
+    /* Content + form: stack vertically, form below */
+    .gw-content-grid { grid-template-columns: 1fr !important; gap: 24px !important; }
+
+    /* Pipeline: 2 cols on mobile */
+    .gw-pipeline-grid { grid-template-columns: repeat(2,1fr) !important; }
+    .gw-pipeline-grid > div { border-right: none !important; border-bottom: 1px solid var(--gw-line); }
+
+    /* Reportable matters: 1 col on mobile */
+    .gw-matters-grid { grid-template-columns: 1fr !important; }
+
+    /* Case table: horizontal scroll */
+    .gw-case-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .gw-case-table-wrap table { min-width: 640px; }
+
+    /* Penalty rail: stack label + items */
+    .gw-penalty-outer { grid-template-columns: 1fr !important; }
+    .gw-penalty-label { border-right: none !important; border-bottom: 1px solid var(--gw-line) !important; }
+    .gw-penalty-items { grid-template-columns: repeat(2,1fr) !important; }
+
+    /* Form mode tabs full width */
+    .gw-mode-tabs > div { flex: 1 !important; justify-content: center; }
+
+    /* Footer: stack */
+    .gw-footer { flex-direction: column !important; gap: 6px !important; height: auto !important; padding: 10px 14px !important; }
+  }
+
+  @media (max-width: 480px) {
+    .gw-hero-title { font-size: 28px !important; }
+    .gw-pipeline-grid { grid-template-columns: 1fr !important; }
+    .gw-penalty-items { grid-template-columns: 1fr !important; }
+  }
 `;
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -305,6 +349,7 @@ export default function GrievancesWhistleblowingPage() {
   const formRef     = useRef<HTMLDivElement>(null);
   const registerRef = useRef<HTMLDivElement>(null);
   const [activeCategory, setActiveCategory] = useState<typeof CATEGORIES[number] | null>(null);
+  const [showPdf, setShowPdf]               = useState(false);
 
   // Keyboard shortcuts: N → intake form, R → case register
   useEffect(() => {
@@ -385,6 +430,129 @@ export default function GrievancesWhistleblowingPage() {
         </div>
       )}
 
+      {/* ── PDF Preview modal ── */}
+      {showPdf && (
+        <>
+          <div onClick={() => setShowPdf(false)} style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,.75)", backdropFilter: "blur(3px)" }} />
+          <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)", zIndex: 201, width: "min(620px,96vw)", maxHeight: "92vh", overflowY: "auto", background: "#f5f5f0", boxShadow: "0 24px 80px rgba(0,0,0,.6)", display: "flex", flexDirection: "column" as const }}>
+            {/* Toolbar */}
+            <div style={{ background: "#141414", color: "#fff", padding: "9px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0 }}>
+              <span style={{ fontFamily: "monospace", fontSize: 9.5, letterSpacing: ".16em", color: "#aaa" }}>GVW/004 · POLICY DOCUMENT PREVIEW</span>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button type="button" onClick={() => window.print()} style={{ background: "#ec4899", border: "none", color: "#fff", padding: "5px 14px", fontWeight: 700, fontSize: 10.5, cursor: "pointer", letterSpacing: ".04em" }}>⬇ Save as PDF</button>
+                <button type="button" onClick={() => setShowPdf(false)} style={{ background: "transparent", border: "1px solid #444", color: "#aaa", padding: "5px 10px", fontSize: 14, cursor: "pointer", lineHeight: 1 }}>×</button>
+              </div>
+            </div>
+
+            {/* A4 page — white */}
+            <div style={{ background: "#fff", margin: "12px 16px", padding: 0, boxShadow: "0 2px 16px rgba(0,0,0,.18)", fontFamily: "'Inter',sans-serif", fontSize: 10, color: "#141414", lineHeight: 1.5 }}>
+
+              {/* Security strip */}
+              <div style={{ overflow: "hidden", whiteSpace: "nowrap", padding: "3px 0", background: "#fff", fontSize: 5.5, color: "#828282", letterSpacing: ".3px" }}>
+                {Array(14).fill("HAWKEYE STERLING  ·  GVW/004  ·  CONFIDENTIAL  ·  DO NOT REDISTRIBUTE  ").join("")}
+              </div>
+
+              {/* Header bar */}
+              <div style={{ borderBottom: "1px solid #e5e5e5", padding: "0 20px", height: 30, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <div style={{ width: 18, height: 18, borderRadius: "50%", border: "1px solid #141414", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 7, fontWeight: 700 }}>H</div>
+                  <span style={{ fontSize: 8, fontWeight: 700, letterSpacing: "1.5px" }}>HAWKEYE  ·  STERLING</span>
+                </div>
+                <span style={{ fontSize: 7, fontWeight: 700, letterSpacing: ".8px", color: "#ec4899" }}>CONFIDENTIAL  ·  COMPLIANCE USE ONLY</span>
+                <span style={{ fontSize: 7.5, letterSpacing: ".5px", color: "#464646" }}>GVW/004</span>
+              </div>
+
+              <div style={{ borderBottom: "1px solid #e5e5e5", margin: "0 32px" }} />
+
+              {/* Cover body */}
+              <div style={{ padding: "24px 40px 20px" }}>
+                {/* Logo + brand */}
+                <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 24 }}>
+                  <div style={{ position: "relative", width: 52, height: 52, flexShrink: 0 }}>
+                    <div style={{ position: "absolute", inset: 0, borderRadius: "50%", border: "1px solid #141414" }} />
+                    <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: 33, height: 33, borderRadius: "50%", border: "1px solid #141414" }} />
+                    <span style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", fontSize: 13, fontWeight: 700, color: "#141414" }}>HS</span>
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 17, fontWeight: 700, letterSpacing: "4px", color: "#141414" }}>HAWKEYE  ·  STERLING</div>
+                    <div style={{ fontSize: 7.5, letterSpacing: "2px", color: "#464646", marginTop: 2 }}>GOVERNANCE & WHISTLEBLOWING MODULE</div>
+                  </div>
+                  <div style={{ fontSize: 7.5, letterSpacing: ".5px", color: "#464646" }}>GVW/004</div>
+                </div>
+
+                <div style={{ fontSize: 7, letterSpacing: "2.5px", color: "#828282", marginBottom: 8, textAlign: "center", textTransform: "uppercase" }}>Policy Document</div>
+
+                {/* Drop-cap title */}
+                <div style={{ marginBottom: 10, textAlign: "center" }}>
+                  <span style={{ fontFamily: "Georgia,'Times New Roman',serif", fontStyle: "italic", fontSize: 34, color: "#ec4899", lineHeight: 1 }}>G</span>
+                  <span style={{ fontFamily: "Georgia,'Times New Roman',serif", fontStyle: "italic", fontSize: 22, color: "#141414", lineHeight: 1 }}>rievances &amp; Whistleblowing</span>
+                </div>
+                <p style={{ fontSize: 8, color: "#464646", maxWidth: 380, textAlign: "center", lineHeight: 1.5, margin: "0 auto 20px" }}>A safe, transparent, and confidential mechanism for employees, clients, and partners to raise concerns or report misconduct — without fear of retaliation.</p>
+
+                {/* Stat cards */}
+                <div style={{ display: "flex", gap: 12, marginBottom: 20 }}>
+                  {[{ l: "Open Cases", v: "14" }, { l: "Resolved (30d)", v: "31" }, { l: "SLA Hit Rate", v: "100%" }, { l: "Escalated", v: "2" }].map((c) => (
+                    <div key={c.l} style={{ flex: 1, border: "1px solid #e5e5e5", padding: "10px 12px" }}>
+                      <div style={{ fontSize: 6.5, letterSpacing: "1.5px", color: "#828282", marginBottom: 4, textTransform: "uppercase" }}>{c.l}</div>
+                      <div style={{ fontSize: 18, fontWeight: 700, color: "#141414", lineHeight: 1 }}>{c.v}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Meta grid */}
+                <div style={{ border: "1px solid #e5e5e5", display: "grid", gridTemplateColumns: "repeat(3,1fr)", fontSize: 7 }}>
+                  {[["Policy Code","GVW/004"],["Version","004"],["Effective","28 NOV 2025"],["Next Review","JUN 2026"],["Owner","Compliance Dpt"],["Classification","CONFIDENTIAL"]].map(([k,v],i) => (
+                    <div key={k} style={{ padding: "7px 10px", borderRight: i%3<2 ? "1px solid #e5e5e5" : "none", borderBottom: i<3 ? "1px solid #e5e5e5" : "none" }}>
+                      <div style={{ color: "#828282", letterSpacing: ".8px", textTransform: "uppercase", marginBottom: 2 }}>{k}</div>
+                      <div style={{ fontWeight: 700, color: k==="Classification" ? "#ec4899" : "#141414" }}>{v}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Policy sections */}
+                <div style={{ marginTop: 20, borderTop: "1px solid #e5e5e5", paddingTop: 16 }}>
+                  {[
+                    ["1. Purpose", "Establishes a confidential mechanism for all parties to raise concerns or report misconduct without fear of retaliation. Fine Gold LLC is committed to the highest standards of ethics and regulatory compliance."],
+                    ["2. Scope", "Applies to all employees, contractors, board members, agents, and third parties acting on behalf of Fine Gold LLC, for all activities within and outside the UAE."],
+                    ["3. Regulatory Basis", "FDL No.10/2025 Arts.16,17,20 · CR No.134/2025 Art.50 · CR No.24/2022 · MoE AML/CFT Guidelines §6 · ISO 37002:2021 · FATF R.18 · PDPL FDL No.45/2021"],
+                    ["4. Reportable Matters", "AML/CFT · Bribery · Fraud · Misconduct & Harassment · KYC/EDD Failures · Data Breach · Operational/Safety · Customer Grievances · Conflicts of Interest · Regulatory Non-Compliance · Third-Party Misconduct · ESG Violations"],
+                    ["5. Resolution Pipeline", "01 Acknowledge ≤2 BD → 02 Assess ≤5 BD → 03 Investigate ≤30 days → 04 Decide ≤5 BD → 05 Escalate ≤10 BD. All SLA-tracked. Interim protective measures applied at Stage 02 where risk warrants."],
+                    ["6. Anti-Retaliation", "Reports made in good faith are protected under FDL No.10/2025 regardless of substantiation. Retaliation = disciplinary offence up to termination and/or legal action."],
+                  ].map(([title, body]) => (
+                    <div key={title} style={{ marginBottom: 10 }}>
+                      <div style={{ fontWeight: 700, fontSize: 8, marginBottom: 2 }}>{title}</div>
+                      <div style={{ color: "#464646", fontSize: 7.5 }}>{body}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Signature block */}
+                <div style={{ marginTop: 20, borderTop: "1px solid #e5e5e5", paddingTop: 14, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+                  {[["Approver","Management"],["Compliance Dpt","Date"]].map(([label]) => (
+                    <div key={label}>
+                      <div style={{ borderBottom: "1px solid #999", height: 24, marginBottom: 4 }} />
+                      <div style={{ fontSize: 7.5, color: "#828282" }}>{label}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div style={{ margin: "0 40px", borderTop: "1px solid #e5e5e5", padding: "10px 0", display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
+                <p style={{ fontFamily: "Georgia,'Times New Roman',serif", fontStyle: "italic", fontSize: 7, color: "#464646", lineHeight: 1.7, margin: 0 }}>
+                  Issued in confidence to the addressee. Reproduction,<br />
+                  transmission or storage outside the controlled domain<br />
+                  of the recipient institution is prohibited.
+                </p>
+                <div style={{ width: 13, height: 13, borderRadius: "50%", border: "1px solid #aaa", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 7, fontWeight: 700, color: "#828282" }}>H</div>
+              </div>
+              <div style={{ height: 12 }} />
+            </div>
+            <div style={{ height: 12, flexShrink: 0 }} />
+          </div>
+        </>
+      )}
+
       {/* ── Category detail modal ── */}
       {activeCategory && (
         <>
@@ -458,10 +626,10 @@ export default function GrievancesWhistleblowingPage() {
         <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 1, backgroundImage: "radial-gradient(rgba(255,255,255,.012) 1px,transparent 1px)", backgroundSize: "3px 3px", mixBlendMode: "overlay" }} />
 
         {/* ── SIDEBAR + MAIN GRID ── */}
-        <div style={{ display: "grid", gridTemplateColumns: "268px 1fr", minHeight: "calc(100vh - 54px - 28px - 30px)", position: "relative", zIndex: 2 }}>
+        <div className="gw-outer-grid" style={{ display: "grid", gridTemplateColumns: "268px 1fr", minHeight: "calc(100vh - 54px - 28px - 30px)", position: "relative", zIndex: 2 }}>
 
           {/* ══ SIDEBAR ══ */}
-          <aside style={{ borderRight: `1px solid ${V.line}`, padding: "22px 18px 30px", background: "linear-gradient(180deg,rgba(28,26,21,.35),transparent 220px)" }}>
+          <aside className="gw-sidebar-panel" style={{ borderRight: `1px solid ${V.line}`, padding: "22px 18px 30px", background: "linear-gradient(180deg,rgba(28,26,21,.35),transparent 220px)" }}>
 
             {/* Programme Stats */}
             <div style={mono({ fontSize: 9.5, letterSpacing: ".22em", textTransform: "uppercase", color: V.muted, marginBottom: 10 })}>Programme · 30 Days</div>
@@ -516,7 +684,7 @@ export default function GrievancesWhistleblowingPage() {
                     policyCode: "FG/GVW/004",
                     version: "004",
                     effective: "28 NOV 2025",
-                    owner: "Compliance Officer / MLRO",
+                    owner: "Compliance Dpt",
                     openCases: stats.open,
                     resolvedCases: stats.resolved,
                     escalatedCases: stats.escalated,
@@ -529,7 +697,7 @@ export default function GrievancesWhistleblowingPage() {
           </aside>
 
           {/* ══ MAIN ══ */}
-          <main style={{ padding: "28px 36px 60px", minWidth: 0 }}>
+          <main className="gw-main-panel" style={{ padding: "28px 36px 60px", minWidth: 0 }}>
 
             {/* Breadcrumbs */}
             <div style={mono({ fontSize: 10, letterSpacing: ".18em", textTransform: "uppercase", color: V.muted, display: "flex", gap: 10, alignItems: "center" })}>
@@ -542,11 +710,11 @@ export default function GrievancesWhistleblowingPage() {
             {/* ── HERO ── */}
             <section style={{ marginTop: 14, paddingBottom: 22, borderBottom: `1px solid ${V.line}` }}>
               <div>
-                <h1 className="gw-serif" style={{ fontWeight: 400, fontSize: 54, letterSpacing: "-0.02em", lineHeight: 1.0, color: V.ink, margin: "6px 0 0" } as React.CSSProperties}>
+                <h1 className="gw-serif gw-hero-title" style={{ fontWeight: 400, fontSize: 54, letterSpacing: "-0.02em", lineHeight: 1.0, color: V.ink, margin: "6px 0 0" } as React.CSSProperties}>
                   A protected channel<br />to <em style={{ fontStyle: "italic", color: V.ember }}>speak up.</em>
                 </h1>
                 <p style={{ color: V.ink2, fontSize: 13.5, maxWidth: 560, marginTop: 14, lineHeight: 1.6, margin: "14px 0 0" }}>
-                  A safe, transparent, confidential mechanism for customers, partners, employees and third parties to raise concerns or report misconduct — without fear of retaliation. Operated by the Compliance Officer / MLRO under the Fine Gold Grievances &amp; Whistleblowing Policy{" "}
+                  A safe, transparent, confidential mechanism for customers, partners, employees and third parties to raise concerns or report misconduct — without fear of retaliation. Operated by the Compliance Dpt under the Fine Gold Grievances &amp; Whistleblowing Policy{" "}
                   <span style={mono({ color: V.ember })}>FG/GVW/004</span>.
                 </p>
                 <div style={{ display: "flex", gap: 10, marginTop: 22, flexWrap: "wrap" as const }}>
@@ -570,7 +738,7 @@ export default function GrievancesWhistleblowingPage() {
                   <button
                     type="button"
                     className="gw-ghost"
-                    onClick={() => window.print()}
+                    onClick={() => setShowPdf(true)}
                     style={{ border: `1px solid ${V.line2}`, background: "transparent", color: V.ink, padding: "10px 18px", fontFamily: "'Inter',sans-serif", fontSize: 12.5, fontWeight: 600, letterSpacing: ".02em", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 9, borderRadius: 1 }}
                   >
                     Download policy PDF
@@ -581,14 +749,14 @@ export default function GrievancesWhistleblowingPage() {
             </section>
 
             {/* ── TWO-COLUMN CONTENT ── */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: 28, marginTop: 32 }}>
+            <div className="gw-content-grid" style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: 28, marginTop: 32 }}>
 
               {/* ── LEFT COLUMN ── */}
               <div>
 
                 {/* A · Resolution Pipeline */}
                 <SectionHead index="A · Resolution Pipeline" title="How a report" em="moves through the system." meta="SLA-tracked · auto-escalated" />
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", border: `1px solid ${V.line}`, background: V.panel }}>
+                <div className="gw-pipeline-grid" style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", border: `1px solid ${V.line}`, background: V.panel }}>
                   {PIPELINE.map((step, i) => (
                     <div
                       key={i}
@@ -618,7 +786,7 @@ export default function GrievancesWhistleblowingPage() {
                 {/* B · Reportable Matters */}
                 <div style={{ marginTop: 36 }}>
                   <SectionHead index="B · Reportable Matters" title="What should be raised" em="through this channel." meta="categorised · routed" />
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 12 }}>
+                  <div className="gw-matters-grid" style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 12 }}>
                     {CATEGORIES.map((cat) => (
                       <div
                         key={cat.title}
@@ -641,8 +809,8 @@ export default function GrievancesWhistleblowingPage() {
                 </div>
 
                 {/* C · Case Register */}
-                <div ref={registerRef} style={{ marginTop: 36 }}>
-                  <SectionHead index="C · Case Register" title="Master log" em="(MLRO custodian)." meta="retention 10 yr · MOE production ≤48h" />
+                <div ref={registerRef} className="gw-case-table-wrap" style={{ marginTop: 36 }}>
+                  <SectionHead index="C · Case Register" title="Master log" em="(Compliance Dpt custodian)." meta="retention 10 yr · MOE production ≤48h" />
                   <table style={{ border: `1px solid ${V.line}`, background: V.panel, width: "100%", borderCollapse: "separate" as const, borderSpacing: 0, fontSize: 11.5 }}>
                     <thead>
                       <tr>
@@ -712,7 +880,7 @@ export default function GrievancesWhistleblowingPage() {
                   </div>
 
                   {/* Anonymous / Named segmented control */}
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", borderBottom: `1px solid ${V.line}` }}>
+                  <div className="gw-mode-tabs" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", borderBottom: `1px solid ${V.line}` }}>
                     {(["anonymous", "named"] as const).map((m) => (
                       <button
                         key={m}
@@ -829,14 +997,14 @@ export default function GrievancesWhistleblowingPage() {
             </div>{/* /two-col */}
 
             {/* ── PENALTY RAIL ── */}
-            <div style={{ marginTop: 32, border: `1px solid ${V.line}`, background: V.panel, display: "grid", gridTemplateColumns: "auto 1fr" }}>
-              <div style={{ padding: "22px 24px", borderRight: `1px solid ${V.line}`, background: V.bg2, display: "flex", flexDirection: "column" as const, justifyContent: "center", minWidth: 230 }}>
+            <div className="gw-penalty-outer" style={{ marginTop: 32, border: `1px solid ${V.line}`, background: V.panel, display: "grid", gridTemplateColumns: "auto 1fr" }}>
+              <div className="gw-penalty-label" style={{ padding: "22px 24px", borderRight: `1px solid ${V.line}`, background: V.bg2, display: "flex", flexDirection: "column" as const, justifyContent: "center", minWidth: 230 }}>
                 <div className="gw-serif" style={{ fontSize: 22, color: V.ink, lineHeight: 1.1 }}>
                   Penalties for <em style={{ fontStyle: "italic", color: V.rose }}>non-reporting</em>
                 </div>
                 <div style={mono({ fontSize: 9.5, color: V.muted, letterSpacing: ".12em", marginTop: 8 })}>CR No.24/2022 · administrative violations</div>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)" }}>
+              <div className="gw-penalty-items" style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)" }}>
                 {PENALTIES.map((p, i) => (
                   <div key={p.lab} style={{ padding: "18px 16px", borderRight: i < PENALTIES.length - 1 ? `1px solid ${V.line}` : "none" }}>
                     <div style={mono({ fontSize: 9.5, letterSpacing: ".14em", textTransform: "uppercase", color: V.muted })}>{p.lab}</div>
@@ -853,7 +1021,7 @@ export default function GrievancesWhistleblowingPage() {
         </div>
 
         {/* ── PAGE FOOTER ── */}
-        <footer style={{ borderTop: `1px solid ${V.line}`, padding: "0 22px", display: "flex", justifyContent: "space-between", alignItems: "center", height: 30, position: "relative", zIndex: 2 }}>
+        <footer className="gw-footer" style={{ borderTop: `1px solid ${V.line}`, padding: "0 22px", display: "flex", justifyContent: "space-between", alignItems: "center", height: 30, position: "relative", zIndex: 2 }}>
           <div style={mono({ fontSize: 9.5, color: V.muted, letterSpacing: ".06em" })}>FG/GVW/004 · v004 · Effective 28 NOV 2025 · Next review JUN 2026</div>
           <div style={{ display: "flex", gap: 18 }}>
             {["Retention 10y", "MOE Production ≤48h", "Audit-trail · HMAC chain"].map((t) => (
