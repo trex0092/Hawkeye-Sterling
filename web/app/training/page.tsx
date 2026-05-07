@@ -90,7 +90,8 @@ function load(): TrainingRow[] {
   try {
     const raw = window.localStorage.getItem(STORAGE);
     return raw ? (JSON.parse(raw) as TrainingRow[]) : DEFAULT_ROWS;
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] training rows parse failed — using defaults:", err);
     return DEFAULT_ROWS;
   }
 }
@@ -98,8 +99,8 @@ function load(): TrainingRow[] {
 function save(rows: TrainingRow[]) {
   try {
     window.localStorage.setItem(STORAGE, JSON.stringify(rows));
-  } catch {
-    /* */
+  } catch (err) {
+    console.error("[hawkeye] training rows persist failed — training-log edits will be lost:", err);
   }
 }
 
