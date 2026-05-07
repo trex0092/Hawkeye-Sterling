@@ -1,7 +1,13 @@
-// Next.js edge middleware — two responsibilities:
+// Next.js edge middleware — three responsibilities:
 // 1. Session guard: redirect unauthenticated users to /login.
 // 2. API token injection: for same-origin API calls, inject the server-side
 //    ADMIN_TOKEN so it is never shipped to the browser JS bundle.
+// 3. CSP per-request nonce: generate a fresh nonce, expose it to RSCs via
+//    request header `x-nonce`, and write `Content-Security-Policy` on the
+//    response so script-src can require `'nonce-...'` instead of
+//    `'unsafe-inline'`. This replaces the static CSP previously set in
+//    netlify.toml for HTML routes (the static CSP was relaxed to
+//    'unsafe-inline' as an emergency unblock — see commit ca4a0a7).
 
 import { NextRequest, NextResponse } from "next/server";
 
@@ -12,6 +18,33 @@ const PUBLIC_PREFIXES = ["/login", "/api/auth/login", "/api/auth/logout", "/_nex
 
 function isPublic(pathname: string): boolean {
   return PUBLIC_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/") || pathname.startsWith(p + "?"));
+}
+
+// ── CSP nonce generation (Edge / Deno crypto) ────────────────────────────────
+// Crypto-quality random, hex-encoded. 16 bytes = 128 bits = enough entropy.
+function generateNonce(): string {
+  const buf = new Uint8Array(16);
+  crypto.getRandomValues(buf);
+  let hex = "";
+  for (const b of buf) hex += b.toString(16).padStart(2, "0");
+  return hex;
+}
+
+function buildCspHeader(nonce: string): string {
+  return [
+    "default-src 'self'",
+    // 'strict-dynamic' lets Next.js's nonced loader script load further
+    // chunks without requiring every chunk URL in the policy. Falls back
+    // to 'self' on browsers that don't support strict-dynamic.
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "img-src 'self' data:",
+    "font-src 'self' data: https://fonts.gstatic.com",
+    "connect-src 'self' https://app.asana.com https://api.anthropic.com",
+    "frame-ancestors 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+  ].join("; ") + ";";
 }
 
 // ── Session verification in Edge ─────────────────────────────────────────────
@@ -87,9 +120,26 @@ export function middleware(req: NextRequest): NextResponse {
         return NextResponse.next({ request: { headers: requestHeaders } });
       }
     }
+    // Non-same-origin API call — pass through untouched (no CSP needed
+    // on API JSON responses; the static netlify.toml header still applies
+    // as a defence-in-depth baseline).
+    return NextResponse.next();
   }
 
-  return NextResponse.next();
+  // ── 3. CSP nonce for HTML routes ──────────────────────────────────────────
+  // Only emit the nonced CSP for navigations to actual pages, not for
+  // API routes (which don't render HTML). The nonce is set on the *request*
+  // headers so React Server Components in app/layout.tsx can read it via
+  // `headers().get('x-nonce')` and pass it as the `nonce` prop on inline
+  // <script> tags. The CSP is set on the *response* headers and overrides
+  // the static one from netlify.toml for HTML routes.
+  const nonce = generateNonce();
+  const requestHeaders = new Headers(req.headers);
+  requestHeaders.set("x-nonce", nonce);
+
+  const response = NextResponse.next({ request: { headers: requestHeaders } });
+  response.headers.set("Content-Security-Policy", buildCspHeader(nonce));
+  return response;
 }
 
 export const config = {
