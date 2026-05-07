@@ -254,9 +254,12 @@ export default function CddReviewPage() {
         setEddChecks({});
         saveEddChecks({});
         setTimeout(() => eddRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+      } else {
+        console.error(`[hawkeye] cdd-review/edd-checklist HTTP ${res.status}`);
       }
-    } catch { /* silent */ }
-    finally { setEddLoading(false); }
+    } catch (err) {
+      console.error("[hawkeye] cdd-review/edd-checklist threw:", err);
+    } finally { setEddLoading(false); }
   };
 
   const eddTotalItems = eddResult
@@ -353,10 +356,15 @@ export default function CddReviewPage() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ reviews }),
       });
+      if (!res.ok) {
+        console.error(`[hawkeye] cdd-adequacy HTTP ${res.status}`);
+        return;
+      }
       const data = (await res.json()) as CddAdequacy;
       setAdequacy(data);
-    } catch { /* non-fatal */ }
-    finally { setAdequacyLoading(false); }
+    } catch (err) {
+      console.error("[hawkeye] cdd-adequacy threw:", err);
+    } finally { setAdequacyLoading(false); }
   };
 
   return (

@@ -720,7 +720,8 @@ function load(): Policy[] {
   try {
     const raw = window.localStorage.getItem(STORAGE);
     return raw ? JSON.parse(raw) : DEFAULT_POLICIES;
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] policies parse failed — using defaults:", err);
     return DEFAULT_POLICIES;
   }
 }
