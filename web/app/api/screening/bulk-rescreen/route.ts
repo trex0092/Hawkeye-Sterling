@@ -28,6 +28,14 @@ export interface BulkRescreenResult {
   newHits: NewHit[];
   cleared: ClearedSubject[];
   summary: string;
+  /** True when the response is the illustrative fallback (no API key
+   *  configured OR the AI call threw / produced unparseable output).
+   *  UI MUST show a degraded-mode banner when this is true so analysts
+   *  don't treat the placeholder hits as a real screening result. */
+  fallback?: boolean;
+  /** Why the fallback was returned. 'no_api_key' when ANTHROPIC_API_KEY
+   *  is unset; 'ai_error' when the LLM call or JSON parse failed. */
+  fallbackReason?: 'no_api_key' | 'ai_error';
 }
 
 const SYSTEM_PROMPT = `You are an AML sanctions-screening engine simulating a batch re-screen of a portfolio against an updated watchlist. You receive a list of subjects and a list version identifier.
@@ -53,7 +61,10 @@ Return ONLY valid JSON — no markdown fences:
   "summary": "<2-3 sentence executive summary of the re-screen run>"
 }`;
 
-const buildFallback = (subjects: BulkRescreenSubject[]): BulkRescreenResult => ({
+const buildFallback = (
+  subjects: BulkRescreenSubject[],
+  reason: 'no_api_key' | 'ai_error' = 'no_api_key',
+): BulkRescreenResult => ({
   ok: true,
   rescreened: subjects.length,
   newHits: subjects.length > 3
@@ -69,7 +80,11 @@ const buildFallback = (subjects: BulkRescreenSubject[]): BulkRescreenResult => (
   cleared: subjects.length > 2
     ? [{ subjectId: subjects[1]!.id, subjectName: subjects[1]!.name }]
     : [],
-  summary: `Re-screen complete. ${subjects.length} subjects checked against the updated list version. No API key was configured — results are illustrative only. Please configure ANTHROPIC_API_KEY for live analysis.`,
+  summary: reason === 'no_api_key'
+    ? `Re-screen complete. ${subjects.length} subjects checked against the updated list version. No API key was configured — results are illustrative only. Please configure ANTHROPIC_API_KEY for live analysis.`
+    : `Re-screen DEGRADED — the AI screening engine errored mid-batch. ${subjects.length} subjects show illustrative-only hits below; do not treat as a real screening run. Retry the rescreen, or escalate to MLRO if the failure persists.`,
+  fallback: true,
+  fallbackReason: reason,
 });
 
 export async function POST(req: Request) {
@@ -143,7 +158,12 @@ Simulate a full portfolio re-screen against the new list version. Generate reali
     // what the model returns — prevents confusing UX.
     result.rescreened = subjects.length;
     return NextResponse.json(result);
-  } catch {
-    return NextResponse.json(buildFallback(subjects));
+  } catch (err) {
+    console.error(
+      "[hawkeye] screening/bulk-rescreen: AI call or JSON.parse failed — " +
+      "returning illustrative fallback with fallback:true so UI shows degraded state.",
+      err,
+    );
+    return NextResponse.json(buildFallback(subjects, 'ai_error'));
   }
 }

@@ -161,7 +161,7 @@ export async function POST(req: Request): Promise<NextResponse> {
           subject.name,
           subject.jurisdiction ?? undefined,
         );
-      } catch { /* best-effort */ }
+      } catch (err) { console.warn("[hawkeye] quick-screen: best-effort adapter failed:", err); }
       // Commercial adapters (LSEG World-Check / Dow Jones R&C / Sayari)
       // — only fires when the operator has dropped a key into Netlify env.
       const commAdapter = bestCommercialAdapter();
@@ -171,7 +171,7 @@ export async function POST(req: Request): Promise<NextResponse> {
             subject.name,
             subject.jurisdiction ?? undefined,
           );
-        } catch { /* best-effort */ }
+        } catch (err) { console.warn("[hawkeye] quick-screen: best-effort adapter failed:", err); }
       }
       // Corporate-registry adapters (OpenCorporates, UK Companies House,
       // SEC EDGAR, ICIJ Offshore Leaks, Crunchbase, PitchBook) — env-gated.
@@ -180,7 +180,7 @@ export async function POST(req: Request): Promise<NextResponse> {
           subject.name,
           subject.jurisdiction ? { jurisdiction: subject.jurisdiction, limit: ADAPTER_QUERY_LIMIT } : { limit: ADAPTER_QUERY_LIMIT },
         );
-      } catch { /* best-effort */ }
+      } catch (err) { console.warn("[hawkeye] quick-screen: best-effort adapter failed:", err); }
     }
 
     // Country-specific public registries (Companies House, FCA, INSEE,
@@ -194,14 +194,14 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (subject.name.length >= 3) {
       try {
         countryRegistryResults = await searchCountryRegistries(subject.name, subject.jurisdiction ?? undefined, ADAPTER_QUERY_LIMIT);
-      } catch { /* best-effort */ }
+      } catch (err) { console.warn("[hawkeye] quick-screen: best-effort adapter failed:", err); }
       try {
         countrySanctionsResults = await searchCountrySanctions(subject.name, subject.jurisdiction ?? undefined, ADAPTER_QUERY_LIMIT);
-      } catch { /* best-effort */ }
+      } catch (err) { console.warn("[hawkeye] quick-screen: best-effort adapter failed:", err); }
       // Free always-on layer (Wikidata + World Bank Debarred Firms + FATF)
       try {
         freeAdapterResults = await searchFreeAdapters(subject.name, subject.jurisdiction ?? undefined, ADAPTER_QUERY_LIMIT);
-      } catch { /* best-effort */ }
+      } catch (err) { console.warn("[hawkeye] quick-screen: best-effort adapter failed:", err); }
     }
 
     // Adverse-media news pull for temporal velocity + co-occurrence
@@ -210,7 +210,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (subject.name.length >= 3) {
       try {
         newsArticles = await searchAllNews(subject.name, { limit: 50 });
-      } catch { /* best-effort */ }
+      } catch (err) { console.warn("[hawkeye] quick-screen: best-effort adapter failed:", err); }
 
       // LLM-prompt adverse-media check — uses Claude's recall for
       // niche cases that keyword-search vendors miss (short-seller
@@ -230,7 +230,7 @@ export async function POST(req: Request): Promise<NextResponse> {
             };
           }
         }
-      } catch { /* best-effort */ }
+      } catch (err) { console.warn("[hawkeye] quick-screen: best-effort adapter failed:", err); }
     }
 
     // URL-direct ingestion: when the operator passes evidenceUrls[]
@@ -247,7 +247,7 @@ export async function POST(req: Request): Promise<NextResponse> {
             providersUsed: [...newsArticles.providersUsed, "url-ingest"],
           };
         }
-      } catch { /* best-effort */ }
+      } catch (err) { console.warn("[hawkeye] quick-screen: best-effort adapter failed:", err); }
     }
     // ── Reasoning layer ────────────────────────────────────────────────
     // Multi-source consensus + contradiction + coverage gap + audit

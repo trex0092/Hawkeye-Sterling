@@ -41,8 +41,8 @@ export function loadOperatorRole(): OperatorRole {
   try {
     const raw = window.localStorage.getItem(ROLE_STORAGE_KEY);
     if (raw && (ALL_ROLES as string[]).includes(raw)) return raw as OperatorRole;
-  } catch {
-    /* localStorage disabled */
+  } catch (err) {
+    console.warn("[hawkeye] operator-role load failed (localStorage disabled?) — defaulting to mlro:", err);
   }
   return "mlro";
 }
