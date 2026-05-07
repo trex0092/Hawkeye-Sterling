@@ -70,6 +70,10 @@ export type ModeApply = (ctx: BrainContext) => Promise<Finding>;
 
 const WAVE3_MODE_APPLIES: Record<string, ModeApply> = {
   art_auction_provenance_gap: artProvenanceGapApply,
+  // Roadmap alias — `WAVE_3_ROADMAP_IDS` lists this mode as
+  // `art_provenance_chain`. Routes to the implemented detector so the
+  // roadmap ID becomes live without renaming the apply() module.
+  art_provenance_chain: artProvenanceGapApply,
   bridge_crossing_trace: bridgeCrossingTraceApply,
   dpms_cash_structuring_split: dpmsStructuringApply,
   family_office_trust_transparency: familyOfficeTrustApply,
@@ -80,6 +84,12 @@ const WAVE3_MODE_APPLIES: Record<string, ModeApply> = {
   tbml_invoice_manipulation: tbmlInvoiceApply,
   utxo_clustering: utxoClusteringApply,
   vessel_ais_gap: vesselAisGapApply,
+  // Roadmap alias — `WAVE_3_ROADMAP_IDS` lists this mode as
+  // `vessel_ais_gap_analysis`. Same vesselAisGapApply implementation
+  // (AIS dark-period detection, sanctioned port nexus, STS-transfer
+  // signature, flag-hopping). Anchors: FATF R.7 (vessel-related TFS) +
+  // UAE FDL 10/2025 Art.15 + IMO regulations + UN sanctions vessel lists.
+  vessel_ais_gap_analysis: vesselAisGapApply,
   cash_courier_threshold: cashCourierThresholdApply,
   shell_company_indicator: shellCompanyApply,
   pep_proximity_chain: pepProximityApply,
