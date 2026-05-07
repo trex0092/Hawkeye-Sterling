@@ -13,7 +13,8 @@ export function loadBellEvents(): DesignationAlert[] {
   try {
     const raw = typeof localStorage !== "undefined" && localStorage.getItem(EVENTS_KEY);
     return raw ? (JSON.parse(raw) as DesignationAlert[]) : [];
-  } catch {
+  } catch (err) {
+    console.error("[hawkeye] bell-events corrupted (parse failed) — returning empty:", err);
     return [];
   }
 }

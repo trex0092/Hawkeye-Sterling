@@ -268,6 +268,7 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
   // ── Hit Disambiguator state ─────────────────────────────────────────────────
   const [disambigResult, setDisambigResult] = useState<DisambiguationResult | null>(null);
   const [disambigLoading, setDisambigLoading] = useState(false);
+  const [disambigError, setDisambigError] = useState<string | null>(null);
   const [disambigClient, setDisambigClient] = useState({
     name: subject.name,
     nationality: subject.country,
@@ -306,17 +307,28 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
     const namedHits = disambigHits.filter((h) => h.hitName.trim());
     if (!disambigClient.name.trim() || namedHits.length === 0) return;
     setDisambigLoading(true);
+    setDisambigError(null);
     try {
       const res = await fetch("/api/smart-disambiguate", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ client: disambigClient, hits: namedHits }),
       });
-      if (!res.ok) return;
+      if (!res.ok) {
+        const detail = await res.text().catch(() => "");
+        const msg = `Disambiguation failed (HTTP ${res.status})${detail ? ` — ${detail.slice(0, 160)}` : ""}`;
+        console.error("[hawkeye] smart-disambiguate", msg);
+        setDisambigError(msg);
+        return;
+      }
       const data = (await res.json()) as DisambiguationResult;
       if (data.ok) setDisambigResult(data);
-    } catch { /* silent */ }
-    finally { setDisambigLoading(false); }
+      else setDisambigError("Disambiguation returned ok:false");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Network error";
+      console.error("[hawkeye] smart-disambiguate threw:", err);
+      setDisambigError(msg);
+    } finally { setDisambigLoading(false); }
   };
 
   const runEIA = async () => {
@@ -529,7 +541,9 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
         },
         result: escalationResult,
         trigger: "save",
-      }).catch(() => {});
+      }).catch((err: unknown) => {
+        console.error("[hawkeye] postScreeningReport (Asana) failed:", err);
+      });
       attachEvidenceToSubject(subject.name, {
         category: "four-eyes-approval",
         title: "Escalated to MLRO",
@@ -1523,6 +1537,12 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
                   {disambigLoading ? "Running AI disambiguation…" : "Run Disambiguation"}
                 </button>
               </div>
+
+              {disambigError && (
+                <div className="px-4 py-2.5 bg-red-dim text-red border border-red/30 rounded text-12">
+                  {disambigError}
+                </div>
+              )}
 
               {disambigResult && (
                 <div className="space-y-4 pt-4 border-t border-hair-2">
@@ -3452,7 +3472,9 @@ function EthicsTab({
       await navigator.clipboard.writeText(eiaResult.subjectRights.join("\n"));
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1800);
-    } catch { /* silent */ }
+    } catch (err) {
+      console.warn("[hawkeye] clipboard write failed:", err);
+    }
   };
 
   const impactColour =

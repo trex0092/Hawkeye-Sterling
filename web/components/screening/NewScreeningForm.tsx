@@ -147,7 +147,8 @@ export function NewScreeningForm({
           setPepHits([]);
           setPepStatus(data.source === "none" ? "idle" : "clear");
         }
-      } catch {
+      } catch (err) {
+        console.error("[hawkeye] pep-match failed:", err);
         setPepStatus("error");
       }
     }, 600);
