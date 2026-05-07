@@ -33,7 +33,10 @@ export function loadAuditEntries(): AuditEntry[] {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     return raw ? (JSON.parse(raw) as AuditEntry[]) : [];
-  } catch { return []; }
+  } catch (err) {
+    console.error("[hawkeye] audit ledger corrupted (parse failed) — returning empty:", err);
+    return [];
+  }
 }
 
 export function writeAuditEvent(

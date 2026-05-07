@@ -87,7 +87,9 @@ export function AIDecisionEngine({
           setLearningStats({ total: d.total, acceptanceRate: d.acceptanceRate ?? null });
         }
       })
-      .catch(() => {});
+      .catch((err: unknown) => {
+        console.warn("[hawkeye] ai-decision/feedback (mount stats) failed:", err);
+      });
   }, []);
 
   const runDecision = useCallback(async () => {
@@ -158,8 +160,8 @@ export function AIDecisionEngine({
       if (typeof d.total === "number") {
         setLearningStats({ total: d.total, acceptanceRate: d.acceptanceRate ?? null });
       }
-    } catch {
-      // silent — feedback loss is non-critical
+    } catch (err) {
+      console.warn("[hawkeye] ai-decision/feedback POST failed:", err);
     } finally {
       setFeedbackSending(false);
     }
