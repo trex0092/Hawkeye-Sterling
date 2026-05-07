@@ -42,15 +42,15 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   for (let i = 0; i < actionCount; i++) {
     const seed = hash + i * 41;
-    const regulator = applicableRegulators[seed % applicableRegulators.length] ?? REGULATORS[seed % REGULATORS.length];
-    const actionType = ACTION_TYPES[seed % ACTION_TYPES.length];
+    const regulator = applicableRegulators[seed % applicableRegulators.length] ?? REGULATORS[seed % REGULATORS.length]!;
+    const actionType = ACTION_TYPES[seed % ACTION_TYPES.length]!;
     const year = 2016 + (seed % 8);
     const month = String(1 + (seed % 12)).padStart(2, "0");
     actions.push({
       regulator,
       date: `${year}-${month}-01`,
       type: actionType,
-      penalty: seed % 2 === 0 ? PENALTIES[seed % PENALTIES.length] : undefined,
+      penalty: seed % 2 === 0 ? PENALTIES[seed % PENALTIES.length]! : undefined,
       description: `${regulator} issued ${actionType} against ${name} in relation to AML/CFT control failures identified during ${year} examination.`,
     });
   }

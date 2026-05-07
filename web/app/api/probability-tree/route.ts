@@ -98,7 +98,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   // Sort by probability
   scenarios.sort((a, b) => b.probability - a.probability);
 
-  const primaryPath = scenarios[0].outcome;
+  const primaryPath = scenarios[0]!.outcome;
 
   const decisionTree: Record<string, unknown> = {
     riskScoreBand: riskScore >= 70 ? "HIGH" : riskScore >= 40 ? "MEDIUM" : "LOW",
@@ -106,7 +106,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     pepStatus: isPEP ? `PEP Tier ${pepTier}` : "Non-PEP",
     adverseMediaHits: amHits,
     recommendedPath: primaryPath,
-    confidence: `${scenarios[0].probability}%`,
+    confidence: `${scenarios[0]!.probability}%`,
   };
 
   return NextResponse.json({

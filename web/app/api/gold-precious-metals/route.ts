@@ -63,7 +63,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const flags: string[] = [];
   const flagCount = (hash % 3) + (lbmaListed ? 0 : 1) + (isHighRiskType ? 1 : 0);
   for (let i = 0; i < Math.min(flagCount, UAE_GOLD_FLAGS.length); i++) {
-    flags.push(UAE_GOLD_FLAGS[(hash + i) % UAE_GOLD_FLAGS.length]);
+    flags.push(UAE_GOLD_FLAGS[(hash + i) % UAE_GOLD_FLAGS.length]!);
   }
 
   const riskLevel = !lbmaListed && isHighRiskType ? "HIGH" : !lbmaListed || refineryLinks.length > 1 ? "MEDIUM" : "LOW";

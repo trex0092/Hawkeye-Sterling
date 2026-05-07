@@ -58,11 +58,11 @@ export async function POST(req: Request): Promise<NextResponse> {
   // Process provided events against known sanctions dates
   for (const event of events) {
     const sanctionsIdx = hash % SANCTIONS_EVENTS.length;
-    const sanctionsEventStr = SANCTIONS_EVENTS[sanctionsIdx];
+    const sanctionsEventStr = SANCTIONS_EVENTS[sanctionsIdx]!;
     // Extract date from sanctions event string (last part)
     const sanctionsDateMatch = sanctionsEventStr.match(/(\d{4}-\d{2}-\d{2})/);
     if (sanctionsDateMatch) {
-      const daysDiff = daysBetween(event.date, sanctionsDateMatch[1]);
+      const daysDiff = daysBetween(event.date, sanctionsDateMatch[1]!);
       if (daysDiff <= 90) {
         const significance = daysDiff <= 7
           ? "CRITICAL — corporate action within 1 week of sanctions event"
@@ -83,8 +83,8 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (events.length === 0 || (hash % 3 === 0 && correlations.length === 0)) {
     const deterministicDays = (hash % 20) + 3;
     correlations.push({
-      corpAction: `Entity incorporation — ${new Date(Date.now() - deterministicDays * 86400000 - 90 * 86400000).toISOString().split("T")[0]}`,
-      sanctionsEvent: SANCTIONS_EVENTS[hash % SANCTIONS_EVENTS.length],
+      corpAction: `Entity incorporation — ${new Date(Date.now() - deterministicDays * 86400000 - 90 * 86400000).toISOString().split("T")[0]!}`,
+      sanctionsEvent: SANCTIONS_EVENTS[hash % SANCTIONS_EVENTS.length]!,
       daysDiff: deterministicDays + 90,
       significance: "LOW — incorporation within 6 months of key sanctions event",
     });

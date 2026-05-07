@@ -39,7 +39,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   const hash = hashStr(entityName);
-  const fzKey = freeZone?.toUpperCase() ?? Object.keys(UAE_FREE_ZONES)[hash % Object.keys(UAE_FREE_ZONES).length];
+  const fzKey = freeZone?.toUpperCase() ?? Object.keys(UAE_FREE_ZONES)[hash % Object.keys(UAE_FREE_ZONES).length] ?? "DMCC";
   const fzData = UAE_FREE_ZONES[fzKey] ?? { riskBase: 35, notes: [`${fzKey} free zone — limited oversight data available`] };
 
   const nomineeDirectors = hash % 3 === 0 || fzData.riskBase >= 45;

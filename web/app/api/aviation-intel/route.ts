@@ -56,7 +56,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (tailNumber) {
     aircraft.push({
       registration: tailNumber,
-      type: AIRCRAFT_TYPES[hash % AIRCRAFT_TYPES.length],
+      type: AIRCRAFT_TYPES[hash % AIRCRAFT_TYPES.length]!,
       jurisdiction: AIRCRAFT_JURISDICTIONS[hash % AIRCRAFT_JURISDICTIONS.length]!,
     });
   }
@@ -65,7 +65,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     const regPrefix = AIRCRAFT_JURISDICTIONS[(hash + i) % AIRCRAFT_JURISDICTIONS.length]! === "UAE" ? "A6" : "VP";
     aircraft.push({
       registration: `${regPrefix}-${String.fromCharCode(65 + ((hash + i * 3) % 26))}${String.fromCharCode(65 + ((hash + i * 7) % 26))}${String.fromCharCode(65 + ((hash + i * 11) % 26))}`,
-      type: AIRCRAFT_TYPES[(hash + i) % AIRCRAFT_TYPES.length],
+      type: AIRCRAFT_TYPES[(hash + i) % AIRCRAFT_TYPES.length]!,
       jurisdiction: AIRCRAFT_JURISDICTIONS[(hash + i) % AIRCRAFT_JURISDICTIONS.length]!,
     });
   }
@@ -73,12 +73,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   const sanctionedAirports: string[] = [];
   if (hash % 4 === 0) sanctionedAirports.push(SANCTIONED_AIRPORTS[0]!);
   if (hash % 5 === 0) sanctionedAirports.push(SANCTIONED_AIRPORTS[1]!);
-  if (hash % 7 === 0) sanctionedAirports.push(SANCTIONED_AIRPORTS[2]);
+  if (hash % 7 === 0) sanctionedAirports.push(SANCTIONED_AIRPORTS[2]!);
 
   const flags: string[] = [];
   const flagCount = (hash % 3) + (aircraft.length > 0 ? 1 : 0);
   for (let i = 0; i < flagCount; i++) {
-    flags.push(AVIATION_FLAGS[(hash + i) % AVIATION_FLAGS.length]);
+    flags.push(AVIATION_FLAGS[(hash + i) % AVIATION_FLAGS.length]!);
   }
 
   const riskLevel = sanctionedAirports.length > 1 ? "HIGH"
