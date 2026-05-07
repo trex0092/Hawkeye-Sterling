@@ -122,7 +122,9 @@ async function maybeMigrateLegacy(): Promise<void> {
     }
     await writeIndex(tenant, legacy.cases.map(entryFromCase));
     await bumpMeta(tenant, "merge");
-    await del(LEGACY_KEY).catch(() => {});
+    await del(LEGACY_KEY).catch((err: unknown) => {
+      console.warn("[case-vault] post-migration legacy-blob delete failed (non-fatal):", err);
+    });
   } catch (err) {
     console.warn("[case-vault] legacy migration failed", err);
   }
@@ -215,7 +217,9 @@ export async function deleteCaseById(
   id: string,
 ): Promise<CaseRecord[]> {
   await maybeMigrateLegacy();
-  await del(caseKey(tenant, id)).catch(() => {});
+  await del(caseKey(tenant, id)).catch((err: unknown) => {
+    console.warn(`[case-vault] delete blob ${caseKey(tenant, id)} failed (non-fatal — index will reconcile):`, err);
+  });
   const idx = await readIndex(tenant);
   const next = idx.entries.filter((e) => e.id !== id);
   if (next.length !== idx.entries.length) {

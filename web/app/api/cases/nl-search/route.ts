@@ -307,7 +307,12 @@ export async function POST(req: Request): Promise<NextResponse> {
       matchCount: matchIds.length,
       auditLogged: true,
     });
-  } catch {
+  } catch (err) {
+    console.error(
+      "[hawkeye] cases/nl-search: AI parse failed — returning empty matchIds " +
+      "with self-documenting interpretation/reasoning so UI can show the fallback state.",
+      err,
+    );
     return NextResponse.json({
       ok: true,
       matchIds: [],
@@ -317,6 +322,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       reasoning: "Fallback: search service error",
       matchCount: 0,
       auditLogged: false,
+      fallback: true,
     });
   }
 }

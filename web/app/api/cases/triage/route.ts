@@ -184,7 +184,12 @@ export async function POST(req: Request): Promise<NextResponse> {
       const results = await triageBatch(batch, apiKey);
       triaged.push(...results);
     }
-  } catch {
+  } catch (err) {
+    console.error(
+      "[hawkeye] cases/triage: AI batch triage failed — falling back to rule-based engine. " +
+      "Response carries fallback:true so UI can flag this to the operator.",
+      err,
+    );
     return NextResponse.json({ ok: true, triaged: ruleBasedTriage(allCases), fallback: true });
   }
 
