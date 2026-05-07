@@ -195,7 +195,7 @@ export default function ResponsibleSourcingPage() {
       <div className="space-y-3">
         {OECD_STEPS.map((step) => {
           const stepKey = `step${step.n}` as keyof ResponsibleSourcingState;
-          const s = workflow[stepKey] as ResponsibleSourcingState["step1"];
+          const s = workflow[stepKey] as ResponsibleSourcingState["step1"] & ResponsibleSourcingState["step2"] & ResponsibleSourcingState["step3"] & ResponsibleSourcingState["step4"] & ResponsibleSourcingState["step5"];
           const isActive = activeStep === step.n;
 
           return (
