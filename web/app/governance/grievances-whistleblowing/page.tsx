@@ -932,13 +932,9 @@ export default function GrievancesWhistleblowingPage() {
                 <div className="gw-field" style={{ border: `1px solid ${V.line}`, background: V.panel, position: "sticky", top: 82 }}>
 
                   {/* Form header */}
-                  <div style={{ padding: "14px 18px", borderBottom: `1px solid ${V.line}`, display: "flex", justifyContent: "space-between", alignItems: "center", background: "linear-gradient(180deg,var(--gw-ember-soft),transparent)" }}>
+                  <div style={{ padding: "14px 18px", borderBottom: `1px solid ${V.line}`, background: "linear-gradient(180deg,var(--gw-ember-soft),transparent)" }}>
                     <div className="gw-serif" style={{ fontSize: 18, color: V.ink, fontWeight: 500 }}>
                       File a <em style={{ fontStyle: "italic", color: V.ember }}>disclosure</em>
-                    </div>
-                    <div style={mono({ fontSize: 9.5, color: V.ember, letterSpacing: ".14em", textAlign: "right" })}>
-                      FG-WB-001
-                      <span style={mono({ color: V.ink2, fontSize: 9, display: "block", marginTop: 2 })}>v1.1 · MAY 2026</span>
                     </div>
                   </div>
 
