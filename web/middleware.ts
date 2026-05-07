@@ -44,13 +44,13 @@ function generateNonce(): string {
   return hex;
 }
 
-function buildCspHeader(nonce: string): string {
+function buildCspHeader(_nonce: string): string {
   return [
     "default-src 'self'",
-    // 'strict-dynamic' lets Next.js's nonced loader script load further
-    // chunks without requiring every chunk URL in the policy. Falls back
-    // to 'self' on browsers that don't support strict-dynamic.
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
+    // 'unsafe-inline' is required — Next.js App Router injects many inline
+    // scripts for hydration that do not carry a nonce. 'strict-dynamic' with
+    // a nonce blocks them all and breaks client-side navigation entirely.
+    "script-src 'self' 'unsafe-inline'",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "img-src 'self' data:",
     "font-src 'self' data: https://fonts.gstatic.com",
@@ -140,19 +140,13 @@ export function middleware(req: NextRequest): NextResponse {
     return NextResponse.next();
   }
 
-  // ── 3. CSP nonce for HTML routes ──────────────────────────────────────────
-  // Only emit the nonced CSP for navigations to actual pages, not for
-  // API routes (which don't render HTML). The nonce is set on the *request*
-  // headers so React Server Components in app/layout.tsx can read it via
-  // `headers().get('x-nonce')` and pass it as the `nonce` prop on inline
-  // <script> tags. The CSP is set on the *response* headers and overrides
-  // the static one from netlify.toml for HTML routes.
-  const nonce = generateNonce();
-  const requestHeaders = new Headers(req.headers);
-  requestHeaders.set("x-nonce", nonce);
-
-  const response = NextResponse.next({ request: { headers: requestHeaders } });
-  response.headers.set("Content-Security-Policy", buildCspHeader(nonce));
+  // ── 3. CSP for HTML routes ────────────────────────────────────────────────
+  // Set consistent CSP on every HTML navigation. The nonce approach was
+  // abandoned because Next.js App Router injects hydration scripts that do
+  // not carry a nonce, causing 17+ CSP violations that block client-side
+  // navigation entirely. Use 'unsafe-inline' (consistent with netlify.toml).
+  const response = NextResponse.next();
+  response.headers.set("Content-Security-Policy", buildCspHeader(""));
   return response;
 }
 
