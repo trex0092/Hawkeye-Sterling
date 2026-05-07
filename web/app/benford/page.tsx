@@ -96,11 +96,15 @@ export default function BenfordPage() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ label: r.label, n: r.n, mad: r.mad, chiSquared: r.chiSquared, risk: r.risk, riskDetail: r.riskDetail, flaggedDigits: r.flaggedDigits, digits: r.digits }),
       });
-      if (!res.ok) return;
+      if (!res.ok) {
+        console.error(`[hawkeye] benford-interpret HTTP ${res.status}`);
+        return;
+      }
       const data = await res.json() as { ok: boolean } & BenfordInterpretation;
       if (data.ok) setAiInterp(data);
-    } catch { /* silent */ }
-    finally { setInterpLoading(false); }
+    } catch (err) {
+      console.error("[hawkeye] benford-interpret threw:", err);
+    } finally { setInterpLoading(false); }
   };
 
   function parseAmounts(): number[] {
