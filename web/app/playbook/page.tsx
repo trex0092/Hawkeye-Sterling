@@ -5859,9 +5859,12 @@ export default function PlaybookPage() {
       if (res.ok) {
         const data = await res.json() as ScenarioSimulateResult;
         setSimResult(data);
+      } else {
+        console.error(`[hawkeye] playbook scenario-simulate HTTP ${res.status}`);
       }
-    } catch { /* silent */ }
-    finally { setSimLoading(false); }
+    } catch (err) {
+      console.error("[hawkeye] playbook scenario-simulate threw:", err);
+    } finally { setSimLoading(false); }
   };
 
   const pb = PLAYBOOKS.find((p) => p.id === drawerOpen) ?? null;
@@ -5900,11 +5903,15 @@ export default function PlaybookPage() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ question: qaQuestion }),
       });
-      if (!res.ok) return;
+      if (!res.ok) {
+        console.error(`[hawkeye] playbook-qa HTTP ${res.status}`);
+        return;
+      }
       const data = await res.json() as { ok: boolean; answer: string; citations: string[]; confidence: number; relatedPlaybooks: string[] };
       if (data.ok) setQaAnswer(data);
-    } catch { /* silent */ }
-    finally { setQaLoading(false); }
+    } catch (err) {
+      console.error("[hawkeye] playbook-qa threw:", err);
+    } finally { setQaLoading(false); }
   };
 
   return (

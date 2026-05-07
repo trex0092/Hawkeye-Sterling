@@ -57,12 +57,17 @@ function load(): Supplier[] {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (raw) return JSON.parse(raw) as Supplier[];
-  } catch { /* ignore */ }
+  } catch (err) {
+    console.warn("[hawkeye] vendor-dd suppliers parse failed — returning empty:", err);
+  }
   return [];
 }
 
 function save(list: Supplier[]) {
-  try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); } catch { /* ignore */ }
+  try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); }
+  catch (err) {
+    console.error("[hawkeye] vendor-dd suppliers persist failed — vendor edits will be lost on reload:", err);
+  }
 }
 
 const XIcon = () => (
@@ -115,7 +120,11 @@ export default function SupplierDdPage() {
       if (res.ok) {
         const data = (await res.json()) as { ok: boolean; result: VendorRisk };
         setRiskMap((prev) => ({ ...prev, [v.id]: data.result }));
+      } else {
+        console.error(`[hawkeye] vendor-risk HTTP ${res.status}`);
       }
+    } catch (err) {
+      console.error("[hawkeye] vendor-risk threw:", err);
     } finally {
       setRiskLoading((prev) => ({ ...prev, [v.id]: false }));
     }
