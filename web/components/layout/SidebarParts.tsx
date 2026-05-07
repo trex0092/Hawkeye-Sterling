@@ -448,7 +448,7 @@ export function SidebarMLROCard() {
       try {
         const n = window.localStorage.getItem(OPERATOR_STORAGE_KEY);
         setName(n ?? "");
-      } catch { /* ignore */ }
+      } catch (err) { console.warn("[hawkeye] sidebar operator-name sync read failed:", err); }
     };
     window.addEventListener("hawkeye:operator-role-updated", sync);
     window.addEventListener("hawkeye:operator-updated", sync);

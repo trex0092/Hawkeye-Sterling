@@ -51,7 +51,10 @@ export function AsanaReportButton({ payload, disabled = false }: Props) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify(payload),
       });
-      const json = (await res.json().catch(() => null)) as
+      const json = (await res.json().catch((err: unknown) => {
+        console.warn("[hawkeye] AsanaReportButton response parse failed:", err);
+        return null;
+      })) as
         | { ok?: boolean; taskUrl?: string; error?: string; detail?: string }
         | null;
       if (!res.ok || !json?.ok) {
