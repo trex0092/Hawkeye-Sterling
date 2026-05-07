@@ -90,6 +90,20 @@ import { chainOfCustodyBreakApply } from './wave3-chain-of-custody-break.js';
 import { assayCertificateAuditApply } from './wave3-assay-certificate.js';
 import { vesselBeneficialOwnerApply } from './wave3-vessel-beneficial-owner.js';
 
+// Wave-3 batch-3 modules (PR feat/wave3-implement-batch-3).
+// Insurance — FATF Life-Insurance Guidance Oct 2018 + IAIS ICP 22.
+// Cyber-fraud — NIST SP 800-177r1 + FBI IC3 BEC + UAE CBUAE Cyber 21/2018.
+import { insEarlySurrenderCashApply } from './wave3-ins-early-surrender.js';
+import { insPremiumOverfundApply } from './wave3-ins-premium-overfund.js';
+import { insPolicyAssignmentApply } from './wave3-ins-policy-assignment.js';
+import { insBeneficiaryRotationApply } from './wave3-ins-beneficiary-rotation.js';
+import { insCrossBorderNomineeApply } from './wave3-ins-cross-border-nominee.js';
+import { insSinglePremiumScrutinyApply } from './wave3-ins-single-premium.js';
+import { emailSpoofForensicApply } from './wave3-email-spoof.js';
+import { typosquatDomainDetectionApply } from './wave3-typosquat-domain.js';
+import { invoiceRedirectionTraceApply } from './wave3-invoice-redirection.js';
+import { ceoImpersonationSignalApply } from './wave3-ceo-impersonation.js';
+
 export type ModeApply = (ctx: BrainContext) => Promise<Finding>;
 
 const WAVE3_MODE_APPLIES: Record<string, ModeApply> = {
@@ -171,6 +185,22 @@ const WAVE3_MODE_APPLIES: Record<string, ModeApply> = {
   chain_of_custody_break: chainOfCustodyBreakApply,
   assay_certificate_audit: assayCertificateAuditApply,
   vessel_beneficial_owner: vesselBeneficialOwnerApply,
+
+  // ── Wave-3 batch-3 modules (PR feat/wave3-implement-batch-3) ──
+  // Insurance: FATF Life-Insurance Guidance Oct 2018 + IAIS ICP 22 +
+  //   UAE CBUAE Reg 26/2014.
+  // Cyber-fraud: NIST SP 800-177r1 + FBI IC3 BEC + UAE CBUAE Cyber
+  //   Risk Management Standard 21/2018.
+  ins_early_surrender_cash: insEarlySurrenderCashApply,
+  ins_premium_overfund: insPremiumOverfundApply,
+  ins_policy_assignment: insPolicyAssignmentApply,
+  ins_beneficiary_rotation: insBeneficiaryRotationApply,
+  ins_cross_border_nominee: insCrossBorderNomineeApply,
+  ins_single_premium_scrutiny: insSinglePremiumScrutinyApply,
+  email_spoof_forensic: emailSpoofForensicApply,
+  typosquat_domain_detection: typosquatDomainDetectionApply,
+  invoice_redirection_trace: invoiceRedirectionTraceApply,
+  ceo_impersonation_signal: ceoImpersonationSignalApply,
 
   ...SANCTIONS_BATCH_APPLIES,
   ...TBML_BATCH_APPLIES,
