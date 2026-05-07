@@ -133,7 +133,10 @@ async function handlePost(req: Request): Promise<NextResponse> {
     item.subjectName,
     item.reason,
     item.initiatedBy,
-  ).catch(() => null);
+  ).catch((err: unknown) => {
+    console.warn("[hawkeye] four-eyes AI enrichment failed — item stored without aiSummary:", err);
+    return null;
+  });
 
   const enrichedItem: FourEyesItem & {
     aiSummary?: string;
@@ -249,7 +252,10 @@ async function handlePatch(req: Request): Promise<NextResponse> {
   await setJson(`four-eyes/${id}`, updated);
 
   // Report to Asana Four-Eyes board — non-blocking, best effort
-  const asanaTaskUrl = await reportToAsana(updated, action, operator).catch(() => null);
+  const asanaTaskUrl = await reportToAsana(updated, action, operator).catch((err: unknown) => {
+    console.warn("[hawkeye] four-eyes Asana report failed — decision logged locally but no Asana task created:", err);
+    return null;
+  });
 
   return NextResponse.json({ ok: true, item: updated, ...(asanaTaskUrl ? { asanaTaskUrl } : {}) });
 }
