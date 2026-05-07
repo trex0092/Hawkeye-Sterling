@@ -3,11 +3,12 @@
 // invalid route export fields.
 
 import { generateSalt, hashPassword } from "@/lib/server/auth";
-import { randomBytes } from "node:crypto";
+import { createHmac, randomBytes } from "node:crypto";
 
-export type UserRole = "compliance" | "management" | "logistics" | "trading" | "accounts";
+export type UserRole = "compliance" | "management" | "logistics" | "trading" | "accounts" | "mlro";
 
 export const ROLE_LABEL: Record<UserRole, string> = {
+  mlro: "MLRO / Compliance Officer",
   compliance: "Compliance Department",
   management: "Management Department",
   logistics: "Logistic Department",
@@ -46,6 +47,7 @@ const ALL_MODULES = [
 ];
 
 export const ROLE_MODULES: Record<UserRole, string[]> = {
+  mlro: ALL_MODULES,
   compliance: ALL_MODULES,
   management: ["Screening", "STR Cases", "MLRO Advisor", "Oversight", "EWRA", "Audit Trail"],
   logistics: ["Screening", "Investigation", "Audit Trail"],
@@ -63,7 +65,6 @@ function resolveInitialPassword(): string {
 
   // Derive a stable, deployment-specific password so it survives cold restarts
   // without requiring a new env var. Same anchor used by auth.ts getSecret().
-  const { createHmac } = require("node:crypto") as typeof import("node:crypto");
   const anchor =
     process.env["AUDIT_CHAIN_SECRET"] ??
     process.env["SESSION_SECRET"] ??
@@ -99,10 +100,10 @@ export const USERS: AccessUser[] = [
     id: "usr-001",
     name: "Luisa Fernanda",
     email: "",
-    role: "compliance",
+    role: "mlro",
     lastLogin: "2025-04-30T08:14:22Z",
     active: true,
-    modules: ROLE_MODULES.compliance,
+    modules: ROLE_MODULES.mlro,
     username: "luisa",
     passwordHash: _luisaHash,
     passwordSalt: _luisaSalt,
