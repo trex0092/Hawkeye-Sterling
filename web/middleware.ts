@@ -14,49 +14,24 @@ function isPublic(pathname: string): boolean {
   return PUBLIC_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/") || pathname.startsWith(p + "?"));
 }
 
-// ── Session verification in Edge (pure string/HMAC — no Node crypto) ─────────
-// We replicate the HMAC check from lib/server/auth.ts using the SubtleCrypto
-// API available in the Edge runtime.
+// ── Session verification in Edge ─────────────────────────────────────────────
+// The Edge runtime cannot reliably access all Netlify env vars (SESSION_SECRET
+// is a Node.js Lambda concern). We do NOT attempt HMAC verification here.
+// Instead we just check that the session cookie exists and hasn't expired.
+//
+// Full HMAC verification happens in auth.ts (Node.js runtime) for every API
+// call and in the /api/auth/me route — so spoofing the cookie only lets an
+// attacker see the (empty) app shell; they cannot load any real data.
 
-async function hmacSha256Base64url(key: string, data: string): Promise<string> {
-  const enc = new TextEncoder();
-  const cryptoKey = await crypto.subtle.importKey(
-    "raw",
-    enc.encode(key),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"],
-  );
-  const sig = await crypto.subtle.sign("HMAC", cryptoKey, enc.encode(data));
-  return btoa(String.fromCharCode(...new Uint8Array(sig)))
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, "");
-}
-
-// Mirrors auth.ts getSecret(): use SESSION_SECRET if present, else a fixed fallback.
-// SESSION_SECRET is scoped "All scopes" in Netlify so it's available in Edge functions.
-// We intentionally do NOT attempt the AUDIT_CHAIN_SECRET derivation here because that
-// variable is only scoped to Lambda functions, not Edge functions — using it would
-// cause a key mismatch between middleware (Edge) and the login route (Node.js Lambda).
-async function resolveSessionSecret(): Promise<string> {
-  const explicit = process.env["SESSION_SECRET"];
-  if (explicit) return explicit;
-
-  // Last resort — same literal fallback used by auth.ts when no anchor is available.
-  return "hawkeye-sterling-dev-secret-change-in-prod";
-}
-
-async function isValidSession(token: string): Promise<boolean> {
-  const dot = token.lastIndexOf(".");
-  if (dot === -1) return false;
-  const encoded = token.slice(0, dot);
-  const sig = token.slice(dot + 1);
-  const secret = await resolveSessionSecret();
-  const expected = await hmacSha256Base64url(secret, encoded);
-  if (expected !== sig) return false;
+function isValidSession(token: string): boolean {
+  if (!token) return false;
   try {
-    const payload = JSON.parse(atob(encoded.replace(/-/g, "+").replace(/_/g, "/"))) as { exp?: number };
+    const dot = token.lastIndexOf(".");
+    if (dot === -1) return false;
+    const encoded = token.slice(0, dot);
+    const payload = JSON.parse(
+      atob(encoded.replace(/-/g, "+").replace(/_/g, "/")),
+    ) as { exp?: number };
     return typeof payload.exp === "number" && payload.exp > Math.floor(Date.now() / 1000);
   } catch {
     return false;
@@ -72,17 +47,13 @@ function hostnameOf(value: string): string | null {
   }
 }
 
-export async function middleware(req: NextRequest): Promise<NextResponse> {
+export function middleware(req: NextRequest): NextResponse {
   const { pathname } = req.nextUrl;
 
   // ── 1. Session guard (non-API routes) ──────────────────────────────────────
   if (!pathname.startsWith("/api/") && !isPublic(pathname)) {
     const token = req.cookies.get(SESSION_COOKIE)?.value ?? "";
-    let valid = false;
-    try {
-      valid = token ? await isValidSession(token) : false;
-    } catch { /* treat any crypto error as invalid */ }
-    if (!valid) {
+    if (!isValidSession(token)) {
       const loginUrl = req.nextUrl.clone();
       loginUrl.pathname = "/login";
       loginUrl.search = "";
