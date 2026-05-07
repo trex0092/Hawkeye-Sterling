@@ -409,22 +409,6 @@ export function HitTriagePanel({ subjectId, subjectName, hits, resolutions = {},
                                 False — different person
                               </button>
                             </div>
-                            {/* CNMR obligation banner — TFS list confirmed matches require filing within 5 business days (CD74/2020 Art.21) */}
-                            {resolutions[h.id] === "positive" &&
-                              (h.source === "qa-namlc" || h.source?.includes("un-consolidated") || h.source?.includes("un-1267") || h.source?.includes("un-1988") || h.type === "TER") && (
-                              <div className="mt-2 flex items-center gap-3 px-3 py-2 rounded border border-red/40 bg-red-dim/30">
-                                <span className="font-mono text-10 font-bold text-red uppercase tracking-wide shrink-0">⚠ CNMR Required</span>
-                                <span className="text-11 text-ink-1 flex-1">
-                                  Confirmed match on a UAE TFS list. A Confirmed Name Match Report must reach EOCN + MoE via goAML within <strong>5 business days</strong> of the freeze (CD74/2020 Art.21).
-                                </span>
-                                <a
-                                  href="/cnmr"
-                                  className="shrink-0 text-11 font-semibold px-3 py-1 rounded bg-red text-white hover:bg-red/90 transition-colors"
-                                >
-                                  File CNMR →
-                                </a>
-                              </div>
-                            )}
                             <p className="text-10 text-ink-3 mt-1.5">
                               <strong>Positive</strong> auto-creates an ongoing-monitoring task in Asana and locks this match into the audit trail. <strong>False</strong> documents the disambiguation rationale (FATF R.10 / FDL Art.19).
                             </p>
