@@ -68,9 +68,8 @@
     Referrer-Policy = "strict-origin-when-cross-origin"
     Strict-Transport-Security = "max-age=63072000; includeSubDomains; preload"
     Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=()"
-    # CSP: Next.js emits multiple per-build inline bootstrap scripts (hydration,
-    # __NEXT_DATA__, theme-flash). Pinning a single sha256 hash blocks the rest
-    # and breaks React hydration -> all click handlers go dead (login button
-    # visibly does nothing). 'unsafe-inline' is the pragmatic unblock; migrate
-    # to per-request nonces via Next middleware as a follow-up.
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://app.asana.com https://api.anthropic.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
+    # CSP is now set per-request by web/middleware.ts with a fresh nonce,
+    # so 'unsafe-inline' is no longer needed. Multiple CSP headers
+    # *intersect* (most-restrictive wins), so a static fallback here
+    # would clash with the middleware-set policy. API routes (which don't
+    # render HTML) get no CSP — script-src is moot for JSON responses.

@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { headers } from "next/headers";
 import "./globals.css";
 import { CaseVaultSyncer } from "@/components/CaseVaultSyncer";
 import { ServiceWorkerRegistrar } from "@/components/layout/ServiceWorkerRegistrar";
@@ -30,11 +31,16 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  // Picked up from middleware.ts — empty string fallback keeps dev hot-reload
+  // working when the middleware hasn't run (e.g. static export probes).
+  const nonce = headers().get("x-nonce") ?? "";
+
   return (
     <html lang="en-GB">
       <head>
         {/* Runs synchronously before paint — prevents flash of light theme on dark-mode reload */}
         <script
+          nonce={nonce}
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var t=localStorage.getItem('hawkeye.theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();`,
           }}
