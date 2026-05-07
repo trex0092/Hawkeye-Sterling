@@ -365,7 +365,10 @@ async function postDailyTMReport(args: {
         },
       }),
     });
-    const payload = (await res.json().catch(() => null)) as
+    const payload = (await res.json().catch((err: unknown) => {
+      console.warn("[hawkeye] tm-run Asana POST response parse failed:", err);
+      return null;
+    })) as
       | { data?: { permalink_url?: string } }
       | null;
     return {
