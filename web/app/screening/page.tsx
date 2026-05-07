@@ -487,7 +487,8 @@ function loadSubjects(): Subject[] {
     // the seed corpus so the UI always has something to show.
     const valid = parsed.filter(isPersistedSubject);
     return valid.length > 0 ? valid : SUBJECTS;
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] screening loadSubjects parse failed — using SUBJECTS seed:", err);
     return SUBJECTS;
   }
 }
@@ -625,12 +626,14 @@ export default function ScreeningPage() {
     setSubjects(loaded);
     setSelectedId((prev) => prev ?? loaded[0]?.id ?? null);
     setHydrated(true);
-    try { setOperatorName(window.localStorage.getItem("hawkeye.operator") ?? ""); } catch {}
+    try { setOperatorName(window.localStorage.getItem("hawkeye.operator") ?? ""); }
+    catch (err) { console.warn("[hawkeye] screening operator-name read failed:", err); }
   }, []);
 
   useEffect(() => {
     const sync = () => {
-      try { setOperatorName(window.localStorage.getItem("hawkeye.operator") ?? ""); } catch {}
+      try { setOperatorName(window.localStorage.getItem("hawkeye.operator") ?? ""); }
+      catch (err) { console.warn("[hawkeye] screening operator-name sync read failed:", err); }
     };
     window.addEventListener("hawkeye:operator-updated", sync);
     return () => window.removeEventListener("hawkeye:operator-updated", sync);
@@ -640,15 +643,17 @@ export default function ScreeningPage() {
     try {
       const loaded = loadSubjects();
       setSubjects(loaded);
-    } catch { /* ignore */ }
+    } catch (err) {
+      console.error("[hawkeye] screening handleRefresh failed:", err);
+    }
   }, []);
 
   useEffect(() => {
     if (!hydrated) return;
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(subjects));
-    } catch {
-      /* quota / disabled storage — skip */
+    } catch (err) {
+      console.error("[hawkeye] screening subjects persist failed — subject edits will be lost on reload:", err);
     }
   }, [subjects, hydrated]);
 
@@ -1253,10 +1258,16 @@ export default function ScreeningPage() {
       });
       // Read as text first so a non-JSON 502 / HTML error page doesn't
       // crash the JSON parser and mask the real status code.
-      const raw = await res.text().catch(() => "");
+      const raw = await res.text().catch((err: unknown) => {
+        console.warn("[hawkeye] screening adverse-media res.text() failed:", err);
+        return "";
+      });
       let data: AdverseMediaApiResponse | null = null;
       if (raw) {
-        try { data = JSON.parse(raw) as AdverseMediaApiResponse; } catch { /* non-JSON */ }
+        try { data = JSON.parse(raw) as AdverseMediaApiResponse; }
+        catch (err) {
+          console.error(`[hawkeye] screening adverse-media non-JSON HTTP ${res.status} — first 200 chars: ${raw.slice(0, 200)}`, err);
+        }
       }
       if (!res.ok) {
         setAmError(data?.error ?? `Search failed - server ${res.status}`);
