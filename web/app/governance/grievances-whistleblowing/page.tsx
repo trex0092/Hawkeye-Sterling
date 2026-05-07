@@ -330,52 +330,11 @@ export default function GrievancesWhistleblowingPage() {
         {/* Grain overlay */}
         <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 1, backgroundImage: "radial-gradient(rgba(255,255,255,.012) 1px,transparent 1px)", backgroundSize: "3px 3px", mixBlendMode: "overlay" }} />
 
-        {/* ── REGULATORY STRIP ── */}
-        <div style={{ borderBottom: `1px solid ${V.line}`, background: "linear-gradient(180deg,rgba(28,26,21,.4),transparent)", padding: "7px 22px", display: "flex", gap: 16, alignItems: "center", overflowX: "auto", whiteSpace: "nowrap", position: "relative", zIndex: 2 }}>
-          <span style={mono({ color: V.ember, letterSpacing: ".18em", textTransform: "uppercase", fontWeight: 600, fontSize: 9.5 })}>Regulatory Basis</span>
-          {[
-            "FDL No.10/2025 Arts.16, 17, 20",
-            "CR No.134/2025 Art.50",
-            "CR No.24/2022 Penalties",
-            "MoE AML/CFT Guidelines Sep 2025 §6",
-            "ISO 37002:2021",
-            "FATF R.18",
-            "PDPL FDL No.45/2021",
-          ].map((r, i, arr) => (
-            <span key={r} style={{ display: "inline-flex", gap: 8, alignItems: "center" }}>
-              <span style={mono({ color: V.ink2, fontSize: 10, letterSpacing: ".06em" })}>{r}</span>
-              {i < arr.length - 1 && <span style={{ color: V.muted2 }}>·</span>}
-            </span>
-          ))}
-          <span style={{ flex: 1 }} />
-          <span style={mono({ color: V.muted, fontSize: 9.5 })}>RETENTION</span>
-          <span style={mono({ color: V.ink2, fontSize: 10 })}>10 YR</span>
-          <span style={{ color: V.muted2 }}>·</span>
-          <span style={mono({ color: V.muted, fontSize: 9.5 })}>MOE PROD.</span>
-          <span style={mono({ color: V.ink2, fontSize: 10 })}>≤48H</span>
-        </div>
-
         {/* ── SIDEBAR + MAIN GRID ── */}
         <div style={{ display: "grid", gridTemplateColumns: "268px 1fr", minHeight: "calc(100vh - 54px - 28px - 30px)", position: "relative", zIndex: 2 }}>
 
           {/* ══ SIDEBAR ══ */}
           <aside style={{ borderRight: `1px solid ${V.line}`, padding: "22px 18px 30px", background: "linear-gradient(180deg,rgba(28,26,21,.35),transparent 220px)" }}>
-
-            {/* Active Case Focus */}
-            <div style={mono({ fontSize: 9.5, letterSpacing: ".22em", textTransform: "uppercase", color: V.muted, marginBottom: 10 })}>Active Case Focus</div>
-            <div style={{ border: `1px solid ${V.line}`, background: V.panel, padding: "14px 14px 12px", marginBottom: 14, position: "relative" }}>
-              {/* Pink corner triangle */}
-              <div style={{ position: "absolute", top: -1, right: -1, width: 0, height: 0, borderLeft: "14px solid transparent", borderTop: `14px solid oklch(74% 0.18 350)` }} />
-              <div style={mono({ fontSize: 11, color: V.ember, letterSpacing: ".08em" })}>FG-WB-2026-014</div>
-              <div style={mono({ fontSize: 9.5, color: V.muted, marginTop: 3, letterSpacing: ".05em" })}>
-                CHANNEL · EMAIL → COMPLIANCE@<br />
-                RECEIVED · 02 MAY 2026 · 09:14
-              </div>
-              <div style={{ marginTop: 10, display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
-                <span style={mono({ color: V.ink2, textTransform: "uppercase", letterSpacing: ".12em", fontSize: 9.5 })}>Stage 03 · Investigation</span>
-                <span style={mono({ color: V.ember, fontWeight: 600, fontSize: 10 })}>SLA · 22d left</span>
-              </div>
-            </div>
 
             {/* Programme Stats */}
             <div style={mono({ fontSize: 9.5, letterSpacing: ".22em", textTransform: "uppercase", color: V.muted, marginBottom: 10 })}>Programme · 30 Days</div>
@@ -454,7 +413,7 @@ export default function GrievancesWhistleblowingPage() {
             </div>
 
             {/* ── HERO ── */}
-            <section style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: 36, marginTop: 14, alignItems: "end", paddingBottom: 22, borderBottom: `1px solid ${V.line}` }}>
+            <section style={{ marginTop: 14, paddingBottom: 22, borderBottom: `1px solid ${V.line}` }}>
               <div>
                 <h1 className="gw-serif" style={{ fontWeight: 400, fontSize: 54, letterSpacing: "-0.02em", lineHeight: 1.0, color: V.ink, margin: "6px 0 0" } as React.CSSProperties}>
                   A protected channel<br />to <em style={{ fontStyle: "italic", color: V.ember }}>speak up.</em>
@@ -465,6 +424,7 @@ export default function GrievancesWhistleblowingPage() {
                 </p>
                 <div style={{ display: "flex", gap: 10, marginTop: 22, flexWrap: "wrap" as const }}>
                   <button
+                    type="button"
                     onClick={() => formRef.current?.scrollIntoView({ behavior: "smooth" })}
                     style={{ border: `1px solid oklch(74% 0.18 350)`, background: "oklch(74% 0.18 350)", color: "#1a0613", padding: "10px 18px", fontFamily: "'Inter',sans-serif", fontSize: 12.5, fontWeight: 600, letterSpacing: ".02em", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 9, borderRadius: 1 }}
                   >
@@ -472,6 +432,7 @@ export default function GrievancesWhistleblowingPage() {
                     <span style={mono({ fontSize: 10, border: "1px solid rgba(0,0,0,.25)", padding: "1px 5px", color: "#1a0613", background: "rgba(0,0,0,.08)" })}>N</span>
                   </button>
                   <button
+                    type="button"
                     className="gw-ghost"
                     onClick={() => registerRef.current?.scrollIntoView({ behavior: "smooth" })}
                     style={{ border: `1px solid ${V.line2}`, background: "transparent", color: V.ink, padding: "10px 18px", fontFamily: "'Inter',sans-serif", fontSize: 12.5, fontWeight: 600, letterSpacing: ".02em", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 9, borderRadius: 1 }}
@@ -480,7 +441,9 @@ export default function GrievancesWhistleblowingPage() {
                     <span style={mono({ fontSize: 10, border: `1px solid ${V.line2}`, padding: "1px 5px", color: V.ink2, background: "transparent" })}>R</span>
                   </button>
                   <button
+                    type="button"
                     className="gw-ghost"
+                    onClick={() => window.print()}
                     style={{ border: `1px solid ${V.line2}`, background: "transparent", color: V.ink, padding: "10px 18px", fontFamily: "'Inter',sans-serif", fontSize: 12.5, fontWeight: 600, letterSpacing: ".02em", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 9, borderRadius: 1 }}
                   >
                     Download policy PDF
@@ -488,28 +451,10 @@ export default function GrievancesWhistleblowingPage() {
                   </button>
                 </div>
               </div>
-
-              {/* Policy meta panel */}
-              <div style={{ border: `1px solid ${V.line}`, background: V.panel, padding: "14px 16px" }}>
-                {([
-                  { k: "Policy code",     v: "FG/GVW/004",                accent: true  },
-                  { k: "Version",         v: "004",                       accent: false },
-                  { k: "Effective",       v: "28 NOV 2025",               accent: false },
-                  { k: "Next review",     v: "JUN 2026",                  accent: false },
-                  { k: "Owner",           v: "Compliance Officer / MLRO", accent: false },
-                  { k: "Approver",        v: "Management",                accent: false },
-                  { k: "Classification",  v: "CONFIDENTIAL",              accent: true  },
-                ] as const).map((row, i, arr) => (
-                  <div key={row.k} style={mono({ display: "flex", justifyContent: "space-between", padding: "4px 0", borderBottom: i < arr.length - 1 ? `1px dotted ${V.line2}` : "none", fontSize: 10.5, color: V.muted })}>
-                    <span>{row.k}</span>
-                    <span style={{ color: row.accent ? V.ember : V.ink2 }}>{row.v}</span>
-                  </div>
-                ))}
-              </div>
             </section>
 
             {/* ── TWO-COLUMN CONTENT ── */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 360px", gap: 36, marginTop: 32 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: 28, marginTop: 32 }}>
 
               {/* ── LEFT COLUMN ── */}
               <div>
