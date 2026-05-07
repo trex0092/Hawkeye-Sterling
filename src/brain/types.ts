@@ -268,12 +268,6 @@ export interface FusionResult {
   contributorCount: number;
   methodology: string;                 // plain-text description per charter P9
   firepower: CognitiveFirepower;       // per-faculty activation + composite firepower score
-  /** Multi-source corroboration score over all evidence cited by the
-   *  contributing findings. Diagnostic only — does NOT affect verdict math.
-   *  Surfaced so MLROs and downstream UI can see whether findings are backed
-   *  by a single source vs multiple independent sources, without re-deriving
-   *  the metric. Undefined when no evidence index was supplied. */
-  corroboration?: import('./evidence-corroboration.js').CorroborationResult;
 }
 
 export interface IntrospectionReport {
