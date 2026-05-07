@@ -84,7 +84,7 @@ export default function EocnPage() {
       try {
         const r = await fetch("/api/eocn-registration");
         if (r.ok) { const d = (await r.json()) as { ok: boolean; registration: EocnRegistrationRecord }; if (d.ok) setRegistration(d.registration); }
-      } catch { /* ignore */ }
+      } catch (err) { console.warn("[hawkeye] eocn registration fetch failed:", err); }
     })();
     (async () => {
       try {
@@ -201,10 +201,12 @@ export default function EocnPage() {
     // remove original from seed (via deletedIds) and upsert in custom
     const newDeleted = deletedMatchIds.includes(m.id) ? deletedMatchIds : [...deletedMatchIds, m.id];
     setDeletedMatchIds(newDeleted);
-    try { localStorage.setItem(EOCN_DELETED_KEY, JSON.stringify(newDeleted)); } catch { /* ignore */ }
+    try { localStorage.setItem(EOCN_DELETED_KEY, JSON.stringify(newDeleted)); }
+    catch (err) { console.warn("[hawkeye] eocn deleted-matches persist failed:", err); }
     const nextCustom = [...customMatches.filter((c) => c.id !== m.id), patched];
     setCustomMatches(nextCustom);
-    try { localStorage.setItem(EOCN_CUSTOM_KEY, JSON.stringify(nextCustom)); } catch { /* ignore */ }
+    try { localStorage.setItem(EOCN_CUSTOM_KEY, JSON.stringify(nextCustom)); }
+    catch (err) { console.warn("[hawkeye] eocn custom-matches persist failed:", err); }
     setEditingMatchId(null);
   };
 
@@ -749,7 +751,7 @@ function DesignatedNamesPanel({ update }: { update: ListUpdate }): JSX.Element {
     try {
       const stored = window.localStorage.getItem(STORAGE_KEY);
       if (stored != null) return stored;
-    } catch { /* ignore */ }
+    } catch (err) { console.warn("[hawkeye] eocn names list parse failed:", err); }
     return seedNames.join("\n");
   });
   useEffect(() => {

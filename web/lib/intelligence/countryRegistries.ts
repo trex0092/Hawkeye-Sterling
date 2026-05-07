@@ -1061,7 +1061,10 @@ export async function searchCountryRegistries(
     ? adapters.filter((a) => a.jurisdiction === jurisdiction.toUpperCase())
     : adapters;
   if (targets.length === 0) return { records: [], jurisdictions: [] };
-  const results = await Promise.all(targets.map((a) => a.search(subjectName, { jurisdiction, limit }).catch(() => [])));
+  const results = await Promise.all(targets.map((a) => a.search(subjectName, { jurisdiction, limit }).catch((err: unknown) => {
+    console.warn(`[hawkeye] countryRegistries[${a.jurisdiction}] search failed:`, err);
+    return [];
+  })));
   const merged = results.flat();
   // Dedupe by (source, name, regNo)
   const seen = new Set<string>();

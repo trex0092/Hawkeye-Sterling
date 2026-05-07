@@ -66,22 +66,24 @@ export default function MoeSurveyPage() {
         const data = (await res.json()) as { ok: boolean; survey: MoeSurveyState };
         if (data.ok) { setSurvey(data.survey); return; }
       }
-    } catch { /* fall through to localStorage */ }
+    } catch (err) { console.warn("[hawkeye] moe-survey server load failed — falling through to localStorage:", err); }
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) setSurvey(JSON.parse(raw) as MoeSurveyState);
-    } catch { /* ignore */ }
+    } catch (err) { console.warn("[hawkeye] moe-survey localStorage parse failed:", err); }
   }, []);
 
   useEffect(() => { void loadSurvey(); }, [loadSurvey]);
 
   const autosave = useCallback(async (updated: MoeSurveyState) => {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(updated)); } catch { /* ignore */ }
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(updated)); }
+    catch (err) { console.warn("[hawkeye] moe-survey localStorage persist failed:", err); }
     setSaving(true);
     try {
       const res = await fetch("/api/moe-survey", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(updated) });
       if (res.ok) setLastSaved(new Date());
-    } catch { /* ignore */ }
+      else console.error(`[hawkeye] moe-survey autosave HTTP ${res.status}`);
+    } catch (err) { console.error("[hawkeye] moe-survey autosave threw:", err); }
     finally { setSaving(false); }
   }, []);
 
@@ -361,7 +363,7 @@ export default function MoeSurveyPage() {
         <div className="flex flex-wrap gap-3">
           <button type="button" disabled={!isReady}
             className="inline-flex items-center gap-2 px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-40"
-            onClick={() => { try { const blob = new Blob([JSON.stringify(survey, null, 2)], { type: "application/json" }); const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = `moe-survey-${new Date().toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(url); } catch { /* ignore */ } }}>
+            onClick={() => { try { const blob = new Blob([JSON.stringify(survey, null, 2)], { type: "application/json" }); const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = `moe-survey-${new Date().toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(url); } catch (err) { console.error("[hawkeye] moe-survey JSON export failed:", err); } }}>
             Export JSON
           </button>
           <a href="/governance/inspection-room" className="inline-flex items-center gap-2 px-4 py-2 rounded border border-hair-2 text-ink-1 text-12 font-medium hover:bg-bg-2 no-underline">
