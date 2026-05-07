@@ -34,37 +34,16 @@ async function hmacSha256Base64url(key: string, data: string): Promise<string> {
     .replace(/=+$/, "");
 }
 
-async function hmacSha256Hex(key: string, data: string): Promise<string> {
-  const enc = new TextEncoder();
-  const cryptoKey = await crypto.subtle.importKey(
-    "raw",
-    enc.encode(key),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"],
-  );
-  const sig = await crypto.subtle.sign("HMAC", cryptoKey, enc.encode(data));
-  return Array.from(new Uint8Array(sig))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-}
-
-// Mirrors auth.ts getSecret() so middleware and login route always agree on the signing key.
+// Mirrors auth.ts getSecret(): use SESSION_SECRET if present, else a fixed fallback.
+// SESSION_SECRET is scoped "All scopes" in Netlify so it's available in Edge functions.
+// We intentionally do NOT attempt the AUDIT_CHAIN_SECRET derivation here because that
+// variable is only scoped to Lambda functions, not Edge functions — using it would
+// cause a key mismatch between middleware (Edge) and the login route (Node.js Lambda).
 async function resolveSessionSecret(): Promise<string> {
-  const explicit = process.env["SESSION_SECRET"] ?? "";
-  if (explicit.length >= 16) return explicit;
+  const explicit = process.env["SESSION_SECRET"];
+  if (explicit) return explicit;
 
-  // Derive the same key auth.ts produces: HMAC-SHA256(anchor, "hawkeye-session-secret-v1") → hex
-  const anchor =
-    process.env["AUDIT_CHAIN_SECRET"] ??
-    process.env["NETLIFY_SITE_ID"] ??
-    process.env["SITE_ID"] ??
-    "";
-  if (anchor.length >= 8) {
-    return hmacSha256Hex(anchor, "hawkeye-session-secret-v1");
-  }
-
-  // Last resort — same literal fallback used by the dev server (no anchor available).
+  // Last resort — same literal fallback used by auth.ts when no anchor is available.
   return "hawkeye-sterling-dev-secret-change-in-prod";
 }
 
