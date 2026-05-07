@@ -29,9 +29,10 @@ function isValidSession(token: string): boolean {
     const dot = token.lastIndexOf(".");
     if (dot === -1) return false;
     const encoded = token.slice(0, dot);
-    const payload = JSON.parse(
-      atob(encoded.replace(/-/g, "+").replace(/_/g, "/")),
-    ) as { exp?: number };
+    // Restore base64 padding that base64url strips — Deno's atob requires it.
+    const b64 = encoded.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = b64 + "=".repeat((4 - (b64.length % 4)) % 4);
+    const payload = JSON.parse(atob(padded)) as { exp?: number };
     return typeof payload.exp === "number" && payload.exp > Math.floor(Date.now() / 1000);
   } catch {
     return false;
