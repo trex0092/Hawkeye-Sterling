@@ -780,7 +780,7 @@ export default function GrievancesWhistleblowingPage() {
           </aside>
 
           {/* ══ MAIN ══ */}
-          <main className="gw-main-panel" style={{ padding: "28px 36px 60px", minWidth: 0 }}>
+          <main className="gw-main-panel" style={{ padding: "28px 16px 60px", minWidth: 0 }}>
 
             {/* Breadcrumbs */}
             <div style={mono({ fontSize: 10, letterSpacing: ".18em", textTransform: "uppercase", color: V.muted, display: "flex", gap: 10, alignItems: "center" })}>
@@ -832,7 +832,7 @@ export default function GrievancesWhistleblowingPage() {
             </section>
 
             {/* ── TWO-COLUMN CONTENT ── */}
-            <div className="gw-content-grid" style={{ display: "grid", gridTemplateColumns: "1fr 420px", gap: 20, marginTop: 32 }}>
+            <div className="gw-content-grid" style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 500px", gap: 20, marginTop: 32 }}>
 
               {/* ── LEFT COLUMN ── */}
               <div>
