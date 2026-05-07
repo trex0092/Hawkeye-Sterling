@@ -64,7 +64,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const offenceKey = offenceType.toLowerCase();
   const jurisKey = jurisdiction;
 
-  const rules = LIMITATION_RULES[offenceKey] ?? LIMITATION_RULES["fraud"];
+  const rules = LIMITATION_RULES[offenceKey] ?? LIMITATION_RULES["fraud"] ?? {};
   const rule = rules[jurisKey] ?? rules["default"] ?? { years: 7, legalBasis: "Standard limitation period applied" };
 
   const today = new Date();
@@ -83,7 +83,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   } else {
     const expiry = new Date(baseDate);
     expiry.setFullYear(expiry.getFullYear() + rule.years);
-    expiryDate = expiry.toISOString().split("T")[0];
+    expiryDate = expiry.toISOString().split("T")[0]!;
     expired = expiry < today;
     daysUntilStale = Math.max(0, Math.floor((expiry.getTime() - today.getTime()) / 86400000));
     urgency = expired ? "EXPIRED" : daysUntilStale < 90 ? "CRITICAL" : daysUntilStale < 365 ? "HIGH" : daysUntilStale < 730 ? "MEDIUM" : "LOW";

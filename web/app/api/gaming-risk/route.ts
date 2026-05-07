@@ -39,7 +39,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const licenceCount = hash % 3;
   const licences: string[] = [];
   for (let i = 0; i < licenceCount; i++) {
-    licences.push(CASINO_LICENCE_TYPES[(hash + i) % CASINO_LICENCE_TYPES.length]);
+    licences.push(CASINO_LICENCE_TYPES[(hash + i) % CASINO_LICENCE_TYPES.length]!);
   }
 
   const casinoExposure = licenceCount > 0 || hash % 4 === 0;

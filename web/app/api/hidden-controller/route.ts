@@ -52,12 +52,12 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const controlMechanism: string[] = [];
   for (let i = 0; i < controlMechanismCount; i++) {
-    controlMechanism.push(CONTROL_MECHANISMS[(hash + i) % CONTROL_MECHANISMS.length]);
+    controlMechanism.push(CONTROL_MECHANISMS[(hash + i) % CONTROL_MECHANISMS.length]!);
   }
 
   const indicators: string[] = [];
   for (let i = 0; i < indicatorCount; i++) {
-    indicators.push(INDICATORS[(hash + i) % INDICATORS.length]);
+    indicators.push(INDICATORS[(hash + i) % INDICATORS.length]!);
   }
 
   let probableController: string | undefined;

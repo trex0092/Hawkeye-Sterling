@@ -41,7 +41,7 @@ function evaluateCondition(condition: string, data: Record<string, unknown>): { 
   // Check for numeric thresholds in condition
   const riskMatch = condLower.match(/risk[_\s]?score\s*[>>=]+\s*(\d+)/);
   if (riskMatch) {
-    const threshold = parseInt(riskMatch[1]);
+    const threshold = parseInt(riskMatch[1]!);
     const riskScore = typeof data.riskScore === "number" ? data.riskScore : typeof data.risk_score === "number" ? data.risk_score : null;
     if (riskScore !== null && riskScore >= threshold) {
       return { triggered: true, evidence: `Risk score ${riskScore} exceeds threshold ${threshold}` };

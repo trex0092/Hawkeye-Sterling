@@ -57,7 +57,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (luxuryExposure) {
     const patternCount = (hash % 3) + 1;
     for (let i = 0; i < patternCount; i++) {
-      patterns.push(LUXURY_PATTERNS[(hash + i) % LUXURY_PATTERNS.length]);
+      patterns.push(LUXURY_PATTERNS[(hash + i) % LUXURY_PATTERNS.length]!);
     }
   }
 
@@ -65,7 +65,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (hash % 2 === 0 && luxuryExposure) {
     const flagCount = (hash % 2) + 1;
     for (let i = 0; i < flagCount; i++) {
-      reExportFlags.push(RE_EXPORT_FLAGS[(hash + i) % RE_EXPORT_FLAGS.length]);
+      reExportFlags.push(RE_EXPORT_FLAGS[(hash + i) % RE_EXPORT_FLAGS.length]!);
     }
   }
 
