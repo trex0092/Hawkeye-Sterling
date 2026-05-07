@@ -442,7 +442,6 @@ export default function GrievancesWhistleblowingPage() {
   const [toast, setToast]         = useState<string | null>(null);
   const [toastErr, setToastErr]   = useState<string | null>(null);
   const [stats]                   = useState<ProgrammeStats>(MOCK_STATS);
-  const [cases, setCases]         = useState<GwCase[]>(MOCK_CASES);
 
   const formRef     = useRef<HTMLDivElement>(null);
   const registerRef = useRef<HTMLDivElement>(null);
@@ -863,67 +862,6 @@ export default function GrievancesWhistleblowingPage() {
                   </div>
                 </div>
 
-                {/* C · Case Register */}
-                <div ref={registerRef} className="gw-case-table-wrap" style={{ marginTop: 36 }}>
-                  <SectionHead index="C · Case Register" title="Master log" em="(Compliance Dpt custodian)." meta="retention 10 yr · MOE production ≤48h" />
-                  <table style={{ border: `1px solid ${V.line}`, background: V.panel, width: "100%", borderCollapse: "separate" as const, borderSpacing: 0, fontSize: 11.5 }}>
-                    <thead>
-                      <tr>
-                        {["Case Ref", "Received", "Channel", "Category", "Stage", "SLA", "Owner", ""].map((h) => (
-                          <th key={h} style={mono({ textAlign: "left", fontSize: 9.5, letterSpacing: ".16em", textTransform: "uppercase", color: V.muted, padding: "9px 12px", borderBottom: `1px solid ${V.line}`, fontWeight: 500, background: V.bg2 })}>{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {cases.map((c, i) => (
-                        <tr key={c.id} className="gw-tr" style={{ cursor: "pointer" }}>
-                          <td style={{ padding: "11px 12px", borderBottom: i < cases.length - 1 ? `1px solid ${V.line}` : "none", fontFamily: "'JetBrains Mono','IBM Plex Mono',monospace", color: V.ember, fontSize: 11 }}>{c.id}</td>
-                          <td style={{ padding: "11px 12px", borderBottom: i < cases.length - 1 ? `1px solid ${V.line}` : "none", color: V.ink2 }}>{c.receivedAt}</td>
-                          <td style={{ padding: "11px 12px", borderBottom: i < cases.length - 1 ? `1px solid ${V.line}` : "none" }}>
-                            <span style={mono({ fontSize: 9.5, letterSpacing: ".06em", border: `1px solid ${V.line2}`, padding: "2px 7px", display: "inline-block", color: V.ink2 })}>{c.channel}</span>
-                          </td>
-                          <td style={{ padding: "11px 12px", borderBottom: i < cases.length - 1 ? `1px solid ${V.line}` : "none" }}>
-                            <span style={mono({ fontSize: 9.5, letterSpacing: ".06em", border: `1px solid ${CAT_COLOR[c.categoryVariant]}`, padding: "2px 7px", display: "inline-block", color: CAT_COLOR[c.categoryVariant] })}>{c.category}</span>
-                          </td>
-                          <td style={{ padding: "11px 12px", borderBottom: i < cases.length - 1 ? `1px solid ${V.line}` : "none" }}>
-                            <span style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "'JetBrains Mono','IBM Plex Mono',monospace", fontSize: 10.5 }}>
-                              <span style={{ width: 7, height: 7, borderRadius: "50%", background: STATUS_DOT[c.stageStatus], boxShadow: STATUS_GLOW[c.stageStatus], display: "inline-block", flexShrink: 0 }} />
-                              {c.stage}
-                            </span>
-                          </td>
-                          <td style={{ padding: "11px 12px", borderBottom: i < cases.length - 1 ? `1px solid ${V.line}` : "none" }}>
-                            <div style={{ height: 5, background: V.bg3, position: "relative", border: `1px solid ${V.line2}`, width: 80 }}>
-                              <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: `${c.slaPct}%`, background: SLA_COLOR[c.slaVariant] }} />
-                            </div>
-                          </td>
-                          <td style={{ padding: "11px 12px", borderBottom: i < cases.length - 1 ? `1px solid ${V.line}` : "none", color: V.ink2 }}>{c.owner}</td>
-                          <td style={{ padding: "11px 12px", borderBottom: i < cases.length - 1 ? `1px solid ${V.line}` : "none", whiteSpace: "nowrap" as const }}>
-                            <button
-                              type="button"
-                              title="Edit case"
-                              onClick={() => formRef.current?.scrollIntoView({ behavior: "smooth" })}
-                              style={{ background: "oklch(60% 0.15 240 / .12)", border: `1px solid oklch(60% 0.15 240 / .6)`, color: "oklch(68% 0.15 240)", width: 28, height: 26, cursor: "pointer", borderRadius: 2, marginRight: 5, lineHeight: 0, display: "inline-flex", alignItems: "center", justifyContent: "center" }}
-                            >
-                              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
-                              </svg>
-                            </button>
-                            <button
-                              type="button"
-                              title="Delete case"
-                              onClick={() => setCases((prev) => prev.filter((r) => r.id !== c.id))}
-                              style={{ background: "oklch(65% 0.22 25 / .12)", border: `1px solid oklch(65% 0.22 25 / .6)`, color: "oklch(65% 0.22 25)", width: 28, height: 26, cursor: "pointer", borderRadius: 2, lineHeight: 0, display: "inline-flex", alignItems: "center", justifyContent: "center" }}
-                            >
-                              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-                              </svg>
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
 
               </div>{/* /left column */}
 
