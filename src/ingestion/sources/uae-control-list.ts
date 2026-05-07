@@ -85,10 +85,10 @@ async function loadFromBlobs(hsCode: string): Promise<ControlledGoodsEntry[] | n
     const listIds = ["uae_156_2025", "eu_dual_use", "us_ccl"];
     const matched: ControlledGoodsEntry[] = [];
     for (const lid of listIds) {
-      const raw = await store.get(`current/${lid}.json`).catch(() => null);
+      const raw = await store.get(`current/${lid}.json`, { type: "text" }).catch(() => null);
       if (!raw) continue;
       let entries: ControlledGoodsEntry[];
-      try { entries = JSON.parse(raw) as ControlledGoodsEntry[]; }
+      try { entries = JSON.parse(raw as string) as ControlledGoodsEntry[]; }
       catch { continue; }
       const norm = hsCode.replace(/\./g, "");
       for (const e of entries) {

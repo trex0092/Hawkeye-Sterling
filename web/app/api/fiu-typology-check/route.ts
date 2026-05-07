@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
-import { FIU_DPMS_TYPOLOGIES_2025, getCoverageMatrix } from "../../../../../dist/src/brain/registry/fiu-dpms-typologies-2025.js";
+import { FIU_DPMS_TYPOLOGIES_2025, getCoverageMatrix } from "../../../../dist/src/brain/registry/fiu-dpms-typologies-2025.js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

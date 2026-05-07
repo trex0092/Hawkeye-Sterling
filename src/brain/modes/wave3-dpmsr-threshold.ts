@@ -55,7 +55,7 @@ export const dpmsrThresholdApply = async (ctx: BrainContext): Promise<Finding> =
     return {
       modeId: 'dpmsr_55k_threshold',
       category: 'sectoral_typology' as ReasoningCategory,
-      faculties: ['data_analysis', 'regulatory_compliance'] satisfies FacultyId[],
+      faculties: ['data_analysis', 'inference'] satisfies FacultyId[],
       score: 0, confidence: 0.15, verdict: 'inconclusive' as Verdict,
       rationale: 'No dpmsrTransactions evidence supplied.',
       evidence: [], producedAt: Date.now(),
@@ -80,7 +80,7 @@ export const dpmsrThresholdApply = async (ctx: BrainContext): Promise<Finding> =
       triggerType: 'single',
       totalAmountAed: t.amountAed,
       transactionIds: [t.txnId],
-      customerId: t.customerId,
+      ...(t.customerId !== undefined ? { customerId: t.customerId } : {}),
       detectedAt: new Date().toISOString(),
       legalBasis: LEGAL_BASIS,
       filingDeadlineHours: FILING_DEADLINE_HOURS,
@@ -101,12 +101,14 @@ export const dpmsrThresholdApply = async (ctx: BrainContext): Promise<Finding> =
     const sorted = [...customerTxns].sort((a, b) => Date.parse(a.at) - Date.parse(b.at));
     // Sliding window: find groups within LINK_WINDOW_DAYS that aggregate to ≥ 55k.
     for (let i = 0; i < sorted.length; i++) {
-      const window: DpmsrTransaction[] = [sorted[i]];
-      let total = sorted[i].amountAed;
+      const anchor = sorted[i]!;
+      const window: DpmsrTransaction[] = [anchor];
+      let total = anchor.amountAed;
       for (let j = i + 1; j < sorted.length; j++) {
-        if (daysBetween(sorted[i].at, sorted[j].at) <= LINK_WINDOW_DAYS) {
-          window.push(sorted[j]);
-          total += sorted[j].amountAed;
+        const next = sorted[j]!;
+        if (daysBetween(anchor.at, next.at) <= LINK_WINDOW_DAYS) {
+          window.push(next);
+          total += next.amountAed;
         }
       }
       if (window.length >= 2 && total >= DPMSR_THRESHOLD_AED) {
@@ -127,7 +129,7 @@ export const dpmsrThresholdApply = async (ctx: BrainContext): Promise<Finding> =
             triggerType: 'linked',
             totalAmountAed: total,
             transactionIds: txnIds,
-            customerId,
+            ...(customerId !== undefined ? { customerId } : {}),
             detectedAt: new Date().toISOString(),
             legalBasis: LEGAL_BASIS,
             filingDeadlineHours: FILING_DEADLINE_HOURS,
@@ -175,7 +177,7 @@ export const dpmsrThresholdApply = async (ctx: BrainContext): Promise<Finding> =
     return {
       modeId: 'dpmsr_55k_threshold',
       category: 'sectoral_typology' as ReasoningCategory,
-      faculties: ['data_analysis', 'regulatory_compliance'] satisfies FacultyId[],
+      faculties: ['data_analysis', 'inference'] satisfies FacultyId[],
       score: 0, confidence: 0.9, verdict: 'clear' as Verdict,
       rationale: `${cashTxns.length} cash transaction(s) reviewed. No single or linked cash transaction reaches the AED ${DPMSR_THRESHOLD_AED.toLocaleString()} DPMSR threshold (${LEGAL_BASIS}).`,
       evidence: [],
@@ -190,18 +192,12 @@ export const dpmsrThresholdApply = async (ctx: BrainContext): Promise<Finding> =
   return {
     modeId: 'dpmsr_55k_threshold',
     category: 'sectoral_typology' as ReasoningCategory,
-    faculties: ['data_analysis', 'regulatory_compliance'] satisfies FacultyId[],
+    faculties: ['data_analysis', 'inference'] satisfies FacultyId[],
     score,
     confidence: conf,
     verdict: 'suspicious' as Verdict,
     rationale: `${obligations.length} DPMSR filing obligation(s) triggered. ${singleBreaches.length} single-transaction breach(es); ${obligations.filter((o) => o.triggerType === 'linked').length} linked-transaction aggregation(s). All filings due within ${FILING_DEADLINE_HOURS}h. Legal basis: ${LEGAL_BASIS}.`,
-    evidence: hits.map((h) => ({
-      id: h.id,
-      label: h.label,
-      weight: h.weight,
-      detail: h.evidence,
-    })),
-    metadata: { obligations },
+    evidence: hits.map((h) => h.id),
     producedAt: Date.now(),
   };
 };
