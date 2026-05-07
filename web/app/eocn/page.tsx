@@ -11,6 +11,7 @@ import {
   type ListUpdateStatus,
   type MatchDisposition,
 } from "@/lib/data/eocn-fixture";
+import type { EocnRegistrationRecord } from "@/app/api/eocn-registration/route";
 
 // EOCN — Executive Office for Control & Non-Proliferation (UAE).
 // Maintains the UAE consolidated Targeted Financial Sanctions (TFS) list.
@@ -43,7 +44,7 @@ const DISPOSITION_LABEL: Record<MatchDisposition, string> = {
 
 // Annual declarations tab removed — the operator already files them
 // directly to EOCN out-of-band; the tab was a static placeholder.
-type Tab = "list-updates" | "matches";
+type Tab = "registration" | "list-updates" | "matches" | "control-list";
 
 const EOCN_DELETED_KEY = "hawkeye.eocn.matches.deleted.v1";
 const EOCN_CUSTOM_KEY = "hawkeye.eocn.matches.custom.v1";
@@ -51,13 +52,19 @@ const EOCN_CUSTOM_KEY = "hawkeye.eocn.matches.custom.v1";
 type MatchEditDraft = Pick<EocnMatch, "disposition" | "notes" | "goAmlRef" | "mlroSignedOff">;
 
 export default function EocnPage() {
-  const [tab, setTab] = useState<Tab>("list-updates");
+  const [tab, setTab] = useState<Tab>("registration");
   // Currently-expanded list-update row id. Clicking a row toggles its
   // detail panel (full notes + version + sync timestamps + "View on
   // EOCN" button when sourceUrl is present). Single-row open at a
   // time keeps the table readable.
   const [expandedUpdateId, setExpandedUpdateId] = useState<string | null>(null);
   const [deletedMatchIds, setDeletedMatchIds] = useState<string[]>([]);
+  // NAS / ARS registration state
+  const [registration, setRegistration] = useState<EocnRegistrationRecord | null>(null);
+  const [regSaving, setRegSaving] = useState(false);
+  // Control list state
+  const [controlListLastSync, setControlListLastSync] = useState<string | null>(null);
+  const [controlListCount, setControlListCount] = useState<number | null>(null);
   const [customMatches, setCustomMatches] = useState<EocnMatch[]>([]);
   const [editingMatchId, setEditingMatchId] = useState<string | null>(null);
   const [editMatchDraft, setEditMatchDraft] = useState<MatchEditDraft>({ disposition: "under-review", notes: "", goAmlRef: "", mlroSignedOff: false });
@@ -70,6 +77,30 @@ export default function EocnPage() {
   const LIST_UPDATES = feed.listUpdates;
   const MATCHES = feed.matches;
   const DECLARATIONS = feed.declarations;
+
+  // Load NAS/ARS registration and control-list metadata on mount.
+  useEffect(() => {
+    (async () => {
+      try {
+        const r = await fetch("/api/eocn-registration");
+        if (r.ok) { const d = (await r.json()) as { ok: boolean; registration: EocnRegistrationRecord }; if (d.ok) setRegistration(d.registration); }
+      } catch { /* ignore */ }
+    })();
+    (async () => {
+      try {
+        const r = await fetch("/api/goods-control-status");
+        if (r.ok) { const d = (await r.json()) as { lastSync?: string; count?: number }; setControlListLastSync(d.lastSync ?? null); setControlListCount(d.count ?? null); }
+      } catch { /* no goods-control-status endpoint yet — fallback to blob metadata */ }
+    })();
+  }, []);
+
+  const saveRegistration = async (patch: Partial<EocnRegistrationRecord>) => {
+    setRegSaving(true);
+    try {
+      const r = await fetch("/api/eocn-registration", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(patch) });
+      if (r.ok) { const d = (await r.json()) as { ok: boolean; registration: EocnRegistrationRecord }; if (d.ok) setRegistration(d.registration); }
+    } finally { setRegSaving(false); }
+  };
 
   // Pull the latest snapshot from the API on mount. Best-effort — if
   // the fetch fails the fixture stays in place.
@@ -212,23 +243,44 @@ export default function EocnPage() {
         ]}
       />
 
+      {/* NAS/ARS warning banner — shown when not registered */}
+      {registration && (!registration.nas.confirmed || !registration.ars.confirmed) && (
+        <div className="mb-4 bg-red-dim border border-red/30 rounded-lg px-4 py-3 flex items-start gap-3">
+          <span className="text-red text-16 shrink-0 mt-0.5">⚠</span>
+          <div>
+            <div className="text-12 font-semibold text-red mb-0.5">EOCN registration incomplete</div>
+            <div className="text-11 text-ink-1">
+              {!registration.nas.confirmed && <span>NAS (Notification Alert System) not confirmed. </span>}
+              {!registration.ars.confirmed && <span>ARS (Automatic Reporting System) not confirmed. </span>}
+              Register at <strong>uaeiec.gov.ae</strong> and confirm below. Required for all DNFBPs.
+            </div>
+          </div>
+          <button type="button" onClick={() => setTab("registration")} className="shrink-0 text-11 font-semibold px-3 py-1.5 rounded border border-red/40 text-red hover:bg-red/10">
+            Fix →
+          </button>
+        </div>
+      )}
+
       {/* Tabs */}
       <div className="flex items-end gap-1 mb-6 border-b border-hair-2">
         {([
+          { key: "registration" as Tab, label: "⚙ Registration", warn: registration && (!registration.nas.confirmed || !registration.ars.confirmed) },
           { key: "list-updates" as Tab, label: "List updates" },
           { key: "matches" as Tab, label: "Matches & dispositions" },
+          { key: "control-list" as Tab, label: "UAE Control List" },
         ]).map((t) => (
           <button
             key={t.key}
             type="button"
             onClick={() => setTab(t.key)}
-            className={`px-4 py-2 text-12 font-medium rounded-t border-b-2 transition-colors whitespace-nowrap ${
+            className={`relative px-4 py-2 text-12 font-medium rounded-t border-b-2 transition-colors whitespace-nowrap ${
               tab === t.key
                 ? "border-brand text-brand bg-brand-dim"
                 : "border-transparent text-ink-2 hover:text-ink-0 hover:bg-bg-1"
             }`}
           >
             {t.label}
+            {"warn" in t && t.warn && <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-red" />}
           </button>
         ))}
         <div className="flex-1" />
@@ -258,6 +310,174 @@ export default function EocnPage() {
           </button>
         </div>
       </div>
+
+      {/* REGISTRATION TAB */}
+      {tab === "registration" && (
+        <div className="space-y-4">
+          <div className="bg-amber-dim border border-amber/20 rounded-lg px-4 py-3 text-12 text-ink-1">
+            <strong>Manual registration required.</strong> Hawkeye Sterling cannot automate EOCN portal registrations.
+            Register at <strong>uaeiec.gov.ae</strong>, then confirm below. Both NAS and ARS are mandatory for all UAE DNFBPs.
+          </div>
+
+          {/* NAS */}
+          <div className={`bg-bg-panel border rounded-xl p-5 ${registration?.nas.confirmed ? "border-green/30" : "border-red/30"}`}>
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <div className="text-13 font-semibold text-ink-0">NAS — Notification Alert System</div>
+                <div className="text-11 text-ink-3">Real-time email alerts when the UAE TFS list is updated · uaeiec.gov.ae</div>
+              </div>
+              <span className={`inline-flex items-center px-2.5 py-1 rounded font-mono text-11 font-semibold uppercase ${registration?.nas.confirmed ? "bg-green-dim text-green border border-green/30" : "bg-red-dim text-red border border-red/30"}`}>
+                {registration?.nas.confirmed ? "✓ Confirmed" : "Not confirmed"}
+              </span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div>
+                <label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">Registration reference</label>
+                <input defaultValue={registration?.nas.reference ?? ""} id="nas-ref" className="w-full text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-ink-0 focus:border-brand outline-none" placeholder="NAS-XXXX / email confirmation ref" />
+              </div>
+              <div>
+                <label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">Registered email address</label>
+                <input defaultValue={registration?.nas.email ?? ""} id="nas-email" className="w-full text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-ink-0 focus:border-brand outline-none" placeholder="compliance@entity.ae" />
+              </div>
+              <div>
+                <label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">Confirmed by</label>
+                <input defaultValue={registration?.nas.confirmedBy ?? ""} id="nas-by" className="w-full text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-ink-0 focus:border-brand outline-none" placeholder="MLRO name" />
+              </div>
+            </div>
+            <div className="flex items-center gap-3 mt-3">
+              <button type="button" disabled={regSaving}
+                onClick={() => {
+                  const ref = (document.getElementById("nas-ref") as HTMLInputElement)?.value ?? "";
+                  const email = (document.getElementById("nas-email") as HTMLInputElement)?.value ?? "";
+                  const by = (document.getElementById("nas-by") as HTMLInputElement)?.value ?? "";
+                  void saveRegistration({ nas: { confirmed: true, reference: ref, email, confirmedBy: by } });
+                }}
+                className="text-11 font-semibold px-3 py-1.5 rounded border border-green/40 text-green bg-green-dim hover:bg-green/20 disabled:opacity-50">
+                {regSaving ? "Saving…" : "✓ Confirm NAS registration"}
+              </button>
+              {registration?.nas.confirmedAt && (
+                <span className="text-10 text-ink-3 font-mono">Confirmed {new Date(registration.nas.confirmedAt).toLocaleDateString("en-GB")}</span>
+              )}
+            </div>
+          </div>
+
+          {/* ARS */}
+          <div className={`bg-bg-panel border rounded-xl p-5 ${registration?.ars.confirmed ? "border-green/30" : "border-red/30"}`}>
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <div className="text-13 font-semibold text-ink-0">ARS — Automatic Reporting System</div>
+                <div className="text-11 text-ink-3">Automated list updates and reporting system · uaeiec.gov.ae · Separate from NAS</div>
+              </div>
+              <span className={`inline-flex items-center px-2.5 py-1 rounded font-mono text-11 font-semibold uppercase ${registration?.ars.confirmed ? "bg-green-dim text-green border border-green/30" : "bg-red-dim text-red border border-red/30"}`}>
+                {registration?.ars.confirmed ? "✓ Confirmed" : "Not confirmed"}
+              </span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">ARS registration reference</label>
+                <input defaultValue={registration?.ars.reference ?? ""} id="ars-ref" className="w-full text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-ink-0 focus:border-brand outline-none" placeholder="ARS registration ID" />
+              </div>
+              <div>
+                <label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">Confirmed by</label>
+                <input defaultValue={registration?.ars.confirmedBy ?? ""} id="ars-by" className="w-full text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-ink-0 focus:border-brand outline-none" placeholder="MLRO name" />
+              </div>
+            </div>
+            <div className="flex items-center gap-3 mt-3">
+              <button type="button" disabled={regSaving}
+                onClick={() => {
+                  const ref = (document.getElementById("ars-ref") as HTMLInputElement)?.value ?? "";
+                  const by = (document.getElementById("ars-by") as HTMLInputElement)?.value ?? "";
+                  void saveRegistration({ ars: { confirmed: true, reference: ref, confirmedBy: by } });
+                }}
+                className="text-11 font-semibold px-3 py-1.5 rounded border border-green/40 text-green bg-green-dim hover:bg-green/20 disabled:opacity-50">
+                {regSaving ? "Saving…" : "✓ Confirm ARS registration"}
+              </button>
+              {registration?.ars.confirmedAt && (
+                <span className="text-10 text-ink-3 font-mono">Confirmed {new Date(registration.ars.confirmedAt).toLocaleDateString("en-GB")}</span>
+              )}
+            </div>
+          </div>
+
+          <p className="text-10.5 text-ink-3 leading-relaxed">
+            Both NAS and ARS registrations are mandatory for all UAE DNFBPs under EOCN guidance. Register at uaeiec.gov.ae.
+            ARS is separate from NAS — both require individual registration. Unregistered entities miss real-time TFS list updates
+            and may fail regulatory inspections. The MoE 2026 AML/CFT survey asks for confirmation of both registrations.
+          </p>
+        </div>
+      )}
+
+      {/* CONTROL LIST TAB — UAE Cabinet Resolution 156/2025 */}
+      {tab === "control-list" && (
+        <div className="space-y-4">
+          <div className="bg-bg-panel border border-hair-2 rounded-xl p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <div className="text-13 font-semibold text-ink-0">UAE Control List — Cabinet Resolution 156/2025</div>
+                <div className="text-11 text-ink-3">Dual-use and proliferation-sensitive goods · Gold dealers must screen trade transactions for controlled goods</div>
+              </div>
+              <span className={`inline-flex items-center px-2.5 py-1 rounded font-mono text-11 font-semibold uppercase ${controlListCount ? "bg-green-dim text-green border border-green/30" : "bg-amber-dim text-amber border border-amber/30"}`}>
+                {controlListCount ? `${controlListCount.toLocaleString()} entries` : "Pending sync"}
+              </span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+              <div className="bg-bg-1 rounded-lg p-3">
+                <div className="text-9 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Last sync</div>
+                <div className="text-12 font-semibold text-ink-0">{controlListLastSync ? new Date(controlListLastSync).toLocaleDateString("en-GB") : "Not synced"}</div>
+              </div>
+              <div className="bg-bg-1 rounded-lg p-3">
+                <div className="text-9 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Legal basis</div>
+                <div className="text-12 font-semibold text-ink-0">CR 156/2025 · EU 2021/821 · US CCL</div>
+              </div>
+              <div className="bg-bg-1 rounded-lg p-3">
+                <div className="text-9 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Ingest schedule</div>
+                <div className="text-12 font-semibold text-ink-0">Every 6 hours</div>
+              </div>
+            </div>
+
+            <div className="bg-amber-dim border border-amber/20 rounded-lg p-3 text-11 text-ink-1 mb-4">
+              <strong>EOCN requires DUG screening against the UAE Control List (CR 156/2025).</strong>{" "}
+              Modes exist (<code className="font-mono bg-bg-2 px-1 rounded">dual_use_goods_routing</code>,{" "}
+              <code className="font-mono bg-bg-2 px-1 rounded">dual_use_goods_routing</code>) but the Control List
+              must be ingested as a live data source. The ingest cron (<code className="font-mono bg-bg-2 px-1 rounded">goods-control-ingest</code>)
+              runs every 6h. Configure <code className="font-mono bg-bg-2 px-1 rounded">FEED_UAE_GOODS_CONTROL</code> env var to enable live feed.
+            </div>
+
+            <div>
+              <div className="text-12 font-semibold text-ink-0 mb-3">Controlled goods categories (CR 156/2025)</div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {[
+                  { cat: "Dual-use goods", desc: "Commercial items with potential military end-use", riskLevel: "high" },
+                  { cat: "Weapons & munitions", desc: "Conventional weapons and ammunition", riskLevel: "critical" },
+                  { cat: "Nuclear materials", desc: "Fissile material and nuclear-related equipment", riskLevel: "critical" },
+                  { cat: "Chemical precursors", desc: "Chemical weapon precursors and toxic agents", riskLevel: "critical" },
+                  { cat: "Missile technology", desc: "Ballistic missile and rocket components", riskLevel: "critical" },
+                  { cat: "Cyber surveillance", desc: "Intrusion software and surveillance equipment", riskLevel: "high" },
+                ].map(({ cat, desc, riskLevel }) => (
+                  <div key={cat} className="flex items-start gap-3 bg-bg-1 rounded p-3">
+                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded font-mono text-9 font-semibold uppercase shrink-0 mt-0.5 ${riskLevel === "critical" ? "bg-red-dim text-red" : "bg-amber-dim text-amber"}`}>{riskLevel}</span>
+                    <div>
+                      <div className="text-12 font-semibold text-ink-0">{cat}</div>
+                      <div className="text-10 text-ink-3">{desc}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-4 pt-4 border-t border-hair">
+              <div className="text-11 font-semibold text-ink-2 mb-2">Integration with screening engine</div>
+              <p className="text-11 text-ink-2 mb-3">
+                When the <code className="font-mono bg-bg-2 px-1 rounded">dual_use_goods_routing</code> brain mode is active,
+                it consults the ingested UAE Control List (stored in Netlify Blobs under <code className="font-mono bg-bg-2 px-1 rounded">hawkeye-goods-control</code>)
+                to evaluate HS codes against CR 156/2025 categories. Without the env var, it falls back to the <code className="font-mono bg-bg-2 px-1 rounded">isDualUse</code> flag in the evidence schema.
+              </p>
+              <a href="/supply-chain" className="inline-flex items-center gap-1.5 text-11 font-semibold text-brand hover:underline">
+                Screen a shipment for dual-use goods ↗
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* LIST UPDATES TAB */}
       {tab === "list-updates" && (
