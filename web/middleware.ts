@@ -78,7 +78,10 @@ export async function middleware(req: NextRequest): Promise<NextResponse> {
   // ── 1. Session guard (non-API routes) ──────────────────────────────────────
   if (!pathname.startsWith("/api/") && !isPublic(pathname)) {
     const token = req.cookies.get(SESSION_COOKIE)?.value ?? "";
-    const valid = token ? await isValidSession(token) : false;
+    let valid = false;
+    try {
+      valid = token ? await isValidSession(token) : false;
+    } catch { /* treat any crypto error as invalid */ }
     if (!valid) {
       const loginUrl = req.nextUrl.clone();
       loginUrl.pathname = "/login";
