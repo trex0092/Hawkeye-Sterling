@@ -324,7 +324,9 @@ export async function POST(req: Request): Promise<Response> {
       reasoningTrace: [],
       finalAnswer: null,
       refusalReason: preGen.reason,
-    }).catch(() => {});
+    }).catch((err: unknown) => {
+      console.error("[hawkeye] mlro-advisor-quick: pre-gen refusal audit-log append failed:", err);
+    });
     return NextResponse.json(
       {
         ok: false,
@@ -526,7 +528,9 @@ export async function POST(req: Request): Promise<Response> {
         finalAnswer: null,
         validation: postGen.validation,
         refusalReason: postGen.router.reason,
-      }).catch(() => {});
+      }).catch((err: unknown) => {
+        console.error("[hawkeye] mlro-advisor-quick: post-gen refusal audit-log append failed:", err);
+      });
       return NextResponse.json(
         {
           ok: false,
