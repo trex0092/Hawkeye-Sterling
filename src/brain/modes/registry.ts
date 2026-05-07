@@ -66,6 +66,17 @@ import { BEHAVIORAL_BATCH_APPLIES } from './wave3-behavioral-batch.js';
 import { PEP_PREDICATE_BATCH_APPLIES } from './wave3-pep-predicate-batch.js';
 import { SECURITIES_DPMS_OPS_BATCH_APPLIES } from './wave3-securities-dpms-ops-batch.js';
 
+// Wave-3 modules implemented from public UAE/FATF regulations
+// (see src/brain/modes/WAVE_3_SPEC_DRAFTS.md for cited thresholds).
+import { reCashPurchaseCheckApply } from './wave3-re-cash-purchase.js';
+import { npoGranteeDiligenceApply } from './wave3-npo-grantee-diligence.js';
+import { lcConfirmationGapApply } from './wave3-lc-confirmation-gap.js';
+import { flagOfConvenienceApply } from './wave3-flag-of-convenience.js';
+import { portStateControlApply } from './wave3-port-state-control.js';
+import { oecdAnnexIIDisciplineApply } from './wave3-oecd-annex-ii.js';
+import { lbmaFiveStepGateApply } from './wave3-lbma-five-step.js';
+import { cargoManifestCrossCheckApply } from './wave3-cargo-manifest-cross-check.js';
+
 export type ModeApply = (ctx: BrainContext) => Promise<Finding>;
 
 const WAVE3_MODE_APPLIES: Record<string, ModeApply> = {
@@ -119,6 +130,20 @@ const WAVE3_MODE_APPLIES: Record<string, ModeApply> = {
   legal_pooled_account_abuse: legalPooledAccountApply,
   non_face_to_face_kyc_anomaly: nonFaceToFaceKycApply,
   nested_designation_match: nestedDesignationApply,
+
+  // ── Wave-3 modules from public UAE/FATF regulations (PR feat/wave3-implement-8-modes) ──
+  // Each implementation cites its threshold source in its top-of-file
+  // docstring. Lines marked ⚠️ VERIFY in WAVE_3_SPEC_DRAFTS.md are
+  // best-guess interpolations pending MLRO sign-off.
+  re_cash_purchase_check: reCashPurchaseCheckApply,
+  npo_grantee_diligence: npoGranteeDiligenceApply,
+  lc_confirmation_gap: lcConfirmationGapApply,
+  flag_of_convenience: flagOfConvenienceApply,
+  port_state_control: portStateControlApply,
+  oecd_annex_ii_discipline: oecdAnnexIIDisciplineApply,
+  lbma_five_step_gate: lbmaFiveStepGateApply,
+  cargo_manifest_cross_check: cargoManifestCrossCheckApply,
+
   ...SANCTIONS_BATCH_APPLIES,
   ...TBML_BATCH_APPLIES,
   ...CRYPTO_BATCH_APPLIES,
