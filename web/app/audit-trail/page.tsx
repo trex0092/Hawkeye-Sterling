@@ -105,8 +105,12 @@ export default function AuditTrailPage() {
       if (res.ok) {
         const data = (await res.json()) as AuditAnomaly;
         setAnomaly(data);
+      } else {
+        console.error(`[hawkeye] audit-trail/anomaly-detect HTTP ${res.status}`);
       }
-    } catch { /* non-fatal */ } finally {
+    } catch (err) {
+      console.error("[hawkeye] audit-trail/anomaly-detect threw:", err);
+    } finally {
       setAnomalyLoading(false);
     }
   };

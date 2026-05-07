@@ -36,7 +36,8 @@ export function loadCases(): CaseRecord[] {
     const parsed = JSON.parse(raw) as unknown;
     if (!Array.isArray(parsed)) return [];
     return parsed as CaseRecord[];
-  } catch {
+  } catch (err) {
+    console.error("[hawkeye] case-store: localStorage parse failed — returning empty:", err);
     return [];
   }
 }
@@ -80,12 +81,12 @@ async function pushToServer(): Promise<void> {
         const merged = [...localOnly, ...body.cases];
         window.localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
         window.dispatchEvent(new CustomEvent("hawkeye:cases-updated"));
-      } catch {
-        /* quota / disabled */
+      } catch (err) {
+        console.warn("[hawkeye] case-store: merge write failed (quota / disabled):", err);
       }
     }
-  } catch {
-    /* offline / 4xx — localStorage stays authoritative */
+  } catch (err) {
+    console.warn("[hawkeye] case-store: pushToServer offline / 4xx — localStorage stays authoritative:", err);
   }
 }
 
@@ -113,12 +114,12 @@ export async function syncFromServer(): Promise<void> {
         window.localStorage.setItem(STORAGE_KEY, JSON.stringify(body.cases));
         window.localStorage.setItem(SYNC_FLAG_KEY, "1");
         window.dispatchEvent(new CustomEvent("hawkeye:cases-updated"));
-      } catch {
-        /* quota / disabled */
+      } catch (err) {
+        console.warn("[hawkeye] case-store: syncFromServer write failed (quota / disabled):", err);
       }
     }
-  } catch {
-    /* offline — localStorage is fine */
+  } catch (err) {
+    console.warn("[hawkeye] case-store: syncFromServer offline — using local copy:", err);
   }
 }
 
@@ -130,8 +131,11 @@ export function saveCases(cases: CaseRecord[]): void {
     window.dispatchEvent(new CustomEvent("hawkeye:cases-updated"));
     // Mirror to server (debounced, fire-and-forget).
     scheduleServerSync();
-  } catch {
-    /* storage quota exhausted or disabled — no-op */
+  } catch (err) {
+    console.error(
+      "[hawkeye] case-store: saveCases write failed — case NOT persisted (storage quota or disabled):",
+      err,
+    );
   }
 }
 
@@ -162,8 +166,8 @@ async function deleteCaseOnServer(id: string): Promise<void> {
       method: "DELETE",
       headers: { accept: "application/json" },
     });
-  } catch {
-    /* offline — server will pick up the deletion on the next merge */
+  } catch (err) {
+    console.warn("[hawkeye] case-store: deleteCaseOnServer offline — will reconcile on next merge:", err);
   }
 }
 

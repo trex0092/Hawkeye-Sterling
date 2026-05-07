@@ -1409,10 +1409,16 @@ export default function MlroAdvisorPage() {
     try {
       const raw = window.localStorage.getItem("hawkeye.mlro.advisor.v1");
       return raw ? (JSON.parse(raw) as AdvisorHistoryEntry[]) : [];
-    } catch { return []; }
+    } catch (err) {
+      console.error("[hawkeye] mlro-advisor: history parse failed — returning empty:", err);
+      return [];
+    }
   });
   useEffect(() => {
-    try { window.localStorage.setItem(ADVISOR_STORAGE, JSON.stringify(advisorHistory.slice(0, 50))); } catch { /* quota */ }
+    try { window.localStorage.setItem(ADVISOR_STORAGE, JSON.stringify(advisorHistory.slice(0, 50))); }
+    catch (err) {
+      console.warn("[hawkeye] mlro-advisor: history persist failed (storage quota):", err);
+    }
   }, [advisorHistory, ADVISOR_STORAGE]);
 
   /** ID of the entry currently being streamed (Quick mode). null when idle. */
@@ -1575,7 +1581,10 @@ export default function MlroAdvisorPage() {
       notFoundStreak = 0;
       const rawText = await pollResp.text();
       let payload: { ok: boolean; status?: string; result?: AdvisorResult; error?: string } | null = null;
-      try { payload = JSON.parse(rawText); } catch { /* ignore */ }
+      try { payload = JSON.parse(rawText); }
+      catch (err) {
+        console.warn("[hawkeye] mlro-advisor: SSE poll payload parse failed — skipping line:", err, rawText.slice(0, 200));
+      }
       if (!payload) continue;
       if (payload.status === "done" && payload.result) {
         recordAdvisorEntry(q, m, payload.result);
@@ -1879,11 +1888,15 @@ export default function MlroAdvisorPage() {
           redFlags: typoInput.redFlags ? typoInput.redFlags.split(",").map((s) => s.trim()).filter(Boolean) : undefined,
         }),
       });
-      if (!res.ok) return;
+      if (!res.ok) {
+        console.error(`[hawkeye] typology-match HTTP ${res.status}`);
+        return;
+      }
       const data = await res.json() as { ok: boolean } & TypologyMatch;
       if (data.ok) setTypoMatch(data);
-    } catch { /* silent */ }
-    finally { setTypoMatchLoading(false); }
+    } catch (err) {
+      console.error("[hawkeye] typology-match threw:", err);
+    } finally { setTypoMatchLoading(false); }
   };
 
   // Transaction Narrative Analyzer
@@ -1904,11 +1917,15 @@ export default function MlroAdvisorPage() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ narrative: txnNarrative, customerType: txnCustomerType || undefined, jurisdiction: txnJurisdiction || undefined, amounts: txnAmounts || undefined }),
       });
-      if (!res.ok) return;
+      if (!res.ok) {
+        console.error(`[hawkeye] transaction-narrative HTTP ${res.status}`);
+        return;
+      }
       const data = await res.json() as { ok: boolean } & TransactionAnalysis;
       if (data.ok) setTxnResult(data);
-    } catch { /* silent */ }
-    finally { setTxnLoading(false); }
+    } catch (err) {
+      console.error("[hawkeye] transaction-narrative threw:", err);
+    } finally { setTxnLoading(false); }
   };
 
   // EDD Questionnaire Generator
@@ -1937,11 +1954,15 @@ export default function MlroAdvisorPage() {
           context: eddContext || undefined,
         }),
       });
-      if (!res.ok) return;
+      if (!res.ok) {
+        console.error(`[hawkeye] edd-questionnaire HTTP ${res.status}`);
+        return;
+      }
       const data = await res.json() as { ok: boolean } & EddQuestionnaire;
       if (data.ok) setEddResult(data);
-    } catch { /* silent */ }
-    finally { setEddLoading(false); }
+    } catch (err) {
+      console.error("[hawkeye] edd-questionnaire threw:", err);
+    } finally { setEddLoading(false); }
   };
 
   // TBML Trade Document Analyzer
