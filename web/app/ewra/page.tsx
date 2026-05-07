@@ -802,6 +802,218 @@ export default function EwraPage() {
           Residual risk is derived automatically. Board must review and re-approve annually per FDL 10/2025 Art.4 and FATF R.1.
           Changes auto-save to local storage.
         </p>
+
+        {/* ─── DPMS-Specific BWRA Supplement ──────────────────────────────── */}
+        <DpmsBwraSection />
     </ModuleLayout>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* DPMS Business-Wide Risk Assessment supplement                               */
+/* Legal basis: FDL 10/2025 Art.19(1)(a) + CR134/2025 Art.5                   */
+/* Sector baseline: UAE NRA 2024 DPMS = Medium-High                            */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+const DPMS_BWRA_CHECKLIST = [
+  { id: "nra-baseline", label: "NRA 2024 sector baseline (DPMS = Medium-High) reviewed and documented" },
+  { id: "cash-threshold", label: "AED 55,000 cash-transaction threshold controls implemented (CR134/2025 Art.3)" },
+  { id: "dual-use", label: "Dual-use goods screening integrated per CR 156/2025 categories" },
+  { id: "fiu-typologies", label: "All 9 FIU Sept 2025 DPMS typologies mapped to detection logic" },
+  { id: "supply-chain", label: "Supply chain due diligence aligned to OECD DDG 5-step framework (MD 68/2024)" },
+  { id: "goaml-reporting", label: "goAML reporting channels tested and MLRO-authorised" },
+  { id: "eocn-nas-ars", label: "NAS and ARS registration confirmed on uaeiec.gov.ae" },
+  { id: "training-dpms", label: "DPMS-specific AML/CFT training completed within past 12 months" },
+  { id: "moe-survey", label: "MoE 2026 survey (MOET/AML/001/2026) completed and submitted" },
+  { id: "board-approved", label: "BWRA signed off by senior management / Board and documented in minutes" },
+];
+
+const BWRA_STORAGE = "hawkeye.ewra.dpms-bwra.v1";
+
+interface DpmsBwraState {
+  checklist: Record<string, boolean>;
+  entityNarrative: string;
+  lastUpdated: string;
+}
+
+function loadBwra(): DpmsBwraState {
+  if (typeof window === "undefined") return { checklist: {}, entityNarrative: "", lastUpdated: "" };
+  try {
+    const raw = window.localStorage.getItem(BWRA_STORAGE);
+    return raw ? (JSON.parse(raw) as DpmsBwraState) : { checklist: {}, entityNarrative: "", lastUpdated: "" };
+  } catch { return { checklist: {}, entityNarrative: "", lastUpdated: "" }; }
+}
+
+function saveBwra(s: DpmsBwraState) {
+  try { window.localStorage.setItem(BWRA_STORAGE, JSON.stringify(s)); } catch { /* */ }
+}
+
+function DpmsBwraSection() {
+  const [open, setOpen] = useState(false);
+  const [state, setState] = useState<DpmsBwraState>({ checklist: {}, entityNarrative: "", lastUpdated: "" });
+
+  // Lazy load from localStorage on first expand
+  const handleOpen = () => {
+    if (!open) { setState(loadBwra()); }
+    setOpen((o) => !o);
+  };
+
+  const update = (patch: Partial<DpmsBwraState>) => {
+    const next = { ...state, ...patch, lastUpdated: new Date().toISOString() };
+    setState(next);
+    saveBwra(next);
+  };
+
+  const toggleCheck = (id: string) => {
+    update({ checklist: { ...state.checklist, [id]: !state.checklist[id] } });
+  };
+
+  const checkedCount = DPMS_BWRA_CHECKLIST.filter((c) => state.checklist[c.id]).length;
+  const total = DPMS_BWRA_CHECKLIST.length;
+  const pct = Math.round((checkedCount / total) * 100);
+  const wordCount = state.entityNarrative.trim().split(/\s+/).filter(Boolean).length;
+  const narrativeOk = wordCount >= 150;
+
+  return (
+    <div className="mt-6 border border-brand/20 rounded-xl bg-bg-panel overflow-hidden">
+      {/* Accordion header */}
+      <button
+        type="button"
+        onClick={handleOpen}
+        className="w-full flex items-center justify-between px-5 py-4 hover:bg-bg-2 transition-colors text-left"
+      >
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex flex-col">
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-10 font-bold uppercase tracking-wide-4 text-brand">DPMS BWRA Supplement</span>
+              <span className="font-mono text-10 px-1.5 py-px rounded bg-brand/10 text-brand border border-brand/20">FDL 10/2025 Art.19(1)(a) · CR134/2025 Art.5</span>
+            </div>
+            <span className="text-12 text-ink-0 mt-0.5 font-semibold">Business-Wide Risk Assessment — DPMS Sector Specifics</span>
+          </div>
+          {open && (
+            <div className="flex items-center gap-3 text-11 font-mono">
+              <span className={pct === 100 ? "text-green" : pct >= 60 ? "text-amber" : "text-red"}>
+                {checkedCount}/{total} checks
+              </span>
+              <span className={narrativeOk ? "text-green" : "text-amber"}>
+                {wordCount} words {narrativeOk ? "✓" : "(min 150)"}
+              </span>
+            </div>
+          )}
+        </div>
+        <span className="text-ink-3 font-mono text-12 shrink-0">{open ? "▾" : "▸"}</span>
+      </button>
+
+      {open && (
+        <div className="border-t border-hair px-5 pb-6 space-y-6">
+          {/* NRA 2024 Sector Baseline */}
+          <div className="mt-5 rounded-lg border border-amber/30 bg-amber-dim/20 p-4">
+            <div className="font-mono text-10 font-bold uppercase tracking-wide-4 text-amber mb-2">UAE NRA 2024 — DPMS Sector Baseline</div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
+              <div className="rounded bg-bg-panel border border-hair p-3">
+                <div className="font-mono text-18 font-bold text-amber">MH</div>
+                <div className="text-10 text-ink-3 mt-1">ML Threat</div>
+              </div>
+              <div className="rounded bg-bg-panel border border-hair p-3">
+                <div className="font-mono text-18 font-bold text-amber">MH</div>
+                <div className="text-10 text-ink-3 mt-1">ML Vulnerability</div>
+              </div>
+              <div className="rounded bg-bg-panel border border-hair p-3">
+                <div className="font-mono text-18 font-bold text-red">H</div>
+                <div className="text-10 text-ink-3 mt-1">TF Threat</div>
+              </div>
+              <div className="rounded bg-bg-panel border border-hair p-3">
+                <div className="font-mono text-18 font-bold text-amber">MH</div>
+                <div className="text-10 text-ink-3 mt-1">Overall DPMS Risk</div>
+              </div>
+            </div>
+            <p className="text-11 text-ink-2 mt-3 leading-relaxed">
+              The 2024 UAE National Risk Assessment classifies the DPMS sector as <strong>Medium-High</strong> overall. High cash intensity, CAHRA exposure, opaque supply chains, and cross-border bullion movement are the primary drivers. Entity-specific assessments must document how individual risk factors compare to this baseline and justify any departure.
+            </p>
+          </div>
+
+          {/* Compliance checklist */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <div className="font-mono text-10 font-bold uppercase tracking-wide-4 text-ink-2">CR134/2025 Art.5 — BWRA Compliance Checklist</div>
+              <div className="flex items-center gap-2">
+                <div className="w-24 h-1.5 rounded-full bg-bg-2 overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all ${pct === 100 ? "bg-green" : pct >= 60 ? "bg-amber" : "bg-red"}`}
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+                <span className={`font-mono text-11 font-semibold ${pct === 100 ? "text-green" : pct >= 60 ? "text-amber" : "text-red"}`}>
+                  {pct}%
+                </span>
+              </div>
+            </div>
+            <div className="space-y-2">
+              {DPMS_BWRA_CHECKLIST.map((item) => (
+                <label
+                  key={item.id}
+                  className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                    state.checklist[item.id] ? "border-green/30 bg-green-dim/20" : "border-hair bg-bg-1 hover:border-brand/20"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={!!state.checklist[item.id]}
+                    onChange={() => toggleCheck(item.id)}
+                    className="mt-0.5 shrink-0 accent-green"
+                  />
+                  <span className={`text-12 leading-snug ${state.checklist[item.id] ? "text-ink-0 line-through decoration-green/50" : "text-ink-1"}`}>
+                    {item.label}
+                  </span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Entity-specific narrative */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <div className="font-mono text-10 font-bold uppercase tracking-wide-4 text-ink-2">Entity-Specific Narrative</div>
+              <div className={`font-mono text-11 px-2 py-0.5 rounded border ${narrativeOk ? "text-green border-green/30 bg-green-dim" : "text-amber border-amber/30 bg-amber-dim"}`}>
+                {wordCount} / 150 words minimum
+              </div>
+            </div>
+            <p className="text-11 text-ink-3 mb-2">
+              This narrative must be entity-specific. Describe how your particular business model, customer base, geographies, and product mix affect the risk profile relative to the NRA 2024 DPMS baseline. Generic or copy-pasted text does not satisfy FDL 10/2025 Art.19(1)(a) — MoE inspectors check for specificity.
+            </p>
+            <textarea
+              value={state.entityNarrative}
+              onChange={(e) => update({ entityNarrative: e.target.value })}
+              rows={8}
+              placeholder={`Example structure:\n• Our customer base is [describe]. PEP exposure is [level] because [reason].\n• Our geographic exposure includes [countries/zones] with [specific risk factors].\n• Products/services include [list] with DPMS-specific risks [describe].\n• Key controls include [list]. Known gaps are [list].\n• How our residual risk compares to the DPMS Medium-High NRA baseline: [explain].`}
+              className="w-full text-12 px-3 py-2.5 rounded-lg border border-hair-2 bg-bg-panel text-ink-0 resize-y placeholder-ink-3 outline-none focus:border-brand transition-colors"
+            />
+            {!narrativeOk && wordCount > 0 && (
+              <p className="text-10.5 text-amber mt-1">
+                {150 - wordCount} more words needed. MoE 2026 guidance flags assessments under 150 words as insufficient.
+              </p>
+            )}
+            {narrativeOk && (
+              <p className="text-10.5 text-green mt-1">✓ Narrative length meets minimum requirement.</p>
+            )}
+          </div>
+
+          {/* Cross-links */}
+          <div className="flex items-center gap-3 flex-wrap pt-1 border-t border-hair">
+            <span className="text-11 text-ink-3">Related modules:</span>
+            <a href="/moe-survey" className="text-11 text-brand hover:underline">MoE 2026 Survey →</a>
+            <a href="/eocn" className="text-11 text-brand hover:underline">EOCN / NAS+ARS →</a>
+            <a href="/typology-library" className="text-11 text-brand hover:underline">FIU Typology Alignment →</a>
+            <a href="/cnmr" className="text-11 text-brand hover:underline">CNMR Workflow →</a>
+          </div>
+
+          {state.lastUpdated && (
+            <p className="text-10 text-ink-3 font-mono">
+              Last saved: {new Date(state.lastUpdated).toLocaleString("en-GB")} — changes auto-save to local storage.
+            </p>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
