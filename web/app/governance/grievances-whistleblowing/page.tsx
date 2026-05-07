@@ -1014,6 +1014,27 @@ export default function GrievancesWhistleblowingPage() {
 
             </div>{/* /two-col */}
 
+            {/* ── PENALTY RAIL ── */}
+            <div className="gw-penalty-outer" style={{ marginTop: 20, border: `1px solid ${V.line}`, background: V.panel, display: "grid", gridTemplateColumns: "auto 1fr" }}>
+              <div className="gw-penalty-label" style={{ padding: "12px 16px", borderRight: `1px solid ${V.line}`, background: V.bg2, display: "flex", flexDirection: "column" as const, justifyContent: "center", minWidth: 160 }}>
+                <div className="gw-serif" style={{ fontSize: 15, color: V.ink, lineHeight: 1.1 }}>
+                  Penalties for <em style={{ fontStyle: "italic", color: V.rose }}>non-reporting</em>
+                </div>
+                <div style={mono({ fontSize: 8, color: V.muted, letterSpacing: ".10em", marginTop: 5 })}>CR No.24/2022 · administrative violations</div>
+              </div>
+              <div className="gw-penalty-items" style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)" }}>
+                {PENALTIES.map((p, i) => (
+                  <div key={p.lab} style={{ padding: "10px 12px", borderRight: i < PENALTIES.length - 1 ? `1px solid ${V.line}` : "none" }}>
+                    <div style={mono({ fontSize: 8, letterSpacing: ".12em", textTransform: "uppercase", color: V.muted })}>{p.lab}</div>
+                    <div className="gw-serif" style={{ fontSize: 14, color: V.ink, marginTop: 4, lineHeight: 1 }}>
+                      {p.prefix} <em style={{ color: V.rose, fontStyle: "normal" }}>{p.em}</em>
+                    </div>
+                    <div style={{ fontSize: 10, color: V.ink2, marginTop: 4, lineHeight: 1.4 }}>{p.desc}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
 
           </main>
         </div>
