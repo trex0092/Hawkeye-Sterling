@@ -85,9 +85,11 @@ export default function UboDeclarationPage() {
       if (res.ok) {
         const data = (await res.json()) as UboRisk;
         setUboRisk(data);
+      } else {
+        console.error(`[hawkeye] ubo-risk HTTP ${res.status}`);
       }
-    } catch {
-      /* non-fatal */
+    } catch (err) {
+      console.error("[hawkeye] ubo-risk threw:", err);
     } finally {
       setUboRiskLoading(false);
     }

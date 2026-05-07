@@ -42,7 +42,10 @@ export default function ProfilePage() {
         if (d.ok && d.user) setProfile(d.user);
         else setLoadError(d.error ?? "Failed to load profile");
       })
-      .catch(() => setLoadError("Failed to load profile"));
+      .catch((err: unknown) => {
+        console.error("[hawkeye] profile auth/me fetch threw:", err);
+        setLoadError("Failed to load profile");
+      });
   }, []);
 
   const handleChangePassword = async (e: FormEvent) => {
@@ -75,7 +78,8 @@ export default function ProfilePage() {
         setNewPassword("");
         setConfirmPassword("");
       }
-    } catch {
+    } catch (err) {
+      console.error("[hawkeye] profile change-password threw:", err);
       setSaveError("Network error — please try again");
     } finally {
       setSaving(false);

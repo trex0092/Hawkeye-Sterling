@@ -136,7 +136,8 @@ function load(): Employee[] {
   try {
     const raw = localStorage.getItem(STORAGE);
     return raw ? JSON.parse(raw) : SEED;
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] employees parse failed — using seed:", err);
     return SEED;
   }
 }
@@ -144,8 +145,8 @@ function load(): Employee[] {
 function save(rows: Employee[]) {
   try {
     localStorage.setItem(STORAGE, JSON.stringify(rows));
-  } catch {
-    /* */
+  } catch (err) {
+    console.error("[hawkeye] employees persist failed — edits will be lost on reload:", err);
   }
 }
 
@@ -191,9 +192,11 @@ export default function EmployeesPage() {
       if (res.ok) {
         const data = (await res.json()) as EmployeeRisk;
         setEmpRisk(data);
+      } else {
+        console.error(`[hawkeye] employee-risk HTTP ${res.status}`);
       }
-    } catch {
-      /* non-fatal */
+    } catch (err) {
+      console.error("[hawkeye] employee-risk threw:", err);
     } finally {
       setEmpRiskLoading(false);
     }

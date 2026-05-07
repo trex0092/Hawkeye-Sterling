@@ -44,7 +44,8 @@ function loadCachedName(): string {
 }
 
 function saveCachedName(name: string) {
-  try { window.localStorage.setItem(CACHED_NAME_KEY, name); } catch { /* quota */ }
+  try { window.localStorage.setItem(CACHED_NAME_KEY, name); }
+  catch (err) { console.warn("[hawkeye] four-eyes cached-name persist failed:", err); }
 }
 
 interface SigningDraft {
