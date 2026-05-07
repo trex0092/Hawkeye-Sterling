@@ -108,10 +108,16 @@ async function handlePaymentScreen(req: Request): Promise<NextResponse> {
 
   const [yenteResults, walletRisk] = await Promise.all([
     namesToMatch.length > 0
-      ? yenteMatch(namesToMatch.map((name) => ({ name, schema: "LegalEntity" as const }))).catch(() => null)
+      ? yenteMatch(namesToMatch.map((name) => ({ name, schema: "LegalEntity" as const }))).catch((err: unknown) => {
+          console.warn("[hawkeye] payment-screen yenteMatch failed:", err);
+          return null;
+        })
       : Promise.resolve(null),
     isCryptoLike
-      ? scoreWallet(cryptoAddress).catch(() => null)
+      ? scoreWallet(cryptoAddress).catch((err: unknown) => {
+          console.warn("[hawkeye] payment-screen scoreWallet failed:", err);
+          return null;
+        })
       : Promise.resolve(null),
   ]);
 

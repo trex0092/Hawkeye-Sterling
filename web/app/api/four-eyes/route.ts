@@ -211,9 +211,13 @@ async function reportToAsana(item: FourEyesItem, decision: "approve" | "reject",
       }),
       signal: AbortSignal.timeout(8_000),
     });
-    const payload = (await res.json().catch(() => null)) as { data?: { permalink_url?: string } } | null;
+    const payload = (await res.json().catch((err: unknown) => {
+      console.warn("[hawkeye] four-eyes Asana POST response parse failed:", err);
+      return null;
+    })) as { data?: { permalink_url?: string } } | null;
     return payload?.data?.permalink_url ?? null;
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] four-eyes reportToAsana threw — decision logged locally without Asana task:", err);
     return null;
   }
 }
