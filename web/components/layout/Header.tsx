@@ -141,6 +141,7 @@ export function Header() {
     { label: `📁 ${strings.strCases}`, href: "/str-cases" },
     { label: `👁️ ${strings.ongoingMonitor}`, href: "/ongoing-monitor" },
     { label: `🧠 ${strings.mlroAdvisor}`, href: "/mlro-advisor" },
+    { label: "🛡️ Grievances", href: "/governance/grievances-whistleblowing" },
   ];
 
   useEffect(() => {

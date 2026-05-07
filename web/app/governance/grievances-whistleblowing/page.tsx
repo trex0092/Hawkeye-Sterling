@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Header } from "@/components/layout/Header";
+import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -194,6 +195,22 @@ function FieldLabel({ children, required }: { children: React.ReactNode; require
   );
 }
 
+// ── Option selector (language / severity) ─────────────────────────────────────
+
+function Opt({ label, selected, onClick }: { label: string; selected: boolean; onClick: () => void }) {
+  return (
+    <div
+      onClick={onClick}
+      style={{ border: `1px solid ${selected ? V.ember : V.line}`, background: selected ? V.emberSoft : V.bg2, padding: "9px 10px", fontSize: 11.5, color: selected ? V.ember : V.ink2, cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}
+    >
+      <div style={{ width: 12, height: 12, border: `1px solid ${selected ? V.ember : V.muted}`, display: "grid", placeItems: "center", flexShrink: 0, background: selected ? V.ember : "transparent" }}>
+        {selected && <div style={{ width: 5, height: 9, border: "solid #1a0613", borderWidth: "0 1.6px 1.6px 0", transform: "rotate(45deg) translate(-1px,-1px)" }} />}
+      </div>
+      {label}
+    </div>
+  );
+}
+
 // ── Main page ──────────────────────────────────────────────────────────────────
 
 export default function GrievancesWhistleblowingPage() {
@@ -207,6 +224,7 @@ export default function GrievancesWhistleblowingPage() {
   const [description, setDesc]    = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [toast, setToast]         = useState<string | null>(null);
+  const [toastErr, setToastErr]   = useState<string | null>(null);
   const [stats]                   = useState<ProgrammeStats>(MOCK_STATS);
   const [cases]                   = useState<GwCase[]>(MOCK_CASES);
 
@@ -227,6 +245,11 @@ export default function GrievancesWhistleblowingPage() {
 
   const handleSubmit = useCallback(async () => {
     if (!concern || submitting) return;
+    if (!description.trim()) {
+      setToastErr("Please provide a description before submitting.");
+      setTimeout(() => setToastErr(null), 6000);
+      return;
+    }
     setSubmitting(true);
     try {
       const res = await fetch("/api/grievances/intake", {
@@ -239,11 +262,17 @@ export default function GrievancesWhistleblowingPage() {
         setToast(`Disclosure submitted · Case ref: ${data.caseRef}`);
         setConcern(""); setLocation(""); setName(""); setDesc("");
         setTimeout(() => setToast(null), 8000);
+      } else {
+        setToastErr("Submission failed — please try again or contact compliance directly.");
+        setTimeout(() => setToastErr(null), 8000);
       }
+    } catch {
+      setToastErr("Network error — please check your connection and retry.");
+      setTimeout(() => setToastErr(null), 8000);
     } finally {
       setSubmitting(false);
     }
-  }, [concern, submitting, mode, dateObs, location, reporterName, description, severity, language]);
+  }, [concern, description, submitting, mode, dateObs, location, reporterName, severity, language]);
 
   // CSS custom properties scoped to page wrapper
   const gwVars = {
@@ -265,22 +294,6 @@ export default function GrievancesWhistleblowingPage() {
     "--gw-rose-soft": "oklch(66% 0.20 20 / .14)",
   } as React.CSSProperties;
 
-  // ── Option selector (language / severity) ────────────────────────────────────
-  function Opt({ label, selected, onClick }: { label: string; selected: boolean; onClick: () => void }) {
-    return (
-      <div
-        onClick={onClick}
-        className="gw-opt"
-        style={{ border: `1px solid ${selected ? V.ember : V.line}`, background: selected ? V.emberSoft : V.bg2, padding: "9px 10px", fontSize: 11.5, color: selected ? V.ember : V.ink2, cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}
-      >
-        <div style={{ width: 12, height: 12, border: `1px solid ${selected ? V.ember : V.muted}`, display: "grid", placeItems: "center", flexShrink: 0, background: selected ? V.ember : "transparent" }}>
-          {selected && <div style={{ width: 5, height: 9, border: "solid #1a0613", borderWidth: "0 1.6px 1.6px 0", transform: "rotate(45deg) translate(-1px,-1px)" }} />}
-        </div>
-        {label}
-      </div>
-    );
-  }
-
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: PAGE_CSS }} />
@@ -289,6 +302,11 @@ export default function GrievancesWhistleblowingPage() {
       {toast && (
         <div style={{ position: "fixed", bottom: 24, right: 24, zIndex: 9999, background: "#15130f", border: `1px solid oklch(74% 0.18 350)`, color: "#efece4", padding: "12px 18px", fontFamily: "'JetBrains Mono','IBM Plex Mono',monospace", fontSize: 12, maxWidth: 360, boxShadow: "0 8px 32px rgba(0,0,0,.7)" }}>
           <span style={{ color: "oklch(74% 0.18 350)" }}>✓</span> {toast}
+        </div>
+      )}
+      {toastErr && (
+        <div style={{ position: "fixed", bottom: toast ? 80 : 24, right: 24, zIndex: 9999, background: "#15130f", border: `1px solid oklch(65% 0.22 25)`, color: "#efece4", padding: "12px 18px", fontFamily: "'JetBrains Mono','IBM Plex Mono',monospace", fontSize: 12, maxWidth: 360, boxShadow: "0 8px 32px rgba(0,0,0,.7)" }}>
+          <span style={{ color: "oklch(65% 0.22 25)" }}>⚠</span> {toastErr}
         </div>
       )}
 
@@ -389,6 +407,29 @@ export default function GrievancesWhistleblowingPage() {
               </div>
             </div>
 
+            {/* Report to Asana */}
+            <div style={{ marginTop: 18 }}>
+              <div style={mono({ fontSize: 9.5, letterSpacing: ".22em", textTransform: "uppercase", color: V.muted, marginBottom: 10 })}>Report</div>
+              <AsanaReportButton
+                payload={{
+                  module: "grievances-whistleblowing",
+                  label: "Grievances & Whistleblowing",
+                  summary: `Grievances & Whistleblowing programme report — FG/GVW/004 v004. Programme stats (30d): ${stats.open} open · ${stats.resolved} resolved · ${stats.escalated} escalated · ${stats.slaHitPct}% SLA hit. Routed to 19 · Incidents & Grievances board.`,
+                  url: "/governance/grievances-whistleblowing",
+                  metadata: {
+                    policyCode: "FG/GVW/004",
+                    version: "004",
+                    effective: "28 NOV 2025",
+                    owner: "Compliance Officer / MLRO",
+                    openCases: stats.open,
+                    resolvedCases: stats.resolved,
+                    escalatedCases: stats.escalated,
+                    slaHitPct: stats.slaHitPct,
+                  },
+                }}
+              />
+            </div>
+
           </aside>
 
           {/* ══ MAIN ══ */}
@@ -435,6 +476,24 @@ export default function GrievancesWhistleblowingPage() {
                     Download policy PDF
                     <span style={mono({ fontSize: 10, border: `1px solid ${V.line2}`, padding: "1px 5px", color: V.ink2, background: "transparent" })}>↓</span>
                   </button>
+                  <AsanaReportButton
+                    payload={{
+                      module: "grievances-whistleblowing",
+                      label: "Grievances & Whistleblowing",
+                      summary: `Grievances & Whistleblowing programme report — FG/GVW/004 v004. Programme stats (30d): ${stats.open} open · ${stats.resolved} resolved · ${stats.escalated} escalated · ${stats.slaHitPct}% SLA hit. Routed to 19 · Incidents & Grievances board.`,
+                      url: "/governance/grievances-whistleblowing",
+                      metadata: {
+                        policyCode: "FG/GVW/004",
+                        version: "004",
+                        effective: "28 NOV 2025",
+                        owner: "Compliance Officer / MLRO",
+                        openCases: stats.open,
+                        resolvedCases: stats.resolved,
+                        escalatedCases: stats.escalated,
+                        slaHitPct: stats.slaHitPct,
+                      },
+                    }}
+                  />
                 </div>
               </div>
 
@@ -446,8 +505,7 @@ export default function GrievancesWhistleblowingPage() {
                   { k: "Effective",       v: "28 NOV 2025",               accent: false },
                   { k: "Next review",     v: "JUN 2026",                  accent: false },
                   { k: "Owner",           v: "Compliance Officer / MLRO", accent: false },
-                  { k: "Custodian",       v: "L. Fernanda",               accent: false },
-                  { k: "Approver",        v: "S.K. Abdulkareem · MD",     accent: false },
+                  { k: "Approver",        v: "Management",                accent: false },
                   { k: "Classification",  v: "CONFIDENTIAL",              accent: true  },
                 ] as const).map((row, i, arr) => (
                   <div key={row.k} style={mono({ display: "flex", justifyContent: "space-between", padding: "4px 0", borderBottom: i < arr.length - 1 ? `1px dotted ${V.line2}` : "none", fontSize: 10.5, color: V.muted })}>
