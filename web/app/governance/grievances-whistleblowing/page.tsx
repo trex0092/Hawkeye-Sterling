@@ -80,13 +80,23 @@ const CHANNELS = [
 const CONCERN_OPTIONS = [
   "AML / CFT — suspicious transactions",
   "Sanctions or proliferation financing",
+  "Terrorist financing",
   "Bribery, gifts or improper influence",
+  "Corruption or abuse of power",
   "Fraud, theft or falsification",
+  "Embezzlement or misappropriation",
   "KYC / EDD failure",
+  "PEP / UBO non-disclosure",
   "Misconduct / harassment / discrimination",
+  "Workplace bullying or retaliation",
+  "Conflicts of interest",
   "Data, IT or confidentiality breach",
-  "Operational / safety / process",
+  "Unauthorised access or system misuse",
+  "Regulatory non-compliance",
+  "Operational / safety / process failure",
   "Customer service grievance",
+  "Third-party / supplier misconduct",
+  "Environmental or ESG violation",
   "Other",
 ];
 
@@ -218,7 +228,7 @@ export default function GrievancesWhistleblowingPage() {
   const [severity, setSeverity]   = useState<"Low" | "Medium" | "High">("Medium");
   const [language, setLanguage]   = useState<"en" | "ar">("en");
   const [concern, setConcern]     = useState("");
-  const [dateObs, setDateObs]     = useState("2026-05-02");
+  const [dateObs, setDateObs]     = useState("02/05/2026");
   const [location, setLocation]   = useState("");
   const [reporterName, setName]   = useState("");
   const [description, setDesc]    = useState("");
@@ -226,7 +236,7 @@ export default function GrievancesWhistleblowingPage() {
   const [toast, setToast]         = useState<string | null>(null);
   const [toastErr, setToastErr]   = useState<string | null>(null);
   const [stats]                   = useState<ProgrammeStats>(MOCK_STATS);
-  const [cases]                   = useState<GwCase[]>(MOCK_CASES);
+  const [cases, setCases]         = useState<GwCase[]>(MOCK_CASES);
 
   const formRef     = useRef<HTMLDivElement>(null);
   const registerRef = useRef<HTMLDivElement>(null);
@@ -255,7 +265,7 @@ export default function GrievancesWhistleblowingPage() {
       const res = await fetch("/api/grievances/intake", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode, concern, dateObs, location, reporterName, description, severity, language }),
+        body: JSON.stringify({ mode, concern, dateObs: (() => { const [d,m,y] = dateObs.split("/"); return `${y}-${(m||"").padStart(2,"0")}-${(d||"").padStart(2,"0")}`; })(), location, reporterName, description, severity, language }),
       });
       if (res.ok) {
         const data = await res.json() as { caseRef: string };
@@ -559,7 +569,7 @@ export default function GrievancesWhistleblowingPage() {
                   <table style={{ border: `1px solid ${V.line}`, background: V.panel, width: "100%", borderCollapse: "separate" as const, borderSpacing: 0, fontSize: 11.5 }}>
                     <thead>
                       <tr>
-                        {["Case Ref", "Received", "Channel", "Category", "Stage", "SLA", "Owner"].map((h) => (
+                        {["Case Ref", "Received", "Channel", "Category", "Stage", "SLA", "Owner", ""].map((h) => (
                           <th key={h} style={mono({ textAlign: "left", fontSize: 9.5, letterSpacing: ".16em", textTransform: "uppercase", color: V.muted, padding: "9px 12px", borderBottom: `1px solid ${V.line}`, fontWeight: 500, background: V.bg2 })}>{h}</th>
                         ))}
                       </tr>
@@ -587,6 +597,20 @@ export default function GrievancesWhistleblowingPage() {
                             </div>
                           </td>
                           <td style={{ padding: "11px 12px", borderBottom: i < cases.length - 1 ? `1px solid ${V.line}` : "none", color: V.ink2 }}>{c.owner}</td>
+                          <td style={{ padding: "11px 12px", borderBottom: i < cases.length - 1 ? `1px solid ${V.line}` : "none", whiteSpace: "nowrap" as const }}>
+                            <button
+                              type="button"
+                              title="Edit case"
+                              onClick={() => formRef.current?.scrollIntoView({ behavior: "smooth" })}
+                              style={{ background: "transparent", border: `1px solid ${V.line2}`, color: V.ink2, padding: "3px 7px", fontSize: 11, cursor: "pointer", borderRadius: 1, marginRight: 5 }}
+                            >✏</button>
+                            <button
+                              type="button"
+                              title="Delete case"
+                              onClick={() => setCases((prev) => prev.filter((r) => r.id !== c.id))}
+                              style={{ background: "transparent", border: `1px solid ${V.line2}`, color: "oklch(65% 0.22 25)", padding: "3px 7px", fontSize: 11, cursor: "pointer", borderRadius: 1 }}
+                            >×</button>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -645,7 +669,14 @@ export default function GrievancesWhistleblowingPage() {
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
                       <div>
                         <FieldLabel>Date observed</FieldLabel>
-                        <input type="date" value={dateObs} onChange={(e) => setDateObs(e.target.value)} style={{ width: "100%", background: V.bg, border: `1px solid ${V.line}`, color: V.ink, padding: "8px 10px", fontFamily: "'Inter',sans-serif", fontSize: 12, borderRadius: 1, colorScheme: "dark" }} />
+                        <input
+                          type="text"
+                          value={dateObs}
+                          onChange={(e) => setDateObs(e.target.value)}
+                          placeholder="DD/MM/YYYY"
+                          maxLength={10}
+                          style={{ width: "100%", background: V.bg, border: `1px solid ${V.line}`, color: V.ink, padding: "8px 10px", fontFamily: "'Inter',sans-serif", fontSize: 12, borderRadius: 1 }}
+                        />
                       </div>
                       <div>
                         <FieldLabel>Location</FieldLabel>
