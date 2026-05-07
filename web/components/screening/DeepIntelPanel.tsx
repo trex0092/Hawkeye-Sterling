@@ -3898,13 +3898,1223 @@ function HumanTraffickingSection({ subject }: { subject: Subject }) {
   );
 }
 
+// ─── GROUP 11: Behavioral & Psychological Intelligence ───────────────────────
+
+function BehavioralBaselineSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState("");
+  async function run() {
+    setStatus("loading"); setError("");
+    try {
+      const res = await fetch("/api/behavioral-baseline", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction, industry: subject.riskCategory }) });
+      const data = (await res.json()) as unknown;
+      setResult(data); setStatus("done");
+    } catch (e) { setError(String(e)); setStatus("error"); }
+  }
+  return (
+    <IntelSection title="Behavioral Anomaly Baseline" icon="🧠" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Establish a behavioral baseline for the subject type and flag deviations — transaction timing, counterparty diversity, channel mix, geographic spread vs. declared profile.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+function LinguisticRiskSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState("");
+  async function run() {
+    setStatus("loading"); setError("");
+    try {
+      const res = await fetch("/api/linguistic-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, narrative: subject.notes ?? subject.name }) });
+      const data = (await res.json()) as unknown;
+      setResult(data); setStatus("done");
+    } catch (e) { setError(String(e)); setStatus("error"); }
+  }
+  return (
+    <IntelSection title="Linguistic Deception Markers" icon="🗣️" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Analyse written statements, narrative text, and KYC documentation for linguistic deception markers: vagueness, hedging, temporal inconsistency, SCAN indicators.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+function LifestyleWealthGapSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState("");
+  async function run() {
+    setStatus("loading"); setError("");
+    try {
+      const res = await fetch("/api/lifestyle-wealth-gap", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction }) });
+      const data = (await res.json()) as unknown;
+      setResult(data); setStatus("done");
+    } catch (e) { setError(String(e)); setStatus("error"); }
+  }
+  return (
+    <IntelSection title="Lifestyle / Wealth Gap Analysis" icon="💸" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Compare declared income and source of wealth against observable lifestyle indicators (property, vehicles, travel, social media) to surface unexplained wealth gaps.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+function PlausibilityScoreSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState("");
+  async function run() {
+    setStatus("loading"); setError("");
+    try {
+      const res = await fetch("/api/plausibility-score", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction, industry: subject.riskCategory, notes: subject.notes }) });
+      const data = (await res.json()) as unknown;
+      setResult(data); setStatus("done");
+    } catch (e) { setError(String(e)); setStatus("error"); }
+  }
+  return (
+    <IntelSection title="Plausibility Score Engine" icon="🎯" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">10-dimension common-sense plausibility scoring: Does the business model make sense? Are stated relationships credible? Does the risk profile fit the declared activity?</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+function AssociationTimelineSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState("");
+  async function run() {
+    setStatus("loading"); setError("");
+    try {
+      const res = await fetch("/api/association-timeline", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, associates: [] }) });
+      const data = (await res.json()) as unknown;
+      setResult(data); setStatus("done");
+    } catch (e) { setError(String(e)); setStatus("error"); }
+  }
+  return (
+    <IntelSection title="Association Timeline" icon="📅" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Date-sorted timeline of significant events involving the subject and their associates, highlighting proximity to sanctions designations, enforcement actions, and typology events.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+function ConfidenceDecaySection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState("");
+  async function run() {
+    setStatus("loading"); setError("");
+    try {
+      const res = await fetch("/api/confidence-decay", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, initialConfidence: 85, daysSinceLastReview: 180 }) });
+      const data = (await res.json()) as unknown;
+      setResult(data); setStatus("done");
+    } catch (e) { setError(String(e)); setStatus("error"); }
+  }
+  return (
+    <IntelSection title="Confidence Decay Calculator" icon="📉" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Model how confidence in the current risk assessment degrades over time as KYC data ages. Outputs decay curve, current confidence level, and recommended re-review date.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+function ExaminerSimSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState("");
+  async function run() {
+    setStatus("loading"); setError("");
+    try {
+      const res = await fetch("/api/examiner-sim", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction }) });
+      const data = (await res.json()) as unknown;
+      setResult(data); setStatus("done");
+    } catch (e) { setError(String(e)); setStatus("error"); }
+  }
+  return (
+    <IntelSection title="Examiner Simulation" icon="🔬" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Simulate how a CBUAE / DFSA / FATF examiner would scrutinise this case: what questions they would ask, what evidence gaps they would flag, what findings they would record.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+function BenfordSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState("");
+  async function run() {
+    setStatus("loading"); setError("");
+    try {
+      const res = await fetch("/api/benford", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name }) });
+      const data = (await res.json()) as unknown;
+      setResult(data); setStatus("done");
+    } catch (e) { setError(String(e)); setStatus("error"); }
+  }
+  return (
+    <IntelSection title="Benford's Law Analysis" icon="📊" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Apply Benford's Law to transaction amounts to detect structured / artificial round-number patterns that deviate significantly from natural first-digit distribution.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+// ─── GROUP 12: Legal & Regulatory Deep Intelligence ───────────────────────────
+
+function LitigationScanSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState("");
+  async function run() {
+    setStatus("loading"); setError("");
+    try {
+      const res = await fetch("/api/litigation-scan", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, jurisdiction: subject.jurisdiction }) });
+      const data = (await res.json()) as unknown;
+      setResult(data); setStatus("done");
+    } catch (e) { setError(String(e)); setStatus("error"); }
+  }
+  return (
+    <IntelSection title="Litigation Scan" icon="⚖️" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Scan for civil and criminal proceedings, court judgments, arbitration awards, insolvency filings, and enforcement actions across primary jurisdictions.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+function EnforcementActionsSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState("");
+  async function run() {
+    setStatus("loading"); setError("");
+    try {
+      const res = await fetch("/api/enforcement-actions", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, jurisdiction: subject.jurisdiction }) });
+      const data = (await res.json()) as unknown;
+      setResult(data); setStatus("done");
+    } catch (e) { setError(String(e)); setStatus("error"); }
+  }
+  return (
+    <IntelSection title="Enforcement Actions History" icon="🚨" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Retrieve FCA, SEC, CBUAE, DFSA, FinCEN, and other regulatory enforcement actions, fines, prohibition orders, and deferred prosecution agreements.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+function TaxAuthoritySection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState("");
+  async function run() {
+    setStatus("loading"); setError("");
+    try {
+      const res = await fetch("/api/tax-authority", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, jurisdiction: subject.jurisdiction, entityType: subject.entityType }) });
+      const data = (await res.json()) as unknown;
+      setResult(data); setStatus("done");
+    } catch (e) { setError(String(e)); setStatus("error"); }
+  }
+  return (
+    <IntelSection title="Tax Authority Flags" icon="🏦" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Check CRS/FATCA reportable account flags, tax haven usage, TIN inconsistencies, offshore disclosure scheme participation, and treaty abuse patterns.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+function ExtraditionMapSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState("");
+  async function run() {
+    setStatus("loading"); setError("");
+    try {
+      const res = await fetch("/api/extradition-map", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectCountry: subject.country ?? subject.jurisdiction, targetCountry: "AE" }) });
+      const data = (await res.json()) as unknown;
+      setResult(data); setStatus("done");
+    } catch (e) { setError(String(e)); setStatus("error"); }
+  }
+  return (
+    <IntelSection title="Extradition Treaty Map" icon="🗺️" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Map extradition treaty status between subject's jurisdiction and UAE / key partner states. Flag no-treaty or non-cooperative jurisdictions used as safe havens.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+function StatuteLimitationsSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState("");
+  async function run() {
+    setStatus("loading"); setError("");
+    try {
+      const res = await fetch("/api/statute-limitations", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jurisdiction: subject.jurisdiction, offenceType: "money_laundering" }) });
+      const data = (await res.json()) as unknown;
+      setResult(data); setStatus("done");
+    } catch (e) { setError(String(e)); setStatus("error"); }
+  }
+  return (
+    <IntelSection title="Statute of Limitations" icon="⏱️" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Calculate applicable limitation periods for AML/CFT offences across relevant jurisdictions. Flag near-expiry situations that create urgency for filing or asset freezing.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+function RegArbitrageSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState("");
+  async function run() {
+    setStatus("loading"); setError("");
+    try {
+      const res = await fetch("/api/reg-arbitrage", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ entityType: subject.entityType, jurisdictions: [subject.jurisdiction].filter(Boolean) }) });
+      const data = (await res.json()) as unknown;
+      setResult(data); setStatus("done");
+    } catch (e) { setError(String(e)); setStatus("error"); }
+  }
+  return (
+    <IntelSection title="Regulatory Arbitrage Detection" icon="⚡" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Identify regulatory arbitrage patterns: deliberate jurisdiction selection to exploit lighter AML/CFT regimes, licensing gaps, or supervisory blind spots.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+function AuditReadinessSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState("");
+  async function run() {
+    setStatus("loading"); setError("");
+    try {
+      const res = await fetch("/api/audit-readiness", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, entityType: subject.entityType }) });
+      const data = (await res.json()) as unknown;
+      setResult(data); setStatus("done");
+    } catch (e) { setError(String(e)); setStatus("error"); }
+  }
+  return (
+    <IntelSection title="Audit Readiness Score" icon="📋" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Score how audit-ready this case file is (0-100). Checks documentation completeness, evidence quality, rationale clarity, and CBUAE / DFSA examination expectations.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+function AmlProgrammeGapSection() {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState("");
+  async function run() {
+    setStatus("loading"); setError("");
+    try {
+      const res = await fetch("/api/aml-programme-gap", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({}) });
+      const data = (await res.json()) as unknown;
+      setResult(data); setStatus("done");
+    } catch (e) { setError(String(e)); setStatus("error"); }
+  }
+  return (
+    <IntelSection title="AML Programme Gap Analysis" icon="🔎" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Identify gaps in the AML/CFT programme against FATF Recommendations, CBUAE standards, and DNFBP obligations. Prioritised remediation roadmap.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+// ─── GROUP 13: Sector-Specific Intelligence ───────────────────────────────────
+
+function ArtMarketSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState("");
+  async function run() {
+    setStatus("loading"); setError("");
+    try {
+      const res = await fetch("/api/art-market", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType }) });
+      const data = (await res.json()) as unknown;
+      setResult(data); setStatus("done");
+    } catch (e) { setError(String(e)); setStatus("error"); }
+  }
+  return (
+    <IntelSection title="Art Market Risk" icon="🎨" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Assess art market AML risk: provenance opacity, valuation anomalies, anonymous buyer patterns, free-port storage, and known high-value art laundering typologies.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+function LuxuryGoodsSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState("");
+  async function run() {
+    setStatus("loading"); setError("");
+    try {
+      const res = await fetch("/api/luxury-goods", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType }) });
+      const data = (await res.json()) as unknown;
+      setResult(data); setStatus("done");
+    } catch (e) { setError(String(e)); setStatus("error"); }
+  }
+  return (
+    <IntelSection title="Luxury Goods Risk" icon="💎" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Detect luxury goods value transfer risk: high-value watches, jewellery, handbags, and Dubai re-export patterns used as portable stores of illicit wealth.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+function AviationIntelSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState("");
+  async function run() {
+    setStatus("loading"); setError("");
+    try {
+      const res = await fetch("/api/aviation-intel", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType }) });
+      const data = (await res.json()) as unknown;
+      setResult(data); setStatus("done");
+    } catch (e) { setError(String(e)); setStatus("error"); }
+  }
+  return (
+    <IntelSection title="Aviation & Aircraft Intel" icon="✈️" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Aircraft ownership registration, sanctioned airport routing patterns, private jet financing structures, and charter company beneficial ownership analysis.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+function FreeZoneRiskSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState("");
+  async function run() {
+    setStatus("loading"); setError("");
+    try {
+      const res = await fetch("/api/free-zone-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, freeZone: subject.jurisdiction }) });
+      const data = (await res.json()) as unknown;
+      setResult(data); setStatus("done");
+    } catch (e) { setError(String(e)); setStatus("error"); }
+  }
+  return (
+    <IntelSection title="UAE Free Zone Risk" icon="🏭" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">UAE free zone risk profiling: JAFZA, DMCC, RAKEZ, UAQ, SAIF Zone, IFZA risk ratings, supervisory oversight quality, and known typologies per zone.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+function GamingRiskSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState("");
+  async function run() {
+    setStatus("loading"); setError("");
+    try {
+      const res = await fetch("/api/gaming-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction }) });
+      const data = (await res.json()) as unknown;
+      setResult(data); setStatus("done");
+    } catch (e) { setError(String(e)); setStatus("error"); }
+  }
+  return (
+    <IntelSection title="Gaming / Gambling Risk" icon="🎰" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Assess gaming and gambling sector risk: chip dumping, smurfing via online platforms, unlicensed operators, and match-fixing proceeds laundering patterns.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+function GoldPreciousMetalsSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState("");
+  async function run() {
+    setStatus("loading"); setError("");
+    try {
+      const res = await fetch("/api/gold-precious-metals", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType }) });
+      const data = (await res.json()) as unknown;
+      setResult(data); setStatus("done");
+    } catch (e) { setError(String(e)); setStatus("error"); }
+  }
+  return (
+    <IntelSection title="Gold & Precious Metals Risk" icon="🥇" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">UAE LBMA/DMCC gold chain heuristics: conflict gold sourcing, refinery by-pass, cash-for-gold smurfing, suspicious provenance declarations, and DMCC compliance flags.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+function NpoRiskSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState("");
+  async function run() {
+    setStatus("loading"); setError("");
+    try {
+      const res = await fetch("/api/npo-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction }) });
+      const data = (await res.json()) as unknown;
+      setResult(data); setStatus("done");
+    } catch (e) { setError(String(e)); setStatus("error"); }
+  }
+  return (
+    <IntelSection title="NPO / Charity Risk" icon="🤝" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Non-profit and charitable organisation AML/CFT/TF risk: donor anonymity, geographic diversion, links to designated entities, registration status, and FATF Recommendation 8 indicators.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+function VaspRiskSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState("");
+  async function run() {
+    setStatus("loading"); setError("");
+    try {
+      const res = await fetch("/api/vasp-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction }) });
+      const data = (await res.json()) as unknown;
+      setResult(data); setStatus("done");
+    } catch (e) { setError(String(e)); setStatus("error"); }
+  }
+  return (
+    <IntelSection title="VASP / Crypto Exchange Risk" icon="🔐" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Virtual Asset Service Provider risk: VARA licensing status, Travel Rule compliance, dark market exposure, unhosted wallet concentration, and FATF R.15 compliance gaps.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+function EnvironmentalCrimeSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState("");
+  async function run() {
+    setStatus("loading"); setError("");
+    try {
+      const res = await fetch("/api/environmental-crime", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, industry: subject.riskCategory }) });
+      const data = (await res.json()) as unknown;
+      setResult(data); setStatus("done");
+    } catch (e) { setError(String(e)); setStatus("error"); }
+  }
+  return (
+    <IntelSection title="Environmental Crime Risk" icon="🌿" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Environmental crime proceeds: illegal logging, wildlife trafficking, carbon credit fraud, illegal waste disposal, and green-washing scam indicators per FATF guidance.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+// ─── GROUP 14: Network & Graph Intelligence ───────────────────────────────────
+
+function SixDegreesSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState("");
+  async function run() {
+    setStatus("loading"); setError("");
+    try {
+      const res = await fetch("/api/six-degrees", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType }) });
+      const data = (await res.json()) as unknown;
+      setResult(data); setStatus("done");
+    } catch (e) { setError(String(e)); setStatus("error"); }
+  }
+  return (
+    <IntelSection title="Six Degrees to Sanctions" icon="🕸️" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Graph traversal to find the shortest path between the subject and any OFAC / UN / EU / HMT sanctioned entity. Flag hop count, path, and intermediate nodes.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+function HiddenControllerSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState("");
+  async function run() {
+    setStatus("loading"); setError("");
+    try {
+      const res = await fetch("/api/hidden-controller", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction }) });
+      const data = (await res.json()) as unknown;
+      setResult(data); setStatus("done");
+    } catch (e) { setError(String(e)); setStatus("error"); }
+  }
+  return (
+    <IntelSection title="Hidden Controller Detection" icon="🎭" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Identify concealed control mechanisms: nominee directors, power of attorney chains, trust-behind-trust structures, and informal control arrangements masking the true beneficial owner.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+function ClusterContaminationSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState("");
+  async function run() {
+    setStatus("loading"); setError("");
+    try {
+      const res = await fetch("/api/cluster-contamination", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, entityType: subject.entityType }) });
+      const data = (await res.json()) as unknown;
+      setResult(data); setStatus("done");
+    } catch (e) { setError(String(e)); setStatus("error"); }
+  }
+  return (
+    <IntelSection title="Cluster Contamination Analysis" icon="🔴" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Model risk propagation across linked entity cluster: if one node is designated/convicted, how does risk spread through the network and which other entities are at risk of contamination?</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+function TimingCorrelationSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState("");
+  async function run() {
+    setStatus("loading"); setError("");
+    try {
+      const res = await fetch("/api/timing-correlation", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, entityType: subject.entityType }) });
+      const data = (await res.json()) as unknown;
+      setResult(data); setStatus("done");
+    } catch (e) { setError(String(e)); setStatus("error"); }
+  }
+  return (
+    <IntelSection title="Timing Correlation Engine" icon="⏰" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Correlate corporate actions (incorporation, capital changes, director changes) against external sanctions events, regulatory announcements, and enforcement timelines to detect evasion timing patterns.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+function DarkMoneyFlowSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState("");
+  async function run() {
+    setStatus("loading"); setError("");
+    try {
+      const res = await fetch("/api/dark-money-flow", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction }) });
+      const data = (await res.json()) as unknown;
+      setResult(data); setStatus("done");
+    } catch (e) { setError(String(e)); setStatus("error"); }
+  }
+  return (
+    <IntelSection title="Dark Money Flow Analysis" icon="🌑" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Structural capacity estimation for dark money flows: shell chain depth, opacity index, correspondent banking pathways, and estimated value-at-risk through the entity structure.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+function BeneficialOwnerVerifySection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState("");
+  async function run() {
+    setStatus("loading"); setError("");
+    try {
+      const res = await fetch("/api/beneficial-owner-verify", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction }) });
+      const data = (await res.json()) as unknown;
+      setResult(data); setStatus("done");
+    } catch (e) { setError(String(e)); setStatus("error"); }
+  }
+  return (
+    <IntelSection title="Beneficial Owner Verification" icon="✅" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Cross-verify declared beneficial owners against registry data, LEI records, corporate filings, and open-source intelligence. Flag discrepancies and unverified ownership claims.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+function PepCorporateNexusSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState("");
+  async function run() {
+    setStatus("loading"); setError("");
+    try {
+      const res = await fetch("/api/pep-corporate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType }) });
+      const data = (await res.json()) as unknown;
+      setResult(data); setStatus("done");
+    } catch (e) { setError(String(e)); setStatus("error"); }
+  }
+  return (
+    <IntelSection title="PEP Corporate Nexus" icon="🏛️" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Map PEP connections to corporate structures: companies where PEPs hold directorships, shareholdings, or are beneficial owners — including family members and close associates.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+function CrossBorderWireSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState("");
+  async function run() {
+    setStatus("loading"); setError("");
+    try {
+      const res = await fetch("/api/cross-border-wire", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction }) });
+      const data = (await res.json()) as unknown;
+      setResult(data); setStatus("done");
+    } catch (e) { setError(String(e)); setStatus("error"); }
+  }
+  return (
+    <IntelSection title="Cross-Border Wire Analysis" icon="🌐" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Analyse cross-border wire transfer patterns: corridor risk, SWIFT message anomalies, R-16 round-trip indicators, and high-risk correspondent banking pathway detection.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+function CtrStructuringSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState("");
+  async function run() {
+    setStatus("loading"); setError("");
+    try {
+      const res = await fetch("/api/ctr-structuring", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType }) });
+      const data = (await res.json()) as unknown;
+      setResult(data); setStatus("done");
+    } catch (e) { setError(String(e)); setStatus("error"); }
+  }
+  return (
+    <IntelSection title="CTR Structuring Detection" icon="💰" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Detect cash transaction report structuring (smurfing): sub-threshold splitting, multiple-branch coordination, periodic clustering just below AED 40,000 / USD 10,000 reporting thresholds.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+// ─── GROUP 15: Advanced AI Reasoning ─────────────────────────────────────────
+
+function CaseAnalogySection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState("");
+  async function run() {
+    setStatus("loading"); setError("");
+    try {
+      const res = await fetch("/api/case-analogy", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction }) });
+      const data = (await res.json()) as unknown;
+      setResult(data); setStatus("done");
+    } catch (e) { setError(String(e)); setStatus("error"); }
+  }
+  return (
+    <IntelSection title="Case Analogy Matching" icon="🔗" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Tag-based similarity matching against real enforcement cases, FIU typologies, and regulatory precedents. Surfaces the most analogous historical cases and their outcomes.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+function EvidenceSufficiencySection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState("");
+  async function run() {
+    setStatus("loading"); setError("");
+    try {
+      const res = await fetch("/api/evidence-sufficiency", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, entityType: subject.entityType, disposition: "STR" }) });
+      const data = (await res.json()) as unknown;
+      setResult(data); setStatus("done");
+    } catch (e) { setError(String(e)); setStatus("error"); }
+  }
+  return (
+    <IntelSection title="Evidence Sufficiency Checker" icon="✔️" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Evaluate whether the evidence assembled is sufficient to support the proposed disposition (Clear / Monitor / EDD / STR / Reject). Checklist against FATF and UAE filing standards.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+function RedlineMonitorSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState("");
+  async function run() {
+    setStatus("loading"); setError("");
+    try {
+      const res = await fetch("/api/redline-monitor", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, conditions: [] }) });
+      const data = (await res.json()) as unknown;
+      setResult(data); setStatus("done");
+    } catch (e) { setError(String(e)); setStatus("error"); }
+  }
+  return (
+    <IntelSection title="Redline Monitor" icon="🔴" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Define absolute redline conditions (sanctions match, PEP + cash + high-risk jurisdiction, etc.) that trigger immediate escalation regardless of overall risk score.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+function ProbabilityTreeSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState("");
+  async function run() {
+    setStatus("loading"); setError("");
+    try {
+      const res = await fetch("/api/probability-tree", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, entityType: subject.entityType }) });
+      const data = (await res.json()) as unknown;
+      setResult(data); setStatus("done");
+    } catch (e) { setError(String(e)); setStatus("error"); }
+  }
+  return (
+    <IntelSection title="Probability Tree Builder" icon="🌳" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Bayesian scenario probability tree: branch the case into explanatory hypotheses (legitimate / suspicious / high-risk), assign prior/posterior probabilities, and identify the most likely true scenario.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+function AutonomousInvestigateSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState("");
+  async function run() {
+    setStatus("loading"); setError("");
+    try {
+      const res = await fetch("/api/autonomous-investigate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction }) });
+      const data = (await res.json()) as unknown;
+      setResult(data); setStatus("done");
+    } catch (e) { setError(String(e)); setStatus("error"); }
+  }
+  return (
+    <IntelSection title="Autonomous Investigation" icon="🤖" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">AI-driven autonomous investigation: multi-step reasoning chain, hypothesis formation, evidence gathering plan, gap identification, and structured intelligence report — without human direction at each step.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+function CompetitorScreenSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState("");
+  async function run() {
+    setStatus("loading"); setError("");
+    try {
+      const res = await fetch("/api/competitor-screen", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, industry: subject.riskCategory }) });
+      const data = (await res.json()) as unknown;
+      setResult(data); setStatus("done");
+    } catch (e) { setError(String(e)); setStatus("error"); }
+  }
+  return (
+    <IntelSection title="Peer / Competitor Screen" icon="👥" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Screen peer entities in the same industry/sector. If competitors are flagged, assess contagion risk. If the subject is notably cleaner than peers, assess whether that itself is anomalous.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+function AdverseClassifySection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState("");
+  async function run() {
+    setStatus("loading"); setError("");
+    try {
+      const res = await fetch("/api/adverse-classify", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType }) });
+      const data = (await res.json()) as unknown;
+      setResult(data); setStatus("done");
+    } catch (e) { setError(String(e)); setStatus("error"); }
+  }
+  return (
+    <IntelSection title="Adverse Media Classifier" icon="📰" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">AI classification of adverse media hits: fraud, corruption, sanctions, terrorism financing, drug trafficking, human trafficking — with relevance scoring and false-positive probability.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+function FalsePositiveOptimizerSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState("");
+  async function run() {
+    setStatus("loading"); setError("");
+    try {
+      const res = await fetch("/api/false-positive", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType }) });
+      const data = (await res.json()) as unknown;
+      setResult(data); setStatus("done");
+    } catch (e) { setError(String(e)); setStatus("error"); }
+  }
+  return (
+    <IntelSection title="False Positive Optimizer" icon="🎛️" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Estimate false positive probability for this case: common name disambiguation, legitimate business explanations, base-rate calibration, and recommended tuning actions to reduce future false positives.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+function MixedFundsSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState("");
+  async function run() {
+    setStatus("loading"); setError("");
+    try {
+      const res = await fetch("/api/mixed-funds", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType }) });
+      const data = (await res.json()) as unknown;
+      setResult(data); setStatus("done");
+    } catch (e) { setError(String(e)); setStatus("error"); }
+  }
+  return (
+    <IntelSection title="Mixed Funds Detector" icon="🫧" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Detect commingling of legitimate and illicit funds: blending ratios, co-mingling through operating accounts, legitimate business revenue used to disguise proceeds of crime.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+function MlPredicateSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState("");
+  async function run() {
+    setStatus("loading"); setError("");
+    try {
+      const res = await fetch("/api/ml-predicate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, industry: subject.riskCategory }) });
+      const data = (await res.json()) as unknown;
+      setResult(data); setStatus("done");
+    } catch (e) { setError(String(e)); setStatus("error"); }
+  }
+  return (
+    <IntelSection title="ML Predicate Offence Classifier" icon="⚖️" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">AI classification of the most likely predicate offence(s) underlying suspected money laundering: fraud, corruption, drug trafficking, tax evasion, cybercrime — with probability distribution.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+function EsgRiskSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState("");
+  async function run() {
+    setStatus("loading"); setError("");
+    try {
+      const res = await fetch("/api/esg-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, industry: subject.riskCategory }) });
+      const data = (await res.json()) as unknown;
+      setResult(data); setStatus("done");
+    } catch (e) { setError(String(e)); setStatus("error"); }
+  }
+  return (
+    <IntelSection title="ESG Risk Overlay" icon="🌱" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Environmental, Social, and Governance risk overlay: UNPRI red flags, ESG controversies, greenwashing indicators, forced labour supply chain exposure, and governance failures correlated with AML risk.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+function CustomerLifecycleSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState("");
+  async function run() {
+    setStatus("loading"); setError("");
+    try {
+      const res = await fetch("/api/customer-lifecycle", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType }) });
+      const data = (await res.json()) as unknown;
+      setResult(data); setStatus("done");
+    } catch (e) { setError(String(e)); setStatus("error"); }
+  }
+  return (
+    <IntelSection title="Customer Lifecycle Risk" icon="🔄" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Map the full customer lifecycle risk profile: onboarding quality, CDD refresh history, risk tier changes, incident history, and predicted future risk trajectory based on entity type and activity pattern.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+function OnboardingRiskTierSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState("");
+  async function run() {
+    setStatus("loading"); setError("");
+    try {
+      const res = await fetch("/api/onboarding-risk-tier", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction, industry: subject.riskCategory }) });
+      const data = (await res.json()) as unknown;
+      setResult(data); setStatus("done");
+    } catch (e) { setError(String(e)); setStatus("error"); }
+  }
+  return (
+    <IntelSection title="Onboarding Risk Tier" icon="🎚️" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Assign the correct onboarding risk tier (Standard / Enhanced / PEP / Prohibited) based on all available intelligence, and generate the minimum required CDD documentation checklist.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+function CddAdequacySection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState("");
+  async function run() {
+    setStatus("loading"); setError("");
+    try {
+      const res = await fetch("/api/cdd-adequacy", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction }) });
+      const data = (await res.json()) as unknown;
+      setResult(data); setStatus("done");
+    } catch (e) { setError(String(e)); setStatus("error"); }
+  }
+  return (
+    <IntelSection title="CDD Adequacy Check" icon="📁" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Assess completeness and adequacy of current Customer Due Diligence file against the required standard for the assigned risk tier. Highlight document gaps, expiries, and re-verification obligations.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+function PepEddGeneratorSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState("");
+  async function run() {
+    setStatus("loading"); setError("");
+    try {
+      const res = await fetch("/api/pep-edd-generator", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, pepRole: subject.pep?.tier, jurisdiction: subject.jurisdiction }) });
+      const data = (await res.json()) as unknown;
+      setResult(data); setStatus("done");
+    } catch (e) { setError(String(e)); setStatus("error"); }
+  }
+  return (
+    <IntelSection title="PEP Enhanced Due Diligence Generator" icon="📝" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Generate a bespoke EDD framework for PEP subjects: senior management approval checklist, source of wealth verification plan, transaction monitoring parameters, and annual review triggers.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+function VendorRiskSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState("");
+  async function run() {
+    setStatus("loading"); setError("");
+    try {
+      const res = await fetch("/api/vendor-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction, industry: subject.riskCategory }) });
+      const data = (await res.json()) as unknown;
+      setResult(data); setStatus("done");
+    } catch (e) { setError(String(e)); setStatus("error"); }
+  }
+  return (
+    <IntelSection title="Vendor / Third-Party Risk" icon="🤝" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Third-party and vendor risk assessment: supply chain AML exposure, sub-contractor screening, outsourced function risk, and third-party due diligence gaps per CBUAE and FATF guidance.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
 // ─── Main DeepIntelPanel ──────────────────────────────────────────────────────
 
 export function DeepIntelPanel({ subject, screen, superBrain }: Props) {
   return (
     <div className="space-y-2 mt-4">
       <div className="text-12 text-ink-3 mb-4">
-        Deep Intelligence workbench — 70 independent modules. Expand any section and click <strong className="text-ink-1">Run</strong> to trigger on demand.
+        Deep Intelligence workbench — 120 independent modules. Expand any section and click <strong className="text-ink-1">Run</strong> to trigger on demand.
       </div>
 
       {/* GROUP 1: Identity & Aliases */}
@@ -4001,6 +5211,71 @@ export function DeepIntelPanel({ subject, screen, superBrain }: Props) {
       <GroupHeader label="Operations & Actions" />
       <InsiderThreatSection subject={subject} />
       <HumanTraffickingSection subject={subject} />
+
+      {/* GROUP 11: Behavioral & Psychological Intelligence */}
+      <GroupHeader label="Behavioral & Psychological Intelligence" />
+      <BehavioralBaselineSection subject={subject} />
+      <LinguisticRiskSection subject={subject} />
+      <LifestyleWealthGapSection subject={subject} />
+      <PlausibilityScoreSection subject={subject} />
+      <AssociationTimelineSection subject={subject} />
+      <ConfidenceDecaySection subject={subject} />
+      <ExaminerSimSection subject={subject} />
+      <BenfordSection subject={subject} />
+
+      {/* GROUP 12: Legal & Regulatory Deep Intelligence */}
+      <GroupHeader label="Legal & Regulatory Deep Intelligence" />
+      <LitigationScanSection subject={subject} />
+      <EnforcementActionsSection subject={subject} />
+      <TaxAuthoritySection subject={subject} />
+      <ExtraditionMapSection subject={subject} />
+      <StatuteLimitationsSection subject={subject} />
+      <RegArbitrageSection subject={subject} />
+      <AuditReadinessSection subject={subject} />
+      <AmlProgrammeGapSection />
+
+      {/* GROUP 13: Sector-Specific Intelligence */}
+      <GroupHeader label="Sector-Specific Intelligence" />
+      <ArtMarketSection subject={subject} />
+      <LuxuryGoodsSection subject={subject} />
+      <AviationIntelSection subject={subject} />
+      <FreeZoneRiskSection subject={subject} />
+      <GamingRiskSection subject={subject} />
+      <GoldPreciousMetalsSection subject={subject} />
+      <NpoRiskSection subject={subject} />
+      <VaspRiskSection subject={subject} />
+      <EnvironmentalCrimeSection subject={subject} />
+
+      {/* GROUP 14: Network & Graph Intelligence */}
+      <GroupHeader label="Network & Graph Intelligence" />
+      <SixDegreesSection subject={subject} />
+      <HiddenControllerSection subject={subject} />
+      <ClusterContaminationSection subject={subject} />
+      <TimingCorrelationSection subject={subject} />
+      <DarkMoneyFlowSection subject={subject} />
+      <BeneficialOwnerVerifySection subject={subject} />
+      <PepCorporateNexusSection subject={subject} />
+      <CrossBorderWireSection subject={subject} />
+      <CtrStructuringSection subject={subject} />
+
+      {/* GROUP 15: Advanced AI Reasoning */}
+      <GroupHeader label="Advanced AI Reasoning" />
+      <CaseAnalogySection subject={subject} />
+      <EvidenceSufficiencySection subject={subject} />
+      <RedlineMonitorSection subject={subject} />
+      <ProbabilityTreeSection subject={subject} />
+      <AutonomousInvestigateSection subject={subject} />
+      <CompetitorScreenSection subject={subject} />
+      <AdverseClassifySection subject={subject} />
+      <FalsePositiveOptimizerSection subject={subject} />
+      <MixedFundsSection subject={subject} />
+      <MlPredicateSection subject={subject} />
+      <EsgRiskSection subject={subject} />
+      <CustomerLifecycleSection subject={subject} />
+      <OnboardingRiskTierSection subject={subject} />
+      <CddAdequacySection subject={subject} />
+      <PepEddGeneratorSection subject={subject} />
+      <VendorRiskSection subject={subject} />
     </div>
   );
 }
