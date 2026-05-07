@@ -847,7 +847,7 @@ export default function GrievancesWhistleblowingPage() {
             </section>
 
             {/* ── TWO-COLUMN CONTENT ── */}
-            <div className="gw-content-grid" style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: 28, marginTop: 32 }}>
+            <div className="gw-content-grid" style={{ display: "grid", gridTemplateColumns: "1fr 260px", gap: 28, marginTop: 32 }}>
 
               {/* ── LEFT COLUMN ── */}
               <div>
