@@ -77,7 +77,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   // Add relevant sanctions events
   const sanctionsCount = (hash % 2) + 1;
   for (let i = 0; i < sanctionsCount; i++) {
-    const event = SANCTIONS_EVENTS[(hash + i) % SANCTIONS_EVENTS.length];
+    const event = SANCTIONS_EVENTS[(hash + i) % SANCTIONS_EVENTS.length]!;
     timeline.push({
       date: event.date,
       event: event.event,
@@ -89,7 +89,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   // Add relevant regulatory events
   const regCount = (hash % 2) + 1;
   for (let i = 0; i < regCount; i++) {
-    const event = REGULATORY_EVENTS[(hash + i) % REGULATORY_EVENTS.length];
+    const event = REGULATORY_EVENTS[(hash + i) % REGULATORY_EVENTS.length]!;
     timeline.push({
       date: event.date,
       event: event.event,

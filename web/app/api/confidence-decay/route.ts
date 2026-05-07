@@ -49,7 +49,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   // Decay rate based on entity type
   const entityKey = entityType.toLowerCase().replace(/\s+/g, "_");
-  const decayRate = DECAY_RATES[entityKey] ?? DECAY_RATES["default"];
+  const decayRate = DECAY_RATES[entityKey] ?? DECAY_RATES["default"] ?? 0.5;
 
   // Confidence decays exponentially: C = 100 * e^(-k * t/T)
   // where k = decayRate, t = days elapsed, T = rescreen interval

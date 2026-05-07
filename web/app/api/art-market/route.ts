@@ -61,10 +61,10 @@ export async function POST(req: Request): Promise<NextResponse> {
   const cpFlagCount = hash % 3;
   const culturalPropertyFlags: string[] = [];
   for (let i = 0; i < cpFlagCount; i++) {
-    culturalPropertyFlags.push(CULTURAL_PROPERTY_FLAGS[(hash + i) % CULTURAL_PROPERTY_FLAGS.length]);
+    culturalPropertyFlags.push(CULTURAL_PROPERTY_FLAGS[(hash + i) % CULTURAL_PROPERTY_FLAGS.length]!);
   }
   if (provenanceRisk === "HIGH") {
-    culturalPropertyFlags.push(PROVENANCE_RISKS[hash % PROVENANCE_RISKS.length]);
+    culturalPropertyFlags.push(PROVENANCE_RISKS[hash % PROVENANCE_RISKS.length]!);
   }
 
   const riskLevel = provenanceRisk === "HIGH" || culturalPropertyFlags.length >= 2 ? "HIGH"

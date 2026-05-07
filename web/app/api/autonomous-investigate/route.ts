@@ -91,7 +91,7 @@ Respond ONLY with valid JSON:
         ],
       });
 
-      const raw = response.content[0].type === "text" ? response.content[0].text : "";
+      const raw = response.content[0]?.type === "text" ? (response.content[0] as { type: "text"; text: string }).text : "";
       const parsed = JSON.parse(raw.match(/\{[\s\S]*\}/)?.[0] ?? "{}");
       if (parsed.investigationSummary !== undefined) {
         parsed.completedAt = new Date().toISOString();
