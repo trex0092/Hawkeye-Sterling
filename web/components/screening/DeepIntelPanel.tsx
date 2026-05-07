@@ -2071,7 +2071,7 @@ function SwiftLcSection({ subject }: { subject: Subject }) {
       const res = await fetch("/api/swift-lc-analyzer", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ bankName: subject.name, swiftCode: subject.swiftCode }),
+        body: JSON.stringify({ bankName: subject.name }),
       });
       const data = (await res.json()) as SwiftLcResultUI;
       setResult(data);
@@ -2132,7 +2132,7 @@ function CryptoTracingSection({ subject }: { subject: Subject }) {
       const res = await fetch("/api/crypto-tracing", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ walletAddress: wallet || subject.cryptoWallet || subject.name, blockchain: "bitcoin", entityName: subject.name, transactionHistory: "", exchangeOrigin: "", transactionPatterns: { highFrequency: false, largeSingleTx: false, mixerUsed: false, privacyCoinConversion: false, peeling: false, consolidation: false, layering: false }, riskFlags: { darknetMarket: false, ransomware: false, scam: false, sanctions: false, childExploitation: false, terroristFinancing: false } }),
+        body: JSON.stringify({ walletAddress: wallet || subject.name, blockchain: "bitcoin", entityName: subject.name, transactionHistory: "", exchangeOrigin: "", transactionPatterns: { highFrequency: false, largeSingleTx: false, mixerUsed: false, privacyCoinConversion: false, peeling: false, consolidation: false, layering: false }, riskFlags: { darknetMarket: false, ransomware: false, scam: false, sanctions: false, childExploitation: false, terroristFinancing: false } }),
       });
       const data = (await res.json()) as unknown;
       setResult(data);
@@ -2177,7 +2177,7 @@ function CryptoMixingSection({ subject }: { subject: Subject }) {
       const res = await fetch("/api/crypto-mixing", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ wallet: wallet || subject.cryptoWallet || subject.name }),
+        body: JSON.stringify({ wallet: wallet || subject.name }),
       });
       const data = (await res.json()) as unknown;
       setResult(data);
@@ -2582,7 +2582,7 @@ function RmiAssessSection({ subject }: { subject: Subject }) {
       const res = await fetch("/api/rmi-assess", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ name: subject.name, commodities: subject.commodities ?? "" }),
+        body: JSON.stringify({ name: subject.name, commodities: "" }),
       });
       const data = (await res.json()) as unknown;
       setResult(data);
