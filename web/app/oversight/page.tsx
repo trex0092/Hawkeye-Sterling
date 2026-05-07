@@ -366,12 +366,17 @@ function loadOversightOverlay(): OversightOverlay {
   try {
     const raw = localStorage.getItem(OVERSIGHT_KEY);
     if (raw) return { ...EMPTY_OVERLAY, ...(JSON.parse(raw) as Partial<OversightOverlay>) };
-  } catch { /* ignore */ }
+  } catch (err) {
+    console.warn("[hawkeye] oversight overlay parse failed — using empty:", err);
+  }
   return { ...EMPTY_OVERLAY };
 }
 
 function saveOversightOverlay(o: OversightOverlay): void {
-  try { localStorage.setItem(OVERSIGHT_KEY, JSON.stringify(o)); } catch { /* ignore */ }
+  try { localStorage.setItem(OVERSIGHT_KEY, JSON.stringify(o)); }
+  catch (err) {
+    console.error("[hawkeye] oversight overlay persist failed — edits will be lost on reload:", err);
+  }
 }
 
 function nowTs(): string {

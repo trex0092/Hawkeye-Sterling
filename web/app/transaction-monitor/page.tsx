@@ -177,11 +177,15 @@ export default function TransactionMonitorPage() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ transaction: t }),
       });
-      if (!res.ok) return;
+      if (!res.ok) {
+        console.error(`[hawkeye] tm-explain HTTP ${res.status}`);
+        return;
+      }
       const data = await res.json() as { ok: boolean; explanation: string; disposition: TmExplanation["disposition"]; dispositionReason: string; regulatoryBasis: string; typologies: string[] };
       if (data.ok) setExplanations((prev) => ({ ...prev, [t.id]: data }));
-    } catch { /* silent */ }
-    finally { setExplaining((prev) => ({ ...prev, [t.id]: false })); }
+    } catch (err) {
+      console.error("[hawkeye] tm-explain threw:", err);
+    } finally { setExplaining((prev) => ({ ...prev, [t.id]: false })); }
   };
 
   const autoTagTypologies = async () => {
@@ -206,7 +210,10 @@ export default function TransactionMonitorPage() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ transactions: payload }),
       });
-      if (!res.ok) return;
+      if (!res.ok) {
+        console.error(`[hawkeye] transaction-monitor/typology-tag HTTP ${res.status}`);
+        return;
+      }
       const data = await res.json() as {
         tagged: (TxTypologyTag & { id: string })[];
         highRiskCount: number;
@@ -223,8 +230,9 @@ export default function TransactionMonitorPage() {
       }
       setTypologyTags(tagMap);
       setTagSummary({ text: data.summary, highRiskCount: data.highRiskCount });
-    } catch { /* silent */ }
-    finally { setTagging(false); }
+    } catch (err) {
+      console.error("[hawkeye] transaction-monitor/typology-tag threw:", err);
+    } finally { setTagging(false); }
   };
 
   const parsedAmount = Number.parseFloat(amount.replace(/,/g, "")) || 0;

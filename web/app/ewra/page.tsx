@@ -98,11 +98,17 @@ function load(): EwraState {
   try {
     const raw = window.localStorage.getItem(STORAGE);
     return raw ? (JSON.parse(raw) as EwraState) : DEFAULT_STATE;
-  } catch { return DEFAULT_STATE; }
+  } catch (err) {
+    console.warn("[hawkeye] ewra state parse failed — using defaults:", err);
+    return DEFAULT_STATE;
+  }
 }
 
 function save(s: EwraState) {
-  try { window.localStorage.setItem(STORAGE, JSON.stringify(s)); } catch { /* */ }
+  try { window.localStorage.setItem(STORAGE, JSON.stringify(s)); }
+  catch (err) {
+    console.error("[hawkeye] ewra state persist failed — risk-assessment edits will be lost on reload:", err);
+  }
 }
 
 interface EwraSnapshot {
@@ -119,7 +125,10 @@ function loadHistory(): EwraSnapshot[] {
   try {
     const raw = window.localStorage.getItem(HISTORY_STORAGE);
     return raw ? (JSON.parse(raw) as EwraSnapshot[]) : [];
-  } catch { return []; }
+  } catch (err) {
+    console.warn("[hawkeye] ewra history parse failed — returning empty:", err);
+    return [];
+  }
 }
 
 function saveSnapshot(s: EwraState, overallInherent: number, overallResidual: number, keyChanges: string[]) {
@@ -135,7 +144,9 @@ function saveSnapshot(s: EwraState, overallInherent: number, overallResidual: nu
     };
     const next = [snap, ...history].slice(0, MAX_HISTORY);
     window.localStorage.setItem(HISTORY_STORAGE, JSON.stringify(next));
-  } catch { /* */ }
+  } catch (err) {
+    console.error("[hawkeye] ewra snapshot persist failed — historical comparison will be incomplete:", err);
+  }
 }
 
 function residual(d: RiskDimension): number {
