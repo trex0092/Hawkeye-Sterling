@@ -39,7 +39,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   // Deterministic heuristic based on name hash
   const hash = name.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
   const caseCount = hash % 5; // 0-4 cases
-  const courts = COURT_MAP[jurisdiction] ?? COURT_MAP["default"];
+  const courts = COURT_MAP[jurisdiction] ?? COURT_MAP["default"] ?? ["Commercial High Court"];
 
   const caseTypes = ["Fraud", "Contract Dispute", "Asset Recovery", "Insolvency", "Regulatory Breach", "Money Laundering"];
   const outcomes = ["Settled", "Judgment Against", "Dismissed", "Ongoing", "Default Judgment"];
@@ -49,11 +49,11 @@ export async function POST(req: Request): Promise<NextResponse> {
   for (let i = 0; i < caseCount; i++) {
     const seed = hash + i * 31;
     cases.push({
-      court: courts[seed % courts.length],
+      court: courts[seed % courts.length]!,
       year: String(2015 + (seed % 9)),
-      type: caseTypes[seed % caseTypes.length],
-      outcome: outcomes[(seed * 7) % outcomes.length],
-      risk: riskLevels[seed % riskLevels.length],
+      type: caseTypes[seed % caseTypes.length]!,
+      outcome: outcomes[(seed * 7) % outcomes.length]!,
+      risk: riskLevels[seed % riskLevels.length]!,
     });
   }
 

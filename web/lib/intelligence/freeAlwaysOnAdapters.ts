@@ -286,7 +286,7 @@ export async function searchFreeAdapters(subjectName: string, jurisdiction?: str
   const adapters = activeFreeAdapters();
   if (adapters.length === 0) return { records: [], providersUsed: [] };
   const results = await Promise.all(adapters.map((a) => a.search(subjectName, { jurisdiction, limit }).catch((err: unknown) => {
-    console.warn(`[hawkeye] freeAlwaysOnAdapters[${a.id ?? 'unknown'}] search failed:`, err);
+    console.warn(`[hawkeye] freeAlwaysOnAdapters[${(a as { id?: string }).id ?? 'unknown'}] search failed:`, err);
     return [];
   })));
   const merged = results.flat();

@@ -8,7 +8,6 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 const NAV_TABS = [
   { key: "nav.screening", label: "🔎 Screening", href: "/screening" },
-  { key: "nav.intel", label: "🛰️ Live Intel", href: "/intel" },
   { key: "nav.cases", label: "🗂️ Cases", href: "/cases" },
   { key: "nav.tm", label: "💸 Transaction Monitor", href: "/transaction-monitor" },
   { key: "nav.str", label: "📁 STR Cases", href: "/str-cases" },
@@ -71,6 +70,7 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "📚 Typology Library", href: "/typology-library", hint: "500+ ML typologies · AI search · deep-dive" },
       { label: "🚫 Sanctions Evasion", href: "/sanctions-evasion", hint: "AI evasion pattern detector · FATF typologies" },
       { label: "🧪 Intelligence Tools", href: "/governance/intelligence-tools", hint: "OFAC 50% walker · Crypto exposure · Synthetic-identity cluster" },
+      { label: "🛰️ Live Intel", href: "/intel", hint: "Intelligence & regulatory feed · live triage · 7-language adverse media" },
       { label: "✏️ Corrections", href: "/corrections", hint: "Data-subject access & correction requests" },
       { label: "🔐 Access Control", href: "/access-control", hint: "User management · permission matrix · session monitor · audit log" },
     ],
@@ -134,12 +134,12 @@ export function Header() {
   // language-neutral so they stay across all locales.
   const NAV_TABS_I18N = [
     { label: `🔎 ${strings.screening}`, href: "/screening" },
-    { label: `🛰️ ${strings.liveIntel}`, href: "/intel" },
     { label: `🗂️ ${strings.cases}`, href: "/cases" },
     { label: `💸 ${strings.transactionMonitor}`, href: "/transaction-monitor" },
     { label: `📁 ${strings.strCases}`, href: "/str-cases" },
     { label: `👁️ ${strings.ongoingMonitor}`, href: "/ongoing-monitor" },
     { label: `🧠 ${strings.mlroAdvisor}`, href: "/mlro-advisor" },
+    { label: "🛡️ Grievances", href: "/governance/grievances-whistleblowing" },
   ];
 
   useEffect(() => {

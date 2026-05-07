@@ -96,13 +96,13 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   const dispositionKey = targetDisposition.toUpperCase();
-  const requirements = DISPOSITION_REQUIREMENTS[dispositionKey] ?? DISPOSITION_REQUIREMENTS["CLEAR"];
+  const requirements = DISPOSITION_REQUIREMENTS[dispositionKey] ?? DISPOSITION_REQUIREMENTS["CLEAR"] ?? { required: [], description: "Clear" };
 
   const normalisedEvidence = currentEvidence.map(normalise);
 
   const missingEvidence = requirements.required.filter(req => {
     const normReq = normalise(req);
-    return !normalisedEvidence.some(e => e.includes(normReq.split(" ")[0]) || normReq.includes(e.split(" ")[0]));
+    return !normalisedEvidence.some(e => e.includes(normReq.split(" ")[0]!) || normReq.includes(e.split(" ")[0]!));
   });
 
   const sufficiencyScore = Math.round(

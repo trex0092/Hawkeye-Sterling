@@ -118,8 +118,8 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (topMatches.some(m => m.jurisdiction.includes("UAE"))) {
     commonPatterns.push("UAE nexus present in multiple analogous cases — elevated regulatory scrutiny expected");
   }
-  if (topMatches[0]?.similarity >= 50) {
-    commonPatterns.push(`Closest match: ${topMatches[0].caseRef} — review that enforcement action for documentary precedent`);
+  if (topMatches[0]!.similarity >= 50) {
+    commonPatterns.push(`Closest match: ${topMatches[0]!.caseRef} — review that enforcement action for documentary precedent`);
   }
 
   return NextResponse.json({

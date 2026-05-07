@@ -69,7 +69,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const actionCount = Math.min(4, Math.ceil(contaminatedEntities / 2) + 1);
   const recommendedActions: string[] = [];
   for (let i = 0; i < actionCount; i++) {
-    recommendedActions.push(RECOMMENDED_ACTIONS[(hash + i) % RECOMMENDED_ACTIONS.length]);
+    recommendedActions.push(RECOMMENDED_ACTIONS[(hash + i) % RECOMMENDED_ACTIONS.length]!);
   }
 
   return NextResponse.json({

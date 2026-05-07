@@ -64,7 +64,7 @@ Respond ONLY with valid JSON matching this schema:
         ],
       });
 
-      const raw = response.content[0].type === "text" ? response.content[0].text : "";
+      const raw = response.content[0]?.type === "text" ? (response.content[0] as { type: "text"; text: string }).text : "";
       const parsed = JSON.parse(raw.match(/\{[\s\S]*\}/)?.[0] ?? "{}");
       if (parsed.deceptionScore !== undefined) {
         return NextResponse.json({ ok: true, ...parsed });
