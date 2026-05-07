@@ -109,7 +109,10 @@ export function ReportModal({
           body: JSON.stringify(asanaFile.body),
           signal: ctl.signal,
         });
-        const json = (await res.json().catch(() => null)) as
+        const json = (await res.json().catch((err: unknown) => {
+          console.warn("[hawkeye] ReportModal Asana response parse failed:", err);
+          return null;
+        })) as
           | { ok?: boolean; taskUrl?: string; error?: string; detail?: string }
           | null;
         if (!res.ok || !json?.ok) {

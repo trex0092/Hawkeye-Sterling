@@ -28,11 +28,11 @@ export function Sidebar({ filters, activeFilters, onFiltersChange, onRefresh }: 
     try {
       const raw = localStorage.getItem(PINNED_KEY);
       if (raw) setPinnedKeys(JSON.parse(raw));
-    } catch { /* ignore */ }
+    } catch (err) { console.warn("[hawkeye] sidebar pinned-filters parse failed:", err); }
     try {
       const raw = localStorage.getItem(SAVED_KEY);
       if (raw) setSavedFilters(JSON.parse(raw));
-    } catch { /* ignore */ }
+    } catch (err) { console.warn("[hawkeye] sidebar saved-filters parse failed:", err); }
   }, []);
 
   // --- Count delta tracking ---
@@ -92,7 +92,8 @@ export function Sidebar({ filters, activeFilters, onFiltersChange, onRefresh }: 
   const togglePin = useCallback((key: FilterKey) => {
     setPinnedKeys((prev) => {
       const next = prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key];
-      try { localStorage.setItem(PINNED_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+      try { localStorage.setItem(PINNED_KEY, JSON.stringify(next)); }
+      catch (err) { console.warn("[hawkeye] sidebar pinned-filters persist failed:", err); }
       return next;
     });
   }, []);
@@ -107,7 +108,8 @@ export function Sidebar({ filters, activeFilters, onFiltersChange, onRefresh }: 
     };
     setSavedFilters((prev) => {
       const next = [...prev, set];
-      try { localStorage.setItem(SAVED_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+      try { localStorage.setItem(SAVED_KEY, JSON.stringify(next)); }
+      catch (err) { console.warn("[hawkeye] sidebar saved-filters persist failed:", err); }
       return next;
     });
   }, [activeFilters]);
@@ -115,7 +117,8 @@ export function Sidebar({ filters, activeFilters, onFiltersChange, onRefresh }: 
   const deleteSavedFilter = useCallback((id: string) => {
     setSavedFilters((prev) => {
       const next = prev.filter((s) => s.id !== id);
-      try { localStorage.setItem(SAVED_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+      try { localStorage.setItem(SAVED_KEY, JSON.stringify(next)); }
+      catch (err) { console.warn("[hawkeye] sidebar saved-filters persist failed:", err); }
       return next;
     });
   }, []);
