@@ -1811,19 +1811,2110 @@ function MultiJurisdictionFilingSection({ subject }: { subject: Subject }) {
   );
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// NEW SECTIONS — Group 1 additions (Identity)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ─── 21. OSINT Digital Footprint ─────────────────────────────────────────────
+
+function OsintSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function run() {
+    setStatus("loading");
+    setError(null);
+    try {
+      const res = await fetch("/api/osint-bridge", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ tool: "sherlock", username: subject.name, entityType: subject.entityType }),
+      });
+      const data = (await res.json()) as unknown;
+      setResult(data);
+      setStatus("done");
+    } catch (err) {
+      setError(String(err));
+      setStatus("error");
+    }
+  }
+
+  return (
+    <IntelSection title="OSINT Digital Footprint" icon="🌐" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Search for digital presence, social profiles, and web intelligence associated with the subject.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+// ─── 22. Email & Domain Reputation ───────────────────────────────────────────
+
+interface EmailRepResult {
+  ok: boolean;
+  domain: string;
+  domainAge: string;
+  mxRecords: string[];
+  isDisposable: boolean;
+  fraudScore: number;
+  riskLevel: string;
+  notes: (string | null)[];
+}
+
+function EmailRepSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<EmailRepResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function run() {
+    setStatus("loading");
+    setError(null);
+    try {
+      const res = await fetch("/api/email-reputation", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ domain: subject.name }),
+      });
+      const data = (await res.json()) as EmailRepResult;
+      setResult(data);
+      setStatus("done");
+    } catch (err) {
+      setError(String(err));
+      setStatus("error");
+    }
+  }
+
+  return (
+    <IntelSection title="Email & Domain Reputation" icon="📧" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Domain age, MX record analysis, disposable email check, and fraud score.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && (
+          <div className="space-y-2 mt-2">
+            <div className="flex gap-4 text-11 font-mono flex-wrap">
+              <span>Domain: <span className="text-ink-0">{result.domain}</span></span>
+              <span>Age: <span className="text-ink-0">{result.domainAge}</span></span>
+              <span>Fraud score: <span className={`font-semibold ${result.fraudScore >= 60 ? "text-red" : result.fraudScore >= 35 ? "text-amber" : "text-green"}`}>{result.fraudScore}</span></span>
+              <span>Risk: <span className={`font-semibold ${result.riskLevel === "critical" || result.riskLevel === "high" ? "text-red" : result.riskLevel === "medium" ? "text-amber" : "text-green"}`}>{result.riskLevel.toUpperCase()}</span></span>
+            </div>
+            {result.isDisposable && (
+              <div className="text-11 font-semibold text-red bg-red-dim rounded px-2 py-1">⚠ Disposable email domain detected</div>
+            )}
+            {result.mxRecords.length > 0 && (
+              <div>
+                <div className="text-10 uppercase font-semibold text-ink-3 mb-1">MX Records</div>
+                <div className="flex flex-wrap gap-1">
+                  {result.mxRecords.map((mx) => (
+                    <span key={mx} className="text-10 font-mono bg-bg-2 border border-hair-2 px-1.5 py-0.5 rounded">{mx}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+            {result.notes.filter(Boolean).length > 0 && (
+              <ul className="space-y-0.5">
+                {result.notes.filter(Boolean).map((n, i) => (
+                  <li key={i} className="text-11 text-amber flex gap-1"><span>⚠</span>{n}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+      </div>
+    </IntelSection>
+  );
+}
+
+// ─── 23. Smart Identity Disambiguation ───────────────────────────────────────
+
+function SmartDisambiguateSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function run() {
+    setStatus("loading");
+    setError(null);
+    try {
+      const res = await fetch("/api/smart-disambiguate", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name: subject.name, context: `entityType:${subject.entityType} jurisdiction:${subject.jurisdiction || subject.country}` }),
+      });
+      const data = (await res.json()) as unknown;
+      setResult(data);
+      setStatus("done");
+    } catch (err) {
+      setError(String(err));
+      setStatus("error");
+    }
+  }
+
+  return (
+    <IntelSection title="Smart Identity Disambiguation" icon="🧬" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Alias deduplication and identity clustering — distinguish true matches from false positives.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+// ─── 24. IBAN Risk Assessment ────────────────────────────────────────────────
+
+interface IbanRiskResult {
+  ok: boolean;
+  iban: string;
+  countryCode: string;
+  country: string;
+  riskLevel: string;
+  fatfStatus: string;
+  notes: string[];
+  eddRequired: boolean;
+  sanctionsCheck: boolean;
+}
+
+function IbanRiskSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<IbanRiskResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [iban, setIban] = useState<string>("");
+
+  async function run() {
+    const ibanVal = iban.trim() || (subject as Subject & { iban?: string }).iban || "";
+    if (!ibanVal) { setError("Enter an IBAN first"); return; }
+    setStatus("loading");
+    setError(null);
+    try {
+      const res = await fetch("/api/iban-risk", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ iban: ibanVal }),
+      });
+      const data = (await res.json()) as IbanRiskResult;
+      setResult(data);
+      setStatus("done");
+    } catch (err) {
+      setError(String(err));
+      setStatus("error");
+    }
+  }
+
+  return (
+    <IntelSection title="IBAN Risk Assessment" icon="🏦" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Parse IBAN country code and assess jurisdiction risk, FATF status, and sanctions exposure.</div>
+        <input
+          type="text"
+          className="w-full px-2 py-1.5 border border-hair-2 rounded text-11 bg-bg-panel text-ink-0 font-mono focus:outline-none focus:border-brand"
+          placeholder="e.g. GB29 NWBK 6016 1331 9268 19"
+          value={iban}
+          onChange={(e) => setIban(e.target.value)}
+        />
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && (
+          <div className="space-y-2 mt-2">
+            <div className="flex gap-4 text-11 font-mono flex-wrap">
+              <span>Country: <span className="text-ink-0">{result.country} ({result.countryCode})</span></span>
+              <span>Risk: <span className={`font-semibold ${result.riskLevel === "critical" || result.riskLevel === "high" ? "text-red" : result.riskLevel === "medium" ? "text-amber" : "text-green"}`}>{result.riskLevel.toUpperCase()}</span></span>
+            </div>
+            <div className="text-11 text-ink-2">FATF: {result.fatfStatus}</div>
+            {result.eddRequired && <div className="text-11 font-semibold text-amber bg-amber-dim rounded px-2 py-1">⚠ Enhanced Due Diligence required</div>}
+            {result.sanctionsCheck && <div className="text-11 font-semibold text-red bg-red-dim rounded px-2 py-1">⚠ Sanctions check mandatory</div>}
+            {result.notes.length > 0 && (
+              <ul className="space-y-0.5">
+                {result.notes.map((n, i) => <li key={i} className="text-11 text-ink-2 flex gap-1"><span className="text-brand">•</span>{n}</li>)}
+              </ul>
+            )}
+          </div>
+        )}
+      </div>
+    </IntelSection>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// NEW SECTIONS — Group 3 additions (Financial Behavior)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ─── 25. SWIFT / LC Analyzer ─────────────────────────────────────────────────
+
+interface SwiftLcResultUI {
+  tbmlRisk: string;
+  messageType: string;
+  priceManipulation: boolean;
+  routingRisk: string;
+  amendmentSuspicion: boolean;
+  beneficiaryRisk: string;
+  indicators: Array<{ indicator: string; severity: string; detail: string }>;
+  recommendedAction: string;
+  actionRationale: string;
+  regulatoryBasis: string;
+}
+
+function SwiftLcSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<SwiftLcResultUI | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function run() {
+    setStatus("loading");
+    setError(null);
+    try {
+      const res = await fetch("/api/swift-lc-analyzer", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ bankName: subject.name, swiftCode: subject.swiftCode }),
+      });
+      const data = (await res.json()) as SwiftLcResultUI;
+      setResult(data);
+      setStatus("done");
+    } catch (err) {
+      setError(String(err));
+      setStatus("error");
+    }
+  }
+
+  return (
+    <IntelSection title="SWIFT / LC Analyzer" icon="🏛️" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">SWIFT/BIC lookup, correspondent banking chain analysis, and LC red flag detection.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && (
+          <div className="space-y-2 mt-2">
+            <div className="flex gap-3 text-11 font-mono flex-wrap">
+              <span>TBML Risk: <span className={`font-semibold ${result.tbmlRisk === "critical" || result.tbmlRisk === "high" ? "text-red" : result.tbmlRisk === "medium" ? "text-amber" : "text-green"}`}>{result.tbmlRisk?.toUpperCase()}</span></span>
+              <span>Type: <span className="text-ink-1">{result.messageType}</span></span>
+              <span>Routing risk: <span className={result.routingRisk === "high" ? "text-red" : result.routingRisk === "medium" ? "text-amber" : "text-green"}>{result.routingRisk}</span></span>
+            </div>
+            <div className="flex gap-3 flex-wrap">
+              {result.priceManipulation && <span className="text-10 font-mono bg-red-dim text-red border border-red/30 px-1.5 py-0.5 rounded">Price manipulation</span>}
+              {result.amendmentSuspicion && <span className="text-10 font-mono bg-amber-dim text-amber border border-amber/30 px-1.5 py-0.5 rounded">Amendment suspicion</span>}
+            </div>
+            <div className="text-11 text-ink-2">Beneficiary risk: {result.beneficiaryRisk}</div>
+            {result.indicators.slice(0, 4).map((ind, i) => (
+              <div key={i} className="bg-bg-2 rounded p-2">
+                <div className="flex gap-2">
+                  <span className={`text-10 font-mono font-semibold ${ind.severity === "critical" || ind.severity === "high" ? "text-red" : "text-amber"}`}>{ind.severity}</span>
+                  <span className="text-11 text-ink-1">{ind.indicator}</span>
+                </div>
+                <div className="text-10 text-ink-3 mt-0.5">{ind.detail}</div>
+              </div>
+            ))}
+            <div className="text-11 text-ink-2">Recommended: {result.recommendedAction} — {result.actionRationale}</div>
+          </div>
+        )}
+      </div>
+    </IntelSection>
+  );
+}
+
+// ─── 26. Crypto Wallet Tracing ────────────────────────────────────────────────
+
+function CryptoTracingSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [wallet, setWallet] = useState<string>("");
+
+  async function run() {
+    setStatus("loading");
+    setError(null);
+    try {
+      const res = await fetch("/api/crypto-tracing", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ walletAddress: wallet || subject.cryptoWallet || subject.name, blockchain: "bitcoin", entityName: subject.name, transactionHistory: "", exchangeOrigin: "", transactionPatterns: { highFrequency: false, largeSingleTx: false, mixerUsed: false, privacyCoinConversion: false, peeling: false, consolidation: false, layering: false }, riskFlags: { darknetMarket: false, ransomware: false, scam: false, sanctions: false, childExploitation: false, terroristFinancing: false } }),
+      });
+      const data = (await res.json()) as unknown;
+      setResult(data);
+      setStatus("done");
+    } catch (err) {
+      setError(String(err));
+      setStatus("error");
+    }
+  }
+
+  return (
+    <IntelSection title="Crypto Wallet Tracing" icon="₿" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Wallet cluster analysis, tainted fund tracing, and exchange attribution.</div>
+        <input
+          type="text"
+          className="w-full px-2 py-1.5 border border-hair-2 rounded text-11 bg-bg-panel text-ink-0 font-mono focus:outline-none focus:border-brand"
+          placeholder="Wallet address (optional — uses subject name if blank)"
+          value={wallet}
+          onChange={(e) => setWallet(e.target.value)}
+        />
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+// ─── 27. Crypto Mixer / DeFi Exposure ────────────────────────────────────────
+
+function CryptoMixingSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [wallet, setWallet] = useState<string>("");
+
+  async function run() {
+    setStatus("loading");
+    setError(null);
+    try {
+      const res = await fetch("/api/crypto-mixing", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ wallet: wallet || subject.cryptoWallet || subject.name }),
+      });
+      const data = (await res.json()) as unknown;
+      setResult(data);
+      setStatus("done");
+    } catch (err) {
+      setError(String(err));
+      setStatus("error");
+    }
+  }
+
+  return (
+    <IntelSection title="Crypto Mixer / DeFi Exposure" icon="🔀" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Detect mixing service usage, DeFi protocol exposure, and obfuscation techniques.</div>
+        <input
+          type="text"
+          className="w-full px-2 py-1.5 border border-hair-2 rounded text-11 bg-bg-panel text-ink-0 font-mono focus:outline-none focus:border-brand"
+          placeholder="Wallet address"
+          value={wallet}
+          onChange={(e) => setWallet(e.target.value)}
+        />
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+// ─── 28. Trade Finance Red Flags ─────────────────────────────────────────────
+
+function TradeFinanceSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function run() {
+    setStatus("loading");
+    setError(null);
+    try {
+      const res = await fetch("/api/trade-finance-rf", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ subjectName: subject.name }),
+      });
+      const data = (await res.json()) as unknown;
+      setResult(data);
+      setStatus("done");
+    } catch (err) {
+      setError(String(err));
+      setStatus("error");
+    }
+  }
+
+  return (
+    <IntelSection title="Trade Finance Red Flags" icon="🚢" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Detect TBML patterns: over/under-invoicing, phantom shipments, multiple invoicing.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+// ─── 29. Shell Company Detector ───────────────────────────────────────────────
+
+interface ShellDetectorResult {
+  shellRisk: string;
+  shellProbability: number;
+  redFlags: Array<{ flag: string; severity: string; category: string; detail: string }>;
+  recommendedAction: string;
+  actionRationale: string;
+}
+
+function ShellDetectorSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<ShellDetectorResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function run() {
+    setStatus("loading");
+    setError(null);
+    try {
+      const res = await fetch("/api/shell-detector", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ entityName: subject.name }),
+      });
+      const data = (await res.json()) as ShellDetectorResult;
+      setResult(data);
+      setStatus("done");
+    } catch (err) {
+      setError(String(err));
+      setStatus("error");
+    }
+  }
+
+  return (
+    <IntelSection title="Shell Company Detector" icon="🐚" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Score shell company probability based on structural, director, and geographic indicators.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && (
+          <div className="space-y-2 mt-2">
+            <div className="flex gap-4 text-11 font-mono">
+              <span>Shell risk: <span className={`font-semibold ${result.shellRisk === "critical" || result.shellRisk === "high" ? "text-red" : result.shellRisk === "medium" ? "text-amber" : "text-green"}`}>{result.shellRisk?.toUpperCase()}</span></span>
+              <span>Probability: <span className={`font-semibold ${result.shellProbability >= 60 ? "text-red" : result.shellProbability >= 35 ? "text-amber" : "text-green"}`}>{result.shellProbability}%</span></span>
+            </div>
+            <div>
+              <div className="text-10 uppercase font-semibold text-ink-3 mb-1">Risk factors</div>
+              <div className="flex flex-wrap gap-1">
+                {result.redFlags.slice(0, 8).map((f, i) => (
+                  <span key={i} className={`text-10 font-mono px-1.5 py-0.5 rounded border ${f.severity === "critical" || f.severity === "high" ? "bg-red-dim text-red border-red/30" : "bg-amber-dim text-amber border-amber/30"}`}>{f.flag}</span>
+                ))}
+              </div>
+            </div>
+            <div className="text-11 text-ink-2">Recommended: {result.recommendedAction} — {result.actionRationale}</div>
+          </div>
+        )}
+      </div>
+    </IntelSection>
+  );
+}
+
+// ─── 30. Hawala / Informal Value Transfer ────────────────────────────────────
+
+function HawalaDetectorSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function run() {
+    setStatus("loading");
+    setError(null);
+    try {
+      const res = await fetch("/api/hawala-detector", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ subjectName: subject.name }),
+      });
+      const data = (await res.json()) as unknown;
+      setResult(data);
+      setStatus("done");
+    } catch (err) {
+      setError(String(err));
+      setStatus("error");
+    }
+  }
+
+  return (
+    <IntelSection title="Hawala / Informal Value Transfer" icon="💱" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Detect hawala network indicators and informal value transfer system usage.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+// ─── 31. Layering / Loan-Back Detection ──────────────────────────────────────
+
+function LayeringDetectorSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function run() {
+    setStatus("loading");
+    setError(null);
+    try {
+      const res = await fetch("/api/layering-detector", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ subjectName: subject.name }),
+      });
+      const data = (await res.json()) as unknown;
+      setResult(data);
+      setStatus("done");
+    } catch (err) {
+      setError(String(err));
+      setStatus("error");
+    }
+  }
+
+  return (
+    <IntelSection title="Layering / Loan-Back Detection" icon="🔄" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Identify loan-back schemes, round-trip transactions, and complex layering patterns.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+// ─── 32. Cash-Intensive Business Overlay ─────────────────────────────────────
+
+function CashIntensiveSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function run() {
+    setStatus("loading");
+    setError(null);
+    try {
+      const res = await fetch("/api/cash-intensive", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ subjectName: subject.name, industry: subject.riskCategory ?? subject.meta ?? "" }),
+      });
+      const data = (await res.json()) as unknown;
+      setResult(data);
+      setStatus("done");
+    } catch (err) {
+      setError(String(err));
+      setStatus("error");
+    }
+  }
+
+  return (
+    <IntelSection title="Cash-Intensive Business Overlay" icon="💵" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Assess whether the subject operates in a cash-intensive sector and overlay associated ML risks.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+// ─── 33. Ghost / Dormant Company Activation ──────────────────────────────────
+
+function GhostCompanySection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function run() {
+    setStatus("loading");
+    setError(null);
+    try {
+      const res = await fetch("/api/ghost-company", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ entityName: subject.name }),
+      });
+      const data = (await res.json()) as unknown;
+      setResult(data);
+      setStatus("done");
+    } catch (err) {
+      setError(String(err));
+      setStatus("error");
+    }
+  }
+
+  return (
+    <IntelSection title="Ghost / Dormant Company Detection" icon="👻" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Detect dormant company reactivation, shelf company indicators, and sudden activity spikes.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// NEW SECTIONS — Group 4 additions (Geopolitical)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ─── 34. Secondary / Indirect Sanctions Exposure ─────────────────────────────
+
+function SanctionsIndirectSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function run() {
+    setStatus("loading");
+    setError(null);
+    try {
+      const res = await fetch("/api/sanctions-indirect", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name: subject.name }),
+      });
+      const data = (await res.json()) as unknown;
+      setResult(data);
+      setStatus("done");
+    } catch (err) {
+      setError(String(err));
+      setStatus("error");
+    }
+  }
+
+  return (
+    <IntelSection title="Secondary Sanctions Exposure" icon="⚡" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Assess secondary and indirect sanctions exposure through network links and correspondent relationships.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+// ─── 35. Sanctions Regime Mapper ─────────────────────────────────────────────
+
+function SanctionsExposureMapperSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function run() {
+    setStatus("loading");
+    setError(null);
+    try {
+      const res = await fetch("/api/sanctions-exposure-mapper", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name: subject.name }),
+      });
+      const data = (await res.json()) as unknown;
+      setResult(data);
+      setStatus("done");
+    } catch (err) {
+      setError(String(err));
+      setStatus("error");
+    }
+  }
+
+  return (
+    <IntelSection title="Sanctions Regime Mapper" icon="🗺️" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Map exposure across OFAC, EU, UN, UK HMT, OFSI, and UAE TFS sanctions regimes.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+// ─── 36. De-risking Impact Assessment ────────────────────────────────────────
+
+function DeRiskingImpactSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function run() {
+    setStatus("loading");
+    setError(null);
+    try {
+      const res = await fetch("/api/derisking-impact", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ sector: subject.riskCategory ?? "general", jurisdiction: subject.jurisdiction || subject.country }),
+      });
+      const data = (await res.json()) as unknown;
+      setResult(data);
+      setStatus("done");
+    } catch (err) {
+      setError(String(err));
+      setStatus("error");
+    }
+  }
+
+  return (
+    <IntelSection title="De-risking Impact Assessment" icon="⚖️" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Assess sector and jurisdiction de-risking exposure and correspondent banking withdrawal risk.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+// ─── 37. Conflict Minerals / CAHRA Exposure ──────────────────────────────────
+
+function RmiAssessSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function run() {
+    setStatus("loading");
+    setError(null);
+    try {
+      const res = await fetch("/api/rmi-assess", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name: subject.name, commodities: subject.commodities ?? "" }),
+      });
+      const data = (await res.json()) as unknown;
+      setResult(data);
+      setStatus("done");
+    } catch (err) {
+      setError(String(err));
+      setStatus("error");
+    }
+  }
+
+  return (
+    <IntelSection title="Conflict Minerals / CAHRA Exposure" icon="⛏️" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Assess conflict mineral supply chain exposure and CAHRA (Conflict-Affected High-Risk Areas) linkages.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+// ─── 38. Jurisdiction Intelligence ────────────────────────────────────────────
+
+function JurisdictionIntelSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function run() {
+    setStatus("loading");
+    setError(null);
+    try {
+      const res = await fetch("/api/jurisdiction-intel", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ jurisdiction: subject.jurisdiction || subject.country }),
+      });
+      const data = (await res.json()) as unknown;
+      setResult(data);
+      setStatus("done");
+    } catch (err) {
+      setError(String(err));
+      setStatus("error");
+    }
+  }
+
+  return (
+    <IntelSection title="Jurisdiction Intelligence" icon="🌍" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Country risk profile, FATF status, regulatory regime, and AML/CFT framework assessment.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+// ─── 39. Sanctions Evasion Typology ──────────────────────────────────────────
+
+function SanctionsEvasionSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function run() {
+    setStatus("loading");
+    setError(null);
+    try {
+      const res = await fetch("/api/sanctions-evasion", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name: subject.name }),
+      });
+      const data = (await res.json()) as unknown;
+      setResult(data);
+      setStatus("done");
+    } catch (err) {
+      setError(String(err));
+      setStatus("error");
+    }
+  }
+
+  return (
+    <IntelSection title="Sanctions Evasion Typology" icon="🚨" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Match subject against known sanctions evasion typologies: name morphing, front companies, re-routing.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// NEW SECTIONS — Group 5 additions (AI Analysis)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ─── 40. News Sentiment Intelligence ─────────────────────────────────────────
+
+interface NewsIntelResult {
+  ok: boolean;
+  sentiment?: string;
+  sentimentScore?: number;
+  positiveCount?: number;
+  neutralCount?: number;
+  negativeCount?: number;
+  articles?: Array<{ headline: string; date: string; sentiment: string; source: string }>;
+  error?: string;
+}
+
+function NewsIntelSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<NewsIntelResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function run() {
+    setStatus("loading");
+    setError(null);
+    try {
+      const res = await fetch("/api/news-intel", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name: subject.name }),
+      });
+      const data = (await res.json()) as NewsIntelResult;
+      setResult(data);
+      setStatus("done");
+    } catch (err) {
+      setError(String(err));
+      setStatus("error");
+    }
+  }
+
+  const total = (result?.positiveCount ?? 0) + (result?.neutralCount ?? 0) + (result?.negativeCount ?? 0);
+  const posPct = total > 0 ? Math.round(((result?.positiveCount ?? 0) / total) * 100) : 0;
+  const neuPct = total > 0 ? Math.round(((result?.neutralCount ?? 0) / total) * 100) : 0;
+  const negPct = total > 0 ? Math.round(((result?.negativeCount ?? 0) / total) * 100) : 0;
+
+  return (
+    <IntelSection title="News Sentiment Intelligence" icon="📰" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Sentiment trajectory, news timeline, and adverse media clustering.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && (
+          <div className="space-y-3 mt-2">
+            {total > 0 && (
+              <div>
+                <div className="text-10 uppercase font-semibold text-ink-3 mb-1">Sentiment distribution ({total} articles)</div>
+                <div className="flex h-4 rounded overflow-hidden gap-px">
+                  {posPct > 0 && <div className="bg-green" style={{ width: `${posPct}%` }} title={`Positive: ${posPct}%`} />}
+                  {neuPct > 0 && <div className="bg-amber" style={{ width: `${neuPct}%` }} title={`Neutral: ${neuPct}%`} />}
+                  {negPct > 0 && <div className="bg-red" style={{ width: `${negPct}%` }} title={`Negative: ${negPct}%`} />}
+                </div>
+                <div className="flex gap-3 text-10 font-mono mt-1">
+                  <span className="text-green">+ {posPct}%</span>
+                  <span className="text-amber">~ {neuPct}%</span>
+                  <span className="text-red">- {negPct}%</span>
+                </div>
+              </div>
+            )}
+            {result.articles && result.articles.slice(0, 5).map((a, i) => (
+              <div key={i} className="bg-bg-2 rounded p-2">
+                <div className="flex items-center gap-2">
+                  <span className={`text-10 font-mono ${a.sentiment === "negative" ? "text-red" : a.sentiment === "positive" ? "text-green" : "text-amber"}`}>{a.sentiment}</span>
+                  <span className="text-10 text-ink-3">{a.date} · {a.source}</span>
+                </div>
+                <div className="text-11 text-ink-1 mt-0.5">{a.headline}</div>
+              </div>
+            ))}
+            {!result.articles && <JsonTree data={result} />}
+          </div>
+        )}
+      </div>
+    </IntelSection>
+  );
+}
+
+// ─── 41. SAR Narrative Generator ─────────────────────────────────────────────
+
+interface StrNarrativeResult {
+  narrative: string;
+  wordCount: number;
+  qualityScore: number;
+  fatfR20Coverage: string[];
+  missingElements: string[];
+  regulatoryBasis: string;
+}
+
+function SarNarrativeSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<StrNarrativeResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  async function run() {
+    setStatus("loading");
+    setError(null);
+    setCopied(false);
+    try {
+      const res = await fetch("/api/str-narrative", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ subjectName: subject.name, evidence: `entityType:${subject.entityType} riskScore:${subject.riskScore} jurisdiction:${subject.jurisdiction || subject.country}` }),
+      });
+      const data = (await res.json()) as StrNarrativeResult;
+      setResult(data);
+      setStatus("done");
+    } catch (err) {
+      setError(String(err));
+      setStatus("error");
+    }
+  }
+
+  function copy() {
+    if (!result?.narrative) return;
+    navigator.clipboard.writeText(result.narrative).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); }).catch(() => {});
+  }
+
+  return (
+    <IntelSection title="SAR Narrative Generator" icon="📝" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Auto-draft a FATF R.20-compliant Suspicious Activity Report narrative from subject evidence.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && (
+          <div className="space-y-2 mt-2">
+            <div className="flex items-center gap-3 text-11 font-mono">
+              <span>Words: <span className="text-ink-0">{result.wordCount}</span></span>
+              <span>Quality: <span className={`font-semibold ${result.qualityScore >= 70 ? "text-green" : result.qualityScore >= 40 ? "text-amber" : "text-red"}`}>{result.qualityScore}/100</span></span>
+            </div>
+            {result.missingElements.length > 0 && (
+              <div className="text-10 text-amber bg-amber-dim rounded px-2 py-1">Missing: {result.missingElements.join(", ")}</div>
+            )}
+            <div className="relative">
+              <textarea
+                readOnly
+                className="w-full rounded border border-hair-2 bg-bg-2 px-3 py-2 text-11 text-ink-0 font-mono resize-y min-h-[140px] max-h-64"
+                value={result.narrative}
+              />
+              <button
+                onClick={copy}
+                className="absolute top-2 right-2 text-10 font-semibold px-2 py-0.5 rounded bg-brand-dim text-brand border border-brand/30 hover:opacity-80"
+              >
+                {copied ? "✓ Copied" : "Copy"}
+              </button>
+            </div>
+            <div className="text-10 text-ink-3 italic">{result.regulatoryBasis}</div>
+          </div>
+        )}
+      </div>
+    </IntelSection>
+  );
+}
+
+// ─── 42. EDD Questionnaire / Interrogation Script ────────────────────────────
+
+interface EddResult {
+  questions?: string[];
+  ok?: boolean;
+  error?: string;
+}
+
+function EddQuestionnaireSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<EddResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function run() {
+    setStatus("loading");
+    setError(null);
+    try {
+      const res = await fetch("/api/edd-questionnaire", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name: subject.name, pepTier: subject.pep?.tier ?? "none", entityType: subject.entityType }),
+      });
+      const data = (await res.json()) as EddResult;
+      setResult(data);
+      setStatus("done");
+    } catch (err) {
+      setError(String(err));
+      setStatus("error");
+    }
+  }
+
+  return (
+    <IntelSection title="EDD Questionnaire / Interrogation Script" icon="🎤" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Generate tailored Enhanced Due Diligence interview questions based on subject risk profile.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && (
+          <div className="space-y-2 mt-2">
+            {result.questions && result.questions.length > 0 ? (
+              <ol className="space-y-2">
+                {result.questions.map((q, i) => (
+                  <li key={i} className="flex gap-2 text-11">
+                    <span className="text-brand font-mono font-semibold shrink-0">{i + 1}.</span>
+                    <span className="text-ink-1">{q}</span>
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <JsonTree data={result} />
+            )}
+          </div>
+        )}
+      </div>
+    </IntelSection>
+  );
+}
+
+// ─── 43. MLRO Regulatory Q&A ──────────────────────────────────────────────────
+
+interface MlroAdvisorResult {
+  ok: boolean;
+  answer?: string;
+  error?: string;
+}
+
+function MlroAdvisorSection() {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<MlroAdvisorResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [query, setQuery] = useState<string>("");
+
+  async function run() {
+    if (!query.trim()) { setError("Enter a question first"); return; }
+    setStatus("loading");
+    setError(null);
+    try {
+      const res = await fetch("/api/mlro-advisor-quick", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ question: query }),
+      });
+      const data = (await res.json()) as MlroAdvisorResult;
+      setResult(data);
+      setStatus("done");
+    } catch (err) {
+      setError(String(err));
+      setStatus("error");
+    }
+  }
+
+  return (
+    <IntelSection title="MLRO Regulatory Q&A" icon="🧠" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Ask the MLRO AI advisor any AML/CFT regulatory question — FATF, CBUAE, FCA, FinCEN.</div>
+        <textarea
+          className="w-full rounded border border-hair-2 bg-bg-panel text-ink-0 px-2 py-1.5 text-11 resize-y min-h-[60px] focus:outline-none focus:border-brand"
+          placeholder="e.g. What are the EDD requirements for a Tier 1 PEP under UAE FDL 2025?"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result?.answer && (
+          <div className="mt-2 bg-bg-2 border border-hair-2 rounded p-3 text-11 text-ink-1 whitespace-pre-wrap leading-relaxed">
+            {result.answer}
+          </div>
+        )}
+        {result && !result.answer && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+// ─── 44. OSINT Synthesis Narrative ───────────────────────────────────────────
+
+function OsintSynthesisSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function run() {
+    setStatus("loading");
+    setError(null);
+    try {
+      const res = await fetch("/api/osint-synthesis", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name: subject.name }),
+      });
+      const data = (await res.json()) as unknown;
+      setResult(data);
+      setStatus("done");
+    } catch (err) {
+      setError(String(err));
+      setStatus("error");
+    }
+  }
+
+  return (
+    <IntelSection title="OSINT Synthesis Narrative" icon="🔮" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Synthesize all OSINT intelligence into a coherent narrative profile for the subject.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+// ─── 45. Typology / Peer Comparison ──────────────────────────────────────────
+
+interface CompetitorResult {
+  ok: boolean;
+  competitors?: Array<{ name: string; riskScore: number; riskLevel: string; jurisdiction: string; flags: string[]; similarity: number }>;
+  peerGroupAvgRisk?: number;
+  peerGroupRiskLevel?: string;
+  methodology?: string;
+  error?: string;
+}
+
+function TypologyMatchSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<CompetitorResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function run() {
+    setStatus("loading");
+    setError(null);
+    try {
+      const res = await fetch("/api/competitor-screen", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ subjectName: subject.name, industry: subject.riskCategory ?? subject.meta ?? "", jurisdiction: subject.jurisdiction || subject.country }),
+      });
+      const data = (await res.json()) as CompetitorResult;
+      setResult(data);
+      setStatus("done");
+    } catch (err) {
+      setError(String(err));
+      setStatus("error");
+    }
+  }
+
+  return (
+    <IntelSection title="Typology / Peer Comparison" icon="📊" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Compare subject risk profile to similar peers in the same industry and jurisdiction.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && (
+          <div className="space-y-2 mt-2">
+            {result.peerGroupAvgRisk !== undefined && (
+              <div className="text-11 font-mono">
+                Peer avg risk: <span className={`font-semibold ${(result.peerGroupAvgRisk ?? 0) >= 60 ? "text-red" : (result.peerGroupAvgRisk ?? 0) >= 40 ? "text-amber" : "text-green"}`}>{result.peerGroupAvgRisk}</span>
+                {result.peerGroupRiskLevel && <span className="ml-2 text-ink-3">({result.peerGroupRiskLevel})</span>}
+              </div>
+            )}
+            {result.competitors && result.competitors.map((c, i) => (
+              <div key={i} className="bg-bg-2 border border-hair-2 rounded p-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-11 font-semibold text-ink-0">{c.name}</span>
+                  <span className={`text-11 font-mono font-semibold ${c.riskScore >= 60 ? "text-red" : c.riskScore >= 40 ? "text-amber" : "text-green"}`}>{c.riskScore}</span>
+                </div>
+                <div className="text-10 text-ink-3">{c.jurisdiction} · {c.similarity}% similar</div>
+                {c.flags.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {c.flags.map((f, fi) => <span key={fi} className="text-10 font-mono bg-amber-dim text-amber border border-amber/30 px-1 py-0.5 rounded">{f}</span>)}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </IntelSection>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// NEW SECTIONS — Group 6 additions (Case Actions)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ─── 46. Predictive Re-Screen Scheduler ──────────────────────────────────────
+
+function ReScreenSchedulerSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function run() {
+    setStatus("loading");
+    setError(null);
+    try {
+      const res = await fetch(`/api/screening-history?subjectId=${encodeURIComponent(subject.id)}`);
+      const data = (await res.json()) as unknown;
+      setResult(data);
+      setStatus("done");
+    } catch (err) {
+      setError(String(err));
+      setStatus("error");
+    }
+  }
+
+  return (
+    <IntelSection title="Predictive Re-Screen Scheduler" icon="📆" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Predict optimal re-screening date based on historical screening patterns and risk evolution.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+// ─── 47. Four-Eyes Review ────────────────────────────────────────────────────
+
+function FourEyesSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function run() {
+    setStatus("loading");
+    setError(null);
+    try {
+      const res = await fetch("/api/four-eyes", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ subjectId: subject.id, subjectName: subject.name, riskScore: subject.riskScore }),
+      });
+      const data = (await res.json()) as unknown;
+      setResult(data);
+      setStatus("done");
+    } catch (err) {
+      setError(String(err));
+      setStatus("error");
+    }
+  }
+
+  return (
+    <IntelSection title="Four-Eyes Review" icon="👁️" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Submit the current screening for mandatory second-reviewer approval under four-eyes control.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+// ─── 48. Whistleblower Tip Submission ────────────────────────────────────────
+
+function WhistleblowerSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [tip, setTip] = useState<string>("");
+
+  async function run() {
+    if (!tip.trim()) { setError("Enter a tip before submitting"); return; }
+    setStatus("loading");
+    setError(null);
+    try {
+      const res = await fetch("/api/whistleblower", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ subjectId: subject.id, subjectName: subject.name, tip }),
+      });
+      const data = (await res.json()) as unknown;
+      setResult(data);
+      setStatus("done");
+    } catch (err) {
+      setError(String(err));
+      setStatus("error");
+    }
+  }
+
+  return (
+    <IntelSection title="Whistleblower Tip" icon="📣" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Submit a confidential whistleblower tip linked to this subject. Anonymised and encrypted at rest.</div>
+        <textarea
+          className="w-full rounded border border-hair-2 bg-bg-panel text-ink-0 px-2 py-1.5 text-11 resize-y min-h-[60px] focus:outline-none focus:border-brand"
+          placeholder="Describe the suspicious activity or information..."
+          value={tip}
+          onChange={(e) => setTip(e.target.value)}
+        />
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+// ─── 49. Inter-Agency Referral ───────────────────────────────────────────────
+
+function InterAgencyReferralSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function run() {
+    setStatus("loading");
+    setError(null);
+    try {
+      const res = await fetch("/api/inter-agency-referral", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ subjectId: subject.id, subjectName: subject.name, riskScore: subject.riskScore, jurisdiction: subject.jurisdiction || subject.country }),
+      });
+      const data = (await res.json()) as unknown;
+      setResult(data);
+      setStatus("done");
+    } catch (err) {
+      setError(String(err));
+      setStatus("error");
+    }
+  }
+
+  return (
+    <IntelSection title="Inter-Agency Referral" icon="🏛️" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Initiate a referral to UAEFIU, CBUAE, police, or customs as appropriate for the risk profile.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+// ─── 50. Investigation Expansion ─────────────────────────────────────────────
+
+function InvestigationExpandSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function run() {
+    setStatus("loading");
+    setError(null);
+    try {
+      const res = await fetch("/api/investigation-expand", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ subjectId: subject.id }),
+      });
+      const data = (await res.json()) as unknown;
+      setResult(data);
+      setStatus("done");
+    } catch (err) {
+      setError(String(err));
+      setStatus("error");
+    }
+  }
+
+  return (
+    <IntelSection title="Investigation Expansion" icon="🔭" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Expand the investigation to all linked subjects, associates, and counterparties identified in the network.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// NEW SECTIONS — Group 7: Corporate Structure
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ─── 51. Director Network ────────────────────────────────────────────────────
+
+interface EntityGraphResult {
+  ok: boolean;
+  subject?: string;
+  registrations?: Array<{ jurisdiction: string; companyNumber: string; status: string }>;
+  directors?: Array<{ name: string; role: string; jurisdiction: string }>;
+  linkedCompanies?: Array<{ name: string; jurisdiction: string; relationship: string }>;
+  totalLinkedCompanies?: number;
+  error?: string;
+}
+
+function EntityGraphSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<EntityGraphResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function run() {
+    setStatus("loading");
+    setError(null);
+    try {
+      const res = await fetch("/api/entity-graph", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name: subject.name }),
+      });
+      const data = (await res.json()) as EntityGraphResult;
+      setResult(data);
+      setStatus("done");
+    } catch (err) {
+      setError(String(err));
+      setStatus("error");
+    }
+  }
+
+  return (
+    <IntelSection title="Director Network" icon="🕸️" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Map director network, all linked companies, and cross-jurisdiction registrations.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && (
+          <div className="space-y-2 mt-2">
+            {result.totalLinkedCompanies !== undefined && (
+              <div className="text-11 font-mono">
+                Linked companies: <span className={`font-semibold ${(result.totalLinkedCompanies ?? 0) > 10 ? "text-amber" : "text-ink-0"}`}>{result.totalLinkedCompanies}</span>
+              </div>
+            )}
+            {result.registrations && result.registrations.length > 0 && (
+              <div>
+                <div className="text-10 uppercase font-semibold text-ink-3 mb-1">Registrations ({result.registrations.length})</div>
+                {result.registrations.slice(0, 5).map((r, i) => (
+                  <div key={i} className="text-11 font-mono text-ink-2 flex gap-2">
+                    <span className="text-ink-0">{r.jurisdiction}</span>
+                    <span>{r.companyNumber}</span>
+                    <span className={r.status === "active" ? "text-green" : "text-amber"}>{r.status}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {result.directors && result.directors.length > 0 && (
+              <div>
+                <div className="text-10 uppercase font-semibold text-ink-3 mb-1">Directors ({result.directors.length})</div>
+                {result.directors.slice(0, 5).map((d, i) => (
+                  <div key={i} className="text-11 text-ink-2">
+                    <span className="text-ink-0">{d.name}</span> · {d.role} · <span className="font-mono text-ink-3">{d.jurisdiction}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {(!result.registrations || result.registrations.length === 0) && (!result.directors || result.directors.length === 0) && <JsonTree data={result} />}
+          </div>
+        )}
+      </div>
+    </IntelSection>
+  );
+}
+
+// ─── 52. UBO Ownership Chain ──────────────────────────────────────────────────
+
+function OwnershipSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function run() {
+    setStatus("loading");
+    setError(null);
+    try {
+      const res = await fetch("/api/ownership", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name: subject.name }),
+      });
+      const data = (await res.json()) as unknown;
+      setResult(data);
+      setStatus("done");
+    } catch (err) {
+      setError(String(err));
+      setStatus("error");
+    }
+  }
+
+  return (
+    <IntelSection title="UBO Ownership Chain" icon="🔗" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Trace Ultimate Beneficial Owner chain and identify all ownership tiers above 25%.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+// ─── 53. Trust / Foundation Structures ────────────────────────────────────────
+
+function TrustStructuresSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function run() {
+    setStatus("loading");
+    setError(null);
+    try {
+      const res = await fetch("/api/trust-structures", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name: subject.name }),
+      });
+      const data = (await res.json()) as unknown;
+      setResult(data);
+      setStatus("done");
+    } catch (err) {
+      setError(String(err));
+      setStatus("error");
+    }
+  }
+
+  return (
+    <IntelSection title="Trust / Foundation Structures" icon="🏰" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Identify trust, nominee, and foundation arrangements that may obscure beneficial ownership.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+// ─── 54. Nominee Director / Shareholder Risk ──────────────────────────────────
+
+function NomineeRiskSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function run() {
+    setStatus("loading");
+    setError(null);
+    try {
+      const res = await fetch("/api/nominee-risk", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name: subject.name }),
+      });
+      const data = (await res.json()) as unknown;
+      setResult(data);
+      setStatus("done");
+    } catch (err) {
+      setError(String(err));
+      setStatus("error");
+    }
+  }
+
+  return (
+    <IntelSection title="Nominee Director / Shareholder Risk" icon="🎭" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Score risk of nominee arrangements concealing true controllers and beneficial owners.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+// ─── 55. EOCN / Regulatory Licence Check ─────────────────────────────────────
+
+function EocnListSection() {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function run() {
+    setStatus("loading");
+    setError(null);
+    try {
+      const res = await fetch("/api/eocn-list-updates");
+      const data = (await res.json()) as unknown;
+      setResult(data);
+      setStatus("done");
+    } catch (err) {
+      setError(String(err));
+      setStatus("error");
+    }
+  }
+
+  return (
+    <IntelSection title="EOCN / Regulatory Licence Check" icon="📋" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Check EOCN registration, regulatory licences, and Designated Non-Financial Business status.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+// ─── 56. Corruption / Bribery Risk ────────────────────────────────────────────
+
+function CorruptionRiskSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function run() {
+    setStatus("loading");
+    setError(null);
+    try {
+      const res = await fetch("/api/corruption-risk", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name: subject.name, jurisdiction: subject.jurisdiction || subject.country }),
+      });
+      const data = (await res.json()) as unknown;
+      setResult(data);
+      setStatus("done");
+    } catch (err) {
+      setError(String(err));
+      setStatus("error");
+    }
+  }
+
+  return (
+    <IntelSection title="Corruption / Bribery Risk" icon="💰" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Assess corruption and bribery risk using CPI scores, sector exposure, and political connections.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+// ─── 57. High Net Worth Indicators ────────────────────────────────────────────
+
+function HighNetWorthSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function run() {
+    setStatus("loading");
+    setError(null);
+    try {
+      const res = await fetch("/api/high-net-worth", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name: subject.name }),
+      });
+      const data = (await res.json()) as unknown;
+      setResult(data);
+      setStatus("done");
+    } catch (err) {
+      setError(String(err));
+      setStatus("error");
+    }
+  }
+
+  return (
+    <IntelSection title="High Net Worth Indicators" icon="💎" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Identify HNW wealth indicators, unexplained wealth flags, and source of wealth signals.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+// ─── 58. Source of Wealth Calculator ─────────────────────────────────────────
+
+function SowCalculatorSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function run() {
+    setStatus("loading");
+    setError(null);
+    try {
+      const res = await fetch("/api/sow-calculator", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name: subject.name }),
+      });
+      const data = (await res.json()) as unknown;
+      setResult(data);
+      setStatus("done");
+    } catch (err) {
+      setError(String(err));
+      setStatus("error");
+    }
+  }
+
+  return (
+    <IntelSection title="Source of Wealth Calculator" icon="📐" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Calculate plausible source of wealth based on known career history, business activities, and disclosed assets.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// NEW SECTIONS — Group 8: Financial Crime Patterns (extended)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ─── 59. Asset Tracer ────────────────────────────────────────────────────────
+
+interface AssetTracerResult {
+  ok: boolean;
+  jurisdictions?: Array<{ country: string; assetTypes: string[]; estimatedValue: string; registrySource: string }>;
+  totalJurisdictions?: number;
+  totalEstimatedValue?: string;
+  error?: string;
+}
+
+function AssetTracerSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<AssetTracerResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function run() {
+    setStatus("loading");
+    setError(null);
+    try {
+      const res = await fetch("/api/asset-tracer", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name: subject.name }),
+      });
+      const data = (await res.json()) as AssetTracerResult;
+      setResult(data);
+      setStatus("done");
+    } catch (err) {
+      setError(String(err));
+      setStatus("error");
+    }
+  }
+
+  return (
+    <IntelSection title="Asset Tracer" icon="🗺️" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Trace assets across jurisdictions: real estate, vehicles, bank accounts, beneficial interests.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && (
+          <div className="space-y-2 mt-2">
+            {result.totalJurisdictions !== undefined && (
+              <div className="flex gap-4 text-11 font-mono">
+                <span>Jurisdictions: <span className="text-ink-0 font-semibold">{result.totalJurisdictions}</span></span>
+                {result.totalEstimatedValue && <span>Est. value: <span className="text-ink-0 font-semibold">{result.totalEstimatedValue}</span></span>}
+              </div>
+            )}
+            {result.jurisdictions && result.jurisdictions.map((j, i) => (
+              <div key={i} className="bg-bg-2 border border-hair-2 rounded p-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-11 font-semibold text-ink-0">{j.country}</span>
+                  <span className="text-11 font-mono text-amber">{j.estimatedValue}</span>
+                </div>
+                <div className="text-10 text-ink-3">Assets: {j.assetTypes.join(", ")}</div>
+                <div className="text-10 font-mono text-ink-3">{j.registrySource}</div>
+              </div>
+            ))}
+            {(!result.jurisdictions || result.jurisdictions.length === 0) && <JsonTree data={result} />}
+          </div>
+        )}
+      </div>
+    </IntelSection>
+  );
+}
+
+// ─── 60. Freeze / Seizure Order Workflow ─────────────────────────────────────
+
+function FreezeSeizureSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function run() {
+    setStatus("loading");
+    setError(null);
+    try {
+      const res = await fetch("/api/freeze-seizure", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name: subject.name, subjectId: subject.id }),
+      });
+      const data = (await res.json()) as unknown;
+      setResult(data);
+      setStatus("done");
+    } catch (err) {
+      setError(String(err));
+      setStatus("error");
+    }
+  }
+
+  return (
+    <IntelSection title="Freeze / Seizure Order" icon="🔒" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Initiate asset freeze or seizure order workflow with CBUAE / UAEFIU / judicial authority.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// NEW SECTIONS — Group 9: Extended AI Analysis
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ─── 61. Evidence Pack Report ────────────────────────────────────────────────
+
+function EvidencePackSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function run() {
+    setStatus("loading");
+    setError(null);
+    try {
+      const res = await fetch("/api/evidence-pack-report", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ subjectId: subject.id }),
+      });
+      const data = (await res.json()) as unknown;
+      setResult(data);
+      setStatus("done");
+    } catch (err) {
+      setError(String(err));
+      setStatus("error");
+    }
+  }
+
+  return (
+    <IntelSection title="Evidence Pack Report" icon="📦" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Generate a court-ready expert witness evidence pack compiling all intelligence findings.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+// ─── 62. Legal Privilege Checker ─────────────────────────────────────────────
+
+function LegalPrivilegeSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function run() {
+    setStatus("loading");
+    setError(null);
+    try {
+      const res = await fetch("/api/legal-privilege", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ subjectId: subject.id }),
+      });
+      const data = (await res.json()) as unknown;
+      setResult(data);
+      setStatus("done");
+    } catch (err) {
+      setError(String(err));
+      setStatus("error");
+    }
+  }
+
+  return (
+    <IntelSection title="Legal Privilege Checker" icon="⚖️" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Assert or check legal professional privilege over documents and communications in the case.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+// ─── 63. Domain Intelligence ─────────────────────────────────────────────────
+
+function DomainIntelSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [domain, setDomain] = useState<string>("");
+
+  async function run() {
+    setStatus("loading");
+    setError(null);
+    try {
+      const res = await fetch("/api/domain-intel", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ domain: domain.trim() || subject.name }),
+      });
+      const data = (await res.json()) as unknown;
+      setResult(data);
+      setStatus("done");
+    } catch (err) {
+      setError(String(err));
+      setStatus("error");
+    }
+  }
+
+  return (
+    <IntelSection title="Domain Intelligence" icon="🌐" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Email domain reputation, MX records, WHOIS age, registrar analysis, and fraud scoring.</div>
+        <input
+          type="text"
+          className="w-full px-2 py-1.5 border border-hair-2 rounded text-11 bg-bg-panel text-ink-0 font-mono focus:outline-none focus:border-brand"
+          placeholder="e.g. example.com"
+          value={domain}
+          onChange={(e) => setDomain(e.target.value)}
+        />
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// NEW SECTIONS — Group 10: Operations & Actions
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ─── 64. Insider Threat Screen ────────────────────────────────────────────────
+
+function InsiderThreatSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function run() {
+    setStatus("loading");
+    setError(null);
+    try {
+      const res = await fetch("/api/insider-threat-screen", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name: subject.name }),
+      });
+      const data = (await res.json()) as unknown;
+      setResult(data);
+      setStatus("done");
+    } catch (err) {
+      setError(String(err));
+      setStatus("error");
+    }
+  }
+
+  return (
+    <IntelSection title="Insider Threat Screen" icon="🔍" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Screen for insider threat indicators: unusual access patterns, financial stress, behavioural anomalies.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
+// ─── 65. Human Trafficking Risk ──────────────────────────────────────────────
+
+function HumanTraffickingSection({ subject }: { subject: Subject }) {
+  const [status, setStatus] = useState<SectionStatus>("idle");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function run() {
+    setStatus("loading");
+    setError(null);
+    try {
+      const res = await fetch("/api/human-trafficking", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name: subject.name }),
+      });
+      const data = (await res.json()) as unknown;
+      setResult(data);
+      setStatus("done");
+    } catch (err) {
+      setError(String(err));
+      setStatus("error");
+    }
+  }
+
+  return (
+    <IntelSection title="Human Trafficking Risk Indicators" icon="🚨" status={status}>
+      <div className="space-y-3">
+        <div className="text-11 text-ink-3">Identify human trafficking risk indicators: recruitment patterns, exploitation venues, financial flows.</div>
+        <RunBtn onClick={run} disabled={status === "loading"} />
+        {error && <ErrorBox msg={error} />}
+        {result && <JsonTree data={result} />}
+      </div>
+    </IntelSection>
+  );
+}
+
 // ─── Main DeepIntelPanel ──────────────────────────────────────────────────────
 
 export function DeepIntelPanel({ subject, screen, superBrain }: Props) {
   return (
     <div className="space-y-2 mt-4">
       <div className="text-12 text-ink-3 mb-4">
-        Deep Intelligence workbench — 20 independent modules. Expand any section and click <strong className="text-ink-1">Run</strong> to trigger on demand.
+        Deep Intelligence workbench — 70 independent modules. Expand any section and click <strong className="text-ink-1">Run</strong> to trigger on demand.
       </div>
 
       {/* GROUP 1: Identity & Aliases */}
       <GroupHeader label="Identity & Aliases" />
       <NameVariantSection subject={subject} screen={screen} />
       <PepNetworkSection subject={subject} />
+      <OsintSection subject={subject} />
+      <EmailRepSection subject={subject} />
+      <SmartDisambiguateSection subject={subject} />
+      <IbanRiskSection subject={subject} />
 
       {/* GROUP 2: Network & Entities */}
       <GroupHeader label="Network & Entities" />
@@ -1836,12 +3927,27 @@ export function DeepIntelPanel({ subject, screen, superBrain }: Props) {
       <TransactionOverlaySection subject={subject} />
       <RealEstateSection subject={subject} />
       <DarkWebBreachSection subject={subject} />
+      <SwiftLcSection subject={subject} />
+      <CryptoTracingSection subject={subject} />
+      <CryptoMixingSection subject={subject} />
+      <TradeFinanceSection subject={subject} />
+      <ShellDetectorSection subject={subject} />
+      <HawalaDetectorSection subject={subject} />
+      <LayeringDetectorSection subject={subject} />
+      <CashIntensiveSection subject={subject} />
+      <GhostCompanySection subject={subject} />
 
       {/* GROUP 4: Geopolitical & Regulatory */}
       <GroupHeader label="Geopolitical & Regulatory" />
       <GeoRiskSection subject={subject} />
       <SanctionsNarrativeSection subject={subject} />
       <RegulatoryDeadlinesSection subject={subject} />
+      <SanctionsIndirectSection subject={subject} />
+      <SanctionsExposureMapperSection subject={subject} />
+      <DeRiskingImpactSection subject={subject} />
+      <RmiAssessSection subject={subject} />
+      <JurisdictionIntelSection subject={subject} />
+      <SanctionsEvasionSection subject={subject} />
 
       {/* GROUP 5: AI Analysis */}
       <GroupHeader label="AI Analysis" />
@@ -1849,6 +3955,12 @@ export function DeepIntelPanel({ subject, screen, superBrain }: Props) {
       <DispositionPredictorSection subject={subject} screen={screen} superBrain={superBrain} />
       <BayesianTrajectorySection subject={subject} superBrain={superBrain} />
       <IndustryTypologySection subject={subject} />
+      <NewsIntelSection subject={subject} />
+      <SarNarrativeSection subject={subject} />
+      <EddQuestionnaireSection subject={subject} />
+      <MlroAdvisorSection />
+      <OsintSynthesisSection subject={subject} />
+      <TypologyMatchSection subject={subject} />
 
       {/* GROUP 6: Case Actions */}
       <GroupHeader label="Case Actions" />
@@ -1857,6 +3969,38 @@ export function DeepIntelPanel({ subject, screen, superBrain }: Props) {
       <CrossCasePatternSection subject={subject} />
       <MultiJurisdictionFilingSection subject={subject} />
       <ContinuousMonitoringSection subject={subject} />
+      <ReScreenSchedulerSection subject={subject} />
+      <FourEyesSection subject={subject} />
+      <WhistleblowerSection subject={subject} />
+      <InterAgencyReferralSection subject={subject} />
+      <InvestigationExpandSection subject={subject} />
+
+      {/* GROUP 7: Corporate Structure */}
+      <GroupHeader label="Corporate Structure" />
+      <EntityGraphSection subject={subject} />
+      <OwnershipSection subject={subject} />
+      <TrustStructuresSection subject={subject} />
+      <NomineeRiskSection subject={subject} />
+      <EocnListSection />
+      <CorruptionRiskSection subject={subject} />
+      <HighNetWorthSection subject={subject} />
+      <SowCalculatorSection subject={subject} />
+
+      {/* GROUP 8: Financial Crime Patterns */}
+      <GroupHeader label="Financial Crime Patterns" />
+      <AssetTracerSection subject={subject} />
+      <FreezeSeizureSection subject={subject} />
+
+      {/* GROUP 9: Extended AI Analysis */}
+      <GroupHeader label="Extended AI Analysis" />
+      <EvidencePackSection subject={subject} />
+      <LegalPrivilegeSection subject={subject} />
+      <DomainIntelSection subject={subject} />
+
+      {/* GROUP 10: Operations & Actions */}
+      <GroupHeader label="Operations & Actions" />
+      <InsiderThreatSection subject={subject} />
+      <HumanTraffickingSection subject={subject} />
     </div>
   );
 }
