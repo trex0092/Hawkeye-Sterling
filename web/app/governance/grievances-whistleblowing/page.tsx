@@ -800,34 +800,6 @@ export default function GrievancesWhistleblowingPage() {
                   A safe, transparent, confidential mechanism for customers, partners, employees and third parties to raise concerns or report misconduct — without fear of retaliation. Operated by the Compliance Dpt under the Fine Gold Grievances &amp; Whistleblowing Policy{" "}
                   <span style={mono({ color: V.ember })}>FG/GVW/004</span>.
                 </p>
-                <div style={{ display: "flex", gap: 10, marginTop: 22, flexWrap: "wrap" as const }}>
-                  <button
-                    type="button"
-                    onClick={() => formRef.current?.scrollIntoView({ behavior: "smooth" })}
-                    style={{ border: `1px solid oklch(74% 0.18 350)`, background: "oklch(74% 0.18 350)", color: "#1a0613", padding: "10px 18px", fontFamily: "'Inter',sans-serif", fontSize: 12.5, fontWeight: 600, letterSpacing: ".02em", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 9, borderRadius: 1 }}
-                  >
-                    File a disclosure
-                    <span style={mono({ fontSize: 10, border: "1px solid rgba(0,0,0,.25)", padding: "1px 5px", color: "#1a0613", background: "rgba(0,0,0,.08)" })}>N</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="gw-ghost"
-                    onClick={() => registerRef.current?.scrollIntoView({ behavior: "smooth" })}
-                    style={{ border: `1px solid ${V.line2}`, background: "transparent", color: V.ink, padding: "10px 18px", fontFamily: "'Inter',sans-serif", fontSize: 12.5, fontWeight: 600, letterSpacing: ".02em", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 9, borderRadius: 1 }}
-                  >
-                    Open case register
-                    <span style={mono({ fontSize: 10, border: `1px solid ${V.line2}`, padding: "1px 5px", color: V.ink2, background: "transparent" })}>R</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="gw-ghost"
-                    onClick={() => setShowPdf(true)}
-                    style={{ border: `1px solid ${V.line2}`, background: "transparent", color: V.ink, padding: "10px 18px", fontFamily: "'Inter',sans-serif", fontSize: 12.5, fontWeight: 600, letterSpacing: ".02em", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 9, borderRadius: 1 }}
-                  >
-                    Download policy PDF
-                    <span style={mono({ fontSize: 10, border: `1px solid ${V.line2}`, padding: "1px 5px", color: V.ink2, background: "transparent" })}>↓</span>
-                  </button>
-                </div>
               </div>
             </section>
 
