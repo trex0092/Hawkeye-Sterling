@@ -53,7 +53,8 @@ export async function POST(req: Request): Promise<NextResponse> {
   const { rows } = body;
 
   // Non-blocking audit event
-  try { writeAuditEvent("mlro", "data-quality.ai-remediation", "portfolio"); } catch { /* non-fatal */ }
+  try { writeAuditEvent("mlro", "data-quality.ai-remediation", "portfolio"); }
+  catch (err) { console.warn("[hawkeye] data-quality-fix writeAuditEvent failed:", err); }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
