@@ -745,21 +745,6 @@ export default function GrievancesWhistleblowingPage() {
               ))}
             </div>
 
-            {/* Reporting Channels */}
-            <div style={mono({ fontSize: 9.5, letterSpacing: ".22em", textTransform: "uppercase", color: V.muted, marginBottom: 10 })}>Reporting Channels</div>
-            <div style={{ marginBottom: 18 }}>
-              {CHANNELS.map((ch) => (
-                <div key={ch.ix} className="gw-ch" style={{ border: `1px solid ${V.line}`, background: V.panel, padding: "10px 12px", marginBottom: 6, display: "grid", gridTemplateColumns: "auto 1fr auto", gap: 10, alignItems: "center", cursor: "pointer" }}>
-                  <div style={mono({ fontSize: 9, color: V.ember, border: `1px solid oklch(74% 0.18 350)`, padding: "2px 5px", letterSpacing: ".08em" })}>{ch.ix}</div>
-                  <div>
-                    <div style={{ fontSize: 11.5, color: V.ink, fontWeight: 500 }}>{ch.name}</div>
-                    <div style={mono({ fontSize: 9, color: V.muted, letterSpacing: ".04em", marginTop: 1 })}>{ch.sub}</div>
-                  </div>
-                  <div style={mono({ fontSize: 13, color: V.muted })}>→</div>
-                </div>
-              ))}
-            </div>
-
             {/* Anti-Retaliation */}
             <div style={{ border: `1px solid ${V.line}`, borderLeft: `2px solid oklch(74% 0.18 350)`, background: "linear-gradient(90deg,var(--gw-ember-soft),transparent 70%)", padding: "11px 13px" }}>
               <div style={mono({ fontSize: 9, letterSpacing: ".18em", textTransform: "uppercase", color: V.ember, fontWeight: 700 })}>Anti-Retaliation</div>
