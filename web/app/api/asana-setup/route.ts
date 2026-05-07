@@ -251,7 +251,10 @@ async function handleSetup(req: Request): Promise<NextResponse> {
 
     let sections: { created: string[]; skipped: string[]; errors: string[] } | undefined;
     if (!dry) {
-      sections = await setupSections(token, found.gid, mapping.sections).catch(() => undefined);
+      sections = await setupSections(token, found.gid, mapping.sections).catch((err: unknown) => {
+        console.warn(`[hawkeye] asana-setup setupSections failed for ${mapping.label}:`, err);
+        return undefined;
+      });
     }
 
     results.push({

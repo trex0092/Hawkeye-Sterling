@@ -565,7 +565,9 @@ export async function POST(req: Request): Promise<NextResponse> {
         finalAnswer: null,
         validation: postGen.validation,
         refusalReason: postGen.router.reason,
-      }).catch(() => {});
+      }).catch((err: unknown) => {
+        console.error("[hawkeye] mlro-advisor: post-gen refusal audit-log append failed:", err);
+      });
       return NextResponse.json(
         {
           ok: false,
