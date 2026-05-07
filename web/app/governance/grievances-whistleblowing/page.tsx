@@ -285,6 +285,45 @@ const V = {
 // ── Page-scoped CSS (animations + hover helpers that can't be inline) ─────────
 
 const PAGE_CSS = `
+  /* ── Light-mode tokens (default) ── */
+  .gw-root {
+    --gw-bg:        var(--bg-0, #faf9f7);
+    --gw-bg-2:      var(--bg-1, #f5f3f0);
+    --gw-bg-3:      var(--bg-2, #efebe6);
+    --gw-panel:     var(--bg-panel, #ffffff);
+    --gw-line:      var(--hair,   rgba(0,0,0,.07));
+    --gw-line-2:    var(--hair-2, rgba(0,0,0,.12));
+    --gw-ink:       var(--ink-0, #1a1614);
+    --gw-ink-2:     var(--ink-1, #44403c);
+    --gw-muted:     var(--ink-2, #78716c);
+    --gw-muted-2:   var(--ink-3, #a8a29e);
+    --gw-ember:     oklch(56% 0.22 340);
+    --gw-ember-soft:oklch(56% 0.22 340 / .10);
+    --gw-teal:      oklch(52% 0.13 220);
+    --gw-teal-soft: oklch(52% 0.13 220 / .12);
+    --gw-rose:      oklch(50% 0.22 20);
+    --gw-rose-soft: oklch(50% 0.22 20 / .10);
+  }
+  /* ── Dark-mode token overrides ── */
+  html[data-theme="dark"] .gw-root {
+    --gw-bg:        #0d0c0a;
+    --gw-bg-2:      #15130f;
+    --gw-bg-3:      #1c1a15;
+    --gw-panel:     #15130f;
+    --gw-line:      #27241e;
+    --gw-line-2:    #332f27;
+    --gw-ink:       #efece4;
+    --gw-ink-2:     #cbc7bc;
+    --gw-muted:     #7d786c;
+    --gw-muted-2:   #5a564c;
+    --gw-ember:     oklch(74% 0.18 350);
+    --gw-ember-soft:oklch(74% 0.18 350 / .14);
+    --gw-teal:      oklch(72% 0.10 220);
+    --gw-teal-soft: oklch(72% 0.10 220 / .14);
+    --gw-rose:      oklch(66% 0.20 20);
+    --gw-rose-soft: oklch(66% 0.20 20 / .14);
+  }
+
   @keyframes gw-pulse {
     0%   { box-shadow: 0 0 0 0   oklch(74% 0.18 350 / .55); }
     70%  { box-shadow: 0 0 0 8px oklch(74% 0.18 350 / 0);   }
@@ -292,8 +331,9 @@ const PAGE_CSS = `
   }
   .gw-pulse { animation: gw-pulse 2.2s infinite; }
   .gw-bar-fill { transition: width 200ms ease-out; }
-  .gw-tr:hover td { background: rgba(255,255,255,.015) !important; }
-  .gw-ch:hover  { border-color: var(--gw-line-2) !important; background: #1a1813 !important; }
+  .gw-tr:hover td { background: rgba(0,0,0,.03) !important; }
+  html[data-theme="dark"] .gw-tr:hover td { background: rgba(255,255,255,.015) !important; }
+  .gw-ch:hover  { border-color: var(--gw-line-2) !important; background: var(--gw-bg-2) !important; }
   .gw-ghost:hover { border-color: var(--gw-ink-2) !important; }
   .gw-field input:focus,
   .gw-field select:focus,
@@ -491,25 +531,7 @@ export default function GrievancesWhistleblowingPage() {
     }
   }, [concern, description, submitting, mode, dateObs, location, reporterName, severity, language]);
 
-  // CSS custom properties scoped to page wrapper
-  const gwVars = {
-    "--gw-bg":        "#0d0c0a",
-    "--gw-bg-2":      "#15130f",
-    "--gw-bg-3":      "#1c1a15",
-    "--gw-panel":     "#15130f",
-    "--gw-line":      "#27241e",
-    "--gw-line-2":    "#332f27",
-    "--gw-ink":       "#efece4",
-    "--gw-ink-2":     "#cbc7bc",
-    "--gw-muted":     "#7d786c",
-    "--gw-muted-2":   "#5a564c",
-    "--gw-ember":     "oklch(74% 0.18 350)",
-    "--gw-ember-soft":"oklch(74% 0.18 350 / .14)",
-    "--gw-teal":      "oklch(72% 0.10 220)",
-    "--gw-teal-soft": "oklch(72% 0.10 220 / .14)",
-    "--gw-rose":      "oklch(66% 0.20 20)",
-    "--gw-rose-soft": "oklch(66% 0.20 20 / .14)",
-  } as React.CSSProperties;
+  const gwVars = {} as React.CSSProperties;
 
   return (
     <>
@@ -796,8 +818,7 @@ export default function GrievancesWhistleblowingPage() {
                   A protected channel<br />to <em style={{ fontStyle: "italic", color: V.ember }}>speak up.</em>
                 </h1>
                 <p style={{ color: V.ink2, fontSize: 13.5, maxWidth: 560, marginTop: 14, lineHeight: 1.6, margin: "14px 0 0" }}>
-                  A safe, transparent, confidential mechanism for customers, partners, employees and third parties to raise concerns or report misconduct — without fear of retaliation. Operated by the Compliance Dpt under the Fine Gold Grievances &amp; Whistleblowing Policy{" "}
-                  <span style={mono({ color: V.ember })}>FG/GVW/004</span>.
+                  A safe, transparent, confidential mechanism for customers, partners, employees and third parties to raise concerns or report misconduct — without fear of retaliation.
                 </p>
               </div>
             </section>
@@ -900,7 +921,7 @@ export default function GrievancesWhistleblowingPage() {
                       <select
                         value={concern}
                         onChange={(e) => setConcern(e.target.value)}
-                        style={{ width: "100%", background: V.bg, border: `1px solid ${V.line}`, color: concern ? V.ink : V.muted, padding: "8px 10px", fontFamily: "'Inter',sans-serif", fontSize: 12, borderRadius: 1, colorScheme: "dark" }}
+                        style={{ width: "100%", background: V.bg, border: `1px solid ${V.line}`, color: concern ? V.ink : V.muted, padding: "8px 10px", fontFamily: "'Inter',sans-serif", fontSize: 12, borderRadius: 1, }}
                       >
                         <option value="">— Select category —</option>
                         {CONCERN_OPTIONS.map((o) => <option key={o}>{o}</option>)}
@@ -993,26 +1014,6 @@ export default function GrievancesWhistleblowingPage() {
 
             </div>{/* /two-col */}
 
-            {/* ── PENALTY RAIL ── */}
-            <div className="gw-penalty-outer" style={{ marginTop: 32, border: `1px solid ${V.line}`, background: V.panel, display: "grid", gridTemplateColumns: "auto 1fr" }}>
-              <div className="gw-penalty-label" style={{ padding: "22px 24px", borderRight: `1px solid ${V.line}`, background: V.bg2, display: "flex", flexDirection: "column" as const, justifyContent: "center", minWidth: 230 }}>
-                <div className="gw-serif" style={{ fontSize: 22, color: V.ink, lineHeight: 1.1 }}>
-                  Penalties for <em style={{ fontStyle: "italic", color: V.rose }}>non-reporting</em>
-                </div>
-                <div style={mono({ fontSize: 9.5, color: V.muted, letterSpacing: ".12em", marginTop: 8 })}>CR No.24/2022 · administrative violations</div>
-              </div>
-              <div className="gw-penalty-items" style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)" }}>
-                {PENALTIES.map((p, i) => (
-                  <div key={p.lab} style={{ padding: "18px 16px", borderRight: i < PENALTIES.length - 1 ? `1px solid ${V.line}` : "none" }}>
-                    <div style={mono({ fontSize: 9.5, letterSpacing: ".14em", textTransform: "uppercase", color: V.muted })}>{p.lab}</div>
-                    <div className="gw-serif" style={{ fontSize: 20, color: V.ink, marginTop: 6, lineHeight: 1 }}>
-                      {p.prefix} <em style={{ color: V.rose, fontStyle: "normal" }}>{p.em}</em>
-                    </div>
-                    <div style={{ fontSize: 11, color: V.ink2, marginTop: 6, lineHeight: 1.5 }}>{p.desc}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
 
           </main>
         </div>
