@@ -144,7 +144,9 @@ export default function StrCasesPage() {
         actor: { role: r, name: operatorName },
         body: { at: new Date().toISOString() },
       }),
-    }).catch(() => {/* non-blocking */});
+    }).catch((err: unknown) => {
+      console.warn("[hawkeye] str_read audit-sign failed — page-visit not in chain:", err);
+    });
   }, []);
 
   // Hydrate the in-page register from the shared case store so refreshing
@@ -284,12 +286,16 @@ export default function StrCasesPage() {
           })),
         }),
       });
-      if (!res.ok) return;
+      if (!res.ok) {
+        console.error(`[hawkeye] str-cases/pattern-detect HTTP ${res.status} — cross-case typology red-flags NOT computed`);
+        return;
+      }
       const data = await res.json() as PatternDetectResult;
       setPatternResult(data);
       setPatternExpanded(true);
-    } catch { /* silent */ }
-    finally { setPatternLoading(false); }
+    } catch (err) {
+      console.error("[hawkeye] str-cases/pattern-detect threw:", err);
+    } finally { setPatternLoading(false); }
   };
 
   const openCase = async (e: React.FormEvent) => {

@@ -656,7 +656,8 @@ function loadOverlay(): Overlay {
       deletedIds: Array.isArray(parsed.deletedIds) ? parsed.deletedIds : [],
       custom: Array.isArray(parsed.custom) ? parsed.custom : [],
     };
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] enforcement overlay parse failed — using empty:", err);
     return EMPTY_OVERLAY;
   }
 }
@@ -665,8 +666,8 @@ function saveOverlay(o: Overlay): void {
   if (typeof window === "undefined") return;
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(o));
-  } catch {
-    /* quota / disabled — silent */
+  } catch (err) {
+    console.error("[hawkeye] enforcement overlay persist failed — edits will be lost on reload:", err);
   }
 }
 

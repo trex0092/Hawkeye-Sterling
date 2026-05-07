@@ -89,8 +89,8 @@ export default function EocnPage() {
             setLastRefreshed(new Date(next.lastSyncedAt));
           }
         }
-      } catch {
-        /* fixture fallback */
+      } catch (err) {
+        console.warn("[hawkeye] eocn-list-updates GET threw — using fixture fallback:", err);
       }
     })();
     return () => {
@@ -117,8 +117,8 @@ export default function EocnPage() {
         }
       }
       setLastRefreshed(new Date());
-    } catch {
-      /* swallow — keep last-known data */
+    } catch (err) {
+      console.error("[hawkeye] eocn-list-updates POST threw — refresh failed, keeping last-known data:", err);
     } finally {
       setRefreshing(false);
     }
@@ -128,28 +128,36 @@ export default function EocnPage() {
     try {
       const raw = localStorage.getItem(EOCN_DELETED_KEY);
       if (raw) setDeletedMatchIds(JSON.parse(raw) as string[]);
-    } catch { /* ignore */ }
+    } catch (err) {
+      console.warn("[hawkeye] eocn deleted-matches localStorage parse failed:", err);
+    }
     try {
       const raw2 = localStorage.getItem(EOCN_CUSTOM_KEY);
       if (raw2) setCustomMatches(JSON.parse(raw2) as EocnMatch[]);
-    } catch { /* ignore */ }
+    } catch (err) {
+      console.warn("[hawkeye] eocn custom-matches localStorage parse failed:", err);
+    }
   }, []);
 
   const deleteMatch = (id: string) => {
     const next = [...deletedMatchIds, id];
     setDeletedMatchIds(next);
-    try { localStorage.setItem(EOCN_DELETED_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+    try { localStorage.setItem(EOCN_DELETED_KEY, JSON.stringify(next)); }
+    catch (err) { console.warn("[hawkeye] eocn deleted-matches persist failed:", err); }
     // also remove from custom if present
     const nextCustom = customMatches.filter((m) => m.id !== id);
     setCustomMatches(nextCustom);
-    try { localStorage.setItem(EOCN_CUSTOM_KEY, JSON.stringify(nextCustom)); } catch { /* ignore */ }
+    try { localStorage.setItem(EOCN_CUSTOM_KEY, JSON.stringify(nextCustom)); }
+    catch (err) { console.warn("[hawkeye] eocn custom-matches persist failed:", err); }
   };
 
   const restoreMatches = () => {
     setDeletedMatchIds([]);
     setCustomMatches([]);
-    try { localStorage.removeItem(EOCN_DELETED_KEY); } catch { /* ignore */ }
-    try { localStorage.removeItem(EOCN_CUSTOM_KEY); } catch { /* ignore */ }
+    try { localStorage.removeItem(EOCN_DELETED_KEY); }
+    catch (err) { console.warn("[hawkeye] eocn deleted-matches removeItem failed:", err); }
+    try { localStorage.removeItem(EOCN_CUSTOM_KEY); }
+    catch (err) { console.warn("[hawkeye] eocn custom-matches removeItem failed:", err); }
   };
 
   const startEditMatch = (m: EocnMatch) => {
