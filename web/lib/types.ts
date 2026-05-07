@@ -279,6 +279,20 @@ export interface EvidenceEntry {
   detail: string;
 }
 
+/**
+ * Presentation-layer timeline event used by `CaseRecord.timeline`. This is a
+ * thin display-only shape (timestamp + free-text event line) that the case UI
+ * iterates to render the activity strip on the case detail page.
+ *
+ * The CANONICAL domain model lives in the brain at
+ * `src/brain/investigation-timeline.ts` (`brain/TimelineEvent`) — it carries
+ * phase, actor, sourceKind, sourceId. The `/api/cases/[id]` route translates
+ * the case record into the brain shape via `buildInvestigationTimeline()` in
+ * `web/lib/server/case-timeline.ts` and exposes it as `investigationTimeline`
+ * alongside the legacy `timeline` field. UI consumers should migrate to the
+ * brain shape (richer + audit-traceable); this presentation interface is kept
+ * for backward compatibility and may be deprecated in a future PR.
+ */
 export interface TimelineEvent {
   timestamp: string;
   event: string;
