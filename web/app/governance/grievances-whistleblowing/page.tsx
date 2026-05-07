@@ -224,6 +224,7 @@ export default function GrievancesWhistleblowingPage() {
   const [description, setDesc]    = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [toast, setToast]         = useState<string | null>(null);
+  const [toastErr, setToastErr]   = useState<string | null>(null);
   const [stats]                   = useState<ProgrammeStats>(MOCK_STATS);
   const [cases]                   = useState<GwCase[]>(MOCK_CASES);
 
@@ -244,6 +245,11 @@ export default function GrievancesWhistleblowingPage() {
 
   const handleSubmit = useCallback(async () => {
     if (!concern || submitting) return;
+    if (!description.trim()) {
+      setToastErr("Please provide a description before submitting.");
+      setTimeout(() => setToastErr(null), 6000);
+      return;
+    }
     setSubmitting(true);
     try {
       const res = await fetch("/api/grievances/intake", {
@@ -256,11 +262,17 @@ export default function GrievancesWhistleblowingPage() {
         setToast(`Disclosure submitted · Case ref: ${data.caseRef}`);
         setConcern(""); setLocation(""); setName(""); setDesc("");
         setTimeout(() => setToast(null), 8000);
+      } else {
+        setToastErr("Submission failed — please try again or contact compliance directly.");
+        setTimeout(() => setToastErr(null), 8000);
       }
+    } catch {
+      setToastErr("Network error — please check your connection and retry.");
+      setTimeout(() => setToastErr(null), 8000);
     } finally {
       setSubmitting(false);
     }
-  }, [concern, submitting, mode, dateObs, location, reporterName, description, severity, language]);
+  }, [concern, description, submitting, mode, dateObs, location, reporterName, severity, language]);
 
   // CSS custom properties scoped to page wrapper
   const gwVars = {
@@ -290,6 +302,11 @@ export default function GrievancesWhistleblowingPage() {
       {toast && (
         <div style={{ position: "fixed", bottom: 24, right: 24, zIndex: 9999, background: "#15130f", border: `1px solid oklch(74% 0.18 350)`, color: "#efece4", padding: "12px 18px", fontFamily: "'JetBrains Mono','IBM Plex Mono',monospace", fontSize: 12, maxWidth: 360, boxShadow: "0 8px 32px rgba(0,0,0,.7)" }}>
           <span style={{ color: "oklch(74% 0.18 350)" }}>✓</span> {toast}
+        </div>
+      )}
+      {toastErr && (
+        <div style={{ position: "fixed", bottom: toast ? 80 : 24, right: 24, zIndex: 9999, background: "#15130f", border: `1px solid oklch(65% 0.22 25)`, color: "#efece4", padding: "12px 18px", fontFamily: "'JetBrains Mono','IBM Plex Mono',monospace", fontSize: 12, maxWidth: 360, boxShadow: "0 8px 32px rgba(0,0,0,.7)" }}>
+          <span style={{ color: "oklch(65% 0.22 25)" }}>⚠</span> {toastErr}
         </div>
       )}
 
@@ -488,8 +505,7 @@ export default function GrievancesWhistleblowingPage() {
                   { k: "Effective",       v: "28 NOV 2025",               accent: false },
                   { k: "Next review",     v: "JUN 2026",                  accent: false },
                   { k: "Owner",           v: "Compliance Officer / MLRO", accent: false },
-                  { k: "Custodian",       v: "L. Fernanda",               accent: false },
-                  { k: "Approver",        v: "S.K. Abdulkareem · MD",     accent: false },
+                  { k: "Approver",        v: "Management",                accent: false },
                   { k: "Classification",  v: "CONFIDENTIAL",              accent: true  },
                 ] as const).map((row, i, arr) => (
                   <div key={row.k} style={mono({ display: "flex", justifyContent: "space-between", padding: "4px 0", borderBottom: i < arr.length - 1 ? `1px dotted ${V.line2}` : "none", fontSize: 10.5, color: V.muted })}>
