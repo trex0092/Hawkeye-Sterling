@@ -76,8 +76,10 @@ export default function GleifPage() {
       const data = await res.json() as GleifResult;
       if (!data.ok) setError(data.error ?? "LEI not found");
       else setLeiResult(data);
-    } catch { setError("Request failed"); }
-    finally { setLoading(false); }
+    } catch (err) {
+      console.error("[hawkeye] gleif lookup threw:", err);
+      setError("Request failed");
+    } finally { setLoading(false); }
   }
 
   async function searchGleif() {
@@ -88,8 +90,10 @@ export default function GleifPage() {
       const data = await res.json() as { ok: boolean; results: SearchResult[]; error?: string };
       if (!data.ok) setError(data.error ?? "Search failed");
       else setSearchResults(data.results);
-    } catch { setError("Request failed"); }
-    finally { setLoading(false); }
+    } catch (err) {
+      console.error("[hawkeye] gleif search threw:", err);
+      setError("Request failed");
+    } finally { setLoading(false); }
   }
 
   const switchTab = (t: "lookup" | "search") => {

@@ -97,8 +97,8 @@ function DeepDiveModal({
       });
       const json = (await res.json()) as TypologyDetailResult;
       setData(json);
-    } catch {
-      /* ignore */
+    } catch (err) {
+      console.error("[hawkeye] typology-library detail fetch threw:", err);
     } finally {
       setLoading(false);
       setFetched(true);

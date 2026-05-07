@@ -124,11 +124,15 @@ export default function CryptoRiskPage() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ address: w.address, chain: w.chain, riskScore: w.riskScore, riskLevel: w.riskLevel, riskCategory: w.riskCategory, exposure: w.exposure, labels: w.labels, taintedTransactions: w.taintedTransactions, totalTransactions: w.totalTransactions }),
       });
-      if (!res.ok) return;
+      if (!res.ok) {
+        console.error(`[hawkeye] crypto-threat HTTP ${res.status}`);
+        return;
+      }
       const data = await res.json() as { ok: boolean } & CryptoThreat;
       if (data.ok) setThreat(data);
-    } catch { /* silent */ }
-    finally { setThreatLoading(false); }
+    } catch (err) {
+      console.error("[hawkeye] crypto-threat threw:", err);
+    } finally { setThreatLoading(false); }
   };
 
   async function score() {
@@ -143,8 +147,10 @@ export default function CryptoRiskPage() {
       const data = await res.json() as WalletRisk;
       if (!data.ok) setError(data.error ?? "Scoring failed");
       else setResult(data);
-    } catch { setError("Request failed"); }
-    finally { setLoading(false); }
+    } catch (err) {
+      console.error("[hawkeye] crypto-risk scoring threw:", err);
+      setError("Request failed");
+    } finally { setLoading(false); }
   }
 
   return (
