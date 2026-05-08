@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { IsoDateInput } from "@/components/ui/IsoDateInput";
 import type { MoeSurveyState } from "@/app/api/moe-survey/route";
 
 // MoE 2026 Mandatory AML/CFT Survey
@@ -174,7 +175,7 @@ export default function MoeSurveyPage() {
                       <div><label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">AML qualification</label>
                         <input value={survey.mlroQualification} onChange={(e) => update({ mlroQualification: e.target.value })} className={inputCls} placeholder="CAMS / ICA / MBA (AML) etc." /></div>
                       <div><label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">Appointment date</label>
-                        <input type="date" value={survey.mlroAppointmentDate} onChange={(e) => update({ mlroAppointmentDate: e.target.value })} className={inputCls} /></div>
+                        <IsoDateInput value={survey.mlroAppointmentDate} onChange={(iso) => update({ mlroAppointmentDate: iso })} className={inputCls} /></div>
                       <div><label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">goAML user ID</label>
                         <input value={survey.mlroGoAmlUserId} onChange={(e) => update({ mlroGoAmlUserId: e.target.value })} className={inputCls} /></div>
                       <div><label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">Reports to</label>
@@ -193,11 +194,11 @@ export default function MoeSurveyPage() {
                   <>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                       <div><label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">Policy approval date</label>
-                        <input type="date" value={survey.policyApprovalDate} onChange={(e) => update({ policyApprovalDate: e.target.value })} className={inputCls} /></div>
+                        <IsoDateInput value={survey.policyApprovalDate} onChange={(iso) => update({ policyApprovalDate: iso })} className={inputCls} /></div>
                       <div><label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">Approved by</label>
                         <input value={survey.policyApprovedBy} onChange={(e) => update({ policyApprovedBy: e.target.value })} className={inputCls} placeholder="Board Chair / MD" /></div>
                       <div><label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">Last review date</label>
-                        <input type="date" value={survey.policyLastReviewDate} onChange={(e) => update({ policyLastReviewDate: e.target.value })} className={inputCls} /></div>
+                        <IsoDateInput value={survey.policyLastReviewDate} onChange={(iso) => update({ policyLastReviewDate: iso })} className={inputCls} /></div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                       <Toggle checked={survey.tippingOffProcedure} onChange={(v) => update({ tippingOffProcedure: v })} label="Tipping-off prohibition procedure documented (FDL Art.25)" />
@@ -213,7 +214,7 @@ export default function MoeSurveyPage() {
                   <>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div><label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">Last AML training date</label>
-                        <input type="date" value={survey.lastTrainingDate} onChange={(e) => update({ lastTrainingDate: e.target.value })} className={inputCls} /></div>
+                        <IsoDateInput value={survey.lastTrainingDate} onChange={(iso) => update({ lastTrainingDate: iso })} className={inputCls} /></div>
                       <div><label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">Staff coverage (%)</label>
                         <input value={survey.trainingCoverage} onChange={(e) => update({ trainingCoverage: e.target.value })} className={inputCls} placeholder="e.g. 100%" /></div>
                       <div><label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">Test pass rate (%)</label>
@@ -230,7 +231,7 @@ export default function MoeSurveyPage() {
                   <>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div><label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">BWRA completion date</label>
-                        <input type="date" value={survey.bwraCompletionDate} onChange={(e) => update({ bwraCompletionDate: e.target.value })} className={inputCls} /></div>
+                        <IsoDateInput value={survey.bwraCompletionDate} onChange={(iso) => update({ bwraCompletionDate: iso })} className={inputCls} /></div>
                       <div><label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">Approved by</label>
                         <input value={survey.bwraApprovedBy} onChange={(e) => update({ bwraApprovedBy: e.target.value })} className={inputCls} placeholder="Board Chair / MLRO" /></div>
                       <div><label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">Entity risk rating (self-assessed)</label>
@@ -258,9 +259,9 @@ export default function MoeSurveyPage() {
                       <div><label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">goAML registration ref</label>
                         <input value={survey.goAmlRegistrationRef} onChange={(e) => update({ goAmlRegistrationRef: e.target.value })} className={inputCls} /></div>
                       <div><label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">Last STR/SAR filing date</label>
-                        <input type="date" value={survey.lastStrFilingDate} onChange={(e) => update({ lastStrFilingDate: e.target.value })} className={inputCls} /></div>
+                        <IsoDateInput value={survey.lastStrFilingDate} onChange={(iso) => update({ lastStrFilingDate: iso })} className={inputCls} /></div>
                       <div><label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">Last DPMSR filing date</label>
-                        <input type="date" value={survey.lastDpmsrFilingDate} onChange={(e) => update({ lastDpmsrFilingDate: e.target.value })} className={inputCls} /></div>
+                        <IsoDateInput value={survey.lastDpmsrFilingDate} onChange={(iso) => update({ lastDpmsrFilingDate: iso })} className={inputCls} /></div>
                       <div><label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">STR/SAR count (last 12 months)</label>
                         <input value={survey.strCountLast12m} onChange={(e) => update({ strCountLast12m: e.target.value })} className={inputCls} placeholder="e.g. 3" /></div>
                       <div><label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">DPMSR count (last 12 months)</label>
@@ -319,7 +320,7 @@ export default function MoeSurveyPage() {
                           <input value={survey.aiToolNames} onChange={(e) => update({ aiToolNames: e.target.value })} className={inputCls} /></div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           <div><label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">AI governance policy date</label>
-                            <input type="date" value={survey.aiGovernancePolicyDate} onChange={(e) => update({ aiGovernancePolicyDate: e.target.value })} className={inputCls} /></div>
+                            <IsoDateInput value={survey.aiGovernancePolicyDate} onChange={(iso) => update({ aiGovernancePolicyDate: iso })} className={inputCls} /></div>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                           <Toggle checked={survey.aiGovernancePolicyExists} onChange={(v) => update({ aiGovernancePolicyExists: v })} label="AI governance policy approved by senior management (CBUAE requirement)" />

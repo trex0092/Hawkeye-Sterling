@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { IsoDateInput } from "@/components/ui/IsoDateInput";
 import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 import { RowActions } from "@/components/shared/RowActions";
 import { formatDMY } from "@/lib/utils/dateFormat";
@@ -931,7 +932,7 @@ function AddShipmentForm({ onAdd, onCancel }: { onAdd: (c: Consignment) => void;
         </div>
         <div>
           <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Clearance date</label>
-          <input type="date" value={clearanceDate} onChange={(e) => setClearanceDate(e.target.value)} className={iCls} />
+          <IsoDateInput value={clearanceDate} onChange={(iso) => setClearanceDate(iso)} className={iCls} />
         </div>
       </div>
 

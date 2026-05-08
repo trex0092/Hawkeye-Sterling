@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { IsoDateInput } from "@/components/ui/IsoDateInput";
 import type { ResponsibleSourcingState } from "@/app/api/responsible-sourcing/route";
 
 // Responsible Sourcing — Ministerial Decree 68/2024
@@ -235,7 +236,7 @@ export default function ResponsibleSourcingPage() {
                     <div className="space-y-3">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div><label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">Supply chain policy date</label>
-                          <input type="date" value={s.supplyChainPolicyDate} onChange={(e) => updateStep(stepKey, { supplyChainPolicyDate: e.target.value })} className={inputCls} /></div>
+                          <IsoDateInput value={s.supplyChainPolicyDate} onChange={(iso) => updateStep(stepKey, { supplyChainPolicyDate: iso })} className={inputCls} /></div>
                         <div><label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">Grievance mechanism type</label>
                           <select value={s.grievanceMechanismType} onChange={(e) => updateStep(stepKey, { grievanceMechanismType: e.target.value })} className={inputCls}>
                             <option value="">— Select —</option>
@@ -294,7 +295,7 @@ export default function ResponsibleSourcingPage() {
                     <div className="space-y-3">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div><label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">Audit date</label>
-                          <input type="date" value={s.auditDate ?? ""} onChange={(e) => updateStep(stepKey, { auditDate: e.target.value })} className={inputCls} /></div>
+                          <IsoDateInput value={s.auditDate ?? ""} onChange={(iso) => updateStep(stepKey, { auditDate: iso })} className={inputCls} /></div>
                         <div><label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">Auditor name</label>
                           <input value={s.auditorName} onChange={(e) => updateStep(stepKey, { auditorName: e.target.value })} className={inputCls} /></div>
                         <div><label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">Auditor accreditation</label>
@@ -325,7 +326,7 @@ export default function ResponsibleSourcingPage() {
                     <div className="space-y-3">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div><label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">Report published / submitted date</label>
-                          <input type="date" value={s.reportPublishedAt ?? ""} onChange={(e) => updateStep(stepKey, { reportPublishedAt: e.target.value })} className={inputCls} /></div>
+                          <IsoDateInput value={s.reportPublishedAt ?? ""} onChange={(iso) => updateStep(stepKey, { reportPublishedAt: iso })} className={inputCls} /></div>
                         <div><label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">Disclosure scope</label>
                           <select value={s.disclosureScope} onChange={(e) => updateStep(stepKey, { disclosureScope: e.target.value })} className={inputCls}>
                             <option value="public">Public (website)</option>

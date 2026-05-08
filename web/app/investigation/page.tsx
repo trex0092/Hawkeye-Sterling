@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { IsoDateInput } from "@/components/ui/IsoDateInput";
 import { loadCases } from "@/lib/data/case-store";
 import type { CaseRecord } from "@/lib/types";
 
@@ -383,7 +384,7 @@ export default function InvestigationPage() {
             {addingEvent && (
               <div className="mb-3 p-3 bg-bg-1 rounded-lg border border-hair-2 space-y-2">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <input type="date" value={newDate} onChange={(e) => setNewDate(e.target.value)} className={inputCls} />
+                  <IsoDateInput value={newDate} onChange={(iso) => setNewDate(iso)} className={inputCls} />
                   <select value={newEvKind} onChange={(e) => setNewEvKind(e.target.value as EventKind)} className={selectCls}>
                     {(Object.keys(EVENT_LABEL) as EventKind[]).map((k) => (
                       <option key={k} value={k}>{EVENT_LABEL[k]}</option>

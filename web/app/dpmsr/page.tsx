@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { IsoDateInput } from "@/components/ui/IsoDateInput";
 import type { DpmsrObligation, DpmsrTransaction } from "@/app/api/dpmsr-trigger/route";
 
 // DPMSR — Designated Precious Metals and Stones Report
@@ -103,7 +104,7 @@ function EvaluateForm({ onResult }: EvaluateFormProps) {
         <div><label className="block text-10 uppercase tracking-wide-2 text-ink-3 mb-1">Customer Name</label>
           <input value={customerName} onChange={(e) => setCustomerName(e.target.value)} className={`${inputCls} w-36`} placeholder="Full name" /></div>
         <div><label className="block text-10 uppercase tracking-wide-2 text-ink-3 mb-1">Date</label>
-          <input type="date" value={txnDate} onChange={(e) => setTxnDate(e.target.value)} className={`${inputCls} w-36`} /></div>
+          <IsoDateInput value={txnDate} onChange={(iso) => setTxnDate(iso)} className={`${inputCls} w-36`} /></div>
         <button type="button" onClick={addTxn}
           className="px-4 py-1.5 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90">+ Add</button>
       </div>

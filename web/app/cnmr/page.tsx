@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { IsoDateInput } from "@/components/ui/IsoDateInput";
 import type { CnmrCase } from "@/app/api/cnmr/route";
 
 // CNMR — Confirmed Name Match Report
@@ -109,7 +110,7 @@ function NewCnmrForm({ onCreated, onCancel }: NewCnmrFormProps) {
         <div><label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">Match score (%)</label>
           <input type="number" min={0} max={100} value={matchScore} onChange={(e) => setMatchScore(e.target.value)} className={inputCls} /></div>
         <div><label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">Freeze date</label>
-          <input type="date" value={freezeDate} onChange={(e) => setFreezeDate(e.target.value)} className={inputCls} /></div>
+          <IsoDateInput value={freezeDate} onChange={(iso) => setFreezeDate(iso)} className={inputCls} /></div>
         <div><label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">Supervisory authority</label>
           <select value={supervisoryAuthority} onChange={(e) => setSupervisoryAuthority(e.target.value as CnmrCase["supervisoryAuthority"])} className={inputCls}>
             <option value="both">EOCN + MoE (both)</option>
