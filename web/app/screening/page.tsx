@@ -23,7 +23,6 @@ import { writeAuditEvent } from "@/lib/audit";
 import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 import { IsoDateInput } from "@/components/ui/IsoDateInput";
 import { BulkImportDialog } from "@/components/screening/BulkImportDialog";
-import { BatchTab } from "@/components/screening/BatchTab";
 import { SavedSearchBar } from "@/components/screening/SavedSearchBar";
 import { BulkActionsBar } from "@/components/screening/BulkActionsBar";
 import { AmLanguageBreakdown } from "@/components/screening/AmLanguageBreakdown";
