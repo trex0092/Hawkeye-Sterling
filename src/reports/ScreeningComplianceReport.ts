@@ -168,11 +168,22 @@ export interface SCRAdverseMediaHit {
   corroboration: string;
 }
 
+export interface SCRNewsDossierArticle {
+  title: string;
+  link: string;
+  pubDate: string;
+  source: string;            // outlet name: "Reuters" | "Al Arabiya" etc.
+  snippet: string;
+  severity?: string;         // "high" | "medium" | "low"
+  keywordGroups?: string[];  // e.g. ["CORR", "ML"]
+}
+
 export interface SCRDomainIIIII {
   pepRegisters: SCRPepRegister[];
   pepHits?: SCRPepHit[];
   adverseMediaCorpora: SCRAdverseMediaCorpus[];
   adverseMediaHits?: SCRAdverseMediaHit[];
+  newsDossierArticles?: SCRNewsDossierArticle[];  // full article list with links & snippets
   adjudicatorFinding: SCRAdjudicatorFinding;
 }
 

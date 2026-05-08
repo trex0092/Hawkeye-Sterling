@@ -557,6 +557,23 @@ function buildSCR(body: ReportInput, now: Date): ScreeningComplianceReport {
         { corpus: "Regulatory announcements", scope: "UAE · EU · UK · US", hits: 0 },
       ],
       ...(amHits.length > 0 ? { adverseMediaHits: amHits } : {}),
+      ...((() => {
+        const articles = (sb?.newsDossier?.articles ?? []).filter(
+          a => a.title && a.link && a.source
+        );
+        if (articles.length === 0) return {};
+        return {
+          newsDossierArticles: articles.map(a => ({
+            title:         a.title!,
+            link:          a.link!,
+            pubDate:       a.pubDate ?? dateStr,
+            source:        a.source!,
+            snippet:       a.snippet ?? "",
+            severity:      a.severity,
+            keywordGroups: a.keywordGroups,
+          })),
+        };
+      })()),
       adjudicatorFinding: sec06Finding,
     },
 

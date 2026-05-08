@@ -10,6 +10,7 @@ import type {
   SCRAdjudicationState,
   SCRStatutoryFilingRow,
   SCRAdverseMediaHit,
+  SCRNewsDossierArticle,
   SCRPepHit,
   SCRSanctionsHit,
 } from './ScreeningComplianceReport.js';
@@ -1008,6 +1009,36 @@ function renderAdverseMediaHits(hits: SCRAdverseMediaHit[]): string {
 </table>`;
 }
 
+function renderNewsDossierArticles(articles: SCRNewsDossierArticle[]): string {
+  const sevColour: Record<string, string> = {
+    high:   '#c0392b',
+    medium: '#e67e22',
+    low:    '#7f8c8d',
+  };
+  const rows = articles.map((a, i) => {
+    const sev = (a.severity ?? 'low').toLowerCase();
+    const sevColor = sevColour[sev] ?? sevColour['low'];
+    const sevLabel = sev.toUpperCase();
+    const groups = (a.keywordGroups ?? []).join(' · ');
+    return `
+<div class="news-article" style="border-left:3px solid ${sevColor};margin:8px 0;padding:6px 10px;background:#fafafa">
+  <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:3px">
+    <span style="font-size:6.5pt;font-weight:700;color:${sevColor};letter-spacing:0.07em;font-family:monospace">[${sevLabel}]</span>
+    <strong style="font-size:8.5pt;color:#1a1a2e">${esc(a.source)}</strong>
+    <span style="font-size:7pt;color:#666;font-family:monospace">${esc(a.pubDate)}</span>
+    ${groups ? `<span style="font-size:6.5pt;color:#888;font-family:monospace">${esc(groups)}</span>` : ''}
+    <span style="font-size:7pt;color:#aaa;font-family:monospace;margin-left:auto">ref: ND-${String(i + 1).padStart(2, '0')}</span>
+  </div>
+  <div style="font-size:8.5pt;font-weight:600;color:#1a1a2e;margin-bottom:3px">${esc(a.title)}</div>
+  <div style="font-size:8pt;color:#444;line-height:1.5;margin-bottom:4px">${esc(a.snippet)}</div>
+  <a href="${esc(a.link)}" style="font-size:7.5pt;color:#1a5276;font-family:monospace;word-break:break-all;text-decoration:none">${esc(a.link)}</a>
+</div>`;
+  }).join('');
+  return `
+<div class="table-section-label" style="margin-top:12px">TABLE 6.C — NEWS DOSSIER · SOURCE ARTICLES (${articles.length})</div>
+<div style="padding:4px 0">${rows}</div>`;
+}
+
 // ── Main renderer ─────────────────────────────────────────────────────────────
 
 export function renderSCR(r: ScreeningComplianceReport): string {
@@ -1203,6 +1234,7 @@ ${renderAuthLine('Authorities. FATF Rec. 6 · UNSC Res. 1267 / 1989 / 2253 / 223
 
   const pepHitsHtml = d23.pepHits && d23.pepHits.length > 0 ? renderPepHits(d23.pepHits) : '';
   const amHitsHtml = d23.adverseMediaHits && d23.adverseMediaHits.length > 0 ? renderAdverseMediaHits(d23.adverseMediaHits) : '';
+  const newsDossierHtml = d23.newsDossierArticles && d23.newsDossierArticles.length > 0 ? renderNewsDossierArticles(d23.newsDossierArticles) : '';
 
   const sec06 = `
 ${renderSectionDivider('06', 'Domains II & III · *PEP* & adverse media.')}
@@ -1220,6 +1252,7 @@ ${renderAuthLine('Authorities. FATF Rec. 12 (PEP) · FDL 10/2025 Art. 11 · Cabi
     <thead><tr><th>CORPUS</th><th>SCOPE</th><th>HITS</th></tr></thead>
     <tbody>${amRows}</tbody>
   </table>
+  ${newsDossierHtml}
   ${renderAdjFinding(d23.adjudicatorFinding)}
 </div>`;
 
