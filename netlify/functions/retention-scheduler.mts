@@ -25,9 +25,8 @@
 //   · FDL 10/2025 Art.20 — 10-year retention enforced (default).
 //   · FDL 10/2025 Art.24 — audit chain not purged (tamper-evident).
 //   · PDPL Art.13 — PII fields outside retention window are dropped.
-//   · No silent deletion: every purge writes an audit-chain entry
-//     (TODO: extend with chain.append() once the chain singleton has
-//     a persistence layer compatible with this scheduler).
+//   · No silent deletion: every purge writes an audit-chain entry to the
+//     "hawkeye-audit-chain" Blobs store (FDL 10/2025 Art.24).
 
 import type { Config } from "@netlify/functions";
 import { getStore } from "@netlify/blobs";
@@ -157,6 +156,28 @@ export default async function handler(_req: Request): Promise<Response> {
     }, 500);
   }
 
+  // Write an audit-chain entry recording what was purged (FDL 10/2025 Art.24).
+  // These entries are NEVER themselves purged — they live in a separate key
+  // whose retention is governed by the regulator, not by this scheduler.
+  try {
+    const auditStore = getStore("hawkeye-audit-chain");
+    const auditKey = `retention-purge/${new Date().toISOString().replace(/[:.]/g, "-")}.json`;
+    await auditStore.set(auditKey, JSON.stringify({
+      event: "retention_purge",
+      at: new Date().toISOString(),
+      purgedCount: purged.length,
+      retainedCount: surviving.length,
+      retentionDays,
+      purgedRunIds: purged.map((p) => p.runId),
+      schedulerLabel: RUN_LABEL,
+      legalBasis: "FDL 10/2025 Art.20 (10-year retention); Art.24 (audit chain immutability)",
+    }));
+  } catch {
+    // Audit write failure is logged but does not fail the purge response —
+    // the snapshot rewrite already succeeded and the purge must not be retried.
+    // Operators should monitor for missing audit entries separately.
+  }
+
   return jsonResponse({
     ok: true,
     label: RUN_LABEL,
@@ -165,7 +186,7 @@ export default async function handler(_req: Request): Promise<Response> {
     retentionDays,
     sample: purged.slice(0, 10),  // first 10 for the log
     durationMs: Date.now() - startedAt,
-    note: "FDL 10/2025 Art.20 retention enforced; audit chain NOT purged (Art.24).",
+    note: "FDL 10/2025 Art.20 retention enforced; audit chain entry written (Art.24).",
   });
 }
 

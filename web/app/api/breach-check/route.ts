@@ -1,8 +1,10 @@
 // POST /api/breach-check
 //
 // Dark Web / Breach Monitor — checks for data breach exposure associated with
-// a subject name or email address. Uses Have I Been Pwned public API for
-// email checks (no key needed for name searches — uses stub for names).
+// a subject name or email address. Uses Have I Been Pwned API v3 for email
+// checks when HIBP_API_KEY is configured. Name-only queries return an
+// inconclusive result — name matching against breach databases requires a
+// commercial threat-intel feed not included by default.
 //
 // Body: { name: string, email?: string }
 // Response: { found: boolean, sources: string[], riskLevel: string }
@@ -20,55 +22,10 @@ interface BreachCheckBody {
 interface BreachResult {
   found: boolean;
   sources: string[];
-  riskLevel: "critical" | "high" | "medium" | "low" | "none";
+  riskLevel: "critical" | "high" | "medium" | "low" | "none" | "inconclusive";
   details: string[];
   emailBreaches?: Array<{ name: string; domain: string; breachDate: string; dataClasses: string[] }>;
   configNote?: string;
-}
-
-// Stub high-risk indicators that trigger a "found" signal in absence of real API
-const HIGH_RISK_PATTERNS = [
-  "al-",
-  "rashid",
-  "khan",
-  "al ",
-  "bin ",
-  "bint ",
-];
-
-function stubRiskFromName(name: string): BreachResult {
-  const lower = name.toLowerCase();
-  const hasHighRiskPattern = HIGH_RISK_PATTERNS.some((p) => lower.includes(p));
-
-  // Deterministic pseudo-random based on name length for demo purposes
-  const seed = name.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
-  const mockFound = hasHighRiskPattern || seed % 3 === 0;
-
-  if (!mockFound) {
-    return {
-      found: false,
-      sources: [],
-      riskLevel: "none",
-      details: ["No breach exposure detected for this subject name in stub database."],
-      configNote: "Configure HIBP API key (HIBP_API_KEY env var) for live email breach checks.",
-    };
-  }
-
-  const sources = ["BreachedDataset-2024", "DarkWebForum-ML-2023"];
-  if (seed % 2 === 0) sources.push("LeakedCredentials-UAE-2022");
-  if (seed % 5 === 0) sources.push("TelegramChannel-FinancialData-2024");
-
-  return {
-    found: true,
-    sources,
-    riskLevel: sources.length >= 3 ? "high" : "medium",
-    details: [
-      `Subject name pattern matches ${sources.length} breach dataset(s) in monitoring corpus.`,
-      "Personal identifiers (possible DOB, national ID fragments) detected in one source.",
-      "Recommend: Verify if subject has been subject to identity theft or account takeover.",
-    ],
-    configNote: "Configure HIBP API key (HIBP_API_KEY env var) for live email breach checks.",
-  };
 }
 
 async function checkHibpEmail(
@@ -122,29 +79,44 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const hibpKey = process.env.HIBP_API_KEY;
 
-  // Start with name-based stub result
-  const result = stubRiskFromName(name.trim());
+  // Base result: name-only checks return inconclusive — reliable name-based
+  // breach attribution requires a commercial threat-intel feed (e.g. Recorded
+  // Future, Flashpoint). Without one we surface no data rather than guessing.
+  const result: BreachResult = {
+    found: false,
+    sources: [],
+    riskLevel: "inconclusive",
+    details: [
+      "Name-only breach lookup requires a commercial dark-web intelligence feed.",
+      "Configure HIBP_API_KEY and supply an email address for live breach data.",
+    ],
+    configNote: hibpKey
+      ? undefined
+      : "Set HIBP_API_KEY environment variable to enable live email breach checks.",
+  };
 
-  // If HIBP key configured and email provided, do live check
+  // Email check via HIBP when key and email are both present
   if (hibpKey && email && email.includes("@")) {
     const emailBreaches = await checkHibpEmail(email, hibpKey);
+    result.configNote = undefined;
     if (emailBreaches.length > 0) {
       result.found = true;
       result.emailBreaches = emailBreaches;
-      result.sources = [...result.sources, ...emailBreaches.map((b) => b.name)];
+      result.sources = emailBreaches.map((b) => b.name);
       const hasCritical = emailBreaches.some((b) =>
         b.dataClasses.some((dc) =>
           ["Passwords", "Credit cards", "Bank account numbers"].includes(dc),
         ),
       );
       result.riskLevel = hasCritical ? "critical" : "high";
-      result.details.unshift(
+      result.details = [
         `HIBP: ${emailBreaches.length} breach(es) confirmed for email address.`,
-      );
+        ...emailBreaches.map((b) => `${b.name} (${b.breachDate}): ${b.dataClasses.join(", ")}`),
+      ];
+    } else {
+      result.riskLevel = "none";
+      result.details = ["HIBP: no breaches found for the supplied email address."];
     }
-    result.configNote = undefined;
-  } else if (!hibpKey) {
-    result.configNote = "Configure HIBP API key (HIBP_API_KEY env var) for live email breach checks.";
   }
 
   return NextResponse.json({ ok: true, ...result });
