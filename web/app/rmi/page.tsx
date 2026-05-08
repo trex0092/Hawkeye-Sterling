@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { IsoDateInput } from "@/components/ui/IsoDateInput";
 import { RowActions } from "@/components/shared/RowActions";
 
 // Responsible Minerals Initiative — RMAP audit tracker.
@@ -678,19 +679,17 @@ export default function RmiPage() {
                       </label>
                       <label className="text-10 font-mono uppercase tracking-wide-3 text-ink-2">
                         Last audit
-                        <input
-                          type="date"
+                        <IsoDateInput
                           value={editDraft.lastAuditDate ?? ""}
-                          onChange={(e) => setEditDraft((d) => ({ ...d, lastAuditDate: e.target.value }))}
+                          onChange={(iso) => setEditDraft((d) => ({ ...d, lastAuditDate: iso }))}
                           className="block w-full mt-1 px-2 py-1 text-12 bg-bg-0 border border-hair-2 rounded font-mono text-ink-0"
                         />
                       </label>
                       <label className="text-10 font-mono uppercase tracking-wide-3 text-ink-2">
                         Next audit due
-                        <input
-                          type="date"
+                        <IsoDateInput
                           value={editDraft.nextAuditDue ?? ""}
-                          onChange={(e) => setEditDraft((d) => ({ ...d, nextAuditDue: e.target.value }))}
+                          onChange={(iso) => setEditDraft((d) => ({ ...d, nextAuditDue: iso }))}
                           className="block w-full mt-1 px-2 py-1 text-12 bg-bg-0 border border-hair-2 rounded font-mono text-ink-0"
                         />
                       </label>
