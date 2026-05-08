@@ -1,3 +1,5 @@
+"use client";
+
 // AuditTrailViewer — MLRO-facing inspection panel for the HMAC-sealed
 // audit chain. Required by HS-OPS-003 Day 2 ("Show us your audit trail
 // for the last 30 days") and HS-MC-001 §10 (audit trail viewer).
@@ -15,8 +17,6 @@
 //
 // Charter alignment: P9 (every audit row carries previousHash + signature
 // in the rendered output — no opaque view).
-
-"use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 

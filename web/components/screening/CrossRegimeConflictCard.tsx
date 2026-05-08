@@ -1,3 +1,5 @@
+"use client";
+
 // Hawkeye Sterling — CrossRegimeConflictCard (audit follow-up #28).
 //
 // Renders the cross-regime conflict report from
@@ -6,8 +8,6 @@
 // one authoritative list designates a subject and another doesn't —
 // the most-restrictive-regime rule mandates escalation, and this UI
 // makes that visible to the MLRO before disposition.
-
-"use client";
 
 interface RegimeStatus {
   regimeId: string;

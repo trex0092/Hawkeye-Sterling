@@ -1,11 +1,11 @@
+"use client";
+
 // Hawkeye Sterling — PepClassificationsList (audit follow-up #28).
 //
 // Renders the per-role PepClassification[] surfaced on
 // BuiltContext.signals.pepClassifications (PR #243 commit 92431fc).
 // Replaces the previous binary hasPep flag display with a richer view
 // of every PEP role detected (tier + type + salience + RCA flagging).
-
-"use client";
 
 interface PepClassification {
   role: string;

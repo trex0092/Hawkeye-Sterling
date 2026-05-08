@@ -1,11 +1,11 @@
+"use client";
+
 // Hawkeye Sterling — BayesTraceInspector (audit follow-up #30).
 //
 // Renders BrainVerdict.bayesTrace as a step-by-step audit-grade table
 // with rawLR / effectiveWeight / weightedLR / posteriorOdds / posterior.
 // Charter P6 (transparent scoring) — every step the Bayesian update
 // took is now MLRO-inspectable, not just the final posterior.
-
-"use client";
 
 import { useState } from "react";
 

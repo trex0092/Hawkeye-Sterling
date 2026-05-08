@@ -1,3 +1,5 @@
+"use client";
+
 // Hawkeye Sterling — ChainReplayPanel (audit follow-up #31).
 //
 // Paste-a-runId reasoning-chain replay UI. Loads the persisted verdict
@@ -5,8 +7,6 @@
 // ReasoningChainNode in order so an MLRO or auditor can see EXACTLY
 // what the brain did at disposition day. FDL 10/2025 Art.24 + Art.20
 // (tamper-evident retention) + Charter P9 (explicit calibration trail).
-
-"use client";
 
 import { useState } from "react";
 

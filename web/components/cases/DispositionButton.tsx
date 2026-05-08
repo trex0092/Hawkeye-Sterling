@@ -1,3 +1,5 @@
+"use client";
+
 // Hawkeye Sterling — DispositionButton (audit follow-up #29).
 //
 // MLRO confirms (or overrides) the auto-dispositioner's proposal. POSTs
@@ -6,8 +8,6 @@
 // end-to-end: every confirmed disposition feeds the
 // OutcomeFeedbackJournal which drives Brier / log-score per mode +
 // bias-signal detection over time.
-
-"use client";
 
 import { useState } from "react";
 

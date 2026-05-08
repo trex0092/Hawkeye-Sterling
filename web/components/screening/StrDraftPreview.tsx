@@ -1,3 +1,5 @@
+"use client";
+
 // Hawkeye Sterling — STR draft preview (audit follow-up #33).
 //
 // Renders a goAML-shaped Suspicious Transaction Report draft that the
@@ -5,8 +7,6 @@
 // brain output — no fields invented, every section cites the
 // underlying mode/anchor (Charter P2 + P9). The component is read-
 // only; submission to goAML is a separate (deferred) integration.
-
-"use client";
 
 import { useState } from "react";
 
