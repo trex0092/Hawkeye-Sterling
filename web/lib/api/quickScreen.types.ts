@@ -10,9 +10,15 @@ export type QuickScreenSeverity = "clear" | "low" | "medium" | "high" | "critica
 export type MatchingMethod =
   | "exact"
   | "levenshtein"
-  | "jaro-winkler"
+  | "jaro"
+  | "jaro_winkler"
   | "soundex"
-  | "double-metaphone";
+  | "double_metaphone"
+  | "token_set"
+  | "trigram"
+  | "partial_token_set"
+  | "fuzzball_token_sort"
+  | "fuzzball_partial";
 
 export interface QuickScreenSubject {
   name: string;
