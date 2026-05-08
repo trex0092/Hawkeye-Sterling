@@ -628,6 +628,102 @@ async function journalEntryAnomalyApply(ctx: BrainContext): Promise<Finding> {
   };
 }
 
+async function poFraudPatternApply(ctx: BrainContext): Promise<Finding> {
+  const txs = (ctx.evidence.transactions ?? []) as Array<Record<string, unknown>>;
+  if (!Array.isArray(txs) || txs.length < 3) {
+    return stubFinding('po_fraud_pattern', 'forensic', ['smartness'],
+      `PO fraud: need ≥3 transactions (got ${Array.isArray(txs) ? txs.length : 0}).`);
+  }
+
+  const parseTs = (raw: unknown): number => {
+    if (typeof raw === 'number') return raw;
+    if (typeof raw === 'string') return Date.parse(raw);
+    return NaN;
+  };
+  const toAmt = (raw: unknown): number => {
+    if (typeof raw === 'number') return raw;
+    if (typeof raw === 'string' && /^[\d.,]+$/.test(raw)) return Number(raw.replace(/,/g, ''));
+    return NaN;
+  };
+
+  // 1. Phantom vendor: appears only once, single large payment
+  const LARGE_THRESHOLD = 50_000; // AED 50k — above UAE DPMS CTR threshold
+  const amtsByVendor = new Map<string, number[]>();
+  for (const t of txs) {
+    const vendor = String(t['vendor'] ?? t['counterparty'] ?? '').toLowerCase().trim();
+    const amt = toAmt(t['amount']);
+    if (vendor && Number.isFinite(amt) && amt > 0) {
+      if (!amtsByVendor.has(vendor)) amtsByVendor.set(vendor, []);
+      amtsByVendor.get(vendor)!.push(amt);
+    }
+  }
+  const phantomVendors = [...amtsByVendor.entries()].filter(
+    ([, amts]) => amts.length === 1 && amts[0] >= LARGE_THRESHOLD,
+  );
+
+  // 2. Split-invoice below approval: ≥2 invoices from same vendor within
+  //    7 days each between 50%–100% of an approval threshold (10k AED).
+  const SPLIT_THRESHOLD = 10_000;
+  const SPLIT_WINDOW_MS = 7 * 86_400_000;
+  const splitSignals: string[] = [];
+  const entriesByVendor = new Map<string, Array<{ amount: number; ts: number }>>();
+  for (const t of txs) {
+    const vendor = String(t['vendor'] ?? t['counterparty'] ?? '').toLowerCase().trim();
+    const amt = toAmt(t['amount']);
+    const ts = parseTs(t['timestamp'] ?? t['date']);
+    if (vendor && Number.isFinite(amt) && amt > 0 && Number.isFinite(ts)) {
+      if (!entriesByVendor.has(vendor)) entriesByVendor.set(vendor, []);
+      entriesByVendor.get(vendor)!.push({ amount: amt, ts });
+    }
+  }
+  for (const [vendor, entries] of entriesByVendor) {
+    const candidates = entries.filter(
+      (e) => e.amount >= SPLIT_THRESHOLD * 0.5 && e.amount < SPLIT_THRESHOLD,
+    );
+    if (candidates.length < 2) continue;
+    candidates.sort((a, b) => a.ts - b.ts);
+    for (let i = 0; i < candidates.length - 1; i++) {
+      if (candidates[i + 1].ts - candidates[i].ts <= SPLIT_WINDOW_MS) {
+        const total = candidates.reduce((s, e) => s + e.amount, 0);
+        splitSignals.push(`${vendor}:${candidates.length}×<${SPLIT_THRESHOLD}(Σ=${total.toFixed(0)})`);
+        break;
+      }
+    }
+  }
+
+  // 3. Back-dated PO: invoice date precedes the PO creation date
+  const backdatedPOs: string[] = [];
+  for (const t of txs) {
+    const invoiceTs = parseTs(t['invoiceDate'] ?? t['invoice_date']);
+    const poTs = parseTs(t['poDate'] ?? t['po_date'] ?? t['purchaseOrderDate']);
+    if (Number.isFinite(invoiceTs) && Number.isFinite(poTs) && invoiceTs < poTs) {
+      const ref = String(t['ref'] ?? t['id'] ?? t['vendor'] ?? 'unknown');
+      backdatedPOs.push(`${ref}:invoice_before_po`);
+    }
+  }
+
+  const flags = [
+    ...phantomVendors.map(([v, [a]]) => `phantom_vendor:${v}(${a})`),
+    ...splitSignals,
+    ...backdatedPOs,
+  ];
+  const score = Math.min(
+    1,
+    phantomVendors.length * 0.35 + splitSignals.length * 0.30 + backdatedPOs.length * 0.25,
+  );
+  return {
+    modeId: 'po_fraud_pattern',
+    category: 'forensic',
+    faculties: ['smartness'],
+    score,
+    confidence: 0.80,
+    verdict: score >= 0.60 ? 'escalate' : score >= 0.25 ? 'flag' : 'clear',
+    rationale: `PO fraud: ${phantomVendors.length} phantom vendor${phantomVendors.length === 1 ? '' : 's'}, ${splitSignals.length} split-invoice cluster${splitSignals.length === 1 ? '' : 's'}, ${backdatedPOs.length} back-dated PO${backdatedPOs.length === 1 ? '' : 's'}.${flags.length ? ' ' + flags.slice(0, 3).join('; ') + '.' : ''}`,
+    evidence: flags.length > 0 ? flags.slice(0, 8) : ['no_po_fraud_indicators'],
+    producedAt: Date.now(),
+  };
+}
+
 // ─── SANCTIONS / GEOPOLITICAL ──────────────────────────────────────────
 
 const FATF_HIGH_RISK = new Set(['IR', 'KP', 'MM']);                    // Call for Action
@@ -840,7 +936,7 @@ export const WAVE3_MODES: ReasoningMode[] = [
   m('split_payment_detection', 'Split-Payment Detection', 'forensic', ['smartness'], 'Invoices split just below thresholds — structuring typology.', splitPaymentApply),
   m('round_trip_transaction', 'Round-Trip Transaction', 'forensic', ['smartness'], 'Funds return to origin through intermediaries.', roundTripApply),
   m('shell_triangulation', 'Shell Triangulation', 'forensic', ['intelligence','ratiocination'], 'Three or more linked shells share agents, directors, or addresses.', shellTriangulationApply),
-  m('po_fraud_pattern', 'Purchase-Order Fraud', 'forensic', ['smartness'], 'Phantom vendors, back-dated POs, split-invoice below approval.'),
+  m('po_fraud_pattern', 'Purchase-Order Fraud', 'forensic', ['smartness'], 'Phantom vendors, back-dated POs, split-invoice below approval.', poFraudPatternApply),
   m('vendor_master_anomaly', 'Vendor Master Anomaly', 'forensic', ['data_analysis'], 'New vendor spikes, bank-detail churn, name-address collisions.', vendorMasterAnomalyApply),
   m('journal_entry_anomaly', 'Journal-Entry Anomaly', 'forensic', ['data_analysis'], 'Round numbers, weekend/holiday postings, manual overrides at period close.', journalEntryAnomalyApply),
   m('revenue_recognition_stretch', 'Revenue-Recognition Stretch', 'forensic', ['intelligence'], 'Channel-stuffing, bill-and-hold, cut-off manipulation patterns.'),
