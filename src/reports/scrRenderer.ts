@@ -783,6 +783,25 @@ body {
   white-space: nowrap;
 }
 
+/* ── Disposition alert banner ── */
+.disp-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 20px;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 7.5pt;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  border-bottom: 1px solid var(--rule);
+}
+.disp-banner.red    { background: var(--red-bg);    color: #9B1C1C; border-left: 5px solid var(--red-bdr); }
+.disp-banner.amber  { background: var(--amber-bg);  color: #92400E; border-left: 5px solid var(--amber-bdr); }
+.disp-banner.green  { background: var(--green-bg);  color: #14532D; border-left: 5px solid var(--green-bdr); }
+.disp-banner .banner-icon { font-size: 11pt; }
+.disp-banner .banner-main { flex: 1; }
+.disp-banner .banner-ref  { font-size: 6.5pt; opacity: .7; white-space: nowrap; }
+
 /* ── Page footer ── */
 .page-footer {
   padding: 6px 20px;
@@ -948,6 +967,7 @@ function renderFilingsTable(filings: SCRStatutoryFilingRow[]): string {
 }
 
 function renderSanctionsHits(hits: SCRSanctionsHit[]): string {
+  const hasDes = hits.some((h) => h.designated);
   const rows = hits.map((h) => `<tr>
     <td>${esc(h.source)}</td>
     <td>${esc(h.matchType)}</td>
@@ -956,9 +976,8 @@ function renderSanctionsHits(hits: SCRSanctionsHit[]): string {
     <td>${esc(h.discriminatorDivergence ?? '')}</td>
     ${hasDes ? `<td class="mono">${esc(h.designated ?? '')}</td>` : ''}
   </tr>`).join('');
-  const hasDes = hits.some((h) => h.designated);
   return `
-<div class="table-section-label">TABLE 5.A — ${hits.length > 0 && hits[0]!.discriminatorDivergence !== undefined ? 'PHONETIC MATCH · ADJUDICATED' : 'HITS, SANCTIONS REGISTERS'}</div>
+<div class="table-section-label">TABLE 5.A — SANCTIONS HITS · DETAIL (${hits.length} HIT${hits.length === 1 ? '' : 'S'})</div>
 <table class="scr-table">
   <thead><tr>
     <th>SOURCE</th><th>MATCH TYPE</th><th>SCORE</th>
@@ -1007,6 +1026,43 @@ function renderAdverseMediaHits(hits: SCRAdverseMediaHit[]): string {
   <thead><tr><th>SOURCE</th><th>DATE</th><th>CATEGORY</th><th>SUBSTANCE</th><th>CORROBORATION</th></tr></thead>
   <tbody>${rows}</tbody>
 </table>`;
+}
+
+function renderDispositionBanner(d: SCRDisposition): string {
+  if (d === 'standard_cdd') return ''; // no banner for clean negative
+  const configs: Record<Exclude<SCRDisposition, 'standard_cdd'>, { cls: string; icon: string; main: string; sub: string; ref: string }> = {
+    prohibited: {
+      cls: 'red',
+      icon: '⛔',
+      main: 'POSITIVE MATCH — RELATIONSHIP REFUSED · REPORTING OBLIGATIONS ACTIVE',
+      sub: 'goAML FFR filed · EOCN notified · 35-day STR window open · tipping-off prohibition absolute — FDL 10/2025 Art. 26',
+      ref: 'FDL 10/2025 Art. 15 & 26 · CR 134/2025 Art. 18',
+    },
+    edd_continuance: {
+      cls: 'amber',
+      icon: '⚠',
+      main: 'PARTIAL MATCH — ENHANCED DUE DILIGENCE REQUIRED · CLEARANCE DEFERRED',
+      sub: 'EDD workstream open · source-of-wealth, source-of-funds, and UBO documentation required before onboarding may proceed',
+      ref: 'FDL 10/2025 Art. 14 · FATF R.12',
+    },
+    cleared: {
+      cls: 'green',
+      icon: '✓',
+      main: 'FALSE POSITIVE CONFIRMED — MATCH DISCOUNTED · ONBOARDING MAY PROCEED',
+      sub: 'Adjudicator has confirmed this is not the designated individual — discriminator divergence on file',
+      ref: 'CR 134/2025 Art. 17 §2',
+    },
+  };
+  const c = configs[d];
+  return `
+<div class="disp-banner ${c.cls}">
+  <span class="banner-icon">${c.icon}</span>
+  <span class="banner-main">
+    <strong>${c.main}</strong><br/>
+    <span style="font-weight:400;font-size:7pt">${c.sub}</span>
+  </span>
+  <span class="banner-ref">${c.ref}</span>
+</div>`;
 }
 
 function renderNewsDossierArticles(articles: SCRNewsDossierArticle[]): string {
@@ -1232,22 +1288,32 @@ ${renderAuthLine('Authorities. FATF Rec. 6 · UNSC Res. 1267 / 1989 / 2253 / 223
     <td class="${c.hits === 0 ? 'hits-zero' : 'hits-pos'}">${c.hits}</td>
   </tr>`).join('');
 
-  const pepHitsHtml = d23.pepHits && d23.pepHits.length > 0 ? renderPepHits(d23.pepHits) : '';
-  const amHitsHtml = d23.adverseMediaHits && d23.adverseMediaHits.length > 0 ? renderAdverseMediaHits(d23.adverseMediaHits) : '';
+  const hasPepHits = !!(d23.pepHits && d23.pepHits.length > 0);
+  const hasAmHits  = !!(d23.adverseMediaHits && d23.adverseMediaHits.length > 0);
+  const pepHitsHtml = hasPepHits ? renderPepHits(d23.pepHits!) : '';
+  const amHitsHtml  = hasAmHits  ? renderAdverseMediaHits(d23.adverseMediaHits!) : '';
   const newsDossierHtml = d23.newsDossierArticles && d23.newsDossierArticles.length > 0 ? renderNewsDossierArticles(d23.newsDossierArticles) : '';
+
+  // Table labels shift when hits are present so numbers don't repeat
+  const pepRegLabel   = hasPepHits
+    ? 'PEP REGISTERS CONSULTED'
+    : `TABLE 6.A — PEP REGISTERS CONSULTED (${d23.pepRegisters.reduce((s, p) => s + p.hits, 0) === 0 ? 'ZERO HITS' : 'HITS'})`;
+  const amCorporaLabel = hasAmHits
+    ? 'ADVERSE-MEDIA CORPORA CONSULTED'
+    : `TABLE 6.B — ADVERSE-MEDIA CORPORA · 10-YEAR LOOKBACK (${d23.adverseMediaCorpora.reduce((s, c) => s + c.hits, 0) === 0 ? 'ZERO HITS' : 'HITS'})`;
 
   const sec06 = `
 ${renderSectionDivider('06', 'Domains II & III · *PEP* & adverse media.')}
 ${renderAuthLine('Authorities. FATF Rec. 12 (PEP) · FDL 10/2025 Art. 11 · Cabinet Res. 109/2023 · FATF Rec. 10 · MoE Circular 08/AML/2021 10 (adverse media) · FDL 10/2025 Art. 19 (10-yr lookback).')}
 <div class="section-body">
   ${pepHitsHtml}
-  <div class="table-section-label">TABLE 6.A — PEP REGISTERS CONSULTED (4 COMMERCIAL · ${d23.pepRegisters.reduce((s, p) => s + p.hits, 0) === 0 ? 'ZERO HITS' : 'HITS'})</div>
+  <div class="table-section-label">${pepRegLabel}</div>
   <table class="scr-table" style="margin:6px 0 10px">
     <thead><tr><th>PROVIDER</th><th>VERSION</th><th>RECORDS</th><th>HITS</th><th>COVERAGE</th></tr></thead>
     <tbody>${pepRegRows}</tbody>
   </table>
   ${amHitsHtml}
-  <div class="table-section-label">TABLE 6.B — ADVERSE-MEDIA CORPORA · 10-YEAR LOOKBACK (${d23.adverseMediaCorpora.reduce((s, c) => s + c.hits, 0) === 0 ? 'ZERO HITS' : 'HITS'})</div>
+  <div class="table-section-label">${amCorporaLabel}</div>
   <table class="scr-table" style="margin:6px 0 10px">
     <thead><tr><th>CORPUS</th><th>SCOPE</th><th>HITS</th></tr></thead>
     <tbody>${amRows}</tbody>
@@ -1432,6 +1498,9 @@ ${renderAuthLine('Purpose. Permits the auditor to reconstruct the regulatory and
     <span class="report-ref">${esc(dc.reportNo)} · PAGE 01 OF ${r.pageCount}</span>
     <span class="confidential-badge">CONFIDENTIAL — RESTRICTED</span>
   </div>
+
+  <!-- Disposition alert banner (non-negative dispositions only) -->
+  ${renderDispositionBanner(r.disposition)}
 
   <!-- Cover body -->
   <div class="cover-body">
