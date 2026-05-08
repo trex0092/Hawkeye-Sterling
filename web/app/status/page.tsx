@@ -568,8 +568,14 @@ function AsanaRebuildSection() {
     setErrMsg("");
     try {
       const res = await fetch("/api/asana-rebuild-sections", { method: "POST" });
-      if (!res.ok) console.error(`[hawkeye] asana-rebuild-sections HTTP ${res.status}`);
-      const data = await res.json() as { ok: boolean; results?: typeof results; error?: string };
+      let data: { ok: boolean; results?: typeof results; error?: string };
+      try {
+        data = await res.json() as { ok: boolean; results?: typeof results; error?: string };
+      } catch {
+        setErrMsg(`Server error (HTTP ${res.status}) — the function may have timed out. Check Netlify function logs.`);
+        setState("error");
+        return;
+      }
       if (data.ok) {
         setResults(data.results ?? []);
         setState("done");

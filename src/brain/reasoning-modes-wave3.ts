@@ -847,9 +847,9 @@ async function poFraudPatternApply(ctx: BrainContext): Promise<Finding> {
     if (candidates.length < 2) continue;
     candidates.sort((a, b) => a.ts - b.ts);
     for (let i = 0; i < candidates.length - 1; i++) {
-      const cur = candidates[i]!;
-      const nxt = candidates[i + 1]!;
-      if (nxt.ts - cur.ts <= SPLIT_WINDOW_MS) {
+      const cur = candidates[i];
+      const next = candidates[i + 1];
+      if (cur && next && next.ts - cur.ts <= SPLIT_WINDOW_MS) {
         const total = candidates.reduce((s, e) => s + e.amount, 0);
         splitSignals.push(`${vendor}:${candidates.length}×<${SPLIT_THRESHOLD}(Σ=${total.toFixed(0)})`);
         break;
