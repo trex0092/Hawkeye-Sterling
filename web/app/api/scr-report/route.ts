@@ -16,8 +16,8 @@ import type {
   SCRStatutoryRow,
   SCRRetentionRow,
   SCRAdjudicationChainRow,
-} from "../../../../../dist/src/reports/ScreeningComplianceReport.js";
-import { renderSCR } from "../../../../../dist/src/reports/scrRenderer.js";
+} from "../../../../dist/src/reports/ScreeningComplianceReport.js";
+import { renderSCR } from "../../../../dist/src/reports/scrRenderer.js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
