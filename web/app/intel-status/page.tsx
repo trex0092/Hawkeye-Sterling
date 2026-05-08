@@ -75,7 +75,13 @@ export default function IntelStatusPage(): React.ReactElement {
       <div className="flex">
         <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-x-hidden">
           <header className="mb-6">
-            <h1 className="text-2xl font-bold mb-1">Intelligence sources · status</h1>
+            <div className="flex items-center gap-1.5 font-mono text-11 tracking-wide-8 uppercase text-ink-2 mb-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-brand shrink-0 shadow-[0_0_6px_var(--brand)] opacity-80" />
+              MODULE 50 · ENRICHMENT
+            </div>
+            <h1 className="font-display font-normal text-36 leading-tight tracking-tightest text-ink-0 mb-1">
+              Intelligence sources · <em className="italic text-brand">status.</em>
+            </h1>
             <p className="text-13 text-ink-3">Live view of every vendor adapter — configured vs missing — with sign-up URL for each free tier.</p>
           </header>
 

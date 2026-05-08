@@ -88,7 +88,8 @@ export default function ReplayPage() {
       <Header />
       <main className="max-w-5xl mx-auto px-10 py-8">
         <div className="mb-6">
-          <div className="font-mono text-11 tracking-wide-8 uppercase text-ink-2 mb-2">
+          <div className="flex items-center gap-1.5 font-mono text-11 tracking-wide-8 uppercase text-ink-2 mb-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-brand shrink-0 shadow-[0_0_6px_var(--brand)] opacity-80" />
             BUREAU II · SCREENING REPLAY
           </div>
           <h1 className="font-display font-normal text-32 text-ink-0 leading-tight">

@@ -47,7 +47,7 @@ export function ModuleLayout<K extends string = string>({
   return (
     <>
       <Header />
-      <div className="grid min-h-[calc(100vh-84px)] print:block grid-cols-1 md:grid-cols-[220px_1fr] lg:grid-cols-[220px_1fr_360px]">
+      <div className="grid min-h-[calc(100vh-84px)] print:block grid-cols-1 md:grid-cols-[220px_1fr] lg:grid-cols-[220px_1fr_360px] border-t-2 border-brand-line">
         <div className="hidden md:block">
           <SidebarShell>
             <SidebarSection title="Regulatory">
@@ -129,7 +129,8 @@ export function ModuleHero({
           MODULE {String(moduleNumber).padStart(2, "0")}
         </div>
       )}
-      <div className="font-mono text-11 tracking-wide-8 uppercase text-ink-2 mb-2">
+      <div className="flex items-center gap-1.5 font-mono text-11 tracking-wide-8 uppercase text-ink-2 mb-2">
+        <span className="w-1.5 h-1.5 rounded-full bg-brand shrink-0 shadow-[0_0_6px_var(--brand)] opacity-80" />
         {eyebrow}
       </div>
       <h1 className="font-display font-normal text-28 md:text-48 leading-[1.1] tracking-tightest m-0 mb-2 text-ink-0">
@@ -142,7 +143,7 @@ export function ModuleHero({
         )}
       </h1>
       {kpis && kpis.length > 0 && (
-        <div className="flex gap-8 mt-3 pt-3 border-t border-hair flex-wrap">
+        <div className="flex gap-8 mt-3 pt-3 border-t border-hair-pink flex-wrap">
           {kpis.map((k) => (
             <HeroStat
               key={k.label}
@@ -178,7 +179,7 @@ function HeroStat({
         ? "text-orange"
         : tone === "amber"
           ? "text-amber"
-          : "text-ink-0";
+          : "text-brand";
   return (
     <div className="flex flex-col gap-0.5">
       <span className={`font-mono text-20 font-semibold ${valueColor}`}>
