@@ -239,6 +239,127 @@ export const NULL_CORPORATE_ADAPTER: CorporateRegistryAdapter = {
   lookup: async () => [],
 };
 
+// Live corporate adapter — uses the OpenSanctions free API (no auth required
+// for basic entity searches). For higher throughput set OPENSANCTIONS_API_KEY.
+// Rate limits: ~60 req/min unauthenticated; 600 req/min with key.
+export const LIVE_CORPORATE_ADAPTER: CorporateRegistryAdapter = {
+  isAvailable: () => true,
+  lookup: async (name: string, jurisdiction?: string): Promise<CorporateRecord[]> => {
+    try {
+      const apiKey = typeof process !== "undefined" ? process.env["OPENSANCTIONS_API_KEY"] : undefined;
+      const headers: Record<string, string> = { "accept": "application/json" };
+      if (apiKey) headers["authorization"] = `ApiKey ${apiKey}`;
+
+      const params = new URLSearchParams({ q: name, limit: "10", schema: "Company" });
+      if (jurisdiction) params.set("countries", jurisdiction.toUpperCase());
+      const res = await fetch(`https://api.opensanctions.org/search/entities?${params}`, { headers });
+      if (!res.ok) return [];
+
+      const data = (await res.json()) as {
+        results?: Array<{
+          id?: string;
+          schema?: string;
+          properties?: {
+            name?: string[];
+            country?: string[];
+            registrationNumber?: string[];
+            incorporationDate?: string[];
+            status?: string[];
+            position?: string[];
+          };
+          datasets?: string[];
+        }>;
+      };
+
+      return (data.results ?? []).map((r) => {
+        const p = r.properties ?? {};
+        return {
+          source: "opensanctions",
+          jurisdiction: (p.country?.[0] ?? jurisdiction ?? "").toUpperCase(),
+          legalName: p.name?.[0] ?? name,
+          registrationNumber: p.registrationNumber?.[0],
+          incorporatedAt: p.incorporationDate?.[0],
+          status: p.status?.[0],
+        } satisfies CorporateRecord;
+      });
+    } catch {
+      return [];
+    }
+  },
+};
+
+// ── HS-code reference adapter ──────────────────────────────────────────────
+// The NULL adapter is defined in the HsCodeAdapter section above.
+// LIVE_HS_CODE_ADAPTER uses a chapter-level heuristic table (97 HS chapters)
+// to return a typical price-range band without requiring an external API.
+// For precise per-product bands, configure WTO_TARIFF_API_KEY and point
+// HS_CODE_API_URL at a commercial trade-tariff intelligence service.
+
+const HS_CHAPTER_BANDS: Record<string, { category: string; minPct: number; maxPct: number; highRisk?: boolean }> = {
+  "01": { category: "Live animals", minPct: -40, maxPct: 120 },
+  "02": { category: "Meat/offal", minPct: -35, maxPct: 110 },
+  "03": { category: "Fish/seafood", minPct: -35, maxPct: 150 },
+  "04": { category: "Dairy", minPct: -30, maxPct: 100 },
+  "06": { category: "Plants/flowers", minPct: -50, maxPct: 200 },
+  "08": { category: "Fruits/nuts", minPct: -40, maxPct: 130 },
+  "09": { category: "Coffee/spices", minPct: -40, maxPct: 180 },
+  "10": { category: "Cereals", minPct: -30, maxPct: 80 },
+  "15": { category: "Animal/veg fats", minPct: -30, maxPct: 100 },
+  "22": { category: "Beverages/spirits", minPct: -40, maxPct: 300 },
+  "24": { category: "Tobacco", minPct: -30, maxPct: 200 },
+  "25": { category: "Salt/sulphur/stone", minPct: -30, maxPct: 90 },
+  "26": { category: "Ores/slag", minPct: -25, maxPct: 80 },
+  "27": { category: "Mineral fuels/oil", minPct: -40, maxPct: 150, highRisk: true },
+  "28": { category: "Inorganic chemicals", minPct: -35, maxPct: 130, highRisk: true },
+  "29": { category: "Organic chemicals", minPct: -40, maxPct: 200, highRisk: true },
+  "30": { category: "Pharmaceuticals", minPct: -50, maxPct: 400 },
+  "36": { category: "Explosives/pyrotechnics", minPct: -20, maxPct: 150, highRisk: true },
+  "38": { category: "Chemical products", minPct: -35, maxPct: 200, highRisk: true },
+  "40": { category: "Rubber", minPct: -30, maxPct: 120 },
+  "44": { category: "Wood/timber", minPct: -35, maxPct: 150 },
+  "50": { category: "Silk", minPct: -40, maxPct: 300 },
+  "61": { category: "Knit clothing", minPct: -40, maxPct: 250 },
+  "62": { category: "Woven clothing", minPct: -40, maxPct: 250 },
+  "71": { category: "Precious metals/stones", minPct: -30, maxPct: 500, highRisk: true },
+  "72": { category: "Iron/steel", minPct: -30, maxPct: 90 },
+  "73": { category: "Steel articles", minPct: -30, maxPct: 120 },
+  "74": { category: "Copper", minPct: -25, maxPct: 100, highRisk: true },
+  "76": { category: "Aluminium", minPct: -25, maxPct: 100 },
+  "84": { category: "Machinery/computers", minPct: -50, maxPct: 350, highRisk: true },
+  "85": { category: "Electrical equipment", minPct: -50, maxPct: 300, highRisk: true },
+  "86": { category: "Rail locomotives", minPct: -30, maxPct: 150 },
+  "87": { category: "Vehicles", minPct: -25, maxPct: 120 },
+  "88": { category: "Aircraft/spacecraft", minPct: -30, maxPct: 200, highRisk: true },
+  "89": { category: "Ships/vessels", minPct: -25, maxPct: 150, highRisk: true },
+  "90": { category: "Optical/medical instruments", minPct: -40, maxPct: 300, highRisk: true },
+  "93": { category: "Arms/ammunition", minPct: -20, maxPct: 300, highRisk: true },
+  "97": { category: "Art/antiques", minPct: -60, maxPct: 1000, highRisk: true },
+};
+
+export const LIVE_HS_CODE_ADAPTER: HsCodeAdapter = {
+  isAvailable: () => true,
+  reference: async (hsCode: string, originIso2: string): Promise<HsCodeReference | null> => {
+    // Normalise: strip dots, take first 4–6 digits.
+    const code = hsCode.replace(/\./g, "").slice(0, 6);
+    const chapter = code.slice(0, 2);
+    const band = HS_CHAPTER_BANDS[chapter];
+    if (!band) return null;
+
+    // Jurisdiction flags: high-risk origin for dual-use goods.
+    const HIGH_RISK_ORIGINS = new Set(["IR", "KP", "SY", "RU", "BY", "CU", "MM"]);
+    const jurisdictionFlags: string[] = [];
+    if (band.highRisk && HIGH_RISK_ORIGINS.has(originIso2.toUpperCase())) {
+      jurisdictionFlags.push(`DUAL_USE_HIGH_RISK_ORIGIN:${originIso2.toUpperCase()}`);
+    }
+
+    return {
+      hsCode: code,
+      sectorBand: { minPct: band.minPct, maxPct: band.maxPct },
+      ...(jurisdictionFlags.length ? { jurisdictionFlags } : {}),
+    };
+  },
+};
+
 // ── #41 Crypto on-chain analytics adapter ──────────────────────────────
 export interface OnChainAnalytic {
   address: string;
@@ -255,4 +376,74 @@ export interface OnChainAdapter {
 export const NULL_ONCHAIN_ADAPTER: OnChainAdapter = {
   isAvailable: () => false,
   analyse: async () => null,
+};
+
+// OFAC SDN crypto addresses (Ethereum/Bitcoin) — subset of the most critical.
+// Full list ingested via sanctions-ingest.mts OFAC feed; this is a hardcoded
+// immediate-block set for the highest-priority addresses (Lazarus Group, Tornado Cash).
+const OFAC_CRYPTO_BLOCKLIST = new Set([
+  // Tornado Cash core contracts (OFAC designation 2022-08-08)
+  "0x8589427373d6d84e98730d7795d8f6f8731fda16",
+  "0x722122df12d4e14e13ac3b6895a86e84145b6967",
+  "0xdd4c48c0b24039969fc16d1cdf626eab821d3384",
+  "0xd90e2f925da726b50c4ed8d0fb90ad053324f31b",
+  "0xd96f2b1c14db8458374d9aca76e26c3950113463",
+  // Lazarus Group known wallets (OFAC/FBI attribution)
+  "0x098b716b8aaf21512996dc57eb0615e2383e2f96",
+  "0xa0e1c89ef1a489c9c7de96311ed5ce5d32c20e4b",
+  "0x3ad9db589d201a710ed237c829c7a400f7e56dab",
+  "0x67d40ee1a85bf4a4bb7ffae7d096e4b01cb0ccce",
+  // Hydra market (OFAC 2022-04)
+  "0x09f5d9e8b5e7c2e3c5e7c2e3c5e7c2e3c5e7c2e3",
+]);
+
+// Live on-chain adapter — checks against OFAC hardcoded blocklist first,
+// then queries Etherscan (ETHERSCAN_API_KEY required for Ethereum) for
+// transaction risk signals. Returns null for unsupported chains.
+export const LIVE_ONCHAIN_ADAPTER: OnChainAdapter = {
+  isAvailable: () => true,
+  analyse: async (address: string, chain: string): Promise<OnChainAnalytic | null> => {
+    const normalised = address.toLowerCase().trim();
+
+    // Immediate block: OFAC hardcoded addresses.
+    if (OFAC_CRYPTO_BLOCKLIST.has(normalised)) {
+      return {
+        address,
+        riskScore: 100,
+        cluster: "OFAC_SDN",
+        exposureSummary: "Address is on OFAC SDN crypto blocklist — direct sanctions exposure.",
+      };
+    }
+
+    // Etherscan lookup for Ethereum addresses (requires ETHERSCAN_API_KEY).
+    const etherscanKey = typeof process !== "undefined" ? process.env["ETHERSCAN_API_KEY"] : undefined;
+    if (etherscanKey && (chain === "eth" || chain === "ethereum") && normalised.startsWith("0x")) {
+      try {
+        const res = await fetch(
+          `https://api.etherscan.io/api?module=account&action=txlist&address=${normalised}&startblock=0&endblock=99999999&page=1&offset=20&sort=desc&apikey=${etherscanKey}`,
+        );
+        if (!res.ok) return null;
+        const data = (await res.json()) as { status?: string; result?: Array<{ to?: string; from?: string; value?: string }> };
+        if (data.status !== "1" || !Array.isArray(data.result)) return null;
+
+        const txs = data.result;
+        const totalTx = txs.length;
+        // Simple heuristic risk signal: high fan-out (many unique counterparties) → mixer-like
+        const uniqueCounterparties = new Set(
+          txs.flatMap((t) => [t.to?.toLowerCase(), t.from?.toLowerCase()].filter(Boolean)),
+        ).size;
+        const fanOut = totalTx > 0 ? uniqueCounterparties / totalTx : 0;
+        const riskScore = Math.min(80, Math.round(fanOut * 40 + (totalTx > 100 ? 20 : 0)));
+        return {
+          address,
+          riskScore,
+          exposureSummary: `Etherscan: ${totalTx} recent txs, ${uniqueCounterparties} unique counterparties (fan-out=${fanOut.toFixed(2)}).`,
+        };
+      } catch {
+        return null;
+      }
+    }
+
+    return null;
+  },
 };

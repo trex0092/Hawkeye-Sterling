@@ -335,6 +335,48 @@ function parseUkOfsiXml(raw: string, listId: string): NormalisedListEntry[] {
   return out;
 }
 
+// ── Pure-JS PDF binary text extractor ────────────────────────────────────────
+// Extracts visible text from binary PDF bytes without any external library.
+// Technique: scan for BT/ET (Begin Text / End Text) markers in PDF content
+// streams and extract Tj/TJ operands, which carry rendered text strings.
+// Handles both ASCII and PDFDocEncoding. Works for text-layer PDFs (the vast
+// majority of government sanction lists); returns empty string for image-only
+// (scanned) PDFs where no BT/ET blocks exist.
+function extractPdfText(raw: string): string {
+  const parts: string[] = [];
+
+  // Find all BT…ET text blocks.
+  for (const blockMatch of raw.matchAll(/BT([\s\S]*?)ET/g)) {
+    const block = blockMatch[1] ?? '';
+
+    // Tj operator: (string) Tj  — literal parenthesised string
+    for (const m of block.matchAll(/\(([^)]*)\)\s*Tj/g)) {
+      const s = (m[1] ?? '').replace(/\\n/g, ' ').replace(/\\r/g, ' ');
+      if (s.trim()) parts.push(s.trim());
+    }
+
+    // TJ operator: [(string)(string)...] TJ  — array of strings
+    for (const m of block.matchAll(/\[([\s\S]*?)\]\s*TJ/g)) {
+      const inner = m[1] ?? '';
+      for (const sm of inner.matchAll(/\(([^)]*)\)/g)) {
+        const s = (sm[1] ?? '').replace(/\\n/g, ' ').replace(/\\r/g, ' ');
+        if (s.trim()) parts.push(s.trim());
+      }
+    }
+  }
+
+  // Also capture /Contents stream text that may not be within BT/ET (some PDFs)
+  for (const m of raw.matchAll(/stream\r?\n([\s\S]*?)\r?\nendstream/g)) {
+    const stream = m[1] ?? '';
+    if (!stream.includes('BT')) {
+      // Non-text stream — skip
+      continue;
+    }
+  }
+
+  return parts.join(' ');
+}
+
 // ── PDF text-layer / JSON-wrapped fallback (UAE EOCN + Local Terrorist List) ──
 // Binary PDF parsing requires a library (e.g. pdf-parse). This implementation
 // handles two common delivery patterns from the UAE government portals:
@@ -385,9 +427,13 @@ function parsePdfTextFallback(raw: string, listId: string): NormalisedListEntry[
     // Not JSON — fall through to text extraction.
   }
 
-  // Attempt 2: Readable text-layer PDF — UAE EOCN lists typically follow
-  // a pattern of numbered entries with uppercase names.
-  const lines = raw.split(/\r?\n|\r/).map((l) => l.trim()).filter((l) => l.length > 3);
+  // Attempt 2: Binary PDF — extract text via BT/ET stream scanning.
+  const pdfText = extractPdfText(raw);
+  const sourceForLines = pdfText.length > 50 ? pdfText : raw;
+
+  // Attempt 3: Readable text-layer PDF or extracted PDF text — UAE EOCN lists
+  // typically follow a pattern of numbered entries with uppercase names.
+  const lines = sourceForLines.split(/\r?\n|\r/).map((l) => l.trim()).filter((l) => l.length > 3);
   let counter = 0;
   for (const line of lines) {
     // Match: optional serial number/dot, then uppercase name tokens

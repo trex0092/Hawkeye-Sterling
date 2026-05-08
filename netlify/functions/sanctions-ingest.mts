@@ -54,16 +54,23 @@ const FEEDS: FeedSpec[] = [
   },
   {
     listId: "eu_consolidated",
-    url: process.env["FEED_EU_CFSP"] ?? "",
+    // EU CFSP consolidated XML list — publicly accessible via the EU sanctions portal.
+    // Override with FEED_EU_CFSP env var if the portal URL changes.
+    url: process.env["FEED_EU_CFSP"] ?? "https://webgate.ec.europa.eu/fsd/fsf/public/files/xmlFullSanctionsList_1_1/content",
     format: "xml",
   },
   {
     listId: "uk_ofsi",
-    url: process.env["FEED_UK_OFSI"] ?? "",
-    format: "json",
+    // UK OFSI consolidated list — publicly hosted on Azure Blob storage by HM Treasury.
+    // Override with FEED_UK_OFSI env var if the URL changes.
+    url: process.env["FEED_UK_OFSI"] ?? "https://ofsistorage.blob.core.windows.net/publishlive/ConList.xml",
+    format: "xml",
   },
   {
     listId: "uae_eocn",
+    // UAE EOCN / Local Terrorist list — not publicly available via a stable URL.
+    // Set FEED_UAE_EOCN to the URL of your CBUAE data-sharing endpoint or
+    // a pre-extracted JSON/text file served from internal infrastructure.
     url: process.env["FEED_UAE_EOCN"] ?? "",
     format: "json",
   },
