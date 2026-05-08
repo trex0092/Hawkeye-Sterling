@@ -179,7 +179,7 @@ export default function WeaponizedBrainPage() {
     <ModuleLayout asanaModule="weaponized-brain" asanaLabel="Weaponized Brain">
       <div>
         <div className="mb-8">
-          <div className="flex items-center gap-1.5 font-mono text-11 tracking-wide-8 uppercase text-ink-2 mb-2">
+          <div className="flex items-center gap-1.5 font-mono text-11 tracking-wide-8 uppercase text-brand mb-2">
             <span className="w-1.5 h-1.5 rounded-full bg-brand shrink-0 shadow-[0_0_6px_var(--brand)] opacity-80" />
             MODULE 06 · WEAPONIZED BRAIN
           </div>
