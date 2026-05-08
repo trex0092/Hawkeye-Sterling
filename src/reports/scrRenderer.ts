@@ -377,11 +377,11 @@ body {
 /* ── Adjudicator finding box ── */
 .adj-finding {
   display: grid;
-  grid-template-columns: 1fr 160px;
-  border-left: 3px solid var(--neutral-bdr);
+  grid-template-columns: 1fr 200px;
+  border-left: 4px solid var(--neutral-bdr);
   background: var(--neutral-bg);
-  margin: 10px 0;
-  font-size: 8.5pt;
+  margin: 14px 0;
+  font-size: 9pt;
 }
 .adj-finding.green  { border-left-color: var(--green-bdr);  background: var(--green-bg); }
 .adj-finding.amber  { border-left-color: var(--amber-bdr);  background: var(--amber-bg); }
@@ -389,37 +389,39 @@ body {
 .adj-finding.neutral{ border-left-color: var(--neutral-bdr);background: var(--neutral-bg); }
 
 .adj-main {
-  padding: 8px 10px;
+  padding: 14px 16px;
   border-right: 1px solid var(--rule);
 }
 .adj-section-ref {
-  font-size: 7pt;
+  font-size: 7.5pt;
   font-weight: 700;
   letter-spacing: 0.1em;
   color: var(--muted);
   font-family: 'Courier New', Courier, monospace;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
   text-transform: uppercase;
 }
-.adj-text { font-size: 8.5pt; line-height: 1.55; color: var(--ink); }
+.adj-text { font-size: 9pt; line-height: 1.65; color: var(--ink); }
 .adj-text strong { font-weight: 700; }
 .adj-text em { font-style: italic; }
 
 .adj-meta {
-  padding: 8px 10px;
-  font-size: 7pt;
+  padding: 14px 14px;
+  font-size: 7.5pt;
   font-family: 'Courier New', Courier, monospace;
-  line-height: 1.7;
+  line-height: 1.8;
 }
 .adj-meta .meta-label {
-  font-size: 6pt;
+  font-size: 6.5pt;
   font-weight: 700;
   letter-spacing: 0.1em;
   color: var(--muted);
   text-transform: uppercase;
   display: block;
+  margin-top: 6px;
 }
-.adj-meta .meta-val { color: var(--ink); }
+.adj-meta .meta-label:first-child { margin-top: 0; }
+.adj-meta .meta-val { color: var(--ink); font-size: 7.5pt; }
 
 /* ── Standard table ── */
 .scr-table {
@@ -987,18 +989,21 @@ function renderAdverseMediaHits(hits: SCRAdverseMediaHit[]): string {
     const amCls = h.categoryColour
       ? `am-${h.categoryColour}`
       : 'am-orange';
+    const sourceCell = h.source
+      ? `<strong style="font-size:8pt;letter-spacing:0.04em">${esc(h.source)}</strong><br/><span class="mono" style="font-size:7pt;color:var(--muted)">${esc(h.sourceTier)}</span>`
+      : `<span class="mono">${esc(h.sourceTier)}</span>`;
     return `<tr>
-      <td>${esc(h.sourceTier)}</td>
+      <td>${sourceCell}</td>
       <td class="mono">${esc(h.date)}</td>
       <td><span class="am-tag ${amCls}">${esc(h.category)}</span></td>
-      <td>${esc(h.substance)}</td>
-      <td class="mono">${esc(h.corroboration)}</td>
+      <td style="font-size:8.5pt;line-height:1.5">${esc(h.substance)}</td>
+      <td class="mono" style="font-size:7.5pt">${esc(h.corroboration)}</td>
     </tr>`;
   }).join('');
   return `
 <div class="table-section-label">TABLE 6.B — ADVERSE-MEDIA · 10-YEAR LOOKBACK</div>
 <table class="scr-table">
-  <thead><tr><th>SOURCE · TIER</th><th>DATE</th><th>CATEGORY</th><th>SUBSTANCE</th><th>CORROBORATION</th></tr></thead>
+  <thead><tr><th>SOURCE</th><th>DATE</th><th>CATEGORY</th><th>SUBSTANCE</th><th>CORROBORATION</th></tr></thead>
   <tbody>${rows}</tbody>
 </table>`;
 }

@@ -158,7 +158,8 @@ export interface SCRAdverseMediaCorpus {
 }
 
 export interface SCRAdverseMediaHit {
-  sourceTier: string;
+  source?: string;           // "NEWS" | "REGULATORY" | "OSINT" | "COURT FILING" etc.
+  sourceTier: string;        // "T1 · T2" — reliability tier
   date: string;
   category: string;          // SANCTIONS EVASION | MONEY LAUNDERING etc.
   categoryColour?: 'red' | 'orange' | 'blue' | 'purple';

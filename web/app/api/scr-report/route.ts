@@ -262,14 +262,49 @@ function buildSCR(body: ReportInput, now: Date): ScreeningComplianceReport {
   const amScored = sb?.adverseMediaScored;
   const amTotal  = amScored?.total ?? (sb?.adverseMedia?.length ?? 0);
   const amCats   = amScored?.categoriesTripped ?? Array.from(new Set((sb?.adverseMedia ?? []).map(a => a.categoryId)));
-  const amHits = amCats.length > 0 ? amCats.map(cat => ({
-    sourceTier: "T1 · T2",
-    date: dateStr,
-    category: cat.replace(/_/g, " ").toUpperCase(),
-    categoryColour: "red" as const,
-    substance: `${amTotal} adverse keyword/article hits in the ${cat.replace(/_/g, " ")} category.`,
-    corroboration: "open-source · multi-source",
-  })) : [];
+
+  // Per-category hit counts for more precise substance text
+  const amByCat: Record<string, number> = amScored?.byCategory
+    ? (amScored.byCategory as Record<string, number>)
+    : amCats.reduce<Record<string, number>>((acc, cat) => {
+        acc[cat] = (sb?.adverseMedia ?? []).filter(a => a.categoryId === cat).length || 1;
+        return acc;
+      }, {});
+
+  // Derive source label from category: news vs regulatory
+  function amSourceLabel(cat: string): string {
+    if (/regulatory|sanction|enforcement|court/i.test(cat)) return "REGULATORY";
+    if (/osint|leak|document/i.test(cat)) return "OSINT";
+    return "NEWS";
+  }
+  // Tier from composite score
+  const amComposite = amScored?.compositeScore ?? 0;
+  const amTierLabel = amComposite >= 0.7 ? "T1" : amComposite >= 0.3 ? "T1 · T2" : "T1 · T2 · T3";
+
+  const amHits = amCats.length > 0 ? amCats.map(cat => {
+    const catCount = amByCat[cat] ?? 1;
+    const catLabel = cat.replace(/_/g, " ");
+    const srcLabel = amSourceLabel(cat);
+    // Build detailed substance: count, keywords, disposition note
+    const topKws = (sb?.adverseMedia ?? [])
+      .filter(a => a.categoryId === cat)
+      .slice(0, 3)
+      .map(a => a.keyword)
+      .filter(Boolean);
+    const kwNote = topKws.length > 0 ? ` Keywords: ${topKws.join(", ")}.` : "";
+    const compNote = amComposite > 0
+      ? ` Severity-weighted composite score: ${Math.round(amComposite * 100)}/100.`
+      : "";
+    return {
+      source: srcLabel,
+      sourceTier: amTierLabel,
+      date: dateStr,
+      category: catLabel.toUpperCase(),
+      categoryColour: amComposite >= 0.7 ? "red" as const : "orange" as const,
+      substance: `${catCount} adverse ${srcLabel === "NEWS" ? "article" : "filing"}${catCount === 1 ? "" : "s"} in the ${catLabel} category.${kwNote}${compNote} Analyst review and live-news corroboration required before constructive knowledge can be asserted under FDL 10/2025 Art.2(3).`,
+      corroboration: `${srcLabel === "NEWS" ? "multi-source news · open-source" : "regulatory filing · open-source"} · ${amTierLabel}`,
+    };
+  }) : [];
 
   const sec06Finding: SCRAdjudicatorFinding = {
     sectionRef: "6.1",
