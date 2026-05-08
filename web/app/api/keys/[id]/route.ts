@@ -8,25 +8,27 @@ export const maxDuration = 15;
 
 export async function POST(
   req: Request,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
   const deny = adminAuth(req);
   if (deny) return deny;
 
-  const ok = await revokeKey(params.id);
+  const { id } = await params;
+  const ok = await revokeKey(id);
   if (!ok) {
     return NextResponse.json({ ok: false, error: "unknown key" }, { status: 404 });
   }
-  return NextResponse.json({ ok: true, id: params.id, revoked: true });
+  return NextResponse.json({ ok: true, id, revoked: true });
 }
 
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
   const deny = adminAuth(req);
   if (deny) return deny;
 
-  await deleteKey(params.id);
-  return NextResponse.json({ ok: true, id: params.id, deleted: true });
+  const { id } = await params;
+  await deleteKey(id);
+  return NextResponse.json({ ok: true, id, deleted: true });
 }

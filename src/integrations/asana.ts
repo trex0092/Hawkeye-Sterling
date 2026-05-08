@@ -4,6 +4,8 @@ export interface AsanaConfig {
   personalAccessToken: string;
   workspaceGid: string;
   projectGid: string;
+  /** GID of the MLRO assignee (Luisa Fernanda). Every task must be assigned. */
+  assigneeGid?: string;
   sections: {
     firstScreening: string;
     dailyMonitoring: string;
@@ -49,6 +51,16 @@ function sectionFor(mode: ScreeningMode, config: AsanaConfig): string {
     : config.sections.dailyMonitoring;
 }
 
+// UAE DNFBP compliance: HIGH hits must be dispositioned same day, MEDIUM within 3
+// business days, clear/LOW within 5 days. Derive urgency from verdict breakdown.
+function dueOnFor(keyFindings: CaseReport['keyFindings']): string {
+  const { Positive, Possible } = keyFindings.verdictBreakdown;
+  const offsetDays = Positive > 0 ? 0 : Possible > 0 ? 3 : 5;
+  const d = new Date();
+  d.setUTCDate(d.getUTCDate() + offsetDays);
+  return d.toISOString().slice(0, 10); // YYYY-MM-DD
+}
+
 export function buildAsanaEnvelope(
   report: CaseReport,
   config: AsanaConfig,
@@ -60,6 +72,7 @@ export function buildAsanaEnvelope(
     name: `[${tag}] ${identity.name} · ${hits} match${hits === 1 ? '' : 'es'} · ${identity.caseId}`,
     notes: summariseReport(report),
     section: sectionFor(header.mode, config),
+    dueOn: dueOnFor(keyFindings),
     customFields: {
       subject: identity.name,
       entity_type: identity.entityType,
@@ -94,6 +107,9 @@ export async function deliverToAsana(
       projects: [config.projectGid],
       memberships: [{ project: config.projectGid, section: envelope.section }],
     };
+    // Assign to the MLRO so every task lands in her Asana inbox.
+    // Absent assigneeGid the task is created but unassigned — MLRO misses it.
+    if (config.assigneeGid) taskBody['assignee'] = config.assigneeGid;
     if (envelope.customFields && Object.keys(envelope.customFields).length > 0) {
       taskBody['custom_fields'] = envelope.customFields;
     }
@@ -122,6 +138,9 @@ export async function deliverToAsana(
     }
     const json = (await res.json()) as { data?: { gid?: string; permalink_url?: string } };
     const taskGid = json.data?.gid;
+    if (!taskGid) {
+      return { ok: false, error: 'Asana task created but GID missing in response — audit trail broken' };
+    }
     const url = json.data?.permalink_url;
 
     // Upload attachments via the Asana attachments endpoint if present.

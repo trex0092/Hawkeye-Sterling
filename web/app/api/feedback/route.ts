@@ -67,13 +67,20 @@ export async function POST(req: Request): Promise<NextResponse> {
     reason,
     analyst,
   } = body;
+  const clean = {
+    subjectId: typeof subjectId === "string" ? subjectId.trim() : "",
+    listId: typeof listId === "string" ? listId.trim() : "",
+    listRef: typeof listRef === "string" ? listRef.trim() : "",
+    candidateName: typeof candidateName === "string" ? candidateName.trim() : "",
+    analyst: typeof analyst === "string" ? analyst.trim().slice(0, 200) : "",
+  };
   if (
-    !subjectId ||
-    !listId ||
-    !listRef ||
-    !candidateName ||
+    !clean.subjectId ||
+    !clean.listId ||
+    !clean.listRef ||
+    !clean.candidateName ||
     !verdict ||
-    !analyst
+    !clean.analyst
   ) {
     return NextResponse.json(
       {
@@ -91,13 +98,13 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   }
   const record = await submitFeedback({
-    subjectId,
-    listId,
-    listRef,
-    candidateName,
+    subjectId: clean.subjectId,
+    listId: clean.listId,
+    listRef: clean.listRef,
+    candidateName: clean.candidateName,
     verdict,
-    ...(reason ? { reason } : {}),
-    analyst,
+    ...(reason && typeof reason === "string" ? { reason: reason.trim().slice(0, 2000) } : {}),
+    analyst: clean.analyst,
   });
   return NextResponse.json({ ok: true, record }, { headers: gateHeaders });
 }

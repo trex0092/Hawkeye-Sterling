@@ -62,9 +62,14 @@ function resolveInitialPassword(): string {
   const fromEnv = process.env["LUISA_INITIAL_PASSWORD"];
   if (fromEnv && fromEnv.length >= 8) return fromEnv;
   const generated = randomBytes(12).toString("base64url");
-  console.info(
-    `[hawkeye] LUISA_INITIAL_PASSWORD not set — generated boot password for l.fernanda: ${generated}`,
-  );
+  // Suppress during Next.js build phase — the generated password would be
+  // discarded anyway (module state is not carried to runtime), and printing
+  // it to build logs is misleading. Log only when this runs at request time.
+  if (process.env["NEXT_PHASE"] !== "phase-production-build") {
+    console.info(
+      `[hawkeye] LUISA_INITIAL_PASSWORD not set — generated boot password for l.fernanda: ${generated}`,
+    );
+  }
   return generated;
 }
 

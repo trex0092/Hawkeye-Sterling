@@ -239,7 +239,7 @@ async function liveAdverseMedia(subject: string) {
   // Return an explicit degraded verdict so the operator knows the lookup was
   // incomplete — the MLRO must perform a manual adverse-media check.
   if (!gdeltResult.ok) {
-    console.warn(`[adverse-media] GDELT unavailable for "${subject}": ${gdeltResult.error}`);
+    console.warn(`[adverse-media] GDELT unavailable (subject redacted): ${gdeltResult.error}`);
     const now = new Date().toISOString();
     const degraded: ReturnType<typeof analyseAdverseMediaResult> & {
       gdeltSource: boolean;
@@ -375,7 +375,7 @@ ${articleBlock}`,
   })();
   if (parsed) return parsed;
 
-  console.warn(`[adverse-media] Claude returned non-JSON for "${subject}" — surfacing degraded verdict`);
+  console.warn(`[adverse-media] Claude returned non-JSON (subject redacted) — surfacing degraded verdict`);
   const degraded: ReturnType<typeof analyseAdverseMediaResult> & {
     gdeltSource: boolean;
     gdeltArticleCount: number;

@@ -39,7 +39,12 @@ async function isValidSession(token: string): Promise<boolean> {
   if (dot === -1) return false;
   const encoded = token.slice(0, dot);
   const sig = token.slice(dot + 1);
-  const secret = process.env["SESSION_SECRET"] ?? "hawkeye-sterling-dev-secret-change-in-prod";
+  const secret = process.env["SESSION_SECRET"];
+  if (!secret) {
+    // Fail-closed: a missing SESSION_SECRET is a misconfiguration, not a
+    // reason to allow sessions signed with a guessable fallback.
+    return false;
+  }
   const expected = await hmacSha256(secret, encoded);
   if (expected !== sig) return false;
   try {

@@ -88,7 +88,7 @@ async function handlePost(req: Request): Promise<NextResponse> {
   for (let i = 0; i < body.subjects.length; i++) {
     const sub = body.subjects[i]!;
     const subStartedAt = Date.now();
-    if (!sub?.name || sub.name.length > 500) {
+    if (!sub?.name || typeof sub.name !== "string" || !sub.name.trim() || sub.name.length > 500) {
       results.push({ subjectIndex: i, ok: false, error: "invalid subject", durationMs: Date.now() - subStartedAt });
       continue;
     }
