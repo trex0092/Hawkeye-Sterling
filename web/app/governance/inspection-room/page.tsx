@@ -51,7 +51,8 @@ function safeParse<T>(key: string): T | null {
     const raw = window.localStorage.getItem(key);
     if (!raw) return null;
     return JSON.parse(raw) as T;
-  } catch {
+  } catch (err) {
+    console.warn(`[hawkeye] inspection-room safeParse(${key}) failed — returning null:`, err);
     return null;
   }
 }
@@ -180,8 +181,8 @@ function PanelActions({ panel, onChanged }: { panel: Panel; onChanged: () => voi
     for (const key of panel.storageKeys) {
       try {
         window.localStorage.removeItem(key);
-      } catch {
-        /* localStorage unavailable / quota — silent */
+      } catch (err) {
+        console.warn(`[hawkeye] inspection-room removeItem(${key}) failed — overlay may persist:`, err);
       }
     }
     onChanged();

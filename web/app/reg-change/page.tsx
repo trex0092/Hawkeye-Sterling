@@ -65,7 +65,8 @@ function daysTo(dateStr: string): number | null {
     const d = new Date(dateStr);
     const now = new Date();
     return Math.ceil((d.getTime() - now.getTime()) / (1000 * 86400));
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] reg-change daysTo parse failed:", dateStr, err);
     return null;
   }
 }
@@ -128,8 +129,14 @@ function ImpactPanel({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ regulation, institution }),
       });
+      if (!res.ok) {
+        console.error(`[hawkeye] reg-change/impact HTTP ${res.status}`);
+        return;
+      }
       const d = (await res.json()) as ImpactAssessmentResult;
       setData(d);
+    } catch (err) {
+      console.error("[hawkeye] reg-change/impact threw:", err);
     } finally {
       setLoading(false);
     }

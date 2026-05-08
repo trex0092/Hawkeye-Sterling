@@ -21,7 +21,7 @@ export const dynamic = "force-dynamic";
 const SNAPSHOT_PATH = path.resolve(process.cwd(), "..", "data/eval/kpi-snapshot.json");
 
 const CORS: Record<string, string> = {
-  "access-control-allow-origin": "*",
+  "access-control-allow-origin": process.env["NEXT_PUBLIC_APP_URL"] ?? "https://hawkeye-sterling.netlify.app",
   "access-control-allow-methods": "GET, OPTIONS",
   "access-control-allow-headers": "content-type, authorization, x-api-key",
 };

@@ -126,8 +126,9 @@ export default function VesselCheckPage() {
       });
       const data = (await res.json()) as VesselRiskProfile;
       if (data.ok) setRiskProfile(data);
-    } catch { /* silent */ }
-    finally { setRiskProfileLoading(false); }
+    } catch (err) {
+      console.error("[hawkeye] vessel risk-profile threw:", err);
+    } finally { setRiskProfileLoading(false); }
   }
 
   async function check() {
@@ -144,8 +145,10 @@ export default function VesselCheckPage() {
       const data = await res.json() as ApiResponse;
       if (!data.ok) setError(data.error ?? "Check failed");
       else setResult(data);
-    } catch { setError("Request failed"); }
-    finally { setLoading(false); }
+    } catch (err) {
+      console.error("[hawkeye] vessel-check threw:", err);
+      setError("Request failed");
+    } finally { setLoading(false); }
   }
 
   const canSubmit = mode === "single" ? imoNumber.trim().length > 0 : batchImos.trim().length > 0;

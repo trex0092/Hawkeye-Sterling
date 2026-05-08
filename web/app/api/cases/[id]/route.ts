@@ -5,11 +5,12 @@ import {
   deleteCaseById,
   loadCase,
 } from "@/lib/server/case-vault";
+import { buildInvestigationTimeline } from "@/lib/server/case-timeline";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// GET    /api/cases/<id>     → single case record
+// GET    /api/cases/<id>     → single case record + canonical brain timeline
 // DELETE /api/cases/<id>     → remove case from the vault
 
 async function handleGet(
@@ -27,8 +28,18 @@ async function handleGet(
       { status: 404, headers: gate.headers },
     );
   }
+  // Translate the presentation-layer CaseRecord into the brain's canonical
+  // TimelineEvent[] shape (phase / actor / sourceKind / sourceId). Surfaced
+  // alongside the legacy `case.timeline` field so UI / regulator exports
+  // can migrate to the richer model without a breaking refactor.
+  let investigationTimeline: ReturnType<typeof buildInvestigationTimeline> = [];
+  try {
+    investigationTimeline = buildInvestigationTimeline(found);
+  } catch (err) {
+    console.warn("[hawkeye] cases/[id]: investigation timeline build failed:", err);
+  }
   return NextResponse.json(
-    { ok: true, tenant, case: found },
+    { ok: true, tenant, case: found, investigationTimeline },
     { headers: gate.headers },
   );
 }

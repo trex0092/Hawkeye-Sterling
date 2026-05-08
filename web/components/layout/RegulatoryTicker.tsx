@@ -54,7 +54,10 @@ export function RegulatoryTicker() {
     void (async () => {
       try {
         const res = await fetch("/api/regulatory-feed");
-        if (!res.ok) return;
+        if (!res.ok) {
+          console.warn(`[hawkeye] regulatory-feed HTTP ${res.status} — ticker stays on static items`);
+          return;
+        }
         const data = await res.json() as { ok: boolean; items?: Array<{ title: string; source: string; tone: string }> };
         if (!data.ok || !Array.isArray(data.items)) return;
         const top = data.items
@@ -65,7 +68,9 @@ export function RegulatoryTicker() {
             tone: i.tone as TickerItem["tone"],
           }));
         setLiveItems(top);
-      } catch { /* silently ignore */ }
+      } catch (err) {
+        console.warn("[hawkeye] regulatory-feed threw — ticker stays on static items:", err);
+      }
     })();
   }, []);
 

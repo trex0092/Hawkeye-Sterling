@@ -286,7 +286,7 @@ export default function AnalyticsPage() {
       if (!res.ok) return;
       const result = await res.json() as { ok: boolean } & AnalyticsInsights;
       if (result.ok) setAiInsights(result);
-    } catch { /* silent */ }
+    } catch (err) { console.error("[hawkeye] analytics handler threw:", err); }
     finally { setInsightsLoading(false); }
   };
 
@@ -307,7 +307,7 @@ export default function AnalyticsPage() {
       if (!res.ok) return;
       const result = (await res.json()) as { ok: boolean } & BiasMonitor;
       if (result.ok) setBiasMonitor(result);
-    } catch { /* silent */ }
+    } catch (err) { console.error("[hawkeye] analytics handler threw:", err); }
     finally { setBiasLoading(false); }
   };
 
@@ -336,7 +336,7 @@ export default function AnalyticsPage() {
       if (!res.ok) return;
       const result = (await res.json()) as PredictRiskResult;
       if (result.ok) setPredictRisk(result);
-    } catch { /* silent */ }
+    } catch (err) { console.error("[hawkeye] analytics handler threw:", err); }
     finally { setPredictLoading(false); }
   };
 
@@ -476,7 +476,8 @@ export default function AnalyticsPage() {
               <div className="font-mono text-10 font-semibold text-amber tracking-wide-4 uppercase mb-1">
                 MODULE 40
               </div>
-              <div className="text-10.5 font-semibold uppercase tracking-wide-4 text-ink-2 mb-1">
+              <div className="flex items-center gap-1.5 text-10.5 font-semibold uppercase tracking-wide-4 text-brand mb-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-brand shrink-0 shadow-[0_0_6px_var(--brand)] opacity-80" />
                 Analytics · MLRO Performance Digest
               </div>
               <h1 className="font-display text-36 text-ink-0 m-0 leading-tight">

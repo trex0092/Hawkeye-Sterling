@@ -13,7 +13,8 @@ export function ScreeningHero({ inQueue, critical, slaRisk, avgRisk }: Screening
       <div className="font-mono text-10 font-semibold text-amber tracking-wide-4 uppercase mb-1">
         MODULE 02
       </div>
-      <div className="font-mono text-11 tracking-wide-8 uppercase text-ink-2 mb-2">
+      <div className="flex items-center gap-1.5 font-mono text-11 tracking-wide-8 uppercase text-brand mb-2">
+        <span className="w-1.5 h-1.5 rounded-full bg-brand shrink-0 shadow-[0_0_6px_var(--brand)] opacity-80" />
         BUREAU II · PRECISION BENCH
       </div>
       <h1 className="font-display font-normal text-28 md:text-48 leading-[1.1] tracking-tightest m-0 mb-2 text-ink-0">
@@ -21,7 +22,7 @@ export function ScreeningHero({ inQueue, critical, slaRisk, avgRisk }: Screening
       </h1>
 
       {/* KPI bar */}
-      <div className="flex gap-8 mt-3 pt-3 border-t border-hair flex-wrap">
+      <div className="flex gap-8 mt-3 pt-3 border-t border-hair-pink flex-wrap">
         <HeroStat value={String(inQueue)} label="in queue" />
         <HeroStat value={String(critical)} label="critical" tone="red" />
         <HeroStat value={String(slaRisk)} label="SLA risk" tone="orange" />
@@ -56,7 +57,7 @@ function HeroStat({
       ? "text-red"
       : tone === "orange"
         ? "text-orange"
-        : "text-ink-0";
+        : "text-brand";
   return (
     <div className="flex flex-col gap-0.5">
       <span className={`font-mono text-20 font-semibold ${valueColor}`}>{value}</span>

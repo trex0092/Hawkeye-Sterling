@@ -234,14 +234,18 @@ async function createAsanaTask(
     } finally {
       clearTimeout(timer);
     }
-    const payload = (await res.json().catch(() => null)) as
+    const payload = (await res.json().catch((err: unknown) => {
+      console.warn("[hawkeye] ai-decision Asana response parse failed:", err);
+      return null;
+    })) as
       | { data?: { gid?: string; permalink_url?: string } }
       | null;
     return {
       taskGid: payload?.data?.gid,
       taskUrl: payload?.data?.permalink_url,
     };
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] ai-decision Asana task creation failed (non-fatal — decision still recorded):", err);
     return {};
   }
 }

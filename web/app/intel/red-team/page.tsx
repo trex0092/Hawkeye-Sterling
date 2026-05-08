@@ -25,7 +25,8 @@ function loadResults(): Record<string, ResultRow> {
   try {
     const raw = window.localStorage.getItem(STORAGE);
     return raw ? (JSON.parse(raw) as Record<string, ResultRow>) : {};
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] red-team results parse failed — returning empty:", err);
     return {};
   }
 }
@@ -34,8 +35,8 @@ function saveResults(map: Record<string, ResultRow>): void {
   if (typeof window === "undefined") return;
   try {
     window.localStorage.setItem(STORAGE, JSON.stringify(map));
-  } catch {
-    /* */
+  } catch (err) {
+    console.error("[hawkeye] red-team results persist failed — probe history will be lost:", err);
   }
 }
 
@@ -60,7 +61,10 @@ async function runOne(p: RedTeamPrompt): Promise<ResultRow> {
         testedAt: Date.now(),
       };
     }
-    const data = (await res.json().catch(() => ({}))) as { narrative?: string; response?: string; answer?: string; message?: string };
+    const data = (await res.json().catch((err: unknown) => {
+      console.warn("[hawkeye] red-team response JSON parse failed:", err);
+      return {};
+    })) as { narrative?: string; response?: string; answer?: string; message?: string };
     const rawText = data.narrative ?? data.response ?? data.answer ?? data.message ?? "";
     // Strip markdown emphasis (** __ * _) so literal patterns like
     // "the answer is no" match against "the answer is **no**". Without

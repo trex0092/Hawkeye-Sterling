@@ -104,11 +104,17 @@ export default function EvalKpiPage() {
     (async () => {
       try {
         const res = await fetch("/api/eval-kpi", { signal: ctl.signal });
+        if (!res.ok) {
+          console.error(`[hawkeye] eval-kpi HTTP ${res.status}`);
+          if (!cancelled) setError(`HTTP ${res.status}`);
+          return;
+        }
         const json = (await res.json()) as ApiResponse;
         if (cancelled) return;
         setData(json);
       } catch (err) {
         if (cancelled) return;
+        console.error("[hawkeye] eval-kpi threw:", err);
         setError(err instanceof Error ? err.message : String(err));
       } finally {
         if (!cancelled) setLoading(false);

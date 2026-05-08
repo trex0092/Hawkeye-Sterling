@@ -115,7 +115,10 @@ export default async function handler(_req: Request): Promise<Response> {
   // Append a CONFIG_HASH event to the audit chain blob for tamper-evident trail.
   try {
     const chainKey = 'config-audit-log.json';
-    const rawLog = await store.get(chainKey, { type: 'text' }).catch(() => null);
+    const rawLog = await store.get(chainKey, { type: 'text' }).catch((err: unknown) => {
+      console.warn("[hawkeye] audit-config: chain blob read failed — assuming empty log:", err);
+      return null;
+    });
     const log: unknown[] = rawLog ? (JSON.parse(rawLog) as unknown[]) : [];
     log.push({ ...entry, hmacSignature, drifted, previousHash: previous?.configHash ?? null });
     // Keep last 365 entries (one per deploy, ~1/day).
@@ -147,7 +150,10 @@ function jsonResp(body: unknown, status = 200): Response {
   });
 }
 
+// Netlify v2 scheduled functions cannot combine `schedule` with a custom
+// `path`. The function is invoked by cron only — there is no need for an
+// HTTP endpoint. Specifying both causes the deploy to fail validation with
+// "scheduled function cannot have a custom path".
 export const config: Config = {
   schedule: '@hourly',
-  path: '/api/internal/audit-config',
 };

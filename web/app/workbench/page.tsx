@@ -196,12 +196,14 @@ export default function WorkbenchPage() {
       const data = (await res.json()) as BrainResult & { error?: string };
       if (ac.signal.aborted) return;
       if (!res.ok || !data.ok) {
+        console.error(`[hawkeye] workbench brain HTTP ${res.status}: ${data.error ?? '(no error)'}`);
         setBrainError(data.error ?? `HTTP ${res.status}`);
       } else {
         setBrainResult(data);
       }
     } catch (err) {
       if (ac.signal.aborted) return;
+      console.error("[hawkeye] workbench brain threw:", err);
       setBrainError(err instanceof Error ? err.message : "Network error");
     } finally {
       setIsRunning(false);
@@ -239,7 +241,8 @@ export default function WorkbenchPage() {
             <div className="font-mono text-10 font-semibold text-amber tracking-wide-4 uppercase mb-1">
               MODULE 43
             </div>
-            <div className="font-mono text-11 tracking-wide-8 uppercase text-ink-2 mb-2">
+            <div className="flex items-center gap-1.5 font-mono text-11 tracking-wide-8 uppercase text-brand mb-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-brand shrink-0 shadow-[0_0_6px_var(--brand)] opacity-80" />
               MODULE 03 · WORKBENCH BRAIN
             </div>
             <h1 className="font-display font-normal text-48 tracking-tightest m-0 mb-2 text-ink-0">

@@ -156,6 +156,11 @@ function projectGidForModule(module: string): string {
     case "inspection-room":
       return process.env["ASANA_REGULATOR_PROJECT_GID"] ?? inbox;
 
+    // 19 · Incidents & Grievances
+    // Governance: Grievances & Whistleblowing portal (FG/GVW/004)
+    case "grievances-whistleblowing":
+      return process.env["ASANA_INCIDENTS_PROJECT_GID"] ?? inbox;
+
     // 07 · CDD/KYC — Onboarding Wizard
     case "onboarding":
       return process.env["ASANA_KYC_PROJECT_GID"] ?? inbox;
@@ -237,6 +242,8 @@ const MODULE_LABELS: Record<string, string> = {
   eocn:                     "EOCN Trade Compliance",
   // 18 · Regulator Portal
   "inspection-room":        "Inspection Room",
+  // 19 · Incidents & Grievances
+  "grievances-whistleblowing": "Grievances & Whistleblowing",
   // 07 · CDD — Onboarding
   onboarding:               "Onboarding Wizard",
   // 05 · STR/SAR
@@ -293,6 +300,7 @@ const PROJECT_BOARD: Record<string, string> = {
   "vessel-check":           "16 · Supply Chain, ESG & LBMA Gold",
   eocn:                     "17 · Export Control & Dual-Use",
   "inspection-room":        "18 · Regulator Portal Handoff",
+  "grievances-whistleblowing": "19 · Incidents & Grievances",
   onboarding:               "07 · CDD/SDD/EDD/KYC — Customer Due Diligence",
   goaml:                    "05 · STR/SAR/CTR/PMR GoAML Filings",
 };
@@ -398,7 +406,10 @@ async function handleModuleReport(req: Request): Promise<NextResponse> {
       clearTimeout(timer);
     }
 
-    const payload = (await asanaRes.json().catch(() => null)) as
+    const payload = (await asanaRes.json().catch((err: unknown) => {
+      console.warn("[hawkeye] module-report Asana response parse failed:", err);
+      return null;
+    })) as
       | { data?: { gid?: string; permalink_url?: string }; errors?: { message?: string }[] }
       | null;
 

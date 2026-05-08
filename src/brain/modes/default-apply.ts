@@ -27,6 +27,10 @@ const TRANSACTION_CATEGORIES = new Set<ReasoningCategory>([
   'behavioral_economics', 'behavioral_science', 'market_integrity',
   'professional_ml', 'hawala_ivt', 'correspondent_banking',
   'quantitative_analysis',
+  // Wave-5/6 additions: financial-data-driven modes.
+  'asset_recovery',        // traces assets through transaction chains
+  'cryptoasset_forensics', // on-chain transaction forensics
+  'conduct_risk',          // incentive / financial conduct pattern analysis
 ]);
 
 // Categories that operate on UBO graph.
@@ -39,12 +43,22 @@ const NETWORK_CATEGORIES = new Set<ReasoningCategory>([
 const TEXT_CATEGORIES = new Set<ReasoningCategory>([
   'osint', 'threat_modeling', 'cognitive_science',
   'psychological_profiling', 'epistemic_quality',
+  // Wave-5/12 additions: narrative-signal-driven modes.
+  'identity_fraud',   // document and narrative identity analysis
+  'digital_economy',  // platform and API abuse narrative signals
+  'human_rights',     // labour-exploitation narrative patterns
+  'insider_threat',   // behavioural / access narrative signals
+  'legal_reasoning',  // regulatory document and text analysis
 ]);
 
 // Categories that cross-check existing prior findings.
 const META_CATEGORIES = new Set<ReasoningCategory>([
   'logic', 'decision_theory', 'causal', 'statistical',
   'intelligence_fusion', 'common_sense', 'formal_reasoning',
+  // Wave-5/12 additions: synthesis over prior findings.
+  'strategic',    // game-theoretic / strategic reasoning over findings
+  'governance',   // governance gate checks over prior compliance findings
+  'data_quality', // data-quality assessment of the prior finding set
 ]);
 
 const FATF_HIGH_RISK = new Set(['IR', 'KP', 'MM']);

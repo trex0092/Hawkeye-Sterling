@@ -45,6 +45,7 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { getAnthropicClient } from "@/lib/server/llm";
 import { weaponizedSystemPrompt } from "../../../../../dist/src/brain/weaponized.js";
 import { evaluateRedlines } from "../../../../../dist/src/brain/redlines.js";
 import { classifyPepRole } from "../../../../../dist/src/brain/pep-classifier.js";
@@ -58,8 +59,6 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
-const ANTHROPIC_VERSION = "2023-06-01";
 const DEFAULT_MODEL = "claude-opus-4-7";
 const DEFAULT_MAX_ITERATIONS = 8;
 const MAX_ITERATIONS_CAP = 20;
@@ -213,7 +212,11 @@ async function dispatch(
   }
 }
 
-// ─── Anthropic API call ─────────────────────────────────────────────────────
+// ─── Anthropic API call (PII-guarded via AnthropicGuard) ────────────────────
+// Uses getAnthropicClient() which redacts UAE IDs, IBANs, card numbers,
+// passport numbers, email addresses, and crypto addresses from all message
+// text before they reach Anthropic's API, satisfying UAE PDPL Art.22 and
+// GDPR Art.5(1)(c). The same redaction map is used to rehydrate the response.
 
 interface AnthropicContentBlock {
   type: "text" | "tool_use" | "thinking";
@@ -243,19 +246,15 @@ async function callAnthropic(
   messages: Array<{ role: string; content: unknown }>,
   abortSignal: AbortSignal,
 ): Promise<AnthropicResponse> {
-  const res = await fetch(ANTHROPIC_API_URL, {
-    method: "POST",
-    headers: {
-      "x-api-key": apiKey,
-      "anthropic-version": ANTHROPIC_VERSION,
-      "content-type": "application/json",
-    },
-    // System prompt is wrapped in a cache_control block — the weaponized
-    // prompt is ~12k tokens; caching cuts cost by ~90% on subsequent calls
-    // within the 5-minute TTL window.
-    body: JSON.stringify({
+  // 55 s client-level timeout — the route has maxDuration: 60.
+  const client = getAnthropicClient(apiKey, 55_000);
+  const response = await client.messages.create(
+    {
       model,
       max_tokens: MAX_OUTPUT_TOKENS,
+      // System prompt is wrapped in a cache_control block — the weaponized
+      // prompt is ~12k tokens; caching cuts cost by ~90% on subsequent calls
+      // within the 5-minute TTL window.
       system: [
         {
           type: "text",
@@ -264,17 +263,11 @@ async function callAnthropic(
         },
       ],
       tools: TOOLS,
-      messages,
-    }),
-    signal: abortSignal,
-  });
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(
-      `Anthropic API ${res.status}: ${text.slice(0, 500)}`,
-    );
-  }
-  return (await res.json()) as AnthropicResponse;
+      messages: messages as Parameters<typeof client.messages.create>[0]["messages"],
+    },
+    { signal: abortSignal },
+  );
+  return response as unknown as AnthropicResponse;
 }
 
 // ─── Body shape & route handler ─────────────────────────────────────────────

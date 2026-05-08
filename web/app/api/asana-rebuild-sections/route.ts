@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 const API = "https://app.asana.com/api/1.0";
 
@@ -170,7 +170,7 @@ export async function POST(): Promise<NextResponse> {
   const me = await fetch(`${API}/users/me`, {
     headers: headers(token),
     signal: AbortSignal.timeout(8_000),
-  }).then((r) => r.ok ? r.json() : null).catch(() => null) as { data?: { name: string } } | null;
+  }).then((r) => r.ok ? r.json() : null).catch((err: unknown) => { console.warn("[hawkeye] asana-rebuild-sections fetch failed:", err); return null; }) as { data?: { name: string } } | null;
 
   if (!me?.data?.name) {
     return NextResponse.json({ ok: false, error: "ASANA_TOKEN is invalid or expired." }, { status: 401 });
@@ -183,45 +183,42 @@ export async function POST(): Promise<NextResponse> {
     errors: string[];
   }> = [];
 
-  for (const project of PROJECTS) {
-    const errors: string[] = [];
-    let deleted = 0;
-    let created = 0;
-
-    try {
-      // 1. Fetch existing sections
-      const existing = await getSections(token, project.gid);
-
-      // 2. Delete all existing sections
-      for (const sec of existing) {
-        try {
-          await deleteSection(token, sec.gid);
-          deleted++;
-        } catch {
-          errors.push(`delete:${sec.name}`);
+  // Process all projects in parallel — sequential + delays was ~120s which
+  // exceeded the function timeout. Parallel brings it to ~5-10s.
+  const projectResults = await Promise.all(
+    PROJECTS.map(async (project) => {
+      const errors: string[] = [];
+      let deleted = 0;
+      let created = 0;
+      try {
+        const existing = await getSections(token, project.gid);
+        for (const sec of existing) {
+          try {
+            await deleteSection(token, sec.gid);
+            deleted++;
+          } catch {
+            errors.push(`delete:${sec.name}`);
+          }
+          await delay(50);
         }
-        await delay(100);
-      }
-
-      await delay(400);
-
-      // 3. Recreate in correct order
-      for (const sectionName of project.sections) {
-        try {
-          const ok = await createSection(token, project.gid, sectionName);
-          if (ok) created++;
-          else errors.push(`create:${sectionName}`);
-        } catch {
-          errors.push(`create:${sectionName}`);
+        await delay(200);
+        for (const sectionName of project.sections) {
+          try {
+            const ok = await createSection(token, project.gid, sectionName);
+            if (ok) created++;
+            else errors.push(`create:${sectionName}`);
+          } catch {
+            errors.push(`create:${sectionName}`);
+          }
+          await delay(50);
         }
-        await delay(150);
+      } catch (err) {
+        errors.push(String(err));
       }
-    } catch (err) {
-      errors.push(String(err));
-    }
-
-    results.push({ name: project.name, deleted, created, errors });
-  }
+      return { name: project.name, deleted, created, errors };
+    }),
+  );
+  results.push(...projectResults);
 
   const allOk = results.every((r) => r.errors.length === 0);
   return NextResponse.json({

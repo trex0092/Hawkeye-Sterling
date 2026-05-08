@@ -28,6 +28,28 @@ import {
   bucketKey,
   getBillingStore,
 } from "@/lib/server/billing";
+import { timingSafeEqual } from "node:crypto";
+
+// Fail-closed: ADMIN_TOKEN must be set and must match the bearer token.
+function requireAdminToken(req: Request): NextResponse | null {
+  const adminToken = process.env["ADMIN_TOKEN"];
+  if (!adminToken) {
+    return NextResponse.json(
+      { ok: false, error: "Admin billing endpoint is not configured (ADMIN_TOKEN not set)" },
+      { status: 503 },
+    );
+  }
+  const auth = req.headers.get("authorization") ?? "";
+  const bearer = auth.startsWith("Bearer ") ? auth.slice(7) : auth;
+  const enc = new TextEncoder();
+  const a = enc.encode(adminToken);
+  const b = enc.encode(bearer);
+  const match = a.byteLength === b.byteLength && timingSafeEqual(a, b);
+  if (!match) {
+    return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+  }
+  return null;
+}
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -41,6 +63,9 @@ interface BillingReport {
 }
 
 async function handleGet(req: Request): Promise<NextResponse> {
+  const adminDeny = requireAdminToken(req);
+  if (adminDeny) return adminDeny;
+
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
   const tenantFilter = tenantIdFromGate(gate);
@@ -94,9 +119,11 @@ async function handleGet(req: Request): Promise<NextResponse> {
             totals[m as BillingMetric] = (totals[m as BillingMetric] ?? 0) + (n ?? 0);
           }
         }
-      } catch { /* ignore */ }
+      } catch (err) { console.warn("[hawkeye] admin/billing: bucket parse failed (skipping):", err); }
     }
-  } catch { /* getBillingStore() threw — return empty counters */ }
+  } catch (err) {
+    console.error("[hawkeye] admin/billing: getBillingStore() threw — returning empty counters:", err);
+  }
 
   const report: BillingReport = {
     tenant: allTenants ? null : tenantFilter,

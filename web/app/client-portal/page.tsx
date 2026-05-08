@@ -312,9 +312,11 @@ export default function ClientPortalPage() {
       if (res.ok) {
         const data = (await res.json()) as ClientRisk;
         setClientRisk(data);
+      } else {
+        console.error(`[hawkeye] client-portal/client-risk HTTP ${res.status}`);
       }
-    } catch {
-      /* non-fatal */
+    } catch (err) {
+      console.error("[hawkeye] client-portal/client-risk threw:", err);
     } finally {
       setClientRiskLoading(false);
     }

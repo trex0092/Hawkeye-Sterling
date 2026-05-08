@@ -66,7 +66,8 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const { consignments } = body;
 
-  try { writeAuditEvent("analyst", "shipments.ai-tbml-scan", "consignment-portfolio"); } catch { /* non-fatal */ }
+  try { writeAuditEvent("analyst", "shipments.ai-tbml-scan", "consignment-portfolio"); }
+  catch (err) { console.warn("[hawkeye] shipment-tbml writeAuditEvent failed:", err); }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {

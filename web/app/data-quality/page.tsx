@@ -105,8 +105,12 @@ export default function DataQualityPage() {
       if (res.ok) {
         const data = (await res.json()) as DataQualityPlan;
         setPlan(data);
+      } else {
+        console.error(`[hawkeye] data-quality-fix HTTP ${res.status}`);
       }
-    } catch { /* non-fatal */ } finally {
+    } catch (err) {
+      console.error("[hawkeye] data-quality-fix threw:", err);
+    } finally {
       setPlanLoading(false);
     }
   };

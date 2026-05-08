@@ -21,10 +21,19 @@ const EDD_STORAGE = "hawkeye.edd-checklist.v1";
 
 function loadEddChecks(): Record<string, boolean> {
   if (typeof window === "undefined") return {};
-  try { const r = window.localStorage.getItem(EDD_STORAGE); return r ? (JSON.parse(r) as Record<string, boolean>) : {}; } catch { return {}; }
+  try {
+    const r = window.localStorage.getItem(EDD_STORAGE);
+    return r ? (JSON.parse(r) as Record<string, boolean>) : {};
+  } catch (err) {
+    console.warn("[hawkeye] cdd-review EDD checks parse failed — returning empty:", err);
+    return {};
+  }
 }
 function saveEddChecks(c: Record<string, boolean>) {
-  try { window.localStorage.setItem(EDD_STORAGE, JSON.stringify(c)); } catch { /* */ }
+  try { window.localStorage.setItem(EDD_STORAGE, JSON.stringify(c)); }
+  catch (err) {
+    console.error("[hawkeye] cdd-review EDD checks persist failed — checklist state will be lost:", err);
+  }
 }
 
 type EddSection = "documents" | "questions" | "verifications" | "redFlagsToMonitor";
@@ -132,11 +141,17 @@ function loadManual(): ReviewRecord[] {
   try {
     const raw = window.localStorage.getItem(STORAGE);
     return raw ? (JSON.parse(raw) as ReviewRecord[]) : [];
-  } catch { return []; }
+  } catch (err) {
+    console.warn("[hawkeye] cdd-review manual reviews parse failed — returning empty:", err);
+    return [];
+  }
 }
 
 function saveManual(rows: ReviewRecord[]) {
-  try { window.localStorage.setItem(STORAGE, JSON.stringify(rows.filter((r) => r.source === "manual"))); } catch { /* */ }
+  try { window.localStorage.setItem(STORAGE, JSON.stringify(rows.filter((r) => r.source === "manual"))); }
+  catch (err) {
+    console.error("[hawkeye] cdd-review manual reviews persist failed — review edits will be lost:", err);
+  }
 }
 
 function casesToRecords(cases: CaseRecord[]): ReviewRecord[] {
@@ -239,9 +254,12 @@ export default function CddReviewPage() {
         setEddChecks({});
         saveEddChecks({});
         setTimeout(() => eddRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+      } else {
+        console.error(`[hawkeye] cdd-review/edd-checklist HTTP ${res.status}`);
       }
-    } catch { /* silent */ }
-    finally { setEddLoading(false); }
+    } catch (err) {
+      console.error("[hawkeye] cdd-review/edd-checklist threw:", err);
+    } finally { setEddLoading(false); }
   };
 
   const eddTotalItems = eddResult
@@ -338,10 +356,15 @@ export default function CddReviewPage() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ reviews }),
       });
+      if (!res.ok) {
+        console.error(`[hawkeye] cdd-adequacy HTTP ${res.status}`);
+        return;
+      }
       const data = (await res.json()) as CddAdequacy;
       setAdequacy(data);
-    } catch { /* non-fatal */ }
-    finally { setAdequacyLoading(false); }
+    } catch (err) {
+      console.error("[hawkeye] cdd-adequacy threw:", err);
+    } finally { setAdequacyLoading(false); }
   };
 
   return (

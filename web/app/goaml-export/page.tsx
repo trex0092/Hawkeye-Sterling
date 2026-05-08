@@ -43,7 +43,8 @@ function loadDraft(): DraftEnvelope {
       ...parsed,
       subject: { ...BLANK.subject, ...(parsed.subject ?? {}) },
     };
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] goaml-export draft parse failed — using BLANK:", err);
     return BLANK;
   }
 }
@@ -52,8 +53,8 @@ function saveDraft(d: DraftEnvelope): void {
   if (typeof window === "undefined") return;
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
-  } catch {
-    /* */
+  } catch (err) {
+    console.error("[hawkeye] goaml-export draft persist failed — STR draft will be lost on reload:", err);
   }
 }
 
@@ -101,11 +102,15 @@ export default function GoAmlExportPage() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ narrative: draft.narrative, reportCode: draft.reportCode, subjectName: draft.subject.name, subjectEntityType: draft.subject.entityType, amountAed: draft.amountAed }),
       });
-      if (!res.ok) return;
+      if (!res.ok) {
+        console.error(`[hawkeye] goaml-validate-ai HTTP ${res.status}`);
+        return;
+      }
       const data = await res.json() as { ok: boolean; score: number; grade: string; missingElements: string[]; tippingOffRisk: boolean; tippingOffFlags: string[]; suggestions: string[]; fatalIssues: string[]; fiuReadiness: string };
       if (data.ok) setAiValidation(data);
-    } catch { /* silent */ }
-    finally { setAiValidating(false); }
+    } catch (err) {
+      console.error("[hawkeye] goaml-validate-ai threw:", err);
+    } finally { setAiValidating(false); }
   };
 
   const handleGenerate = async () => {

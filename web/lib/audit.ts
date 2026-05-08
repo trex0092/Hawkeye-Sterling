@@ -33,7 +33,10 @@ export function loadAuditEntries(): AuditEntry[] {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     return raw ? (JSON.parse(raw) as AuditEntry[]) : [];
-  } catch { return []; }
+  } catch (err) {
+    console.error("[hawkeye] audit ledger corrupted (parse failed) — returning empty:", err);
+    return [];
+  }
 }
 
 export function writeAuditEvent(
@@ -53,7 +56,13 @@ export function writeAuditEvent(
   const entry: AuditEntry = { ...partial, hash: chainHash(partial, prevHash) };
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify([...entries, entry]));
-  } catch { /* storage full — non-fatal */ }
+  } catch (err) {
+    console.error(
+      "[hawkeye] audit ledger NOT persisted (storage full or disabled). Entry will be lost on reload:",
+      err,
+      entry,
+    );
+  }
   return entry;
 }
 

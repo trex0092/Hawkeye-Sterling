@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { IsoDateInput } from "@/components/ui/IsoDateInput";
 
 interface Props {
   snoozedUntil: string | null;
@@ -45,12 +46,10 @@ export function SnoozeButton({ snoozedUntil, snoozeReason, onSnooze, onClearSnoo
 
   return (
     <div className="inline-flex items-center gap-1 p-1 rounded border border-amber bg-bg-panel">
-      <input
-        type="date"
+      <IsoDateInput
         value={until}
-        onChange={(e) => setUntil(e.target.value)}
+        onChange={(iso) => setUntil(iso)}
         className="px-1.5 py-0.5 text-11 border border-hair-2 rounded bg-bg-1 text-ink-0"
-        min={new Date().toISOString().slice(0, 10)}
       />
       <input
         value={reason}

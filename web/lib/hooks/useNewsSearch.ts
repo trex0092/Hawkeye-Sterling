@@ -70,7 +70,10 @@ async function fetchDossier(
         // 504 on upstream timeout, etc.) — fall through to retry.
         lastErr = new Error(`server ${r.status}`);
       } else {
-        const payload = (await r.json().catch(() => null)) as
+        const payload = (await r.json().catch((err: unknown) => {
+          console.warn("[hawkeye] useNewsSearch response parse failed:", err);
+          return null;
+        })) as
           | ({ ok: true } & NewsDossier)
           | { ok: false; error?: string; detail?: string }
           | null;

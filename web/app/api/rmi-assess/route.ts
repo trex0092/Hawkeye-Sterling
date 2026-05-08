@@ -66,7 +66,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "smelters array is required" }, { status: 400 });
   }
 
-  try { writeAuditEvent("analyst", "rmi.ai-supply-chain-assessment", "smelter-portfolio"); } catch { /* non-fatal */ }
+  try { writeAuditEvent("analyst", "rmi.ai-supply-chain-assessment", "smelter-portfolio"); }
+  catch (err) { console.warn("[hawkeye] rmi-assess writeAuditEvent failed:", err); }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {

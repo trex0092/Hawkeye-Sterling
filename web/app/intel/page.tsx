@@ -142,8 +142,9 @@ function RegulatoryFeedPanel() {
       setSources(data.sources ?? []);
       setFetchedAt(data.fetchedAt ?? "");
       void runTriage(loadedItems);
-    } catch { /* silently ignore */ }
-    finally { setLoading(false); }
+    } catch (err) {
+      console.error("[hawkeye] intel/news-search threw — feed empty until next refresh:", err);
+    } finally { setLoading(false); }
   }, []);
 
   useEffect(() => { void load(); }, [load]);
@@ -302,14 +303,16 @@ function AdverseMediaPanel() {
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
       setWatch(raw ? JSON.parse(raw) : DEFAULTS);
-    } catch {
+    } catch (err) {
+      console.warn("[hawkeye] intel watchlist parse failed — using defaults:", err);
       setWatch(DEFAULTS);
     }
   }, []);
 
   const save = (list: string[]) => {
     setWatch(list);
-    try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); } catch { /* */ }
+    try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); }
+    catch (err) { console.error("[hawkeye] intel watchlist persist failed — entries will be lost:", err); }
   };
 
   const add = () => {
@@ -457,9 +460,12 @@ function JurisdictionIntelPanel() {
       if (res.ok) {
         const data = await res.json() as JurisdictionIntel;
         if (data.ok) setIntel(data);
+      } else {
+        console.error(`[hawkeye] jurisdiction-intel HTTP ${res.status}`);
       }
-    } catch { /* silent */ }
-    finally { setLoading(false); }
+    } catch (err) {
+      console.error("[hawkeye] jurisdiction-intel threw:", err);
+    } finally { setLoading(false); }
   };
 
   const inputCls = "text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-ink-0 focus:outline-none focus:border-brand";

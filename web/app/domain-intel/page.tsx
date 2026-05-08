@@ -57,8 +57,10 @@ export default function DomainIntelPage() {
       const data = await res.json() as DomainIntelResult;
       if (!data.ok) setError(data.error ?? "Scan failed");
       else setResult(data);
-    } catch { setError("Request failed"); }
-    finally { setLoading(false); }
+    } catch (err) {
+      console.error("[hawkeye] domain-intel threw:", err);
+      setError("Request failed");
+    } finally { setLoading(false); }
   }
 
   return (

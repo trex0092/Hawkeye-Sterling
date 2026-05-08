@@ -63,7 +63,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "entries array is required" }, { status: 400 });
   }
 
-  try { writeAuditEvent("mlro", "audit-trail.ai-anomaly-scan", "trail"); } catch { /* non-fatal */ }
+  try { writeAuditEvent("mlro", "audit-trail.ai-anomaly-scan", "trail"); }
+  catch (err) { console.warn("[hawkeye] audit-anomaly writeAuditEvent failed:", err); }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {

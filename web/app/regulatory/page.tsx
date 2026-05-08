@@ -909,7 +909,10 @@ export default function RegulatoryPage() {
           setClassifyStatus("error");
         }
       })
-      .catch(() => setClassifyStatus("error"));
+      .catch((err: unknown) => {
+        console.error("[hawkeye] regulatory/classify-urgency threw:", err);
+        setClassifyStatus("error");
+      });
   }, []);
 
   const loadFeed = useCallback(() => {
@@ -924,7 +927,10 @@ export default function RegulatoryPage() {
         setFeedStatus("ok");
         classifyItems(items);
       })
-      .catch(() => setFeedStatus("error"));
+      .catch((err: unknown) => {
+        console.error("[hawkeye] regulatory-feed threw:", err);
+        setFeedStatus("error");
+      });
   }, [classifyItems]);
 
   const loadCalendar = useCallback(() => {
@@ -935,7 +941,10 @@ export default function RegulatoryPage() {
         setCalData(data);
         setCalStatus("ok");
       })
-      .catch(() => setCalStatus("error"));
+      .catch((err: unknown) => {
+        console.error("[hawkeye] regulatory-calendar-live threw:", err);
+        setCalStatus("error");
+      });
   }, []);
 
   useEffect(() => {

@@ -45,6 +45,7 @@ export default function ReplayPage() {
         { label: "Replay history load failed" },
       );
       if (!res.ok || !res.data?.ok) {
+        console.error("[hawkeye] screening/replay history load failed:", res.error, res.data);
         setError(res.error ?? "history unavailable");
         return;
       }
@@ -73,6 +74,7 @@ export default function ReplayPage() {
     });
     setLoadingToday(false);
     if (!res.ok || !res.data?.ok) {
+      console.error("[hawkeye] screening/replay quick-screen re-run failed:", res.error, res.data);
       setError(res.error ?? "re-run failed");
       return;
     }
@@ -86,7 +88,8 @@ export default function ReplayPage() {
       <Header />
       <main className="max-w-5xl mx-auto px-10 py-8">
         <div className="mb-6">
-          <div className="font-mono text-11 tracking-wide-8 uppercase text-ink-2 mb-2">
+          <div className="flex items-center gap-1.5 font-mono text-11 tracking-wide-8 uppercase text-brand mb-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-brand shrink-0 shadow-[0_0_6px_var(--brand)] opacity-80" />
             BUREAU II · SCREENING REPLAY
           </div>
           <h1 className="font-display font-normal text-32 text-ink-0 leading-tight">

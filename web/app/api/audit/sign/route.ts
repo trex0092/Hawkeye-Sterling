@@ -188,9 +188,21 @@ async function handleSign(req: Request): Promise<NextResponse> {
 
   // Zero-pad to 10 digits so lexical blob listing = chronological order.
   const paddedSeq = String(nextSequence).padStart(10, "0");
-  await setJson(`audit/entry/${paddedSeq}.json`, entry);
-  // Head hash is id — links the next entry to this one.
-  await setJson("audit/head.json", { sequence: nextSequence, hash: id });
+  try {
+    await setJson(`audit/entry/${paddedSeq}.json`, entry);
+    // Head hash is id — links the next entry to this one.
+    await setJson("audit/head.json", { sequence: nextSequence, hash: id });
+  } catch (err) {
+    console.error(
+      "[hawkeye] audit/sign: Blobs write failed — entry NOT persisted, sequence NOT advanced:",
+      err,
+      { sequence: nextSequence, paddedSeq },
+    );
+    return NextResponse.json(
+      { ok: false, error: "Audit entry could not be persisted to durable store" },
+      { status: 500 },
+    );
+  }
 
   return NextResponse.json({ ok: true, entry });
 }

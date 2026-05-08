@@ -474,7 +474,8 @@ export default function ApiDocsPage() {
           <div className="font-mono text-10 font-semibold text-amber tracking-wide-4 uppercase mb-1">
             MODULE 47
           </div>
-          <div className="font-mono text-[11px] tracking-widest uppercase text-ink-3 mb-2">
+          <div className="flex items-center gap-1.5 font-mono text-[11px] tracking-widest uppercase text-ink-3 mb-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-brand shrink-0 shadow-[0_0_6px_var(--brand)] opacity-80" />
             REST · JSON · OpenAPI 3.1
           </div>
           <h1 className="text-[22px] font-semibold tracking-tight text-ink-0 leading-snug mb-1">

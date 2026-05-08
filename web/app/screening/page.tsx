@@ -206,6 +206,14 @@ function applyFilters(subjects: Subject[], filters: FilterKey[], operatorName?: 
   return result;
 }
 
+function subjectSeverity(riskScore: number): "clear" | "low" | "medium" | "high" | "critical" {
+  if (riskScore === 0) return "clear";
+  if (riskScore >= 95) return "critical";
+  if (riskScore >= 85) return "high";
+  if (riskScore >= 70) return "medium";
+  return "low";
+}
+
 function sortSubjects(
   subjects: Subject[],
   key: SortKey,
@@ -487,7 +495,8 @@ function loadSubjects(): Subject[] {
     // the seed corpus so the UI always has something to show.
     const valid = parsed.filter(isPersistedSubject);
     return valid.length > 0 ? valid : SUBJECTS;
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] screening loadSubjects parse failed — using SUBJECTS seed:", err);
     return SUBJECTS;
   }
 }
@@ -560,6 +569,7 @@ export default function ScreeningPage() {
   const [sortKey, setSortKey] = useState<SortKey>("riskScore");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [statusFilter, setStatusFilter] = useState<Subject["status"] | "all">("all");
+  const [severityFilter, setSeverityFilter] = useState<"clear" | "low" | "medium" | "high" | "critical" | "all">("all");
   // Subject IDs whose quick-screen API call is in-flight. Drives the
   // "Screening…" badge and pulsing risk bar in the table.
   const [pendingIds, setPendingIds] = useState<ReadonlySet<string>>(new Set());
@@ -625,12 +635,14 @@ export default function ScreeningPage() {
     setSubjects(loaded);
     setSelectedId((prev) => prev ?? loaded[0]?.id ?? null);
     setHydrated(true);
-    try { setOperatorName(window.localStorage.getItem("hawkeye.operator") ?? ""); } catch {}
+    try { setOperatorName(window.localStorage.getItem("hawkeye.operator") ?? ""); }
+    catch (err) { console.warn("[hawkeye] screening operator-name read failed:", err); }
   }, []);
 
   useEffect(() => {
     const sync = () => {
-      try { setOperatorName(window.localStorage.getItem("hawkeye.operator") ?? ""); } catch {}
+      try { setOperatorName(window.localStorage.getItem("hawkeye.operator") ?? ""); }
+      catch (err) { console.warn("[hawkeye] screening operator-name sync read failed:", err); }
     };
     window.addEventListener("hawkeye:operator-updated", sync);
     return () => window.removeEventListener("hawkeye:operator-updated", sync);
@@ -640,15 +652,17 @@ export default function ScreeningPage() {
     try {
       const loaded = loadSubjects();
       setSubjects(loaded);
-    } catch { /* ignore */ }
+    } catch (err) {
+      console.error("[hawkeye] screening handleRefresh failed:", err);
+    }
   }, []);
 
   useEffect(() => {
     if (!hydrated) return;
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(subjects));
-    } catch {
-      /* quota / disabled storage — skip */
+    } catch (err) {
+      console.error("[hawkeye] screening subjects persist failed — subject edits will be lost on reload:", err);
     }
   }, [subjects, hydrated]);
 
@@ -681,6 +695,9 @@ export default function ScreeningPage() {
     });
     if (statusFilter !== "all") {
       list = list.filter((s) => s.status === statusFilter);
+    }
+    if (severityFilter !== "all") {
+      list = list.filter((s) => subjectSeverity(s.riskScore) === severityFilter);
     }
     if (minRisk > 0) {
       list = list.filter((s) => s.riskScore >= minRisk);
@@ -725,7 +742,7 @@ export default function ScreeningPage() {
         .map(({ s }) => s);
     }
     return sortSubjects(list, sortKey, sortDir);
-  }, [subjects, activeFilters, operatorName, deferredQuery, sortKey, sortDir, statusFilter, minRisk, aiFilter, nlMatchIds]);
+  }, [subjects, activeFilters, operatorName, deferredQuery, sortKey, sortDir, statusFilter, severityFilter, minRisk, aiFilter, nlMatchIds]);
 
   const selected = useMemo(
     () => subjects.find((s) => s.id === selectedId) ?? null,
@@ -1253,10 +1270,16 @@ export default function ScreeningPage() {
       });
       // Read as text first so a non-JSON 502 / HTML error page doesn't
       // crash the JSON parser and mask the real status code.
-      const raw = await res.text().catch(() => "");
+      const raw = await res.text().catch((err: unknown) => {
+        console.warn("[hawkeye] screening adverse-media res.text() failed:", err);
+        return "";
+      });
       let data: AdverseMediaApiResponse | null = null;
       if (raw) {
-        try { data = JSON.parse(raw) as AdverseMediaApiResponse; } catch { /* non-JSON */ }
+        try { data = JSON.parse(raw) as AdverseMediaApiResponse; }
+        catch (err) {
+          console.error(`[hawkeye] screening adverse-media non-JSON HTTP ${res.status} — first 200 chars: ${raw.slice(0, 200)}`, err);
+        }
       }
       if (!res.ok) {
         setAmError(data?.error ?? `Search failed - server ${res.status}`);
@@ -1404,7 +1427,7 @@ export default function ScreeningPage() {
   return (
     <>
       <Header />
-      <div className="grid min-h-[calc(100vh-84px)] grid-cols-1 md:grid-cols-[220px_1fr] lg:grid-cols-[220px_1fr_480px]">
+      <div className="grid min-h-[calc(100vh-84px)] grid-cols-1 md:grid-cols-[220px_1fr] lg:grid-cols-[220px_1fr_480px] border-t-2 border-brand-line">
         <div className="hidden md:block">
           <Sidebar
             filters={dynamicFilters}
@@ -1577,6 +1600,8 @@ export default function ScreeningPage() {
             onSortChange={handleSortChange}
             statusFilter={statusFilter}
             onStatusFilterChange={setStatusFilter}
+            severityFilter={severityFilter}
+            onSeverityFilterChange={setSeverityFilter}
             columns={columns}
             onColumnsChange={handleColumnsChange}
             onBulkImport={() => setBulkImportOpen(true)}
@@ -1810,7 +1835,6 @@ export default function ScreeningPage() {
             // when the upstream feed is degraded (e.g. Taranis returned 0
             // items). Normalise everything so the UI doesn't crash on
             // missing arrays / undefined counters.
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const v = amVerdict!;
             const findings = v.findings ?? [];
             const fatfRecs = v.fatfRecommendations ?? [];

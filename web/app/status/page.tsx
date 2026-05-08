@@ -172,9 +172,15 @@ export default function StatusPage() {
     const load = async () => {
       try {
         const r = await fetch("/api/status", { cache: "no-store" });
+        if (!r.ok) {
+          console.error(`[hawkeye] status HTTP ${r.status}`);
+          if (active) setErr(`HTTP ${r.status}`);
+          return;
+        }
         const payload = (await r.json()) as StatusPayload;
         if (active) setData(payload);
       } catch (e) {
+        console.error("[hawkeye] status threw:", e);
         if (active) setErr(e instanceof Error ? e.message : String(e));
       }
     };
@@ -268,8 +274,19 @@ export default function StatusPage() {
                   {data.status.toUpperCase()}
                 </span>
                 <span className="text-14 text-ink-0">
-                  All services{" "}
-                  {data.status === "operational" ? "operational" : data.status}
+                  {data.status === "operational"
+                    ? "All services operational"
+                    : (() => {
+                        const affected = [...data.checks, ...data.externalChecks].filter(
+                          (c) => c.status !== "operational"
+                        );
+                        const downCount = affected.filter((c) => c.status === "down").length;
+                        const degradedCount = affected.filter((c) => c.status === "degraded").length;
+                        const parts: string[] = [];
+                        if (downCount > 0) parts.push(`${downCount} service${downCount > 1 ? "s" : ""} down`);
+                        if (degradedCount > 0) parts.push(`${degradedCount} degraded`);
+                        return parts.join(", ");
+                      })()}
                 </span>
                 {data.cognitiveGrade && (
                   <div className="ml-auto text-right">
@@ -562,7 +579,14 @@ function AsanaRebuildSection() {
     setErrMsg("");
     try {
       const res = await fetch("/api/asana-rebuild-sections", { method: "POST" });
-      const data = await res.json() as { ok: boolean; results?: typeof results; error?: string };
+      let data: { ok: boolean; results?: typeof results; error?: string };
+      try {
+        data = await res.json() as { ok: boolean; results?: typeof results; error?: string };
+      } catch {
+        setErrMsg(`Server error (HTTP ${res.status}) — the function may have timed out. Check Netlify function logs.`);
+        setState("error");
+        return;
+      }
       if (data.ok) {
         setResults(data.results ?? []);
         setState("done");

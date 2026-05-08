@@ -196,11 +196,14 @@ export function loadStoredLocale(): Locale {
   try {
     const v = window.localStorage.getItem("hawkeye.locale");
     if (v === "en" || v === "ar" || v === "zh") return v;
-  } catch { /* ignore */ }
+  } catch (err) {
+    console.warn("[hawkeye] locale load failed — falling back to browser detection:", err);
+  }
   return detectLocaleFromBrowser();
 }
 
 export function persistLocale(locale: Locale): void {
   if (typeof window === "undefined") return;
-  try { window.localStorage.setItem("hawkeye.locale", locale); } catch { /* ignore */ }
+  try { window.localStorage.setItem("hawkeye.locale", locale); }
+  catch (err) { console.warn("[hawkeye] locale persist failed (localStorage disabled?):", err); }
 }

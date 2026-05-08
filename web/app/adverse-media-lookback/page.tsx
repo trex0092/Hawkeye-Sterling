@@ -158,11 +158,17 @@ function load(): AmEntry[] {
   try {
     const raw = window.localStorage.getItem(STORAGE);
     return raw ? (JSON.parse(raw) as AmEntry[]) : [];
-  } catch { return []; }
+  } catch (err) {
+    console.warn("[hawkeye] adverse-media-lookback parse failed — returning empty:", err);
+    return [];
+  }
 }
 
 function save(rows: AmEntry[]) {
-  try { window.localStorage.setItem(STORAGE, JSON.stringify(rows)); } catch { /* */ }
+  try { window.localStorage.setItem(STORAGE, JSON.stringify(rows)); }
+  catch (err) {
+    console.error("[hawkeye] adverse-media-lookback persist failed — entries will be lost:", err);
+  }
 }
 
 /** "dd/mm/yyyy" → year number */
@@ -230,8 +236,12 @@ export default function AdverseMediaLookbackPage() {
       if (res.ok) {
         const data = (await res.json()) as AmAssessment;
         setAssessment((prev) => ({ ...prev, [subject]: data }));
+      } else {
+        console.error(`[hawkeye] adverse-media-lookback assess HTTP ${res.status} for ${subject}`);
       }
-    } catch { /* non-fatal */ } finally {
+    } catch (err) {
+      console.error(`[hawkeye] adverse-media-lookback assess threw for ${subject}:`, err);
+    } finally {
       setAssessing((prev) => ({ ...prev, [subject]: false }));
     }
   };
@@ -256,8 +266,12 @@ export default function AdverseMediaLookbackPage() {
       if (res.ok) {
         const data = (await res.json()) as CrossCorrelateResult;
         setCorrelations((prev) => ({ ...prev, [subject]: data }));
+      } else {
+        console.error(`[hawkeye] adverse-media-lookback cross-correlate HTTP ${res.status} for ${subject}`);
       }
-    } catch { /* non-fatal */ } finally {
+    } catch (err) {
+      console.error(`[hawkeye] adverse-media-lookback cross-correlate threw for ${subject}:`, err);
+    } finally {
       setCorrelating((prev) => ({ ...prev, [subject]: false }));
     }
   };

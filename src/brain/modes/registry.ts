@@ -66,10 +66,52 @@ import { BEHAVIORAL_BATCH_APPLIES } from './wave3-behavioral-batch.js';
 import { PEP_PREDICATE_BATCH_APPLIES } from './wave3-pep-predicate-batch.js';
 import { SECURITIES_DPMS_OPS_BATCH_APPLIES } from './wave3-securities-dpms-ops-batch.js';
 
+// Wave-3 modules implemented from public UAE/FATF regulations
+// (see src/brain/modes/WAVE_3_SPEC_DRAFTS.md for cited thresholds).
+import { reCashPurchaseCheckApply } from './wave3-re-cash-purchase.js';
+import { npoGranteeDiligenceApply } from './wave3-npo-grantee-diligence.js';
+import { lcConfirmationGapApply } from './wave3-lc-confirmation-gap.js';
+import { flagOfConvenienceApply } from './wave3-flag-of-convenience.js';
+import { portStateControlApply } from './wave3-port-state-control.js';
+import { oecdAnnexIIDisciplineApply } from './wave3-oecd-annex-ii.js';
+import { lbmaFiveStepGateApply } from './wave3-lbma-five-step.js';
+import { cargoManifestCrossCheckApply } from './wave3-cargo-manifest-cross-check.js';
+
+// Wave-3 batch-2 modules (PR feat/wave3-implement-batch-2).
+// See WAVE_3_SPEC_DRAFTS_BATCH_2.md for citations.
+import { reGoldenVisaInvestmentApply } from './wave3-re-golden-visa.js';
+import { reShellOwnerCheckApply } from './wave3-re-shell-owner.js';
+import { npoConflictZoneFlowApply } from './wave3-npo-conflict-zone.js';
+import { npoProgrammeVsCashRatioApply } from './wave3-npo-programme-vs-cash.js';
+import { modernSlaveryIndicatorApply } from './wave3-modern-slavery.js';
+import { childLabourIndicatorApply } from './wave3-child-labour.js';
+import { conflictMineralDocumentationApply } from './wave3-conflict-mineral-doc.js';
+import { chainOfCustodyBreakApply } from './wave3-chain-of-custody-break.js';
+import { assayCertificateAuditApply } from './wave3-assay-certificate.js';
+import { vesselBeneficialOwnerApply } from './wave3-vessel-beneficial-owner.js';
+
+// Wave-3 batch-3 modules (PR feat/wave3-implement-batch-3).
+// Insurance — FATF Life-Insurance Guidance Oct 2018 + IAIS ICP 22.
+// Cyber-fraud — NIST SP 800-177r1 + FBI IC3 BEC + UAE CBUAE Cyber 21/2018.
+import { insEarlySurrenderCashApply } from './wave3-ins-early-surrender.js';
+import { insPremiumOverfundApply } from './wave3-ins-premium-overfund.js';
+import { insPolicyAssignmentApply } from './wave3-ins-policy-assignment.js';
+import { insBeneficiaryRotationApply } from './wave3-ins-beneficiary-rotation.js';
+import { insCrossBorderNomineeApply } from './wave3-ins-cross-border-nominee.js';
+import { insSinglePremiumScrutinyApply } from './wave3-ins-single-premium.js';
+import { emailSpoofForensicApply } from './wave3-email-spoof.js';
+import { typosquatDomainDetectionApply } from './wave3-typosquat-domain.js';
+import { invoiceRedirectionTraceApply } from './wave3-invoice-redirection.js';
+import { ceoImpersonationSignalApply } from './wave3-ceo-impersonation.js';
+
 export type ModeApply = (ctx: BrainContext) => Promise<Finding>;
 
 const WAVE3_MODE_APPLIES: Record<string, ModeApply> = {
   art_auction_provenance_gap: artProvenanceGapApply,
+  // Roadmap alias — `WAVE_3_ROADMAP_IDS` lists this mode as
+  // `art_provenance_chain`. Routes to the implemented detector so the
+  // roadmap ID becomes live without renaming the apply() module.
+  art_provenance_chain: artProvenanceGapApply,
   bridge_crossing_trace: bridgeCrossingTraceApply,
   dpms_cash_structuring_split: dpmsStructuringApply,
   family_office_trust_transparency: familyOfficeTrustApply,
@@ -79,7 +121,27 @@ const WAVE3_MODE_APPLIES: Record<string, ModeApply> = {
   professional_enabler_pattern: professionalEnablerApply,
   tbml_invoice_manipulation: tbmlInvoiceApply,
   utxo_clustering: utxoClusteringApply,
+  // Roadmap aliases — `WAVE_3_ROADMAP_IDS` enumerates four sub-heuristics
+  // that the utxoClusteringApply module already detects as core signals
+  // (per top-of-file docstring in wave3-utxo-clustering.ts):
+  //   address_reuse_analysis  → ADDRESS_REUSE heuristic (counts ≥5 reuses).
+  //   heuristic_common_input  → COMMON_INPUT_OWNERSHIP (Meiklejohn 2013).
+  //   heuristic_change_address → CHANGE_ADDRESS round-vs-remainder split.
+  //   peel_chain               → PEEL_CHAIN_LINKAGE residual cluster pattern.
+  // Aliasing routes the roadmap IDs to the same proven implementation
+  // (no new code, no fabrication) so callers using the longer roadmap
+  // names get the same finding the canonical mode produces.
+  address_reuse_analysis: utxoClusteringApply,
+  heuristic_common_input: utxoClusteringApply,
+  heuristic_change_address: utxoClusteringApply,
+  peel_chain: utxoClusteringApply,
   vessel_ais_gap: vesselAisGapApply,
+  // Roadmap alias — `WAVE_3_ROADMAP_IDS` lists this mode as
+  // `vessel_ais_gap_analysis`. Same vesselAisGapApply implementation
+  // (AIS dark-period detection, sanctioned port nexus, STS-transfer
+  // signature, flag-hopping). Anchors: FATF R.7 (vessel-related TFS) +
+  // UAE FDL 10/2025 Art.15 + IMO regulations + UN sanctions vessel lists.
+  vessel_ais_gap_analysis: vesselAisGapApply,
   cash_courier_threshold: cashCourierThresholdApply,
   shell_company_indicator: shellCompanyApply,
   pep_proximity_chain: pepProximityApply,
@@ -95,6 +157,51 @@ const WAVE3_MODE_APPLIES: Record<string, ModeApply> = {
   legal_pooled_account_abuse: legalPooledAccountApply,
   non_face_to_face_kyc_anomaly: nonFaceToFaceKycApply,
   nested_designation_match: nestedDesignationApply,
+
+  // ── Wave-3 modules from public UAE/FATF regulations (PR feat/wave3-implement-8-modes) ──
+  // Each implementation cites its threshold source in its top-of-file
+  // docstring. Lines marked ⚠️ VERIFY in WAVE_3_SPEC_DRAFTS.md are
+  // best-guess interpolations pending MLRO sign-off.
+  re_cash_purchase_check: reCashPurchaseCheckApply,
+  npo_grantee_diligence: npoGranteeDiligenceApply,
+  lc_confirmation_gap: lcConfirmationGapApply,
+  flag_of_convenience: flagOfConvenienceApply,
+  port_state_control: portStateControlApply,
+  oecd_annex_ii_discipline: oecdAnnexIIDisciplineApply,
+  lbma_five_step_gate: lbmaFiveStepGateApply,
+  cargo_manifest_cross_check: cargoManifestCrossCheckApply,
+
+  // ── Wave-3 batch-2 modules (PR feat/wave3-implement-batch-2) ──
+  // Each implementation cites public regulatory anchors in its top-of-file
+  // docstring. Lines marked ⚠️ VERIFY in WAVE_3_SPEC_DRAFTS_BATCH_2.md
+  // are interpolations pending MLRO sign-off.
+  re_golden_visa_investment: reGoldenVisaInvestmentApply,
+  re_shell_owner_check: reShellOwnerCheckApply,
+  npo_conflict_zone_flow: npoConflictZoneFlowApply,
+  npo_programme_vs_cash_ratio: npoProgrammeVsCashRatioApply,
+  modern_slavery_indicator: modernSlaveryIndicatorApply,
+  child_labour_indicator: childLabourIndicatorApply,
+  conflict_mineral_documentation: conflictMineralDocumentationApply,
+  chain_of_custody_break: chainOfCustodyBreakApply,
+  assay_certificate_audit: assayCertificateAuditApply,
+  vessel_beneficial_owner: vesselBeneficialOwnerApply,
+
+  // ── Wave-3 batch-3 modules (PR feat/wave3-implement-batch-3) ──
+  // Insurance: FATF Life-Insurance Guidance Oct 2018 + IAIS ICP 22 +
+  //   UAE CBUAE Reg 26/2014.
+  // Cyber-fraud: NIST SP 800-177r1 + FBI IC3 BEC + UAE CBUAE Cyber
+  //   Risk Management Standard 21/2018.
+  ins_early_surrender_cash: insEarlySurrenderCashApply,
+  ins_premium_overfund: insPremiumOverfundApply,
+  ins_policy_assignment: insPolicyAssignmentApply,
+  ins_beneficiary_rotation: insBeneficiaryRotationApply,
+  ins_cross_border_nominee: insCrossBorderNomineeApply,
+  ins_single_premium_scrutiny: insSinglePremiumScrutinyApply,
+  email_spoof_forensic: emailSpoofForensicApply,
+  typosquat_domain_detection: typosquatDomainDetectionApply,
+  invoice_redirection_trace: invoiceRedirectionTraceApply,
+  ceo_impersonation_signal: ceoImpersonationSignalApply,
+
   ...SANCTIONS_BATCH_APPLIES,
   ...TBML_BATCH_APPLIES,
   ...CRYPTO_BATCH_APPLIES,

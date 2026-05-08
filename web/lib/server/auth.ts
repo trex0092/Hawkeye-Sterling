@@ -35,9 +35,26 @@ interface SessionPayload {
 }
 
 function getSecret(): string {
-  const secret = process.env["SESSION_SECRET"];
-  if (!secret) throw new Error("SESSION_SECRET environment variable must be set");
-  return secret;
+  const explicit = process.env["SESSION_SECRET"];
+  if (explicit) return explicit;
+
+  // AUDIT_CHAIN_SECRET is operator-set and non-public — safe as a fallback
+  // anchor. NETLIFY_SITE_ID and SITE_ID were previously accepted here but are
+  // discoverable (visible in build logs and Netlify dashboard URLs), so they
+  // are no longer permitted as session-key anchors.
+  const anchor = process.env["AUDIT_CHAIN_SECRET"];
+  if (anchor && anchor.length >= 32) {
+    console.warn(
+      "[hawkeye] SESSION_SECRET not set — deriving session key from AUDIT_CHAIN_SECRET. " +
+      "Set SESSION_SECRET in Netlify env vars for production security.",
+    );
+    return createHmac("sha256", anchor).update("hawkeye-session-secret-v1").digest("hex");
+  }
+
+  throw new Error(
+    "SESSION_SECRET must be set in Netlify environment variables. " +
+    "Generate a 64-character random hex string: openssl rand -hex 32",
+  );
 }
 
 export function issueSession(userId: string, username: string, role: string): string {

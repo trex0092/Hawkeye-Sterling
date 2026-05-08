@@ -59,9 +59,15 @@ export function httpSink(endpoint: string, bearerToken?: string, fetchImpl: type
       const headers: Record<string, string> = { 'content-type': 'application/json' };
       if (bearerToken) headers.Authorization = `Bearer ${bearerToken}`;
       await fetchImpl(endpoint, { method: 'POST', headers, body: JSON.stringify(event) });
-    } catch {
+    } catch (err) {
       // Telemetry must never throw; a dropped event is preferable to a
-      // broken MLRO workflow. Caller can wrap with a durable queue.
+      // broken MLRO workflow. Log so ops can detect sink failures.
+      console.warn('[mlro-telemetry] httpSink dropped event', {
+        endpoint,
+        caseId: event.caseId,
+        runId: event.runId,
+        error: err instanceof Error ? err.message : String(err),
+      });
     }
   };
 }
@@ -112,5 +118,13 @@ export function buildTelemetryEvent(input: BuildTelemetryInput): TelemetryEvent 
 }
 
 export async function emitTelemetry(sink: TelemetrySink, event: TelemetryEvent): Promise<void> {
-  try { await sink(event); } catch { /* swallow — telemetry must not throw */ }
+  try {
+    await sink(event);
+  } catch (err) {
+    console.warn('[mlro-telemetry] emitTelemetry swallowed error', {
+      caseId: event.caseId,
+      runId: event.runId,
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
 }

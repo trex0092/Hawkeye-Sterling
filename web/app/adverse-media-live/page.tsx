@@ -96,12 +96,15 @@ function RegulatoryFeedPanel() {
         sources: string[];
         fetchedAt: string;
       };
-      if (!data.ok) return;
+      if (!data.ok) {
+        console.error("[hawkeye] adverse-media-live regulatory-feed returned ok:false");
+        return;
+      }
       setItems(data.items ?? []);
       setSources(data.sources ?? []);
       setFetchedAt(data.fetchedAt ?? "");
-    } catch {
-      /* silently ignore */
+    } catch (err) {
+      console.error("[hawkeye] adverse-media-live regulatory-feed threw:", err);
     } finally {
       setLoading(false);
     }

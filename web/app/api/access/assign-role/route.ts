@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
-import { USERS, PERMISSION_LOG, ROLE_MODULES, type UserRole } from "../_store";
+import { loadUsers, saveUsers, appendPermissionLog, ROLE_MODULES, type UserRole } from "../_store";
 import { adminAuth } from "@/lib/server/admin-auth";
 
 const FALLBACK_ASSESSMENT: Record<string, string> = {
@@ -29,22 +29,22 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "userId, newRole, reason and assignedBy are required" }, { status: 400 });
   }
 
-  const userIdx = USERS.findIndex((u) => u.id === userId);
+  const users = await loadUsers();
+  const userIdx = users.findIndex((u) => u.id === userId);
   if (userIdx === -1) {
     return NextResponse.json({ ok: false, error: "User not found" }, { status: 404 });
   }
 
-  const user = USERS[userIdx]!;
+  const user = users[userIdx]!;
   const oldRole = user.role;
-
-  // Update user role and modules
-  USERS[userIdx] = {
+  const updatedUsers = [...users];
+  updatedUsers[userIdx] = {
     ...user,
     role: newRole,
     modules: ROLE_MODULES[newRole] ?? user.modules,
   };
+  await saveUsers(updatedUsers);
 
-  // Log the change
   const logEntry = {
     id: `log-${String(Date.now()).slice(-6)}`,
     timestamp: new Date().toISOString(),
@@ -56,7 +56,7 @@ export async function POST(req: Request) {
     newRole,
     reason,
   };
-  PERMISSION_LOG.push(logEntry);
+  await appendPermissionLog(logEntry);
 
   // Generate AI impact assessment with prompt caching
   const apiKey = process.env["ANTHROPIC_API_KEY"];
@@ -91,7 +91,7 @@ export async function POST(req: Request) {
 
   return NextResponse.json({
     ok: true,
-    user: USERS[userIdx],
+    user: updatedUsers[userIdx],
     logEntry,
     impactAssessment,
   });

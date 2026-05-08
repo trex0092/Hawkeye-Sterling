@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { IsoDateInput } from "@/components/ui/IsoDateInput";
 import { RowActions } from "@/components/shared/RowActions";
 
 // Responsible Minerals Initiative — RMAP audit tracker.
@@ -258,13 +259,16 @@ export default function RmiPage() {
       if (raw) setDeletedIds(JSON.parse(raw) as string[]);
       const editsRaw = localStorage.getItem(RMI_EDITS_KEY);
       if (editsRaw) setEdits(JSON.parse(editsRaw) as Record<string, SmelterEdit>);
-    } catch { /* ignore */ }
+    } catch (err) {
+      console.warn("[hawkeye] rmi overlay parse failed:", err);
+    }
   }, []);
 
   const deleteEntry = (id: string) => {
     const next = [...deletedIds, id];
     setDeletedIds(next);
-    try { localStorage.setItem(RMI_DELETED_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+    try { localStorage.setItem(RMI_DELETED_KEY, JSON.stringify(next)); }
+    catch (err) { console.error("[hawkeye] rmi delete persist failed:", err); }
   };
 
   const restoreAll = () => {
@@ -273,7 +277,9 @@ export default function RmiPage() {
     try {
       localStorage.removeItem(RMI_DELETED_KEY);
       localStorage.removeItem(RMI_EDITS_KEY);
-    } catch { /* ignore */ }
+    } catch (err) {
+      console.warn("[hawkeye] rmi restore-all removeItem failed:", err);
+    }
   };
 
   const startEdit = (s: Smelter) => {
@@ -298,7 +304,8 @@ export default function RmiPage() {
   const saveEdit = (id: string) => {
     const next = { ...edits, [id]: { ...edits[id], ...editDraft } };
     setEdits(next);
-    try { localStorage.setItem(RMI_EDITS_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+    try { localStorage.setItem(RMI_EDITS_KEY, JSON.stringify(next)); }
+    catch (err) { console.error("[hawkeye] rmi edit persist failed — smelter edits will be lost:", err); }
     setEditingId(null);
   };
 
@@ -339,8 +346,12 @@ export default function RmiPage() {
       if (res.ok) {
         const data = (await res.json()) as RmiAssessment;
         setRmiAssess(data);
+      } else {
+        console.error(`[hawkeye] rmi-assess HTTP ${res.status}`);
       }
-    } catch { /* non-fatal */ } finally {
+    } catch (err) {
+      console.error("[hawkeye] rmi-assess threw:", err);
+    } finally {
       setRmiAssessLoading(false);
     }
   };
@@ -668,19 +679,17 @@ export default function RmiPage() {
                       </label>
                       <label className="text-10 font-mono uppercase tracking-wide-3 text-ink-2">
                         Last audit
-                        <input
-                          type="date"
+                        <IsoDateInput
                           value={editDraft.lastAuditDate ?? ""}
-                          onChange={(e) => setEditDraft((d) => ({ ...d, lastAuditDate: e.target.value }))}
+                          onChange={(iso) => setEditDraft((d) => ({ ...d, lastAuditDate: iso }))}
                           className="block w-full mt-1 px-2 py-1 text-12 bg-bg-0 border border-hair-2 rounded font-mono text-ink-0"
                         />
                       </label>
                       <label className="text-10 font-mono uppercase tracking-wide-3 text-ink-2">
                         Next audit due
-                        <input
-                          type="date"
+                        <IsoDateInput
                           value={editDraft.nextAuditDue ?? ""}
-                          onChange={(e) => setEditDraft((d) => ({ ...d, nextAuditDue: e.target.value }))}
+                          onChange={(iso) => setEditDraft((d) => ({ ...d, nextAuditDue: iso }))}
                           className="block w-full mt-1 px-2 py-1 text-12 bg-bg-0 border border-hair-2 rounded font-mono text-ink-0"
                         />
                       </label>

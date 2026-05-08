@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { IsoDateInput } from "@/components/ui/IsoDateInput";
 import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 import { RowActions } from "@/components/shared/RowActions";
 import { formatDMY } from "@/lib/utils/dateFormat";
@@ -47,7 +48,8 @@ function loadDeletedIds(): string[] {
     if (!raw) return [];
     const parsed = JSON.parse(raw) as unknown;
     return Array.isArray(parsed) ? parsed.filter((v): v is string => typeof v === "string") : [];
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] shipments localStorage parse failed — returning empty:", err);
     return [];
   }
 }
@@ -56,8 +58,8 @@ function saveDeletedIds(ids: string[]): void {
   if (typeof window === "undefined") return;
   try {
     window.localStorage.setItem(SHIPMENTS_DELETED_KEY, JSON.stringify(ids));
-  } catch {
-    /* quota / disabled — silent */
+  } catch (err) {
+    console.error("[hawkeye] shipments localStorage write failed — chain-of-custody edits will be lost on reload:", err);
   }
 }
 
@@ -68,7 +70,8 @@ function loadCustom(): Consignment[] {
     if (!raw) return [];
     const parsed = JSON.parse(raw) as unknown;
     return Array.isArray(parsed) ? (parsed as Consignment[]) : [];
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] shipments localStorage parse failed — returning empty:", err);
     return [];
   }
 }
@@ -77,8 +80,8 @@ function saveCustom(rows: Consignment[]): void {
   if (typeof window === "undefined") return;
   try {
     window.localStorage.setItem(SHIPMENTS_CUSTOM_KEY, JSON.stringify(rows));
-  } catch {
-    /* quota / disabled — silent */
+  } catch (err) {
+    console.error("[hawkeye] shipments localStorage write failed — chain-of-custody edits will be lost on reload:", err);
   }
 }
 
@@ -929,7 +932,7 @@ function AddShipmentForm({ onAdd, onCancel }: { onAdd: (c: Consignment) => void;
         </div>
         <div>
           <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Clearance date</label>
-          <input type="date" value={clearanceDate} onChange={(e) => setClearanceDate(e.target.value)} className={iCls} />
+          <IsoDateInput value={clearanceDate} onChange={(iso) => setClearanceDate(iso)} className={iCls} />
         </div>
       </div>
 
@@ -1078,9 +1081,11 @@ export default function ShipmentsPage() {
       if (res.ok) {
         const data = (await res.json()) as ShipmentTbml;
         setTbml(data);
+      } else {
+        console.error(`[hawkeye] shipment-tbml HTTP ${res.status}`);
       }
-    } catch {
-      /* non-fatal */
+    } catch (err) {
+      console.error("[hawkeye] shipment-tbml threw:", err);
     } finally {
       setTbmlLoading(false);
     }

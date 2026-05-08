@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { CDDPosture, Subject } from "@/lib/types";
+import { IsoDateInput } from "@/components/ui/IsoDateInput";
 
 interface Props {
   selectedIds: string[];
@@ -107,10 +108,9 @@ export function BulkActionsBar({
           {showSnooze && (
             <div className="absolute top-full left-0 mt-1 w-64 bg-bg-panel border border-hair-2 rounded-lg shadow-lg p-2 z-30">
               <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-0.5">Until</label>
-              <input
-                type="date"
+              <IsoDateInput
                 value={snoozeDraft.until}
-                onChange={(e) => setSnoozeDraft({ ...snoozeDraft, until: e.target.value })}
+                onChange={(iso) => setSnoozeDraft({ ...snoozeDraft, until: iso })}
                 className="w-full px-2 py-1 text-12 border border-hair-2 rounded bg-bg-1 text-ink-0 mb-2"
               />
               <label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-0.5">Reason</label>

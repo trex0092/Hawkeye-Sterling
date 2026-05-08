@@ -71,7 +71,7 @@ const MAX_TOKENS = 700;
 const HARD_TIMEOUT_MS = 18_000;
 
 const CORS: Record<string, string> = {
-  "access-control-allow-origin": "*",
+  "access-control-allow-origin": process.env["NEXT_PUBLIC_APP_URL"] ?? "https://hawkeye-sterling.netlify.app",
   "access-control-allow-methods": "POST, OPTIONS",
   "access-control-allow-headers": "content-type, authorization, x-api-key",
 };
@@ -324,7 +324,9 @@ export async function POST(req: Request): Promise<Response> {
       reasoningTrace: [],
       finalAnswer: null,
       refusalReason: preGen.reason,
-    }).catch(() => {});
+    }).catch((err: unknown) => {
+      console.error("[hawkeye] mlro-advisor-quick: pre-gen refusal audit-log append failed:", err);
+    });
     return NextResponse.json(
       {
         ok: false,
@@ -526,7 +528,9 @@ export async function POST(req: Request): Promise<Response> {
         finalAnswer: null,
         validation: postGen.validation,
         refusalReason: postGen.router.reason,
-      }).catch(() => {});
+      }).catch((err: unknown) => {
+        console.error("[hawkeye] mlro-advisor-quick: post-gen refusal audit-log append failed:", err);
+      });
       return NextResponse.json(
         {
           ok: false,

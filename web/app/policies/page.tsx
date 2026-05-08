@@ -720,7 +720,8 @@ function load(): Policy[] {
   try {
     const raw = window.localStorage.getItem(STORAGE);
     return raw ? JSON.parse(raw) : DEFAULT_POLICIES;
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] policies parse failed — using defaults:", err);
     return DEFAULT_POLICIES;
   }
 }
@@ -728,8 +729,8 @@ function load(): Policy[] {
 function save(policies: Policy[]) {
   try {
     window.localStorage.setItem(STORAGE, JSON.stringify(policies));
-  } catch {
-    /* */
+  } catch (err) {
+    console.error("[hawkeye] policies persist failed — policy edits will be lost on reload:", err);
   }
 }
 

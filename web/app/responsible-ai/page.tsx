@@ -272,24 +272,34 @@ function loadModelsOverlay(): ModelsOverlay {
   try {
     const raw = localStorage.getItem(MODELS_KEY);
     if (raw) return { deletedIds: [], customModels: [], ...(JSON.parse(raw) as Partial<ModelsOverlay>) };
-  } catch { /* ignore */ }
+  } catch (err) {
+    console.warn("[hawkeye] responsible-ai models overlay parse failed:", err);
+  }
   return { deletedIds: [], customModels: [] };
 }
 
 function saveModelsOverlay(o: ModelsOverlay): void {
-  try { localStorage.setItem(MODELS_KEY, JSON.stringify(o)); } catch { /* ignore */ }
+  try { localStorage.setItem(MODELS_KEY, JSON.stringify(o)); }
+  catch (err) {
+    console.error("[hawkeye] responsible-ai models overlay persist failed — model edits will be lost:", err);
+  }
 }
 
 function loadIncidentsOverlay(): IncidentsOverlay {
   try {
     const raw = localStorage.getItem(INCIDENTS_KEY);
     if (raw) return { deletedIds: [], customIncidents: [], statusPatches: {}, ...(JSON.parse(raw) as Partial<IncidentsOverlay>) };
-  } catch { /* ignore */ }
+  } catch (err) {
+    console.warn("[hawkeye] responsible-ai incidents overlay parse failed:", err);
+  }
   return { deletedIds: [], customIncidents: [], statusPatches: {} };
 }
 
 function saveIncidentsOverlay(o: IncidentsOverlay): void {
-  try { localStorage.setItem(INCIDENTS_KEY, JSON.stringify(o)); } catch { /* ignore */ }
+  try { localStorage.setItem(INCIDENTS_KEY, JSON.stringify(o)); }
+  catch (err) {
+    console.error("[hawkeye] responsible-ai incidents overlay persist failed — incident edits will be lost:", err);
+  }
 }
 
 function nowDateStr(): string {
@@ -1356,7 +1366,8 @@ export default function ResponsibleAIPage() {
   const saveRao = () => {
     const name = draftRao.trim() || RAO_DEFAULT;
     setRaoName(name);
-    try { window.localStorage.setItem(RAO_STORAGE, name); } catch { /* ignore */ }
+    try { window.localStorage.setItem(RAO_STORAGE, name); }
+    catch (err) { console.warn("[hawkeye] responsible-ai RAO name persist failed:", err); }
   };
 
   const tabs: Array<{ key: Tab; label: string }> = [

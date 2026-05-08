@@ -190,7 +190,10 @@ export async function POST(req: Request): Promise<NextResponse> {
           name: row.name,
           schema: row.entityType === "individual" ? "Person" : row.entityType === "organisation" ? "Organization" : "LegalEntity",
           ...(row.jurisdiction ? { nationality: row.jurisdiction } : {}),
-        }]).catch(() => null),
+        }]).catch((err: unknown) => {
+          console.warn("[hawkeye] batch-screen yenteMatch failed for row:", row.name, err);
+          return null;
+        }),
       ]);
 
       const crossRef: CrossRef = {};
@@ -298,12 +301,15 @@ export async function POST(req: Request): Promise<NextResponse> {
           },
         }),
       });
-      const payload = (await res.json().catch(() => null)) as
+      const payload = (await res.json().catch((err: unknown) => {
+        console.warn("[hawkeye] batch-screen Asana response parse failed:", err);
+        return null;
+      })) as
         | { data?: { permalink_url?: string } }
         | null;
       if (res.ok && payload?.data?.permalink_url) asanaTaskUrl = payload.data.permalink_url;
-    } catch {
-      /* non-fatal — batch results still returned to caller */
+    } catch (err) {
+      console.warn("[hawkeye] batch-screen Asana POST threw — batch results still returned to caller:", err);
     }
   }
 

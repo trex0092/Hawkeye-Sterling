@@ -1,10 +1,8 @@
 "use client";
 
 import { useState, FormEvent } from "react";
-import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
-  const router = useRouter();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -25,8 +23,7 @@ export default function LoginPage() {
         setError(json.error ?? "Invalid credentials");
         return;
       }
-      router.push("/");
-      router.refresh();
+      window.location.href = "/";
     } catch {
       setError("Network error — please try again");
     } finally {
@@ -120,7 +117,7 @@ export default function LoginPage() {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
-              placeholder="e.g. l.fernanda"
+              placeholder="e.g. luisa"
               style={{
                 width: "100%",
                 background: "rgba(255,255,255,0.04)",

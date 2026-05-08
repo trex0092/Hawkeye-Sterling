@@ -267,7 +267,9 @@ export async function POST(req: Request): Promise<NextResponse> {
       reasoningTrace: [],
       finalAnswer: null,
       refusalReason: preGen.reason,
-    }).catch(() => {});
+    }).catch((err: unknown) => {
+      console.error("[hawkeye] mlro-advisor: refusal audit-log append failed:", err);
+    });
     return NextResponse.json(
       {
         ok: false,
@@ -410,7 +412,10 @@ export async function POST(req: Request): Promise<NextResponse> {
     : askComplianceQuestion({
         query: body.question.trim().slice(0, 500),
         mode: "multi-agent",
-      }).catch(() => null);
+      }).catch((err: unknown) => {
+        console.warn("[hawkeye] mlro-advisor: RAG (askComplianceQuestion) failed — continuing without retrieval context:", err);
+        return null;
+      });
 
   try {
     const [result, ragResult] = await Promise.all([
@@ -560,7 +565,9 @@ export async function POST(req: Request): Promise<NextResponse> {
         finalAnswer: null,
         validation: postGen.validation,
         refusalReason: postGen.router.reason,
-      }).catch(() => {});
+      }).catch((err: unknown) => {
+        console.error("[hawkeye] mlro-advisor: post-gen refusal audit-log append failed:", err);
+      });
       return NextResponse.json(
         {
           ok: false,

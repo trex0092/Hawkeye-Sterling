@@ -63,9 +63,15 @@ export default function OwnershipPage() {
           shareholders,
         }),
       });
+      if (!res.ok) {
+        console.error(`[hawkeye] ownership HTTP ${res.status}`);
+        setError(`Request failed — HTTP ${res.status}`);
+        return;
+      }
       const data = (await res.json()) as OwnershipResult;
       setResult(data);
-    } catch {
+    } catch (err) {
+      console.error("[hawkeye] ownership threw:", err);
       setError("Request failed — please try again.");
     } finally {
       setLoading(false);

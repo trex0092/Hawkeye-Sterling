@@ -4,6 +4,17 @@ import { forwardRef, useState, useRef } from "react";
 import type { SortKey, Subject, TableColumnKey } from "@/lib/types";
 import { ColumnChooser } from "@/components/screening/ColumnChooser";
 import type { NlSearchFilter } from "@/app/api/cases/nl-search/route";
+import type { QuickScreenSeverity } from "@/lib/api/quickScreen.types";
+
+const SEVERITY_OPTIONS: { value: QuickScreenSeverity | "all"; label: string; activeClass: string }[] = [
+  { value: "all",      label: "All",      activeClass: "bg-ink-0 text-bg-0" },
+  { value: "critical", label: "Critical", activeClass: "bg-red-600 text-white" },
+  { value: "high",     label: "High",     activeClass: "bg-orange-500 text-white" },
+  { value: "medium",   label: "Medium",   activeClass: "bg-amber-400 text-ink-0" },
+  { value: "low",      label: "Low",      activeClass: "bg-blue-500 text-white" },
+  { value: "clear",    label: "Clear",    activeClass: "bg-green-600 text-white" },
+];
+
 
 const SORT_OPTIONS: { key: SortKey; label: string }[] = [
   { key: "riskScore", label: "Risk score" },
@@ -43,6 +54,9 @@ interface ScreeningToolbarProps {
   nlSearchActive?: boolean;
   onNLSearchClear?: () => void;
   nlSearchLoading?: boolean;
+  /** Severity tier filter — filters subjects by their risk score band. */
+  severityFilter: QuickScreenSeverity | "all";
+  onSeverityFilterChange: (v: QuickScreenSeverity | "all") => void;
 }
 
 export const ScreeningToolbar = forwardRef<HTMLInputElement, ScreeningToolbarProps>(function ScreeningToolbar({
@@ -64,6 +78,8 @@ export const ScreeningToolbar = forwardRef<HTMLInputElement, ScreeningToolbarPro
   nlSearchActive,
   onNLSearchClear,
   nlSearchLoading,
+  severityFilter,
+  onSeverityFilterChange,
 }: ScreeningToolbarProps, ref) {
   const activeSortLabel = SORT_OPTIONS.find((o) => o.key === sortKey)?.label ?? "Risk score";
 
@@ -303,22 +319,44 @@ export const ScreeningToolbar = forwardRef<HTMLInputElement, ScreeningToolbarPro
       )}
 
       {/* Status filter pills */}
-      <div className="flex items-center gap-1.5">
-        <span className="text-11 text-ink-3 uppercase tracking-wide-2 mr-1">Status:</span>
-        {STATUS_OPTIONS.map((opt) => (
-          <button
-            key={opt.value}
-            type="button"
-            onClick={() => onStatusFilterChange(opt.value)}
-            className={`px-2.5 py-1 rounded-full text-11.5 font-medium transition-colors border ${
-              statusFilter === opt.value
-                ? "bg-ink-0 text-bg-0 border-ink-0"
-                : "bg-bg-panel text-ink-1 border-hair-2 hover:border-hair-3 hover:bg-bg-2"
-            }`}
-          >
-            {opt.label}
-          </button>
-        ))}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
+        <div className="flex items-center gap-1.5">
+          <span className="text-11 text-ink-3 uppercase tracking-wide-2 mr-1">Status:</span>
+          {STATUS_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => onStatusFilterChange(opt.value)}
+              className={`px-2.5 py-1 rounded-full text-11.5 font-medium transition-colors border ${
+                statusFilter === opt.value
+                  ? "bg-ink-0 text-bg-0 border-ink-0"
+                  : "bg-bg-panel text-ink-1 border-hair-2 hover:border-hair-3 hover:bg-bg-2"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Severity filter pills */}
+        <div className="flex items-center gap-1.5">
+          <span className="text-11 text-ink-3 uppercase tracking-wide-2 mr-1">Severity:</span>
+          {SEVERITY_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => onSeverityFilterChange(opt.value)}
+              className={`px-2.5 py-1 rounded-full text-11.5 font-medium transition-colors border ${
+                severityFilter === opt.value
+                  ? `${opt.activeClass} border-transparent`
+                  : "bg-bg-panel text-ink-1 border-hair-2 hover:border-hair-3 hover:bg-bg-2"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+
       </div>
     </div>
   );

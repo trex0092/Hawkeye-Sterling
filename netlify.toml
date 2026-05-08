@@ -14,7 +14,7 @@
   # exit identifies the step that failed. Each step's exit code is also
   # echoed so a non-zero from a piped command is visible. `set -o pipefail`
   # ensures pipe failures (not just final command) propagate.
-  command = "set -eo pipefail; echo '>>> HS-STEP-1 npm ci root' && npm ci --include=dev && echo '>>> HS-STEP-1 ok' && echo '>>> HS-STEP-2 tsc root' && npm run build && echo '>>> HS-STEP-2 ok' && echo '>>> HS-STEP-3 weaponize' && node scripts/gen-weaponized-brain.cjs && echo '>>> HS-STEP-3 ok' && echo '>>> HS-STEP-4 cd web && npm ci' && cd web && npm ci --include=dev && echo '>>> HS-STEP-4 ok' && echo '>>> HS-STEP-5 clear next cache' && rm -rf .next/cache && echo '>>> HS-STEP-5 ok' && echo '>>> HS-STEP-6 next build' && npm run build && echo '>>> HS-STEP-6 ok >>> HS-STEP-DONE'"
+  command = "set -eo pipefail; echo '>>> HS-STEP-1 npm ci root' && npm ci --include=dev && echo '>>> HS-STEP-1 ok' && echo '>>> HS-STEP-2 tsc root' && npm run build && echo '>>> HS-STEP-2 ok' && echo '>>> HS-STEP-3 weaponize' && node scripts/gen-weaponized-brain.cjs && echo '>>> HS-STEP-3 ok' && echo '>>> HS-STEP-4 cd web && npm ci' && cd web && npm ci --include=dev && echo '>>> HS-STEP-4 ok' && echo '>>> HS-STEP-5 clear .next' && rm -rf .next && echo '>>> HS-STEP-5 ok' && echo '>>> HS-STEP-6 next build' && npm run build && echo '>>> HS-STEP-6 ok >>> HS-STEP-DONE'"
   publish = "web/.next"
 
 [build.environment]
@@ -68,8 +68,8 @@
     Referrer-Policy = "strict-origin-when-cross-origin"
     Strict-Transport-Security = "max-age=63072000; includeSubDomains; preload"
     Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=()"
-    # CSP: self-only for scripts/styles; allow Asana + Anthropic API calls from
-    # the server-side edge (connect-src covers fetch() from the browser). The
-    # nonce-based approach would require Next.js middleware; this initial policy
-    # blocks the highest-risk categories (inline scripts, arbitrary framing).
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'sha256-uAiHQr4EnpWqCN2LcM80Nn9IIvUzB/jnDmO/OmYrL3E='; style-src 'self' 'unsafe-inline' https://fonts.bunny.net; img-src 'self' data:; font-src 'self' data: https://fonts.bunny.net; connect-src 'self' https://app.asana.com https://api.anthropic.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
+    # CSP is now set per-request by web/middleware.ts with a fresh nonce,
+    # so 'unsafe-inline' is no longer needed. Multiple CSP headers
+    # *intersect* (most-restrictive wins), so a static fallback here
+    # would clash with the middleware-set policy. API routes (which don't
+    # render HTML) get no CSP — script-src is moot for JSON responses.

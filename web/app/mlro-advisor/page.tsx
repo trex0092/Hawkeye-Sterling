@@ -1409,10 +1409,16 @@ export default function MlroAdvisorPage() {
     try {
       const raw = window.localStorage.getItem("hawkeye.mlro.advisor.v1");
       return raw ? (JSON.parse(raw) as AdvisorHistoryEntry[]) : [];
-    } catch { return []; }
+    } catch (err) {
+      console.error("[hawkeye] mlro-advisor: history parse failed — returning empty:", err);
+      return [];
+    }
   });
   useEffect(() => {
-    try { window.localStorage.setItem(ADVISOR_STORAGE, JSON.stringify(advisorHistory.slice(0, 50))); } catch { /* quota */ }
+    try { window.localStorage.setItem(ADVISOR_STORAGE, JSON.stringify(advisorHistory.slice(0, 50))); }
+    catch (err) {
+      console.warn("[hawkeye] mlro-advisor: history persist failed (storage quota):", err);
+    }
   }, [advisorHistory, ADVISOR_STORAGE]);
 
   /** ID of the entry currently being streamed (Quick mode). null when idle. */
@@ -1575,7 +1581,10 @@ export default function MlroAdvisorPage() {
       notFoundStreak = 0;
       const rawText = await pollResp.text();
       let payload: { ok: boolean; status?: string; result?: AdvisorResult; error?: string } | null = null;
-      try { payload = JSON.parse(rawText); } catch { /* ignore */ }
+      try { payload = JSON.parse(rawText); }
+      catch (err) {
+        console.warn("[hawkeye] mlro-advisor: SSE poll payload parse failed — skipping line:", err, rawText.slice(0, 200));
+      }
       if (!payload) continue;
       if (payload.status === "done" && payload.result) {
         recordAdvisorEntry(q, m, payload.result);
@@ -1879,11 +1888,15 @@ export default function MlroAdvisorPage() {
           redFlags: typoInput.redFlags ? typoInput.redFlags.split(",").map((s) => s.trim()).filter(Boolean) : undefined,
         }),
       });
-      if (!res.ok) return;
+      if (!res.ok) {
+        console.error(`[hawkeye] typology-match HTTP ${res.status}`);
+        return;
+      }
       const data = await res.json() as { ok: boolean } & TypologyMatch;
       if (data.ok) setTypoMatch(data);
-    } catch { /* silent */ }
-    finally { setTypoMatchLoading(false); }
+    } catch (err) {
+      console.error("[hawkeye] typology-match threw:", err);
+    } finally { setTypoMatchLoading(false); }
   };
 
   // Transaction Narrative Analyzer
@@ -1904,11 +1917,15 @@ export default function MlroAdvisorPage() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ narrative: txnNarrative, customerType: txnCustomerType || undefined, jurisdiction: txnJurisdiction || undefined, amounts: txnAmounts || undefined }),
       });
-      if (!res.ok) return;
+      if (!res.ok) {
+        console.error(`[hawkeye] transaction-narrative HTTP ${res.status}`);
+        return;
+      }
       const data = await res.json() as { ok: boolean } & TransactionAnalysis;
       if (data.ok) setTxnResult(data);
-    } catch { /* silent */ }
-    finally { setTxnLoading(false); }
+    } catch (err) {
+      console.error("[hawkeye] transaction-narrative threw:", err);
+    } finally { setTxnLoading(false); }
   };
 
   // EDD Questionnaire Generator
@@ -1937,11 +1954,15 @@ export default function MlroAdvisorPage() {
           context: eddContext || undefined,
         }),
       });
-      if (!res.ok) return;
+      if (!res.ok) {
+        console.error(`[hawkeye] edd-questionnaire HTTP ${res.status}`);
+        return;
+      }
       const data = await res.json() as { ok: boolean } & EddQuestionnaire;
       if (data.ok) setEddResult(data);
-    } catch { /* silent */ }
-    finally { setEddLoading(false); }
+    } catch (err) {
+      console.error("[hawkeye] edd-questionnaire threw:", err);
+    } finally { setEddLoading(false); }
   };
 
   // TBML Trade Document Analyzer
@@ -1967,10 +1988,10 @@ export default function MlroAdvisorPage() {
           additionalContext: tbmlInput.additionalContext || undefined,
         }),
       });
-      if (!res.ok) return;
+      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
       const data = await res.json() as { ok: boolean } & TbmlAnalysis;
       if (data.ok) setTbmlResult(data);
-    } catch { /* silent */ }
+    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
     finally { setTbmlLoading(false); }
   };
 
@@ -1984,10 +2005,10 @@ export default function MlroAdvisorPage() {
     setStrNarrLoading(true); setStrNarrResult(null);
     try {
       const res = await fetch("/api/str-narrative", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...strNarrInput, redFlags: strNarrInput.redFlags ? strNarrInput.redFlags.split("\n").map((s) => s.trim()).filter(Boolean) : undefined }) });
-      if (!res.ok) return;
+      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
       const data = await res.json() as { ok: boolean } & StrNarrativeResult;
       if (data.ok) setStrNarrResult(data);
-    } catch { /* silent */ }
+    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
     finally { setStrNarrLoading(false); }
   };
 
@@ -2000,10 +2021,10 @@ export default function MlroAdvisorPage() {
     setWireLoading(true); setWireResult(null);
     try {
       const res = await fetch("/api/wire-r16", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(wireInput) });
-      if (!res.ok) return;
+      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
       const data = await res.json() as { ok: boolean } & WireR16Result;
       if (data.ok) setWireResult(data);
-    } catch { /* silent */ }
+    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
     finally { setWireLoading(false); }
   };
 
@@ -2017,10 +2038,10 @@ export default function MlroAdvisorPage() {
     setPfLoading(true); setPfResult(null);
     try {
       const res = await fetch("/api/pf-screener", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(pfInput) });
-      if (!res.ok) return;
+      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
       const data = await res.json() as { ok: boolean } & PfScreenerResult;
       if (data.ok) setPfResult(data);
-    } catch { /* silent */ }
+    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
     finally { setPfLoading(false); }
   };
 
@@ -2034,10 +2055,10 @@ export default function MlroAdvisorPage() {
     setMemoLoading(true); setMemoResult(null);
     try {
       const res = await fetch("/api/mlro-memo", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...memoInput, redFlags: memoInput.redFlags ? memoInput.redFlags.split("\n").map((s) => s.trim()).filter(Boolean) : undefined }) });
-      if (!res.ok) return;
+      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
       const data = await res.json() as { ok: boolean } & MlroMemoResult;
       if (data.ok) setMemoResult(data);
-    } catch { /* silent */ }
+    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
     finally { setMemoLoading(false); }
   };
 
@@ -2451,10 +2472,10 @@ export default function MlroAdvisorPage() {
     setTfLoading(true); setTfResult(null);
     try {
       const res = await fetch("/api/tf-screener", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...tfInput, existingRedFlags: tfInput.existingRedFlags ? tfInput.existingRedFlags.split("\n").map((s) => s.trim()).filter(Boolean) : undefined }) });
-      if (!res.ok) return;
+      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
       const data = await res.json() as { ok: boolean } & TfScreenerResult;
       if (data.ok) setTfResult(data);
-    } catch { /* silent */ }
+    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
     finally { setTfLoading(false); }
   };
 
@@ -2463,10 +2484,10 @@ export default function MlroAdvisorPage() {
     setShellLoading(true); setShellResult(null);
     try {
       const res = await fetch("/api/shell-detector", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(shellInput) });
-      if (!res.ok) return;
+      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
       const data = await res.json() as { ok: boolean } & ShellDetectorResult;
       if (data.ok) setShellResult(data);
-    } catch { /* silent */ }
+    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
     finally { setShellLoading(false); }
   };
 
@@ -2475,10 +2496,10 @@ export default function MlroAdvisorPage() {
     setAdverseLoading(true); setAdverseResult(null);
     try {
       const res = await fetch("/api/adverse-classify", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ articleText: adverseText, subjectName: adverseSubject || undefined }) });
-      if (!res.ok) return;
+      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
       const data = await res.json() as { ok: boolean } & AdverseClassifyResult;
       if (data.ok) setAdverseResult(data);
-    } catch { /* silent */ }
+    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
     finally { setAdverseLoading(false); }
   };
 
@@ -2487,10 +2508,10 @@ export default function MlroAdvisorPage() {
     setTimelineLoading(true); setTimelineResult(null);
     try {
       const res = await fetch("/api/case-timeline", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ events: timelineEvents, subjectName: timelineSubject || undefined, caseRef: timelineCaseRef || undefined }) });
-      if (!res.ok) return;
+      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
       const data = await res.json() as { ok: boolean } & CaseTimelineResult;
       if (data.ok) setTimelineResult(data);
-    } catch { /* silent */ }
+    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
     finally { setTimelineLoading(false); }
   };
 
@@ -2499,10 +2520,10 @@ export default function MlroAdvisorPage() {
     setPredicateLoading(true); setPredicateResult(null);
     try {
       const res = await fetch("/api/ml-predicate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ facts: predicateFacts, suspectedActivity: predicateActivity || undefined, jurisdiction: predicateJurisdiction || undefined }) });
-      if (!res.ok) return;
+      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
       const data = await res.json() as { ok: boolean } & MlPredicateResult;
       if (data.ok) setPredicateResult(data);
-    } catch { /* silent */ }
+    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
     finally { setPredicateLoading(false); }
   };
 
@@ -2511,10 +2532,10 @@ export default function MlroAdvisorPage() {
     setClientRiskLoading(true); setClientRiskResult(null);
     try {
       const res = await fetch("/api/client-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ entity: clientRiskEntity, shareholders: clientRiskShareholders.filter((s) => s.name.trim()) }) });
-      if (!res.ok) return;
+      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
       const data = await res.json() as { ok: boolean } & ClientRiskResult;
       if (data.ok) setClientRiskResult(data);
-    } catch { /* silent */ }
+    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
     finally { setClientRiskLoading(false); }
   };
 
@@ -2523,10 +2544,10 @@ export default function MlroAdvisorPage() {
     setJurisLoading(true); setJurisResult(null);
     try {
       const res = await fetch("/api/jurisdiction-intel", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ country: jurisCountry, context: jurisContext || undefined }) });
-      if (!res.ok) return;
+      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
       const data = await res.json() as { ok: boolean } & JurisdictionIntelResult;
       if (data.ok) setJurisResult(data);
-    } catch { /* silent */ }
+    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
     finally { setJurisLoading(false); }
   };
 
@@ -2535,10 +2556,10 @@ export default function MlroAdvisorPage() {
     setUboLoading(true); setUboResult(null);
     try {
       const res = await fetch("/api/ubo-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ entity: uboEntity, registered: uboRegistered || undefined, ubos: uboEntries.filter((u) => u.name.trim()) }) });
-      if (!res.ok) return;
+      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
       const data = await res.json() as { ok: boolean } & UboRiskResult;
       if (data.ok) setUboResult(data);
-    } catch { /* silent */ }
+    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
     finally { setUboLoading(false); }
   };
 
@@ -2548,10 +2569,10 @@ export default function MlroAdvisorPage() {
     setBenfordLoading(true); setBenfordResult(null);
     try {
       const res = await fetch("/api/benford", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ amounts, label: benfordLabel || undefined }) });
-      if (!res.ok) return;
+      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
       const data = await res.json() as BenfordResult;
       setBenfordResult(data);
-    } catch { /* silent */ }
+    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
     finally { setBenfordLoading(false); }
   };
 
@@ -2563,7 +2584,7 @@ export default function MlroAdvisorPage() {
       const data = await res.json() as { ok: boolean; error?: string } & Record<string, unknown>;
       if (!data.ok) { setCryptoError(data.error ?? "Service unavailable"); }
       else { setCryptoResult(data); }
-    } catch { /* silent */ }
+    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
     finally { setCryptoLoading(false); }
   };
 
@@ -2572,10 +2593,10 @@ export default function MlroAdvisorPage() {
     setOnboardLoading(true); setOnboardResult(null);
     try {
       const res = await fetch("/api/onboarding-risk-tier", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(onboardInput) });
-      if (!res.ok) return;
+      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
       const data = await res.json() as { ok?: boolean } & OnboardingRiskResult;
       setOnboardResult(data);
-    } catch { /* silent */ }
+    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
     finally { setOnboardLoading(false); }
   };
 
@@ -3009,10 +3030,10 @@ export default function MlroAdvisorPage() {
           notes: escNotes || undefined,
         }),
       });
-      if (!res.ok) return;
+      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
       const data = await res.json() as { ok: boolean } & EscalationResult;
       if (data.ok) setEscResult(data);
-    } catch { /* silent */ }
+    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
     finally { setEscLoading(false); }
   };
 
@@ -3047,10 +3068,10 @@ export default function MlroAdvisorPage() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ cases: cases.map((c) => ({ id: c.id, subject: c.subject, meta: c.meta, status: c.status, openedAt: c.opened })) }),
       });
-      if (!res.ok) return;
+      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
       const data = await res.json() as { ok: boolean } & PatternResult;
       if (data.ok) setPatternResult(data);
-    } catch { /* silent */ }
+    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
     finally { setPatternLoading(false); }
   };
 
@@ -3064,10 +3085,10 @@ export default function MlroAdvisorPage() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ subjectName: briefSubject, jurisdiction: briefJurisdiction || undefined, entityType: briefEntityType || undefined }),
       });
-      if (!res.ok) return;
+      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
       const data = await res.json() as { ok: boolean } & SubjectBrief;
       if (data.ok) setBriefResult(data);
-    } catch { /* silent */ }
+    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
     finally { setBriefLoading(false); }
   };
 
@@ -3087,10 +3108,10 @@ export default function MlroAdvisorPage() {
           tenure: pepInput.tenure || undefined,
         }),
       });
-      if (!res.ok) return;
+      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
       const data = await res.json() as { ok: boolean } & PepNetwork;
       if (data.ok) setPepNet(data);
-    } catch { /* silent */ }
+    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
     finally { setPepNetLoading(false); }
   };
 
@@ -3115,10 +3136,10 @@ export default function MlroAdvisorPage() {
           context: sanctionsNexusInput.context || undefined,
         }),
       });
-      if (!res.ok) return;
+      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
       const data = await res.json() as { ok: boolean } & SanctionsNexus;
       if (data.ok) setSanctionsNexus(data);
-    } catch { /* silent */ }
+    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
     finally { setSanctionsNexusLoading(false); }
   };
 

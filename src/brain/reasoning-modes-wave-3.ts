@@ -1,11 +1,62 @@
 // Hawkeye Sterling — reasoning modes, Wave 3.
-// A further 100+ specialist modes layered on top of Wave 1 + Wave 2. These
-// cover: on-chain forensics, trade-finance discipline, real-estate detection,
-// insurance patterns, NPO risk, shipping / maritime, ESG / supply-chain,
-// insider / market-abuse, cyber / BEC, precious-metals specifics, free-zone
-// structures, charity diversion, gambling flows, art / luxury, family offices.
+//
+// HONESTY NOTE (2026-05-07):
+// This file used to export `REASONING_MODE_IDS_WAVE_3` as if it were a list
+// of registered reasoning modes. It isn't, and it never was. The constant is
+// not consumed anywhere in the verdict path — `src/brain/modes/registry.ts`
+// resolves apply() implementations from the per-domain *_MODE_APPLIES bundles
+// (forensic, behavioral, compliance, …) and the explicit `wave3-*.ts` modules
+// it imports directly. Listing an ID here registers nothing.
+//
+// As of this audit the wave-3 *implemented* modes (the ones that actually
+// produce findings, not stubApply() placeholders) live in:
+//   src/brain/modes/wave3-art-provenance-gap.ts
+//   src/brain/modes/wave3-bridge-crossing-trace.ts
+//   src/brain/modes/wave3-cash-courier-threshold.ts
+//   src/brain/modes/wave3-casino-chip-dumping.ts
+//   src/brain/modes/wave3-correspondent-nesting.ts
+//   src/brain/modes/wave3-crypto-chain-hop.ts
+//   src/brain/modes/wave3-dpms-structuring.ts
+//   src/brain/modes/wave3-dual-use-routing.ts
+//   src/brain/modes/wave3-family-office-trust.ts
+//   src/brain/modes/wave3-ftz-layered-ownership.ts
+//   src/brain/modes/wave3-hawala-ivts.ts
+//   src/brain/modes/wave3-legal-pooled-account.ts
+//   src/brain/modes/wave3-mixer-forensics.ts
+//   src/brain/modes/wave3-mule-cluster.ts
+//   src/brain/modes/wave3-nested-designation-match.ts
+//   src/brain/modes/wave3-nft-wash-trading.ts
+//   src/brain/modes/wave3-non-face-to-face-kyc.ts
+//   src/brain/modes/wave3-npo-high-risk.ts
+//   src/brain/modes/wave3-pep-proximity.ts
+//   src/brain/modes/wave3-professional-enabler.ts
+//   src/brain/modes/wave3-real-estate-underpricing.ts
+//   src/brain/modes/wave3-shell-company.ts
+//   src/brain/modes/wave3-tbml-invoice.ts
+//   src/brain/modes/wave3-utxo-clustering.ts
+//   src/brain/modes/wave3-vessel-ais-gap.ts
+//   src/brain/modes/wave3-wire-stripping.ts
+// plus the batch bundles (SANCTIONS_BATCH_APPLIES, TBML_BATCH_APPLIES,
+// CRYPTO_BATCH_APPLIES, IDENTITY_BATCH_APPLIES, BEHAVIORAL_BATCH_APPLIES,
+// PEP_PREDICATE_BATCH_APPLIES, SECURITIES_DPMS_OPS_BATCH_APPLIES) — see
+// `src/brain/modes/registry.ts` for the canonical wiring.
+//
+// The list below is a *roadmap* of mode IDs we want to support. It is NOT
+// the registered set. To stop misleading auditBrain output and downstream
+// callers, the export is renamed to `WAVE_3_ROADMAP_IDS` and explicitly
+// typed as a roadmap. If you need to know what modes are actually live,
+// call `listImplementedModeIds()` from `modes/registry.ts`.
 
-export const REASONING_MODE_IDS_WAVE_3 = [
+/**
+ * Wave-3 roadmap mode IDs — NOT registered, NOT executed.
+ *
+ * To check which IDs are actually wired into the verdict path, use
+ * `listImplementedModeIds()` from `src/brain/modes/registry.ts`.
+ *
+ * To register a roadmap ID for real, write its apply() in a new
+ * `wave3-*.ts` module and add it to `WAVE3_MODE_APPLIES` in registry.ts.
+ */
+export const WAVE_3_ROADMAP_IDS = [
   // On-chain forensics
   'utxo_clustering', 'address_reuse_analysis', 'heuristic_common_input',
   'heuristic_change_address', 'peel_chain', 'coinjoin_detection',
@@ -92,4 +143,16 @@ export const REASONING_MODE_IDS_WAVE_3 = [
   'freshness_sla_breach', 'lineage_break_detection',
 ] as const;
 
-export type ReasoningModeIdWave3 = typeof REASONING_MODE_IDS_WAVE_3[number];
+export type Wave3RoadmapId = typeof WAVE_3_ROADMAP_IDS[number];
+
+/**
+ * @deprecated Misleading name — these IDs were never registered as reasoning
+ * modes. Use `WAVE_3_ROADMAP_IDS` to read the roadmap, or
+ * `listImplementedModeIds()` (from `modes/registry.ts`) to read what's actually
+ * wired into the verdict path. This alias is kept for backwards compatibility
+ * with older imports and will be removed once external callers migrate.
+ */
+export const REASONING_MODE_IDS_WAVE_3 = WAVE_3_ROADMAP_IDS;
+
+/** @deprecated Use `Wave3RoadmapId` instead. */
+export type ReasoningModeIdWave3 = Wave3RoadmapId;

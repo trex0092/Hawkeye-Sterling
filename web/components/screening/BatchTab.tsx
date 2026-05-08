@@ -233,30 +233,42 @@ export function BatchTab() {
   const [page, setPage] = useState(0);
   const [ranking, setRanking] = useState<BatchRanking | null>(null);
   const [rankLoading, setRankLoading] = useState(false);
+  const [rankError, setRankError] = useState<string | null>(null);
   const [smartPriority, setSmartPriority] = useState<SmartPrioritization | null>(null);
   const [smartPriorityLoading, setSmartPriorityLoading] = useState(false);
+  const [smartPriorityError, setSmartPriorityError] = useState<string | null>(null);
   const [priorityFilter, setPriorityFilter] = useState<"all" | "immediate" | "scheduled" | "low">("all");
   const fileInput = useRef<HTMLInputElement>(null);
 
   const [nameVars, setNameVars] = useState<NameVariants | null>(null);
   const [nameVarsLoading, setNameVarsLoading] = useState(false);
   const [nameVarsInput, setNameVarsInput] = useState("");
+  const [nameVarsError, setNameVarsError] = useState<string | null>(null);
 
   const generateVariants = async () => {
     if (!nameVarsInput.trim() || nameVarsLoading) return;
     setNameVarsLoading(true);
     setNameVars(null);
+    setNameVarsError(null);
     try {
       const res = await fetch("/api/name-variants", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ name: nameVarsInput }),
       });
-      if (!res.ok) return;
+      if (!res.ok) {
+        const msg = `Name variants failed (HTTP ${res.status})`;
+        console.error("[hawkeye]", msg);
+        setNameVarsError(msg);
+        return;
+      }
       const data = (await res.json()) as NameVariants;
       if (data.ok) setNameVars(data);
-    } catch { /* silent */ }
-    finally { setNameVarsLoading(false); }
+      else setNameVarsError("Name variants returned ok:false");
+    } catch (err) {
+      console.error("[hawkeye] name-variants threw:", err);
+      setNameVarsError(err instanceof Error ? err.message : "Network error");
+    } finally { setNameVarsLoading(false); }
   };
 
   useEffect(() => {
@@ -424,6 +436,7 @@ export function BatchTab() {
     if (rows.length === 0) return;
     setRankLoading(true);
     setRanking(null);
+    setRankError(null);
     try {
       const res = await fetch("/api/batch-rank", {
         method: "POST",
@@ -441,17 +454,26 @@ export function BatchTab() {
           })),
         }),
       });
-      if (!res.ok) return;
+      if (!res.ok) {
+        const msg = `Batch ranking failed (HTTP ${res.status})`;
+        console.error("[hawkeye]", msg);
+        setRankError(msg);
+        return;
+      }
       const data = await res.json() as { ok: boolean } & BatchRanking;
       if (data.ok) setRanking(data);
-    } catch { /* silent */ }
-    finally { setRankLoading(false); }
+      else setRankError("Batch ranking returned ok:false");
+    } catch (err) {
+      console.error("[hawkeye] batch-rank threw:", err);
+      setRankError(err instanceof Error ? err.message : "Network error");
+    } finally { setRankLoading(false); }
   };
 
   const runSmartPrioritize = async () => {
     if (results.length === 0 && rows.length === 0) return;
     setSmartPriorityLoading(true);
     setSmartPriority(null);
+    setSmartPriorityError(null);
     setPriorityFilter("all");
     try {
       const subjects = results.length > 0
@@ -472,11 +494,19 @@ export function BatchTab() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ subjects }),
       });
-      if (!res.ok) return;
+      if (!res.ok) {
+        const msg = `Smart prioritization failed (HTTP ${res.status})`;
+        console.error("[hawkeye]", msg);
+        setSmartPriorityError(msg);
+        return;
+      }
       const data = await res.json() as SmartPrioritization;
       if (data.ok) setSmartPriority(data);
-    } catch { /* silent */ }
-    finally { setSmartPriorityLoading(false); }
+      else setSmartPriorityError("Smart prioritization returned ok:false");
+    } catch (err) {
+      console.error("[hawkeye] batch/prioritize threw:", err);
+      setSmartPriorityError(err instanceof Error ? err.message : "Network error");
+    } finally { setSmartPriorityLoading(false); }
   };
 
   return (
@@ -505,6 +535,12 @@ export function BatchTab() {
             {nameVarsLoading ? "Generating…" : "Generate Variants"}
           </button>
         </div>
+
+        {nameVarsError && (
+          <div className="mb-3 px-3 py-2 bg-red-dim text-red border border-red/30 rounded text-12">
+            {nameVarsError}
+          </div>
+        )}
 
         {nameVars && (
           <div className="space-y-3">
@@ -733,6 +769,12 @@ export function BatchTab() {
         </div>
       )}
 
+      {smartPriorityError && (
+        <div className="mb-4 px-3 py-2 bg-red-dim text-red border border-red/30 rounded text-12">
+          Smart Prioritize — {smartPriorityError}
+        </div>
+      )}
+
       {smartPriority && (
         <div className="mb-4 bg-bg-panel border border-amber/20 rounded-xl p-4 space-y-3">
           <div className="flex items-center justify-between flex-wrap gap-2">
@@ -805,6 +847,12 @@ export function BatchTab() {
                 );
               })}
           </div>
+        </div>
+      )}
+
+      {rankError && (
+        <div className="mb-4 px-3 py-2 bg-red-dim text-red border border-red/30 rounded text-12">
+          AI Priority Ranking — {rankError}
         </div>
       )}
 

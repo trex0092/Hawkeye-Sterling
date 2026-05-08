@@ -254,7 +254,7 @@ export async function GET(): Promise<NextResponse> {
     {
       headers: {
         "cache-control": "no-store",
-        "access-control-allow-origin": "*",
+        "access-control-allow-origin": process.env["NEXT_PUBLIC_APP_URL"] ?? "https://hawkeye-sterling.netlify.app",
       },
     },
   );

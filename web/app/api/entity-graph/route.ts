@@ -12,7 +12,7 @@ import { searchCountryRegistries } from "@/lib/intelligence/countryRegistries";
 import { bestCommercialAdapter, activeCommercialProvider } from "@/lib/intelligence/commercialAdapters";
 
 const CORS: Record<string, string> = {
-  "access-control-allow-origin": "*",
+  "access-control-allow-origin": process.env["NEXT_PUBLIC_APP_URL"] ?? "https://hawkeye-sterling.netlify.app",
   "access-control-allow-methods": "POST, OPTIONS",
   "access-control-allow-headers": "content-type, authorization, x-api-key",
 };
@@ -381,10 +381,19 @@ export async function POST(req: Request): Promise<NextResponse> {
     await Promise.all([
       queryOpenCorporates(companyName, body.jurisdiction, body.companyNumber),
       queryGleifFuzzy(companyName),
-      searchAllRegistries(companyName, body.jurisdiction ? { jurisdiction: body.jurisdiction, limit: 25 } : { limit: 25 }).catch(() => ({ records: [], providersUsed: [] })),
-      searchCountryRegistries(companyName, body.jurisdiction, 25).catch(() => ({ records: [], jurisdictions: [] })),
+      searchAllRegistries(companyName, body.jurisdiction ? { jurisdiction: body.jurisdiction, limit: 25 } : { limit: 25 }).catch((err: unknown) => {
+        console.warn("[hawkeye] entity-graph searchAllRegistries failed:", err);
+        return { records: [], providersUsed: [] };
+      }),
+      searchCountryRegistries(companyName, body.jurisdiction, 25).catch((err: unknown) => {
+        console.warn("[hawkeye] entity-graph searchCountryRegistries failed:", err);
+        return { records: [], jurisdictions: [] };
+      }),
       commAdapter.isAvailable()
-        ? commAdapter.lookup(companyName, body.jurisdiction).catch(() => [])
+        ? commAdapter.lookup(companyName, body.jurisdiction).catch((err: unknown) => {
+            console.warn("[hawkeye] entity-graph commercialAdapter.lookup failed:", err);
+            return [];
+          })
         : Promise.resolve([]),
     ]);
 
