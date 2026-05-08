@@ -15,14 +15,6 @@ const SEVERITY_OPTIONS: { value: QuickScreenSeverity | "all"; label: string; act
   { value: "clear",    label: "Clear",    activeClass: "bg-green-600 text-white" },
 ];
 
-const ENTITY_TYPE_OPTIONS: { value: Subject["entityType"] | "all"; label: string }[] = [
-  { value: "all",          label: "All types" },
-  { value: "individual",   label: "Person" },
-  { value: "organisation", label: "Company" },
-  { value: "vessel",       label: "Vessel" },
-  { value: "aircraft",     label: "Aircraft" },
-  { value: "other",        label: "Other" },
-];
 
 const SORT_OPTIONS: { key: SortKey; label: string }[] = [
   { key: "riskScore", label: "Risk score" },
@@ -65,9 +57,7 @@ interface ScreeningToolbarProps {
   /** Severity tier filter — filters subjects by their risk score band. */
   severityFilter: QuickScreenSeverity | "all";
   onSeverityFilterChange: (v: QuickScreenSeverity | "all") => void;
-  /** Entity type filter. */
-  entityTypeFilter: Subject["entityType"] | "all";
-  onEntityTypeFilterChange: (v: Subject["entityType"] | "all") => void;
+
 }
 
 export const ScreeningToolbar = forwardRef<HTMLInputElement, ScreeningToolbarProps>(function ScreeningToolbar({
@@ -91,8 +81,6 @@ export const ScreeningToolbar = forwardRef<HTMLInputElement, ScreeningToolbarPro
   nlSearchLoading,
   severityFilter,
   onSeverityFilterChange,
-  entityTypeFilter,
-  onEntityTypeFilterChange,
 }: ScreeningToolbarProps, ref) {
   const activeSortLabel = SORT_OPTIONS.find((o) => o.key === sortKey)?.label ?? "Risk score";
 
@@ -370,24 +358,7 @@ export const ScreeningToolbar = forwardRef<HTMLInputElement, ScreeningToolbarPro
           ))}
         </div>
 
-        {/* Entity type filter pills */}
-        <div className="flex items-center gap-1.5">
-          <span className="text-11 text-ink-3 uppercase tracking-wide-2 mr-1">Type:</span>
-          {ENTITY_TYPE_OPTIONS.map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => onEntityTypeFilterChange(opt.value)}
-              className={`px-2.5 py-1 rounded-full text-11.5 font-medium transition-colors border ${
-                entityTypeFilter === opt.value
-                  ? "bg-ink-0 text-bg-0 border-ink-0"
-                  : "bg-bg-panel text-ink-1 border-hair-2 hover:border-hair-3 hover:bg-bg-2"
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
+
       </div>
     </div>
   );
