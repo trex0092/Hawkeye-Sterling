@@ -2,7 +2,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
-import { USERS, PERMISSION_LOG } from "../_store";
+import { loadUsers, saveUsers, appendPermissionLog } from "../_store";
 import { adminAuth } from "@/lib/server/admin-auth";
 
 export async function POST(req: Request) {
@@ -20,13 +20,16 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "userId and reason are required" }, { status: 400 });
   }
 
-  const userIdx = USERS.findIndex((u) => u.id === userId);
+  const users = await loadUsers();
+  const userIdx = users.findIndex((u) => u.id === userId);
   if (userIdx === -1) {
     return NextResponse.json({ ok: false, error: "User not found" }, { status: 404 });
   }
 
-  const user = USERS[userIdx]!;
-  USERS[userIdx] = { ...user, active: false };
+  const user = users[userIdx]!;
+  const updatedUsers = [...users];
+  updatedUsers[userIdx] = { ...user, active: false };
+  await saveUsers(updatedUsers);
 
   const logEntry = {
     id: `log-${String(Date.now()).slice(-6)}`,
@@ -37,7 +40,7 @@ export async function POST(req: Request) {
     targetUserName: user.name,
     reason,
   };
-  PERMISSION_LOG.push(logEntry);
+  await appendPermissionLog(logEntry);
 
-  return NextResponse.json({ ok: true, user: USERS[userIdx], logEntry });
+  return NextResponse.json({ ok: true, user: updatedUsers[userIdx], logEntry });
 }

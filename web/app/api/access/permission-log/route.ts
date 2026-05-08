@@ -2,13 +2,14 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
-import { PERMISSION_LOG, type PermissionLogEntry } from "../_store";
+import { loadPermissionLog, appendPermissionLog, type PermissionLogEntry } from "../_store";
 import { adminAuth } from "@/lib/server/admin-auth";
 
-export function GET(req: Request) {
+export async function GET(req: Request) {
   const deny = adminAuth(req);
   if (deny) return deny;
-  return NextResponse.json({ ok: true, log: PERMISSION_LOG });
+  const log = await loadPermissionLog();
+  return NextResponse.json({ ok: true, log });
 }
 
 export async function POST(req: Request) {
@@ -40,6 +41,6 @@ export async function POST(req: Request) {
     reason: body.reason,
   };
 
-  PERMISSION_LOG.push(entry);
+  await appendPermissionLog(entry);
   return NextResponse.json({ ok: true, entry }, { status: 201 });
 }

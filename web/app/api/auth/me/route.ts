@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 import { verifySession, SESSION_COOKIE } from "@/lib/server/auth";
-import { USERS, ROLE_LABEL } from "../../access/_store";
+import { loadUsers, ROLE_LABEL } from "../../access/_store";
 import { cookies } from "next/headers";
 
 export async function GET(): Promise<NextResponse> {
@@ -16,7 +16,8 @@ export async function GET(): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "Not authenticated" }, { status: 401 });
   }
 
-  const user = USERS.find((u) => u.id === session.userId);
+  const users = await loadUsers();
+  const user = users.find((u) => u.id === session.userId);
   if (!user) {
     return NextResponse.json({ ok: false, error: "User not found" }, { status: 404 });
   }

@@ -71,7 +71,7 @@ const MAX_TOKENS = 700;
 const HARD_TIMEOUT_MS = 18_000;
 
 const CORS: Record<string, string> = {
-  "access-control-allow-origin": "*",
+  "access-control-allow-origin": process.env["NEXT_PUBLIC_APP_URL"] ?? "https://hawkeye-sterling.netlify.app",
   "access-control-allow-methods": "POST, OPTIONS",
   "access-control-allow-headers": "content-type, authorization, x-api-key",
 };

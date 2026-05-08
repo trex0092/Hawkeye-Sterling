@@ -7,11 +7,6 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const nextConfig = {
   reactStrictMode: true,
 
-  eslint: {
-    // ESLint is not installed in web/node_modules — skip lint during build.
-    ignoreDuringBuilds: true,
-  },
-
   typescript: {
     // JSX implicit-any errors (TS7026/TS2741) are pre-existing across the entire
     // codebase due to React types not being in the tsconfig lib. Runtime behaviour

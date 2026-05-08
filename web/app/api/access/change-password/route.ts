@@ -8,7 +8,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
-import { USERS } from "../_store";
+import { loadUsers, saveUsers } from "../_store";
 import {
   generateSalt,
   hashPassword,
@@ -53,12 +53,13 @@ export async function POST(req: Request) {
     );
   }
 
-  const idx = USERS.findIndex((u) => u.id === session.userId);
+  const users = await loadUsers();
+  const idx = users.findIndex((u) => u.id === session.userId);
   if (idx === -1) {
     return NextResponse.json({ ok: false, error: "User not found" }, { status: 404 });
   }
 
-  const user = USERS[idx]!;
+  const user = users[idx]!;
   if (!user.passwordHash || !user.passwordSalt) {
     return NextResponse.json(
       { ok: false, error: "Account has no password set — contact your MLRO" },
@@ -72,7 +73,9 @@ export async function POST(req: Request) {
 
   const salt = generateSalt();
   const hash = hashPassword(newPassword, salt);
-  USERS[idx] = { ...user, passwordHash: hash, passwordSalt: salt };
+  const updatedUsers = [...users];
+  updatedUsers[idx] = { ...user, passwordHash: hash, passwordSalt: salt };
+  await saveUsers(updatedUsers);
 
   return NextResponse.json({ ok: true });
 }

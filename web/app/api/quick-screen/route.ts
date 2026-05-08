@@ -57,9 +57,10 @@ interface QuickScreenRequestBody {
 const MAX_CANDIDATES = 5_000;
 
 const CORS_HEADERS: Record<string, string> = {
-  "access-control-allow-origin": "*",
+  "access-control-allow-origin": process.env["NEXT_PUBLIC_APP_URL"] ?? "https://hawkeye-sterling.netlify.app",
   "access-control-allow-methods": "POST, OPTIONS",
   "access-control-allow-headers": "content-type, authorization, x-api-key",
+  vary: "Origin",
 };
 
 function respond(
@@ -89,6 +90,9 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   if (!subject || typeof subject.name !== "string" || !subject.name.trim()) {
     return respond(400, { ok: false, error: "subject.name required" }, gateHeaders);
+  }
+  if (subject.name.length > 512) {
+    return respond(400, { ok: false, error: "subject.name exceeds 512-character limit" }, gateHeaders);
   }
 
   let candidates: QuickScreenCandidate[];

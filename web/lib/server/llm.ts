@@ -82,7 +82,6 @@ export class AnthropicGuard {
   get messages() {
     const inner = this.inner;
     return {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       create: async (opts: any, requestOptions?: any): Promise<Anthropic.Message> => {
         const map: RedactionMap = {};
 
@@ -102,7 +101,6 @@ export class AnthropicGuard {
         const response = await inner.messages.create(safe, requestOptions);
 
         // Rehydrate response text blocks
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const rehydratedContent = (response.content as any[]).map((block: any) => {
           if (block.type === "text" && typeof block.text === "string") {
             return { ...block, text: rehydrate(block.text, map) };

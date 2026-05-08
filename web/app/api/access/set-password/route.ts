@@ -2,7 +2,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
-import { USERS } from "../_store";
+import { loadUsers, saveUsers } from "../_store";
 import { generateSalt, hashPassword, verifySession, SESSION_COOKIE } from "@/lib/server/auth";
 import { cookies } from "next/headers";
 
@@ -30,20 +30,22 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "Password must be at least 8 characters" }, { status: 400 });
   }
 
-  const idx = USERS.findIndex((u) => u.id === userId);
+  const users = await loadUsers();
+  const idx = users.findIndex((u) => u.id === userId);
   if (idx === -1) {
     return NextResponse.json({ ok: false, error: "User not found" }, { status: 404 });
   }
 
   const salt = generateSalt();
   const hash = hashPassword(newPassword, salt);
-
-  USERS[idx] = {
-    ...USERS[idx]!,
+  const updatedUsers = [...users];
+  updatedUsers[idx] = {
+    ...users[idx]!,
     passwordHash: hash,
     passwordSalt: salt,
     ...(username ? { username } : {}),
   };
+  await saveUsers(updatedUsers);
 
-  return NextResponse.json({ ok: true, username: USERS[idx]!.username });
+  return NextResponse.json({ ok: true, username: updatedUsers[idx]!.username });
 }
