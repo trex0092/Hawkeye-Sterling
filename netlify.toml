@@ -2,7 +2,7 @@
 #
 # Build order:
 #   1. Root: `npm ci && npm run build` → compiles src/brain (TypeScript → dist/).
-#   2. web/: `npm ci && npm run build` → builds Next.js 14 app (SSR + API routes).
+#   2. web/: `npm ci && npm run build` → builds Next.js 15 app (SSR + API routes).
 #
 # The Next.js route handler at web/app/api/quick-screen/route.ts imports the
 # compiled brain from ../../../../../dist/src/brain/quick-screen.js, so step 1

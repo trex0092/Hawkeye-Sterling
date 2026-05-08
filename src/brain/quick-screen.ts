@@ -162,7 +162,7 @@ export function quickScreen(
           bestAlias = cn === cand.name ? undefined : cn;
           phonetic = ens.phoneticAgreement;
           bestEns = ens;
-        } else if (ens.best.score === bestScore && ens.phoneticAgreement && !phonetic) {
+        } else if (ens.best.score === bestScore && ens.phoneticAgreement) {
           phonetic = true;
         }
       }

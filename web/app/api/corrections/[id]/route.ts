@@ -11,16 +11,18 @@ const PREFIX = "corrections/";
 
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
   const gate = await enforce(req, { requireAuth: true });
   if (!gate.ok) return gate.response;
 
-  const record = await getJson<CorrectionRequest>(`${PREFIX}${params.id}`);
+  const { id } = await params;
+  const record = await getJson<CorrectionRequest>(`${PREFIX}${id}`);
   if (!record) {
     return NextResponse.json({ ok: false, error: "not found" }, { status: 404, headers: gate.headers });
   }
   return NextResponse.json({ ok: true, request: record }, { headers: gate.headers });
+
 }
 
 interface PatchBody {
@@ -43,11 +45,12 @@ function isCorrectionStatus(v: unknown): v is CorrectionStatus {
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
   const gate = await enforce(req, { requireAuth: true });
   if (!gate.ok) return gate.response;
   const gateHeaders = gate.headers;
+  const { id } = await params;
 
   let raw: unknown;
   try {
@@ -86,7 +89,7 @@ export async function PATCH(
     );
   }
 
-  const record = await getJson<CorrectionRequest>(`${PREFIX}${params.id}`);
+  const record = await getJson<CorrectionRequest>(`${PREFIX}${id}`);
   if (!record) {
     return NextResponse.json({ ok: false, error: "not found" }, { status: 404, headers: gateHeaders });
   }
@@ -116,6 +119,6 @@ export async function PATCH(
     record.reason = `Appeal filed by ${a.by}: ${a.reason}`;
   }
 
-  await setJson(`${PREFIX}${params.id}`, record);
+  await setJson(`${PREFIX}${id}`, record);
   return NextResponse.json({ ok: true, request: record }, { headers: gateHeaders });
 }

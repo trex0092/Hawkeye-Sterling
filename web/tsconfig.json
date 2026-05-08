@@ -15,7 +15,8 @@
     "incremental": true,
     "plugins": [{ "name": "next" }],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@brain/*": ["../dist/src/brain/*"]
     },
     "noUncheckedIndexedAccess": true
   },

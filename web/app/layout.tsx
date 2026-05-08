@@ -30,10 +30,10 @@ export const viewport: Viewport = {
   themeColor: "#0b1320",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
   // Picked up from middleware.ts — empty string fallback keeps dev hot-reload
   // working when the middleware hasn't run (e.g. static export probes).
-  const nonce = headers().get("x-nonce") ?? "";
+  const nonce = (await headers()).get("x-nonce") ?? "";
 
   return (
     <html lang="en-GB">

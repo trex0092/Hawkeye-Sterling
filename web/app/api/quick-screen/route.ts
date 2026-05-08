@@ -33,7 +33,8 @@ import { assessCommonName } from "@/lib/intelligence/commonNames";
 // Compiled backend entry point. The root `tsc` build (npm run build at the repo root)
 // must run before this API route is bundled. Netlify build order is encoded in
 // netlify.toml; local dev runs `npm run build` at the root once to produce dist/.
-import { quickScreen as brainQuickScreen } from "../../../../dist/src/brain/quick-screen.js";
+// @brain/* is resolved via web/tsconfig.json paths → ../dist/src/brain/*.
+import { quickScreen as brainQuickScreen } from "@brain/quick-screen.js";
 
 type QuickScreenFn = (
   subject: QuickScreenSubject,
@@ -60,6 +61,10 @@ const CORS_HEADERS: Record<string, string> = {
   "access-control-allow-origin": process.env["NEXT_PUBLIC_APP_URL"] ?? "https://hawkeye-sterling.netlify.app",
   "access-control-allow-methods": "POST, OPTIONS",
   "access-control-allow-headers": "content-type, authorization, x-api-key",
+  // Screening results must never be cached — stale hits or stale CLEAR
+  // verdicts are a compliance failure. Set this explicitly rather than
+  // relying solely on the force-dynamic export above.
+  "cache-control": "no-store, no-cache, must-revalidate",
   vary: "Origin",
 };
 

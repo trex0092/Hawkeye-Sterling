@@ -9,10 +9,10 @@ export const maxDuration = 10;
 
 export async function POST(
   req: Request,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
   try {
-    const id = params.id;
+    const { id } = await params;
     if (!id) return NextResponse.json({ ok: false, error: "id required" }, { status: 400 });
     let dismissedBy: string | undefined;
     try {

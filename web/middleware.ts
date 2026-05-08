@@ -51,9 +51,9 @@ function buildCspHeader(_nonce: string): string {
     // scripts for hydration that do not carry a nonce. 'strict-dynamic' with
     // a nonce blocks them all and breaks client-side navigation entirely.
     "script-src 'self' 'unsafe-inline'",
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "style-src 'self' 'unsafe-inline' https://fonts.bunny.net",
     "img-src 'self' data:",
-    "font-src 'self' data: https://fonts.gstatic.com",
+    "font-src 'self' data: https://fonts.bunny.net",
     "connect-src 'self' https://app.asana.com https://api.anthropic.com",
     "frame-ancestors 'none'",
     "base-uri 'self'",

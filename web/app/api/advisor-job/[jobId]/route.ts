@@ -20,9 +20,10 @@ const JOB_ID_RE = /^[A-Za-z0-9_-]{1,128}$/;
 
 export async function GET(
   _req: Request,
-  { params }: { params: { jobId: string } },
+  { params }: { params: Promise<{ jobId: string }> },
 ): Promise<NextResponse> {
-  const jobId = params.jobId?.trim() ?? "";
+  const { jobId: rawJobId } = await params;
+  const jobId = rawJobId?.trim() ?? "";
   if (!JOB_ID_RE.test(jobId)) {
     return NextResponse.json(
       { ok: false, error: "invalid jobId" },
