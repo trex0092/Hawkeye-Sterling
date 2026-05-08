@@ -212,6 +212,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         (c): c is QuickScreenCandidate =>
           !!c && typeof c === "object" &&
           typeof (c as QuickScreenCandidate).listId === "string" &&
+          typeof (c as QuickScreenCandidate).listRef === "string" &&
           typeof (c as QuickScreenCandidate).name === "string",
       );
       listsLoaded = candidates.length;

@@ -55,6 +55,9 @@ interface PdfReportRequest {
   chainAnchor?: string;
 }
 
+const VALID_ENTITY_TYPES = ["individual", "entity", "vessel", "wallet", "aircraft"] as const;
+type PdfEntityType = (typeof VALID_ENTITY_TYPES)[number];
+
 function validatePdfRequest(raw: unknown): { ok: true; value: PdfReportRequest } | { ok: false; error: string } {
   if (typeof raw !== "object" || raw === null) return { ok: false, error: "body must be a JSON object" };
   const b = raw as Record<string, unknown>;
@@ -62,6 +65,9 @@ function validatePdfRequest(raw: unknown): { ok: true; value: PdfReportRequest }
   if (typeof b["subject"] !== "object" || b["subject"] === null) return { ok: false, error: "subject required" };
   const subj = b["subject"] as Record<string, unknown>;
   if (typeof subj["name"] !== "string" || !subj["name"].trim()) return { ok: false, error: "subject.name required" };
+  if (subj["entityType"] !== undefined && !VALID_ENTITY_TYPES.includes(subj["entityType"] as PdfEntityType)) {
+    return { ok: false, error: `subject.entityType must be one of: ${VALID_ENTITY_TYPES.join(", ")}` };
+  }
   if (typeof b["verdict"] !== "object" || b["verdict"] === null) return { ok: false, error: "verdict required" };
   const v = b["verdict"] as Record<string, unknown>;
   if (typeof v["outcome"] !== "string") return { ok: false, error: "verdict.outcome required" };
@@ -102,14 +108,13 @@ export async function POST(req: Request): Promise<NextResponse | Response> {
     outcome: verdict.outcome as BrainVerdict["outcome"],
     aggregateScore: verdict.aggregateScore,
     aggregateConfidence: verdict.aggregateConfidence,
-    generatedAt: ts,
+    generatedAt: new Date(ts).getTime(),
     findings: Array.isArray(verdict.findings) ? (verdict.findings as BrainVerdict["findings"]) : [],
     introspection: { bias: [], calibration: { confidence: verdict.aggregateConfidence, calibrationNote: "Score reflects matching ensemble output." } },
     methodology: verdict.methodology ?? "Hawkeye Sterling name-matching ensemble (Levenshtein + phonetic + alias expansion)",
     primaryHypothesis: verdict.primaryHypothesis,
-    reviewerFooter: reviewerName ? `Reviewed by: ${reviewerName}` : undefined,
     chain: [],
-    recommendedActions: [],
+    recommendedActions: reviewerName ? [`Reviewed by: ${reviewerName}`] : [],
   } as unknown as BrainVerdict;
 
   // Integrity hash of the result payload (independent of chain anchor)

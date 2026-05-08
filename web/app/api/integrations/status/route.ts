@@ -81,7 +81,7 @@ async function pingCheck(
       headers: { "user-agent": "hawkeye-sterling-health/1" },
     });
     clearTimeout(timer);
-    const ok = res.ok || res.status < 500;
+    const ok = res.ok;
     return {
       id,
       label,

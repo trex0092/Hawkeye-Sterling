@@ -122,6 +122,8 @@ jobs:
             "web/.next/server/app/api/reports/pdf/route.js"
             "web/.next/server/app/api/reports/xml/route.js"
             "web/.next/server/app/api/quick-screen/route.js"
+            "web/.next/server/app/api/env-check/route.js"
+            "web/.next/server/app/api/auth/login/route.js"
           )
           MISSING=0
           for route in "${REQUIRED_ROUTES[@]}"; do
