@@ -52,7 +52,7 @@ interface ReportInput {
     group?: string;
     idNumber?: string;
   };
-  result: {
+  result?: {
     topScore: number;
     severity: string;
     hits: ReportHit[];
@@ -61,15 +61,27 @@ interface ReportInput {
     durationMs?: number;
     generatedAt?: string;
   };
+  operator?: {
+    role?: string;
+    id?: string;
+  };
   superBrain?: {
     pep?: { tier: string; type: string; salience: number; rationale?: string } | null;
-    adverseMedia?: Array<{ categoryId: string; keyword: string }>;
+    pepAssessment?: {
+      isLikelyPEP?: boolean;
+      highestTier?: string;
+      riskScore?: number;
+      matchedRoles?: Array<{ tier: string; label: string; snippet?: string }>;
+    } | null;
+    adverseMedia?: Array<{ categoryId: string; keyword: string; offset?: number }>;
     adverseKeywordGroups?: Array<{ group: string; label: string; count: number }>;
     adverseMediaScored?: {
       total?: number;
       categoriesTripped?: string[];
       compositeScore?: number;
       byCategory?: Record<string, number>;
+      distinctKeywords?: number;
+      topKeywords?: Array<{ keyword: string; categoryId: string; count: number }>;
     };
     newsDossier?: {
       articleCount?: number;
@@ -80,7 +92,7 @@ interface ReportInput {
         title?: string;
         link?: string;
         pubDate?: string;
-        source?: string;   // outlet name: "Reuters" | "Al Arabiya" | "Gulf News" etc.
+        source?: string;
         snippet?: string;
         severity?: string;
         keywordGroups?: string[];
@@ -91,21 +103,26 @@ interface ReportInput {
       name?: string;
       cahra?: boolean;
       region?: string;
+      regimes?: string[];
     };
-    composite?: { score: number };
+    composite?: { score: number; breakdown?: Record<string, number> };
     redlines?: { fired?: Array<{ id: string; label?: string }>; action?: string | null };
   } | null;
   mlro?: string;
   now?: string;
   triageResolutions?: Array<{
+    hitId?: string;
     matchedName: string;
     sourceList: string;
     listRef?: string;
     matchStrength: number;
+    type?: string;
     dob?: string;
     citizenship?: string;
     resolution: "positive" | "possible" | "false" | "unspecified";
     reason?: string;
+    resolvedAt?: string;
+    resolvedBy?: string;
   }>;
 }
 
@@ -117,8 +134,8 @@ function safeFilenameSegment(s: string | undefined | null): string {
 // ── Disposition derivation ────────────────────────────────────────────────────
 
 function deriveDisposition(body: ReportInput): SCRDisposition {
-  const hits = body.result.hits;
-  const sev = body.result.severity;
+  const hits = body.result?.hits ?? [];
+  const sev = body.result?.severity ?? "clear";
   const triage = body.triageResolutions ?? [];
 
   // Any triage resolution explicitly marked positive → prohibited
@@ -133,9 +150,15 @@ function deriveDisposition(body: ReportInput): SCRDisposition {
 
   // Sanctions hits at lower severity, or PEP/adverse media only → EDD continuance
   if (hits.length > 0) return "edd_continuance";
-  if (body.superBrain?.pep?.salience && body.superBrain.pep.salience > 0) return "edd_continuance";
-  const amScore = body.superBrain?.adverseMediaScored?.compositeScore ?? 0;
-  if (amScore > 0) return "edd_continuance";
+
+  const sb = body.superBrain;
+  const pepSalience = sb?.pep?.salience ?? 0;
+  const pepLikely = sb?.pepAssessment?.isLikelyPEP ?? false;
+  if (pepSalience > 0 || pepLikely) return "edd_continuance";
+
+  const amScore = sb?.adverseMediaScored?.compositeScore ?? 0;
+  const amTotal = sb?.adverseMediaScored?.total ?? (sb?.adverseMedia?.length ?? 0);
+  if (amScore > 0 || amTotal > 0) return "edd_continuance";
 
   return "standard_cdd";
 }
@@ -144,10 +167,16 @@ function deriveDisposition(body: ReportInput): SCRDisposition {
 
 function buildSCR(body: ReportInput, now: Date): ScreeningComplianceReport {
   const s = body.subject;
-  const r = body.result;
+  const r = body.result ?? { topScore: 0, severity: "clear", hits: [] };
   const sb = body.superBrain ?? null;
-  const hits = r.hits;
-  const mlro = body.mlro ?? "L. Fernanda";
+  const hits = r.hits ?? [];
+  // MLRO name: explicit > operator.id > role label > fallback
+  const mlro = body.mlro
+    ?? body.operator?.id
+    ?? (body.operator?.role === "mlro" ? "MLRO Officer"
+       : body.operator?.role === "compliance_officer" ? "Compliance Officer"
+       : body.operator?.role ? body.operator.role
+       : "L. Fernanda");
   const disposition = deriveDisposition(body);
 
   // Time formatting
@@ -207,7 +236,7 @@ function buildSCR(body: ReportInput, now: Date): ScreeningComplianceReport {
     { label: "Jurisdiction", value: s.jurisdiction ?? "—" },
     ...(s.nationality ? [{ label: "Nationality", value: s.nationality }] : []),
     ...(s.dob ? [{ label: "Date of birth", value: s.dob }] : []),
-    ...(s.aliases?.length ? [{ label: "Aliases", value: s.aliases.join(" · ") }] : []),
+    ...(() => { const a = (s.aliases ?? []).filter(Boolean); return a.length ? [{ label: "Aliases", value: a.join(" · ") }] : []; })(),
     ...(s.caseId ? [{ label: "Case reference", value: s.caseId }] : []),
     ...(s.group ? [{ label: "Group", value: s.group }] : []),
     {
@@ -266,12 +295,17 @@ function buildSCR(body: ReportInput, now: Date): ScreeningComplianceReport {
   };
 
   // ── Section 06 — PEP & adverse media ──────────────────────────────────────
-  const pepTier = sb?.pep?.tier ?? null;
+  // Use pepAssessment as authoritative fallback when pep object is absent
+  const pepAssessment = sb?.pepAssessment ?? null;
+  const pepTier = sb?.pep?.tier
+    ?? (pepAssessment?.isLikelyPEP ? (pepAssessment.highestTier ?? "tier_2") : null);
+  const pepCategory = sb?.pep?.type?.replace(/_/g, " ").toUpperCase()
+    ?? (pepAssessment?.matchedRoles?.[0]?.label?.toUpperCase() ?? "PEP");
   const pepHits = pepTier ? [{
     provider: "World-Check / HS Internal",
     record: s.name,
     entered: dateStr,
-    category: sb?.pep?.type?.replace(/_/g, " ").toUpperCase() ?? "PEP",
+    category: pepCategory,
     tier: pepTier.includes("1") ? "T1" : "T2",
   }] : [];
 
@@ -293,9 +327,9 @@ function buildSCR(body: ReportInput, now: Date): ScreeningComplianceReport {
     if (/osint|leak|document/i.test(cat)) return "OSINT";
     return "NEWS";
   }
-  // Tier from composite score
+  // compositeScore is 0-100 (not 0-1)
   const amComposite = amScored?.compositeScore ?? 0;
-  const amTierLabel = amComposite >= 0.7 ? "T1" : amComposite >= 0.3 ? "T1 · T2" : "T1 · T2 · T3";
+  const amTierLabel = amComposite >= 70 ? "T1" : amComposite >= 30 ? "T1 · T2" : "T1 · T2 · T3";
 
   // Index newsDossier articles by keyword group for outlet-name lookup
   const dossierArticles = sb?.newsDossier?.articles ?? [];
@@ -312,7 +346,7 @@ function buildSCR(body: ReportInput, now: Date): ScreeningComplianceReport {
       .filter(Boolean);
     const kwNote = topKws.length > 0 ? ` Keywords: ${topKws.join(", ")}.` : "";
     const compNote = amComposite > 0
-      ? ` Severity-weighted composite score: ${Math.round(amComposite * 100)}/100.`
+      ? ` Severity-weighted composite score: ${Math.round(amComposite)}/100.`
       : "";
 
     // Derive matching outlet names from newsDossier articles for this category
@@ -356,7 +390,7 @@ function buildSCR(body: ReportInput, now: Date): ScreeningComplianceReport {
       sourceTier: amTierLabel,
       date: dateStr,
       category: catLabel.toUpperCase(),
-      categoryColour: amComposite >= 0.7 ? "red" as const : "orange" as const,
+      categoryColour: amComposite >= 70 ? "red" as const : "orange" as const,
       substance: `${catCount} adverse ${srcLabel === "NEWS" ? "article" : "filing"}${catCount === 1 ? "" : "s"} in the ${catLabel} category.${kwNote}${compNote} Analyst review and live-news corroboration required before constructive knowledge can be asserted under FDL 10/2025 Art.2(3).`,
       corroboration: `${srcLabel === "NEWS" ? "multi-source news · open-source" : "regulatory filing · open-source"} · ${amTierLabel}`,
     };
@@ -368,7 +402,7 @@ function buildSCR(body: ReportInput, now: Date): ScreeningComplianceReport {
     text: (!pepTier && amTotal === 0)
       ? "No PEP classification or adverse media was identified in this screening run. The domain returns a CLEAR finding."
       : [
-          pepTier ? `PEP signal: ${s.name} has been identified as a possible ${sb?.pep?.type?.replace(/_/g, " ")} (${pepTier}). Independent verification required per FATF R.12.` : "",
+          pepTier ? `PEP signal: ${s.name} has been identified as a possible ${pepCategory.toLowerCase()} (${pepTier}). Independent verification required per FATF R.12.` : "",
           amTotal > 0 ? `Adverse media: ${amTotal} hit${amTotal === 1 ? "" : "s"} in ${amCats.length} categor${amCats.length === 1 ? "y" : "ies"}. Analyst review and live-news corroboration required before constructive knowledge can be asserted under FDL 10/2025 Art.2(3).` : "",
         ].filter(Boolean).join(" "),
     reviewer: "AUTOMATED · QA passed",
@@ -677,6 +711,13 @@ async function handleScrReport(req: Request): Promise<Response> {
       { ok: false, error: "subject.name is required" },
       { status: 400, headers: gateHeaders },
     );
+  }
+
+  // Ensure result is at least a zero-state object so buildSCR never crashes
+  if (!body.result) {
+    body.result = { topScore: 0, severity: "clear", hits: [] };
+  } else if (!Array.isArray(body.result.hits)) {
+    body.result.hits = [];
   }
 
   const now = body.now ? new Date(body.now) : new Date();
