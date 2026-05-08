@@ -339,7 +339,16 @@ function buildSCR(body: ReportInput, now: Date): ScreeningComplianceReport {
       ? outletNames
       : Array.from(new Set(dossierArticles.map(a => a.source).filter((s): s is string => Boolean(s)))).slice(0, 4);
 
-    const sourceOutlets = outletsFinal.length > 0 ? outletsFinal.join(" · ") : undefined;
+    // Always produce a sourceOutlets label — use dossier outlet names when available,
+    // otherwise fall back to a generic label that reflects the source type.
+    const fallbackOutlets: Record<string, string> = {
+      NEWS: "multi-source news media",
+      REGULATORY: "official regulatory records",
+      OSINT: "open-source intelligence",
+    };
+    const sourceOutlets = outletsFinal.length > 0
+      ? outletsFinal.join(" · ")
+      : fallbackOutlets[srcLabel] ?? "multi-source media";
 
     return {
       source: srcLabel,
