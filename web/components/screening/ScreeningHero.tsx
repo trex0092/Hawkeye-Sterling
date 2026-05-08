@@ -57,7 +57,7 @@ function HeroStat({
       ? "text-red"
       : tone === "orange"
         ? "text-orange"
-        : "text-ink-0";
+        : "text-brand";
   return (
     <div className="flex flex-col gap-0.5">
       <span className={`font-mono text-20 font-semibold ${valueColor}`}>{value}</span>
