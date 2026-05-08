@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 import { randomBytes } from "node:crypto";
-import { USERS, PERMISSION_LOG, ROLE_MODULES, type UserRole } from "../_store";
+import { loadUsers, saveUsers, appendPermissionLog, ROLE_MODULES, type UserRole } from "../_store";
 import { generateSalt, hashPassword } from "@/lib/server/auth";
 import { adminAuth } from "@/lib/server/admin-auth";
 
@@ -22,13 +22,14 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "name, email, and role are required" }, { status: 400 });
   }
 
+  const users = await loadUsers();
   const emailLower = email.toLowerCase().trim();
-  if (USERS.some((u) => u.email.toLowerCase() === emailLower)) {
+  if (users.some((u) => u.email.toLowerCase() === emailLower)) {
     return NextResponse.json({ ok: false, error: "A user with this email already exists" }, { status: 409 });
   }
 
   const derivedUsername = username?.trim() || emailLower.split("@")[0]!.replace(/[^a-z0-9._-]/gi, "").toLowerCase();
-  if (USERS.some((u) => u.username?.toLowerCase() === derivedUsername.toLowerCase())) {
+  if (users.some((u) => u.username?.toLowerCase() === derivedUsername.toLowerCase())) {
     return NextResponse.json({ ok: false, error: "Username already taken — choose a different one" }, { status: 409 });
   }
 
@@ -49,7 +50,7 @@ export async function POST(req: Request) {
     passwordHash: hash,
     passwordSalt: salt,
   };
-  USERS.push(newUser);
+  await saveUsers([...users, newUser]);
 
   const logEntry = {
     id: `log-${String(Date.now()).slice(-6)}`,
@@ -61,7 +62,7 @@ export async function POST(req: Request) {
     newRole: role,
     reason: `User account created with ${role} role. Login: ${derivedUsername}`,
   };
-  PERMISSION_LOG.push(logEntry);
+  await appendPermissionLog(logEntry);
 
   // Return user without exposing hash/salt to the client
   const { passwordHash: _h, passwordSalt: _s, ...safeUser } = newUser;

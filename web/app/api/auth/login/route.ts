@@ -3,14 +3,14 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 import { createHash } from "node:crypto";
-import { USERS } from "@/app/api/access/_store";
+import { loadUsers, saveUsers } from "@/app/api/access/_store";
 import { verifyPassword, issueSession, SESSION_COOKIE, SESSION_TTL_S } from "@/lib/server/auth";
 
 // ── Per-username brute-force protection ──────────────────────────────────────
 // Tracks failed attempts per normalised username. Hard-locks after
-// MAX_FAILURES within WINDOW_MS. Lock persists in this function instance
-// (resets on cold start — acceptable for MVP; Redis lock preferred for prod,
-// set via UPSTASH_REDIS_REST_URL in the operational integration tier).
+// MAX_FAILURES within WINDOW_MS. Lock persists in this function instance.
+// For cross-instance protection in production, replace failureMap with
+// Upstash Redis (set UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN).
 
 const MAX_FAILURES = 10;
 const WINDOW_MS = 15 * 60 * 1000; // 15-minute sliding window
@@ -94,7 +94,8 @@ export async function POST(req: Request) {
     );
   }
 
-  const user = USERS.find(
+  const users = await loadUsers();
+  const user = users.find(
     (u) => u.active && u.username?.toLowerCase() === username.toLowerCase(),
   );
 
@@ -124,10 +125,11 @@ export async function POST(req: Request) {
     path: "/",
   });
 
-  const idx = USERS.findIndex((u) => u.id === user.id);
-  if (idx !== -1) {
-    USERS[idx] = { ...USERS[idx]!, lastLogin: new Date().toISOString() };
-  }
+  // Persist last-login timestamp so it survives cold restarts
+  const updatedUsers = users.map((u) =>
+    u.id === user.id ? { ...u, lastLogin: new Date().toISOString() } : u,
+  );
+  await saveUsers(updatedUsers);
 
   return res;
 }

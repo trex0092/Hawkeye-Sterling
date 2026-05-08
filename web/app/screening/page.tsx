@@ -1835,7 +1835,6 @@ export default function ScreeningPage() {
             // when the upstream feed is degraded (e.g. Taranis returned 0
             // items). Normalise everything so the UI doesn't crash on
             // missing arrays / undefined counters.
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const v = amVerdict!;
             const findings = v.findings ?? [];
             const fatfRecs = v.fatfRecommendations ?? [];

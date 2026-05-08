@@ -133,14 +133,39 @@ export interface AuditRecord {
 type AuditSink = (record: AuditRecord) => void;
 
 // Fixed-capacity ring buffer with O(1) insert via index wraparound.
+// Serves same-instance "recent access" queries quickly. Records are also
+// written to Netlify Blobs asynchronously for cross-instance persistence.
 const RING_CAPACITY = 1_000;
 const RING: AuditRecord[] = new Array<AuditRecord>(RING_CAPACITY);
 let RING_HEAD = 0;
 let RING_SIZE = 0;
+
+// Persistent sink: append each access record to a daily blob in Netlify Blobs.
+// Failures are silently swallowed — audit persistence must never break the
+// request path. The ring buffer still captures same-instance records even when
+// Blobs is unavailable (e.g. local dev without NETLIFY_SITE_ID).
+async function persistAuditRecord(record: AuditRecord): Promise<void> {
+  try {
+    // Lazy import avoids a circular dependency between guard.ts and store.ts
+    // (store.ts is already used heavily in API routes that import guard.ts).
+    const { getJson, setJson } = await import("./store");
+    const day = record.at.slice(0, 10); // YYYY-MM-DD
+    const key = `access-audit/${day}.json`;
+    const existing = (await getJson<AuditRecord[]>(key)) ?? [];
+    // Cap per-day log at 50k entries to prevent runaway blob growth.
+    const updated = [...existing, record].slice(-50_000);
+    await setJson(key, updated);
+  } catch {
+    // Swallow — audit persistence is best-effort.
+  }
+}
+
 let SINK: AuditSink = (record) => {
   RING[RING_HEAD % RING_CAPACITY] = record;
   RING_HEAD++;
   if (RING_SIZE < RING_CAPACITY) RING_SIZE++;
+  // Fire-and-forget persistence — does not block the response.
+  void persistAuditRecord(record);
 };
 
 export function setAuditSink(fn: AuditSink): void {
