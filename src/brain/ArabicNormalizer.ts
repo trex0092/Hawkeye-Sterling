@@ -143,7 +143,6 @@ const URDU_EXTRA: Record<number, string> = {
   0x0679: 't',  // ٹ (tte) → t
   0x0688: 'd',  // ڈ (ddal) → d
   0x0691: 'r',  // ڑ (rra) → r
-  0x06BE: 'h',  // duplicate intentional for clarity
   0x0698: 'zh', // ژ → zh
   0x06A9: 'k',  // ک (keheh) → k
   0x06AF: 'g',  // گ (gaf) → g

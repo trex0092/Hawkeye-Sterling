@@ -68,34 +68,34 @@ export interface OverriddenAlert {
 
 export interface Decision {
   decisionId: string;
-  caseId?: string;           // links to EscalationCase
+  caseId?: string | undefined;
   subjectId: string;
   subjectName: string;
   category: DecisionCategory;
   outcome: DecisionOutcome;
 
   reviewer: ReviewerRecord;
-  rationale: string;          // plain-language explanation (regulator-readable)
+  rationale: string;
   evidenceReferences: EvidenceReference[];
   policyReferences: PolicyReference[];
   overriddenAlerts: OverriddenAlert[];
 
   riskScoreAtDecision: number;
-  confidenceAtDecision: string; // MatchConfidenceLevel
+  confidenceAtDecision: string;
 
   requiresSecondApproval: boolean;
-  secondApprover?: ReviewerRecord;
-  secondApprovalAt?: string;
-  secondApprovalRationale?: string;
+  secondApprover?: ReviewerRecord | undefined;
+  secondApprovalAt?: string | undefined;
+  secondApprovalRationale?: string | undefined;
 
   effectiveDates: {
-    decidedAt: string;          // ISO 8601
-    reviewDueAt?: string;       // for 'monitor' decisions
-    expiresAt?: string;         // for time-limited decisions
+    decidedAt: string;
+    reviewDueAt?: string | undefined;
+    expiresAt?: string | undefined;
   };
 
-  decisionHash: string;         // tamper-evident hash
-  auditTrailRef?: string;       // reference to audit chain entry
+  decisionHash: string;
+  auditTrailRef?: string | undefined;
   schemaVersion: string;
 }
 

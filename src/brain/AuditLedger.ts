@@ -51,23 +51,23 @@ export interface LedgerEntry {
     actorId: string;
     actorName: string;
     role: string;
-    ipAddress?: string;
-    sessionId?: string;
+    ipAddress?: string | undefined;
+    sessionId?: string | undefined;
   };
 
   subject?: {
     subjectId: string;
     subjectName: string;
     subjectType: 'individual' | 'entity' | 'account' | 'system';
-  };
+  } | undefined;
 
   payload: Record<string, unknown>;  // action-specific data
 
   // Forensic metadata
-  correlationId?: string;    // ties related entries (e.g. a full screening run)
-  caseId?: string;
-  decisionId?: string;
-  sanctionsListVersion?: string;
+  correlationId?: string | undefined;
+  caseId?: string | undefined;
+  decisionId?: string | undefined;
+  sanctionsListVersion?: string | undefined;
   schemaVersion: string;
 }
 
@@ -270,8 +270,8 @@ export class AuditLedger {
     totalEntries: number;
     byCategory: Partial<Record<LedgerActionCategory, number>>;
     criticalCount: number;
-    oldestEntry?: string;
-    newestEntry?: string;
+    oldestEntry?: string | undefined;
+    newestEntry?: string | undefined;
   } {
     const byCategory: Partial<Record<LedgerActionCategory, number>> = {};
     let criticalCount = 0;

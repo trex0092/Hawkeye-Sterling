@@ -21,7 +21,7 @@ export interface UBOChain {
   targetEntityName: string;
   effectiveOwnershipPercent: number;
   chainDepth: number;
-  path: Array<{ nodeId: string; nodeName: string; edgeKind: EdgeKind; weight?: number }>;
+  path: Array<{ nodeId: string; nodeName: string; edgeKind: EdgeKind; weight?: number | undefined }>;
   viaNominee: boolean;
   riskFlags: string[];
 }
@@ -29,7 +29,7 @@ export interface UBOChain {
 export interface ShellChain {
   startId: string;
   endId: string;
-  intermediateEntities: Array<{ id: string; name: string; jurisdiction?: string }>;
+  intermediateEntities: Array<{ id: string; name: string; jurisdiction?: string | undefined }>;
   depth: number;
   riskScore: number;   // 0..1
   characteristics: string[];   // 'nominee_directors', 'offshore_jurisdiction', 'circular', etc.
@@ -379,7 +379,7 @@ export function buildRelationshipIntelligenceReport(
   }
 
   if (shellChains.some((c) => c.riskScore >= 0.60)) {
-    if (overallRisk === 'clear' || overallRisk === 'low') overallRisk = 'medium';
+    if ((['clear', 'low'] as typeof overallRisk[]).includes(overallRisk)) overallRisk = 'medium';
     primaryDrivers.push('High-risk shell chain in ownership structure');
   }
 

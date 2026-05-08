@@ -441,22 +441,20 @@ export function formatReasoningMarkdown(r: SearchReasoning): string {
   return lines.join('\n');
 }
 
-// ── Batch reasoning for a full resolution result ──────────────────────────────
+// ── Single-pair reasoning from a ResolutionResult ────────────────────────────
 
 export function reasonResolutionResult(
   query: string,
+  candidateId: string,
+  candidateName: string,
   result: ResolutionResult,
-): SearchReasoning[] {
-  return result.matches.map((m, idx) =>
-    buildSearchReasoning({
-      queryId: `${result.subject.name.replace(/\s+/g, '_').toUpperCase()}-${idx + 1}`,
-      query,
-      candidateId: m.candidate.entityId,
-      candidateName: m.candidate.name,
-      candidateAliases: m.candidate.aliases,
-      finalScore: m.score,
-      nameScore: m.nameScore,
-      contradictions: m.contradictions,
-    })
-  );
+): SearchReasoning {
+  return buildSearchReasoning({
+    queryId: `${query.replace(/\s+/g, '_').toUpperCase()}-RES`,
+    query,
+    candidateId,
+    candidateName,
+    finalScore: result.score,
+    contradictions: result.disagreements,
+  });
 }

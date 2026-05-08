@@ -34,15 +34,15 @@ export interface SearchSnapshot {
 export interface EvidenceSnapshot {
   evidenceId: string;
   evidenceType: string;
-  contentHash: string;    // hash of retrieved content
+  contentHash: string;
   retrievedAt: string;
-  sourceUrl?: string;
+  sourceUrl?: string | undefined;
   excerpt: string;
 }
 
 export interface AIInferenceSnapshot {
   model: string;
-  promptHash: string;     // hash of the prompt (not the prompt itself for confidentiality)
+  promptHash: string;
   responseHash: string;
   confidence: number;
   guardrailsApplied: string[];
@@ -55,32 +55,26 @@ export interface AnalystActionSnapshot {
   action: string;
   rationale: string;
   timestamp: string;
-  overriddenAlerts?: string[];
+  overriddenAlerts?: string[] | undefined;
 }
 
 // ── Replay record ─────────────────────────────────────────────────────────────
 
 export interface ReplayRecord {
   replayId: string;
-  originalDecisionId?: string;
-  originalCaseId?: string;
+  originalDecisionId?: string | undefined;
+  originalCaseId?: string | undefined;
   subjectId: string;
   subjectName: string;
-
-  // What was the state at the time of the original decision?
-  snapshotAt: string;           // ISO 8601 timestamp of the event being replayed
-
+  snapshotAt: string;
   sanctionsState: SanctionsListSnapshot[];
   searchSnapshots: SearchSnapshot[];
   evidenceSnapshots: EvidenceSnapshot[];
   aiSnapshots: AIInferenceSnapshot[];
   analystActions: AnalystActionSnapshot[];
-
-  // Reconstruction
   reconstructedOutcome: string;
   reconstructionNotes: string[];
-  reconstructionMatches: boolean; // did replay produce same outcome?
-
+  reconstructionMatches: boolean;
   generatedAt: string;
   generatedBy: string;
   schemaVersion: string;
@@ -92,12 +86,12 @@ export interface ReplaySession {
   sessionId: string;
   requestedBy: string;
   requestedAt: string;
-  reason: string;           // regulatory request, internal audit, dispute
-  targetDecisionId?: string;
-  targetCaseId?: string;
-  targetTimestamp?: string;
+  reason: string;
+  targetDecisionId?: string | undefined;
+  targetCaseId?: string | undefined;
+  targetTimestamp?: string | undefined;
   records: ReplayRecord[];
-  completedAt?: string;
+  completedAt?: string | undefined;
   verified: boolean;
 }
 

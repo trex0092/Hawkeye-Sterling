@@ -34,15 +34,15 @@ export type FinancialCrimeEventType =
 
 export interface ClassifiedEvent {
   type: FinancialCrimeEventType;
-  subType?: string;
-  confidence: number;        // 0..1
+  subType?: string | undefined;
+  confidence: number;
   severity: 'critical' | 'high' | 'medium' | 'low';
   fatfPredicateOffense: string;
   fatfRecommendations: string[];
-  evidenceTokens: string[];  // text fragments that triggered classification
-  propagatesTo: FinancialCrimeEventType[]; // likely co-occurring events
+  evidenceTokens: string[];
+  propagatesTo: FinancialCrimeEventType[];
   requiresSTR: boolean;
-  typologyCode?: string;     // internal typology reference
+  typologyCode?: string | undefined;
 }
 
 // ── Classification signal definitions ────────────────────────────────────────

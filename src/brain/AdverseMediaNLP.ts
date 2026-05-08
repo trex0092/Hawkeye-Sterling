@@ -31,9 +31,9 @@ export interface ExtractedCrime {
 
 export interface ExtractedPenalty {
   type: 'fine' | 'imprisonment' | 'confiscation' | 'debarment' | 'license_revocation' | 'other';
-  amount?: number;
-  currency?: string;
-  duration?: string;
+  amount?: number | undefined;
+  currency?: string | undefined;
+  duration?: string | undefined;
   rawText: string;
 }
 

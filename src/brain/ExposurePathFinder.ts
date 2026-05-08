@@ -22,10 +22,10 @@ export interface PathStep {
   toId: string;
   toName: string;
   edgeKind: EdgeKind;
-  edgeWeight?: number;       // ownership %, confidence, etc.
-  jurisdiction?: string;
+  edgeWeight?: number | undefined;
+  jurisdiction?: string | undefined;
   isNominee: boolean;
-  stepScore: number;         // contribution of this step to exposure
+  stepScore: number;
 }
 
 export interface ExposurePath {

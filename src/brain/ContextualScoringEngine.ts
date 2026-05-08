@@ -73,15 +73,15 @@ const ENTITY_TYPE_SENSITIVITY: Record<string, number> = {
 
 export interface ContextualInput {
   entityType: 'individual' | 'organisation' | 'vessel' | 'aircraft' | 'other';
-  jurisdiction?: string;           // ISO 3166-1 alpha-2 of subject or candidate
-  sanctionsList?: string;          // list id the candidate appears on
-  dataCompleteness: number;        // 0..1 — how complete is the subject's data
-  hasNativeScript?: boolean;       // subject has native-script name
-  hasPhoneticAgreement?: boolean;  // phonetic algorithms agreed
-  hasIdentifierOverlap?: boolean;  // shared passport/ID
-  hasAddressOverlap?: boolean;     // shared registered address
-  hasDobMatch?: boolean;           // date of birth matches
-  isHighProfileProgram?: boolean;  // e.g., IRAN, DPRK, RUSSIA sanctions programs
+  jurisdiction?: string | undefined;
+  sanctionsList?: string | undefined;
+  dataCompleteness: number;
+  hasNativeScript?: boolean | undefined;
+  hasPhoneticAgreement?: boolean | undefined;
+  hasIdentifierOverlap?: boolean | undefined;
+  hasAddressOverlap?: boolean | undefined;
+  hasDobMatch?: boolean | undefined;
+  isHighProfileProgram?: boolean | undefined;
 }
 
 export interface ContextualScoreResult {

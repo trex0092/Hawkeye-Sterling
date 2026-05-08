@@ -147,16 +147,16 @@ export interface IngestionJob {
   sourceId: SanctionsSourceId;
   status: IngestionStatus;
   startedAt: string;
-  completedAt?: string;
+  completedAt?: string | undefined;
   entitiesAdded: number;
   entitiesRemoved: number;
   entitiesAmended: number;
   errors: string[];
   warnings: string[];
-  snapshot?: IngestionSnapshot;
-  delta?: SanctionDelta;
+  snapshot?: IngestionSnapshot | undefined;
+  delta?: SanctionDelta | undefined;
   rollbackAvailable: boolean;
-  previousSnapshotId?: string;
+  previousSnapshotId?: string | undefined;
 }
 
 // ── Checksum validation ───────────────────────────────────────────────────────

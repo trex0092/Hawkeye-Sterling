@@ -16,12 +16,11 @@ export interface SigningKey {
   keyId: string;
   algorithm: 'HMAC-SHA256' | 'FNV1A-CHAIN';
   createdAt: string;
-  expiresAt?: string;
+  expiresAt?: string | undefined;
   owner: string;
   purpose: 'evidence' | 'report' | 'audit' | 'export';
   isActive: boolean;
-  // The raw key material is never stored here — only the reference
-  _rawKey?: string;  // only present during key creation, then cleared
+  _rawKey?: string | undefined;
 }
 
 const KEY_REGISTRY = new Map<string, SigningKey>();

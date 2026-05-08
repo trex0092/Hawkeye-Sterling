@@ -8,17 +8,17 @@
 
 export interface EntityProfile {
   name: string;
-  dateOfBirth?: string;
-  dateOfIncorporation?: string;
-  nationality?: string;
-  nationalities?: string[];
-  identifiers?: Array<{ kind: string; number: string; issuer?: string }>;
-  addresses?: Array<{ country?: string; city?: string; full?: string }>;
-  gender?: 'M' | 'F' | 'unknown';
-  entityType?: string;
-  deceasedDate?: string;
-  passportExpiryDate?: string;
-  incorporationCountry?: string;
+  dateOfBirth?: string | undefined;
+  dateOfIncorporation?: string | undefined;
+  nationality?: string | undefined;
+  nationalities?: string[] | undefined;
+  identifiers?: Array<{ kind: string; number: string; issuer?: string | undefined }> | undefined;
+  addresses?: Array<{ country?: string | undefined; city?: string | undefined; full?: string | undefined }> | undefined;
+  gender?: 'M' | 'F' | 'unknown' | undefined;
+  entityType?: string | undefined;
+  deceasedDate?: string | undefined;
+  passportExpiryDate?: string | undefined;
+  incorporationCountry?: string | undefined;
 }
 
 export type ContradictionSeverity = 'critical' | 'major' | 'minor';

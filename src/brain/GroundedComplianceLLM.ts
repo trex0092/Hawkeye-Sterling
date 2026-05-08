@@ -21,8 +21,8 @@ export interface Citation {
   sourceId: string;           // e.g. 'ofac_sdn', 'reuters', 'fca'
   sourceName: string;
   title: string;
-  url?: string;
-  publishedAt?: string;       // ISO 8601
+  url?: string | undefined;
+  publishedAt?: string | undefined;
   retrievedAt: string;        // ISO 8601
   relevanceScore: number;     // 0..1 — semantic relevance to the claim
   excerpt: string;            // exact text from the source supporting the claim

@@ -16,14 +16,14 @@ export interface MediaArticle {
   sourceType: MediaSourceType;
   title: string;
   content: string;
-  url?: string;
-  publishedAt: string;      // ISO 8601
-  fetchedAt: string;        // ISO 8601
-  language: string;         // ISO 639-1
-  jurisdiction?: string;    // ISO 3166-1 alpha-2
-  reliability: number;      // 0..1 — from SourceReliabilityEngine
+  url?: string | undefined;
+  publishedAt: string;
+  fetchedAt: string;
+  language: string;
+  jurisdiction?: string | undefined;
+  reliability: number;
   tags: string[];
-  rawXml?: string;          // preserved for forensic replay
+  rawXml?: string | undefined;
 }
 
 export type MediaSourceType =
