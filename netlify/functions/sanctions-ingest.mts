@@ -141,15 +141,111 @@ function normaliseJson(listId: string, raw: unknown): NormalisedListEntry[] {
     .filter((x): x is NormalisedListEntry => x !== null);
 }
 
-// XML normalisation is intentionally minimal — Netlify Functions don't
-// have a full XML parser by default. Production should swap this for a
-// real XML parser (fast-xml-parser is the typical pick) once added to
-// dependencies.
-function normaliseXmlPlaceholder(listId: string, _raw: string): NormalisedListEntry[] {
-  // Returning [] is a SAFE no-op — the delta then shows the entire
-  // current state as removals on first run for XML feeds. Production
-  // wiring must replace this with a real parser.
-  return [];
+// ── Shared XML helpers ────────────────────────────────────────────────────────
+
+function xmlTag(block: string, name: string): string {
+  return block.match(new RegExp(`<${name}[^>]*>([\\s\\S]*?)<\\/${name}>`, "s"))?.[1]?.trim() ?? "";
+}
+
+function xmlTags(block: string, name: string): string[] {
+  return Array.from(
+    block.matchAll(new RegExp(`<${name}[^>]*>([\\s\\S]*?)<\\/${name}>`, "gs")),
+    (m) => m[1]?.trim() ?? "",
+  ).filter(Boolean);
+}
+
+function xmlAttr(fragment: string, name: string): string {
+  return fragment.match(new RegExp(`${name}="([^"]+)"`))?.[1] ?? "";
+}
+
+// Regex-based XML normalisation covering the three XML-format feeds:
+//   - UN 1267 consolidated (INDIVIDUAL / ENTITY blocks)
+//   - EU CFSP (sanctionEntity blocks)
+//   - OFAC SDN / Consolidated (sdnEntry blocks)
+// Intentionally permissive — minor schema drift does not break the parser.
+function normaliseXml(listId: string, raw: string): NormalisedListEntry[] {
+  const out: NormalisedListEntry[] = [];
+  const now = new Date().toISOString();
+
+  // UN 1267 format ─────────────────────────────────────────────────────────────
+  if (listId === "un_1267") {
+    for (const m of raw.matchAll(/<INDIVIDUAL>([\s\S]*?)<\/INDIVIDUAL>/g)) {
+      const block = m[1] ?? "";
+      const ref = xmlTag(block, "DATAID");
+      const name = [xmlTag(block, "FIRST_NAME"), xmlTag(block, "SECOND_NAME"), xmlTag(block, "THIRD_NAME")].filter(Boolean).join(" ");
+      if (!name || !ref) continue;
+      const programs = xmlTags(block, "UN_LIST_TYPE");
+      const aliases = xmlTags(block, "ALIAS_NAME");
+      const identifiers: NormalisedListEntry["identifiers"] = [];
+      const passport = xmlTag(block, "PASSPORT_NUMBER");
+      const ni = xmlTag(block, "NATIONAL_IDENTIFICATION_NUMBER");
+      const dob = xmlTag(block, "DATE_OF_BIRTH");
+      if (passport) identifiers.push({ kind: "passport", number: passport });
+      if (ni) identifiers.push({ kind: "national_id", number: ni });
+      if (dob) identifiers.push({ kind: "dob", number: dob });
+      out.push({ listId, sourceRef: ref, primaryName: name, entityType: "individual", programs, aliases, identifiers, publishedAt: now });
+    }
+    for (const m of raw.matchAll(/<ENTITY>([\s\S]*?)<\/ENTITY>/g)) {
+      const block = m[1] ?? "";
+      const ref = xmlTag(block, "DATAID");
+      const name = xmlTag(block, "FIRST_NAME") || xmlTag(block, "ENTITY_NAME");
+      if (!name || !ref) continue;
+      const programs = xmlTags(block, "UN_LIST_TYPE");
+      out.push({ listId, sourceRef: ref, primaryName: name, entityType: "entity", programs, aliases: [], identifiers: [] });
+    }
+    return out;
+  }
+
+  // EU CFSP format ─────────────────────────────────────────────────────────────
+  if (listId === "eu_consolidated") {
+    for (const m of raw.matchAll(/<sanctionEntity([^>]*)>([\s\S]*?)<\/sanctionEntity>/g)) {
+      const attrStr = m[1] ?? "";
+      const block = m[2] ?? "";
+      const ref = xmlAttr(attrStr, "euReferenceNumber") || xmlAttr(attrStr, "logicalId") || xmlTag(block, "euReferenceNumber");
+      const whole = xmlTag(block, "wholeName");
+      const last = xmlTag(block, "lastName");
+      const first = xmlTag(block, "firstName");
+      const name = whole || [first, last].filter(Boolean).join(" ");
+      if (!name) continue;
+      const aliases: string[] = [];
+      for (const am of block.matchAll(/<nameAlias[^>]*>([\s\S]*?)<\/nameAlias>/g)) {
+        const aname = xmlTag(am[1] ?? "", "wholeName") || xmlTag(am[1] ?? "", "lastName");
+        if (aname) aliases.push(aname);
+      }
+      const programs = xmlTags(block, "regulation");
+      out.push({ listId, sourceRef: ref || name, primaryName: name, entityType: "individual", programs, aliases, identifiers: [] });
+    }
+    return out;
+  }
+
+  // OFAC SDN / Consolidated format (sdnEntry schema) ──────────────────────────
+  for (const m of raw.matchAll(/<sdnEntry>([\s\S]*?)<\/sdnEntry>/g)) {
+    const block = m[1] ?? "";
+    const uid = xmlTag(block, "uid");
+    const fn = xmlTag(block, "firstName");
+    const ln = xmlTag(block, "lastName");
+    const name = (fn + " " + ln).trim() || ln || fn;
+    if (!name || !uid) continue;
+    const programs = xmlTags(block, "program");
+    const aliases: string[] = [];
+    for (const am of block.matchAll(/<aka>([\s\S]*?)<\/aka>/g)) {
+      const af = xmlTag(am[1] ?? "", "firstName");
+      const al = xmlTag(am[1] ?? "", "lastName");
+      const aname = (af + " " + al).trim() || al || af;
+      if (aname) aliases.push(aname);
+    }
+    const identifiers: NormalisedListEntry["identifiers"] = [];
+    for (const im of block.matchAll(/<id>([\s\S]*?)<\/id>/g)) {
+      const ib = im[1] ?? "";
+      const kind = xmlTag(ib, "idType").toLowerCase().replace(/\s+/g, "_");
+      const number = xmlTag(ib, "idNumber");
+      const issuer = xmlTag(ib, "idCountry");
+      if (number) identifiers.push({ kind, number, ...(issuer ? { issuer } : {}) });
+    }
+    out.push({ listId, sourceRef: uid, primaryName: name, entityType: "individual", programs, aliases, identifiers });
+  }
+
+  return out;
 }
 
 interface IngestOutcome {
@@ -180,7 +276,7 @@ async function ingestOne(spec: FeedSpec, store: ReturnType<typeof getStore>): Pr
     }
     const text = await res.text();
     const current: NormalisedListEntry[] =
-      spec.format === "json" ? normaliseJson(spec.listId, safeParseJson(text)) : normaliseXmlPlaceholder(spec.listId, text);
+      spec.format === "json" ? normaliseJson(spec.listId, safeParseJson(text)) : normaliseXml(spec.listId, text);
 
     // Read prior snapshot.
     let previous: NormalisedListEntry[] = [];

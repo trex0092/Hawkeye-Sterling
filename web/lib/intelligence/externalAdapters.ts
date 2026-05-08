@@ -149,6 +149,75 @@ export const NULL_GLEIF_ADAPTER: GleifAdapter = {
   lookupByName: async () => [],
 };
 
+// Live GLEIF adapter — uses the public GLEIF API (no auth key required).
+// Rate limit: 60 req/min unauthenticated. For higher throughput configure
+// GLEIF_API_KEY for authenticated access (same base URL, add x-gleif-api-key).
+export const LIVE_GLEIF_ADAPTER: GleifAdapter = {
+  isAvailable: () => true,
+  lookupByName: async (legalName: string): Promise<LeiRecord[]> => {
+    try {
+      const apiKey = typeof process !== "undefined" ? process.env["GLEIF_API_KEY"] : undefined;
+      const headers: Record<string, string> = { "accept": "application/vnd.api+json" };
+      if (apiKey) headers["x-gleif-api-key"] = apiKey;
+
+      const url = `https://api.gleif.org/api/v1/fuzzycompletions?field=entity.legalName&q=${encodeURIComponent(legalName)}&page%5Bsize%5D=10`;
+      const res = await fetch(url, { headers });
+      if (!res.ok) return [];
+
+      // Fuzzy completions → collect LEIs, then fetch full records.
+      const completions = (await res.json()) as { data?: Array<{ relationships?: { "lei-records"?: { data?: { id?: string } } } }> };
+      const leis = (completions.data ?? [])
+        .map((d) => d.relationships?.["lei-records"]?.data?.id)
+        .filter((id): id is string => Boolean(id));
+
+      if (leis.length === 0) return [];
+
+      // Batch fetch full LEI records.
+      const filter = leis.map((l) => `filter[lei]=${encodeURIComponent(l)}`).join("&");
+      const recordsRes = await fetch(`https://api.gleif.org/api/v1/lei-records?${filter}&page%5Bsize%5D=10`, { headers });
+      if (!recordsRes.ok) return [];
+
+      const records = (await recordsRes.json()) as {
+        data?: Array<{
+          id?: string;
+          attributes?: {
+            entity?: {
+              legalName?: { name?: string };
+              legalForm?: { id?: string };
+              registeredAt?: { id?: string };
+              status?: string;
+              jurisdiction?: string;
+            };
+            registration?: { registrationDate?: string; managingLou?: string };
+          };
+        }>;
+      };
+
+      return (records.data ?? []).map((r) => {
+        const attrs = r.attributes ?? {};
+        const entity = attrs.entity ?? {};
+        const statusRaw = (entity.status ?? "").toUpperCase();
+        const status: LeiRecord["status"] =
+          statusRaw === "ACTIVE" ? "ACTIVE"
+            : statusRaw === "INACTIVE" ? "INACTIVE"
+              : statusRaw === "LAPSED" ? "LAPSED"
+                : statusRaw === "RETIRED" ? "RETIRED"
+                  : undefined;
+        return {
+          lei: r.id ?? "",
+          legalName: entity.legalName?.name ?? legalName,
+          legalForm: entity.legalForm?.id,
+          registeredAt: attrs.registration?.registrationDate,
+          status,
+          countryIso2: entity.jurisdiction ?? entity.registeredAt?.id,
+        };
+      }).filter((r) => r.lei);
+    } catch {
+      return [];
+    }
+  },
+};
+
 // ── #40 OpenSanctions / OpenCorporates ─────────────────────────────────
 export interface CorporateRecord {
   source: string;            // "opencorporates" | "opensanctions"
