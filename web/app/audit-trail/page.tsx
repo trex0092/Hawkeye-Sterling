@@ -162,7 +162,8 @@ export default function AuditTrailPage() {
           <div className="font-mono text-10 font-semibold text-amber tracking-wide-4 uppercase mb-1">
             MODULE 28
           </div>
-          <div className="font-mono text-11 tracking-wide-8 uppercase text-ink-2 mb-2">
+          <div className="flex items-center gap-1.5 font-mono text-11 tracking-wide-8 uppercase text-ink-2 mb-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-brand shrink-0 shadow-[0_0_6px_var(--brand)] opacity-80" />
             IMMUTABLE RECORD
           </div>
           <h1 className="font-display font-normal text-48 leading-[1.1] tracking-tightest m-0 mb-2 text-ink-0">
@@ -176,7 +177,7 @@ export default function AuditTrailPage() {
         </div>
 
         {/* KPI bar */}
-        <div className="flex flex-wrap items-center gap-3 mb-4 px-4 py-3 bg-bg-panel border border-hair-2 rounded-lg">
+        <div className="flex flex-wrap items-center gap-3 mb-4 px-4 py-3 bg-bg-panel border border-hair-2 border-t-2 border-t-brand-line rounded-lg">
           <div className="text-center">
             <div className="text-20 font-bold tabular-nums text-ink-0">{entries.length}</div>
             <div className="text-10 text-ink-3 uppercase tracking-wide-3">Total entries</div>

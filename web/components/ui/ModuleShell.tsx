@@ -33,7 +33,7 @@ export function ModuleHeader({
   actions,
 }: ModuleHeaderProps) {
   return (
-    <header className="flex items-start justify-between gap-6 pb-5 border-b border-hair-2 mb-7 flex-wrap">
+    <header className="flex items-start justify-between gap-6 pb-5 border-b border-hair-2 border-t-2 border-t-brand-line pt-4 mb-7 flex-wrap">
       <div>
         <div className="flex items-center gap-3 mb-1">
           <span className={`w-2 h-2 rounded-full ${DOT_COLOR[dotColor]}`} />
@@ -149,7 +149,7 @@ export function KpiGrid({
 
 export function Card({ children }: { children: ReactNode }) {
   return (
-    <div className="bg-bg-panel border border-hair-2 rounded-xl p-4">
+    <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 hover:border-brand-line transition-colors">
       {children}
     </div>
   );

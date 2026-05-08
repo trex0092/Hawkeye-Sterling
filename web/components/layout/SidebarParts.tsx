@@ -17,7 +17,7 @@ const OPERATOR_STORAGE_KEY = "hawkeye.operator";
 
 export function SidebarShell({ children }: { children: ReactNode }) {
   return (
-    <aside className="bg-bg-panel border-r border-hair-2 px-4 py-5 overflow-y-auto print:hidden">
+    <aside className="bg-bg-panel border-r border-hair-2 border-t-2 border-t-brand-line px-4 py-5 overflow-y-auto print:hidden">
       {children}
     </aside>
   );
@@ -41,8 +41,9 @@ export function SidebarSection({
         <button
           type="button"
           onClick={collapsible ? () => setCollapsed((c) => !c) : undefined}
-          className={`flex items-center gap-1 text-10.5 font-semibold tracking-wide-4 uppercase text-ink-2 ${collapsible ? "cursor-pointer hover:text-ink-1" : "cursor-default"}`}
+          className={`flex items-center gap-1.5 text-10.5 font-semibold tracking-wide-4 uppercase text-ink-2 ${collapsible ? "cursor-pointer hover:text-ink-1" : "cursor-default"}`}
         >
+          <span className="w-1 h-1 rounded-full bg-brand opacity-60 shrink-0" />
           {collapsible && (
             <svg
               width="7" height="7" viewBox="0 0 8 8" fill="currentColor"
