@@ -822,7 +822,7 @@ async function poFraudPatternApply(ctx: BrainContext): Promise<Finding> {
     }
   }
   const phantomVendors = [...amtsByVendor.entries()].filter(
-    ([, amts]) => amts.length === 1 && amts[0] >= LARGE_THRESHOLD,
+    ([, amts]) => amts.length === 1 && (amts[0] ?? 0) >= LARGE_THRESHOLD,
   );
 
   // 2. Split-invoice below approval: ≥2 invoices from same vendor within
@@ -847,7 +847,9 @@ async function poFraudPatternApply(ctx: BrainContext): Promise<Finding> {
     if (candidates.length < 2) continue;
     candidates.sort((a, b) => a.ts - b.ts);
     for (let i = 0; i < candidates.length - 1; i++) {
-      if (candidates[i + 1].ts - candidates[i].ts <= SPLIT_WINDOW_MS) {
+      const cur = candidates[i]!;
+      const nxt = candidates[i + 1]!;
+      if (nxt.ts - cur.ts <= SPLIT_WINDOW_MS) {
         const total = candidates.reduce((s, e) => s + e.amount, 0);
         splitSignals.push(`${vendor}:${candidates.length}×<${SPLIT_THRESHOLD}(Σ=${total.toFixed(0)})`);
         break;

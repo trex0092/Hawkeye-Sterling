@@ -92,7 +92,10 @@ async function loadFromBlobs(hsCode: string): Promise<ControlledGoodsEntry[] | n
       if (!raw) continue;
       let entries: ControlledGoodsEntry[];
       try { entries = JSON.parse(raw as string) as ControlledGoodsEntry[]; }
-      catch { continue; }
+      catch (parseErr) {
+        console.warn(`[hawkeye] uae-control-list: JSON parse failed for ${lid}:`, parseErr instanceof Error ? parseErr.message : String(parseErr));
+        continue;
+      }
       const norm = hsCode.replace(/\./g, "");
       for (const e of entries) {
         const eNorm = e.hsCode.replace(/\./g, "");
@@ -102,7 +105,8 @@ async function loadFromBlobs(hsCode: string): Promise<ControlledGoodsEntry[] | n
       }
     }
     return matched.length > 0 ? matched : null;
-  } catch {
+  } catch (err) {
+    console.warn('[hawkeye] uae-control-list: outer lookup failed:', err instanceof Error ? err.message : String(err));
     return null;
   }
 }
