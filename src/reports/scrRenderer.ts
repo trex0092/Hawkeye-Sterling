@@ -325,6 +325,7 @@ body {
 }
 .data-grid.cols-2 { grid-template-columns: 1fr 1fr; }
 .data-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+.data-grid.cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
 
 .data-cell {
   padding: 7px 10px;
@@ -333,8 +334,10 @@ body {
 }
 .data-grid.cols-2 .data-cell:nth-child(2n)   { border-right: none; }
 .data-grid.cols-3 .data-cell:nth-child(3n)   { border-right: none; }
+.data-grid.cols-4 .data-cell:nth-child(4n)   { border-right: none; }
 .data-grid.cols-2 .data-cell:nth-last-child(-n+2) { border-bottom: none; }
 .data-grid.cols-3 .data-cell:nth-last-child(-n+3) { border-bottom: none; }
+.data-grid.cols-4 .data-cell:nth-last-child(-n+4) { border-bottom: none; }
 
 .dc-label {
   font-size: 6.5pt;
@@ -948,7 +951,7 @@ function renderSanctionsHits(hits: SCRSanctionsHit[]): string {
     <td><span class="score-badge">${esc(h.score)}</span></td>
     <td><strong>${esc(h.listedEntity)}</strong></td>
     <td>${esc(h.discriminatorDivergence ?? '')}</td>
-    ${h.designated ? `<td class="mono">${esc(h.designated)}</td>` : ''}
+    ${hasDes ? `<td class="mono">${esc(h.designated ?? '')}</td>` : ''}
   </tr>`).join('');
   const hasDes = hits.some((h) => h.designated);
   return `
@@ -1092,7 +1095,7 @@ export function renderSCR(r: ScreeningComplianceReport): string {
 
   // Section 01 — Executive summary
   const sec01 = `
-${renderSectionDivider('01', '*Executive summary* & disposition.')}
+${renderSectionDivider('01', 'Executive *summary* & disposition.')}
 <div class="auth-line" style="border-bottom:1px solid var(--rule);padding-bottom:6px;">
   Purpose. A reader-of-record briefing of the screening, the regulatory basis, the four screening domains, the adjudication, and the action taken.
   <strong>Audience.</strong> MLRO · Compliance Committee · Internal Audit · MoE · CBUAE · FIU · EOCN · external auditors.
@@ -1123,18 +1126,18 @@ ${renderAuthLine('Basis. ' + r.subjectOfRecord.basis)}
     ? `${esc(tr.tenYrLookback)} <span class="tag-badge tag-pink">APPLIED</span>`
     : esc(tr.tenYrLookback);
   const sec03 = `
-${renderSectionDivider('03', '*Screening trigger* & risk basis.')}
+${renderSectionDivider('03', 'Screening *trigger* & risk basis.')}
 ${renderAuthLine('Authorities. FDL 10/2025 Art. 4 · MoE Circular 2/2024 · Cab. Res. 109/2023 · Enterprise-Wide Risk Assessment v.4.1.')}
 <div class="section-body">
-  <div class="data-grid cols-3" style="margin:10px 0">
+  <div class="data-grid cols-4" style="margin:10px 0">
     <div class="data-cell"><div class="dc-label">3.1 TRIGGER EVENT</div><div class="dc-value">${esc(tr.triggerEvent)}</div></div>
     <div class="data-cell"><div class="dc-label">3.2 EWRA TIER</div><div class="dc-value">${esc(tr.ewraTier)}</div></div>
     <div class="data-cell"><div class="dc-label">3.3 CADENCE</div><div class="dc-value">${esc(tr.cadence)}</div></div>
-    <div class="data-cell" style="border-right:1px solid var(--rule);border-bottom:none"><div class="dc-label">3.4 BUREAU · OPERATOR</div><div class="dc-value">${esc(tr.bureauOperator)}</div></div>
-    <div class="data-cell" style="border-right:1px solid var(--rule);border-bottom:none"><div class="dc-label">3.5 DPMS THRESHOLD</div><div class="dc-value">${esc(tr.dpmsThreshold)}</div></div>
-    <div class="data-cell" style="border-right:1px solid var(--rule);border-bottom:none"><div class="dc-label">3.6 VA TRAVEL RULE</div><div class="dc-value">${esc(tr.vaTravelRule)}</div></div>
-    <div class="data-cell" style="border-right:1px solid var(--rule);border-bottom:none"><div class="dc-label">3.7 10-YR LOOKBACK</div><div class="dc-value">${lookbackLabel}</div></div>
-    <div class="data-cell" style="border-bottom:none;grid-column:span 2"><div class="dc-label">3.8 SESSION REF</div><div class="dc-value mono">${esc(tr.sessionRef)}</div></div>
+    <div class="data-cell"><div class="dc-label">3.4 BUREAU · OPERATOR</div><div class="dc-value">${esc(tr.bureauOperator)}</div></div>
+    <div class="data-cell"><div class="dc-label">3.5 DPMS THRESHOLD</div><div class="dc-value">${esc(tr.dpmsThreshold)}</div></div>
+    <div class="data-cell"><div class="dc-label">3.6 VA TRAVEL RULE</div><div class="dc-value">${esc(tr.vaTravelRule)}</div></div>
+    <div class="data-cell"><div class="dc-label">3.7 10-YR LOOKBACK</div><div class="dc-value">${lookbackLabel}</div></div>
+    <div class="data-cell"><div class="dc-label">3.8 SESSION REF</div><div class="dc-value mono">${esc(tr.sessionRef)}</div></div>
   </div>
 </div>`;
 
@@ -1163,19 +1166,18 @@ ${renderAuthLine('Purpose. To document the matching algorithm and its parameters
     <td class="mono muted">${esc(reg.authority)}</td>
   </tr>`).join('');
 
-  const hitsTableHtml = d1.hits && d1.hits.length > 0 ? renderSanctionsHits(d1.hits) : `
-<div class="table-section-label">TABLE 5.A — SANCTIONS REGISTERS CONSULTED&nbsp;&nbsp;(${d1.registers.length} MUTUALLY-INDEPENDENT SOURCES · SCORE THRESHOLD ≥ 85% · ZERO RECORDS RETURNED)</div>`;
+  const hasHits = !!(d1.hits && d1.hits.length > 0);
+  const zeroHitsLabel = `<div class="table-section-label">TABLE 5.A — SANCTIONS REGISTERS CONSULTED &nbsp;(${d1.registers.length} MUTUALLY-INDEPENDENT SOURCES · SCORE THRESHOLD ≥ 85% · ZERO RECORDS RETURNED)</div>`;
 
   const sec05 = `
 ${renderSectionDivider('05', 'Domain I · Targeted *Financial Sanctions*.')}
 ${renderAuthLine('Authorities. FATF Rec. 6 · UNSC Res. 1267 / 1989 / 2253 / 2231 · Cabinet Resolution 74/2020 · EOCN Guidance 01/2023 · OFAC E.O. 13382 · EU CFSP 2014/145.')}
 <div class="section-body">
-  ${d1.hits && d1.hits.length > 0 ? hitsTableHtml : ''}
+  ${hasHits ? renderSanctionsHits(d1.hits!) : zeroHitsLabel}
   <table class="scr-table" style="margin:8px 0">
     <thead><tr><th>REGISTER</th><th>VERSION · REFRESH</th><th>RECORDS</th><th>HITS</th><th>COVERAGE</th><th>AUTHORITY</th></tr></thead>
     <tbody>${regTableRows}</tbody>
   </table>
-  ${d1.hits && d1.hits.length > 0 ? '' : hitsTableHtml}
   ${renderAdjFinding(d1.adjudicatorFinding)}
 </div>`;
 

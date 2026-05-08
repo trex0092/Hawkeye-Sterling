@@ -99,7 +99,6 @@ export interface SCRTrigger {
 
 export interface SCRMethodologyRow {
   id: string;                // 4.1 ENGINE
-  label: string;
   value: string;
   ref?: string;              // right-column reference code
 }
