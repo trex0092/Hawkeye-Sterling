@@ -1,10 +1,10 @@
+"use client";
+
 // Hawkeye Sterling — weaponized side-by-side subject compare panel.
 //
 // Runs useSuperBrain concurrently for both subjects and overlays
 // brain intelligence: composite scores, fired redlines, cross-regime
 // conflict, PEP assessment, typology hits, and CAHRA flags.
-
-"use client";
 
 import { useEffect } from "react";
 import type { Subject } from "@/lib/types";

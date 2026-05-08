@@ -1,3 +1,5 @@
+"use client";
+
 // PerformanceMonitoringDashboard — live calibration / drift / mode
 // performance dashboard for the MLRO. Required by HS-OPS-003 Day 2 PM
 // ("How do you know the system is working correctly?") and HS-MC-001
@@ -14,8 +16,6 @@
 //   · aria-live region for refresh status (WCAG 4.1.3)
 //   · semantic <table> with <caption> + scope on headers
 //   · color is never the only signal — every status carries a label
-
-"use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 

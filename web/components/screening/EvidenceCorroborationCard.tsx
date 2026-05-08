@@ -1,3 +1,5 @@
+"use client";
+
 // Hawkeye Sterling — EvidenceCorroborationCard (audit follow-up #28).
 //
 // Renders the cross-evidence corroboration summary (BrainVerdict.
@@ -9,8 +11,6 @@
 // Design: compact card; colour-codes the score band; shows kinds + age
 // + penalties; expandable reasons[] list for full audit transparency
 // (Charter P9).
-
-"use client";
 
 import { useState } from "react";
 
