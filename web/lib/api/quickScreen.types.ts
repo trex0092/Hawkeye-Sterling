@@ -41,7 +41,11 @@ export interface QuickScreenCandidate {
   entityType?: EntityType;
   jurisdiction?: string;
   programs?: string[];
+  dateOfBirth?: string;
+  nationality?: string;
 }
+
+export type DobMatch = 'exact' | 'year' | 'conflict' | 'none';
 
 export interface QuickScreenHit {
   listId: string;
@@ -49,15 +53,20 @@ export interface QuickScreenHit {
   candidateName: string;
   matchedAlias?: string;
   score: number;
+  baseScore: number;
   method: MatchingMethod;
   phoneticAgreement: boolean;
   programs?: string[];
   reason: string;
+  dobMatch?: DobMatch;
+  nationalityMatch?: boolean;
+  scores?: Partial<Record<MatchingMethod, number>>;
 }
 
 export interface QuickScreenOptions {
   scoreThreshold?: number;
   maxHits?: number;
+  includeScoreBreakdown?: boolean;
 }
 
 export interface QuickScreenResult {

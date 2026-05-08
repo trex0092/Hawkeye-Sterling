@@ -277,3 +277,123 @@ describe("Screening benchmark — Entity type", () => {
     expect(result.hits.length).toBeGreaterThan(0);
   });
 });
+
+// ── DOB discriminator ─────────────────────────────────────────────────────────
+describe("Screening benchmark — DOB discriminator", () => {
+  const dobCorpus = [
+    { listId: "TEST-OFAC", listRef: "D-001", name: "Ali Hassan", dateOfBirth: "1975-06-15" },
+    { listId: "TEST-OFAC", listRef: "D-002", name: "Ali Hassan", dateOfBirth: "1985-03-22" },
+    { listId: "TEST-OFAC", listRef: "D-003", name: "Ali Hassan" },
+  ];
+
+  it("exact DOB match boosts score — hit[0] should be D-001", () => {
+    const result = quickScreen(
+      { name: "Ali Hassan", dateOfBirth: "1975-06-15" },
+      dobCorpus,
+      { scoreThreshold: 0.5 },
+    );
+    expect(result.hits.length).toBeGreaterThan(0);
+    const d001 = result.hits.find((h) => h.listRef === "D-001");
+    expect(d001).toBeDefined();
+    expect(d001?.dobMatch).toBe("exact");
+    // Exact DOB match should rank above entries with conflicting DOB
+    const d002 = result.hits.find((h) => h.listRef === "D-002");
+    if (d001 && d002) {
+      expect(d001.score).toBeGreaterThan(d002.score);
+    }
+  });
+
+  it("conflicting DOB lowers score — D-002 should score lower than D-003 (no DOB)", () => {
+    const result = quickScreen(
+      { name: "Ali Hassan", dateOfBirth: "1975-06-15" },
+      dobCorpus,
+      { scoreThreshold: 0.5 },
+    );
+    const d002 = result.hits.find((h) => h.listRef === "D-002");
+    const d003 = result.hits.find((h) => h.listRef === "D-003");
+    if (d002 && d003) {
+      // D-002 has conflicting DOB (1985 vs 1975), D-003 has no DOB
+      // D-002 should score lower due to -0.20 penalty
+      expect(d002.score).toBeLessThan(d003.score);
+      expect(d002.dobMatch).toBe("conflict");
+    }
+  });
+
+  it("baseScore is always <= score for exact DOB matches", () => {
+    const result = quickScreen(
+      { name: "Ali Hassan", dateOfBirth: "1975-06-15" },
+      dobCorpus,
+      { scoreThreshold: 0.5 },
+    );
+    const d001 = result.hits.find((h) => h.listRef === "D-001");
+    if (d001) {
+      expect(d001.score).toBeGreaterThanOrEqual(d001.baseScore);
+    }
+  });
+
+  it("baseScore is always >= score for DOB conflict", () => {
+    const result = quickScreen(
+      { name: "Ali Hassan", dateOfBirth: "1975-06-15" },
+      dobCorpus,
+      { scoreThreshold: 0.5 },
+    );
+    const d002 = result.hits.find((h) => h.listRef === "D-002");
+    if (d002) {
+      expect(d002.score).toBeLessThanOrEqual(d002.baseScore);
+    }
+  });
+
+  it("year-only DOB match produces 'year' dobMatch with small boost", () => {
+    const result = quickScreen(
+      { name: "Ali Hassan", dateOfBirth: "1975" },
+      dobCorpus,
+      { scoreThreshold: 0.5 },
+    );
+    const d001 = result.hits.find((h) => h.listRef === "D-001");
+    if (d001) {
+      expect(d001.dobMatch).toBe("year");
+    }
+  });
+});
+
+// ── Score breakdown ────────────────────────────────────────────────────────────
+describe("Screening benchmark — Score breakdown", () => {
+  it("includeScoreBreakdown attaches per-algorithm scores to hits", () => {
+    const result = quickScreen(
+      { name: "Ahmad Al-Rashidi" },
+      CORPUS,
+      { scoreThreshold: MATCH_THRESHOLD, includeScoreBreakdown: true },
+    );
+    expect(result.hits.length).toBeGreaterThan(0);
+    const hit = result.hits[0]!;
+    expect(hit.scores).toBeDefined();
+    expect(typeof hit.scores).toBe("object");
+  });
+
+  it("score breakdown is absent when includeScoreBreakdown is false (default)", () => {
+    const result = quickScreen(
+      { name: "Ahmad Al-Rashidi" },
+      CORPUS,
+      { scoreThreshold: MATCH_THRESHOLD },
+    );
+    expect(result.hits.length).toBeGreaterThan(0);
+    expect(result.hits[0]?.scores).toBeUndefined();
+  });
+
+  it("every hit always has baseScore <= 1", () => {
+    const result = quickScreen({ name: "Ahmad Al-Rashidi" }, CORPUS, { scoreThreshold: 0.5 });
+    for (const hit of result.hits) {
+      expect(hit.baseScore).toBeGreaterThanOrEqual(0);
+      expect(hit.baseScore).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it("score never exceeds 1.0", () => {
+    const result = quickScreen(
+      { name: "Ahmad Al-Rashidi", dateOfBirth: "1975-06-15" },
+      [{ listId: "T", listRef: "T-1", name: "Ahmad Al-Rashidi", dateOfBirth: "1975-06-15" }],
+    );
+    expect(result.hits.length).toBeGreaterThan(0);
+    expect(result.hits[0]!.score).toBeLessThanOrEqual(1.0);
+  });
+});
