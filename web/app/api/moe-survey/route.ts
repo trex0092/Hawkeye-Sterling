@@ -22,14 +22,36 @@ export interface MoeSurveySection {
 export interface MoeSurveyState {
   tenant: string;
   updatedAt: string;
-  // Section 1: MLRO appointment
+
+  // Section 1: Business Profile & Licensing
+  dpmsLicenseNumber: string;
+  dpmsLicenseExpiry: string;
+  businessActivityType: string;       // "retailer" | "wholesaler" | "manufacturer" | "broker" | "multiple"
+  productTypesGold: boolean;
+  productTypesDiamonds: boolean;
+  productTypesPreciousStones: boolean;
+  productTypesPearls: boolean;
+  productTypesPreciousMetals: boolean;
+  transactionChannelCash: boolean;
+  transactionChannelBankTransfer: boolean;
+  transactionChannelOnline: boolean;
+  transactionChannelExportImport: boolean;
+  numberOfEmployees: string;
+  numberOfBranches: string;
+  annualTransactionVolumeAed: string;
+  importExportActivity: boolean;
+  freeZoneActivity: boolean;
+
+  // Section 2: MLRO Appointment
   mlroName: string;
   mlroQualification: string;
   mlroAppointmentDate: string;
   mlroGoAmlUserId: string;
-  mlroReportsTo: string;          // "board" | "ceo" | "other"
+  mlroReportsTo: string;              // "board" | "ceo" | "other"
   mlroIndependent: boolean;
-  // Section 2: AML/CFT Policies
+  mlroDeputyName: string;
+
+  // Section 3: AML/CFT Policies
   policyApprovalDate: string;
   policyApprovedBy: string;
   policyLastReviewDate: string;
@@ -37,30 +59,80 @@ export interface MoeSurveyState {
   freezeProcedure: boolean;
   cnmrProcedure: boolean;
   dpmsrProcedure: boolean;
-  // Section 3: Training
+  cddThresholdStandard: string;       // AED amount triggering standard CDD
+  eddTriggerDescription: string;      // what triggers EDD
+  boVerificationProcedure: boolean;
+  recordRetention5Year: boolean;
+
+  // Section 4: Training Logs
   lastTrainingDate: string;
-  trainingCoverage: string;       // % staff trained
+  trainingCoverage: string;
   trainingTestPassRate: string;
-  mlroQualificationRecord: string; // certification / course name
-  // Section 4: Risk Assessment
+  mlroQualificationRecord: string;
+  seniorMgmtTrainingDate: string;
+
+  // Section 5: Risk Assessment (ML/TF)
   bwraCompletionDate: string;
   bwraApprovedBy: string;
-  nraAlignment: boolean;          // aligned to 2024 NRA DPMS Medium-High
-  dpmsRiskRating: string;         // entity's self-assessed overall risk
-  // Section 5: goAML Filing History
+  nraAlignment: boolean;
+  dpmsRiskRating: string;
+
+  // Section 6: Proliferation Financing Risk Assessment
+  pfRiskAssessmentDate: string;
+  pfRiskAssessmentApprovedBy: string;
+  pfRiskRating: string;               // "low" | "medium" | "high"
+  pfTfsScreeningConfirmed: boolean;
+  unscr1718Compliance: boolean;
+  unscr1737Compliance: boolean;
+  unscr2231Compliance: boolean;
+  eocnRegistrationStatus: string;     // "registered" | "not-required" | "pending"
+
+  // Section 7: Transaction Monitoring
+  txMonitoringProcedureExists: boolean;
+  txMonitoringType: string;           // "manual" | "automated" | "hybrid"
+  redFlagListUpdatedDate: string;
+  mlroEscalationThresholdAed: string;
+  cashTransactionLogMaintained: boolean;
+  internalUtrCountLast12m: string;
+  averageTransactionValueAed: string;
+
+  // Section 8: goAML Filing History
   goAmlRegistrationRef: string;
+  goAmlAccountStatus: string;         // "active" | "suspended" | "pending"
   lastStrFilingDate: string;
   lastSarFilingDate: string;
   lastDpmsrFilingDate: string;
   strCountLast12m: string;
+  sarCountLast12m: string;
   dpmsrCountLast12m: string;
-  // Section 6: Sanctions Screening Tools
+
+  // Section 9: Sanctions Screening
   screeningToolName: string;
-  screeningLists: string[];        // lists screened against
+  screeningLists: string[];
   nasRegistered: boolean;
   arsRegistered: boolean;
-  screeningFrequency: string;      // "daily" | "transaction" | "other"
-  // Section 7: AI Tool Governance
+  screeningFrequency: string;         // "daily" | "transaction" | "other"
+  existingCustomerRescreeningFrequency: string; // "realtime" | "daily" | "monthly" | "quarterly"
+  freezeTurnaroundHours: string;
+  sanctionsHitsLast12m: string;
+  uaeLocalListConfirmed: boolean;
+
+  // Section 10: Internal Audit & Independent Review
+  lastAmlAuditDate: string;
+  auditConductedBy: string;           // "internal" | "external" | "consultant"
+  auditRating: string;                // "satisfactory" | "needs-improvement" | "unsatisfactory"
+  openRemediationItems: string;
+  boardAuditReviewDate: string;
+
+  // Section 11: Senior Management Governance
+  uboName: string;
+  uboTitle: string;
+  boardSignOffDate: string;
+  boardSignOffBy: string;
+  amlReportingFrequency: string;      // "monthly" | "quarterly" | "annually"
+  whistleblowerChannelExists: boolean;
+
+  // Section 12: AI Tool Governance
   aiToolsUsed: boolean;
   aiToolNames: string;
   aiGovernancePolicyExists: boolean;
@@ -69,25 +141,70 @@ export interface MoeSurveyState {
   aiModelCardsExist: boolean;
   humanOversightDemonstrable: boolean;
   cbueaNotified: boolean;
+
+  // Section 13: Previous MoE Inspections & Regulatory History
+  previousInspectionDate: string;
+  previousInspectionOutcome: string;  // "satisfactory" | "needs-improvement" | "enforcement" | "none"
+  enforcementActionsLast3Years: boolean;
+  enforcementActionsDetails: string;
+  previousSurveySubmitted: boolean;
+  moeCircularAcknowledged: boolean;
+
   sections: MoeSurveySection[];
 }
 
 const DEFAULT_STATE: Omit<MoeSurveyState, "tenant" | "updatedAt"> = {
-  mlroName: "", mlroQualification: "", mlroAppointmentDate: "", mlroGoAmlUserId: "", mlroReportsTo: "board", mlroIndependent: false,
+  // Section 1
+  dpmsLicenseNumber: "", dpmsLicenseExpiry: "", businessActivityType: "",
+  productTypesGold: false, productTypesDiamonds: false, productTypesPreciousStones: false, productTypesPearls: false, productTypesPreciousMetals: false,
+  transactionChannelCash: false, transactionChannelBankTransfer: false, transactionChannelOnline: false, transactionChannelExportImport: false,
+  numberOfEmployees: "", numberOfBranches: "", annualTransactionVolumeAed: "", importExportActivity: false, freeZoneActivity: false,
+  // Section 2
+  mlroName: "", mlroQualification: "", mlroAppointmentDate: "", mlroGoAmlUserId: "", mlroReportsTo: "board", mlroIndependent: false, mlroDeputyName: "",
+  // Section 3
   policyApprovalDate: "", policyApprovedBy: "", policyLastReviewDate: "", tippingOffProcedure: false, freezeProcedure: false, cnmrProcedure: false, dpmsrProcedure: false,
-  lastTrainingDate: "", trainingCoverage: "", trainingTestPassRate: "", mlroQualificationRecord: "",
+  cddThresholdStandard: "", eddTriggerDescription: "", boVerificationProcedure: false, recordRetention5Year: false,
+  // Section 4
+  lastTrainingDate: "", trainingCoverage: "", trainingTestPassRate: "", mlroQualificationRecord: "", seniorMgmtTrainingDate: "",
+  // Section 5
   bwraCompletionDate: "", bwraApprovedBy: "", nraAlignment: false, dpmsRiskRating: "",
-  goAmlRegistrationRef: "", lastStrFilingDate: "", lastSarFilingDate: "", lastDpmsrFilingDate: "", strCountLast12m: "", dpmsrCountLast12m: "",
-  screeningToolName: "Hawkeye Sterling", screeningLists: ["UAE Local Terrorist List", "UN Consolidated List", "OFAC SDN", "EU FSF", "UK OFSI"], nasRegistered: false, arsRegistered: false, screeningFrequency: "transaction",
-  aiToolsUsed: true, aiToolNames: "Hawkeye Sterling AI screening engine", aiGovernancePolicyExists: false, aiGovernancePolicyDate: "", aiInventoryDocumentExists: false, aiModelCardsExist: false, humanOversightDemonstrable: false, cbueaNotified: false,
+  // Section 6
+  pfRiskAssessmentDate: "", pfRiskAssessmentApprovedBy: "", pfRiskRating: "", pfTfsScreeningConfirmed: false,
+  unscr1718Compliance: false, unscr1737Compliance: false, unscr2231Compliance: false, eocnRegistrationStatus: "",
+  // Section 7
+  txMonitoringProcedureExists: false, txMonitoringType: "", redFlagListUpdatedDate: "", mlroEscalationThresholdAed: "",
+  cashTransactionLogMaintained: false, internalUtrCountLast12m: "", averageTransactionValueAed: "",
+  // Section 8
+  goAmlRegistrationRef: "", goAmlAccountStatus: "active", lastStrFilingDate: "", lastSarFilingDate: "", lastDpmsrFilingDate: "",
+  strCountLast12m: "", sarCountLast12m: "", dpmsrCountLast12m: "",
+  // Section 9
+  screeningToolName: "Hawkeye Sterling", screeningLists: ["UAE Local Terrorist List", "UN Consolidated List", "OFAC SDN", "EU FSF", "UK OFSI"],
+  nasRegistered: false, arsRegistered: false, screeningFrequency: "transaction",
+  existingCustomerRescreeningFrequency: "realtime", freezeTurnaroundHours: "", sanctionsHitsLast12m: "", uaeLocalListConfirmed: false,
+  // Section 10
+  lastAmlAuditDate: "", auditConductedBy: "", auditRating: "", openRemediationItems: "", boardAuditReviewDate: "",
+  // Section 11
+  uboName: "", uboTitle: "", boardSignOffDate: "", boardSignOffBy: "", amlReportingFrequency: "quarterly", whistleblowerChannelExists: false,
+  // Section 12
+  aiToolsUsed: true, aiToolNames: "Hawkeye Sterling AI screening engine", aiGovernancePolicyExists: false, aiGovernancePolicyDate: "",
+  aiInventoryDocumentExists: false, aiModelCardsExist: false, humanOversightDemonstrable: false, cbueaNotified: false,
+  // Section 13
+  previousInspectionDate: "", previousInspectionOutcome: "none", enforcementActionsLast3Years: false, enforcementActionsDetails: "",
+  previousSurveySubmitted: false, moeCircularAcknowledged: false,
   sections: [
+    { id: "business-profile", completed: false },
     { id: "mlro", completed: false },
     { id: "policies", completed: false },
     { id: "training", completed: false },
     { id: "risk-assessment", completed: false },
+    { id: "pf-risk", completed: false },
+    { id: "tx-monitoring", completed: false },
     { id: "goaml", completed: false },
     { id: "screening", completed: false },
+    { id: "internal-audit", completed: false },
+    { id: "senior-mgmt", completed: false },
     { id: "ai-governance", completed: false },
+    { id: "inspections", completed: false },
   ],
 };
 
@@ -97,9 +214,18 @@ async function loadState(tenant: string): Promise<MoeSurveyState> {
   try {
     const store = getStore({ name: STORE, consistency: "strong" });
     const raw = await store.get(tenant, { type: "text" });
-    if (raw) return JSON.parse(raw) as MoeSurveyState;
+    if (raw) {
+      const saved = JSON.parse(raw) as MoeSurveyState;
+      // Merge with defaults so new fields are populated for existing tenants
+      return { ...DEFAULT_STATE, ...saved, tenant, sections: mergedSections(saved.sections) };
+    }
   } catch { /* local dev */ }
   return { ...DEFAULT_STATE, tenant, updatedAt: new Date().toISOString() };
+}
+
+function mergedSections(saved: MoeSurveySection[]): MoeSurveySection[] {
+  const defaults = DEFAULT_STATE.sections;
+  return defaults.map((d) => saved.find((s) => s.id === d.id) ?? d);
 }
 
 async function saveState(tenant: string, state: MoeSurveyState): Promise<void> {
