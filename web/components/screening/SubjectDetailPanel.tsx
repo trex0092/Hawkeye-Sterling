@@ -700,7 +700,7 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
     }
     const payload = buildReportPayload();
     try {
-      const res = await fetch("/api/compliance-report?format=html", {
+      const res = await fetch("/api/scr-report", {
         method: "POST",
         headers: {
           "content-type": "application/json",
@@ -726,10 +726,10 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
       // replay exactly what the MLRO saw on disposition day.
       attachEvidenceToSubject(subject.name, {
         category: "screening-report",
-        title: "Compliance report (PDF)",
+        title: "Screening Compliance Report (SCR)",
         meta: new Date().toISOString(),
-        detail: `Generated for ${subject.name} (${subject.id}) via /api/compliance-report?format=html`,
-        timelineEvent: "Compliance report (PDF) generated",
+        detail: `Generated for ${subject.name} (${subject.id}) via /api/scr-report`,
+        timelineEvent: "Screening Compliance Report (SCR) generated",
       });
     } catch (err) {
       showFlash(
