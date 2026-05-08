@@ -415,6 +415,73 @@ async function multiSourceConsistencyApply(ctx: BrainContext): Promise<Finding> 
   };
 }
 
+async function counterEvidenceWeightingApply(ctx: BrainContext): Promise<Finding> {
+  const usable = ctx.priorFindings.filter(
+    (f) => !f.rationale.startsWith('[stub]') && f.confidence > 0.2,
+  );
+  if (usable.length < 3) {
+    return stubFinding('counter_evidence_weighting', 'statistical', ['introspection', 'argumentation'],
+      `Counter-evidence: need ≥3 confident prior findings (got ${usable.length}).`);
+  }
+
+  // Partition into confirming (flagging the subject) vs disconfirming (clearing).
+  const confirming = usable.filter(
+    (f) => f.score >= 0.30 || ['flag', 'escalate', 'block'].includes(f.verdict),
+  );
+  const disconfirming = usable.filter(
+    (f) => f.verdict === 'clear' && f.score < 0.20,
+  );
+
+  if (disconfirming.length === 0) {
+    return {
+      modeId: 'counter_evidence_weighting',
+      category: 'statistical',
+      faculties: ['introspection', 'argumentation'],
+      score: 0,
+      confidence: 0.55,
+      verdict: 'clear',
+      rationale: `Counter-evidence: no disconfirming findings among ${usable.length} priors — all signals directionally consistent with risk thesis.`,
+      evidence: [`confirming=${confirming.length}`, `disconfirming=0`, `total=${usable.length}`],
+      producedAt: Date.now(),
+    };
+  }
+
+  // Re-weight: give disconfirming findings 2× their natural confidence weight
+  // so confirmation bias cannot silently suppress exculpatory evidence.
+  const confirmSum = confirming.reduce((s, f) => s + f.score * f.confidence, 0);
+  const disconfirmSum = disconfirming.reduce(
+    (s, f) => s + (1 - f.score) * f.confidence * 2, 0,
+  );
+  const total = confirmSum + disconfirmSum;
+  const adjustedScore = total > 0 ? confirmSum / total : 0;
+
+  // Confirmation-bias signal: disconfirming evidence is ≥20% of confirming
+  // by count but carries <10% of raw unweighted score mass.
+  const biasRatio = disconfirming.length / Math.max(confirming.length, 1);
+  const rawMeanConfirm = confirming.length > 0
+    ? confirming.reduce((s, f) => s + f.score, 0) / confirming.length
+    : 0;
+  const biasAlert = biasRatio >= 0.20 && rawMeanConfirm >= 0.35;
+
+  return {
+    modeId: 'counter_evidence_weighting',
+    category: 'statistical',
+    faculties: ['introspection', 'argumentation'],
+    score: adjustedScore,
+    confidence: 0.70,
+    verdict: biasAlert ? 'flag' : adjustedScore >= 0.55 ? 'flag' : 'clear',
+    rationale: `Counter-evidence: ${confirming.length} confirming vs ${disconfirming.length} disconfirming findings (bias_ratio=${biasRatio.toFixed(2)}). Bias-corrected score=${adjustedScore.toFixed(3)}${biasAlert ? ' — confirmation-bias risk: review clear findings before sealing verdict.' : '.'}`,
+    evidence: [
+      `confirming=${confirming.length}`,
+      `disconfirming=${disconfirming.length}`,
+      `bias_ratio=${biasRatio.toFixed(2)}`,
+      `adjusted_score=${adjustedScore.toFixed(3)}`,
+      ...disconfirming.slice(0, 4).map((f) => `clear:${f.modeId}(score=${f.score.toFixed(2)})`),
+    ],
+    producedAt: Date.now(),
+  };
+}
+
 // ─── FORENSIC ACCOUNTING ───────────────────────────────────────────────
 
 const STRUCTURING_THRESHOLDS = [
@@ -628,6 +695,103 @@ async function journalEntryAnomalyApply(ctx: BrainContext): Promise<Finding> {
   };
 }
 
+async function revenueRecognitionStretchApply(ctx: BrainContext): Promise<Finding> {
+  const txs = (ctx.evidence.transactions ?? []) as Array<Record<string, unknown>>;
+  if (!Array.isArray(txs) || txs.length < 10) {
+    return stubFinding('revenue_recognition_stretch', 'forensic', ['intelligence'],
+      `Revenue stretch: need ≥10 transactions (got ${Array.isArray(txs) ? txs.length : 0}).`);
+  }
+
+  const parseTs = (raw: unknown): number => {
+    if (typeof raw === 'number') return raw;
+    if (typeof raw === 'string') return Date.parse(raw);
+    return NaN;
+  };
+  const toAmt = (raw: unknown): number => {
+    if (typeof raw === 'number') return raw;
+    if (typeof raw === 'string' && /^-?[\d.,]+$/.test(raw)) return Number(raw.replace(/,/g, ''));
+    return NaN;
+  };
+
+  // 1. Channel-stuffing: ≥25% of transactions in the last 3 days of month,
+  //    and their average amount is ≥1.5× the mid-month average.
+  let periodEndCount = 0, periodEndAmt = 0;
+  let midMonthCount = 0, midMonthAmt = 0;
+  let totalDated = 0;
+  for (const t of txs) {
+    const ts = parseTs(t['timestamp'] ?? t['date'] ?? t['invoiceDate'] ?? t['invoice_date']);
+    const amt = toAmt(t['amount']);
+    if (!Number.isFinite(ts) || !Number.isFinite(amt) || amt <= 0) continue;
+    totalDated++;
+    const d = new Date(ts);
+    const day = d.getUTCDate();
+    const daysInMonth = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0)).getUTCDate();
+    if (daysInMonth - day <= 2) {
+      periodEndCount++;
+      periodEndAmt += amt;
+    } else if (day <= 25) {
+      midMonthCount++;
+      midMonthAmt += amt;
+    }
+  }
+  const periodEndRatio = totalDated > 0 ? periodEndCount / totalDated : 0;
+  const avgPeriodEnd = periodEndCount > 0 ? periodEndAmt / periodEndCount : 0;
+  const avgMidMonth = midMonthCount > 0 ? midMonthAmt / midMonthCount : 0;
+  const amtMultiple = avgMidMonth > 0 ? avgPeriodEnd / avgMidMonth : 0;
+  const channelStuffing = periodEndRatio >= 0.25 && amtMultiple >= 1.5;
+
+  // 2. Bill-and-hold: invoice recorded >30 days before shipment/delivery.
+  const BILL_HOLD_THRESHOLD_DAYS = 30;
+  let billHoldCount = 0;
+  for (const t of txs) {
+    const invoiceTs = parseTs(t['invoiceDate'] ?? t['invoice_date']);
+    const shipTs = parseTs(t['shipmentDate'] ?? t['shipped_date'] ?? t['delivery_date'] ?? t['deliveryDate']);
+    if (!Number.isFinite(invoiceTs) || !Number.isFinite(shipTs)) continue;
+    const gapDays = (shipTs - invoiceTs) / 86_400_000;
+    if (gapDays > BILL_HOLD_THRESHOLD_DAYS) billHoldCount++;
+  }
+
+  // 3. Cut-off manipulation: reversals (negative amounts or explicit reversal flag)
+  //    clustered in the first 5 days of a month — period-close pull-forwards reversed.
+  let earlyReversals = 0;
+  for (const t of txs) {
+    const amt = toAmt(t['amount']);
+    const ts = parseTs(t['timestamp'] ?? t['date']);
+    const isReversal =
+      (typeof t['reversal'] === 'boolean' && t['reversal']) ||
+      String(t['reversal'] ?? '').toLowerCase() === 'true' ||
+      (Number.isFinite(amt) && amt < 0);
+    if (isReversal && Number.isFinite(ts)) {
+      const day = new Date(ts).getUTCDate();
+      if (day <= 5) earlyReversals++;
+    }
+  }
+  const earlyReversalRatio = totalDated > 0 ? earlyReversals / totalDated : 0;
+  const cutOffFlag = earlyReversalRatio >= 0.10;
+
+  const flags: string[] = [];
+  if (channelStuffing) flags.push(`channel_stuff:${(periodEndRatio * 100).toFixed(1)}%_period_end,${amtMultiple.toFixed(1)}x_avg_amt`);
+  if (billHoldCount > 0) flags.push(`bill_and_hold:${billHoldCount}_invoice${billHoldCount === 1 ? '' : 's'}`);
+  if (cutOffFlag) flags.push(`cut_off_reversal:${earlyReversals}(${(earlyReversalRatio * 100).toFixed(1)}%)`);
+  const score = Math.min(
+    1,
+    (channelStuffing ? 0.40 : 0) +
+    (billHoldCount > 0 ? Math.min(0.40, billHoldCount * 0.15) : 0) +
+    (cutOffFlag ? 0.30 : 0),
+  );
+  return {
+    modeId: 'revenue_recognition_stretch',
+    category: 'forensic',
+    faculties: ['intelligence'],
+    score,
+    confidence: 0.75,
+    verdict: score >= 0.50 ? 'escalate' : score >= 0.20 ? 'flag' : 'clear',
+    rationale: `Revenue stretch: channel-stuffing=${channelStuffing} (${(periodEndRatio * 100).toFixed(1)}% period-end, ${amtMultiple.toFixed(1)}× avg); bill-and-hold=${billHoldCount}; cut-off reversals=${earlyReversals}.`,
+    evidence: flags.length > 0 ? flags : ['no_revenue_stretch_indicators'],
+    producedAt: Date.now(),
+  };
+}
+
 async function poFraudPatternApply(ctx: BrainContext): Promise<Finding> {
   const txs = (ctx.evidence.transactions ?? []) as Array<Record<string, unknown>>;
   if (!Array.isArray(txs) || txs.length < 3) {
@@ -723,6 +887,93 @@ async function poFraudPatternApply(ctx: BrainContext): Promise<Finding> {
     producedAt: Date.now(),
   };
 }
+
+// ─── LINGUISTIC / NLP ──────────────────────────────────────────────────
+
+// Passive-voice markers and vague-agent phrases signal deliberate obscuring of
+// who did what — a well-documented red flag in AML narrative analysis.
+const OBFUSCATION_PATTERNS = [
+  'was transferred', 'were transferred', 'was conducted', 'were conducted',
+  'has been noted', 'have been noted', 'it was decided', 'it was agreed',
+  'certain parties', 'various entities', 'third parties', 'relevant individuals',
+  'an individual', 'a company', 'undisclosed party', 'unnamed entity',
+  'passive intermediary', 'acting on behalf', 'it was found', 'it was observed',
+];
+
+// Weasel words that hedge the claim without committing to a finding.
+const HEDGING_PATTERNS = [
+  'arguably', 'reportedly', 'allegedly', 'purportedly', 'supposedly',
+  'it seems', 'it appears', 'may be', 'might be', 'could be', 'would appear',
+  'in certain cases', 'in some instances', 'to some extent', 'in a sense',
+  'could suggest', 'may indicate', 'might indicate', 'tends to suggest',
+  'not necessarily', 'cannot be ruled out', 'possible explanation',
+];
+
+// Language that minimises risk severity in a narrative or SAR.
+const MINIMISATION_PATTERNS = [
+  'minor concern', 'not material', 'immaterial', 'negligible', 'de minimis',
+  'not significant', 'simply', 'merely', 'only a small', 'routine transaction',
+  'standard practice', 'common occurrence', 'nothing unusual', 'business as usual',
+  'low risk', 'unlikely to be', 'no cause for concern', 'satisfied with explanation',
+  'plausible explanation accepted', 'commercially reasonable', 'normal course',
+];
+
+// Phrases that deny or undermine a previously established fact.
+const GASLIGHTING_PATTERNS = [
+  'you misunderstood', 'that never happened', 'i never said', 'never occurred',
+  'no such transaction', 'no such meeting', 'not what was agreed',
+  'you are mistaken', 'incorrect recollection', 'misremembering',
+  'fabricated claim', 'out of context', 'this is being exaggerated',
+  'you are confused', 'clearly a misunderstanding', 'baseless allegation',
+];
+
+function linguisticApply(
+  modeId: string,
+  faculties: FacultyId[],
+  patterns: string[],
+  label: string,
+  flagThreshold: number,
+  escalateThreshold: number,
+): (ctx: BrainContext) => Promise<Finding> {
+  return async (ctx: BrainContext): Promise<Finding> => {
+    const text = freeTextOf(ctx);
+    if (text.length < 32) {
+      return stubFinding(modeId, 'forensic', faculties,
+        `${label}: narrative too thin (${text.length} chars).`);
+    }
+    const hits = patterns.filter((p) => text.includes(p.toLowerCase()));
+    const ratio = hits.length / patterns.length;
+    const score = Math.min(0.9, hits.length * (1 / Math.max(5, patterns.length / 2)));
+    return {
+      modeId,
+      category: 'forensic',
+      faculties,
+      score,
+      confidence: 0.65,
+      verdict: hits.length >= escalateThreshold ? 'escalate' : hits.length >= flagThreshold ? 'flag' : 'clear',
+      rationale: `${label}: ${hits.length}/${patterns.length} pattern${hits.length === 1 ? '' : 's'} matched (${(ratio * 100).toFixed(1)}% coverage). ${hits.length > 0 ? 'Indicators: ' + hits.slice(0, 4).map((h) => `"${h}"`).join(', ') + '.' : 'No indicators found.'}`,
+      evidence: hits.length > 0 ? hits.slice(0, 8).map((h) => `pattern="${h}"`) : [`text_chars=${text.length}`],
+      producedAt: Date.now(),
+    };
+  };
+}
+
+const obfuscationPatternApply = linguisticApply(
+  'obfuscation_pattern', ['intelligence', 'smartness'],
+  OBFUSCATION_PATTERNS, 'Obfuscation', 2, 4,
+);
+const hedgingLanguageApply = linguisticApply(
+  'hedging_language', ['intelligence', 'introspection'],
+  HEDGING_PATTERNS, 'Hedging', 3, 6,
+);
+const minimisationPatternApply = linguisticApply(
+  'minimisation_pattern', ['intelligence'],
+  MINIMISATION_PATTERNS, 'Minimisation', 2, 4,
+);
+const gaslightingDetectionApply = linguisticApply(
+  'gaslighting_detection', ['intelligence', 'introspection'],
+  GASLIGHTING_PATTERNS, 'Gaslighting', 1, 3,
+);
 
 // ─── SANCTIONS / GEOPOLITICAL ──────────────────────────────────────────
 
@@ -939,7 +1190,7 @@ export const WAVE3_MODES: ReasoningMode[] = [
   m('po_fraud_pattern', 'Purchase-Order Fraud', 'forensic', ['smartness'], 'Phantom vendors, back-dated POs, split-invoice below approval.', poFraudPatternApply),
   m('vendor_master_anomaly', 'Vendor Master Anomaly', 'forensic', ['data_analysis'], 'New vendor spikes, bank-detail churn, name-address collisions.', vendorMasterAnomalyApply),
   m('journal_entry_anomaly', 'Journal-Entry Anomaly', 'forensic', ['data_analysis'], 'Round numbers, weekend/holiday postings, manual overrides at period close.', journalEntryAnomalyApply),
-  m('revenue_recognition_stretch', 'Revenue-Recognition Stretch', 'forensic', ['intelligence'], 'Channel-stuffing, bill-and-hold, cut-off manipulation patterns.'),
+  m('revenue_recognition_stretch', 'Revenue-Recognition Stretch', 'forensic', ['intelligence'], 'Channel-stuffing, bill-and-hold, cut-off manipulation patterns.', revenueRecognitionStretchApply),
 
   // ─── BEHAVIORAL ECONOMICS ─────────────────────────────────────────
   m('prospect_theory', 'Prospect-Theory Lens', 'cognitive_science', ['deep_thinking','introspection'], 'Reference-point, loss-aversion, probability-weighting checks on the subject\'s decisions.'),
@@ -960,11 +1211,11 @@ export const WAVE3_MODES: ReasoningMode[] = [
 
   // ─── LINGUISTIC / NLP ─────────────────────────────────────────────
   m('stylometry', 'Stylometry', 'forensic', ['intelligence'], 'Authorship attribution via style fingerprint.'),
-  m('gaslighting_detection', 'Gaslighting Detection', 'forensic', ['intelligence','introspection'], 'Reality-denial / memory-undermining patterns in client communication.'),
-  m('obfuscation_pattern', 'Obfuscation Pattern', 'forensic', ['intelligence','smartness'], 'Deliberate vagueness / passive voice / agentless constructions.'),
+  m('gaslighting_detection', 'Gaslighting Detection', 'forensic', ['intelligence','introspection'], 'Reality-denial / memory-undermining patterns in client communication.', gaslightingDetectionApply),
+  m('obfuscation_pattern', 'Obfuscation Pattern', 'forensic', ['intelligence','smartness'], 'Deliberate vagueness / passive voice / agentless constructions.', obfuscationPatternApply),
   m('code_word_detection', 'Code-Word Detection', 'forensic', ['intelligence','smartness'], 'Domain slang, cant, or cipher masking illicit content.'),
-  m('hedging_language', 'Hedging Language', 'forensic', ['intelligence','introspection'], 'Weasel words signalling low commitment to a claim.'),
-  m('minimisation_pattern', 'Minimisation Pattern', 'forensic', ['intelligence'], 'Systematic downplaying of severity in narratives / SARs.'),
+  m('hedging_language', 'Hedging Language', 'forensic', ['intelligence','introspection'], 'Weasel words signalling low commitment to a claim.', hedgingLanguageApply),
+  m('minimisation_pattern', 'Minimisation Pattern', 'forensic', ['intelligence'], 'Systematic downplaying of severity in narratives / SARs.', minimisationPatternApply),
 
   // ─── SANCTIONS-EVASION SPECIFIC ───────────────────────────────────
   m('phantom_vessel', 'Phantom Vessel', 'sectoral_typology', ['intelligence'], 'AIS-off, spoofed identity, dark-fleet patterns.'),
@@ -995,7 +1246,7 @@ export const WAVE3_MODES: ReasoningMode[] = [
   m('dempster_shafer', 'Dempster-Shafer Combination', 'statistical', ['inference','deep_thinking'], 'Belief combination across partial evidence masses.', dempsterShaferApply),
   m('bayesian_update_cascade', 'Bayesian Update Cascade', 'statistical', ['inference','deep_thinking'], 'Sequential posterior update across heterogeneous evidence.', bayesianUpdateCascadeApply),
   m('multi_source_consistency', 'Multi-Source Consistency', 'statistical', ['data_analysis','reasoning'], 'Agreement / contradiction measure across independent sources.', multiSourceConsistencyApply),
-  m('counter_evidence_weighting', 'Counter-Evidence Weighting', 'statistical', ['introspection','argumentation'], 'Up-weight disconfirming evidence to resist confirmation bias.'),
+  m('counter_evidence_weighting', 'Counter-Evidence Weighting', 'statistical', ['introspection','argumentation'], 'Up-weight disconfirming evidence to resist confirmation bias.', counterEvidenceWeightingApply),
 
   // ─── DATA-QUALITY REAL IMPLEMENTATIONS ────────────────────────────
   // (these override the wave-2 stubs — the engine registry de-dupes by id)
