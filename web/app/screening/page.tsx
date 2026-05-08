@@ -570,7 +570,6 @@ export default function ScreeningPage() {
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [statusFilter, setStatusFilter] = useState<Subject["status"] | "all">("all");
   const [severityFilter, setSeverityFilter] = useState<"clear" | "low" | "medium" | "high" | "critical" | "all">("all");
-  const [entityTypeFilter, setEntityTypeFilter] = useState<Subject["entityType"] | "all">("all");
   // Subject IDs whose quick-screen API call is in-flight. Drives the
   // "Screening…" badge and pulsing risk bar in the table.
   const [pendingIds, setPendingIds] = useState<ReadonlySet<string>>(new Set());
@@ -700,9 +699,6 @@ export default function ScreeningPage() {
     if (severityFilter !== "all") {
       list = list.filter((s) => subjectSeverity(s.riskScore) === severityFilter);
     }
-    if (entityTypeFilter !== "all") {
-      list = list.filter((s) => s.entityType === entityTypeFilter);
-    }
     if (minRisk > 0) {
       list = list.filter((s) => s.riskScore >= minRisk);
     }
@@ -746,7 +742,7 @@ export default function ScreeningPage() {
         .map(({ s }) => s);
     }
     return sortSubjects(list, sortKey, sortDir);
-  }, [subjects, activeFilters, operatorName, deferredQuery, sortKey, sortDir, statusFilter, severityFilter, entityTypeFilter, minRisk, aiFilter, nlMatchIds]);
+  }, [subjects, activeFilters, operatorName, deferredQuery, sortKey, sortDir, statusFilter, severityFilter, minRisk, aiFilter, nlMatchIds]);
 
   const selected = useMemo(
     () => subjects.find((s) => s.id === selectedId) ?? null,
@@ -1606,8 +1602,6 @@ export default function ScreeningPage() {
             onStatusFilterChange={setStatusFilter}
             severityFilter={severityFilter}
             onSeverityFilterChange={setSeverityFilter}
-            entityTypeFilter={entityTypeFilter}
-            onEntityTypeFilterChange={setEntityTypeFilter}
             columns={columns}
             onColumnsChange={handleColumnsChange}
             onBulkImport={() => setBulkImportOpen(true)}
