@@ -159,6 +159,7 @@ export interface SCRAdverseMediaCorpus {
 
 export interface SCRAdverseMediaHit {
   source?: string;           // "NEWS" | "REGULATORY" | "OSINT" | "COURT FILING" etc.
+  sourceOutlets?: string;    // actual outlet names: "Reuters · Gulf News · Al Arabiya"
   sourceTier: string;        // "T1 · T2" — reliability tier
   date: string;
   category: string;          // SANCTIONS EVASION | MONEY LAUNDERING etc.

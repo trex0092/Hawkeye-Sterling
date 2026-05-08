@@ -990,7 +990,7 @@ function renderAdverseMediaHits(hits: SCRAdverseMediaHit[]): string {
       ? `am-${h.categoryColour}`
       : 'am-orange';
     const sourceCell = h.source
-      ? `<strong style="font-size:8pt;letter-spacing:0.04em">${esc(h.source)}</strong><br/><span class="mono" style="font-size:7pt;color:var(--muted)">${esc(h.sourceTier)}</span>`
+      ? `<strong style="font-size:8pt;letter-spacing:0.04em">${esc(h.source)}</strong>${h.sourceOutlets ? `<br/><span style="font-size:7.5pt;color:var(--ink);line-height:1.4">${esc(h.sourceOutlets)}</span>` : ''}<br/><span class="mono" style="font-size:6.5pt;color:var(--muted)">${esc(h.sourceTier)}</span>`
       : `<span class="mono">${esc(h.sourceTier)}</span>`;
     return `<tr>
       <td>${sourceCell}</td>

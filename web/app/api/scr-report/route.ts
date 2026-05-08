@@ -69,7 +69,23 @@ interface ReportInput {
       total?: number;
       categoriesTripped?: string[];
       compositeScore?: number;
+      byCategory?: Record<string, number>;
     };
+    newsDossier?: {
+      articleCount?: number;
+      topSeverity?: string;
+      source?: string;
+      languages?: string[];
+      articles?: Array<{
+        title?: string;
+        link?: string;
+        pubDate?: string;
+        source?: string;   // outlet name: "Reuters" | "Al Arabiya" | "Gulf News" etc.
+        snippet?: string;
+        severity?: string;
+        keywordGroups?: string[];
+      }>;
+    } | null;
     jurisdiction?: {
       iso2?: string;
       name?: string;
@@ -281,6 +297,9 @@ function buildSCR(body: ReportInput, now: Date): ScreeningComplianceReport {
   const amComposite = amScored?.compositeScore ?? 0;
   const amTierLabel = amComposite >= 0.7 ? "T1" : amComposite >= 0.3 ? "T1 · T2" : "T1 · T2 · T3";
 
+  // Index newsDossier articles by keyword group for outlet-name lookup
+  const dossierArticles = sb?.newsDossier?.articles ?? [];
+
   const amHits = amCats.length > 0 ? amCats.map(cat => {
     const catCount = amByCat[cat] ?? 1;
     const catLabel = cat.replace(/_/g, " ");
@@ -295,8 +314,36 @@ function buildSCR(body: ReportInput, now: Date): ScreeningComplianceReport {
     const compNote = amComposite > 0
       ? ` Severity-weighted composite score: ${Math.round(amComposite * 100)}/100.`
       : "";
+
+    // Derive matching outlet names from newsDossier articles for this category
+    // Articles are matched by keywordGroups (group codes like "CORR", "ML" etc.)
+    // Also fall back to matching any article when no group filter is available
+    const catGroupCodes = (sb?.adverseKeywordGroups ?? [])
+      .filter(g => g.label.toLowerCase().includes(cat.replace(/_/g, " ").toLowerCase()) || cat.includes(g.group.toLowerCase()))
+      .map(g => g.group.toUpperCase());
+
+    const matchingArticles = dossierArticles.filter(a => {
+      if (!a.source) return false;
+      if (catGroupCodes.length === 0) return true; // no group filter — include all
+      return (a.keywordGroups ?? []).some(kg => catGroupCodes.includes(kg.toUpperCase()));
+    });
+
+    const outletNames = Array.from(new Set(
+      matchingArticles
+        .map(a => a.source)
+        .filter((s): s is string => Boolean(s))
+    )).slice(0, 4); // cap at 4 outlet names
+
+    // Fall back: if no articles matched by group, use any articles in the dossier
+    const outletsFinal = outletNames.length > 0
+      ? outletNames
+      : Array.from(new Set(dossierArticles.map(a => a.source).filter((s): s is string => Boolean(s)))).slice(0, 4);
+
+    const sourceOutlets = outletsFinal.length > 0 ? outletsFinal.join(" · ") : undefined;
+
     return {
       source: srcLabel,
+      sourceOutlets,
       sourceTier: amTierLabel,
       date: dateStr,
       category: catLabel.toUpperCase(),
