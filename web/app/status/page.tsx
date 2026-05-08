@@ -274,8 +274,19 @@ export default function StatusPage() {
                   {data.status.toUpperCase()}
                 </span>
                 <span className="text-14 text-ink-0">
-                  All services{" "}
-                  {data.status === "operational" ? "operational" : data.status}
+                  {data.status === "operational"
+                    ? "All services operational"
+                    : (() => {
+                        const affected = [...data.checks, ...data.externalChecks].filter(
+                          (c) => c.status !== "operational"
+                        );
+                        const downCount = affected.filter((c) => c.status === "down").length;
+                        const degradedCount = affected.filter((c) => c.status === "degraded").length;
+                        const parts: string[] = [];
+                        if (downCount > 0) parts.push(`${downCount} service${downCount > 1 ? "s" : ""} down`);
+                        if (degradedCount > 0) parts.push(`${degradedCount} degraded`);
+                        return parts.join(", ");
+                      })()}
                 </span>
                 {data.cognitiveGrade && (
                   <div className="ml-auto text-right">

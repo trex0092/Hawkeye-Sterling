@@ -278,8 +278,10 @@ async function checkGdelt(): Promise<Check> {
     }
   });
   if (!r.ok) {
-    // Hard network failure — unreachable, timed out, or 5xx.
-    return { name: "gdelt-live-feed", status: "down", latencyMs: r.latencyMs, note: r.error };
+    // Hard network failure — GDELT is a free, known-flaky external API.
+    // Transient network errors don't indicate a system outage; degrade rather
+    // than marking "down" so the banner stays amber rather than red.
+    return { name: "gdelt-live-feed", status: "degraded", latencyMs: r.latencyMs, note: r.error };
   }
   if (r.value.degraded) {
     return { name: "gdelt-live-feed", status: "degraded", latencyMs: r.latencyMs, note: r.value.note };
