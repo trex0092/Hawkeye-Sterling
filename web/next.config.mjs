@@ -101,6 +101,22 @@ const nextConfig = {
       "./node_modules/next/dist/server/**/*",
     ],
   },
+  // The @vercel/nft auto-tracer follows static imports and will include
+  // node_modules/react + node_modules/react-dom even though we never
+  // add them to outputFileTracingIncludes. At runtime
+  // next/dist/server/require-hook.js redirects require('react') →
+  // next/dist/compiled/react, so having the raw copies alongside the
+  // compiled copies creates two React instances and breaks
+  // useSyncExternalStore ("a3.snapshot is not a function").
+  // outputFileTracingExcludes tells nft to drop these paths from the
+  // trace even when it detects them as reachable dependencies.
+  outputFileTracingExcludes: {
+    "/**": [
+      "./node_modules/react/**/*",
+      "./node_modules/react-dom/**/*",
+      "./node_modules/react-is/**/*",
+    ],
+  },
 };
 
 export default nextConfig;
