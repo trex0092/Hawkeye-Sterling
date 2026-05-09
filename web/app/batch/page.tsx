@@ -1,18 +1,15 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Papa from "papaparse";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { RowActions } from "@/components/shared/RowActions";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
-} from "recharts";
+
+const BatchSeverityChart = dynamic(
+  () => import("@/components/batch/BatchSeverityChart"),
+  { ssr: false },
+);
 
 interface RowResult {
   name: string;
@@ -483,21 +480,7 @@ export default function BatchPage() {
             {chartData.length > 0 && (
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4">
                 <div className="text-10 uppercase tracking-wide-4 text-ink-3 mb-2">Severity distribution</div>
-                <ResponsiveContainer width="100%" height={120}>
-                  <BarChart data={chartData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                    <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#888894" }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fontSize: 10, fill: "#888894" }} axisLine={false} tickLine={false} />
-                    <Tooltip
-                      contentStyle={{ background: "#121215", border: "1px solid #1e1e24", borderRadius: 4, fontSize: 11 }}
-                      cursor={{ fill: "rgba(255,255,255,0.04)" }}
-                    />
-                    <Bar dataKey="value" radius={[3,3,0,0]}>
-                      {chartData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.fill} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
+                <BatchSeverityChart data={chartData} />
               </div>
             )}
           </div>
