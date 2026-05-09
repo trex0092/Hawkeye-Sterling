@@ -146,9 +146,9 @@ const SEVERITY_CLS: Record<string, string> = {
   error: "bg-red text-white",
 };
 
-const CHART_COLORS: Record<string, string> = {
+const CHART_COLORS = {
   critical: "#ef4444", high: "#f97316", medium: "#f59e0b", low: "#3b82f6", clear: "#22c55e",
-};
+} satisfies Record<string, string>;
 
 type SortKey = "name" | "severity" | "topScore" | "hitCount";
 type SortDir = "asc" | "desc";
