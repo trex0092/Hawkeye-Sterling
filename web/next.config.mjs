@@ -7,6 +7,16 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const nextConfig = {
   reactStrictMode: true,
 
+  // recharts 3.x depends on react-redux / use-sync-external-store which
+  // crashes during SSR with "snapshot is not a function". Marking these
+  // as server-external keeps them out of the SSR bundle entirely.
+  serverExternalPackages: [
+    "recharts",
+    "@reduxjs/toolkit",
+    "react-redux",
+    "use-sync-external-store",
+  ],
+
   typescript: {
     // JSX implicit-any errors (TS7026/TS2741) are pre-existing across the entire
     // codebase due to React types not being in the tsconfig lib. Runtime behaviour
