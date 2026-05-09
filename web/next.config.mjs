@@ -85,17 +85,20 @@ const nextConfig = {
       // enrolled via /api/ongoing would vanish on the next cold-start.
       "./node_modules/@netlify/blobs/**/*",
     ],
-    // styled-jsx + the React / Next server runtime are dynamically
-    // required by next/dist/server/require-hook.js via string literals
-    // on EVERY server-rendered route, so the static file tracer never
-    // picks them up. Explicitly include them for every route (both
-    // pages and API) so the Lambda bundle is self-contained.
+    // styled-jsx + the Next.js server runtime are dynamically required by
+    // next/dist/server/require-hook.js via string literals on every SSR
+    // route, so the static file tracer never picks them up.
+    //
+    // IMPORTANT: do NOT include ./node_modules/react or ./node_modules/react-dom
+    // here. next/dist/server/require-hook.js redirects require('react') and
+    // require('react-dom') to next/dist/compiled/react* at runtime. Including
+    // both next/dist/compiled/react AND node_modules/react in the bundle
+    // creates two React instances, which breaks useSyncExternalStore and
+    // causes "a3.snapshot is not a function" on every page load.
     "/**": [
       "./node_modules/styled-jsx/**/*",
       "./node_modules/next/dist/compiled/**/*",
       "./node_modules/next/dist/server/**/*",
-      "./node_modules/react/**/*",
-      "./node_modules/react-dom/**/*",
     ],
   },
 };
