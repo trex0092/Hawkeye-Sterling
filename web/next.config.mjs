@@ -46,7 +46,7 @@ const nextConfig = {
   // resolve.modules ensures webpack can find @netlify/blobs during the build even when
   // root node_modules is not installed (local dev). On Netlify, root npm ci installs
   // the package at the repo root first, so the standard relative resolution still wins.
-  webpack: (config, { isServer }) => {
+  webpack: (config, { isServer, nextRuntime, webpack }) => {
     if (isServer) {
       config.resolve.modules = [
         ...(Array.isArray(config.resolve.modules)
@@ -55,6 +55,24 @@ const nextConfig = {
         path.resolve(__dirname, "node_modules"),
       ];
     }
+
+    // AsyncLocalStorage.snapshot() was added in Node.js 22.3.0.
+    // Next.js 15.5+ calls it during module evaluation — before
+    // instrumentation.ts ever runs. Injecting via BannerPlugin puts the
+    // polyfill at the very top of every server entry chunk, in raw Node.js
+    // scope where require() is the native loader, before webpack's runtime
+    // or any Next.js module is evaluated.
+    if (isServer && nextRuntime !== "edge") {
+      config.plugins.push(
+        new webpack.BannerPlugin({
+          banner:
+            "(function(){try{var h=require('node:async_hooks');var a=h&&h.AsyncLocalStorage;if(a&&typeof a.snapshot!=='function'){a.snapshot=function(){return function(fn){return fn.apply(this,Array.prototype.slice.call(arguments,1));};};}}catch(e){}})();",
+          raw: true,
+          entryOnly: true,
+        })
+      );
+    }
+
     return config;
   },
 
