@@ -19,6 +19,11 @@ export default function ScreeningError({
         <p className="text-13 text-ink-2 mb-6 leading-relaxed">
           {error.message || "An unexpected error occurred in the screening module."}
         </p>
+        {error.stack && (
+          <pre className="text-left text-10 text-ink-3 bg-bg-1 border border-line-1 rounded p-4 mb-6 overflow-auto max-h-64 whitespace-pre-wrap break-all">
+            {error.stack}
+          </pre>
+        )}
         <button
           type="button"
           onClick={reset}
