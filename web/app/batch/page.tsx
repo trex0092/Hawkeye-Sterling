@@ -1,15 +1,10 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import Papa from "papaparse";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { RowActions } from "@/components/shared/RowActions";
-
-const BatchSeverityChart = dynamic(
-  () => import("@/components/batch/BatchSeverityChart"),
-  { ssr: false },
-);
+import BatchSeverityChart from "@/components/batch/BatchSeverityChart";
 
 interface RowResult {
   name: string;
@@ -172,10 +167,6 @@ export default function BatchPage() {
   const [page, setPage] = useState(0);
   const fileInput = useRef<HTMLInputElement>(null);
 
-  // Pre-populate the row set when ?names=foo,bar,baz is in the URL —
-  // EOCN announcement detail panels link into /batch with the
-  // designated names already in hand. ?source=eocn-announcement-id
-  // is preserved as `caseId` per row for audit traceability.
   useEffect(() => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
@@ -188,23 +179,13 @@ export default function BatchPage() {
       .filter((s) => s.length > 0)
       .slice(0, 200);
     if (split.length === 0) return;
-    setRows(
-      split.map((name) =>
-        source ? { name, caseId: source } : { name },
-      ),
-    );
+    setRows(split.map((name) => source ? { name, caseId: source } : { name }));
     setResults([]);
     setSummary(null);
     setProgress(null);
     setError(null);
     setPage(0);
-    // Clean the URL so a refresh doesn't keep re-injecting the same
-    // names.
-    window.history.replaceState(
-      {},
-      "",
-      window.location.pathname,
-    );
+    window.history.replaceState({}, "", window.location.pathname);
   }, []);
 
   const running = progress !== null && (summary === null);
@@ -226,13 +207,10 @@ export default function BatchPage() {
     setProgress({ done: 0, total: rows.length });
     setError(null);
     setPage(0);
-
     try {
       const res = await fetch("/api/batch-screen-stream", {
         method: "POST",
-        headers: {
-          "content-type": "application/json",
-        },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ rows }),
       });
       if (!res.ok || !res.body) {
@@ -255,12 +233,8 @@ export default function BatchPage() {
           if (!trimmed.startsWith("data:")) continue;
           try {
             const evt = JSON.parse(trimmed.slice(5).trim()) as {
-              type: string;
-              index?: number;
-              total?: number;
-              result?: RowResult;
-              summary?: Summary;
-              error?: string;
+              type: string; index?: number; total?: number;
+              result?: RowResult; summary?: Summary; error?: string;
             };
             if (evt.type === "progress" && evt.result) {
               accumulated.push(evt.result);
@@ -361,16 +335,8 @@ export default function BatchPage() {
           kpis={
             summary
               ? [
-                  {
-                    value: String(summary.critical + summary.high),
-                    label: "high / critical",
-                    tone: summary.critical + summary.high > 0 ? "red" : undefined,
-                  },
-                  {
-                    value: String(summary.medium),
-                    label: "medium",
-                    tone: summary.medium > 0 ? "amber" : undefined,
-                  },
+                  { value: String(summary.critical + summary.high), label: "high / critical", tone: summary.critical + summary.high > 0 ? "red" : undefined },
+                  { value: String(summary.medium), label: "medium", tone: summary.medium > 0 ? "amber" : undefined },
                   { value: String(summary.clear + summary.low), label: "clear / low" },
                   { value: String(summary.errors), label: "errors", tone: summary.errors > 0 ? "red" : undefined },
                   { value: String(summary.total), label: "screened" },
@@ -381,7 +347,6 @@ export default function BatchPage() {
           }
         />
 
-        {/* Drop zone */}
         <div
           onDragOver={(e) => e.preventDefault()}
           onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) void handleFile(f); }}
@@ -405,7 +370,6 @@ export default function BatchPage() {
           </div>
         </div>
 
-        {/* Rows ready + run */}
         {rows.length > 0 && (
           <div className="bg-bg-panel border border-hair-2 rounded-lg p-4 mb-4">
             <div className="flex items-center gap-4 flex-wrap mb-3">
@@ -432,12 +396,8 @@ export default function BatchPage() {
           </div>
         )}
 
-        {/* Error */}
-        {error && (
-          <div className="bg-red-dim text-red rounded px-3 py-2 text-12 mb-4">{error}</div>
-        )}
+        {error && <div className="bg-red-dim text-red rounded px-3 py-2 text-12 mb-4">{error}</div>}
 
-        {/* Progress bar */}
         {progress && (
           <div className="mb-4">
             <div className="flex justify-between text-11 text-ink-2 mb-1">
@@ -445,15 +405,12 @@ export default function BatchPage() {
               <span className="font-mono">{Math.round((progress.done / progress.total) * 100)}%</span>
             </div>
             <div className="h-2 bg-bg-2 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-brand transition-all duration-200 rounded-full"
-                style={{ width: `${(progress.done / progress.total) * 100}%` }}
-              />
+              <div className="h-full bg-brand transition-all duration-200 rounded-full"
+                style={{ width: `${(progress.done / progress.total) * 100}%` }} />
             </div>
           </div>
         )}
 
-        {/* Summary + chart */}
         {summary && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
             <div className="bg-ink-0 text-bg-0 rounded-xl p-4 flex flex-wrap gap-5 items-end">
@@ -486,7 +443,6 @@ export default function BatchPage() {
           </div>
         )}
 
-        {/* Filter + sort toolbar */}
         {results.length > 0 && (
           <div className="flex items-center gap-3 mb-3 flex-wrap">
             <span className="text-11 text-ink-3">Filter:</span>
@@ -504,7 +460,6 @@ export default function BatchPage() {
           </div>
         )}
 
-        {/* Results table */}
         {results.length > 0 && (
           <div className="bg-bg-panel border border-hair-2 rounded-xl overflow-hidden mb-4">
             <table className="w-full text-12">
@@ -572,9 +527,7 @@ export default function BatchPage() {
                     <td className="px-2 py-2 text-right">
                       <RowActions
                         label={`batch row ${r.name}`}
-                        onDelete={() => {
-                          setResults((prev) => prev.filter((x) => x.name !== r.name));
-                        }}
+                        onDelete={() => setResults((prev) => prev.filter((x) => x.name !== r.name))}
                         confirmDelete={false}
                       />
                     </td>
@@ -585,7 +538,6 @@ export default function BatchPage() {
           </div>
         )}
 
-        {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex items-center gap-2 justify-center">
             <button onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0}
