@@ -180,6 +180,10 @@ export default function AnalyticsPage() {
         setErr(result.error ?? `status ${result.status}`);
         return;
       }
+      if (!result.data.commercial || !result.data.monitoring || !result.data.quality || !result.data.kpis) {
+        setErr("analytics payload missing required sections");
+        return;
+      }
       setData(result.data);
     })();
     return () => {
