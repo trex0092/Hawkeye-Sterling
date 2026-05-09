@@ -23,7 +23,7 @@
     "@netlify/blobs": "^10.0.0"
   },
   "devDependencies": {
-    "@netlify/plugin-nextjs": "5.15.11",
+    "@netlify/plugin-nextjs": "^5.7.2",
     "@types/node": "^24.12.2",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
