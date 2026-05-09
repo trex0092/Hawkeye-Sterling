@@ -19,6 +19,7 @@ import { activeCountrySanctionAdapters } from "@/lib/intelligence/countrySanctio
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 interface ProviderStatus {
   id: string;
