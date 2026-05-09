@@ -268,7 +268,7 @@ export default function LoginPage() {
           textAlign: "center",
         }}
       >
-        © 2025 Hawkeye Sterling · Precision Screening · UAE
+        © 2026 Hawkeye Sterling · Precision Screening · UAE
       </div>
     </div>
   );
