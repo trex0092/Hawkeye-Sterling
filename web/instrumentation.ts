@@ -1,24 +1,26 @@
-export async function register() {
-  if (process.env.NEXT_RUNTIME === 'nodejs') {
-    // AsyncLocalStorage.snapshot() static method was added in Node.js 22.3.0.
-    // Next.js 15.5+ calls it at app-page runtime module evaluation time.
-    // If the function runtime is an older 22.x release, every page returns
-    // HTTP 500 with "a3.snapshot is not a function".
-    // This polyfill runs before any route is handled, so the static method
-    // is present when the app-page runtime module first evaluates.
-    const { AsyncLocalStorage } = await import('node:async_hooks')
+// AsyncLocalStorage.snapshot() was added in Node.js 22.3.0.
+// Next.js 15.5+ calls it synchronously during app-page runtime module
+// evaluation — before register() is awaited. The polyfill must therefore
+// run at module-load time (top-level), not inside the async register().
+// Next.js compiles instrumentation.ts to CJS for the Node.js runtime,
+// so require() is available here even though the file uses ESM exports.
+if (
+  typeof process !== 'undefined' &&
+  process.env.NEXT_RUNTIME === 'nodejs'
+) {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { AsyncLocalStorage } = require('node:async_hooks') as typeof import('node:async_hooks')
     if (typeof (AsyncLocalStorage as any).snapshot !== 'function') {
       ;(AsyncLocalStorage as any).snapshot = function () {
         return function (fn: (...args: unknown[]) => unknown, ...args: unknown[]) {
           return fn(...args)
         }
       }
-      // globalThis.AsyncLocalStorage is the same object reference, so
-      // patching the class also patches the global — but belt-and-suspenders:
-      const g = globalThis as any
-      if (g.AsyncLocalStorage && typeof g.AsyncLocalStorage.snapshot !== 'function') {
-        g.AsyncLocalStorage.snapshot = (AsyncLocalStorage as any).snapshot
-      }
     }
+  } catch {
+    // async_hooks not available in this runtime — skip
   }
 }
+
+export async function register() {}
