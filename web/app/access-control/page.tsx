@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -217,6 +217,9 @@ function UserSidePanel({ user, onClose, onRoleChanged }: SidePanelProps) {
   const [pwSaving, setPwSaving] = useState(false);
   const [pwMsg, setPwMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
+
   const handleSetPassword = async () => {
     if (!newPassword.trim()) return;
     setPwSaving(true);
@@ -228,6 +231,7 @@ function UserSidePanel({ user, onClose, onRoleChanged }: SidePanelProps) {
         body: JSON.stringify({ userId: user.id, newPassword: newPassword.trim(), username: newUsername.trim() || undefined }),
       });
       const data = (await resp.json()) as { ok: boolean; error?: string };
+      if (!mountedRef.current) return;
       if (data.ok) {
         setPwMsg({ ok: true, text: "Credentials updated successfully." });
         setNewPassword("");
@@ -235,9 +239,9 @@ function UserSidePanel({ user, onClose, onRoleChanged }: SidePanelProps) {
         setPwMsg({ ok: false, text: data.error ?? "Failed to update credentials." });
       }
     } catch {
-      setPwMsg({ ok: false, text: "Network error — please try again." });
+      if (mountedRef.current) setPwMsg({ ok: false, text: "Network error — please try again." });
     } finally {
-      setPwSaving(false);
+      if (mountedRef.current) setPwSaving(false);
     }
   };
 
@@ -519,6 +523,9 @@ export default function AccessControlPage() {
   const [revokeError, setRevokeError] = useState<string | null>(null);
   const [revokingId, setRevokingId] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
+
   // Load from localStorage or API
   const fetchUsers = useCallback(async () => {
     setLoadingUsers(true);
@@ -592,6 +599,7 @@ export default function AccessControlPage() {
         body: JSON.stringify(addForm),
       });
       const data = (await resp.json()) as { ok: boolean; user?: AccessUser; error?: string; initialPassword?: string };
+      if (!mountedRef.current) return;
       if (!data.ok) { setAddError(data.error ?? "Failed to add user."); return; }
       if (data.user) {
         setUsers((prev) => [...prev, data.user!]);
@@ -601,9 +609,9 @@ export default function AccessControlPage() {
       setShowAddForm(false);
       void fetchLog();
     } catch {
-      setAddError("Network error — please try again.");
+      if (mountedRef.current) setAddError("Network error — please try again.");
     } finally {
-      setAddingUser(false);
+      if (mountedRef.current) setAddingUser(false);
     }
   };
 

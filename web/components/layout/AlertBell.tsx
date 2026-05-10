@@ -68,6 +68,9 @@ export function AlertBell(): JSX.Element {
   const { alerts, unreadCount, dismiss, requestNotificationPermission, notificationPermission } = useAlerts();
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const mountedRef = useRef(true);
+
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -97,6 +100,7 @@ export function AlertBell(): JSX.Element {
   const dismissAll = async () => {
     const unread = sorted.filter((a) => !a.read);
     for (const a of unread) {
+      if (!mountedRef.current) break;
       await dismiss(a.id);
     }
   };

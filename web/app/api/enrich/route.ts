@@ -59,6 +59,9 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   const name = body.name.trim();
+  // Coerce to strict boolean — prevents a truthy string like "true" from
+  // triggering the slow SpiderFoot scan.
+  const enableOsint = body.enableOsint === true;
 
   // If no LEI provided, attempt to find one via GLEIF name search
   let resolvedLei = body.lei?.trim().toUpperCase();
@@ -84,7 +87,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       ? domainIntel(body.domain).catch(logFail("domainIntel"))
       : Promise.resolve(null),
     yenteMatch([{ name, schema: "LegalEntity" }]).catch(logFail("yenteMatch")),
-    body.enableOsint && body.domain
+    enableOsint && body.domain
       ? spiderFootScan(body.domain, { moduleSet: "passive", maxWaitMs: 90_000 }).catch(logFail("spiderFootScan"))
       : Promise.resolve(null),
     searchAdverseMedia(name, { limit: 20, minRelevance: 0 }).catch(logFail("searchAdverseMedia")),

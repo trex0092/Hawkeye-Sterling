@@ -86,6 +86,20 @@ export async function POST(req: Request): Promise<NextResponse> {
       { status: 400, headers: gateHeaders },
     );
   }
+  const ALLOWED_CAPACITIES: CorrectionRequest["requesterCapacity"][] = ["subject", "legal_representative", "data_controller", "other"];
+  const capacity = body.requesterCapacity ?? "subject";
+  if (!ALLOWED_CAPACITIES.includes(capacity)) {
+    return NextResponse.json(
+      { ok: false, error: `requesterCapacity must be one of: ${ALLOWED_CAPACITIES.join(", ")}` },
+      { status: 400, headers: gateHeaders },
+    );
+  }
+  const safeEvidenceUrls = Array.isArray(body.evidenceUrls)
+    ? body.evidenceUrls.filter((u) => {
+        try { const p = new URL(u); return p.protocol === "http:" || p.protocol === "https:"; }
+        catch { return false; }
+      })
+    : undefined;
   const submittedAt = new Date().toISOString();
   const record: CorrectionRequest = {
     id: newId(),
@@ -94,9 +108,9 @@ export async function POST(req: Request): Promise<NextResponse> {
     ...(body.listRef ? { listRef: body.listRef } : {}),
     requesterName: body.requesterName ?? "(withheld)",
     requesterEmail: body.requesterEmail,
-    requesterCapacity: body.requesterCapacity ?? "subject",
+    requesterCapacity: capacity,
     claim: body.claim,
-    ...(body.evidenceUrls ? { evidenceUrls: body.evidenceUrls } : {}),
+    ...(safeEvidenceUrls?.length ? { evidenceUrls: safeEvidenceUrls } : {}),
     status: "received",
     submittedAt,
     dueBy: addDays(submittedAt, REVIEW_SLA_DAYS),

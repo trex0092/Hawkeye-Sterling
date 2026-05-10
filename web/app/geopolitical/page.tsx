@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import type { GeopoliticalEvent } from "@/app/api/geopolitical/events/route";
 import type {
@@ -121,6 +121,9 @@ export default function GeopoliticalPage() {
   const [impactLoading, setImpactLoading] = useState(false);
   const [impactError, setImpactError] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
+
   const fetchEvents = useCallback(async () => {
     setLoading(true);
     try {
@@ -191,11 +194,11 @@ export default function GeopoliticalPage() {
         throw new Error(body.error ?? `Impact assessment failed (HTTP ${res.status}) — please retry`);
       }
       const data = await res.json() as PortfolioImpactResult;
-      setImpactResult(data);
+      if (mountedRef.current) setImpactResult(data);
     } catch (err) {
-      setImpactError(err instanceof Error ? err.message : "Impact assessment failed — please retry");
+      if (mountedRef.current) setImpactError(err instanceof Error ? err.message : "Impact assessment failed — please retry");
     } finally {
-      setImpactLoading(false);
+      if (mountedRef.current) setImpactLoading(false);
     }
   }
 
