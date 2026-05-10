@@ -26,6 +26,8 @@
 //     audit log (FATF R.10 / FDL Art.19 negative-finding evidence-of-search)
 
 import { NextResponse } from "next/server";
+import { randomUUID } from "node:crypto";
+import { enforce } from "@/lib/server/enforce";
 import { asanaGids } from "@/lib/server/asanaConfig";
 
 export const runtime = "nodejs";
@@ -99,6 +101,9 @@ async function createAsanaTask(opts: {
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
+
   let body: ResolveBody;
   try {
     body = (await req.json()) as ResolveBody;
@@ -113,8 +118,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     return respond(400, { ok: false, resolution, auditId: "", error: "resolution must be positive | possible | false | unspecified" });
   }
 
-  // Audit ID — caller persists this in their UI state if needed
-  const auditId = `res_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+  const auditId = `res_${randomUUID()}`;
   const timestamp = new Date().toISOString();
 
   // ── Side effect: Positive → create ongoing-monitoring task

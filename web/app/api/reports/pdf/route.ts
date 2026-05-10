@@ -138,7 +138,7 @@ export async function POST(req: Request): Promise<NextResponse | Response> {
   }
 
   const filename = `hawkeye-evidence-${resultId.slice(0, 12)}-${ts.slice(0, 10)}.pdf`;
-  return new Response(pdfBytes, {
+  return new Response(pdfBytes as unknown as BodyInit, {
     status: 200,
     headers: {
       ...gate.headers,

@@ -82,7 +82,25 @@ export type TypologyId =
   | 'healthcare_billing_fraud'
   // Wave 6 — crypto on-/off-ramp obfuscation, free-zone bearer-share loopholes
   | 'crypto_onramp_obfuscation'
-  | 'bearer_share_fz_loophole';
+  | 'bearer_share_fz_loophole'
+  // Wave 5 — cross-cutting category typologies
+  | 'kyc_gap'
+  | 'adverse_media'
+  | 'governance'
+  | 'ubo'
+  | 'source_of_wealth'
+  | 'source_of_funds'
+  | 'transaction_monitoring'
+  | 'cyber_incident'
+  | 'gaming'
+  | 'insurance_aml'
+  | 'real_estate_aml'
+  | 'sanctions_screening'
+  | 'shell_company'
+  | 'tipping_off'
+  | 'third_party_risk'
+  | 'layering'
+  | 'tax_evasion';
 
 export interface Typology {
   id: TypologyId;
@@ -170,6 +188,24 @@ export const TYPOLOGIES: Typology[] = [
   // Wave 6 — additional weaponization
   { id: 'crypto_onramp_obfuscation', displayName: 'Crypto on-/off-ramp obfuscation', describes: 'Card-funded or cash-funded crypto purchase rapidly chain-hopped through mixers, privacy coins, or P2P/OTC desks to convert proceeds to fiat with no KYC link.', redFlagIds: ['rf_crypto_onramp_card_to_mixer', 'rf_crypto_offramp_otc_cash'], reasoningModes: ['chain_analysis', 'taint_propagation', 'velocity_analysis', 'vasp_travel_rule'], doctrines: ['fatf_rba'] },
   { id: 'bearer_share_fz_loophole', displayName: 'Bearer-share / free-zone loophole', describes: 'UAE / GCC free-zone holding entity used as substance-light invoicing vehicle, often combined with bearer-share-equivalent ownership to obscure UBO and bypass mainland AML supervision.', redFlagIds: ['rf_bearer_share_fz_holding', 'rf_fz_no_substance'], reasoningModes: ['ubo_bearer_shares', 'ubo_tree_walk', 'jurisdiction_cascade', 'kyb_strict'], doctrines: ['fatf_rba', 'uae_fdl_20_2018'] },
+  // ── Wave 5 — cross-cutting category typologies ───────────────────────
+  { id: 'kyc_gap', displayName: 'KYC / CDD gap', describes: 'Customer due diligence information is missing, incomplete, or unverifiable.', redFlagIds: [], reasoningModes: ['documentation_quality', 'retention_audit'], doctrines: ['uae_fdl_20_2018'] },
+  { id: 'adverse_media', displayName: 'Adverse media allegation', describes: 'Credible adverse-media allegation against a customer or counterparty.', redFlagIds: [], reasoningModes: ['source_triangulation', 'freshness_check', 'source_credibility'], doctrines: ['wolfsberg_faq'] },
+  { id: 'governance', displayName: 'AML governance / control weakness', describes: 'Internal control, oversight, or governance failure creating AML risk.', redFlagIds: [], reasoningModes: ['policy_drift', 'exception_log', 'retention_audit'], doctrines: ['fatf_rba'] },
+  { id: 'ubo', displayName: 'UBO opacity / beneficial ownership risk', describes: 'Beneficial ownership is obscured, incomplete, or controlled by high-risk parties.', redFlagIds: [], reasoningModes: ['ubo_tree_walk', 'entity_resolution', 'jurisdiction_cascade'], doctrines: ['fatf_rba'] },
+  { id: 'source_of_wealth', displayName: 'Source of wealth risk', describes: 'Customer\'s wealth accumulation cannot be adequately explained or corroborated.', redFlagIds: [], reasoningModes: ['source_triangulation', 'regression', 'narrative_coherence'], doctrines: ['wolfsberg_faq'] },
+  { id: 'source_of_funds', displayName: 'Source of funds risk', describes: 'The specific funds used in a transaction cannot be verified as legitimate.', redFlagIds: [], reasoningModes: ['documentation_quality', 'source_credibility'], doctrines: ['wolfsberg_faq'] },
+  { id: 'transaction_monitoring', displayName: 'Transaction monitoring alert', describes: 'Transaction monitoring system has generated an alert requiring investigation.', redFlagIds: [], reasoningModes: ['velocity_analysis', 'pattern_of_life', 'spike_detection'], doctrines: ['fatf_rba'] },
+  { id: 'cyber_incident', displayName: 'Cyber incident / ransomware', describes: 'Cyber attack, ransomware, or data breach with financial crime implications.', redFlagIds: [], reasoningModes: ['timeline_reconstruction', 'chain_analysis'], doctrines: [] },
+  { id: 'gaming', displayName: 'Gaming / gambling AML risk', describes: 'AML risk arising from gaming or gambling activity.', redFlagIds: [], reasoningModes: ['casino_junket_flow', 'pattern_of_life', 'velocity_analysis'], doctrines: ['fatf_rba'] },
+  { id: 'insurance_aml', displayName: 'Insurance AML risk', describes: 'AML risk in insurance products including placement, layering, and early surrender.', redFlagIds: [], reasoningModes: ['insurance_wrap', 'pattern_of_life'], doctrines: ['wolfsberg_faq'] },
+  { id: 'real_estate_aml', displayName: 'Real estate AML risk', describes: 'AML risk in real estate transactions including cash purchases and layered structures.', redFlagIds: [], reasoningModes: ['real_estate_cash', 'source_triangulation', 'ubo_tree_walk'], doctrines: ['fatf_rba'] },
+  { id: 'sanctions_screening', displayName: 'Sanctions screening match', describes: 'A sanctions or watchlist screening hit requiring triage and resolution.', redFlagIds: [], reasoningModes: ['list_walk', 'entity_resolution', 'sanctions_regime_matrix'], doctrines: ['uae_cd_74_2020'] },
+  { id: 'shell_company', displayName: 'Shell company / no-substance entity', describes: 'Entity with no genuine economic activity used as an AML vehicle.', redFlagIds: [], reasoningModes: ['kyb_strict', 'narrative_coherence', 'entity_resolution'], doctrines: ['fatf_rba'] },
+  { id: 'tipping_off', displayName: 'Tipping-off risk', describes: 'Risk that a customer or third party is alerted to an internal suspicion or investigation.', redFlagIds: [], reasoningModes: ['narrative_coherence', 'timeline_reconstruction'], doctrines: ['uae_fdl_20_2018'] },
+  { id: 'third_party_risk', displayName: 'Third-party / outsourcing risk', describes: 'AML risk arising from reliance on third parties, outsourced services, or intermediaries.', redFlagIds: [], reasoningModes: ['documentation_quality', 'policy_drift', 'entity_resolution'], doctrines: ['fatf_rba'] },
+  { id: 'layering', displayName: 'Layering', describes: 'The layering stage of money laundering where funds are moved through multiple accounts or instruments to obscure origin.', redFlagIds: [], reasoningModes: ['link_analysis', 'reconciliation', 'community_detection'], doctrines: ['fatf_rba'] },
+  { id: 'tax_evasion', displayName: 'Tax evasion predicate', describes: 'Tax evasion as an AML predicate offence, including offshore concealment and unreported income.', redFlagIds: [], reasoningModes: ['jurisdiction_cascade', 'source_triangulation', 'narrative_coherence'], doctrines: ['fatf_rba'] },
 ];
 
 export const TYPOLOGY_BY_ID: Map<TypologyId, Typology> = new Map(

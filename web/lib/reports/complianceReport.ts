@@ -302,8 +302,8 @@ function ed25519Sign(reportHash: string): string | null {
   // Ed25519 in Node: pass null for the algorithm; the curve dictates
   // SHA-512 internally. Sign the hex digest as bytes; verifiers replay
   // the same.
-  const sig = nodeSign(null, new Uint8Array(Buffer.from(reportHash, "utf8")), priv);
-  return Buffer.from(sig).toString("hex");
+  const sig = nodeSign(null, Uint8Array.from(Buffer.from(reportHash, "utf8")), priv);
+  return sig.toString("hex");
 }
 
 function ed25519PublicKeyFingerprint(): string | null {

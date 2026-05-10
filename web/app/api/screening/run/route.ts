@@ -149,8 +149,8 @@ function buildNegativeEvidence(
   if (result.hits.length === 0) {
     clear.push(`Screened against ${listsLoaded.toLocaleString()} watchlist entries — no matches found`);
   }
-  if (result.topScore < 0.5) {
-    clear.push(`Top match score (${(result.topScore * 100).toFixed(0)}%) is below significance threshold — no material similarity detected`);
+  if (result.topScore < 50) {
+    clear.push(`Top match score (${result.topScore.toFixed(0)}%) is below significance threshold — no material similarity detected`);
   }
   if (result.severity === "clear") {
     clear.push("Severity assessment: CLEAR — no actionable hits requiring human review");
@@ -268,8 +268,8 @@ export async function POST(req: Request): Promise<NextResponse> {
       confidenceNote,
       // Disambiguate unresolved ambiguity
       unresolvedAmbiguity:
-        result.severity === "medium" || result.topScore >= 0.7
-          ? ["Manual reviewer must confirm or dismiss hits. Automated disposition not permitted for scores >= 0.7."]
+        result.severity === "medium" || result.topScore >= 70
+          ? ["Manual reviewer must confirm or dismiss hits. Automated disposition not permitted for scores >= 70."]
           : [],
     },
     { headers: responseHeaders },
