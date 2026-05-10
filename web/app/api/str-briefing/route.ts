@@ -4,6 +4,7 @@ export const maxDuration = 60;
 
 import { NextRequest, NextResponse } from "next/server";
 import { writeAuditEvent } from "@/lib/audit";
+import { enforce } from "@/lib/server/enforce";
 
 interface CaseInput {
   id: string;
@@ -33,6 +34,8 @@ const EMPTY_BRIEFING: MlroBriefing = {
 };
 
 export async function POST(req: NextRequest) {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   let body: { cases?: CaseInput[] };
   try {
     body = (await req.json()) as typeof body;

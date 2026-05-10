@@ -4,6 +4,7 @@ export const maxDuration = 25;
 
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { enforce } from "@/lib/server/enforce";
 import { getJson } from "@/lib/server/store";
 import { randomBytes } from "node:crypto";
 
@@ -253,6 +254,8 @@ async function createAsanaTask(
 // ── Handler ───────────────────────────────────────────────────────────────────
 
 export async function POST(req: Request) {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   let body: DecisionRequest;
   try {
     body = (await req.json()) as DecisionRequest;

@@ -4,6 +4,7 @@ export const maxDuration = 60;
 
 import { NextRequest, NextResponse } from "next/server";
 import { writeAuditEvent } from "@/lib/audit";
+import { enforce } from "@/lib/server/enforce";
 
 interface QaAnswer {
   answer: string;
@@ -20,6 +21,8 @@ const EMPTY_ANSWER: QaAnswer = {
 };
 
 export async function POST(req: NextRequest) {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   let body: { question?: string; playbookIds?: string[] };
   try {
     body = (await req.json()) as typeof body;

@@ -2,6 +2,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 import { NextResponse } from "next/server";
+import { enforce } from "@/lib/server/enforce";
 
 export interface PepEddResult {
   pepClassification: "domestic_pep" | "foreign_pep" | "international_organisation_pep" | "former_pep" | "pep_family" | "pep_associate" | "not_pep";
@@ -88,6 +89,8 @@ const FALLBACK: PepEddResult = {
 };
 
 export async function POST(req: Request) {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   let body: {
     pepName: string;
     pepRole?: string;
