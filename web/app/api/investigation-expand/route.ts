@@ -43,7 +43,7 @@ export async function POST(req: Request) {
       },
       body: JSON.stringify({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 900,
+        max_tokens: 2048,
         system: `You are an AML/CFT link-analysis intelligence engine. Given a subject and their known network, infer additional entities that investigators should look for. Base your reasoning on:
 - Corporate naming / holding patterns common to UAE/MENA structures
 - UBO residual tranches and nominee arrangements

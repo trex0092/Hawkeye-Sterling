@@ -91,7 +91,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       },
       body: JSON.stringify({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 700,
+        max_tokens: 1500,
         system:
           "You are a UAE AML compliance officer specializing in staff vetting and ongoing monitoring under FDL 10/2025 Art.21 (internal controls) and FATF R.18 (internal programs). Assess employee document compliance, identify screening risks, and flag staff requiring immediate attention. Return ONLY valid JSON, no markdown fences.",
         messages: [

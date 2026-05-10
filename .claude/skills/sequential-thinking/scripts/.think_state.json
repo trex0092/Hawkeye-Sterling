@@ -1,39 +1,21 @@
 {
   "thoughtHistory": [
     {
-      "thought": "Starting comprehensive audit of Hawkeye-Sterling. Need to systematically check: (1) All API routes for enforce() auth gates, (2) All AI routes for correct max_tokens, (3) All frontend pages for remaining silent errors, (4) TypeScript correctness, (5) Logic bugs. Let me structure the audit into parallel search passes to cover everything. I'll start by enumerating all route files and then check each category.",
+      "thought": "I need to do a comprehensive production-readiness audit. The previous session fixed: max_tokens on 17 routes, silent errors in 6 frontend pages, mlro-advisor 21 catch blocks. What categories remain to check? \n  \n  1. TypeScript errors — run tsc --noEmit first\n  2. Silent errors in remaining pages not yet audited\n  3. API routes missing enforce() auth\n  4. API routes still with low max_tokens\n  5. API routes with JSON.parse not in try/catch\n  6. Frontend pages with fetch() not checking !res.ok\n  7. Any missing API routes (404s for buttons that call endpoints)\n  8. Any broken imports or missing components\n  9. Test suite status\n  \n  Strategy: Run parallel agents — one for API routes audit, one for frontend pages audit, one for tests. Then fix everything found.",
       "thoughtNumber": 1,
-      "totalThoughts": 10,
+      "totalThoughts": 4,
       "nextThoughtNeeded": true
     },
     {
-      "thought": "336 API routes total. Previous work fixed enforce() in ~50 of them via sed. I need to identify which routes still LACK the enforce() auth gate. Key: routes that handle sensitive operations (POST/mutation routes, AI routes) should all have enforce(). Let me grep for routes that have POST handlers but DON'T call enforce().",
+      "thought": "Let me define the concrete scan commands for the parallel audit agents:\n\n  AGENT 1 - API Routes:\n  a) Find all route.ts files: find web/app/api -name 'route.ts' | wc -l\n  b) Routes missing enforce(): grep -rL 'enforce(' web/app/api/*/route.ts\n  c) Routes with low max_tokens (< 1000): grep -rn 'max_tokens' web/app/api --include='route.ts' | grep -E ': [0-9]{1,3}[^0-9]|: [0-9]{3}[^0-9]' where value < 1000\n  d) Routes with unprotected JSON.parse: grep -n 'JSON.parse' in each route\n  e) Routes returning 200 on AI errors (swallowing errors)\n\n  AGENT 2 - Frontend Pages:\n  a) Pages with fetch() but no .ok check: grep -rn 'await fetch' web/app --include='page.tsx'\n  b) Pages with catch blocks that only console.log/warn/error\n  c) Pages with missing loading states\n  d) Pages calling APIs that don't exist\n\n  AGENT 3 - Tests + Build:\n  a) npm test -- --passWithNoTests\n  b) tsc --noEmit\n\n  I'll run all three agents in parallel.",
       "thoughtNumber": 2,
-      "totalThoughts": 10,
+      "totalThoughts": 4,
       "nextThoughtNeeded": true
     },
     {
-      "thought": "Key insight: enforce() with default opts allows anonymous requests (free tier) — it's rate-limiting not hard auth. The portal uses ADMIN_TOKEN injected by middleware. So missing enforce() means NO rate-limiting on those routes. Routes with adminAuth() have their own admin-only gate. I need to check: (1) AI routes among the 65 missing enforce() — cost abuse risk, (2) any routes still using wrong pattern '!gate.ok && gate.response.status === 429', (3) frontend silent errors, (4) max_tokens.",
+      "thought": "Execution plan — I will now launch all scans. Priority order for fixes after audit:\n  1. TypeScript errors (blocking — must be 0)\n  2. Any missing API routes (would cause 404 on button clicks)\n  3. Silent error catch blocks in pages not yet fixed\n  4. Remaining low max_tokens in AI routes\n  5. Missing enforce() on AI routes\n  6. Any other runtime issues\n  \n  After collecting all findings, I'll fix them in priority order, commit, and push.",
       "thoughtNumber": 3,
-      "totalThoughts": 10,
-      "nextThoughtNeeded": true
-    },
-    {
-      "thought": "Findings so far: (1) No remaining wrong enforce() patterns — all fixed, (2) No AI routes missing enforce(), (3) Low max_tokens in: access/ai-recommend(600), mlro-advisor/chain-run(600,600,700), sar-qa-score(600), vendor-risk(600), four-eyes(600), adverse-media-live(800), playbook-qa(800), str-briefing(800) — need to raise these, (4) Remaining console.error in pages are mostly localStorage/autosave/export — acceptable. Need to verify the low max_tokens routes will actually produce structured JSON output without truncation.",
-      "thoughtNumber": 4,
-      "totalThoughts": 10,
-      "nextThoughtNeeded": true
-    },
-    {
-      "thought": "After thorough audit: No AI routes missing enforce(), no wrong enforce() patterns. Remaining issues: (1) max_tokens too low in 5 routes: sar-qa-score(600), vendor-risk(600), access/ai-recommend(600), str-briefing(800), adverse-media-live(800) — these need raising. (2) ctr-structuring is a pure computation route (no AI), so missing enforce() is acceptable. (3) Need to check frontend pages more carefully — especially goaml-submission, goaml-export, ongoing-monitor for silent errors. Let me also audit pages not previously checked.",
-      "thoughtNumber": 5,
-      "totalThoughts": 10,
-      "nextThoughtNeeded": true
-    },
-    {
-      "thought": "Complete fix list identified: (1) max_tokens: raise sar-qa-score 600→2048, vendor-risk 600→1024, ai-recommend 600→1024, str-briefing 800→1500, adverse-media-live 800→1500. (2) mlro-advisor: 3 more silent handlers — typologyMatch, txnNarrative, eddQuestionnaire — wire to toolErrors + add JSX banners. (3) geopolitical/assessImpact: missing !res.ok check, silent catch — add impactError state + banner. (4) shipments/shipment-tbml: both !res.ok branch and catch are silent — add tbmlError state + banner. (5) screening:1584 resolve is background best-effort — acceptable. Now implementing all fixes.",
-      "thoughtNumber": 6,
-      "totalThoughts": 10,
+      "totalThoughts": 4,
       "nextThoughtNeeded": false
     }
   ],

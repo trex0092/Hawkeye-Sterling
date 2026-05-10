@@ -89,7 +89,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       },
       body: JSON.stringify({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 700,
+        max_tokens: 1500,
         system:
           "You are a UAE precious-metals supply chain compliance expert specializing in RMI/OECD Due Diligence Guidance (DDG) and LBMA Responsible Gold Guidance v9. Assess this smelter/refiner portfolio for conflict minerals risk, CAHRA exposure, and OECD DDG compliance gaps. Return ONLY valid JSON, no markdown fences.",
         messages: [

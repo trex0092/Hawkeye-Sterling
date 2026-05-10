@@ -108,7 +108,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       },
       body: JSON.stringify({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 600,
+        max_tokens: 1500,
         system:
           "You are a UAE AML forensic accountant expert in Benford's Law analysis for financial crime detection. Interpret these statistical results and provide a compliance-focused assessment for the MLRO. MAD interpretation: <0.006 = close conformity, 0.006-0.012 = acceptable, 0.012-0.015 = marginal, >0.015 = nonconformity. Flagged digits: suppression of digit 1 or digit 9 → structuring; elevation of digit 5 → round-number bias; systematic deviation → potential invoice manipulation. Return ONLY valid JSON — no markdown fences, no commentary.",
         messages: [{ role: "user", content: userContent }],

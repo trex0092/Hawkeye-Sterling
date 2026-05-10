@@ -84,7 +84,7 @@ async function runHaikuQuick(question: string, contextPairs: HaikuPair[], apiKey
       },
       body: JSON.stringify({
         model: HAIKU_MODEL,
-        max_tokens: 700,
+        max_tokens: 2048,
         stream: true,
         system: [{ type: "text", text: HAIKU_SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
         messages: [{ role: "user", content: buildHaikuPrompt(question, contextPairs) }],
