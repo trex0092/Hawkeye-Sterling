@@ -27,11 +27,9 @@ if (process.env.NEXT_RUNTIME !== 'edge') {
 
   // Also patch via both require() forms in case of separate module cache entries.
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     applySnapshotPolyfill((require('async_hooks') as { AsyncLocalStorage: unknown }).AsyncLocalStorage)
   } catch { /* not available in this runtime */ }
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     applySnapshotPolyfill((require('node:async_hooks') as { AsyncLocalStorage: unknown }).AsyncLocalStorage)
   } catch { /* not available in this runtime */ }
 }
