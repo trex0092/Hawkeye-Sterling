@@ -57,16 +57,19 @@ const nextConfig = {
     }
 
     // AsyncLocalStorage.snapshot() was added in Node.js 22.3.0.
-    // Next.js 15.5+ calls it during module evaluation — before
-    // instrumentation.ts ever runs. Injecting via BannerPlugin puts the
-    // polyfill at the very top of every server entry chunk, in raw Node.js
-    // scope where require() is the native loader, before webpack's runtime
-    // or any Next.js module is evaluated.
+    // Next.js 15.5 compiled runtimes (app-page, app-route) capture
+    //   let eV = globalThis.AsyncLocalStorage
+    // at module load time and call eV.snapshot() per request.
+    //
+    // We patch ALL THREE known locations for the AsyncLocalStorage class
+    // because require('async_hooks') vs require('node:async_hooks') may be
+    // separate module-cache entries on some Lambda Node.js builds, and both
+    // differ from the globalThis copy set by node-environment-baseline.js.
     if (isServer && nextRuntime !== "edge") {
       config.plugins.push(
         new webpack.BannerPlugin({
           banner:
-            "(function(){try{var h=require('node:async_hooks');var a=h&&h.AsyncLocalStorage;if(a&&typeof a.snapshot!=='function'){a.snapshot=function(){return function(fn){return fn.apply(this,Array.prototype.slice.call(arguments,1));};};}}catch(e){}})();",
+            "(function(){var s=function(){return function(fn){var a=Array.prototype.slice.call(arguments,1);return fn.apply(this,a);};};try{var h=require('async_hooks');if(h&&h.AsyncLocalStorage&&typeof h.AsyncLocalStorage.snapshot!=='function')h.AsyncLocalStorage.snapshot=s;}catch(e){}try{var h2=require('node:async_hooks');if(h2&&h2.AsyncLocalStorage&&typeof h2.AsyncLocalStorage.snapshot!=='function')h2.AsyncLocalStorage.snapshot=s;}catch(e){}var g=typeof globalThis!=='undefined'&&globalThis;if(g&&g.AsyncLocalStorage&&typeof g.AsyncLocalStorage.snapshot!=='function')g.AsyncLocalStorage.snapshot=s;})();",
           raw: true,
           entryOnly: true,
         })
