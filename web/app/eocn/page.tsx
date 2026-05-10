@@ -70,6 +70,7 @@ export default function EocnPage() {
   const [editMatchDraft, setEditMatchDraft] = useState<MatchEditDraft>({ disposition: "under-review", notes: "", goAmlRef: "", mlroSignedOff: false });
   const [refreshing, setRefreshing] = useState(false);
   const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   // Live-feed payload, initialized from the bundled fixture so the
   // page renders instantly on first load. Replaced by GET
   // /api/eocn-list-updates on mount and by POST on operator refresh.
@@ -84,7 +85,8 @@ export default function EocnPage() {
       try {
         const r = await fetch("/api/eocn-registration");
         if (r.ok) { const d = (await r.json()) as { ok: boolean; registration: EocnRegistrationRecord }; if (d.ok) setRegistration(d.registration); }
-      } catch (err) { console.warn("[hawkeye] eocn registration fetch failed:", err); }
+        else { console.warn("[hawkeye] eocn registration fetch failed:", r.status); setFetchError(`Could not load registration data (HTTP ${r.status}).`); }
+      } catch (err) { console.warn("[hawkeye] eocn registration fetch failed:", err); setFetchError("Could not load registration data — network error."); }
     })();
     (async () => {
       try {
@@ -112,7 +114,11 @@ export default function EocnPage() {
           method: "GET",
           headers: { accept: "application/json" },
         });
-        if (!r.ok) return;
+        if (!r.ok) {
+          console.warn("[hawkeye] eocn-list-updates GET failed:", r.status);
+          setFetchError(`Could not load latest list updates (HTTP ${r.status}) — showing cached data.`);
+          return;
+        }
         const next = (await r.json()) as EocnFeedPayload;
         if (!cancelled && next?.listUpdates?.length) {
           setFeed(next);
@@ -122,6 +128,7 @@ export default function EocnPage() {
         }
       } catch (err) {
         console.warn("[hawkeye] eocn-list-updates GET threw — using fixture fallback:", err);
+        setFetchError("Could not load latest list updates — showing cached data.");
       }
     })();
     return () => {
@@ -131,6 +138,7 @@ export default function EocnPage() {
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
+    setFetchError(null);
     try {
       // POST triggers an upstream re-fetch when EOCN_FEED_URL is
       // configured; otherwise the route returns the fixture but
@@ -146,10 +154,14 @@ export default function EocnPage() {
         if (next?.listUpdates?.length) {
           setFeed(next);
         }
+      } else {
+        console.error("[hawkeye] eocn-list-updates POST returned", r.status);
+        setFetchError(`Refresh failed (HTTP ${r.status}) — showing last-known data.`);
       }
       setLastRefreshed(new Date());
     } catch (err) {
       console.error("[hawkeye] eocn-list-updates POST threw — refresh failed, keeping last-known data:", err);
+      setFetchError("Refresh failed — network error. Showing last-known data.");
     } finally {
       setRefreshing(false);
     }
@@ -244,6 +256,16 @@ export default function EocnPage() {
           { value: String(overdue), label: "declarations overdue", tone: overdue > 0 ? "red" : undefined },
         ]}
       />
+
+      {fetchError && (
+        <div className="mt-3 rounded-lg border border-red/30 bg-red-dim px-4 py-3 flex items-start gap-2">
+          <span className="text-red text-14 shrink-0">⚠</span>
+          <div>
+            <p className="text-12 font-semibold text-red">Error</p>
+            <p className="text-11 text-ink-2 mt-0.5">{fetchError}</p>
+          </div>
+        </div>
+      )}
 
       {/* NAS/ARS warning banner — shown when not registered */}
       {registration && (!registration.nas.confirmed || !registration.ars.confirmed) && (

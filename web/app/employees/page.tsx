@@ -169,10 +169,12 @@ export default function EmployeesPage() {
   const [editForm, setEditForm] = useState(BLANK_FORM);
   const [empRisk, setEmpRisk] = useState<EmployeeRisk | null>(null);
   const [empRiskLoading, setEmpRiskLoading] = useState(false);
+  const [empRiskError, setEmpRiskError] = useState<string | null>(null);
 
   async function runEmployeeRiskScan() {
     if (employees.length === 0 || empRiskLoading) return;
     setEmpRiskLoading(true);
+    setEmpRiskError(null);
     try {
       const mapped = employees.map((e) => ({
         name: e.name,
@@ -193,10 +195,13 @@ export default function EmployeesPage() {
         const data = (await res.json()) as EmployeeRisk;
         setEmpRisk(data);
       } else {
+        const body = await res.text().catch(() => "");
         console.error(`[hawkeye] employee-risk HTTP ${res.status}`);
+        setEmpRiskError(`AI risk scan failed (HTTP ${res.status})${body ? ` — ${body}` : ""}`);
       }
     } catch (err) {
       console.error("[hawkeye] employee-risk threw:", err);
+      setEmpRiskError("AI risk scan request failed — please check your connection and try again.");
     } finally {
       setEmpRiskLoading(false);
     }
@@ -474,6 +479,15 @@ export default function EmployeesPage() {
         )}
 
         {/* AI Risk Panel */}
+        {empRiskError && (
+          <div className="mt-3 rounded-lg border border-red/30 bg-red-dim px-4 py-3 flex items-start gap-2 mb-4">
+            <span className="text-red text-14 shrink-0">⚠</span>
+            <div>
+              <p className="text-12 font-semibold text-red">Error</p>
+              <p className="text-11 text-ink-2 mt-0.5">{empRiskError}</p>
+            </div>
+          </div>
+        )}
         {empRisk && (
           <div className="bg-bg-panel border border-hair-2 rounded-lg p-5 mb-4 space-y-4">
             <div className="flex items-center justify-between">

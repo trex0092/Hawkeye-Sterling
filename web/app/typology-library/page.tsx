@@ -298,20 +298,28 @@ function DeepDiveModal({
   const [data, setData] = useState<TypologyDetailResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [fetched, setFetched] = useState(false);
+  const [detailError, setDetailError] = useState<string | null>(null);
 
   const fetchDetail = async () => {
     if (fetched) return;
     setLoading(true);
+    setDetailError(null);
     try {
       const res = await fetch("/api/typology-library/detail", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ typologyName }),
       });
-      const json = (await res.json()) as TypologyDetailResult;
-      setData(json);
+      if (!res.ok) {
+        console.error("[hawkeye] typology-library detail fetch HTTP", res.status);
+        setDetailError(`Could not load typology detail (HTTP ${res.status}).`);
+      } else {
+        const json = (await res.json()) as TypologyDetailResult;
+        setData(json);
+      }
     } catch (err) {
       console.error("[hawkeye] typology-library detail fetch threw:", err);
+      setDetailError(`Network error — ${err instanceof Error ? err.message : String(err)}.`);
     } finally {
       setLoading(false);
       setFetched(true);
@@ -368,6 +376,16 @@ function DeepDiveModal({
                   style={{ animation: "spin 0.8s linear infinite" }}
                 />
                 <span className="font-mono text-11 text-ink-2 uppercase tracking-wide">Analysing typology…</span>
+              </div>
+            </div>
+          )}
+
+          {detailError && !loading && (
+            <div className="mt-3 rounded-lg border border-red/30 bg-red-dim px-4 py-3 flex items-start gap-2">
+              <span className="text-red text-14 shrink-0">⚠</span>
+              <div>
+                <p className="text-12 font-semibold text-red">Error</p>
+                <p className="text-11 text-ink-2 mt-0.5">{detailError}</p>
               </div>
             </div>
           )}

@@ -100,6 +100,7 @@ export default function CasesPage() {
   const [timelineOpen, setTimelineOpen] = useState(false);
   const [triageResult, setTriageResult] = useState<TriageResult | null>(null);
   const [triageLoading, setTriageLoading] = useState(false);
+  const [triageError, setTriageError] = useState<string | null>(null);
 
   // Hydrate from localStorage on mount + react to writes from other
   // modules (STR filing form, screening-panel escalations, etc.).
@@ -152,6 +153,7 @@ export default function CasesPage() {
   const runBatchTriage = async () => {
     setTriageLoading(true);
     setTriageResult(null);
+    setTriageError(null);
     try {
       const activeCases = cases.slice(0, 10).map((c) => ({
         id: c.id,
@@ -166,13 +168,16 @@ export default function CasesPage() {
         body: JSON.stringify({ cases: activeCases }),
       });
       if (!res.ok) {
+        const body = await res.text().catch(() => "");
         console.error(`[hawkeye] cases/triage HTTP ${res.status}`);
+        setTriageError(`AI triage failed (HTTP ${res.status})${body ? ` — ${body}` : ""}`);
         return;
       }
       const data = await res.json() as TriageResult;
       if (data.ok) setTriageResult(data);
     } catch (err) {
       console.error("[hawkeye] cases/triage threw:", err);
+      setTriageError("AI triage request failed — please check your connection and try again.");
     } finally { setTriageLoading(false); }
   };
 
@@ -200,6 +205,15 @@ export default function CasesPage() {
             </div>
           </div>
           <CasesToolbar query={query} onQueryChange={setQuery} />
+          {triageError && (
+            <div className="mt-3 rounded-lg border border-red/30 bg-red-dim px-4 py-3 flex items-start gap-2">
+              <span className="text-red text-14 shrink-0">⚠</span>
+              <div>
+                <p className="text-12 font-semibold text-red">Error</p>
+                <p className="text-11 text-ink-2 mt-0.5">{triageError}</p>
+              </div>
+            </div>
+          )}
           {triageResult && (
             <div className="mb-4 bg-bg-panel border border-hair-2 rounded-xl overflow-hidden">
               <div className="flex items-center justify-between px-4 py-2 border-b border-hair-2 bg-bg-1">

@@ -55,6 +55,7 @@ export default function UboDeclarationPage() {
   const [submitted, setSubmitted] = useState(false);
   const [uboRisk, setUboRisk] = useState<UboRisk | null>(null);
   const [uboRiskLoading, setUboRiskLoading] = useState(false);
+  const [uboRiskError, setUboRiskError] = useState<string | null>(null);
 
   const inputCls =
     "w-full text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-ink-0";
@@ -76,6 +77,7 @@ export default function UboDeclarationPage() {
 
   const assessUboRisk = async (entityName: string, registeredIn: string, uboList: UboEntry[]) => {
     setUboRiskLoading(true);
+    setUboRiskError(null);
     try {
       const res = await fetch("/api/ubo-risk", {
         method: "POST",
@@ -86,10 +88,13 @@ export default function UboDeclarationPage() {
         const data = (await res.json()) as UboRisk;
         setUboRisk(data);
       } else {
+        const body = await res.text().catch(() => "");
         console.error(`[hawkeye] ubo-risk HTTP ${res.status}`);
+        setUboRiskError(`AI risk assessment failed (HTTP ${res.status})${body ? ` — ${body}` : ""}`);
       }
     } catch (err) {
       console.error("[hawkeye] ubo-risk threw:", err);
+      setUboRiskError("AI risk assessment request failed — please check your connection and try again.");
     } finally {
       setUboRiskLoading(false);
     }
@@ -127,6 +132,16 @@ export default function UboDeclarationPage() {
               <div className="bg-bg-panel border border-hair-2 rounded-lg p-6 flex items-center justify-center gap-3">
                 <div className="w-4 h-4 rounded-full border-2 border-brand border-t-transparent animate-spin" />
                 <span className="text-12 text-ink-2">Running AI risk assessment…</span>
+              </div>
+            )}
+
+            {uboRiskError && (
+              <div className="mt-3 rounded-lg border border-red/30 bg-red-dim px-4 py-3 flex items-start gap-2">
+                <span className="text-red text-14 shrink-0">⚠</span>
+                <div>
+                  <p className="text-12 font-semibold text-red">Error</p>
+                  <p className="text-11 text-ink-2 mt-0.5">{uboRiskError}</p>
+                </div>
               </div>
             )}
 

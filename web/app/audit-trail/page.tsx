@@ -59,6 +59,7 @@ export default function AuditTrailPage() {
   const [chainStatus, setChainStatus] = useState<{ ok: boolean; brokenAt?: number } | null>(null);
   const [anomaly, setAnomaly] = useState<AuditAnomaly | null>(null);
   const [anomalyLoading, setAnomalyLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const loaded = loadAuditEntries();
@@ -87,6 +88,7 @@ export default function AuditTrailPage() {
 
   const runAnomalyScan = async () => {
     setAnomalyLoading(true);
+    setError(null);
     try {
       const sliced = entries.slice(-200);
       const payload = sliced.map((e) => ({
@@ -107,9 +109,11 @@ export default function AuditTrailPage() {
         setAnomaly(data);
       } else {
         console.error(`[hawkeye] audit-trail/anomaly-detect HTTP ${res.status}`);
+        setError(`Anomaly scan failed (HTTP ${res.status}). Please try again.`);
       }
     } catch (err) {
       console.error("[hawkeye] audit-trail/anomaly-detect threw:", err);
+      setError("Anomaly scan could not be reached. Check your connection and try again.");
     } finally {
       setAnomalyLoading(false);
     }
@@ -241,6 +245,21 @@ export default function AuditTrailPage() {
             </button>
           )}
         </div>
+
+        {/* Error banner */}
+        {error && (
+          <div className="mb-4 flex items-center gap-3 px-4 py-3 bg-red-dim border border-red/30 rounded-lg text-13 text-red">
+            <span aria-hidden="true">⚠</span>
+            <span>{error}</span>
+            <button
+              type="button"
+              onClick={() => setError(null)}
+              className="ml-auto text-11 text-red/70 hover:text-red underline"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
 
         {/* Anomaly Summary Panel */}
         {anomaly && (

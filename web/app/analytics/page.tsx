@@ -268,6 +268,7 @@ export default function AnalyticsPage() {
   const generateInsights = async () => {
     setInsightsLoading(true);
     setAiInsights(null);
+    setErr(null);
     try {
       const pepCount = cases.filter((c) => /PEP/i.test(c.meta)).length;
       const res = await fetch("/api/analytics-insights", {
@@ -287,16 +288,23 @@ export default function AnalyticsPage() {
           period: formatPeriod(now),
         }),
       });
-      if (!res.ok) return;
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(body.error ?? `AI insights failed (HTTP ${res.status}) — please retry`);
+      }
       const result = await res.json() as { ok: boolean } & AnalyticsInsights;
       if (result.ok) setAiInsights(result);
-    } catch (err) { console.error("[hawkeye] analytics handler threw:", err); }
+    } catch (e) {
+      console.error("[hawkeye] analytics generateInsights threw:", e);
+      setErr(e instanceof Error ? e.message : "AI insights failed — please retry");
+    }
     finally { setInsightsLoading(false); }
   };
 
   const runBiasMonitor = async () => {
     setBiasLoading(true);
     setBiasMonitor(null);
+    setErr(null);
     try {
       const subjects = cases.map((c) => ({
         name: c.subject,
@@ -308,16 +316,23 @@ export default function AnalyticsPage() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ subjects }),
       });
-      if (!res.ok) return;
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(body.error ?? `Bias monitor failed (HTTP ${res.status}) — please retry`);
+      }
       const result = (await res.json()) as { ok: boolean } & BiasMonitor;
       if (result.ok) setBiasMonitor(result);
-    } catch (err) { console.error("[hawkeye] analytics handler threw:", err); }
+    } catch (e) {
+      console.error("[hawkeye] analytics runBiasMonitor threw:", e);
+      setErr(e instanceof Error ? e.message : "Bias monitor failed — please retry");
+    }
     finally { setBiasLoading(false); }
   };
 
   const runPredictRisk = async () => {
     setPredictLoading(true);
     setPredictRisk(null);
+    setErr(null);
     try {
       const pepCount = cases.filter((c) => /PEP/i.test(c.meta)).length;
       const avgRisk = data?.quality.falsePositiveRate
@@ -337,10 +352,16 @@ export default function AnalyticsPage() {
           timeframe: predictTimeframe,
         }),
       });
-      if (!res.ok) return;
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(body.error ?? `Risk prediction failed (HTTP ${res.status}) — please retry`);
+      }
       const result = (await res.json()) as PredictRiskResult;
       if (result.ok) setPredictRisk(result);
-    } catch (err) { console.error("[hawkeye] analytics handler threw:", err); }
+    } catch (e) {
+      console.error("[hawkeye] analytics runPredictRisk threw:", e);
+      setErr(e instanceof Error ? e.message : "Risk prediction failed — please retry");
+    }
     finally { setPredictLoading(false); }
   };
 

@@ -82,14 +82,20 @@ const TONE_BADGE_CLS: Record<RegulatoryItem["tone"], string> = {
 function RegulatoryFeedPanel() {
   const [items, setItems] = useState<RegulatoryItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [feedError, setFeedError] = useState<string | null>(null);
   const [fetchedAt, setFetchedAt] = useState("");
   const [sources, setSources] = useState<string[]>([]);
 
   const load = useCallback(async () => {
     setLoading(true);
+    setFeedError(null);
     try {
       const res = await fetch("/api/regulatory-feed");
-      if (!res.ok) return;
+      if (!res.ok) {
+        console.error(`[hawkeye] adverse-media-live regulatory-feed HTTP ${res.status}`);
+        setFeedError(`Regulatory feed unavailable (HTTP ${res.status}) — retrying automatically`);
+        return;
+      }
       const data = (await res.json()) as {
         ok: boolean;
         items: RegulatoryItem[];
@@ -98,6 +104,7 @@ function RegulatoryFeedPanel() {
       };
       if (!data.ok) {
         console.error("[hawkeye] adverse-media-live regulatory-feed returned ok:false");
+        setFeedError("Regulatory feed returned an error — retrying automatically");
         return;
       }
       setItems(data.items ?? []);
@@ -105,6 +112,7 @@ function RegulatoryFeedPanel() {
       setFetchedAt(data.fetchedAt ?? "");
     } catch (err) {
       console.error("[hawkeye] adverse-media-live regulatory-feed threw:", err);
+      setFeedError("Network error fetching regulatory feed — retrying automatically");
     } finally {
       setLoading(false);
     }
@@ -176,6 +184,13 @@ function RegulatoryFeedPanel() {
               {s}
             </span>
           ))}
+        </div>
+      )}
+
+      {feedError && (
+        <div className="mx-4 mt-3 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
+          <span className="text-red text-13 shrink-0">⚠</span>
+          <span className="text-11 text-red">{feedError}</span>
         </div>
       )}
 

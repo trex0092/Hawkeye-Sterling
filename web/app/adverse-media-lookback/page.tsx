@@ -209,8 +209,10 @@ export default function AdverseMediaLookbackPage() {
   const [editDraft, setEditDraft] = useState(BLANK);
   const [assessment, setAssessment] = useState<Record<string, AmAssessment>>({});
   const [assessing, setAssessing] = useState<Record<string, boolean>>({});
+  const [assessErrors, setAssessErrors] = useState<Record<string, string>>({});
   const [correlations, setCorrelations] = useState<Record<string, CrossCorrelateResult>>({});
   const [correlating, setCorrelating] = useState<Record<string, boolean>>({});
+  const [correlateErrors, setCorrelateErrors] = useState<Record<string, string>>({});
   const [dismissedOpen, setDismissedOpen] = useState<Record<string, boolean>>({});
 
   useEffect(() => { setEntries(load()); }, []);
@@ -218,6 +220,7 @@ export default function AdverseMediaLookbackPage() {
   const assessSubject = async (subject: string) => {
     if (assessing[subject]) return;
     setAssessing((prev) => ({ ...prev, [subject]: true }));
+    setAssessErrors((prev) => ({ ...prev, [subject]: "" }));
     try {
       const subjectEntries = entries
         .filter((e) => e.subject === subject)
@@ -238,9 +241,11 @@ export default function AdverseMediaLookbackPage() {
         setAssessment((prev) => ({ ...prev, [subject]: data }));
       } else {
         console.error(`[hawkeye] adverse-media-lookback assess HTTP ${res.status} for ${subject}`);
+        setAssessErrors((prev) => ({ ...prev, [subject]: `AI assessment failed (HTTP ${res.status}). Please try again.` }));
       }
     } catch (err) {
       console.error(`[hawkeye] adverse-media-lookback assess threw for ${subject}:`, err);
+      setAssessErrors((prev) => ({ ...prev, [subject]: "AI assessment could not be reached. Please try again." }));
     } finally {
       setAssessing((prev) => ({ ...prev, [subject]: false }));
     }
@@ -249,6 +254,7 @@ export default function AdverseMediaLookbackPage() {
   const crossCorrelateSubject = async (subject: string) => {
     if (correlating[subject]) return;
     setCorrelating((prev) => ({ ...prev, [subject]: true }));
+    setCorrelateErrors((prev) => ({ ...prev, [subject]: "" }));
     try {
       const articles: CrossCorrelateArticle[] = entries
         .filter((e) => e.subject === subject)
@@ -268,9 +274,11 @@ export default function AdverseMediaLookbackPage() {
         setCorrelations((prev) => ({ ...prev, [subject]: data }));
       } else {
         console.error(`[hawkeye] adverse-media-lookback cross-correlate HTTP ${res.status} for ${subject}`);
+        setCorrelateErrors((prev) => ({ ...prev, [subject]: `Cross-correlation failed (HTTP ${res.status}). Please try again.` }));
       }
     } catch (err) {
       console.error(`[hawkeye] adverse-media-lookback cross-correlate threw for ${subject}:`, err);
+      setCorrelateErrors((prev) => ({ ...prev, [subject]: "Cross-correlation could not be reached. Please try again." }));
     } finally {
       setCorrelating((prev) => ({ ...prev, [subject]: false }));
     }
@@ -480,6 +488,26 @@ export default function AdverseMediaLookbackPage() {
                       </button>
                     </div>
                   </div>
+
+                  {/* Per-subject error banners */}
+                  {assessErrors[subject] && (
+                    <div className="mt-3 rounded-lg border border-red/30 bg-red-dim px-4 py-3 flex items-start gap-2">
+                      <span className="text-red text-14 shrink-0">⚠</span>
+                      <div>
+                        <p className="text-12 font-semibold text-red">Error</p>
+                        <p className="text-11 text-ink-2 mt-0.5">{assessErrors[subject]}</p>
+                      </div>
+                    </div>
+                  )}
+                  {correlateErrors[subject] && (
+                    <div className="mt-3 rounded-lg border border-red/30 bg-red-dim px-4 py-3 flex items-start gap-2">
+                      <span className="text-red text-14 shrink-0">⚠</span>
+                      <div>
+                        <p className="text-12 font-semibold text-red">Error</p>
+                        <p className="text-11 text-ink-2 mt-0.5">{correlateErrors[subject]}</p>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Cross-Correlate Result Panel */}
                   {corr && (

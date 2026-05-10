@@ -55,6 +55,8 @@ export default function FpOptimizerPage() {
   const [analysisLoading, setAnalysisLoading] = useState(false);
   const [appliedThresholds, setAppliedThresholds] = useState<Set<number>>(new Set());
 
+  const [error, setError] = useState<string | null>(null);
+
   // Prediction tab
   const [predictForm, setPredictForm] = useState<PredictRequest>({
     subject: "Ahmed Al-Rahman",
@@ -91,16 +93,23 @@ export default function FpOptimizerPage() {
   async function analyzePatterns() {
     const decisions = parseDecisions(csvInput);
     setAnalysisLoading(true);
+    setError(null);
     try {
       const res = await fetch("/api/fp-optimizer/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ decisions }),
       });
+      if (!res.ok) {
+        console.error(`[hawkeye] fp-optimizer/analyze HTTP ${res.status}`);
+        setError(`Pattern analysis failed (HTTP ${res.status}). Please try again.`);
+        return;
+      }
       const data = await res.json() as FpAnalysisResult;
       setAnalysisResult(data);
     } catch (err) {
       console.error("[hawkeye] fp-optimizer/analyze threw:", err);
+      setError("Pattern analysis could not be reached. Check your connection and try again.");
     } finally {
       setAnalysisLoading(false);
     }
@@ -108,16 +117,23 @@ export default function FpOptimizerPage() {
 
   async function predictFp() {
     setPredictLoading(true);
+    setError(null);
     try {
       const res = await fetch("/api/fp-optimizer/predict", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(predictForm),
       });
+      if (!res.ok) {
+        console.error(`[hawkeye] fp-optimizer/predict HTTP ${res.status}`);
+        setError(`FP prediction failed (HTTP ${res.status}). Please try again.`);
+        return;
+      }
       const data = await res.json() as PredictResult;
       setPredictResult(data);
     } catch (err) {
       console.error("[hawkeye] fp-optimizer/predict threw:", err);
+      setError("FP prediction could not be reached. Check your connection and try again.");
     } finally {
       setPredictLoading(false);
     }
@@ -162,6 +178,21 @@ export default function FpOptimizerPage() {
           </button>
         ))}
       </div>
+
+      {/* Error banner */}
+      {error && (
+        <div className="mb-4 flex items-center gap-3 px-4 py-3 bg-red-dim border border-red/30 rounded-lg text-13 text-red">
+          <span aria-hidden="true">⚠</span>
+          <span>{error}</span>
+          <button
+            type="button"
+            onClick={() => setError(null)}
+            className="ml-auto text-11 text-red/70 hover:text-red underline"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       {/* ── TAB 1: Analysis ── */}
       {tab === "analysis" && (
