@@ -51,14 +51,17 @@ export function RegulatoryTicker() {
 
   // Fetch top priority items from the regulatory feed and surface them in the ticker.
   useEffect(() => {
+    let cancelled = false;
     void (async () => {
       try {
         const res = await fetch("/api/regulatory-feed");
+        if (cancelled) return;
         if (!res.ok) {
           console.warn(`[hawkeye] regulatory-feed HTTP ${res.status} — ticker stays on static items`);
           return;
         }
         const data = await res.json() as { ok: boolean; items?: Array<{ title: string; source: string; tone: string }> };
+        if (cancelled) return;
         if (!data.ok || !Array.isArray(data.items)) return;
         const top = data.items
           .filter((i) => i.tone === "red" || i.tone === "amber")
@@ -69,9 +72,11 @@ export function RegulatoryTicker() {
           }));
         setLiveItems(top);
       } catch (err) {
+        if (cancelled) return;
         console.warn("[hawkeye] regulatory-feed threw — ticker stays on static items:", err);
       }
     })();
+    return () => { cancelled = true; };
   }, []);
 
   const items: TickerItem[] = [

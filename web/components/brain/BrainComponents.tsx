@@ -136,10 +136,12 @@ export function BrainManifestPanel() {
   >({ status: "loading" });
 
   useEffect(() => {
+    let cancelled = false;
     fetch("/weaponized-brain.json")
       .then((r) => (r.ok ? r : fetch("/api/weaponized-brain")))
       .then((r) => r.json() as Promise<Response>)
       .then((r) => {
+        if (cancelled) return;
         if (r.ok && r.manifest && r.integrity) {
           setState({
             status: "ready",
@@ -153,9 +155,11 @@ export function BrainManifestPanel() {
           setState({ status: "error", error: r.detail ?? r.error ?? "unknown" });
         }
       })
-      .catch((e: unknown) =>
-        setState({ status: "error", error: e instanceof Error ? e.message : String(e) }),
-      );
+      .catch((e: unknown) => {
+        if (cancelled) return;
+        setState({ status: "error", error: e instanceof Error ? e.message : String(e) });
+      });
+    return () => { cancelled = true; };
   }, []);
 
   return (

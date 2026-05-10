@@ -70,6 +70,7 @@ async function createAsanaTask(opts: {
   try {
     const res = await fetch("https://app.asana.com/api/1.0/tasks", {
       method: "POST",
+      signal: AbortSignal.timeout(10_000),
       headers: {
         Authorization: `Bearer ${token}`,
         "content-type": "application/json",
