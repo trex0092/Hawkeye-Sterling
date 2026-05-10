@@ -93,7 +93,7 @@ const SOURCE_TARGET = 'return maybeGlobalAsyncLocalStorage.snapshot();';
 const SOURCE_REPLACEMENT =
   `return (typeof maybeGlobalAsyncLocalStorage.snapshot === "function"${MARKER}` +
   ` ? maybeGlobalAsyncLocalStorage.snapshot()` +
-  ` : function(fn, ...args) { return fn(...args); })();`;
+  ` : function(fn, ...args) { return fn(...args); });`;
 
 for (const relPath of SOURCE_FILES) {
   const filePath = path.resolve(relPath);
