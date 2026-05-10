@@ -15,6 +15,7 @@ import { evaluateRedlines } from "../../../../../dist/src/brain/redlines.js";
 import { detectCrossRegimeConflict, type RegimeStatus } from "../../../../../dist/src/brain/cross-regime-conflict.js";
 import { classifyPepRole } from "../../../../../dist/src/brain/pep-classifier.js";
 import { loadCandidates } from "@/lib/server/candidates-loader";
+import { enforce } from "@/lib/server/enforce";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -32,6 +33,9 @@ function sse(data: unknown, event = "message"): string {
 }
 
 export async function GET(req: Request): Promise<Response> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
+
   const url = new URL(req.url);
   const name = url.searchParams.get("name");
   if (!name) return new Response("name query param required", { status: 400 });
