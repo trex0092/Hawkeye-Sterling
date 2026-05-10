@@ -349,6 +349,7 @@ async function postDailyTMReport(args: {
 
   try {
     const res = await fetch("https://app.asana.com/api/1.0/tasks", {
+      signal: AbortSignal.timeout(10_000),
       method: "POST",
       headers: {
         authorization: `Bearer ${token}`,

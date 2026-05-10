@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { issueKey, listApiKeys } from "@/lib/server/api-keys";
-import { adminAuth } from "@/lib/server/admin-auth";
+import { enforce } from "@/lib/server/enforce";
 import { TIERS, type TierId } from "@/lib/data/tiers";
 
 export const runtime = "nodejs";
@@ -14,8 +14,8 @@ interface CreateKeyBody {
 }
 
 export async function GET(req: Request): Promise<NextResponse> {
-  const deny = adminAuth(req);
-  if (deny) return deny;
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
 
   const keys = await listApiKeys();
   return NextResponse.json({
@@ -28,8 +28,8 @@ export async function GET(req: Request): Promise<NextResponse> {
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
-  const deny = adminAuth(req);
-  if (deny) return deny;
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
 
   let body: CreateKeyBody;
   try {

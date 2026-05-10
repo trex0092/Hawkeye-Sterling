@@ -1,15 +1,19 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+import { enforce } from "@/lib/server/enforce";
 import {
   buildHtmlDoc, hsPage, hsCover, hsSection, hsPill, hsKvGrid,
-  hsFindings, hsSignatureBlock, hsFinis, hsSeverityCell, nowMeta, type CoverData,
+  hsFindings, hsSignatureBlock, hsFinis, hsSeverityCell, nowMeta, escHtml, type CoverData,
 } from "@/lib/reportHtml";
 
 export async function POST(req: Request) {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
+
   const body = await req.json() as {
     subjectName: string;
     jurisdiction: string;
-    verdict: string;               // e.g. "EDD REQUIRED" | "CLEAR" | "HIGH RISK"
+    verdict: string;
     verdictTone: "ember"|"amber"|"sage";
     subjectDetails: Array<{k:string; v:string}>;
     findings: string[];
@@ -42,11 +46,17 @@ export async function POST(req: Request) {
     ],
   };
 
+  // Escape user-supplied subjectDetails values before passing to hsKvGrid
+  const safeSubjectDetails = body.subjectDetails.map(({ k, v }) => ({
+    k: escHtml(k),
+    v: escHtml(v),
+  }));
+
   const listRows = body.listCoverage.map(r => [
-    r.list,
+    escHtml(r.list),
     hsSeverityCell(r.result),
-    `<span class="hs-mono-s">${r.match}</span>`,
-    `<span class="hs-mono-s">${r.date}</span>`,
+    `<span class="hs-mono-s">${escHtml(r.match)}</span>`,
+    `<span class="hs-mono-s">${escHtml(r.date)}</span>`,
   ]);
 
   const contentBody = `
@@ -55,7 +65,7 @@ export async function POST(req: Request) {
   <div style="margin-top:8px">${hsPill(body.verdictTone, body.verdict, true)}</div>
 </div>
 ${hsSection({ num:"01", kicker:"part one", title:"Subject details", tight:true,
-  content: hsKvGrid(body.subjectDetails) })}
+  content: hsKvGrid(safeSubjectDetails) })}
 ${body.findings.length > 0 ? hsSection({ num:"02", kicker:"part two", title:"Findings", tight:true,
   content: hsFindings(body.findings) }) : ""}
 ${listRows.length > 0 ? hsSection({ num:"03", kicker:"part three", title:"List coverage", tight:true,

@@ -227,6 +227,7 @@ async function handleTmReport(req: Request): Promise<NextResponse> {
     | null;
   try {
     taskRes = await fetch("https://app.asana.com/api/1.0/tasks", {
+      signal: AbortSignal.timeout(10_000),
       method: "POST",
       headers: {
         authorization: `Bearer ${token}`,

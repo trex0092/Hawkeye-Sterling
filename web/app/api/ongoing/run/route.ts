@@ -290,6 +290,7 @@ export async function POST(req: Request): Promise<NextResponse> {
             appBaseForNews,
           ).toString(),
           {
+            signal: AbortSignal.timeout(15_000),
             headers: { accept: "application/json" },
           },
         );
@@ -365,6 +366,7 @@ export async function POST(req: Request): Promise<NextResponse> {
                   },
                 };
                 const r = await fetch("https://app.asana.com/api/1.0/tasks", {
+                  signal: AbortSignal.timeout(10_000),
                   method: "POST",
                   headers: {
                     "content-type": "application/json",
@@ -444,6 +446,7 @@ export async function POST(req: Request): Promise<NextResponse> {
           const asanaRes = await fetch(
             new URL("/api/screening-report", appBase).toString(),
             {
+              signal: AbortSignal.timeout(20_000),
               method: "POST",
               headers: {
                 "content-type": "application/json",
@@ -546,6 +549,7 @@ export async function POST(req: Request): Promise<NextResponse> {
               },
             };
             const r = await fetch("https://app.asana.com/api/1.0/tasks", {
+              signal: AbortSignal.timeout(10_000),
               method: "POST",
               headers: {
                 "content-type": "application/json",

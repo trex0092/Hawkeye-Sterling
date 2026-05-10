@@ -313,7 +313,7 @@ export default function AuditTrailPage() {
                 <div className="space-y-2">
                   {anomaly.anomalies.map((a, i) => (
                     <div
-                      key={i}
+                      key={`${a.pattern ?? a.severity}-${i}`}
                       className={`border rounded p-3 bg-bg-1 border-l-4 ${
                         a.severity === "critical" ? "border-l-red border-hair-2"
                         : a.severity === "high" ? "border-l-red border-hair-2"

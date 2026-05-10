@@ -36,6 +36,7 @@ async function checkHibpEmail(
     const res = await fetch(
       `https://haveibeenpwned.com/api/v3/breachedaccount/${encodeURIComponent(email)}?truncateResponse=false`,
       {
+        signal: AbortSignal.timeout(8_000),
         headers: {
           "hibp-api-key": apiKey,
           "User-Agent": "Hawkeye-Sterling-AML/1.0",

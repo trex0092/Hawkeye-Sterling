@@ -1,11 +1,15 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+import { enforce } from "@/lib/server/enforce";
 import {
   buildHtmlDoc, hsPage, hsCover, hsSection, hsPill, hsNarrative,
-  hsSignatureBlock, hsFinis, hsScorebox, hsSeverityCell, nowMeta, type CoverData,
+  hsSignatureBlock, hsFinis, hsScorebox, hsSeverityCell, nowMeta, escHtml, type CoverData,
 } from "@/lib/reportHtml";
 
 export async function POST(req: Request) {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
+
   const body = await req.json() as {
     totalScreened: number;
     criticalHits: number;
@@ -55,12 +59,12 @@ export async function POST(req: Request) {
   </div>`;
 
   const resultRows = body.results.map(r => [
-    `<span class="hs-mono-s">${r.id}</span>`,
-    `<span style="font-weight:500">${r.subject}</span>`,
+    `<span class="hs-mono-s">${escHtml(r.id)}</span>`,
+    `<span style="font-weight:500">${escHtml(r.subject)}</span>`,
     `<span class="hs-mono-s" style="display:block;text-align:right">${r.score}</span>`,
     hsSeverityCell(r.severity),
     hsSeverityCell(r.disposition),
-    `<span class="hs-mono-s">${r.date}</span>`,
+    `<span class="hs-mono-s">${escHtml(r.date)}</span>`,
   ]);
 
   const tone = body.criticalHits > 0 ? "ember" : body.highRisk > 0 ? "amber" : "sage";

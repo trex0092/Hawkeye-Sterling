@@ -1,12 +1,17 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+import { NextResponse } from "next/server";
+import { enforce } from "@/lib/server/enforce";
 import type { GovernanceGapResult } from "@/app/api/governance-gap/route";
 import {
   buildHtmlDoc, hsPage, hsCover, hsSection, hsPill, hsKvGrid, hsNarrative,
-  hsSignatureBlock, hsFinis, hsSeverityCell, nowMeta, type CoverData,
+  hsSignatureBlock, hsFinis, hsSeverityCell, nowMeta, escHtml, type CoverData,
 } from "@/lib/reportHtml";
 
 export async function POST(req: Request) {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
+
   const body = await req.json() as { gapResult: GovernanceGapResult; institution: string };
   const { gapResult, institution } = body;
 
@@ -22,7 +27,7 @@ export async function POST(req: Request) {
     reportId, regs,
     module: "GOVERNANCE OVERSIGHT",
     title: "Governance Gap Analysis Report",
-    subtitle: `Assessment of AML/CFT governance framework for ${institution} against CBUAE AML Standards and UAE FDL 10/2025 requirements.`,
+    subtitle: `Assessment of AML/CFT governance framework for ${escHtml(institution)} against CBUAE AML Standards and UAE FDL 10/2025 requirements.`,
     subjectLabel: "INSTITUTION",
     subjectName: institution,
     subjectMeta: `UAE · DMCC · ${reportId}`,
@@ -47,17 +52,17 @@ export async function POST(req: Request) {
   ];
 
   const findingsRows = (gapResult.findings ?? []).map(f => [
-    `<span style="font-weight:500">${f.area}</span>`,
-    f.finding,
+    `<span style="font-weight:500">${escHtml(f.area)}</span>`,
+    escHtml(f.finding),
     hsSeverityCell(f.severity),
-    `<span class="hs-mono-s">${f.regulatoryRef}</span>`,
+    `<span class="hs-mono-s">${escHtml(f.regulatoryRef)}</span>`,
   ]);
 
   const recsRows = (gapResult.recommendations ?? []).map(r => [
     hsSeverityCell(r.priority),
-    r.action,
-    r.owner,
-    `<span class="hs-mono-s">${r.deadline}</span>`,
+    escHtml(r.action),
+    escHtml(r.owner),
+    `<span class="hs-mono-s">${escHtml(r.deadline)}</span>`,
   ]);
 
   const contentBody = `
