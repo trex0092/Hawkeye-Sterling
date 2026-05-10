@@ -86,10 +86,10 @@ export async function POST(req: Request) {
     });
     if (!response.ok) return NextResponse.json({ ok: false, error: "trade-finance-rf temporarily unavailable - please retry." }, { status: 503 });
     const data = (await response.json()) as {
-      content: Array<{ type: string; text: string }>;
+      content?: Array<{ type: string; text: string }>;
     };
     const raw =
-      data.content[0]?.type === "text" ? data.content[0].text : "{}";
+      data?.content?.[0]?.type === "text" ? data.content![0].text : "{}";
     const result = JSON.parse(
       raw.replace(/```json\n?|\n?```/g, "").trim()
     ) as TradeFinanceRfResult;

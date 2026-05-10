@@ -131,8 +131,8 @@ async function getSections(token: string, projectGid: string): Promise<Array<{ g
     signal: AbortSignal.timeout(10_000),
   });
   if (!res.ok) throw new Error(`getSections ${res.status}`);
-  const json = await res.json() as { data: Array<{ gid: string; name: string }> };
-  return json.data;
+  const json = await res.json() as { data?: Array<{ gid: string; name: string }> };
+  return json.data ?? [];
 }
 
 async function deleteSection(token: string, sectionGid: string): Promise<void> {
