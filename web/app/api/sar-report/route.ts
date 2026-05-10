@@ -62,12 +62,21 @@ const TIPPING_OFF_PATTERNS = [
   /\bAML\s+(?:investigation|inquiry|review|case|alert|flag)\b/i,
   /\bcompliance\s+(?:investigation|inquiry|alert|flag|hold)\b/i,
   // Account-status disclosures that imply a suspicion was raised
-  /\byour\s+account.{0,40}(?:suspend|block|freez|flag|hold|restrict|escalat)/i,
+  /\byour\s+account.{0,40}(?:suspend|block|freez|flag|hold|restrict|escalat)/is,
   /\b(?:suspended|blocked|frozen|flagged|on hold|restricted)\s+(?:due to|because of|pending)\s+(?:AML|compliance|investigation|review|suspicion)/i,
   // Circumvention phrasings — "between you and me", "off the record"
-  /\b(?:off\s+the\s+record|between\s+you\s+and\s+me|don'?t\s+tell\s+anyone).{0,80}\b(?:STR|SAR|FIU|investigat|report|fil)/i,
-  /\bI\s+shouldn'?t\s+(?:tell|say)\s+you.{0,80}\b(?:STR|SAR|FIU|investigat|report|fil)/i,
+  /\b(?:off\s+the\s+record|between\s+you\s+and\s+me|don'?t\s+tell\s+anyone).{0,80}\b(?:STR|SAR|FIU|investigat|report|fil)/is,
+  /\bI\s+shouldn'?t\s+(?:tell|say)\s+you.{0,80}\b(?:STR|SAR|FIU|investigat|report|fil)/is,
 ];
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
 
 function checkTippingOff(text: string): string | null {
   for (const pat of TIPPING_OFF_PATTERNS) {
@@ -450,7 +459,7 @@ async function handleSarReport(req: Request): Promise<Response> {
 
     const narrativePage = `
       <h2 class="hs-section-h" style="margin-top:0">Narrative (MLRO review required)</h2>
-      <p class="hs-narrative">${narrative.replace(/\n/g, "</p><p class='hs-narrative'>")}</p>
+      <p class="hs-narrative">${escapeHtml(narrative).replace(/\n/g, "</p><p class='hs-narrative'>")}</p>
       <h2 class="hs-section-h" style="margin-top:14px">goAML envelope</h2>
       ${hsKvGrid([
         { k: "Internal reference", v: internalRef },
