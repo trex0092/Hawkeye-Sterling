@@ -40,6 +40,8 @@ const FALLBACK: TrustStructuresResult = {
 };
 
 export async function POST(req: Request) {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   let body: {
     entityName: string;
     structureType: string;
