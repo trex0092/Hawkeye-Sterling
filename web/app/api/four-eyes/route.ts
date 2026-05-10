@@ -17,6 +17,7 @@ import { NextResponse } from "next/server";
 import { withGuard } from "@/lib/server/guard";
 import { del, getJson, listKeys, setJson } from "@/lib/server/store";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { enforce } from "@/lib/server/enforce";
 import type { FourEyesAction, FourEyesItem, FourEyesStatus } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -71,7 +72,7 @@ async function generateApprovalSummary(
   const client = getAnthropicClient(apiKey);
   const msg = await client.messages.create({
     model: "claude-haiku-4-5-20251001",
-    max_tokens: 600,
+    max_tokens: 1500,
     system: [{ type: "text" as const, text: 'You are an AML four-eyes approval assessor. Return ONLY this JSON: { "aiSummary": "string", "aiRegulatoryAnchor": "string", "aiRiskLevel": "critical|high|medium|low" }. aiSummary = 1 sentence: what this action means for the subject and why a second approver should care. aiRegulatoryAnchor = the specific UAE/FATF regulation that requires this action (e.g. \'FDL 10/2025 Art.22 — STR filing obligation\'). aiRiskLevel = the risk level of the action.', cache_control: { type: "ephemeral" as const } }],
     messages: [{ role: "user", content: userContent }],
   });
@@ -96,6 +97,8 @@ async function handleGet(req: Request): Promise<NextResponse> {
 }
 
 async function handlePost(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   let raw: unknown;
   try { raw = await req.json(); } catch {
     return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });

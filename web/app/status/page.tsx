@@ -99,6 +99,7 @@ interface DeployEntry {
 interface StatusPayload {
   ok: true;
   status: "operational" | "degraded" | "down";
+  externalStatus?: "operational" | "degraded" | "down";
   uptimeSec: number;
   startedAt: string;
   now: string;
@@ -215,8 +216,8 @@ export default function StatusPage() {
 
         {data && (
           <>
-            {/* Current-incident banner — only renders when anything is
-                not green. Prominent red/amber bar across the whole page. */}
+            {/* Internal-service incident banner — fires only when core
+                compliance services are down or degraded. */}
             {data.status !== "operational" && (
               <div
                 className={`rounded-lg p-4 mb-4 flex items-start gap-3 ${
@@ -236,10 +237,32 @@ export default function StatusPage() {
                       : "One or more services are DEGRADED — investigating"}
                   </div>
                   <div className="text-11 mt-0.5 opacity-90">
-                    {[...data.checks, ...data.externalChecks]
+                    {data.checks
                       .filter((c) => c.status !== "operational")
                       .map((c) => `${c.name} (${c.status})`)
                       .join(" · ")}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* External dependency notice — softer styling; external APIs
+                (GDELT, Google News) timing out is expected and does not
+                indicate a system outage. Shown separately so MLRO can
+                distinguish infrastructure failures from third-party issues. */}
+            {data.status === "operational" && data.externalStatus && data.externalStatus !== "operational" && (
+              <div className="rounded-lg p-3 mb-4 flex items-start gap-3 bg-bg-panel border border-hair-2 text-ink-2">
+                <span className="text-16 leading-none mt-0.5">ℹ</span>
+                <div className="flex-1 min-w-0">
+                  <div className="text-12 font-semibold text-ink-1">
+                    External dependency notice
+                  </div>
+                  <div className="text-11 mt-0.5">
+                    {data.externalChecks
+                      .filter((c) => c.status !== "operational")
+                      .map((c) => `${c.name} (${c.status}${c.note ? ` — ${c.note}` : ""})`)
+                      .join(" · ")}{" "}
+                    — third-party APIs only; core compliance functions unaffected.
                   </div>
                 </div>
               </div>
@@ -579,9 +602,9 @@ function AsanaRebuildSection() {
     setErrMsg("");
     try {
       const res = await fetch("/api/asana-rebuild-sections", { method: "POST" });
-      let data: { ok: boolean; results?: typeof results; error?: string };
+      let data: { ok: boolean; results?: typeof results; error?: string; authenticatedAs?: string };
       try {
-        data = await res.json() as { ok: boolean; results?: typeof results; error?: string };
+        data = await res.json() as typeof data;
       } catch {
         setErrMsg(`Server error (HTTP ${res.status}) — the function may have timed out. Check Netlify function logs.`);
         setState("error");
@@ -590,8 +613,16 @@ function AsanaRebuildSection() {
       if (data.ok) {
         setResults(data.results ?? []);
         setState("done");
+      } else if (data.results && data.results.length > 0) {
+        // Partial success — auth worked but some boards had errors; show breakdown
+        setResults(data.results);
+        const failCount = data.results.filter((r) => r.errors.length > 0).length;
+        setErrMsg(failCount > 0
+          ? `${failCount} board${failCount !== 1 ? "s" : ""} had errors — see breakdown below`
+          : "");
+        setState("done");
       } else {
-        setErrMsg(data.error ?? "Rebuild failed");
+        setErrMsg(data.error ?? "Rebuild failed — check ASANA_TOKEN env var in Netlify");
         setState("error");
       }
     } catch (e) {
@@ -671,11 +702,16 @@ function AsanaRebuildSection() {
 
       {state === "done" && results.length > 0 && (
         <div className="space-y-1.5">
+          {errMsg && (
+            <div className="bg-amber-dim border border-amber/30 rounded px-3 py-2 text-12 text-amber mb-1">
+              ⚠ {errMsg}
+            </div>
+          )}
           {results.map((r) => (
             <div key={r.name} className={`flex items-center justify-between px-3 py-2 rounded text-12 ${r.errors.length > 0 ? "bg-amber-dim text-amber" : "bg-green-dim text-green"}`}>
-              <span className="font-medium">{r.name}</span>
-              <span className="font-mono text-11 opacity-80">
-                {r.errors.length > 0 ? `⚠ ${r.errors.join(", ")}` : `✓ ${r.deleted} deleted · ${r.created} created`}
+              <span className="font-medium truncate mr-2">{r.name}</span>
+              <span className="font-mono text-11 opacity-80 shrink-0">
+                {r.errors.length > 0 ? `⚠ ${r.errors.join(", ")}` : `✓ ${r.deleted}↓ ${r.created}↑`}
               </span>
             </div>
           ))}

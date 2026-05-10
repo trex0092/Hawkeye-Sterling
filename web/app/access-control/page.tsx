@@ -207,6 +207,7 @@ function UserSidePanel({ user, onClose, onRoleChanged }: SidePanelProps) {
   const [selectedRole, setSelectedRole] = useState<UserRole>(user.role);
   const [reason, setReason] = useState("");
   const [saving, setSaving] = useState(false);
+  const [roleError, setRoleError] = useState<string | null>(null);
   const [impact, setImpact] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiResult, setAiResult] = useState<RoleRecommendation | null>(null);
@@ -270,6 +271,7 @@ function UserSidePanel({ user, onClose, onRoleChanged }: SidePanelProps) {
     if (!reason.trim()) return;
     setSaving(true);
     setImpact(null);
+    setRoleError(null);
     try {
       const resp = await fetch("/api/access/assign-role", {
         method: "POST",
@@ -281,15 +283,17 @@ function UserSidePanel({ user, onClose, onRoleChanged }: SidePanelProps) {
           assignedBy: "Luisa Fernanda",
         }),
       });
-      const data = (await resp.json()) as { ok: boolean; user?: AccessUser; impactAssessment?: string };
+      const data = (await resp.json()) as { ok: boolean; user?: AccessUser; impactAssessment?: string; error?: string };
       if (data.ok && data.user) {
         setImpact(data.impactAssessment ?? null);
         onRoleChanged(data.user);
       } else {
         console.error("[hawkeye] access-control role-change rejected:", data);
+        setRoleError(data.error ?? "Role change was rejected by the server.");
       }
     } catch (err) {
       console.error("[hawkeye] access-control role-change threw — UI may show stale role:", err);
+      setRoleError("Network error — role change could not be saved. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -392,6 +396,11 @@ function UserSidePanel({ user, onClose, onRoleChanged }: SidePanelProps) {
                 {saving ? "Saving…" : "Apply role change"}
               </button>
             </div>
+            {roleError && (
+              <div className="text-12 px-3 py-2 rounded border bg-red-dim text-red border-red/20">
+                {roleError}
+              </div>
+            )}
             {impact && (
               <div className="text-12 text-ink-1 bg-bg-panel border border-hair rounded p-3 leading-relaxed">
                 <span className="text-brand font-semibold text-10 uppercase font-mono tracking-wide block mb-1">
@@ -507,6 +516,7 @@ export default function AccessControlPage() {
   const [addingUser, setAddingUser] = useState(false);
   const [addError, setAddError] = useState("");
   const [newUserCreds, setNewUserCreds] = useState<{ username: string; password: string } | null>(null);
+  const [revokeError, setRevokeError] = useState<string | null>(null);
 
   // Load from localStorage or API
   const fetchUsers = useCallback(async () => {
@@ -597,6 +607,7 @@ export default function AccessControlPage() {
   };
 
   const handleRevokeSession = async (session: Session) => {
+    setRevokeError(null);
     try {
       await fetch("/api/access/revoke-session", {
         method: "POST",
@@ -608,6 +619,7 @@ export default function AccessControlPage() {
       void fetchLog();
     } catch (err) {
       console.error("[hawkeye] access-control session-revoke threw — UI optimistic update may diverge from server:", err);
+      setRevokeError("Network error — session could not be revoked. Please try again.");
     }
   };
 
@@ -887,6 +899,11 @@ export default function AccessControlPage() {
               {sessions.filter((s) => s.active).length} active of {sessions.length} total sessions.
             </p>
           </div>
+          {revokeError && (
+            <div className="mb-3 text-12 px-3 py-2 rounded border bg-red-dim text-red border-red/20">
+              {revokeError}
+            </div>
+          )}
           <div className="flex flex-col gap-3">
             {sessions.map((session) => (
               <div

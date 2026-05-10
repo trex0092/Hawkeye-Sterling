@@ -2,6 +2,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 import { NextResponse } from "next/server";
+import { enforce } from "@/lib/server/enforce";
 
 export interface MlroMemoResult {
   memoRef: string;
@@ -91,6 +92,8 @@ This memorandum forms part of the entity's AML/CFT audit trail and is to be reta
 };
 
 export async function POST(req: Request) {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   let body: {
     subjectName: string;
     subjectType?: string;

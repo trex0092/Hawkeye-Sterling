@@ -2,6 +2,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;import { NextResponse } from "next/server";
 
+import { enforce } from "@/lib/server/enforce";
 export interface CustomerLifecycleResult {
   currentStage: "onboarding" | "active" | "dormant" | "exit";
   riskTrajectory: "increasing" | "stable" | "decreasing";
@@ -66,6 +67,8 @@ const FALLBACK: CustomerLifecycleResult = {
 };
 
 export async function POST(req: Request) {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   let body: {
     customerName: string;
     onboardingDate: string;

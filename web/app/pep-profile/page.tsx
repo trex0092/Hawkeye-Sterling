@@ -83,11 +83,17 @@ export default function PepProfilePage() {
           declaredAssets,
         }),
       });
+      if (!res.ok) {
+        const body = await res.text().catch(() => "");
+        console.error(`[hawkeye] pep-profile HTTP ${res.status}`);
+        setError(`Request failed (HTTP ${res.status})${body ? ` — ${body}` : ""} — please try again.`);
+        return;
+      }
       const data = (await res.json()) as PepProfileResult;
       setResult(data);
     } catch (err) {
       console.error("[hawkeye] pep-profile threw:", err);
-      setError("Request failed — please try again.");
+      setError("Request failed — please check your connection and try again.");
     } finally {
       setLoading(false);
     }

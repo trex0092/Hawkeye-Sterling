@@ -1,0 +1,23 @@
+{
+  "thoughtHistory": [
+    {
+      "thought": "I need to do a comprehensive production-readiness audit. The previous session fixed: max_tokens on 17 routes, silent errors in 6 frontend pages, mlro-advisor 21 catch blocks. What categories remain to check? \n  \n  1. TypeScript errors — run tsc --noEmit first\n  2. Silent errors in remaining pages not yet audited\n  3. API routes missing enforce() auth\n  4. API routes still with low max_tokens\n  5. API routes with JSON.parse not in try/catch\n  6. Frontend pages with fetch() not checking !res.ok\n  7. Any missing API routes (404s for buttons that call endpoints)\n  8. Any broken imports or missing components\n  9. Test suite status\n  \n  Strategy: Run parallel agents — one for API routes audit, one for frontend pages audit, one for tests. Then fix everything found.",
+      "thoughtNumber": 1,
+      "totalThoughts": 4,
+      "nextThoughtNeeded": true
+    },
+    {
+      "thought": "Let me define the concrete scan commands for the parallel audit agents:\n\n  AGENT 1 - API Routes:\n  a) Find all route.ts files: find web/app/api -name 'route.ts' | wc -l\n  b) Routes missing enforce(): grep -rL 'enforce(' web/app/api/*/route.ts\n  c) Routes with low max_tokens (< 1000): grep -rn 'max_tokens' web/app/api --include='route.ts' | grep -E ': [0-9]{1,3}[^0-9]|: [0-9]{3}[^0-9]' where value < 1000\n  d) Routes with unprotected JSON.parse: grep -n 'JSON.parse' in each route\n  e) Routes returning 200 on AI errors (swallowing errors)\n\n  AGENT 2 - Frontend Pages:\n  a) Pages with fetch() but no .ok check: grep -rn 'await fetch' web/app --include='page.tsx'\n  b) Pages with catch blocks that only console.log/warn/error\n  c) Pages with missing loading states\n  d) Pages calling APIs that don't exist\n\n  AGENT 3 - Tests + Build:\n  a) npm test -- --passWithNoTests\n  b) tsc --noEmit\n\n  I'll run all three agents in parallel.",
+      "thoughtNumber": 2,
+      "totalThoughts": 4,
+      "nextThoughtNeeded": true
+    },
+    {
+      "thought": "Execution plan — I will now launch all scans. Priority order for fixes after audit:\n  1. TypeScript errors (blocking — must be 0)\n  2. Any missing API routes (would cause 404 on button clicks)\n  3. Silent error catch blocks in pages not yet fixed\n  4. Remaining low max_tokens in AI routes\n  5. Missing enforce() on AI routes\n  6. Any other runtime issues\n  \n  After collecting all findings, I'll fix them in priority order, commit, and push.",
+      "thoughtNumber": 3,
+      "totalThoughts": 4,
+      "nextThoughtNeeded": false
+    }
+  ],
+  "branches": {}
+}

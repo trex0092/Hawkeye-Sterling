@@ -105,6 +105,7 @@ export default function InvestigationPage() {
   const [brainAnalysis, setBrainAnalysis] = useState<BrainAnalysis | null>(null);
   const [exportingPack, setExportingPack] = useState(false);
   const [packReady, setPackReady] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => { setAllCases(loadCases()); }, []);
 
@@ -163,7 +164,7 @@ export default function InvestigationPage() {
 
   const runBrain = useCallback(async () => {
     if (!committed) return;
-    setBrainLoading(true); setBrainAnalysis(null);
+    setBrainLoading(true); setBrainAnalysis(null); setError(null);
     try {
       const res = await fetch("/api/mlro-advisor", {
         method: "POST",
@@ -176,7 +177,14 @@ export default function InvestigationPage() {
         }),
       });
       let narrative = "";
-      if (res.ok) { const d = await res.json() as { narrative?: string }; narrative = d.narrative ?? ""; }
+      if (res.ok) {
+        const d = await res.json() as { narrative?: string };
+        narrative = d.narrative ?? "";
+      } else {
+        console.error(`[hawkeye] investigation brain (mlro-advisor) HTTP ${res.status}`);
+        setError(`Brain analysis failed (HTTP ${res.status}). Please try again.`);
+        return;
+      }
       const lower = narrative.toLowerCase();
       setBrainAnalysis({
         narrative: narrative || "No narrative generated.",
@@ -193,14 +201,15 @@ export default function InvestigationPage() {
       });
     } catch (err) {
       console.error("[hawkeye] investigation brain (mlro-advisor) threw:", err);
+      setError("Brain analysis could not be reached. Check your connection and try again.");
     } finally { setBrainLoading(false); }
   }, [committed, matchedCases]);
 
   const runPack = useCallback(async () => {
     if (!committed) return;
-    setExportingPack(true);
+    setExportingPack(true); setError(null);
     try {
-      await fetch("/api/investigation/evidence-pack", {
+      const res = await fetch("/api/investigation/evidence-pack", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
@@ -214,9 +223,15 @@ export default function InvestigationPage() {
           analyst: "Hawkeye Sterling Analyst",
         }),
       });
-      setPackReady(true);
+      if (!res.ok) {
+        console.error(`[hawkeye] investigation/evidence-pack HTTP ${res.status} — pack NOT generated`);
+        setError(`Evidence pack export failed (HTTP ${res.status}). Please try again.`);
+      } else {
+        setPackReady(true);
+      }
     } catch (err) {
       console.error("[hawkeye] investigation/evidence-pack threw — pack NOT generated:", err);
+      setError("Evidence pack could not be reached. Check your connection and try again.");
     } finally { setExportingPack(false); }
   }, [committed, parties, brainAnalysis]);
 
@@ -426,6 +441,21 @@ export default function InvestigationPage() {
               ))}
             </div>
           </div>
+
+          {/* Error banner */}
+          {error && (
+            <div className="flex items-center gap-3 px-4 py-3 bg-red-dim border border-red/30 rounded-xl text-13 text-red">
+              <span aria-hidden="true">⚠</span>
+              <span>{error}</span>
+              <button
+                type="button"
+                onClick={() => setError(null)}
+                className="ml-auto text-11 text-red/70 hover:text-red underline"
+              >
+                Dismiss
+              </button>
+            </div>
+          )}
 
           {/* Analysis */}
           <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-2">

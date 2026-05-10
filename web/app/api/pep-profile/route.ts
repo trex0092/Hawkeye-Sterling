@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { enforce } from "@/lib/server/enforce";
 export interface PepProfileResult {
   ok: true;
   pepTier: "tier1" | "tier2" | "tier3" | "rca";
@@ -86,6 +87,8 @@ const FALLBACK: PepProfileResult = {
 };
 
 export async function POST(req: Request) {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   let body: {
     name?: string;
     country?: string;

@@ -71,6 +71,7 @@ export default function GoAmlExportPage() {
   const [submission, setSubmission] = useState<SubmissionState>({ status: "idle" });
   const [aiValidation, setAiValidation] = useState<{ score: number; grade: string; missingElements: string[]; tippingOffRisk: boolean; tippingOffFlags: string[]; suggestions: string[]; fatalIssues: string[]; fiuReadiness: string } | null>(null);
   const [aiValidating, setAiValidating] = useState(false);
+  const [aiValidateError, setAiValidateError] = useState<string | null>(null);
 
   useEffect(() => { setDraft(loadDraft()); }, []);
   useEffect(() => { saveDraft(draft); }, [draft]);
@@ -96,6 +97,7 @@ export default function GoAmlExportPage() {
     if (!draft.narrative.trim()) return;
     setAiValidating(true);
     setAiValidation(null);
+    setAiValidateError(null);
     try {
       const res = await fetch("/api/goaml-validate-ai", {
         method: "POST",
@@ -104,12 +106,14 @@ export default function GoAmlExportPage() {
       });
       if (!res.ok) {
         console.error(`[hawkeye] goaml-validate-ai HTTP ${res.status}`);
+        setAiValidateError(`AI validation failed (HTTP ${res.status}). Please try again.`);
         return;
       }
       const data = await res.json() as { ok: boolean; score: number; grade: string; missingElements: string[]; tippingOffRisk: boolean; tippingOffFlags: string[]; suggestions: string[]; fatalIssues: string[]; fiuReadiness: string };
       if (data.ok) setAiValidation(data);
     } catch (err) {
       console.error("[hawkeye] goaml-validate-ai threw:", err);
+      setAiValidateError("AI validation could not be reached. Please check your connection and try again.");
     } finally { setAiValidating(false); }
   };
 
@@ -314,6 +318,15 @@ export default function GoAmlExportPage() {
                 className="text-11 font-semibold px-3 py-1.5 rounded border border-brand/50 bg-brand-dim text-brand-deep hover:bg-brand/20 disabled:opacity-40">
                 {aiValidating ? "Validating…" : "✦AI"}
               </button>
+              {aiValidateError && (
+                <div className="mt-3 rounded-lg border border-red/30 bg-red-dim px-4 py-3 flex items-start gap-2">
+                  <span className="text-red text-14 shrink-0">⚠</span>
+                  <div>
+                    <p className="text-12 font-semibold text-red">Error</p>
+                    <p className="text-11 text-ink-2 mt-0.5">{aiValidateError}</p>
+                  </div>
+                </div>
+              )}
               {aiValidation && (
                 <div className="mt-3 border border-hair-2 rounded-lg p-3 space-y-2 bg-bg-1">
                   <div className="flex items-center gap-3">

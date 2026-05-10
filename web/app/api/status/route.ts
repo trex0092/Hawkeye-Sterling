@@ -818,13 +818,19 @@ export async function GET(): Promise<NextResponse> {
   ]));
   const externalChecks: Check[] = annotateLatencyAnomalies(enrichWithLatencyStats([asana, googleNews, gdelt]));
 
-  // Derive banner status from core services only. sanctions-freshness is a
-  // data-quality check shown in its own dedicated UI section; including it
-  // in the banner causes "All services degraded" whenever the cron hasn't
-  // ticked yet (expected on a fresh deployment).
-  const worstStatus: Check["status"] = [...internalChecks, ...externalChecks].some((c) => c.status === "down")
+  // Derive banner status from INTERNAL services only. External dependency
+  // degradation (GDELT timeouts, third-party 429s) is expected for free-tier
+  // APIs and must not trigger the main system-degraded banner — it is surfaced
+  // in a dedicated "external dependencies" notice instead. sanctions-freshness
+  // is also excluded (data-quality check in its own UI section).
+  const worstStatus: Check["status"] = internalChecks.some((c) => c.status === "down")
     ? "down"
-    : [...internalChecks, ...externalChecks].some((c) => c.status === "degraded")
+    : internalChecks.some((c) => c.status === "degraded")
+      ? "degraded"
+      : "operational";
+  const externalStatus: Check["status"] = externalChecks.some((c) => c.status === "down")
+    ? "down"
+    : externalChecks.some((c) => c.status === "degraded")
       ? "degraded"
       : "operational";
 
@@ -929,6 +935,7 @@ export async function GET(): Promise<NextResponse> {
   return NextResponse.json({
     ok: true,
     status: worstStatus,
+    externalStatus,
     uptimeSec,
     startedAt: STARTED_AT,
     now: new Date().toISOString(),

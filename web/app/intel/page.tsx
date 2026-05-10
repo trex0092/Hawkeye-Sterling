@@ -107,6 +107,7 @@ async function fetchTriage(items: RegulatoryItem[]): Promise<Record<string, Tria
 function RegulatoryFeedPanel() {
   const [items, setItems] = useState<RegulatoryItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [feedError, setFeedError] = useState<string | null>(null);
   const [fetchedAt, setFetchedAt] = useState("");
   const [sources, setSources] = useState<string[]>([]);
   const [filterCat, setFilterCat] = useState<string>("all");
@@ -132,11 +133,19 @@ function RegulatoryFeedPanel() {
 
   const load = useCallback(async () => {
     setLoading(true);
+    setFeedError(null);
     try {
       const res = await fetch("/api/regulatory-feed");
-      if (!res.ok) return;
+      if (!res.ok) {
+        console.error(`[hawkeye] intel regulatory-feed HTTP ${res.status}`);
+        setFeedError(`Feed unavailable (HTTP ${res.status}) — retrying automatically`);
+        return;
+      }
       const data = await res.json() as { ok: boolean; items: RegulatoryItem[]; sources: string[]; fetchedAt: string };
-      if (!data.ok) return;
+      if (!data.ok) {
+        setFeedError("Feed returned an error — retrying automatically");
+        return;
+      }
       const loadedItems = data.items ?? [];
       setItems(loadedItems);
       setSources(data.sources ?? []);
@@ -144,6 +153,7 @@ function RegulatoryFeedPanel() {
       void runTriage(loadedItems);
     } catch (err) {
       console.error("[hawkeye] intel/news-search threw — feed empty until next refresh:", err);
+      setFeedError("Network error fetching regulatory feed — retrying automatically");
     } finally { setLoading(false); }
   }, []);
 
@@ -233,6 +243,13 @@ function RegulatoryFeedPanel() {
         </select>
         <span className="ml-auto text-9 font-mono text-ink-3">{filtered.length} items</span>
       </div>
+
+      {feedError && (
+        <div className="mx-4 mt-3 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
+          <span className="text-red text-13 shrink-0">⚠</span>
+          <span className="text-11 text-red">{feedError}</span>
+        </div>
+      )}
 
       {/* Items */}
       {loading && items.length === 0 ? (

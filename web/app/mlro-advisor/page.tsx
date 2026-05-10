@@ -1888,15 +1888,11 @@ export default function MlroAdvisorPage() {
           redFlags: typoInput.redFlags ? typoInput.redFlags.split(",").map((s) => s.trim()).filter(Boolean) : undefined,
         }),
       });
-      if (!res.ok) {
-        console.error(`[hawkeye] typology-match HTTP ${res.status}`);
-        return;
-      }
+      if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & TypologyMatch;
       if (data.ok) setTypoMatch(data);
-    } catch (err) {
-      console.error("[hawkeye] typology-match threw:", err);
-    } finally { setTypoMatchLoading(false); }
+    } catch (err) { setToolErrors((p) => ({ ...p, ["typologyMatch"]: err instanceof Error ? err.message : "Typology match failed — please retry" })); }
+    finally { setTypoMatchLoading(false); }
   };
 
   // Transaction Narrative Analyzer
@@ -1917,15 +1913,11 @@ export default function MlroAdvisorPage() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ narrative: txnNarrative, customerType: txnCustomerType || undefined, jurisdiction: txnJurisdiction || undefined, amounts: txnAmounts || undefined }),
       });
-      if (!res.ok) {
-        console.error(`[hawkeye] transaction-narrative HTTP ${res.status}`);
-        return;
-      }
+      if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & TransactionAnalysis;
       if (data.ok) setTxnResult(data);
-    } catch (err) {
-      console.error("[hawkeye] transaction-narrative threw:", err);
-    } finally { setTxnLoading(false); }
+    } catch (err) { setToolErrors((p) => ({ ...p, ["txnNarrative"]: err instanceof Error ? err.message : "Transaction analysis failed — please retry" })); }
+    finally { setTxnLoading(false); }
   };
 
   // EDD Questionnaire Generator
@@ -1954,15 +1946,11 @@ export default function MlroAdvisorPage() {
           context: eddContext || undefined,
         }),
       });
-      if (!res.ok) {
-        console.error(`[hawkeye] edd-questionnaire HTTP ${res.status}`);
-        return;
-      }
+      if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & EddQuestionnaire;
       if (data.ok) setEddResult(data);
-    } catch (err) {
-      console.error("[hawkeye] edd-questionnaire threw:", err);
-    } finally { setEddLoading(false); }
+    } catch (err) { setToolErrors((p) => ({ ...p, ["eddQuestionnaire"]: err instanceof Error ? err.message : "EDD questionnaire failed — please retry" })); }
+    finally { setEddLoading(false); }
   };
 
   // TBML Trade Document Analyzer
@@ -1988,10 +1976,10 @@ export default function MlroAdvisorPage() {
           additionalContext: tbmlInput.additionalContext || undefined,
         }),
       });
-      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
+      if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & TbmlAnalysis;
       if (data.ok) setTbmlResult(data);
-    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
+    } catch (err) { setToolErrors((p) => ({ ...p, ["tbml"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
     finally { setTbmlLoading(false); }
   };
 
@@ -2005,10 +1993,10 @@ export default function MlroAdvisorPage() {
     setStrNarrLoading(true); setStrNarrResult(null);
     try {
       const res = await fetch("/api/str-narrative", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...strNarrInput, redFlags: strNarrInput.redFlags ? strNarrInput.redFlags.split("\n").map((s) => s.trim()).filter(Boolean) : undefined }) });
-      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
+      if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & StrNarrativeResult;
       if (data.ok) setStrNarrResult(data);
-    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
+    } catch (err) { setToolErrors((p) => ({ ...p, ["strNarrative"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
     finally { setStrNarrLoading(false); }
   };
 
@@ -2021,10 +2009,10 @@ export default function MlroAdvisorPage() {
     setWireLoading(true); setWireResult(null);
     try {
       const res = await fetch("/api/wire-r16", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(wireInput) });
-      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
+      if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & WireR16Result;
       if (data.ok) setWireResult(data);
-    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
+    } catch (err) { setToolErrors((p) => ({ ...p, ["wireR16"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
     finally { setWireLoading(false); }
   };
 
@@ -2038,10 +2026,10 @@ export default function MlroAdvisorPage() {
     setPfLoading(true); setPfResult(null);
     try {
       const res = await fetch("/api/pf-screener", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(pfInput) });
-      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
+      if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & PfScreenerResult;
       if (data.ok) setPfResult(data);
-    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
+    } catch (err) { setToolErrors((p) => ({ ...p, ["pfScreener"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
     finally { setPfLoading(false); }
   };
 
@@ -2055,10 +2043,10 @@ export default function MlroAdvisorPage() {
     setMemoLoading(true); setMemoResult(null);
     try {
       const res = await fetch("/api/mlro-memo", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...memoInput, redFlags: memoInput.redFlags ? memoInput.redFlags.split("\n").map((s) => s.trim()).filter(Boolean) : undefined }) });
-      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
+      if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & MlroMemoResult;
       if (data.ok) setMemoResult(data);
-    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
+    } catch (err) { setToolErrors((p) => ({ ...p, ["mlroMemo"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
     finally { setMemoLoading(false); }
   };
 
@@ -2128,6 +2116,9 @@ export default function MlroAdvisorPage() {
   const [onboardInput, setOnboardInput] = useState({ fullName: "", nationalityIso2: "", dob: "", occupation: "", sourceOfFunds: "", expectedProfile: "", address: "" });
   const [onboardResult, setOnboardResult] = useState<OnboardingRiskResult | null>(null);
   const [onboardLoading, setOnboardLoading] = useState(false);
+
+  // Shared tool error state
+  const [toolErrors, setToolErrors] = useState<Record<string, string>>({});
 
   // Prolif Finance
   const [prolifInput, setProlifInput] = useState({ subject: "", subjectCountry: "", counterparty: "", counterpartyCountry: "", goods: "", transactionType: "", amount: "", currency: "AED", endUser: "", endUserCountry: "", context: "" });
@@ -2472,10 +2463,10 @@ export default function MlroAdvisorPage() {
     setTfLoading(true); setTfResult(null);
     try {
       const res = await fetch("/api/tf-screener", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...tfInput, existingRedFlags: tfInput.existingRedFlags ? tfInput.existingRedFlags.split("\n").map((s) => s.trim()).filter(Boolean) : undefined }) });
-      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
+      if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & TfScreenerResult;
       if (data.ok) setTfResult(data);
-    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
+    } catch (err) { setToolErrors((p) => ({ ...p, ["tfScreener"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
     finally { setTfLoading(false); }
   };
 
@@ -2484,10 +2475,10 @@ export default function MlroAdvisorPage() {
     setShellLoading(true); setShellResult(null);
     try {
       const res = await fetch("/api/shell-detector", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(shellInput) });
-      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
+      if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & ShellDetectorResult;
       if (data.ok) setShellResult(data);
-    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
+    } catch (err) { setToolErrors((p) => ({ ...p, ["shellDetector"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
     finally { setShellLoading(false); }
   };
 
@@ -2496,10 +2487,10 @@ export default function MlroAdvisorPage() {
     setAdverseLoading(true); setAdverseResult(null);
     try {
       const res = await fetch("/api/adverse-classify", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ articleText: adverseText, subjectName: adverseSubject || undefined }) });
-      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
+      if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & AdverseClassifyResult;
       if (data.ok) setAdverseResult(data);
-    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
+    } catch (err) { setToolErrors((p) => ({ ...p, ["adverseClassify"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
     finally { setAdverseLoading(false); }
   };
 
@@ -2508,10 +2499,10 @@ export default function MlroAdvisorPage() {
     setTimelineLoading(true); setTimelineResult(null);
     try {
       const res = await fetch("/api/case-timeline", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ events: timelineEvents, subjectName: timelineSubject || undefined, caseRef: timelineCaseRef || undefined }) });
-      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
+      if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & CaseTimelineResult;
       if (data.ok) setTimelineResult(data);
-    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
+    } catch (err) { setToolErrors((p) => ({ ...p, ["caseTimeline"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
     finally { setTimelineLoading(false); }
   };
 
@@ -2520,10 +2511,10 @@ export default function MlroAdvisorPage() {
     setPredicateLoading(true); setPredicateResult(null);
     try {
       const res = await fetch("/api/ml-predicate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ facts: predicateFacts, suspectedActivity: predicateActivity || undefined, jurisdiction: predicateJurisdiction || undefined }) });
-      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
+      if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & MlPredicateResult;
       if (data.ok) setPredicateResult(data);
-    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
+    } catch (err) { setToolErrors((p) => ({ ...p, ["mlPredicate"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
     finally { setPredicateLoading(false); }
   };
 
@@ -2532,10 +2523,10 @@ export default function MlroAdvisorPage() {
     setClientRiskLoading(true); setClientRiskResult(null);
     try {
       const res = await fetch("/api/client-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ entity: clientRiskEntity, shareholders: clientRiskShareholders.filter((s) => s.name.trim()) }) });
-      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
+      if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & ClientRiskResult;
       if (data.ok) setClientRiskResult(data);
-    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
+    } catch (err) { setToolErrors((p) => ({ ...p, ["clientRisk"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
     finally { setClientRiskLoading(false); }
   };
 
@@ -2544,10 +2535,10 @@ export default function MlroAdvisorPage() {
     setJurisLoading(true); setJurisResult(null);
     try {
       const res = await fetch("/api/jurisdiction-intel", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ country: jurisCountry, context: jurisContext || undefined }) });
-      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
+      if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & JurisdictionIntelResult;
       if (data.ok) setJurisResult(data);
-    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
+    } catch (err) { setToolErrors((p) => ({ ...p, ["jurisdictionIntel"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
     finally { setJurisLoading(false); }
   };
 
@@ -2556,10 +2547,10 @@ export default function MlroAdvisorPage() {
     setUboLoading(true); setUboResult(null);
     try {
       const res = await fetch("/api/ubo-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ entity: uboEntity, registered: uboRegistered || undefined, ubos: uboEntries.filter((u) => u.name.trim()) }) });
-      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
+      if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & UboRiskResult;
       if (data.ok) setUboResult(data);
-    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
+    } catch (err) { setToolErrors((p) => ({ ...p, ["uboRisk"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
     finally { setUboLoading(false); }
   };
 
@@ -2569,10 +2560,10 @@ export default function MlroAdvisorPage() {
     setBenfordLoading(true); setBenfordResult(null);
     try {
       const res = await fetch("/api/benford", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ amounts, label: benfordLabel || undefined }) });
-      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
+      if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as BenfordResult;
       setBenfordResult(data);
-    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
+    } catch (err) { setToolErrors((p) => ({ ...p, ["benford"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
     finally { setBenfordLoading(false); }
   };
 
@@ -2584,7 +2575,7 @@ export default function MlroAdvisorPage() {
       const data = await res.json() as { ok: boolean; error?: string } & Record<string, unknown>;
       if (!data.ok) { setCryptoError(data.error ?? "Service unavailable"); }
       else { setCryptoResult(data); }
-    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
+    } catch (err) { setToolErrors((p) => ({ ...p, ["cryptoWallet"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
     finally { setCryptoLoading(false); }
   };
 
@@ -2593,120 +2584,170 @@ export default function MlroAdvisorPage() {
     setOnboardLoading(true); setOnboardResult(null);
     try {
       const res = await fetch("/api/onboarding-risk-tier", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(onboardInput) });
-      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
+      if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok?: boolean } & OnboardingRiskResult;
       setOnboardResult(data);
-    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
+    } catch (err) { setToolErrors((p) => ({ ...p, ["onboardingTier"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
     finally { setOnboardLoading(false); }
   };
 
   const runProlifFinance = async () => {
     if (!prolifInput.subject.trim()) return;
     setProlifLoading(true); setProlifResult(null);
+    setToolErrors((p) => { const n = {...p}; delete n["prolifFinance"]; return n; });
     try {
       const res = await fetch("/api/proliferation-finance", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(prolifInput) });
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as ProlifFinanceResult;
       setProlifResult(data);
-    } catch { /* noop */ }
+    } catch (err) {
+      console.error(`[hawkeye] mlro-advisor runProlifFinance threw:`, err);
+      setToolErrors((p) => ({ ...p, prolifFinance: err instanceof Error ? err.message : "Request failed — please retry" }));
+    }
     finally { setProlifLoading(false); }
   };
 
   const runSarTriage = async () => {
     if (!sarInput.suspiciousActivity.trim()) return;
     setSarTriageLoading(true); setSarTriageResult(null);
+    setToolErrors((p) => { const n = {...p}; delete n["sarTriage"]; return n; });
     try {
       const res = await fetch("/api/sar-triage", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(sarInput) });
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as SarTriageResult;
       setSarTriageResult(data);
-    } catch { /* noop */ }
+    } catch (err) {
+      console.error(`[hawkeye] mlro-advisor runSarTriage threw:`, err);
+      setToolErrors((p) => ({ ...p, sarTriage: err instanceof Error ? err.message : "Request failed — please retry" }));
+    }
     finally { setSarTriageLoading(false); }
   };
 
   const runDocFraud = async () => {
     if (!docFraudInput.documentTypes.trim()) return;
     setDocFraudLoading(true); setDocFraudResult(null);
+    setToolErrors((p) => { const n = {...p}; delete n["docFraud"]; return n; });
     try {
       const res = await fetch("/api/document-fraud", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(docFraudInput) });
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as DocumentFraudResult;
       setDocFraudResult(data);
-    } catch { /* noop */ }
+    } catch (err) {
+      console.error(`[hawkeye] mlro-advisor runDocFraud threw:`, err);
+      setToolErrors((p) => ({ ...p, docFraud: err instanceof Error ? err.message : "Request failed — please retry" }));
+    }
     finally { setDocFraudLoading(false); }
   };
 
   const runCtrStructuring = async () => {
     if (!ctrAmounts.trim()) return;
     setCtrLoading(true); setCtrResult(null);
+    setToolErrors((p) => { const n = {...p}; delete n["ctrStructuring"]; return n; });
     try {
       const res = await fetch("/api/ctr-structuring", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ amounts: ctrAmounts, periodDays: parseInt(ctrPeriodDays) || 30, subjectName: ctrSubject }) });
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as CtrStructuringResult;
       setCtrResult(data);
-    } catch { /* noop */ }
+    } catch (err) {
+      console.error(`[hawkeye] mlro-advisor runCtrStructuring threw:`, err);
+      setToolErrors((p) => ({ ...p, ctrStructuring: err instanceof Error ? err.message : "Request failed — please retry" }));
+    }
     finally { setCtrLoading(false); }
   };
 
   const runDnfbpObligations = async () => {
     if (!dnfbpInput.dnfbpType.trim()) return;
     setDnfbpLoading(true); setDnfbpResult(null);
+    setToolErrors((p) => { const n = {...p}; delete n["dnfbpObligations"]; return n; });
     try {
       const res = await fetch("/api/dnfbp-obligations", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(dnfbpInput) });
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as DnfbpObligationsResult;
       setDnfbpResult(data);
-    } catch { /* noop */ }
+    } catch (err) {
+      console.error(`[hawkeye] mlro-advisor runDnfbpObligations threw:`, err);
+      setToolErrors((p) => ({ ...p, dnfbpObligations: err instanceof Error ? err.message : "Request failed — please retry" }));
+    }
     finally { setDnfbpLoading(false); }
   };
 
   const runCddRefresh = async () => {
     if (!cddRefreshInput.triggerEvents.trim() && !cddRefreshInput.adverseMediaHit.trim() && !cddRefreshInput.transactionPatternChange.trim()) return;
     setCddRefreshLoading(true); setCddRefreshResult(null);
+    setToolErrors((p) => { const n = {...p}; delete n["cddRefresh"]; return n; });
     try {
       const res = await fetch("/api/cdd-refresh-trigger", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(cddRefreshInput) });
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as CddRefreshTriggerResult;
       setCddRefreshResult(data);
-    } catch { /* noop */ }
+    } catch (err) {
+      console.error(`[hawkeye] mlro-advisor runCddRefresh threw:`, err);
+      setToolErrors((p) => ({ ...p, cddRefresh: err instanceof Error ? err.message : "Request failed — please retry" }));
+    }
     finally { setCddRefreshLoading(false); }
   };
 
   const runVaspRisk = async () => {
     if (!vaspInput.vaspName.trim()) return;
     setVaspLoading(true); setVaspResult(null);
+    setToolErrors((p) => { const n = {...p}; delete n["vaspRisk"]; return n; });
     try {
       const res = await fetch("/api/vasp-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(vaspInput) });
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as VaspRiskResult;
       setVaspResult(data);
-    } catch { /* noop */ }
+    } catch (err) {
+      console.error(`[hawkeye] mlro-advisor runVaspRisk threw:`, err);
+      setToolErrors((p) => ({ ...p, vaspRisk: err instanceof Error ? err.message : "Request failed — please retry" }));
+    }
     finally { setVaspLoading(false); }
   };
 
   const runGoAmlValidator = async () => {
     if (!goAmlInput.narrative.trim()) return;
     setGoAmlLoading(true); setGoAmlResult(null);
+    setToolErrors((p) => { const n = {...p}; delete n["goAmlValidator"]; return n; });
     try {
       const res = await fetch("/api/goaml-validator", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(goAmlInput) });
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as GoAmlValidatorResult;
       setGoAmlResult(data);
-    } catch { /* noop */ }
+    } catch (err) {
+      console.error(`[hawkeye] mlro-advisor runGoAmlValidator threw:`, err);
+      setToolErrors((p) => ({ ...p, goAmlValidator: err instanceof Error ? err.message : "Request failed — please retry" }));
+    }
     finally { setGoAmlLoading(false); }
   };
 
   const runPepEdd = async () => {
     if (!pepEddInput.pepName.trim()) return;
     setPepEddLoading(true); setPepEddResult(null);
+    setToolErrors((p) => { const n = {...p}; delete n["pepEdd"]; return n; });
     try {
       const res = await fetch("/api/pep-edd-generator", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(pepEddInput) });
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as PepEddResult;
       setPepEddResult(data);
-    } catch { /* noop */ }
+    } catch (err) {
+      console.error(`[hawkeye] mlro-advisor runPepEdd threw:`, err);
+      setToolErrors((p) => ({ ...p, pepEdd: err instanceof Error ? err.message : "Request failed — please retry" }));
+    }
     finally { setPepEddLoading(false); }
   };
 
   const runSanctionsMapper = async () => {
     if (!sanctionsMapInput.entityName.trim()) return;
     setSanctionsMapLoading(true); setSanctionsMapResult(null);
+    setToolErrors((p) => { const n = {...p}; delete n["sanctionsMapper"]; return n; });
     try {
       const res = await fetch("/api/sanctions-exposure-mapper", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(sanctionsMapInput) });
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as SanctionsExposureResult;
       setSanctionsMapResult(data);
-    } catch { /* noop */ }
+    } catch (err) {
+      console.error(`[hawkeye] mlro-advisor runSanctionsMapper threw:`, err);
+      setToolErrors((p) => ({ ...p, sanctionsMapper: err instanceof Error ? err.message : "Request failed — please retry" }));
+    }
     finally { setSanctionsMapLoading(false); }
   };
 
@@ -2715,197 +2756,287 @@ export default function MlroAdvisorPage() {
   const runLayeringDetector = async () => {
     if (!layeringInput.transactions.trim()) return;
     setLayeringLoading(true); setLayeringResult(null);
+    setToolErrors((p) => { const n = {...p}; delete n["layeringDetector"]; return n; });
     try {
       const res = await fetch("/api/layering-detector", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(layeringInput) });
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as Record<string, unknown>;
       setLayeringResult(data);
-    } catch { /* noop */ }
+    } catch (err) {
+      console.error(`[hawkeye] mlro-advisor runLayeringDetector threw:`, err);
+      setToolErrors((p) => ({ ...p, layeringDetector: err instanceof Error ? err.message : "Request failed — please retry" }));
+    }
     finally { setLayeringLoading(false); }
   };
 
   const runRealEstateMl = async () => {
     if (!realEstateMlInput.propertyDetails.trim()) return;
     setRealEstateMlLoading(true); setRealEstateMlResult(null);
+    setToolErrors((p) => { const n = {...p}; delete n["realEstateMl"]; return n; });
     try {
       const res = await fetch("/api/real-estate-ml", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(realEstateMlInput) });
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as Record<string, unknown>;
       setRealEstateMlResult(data);
-    } catch { /* noop */ }
+    } catch (err) {
+      console.error(`[hawkeye] mlro-advisor runRealEstateMl threw:`, err);
+      setToolErrors((p) => ({ ...p, realEstateMl: err instanceof Error ? err.message : "Request failed — please retry" }));
+    }
     finally { setRealEstateMlLoading(false); }
   };
 
   const runAssetTracer = async () => {
     if (!assetTracerInput.initialFunds.trim()) return;
     setAssetTracerLoading(true); setAssetTracerResult(null);
+    setToolErrors((p) => { const n = {...p}; delete n["assetTracer"]; return n; });
     try {
       const res = await fetch("/api/asset-tracer", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(assetTracerInput) });
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as Record<string, unknown>;
       setAssetTracerResult(data);
-    } catch { /* noop */ }
+    } catch (err) {
+      console.error(`[hawkeye] mlro-advisor runAssetTracer threw:`, err);
+      setToolErrors((p) => ({ ...p, assetTracer: err instanceof Error ? err.message : "Request failed — please retry" }));
+    }
     finally { setAssetTracerLoading(false); }
   };
 
   const runSowCalculator = async () => {
     if (!sowInput.declaredIncome.trim()) return;
     setSowLoading(true); setSowResult(null);
+    setToolErrors((p) => { const n = {...p}; delete n["sowCalculator"]; return n; });
     try {
       const res = await fetch("/api/sow-calculator", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(sowInput) });
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as Record<string, unknown>;
       setSowResult(data);
-    } catch { /* noop */ }
+    } catch (err) {
+      console.error(`[hawkeye] mlro-advisor runSowCalculator threw:`, err);
+      setToolErrors((p) => ({ ...p, sowCalculator: err instanceof Error ? err.message : "Request failed — please retry" }));
+    }
     finally { setSowLoading(false); }
   };
 
   const runInsiderThreat = async () => {
     if (!insiderInput.observedBehaviours.trim() && !insiderInput.employeeRole.trim()) return;
     setInsiderLoading(true); setInsiderResult(null);
+    setToolErrors((p) => { const n = {...p}; delete n["insiderThreat"]; return n; });
     try {
       const res = await fetch("/api/insider-threat-screen", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(insiderInput) });
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as Record<string, unknown>;
       setInsiderResult(data);
-    } catch { /* noop */ }
+    } catch (err) {
+      console.error(`[hawkeye] mlro-advisor runInsiderThreat threw:`, err);
+      setToolErrors((p) => ({ ...p, insiderThreat: err instanceof Error ? err.message : "Request failed — please retry" }));
+    }
     finally { setInsiderLoading(false); }
   };
 
   const runBoardAmlReport = async () => {
     if (!boardAmlInput.reportingPeriod.trim() && !boardAmlInput.institutionName.trim()) return;
     setBoardAmlLoading(true); setBoardAmlResult(null);
+    setToolErrors((p) => { const n = {...p}; delete n["boardAmlReport"]; return n; });
     try {
       const res = await fetch("/api/board-aml-report", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(boardAmlInput) });
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as Record<string, unknown>;
       setBoardAmlResult(data);
-    } catch { /* noop */ }
+    } catch (err) {
+      console.error(`[hawkeye] mlro-advisor runBoardAmlReport threw:`, err);
+      setToolErrors((p) => ({ ...p, boardAmlReport: err instanceof Error ? err.message : "Request failed — please retry" }));
+    }
     finally { setBoardAmlLoading(false); }
   };
 
   const runEnforcementExposure = async () => {
     if (!enforcementInput.violation.trim()) return;
     setEnforcementLoading(true); setEnforcementResult(null);
+    setToolErrors((p) => { const n = {...p}; delete n["enforcementExposure"]; return n; });
     try {
       const res = await fetch("/api/enforcement-exposure", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(enforcementInput) });
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as Record<string, unknown>;
       setEnforcementResult(data);
-    } catch { /* noop */ }
+    } catch (err) {
+      console.error(`[hawkeye] mlro-advisor runEnforcementExposure threw:`, err);
+      setToolErrors((p) => ({ ...p, enforcementExposure: err instanceof Error ? err.message : "Request failed — please retry" }));
+    }
     finally { setEnforcementLoading(false); }
   };
 
   const runInterAgencyReferral = async () => {
     if (!referralInput.caseDescription.trim()) return;
     setReferralLoading(true); setReferralResult(null);
+    setToolErrors((p) => { const n = {...p}; delete n["interAgencyReferral"]; return n; });
     try {
       const res = await fetch("/api/inter-agency-referral", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(referralInput) });
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as Record<string, unknown>;
       setReferralResult(data);
-    } catch { /* noop */ }
+    } catch (err) {
+      console.error(`[hawkeye] mlro-advisor runInterAgencyReferral threw:`, err);
+      setToolErrors((p) => ({ ...p, interAgencyReferral: err instanceof Error ? err.message : "Request failed — please retry" }));
+    }
     finally { setReferralLoading(false); }
   };
 
   const runPolicyReviewer = async () => {
     if (!policyInput.policyText.trim()) return;
     setPolicyLoading(true); setPolicyResult(null);
+    setToolErrors((p) => { const n = {...p}; delete n["policyReviewer"]; return n; });
     try {
       const res = await fetch("/api/policy-reviewer", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(policyInput) });
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as Record<string, unknown>;
       setPolicyResult(data);
-    } catch { /* noop */ }
+    } catch (err) {
+      console.error(`[hawkeye] mlro-advisor runPolicyReviewer threw:`, err);
+      setToolErrors((p) => ({ ...p, policyReviewer: err instanceof Error ? err.message : "Request failed — please retry" }));
+    }
     finally { setPolicyLoading(false); }
   };
 
   const runComplianceTestPlanner = async () => {
     if (!compTestInput.institutionType.trim()) return;
     setCompTestLoading(true); setCompTestResult(null);
+    setToolErrors((p) => { const n = {...p}; delete n["complianceTestPlanner"]; return n; });
     try {
       const res = await fetch("/api/compliance-test-planner", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(compTestInput) });
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as Record<string, unknown>;
       setCompTestResult(data);
-    } catch { /* noop */ }
+    } catch (err) {
+      console.error(`[hawkeye] mlro-advisor runComplianceTestPlanner threw:`, err);
+      setToolErrors((p) => ({ ...p, complianceTestPlanner: err instanceof Error ? err.message : "Request failed — please retry" }));
+    }
     finally { setCompTestLoading(false); }
   };
 
   const runSwiftLcAnalyzer = async () => {
     if (!swiftLcInput.swiftMessage.trim()) return;
     setSwiftLcLoading(true); setSwiftLcResult(null);
+    setToolErrors((p) => { const n = {...p}; delete n["swiftLcAnalyzer"]; return n; });
     try {
       const res = await fetch("/api/swift-lc-analyzer", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(swiftLcInput) });
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as Record<string, unknown>;
       setSwiftLcResult(data);
-    } catch { /* noop */ }
+    } catch (err) {
+      console.error(`[hawkeye] mlro-advisor runSwiftLcAnalyzer threw:`, err);
+      setToolErrors((p) => ({ ...p, swiftLcAnalyzer: err instanceof Error ? err.message : "Request failed — please retry" }));
+    }
     finally { setSwiftLcLoading(false); }
   };
 
   const runRegulatoryCalendar = async () => {
     setRegCalLoading(true); setRegCalResult(null);
+    setToolErrors((p) => { const n = {...p}; delete n["regulatoryCalendar"]; return n; });
     try {
       const res = await fetch("/api/regulatory-calendar", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(regCalInput) });
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as Record<string, unknown>;
       setRegCalResult(data);
-    } catch { /* noop */ }
+    } catch (err) {
+      console.error(`[hawkeye] mlro-advisor runRegulatoryCalendar threw:`, err);
+      setToolErrors((p) => ({ ...p, regulatoryCalendar: err instanceof Error ? err.message : "Request failed — please retry" }));
+    }
     finally { setRegCalLoading(false); }
   };
 
   const runEwraGenerator = async () => {
     if (!ewraInput.institutionType.trim()) return;
     setEwraLoading(true); setEwraResult(null);
+    setToolErrors((p) => { const n = {...p}; delete n["ewraGenerator"]; return n; });
     try {
       const res = await fetch("/api/ewra-generator", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(ewraInput) });
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as Record<string, unknown>;
       setEwraResult(data);
-    } catch { /* noop */ }
+    } catch (err) {
+      console.error(`[hawkeye] mlro-advisor runEwraGenerator threw:`, err);
+      setToolErrors((p) => ({ ...p, ewraGenerator: err instanceof Error ? err.message : "Request failed — please retry" }));
+    }
     finally { setEwraLoading(false); }
   };
 
   const runAmlProgrammeGap = async () => {
     if (!amlGapInput.institutionType.trim()) return;
     setAmlGapLoading(true); setAmlGapResult(null);
+    setToolErrors((p) => { const n = {...p}; delete n["amlProgrammeGap"]; return n; });
     try {
       const res = await fetch("/api/aml-programme-gap", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(amlGapInput) });
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as Record<string, unknown>;
       setAmlGapResult(data);
-    } catch { /* noop */ }
+    } catch (err) {
+      console.error(`[hawkeye] mlro-advisor runAmlProgrammeGap threw:`, err);
+      setToolErrors((p) => ({ ...p, amlProgrammeGap: err instanceof Error ? err.message : "Request failed — please retry" }));
+    }
     finally { setAmlGapLoading(false); }
   };
 
   const runTradeInvoiceAnalyzer = async () => {
     if (!tradeInvoiceInput.invoiceDetails.trim()) return;
     setTradeInvoiceLoading(true); setTradeInvoiceResult(null);
+    setToolErrors((p) => { const n = {...p}; delete n["tradeInvoiceAnalyzer"]; return n; });
     try {
       const res = await fetch("/api/trade-invoice-analyzer", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(tradeInvoiceInput) });
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as Record<string, unknown>;
       setTradeInvoiceResult(data);
-    } catch { /* noop */ }
+    } catch (err) {
+      console.error(`[hawkeye] mlro-advisor runTradeInvoiceAnalyzer threw:`, err);
+      setToolErrors((p) => ({ ...p, tradeInvoiceAnalyzer: err instanceof Error ? err.message : "Request failed — please retry" }));
+    }
     finally { setTradeInvoiceLoading(false); }
   };
 
   const runNetworkMapper = async () => {
     if (!networkMapInput.entities.trim()) return;
     setNetworkMapLoading(true); setNetworkMapResult(null);
+    setToolErrors((p) => { const n = {...p}; delete n["networkMapper"]; return n; });
     try {
       const res = await fetch("/api/network-mapper", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(networkMapInput) });
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as Record<string, unknown>;
       setNetworkMapResult(data);
-    } catch { /* noop */ }
+    } catch (err) {
+      console.error(`[hawkeye] mlro-advisor runNetworkMapper threw:`, err);
+      setToolErrors((p) => ({ ...p, networkMapper: err instanceof Error ? err.message : "Request failed — please retry" }));
+    }
     finally { setNetworkMapLoading(false); }
   };
 
   const runRiskAppetiteBuilder = async () => {
     if (!riskAppInput.institutionType.trim()) return;
     setRiskAppLoading(true); setRiskAppResult(null);
+    setToolErrors((p) => { const n = {...p}; delete n["riskAppetiteBuilder"]; return n; });
     try {
       const res = await fetch("/api/risk-appetite-builder", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(riskAppInput) });
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as Record<string, unknown>;
       setRiskAppResult(data);
-    } catch { /* noop */ }
+    } catch (err) {
+      console.error(`[hawkeye] mlro-advisor runRiskAppetiteBuilder threw:`, err);
+      setToolErrors((p) => ({ ...p, riskAppetiteBuilder: err instanceof Error ? err.message : "Request failed — please retry" }));
+    }
     finally { setRiskAppLoading(false); }
   };
 
   const runRegulatoryExamPrep = async () => {
     if (!examPrepInput.examArea.trim()) return;
     setExamPrepLoading(true); setExamPrepResult(null);
+    setToolErrors((p) => { const n = {...p}; delete n["regulatoryExamPrep"]; return n; });
     try {
       const res = await fetch("/api/regulatory-exam-prep", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(examPrepInput) });
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as Record<string, unknown>;
       setExamPrepResult(data);
-    } catch { /* noop */ }
+    } catch (err) {
+      console.error(`[hawkeye] mlro-advisor runRegulatoryExamPrep threw:`, err);
+      setToolErrors((p) => ({ ...p, regulatoryExamPrep: err instanceof Error ? err.message : "Request failed — please retry" }));
+    }
     finally { setExamPrepLoading(false); }
   };
 
@@ -3030,10 +3161,10 @@ export default function MlroAdvisorPage() {
           notes: escNotes || undefined,
         }),
       });
-      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
+      if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & EscalationResult;
       if (data.ok) setEscResult(data);
-    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
+    } catch (err) { setToolErrors((p) => ({ ...p, ["escalation"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
     finally { setEscLoading(false); }
   };
 
@@ -3068,10 +3199,10 @@ export default function MlroAdvisorPage() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ cases: cases.map((c) => ({ id: c.id, subject: c.subject, meta: c.meta, status: c.status, openedAt: c.opened })) }),
       });
-      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
+      if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & PatternResult;
       if (data.ok) setPatternResult(data);
-    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
+    } catch (err) { setToolErrors((p) => ({ ...p, ["casePatterns"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
     finally { setPatternLoading(false); }
   };
 
@@ -3085,10 +3216,10 @@ export default function MlroAdvisorPage() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ subjectName: briefSubject, jurisdiction: briefJurisdiction || undefined, entityType: briefEntityType || undefined }),
       });
-      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
+      if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & SubjectBrief;
       if (data.ok) setBriefResult(data);
-    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
+    } catch (err) { setToolErrors((p) => ({ ...p, ["subjectBrief"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
     finally { setBriefLoading(false); }
   };
 
@@ -3108,10 +3239,10 @@ export default function MlroAdvisorPage() {
           tenure: pepInput.tenure || undefined,
         }),
       });
-      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
+      if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & PepNetwork;
       if (data.ok) setPepNet(data);
-    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
+    } catch (err) { setToolErrors((p) => ({ ...p, ["pepNetwork"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
     finally { setPepNetLoading(false); }
   };
 
@@ -3136,10 +3267,10 @@ export default function MlroAdvisorPage() {
           context: sanctionsNexusInput.context || undefined,
         }),
       });
-      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
+      if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & SanctionsNexus;
       if (data.ok) setSanctionsNexus(data);
-    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
+    } catch (err) { setToolErrors((p) => ({ ...p, ["sanctionsNexus"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
     finally { setSanctionsNexusLoading(false); }
   };
 
@@ -4149,6 +4280,11 @@ export default function MlroAdvisorPage() {
                   className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {escLoading ? "Deciding…" : "Get Escalation Decision"}
                 </button>
+                {toolErrors["escalation"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 text-11 text-red">
+                    ⚠ {toolErrors["escalation"]}
+                  </div>
+                )}
                 {escResult && (() => {
                   const r = escResult;
                   const decisionCls = r.decision === "FILE_STR" ? "bg-red text-white" : r.decision === "ESCALATE_INTERNAL" ? "bg-red-dim text-red" : r.decision === "ENHANCE_CDD" ? "bg-amber-dim text-amber" : r.decision === "MONITOR" ? "bg-brand-dim text-brand-deep" : "bg-green-dim text-green";
@@ -4242,6 +4378,11 @@ export default function MlroAdvisorPage() {
                   className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {patternLoading ? "Analyzing…" : "Detect Patterns Across Cases"}
                 </button>
+                {toolErrors["casePatterns"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 text-11 text-red">
+                    ⚠ {toolErrors["casePatterns"]}
+                  </div>
+                )}
                 {patternResult && (() => {
                   const p = patternResult;
                   const prCls = p.portfolioRisk === "critical" ? "bg-red text-white" : p.portfolioRisk === "high" ? "bg-red-dim text-red" : p.portfolioRisk === "medium" ? "bg-amber-dim text-amber" : "bg-green-dim text-green";
@@ -4307,6 +4448,11 @@ export default function MlroAdvisorPage() {
                   className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {briefLoading ? "Briefing…" : "Generate Intelligence Brief"}
                 </button>
+                {toolErrors["subjectBrief"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 text-11 text-red">
+                    ⚠ {toolErrors["subjectBrief"]}
+                  </div>
+                )}
                 {briefResult && (() => {
                   const b = briefResult;
                   const compCls = b.riskProfile.compositeRisk === "high" ? "bg-red-dim text-red" : b.riskProfile.compositeRisk === "medium" ? "bg-amber-dim text-amber" : "bg-green-dim text-green";
@@ -4408,6 +4554,11 @@ export default function MlroAdvisorPage() {
                 >
                   {typoMatchLoading ? "Matching…" : "Match Typologies"}
                 </button>
+                {toolErrors["typologyMatch"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 text-11 text-red">
+                    ⚠ {toolErrors["typologyMatch"]}
+                  </div>
+                )}
                 {typoMatch && (() => {
                   const tm = typoMatch;
                   const strengthCls = (s: string) => s === "strong" ? "bg-red text-white" : s === "moderate" ? "bg-amber-dim text-amber" : "bg-blue-dim text-blue";
@@ -4539,6 +4690,11 @@ export default function MlroAdvisorPage() {
                   className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {pepNetLoading ? "Generating…" : "Generate PEP Network Intelligence"}
                 </button>
+                {toolErrors["pepNetwork"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 text-11 text-red">
+                    ⚠ {toolErrors["pepNetwork"]}
+                  </div>
+                )}
                 {pepNet && (() => {
                   const n = pepNet;
                   const ratingCls = n.riskRating === "critical" || n.riskRating === "high" ? "bg-red text-white" : "bg-amber-dim text-amber";
@@ -4676,6 +4832,11 @@ export default function MlroAdvisorPage() {
                   className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {sanctionsNexusLoading ? "Analyzing…" : "Analyze Sanctions Exposure"}
                 </button>
+                {toolErrors["sanctionsNexus"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 text-11 text-red">
+                    ⚠ {toolErrors["sanctionsNexus"]}
+                  </div>
+                )}
                 {sanctionsNexus && (() => {
                   const s = sanctionsNexus;
                   const overallCls = s.overallSanctionsRisk === "critical" || s.overallSanctionsRisk === "high" ? "text-red font-bold" : s.overallSanctionsRisk === "medium" ? "text-amber font-bold" : "text-green font-bold";
@@ -4779,6 +4940,11 @@ export default function MlroAdvisorPage() {
                   className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {txnLoading ? "Analyzing…" : "Analyze Transaction"}
                 </button>
+                {toolErrors["txnNarrative"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 text-11 text-red">
+                    ⚠ {toolErrors["txnNarrative"]}
+                  </div>
+                )}
                 {txnResult && (() => {
                   const t = txnResult;
                   const riskCls = t.riskVerdict === "critical" ? "bg-red text-white" : t.riskVerdict === "high" ? "bg-red-dim text-red" : t.riskVerdict === "medium" ? "bg-amber-dim text-amber" : t.riskVerdict === "low" ? "bg-brand-dim text-brand" : "bg-green-dim text-green";
@@ -4878,6 +5044,11 @@ export default function MlroAdvisorPage() {
                   className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {eddLoading ? "Generating…" : "Generate EDD Questionnaire"}
                 </button>
+                {toolErrors["eddQuestionnaire"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 text-11 text-red">
+                    ⚠ {toolErrors["eddQuestionnaire"]}
+                  </div>
+                )}
                 {eddResult && (() => {
                   const e = eddResult;
                   const lvlCls = e.eddLevel === "intensive" ? "bg-red text-white" : e.eddLevel === "enhanced" ? "bg-amber-dim text-amber" : "bg-brand-dim text-brand";
@@ -4972,6 +5143,11 @@ export default function MlroAdvisorPage() {
                   className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {tbmlLoading ? "Analyzing…" : "Analyze for TBML Risk"}
                 </button>
+                {toolErrors["tbml"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 text-11 text-red">
+                    ⚠ {toolErrors["tbml"]}
+                  </div>
+                )}
                 {tbmlResult && (() => {
                   const tb = tbmlResult;
                   const riskCls = tb.tbmlRisk === "critical" ? "bg-red text-white" : tb.tbmlRisk === "high" ? "bg-red-dim text-red" : tb.tbmlRisk === "medium" ? "bg-amber-dim text-amber" : tb.tbmlRisk === "low" ? "bg-brand-dim text-brand" : "bg-green-dim text-green";
@@ -5107,6 +5283,11 @@ export default function MlroAdvisorPage() {
                   className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {strNarrLoading ? "Drafting…" : "Draft STR Narrative"}
                 </button>
+                {toolErrors["strNarr"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 text-11 text-red">
+                    ⚠ {toolErrors["strNarr"]}
+                  </div>
+                )}
                 {strNarrResult && (() => {
                   const s = strNarrResult;
                   const qScore = s.qualityScore;
@@ -5215,6 +5396,11 @@ export default function MlroAdvisorPage() {
                   className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {wireLoading ? "Checking…" : "Check R.16 Compliance"}
                 </button>
+                {toolErrors["wireR16"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 text-11 text-red">
+                    ⚠ {toolErrors["wireR16"]}
+                  </div>
+                )}
                 {wireResult && (() => {
                   const w = wireResult;
                   const verdictCfg = {
@@ -5316,6 +5502,11 @@ export default function MlroAdvisorPage() {
                   className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {pfLoading ? "Screening…" : "Screen for Proliferation Financing Risk"}
                 </button>
+                {toolErrors["pfScreener"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 text-11 text-red">
+                    ⚠ {toolErrors["pfScreener"]}
+                  </div>
+                )}
                 {pfResult && (() => {
                   const pf = pfResult;
                   const riskCls = pf.pfRisk === "critical" ? "bg-red text-white" : pf.pfRisk === "high" ? "bg-red-dim text-red" : pf.pfRisk === "medium" ? "bg-amber-dim text-amber" : pf.pfRisk === "low" ? "bg-brand-dim text-brand" : "bg-green-dim text-green";
@@ -5440,6 +5631,11 @@ export default function MlroAdvisorPage() {
                   className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {memoLoading ? "Drafting Memo…" : "Generate MLRO Decision Memo"}
                 </button>
+                {toolErrors["mlroMemo"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 text-11 text-red">
+                    ⚠ {toolErrors["mlroMemo"]}
+                  </div>
+                )}
                 {memoResult && (() => {
                   const m = memoResult;
                   const riskCls = m.riskRating === "critical" ? "bg-red text-white" : m.riskRating === "high" ? "bg-red-dim text-red" : m.riskRating === "medium" ? "bg-amber-dim text-amber" : "bg-brand-dim text-brand";
@@ -5535,6 +5731,11 @@ export default function MlroAdvisorPage() {
                   className="text-11 font-semibold px-4 py-2 rounded bg-red text-white hover:bg-red/90 disabled:opacity-40">
                   {tfLoading ? "Screening…" : "Screen for Terrorism Financing Risk"}
                 </button>
+                {toolErrors["tfScreener"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 text-11 text-red">
+                    ⚠ {toolErrors["tfScreener"]}
+                  </div>
+                )}
                 {tfResult && (() => {
                   const tf = tfResult;
                   const riskCls = tf.tfRisk === "critical" ? "bg-red text-white" : tf.tfRisk === "high" ? "bg-red-dim text-red" : tf.tfRisk === "medium" ? "bg-amber-dim text-amber" : tf.tfRisk === "low" ? "bg-brand-dim text-brand" : "bg-green-dim text-green";
@@ -5641,6 +5842,11 @@ export default function MlroAdvisorPage() {
                 <button type="button" onClick={() => void runShellDetector()} disabled={shellLoading || !shellInput.entityName.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {shellLoading ? "Analysing structure…" : "Detect Shell Indicators"}
                 </button>
+                {toolErrors["shellDetector"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 text-11 text-red">
+                    ⚠ {toolErrors["shellDetector"]}
+                  </div>
+                )}
                 {shellResult && (() => {
                   const s = shellResult;
                   const riskCls = s.shellRisk === "critical" ? "bg-red text-white" : s.shellRisk === "high" ? "bg-red-dim text-red" : s.shellRisk === "medium" ? "bg-amber-dim text-amber" : s.shellRisk === "low" ? "bg-brand-dim text-brand-deep" : "bg-green-dim text-green";
@@ -5701,6 +5907,11 @@ export default function MlroAdvisorPage() {
                 <button type="button" onClick={() => void runAdverseClassify()} disabled={adverseLoading || !adverseText.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {adverseLoading ? "Classifying…" : "Classify Adverse Media"}
                 </button>
+                {toolErrors["adverseClassify"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 text-11 text-red">
+                    ⚠ {toolErrors["adverseClassify"]}
+                  </div>
+                )}
                 {adverseResult && (() => {
                   const ar = adverseResult;
                   const riskCls = ar.adverseRisk === "critical" ? "bg-red text-white" : ar.adverseRisk === "high" ? "bg-red-dim text-red" : ar.adverseRisk === "medium" ? "bg-amber-dim text-amber" : ar.adverseRisk === "low" ? "bg-brand-dim text-brand-deep" : "bg-green-dim text-green";
@@ -5761,6 +5972,11 @@ export default function MlroAdvisorPage() {
                 <button type="button" onClick={() => void runCaseTimeline()} disabled={timelineLoading || !timelineEvents.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {timelineLoading ? "Building timeline…" : "Build STR Timeline"}
                 </button>
+                {toolErrors["caseTimeline"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 text-11 text-red">
+                    ⚠ {toolErrors["caseTimeline"]}
+                  </div>
+                )}
                 {timelineResult && (() => {
                   const tl = timelineResult;
                   return (
@@ -5831,6 +6047,11 @@ export default function MlroAdvisorPage() {
                 <button type="button" onClick={() => void runMlPredicate()} disabled={predicateLoading || !predicateFacts.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {predicateLoading ? "Mapping predicates…" : "Map Predicate Offences"}
                 </button>
+                {toolErrors["mlPredicate"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 text-11 text-red">
+                    ⚠ {toolErrors["mlPredicate"]}
+                  </div>
+                )}
                 {predicateResult && (() => {
                   const pr = predicateResult;
                   return (
@@ -5909,6 +6130,11 @@ export default function MlroAdvisorPage() {
                     {clientRiskLoading ? "Scoring…" : "Score Client Risk"}
                   </button>
                 </div>
+                {toolErrors["clientRisk"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 text-11 text-red">
+                    ⚠ {toolErrors["clientRisk"]}
+                  </div>
+                )}
                 {clientRiskResult && (() => {
                   const cr = clientRiskResult;
                   const riskCls = cr.overallRisk === "critical" ? "bg-red text-white" : cr.overallRisk === "high" ? "bg-red-dim text-red" : cr.overallRisk === "medium" ? "bg-amber-dim text-amber" : "bg-green-dim text-green";
@@ -5948,6 +6174,11 @@ export default function MlroAdvisorPage() {
                 <button type="button" onClick={() => void runJurisdictionIntel()} disabled={jurisLoading || !jurisCountry.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {jurisLoading ? "Loading intelligence…" : "Get Jurisdiction Intel"}
                 </button>
+                {toolErrors["jurisdictionIntel"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 text-11 text-red">
+                    ⚠ {toolErrors["jurisdictionIntel"]}
+                  </div>
+                )}
                 {jurisResult && (() => {
                   const jr = jurisResult;
                   const riskCls = jr.overallRisk === "critical" ? "bg-red text-white" : jr.overallRisk === "high" ? "bg-red-dim text-red" : jr.overallRisk === "medium" ? "bg-amber-dim text-amber" : "bg-green-dim text-green";
@@ -6008,6 +6239,11 @@ export default function MlroAdvisorPage() {
                     {uboLoading ? "Analysing UBO chain…" : "Analyse UBO Risk"}
                   </button>
                 </div>
+                {toolErrors["uboRisk"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 text-11 text-red">
+                    ⚠ {toolErrors["uboRisk"]}
+                  </div>
+                )}
                 {uboResult && (() => {
                   const ur = uboResult;
                   const riskCls = ur.overallRisk === "critical" ? "bg-red text-white" : ur.overallRisk === "high" ? "bg-red-dim text-red" : ur.overallRisk === "medium" ? "bg-amber-dim text-amber" : "bg-green-dim text-green";
@@ -6055,6 +6291,11 @@ export default function MlroAdvisorPage() {
                 <button type="button" onClick={() => void runBenford()} disabled={benfordLoading || benfordAmounts.split(",").filter((s) => !isNaN(Number(s.trim())) && Number(s.trim()) > 0).length < 2} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {benfordLoading ? "Analysing…" : "Run Benford Analysis"}
                 </button>
+                {toolErrors["benford"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 text-11 text-red">
+                    ⚠ {toolErrors["benford"]}
+                  </div>
+                )}
                 {benfordResult && (() => {
                   const br = benfordResult;
                   if (!br.ok || br.risk === "insufficient-data") return (
@@ -6147,6 +6388,11 @@ export default function MlroAdvisorPage() {
                 <button type="button" onClick={() => void runOnboardingTier()} disabled={onboardLoading || !onboardInput.fullName.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {onboardLoading ? "Scoring…" : "Score Onboarding Risk"}
                 </button>
+                {toolErrors["onboardingTier"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 text-11 text-red">
+                    ⚠ {toolErrors["onboardingTier"]}
+                  </div>
+                )}
                 {onboardResult && (() => {
                   const or = onboardResult;
                   const tierCls = or.tier === "tier-1" ? "bg-red text-white" : or.tier === "tier-2" ? "bg-amber-dim text-amber" : "bg-green-dim text-green";
@@ -6200,6 +6446,12 @@ export default function MlroAdvisorPage() {
                   <div className="col-span-2"><label className="block text-10 text-ink-3 mb-1">Additional Context</label><textarea value={prolifInput.context} onChange={(e) => setProlifInput((p) => ({...p, context: e.target.value}))} rows={2} placeholder="e.g. transshipment route, payment method, intermediaries" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 resize-none" /></div>
                 </div>
                 <button type="button" onClick={() => void runProlifFinance()} disabled={prolifLoading || !prolifInput.subject.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{prolifLoading ? "Assessing…" : "Screen for PF Risk"}</button>
+                {toolErrors["prolifFinance"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
+                    <span className="text-red text-13">⚠</span>
+                    <span className="text-11 text-red">{toolErrors["prolifFinance"]}</span>
+                  </div>
+                )}
                 {prolifResult && (() => {
                   const pf = prolifResult as ProlifFinanceResult;
                   const riskCls = pf.pfRisk === "critical" ? "bg-red text-white" : pf.pfRisk === "high" ? "bg-amber-dim text-amber" : pf.pfRisk === "medium" ? "bg-yellow-dim text-yellow-600" : "bg-green-dim text-green";
@@ -6237,6 +6489,12 @@ export default function MlroAdvisorPage() {
                   </div>
                 </div>
                 <button type="button" onClick={() => void runSarTriage()} disabled={sarTriageLoading || !sarInput.suspiciousActivity.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{sarTriageLoading ? "Triaging…" : "Run STR Triage"}</button>
+                {toolErrors["sarTriage"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
+                    <span className="text-red text-13">⚠</span>
+                    <span className="text-11 text-red">{toolErrors["sarTriage"]}</span>
+                  </div>
+                )}
                 {sarTriageResult && (() => {
                   const st = sarTriageResult;
                   const decCls = st.decision === "file_str" ? "bg-red text-white" : st.decision === "more_info" ? "bg-amber-dim text-amber" : st.decision === "escalate_mlro" ? "bg-yellow-dim text-yellow-700" : "bg-green-dim text-green";
@@ -6281,6 +6539,12 @@ export default function MlroAdvisorPage() {
                   <div className="col-span-2"><label className="block text-10 text-ink-3 mb-1">Document Details / Observations</label><textarea value={docFraudInput.documentDetails} onChange={(e) => setDocFraudInput((p) => ({...p, documentDetails: e.target.value}))} rows={2} placeholder="Describe any unusual features, quality issues, or specific concerns..." className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 resize-none" /></div>
                 </div>
                 <button type="button" onClick={() => void runDocFraud()} disabled={docFraudLoading || !docFraudInput.documentTypes.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{docFraudLoading ? "Analysing…" : "Assess Document Authenticity"}</button>
+                {toolErrors["docFraud"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
+                    <span className="text-red text-13">⚠</span>
+                    <span className="text-11 text-red">{toolErrors["docFraud"]}</span>
+                  </div>
+                )}
                 {docFraudResult && (() => {
                   const df = docFraudResult;
                   const riskCls = df.fraudRisk === "critical" ? "bg-red text-white" : df.fraudRisk === "high" ? "bg-amber-dim text-amber" : df.fraudRisk === "medium" ? "bg-yellow-dim text-yellow-600" : df.fraudRisk === "clear" ? "bg-green-dim text-green" : "bg-bg-2 text-ink-2";
@@ -6316,6 +6580,12 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 text-ink-3 mb-1">Subject Name</label><input value={ctrSubject} onChange={(e) => setCtrSubject(e.target.value)} placeholder="Account holder name" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                 </div>
                 <button type="button" onClick={() => void runCtrStructuring()} disabled={ctrLoading || !ctrAmounts.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{ctrLoading ? "Analysing…" : "Analyse CTR & Structuring"}</button>
+                {toolErrors["ctrStructuring"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
+                    <span className="text-red text-13">⚠</span>
+                    <span className="text-11 text-red">{toolErrors["ctrStructuring"]}</span>
+                  </div>
+                )}
                 {ctrResult && (() => {
                   const ct = ctrResult;
                   const riskCls = ct.structuringRisk === "critical" ? "bg-red text-white" : ct.structuringRisk === "high" ? "bg-amber-dim text-amber" : ct.structuringRisk === "medium" ? "bg-yellow-dim text-yellow-600" : ct.structuringRisk === "low" ? "bg-bg-2 text-ink-2" : "bg-green-dim text-green";
@@ -6356,6 +6626,12 @@ export default function MlroAdvisorPage() {
                   <div className="col-span-2"><label className="block text-10 text-ink-3 mb-1">Additional Context</label><input value={dnfbpInput.context} onChange={(e) => setDnfbpInput((p) => ({...p, context: e.target.value}))} placeholder="Any specific scenario details..." className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                 </div>
                 <button type="button" onClick={() => void runDnfbpObligations()} disabled={dnfbpLoading || !dnfbpInput.dnfbpType.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{dnfbpLoading ? "Mapping…" : "Map DNFBP Obligations"}</button>
+                {toolErrors["dnfbpObligations"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
+                    <span className="text-red text-13">⚠</span>
+                    <span className="text-11 text-red">{toolErrors["dnfbpObligations"]}</span>
+                  </div>
+                )}
                 {dnfbpResult && (() => {
                   const dn = dnfbpResult;
                   return (
@@ -6396,6 +6672,12 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 text-ink-3 mb-1">Adverse Media Hit</label><input value={cddRefreshInput.adverseMediaHit} onChange={(e) => setCddRefreshInput((p) => ({...p, adverseMediaHit: e.target.value}))} placeholder="Describe adverse media if any" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                 </div>
                 <button type="button" onClick={() => void runCddRefresh()} disabled={cddRefreshLoading || (!cddRefreshInput.triggerEvents.trim() && !cddRefreshInput.adverseMediaHit.trim() && !cddRefreshInput.transactionPatternChange.trim())} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{cddRefreshLoading ? "Analysing…" : "Determine CDD Refresh Requirement"}</button>
+                {toolErrors["cddRefresh"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
+                    <span className="text-red text-13">⚠</span>
+                    <span className="text-11 text-red">{toolErrors["cddRefresh"]}</span>
+                  </div>
+                )}
                 {cddRefreshResult && (() => {
                   const cr = cddRefreshResult;
                   const urgCls = cr.urgency === "immediate" ? "bg-red text-white" : cr.urgency === "within_30_days" ? "bg-amber-dim text-amber" : cr.urgency === "within_90_days" ? "bg-yellow-dim text-yellow-600" : "bg-green-dim text-green";
@@ -6436,6 +6718,12 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 text-ink-3 mb-1">Geographic Reach</label><input value={vaspInput.geographicReach} onChange={(e) => setVaspInput((p) => ({...p, geographicReach: e.target.value}))} placeholder="Countries served, high-risk jurisdictions" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                 </div>
                 <button type="button" onClick={() => void runVaspRisk()} disabled={vaspLoading || !vaspInput.vaspName.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{vaspLoading ? "Assessing…" : "Assess VASP Risk"}</button>
+                {toolErrors["vaspRisk"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
+                    <span className="text-red text-13">⚠</span>
+                    <span className="text-11 text-red">{toolErrors["vaspRisk"]}</span>
+                  </div>
+                )}
                 {vaspResult && (() => {
                   const vr = vaspResult;
                   const riskCls = vr.overallRisk === "critical" ? "bg-red text-white" : vr.overallRisk === "high" ? "bg-amber-dim text-amber" : vr.overallRisk === "medium" ? "bg-yellow-dim text-yellow-600" : "bg-green-dim text-green";
@@ -6475,6 +6763,12 @@ export default function MlroAdvisorPage() {
                   </div>
                 </div>
                 <button type="button" onClick={() => void runGoAmlValidator()} disabled={goAmlLoading || !goAmlInput.narrative.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{goAmlLoading ? "Validating…" : "Validate STR for goAML"}</button>
+                {toolErrors["goAmlValidator"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
+                    <span className="text-red text-13">⚠</span>
+                    <span className="text-11 text-red">{toolErrors["goAmlValidator"]}</span>
+                  </div>
+                )}
                 {goAmlResult && (() => {
                   const gv = goAmlResult;
                   const statusCls = gv.overallStatus === "ready_to_file" ? "bg-green-dim text-green" : gv.overallStatus === "rejected" ? "bg-red text-white" : "bg-amber-dim text-amber";
@@ -6516,6 +6810,12 @@ export default function MlroAdvisorPage() {
                   <div className="col-span-2"><label className="block text-10 text-ink-3 mb-1">Additional Context</label><textarea value={pepEddInput.context} onChange={(e) => setPepEddInput((p) => ({...p, context: e.target.value}))} rows={2} placeholder="Any additional relevant context..." className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 resize-none" /></div>
                 </div>
                 <button type="button" onClick={() => void runPepEdd()} disabled={pepEddLoading || !pepEddInput.pepName.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{pepEddLoading ? "Generating…" : "Generate PEP EDD Package"}</button>
+                {toolErrors["pepEdd"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
+                    <span className="text-red text-13">⚠</span>
+                    <span className="text-11 text-red">{toolErrors["pepEdd"]}</span>
+                  </div>
+                )}
                 {pepEddResult && (() => {
                   const pe = pepEddResult;
                   const riskCls = pe.riskRating === "very_high" ? "bg-red text-white" : pe.riskRating === "high" ? "bg-amber-dim text-amber" : "bg-yellow-dim text-yellow-600";
@@ -6561,6 +6861,12 @@ export default function MlroAdvisorPage() {
                   <div className="col-span-2"><label className="block text-10 text-ink-3 mb-1">Additional Context</label><input value={sanctionsMapInput.context} onChange={(e) => setSanctionsMapInput((p) => ({...p, context: e.target.value}))} placeholder="Jurisdiction of activity, transaction context, counterparties..." className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                 </div>
                 <button type="button" onClick={() => void runSanctionsMapper()} disabled={sanctionsMapLoading || !sanctionsMapInput.entityName.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{sanctionsMapLoading ? "Mapping…" : "Map Sanctions Exposure"}</button>
+                {toolErrors["sanctionsMapper"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
+                    <span className="text-red text-13">⚠</span>
+                    <span className="text-11 text-red">{toolErrors["sanctionsMapper"]}</span>
+                  </div>
+                )}
                 {sanctionsMapResult && (() => {
                   const sm = sanctionsMapResult;
                   const expCls = sm.overallExposure === "confirmed_hit" ? "bg-red text-white" : sm.overallExposure === "high" ? "bg-amber-dim text-amber" : sm.overallExposure === "medium" ? "bg-yellow-dim text-yellow-600" : sm.overallExposure === "none" ? "bg-green-dim text-green" : "bg-bg-2 text-ink-2";
@@ -6606,6 +6912,12 @@ export default function MlroAdvisorPage() {
                   </div>
                 </div>
                 <button type="button" onClick={() => void runLayeringDetector()} disabled={layeringLoading || !layeringInput.transactions.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{layeringLoading ? "Analysing…" : "Detect Layering Stages"}</button>
+                {toolErrors["layeringDetector"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
+                    <span className="text-red text-13">⚠</span>
+                    <span className="text-11 text-red">{toolErrors["layeringDetector"]}</span>
+                  </div>
+                )}
                 {layeringResult && (() => {
                   const r = layeringResult as Record<string, unknown>;
                   const risk = r["layeringRisk"] as string;
@@ -6652,6 +6964,12 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 text-ink-3 mb-1">Additional Context</label><input value={realEstateMlInput.context} onChange={(e) => setRealEstateMlInput((p) => ({...p, context: e.target.value}))} placeholder="Third-party payments, flipping history…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                 </div>
                 <button type="button" onClick={() => void runRealEstateMl()} disabled={realEstateMlLoading || !realEstateMlInput.propertyDetails.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{realEstateMlLoading ? "Analysing…" : "Analyse Real Estate Transaction"}</button>
+                {toolErrors["realEstateMl"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
+                    <span className="text-red text-13">⚠</span>
+                    <span className="text-11 text-red">{toolErrors["realEstateMl"]}</span>
+                  </div>
+                )}
                 {realEstateMlResult && (() => {
                   const r = realEstateMlResult as Record<string, unknown>;
                   const risk = r["mlRisk"] as string;
@@ -6697,6 +7015,12 @@ export default function MlroAdvisorPage() {
                   </div>
                 </div>
                 <button type="button" onClick={() => void runAssetTracer()} disabled={assetTracerLoading || !assetTracerInput.initialFunds.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{assetTracerLoading ? "Tracing…" : "Trace Assets"}</button>
+                {toolErrors["assetTracer"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
+                    <span className="text-red text-13">⚠</span>
+                    <span className="text-11 text-red">{toolErrors["assetTracer"]}</span>
+                  </div>
+                )}
                 {assetTracerResult && (() => {
                   const r = assetTracerResult as Record<string, unknown>;
                   const risk = r["tracingRisk"] as string;
@@ -6740,6 +7064,12 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 text-ink-3 mb-1">Known Expenditures</label><input value={sowInput.knownExpenditures} onChange={(e) => setSowInput((p) => ({...p, knownExpenditures: e.target.value}))} placeholder="School fees, rent, club memberships…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                 </div>
                 <button type="button" onClick={() => void runSowCalculator()} disabled={sowLoading || !sowInput.declaredIncome.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{sowLoading ? "Calculating…" : "Calculate SOW Gap"}</button>
+                {toolErrors["sowCalculator"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
+                    <span className="text-red text-13">⚠</span>
+                    <span className="text-11 text-red">{toolErrors["sowCalculator"]}</span>
+                  </div>
+                )}
                 {sowResult && (() => {
                   const r = sowResult as Record<string, unknown>;
                   const risk = r["sowRisk"] as string;
@@ -6779,6 +7109,12 @@ export default function MlroAdvisorPage() {
                   <div className="col-span-2"><label className="block text-10 text-ink-3 mb-1">Additional Context</label><input value={insiderInput.context} onChange={(e) => setInsiderInput((p) => ({...p, context: e.target.value}))} placeholder="Any other relevant context" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                 </div>
                 <button type="button" onClick={() => void runInsiderThreat()} disabled={insiderLoading || (!insiderInput.observedBehaviours.trim() && !insiderInput.employeeRole.trim())} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{insiderLoading ? "Screening…" : "Screen Insider Threat"}</button>
+                {toolErrors["insiderThreat"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
+                    <span className="text-red text-13">⚠</span>
+                    <span className="text-11 text-red">{toolErrors["insiderThreat"]}</span>
+                  </div>
+                )}
                 {insiderResult && (() => {
                   const r = insiderResult as Record<string, unknown>;
                   const risk = r["threatRisk"] as string;
@@ -6814,6 +7150,12 @@ export default function MlroAdvisorPage() {
                   <div className="col-span-2"><label className="block text-10 text-ink-3 mb-1">Additional Context</label><input value={boardAmlInput.context} onChange={(e) => setBoardAmlInput((p) => ({...p, context: e.target.value}))} placeholder="Regulatory developments, key incidents, programme changes…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                 </div>
                 <button type="button" onClick={() => void runBoardAmlReport()} disabled={boardAmlLoading || (!boardAmlInput.reportingPeriod.trim() && !boardAmlInput.institutionName.trim())} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{boardAmlLoading ? "Generating…" : "Generate Board AML Report"}</button>
+                {toolErrors["boardAmlReport"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
+                    <span className="text-red text-13">⚠</span>
+                    <span className="text-11 text-red">{toolErrors["boardAmlReport"]}</span>
+                  </div>
+                )}
                 {boardAmlResult && (() => {
                   const r = boardAmlResult as Record<string, unknown>;
                   return (
@@ -6842,6 +7184,12 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 text-ink-3 mb-1">Additional Context</label><input value={enforcementInput.context} onChange={(e) => setEnforcementInput((p) => ({...p, context: e.target.value}))} placeholder="Remediation taken, board engagement…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                 </div>
                 <button type="button" onClick={() => void runEnforcementExposure()} disabled={enforcementLoading || !enforcementInput.violation.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{enforcementLoading ? "Estimating…" : "Estimate Enforcement Exposure"}</button>
+                {toolErrors["enforcementExposure"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
+                    <span className="text-red text-13">⚠</span>
+                    <span className="text-11 text-red">{toolErrors["enforcementExposure"]}</span>
+                  </div>
+                )}
                 {enforcementResult && (() => {
                   const r = enforcementResult as Record<string, unknown>;
                   const penRange = r["penaltyRange"] as Record<string,string> | undefined;
@@ -6879,6 +7227,12 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 text-ink-3 mb-1">Evidence Summary</label><textarea value={referralInput.evidenceSummary} onChange={(e) => setReferralInput((p) => ({...p, evidenceSummary: e.target.value}))} rows={2} placeholder="Key evidence available — bank records, CCTV, documents…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 resize-none" /></div>
                 </div>
                 <button type="button" onClick={() => void runInterAgencyReferral()} disabled={referralLoading || !referralInput.caseDescription.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{referralLoading ? "Building…" : "Build Referral"}</button>
+                {toolErrors["interAgencyReferral"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
+                    <span className="text-red text-13">⚠</span>
+                    <span className="text-11 text-red">{toolErrors["interAgencyReferral"]}</span>
+                  </div>
+                )}
                 {referralResult && (() => {
                   const r = referralResult as Record<string, unknown>;
                   return (
@@ -6908,6 +7262,12 @@ export default function MlroAdvisorPage() {
                   </div>
                 </div>
                 <button type="button" onClick={() => void runPolicyReviewer()} disabled={policyLoading || !policyInput.policyText.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{policyLoading ? "Reviewing…" : "Review Policy"}</button>
+                {toolErrors["policyReviewer"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
+                    <span className="text-red text-13">⚠</span>
+                    <span className="text-11 text-red">{toolErrors["policyReviewer"]}</span>
+                  </div>
+                )}
                 {policyResult && (() => {
                   const r = policyResult as Record<string, unknown>;
                   return (
@@ -6935,6 +7295,12 @@ export default function MlroAdvisorPage() {
                   <div className="col-span-2"><label className="block text-10 text-ink-3 mb-1">Additional Context</label><input value={compTestInput.context} onChange={(e) => setCompTestInput((p) => ({...p, context: e.target.value}))} placeholder="Recent audit findings, regulatory focus areas…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                 </div>
                 <button type="button" onClick={() => void runComplianceTestPlanner()} disabled={compTestLoading || !compTestInput.institutionType.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{compTestLoading ? "Building…" : "Build Test Plan"}</button>
+                {toolErrors["complianceTestPlanner"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
+                    <span className="text-red text-13">⚠</span>
+                    <span className="text-11 text-red">{toolErrors["complianceTestPlanner"]}</span>
+                  </div>
+                )}
                 {compTestResult && (() => {
                   const r = compTestResult as Record<string, unknown>;
                   return (
@@ -6964,6 +7330,12 @@ export default function MlroAdvisorPage() {
                   </div>
                 </div>
                 <button type="button" onClick={() => void runSwiftLcAnalyzer()} disabled={swiftLcLoading || !swiftLcInput.swiftMessage.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{swiftLcLoading ? "Analysing…" : "Analyse SWIFT / LC"}</button>
+                {toolErrors["swiftLcAnalyzer"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
+                    <span className="text-red text-13">⚠</span>
+                    <span className="text-11 text-red">{toolErrors["swiftLcAnalyzer"]}</span>
+                  </div>
+                )}
                 {swiftLcResult && (() => {
                   const r = swiftLcResult as Record<string, unknown>;
                   const risk = r["amlRisk"] as string ?? r["overallRisk"] as string;
@@ -6989,6 +7361,12 @@ export default function MlroAdvisorPage() {
                 <p className="text-11 text-ink-3">Generates a structured regulatory calendar of AML/CFT reporting deadlines, review cycles, and compliance obligations for UAE regulated entities per FDL 10/2025, CBUAE guidelines, goAML filing requirements, and international frameworks.</p>
                 <div><label className="block text-10 text-ink-3 mb-1">Institution Type</label><input value={regCalInput.institutionType} onChange={(e) => setRegCalInput({ institutionType: e.target.value })} placeholder="bank / DPMS / VASP / real estate agent / law firm…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" /></div>
                 <button type="button" onClick={() => void runRegulatoryCalendar()} disabled={regCalLoading} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{regCalLoading ? "Generating…" : "Generate Regulatory Calendar"}</button>
+                {toolErrors["regulatoryCalendar"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
+                    <span className="text-red text-13">⚠</span>
+                    <span className="text-11 text-red">{toolErrors["regulatoryCalendar"]}</span>
+                  </div>
+                )}
                 {regCalResult && (() => {
                   const r = regCalResult as Record<string, unknown>;
                   return (
@@ -7016,6 +7394,12 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 text-ink-3 mb-1">Additional Context</label><input value={ewraInput.context} onChange={(e) => setEwraInput((p) => ({...p, context: e.target.value}))} placeholder="Recent regulatory changes, known gaps…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                 </div>
                 <button type="button" onClick={() => void runEwraGenerator()} disabled={ewraLoading || !ewraInput.institutionType.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{ewraLoading ? "Generating…" : "Generate EWRA"}</button>
+                {toolErrors["ewraGenerator"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
+                    <span className="text-red text-13">⚠</span>
+                    <span className="text-11 text-red">{toolErrors["ewraGenerator"]}</span>
+                  </div>
+                )}
                 {ewraResult && (() => {
                   const r = ewraResult as Record<string, unknown>;
                   return (
@@ -7044,6 +7428,12 @@ export default function MlroAdvisorPage() {
                   <div className="col-span-2"><label className="block text-10 text-ink-3 mb-1">Additional Context</label><input value={amlGapInput.context} onChange={(e) => setAmlGapInput((p) => ({...p, context: e.target.value}))} placeholder="Known weaknesses, recent regulatory feedback…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                 </div>
                 <button type="button" onClick={() => void runAmlProgrammeGap()} disabled={amlGapLoading || !amlGapInput.institutionType.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{amlGapLoading ? "Analysing…" : "Analyse AML Programme Gaps"}</button>
+                {toolErrors["amlProgrammeGap"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
+                    <span className="text-red text-13">⚠</span>
+                    <span className="text-11 text-red">{toolErrors["amlProgrammeGap"]}</span>
+                  </div>
+                )}
                 {amlGapResult && (() => {
                   const r = amlGapResult as Record<string, unknown>;
                   return (
@@ -7074,6 +7464,12 @@ export default function MlroAdvisorPage() {
                   </div>
                 </div>
                 <button type="button" onClick={() => void runTradeInvoiceAnalyzer()} disabled={tradeInvoiceLoading || !tradeInvoiceInput.invoiceDetails.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{tradeInvoiceLoading ? "Analysing…" : "Analyse Invoice"}</button>
+                {toolErrors["tradeInvoiceAnalyzer"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
+                    <span className="text-red text-13">⚠</span>
+                    <span className="text-11 text-red">{toolErrors["tradeInvoiceAnalyzer"]}</span>
+                  </div>
+                )}
                 {tradeInvoiceResult && (() => {
                   const r = tradeInvoiceResult as Record<string, unknown>;
                   const risk = r["tbmlRisk"] as string ?? r["overallRisk"] as string;
@@ -7106,6 +7502,12 @@ export default function MlroAdvisorPage() {
                   </div>
                 </div>
                 <button type="button" onClick={() => void runNetworkMapper()} disabled={networkMapLoading || !networkMapInput.entities.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{networkMapLoading ? "Mapping…" : "Map Network"}</button>
+                {toolErrors["networkMapper"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
+                    <span className="text-red text-13">⚠</span>
+                    <span className="text-11 text-red">{toolErrors["networkMapper"]}</span>
+                  </div>
+                )}
                 {networkMapResult && (() => {
                   const r = networkMapResult as Record<string, unknown>;
                   return (
@@ -7134,6 +7536,12 @@ export default function MlroAdvisorPage() {
                   <div className="col-span-2"><label className="block text-10 text-ink-3 mb-1">Additional Context</label><input value={riskAppInput.context} onChange={(e) => setRiskAppInput((p) => ({...p, context: e.target.value}))} placeholder="Regulatory feedback, known risk areas, strategic focus…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                 </div>
                 <button type="button" onClick={() => void runRiskAppetiteBuilder()} disabled={riskAppLoading || !riskAppInput.institutionType.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{riskAppLoading ? "Building…" : "Build Risk Appetite Statement"}</button>
+                {toolErrors["riskAppetiteBuilder"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
+                    <span className="text-red text-13">⚠</span>
+                    <span className="text-11 text-red">{toolErrors["riskAppetiteBuilder"]}</span>
+                  </div>
+                )}
                 {riskAppResult && (() => {
                   const r = riskAppResult as Record<string, unknown>;
                   return (
@@ -7159,6 +7567,12 @@ export default function MlroAdvisorPage() {
                   <div className="col-span-2"><label className="block text-10 text-ink-3 mb-1">Additional Context</label><input value={examPrepInput.context} onChange={(e) => setExamPrepInput((p) => ({...p, context: e.target.value}))} placeholder="Upcoming inspection focus, known weaknesses, recent regulatory changes…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                 </div>
                 <button type="button" onClick={() => void runRegulatoryExamPrep()} disabled={examPrepLoading || !examPrepInput.examArea.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{examPrepLoading ? "Preparing…" : "Generate Exam Prep Pack"}</button>
+                {toolErrors["regulatoryExamPrep"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
+                    <span className="text-red text-13">⚠</span>
+                    <span className="text-11 text-red">{toolErrors["regulatoryExamPrep"]}</span>
+                  </div>
+                )}
                 {examPrepResult && (() => {
                   const r = examPrepResult as Record<string, unknown>;
                   return (

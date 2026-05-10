@@ -54,7 +54,7 @@ interface BatchResult {
 
 async function handlePost(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
-  if (!gate.ok && gate.response.status === 429) return gate.response;
+  if (!gate.ok) return gate.response;
   const gateHeaders: Record<string, string> = gate.ok ? gate.headers : {};
 
   let body: Body;

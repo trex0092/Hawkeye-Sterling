@@ -5,6 +5,7 @@
 // returns a structured gap analysis result via Claude Haiku.
 
 import { NextResponse } from "next/server";
+import { enforce } from "@/lib/server/enforce";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -39,6 +40,8 @@ const GAP_FALLBACK = {
 };
 
 export async function POST(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
     return NextResponse.json({ ok: false, error: "oversight-gap-analysis temporarily unavailable - please retry." }, { status: 503 });
@@ -62,7 +65,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       },
       body: JSON.stringify({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 600,
+        max_tokens: 2048,
         system: SYSTEM_PROMPT,
         messages: [{ role: "user", content: JSON.stringify(body) }],
       }),

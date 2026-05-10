@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { enforce } from "@/lib/server/enforce";
 import { loadUsers, saveUsers, appendPermissionLog, ROLE_MODULES, type UserRole } from "../_store";
 import { adminAuth } from "@/lib/server/admin-auth";
 
@@ -17,6 +18,8 @@ const FALLBACK_ASSESSMENT: Record<string, string> = {
 export async function POST(req: Request) {
   const deny = adminAuth(req);
   if (deny) return deny;
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   let body: { userId: string; newRole: UserRole; reason: string; assignedBy: string };
   try {
     body = (await req.json()) as typeof body;
@@ -67,7 +70,7 @@ export async function POST(req: Request) {
       const client = getAnthropicClient(apiKey, 22_000);
       const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 300,
+        max_tokens: 1024,
         system: [
           {
             type: "text",

@@ -119,6 +119,7 @@ export default function GeopoliticalPage() {
   );
   const [impactResult, setImpactResult] = useState<PortfolioImpactResult | null>(null);
   const [impactLoading, setImpactLoading] = useState(false);
+  const [impactError, setImpactError] = useState<string | null>(null);
 
   const fetchEvents = useCallback(async () => {
     setLoading(true);
@@ -178,16 +179,21 @@ export default function GeopoliticalPage() {
     const parsed = parsePortfolio(portfolioRaw);
     setPortfolio(parsed);
     setImpactLoading(true);
+    setImpactError(null);
     try {
       const res = await fetch("/api/geopolitical/portfolio-impact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ events, portfolio: parsed }),
       });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(body.error ?? `Impact assessment failed (HTTP ${res.status}) — please retry`);
+      }
       const data = await res.json() as PortfolioImpactResult;
       setImpactResult(data);
     } catch (err) {
-      console.error("[hawkeye] geopolitical assessImpact threw:", err);
+      setImpactError(err instanceof Error ? err.message : "Impact assessment failed — please retry");
     } finally {
       setImpactLoading(false);
     }
@@ -368,6 +374,11 @@ export default function GeopoliticalPage() {
             </button>
             {!events.length && (
               <p className="text-11 text-amber mt-2">Load events first (switch to Live Events tab to refresh)</p>
+            )}
+            {impactError && (
+              <div className="mt-3 rounded border border-red/30 bg-red-dim px-3 py-2 text-12 text-red">
+                ⚠ {impactError}
+              </div>
             )}
           </div>
 

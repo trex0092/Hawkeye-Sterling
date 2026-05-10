@@ -645,6 +645,9 @@ function FeedPanel({
           {status === "error" && (
             <span className="font-mono text-10 text-red">feed unavailable</span>
           )}
+          {classifyStatus === "error" && (
+            <span className="font-mono text-10 text-red">urgency classification failed</span>
+          )}
           <button
             type="button"
             onClick={onRefresh}

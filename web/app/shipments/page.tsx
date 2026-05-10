@@ -986,6 +986,7 @@ export default function ShipmentsPage() {
   const [editingShipment, setEditingShipment] = useState<Consignment | null>(null);
   const [tbml, setTbml] = useState<ShipmentTbml | null>(null);
   const [tbmlLoading, setTbmlLoading] = useState(false);
+  const [tbmlError, setTbmlError] = useState<string | null>(null);
 
   // Hydrate deletions and custom rows from localStorage on mount only.
   useEffect(() => {
@@ -1056,6 +1057,7 @@ export default function ShipmentsPage() {
 
   const runTbmlScan = async (consignments: Consignment[]) => {
     setTbmlLoading(true);
+    setTbmlError(null);
     try {
       const payload = consignments.map((c) => ({
         reference: c.reference,
@@ -1078,14 +1080,14 @@ export default function ShipmentsPage() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ consignments: payload }),
       });
-      if (res.ok) {
-        const data = (await res.json()) as ShipmentTbml;
-        setTbml(data);
-      } else {
-        console.error(`[hawkeye] shipment-tbml HTTP ${res.status}`);
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(body.error ?? `TBML scan failed (HTTP ${res.status}) — please retry`);
       }
+      const data = (await res.json()) as ShipmentTbml;
+      setTbml(data);
     } catch (err) {
-      console.error("[hawkeye] shipment-tbml threw:", err);
+      setTbmlError(err instanceof Error ? err.message : "TBML scan failed — please retry");
     } finally {
       setTbmlLoading(false);
     }
@@ -1152,6 +1154,12 @@ export default function ShipmentsPage() {
               Clear scan
             </button>
           )}
+        </div>
+      )}
+
+      {tbmlError && (
+        <div className="mb-4 rounded border border-red/30 bg-red-dim px-4 py-3 text-12 text-red">
+          ⚠ {tbmlError}
         </div>
       )}
 

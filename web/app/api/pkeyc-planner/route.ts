@@ -2,6 +2,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;import { NextResponse } from "next/server";
 
+import { enforce } from "@/lib/server/enforce";
 export interface PkycPlannerResult {
   reviewFrequency: "monthly" | "quarterly" | "bi-annual" | "annual";
   triggerEvents: string[];
@@ -68,6 +69,8 @@ const FALLBACK: PkycPlannerResult = {
 };
 
 export async function POST(req: Request) {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   let body: {
     customerCount: string;
     highRiskCount: string;

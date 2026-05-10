@@ -110,7 +110,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   // Batch is the single highest-cost endpoint (500 rows × brain
   // screening each). Gate + rate-limit before touching the body.
   const gate = await enforce(req);
-  if (!gate.ok && gate.response.status === 429) return gate.response;
+  if (!gate.ok) return gate.response;
   const gateHeaders: Record<string, string> = gate.ok ? gate.headers : {};
 
   // Load live watchlist corpus once per batch request (cached in-process).

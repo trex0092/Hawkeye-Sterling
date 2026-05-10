@@ -285,12 +285,14 @@ export default function ClientPortalPage() {
   const [submitted, setSubmitted] = useState(false);
   const [clientRisk, setClientRisk] = useState<ClientRisk | null>(null);
   const [clientRiskLoading, setClientRiskLoading] = useState(false);
+  const [clientRiskError, setClientRiskError] = useState<string | null>(null);
 
   const canRunRisk = entity.name.trim().length > 0 && shareholders.length > 0;
 
   async function runClientRiskAssessment() {
     if (!canRunRisk || clientRiskLoading) return;
     setClientRiskLoading(true);
+    setClientRiskError(null);
     try {
       const res = await fetch("/api/client-risk", {
         method: "POST",
@@ -314,9 +316,11 @@ export default function ClientPortalPage() {
         setClientRisk(data);
       } else {
         console.error(`[hawkeye] client-portal/client-risk HTTP ${res.status}`);
+        setClientRiskError(`Risk assessment failed (HTTP ${res.status}). Please try again.`);
       }
     } catch (err) {
       console.error("[hawkeye] client-portal/client-risk threw:", err);
+      setClientRiskError("Risk assessment could not be reached. Please check your connection and try again.");
     } finally {
       setClientRiskLoading(false);
     }
@@ -498,6 +502,17 @@ export default function ClientPortalPage() {
             </div>
           </div>
         </form>
+
+        {/* ── AI Risk Assessment error ─────────────────────────────── */}
+        {clientRiskError && (
+          <div className="mt-3 rounded-lg border border-red/30 bg-red-dim px-4 py-3 flex items-start gap-2">
+            <span className="text-red text-14 shrink-0">⚠</span>
+            <div>
+              <p className="text-12 font-semibold text-red">Error</p>
+              <p className="text-11 text-ink-2 mt-0.5">{clientRiskError}</p>
+            </div>
+          </div>
+        )}
 
         {/* ── AI Risk Assessment panel ─────────────────────────────── */}
         {clientRisk && (

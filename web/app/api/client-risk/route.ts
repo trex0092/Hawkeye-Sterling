@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { writeAuditEvent } from "@/lib/audit";
+import { enforce } from "@/lib/server/enforce";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -67,6 +68,8 @@ const FALLBACK: ClientRiskResult = {
 };
 
 export async function POST(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   let body: RequestBody;
   try {
     body = (await req.json()) as RequestBody;
@@ -98,7 +101,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       },
       body: JSON.stringify({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 700,
+        max_tokens: 2048,
         system:
           "You are a UAE AML/CFT compliance analyst specializing in entity onboarding and CDD risk assessment for licensed DPMS/VASP under FDL 10/2025 Art.10, Cabinet Decision 58/2020, and FATF Recommendation 10. Assess this entity onboarding submission for ML/FT risk. Return ONLY valid JSON, no markdown fences.",
         messages: [

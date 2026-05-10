@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { enforce } from "@/lib/server/enforce";
 export interface ThreatTypology {
   name: string;
   trend: "rising" | "stable" | "declining";
@@ -116,6 +117,8 @@ const FALLBACK: ThreatIntelResult = {
 };
 
 export async function POST(req: Request) {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   let body: { sector?: string; jurisdiction?: string; reportingPeriod?: string };
   try {
     body = (await req.json()) as typeof body;

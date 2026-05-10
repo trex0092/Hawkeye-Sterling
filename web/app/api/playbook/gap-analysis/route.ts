@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { enforce } from "@/lib/server/enforce";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -33,6 +34,8 @@ const FALLBACK: GapResult = {
 };
 
 export async function POST(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) return NextResponse.json({ ok: false, error: "playbook/gap-analysis temporarily unavailable - please retry." }, { status: 503 });
 

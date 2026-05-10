@@ -13,6 +13,7 @@
 
 import { NextResponse } from "next/server";
 import { writeAuditEvent } from "@/lib/audit";
+import { enforce } from "@/lib/server/enforce";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -176,7 +177,7 @@ async function parseQuery(query: string): Promise<ParseResult> {
       },
       body: JSON.stringify({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 500,
+        max_tokens: 1024,
         system: SYSTEM_PROMPT,
         messages: [{ role: "user", content: `Query: "${query}"` }],
       }),
@@ -276,6 +277,8 @@ function applyFilters(subjects: SubjectSlim[], filters: ParsedFilters): string[]
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   try {
     const body = (await req.json()) as { query?: string; subjects?: SubjectSlim[]; actor?: string };
     const query = (body.query ?? "").trim();

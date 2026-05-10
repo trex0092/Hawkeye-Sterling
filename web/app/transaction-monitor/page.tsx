@@ -133,8 +133,10 @@ export default function TransactionMonitorPage() {
   const formRef = useRef<HTMLFormElement | null>(null);
   const [explanations, setExplanations] = useState<Record<string, TmExplanation>>({});
   const [explaining, setExplaining] = useState<Record<string, boolean>>({});
+  const [explainErrors, setExplainErrors] = useState<Record<string, string>>({});
   const [typologyTags, setTypologyTags] = useState<Record<string, TxTypologyTag>>({});
   const [tagging, setTagging] = useState(false);
+  const [tagError, setTagError] = useState<string | null>(null);
   const [tagSummary, setTagSummary] = useState<{ text: string; highRiskCount: number } | null>(null);
 
   useEffect(() => {
@@ -171,6 +173,7 @@ export default function TransactionMonitorPage() {
 
   const explainTx = async (t: TxRow) => {
     setExplaining((prev) => ({ ...prev, [t.id]: true }));
+    setExplainErrors((prev) => { const n = { ...prev }; delete n[t.id]; return n; });
     try {
       const res = await fetch("/api/tm-explain", {
         method: "POST",
@@ -178,19 +181,21 @@ export default function TransactionMonitorPage() {
         body: JSON.stringify({ transaction: t }),
       });
       if (!res.ok) {
-        console.error(`[hawkeye] tm-explain HTTP ${res.status}`);
-        return;
+        const body = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(body.error ?? `Explanation failed (HTTP ${res.status}) — please retry`);
       }
       const data = await res.json() as { ok: boolean; explanation: string; disposition: TmExplanation["disposition"]; dispositionReason: string; regulatoryBasis: string; typologies: string[] };
       if (data.ok) setExplanations((prev) => ({ ...prev, [t.id]: data }));
     } catch (err) {
-      console.error("[hawkeye] tm-explain threw:", err);
+      const msg = err instanceof Error ? err.message : "Explanation failed — please retry";
+      setExplainErrors((prev) => ({ ...prev, [t.id]: msg }));
     } finally { setExplaining((prev) => ({ ...prev, [t.id]: false })); }
   };
 
   const autoTagTypologies = async () => {
     if (txs.length === 0) return;
     setTagging(true);
+    setTagError(null);
     try {
       const payload = txs.map((t) => ({
         id: t.id,
@@ -211,8 +216,8 @@ export default function TransactionMonitorPage() {
         body: JSON.stringify({ transactions: payload }),
       });
       if (!res.ok) {
-        console.error(`[hawkeye] transaction-monitor/typology-tag HTTP ${res.status}`);
-        return;
+        const body = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(body.error ?? `Typology tagging failed (HTTP ${res.status}) — please retry`);
       }
       const data = await res.json() as {
         tagged: (TxTypologyTag & { id: string })[];
@@ -231,7 +236,8 @@ export default function TransactionMonitorPage() {
       setTypologyTags(tagMap);
       setTagSummary({ text: data.summary, highRiskCount: data.highRiskCount });
     } catch (err) {
-      console.error("[hawkeye] transaction-monitor/typology-tag threw:", err);
+      const msg = err instanceof Error ? err.message : "Typology tagging failed — please retry";
+      setTagError(msg);
     } finally { setTagging(false); }
   };
 
@@ -372,6 +378,12 @@ export default function TransactionMonitorPage() {
             <Kpi value={alerts} label="Alerts" tone="amber" />
             <Kpi value={reportable} label="Reportable (DPMS ≥ 55k)" tone="red" />
       </KpiGrid>
+
+      {tagError && (
+        <div className="mt-4 mb-2 rounded-lg border border-red/30 bg-red-dim px-4 py-3 text-12 text-red">
+          ⚠ {tagError}
+        </div>
+      )}
 
       {tagSummary && (
         <div className="mt-4 mb-2 bg-bg-panel border border-hair-2 rounded-xl p-4">
@@ -609,6 +621,16 @@ export default function TransactionMonitorPage() {
                   ))}
                 </tbody>
               </table>
+              {Object.keys(explainErrors).length > 0 && (
+                <div className="border-t border-hair-2 divide-y divide-hair">
+                  {txs.filter((t) => explainErrors[t.id]).map((t) => (
+                    <div key={t.id} className="px-4 py-2 bg-red-dim flex items-start gap-2">
+                      <span className="font-mono text-10 text-ink-3 shrink-0">{t.ref}</span>
+                      <span className="text-11 text-red">⚠ {explainErrors[t.id]}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
               {Object.keys(explanations).length > 0 && (
                 <div className="border-t border-hair-2 divide-y divide-hair">
                   {txs.filter((t) => explanations[t.id]).map((t) => {

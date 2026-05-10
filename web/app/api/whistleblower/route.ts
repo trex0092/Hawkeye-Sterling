@@ -2,6 +2,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;import { NextResponse } from "next/server";
 
+import { enforce } from "@/lib/server/enforce";
 export interface WhistleblowerResult {
   caseUrgency: "critical" | "high" | "medium" | "low";
   allegationCategories: string[];
@@ -44,6 +45,8 @@ const FALLBACK: WhistleblowerResult = {
 };
 
 export async function POST(req: Request) {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   let body: {
     allegation: string;
     reportSource: string;

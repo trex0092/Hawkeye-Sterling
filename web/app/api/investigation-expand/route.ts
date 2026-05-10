@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { enforce } from "@/lib/server/enforce";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -13,6 +14,8 @@ export interface DiscoveredEntity {
 }
 
 export async function POST(req: Request) {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   let body: { subject: string; knownNodes: string[]; knownEdges: Array<{ from: string; to: string; label?: string }> };
   try {
     body = (await req.json()) as typeof body;
@@ -40,7 +43,7 @@ export async function POST(req: Request) {
       },
       body: JSON.stringify({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 900,
+        max_tokens: 2048,
         system: `You are an AML/CFT link-analysis intelligence engine. Given a subject and their known network, infer additional entities that investigators should look for. Base your reasoning on:
 - Corporate naming / holding patterns common to UAE/MENA structures
 - UBO residual tranches and nominee arrangements

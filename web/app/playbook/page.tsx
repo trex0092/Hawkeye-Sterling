@@ -5832,6 +5832,7 @@ export default function PlaybookPage() {
   const [qaQuestion, setQaQuestion] = useState("");
   const [qaAnswer, setQaAnswer] = useState<{ answer: string; citations: string[]; confidence: number; relatedPlaybooks: string[] } | null>(null);
   const [qaLoading, setQaLoading] = useState(false);
+  const [qaError, setQaError] = useState<string | null>(null);
 
   // Scenario Simulator state
   const [simScenario, setSimScenario] = useState("");
@@ -5840,11 +5841,13 @@ export default function PlaybookPage() {
   const [simRiskLevel, setSimRiskLevel] = useState("Medium");
   const [simResult, setSimResult] = useState<ScenarioSimulateResult | null>(null);
   const [simLoading, setSimLoading] = useState(false);
+  const [simError, setSimError] = useState<string | null>(null);
 
   const runSimulator = async () => {
     if (!simScenario.trim()) return;
     setSimLoading(true);
     setSimResult(null);
+    setSimError(null);
     try {
       const res = await fetch("/api/playbook/scenario-simulate", {
         method: "POST",
@@ -5856,14 +5859,14 @@ export default function PlaybookPage() {
           riskLevel: simRiskLevel,
         }),
       });
-      if (res.ok) {
-        const data = await res.json() as ScenarioSimulateResult;
-        setSimResult(data);
-      } else {
-        console.error(`[hawkeye] playbook scenario-simulate HTTP ${res.status}`);
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(body.error ?? `Simulation failed (HTTP ${res.status}) — please retry`);
       }
+      const data = await res.json() as ScenarioSimulateResult;
+      setSimResult(data);
     } catch (err) {
-      console.error("[hawkeye] playbook scenario-simulate threw:", err);
+      setSimError(err instanceof Error ? err.message : "Simulation failed — please retry");
     } finally { setSimLoading(false); }
   };
 
@@ -5897,6 +5900,7 @@ export default function PlaybookPage() {
   const askPlaybook = async () => {
     if (!qaQuestion.trim()) return;
     setQaLoading(true);
+    setQaError(null);
     try {
       const res = await fetch("/api/playbook-qa", {
         method: "POST",
@@ -5904,13 +5908,13 @@ export default function PlaybookPage() {
         body: JSON.stringify({ question: qaQuestion }),
       });
       if (!res.ok) {
-        console.error(`[hawkeye] playbook-qa HTTP ${res.status}`);
-        return;
+        const body = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(body.error ?? `Playbook QA failed (HTTP ${res.status}) — please retry`);
       }
       const data = await res.json() as { ok: boolean; answer: string; citations: string[]; confidence: number; relatedPlaybooks: string[] };
       if (data.ok) setQaAnswer(data);
     } catch (err) {
-      console.error("[hawkeye] playbook-qa threw:", err);
+      setQaError(err instanceof Error ? err.message : "Playbook QA failed — please retry");
     } finally { setQaLoading(false); }
   };
 
@@ -6013,10 +6017,16 @@ export default function PlaybookPage() {
             >
               {qaLoading ? "Asking…" : "Ask"}
             </button>
-            {(simResult || qaAnswer) && (
-              <button type="button" onClick={() => { setSimResult(null); setQaAnswer(null); }} className="text-11 text-blue-400 hover:text-blue-300 px-2 py-1.5">✕</button>
+            {(simResult || qaAnswer || simError || qaError) && (
+              <button type="button" onClick={() => { setSimResult(null); setQaAnswer(null); setSimError(null); setQaError(null); }} className="text-11 text-blue-400 hover:text-blue-300 px-2 py-1.5">✕</button>
             )}
           </div>
+
+          {(simError || qaError) && (
+            <div className="mt-3 rounded border border-red/30 bg-red-dim px-3 py-2 text-12 text-red">
+              ⚠ {simError ?? qaError}
+            </div>
+          )}
 
           {simResult && (
             <div className="mt-4 space-y-4 border-t border-hair-2 pt-4">

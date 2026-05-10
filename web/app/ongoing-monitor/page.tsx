@@ -203,6 +203,9 @@ export default function OngoingMonitorPage() {
   const [monitorAlerts, setMonitorAlerts] = useState<MonitorAlertsResult | null>(null);
   const [monitorAlertsLoading, setMonitorAlertsLoading] = useState(false);
 
+  // Background-operation error banner
+  const [bgError, setBgError] = useState<string | null>(null);
+
   // Enrichment state
   const [enrichName, setEnrichName] = useState("");
   const [enrichLei, setEnrichLei] = useState("");
@@ -271,6 +274,7 @@ export default function OngoingMonitorPage() {
 
   const add = async () => {
     if (!draft.name) return;
+    setBgError(null);
     const now = new Date().toISOString();
     const subject: MonitoredSubject = {
       ...draft, id: `om-${Date.now()}`, status: "active",
@@ -285,9 +289,13 @@ export default function OngoingMonitorPage() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ id: subject.id, name: subject.name, ...(subject.caseId ? { caseId: subject.caseId } : {}), cadence: subject.cadence }),
       });
-      if (!res.ok) console.error(`[hawkeye] ongoing enrol HTTP ${res.status} — backend out of sync with UI`);
+      if (!res.ok) {
+        console.error(`[hawkeye] ongoing enrol HTTP ${res.status} — backend out of sync with UI`);
+        setBgError(`Failed to sync enrolment with server (HTTP ${res.status}). The subject has been saved locally.`);
+      }
     } catch (err) {
       console.error("[hawkeye] ongoing enrol threw — backend out of sync with UI:", err);
+      setBgError("Could not reach the server to sync enrolment. The subject has been saved locally.");
     }
   };
 
@@ -299,19 +307,25 @@ export default function OngoingMonitorPage() {
   };
 
   const remove = async (id: string) => {
+    setBgError(null);
     const next = subjects.filter((s) => s.id !== id);
     save(next); setSubjects(next);
     try {
       const res = await fetch(`/api/ongoing?id=${encodeURIComponent(id)}`, {
         method: "DELETE",
       });
-      if (!res.ok) console.error(`[hawkeye] ongoing DELETE HTTP ${res.status} — backend row may persist as orphan`);
+      if (!res.ok) {
+        console.error(`[hawkeye] ongoing DELETE HTTP ${res.status} — backend row may persist as orphan`);
+        setBgError(`Failed to remove subject from server (HTTP ${res.status}). It has been removed locally but may reappear on next sync.`);
+      }
     } catch (err) {
       console.error("[hawkeye] ongoing DELETE threw — backend row may persist as orphan:", err);
+      setBgError("Could not reach the server to remove this subject. It has been removed locally but may reappear on next sync.");
     }
   };
 
   const screenNow = async (s: MonitoredSubject) => {
+    setBgError(null);
     setScreening((prev) => ({ ...prev, [s.id]: true }));
     try {
       const res = await fetch("/api/quick-screen", {
@@ -331,6 +345,7 @@ export default function OngoingMonitorPage() {
       }
     } catch (err) {
       console.error("[hawkeye] quick-screen threw — UI lastRun timestamp NOT updated:", err);
+      setBgError(`Screening failed for "${s.name}". Please try again.`);
     } finally { setScreening((prev) => ({ ...prev, [s.id]: false })); }
   };
 
@@ -356,6 +371,7 @@ export default function OngoingMonitorPage() {
   };
 
   const runAiMonitor = async () => {
+    setBgError(null);
     setMonitorAlertsLoading(true);
     try {
       const payload = subjects.map((s) => ({
@@ -373,10 +389,16 @@ export default function OngoingMonitorPage() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ subjects: payload }),
       });
+      if (!res.ok) {
+        console.error(`[hawkeye] ongoing-monitor-ai HTTP ${res.status} — portfolio-health KPI NOT refreshed`);
+        setBgError(`AI health check failed (HTTP ${res.status}). Portfolio alerts were not updated.`);
+        return;
+      }
       const data = (await res.json()) as MonitorAlertsResult;
       setMonitorAlerts(data);
     } catch (err) {
       console.error("[hawkeye] ongoing-monitor-ai threw — portfolio-health KPI NOT refreshed, escalations may be missed:", err);
+      setBgError("AI health check could not be reached. Portfolio alerts were not updated.");
     } finally { setMonitorAlertsLoading(false); }
   };
 
@@ -430,6 +452,16 @@ export default function OngoingMonitorPage() {
               {monitorAlertsLoading ? "Scanning…" : "✦AI"}
             </button>
           </div>
+
+          {bgError && (
+            <div className="mt-3 rounded-lg border border-red/30 bg-red-dim px-4 py-3 flex items-start gap-2">
+              <span className="text-red text-14 shrink-0">⚠</span>
+              <div>
+                <p className="text-12 font-semibold text-red">Error</p>
+                <p className="text-11 text-ink-2 mt-0.5">{bgError}</p>
+              </div>
+            </div>
+          )}
 
           {monitorAlerts && (
             <div className={`mb-4 rounded-lg border p-4 ${monitorAlerts.portfolioHealth === "critical" ? "bg-red-dim border-red/30" : monitorAlerts.portfolioHealth === "attention_required" ? "bg-amber-dim border-amber/30" : "bg-green-dim border-green/30"}`}>

@@ -311,6 +311,7 @@ export default function EsgRiskPage() {
             // AI-suggest: ask Claude to generate a representative
             // high-risk entity profile so the operator can demo the
             // ESG scoring pipeline without typing.
+            setError(null);
             try {
               const res = await fetch("/api/mlro-advisor-quick", {
                 method: "POST",
@@ -320,6 +321,10 @@ export default function EsgRiskPage() {
                   redTeamMode: false,
                 }),
               });
+              if (!res.ok) {
+                const b = await res.json().catch(() => ({})) as { error?: string };
+                throw new Error(b.error ?? `AI suggest failed (HTTP ${res.status}) — please retry`);
+              }
               const data = (await res.json()) as { answer?: string; message?: string };
               const text = data.answer ?? data.message ?? "";
               const jsonMatch = text.match(/\{[\s\S]*\}/);
@@ -333,7 +338,7 @@ export default function EsgRiskPage() {
               if (parsed.supplierCountries) setField("supplierCountries", String(parsed.supplierCountries));
               if (parsed.notes) setField("notes", String(parsed.notes));
             } catch (err) {
-              console.warn("[esg ai-suggest] failed:", err);
+              setError(err instanceof Error ? err.message : "AI suggest failed — please retry");
             }
           }}
           className="px-5 py-2 rounded-lg border-2 border-amber-400 bg-amber-400/10 text-amber-300 text-13 font-bold hover:bg-amber-400/20 whitespace-nowrap shadow-[0_0_12px_rgba(251,191,36,0.15)] hover:shadow-[0_0_18px_rgba(251,191,36,0.30)] transition-all"

@@ -6,6 +6,7 @@ export const maxDuration = 60;
 
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { enforce } from "@/lib/server/enforce";
 import type { CountryRiskResult } from "../route";
 
 export interface CountryCompareResult {
@@ -15,6 +16,8 @@ export interface CountryCompareResult {
 }
 
 export async function POST(req: Request) {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   let body: { countries?: string[] };
   try {
     body = (await req.json()) as typeof body;

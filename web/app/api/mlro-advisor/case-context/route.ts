@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { writeAuditEvent } from "@/lib/audit";
+import { enforce } from "@/lib/server/enforce";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -18,6 +19,8 @@ interface Body {
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   const apiKey = process.env["ANTHROPIC_API_KEY"];
 
   if (!apiKey) {
@@ -75,7 +78,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       },
       body: JSON.stringify({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 500,
+        max_tokens: 1500,
         system:
           'You are summarizing open compliance cases for an MLRO advisor context injection. Create a compact, structured summary (under 200 words) highlighting: total cases, any with critical risk indicators, subjects from high-risk jurisdictions, cases approaching regulatory deadlines, patterns across cases. Format as clean prose, not JSON. This will be injected as context for the MLRO AI advisor. After your prose summary, on a new line output: PRIORITY_IDS: followed by a comma-separated list of case IDs that are highest priority (empty if none).',
         messages: [{ role: "user", content: userContent }],

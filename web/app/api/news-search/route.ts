@@ -334,7 +334,7 @@ export async function GET(req: Request): Promise<NextResponse> {
   // this, a single user could trivially pin a Netlify Function into a
   // quota-exhaustion loop.
   const gate = await enforce(req);
-  if (!gate.ok && gate.response.status === 429) return gate.response;
+  if (!gate.ok) return gate.response;
   const gateHeaders: Record<string, string> = gate.ok ? gate.headers : {};
 
   const url = new URL(req.url);
