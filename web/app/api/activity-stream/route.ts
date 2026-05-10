@@ -166,6 +166,9 @@ export async function GET(req: Request): Promise<Response> {
 // Other routes (quick-screen, batch-screen, ongoing/run) can call this to
 // surface events on the operator's live feed without opening a new socket.
 export async function POST(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
+
   let raw: unknown;
   try { raw = await req.json(); } catch {
     return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
