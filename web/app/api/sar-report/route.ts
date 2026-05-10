@@ -62,11 +62,12 @@ const TIPPING_OFF_PATTERNS = [
   /\bAML\s+(?:investigation|inquiry|review|case|alert|flag)\b/i,
   /\bcompliance\s+(?:investigation|inquiry|alert|flag|hold)\b/i,
   // Account-status disclosures that imply a suspicion was raised
-  /\byour\s+account.{0,40}(?:suspend|block|freez|flag|hold|restrict|escalat)/i,
+  /\byour\s+account.{0,40}(?:suspend|block|freez|flag|hold|restrict|escalat)/is,
   /\b(?:suspended|blocked|frozen|flagged|on hold|restricted)\s+(?:due to|because of|pending)\s+(?:AML|compliance|investigation|review|suspicion)/i,
   // Circumvention phrasings — "between you and me", "off the record"
-  /\b(?:off\s+the\s+record|between\s+you\s+and\s+me|don'?t\s+tell\s+anyone).{0,80}\b(?:STR|SAR|FIU|investigat|report|fil)/i,
-  /\bI\s+shouldn'?t\s+(?:tell|say)\s+you.{0,80}\b(?:STR|SAR|FIU|investigat|report|fil)/i,
+  // `s` flag: dotAll so .{0,80} can't be bypassed by embedding a newline mid-phrase
+  /\b(?:off\s+the\s+record|between\s+you\s+and\s+me|don'?t\s+tell\s+anyone).{0,80}\b(?:STR|SAR|FIU|investigat|report|fil)/is,
+  /\bI\s+shouldn'?t\s+(?:tell|say)\s+you.{0,80}\b(?:STR|SAR|FIU|investigat|report|fil)/is,
 ];
 
 function escapeHtml(s: string): string {
@@ -446,8 +447,8 @@ async function handleSarReport(req: Request): Promise<Response> {
       ${body.superBrain?.pep && body.superBrain.pep.salience > 0 ? `
         <h2 class="hs-section-h">PEP</h2>
         ${hsKvGrid([
-          { k: "Type", v: body.superBrain.pep.type.replace(/_/g, " ") },
-          { k: "Tier", v: body.superBrain.pep.tier },
+          { k: "Type", v: escapeHtml(body.superBrain.pep.type.replace(/_/g, " ")) },
+          { k: "Tier", v: escapeHtml(body.superBrain.pep.tier) },
           { k: "Salience", v: `${Math.round(body.superBrain.pep.salience * 100)}%` },
         ])}
       ` : ""}
