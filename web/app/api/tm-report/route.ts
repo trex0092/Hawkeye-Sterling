@@ -90,7 +90,11 @@ async function classifyTransaction(
 
   // Strip markdown fences before parsing
   const stripped = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
-  return JSON.parse(stripped) as TypologyResult;
+  try {
+    return JSON.parse(stripped) as TypologyResult;
+  } catch {
+    return null;
+  }
 }
 
 async function handleTmReport(req: Request): Promise<NextResponse> {
