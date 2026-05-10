@@ -3,6 +3,7 @@
 // DELETE /api/alerts        — dismiss ALL unread (batch)
 
 import { NextResponse } from "next/server";
+import { enforce } from "@/lib/server/enforce";
 import {
   listAlerts,
   writeAlert,
@@ -47,13 +48,14 @@ export async function GET(): Promise<NextResponse> {
 
 export async function POST(req: Request): Promise<NextResponse> {
   try {
-    // Auth — accept ALERTS_CRON_TOKEN bearer or no-auth in dev
+    // Auth — ALERTS_CRON_TOKEN bearer (fail-closed: token must always be set)
     const token = process.env["ALERTS_CRON_TOKEN"];
-    if (token) {
-      const auth = req.headers.get("authorization") ?? "";
-      if (auth !== `Bearer ${token}`) {
-        return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
-      }
+    if (!token) {
+      return NextResponse.json({ ok: false, error: "ALERTS_CRON_TOKEN not configured" }, { status: 503 });
+    }
+    const auth = req.headers.get("authorization") ?? "";
+    if (auth !== `Bearer ${token}`) {
+      return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
     }
     const body = (await req.json()) as Partial<DesignationAlert>;
     if (!body.id || !body.listId || !body.matchedEntry) {
@@ -84,14 +86,10 @@ export async function POST(req: Request): Promise<NextResponse> {
 }
 
 export async function DELETE(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
+
   try {
-    const token = process.env["ALERTS_CRON_TOKEN"];
-    if (token) {
-      const auth = req.headers.get("authorization") ?? "";
-      if (auth !== `Bearer ${token}`) {
-        return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
-      }
-    }
     let dismissedBy: string | undefined;
     try {
       const body = (await req.json()) as { dismissedBy?: string };

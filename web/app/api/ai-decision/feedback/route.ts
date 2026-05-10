@@ -2,6 +2,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
+import { enforce } from "@/lib/server/enforce";
 import { getJson, setJson } from "@/lib/server/store";
 import type { AIDecision } from "../route";
 
@@ -39,6 +40,9 @@ interface FeedbackBody {
 }
 
 export async function POST(req: Request) {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
+
   let body: FeedbackBody;
   try {
     body = (await req.json()) as FeedbackBody;

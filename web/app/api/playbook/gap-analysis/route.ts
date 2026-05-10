@@ -88,7 +88,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       },
       body: JSON.stringify({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 1000,
+        max_tokens: 1024,
         system: systemPrompt,
         messages: [{ role: "user", content: userContent }],
       }),
