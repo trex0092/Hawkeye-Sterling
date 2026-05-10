@@ -80,11 +80,10 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("[alerts POST]", err instanceof Error ? err.message : err);
-    return NextResponse.json({
-      ok: true,
-      stored: false,
-      note: "alert store unavailable — alert not persisted",
-    });
+    return NextResponse.json(
+      { ok: false, error: "alert store unavailable — alert not persisted" },
+      { status: 503 },
+    );
   }
 }
 
@@ -102,10 +101,9 @@ export async function DELETE(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: true, dismissed: count });
   } catch (err) {
     console.error("[alerts DELETE]", err instanceof Error ? err.message : err);
-    return NextResponse.json({
-      ok: true,
-      dismissed: 0,
-      note: "alert store unavailable — dismiss not persisted",
-    });
+    return NextResponse.json(
+      { ok: false, error: "alert store unavailable — dismiss not persisted" },
+      { status: 503 },
+    );
   }
 }

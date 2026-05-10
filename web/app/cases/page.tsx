@@ -173,8 +173,9 @@ export default function CasesPage() {
         setTriageError(`AI triage failed (HTTP ${res.status})${body ? ` — ${body}` : ""}`);
         return;
       }
-      const data = await res.json() as TriageResult;
+      const data = await res.json() as TriageResult & { error?: string };
       if (data.ok) setTriageResult(data);
+      else setTriageError(data.error ?? "AI triage returned an error — please retry.");
     } catch (err) {
       console.error("[hawkeye] cases/triage threw:", err);
       setTriageError("AI triage request failed — please check your connection and try again.");

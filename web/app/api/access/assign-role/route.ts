@@ -32,6 +32,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "userId, newRole, reason and assignedBy are required" }, { status: 400 });
   }
 
+  if (!(newRole in ROLE_MODULES)) {
+    return NextResponse.json(
+      { ok: false, error: `newRole must be one of: ${Object.keys(ROLE_MODULES).join(", ")}` },
+      { status: 400 },
+    );
+  }
+
   const users = await loadUsers();
   const userIdx = users.findIndex((u) => u.id === userId);
   if (userIdx === -1) {

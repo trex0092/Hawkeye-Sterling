@@ -20,6 +20,15 @@ export async function POST(req: Request) {
     listCoverage: Array<{list:string; result:string; match:string; date:string}>;
   };
 
+  if (!body?.subjectName?.trim()) {
+    return new Response(JSON.stringify({ ok: false, error: "subjectName required" }), { status: 400 });
+  }
+  if (!Array.isArray(body.subjectDetails)) body.subjectDetails = [];
+  if (!Array.isArray(body.findings)) body.findings = [];
+  if (!Array.isArray(body.listCoverage)) body.listCoverage = [];
+  if (!body.jurisdiction) body.jurisdiction = "—";
+  if (!["ember","amber","sage"].includes(body.verdictTone)) body.verdictTone = "amber";
+
   const { dateStr, time } = nowMeta();
   const dd = dateStr.slice(0,2), mm = dateStr.slice(3,5), yyyy = dateStr.slice(6);
   const reportId = `SCR-${dd}-${mm}-${yyyy}`;

@@ -28,10 +28,9 @@ export async function POST(
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("[alerts/dismiss]", err instanceof Error ? err.message : err);
-    return NextResponse.json({
-      ok: true,
-      stored: false,
-      note: "alert store unavailable — dismiss not persisted",
-    });
+    return NextResponse.json(
+      { ok: false, error: "alert store unavailable — dismiss not persisted" },
+      { status: 503 },
+    );
   }
 }
