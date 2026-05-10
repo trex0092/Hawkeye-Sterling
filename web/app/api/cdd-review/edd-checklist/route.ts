@@ -48,7 +48,11 @@ const FALLBACK: EddChecklistResult = {
   estimatedDays: 14,
 };
 
+import { enforce } from "@/lib/server/enforce";
+
 export async function POST(req: Request) {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   let body: {
     clientName?: string;
     clientType?: string;
