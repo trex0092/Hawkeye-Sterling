@@ -80,16 +80,20 @@ export function AIDecisionEngine({
 
   // Fetch learning stats once on mount
   useEffect(() => {
+    let cancelled = false;
     void fetch("/api/ai-decision/feedback")
       .then((r) => r.json())
       .then((d: { total?: number; acceptanceRate?: number | null }) => {
+        if (cancelled) return;
         if (typeof d.total === "number") {
           setLearningStats({ total: d.total, acceptanceRate: d.acceptanceRate ?? null });
         }
       })
       .catch((err: unknown) => {
+        if (cancelled) return;
         console.warn("[hawkeye] ai-decision/feedback (mount stats) failed:", err);
       });
+    return () => { cancelled = true; };
   }, []);
 
   const runDecision = useCallback(async () => {
