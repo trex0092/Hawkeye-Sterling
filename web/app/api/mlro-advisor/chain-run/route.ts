@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { enforce } from "@/lib/server/enforce";
 export interface ChainRunResult {
   ok: true;
   subjectBrief: string;
@@ -14,6 +15,8 @@ export interface ChainRunResult {
 const SYSTEM_PROMPT = `You are a senior MLRO (Money Laundering Reporting Officer) with deep expertise in UAE AML/CFT law (FDL 10/2025, CBUAE AML Standards), FATF Recommendations, and financial crime typologies. You produce concise, actionable analysis for compliance officers. Respond in plain prose — no markdown headers, no bullet points — focused and professional.`;
 
 export async function POST(req: Request) {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   let body: {
     subject?: string;
     jurisdiction?: string;

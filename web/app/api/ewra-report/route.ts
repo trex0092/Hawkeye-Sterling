@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { enforce } from "@/lib/server/enforce";
 import { withLlmFallback } from "@/lib/server/llm-fallback";
 import { writeAuditEvent } from "@/lib/audit";
 
@@ -97,6 +98,8 @@ const FALLBACK: EwraBoardReportResult = {
 };
 
 export async function POST(req: Request) {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   let body: {
     dimensions?: Array<{ id?: string; dimension: string; description?: string; inherent: number; controls: number; notes: string }>;
     institutionName?: string;

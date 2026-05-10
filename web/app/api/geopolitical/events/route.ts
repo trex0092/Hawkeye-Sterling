@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { enforce } from "@/lib/server/enforce";
 export interface GeopoliticalEvent {
   id: string;
   country: string;
@@ -193,7 +194,9 @@ const FALLBACK_EVENTS: GeopoliticalEvent[] = [
   },
 ];
 
-export async function GET() {
+export async function GET(req: Request) {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) return NextResponse.json({ ok: false, error: "geopolitical/events temporarily unavailable - please retry." }, { status: 503 });
 

@@ -17,6 +17,7 @@ import { NextResponse } from "next/server";
 import { withGuard } from "@/lib/server/guard";
 import { del, getJson, listKeys, setJson } from "@/lib/server/store";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { enforce } from "@/lib/server/enforce";
 import type { FourEyesAction, FourEyesItem, FourEyesStatus } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -96,6 +97,8 @@ async function handleGet(req: Request): Promise<NextResponse> {
 }
 
 async function handlePost(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   let raw: unknown;
   try { raw = await req.json(); } catch {
     return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
