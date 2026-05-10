@@ -2,6 +2,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
+import { enforce } from "@/lib/server/enforce";
 import { writeAuditEvent } from "@/lib/audit";
 
 interface OverrideBody {
@@ -14,6 +15,9 @@ interface OverrideBody {
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
+
   let body: OverrideBody;
   try {
     body = (await req.json()) as OverrideBody;
@@ -36,7 +40,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "humanReason is required" }, { status: 400 });
   }
 
-  const actor = operator ?? "mlro";
+  const actor = operator ?? gate.keyId ?? "mlro";
 
   // Log 1: high-level human override event
   writeAuditEvent(actor, "ai.human-override", aiModule);
