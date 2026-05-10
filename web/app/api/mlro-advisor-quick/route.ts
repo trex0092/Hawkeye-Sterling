@@ -268,7 +268,7 @@ export async function OPTIONS(): Promise<Response> {
 export async function POST(req: Request): Promise<Response> {
   const startedAt = Date.now();
   const gate = await enforce(req);
-  if (!gate.ok && gate.response.status === 429) return gate.response;
+  if (!gate.ok) return gate.response;
 
   let body: Body;
   try {

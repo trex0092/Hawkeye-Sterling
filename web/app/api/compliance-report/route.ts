@@ -797,7 +797,7 @@ async function handleComplianceReport(req: Request): Promise<Response> {
   // there is no server-side secret to protect, and a token mismatch
   // between NEXT_PUBLIC_ADMIN_TOKEN and ADMIN_TOKEN shouldn't block MLRO
   // officers from generating compliance reports.
-  if (!gate.ok && gate.response.status === 429) return gate.response;
+  if (!gate.ok) return gate.response;
   const gateHeaders: Record<string, string> = gate.ok ? gate.headers : {};
 
   const url = new URL(req.url);

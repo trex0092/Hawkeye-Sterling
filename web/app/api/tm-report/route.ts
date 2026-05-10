@@ -74,7 +74,7 @@ async function classifyTransaction(
     },
     body: JSON.stringify({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 400,
+      max_tokens: 2048,
       system:
         'You are a UAE-licensed AML typology classifier for a DPMS compliance platform. Analyze a transaction and return ONLY this JSON: { "typologies": ["string"], "narrative": "string", "severityUpgrade": boolean, "regulatoryBasis": "string" }. typologies = FATF ML/TF typology codes (e.g. \'ML-TF-01 Structuring\', \'ML-TF-09 Cash-intensive business\'). narrative = 1-2 sentence STR-ready description. severityUpgrade = true if you\'d recommend escalating severity. regulatoryBasis = specific UAE/FATF articles triggered.',
       messages: [{ role: "user", content: userContent }],

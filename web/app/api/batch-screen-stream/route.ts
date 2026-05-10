@@ -107,7 +107,7 @@ export async function POST(req: Request): Promise<Response> {
   const gate = await enforce(req);
   // 429 is the only hard stop — auth failures fall through as anonymous
   // so a NEXT_PUBLIC_ADMIN_TOKEN / ADMIN_TOKEN mismatch never blocks operators.
-  if (!gate.ok && gate.response.status === 429) return gate.response;
+  if (!gate.ok) return gate.response;
   const gateHeaders: Record<string, string> = gate.ok ? gate.headers : {};
 
   let body: { rows: BatchRow[] };

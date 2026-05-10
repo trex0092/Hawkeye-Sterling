@@ -1988,10 +1988,10 @@ export default function MlroAdvisorPage() {
           additionalContext: tbmlInput.additionalContext || undefined,
         }),
       });
-      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
+      if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & TbmlAnalysis;
       if (data.ok) setTbmlResult(data);
-    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
+    } catch (err) { setToolErrors((p) => ({ ...p, ["tbml"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
     finally { setTbmlLoading(false); }
   };
 
@@ -2005,10 +2005,10 @@ export default function MlroAdvisorPage() {
     setStrNarrLoading(true); setStrNarrResult(null);
     try {
       const res = await fetch("/api/str-narrative", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...strNarrInput, redFlags: strNarrInput.redFlags ? strNarrInput.redFlags.split("\n").map((s) => s.trim()).filter(Boolean) : undefined }) });
-      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
+      if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & StrNarrativeResult;
       if (data.ok) setStrNarrResult(data);
-    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
+    } catch (err) { setToolErrors((p) => ({ ...p, ["strNarrative"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
     finally { setStrNarrLoading(false); }
   };
 
@@ -2021,10 +2021,10 @@ export default function MlroAdvisorPage() {
     setWireLoading(true); setWireResult(null);
     try {
       const res = await fetch("/api/wire-r16", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(wireInput) });
-      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
+      if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & WireR16Result;
       if (data.ok) setWireResult(data);
-    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
+    } catch (err) { setToolErrors((p) => ({ ...p, ["wireR16"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
     finally { setWireLoading(false); }
   };
 
@@ -2038,10 +2038,10 @@ export default function MlroAdvisorPage() {
     setPfLoading(true); setPfResult(null);
     try {
       const res = await fetch("/api/pf-screener", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(pfInput) });
-      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
+      if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & PfScreenerResult;
       if (data.ok) setPfResult(data);
-    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
+    } catch (err) { setToolErrors((p) => ({ ...p, ["pfScreener"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
     finally { setPfLoading(false); }
   };
 
@@ -2055,10 +2055,10 @@ export default function MlroAdvisorPage() {
     setMemoLoading(true); setMemoResult(null);
     try {
       const res = await fetch("/api/mlro-memo", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...memoInput, redFlags: memoInput.redFlags ? memoInput.redFlags.split("\n").map((s) => s.trim()).filter(Boolean) : undefined }) });
-      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
+      if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & MlroMemoResult;
       if (data.ok) setMemoResult(data);
-    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
+    } catch (err) { setToolErrors((p) => ({ ...p, ["mlroMemo"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
     finally { setMemoLoading(false); }
   };
 
@@ -2475,10 +2475,10 @@ export default function MlroAdvisorPage() {
     setTfLoading(true); setTfResult(null);
     try {
       const res = await fetch("/api/tf-screener", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...tfInput, existingRedFlags: tfInput.existingRedFlags ? tfInput.existingRedFlags.split("\n").map((s) => s.trim()).filter(Boolean) : undefined }) });
-      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
+      if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & TfScreenerResult;
       if (data.ok) setTfResult(data);
-    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
+    } catch (err) { setToolErrors((p) => ({ ...p, ["tfScreener"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
     finally { setTfLoading(false); }
   };
 
@@ -2487,10 +2487,10 @@ export default function MlroAdvisorPage() {
     setShellLoading(true); setShellResult(null);
     try {
       const res = await fetch("/api/shell-detector", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(shellInput) });
-      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
+      if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & ShellDetectorResult;
       if (data.ok) setShellResult(data);
-    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
+    } catch (err) { setToolErrors((p) => ({ ...p, ["shellDetector"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
     finally { setShellLoading(false); }
   };
 
@@ -2499,10 +2499,10 @@ export default function MlroAdvisorPage() {
     setAdverseLoading(true); setAdverseResult(null);
     try {
       const res = await fetch("/api/adverse-classify", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ articleText: adverseText, subjectName: adverseSubject || undefined }) });
-      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
+      if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & AdverseClassifyResult;
       if (data.ok) setAdverseResult(data);
-    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
+    } catch (err) { setToolErrors((p) => ({ ...p, ["adverseClassify"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
     finally { setAdverseLoading(false); }
   };
 
@@ -2511,10 +2511,10 @@ export default function MlroAdvisorPage() {
     setTimelineLoading(true); setTimelineResult(null);
     try {
       const res = await fetch("/api/case-timeline", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ events: timelineEvents, subjectName: timelineSubject || undefined, caseRef: timelineCaseRef || undefined }) });
-      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
+      if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & CaseTimelineResult;
       if (data.ok) setTimelineResult(data);
-    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
+    } catch (err) { setToolErrors((p) => ({ ...p, ["caseTimeline"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
     finally { setTimelineLoading(false); }
   };
 
@@ -2523,10 +2523,10 @@ export default function MlroAdvisorPage() {
     setPredicateLoading(true); setPredicateResult(null);
     try {
       const res = await fetch("/api/ml-predicate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ facts: predicateFacts, suspectedActivity: predicateActivity || undefined, jurisdiction: predicateJurisdiction || undefined }) });
-      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
+      if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & MlPredicateResult;
       if (data.ok) setPredicateResult(data);
-    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
+    } catch (err) { setToolErrors((p) => ({ ...p, ["mlPredicate"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
     finally { setPredicateLoading(false); }
   };
 
@@ -2535,10 +2535,10 @@ export default function MlroAdvisorPage() {
     setClientRiskLoading(true); setClientRiskResult(null);
     try {
       const res = await fetch("/api/client-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ entity: clientRiskEntity, shareholders: clientRiskShareholders.filter((s) => s.name.trim()) }) });
-      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
+      if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & ClientRiskResult;
       if (data.ok) setClientRiskResult(data);
-    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
+    } catch (err) { setToolErrors((p) => ({ ...p, ["clientRisk"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
     finally { setClientRiskLoading(false); }
   };
 
@@ -2547,10 +2547,10 @@ export default function MlroAdvisorPage() {
     setJurisLoading(true); setJurisResult(null);
     try {
       const res = await fetch("/api/jurisdiction-intel", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ country: jurisCountry, context: jurisContext || undefined }) });
-      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
+      if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & JurisdictionIntelResult;
       if (data.ok) setJurisResult(data);
-    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
+    } catch (err) { setToolErrors((p) => ({ ...p, ["jurisdictionIntel"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
     finally { setJurisLoading(false); }
   };
 
@@ -2559,10 +2559,10 @@ export default function MlroAdvisorPage() {
     setUboLoading(true); setUboResult(null);
     try {
       const res = await fetch("/api/ubo-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ entity: uboEntity, registered: uboRegistered || undefined, ubos: uboEntries.filter((u) => u.name.trim()) }) });
-      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
+      if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & UboRiskResult;
       if (data.ok) setUboResult(data);
-    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
+    } catch (err) { setToolErrors((p) => ({ ...p, ["uboRisk"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
     finally { setUboLoading(false); }
   };
 
@@ -2572,10 +2572,10 @@ export default function MlroAdvisorPage() {
     setBenfordLoading(true); setBenfordResult(null);
     try {
       const res = await fetch("/api/benford", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ amounts, label: benfordLabel || undefined }) });
-      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
+      if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as BenfordResult;
       setBenfordResult(data);
-    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
+    } catch (err) { setToolErrors((p) => ({ ...p, ["benford"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
     finally { setBenfordLoading(false); }
   };
 
@@ -2587,7 +2587,7 @@ export default function MlroAdvisorPage() {
       const data = await res.json() as { ok: boolean; error?: string } & Record<string, unknown>;
       if (!data.ok) { setCryptoError(data.error ?? "Service unavailable"); }
       else { setCryptoResult(data); }
-    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
+    } catch (err) { setToolErrors((p) => ({ ...p, ["cryptoWallet"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
     finally { setCryptoLoading(false); }
   };
 
@@ -2596,10 +2596,10 @@ export default function MlroAdvisorPage() {
     setOnboardLoading(true); setOnboardResult(null);
     try {
       const res = await fetch("/api/onboarding-risk-tier", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(onboardInput) });
-      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
+      if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok?: boolean } & OnboardingRiskResult;
       setOnboardResult(data);
-    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
+    } catch (err) { setToolErrors((p) => ({ ...p, ["onboardingTier"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
     finally { setOnboardLoading(false); }
   };
 
@@ -3173,10 +3173,10 @@ export default function MlroAdvisorPage() {
           notes: escNotes || undefined,
         }),
       });
-      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
+      if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & EscalationResult;
       if (data.ok) setEscResult(data);
-    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
+    } catch (err) { setToolErrors((p) => ({ ...p, ["escalation"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
     finally { setEscLoading(false); }
   };
 
@@ -3211,10 +3211,10 @@ export default function MlroAdvisorPage() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ cases: cases.map((c) => ({ id: c.id, subject: c.subject, meta: c.meta, status: c.status, openedAt: c.opened })) }),
       });
-      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
+      if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & PatternResult;
       if (data.ok) setPatternResult(data);
-    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
+    } catch (err) { setToolErrors((p) => ({ ...p, ["casePatterns"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
     finally { setPatternLoading(false); }
   };
 
@@ -3228,10 +3228,10 @@ export default function MlroAdvisorPage() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ subjectName: briefSubject, jurisdiction: briefJurisdiction || undefined, entityType: briefEntityType || undefined }),
       });
-      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
+      if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & SubjectBrief;
       if (data.ok) setBriefResult(data);
-    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
+    } catch (err) { setToolErrors((p) => ({ ...p, ["subjectBrief"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
     finally { setBriefLoading(false); }
   };
 
@@ -3251,10 +3251,10 @@ export default function MlroAdvisorPage() {
           tenure: pepInput.tenure || undefined,
         }),
       });
-      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
+      if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & PepNetwork;
       if (data.ok) setPepNet(data);
-    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
+    } catch (err) { setToolErrors((p) => ({ ...p, ["pepNetwork"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
     finally { setPepNetLoading(false); }
   };
 
@@ -3279,10 +3279,10 @@ export default function MlroAdvisorPage() {
           context: sanctionsNexusInput.context || undefined,
         }),
       });
-      if (!res.ok) { console.error(`[hawkeye] mlro-advisor handler HTTP ${res.status}`); return; }
+      if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & SanctionsNexus;
       if (data.ok) setSanctionsNexus(data);
-    } catch (err) { console.error("[hawkeye] mlro-advisor handler threw:", err); }
+    } catch (err) { setToolErrors((p) => ({ ...p, ["sanctionsNexus"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
     finally { setSanctionsNexusLoading(false); }
   };
 
@@ -4292,6 +4292,11 @@ export default function MlroAdvisorPage() {
                   className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {escLoading ? "Deciding…" : "Get Escalation Decision"}
                 </button>
+                {toolErrors["escalation"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 text-11 text-red">
+                    ⚠ {toolErrors["escalation"]}
+                  </div>
+                )}
                 {escResult && (() => {
                   const r = escResult;
                   const decisionCls = r.decision === "FILE_STR" ? "bg-red text-white" : r.decision === "ESCALATE_INTERNAL" ? "bg-red-dim text-red" : r.decision === "ENHANCE_CDD" ? "bg-amber-dim text-amber" : r.decision === "MONITOR" ? "bg-brand-dim text-brand-deep" : "bg-green-dim text-green";
@@ -4385,6 +4390,11 @@ export default function MlroAdvisorPage() {
                   className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {patternLoading ? "Analyzing…" : "Detect Patterns Across Cases"}
                 </button>
+                {toolErrors["casePatterns"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 text-11 text-red">
+                    ⚠ {toolErrors["casePatterns"]}
+                  </div>
+                )}
                 {patternResult && (() => {
                   const p = patternResult;
                   const prCls = p.portfolioRisk === "critical" ? "bg-red text-white" : p.portfolioRisk === "high" ? "bg-red-dim text-red" : p.portfolioRisk === "medium" ? "bg-amber-dim text-amber" : "bg-green-dim text-green";
@@ -4450,6 +4460,11 @@ export default function MlroAdvisorPage() {
                   className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {briefLoading ? "Briefing…" : "Generate Intelligence Brief"}
                 </button>
+                {toolErrors["subjectBrief"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 text-11 text-red">
+                    ⚠ {toolErrors["subjectBrief"]}
+                  </div>
+                )}
                 {briefResult && (() => {
                   const b = briefResult;
                   const compCls = b.riskProfile.compositeRisk === "high" ? "bg-red-dim text-red" : b.riskProfile.compositeRisk === "medium" ? "bg-amber-dim text-amber" : "bg-green-dim text-green";
@@ -4682,6 +4697,11 @@ export default function MlroAdvisorPage() {
                   className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {pepNetLoading ? "Generating…" : "Generate PEP Network Intelligence"}
                 </button>
+                {toolErrors["pepNetwork"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 text-11 text-red">
+                    ⚠ {toolErrors["pepNetwork"]}
+                  </div>
+                )}
                 {pepNet && (() => {
                   const n = pepNet;
                   const ratingCls = n.riskRating === "critical" || n.riskRating === "high" ? "bg-red text-white" : "bg-amber-dim text-amber";
@@ -4819,6 +4839,11 @@ export default function MlroAdvisorPage() {
                   className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {sanctionsNexusLoading ? "Analyzing…" : "Analyze Sanctions Exposure"}
                 </button>
+                {toolErrors["sanctionsNexus"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 text-11 text-red">
+                    ⚠ {toolErrors["sanctionsNexus"]}
+                  </div>
+                )}
                 {sanctionsNexus && (() => {
                   const s = sanctionsNexus;
                   const overallCls = s.overallSanctionsRisk === "critical" || s.overallSanctionsRisk === "high" ? "text-red font-bold" : s.overallSanctionsRisk === "medium" ? "text-amber font-bold" : "text-green font-bold";
@@ -5115,6 +5140,11 @@ export default function MlroAdvisorPage() {
                   className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {tbmlLoading ? "Analyzing…" : "Analyze for TBML Risk"}
                 </button>
+                {toolErrors["tbml"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 text-11 text-red">
+                    ⚠ {toolErrors["tbml"]}
+                  </div>
+                )}
                 {tbmlResult && (() => {
                   const tb = tbmlResult;
                   const riskCls = tb.tbmlRisk === "critical" ? "bg-red text-white" : tb.tbmlRisk === "high" ? "bg-red-dim text-red" : tb.tbmlRisk === "medium" ? "bg-amber-dim text-amber" : tb.tbmlRisk === "low" ? "bg-brand-dim text-brand" : "bg-green-dim text-green";
@@ -5250,6 +5280,11 @@ export default function MlroAdvisorPage() {
                   className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {strNarrLoading ? "Drafting…" : "Draft STR Narrative"}
                 </button>
+                {toolErrors["strNarr"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 text-11 text-red">
+                    ⚠ {toolErrors["strNarr"]}
+                  </div>
+                )}
                 {strNarrResult && (() => {
                   const s = strNarrResult;
                   const qScore = s.qualityScore;
@@ -5358,6 +5393,11 @@ export default function MlroAdvisorPage() {
                   className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {wireLoading ? "Checking…" : "Check R.16 Compliance"}
                 </button>
+                {toolErrors["wireR16"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 text-11 text-red">
+                    ⚠ {toolErrors["wireR16"]}
+                  </div>
+                )}
                 {wireResult && (() => {
                   const w = wireResult;
                   const verdictCfg = {
@@ -5459,6 +5499,11 @@ export default function MlroAdvisorPage() {
                   className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {pfLoading ? "Screening…" : "Screen for Proliferation Financing Risk"}
                 </button>
+                {toolErrors["pfScreener"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 text-11 text-red">
+                    ⚠ {toolErrors["pfScreener"]}
+                  </div>
+                )}
                 {pfResult && (() => {
                   const pf = pfResult;
                   const riskCls = pf.pfRisk === "critical" ? "bg-red text-white" : pf.pfRisk === "high" ? "bg-red-dim text-red" : pf.pfRisk === "medium" ? "bg-amber-dim text-amber" : pf.pfRisk === "low" ? "bg-brand-dim text-brand" : "bg-green-dim text-green";
@@ -5583,6 +5628,11 @@ export default function MlroAdvisorPage() {
                   className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {memoLoading ? "Drafting Memo…" : "Generate MLRO Decision Memo"}
                 </button>
+                {toolErrors["mlroMemo"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 text-11 text-red">
+                    ⚠ {toolErrors["mlroMemo"]}
+                  </div>
+                )}
                 {memoResult && (() => {
                   const m = memoResult;
                   const riskCls = m.riskRating === "critical" ? "bg-red text-white" : m.riskRating === "high" ? "bg-red-dim text-red" : m.riskRating === "medium" ? "bg-amber-dim text-amber" : "bg-brand-dim text-brand";
@@ -5678,6 +5728,11 @@ export default function MlroAdvisorPage() {
                   className="text-11 font-semibold px-4 py-2 rounded bg-red text-white hover:bg-red/90 disabled:opacity-40">
                   {tfLoading ? "Screening…" : "Screen for Terrorism Financing Risk"}
                 </button>
+                {toolErrors["tfScreener"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 text-11 text-red">
+                    ⚠ {toolErrors["tfScreener"]}
+                  </div>
+                )}
                 {tfResult && (() => {
                   const tf = tfResult;
                   const riskCls = tf.tfRisk === "critical" ? "bg-red text-white" : tf.tfRisk === "high" ? "bg-red-dim text-red" : tf.tfRisk === "medium" ? "bg-amber-dim text-amber" : tf.tfRisk === "low" ? "bg-brand-dim text-brand" : "bg-green-dim text-green";
@@ -5784,6 +5839,11 @@ export default function MlroAdvisorPage() {
                 <button type="button" onClick={() => void runShellDetector()} disabled={shellLoading || !shellInput.entityName.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {shellLoading ? "Analysing structure…" : "Detect Shell Indicators"}
                 </button>
+                {toolErrors["shellDetector"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 text-11 text-red">
+                    ⚠ {toolErrors["shellDetector"]}
+                  </div>
+                )}
                 {shellResult && (() => {
                   const s = shellResult;
                   const riskCls = s.shellRisk === "critical" ? "bg-red text-white" : s.shellRisk === "high" ? "bg-red-dim text-red" : s.shellRisk === "medium" ? "bg-amber-dim text-amber" : s.shellRisk === "low" ? "bg-brand-dim text-brand-deep" : "bg-green-dim text-green";
@@ -5844,6 +5904,11 @@ export default function MlroAdvisorPage() {
                 <button type="button" onClick={() => void runAdverseClassify()} disabled={adverseLoading || !adverseText.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {adverseLoading ? "Classifying…" : "Classify Adverse Media"}
                 </button>
+                {toolErrors["adverseClassify"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 text-11 text-red">
+                    ⚠ {toolErrors["adverseClassify"]}
+                  </div>
+                )}
                 {adverseResult && (() => {
                   const ar = adverseResult;
                   const riskCls = ar.adverseRisk === "critical" ? "bg-red text-white" : ar.adverseRisk === "high" ? "bg-red-dim text-red" : ar.adverseRisk === "medium" ? "bg-amber-dim text-amber" : ar.adverseRisk === "low" ? "bg-brand-dim text-brand-deep" : "bg-green-dim text-green";
@@ -5904,6 +5969,11 @@ export default function MlroAdvisorPage() {
                 <button type="button" onClick={() => void runCaseTimeline()} disabled={timelineLoading || !timelineEvents.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {timelineLoading ? "Building timeline…" : "Build STR Timeline"}
                 </button>
+                {toolErrors["caseTimeline"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 text-11 text-red">
+                    ⚠ {toolErrors["caseTimeline"]}
+                  </div>
+                )}
                 {timelineResult && (() => {
                   const tl = timelineResult;
                   return (
@@ -5974,6 +6044,11 @@ export default function MlroAdvisorPage() {
                 <button type="button" onClick={() => void runMlPredicate()} disabled={predicateLoading || !predicateFacts.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {predicateLoading ? "Mapping predicates…" : "Map Predicate Offences"}
                 </button>
+                {toolErrors["mlPredicate"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 text-11 text-red">
+                    ⚠ {toolErrors["mlPredicate"]}
+                  </div>
+                )}
                 {predicateResult && (() => {
                   const pr = predicateResult;
                   return (
@@ -6052,6 +6127,11 @@ export default function MlroAdvisorPage() {
                     {clientRiskLoading ? "Scoring…" : "Score Client Risk"}
                   </button>
                 </div>
+                {toolErrors["clientRisk"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 text-11 text-red">
+                    ⚠ {toolErrors["clientRisk"]}
+                  </div>
+                )}
                 {clientRiskResult && (() => {
                   const cr = clientRiskResult;
                   const riskCls = cr.overallRisk === "critical" ? "bg-red text-white" : cr.overallRisk === "high" ? "bg-red-dim text-red" : cr.overallRisk === "medium" ? "bg-amber-dim text-amber" : "bg-green-dim text-green";
@@ -6091,6 +6171,11 @@ export default function MlroAdvisorPage() {
                 <button type="button" onClick={() => void runJurisdictionIntel()} disabled={jurisLoading || !jurisCountry.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {jurisLoading ? "Loading intelligence…" : "Get Jurisdiction Intel"}
                 </button>
+                {toolErrors["jurisdictionIntel"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 text-11 text-red">
+                    ⚠ {toolErrors["jurisdictionIntel"]}
+                  </div>
+                )}
                 {jurisResult && (() => {
                   const jr = jurisResult;
                   const riskCls = jr.overallRisk === "critical" ? "bg-red text-white" : jr.overallRisk === "high" ? "bg-red-dim text-red" : jr.overallRisk === "medium" ? "bg-amber-dim text-amber" : "bg-green-dim text-green";
@@ -6151,6 +6236,11 @@ export default function MlroAdvisorPage() {
                     {uboLoading ? "Analysing UBO chain…" : "Analyse UBO Risk"}
                   </button>
                 </div>
+                {toolErrors["uboRisk"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 text-11 text-red">
+                    ⚠ {toolErrors["uboRisk"]}
+                  </div>
+                )}
                 {uboResult && (() => {
                   const ur = uboResult;
                   const riskCls = ur.overallRisk === "critical" ? "bg-red text-white" : ur.overallRisk === "high" ? "bg-red-dim text-red" : ur.overallRisk === "medium" ? "bg-amber-dim text-amber" : "bg-green-dim text-green";
@@ -6198,6 +6288,11 @@ export default function MlroAdvisorPage() {
                 <button type="button" onClick={() => void runBenford()} disabled={benfordLoading || benfordAmounts.split(",").filter((s) => !isNaN(Number(s.trim())) && Number(s.trim()) > 0).length < 2} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {benfordLoading ? "Analysing…" : "Run Benford Analysis"}
                 </button>
+                {toolErrors["benford"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 text-11 text-red">
+                    ⚠ {toolErrors["benford"]}
+                  </div>
+                )}
                 {benfordResult && (() => {
                   const br = benfordResult;
                   if (!br.ok || br.risk === "insufficient-data") return (
@@ -6290,6 +6385,11 @@ export default function MlroAdvisorPage() {
                 <button type="button" onClick={() => void runOnboardingTier()} disabled={onboardLoading || !onboardInput.fullName.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {onboardLoading ? "Scoring…" : "Score Onboarding Risk"}
                 </button>
+                {toolErrors["onboardingTier"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 text-11 text-red">
+                    ⚠ {toolErrors["onboardingTier"]}
+                  </div>
+                )}
                 {onboardResult && (() => {
                   const or = onboardResult;
                   const tierCls = or.tier === "tier-1" ? "bg-red text-white" : or.tier === "tier-2" ? "bg-amber-dim text-amber" : "bg-green-dim text-green";

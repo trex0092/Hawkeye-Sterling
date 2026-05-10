@@ -73,12 +73,15 @@ export default function GleifPage() {
     setLoading(true); setError(null); setLeiResult(null);
     try {
       const res = await fetch(`/api/gleif?lei=${encodeURIComponent(lei.trim())}&depth=${depth}`);
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(body.error ?? `LEI lookup failed (HTTP ${res.status}) — please retry`);
+      }
       const data = await res.json() as GleifResult;
       if (!data.ok) setError(data.error ?? "LEI not found");
       else setLeiResult(data);
     } catch (err) {
-      console.error("[hawkeye] gleif lookup threw:", err);
-      setError("Request failed");
+      setError(err instanceof Error ? err.message : "Request failed");
     } finally { setLoading(false); }
   }
 
@@ -87,12 +90,15 @@ export default function GleifPage() {
     setLoading(true); setError(null); setSearchResults([]);
     try {
       const res = await fetch(`/api/gleif?q=${encodeURIComponent(query.trim())}&limit=20`);
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(body.error ?? `GLEIF search failed (HTTP ${res.status}) — please retry`);
+      }
       const data = await res.json() as { ok: boolean; results: SearchResult[]; error?: string };
       if (!data.ok) setError(data.error ?? "Search failed");
       else setSearchResults(data.results);
     } catch (err) {
-      console.error("[hawkeye] gleif search threw:", err);
-      setError("Request failed");
+      setError(err instanceof Error ? err.message : "Request failed");
     } finally { setLoading(false); }
   }
 

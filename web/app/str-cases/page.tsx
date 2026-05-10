@@ -212,11 +212,13 @@ export default function StrCasesPage() {
   const [submitting, setSubmitting] = useState(false);
   const [briefing, setBriefing] = useState<MlroBriefing | null>(null);
   const [briefingLoading, setBriefingLoading] = useState(false);
+  const [briefingError, setBriefingError] = useState<string | null>(null);
 
   // Cross-case pattern detection
   const [patternResult, setPatternResult] = useState<PatternDetectResult | null>(null);
   const [patternLoading, setPatternLoading] = useState(false);
   const [patternExpanded, setPatternExpanded] = useState(false);
+  const [patternError, setPatternError] = useState<string | null>(null);
 
   const open = cases.filter(
     (c) => c.status !== "Submitted" && c.status !== "Closed",
@@ -255,6 +257,7 @@ export default function StrCasesPage() {
 
   const generateBriefing = async () => {
     setBriefingLoading(true);
+    setBriefingError(null);
     try {
       const res = await fetch("/api/str-briefing", {
         method: "POST",
@@ -262,18 +265,20 @@ export default function StrCasesPage() {
         body: JSON.stringify({ cases }),
       });
       if (!res.ok) {
-        console.error(`[hawkeye] str-cases briefing HTTP ${res.status}`);
-        return;
+        const body = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(body.error ?? `Briefing generation failed (HTTP ${res.status}) — please retry`);
       }
       const data = await res.json() as { ok: boolean; briefing: MlroBriefing };
       if (data.ok) setBriefing(data.briefing);
     } catch (err) {
-      console.error("[hawkeye] str-cases briefing threw:", err);
+      const msg = err instanceof Error ? err.message : "Briefing generation failed — please retry";
+      setBriefingError(msg);
     } finally { setBriefingLoading(false); }
   };
 
   const runPatternDetection = async () => {
     setPatternLoading(true);
+    setPatternError(null);
     try {
       const res = await fetch("/api/str-cases/pattern-detect", {
         method: "POST",
@@ -291,14 +296,15 @@ export default function StrCasesPage() {
         }),
       });
       if (!res.ok) {
-        console.error(`[hawkeye] str-cases/pattern-detect HTTP ${res.status} — cross-case typology red-flags NOT computed`);
-        return;
+        const body = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(body.error ?? `Pattern detection failed (HTTP ${res.status}) — please retry`);
       }
       const data = await res.json() as PatternDetectResult;
       setPatternResult(data);
       setPatternExpanded(true);
     } catch (err) {
-      console.error("[hawkeye] str-cases/pattern-detect threw:", err);
+      const msg = err instanceof Error ? err.message : "Pattern detection failed — please retry";
+      setPatternError(msg);
     } finally { setPatternLoading(false); }
   };
 
@@ -453,6 +459,12 @@ export default function StrCasesPage() {
             />
       </KpiGrid>
 
+      {briefingError && (
+        <div className="mt-4 mb-2 rounded-lg border border-red/30 bg-red-dim px-4 py-3 text-12 text-red">
+          ⚠ {briefingError}
+        </div>
+      )}
+
       {briefing && (
         <div className="mt-4 mb-2 bg-bg-panel border border-brand/30 rounded-xl p-4 space-y-3">
           <div className="flex items-center justify-between">
@@ -518,6 +530,12 @@ export default function StrCasesPage() {
             </button>
           </div>
         </div>
+
+        {patternError && (
+          <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 text-11 text-red">
+            ⚠ {patternError}
+          </div>
+        )}
 
         {patternExpanded && patternResult && (
           <div className="mt-3 border-t border-hair-2 pt-3">

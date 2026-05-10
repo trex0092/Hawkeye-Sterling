@@ -129,7 +129,7 @@ function splitFullName(full: string): { first: string; last: string; middle?: st
 
 async function handleGoaml(req: Request): Promise<Response> {
   const gate = await enforce(req);
-  if (!gate.ok && gate.response.status === 429) return gate.response;
+  if (!gate.ok) return gate.response;
   const gateHeaders: Record<string, string> = gate.ok ? gate.headers : {};
 
   let body: Body;

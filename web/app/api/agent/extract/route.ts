@@ -140,7 +140,7 @@ function inferEvidenceMeta(schema: Schema, extracted: Record<string, unknown>): 
 
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
-  if (!gate.ok && gate.response.status === 429) return gate.response;
+  if (!gate.ok) return gate.response;
   const gateHeaders: Record<string, string> = gate.ok ? gate.headers : {};
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];

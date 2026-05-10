@@ -29,7 +29,7 @@ const VALID_VERDICTS = new Set<Verdict>([
 
 export async function GET(req: Request): Promise<NextResponse> {
   const gate = await enforce(req, { requireAuth: true });
-  if (!gate.ok && gate.response.status === 429) return gate.response;
+  if (!gate.ok) return gate.response;
   const gateHeaders: Record<string, string> = gate.ok ? gate.headers : {};
 
   const [records, s] = await Promise.all([listFeedback(), stats()]);
@@ -46,7 +46,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   // actors can't flood the feedback table and skew the FP signal
   // we feed back into the match-score calibrator.
   const gate = await enforce(req);
-  if (!gate.ok && gate.response.status === 429) return gate.response;
+  if (!gate.ok) return gate.response;
   const gateHeaders: Record<string, string> = gate.ok ? gate.headers : {};
 
   let body: FeedbackBody;

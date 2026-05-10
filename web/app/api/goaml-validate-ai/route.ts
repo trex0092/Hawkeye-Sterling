@@ -97,7 +97,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       },
       body: JSON.stringify({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 800,
+        max_tokens: 2048,
         system:
           "You are a UAE FIU goAML submission quality reviewer. Check whether this STR/SAR narrative meets all requirements under FDL 10/2025 Art.26, FATF R.20, and goAML submission standards. A valid narrative must answer Who/What/When/Where/Why, document the specific suspicion, avoid tipping-off language, and include enough detail for the FIU to act. Return ONLY valid JSON — no markdown fences, no commentary.",
         messages: [{ role: "user", content: userContent }],

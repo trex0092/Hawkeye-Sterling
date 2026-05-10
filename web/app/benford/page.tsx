@@ -86,10 +86,12 @@ export default function BenfordPage() {
   const [error, setError] = useState<string | null>(null);
   const [aiInterp, setAiInterp] = useState<BenfordInterpretation | null>(null);
   const [interpLoading, setInterpLoading] = useState(false);
+  const [interpError, setInterpError] = useState<string | null>(null);
 
   const interpretResult = async (r: BenfordResult) => {
     setInterpLoading(true);
     setAiInterp(null);
+    setInterpError(null);
     try {
       const res = await fetch("/api/benford-interpret", {
         method: "POST",
@@ -97,13 +99,14 @@ export default function BenfordPage() {
         body: JSON.stringify({ label: r.label, n: r.n, mad: r.mad, chiSquared: r.chiSquared, risk: r.risk, riskDetail: r.riskDetail, flaggedDigits: r.flaggedDigits, digits: r.digits }),
       });
       if (!res.ok) {
-        console.error(`[hawkeye] benford-interpret HTTP ${res.status}`);
-        return;
+        const body = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(body.error ?? `AI interpretation failed (HTTP ${res.status}) — please retry`);
       }
       const data = await res.json() as { ok: boolean } & BenfordInterpretation;
       if (data.ok) setAiInterp(data);
     } catch (err) {
-      console.error("[hawkeye] benford-interpret threw:", err);
+      const msg = err instanceof Error ? err.message : "AI interpretation failed — please retry";
+      setInterpError(msg);
     } finally { setInterpLoading(false); }
   };
 
@@ -126,9 +129,13 @@ export default function BenfordPage() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify(body),
       });
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(errBody.error ?? `Analysis failed (HTTP ${res.status}) — please retry`);
+      }
       const data = await res.json() as BenfordResult;
       setResult(data);
-    } catch { setError("Request failed"); }
+    } catch (e) { setError(e instanceof Error ? e.message : "Request failed"); }
     finally { setLoading(false); }
   }
 
@@ -328,6 +335,11 @@ export default function BenfordPage() {
               className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
               {interpLoading ? "Interpreting…" : "✦AI"}
             </button>
+            {interpError && (
+              <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 text-11 text-red">
+                ⚠ {interpError}
+              </div>
+            )}
             {aiInterp && (() => {
               const verdictCls = aiInterp.verdict === "refer_to_mlro" ? "bg-red text-white" : aiInterp.verdict === "enhanced_review" ? "bg-red-dim text-red" : aiInterp.verdict === "monitor" ? "bg-amber-dim text-amber" : "bg-green-dim text-green";
               const confCls = aiInterp.confidence === "high" ? "text-green" : aiInterp.confidence === "medium" ? "text-amber" : "text-red";
