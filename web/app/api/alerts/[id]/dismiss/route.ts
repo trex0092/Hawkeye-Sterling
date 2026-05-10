@@ -1,6 +1,7 @@
 // POST /api/alerts/[id]/dismiss — mark a designation alert as read/dismissed
 
 import { NextResponse } from "next/server";
+import { enforce } from "@/lib/server/enforce";
 import { dismissAlert } from "@/lib/server/alerts-store";
 
 export const runtime = "nodejs";
@@ -11,6 +12,9 @@ export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
+
   try {
     const { id } = await params;
     if (!id) return NextResponse.json({ ok: false, error: "id required" }, { status: 400 });

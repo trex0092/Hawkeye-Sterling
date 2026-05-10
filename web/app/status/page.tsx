@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 
 interface Check {
@@ -96,10 +96,27 @@ interface DeployEntry {
   state: "success" | "error" | "building";
 }
 
+interface ConfigCheck {
+  id: string;
+  label: string;
+  required: boolean;
+  present: boolean;
+}
+
+interface ConfigHealth {
+  requiredTotal: number;
+  requiredConfigured: number;
+  requiredMissing: string[];
+  optionalTotal: number;
+  optionalConfigured: number;
+  checks: ConfigCheck[];
+}
+
 interface StatusPayload {
   ok: true;
   status: "operational" | "degraded" | "down";
   externalStatus?: "operational" | "degraded" | "down";
+  configHealth?: ConfigHealth;
   uptimeSec: number;
   startedAt: string;
   now: string;
@@ -167,6 +184,7 @@ function effectiveSanctionsStatus(s: SanctionsCheck): Check["status"] {
 export default function StatusPage() {
   const [data, setData] = useState<StatusPayload | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const historyRef = useRef<Record<string, ("operational" | "degraded" | "down")[]>>({});
 
   useEffect(() => {
     let active = true;
@@ -179,7 +197,19 @@ export default function StatusPage() {
           return;
         }
         const payload = (await r.json()) as StatusPayload;
-        if (active) setData(payload);
+        if (active) {
+          setData(payload);
+          // Rolling 20-sample session history (≈ 5 min at 15 s polling)
+          const allSvcs = [
+            ...payload.checks,
+            ...payload.externalChecks,
+            { name: payload.sanctions.name, status: effectiveSanctionsStatus(payload.sanctions) },
+          ];
+          for (const svc of allSvcs) {
+            const prev = historyRef.current[svc.name] ?? [];
+            historyRef.current[svc.name] = [...prev.slice(-19), svc.status];
+          }
+        }
       } catch (e) {
         console.error("[hawkeye] status threw:", e);
         if (active) setErr(e instanceof Error ? e.message : String(e));
@@ -381,6 +411,10 @@ export default function StatusPage() {
               </div>
             </Section>
 
+            <Section title="Service dependency map">
+              <ServiceDependencyMap checks={data.checks} externalChecks={data.externalChecks} />
+            </Section>
+
             <Section title="External dependencies">
               <div className="space-y-2">
                 {data.externalChecks.map((c) => (
@@ -389,10 +423,63 @@ export default function StatusPage() {
               </div>
             </Section>
 
+            {/* Config / Environment Health ─────────────────────────────── */}
+            {data.configHealth && (
+              <Section title="Environment config">
+                <div className="bg-bg-panel border border-hair-2 rounded px-4 py-3">
+                  {/* Summary row */}
+                  <div className="flex items-center gap-3 mb-3">
+                    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded font-mono text-10 font-semibold ${
+                      data.configHealth.requiredMissing.length === 0
+                        ? "bg-green-dim text-green"
+                        : "bg-red-dim text-red"
+                    }`}>
+                      {data.configHealth.requiredMissing.length === 0 ? "✓" : "✗"}{" "}
+                      {data.configHealth.requiredConfigured}/{data.configHealth.requiredTotal} required
+                    </span>
+                    <span className="text-11 text-ink-3 font-mono">
+                      {data.configHealth.optionalConfigured}/{data.configHealth.optionalTotal} optional
+                    </span>
+                    {data.configHealth.requiredMissing.length === 0 && (
+                      <span className="text-11 text-ink-3">All required vars configured</span>
+                    )}
+                  </div>
+
+                  {/* Missing required — show prominently */}
+                  {data.configHealth.requiredMissing.length > 0 && (
+                    <div className="mb-3 bg-red-dim border border-red/20 rounded p-2">
+                      <div className="text-10 font-mono uppercase tracking-wide text-red mb-1">Missing required vars</div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {data.configHealth.requiredMissing.map((v) => (
+                          <span key={v} className="font-mono text-10 bg-red/10 text-red px-1.5 py-0.5 rounded border border-red/20 select-all">{v}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* All checks grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 text-11 font-mono">
+                    {data.configHealth.checks.map((c) => (
+                      <div key={c.id} className="flex items-center justify-between">
+                        <span className={c.required ? "text-ink-1" : "text-ink-3"}>{c.label}</span>
+                        <span className={c.present ? "text-green" : c.required ? "text-red font-semibold" : "text-ink-3"}>
+                          {c.present ? "✓ set" : c.required ? "✗ missing" : "— not set"}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-3 pt-2 border-t border-hair text-10 text-ink-3">
+                    Values are never returned — only presence is checked. Full config at <a href="/env-check" className="text-brand hover:underline">/env-check</a>.
+                  </div>
+                </div>
+              </Section>
+            )}
+
+            {/* Sanctions-list freshness ───────────────────────────────────── */}
             <Section title="Sanctions-list freshness">
               <div className="bg-bg-panel border border-hair-2 rounded px-4 py-3 mb-2">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-3">
+                <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+                  <div className="flex items-center gap-3 flex-wrap">
                     <span
                       className={`inline-flex items-center px-2 py-0.5 rounded font-mono text-10 font-semibold ${STATUS_TONE[effectiveSanctionsStatus(data.sanctions)]}`}
                     >
@@ -410,8 +497,11 @@ export default function StatusPage() {
                       }
                     </span>
                   </div>
+                  {/* SLO hint */}
+                  <span className="text-10 font-mono text-ink-3">SLO: refresh every 24h · alert at 48h</span>
                 </div>
-                {data.sanctions.lists.length > 0 && (
+                <SanctionsRefreshButton />
+                {data.sanctions.lists.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1 text-11 font-mono">
                     {data.sanctions.lists.map((l) => {
                       const tone =
@@ -422,17 +512,22 @@ export default function StatusPage() {
                             : l.ageH > 24
                               ? "text-amber"
                               : "text-green";
+                      const nextRefreshH = l.ageH != null ? Math.max(0, 24 - l.ageH) : null;
                       return (
-                        <div key={l.id} className="flex justify-between">
+                        <div key={l.id} className="flex justify-between gap-2">
                           <span className="text-ink-2">{l.id}</span>
                           <span className={tone}>
                             {l.ageH == null
                               ? "not fetched yet"
-                              : `${l.ageH}h ago${l.recordCount ? ` · ${l.recordCount.toLocaleString()} records` : ""}`}
+                              : `${l.ageH}h ago${l.recordCount ? ` · ${l.recordCount.toLocaleString()} records` : ""}${nextRefreshH === 0 ? " · refresh due" : nextRefreshH != null ? ` · next in ${nextRefreshH}h` : ""}`}
                           </span>
                         </div>
                       );
                     })}
+                  </div>
+                ) : (
+                  <div className="text-11 font-mono text-ink-3">
+                    No list data yet — sanctions cron hasn't run. Lists refresh automatically on the 24-hour schedule.
                   </div>
                 )}
               </div>
@@ -448,6 +543,16 @@ export default function StatusPage() {
                   <UptimeTimeline key={c.name} name={c.name} samples={synth90d(c.status)} />
                 ))}
               </div>
+            </Section>
+
+            <Section title="Session activity (last 5 min)">
+              <SessionActivity
+                historyRef={historyRef}
+                checks={data.checks}
+                externalChecks={data.externalChecks}
+                sanctionsName={data.sanctions.name}
+                sanctionsStatus={effectiveSanctionsStatus(data.sanctions)}
+              />
             </Section>
 
             <Section title="Incident history">
@@ -591,10 +696,229 @@ export default function StatusPage() {
   );
 }
 
+function SanctionsRefreshButton() {
+  const [state, setState] = useState<"idle" | "running" | "done" | "error">("idle");
+  const [msg, setMsg] = useState("");
+
+  const run = async () => {
+    setState("running");
+    setMsg("");
+    try {
+      const res = await fetch("/api/sanctions/refresh", { method: "POST" });
+      const json = await res.json() as { ok?: boolean; message?: string; error?: string };
+      if (json.ok) {
+        setMsg(json.message ?? "Cache invalidated — live lists reload on next screen.");
+        setState("done");
+      } else {
+        setMsg(json.error ?? "Refresh failed.");
+        setState("error");
+      }
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : "Network error");
+      setState("error");
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-2 flex-wrap mt-2">
+      <button
+        type="button"
+        onClick={() => void run()}
+        disabled={state === "running"}
+        className="text-10 font-mono font-semibold px-2.5 py-1 rounded border border-brand/50 bg-brand-dim text-brand-deep hover:bg-brand/20 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity"
+      >
+        {state === "running" ? "Invalidating…" : "Refresh Cache"}
+      </button>
+      {state === "done" && (
+        <span className="text-10 text-green font-mono">{msg}</span>
+      )}
+      {state === "error" && (
+        <span className="text-10 text-red font-mono">{msg}</span>
+      )}
+      {state === "idle" && (
+        <span className="text-10 text-ink-3 font-mono">Invalidates the in-process cache — live data reloads on next screen.</span>
+      )}
+    </div>
+  );
+}
+
+type SvcStatus = "operational" | "degraded" | "down";
+
+function DependencyNode({
+  label,
+  status,
+  external = false,
+}: {
+  label: string;
+  status?: SvcStatus;
+  external?: boolean;
+}) {
+  const dot =
+    status === "operational"
+      ? "bg-green"
+      : status === "degraded"
+        ? "bg-amber"
+        : status === "down"
+          ? "bg-red"
+          : "bg-ink-3";
+  const border = external ? "border-dashed border-hair-2" : "border-hair-2";
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded border ${border} bg-bg-1 font-mono text-10 text-ink-1 whitespace-nowrap`}>
+      <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${dot}`} />
+      {label}
+    </span>
+  );
+}
+
+function Arrow() {
+  return <span className="text-ink-3 font-mono text-11 select-none">→</span>;
+}
+
+function ServiceDependencyMap({ checks, externalChecks }: { checks: Check[]; externalChecks: Check[] }) {
+  const find = (name: string) => checks.find((c) => c.name === name)?.status ?? externalChecks.find((c) => c.name === name)?.status;
+
+  const rows: Array<{ label: string; from: string; to: string[] }> = [
+    { label: "Core AI",     from: "super-brain",        to: ["adverse-media", "weaponized-brain"] },
+    { label: "Screening",   from: "screening",           to: ["sanctions-lists"] },
+    { label: "Adverse media", from: "adverse-media",    to: ["Google News", "GDELT"] },
+    { label: "Workflow",    from: "Asana",               to: [] },
+  ];
+
+  return (
+    <div className="bg-bg-panel border border-hair-2 rounded px-4 py-4 space-y-2.5">
+      {/* Top-level: platform → super-brain → Anthropic */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <DependencyNode label="platform" />
+        <Arrow />
+        <DependencyNode label="super-brain" status={find("super-brain")} />
+        <Arrow />
+        <DependencyNode label="Anthropic API" external />
+      </div>
+      {/* Screening */}
+      <div className="flex items-center gap-2 flex-wrap pl-6">
+        <DependencyNode label="screening" status={find("screening")} />
+        <Arrow />
+        <DependencyNode label="candidates-loader" status={find("screening")} />
+        <Arrow />
+        {["UN Consolidated", "OFAC SDN", "OFAC Cons.", "EU", "UK", "FATF", "UAE EOCN", "UAE LTL"].map((l) => (
+          <DependencyNode key={l} label={l} external />
+        ))}
+      </div>
+      {/* Adverse media */}
+      <div className="flex items-center gap-2 flex-wrap pl-6">
+        <DependencyNode label="adverse-media" status={find("adverse-media")} />
+        <Arrow />
+        <DependencyNode label="Google News RSS" status={find("Google News")} external />
+        <DependencyNode label="GDELT" status={find("GDELT")} external />
+      </div>
+      {/* Weaponized brain */}
+      <div className="flex items-center gap-2 flex-wrap pl-6">
+        <DependencyNode label="weaponized-brain" status={find("weaponized-brain")} />
+        <Arrow />
+        <DependencyNode label="brain-soul manifest" />
+        <DependencyNode label="amplifier directives" />
+      </div>
+      {/* Storage */}
+      <div className="flex items-center gap-2 flex-wrap pl-6">
+        <DependencyNode label="storage" status={find("storage")} />
+        <Arrow />
+        <DependencyNode label="Netlify Blobs" external />
+      </div>
+      {/* Asana */}
+      <div className="flex items-center gap-2 flex-wrap pl-6">
+        <DependencyNode label="Asana" status={find("Asana")} external />
+        <Arrow />
+        <DependencyNode label="19 workflow boards" external />
+      </div>
+      <div className="pt-1 border-t border-hair text-10 text-ink-3 font-mono">
+        Solid border = internal · Dashed border = external dependency · Dot = live status
+      </div>
+    </div>
+  );
+}
+
+function SessionActivity({ historyRef, checks, externalChecks, sanctionsName, sanctionsStatus }: {
+  historyRef: React.MutableRefObject<Record<string, SvcStatus[]>>;
+  checks: Check[];
+  externalChecks: Check[];
+  sanctionsName: string;
+  sanctionsStatus: SvcStatus;
+}) {
+  const allSvcs = [
+    ...checks.map((c) => c.name),
+    ...externalChecks.map((c) => c.name),
+    sanctionsName,
+  ];
+  const dotColor = (s: SvcStatus) =>
+    s === "operational" ? "bg-green" : s === "degraded" ? "bg-amber" : "bg-red";
+
+  return (
+    <div className="bg-bg-panel border border-hair-2 rounded px-4 py-3">
+      <div className="text-10 font-mono text-ink-3 mb-2">Last 20 polls · each dot = 15 s · green=ok · amber=degraded · red=down</div>
+      <div className="space-y-1.5">
+        {allSvcs.map((name) => {
+          const samples = historyRef.current[name] ?? [];
+          if (samples.length === 0) return null;
+          const errCount = samples.filter((s) => s !== "operational").length;
+          return (
+            <div key={name} className="flex items-center gap-2">
+              <span className="text-10 font-mono text-ink-2 w-36 shrink-0 truncate">{name}</span>
+              <div className="flex gap-px">
+                {samples.map((s, i) => (
+                  <div key={i} className={`w-2.5 h-3 rounded-sm ${dotColor(s)}`} title={`Poll -${samples.length - 1 - i}: ${s}`} />
+                ))}
+              </div>
+              {errCount > 0 && (
+                <span className="text-10 font-mono text-amber">{errCount} non-ok</span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+interface CmResult { envVar: string; name: string; gid: string | null; status: "created" | "already_exists" | "failed"; error?: string }
+
 function AsanaRebuildSection() {
   const [state, setState] = useState<"idle" | "running" | "done" | "error">("idle");
   const [results, setResults] = useState<Array<{ name: string; deleted: number; created: number; errors: string[] }>>([]);
   const [errMsg, setErrMsg] = useState("");
+
+  const [cmState, setCmState] = useState<"idle" | "running" | "done" | "error">("idle");
+  const [cmResults, setCmResults] = useState<CmResult[]>([]);
+  const [cmEnvBlock, setCmEnvBlock] = useState("");
+  const [cmErr, setCmErr] = useState("");
+
+  const createMissing = async () => {
+    setCmState("running");
+    setCmResults([]);
+    setCmEnvBlock("");
+    setCmErr("");
+    try {
+      const res = await fetch("/api/asana-create-missing", { method: "POST" });
+      let json: { ok: boolean; results?: CmResult[]; envBlock?: string; summary?: { created: number; alreadyExists: number; failed: number }; error?: string };
+      try {
+        json = await res.json() as typeof json;
+      } catch {
+        setCmErr(`Server error (HTTP ${res.status}) — check Netlify function logs.`);
+        setCmState("error");
+        return;
+      }
+      setCmResults(json.results ?? []);
+      setCmEnvBlock(json.envBlock ?? "");
+      if (json.ok || (json.results && json.results.length > 0)) {
+        setCmState("done");
+      } else {
+        setCmErr(json.error ?? "Create failed — check ASANA_TOKEN.");
+        setCmState("error");
+      }
+    } catch (e) {
+      setCmErr(e instanceof Error ? e.message : "Network error");
+      setCmState("error");
+    }
+  };
 
   const run = async () => {
     setState("running");
@@ -657,15 +981,60 @@ function AsanaRebuildSection() {
             Rebuilds sections on all configured boards (up to 19). Boards missing a GID env var are skipped.
           </div>
         </div>
-        <button
-          type="button"
-          onClick={run}
-          disabled={state === "running"}
-          className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity shrink-0"
-        >
-          {state === "running" ? "Rebuilding…" : "Rebuild Sections"}
-        </button>
+        <div className="flex gap-2 flex-wrap shrink-0">
+          <button
+            type="button"
+            onClick={() => void createMissing()}
+            disabled={cmState === "running" || state === "running"}
+            className="px-3 py-2 rounded border border-brand text-brand bg-brand-dim text-12 font-semibold hover:bg-brand hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            {cmState === "running" ? "Creating…" : "Create Missing Projects"}
+          </button>
+          <button
+            type="button"
+            onClick={run}
+            disabled={state === "running" || cmState === "running"}
+            className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity"
+          >
+            {state === "running" ? "Rebuilding…" : "Rebuild Sections"}
+          </button>
+        </div>
       </div>
+
+      {/* Create-missing results */}
+      {cmState !== "idle" && (
+        <div className={`mb-4 border rounded-lg p-3 ${cmState === "error" ? "border-red/30 bg-red-dim" : "border-hair-2 bg-bg-1"}`}>
+          {cmState === "running" && (
+            <div className="text-12 text-ink-2">Checking Asana for missing projects…</div>
+          )}
+          {cmState === "error" && (
+            <div className="text-12 text-red">{cmErr}</div>
+          )}
+          {cmState === "done" && cmResults.length > 0 && (
+            <div className="space-y-2">
+              <div className="text-11 font-mono text-ink-2 mb-2">
+                {cmResults.filter((r) => r.status === "created").length} created ·{" "}
+                {cmResults.filter((r) => r.status === "already_exists").length} already exist ·{" "}
+                {cmResults.filter((r) => r.status === "failed").length} failed
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-1 text-11 font-mono">
+                {cmResults.map((r) => (
+                  <div key={r.envVar} className="flex items-center justify-between gap-2">
+                    <span className={r.status === "failed" ? "text-red" : r.status === "created" ? "text-green" : "text-ink-3"}>{r.name}</span>
+                    <span className="text-ink-3">{r.gid ?? r.error ?? "—"}</span>
+                  </div>
+                ))}
+              </div>
+              {cmEnvBlock && (
+                <div className="mt-3">
+                  <div className="text-10 font-mono uppercase tracking-wide text-ink-3 mb-1">Copy to Netlify → Environment variables → Import .env</div>
+                  <pre className="text-10 font-mono bg-bg-panel border border-hair-2 rounded p-2 overflow-auto select-all whitespace-pre-wrap">{cmEnvBlock}</pre>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Env-var reference — 10 new boards that need GIDs in Netlify */}
       <div className="mb-4 border border-hair-1 rounded-lg overflow-hidden">

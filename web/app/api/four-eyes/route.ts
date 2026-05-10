@@ -79,7 +79,11 @@ async function generateApprovalSummary(
 
   const text = msg.content[0]?.type === "text" ? msg.content[0].text : "";
   const stripped = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
-  return JSON.parse(stripped) as ApprovalSummary;
+  try {
+    return JSON.parse(stripped) as ApprovalSummary;
+  } catch {
+    return null;
+  }
 }
 
 async function handleGet(req: Request): Promise<NextResponse> {

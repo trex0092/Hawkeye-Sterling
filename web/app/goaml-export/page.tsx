@@ -110,7 +110,11 @@ export default function GoAmlExportPage() {
         return;
       }
       const data = await res.json() as { ok: boolean; score: number; grade: string; missingElements: string[]; tippingOffRisk: boolean; tippingOffFlags: string[]; suggestions: string[]; fatalIssues: string[]; fiuReadiness: string };
-      if (data.ok) setAiValidation(data);
+      if (data.ok) {
+        setAiValidation(data);
+      } else {
+        setAiValidateError((data as { error?: string }).error ?? "AI validation returned an error. Please try again.");
+      }
     } catch (err) {
       console.error("[hawkeye] goaml-validate-ai threw:", err);
       setAiValidateError("AI validation could not be reached. Please check your connection and try again.");
