@@ -80,7 +80,7 @@ export async function POST(req: Request) {
       headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
       body: JSON.stringify({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 800,
+        max_tokens: 2048,
         system: `You are a UAE AML compliance specialist checking wire transfer compliance with FATF Recommendation 16 (Wire Transfers) and UAE FDL 10/2025 Art.19.
 
 Evaluate whether the wire transfer details provided meet FATF R.16 mandatory originator and beneficiary information requirements. For transfers ≥ USD 1,000 (AED ~3,673): full name, account number, and address/national ID required for originator; full name and account number for beneficiary. For transfers < USD 1,000: name and account number sufficient.

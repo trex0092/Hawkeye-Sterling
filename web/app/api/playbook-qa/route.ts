@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
     },
     body: JSON.stringify({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 800,
+      max_tokens: 1200,
       system:
         "You are an AML compliance expert for a UAE-licensed DPMS/VASP. You answer \"what do I do if…\" questions using UAE AML procedures, FATF recommendations, and compliance playbooks. Always cite the specific regulatory basis (FDL article, FATF Rec, Cabinet Decision, MoE Circular). Keep answers concise and action-oriented — numbered steps where appropriate. Output JSON with: answer (markdown allowed, max 400 words), citations (array of strings like \"FATF R.20\", \"FDL Art.26\"), confidence (0-1), relatedPlaybooks (array of playbook names relevant to this question).",
       messages: [

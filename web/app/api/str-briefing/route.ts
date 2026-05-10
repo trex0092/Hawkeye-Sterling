@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
     },
     body: JSON.stringify({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 800,
+      max_tokens: 1500,
       system:
         "You are preparing a concise daily briefing for the MLRO about active STR/SAR cases. Identify priority cases needing immediate attention, flag any apparent duplicates (same subject filed multiple times), note regulatory deadlines (FDL Art. 26 requires filing within 30 days of detection), and list required MLRO actions. Output clean JSON only.",
       messages: [

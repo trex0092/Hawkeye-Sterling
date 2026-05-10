@@ -1888,15 +1888,11 @@ export default function MlroAdvisorPage() {
           redFlags: typoInput.redFlags ? typoInput.redFlags.split(",").map((s) => s.trim()).filter(Boolean) : undefined,
         }),
       });
-      if (!res.ok) {
-        console.error(`[hawkeye] typology-match HTTP ${res.status}`);
-        return;
-      }
+      if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & TypologyMatch;
       if (data.ok) setTypoMatch(data);
-    } catch (err) {
-      console.error("[hawkeye] typology-match threw:", err);
-    } finally { setTypoMatchLoading(false); }
+    } catch (err) { setToolErrors((p) => ({ ...p, ["typologyMatch"]: err instanceof Error ? err.message : "Typology match failed — please retry" })); }
+    finally { setTypoMatchLoading(false); }
   };
 
   // Transaction Narrative Analyzer
@@ -1917,15 +1913,11 @@ export default function MlroAdvisorPage() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ narrative: txnNarrative, customerType: txnCustomerType || undefined, jurisdiction: txnJurisdiction || undefined, amounts: txnAmounts || undefined }),
       });
-      if (!res.ok) {
-        console.error(`[hawkeye] transaction-narrative HTTP ${res.status}`);
-        return;
-      }
+      if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & TransactionAnalysis;
       if (data.ok) setTxnResult(data);
-    } catch (err) {
-      console.error("[hawkeye] transaction-narrative threw:", err);
-    } finally { setTxnLoading(false); }
+    } catch (err) { setToolErrors((p) => ({ ...p, ["txnNarrative"]: err instanceof Error ? err.message : "Transaction analysis failed — please retry" })); }
+    finally { setTxnLoading(false); }
   };
 
   // EDD Questionnaire Generator
@@ -1954,15 +1946,11 @@ export default function MlroAdvisorPage() {
           context: eddContext || undefined,
         }),
       });
-      if (!res.ok) {
-        console.error(`[hawkeye] edd-questionnaire HTTP ${res.status}`);
-        return;
-      }
+      if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & EddQuestionnaire;
       if (data.ok) setEddResult(data);
-    } catch (err) {
-      console.error("[hawkeye] edd-questionnaire threw:", err);
-    } finally { setEddLoading(false); }
+    } catch (err) { setToolErrors((p) => ({ ...p, ["eddQuestionnaire"]: err instanceof Error ? err.message : "EDD questionnaire failed — please retry" })); }
+    finally { setEddLoading(false); }
   };
 
   // TBML Trade Document Analyzer
@@ -4566,6 +4554,11 @@ export default function MlroAdvisorPage() {
                 >
                   {typoMatchLoading ? "Matching…" : "Match Typologies"}
                 </button>
+                {toolErrors["typologyMatch"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 text-11 text-red">
+                    ⚠ {toolErrors["typologyMatch"]}
+                  </div>
+                )}
                 {typoMatch && (() => {
                   const tm = typoMatch;
                   const strengthCls = (s: string) => s === "strong" ? "bg-red text-white" : s === "moderate" ? "bg-amber-dim text-amber" : "bg-blue-dim text-blue";
@@ -4947,6 +4940,11 @@ export default function MlroAdvisorPage() {
                   className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {txnLoading ? "Analyzing…" : "Analyze Transaction"}
                 </button>
+                {toolErrors["txnNarrative"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 text-11 text-red">
+                    ⚠ {toolErrors["txnNarrative"]}
+                  </div>
+                )}
                 {txnResult && (() => {
                   const t = txnResult;
                   const riskCls = t.riskVerdict === "critical" ? "bg-red text-white" : t.riskVerdict === "high" ? "bg-red-dim text-red" : t.riskVerdict === "medium" ? "bg-amber-dim text-amber" : t.riskVerdict === "low" ? "bg-brand-dim text-brand" : "bg-green-dim text-green";
@@ -5046,6 +5044,11 @@ export default function MlroAdvisorPage() {
                   className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {eddLoading ? "Generating…" : "Generate EDD Questionnaire"}
                 </button>
+                {toolErrors["eddQuestionnaire"] && (
+                  <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 text-11 text-red">
+                    ⚠ {toolErrors["eddQuestionnaire"]}
+                  </div>
+                )}
                 {eddResult && (() => {
                   const e = eddResult;
                   const lvlCls = e.eddLevel === "intensive" ? "bg-red text-white" : e.eddLevel === "enhanced" ? "bg-amber-dim text-amber" : "bg-brand-dim text-brand";
