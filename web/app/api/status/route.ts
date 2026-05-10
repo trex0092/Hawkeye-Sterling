@@ -932,10 +932,54 @@ export async function GET(): Promise<NextResponse> {
     ],
   };
 
+  // Config health — show which critical env vars are set without
+  // exposing actual values. Names are disclosed (they're well-known)
+  // but values are never returned. Helps MLRO ops spot misconfigurations
+  // (e.g. missing ASANA_TOKEN causing "Rebuild failed") at a glance.
+  const CONFIG_CHECKS: Array<{ id: string; label: string; required: boolean }> = [
+    { id: "anthropic",   label: "ANTHROPIC_API_KEY",       required: true  },
+    { id: "admin_token", label: "ADMIN_TOKEN",              required: true  },
+    { id: "audit_chain", label: "AUDIT_CHAIN_SECRET",       required: true  },
+    { id: "app_url",     label: "NEXT_PUBLIC_APP_URL",      required: true  },
+    { id: "ongoing_tok", label: "ONGOING_RUN_TOKEN",        required: true  },
+    { id: "sanct_tok",   label: "SANCTIONS_CRON_TOKEN",     required: true  },
+    { id: "goaml_ent",   label: "HAWKEYE_ENTITIES",         required: true  },
+    { id: "asana_tok",   label: "ASANA_TOKEN",              required: false },
+    { id: "asana_ws",    label: "ASANA_WORKSPACE_GID",      required: false },
+    { id: "asana_proj",  label: "ASANA_PROJECT_GID",        required: false },
+    { id: "redis",       label: "UPSTASH_REDIS_REST_URL",   required: false },
+  ];
+  const VAR_MAP: Record<string, string[]> = {
+    anthropic:   ["ANTHROPIC_API_KEY"],
+    admin_token: ["ADMIN_TOKEN"],
+    audit_chain: ["AUDIT_CHAIN_SECRET"],
+    app_url:     ["NEXT_PUBLIC_APP_URL"],
+    ongoing_tok: ["ONGOING_RUN_TOKEN"],
+    sanct_tok:   ["SANCTIONS_CRON_TOKEN"],
+    goaml_ent:   ["HAWKEYE_ENTITIES", "GOAML_RENTITY_ID"],
+    asana_tok:   ["ASANA_TOKEN"],
+    asana_ws:    ["ASANA_WORKSPACE_GID"],
+    asana_proj:  ["ASANA_PROJECT_GID"],
+    redis:       ["UPSTASH_REDIS_REST_URL"],
+  };
+  const configChecks = CONFIG_CHECKS.map((c) => ({
+    ...c,
+    present: (VAR_MAP[c.id] ?? [c.label]).some((v) => !!process.env[v]?.trim()),
+  }));
+  const configHealth = {
+    requiredTotal:       configChecks.filter((c) => c.required).length,
+    requiredConfigured:  configChecks.filter((c) => c.required && c.present).length,
+    requiredMissing:     configChecks.filter((c) => c.required && !c.present).map((c) => c.label),
+    optionalTotal:       configChecks.filter((c) => !c.required).length,
+    optionalConfigured:  configChecks.filter((c) => !c.required && c.present).length,
+    checks: configChecks,
+  };
+
   return NextResponse.json({
     ok: true,
     status: worstStatus,
     externalStatus,
+    configHealth,
     uptimeSec,
     startedAt: STARTED_AT,
     now: new Date().toISOString(),

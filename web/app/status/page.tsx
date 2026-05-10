@@ -96,10 +96,27 @@ interface DeployEntry {
   state: "success" | "error" | "building";
 }
 
+interface ConfigCheck {
+  id: string;
+  label: string;
+  required: boolean;
+  present: boolean;
+}
+
+interface ConfigHealth {
+  requiredTotal: number;
+  requiredConfigured: number;
+  requiredMissing: string[];
+  optionalTotal: number;
+  optionalConfigured: number;
+  checks: ConfigCheck[];
+}
+
 interface StatusPayload {
   ok: true;
   status: "operational" | "degraded" | "down";
   externalStatus?: "operational" | "degraded" | "down";
+  configHealth?: ConfigHealth;
   uptimeSec: number;
   startedAt: string;
   now: string;
@@ -389,10 +406,63 @@ export default function StatusPage() {
               </div>
             </Section>
 
+            {/* Config / Environment Health ─────────────────────────────── */}
+            {data.configHealth && (
+              <Section title="Environment config">
+                <div className="bg-bg-panel border border-hair-2 rounded px-4 py-3">
+                  {/* Summary row */}
+                  <div className="flex items-center gap-3 mb-3">
+                    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded font-mono text-10 font-semibold ${
+                      data.configHealth.requiredMissing.length === 0
+                        ? "bg-green-dim text-green"
+                        : "bg-red-dim text-red"
+                    }`}>
+                      {data.configHealth.requiredMissing.length === 0 ? "✓" : "✗"}{" "}
+                      {data.configHealth.requiredConfigured}/{data.configHealth.requiredTotal} required
+                    </span>
+                    <span className="text-11 text-ink-3 font-mono">
+                      {data.configHealth.optionalConfigured}/{data.configHealth.optionalTotal} optional
+                    </span>
+                    {data.configHealth.requiredMissing.length === 0 && (
+                      <span className="text-11 text-ink-3">All required vars configured</span>
+                    )}
+                  </div>
+
+                  {/* Missing required — show prominently */}
+                  {data.configHealth.requiredMissing.length > 0 && (
+                    <div className="mb-3 bg-red-dim border border-red/20 rounded p-2">
+                      <div className="text-10 font-mono uppercase tracking-wide text-red mb-1">Missing required vars</div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {data.configHealth.requiredMissing.map((v) => (
+                          <span key={v} className="font-mono text-10 bg-red/10 text-red px-1.5 py-0.5 rounded border border-red/20 select-all">{v}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* All checks grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 text-11 font-mono">
+                    {data.configHealth.checks.map((c) => (
+                      <div key={c.id} className="flex items-center justify-between">
+                        <span className={c.required ? "text-ink-1" : "text-ink-3"}>{c.label}</span>
+                        <span className={c.present ? "text-green" : c.required ? "text-red font-semibold" : "text-ink-3"}>
+                          {c.present ? "✓ set" : c.required ? "✗ missing" : "— not set"}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-3 pt-2 border-t border-hair text-10 text-ink-3">
+                    Values are never returned — only presence is checked. Full config at <a href="/env-check" className="text-brand hover:underline">/env-check</a>.
+                  </div>
+                </div>
+              </Section>
+            )}
+
+            {/* Sanctions-list freshness ───────────────────────────────────── */}
             <Section title="Sanctions-list freshness">
               <div className="bg-bg-panel border border-hair-2 rounded px-4 py-3 mb-2">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-3">
+                <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+                  <div className="flex items-center gap-3 flex-wrap">
                     <span
                       className={`inline-flex items-center px-2 py-0.5 rounded font-mono text-10 font-semibold ${STATUS_TONE[effectiveSanctionsStatus(data.sanctions)]}`}
                     >
@@ -410,8 +480,10 @@ export default function StatusPage() {
                       }
                     </span>
                   </div>
+                  {/* SLO hint */}
+                  <span className="text-10 font-mono text-ink-3">SLO: refresh every 24h · alert at 48h</span>
                 </div>
-                {data.sanctions.lists.length > 0 && (
+                {data.sanctions.lists.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1 text-11 font-mono">
                     {data.sanctions.lists.map((l) => {
                       const tone =
@@ -422,17 +494,22 @@ export default function StatusPage() {
                             : l.ageH > 24
                               ? "text-amber"
                               : "text-green";
+                      const nextRefreshH = l.ageH != null ? Math.max(0, 24 - l.ageH) : null;
                       return (
-                        <div key={l.id} className="flex justify-between">
+                        <div key={l.id} className="flex justify-between gap-2">
                           <span className="text-ink-2">{l.id}</span>
                           <span className={tone}>
                             {l.ageH == null
                               ? "not fetched yet"
-                              : `${l.ageH}h ago${l.recordCount ? ` · ${l.recordCount.toLocaleString()} records` : ""}`}
+                              : `${l.ageH}h ago${l.recordCount ? ` · ${l.recordCount.toLocaleString()} records` : ""}${nextRefreshH === 0 ? " · refresh due" : nextRefreshH != null ? ` · next in ${nextRefreshH}h` : ""}`}
                           </span>
                         </div>
                       );
                     })}
+                  </div>
+                ) : (
+                  <div className="text-11 font-mono text-ink-3">
+                    No list data yet — sanctions cron hasn't run. Lists refresh automatically on the 24-hour schedule.
                   </div>
                 )}
               </div>
