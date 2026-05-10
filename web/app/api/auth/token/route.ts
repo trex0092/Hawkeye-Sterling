@@ -62,12 +62,13 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   } catch (err) {
     console.error("[auth/token]", err instanceof Error ? err.message : err);
-    return NextResponse.json({
-      ok: true,
-      offline: true,
-      token: null,
-      note: `JWT signing unavailable: ${err instanceof Error ? err.message : "JWT_SECRET may not be configured"}`,
-    }, { headers: rateLimitHeaders(rl) });
+    return NextResponse.json(
+      {
+        ok: false,
+        error: `JWT signing unavailable: ${err instanceof Error ? err.message : "JWT_SIGNING_SECRET may not be configured"}`,
+      },
+      { status: 503, headers: rateLimitHeaders(rl) },
+    );
   }
 
   return NextResponse.json(
