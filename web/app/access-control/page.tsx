@@ -517,6 +517,7 @@ export default function AccessControlPage() {
   const [addError, setAddError] = useState("");
   const [newUserCreds, setNewUserCreds] = useState<{ username: string; password: string } | null>(null);
   const [revokeError, setRevokeError] = useState<string | null>(null);
+  const [revokingId, setRevokingId] = useState<string | null>(null);
 
   // Load from localStorage or API
   const fetchUsers = useCallback(async () => {
@@ -608,6 +609,7 @@ export default function AccessControlPage() {
 
   const handleRevokeSession = async (session: Session) => {
     setRevokeError(null);
+    setRevokingId(session.id);
     try {
       await fetch("/api/access/revoke-session", {
         method: "POST",
@@ -620,6 +622,8 @@ export default function AccessControlPage() {
     } catch (err) {
       console.error("[hawkeye] access-control session-revoke threw — UI optimistic update may diverge from server:", err);
       setRevokeError("Network error — session could not be revoked. Please try again.");
+    } finally {
+      setRevokingId(null);
     }
   };
 
@@ -938,9 +942,10 @@ export default function AccessControlPage() {
                 {session.active && (
                   <button
                     onClick={() => void handleRevokeSession(session)}
-                    className="flex-shrink-0 px-3 py-1.5 rounded border border-red text-red text-11 font-mono font-semibold hover:bg-red-dim transition-colors"
+                    disabled={revokingId === session.id}
+                    className="flex-shrink-0 px-3 py-1.5 rounded border border-red text-red text-11 font-mono font-semibold hover:bg-red-dim transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Revoke
+                    {revokingId === session.id ? "Revoking…" : "Revoke"}
                   </button>
                 )}
               </div>
@@ -958,9 +963,10 @@ export default function AccessControlPage() {
             </h2>
             <button
               onClick={() => void fetchLog()}
-              className="px-2 py-1 text-12 font-mono border border-green/40 rounded text-green bg-green-dim hover:bg-green-dim/70 transition-colors"
+              disabled={loadingLog}
+              className="px-2 py-1 text-12 font-mono border border-green/40 rounded text-green bg-green-dim hover:bg-green-dim/70 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              ↻
+              {loadingLog ? "…" : "↻"}
             </button>
           </div>
           <div className="border border-hair-2 rounded-md overflow-hidden">

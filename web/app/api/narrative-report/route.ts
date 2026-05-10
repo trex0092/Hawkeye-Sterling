@@ -1,5 +1,14 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
 import {
   generateNarrativeReport,
   type NarrativeReportRequest,
@@ -111,7 +120,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       return NextResponse.json(
         {
           ok: true,
-          html: `<p>Narrative report generation failed: ${result.error ?? "unknown error"}. Please generate the narrative manually.</p>`,
+          html: `<p>Narrative report generation failed: ${escapeHtml(result.error ?? "unknown error")}. Please generate the narrative manually.</p>`,
           style: body.style ?? "regulator",
           note: result.error ?? "narrative generation failed",
         },

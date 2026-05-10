@@ -29,6 +29,7 @@ import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
 import { enforce } from "@/lib/server/enforce";
 import { asanaGids } from "@/lib/server/asanaConfig";
+import { corsHeaders, corsPreflight } from "@/lib/api/cors";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -55,14 +56,8 @@ interface ResolveResponse {
   error?: string;
 }
 
-const CORS: Record<string, string> = {
-  "access-control-allow-origin": process.env["NEXT_PUBLIC_APP_URL"] ?? "https://hawkeye-sterling.netlify.app",
-  "access-control-allow-methods": "POST, OPTIONS",
-  "access-control-allow-headers": "content-type, authorization, x-api-key",
-};
-
-function respond(status: number, body: ResolveResponse): NextResponse {
-  return NextResponse.json(body, { status, headers: CORS });
+function respond(status: number, body: ResolveResponse, origin: string | null = null): NextResponse {
+  return NextResponse.json(body, { status, headers: corsHeaders(origin) });
 }
 
 async function createAsanaTask(opts: {
@@ -104,18 +99,19 @@ export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
 
+  const origin = req.headers.get("origin");
   let body: ResolveBody;
   try {
     body = (await req.json()) as ResolveBody;
   } catch {
-    return respond(400, { ok: false, resolution: "", auditId: "", error: "invalid JSON body" });
+    return respond(400, { ok: false, resolution: "", auditId: "", error: "invalid JSON body" }, origin);
   }
   const { subjectId, subjectName, hitId, resolution, reason, hitContext } = body;
   if (!subjectId || !subjectName || !hitId || !resolution) {
-    return respond(400, { ok: false, resolution: "", auditId: "", error: "subjectId, subjectName, hitId, resolution all required" });
+    return respond(400, { ok: false, resolution: "", auditId: "", error: "subjectId, subjectName, hitId, resolution all required" }, origin);
   }
   if (!["positive", "possible", "false", "unspecified"].includes(resolution)) {
-    return respond(400, { ok: false, resolution, auditId: "", error: "resolution must be positive | possible | false | unspecified" });
+    return respond(400, { ok: false, resolution, auditId: "", error: "resolution must be positive | possible | false | unspecified" }, origin);
   }
 
   const auditId = `res_${randomUUID()}`;
@@ -163,9 +159,9 @@ export async function POST(req: Request): Promise<NextResponse> {
     resolution,
     auditId,
     ...(ongoingMonitorTaskId ? { ongoingMonitorTaskId } : {}),
-  });
+  }, origin);
 }
 
-export async function OPTIONS(): Promise<NextResponse> {
-  return new NextResponse(null, { status: 204, headers: CORS });
+export async function OPTIONS(req: Request): Promise<Response> {
+  return corsPreflight(req.headers.get("origin"));
 }

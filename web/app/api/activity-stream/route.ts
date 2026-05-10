@@ -11,6 +11,7 @@
 // invocation cap; the client EventSource auto-reconnects.
 
 import { NextResponse } from "next/server";
+import { enforce } from "@/lib/server/enforce";
 import { getJson, listKeys, setJson } from "@/lib/server/store";
 
 export const runtime = "nodejs";
@@ -44,7 +45,10 @@ function encode(ev: EngineEvent): string {
   return `id: ${ev.id}\nevent: engine-event\ndata: ${JSON.stringify(ev)}\n\n`;
 }
 
-export async function GET(): Promise<Response> {
+export async function GET(req: Request): Promise<Response> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
+
   const start = Date.now();
   let counter = 0;
   let lastSeenIso = new Date(start).toISOString();

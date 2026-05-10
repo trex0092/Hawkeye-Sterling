@@ -69,6 +69,15 @@ const TIPPING_OFF_PATTERNS = [
   /\bI\s+shouldn'?t\s+(?:tell|say)\s+you.{0,80}\b(?:STR|SAR|FIU|investigat|report|fil)/i,
 ];
 
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 function checkTippingOff(text: string): string | null {
   for (const pat of TIPPING_OFF_PATTERNS) {
     if (pat.test(text)) return pat.source;
@@ -430,8 +439,8 @@ async function handleSarReport(req: Request): Promise<Response> {
       ${body.superBrain?.jurisdiction ? `
         <h2 class="hs-section-h">Jurisdiction risk</h2>
         ${hsKvGrid([
-          { k: "Country", v: `${body.superBrain.jurisdiction.name} (${body.superBrain.jurisdiction.iso2})${body.superBrain.jurisdiction.cahra ? " · CAHRA" : ""}` },
-          { k: "Active regimes", v: (body.superBrain.jurisdiction.regimes ?? []).join(", ") || "—" },
+          { k: "Country", v: `${escapeHtml(body.superBrain.jurisdiction.name)} (${escapeHtml(body.superBrain.jurisdiction.iso2)})${body.superBrain.jurisdiction.cahra ? " · CAHRA" : ""}` },
+          { k: "Active regimes", v: escapeHtml((body.superBrain.jurisdiction.regimes ?? []).join(", ") || "—") },
         ])}
       ` : ""}
       ${body.superBrain?.pep && body.superBrain.pep.salience > 0 ? `
@@ -444,13 +453,13 @@ async function handleSarReport(req: Request): Promise<Response> {
       ` : ""}
       ${body.superBrain?.adverseKeywordGroups?.length ? `
         <h2 class="hs-section-h">Adverse-media groups</h2>
-        <ul class="hs-findings">${body.superBrain.adverseKeywordGroups.map((g) => `<li>${g.label} (${g.count})</li>`).join("")}</ul>
+        <ul class="hs-findings">${body.superBrain.adverseKeywordGroups.map((g) => `<li>${escapeHtml(g.label)} (${g.count})</li>`).join("")}</ul>
       ` : ""}
     `;
 
     const narrativePage = `
       <h2 class="hs-section-h" style="margin-top:0">Narrative (MLRO review required)</h2>
-      <p class="hs-narrative">${narrative.replace(/\n/g, "</p><p class='hs-narrative'>")}</p>
+      <p class="hs-narrative">${escapeHtml(narrative).replace(/\n/g, "</p><p class='hs-narrative'>")}</p>
       <h2 class="hs-section-h" style="margin-top:14px">goAML envelope</h2>
       ${hsKvGrid([
         { k: "Internal reference", v: internalRef },
@@ -460,7 +469,7 @@ async function handleSarReport(req: Request): Promise<Response> {
       ])}
       ${goamlValidationWarnings.length > 0 ? `
         <p class="hs-narrative" style="color:#b45309"><strong>Validation warnings:</strong></p>
-        <ul class="hs-findings">${goamlValidationWarnings.map((w) => `<li>${w}</li>`).join("")}</ul>
+        <ul class="hs-findings">${goamlValidationWarnings.map((w) => `<li>${escapeHtml(w)}</li>`).join("")}</ul>
       ` : ""}
       ${hsFinis(reportId, 2, 2)}
     `;
