@@ -120,20 +120,20 @@ const nextConfig = {
       "./node_modules/next/dist/server/**/*",
     ],
   },
-  // The @vercel/nft auto-tracer follows static imports and will include
-  // node_modules/react + node_modules/react-dom even though we never
-  // add them to outputFileTracingIncludes. At runtime
-  // next/dist/server/require-hook.js redirects require('react') →
-  // next/dist/compiled/react, so having the raw copies alongside the
-  // compiled copies creates two React instances and breaks
-  // useSyncExternalStore ("a3.snapshot is not a function").
-  // outputFileTracingExcludes tells nft to drop these paths from the
-  // trace even when it detects them as reachable dependencies.
+  // outputFileTracingRoot is set to the repo root (one level above web/).
+  // The nft tracer therefore reports all paths with a "web/" prefix, e.g.
+  // "web/node_modules/react/index.js". The old patterns "./node_modules/react/**/*"
+  // normalise to "node_modules/react/**/*" and never match those prefixed paths,
+  // so React shipped twice and broke useSyncExternalStore ("a3.snapshot is not a function").
+  // Using "**" anchors the match anywhere in the path, covering both
+  // "web/node_modules/react/…" and a hypothetical root "node_modules/react/…".
+  // "node_modules/react" is distinct from "node_modules/next/dist/compiled/react"
+  // so the compiled copy that Next.js needs is NOT accidentally excluded.
   outputFileTracingExcludes: {
     "/**": [
-      "./node_modules/react/**/*",
-      "./node_modules/react-dom/**/*",
-      "./node_modules/react-is/**/*",
+      "**/node_modules/react/**",
+      "**/node_modules/react-dom/**",
+      "**/node_modules/react-is/**",
     ],
   },
 };
