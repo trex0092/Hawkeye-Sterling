@@ -81,19 +81,23 @@ export default function EocnPage() {
 
   // Load NAS/ARS registration and control-list metadata on mount.
   useEffect(() => {
+    let cancelled = false;
     (async () => {
       try {
         const r = await fetch("/api/eocn-registration");
+        if (cancelled) return;
         if (r.ok) { const d = (await r.json()) as { ok: boolean; registration: EocnRegistrationRecord }; if (d.ok) setRegistration(d.registration); }
         else { console.warn("[hawkeye] eocn registration fetch failed:", r.status); setFetchError(`Could not load registration data (HTTP ${r.status}).`); }
-      } catch (err) { console.warn("[hawkeye] eocn registration fetch failed:", err); setFetchError("Could not load registration data — network error."); }
+      } catch (err) { if (!cancelled) { console.warn("[hawkeye] eocn registration fetch failed:", err); setFetchError("Could not load registration data — network error."); } }
     })();
     (async () => {
       try {
         const r = await fetch("/api/goods-control-status");
+        if (cancelled) return;
         if (r.ok) { const d = (await r.json()) as { lastSync?: string; count?: number }; setControlListLastSync(d.lastSync ?? null); setControlListCount(d.count ?? null); }
       } catch { /* no goods-control-status endpoint yet — fallback to blob metadata */ }
     })();
+    return () => { cancelled = true; };
   }, []);
 
   const saveRegistration = async (patch: Partial<EocnRegistrationRecord>) => {

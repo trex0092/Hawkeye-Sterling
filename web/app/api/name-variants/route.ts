@@ -102,6 +102,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   try {
     const res = await fetch(ANTHROPIC_API_URL, {
+      signal: AbortSignal.timeout(20_000),
       method: "POST",
       headers: {
         "x-api-key": apiKey,

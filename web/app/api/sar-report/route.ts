@@ -65,6 +65,7 @@ const TIPPING_OFF_PATTERNS = [
   /\byour\s+account.{0,40}(?:suspend|block|freez|flag|hold|restrict|escalat)/is,
   /\b(?:suspended|blocked|frozen|flagged|on hold|restricted)\s+(?:due to|because of|pending)\s+(?:AML|compliance|investigation|review|suspicion)/i,
   // Circumvention phrasings — "between you and me", "off the record"
+  // `s` flag: dotAll so .{0,80} can't be bypassed by embedding a newline mid-phrase
   /\b(?:off\s+the\s+record|between\s+you\s+and\s+me|don'?t\s+tell\s+anyone).{0,80}\b(?:STR|SAR|FIU|investigat|report|fil)/is,
   /\bI\s+shouldn'?t\s+(?:tell|say)\s+you.{0,80}\b(?:STR|SAR|FIU|investigat|report|fil)/is,
 ];
@@ -439,21 +440,21 @@ async function handleSarReport(req: Request): Promise<Response> {
       ${body.superBrain?.jurisdiction ? `
         <h2 class="hs-section-h">Jurisdiction risk</h2>
         ${hsKvGrid([
-          { k: "Country", v: `${body.superBrain.jurisdiction.name} (${body.superBrain.jurisdiction.iso2})${body.superBrain.jurisdiction.cahra ? " · CAHRA" : ""}` },
-          { k: "Active regimes", v: (body.superBrain.jurisdiction.regimes ?? []).join(", ") || "—" },
+          { k: "Country", v: `${escapeHtml(body.superBrain.jurisdiction.name)} (${escapeHtml(body.superBrain.jurisdiction.iso2)})${body.superBrain.jurisdiction.cahra ? " · CAHRA" : ""}` },
+          { k: "Active regimes", v: escapeHtml((body.superBrain.jurisdiction.regimes ?? []).join(", ") || "—") },
         ])}
       ` : ""}
       ${body.superBrain?.pep && body.superBrain.pep.salience > 0 ? `
         <h2 class="hs-section-h">PEP</h2>
         ${hsKvGrid([
-          { k: "Type", v: body.superBrain.pep.type.replace(/_/g, " ") },
-          { k: "Tier", v: body.superBrain.pep.tier },
+          { k: "Type", v: escapeHtml(body.superBrain.pep.type.replace(/_/g, " ")) },
+          { k: "Tier", v: escapeHtml(body.superBrain.pep.tier) },
           { k: "Salience", v: `${Math.round(body.superBrain.pep.salience * 100)}%` },
         ])}
       ` : ""}
       ${body.superBrain?.adverseKeywordGroups?.length ? `
         <h2 class="hs-section-h">Adverse-media groups</h2>
-        <ul class="hs-findings">${body.superBrain.adverseKeywordGroups.map((g) => `<li>${g.label} (${g.count})</li>`).join("")}</ul>
+        <ul class="hs-findings">${body.superBrain.adverseKeywordGroups.map((g) => `<li>${escapeHtml(g.label)} (${g.count})</li>`).join("")}</ul>
       ` : ""}
     `;
 
@@ -469,7 +470,7 @@ async function handleSarReport(req: Request): Promise<Response> {
       ])}
       ${goamlValidationWarnings.length > 0 ? `
         <p class="hs-narrative" style="color:#b45309"><strong>Validation warnings:</strong></p>
-        <ul class="hs-findings">${goamlValidationWarnings.map((w) => `<li>${w}</li>`).join("")}</ul>
+        <ul class="hs-findings">${goamlValidationWarnings.map((w) => `<li>${escapeHtml(w)}</li>`).join("")}</ul>
       ` : ""}
       ${hsFinis(reportId, 2, 2)}
     `;

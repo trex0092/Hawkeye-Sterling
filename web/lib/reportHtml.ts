@@ -1,8 +1,8 @@
 // Hawkeye Sterling — shared HTML report generator.
 // All 8 PDF reports use this design system (reference: Google Drive design files).
 
-function escHtml(s: string): string {
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+export function escHtml(s: string): string {
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
 
 export const REPORT_CSS = `

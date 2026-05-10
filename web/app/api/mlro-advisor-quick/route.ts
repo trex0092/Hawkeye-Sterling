@@ -26,6 +26,7 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { corsHeaders, corsPreflight } from "@/lib/api/cors";
 import { classifyMlroQuestion } from "../../../../dist/src/brain/mlro-question-classifier.js";
 import { gateMlroQuestion } from "@/lib/server/mlro-input-gate";
 import { scoreAdvisorAnswer } from "../../../../dist/src/integrations/qualityGates.js";
@@ -70,11 +71,6 @@ const MAX_TOKENS = 1024;
 // our body with an HTML 502).
 const HARD_TIMEOUT_MS = 18_000;
 
-const CORS: Record<string, string> = {
-  "access-control-allow-origin": process.env["NEXT_PUBLIC_APP_URL"] ?? "https://hawkeye-sterling.netlify.app",
-  "access-control-allow-methods": "POST, OPTIONS",
-  "access-control-allow-headers": "content-type, authorization, x-api-key",
-};
 
 interface ContextPair { q: string; a: string }
 
@@ -261,12 +257,13 @@ function buildEnrichedUserPrompt(question: string, contextPairs: ContextPair[]):
   return lines.filter(Boolean).join("\n");
 }
 
-export async function OPTIONS(): Promise<Response> {
-  return new Response(null, { status: 204, headers: CORS });
+export async function OPTIONS(req: Request): Promise<Response> {
+  return corsPreflight(req.headers.get("origin"));
 }
 
 export async function POST(req: Request): Promise<Response> {
   const startedAt = Date.now();
+  const origin = req.headers.get("origin");
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
 
@@ -274,7 +271,7 @@ export async function POST(req: Request): Promise<Response> {
   try {
     body = (await req.json()) as Body;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400, headers: CORS });
+    return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400, headers: corsHeaders(origin) });
   }
 
   // Shared input gate — refuses empty / oversize / prompt-injection
@@ -292,7 +289,7 @@ export async function POST(req: Request): Promise<Response> {
         reason: gateResult.reason,
         ...(gateResult.hint ? { hint: gateResult.hint } : {}),
       },
-      { status: gateResult.status, headers: CORS },
+      { status: gateResult.status, headers: corsHeaders(origin) },
     );
   }
   const question = gateResult.question;
@@ -336,7 +333,7 @@ export async function POST(req: Request): Promise<Response> {
         escalation: preGen.escalation,
         elapsedMs: Date.now() - startedAt,
       },
-      { status: 200, headers: CORS },
+      { status: 200, headers: corsHeaders(origin) },
     );
   }
 
@@ -351,7 +348,7 @@ export async function POST(req: Request): Promise<Response> {
       suggestedFollowUps: ["Consult your designated MLRO", "Review applicable CBUAE guidance", "Check FATF Recommendations R.6-R.25"],
       verification: { passed: false, defects: ["offline-mode"] },
       offline: true,
-    }, { status: 200, headers: CORS });
+    }, { status: 200, headers: corsHeaders(origin) });
   }
 
   const analysis = classifyMlroQuestion(question);
@@ -444,7 +441,7 @@ export async function POST(req: Request): Promise<Response> {
       if (typeof status === "number" && status === 429) {
         return NextResponse.json(
           { ok: false, error: "Rate limited — please try again in a moment", elapsedMs: Date.now() - startedAt },
-          { status: 429, headers: CORS },
+          { status: 429, headers: corsHeaders(origin) },
         );
       }
       // API error — return offline response instead of 502
@@ -457,7 +454,7 @@ export async function POST(req: Request): Promise<Response> {
         suggestedFollowUps: ["Consult your designated MLRO", "Review applicable CBUAE guidance", "Check FATF Recommendations"],
         verification: { passed: false, defects: ["offline-mode"] },
         offline: true,
-      }, { status: 200, headers: CORS });
+      }, { status: 200, headers: corsHeaders(origin) });
     }
 
     let citationReport = verifyCitations(answer);
@@ -540,7 +537,7 @@ export async function POST(req: Request): Promise<Response> {
           escalation: postGen.router.escalation,
           elapsedMs: Date.now() - startedAt,
         },
-        { status: 200, headers: CORS },
+        { status: 200, headers: corsHeaders(origin) },
       );
     }
 
@@ -615,7 +612,7 @@ export async function POST(req: Request): Promise<Response> {
         })),
         auditEntrySeq: audit.seq,
       },
-      { status: 200, headers: CORS },
+      { status: 200, headers: corsHeaders(origin) },
     );
   } catch (err) {
     const aborted = upstreamCtl.signal.aborted;
@@ -628,7 +625,7 @@ export async function POST(req: Request): Promise<Response> {
           : `upstream connect failed: ${msg}`,
         elapsedMs: Date.now() - startedAt,
       },
-      { status: aborted ? 504 : 502, headers: CORS },
+      { status: aborted ? 504 : 502, headers: corsHeaders(origin) },
     );
   } finally {
     clearTimeout(killTimer);

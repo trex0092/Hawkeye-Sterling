@@ -36,16 +36,20 @@ export default function ProfilePage() {
   const [saveSuccess, setSaveSuccess] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
     fetch("/api/auth/me")
       .then((r) => r.json())
       .then((d: { ok: boolean; user?: UserProfile; error?: string }) => {
+        if (cancelled) return;
         if (d.ok && d.user) setProfile(d.user);
         else setLoadError(d.error ?? "Failed to load profile");
       })
       .catch((err: unknown) => {
+        if (cancelled) return;
         console.error("[hawkeye] profile auth/me fetch threw:", err);
         setLoadError("Failed to load profile");
       });
+    return () => { cancelled = true; };
   }, []);
 
   const handleChangePassword = async (e: FormEvent) => {

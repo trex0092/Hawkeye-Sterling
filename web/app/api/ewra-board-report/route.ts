@@ -1,14 +1,18 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+import { enforce } from "@/lib/server/enforce";
 import type { EwraBoardReportResult } from "@/app/api/ewra-report/route";
 import {
   buildHtmlDoc, hsPage, hsCover, hsSection, hsPill, hsNarrative,
-  hsNumList, hsSignatureBlock, hsFinis, hsBar, nowMeta, type CoverData,
+  hsNumList, hsSignatureBlock, hsFinis, hsBar, nowMeta, escHtml, type CoverData,
 } from "@/lib/reportHtml";
 
 interface Dimension { dimension: string; inherent: number; controls: number; notes: string }
 
 export async function POST(req: Request) {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
+
   const body = await req.json() as { boardReport: EwraBoardReportResult; dimensions: Dimension[] };
   const { boardReport, dimensions } = body;
 
@@ -42,12 +46,12 @@ export async function POST(req: Request) {
   };
 
   const dimRows = dimensions.map(d => {
-    const tone = d.controls >= 70 ? "pink" : d.controls >= 60 ? "amber" : d.controls >= 50 ? "ink" : "sage";
+    const barTone = d.controls >= 70 ? "pink" : d.controls >= 60 ? "amber" : d.controls >= 50 ? "ink" : "sage";
     return [
-      `<span style="font-weight:500">${d.dimension}</span>`,
-      hsBar(d.inherent, tone as "pink"|"amber"|"sage"|"ink"),
-      hsBar(d.controls, tone as "pink"|"amber"|"sage"|"ink"),
-      d.notes || "—",
+      `<span style="font-weight:500">${escHtml(d.dimension)}</span>`,
+      hsBar(d.inherent, barTone as "pink"|"amber"|"sage"|"ink"),
+      hsBar(d.controls, barTone as "pink"|"amber"|"sage"|"ink"),
+      escHtml(d.notes || "—"),
     ];
   });
 

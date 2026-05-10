@@ -1,11 +1,15 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+import { enforce } from "@/lib/server/enforce";
 import {
   buildHtmlDoc, hsPage, hsCover, hsSection, hsPill, hsKvGrid,
-  hsNarrative, hsTable, hsSignatureBlock, hsFinis, nowMeta, type CoverData,
+  hsNarrative, hsTable, hsSignatureBlock, hsFinis, nowMeta, escHtml, type CoverData,
 } from "@/lib/reportHtml";
 
 export async function POST(req: Request) {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
+
   const body = await req.json() as {
     subject: string;
     narrative: string;
@@ -50,9 +54,9 @@ export async function POST(req: Request) {
   ];
 
   const txRows = body.transactions.map(tx => [
-    `<span class="hs-mono-s">${tx.date}</span>`,
+    `<span class="hs-mono-s">${escHtml(tx.date)}</span>`,
     `<span class="hs-mono-s" style="display:block;text-align:right">${tx.amount.toLocaleString("en-AE",{minimumFractionDigits:2})}</span>`,
-    tx.desc,
+    escHtml(tx.desc),
   ]);
 
   const contentBody = `

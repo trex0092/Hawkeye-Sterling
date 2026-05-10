@@ -1,12 +1,16 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+import { enforce } from "@/lib/server/enforce";
 import type { EvidencePackEntry } from "@/lib/evidencePack";
 import {
   buildHtmlDoc, hsPage, hsCover, hsSection, hsPill, hsKvGrid, hsNarrative,
-  hsSignatureBlock, hsFinis, nowMeta, type CoverData,
+  hsSignatureBlock, hsFinis, nowMeta, escHtml, type CoverData,
 } from "@/lib/reportHtml";
 
 export async function POST(req: Request) {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
+
   const entry: EvidencePackEntry = await req.json();
 
   const { dateStr, time } = nowMeta();
@@ -36,25 +40,25 @@ export async function POST(req: Request) {
   };
 
   const sessionKv = [
-    { k: "QUESTION",  v: entry.question },
-    { k: "MODE",      v: entry.mode },
-    { k: "VERDICT",   v: entry.verdict ?? "—" },
-    { k: "ELAPSED",   v: `${(entry.elapsedMs/1000).toFixed(1)}s` },
-    { k: "HASH",      v: entry.charterIntegrityHash ?? "—" },
+    { k: "QUESTION", v: escHtml(entry.question) },
+    { k: "MODE",     v: escHtml(entry.mode) },
+    { k: "VERDICT",  v: escHtml(entry.verdict ?? "—") },
+    { k: "ELAPSED",  v: `${(entry.elapsedMs/1000).toFixed(1)}s` },
+    { k: "HASH",     v: escHtml(entry.charterIntegrityHash ?? "—") },
   ];
 
   const trailRows = (entry.reasoningTrail ?? []).map(r => [
     `<span class="hs-mono-s">${String(r.stepNo).padStart(2,"0")}</span>`,
-    `<span style="font-weight:500">${r.actor}</span>`,
-    `<span class="hs-mono-s">${r.modelId}</span>`,
-    r.summary,
+    `<span style="font-weight:500">${escHtml(r.actor)}</span>`,
+    `<span class="hs-mono-s">${escHtml(r.modelId)}</span>`,
+    escHtml(r.summary),
   ]);
 
   const cls = entry.classifier;
   const classifierKv = cls ? [
-    { k: "PRIMARY TOPIC",       v: cls.primaryTopic ?? "—" },
-    { k: "FATF RECOMMENDATIONS",v: cls.fatfRecs?.map(f=>f.num).join(", ") ?? "—" },
-    { k: "RED FLAGS",           v: cls.redFlags?.join("; ") ?? "—" },
+    { k: "PRIMARY TOPIC",        v: escHtml(cls.primaryTopic ?? "—") },
+    { k: "FATF RECOMMENDATIONS", v: escHtml(cls.fatfRecs?.map(f=>f.num).join(", ") ?? "—") },
+    { k: "RED FLAGS",            v: escHtml(cls.redFlags?.join("; ") ?? "—") },
   ] : [];
 
   const narrative = entry.narrative ?? entry.guidance ?? "";

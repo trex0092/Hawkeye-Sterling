@@ -18,7 +18,10 @@ export const maxDuration = 15;
 
 const SEVERITY_ORDER: Record<DesignationAlert["severity"], number> = { critical: 0, high: 1, medium: 2 };
 
-export async function GET(): Promise<NextResponse> {
+export async function GET(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
+
   try {
     const all = await listAlerts(false);
     // Sort: unread critical first, then high, then medium; read last

@@ -285,6 +285,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     lines.push(`Legal   : FDL 10/2025 Art.26-27 · CR 134/2025 Art.18`);
     try {
       const res = await fetch("https://app.asana.com/api/1.0/tasks", {
+        signal: AbortSignal.timeout(10_000),
         method: "POST",
         headers: {
           authorization: `Bearer ${token}`,

@@ -158,6 +158,7 @@ async function handlePost(req: Request): Promise<NextResponse> {
 
   try {
     const upstream = await fetch(endpoint, {
+      signal: AbortSignal.timeout(25_000),
       method: "POST",
       headers: {
         "content-type": "application/xml",

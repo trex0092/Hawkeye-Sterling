@@ -1,11 +1,15 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+import { enforce } from "@/lib/server/enforce";
 import {
   buildHtmlDoc, hsPage, hsCover, hsSection, hsPill, hsKvGrid, hsNarrative,
-  hsSignatureBlock, hsFinis, nowMeta, type CoverData,
+  hsSignatureBlock, hsFinis, nowMeta, escHtml, type CoverData,
 } from "@/lib/reportHtml";
 
 export async function POST(req: Request) {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
+
   const body = await req.json() as {
     subject: string;
     toRole: string;
@@ -43,12 +47,13 @@ export async function POST(req: Request) {
     ],
   };
 
+  // Escape all user-supplied values before passing to hsKvGrid
   const detailKv = [
-    { k: "TO",      v: body.toRole },
-    { k: "FROM",    v: `L. Fernanda — MLRO` },
-    { k: "DATE",    v: dateStr },
-    { k: "RE",      v: body.re },
-    ...(body.details ?? []),
+    { k: "TO",   v: escHtml(body.toRole) },
+    { k: "FROM", v: "L. Fernanda — MLRO" },
+    { k: "DATE", v: dateStr },
+    { k: "RE",   v: escHtml(body.re) },
+    ...(body.details ?? []).map(({ k, v }) => ({ k: escHtml(k), v: escHtml(v) })),
   ];
 
   const privilege = body.privilege ?? "This memorandum is legally privileged and confidential. It is prepared for the sole use of the addressee in connection with the matter described. It must not be disclosed to any other person without the express written consent of the MLRO.";
@@ -61,7 +66,7 @@ export async function POST(req: Request) {
 ${hsSection({ num:"01", kicker:"part one", title:"Memorandum details", tight:true, content: hsKvGrid(detailKv) })}
 ${hsSection({ num:"02", kicker:"part two", title:"Summary", tight:true, content: hsNarrative(body.summary, true) })}
 ${hsSection({ num:"03", kicker:"part three", title:"Recommendation", tight:true, content: hsNarrative(body.recommendation) })}
-<div class="hs-cnote">${privilege}</div>
+<div class="hs-cnote">${escHtml(privilege)}</div>
 ${hsSignatureBlock([
   { name:"L. Fernanda",     role:"MLRO · Author",          lic:"HS-MLRO-0428",                date: dateStr },
   { name:"Senior Management",role:"Approval pending",       lic:"Required prior to relationship",date:"—" },
