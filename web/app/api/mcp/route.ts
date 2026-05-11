@@ -716,9 +716,10 @@ const TOOLS: ToolDef[] = [
         screeningId: { type: "string" },
       },
     },
-    handler: async ({ screeningId }) =>
-      callApi("/api/audit/view", "GET", undefined,
-        screeningId ? { screeningId: String(screeningId) } : undefined),
+    handler: async ({ screeningId }) => {
+      if (!screeningId) return { ok: false, error: "screeningId is required — provide the ID from a prior screening run." };
+      return callApi("/api/audit/view", "GET", undefined, { screeningId: String(screeningId) });
+    },
   },
 
   // ── REGULATORY ───────────────────────────────────────────────────────────────

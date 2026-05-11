@@ -127,7 +127,7 @@ export async function POST(req: Request) {
 
   // Netlify edge gateway has a 26s inactivity timeout. Keep both modes well
   // under that ceiling: Haiku at ≤1800 tokens reliably responds in 8-15s.
-  const sdkTimeoutMs = 22_000;
+  const sdkTimeoutMs = 10_000;
 
   try {
     const client = getAnthropicClient(apiKey, sdkTimeoutMs);
