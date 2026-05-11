@@ -257,6 +257,7 @@ async function checkGdelt(): Promise<Check> {
         maxrecords: "1",
         format: "json",
         sort: "DateDesc",
+        timespan: "1h",
       });
       const res = await fetch(
         `https://api.gdeltproject.org/api/v2/doc/doc?${params.toString()}`,
