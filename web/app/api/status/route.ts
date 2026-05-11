@@ -622,7 +622,16 @@ interface SanctionsFreshness {
   status: Check["status"];
   latencyMs: number;
   note?: string;
+  nextRefreshAt?: string;
   lists: Array<{ id: string; ageH: number | null; recordCount: number | null }>;
+}
+
+// Next occurrence of 03:00 UTC (the refresh-lists cron schedule: "0 3 * * *")
+function nextCronAt(): string {
+  const now = new Date();
+  const next = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 3, 0, 0, 0));
+  if (next.getTime() <= now.getTime()) next.setUTCDate(next.getUTCDate() + 1);
+  return next.toISOString();
 }
 
 async function checkSanctionsFreshness(): Promise<SanctionsFreshness> {
@@ -703,18 +712,18 @@ async function checkSanctionsFreshness(): Promise<SanctionsFreshness> {
       note: looksLikeBlobConfig
         ? "reports store not yet bound — will populate on first cron tick"
         : r.error,
+      nextRefreshAt: looksLikeBlobConfig ? nextCronAt() : undefined,
       lists: [],
     };
   }
   const lists = r.value ?? [];
   if (lists.length === 0) {
-    // Blobs store accessible but library returned null — treat as pending
-    // setup, not a runtime failure. The cron will populate on first tick.
     return {
       name: "sanctions-freshness",
       status: "operational",
       latencyMs: r.latencyMs,
       note: "awaiting first scheduled refresh",
+      nextRefreshAt: nextCronAt(),
       lists: [],
     };
   }
@@ -742,6 +751,7 @@ async function checkSanctionsFreshness(): Promise<SanctionsFreshness> {
       worstAge == null
         ? "awaiting first scheduled refresh"
         : `oldest list ${worstAge}h`,
+    nextRefreshAt: nextCronAt(),
     lists,
   };
 }

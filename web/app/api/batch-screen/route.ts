@@ -35,7 +35,7 @@ const quickScreen = _quickScreen as QuickScreenFn;
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 interface BatchRow {
   name: string;
@@ -137,12 +137,17 @@ export async function POST(req: Request): Promise<NextResponse> {
       { status: 400, headers: gateHeaders },
     );
   }
-  if (body.rows.length > 500) {
+  if (body.rows.length > 10_000) {
     return NextResponse.json(
-      { ok: false, error: "batch size exceeds 500-row limit" },
+      { ok: false, error: "batch size exceeds 10000-row limit" },
       { status: 400, headers: gateHeaders },
     );
   }
+  // Batches over 500 rows use a fast-path that skips external cross-validation
+  // (Watchman, Marble, Jube, Yente) — each adds 1-5s per row and would exhaust
+  // the function budget. In-memory quickScreen + keyword classification runs at
+  // ~1ms/row so 10,000 rows completes in ~10s well within maxDuration.
+  const useFastPath = body.rows.length > 500;
 
   const started = Date.now();
   const results: RowResult[] = [];
@@ -181,20 +186,23 @@ export async function POST(req: Request): Promise<NextResponse> {
       const esgCats = Array.from(new Set(esg.map((e) => e.categoryId)));
       const checkpoints = computeCheckpoints(row, screen, kwGroups, esgCats);
 
-      // Call optional cross-validation services in parallel (all fail-soft).
-      const [watchmanRes, marbleRes, jubeRes, yenteRes] = await Promise.all([
-        checkWatchman(row.name),
-        checkMarble(row.name, row.entityType),
-        checkJube(row.name, row.entityType, row.jurisdiction),
-        yenteMatch([{
-          name: row.name,
-          schema: row.entityType === "individual" ? "Person" : row.entityType === "organisation" ? "Organization" : "LegalEntity",
-          ...(row.jurisdiction ? { nationality: row.jurisdiction } : {}),
-        }]).catch((err: unknown) => {
-          console.warn("[hawkeye] batch-screen yenteMatch failed for row:", row.name, err);
-          return null;
-        }),
-      ]);
+      // External cross-validation is skipped for large batches (>500 rows) —
+      // each service adds 1-5s per row which would exhaust the function budget.
+      const [watchmanRes, marbleRes, jubeRes, yenteRes] = useFastPath
+        ? [null, null, null, null]
+        : await Promise.all([
+            checkWatchman(row.name),
+            checkMarble(row.name, row.entityType),
+            checkJube(row.name, row.entityType, row.jurisdiction),
+            yenteMatch([{
+              name: row.name,
+              schema: row.entityType === "individual" ? "Person" : row.entityType === "organisation" ? "Organization" : "LegalEntity",
+              ...(row.jurisdiction ? { nationality: row.jurisdiction } : {}),
+            }]).catch((err: unknown) => {
+              console.warn("[hawkeye] batch-screen yenteMatch failed for row:", row.name, err);
+              return null;
+            }),
+          ]);
 
       const crossRef: CrossRef = {};
       if (watchmanRes !== null) crossRef.watchmanHits = watchmanRes.hitCount;
