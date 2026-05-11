@@ -295,11 +295,11 @@ export default function OngoingMonitorPage() {
       });
       if (!res.ok) {
         console.error(`[hawkeye] ongoing enrol HTTP ${res.status} — backend out of sync with UI`);
-        setBgError(`Failed to sync enrolment with server (HTTP ${res.status}). The subject has been saved locally.`);
+        if (mountedRef.current) setBgError(`Failed to sync enrolment with server (HTTP ${res.status}). The subject has been saved locally.`);
       }
     } catch (err) {
       console.error("[hawkeye] ongoing enrol threw — backend out of sync with UI:", err);
-      setBgError("Could not reach the server to sync enrolment. The subject has been saved locally.");
+      if (mountedRef.current) setBgError("Could not reach the server to sync enrolment. The subject has been saved locally.");
     }
   };
 
@@ -320,11 +320,11 @@ export default function OngoingMonitorPage() {
       });
       if (!res.ok) {
         console.error(`[hawkeye] ongoing DELETE HTTP ${res.status} — backend row may persist as orphan`);
-        setBgError(`Failed to remove subject from server (HTTP ${res.status}). It has been removed locally but may reappear on next sync.`);
+        if (mountedRef.current) setBgError(`Failed to remove subject from server (HTTP ${res.status}). It has been removed locally but may reappear on next sync.`);
       }
     } catch (err) {
       console.error("[hawkeye] ongoing DELETE threw — backend row may persist as orphan:", err);
-      setBgError("Could not reach the server to remove this subject. It has been removed locally but may reappear on next sync.");
+      if (mountedRef.current) setBgError("Could not reach the server to remove this subject. It has been removed locally but may reappear on next sync.");
     }
   };
 
@@ -342,7 +342,8 @@ export default function OngoingMonitorPage() {
       const next = subjects.map((sub) =>
         sub.id === s.id ? { ...sub, lastRun: nowStr, nextDue: computeNextDue(nowStr, sub.cadence), status: "active" as const } : sub,
       );
-      save(next); setSubjects(next);
+      save(next);
+      if (mountedRef.current) setSubjects(next);
       if (data.ok && data.topScore !== undefined && mountedRef.current) {
         setLastResults((prev) => ({ ...prev, [s.id]: { severity: data.severity ?? "low", topScore: data.topScore ?? 0 } }));
         writeAuditEvent("system", "screening.completed", `${s.name} (${s.id}) — score ${data.topScore} · ${data.severity ?? "low"}`);

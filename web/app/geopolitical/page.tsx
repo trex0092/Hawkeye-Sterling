@@ -129,6 +129,7 @@ export default function GeopoliticalPage() {
     try {
       const res = await fetch("/api/geopolitical/events");
       const data = await res.json() as GeopoliticalEvent[] | { ok: boolean; events: GeopoliticalEvent[] };
+      if (!mountedRef.current) return;
       if (Array.isArray(data)) {
         setEvents(data);
       } else if (data && "events" in data) {
@@ -138,7 +139,7 @@ export default function GeopoliticalPage() {
     } catch (err) {
       console.error("[hawkeye] geopolitical fetchEvents threw — keeping existing events:", err);
     } finally {
-      setLoading(false);
+      if (mountedRef.current) setLoading(false);
     }
   }, []);
 

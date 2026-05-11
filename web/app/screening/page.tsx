@@ -1284,19 +1284,21 @@ export default function ScreeningPage() {
         }
       }
       if (!res.ok) {
-        setAmError(data?.error ?? `Search failed - server ${res.status}`);
+        if (mountedRef.current) setAmError(data?.error ?? `Search failed - server ${res.status}`);
         return;
       }
       if (!data) {
-        setAmError("Search failed - empty response");
+        if (mountedRef.current) setAmError("Search failed - empty response");
         return;
       }
+      if (!mountedRef.current) return;
       if (!data.ok) {
         setAmError(data.error ?? "Search failed");
       } else {
         setAmResult(data);
       }
     } catch (err) {
+      if (!mountedRef.current) return;
       if (err instanceof Error && err.name === "AbortError") {
         setAmError("Search failed - request timed out");
       } else {
@@ -1304,7 +1306,7 @@ export default function ScreeningPage() {
       }
     } finally {
       clearTimeout(timer);
-      setAmLoading(false);
+      if (mountedRef.current) setAmLoading(false);
     }
   };
 

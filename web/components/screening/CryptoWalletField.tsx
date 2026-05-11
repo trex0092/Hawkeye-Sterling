@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { fetchJson } from "@/lib/api/fetchWithRetry";
 
 interface Props {
@@ -30,6 +30,8 @@ export function CryptoWalletField({ wallets, onChange }: Props) {
   const [draft, setDraft] = useState("");
   const [risks, setRisks] = useState<Record<string, WalletRisk>>({});
   const [loading, setLoading] = useState<Set<string>>(new Set());
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   const lookup = async (address: string) => {
     setLoading((prev) => new Set([...prev, address]));
@@ -40,12 +42,14 @@ export function CryptoWalletField({ wallets, onChange }: Props) {
       label: "Wallet risk lookup failed",
       timeoutMs: 10_000,
     });
-    setLoading((prev) => {
-      const next = new Set(prev);
-      next.delete(address);
-      return next;
-    });
-    if (res.ok && res.data?.ok && res.data.risk) {
+    if (mountedRef.current) {
+      setLoading((prev) => {
+        const next = new Set(prev);
+        next.delete(address);
+        return next;
+      });
+    }
+    if (mountedRef.current && res.ok && res.data?.ok && res.data.risk) {
       const entry: WalletRisk = {
         address,
         risk: res.data.risk,

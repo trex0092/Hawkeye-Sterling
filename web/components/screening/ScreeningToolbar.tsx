@@ -1,6 +1,6 @@
 "use client";
 
-import { forwardRef, useState, useRef } from "react";
+import { forwardRef, useState, useRef, useEffect } from "react";
 import type { SortKey, Subject, TableColumnKey } from "@/lib/types";
 import { ColumnChooser } from "@/components/screening/ColumnChooser";
 import type { NlSearchFilter } from "@/app/api/cases/nl-search/route";
@@ -89,6 +89,8 @@ export const ScreeningToolbar = forwardRef<HTMLInputElement, ScreeningToolbarPro
   const [aiError, setAiError] = useState<string | null>(null);
   const [aiInterpreted, setAiInterpreted] = useState<string | null>(null);
   const aiInputRef = useRef<HTMLInputElement>(null);
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   const handleAiSearch = async () => {
     if (!aiQuery.trim()) return;
@@ -102,6 +104,7 @@ export const ScreeningToolbar = forwardRef<HTMLInputElement, ScreeningToolbarPro
         body: JSON.stringify({ query: aiQuery.trim() }),
       });
       const data = (await res.json()) as { ok: boolean; interpreted?: string; filters?: NlSearchFilter; clarification?: string; error?: string };
+      if (!mountedRef.current) return;
       if (!data.ok || !data.filters) {
         setAiError(data.error ?? "Could not interpret query");
         return;
@@ -109,9 +112,9 @@ export const ScreeningToolbar = forwardRef<HTMLInputElement, ScreeningToolbarPro
       setAiInterpreted(data.interpreted ?? null);
       onAiFilter(data.filters, aiQuery.trim());
     } catch {
-      setAiError("Network error — try again");
+      if (mountedRef.current) setAiError("Network error — try again");
     } finally {
-      setAiLoading(false);
+      if (mountedRef.current) setAiLoading(false);
     }
   };
 

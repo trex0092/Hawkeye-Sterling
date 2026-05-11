@@ -18,7 +18,7 @@
 // Charter alignment: P9 (every audit row carries previousHash + signature
 // in the rendered output — no opaque view).
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 interface AuditEntry {
   sequence: number;
@@ -116,6 +116,9 @@ export function AuditTrailViewer({
   const [verifying, setVerifying] = useState(false);
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
+
   const load = useCallback(
     async (nextOffset: number) => {
       setLoading(true);
@@ -133,11 +136,11 @@ export function AuditTrailViewer({
           throw new Error(`Audit view failed: HTTP ${res.status}`);
         }
         const json = (await res.json()) as ViewResponse;
-        setData(json);
+        if (mountedRef.current) setData(json);
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Failed to load audit trail.");
+        if (mountedRef.current) setError(e instanceof Error ? e.message : "Failed to load audit trail.");
       } finally {
-        setLoading(false);
+        if (mountedRef.current) setLoading(false);
       }
     },
     [screeningId, action, actor, pageSize],
@@ -165,9 +168,9 @@ export function AuditTrailViewer({
         headers: { accept: "application/json" },
       });
       const json = (await res.json()) as VerifyResponse;
-      setVerifyResult(json);
+      if (mountedRef.current) setVerifyResult(json);
     } catch (e) {
-      setVerifyResult({
+      if (mountedRef.current) setVerifyResult({
         ok: false,
         totalScanned: 0,
         totalVerified: 0,
@@ -180,7 +183,7 @@ export function AuditTrailViewer({
         error: e instanceof Error ? e.message : "Verification request failed.",
       });
     } finally {
-      setVerifying(false);
+      if (mountedRef.current) setVerifying(false);
     }
   }, [screeningId]);
 

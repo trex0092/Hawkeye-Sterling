@@ -872,6 +872,9 @@ export function PerformanceMonitoringDashboard() {
   const [alertsError, setAlertsError] = useState<string | null>(null);
   const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
+
   const alertIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // ── Fetchers ──────────────────────────────────────────────────────────────
@@ -883,11 +886,11 @@ export function PerformanceMonitoringDashboard() {
       const res = await fetch("/api/mlro/brier");
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = (await res.json()) as BrierResponse;
-      setBrierData(json);
+      if (mountedRef.current) setBrierData(json);
     } catch (err) {
-      setBrierError(err instanceof Error ? err.message : "Failed to load calibration data");
+      if (mountedRef.current) setBrierError(err instanceof Error ? err.message : "Failed to load calibration data");
     } finally {
-      setBrierLoading(false);
+      if (mountedRef.current) setBrierLoading(false);
     }
   }, []);
 
@@ -899,12 +902,13 @@ export function PerformanceMonitoringDashboard() {
       const res = await fetch("/api/mlro/mode-performance");
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = (await res.json()) as ModePerformanceResponse;
+      if (!mountedRef.current) return;
       setModeData(json);
       setModeFetched(true);
     } catch (err) {
-      setModeError(err instanceof Error ? err.message : "Failed to load mode performance data");
+      if (mountedRef.current) setModeError(err instanceof Error ? err.message : "Failed to load mode performance data");
     } finally {
-      setModeLoading(false);
+      if (mountedRef.current) setModeLoading(false);
     }
   }, [modeFetched]);
 
@@ -916,12 +920,13 @@ export function PerformanceMonitoringDashboard() {
       const res = await fetch("/api/mlro/fairness");
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = (await res.json()) as FairnessResponse;
+      if (!mountedRef.current) return;
       setFairnessData(json);
       setFairnessFetched(true);
     } catch (err) {
-      setFairnessError(err instanceof Error ? err.message : "Failed to load fairness data");
+      if (mountedRef.current) setFairnessError(err instanceof Error ? err.message : "Failed to load fairness data");
     } finally {
-      setFairnessLoading(false);
+      if (mountedRef.current) setFairnessLoading(false);
     }
   }, [fairnessFetched]);
 
@@ -932,12 +937,13 @@ export function PerformanceMonitoringDashboard() {
       const res = await fetch("/api/mlro/drift-alerts");
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = (await res.json()) as DriftAlertsResponse;
+      if (!mountedRef.current) return;
       setAlertsData(json);
       setLastRefreshed(new Date());
     } catch (err) {
-      setAlertsError(err instanceof Error ? err.message : "Failed to load drift alerts");
+      if (mountedRef.current) setAlertsError(err instanceof Error ? err.message : "Failed to load drift alerts");
     } finally {
-      setAlertsLoading(false);
+      if (mountedRef.current) setAlertsLoading(false);
     }
   }, []);
 

@@ -121,8 +121,10 @@ export function NewScreeningForm({
       setPepHits([]);
       return;
     }
+    let cancelled = false;
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(async () => {
+      if (cancelled) return;
       setPepStatus("loading");
       try {
         const res = await fetch("/api/pep-match", {
@@ -135,6 +137,7 @@ export function NewScreeningForm({
           }),
         });
         const data = (await res.json()) as PepMatchResponse;
+        if (cancelled) return;
         if (data.ok && data.hits.length > 0) {
           setPepHits(data.hits);
           setPepStatus("hit");
@@ -149,10 +152,11 @@ export function NewScreeningForm({
         }
       } catch (err) {
         console.error("[hawkeye] pep-match failed:", err);
-        setPepStatus("error");
+        if (!cancelled) setPepStatus("error");
       }
     }, 600);
     return () => {
+      cancelled = true;
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps

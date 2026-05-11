@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 
 type AsanaState =
   | { status: "idle" }
@@ -41,6 +41,8 @@ function isDisabled(msg: string): boolean {
 
 export function AsanaReportButton({ payload, disabled = false }: Props) {
   const [state, setState] = useState<AsanaState>({ status: "idle" });
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   const report = async () => {
     if (state.status !== "idle") return;
@@ -57,6 +59,7 @@ export function AsanaReportButton({ payload, disabled = false }: Props) {
       })) as
         | { ok?: boolean; taskUrl?: string; error?: string; detail?: string }
         | null;
+      if (!mountedRef.current) return;
       if (!res.ok || !json?.ok) {
         const msg = (json?.error ?? "") + " " + (json?.detail ?? "");
         if (isDisabled(msg)) {
@@ -68,7 +71,7 @@ export function AsanaReportButton({ payload, disabled = false }: Props) {
       }
       setState({ status: "sent", ...(json.taskUrl ? { taskUrl: json.taskUrl } : {}) });
     } catch {
-      setState({ status: "error" });
+      if (mountedRef.current) setState({ status: "error" });
     }
   };
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { parseCsv, rowsToBulkImport, type BulkImportRow } from "@/lib/data/csv";
 import { fetchJson } from "@/lib/api/fetchWithRetry";
 
@@ -35,6 +35,9 @@ export function BulkImportDialog({ open, onClose, onImported }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<BatchSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   if (!open) return null;
 
@@ -72,6 +75,7 @@ export function BulkImportDialog({ open, onClose, onImported }: Props) {
         label: "Bulk import failed",
         timeoutMs: 90_000,
       });
+      if (!mountedRef.current) return;
       if (!res.ok || !res.data?.ok) {
         setError(res.error ?? res.data?.error ?? "Bulk import failed");
         return;
@@ -79,7 +83,7 @@ export function BulkImportDialog({ open, onClose, onImported }: Props) {
       setResult(res.data.summary ?? null);
       onImported(parsedRows);
     } finally {
-      setSubmitting(false);
+      if (mountedRef.current) setSubmitting(false);
     }
   };
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -335,6 +335,9 @@ export function AuditTrailViewer({
 
   const [exporting, setExporting] = useState(false);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
+
   // ── Load audit record ──────────────────────────────────────────────────────
 
   useEffect(() => {
@@ -383,12 +386,14 @@ export function AuditTrailViewer({
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = (await res.json()) as VerifyResponse;
+      if (!mountedRef.current) return;
       setHmacStatus(json.valid ? "valid" : "invalid");
     } catch (err) {
+      if (!mountedRef.current) return;
       setVerifyError(err instanceof Error ? err.message : "Verification failed");
       setHmacStatus("error");
     } finally {
-      setVerifying(false);
+      if (mountedRef.current) setVerifying(false);
     }
   }, [data, screeningId]);
 

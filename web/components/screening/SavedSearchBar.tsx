@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { fetchJson } from "@/lib/api/fetchWithRetry";
 import type { FilterKey, SavedSearch, SubjectStatus } from "@/lib/types";
 
@@ -31,12 +31,16 @@ export function SavedSearchBar({ active, onApply, appliedId }: Props) {
   const [adding, setAdding] = useState(false);
   const [draftLabel, setDraftLabel] = useState("");
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
+
   const refresh = async () => {
     setLoading(true);
     const res = await fetchJson<ListResponse>("/api/saved-searches", {
       label: "Saved searches load failed",
       timeoutMs: 10_000,
     });
+    if (!mountedRef.current) return;
     setLoading(false);
     if (!res.ok || !res.data?.ok) {
       setError(res.error ?? "load failed");
@@ -62,6 +66,7 @@ export function SavedSearchBar({ active, onApply, appliedId }: Props) {
       body: JSON.stringify(body),
       label: "Save search failed",
     });
+    if (!mountedRef.current) return;
     if (!res.ok || !res.data?.ok) {
       setError(res.error ?? "save failed");
       return;

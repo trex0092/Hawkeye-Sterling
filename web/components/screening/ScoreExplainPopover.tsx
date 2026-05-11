@@ -32,6 +32,7 @@ export function ScoreExplainPopover({ subject, onClose, anchor }: Props) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    let cancelled = false;
     const ctl = new AbortController();
     void (async () => {
       const res = await fetchJson<ApiOk>("/api/quick-screen", {
@@ -42,6 +43,7 @@ export function ScoreExplainPopover({ subject, onClose, anchor }: Props) {
         signal: ctl.signal,
         timeoutMs: 12_000,
       });
+      if (cancelled) return;
       if (!res.ok || !res.data) {
         setState({ kind: "error", error: res.error ?? "lookup failed" });
         return;
@@ -49,7 +51,7 @@ export function ScoreExplainPopover({ subject, onClose, anchor }: Props) {
       // The /api/quick-screen response embeds a full QuickScreenResult.
       setState({ kind: "ready", result: res.data as unknown as QuickScreenResult });
     })();
-    return () => ctl.abort();
+    return () => { cancelled = true; ctl.abort(); };
   }, [subject]);
 
   // Close on outside click + Escape.
