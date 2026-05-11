@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { enforce } from "@/lib/server/enforce";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -13,6 +14,8 @@ const CRS_JURISDICTIONS = ["UAE", "UK", "Germany", "France", "Singapore", "Switz
 const FATCA_JURISDICTIONS = ["UAE", "UK", "Canada", "Australia", "Singapore", "Luxembourg"];
 
 export async function POST(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   let body: ReqBody;
   try {
     body = (await req.json()) as ReqBody;

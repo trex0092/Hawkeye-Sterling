@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 
+import { enforce } from "@/lib/server/enforce";
 export interface CtrStructuringResult {
   structuringDetected: boolean;
   structuringRisk: "critical" | "high" | "medium" | "low" | "none";
@@ -40,6 +41,8 @@ function parseCash(raw: string): number[] {
 const CTR_THRESHOLD = 55000;
 
 export async function POST(req: Request) {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   let body: {
     amounts: string;
     currency?: string;

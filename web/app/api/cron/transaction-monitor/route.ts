@@ -102,10 +102,17 @@ async function openCase(record: TxnFlagRecord, typology: TypologyResult): Promis
 
 export async function POST(req: Request): Promise<NextResponse> {
   const cronSecret = process.env["CRON_SECRET"] ?? process.env["ONGOING_RUN_TOKEN"] ?? "";
-  const authHeader = req.headers.get("authorization") ?? "";
-  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
-
-  if (!cronSecret || token !== cronSecret) {
+  if (!cronSecret) {
+    return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
+  }
+  const got = (req.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "");
+  const { timingSafeEqual } = await import("crypto");
+  const enc = new TextEncoder();
+  const expBuf = enc.encode(cronSecret);
+  const gotRaw = enc.encode(got);
+  const gotBuf = new Uint8Array(expBuf.length);
+  gotBuf.set(gotRaw.slice(0, expBuf.length));
+  if (got.length !== cronSecret.length || !timingSafeEqual(expBuf, gotBuf)) {
     return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
   }
 

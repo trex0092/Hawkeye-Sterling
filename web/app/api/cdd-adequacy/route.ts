@@ -141,7 +141,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       `${reviews.length} subjects assessed — portfolio: ${parsed.portfolioStatus} · critical: ${(parsed.criticalSubjects ?? []).length}`,
     );
 
-    return NextResponse.json(parsed);
+    return NextResponse.json({ ok: true, ...parsed });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     writeAuditEvent("mlro", "cdd.ai-adequacy-check", `error — ${msg}`);

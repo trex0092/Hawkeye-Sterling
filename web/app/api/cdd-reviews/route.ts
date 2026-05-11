@@ -122,11 +122,13 @@ export async function POST(req: Request): Promise<NextResponse> {
   };
 
   await saveCddReview(tenant, record);
-  writeAuditEvent(
-    "mlro",
-    "cdd.review.saved",
-    `${record.subject} — tier:${record.tier} status:${record.status} daysOverdue:${record.daysOverdue}`,
-  );
+  try {
+    writeAuditEvent(
+      "mlro",
+      "cdd.review.saved",
+      `${record.subject} — tier:${record.tier} status:${record.status} daysOverdue:${record.daysOverdue}`,
+    );
+  } catch { /* browser-only audit — best-effort on server */ }
 
   return NextResponse.json(
     { ok: true, record },
@@ -151,6 +153,6 @@ export async function DELETE(req: Request): Promise<NextResponse> {
   }
 
   await deleteCddReview(tenant, id);
-  writeAuditEvent("mlro", "cdd.review.deleted", `${existing.subject} (${id})`);
+  try { writeAuditEvent("mlro", "cdd.review.deleted", `${existing.subject} (${id})`); } catch { /* browser-only audit */ }
   return NextResponse.json({ ok: true, deleted: id }, { headers: gate.headers });
 }

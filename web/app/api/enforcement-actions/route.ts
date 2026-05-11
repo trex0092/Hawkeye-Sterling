@@ -41,7 +41,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const actions: EnforcementAction[] = [];
   const jurisRegulators = jurisdiction === "UK" ? ["FCA"] : jurisdiction === "US" ? ["SEC", "FinCEN"] : ["CBUAE", "DFSA"];
-  const applicableRegulators = actionCount > 0 ? [...jurisRegulators, ...REGULATORS].slice(0, Math.max(jurisRegulators.length, 2)) : [];
+  const applicableRegulators = actionCount > 0 ? jurisRegulators : [];
 
   for (let i = 0; i < actionCount; i++) {
     const seed = hash + i * 41;

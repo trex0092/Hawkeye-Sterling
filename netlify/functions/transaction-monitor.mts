@@ -15,7 +15,6 @@ export default async (_req: Request) => {
   const token =
     process.env.CRON_SECRET ??
     process.env.ONGOING_RUN_TOKEN ??
-    process.env.ADMIN_TOKEN ??
     "";
   const headers: Record<string, string> = { "content-type": "application/json" };
   if (token) headers.authorization = `Bearer ${token}`;

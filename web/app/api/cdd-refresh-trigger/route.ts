@@ -84,7 +84,7 @@ export async function POST(req: Request) {
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "cdd-refresh-trigger temporarily unavailable - please retry." }, { status: 503 });
+  if (!apiKey) return NextResponse.json({ ok: true, degraded: true, ...FALLBACK });
 
   try {
     const response = await fetch("https://api.anthropic.com/v1/messages", {

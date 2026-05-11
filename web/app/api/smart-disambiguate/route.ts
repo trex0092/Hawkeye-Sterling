@@ -154,15 +154,12 @@ export async function POST(req: Request): Promise<NextResponse> {
       { status: 400 },
     );
   }
-  const hitsToProcess = hits;
-  const truncated = false;
-
   // Deterministic template — applied when no API key is set OR the LLM fails.
   const buildTemplate = (): DisambiguationResult => ({
     overallAssessment: `Deterministic disambiguation for "${client.name}" against ${hits.length} hit(s). Set ANTHROPIC_API_KEY for AI-graded scoring.`,
     clientRiskProfile: `${client.name}${client.nationality ? ` (${client.nationality})` : ""} — supplied identifiers: ${[client.dob ? "DOB" : "", client.gender ? "gender" : "", client.occupation ? "role" : ""].filter(Boolean).join(", ") || "name only"}.`,
     disambiguationStrategy: "Score each hit on identifier overlap (name, DOB, country, role). Without DOB/passport the engine cannot definitively distinguish — refer to MLRO with all hits as 'possible'.",
-    hits: hitsToProcess.map((h) => ({
+    hits: hits.map((h) => ({
       hitId: h.hitId,
       verdict: "possible_match",
       confidenceScore: 50,
@@ -183,7 +180,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ...buildTemplate(), degraded: true, degradedReason: "ANTHROPIC_API_KEY not configured — deterministic template used." });
   }
 
-  const userMessage = `Disambiguate these screening hits for client: ${JSON.stringify(client)}. Hits to assess: ${JSON.stringify(hitsToProcess)}${truncated ? ` (Note: only first 20 of ${hits.length} hits processed due to batch limit)` : ""}`;
+  const userMessage = `Disambiguate these screening hits for client: ${JSON.stringify(client)}. Hits to assess: ${JSON.stringify(hits)}`;
 
   try {
     const res = await fetch(ANTHROPIC_API_URL, {
@@ -213,11 +210,6 @@ export async function POST(req: Request): Promise<NextResponse> {
     const stripped = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "");
 
     const parsed = JSON.parse(stripped) as DisambiguationResult;
-
-    // If truncated, amend overallAssessment
-    if (truncated && parsed.overallAssessment) {
-      parsed.overallAssessment = `[First 20 of ${hits.length} hits processed] ${parsed.overallAssessment}`;
-    }
 
     return NextResponse.json({ ok: true, ...parsed });
   } catch (err) {

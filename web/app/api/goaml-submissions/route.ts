@@ -111,11 +111,13 @@ export async function POST(req: Request): Promise<NextResponse> {
   };
 
   await saveGoAmlSubmission(tenant, updated);
-  writeAuditEvent(
-    "mlro",
-    `goaml.submission.${body.status}`,
-    `${body.reportRef} — ${existing.reportCode} / ${existing.subjectName}${isResubmit ? ` (retry #${updated.retryCount})` : ""}`,
-  );
+  try {
+    writeAuditEvent(
+      "mlro",
+      `goaml.submission.${body.status}`,
+      `${body.reportRef} — ${existing.reportCode} / ${existing.subjectName}${isResubmit ? ` (retry #${updated.retryCount})` : ""}`,
+    );
+  } catch { /* browser-only audit — best-effort on server */ }
 
   return NextResponse.json({ ok: true, record: updated }, { headers: gate.headers });
 }
@@ -137,6 +139,6 @@ export async function DELETE(req: Request): Promise<NextResponse> {
   }
 
   await deleteGoAmlSubmission(tenant, ref);
-  writeAuditEvent("mlro", "goaml.submission.deleted", `${ref} (${existing.reportCode} / ${existing.subjectName})`);
+  try { writeAuditEvent("mlro", "goaml.submission.deleted", `${ref} (${existing.reportCode} / ${existing.subjectName})`); } catch { /* browser-only audit */ }
   return NextResponse.json({ ok: true, deleted: ref }, { headers: gate.headers });
 }

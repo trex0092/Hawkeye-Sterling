@@ -13,6 +13,7 @@ import { getToolLevel } from "@/lib/mcp/tool-manifest";
 import type { ConsequenceLevel } from "@/lib/mcp/tool-manifest";
 import type { McpLogEntry } from "@/app/api/operator/logs/route";
 
+import { enforce } from "@/lib/server/enforce";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -233,9 +234,10 @@ function summarise(value: unknown, maxLen = 200): string {
   return s.length > maxLen ? s.slice(0, maxLen) + "…" : s;
 }
 
-// Per-call timeout set by the tools/call handler before invoking the tool handler.
-// Tools call callApi() which picks up this value for per-class timeouts.
+// Per-call state threaded via module-level vars (set before each dispatch, cleared after).
+// Not concurrency-safe under heavy parallel load, but acceptable for this compliance platform.
 let _currentCallTimeout: number | undefined;
+let _currentAuthHeader: string | undefined;
 
 // ── Internal API proxy ────────────────────────────────────────────────────────
 async function callApi(
@@ -257,7 +259,10 @@ async function callApi(
   try {
     const res = await fetch(url.toString(), {
       method,
-      headers: { "content-type": "application/json" },
+      headers: {
+        "content-type": "application/json",
+        ...(_currentAuthHeader ? { authorization: _currentAuthHeader } : {}),
+      },
       ...(body ? { body: JSON.stringify(body) } : {}),
       signal: AbortSignal.timeout(timeoutMs ?? _currentCallTimeout ?? 55_000),
     });
@@ -311,7 +316,7 @@ const TOOLS: ToolDef[] = [
       properties: {
         subjects: {
           type: "array",
-          description: "List of subjects to screen (max 500)",
+          description: "List of subjects to screen (up to 10,000)",
           items: {
             type: "object",
             properties: {
@@ -381,7 +386,7 @@ const TOOLS: ToolDef[] = [
           },
         },
       },
-      required: ["name"],
+      required: ["name", "hits"],
     },
     handler: async (args) => {
       const { hits, ...clientFields } = args as Record<string, unknown>;
@@ -490,7 +495,7 @@ const TOOLS: ToolDef[] = [
         subjectName: { type: "string" },
         entityType: { type: "string" },
         jurisdiction: { type: "string" },
-        format: { type: "string", enum: ["json", "html"], default: "json" },
+        format: { type: "string", description: "Output format — currently always html; json planned" },
       },
       required: ["subjectName"],
     },
@@ -522,13 +527,15 @@ const TOOLS: ToolDef[] = [
       },
       required: ["subjectName", "suspicionBasis"],
     },
-    handler: async ({ suspicionBasis, subjectName, filingType, approver, ...rest }) =>
-      callApi("/api/sar-report", "POST", {
-        subject: { name: subjectName, ...rest },
-        suspicionBasis,
+    handler: async ({ suspicionBasis, subjectName, filingType, approver, ...rest }) => {
+      const subjectId = String(subjectName ?? "").toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 40) + "-" + Date.now().toString(36);
+      return callApi("/api/sar-report", "POST", {
+        subject: { id: subjectId, name: subjectName, ...rest },
+        narrative: suspicionBasis,
         filingType: filingType ?? "STR",
         approver,
-      }),
+      });
+    },
   },
   {
     name: "compliance_report",
@@ -558,10 +565,11 @@ const TOOLS: ToolDef[] = [
       type: "object",
       properties: {
         question: { type: "string", description: "Compliance question or case to analyse" },
-        context: { type: "string", description: "Additional case context or evidence" },
+        subjectName: { type: "string", description: "Full name of the subject being analysed" },
+        context: { type: "array", items: { type: "object", properties: { q: { type: "string" }, a: { type: "string" } } }, description: "Prior Q&A context pairs" },
         mode: { type: "string", enum: ["executor", "advisor", "challenger", "all"] },
       },
-      required: ["question"],
+      required: ["question", "subjectName"],
     },
     handler: async (args) => callApi("/api/mlro-advisor", "POST", args),
   },
@@ -572,7 +580,8 @@ const TOOLS: ToolDef[] = [
       type: "object",
       properties: {
         question: { type: "string" },
-        context: { type: "string" },
+        subjectName: { type: "string", description: "Full name of the subject being analysed" },
+        context: { type: "array", items: { type: "object", properties: { q: { type: "string" }, a: { type: "string" } } }, description: "Prior Q&A context pairs" },
       },
       required: ["question"],
     },
@@ -709,16 +718,17 @@ const TOOLS: ToolDef[] = [
     inputSchema: {
       type: "object",
       properties: {
-        amount: { type: "number" },
-        currency: { type: "string" },
+        amountUsd: { type: "number", description: "Transaction amount in USD" },
         senderName: { type: "string" },
         senderCountry: { type: "string" },
         receiverName: { type: "string" },
         receiverCountry: { type: "string" },
         channel: { type: "string", description: "e.g. wire, cash, crypto, trade" },
         narrative: { type: "string" },
+        countryRiskScore: { type: "number", description: "0-100 country risk score" },
+        counterpartyFirstSeen: { type: "boolean" },
       },
-      required: ["amount", "currency"],
+      required: ["amountUsd"],
     },
     handler: async (args) => callApi("/api/transaction-anomaly", "POST", { transaction: args }),
   },
@@ -998,6 +1008,11 @@ export async function GET(): Promise<Response> {
 }
 
 export async function POST(req: Request): Promise<Response> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
+  // Thread caller's auth to all internal callApi requests so they're
+  // rate-limited against the caller's tier rather than free-tier anonymous.
+  _currentAuthHeader = req.headers.get("authorization") ?? undefined;
   // Kill switch — set MCP_ENABLED=false in Netlify env vars to instantly
   // disable all 28 tools. All tool calls return 503 until re-enabled.
   if (process.env["MCP_ENABLED"] === "false") {

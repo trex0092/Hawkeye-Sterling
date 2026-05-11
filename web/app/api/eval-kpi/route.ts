@@ -12,6 +12,7 @@
 // snapshot JSON. This route is the read side.
 
 import { NextResponse } from "next/server";
+import { enforce } from "@/lib/server/enforce";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 
@@ -30,7 +31,9 @@ export async function OPTIONS(): Promise<Response> {
   return new Response(null, { status: 204, headers: CORS });
 }
 
-export async function GET(): Promise<Response> {
+export async function GET(req: Request): Promise<Response> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   try {
     const raw = await fs.readFile(SNAPSHOT_PATH, "utf8");
     const snap = JSON.parse(raw);

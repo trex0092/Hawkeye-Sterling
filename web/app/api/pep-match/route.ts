@@ -50,6 +50,7 @@ interface PepRecord {
 // Module-level cache so we don't re-read the blob on every warm request.
 let cachedRecords: PepRecord[] | null = null;
 let cacheLoadedAt = 0;
+let cacheSource: "blobs" | "cdn" | "none" = "none";
 const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
 
 const BLOBS_STORE = "hawkeye-pep";
@@ -74,6 +75,7 @@ async function loadCorpus(): Promise<PepRecord[]> {
       if (records.length > 0) {
         cachedRecords = records;
         cacheLoadedAt = Date.now();
+        cacheSource = "blobs";
         return records;
       }
     }
@@ -97,6 +99,7 @@ async function loadCorpus(): Promise<PepRecord[]> {
     if (records.length > 0) {
       cachedRecords = records;
       cacheLoadedAt = Date.now();
+      cacheSource = "cdn";
     }
     return records;
   } catch {
@@ -220,7 +223,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: true, hits: [], source: "none", queriedName: name } satisfies PepMatchResponse);
   }
 
-  const source: PepMatchResponse["source"] = cacheLoadedAt > 0 ? (corpus === cachedRecords ? "blobs" : "cdn") : "none";
+  const source: PepMatchResponse["source"] = cacheLoadedAt > 0 ? cacheSource : "none";
 
   const qNorm = normName(name);
   const qTokens = tokenSet(name);

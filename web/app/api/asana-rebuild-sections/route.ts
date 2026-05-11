@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { enforce } from "@/lib/server/enforce";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -169,7 +170,9 @@ async function delay(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-export async function POST(): Promise<NextResponse> {
+export async function POST(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   const token = process.env["ASANA_TOKEN"];
   if (!token) {
     return NextResponse.json({

@@ -135,7 +135,7 @@ export async function enforce(
             headers: check.tier
               ? rateLimitHeaders({
                   allowed: false,
-                  retryAfterSec: 60,
+                  retryAfterSec: check.reason === "quota_exceeded" ? 2_592_000 : 60,
                   remainingSecond: 0,
                   remainingMinute: 0,
                   tier: check.tier,

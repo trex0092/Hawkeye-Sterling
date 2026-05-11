@@ -49,6 +49,12 @@ function reviewPrefix(tenantId: string): string {
 
 export function computeNextReviewDate(tier: CddReviewRecord["tier"], fromDate: string): string {
   const d = new Date(fromDate);
+  if (isNaN(d.getTime())) {
+    // Corrupt or missing date — default to today + cadence
+    const fallback = new Date();
+    fallback.setDate(fallback.getDate() + CADENCE_DAYS[tier]);
+    return fallback.toISOString().split("T")[0]!;
+  }
   d.setDate(d.getDate() + CADENCE_DAYS[tier]);
   return d.toISOString().split("T")[0]!;
 }
@@ -56,6 +62,7 @@ export function computeNextReviewDate(tier: CddReviewRecord["tier"], fromDate: s
 export function computeDaysOverdue(nextReviewDate: string): number {
   const now = Date.now();
   const due = new Date(nextReviewDate).getTime();
+  if (isNaN(due)) return 0;
   return Math.max(0, Math.floor((now - due) / 86_400_000));
 }
 

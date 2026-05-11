@@ -190,7 +190,10 @@ function isKeySet(envKey: string): boolean {
   return !!v && v.length > 0;
 }
 
-export async function GET(): Promise<NextResponse> {
+export async function GET(req: Request): Promise<NextResponse> {
+  const { enforce } = await import("@/lib/server/enforce");
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   // Resolve `configured` per provider
   const providers = PROVIDER_CATALOG.map((p) => {
     const allSet = p.tier === "free-toggle"

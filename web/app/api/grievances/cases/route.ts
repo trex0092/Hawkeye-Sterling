@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { enforce } from "@/lib/server/enforce";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -35,6 +36,8 @@ async function loadCasesFromStore(): Promise<GrievanceCase[]> {
 }
 
 export async function GET(req: Request) {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   const { searchParams } = new URL(req.url);
   const limit = Math.min(parseInt(searchParams.get("limit") ?? "20", 10), 100);
   const statusFilter = searchParams.get("status");

@@ -11,6 +11,7 @@
 import { NextResponse } from "next/server";
 import { getStore } from "@/lib/server/store";
 
+import { enforce } from "@/lib/server/enforce";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 10;
@@ -22,6 +23,8 @@ export async function GET(
   _req: Request,
   { params }: { params: Promise<{ jobId: string }> },
 ): Promise<NextResponse> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   const { jobId: rawJobId } = await params;
   const jobId = rawJobId?.trim() ?? "";
   if (!JOB_ID_RE.test(jobId)) {

@@ -614,7 +614,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         composite: { score: 75, breakdown: { quickScreen: 0, jurisdictionPenalty: 0, regimesPenalty: 0, redlinesPenalty: 0, adverseMediaPenalty: 0, adverseMediaScoredPenalty: 0, adverseKeywordPenalty: 0, pepPenalty: 0 } },
         note: "⚠ Super-brain analysis unavailable — scoring engine crashed. MLRO manual review required before any onboarding or clearance decision. Do not use this result as a CLEAR verdict.",
       },
-      { headers: gateHeaders },
+      { status: 503, headers: gateHeaders },
     );
   }
 }
