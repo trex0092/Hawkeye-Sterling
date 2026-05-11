@@ -708,7 +708,7 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
   // "Save as PDF" without the app needing a server-side PDF engine.
   const handleDownloadPdf = async () => {
     if (screening.status !== "success") {
-      showFlash("Screening not complete yet");
+      showFlash(screening.status === "loading" ? "Screening in progress — please wait" : "Screening not complete yet");
       return;
     }
     if (superBrain.status === "loading") {
@@ -766,7 +766,7 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
   // FIU portal. reportCode defaults to STR, the most common filing.
   const handleDownloadGoaml = async () => {
     if (screening.status !== "success") {
-      showFlash("Screening not complete yet");
+      showFlash(screening.status === "loading" ? "Screening in progress — please wait" : "Screening not complete yet");
       return;
     }
     const composite =
@@ -992,7 +992,7 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
 
   const handleDownloadReport = async () => {
     if (screening.status !== "success") {
-      showFlash("Screening not complete yet");
+      showFlash(screening.status === "loading" ? "Screening in progress — please wait" : "Screening not complete yet");
       return;
     }
     if (superBrain.status === "loading") {

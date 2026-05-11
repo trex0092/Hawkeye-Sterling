@@ -1570,7 +1570,7 @@ export default function ScreeningPage() {
                   // Find hit context for the audit trail
                   const hit = latestTriage.hits.find((h) => h.id === hitId);
                   try {
-                    await fetch("/api/screening/resolve", {
+                    const resolveRes = await fetch("/api/screening/resolve", {
                       method: "POST",
                       headers: { "content-type": "application/json" },
                       body: JSON.stringify({
@@ -1587,8 +1587,23 @@ export default function ScreeningPage() {
                         } : undefined,
                       }),
                     });
+                    if (!resolveRes.ok) {
+                      // Roll back the optimistic UI update so the operator
+                      // knows the resolution didn't persist.
+                      setTriageResolutions((p) => {
+                        const next = { ...p };
+                        delete next[hitId];
+                        return next;
+                      });
+                      console.error(`[screening] resolve failed: HTTP ${resolveRes.status}`);
+                    }
                   } catch (err) {
                     console.warn("[screening] resolve failed:", err);
+                    setTriageResolutions((p) => {
+                      const next = { ...p };
+                      delete next[hitId];
+                      return next;
+                    });
                   }
                 }}
               />

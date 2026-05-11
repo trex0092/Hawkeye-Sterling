@@ -69,7 +69,8 @@ const MAX_TOKENS = 1024;
 // so we abort upstream well before that to guarantee we always have time
 // to return a clean JSON response (rather than letting Netlify replace
 // our body with an HTML 502).
-const HARD_TIMEOUT_MS = 18_000;
+// 22 s leaves ~8 s of response-marshalling buffer inside the 30 s maxDuration.
+const HARD_TIMEOUT_MS = 22_000;
 
 
 interface ContextPair { q: string; a: string }

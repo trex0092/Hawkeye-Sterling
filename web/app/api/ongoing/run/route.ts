@@ -150,14 +150,18 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const nowMs = Date.now();
 
-  for (const s of subjects) {
+  // Process all subjects in parallel — each writes to its own blob keys
+  // (ongoing/last/${id}, profile/${id}, etc.) so there are no conflicts.
+  // Sequential processing timed out on portfolios > ~20 subjects due to
+  // the 15s news-search call per subject adding up serially.
+  await Promise.all(subjects.map(async (s) => {
     try {
       // Respect per-subject schedule. If a schedule exists and the next
       // run isn't due yet, skip this subject. Subjects without a
       // schedule run on every tick (legacy behaviour).
       const schedule = await getJson<Schedule>(`schedule/${s.id}`);
       if (schedule && Date.parse(schedule.nextRunAt) > nowMs) {
-        continue;
+        return;
       }
 
       const subject = {
@@ -663,7 +667,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     } catch (err) {
       results.push({
         subjectId: s.id,
-        subjectName: s.name,
+        subjectName: s.name ?? "",
         topScore: 0,
         severity: "error",
         scoreDelta: 0,
@@ -675,7 +679,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         },
       });
     }
-  }
+  }));
 
   return NextResponse.json({
     ok: true,

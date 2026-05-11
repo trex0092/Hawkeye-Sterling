@@ -83,78 +83,78 @@ async function handlePost(req: Request): Promise<NextResponse> {
   const startedAt = Date.now();
   const candidates = await loadCandidates();
   const mode = body.mode === "full" ? "full" : "fast";
-  const results: BatchResult[] = [];
 
-  for (let i = 0; i < body.subjects.length; i++) {
-    const sub = body.subjects[i]!;
-    const subStartedAt = Date.now();
-    if (!sub?.name || typeof sub.name !== "string" || !sub.name.trim() || sub.name.length > 500) {
-      results.push({ subjectIndex: i, ok: false, error: "invalid subject", durationMs: Date.now() - subStartedAt });
-      continue;
-    }
-    try {
-      const screen = quickScreen(sub, candidates) as {
-        topScore?: number;
-        severity?: string;
-        hits?: Array<{ score: number; listId: string; listRef: string }>;
-        generatedAt?: string;
-      };
-      const hits = screen.hits ?? [];
-
-      // Redlines (fast mode skips this; full mode includes).
-      let redlinesFiredCount = 0;
-      let crossRegime: BatchResult["crossRegime"] = null;
-      if (mode === "full") {
-        const keywords = [sub.name, ...(sub.aliases ?? [])]
-          .join(" ")
-          .toLowerCase()
-          .split(/\W+/)
-          .filter((t) => t.length >= 3);
-        redlinesFiredCount = evaluateRedlines(keywords).fired.length;
-
-        // Cross-regime detection — same status mapping as super-brain.
-        const REGIME_LIST_IDS = ["un_1267", "ofac_sdn", "eu_consolidated", "uk_ofsi", "uae_eocn", "uae_local_terrorist"] as const;
-        const hitsByList = new Map<string, typeof hits>();
-        for (const h of hits) {
-          const arr = hitsByList.get(h.listId);
-          if (arr) arr.push(h);
-          else hitsByList.set(h.listId, [h]);
-        }
-        const statuses: RegimeStatus[] = REGIME_LIST_IDS.map((listId) => {
-          const list = hitsByList.get(listId);
-          let hit: RegimeStatus["hit"] = "not_designated";
-          if (list && list.length > 0) {
-            const best = list.reduce((a, b) => (b.score > a.score ? b : a));
-            hit = best.score >= 0.85 ? "designated" : "partial_match";
-          }
-          return { regimeId: listId, hit, asOf: screen.generatedAt ?? new Date().toISOString() };
-        });
-        const cr = detectCrossRegimeConflict(statuses);
-        crossRegime = { recommendedAction: cr.recommendedAction, split: cr.split };
+  // Process all subjects in parallel — quickScreen is CPU-only and
+  // synchronous; redlines + cross-regime are also in-process. No I/O per
+  // subject, so parallel is safe and eliminates the serial wait.
+  const results: BatchResult[] = await Promise.all(
+    body.subjects.map(async (sub, i): Promise<BatchResult> => {
+      const subStartedAt = Date.now();
+      if (!sub?.name || typeof sub.name !== "string" || !sub.name.trim() || sub.name.length > 500) {
+        return { subjectIndex: i, ok: false, error: "invalid subject", durationMs: Date.now() - subStartedAt };
       }
+      try {
+        const screen = quickScreen(sub, candidates) as {
+          topScore?: number;
+          severity?: string;
+          hits?: Array<{ score: number; listId: string; listRef: string }>;
+          generatedAt?: string;
+        };
+        const hits = screen.hits ?? [];
 
-      results.push({
-        subjectIndex: i,
-        ok: true,
-        subjectName: sub.name,
-        topScore: screen.topScore,
-        severity: screen.severity,
-        hits: hits.length,
-        redlinesFired: redlinesFiredCount,
-        crossRegime,
-        durationMs: Date.now() - subStartedAt,
-      });
-    } catch (err) {
-      results.push({
-        subjectIndex: i,
-        ok: false,
-        subjectName: sub.name,
-        error: err instanceof Error ? err.message : String(err),
-        durationMs: Date.now() - subStartedAt,
-      });
-    }
-    void PER_SUBJECT_BUDGET_MS; // currently advisory only — quickScreen is fast.
-  }
+        // Redlines (fast mode skips this; full mode includes).
+        let redlinesFiredCount = 0;
+        let crossRegime: BatchResult["crossRegime"] = null;
+        if (mode === "full") {
+          const keywords = [sub.name, ...(sub.aliases ?? [])]
+            .join(" ")
+            .toLowerCase()
+            .split(/\W+/)
+            .filter((t) => t.length >= 3);
+          redlinesFiredCount = evaluateRedlines(keywords).fired.length;
+
+          const REGIME_LIST_IDS = ["un_1267", "ofac_sdn", "eu_consolidated", "uk_ofsi", "uae_eocn", "uae_local_terrorist"] as const;
+          const hitsByList = new Map<string, typeof hits>();
+          for (const h of hits) {
+            const arr = hitsByList.get(h.listId);
+            if (arr) arr.push(h);
+            else hitsByList.set(h.listId, [h]);
+          }
+          const statuses: RegimeStatus[] = REGIME_LIST_IDS.map((listId) => {
+            const list = hitsByList.get(listId);
+            let hit: RegimeStatus["hit"] = "not_designated";
+            if (list && list.length > 0) {
+              const best = list.reduce((a, b) => (b.score > a.score ? b : a));
+              hit = best.score >= 0.85 ? "designated" : "partial_match";
+            }
+            return { regimeId: listId, hit, asOf: screen.generatedAt ?? new Date().toISOString() };
+          });
+          const cr = detectCrossRegimeConflict(statuses);
+          crossRegime = { recommendedAction: cr.recommendedAction, split: cr.split };
+        }
+
+        return {
+          subjectIndex: i,
+          ok: true,
+          subjectName: sub.name,
+          topScore: screen.topScore,
+          severity: screen.severity,
+          hits: hits.length,
+          redlinesFired: redlinesFiredCount,
+          crossRegime,
+          durationMs: Date.now() - subStartedAt,
+        };
+      } catch (err) {
+        return {
+          subjectIndex: i,
+          ok: false,
+          subjectName: sub.name,
+          error: err instanceof Error ? err.message : String(err),
+          durationMs: Date.now() - subStartedAt,
+        };
+      }
+    }),
+  );
 
   return NextResponse.json(
     {
