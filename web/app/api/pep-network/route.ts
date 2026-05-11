@@ -95,19 +95,19 @@ export async function POST(req: Request): Promise<NextResponse> {
   const apiKey = process.env["ANTHROPIC_API_KEY"];
 
   if (!apiKey) {
-    return NextResponse.json({ ok: false, error: "pep-network temporarily unavailable - please retry." }, { status: 503 });
+    return NextResponse.json({ ok: false, error: "pep-network temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
   }
 
   let body: Body;
   try {
     body = (await req.json()) as Body;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
   }
 
   const pepName = (body?.pepName ?? body?.subject)?.trim();
   if (!pepName) {
-    return NextResponse.json({ ok: false, error: "pepName is required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "pepName is required" }, { status: 400 , headers: gate.headers});
   }
 
   const parts: string[] = [
@@ -165,5 +165,5 @@ export async function POST(req: Request): Promise<NextResponse> {
     writeAuditEvent("mlro", "pep.ai-network-intelligence", pepName);
   } catch { /* non-blocking */ }
 
-  return NextResponse.json({ ok: true, ...result });
+  return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
 }

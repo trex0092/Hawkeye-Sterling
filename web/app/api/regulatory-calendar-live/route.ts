@@ -137,7 +137,10 @@ function calcUrgency(daysUntil: number): CalendarEvent["urgency"] {
   return "planned";
 }
 
-export async function GET(): Promise<NextResponse> {
+export async function GET(req: Request): Promise<NextResponse> {
+  const { enforce } = await import("@/lib/server/enforce");
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   const today = new Date();
 
   const events: CalendarEvent[] = RAW_EVENTS.map((raw): CalendarEvent => {

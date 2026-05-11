@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 
+import { enforce } from "@/lib/server/enforce";
 export interface MapNode {
   id: string;
   name: string;
@@ -71,6 +72,8 @@ function getCountryRisk(country: string): { level: "low" | "medium" | "high" | "
 }
 
 export async function POST(req: Request) {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   let body: {
     company?: string;
     suppliers?: Array<{ name: string; country: string; riskLevel?: string }>;
@@ -78,7 +81,7 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
   }
 
   const company = body.company ?? "Company";

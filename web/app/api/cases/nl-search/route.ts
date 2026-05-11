@@ -285,7 +285,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     const query = (body.query ?? "").trim();
     const subjects = body.subjects ?? [];
     if (!query) {
-      return NextResponse.json({ ok: false, error: "query required" }, { status: 400 });
+      return NextResponse.json({ ok: false, error: "query required" }, { status: 400 , headers: gate.headers});
     }
 
     const { filters, interpretation, confidence, reasoning } = await parseQuery(query);

@@ -56,8 +56,14 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (!token) {
       return NextResponse.json({ ok: false, error: "ALERTS_CRON_TOKEN not configured" }, { status: 503 });
     }
-    const auth = req.headers.get("authorization") ?? "";
-    if (auth !== `Bearer ${token}`) {
+    const got = (req.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "");
+    const { timingSafeEqual } = await import("crypto");
+    const enc = new TextEncoder();
+    const expBuf = enc.encode(token);
+    const gotRaw = enc.encode(got);
+    const gotBuf = new Uint8Array(expBuf.length);
+    gotBuf.set(gotRaw.slice(0, expBuf.length));
+    if (got.length !== token.length || !timingSafeEqual(expBuf, gotBuf)) {
       return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
     }
     const body = (await req.json()) as Partial<DesignationAlert>;
@@ -98,7 +104,7 @@ export async function DELETE(req: Request): Promise<NextResponse> {
       if (typeof body.dismissedBy === "string") dismissedBy = body.dismissedBy;
     } catch { /* body optional */ }
     const count = await dismissAllUnread(dismissedBy);
-    return NextResponse.json({ ok: true, dismissed: count });
+    return NextResponse.json({ ok: true, dismissed: count }, { headers: gate.headers });
   } catch (err) {
     console.error("[alerts DELETE]", err instanceof Error ? err.message : err);
     return NextResponse.json(

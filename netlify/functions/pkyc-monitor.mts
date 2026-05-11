@@ -14,7 +14,6 @@ export default async (_req: Request) => {
     "https://hawkeye-sterling.netlify.app";
   const token =
     process.env.ADMIN_TOKEN ??
-    process.env.NEXT_PUBLIC_ADMIN_TOKEN ??
     "";
 
   const headers: Record<string, string> = { "content-type": "application/json" };

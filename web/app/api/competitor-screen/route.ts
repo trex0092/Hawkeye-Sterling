@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 
+import { enforce } from "@/lib/server/enforce";
 interface CompetitorProfile {
   name: string;
   riskScore: number;
@@ -80,15 +81,17 @@ function findPeers(subjectName: string, industry?: string): CompetitorProfile[] 
 }
 
 export async function POST(req: Request) {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   let body: { subjectName: string; industry?: string; jurisdiction?: string };
   try {
     body = (await req.json()) as { subjectName: string; industry?: string; jurisdiction?: string };
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
   }
 
   if (!body.subjectName?.trim()) {
-    return NextResponse.json({ ok: false, error: "subjectName required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "subjectName required" }, { status: 400 , headers: gate.headers});
   }
 
   const competitors = findPeers(body.subjectName, body.industry);

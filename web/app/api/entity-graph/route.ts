@@ -7,6 +7,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
 import { NextResponse } from "next/server";
+import { enforce } from "@/lib/server/enforce";
 import { searchAllRegistries } from "@/lib/intelligence/registryAdapters";
 import { searchCountryRegistries } from "@/lib/intelligence/countryRegistries";
 import { bestCommercialAdapter, activeCommercialProvider } from "@/lib/intelligence/commercialAdapters";
@@ -351,6 +352,9 @@ interface EntityGraphBody {
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
+
   let body: EntityGraphBody;
   try {
     body = (await req.json()) as EntityGraphBody;

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { enforce } from "@/lib/server/enforce";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -52,16 +53,18 @@ function evaluateCondition(condition: string, data: Record<string, unknown>): { 
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   let body: ReqBody;
   try {
     body = (await req.json()) as ReqBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
   }
 
   const { subjectId, redlines = [], currentData = {} } = body;
   if (!subjectId) {
-    return NextResponse.json({ ok: false, error: "subjectId is required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "subjectId is required" }, { status: 400 , headers: gate.headers});
   }
 
   const triggered: TriggeredRedline[] = [];

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { enforce } from "@/lib/server/enforce";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -16,16 +17,18 @@ interface ReqBody {
 const PASS_THRESHOLD = 70;
 
 export async function POST(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   let body: ReqBody;
   try {
     body = (await req.json()) as ReqBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
   }
 
   const { subjectId, caseAge, hasScreening, hasCdd, hasEdd, hasNarrative, hasDisposition } = body;
   if (!subjectId) {
-    return NextResponse.json({ ok: false, error: "subjectId is required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "subjectId is required" }, { status: 400 , headers: gate.headers});
   }
 
   const gaps: string[] = [];

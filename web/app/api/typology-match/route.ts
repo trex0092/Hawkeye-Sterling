@@ -101,21 +101,22 @@ Output ONLY valid JSON, no markdown fences, in this exact shape:
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+  const gateHeaders = gate.headers;
   const apiKey = process.env["ANTHROPIC_API_KEY"];
 
   if (!apiKey) {
-    return NextResponse.json({ ok: false, error: "typology-match temporarily unavailable - please retry." }, { status: 503 });
+    return NextResponse.json({ ok: true, degraded: true, ...FALLBACK }, { headers: gateHeaders });
   }
 
   let body: Body;
   try {
     body = (await req.json()) as Body;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400, headers: gateHeaders });
   }
 
   if (!body?.facts?.trim()) {
-    return NextResponse.json({ ok: false, error: "facts is required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "facts is required" }, { status: 400, headers: gateHeaders });
   }
 
   const lines: string[] = [`Facts: ${body.facts.trim().slice(0, 2000)}`];
@@ -146,7 +147,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     });
 
     if (!res.ok) {
-      return NextResponse.json({ ok: false, error: "typology-match temporarily unavailable - please retry." }, { status: 503 });
+      return NextResponse.json({ ok: false, error: "typology-match temporarily unavailable - please retry." }, { status: 503, headers: gateHeaders });
     }
 
     const data = (await res.json()) as {
@@ -156,12 +157,12 @@ export async function POST(req: Request): Promise<NextResponse> {
     const cleaned = raw.replace(/^```json?\s*/i, "").replace(/\s*```$/i, "").trim();
     result = JSON.parse(cleaned) as TypologyMatchResult;
   } catch {
-    return NextResponse.json({ ok: false, error: "typology-match temporarily unavailable - please retry." }, { status: 503 });
+    return NextResponse.json({ ok: true, degraded: true, ...FALLBACK }, { headers: gateHeaders });
   }
 
   try {
     writeAuditEvent("mlro", "typology.ai-fingerprint", body.subjectType ?? "unknown");
-  } catch { /* non-blocking */ }
+  } catch { /* browser-only audit */ }
 
-  return NextResponse.json({ ok: true, ...result });
+  return NextResponse.json({ ok: true, ...result }, { headers: gateHeaders });
 }

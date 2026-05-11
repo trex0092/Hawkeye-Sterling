@@ -7,6 +7,7 @@
 import { NextResponse } from "next/server";
 import { classifyMlroQuestion } from "../../../../dist/src/brain/mlro-question-classifier.js";
 
+import { enforce } from "@/lib/server/enforce";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -21,6 +22,8 @@ export async function OPTIONS(): Promise<NextResponse> {
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   let body: { question?: unknown };
   try {
     body = (await req.json()) as { question?: unknown };

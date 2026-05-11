@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { enforce } from "@/lib/server/enforce";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -14,16 +15,18 @@ const HIGH_RISK_JURISDICTIONS = ["BVI", "Cayman Islands", "Panama", "Seychelles"
 const HIGH_RISK_INDUSTRIES = ["crypto", "gambling", "gaming", "money services", "cash intensive", "precious metals", "real estate"];
 
 export async function POST(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   let body: ReqBody;
   try {
     body = (await req.json()) as ReqBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
   }
 
   const { entityType, industry, jurisdiction, riskScore } = body;
   if (!entityType || !industry || !jurisdiction) {
-    return NextResponse.json({ ok: false, error: "entityType, industry, and jurisdiction are required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "entityType, industry, and jurisdiction are required" }, { status: 400 , headers: gate.headers});
   }
 
   const jurisRisk = HIGH_RISK_JURISDICTIONS.some(j => jurisdiction.toLowerCase().includes(j.toLowerCase()));

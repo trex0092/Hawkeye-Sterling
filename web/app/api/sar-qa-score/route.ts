@@ -83,14 +83,14 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as RequestBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
   }
   const { cases } = body;
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
 
   if (!apiKey) {
-    return NextResponse.json({ ok: true, scores: fallbackScores(cases) });
+    return NextResponse.json({ ok: true, scores: fallbackScores(cases) }, { headers: gate.headers });
   }
 
   const userContent = cases
@@ -129,7 +129,7 @@ Red Flags: ${redFlagsStr}`;
   });
 
   if (!claudeRes.ok) {
-    return NextResponse.json({ ok: true, scores: fallbackScores(cases) });
+    return NextResponse.json({ ok: true, scores: fallbackScores(cases) }, { headers: gate.headers });
   }
 
   interface ClaudeContent { type: string; text?: string }
@@ -145,7 +145,7 @@ Red Flags: ${redFlagsStr}`;
       .trim();
     parsed = JSON.parse(cleaned) as typeof parsed;
   } catch {
-    return NextResponse.json({ ok: true, scores: fallbackScores(cases) });
+    return NextResponse.json({ ok: true, scores: fallbackScores(cases) }, { headers: gate.headers });
   }
 
   const scores: QaScore[] = parsed.scores.map((s) => ({
@@ -165,5 +165,5 @@ Red Flags: ${redFlagsStr}`;
     // Non-fatal — server-side localStorage is unavailable
   }
 
-  return NextResponse.json({ ok: true, scores });
+  return NextResponse.json({ ok: true, scores }, { headers: gate.headers });
 }

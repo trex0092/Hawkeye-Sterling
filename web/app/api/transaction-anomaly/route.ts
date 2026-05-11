@@ -10,11 +10,26 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { tenantIdFromGate } from "@/lib/server/tenant";
+import { setJson } from "@/lib/server/store";
 import {
   StreamingAnomalyGate,
   extractFeatures,
 } from "../../../../dist/src/brain/streaming-anomaly.js";
 import type { AnomalyFeatureVector } from "../../../../dist/src/brain/streaming-anomaly.js";
+
+export interface TxnFlagRecord {
+  flagId: string;
+  tenantId: string;
+  sessionId: string;
+  tier: "flag" | "hold";
+  score: number;
+  amountUsd: number;
+  timestampUtc: string;
+  drivers: string[];
+  processed: boolean;
+  createdAt: string;
+}
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -97,6 +112,27 @@ export async function POST(req: Request): Promise<NextResponse> {
   });
 
   const result = streamingGate.scoreAndUpdate(features);
+
+  // Persist flag/hold results to Blob storage so the transaction-monitor
+  // cron can pick them up, run typology matching, and open cases.
+  if (result.tier === "flag" || result.tier === "hold") {
+    const tenant = tenantIdFromGate(gate);
+    const flagId = `txf-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    const record: TxnFlagRecord = {
+      flagId,
+      tenantId: tenant,
+      sessionId,
+      tier: result.tier,
+      score: result.score,
+      amountUsd: tx.amountUsd,
+      timestampUtc: tx.timestampUtc ?? new Date().toISOString(),
+      drivers: result.drivers,
+      processed: false,
+      createdAt: new Date().toISOString(),
+    };
+    void setJson(`hawkeye-txn-flags/${tenant}/${flagId}.json`, record)
+      .catch((err) => console.error("[transaction-anomaly] flag persist failed:", err));
+  }
 
   return NextResponse.json(
     {

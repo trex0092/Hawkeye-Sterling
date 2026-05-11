@@ -62,9 +62,14 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "imoNumber or imoNumbers is required" }, { status: 400, headers: CORS });
   }
 
+  const imoTrimmed = body.imoNumber.trim();
+  if (!/^\d{7}$/.test(imoTrimmed)) {
+    return NextResponse.json({ ok: false, error: "imoNumber must be exactly 7 digits (IMO format)" }, { status: 400, headers: CORS });
+  }
+
   let result: Awaited<ReturnType<typeof checkVessel>>;
   try {
-    result = await checkVessel(body.imoNumber.trim());
+    result = await checkVessel(imoTrimmed);
   } catch (err) {
     console.error("[vessel-check] checkVessel failed", err);
     return NextResponse.json(

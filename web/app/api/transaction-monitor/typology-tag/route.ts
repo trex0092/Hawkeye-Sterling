@@ -68,7 +68,7 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
   }
 
   const transactions = body.transactions ?? [];
@@ -81,7 +81,7 @@ export async function POST(req: Request) {
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json(buildFallback(transactions));
+  if (!apiKey) return NextResponse.json(buildFallback(transactions), { headers: gate.headers });
 
   try {
     const client = getAnthropicClient(apiKey, 55_000);
@@ -168,6 +168,6 @@ ${JSON.stringify(transactions, null, 2)}`,
       summary: parsed.summary ?? "",
     } satisfies TypologyTagResult);
   } catch {
-    return NextResponse.json(buildFallback(transactions));
+    return NextResponse.json(buildFallback(transactions), { headers: gate.headers });
   }
 }

@@ -133,31 +133,33 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as RequestBody;
   } catch {
-    return NextResponse.json({ error: "invalid JSON body" }, { status: 400 });
+    return NextResponse.json({ error: "invalid JSON body" }, { status: 400 , headers: gate.headers});
   }
 
   const { client, hits } = body;
   if (!client?.name) {
-    return NextResponse.json({ error: "client.name is required" }, { status: 400 });
+    return NextResponse.json({ error: "client.name is required" }, { status: 400 , headers: gate.headers});
   }
   if (!Array.isArray(hits) || hits.length === 0) {
-    return NextResponse.json({ error: "hits array is required and must not be empty" }, { status: 400 });
+    return NextResponse.json({ error: "hits array is required and must not be empty" }, { status: 400 , headers: gate.headers});
   }
 
   writeAuditEvent("analyst", "screening.smart-disambiguate", client.name);
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
 
-  // Process max 20 hits
-  const hitsToProcess = hits.slice(0, 20);
-  const truncated = hits.length > 20;
-
+  if (hits.length > 20) {
+    return NextResponse.json(
+      { error: `hits array exceeds maximum batch size of 20 (received ${hits.length}). Split into multiple requests.` },
+      { status: 400 },
+    );
+  }
   // Deterministic template — applied when no API key is set OR the LLM fails.
   const buildTemplate = (): DisambiguationResult => ({
     overallAssessment: `Deterministic disambiguation for "${client.name}" against ${hits.length} hit(s). Set ANTHROPIC_API_KEY for AI-graded scoring.`,
     clientRiskProfile: `${client.name}${client.nationality ? ` (${client.nationality})` : ""} — supplied identifiers: ${[client.dob ? "DOB" : "", client.gender ? "gender" : "", client.occupation ? "role" : ""].filter(Boolean).join(", ") || "name only"}.`,
     disambiguationStrategy: "Score each hit on identifier overlap (name, DOB, country, role). Without DOB/passport the engine cannot definitively distinguish — refer to MLRO with all hits as 'possible'.",
-    hits: hitsToProcess.map((h) => ({
+    hits: hits.map((h) => ({
       hitId: h.hitId,
       verdict: "possible_match",
       confidenceScore: 50,
@@ -175,10 +177,10 @@ export async function POST(req: Request): Promise<NextResponse> {
   });
 
   if (!apiKey) {
-    return NextResponse.json({ ...buildTemplate(), degraded: true, degradedReason: "ANTHROPIC_API_KEY not configured — deterministic template used." });
+    return NextResponse.json({ ...buildTemplate(), degraded: true, degradedReason: "ANTHROPIC_API_KEY not configured — deterministic template used." }, { headers: gate.headers });
   }
 
-  const userMessage = `Disambiguate these screening hits for client: ${JSON.stringify(client)}. Hits to assess: ${JSON.stringify(hitsToProcess)}${truncated ? ` (Note: only first 20 of ${hits.length} hits processed due to batch limit)` : ""}`;
+  const userMessage = `Disambiguate these screening hits for client: ${JSON.stringify(client)}. Hits to assess: ${JSON.stringify(hits)}`;
 
   try {
     const res = await fetch(ANTHROPIC_API_URL, {
@@ -209,15 +211,10 @@ export async function POST(req: Request): Promise<NextResponse> {
 
     const parsed = JSON.parse(stripped) as DisambiguationResult;
 
-    // If truncated, amend overallAssessment
-    if (truncated && parsed.overallAssessment) {
-      parsed.overallAssessment = `[First 20 of ${hits.length} hits processed] ${parsed.overallAssessment}`;
-    }
-
-    return NextResponse.json({ ok: true, ...parsed });
+    return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     writeAuditEvent("analyst", "screening.smart-disambiguate.error", `${client.name} — ${msg}`);
-    return NextResponse.json({ ...buildTemplate(), degraded: true, degradedReason: `LLM call failed: ${msg}` });
+    return NextResponse.json({ ...buildTemplate(), degraded: true, degradedReason: `LLM call failed: ${msg}` }, { headers: gate.headers });
   }
 }

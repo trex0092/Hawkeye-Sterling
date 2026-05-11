@@ -2,6 +2,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
+import { enforce } from "@/lib/server/enforce";
 
 const DISPOSABLE_DOMAINS = new Set([
   "mailinator.com", "guerrillamail.com", "tempmail.com", "throwaway.email",
@@ -46,18 +47,20 @@ function getFraudScore(domain: string, email?: string): number {
 }
 
 export async function POST(req: Request) {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   let body: { email?: string; domain?: string };
   try {
     body = (await req.json()) as { email?: string; domain?: string };
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
   }
 
   const rawDomain = body.domain ?? body.email?.split("@")[1] ?? "";
   const domain = rawDomain.toLowerCase().trim();
 
   if (!domain) {
-    return NextResponse.json({ ok: false, error: "email or domain required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "email or domain required" }, { status: 400 , headers: gate.headers});
   }
 
   const isDisposable = DISPOSABLE_DOMAINS.has(domain);

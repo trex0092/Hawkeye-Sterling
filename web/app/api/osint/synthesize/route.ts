@@ -67,15 +67,15 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
   }
 
   if (!body.subject || !body.sources || body.sources.length === 0) {
-    return NextResponse.json({ ok: false, error: "subject and sources are required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "subject and sources are required" }, { status: 400 , headers: gate.headers});
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "osint/synthesize temporarily unavailable - please retry." }, { status: 503 });
+  if (!apiKey) return NextResponse.json({ ok: false, error: "osint/synthesize temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
 
   const sourcesText = body.sources
     .map(
@@ -135,8 +135,8 @@ Synthesise all source intelligence into a coherent subject profile. Identify cor
     const result = JSON.parse(
       raw.replace(/```json\n?|\n?```/g, "").trim()
     ) as OsintSynthesisResult;
-    return NextResponse.json(result);
+    return NextResponse.json(result, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "osint/synthesize temporarily unavailable - please retry." }, { status: 503 });
+    return NextResponse.json({ ok: false, error: "osint/synthesize temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
   }
 }

@@ -64,12 +64,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as ReqBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
   }
 
   const { subjectName, riskScore, caseNotes } = body;
   if (!subjectName || riskScore === undefined || !caseNotes) {
-    return NextResponse.json({ ok: false, error: "subjectName, riskScore, and caseNotes are required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "subjectName, riskScore, and caseNotes are required" }, { status: 400 , headers: gate.headers});
   }
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -101,7 +101,7 @@ Simulate an examiner review. Respond ONLY with valid JSON:
       const raw = response.content[0]?.type === "text" ? (response.content[0] as { type: "text"; text: string }).text : "";
       const parsed = JSON.parse(raw.match(/\{[\s\S]*\}/)?.[0] ?? "{}");
       if (parsed.examinerFindings !== undefined) {
-        return NextResponse.json({ ok: true, ...parsed });
+        return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
       }
     } catch {
       // fall through to heuristic
@@ -109,5 +109,5 @@ Simulate an examiner review. Respond ONLY with valid JSON:
   }
 
   const result = heuristicFallback(subjectName, riskScore, caseNotes);
-  return NextResponse.json({ ok: true, ...result });
+  return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
 }

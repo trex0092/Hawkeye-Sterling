@@ -65,7 +65,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as RequestBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
   }
 
   const { consignments } = body;
@@ -75,7 +75,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
-    return NextResponse.json({ ok: false, error: "shipment-tbml temporarily unavailable - please retry." }, { status: 503 });
+    return NextResponse.json({ ok: false, error: "shipment-tbml temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
   }
 
   try {
@@ -102,15 +102,15 @@ export async function POST(req: Request): Promise<NextResponse> {
     });
 
     if (!res.ok) {
-      return NextResponse.json({ ok: false, error: "shipment-tbml temporarily unavailable - please retry." }, { status: 503 });
+      return NextResponse.json({ ok: false, error: "shipment-tbml temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
     }
 
     const data = (await res.json()) as { content?: { type: string; text: string }[] };
     const text = data?.content?.[0]?.text ?? "";
     const stripped = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
     const parsed = JSON.parse(stripped) as TbmlResult;
-    return NextResponse.json({ ok: true, ...parsed });
+    return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "shipment-tbml temporarily unavailable - please retry." }, { status: 503 });
+    return NextResponse.json({ ok: false, error: "shipment-tbml temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
   }
 }

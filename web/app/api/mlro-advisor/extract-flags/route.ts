@@ -279,11 +279,11 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as Body;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
   }
 
   if (!body?.text?.trim()) {
-    return NextResponse.json({ ok: false, error: "text is required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "text is required" }, { status: 400 , headers: gate.headers});
   }
 
   const text = body.text.trim();
@@ -351,5 +351,5 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   } catch { /* non-blocking */ }
 
-  return NextResponse.json({ ok: true, ...result });
+  return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
 }

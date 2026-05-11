@@ -99,7 +99,7 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
   }
 
   const subjects = body.subjects ?? [];
@@ -113,7 +113,7 @@ export async function POST(req: Request) {
   const listVersion = body.listVersion ?? "latest";
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json(buildFallback(subjects));
+  if (!apiKey) return NextResponse.json(buildFallback(subjects), { headers: gate.headers });
 
   try {
     const client = getAnthropicClient(apiKey, 22_000);
@@ -160,13 +160,13 @@ Simulate a full portfolio re-screen against the new list version. Generate reali
     // Enforce rescreened count equals actual subject count regardless of
     // what the model returns — prevents confusing UX.
     result.rescreened = subjects.length;
-    return NextResponse.json(result);
+    return NextResponse.json(result, { headers: gate.headers });
   } catch (err) {
     console.error(
       "[hawkeye] screening/bulk-rescreen: AI call or JSON.parse failed — " +
       "returning illustrative fallback with fallback:true so UI shows degraded state.",
       err,
     );
-    return NextResponse.json(buildFallback(subjects, 'ai_error'));
+    return NextResponse.json(buildFallback(subjects, 'ai_error'), { headers: gate.headers });
   }
 }

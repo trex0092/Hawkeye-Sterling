@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { enforce } from "@/lib/server/enforce";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -21,16 +22,18 @@ const JURISDICTIONS_HIGH_RISK = ["Iran", "North Korea", "Syria", "Cuba", "Russia
 const JURISDICTIONS_MEDIUM_RISK = ["Pakistan", "UAE", "Turkey", "Nigeria", "Kenya", "Philippines", "Cambodia"];
 
 export async function POST(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   let body: ReqBody;
   try {
     body = (await req.json()) as ReqBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
   }
 
   const { riskScore, jurisdiction, entityType, pepTier, amHits = 0 } = body;
   if (riskScore === undefined || !jurisdiction || !entityType) {
-    return NextResponse.json({ ok: false, error: "riskScore, jurisdiction, and entityType are required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "riskScore, jurisdiction, and entityType are required" }, { status: 400 , headers: gate.headers});
   }
 
   const jurisHighRisk = JURISDICTIONS_HIGH_RISK.some(j => jurisdiction.toLowerCase().includes(j.toLowerCase()));

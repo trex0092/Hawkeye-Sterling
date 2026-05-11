@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { enforce } from "@/lib/server/enforce";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -37,16 +38,18 @@ const AVIATION_FLAGS = [
 ];
 
 export async function POST(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   let body: ReqBody;
   try {
     body = (await req.json()) as ReqBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
   }
 
   const { subjectName, tailNumber } = body;
   if (!subjectName) {
-    return NextResponse.json({ ok: false, error: "subjectName is required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "subjectName is required" }, { status: 400 , headers: gate.headers});
   }
 
   const hash = hashStr(subjectName);

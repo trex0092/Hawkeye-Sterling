@@ -1,5 +1,6 @@
 import { getJson, listKeys } from "@/lib/server/store";
 
+import { enforce } from "@/lib/server/enforce";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 15;
@@ -42,6 +43,8 @@ function escape(s: string): string {
 }
 
 export async function GET(req: Request): Promise<Response> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   const origin = new URL(req.url).origin;
 
   let incidents: Incident[] = [];

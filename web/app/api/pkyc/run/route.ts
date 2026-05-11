@@ -26,7 +26,7 @@ const BASE_URL =
   process.env.DEPLOY_PRIME_URL ??
   "http://localhost:3000";
 
-const ADMIN_TOKEN = process.env.ADMIN_TOKEN ?? process.env.NEXT_PUBLIC_ADMIN_TOKEN ?? "";
+const ADMIN_TOKEN = process.env.ADMIN_TOKEN ?? "";
 
 // ── Internal API helpers ──────────────────────────────────────────────────────
 

@@ -103,12 +103,12 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
   }
 
   const country = (body.country ?? "").trim();
   if (!country) {
-    return NextResponse.json({ ok: false, error: "country is required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "country is required" }, { status: 400 , headers: gate.headers});
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
@@ -233,7 +233,7 @@ Provide a complete country risk intelligence assessment covering AML/CFT risk, F
         { status: 502 },
       );
     }
-    return NextResponse.json(result);
+    return NextResponse.json(result, { headers: gate.headers });
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);
     console.warn("[country-risk] LLM call failed:", detail);

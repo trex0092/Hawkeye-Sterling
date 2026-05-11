@@ -10,8 +10,8 @@
 // that cross-reference happens client-side in useAlerts). The MLRO
 // can see new designations as they land and proactively screen.
 //
-// Schedule: hourly at :05 (UTC) — staggered so it runs after ingest
-// (which lands at :07) on odd hours but proactively on even hours.
+// Schedule: hourly at :10 (UTC) — staggered so it always runs after
+// the sanctions ingest (which lands at :07), ensuring fresh data is present.
 
 import type { Config } from "@netlify/functions";
 import { getStore } from "@netlify/blobs";
@@ -125,4 +125,4 @@ export default async (_req: Request): Promise<Response> => {
   );
 };
 
-export const config: Config = { schedule: "5 * * * *" };
+export const config: Config = { schedule: "10 * * * *" };

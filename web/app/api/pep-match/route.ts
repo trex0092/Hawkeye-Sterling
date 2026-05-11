@@ -2,6 +2,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { getStore } from "@netlify/blobs";
+import { enforce } from "@/lib/server/enforce";
 
 // PEP matching against the local OpenSanctions bulk snapshot.
 // POST /api/pep-match  { name, birthYear?, aliases? }
@@ -49,6 +50,7 @@ interface PepRecord {
 // Module-level cache so we don't re-read the blob on every warm request.
 let cachedRecords: PepRecord[] | null = null;
 let cacheLoadedAt = 0;
+let cacheSource: "blobs" | "cdn" | "none" = "none";
 const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
 
 const BLOBS_STORE = "hawkeye-pep";
@@ -73,6 +75,7 @@ async function loadCorpus(): Promise<PepRecord[]> {
       if (records.length > 0) {
         cachedRecords = records;
         cacheLoadedAt = Date.now();
+        cacheSource = "blobs";
         return records;
       }
     }
@@ -96,6 +99,7 @@ async function loadCorpus(): Promise<PepRecord[]> {
     if (records.length > 0) {
       cachedRecords = records;
       cacheLoadedAt = Date.now();
+      cacheSource = "cdn";
     }
     return records;
   } catch {
@@ -197,6 +201,8 @@ function scoreRecord(qNorm: string, qTokens: Set<string>, rec: PepRecord): numbe
 // ── Route handler ─────────────────────────────────────────────────────────────
 
 export async function POST(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   let body: { name?: string; birthYear?: string | number; aliases?: string[] };
   try {
     body = (await req.json()) as typeof body;
@@ -209,15 +215,15 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const name = (body.name ?? "").trim();
   if (name.length < 2) {
-    return NextResponse.json({ ok: true, hits: [], source: "none", queriedName: name } satisfies PepMatchResponse);
+    return NextResponse.json({ ok: true, hits: [], source: "none", queriedName: name } satisfies PepMatchResponse, { headers: gate.headers });
   }
 
   const corpus = await loadCorpus();
   if (corpus.length === 0) {
-    return NextResponse.json({ ok: true, hits: [], source: "none", queriedName: name } satisfies PepMatchResponse);
+    return NextResponse.json({ ok: true, hits: [], source: "none", queriedName: name } satisfies PepMatchResponse, { headers: gate.headers });
   }
 
-  const source: PepMatchResponse["source"] = cacheLoadedAt > 0 ? (corpus === cachedRecords ? "blobs" : "cdn") : "none";
+  const source: PepMatchResponse["source"] = cacheLoadedAt > 0 ? cacheSource : "none";
 
   const qNorm = normName(name);
   const qTokens = tokenSet(name);

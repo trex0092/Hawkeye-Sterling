@@ -1,11 +1,9 @@
-// Netlify Scheduled Function — daily transaction monitoring.
+// Netlify Scheduled Function — hourly transaction anomaly monitor.
 //
-// Schedule: every day at 09:00 Dubai time (UTC+4) → 05:00 UTC.
-// Action:   self-POSTs to /api/transaction-monitor/run which walks every
-//           enrolled subject, runs the brain's structuring / smurfing /
-//           anomaly detectors on any recorded transactions, and posts a
-//           single daily [TM-DAILY] summary task to Asana plus a webhook
-//           event with the alert roll-up.
+// Schedule: top of every hour (cron "0 * * * *").
+// Action:   POSTs to /api/cron/transaction-monitor which reads all
+//           unprocessed flag/hold records from Blobs, runs typology-match,
+//           and auto-opens cases for strong/moderate hits or any HOLD tier.
 
 import type { Config } from "@netlify/functions";
 
@@ -14,16 +12,17 @@ export default async (_req: Request) => {
     process.env.URL ??
     process.env.DEPLOY_PRIME_URL ??
     "https://hawkeye-sterling.netlify.app";
-  const token = process.env.ONGOING_RUN_TOKEN ?? "";
-  const headers: Record<string, string> = {
-    "content-type": "application/json",
-  };
+  const token =
+    process.env.CRON_SECRET ??
+    process.env.ONGOING_RUN_TOKEN ??
+    "";
+  const headers: Record<string, string> = { "content-type": "application/json" };
   if (token) headers.authorization = `Bearer ${token}`;
 
   const controller = new AbortController();
-  const deadline = setTimeout(() => controller.abort(), 24_000);
+  const deadline = setTimeout(() => controller.abort(), 55_000);
   try {
-    const res = await fetch(`${base}/api/transaction-monitor/run`, {
+    const res = await fetch(`${base}/api/cron/transaction-monitor`, {
       method: "POST",
       headers,
       signal: controller.signal,
@@ -58,6 +57,5 @@ export default async (_req: Request) => {
 };
 
 export const config: Config = {
-  // 09:00 Dubai (UTC+4) = 05:00 UTC, every day.
-  schedule: "0 5 * * *",
+  schedule: "0 * * * *",
 };

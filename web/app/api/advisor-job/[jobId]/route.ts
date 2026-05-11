@@ -11,6 +11,7 @@
 import { NextResponse } from "next/server";
 import { getStore } from "@/lib/server/store";
 
+import { enforce } from "@/lib/server/enforce";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 10;
@@ -19,9 +20,11 @@ const KEY_PREFIX = "advisor-jobs";
 const JOB_ID_RE = /^[A-Za-z0-9_-]{1,128}$/;
 
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ jobId: string }> },
 ): Promise<NextResponse> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   const { jobId: rawJobId } = await params;
   const jobId = rawJobId?.trim() ?? "";
   if (!JOB_ID_RE.test(jobId)) {
@@ -59,7 +62,7 @@ export async function GET(
       result?: unknown;
       error?: string;
     };
-    return NextResponse.json({ ok: true, ...record });
+    return NextResponse.json({ ok: true, ...record }, { headers: gate.headers });
   } catch {
     return NextResponse.json(
       { ok: true, status: "pending", jobId, note: "job record unreadable — keep polling" },

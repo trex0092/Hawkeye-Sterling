@@ -23,6 +23,7 @@
 // /api/advisor-job/[jobId]) can pick it up.
 
 import { getStore } from "@netlify/blobs";
+import { timingSafeEqual } from "node:crypto";
 // Compiled at build time by `tsc` at the repo root.
 import {
   invokeMlroAdvisor,
@@ -75,6 +76,25 @@ export default async (req: Request): Promise<Response> => {
       status: 405,
       headers: { "content-type": "application/json" },
     });
+  }
+
+  // Auth gate — prevent unauthenticated callers from triggering expensive LLM calls.
+  // Callers must present ADMIN_TOKEN (injected by Next.js middleware for same-origin
+  // portal requests) as a Bearer token.
+  const adminToken = process.env["ADMIN_TOKEN"] ?? "";
+  const bearer = (req.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "");
+  const unauthorized = new Response(JSON.stringify({ ok: false, error: "unauthorized" }), {
+    status: 401,
+    headers: { "content-type": "application/json" },
+  });
+  if (!adminToken) return unauthorized;
+  const enc = new TextEncoder();
+  const expBuf = enc.encode(adminToken);
+  const gotRaw = enc.encode(bearer);
+  const gotBuf = new Uint8Array(expBuf.length);
+  gotBuf.set(gotRaw.slice(0, expBuf.length));
+  if (bearer.length !== adminToken.length || !timingSafeEqual(expBuf, gotBuf)) {
+    return unauthorized;
   }
 
   let body: Body;

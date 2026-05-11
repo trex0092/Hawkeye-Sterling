@@ -20,7 +20,7 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
   }
   const { subject, knownNodes, knownEdges } = body;
 
@@ -77,7 +77,7 @@ What additional entities should investigators look for?`,
     const raw = data.content[0]?.type === "text" ? data.content[0].text : "{}";
     const cleaned = raw.replace(/```json\n?|\n?```/g, "").trim();
     const result = JSON.parse(cleaned) as { discovered: DiscoveredEntity[] };
-    return NextResponse.json({ ok: true, discovered: result.discovered ?? [] });
+    return NextResponse.json({ ok: true, discovered: result.discovered ?? [] }, { headers: gate.headers });
   } catch {
     return NextResponse.json(
       { ok: false, error: "Investigation expand temporarily unavailable — please retry." },

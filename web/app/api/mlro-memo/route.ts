@@ -108,14 +108,14 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
   }
   if (!body.subjectName?.trim() || !body.activitySummary?.trim()) {
-    return NextResponse.json({ ok: false, error: "subjectName and activitySummary required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "subjectName and activitySummary required" }, { status: 400 , headers: gate.headers});
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "mlro-memo temporarily unavailable - please retry." }, { status: 503 });
+  if (!apiKey) return NextResponse.json({ ok: false, error: "mlro-memo temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
 
   const memoRef = `MLRO-MEMO-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 9000) + 1000)}`;
 
@@ -169,12 +169,12 @@ Draft the MLRO Decision Memorandum.`,
         }],
       }),
     });
-    if (!response.ok) return NextResponse.json({ ok: false, error: "mlro-memo temporarily unavailable - please retry." }, { status: 503 });
+    if (!response.ok) return NextResponse.json({ ok: false, error: "mlro-memo temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
     const data = (await response.json()) as { content: Array<{ type: string; text: string }> };
     const raw = data.content[0]?.type === "text" ? data.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as MlroMemoResult;
-    return NextResponse.json({ ok: true, ...result });
+    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "mlro-memo temporarily unavailable - please retry." }, { status: 503 });
+    return NextResponse.json({ ok: false, error: "mlro-memo temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
   }
 }

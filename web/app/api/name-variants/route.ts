@@ -82,12 +82,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as RequestBody;
   } catch {
-    return NextResponse.json({ error: "invalid JSON body" }, { status: 400 });
+    return NextResponse.json({ error: "invalid JSON body" }, { status: 400 , headers: gate.headers});
   }
 
   const { name, nationality, dob, context } = body;
   if (!name || typeof name !== "string" || !name.trim()) {
-    return NextResponse.json({ error: "name is required" }, { status: 400 });
+    return NextResponse.json({ error: "name is required" }, { status: 400 , headers: gate.headers});
   }
 
   const trimmedName = name.trim();
@@ -95,7 +95,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    return NextResponse.json({ ok: true, ...buildFallback(trimmedName) });
+    return NextResponse.json({ ok: true, ...buildFallback(trimmedName) }, { headers: gate.headers });
   }
 
   const userMessage = `Generate all name variants for AML screening: Name: ${trimmedName}, Nationality: ${nationality ?? "unknown"}, DOB: ${dob ?? "unknown"}, Context: ${context ?? "none"}`;
@@ -128,10 +128,10 @@ export async function POST(req: Request): Promise<NextResponse> {
     const stripped = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "");
 
     const parsed = JSON.parse(stripped) as NameVariantsResponse;
-    return NextResponse.json({ ok: true, ...parsed });
+    return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     writeAuditEvent("analyst", "screening.name-variants.error", `${trimmedName} — ${msg}`);
-    return NextResponse.json({ ok: true, ...buildFallback(trimmedName) });
+    return NextResponse.json({ ok: true, ...buildFallback(trimmedName) }, { headers: gate.headers });
   }
 }

@@ -95,7 +95,7 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
   }
 
   const caseTitle = body.caseTitle ?? "Untitled Investigation";
@@ -107,7 +107,7 @@ export async function POST(req: Request) {
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
-    return NextResponse.json(buildFallback(caseTitle, entities, links, narrative, analyst));
+    return NextResponse.json(buildFallback(caseTitle, entities, links, narrative, analyst), { headers: gate.headers });
   }
 
   try {
@@ -161,8 +161,8 @@ Generate a court-ready evidence pack summary covering: case overview, entity pro
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const cleaned = raw.replace(/```json\n?|\n?```/g, "").trim();
     const result = JSON.parse(cleaned) as Omit<EvidencePackResult, "ok" | "generatedAt">;
-    return NextResponse.json({ ok: true, ...result, generatedAt });
+    return NextResponse.json({ ok: true, ...result, generatedAt }, { headers: gate.headers });
   } catch {
-    return NextResponse.json(buildFallback(caseTitle, entities, links, narrative, analyst));
+    return NextResponse.json(buildFallback(caseTitle, entities, links, narrative, analyst), { headers: gate.headers });
   }
 }

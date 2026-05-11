@@ -37,17 +37,17 @@ export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "playbook/str-narrative temporarily unavailable - please retry." }, { status: 503 });
+  if (!apiKey) return NextResponse.json({ ok: false, error: "playbook/str-narrative temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
 
   let body: Body;
   try {
     body = (await req.json()) as Body;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
   }
 
   if (!body?.playbookTitle?.trim()) {
-    return NextResponse.json({ ok: false, error: "playbookTitle is required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "playbookTitle is required" }, { status: 400 , headers: gate.headers});
   }
 
   const systemPrompt = [
@@ -95,7 +95,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       }),
     });
 
-    if (!res.ok) return NextResponse.json({ ok: false, error: "playbook/str-narrative temporarily unavailable - please retry." }, { status: 503 });
+    if (!res.ok) return NextResponse.json({ ok: false, error: "playbook/str-narrative temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
 
     const data = (await res.json()) as { content?: { type: string; text: string }[] };
     const first = data?.content?.[0];
@@ -107,8 +107,8 @@ export async function POST(req: Request): Promise<NextResponse> {
       writeAuditEvent("mlro", "playbook.str-narrative", `${body.playbookTitle} → ${result.recommendedDisposition} (${body.completedChecks.length} checks completed)`);
     } catch { /* non-blocking */ }
 
-    return NextResponse.json({ ok: true, ...result });
+    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "playbook/str-narrative temporarily unavailable - please retry." }, { status: 503 });
+    return NextResponse.json({ ok: false, error: "playbook/str-narrative temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
   }
 }

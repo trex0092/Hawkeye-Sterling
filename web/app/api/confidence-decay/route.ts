@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { enforce } from "@/lib/server/enforce";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -27,16 +28,18 @@ const DECAY_RATES: Record<string, number> = {
 };
 
 export async function POST(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   let body: ReqBody;
   try {
     body = (await req.json()) as ReqBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
   }
 
   const { lastScreenedAt, verdict, riskScore, entityType } = body;
   if (!lastScreenedAt || !verdict || riskScore === undefined || !entityType) {
-    return NextResponse.json({ ok: false, error: "lastScreenedAt, verdict, riskScore, and entityType are required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "lastScreenedAt, verdict, riskScore, and entityType are required" }, { status: 400 , headers: gate.headers});
   }
 
   const screenedDate = new Date(lastScreenedAt);

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { enforce } from "@/lib/server/enforce";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -169,7 +170,9 @@ async function delay(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-export async function POST(): Promise<NextResponse> {
+export async function POST(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   const token = process.env["ASANA_TOKEN"];
   if (!token) {
     return NextResponse.json({
@@ -185,7 +188,7 @@ export async function POST(): Promise<NextResponse> {
   }).then((r) => r.ok ? r.json() : null).catch((err: unknown) => { console.warn("[hawkeye] asana-rebuild-sections fetch failed:", err); return null; }) as { data?: { name: string } } | null;
 
   if (!me?.data?.name) {
-    return NextResponse.json({ ok: false, error: "ASANA_TOKEN is invalid or expired." }, { status: 401 });
+    return NextResponse.json({ ok: false, error: "ASANA_TOKEN is invalid or expired." }, { status: 401 , headers: gate.headers});
   }
 
   const results: Array<{

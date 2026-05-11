@@ -284,7 +284,10 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   // Enrich the question with conversation context + classifier pre-brief.
   // ── Persistent advisor session ────────────────────────────────
-  const sessionKey = body.sessionKey ?? body.caseId ?? null;
+  const rawSessionKey = body.sessionKey ?? body.caseId ?? null;
+  const sessionKey = typeof rawSessionKey === "string" && rawSessionKey.length <= 256 && /^[\w\-]+$/.test(rawSessionKey)
+    ? rawSessionKey
+    : null;
   // Server-side session turns merged with any in-memory `context`
   // pairs the client supplied. In-memory wins on overlap (it's the
   // most recent state the operator saw).

@@ -60,13 +60,13 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as Body;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
   }
 
   const cases = body?.cases ?? [];
 
   if (!apiKey || cases.length < 2) {
-    return NextResponse.json({ ok: false, error: "mlro-advisor/case-patterns temporarily unavailable - please retry." }, { status: 503 });
+    return NextResponse.json({ ok: false, error: "mlro-advisor/case-patterns temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
   }
 
   const casesSummary = cases
@@ -151,5 +151,5 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   } catch { /* non-blocking */ }
 
-  return NextResponse.json({ ok: true, ...result });
+  return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
 }

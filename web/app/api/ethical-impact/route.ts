@@ -90,7 +90,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as RequestBody;
   } catch {
-    return NextResponse.json({ error: "invalid JSON body" }, { status: 400 });
+    return NextResponse.json({ error: "invalid JSON body" }, { status: 400 , headers: gate.headers});
   }
 
   const subjectName = body.subjectName ?? "unknown";

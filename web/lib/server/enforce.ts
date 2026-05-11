@@ -93,6 +93,15 @@ export async function enforce(
         ),
       };
     }
+    if (!v.payload.sub) {
+      return {
+        ok: false,
+        response: NextResponse.json(
+          { ok: false, error: "invalid JWT: missing sub claim" },
+          { status: 401 },
+        ),
+      };
+    }
     keyId = v.payload.sub;
     tierId = v.payload.tier;
     const rl = await consumeRateLimit(keyId, tierId);
@@ -135,7 +144,7 @@ export async function enforce(
             headers: check.tier
               ? rateLimitHeaders({
                   allowed: false,
-                  retryAfterSec: 60,
+                  retryAfterSec: check.reason === "quota_exceeded" ? 2_592_000 : 60,
                   remainingSecond: 0,
                   remainingMinute: 0,
                   tier: check.tier,

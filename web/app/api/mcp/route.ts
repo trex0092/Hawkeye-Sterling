@@ -9,10 +9,12 @@
 // Kill switch: set MCP_ENABLED=false in Netlify env vars to instantly disable
 // all 28 tools. Set back to true (or remove) to re-enable.
 
+import { AsyncLocalStorage } from "node:async_hooks";
 import { getToolLevel } from "@/lib/mcp/tool-manifest";
 import type { ConsequenceLevel } from "@/lib/mcp/tool-manifest";
 import type { McpLogEntry } from "@/app/api/operator/logs/route";
 
+import { enforce } from "@/lib/server/enforce";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -233,9 +235,10 @@ function summarise(value: unknown, maxLen = 200): string {
   return s.length > maxLen ? s.slice(0, maxLen) + "…" : s;
 }
 
-// Per-call timeout set by the tools/call handler before invoking the tool handler.
-// Tools call callApi() which picks up this value for per-class timeouts.
-let _currentCallTimeout: number | undefined;
+// Per-request context stored in AsyncLocalStorage so concurrent requests
+// don't share state (eliminates auth header and timeout cross-contamination).
+interface CallCtx { authHeader?: string; timeoutMs?: number }
+const _callCtx = new AsyncLocalStorage<CallCtx>();
 
 // ── Internal API proxy ────────────────────────────────────────────────────────
 async function callApi(
@@ -254,12 +257,16 @@ async function callApi(
   if (query) {
     for (const [k, v] of Object.entries(query)) url.searchParams.set(k, v);
   }
+  const ctx = _callCtx.getStore();
   try {
     const res = await fetch(url.toString(), {
       method,
-      headers: { "content-type": "application/json" },
+      headers: {
+        "content-type": "application/json",
+        ...(ctx?.authHeader ? { authorization: ctx.authHeader } : {}),
+      },
       ...(body ? { body: JSON.stringify(body) } : {}),
-      signal: AbortSignal.timeout(timeoutMs ?? _currentCallTimeout ?? 55_000),
+      signal: AbortSignal.timeout(timeoutMs ?? ctx?.timeoutMs ?? 55_000),
     });
     return await res.json().catch(() => ({ ok: res.ok, status: res.status }));
   } catch (err) {
@@ -311,7 +318,7 @@ const TOOLS: ToolDef[] = [
       properties: {
         subjects: {
           type: "array",
-          description: "List of subjects to screen (max 500)",
+          description: "List of subjects to screen (up to 10,000)",
           items: {
             type: "object",
             properties: {
@@ -354,21 +361,42 @@ const TOOLS: ToolDef[] = [
   {
     name: "smart_disambiguate",
     description:
-      "Disambiguate an ambiguous name using supplementary identity fields. Returns confidence and best-matching candidate.",
+      "Disambiguate screening hits against a client profile. Provide client identity fields and the hits array from a prior sanctions/PEP screen.",
     inputSchema: {
       type: "object",
       properties: {
-        name: { type: "string" },
+        name: { type: "string", description: "Client full name" },
         nationality: { type: "string" },
-        dob: { type: "string" },
+        dob: { type: "string", description: "Date of birth YYYY-MM-DD" },
         gender: { type: "string" },
         idNumber: { type: "string" },
         occupation: { type: "string" },
         context: { type: "string" },
+        hits: {
+          type: "array",
+          description: "Screening hits to disambiguate — from a prior screen_subject or batch_screen call",
+          items: {
+            type: "object",
+            properties: {
+              hitId: { type: "string" },
+              hitName: { type: "string" },
+              hitCategory: { type: "string" },
+              hitCountry: { type: "string" },
+              hitDob: { type: "string" },
+              matchScore: { type: "number" },
+            },
+          },
+        },
       },
-      required: ["name"],
+      required: ["name", "hits"],
     },
-    handler: async (args) => callApi("/api/smart-disambiguate", "POST", args),
+    handler: async (args) => {
+      const { hits, ...clientFields } = args as Record<string, unknown>;
+      return callApi("/api/smart-disambiguate", "POST", {
+        client: clientFields,
+        hits: (hits as unknown[]) ?? [],
+      });
+    },
   },
 
   // ── ADVERSE MEDIA & NEWS ────────────────────────────────────────────────────
@@ -469,7 +497,7 @@ const TOOLS: ToolDef[] = [
         subjectName: { type: "string" },
         entityType: { type: "string" },
         jurisdiction: { type: "string" },
-        format: { type: "string", enum: ["json", "html"], default: "json" },
+        format: { type: "string", description: "Output format — currently always html; json planned" },
       },
       required: ["subjectName"],
     },
@@ -501,13 +529,15 @@ const TOOLS: ToolDef[] = [
       },
       required: ["subjectName", "suspicionBasis"],
     },
-    handler: async ({ suspicionBasis, subjectName, filingType, approver, ...rest }) =>
-      callApi("/api/sar-report", "POST", {
-        subject: { name: subjectName, ...rest },
-        suspicionBasis,
+    handler: async ({ suspicionBasis, subjectName, filingType, approver, ...rest }) => {
+      const subjectId = String(subjectName ?? "").toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 40) + "-" + Date.now().toString(36);
+      return callApi("/api/sar-report", "POST", {
+        subject: { id: subjectId, name: subjectName, ...rest },
+        narrative: suspicionBasis,
         filingType: filingType ?? "STR",
         approver,
-      }),
+      });
+    },
   },
   {
     name: "compliance_report",
@@ -537,10 +567,11 @@ const TOOLS: ToolDef[] = [
       type: "object",
       properties: {
         question: { type: "string", description: "Compliance question or case to analyse" },
-        context: { type: "string", description: "Additional case context or evidence" },
+        subjectName: { type: "string", description: "Full name of the subject being analysed" },
+        context: { type: "array", items: { type: "object", properties: { q: { type: "string" }, a: { type: "string" } } }, description: "Prior Q&A context pairs" },
         mode: { type: "string", enum: ["executor", "advisor", "challenger", "all"] },
       },
-      required: ["question"],
+      required: ["question", "subjectName"],
     },
     handler: async (args) => callApi("/api/mlro-advisor", "POST", args),
   },
@@ -551,7 +582,8 @@ const TOOLS: ToolDef[] = [
       type: "object",
       properties: {
         question: { type: "string" },
-        context: { type: "string" },
+        subjectName: { type: "string", description: "Full name of the subject being analysed" },
+        context: { type: "array", items: { type: "object", properties: { q: { type: "string" }, a: { type: "string" } } }, description: "Prior Q&A context pairs" },
       },
       required: ["question"],
     },
@@ -564,14 +596,37 @@ const TOOLS: ToolDef[] = [
     inputSchema: {
       type: "object",
       properties: {
-        subjectName: { type: "string" },
+        subjectName: { type: "string", description: "Full name of the subject" },
+        subjectId: { type: "string", description: "Unique subject ID (use case ID or screening ID if available)" },
+        country: { type: "string", description: "Subject's country of residence or operation" },
+        entityType: { type: "string", description: "individual / company / vessel / etc." },
         riskScore: { type: "number", description: "Pre-computed risk score 0–100" },
-        verdict: { type: "string" },
-        evidence: { type: "string" },
+        listCoverage: { type: "array", items: { type: "string" }, description: "Sanctions lists checked" },
+        sanctionsHits: { type: "array", items: { type: "object" }, description: "Hit objects from sanctions screen" },
+        adverseMedia: { type: "string", description: "Adverse media summary" },
+        pepTier: { type: "string", description: "PEP tier if applicable" },
+        exposureAED: { type: "string", description: "Estimated transaction exposure in AED" },
+        notes: { type: "string", description: "Additional compliance notes" },
       },
       required: ["subjectName"],
     },
-    handler: async (args) => callApi("/api/ai-decision", "POST", args),
+    handler: async (args) => {
+      const a = args as Record<string, unknown>;
+      const name = String(a.subjectName ?? "");
+      return callApi("/api/ai-decision", "POST", {
+        subjectId: a.subjectId ?? name,
+        name,
+        country: a.country ?? "Unknown",
+        entityType: a.entityType ?? "individual",
+        riskScore: a.riskScore ?? 50,
+        listCoverage: a.listCoverage ?? [],
+        sanctionsHits: a.sanctionsHits ?? [],
+        adverseMedia: a.adverseMedia,
+        pepTier: a.pepTier,
+        exposureAED: a.exposureAED,
+        notes: a.notes,
+      });
+    },
   },
 
   // ── ENTITY INTELLIGENCE ──────────────────────────────────────────────────────
@@ -665,16 +720,17 @@ const TOOLS: ToolDef[] = [
     inputSchema: {
       type: "object",
       properties: {
-        amount: { type: "number" },
-        currency: { type: "string" },
+        amountUsd: { type: "number", description: "Transaction amount in USD" },
         senderName: { type: "string" },
         senderCountry: { type: "string" },
         receiverName: { type: "string" },
         receiverCountry: { type: "string" },
         channel: { type: "string", description: "e.g. wire, cash, crypto, trade" },
         narrative: { type: "string" },
+        countryRiskScore: { type: "number", description: "0-100 country risk score" },
+        counterpartyFirstSeen: { type: "boolean" },
       },
-      required: ["amount", "currency"],
+      required: ["amountUsd"],
     },
     handler: async (args) => callApi("/api/transaction-anomaly", "POST", { transaction: args }),
   },
@@ -868,20 +924,14 @@ async function dispatch(msg: {
 
     const t0 = Date.now();
     try {
-      // Pass per-class timeout to callApi via handler override
-      const handlerWithTimeout = (args: Record<string, unknown>) => {
-        // Temporarily override AbortSignal timeout via the tool's handler — we
-        // achieve this by wrapping the handler and injecting timeout into callApi
-        // indirectly: each handler ultimately calls callApi, which now accepts timeoutMs.
-        // Since handlers are closures over callApi, we use a module-level variable trick:
-        _currentCallTimeout = timeoutMs;
-        try {
-          return tool.handler(args);
-        } finally {
-          _currentCallTimeout = undefined;
-        }
-      };
-      const result = await handlerWithTimeout(toolArgs);
+      // Run the tool inside an AsyncLocalStorage context that carries
+      // the per-class timeout, inheriting the caller's auth header from
+      // the enclosing POST context.
+      const parentCtx = _callCtx.getStore() ?? {};
+      const result = await _callCtx.run(
+        { ...parentCtx, timeoutMs },
+        () => tool.handler(toolArgs),
+      );
       const durationMs = Date.now() - t0;
       recordBreakerSuccess(toolName);
       const wrapped = wrapWithGovernance(toolName, level, result);
@@ -954,6 +1004,9 @@ export async function GET(): Promise<Response> {
 }
 
 export async function POST(req: Request): Promise<Response> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
+
   // Kill switch — set MCP_ENABLED=false in Netlify env vars to instantly
   // disable all 28 tools. All tool calls return 503 until re-enabled.
   if (process.env["MCP_ENABLED"] === "false") {
@@ -970,15 +1023,23 @@ export async function POST(req: Request): Promise<Response> {
     return json(err(null, -32700, "Parse error"), 400);
   }
 
+  // Thread caller's auth into all internal callApi requests via AsyncLocalStorage
+  // so each concurrent request has its own isolated auth context.
+  const authHeader = req.headers.get("authorization") ?? undefined;
+
   // Batch request
   if (Array.isArray(body)) {
-    const results = await Promise.all(body.map((msg) => dispatch(msg as Parameters<typeof dispatch>[0])));
+    const results = await _callCtx.run({ authHeader }, () =>
+      Promise.all(body.map((msg) => dispatch(msg as Parameters<typeof dispatch>[0]))),
+    );
     const responses = results.filter((r) => r !== null);
     return json(responses);
   }
 
   // Single request
-  const result = await dispatch(body as Parameters<typeof dispatch>[0]);
+  const result = await _callCtx.run({ authHeader }, () =>
+    dispatch(body as Parameters<typeof dispatch>[0]),
+  );
   if (result === null) {
     // Notification — no response body
     return new Response(null, { status: 202, headers: CORS });

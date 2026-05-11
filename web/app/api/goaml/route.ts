@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getEntity } from "@/lib/config/entities";
+import { saveGoAmlSubmission } from "@/lib/server/goaml-vault";
 // Pull the compiled brain + integrations from dist — the other screening
 // routes do the same to keep cold-start below the 10s Netlify Function cap.
 import { serialiseGoamlXml } from "../../../../dist/src/integrations/goaml-xml.js";
@@ -144,6 +146,12 @@ async function handleGoaml(req: Request): Promise<Response> {
       { status: 400, headers: gateHeaders },
     );
   }
+  if (!body.subject.entityType) {
+    return NextResponse.json(
+      { ok: false, error: "subject.entityType is required (individual or entity)" },
+      { status: 400, headers: gateHeaders },
+    );
+  }
   if (!VALID_REPORT_CODES.has(body.reportCode)) {
     return NextResponse.json(
       {
@@ -156,11 +164,12 @@ async function handleGoaml(req: Request): Promise<Response> {
 
   const now = new Date();
   const iso = now.toISOString();
+  const safeCaseId = body.subject.caseId
+    ? safeFilenameSegment(body.subject.caseId).slice(0, 24)
+    : safeFilenameSegment(body.subject.name).slice(0, 16);
   const reportRef = `HWK-${body.reportCode}-${
     now.getUTCFullYear()
-  }${String(now.getUTCMonth() + 1).padStart(2, "0")}${String(now.getUTCDate()).padStart(2, "0")}-${
-    body.subject.caseId ?? safeFilenameSegment(body.subject.name).slice(0, 16)
-  }`;
+  }${String(now.getUTCMonth() + 1).padStart(2, "0")}${String(now.getUTCDate()).padStart(2, "0")}-${safeCaseId}`;
 
   const involvedPersons: GoAmlPerson[] = [];
   const involvedEntities: GoAmlEntity[] = [];
@@ -264,18 +273,20 @@ async function handleGoaml(req: Request): Promise<Response> {
   // the FIU artefact back to the brain run.
   const prov = body.screeningProvenance;
   if (prov && (prov.runId || prov.payloadSha256 || prov.reportSha256)) {
+    // Sanitize all provenance strings: XML comments cannot contain "--"
+    const safeStr = (s: string | undefined) => (s ?? "").replace(/-{2,}/g, "-").replace(/>/g, "");
     const lines: string[] = [];
     lines.push("<!--");
     lines.push("  Hawkeye Sterling — goAML envelope provenance");
-    if (prov.runId) lines.push(`  screening.run_id          : ${prov.runId}`);
-    if (prov.engineVersion) lines.push(`  brain.engine_version      : ${prov.engineVersion}`);
-    if (prov.schemaVersion) lines.push(`  report.schema_version     : ${prov.schemaVersion}`);
-    if (prov.buildSha) lines.push(`  brain.build_sha           : ${prov.buildSha}`);
-    if (prov.generatedAt) lines.push(`  brain.generated_at        : ${prov.generatedAt}`);
-    if (prov.payloadSha256) lines.push(`  screening.payload.sha256  : ${prov.payloadSha256}`);
-    if (prov.reportSha256) lines.push(`  screening.report.sha256   : ${prov.reportSha256}`);
-    if (prov.signature) lines.push(`  screening.report.signature: ${prov.signature}`);
-    if (prov.signingKeyFp) lines.push(`  signing.key_fp            : ${prov.signingKeyFp}`);
+    if (prov.runId) lines.push(`  screening.run_id          : ${safeStr(prov.runId)}`);
+    if (prov.engineVersion) lines.push(`  brain.engine_version      : ${safeStr(prov.engineVersion)}`);
+    if (prov.schemaVersion) lines.push(`  report.schema_version     : ${safeStr(prov.schemaVersion)}`);
+    if (prov.buildSha) lines.push(`  brain.build_sha           : ${safeStr(prov.buildSha)}`);
+    if (prov.generatedAt) lines.push(`  brain.generated_at        : ${safeStr(prov.generatedAt)}`);
+    if (prov.payloadSha256) lines.push(`  screening.payload.sha256  : ${safeStr(prov.payloadSha256)}`);
+    if (prov.reportSha256) lines.push(`  screening.report.sha256   : ${safeStr(prov.reportSha256)}`);
+    if (prov.signature) lines.push(`  screening.report.signature: ${safeStr(prov.signature)}`);
+    if (prov.signingKeyFp) lines.push(`  signing.key_fp            : ${safeStr(prov.signingKeyFp)}`);
     lines.push(`  goaml.envelope.generated  : ${iso}`);
     lines.push(`  goaml.internal_reference  : ${reportRef}`);
     lines.push("-->");
@@ -290,6 +301,21 @@ async function handleGoaml(req: Request): Promise<Response> {
       xml = comment + "\n" + xml;
     }
   }
+
+  const tenant = tenantIdFromGate(gate);
+  await saveGoAmlSubmission(tenant, {
+    reportRef,
+    tenantId: tenant,
+    reportCode: body.reportCode,
+    subjectName: body.subject.name,
+    entityType: body.subject.entityType,
+    narrativeSlice: body.narrative.slice(0, 200),
+    charterHash: envelope.charterIntegrityHash ?? "",
+    status: "draft",
+    generatedAt: iso,
+    retryCount: 0,
+    caseId: body.subject.caseId,
+  }).catch((err) => console.error("[goaml] draft record save failed:", err));
 
   const filename = `goaml-${body.reportCode.toLowerCase()}-${safeFilenameSegment(reportRef)}.xml`;
   const warningHeaders: Record<string, string> = usingPlaceholderMlro

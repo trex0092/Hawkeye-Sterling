@@ -9,6 +9,7 @@
 
 import { NextResponse } from "next/server";
 
+import { enforce } from "@/lib/server/enforce";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -205,11 +206,13 @@ function computePredictions(body: DispositionPredictBody): Prediction[] {
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   let body: DispositionPredictBody;
   try {
     body = (await req.json()) as DispositionPredictBody;
   } catch {
-    return NextResponse.json({ error: "invalid JSON body" }, { status: 400 });
+    return NextResponse.json({ error: "invalid JSON body" }, { status: 400 , headers: gate.headers});
   }
 
   const predictions = computePredictions(body);
@@ -226,5 +229,5 @@ export async function POST(req: Request): Promise<NextResponse> {
     modelVersion: "heuristic-rba-v1.0",
   };
 
-  return NextResponse.json(response);
+  return NextResponse.json(response, { headers: gate.headers });
 }

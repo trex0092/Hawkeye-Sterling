@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { withGuard } from "@/lib/server/guard";
+import type { RequestContext } from "@/lib/server/guard";
 import { del, getJson, listKeys, setJson } from "@/lib/server/store";
 
 export const runtime = "nodejs";
@@ -8,6 +9,7 @@ export const maxDuration = 15;
 
 interface EnrolledSubject {
   id: string;
+  tenantId?: string;
   name: string;
   aliases?: string[];
   entityType?: "individual" | "organisation" | "vessel" | "aircraft" | "other";
@@ -36,14 +38,16 @@ function stringArray(v: unknown): string[] | undefined {
   return cleaned.length > 0 ? cleaned : undefined;
 }
 
-async function handleGet(): Promise<NextResponse> {
+async function handleGet(_req: Request, ctx: RequestContext): Promise<NextResponse> {
   const keys = await listKeys("ongoing/subject/");
   const loaded = await Promise.all(keys.map((k) => getJson<EnrolledSubject>(k)));
-  const subjects = loaded.filter((s): s is EnrolledSubject => s !== null);
+  const subjects = loaded
+    .filter((s): s is EnrolledSubject => s !== null)
+    .filter((s) => !s.tenantId || s.tenantId === ctx.tenantId);
   return NextResponse.json({ ok: true, count: subjects.length, subjects });
 }
 
-async function handlePost(req: Request): Promise<NextResponse> {
+async function handlePost(req: Request, ctx: RequestContext): Promise<NextResponse> {
   let raw: unknown;
   try {
     raw = await req.json();
@@ -84,6 +88,7 @@ async function handlePost(req: Request): Promise<NextResponse> {
       : undefined;
   const record: EnrolledSubject = {
     id,
+    tenantId: ctx.tenantId,
     name,
     ...(stringArray(raw["aliases"]) ? { aliases: stringArray(raw["aliases"])! } : {}),
     ...(entityType ? { entityType } : {}),
@@ -119,7 +124,7 @@ async function handlePost(req: Request): Promise<NextResponse> {
   return NextResponse.json({ ok: true, subject: record, cadence });
 }
 
-async function handleDelete(req: Request): Promise<NextResponse> {
+async function handleDelete(req: Request, ctx: RequestContext): Promise<NextResponse> {
   const url = new URL(req.url);
   const id = url.searchParams.get("id")?.trim();
   if (!id || id.length > MAX_ID_LENGTH || !SAFE_ID_RE.test(id)) {
@@ -127,6 +132,11 @@ async function handleDelete(req: Request): Promise<NextResponse> {
       { ok: false, error: "id required (alphanumeric/._-:, max 128 chars)" },
       { status: 400 },
     );
+  }
+  // Verify ownership — only the enrolling tenant may delete the subject.
+  const existing = await getJson<EnrolledSubject>(`ongoing/subject/${id}`);
+  if (!existing || (existing.tenantId && existing.tenantId !== ctx.tenantId)) {
+    return NextResponse.json({ ok: false, error: "not found" }, { status: 404 });
   }
   await del(`ongoing/subject/${id}`);
   await del(`ongoing/last/${id}`);

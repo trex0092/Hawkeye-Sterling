@@ -26,7 +26,7 @@ export async function POST(req: Request) {
   catch { return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 }); }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "virtual-asset-risk temporarily unavailable - please retry." }, { status: 503 });
+  if (!apiKey) return NextResponse.json({ ok: false, error: "virtual-asset-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
 
   try {
     const client = getAnthropicClient(apiKey, 22_000);
@@ -62,8 +62,8 @@ Assess FATF R.15/R.16 compliance, travel rule status, DeFi exposure, mixer/tumbl
     });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim());
-    return NextResponse.json(result);
+    return NextResponse.json(result, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "virtual-asset-risk temporarily unavailable - please retry." }, { status: 503 });
+    return NextResponse.json({ ok: false, error: "virtual-asset-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
   }
 }

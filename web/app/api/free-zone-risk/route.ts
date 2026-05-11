@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { enforce } from "@/lib/server/enforce";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -26,16 +27,18 @@ function hashStr(s: string): number {
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   let body: ReqBody;
   try {
     body = (await req.json()) as ReqBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
   }
 
   const { entityName, freeZone } = body;
   if (!entityName) {
-    return NextResponse.json({ ok: false, error: "entityName is required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "entityName is required" }, { status: 400 , headers: gate.headers});
   }
 
   const hash = hashStr(entityName);

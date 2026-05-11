@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { enforce } from "@/lib/server/enforce";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -35,6 +36,8 @@ async function loadCasesFromStore(): Promise<GrievanceCase[]> {
 }
 
 export async function GET(req: Request) {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   const { searchParams } = new URL(req.url);
   const limit = Math.min(parseInt(searchParams.get("limit") ?? "20", 10), 100);
   const statusFilter = searchParams.get("status");
@@ -51,15 +54,18 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
+
   let body: Partial<GrievanceCase>;
   try {
     body = (await req.json()) as Partial<GrievanceCase>;
   } catch {
-    return NextResponse.json({ error: "invalid JSON body" }, { status: 400 });
+    return NextResponse.json({ error: "invalid JSON body" }, { status: 400, headers: gate.headers });
   }
 
   if (!body.category || !body.channel) {
-    return NextResponse.json({ error: "category and channel are required" }, { status: 400 });
+    return NextResponse.json({ error: "category and channel are required" }, { status: 400, headers: gate.headers });
   }
 
   try {
@@ -89,7 +95,7 @@ export async function POST(req: Request) {
     };
 
     await store.set("cases.json", JSON.stringify([newCase, ...existing]));
-    return NextResponse.json({ ok: true, case: newCase }, { status: 201 });
+    return NextResponse.json({ ok: true, case: newCase }, { status: 201, headers: gate.headers });
   } catch (err) {
     return NextResponse.json(
       { error: `store unavailable: ${err instanceof Error ? err.message : String(err)}` },

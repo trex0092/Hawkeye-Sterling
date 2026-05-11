@@ -68,7 +68,7 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
   }
 
   if (!body.subject?.name || !body.hit?.listName) {
@@ -100,7 +100,7 @@ export async function POST(req: Request) {
     };
   };
   if (!apiKey) {
-    return NextResponse.json({ ...buildTemplate(), degraded: true, degradedReason: "ANTHROPIC_API_KEY not configured — deterministic template used." });
+    return NextResponse.json({ ...buildTemplate(), degraded: true, degradedReason: "ANTHROPIC_API_KEY not configured — deterministic template used." }, { headers: gate.headers });
   }
 
   try {
@@ -143,7 +143,7 @@ Assess whether this is a true sanctions/PEP/watchlist match or a false positive.
     const result = JSON.parse(
       raw.replace(/```json\n?|\n?```/g, "").trim(),
     ) as ConfidenceScoreResult;
-    return NextResponse.json(result);
+    return NextResponse.json(result, { headers: gate.headers });
   } catch (err) {
     console.warn("[confidence-score] LLM failed, using deterministic template:", err instanceof Error ? err.message : err);
     return NextResponse.json({

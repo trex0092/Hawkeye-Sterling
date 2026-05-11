@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 
+import { enforce } from "@/lib/server/enforce";
 export interface CtrStructuringResult {
   structuringDetected: boolean;
   structuringRisk: "critical" | "high" | "medium" | "low" | "none";
@@ -40,6 +41,8 @@ function parseCash(raw: string): number[] {
 const CTR_THRESHOLD = 55000;
 
 export async function POST(req: Request) {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   let body: {
     amounts: string;
     currency?: string;
@@ -53,12 +56,12 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
   }
-  if (!body.amounts?.trim()) return NextResponse.json({ ok: false, error: "amounts required" }, { status: 400 });
+  if (!body.amounts?.trim()) return NextResponse.json({ ok: false, error: "amounts required" }, { status: 400 , headers: gate.headers});
 
   const amounts = parseCash(body.amounts);
-  if (amounts.length === 0) return NextResponse.json({ ok: false, error: "No valid amounts parsed" }, { status: 400 });
+  if (amounts.length === 0) return NextResponse.json({ ok: false, error: "No valid amounts parsed" }, { status: 400 , headers: gate.headers});
 
   const periodDays = body.periodDays ?? 30;
   const totalValueAed = amounts.reduce((s, a) => s + a, 0);
@@ -143,5 +146,5 @@ export async function POST(req: Request) {
     regulatoryBasis: "UAE FDL 10/2025 Art.17 (CTR ≥ AED 55,000); Art.26 (STR — no threshold); Federal Law 4/2002 Art.2 (ML predicates including structuring); FATF R.20; CBUAE Anti-Money Laundering Guidelines 2021",
   };
 
-  return NextResponse.json({ ok: true, ...result });
+  return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
 }

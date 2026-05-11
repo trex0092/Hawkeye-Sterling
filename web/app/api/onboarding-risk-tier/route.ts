@@ -15,6 +15,7 @@
 import { NextResponse } from "next/server";
 import { classifyOnboardingRiskTier } from "../../../../dist/src/brain/onboarding-risk-tier.js";
 
+import { enforce } from "@/lib/server/enforce";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -40,6 +41,8 @@ interface Body {
 }
 
 export async function POST(req: Request): Promise<Response> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   let body: Body;
   try {
     body = (await req.json()) as Body;

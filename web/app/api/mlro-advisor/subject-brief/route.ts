@@ -51,18 +51,18 @@ export async function POST(req: Request): Promise<NextResponse> {
   const apiKey = process.env["ANTHROPIC_API_KEY"];
 
   if (!apiKey) {
-    return NextResponse.json({ ok: false, error: "mlro-advisor/subject-brief temporarily unavailable - please retry." }, { status: 503 });
+    return NextResponse.json({ ok: false, error: "mlro-advisor/subject-brief temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
   }
 
   let body: Body;
   try {
     body = (await req.json()) as Body;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
   }
 
   if (!body?.subjectName?.trim()) {
-    return NextResponse.json({ ok: false, error: "subjectName is required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "subjectName is required" }, { status: 400 , headers: gate.headers});
   }
 
   const lines: string[] = [`Subject name: ${body.subjectName.trim()}`];
@@ -137,5 +137,5 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   } catch { /* non-blocking */ }
 
-  return NextResponse.json({ ok: true, ...result });
+  return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
 }

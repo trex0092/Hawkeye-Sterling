@@ -43,12 +43,12 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
   }
 
   const subjects = body.subjects ?? [];
   if (subjects.length === 0) {
-    return NextResponse.json({ ok: false, error: "No subjects provided" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "No subjects provided" }, { status: 400 , headers: gate.headers});
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
@@ -62,7 +62,7 @@ export async function POST(req: Request) {
         estimatedRisk: "Unknown",
       })),
     };
-    return NextResponse.json(fallbackWithSubjects);
+    return NextResponse.json(fallbackWithSubjects, { headers: gate.headers });
   }
 
   try {
@@ -125,8 +125,8 @@ Analyse and prioritise these subjects for AML re-screening urgency. Flag immedia
 
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as PrioritizeResult;
-    return NextResponse.json(result);
+    return NextResponse.json(result, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "batch/prioritize temporarily unavailable - please retry." }, { status: 503 });
+    return NextResponse.json({ ok: false, error: "batch/prioritize temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
   }
 }

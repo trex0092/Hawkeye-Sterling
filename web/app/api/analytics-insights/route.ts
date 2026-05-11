@@ -94,7 +94,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as RequestBody;
   } catch {
-    return NextResponse.json({ error: "invalid JSON body" }, { status: 400 });
+    return NextResponse.json({ error: "invalid JSON body" }, { status: 400 , headers: gate.headers});
   }
 
   const kpis = body.kpis ?? {};
@@ -103,7 +103,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     writeAuditEvent("analyst", "analytics.ai-insights", `no-api-key — period: ${period}`);
-    return NextResponse.json({ ok: false, error: "analytics-insights temporarily unavailable - please retry." }, { status: 503 });
+    return NextResponse.json({ ok: false, error: "analytics-insights temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
   }
 
   try {
@@ -146,10 +146,10 @@ export async function POST(req: Request): Promise<NextResponse> {
       `period: ${period} · trend: ${parsed.riskTrend} · insights: ${(parsed.insights ?? []).length}`,
     );
 
-    return NextResponse.json({ ok: true, ...parsed });
+    return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     writeAuditEvent("analyst", "analytics.ai-insights", `error — ${msg}`);
-    return NextResponse.json({ ok: false, error: "analytics-insights temporarily unavailable - please retry." }, { status: 503 });
+    return NextResponse.json({ ok: false, error: "analytics-insights temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
   }
 }

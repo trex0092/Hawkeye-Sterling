@@ -173,7 +173,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const allCases = body.cases;
 
   if (!apiKey) {
-    return NextResponse.json({ ok: true, triaged: ruleBasedTriage(allCases), fallback: true });
+    return NextResponse.json({ ok: true, triaged: ruleBasedTriage(allCases), fallback: true }, { headers: gate.headers });
   }
 
   // Split into batches of BATCH_SIZE and process sequentially
@@ -194,7 +194,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       "Response carries fallback:true so UI can flag this to the operator.",
       err,
     );
-    return NextResponse.json({ ok: true, triaged: ruleBasedTriage(allCases), fallback: true });
+    return NextResponse.json({ ok: true, triaged: ruleBasedTriage(allCases), fallback: true }, { headers: gate.headers });
   }
 
   // Audit trail — triage decisions are compliance-relevant.
@@ -206,5 +206,5 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   } catch { /* non-blocking */ }
 
-  return NextResponse.json({ ok: true, triaged });
+  return NextResponse.json({ ok: true, triaged }, { headers: gate.headers });
 }

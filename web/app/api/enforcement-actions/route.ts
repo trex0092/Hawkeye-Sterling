@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { enforce } from "@/lib/server/enforce";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,16 +22,18 @@ const ACTION_TYPES = ["Civil Penalty", "Warning Notice", "Prohibition Order", "C
 const PENALTIES = ["USD 125,000", "USD 2.5M", "GBP 450,000", "AED 500,000", "USD 15M"];
 
 export async function POST(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   let body: ReqBody;
   try {
     body = (await req.json()) as ReqBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
   }
 
   const { name, jurisdiction = "UAE" } = body;
   if (!name) {
-    return NextResponse.json({ ok: false, error: "name is required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "name is required" }, { status: 400 , headers: gate.headers});
   }
 
   const hash = name.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
@@ -38,7 +41,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const actions: EnforcementAction[] = [];
   const jurisRegulators = jurisdiction === "UK" ? ["FCA"] : jurisdiction === "US" ? ["SEC", "FinCEN"] : ["CBUAE", "DFSA"];
-  const applicableRegulators = actionCount > 0 ? [...jurisRegulators, ...REGULATORS].slice(0, Math.max(jurisRegulators.length, 2)) : [];
+  const applicableRegulators = actionCount > 0 ? jurisRegulators : [];
 
   for (let i = 0; i < actionCount; i++) {
     const seed = hash + i * 41;

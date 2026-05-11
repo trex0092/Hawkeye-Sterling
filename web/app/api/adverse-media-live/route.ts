@@ -9,6 +9,7 @@
 // Body: { subjectName: string; entityType?: string; jurisdiction?: string }
 
 import { NextResponse } from "next/server";
+import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { searchAllNews } from "@/lib/intelligence/newsAdapters";
 import { gdeltKeywordOr } from "@/lib/intelligence/amlKeywords";
@@ -398,6 +399,9 @@ export async function OPTIONS(): Promise<NextResponse> {
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
+
   let body: AdverseMediaLiveBody;
   try {
     body = (await req.json()) as AdverseMediaLiveBody;
@@ -520,5 +524,5 @@ export async function POST(req: Request): Promise<NextResponse> {
       : {}),
   };
 
-  return NextResponse.json(result);
+  return NextResponse.json(result, { headers: gate.headers });
 }

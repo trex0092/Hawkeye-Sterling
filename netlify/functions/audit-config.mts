@@ -155,5 +155,5 @@ function jsonResp(body: unknown, status = 200): Response {
 // HTTP endpoint. Specifying both causes the deploy to fail validation with
 // "scheduled function cannot have a custom path".
 export const config: Config = {
-  schedule: '@hourly',
+  schedule: '0 * * * *',
 };
