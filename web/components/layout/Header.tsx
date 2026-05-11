@@ -104,6 +104,7 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "📡 Mode Telemetry", href: "/intel/telemetry", hint: "Brain firing counts · mode drift" },
       { label: "🥷 Red-Team Tests", href: "/intel/red-team", hint: "GenAI adversarial test catalogue" },
       { label: "💚 Status", href: "/status", hint: "Live endpoint & watchlist health" },
+      { label: "🔭 Operator Console", href: "/operator", hint: "MCP activity log · tool call audit trail · kill switch" },
       { label: "📊 Eval KPIs", href: "/eval-kpi", hint: "ML model evaluation · KPI metrics · performance tracking" },
       { label: "📘 API Docs", href: "/api-docs", hint: "OpenAPI reference" },
     ],
