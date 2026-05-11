@@ -13,6 +13,7 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 import { redact, rehydrate, type RedactionMap } from "./redact";
+import { recordCall } from "./llm-telemetry";
 
 // ── Types (forward SDK types so callers don't need to import both) ─────────────
 
@@ -66,8 +67,9 @@ const DEFAULT_ANTHROPIC_TIMEOUT_MS = 22_000;
 
 export class AnthropicGuard {
   private inner: Anthropic;
+  private route: string;
 
-  constructor(apiKey: string, timeoutMs: number = DEFAULT_ANTHROPIC_TIMEOUT_MS) {
+  constructor(apiKey: string, timeoutMs: number = DEFAULT_ANTHROPIC_TIMEOUT_MS, route = "unknown") {
     this.inner = new Anthropic({
       apiKey,
       timeout: timeoutMs,
@@ -76,14 +78,17 @@ export class AnthropicGuard {
       // their own logic with explicit per-call timeouts.
       maxRetries: 0,
     });
+    this.route = route;
   }
 
   /** Proxy `messages` namespace with PII redaction on the way in, rehydration on the way out. */
   get messages() {
     const inner = this.inner;
+    const route = this.route;
     return {
       create: async (opts: any, requestOptions?: any): Promise<Anthropic.Message> => {
         const map: RedactionMap = {};
+        const t0 = Date.now();
 
         // Redact all outbound text
         const safe = {
@@ -108,6 +113,18 @@ export class AnthropicGuard {
           return block;
         });
 
+        // Fire-and-forget telemetry
+        const u = response.usage as any;
+        void recordCall({
+          route,
+          model: response.model,
+          inputTokens: u?.input_tokens ?? 0,
+          outputTokens: u?.output_tokens ?? 0,
+          cacheReadTokens: u?.cache_read_input_tokens ?? 0,
+          cacheWriteTokens: u?.cache_creation_input_tokens ?? 0,
+          latencyMs: Date.now() - t0,
+        });
+
         return { ...response, content: rehydratedContent } as Anthropic.Message;
       },
     };
@@ -123,6 +140,6 @@ export class AnthropicGuard {
  *                   routes on the standard Netlify Lambda budget. Routes that
  *                   set `export const maxDuration = 60` should pass ~55_000.
  */
-export function getAnthropicClient(apiKey: string, timeoutMs?: number): AnthropicGuard {
-  return new AnthropicGuard(apiKey, timeoutMs);
+export function getAnthropicClient(apiKey: string, timeoutMs?: number, route?: string): AnthropicGuard {
+  return new AnthropicGuard(apiKey, timeoutMs, route);
 }

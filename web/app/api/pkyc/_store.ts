@@ -5,6 +5,16 @@ export type PKycCadence = "daily" | "weekly" | "monthly" | "quarterly" | "annual
 export type PKycStatus = "active" | "pending_review" | "suspended" | "archived";
 export type PKycRiskBand = "clear" | "low" | "medium" | "high" | "critical";
 
+export interface BehavioralBaseline {
+  capturedAt: string;
+  expectedTransactionFrequency: string;
+  expectedCounterpartyCount: string;
+  expectedCashUsage: string;
+  expectedCrossJurisdictional: string;
+  anomalyScore: number;
+  deviations: string[];
+}
+
 export interface PKycSubject {
   id: string;
   name: string;
@@ -26,6 +36,8 @@ export interface PKycSubject {
   alertCount: number;
   notes?: string;
   mlro?: string;
+  behavioralBaseline?: BehavioralBaseline;
+  behavioralDrift?: string[];
 }
 
 export interface PKycDelta {

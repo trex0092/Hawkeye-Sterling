@@ -30,6 +30,7 @@ import { randomUUID } from "node:crypto";
 import { enforce } from "@/lib/server/enforce";
 import { asanaGids } from "@/lib/server/asanaConfig";
 import { corsHeaders, corsPreflight } from "@/lib/api/cors";
+import { submitFeedback } from "@/lib/server/feedback";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -139,6 +140,19 @@ export async function POST(req: Request): Promise<NextResponse> {
       ].filter(Boolean).join("\n");
       ongoingMonitorTaskId = await createAsanaTask({ name: taskName, notes: taskNotes, projectGid });
     }
+  }
+
+  // Persist verdict to feedback store so confidence-score adjusts future hits
+  if (resolution === "false" || resolution === "positive") {
+    void submitFeedback({
+      subjectId,
+      listId: hitContext?.sourceList ?? "unknown",
+      listRef: hitContext?.listRef ?? hitContext?.matchedName ?? subjectName,
+      candidateName: hitContext?.matchedName ?? subjectName,
+      verdict: resolution === "false" ? "false_positive" : "true_match",
+      reason,
+      analyst: gate.keyId ?? "system",
+    }).catch(() => {/* feedback is best-effort */});
   }
 
   // Audit-trail entry — for now we write to console. Future: persist to
