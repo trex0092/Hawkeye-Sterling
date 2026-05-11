@@ -105,7 +105,7 @@ async function handleGet(req: Request): Promise<NextResponse> {
                 totals[m as BillingMetric] = (totals[m as BillingMetric] ?? 0) + (n ?? 0);
               }
             }
-          } catch { /* ignore malformed bucket */ }
+          } catch (err) { console.warn("[hawkeye] admin/billing: bucket parse failed (skipping):", err); }
         }
       } catch { /* list failed; return empty */ }
     } else {

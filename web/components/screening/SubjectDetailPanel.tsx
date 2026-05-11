@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuickScreen } from "@/lib/hooks/useQuickScreen";
 import { useAutoReport } from "@/lib/hooks/useAutoReport";
 import { useSuperBrain, type SuperBrainResult } from "@/lib/hooks/useSuperBrain";
@@ -282,6 +282,9 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
     { hitId: "hit-001", hitName: "", hitCategory: subject.listCoverage.length > 0 ? "Sanctions" : "Sanctions", hitCountry: "", hitDob: "", hitRole: "", matchScore: undefined },
   ]);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
+
   // Re-seed client fields when the active subject changes
   useEffect(() => {
     setDisambigClient({
@@ -319,17 +322,19 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
         const detail = await res.text().catch(() => "");
         const msg = `Disambiguation failed (HTTP ${res.status})${detail ? ` — ${detail.slice(0, 160)}` : ""}`;
         console.error("[hawkeye] smart-disambiguate", msg);
+        if (!mountedRef.current) return;
         setDisambigError(msg);
         return;
       }
       const data = (await res.json()) as DisambiguationResult;
+      if (!mountedRef.current) return;
       if (data.ok) setDisambigResult(data);
       else setDisambigError("Disambiguation returned ok:false");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Network error";
       console.error("[hawkeye] smart-disambiguate threw:", err);
-      setDisambigError(msg);
-    } finally { setDisambigLoading(false); }
+      if (mountedRef.current) setDisambigError(msg);
+    } finally { if (mountedRef.current) setDisambigLoading(false); }
   };
 
   const runEIA = async () => {
@@ -356,6 +361,7 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
       if (raw) {
         try { payload = JSON.parse(raw); } catch { /* leave empty */ }
       }
+      if (!mountedRef.current) return;
       if (!res.ok) {
         const msg = payload.detail ?? payload.error ?? `Ethical Impact API returned HTTP ${res.status}`;
         setEiaError(
@@ -373,13 +379,13 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
     } catch (err) {
       const detail = err instanceof Error ? err.message : String(err);
       const isTimeout = err instanceof Error && (err.name === "AbortError" || err.name === "TimeoutError");
-      setEiaError(
+      if (mountedRef.current) setEiaError(
         isTimeout
           ? "Ethical Impact assessment timed out after 45s — please retry."
           : `Ethical Impact request failed: ${detail}`,
       );
     } finally {
-      setEiaLoading(false);
+      if (mountedRef.current) setEiaLoading(false);
     }
   };
   const effectiveAdverseMediaText =
@@ -491,9 +497,9 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(subject.id);
-      showFlash(`Copied ${subject.id}`);
+      if (mountedRef.current) showFlash(`Copied ${subject.id}`);
     } catch {
-      showFlash("Copy failed");
+      if (mountedRef.current) showFlash("Copy failed");
     }
   };
 
@@ -636,6 +642,7 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
         label: "STR filing failed",
       },
     );
+    if (!mountedRef.current) return;
     if (res.ok && res.data?.ok) {
       setStrRaised(true);
       void fetchJson("/api/audit/sign", {
@@ -708,11 +715,13 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
         },
         body: JSON.stringify(payload),
       });
+      if (!mountedRef.current) return;
       if (!res.ok) {
         showFlash(`Report failed server ${res.status}`);
         return;
       }
       const html = await res.text();
+      if (!mountedRef.current) return;
       const blob = new Blob([html], { type: "text/html;charset=utf-8" });
       const url = URL.createObjectURL(blob);
       const opened = window.open(url, "_blank", "noopener,noreferrer");
@@ -732,6 +741,7 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
         timelineEvent: "Screening Compliance Report (SCR) generated",
       });
     } catch (err) {
+      if (!mountedRef.current) return;
       showFlash(
         err instanceof Error && err.name === "AbortError"
           ? "Report failed request timed out"
@@ -858,11 +868,13 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
           ...(provenance ? { screeningProvenance: provenance } : {}),
         }),
       });
+      if (!mountedRef.current) return;
       if (!res.ok) {
         showFlash(`goAML failed server ${res.status}`);
         return;
       }
       const xml = await res.text();
+      if (!mountedRef.current) return;
       const blob = new Blob([xml], { type: "application/xml;charset=utf-8" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -879,7 +891,7 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
         timelineEvent: "goAML STR XML generated",
       });
     } catch {
-      showFlash("goAML request failed");
+      if (mountedRef.current) showFlash("goAML request failed");
     }
   };
 
@@ -1053,6 +1065,7 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
           body: JSON.stringify(payload),
           signal: ctl.signal,
         });
+        if (!mountedRef.current) return;
         if (res.status >= 500 && res.status <= 599) {
           if (attempt < retries) {
             await new Promise((r) => setTimeout(r, 750));
@@ -1066,6 +1079,7 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
           return;
         }
         const blob = await res.blob();
+        if (!mountedRef.current) return;
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
@@ -1086,6 +1100,7 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
           await new Promise((r) => setTimeout(r, 750));
           continue;
         }
+        if (!mountedRef.current) return;
         showFlash(
           err instanceof Error && err.name === "AbortError"
             ? "Report failed request timed out"
@@ -2128,6 +2143,9 @@ function HitRow({ hit, subjectCtx }: { hit: QuickScreenHit; subjectCtx?: Subject
   const [resolving, setResolving] = useState(false);
   const [enrollStatus, setEnrollStatus] = useState<"idle" | "enrolling" | "enrolled" | "error">("idle");
 
+  const hitMountedRef = useRef(true);
+  useEffect(() => () => { hitMountedRef.current = false; }, []);
+
   const monitoringActive =
     resolution?.verdict === "confirmed_positive" || enrollStatus === "enrolled";
 
@@ -2158,11 +2176,13 @@ function HitRow({ hit, subjectCtx }: { hit: QuickScreenHit; subjectCtx?: Subject
           },
         }),
       });
+      if (!hitMountedRef.current) return;
       if (!res.ok) { setCsError("API error — please retry"); return; }
       const data = (await res.json()) as ConfidenceScoreResult;
+      if (!hitMountedRef.current) return;
       if (data.ok) setCsResult(data);
-    } catch { setCsError("Request failed"); }
-    finally { setCsLoading(false); }
+    } catch { if (hitMountedRef.current) setCsError("Request failed"); }
+    finally { if (hitMountedRef.current) setCsLoading(false); }
   };
 
   const handleResolve = async () => {
@@ -2192,6 +2212,7 @@ function HitRow({ hit, subjectCtx }: { hit: QuickScreenHit; subjectCtx?: Subject
               cadence: "thrice_daily",
             }),
           });
+          if (!hitMountedRef.current) return;
           if (r.ok) {
             setEnrollStatus("enrolled");
             // Update persisted record with confirmed monitoring flag
@@ -2202,11 +2223,11 @@ function HitRow({ hit, subjectCtx }: { hit: QuickScreenHit; subjectCtx?: Subject
             setEnrollStatus("error");
           }
         } catch {
-          setEnrollStatus("error");
+          if (hitMountedRef.current) setEnrollStatus("error");
         }
       }
     } finally {
-      setResolving(false);
+      if (hitMountedRef.current) setResolving(false);
     }
   };
 
@@ -3475,11 +3496,14 @@ function EthicsTab({
 }) {
   const [copied, setCopied] = useState(false);
 
+  const ethicsMountedRef = useRef(true);
+  useEffect(() => () => { ethicsMountedRef.current = false; }, []);
+
   const copyRights = async () => {
     if (!eiaResult) return;
     try {
       await navigator.clipboard.writeText(eiaResult.subjectRights.join("\n"));
-      setCopied(true);
+      if (ethicsMountedRef.current) setCopied(true);
       window.setTimeout(() => setCopied(false), 1800);
     } catch (err) {
       console.warn("[hawkeye] clipboard write failed:", err);

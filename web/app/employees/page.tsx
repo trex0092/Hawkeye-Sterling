@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { RowActions } from "@/components/shared/RowActions";
 
@@ -171,6 +171,9 @@ export default function EmployeesPage() {
   const [empRiskLoading, setEmpRiskLoading] = useState(false);
   const [empRiskError, setEmpRiskError] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
+
   async function runEmployeeRiskScan() {
     if (employees.length === 0 || empRiskLoading) return;
     setEmpRiskLoading(true);
@@ -193,17 +196,19 @@ export default function EmployeesPage() {
       });
       if (res.ok) {
         const data = (await res.json()) as EmployeeRisk;
-        setEmpRisk(data);
+        if (mountedRef.current) setEmpRisk(data);
       } else {
         const body = await res.text().catch(() => "");
+        if (!mountedRef.current) return;
         console.error(`[hawkeye] employee-risk HTTP ${res.status}`);
         setEmpRiskError(`AI risk scan failed (HTTP ${res.status})${body ? ` — ${body}` : ""}`);
       }
     } catch (err) {
+      if (!mountedRef.current) return;
       console.error("[hawkeye] employee-risk threw:", err);
       setEmpRiskError("AI risk scan request failed — please check your connection and try again.");
     } finally {
-      setEmpRiskLoading(false);
+      if (mountedRef.current) setEmpRiskLoading(false);
     }
   }
 

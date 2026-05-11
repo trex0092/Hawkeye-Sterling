@@ -85,20 +85,17 @@ export async function POST(req: Request) {
       overrideRate: trimmed.length > 0 ? Math.round((overridden / trimmed.length) * 100) : null,
     });
   } catch (err) {
-    console.error("[ai-decision/feedback]", err);
-    return NextResponse.json({
-      ok: true,
-      stored: false,
-      recorded: record.id,
-      totalFeedback: null,
-      acceptanceRate: null,
-      overrideRate: null,
-      note: "feedback store unavailable — record not persisted",
-    });
+    console.error("[hawkeye] ai-decision/feedback: store write failed — record not persisted:", err);
+    return NextResponse.json(
+      { ok: false, error: "feedback store unavailable — record not persisted" },
+      { status: 503 },
+    );
   }
 }
 
-export async function GET() {
+export async function GET(req: Request) {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   try {
     const records = (await getJson<FeedbackRecord[]>(FEEDBACK_STORE_KEY)) ?? [];
     const accepted = records.filter((r) => r.outcome === "accepted").length;

@@ -21,6 +21,12 @@ export async function POST(req: Request) {
   if (!name?.trim() || !email?.trim() || !role) {
     return NextResponse.json({ ok: false, error: "name, email, and role are required" }, { status: 400 });
   }
+  if (!(role in ROLE_MODULES)) {
+    return NextResponse.json(
+      { ok: false, error: `role must be one of: ${Object.keys(ROLE_MODULES).join(", ")}` },
+      { status: 400 },
+    );
+  }
 
   const users = await loadUsers();
   const emailLower = email.toLowerCase().trim();

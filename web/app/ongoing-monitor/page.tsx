@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { writeAuditEvent } from "@/lib/audit";
 import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
@@ -215,17 +215,21 @@ export default function OngoingMonitorPage() {
   const [enrichResult, setEnrichResult] = useState<EnrichResult | null>(null);
   const [enrichError, setEnrichError] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
+
   useEffect(() => {
+    let cancelled = false;
     setSubjects(load());
     (async () => {
       try {
         const res = await fetch("/api/ongoing");
-        if (!res.ok) return;
+        if (!res.ok || cancelled) return;
         const data = (await res.json()) as {
           ok: boolean;
           subjects?: Array<{ id: string; name: string; caseId?: string; jurisdiction?: string; enrolledAt: string }>;
         };
-        if (!data.ok || !Array.isArray(data.subjects)) return;
+        if (!data.ok || !Array.isArray(data.subjects) || cancelled) return;
         const local = load();
         const localById = new Map(local.map((s) => [s.id, s]));
         const merged: MonitoredSubject[] = data.subjects.map((srv) => {
@@ -238,10 +242,10 @@ export default function OngoingMonitorPage() {
             enrolledBy: "", enrolledAt: fmtDate(srv.enrolledAt), notes: "",
           };
         });
-        setSubjects(merged);
-        save(merged);
+        if (!cancelled) { setSubjects(merged); save(merged); }
       } catch { /* offline — keep local cache */ }
     })();
+    return () => { cancelled = true; };
   }, []);
 
   const set = (k: keyof typeof BLANK) =>
@@ -291,11 +295,11 @@ export default function OngoingMonitorPage() {
       });
       if (!res.ok) {
         console.error(`[hawkeye] ongoing enrol HTTP ${res.status} — backend out of sync with UI`);
-        setBgError(`Failed to sync enrolment with server (HTTP ${res.status}). The subject has been saved locally.`);
+        if (mountedRef.current) setBgError(`Failed to sync enrolment with server (HTTP ${res.status}). The subject has been saved locally.`);
       }
     } catch (err) {
       console.error("[hawkeye] ongoing enrol threw — backend out of sync with UI:", err);
-      setBgError("Could not reach the server to sync enrolment. The subject has been saved locally.");
+      if (mountedRef.current) setBgError("Could not reach the server to sync enrolment. The subject has been saved locally.");
     }
   };
 
@@ -316,11 +320,11 @@ export default function OngoingMonitorPage() {
       });
       if (!res.ok) {
         console.error(`[hawkeye] ongoing DELETE HTTP ${res.status} — backend row may persist as orphan`);
-        setBgError(`Failed to remove subject from server (HTTP ${res.status}). It has been removed locally but may reappear on next sync.`);
+        if (mountedRef.current) setBgError(`Failed to remove subject from server (HTTP ${res.status}). It has been removed locally but may reappear on next sync.`);
       }
     } catch (err) {
       console.error("[hawkeye] ongoing DELETE threw — backend row may persist as orphan:", err);
-      setBgError("Could not reach the server to remove this subject. It has been removed locally but may reappear on next sync.");
+      if (mountedRef.current) setBgError("Could not reach the server to remove this subject. It has been removed locally but may reappear on next sync.");
     }
   };
 
@@ -338,15 +342,17 @@ export default function OngoingMonitorPage() {
       const next = subjects.map((sub) =>
         sub.id === s.id ? { ...sub, lastRun: nowStr, nextDue: computeNextDue(nowStr, sub.cadence), status: "active" as const } : sub,
       );
-      save(next); setSubjects(next);
-      if (data.ok && data.topScore !== undefined) {
+      save(next);
+      if (mountedRef.current) setSubjects(next);
+      if (data.ok && data.topScore !== undefined && mountedRef.current) {
         setLastResults((prev) => ({ ...prev, [s.id]: { severity: data.severity ?? "low", topScore: data.topScore ?? 0 } }));
         writeAuditEvent("system", "screening.completed", `${s.name} (${s.id}) — score ${data.topScore} · ${data.severity ?? "low"}`);
       }
     } catch (err) {
+      if (!mountedRef.current) return;
       console.error("[hawkeye] quick-screen threw — UI lastRun timestamp NOT updated:", err);
       setBgError(`Screening failed for "${s.name}". Please try again.`);
-    } finally { setScreening((prev) => ({ ...prev, [s.id]: false })); }
+    } finally { if (mountedRef.current) setScreening((prev) => ({ ...prev, [s.id]: false })); }
   };
 
   const enrich = async () => {
@@ -364,10 +370,11 @@ export default function OngoingMonitorPage() {
         }),
       });
       const data = await res.json() as EnrichResult;
+      if (!mountedRef.current) return;
       if (!data.ok) setEnrichError(data.error ?? "Enrichment failed");
       else setEnrichResult(data);
-    } catch { setEnrichError("Request failed"); }
-    finally { setEnrichLoading(false); }
+    } catch { if (mountedRef.current) setEnrichError("Request failed"); }
+    finally { if (mountedRef.current) setEnrichLoading(false); }
   };
 
   const runAiMonitor = async () => {
@@ -395,11 +402,12 @@ export default function OngoingMonitorPage() {
         return;
       }
       const data = (await res.json()) as MonitorAlertsResult;
-      setMonitorAlerts(data);
+      if (mountedRef.current) setMonitorAlerts(data);
     } catch (err) {
+      if (!mountedRef.current) return;
       console.error("[hawkeye] ongoing-monitor-ai threw — portfolio-health KPI NOT refreshed, escalations may be missed:", err);
       setBgError("AI health check could not be reached. Portfolio alerts were not updated.");
-    } finally { setMonitorAlertsLoading(false); }
+    } finally { if (mountedRef.current) setMonitorAlertsLoading(false); }
   };
 
   const active = subjects.filter((s) => s.status === "active").length;

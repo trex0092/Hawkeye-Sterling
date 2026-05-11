@@ -156,8 +156,9 @@ async function asanaPost(token: string, path: string, data: unknown) {
     body: JSON.stringify({ data }),
     signal: AbortSignal.timeout(8000),
   });
-  const json = await res.json() as { data: unknown };
-  return { ok: res.ok, data: json.data };
+  let json: { data: unknown } | null = null;
+  try { json = await res.json() as { data: unknown }; } catch { /* non-JSON error response */ }
+  return { ok: res.ok, data: json?.data };
 }
 
 interface SectionRecord { name: string }

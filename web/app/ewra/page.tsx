@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import type { EwraBoardReportResult } from "@/app/api/ewra-report/route";
 import type { ThreatIntelResult } from "@/app/api/ewra/threat-intel/route";
@@ -197,6 +197,9 @@ export default function EwraPage() {
   const [threatError, setThreatError] = useState<string | null>(null);
   const [threatOpen, setThreatOpen] = useState(false);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
+
   // Version history state
   const [history, setHistory] = useState<EwraSnapshot[]>([]);
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -221,13 +224,14 @@ export default function EwraPage() {
         }),
       });
       const data = (await res.json()) as { ok: boolean; error?: string } & ThreatIntelResult;
+      if (!mountedRef.current) return;
       if (!data.ok) { setThreatError(data.error ?? "Threat intel generation failed"); return; }
       setThreatIntel(data);
       setThreatOpen(true);
     } catch {
-      setThreatError("Network error — try again");
+      if (mountedRef.current) setThreatError("Network error — try again");
     } finally {
-      setThreatLoading(false);
+      if (mountedRef.current) setThreatLoading(false);
     }
   };
 
@@ -275,16 +279,18 @@ export default function EwraPage() {
       let data: { ok: boolean; error?: string } & EwraBoardReportResult;
       try { data = JSON.parse(raw); }
       catch { setBoardError("Board-report returned a malformed response. Please retry."); return; }
+      if (!mountedRef.current) return;
       if (!data.ok) { setBoardError(data.error ?? "Report generation failed"); return; }
       setBoardReport(data);
       setBoardOpen(true);
     } catch (err) {
+      if (!mountedRef.current) return;
       const isTimeout = err instanceof Error && (err.name === "AbortError" || err.name === "TimeoutError");
       setBoardError(isTimeout
         ? "Board-report timed out after 60s — please retry."
         : `Network error — ${err instanceof Error ? err.message : String(err)}.`);
     } finally {
-      setBoardLoading(false);
+      if (mountedRef.current) setBoardLoading(false);
     }
   };
 

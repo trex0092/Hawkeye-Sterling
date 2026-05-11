@@ -62,8 +62,8 @@ export async function POST(req: Request) {
     `<span class="hs-mono-s">${escHtml(r.id)}</span>`,
     `<span style="font-weight:500">${escHtml(r.subject)}</span>`,
     `<span class="hs-mono-s" style="display:block;text-align:right">${r.score}</span>`,
-    hsSeverityCell(escHtml(r.severity)),
-    hsSeverityCell(escHtml(r.disposition)),
+    hsSeverityCell(r.severity),
+    hsSeverityCell(r.disposition),
     `<span class="hs-mono-s">${escHtml(r.date)}</span>`,
   ]);
 

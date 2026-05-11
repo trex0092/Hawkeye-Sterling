@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 
 export interface StrDraftPayload {
   question: string;
@@ -121,6 +121,8 @@ export function StrDraftModal({ open, onClose, payload }: Props) {
   const [counterparty, setCounterparty] = useState("");
   const [posting, setPosting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   if (!open) return null;
 
@@ -148,6 +150,7 @@ export function StrDraftModal({ open, onClose, payload }: Props) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify(body),
       });
+      if (!mountedRef.current) return;
       if (!res.ok) {
         const text = await res.text();
         let msg = `HTTP ${res.status}`;
@@ -155,6 +158,7 @@ export function StrDraftModal({ open, onClose, payload }: Props) {
         throw new Error(msg);
       }
       const xml = await res.text();
+      if (!mountedRef.current) return;
       const blob = new Blob([xml], { type: "application/xml" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -165,9 +169,9 @@ export function StrDraftModal({ open, onClose, payload }: Props) {
       URL.revokeObjectURL(url);
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Draft failed");
+      if (mountedRef.current) setError(err instanceof Error ? err.message : "Draft failed");
     } finally {
-      setPosting(false);
+      if (mountedRef.current) setPosting(false);
     }
   };
 

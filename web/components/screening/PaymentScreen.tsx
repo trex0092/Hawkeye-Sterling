@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 
 // SWIFT MT103 / SEPA XML payment-rail screener. Paste a raw payment
 // message; the server parses it, screens ordering + beneficiary parties
@@ -82,6 +82,8 @@ export function PaymentScreen() {
   const [message, setMessage] = useState("");
   const [result, setResult] = useState<PaymentVerdict | null>(null);
   const [loading, setLoading] = useState(false);
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   const screen = async () => {
     setLoading(true);
@@ -94,14 +96,14 @@ export function PaymentScreen() {
         body: JSON.stringify({ message }),
       });
       const payload = (await res.json()) as PaymentVerdict;
-      setResult(payload);
+      if (mountedRef.current) setResult(payload);
     } catch (err) {
-      setResult({
+      if (mountedRef.current) setResult({
         ok: false,
         error: err instanceof Error ? err.message : "Payment screen failed",
       });
     } finally {
-      setLoading(false);
+      if (mountedRef.current) setLoading(false);
     }
   };
 

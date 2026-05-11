@@ -580,6 +580,9 @@ export default function ScreeningPage() {
   const [rescreenLoading, setRescreenLoading] = useState(false);
   const [rescreenResult, setRescreenResult] = useState<BulkRescreenResult | null>(null);
   const [rescreenError, setRescreenError] = useState<string | null>(null);
+
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   // Latest reasoning from the most recent /api/quick-screen call —
   // populated when an auto-screen completes; rendered as a full-width
   // panel above the screening table.
@@ -1281,19 +1284,21 @@ export default function ScreeningPage() {
         }
       }
       if (!res.ok) {
-        setAmError(data?.error ?? `Search failed - server ${res.status}`);
+        if (mountedRef.current) setAmError(data?.error ?? `Search failed - server ${res.status}`);
         return;
       }
       if (!data) {
-        setAmError("Search failed - empty response");
+        if (mountedRef.current) setAmError("Search failed - empty response");
         return;
       }
+      if (!mountedRef.current) return;
       if (!data.ok) {
         setAmError(data.error ?? "Search failed");
       } else {
         setAmResult(data);
       }
     } catch (err) {
+      if (!mountedRef.current) return;
       if (err instanceof Error && err.name === "AbortError") {
         setAmError("Search failed - request timed out");
       } else {
@@ -1301,7 +1306,7 @@ export default function ScreeningPage() {
       }
     } finally {
       clearTimeout(timer);
-      setAmLoading(false);
+      if (mountedRef.current) setAmLoading(false);
     }
   };
 
@@ -1358,18 +1363,19 @@ export default function ScreeningPage() {
         body: JSON.stringify({ subjects: payload, listVersion: new Date().toISOString().slice(0, 10) }),
       });
       if (!res.ok) {
-        setRescreenError(`Re-screen failed — server ${res.status}`);
+        if (mountedRef.current) setRescreenError(`Re-screen failed — server ${res.status}`);
         return;
       }
       const data = (await res.json()) as BulkRescreenResult;
+      if (!mountedRef.current) return;
       if (data.ok) {
         setRescreenResult(data);
         writeAuditEvent("analyst", "bulk.rescreened", `${data.rescreened} subjects — ${data.newHits.length} new hits, ${data.cleared.length} cleared`);
       }
     } catch (err) {
-      setRescreenError(err instanceof Error ? err.message : "Request failed");
+      if (mountedRef.current) setRescreenError(err instanceof Error ? err.message : "Request failed");
     } finally {
-      setRescreenLoading(false);
+      if (mountedRef.current) setRescreenLoading(false);
     }
   };
 

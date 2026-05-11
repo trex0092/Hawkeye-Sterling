@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import { RowActions } from "@/components/shared/RowActions";
 import { formatDMYTimeSec } from "@/lib/utils/dateFormat";
@@ -61,6 +61,9 @@ export default function AuditTrailPage() {
   const [anomalyLoading, setAnomalyLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
+
   useEffect(() => {
     const loaded = loadAuditEntries();
     setEntries(loaded);
@@ -106,16 +109,18 @@ export default function AuditTrailPage() {
       });
       if (res.ok) {
         const data = (await res.json()) as AuditAnomaly;
-        setAnomaly(data);
+        if (mountedRef.current) setAnomaly(data);
       } else {
+        if (!mountedRef.current) return;
         console.error(`[hawkeye] audit-trail/anomaly-detect HTTP ${res.status}`);
         setError(`Anomaly scan failed (HTTP ${res.status}). Please try again.`);
       }
     } catch (err) {
+      if (!mountedRef.current) return;
       console.error("[hawkeye] audit-trail/anomaly-detect threw:", err);
       setError("Anomaly scan could not be reached. Check your connection and try again.");
     } finally {
-      setAnomalyLoading(false);
+      if (mountedRef.current) setAnomalyLoading(false);
     }
   };
 

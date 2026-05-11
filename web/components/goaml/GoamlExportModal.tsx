@@ -10,7 +10,7 @@
 // same /api/goaml backend; this modal is the "from a real case"
 // entry point regulators expect to see in an audit trail.
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   REPORT_CODES,
   REPORT_CODE_LABEL,
@@ -92,6 +92,8 @@ export function GoamlExportModal({ open, onClose, prefill, onExportComplete }: G
   const [step, setStep] = useState<Step>(1);
   const [draft, setDraft] = useState<DraftEnvelope>(BLANK);
   const [submission, setSubmission] = useState<SubmissionState>({ status: "idle" });
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   // Re-prefill every time the modal is opened so a stale draft from
   // an earlier case can't bleed in.
@@ -156,6 +158,7 @@ export function GoamlExportModal({ open, onClose, prefill, onExportComplete }: G
         headers: { "content-type": "application/json" },
         body: JSON.stringify(body),
       });
+      if (!mountedRef.current) return;
       if (!res.ok) {
         let detail: string = `HTTP ${res.status}`;
         try {
@@ -166,13 +169,14 @@ export function GoamlExportModal({ open, onClose, prefill, onExportComplete }: G
         return;
       }
       const xml = await res.text();
+      if (!mountedRef.current) return;
       const dispo = res.headers.get("content-disposition") ?? "";
       const m = /filename="([^"]+)"/.exec(dispo);
       const filename = m?.[1] ?? "goaml-export.xml";
       setSubmission({ status: "ready", xml, filename });
       onExportComplete?.({ filename, xmlBytes: xml.length });
     } catch (err) {
-      setSubmission({ status: "error", error: err instanceof Error ? err.message : String(err) });
+      if (mountedRef.current) setSubmission({ status: "error", error: err instanceof Error ? err.message : String(err) });
     }
   };
 

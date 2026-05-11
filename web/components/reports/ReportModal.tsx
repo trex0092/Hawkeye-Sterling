@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface AsanaFile {
   endpoint: string;
@@ -50,6 +50,9 @@ export function ReportModal({
   const [state, setState] = useState<ReportState>({ status: "idle" });
   const [asana, setAsana] = useState<AsanaState>({ status: "idle" });
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
+
   useEffect(() => {
     if (!open) {
       setState({ status: "idle" });
@@ -69,6 +72,7 @@ export function ReportModal({
           body: JSON.stringify(payload),
           signal: ctl.signal,
         });
+        if (ctl.signal.aborted || !mountedRef.current) return;
         if (!res.ok) {
           setState({
             status: "error",
@@ -77,9 +81,10 @@ export function ReportModal({
           return;
         }
         const text = await res.text();
+        if (ctl.signal.aborted || !mountedRef.current) return;
         setState({ status: "ready", body: text });
       } catch (err) {
-        if (ctl.signal.aborted) return;
+        if (ctl.signal.aborted || !mountedRef.current) return;
         setState({
           status: "error",
           message:
@@ -115,6 +120,7 @@ export function ReportModal({
         })) as
           | { ok?: boolean; taskUrl?: string; error?: string; detail?: string }
           | null;
+        if (ctl.signal.aborted || !mountedRef.current) return;
         if (!res.ok || !json?.ok) {
           // Predictable misconfig — Asana token missing or upstream auth
           // failure. Surface as "disabled" (non-alarming) rather than a
@@ -136,7 +142,7 @@ export function ReportModal({
         });
         if (json.taskUrl && onAsanaFiled) onAsanaFiled(json.taskUrl);
       } catch (err) {
-        if (ctl.signal.aborted) return;
+        if (ctl.signal.aborted || !mountedRef.current) return;
         setAsana({
           status: "error",
           message: err instanceof Error ? err.message : "Asana filing failed",

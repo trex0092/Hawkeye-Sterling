@@ -287,8 +287,8 @@ export interface CoverData {
 export function hsCover(d: CoverData): string {
   const metaHtml = d.meta.map(m => `
     <div>
-      <div>${m.value}${m.sub ? `<br><span class="hs-meta-sub">${m.sub}</span>` : ""}</div>
-      <div class="hs-meta-sub">${m.label}</div>
+      <div>${escHtml(m.value)}${m.sub ? `<br><span class="hs-meta-sub">${escHtml(m.sub)}</span>` : ""}</div>
+      <div class="hs-meta-sub">${escHtml(m.label)}</div>
     </div>`).join("");
 
   const legal = d.footerLegal ?? `Issued in confidence to the addressee. Reproduction, transmission or storage outside the controlled domain of the recipient institution is prohibited under the terms of the engagement.`;
@@ -320,15 +320,15 @@ export function hsCover(d: CoverData): string {
   <div class="hs-cover-grid">
     <div class="hs-cover-subject">
       <div class="hs-sc">${d.subjectLabel}</div>
-      <div class="hs-subject-name">${d.subjectName}</div>
-      <div class="hs-subject-meta">${d.subjectMeta}</div>
+      <div class="hs-subject-name">${escHtml(d.subjectName)}</div>
+      <div class="hs-subject-meta">${escHtml(d.subjectMeta)}</div>
     </div>
     <div class="hs-cover-band hs-band-${d.verdictBand}">
       <div class="hs-sc">VERDICT</div>
       <div class="hs-cover-band-row">
         <div class="hs-cover-band-tx">
-          <div class="hs-cover-band-band">${d.verdictLabel}</div>
-          <div class="hs-cover-band-note">${d.verdictNote}</div>
+          <div class="hs-cover-band-band">${escHtml(d.verdictLabel)}</div>
+          <div class="hs-cover-band-note">${escHtml(d.verdictNote)}</div>
         </div>
       </div>
     </div>
@@ -396,15 +396,15 @@ export function hsSeverityCell(s: string): string {
     norm === "critical" || norm === "high" || norm === "edd required" || norm === "escalate" || norm === "hit" ? "ember" :
     norm === "medium" || norm === "amber" || norm === "review" ? "amber" :
     norm === "low" || norm === "clear" || norm === "pass" || norm === "sage" ? "sage" : "ink";
-  return `<span class="hs-sev hs-sev-${tone}"><span class="hs-sev-dot"></span>${s}</span>`;
+  return `<span class="hs-sev hs-sev-${tone}"><span class="hs-sev-dot"></span>${escHtml(s)}</span>`;
 }
 
 export function hsFindings(items: string[]): string {
-  return `<ul class="hs-findings">${items.map(i => `<li>${i}</li>`).join("")}</ul>`;
+  return `<ul class="hs-findings">${items.map(i => `<li>${escHtml(i)}</li>`).join("")}</ul>`;
 }
 
 export function hsNumList(items: string[]): string {
-  return `<ol class="hs-numlist">${items.map(i => `<li>${i}</li>`).join("")}</ol>`;
+  return `<ol class="hs-numlist">${items.map(i => `<li>${escHtml(i)}</li>`).join("")}</ol>`;
 }
 
 export function hsSignatureBlock(signers: Array<{name: string; role: string; lic: string; date: string}>): string {

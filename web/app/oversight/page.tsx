@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { RowActions } from "@/components/shared/RowActions";
 import { DateParts } from "@/components/ui/DateParts";
@@ -787,6 +787,9 @@ export default function OversightPage() {
   const [packError, setPackError] = useState("");
   const [packExpandedSection, setPackExpandedSection] = useState<string | null>("executiveSummary");
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
+
   useEffect(() => { setOverlay(loadOversightOverlay()); }, []);
 
   const updateOverlay = (next: OversightOverlay) => { setOverlay(next); saveOversightOverlay(next); };
@@ -1009,12 +1012,13 @@ export default function OversightPage() {
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = (await res.json()) as GovernanceGapResult;
+      if (!mountedRef.current) return;
       setGapResult(data);
       setGapOpen(true);
     } catch (e) {
-      setGapError(e instanceof Error ? e.message : "Unknown error");
+      if (mountedRef.current) setGapError(e instanceof Error ? e.message : "Unknown error");
     } finally {
-      setGapLoading(false);
+      if (mountedRef.current) setGapLoading(false);
     }
   };
 
@@ -1035,11 +1039,11 @@ export default function OversightPage() {
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = (await res.json()) as BoardAmlReportResult & { ok: boolean };
-      setBoardResult(data);
+      if (mountedRef.current) setBoardResult(data);
     } catch (e) {
-      setBoardError(e instanceof Error ? e.message : "Unknown error");
+      if (mountedRef.current) setBoardError(e instanceof Error ? e.message : "Unknown error");
     } finally {
-      setBoardLoading(false);
+      if (mountedRef.current) setBoardLoading(false);
     }
   };
 
@@ -1070,12 +1074,13 @@ export default function OversightPage() {
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json() as BoardPackResult;
+      if (!mountedRef.current) return;
       setPackResult(data);
       setPackExpandedSection("executiveSummary");
     } catch (e) {
-      setPackError(e instanceof Error ? e.message : "Unknown error");
+      if (mountedRef.current) setPackError(e instanceof Error ? e.message : "Unknown error");
     } finally {
-      setPackLoading(false);
+      if (mountedRef.current) setPackLoading(false);
     }
   };
 

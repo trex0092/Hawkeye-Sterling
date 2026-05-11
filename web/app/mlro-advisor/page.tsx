@@ -1448,6 +1448,9 @@ export default function MlroAdvisorPage() {
     setQuestion("");
   }, []);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
+
   /**
    * Run a Quick-mode answer via /api/mlro-advisor-quick. Single-pass
    * Haiku 4.5, no extended thinking, brain-classifier-grounded prompt.
@@ -1507,6 +1510,7 @@ export default function MlroAdvisorPage() {
       if (!data.ok || !data.answer) {
         throw new Error(data.error ?? `HTTP ${res.status}`);
       }
+      if (!mountedRef.current) return;
       setAdvisorHistory((prev) =>
         prev.map((e) =>
           e.id === entryId
@@ -1529,13 +1533,13 @@ export default function MlroAdvisorPage() {
     } catch (err) {
       // Drop the placeholder entry on error so the catch in handleAsk
       // can render the error banner cleanly.
-      setAdvisorHistory((prev) => prev.filter((e) => e.id !== entryId));
+      if (mountedRef.current) setAdvisorHistory((prev) => prev.filter((e) => e.id !== entryId));
       throw err;
     } finally {
       clearTimeout(killTimer);
-      setStreamingEntryId(null);
+      if (mountedRef.current) setStreamingEntryId(null);
     }
-  }, [CLIENT_TIMEOUTS.quick]);
+  }, [CLIENT_TIMEOUTS.quick, mountedRef]);
 
   // multi_perspective is offloaded to the Netlify Background Function so it
   // is not killed by Netlify's ~26 s edge inactivity timeout. Speed and
@@ -1587,7 +1591,7 @@ export default function MlroAdvisorPage() {
       }
       if (!payload) continue;
       if (payload.status === "done" && payload.result) {
-        recordAdvisorEntry(q, m, payload.result);
+        if (mountedRef.current) recordAdvisorEntry(q, m, payload.result);
         return;
       }
       if (payload.status === "failed") {
@@ -1596,7 +1600,7 @@ export default function MlroAdvisorPage() {
       // status === "running" → keep polling
     }
     throw new Error("Multi (Deep) timed out — check Netlify function logs.");
-  }, [CLIENT_TIMEOUTS.multi_perspective, recordAdvisorEntry]);
+  }, [CLIENT_TIMEOUTS.multi_perspective, recordAdvisorEntry, mountedRef]);
 
   const runSynchronous = useCallback(async (q: string, m: ReasoningMode): Promise<void> => {
     const ctl = new AbortController();
@@ -1633,11 +1637,11 @@ export default function MlroAdvisorPage() {
       if (!res.ok || !data.ok) {
         throw new Error(data.error ?? data.guidance ?? `HTTP ${res.status}`);
       }
-      recordAdvisorEntry(q, m, data);
+      if (mountedRef.current) recordAdvisorEntry(q, m, data);
     } finally {
       clearTimeout(timer);
     }
-  }, [CLIENT_TIMEOUTS, recordAdvisorEntry]);
+  }, [CLIENT_TIMEOUTS, recordAdvisorEntry, mountedRef]);
 
   const handleAsk = useCallback(async () => {
     const q = question.trim();
@@ -1664,19 +1668,21 @@ export default function MlroAdvisorPage() {
         await runSynchronous(q, mode);
       }
     } catch (err) {
-      if (err instanceof DOMException && err.name === "AbortError") {
-        setError(mode === "quick"
-          ? "Quick mode timed out (>15 s) — try again or switch to Balanced."
-          : mode === "speed"
-            ? "Speed mode timed out (>9 s) — check server logs or try again."
-            : "Request timed out — try Quick or Balanced mode.");
-      } else {
-        setError(err instanceof Error ? err.message : "Network error");
+      if (mountedRef.current) {
+        if (err instanceof DOMException && err.name === "AbortError") {
+          setError(mode === "quick"
+            ? "Quick mode timed out (>15 s) — try again or switch to Balanced."
+            : mode === "speed"
+              ? "Speed mode timed out (>9 s) — check server logs or try again."
+              : "Request timed out — try Quick or Balanced mode.");
+        } else {
+          setError(err instanceof Error ? err.message : "Network error");
+        }
       }
     } finally {
-      setRunning(false);
+      if (mountedRef.current) setRunning(false);
     }
-  }, [question, mode, runQuick, runDeepBackground, runSynchronous]);
+  }, [question, mode, runQuick, runDeepBackground, runSynchronous, mountedRef]);
 
   const toggleAdvisorEntry = (id: string) =>
     setAdvisorHistory((prev) =>
@@ -1720,6 +1726,7 @@ export default function MlroAdvisorPage() {
         error?: string;
       };
       if (!data.ok) throw new Error(data.error ?? `HTTP ${res.status}`);
+      if (!mountedRef.current) return;
       const challenge: ChallengeResult = {
         outcome: data.outcome,
         steelman: data.steelman,
@@ -1735,11 +1742,11 @@ export default function MlroAdvisorPage() {
       );
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Challenge failed";
-      setAdvisorHistory((prev) =>
+      if (mountedRef.current) setAdvisorHistory((prev) =>
         prev.map((e) => (e.id === entry.id ? { ...e, challenging: false, challengeError: msg } : e)),
       );
     }
-  }, []);
+  }, [mountedRef]);
 
   // ── Regulatory Q&A state ─────────────────────────────────────────────────────
   const [qaQuery, setQaQuery] = useState("");
@@ -1778,12 +1785,13 @@ export default function MlroAdvisorPage() {
         // 502 bad gateway, etc.). Surface the HTTP status + a snippet so the
         // user (and we) can actually see what happened.
         const snippet = rawText.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 240);
-        setQaError(
+        if (mountedRef.current) setQaError(
           `Server returned HTTP ${res.status} ${res.statusText || ""} (non-JSON body). ` +
           (snippet ? `Detail: ${snippet}` : "Likely a function timeout — try again or use the MLRO Advisor tab."),
         );
         return;
       }
+      if (!mountedRef.current) return;
       if (!data || !data.ok) {
         const baseError = data?.error ?? `HTTP ${res.status}${res.statusText ? ` ${res.statusText}` : ""}`;
         const suffix = data?.partialAnswer ? ` Partial answer captured below.` : "";
@@ -1814,11 +1822,11 @@ export default function MlroAdvisorPage() {
       }
     } catch (err) {
       const detail = err instanceof Error ? err.message : String(err);
-      setQaError(`Request failed: ${detail}`);
+      if (mountedRef.current) setQaError(`Request failed: ${detail}`);
     } finally {
-      setQaLoading(false);
+      if (mountedRef.current) setQaLoading(false);
     }
-  }, [qaQuery, qaDepth, qaUseTools]);
+  }, [qaQuery, qaDepth, qaUseTools, mountedRef]);
 
   // ── Super Tools state ────────────────────────────────────────────────────────
   const [superToolsTab, setSuperToolsTab] = useState<"escalation"|"flags"|"patterns"|"brief"|"pep-network"|"sanctions-nexus"|"typology-match"|"txn-narrative"|"edd-questionnaire"|"tbml"|"str-narrative"|"wire-r16"|"pf-screener"|"mlro-memo"|"tf-screener"|"shell-detector"|"adverse-classify"|"case-timeline"|"ml-predicate"|"client-risk"|"jurisdiction-intel"|"ubo-risk"|"benford"|"crypto-wallet"|"onboarding-tier"|"prolif-finance"|"sar-triage"|"doc-fraud"|"ctr-structuring"|"dnfbp-obligations"|"cdd-refresh"|"vasp-risk"|"goaml-validator"|"pep-edd"|"sanctions-mapper"|"layering-detector"|"real-estate-ml"|"asset-tracer"|"sow-calculator"|"insider-threat-screen"|"board-aml-report"|"enforcement-exposure"|"inter-agency-referral"|"policy-reviewer"|"compliance-test-planner"|"swift-lc-analyzer"|"regulatory-calendar"|"ewra-generator"|"aml-programme-gap"|"trade-invoice-analyzer"|"network-mapper"|"risk-appetite-builder"|"regulatory-exam-prep"|"npo-risk"|"correspondent-bank"|"mixed-funds"|"sanctions-breach"|"freeze-seizure"|"audit-response"|"high-net-worth"|"cash-intensive"|"trust-structures"|"cross-border-wire"|"fiu-feedback"|"derisking-impact"|"legal-privilege"|"ml-scenario"|"staff-alert"|"str-quality"|"hawala-detector"|"nominee-risk"|"pep-corporate"|"crypto-mixing"|"ghost-company"|"pkeyc-planner"|"whistleblower"|"trade-finance-rf"|"sanctions-exposure-calc"|"customer-lifecycle"|"pep-screening-enhance"|"aml-training-gap"|"beneficial-owner-verify"|"aml-kpi-dashboard"|"trade-finance-risk"|"insider-threat"|"crypto-tracing"|"investment-fraud"|"bec-fraud"|"cash-courier"|"nft-wash"|"carbon-fraud"|"darknet-exposure"|"drug-trafficking"|"human-trafficking-fin"|"arms-trafficking"|"corruption-bribery"|"tax-evasion-fin"|"cybercrime-proceeds"|"market-manipulation"|"insurance-fraud"|"mortgage-fraud"|"identity-theft"|"elder-fraud"|"ransomware-response"|"fraud-network"|"fatf-evaluation-prep"|"vara-compliance"|"cbuae-exam"|"eu-amla"|"mica-compliance"|"dora-resilience"|"aml-framework-gap"|"regulatory-breach-notice"|"remediation-planner"|"mou-treaty"|"finma-compliance"|"mas-compliance"|"fca-compliance"|"bafin-compliance"|"basel-aml-index"|"egmont-fiu"|"wolfsberg-principles"|"palermo-convention"|"vienna-convention"|"fatf-grey-impact"|"digital-identity"|"synthetic-identity"|"deepfake-kyc"|"adverse-media-deep"|"sow-substantiator"|"corporate-registry"|"entity-resolution"|"politically-sensitive"|"dual-nationality"|"high-risk-profession"|"local-kyc-requirements"|"ekyc-risk"|"perpetual-kyc"|"beneficial-ownership-calc"|"corporate-complexity"|"velocity-analyzer"|"peer-group-anomaly"|"round-trip-detector"|"funnel-account"|"dormant-reactivation"|"currency-mismatch"|"ach-fraud"|"wire-transfer-risk"|"high-freq-trading"|"payment-routing"|"refund-arbitrage"|"correspondent-chain"|"remittance-risk"|"atm-pattern"|"casino-chip"|"luxury-goods"|"art-provenance"|"superyacht-jet"|"agri-commodities"|"precious-stones"|"gaming-sector"|"fintech-risk"|"fund-administration"|"private-equity"|"hedge-fund"|"family-office"|"free-zone"|"foundation-risk"|"crowdfunding"|"p2p-lending"|"geopolitical-risk"|"network-centrality"|"follow-the-money"|"causal-chain"|"evidence-assessment"|"witness-statement"|"open-source-intel"|"court-order-drafter"|"law-enforcement-liaison"|"mutual-legal-assistance"|"asset-recovery"|"forfeiture-analysis"|"whistleblower-protect"|"regtech-assessment"|"aml-innovation">("escalation");
@@ -1890,9 +1898,10 @@ export default function MlroAdvisorPage() {
       });
       if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & TypologyMatch;
+      if (!mountedRef.current) return;
       if (data.ok) setTypoMatch(data);
-    } catch (err) { setToolErrors((p) => ({ ...p, ["typologyMatch"]: err instanceof Error ? err.message : "Typology match failed — please retry" })); }
-    finally { setTypoMatchLoading(false); }
+    } catch (err) { if (mountedRef.current) setToolErrors((p) => ({ ...p, ["typologyMatch"]: err instanceof Error ? err.message : "Typology match failed — please retry" })); }
+    finally { if (mountedRef.current) setTypoMatchLoading(false); }
   };
 
   // Transaction Narrative Analyzer
@@ -1915,9 +1924,10 @@ export default function MlroAdvisorPage() {
       });
       if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & TransactionAnalysis;
+      if (!mountedRef.current) return;
       if (data.ok) setTxnResult(data);
-    } catch (err) { setToolErrors((p) => ({ ...p, ["txnNarrative"]: err instanceof Error ? err.message : "Transaction analysis failed — please retry" })); }
-    finally { setTxnLoading(false); }
+    } catch (err) { if (mountedRef.current) setToolErrors((p) => ({ ...p, ["txnNarrative"]: err instanceof Error ? err.message : "Transaction analysis failed — please retry" })); }
+    finally { if (mountedRef.current) setTxnLoading(false); }
   };
 
   // EDD Questionnaire Generator
@@ -1948,9 +1958,10 @@ export default function MlroAdvisorPage() {
       });
       if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & EddQuestionnaire;
+      if (!mountedRef.current) return;
       if (data.ok) setEddResult(data);
-    } catch (err) { setToolErrors((p) => ({ ...p, ["eddQuestionnaire"]: err instanceof Error ? err.message : "EDD questionnaire failed — please retry" })); }
-    finally { setEddLoading(false); }
+    } catch (err) { if (mountedRef.current) setToolErrors((p) => ({ ...p, ["eddQuestionnaire"]: err instanceof Error ? err.message : "EDD questionnaire failed — please retry" })); }
+    finally { if (mountedRef.current) setEddLoading(false); }
   };
 
   // TBML Trade Document Analyzer
@@ -1978,9 +1989,10 @@ export default function MlroAdvisorPage() {
       });
       if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & TbmlAnalysis;
+      if (!mountedRef.current) return;
       if (data.ok) setTbmlResult(data);
-    } catch (err) { setToolErrors((p) => ({ ...p, ["tbml"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
-    finally { setTbmlLoading(false); }
+    } catch (err) { if (mountedRef.current) setToolErrors((p) => ({ ...p, ["tbml"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
+    finally { if (mountedRef.current) setTbmlLoading(false); }
   };
 
   // STR Narrative Drafter
@@ -1995,9 +2007,10 @@ export default function MlroAdvisorPage() {
       const res = await fetch("/api/str-narrative", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...strNarrInput, redFlags: strNarrInput.redFlags ? strNarrInput.redFlags.split("\n").map((s) => s.trim()).filter(Boolean) : undefined }) });
       if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & StrNarrativeResult;
+      if (!mountedRef.current) return;
       if (data.ok) setStrNarrResult(data);
-    } catch (err) { setToolErrors((p) => ({ ...p, ["strNarrative"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
-    finally { setStrNarrLoading(false); }
+    } catch (err) { if (mountedRef.current) setToolErrors((p) => ({ ...p, ["strNarrative"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
+    finally { if (mountedRef.current) setStrNarrLoading(false); }
   };
 
   // Wire Transfer R.16 Checker
@@ -2011,9 +2024,10 @@ export default function MlroAdvisorPage() {
       const res = await fetch("/api/wire-r16", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(wireInput) });
       if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & WireR16Result;
+      if (!mountedRef.current) return;
       if (data.ok) setWireResult(data);
-    } catch (err) { setToolErrors((p) => ({ ...p, ["wireR16"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
-    finally { setWireLoading(false); }
+    } catch (err) { if (mountedRef.current) setToolErrors((p) => ({ ...p, ["wireR16"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
+    finally { if (mountedRef.current) setWireLoading(false); }
   };
 
   // Proliferation Financing Screener
@@ -2028,9 +2042,10 @@ export default function MlroAdvisorPage() {
       const res = await fetch("/api/pf-screener", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(pfInput) });
       if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & PfScreenerResult;
+      if (!mountedRef.current) return;
       if (data.ok) setPfResult(data);
-    } catch (err) { setToolErrors((p) => ({ ...p, ["pfScreener"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
-    finally { setPfLoading(false); }
+    } catch (err) { if (mountedRef.current) setToolErrors((p) => ({ ...p, ["pfScreener"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
+    finally { if (mountedRef.current) setPfLoading(false); }
   };
 
   // MLRO Decision Memo
@@ -2045,9 +2060,10 @@ export default function MlroAdvisorPage() {
       const res = await fetch("/api/mlro-memo", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...memoInput, redFlags: memoInput.redFlags ? memoInput.redFlags.split("\n").map((s) => s.trim()).filter(Boolean) : undefined }) });
       if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & MlroMemoResult;
+      if (!mountedRef.current) return;
       if (data.ok) setMemoResult(data);
-    } catch (err) { setToolErrors((p) => ({ ...p, ["mlroMemo"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
-    finally { setMemoLoading(false); }
+    } catch (err) { if (mountedRef.current) setToolErrors((p) => ({ ...p, ["mlroMemo"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
+    finally { if (mountedRef.current) setMemoLoading(false); }
   };
 
   // Terrorism Financing Screener
@@ -2450,12 +2466,14 @@ export default function MlroAdvisorPage() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ toolId, inputs: nt }),
       });
+      if (!mountedRef.current) return;
       if (!res.ok) { setNtError(`Error ${res.status}`); return; }
       const data = await res.json() as { ok: boolean; error?: string } & Record<string, unknown>;
+      if (!mountedRef.current) return;
       if (data.ok) setNtResult(data);
       else setNtError(data.error ?? "Analysis failed");
-    } catch (e) { setNtError(e instanceof Error ? e.message : "Network error"); }
-    finally { setNtLoading(false); }
+    } catch (e) { if (mountedRef.current) setNtError(e instanceof Error ? e.message : "Network error"); }
+    finally { if (mountedRef.current) setNtLoading(false); }
   };
 
   const runTfScreener = async () => {
@@ -2465,9 +2483,10 @@ export default function MlroAdvisorPage() {
       const res = await fetch("/api/tf-screener", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...tfInput, existingRedFlags: tfInput.existingRedFlags ? tfInput.existingRedFlags.split("\n").map((s) => s.trim()).filter(Boolean) : undefined }) });
       if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & TfScreenerResult;
+      if (!mountedRef.current) return;
       if (data.ok) setTfResult(data);
-    } catch (err) { setToolErrors((p) => ({ ...p, ["tfScreener"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
-    finally { setTfLoading(false); }
+    } catch (err) { if (mountedRef.current) setToolErrors((p) => ({ ...p, ["tfScreener"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
+    finally { if (mountedRef.current) setTfLoading(false); }
   };
 
   const runShellDetector = async () => {
@@ -2477,9 +2496,10 @@ export default function MlroAdvisorPage() {
       const res = await fetch("/api/shell-detector", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(shellInput) });
       if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & ShellDetectorResult;
+      if (!mountedRef.current) return;
       if (data.ok) setShellResult(data);
-    } catch (err) { setToolErrors((p) => ({ ...p, ["shellDetector"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
-    finally { setShellLoading(false); }
+    } catch (err) { if (mountedRef.current) setToolErrors((p) => ({ ...p, ["shellDetector"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
+    finally { if (mountedRef.current) setShellLoading(false); }
   };
 
   const runAdverseClassify = async () => {
@@ -2489,9 +2509,10 @@ export default function MlroAdvisorPage() {
       const res = await fetch("/api/adverse-classify", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ articleText: adverseText, subjectName: adverseSubject || undefined }) });
       if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & AdverseClassifyResult;
+      if (!mountedRef.current) return;
       if (data.ok) setAdverseResult(data);
-    } catch (err) { setToolErrors((p) => ({ ...p, ["adverseClassify"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
-    finally { setAdverseLoading(false); }
+    } catch (err) { if (mountedRef.current) setToolErrors((p) => ({ ...p, ["adverseClassify"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
+    finally { if (mountedRef.current) setAdverseLoading(false); }
   };
 
   const runCaseTimeline = async () => {
@@ -2501,9 +2522,10 @@ export default function MlroAdvisorPage() {
       const res = await fetch("/api/case-timeline", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ events: timelineEvents, subjectName: timelineSubject || undefined, caseRef: timelineCaseRef || undefined }) });
       if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & CaseTimelineResult;
+      if (!mountedRef.current) return;
       if (data.ok) setTimelineResult(data);
-    } catch (err) { setToolErrors((p) => ({ ...p, ["caseTimeline"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
-    finally { setTimelineLoading(false); }
+    } catch (err) { if (mountedRef.current) setToolErrors((p) => ({ ...p, ["caseTimeline"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
+    finally { if (mountedRef.current) setTimelineLoading(false); }
   };
 
   const runMlPredicate = async () => {
@@ -2513,9 +2535,10 @@ export default function MlroAdvisorPage() {
       const res = await fetch("/api/ml-predicate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ facts: predicateFacts, suspectedActivity: predicateActivity || undefined, jurisdiction: predicateJurisdiction || undefined }) });
       if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & MlPredicateResult;
+      if (!mountedRef.current) return;
       if (data.ok) setPredicateResult(data);
-    } catch (err) { setToolErrors((p) => ({ ...p, ["mlPredicate"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
-    finally { setPredicateLoading(false); }
+    } catch (err) { if (mountedRef.current) setToolErrors((p) => ({ ...p, ["mlPredicate"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
+    finally { if (mountedRef.current) setPredicateLoading(false); }
   };
 
   const runClientRisk = async () => {
@@ -2525,9 +2548,10 @@ export default function MlroAdvisorPage() {
       const res = await fetch("/api/client-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ entity: clientRiskEntity, shareholders: clientRiskShareholders.filter((s) => s.name.trim()) }) });
       if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & ClientRiskResult;
+      if (!mountedRef.current) return;
       if (data.ok) setClientRiskResult(data);
-    } catch (err) { setToolErrors((p) => ({ ...p, ["clientRisk"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
-    finally { setClientRiskLoading(false); }
+    } catch (err) { if (mountedRef.current) setToolErrors((p) => ({ ...p, ["clientRisk"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
+    finally { if (mountedRef.current) setClientRiskLoading(false); }
   };
 
   const runJurisdictionIntel = async () => {
@@ -2537,9 +2561,10 @@ export default function MlroAdvisorPage() {
       const res = await fetch("/api/jurisdiction-intel", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ country: jurisCountry, context: jurisContext || undefined }) });
       if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & JurisdictionIntelResult;
+      if (!mountedRef.current) return;
       if (data.ok) setJurisResult(data);
-    } catch (err) { setToolErrors((p) => ({ ...p, ["jurisdictionIntel"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
-    finally { setJurisLoading(false); }
+    } catch (err) { if (mountedRef.current) setToolErrors((p) => ({ ...p, ["jurisdictionIntel"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
+    finally { if (mountedRef.current) setJurisLoading(false); }
   };
 
   const runUboRisk = async () => {
@@ -2549,9 +2574,10 @@ export default function MlroAdvisorPage() {
       const res = await fetch("/api/ubo-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ entity: uboEntity, registered: uboRegistered || undefined, ubos: uboEntries.filter((u) => u.name.trim()) }) });
       if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & UboRiskResult;
+      if (!mountedRef.current) return;
       if (data.ok) setUboResult(data);
-    } catch (err) { setToolErrors((p) => ({ ...p, ["uboRisk"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
-    finally { setUboLoading(false); }
+    } catch (err) { if (mountedRef.current) setToolErrors((p) => ({ ...p, ["uboRisk"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
+    finally { if (mountedRef.current) setUboLoading(false); }
   };
 
   const runBenford = async () => {
@@ -2562,9 +2588,10 @@ export default function MlroAdvisorPage() {
       const res = await fetch("/api/benford", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ amounts, label: benfordLabel || undefined }) });
       if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as BenfordResult;
+      if (!mountedRef.current) return;
       setBenfordResult(data);
-    } catch (err) { setToolErrors((p) => ({ ...p, ["benford"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
-    finally { setBenfordLoading(false); }
+    } catch (err) { if (mountedRef.current) setToolErrors((p) => ({ ...p, ["benford"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
+    finally { if (mountedRef.current) setBenfordLoading(false); }
   };
 
   const runCryptoWallet = async () => {
@@ -2573,10 +2600,11 @@ export default function MlroAdvisorPage() {
     try {
       const res = await fetch("/api/crypto-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ address: cryptoAddress, chain: cryptoChain }) });
       const data = await res.json() as { ok: boolean; error?: string } & Record<string, unknown>;
+      if (!mountedRef.current) return;
       if (!data.ok) { setCryptoError(data.error ?? "Service unavailable"); }
       else { setCryptoResult(data); }
-    } catch (err) { setToolErrors((p) => ({ ...p, ["cryptoWallet"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
-    finally { setCryptoLoading(false); }
+    } catch (err) { if (mountedRef.current) setToolErrors((p) => ({ ...p, ["cryptoWallet"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
+    finally { if (mountedRef.current) setCryptoLoading(false); }
   };
 
   const runOnboardingTier = async () => {
@@ -2586,9 +2614,10 @@ export default function MlroAdvisorPage() {
       const res = await fetch("/api/onboarding-risk-tier", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(onboardInput) });
       if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok?: boolean } & OnboardingRiskResult;
+      if (!mountedRef.current) return;
       setOnboardResult(data);
-    } catch (err) { setToolErrors((p) => ({ ...p, ["onboardingTier"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
-    finally { setOnboardLoading(false); }
+    } catch (err) { if (mountedRef.current) setToolErrors((p) => ({ ...p, ["onboardingTier"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
+    finally { if (mountedRef.current) setOnboardLoading(false); }
   };
 
   const runProlifFinance = async () => {
@@ -2599,12 +2628,13 @@ export default function MlroAdvisorPage() {
       const res = await fetch("/api/proliferation-finance", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(prolifInput) });
       if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as ProlifFinanceResult;
+      if (!mountedRef.current) return;
       setProlifResult(data);
     } catch (err) {
       console.error(`[hawkeye] mlro-advisor runProlifFinance threw:`, err);
-      setToolErrors((p) => ({ ...p, prolifFinance: err instanceof Error ? err.message : "Request failed — please retry" }));
+      if (mountedRef.current) setToolErrors((p) => ({ ...p, prolifFinance: err instanceof Error ? err.message : "Request failed — please retry" }));
     }
-    finally { setProlifLoading(false); }
+    finally { if (mountedRef.current) setProlifLoading(false); }
   };
 
   const runSarTriage = async () => {
@@ -2615,12 +2645,13 @@ export default function MlroAdvisorPage() {
       const res = await fetch("/api/sar-triage", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(sarInput) });
       if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as SarTriageResult;
+      if (!mountedRef.current) return;
       setSarTriageResult(data);
     } catch (err) {
       console.error(`[hawkeye] mlro-advisor runSarTriage threw:`, err);
-      setToolErrors((p) => ({ ...p, sarTriage: err instanceof Error ? err.message : "Request failed — please retry" }));
+      if (mountedRef.current) setToolErrors((p) => ({ ...p, sarTriage: err instanceof Error ? err.message : "Request failed — please retry" }));
     }
-    finally { setSarTriageLoading(false); }
+    finally { if (mountedRef.current) setSarTriageLoading(false); }
   };
 
   const runDocFraud = async () => {
@@ -2631,12 +2662,13 @@ export default function MlroAdvisorPage() {
       const res = await fetch("/api/document-fraud", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(docFraudInput) });
       if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as DocumentFraudResult;
+      if (!mountedRef.current) return;
       setDocFraudResult(data);
     } catch (err) {
       console.error(`[hawkeye] mlro-advisor runDocFraud threw:`, err);
-      setToolErrors((p) => ({ ...p, docFraud: err instanceof Error ? err.message : "Request failed — please retry" }));
+      if (mountedRef.current) setToolErrors((p) => ({ ...p, docFraud: err instanceof Error ? err.message : "Request failed — please retry" }));
     }
-    finally { setDocFraudLoading(false); }
+    finally { if (mountedRef.current) setDocFraudLoading(false); }
   };
 
   const runCtrStructuring = async () => {
@@ -2647,12 +2679,13 @@ export default function MlroAdvisorPage() {
       const res = await fetch("/api/ctr-structuring", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ amounts: ctrAmounts, periodDays: parseInt(ctrPeriodDays) || 30, subjectName: ctrSubject }) });
       if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as CtrStructuringResult;
+      if (!mountedRef.current) return;
       setCtrResult(data);
     } catch (err) {
       console.error(`[hawkeye] mlro-advisor runCtrStructuring threw:`, err);
-      setToolErrors((p) => ({ ...p, ctrStructuring: err instanceof Error ? err.message : "Request failed — please retry" }));
+      if (mountedRef.current) setToolErrors((p) => ({ ...p, ctrStructuring: err instanceof Error ? err.message : "Request failed — please retry" }));
     }
-    finally { setCtrLoading(false); }
+    finally { if (mountedRef.current) setCtrLoading(false); }
   };
 
   const runDnfbpObligations = async () => {
@@ -2663,12 +2696,13 @@ export default function MlroAdvisorPage() {
       const res = await fetch("/api/dnfbp-obligations", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(dnfbpInput) });
       if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as DnfbpObligationsResult;
+      if (!mountedRef.current) return;
       setDnfbpResult(data);
     } catch (err) {
       console.error(`[hawkeye] mlro-advisor runDnfbpObligations threw:`, err);
-      setToolErrors((p) => ({ ...p, dnfbpObligations: err instanceof Error ? err.message : "Request failed — please retry" }));
+      if (mountedRef.current) setToolErrors((p) => ({ ...p, dnfbpObligations: err instanceof Error ? err.message : "Request failed — please retry" }));
     }
-    finally { setDnfbpLoading(false); }
+    finally { if (mountedRef.current) setDnfbpLoading(false); }
   };
 
   const runCddRefresh = async () => {
@@ -2679,12 +2713,13 @@ export default function MlroAdvisorPage() {
       const res = await fetch("/api/cdd-refresh-trigger", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(cddRefreshInput) });
       if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as CddRefreshTriggerResult;
+      if (!mountedRef.current) return;
       setCddRefreshResult(data);
     } catch (err) {
       console.error(`[hawkeye] mlro-advisor runCddRefresh threw:`, err);
-      setToolErrors((p) => ({ ...p, cddRefresh: err instanceof Error ? err.message : "Request failed — please retry" }));
+      if (mountedRef.current) setToolErrors((p) => ({ ...p, cddRefresh: err instanceof Error ? err.message : "Request failed — please retry" }));
     }
-    finally { setCddRefreshLoading(false); }
+    finally { if (mountedRef.current) setCddRefreshLoading(false); }
   };
 
   const runVaspRisk = async () => {
@@ -2695,12 +2730,13 @@ export default function MlroAdvisorPage() {
       const res = await fetch("/api/vasp-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(vaspInput) });
       if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as VaspRiskResult;
+      if (!mountedRef.current) return;
       setVaspResult(data);
     } catch (err) {
       console.error(`[hawkeye] mlro-advisor runVaspRisk threw:`, err);
-      setToolErrors((p) => ({ ...p, vaspRisk: err instanceof Error ? err.message : "Request failed — please retry" }));
+      if (mountedRef.current) setToolErrors((p) => ({ ...p, vaspRisk: err instanceof Error ? err.message : "Request failed — please retry" }));
     }
-    finally { setVaspLoading(false); }
+    finally { if (mountedRef.current) setVaspLoading(false); }
   };
 
   const runGoAmlValidator = async () => {
@@ -2711,12 +2747,13 @@ export default function MlroAdvisorPage() {
       const res = await fetch("/api/goaml-validator", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(goAmlInput) });
       if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as GoAmlValidatorResult;
+      if (!mountedRef.current) return;
       setGoAmlResult(data);
     } catch (err) {
       console.error(`[hawkeye] mlro-advisor runGoAmlValidator threw:`, err);
-      setToolErrors((p) => ({ ...p, goAmlValidator: err instanceof Error ? err.message : "Request failed — please retry" }));
+      if (mountedRef.current) setToolErrors((p) => ({ ...p, goAmlValidator: err instanceof Error ? err.message : "Request failed — please retry" }));
     }
-    finally { setGoAmlLoading(false); }
+    finally { if (mountedRef.current) setGoAmlLoading(false); }
   };
 
   const runPepEdd = async () => {
@@ -2727,12 +2764,13 @@ export default function MlroAdvisorPage() {
       const res = await fetch("/api/pep-edd-generator", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(pepEddInput) });
       if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as PepEddResult;
+      if (!mountedRef.current) return;
       setPepEddResult(data);
     } catch (err) {
       console.error(`[hawkeye] mlro-advisor runPepEdd threw:`, err);
-      setToolErrors((p) => ({ ...p, pepEdd: err instanceof Error ? err.message : "Request failed — please retry" }));
+      if (mountedRef.current) setToolErrors((p) => ({ ...p, pepEdd: err instanceof Error ? err.message : "Request failed — please retry" }));
     }
-    finally { setPepEddLoading(false); }
+    finally { if (mountedRef.current) setPepEddLoading(false); }
   };
 
   const runSanctionsMapper = async () => {
@@ -2743,12 +2781,13 @@ export default function MlroAdvisorPage() {
       const res = await fetch("/api/sanctions-exposure-mapper", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(sanctionsMapInput) });
       if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as SanctionsExposureResult;
+      if (!mountedRef.current) return;
       setSanctionsMapResult(data);
     } catch (err) {
       console.error(`[hawkeye] mlro-advisor runSanctionsMapper threw:`, err);
-      setToolErrors((p) => ({ ...p, sanctionsMapper: err instanceof Error ? err.message : "Request failed — please retry" }));
+      if (mountedRef.current) setToolErrors((p) => ({ ...p, sanctionsMapper: err instanceof Error ? err.message : "Request failed — please retry" }));
     }
-    finally { setSanctionsMapLoading(false); }
+    finally { if (mountedRef.current) setSanctionsMapLoading(false); }
   };
 
   // ── Wave 3 handlers ────────────────────────────────────────────────────────
@@ -2761,12 +2800,13 @@ export default function MlroAdvisorPage() {
       const res = await fetch("/api/layering-detector", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(layeringInput) });
       if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as Record<string, unknown>;
+      if (!mountedRef.current) return;
       setLayeringResult(data);
     } catch (err) {
       console.error(`[hawkeye] mlro-advisor runLayeringDetector threw:`, err);
-      setToolErrors((p) => ({ ...p, layeringDetector: err instanceof Error ? err.message : "Request failed — please retry" }));
+      if (mountedRef.current) setToolErrors((p) => ({ ...p, layeringDetector: err instanceof Error ? err.message : "Request failed — please retry" }));
     }
-    finally { setLayeringLoading(false); }
+    finally { if (mountedRef.current) setLayeringLoading(false); }
   };
 
   const runRealEstateMl = async () => {
@@ -2777,12 +2817,13 @@ export default function MlroAdvisorPage() {
       const res = await fetch("/api/real-estate-ml", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(realEstateMlInput) });
       if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as Record<string, unknown>;
+      if (!mountedRef.current) return;
       setRealEstateMlResult(data);
     } catch (err) {
       console.error(`[hawkeye] mlro-advisor runRealEstateMl threw:`, err);
-      setToolErrors((p) => ({ ...p, realEstateMl: err instanceof Error ? err.message : "Request failed — please retry" }));
+      if (mountedRef.current) setToolErrors((p) => ({ ...p, realEstateMl: err instanceof Error ? err.message : "Request failed — please retry" }));
     }
-    finally { setRealEstateMlLoading(false); }
+    finally { if (mountedRef.current) setRealEstateMlLoading(false); }
   };
 
   const runAssetTracer = async () => {
@@ -2793,12 +2834,13 @@ export default function MlroAdvisorPage() {
       const res = await fetch("/api/asset-tracer", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(assetTracerInput) });
       if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as Record<string, unknown>;
+      if (!mountedRef.current) return;
       setAssetTracerResult(data);
     } catch (err) {
       console.error(`[hawkeye] mlro-advisor runAssetTracer threw:`, err);
-      setToolErrors((p) => ({ ...p, assetTracer: err instanceof Error ? err.message : "Request failed — please retry" }));
+      if (mountedRef.current) setToolErrors((p) => ({ ...p, assetTracer: err instanceof Error ? err.message : "Request failed — please retry" }));
     }
-    finally { setAssetTracerLoading(false); }
+    finally { if (mountedRef.current) setAssetTracerLoading(false); }
   };
 
   const runSowCalculator = async () => {
@@ -2809,12 +2851,13 @@ export default function MlroAdvisorPage() {
       const res = await fetch("/api/sow-calculator", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(sowInput) });
       if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as Record<string, unknown>;
+      if (!mountedRef.current) return;
       setSowResult(data);
     } catch (err) {
       console.error(`[hawkeye] mlro-advisor runSowCalculator threw:`, err);
-      setToolErrors((p) => ({ ...p, sowCalculator: err instanceof Error ? err.message : "Request failed — please retry" }));
+      if (mountedRef.current) setToolErrors((p) => ({ ...p, sowCalculator: err instanceof Error ? err.message : "Request failed — please retry" }));
     }
-    finally { setSowLoading(false); }
+    finally { if (mountedRef.current) setSowLoading(false); }
   };
 
   const runInsiderThreat = async () => {
@@ -2825,12 +2868,13 @@ export default function MlroAdvisorPage() {
       const res = await fetch("/api/insider-threat-screen", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(insiderInput) });
       if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as Record<string, unknown>;
+      if (!mountedRef.current) return;
       setInsiderResult(data);
     } catch (err) {
       console.error(`[hawkeye] mlro-advisor runInsiderThreat threw:`, err);
-      setToolErrors((p) => ({ ...p, insiderThreat: err instanceof Error ? err.message : "Request failed — please retry" }));
+      if (mountedRef.current) setToolErrors((p) => ({ ...p, insiderThreat: err instanceof Error ? err.message : "Request failed — please retry" }));
     }
-    finally { setInsiderLoading(false); }
+    finally { if (mountedRef.current) setInsiderLoading(false); }
   };
 
   const runBoardAmlReport = async () => {
@@ -2841,12 +2885,13 @@ export default function MlroAdvisorPage() {
       const res = await fetch("/api/board-aml-report", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(boardAmlInput) });
       if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as Record<string, unknown>;
+      if (!mountedRef.current) return;
       setBoardAmlResult(data);
     } catch (err) {
       console.error(`[hawkeye] mlro-advisor runBoardAmlReport threw:`, err);
-      setToolErrors((p) => ({ ...p, boardAmlReport: err instanceof Error ? err.message : "Request failed — please retry" }));
+      if (mountedRef.current) setToolErrors((p) => ({ ...p, boardAmlReport: err instanceof Error ? err.message : "Request failed — please retry" }));
     }
-    finally { setBoardAmlLoading(false); }
+    finally { if (mountedRef.current) setBoardAmlLoading(false); }
   };
 
   const runEnforcementExposure = async () => {
@@ -2857,12 +2902,13 @@ export default function MlroAdvisorPage() {
       const res = await fetch("/api/enforcement-exposure", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(enforcementInput) });
       if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as Record<string, unknown>;
+      if (!mountedRef.current) return;
       setEnforcementResult(data);
     } catch (err) {
       console.error(`[hawkeye] mlro-advisor runEnforcementExposure threw:`, err);
-      setToolErrors((p) => ({ ...p, enforcementExposure: err instanceof Error ? err.message : "Request failed — please retry" }));
+      if (mountedRef.current) setToolErrors((p) => ({ ...p, enforcementExposure: err instanceof Error ? err.message : "Request failed — please retry" }));
     }
-    finally { setEnforcementLoading(false); }
+    finally { if (mountedRef.current) setEnforcementLoading(false); }
   };
 
   const runInterAgencyReferral = async () => {
@@ -2873,12 +2919,13 @@ export default function MlroAdvisorPage() {
       const res = await fetch("/api/inter-agency-referral", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(referralInput) });
       if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as Record<string, unknown>;
+      if (!mountedRef.current) return;
       setReferralResult(data);
     } catch (err) {
       console.error(`[hawkeye] mlro-advisor runInterAgencyReferral threw:`, err);
-      setToolErrors((p) => ({ ...p, interAgencyReferral: err instanceof Error ? err.message : "Request failed — please retry" }));
+      if (mountedRef.current) setToolErrors((p) => ({ ...p, interAgencyReferral: err instanceof Error ? err.message : "Request failed — please retry" }));
     }
-    finally { setReferralLoading(false); }
+    finally { if (mountedRef.current) setReferralLoading(false); }
   };
 
   const runPolicyReviewer = async () => {
@@ -2889,12 +2936,13 @@ export default function MlroAdvisorPage() {
       const res = await fetch("/api/policy-reviewer", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(policyInput) });
       if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as Record<string, unknown>;
+      if (!mountedRef.current) return;
       setPolicyResult(data);
     } catch (err) {
       console.error(`[hawkeye] mlro-advisor runPolicyReviewer threw:`, err);
-      setToolErrors((p) => ({ ...p, policyReviewer: err instanceof Error ? err.message : "Request failed — please retry" }));
+      if (mountedRef.current) setToolErrors((p) => ({ ...p, policyReviewer: err instanceof Error ? err.message : "Request failed — please retry" }));
     }
-    finally { setPolicyLoading(false); }
+    finally { if (mountedRef.current) setPolicyLoading(false); }
   };
 
   const runComplianceTestPlanner = async () => {
@@ -2905,12 +2953,13 @@ export default function MlroAdvisorPage() {
       const res = await fetch("/api/compliance-test-planner", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(compTestInput) });
       if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as Record<string, unknown>;
+      if (!mountedRef.current) return;
       setCompTestResult(data);
     } catch (err) {
       console.error(`[hawkeye] mlro-advisor runComplianceTestPlanner threw:`, err);
-      setToolErrors((p) => ({ ...p, complianceTestPlanner: err instanceof Error ? err.message : "Request failed — please retry" }));
+      if (mountedRef.current) setToolErrors((p) => ({ ...p, complianceTestPlanner: err instanceof Error ? err.message : "Request failed — please retry" }));
     }
-    finally { setCompTestLoading(false); }
+    finally { if (mountedRef.current) setCompTestLoading(false); }
   };
 
   const runSwiftLcAnalyzer = async () => {
@@ -2921,12 +2970,13 @@ export default function MlroAdvisorPage() {
       const res = await fetch("/api/swift-lc-analyzer", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(swiftLcInput) });
       if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as Record<string, unknown>;
+      if (!mountedRef.current) return;
       setSwiftLcResult(data);
     } catch (err) {
       console.error(`[hawkeye] mlro-advisor runSwiftLcAnalyzer threw:`, err);
-      setToolErrors((p) => ({ ...p, swiftLcAnalyzer: err instanceof Error ? err.message : "Request failed — please retry" }));
+      if (mountedRef.current) setToolErrors((p) => ({ ...p, swiftLcAnalyzer: err instanceof Error ? err.message : "Request failed — please retry" }));
     }
-    finally { setSwiftLcLoading(false); }
+    finally { if (mountedRef.current) setSwiftLcLoading(false); }
   };
 
   const runRegulatoryCalendar = async () => {
@@ -2936,12 +2986,13 @@ export default function MlroAdvisorPage() {
       const res = await fetch("/api/regulatory-calendar", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(regCalInput) });
       if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as Record<string, unknown>;
+      if (!mountedRef.current) return;
       setRegCalResult(data);
     } catch (err) {
       console.error(`[hawkeye] mlro-advisor runRegulatoryCalendar threw:`, err);
-      setToolErrors((p) => ({ ...p, regulatoryCalendar: err instanceof Error ? err.message : "Request failed — please retry" }));
+      if (mountedRef.current) setToolErrors((p) => ({ ...p, regulatoryCalendar: err instanceof Error ? err.message : "Request failed — please retry" }));
     }
-    finally { setRegCalLoading(false); }
+    finally { if (mountedRef.current) setRegCalLoading(false); }
   };
 
   const runEwraGenerator = async () => {
@@ -2952,12 +3003,13 @@ export default function MlroAdvisorPage() {
       const res = await fetch("/api/ewra-generator", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(ewraInput) });
       if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as Record<string, unknown>;
+      if (!mountedRef.current) return;
       setEwraResult(data);
     } catch (err) {
       console.error(`[hawkeye] mlro-advisor runEwraGenerator threw:`, err);
-      setToolErrors((p) => ({ ...p, ewraGenerator: err instanceof Error ? err.message : "Request failed — please retry" }));
+      if (mountedRef.current) setToolErrors((p) => ({ ...p, ewraGenerator: err instanceof Error ? err.message : "Request failed — please retry" }));
     }
-    finally { setEwraLoading(false); }
+    finally { if (mountedRef.current) setEwraLoading(false); }
   };
 
   const runAmlProgrammeGap = async () => {
@@ -2968,12 +3020,13 @@ export default function MlroAdvisorPage() {
       const res = await fetch("/api/aml-programme-gap", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(amlGapInput) });
       if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as Record<string, unknown>;
+      if (!mountedRef.current) return;
       setAmlGapResult(data);
     } catch (err) {
       console.error(`[hawkeye] mlro-advisor runAmlProgrammeGap threw:`, err);
-      setToolErrors((p) => ({ ...p, amlProgrammeGap: err instanceof Error ? err.message : "Request failed — please retry" }));
+      if (mountedRef.current) setToolErrors((p) => ({ ...p, amlProgrammeGap: err instanceof Error ? err.message : "Request failed — please retry" }));
     }
-    finally { setAmlGapLoading(false); }
+    finally { if (mountedRef.current) setAmlGapLoading(false); }
   };
 
   const runTradeInvoiceAnalyzer = async () => {
@@ -2984,12 +3037,13 @@ export default function MlroAdvisorPage() {
       const res = await fetch("/api/trade-invoice-analyzer", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(tradeInvoiceInput) });
       if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as Record<string, unknown>;
+      if (!mountedRef.current) return;
       setTradeInvoiceResult(data);
     } catch (err) {
       console.error(`[hawkeye] mlro-advisor runTradeInvoiceAnalyzer threw:`, err);
-      setToolErrors((p) => ({ ...p, tradeInvoiceAnalyzer: err instanceof Error ? err.message : "Request failed — please retry" }));
+      if (mountedRef.current) setToolErrors((p) => ({ ...p, tradeInvoiceAnalyzer: err instanceof Error ? err.message : "Request failed — please retry" }));
     }
-    finally { setTradeInvoiceLoading(false); }
+    finally { if (mountedRef.current) setTradeInvoiceLoading(false); }
   };
 
   const runNetworkMapper = async () => {
@@ -3000,12 +3054,13 @@ export default function MlroAdvisorPage() {
       const res = await fetch("/api/network-mapper", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(networkMapInput) });
       if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as Record<string, unknown>;
+      if (!mountedRef.current) return;
       setNetworkMapResult(data);
     } catch (err) {
       console.error(`[hawkeye] mlro-advisor runNetworkMapper threw:`, err);
-      setToolErrors((p) => ({ ...p, networkMapper: err instanceof Error ? err.message : "Request failed — please retry" }));
+      if (mountedRef.current) setToolErrors((p) => ({ ...p, networkMapper: err instanceof Error ? err.message : "Request failed — please retry" }));
     }
-    finally { setNetworkMapLoading(false); }
+    finally { if (mountedRef.current) setNetworkMapLoading(false); }
   };
 
   const runRiskAppetiteBuilder = async () => {
@@ -3016,12 +3071,13 @@ export default function MlroAdvisorPage() {
       const res = await fetch("/api/risk-appetite-builder", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(riskAppInput) });
       if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as Record<string, unknown>;
+      if (!mountedRef.current) return;
       setRiskAppResult(data);
     } catch (err) {
       console.error(`[hawkeye] mlro-advisor runRiskAppetiteBuilder threw:`, err);
-      setToolErrors((p) => ({ ...p, riskAppetiteBuilder: err instanceof Error ? err.message : "Request failed — please retry" }));
+      if (mountedRef.current) setToolErrors((p) => ({ ...p, riskAppetiteBuilder: err instanceof Error ? err.message : "Request failed — please retry" }));
     }
-    finally { setRiskAppLoading(false); }
+    finally { if (mountedRef.current) setRiskAppLoading(false); }
   };
 
   const runRegulatoryExamPrep = async () => {
@@ -3032,45 +3088,46 @@ export default function MlroAdvisorPage() {
       const res = await fetch("/api/regulatory-exam-prep", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(examPrepInput) });
       if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as Record<string, unknown>;
+      if (!mountedRef.current) return;
       setExamPrepResult(data);
     } catch (err) {
       console.error(`[hawkeye] mlro-advisor runRegulatoryExamPrep threw:`, err);
-      setToolErrors((p) => ({ ...p, regulatoryExamPrep: err instanceof Error ? err.message : "Request failed — please retry" }));
+      if (mountedRef.current) setToolErrors((p) => ({ ...p, regulatoryExamPrep: err instanceof Error ? err.message : "Request failed — please retry" }));
     }
-    finally { setExamPrepLoading(false); }
+    finally { if (mountedRef.current) setExamPrepLoading(false); }
   };
 
-  const runNpoRisk = async () => { setNpoLoading(true); try { const r = await fetch("/api/npo-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(npoInput) }); setNpoResult(await r.json()); } catch { setNpoResult({ ok: false, error: "Network error" }); } finally { setNpoLoading(false); } };
-  const runCorrBank = async () => { setCorrBankLoading(true); try { const r = await fetch("/api/correspondent-bank", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(corrBankInput) }); setCorrBankResult(await r.json()); } catch { setCorrBankResult({ ok: false, error: "Network error" }); } finally { setCorrBankLoading(false); } };
-  const runMixedFunds = async () => { setMixedFundsLoading(true); try { const r = await fetch("/api/mixed-funds", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(mixedFundsInput) }); setMixedFundsResult(await r.json()); } catch { setMixedFundsResult({ ok: false, error: "Network error" }); } finally { setMixedFundsLoading(false); } };
-  const runSanctionsBreach = async () => { setSanctionsBreachLoading(true); try { const r = await fetch("/api/sanctions-breach", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(sanctionsBreachInput) }); setSanctionsBreachResult(await r.json()); } catch { setSanctionsBreachResult({ ok: false, error: "Network error" }); } finally { setSanctionsBreachLoading(false); } };
-  const runFreezeSeizure = async () => { setFreezeSeizureLoading(true); try { const r = await fetch("/api/freeze-seizure", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(freezeSeizureInput) }); setFreezeSeizureResult(await r.json()); } catch { setFreezeSeizureResult({ ok: false, error: "Network error" }); } finally { setFreezeSeizureLoading(false); } };
-  const runAuditResponse = async () => { setAuditResponseLoading(true); try { const r = await fetch("/api/audit-response", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(auditResponseInput) }); setAuditResponseResult(await r.json()); } catch { setAuditResponseResult({ ok: false, error: "Network error" }); } finally { setAuditResponseLoading(false); } };
-  const runHnw = async () => { setHnwLoading(true); try { const r = await fetch("/api/high-net-worth", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(hnwInput) }); setHnwResult(await r.json()); } catch { setHnwResult({ ok: false, error: "Network error" }); } finally { setHnwLoading(false); } };
-  const runCashIntensive = async () => { setCashIntensiveLoading(true); try { const r = await fetch("/api/cash-intensive", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(cashIntensiveInput) }); setCashIntensiveResult(await r.json()); } catch { setCashIntensiveResult({ ok: false, error: "Network error" }); } finally { setCashIntensiveLoading(false); } };
-  const runTrustStruct = async () => { setTrustStructLoading(true); try { const r = await fetch("/api/trust-structures", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(trustStructInput) }); setTrustStructResult(await r.json()); } catch { setTrustStructResult({ ok: false, error: "Network error" }); } finally { setTrustStructLoading(false); } };
-  const runCrossBorder = async () => { setCrossBorderLoading(true); try { const r = await fetch("/api/cross-border-wire", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(crossBorderInput) }); setCrossBorderResult(await r.json()); } catch { setCrossBorderResult({ ok: false, error: "Network error" }); } finally { setCrossBorderLoading(false); } };
-  const runFiuFeedback = async () => { setFiuFeedbackLoading(true); try { const r = await fetch("/api/fiu-feedback", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(fiuFeedbackInput) }); setFiuFeedbackResult(await r.json()); } catch { setFiuFeedbackResult({ ok: false, error: "Network error" }); } finally { setFiuFeedbackLoading(false); } };
-  const runDerisking = async () => { setDeriskingLoading(true); try { const r = await fetch("/api/derisking-impact", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(deriskingInput) }); setDeriskingResult(await r.json()); } catch { setDeriskingResult({ ok: false, error: "Network error" }); } finally { setDeriskingLoading(false); } };
-  const runLegalPriv = async () => { setLegalPrivLoading(true); try { const r = await fetch("/api/legal-privilege", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(legalPrivInput) }); setLegalPrivResult(await r.json()); } catch { setLegalPrivResult({ ok: false, error: "Network error" }); } finally { setLegalPrivLoading(false); } };
-  const runMlScenario = async () => { setMlScenarioLoading(true); try { const r = await fetch("/api/ml-scenario", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(mlScenarioInput) }); setMlScenarioResult(await r.json()); } catch { setMlScenarioResult({ ok: false, error: "Network error" }); } finally { setMlScenarioLoading(false); } };
-  const runStaffAlert = async () => { setStaffAlertLoading(true); try { const r = await fetch("/api/staff-alert", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(staffAlertInput) }); setStaffAlertResult(await r.json()); } catch { setStaffAlertResult({ ok: false, error: "Network error" }); } finally { setStaffAlertLoading(false); } };
-  const runStrQuality = async () => { setStrQualityLoading(true); try { const r = await fetch("/api/str-quality", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(strQualityInput) }); setStrQualityResult(await r.json()); } catch { setStrQualityResult({ ok: false, error: "Network error" }); } finally { setStrQualityLoading(false); } };
-  const runHawala = async () => { setHawalaLoading(true); try { const r = await fetch("/api/hawala-detector", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(hawalaInput) }); setHawalaResult(await r.json()); } catch { setHawalaResult({ ok: false, error: "Network error" }); } finally { setHawalaLoading(false); } };
-  const runNominee = async () => { setNomineeLoading(true); try { const r = await fetch("/api/nominee-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(nomineeInput) }); setNomineeResult(await r.json()); } catch { setNomineeResult({ ok: false, error: "Network error" }); } finally { setNomineeLoading(false); } };
-  const runPepCorp = async () => { setPepCorpLoading(true); try { const r = await fetch("/api/pep-corporate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(pepCorpInput) }); setPepCorpResult(await r.json()); } catch { setPepCorpResult({ ok: false, error: "Network error" }); } finally { setPepCorpLoading(false); } };
-  const runCryptoMix = async () => { setCryptoMixLoading(true); try { const r = await fetch("/api/crypto-mixing", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(cryptoMixInput) }); setCryptoMixResult(await r.json()); } catch { setCryptoMixResult({ ok: false, error: "Network error" }); } finally { setCryptoMixLoading(false); } };
-  const runGhostCo = async () => { setGhostCoLoading(true); try { const r = await fetch("/api/ghost-company", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(ghostCoInput) }); setGhostCoResult(await r.json()); } catch { setGhostCoResult({ ok: false, error: "Network error" }); } finally { setGhostCoLoading(false); } };
-  const runPKyc = async () => { setPKycLoading(true); try { const r = await fetch("/api/pkeyc-planner", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(pKycInput) }); setPKycResult(await r.json()); } catch { setPKycResult({ ok: false, error: "Network error" }); } finally { setPKycLoading(false); } };
-  const runWhistle = async () => { setWhistleLoading(true); try { const r = await fetch("/api/whistleblower", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(whistleInput) }); setWhistleResult(await r.json()); } catch { setWhistleResult({ ok: false, error: "Network error" }); } finally { setWhistleLoading(false); } };
-  const runTradeFinRf = async () => { setTradeFinRfLoading(true); try { const r = await fetch("/api/trade-finance-rf", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(tradeFinRfInput) }); setTradeFinRfResult(await r.json()); } catch { setTradeFinRfResult({ ok: false, error: "Network error" }); } finally { setTradeFinRfLoading(false); } };
-  const runSanctionsExp = async () => { setSanctionsExpLoading(true); try { const r = await fetch("/api/sanctions-exposure-calc", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(sanctionsExpInput) }); setSanctionsExpResult(await r.json()); } catch { setSanctionsExpResult({ ok: false, error: "Network error" }); } finally { setSanctionsExpLoading(false); } };
-  const runCustLife = async () => { setCustLifeLoading(true); try { const r = await fetch("/api/customer-lifecycle", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(custLifeInput) }); setCustLifeResult(await r.json()); } catch { setCustLifeResult({ ok: false, error: "Network error" }); } finally { setCustLifeLoading(false); } };
-  const runPepEnh = async () => { setPepEnhLoading(true); try { const r = await fetch("/api/pep-screening-enhance", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(pepEnhInput) }); setPepEnhResult(await r.json()); } catch { setPepEnhResult({ ok: false, error: "Network error" }); } finally { setPepEnhLoading(false); } };
-  const runAmlTrain = async () => { setAmlTrainLoading(true); try { const r = await fetch("/api/aml-training-gap", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(amlTrainInput) }); setAmlTrainResult(await r.json()); } catch { setAmlTrainResult({ ok: false, error: "Network error" }); } finally { setAmlTrainLoading(false); } };
-  const runUboVerify = async () => { setUboVerifyLoading(true); try { const r = await fetch("/api/beneficial-owner-verify", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(uboVerifyInput) }); setUboVerifyResult(await r.json()); } catch { setUboVerifyResult({ ok: false, error: "Network error" }); } finally { setUboVerifyLoading(false); } };
-  const runAmlKpi = async () => { setAmlKpiLoading(true); try { const r = await fetch("/api/aml-kpi-dashboard", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(amlKpiInput) }); setAmlKpiResult(await r.json()); } catch { setAmlKpiResult({ ok: false, error: "Network error" }); } finally { setAmlKpiLoading(false); } };
-  const runCryptoTracing = async () => { setCryptoTracingLoading(true); try { const r = await fetch("/api/crypto-tracing", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(cryptoTracingInput) }); setCryptoTracingResult(await r.json()); } catch { setCryptoTracingResult({ ok: false, error: "Network error" }); } finally { setCryptoTracingLoading(false); } };
+  const runNpoRisk = async () => { setNpoLoading(true); try { const r = await fetch("/api/npo-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(npoInput) }); const d = await r.json(); if (!mountedRef.current) return; setNpoResult(d); } catch { if (mountedRef.current) setNpoResult({ ok: false, error: "Network error" }); } finally { if (mountedRef.current) setNpoLoading(false); } };
+  const runCorrBank = async () => { setCorrBankLoading(true); try { const r = await fetch("/api/correspondent-bank", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(corrBankInput) }); const d = await r.json(); if (!mountedRef.current) return; setCorrBankResult(d); } catch { if (mountedRef.current) setCorrBankResult({ ok: false, error: "Network error" }); } finally { if (mountedRef.current) setCorrBankLoading(false); } };
+  const runMixedFunds = async () => { setMixedFundsLoading(true); try { const r = await fetch("/api/mixed-funds", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(mixedFundsInput) }); const d = await r.json(); if (!mountedRef.current) return; setMixedFundsResult(d); } catch { if (mountedRef.current) setMixedFundsResult({ ok: false, error: "Network error" }); } finally { if (mountedRef.current) setMixedFundsLoading(false); } };
+  const runSanctionsBreach = async () => { setSanctionsBreachLoading(true); try { const r = await fetch("/api/sanctions-breach", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(sanctionsBreachInput) }); const d = await r.json(); if (!mountedRef.current) return; setSanctionsBreachResult(d); } catch { if (mountedRef.current) setSanctionsBreachResult({ ok: false, error: "Network error" }); } finally { if (mountedRef.current) setSanctionsBreachLoading(false); } };
+  const runFreezeSeizure = async () => { setFreezeSeizureLoading(true); try { const r = await fetch("/api/freeze-seizure", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(freezeSeizureInput) }); const d = await r.json(); if (!mountedRef.current) return; setFreezeSeizureResult(d); } catch { if (mountedRef.current) setFreezeSeizureResult({ ok: false, error: "Network error" }); } finally { if (mountedRef.current) setFreezeSeizureLoading(false); } };
+  const runAuditResponse = async () => { setAuditResponseLoading(true); try { const r = await fetch("/api/audit-response", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(auditResponseInput) }); const d = await r.json(); if (!mountedRef.current) return; setAuditResponseResult(d); } catch { if (mountedRef.current) setAuditResponseResult({ ok: false, error: "Network error" }); } finally { if (mountedRef.current) setAuditResponseLoading(false); } };
+  const runHnw = async () => { setHnwLoading(true); try { const r = await fetch("/api/high-net-worth", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(hnwInput) }); const d = await r.json(); if (!mountedRef.current) return; setHnwResult(d); } catch { if (mountedRef.current) setHnwResult({ ok: false, error: "Network error" }); } finally { if (mountedRef.current) setHnwLoading(false); } };
+  const runCashIntensive = async () => { setCashIntensiveLoading(true); try { const r = await fetch("/api/cash-intensive", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(cashIntensiveInput) }); const d = await r.json(); if (!mountedRef.current) return; setCashIntensiveResult(d); } catch { if (mountedRef.current) setCashIntensiveResult({ ok: false, error: "Network error" }); } finally { if (mountedRef.current) setCashIntensiveLoading(false); } };
+  const runTrustStruct = async () => { setTrustStructLoading(true); try { const r = await fetch("/api/trust-structures", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(trustStructInput) }); const d = await r.json(); if (!mountedRef.current) return; setTrustStructResult(d); } catch { if (mountedRef.current) setTrustStructResult({ ok: false, error: "Network error" }); } finally { if (mountedRef.current) setTrustStructLoading(false); } };
+  const runCrossBorder = async () => { setCrossBorderLoading(true); try { const r = await fetch("/api/cross-border-wire", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(crossBorderInput) }); const d = await r.json(); if (!mountedRef.current) return; setCrossBorderResult(d); } catch { if (mountedRef.current) setCrossBorderResult({ ok: false, error: "Network error" }); } finally { if (mountedRef.current) setCrossBorderLoading(false); } };
+  const runFiuFeedback = async () => { setFiuFeedbackLoading(true); try { const r = await fetch("/api/fiu-feedback", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(fiuFeedbackInput) }); const d = await r.json(); if (!mountedRef.current) return; setFiuFeedbackResult(d); } catch { if (mountedRef.current) setFiuFeedbackResult({ ok: false, error: "Network error" }); } finally { if (mountedRef.current) setFiuFeedbackLoading(false); } };
+  const runDerisking = async () => { setDeriskingLoading(true); try { const r = await fetch("/api/derisking-impact", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(deriskingInput) }); const d = await r.json(); if (!mountedRef.current) return; setDeriskingResult(d); } catch { if (mountedRef.current) setDeriskingResult({ ok: false, error: "Network error" }); } finally { if (mountedRef.current) setDeriskingLoading(false); } };
+  const runLegalPriv = async () => { setLegalPrivLoading(true); try { const r = await fetch("/api/legal-privilege", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(legalPrivInput) }); const d = await r.json(); if (!mountedRef.current) return; setLegalPrivResult(d); } catch { if (mountedRef.current) setLegalPrivResult({ ok: false, error: "Network error" }); } finally { if (mountedRef.current) setLegalPrivLoading(false); } };
+  const runMlScenario = async () => { setMlScenarioLoading(true); try { const r = await fetch("/api/ml-scenario", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(mlScenarioInput) }); const d = await r.json(); if (!mountedRef.current) return; setMlScenarioResult(d); } catch { if (mountedRef.current) setMlScenarioResult({ ok: false, error: "Network error" }); } finally { if (mountedRef.current) setMlScenarioLoading(false); } };
+  const runStaffAlert = async () => { setStaffAlertLoading(true); try { const r = await fetch("/api/staff-alert", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(staffAlertInput) }); const d = await r.json(); if (!mountedRef.current) return; setStaffAlertResult(d); } catch { if (mountedRef.current) setStaffAlertResult({ ok: false, error: "Network error" }); } finally { if (mountedRef.current) setStaffAlertLoading(false); } };
+  const runStrQuality = async () => { setStrQualityLoading(true); try { const r = await fetch("/api/str-quality", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(strQualityInput) }); const d = await r.json(); if (!mountedRef.current) return; setStrQualityResult(d); } catch { if (mountedRef.current) setStrQualityResult({ ok: false, error: "Network error" }); } finally { if (mountedRef.current) setStrQualityLoading(false); } };
+  const runHawala = async () => { setHawalaLoading(true); try { const r = await fetch("/api/hawala-detector", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(hawalaInput) }); const d = await r.json(); if (!mountedRef.current) return; setHawalaResult(d); } catch { if (mountedRef.current) setHawalaResult({ ok: false, error: "Network error" }); } finally { if (mountedRef.current) setHawalaLoading(false); } };
+  const runNominee = async () => { setNomineeLoading(true); try { const r = await fetch("/api/nominee-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(nomineeInput) }); const d = await r.json(); if (!mountedRef.current) return; setNomineeResult(d); } catch { if (mountedRef.current) setNomineeResult({ ok: false, error: "Network error" }); } finally { if (mountedRef.current) setNomineeLoading(false); } };
+  const runPepCorp = async () => { setPepCorpLoading(true); try { const r = await fetch("/api/pep-corporate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(pepCorpInput) }); const d = await r.json(); if (!mountedRef.current) return; setPepCorpResult(d); } catch { if (mountedRef.current) setPepCorpResult({ ok: false, error: "Network error" }); } finally { if (mountedRef.current) setPepCorpLoading(false); } };
+  const runCryptoMix = async () => { setCryptoMixLoading(true); try { const r = await fetch("/api/crypto-mixing", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(cryptoMixInput) }); const d = await r.json(); if (!mountedRef.current) return; setCryptoMixResult(d); } catch { if (mountedRef.current) setCryptoMixResult({ ok: false, error: "Network error" }); } finally { if (mountedRef.current) setCryptoMixLoading(false); } };
+  const runGhostCo = async () => { setGhostCoLoading(true); try { const r = await fetch("/api/ghost-company", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(ghostCoInput) }); const d = await r.json(); if (!mountedRef.current) return; setGhostCoResult(d); } catch { if (mountedRef.current) setGhostCoResult({ ok: false, error: "Network error" }); } finally { if (mountedRef.current) setGhostCoLoading(false); } };
+  const runPKyc = async () => { setPKycLoading(true); try { const r = await fetch("/api/pkeyc-planner", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(pKycInput) }); const d = await r.json(); if (!mountedRef.current) return; setPKycResult(d); } catch { if (mountedRef.current) setPKycResult({ ok: false, error: "Network error" }); } finally { if (mountedRef.current) setPKycLoading(false); } };
+  const runWhistle = async () => { setWhistleLoading(true); try { const r = await fetch("/api/whistleblower", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(whistleInput) }); const d = await r.json(); if (!mountedRef.current) return; setWhistleResult(d); } catch { if (mountedRef.current) setWhistleResult({ ok: false, error: "Network error" }); } finally { if (mountedRef.current) setWhistleLoading(false); } };
+  const runTradeFinRf = async () => { setTradeFinRfLoading(true); try { const r = await fetch("/api/trade-finance-rf", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(tradeFinRfInput) }); const d = await r.json(); if (!mountedRef.current) return; setTradeFinRfResult(d); } catch { if (mountedRef.current) setTradeFinRfResult({ ok: false, error: "Network error" }); } finally { if (mountedRef.current) setTradeFinRfLoading(false); } };
+  const runSanctionsExp = async () => { setSanctionsExpLoading(true); try { const r = await fetch("/api/sanctions-exposure-calc", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(sanctionsExpInput) }); const d = await r.json(); if (!mountedRef.current) return; setSanctionsExpResult(d); } catch { if (mountedRef.current) setSanctionsExpResult({ ok: false, error: "Network error" }); } finally { if (mountedRef.current) setSanctionsExpLoading(false); } };
+  const runCustLife = async () => { setCustLifeLoading(true); try { const r = await fetch("/api/customer-lifecycle", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(custLifeInput) }); const d = await r.json(); if (!mountedRef.current) return; setCustLifeResult(d); } catch { if (mountedRef.current) setCustLifeResult({ ok: false, error: "Network error" }); } finally { if (mountedRef.current) setCustLifeLoading(false); } };
+  const runPepEnh = async () => { setPepEnhLoading(true); try { const r = await fetch("/api/pep-screening-enhance", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(pepEnhInput) }); const d = await r.json(); if (!mountedRef.current) return; setPepEnhResult(d); } catch { if (mountedRef.current) setPepEnhResult({ ok: false, error: "Network error" }); } finally { if (mountedRef.current) setPepEnhLoading(false); } };
+  const runAmlTrain = async () => { setAmlTrainLoading(true); try { const r = await fetch("/api/aml-training-gap", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(amlTrainInput) }); const d = await r.json(); if (!mountedRef.current) return; setAmlTrainResult(d); } catch { if (mountedRef.current) setAmlTrainResult({ ok: false, error: "Network error" }); } finally { if (mountedRef.current) setAmlTrainLoading(false); } };
+  const runUboVerify = async () => { setUboVerifyLoading(true); try { const r = await fetch("/api/beneficial-owner-verify", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(uboVerifyInput) }); const d = await r.json(); if (!mountedRef.current) return; setUboVerifyResult(d); } catch { if (mountedRef.current) setUboVerifyResult({ ok: false, error: "Network error" }); } finally { if (mountedRef.current) setUboVerifyLoading(false); } };
+  const runAmlKpi = async () => { setAmlKpiLoading(true); try { const r = await fetch("/api/aml-kpi-dashboard", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(amlKpiInput) }); const d = await r.json(); if (!mountedRef.current) return; setAmlKpiResult(d); } catch { if (mountedRef.current) setAmlKpiResult({ ok: false, error: "Network error" }); } finally { if (mountedRef.current) setAmlKpiLoading(false); } };
+  const runCryptoTracing = async () => { setCryptoTracingLoading(true); try { const r = await fetch("/api/crypto-tracing", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(cryptoTracingInput) }); const d = await r.json(); if (!mountedRef.current) return; setCryptoTracingResult(d); } catch { if (mountedRef.current) setCryptoTracingResult({ ok: false, error: "Network error" }); } finally { if (mountedRef.current) setCryptoTracingLoading(false); } };
 
   const runTradeFinRisk = async () => {
     if (!tradeFinRiskInput.exporterName.trim() && !tradeFinRiskInput.goods.trim()) return;
@@ -3098,9 +3155,11 @@ export default function MlroAdvisorPage() {
         context: tradeFinRiskInput.context,
       };
       const r = await fetch("/api/trade-finance-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
-      setTradeFinRiskResult(await r.json());
-    } catch { setTradeFinRiskResult({ ok: false, error: "Network error" }); }
-    finally { setTradeFinRiskLoading(false); }
+      const d = await r.json();
+      if (!mountedRef.current) return;
+      setTradeFinRiskResult(d);
+    } catch { if (mountedRef.current) setTradeFinRiskResult({ ok: false, error: "Network error" }); }
+    finally { if (mountedRef.current) setTradeFinRiskLoading(false); }
   };
 
   const runInsiderThreatFull = async () => {
@@ -3138,9 +3197,11 @@ export default function MlroAdvisorPage() {
         context: itInput.context,
       };
       const r = await fetch("/api/insider-threat", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
-      setItResult(await r.json());
-    } catch { setItResult({ ok: false, error: "Network error" }); }
-    finally { setItLoading(false); }
+      const d = await r.json();
+      if (!mountedRef.current) return;
+      setItResult(d);
+    } catch { if (mountedRef.current) setItResult({ ok: false, error: "Network error" }); }
+    finally { if (mountedRef.current) setItLoading(false); }
   };
 
   const runEscalation = async () => {
@@ -3163,9 +3224,10 @@ export default function MlroAdvisorPage() {
       });
       if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & EscalationResult;
+      if (!mountedRef.current) return;
       if (data.ok) setEscResult(data);
-    } catch (err) { setToolErrors((p) => ({ ...p, ["escalation"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
-    finally { setEscLoading(false); }
+    } catch (err) { if (mountedRef.current) setToolErrors((p) => ({ ...p, ["escalation"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
+    finally { if (mountedRef.current) setEscLoading(false); }
   };
 
   const runFlagExtraction = async () => {
@@ -3179,12 +3241,13 @@ export default function MlroAdvisorPage() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ text: flagText }),
       });
-      if (!res.ok) { setFlagError(`API error ${res.status} — check server logs`); return; }
+      if (!res.ok) { if (mountedRef.current) setFlagError(`API error ${res.status} — check server logs`); return; }
       const data = await res.json() as { ok: boolean; error?: string } & FlagResult;
+      if (!mountedRef.current) return;
       if (data.ok) setFlagResult(data);
       else setFlagError(data.error ?? "Extraction failed");
-    } catch (err) { setFlagError(err instanceof Error ? err.message : "Network error"); }
-    finally { setFlagLoading(false); }
+    } catch (err) { if (mountedRef.current) setFlagError(err instanceof Error ? err.message : "Network error"); }
+    finally { if (mountedRef.current) setFlagLoading(false); }
   };
 
   const runCasePatterns = async () => {
@@ -3201,9 +3264,10 @@ export default function MlroAdvisorPage() {
       });
       if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & PatternResult;
+      if (!mountedRef.current) return;
       if (data.ok) setPatternResult(data);
-    } catch (err) { setToolErrors((p) => ({ ...p, ["casePatterns"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
-    finally { setPatternLoading(false); }
+    } catch (err) { if (mountedRef.current) setToolErrors((p) => ({ ...p, ["casePatterns"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
+    finally { if (mountedRef.current) setPatternLoading(false); }
   };
 
   const runSubjectBrief = async () => {
@@ -3218,9 +3282,10 @@ export default function MlroAdvisorPage() {
       });
       if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & SubjectBrief;
+      if (!mountedRef.current) return;
       if (data.ok) setBriefResult(data);
-    } catch (err) { setToolErrors((p) => ({ ...p, ["subjectBrief"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
-    finally { setBriefLoading(false); }
+    } catch (err) { if (mountedRef.current) setToolErrors((p) => ({ ...p, ["subjectBrief"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
+    finally { if (mountedRef.current) setBriefLoading(false); }
   };
 
   const runPepNetwork = async () => {
@@ -3241,9 +3306,10 @@ export default function MlroAdvisorPage() {
       });
       if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & PepNetwork;
+      if (!mountedRef.current) return;
       if (data.ok) setPepNet(data);
-    } catch (err) { setToolErrors((p) => ({ ...p, ["pepNetwork"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
-    finally { setPepNetLoading(false); }
+    } catch (err) { if (mountedRef.current) setToolErrors((p) => ({ ...p, ["pepNetwork"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
+    finally { if (mountedRef.current) setPepNetLoading(false); }
   };
 
   const runSanctionsNexus = async () => {
@@ -3269,9 +3335,10 @@ export default function MlroAdvisorPage() {
       });
       if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & SanctionsNexus;
+      if (!mountedRef.current) return;
       if (data.ok) setSanctionsNexus(data);
-    } catch (err) { setToolErrors((p) => ({ ...p, ["sanctionsNexus"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
-    finally { setSanctionsNexusLoading(false); }
+    } catch (err) { if (mountedRef.current) setToolErrors((p) => ({ ...p, ["sanctionsNexus"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
+    finally { if (mountedRef.current) setSanctionsNexusLoading(false); }
   };
 
   return (

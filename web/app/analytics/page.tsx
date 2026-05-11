@@ -160,6 +160,9 @@ export default function AnalyticsPage() {
   const [predictTimeframe, setPredictTimeframe] = useState<"30" | "60" | "90">("90");
   const now = useMemo(() => new Date(), []);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
+
   useEffect(() => {
     setCases(loadCases());
     setTxs(loadTxs());
@@ -293,12 +296,13 @@ export default function AnalyticsPage() {
         throw new Error(body.error ?? `AI insights failed (HTTP ${res.status}) — please retry`);
       }
       const result = await res.json() as { ok: boolean } & AnalyticsInsights;
-      if (result.ok) setAiInsights(result);
+      if (result.ok && mountedRef.current) setAiInsights(result);
     } catch (e) {
+      if (!mountedRef.current) return;
       console.error("[hawkeye] analytics generateInsights threw:", e);
       setErr(e instanceof Error ? e.message : "AI insights failed — please retry");
     }
-    finally { setInsightsLoading(false); }
+    finally { if (mountedRef.current) setInsightsLoading(false); }
   };
 
   const runBiasMonitor = async () => {
@@ -321,12 +325,13 @@ export default function AnalyticsPage() {
         throw new Error(body.error ?? `Bias monitor failed (HTTP ${res.status}) — please retry`);
       }
       const result = (await res.json()) as { ok: boolean } & BiasMonitor;
-      if (result.ok) setBiasMonitor(result);
+      if (result.ok && mountedRef.current) setBiasMonitor(result);
     } catch (e) {
+      if (!mountedRef.current) return;
       console.error("[hawkeye] analytics runBiasMonitor threw:", e);
       setErr(e instanceof Error ? e.message : "Bias monitor failed — please retry");
     }
-    finally { setBiasLoading(false); }
+    finally { if (mountedRef.current) setBiasLoading(false); }
   };
 
   const runPredictRisk = async () => {
@@ -357,12 +362,13 @@ export default function AnalyticsPage() {
         throw new Error(body.error ?? `Risk prediction failed (HTTP ${res.status}) — please retry`);
       }
       const result = (await res.json()) as PredictRiskResult;
-      if (result.ok) setPredictRisk(result);
+      if (result.ok && mountedRef.current) setPredictRisk(result);
     } catch (e) {
+      if (!mountedRef.current) return;
       console.error("[hawkeye] analytics runPredictRisk threw:", e);
       setErr(e instanceof Error ? e.message : "Risk prediction failed — please retry");
     }
-    finally { setPredictLoading(false); }
+    finally { if (mountedRef.current) setPredictLoading(false); }
   };
 
   const handleExportPdf = () => {

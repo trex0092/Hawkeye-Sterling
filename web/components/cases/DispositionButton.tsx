@@ -9,7 +9,7 @@
 // OutcomeFeedbackJournal which drives Brier / log-score per mode +
 // bias-signal detection over time.
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 
 const DISPOSITION_CODES = [
   { code: "D00_no_match", label: "D00 — No match" },
@@ -56,6 +56,8 @@ export function DispositionButton({
   const [busy, setBusy] = useState(false);
   const [errorText, setErrorText] = useState<string | null>(null);
   const [doneText, setDoneText] = useState<string | null>(null);
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   const overridden = chosen !== autoProposed;
 
@@ -89,6 +91,7 @@ export function DispositionButton({
         persisted?: boolean;
         error?: string;
       };
+      if (!mountedRef.current) return;
       if (!res.ok || !data.ok) {
         setErrorText(data.error ?? `HTTP ${res.status}`);
         onSubmit?.({ ok: false, error: data.error ?? `HTTP ${res.status}` });
@@ -103,13 +106,13 @@ export function DispositionButton({
         overridden: data.overridden,
         persisted: data.persisted,
       });
-      setTimeout(() => setOpen(false), 1500);
+      setTimeout(() => { if (mountedRef.current) setOpen(false); }, 1500);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      setErrorText(msg);
+      if (mountedRef.current) setErrorText(msg);
       onSubmit?.({ ok: false, error: msg });
     } finally {
-      setBusy(false);
+      if (mountedRef.current) setBusy(false);
     }
   }
 

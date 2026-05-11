@@ -8,7 +8,7 @@
 // what the brain did at disposition day. FDL 10/2025 Art.24 + Art.20
 // (tamper-evident retention) + Charter P9 (explicit calibration trail).
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 
 interface ReasoningChainNode {
   step: number;
@@ -56,6 +56,8 @@ export function ChainReplayPanel(): JSX.Element {
   const [busy, setBusy] = useState(false);
   const [data, setData] = useState<VerdictResponse | null>(null);
   const [errorText, setErrorText] = useState<string | null>(null);
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   async function load(): Promise<void> {
     if (!caseId.trim()) return;
@@ -65,15 +67,16 @@ export function ChainReplayPanel(): JSX.Element {
     try {
       const res = await fetch(`/api/cases/${encodeURIComponent(caseId.trim())}`);
       const json = (await res.json()) as VerdictResponse;
+      if (!mountedRef.current) return;
       if (!res.ok || !json.ok) {
         setErrorText(json.error ?? `HTTP ${res.status}`);
         return;
       }
       setData(json);
     } catch (err) {
-      setErrorText(err instanceof Error ? err.message : String(err));
+      if (mountedRef.current) setErrorText(err instanceof Error ? err.message : String(err));
     } finally {
-      setBusy(false);
+      if (mountedRef.current) setBusy(false);
     }
   }
 

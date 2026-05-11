@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { IsoDateInput } from "@/components/ui/IsoDateInput";
 import { loadCases } from "@/lib/data/case-store";
@@ -105,6 +105,9 @@ export default function InvestigationPage() {
   const [brainAnalysis, setBrainAnalysis] = useState<BrainAnalysis | null>(null);
   const [exportingPack, setExportingPack] = useState(false);
   const [packReady, setPackReady] = useState(false);
+
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => { setAllCases(loadCases()); }, []);
@@ -186,6 +189,7 @@ export default function InvestigationPage() {
         return;
       }
       const lower = narrative.toLowerCase();
+      if (!mountedRef.current) return;
       setBrainAnalysis({
         narrative: narrative || "No narrative generated.",
         typologies: ["Layering", "Structuring"],
@@ -200,9 +204,10 @@ export default function InvestigationPage() {
           : "medium",
       });
     } catch (err) {
+      if (!mountedRef.current) return;
       console.error("[hawkeye] investigation brain (mlro-advisor) threw:", err);
       setError("Brain analysis could not be reached. Check your connection and try again.");
-    } finally { setBrainLoading(false); }
+    } finally { if (mountedRef.current) setBrainLoading(false); }
   }, [committed, matchedCases]);
 
   const runPack = useCallback(async () => {
@@ -223,6 +228,7 @@ export default function InvestigationPage() {
           analyst: "Hawkeye Sterling Analyst",
         }),
       });
+      if (!mountedRef.current) return;
       if (!res.ok) {
         console.error(`[hawkeye] investigation/evidence-pack HTTP ${res.status} — pack NOT generated`);
         setError(`Evidence pack export failed (HTTP ${res.status}). Please try again.`);
@@ -230,9 +236,10 @@ export default function InvestigationPage() {
         setPackReady(true);
       }
     } catch (err) {
+      if (!mountedRef.current) return;
       console.error("[hawkeye] investigation/evidence-pack threw — pack NOT generated:", err);
       setError("Evidence pack could not be reached. Check your connection and try again.");
-    } finally { setExportingPack(false); }
+    } finally { if (mountedRef.current) setExportingPack(false); }
   }, [committed, parties, brainAnalysis]);
 
   const sortedEvents = useMemo(() =>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -217,6 +217,9 @@ function UserSidePanel({ user, onClose, onRoleChanged }: SidePanelProps) {
   const [pwSaving, setPwSaving] = useState(false);
   const [pwMsg, setPwMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
+
   const handleSetPassword = async () => {
     if (!newPassword.trim()) return;
     setPwSaving(true);
@@ -228,6 +231,7 @@ function UserSidePanel({ user, onClose, onRoleChanged }: SidePanelProps) {
         body: JSON.stringify({ userId: user.id, newPassword: newPassword.trim(), username: newUsername.trim() || undefined }),
       });
       const data = (await resp.json()) as { ok: boolean; error?: string };
+      if (!mountedRef.current) return;
       if (data.ok) {
         setPwMsg({ ok: true, text: "Credentials updated successfully." });
         setNewPassword("");
@@ -235,9 +239,9 @@ function UserSidePanel({ user, onClose, onRoleChanged }: SidePanelProps) {
         setPwMsg({ ok: false, text: data.error ?? "Failed to update credentials." });
       }
     } catch {
-      setPwMsg({ ok: false, text: "Network error — please try again." });
+      if (mountedRef.current) setPwMsg({ ok: false, text: "Network error — please try again." });
     } finally {
-      setPwSaving(false);
+      if (mountedRef.current) setPwSaving(false);
     }
   };
 
@@ -258,11 +262,11 @@ function UserSidePanel({ user, onClose, onRoleChanged }: SidePanelProps) {
         }),
       });
       const data = (await resp.json()) as RoleRecommendation & { ok?: boolean };
-      setAiResult(data);
+      if (mountedRef.current) setAiResult(data);
     } catch {
-      setAiError("AI recommendation unavailable.");
+      if (mountedRef.current) setAiError("AI recommendation unavailable.");
     } finally {
-      setAiLoading(false);
+      if (mountedRef.current) setAiLoading(false);
     }
   };
 
@@ -284,6 +288,7 @@ function UserSidePanel({ user, onClose, onRoleChanged }: SidePanelProps) {
         }),
       });
       const data = (await resp.json()) as { ok: boolean; user?: AccessUser; impactAssessment?: string; error?: string };
+      if (!mountedRef.current) return;
       if (data.ok && data.user) {
         setImpact(data.impactAssessment ?? null);
         onRoleChanged(data.user);
@@ -293,9 +298,9 @@ function UserSidePanel({ user, onClose, onRoleChanged }: SidePanelProps) {
       }
     } catch (err) {
       console.error("[hawkeye] access-control role-change threw — UI may show stale role:", err);
-      setRoleError("Network error — role change could not be saved. Please try again.");
+      if (mountedRef.current) setRoleError("Network error — role change could not be saved. Please try again.");
     } finally {
-      setSaving(false);
+      if (mountedRef.current) setSaving(false);
     }
   };
 
@@ -519,23 +524,26 @@ export default function AccessControlPage() {
   const [revokeError, setRevokeError] = useState<string | null>(null);
   const [revokingId, setRevokingId] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
+
   // Load from localStorage or API
   const fetchUsers = useCallback(async () => {
     setLoadingUsers(true);
     try {
       const resp = await fetch("/api/access/users");
       const data = (await resp.json()) as { ok: boolean; users?: AccessUser[] };
-      if (data.ok && data.users) {
+      if (data.ok && data.users && mountedRef.current) {
         setUsers(data.users);
         localStorage.setItem("hawkeye.access.users", JSON.stringify(data.users));
       }
     } catch {
       try {
         const cached = localStorage.getItem("hawkeye.access.users");
-        if (cached) setUsers(JSON.parse(cached) as AccessUser[]);
+        if (cached && mountedRef.current) setUsers(JSON.parse(cached) as AccessUser[]);
       } catch { /* corrupted cache — ignore */ }
     } finally {
-      setLoadingUsers(false);
+      if (mountedRef.current) setLoadingUsers(false);
     }
   }, []);
 
@@ -544,17 +552,17 @@ export default function AccessControlPage() {
     try {
       const resp = await fetch("/api/access/permission-log");
       const data = (await resp.json()) as { ok: boolean; log?: PermissionLogEntry[] };
-      if (data.ok && data.log) {
+      if (data.ok && data.log && mountedRef.current) {
         setLog(data.log);
         localStorage.setItem("hawkeye.access.log", JSON.stringify(data.log));
       }
     } catch {
       try {
         const cached = localStorage.getItem("hawkeye.access.log");
-        if (cached) setLog(JSON.parse(cached) as PermissionLogEntry[]);
+        if (cached && mountedRef.current) setLog(JSON.parse(cached) as PermissionLogEntry[]);
       } catch { /* corrupted cache — ignore */ }
     } finally {
-      setLoadingLog(false);
+      if (mountedRef.current) setLoadingLog(false);
     }
   }, []);
 
@@ -592,6 +600,7 @@ export default function AccessControlPage() {
         body: JSON.stringify(addForm),
       });
       const data = (await resp.json()) as { ok: boolean; user?: AccessUser; error?: string; initialPassword?: string };
+      if (!mountedRef.current) return;
       if (!data.ok) { setAddError(data.error ?? "Failed to add user."); return; }
       if (data.user) {
         setUsers((prev) => [...prev, data.user!]);
@@ -601,9 +610,9 @@ export default function AccessControlPage() {
       setShowAddForm(false);
       void fetchLog();
     } catch {
-      setAddError("Network error — please try again.");
+      if (mountedRef.current) setAddError("Network error — please try again.");
     } finally {
-      setAddingUser(false);
+      if (mountedRef.current) setAddingUser(false);
     }
   };
 
@@ -616,14 +625,15 @@ export default function AccessControlPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: session.userId, reason: "Manual session revocation by administrator." }),
       });
+      if (!mountedRef.current) return;
       setSessions((prev) => prev.map((s) => (s.id === session.id ? { ...s, active: false } : s)));
       setUsers((prev) => prev.map((u) => (u.id === session.userId ? { ...u, active: false } : u)));
       void fetchLog();
     } catch (err) {
       console.error("[hawkeye] access-control session-revoke threw — UI optimistic update may diverge from server:", err);
-      setRevokeError("Network error — session could not be revoked. Please try again.");
+      if (mountedRef.current) setRevokeError("Network error — session could not be revoked. Please try again.");
     } finally {
-      setRevokingId(null);
+      if (mountedRef.current) setRevokingId(null);
     }
   };
 

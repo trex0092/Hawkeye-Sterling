@@ -1,6 +1,6 @@
 "use client";
 
-import { useDeferredValue, useEffect, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { Header } from "@/components/layout/Header";
 import { CasesSidebar } from "@/components/cases/CasesSidebar";
 import { CasesHero } from "@/components/cases/CasesHero";
@@ -102,6 +102,9 @@ export default function CasesPage() {
   const [triageLoading, setTriageLoading] = useState(false);
   const [triageError, setTriageError] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
+
   // Hydrate from localStorage on mount + react to writes from other
   // modules (STR filing form, screening-panel escalations, etc.).
   useEffect(() => {
@@ -170,16 +173,18 @@ export default function CasesPage() {
       if (!res.ok) {
         const body = await res.text().catch(() => "");
         console.error(`[hawkeye] cases/triage HTTP ${res.status}`);
-        setTriageError(`AI triage failed (HTTP ${res.status})${body ? ` — ${body}` : ""}`);
+        if (mountedRef.current) setTriageError(`AI triage failed (HTTP ${res.status})${body ? ` — ${body}` : ""}`);
         return;
       }
       const data = await res.json() as TriageResult & { error?: string };
+      if (!mountedRef.current) return;
       if (data.ok) setTriageResult(data);
       else setTriageError(data.error ?? "AI triage returned an error — please retry.");
     } catch (err) {
+      if (!mountedRef.current) return;
       console.error("[hawkeye] cases/triage threw:", err);
       setTriageError("AI triage request failed — please check your connection and try again.");
-    } finally { setTriageLoading(false); }
+    } finally { if (mountedRef.current) setTriageLoading(false); }
   };
 
   return (
