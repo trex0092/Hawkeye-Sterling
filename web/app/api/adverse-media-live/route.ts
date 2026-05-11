@@ -435,17 +435,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       }
     }
   } catch {
-    return NextResponse.json({
-      ...FALLBACK,
-      subject: subjectName,
-    } satisfies AdverseMediaLiveResult);
-  }
-
-  if (rawArticles.length === 0) {
-    return NextResponse.json({
-      ...FALLBACK,
-      subject: subjectName,
-    } satisfies AdverseMediaLiveResult);
+    rawArticles = []; // GDELT failed — fall through to vendor adapters below
   }
 
   // Map GDELT articles to our schema
@@ -460,11 +450,10 @@ export async function POST(req: Request): Promise<NextResponse> {
     snippet: "", // GDELT artlist mode doesn't return snippets
   }));
 
-  // Augment with vendor news adapters (NewsAPI, MarketAux, GNews, Mediastack,
-  // Currents, NewsCatcher, Reuters/RDP, ComplyAdvantage, FactSet, S&P Global,
-  // Moody's Orbis, Bloomberg). Each adapter is env-key gated; absent keys
-  // degrade silently to NULL_NEWS_ADAPTER. Failures from any single vendor
-  // never break the GDELT-anchored result.
+  // Always try vendor adapters (NewsAPI, MarketAux, GNews, Mediastack, etc.)
+  // regardless of GDELT result. When GDELT is rate-limited (429) and returns 0
+  // articles, vendor adapters act as hot-standby so the search never returns
+  // a false CLEAR. Each adapter is env-key gated; absent keys degrade to no-op.
   let vendorProviders: string[] = [];
   try {
     const { articles: vendorArticles, providersUsed } = await searchAllNews(subjectName, { limit: 25 });
@@ -489,6 +478,14 @@ export async function POST(req: Request): Promise<NextResponse> {
     }
   } catch (err) {
     console.warn("[adverse-media-live] vendor news augmentation failed:", err instanceof Error ? err.message : String(err));
+  }
+
+  // Only return FALLBACK when both GDELT and all vendor adapters found nothing.
+  if (articles.length === 0) {
+    return NextResponse.json({
+      ...FALLBACK,
+      subject: subjectName,
+    } satisfies AdverseMediaLiveResult);
   }
 
   // Sort by tone ascending (most negative first)
