@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import type { PepProfileResult } from "@/app/api/pep-profile/route";
 
@@ -53,6 +53,8 @@ export default function PepProfilePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<PepProfileResult | null>(null);
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   // Static KPI counters (would be dynamic in production)
   const [profileCount] = useState(247);
@@ -86,16 +88,18 @@ export default function PepProfilePage() {
       if (!res.ok) {
         const body = await res.text().catch(() => "");
         console.error(`[hawkeye] pep-profile HTTP ${res.status}`);
+        if (!mountedRef.current) return;
         setError(`Request failed (HTTP ${res.status})${body ? ` — ${body}` : ""} — please try again.`);
         return;
       }
       const data = (await res.json()) as PepProfileResult;
+      if (!mountedRef.current) return;
       setResult(data);
     } catch (err) {
       console.error("[hawkeye] pep-profile threw:", err);
-      setError("Request failed — please check your connection and try again.");
+      if (mountedRef.current) setError("Request failed — please check your connection and try again.");
     } finally {
-      setLoading(false);
+      if (mountedRef.current) setLoading(false);
     }
   };
 

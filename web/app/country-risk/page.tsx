@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import type { CountryRiskResult } from "@/app/api/country-risk/route";
 import type { CountryCompareResult } from "@/app/api/country-risk/compare/route";
@@ -379,6 +379,9 @@ export default function CountryRiskPage() {
   const [compareResult, setCompareResult] = useState<CountryCompareResult | null>(null);
   const [compareError, setCompareError] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
+
   const analyse = useCallback(async (country: string) => {
     if (!country.trim()) return;
     setLoading(true);
@@ -392,12 +395,13 @@ export default function CountryRiskPage() {
       });
       if (!res.ok) throw new Error(`API error ${res.status} — please try again`);
       const data = (await res.json()) as CountryRiskResult & { ok?: boolean; error?: string };
+      if (!mountedRef.current) return;
       if (data.error) throw new Error(data.error);
       setResult(data as CountryRiskResult);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Analysis failed");
+      if (mountedRef.current) setError(e instanceof Error ? e.message : "Analysis failed");
     } finally {
-      setLoading(false);
+      if (mountedRef.current) setLoading(false);
     }
   }, [depth]);
 
@@ -434,12 +438,13 @@ export default function CountryRiskPage() {
       });
       if (!res.ok) throw new Error(`API error ${res.status} — please try again`);
       const data = (await res.json()) as CountryCompareResult & { ok?: boolean; error?: string };
+      if (!mountedRef.current) return;
       if (data.error) throw new Error(data.error);
       setCompareResult(data as CountryCompareResult);
     } catch (e) {
-      setCompareError(e instanceof Error ? e.message : "Comparison failed");
+      if (mountedRef.current) setCompareError(e instanceof Error ? e.message : "Comparison failed");
     } finally {
-      setComparing(false);
+      if (mountedRef.current) setComparing(false);
     }
   };
 

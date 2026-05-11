@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ModuleLayout, ModuleHero } from "@/components/layout/ModuleLayout";
 import type { EntityGraphResult } from "@/app/api/entity-graph/route";
 import type { LeiLookupResult } from "@/app/api/lei-lookup/route";
@@ -384,6 +384,9 @@ export default function EntityGraphPage() {
   const [leiResult, setLeiResult] = useState<LeiLookupResult | null>(null);
   const [leiError, setLeiError] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
+
   async function search() {
     if (!companyName.trim()) return;
     setLoading(true);
@@ -400,15 +403,16 @@ export default function EntityGraphPage() {
         }),
       });
       const data = (await res.json()) as EntityGraphResult & { error?: string };
+      if (!mountedRef.current) return;
       if (!data.ok) {
         setError((data as unknown as { error?: string }).error ?? "Search failed");
       } else {
         setResult(data);
       }
     } catch {
-      setError("Request failed — check network connection");
+      if (mountedRef.current) setError("Request failed — check network connection");
     } finally {
-      setLoading(false);
+      if (mountedRef.current) setLoading(false);
     }
   }
 
@@ -426,15 +430,16 @@ export default function EntityGraphPage() {
         body: JSON.stringify(body),
       });
       const data = (await res.json()) as LeiLookupResult & { error?: string };
+      if (!mountedRef.current) return;
       if (!data.ok) {
         setLeiError((data as unknown as { error?: string }).error ?? "LEI lookup failed");
       } else {
         setLeiResult(data);
       }
     } catch {
-      setLeiError("Request failed");
+      if (mountedRef.current) setLeiError("Request failed");
     } finally {
-      setLeiLoading(false);
+      if (mountedRef.current) setLeiLoading(false);
     }
   }
 

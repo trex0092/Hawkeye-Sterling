@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { RowActions } from "@/components/shared/RowActions";
 import { IsoDateInput } from "@/components/ui/IsoDateInput";
@@ -105,6 +105,9 @@ export default function SupplierDdPage() {
   const [riskMap, setRiskMap] = useState<Record<string, VendorRisk>>({});
   const [riskLoading, setRiskLoading] = useState<Record<string, boolean>>({});
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
+
   useEffect(() => {
     setSuppliers(load());
   }, []);
@@ -119,6 +122,7 @@ export default function SupplierDdPage() {
       });
       if (res.ok) {
         const data = (await res.json()) as { ok: boolean; result: VendorRisk };
+        if (!mountedRef.current) return;
         setRiskMap((prev) => ({ ...prev, [v.id]: data.result }));
       } else {
         console.error(`[hawkeye] vendor-risk HTTP ${res.status}`);
@@ -126,7 +130,7 @@ export default function SupplierDdPage() {
     } catch (err) {
       console.error("[hawkeye] vendor-risk threw:", err);
     } finally {
-      setRiskLoading((prev) => ({ ...prev, [v.id]: false }));
+      if (mountedRef.current) setRiskLoading((prev) => ({ ...prev, [v.id]: false }));
     }
   };
 

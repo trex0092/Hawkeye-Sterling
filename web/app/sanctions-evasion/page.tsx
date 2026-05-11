@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import type { SanctionsEvasionResult, EvasionPattern } from "@/app/api/sanctions-evasion/route";
 
@@ -173,6 +173,8 @@ export default function SanctionsEvasionPage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<SanctionsEvasionResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   const handleDetect = async () => {
     if (!entity.trim()) return;
@@ -192,12 +194,13 @@ export default function SanctionsEvasionPage() {
         }),
       });
       const json = (await res.json()) as SanctionsEvasionResult;
+      if (!mountedRef.current) return;
       setResult(json);
     } catch (err) {
       console.error("[hawkeye] sanctions-evasion threw:", err);
-      setError("Analysis failed. Please try again.");
+      if (mountedRef.current) setError("Analysis failed. Please try again.");
     } finally {
-      setLoading(false);
+      if (mountedRef.current) setLoading(false);
     }
   };
 

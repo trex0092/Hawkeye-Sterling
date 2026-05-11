@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { RowActions } from "@/components/shared/RowActions";
 import type { RegulatoryItem } from "@/app/api/regulatory-feed/route";
@@ -115,6 +115,8 @@ function RegulatoryFeedPanel() {
   const [triageMap, setTriageMap] = useState<Record<string, TriageEntry>>({});
   const [triageLoading, setTriageLoading] = useState(false);
   const [triageError, setTriageError] = useState<string | null>(null);
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   const runTriage = async (feedItems: RegulatoryItem[]) => {
     if (feedItems.length === 0) return;
@@ -122,12 +124,13 @@ function RegulatoryFeedPanel() {
     setTriageError(null);
     try {
       const map = await fetchTriage(feedItems);
+      if (!mountedRef.current) return;
       setTriageMap(map);
     } catch (err) {
       console.error("Triage failed:", err);
-      setTriageError("AI triage unavailable — API key not configured.");
+      if (mountedRef.current) setTriageError("AI triage unavailable — API key not configured.");
     } finally {
-      setTriageLoading(false);
+      if (mountedRef.current) setTriageLoading(false);
     }
   };
 
@@ -138,10 +141,12 @@ function RegulatoryFeedPanel() {
       const res = await fetch("/api/regulatory-feed");
       if (!res.ok) {
         console.error(`[hawkeye] intel regulatory-feed HTTP ${res.status}`);
+        if (!mountedRef.current) return;
         setFeedError(`Feed unavailable (HTTP ${res.status}) — retrying automatically`);
         return;
       }
       const data = await res.json() as { ok: boolean; items: RegulatoryItem[]; sources: string[]; fetchedAt: string };
+      if (!mountedRef.current) return;
       if (!data.ok) {
         setFeedError("Feed returned an error — retrying automatically");
         return;
@@ -153,8 +158,8 @@ function RegulatoryFeedPanel() {
       void runTriage(loadedItems);
     } catch (err) {
       console.error("[hawkeye] intel/news-search threw — feed empty until next refresh:", err);
-      setFeedError("Network error fetching regulatory feed — retrying automatically");
-    } finally { setLoading(false); }
+      if (mountedRef.current) setFeedError("Network error fetching regulatory feed — retrying automatically");
+    } finally { if (mountedRef.current) setLoading(false); }
   }, []);
 
   useEffect(() => { void load(); }, [load]);
@@ -315,6 +320,8 @@ function AdverseMediaPanel() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(false);
   const [draft, setDraft] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   useEffect(() => {
     try {
@@ -354,8 +361,9 @@ function AdverseMediaPanel() {
         const order = ["clear", "low", "medium", "high", "critical"];
         return order.indexOf(b.severity) - order.indexOf(a.severity);
       });
+      if (!mountedRef.current) return;
       setArticles(all.slice(0, 60));
-    } finally { setLoading(false); }
+    } finally { if (mountedRef.current) setLoading(false); }
   };
 
   return (
@@ -463,6 +471,8 @@ function JurisdictionIntelPanel() {
   const [context, setContext] = useState("");
   const [intel, setIntel] = useState<JurisdictionIntel | null>(null);
   const [loading, setLoading] = useState(false);
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   const run = async () => {
     if (!country.trim()) return;
@@ -476,13 +486,14 @@ function JurisdictionIntelPanel() {
       });
       if (res.ok) {
         const data = await res.json() as JurisdictionIntel;
+        if (!mountedRef.current) return;
         if (data.ok) setIntel(data);
       } else {
         console.error(`[hawkeye] jurisdiction-intel HTTP ${res.status}`);
       }
     } catch (err) {
       console.error("[hawkeye] jurisdiction-intel threw:", err);
-    } finally { setLoading(false); }
+    } finally { if (mountedRef.current) setLoading(false); }
   };
 
   const inputCls = "text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-ink-0 focus:outline-none focus:border-brand";

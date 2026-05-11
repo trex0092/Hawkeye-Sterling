@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { IsoDateInput } from "@/components/ui/IsoDateInput";
 import { RowActions } from "@/components/shared/RowActions";
@@ -252,6 +252,8 @@ export default function RmiPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState<SmelterEdit>({});
   const [addedSmelters, setAddedSmelters] = useState<Smelter[]>([]);
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   useEffect(() => {
     try {
@@ -345,6 +347,7 @@ export default function RmiPage() {
       });
       if (res.ok) {
         const data = (await res.json()) as RmiAssessment;
+        if (!mountedRef.current) return;
         setRmiAssess(data);
       } else {
         console.error(`[hawkeye] rmi-assess HTTP ${res.status}`);
@@ -352,7 +355,7 @@ export default function RmiPage() {
     } catch (err) {
       console.error("[hawkeye] rmi-assess threw:", err);
     } finally {
-      setRmiAssessLoading(false);
+      if (mountedRef.current) setRmiAssessLoading(false);
     }
   };
 

@@ -86,6 +86,9 @@ function RegulatoryFeedPanel() {
   const [fetchedAt, setFetchedAt] = useState("");
   const [sources, setSources] = useState<string[]>([]);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
+
   const load = useCallback(async () => {
     setLoading(true);
     setFeedError(null);
@@ -93,7 +96,7 @@ function RegulatoryFeedPanel() {
       const res = await fetch("/api/regulatory-feed");
       if (!res.ok) {
         console.error(`[hawkeye] adverse-media-live regulatory-feed HTTP ${res.status}`);
-        setFeedError(`Regulatory feed unavailable (HTTP ${res.status}) — retrying automatically`);
+        if (mountedRef.current) setFeedError(`Regulatory feed unavailable (HTTP ${res.status}) — retrying automatically`);
         return;
       }
       const data = (await res.json()) as {
@@ -102,6 +105,7 @@ function RegulatoryFeedPanel() {
         sources: string[];
         fetchedAt: string;
       };
+      if (!mountedRef.current) return;
       if (!data.ok) {
         console.error("[hawkeye] adverse-media-live regulatory-feed returned ok:false");
         setFeedError("Regulatory feed returned an error — retrying automatically");
@@ -112,9 +116,9 @@ function RegulatoryFeedPanel() {
       setFetchedAt(data.fetchedAt ?? "");
     } catch (err) {
       console.error("[hawkeye] adverse-media-live regulatory-feed threw:", err);
-      setFeedError("Network error fetching regulatory feed — retrying automatically");
+      if (mountedRef.current) setFeedError("Network error fetching regulatory feed — retrying automatically");
     } finally {
-      setLoading(false);
+      if (mountedRef.current) setLoading(false);
     }
   }, []);
 
@@ -309,6 +313,9 @@ export default function AdverseMediaLivePage() {
   const [liveRefreshCount, setLiveRefreshCount] = useState(0);
   const liveIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const mountedRefPage = useRef(true);
+  useEffect(() => () => { mountedRefPage.current = false; }, []);
+
   const doSearch = useCallback(
     async (params: {
       subjectName: string;
@@ -328,12 +335,13 @@ export default function AdverseMediaLivePage() {
           }),
         });
         const data = (await res.json()) as AdverseMediaLiveResult;
+        if (!mountedRefPage.current) return;
         setResult(data);
         setLastSearched(params);
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Search failed");
+        if (mountedRefPage.current) setError(e instanceof Error ? e.message : "Search failed");
       } finally {
-        setLoading(false);
+        if (mountedRefPage.current) setLoading(false);
       }
     },
     [],

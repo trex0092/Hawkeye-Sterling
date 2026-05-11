@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ModuleLayout, ModuleHero } from "@/components/layout/ModuleLayout";
 import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 
@@ -88,6 +88,9 @@ export default function BenfordPage() {
   const [interpLoading, setInterpLoading] = useState(false);
   const [interpError, setInterpError] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
+
   const interpretResult = async (r: BenfordResult) => {
     setInterpLoading(true);
     setAiInterp(null);
@@ -103,11 +106,12 @@ export default function BenfordPage() {
         throw new Error(body.error ?? `AI interpretation failed (HTTP ${res.status}) — please retry`);
       }
       const data = await res.json() as { ok: boolean } & BenfordInterpretation;
+      if (!mountedRef.current) return;
       if (data.ok) setAiInterp(data);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "AI interpretation failed — please retry";
-      setInterpError(msg);
-    } finally { setInterpLoading(false); }
+      if (mountedRef.current) setInterpError(msg);
+    } finally { if (mountedRef.current) setInterpLoading(false); }
   };
 
   function parseAmounts(): number[] {
@@ -131,12 +135,14 @@ export default function BenfordPage() {
       });
       if (!res.ok) {
         const errBody = await res.json().catch(() => ({})) as { error?: string };
+        if (!mountedRef.current) return;
         throw new Error(errBody.error ?? `Analysis failed (HTTP ${res.status}) — please retry`);
       }
       const data = await res.json() as BenfordResult;
+      if (!mountedRef.current) return;
       setResult(data);
-    } catch (e) { setError(e instanceof Error ? e.message : "Request failed"); }
-    finally { setLoading(false); }
+    } catch (e) { if (mountedRef.current) setError(e instanceof Error ? e.message : "Request failed"); }
+    finally { if (mountedRef.current) setLoading(false); }
   }
 
   const parsedCount = parseAmounts().length;

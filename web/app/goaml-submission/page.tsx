@@ -11,7 +11,7 @@
 // Regulatory basis: UAE FDL 10/2025 Art.17 (48-hour STR obligation);
 // UAE FIU goAML Technical Guide v3.1; FATF R.20.
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import type { GoAmlXmlResult } from "@/app/api/goaml-xml/route";
 
@@ -196,6 +196,8 @@ export default function GoAmlSubmissionPage() {
   const [gen, setGen] = useState<GenState>({ status: "idle" });
   const [checklist, setChecklist] = useState<Record<string, boolean>>({});
   const [copied, setCopied] = useState(false);
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   const upd = (patch: Partial<FormState>) =>
     setForm((p) => ({ ...p, ...patch }));
@@ -249,13 +251,15 @@ export default function GoAmlSubmissionPage() {
           return {};
         })) as { error?: string };
         console.error(`[hawkeye] goaml-xml HTTP ${res.status}: ${j.error ?? '(no error body)'}`);
+        if (!mountedRef.current) return;
         setGen({ status: "error", message: j.error ?? `HTTP ${res.status}` });
         return;
       }
       const data = (await res.json()) as GoAmlXmlResult;
+      if (!mountedRef.current) return;
       setGen({ status: "done", result: data });
     } catch (err) {
-      setGen({
+      if (mountedRef.current) setGen({
         status: "error",
         message: err instanceof Error ? err.message : String(err),
       });

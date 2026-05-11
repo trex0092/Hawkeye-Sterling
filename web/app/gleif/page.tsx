@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ModuleLayout, ModuleHero } from "@/components/layout/ModuleLayout";
 import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 
@@ -68,6 +68,9 @@ export default function GleifPage() {
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [error, setError] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
+
   async function lookupLei() {
     if (!lei.trim()) return;
     setLoading(true); setError(null); setLeiResult(null);
@@ -78,11 +81,12 @@ export default function GleifPage() {
         throw new Error(body.error ?? `LEI lookup failed (HTTP ${res.status}) — please retry`);
       }
       const data = await res.json() as GleifResult;
+      if (!mountedRef.current) return;
       if (!data.ok) setError(data.error ?? "LEI not found");
       else setLeiResult(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Request failed");
-    } finally { setLoading(false); }
+      if (mountedRef.current) setError(err instanceof Error ? err.message : "Request failed");
+    } finally { if (mountedRef.current) setLoading(false); }
   }
 
   async function searchGleif() {
@@ -95,11 +99,12 @@ export default function GleifPage() {
         throw new Error(body.error ?? `GLEIF search failed (HTTP ${res.status}) — please retry`);
       }
       const data = await res.json() as { ok: boolean; results: SearchResult[]; error?: string };
+      if (!mountedRef.current) return;
       if (!data.ok) setError(data.error ?? "Search failed");
       else setSearchResults(data.results);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Request failed");
-    } finally { setLoading(false); }
+      if (mountedRef.current) setError(err instanceof Error ? err.message : "Request failed");
+    } finally { if (mountedRef.current) setLoading(false); }
   }
 
   const switchTab = (t: "lookup" | "search") => {

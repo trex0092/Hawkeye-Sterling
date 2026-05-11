@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 
 interface SherlockProfile { site: string; url: string; exists: boolean }
@@ -57,6 +57,8 @@ export default function OsintPage() {
   const [intelSynthesis, setIntelSynthesis] = useState<IntelSynthesis | null>(null);
   const [intelSynthLoading, setIntelSynthLoading] = useState(false);
   const [intelSources, setIntelSources] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   const run = async () => {
     const t = target.trim();
@@ -75,6 +77,7 @@ export default function OsintPage() {
           body: JSON.stringify({ tool: "harvester", domain: t }),
         });
         const data = (await res.json()) as HarvesterResult;
+        if (!mountedRef.current) return;
         if (!data.ok) setError(data.error ?? "Harvest failed");
         else { setDomainResult(data); setScannedAt(new Date().toLocaleTimeString()); }
       } else {
@@ -90,6 +93,7 @@ export default function OsintPage() {
             body: JSON.stringify({ tool: "social-analyzer", person: t }),
           }).then((r) => r.json() as Promise<SocialResult>),
         ]);
+        if (!mountedRef.current) return;
         if (sh.status === "fulfilled") setSherlockResult(sh.value);
         if (sa.status === "fulfilled") setSocialResult(sa.value);
         setScannedAt(new Date().toLocaleTimeString());
@@ -97,9 +101,9 @@ export default function OsintPage() {
           setError("All OSINT tools failed — check the bridge service is running");
       }
     } catch {
-      setError("Network error — check connectivity");
+      if (mountedRef.current) setError("Network error — check connectivity");
     } finally {
-      setLoading(false);
+      if (mountedRef.current) setLoading(false);
     }
   };
 
@@ -123,10 +127,11 @@ export default function OsintPage() {
         return;
       }
       const data = await res.json() as { ok: boolean } & OsintSynthesis;
+      if (!mountedRef.current) return;
       if (data.ok) setSynthesis(data);
     } catch (err) {
       console.error("[hawkeye] osint/synthesis threw:", err);
-    } finally { setSynthLoading(false); }
+    } finally { if (mountedRef.current) setSynthLoading(false); }
   };
 
   const runIntelSynthesis = async () => {
@@ -181,10 +186,11 @@ export default function OsintPage() {
         return;
       }
       const data = (await res.json()) as IntelSynthesis;
+      if (!mountedRef.current) return;
       if (data.ok) setIntelSynthesis(data);
     } catch (err) {
       console.error("[hawkeye] osint/intel-synthesize threw:", err);
-    } finally { setIntelSynthLoading(false); }
+    } finally { if (mountedRef.current) setIntelSynthLoading(false); }
   };
 
   const hasResults = domainResult || sherlockResult || socialResult;
