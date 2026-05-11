@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import { BarChart, Donut } from "@/components/ui/Charts";
 
@@ -239,6 +239,9 @@ export function AuditStrip() {
   const [data, setData] = useState<AuditResponse | null>(null);
   const [reloading, setReloading] = useState(false);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
+
   const load = () => {
     setReloading(true);
     fetch("/api/weaponized-brain/audit")
@@ -259,13 +262,13 @@ export function AuditStrip() {
           } as AuditResponse;
         }
       })
-      .then(setData)
-      .catch((e: unknown) =>
-        setData({ ok: false, error: e instanceof Error ? e.message : String(e) }),
-      )
-      .finally(() => setReloading(false));
+      .then((d) => { if (mountedRef.current) setData(d); })
+      .catch((e: unknown) => {
+        if (mountedRef.current) setData({ ok: false, error: e instanceof Error ? e.message : String(e) });
+      })
+      .finally(() => { if (mountedRef.current) setReloading(false); });
   };
-  useEffect(load, []);
+  useEffect(() => { load(); }, []);
 
   if (!data) {
     return (

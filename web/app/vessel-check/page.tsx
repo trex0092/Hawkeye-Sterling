@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ModuleLayout, ModuleHero } from "@/components/layout/ModuleLayout";
 import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 
@@ -105,6 +105,9 @@ export default function VesselCheckPage() {
   const [rpCargo, setRpCargo] = useState("");
   const [rpSanctioned, setRpSanctioned] = useState(false);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
+
   async function generateRiskProfile() {
     setRiskProfileLoading(true);
     setRiskProfile(null);
@@ -125,10 +128,10 @@ export default function VesselCheckPage() {
         }),
       });
       const data = (await res.json()) as VesselRiskProfile;
-      if (data.ok) setRiskProfile(data);
+      if (data.ok && mountedRef.current) setRiskProfile(data);
     } catch (err) {
       console.error("[hawkeye] vessel risk-profile threw:", err);
-    } finally { setRiskProfileLoading(false); }
+    } finally { if (mountedRef.current) setRiskProfileLoading(false); }
   }
 
   async function check() {
@@ -143,12 +146,14 @@ export default function VesselCheckPage() {
         body: JSON.stringify(body),
       });
       const data = await res.json() as ApiResponse;
+      if (!mountedRef.current) return;
       if (!data.ok) setError(data.error ?? "Check failed");
       else setResult(data);
     } catch (err) {
+      if (!mountedRef.current) return;
       console.error("[hawkeye] vessel-check threw:", err);
       setError("Request failed");
-    } finally { setLoading(false); }
+    } finally { if (mountedRef.current) setLoading(false); }
   }
 
   const canSubmit = mode === "single" ? imoNumber.trim().length > 0 : batchImos.trim().length > 0;

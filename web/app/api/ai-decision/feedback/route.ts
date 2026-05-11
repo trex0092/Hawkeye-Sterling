@@ -93,7 +93,9 @@ export async function POST(req: Request) {
   }
 }
 
-export async function GET() {
+export async function GET(req: Request) {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   try {
     const records = (await getJson<FeedbackRecord[]>(FEEDBACK_STORE_KEY)) ?? [];
     const accepted = records.filter((r) => r.outcome === "accepted").length;
