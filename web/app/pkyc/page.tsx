@@ -5,7 +5,7 @@
 // Controls: 3.01 (ongoing CDD), 3.04 (periodic review), 20.09
 
 import { useEffect, useState, useCallback } from "react";
-import type { PKycSubject, PKycCadence } from "@/app/api/pkyc/route";
+import type { PKycSubject, PKycCadence } from "@/app/api/pkyc/_store";
 
 const BAND_COLOR: Record<string, string> = {
   clear: "#22c55e", low: "#3b82f6", medium: "#f59e0b",

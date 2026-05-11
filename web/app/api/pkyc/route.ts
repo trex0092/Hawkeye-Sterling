@@ -2,102 +2,18 @@
 // POST /api/pkyc          — enroll a subject in perpetual monitoring
 // DELETE /api/pkyc?id=... — remove a subject from monitoring
 //
-// pKYC (Perpetual KYC) = continuous CDD lifecycle management.
-// Each enrolled subject is rescreened on its assigned cadence, and any
-// material change in risk profile (new hit, band change, PEP reclassification)
-// is queued for MLRO review and recorded in the audit trail.
-//
 // Controls: 3.01 (CDD ongoing), 3.04 (periodic review), 20.09 (telemetry)
 
 import { NextResponse } from "next/server";
 import { withGuard } from "@/lib/server/guard";
+import {
+  listSubjects, getSubject, saveSubject, deleteSubject,
+  type PKycSubject, type PKycCadence,
+} from "./_store";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 15;
-
-export type PKycCadence = "daily" | "weekly" | "monthly" | "quarterly" | "annual";
-export type PKycStatus = "active" | "pending_review" | "suspended" | "archived";
-export type PKycRiskBand = "clear" | "low" | "medium" | "high" | "critical";
-
-export interface PKycSubject {
-  id: string;
-  name: string;
-  entityType?: string;
-  jurisdiction?: string;
-  nationality?: string;
-  dob?: string;
-  aliases?: string[];
-  caseId?: string;
-  cadence: PKycCadence;
-  status: PKycStatus;
-  enrolledAt: string;
-  lastRunAt: string | null;
-  nextRunAt: string;
-  lastBand: PKycRiskBand | null;
-  lastComposite: number | null;
-  lastHits: number;
-  runCount: number;
-  alertCount: number;
-  notes?: string;
-  mlro?: string;
-}
-
-export interface PKycDelta {
-  id: string;
-  subjectId: string;
-  subjectName: string;
-  detectedAt: string;
-  kind: "new_hit" | "band_change" | "pep_reclassified" | "adverse_media" | "clear";
-  from?: string;
-  to?: string;
-  detail: string;
-  acknowledged: boolean;
-}
-
-// ── Blobs ────────────────────────────────────────────────────────────────────
-
-async function getStore() {
-  try {
-    const mod = await import("@netlify/blobs").catch(() => null);
-    if (!mod) return null;
-    return mod.getStore({ name: "pkyc" });
-  } catch { return null; }
-}
-
-export async function listSubjects(): Promise<PKycSubject[]> {
-  const store = await getStore();
-  if (!store) return [];
-  try {
-    const listed = await store.list({ prefix: "subject/" });
-    const subjects = await Promise.all(
-      listed.blobs.map((b: { key: string }) =>
-        store.get(b.key, { type: "json" }).catch(() => null)
-      )
-    );
-    return subjects.filter((s): s is PKycSubject => s !== null);
-  } catch { return []; }
-}
-
-export async function getSubject(id: string): Promise<PKycSubject | null> {
-  const store = await getStore();
-  if (!store) return null;
-  return store.get(`subject/${id}`, { type: "json" }).catch(() => null) as Promise<PKycSubject | null>;
-}
-
-export async function saveSubject(subject: PKycSubject): Promise<void> {
-  const store = await getStore();
-  if (!store) return;
-  await store.setJSON(`subject/${subject.id}`, subject);
-}
-
-export async function deleteSubject(id: string): Promise<void> {
-  const store = await getStore();
-  if (!store) return;
-  await store.delete(`subject/${id}`).catch(() => {});
-}
-
-// ── Next-run calculation ──────────────────────────────────────────────────────
 
 function nextRunAt(cadence: PKycCadence, from = new Date()): string {
   const d = new Date(from);
@@ -110,8 +26,6 @@ function nextRunAt(cadence: PKycCadence, from = new Date()): string {
   }
   return d.toISOString();
 }
-
-// ── GET ───────────────────────────────────────────────────────────────────────
 
 async function handleGet(req: Request): Promise<NextResponse> {
   const url = new URL(req.url);
@@ -133,8 +47,6 @@ async function handleGet(req: Request): Promise<NextResponse> {
 
   return NextResponse.json({ ok: true, stats, subjects });
 }
-
-// ── POST ──────────────────────────────────────────────────────────────────────
 
 async function handlePost(req: Request): Promise<NextResponse> {
   let body: Partial<PKycSubject>;
@@ -173,8 +85,6 @@ async function handlePost(req: Request): Promise<NextResponse> {
   await saveSubject(subject);
   return NextResponse.json({ ok: true, subject }, { status: 201 });
 }
-
-// ── DELETE ────────────────────────────────────────────────────────────────────
 
 async function handleDelete(req: Request): Promise<NextResponse> {
   const id = new URL(req.url).searchParams.get("id");
