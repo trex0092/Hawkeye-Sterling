@@ -135,12 +135,13 @@ async function getSections(token: string, projectGid: string): Promise<Array<{ g
   return json.data ?? [];
 }
 
-async function deleteSection(token: string, sectionGid: string): Promise<void> {
-  await fetch(`${API}/sections/${sectionGid}`, {
+async function deleteSection(token: string, sectionGid: string): Promise<boolean> {
+  const res = await fetch(`${API}/sections/${sectionGid}`, {
     method: "DELETE",
     headers: headers(token),
     signal: AbortSignal.timeout(8_000),
   });
+  return res.ok;
 }
 
 async function createSection(token: string, projectGid: string, name: string): Promise<boolean> {
@@ -192,17 +193,33 @@ export async function POST(): Promise<NextResponse> {
       let created = 0;
       try {
         const existing = await getSections(token, project.gid);
+        // Track which sections survive (delete rejected by Asana — e.g. section
+        // has tasks, or it's a protected default section). We skip creating a
+        // section with the same name later to avoid a 400 duplicate-name error.
+        const survivingNames = new Set<string>();
         for (const sec of existing) {
           try {
-            await deleteSection(token, sec.gid);
-            deleted++;
+            const ok = await deleteSection(token, sec.gid);
+            if (ok) {
+              deleted++;
+            } else {
+              errors.push(`delete:${sec.name}`);
+              survivingNames.add(sec.name);
+            }
           } catch {
             errors.push(`delete:${sec.name}`);
+            survivingNames.add(sec.name);
           }
           await delay(50);
         }
         await delay(200);
         for (const sectionName of project.sections) {
+          if (survivingNames.has(sectionName)) {
+            // Section already exists because delete was rejected — treat as
+            // success so we don't surface a spurious create error.
+            created++;
+            continue;
+          }
           try {
             const ok = await createSection(token, project.gid, sectionName);
             if (ok) created++;

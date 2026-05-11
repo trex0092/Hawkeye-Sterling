@@ -247,7 +247,9 @@ async function checkGoogleNews(): Promise<Check> {
 async function checkGdelt(): Promise<Check> {
   const r = await time(async () => {
     const controller = new AbortController();
-    const t = setTimeout(() => controller.abort(), 8_000);
+    // GDELT free API is slow — p95 regularly 10–14 s. 20 s gives it room
+    // to respond without flooding the probe with false timeouts.
+    const t = setTimeout(() => controller.abort(), 20_000);
     try {
       const params = new URLSearchParams({
         query: "compliance",
@@ -273,6 +275,10 @@ async function checkGdelt(): Promise<Check> {
       if (res.status === 429) return { degraded: true as const, note: "GDELT rate-limited (429)" };
       if (res.status >= 400) return { degraded: true as const, note: `GDELT HTTP ${res.status}` };
       return { degraded: false as const };
+    } catch (err) {
+      const isTimeout = err instanceof Error && (err.name === "AbortError" || err.message.includes("aborted"));
+      if (isTimeout) return { degraded: true as const, note: "GDELT timeout (>20s)" };
+      throw err;
     } finally {
       clearTimeout(t);
     }
