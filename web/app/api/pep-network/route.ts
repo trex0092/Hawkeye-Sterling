@@ -7,9 +7,10 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 interface Body {
-  pepName: string;
-  role: string;
-  country: string;
+  pepName?: string;
+  subject?: string;  // alias accepted from MCP tool
+  role?: string;
+  country?: string;
   party?: string;
   tenure?: string;
 }
@@ -104,7 +105,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
   }
 
-  const pepName = body?.pepName?.trim();
+  const pepName = (body?.pepName ?? body?.subject)?.trim();
   if (!pepName) {
     return NextResponse.json({ ok: false, error: "pepName is required" }, { status: 400 });
   }
