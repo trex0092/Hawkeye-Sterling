@@ -587,7 +587,7 @@ const TOOLS: ToolDef[] = [
       const a = args as Record<string, unknown>;
       if (!a.companyName && (a.subject || a.name)) {
         const subject = String(a.subject ?? a.name ?? "");
-        return callApi("/api/pep-network", "POST", { subject, maxDepth: a.maxDepth ?? 2 });
+        return callApi("/api/pep-network", "POST", { pepName: subject, maxDepth: a.maxDepth ?? 2 });
       }
       if (!a.companyName) {
         return {
