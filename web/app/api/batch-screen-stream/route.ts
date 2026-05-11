@@ -206,7 +206,13 @@ export async function POST(req: Request): Promise<Response> {
             screen.hits.length === 0 && (crossRef.watchmanHits ?? 0) > 0;
           if (crossRefDisagreement) checkpoints.push("cross-ref-disagreement");
 
-          const normalizedKey = row.name.trim().toLowerCase();
+          // Composite key: name + entity-type + jurisdiction so "John Smith (UK)"
+          // and "John Smith (UAE)" are not falsely collapsed as duplicates.
+          const normalizedKey = [
+            row.name.trim().toLowerCase(),
+            row.entityType ?? "",
+            (row.jurisdiction ?? "").toLowerCase(),
+          ].join("|");
           const isDuplicate = seenNames.has(normalizedKey);
           if (!isDuplicate) seenNames.set(normalizedKey, i);
           if (isDuplicate) checkpoints.push("duplicate");

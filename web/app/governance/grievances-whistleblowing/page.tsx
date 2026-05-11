@@ -485,6 +485,8 @@ export default function GrievancesWhistleblowingPage() {
 
   const formRef     = useRef<HTMLDivElement>(null);
   const registerRef = useRef<HTMLDivElement>(null);
+  const mountedRef  = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   const [activeCategory, setActiveCategory] = useState<typeof CATEGORIES[number] | null>(null);
   const [showPdf, setShowPdf]               = useState(false);
 
@@ -516,18 +518,22 @@ export default function GrievancesWhistleblowingPage() {
       });
       if (res.ok) {
         const data = await res.json() as { caseRef: string };
+        if (!mountedRef.current) return;
         setToast(`Disclosure submitted · Case ref: ${data.caseRef}`);
         setConcern(""); setLocation(""); setName(""); setDesc("");
         setTimeout(() => setToast(null), 8000);
       } else {
+        if (!mountedRef.current) return;
         setToastErr("Submission failed — please try again or contact compliance directly.");
         setTimeout(() => setToastErr(null), 8000);
       }
     } catch {
-      setToastErr("Network error — please check your connection and retry.");
-      setTimeout(() => setToastErr(null), 8000);
+      if (mountedRef.current) {
+        setToastErr("Network error — please check your connection and retry.");
+        setTimeout(() => setToastErr(null), 8000);
+      }
     } finally {
-      setSubmitting(false);
+      if (mountedRef.current) setSubmitting(false);
     }
   }, [concern, description, submitting, mode, dateObs, location, reporterName, severity, language]);
 

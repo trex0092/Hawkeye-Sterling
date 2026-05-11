@@ -166,6 +166,8 @@ export default function BatchPage() {
   const [filterSev, setFilterSev] = useState<string>("all");
   const [page, setPage] = useState(0);
   const fileInput = useRef<HTMLInputElement>(null);
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -214,6 +216,7 @@ export default function BatchPage() {
         body: JSON.stringify({ rows }),
       });
       if (!res.ok || !res.body) {
+        if (!mountedRef.current) return;
         setError(`Batch failed server ${res.status}`);
         setProgress(null);
         return;
@@ -224,6 +227,7 @@ export default function BatchPage() {
       const accumulated: RowResult[] = [];
       while (true) {
         const { done, value } = await reader.read();
+        if (!mountedRef.current) return;
         if (done) break;
         buf += decoder.decode(value, { stream: true });
         const lines = buf.split("\n");
@@ -251,6 +255,7 @@ export default function BatchPage() {
         }
       }
     } catch (err) {
+      if (!mountedRef.current) return;
       setError(err instanceof Error ? err.message : "Batch failed");
       setProgress(null);
     }

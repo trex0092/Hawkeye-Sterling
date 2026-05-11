@@ -1821,37 +1821,75 @@ function bingNewsAdapter(): NewsAdapter {
 }
 
 // ── Google News RSS — free, no key. Default-on (HS_DISABLED=google-news-rss to opt out).
+// Searches 3 locales in parallel (EN, AR, RU) with AML modifiers so subjects
+// from non-English-speaking jurisdictions (Turkey, MENA, CIS) are covered.
+// The modifiers mirror those used by /api/news-search so both code paths
+// surface the same articles.
+const GNEWS_AML_LOCALES = [
+  { hl: "en",    gl: "US", ceid: "US:en",    mod: "sanctions OR fraud OR corruption OR bribery OR arrest OR laundering OR trafficking OR terrorism" },
+  { hl: "ar",    gl: "AE", ceid: "AE:ar",    mod: "عقوبات OR احتيال OR فساد OR رشوة OR اعتقال OR غسل" },
+  { hl: "ru",    gl: "RU", ceid: "RU:ru",    mod: "санкции OR мошенничество OR коррупция OR арест OR отмывание" },
+  { hl: "tr",    gl: "TR", ceid: "TR:tr",    mod: "yaptırım OR dolandırıcılık OR yolsuzluk OR rüşvet OR tutuklama OR kara para" },
+] as const;
+
 function googleNewsRssAdapter(): NewsAdapter {
   if (!flagOn("google-news-rss")) return NULL_NEWS_ADAPTER;
+
+  async function fetchLocale(
+    subjectName: string,
+    locale: (typeof GNEWS_AML_LOCALES)[number],
+    limitPerLocale: number,
+  ): Promise<NewsArticle[]> {
+    const q = `"${subjectName}" (${locale.mod})`;
+    const params = new URLSearchParams({ q, hl: locale.hl, gl: locale.gl, ceid: locale.ceid });
+    const res = await abortable(
+      fetch(`https://news.google.com/rss/search?${params.toString()}`, {
+        headers: { "user-agent": "HawkeyeSterling/1.0", accept: "application/rss+xml" },
+      }),
+      8_000,
+    );
+    if (!res.ok) return [];
+    const xml = await res.text();
+    const items = xml.match(/<item>[\s\S]*?<\/item>/g) ?? [];
+    const articles: NewsArticle[] = [];
+    for (const it of items.slice(0, limitPerLocale)) {
+      const title = /<title>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/title>/.exec(it)?.[1]?.trim();
+      const link  = /<link>([\s\S]*?)<\/link>/.exec(it)?.[1]?.trim();
+      const pub   = /<pubDate>([\s\S]*?)<\/pubDate>/.exec(it)?.[1]?.trim();
+      const src   = /<source[^>]*>([\s\S]*?)<\/source>/.exec(it)?.[1]?.trim();
+      if (!title || !link) continue;
+      articles.push({
+        source: "google-news-rss",
+        outlet: src ?? "google-news",
+        title,
+        url: link,
+        publishedAt: pub ? new Date(pub).toISOString() : new Date().toISOString(),
+      });
+    }
+    return articles;
+  }
+
   return {
     isAvailable: () => true,
     search: async (subjectName, opts) => {
       try {
-        const params = new URLSearchParams({ q: `"${subjectName}"`, hl: "en", gl: "US", ceid: "US:en" });
-        const res = await abortable(
-          fetch(`https://news.google.com/rss/search?${params.toString()}`, {
-            headers: { "user-agent": "HawkeyeSterling/1.0", accept: "application/rss+xml" },
-          }),
+        const limit = opts?.limit ?? 25;
+        const perLocale = Math.ceil(limit / GNEWS_AML_LOCALES.length);
+        const settled = await Promise.allSettled(
+          GNEWS_AML_LOCALES.map((loc) => fetchLocale(subjectName, loc, perLocale)),
         );
-        if (!res.ok) return [];
-        const xml = await res.text();
-        const items = xml.match(/<item>[\s\S]*?<\/item>/g) ?? [];
+        const seen = new Set<string>();
         const articles: NewsArticle[] = [];
-        for (const it of items.slice(0, opts?.limit ?? 25)) {
-          const title = /<title>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/title>/.exec(it)?.[1]?.trim();
-          const link = /<link>([\s\S]*?)<\/link>/.exec(it)?.[1]?.trim();
-          const pub = /<pubDate>([\s\S]*?)<\/pubDate>/.exec(it)?.[1]?.trim();
-          const src = /<source[^>]*>([\s\S]*?)<\/source>/.exec(it)?.[1]?.trim();
-          if (!title || !link) continue;
-          articles.push({
-            source: "google-news-rss",
-            outlet: src ?? "google-news",
-            title,
-            url: link,
-            publishedAt: pub ? new Date(pub).toISOString() : new Date().toISOString(),
-          });
+        for (const r of settled) {
+          if (r.status !== "fulfilled") continue;
+          for (const a of r.value) {
+            const k = a.url.toLowerCase();
+            if (seen.has(k)) continue;
+            seen.add(k);
+            articles.push(a);
+          }
         }
-        return articles;
+        return articles.slice(0, limit);
       } catch (err) {
         console.warn("[google-news-rss] failed:", err instanceof Error ? err.message : err);
         return [];

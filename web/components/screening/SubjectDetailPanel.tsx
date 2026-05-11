@@ -395,6 +395,16 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
     adverseMediaText: effectiveAdverseMediaText,
   });
 
+  // Sync super-brain composite score back to the parent list so the row
+  // shows the full score (jurisdiction + adverse media + PEP + redlines)
+  // instead of the quick-screen topScore (sanctions only, often 0).
+  useEffect(() => {
+    if (superBrain.status === "success" && onUpdate) {
+      onUpdate(subject.id, { riskScore: superBrain.result.composite.score });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [superBrain.status]);
+
   const asanaReport = useAutoReport({
     subjectId: subject.id,
     qsSubject: screening.status === "success" ? qsSubject : null,
@@ -698,7 +708,7 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
   // "Save as PDF" without the app needing a server-side PDF engine.
   const handleDownloadPdf = async () => {
     if (screening.status !== "success") {
-      showFlash("Screening not complete yet");
+      showFlash(screening.status === "loading" ? "Screening in progress — please wait" : "Screening not complete yet");
       return;
     }
     if (superBrain.status === "loading") {
@@ -756,7 +766,7 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
   // FIU portal. reportCode defaults to STR, the most common filing.
   const handleDownloadGoaml = async () => {
     if (screening.status !== "success") {
-      showFlash("Screening not complete yet");
+      showFlash(screening.status === "loading" ? "Screening in progress — please wait" : "Screening not complete yet");
       return;
     }
     const composite =
@@ -982,7 +992,7 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
 
   const handleDownloadReport = async () => {
     if (screening.status !== "success") {
-      showFlash("Screening not complete yet");
+      showFlash(screening.status === "loading" ? "Screening in progress — please wait" : "Screening not complete yet");
       return;
     }
     if (superBrain.status === "loading") {

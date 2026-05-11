@@ -167,6 +167,8 @@ export default function TransactionMonitorPage() {
   const [flash, setFlash] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
   const [reportTx, setReportTx] = useState<TxRow | null>(null);
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   const openTxReport = (t: TxRow): void => setReportTx(t);
   const closeTxReport = (): void => setReportTx(null);
@@ -185,11 +187,12 @@ export default function TransactionMonitorPage() {
         throw new Error(body.error ?? `Explanation failed (HTTP ${res.status}) — please retry`);
       }
       const data = await res.json() as { ok: boolean; explanation: string; disposition: TmExplanation["disposition"]; dispositionReason: string; regulatoryBasis: string; typologies: string[] };
+      if (!mountedRef.current) return;
       if (data.ok) setExplanations((prev) => ({ ...prev, [t.id]: data }));
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Explanation failed — please retry";
-      setExplainErrors((prev) => ({ ...prev, [t.id]: msg }));
-    } finally { setExplaining((prev) => ({ ...prev, [t.id]: false })); }
+      if (mountedRef.current) setExplainErrors((prev) => ({ ...prev, [t.id]: msg }));
+    } finally { if (mountedRef.current) setExplaining((prev) => ({ ...prev, [t.id]: false })); }
   };
 
   const autoTagTypologies = async () => {
@@ -233,12 +236,13 @@ export default function TransactionMonitorPage() {
           fatfReference: t.fatfReference,
         };
       }
+      if (!mountedRef.current) return;
       setTypologyTags(tagMap);
       setTagSummary({ text: data.summary, highRiskCount: data.highRiskCount });
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Typology tagging failed — please retry";
-      setTagError(msg);
-    } finally { setTagging(false); }
+      if (mountedRef.current) setTagError(msg);
+    } finally { if (mountedRef.current) setTagging(false); }
   };
 
   const parsedAmount = Number.parseFloat(amount.replace(/,/g, "")) || 0;
@@ -335,16 +339,16 @@ export default function TransactionMonitorPage() {
         { method: "POST", label: "Scan failed" },
       );
       if (!res.ok) {
-        flashFor(res.error ?? "Scan failed");
+        if (mountedRef.current) flashFor(res.error ?? "Scan failed");
         return;
       }
-      flashFor(
+      if (mountedRef.current) flashFor(
         res.data?.ok
           ? `Scan complete ${res.data.totalAlerts ?? 0} alerts`
           : "Scan failed",
       );
     } finally {
-      setRunning(false);
+      if (mountedRef.current) setRunning(false);
     }
   };
 

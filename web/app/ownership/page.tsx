@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import type { OwnershipResult } from "@/app/api/ownership/route";
 import { walkOwnershipChain, type OwnershipGraph } from "@/lib/intelligence/ownershipChain";
@@ -37,6 +37,8 @@ export default function OwnershipPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<OwnershipResult | null>(null);
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   // Static KPI counters (would be dynamic in production)
   const [entitiesCount] = useState(183);
@@ -65,16 +67,18 @@ export default function OwnershipPage() {
       });
       if (!res.ok) {
         console.error(`[hawkeye] ownership HTTP ${res.status}`);
+        if (!mountedRef.current) return;
         setError(`Request failed — HTTP ${res.status}`);
         return;
       }
       const data = (await res.json()) as OwnershipResult;
+      if (!mountedRef.current) return;
       setResult(data);
     } catch (err) {
       console.error("[hawkeye] ownership threw:", err);
-      setError("Request failed — please try again.");
+      if (mountedRef.current) setError("Request failed — please try again.");
     } finally {
-      setLoading(false);
+      if (mountedRef.current) setLoading(false);
     }
   };
 

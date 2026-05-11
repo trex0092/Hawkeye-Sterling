@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { formatDMY } from "@/lib/utils/dateFormat";
 
@@ -28,6 +28,8 @@ export default function CorrectionsPage() {
   } | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   const update =
     <K extends keyof typeof form>(k: K) =>
@@ -53,15 +55,16 @@ export default function CorrectionsPage() {
       const payload = (await res.json()) as
         | { ok: true; id: string; dueBy: string; message: string }
         | { ok: false; error?: string };
+      if (!mountedRef.current) return;
       if (!payload.ok) {
         setErr(payload.error ?? "submission failed");
       } else {
         setReceipt(payload);
       }
     } catch (e) {
-      setErr(e instanceof Error ? e.message : String(e));
+      if (mountedRef.current) setErr(e instanceof Error ? e.message : String(e));
     } finally {
-      setSubmitting(false);
+      if (mountedRef.current) setSubmitting(false);
     }
   };
 

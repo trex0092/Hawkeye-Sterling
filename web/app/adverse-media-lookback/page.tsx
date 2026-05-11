@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { RowActions } from "@/components/shared/RowActions";
 import type { CrossCorrelateResult, CrossCorrelateArticle } from "@/app/api/adverse-media/cross-correlate/route";
@@ -215,6 +215,9 @@ export default function AdverseMediaLookbackPage() {
   const [correlateErrors, setCorrelateErrors] = useState<Record<string, string>>({});
   const [dismissedOpen, setDismissedOpen] = useState<Record<string, boolean>>({});
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
+
   useEffect(() => { setEntries(load()); }, []);
 
   const assessSubject = async (subject: string) => {
@@ -238,16 +241,17 @@ export default function AdverseMediaLookbackPage() {
       });
       if (res.ok) {
         const data = (await res.json()) as AmAssessment;
+        if (!mountedRef.current) return;
         setAssessment((prev) => ({ ...prev, [subject]: data }));
       } else {
         console.error(`[hawkeye] adverse-media-lookback assess HTTP ${res.status} for ${subject}`);
-        setAssessErrors((prev) => ({ ...prev, [subject]: `AI assessment failed (HTTP ${res.status}). Please try again.` }));
+        if (mountedRef.current) setAssessErrors((prev) => ({ ...prev, [subject]: `AI assessment failed (HTTP ${res.status}). Please try again.` }));
       }
     } catch (err) {
       console.error(`[hawkeye] adverse-media-lookback assess threw for ${subject}:`, err);
-      setAssessErrors((prev) => ({ ...prev, [subject]: "AI assessment could not be reached. Please try again." }));
+      if (mountedRef.current) setAssessErrors((prev) => ({ ...prev, [subject]: "AI assessment could not be reached. Please try again." }));
     } finally {
-      setAssessing((prev) => ({ ...prev, [subject]: false }));
+      if (mountedRef.current) setAssessing((prev) => ({ ...prev, [subject]: false }));
     }
   };
 
@@ -271,16 +275,17 @@ export default function AdverseMediaLookbackPage() {
       });
       if (res.ok) {
         const data = (await res.json()) as CrossCorrelateResult;
+        if (!mountedRef.current) return;
         setCorrelations((prev) => ({ ...prev, [subject]: data }));
       } else {
         console.error(`[hawkeye] adverse-media-lookback cross-correlate HTTP ${res.status} for ${subject}`);
-        setCorrelateErrors((prev) => ({ ...prev, [subject]: `Cross-correlation failed (HTTP ${res.status}). Please try again.` }));
+        if (mountedRef.current) setCorrelateErrors((prev) => ({ ...prev, [subject]: `Cross-correlation failed (HTTP ${res.status}). Please try again.` }));
       }
     } catch (err) {
       console.error(`[hawkeye] adverse-media-lookback cross-correlate threw for ${subject}:`, err);
-      setCorrelateErrors((prev) => ({ ...prev, [subject]: "Cross-correlation could not be reached. Please try again." }));
+      if (mountedRef.current) setCorrelateErrors((prev) => ({ ...prev, [subject]: "Cross-correlation could not be reached. Please try again." }));
     } finally {
-      setCorrelating((prev) => ({ ...prev, [subject]: false }));
+      if (mountedRef.current) setCorrelating((prev) => ({ ...prev, [subject]: false }));
     }
   };
 

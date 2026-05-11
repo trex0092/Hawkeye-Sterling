@@ -1087,7 +1087,7 @@ function renderNewsDossierArticles(articles: SCRNewsDossierArticle[]): string {
   </div>
   <div style="font-size:8.5pt;font-weight:600;color:#1a1a2e;margin-bottom:3px">${esc(a.title)}</div>
   <div style="font-size:8pt;color:#444;line-height:1.5;margin-bottom:4px">${esc(a.snippet)}</div>
-  <a href="${esc(a.link)}" style="font-size:7.5pt;color:#1a5276;font-family:monospace;word-break:break-all;text-decoration:none">${esc(a.link)}</a>
+  <a href="${esc(a.link)}" style="font-size:7.5pt;color:#1a5276;font-family:monospace;text-decoration:none">${esc((() => { try { return new URL(a.link).hostname.replace(/^www\./, ''); } catch { return 'source'; } })())}</a>
 </div>`;
   }).join('');
   return `

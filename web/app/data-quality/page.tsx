@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { loadCases } from "@/lib/data/case-store";
 import type { CaseRecord } from "@/lib/types";
@@ -47,6 +47,8 @@ export default function DataQualityPage() {
   const [cases, setCases] = useState<CaseRecord[]>([]);
   const [plan, setPlan] = useState<DataQualityPlan | null>(null);
   const [planLoading, setPlanLoading] = useState(false);
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   useEffect(() => {
     setCases(loadCases());
@@ -104,6 +106,7 @@ export default function DataQualityPage() {
       });
       if (res.ok) {
         const data = (await res.json()) as DataQualityPlan;
+        if (!mountedRef.current) return;
         setPlan(data);
       } else {
         console.error(`[hawkeye] data-quality-fix HTTP ${res.status}`);
@@ -111,7 +114,7 @@ export default function DataQualityPage() {
     } catch (err) {
       console.error("[hawkeye] data-quality-fix threw:", err);
     } finally {
-      setPlanLoading(false);
+      if (mountedRef.current) setPlanLoading(false);
     }
   };
 

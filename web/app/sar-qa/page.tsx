@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { deleteCase, loadCases } from "@/lib/data/case-store";
 import { RowActions } from "@/components/shared/RowActions";
@@ -101,6 +101,8 @@ export default function SarQaPage() {
   const [reasonDraft, setReasonDraft] = useState<Record<string, ChallengeReason>>({});
   const [aiScores, setAiScores] = useState<Record<string, QaScore>>({});
   const [aiScoreLoading, setAiScoreLoading] = useState(false);
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   useEffect(() => {
     setCases(loadCases().filter((c) => c.status === "reported"));
@@ -128,10 +130,11 @@ export default function SarQaPage() {
         for (const s of data.scores) {
           map[s.id] = s;
         }
+        if (!mountedRef.current) return;
         setAiScores(map);
       }
     } finally {
-      setAiScoreLoading(false);
+      if (mountedRef.current) setAiScoreLoading(false);
     }
   };
 

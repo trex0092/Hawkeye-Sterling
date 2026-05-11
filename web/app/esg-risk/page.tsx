@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import type { EsgRiskResult, EsgRating, MlRiskLevel } from "@/app/api/esg-risk/route";
 
@@ -217,6 +217,9 @@ export default function EsgRiskPage() {
   const [result, setResult] = useState<EsgRiskResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
+
   const setField = <K extends keyof FormData>(key: K, val: FormData[K]) => {
     setForm((f) => ({ ...f, [key]: val }));
   };
@@ -252,6 +255,7 @@ export default function EsgRiskPage() {
       // a raw "Unexpected token '<'" SyntaxError.
       const raw = await res.text().catch(() => "");
       const isHtml = raw.trimStart().toLowerCase().startsWith("<");
+      if (!mountedRef.current) return;
       if (!res.ok || isHtml) {
         const detail = isHtml
           ? `Server returned HTML (HTTP ${res.status}) — likely a Netlify 502 / function timeout. Please retry; if it persists, set ANTHROPIC_API_KEY in the deployment.`
@@ -265,11 +269,11 @@ export default function EsgRiskPage() {
       setResult(data);
     } catch (e) {
       const isTimeout = e instanceof Error && (e.name === "AbortError" || e.name === "TimeoutError");
-      setError(isTimeout
+      if (mountedRef.current) setError(isTimeout
         ? "ESG scorer timed out after 60s — please retry."
         : `Request failed: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
-      setLoading(false);
+      if (mountedRef.current) setLoading(false);
     }
   };
 
@@ -323,9 +327,11 @@ export default function EsgRiskPage() {
               });
               if (!res.ok) {
                 const b = await res.json().catch(() => ({})) as { error?: string };
+                if (!mountedRef.current) return;
                 throw new Error(b.error ?? `AI suggest failed (HTTP ${res.status}) — please retry`);
               }
               const data = (await res.json()) as { answer?: string; message?: string };
+              if (!mountedRef.current) return;
               const text = data.answer ?? data.message ?? "";
               const jsonMatch = text.match(/\{[\s\S]*\}/);
               if (!jsonMatch) return;
@@ -338,7 +344,7 @@ export default function EsgRiskPage() {
               if (parsed.supplierCountries) setField("supplierCountries", String(parsed.supplierCountries));
               if (parsed.notes) setField("notes", String(parsed.notes));
             } catch (err) {
-              setError(err instanceof Error ? err.message : "AI suggest failed — please retry");
+              if (mountedRef.current) setError(err instanceof Error ? err.message : "AI suggest failed — please retry");
             }
           }}
           disabled={loading}

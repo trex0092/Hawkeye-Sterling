@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import {
   REPORT_CODES,
@@ -72,6 +72,8 @@ export default function GoAmlExportPage() {
   const [aiValidation, setAiValidation] = useState<{ score: number; grade: string; missingElements: string[]; tippingOffRisk: boolean; tippingOffFlags: string[]; suggestions: string[]; fatalIssues: string[]; fiuReadiness: string } | null>(null);
   const [aiValidating, setAiValidating] = useState(false);
   const [aiValidateError, setAiValidateError] = useState<string | null>(null);
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   useEffect(() => { setDraft(loadDraft()); }, []);
   useEffect(() => { saveDraft(draft); }, [draft]);
@@ -106,10 +108,11 @@ export default function GoAmlExportPage() {
       });
       if (!res.ok) {
         console.error(`[hawkeye] goaml-validate-ai HTTP ${res.status}`);
-        setAiValidateError(`AI validation failed (HTTP ${res.status}). Please try again.`);
+        if (mountedRef.current) setAiValidateError(`AI validation failed (HTTP ${res.status}). Please try again.`);
         return;
       }
       const data = await res.json() as { ok: boolean; score: number; grade: string; missingElements: string[]; tippingOffRisk: boolean; tippingOffFlags: string[]; suggestions: string[]; fatalIssues: string[]; fiuReadiness: string };
+      if (!mountedRef.current) return;
       if (data.ok) {
         setAiValidation(data);
       } else {
@@ -117,8 +120,8 @@ export default function GoAmlExportPage() {
       }
     } catch (err) {
       console.error("[hawkeye] goaml-validate-ai threw:", err);
-      setAiValidateError("AI validation could not be reached. Please check your connection and try again.");
-    } finally { setAiValidating(false); }
+      if (mountedRef.current) setAiValidateError("AI validation could not be reached. Please check your connection and try again.");
+    } finally { if (mountedRef.current) setAiValidating(false); }
   };
 
   const handleGenerate = async () => {
@@ -153,15 +156,15 @@ export default function GoAmlExportPage() {
           const j = (await res.json()) as { error?: string };
           if (j?.error) detail = j.error;
         } catch { /* response was XML or empty */ }
-        setSubmission({ status: "error", error: detail });
+        if (mountedRef.current) setSubmission({ status: "error", error: detail });
         return;
       }
       const xml = await res.text();
       const dispo = res.headers.get("content-disposition") ?? "";
       const m = /filename="([^"]+)"/.exec(dispo);
-      setSubmission({ status: "ready", xml, filename: m?.[1] ?? "goaml-export.xml" });
+      if (mountedRef.current) setSubmission({ status: "ready", xml, filename: m?.[1] ?? "goaml-export.xml" });
     } catch (err) {
-      setSubmission({ status: "error", error: err instanceof Error ? err.message : String(err) });
+      if (mountedRef.current) setSubmission({ status: "error", error: err instanceof Error ? err.message : String(err) });
     }
   };
 

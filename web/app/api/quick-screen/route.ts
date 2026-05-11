@@ -158,89 +158,48 @@ export async function POST(req: Request): Promise<NextResponse> {
     // Augment with OpenSanctions live results when local matcher returns
     // few/no hits — adds a free additional signal layer beyond the bundled
     // watchlists. Best-effort: failure here doesn't 5xx the screening.
-    let openSanctionsResults: Awaited<ReturnType<typeof LIVE_OPENSANCTIONS_ADAPTER.lookup>> = [];
-    let commercialResults: Awaited<ReturnType<ReturnType<typeof bestCommercialAdapter>["lookup"]>> = [];
-    let registryResults: Awaited<ReturnType<typeof searchAllRegistries>> = { records: [], providersUsed: [] };
-    // For common names we ALWAYS run the augmentation layers (not just
-    // when local hits < 3), because the operator needs the full picture
-    // to disambiguate.
-    if ((result.hits.length < 3 || isCommonName) && subject.name.length >= 3) {
-      try {
-        openSanctionsResults = await LIVE_OPENSANCTIONS_ADAPTER.lookup(
-          subject.name,
-          subject.jurisdiction ?? undefined,
-        );
-      } catch (err) { console.warn("[hawkeye] quick-screen: best-effort adapter failed:", err); }
-      // Commercial adapters (LSEG World-Check / Dow Jones R&C / Sayari)
-      // — only fires when the operator has dropped a key into Netlify env.
-      const commAdapter = bestCommercialAdapter();
-      if (commAdapter.isAvailable()) {
-        try {
-          commercialResults = await commAdapter.lookup(
-            subject.name,
-            subject.jurisdiction ?? undefined,
-          );
-        } catch (err) { console.warn("[hawkeye] quick-screen: best-effort adapter failed:", err); }
-      }
-      // Corporate-registry adapters (OpenCorporates, UK Companies House,
-      // SEC EDGAR, ICIJ Offshore Leaks, Crunchbase, PitchBook) — env-gated.
-      try {
-        registryResults = await searchAllRegistries(
-          subject.name,
-          subject.jurisdiction ? { jurisdiction: subject.jurisdiction, limit: ADAPTER_QUERY_LIMIT } : { limit: ADAPTER_QUERY_LIMIT },
-        );
-      } catch (err) { console.warn("[hawkeye] quick-screen: best-effort adapter failed:", err); }
-    }
+    // All augmentation layers are independent — kick every promise off at
+    // once and await them together so they run in parallel, not serially.
+    const commAdapter = bestCommercialAdapter();
+    const llmAdapter = llmAdverseMediaAdapter({
+      jurisdiction: subject.jurisdiction,
+      entityType: subject.entityType,
+    });
+    const warn = (err: unknown) => console.warn("[hawkeye] quick-screen: best-effort adapter failed:", err);
+    const canAug = subject.name.length >= 3;
+    const hitGated = (result.hits.length < 3 || isCommonName) && canAug;
 
-    // Country-specific public registries (Companies House, FCA, INSEE,
-    // ZEFIX, KVK, Brønnøysund, CVR, YTJ, ABR, ACRA, NZBN, etc.) and
-    // country-issued sanctions lists (OFAC, HMT-OFSI, EU EBA, UN-SC,
-    // DFAT, SECO, SEMA, MAS, EOCN, METI). Always run when configured —
-    // these are the authoritative sources operators are auditioned on.
-    let countryRegistryResults: Awaited<ReturnType<typeof searchCountryRegistries>> = { records: [], jurisdictions: [] };
-    let countrySanctionsResults: Awaited<ReturnType<typeof searchCountrySanctions>> = { records: [], lists: [] };
-    let freeAdapterResults: Awaited<ReturnType<typeof searchFreeAdapters>> = { records: [], providersUsed: [] };
-    if (subject.name.length >= 3) {
-      try {
-        countryRegistryResults = await searchCountryRegistries(subject.name, subject.jurisdiction ?? undefined, ADAPTER_QUERY_LIMIT);
-      } catch (err) { console.warn("[hawkeye] quick-screen: best-effort adapter failed:", err); }
-      try {
-        countrySanctionsResults = await searchCountrySanctions(subject.name, subject.jurisdiction ?? undefined, ADAPTER_QUERY_LIMIT);
-      } catch (err) { console.warn("[hawkeye] quick-screen: best-effort adapter failed:", err); }
-      // Free always-on layer (Wikidata + World Bank Debarred Firms + FATF)
-      try {
-        freeAdapterResults = await searchFreeAdapters(subject.name, subject.jurisdiction ?? undefined, ADAPTER_QUERY_LIMIT);
-      } catch (err) { console.warn("[hawkeye] quick-screen: best-effort adapter failed:", err); }
-    }
+    type OSResult   = Awaited<ReturnType<typeof LIVE_OPENSANCTIONS_ADAPTER.lookup>>;
+    type CommResult = Awaited<ReturnType<ReturnType<typeof bestCommercialAdapter>["lookup"]>>;
+    type RegResult  = Awaited<ReturnType<typeof searchAllRegistries>>;
+    type CRegResult = Awaited<ReturnType<typeof searchCountryRegistries>>;
+    type CSanResult = Awaited<ReturnType<typeof searchCountrySanctions>>;
+    type FreeResult = Awaited<ReturnType<typeof searchFreeAdapters>>;
+    type NewsResult = Awaited<ReturnType<typeof searchAllNews>>;
+    type LlmResult  = Awaited<ReturnType<typeof llmAdapter.search>>;
 
-    // Adverse-media news pull for temporal velocity + co-occurrence
-    // — best-effort; failure does not affect screening rating.
-    let newsArticles: Awaited<ReturnType<typeof searchAllNews>> = { articles: [], providersUsed: [] };
-    if (subject.name.length >= 3) {
-      try {
-        newsArticles = await searchAllNews(subject.name, { limit: 50 });
-      } catch (err) { console.warn("[hawkeye] quick-screen: best-effort adapter failed:", err); }
+    const [
+      openSanctionsResults, commercialResults, registryResults,
+      countryRegistryResults, countrySanctionsResults, freeAdapterResults,
+      rawNews, llmArts,
+    ] = await Promise.all([
+      // Group A — hit-gated (only when local hits sparse or common name)
+      hitGated ? LIVE_OPENSANCTIONS_ADAPTER.lookup(subject.name, subject.jurisdiction ?? undefined).catch((e): OSResult => { warn(e); return []; }) : Promise.resolve<OSResult>([]),
+      hitGated && commAdapter.isAvailable() ? commAdapter.lookup(subject.name, subject.jurisdiction ?? undefined).catch((e): CommResult => { warn(e); return []; }) : Promise.resolve<CommResult>([]),
+      hitGated ? searchAllRegistries(subject.name, subject.jurisdiction ? { jurisdiction: subject.jurisdiction, limit: ADAPTER_QUERY_LIMIT } : { limit: ADAPTER_QUERY_LIMIT }).catch((e): RegResult => { warn(e); return { records: [], providersUsed: [] }; }) : Promise.resolve<RegResult>({ records: [], providersUsed: [] }),
+      // Group B — authoritative country sources, always run
+      canAug ? searchCountryRegistries(subject.name, subject.jurisdiction ?? undefined, ADAPTER_QUERY_LIMIT).catch((e): CRegResult => { warn(e); return { records: [], jurisdictions: [] }; }) : Promise.resolve<CRegResult>({ records: [], jurisdictions: [] }),
+      canAug ? searchCountrySanctions(subject.name, subject.jurisdiction ?? undefined, ADAPTER_QUERY_LIMIT).catch((e): CSanResult => { warn(e); return { records: [], lists: [] }; }) : Promise.resolve<CSanResult>({ records: [], lists: [] }),
+      canAug ? searchFreeAdapters(subject.name, subject.jurisdiction ?? undefined, ADAPTER_QUERY_LIMIT).catch((e): FreeResult => { warn(e); return { records: [], providersUsed: [] }; }) : Promise.resolve<FreeResult>({ records: [], providersUsed: [] }),
+      // Group C — news velocity + LLM adverse-media recall
+      canAug ? searchAllNews(subject.name, { limit: 50 }).catch((e): NewsResult => { warn(e); return { articles: [], providersUsed: [] }; }) : Promise.resolve<NewsResult>({ articles: [], providersUsed: [] }),
+      canAug && llmAdapter.isAvailable() ? llmAdapter.search(subject.name, { limit: 15 }).catch((e): LlmResult => { warn(e); return []; }) : Promise.resolve<LlmResult>([]),
+    ]);
 
-      // LLM-prompt adverse-media check — uses Claude's recall for
-      // niche cases that keyword-search vendors miss (short-seller
-      // reports, foreign-language press, recently-reported lawsuits).
-      // Best-effort: silent failure when ANTHROPIC_API_KEY absent.
-      try {
-        const llmAdapter = llmAdverseMediaAdapter({
-          jurisdiction: subject.jurisdiction,
-          entityType: subject.entityType,
-        });
-        if (llmAdapter.isAvailable()) {
-          const llmArticles = await llmAdapter.search(subject.name, { limit: 15 });
-          if (llmArticles.length > 0) {
-            newsArticles = {
-              articles: [...llmArticles, ...newsArticles.articles],
-              providersUsed: [...newsArticles.providersUsed, "claude-adverse-media"],
-            };
-          }
-        }
-      } catch (err) { console.warn("[hawkeye] quick-screen: best-effort adapter failed:", err); }
-    }
+    // Merge LLM adverse-media articles (prepend so they rank first)
+    let newsArticles: NewsResult = llmArts.length > 0
+      ? { articles: [...llmArts, ...rawNews.articles], providersUsed: [...rawNews.providersUsed, "claude-adverse-media"] }
+      : rawNews;
 
     // URL-direct ingestion: when the operator passes evidenceUrls[]
     // the route fetches each URL, extracts metadata, and counts each

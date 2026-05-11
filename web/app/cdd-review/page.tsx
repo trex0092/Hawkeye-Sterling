@@ -234,6 +234,9 @@ export default function CddReviewPage() {
   });
   const eddRef = useRef<HTMLDivElement>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
+
   // Table controls
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [sortCol, setSortCol] = useState<SortCol>("status");
@@ -282,10 +285,11 @@ export default function CddReviewPage() {
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({})) as { error?: string };
-        setEddError(err.error ?? `Server error ${res.status} — please retry`);
+        if (mountedRef.current) setEddError(err.error ?? `Server error ${res.status} — please retry`);
         return;
       }
       const data = await res.json() as EddChecklistResult;
+      if (!mountedRef.current) return;
       if (!data.documents || !data.questions) {
         setEddError("Unexpected response from server — please retry");
         return;
@@ -295,8 +299,8 @@ export default function CddReviewPage() {
       saveEddChecks({});
       setTimeout(() => eddRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
     } catch (err) {
-      setEddError(err instanceof Error ? err.message : "Network error — please retry");
-    } finally { setEddLoading(false); }
+      if (mountedRef.current) setEddError(err instanceof Error ? err.message : "Network error — please retry");
+    } finally { if (mountedRef.current) setEddLoading(false); }
   };
 
   const eddTotalItems = eddResult
@@ -427,18 +431,19 @@ export default function CddReviewPage() {
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({})) as { error?: string };
-        setAdequacyError(err.error ?? `Assessment failed (${res.status}) — please retry`);
+        if (mountedRef.current) setAdequacyError(err.error ?? `Assessment failed (${res.status}) — please retry`);
         return;
       }
       const data = await res.json() as CddAdequacy;
+      if (!mountedRef.current) return;
       if (!data.assessments || !data.portfolioStatus) {
         setAdequacyError("Unexpected response — please retry");
         return;
       }
       setAdequacy(data);
     } catch (err) {
-      setAdequacyError(err instanceof Error ? err.message : "Network error — please retry");
-    } finally { setAdequacyLoading(false); }
+      if (mountedRef.current) setAdequacyError(err instanceof Error ? err.message : "Network error — please retry");
+    } finally { if (mountedRef.current) setAdequacyLoading(false); }
   };
 
   const statusCounts: Record<StatusFilter, number> = {

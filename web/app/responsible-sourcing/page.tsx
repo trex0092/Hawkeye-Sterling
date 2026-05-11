@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { IsoDateInput } from "@/components/ui/IsoDateInput";
 import type { ResponsibleSourcingState } from "@/app/api/responsible-sourcing/route";
@@ -92,18 +92,21 @@ export default function ResponsibleSourcingPage() {
   const [activeStep, setActiveStep] = useState<number>(1);
   const [saving, setSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   const loadWorkflow = useCallback(async () => {
     try {
       const res = await fetch("/api/responsible-sourcing");
       if (res.ok) {
         const data = (await res.json()) as { ok: boolean; workflow: ResponsibleSourcingState };
+        if (!mountedRef.current) return;
         if (data.ok) { setWorkflow(data.workflow); return; }
       }
     } catch (err) { console.warn("[hawkeye] responsible-sourcing server load failed — falling back to localStorage:", err); }
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) setWorkflow(JSON.parse(raw) as ResponsibleSourcingState);
+      if (raw && mountedRef.current) setWorkflow(JSON.parse(raw) as ResponsibleSourcingState);
     } catch (err) { console.warn("[hawkeye] responsible-sourcing localStorage parse failed:", err); }
   }, []);
 
@@ -115,10 +118,11 @@ export default function ResponsibleSourcingPage() {
     setSaving(true);
     try {
       const res = await fetch("/api/responsible-sourcing", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(updated) });
+      if (!mountedRef.current) return;
       if (res.ok) setLastSaved(new Date());
       else console.error(`[hawkeye] responsible-sourcing autosave HTTP ${res.status}`);
     } catch (err) { console.error("[hawkeye] responsible-sourcing autosave threw:", err); }
-    finally { setSaving(false); }
+    finally { if (mountedRef.current) setSaving(false); }
   }, []);
 
   const update = useCallback(<K extends keyof ResponsibleSourcingState>(key: K, value: ResponsibleSourcingState[K]) => {

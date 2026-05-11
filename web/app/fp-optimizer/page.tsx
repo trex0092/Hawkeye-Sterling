@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import type {
   MlroDecision,
@@ -57,6 +57,9 @@ export default function FpOptimizerPage() {
 
   const [error, setError] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
+
   // Prediction tab
   const [predictForm, setPredictForm] = useState<PredictRequest>({
     subject: "Ahmed Al-Rahman",
@@ -102,16 +105,17 @@ export default function FpOptimizerPage() {
       });
       if (!res.ok) {
         console.error(`[hawkeye] fp-optimizer/analyze HTTP ${res.status}`);
-        setError(`Pattern analysis failed (HTTP ${res.status}). Please try again.`);
+        if (mountedRef.current) setError(`Pattern analysis failed (HTTP ${res.status}). Please try again.`);
         return;
       }
       const data = await res.json() as FpAnalysisResult;
+      if (!mountedRef.current) return;
       setAnalysisResult(data);
     } catch (err) {
       console.error("[hawkeye] fp-optimizer/analyze threw:", err);
-      setError("Pattern analysis could not be reached. Check your connection and try again.");
+      if (mountedRef.current) setError("Pattern analysis could not be reached. Check your connection and try again.");
     } finally {
-      setAnalysisLoading(false);
+      if (mountedRef.current) setAnalysisLoading(false);
     }
   }
 
@@ -126,16 +130,17 @@ export default function FpOptimizerPage() {
       });
       if (!res.ok) {
         console.error(`[hawkeye] fp-optimizer/predict HTTP ${res.status}`);
-        setError(`FP prediction failed (HTTP ${res.status}). Please try again.`);
+        if (mountedRef.current) setError(`FP prediction failed (HTTP ${res.status}). Please try again.`);
         return;
       }
       const data = await res.json() as PredictResult;
+      if (!mountedRef.current) return;
       setPredictResult(data);
     } catch (err) {
       console.error("[hawkeye] fp-optimizer/predict threw:", err);
-      setError("FP prediction could not be reached. Check your connection and try again.");
+      if (mountedRef.current) setError("FP prediction could not be reached. Check your connection and try again.");
     } finally {
-      setPredictLoading(false);
+      if (mountedRef.current) setPredictLoading(false);
     }
   }
 

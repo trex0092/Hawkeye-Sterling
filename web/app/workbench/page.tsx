@@ -85,6 +85,9 @@ export default function WorkbenchPage() {
   const runAbortRef = useRef<AbortController | null>(null);
   useEffect(() => () => { runAbortRef.current?.abort(); }, []);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
+
   // Subject screening state
   const [subjectName, setSubjectName] = useState("");
   const [isRunning, setIsRunning] = useState(false);
@@ -195,6 +198,7 @@ export default function WorkbenchPage() {
       if (ac.signal.aborted) return;
       const data = (await res.json()) as BrainResult & { error?: string };
       if (ac.signal.aborted) return;
+      if (!mountedRef.current) return;
       if (!res.ok || !data.ok) {
         console.error(`[hawkeye] workbench brain HTTP ${res.status}: ${data.error ?? '(no error)'}`);
         setBrainError(data.error ?? `HTTP ${res.status}`);
@@ -204,9 +208,9 @@ export default function WorkbenchPage() {
     } catch (err) {
       if (ac.signal.aborted) return;
       console.error("[hawkeye] workbench brain threw:", err);
-      setBrainError(err instanceof Error ? err.message : "Network error");
+      if (mountedRef.current) setBrainError(err instanceof Error ? err.message : "Network error");
     } finally {
-      setIsRunning(false);
+      if (mountedRef.current) setIsRunning(false);
       window.requestAnimationFrame(() => {
         document.getElementById("pipeline-run-result")?.scrollIntoView({
           behavior: "smooth",

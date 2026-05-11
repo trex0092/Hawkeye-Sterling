@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, FormEvent, useEffect, useRef } from "react";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -20,14 +22,15 @@ export default function LoginPage() {
       });
       const json = (await res.json()) as { ok: boolean; error?: string };
       if (!res.ok || !json.ok) {
+        if (!mountedRef.current) return;
         setError(json.error ?? "Invalid credentials");
         return;
       }
       window.location.href = "/";
     } catch {
-      setError("Network error — please try again");
+      if (mountedRef.current) setError("Network error — please try again");
     } finally {
-      setLoading(false);
+      if (mountedRef.current) setLoading(false);
     }
   };
 

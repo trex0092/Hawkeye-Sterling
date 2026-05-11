@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import {
   CATEGORY_LABEL,
@@ -99,6 +99,8 @@ export default function RedTeamPage() {
   const [running, setRunning] = useState<string | null>(null);
   const [runningAll, setRunningAll] = useState(false);
   const [filter, setFilter] = useState<PromptCategory | "all">("all");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   useEffect(() => {
     setResults(loadResults());
@@ -123,6 +125,7 @@ export default function RedTeamPage() {
   const runSingle = async (p: RedTeamPrompt) => {
     setRunning(p.id);
     const r = await runOne(p);
+    if (!mountedRef.current) return;
     const next = { ...results, [p.id]: r };
     setResults(next);
     saveResults(next);
@@ -133,13 +136,16 @@ export default function RedTeamPage() {
     setRunningAll(true);
     const next = { ...results };
     for (const p of filtered) {
+      if (!mountedRef.current) return;
       setRunning(p.id);
       const r = await runOne(p);
+      if (!mountedRef.current) return;
       next[p.id] = r;
       setResults({ ...next });
       // 200ms throttle to be polite to the endpoint
       await new Promise((r) => setTimeout(r, 200));
     }
+    if (!mountedRef.current) return;
     saveResults(next);
     setRunning(null);
     setRunningAll(false);

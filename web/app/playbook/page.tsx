@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 
 interface Playbook {
@@ -5842,6 +5842,8 @@ export default function PlaybookPage() {
   const [simResult, setSimResult] = useState<ScenarioSimulateResult | null>(null);
   const [simLoading, setSimLoading] = useState(false);
   const [simError, setSimError] = useState<string | null>(null);
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   const runSimulator = async () => {
     if (!simScenario.trim()) return;
@@ -5864,10 +5866,11 @@ export default function PlaybookPage() {
         throw new Error(body.error ?? `Simulation failed (HTTP ${res.status}) — please retry`);
       }
       const data = await res.json() as ScenarioSimulateResult;
+      if (!mountedRef.current) return;
       setSimResult(data);
     } catch (err) {
-      setSimError(err instanceof Error ? err.message : "Simulation failed — please retry");
-    } finally { setSimLoading(false); }
+      if (mountedRef.current) setSimError(err instanceof Error ? err.message : "Simulation failed — please retry");
+    } finally { if (mountedRef.current) setSimLoading(false); }
   };
 
   const pb = PLAYBOOKS.find((p) => p.id === drawerOpen) ?? null;
@@ -5912,10 +5915,11 @@ export default function PlaybookPage() {
         throw new Error(body.error ?? `Playbook QA failed (HTTP ${res.status}) — please retry`);
       }
       const data = await res.json() as { ok: boolean; answer: string; citations: string[]; confidence: number; relatedPlaybooks: string[] };
+      if (!mountedRef.current) return;
       if (data.ok) setQaAnswer(data);
     } catch (err) {
-      setQaError(err instanceof Error ? err.message : "Playbook QA failed — please retry");
-    } finally { setQaLoading(false); }
+      if (mountedRef.current) setQaError(err instanceof Error ? err.message : "Playbook QA failed — please retry");
+    } finally { if (mountedRef.current) setQaLoading(false); }
   };
 
   return (

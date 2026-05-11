@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 
 interface ClientRisk {
@@ -286,6 +286,8 @@ export default function ClientPortalPage() {
   const [clientRisk, setClientRisk] = useState<ClientRisk | null>(null);
   const [clientRiskLoading, setClientRiskLoading] = useState(false);
   const [clientRiskError, setClientRiskError] = useState<string | null>(null);
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   const canRunRisk = entity.name.trim().length > 0 && shareholders.length > 0;
 
@@ -313,16 +315,17 @@ export default function ClientPortalPage() {
       });
       if (res.ok) {
         const data = (await res.json()) as ClientRisk;
+        if (!mountedRef.current) return;
         setClientRisk(data);
       } else {
         console.error(`[hawkeye] client-portal/client-risk HTTP ${res.status}`);
-        setClientRiskError(`Risk assessment failed (HTTP ${res.status}). Please try again.`);
+        if (mountedRef.current) setClientRiskError(`Risk assessment failed (HTTP ${res.status}). Please try again.`);
       }
     } catch (err) {
       console.error("[hawkeye] client-portal/client-risk threw:", err);
-      setClientRiskError("Risk assessment could not be reached. Please check your connection and try again.");
+      if (mountedRef.current) setClientRiskError("Risk assessment could not be reached. Please check your connection and try again.");
     } finally {
-      setClientRiskLoading(false);
+      if (mountedRef.current) setClientRiskLoading(false);
     }
   }
 

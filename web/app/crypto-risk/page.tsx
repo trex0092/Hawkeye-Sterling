@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ModuleLayout, ModuleHero } from "@/components/layout/ModuleLayout";
 import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 import { analyzeCrypto, type WalletNode } from "@/lib/intelligence/cryptoExposure";
@@ -70,6 +70,9 @@ export default function CryptoRiskPage() {
   const [threat, setThreat] = useState<CryptoThreat | null>(null);
   const [threatLoading, setThreatLoading] = useState(false);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
+
   // ── Deterministic crypto-exposure baseline ─────────────────────────────
   // Runs the local pure-function analyser against the API result to
   // surface direct/1-hop/indirect cluster exposure without an LLM call.
@@ -129,10 +132,11 @@ export default function CryptoRiskPage() {
         return;
       }
       const data = await res.json() as { ok: boolean } & CryptoThreat;
+      if (!mountedRef.current) return;
       if (data.ok) setThreat(data);
     } catch (err) {
       console.error("[hawkeye] crypto-threat threw:", err);
-    } finally { setThreatLoading(false); }
+    } finally { if (mountedRef.current) setThreatLoading(false); }
   };
 
   async function score() {
@@ -145,12 +149,13 @@ export default function CryptoRiskPage() {
         body: JSON.stringify({ address: address.trim() }),
       });
       const data = await res.json() as WalletRisk;
+      if (!mountedRef.current) return;
       if (!data.ok) setError(data.error ?? "Scoring failed");
       else setResult(data);
     } catch (err) {
       console.error("[hawkeye] crypto-risk scoring threw:", err);
-      setError("Request failed");
-    } finally { setLoading(false); }
+      if (mountedRef.current) setError("Request failed");
+    } finally { if (mountedRef.current) setLoading(false); }
   }
 
   return (

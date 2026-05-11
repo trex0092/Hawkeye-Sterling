@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import type { EthicsAssessmentResult } from "@/app/api/ai-ethics-assessment/route";
 import { loadAuditEntries, type AuditEntry } from "@/lib/audit";
@@ -1353,6 +1353,8 @@ export default function ResponsibleAIPage() {
   const [raoName, setRaoName] = useState<string>(RAO_DEFAULT);
   const [draftRao, setDraftRao] = useState<string>(RAO_DEFAULT);
   const [aiAuditEvents, setAiAuditEvents] = useState<AuditEntry[]>([]);
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   useEffect(() => {
     try {
@@ -1419,11 +1421,12 @@ export default function ResponsibleAIPage() {
 
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = (await res.json()) as EthicsAssessmentResult & { ok?: boolean };
+      if (!mountedRef.current) return;
       setAssessmentResult(data);
     } catch (e) {
-      setAssessmentError(e instanceof Error ? e.message : "Unknown error");
+      if (mountedRef.current) setAssessmentError(e instanceof Error ? e.message : "Unknown error");
     } finally {
-      setAssessmentLoading(false);
+      if (mountedRef.current) setAssessmentLoading(false);
     }
   };
 

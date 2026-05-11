@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import type { TypologyResult, TypologySearchResponse } from "@/app/api/typology-library/search/route";
 import type { TypologyDetailResult } from "@/app/api/typology-library/detail/route";
@@ -120,6 +120,8 @@ function FiuDpmsSection() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   const fetchMatrix = async () => {
     if (data) { setOpen(true); return; }
@@ -127,14 +129,18 @@ function FiuDpmsSection() {
     setError(null);
     try {
       const res = await fetch("/api/fiu-typology-check");
-      if (!res.ok) { setError(`Failed to load coverage matrix (HTTP ${res.status})`); return; }
+      if (!res.ok) {
+        if (mountedRef.current) setError(`Failed to load coverage matrix (HTTP ${res.status})`);
+        return;
+      }
       const json = (await res.json()) as FiuCoverageResponse;
+      if (!mountedRef.current) return;
       setData(json);
       setOpen(true);
     } catch {
-      setError("Network error — could not load FIU coverage matrix.");
+      if (mountedRef.current) setError("Network error — could not load FIU coverage matrix.");
     } finally {
-      setLoading(false);
+      if (mountedRef.current) setLoading(false);
     }
   };
 
@@ -299,6 +305,8 @@ function DeepDiveModal({
   const [loading, setLoading] = useState(false);
   const [fetched, setFetched] = useState(false);
   const [detailError, setDetailError] = useState<string | null>(null);
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   const fetchDetail = async () => {
     if (fetched) return;
@@ -312,17 +320,17 @@ function DeepDiveModal({
       });
       if (!res.ok) {
         console.error("[hawkeye] typology-library detail fetch HTTP", res.status);
-        setDetailError(`Could not load typology detail (HTTP ${res.status}).`);
+        if (mountedRef.current) setDetailError(`Could not load typology detail (HTTP ${res.status}).`);
       } else {
         const json = (await res.json()) as TypologyDetailResult;
+        if (!mountedRef.current) return;
         setData(json);
       }
     } catch (err) {
       console.error("[hawkeye] typology-library detail fetch threw:", err);
-      setDetailError(`Network error — ${err instanceof Error ? err.message : String(err)}.`);
+      if (mountedRef.current) setDetailError(`Network error — ${err instanceof Error ? err.message : String(err)}.`);
     } finally {
-      setLoading(false);
-      setFetched(true);
+      if (mountedRef.current) { setLoading(false); setFetched(true); }
     }
   };
 
@@ -597,6 +605,8 @@ export default function TypologyLibraryPage() {
   const [results, setResults] = useState<TypologySearchResponse | null>(null);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [deepDiveTarget, setDeepDiveTarget] = useState<string | null>(null);
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   const handleSearch = async (overrideQuery?: string, overrideFilter?: FilterKey) => {
     const q = overrideQuery ?? query;
@@ -620,7 +630,7 @@ export default function TypologyLibraryPage() {
       const isHtml = raw.trimStart().toLowerCase().startsWith("<");
       if (!res.ok || isHtml) {
         console.error(`[hawkeye] typology-library search HTTP ${res.status} isHtml=${isHtml}`);
-        setSearchError(
+        if (mountedRef.current) setSearchError(
           res.status === 503
             ? "Typology-library AI service unavailable — set ANTHROPIC_API_KEY or retry in a moment."
             : isHtml
@@ -633,17 +643,18 @@ export default function TypologyLibraryPage() {
       try { json = JSON.parse(raw) as TypologySearchResponse; }
       catch (err) {
         console.error("[hawkeye] typology-library search JSON.parse failed:", err, raw.slice(0, 200));
-        setSearchError("Typology-library returned a malformed response.");
+        if (mountedRef.current) setSearchError("Typology-library returned a malformed response.");
         return;
       }
+      if (!mountedRef.current) return;
       setResults(json);
     } catch (err) {
       const isTimeout = err instanceof Error && (err.name === "AbortError" || err.name === "TimeoutError");
-      setSearchError(isTimeout
+      if (mountedRef.current) setSearchError(isTimeout
         ? "Typology search timed out after 45s — please retry or use a tighter query."
         : `Network error — ${err instanceof Error ? err.message : String(err)}.`);
     } finally {
-      setLoading(false);
+      if (mountedRef.current) setLoading(false);
     }
   };
 

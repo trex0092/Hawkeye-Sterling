@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { IsoDateInput } from "@/components/ui/IsoDateInput";
 import type { DpmsrObligation, DpmsrTransaction } from "@/app/api/dpmsr-trigger/route";
@@ -50,6 +50,8 @@ function EvaluateForm({ onResult }: EvaluateFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [evalResult, setEvalResult] = useState<{ obligationsFound: number; obligations: DpmsrObligation[] } | null>(null);
   const [saveMode, setSaveMode] = useState(false);
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   const inputCls = "text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-ink-0 focus:border-brand outline-none";
 
@@ -73,11 +75,12 @@ function EvaluateForm({ onResult }: EvaluateFormProps) {
         body: JSON.stringify({ transactions, save }),
       });
       const data = (await res.json()) as { ok: boolean; obligationsFound: number; obligations: DpmsrObligation[]; error?: string };
+      if (!mountedRef.current) return;
       if (!data.ok) { setError(data.error ?? "Evaluation failed"); return; }
       setEvalResult(data);
       if (save && data.obligations.length > 0) { onResult(data.obligations); setTransactions([]); setEvalResult(null); }
-    } catch { setError("Network error"); }
-    finally { setLoading(false); }
+    } catch { if (mountedRef.current) setError("Network error"); }
+    finally { if (mountedRef.current) setLoading(false); }
   };
 
   return (
@@ -171,19 +174,22 @@ export default function DpmsrPage() {
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [saving, setSaving] = useState<string | null>(null);
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   const loadObligations = useCallback(async () => {
     try {
       const res = await fetch("/api/dpmsr-trigger");
       if (res.ok) {
         const data = (await res.json()) as { ok: boolean; obligations: DpmsrObligation[] };
+        if (!mountedRef.current) return;
         if (data.ok) setObligations(data.obligations);
       } else {
         console.error(`[hawkeye] dpmsr-trigger HTTP ${res.status}`);
       }
     } catch (err) {
       console.error("[hawkeye] dpmsr loadObligations threw:", err);
-    } finally { setLoading(false); }
+    } finally { if (mountedRef.current) setLoading(false); }
   }, []);
 
   useEffect(() => { void loadObligations(); }, [loadObligations]);
@@ -193,8 +199,9 @@ export default function DpmsrPage() {
     try {
       const res = await fetch("/api/dpmsr-trigger", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ patch: { id, ...patch } }) });
       const data = (await res.json()) as { ok: boolean; obligation?: DpmsrObligation };
+      if (!mountedRef.current) return;
       if (data.ok && data.obligation) setObligations((prev) => prev.map((o) => o.id === id ? data.obligation! : o));
-    } finally { setSaving(null); }
+    } finally { if (mountedRef.current) setSaving(null); }
   };
 
   const handleNewObligations = (obs: DpmsrObligation[]) => {

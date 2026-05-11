@@ -315,6 +315,8 @@ function AnalysisTab() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<NewsIntelResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   const addArticle = () => {
     setArticles((a) => [...a, { source: "", headline: "", date: "", content: "", language: "en" }]);
@@ -348,11 +350,12 @@ function AnalysisTab() {
         body: JSON.stringify({ subject: subject.trim(), articles: valid }),
       });
       const data = (await res.json()) as NewsIntelResult;
+      if (!mountedRef.current) return;
       setResult(data);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Request failed");
+      if (mountedRef.current) setError(e instanceof Error ? e.message : "Request failed");
     } finally {
-      setLoading(false);
+      if (mountedRef.current) setLoading(false);
     }
   };
 
@@ -585,11 +588,14 @@ function FeedTab({
   const [filter, setFilter] = useState<FeedFilter>("all");
   const [fetchedAt, setFetchedAt] = useState<string>("");
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   const fetchFeed = useCallback(async () => {
     try {
       const res = await fetch("/api/news-intel/feed");
       const data = (await res.json()) as NewsFeedResult;
+      if (!mountedRef.current) return;
       if (data.ok) {
         setItems(data.items);
         setFetchedAt(data.fetchedAt);
@@ -599,7 +605,7 @@ function FeedTab({
     } catch (err) {
       console.error("[hawkeye] news-intel feed threw — keeping existing items:", err);
     } finally {
-      setLoading(false);
+      if (mountedRef.current) setLoading(false);
     }
   }, []);
 

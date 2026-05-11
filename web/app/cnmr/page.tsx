@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { IsoDateInput } from "@/components/ui/IsoDateInput";
 import type { CnmrCase } from "@/app/api/cnmr/route";
@@ -75,6 +75,8 @@ function NewCnmrForm({ onCreated, onCancel }: NewCnmrFormProps) {
   const [supervisoryAuthority, setSupervisoryAuthority] = useState<CnmrCase["supervisoryAuthority"]>("both");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   const submit = async () => {
     if (!subjectName.trim()) { setError("Subject name required"); return; }
@@ -86,10 +88,11 @@ function NewCnmrForm({ onCreated, onCancel }: NewCnmrFormProps) {
         body: JSON.stringify({ subjectName, sourceList, listEntry, matchScore: parseInt(matchScore) || 100, freezeDate: new Date(freezeDate).toISOString(), narrativeDraft, supervisoryAuthority }),
       });
       const data = (await res.json()) as { ok: boolean; case?: CnmrCase; error?: string };
+      if (!mountedRef.current) return;
       if (!data.ok) { setError(data.error ?? "Failed to create case"); return; }
       onCreated(data.case!);
-    } catch { setError("Network error"); }
-    finally { setSaving(false); }
+    } catch { if (mountedRef.current) setError("Network error"); }
+    finally { if (mountedRef.current) setSaving(false); }
   };
 
   const inputCls = "w-full text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-ink-0 focus:border-brand outline-none";
@@ -140,14 +143,17 @@ function CaseDetail({ c, onUpdate }: CaseDetailProps) {
   const [narrativeDraft, setNarrativeDraft] = useState(c.narrativeDraft);
   const [goAmlRef, setGoAmlRef] = useState(c.goAmlRef ?? "");
   const [saving, setSaving] = useState(false);
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   const patch = async (patch: Partial<CnmrCase>) => {
     setSaving(true);
     try {
       const res = await fetch("/api/cnmr", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ id: c.id, ...patch }) });
       const data = (await res.json()) as { ok: boolean; case?: CnmrCase };
+      if (!mountedRef.current) return;
       if (data.ok && data.case) onUpdate(data.case);
-    } finally { setSaving(false); }
+    } finally { if (mountedRef.current) setSaving(false); }
   };
 
   const inputCls = "w-full text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:border-brand outline-none";
@@ -216,16 +222,19 @@ export default function CnmrPage() {
   const [loading, setLoading] = useState(true);
   const [showNew, setShowNew] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   const loadCases = useCallback(async () => {
     try {
       const res = await fetch("/api/cnmr");
       if (res.ok) {
         const data = (await res.json()) as { ok: boolean; cases: CnmrCase[] };
+        if (!mountedRef.current) return;
         if (data.ok) setCases(data.cases);
       }
     } catch { /* use localStorage fallback */ }
-    finally { setLoading(false); }
+    finally { if (mountedRef.current) setLoading(false); }
   }, []);
 
   useEffect(() => { void loadCases(); }, [loadCases]);

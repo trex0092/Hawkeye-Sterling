@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Header } from "@/components/layout/Header";
 import { fetchJson } from "@/lib/api/fetchWithRetry";
 
@@ -37,6 +37,9 @@ export default function AbTestPage() {
   const [result, setResult] = useState<ApiResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
+
   const submit = async () => {
     const subjects = pasted
       .split(/\r?\n/)
@@ -69,6 +72,7 @@ export default function AbTestPage() {
       label: "A/B run failed",
       timeoutMs: 90_000,
     });
+    if (!mountedRef.current) return;
     setRunning(false);
     if (!res.ok || !res.data?.ok) {
       console.error("[hawkeye] ab-test/ab-threshold failed:", res.error, res.data);

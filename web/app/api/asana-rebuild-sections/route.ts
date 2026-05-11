@@ -135,12 +135,13 @@ async function getSections(token: string, projectGid: string): Promise<Array<{ g
   return json.data ?? [];
 }
 
-async function deleteSection(token: string, sectionGid: string): Promise<void> {
-  await fetch(`${API}/sections/${sectionGid}`, {
+async function deleteSection(token: string, sectionGid: string): Promise<boolean> {
+  const res = await fetch(`${API}/sections/${sectionGid}`, {
     method: "DELETE",
     headers: headers(token),
     signal: AbortSignal.timeout(8_000),
   });
+  return res.ok;
 }
 
 async function createSection(token: string, projectGid: string, name: string): Promise<boolean> {
@@ -192,17 +193,40 @@ export async function POST(): Promise<NextResponse> {
       let created = 0;
       try {
         const existing = await getSections(token, project.gid);
+        const desiredSet = new Set(project.sections);
+        // Track names that survive (delete rejected by Asana) so we don't try
+        // to re-create them and hit a 400 duplicate-name error.
+        const survivingNames = new Set<string>();
         for (const sec of existing) {
           try {
-            await deleteSection(token, sec.gid);
-            deleted++;
+            const ok = await deleteSection(token, sec.gid);
+            if (ok) {
+              deleted++;
+            } else {
+              survivingNames.add(sec.name);
+              // Only report an error when we WANTED to remove the section
+              // (i.e. it isn't in the desired list). If it's already the
+              // correct section name, the "delete failed" is irrelevant —
+              // the section is in the right state.
+              if (!desiredSet.has(sec.name)) {
+                errors.push(`delete:${sec.name}`);
+              }
+            }
           } catch {
-            errors.push(`delete:${sec.name}`);
+            survivingNames.add(sec.name);
+            if (!desiredSet.has(sec.name)) {
+              errors.push(`delete:${sec.name}`);
+            }
           }
           await delay(50);
         }
         await delay(200);
         for (const sectionName of project.sections) {
+          if (survivingNames.has(sectionName)) {
+            // Section already exists with the right name — count as success.
+            created++;
+            continue;
+          }
           try {
             const ok = await createSection(token, project.gid, sectionName);
             if (ok) created++;

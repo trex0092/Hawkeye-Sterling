@@ -699,6 +699,8 @@ export default function StatusPage() {
 function SanctionsRefreshButton() {
   const [state, setState] = useState<"idle" | "running" | "done" | "error">("idle");
   const [msg, setMsg] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   const run = async () => {
     setState("running");
@@ -706,6 +708,7 @@ function SanctionsRefreshButton() {
     try {
       const res = await fetch("/api/sanctions/refresh", { method: "POST" });
       const json = await res.json() as { ok?: boolean; message?: string; error?: string };
+      if (!mountedRef.current) return;
       if (json.ok) {
         setMsg(json.message ?? "Cache invalidated — live lists reload on next screen.");
         setState("done");
@@ -714,8 +717,8 @@ function SanctionsRefreshButton() {
         setState("error");
       }
     } catch (e) {
-      setMsg(e instanceof Error ? e.message : "Network error");
-      setState("error");
+      if (mountedRef.current) setMsg(e instanceof Error ? e.message : "Network error");
+      if (mountedRef.current) setState("error");
     }
   };
 
@@ -890,6 +893,8 @@ function AsanaRebuildSection() {
   const [cmResults, setCmResults] = useState<CmResult[]>([]);
   const [cmEnvBlock, setCmEnvBlock] = useState("");
   const [cmErr, setCmErr] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   const createMissing = async () => {
     setCmState("running");
@@ -902,10 +907,13 @@ function AsanaRebuildSection() {
       try {
         json = await res.json() as typeof json;
       } catch {
-        setCmErr(`Server error (HTTP ${res.status}) — check Netlify function logs.`);
-        setCmState("error");
+        if (mountedRef.current) {
+          setCmErr(`Server error (HTTP ${res.status}) — check Netlify function logs.`);
+          setCmState("error");
+        }
         return;
       }
+      if (!mountedRef.current) return;
       setCmResults(json.results ?? []);
       setCmEnvBlock(json.envBlock ?? "");
       if (json.ok || (json.results && json.results.length > 0)) {
@@ -915,8 +923,8 @@ function AsanaRebuildSection() {
         setCmState("error");
       }
     } catch (e) {
-      setCmErr(e instanceof Error ? e.message : "Network error");
-      setCmState("error");
+      if (mountedRef.current) setCmErr(e instanceof Error ? e.message : "Network error");
+      if (mountedRef.current) setCmState("error");
     }
   };
 
@@ -930,10 +938,13 @@ function AsanaRebuildSection() {
       try {
         data = await res.json() as typeof data;
       } catch {
-        setErrMsg(`Server error (HTTP ${res.status}) — the function may have timed out. Check Netlify function logs.`);
-        setState("error");
+        if (mountedRef.current) {
+          setErrMsg(`Server error (HTTP ${res.status}) — the function may have timed out. Check Netlify function logs.`);
+          setState("error");
+        }
         return;
       }
+      if (!mountedRef.current) return;
       if (data.ok) {
         setResults(data.results ?? []);
         setState("done");
@@ -950,8 +961,8 @@ function AsanaRebuildSection() {
         setState("error");
       }
     } catch (e) {
-      setErrMsg(e instanceof Error ? e.message : "Network error");
-      setState("error");
+      if (mountedRef.current) setErrMsg(e instanceof Error ? e.message : "Network error");
+      if (mountedRef.current) setState("error");
     }
   };
 

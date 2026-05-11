@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ModuleLayout, ModuleHero } from "@/components/layout/ModuleLayout";
 import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 
@@ -44,6 +44,8 @@ export default function DomainIntelPage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<DomainIntelResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   async function scan() {
     if (!domain.trim()) return;
@@ -55,12 +57,13 @@ export default function DomainIntelPage() {
         body: JSON.stringify({ domain: domain.trim().toLowerCase() }),
       });
       const data = await res.json() as DomainIntelResult;
+      if (!mountedRef.current) return;
       if (!data.ok) setError(data.error ?? "Scan failed");
       else setResult(data);
     } catch (err) {
       console.error("[hawkeye] domain-intel threw:", err);
-      setError("Request failed");
-    } finally { setLoading(false); }
+      if (mountedRef.current) setError("Request failed");
+    } finally { if (mountedRef.current) setLoading(false); }
   }
 
   return (
