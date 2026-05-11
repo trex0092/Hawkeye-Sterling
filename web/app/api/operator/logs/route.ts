@@ -6,7 +6,7 @@
 // so concurrent writes never collide.
 
 import { NextResponse } from "next/server";
-import { withGuard } from "@/lib/server/guard";
+import { enforce } from "@/lib/server/enforce";
 import type { ConsequenceLevel } from "@/lib/mcp/tool-manifest";
 
 export const runtime = "nodejs";
@@ -29,10 +29,23 @@ export interface McpLogEntry {
 async function getStore() {
   const mod = await import("@netlify/blobs").catch(() => null);
   if (!mod) return null;
-  return mod.getStore({ name: "mcp-activity-logs" });
+  try {
+    const siteID = process.env["NETLIFY_SITE_ID"] ?? process.env["SITE_ID"];
+    const token =
+      process.env["NETLIFY_API_TOKEN"] ??
+      process.env["NETLIFY_AUTH_TOKEN"] ??
+      process.env["NETLIFY_BLOBS_TOKEN"];
+    return siteID && token
+      ? mod.getStore({ name: "mcp-activity-logs", siteID, token, consistency: "strong" })
+      : mod.getStore({ name: "mcp-activity-logs" });
+  } catch {
+    return null;
+  }
 }
 
 async function handleGet(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   const url = new URL(req.url);
   const exportCsv = url.searchParams.get("export") === "csv";
   const limit = Math.min(500, parseInt(url.searchParams.get("limit") ?? "200", 10));
@@ -90,7 +103,12 @@ async function handleGet(req: Request): Promise<NextResponse> {
     }) as unknown as NextResponse;
   }
 
-  return NextResponse.json({ ok: true, count: entries.length, entries });
+  return NextResponse.json(
+    { ok: true, count: entries.length, entries },
+    { headers: gate.headers },
+  );
 }
 
-export const GET = withGuard(handleGet);
+export async function GET(req: Request): Promise<NextResponse> {
+  return handleGet(req);
+}
