@@ -58,6 +58,15 @@ const FALLBACK: EddQuestionnaire = {
   regulatoryBasis: "FDL 10/2025 Art.10, Art.13; Cabinet Resolution 134/2025; FATF R.10, R.12",
 };
 
+const LEVEL_RANK: Record<"standard" | "enhanced" | "intensive", number> = { standard: 0, enhanced: 1, intensive: 2 };
+
+function maxLevel(
+  a: "standard" | "enhanced" | "intensive",
+  b: "standard" | "enhanced" | "intensive",
+): "standard" | "enhanced" | "intensive" {
+  return LEVEL_RANK[a] >= LEVEL_RANK[b] ? a : b;
+}
+
 interface SuperBrainSignals {
   pep?: { tier?: string; type?: string; salience?: number } | null;
   screen?: { topScore?: number } | null;
@@ -73,21 +82,21 @@ function deriveEddContext(sb: SuperBrainSignals): { eddLevel: "standard" | "enha
 
   const pepTier = sb.pep?.tier ?? "";
   if (pepTier === "T1") { signals.push(`PEP Tier 1 (${sb.pep?.type ?? "senior official"})`); level = "intensive"; }
-  else if (pepTier === "T2" || pepTier === "T3") { signals.push(`PEP Tier ${pepTier}`); if (level !== "intensive") level = "enhanced"; }
+  else if (pepTier === "T2" || pepTier === "T3") { signals.push(`PEP Tier ${pepTier}`); level = maxLevel(level, "enhanced"); }
 
   const topScore = sb.screen?.topScore ?? 0;
   if (topScore >= 80) { signals.push(`Sanctions match score ${topScore}/100`); level = "intensive"; }
-  else if (topScore >= 50) { signals.push(`Possible sanctions match score ${topScore}/100`); if (level !== "intensive") level = "enhanced"; }
+  else if (topScore >= 50) { signals.push(`Possible sanctions match score ${topScore}/100`); level = maxLevel(level, "enhanced"); }
 
   if (sb.jurisdiction?.cahra) { signals.push(`CAHRA jurisdiction: ${sb.jurisdiction.name ?? sb.jurisdiction.iso2 ?? "unknown"}`); level = "intensive"; }
 
   const typScore = sb.typologies?.compositeScore ?? 0;
   if (typScore >= 0.7) { signals.push(`High typology composite score ${Math.round(typScore * 100)}%`); level = "intensive"; }
-  else if (typScore >= 0.4) { signals.push(`Moderate typology composite score ${Math.round(typScore * 100)}%`); if (level !== "intensive") level = "enhanced"; }
+  else if (typScore >= 0.4) { signals.push(`Moderate typology composite score ${Math.round(typScore * 100)}%`); level = maxLevel(level, "enhanced"); }
 
   const amSev = sb.adverseMediaScored?.severity;
   if (amSev === "critical") { signals.push("Critical adverse media severity"); level = "intensive"; }
-  else if (amSev === "high") { signals.push("High adverse media severity"); if (level !== "intensive") level = "enhanced"; }
+  else if (amSev === "high") { signals.push("High adverse media severity"); level = maxLevel(level, "enhanced"); }
 
   const composite = sb.composite?.score ?? 0;
   if (composite >= 75 && level === "standard") { signals.push(`Composite risk score ${composite}/100`); level = "enhanced"; }

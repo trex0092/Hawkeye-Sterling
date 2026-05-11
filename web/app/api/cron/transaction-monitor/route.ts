@@ -105,7 +105,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const authHeader = req.headers.get("authorization") ?? "";
   const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
 
-  if (cronSecret && token !== cronSecret) {
+  if (!cronSecret || token !== cronSecret) {
     return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
   }
 

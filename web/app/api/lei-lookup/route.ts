@@ -7,6 +7,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 20;
 
 import { NextResponse } from "next/server";
+import { enforce } from "@/lib/server/enforce";
 
 const CORS: Record<string, string> = {
   "access-control-allow-origin": process.env["NEXT_PUBLIC_APP_URL"] ?? "https://hawkeye-sterling.netlify.app",
@@ -249,6 +250,9 @@ interface LeiLookupBody {
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
+
   let body: LeiLookupBody;
   try {
     body = (await req.json()) as LeiLookupBody;
