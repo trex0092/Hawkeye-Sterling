@@ -496,13 +496,17 @@ const TOOLS: ToolDef[] = [
         jurisdiction: { type: "string" },
         dob: { type: "string" },
         suspicionBasis: { type: "string", description: "Grounds for suspicion" },
+        filingType: { type: "string", enum: ["STR", "SAR", "CTR", "DPMSR", "FFR", "PNMR", "HRCR", "AIF"], description: "GoAML filing type — defaults to STR" },
+        approver: { type: "string", description: "Four-eyes approver name (required for final filing)" },
       },
       required: ["subjectName", "suspicionBasis"],
     },
-    handler: async ({ suspicionBasis, subjectName, ...rest }) =>
+    handler: async ({ suspicionBasis, subjectName, filingType, approver, ...rest }) =>
       callApi("/api/sar-report", "POST", {
         subject: { name: subjectName, ...rest },
         suspicionBasis,
+        filingType: filingType ?? "STR",
+        approver,
       }),
   },
   {
