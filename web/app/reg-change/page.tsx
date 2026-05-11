@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import type { RegChangeResult, RegChange } from "@/app/api/reg-change/route";
 import type { ImpactAssessmentResult } from "@/app/api/reg-change/impact/route";
@@ -120,6 +120,8 @@ function ImpactPanel({
 }) {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<ImpactAssessmentResult | null>(null);
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   const load = async () => {
     setLoading(true);
@@ -134,11 +136,12 @@ function ImpactPanel({
         return;
       }
       const d = (await res.json()) as ImpactAssessmentResult;
+      if (!mountedRef.current) return;
       setData(d);
     } catch (err) {
       console.error("[hawkeye] reg-change/impact threw:", err);
     } finally {
-      setLoading(false);
+      if (mountedRef.current) setLoading(false);
     }
   };
 
@@ -268,6 +271,8 @@ export default function RegChangePage() {
   const [result, setResult] = useState<RegChangeResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [impactRegulation, setImpactRegulation] = useState<string | null>(null);
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   const institution = {
     type: institutionType,
@@ -304,11 +309,12 @@ export default function RegChangePage() {
         body: JSON.stringify({ institution }),
       });
       const d = (await res.json()) as RegChangeResult;
+      if (!mountedRef.current) return;
       setResult(d);
     } catch (e) {
-      setError(String(e));
+      if (mountedRef.current) setError(String(e));
     } finally {
-      setLoading(false);
+      if (mountedRef.current) setLoading(false);
     }
   };
 

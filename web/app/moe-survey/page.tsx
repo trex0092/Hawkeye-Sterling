@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { IsoDateInput } from "@/components/ui/IsoDateInput";
 import type { MoeSurveyState } from "@/app/api/moe-survey/route";
@@ -69,18 +69,21 @@ export default function MoeSurveyPage() {
   const [activeSection, setActiveSection] = useState<string>("business-profile");
   const [saving, setSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   const loadSurvey = useCallback(async () => {
     try {
       const res = await fetch("/api/moe-survey");
       if (res.ok) {
         const data = (await res.json()) as { ok: boolean; survey: MoeSurveyState };
+        if (!mountedRef.current) return;
         if (data.ok) { setSurvey(data.survey); return; }
       }
     } catch (err) { console.warn("[hawkeye] moe-survey server load failed:", err); }
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) setSurvey(JSON.parse(raw) as MoeSurveyState);
+      if (raw && mountedRef.current) setSurvey(JSON.parse(raw) as MoeSurveyState);
     } catch (err) { console.warn("[hawkeye] moe-survey localStorage parse failed:", err); }
   }, []);
 
@@ -92,10 +95,11 @@ export default function MoeSurveyPage() {
     setSaving(true);
     try {
       const res = await fetch("/api/moe-survey", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(updated) });
+      if (!mountedRef.current) return;
       if (res.ok) setLastSaved(new Date());
       else console.error(`[hawkeye] moe-survey autosave HTTP ${res.status}`);
     } catch (err) { console.error("[hawkeye] moe-survey autosave threw:", err); }
-    finally { setSaving(false); }
+    finally { if (mountedRef.current) setSaving(false); }
   }, []);
 
   const update = useCallback((patch: Partial<MoeSurveyState>) => {
