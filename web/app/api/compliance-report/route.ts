@@ -809,11 +809,22 @@ async function handleComplianceReport(req: Request): Promise<Response> {
   } catch {
     return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400, headers: gateHeaders });
   }
-  if (!body?.subject?.name || !body?.result) {
+  if (!body?.subject?.name) {
     return NextResponse.json(
-      { ok: false, error: "subject and result are required" },
+      { ok: false, error: "subject.name is required" },
       { status: 400, headers: gateHeaders },
     );
+  }
+  // BUG-03 fix: allow standalone calls without a prior screening result
+  if (!body.result) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (body as any).result = { topScore: 0, severity: "clear", hits: [] };
+  } else if (!Array.isArray(body.result.hits)) {
+    body.result.hits = [];
+  }
+  // Ensure subject.id is always present (filename and digest use it)
+  if (!body.subject.id) {
+    body.subject = { ...body.subject, id: body.subject.name.slice(0, 32).replace(/[^A-Za-z0-9]/g, "-") };
   }
   let report: string;
   try {

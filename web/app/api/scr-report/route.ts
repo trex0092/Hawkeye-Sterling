@@ -713,16 +713,31 @@ async function handleScrReport(req: Request): Promise<Response> {
     );
   }
 
-  // Ensure result is at least a zero-state object so buildSCR never crashes
+  // BUG-04 fix: ensure result and subject.id are always present
   if (!body.result) {
     body.result = { topScore: 0, severity: "clear", hits: [] };
   } else if (!Array.isArray(body.result.hits)) {
     body.result.hits = [];
   }
+  if (!body.subject.id) {
+    body.subject = {
+      ...body.subject,
+      id: body.subject.name.slice(0, 32).replace(/[^A-Za-z0-9]/g, "-"),
+    };
+  }
 
   const now = body.now ? new Date(body.now) : new Date();
-  const scr = buildSCR(body, now);
-  const html = renderSCR(scr);
+  let html: string;
+  try {
+    const scr = buildSCR(body, now);
+    html = renderSCR(scr);
+  } catch (err) {
+    console.error("scr-report render failed", err);
+    return NextResponse.json(
+      { ok: false, error: err instanceof Error ? err.message : String(err) },
+      { status: 500, headers: gateHeaders },
+    );
+  }
 
   return new Response(html, {
     status: 200,

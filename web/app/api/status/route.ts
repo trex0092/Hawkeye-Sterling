@@ -688,6 +688,32 @@ async function checkSanctionsFreshness(): Promise<SanctionsFreshness> {
         per.push({ id, ageH: null, recordCount: null });
       }
     }
+
+    // Persist snapshot whenever we have live data so cold starts never show nulls.
+    const hasLiveData = per.some(l => l.ageH !== null);
+    if (hasLiveData) {
+      void reports.setJSON("freshness/snapshot.json", {
+        savedAt: now,
+        lists: per,
+      }).catch(() => {});
+    }
+
+    // Cold start — all blobs empty (no cron has run yet). Fall back to snapshot.
+    if (!hasLiveData) {
+      const snap = await reports.get("freshness/snapshot.json", { type: "json" }).catch(() => null) as {
+        savedAt: number;
+        lists: SanctionsFreshness["lists"];
+      } | null;
+      if (snap && Array.isArray(snap.lists) && snap.lists.length > 0) {
+        // Re-age snapshot entries: add elapsed hours since snapshot was saved.
+        const elapsedH = Math.round((now - snap.savedAt) / (60 * 60 * 1_000));
+        return snap.lists.map(l => ({
+          ...l,
+          ageH: l.ageH !== null ? l.ageH + elapsedH : null,
+        }));
+      }
+    }
+
     return per;
   });
 
