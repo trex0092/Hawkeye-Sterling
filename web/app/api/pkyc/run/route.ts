@@ -158,7 +158,7 @@ async function runSubject(subject: PKycSubject, force = false): Promise<RunSubje
       quarterly: 91 * 86_400_000,
       annual: 365 * 86_400_000,
     };
-    const nextMs = cadenceMs[subject.cadence] ?? cadenceMs.monthly;
+    const nextMs = cadenceMs[subject.cadence] ?? cadenceMs["monthly"]!;
     const nextRunAt = new Date(now.getTime() + nextMs).toISOString();
 
     const updatedSubject: PKycSubject = {
