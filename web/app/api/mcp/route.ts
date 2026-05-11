@@ -1,26 +1,29 @@
-// POST/GET /api/mcp
-// MCP (Model Context Protocol) server — exposes Hawkeye Sterling's screening,
-// intelligence, and compliance tools to Claude and other MCP clients.
+// POST /api/mcp  — Hawkeye Sterling MCP server (Streamable HTTP, stateless)
 //
-// Transport: Streamable HTTP (stateless mode, no session management needed)
-// Spec: https://modelcontextprotocol.io/specification/2025-03-26/basic/transports
+// Implements the MCP JSON-RPC 2.0 protocol directly without the SDK transport
+// layer so it works reliably on Netlify's serverless functions.
 //
 // Add to Claude.ai → Settings → Connectors:
 //   URL: https://hawkeye-sterling.netlify.app/api/mcp
-
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
-import { z } from "zod";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-const BASE_URL =
-  process.env["NEXT_PUBLIC_APP_URL"] ??
-  "https://hawkeye-sterling.netlify.app";
+const PROTOCOL_VERSION = "2024-11-05";
+const SERVER_NAME = "hawkeye-sterling";
+const SERVER_VERSION = "1.0.0";
 
-// ── Internal API proxy ───────────────────────────────────────────────────────
+const BASE_URL =
+  process.env["NEXT_PUBLIC_APP_URL"] ?? "https://hawkeye-sterling.netlify.app";
+
+const CORS: Record<string, string> = {
+  "access-control-allow-origin": "*",
+  "access-control-allow-methods": "GET, POST, DELETE, OPTIONS",
+  "access-control-allow-headers": "content-type, authorization, mcp-session-id",
+};
+
+// ── Internal API proxy ────────────────────────────────────────────────────────
 async function callApi(
   path: string,
   method: "GET" | "POST",
@@ -31,552 +34,618 @@ async function callApi(
   if (query) {
     for (const [k, v] of Object.entries(query)) url.searchParams.set(k, v);
   }
-  const res = await fetch(url.toString(), {
-    method,
-    headers: { "content-type": "application/json" },
-    ...(body ? { body: JSON.stringify(body) } : {}),
-    signal: AbortSignal.timeout(55_000),
-  });
-  return res.json().catch(() => ({ ok: res.ok, status: res.status }));
+  try {
+    const res = await fetch(url.toString(), {
+      method,
+      headers: { "content-type": "application/json" },
+      ...(body ? { body: JSON.stringify(body) } : {}),
+      signal: AbortSignal.timeout(55_000),
+    });
+    return await res.json().catch(() => ({ ok: res.ok, status: res.status }));
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) };
+  }
 }
 
-function txt(data: unknown): { content: [{ type: "text"; text: string }] } {
-  return {
-    content: [
-      {
-        type: "text" as const,
-        text: typeof data === "string" ? data : JSON.stringify(data, null, 2),
-      },
-    ],
+// ── Tool definitions ──────────────────────────────────────────────────────────
+interface ToolDef {
+  name: string;
+  description: string;
+  inputSchema: {
+    type: "object";
+    properties: Record<string, unknown>;
+    required?: string[];
   };
+  handler: (args: Record<string, unknown>) => Promise<unknown>;
 }
 
-// ── Build MCP server ─────────────────────────────────────────────────────────
-function buildServer(): McpServer {
-  const server = new McpServer({
-    name: "hawkeye-sterling",
-    version: "1.0.0",
-  });
-
-  // ── SCREENING ──────────────────────────────────────────────────────────────
-
-  server.tool(
-    "screen_subject",
-    "Screen a single subject against sanctions lists, PEP registers, adverse media, and intelligence sources. Returns a risk score, severity, hit list, and AI reasoning.",
-    {
-      name: z.string().describe("Full name of the subject"),
-      entityType: z
-        .enum(["individual", "organisation", "vessel", "aircraft", "other"])
-        .optional()
-        .describe("Entity type"),
-      jurisdiction: z.string().optional().describe("Country / jurisdiction (e.g. 'Russia', 'UAE')"),
-      aliases: z.array(z.string()).optional().describe("Known aliases or alternate spellings"),
-      dob: z.string().optional().describe("Date of birth (YYYY-MM-DD), individuals only"),
-      idNumber: z.string().optional().describe("Passport, trade licence, or other ID number"),
+const TOOLS: ToolDef[] = [
+  // ── SCREENING ───────────────────────────────────────────────────────────────
+  {
+    name: "screen_subject",
+    description:
+      "Screen a single subject against sanctions lists, PEP registers, and adverse media. Returns risk score, severity, hit list, and AI reasoning.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        name: { type: "string", description: "Full name of the subject" },
+        entityType: {
+          type: "string",
+          enum: ["individual", "organisation", "vessel", "aircraft", "other"],
+          description: "Entity type",
+        },
+        jurisdiction: { type: "string", description: "Country / jurisdiction, e.g. Russia" },
+        aliases: { type: "array", items: { type: "string" }, description: "Known aliases" },
+        dob: { type: "string", description: "Date of birth YYYY-MM-DD (individuals)" },
+        idNumber: { type: "string", description: "Passport or trade licence number" },
+      },
+      required: ["name"],
     },
-    async (args) => {
-      const data = await callApi("/api/quick-screen", "POST", { subject: args });
-      return txt(data);
+    handler: async (args) => callApi("/api/quick-screen", "POST", { subject: args }),
+  },
+  {
+    name: "batch_screen",
+    description: "Screen multiple subjects in one call. Returns a result per subject plus a summary.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        subjects: {
+          type: "array",
+          description: "List of subjects to screen (max 500)",
+          items: {
+            type: "object",
+            properties: {
+              name: { type: "string" },
+              entityType: { type: "string" },
+              jurisdiction: { type: "string" },
+              aliases: { type: "array", items: { type: "string" } },
+              dob: { type: "string" },
+            },
+            required: ["name"],
+          },
+        },
+      },
+      required: ["subjects"],
     },
-  );
-
-  server.tool(
-    "batch_screen",
-    "Screen multiple subjects in one call. Streams progress. Returns a result per subject plus a summary.",
-    {
-      subjects: z
-        .array(
-          z.object({
-            name: z.string(),
-            entityType: z
-              .enum(["individual", "organisation", "vessel", "aircraft", "other"])
-              .optional(),
-            jurisdiction: z.string().optional(),
-            aliases: z.array(z.string()).optional(),
-            dob: z.string().optional(),
-          }),
-        )
-        .describe("List of subjects to screen (max 500)"),
+    handler: async (args) =>
+      callApi("/api/batch-screen", "POST", { rows: args["subjects"] }),
+  },
+  {
+    name: "super_brain",
+    description:
+      "Full deep-analysis: composite risk score, PEP assessment, jurisdiction profile, adverse media scoring, typology matching, ESG, redlines, and audit rationale.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        name: { type: "string" },
+        entityType: { type: "string" },
+        jurisdiction: { type: "string" },
+        aliases: { type: "array", items: { type: "string" } },
+        adverseMediaText: { type: "string", description: "Pre-fetched adverse media text" },
+      },
+      required: ["name"],
     },
-    async (args) => {
-      const data = await callApi("/api/batch-screen", "POST", { rows: args.subjects });
-      return txt(data);
-    },
-  );
-
-  server.tool(
-    "super_brain",
-    "Full deep-analysis of a subject: composite risk score, PEP assessment, jurisdiction profile, adverse media scoring, typology matching, ESG, redlines, and audit rationale.",
-    {
-      name: z.string().describe("Subject full name"),
-      entityType: z
-        .enum(["individual", "organisation", "vessel", "aircraft", "other"])
-        .optional(),
-      jurisdiction: z.string().optional(),
-      aliases: z.array(z.string()).optional(),
-      adverseMediaText: z
-        .string()
-        .optional()
-        .describe("Pre-fetched adverse media text to incorporate"),
-    },
-    async (args) => {
-      const { adverseMediaText, ...subject } = args;
-      const data = await callApi("/api/super-brain", "POST", {
+    handler: async ({ adverseMediaText, ...subject }) =>
+      callApi("/api/super-brain", "POST", {
         subject,
         ...(adverseMediaText ? { adverseMediaText } : {}),
-      });
-      return txt(data);
+      }),
+  },
+  {
+    name: "smart_disambiguate",
+    description:
+      "Disambiguate an ambiguous name using supplementary identity fields. Returns confidence and best-matching candidate.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        name: { type: "string" },
+        nationality: { type: "string" },
+        dob: { type: "string" },
+        gender: { type: "string" },
+        idNumber: { type: "string" },
+        occupation: { type: "string" },
+        context: { type: "string" },
+      },
+      required: ["name"],
     },
-  );
+    handler: async (args) => callApi("/api/smart-disambiguate", "POST", args),
+  },
 
-  server.tool(
-    "smart_disambiguate",
-    "Disambiguate a common or ambiguous name using supplementary identity fields. Returns a confidence score and the best-matching sanctioned/PEP candidate.",
-    {
-      name: z.string(),
-      nationality: z.string().optional(),
-      dob: z.string().optional(),
-      gender: z.enum(["M", "F", "male", "female", "other"]).optional(),
-      idNumber: z.string().optional(),
-      occupation: z.string().optional(),
-      employer: z.string().optional(),
-      context: z.string().optional().describe("Any additional context about the subject"),
+  // ── ADVERSE MEDIA & NEWS ────────────────────────────────────────────────────
+  {
+    name: "adverse_media_live",
+    description:
+      "Real-time GDELT 10-year adverse media lookup. Returns articles with tone scores, keyword categories, and AI summary.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        subjectName: { type: "string" },
+        entityType: { type: "string" },
+        jurisdiction: { type: "string" },
+        aliases: { type: "array", items: { type: "string" } },
+      },
+      required: ["subjectName"],
     },
-    async (args) => {
-      const data = await callApi("/api/smart-disambiguate", "POST", args);
-      return txt(data);
+    handler: async (args) => callApi("/api/adverse-media-live", "POST", args),
+  },
+  {
+    name: "news_search",
+    description:
+      "Search Google News RSS across 7 locales for a subject. Returns articles with severity classification and adverse-keyword tagging.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: { type: "string", description: "Search query — typically the subject name" },
+      },
+      required: ["query"],
     },
-  );
+    handler: async ({ query }) =>
+      callApi("/api/news-search", "GET", undefined, { q: String(query) }),
+  },
 
-  // ── ADVERSE MEDIA & NEWS ───────────────────────────────────────────────────
+  // ── PEP & SANCTIONS ─────────────────────────────────────────────────────────
+  {
+    name: "pep_profile",
+    description:
+      "Detailed PEP profile including role history, family links, and associated entities.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        name: { type: "string" },
+        jurisdiction: { type: "string" },
+        aliases: { type: "array", items: { type: "string" } },
+      },
+      required: ["name"],
+    },
+    handler: async (args) => callApi("/api/pep-profile", "POST", args),
+  },
+  {
+    name: "pep_network",
+    description:
+      "Map the PEP association network — family members, business associates, and shell entities.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        subject: { type: "string" },
+        maxDepth: { type: "number", description: "Traversal depth 1–3" },
+      },
+      required: ["subject"],
+    },
+    handler: async (args) => callApi("/api/pep-network", "POST", args),
+  },
+  {
+    name: "country_risk",
+    description:
+      "Multi-factor jurisdiction risk: FATF status, corruption index, sanctions regime, and AML/CFT maturity.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        country: { type: "string", description: "Country name or ISO code" },
+      },
+      required: ["country"],
+    },
+    handler: async ({ country }) =>
+      callApi("/api/country-risk", "POST", { countries: [country] }),
+  },
+  {
+    name: "sanctions_status",
+    description: "Check freshness and coverage of all loaded sanctions lists.",
+    inputSchema: { type: "object", properties: {} },
+    handler: async () => callApi("/api/sanctions/status", "GET"),
+  },
 
-  server.tool(
-    "adverse_media_live",
-    "Real-time GDELT 10-year adverse media lookup. Returns articles with tone scores, keyword categories (fraud, bribery, terrorism, etc.), and an AI summary.",
-    {
-      subjectName: z.string().describe("Name to search for"),
-      entityType: z
-        .enum(["individual", "organisation", "vessel", "aircraft", "other"])
-        .optional(),
-      jurisdiction: z.string().optional(),
-      aliases: z.array(z.string()).optional(),
+  // ── REPORTS ─────────────────────────────────────────────────────────────────
+  {
+    name: "generate_screening_report",
+    description:
+      "Generate a full Screening Compliance Report (SCR) — 14 sections covering sanctions, PEP, adverse media, EDD, and regulatory basis.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        subjectName: { type: "string" },
+        entityType: { type: "string" },
+        jurisdiction: { type: "string" },
+        format: { type: "string", enum: ["json", "html"], default: "json" },
+      },
+      required: ["subjectName"],
     },
-    async (args) => {
-      const data = await callApi("/api/adverse-media-live", "POST", args);
-      return txt(data);
+    handler: async ({ subjectName, entityType, jurisdiction, format }) =>
+      callApi("/api/scr-report", "POST", {
+        subject: { name: subjectName, entityType, jurisdiction },
+        format: format ?? "json",
+      }),
+  },
+  {
+    name: "generate_sar_report",
+    description:
+      "Generate a SAR/STR narrative and GoAML-compatible XML filing.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        subjectName: { type: "string" },
+        entityType: { type: "string" },
+        jurisdiction: { type: "string" },
+        dob: { type: "string" },
+        suspicionBasis: { type: "string", description: "Grounds for suspicion" },
+      },
+      required: ["subjectName", "suspicionBasis"],
     },
-  );
-
-  server.tool(
-    "news_search",
-    "Search Google News RSS across 7 locales for a subject. Returns articles with severity classification and adverse-keyword tagging.",
-    {
-      query: z.string().describe("Search query — typically the subject's name"),
-    },
-    async (args) => {
-      const data = await callApi("/api/news-search", "GET", undefined, {
-        q: args.query,
-      });
-      return txt(data);
-    },
-  );
-
-  // ── PEP & SANCTIONS ────────────────────────────────────────────────────────
-
-  server.tool(
-    "pep_profile",
-    "Look up a detailed PEP (Politically Exposed Person) profile including role history, family links, and associated entities.",
-    {
-      name: z.string(),
-      jurisdiction: z.string().optional(),
-      aliases: z.array(z.string()).optional(),
-    },
-    async (args) => {
-      const data = await callApi("/api/pep-profile", "POST", args);
-      return txt(data);
-    },
-  );
-
-  server.tool(
-    "country_risk",
-    "Multi-factor jurisdiction risk assessment: FATF status, corruption index, sanctions regime, regulatory quality, and AML/CFT maturity.",
-    {
-      country: z.string().describe("Country name or ISO code"),
-    },
-    async (args) => {
-      const data = await callApi("/api/country-risk", "POST", { countries: [args.country] });
-      return txt(data);
-    },
-  );
-
-  server.tool(
-    "sanctions_status",
-    "Check the freshness and coverage of all loaded sanctions lists.",
-    {},
-    async () => {
-      const data = await callApi("/api/sanctions/status", "GET");
-      return txt(data);
-    },
-  );
-
-  // ── REPORTS ────────────────────────────────────────────────────────────────
-
-  server.tool(
-    "generate_screening_report",
-    "Generate a full Screening Compliance Report (SCR) — 14 sections covering sanctions, PEP, adverse media, EDD, and regulatory basis. Returns HTML, PDF, or JSON.",
-    {
-      subjectName: z.string(),
-      entityType: z
-        .enum(["individual", "organisation", "vessel", "aircraft", "other"])
-        .optional(),
-      jurisdiction: z.string().optional(),
-      format: z.enum(["json", "html"]).optional().default("json"),
-    },
-    async (args) => {
-      const { format, ...rest } = args;
-      const data = await callApi(
-        "/api/scr-report",
-        "POST",
-        { subject: rest, format },
-      );
-      return txt(data);
-    },
-  );
-
-  server.tool(
-    "generate_sar_report",
-    "Generate a Suspicious Activity Report (SAR/STR) narrative and GoAML-compatible XML filing.",
-    {
-      subjectName: z.string(),
-      entityType: z
-        .enum(["individual", "organisation", "vessel", "aircraft", "other"])
-        .optional(),
-      jurisdiction: z.string().optional(),
-      dob: z.string().optional(),
-      suspicionBasis: z.string().describe("Describe the grounds for suspicion"),
-    },
-    async (args) => {
-      const { suspicionBasis, ...subject } = args;
-      const data = await callApi("/api/sar-report", "POST", {
-        subject: { name: subject.subjectName, ...subject },
+    handler: async ({ suspicionBasis, subjectName, ...rest }) =>
+      callApi("/api/sar-report", "POST", {
+        subject: { name: subjectName, ...rest },
         suspicionBasis,
-      });
-      return txt(data);
+      }),
+  },
+  {
+    name: "compliance_report",
+    description:
+      "Generate a module-level compliance report combining screening, super-brain, and audit trail.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        subjectName: { type: "string" },
+        entityType: { type: "string" },
+        jurisdiction: { type: "string" },
+      },
+      required: ["subjectName"],
     },
-  );
+    handler: async ({ subjectName, ...rest }) =>
+      callApi("/api/compliance-report", "POST", {
+        subject: { name: subjectName, ...rest },
+      }),
+  },
 
-  server.tool(
-    "compliance_report",
-    "Generate a module-level compliance report for a subject combining screening, super-brain, and audit trail.",
-    {
-      subjectName: z.string(),
-      entityType: z
-        .enum(["individual", "organisation", "vessel", "aircraft", "other"])
-        .optional(),
-      jurisdiction: z.string().optional(),
+  // ── MLRO ADVISOR ────────────────────────────────────────────────────────────
+  {
+    name: "mlro_advisor",
+    description:
+      "Deep multi-perspective MLRO analysis (executor + advisor + challenger modes). Returns a consensus compliance verdict with confidence score.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        question: { type: "string", description: "Compliance question or case to analyse" },
+        context: { type: "string", description: "Additional case context or evidence" },
+        mode: { type: "string", enum: ["executor", "advisor", "challenger", "all"] },
+      },
+      required: ["question"],
     },
-    async (args) => {
-      const data = await callApi("/api/compliance-report", "POST", {
-        subject: { name: args.subjectName, entityType: args.entityType, jurisdiction: args.jurisdiction },
-      });
-      return txt(data);
+    handler: async (args) => callApi("/api/mlro-advisor", "POST", args),
+  },
+  {
+    name: "mlro_advisor_quick",
+    description: "Fast single-pass MLRO analysis (<5s). Good for quick compliance questions and flag extraction.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        question: { type: "string" },
+        context: { type: "string" },
+      },
+      required: ["question"],
     },
-  );
+    handler: async (args) => callApi("/api/mlro-advisor-quick", "POST", args),
+  },
+  {
+    name: "ai_decision",
+    description:
+      "AI Decision Engine: automatically decides disposition (approve / EDD / escalate / STR) with reasoning and confidence.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        subjectName: { type: "string" },
+        riskScore: { type: "number", description: "Pre-computed risk score 0–100" },
+        verdict: { type: "string" },
+        evidence: { type: "string" },
+      },
+      required: ["subjectName"],
+    },
+    handler: async (args) => callApi("/api/ai-decision", "POST", args),
+  },
 
-  // ── MLRO ADVISOR ───────────────────────────────────────────────────────────
+  // ── ENTITY INTELLIGENCE ──────────────────────────────────────────────────────
+  {
+    name: "entity_graph",
+    description:
+      "Build a corporate ownership knowledge graph: directorships, UBO chains, and related entities.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        companyName: { type: "string" },
+        jurisdiction: { type: "string" },
+        companyNumber: { type: "string" },
+      },
+      required: ["companyName"],
+    },
+    handler: async (args) => callApi("/api/entity-graph", "POST", args),
+  },
+  {
+    name: "domain_intel",
+    description: "Domain reputation and hosting intelligence: registration, hosting, associated entities, and risk indicators.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        domain: { type: "string", description: "Domain name, e.g. example.com" },
+      },
+      required: ["domain"],
+    },
+    handler: async (args) => callApi("/api/domain-intel", "POST", args),
+  },
+  {
+    name: "vessel_check",
+    description: "Screen a vessel by IMO number against sanctions lists, flag-state risk, and ownership chains.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        imoNumber: { type: "string" },
+        name: { type: "string", description: "Vessel name for fuzzy matching" },
+        flagState: { type: "string" },
+      },
+      required: ["imoNumber"],
+    },
+    handler: async (args) => callApi("/api/vessel-check", "POST", args),
+  },
+  {
+    name: "crypto_risk",
+    description: "Blockchain address risk: sanctions exposure, mixer interactions, darknet links, and exchange attribution.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        address: { type: "string" },
+        chain: { type: "string", enum: ["bitcoin", "ethereum", "tron", "other"] },
+      },
+      required: ["address"],
+    },
+    handler: async (args) => callApi("/api/crypto-risk", "POST", args),
+  },
+  {
+    name: "lei_lookup",
+    description: "Look up a Legal Entity Identifier and traverse the ownership hierarchy to the ultimate parent.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        lei: { type: "string", description: "20-character LEI code" },
+        legalName: { type: "string", description: "Legal entity name if LEI unknown" },
+      },
+    },
+    handler: async (args) => callApi("/api/lei-lookup", "POST", args),
+  },
 
-  server.tool(
-    "mlro_advisor",
-    "Deep multi-perspective MLRO analysis. Runs three AI modes (executor, advisor, challenger) and synthesises a consensus compliance verdict with confidence score.",
-    {
-      question: z.string().describe("The compliance question or case to analyse"),
-      context: z.string().optional().describe("Additional case context, evidence, or background"),
-      mode: z
-        .enum(["executor", "advisor", "challenger", "all"])
-        .optional()
-        .default("all")
-        .describe("Run a specific mode or all three"),
+  // ── TRANSACTIONS & TYPOLOGY ───────────────────────────────────────────────────
+  {
+    name: "transaction_anomaly",
+    description: "Real-time transaction anomaly scoring. Detects structuring, layering, smurfing, and FATF typology patterns.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        amount: { type: "number" },
+        currency: { type: "string" },
+        senderName: { type: "string" },
+        senderCountry: { type: "string" },
+        receiverName: { type: "string" },
+        receiverCountry: { type: "string" },
+        channel: { type: "string", description: "e.g. wire, cash, crypto, trade" },
+        narrative: { type: "string" },
+      },
+      required: ["amount", "currency"],
     },
-    async (args) => {
-      const data = await callApi("/api/mlro-advisor", "POST", args);
-      return txt(data);
+    handler: async (args) => callApi("/api/transaction-anomaly", "POST", { transaction: args }),
+  },
+  {
+    name: "typology_match",
+    description: "Match facts against the FATF predicate offence typology library. Returns matched typologies with red-flag indicators.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        facts: { type: "string", description: "Description of the transaction or behaviour" },
+        subjectType: { type: "string" },
+        transactionType: { type: "string" },
+      },
+      required: ["facts"],
     },
-  );
+    handler: async (args) => callApi("/api/typology-match", "POST", args),
+  },
 
-  server.tool(
-    "mlro_advisor_quick",
-    "Fast single-pass MLRO analysis (< 5s). Good for quick compliance questions, flag extraction, and escalation recommendations.",
-    {
-      question: z.string(),
-      context: z.string().optional(),
+  // ── CASES & AUDIT ────────────────────────────────────────────────────────────
+  {
+    name: "get_cases",
+    description: "List all compliance cases with status, disposition, and risk scores.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        status: { type: "string", enum: ["active", "closed", "escalated", "all"] },
+      },
     },
-    async (args) => {
-      const data = await callApi("/api/mlro-advisor-quick", "POST", args);
-      return txt(data);
+    handler: async ({ status }) =>
+      callApi("/api/cases", "GET", undefined,
+        status && status !== "all" ? { status: String(status) } : undefined),
+  },
+  {
+    name: "audit_trail",
+    description: "Retrieve the HMAC-signed immutable audit trail for a screening or case.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        screeningId: { type: "string" },
+      },
     },
-  );
+    handler: async ({ screeningId }) =>
+      callApi("/api/audit/view", "GET", undefined,
+        screeningId ? { screeningId: String(screeningId) } : undefined),
+  },
 
-  server.tool(
-    "ai_decision",
-    "Run the AI Decision Engine on a subject. Automatically decides disposition (approve / EDD / escalate / STR) with reasoning and confidence.",
-    {
-      subjectName: z.string(),
-      riskScore: z.number().optional().describe("Pre-computed risk score 0–100"),
-      verdict: z.string().optional().describe("Preliminary human verdict to evaluate"),
-      evidence: z.string().optional().describe("Evidence summary"),
+  // ── REGULATORY ───────────────────────────────────────────────────────────────
+  {
+    name: "regulatory_feed",
+    description: "Latest UAE regulatory AML/CFT notices from CBUAE, FSRA, SCA, and other authorities.",
+    inputSchema: { type: "object", properties: {} },
+    handler: async () => callApi("/api/regulatory-feed", "GET"),
+  },
+  {
+    name: "compliance_qa",
+    description: "Multi-agent compliance Q&A. Ask any AML/CFT regulatory question and get a cited, jurisdiction-aware answer.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: { type: "string" },
+        jurisdiction: { type: "string" },
+      },
+      required: ["query"],
     },
-    async (args) => {
-      const data = await callApi("/api/ai-decision", "POST", args);
-      return txt(data);
-    },
-  );
+    handler: async (args) => callApi("/api/compliance-qa", "POST", args),
+  },
 
-  // ── ENTITY INTELLIGENCE ────────────────────────────────────────────────────
+  // ── SYSTEM ───────────────────────────────────────────────────────────────────
+  {
+    name: "system_status",
+    description: "Check Hawkeye Sterling system health: all services, external dependencies, and sanctions list freshness.",
+    inputSchema: { type: "object", properties: {} },
+    handler: async () => callApi("/api/status", "GET"),
+  },
 
-  server.tool(
-    "entity_graph",
-    "Build a knowledge graph of corporate ownership, directorships, and UBO chains for a company.",
-    {
-      companyName: z.string(),
-      jurisdiction: z.string().optional(),
-      companyNumber: z.string().optional(),
+  // ── GENERIC PROXY ────────────────────────────────────────────────────────────
+  {
+    name: "call_api",
+    description:
+      "Generic proxy to any Hawkeye Sterling API endpoint not covered by the named tools. Use the exact path, e.g. /api/crypto-tracing.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        path: { type: "string", description: "API path, e.g. /api/vessel-check/risk-profile" },
+        method: { type: "string", enum: ["GET", "POST"] },
+        body: { type: "object", description: "Request body" },
+        query: {
+          type: "object",
+          additionalProperties: { type: "string" },
+          description: "URL query parameters",
+        },
+      },
+      required: ["path"],
     },
-    async (args) => {
-      const data = await callApi("/api/entity-graph", "POST", args);
-      return txt(data);
-    },
-  );
+    handler: async ({ path, method, body, query }) =>
+      callApi(
+        String(path),
+        (method as "GET" | "POST") ?? "POST",
+        body as unknown,
+        query as Record<string, string> | undefined,
+      ),
+  },
+];
 
-  server.tool(
-    "domain_intel",
-    "Domain reputation and hosting intelligence: registration data, hosting provider, associated entities, and risk indicators.",
-    {
-      domain: z.string().describe("Domain name, e.g. example.com"),
-    },
-    async (args) => {
-      const data = await callApi("/api/domain-intel", "POST", args);
-      return txt(data);
-    },
-  );
-
-  server.tool(
-    "vessel_check",
-    "Screen a vessel by IMO number against sanctions lists, flag-state risk, and ownership chains.",
-    {
-      imoNumber: z.string().describe("IMO vessel number"),
-      name: z.string().optional().describe("Vessel name (for fuzzy matching)"),
-      flagState: z.string().optional(),
-    },
-    async (args) => {
-      const data = await callApi("/api/vessel-check", "POST", args);
-      return txt(data);
-    },
-  );
-
-  server.tool(
-    "crypto_risk",
-    "Blockchain address risk assessment: sanctions exposure, mixer interactions, darknet links, and exchange attribution.",
-    {
-      address: z.string().describe("Blockchain wallet address"),
-      chain: z
-        .enum(["bitcoin", "ethereum", "tron", "other"])
-        .optional()
-        .describe("Blockchain network"),
-    },
-    async (args) => {
-      const data = await callApi("/api/crypto-risk", "POST", args);
-      return txt(data);
-    },
-  );
-
-  server.tool(
-    "lei_lookup",
-    "Look up a Legal Entity Identifier (LEI) and traverse the ownership hierarchy to the ultimate parent.",
-    {
-      lei: z.string().optional().describe("20-character LEI code"),
-      legalName: z.string().optional().describe("Legal entity name (if LEI unknown)"),
-    },
-    async (args) => {
-      const data = await callApi("/api/lei-lookup", "POST", args);
-      return txt(data);
-    },
-  );
-
-  server.tool(
-    "pep_network",
-    "Map the PEP association network — family members, business associates, and shell entities linked to a politically exposed person.",
-    {
-      subject: z.string().describe("PEP subject name"),
-      maxDepth: z.number().optional().default(2).describe("Network traversal depth (1–3)"),
-    },
-    async (args) => {
-      const data = await callApi("/api/pep-network", "POST", args);
-      return txt(data);
-    },
-  );
-
-  // ── TRANSACTION & TYPOLOGY ─────────────────────────────────────────────────
-
-  server.tool(
-    "transaction_anomaly",
-    "Real-time transaction anomaly scoring. Detects structuring, layering, smurfing, and FATF typology patterns.",
-    {
-      amount: z.number().describe("Transaction amount"),
-      currency: z.string().describe("ISO currency code, e.g. USD"),
-      senderName: z.string().optional(),
-      senderCountry: z.string().optional(),
-      receiverName: z.string().optional(),
-      receiverCountry: z.string().optional(),
-      channel: z.string().optional().describe("e.g. wire, cash, crypto, trade"),
-      narrative: z.string().optional(),
-    },
-    async (args) => {
-      const data = await callApi("/api/transaction-anomaly", "POST", { transaction: args });
-      return txt(data);
-    },
-  );
-
-  server.tool(
-    "typology_match",
-    "Match a set of facts against the FATF predicate offence typology library. Returns matched typologies with confidence and red-flag indicators.",
-    {
-      facts: z.string().describe("Description of the transaction or behaviour to classify"),
-      subjectType: z.string().optional().describe("e.g. individual, company, VASP"),
-      transactionType: z.string().optional().describe("e.g. wire transfer, cash deposit, trade finance"),
-    },
-    async (args) => {
-      const data = await callApi("/api/typology-match", "POST", args);
-      return txt(data);
-    },
-  );
-
-  // ── CASES & AUDIT ──────────────────────────────────────────────────────────
-
-  server.tool(
-    "get_cases",
-    "List all compliance cases in the vault with their status, disposition, and risk scores.",
-    {
-      status: z
-        .enum(["active", "closed", "escalated", "all"])
-        .optional()
-        .default("all"),
-    },
-    async (args) => {
-      const data = await callApi("/api/cases", "GET", undefined,
-        args.status !== "all" ? { status: args.status } : undefined,
-      );
-      return txt(data);
-    },
-  );
-
-  server.tool(
-    "audit_trail",
-    "Retrieve the HMAC-signed immutable audit trail for a screening or case.",
-    {
-      screeningId: z.string().optional().describe("Screening ID to look up"),
-    },
-    async (args) => {
-      const data = await callApi("/api/audit/view", "GET", undefined,
-        args.screeningId ? { screeningId: args.screeningId } : undefined,
-      );
-      return txt(data);
-    },
-  );
-
-  // ── REGULATORY ─────────────────────────────────────────────────────────────
-
-  server.tool(
-    "regulatory_feed",
-    "Latest UAE regulatory announcements and AML/CFT notices from CBUAE, FSRA, SCA, and other authorities.",
-    {},
-    async () => {
-      const data = await callApi("/api/regulatory-feed", "GET");
-      return txt(data);
-    },
-  );
-
-  server.tool(
-    "compliance_qa",
-    "Multi-agent compliance Q&A. Ask any AML/CFT regulatory question and get a cited, jurisdiction-aware answer.",
-    {
-      query: z.string().describe("Compliance question to answer"),
-      jurisdiction: z.string().optional().describe("Jurisdiction context, e.g. 'UAE', 'EU'"),
-    },
-    async (args) => {
-      const data = await callApi("/api/compliance-qa", "POST", args);
-      return txt(data);
-    },
-  );
-
-  // ── SYSTEM ─────────────────────────────────────────────────────────────────
-
-  server.tool(
-    "system_status",
-    "Check Hawkeye Sterling system health: all services, external dependencies (GDELT, Asana, news feeds), and sanctions list freshness.",
-    {},
-    async () => {
-      const data = await callApi("/api/status", "GET");
-      return txt(data);
-    },
-  );
-
-  // ── GENERIC PROXY ──────────────────────────────────────────────────────────
-
-  server.tool(
-    "call_api",
-    "Generic proxy to any Hawkeye Sterling API endpoint not covered by the named tools above. Use the exact path, e.g. /api/crypto-tracing.",
-    {
-      path: z.string().describe("API path, e.g. /api/vessel-check/risk-profile"),
-      method: z.enum(["GET", "POST"]).default("POST"),
-      body: z
-        .record(z.string(), z.unknown())
-        .optional()
-        .describe("Request body as JSON object"),
-      query: z
-        .record(z.string(), z.string())
-        .optional()
-        .describe("URL query parameters"),
-    },
-    async (args) => {
-      const data = await callApi(args.path, args.method, args.body as unknown, args.query);
-      return txt(data);
-    },
-  );
-
-  return server;
+// ── JSON-RPC helpers ──────────────────────────────────────────────────────────
+function ok(id: unknown, result: unknown) {
+  return { jsonrpc: "2.0", id, result };
+}
+function err(id: unknown, code: number, message: string) {
+  return { jsonrpc: "2.0", id, error: { code, message } };
+}
+function json(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { "content-type": "application/json", ...CORS },
+  });
 }
 
-// ── Route handlers ───────────────────────────────────────────────────────────
+// ── MCP request dispatcher ────────────────────────────────────────────────────
+async function dispatch(msg: {
+  jsonrpc: string;
+  method: string;
+  params?: unknown;
+  id?: unknown;
+}): Promise<unknown> {
+  const { method, params, id } = msg;
+
+  if (method === "initialize") {
+    return ok(id, {
+      protocolVersion: PROTOCOL_VERSION,
+      serverInfo: { name: SERVER_NAME, version: SERVER_VERSION },
+      capabilities: { tools: {} },
+    });
+  }
+
+  if (method === "ping") {
+    return ok(id, {});
+  }
+
+  if (method === "tools/list") {
+    return ok(id, {
+      tools: TOOLS.map((t) => ({
+        name: t.name,
+        description: t.description,
+        inputSchema: t.inputSchema,
+      })),
+    });
+  }
+
+  if (method === "tools/call") {
+    const p = params as { name?: string; arguments?: Record<string, unknown> };
+    const tool = TOOLS.find((t) => t.name === p?.name);
+    if (!tool) return err(id, -32601, `Tool not found: ${p?.name}`);
+    try {
+      const result = await tool.handler(p?.arguments ?? {});
+      return ok(id, {
+        content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+      });
+    } catch (e) {
+      return ok(id, {
+        content: [{ type: "text", text: `Error: ${e instanceof Error ? e.message : String(e)}` }],
+        isError: true,
+      });
+    }
+  }
+
+  // Notifications have no id — ignore them silently
+  if (id === undefined || id === null) return null;
+
+  return err(id, -32601, `Method not found: ${method}`);
+}
+
+// ── Route handlers ─────────────────────────────────────────────────────────────
+
+export async function OPTIONS(): Promise<Response> {
+  return new Response(null, { status: 204, headers: CORS });
+}
+
+export async function GET(): Promise<Response> {
+  // Claude.ai sends a GET to discover the MCP endpoint.
+  // Return a minimal SSE stream that immediately closes.
+  const body = new ReadableStream({
+    start(c) {
+      c.enqueue(
+        new TextEncoder().encode(
+          `data: ${JSON.stringify({ type: "endpoint", endpoint: "/api/mcp" })}\n\n`,
+        ),
+      );
+      c.close();
+    },
+  });
+  return new Response(body, {
+    headers: {
+      "content-type": "text/event-stream",
+      "cache-control": "no-cache",
+      ...CORS,
+    },
+  });
+}
 
 export async function POST(req: Request): Promise<Response> {
-  const server = buildServer();
-  const transport = new WebStandardStreamableHTTPServerTransport({
-    sessionIdGenerator: undefined, // stateless
-  });
-  await server.connect(transport);
-  const response = await transport.handleRequest(req);
-  await server.close();
-  return response;
-}
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return json(err(null, -32700, "Parse error"), 400);
+  }
 
-export async function GET(req: Request): Promise<Response> {
-  const server = buildServer();
-  const transport = new WebStandardStreamableHTTPServerTransport({
-    sessionIdGenerator: undefined,
-  });
-  await server.connect(transport);
-  const response = await transport.handleRequest(req);
-  // Don't close for SSE — the stream stays open
-  return response;
-}
+  // Batch request
+  if (Array.isArray(body)) {
+    const results = await Promise.all(body.map((msg) => dispatch(msg as Parameters<typeof dispatch>[0])));
+    const responses = results.filter((r) => r !== null);
+    return json(responses);
+  }
 
-export async function DELETE(req: Request): Promise<Response> {
-  const server = buildServer();
-  const transport = new WebStandardStreamableHTTPServerTransport({
-    sessionIdGenerator: undefined,
-  });
-  await server.connect(transport);
-  const response = await transport.handleRequest(req);
-  await server.close();
-  return response;
+  // Single request
+  const result = await dispatch(body as Parameters<typeof dispatch>[0]);
+  if (result === null) {
+    // Notification — no response body
+    return new Response(null, { status: 202, headers: CORS });
+  }
+  return json(result);
 }
