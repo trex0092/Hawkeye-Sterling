@@ -148,9 +148,14 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
 
-  // Process max 20 hits
-  const hitsToProcess = hits.slice(0, 20);
-  const truncated = hits.length > 20;
+  if (hits.length > 20) {
+    return NextResponse.json(
+      { error: `hits array exceeds maximum batch size of 20 (received ${hits.length}). Split into multiple requests.` },
+      { status: 400 },
+    );
+  }
+  const hitsToProcess = hits;
+  const truncated = false;
 
   // Deterministic template — applied when no API key is set OR the LLM fails.
   const buildTemplate = (): DisambiguationResult => ({

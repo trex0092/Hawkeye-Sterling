@@ -2,6 +2,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
+import { enforce } from "@/lib/server/enforce";
 
 export interface RegulatoryCalendarResult {
   obligations: Array<{
@@ -147,13 +148,14 @@ const FALLBACK: RegulatoryCalendarResult = {
 };
 
 export async function POST(req: Request) {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   let body: { institutionType?: string };
   try {
     body = (await req.json()) as typeof body;
   } catch {
     body = {};
   }
-  // Deterministic route — no AI call. Returns static UAE AML/CFT regulatory calendar.
   void body; // institutionType reserved for future filtering
-  return NextResponse.json({ ok: false, error: "regulatory-calendar temporarily unavailable - please retry." }, { status: 503 });
+  return NextResponse.json({ ok: true, ...FALLBACK }, { headers: gate.headers });
 }

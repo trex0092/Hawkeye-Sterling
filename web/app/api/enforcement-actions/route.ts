@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { enforce } from "@/lib/server/enforce";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,6 +22,8 @@ const ACTION_TYPES = ["Civil Penalty", "Warning Notice", "Prohibition Order", "C
 const PENALTIES = ["USD 125,000", "USD 2.5M", "GBP 450,000", "AED 500,000", "USD 15M"];
 
 export async function POST(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   let body: ReqBody;
   try {
     body = (await req.json()) as ReqBody;

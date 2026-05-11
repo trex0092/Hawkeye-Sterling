@@ -58,23 +58,69 @@ const FALLBACK: EddQuestionnaire = {
   regulatoryBasis: "FDL 10/2025 Art.10, Art.13; Cabinet Resolution 134/2025; FATF R.10, R.12",
 };
 
+interface SuperBrainSignals {
+  pep?: { tier?: string; type?: string; salience?: number } | null;
+  screen?: { topScore?: number } | null;
+  jurisdiction?: { cahra?: boolean; name?: string; iso2?: string } | null;
+  typologies?: { compositeScore?: number } | null;
+  adverseMediaScored?: { severity?: string; compositeScore?: number } | null;
+  composite?: { score?: number } | null;
+}
+
+function deriveEddContext(sb: SuperBrainSignals): { eddLevel: "standard" | "enhanced" | "intensive"; riskSignals: string[] } {
+  const signals: string[] = [];
+  let level: "standard" | "enhanced" | "intensive" = "standard";
+
+  const pepTier = sb.pep?.tier ?? "";
+  if (pepTier === "T1") { signals.push(`PEP Tier 1 (${sb.pep?.type ?? "senior official"})`); level = "intensive"; }
+  else if (pepTier === "T2" || pepTier === "T3") { signals.push(`PEP Tier ${pepTier}`); if (level !== "intensive") level = "enhanced"; }
+
+  const topScore = sb.screen?.topScore ?? 0;
+  if (topScore >= 80) { signals.push(`Sanctions match score ${topScore}/100`); level = "intensive"; }
+  else if (topScore >= 50) { signals.push(`Possible sanctions match score ${topScore}/100`); if (level !== "intensive") level = "enhanced"; }
+
+  if (sb.jurisdiction?.cahra) { signals.push(`CAHRA jurisdiction: ${sb.jurisdiction.name ?? sb.jurisdiction.iso2 ?? "unknown"}`); level = "intensive"; }
+
+  const typScore = sb.typologies?.compositeScore ?? 0;
+  if (typScore >= 0.7) { signals.push(`High typology composite score ${Math.round(typScore * 100)}%`); level = "intensive"; }
+  else if (typScore >= 0.4) { signals.push(`Moderate typology composite score ${Math.round(typScore * 100)}%`); if (level !== "intensive") level = "enhanced"; }
+
+  const amSev = sb.adverseMediaScored?.severity;
+  if (amSev === "critical") { signals.push("Critical adverse media severity"); level = "intensive"; }
+  else if (amSev === "high") { signals.push("High adverse media severity"); if (level !== "intensive") level = "enhanced"; }
+
+  const composite = sb.composite?.score ?? 0;
+  if (composite >= 75 && level === "standard") { signals.push(`Composite risk score ${composite}/100`); level = "enhanced"; }
+
+  return { eddLevel: level, riskSignals: signals };
+}
+
 export async function POST(req: Request) {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
-  let body: { customerType: string; riskFactors: string[]; jurisdiction?: string; productTypes?: string[]; context?: string };
+  let body: {
+    customerType: string;
+    riskFactors: string[];
+    jurisdiction?: string;
+    productTypes?: string[];
+    context?: string;
+    superBrainResult?: SuperBrainSignals;
+  };
   try {
     body = (await req.json()) as typeof body;
   } catch {
     return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
   }
-  const { customerType, riskFactors, jurisdiction, productTypes, context } = body;
+  const { customerType, riskFactors, jurisdiction, productTypes, context, superBrainResult } = body;
+  const sbContext = superBrainResult ? deriveEddContext(superBrainResult) : null;
   if (!customerType?.trim()) {
     return NextResponse.json({ ok: false, error: "customerType required" }, { status: 400 });
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
-    return NextResponse.json({ ok: false, error: "edd-questionnaire temporarily unavailable - please retry." }, { status: 503 });
+    const fallback = { ...FALLBACK, ...(sbContext ? { eddLevel: sbContext.eddLevel, eddBasis: `${sbContext.eddLevel.toUpperCase()} EDD — screening signals: ${sbContext.riskSignals.join("; ") || "none"}` } : {}) };
+    return NextResponse.json({ ok: true, degraded: true, ...fallback });
   }
 
   const systemPrompt = `You are a UAE AML/CFT compliance expert generating tailored Enhanced Due Diligence (EDD) questionnaires for a UAE-licensed DPMS (gold trader / precious metals dealer) operating under FDL 10/2025 and supervised by MoE.
@@ -127,9 +173,9 @@ Generate 10–15 questions. Be specific to the UAE gold/DPMS context and the cus
         messages: [{
           role: "user",
           content: `Customer Type: ${customerType}
-Risk Factors: ${riskFactors.join(", ")}${jurisdiction ? `\nJurisdiction: ${jurisdiction}` : ""}${productTypes?.length ? `\nProducts/Services: ${productTypes.join(", ")}` : ""}${context ? `\nAdditional Context: ${context}` : ""}
+Risk Factors: ${riskFactors.join(", ")}${jurisdiction ? `\nJurisdiction: ${jurisdiction}` : ""}${productTypes?.length ? `\nProducts/Services: ${productTypes.join(", ")}` : ""}${context ? `\nAdditional Context: ${context}` : ""}${sbContext?.riskSignals.length ? `\nScreening Risk Signals (from super-brain): ${sbContext.riskSignals.join("; ")}` : ""}${sbContext ? `\nRecommended EDD Level (from screening): ${sbContext.eddLevel.toUpperCase()}` : ""}
 
-Generate the EDD questionnaire.`,
+Generate the EDD questionnaire. ${sbContext?.eddLevel === "intensive" ? "This subject has INTENSIVE EDD indicators — include all mandatory questions plus additional deep-dive questions on each risk signal identified." : sbContext?.eddLevel === "enhanced" ? "This subject has ENHANCED EDD indicators — include all mandatory questions and tailor additional questions to the specific risk signals identified." : ""}`,
         }],
       }),
     });

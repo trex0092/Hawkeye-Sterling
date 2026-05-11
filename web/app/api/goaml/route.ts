@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getEntity } from "@/lib/config/entities";
+import { saveGoAmlSubmission } from "@/lib/server/goaml-vault";
 // Pull the compiled brain + integrations from dist — the other screening
 // routes do the same to keep cold-start below the 10s Netlify Function cap.
 import { serialiseGoamlXml } from "../../../../dist/src/integrations/goaml-xml.js";
@@ -290,6 +292,21 @@ async function handleGoaml(req: Request): Promise<Response> {
       xml = comment + "\n" + xml;
     }
   }
+
+  const tenant = tenantIdFromGate(gate);
+  void saveGoAmlSubmission(tenant, {
+    reportRef,
+    tenantId: tenant,
+    reportCode: body.reportCode,
+    subjectName: body.subject.name,
+    entityType: body.subject.entityType,
+    narrativeSlice: body.narrative.slice(0, 200),
+    charterHash: envelope.charterIntegrityHash ?? "",
+    status: "draft",
+    generatedAt: iso,
+    retryCount: 0,
+    caseId: body.subject.caseId,
+  }).catch((err) => console.error("[goaml] draft record save failed:", err));
 
   const filename = `goaml-${body.reportCode.toLowerCase()}-${safeFilenameSegment(reportRef)}.xml`;
   const warningHeaders: Record<string, string> = usingPlaceholderMlro

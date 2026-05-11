@@ -2,6 +2,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { getStore } from "@netlify/blobs";
+import { enforce } from "@/lib/server/enforce";
 
 // PEP matching against the local OpenSanctions bulk snapshot.
 // POST /api/pep-match  { name, birthYear?, aliases? }
@@ -197,6 +198,8 @@ function scoreRecord(qNorm: string, qTokens: Set<string>, rec: PepRecord): numbe
 // ── Route handler ─────────────────────────────────────────────────────────────
 
 export async function POST(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   let body: { name?: string; birthYear?: string | number; aliases?: string[] };
   try {
     body = (await req.json()) as typeof body;
