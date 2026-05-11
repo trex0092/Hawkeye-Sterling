@@ -193,9 +193,9 @@ export async function POST(): Promise<NextResponse> {
       let created = 0;
       try {
         const existing = await getSections(token, project.gid);
-        // Track which sections survive (delete rejected by Asana — e.g. section
-        // has tasks, or it's a protected default section). We skip creating a
-        // section with the same name later to avoid a 400 duplicate-name error.
+        const desiredSet = new Set(project.sections);
+        // Track names that survive (delete rejected by Asana) so we don't try
+        // to re-create them and hit a 400 duplicate-name error.
         const survivingNames = new Set<string>();
         for (const sec of existing) {
           try {
@@ -203,20 +203,27 @@ export async function POST(): Promise<NextResponse> {
             if (ok) {
               deleted++;
             } else {
-              errors.push(`delete:${sec.name}`);
               survivingNames.add(sec.name);
+              // Only report an error when we WANTED to remove the section
+              // (i.e. it isn't in the desired list). If it's already the
+              // correct section name, the "delete failed" is irrelevant —
+              // the section is in the right state.
+              if (!desiredSet.has(sec.name)) {
+                errors.push(`delete:${sec.name}`);
+              }
             }
           } catch {
-            errors.push(`delete:${sec.name}`);
             survivingNames.add(sec.name);
+            if (!desiredSet.has(sec.name)) {
+              errors.push(`delete:${sec.name}`);
+            }
           }
           await delay(50);
         }
         await delay(200);
         for (const sectionName of project.sections) {
           if (survivingNames.has(sectionName)) {
-            // Section already exists because delete was rejected — treat as
-            // success so we don't surface a spurious create error.
+            // Section already exists with the right name — count as success.
             created++;
             continue;
           }

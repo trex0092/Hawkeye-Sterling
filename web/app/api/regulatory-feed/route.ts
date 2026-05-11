@@ -65,6 +65,9 @@ const CACHE_KEY = "__hsRegulatoryFeedCache";
 const CACHE_TTL_MS = 30 * 60_000; // 30 minutes
 
 const FETCH_TIMEOUT_MS = 5_000;
+// GDELT free API p95 is routinely 10-14s — give it a separate, longer budget
+// while keeping the aggressive 5s timeout for the faster RSS/XML sources.
+const GDELT_FETCH_TIMEOUT_MS = 18_000;
 
 function mkAbort(ms: number): { signal: AbortSignal; clear: () => void } {
   const ctrl = new AbortController();
@@ -366,7 +369,7 @@ function gdeltDate(seendate: string | undefined): string {
 async function fetchGdelt(query: string): Promise<RegulatoryItem[]> {
   const url =
     `${GDELT_BASE}?query=${encodeURIComponent(query)}&mode=artlist&maxrecords=10&format=json&timespan=7d`;
-  const { signal, clear } = mkAbort(FETCH_TIMEOUT_MS);
+  const { signal, clear } = mkAbort(GDELT_FETCH_TIMEOUT_MS);
   try {
     const res = await fetch(url, {
       headers: {
