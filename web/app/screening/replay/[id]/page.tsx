@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import { Header } from "@/components/layout/Header";
 import { fetchJson } from "@/lib/api/fetchWithRetry";
@@ -36,6 +36,8 @@ export default function ReplayPage() {
   const [today, setToday] = useState<QuickScreenApi | null>(null);
   const [loadingToday, setLoadingToday] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   useEffect(() => {
     if (!subjectId) return;
@@ -72,6 +74,7 @@ export default function ReplayPage() {
       label: "Replay re-run failed",
       timeoutMs: 20_000,
     });
+    if (!mountedRef.current) return;
     setLoadingToday(false);
     if (!res.ok || !res.data?.ok) {
       console.error("[hawkeye] screening/replay quick-screen re-run failed:", res.error, res.data);

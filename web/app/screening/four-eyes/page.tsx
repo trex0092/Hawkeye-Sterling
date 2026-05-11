@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Header } from "@/components/layout/Header";
 import { fetchJson } from "@/lib/api/fetchWithRetry";
 import type { FourEyesItem, FourEyesStatus } from "@/lib/types";
@@ -61,10 +61,13 @@ export default function FourEyesPage() {
   const [error, setError] = useState<string | null>(null);
   const [signingDraft, setSigningDraft] = useState<SigningDraft | null>(null);
   const [lastAsanaUrl, setLastAsanaUrl] = useState<string | null>(null);
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   const refresh = async () => {
     setLoading(true);
     const res = await fetchJson<ListResponse>("/api/four-eyes", { label: "Four-eyes load failed" });
+    if (!mountedRef.current) return;
     setLoading(false);
     if (!res.ok || !res.data?.ok) { setError(res.error ?? "load failed"); return; }
     setError(null);
@@ -97,6 +100,7 @@ export default function FourEyesPage() {
       label: "Four-eyes decision failed",
     });
 
+    if (!mountedRef.current) return;
     if (!res.ok || !res.data?.ok) { setError(res.error ?? "decision failed"); return; }
 
     const item = res.data.item;

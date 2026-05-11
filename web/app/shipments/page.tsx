@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { IsoDateInput } from "@/components/ui/IsoDateInput";
 import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
@@ -988,6 +988,9 @@ export default function ShipmentsPage() {
   const [tbmlLoading, setTbmlLoading] = useState(false);
   const [tbmlError, setTbmlError] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
+
   // Hydrate deletions and custom rows from localStorage on mount only.
   useEffect(() => {
     setDeletedIds(loadDeletedIds());
@@ -1085,11 +1088,12 @@ export default function ShipmentsPage() {
         throw new Error(body.error ?? `TBML scan failed (HTTP ${res.status}) — please retry`);
       }
       const data = (await res.json()) as ShipmentTbml;
+      if (!mountedRef.current) return;
       setTbml(data);
     } catch (err) {
-      setTbmlError(err instanceof Error ? err.message : "TBML scan failed — please retry");
+      if (mountedRef.current) setTbmlError(err instanceof Error ? err.message : "TBML scan failed — please retry");
     } finally {
-      setTbmlLoading(false);
+      if (mountedRef.current) setTbmlLoading(false);
     }
   };
 

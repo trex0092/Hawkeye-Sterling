@@ -57,6 +57,9 @@ export default function UboDeclarationPage() {
   const [uboRiskLoading, setUboRiskLoading] = useState(false);
   const [uboRiskError, setUboRiskError] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
+
   const inputCls =
     "w-full text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-ink-0";
 
@@ -86,17 +89,18 @@ export default function UboDeclarationPage() {
       });
       if (res.ok) {
         const data = (await res.json()) as UboRisk;
+        if (!mountedRef.current) return;
         setUboRisk(data);
       } else {
         const body = await res.text().catch(() => "");
         console.error(`[hawkeye] ubo-risk HTTP ${res.status}`);
-        setUboRiskError(`AI risk assessment failed (HTTP ${res.status})${body ? ` — ${body}` : ""}`);
+        if (mountedRef.current) setUboRiskError(`AI risk assessment failed (HTTP ${res.status})${body ? ` — ${body}` : ""}`);
       }
     } catch (err) {
       console.error("[hawkeye] ubo-risk threw:", err);
-      setUboRiskError("AI risk assessment request failed — please check your connection and try again.");
+      if (mountedRef.current) setUboRiskError("AI risk assessment request failed — please check your connection and try again.");
     } finally {
-      setUboRiskLoading(false);
+      if (mountedRef.current) setUboRiskLoading(false);
     }
   };
 
