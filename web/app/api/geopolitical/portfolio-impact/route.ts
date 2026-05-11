@@ -174,7 +174,7 @@ Assess which portfolio clients are exposed to which geopolitical events. Conside
     const result = JSON.parse(
       raw.replace(/```json\n?|\n?```/g, "").trim()
     ) as PortfolioImpactResult;
-    return NextResponse.json(result);
+    return NextResponse.json(result, { headers: gate.headers });
   } catch {
     // API call failed — return a rule-based fallback matching the no-key path
     const exposed = portfolio

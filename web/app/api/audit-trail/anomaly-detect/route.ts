@@ -40,16 +40,16 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
   }
 
   const events = body.events ?? [];
   if (events.length === 0) {
-    return NextResponse.json({ anomalies: [], riskScore: 0 });
+    return NextResponse.json({ anomalies: [], riskScore: 0 }, { headers: gate.headers });
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json(buildFallback());
+  if (!apiKey) return NextResponse.json(buildFallback(), { headers: gate.headers });
 
   try {
     const client = getAnthropicClient(apiKey, 22_000);
@@ -112,6 +112,6 @@ ${JSON.stringify(events, null, 2)}`,
     } satisfies AnomalyDetectResult);
   } catch (err) {
     console.error("[hawkeye] audit-trail/anomaly-detect: LLM call or parse failed — returning empty fallback:", err);
-    return NextResponse.json(buildFallback());
+    return NextResponse.json(buildFallback(), { headers: gate.headers });
   }
 }

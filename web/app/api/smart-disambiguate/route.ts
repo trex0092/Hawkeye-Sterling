@@ -133,15 +133,15 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as RequestBody;
   } catch {
-    return NextResponse.json({ error: "invalid JSON body" }, { status: 400 });
+    return NextResponse.json({ error: "invalid JSON body" }, { status: 400 , headers: gate.headers});
   }
 
   const { client, hits } = body;
   if (!client?.name) {
-    return NextResponse.json({ error: "client.name is required" }, { status: 400 });
+    return NextResponse.json({ error: "client.name is required" }, { status: 400 , headers: gate.headers});
   }
   if (!Array.isArray(hits) || hits.length === 0) {
-    return NextResponse.json({ error: "hits array is required and must not be empty" }, { status: 400 });
+    return NextResponse.json({ error: "hits array is required and must not be empty" }, { status: 400 , headers: gate.headers});
   }
 
   writeAuditEvent("analyst", "screening.smart-disambiguate", client.name);
@@ -177,7 +177,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   });
 
   if (!apiKey) {
-    return NextResponse.json({ ...buildTemplate(), degraded: true, degradedReason: "ANTHROPIC_API_KEY not configured — deterministic template used." });
+    return NextResponse.json({ ...buildTemplate(), degraded: true, degradedReason: "ANTHROPIC_API_KEY not configured — deterministic template used." }, { headers: gate.headers });
   }
 
   const userMessage = `Disambiguate these screening hits for client: ${JSON.stringify(client)}. Hits to assess: ${JSON.stringify(hits)}`;
@@ -211,10 +211,10 @@ export async function POST(req: Request): Promise<NextResponse> {
 
     const parsed = JSON.parse(stripped) as DisambiguationResult;
 
-    return NextResponse.json({ ok: true, ...parsed });
+    return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     writeAuditEvent("analyst", "screening.smart-disambiguate.error", `${client.name} — ${msg}`);
-    return NextResponse.json({ ...buildTemplate(), degraded: true, degradedReason: `LLM call failed: ${msg}` });
+    return NextResponse.json({ ...buildTemplate(), degraded: true, degradedReason: `LLM call failed: ${msg}` }, { headers: gate.headers });
   }
 }

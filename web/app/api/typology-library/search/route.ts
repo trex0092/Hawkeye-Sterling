@@ -317,7 +317,7 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
@@ -380,7 +380,7 @@ Find the most relevant AML/CFT typologies matching this search. Return comprehen
     const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
     const jsonStr = jsonMatch ? jsonMatch[0] : cleaned;
     const result = JSON.parse(jsonStr) as TypologySearchResponse;
-    return NextResponse.json(result);
+    return NextResponse.json(result, { headers: gate.headers });
   } catch (err) {
     console.warn("[typology-library/search] LLM failed:", err instanceof Error ? err.message : err);
     return NextResponse.json({

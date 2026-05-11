@@ -198,7 +198,7 @@ export async function GET(req: Request) {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "geopolitical/events temporarily unavailable - please retry." }, { status: 503 });
+  if (!apiKey) return NextResponse.json({ ok: false, error: "geopolitical/events temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
 
   try {
     const client = getAnthropicClient(apiKey, 22_000);
@@ -247,8 +247,8 @@ Include a mix of: 2-3 critical events, 5-6 high events, 3-4 medium events. Make 
     const result = JSON.parse(
       raw.replace(/```json\n?|\n?```/g, "").trim()
     ) as { ok: boolean; events: GeopoliticalEvent[] };
-    return NextResponse.json(result);
+    return NextResponse.json(result, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "geopolitical/events temporarily unavailable - please retry." }, { status: 503 });
+    return NextResponse.json({ ok: false, error: "geopolitical/events temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
   }
 }

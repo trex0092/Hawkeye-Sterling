@@ -22,7 +22,7 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
   }
 
   const countries = (body.countries ?? []).slice(0, 5).map((c) => c.trim()).filter(Boolean);
@@ -37,7 +37,7 @@ export async function POST(req: Request) {
   if (!apiKey) {
     // Return deterministic fallback for up to 5 countries
     const fallbacks = countries.map((c) => buildFallback(c));
-    return NextResponse.json({ ok: true, countries: fallbacks, comparedAt: new Date().toISOString() });
+    return NextResponse.json({ ok: true, countries: fallbacks, comparedAt: new Date().toISOString() }, { headers: gate.headers });
   }
 
   try {

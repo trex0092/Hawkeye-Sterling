@@ -107,7 +107,7 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as PredictRequest;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
   }
 
   if (!body.subject || !body.listName || body.matchScore === undefined) {
@@ -118,7 +118,7 @@ export async function POST(req: Request) {
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json(simplePredictFallback(body));
+  if (!apiKey) return NextResponse.json(simplePredictFallback(body), { headers: gate.headers });
 
   try {
     const client = getAnthropicClient(apiKey, 22_000);
@@ -176,8 +176,8 @@ Predict whether this is a false positive and recommend the appropriate action.`,
 
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as PredictResult;
-    return NextResponse.json(result);
+    return NextResponse.json(result, { headers: gate.headers });
   } catch {
-    return NextResponse.json(simplePredictFallback(body));
+    return NextResponse.json(simplePredictFallback(body), { headers: gate.headers });
   }
 }

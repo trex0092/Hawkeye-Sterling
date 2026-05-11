@@ -212,7 +212,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as DispositionPredictBody;
   } catch {
-    return NextResponse.json({ error: "invalid JSON body" }, { status: 400 });
+    return NextResponse.json({ error: "invalid JSON body" }, { status: 400 , headers: gate.headers});
   }
 
   const predictions = computePredictions(body);
@@ -229,5 +229,5 @@ export async function POST(req: Request): Promise<NextResponse> {
     modelVersion: "heuristic-rba-v1.0",
   };
 
-  return NextResponse.json(response);
+  return NextResponse.json(response, { headers: gate.headers });
 }

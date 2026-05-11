@@ -87,11 +87,11 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as { subjectName: string; industry?: string; jurisdiction?: string };
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
   }
 
   if (!body.subjectName?.trim()) {
-    return NextResponse.json({ ok: false, error: "subjectName required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "subjectName required" }, { status: 400 , headers: gate.headers});
   }
 
   const competitors = findPeers(body.subjectName, body.industry);

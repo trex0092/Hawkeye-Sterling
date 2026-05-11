@@ -524,5 +524,5 @@ export async function POST(req: Request): Promise<NextResponse> {
       : {}),
   };
 
-  return NextResponse.json(result);
+  return NextResponse.json(result, { headers: gate.headers });
 }

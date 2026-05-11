@@ -296,7 +296,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const matches = await searchByName(legalName!);
   if (matches.length === 0) {
     // Return fallback
-    return NextResponse.json({ ok: false, error: "lei-lookup temporarily unavailable - please retry." }, { status: 503 });
+    return NextResponse.json({ ok: false, error: "lei-lookup temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
   }
 
   const topMatch = matches[0]!;

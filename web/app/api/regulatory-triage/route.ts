@@ -51,11 +51,11 @@ export async function POST(req: Request): Promise<NextResponse> {
     const body = (await req.json()) as { items: TriageItem[] };
     items = (body.items ?? []).slice(0, 20);
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON body" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid JSON body" }, { status: 400 , headers: gate.headers});
   }
 
   if (items.length === 0) {
-    return NextResponse.json({ ok: true, results: [] });
+    return NextResponse.json({ ok: true, results: [] }, { headers: gate.headers });
   }
 
   if (!apiKey) {
@@ -123,5 +123,5 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   }
 
-  return NextResponse.json({ ok: true, results });
+  return NextResponse.json({ ok: true, results }, { headers: gate.headers });
 }

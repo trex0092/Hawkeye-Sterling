@@ -118,18 +118,18 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
   }
   const { customerType, riskFactors, jurisdiction, productTypes, context, superBrainResult } = body;
   const sbContext = superBrainResult ? deriveEddContext(superBrainResult) : null;
   if (!customerType?.trim()) {
-    return NextResponse.json({ ok: false, error: "customerType required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "customerType required" }, { status: 400 , headers: gate.headers});
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
     const fallback = { ...FALLBACK, ...(sbContext ? { eddLevel: sbContext.eddLevel, eddBasis: `${sbContext.eddLevel.toUpperCase()} EDD — screening signals: ${sbContext.riskSignals.join("; ") || "none"}` } : {}) };
-    return NextResponse.json({ ok: true, degraded: true, ...fallback });
+    return NextResponse.json({ ok: true, degraded: true, ...fallback }, { headers: gate.headers });
   }
 
   const systemPrompt = `You are a UAE AML/CFT compliance expert generating tailored Enhanced Due Diligence (EDD) questionnaires for a UAE-licensed DPMS (gold trader / precious metals dealer) operating under FDL 10/2025 and supervised by MoE.
@@ -189,14 +189,14 @@ Generate the EDD questionnaire. ${sbContext?.eddLevel === "intensive" ? "This su
       }),
     });
 
-    if (!response.ok) return NextResponse.json({ ok: false, error: "edd-questionnaire temporarily unavailable - please retry." }, { status: 503 });
+    if (!response.ok) return NextResponse.json({ ok: false, error: "edd-questionnaire temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
 
     const data = (await response.json()) as { content: Array<{ type: string; text: string }> };
     const raw = data.content[0]?.type === "text" ? data.content[0].text : "{}";
     const cleaned = raw.replace(/```json\n?|\n?```/g, "").trim();
     const result = JSON.parse(cleaned) as EddQuestionnaire;
-    return NextResponse.json({ ok: true, ...result });
+    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "edd-questionnaire temporarily unavailable - please retry." }, { status: 503 });
+    return NextResponse.json({ ok: false, error: "edd-questionnaire temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
   }
 }

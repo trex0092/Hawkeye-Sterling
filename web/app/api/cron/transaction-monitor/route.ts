@@ -32,7 +32,7 @@ interface TypologyResult {
 }
 
 async function runTypologyMatch(record: TxnFlagRecord): Promise<TypologyResult | null> {
-  const adminToken = process.env["ADMIN_TOKEN"] ?? process.env["NEXT_PUBLIC_ADMIN_TOKEN"] ?? "";
+  const adminToken = process.env["ADMIN_TOKEN"] ?? "";
   const facts = [
     `Anomaly score: ${Math.round(record.score * 100)}/100 (tier: ${record.tier.toUpperCase()})`,
     `Transaction amount: USD ${record.amountUsd.toFixed(2)}`,
@@ -58,7 +58,7 @@ async function runTypologyMatch(record: TxnFlagRecord): Promise<TypologyResult |
 }
 
 async function openCase(record: TxnFlagRecord, typology: TypologyResult): Promise<void> {
-  const adminToken = process.env["ADMIN_TOKEN"] ?? process.env["NEXT_PUBLIC_ADMIN_TOKEN"] ?? "";
+  const adminToken = process.env["ADMIN_TOKEN"] ?? "";
   const subject = `TXN-ANOMALY · ${record.sessionId} · USD ${record.amountUsd.toFixed(0)}`;
   const now = new Date().toISOString();
 

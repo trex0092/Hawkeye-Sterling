@@ -62,7 +62,7 @@ export async function GET(
       result?: unknown;
       error?: string;
     };
-    return NextResponse.json({ ok: true, ...record });
+    return NextResponse.json({ ok: true, ...record }, { headers: gate.headers });
   } catch {
     return NextResponse.json(
       { ok: true, status: "pending", jobId, note: "job record unreadable — keep polling" },

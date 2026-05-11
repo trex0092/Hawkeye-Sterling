@@ -33,12 +33,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as ReqBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
   }
 
   const { entityName, freeZone } = body;
   if (!entityName) {
-    return NextResponse.json({ ok: false, error: "entityName is required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "entityName is required" }, { status: 400 , headers: gate.headers});
   }
 
   const hash = hashStr(entityName);

@@ -215,12 +215,12 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const name = (body.name ?? "").trim();
   if (name.length < 2) {
-    return NextResponse.json({ ok: true, hits: [], source: "none", queriedName: name } satisfies PepMatchResponse);
+    return NextResponse.json({ ok: true, hits: [], source: "none", queriedName: name } satisfies PepMatchResponse, { headers: gate.headers });
   }
 
   const corpus = await loadCorpus();
   if (corpus.length === 0) {
-    return NextResponse.json({ ok: true, hits: [], source: "none", queriedName: name } satisfies PepMatchResponse);
+    return NextResponse.json({ ok: true, hits: [], source: "none", queriedName: name } satisfies PepMatchResponse, { headers: gate.headers });
   }
 
   const source: PepMatchResponse["source"] = cacheLoadedAt > 0 ? cacheSource : "none";

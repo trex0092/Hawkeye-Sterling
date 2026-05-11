@@ -37,13 +37,13 @@ export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "playbook/gap-analysis temporarily unavailable - please retry." }, { status: 503 });
+  if (!apiKey) return NextResponse.json({ ok: false, error: "playbook/gap-analysis temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
 
   let body: Body;
   try {
     body = (await req.json()) as Body;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
   }
 
   const systemPrompt = [
@@ -94,7 +94,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       }),
     });
 
-    if (!res.ok) return NextResponse.json({ ok: false, error: "playbook/gap-analysis temporarily unavailable - please retry." }, { status: 503 });
+    if (!res.ok) return NextResponse.json({ ok: false, error: "playbook/gap-analysis temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
 
     const data = (await res.json()) as { content?: { type: string; text: string }[] };
     const first = data?.content?.[0];
@@ -102,8 +102,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     const cleaned = raw.replace(/^```json?\s*/i, "").replace(/\s*```$/i, "").trim();
     const result = JSON.parse(cleaned) as GapResult;
 
-    return NextResponse.json({ ok: true, ...result });
+    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "playbook/gap-analysis temporarily unavailable - please retry." }, { status: 503 });
+    return NextResponse.json({ ok: false, error: "playbook/gap-analysis temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
   }
 }

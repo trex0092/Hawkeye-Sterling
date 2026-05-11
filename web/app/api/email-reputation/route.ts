@@ -53,14 +53,14 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as { email?: string; domain?: string };
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
   }
 
   const rawDomain = body.domain ?? body.email?.split("@")[1] ?? "";
   const domain = rawDomain.toLowerCase().trim();
 
   if (!domain) {
-    return NextResponse.json({ ok: false, error: "email or domain required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "email or domain required" }, { status: 400 , headers: gate.headers});
   }
 
   const isDisposable = DISPOSABLE_DOMAINS.has(domain);

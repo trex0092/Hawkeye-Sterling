@@ -78,7 +78,7 @@ export async function POST(req: Request) {
     );
   }
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "sanctions-exposure-calc temporarily unavailable - please retry." }, { status: 503 });
+  if (!apiKey) return NextResponse.json({ ok: false, error: "sanctions-exposure-calc temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
   try {
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       signal: AbortSignal.timeout(55_000),
@@ -101,7 +101,7 @@ export async function POST(req: Request) {
         ],
       }),
     });
-    if (!response.ok) return NextResponse.json({ ok: false, error: "sanctions-exposure-calc temporarily unavailable - please retry." }, { status: 503 });
+    if (!response.ok) return NextResponse.json({ ok: false, error: "sanctions-exposure-calc temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
     const data = (await response.json()) as {
       content: Array<{ type: string; text: string }>;
     };
@@ -110,8 +110,8 @@ export async function POST(req: Request) {
     const result = JSON.parse(
       raw.replace(/```json\n?|\n?```/g, "").trim()
     ) as SanctionsExposureCalcResult;
-    return NextResponse.json({ ok: true, ...result });
+    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "sanctions-exposure-calc temporarily unavailable - please retry." }, { status: 503 });
+    return NextResponse.json({ ok: false, error: "sanctions-exposure-calc temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
   }
 }

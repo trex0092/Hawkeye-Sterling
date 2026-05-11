@@ -35,7 +35,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as CreateKeyBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
   }
   const name = body.name?.trim();
   const email = body.email?.trim();
@@ -47,7 +47,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   }
   if (!TIERS[tier]) {
-    return NextResponse.json({ ok: false, error: "unknown tier" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "unknown tier" }, { status: 400 , headers: gate.headers});
   }
   const issued = await issueKey({ name, email, tier });
   return NextResponse.json({

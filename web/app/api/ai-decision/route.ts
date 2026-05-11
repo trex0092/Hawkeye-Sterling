@@ -260,11 +260,11 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as DecisionRequest;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
   }
 
   if (!body.name || !body.subjectId) {
-    return NextResponse.json({ ok: false, error: "name and subjectId are required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "name and subjectId are required" }, { status: 400 , headers: gate.headers});
   }
 
   // Fetch learning context from Netlify Blobs
@@ -345,7 +345,7 @@ export async function POST(req: Request) {
     ...(asana.taskGid ? { asanaTaskGid: asana.taskGid } : {}),
   };
 
-  return NextResponse.json(responseBody, { status: 200 });
+  return NextResponse.json(responseBody, { status: 200 , headers: gate.headers});
 }
 
 // ── Rule-based fallback ───────────────────────────────────────────────────────

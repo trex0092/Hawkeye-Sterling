@@ -57,12 +57,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as ReqBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
   }
 
   const { subjectName, entityType, riskScore, jurisdiction } = body;
   if (!subjectName || !entityType || riskScore === undefined || !jurisdiction) {
-    return NextResponse.json({ ok: false, error: "subjectName, entityType, riskScore, and jurisdiction are required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "subjectName, entityType, riskScore, and jurisdiction are required" }, { status: 400 , headers: gate.headers});
   }
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -99,7 +99,7 @@ Respond ONLY with valid JSON:
       const parsed = JSON.parse(raw.match(/\{[\s\S]*\}/)?.[0] ?? "{}");
       if (parsed.investigationSummary !== undefined) {
         parsed.completedAt = new Date().toISOString();
-        return NextResponse.json({ ok: true, ...parsed });
+        return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
       }
     } catch {
       // fall through to heuristic
@@ -107,5 +107,5 @@ Respond ONLY with valid JSON:
   }
 
   const result = heuristicInvestigation(subjectName, entityType, riskScore, jurisdiction);
-  return NextResponse.json({ ok: true, ...result });
+  return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
 }

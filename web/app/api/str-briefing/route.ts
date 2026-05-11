@@ -40,13 +40,13 @@ export async function POST(req: NextRequest) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
   }
   const cases = body.cases ?? [];
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    return NextResponse.json({ ok: true, briefing: EMPTY_BRIEFING });
+    return NextResponse.json({ ok: true, briefing: EMPTY_BRIEFING }, { headers: gate.headers });
   }
 
   const userMessage = `Here are the active STR/SAR cases for today's briefing:\n\n${JSON.stringify(cases, null, 2)}\n\nToday's date: ${new Date().toISOString().slice(0, 10)}`;
@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
   });
 
   if (!response.ok) {
-    return NextResponse.json({ ok: true, briefing: EMPTY_BRIEFING });
+    return NextResponse.json({ ok: true, briefing: EMPTY_BRIEFING }, { headers: gate.headers });
   }
 
   const claudeData = (await response.json()) as {
@@ -96,5 +96,5 @@ export async function POST(req: NextRequest) {
 
   writeAuditEvent("mlro", "str.briefing-generated", `cases: ${cases.length}`);
 
-  return NextResponse.json({ ok: true, briefing });
+  return NextResponse.json({ ok: true, briefing }, { headers: gate.headers });
 }

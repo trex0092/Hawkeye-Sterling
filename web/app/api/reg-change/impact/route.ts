@@ -167,11 +167,11 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "reg-change/impact temporarily unavailable - please retry." }, { status: 503 });
+  if (!apiKey) return NextResponse.json({ ok: false, error: "reg-change/impact temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
 
   try {
     const client = getAnthropicClient(apiKey, 55_000);
@@ -228,8 +228,8 @@ Produce a comprehensive impact assessment for how this regulation affects this s
     });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as ImpactAssessmentResult;
-    return NextResponse.json(result);
+    return NextResponse.json(result, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "reg-change/impact temporarily unavailable - please retry." }, { status: 503 });
+    return NextResponse.json({ ok: false, error: "reg-change/impact temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
   }
 }

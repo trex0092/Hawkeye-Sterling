@@ -30,12 +30,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as ReqBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
   }
 
   const { subjectId, clusterEntities = [], entityScores = {}, edges = [] } = body;
   if (!subjectId) {
-    return NextResponse.json({ ok: false, error: "subjectId is required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "subjectId is required" }, { status: 400 , headers: gate.headers});
   }
 
   const totalEntities = clusterEntities.length;
