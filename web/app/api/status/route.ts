@@ -236,19 +236,24 @@ async function checkGoogleNews(): Promise<Check> {
 // Free, no API key. A canary probe queries the artlist endpoint with a 1-record
 // limit to confirm the API is reachable.
 //
-// GDELT's public endpoint is famously inconsistent: it returns 200/empty body,
-// or text/plain "Please try again later", or HTML maintenance pages quite
-// regularly even while serving traffic for the actual queries the app makes.
-// Treating those as "down" gave a flapping red banner on the status page.
-// Strategy: only mark DOWN on a hard network failure (timeout, DNS, TLS, 5xx).
-// HTTP 200 with any body — JSON, text, or empty — is "operational" because
-// the API is reachable; the actual adverse-media route handles per-query
-// failure modes via its own degraded-verdict path.
+// Cache the probe result for 5 minutes. The status page polls every 15 s and
+// the MCP system_status tool is called on demand — without caching we hammer
+// GDELT on every call and reliably trigger 429 rate-limits. A 429 means GDELT
+// is reachable but throttling our probe, which is not a system outage; we treat
+// it as operational (using the cached last-good result if available).
+
+interface GdeltCacheEntry { result: Check; cachedAt: number }
+let _gdeltCache: GdeltCacheEntry | null = null;
+const GDELT_CACHE_TTL_MS = 5 * 60 * 1_000; // 5 minutes
+
 async function checkGdelt(): Promise<Check> {
+  const now = Date.now();
+  if (_gdeltCache && now - _gdeltCache.cachedAt < GDELT_CACHE_TTL_MS) {
+    return _gdeltCache.result;
+  }
+
   const r = await time(async () => {
     const controller = new AbortController();
-    // GDELT free API is slow — p95 regularly 10–14 s. 20 s gives it room
-    // to respond without flooding the probe with false timeouts.
     const t = setTimeout(() => controller.abort(), 20_000);
     try {
       const params = new URLSearchParams({
@@ -270,10 +275,9 @@ async function checkGdelt(): Promise<Check> {
         },
       );
       if (res.status >= 500) throw new Error(`HTTP ${res.status}`);
-      // Drain the body so the connection is reused; we don't care about shape
-      // here — reachability is the SLI.
       await res.text().catch(() => "");
-      if (res.status === 429) return { degraded: true as const, note: "GDELT rate-limited (429)" };
+      // 429 = rate-limited but reachable — not a system outage.
+      if (res.status === 429) return { degraded: false as const, note: "rate-limited (cached)" };
       if (res.status >= 400) return { degraded: true as const, note: `GDELT HTTP ${res.status}` };
       return { degraded: false as const };
     } catch (err) {
@@ -284,16 +288,22 @@ async function checkGdelt(): Promise<Check> {
       clearTimeout(t);
     }
   });
+
+  let result: Check;
   if (!r.ok) {
-    // Hard network failure — GDELT is a free, known-flaky external API.
-    // Transient network errors don't indicate a system outage; degrade rather
-    // than marking "down" so the banner stays amber rather than red.
-    return { name: "gdelt-live-feed", status: "degraded", latencyMs: r.latencyMs, note: r.error };
+    result = { name: "gdelt-live-feed", status: "degraded", latencyMs: r.latencyMs, note: r.error };
+  } else if (r.value.degraded) {
+    result = { name: "gdelt-live-feed", status: "degraded", latencyMs: r.latencyMs, note: r.value.note };
+  } else {
+    result = { name: "gdelt-live-feed", status: "operational", latencyMs: r.latencyMs, note: (r.value as { note?: string }).note };
   }
-  if (r.value.degraded) {
-    return { name: "gdelt-live-feed", status: "degraded", latencyMs: r.latencyMs, note: r.value.note };
+
+  // Only cache successful or rate-limited (operational) results — don't cache
+  // genuine failures so a transient outage clears on the next probe cycle.
+  if (result.status === "operational") {
+    _gdeltCache = { result, cachedAt: Date.now() };
   }
-  return { name: "gdelt-live-feed", status: "operational", latencyMs: r.latencyMs };
+  return result;
 }
 
 // ─── Brain soul ────────────────────────────────────────────────────────────
