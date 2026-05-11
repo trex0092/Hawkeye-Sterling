@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuickScreen } from "@/lib/hooks/useQuickScreen";
 import { useAutoReport } from "@/lib/hooks/useAutoReport";
 import { useSuperBrain, type SuperBrainResult } from "@/lib/hooks/useSuperBrain";
@@ -282,6 +282,9 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
     { hitId: "hit-001", hitName: "", hitCategory: subject.listCoverage.length > 0 ? "Sanctions" : "Sanctions", hitCountry: "", hitDob: "", hitRole: "", matchScore: undefined },
   ]);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
+
   // Re-seed client fields when the active subject changes
   useEffect(() => {
     setDisambigClient({
@@ -319,17 +322,19 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
         const detail = await res.text().catch(() => "");
         const msg = `Disambiguation failed (HTTP ${res.status})${detail ? ` — ${detail.slice(0, 160)}` : ""}`;
         console.error("[hawkeye] smart-disambiguate", msg);
+        if (!mountedRef.current) return;
         setDisambigError(msg);
         return;
       }
       const data = (await res.json()) as DisambiguationResult;
+      if (!mountedRef.current) return;
       if (data.ok) setDisambigResult(data);
       else setDisambigError("Disambiguation returned ok:false");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Network error";
       console.error("[hawkeye] smart-disambiguate threw:", err);
-      setDisambigError(msg);
-    } finally { setDisambigLoading(false); }
+      if (mountedRef.current) setDisambigError(msg);
+    } finally { if (mountedRef.current) setDisambigLoading(false); }
   };
 
   const runEIA = async () => {
@@ -356,6 +361,7 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
       if (raw) {
         try { payload = JSON.parse(raw); } catch { /* leave empty */ }
       }
+      if (!mountedRef.current) return;
       if (!res.ok) {
         const msg = payload.detail ?? payload.error ?? `Ethical Impact API returned HTTP ${res.status}`;
         setEiaError(
@@ -373,13 +379,13 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
     } catch (err) {
       const detail = err instanceof Error ? err.message : String(err);
       const isTimeout = err instanceof Error && (err.name === "AbortError" || err.name === "TimeoutError");
-      setEiaError(
+      if (mountedRef.current) setEiaError(
         isTimeout
           ? "Ethical Impact assessment timed out after 45s — please retry."
           : `Ethical Impact request failed: ${detail}`,
       );
     } finally {
-      setEiaLoading(false);
+      if (mountedRef.current) setEiaLoading(false);
     }
   };
   const effectiveAdverseMediaText =
@@ -491,9 +497,9 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(subject.id);
-      showFlash(`Copied ${subject.id}`);
+      if (mountedRef.current) showFlash(`Copied ${subject.id}`);
     } catch {
-      showFlash("Copy failed");
+      if (mountedRef.current) showFlash("Copy failed");
     }
   };
 

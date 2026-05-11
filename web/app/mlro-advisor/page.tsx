@@ -3264,9 +3264,10 @@ export default function MlroAdvisorPage() {
       });
       if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & PatternResult;
+      if (!mountedRef.current) return;
       if (data.ok) setPatternResult(data);
-    } catch (err) { setToolErrors((p) => ({ ...p, ["casePatterns"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
-    finally { setPatternLoading(false); }
+    } catch (err) { if (mountedRef.current) setToolErrors((p) => ({ ...p, ["casePatterns"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
+    finally { if (mountedRef.current) setPatternLoading(false); }
   };
 
   const runSubjectBrief = async () => {
@@ -3281,9 +3282,10 @@ export default function MlroAdvisorPage() {
       });
       if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & SubjectBrief;
+      if (!mountedRef.current) return;
       if (data.ok) setBriefResult(data);
-    } catch (err) { setToolErrors((p) => ({ ...p, ["subjectBrief"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
-    finally { setBriefLoading(false); }
+    } catch (err) { if (mountedRef.current) setToolErrors((p) => ({ ...p, ["subjectBrief"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
+    finally { if (mountedRef.current) setBriefLoading(false); }
   };
 
   const runPepNetwork = async () => {
@@ -3304,9 +3306,10 @@ export default function MlroAdvisorPage() {
       });
       if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & PepNetwork;
+      if (!mountedRef.current) return;
       if (data.ok) setPepNet(data);
-    } catch (err) { setToolErrors((p) => ({ ...p, ["pepNetwork"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
-    finally { setPepNetLoading(false); }
+    } catch (err) { if (mountedRef.current) setToolErrors((p) => ({ ...p, ["pepNetwork"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
+    finally { if (mountedRef.current) setPepNetLoading(false); }
   };
 
   const runSanctionsNexus = async () => {
@@ -3332,9 +3335,10 @@ export default function MlroAdvisorPage() {
       });
       if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json() as { ok: boolean } & SanctionsNexus;
+      if (!mountedRef.current) return;
       if (data.ok) setSanctionsNexus(data);
-    } catch (err) { setToolErrors((p) => ({ ...p, ["sanctionsNexus"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
-    finally { setSanctionsNexusLoading(false); }
+    } catch (err) { if (mountedRef.current) setToolErrors((p) => ({ ...p, ["sanctionsNexus"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
+    finally { if (mountedRef.current) setSanctionsNexusLoading(false); }
   };
 
   return (
