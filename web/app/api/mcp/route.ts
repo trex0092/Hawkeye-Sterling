@@ -354,21 +354,42 @@ const TOOLS: ToolDef[] = [
   {
     name: "smart_disambiguate",
     description:
-      "Disambiguate an ambiguous name using supplementary identity fields. Returns confidence and best-matching candidate.",
+      "Disambiguate screening hits against a client profile. Provide client identity fields and the hits array from a prior sanctions/PEP screen.",
     inputSchema: {
       type: "object",
       properties: {
-        name: { type: "string" },
+        name: { type: "string", description: "Client full name" },
         nationality: { type: "string" },
-        dob: { type: "string" },
+        dob: { type: "string", description: "Date of birth YYYY-MM-DD" },
         gender: { type: "string" },
         idNumber: { type: "string" },
         occupation: { type: "string" },
         context: { type: "string" },
+        hits: {
+          type: "array",
+          description: "Screening hits to disambiguate — from a prior screen_subject or batch_screen call",
+          items: {
+            type: "object",
+            properties: {
+              hitId: { type: "string" },
+              hitName: { type: "string" },
+              hitCategory: { type: "string" },
+              hitCountry: { type: "string" },
+              hitDob: { type: "string" },
+              matchScore: { type: "number" },
+            },
+          },
+        },
       },
       required: ["name"],
     },
-    handler: async (args) => callApi("/api/smart-disambiguate", "POST", args),
+    handler: async (args) => {
+      const { hits, ...clientFields } = args as Record<string, unknown>;
+      return callApi("/api/smart-disambiguate", "POST", {
+        client: clientFields,
+        hits: (hits as unknown[]) ?? [],
+      });
+    },
   },
 
   // ── ADVERSE MEDIA & NEWS ────────────────────────────────────────────────────
@@ -564,14 +585,37 @@ const TOOLS: ToolDef[] = [
     inputSchema: {
       type: "object",
       properties: {
-        subjectName: { type: "string" },
+        subjectName: { type: "string", description: "Full name of the subject" },
+        subjectId: { type: "string", description: "Unique subject ID (use case ID or screening ID if available)" },
+        country: { type: "string", description: "Subject's country of residence or operation" },
+        entityType: { type: "string", description: "individual / company / vessel / etc." },
         riskScore: { type: "number", description: "Pre-computed risk score 0–100" },
-        verdict: { type: "string" },
-        evidence: { type: "string" },
+        listCoverage: { type: "array", items: { type: "string" }, description: "Sanctions lists checked" },
+        sanctionsHits: { type: "array", items: { type: "object" }, description: "Hit objects from sanctions screen" },
+        adverseMedia: { type: "string", description: "Adverse media summary" },
+        pepTier: { type: "string", description: "PEP tier if applicable" },
+        exposureAED: { type: "string", description: "Estimated transaction exposure in AED" },
+        notes: { type: "string", description: "Additional compliance notes" },
       },
       required: ["subjectName"],
     },
-    handler: async (args) => callApi("/api/ai-decision", "POST", args),
+    handler: async (args) => {
+      const a = args as Record<string, unknown>;
+      const name = String(a.subjectName ?? "");
+      return callApi("/api/ai-decision", "POST", {
+        subjectId: a.subjectId ?? name,
+        name,
+        country: a.country ?? "Unknown",
+        entityType: a.entityType ?? "individual",
+        riskScore: a.riskScore ?? 50,
+        listCoverage: a.listCoverage ?? [],
+        sanctionsHits: a.sanctionsHits ?? [],
+        adverseMedia: a.adverseMedia,
+        pepTier: a.pepTier,
+        exposureAED: a.exposureAED,
+        notes: a.notes,
+      });
+    },
   },
 
   // ── ENTITY INTELLIGENCE ──────────────────────────────────────────────────────
