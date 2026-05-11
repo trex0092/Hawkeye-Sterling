@@ -89,7 +89,6 @@ function osEntityToCandidate(entity: OSEntity): SanctionsCandidate {
 
 // ── Blob helpers ─────────────────────────────────────────────────────────────
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function getBlobs(): Promise<any | null> {
   try {
     const mod = await import("@netlify/blobs").catch(() => null);

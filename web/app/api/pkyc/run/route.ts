@@ -15,7 +15,7 @@ import { withGuard } from "@/lib/server/guard";
 import {
   listSubjects, getSubject, saveSubject,
   type PKycSubject, type PKycRiskBand, type PKycDelta,
-} from "../route";
+} from "../_store";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

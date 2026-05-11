@@ -431,7 +431,11 @@ const TOOLS: ToolDef[] = [
       },
       required: ["subject"],
     },
-    handler: async (args) => callApi("/api/pep-network", "POST", args),
+    handler: async (args) => {
+      const a = args as Record<string, unknown>;
+      const { subject, maxDepth, ...rest } = a;
+      return callApi("/api/pep-network", "POST", { pepName: subject, maxDepth, ...rest });
+    },
   },
   {
     name: "country_risk",

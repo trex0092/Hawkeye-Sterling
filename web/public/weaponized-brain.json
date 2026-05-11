@@ -1,10 +1,10 @@
 {
   "ok": true,
-  "generatedAt": "2026-05-08T22:30:29+04:00",
+  "generatedAt": "2026-05-11T12:14:06+00:00",
   "manifest": {
     "product": "Hawkeye Sterling",
     "version": "0.2.0",
-    "generatedAt": "2026-05-08T22:30:29+04:00",
+    "generatedAt": "2026-05-11T12:14:06+00:00",
     "charter": {
       "prohibitions": [
         {
@@ -489,39 +489,54 @@
         }
       },
       "redFlags": {
-        "total": 45,
+        "total": 164,
         "bySeverity": {
           "low": 0,
-          "medium": 7,
-          "high": 38
+          "medium": 35,
+          "high": 129
         },
         "byTypology": {
-          "structuring": 2,
-          "dpms_retail": 2,
+          "structuring": 7,
+          "dpms_retail": 4,
           "dpms_refinery": 1,
-          "tbml": 5,
-          "sanctions_evasion": 2,
-          "proliferation": 1,
-          "pep": 2,
-          "ubo": 2,
-          "vasp": 2,
-          "adverse_media": 1,
-          "governance": 3,
-          "environmental_crime": 2,
-          "carbon_market_fraud": 2,
-          "insider_threat": 2,
-          "ai_governance_breach": 4,
-          "ai_synthetic_media_fraud": 2,
+          "tbml": 11,
+          "sanctions_evasion": 7,
+          "proliferation": 2,
+          "pep": 5,
+          "ubo": 7,
+          "vasp": 9,
+          "adverse_media": 2,
+          "governance": 26,
+          "environmental_crime": 10,
+          "carbon_market_fraud": 4,
+          "insider_threat": 3,
+          "ai_governance_breach": 10,
+          "ai_synthetic_media_fraud": 5,
           "crypto_onramp_obfuscation": 2,
-          "npo_diversion": 2,
+          "npo_diversion": 4,
           "shell_company_chain": 2,
           "bearer_share_fz_loophole": 2,
-          "synthetic_identity": 1,
-          "funnel_account": 1
+          "synthetic_identity": 2,
+          "funnel_account": 1,
+          "kyc_gap": 6,
+          "source_of_wealth": 2,
+          "source_of_funds": 2,
+          "transaction_monitoring": 4,
+          "layering": 1,
+          "shell_company": 2,
+          "tax_evasion": 2,
+          "real_estate_aml": 3,
+          "correspondent_banking": 4,
+          "sanctions_screening": 2,
+          "tipping_off": 1,
+          "third_party_risk": 4,
+          "insurance_aml": 2,
+          "gaming": 2,
+          "cyber_incident": 1
         }
       },
       "typologies": {
-        "total": 73,
+        "total": 90,
         "ids": [
           "structuring",
           "smurfing",
@@ -595,7 +610,24 @@
           "construction_ml",
           "healthcare_billing_fraud",
           "crypto_onramp_obfuscation",
-          "bearer_share_fz_loophole"
+          "bearer_share_fz_loophole",
+          "kyc_gap",
+          "adverse_media",
+          "governance",
+          "ubo",
+          "source_of_wealth",
+          "source_of_funds",
+          "transaction_monitoring",
+          "cyber_incident",
+          "gaming",
+          "insurance_aml",
+          "real_estate_aml",
+          "sanctions_screening",
+          "shell_company",
+          "tipping_off",
+          "third_party_risk",
+          "layering",
+          "tax_evasion"
         ]
       },
       "matching": {
@@ -671,7 +703,7 @@
         ]
       },
       "playbooks": {
-        "total": 22,
+        "total": 106,
         "ids": [
           "pb_confirmed_sanctions_match",
           "pb_partial_sanctions_match",
@@ -694,7 +726,91 @@
           "pb_real_estate_layering",
           "pb_correspondent_nested_account",
           "pb_proliferation_dual_use",
-          "pb_carbon_market_fraud"
+          "pb_carbon_market_fraud",
+          "pb_cdd_natural_person",
+          "pb_cdd_legal_person",
+          "pb_edd_high_risk",
+          "pb_celebrity_hnwi",
+          "pb_periodic_review",
+          "pb_risk_rating_refresh",
+          "pb_sof_documentation",
+          "pb_sow_corroboration",
+          "pb_pep",
+          "pb_domestic_pep_onboard",
+          "pb_foreign_pep_onboard",
+          "pb_pep_stepdown",
+          "pb_rca_family",
+          "pb_sanctions_match_triage",
+          "pb_sanctions_shell",
+          "pb_dprk_sanctions",
+          "pb_iran_sanctions",
+          "pb_russia_sanctions",
+          "pb_eocn_tfs",
+          "pb_vasp",
+          "pb_crypto_exchange_onboard",
+          "pb_crypto_otc",
+          "pb_defi_protocol",
+          "pb_privacy_coin",
+          "pb_stablecoin_issuance",
+          "pb_mixer_tumbler",
+          "pb_travel_rule",
+          "pb_nft_wash_trading",
+          "pb_structuring",
+          "pb_funnel_account",
+          "pb_wire_transfer",
+          "pb_remittance",
+          "pb_underground_banking",
+          "pb_hawala",
+          "pb_cuckoo_smurfing",
+          "pb_atm_cashout",
+          "pb_bulk_cash_smuggling",
+          "pb_cash_intensive",
+          "pb_pig_butchering",
+          "pb_tbml",
+          "pb_trade_finance",
+          "pb_timber_flegt",
+          "pb_agri_commodities",
+          "pb_base_metals",
+          "pb_petroleum_trade",
+          "pb_coloured_gems",
+          "pb_oecd_ddg_gold",
+          "pb_diamond_kimberley",
+          "pb_conflict_minerals",
+          "pb_iuu_fishing",
+          "pb_shadow_fleet",
+          "pb_end_user_cert",
+          "pb_dual_use_export",
+          "pb_proliferation",
+          "pb_real_estate",
+          "pb_real_estate_agent",
+          "pb_ubo_cooperative",
+          "pb_ubo_foundation",
+          "pb_ubo_trust",
+          "pb_shell_complex",
+          "pb_free_zone_risk",
+          "pb_correspondent",
+          "pb_branch_risk_assessment",
+          "pb_account_takeover",
+          "pb_adverse_media_deepdive",
+          "pb_app_fraud",
+          "pb_casino_junket",
+          "pb_gaming",
+          "pb_human_trafficking",
+          "pb_hv_dealer",
+          "pb_insurance",
+          "pb_tax_evasion",
+          "pb_ransomware_proceeds",
+          "pb_swift_fin_compromise",
+          "pb_synthetic_id",
+          "pb_environmental_crime",
+          "pb_ngo",
+          "pb_dpms_retail",
+          "pb_moe_dpms_supervisor",
+          "pb_bor_filing",
+          "pb_fiu_goaml_filing",
+          "pb_sar_quality",
+          "pb_customer_exit",
+          "pb_wildlife_trafficking"
         ]
       },
       "redlines": {
@@ -1148,7 +1264,7 @@
       "bayesianCalibration": {
         "defaultPrior": 0.01,
         "calibratedCount": 73,
-        "uncalibratedCount": 0,
+        "uncalibratedCount": 17,
         "typologyPriors": {
           "structuring": 0.03,
           "smurfing": 0.015,
@@ -1267,13 +1383,13 @@
     },
     "integrity": {
       "charterHash": "65a67258",
-      "catalogueHash": "b2d525e9"
+      "catalogueHash": "b8fd695c"
     }
   },
   "integrity": {
     "charterHash": "65a67258",
-    "catalogueHash": "b2d525e9",
-    "compositeHash": "cb258b58"
+    "catalogueHash": "b8fd695c",
+    "compositeHash": "aa98cb5d"
   },
   "enhanced": {
     "extended": {
@@ -1281,8 +1397,8 @@
         "questionTemplates": 72,
         "sectorRubrics": 12,
         "scenarios": 69,
-        "typologies": 73,
-        "redFlags": 45,
+        "typologies": 90,
+        "redFlags": 164,
         "redFlagsExtended": 201,
         "adverseMediaCategories": 13,
         "metaCognition": 103
@@ -1413,7 +1529,7 @@
           "count": 5
         }
       ],
-      "typologyCount": 73,
+      "typologyCount": 90,
       "topTypologies": [
         {
           "id": "structuring",
@@ -1469,9 +1585,9 @@
       "catalogues": 19,
       "enhancedCatalogues": 20,
       "regulatoryRecords": 581,
-      "taxonomyRecords": 588,
+      "taxonomyRecords": 724,
       "skillsRecords": 893,
-      "totalRecords": 2062
+      "totalRecords": 2198
     }
   }
 }
