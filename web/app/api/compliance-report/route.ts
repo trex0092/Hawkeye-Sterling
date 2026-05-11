@@ -817,7 +817,6 @@ async function handleComplianceReport(req: Request): Promise<Response> {
   }
   // BUG-03 fix: allow standalone calls without a prior screening result
   if (!body.result) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (body as any).result = { topScore: 0, severity: "clear", hits: [] };
   } else if (!Array.isArray(body.result.hits)) {
     body.result.hits = [];
