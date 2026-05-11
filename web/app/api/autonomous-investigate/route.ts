@@ -33,13 +33,12 @@ interface StageResult {
 }
 
 function heuristicInvestigation(subjectName: string, entityType: string, riskScore: number, jurisdiction: string) {
-  const hash = subjectName.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
   const riskBand = riskScore >= 70 ? "HIGH" : riskScore >= 40 ? "MEDIUM" : "LOW";
   const keyFindings: string[] = [
     `Subject ${subjectName} classified as ${entityType} with ${riskBand} risk score of ${riskScore}/100`,
     `Jurisdiction: ${jurisdiction} — ${riskScore >= 60 ? "elevated" : "standard"} oversight regime applies`,
   ];
-  if (hash % 3 === 0) keyFindings.push("Corporate structure includes offshore holding entities — beneficial ownership requires verification");
+  if (entityType === "corporate" && riskScore >= 50) keyFindings.push("Corporate structure requires beneficial ownership verification to natural person level");
   if (riskScore >= 70) keyFindings.push("High risk score triggers mandatory EDD requirements under CBUAE AML framework");
   const recommendedActions = [
     "Commission enhanced source of wealth investigation",

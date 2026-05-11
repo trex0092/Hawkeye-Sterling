@@ -101,7 +101,8 @@ export async function calibrateWeights(): Promise<{ current: RiskWeights; propos
   }
 
   // General false-positive rate → reduce adverseMedia weight slightly if noisy
-  const overallFPRate = fb.totalVerdicts > 0 ? totalFP / fb.totalVerdicts : 0;
+  const actionableVerdicts = totalFP + totalTM;
+  const overallFPRate = actionableVerdicts > 0 ? totalFP / actionableVerdicts : 0;
   if (overallFPRate > 0.6) {
     proposed.adverseMedia = Math.max(0.03, current.adverseMedia - 0.01);
   } else if (overallFPRate < 0.2 && totalTM > 5) {

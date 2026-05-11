@@ -13,7 +13,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
-const BATCH_INDEX_KEY = "llm-batch/index";
+const batchIndexKey = (keyId: string) => `llm-batch/index/${keyId}`;
 
 interface BatchJob {
   batchId: string;
@@ -22,6 +22,7 @@ interface BatchJob {
   purpose: string;
   status: "submitted" | "in_progress" | "ended" | "failed";
   anthropicBatchId?: string;
+  ownerId: string;
 }
 
 interface BatchRequest {
@@ -87,6 +88,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
     const anthropicBatch = (await res.json()) as { id: string; processing_status: string };
     const batchId = `hk-batch-${Date.now()}`;
+    const ownerId = gate.keyId ?? "unknown";
     const job: BatchJob = {
       batchId,
       submittedAt: new Date().toISOString(),
@@ -94,12 +96,13 @@ export async function POST(req: Request): Promise<NextResponse> {
       purpose: body.purpose ?? "bulk-analysis",
       status: "submitted",
       anthropicBatchId: anthropicBatch.id,
+      ownerId,
     };
 
-    // Persist index entry
-    const index = (await getJson<BatchJob[]>(BATCH_INDEX_KEY)) ?? [];
+    // Persist per-owner index entry (tenant-isolated)
+    const index = (await getJson<BatchJob[]>(batchIndexKey(ownerId))) ?? [];
     index.unshift(job);
-    await setJson(BATCH_INDEX_KEY, index.slice(0, 200));
+    await setJson(batchIndexKey(ownerId), index.slice(0, 200));
 
     return NextResponse.json({ ok: true, batchId, anthropicBatchId: anthropicBatch.id, requestCount: body.requests.length }, { status: 202, headers: gate.headers });
   } catch (err) {
@@ -115,7 +118,8 @@ export async function GET(req: Request): Promise<NextResponse> {
   const batchId = searchParams.get("id");
   const apiKey = process.env.ANTHROPIC_API_KEY;
 
-  const index = (await getJson<BatchJob[]>(BATCH_INDEX_KEY)) ?? [];
+  const ownerId = gate.keyId ?? "unknown";
+  const index = (await getJson<BatchJob[]>(batchIndexKey(ownerId))) ?? [];
 
   if (!batchId) {
     return NextResponse.json({ ok: true, batches: index }, { headers: gate.headers });
@@ -148,7 +152,7 @@ export async function GET(req: Request): Promise<NextResponse> {
           ...job,
           liveStatus: statusData.processing_status,
           requestCounts: statusData.request_counts,
-          resultsUrl: statusData.results_url,
+          // resultsUrl intentionally excluded — fetch results server-side only
         }, { headers: gate.headers });
       }
     } catch { /* fall through to cached status */ }

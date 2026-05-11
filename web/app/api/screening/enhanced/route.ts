@@ -62,13 +62,18 @@ interface LlmTriageResult {
 
 async function callScreeningRun(body: unknown): Promise<ScreeningResult> {
   const headers: Record<string, string> = { "content-type": "application/json" };
-  if (ADMIN_TOKEN) headers.authorization = `Bearer ${ADMIN_TOKEN}`;
+  const token = process.env.ADMIN_TOKEN;
+  if (token) headers.authorization = `Bearer ${token}`;
   const res = await fetch(`${BASE_URL}/api/screening/run`, {
     method: "POST",
     headers,
     body: JSON.stringify(body),
     signal: AbortSignal.timeout(25_000),
   });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`upstream screening ${res.status}: ${text.slice(0, 200)}`);
+  }
   return res.json() as Promise<ScreeningResult>;
 }
 

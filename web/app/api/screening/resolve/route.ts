@@ -31,6 +31,7 @@ import { enforce } from "@/lib/server/enforce";
 import { asanaGids } from "@/lib/server/asanaConfig";
 import { corsHeaders, corsPreflight } from "@/lib/api/cors";
 import { submitFeedback } from "@/lib/server/feedback";
+import { setJson } from "@/lib/server/store";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -155,11 +156,11 @@ export async function POST(req: Request): Promise<NextResponse> {
     }).catch(() => {/* feedback is best-effort */});
   }
 
-  // Audit-trail entry — for now we write to console. Future: persist to
-  // Netlify Blobs or a dedicated /api/audit endpoint that signs and
-  // stores immutably.
-  console.info(`[audit] ${timestamp} hit-resolution`, {
+  // Persist immutable audit-trail event (FDL 10/2025 Art.19 — 10-year retention)
+  const auditEvent = {
     auditId,
+    eventType: "hit-resolution",
+    timestamp,
     subjectId,
     subjectName,
     hitId,
@@ -167,7 +168,12 @@ export async function POST(req: Request): Promise<NextResponse> {
     reason,
     hitContext,
     ongoingMonitorTaskId,
-  });
+    analyst: gate.keyId ?? "system",
+  };
+  void setJson(`audit/hit-resolution/${auditId}`, auditEvent).catch((err) =>
+    console.warn("[resolve] audit persist failed:", err instanceof Error ? err.message : err)
+  );
+  console.info("[audit]", auditId, "hit-resolution persisted");
 
   return respond(200, {
     ok: true,

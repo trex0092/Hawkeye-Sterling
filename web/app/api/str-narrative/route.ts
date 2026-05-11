@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { getAnthropicClient } from "@/lib/server/llm";
 
 export interface StrNarrativeResult {
   narrative: string;
@@ -131,44 +132,45 @@ Respond ONLY with valid JSON — no markdown fences:
   "regulatoryBasis": "<full citation>"
 }`;
 
+  const client = getAnthropicClient(apiKey, 55_000, "str-narrative");
+
   try {
     let best: StrNarrativeResult | null = null;
     let iterations = 0;
     let userContent = baseUserContent;
 
     while (iterations < MAX_ITERATIONS) {
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
-        signal: AbortSignal.timeout(55_000),
-        method: "POST",
-        headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-haiku-4-5-20251001",
-          max_tokens: 2000,
-          system: SYSTEM,
-          messages: [{ role: "user", content: userContent }],
-        }),
+      const response = await client.messages.create({
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 2000,
+        system: SYSTEM,
+        messages: [{ role: "user", content: userContent }],
       });
-      if (!response.ok) break;
 
-      const data = (await response.json()) as { content: Array<{ type: string; text: string }> };
-      const raw = data.content[0]?.type === "text" ? data.content[0].text : "{}";
-      const candidate = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as StrNarrativeResult;
-      iterations++;
+      const raw = response.content[0]?.type === "text" ? (response.content[0] as { type: "text"; text: string }).text : "{}";
 
-      if (!best || candidate.qualityScore > best.qualityScore) best = candidate;
+      let candidate: StrNarrativeResult | null = null;
+      try {
+        candidate = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as StrNarrativeResult;
+      } catch {
+        break; // parse failure — keep best from prior iterations
+      }
 
-      // Stop if quality threshold met
-      if (candidate.qualityScore >= QUALITY_THRESHOLD) break;
-
-      // Feed missing elements back as revision prompt for next iteration
-      if (candidate.missingElements?.length) {
-        userContent = `${baseUserContent}
+      if (candidate?.narrative) {
+        iterations++;
+        if (!best || (candidate.qualityScore ?? 0) > (best.qualityScore ?? 0)) best = candidate;
+        if ((candidate.qualityScore ?? 0) >= QUALITY_THRESHOLD) break;
+        if (candidate.missingElements?.length) {
+          userContent = `${baseUserContent}
 
 REVISION REQUEST (attempt ${iterations}/${MAX_ITERATIONS}):
 The previous draft scored ${candidate.qualityScore}/100. Improve it by addressing these missing elements:
 ${candidate.missingElements.map((e, i) => `${i + 1}. ${e}`).join("\n")}
 
 Produce a revised narrative that scores ≥${QUALITY_THRESHOLD}/100.`;
+        } else {
+          break;
+        }
       } else {
         break;
       }
@@ -176,7 +178,8 @@ Produce a revised narrative that scores ≥${QUALITY_THRESHOLD}/100.`;
 
     if (!best) return NextResponse.json({ ok: false, error: "str-narrative temporarily unavailable - please retry." }, { status: 503, headers: gate.headers });
     return NextResponse.json({ ok: true, ...best, iterations }, { headers: gate.headers });
-  } catch {
-    return NextResponse.json({ ok: false, error: "str-narrative temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  } catch (err) {
+    console.error("[str-narrative] failed:", err instanceof Error ? err.message : err);
+    return NextResponse.json({ ok: false, error: "str-narrative temporarily unavailable - please retry." }, { status: 503, headers: gate.headers });
   }
 }

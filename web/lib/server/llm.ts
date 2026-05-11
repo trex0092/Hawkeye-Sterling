@@ -94,7 +94,7 @@ export class AnthropicGuard {
         const safe = {
           ...opts,
           system: redactSystem(opts.system, map),
-          messages: (opts.messages as Anthropic.Messages.MessageParam[]).map((msg) => ({
+          messages: ((opts.messages as Anthropic.Messages.MessageParam[]) ?? []).map((msg) => ({
             ...msg,
             content: redactContent(
               msg.content as string | ContentBlock[],

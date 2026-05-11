@@ -14,7 +14,8 @@ export async function GET(req: Request): Promise<NextResponse> {
   if (!gate.ok) return gate.response;
 
   const { searchParams } = new URL(req.url);
-  const limit = Math.min(parseInt(searchParams.get("limit") ?? "100", 10), 500);
+  const rawLimit = parseInt(searchParams.get("limit") ?? "", 10);
+  const limit = Math.min(isNaN(rawLimit) ? 100 : rawLimit, 500);
 
   const [calls, summary] = await Promise.all([listCalls(limit), getSummary()]);
   return NextResponse.json({ ok: true, summary, calls, count: calls.length }, { headers: gate.headers });
