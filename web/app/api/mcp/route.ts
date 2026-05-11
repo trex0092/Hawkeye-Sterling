@@ -14,8 +14,20 @@ const PROTOCOL_VERSION = "2024-11-05";
 const SERVER_NAME = "hawkeye-sterling";
 const SERVER_VERSION = "1.0.0";
 
-const BASE_URL =
-  process.env["NEXT_PUBLIC_APP_URL"] ?? "https://hawkeye-sterling.netlify.app";
+// NEXT_PUBLIC_APP_URL can be empty string, "undefined", or missing protocol —
+// validate it and always fall back to the hardcoded production URL.
+const FALLBACK_URL = "https://hawkeye-sterling.netlify.app";
+function resolveBaseUrl(): string {
+  const raw = process.env["NEXT_PUBLIC_APP_URL"];
+  if (!raw) return FALLBACK_URL;
+  try {
+    const u = new URL(raw);
+    return u.origin; // e.g. "https://hawkeye-sterling.netlify.app"
+  } catch {
+    return FALLBACK_URL;
+  }
+}
+const BASE_URL = resolveBaseUrl();
 
 const CORS: Record<string, string> = {
   "access-control-allow-origin": "*",
@@ -30,7 +42,12 @@ async function callApi(
   body?: unknown,
   query?: Record<string, string>,
 ): Promise<unknown> {
-  const url = new URL(path, BASE_URL);
+  let url: URL;
+  try {
+    url = new URL(path, BASE_URL);
+  } catch {
+    return { ok: false, error: `URL construction failed: path="${path}" base="${BASE_URL}"` };
+  }
   if (query) {
     for (const [k, v] of Object.entries(query)) url.searchParams.set(k, v);
   }
