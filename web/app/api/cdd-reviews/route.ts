@@ -117,6 +117,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     enhancedMeasuresRequired: body.enhancedMeasuresRequired,
     gaps: body.gaps,
     recommendedActions: body.recommendedActions,
+    caseId: body.caseId,
     createdAt: existing?.createdAt ?? now,
     updatedAt: now,
   };

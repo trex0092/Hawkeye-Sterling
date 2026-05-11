@@ -86,8 +86,9 @@ async function handlePut(req: Request): Promise<NextResponse> {
     );
   }
   await saveAllCases(tenant, body.cases);
+  const saved = await loadAllCases(tenant);
   return NextResponse.json(
-    { ok: true, tenant, cases: body.cases },
+    { ok: true, tenant, cases: saved },
     { headers: gate.headers },
   );
 }

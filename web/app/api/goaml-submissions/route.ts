@@ -87,6 +87,14 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   const existing = await getGoAmlSubmission(tenant, body.reportRef);
+  // Forward-only status transition: prevent regressing terminal states
+  const STATUS_RANK: Record<string, number> = { draft: 0, submitted: 1, acknowledged: 2, rejected: 2, failed: 2 };
+  if (existing && (STATUS_RANK[existing.status] ?? 0) > (STATUS_RANK[body.status] ?? 0)) {
+    return NextResponse.json(
+      { ok: false, error: `Cannot regress status from '${existing.status}' to '${body.status}'` },
+      { status: 409, headers: gate.headers },
+    );
+  }
   if (!existing) {
     return NextResponse.json(
       { ok: false, error: `submission ${body.reportRef} not found — it is created automatically by /api/goaml` },

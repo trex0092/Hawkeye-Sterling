@@ -93,6 +93,15 @@ export async function enforce(
         ),
       };
     }
+    if (!v.payload.sub) {
+      return {
+        ok: false,
+        response: NextResponse.json(
+          { ok: false, error: "invalid JWT: missing sub claim" },
+          { status: 401 },
+        ),
+      };
+    }
     keyId = v.payload.sub;
     tierId = v.payload.tier;
     const rl = await consumeRateLimit(keyId, tierId);

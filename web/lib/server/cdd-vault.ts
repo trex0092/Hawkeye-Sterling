@@ -25,6 +25,7 @@ export interface CddReviewRecord {
   enhancedMeasuresRequired?: boolean;
   gaps?: string[];
   recommendedActions?: string[];
+  caseId?: string;
   createdAt: string;
   updatedAt: string;
 }

@@ -9,6 +9,7 @@
 // Kill switch: set MCP_ENABLED=false in Netlify env vars to instantly disable
 // all 28 tools. Set back to true (or remove) to re-enable.
 
+import { AsyncLocalStorage } from "node:async_hooks";
 import { getToolLevel } from "@/lib/mcp/tool-manifest";
 import type { ConsequenceLevel } from "@/lib/mcp/tool-manifest";
 import type { McpLogEntry } from "@/app/api/operator/logs/route";
@@ -234,10 +235,10 @@ function summarise(value: unknown, maxLen = 200): string {
   return s.length > maxLen ? s.slice(0, maxLen) + "…" : s;
 }
 
-// Per-call state threaded via module-level vars (set before each dispatch, cleared after).
-// Not concurrency-safe under heavy parallel load, but acceptable for this compliance platform.
-let _currentCallTimeout: number | undefined;
-let _currentAuthHeader: string | undefined;
+// Per-request context stored in AsyncLocalStorage so concurrent requests
+// don't share state (eliminates auth header and timeout cross-contamination).
+interface CallCtx { authHeader?: string; timeoutMs?: number }
+const _callCtx = new AsyncLocalStorage<CallCtx>();
 
 // ── Internal API proxy ────────────────────────────────────────────────────────
 async function callApi(
@@ -256,15 +257,16 @@ async function callApi(
   if (query) {
     for (const [k, v] of Object.entries(query)) url.searchParams.set(k, v);
   }
+  const ctx = _callCtx.getStore();
   try {
     const res = await fetch(url.toString(), {
       method,
       headers: {
         "content-type": "application/json",
-        ...(_currentAuthHeader ? { authorization: _currentAuthHeader } : {}),
+        ...(ctx?.authHeader ? { authorization: ctx.authHeader } : {}),
       },
       ...(body ? { body: JSON.stringify(body) } : {}),
-      signal: AbortSignal.timeout(timeoutMs ?? _currentCallTimeout ?? 55_000),
+      signal: AbortSignal.timeout(timeoutMs ?? ctx?.timeoutMs ?? 55_000),
     });
     return await res.json().catch(() => ({ ok: res.ok, status: res.status }));
   } catch (err) {
@@ -922,20 +924,14 @@ async function dispatch(msg: {
 
     const t0 = Date.now();
     try {
-      // Pass per-class timeout to callApi via handler override
-      const handlerWithTimeout = (args: Record<string, unknown>) => {
-        // Temporarily override AbortSignal timeout via the tool's handler — we
-        // achieve this by wrapping the handler and injecting timeout into callApi
-        // indirectly: each handler ultimately calls callApi, which now accepts timeoutMs.
-        // Since handlers are closures over callApi, we use a module-level variable trick:
-        _currentCallTimeout = timeoutMs;
-        try {
-          return tool.handler(args);
-        } finally {
-          _currentCallTimeout = undefined;
-        }
-      };
-      const result = await handlerWithTimeout(toolArgs);
+      // Run the tool inside an AsyncLocalStorage context that carries
+      // the per-class timeout, inheriting the caller's auth header from
+      // the enclosing POST context.
+      const parentCtx = _callCtx.getStore() ?? {};
+      const result = await _callCtx.run(
+        { ...parentCtx, timeoutMs },
+        () => tool.handler(toolArgs),
+      );
       const durationMs = Date.now() - t0;
       recordBreakerSuccess(toolName);
       const wrapped = wrapWithGovernance(toolName, level, result);
@@ -1010,9 +1006,7 @@ export async function GET(): Promise<Response> {
 export async function POST(req: Request): Promise<Response> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
-  // Thread caller's auth to all internal callApi requests so they're
-  // rate-limited against the caller's tier rather than free-tier anonymous.
-  _currentAuthHeader = req.headers.get("authorization") ?? undefined;
+
   // Kill switch — set MCP_ENABLED=false in Netlify env vars to instantly
   // disable all 28 tools. All tool calls return 503 until re-enabled.
   if (process.env["MCP_ENABLED"] === "false") {
@@ -1029,15 +1023,23 @@ export async function POST(req: Request): Promise<Response> {
     return json(err(null, -32700, "Parse error"), 400);
   }
 
+  // Thread caller's auth into all internal callApi requests via AsyncLocalStorage
+  // so each concurrent request has its own isolated auth context.
+  const authHeader = req.headers.get("authorization") ?? undefined;
+
   // Batch request
   if (Array.isArray(body)) {
-    const results = await Promise.all(body.map((msg) => dispatch(msg as Parameters<typeof dispatch>[0])));
+    const results = await _callCtx.run({ authHeader }, () =>
+      Promise.all(body.map((msg) => dispatch(msg as Parameters<typeof dispatch>[0]))),
+    );
     const responses = results.filter((r) => r !== null);
     return json(responses);
   }
 
   // Single request
-  const result = await dispatch(body as Parameters<typeof dispatch>[0]);
+  const result = await _callCtx.run({ authHeader }, () =>
+    dispatch(body as Parameters<typeof dispatch>[0]),
+  );
   if (result === null) {
     // Notification — no response body
     return new Response(null, { status: 202, headers: CORS });

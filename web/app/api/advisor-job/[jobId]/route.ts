@@ -20,7 +20,7 @@ const KEY_PREFIX = "advisor-jobs";
 const JOB_ID_RE = /^[A-Za-z0-9_-]{1,128}$/;
 
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ jobId: string }> },
 ): Promise<NextResponse> {
   const gate = await enforce(req);
