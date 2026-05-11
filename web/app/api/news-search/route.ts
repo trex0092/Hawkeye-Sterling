@@ -214,15 +214,15 @@ function parseRss(xml: string, subject: string, variants: string[], lang: string
   return out;
 }
 
-// Per-locale RSS timeout. Netlify Functions cap at 10s total wall-clock; with
-// 7 locales fanning out in parallel, any single stalled feed used to sink the
-// whole function into a 502. A 4-second AbortSignal bounds each feed so the
-// slowest locale is skipped rather than killing the response.
+// Per-locale RSS timeout. With 7 locales fanning out in parallel, any single
+// stalled feed would otherwise hold up the whole response. A 4-second
+// AbortSignal bounds each feed so the slowest locale is skipped rather than
+// blocking the others.
 const FEED_TIMEOUT_MS = 4_000;
 
 // Overall timebox for the whole fan-out. We return with whatever articles
-// have arrived by this deadline — the alternative is letting Netlify kill
-// the function at the 10s edge and surface a 502 to the operator.
+// have arrived by this deadline so a slow Google News cluster never burns
+// the full 30s maxDuration budget.
 const OVERALL_TIMEBOX_MS = 7_500;
 
 async function fetchLocaleFeed(
@@ -374,7 +374,7 @@ export async function GET(req: Request): Promise<NextResponse> {
     // allSettled so one rejected fetch never rejects the whole batch —
     // combined with the per-feed AbortSignal and the overall timebox
     // this guarantees the function always returns within ~7.5s, well
-    // inside Netlify's 10s edge cap.
+    // inside the 30s maxDuration budget.
     const fanOut = Promise.allSettled(
       LOCALES.map((loc) => fetchLocaleFeed(q, loc, variants)),
     );
