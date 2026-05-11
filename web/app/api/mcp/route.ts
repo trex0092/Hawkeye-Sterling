@@ -449,7 +449,7 @@ const TOOLS: ToolDef[] = [
       required: ["country"],
     },
     handler: async ({ country }) =>
-      callApi("/api/country-risk", "POST", { countries: [country] }),
+      callApi("/api/country-risk", "POST", { country }),
   },
   {
     name: "sanctions_status",
