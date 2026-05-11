@@ -23,6 +23,7 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
     // Client lifecycle: intake → KYC → ongoing CDD → data quality
     title: "Onboarding & CDD",
     items: [
+      { label: "🔄 pKYC Monitor", href: "/pkyc", hint: "Perpetual KYC — continuous CDD lifecycle management" },
       { label: "🪄 Onboarding Wizard", href: "/operations/onboard", hint: "Guided new-customer flow" },
       { label: "🪪 Client Portal", href: "/client-portal", hint: "Entity KYC + AI risk assessment" },
       { label: "👥 UBO Declaration", href: "/ubo-declaration", hint: "Beneficial ownership form + AI risk" },
@@ -60,6 +61,7 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
     // Regulatory record-keeping, audit trail, reference library
     title: "Governance & Audit",
     items: [
+      { label: "📋 System Card", href: "/system-card", hint: "AI system disclosure · capabilities · safeguards · regulatory basis" },
       { label: "🤖 Responsible AI", href: "/responsible-ai", hint: "UNESCO AI ethics compliance · human oversight" },
       { label: "🔒 Audit Trail", href: "/audit-trail", hint: "Immutable HMAC audit chain + AI anomaly scan" },
       { label: "🕰️ AM Lookback", href: "/adverse-media-lookback", hint: "10-year adverse media archive · FDL Art.19" },

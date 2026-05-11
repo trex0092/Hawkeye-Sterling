@@ -22,6 +22,8 @@ export interface McpLogEntry {
   outputSummary: string;
   durationMs: number;
   isError: boolean;
+  anomalyNote?: string;
+  jurisdiction?: string;
 }
 
 async function getStore() {

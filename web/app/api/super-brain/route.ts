@@ -619,15 +619,38 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 }
 
+// BUG-02 fix: common country names that jurisdictionByName() misses
+const COMMON_NAME_ISO2: Record<string, string> = {
+  "russia": "RU", "russian federation": "RU",
+  "china": "CN", "people's republic of china": "CN", "prc": "CN",
+  "iran": "IR", "islamic republic of iran": "IR",
+  "north korea": "KP", "dprk": "KP", "democratic people's republic of korea": "KP",
+  "syria": "SY", "syrian arab republic": "SY",
+  "cuba": "CU", "venezuela": "VE",
+  "belarus": "BY", "republic of belarus": "BY",
+  "myanmar": "MM", "burma": "MM",
+  "ukraine": "UA", "united states": "US", "usa": "US",
+  "united kingdom": "GB", "uk": "GB", "great britain": "GB",
+  "germany": "DE", "france": "FR", "italy": "IT", "spain": "ES",
+  "saudi arabia": "SA", "united arab emirates": "AE", "uae": "AE",
+  "turkey": "TR", "türkiye": "TR", "pakistan": "PK", "india": "IN",
+  "afghanistan": "AF", "iraq": "IQ", "libya": "LY", "somalia": "SO",
+  "sudan": "SD", "south sudan": "SS", "eritrea": "ER", "ethiopia": "ET",
+  "zimbabwe": "ZW", "burundi": "BI", "central african republic": "CF",
+  "democratic republic of the congo": "CD", "drc": "CD", "congo": "CG",
+};
+
 function resolveJurisdiction(
   input?: string,
 ): { iso2: string; name: string; region: string; cahra: boolean; regimes: string[] } | null {
   if (!input) return null;
   const raw = input.trim();
   if (!raw) return null;
-  // Try exact name first, then ISO2 uppercase.
+  // Try exact name first, then common-name map, then ISO2 uppercase.
   const byName = jurisdictionByName(raw);
-  const iso2Guess = raw.length === 2 ? raw.toUpperCase() : byName?.iso2 ?? raw.toUpperCase();
+  const iso2Guess = raw.length === 2
+    ? raw.toUpperCase()
+    : byName?.iso2 ?? COMMON_NAME_ISO2[raw.toLowerCase()] ?? raw.toUpperCase();
   const regimes = (() => {
     try {
       return regimesForJurisdiction(iso2Guess).map((r: any) => r.id ?? String(r));

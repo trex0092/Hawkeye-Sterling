@@ -29,6 +29,8 @@ jobs:
         run: test -f scripts/gen-capabilities.cjs
       - name: Red-flag extractor check
         run: test -f scripts/gen-redflags.cjs
+      - name: Lethal-trifecta governance check (Control 5.08)
+        run: node scripts/lethal-trifecta-check.mjs
 
   security-audit:
     runs-on: ubuntu-latest

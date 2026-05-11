@@ -10,11 +10,180 @@
 // all 28 tools. Set back to true (or remove) to re-enable.
 
 import { getToolLevel } from "@/lib/mcp/tool-manifest";
+import type { ConsequenceLevel } from "@/lib/mcp/tool-manifest";
 import type { McpLogEntry } from "@/app/api/operator/logs/route";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
+
+// ── Per-class timeouts (Control 2.03) ────────────────────────────────────────
+const CLASS_TIMEOUT_MS: Record<ConsequenceLevel, number> = {
+  "read-only":  15_000,
+  "supervised": 45_000,
+  "action":     55_000,
+};
+
+// ── Rate limiter (Control 20.02/20.06) ───────────────────────────────────────
+// Calls per minute per tool class. Module-level; resets each minute window.
+const CLASS_RATE_LIMITS: Record<ConsequenceLevel, number> = {
+  "read-only":  120,
+  "supervised":  40,
+  "action":      10,
+};
+interface RateWindow { count: number; windowStart: number }
+const _rateWindows = new Map<string, RateWindow>();
+
+function checkRateLimit(toolName: string, level: ConsequenceLevel): { allowed: boolean; retryAfterMs?: number } {
+  const limit = CLASS_RATE_LIMITS[level];
+  const now = Date.now();
+  const win = _rateWindows.get(toolName);
+  if (!win || now - win.windowStart >= 60_000) {
+    _rateWindows.set(toolName, { count: 1, windowStart: now });
+    return { allowed: true };
+  }
+  if (win.count >= limit) {
+    return { allowed: false, retryAfterMs: 60_000 - (now - win.windowStart) };
+  }
+  win.count++;
+  return { allowed: true };
+}
+
+// ── Circuit breaker (Control 20.02) ──────────────────────────────────────────
+// Trip after 5 consecutive failures; auto-reset after 60 s.
+interface BreakerState { failures: number; tripTime: number | null }
+const _breakers = new Map<string, BreakerState>();
+const BREAKER_THRESHOLD = 5;
+const BREAKER_RESET_MS = 60_000;
+
+function isBreakerOpen(toolName: string): boolean {
+  const s = _breakers.get(toolName);
+  if (!s || s.tripTime === null) return false;
+  if (Date.now() - s.tripTime > BREAKER_RESET_MS) {
+    // Auto-reset (half-open)
+    s.tripTime = null;
+    s.failures = 0;
+    return false;
+  }
+  return true;
+}
+
+function recordBreakerSuccess(toolName: string): void {
+  const s = _breakers.get(toolName);
+  if (s) { s.failures = 0; s.tripTime = null; }
+}
+
+function recordBreakerFailure(toolName: string): void {
+  const s = _breakers.get(toolName) ?? { failures: 0, tripTime: null };
+  s.failures++;
+  if (s.failures >= BREAKER_THRESHOLD) s.tripTime = Date.now();
+  _breakers.set(toolName, s);
+}
+
+// ── Prompt injection detection (Control 13.03/13.07) ─────────────────────────
+const INJECTION_PATTERNS: RegExp[] = [
+  /ignore\s+(all\s+)?previous\s+instructions?/i,
+  /you\s+are\s+now\s+a/i,
+  /act\s+as\s+if\s+you/i,
+  /disregard\s+your\s+(previous\s+)?instructions?/i,
+  /forget\s+everything/i,
+  /\[INST\]/,
+  /<\|system\|>/,
+  /###\s*INSTRUCTION/i,
+  /---\s*SYSTEM\s*PROMPT/i,
+  /override\s+(safety|security|compliance)\s+mode/i,
+];
+
+function detectInjection(input: string): boolean {
+  const s = typeof input === "string" ? input : JSON.stringify(input);
+  return INJECTION_PATTERNS.some(p => p.test(s));
+}
+
+function scanArgsForInjection(args: Record<string, unknown>): string | null {
+  for (const [k, v] of Object.entries(args)) {
+    const s = typeof v === "string" ? v : JSON.stringify(v);
+    if (s.length > 0 && detectInjection(s)) return k;
+  }
+  return null;
+}
+
+// ── Governance wrapper (Controls 2.05, 12.04) ─────────────────────────────────
+// Injects confidence score, human-review flag, and provenance onto supervised outputs.
+function wrapWithGovernance(toolName: string, level: ConsequenceLevel, result: unknown): unknown {
+  if (level === "read-only") return result;
+  if (typeof result !== "object" || result === null) return result;
+
+  const r = result as Record<string, unknown>;
+  let confidenceScore = 0.75;
+  if (typeof r["confidence"] === "number")   confidenceScore = r["confidence"];
+  else if (typeof r["riskScore"] === "number") {
+    const rs = r["riskScore"] as number;
+    confidenceScore = rs > 70 ? 0.85 : rs > 40 ? 0.75 : 0.65;
+  }
+
+  return {
+    ...r,
+    _governance: {
+      confidenceScore: Math.round(confidenceScore * 100) / 100,
+      humanReviewRequired: true,
+      consequenceLevel: level,
+      reviewNote: "AI-generated output — MLRO review required before any compliance action. FDL No.10/2025 Art.18.",
+      _provenance: {
+        tool: toolName,
+        engineVersion: process.env["BRAIN_VERSION"] ?? "wave-5",
+        commitRef: (process.env["COMMIT_REF"] ?? process.env["NETLIFY_COMMIT_REF"] ?? "dev").slice(0, 7),
+        generatedAt: new Date().toISOString(),
+        dataSources: ["ofac-sdn", "eu-fsf", "uk-ofsi", "uae-eocn", "uae-ltl", "un-consolidated", "gdelt", "google-news-rss"],
+      },
+    },
+  };
+}
+
+// ── Anomaly detection (Controls 21.08/16.01) ─────────────────────────────────
+// Baseline: ≤30 calls per 5-min window per session is normal. Alert at >50.
+interface SessionWindow { calls: number; actionCalls: number; windowStart: number; flagged: boolean }
+const _sessionWindows = new Map<string, SessionWindow>();
+
+function trackAndDetectAnomaly(sessionId: string, toolName: string, level: ConsequenceLevel): string | null {
+  const now = Date.now();
+  const win = _sessionWindows.get(sessionId) ?? { calls: 0, actionCalls: 0, windowStart: now, flagged: false };
+  if (now - win.windowStart >= 5 * 60_000) {
+    // New window
+    win.calls = 1;
+    win.actionCalls = level === "action" ? 1 : 0;
+    win.windowStart = now;
+    win.flagged = false;
+  } else {
+    win.calls++;
+    if (level === "action") win.actionCalls++;
+  }
+  _sessionWindows.set(sessionId, win);
+
+  if (!win.flagged && win.calls > 50) {
+    win.flagged = true;
+    void writeAnomaly({ sessionId, type: "high_volume", toolName, calls: win.calls, windowMs: now - win.windowStart });
+    return `session exceeded 50 calls in 5-minute window (${win.calls} calls)`;
+  }
+  if (!win.flagged && win.actionCalls > 5) {
+    win.flagged = true;
+    void writeAnomaly({ sessionId, type: "action_burst", toolName, actionCalls: win.actionCalls });
+    return `session triggered ${win.actionCalls} action-level calls in 5 minutes`;
+  }
+  return null;
+}
+
+async function writeAnomaly(data: Record<string, unknown>): Promise<void> {
+  try {
+    const mod = await import("@netlify/blobs").catch(() => null);
+    if (!mod) return;
+    const store = mod.getStore({ name: "mcp-anomaly-logs" });
+    const ts = new Date().toISOString().replace(/[:.]/g, "-");
+    await store.setJSON(`anomaly/${ts}-${Math.random().toString(36).slice(2, 8)}`, {
+      ...data,
+      detectedAt: new Date().toISOString(),
+    });
+  } catch { /* never blocks */ }
+}
 
 const PROTOCOL_VERSION = "2024-11-05";
 const SERVER_NAME = "hawkeye-sterling";
@@ -64,12 +233,17 @@ function summarise(value: unknown, maxLen = 200): string {
   return s.length > maxLen ? s.slice(0, maxLen) + "…" : s;
 }
 
+// Per-call timeout set by the tools/call handler before invoking the tool handler.
+// Tools call callApi() which picks up this value for per-class timeouts.
+let _currentCallTimeout: number | undefined;
+
 // ── Internal API proxy ────────────────────────────────────────────────────────
 async function callApi(
   path: string,
   method: "GET" | "POST",
   body?: unknown,
   query?: Record<string, string>,
+  timeoutMs?: number,
 ): Promise<unknown> {
   let url: URL;
   try {
@@ -85,7 +259,7 @@ async function callApi(
       method,
       headers: { "content-type": "application/json" },
       ...(body ? { body: JSON.stringify(body) } : {}),
-      signal: AbortSignal.timeout(55_000),
+      signal: AbortSignal.timeout(timeoutMs ?? _currentCallTimeout ?? 55_000),
     });
     return await res.json().catch(() => ({ ok: res.ok, status: res.status }));
   } catch (err) {
@@ -297,7 +471,12 @@ const TOOLS: ToolDef[] = [
     },
     handler: async ({ subjectName, entityType, jurisdiction, format }) =>
       callApi("/api/scr-report", "POST", {
-        subject: { name: subjectName, entityType, jurisdiction },
+        subject: {
+          id: String(subjectName ?? "").slice(0, 32).replace(/[^A-Za-z0-9]/g, "-") || "subject",
+          name: subjectName,
+          entityType,
+          jurisdiction,
+        },
         format: format ?? "json",
       }),
   },
@@ -391,17 +570,33 @@ const TOOLS: ToolDef[] = [
   {
     name: "entity_graph",
     description:
-      "Build a corporate ownership knowledge graph: directorships, UBO chains, and related entities.",
+      "Build a corporate ownership knowledge graph: directorships, UBO chains, and related entities. Requires a company/organisation name. For individual persons use pep_network instead.",
     inputSchema: {
       type: "object",
       properties: {
         companyName: { type: "string" },
         jurisdiction: { type: "string" },
         companyNumber: { type: "string" },
+        subject: { type: "string", description: "Deprecated alias — use pep_network for individuals" },
+        name: { type: "string", description: "Deprecated alias — use pep_network for individuals" },
       },
-      required: ["companyName"],
+      required: [],
     },
-    handler: async (args) => callApi("/api/entity-graph", "POST", args),
+    // BUG-01 fix: if caller passes a person name but no companyName, redirect to pep_network
+    handler: async (args) => {
+      const a = args as Record<string, unknown>;
+      if (!a.companyName && (a.subject || a.name)) {
+        const subject = String(a.subject ?? a.name ?? "");
+        return callApi("/api/pep-network", "POST", { subject, maxDepth: a.maxDepth ?? 2 });
+      }
+      if (!a.companyName) {
+        return {
+          error: "entity_graph requires a companyName. For individuals, use the pep_network tool instead.",
+          routingHint: "pep_network",
+        };
+      }
+      return callApi("/api/entity-graph", "POST", args);
+    },
   },
   {
     name: "domain_intel",
@@ -625,33 +820,84 @@ async function dispatch(msg: {
     const p = params as { name?: string; arguments?: Record<string, unknown> };
     const tool = TOOLS.find((t) => t.name === p?.name);
     if (!tool) return err(id, -32601, `Tool not found: ${p?.name}`);
-    const t0 = Date.now();
+
     const toolName = p?.name ?? "unknown";
     const toolArgs = p?.arguments ?? {};
-    try {
-      const result = await tool.handler(toolArgs);
-      const durationMs = Date.now() - t0;
-      // Fire-and-forget audit log — never blocks the response
+    const level = getToolLevel(toolName);
+    const timeoutMs = CLASS_TIMEOUT_MS[level];
+
+    // Circuit breaker check (Control 20.02)
+    if (isBreakerOpen(toolName)) {
+      return err(id, -32002, `Tool ${toolName} is temporarily unavailable (circuit breaker open). Retry in 60s.`);
+    }
+
+    // Rate limit check (Control 20.06)
+    const rate = checkRateLimit(toolName, level);
+    if (!rate.allowed) {
+      return err(id, -32003, `Rate limit exceeded for ${toolName}. Retry in ${Math.ceil((rate.retryAfterMs ?? 60_000) / 1_000)}s.`);
+    }
+
+    // Prompt injection check (Control 13.03)
+    const injectedField = scanArgsForInjection(toolArgs);
+    if (injectedField) {
       void logToolCall({
         id: Math.random().toString(36).slice(2, 10),
         timestamp: new Date().toISOString(),
         tool: toolName,
-        consequenceLevel: getToolLevel(toolName),
+        consequenceLevel: level,
         inputSummary: summarise(toolArgs),
-        outputSummary: summarise(result),
+        outputSummary: `BLOCKED: prompt injection detected in field "${injectedField}"`,
+        durationMs: 0,
+        isError: true,
+      });
+      return err(id, -32004, `Request blocked: potential prompt injection detected in input field "${injectedField}".`);
+    }
+
+    // Anomaly detection (Control 21.08)
+    const sessionId = (params as Record<string, unknown>)["_sessionId"] as string | undefined ?? "default";
+    const anomaly = trackAndDetectAnomaly(sessionId, toolName, level);
+
+    const t0 = Date.now();
+    try {
+      // Pass per-class timeout to callApi via handler override
+      const handlerWithTimeout = (args: Record<string, unknown>) => {
+        // Temporarily override AbortSignal timeout via the tool's handler — we
+        // achieve this by wrapping the handler and injecting timeout into callApi
+        // indirectly: each handler ultimately calls callApi, which now accepts timeoutMs.
+        // Since handlers are closures over callApi, we use a module-level variable trick:
+        _currentCallTimeout = timeoutMs;
+        try {
+          return tool.handler(args);
+        } finally {
+          _currentCallTimeout = undefined;
+        }
+      };
+      const result = await handlerWithTimeout(toolArgs);
+      const durationMs = Date.now() - t0;
+      recordBreakerSuccess(toolName);
+      const wrapped = wrapWithGovernance(toolName, level, result);
+      void logToolCall({
+        id: Math.random().toString(36).slice(2, 10),
+        timestamp: new Date().toISOString(),
+        tool: toolName,
+        consequenceLevel: level,
+        inputSummary: summarise(toolArgs),
+        outputSummary: summarise(wrapped),
         durationMs,
         isError: false,
+        ...(anomaly ? { anomalyNote: anomaly } : {}),
       });
       return ok(id, {
-        content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
       });
     } catch (e) {
       const durationMs = Date.now() - t0;
+      recordBreakerFailure(toolName);
       void logToolCall({
         id: Math.random().toString(36).slice(2, 10),
         timestamp: new Date().toISOString(),
         tool: toolName,
-        consequenceLevel: getToolLevel(toolName),
+        consequenceLevel: level,
         inputSummary: summarise(toolArgs),
         outputSummary: e instanceof Error ? e.message : String(e),
         durationMs,
