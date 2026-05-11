@@ -86,8 +86,9 @@ export async function calibrateWeights(): Promise<{ current: RiskWeights; propos
   const totalTM = tmPairs.reduce((s, k) => s + (fb.trueMatchByPair[k] ?? 0), 0);
 
   // Sanctions-related pairs are keyed with list IDs like "OFAC|...|..."
-  const sanctionsFP = fpPairs.filter((k) => k.startsWith("OFAC") || k.startsWith("UN") || k.startsWith("EU") || k.startsWith("UAE")).reduce((s, k) => s + (fb.falsePositiveByPair[k] ?? 0), 0);
-  const sanctionsTM = tmPairs.filter((k) => k.startsWith("OFAC") || k.startsWith("UN") || k.startsWith("EU") || k.startsWith("UAE")).reduce((s, k) => s + (fb.trueMatchByPair[k] ?? 0), 0);
+  const isSanctionsKey = (k: string) => { const l = k.toLowerCase(); return l.startsWith("ofac") || l.startsWith("un") || l.startsWith("eu") || l.startsWith("uae"); };
+  const sanctionsFP = fpPairs.filter(isSanctionsKey).reduce((s, k) => s + (fb.falsePositiveByPair[k] ?? 0), 0);
+  const sanctionsTM = tmPairs.filter(isSanctionsKey).reduce((s, k) => s + (fb.trueMatchByPair[k] ?? 0), 0);
 
   const proposed: RiskWeights = { ...current };
   const MAX_DELTA = 0.15; // max 15% of baseline per dimension

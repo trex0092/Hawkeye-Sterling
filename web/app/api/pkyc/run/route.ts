@@ -13,7 +13,7 @@
 import { NextResponse } from "next/server";
 import { withGuard } from "@/lib/server/guard";
 import {
-  listSubjects, getSubject, saveSubject,
+  listSubjects, getSubject, saveSubject, saveDelta,
   type PKycSubject, type PKycRiskBand, type PKycDelta, type BehavioralBaseline,
 } from "../_store";
 
@@ -88,17 +88,6 @@ function isMaterialChange(subject: PKycSubject, newBand: PKycRiskBand, newCompos
   return { changed: false, kind: "clear", detail: "No material change" };
 }
 
-// ── Save delta ────────────────────────────────────────────────────────────────
-
-async function saveDelta(delta: PKycDelta): Promise<void> {
-  try {
-    const mod = await import("@netlify/blobs").catch(() => null);
-    if (!mod) return;
-    const store = mod.getStore({ name: "pkyc" });
-    await store.setJSON(`delta/${delta.id}`, delta);
-  } catch { /* non-blocking */ }
-}
-
 // ── Run a single subject ──────────────────────────────────────────────────────
 
 interface RunSubjectResult {
@@ -114,6 +103,8 @@ interface RunSubjectResult {
 }
 
 async function runSubject(subject: PKycSubject, force = false): Promise<RunSubjectResult> {
+  // PR-3: normalize lastHits for records created before this field existed
+  subject.lastHits = subject.lastHits ?? 0;
   const now = new Date();
 
   if (!force && new Date(subject.nextRunAt) > now) {

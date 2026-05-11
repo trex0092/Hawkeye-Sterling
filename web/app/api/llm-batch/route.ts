@@ -54,6 +54,13 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "maximum 100 requests per batch" }, { status: 400, headers: gate.headers });
   }
 
+  // LB-4: validate customId format required by Anthropic
+  const CUSTOM_ID_RE = /^[a-zA-Z0-9_-]{1,64}$/;
+  const badId = body.requests.find((r) => !CUSTOM_ID_RE.test(r.customId ?? ""));
+  if (badId) {
+    return NextResponse.json({ ok: false, error: `customId "${badId.customId}" invalid — must match ^[a-zA-Z0-9_-]{1,64}$` }, { status: 400, headers: gate.headers });
+  }
+
   const DEFAULT_SYSTEM = "You are an AML compliance analyst. Respond concisely with valid JSON only.";
   const DEFAULT_MODEL = "claude-haiku-4-5-20251001";
 

@@ -154,13 +154,14 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (fbStats) {
     for (const hit of hits) {
       const listId = hit.listId ?? "unknown";
-      const listRef = hit.listRef ?? hit.name ?? "unknown";
+      // EN-2: use same key formula in both storage and lookup
+      const hitKey = hit.listRef ?? hit.name ?? "unknown";
       const candidate = subjectName;
       const rawScore = (hit.score ?? 0) / 100;
-      const adj = adjustScore(rawScore, listId, listRef, candidate, fbStats);
+      const adj = adjustScore(rawScore, listId, hitKey, candidate, fbStats);
       if (adj.delta !== 0) {
         hit.score = Math.round(adj.score * 100);
-        feedbackAdjustments[listRef] = { delta: adj.delta, reason: adj.reason ?? "" };
+        feedbackAdjustments[hitKey] = { delta: adj.delta, reason: adj.reason ?? "" };
       }
     }
   }
@@ -195,7 +196,7 @@ Assess: true match or false positive?`,
         });
         const raw = res.content[0]?.type === "text" ? (res.content[0] as { type: "text"; text: string }).text : "{}";
         const parsed = JSON.parse(raw.match(/\{[\s\S]*\}/)?.[0] ?? "{}") as { confidenceScore?: number; recommendation?: string; reasoning?: string };
-        const fbAdj = feedbackAdjustments[hit.listRef ?? hit.name ?? ""];
+        const fbAdj = feedbackAdjustments[hit.listRef ?? hit.name ?? "unknown"];
         triageResults.push({
           hitRef: hit.listRef ?? hit.name ?? String(hit.score),
           confidenceScore: parsed.confidenceScore ?? (hit.score ?? 50),
@@ -210,18 +211,21 @@ Assess: true match or false positive?`,
 
   // ── Layer 6: Cross-list deduplication ────────────────────────────────────────
 
-  const merged: Record<string, { hit: ScreeningHit; lists: string[] }> = {};
+  // EN-3: collect ALL listRef values per deduplicated entry, not just the first
+  const merged: Record<string, { hit: ScreeningHit; lists: string[]; refs: string[] }> = {};
   for (const hit of hits) {
     const key = (hit.name ?? "").toLowerCase().replace(/\s+/g, " ").trim();
     if (merged[key]) {
       merged[key]!.lists.push(hit.listId ?? "unknown");
+      if (hit.listRef) merged[key]!.refs.push(hit.listRef);
     } else {
-      merged[key] = { hit, lists: [hit.listId ?? "unknown"] };
+      merged[key] = { hit, lists: [hit.listId ?? "unknown"], refs: hit.listRef ? [hit.listRef] : [] };
     }
   }
-  const deduplicatedHits = Object.values(merged).map(({ hit, lists }) => ({
+  const deduplicatedHits = Object.values(merged).map(({ hit, lists, refs }) => ({
     ...hit,
     appearsOnLists: [...new Set(lists)],
+    appearsWithRefs: [...new Set(refs)],
     multiListHit: lists.length > 1,
   }));
 

@@ -180,8 +180,11 @@ const PROVIDER_CATALOG: ProviderStatus[] = [
 
 function isToggleOn(envKey: string): boolean {
   const v = process.env[envKey];
-  if (!v) return false;
-  if (v === "0" || v.toLowerCase() === "false") return false;
+  // Non-_ENABLED env vars (e.g. MASTODON_INSTANCE, ALEPH_API_KEY) require actual values.
+  if (!envKey.endsWith("_ENABLED")) return !!v && v.length > 0;
+  // Boolean _ENABLED toggles: per featureFlags.ts they default to ON.
+  // Only disable when explicitly set to "0" or "false".
+  if (v === "0" || v?.toLowerCase() === "false") return false;
   return true;
 }
 

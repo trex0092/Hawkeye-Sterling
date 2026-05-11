@@ -1,10 +1,14 @@
 // LLM call telemetry — records per-call token counts, latency, and estimated
 // cost to Netlify Blobs. Fire-and-forget: never throws or blocks callers.
+//
+// Race condition fix (T-1): the running SUMMARY_KEY is removed. Summary is now
+// computed at read time from the CALLS_KEY list, eliminating the concurrent
+// read-modify-write hazard. Cost is best-effort; individual records are still
+// stored append-first (newest at index 0) and truncated to MAX_RECORDS.
 
 import { getJson, setJson } from "./store";
 
 const CALLS_KEY = "llm-telemetry/calls";
-const SUMMARY_KEY = "llm-telemetry/summary";
 const MAX_RECORDS = 500;
 
 export interface LlmCallRecord {
@@ -26,7 +30,7 @@ export interface LlmSummary {
   totalTokens: number;
   byModel: Record<string, { calls: number; costUsd: number; tokens: number }>;
   byRoute: Record<string, { calls: number; costUsd: number }>;
-  updatedAt: string;
+  computedAt: string;
 }
 
 // Pricing per 1M tokens (Anthropic May 2026)
@@ -47,27 +51,12 @@ export async function recordCall(rec: Omit<LlmCallRecord, "id" | "at" | "costUsd
     const costUsd = calcCost(rec.model, rec.inputTokens, rec.outputTokens, rec.cacheReadTokens, rec.cacheWriteTokens);
     const full: LlmCallRecord = { id, at: new Date().toISOString(), costUsd, ...rec };
 
+    // Single write: prepend to calls list (no SUMMARY_KEY race condition)
     const existing = (await getJson<LlmCallRecord[]>(CALLS_KEY)) ?? [];
     existing.unshift(full);
     await setJson(CALLS_KEY, existing.slice(0, MAX_RECORDS));
-
-    const summary = (await getJson<LlmSummary>(SUMMARY_KEY)) ?? {
-      totalCalls: 0, totalCostUsd: 0, totalTokens: 0, byModel: {}, byRoute: {}, updatedAt: "",
-    };
-    summary.totalCalls += 1;
-    summary.totalCostUsd += costUsd;
-    summary.totalTokens += rec.inputTokens + rec.outputTokens;
-    summary.byModel[rec.model] ??= { calls: 0, costUsd: 0, tokens: 0 };
-    summary.byModel[rec.model]!.calls += 1;
-    summary.byModel[rec.model]!.costUsd += costUsd;
-    summary.byModel[rec.model]!.tokens += rec.inputTokens + rec.outputTokens;
-    summary.byRoute[rec.route] ??= { calls: 0, costUsd: 0 };
-    summary.byRoute[rec.route]!.calls += 1;
-    summary.byRoute[rec.route]!.costUsd += costUsd;
-    summary.updatedAt = new Date().toISOString();
-    await setJson(SUMMARY_KEY, summary);
-  } catch {
-    // telemetry is best-effort — never block callers
+  } catch (err) {
+    console.warn("[llm-telemetry] recordCall failed:", err instanceof Error ? err.message : err);
   }
 }
 
@@ -75,8 +64,23 @@ export async function listCalls(limit = 100): Promise<LlmCallRecord[]> {
   return ((await getJson<LlmCallRecord[]>(CALLS_KEY)) ?? []).slice(0, limit);
 }
 
+// Summary computed at read time — eliminates race condition on summary key
 export async function getSummary(): Promise<LlmSummary> {
-  return (await getJson<LlmSummary>(SUMMARY_KEY)) ?? {
-    totalCalls: 0, totalCostUsd: 0, totalTokens: 0, byModel: {}, byRoute: {}, updatedAt: new Date().toISOString(),
+  const calls = (await getJson<LlmCallRecord[]>(CALLS_KEY)) ?? [];
+  const summary: LlmSummary = {
+    totalCalls: 0, totalCostUsd: 0, totalTokens: 0, byModel: {}, byRoute: {}, computedAt: new Date().toISOString(),
   };
+  for (const c of calls) {
+    summary.totalCalls += 1;
+    summary.totalCostUsd += c.costUsd;
+    summary.totalTokens += c.inputTokens + c.outputTokens;
+    summary.byModel[c.model] ??= { calls: 0, costUsd: 0, tokens: 0 };
+    summary.byModel[c.model]!.calls += 1;
+    summary.byModel[c.model]!.costUsd += c.costUsd;
+    summary.byModel[c.model]!.tokens += c.inputTokens + c.outputTokens;
+    summary.byRoute[c.route] ??= { calls: 0, costUsd: 0 };
+    summary.byRoute[c.route]!.calls += 1;
+    summary.byRoute[c.route]!.costUsd += c.costUsd;
+  }
+  return summary;
 }
