@@ -5,6 +5,12 @@
 //
 // Add to Claude.ai → Settings → Connectors:
 //   URL: https://hawkeye-sterling.netlify.app/api/mcp
+//
+// Kill switch: set MCP_ENABLED=false in Netlify env vars to instantly disable
+// all 28 tools. Set back to true (or remove) to re-enable.
+
+import { getToolLevel } from "@/lib/mcp/tool-manifest";
+import type { McpLogEntry } from "@/app/api/operator/logs/route";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -34,6 +40,29 @@ const CORS: Record<string, string> = {
   "access-control-allow-methods": "GET, POST, DELETE, OPTIONS",
   "access-control-allow-headers": "content-type, authorization, mcp-session-id",
 };
+
+// ── Activity logger ───────────────────────────────────────────────────────────
+// Writes one blob per tool call to "mcp-activity-logs" store.
+// Fire-and-forget — never throws, never blocks the tool response.
+async function logToolCall(entry: McpLogEntry): Promise<void> {
+  try {
+    const mod = await import("@netlify/blobs").catch(() => null);
+    if (!mod) return;
+    const store = mod.getStore({ name: "mcp-activity-logs" });
+    // Key format: entry/YYYY-MM-DDTHH-MM-SS-mmmZ-{id}
+    // Lexicographic sort = chronological order; prefix "entry/" for easy listing.
+    const key = `entry/${entry.timestamp.replace(/[:.]/g, "-")}-${entry.id}`;
+    await store.setJSON(key, entry);
+  } catch {
+    // Logging must never break the tool call
+  }
+}
+
+function summarise(value: unknown, maxLen = 200): string {
+  if (value === null || value === undefined) return "";
+  const s = typeof value === "string" ? value : JSON.stringify(value);
+  return s.length > maxLen ? s.slice(0, maxLen) + "…" : s;
+}
 
 // ── Internal API proxy ────────────────────────────────────────────────────────
 async function callApi(
@@ -596,12 +625,38 @@ async function dispatch(msg: {
     const p = params as { name?: string; arguments?: Record<string, unknown> };
     const tool = TOOLS.find((t) => t.name === p?.name);
     if (!tool) return err(id, -32601, `Tool not found: ${p?.name}`);
+    const t0 = Date.now();
+    const toolName = p?.name ?? "unknown";
+    const toolArgs = p?.arguments ?? {};
     try {
-      const result = await tool.handler(p?.arguments ?? {});
+      const result = await tool.handler(toolArgs);
+      const durationMs = Date.now() - t0;
+      // Fire-and-forget audit log — never blocks the response
+      void logToolCall({
+        id: Math.random().toString(36).slice(2, 10),
+        timestamp: new Date().toISOString(),
+        tool: toolName,
+        consequenceLevel: getToolLevel(toolName),
+        inputSummary: summarise(toolArgs),
+        outputSummary: summarise(result),
+        durationMs,
+        isError: false,
+      });
       return ok(id, {
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
       });
     } catch (e) {
+      const durationMs = Date.now() - t0;
+      void logToolCall({
+        id: Math.random().toString(36).slice(2, 10),
+        timestamp: new Date().toISOString(),
+        tool: toolName,
+        consequenceLevel: getToolLevel(toolName),
+        inputSummary: summarise(toolArgs),
+        outputSummary: e instanceof Error ? e.message : String(e),
+        durationMs,
+        isError: true,
+      });
       return ok(id, {
         content: [{ type: "text", text: `Error: ${e instanceof Error ? e.message : String(e)}` }],
         isError: true,
@@ -644,6 +699,15 @@ export async function GET(): Promise<Response> {
 }
 
 export async function POST(req: Request): Promise<Response> {
+  // Kill switch — set MCP_ENABLED=false in Netlify env vars to instantly
+  // disable all 28 tools. All tool calls return 503 until re-enabled.
+  if (process.env["MCP_ENABLED"] === "false") {
+    return json(
+      err(null, -32001, "Hawkeye Sterling MCP is offline. Contact your MLRO to re-enable."),
+      503,
+    );
+  }
+
   let body: unknown;
   try {
     body = await req.json();
