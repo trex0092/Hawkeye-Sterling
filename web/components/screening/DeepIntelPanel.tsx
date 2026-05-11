@@ -7,7 +7,7 @@
  * Each section is independently triggerable (lazy — no auto-fire on mount).
  */
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Subject } from "@/lib/types";
 import type { QuickScreenResult } from "@/lib/api/quickScreen.types";
 import type { SuperBrainResult } from "@/lib/hooks/useSuperBrain";
@@ -127,6 +127,8 @@ function NameVariantSection({ subject, screen }: { subject: Subject; screen: Qui
   const [result, setResult] = useState<NameVariantsResult | null>(null);
   const [error, setError] = useState<string>("");
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading");
     setError("");
@@ -138,11 +140,12 @@ function NameVariantSection({ subject, screen }: { subject: Subject; screen: Qui
       });
       const data = (await res.json()) as NameVariantsResult & { ok?: boolean; error?: string };
       if (!res.ok || data.error) throw new Error(data.error ?? "API error");
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Unknown error");
-      setStatus("error");
+      if (mountedRef.current) setError(e instanceof Error ? e.message : "Unknown error");
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -246,6 +249,8 @@ function NetworkExpansionSection({ subject }: { subject: Subject }) {
   const [result, setResult] = useState<NetworkMapResult | null>(null);
   const [error, setError] = useState<string>("");
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading");
     setError("");
@@ -257,11 +262,12 @@ function NetworkExpansionSection({ subject }: { subject: Subject }) {
       });
       const data = (await res.json()) as NetworkMapResult & { ok?: boolean; error?: string };
       if (!res.ok || data.error) throw new Error(data.error ?? "API error");
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Unknown error");
-      setStatus("error");
+      if (mountedRef.current) setError(e instanceof Error ? e.message : "Unknown error");
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -347,6 +353,8 @@ function TransactionOverlaySection({ subject }: { subject: Subject }) {
   const [result, setResult] = useState<SubjectAlertRoll | null>(null);
   const [error, setError] = useState<string>("");
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading");
     setError("");
@@ -359,11 +367,12 @@ function TransactionOverlaySection({ subject }: { subject: Subject }) {
       const data = (await res.json()) as TxMonitorResponse;
       if (!res.ok || data.error) throw new Error(data.error ?? "API error");
       const roll = data.subjects?.find((s) => s.subjectId === subject.id) ?? data.subjects?.[0] ?? null;
+      if (!mountedRef.current) return;
       setResult(roll);
       setStatus("done");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Unknown error");
-      setStatus("error");
+      if (mountedRef.current) setError(e instanceof Error ? e.message : "Unknown error");
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -429,6 +438,8 @@ function AdversarialRedTeamSection({ subject, screen }: { subject: Subject; scre
   const [result, setResult] = useState<PremortemResult | null>(null);
   const [error, setError] = useState<string>("");
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading");
     setError("");
@@ -441,11 +452,12 @@ function AdversarialRedTeamSection({ subject, screen }: { subject: Subject; scre
       });
       const data = (await res.json()) as PremortemResult;
       if (!res.ok || data.error) throw new Error(data.error ?? "API error");
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Unknown error");
-      setStatus("error");
+      if (mountedRef.current) setError(e instanceof Error ? e.message : "Unknown error");
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -506,6 +518,8 @@ function GeoRiskSection({ subject }: { subject: Subject }) {
 
   const country = subject.country || subject.jurisdiction || "";
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading");
     setError("");
@@ -516,11 +530,12 @@ function GeoRiskSection({ subject }: { subject: Subject }) {
       });
       const data = (await res.json()) as GeoEventsResult & { events?: GeoEvent[] };
       if (!res.ok || data.error) throw new Error(data.error ?? "API error");
+      if (!mountedRef.current) return;
       setEvents(data.events ?? []);
       setStatus("done");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Unknown error");
-      setStatus("error");
+      if (mountedRef.current) setError(e instanceof Error ? e.message : "Unknown error");
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -579,6 +594,8 @@ function CorporateRegistrySection({ subject }: { subject: Subject }) {
   const [result, setResult] = useState<PepCorporateResult | null>(null);
   const [error, setError] = useState<string>("");
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading");
     setError("");
@@ -597,11 +614,12 @@ function CorporateRegistrySection({ subject }: { subject: Subject }) {
       });
       const data = (await res.json()) as PepCorporateResult & { ok?: boolean; error?: string };
       if (!res.ok || data.error) throw new Error(data.error ?? "API error");
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Unknown error");
-      setStatus("error");
+      if (mountedRef.current) setError(e instanceof Error ? e.message : "Unknown error");
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -727,6 +745,8 @@ function DocumentIntelSection({ subject }: { subject: Subject }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [fileName, setFileName] = useState<string>("");
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     const file = fileRef.current?.files?.[0];
     if (!file) {
@@ -752,11 +772,12 @@ function DocumentIntelSection({ subject }: { subject: Subject }) {
       });
       const data = (await res.json()) as DocumentFraudResult & { ok?: boolean; error?: string };
       if (!res.ok || data.error) throw new Error(data.error ?? "API error");
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Unknown error");
-      setStatus("error");
+      if (mountedRef.current) setError(e instanceof Error ? e.message : "Unknown error");
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -948,6 +969,8 @@ function PepNetworkSection({ subject }: { subject: Subject }) {
   const [result, setResult] = useState<PepNetworkResult | null>(null);
   const [error, setError] = useState<string>("");
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading");
     setError("");
@@ -963,11 +986,12 @@ function PepNetworkSection({ subject }: { subject: Subject }) {
       });
       const data = (await res.json()) as PepNetworkResult & { ok?: boolean; error?: string };
       if (!res.ok || data.error) throw new Error(data.error ?? "API error");
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Unknown error");
-      setStatus("error");
+      if (mountedRef.current) setError(e instanceof Error ? e.message : "Unknown error");
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -1030,6 +1054,8 @@ function DispositionPredictorSection({ subject, screen, superBrain }: { subject:
   const [result, setResult] = useState<PredictionResponse | null>(null);
   const [error, setError] = useState<string>("");
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading");
     setError("");
@@ -1050,11 +1076,12 @@ function DispositionPredictorSection({ subject, screen, superBrain }: { subject:
       });
       const data = (await res.json()) as PredictionResponse;
       if (!res.ok || data.error) throw new Error(data.error ?? "API error");
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Unknown error");
-      setStatus("error");
+      if (mountedRef.current) setError(e instanceof Error ? e.message : "Unknown error");
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -1112,6 +1139,8 @@ function DarkWebBreachSection({ subject }: { subject: Subject }) {
   const [result, setResult] = useState<BreachResult | null>(null);
   const [error, setError] = useState<string>("");
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading");
     setError("");
@@ -1123,11 +1152,12 @@ function DarkWebBreachSection({ subject }: { subject: Subject }) {
       });
       const data = (await res.json()) as BreachResult;
       if (!res.ok || data.error) throw new Error(data.error ?? "API error");
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Unknown error");
-      setStatus("error");
+      if (mountedRef.current) setError(e instanceof Error ? e.message : "Unknown error");
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -1185,6 +1215,8 @@ function VesselAircraftSection({ subject }: { subject: Subject }) {
 
   const imoNumber = subject.vesselImo ?? subject.vesselMmsi ?? subject.aircraftTail ?? "";
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading");
     setError("");
@@ -1199,11 +1231,12 @@ function VesselAircraftSection({ subject }: { subject: Subject }) {
       });
       const data = (await res.json()) as VesselResult;
       if (!res.ok || data.error) throw new Error(data.error ?? "API error");
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Unknown error");
-      setStatus("error");
+      if (mountedRef.current) setError(e instanceof Error ? e.message : "Unknown error");
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -1245,6 +1278,8 @@ function RealEstateSection({ subject }: { subject: Subject }) {
   const [result, setResult] = useState<RealEstateResult | null>(null);
   const [error, setError] = useState<string>("");
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading");
     setError("");
@@ -1256,11 +1291,12 @@ function RealEstateSection({ subject }: { subject: Subject }) {
       });
       const data = (await res.json()) as RealEstateResult & { ok?: boolean; error?: string };
       if (!res.ok || data.error) throw new Error(data.error ?? "API error");
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Unknown error");
-      setStatus("error");
+      if (mountedRef.current) setError(e instanceof Error ? e.message : "Unknown error");
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -1315,6 +1351,8 @@ function SanctionsNarrativeSection({ subject }: { subject: Subject }) {
   const [result, setResult] = useState<SanctionsBreachResult | null>(null);
   const [error, setError] = useState<string>("");
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading");
     setError("");
@@ -1332,11 +1370,12 @@ function SanctionsNarrativeSection({ subject }: { subject: Subject }) {
       });
       const data = (await res.json()) as SanctionsBreachResult & { ok?: boolean; error?: string };
       if (!res.ok || data.error) throw new Error(data.error ?? "API error");
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Unknown error");
-      setStatus("error");
+      if (mountedRef.current) setError(e instanceof Error ? e.message : "Unknown error");
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -1391,6 +1430,8 @@ function CrossCasePatternSection({ subject }: { subject: Subject }) {
   const [result, setResult] = useState<CrossCaseResult | null>(null);
   const [error, setError] = useState<string>("");
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading");
     setError("");
@@ -1407,11 +1448,12 @@ function CrossCasePatternSection({ subject }: { subject: Subject }) {
       });
       const data = (await res.json()) as CrossCaseResult;
       if (!res.ok || data.error) throw new Error(data.error ?? "API error");
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Unknown error");
-      setStatus("error");
+      if (mountedRef.current) setError(e instanceof Error ? e.message : "Unknown error");
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -1637,6 +1679,8 @@ function IndustryTypologySection({ subject }: { subject: Subject }) {
   const [result, setResult] = useState<FiuTypologyCheckResult | null>(null);
   const [error, setError] = useState<string>("");
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading");
     setError("");
@@ -1647,11 +1691,12 @@ function IndustryTypologySection({ subject }: { subject: Subject }) {
       });
       const data = (await res.json()) as FiuTypologyCheckResult;
       if (!res.ok || data.error) throw new Error(data.error ?? "API error");
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Unknown error");
-      setStatus("error");
+      if (mountedRef.current) setError(e instanceof Error ? e.message : "Unknown error");
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -1833,6 +1878,8 @@ function OsintSection({ subject }: { subject: Subject }) {
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading");
     setError(null);
@@ -1843,11 +1890,12 @@ function OsintSection({ subject }: { subject: Subject }) {
         body: JSON.stringify({ tool: "sherlock", username: subject.name, entityType: subject.entityType }),
       });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (err) {
-      setError(String(err));
-      setStatus("error");
+      if (mountedRef.current) setError(String(err));
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -1881,6 +1929,8 @@ function EmailRepSection({ subject }: { subject: Subject }) {
   const [result, setResult] = useState<EmailRepResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading");
     setError(null);
@@ -1891,11 +1941,12 @@ function EmailRepSection({ subject }: { subject: Subject }) {
         body: JSON.stringify({ domain: subject.name }),
       });
       const data = (await res.json()) as EmailRepResult;
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (err) {
-      setError(String(err));
-      setStatus("error");
+      if (mountedRef.current) setError(String(err));
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -1947,6 +1998,8 @@ function SmartDisambiguateSection({ subject }: { subject: Subject }) {
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading");
     setError(null);
@@ -1957,11 +2010,12 @@ function SmartDisambiguateSection({ subject }: { subject: Subject }) {
         body: JSON.stringify({ name: subject.name, context: `entityType:${subject.entityType} jurisdiction:${subject.jurisdiction || subject.country}` }),
       });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (err) {
-      setError(String(err));
-      setStatus("error");
+      if (mountedRef.current) setError(String(err));
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -1997,6 +2051,8 @@ function IbanRiskSection({ subject }: { subject: Subject }) {
   const [error, setError] = useState<string | null>(null);
   const [iban, setIban] = useState<string>("");
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     const ibanVal = iban.trim() || (subject as Subject & { iban?: string }).iban || "";
     if (!ibanVal) { setError("Enter an IBAN first"); return; }
@@ -2009,11 +2065,12 @@ function IbanRiskSection({ subject }: { subject: Subject }) {
         body: JSON.stringify({ iban: ibanVal }),
       });
       const data = (await res.json()) as IbanRiskResult;
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (err) {
-      setError(String(err));
-      setStatus("error");
+      if (mountedRef.current) setError(String(err));
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -2075,6 +2132,8 @@ function SwiftLcSection({ subject }: { subject: Subject }) {
   const [result, setResult] = useState<SwiftLcResultUI | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading");
     setError(null);
@@ -2085,11 +2144,12 @@ function SwiftLcSection({ subject }: { subject: Subject }) {
         body: JSON.stringify({ bankName: subject.name }),
       });
       const data = (await res.json()) as SwiftLcResultUI;
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (err) {
-      setError(String(err));
-      setStatus("error");
+      if (mountedRef.current) setError(String(err));
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -2136,6 +2196,8 @@ function CryptoTracingSection({ subject }: { subject: Subject }) {
   const [error, setError] = useState<string | null>(null);
   const [wallet, setWallet] = useState<string>("");
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading");
     setError(null);
@@ -2146,11 +2208,12 @@ function CryptoTracingSection({ subject }: { subject: Subject }) {
         body: JSON.stringify({ walletAddress: wallet || subject.name, blockchain: "bitcoin", entityName: subject.name, transactionHistory: "", exchangeOrigin: "", transactionPatterns: { highFrequency: false, largeSingleTx: false, mixerUsed: false, privacyCoinConversion: false, peeling: false, consolidation: false, layering: false }, riskFlags: { darknetMarket: false, ransomware: false, scam: false, sanctions: false, childExploitation: false, terroristFinancing: false } }),
       });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (err) {
-      setError(String(err));
-      setStatus("error");
+      if (mountedRef.current) setError(String(err));
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -2181,6 +2244,8 @@ function CryptoMixingSection({ subject }: { subject: Subject }) {
   const [error, setError] = useState<string | null>(null);
   const [wallet, setWallet] = useState<string>("");
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading");
     setError(null);
@@ -2191,11 +2256,12 @@ function CryptoMixingSection({ subject }: { subject: Subject }) {
         body: JSON.stringify({ wallet: wallet || subject.name }),
       });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (err) {
-      setError(String(err));
-      setStatus("error");
+      if (mountedRef.current) setError(String(err));
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -2225,6 +2291,8 @@ function TradeFinanceSection({ subject }: { subject: Subject }) {
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading");
     setError(null);
@@ -2235,11 +2303,12 @@ function TradeFinanceSection({ subject }: { subject: Subject }) {
         body: JSON.stringify({ subjectName: subject.name }),
       });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (err) {
-      setError(String(err));
-      setStatus("error");
+      if (mountedRef.current) setError(String(err));
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -2270,6 +2339,8 @@ function ShellDetectorSection({ subject }: { subject: Subject }) {
   const [result, setResult] = useState<ShellDetectorResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading");
     setError(null);
@@ -2280,11 +2351,12 @@ function ShellDetectorSection({ subject }: { subject: Subject }) {
         body: JSON.stringify({ entityName: subject.name }),
       });
       const data = (await res.json()) as ShellDetectorResult;
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (err) {
-      setError(String(err));
-      setStatus("error");
+      if (mountedRef.current) setError(String(err));
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -2323,6 +2395,8 @@ function HawalaDetectorSection({ subject }: { subject: Subject }) {
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading");
     setError(null);
@@ -2333,11 +2407,12 @@ function HawalaDetectorSection({ subject }: { subject: Subject }) {
         body: JSON.stringify({ subjectName: subject.name }),
       });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (err) {
-      setError(String(err));
-      setStatus("error");
+      if (mountedRef.current) setError(String(err));
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -2360,6 +2435,8 @@ function LayeringDetectorSection({ subject }: { subject: Subject }) {
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading");
     setError(null);
@@ -2370,11 +2447,12 @@ function LayeringDetectorSection({ subject }: { subject: Subject }) {
         body: JSON.stringify({ subjectName: subject.name }),
       });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (err) {
-      setError(String(err));
-      setStatus("error");
+      if (mountedRef.current) setError(String(err));
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -2397,6 +2475,8 @@ function CashIntensiveSection({ subject }: { subject: Subject }) {
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading");
     setError(null);
@@ -2407,11 +2487,12 @@ function CashIntensiveSection({ subject }: { subject: Subject }) {
         body: JSON.stringify({ subjectName: subject.name, industry: subject.riskCategory ?? subject.meta ?? "" }),
       });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (err) {
-      setError(String(err));
-      setStatus("error");
+      if (mountedRef.current) setError(String(err));
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -2434,6 +2515,8 @@ function GhostCompanySection({ subject }: { subject: Subject }) {
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading");
     setError(null);
@@ -2444,11 +2527,12 @@ function GhostCompanySection({ subject }: { subject: Subject }) {
         body: JSON.stringify({ entityName: subject.name }),
       });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (err) {
-      setError(String(err));
-      setStatus("error");
+      if (mountedRef.current) setError(String(err));
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -2475,6 +2559,8 @@ function SanctionsIndirectSection({ subject }: { subject: Subject }) {
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading");
     setError(null);
@@ -2485,11 +2571,12 @@ function SanctionsIndirectSection({ subject }: { subject: Subject }) {
         body: JSON.stringify({ name: subject.name }),
       });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (err) {
-      setError(String(err));
-      setStatus("error");
+      if (mountedRef.current) setError(String(err));
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -2512,6 +2599,8 @@ function SanctionsExposureMapperSection({ subject }: { subject: Subject }) {
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading");
     setError(null);
@@ -2522,11 +2611,12 @@ function SanctionsExposureMapperSection({ subject }: { subject: Subject }) {
         body: JSON.stringify({ name: subject.name }),
       });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (err) {
-      setError(String(err));
-      setStatus("error");
+      if (mountedRef.current) setError(String(err));
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -2549,6 +2639,8 @@ function DeRiskingImpactSection({ subject }: { subject: Subject }) {
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading");
     setError(null);
@@ -2559,11 +2651,12 @@ function DeRiskingImpactSection({ subject }: { subject: Subject }) {
         body: JSON.stringify({ sector: subject.riskCategory ?? "general", jurisdiction: subject.jurisdiction || subject.country }),
       });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (err) {
-      setError(String(err));
-      setStatus("error");
+      if (mountedRef.current) setError(String(err));
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -2586,6 +2679,8 @@ function RmiAssessSection({ subject }: { subject: Subject }) {
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading");
     setError(null);
@@ -2596,11 +2691,12 @@ function RmiAssessSection({ subject }: { subject: Subject }) {
         body: JSON.stringify({ name: subject.name, commodities: "" }),
       });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (err) {
-      setError(String(err));
-      setStatus("error");
+      if (mountedRef.current) setError(String(err));
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -2623,6 +2719,8 @@ function JurisdictionIntelSection({ subject }: { subject: Subject }) {
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading");
     setError(null);
@@ -2633,11 +2731,12 @@ function JurisdictionIntelSection({ subject }: { subject: Subject }) {
         body: JSON.stringify({ jurisdiction: subject.jurisdiction || subject.country }),
       });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (err) {
-      setError(String(err));
-      setStatus("error");
+      if (mountedRef.current) setError(String(err));
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -2660,6 +2759,8 @@ function SanctionsEvasionSection({ subject }: { subject: Subject }) {
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading");
     setError(null);
@@ -2670,11 +2771,12 @@ function SanctionsEvasionSection({ subject }: { subject: Subject }) {
         body: JSON.stringify({ name: subject.name }),
       });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (err) {
-      setError(String(err));
-      setStatus("error");
+      if (mountedRef.current) setError(String(err));
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -2712,6 +2814,8 @@ function NewsIntelSection({ subject }: { subject: Subject }) {
   const [result, setResult] = useState<NewsIntelResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading");
     setError(null);
@@ -2722,11 +2826,12 @@ function NewsIntelSection({ subject }: { subject: Subject }) {
         body: JSON.stringify({ name: subject.name }),
       });
       const data = (await res.json()) as NewsIntelResult;
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (err) {
-      setError(String(err));
-      setStatus("error");
+      if (mountedRef.current) setError(String(err));
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -2792,6 +2897,8 @@ function SarNarrativeSection({ subject }: { subject: Subject }) {
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading");
     setError(null);
@@ -2803,11 +2910,12 @@ function SarNarrativeSection({ subject }: { subject: Subject }) {
         body: JSON.stringify({ subjectName: subject.name, evidence: `entityType:${subject.entityType} riskScore:${subject.riskScore} jurisdiction:${subject.jurisdiction || subject.country}` }),
       });
       const data = (await res.json()) as StrNarrativeResult;
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (err) {
-      setError(String(err));
-      setStatus("error");
+      if (mountedRef.current) setError(String(err));
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -2865,6 +2973,8 @@ function EddQuestionnaireSection({ subject }: { subject: Subject }) {
   const [result, setResult] = useState<EddResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading");
     setError(null);
@@ -2875,11 +2985,12 @@ function EddQuestionnaireSection({ subject }: { subject: Subject }) {
         body: JSON.stringify({ name: subject.name, pepTier: subject.pep?.tier ?? "none", entityType: subject.entityType }),
       });
       const data = (await res.json()) as EddResult;
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (err) {
-      setError(String(err));
-      setStatus("error");
+      if (mountedRef.current) setError(String(err));
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -2924,6 +3035,8 @@ function MlroAdvisorSection() {
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState<string>("");
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     if (!query.trim()) { setError("Enter a question first"); return; }
     setStatus("loading");
@@ -2935,11 +3048,12 @@ function MlroAdvisorSection() {
         body: JSON.stringify({ question: query }),
       });
       const data = (await res.json()) as MlroAdvisorResult;
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (err) {
-      setError(String(err));
-      setStatus("error");
+      if (mountedRef.current) setError(String(err));
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -2973,6 +3087,8 @@ function OsintSynthesisSection({ subject }: { subject: Subject }) {
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading");
     setError(null);
@@ -2983,11 +3099,12 @@ function OsintSynthesisSection({ subject }: { subject: Subject }) {
         body: JSON.stringify({ name: subject.name }),
       });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (err) {
-      setError(String(err));
-      setStatus("error");
+      if (mountedRef.current) setError(String(err));
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -3019,6 +3136,8 @@ function TypologyMatchSection({ subject }: { subject: Subject }) {
   const [result, setResult] = useState<CompetitorResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading");
     setError(null);
@@ -3029,11 +3148,12 @@ function TypologyMatchSection({ subject }: { subject: Subject }) {
         body: JSON.stringify({ subjectName: subject.name, industry: subject.riskCategory ?? subject.meta ?? "", jurisdiction: subject.jurisdiction || subject.country }),
       });
       const data = (await res.json()) as CompetitorResult;
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (err) {
-      setError(String(err));
-      setStatus("error");
+      if (mountedRef.current) setError(String(err));
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -3083,17 +3203,20 @@ function ReScreenSchedulerSection({ subject }: { subject: Subject }) {
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading");
     setError(null);
     try {
       const res = await fetch(`/api/screening-history?subjectId=${encodeURIComponent(subject.id)}`);
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (err) {
-      setError(String(err));
-      setStatus("error");
+      if (mountedRef.current) setError(String(err));
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -3116,6 +3239,8 @@ function FourEyesSection({ subject }: { subject: Subject }) {
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading");
     setError(null);
@@ -3126,11 +3251,12 @@ function FourEyesSection({ subject }: { subject: Subject }) {
         body: JSON.stringify({ subjectId: subject.id, subjectName: subject.name, riskScore: subject.riskScore }),
       });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (err) {
-      setError(String(err));
-      setStatus("error");
+      if (mountedRef.current) setError(String(err));
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -3154,6 +3280,8 @@ function WhistleblowerSection({ subject }: { subject: Subject }) {
   const [error, setError] = useState<string | null>(null);
   const [tip, setTip] = useState<string>("");
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     if (!tip.trim()) { setError("Enter a tip before submitting"); return; }
     setStatus("loading");
@@ -3165,11 +3293,12 @@ function WhistleblowerSection({ subject }: { subject: Subject }) {
         body: JSON.stringify({ subjectId: subject.id, subjectName: subject.name, tip }),
       });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (err) {
-      setError(String(err));
-      setStatus("error");
+      if (mountedRef.current) setError(String(err));
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -3198,6 +3327,8 @@ function InterAgencyReferralSection({ subject }: { subject: Subject }) {
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading");
     setError(null);
@@ -3208,11 +3339,12 @@ function InterAgencyReferralSection({ subject }: { subject: Subject }) {
         body: JSON.stringify({ subjectId: subject.id, subjectName: subject.name, riskScore: subject.riskScore, jurisdiction: subject.jurisdiction || subject.country }),
       });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (err) {
-      setError(String(err));
-      setStatus("error");
+      if (mountedRef.current) setError(String(err));
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -3235,6 +3367,8 @@ function InvestigationExpandSection({ subject }: { subject: Subject }) {
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading");
     setError(null);
@@ -3245,11 +3379,12 @@ function InvestigationExpandSection({ subject }: { subject: Subject }) {
         body: JSON.stringify({ subjectId: subject.id }),
       });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (err) {
-      setError(String(err));
-      setStatus("error");
+      if (mountedRef.current) setError(String(err));
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -3286,6 +3421,8 @@ function EntityGraphSection({ subject }: { subject: Subject }) {
   const [result, setResult] = useState<EntityGraphResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading");
     setError(null);
@@ -3296,11 +3433,12 @@ function EntityGraphSection({ subject }: { subject: Subject }) {
         body: JSON.stringify({ name: subject.name }),
       });
       const data = (await res.json()) as EntityGraphResult;
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (err) {
-      setError(String(err));
-      setStatus("error");
+      if (mountedRef.current) setError(String(err));
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -3354,6 +3492,8 @@ function OwnershipSection({ subject }: { subject: Subject }) {
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading");
     setError(null);
@@ -3364,11 +3504,12 @@ function OwnershipSection({ subject }: { subject: Subject }) {
         body: JSON.stringify({ name: subject.name }),
       });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (err) {
-      setError(String(err));
-      setStatus("error");
+      if (mountedRef.current) setError(String(err));
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -3391,6 +3532,8 @@ function TrustStructuresSection({ subject }: { subject: Subject }) {
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading");
     setError(null);
@@ -3401,11 +3544,12 @@ function TrustStructuresSection({ subject }: { subject: Subject }) {
         body: JSON.stringify({ name: subject.name }),
       });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (err) {
-      setError(String(err));
-      setStatus("error");
+      if (mountedRef.current) setError(String(err));
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -3428,6 +3572,8 @@ function NomineeRiskSection({ subject }: { subject: Subject }) {
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading");
     setError(null);
@@ -3438,11 +3584,12 @@ function NomineeRiskSection({ subject }: { subject: Subject }) {
         body: JSON.stringify({ name: subject.name }),
       });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (err) {
-      setError(String(err));
-      setStatus("error");
+      if (mountedRef.current) setError(String(err));
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -3465,17 +3612,20 @@ function EocnListSection() {
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading");
     setError(null);
     try {
       const res = await fetch("/api/eocn-list-updates");
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (err) {
-      setError(String(err));
-      setStatus("error");
+      if (mountedRef.current) setError(String(err));
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -3498,6 +3648,8 @@ function CorruptionRiskSection({ subject }: { subject: Subject }) {
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading");
     setError(null);
@@ -3508,11 +3660,12 @@ function CorruptionRiskSection({ subject }: { subject: Subject }) {
         body: JSON.stringify({ name: subject.name, jurisdiction: subject.jurisdiction || subject.country }),
       });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (err) {
-      setError(String(err));
-      setStatus("error");
+      if (mountedRef.current) setError(String(err));
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -3535,6 +3688,8 @@ function HighNetWorthSection({ subject }: { subject: Subject }) {
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading");
     setError(null);
@@ -3545,11 +3700,12 @@ function HighNetWorthSection({ subject }: { subject: Subject }) {
         body: JSON.stringify({ name: subject.name }),
       });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (err) {
-      setError(String(err));
-      setStatus("error");
+      if (mountedRef.current) setError(String(err));
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -3572,6 +3728,8 @@ function SowCalculatorSection({ subject }: { subject: Subject }) {
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading");
     setError(null);
@@ -3582,11 +3740,12 @@ function SowCalculatorSection({ subject }: { subject: Subject }) {
         body: JSON.stringify({ name: subject.name }),
       });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (err) {
-      setError(String(err));
-      setStatus("error");
+      if (mountedRef.current) setError(String(err));
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -3621,6 +3780,8 @@ function AssetTracerSection({ subject }: { subject: Subject }) {
   const [result, setResult] = useState<AssetTracerResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading");
     setError(null);
@@ -3631,11 +3792,12 @@ function AssetTracerSection({ subject }: { subject: Subject }) {
         body: JSON.stringify({ name: subject.name }),
       });
       const data = (await res.json()) as AssetTracerResult;
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (err) {
-      setError(String(err));
-      setStatus("error");
+      if (mountedRef.current) setError(String(err));
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -3678,6 +3840,8 @@ function FreezeSeizureSection({ subject }: { subject: Subject }) {
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading");
     setError(null);
@@ -3688,11 +3852,12 @@ function FreezeSeizureSection({ subject }: { subject: Subject }) {
         body: JSON.stringify({ name: subject.name, subjectId: subject.id }),
       });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (err) {
-      setError(String(err));
-      setStatus("error");
+      if (mountedRef.current) setError(String(err));
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -3719,6 +3884,8 @@ function EvidencePackSection({ subject }: { subject: Subject }) {
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading");
     setError(null);
@@ -3729,11 +3896,12 @@ function EvidencePackSection({ subject }: { subject: Subject }) {
         body: JSON.stringify({ subjectId: subject.id }),
       });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (err) {
-      setError(String(err));
-      setStatus("error");
+      if (mountedRef.current) setError(String(err));
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -3756,6 +3924,8 @@ function LegalPrivilegeSection({ subject }: { subject: Subject }) {
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading");
     setError(null);
@@ -3766,11 +3936,12 @@ function LegalPrivilegeSection({ subject }: { subject: Subject }) {
         body: JSON.stringify({ subjectId: subject.id }),
       });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (err) {
-      setError(String(err));
-      setStatus("error");
+      if (mountedRef.current) setError(String(err));
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -3794,6 +3965,8 @@ function DomainIntelSection({ subject }: { subject: Subject }) {
   const [error, setError] = useState<string | null>(null);
   const [domain, setDomain] = useState<string>("");
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading");
     setError(null);
@@ -3804,11 +3977,12 @@ function DomainIntelSection({ subject }: { subject: Subject }) {
         body: JSON.stringify({ domain: domain.trim() || subject.name }),
       });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (err) {
-      setError(String(err));
-      setStatus("error");
+      if (mountedRef.current) setError(String(err));
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -3842,6 +4016,8 @@ function InsiderThreatSection({ subject }: { subject: Subject }) {
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading");
     setError(null);
@@ -3852,11 +4028,12 @@ function InsiderThreatSection({ subject }: { subject: Subject }) {
         body: JSON.stringify({ name: subject.name }),
       });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (err) {
-      setError(String(err));
-      setStatus("error");
+      if (mountedRef.current) setError(String(err));
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -3879,6 +4056,8 @@ function HumanTraffickingSection({ subject }: { subject: Subject }) {
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading");
     setError(null);
@@ -3889,11 +4068,12 @@ function HumanTraffickingSection({ subject }: { subject: Subject }) {
         body: JSON.stringify({ name: subject.name }),
       });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
     } catch (err) {
-      setError(String(err));
-      setStatus("error");
+      if (mountedRef.current) setError(String(err));
+      if (mountedRef.current) setStatus("error");
     }
   }
 
@@ -3915,13 +4095,16 @@ function BehavioralBaselineSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/behavioral-baseline", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction, industry: subject.riskCategory }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Behavioral Anomaly Baseline" icon="🧠" status={status}>
@@ -3939,13 +4122,16 @@ function LinguisticRiskSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/linguistic-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, narrative: subject.notes ?? subject.name }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Linguistic Deception Markers" icon="🗣️" status={status}>
@@ -3963,13 +4149,16 @@ function LifestyleWealthGapSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/lifestyle-wealth-gap", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Lifestyle / Wealth Gap Analysis" icon="💸" status={status}>
@@ -3987,13 +4176,16 @@ function PlausibilityScoreSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/plausibility-score", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction, industry: subject.riskCategory, notes: subject.notes }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Plausibility Score Engine" icon="🎯" status={status}>
@@ -4011,13 +4203,16 @@ function AssociationTimelineSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/association-timeline", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, associates: [] }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Association Timeline" icon="📅" status={status}>
@@ -4035,13 +4230,16 @@ function ConfidenceDecaySection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/confidence-decay", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, initialConfidence: 85, daysSinceLastReview: 180 }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Confidence Decay Calculator" icon="📉" status={status}>
@@ -4059,13 +4257,16 @@ function ExaminerSimSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/examiner-sim", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Examiner Simulation" icon="🔬" status={status}>
@@ -4083,13 +4284,16 @@ function BenfordSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/benford", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Benford's Law Analysis" icon="📊" status={status}>
@@ -4109,13 +4313,16 @@ function LitigationScanSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/litigation-scan", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, jurisdiction: subject.jurisdiction }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Litigation Scan" icon="⚖️" status={status}>
@@ -4133,13 +4340,16 @@ function EnforcementActionsSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/enforcement-actions", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, jurisdiction: subject.jurisdiction }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Enforcement Actions History" icon="🚨" status={status}>
@@ -4157,13 +4367,16 @@ function TaxAuthoritySection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/tax-authority", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, jurisdiction: subject.jurisdiction, entityType: subject.entityType }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Tax Authority Flags" icon="🏦" status={status}>
@@ -4181,13 +4394,16 @@ function ExtraditionMapSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/extradition-map", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectCountry: subject.country ?? subject.jurisdiction, targetCountry: "AE" }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Extradition Treaty Map" icon="🗺️" status={status}>
@@ -4205,13 +4421,16 @@ function StatuteLimitationsSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/statute-limitations", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jurisdiction: subject.jurisdiction, offenceType: "money_laundering" }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Statute of Limitations" icon="⏱️" status={status}>
@@ -4229,13 +4448,16 @@ function RegArbitrageSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/reg-arbitrage", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ entityType: subject.entityType, jurisdictions: [subject.jurisdiction].filter(Boolean) }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Regulatory Arbitrage Detection" icon="⚡" status={status}>
@@ -4253,13 +4475,16 @@ function AuditReadinessSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/audit-readiness", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, entityType: subject.entityType }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Audit Readiness Score" icon="📋" status={status}>
@@ -4277,13 +4502,16 @@ function AmlProgrammeGapSection() {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/aml-programme-gap", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({}) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="AML Programme Gap Analysis" icon="🔎" status={status}>
@@ -4303,13 +4531,16 @@ function ArtMarketSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/art-market", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Art Market Risk" icon="🎨" status={status}>
@@ -4327,13 +4558,16 @@ function LuxuryGoodsSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/luxury-goods", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Luxury Goods Risk" icon="💎" status={status}>
@@ -4351,13 +4585,16 @@ function AviationIntelSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/aviation-intel", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Aviation & Aircraft Intel" icon="✈️" status={status}>
@@ -4375,13 +4612,16 @@ function FreeZoneRiskSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/free-zone-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, freeZone: subject.jurisdiction }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="UAE Free Zone Risk" icon="🏭" status={status}>
@@ -4399,13 +4639,16 @@ function GamingRiskSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/gaming-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Gaming / Gambling Risk" icon="🎰" status={status}>
@@ -4423,13 +4666,16 @@ function GoldPreciousMetalsSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/gold-precious-metals", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Gold & Precious Metals Risk" icon="🥇" status={status}>
@@ -4447,13 +4693,16 @@ function NpoRiskSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/npo-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="NPO / Charity Risk" icon="🤝" status={status}>
@@ -4471,13 +4720,16 @@ function VaspRiskSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/vasp-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="VASP / Crypto Exchange Risk" icon="🔐" status={status}>
@@ -4495,13 +4747,16 @@ function EnvironmentalCrimeSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/environmental-crime", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, industry: subject.riskCategory }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Environmental Crime Risk" icon="🌿" status={status}>
@@ -4521,13 +4776,16 @@ function SixDegreesSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/six-degrees", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Six Degrees to Sanctions" icon="🕸️" status={status}>
@@ -4545,13 +4803,16 @@ function HiddenControllerSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/hidden-controller", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Hidden Controller Detection" icon="🎭" status={status}>
@@ -4569,13 +4830,16 @@ function ClusterContaminationSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/cluster-contamination", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, entityType: subject.entityType }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Cluster Contamination Analysis" icon="🔴" status={status}>
@@ -4593,13 +4857,16 @@ function TimingCorrelationSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/timing-correlation", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, entityType: subject.entityType }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Timing Correlation Engine" icon="⏰" status={status}>
@@ -4617,13 +4884,16 @@ function DarkMoneyFlowSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/dark-money-flow", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Dark Money Flow Analysis" icon="🌑" status={status}>
@@ -4641,13 +4911,16 @@ function BeneficialOwnerVerifySection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/beneficial-owner-verify", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Beneficial Owner Verification" icon="✅" status={status}>
@@ -4665,13 +4938,16 @@ function PepCorporateNexusSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/pep-corporate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="PEP Corporate Nexus" icon="🏛️" status={status}>
@@ -4689,13 +4965,16 @@ function CrossBorderWireSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/cross-border-wire", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Cross-Border Wire Analysis" icon="🌐" status={status}>
@@ -4713,13 +4992,16 @@ function CtrStructuringSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/ctr-structuring", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="CTR Structuring Detection" icon="💰" status={status}>
@@ -4739,13 +5021,16 @@ function CaseAnalogySection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/case-analogy", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Case Analogy Matching" icon="🔗" status={status}>
@@ -4763,13 +5048,16 @@ function EvidenceSufficiencySection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/evidence-sufficiency", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, entityType: subject.entityType, disposition: "STR" }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Evidence Sufficiency Checker" icon="✔️" status={status}>
@@ -4787,13 +5075,16 @@ function RedlineMonitorSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/redline-monitor", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, conditions: [] }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Redline Monitor" icon="🔴" status={status}>
@@ -4811,13 +5102,16 @@ function ProbabilityTreeSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/probability-tree", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, entityType: subject.entityType }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Probability Tree Builder" icon="🌳" status={status}>
@@ -4835,13 +5129,16 @@ function AutonomousInvestigateSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/autonomous-investigate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Autonomous Investigation" icon="🤖" status={status}>
@@ -4859,13 +5156,16 @@ function CompetitorScreenSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/competitor-screen", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, industry: subject.riskCategory }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Peer / Competitor Screen" icon="👥" status={status}>
@@ -4883,13 +5183,16 @@ function AdverseClassifySection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/adverse-classify", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Adverse Media Classifier" icon="📰" status={status}>
@@ -4907,13 +5210,16 @@ function FalsePositiveOptimizerSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/false-positive", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="False Positive Optimizer" icon="🎛️" status={status}>
@@ -4931,13 +5237,16 @@ function MixedFundsSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/mixed-funds", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Mixed Funds Detector" icon="🫧" status={status}>
@@ -4955,13 +5264,16 @@ function MlPredicateSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/ml-predicate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, industry: subject.riskCategory }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="ML Predicate Offence Classifier" icon="⚖️" status={status}>
@@ -4979,13 +5291,16 @@ function EsgRiskSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/esg-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, industry: subject.riskCategory }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="ESG Risk Overlay" icon="🌱" status={status}>
@@ -5003,13 +5318,16 @@ function CustomerLifecycleSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/customer-lifecycle", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Customer Lifecycle Risk" icon="🔄" status={status}>
@@ -5027,13 +5345,16 @@ function OnboardingRiskTierSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/onboarding-risk-tier", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction, industry: subject.riskCategory }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Onboarding Risk Tier" icon="🎚️" status={status}>
@@ -5051,13 +5372,16 @@ function CddAdequacySection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/cdd-adequacy", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="CDD Adequacy Check" icon="📁" status={status}>
@@ -5075,13 +5399,16 @@ function PepEddGeneratorSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/pep-edd-generator", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, pepRole: subject.pep?.tier, jurisdiction: subject.jurisdiction }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="PEP Enhanced Due Diligence Generator" icon="📝" status={status}>
@@ -5099,13 +5426,16 @@ function VendorRiskSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/vendor-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction, industry: subject.riskCategory }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Vendor / Third-Party Risk" icon="🤝" status={status}>
@@ -5125,13 +5455,16 @@ function SyntheticIdentitySection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/smart-disambiguate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, checkSynthetic: true }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Synthetic Identity Detector" icon="🧬" status={status}>
@@ -5149,13 +5482,16 @@ function PhoneIntelSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/domain-intel", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, lookupType: "phone" }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Phone Number Intelligence" icon="📱" status={status}>
@@ -5173,13 +5509,16 @@ function SocialMediaIdentitySection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/osint", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, focus: "social_media" }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Social Media Identity Analysis" icon="📲" status={status}>
@@ -5197,13 +5536,16 @@ function AddressHistorySection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/association-timeline", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, focus: "address_history" }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Address History Timeline" icon="📍" status={status}>
@@ -5221,13 +5563,16 @@ function PassportDocRiskSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/document-fraud", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, country: subject.country }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Passport / ID Document Risk" icon="🪪" status={status}>
@@ -5245,13 +5590,16 @@ function NationalityRiskMatrixSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/country-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, country: subject.country, checkMultiNationality: true }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Nationality Risk Matrix" icon="🌍" status={status}>
@@ -5269,13 +5617,16 @@ function DigitalShadowSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/osint-bridge", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, deepSearch: true }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Digital Shadow Profile" icon="👤" status={status}>
@@ -5293,13 +5644,16 @@ function AliasNetworkMapperSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/name-variants", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, aliases: subject.aliases ?? [], crossCaseMap: true }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Alias Network Mapper" icon="🗂️" status={status}>
@@ -5317,13 +5671,16 @@ function CorporateIdentityTheftSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/ghost-company", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, checkIdentityTheft: true }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Corporate Identity Theft" icon="🏴‍☠️" status={status}>
@@ -5341,13 +5698,16 @@ function NameFrequencySection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/false-positive", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, checkNameFrequency: true }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Name Frequency Score" icon="📏" status={status}>
@@ -5365,13 +5725,16 @@ function EntityDualitySection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/hidden-controller", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, checkDuality: true }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Entity Duality Detector" icon="🔀" status={status}>
@@ -5391,13 +5754,16 @@ function FatfGreyBlackSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/country-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, country: subject.country, jurisdiction: subject.jurisdiction, checkFatfList: true }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="FATF Grey / Black List Exposure" icon="⚠️" status={status}>
@@ -5415,13 +5781,16 @@ function KleptocracyProximitySection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/corruption-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, jurisdiction: subject.jurisdiction, checkKleptocracy: true }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Kleptocracy Network Proximity" icon="👑" status={status}>
@@ -5439,13 +5808,16 @@ function StateOwnedEnterpriseSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/pep-corporate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, checkSOE: true }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="State-Owned Enterprise Risk" icon="🏛️" status={status}>
@@ -5463,13 +5835,16 @@ function DualUseExportSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/proliferation-finance", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction, checkDualUse: true }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Dual-Use Export Control Risk" icon="🚀" status={status}>
@@ -5487,13 +5862,16 @@ function WarCrimesFinanceSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/sanctions-evasion", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, checkAtrocityFinance: true }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="War Crimes / Atrocity Finance Risk" icon="⚔️" status={status}>
@@ -5511,13 +5889,16 @@ function PoliticalInstabilitySection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/geopolitical", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, country: subject.country, checkInstabilityIndex: true }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Political Instability Index" icon="🌋" status={status}>
@@ -5535,13 +5916,16 @@ function FiuActivitySection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/jurisdiction-intel", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, jurisdiction: subject.jurisdiction, checkFiuActivity: true }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Financial Intelligence Unit Activity" icon="🔭" status={status}>
@@ -5559,13 +5943,16 @@ function DiplomaticRiskSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/pep-match", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, checkDiplomatic: true }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Diplomatic / Embassy Risk" icon="🏴" status={status}>
@@ -5583,13 +5970,16 @@ function OligarchOverlaySection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/pep-network", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, checkOligarchLists: true }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Oligarch Overlay" icon="💼" status={status}>
@@ -5607,13 +5997,16 @@ function ProliferationFinanceSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/pf-screener", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Proliferation Finance Screen" icon="☢️" status={status}>
@@ -5631,13 +6024,16 @@ function NcctMonitorSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/regulatory-feed", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, jurisdiction: subject.jurisdiction, checkNcct: true }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="NCCT / High-Risk Jurisdiction Monitor" icon="🚩" status={status}>
@@ -5655,13 +6051,16 @@ function DeforestationFinanceSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/environmental-crime", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, checkDeforestation: true }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Deforestation Finance Risk" icon="🌳" status={status}>
@@ -5681,13 +6080,16 @@ function RoundTripDetectorSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/layering-detector", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, checkRoundTrip: true }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Round-Trip Transaction Detector" icon="🔁" status={status}>
@@ -5705,13 +6107,16 @@ function MirrorTradingSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/transaction-anomaly", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, checkMirrorTrading: true }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Mirror Trading Detection" icon="🪞" status={status}>
@@ -5729,13 +6134,16 @@ function OverUnderInvoicingSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/trade-finance-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, checkTbmlInvoicing: true }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Over / Under Invoicing (TBML)" icon="📄" status={status}>
@@ -5753,13 +6161,16 @@ function VelocityAnomalySection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/transaction-anomaly", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, checkVelocity: true }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Velocity Anomaly Engine" icon="⚡" status={status}>
@@ -5777,13 +6188,16 @@ function PrepaidCardAbuseSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/transaction-anomaly", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, checkPrepaidCard: true }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Prepaid Card / E-Money Abuse" icon="💳" status={status}>
@@ -5801,13 +6215,16 @@ function PayrollStructuringSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/ctr-structuring", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, checkPayroll: true }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Salary / Payroll Structuring" icon="💵" status={status}>
@@ -5825,13 +6242,16 @@ function InsuranceFraudSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/transaction-anomaly", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, checkInsurance: true }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Insurance Fraud Indicators" icon="🛡️" status={status}>
@@ -5849,13 +6269,16 @@ function CarbonCreditFraudSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/environmental-crime", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, checkCarbonFraud: true }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Carbon Credit / Emissions Fraud" icon="🌫️" status={status}>
@@ -5873,13 +6296,16 @@ function MicroTransactionStructuringSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/ctr-structuring", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, checkMicro: true }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Micro-Transaction Structuring" icon="🔢" status={status}>
@@ -5897,13 +6323,16 @@ function CorrespondentAccountMisuseSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/correspondent-bank", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Correspondent Account Misuse" icon="🏛️" status={status}>
@@ -5921,13 +6350,16 @@ function FundFlowReconstructionSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/asset-tracer", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, reconstructFlows: true }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Fund Flow Reconstruction" icon="🗺️" status={status}>
@@ -5945,13 +6377,16 @@ function PensionFundRiskSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/transaction-anomaly", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, checkPension: true }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Pension / Retirement Fund Risk" icon="🏦" status={status}>
@@ -5969,13 +6404,16 @@ function InvoiceFactoringFraudSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/trade-finance-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, checkFactoring: true }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Invoice Factoring Fraud" icon="📋" status={status}>
@@ -5993,13 +6431,16 @@ function AtmWithdrawalPatternSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/cash-intensive", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, checkAtmPatterns: true }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="ATM / Cash Withdrawal Pattern" icon="🏧" status={status}>
@@ -6019,13 +6460,16 @@ function MultiModelConsensusSection({ subject, superBrain }: { subject: Subject;
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/super-brain", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, multiModel: true, superBrainSummary: superBrain?.redlines?.summary ?? null }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Multi-Model Consensus Score" icon="🧮" status={status}>
@@ -6043,13 +6487,16 @@ function ContradictoryEvidenceSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/plausibility-score", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, checkContradictions: true }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Contradictory Evidence Resolver" icon="⚔️" status={status}>
@@ -6067,13 +6514,16 @@ function CounterfactualScenarioSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/agent/counterfactual", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Counterfactual Scenario Builder" icon="🔄" status={status}>
@@ -6091,13 +6541,16 @@ function HypothesisGeneratorSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/autonomous-investigate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction, mode: "hypothesis" }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Automated Hypothesis Generator" icon="💡" status={status}>
@@ -6115,13 +6568,16 @@ function ChainOfThoughtAuditSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/mlro-advisor-challenger", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, auditChainOfThought: true }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Chain-of-Thought Audit Trail" icon="🔍" status={status}>
@@ -6139,13 +6595,16 @@ function AiEthicsComplianceSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/ai-ethics-assessment", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="AI Ethics Compliance Check" icon="⚖️" status={status}>
@@ -6163,13 +6622,16 @@ function HallucinationCalibrationSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/confidence-decay", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, initialConfidence: 80, checkCalibration: true }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Hallucination / Confidence Calibration" icon="🎯" status={status}>
@@ -6187,13 +6649,16 @@ function AdversarialStressTestSection({ subject, screen }: { subject: Subject; s
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/agent/counterfactual", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction, screenScore: screen?.topScore ?? 0, mode: "adversarial_stress" }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Adversarial Stress Test" icon="💣" status={status}>
@@ -6211,13 +6676,16 @@ function NarrativeConsistencySection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/linguistic-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, narrative: subject.notes ?? "", checkConsistency: true }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Narrative Consistency Checker" icon="📖" status={status}>
@@ -6235,13 +6703,16 @@ function RegulatoryQaChallengerSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/mlro-advisor-challenger", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Regulatory Q&A Challenger" icon="🥊" status={status}>
@@ -6261,13 +6732,16 @@ function BoardAmlReportSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/board-aml-report", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Board-Level AML Report Generator" icon="📊" status={status}>
@@ -6285,13 +6759,16 @@ function RegExamPrepSection() {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/regulatory-exam-prep", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({}) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Regulatory Exam Prep Simulator" icon="🎓" status={status}>
@@ -6309,13 +6786,16 @@ function PolicyComplianceCheckerSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/compliance-qa", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Policy Compliance Auto-Checker" icon="✅" status={status}>
@@ -6333,13 +6813,16 @@ function PrecedentCaseLawSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/case-analogy", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction, mode: "case_law" }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Precedent Case Law Analyzer" icon="⚖️" status={status}>
@@ -6357,13 +6840,16 @@ function TrainingGapSection() {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/aml-training-gap", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({}) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Training Gap Identifier" icon="📚" status={status}>
@@ -6381,13 +6867,16 @@ function GovernanceFailureSection() {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/governance-gap", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({}) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Governance Failure Pattern Detector" icon="🏚️" status={status}>
@@ -6405,13 +6894,16 @@ function ScenarioStressNarrativeSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/examiner-sim", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction, mode: "scenario_stress" }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Scenario-Based Risk Narrative" icon="🎭" status={status}>
@@ -6429,13 +6921,16 @@ function CrossBorderRegulatoryMappingSection({ subject }: { subject: Subject }) 
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/dnfbp-obligations", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, jurisdictions: [subject.jurisdiction, subject.country].filter(Boolean) }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Cross-Border Regulatory Mapping" icon="🗺️" status={status}>
@@ -6453,13 +6948,16 @@ function AutomatedStrDraftSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/str-narrative", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction, notes: subject.notes, autoPopulate: true }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Automated STR Drafting Assistant" icon="📝" status={status}>
@@ -6479,13 +6977,16 @@ function CausalInferenceSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/probability-tree", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, entityType: subject.entityType, mode: "causal" }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Causal Inference Engine" icon="🔗" status={status}>
@@ -6503,13 +7004,16 @@ function MonteCarloSimSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/probability-tree", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, entityType: subject.entityType, mode: "monte_carlo", iterations: 10000 }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Monte Carlo Risk Simulation" icon="🎲" status={status}>
@@ -6527,13 +7031,16 @@ function GameTheorySection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/autonomous-investigate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction, mode: "game_theory" }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Game Theory / Strategic Behaviour" icon="♟️" status={status}>
@@ -6551,13 +7058,16 @@ function TemporalReasoningSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/timing-correlation", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, entityType: subject.entityType, mode: "temporal_consistency" }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Temporal Reasoning Engine" icon="⏳" status={status}>
@@ -6575,13 +7085,16 @@ function MultiAgentDebateSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/examiner-sim", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction, mode: "multi_agent_debate" }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Multi-Agent AI Debate" icon="🎤" status={status}>
@@ -6599,13 +7112,16 @@ function InductivePatternSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/cross-case-patterns", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, mode: "inductive" }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Inductive Pattern Recognition" icon="🧩" status={status}>
@@ -6623,13 +7139,16 @@ function AbductiveInferenceSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/plausibility-score", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction, mode: "abductive" }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Abductive Inference Engine" icon="🔮" status={status}>
@@ -6647,13 +7166,16 @@ function RiskCrystallizationSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/redline-monitor", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, conditions: [], mode: "crystallization_forecast" }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Risk Crystallization Predictor" icon="💎" status={status}>
@@ -6671,13 +7193,16 @@ function RegulatoryPenaltyEstimatorSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/enforcement-actions", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, jurisdiction: subject.jurisdiction, mode: "penalty_estimate" }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Regulatory Penalty Estimator" icon="💰" status={status}>
@@ -6695,13 +7220,16 @@ function DeductiveLogicValidatorSection({ subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   async function run() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/evidence-sufficiency", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, entityType: subject.entityType, disposition: "STR", mode: "deductive_validate" }) });
       const data = (await res.json()) as unknown;
+      if (!mountedRef.current) return;
       setResult(data); setStatus("done");
-    } catch (e) { setError(String(e)); setStatus("error"); }
+    } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
     <IntelSection title="Deductive Logic Validator" icon="🧮" status={status}>
