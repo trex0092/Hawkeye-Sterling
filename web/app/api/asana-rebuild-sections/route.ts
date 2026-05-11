@@ -125,6 +125,17 @@ function headers(token: string) {
   return { Authorization: `Bearer ${token}`, "Content-Type": "application/json", Accept: "application/json" };
 }
 
+// Asana stores emoji without the U+FE0F variation selector and sometimes
+// with different whitespace than what we define in PROJECTS. Normalise both
+// sides before comparing so "⚠️  Hit" and "⚠ Hit" are treated as the same
+// section and don't trigger a spurious delete+recreate cycle.
+function normSection(name: string): string {
+  return name
+    .replace(/️/g, "")   // strip emoji variation selector
+    .replace(/\s+/g, " ")     // collapse runs of whitespace to single space
+    .trim();
+}
+
 async function getSections(token: string, projectGid: string): Promise<Array<{ gid: string; name: string }>> {
   const res = await fetch(`${API}/projects/${projectGid}/sections`, {
     headers: headers(token),
@@ -193,28 +204,29 @@ export async function POST(): Promise<NextResponse> {
       let created = 0;
       try {
         const existing = await getSections(token, project.gid);
-        const desiredSet = new Set(project.sections);
-        // Track names that survive (delete rejected by Asana) so we don't try
-        // to re-create them and hit a 400 duplicate-name error.
-        const survivingNames = new Set<string>();
+        const desiredNorms = new Set(project.sections.map(normSection));
+        // Track normalised names that survive (delete rejected by Asana) so we
+        // don't try to re-create them and hit a 400 duplicate-name error.
+        const survivingNorms = new Set<string>();
         for (const sec of existing) {
+          const secNorm = normSection(sec.name);
           try {
             const ok = await deleteSection(token, sec.gid);
             if (ok) {
               deleted++;
             } else {
-              survivingNames.add(sec.name);
+              survivingNorms.add(secNorm);
               // Only report an error when we WANTED to remove the section
               // (i.e. it isn't in the desired list). If it's already the
-              // correct section name, the "delete failed" is irrelevant —
-              // the section is in the right state.
-              if (!desiredSet.has(sec.name)) {
+              // correct section name (emoji-normalised), the "delete failed"
+              // is irrelevant — the section is in the right state.
+              if (!desiredNorms.has(secNorm)) {
                 errors.push(`delete:${sec.name}`);
               }
             }
           } catch {
-            survivingNames.add(sec.name);
-            if (!desiredSet.has(sec.name)) {
+            survivingNorms.add(secNorm);
+            if (!desiredNorms.has(secNorm)) {
               errors.push(`delete:${sec.name}`);
             }
           }
@@ -222,7 +234,7 @@ export async function POST(): Promise<NextResponse> {
         }
         await delay(200);
         for (const sectionName of project.sections) {
-          if (survivingNames.has(sectionName)) {
+          if (survivingNorms.has(normSection(sectionName))) {
             // Section already exists with the right name — count as success.
             created++;
             continue;
