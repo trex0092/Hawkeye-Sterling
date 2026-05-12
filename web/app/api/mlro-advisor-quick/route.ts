@@ -30,20 +30,22 @@ import { corsHeaders, corsPreflight } from "@/lib/api/cors";
 import { gateMlroQuestion } from "@/lib/server/mlro-input-gate";
 // Dynamic imports — prevents hard 500 on cold Lambda if dist/ isn't compiled yet.
 type ClassifyFn = (q: string) => {
-  primaryTopic: string; intent: string; complexity: string;
-  topics: string[]; jurisdictions: string[]; regimes: string[];
+  primaryTopic: string; topics: string[]; jurisdictions: string[]; regimes: string[];
   fatfRecHints: string[]; fatfRecDetails: Array<{ num: number; title: string }>;
   doctrineHints: string[]; playbookHints: string[]; redFlagHints: string[];
   urgencyFlags: string[]; commonSenseRules: string[];
+  suggestedFollowUps: string[]; confidence: string;
+  intelligenceProfile: { coverageScore: number };
 };
-type ScoreFn = (answer: string, mode: string) => { passedQualityGate: boolean; score: number; defects: Array<{ axis: string; detail: string }> };
+type ScoreFn = (answer: string, mode: string) => { passedQualityGate: boolean };
 let classifyMlroQuestion: ClassifyFn = (_q) => ({
-  primaryTopic: "general", intent: "advisory", complexity: "standard",
-  topics: [], jurisdictions: [], regimes: [],
+  primaryTopic: "general", topics: [], jurisdictions: [], regimes: [],
   fatfRecHints: [], fatfRecDetails: [], doctrineHints: [], playbookHints: [],
   redFlagHints: [], urgencyFlags: [], commonSenseRules: [],
+  suggestedFollowUps: [], confidence: "medium",
+  intelligenceProfile: { coverageScore: 0 },
 });
-let scoreAdvisorAnswer: ScoreFn = (_answer, _mode) => ({ passedQualityGate: true, score: 70, defects: [] });
+let scoreAdvisorAnswer: ScoreFn = (_answer, _mode) => ({ passedQualityGate: true });
 (async () => {
   try {
     const [cls, qg] = await Promise.all([
