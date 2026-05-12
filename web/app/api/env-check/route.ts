@@ -32,10 +32,12 @@ const ENV_SPECS: EnvSpec[] = [
   // Core Required
   { id: "anthropic_api_key", label: "ANTHROPIC_API_KEY", group: "Core Required", required: true, vars: ["ANTHROPIC_API_KEY"], hint: "Anthropic Claude API key. Required for all AI-powered features." },
   { id: "audit_chain_secret", label: "AUDIT_CHAIN_SECRET", group: "Core Required", required: true, vars: ["AUDIT_CHAIN_SECRET"], hint: "HMAC-SHA256 key for tamper-evident audit chain. Generate: openssl rand -hex 64" },
+  { id: "session_secret", label: "SESSION_SECRET", group: "Core Required", required: true, vars: ["SESSION_SECRET"], hint: "HMAC-SHA256 portal session signing key. Generate: openssl rand -hex 32" },
+  { id: "jwt_signing_secret", label: "JWT_SIGNING_SECRET", group: "Core Required", required: true, vars: ["JWT_SIGNING_SECRET"], hint: "JWT signing secret (≥32 bytes). Generate: openssl rand -base64 32" },
   { id: "admin_token", label: "ADMIN_TOKEN", group: "Core Required", required: true, vars: ["ADMIN_TOKEN"], hint: "Admin portal bearer token. Generate: openssl rand -hex 32" },
   { id: "ongoing_run_token", label: "ONGOING_RUN_TOKEN", group: "Core Required", required: true, vars: ["ONGOING_RUN_TOKEN"], hint: "Bearer token for /api/ongoing/run. Required for ongoing monitoring." },
   { id: "sanctions_cron_token", label: "SANCTIONS_CRON_TOKEN", group: "Core Required", required: true, vars: ["SANCTIONS_CRON_TOKEN"], hint: "Bearer token for scheduled sanctions refresh. Required for list ingestion." },
-  { id: "app_url", label: "NEXT_PUBLIC_APP_URL", group: "Core Required", required: true, vars: ["NEXT_PUBLIC_APP_URL"], hint: "Public URL of this deployment. Required for webhook callbacks." },
+  { id: "app_url", label: "NEXT_PUBLIC_APP_URL", group: "Core Required", required: true, vars: ["NEXT_PUBLIC_APP_URL"], hint: "Public URL of this deployment. Required for CORS and webhook callbacks." },
 
   // goAML / FIU Reporting
   { id: "goaml_entities", label: "HAWKEYE_ENTITIES", group: "goAML / FIU Reporting", required: true, vars: ["HAWKEYE_ENTITIES", "GOAML_RENTITY_ID"], hint: "Reporting entity JSON array (or legacy GOAML_RENTITY_ID). Required for STR/SAR filing." },

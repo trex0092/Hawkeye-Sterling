@@ -280,6 +280,16 @@ async function callApi(
     }
     return await res.json().catch(() => ({ ok: res.ok, status: res.status }));
   } catch (err) {
+    const isTimeout = err instanceof Error &&
+      (err.name === "AbortError" || err.name === "TimeoutError" || err.message.includes("aborted") || err.message.includes("timed out"));
+    if (isTimeout) {
+      return {
+        ok: false,
+        degraded: true,
+        error: `Tool timed out — the upstream service did not respond within the allowed window. Manual MLRO review is required for any case affected by this outage.`,
+        _governance: { humanReviewRequired: true, degradedService: path },
+      };
+    }
     return { ok: false, error: err instanceof Error ? err.message : String(err) };
   }
 }

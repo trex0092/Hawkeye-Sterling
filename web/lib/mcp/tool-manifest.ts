@@ -34,8 +34,9 @@ export const TOOL_MANIFEST: Record<string, ToolManifestEntry> = {
     description: "PEP association network mapping",
   },
   country_risk: {
-    level: "read-only",
+    level: "supervised",
     description: "Jurisdiction risk assessment (FATF, CPI, sanctions regime)",
+    regulatoryNote: "LLM-generated risk profile — must be reviewed by MLRO before compliance action",
   },
   sanctions_status: {
     level: "read-only",
@@ -62,8 +63,9 @@ export const TOOL_MANIFEST: Record<string, ToolManifestEntry> = {
     description: "LEI lookup with ownership hierarchy",
   },
   typology_match: {
-    level: "read-only",
+    level: "supervised",
     description: "FATF predicate offence typology matching",
+    regulatoryNote: "LLM-generated typology analysis — MLRO must review before any STR/SAR decision",
   },
   get_cases: {
     level: "read-only",

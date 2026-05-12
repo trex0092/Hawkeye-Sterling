@@ -264,19 +264,20 @@ async function checkGoogleNews(): Promise<Check> {
 // is reachable but throttling our probe, which is not a system outage; we treat
 // it as operational (using the cached last-good result if available).
 
-interface GdeltCacheEntry { result: Check; cachedAt: number }
+interface GdeltCacheEntry { result: Check; cachedAt: number; ttl: number }
 let _gdeltCache: GdeltCacheEntry | null = null;
-const GDELT_CACHE_TTL_MS = 5 * 60 * 1_000; // 5 minutes
+const GDELT_CACHE_TTL_OPERATIONAL_MS = 5 * 60 * 1_000; // 5 min for healthy results
+const GDELT_CACHE_TTL_DEGRADED_MS    = 60 * 1_000;     // 1 min for timeouts — recover quickly
 
 async function checkGdelt(): Promise<Check> {
   const now = Date.now();
-  if (_gdeltCache && now - _gdeltCache.cachedAt < GDELT_CACHE_TTL_MS) {
+  if (_gdeltCache && now - _gdeltCache.cachedAt < _gdeltCache.ttl) {
     return _gdeltCache.result;
   }
 
   const r = await time(async () => {
     const controller = new AbortController();
-    const t = setTimeout(() => controller.abort(), 10_000);
+    const t = setTimeout(() => controller.abort(), 15_000);
     try {
       const params = new URLSearchParams({
         query: "compliance",
@@ -304,7 +305,7 @@ async function checkGdelt(): Promise<Check> {
       return { degraded: false as const };
     } catch (err) {
       const isTimeout = err instanceof Error && (err.name === "AbortError" || err.message.includes("aborted"));
-      if (isTimeout) return { degraded: true as const, note: "GDELT timeout (>20s)" };
+      if (isTimeout) return { degraded: true as const, note: "GDELT timeout (>10s)" };
       throw err;
     } finally {
       clearTimeout(t);
@@ -320,11 +321,13 @@ async function checkGdelt(): Promise<Check> {
     result = { name: "gdelt-live-feed", status: "operational", latencyMs: r.latencyMs, note: (r.value as { note?: string }).note };
   }
 
-  // Only cache successful or rate-limited (operational) results — don't cache
-  // genuine failures so a transient outage clears on the next probe cycle.
-  if (result.status === "operational") {
-    _gdeltCache = { result, cachedAt: Date.now() };
-  }
+  // Cache both operational and degraded results to prevent a 15s stall on every
+  // status poll when GDELT is slow. Operational → 5 min; degraded/timeout → 1 min
+  // so the page recovers quickly once GDELT comes back.
+  const ttl = result.status === "operational"
+    ? GDELT_CACHE_TTL_OPERATIONAL_MS
+    : GDELT_CACHE_TTL_DEGRADED_MS;
+  _gdeltCache = { result, cachedAt: Date.now(), ttl };
   return result;
 }
 
@@ -923,14 +926,28 @@ export async function GET(): Promise<NextResponse> {
   // Data-feed version badges — auditors want to know exactly which
   // brain/taxonomy version was in effect when a decision was made.
   // Derived from env (set by CI) or from committed manifest values.
+  const brainReviewedAt = process.env["BRAIN_REVIEWED_AT"] ?? "2026-04-01";
+  const knownPepEntries = Number(process.env["KNOWN_PEP_ENTRIES"] ?? "6");
   const feedVersions = {
     brain: process.env["BRAIN_VERSION"] ?? "wave-5",
-    commitSha: (process.env["NEXT_PUBLIC_COMMIT_REF"] ?? process.env["COMMIT_REF"] ?? process.env["NETLIFY_COMMIT_REF"] ?? "dev").slice(0, 7),
+    commitSha: (process.env["NEXT_PUBLIC_COMMIT_SHA"] ?? process.env["NEXT_PUBLIC_COMMIT_REF"] ?? process.env["COMMIT_REF"] ?? process.env["NETLIFY_COMMIT_REF"] ?? "dev").slice(0, 7),
     adverseMediaCategories: 13,
     adverseMediaKeywords: 1066,
-    knownPepEntries: 6,
-    reviewedAt: process.env["BRAIN_REVIEWED_AT"] ?? "2026-04-01",
+    knownPepEntries,
+    reviewedAt: brainReviewedAt,
   };
+
+  // ENH-F: warn if PEP corpus < 500,000 entries
+  const pepCountWarning = knownPepEntries < 500_000
+    ? `PEP corpus has only ${knownPepEntries.toLocaleString("en-US")} entries — expected ≥500,000. Set KNOWN_PEP_ENTRIES env var or re-run PEP ingestion.`
+    : undefined;
+
+  // ENH-G: warn if brain catalogue review > 30 days old
+  const reviewedAtMs = Date.parse(brainReviewedAt);
+  const brainCatalogueStale = !isNaN(reviewedAtMs) && (Date.now() - reviewedAtMs) > 30 * 24 * 60 * 60 * 1_000;
+  const brainCatalogueWarning = brainCatalogueStale
+    ? `Brain catalogue last reviewed ${brainReviewedAt} — over 30 days ago. MLRO should trigger a catalogue review cycle.`
+    : undefined;
 
   // Scheduled maintenance windows — read from a blob list. Ops writes
   // a JSON array; operators see it on the status page ahead of time.
@@ -1016,6 +1033,8 @@ export async function GET(): Promise<NextResponse> {
     { id: "anthropic",   label: "ANTHROPIC_API_KEY",       required: true  },
     { id: "admin_token", label: "ADMIN_TOKEN",              required: true  },
     { id: "audit_chain", label: "AUDIT_CHAIN_SECRET",       required: true  },
+    { id: "session_sec", label: "SESSION_SECRET",           required: true  },
+    { id: "jwt_secret",  label: "JWT_SIGNING_SECRET",       required: true  },
     { id: "app_url",     label: "NEXT_PUBLIC_APP_URL",      required: true  },
     { id: "ongoing_tok", label: "ONGOING_RUN_TOKEN",        required: true  },
     { id: "sanct_tok",   label: "SANCTIONS_CRON_TOKEN",     required: true  },
@@ -1029,6 +1048,8 @@ export async function GET(): Promise<NextResponse> {
     anthropic:   ["ANTHROPIC_API_KEY"],
     admin_token: ["ADMIN_TOKEN"],
     audit_chain: ["AUDIT_CHAIN_SECRET"],
+    session_sec: ["SESSION_SECRET"],
+    jwt_secret:  ["JWT_SIGNING_SECRET"],
     app_url:     ["NEXT_PUBLIC_APP_URL"],
     ongoing_tok: ["ONGOING_RUN_TOKEN"],
     sanct_tok:   ["SANCTIONS_CRON_TOKEN"],
@@ -1051,6 +1072,34 @@ export async function GET(): Promise<NextResponse> {
     checks: configChecks,
   };
 
+  // ENH-D: sanctions list age alert — fire if any list > 36h old
+  const staleLists = sanctions.lists.filter((l) => l.ageH !== null && l.ageH > 36);
+  const sanctionsAgeWarning = staleLists.length > 0
+    ? `Sanctions lists stale: ${staleLists.map((l) => `${l.id} (${l.ageH}h)`).join(", ")} — expected refresh every 24h. Trigger cron or investigate blob storage.`
+    : undefined;
+
+  // ENH-B: fire alert webhook on degraded critical services (best-effort, non-blocking)
+  const alertWebhookUrl = process.env["ALERT_WEBHOOK_URL"];
+  const alertDegraded = [...internalChecks, gdelt].filter((c) => c.status !== "operational");
+  if (alertWebhookUrl && alertDegraded.length > 0) {
+    const payload = {
+      source: "hawkeye-sterling/status",
+      timestamp: new Date().toISOString(),
+      degradedServices: alertDegraded.map((c) => ({ name: c.name, status: c.status, note: c.note })),
+      sanctionsAgeWarning,
+      pepCountWarning,
+      brainCatalogueWarning,
+    };
+    void fetch(alertWebhookUrl, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(4_000),
+    }).catch((err: unknown) => console.warn("[status] alert webhook failed:", err instanceof Error ? err.message : err));
+  }
+
+  const warnings = [sanctionsAgeWarning, pepCountWarning, brainCatalogueWarning].filter(Boolean) as string[];
+
   return NextResponse.json({
     ok: true,
     status: worstStatus,
@@ -1072,6 +1121,7 @@ export async function GET(): Promise<NextResponse> {
     cognitiveGrade,
     brainNarrative,
     threatSurface,
+    warnings: warnings.length > 0 ? warnings : undefined,
     sla: {
       uptimeTargetPct: 99.99,
       rolling: currentSla(worstStatus),
