@@ -981,7 +981,6 @@ async function _handleGet(req: Request): Promise<NextResponse> {
 
   // Add sourceType to items and exclude items older than 36 months unless
   // includeArchived is requested.
-  const ARCHIVE_CUTOFF_MS = 36 * 30 * 24 * 60 * 60 * 1_000;
   const cutoff = Date.now() - ARCHIVE_CUTOFF_MS;
   const sourceTypeMap: Record<string, string> = {
     "MoET": "government", "UAE IEC": "government", "CBUAE": "government",

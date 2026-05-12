@@ -99,8 +99,8 @@ export async function getSanctionsHealth(): Promise<SanctionsHealth> {
     await Promise.allSettled(
       (ALL_LISTS as readonly string[]).map(async (listId) => {
         try {
-          const meta = await store.getMetadata(listId);
-          if (!meta) {
+          const value = await store.get(listId, { type: "text" });
+          if (!value) {
             missingAll.push(listId);
             if ((CRITICAL_LISTS as readonly string[]).includes(listId)) {
               missingCritical.push(listId);

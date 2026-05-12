@@ -13,6 +13,8 @@
 // instance when needed.
 
 import type { Config } from "@netlify/functions";
+import { readFileSync } from "fs";
+import { fileURLToPath } from "url";
 
 interface TransactionPayload {
   amountUsd: number;
@@ -44,11 +46,10 @@ export default async (_req: Request): Promise<Response> => {
   // accessible at runtime, we fall back to a minimal inline set.
   let baseline: TransactionPayload[] = [];
   try {
-    // Dynamic import of the JSON file relative to the function root.
-    const url = new URL("../../data/anomaly-baseline.json", import.meta.url);
-    const { default: data } = (await import(url.pathname, { assert: { type: "json" } }).catch(
-      () => import("../../data/anomaly-baseline.json", { assert: { type: "json" } }),
-    )) as { default: TransactionPayload[] };
+    // Read JSON file synchronously at function startup — compatible with all Node versions.
+    const jsonPath = fileURLToPath(new URL("../../data/anomaly-baseline.json", import.meta.url));
+    const raw = readFileSync(jsonPath, "utf-8");
+    const data = JSON.parse(raw) as TransactionPayload[];
     baseline = Array.isArray(data) ? data : [];
   } catch (err) {
     console.warn("[seed-anomaly-baseline] could not load baseline JSON — using empty set:", err instanceof Error ? err.message : err);
