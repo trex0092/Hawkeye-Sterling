@@ -29,10 +29,21 @@ import { enforce } from "@/lib/server/enforce";
 import { corsHeaders, corsPreflight } from "@/lib/api/cors";
 import { gateMlroQuestion } from "@/lib/server/mlro-input-gate";
 // Dynamic imports — prevents hard 500 on cold Lambda if dist/ isn't compiled yet.
-type ClassifyFn = (q: string) => { primaryTopic: string; intent: string; complexity: string };
+type ClassifyFn = (q: string) => {
+  primaryTopic: string; intent: string; complexity: string;
+  topics: string[]; jurisdictions: string[]; regimes: string[];
+  fatfRecHints: string[]; fatfRecDetails: Array<{ num: number; title: string }>;
+  doctrineHints: string[]; playbookHints: string[]; redFlagHints: string[];
+  urgencyFlags: string[]; commonSenseRules: string[];
+};
 type ScoreFn = (answer: string, mode: string) => { passedQualityGate: boolean; score: number; defects: Array<{ axis: string; detail: string }> };
-let classifyMlroQuestion: ClassifyFn = (q) => ({ primaryTopic: "general", intent: "advisory", complexity: "standard" });
-let scoreAdvisorAnswer: ScoreFn = (answer, _mode) => ({ passedQualityGate: true, score: 70, defects: [] });
+let classifyMlroQuestion: ClassifyFn = (_q) => ({
+  primaryTopic: "general", intent: "advisory", complexity: "standard",
+  topics: [], jurisdictions: [], regimes: [],
+  fatfRecHints: [], fatfRecDetails: [], doctrineHints: [], playbookHints: [],
+  redFlagHints: [], urgencyFlags: [], commonSenseRules: [],
+});
+let scoreAdvisorAnswer: ScoreFn = (_answer, _mode) => ({ passedQualityGate: true, score: 70, defects: [] });
 (async () => {
   try {
     const [cls, qg] = await Promise.all([
