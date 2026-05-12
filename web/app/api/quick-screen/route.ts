@@ -127,9 +127,9 @@ export async function POST(req: Request): Promise<NextResponse> {
           typeof (c as QuickScreenCandidate).name === "string",
       );
       if (candidates.length === 0) {
-        // Empty corpus is a real concern — sanctions screening with zero
-        // candidates ALWAYS returns CLEAR. Fail loud rather than degrade.
-        return respond(503, { ok: false, error: "watchlist corpus unavailable", detail: "no valid candidates loaded" }, gateHeaders);
+        // Empty corpus means CLEAR would be returned for every subject — that
+        // is a safety failure. Fail loudly so the caller knows to retry.
+        return respond(503, { ok: false, error: "Sanctions lists not yet loaded — system initialising. Retry in 60 seconds.", detail: "no valid candidates loaded" }, gateHeaders);
       }
     } catch (err) {
       const detail = err instanceof Error ? err.message : String(err);

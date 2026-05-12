@@ -926,14 +926,28 @@ export async function GET(): Promise<NextResponse> {
   // Data-feed version badges — auditors want to know exactly which
   // brain/taxonomy version was in effect when a decision was made.
   // Derived from env (set by CI) or from committed manifest values.
+  const brainReviewedAt = process.env["BRAIN_REVIEWED_AT"] ?? "2026-04-01";
+  const knownPepEntries = Number(process.env["KNOWN_PEP_ENTRIES"] ?? "6");
   const feedVersions = {
     brain: process.env["BRAIN_VERSION"] ?? "wave-5",
     commitSha: (process.env["NEXT_PUBLIC_COMMIT_SHA"] ?? process.env["NEXT_PUBLIC_COMMIT_REF"] ?? process.env["COMMIT_REF"] ?? process.env["NETLIFY_COMMIT_REF"] ?? "dev").slice(0, 7),
     adverseMediaCategories: 13,
     adverseMediaKeywords: 1066,
-    knownPepEntries: 6,
-    reviewedAt: process.env["BRAIN_REVIEWED_AT"] ?? "2026-04-01",
+    knownPepEntries,
+    reviewedAt: brainReviewedAt,
   };
+
+  // ENH-F: warn if PEP corpus < 500,000 entries
+  const pepCountWarning = knownPepEntries < 500_000
+    ? `PEP corpus has only ${knownPepEntries.toLocaleString("en-US")} entries — expected ≥500,000. Set KNOWN_PEP_ENTRIES env var or re-run PEP ingestion.`
+    : undefined;
+
+  // ENH-G: warn if brain catalogue review > 30 days old
+  const reviewedAtMs = Date.parse(brainReviewedAt);
+  const brainCatalogueStale = !isNaN(reviewedAtMs) && (Date.now() - reviewedAtMs) > 30 * 24 * 60 * 60 * 1_000;
+  const brainCatalogueWarning = brainCatalogueStale
+    ? `Brain catalogue last reviewed ${brainReviewedAt} — over 30 days ago. MLRO should trigger a catalogue review cycle.`
+    : undefined;
 
   // Scheduled maintenance windows — read from a blob list. Ops writes
   // a JSON array; operators see it on the status page ahead of time.
@@ -1058,6 +1072,34 @@ export async function GET(): Promise<NextResponse> {
     checks: configChecks,
   };
 
+  // ENH-D: sanctions list age alert — fire if any list > 36h old
+  const staleLists = sanctions.lists.filter((l) => l.ageH !== null && l.ageH > 36);
+  const sanctionsAgeWarning = staleLists.length > 0
+    ? `Sanctions lists stale: ${staleLists.map((l) => `${l.id} (${l.ageH}h)`).join(", ")} — expected refresh every 24h. Trigger cron or investigate blob storage.`
+    : undefined;
+
+  // ENH-B: fire alert webhook on degraded critical services (best-effort, non-blocking)
+  const alertWebhookUrl = process.env["ALERT_WEBHOOK_URL"];
+  const alertDegraded = [...internalChecks, gdelt].filter((c) => c.status !== "operational");
+  if (alertWebhookUrl && alertDegraded.length > 0) {
+    const payload = {
+      source: "hawkeye-sterling/status",
+      timestamp: new Date().toISOString(),
+      degradedServices: alertDegraded.map((c) => ({ name: c.name, status: c.status, note: c.note })),
+      sanctionsAgeWarning,
+      pepCountWarning,
+      brainCatalogueWarning,
+    };
+    void fetch(alertWebhookUrl, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(4_000),
+    }).catch((err: unknown) => console.warn("[status] alert webhook failed:", err instanceof Error ? err.message : err));
+  }
+
+  const warnings = [sanctionsAgeWarning, pepCountWarning, brainCatalogueWarning].filter(Boolean) as string[];
+
   return NextResponse.json({
     ok: true,
     status: worstStatus,
@@ -1079,6 +1121,7 @@ export async function GET(): Promise<NextResponse> {
     cognitiveGrade,
     brainNarrative,
     threatSurface,
+    warnings: warnings.length > 0 ? warnings : undefined,
     sla: {
       uptimeTargetPct: 99.99,
       rolling: currentSla(worstStatus),

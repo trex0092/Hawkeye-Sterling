@@ -726,10 +726,37 @@ async function handleScrReport(req: Request): Promise<Response> {
     };
   }
 
+  const { searchParams } = new URL(req.url);
+  const format = searchParams.get("format")?.toLowerCase() ?? "html";
+
   const now = body.now ? new Date(body.now) : new Date();
+  let scr: ScreeningComplianceReport;
+  try {
+    scr = buildSCR(body, now);
+  } catch (err) {
+    console.error("scr-report build failed", err);
+    return NextResponse.json(
+      { ok: false, error: err instanceof Error ? err.message : String(err) },
+      { status: 500, headers: gateHeaders },
+    );
+  }
+
+  if (format === "json") {
+    return NextResponse.json(
+      { ok: true, report: scr },
+      {
+        status: 200,
+        headers: {
+          ...gateHeaders,
+          "content-disposition": `inline; filename="hs-scr-${safeFilenameSegment(body.subject.id)}.json"`,
+          "cache-control": "no-store",
+        },
+      },
+    );
+  }
+
   let html: string;
   try {
-    const scr = buildSCR(body, now);
     html = renderSCR(scr);
   } catch (err) {
     console.error("scr-report render failed", err);
