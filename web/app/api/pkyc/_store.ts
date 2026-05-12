@@ -1,9 +1,25 @@
 // Shared pKYC types and Blobs helpers — imported by route.ts and run/route.ts.
 // Underscore prefix keeps Next.js from treating this as a route file.
+//
+// Uses the shared store.ts wrapper (hawkeye-sterling Blobs store with credential
+// passing and in-memory fallback) rather than direct @netlify/blobs calls.
+// Key prefix: "pkyc/" — all pKYC data is namespaced within the main store.
+
+import { getJson, setJson, listKeys } from "@/lib/server/store";
 
 export type PKycCadence = "daily" | "weekly" | "monthly" | "quarterly" | "annual";
 export type PKycStatus = "active" | "pending_review" | "suspended" | "archived";
 export type PKycRiskBand = "clear" | "low" | "medium" | "high" | "critical";
+
+export interface BehavioralBaseline {
+  capturedAt: string;
+  expectedTransactionFrequency: string;
+  expectedCounterpartyCount: string;
+  expectedCashUsage: string;
+  expectedCrossJurisdictional: string;
+  anomalyScore: number;
+  deviations: string[];
+}
 
 export interface PKycSubject {
   id: string;
@@ -26,6 +42,8 @@ export interface PKycSubject {
   alertCount: number;
   notes?: string;
   mlro?: string;
+  behavioralBaseline?: BehavioralBaseline;
+  behavioralDrift?: string[];
 }
 
 export interface PKycDelta {
@@ -40,42 +58,29 @@ export interface PKycDelta {
   acknowledged: boolean;
 }
 
-async function getStore() {
-  try {
-    const mod = await import("@netlify/blobs").catch(() => null);
-    if (!mod) return null;
-    return mod.getStore({ name: "pkyc" });
-  } catch { return null; }
-}
-
 export async function listSubjects(): Promise<PKycSubject[]> {
-  const store = await getStore();
-  if (!store) return [];
   try {
-    const listed = await store.list({ prefix: "subject/" });
-    const subjects = await Promise.all(
-      listed.blobs.map((b: { key: string }) =>
-        store.get(b.key, { type: "json" }).catch(() => null)
-      )
-    );
+    const keys = await listKeys("pkyc/subject/");
+    const subjects = await Promise.all(keys.map((k) => getJson<PKycSubject>(k)));
     return subjects.filter((s): s is PKycSubject => s !== null);
   } catch { return []; }
 }
 
 export async function getSubject(id: string): Promise<PKycSubject | null> {
-  const store = await getStore();
-  if (!store) return null;
-  return store.get(`subject/${id}`, { type: "json" }).catch(() => null) as Promise<PKycSubject | null>;
+  return getJson<PKycSubject>(`pkyc/subject/${id}`).catch(() => null);
 }
 
 export async function saveSubject(subject: PKycSubject): Promise<void> {
-  const store = await getStore();
-  if (!store) return;
-  await store.setJSON(`subject/${subject.id}`, subject);
+  await setJson(`pkyc/subject/${subject.id}`, subject);
 }
 
 export async function deleteSubject(id: string): Promise<void> {
-  const store = await getStore();
-  if (!store) return;
-  await store.delete(`subject/${id}`).catch(() => {});
+  // store.ts has no delete — overwrite with tombstone marker
+  await setJson(`pkyc/subject/${id}`, null).catch(() => {});
+}
+
+export async function saveDelta(delta: PKycDelta): Promise<void> {
+  await setJson(`pkyc/delta/${delta.id}`, delta).catch((err) =>
+    console.warn("[pkyc] saveDelta failed:", err instanceof Error ? err.message : err)
+  );
 }

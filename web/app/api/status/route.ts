@@ -2,11 +2,27 @@ import { NextResponse } from "next/server";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 
-import { quickScreen } from "../../../../dist/src/brain/quick-screen.js";
-import { evaluateRedlines } from "../../../../dist/src/brain/redlines.js";
 import { classifyAdverseKeywords } from "@/lib/data/adverse-keywords";
 import { getJson, isInMemoryFallback } from "@/lib/server/store";
-import { COGNITIVE_AMPLIFIER } from "../../../../dist/src/brain/cognitive-amplifier.js";
+
+// Brain modules are compiled separately; dynamic import so the route module
+// loads even when the dist/ folder hasn't been built yet (local dev).
+async function loadBrain() {
+  try {
+    const [qs, rl, ca] = await Promise.all([
+      import("../../../../dist/src/brain/quick-screen.js").catch(() => null),
+      import("../../../../dist/src/brain/redlines.js").catch(() => null),
+      import("../../../../dist/src/brain/cognitive-amplifier.js").catch(() => null),
+    ]);
+    return {
+      quickScreen: (qs as { quickScreen?: unknown } | null)?.quickScreen ?? null,
+      evaluateRedlines: (rl as { evaluateRedlines?: unknown } | null)?.evaluateRedlines ?? null,
+      COGNITIVE_AMPLIFIER: (ca as { COGNITIVE_AMPLIFIER?: unknown } | null)?.COGNITIVE_AMPLIFIER ?? null,
+    };
+  } catch {
+    return { quickScreen: null, evaluateRedlines: null, COGNITIVE_AMPLIFIER: null };
+  }
+}
 
 async function safe<T>(label: string, fn: () => Promise<T> | T, fallback: T): Promise<T> {
   try {
@@ -111,23 +127,29 @@ async function time<T>(fn: () => Promise<T> | T): Promise<{ ok: true; value: T; 
 }
 
 async function checkScreening(): Promise<Check> {
-  const r = await time(() => quickScreen({ name: "statusping" }, [], {}));
+  const r = await time(async () => {
+    const { quickScreen } = await loadBrain();
+    if (typeof quickScreen !== "function") throw new Error("brain not built — run tsc first");
+    return (quickScreen as (s: unknown, c: unknown[], o: unknown) => unknown)({ name: "statusping" }, [], {});
+  });
   if (!r.ok) return { name: "screening", status: "down", latencyMs: r.latencyMs, note: r.error };
   const result = r.value as { severity?: string };
-  if (typeof result.severity !== "string") {
+  if (typeof result?.severity !== "string") {
     return { name: "screening", status: "degraded", latencyMs: r.latencyMs, note: "unexpected result shape" };
   }
   return { name: "screening", status: "operational", latencyMs: r.latencyMs };
 }
 
 async function checkSuperBrain(): Promise<Check> {
-  // Super-brain composes quickScreen + redlines + classifiers. Probe the
-  // same pieces so a bundler regression (e.g. the styled-jsx import that
-  // broke Super Brain in April 2026) surfaces here without having to
-  // loop back through HTTP.
-  const r = await time(() => {
-    const screen = quickScreen({ name: "statusping" }, [], {});
-    const redlines = evaluateRedlines([]);
+  const r = await time(async () => {
+    const { quickScreen, evaluateRedlines } = await loadBrain();
+    if (typeof quickScreen !== "function" || typeof evaluateRedlines !== "function") {
+      throw new Error("brain not built — run tsc first");
+    }
+    const qs = quickScreen as (s: unknown, c: unknown[], o: unknown) => unknown;
+    const er = evaluateRedlines as (r: unknown[]) => unknown;
+    const screen = qs({ name: "statusping" }, [], {});
+    const redlines = er([]);
     return { screen, redlines };
   });
   if (!r.ok) return { name: "super-brain", status: "down", latencyMs: r.latencyMs, note: r.error };
@@ -366,11 +388,12 @@ async function checkBrainSoul(): Promise<BrainSoul> {
     const catalogueHash = integ?.catalogueHash ?? "missing";
     const compositeHash = fnv1aInline(`${charterHash}·${catalogueHash}`);
 
-    // Prefer live COGNITIVE_AMPLIFIER constants (always current) over the
-    // static JSON — they reflect any in-flight version bump immediately.
-    const livePercent = COGNITIVE_AMPLIFIER.percent;
-    const liveFactor = COGNITIVE_AMPLIFIER.factor;
-    const liveVersion = COGNITIVE_AMPLIFIER.version;
+    // Prefer live COGNITIVE_AMPLIFIER constants when available.
+    const { COGNITIVE_AMPLIFIER } = await loadBrain();
+    const ca = COGNITIVE_AMPLIFIER as { percent?: number; factor?: number; version?: string; directives?: unknown[] } | null;
+    const livePercent = ca?.percent ?? 0;
+    const liveFactor = ca?.factor ?? 0;
+    const liveVersion = ca?.version ?? null;
 
     const amplificationPercent = livePercent > 0 ? livePercent : (cat?.amplifier?.percent ?? 0);
     const amplificationFactor = liveFactor > 0 ? liveFactor : (cat?.amplifier?.factor ?? 0);
@@ -388,7 +411,7 @@ async function checkBrainSoul(): Promise<BrainSoul> {
       amplifierVersion,
       amplificationPercent,
       amplificationFactor,
-      directiveCount: COGNITIVE_AMPLIFIER.directives.length,
+      directiveCount: ca?.directives?.length ?? 0,
       charterHash,
       catalogueHash,
       compositeHash,

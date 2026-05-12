@@ -13,8 +13,8 @@
 import { NextResponse } from "next/server";
 import { withGuard } from "@/lib/server/guard";
 import {
-  listSubjects, getSubject, saveSubject,
-  type PKycSubject, type PKycRiskBand, type PKycDelta,
+  listSubjects, getSubject, saveSubject, saveDelta,
+  type PKycSubject, type PKycRiskBand, type PKycDelta, type BehavioralBaseline,
 } from "../_store";
 
 export const runtime = "nodejs";
@@ -88,17 +88,6 @@ function isMaterialChange(subject: PKycSubject, newBand: PKycRiskBand, newCompos
   return { changed: false, kind: "clear", detail: "No material change" };
 }
 
-// ── Save delta ────────────────────────────────────────────────────────────────
-
-async function saveDelta(delta: PKycDelta): Promise<void> {
-  try {
-    const mod = await import("@netlify/blobs").catch(() => null);
-    if (!mod) return;
-    const store = mod.getStore({ name: "pkyc" });
-    await store.setJSON(`delta/${delta.id}`, delta);
-  } catch { /* non-blocking */ }
-}
-
 // ── Run a single subject ──────────────────────────────────────────────────────
 
 interface RunSubjectResult {
@@ -110,9 +99,12 @@ interface RunSubjectResult {
   changed: boolean;
   skipped?: boolean;
   error?: string;
+  behavioralDrift?: string[];
 }
 
 async function runSubject(subject: PKycSubject, force = false): Promise<RunSubjectResult> {
+  // PR-3: normalize lastHits for records created before this field existed
+  subject.lastHits = subject.lastHits ?? 0;
   const now = new Date();
 
   if (!force && new Date(subject.nextRunAt) > now) {
@@ -150,6 +142,43 @@ async function runSubject(subject: PKycSubject, force = false): Promise<RunSubje
 
     const { changed, kind, detail } = isMaterialChange(subject, band, composite, hits);
 
+    // Compute behavioral baseline and detect drift from prior run
+    let behavioralBaseline: BehavioralBaseline | undefined;
+    let behavioralDrift: string[] | undefined;
+    try {
+      const blResult = await callInternal("/api/behavioral-baseline", {
+        entityType: subject.entityType ?? "individual",
+        industry: subject.entityType ?? "general",
+        jurisdiction: subject.jurisdiction ?? "UAE",
+        riskScore: composite,
+      }) as { baseline?: Record<string, string>; deviations?: string[]; anomalyScore?: number } | null;
+
+      if (blResult?.baseline) {
+        behavioralBaseline = {
+          capturedAt: now.toISOString(),
+          expectedTransactionFrequency: blResult.baseline["expectedTransactionFrequency"] ?? "moderate",
+          expectedCounterpartyCount: blResult.baseline["expectedCounterpartyCount"] ?? "unknown",
+          expectedCashUsage: blResult.baseline["expectedCashUsage"] ?? "low",
+          expectedCrossJurisdictional: blResult.baseline["expectedCrossJurisdictional"] ?? "low",
+          anomalyScore: blResult.anomalyScore ?? 0,
+          deviations: blResult.deviations ?? [],
+        };
+
+        // Detect drift vs prior baseline
+        if (subject.behavioralBaseline) {
+          const prior = subject.behavioralBaseline;
+          const drift: string[] = [];
+          if (behavioralBaseline.anomalyScore - prior.anomalyScore > 20)
+            drift.push(`Anomaly score escalated ${prior.anomalyScore} → ${behavioralBaseline.anomalyScore}`);
+          if (behavioralBaseline.expectedCashUsage !== prior.expectedCashUsage)
+            drift.push(`Cash usage profile changed: ${prior.expectedCashUsage} → ${behavioralBaseline.expectedCashUsage}`);
+          if (behavioralBaseline.expectedCrossJurisdictional !== prior.expectedCrossJurisdictional)
+            drift.push(`Cross-jurisdictional exposure changed: ${prior.expectedCrossJurisdictional} → ${behavioralBaseline.expectedCrossJurisdictional}`);
+          if (drift.length) behavioralDrift = drift;
+        }
+      }
+    } catch { /* baseline is non-blocking */ }
+
     // Build cadence-specific next-run date
     const cadenceMs: Record<string, number> = {
       daily: 86_400_000,
@@ -161,6 +190,7 @@ async function runSubject(subject: PKycSubject, force = false): Promise<RunSubje
     const nextMs = cadenceMs[subject.cadence] ?? cadenceMs["monthly"]!;
     const nextRunAt = new Date(now.getTime() + nextMs).toISOString();
 
+    const hasBehavioralAlert = (behavioralDrift?.length ?? 0) > 0;
     const updatedSubject: PKycSubject = {
       ...subject,
       lastRunAt: now.toISOString(),
@@ -169,8 +199,10 @@ async function runSubject(subject: PKycSubject, force = false): Promise<RunSubje
       lastComposite: composite,
       lastHits: hits,
       runCount: subject.runCount + 1,
-      alertCount: subject.alertCount + (changed ? 1 : 0),
+      alertCount: subject.alertCount + (changed || hasBehavioralAlert ? 1 : 0),
       status: changed && (band === "high" || band === "critical") ? "pending_review" : "active",
+      ...(behavioralBaseline ? { behavioralBaseline } : {}),
+      ...(behavioralDrift ? { behavioralDrift } : {}),
     };
     await saveSubject(updatedSubject);
 
@@ -189,7 +221,7 @@ async function runSubject(subject: PKycSubject, force = false): Promise<RunSubje
       await saveDelta(delta);
     }
 
-    return { id: subject.id, name: subject.name, band, composite, hits, changed };
+    return { id: subject.id, name: subject.name, band, composite, hits, changed, behavioralDrift };
   } catch (err) {
     return {
       id: subject.id,

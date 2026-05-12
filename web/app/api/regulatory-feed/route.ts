@@ -76,7 +76,18 @@ function mkAbort(ms: number): { signal: AbortSignal; clear: () => void } {
 }
 
 function stripHtml(s: string): string {
-  return s.replace(/<[^>]*>/g, " ").replace(/&[^;]{1,8};/g, " ").replace(/\s+/g, " ").trim();
+  // Decode HTML entities to real characters first (handles entity-encoded HTML in RSS)
+  const decoded = s
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, h) => String.fromCharCode(parseInt(h, 16)));
+  // Strip all HTML tags (including freshly-decoded ones)
+  return decoded.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
 }
 
 function sanitizeUrl(raw: string): string {

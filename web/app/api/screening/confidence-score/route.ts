@@ -4,6 +4,8 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { stats as feedbackStats, adjustScore } from "@/lib/server/feedback";
+
 export interface ConfidenceScoreResult {
   ok: true;
   confidenceScore: number;
@@ -143,6 +145,20 @@ Assess whether this is a true sanctions/PEP/watchlist match or a false positive.
     const result = JSON.parse(
       raw.replace(/```json\n?|\n?```/g, "").trim(),
     ) as ConfidenceScoreResult;
+
+    // Apply historical false-positive feedback to adjust the LLM score
+    const listId = body.hit?.listName ?? "unknown";
+    const listRef = body.hit?.matchedName ?? body.subject?.name ?? "unknown";
+    const candidate = body.subject?.name ?? "unknown";
+    const fbStats = await feedbackStats().catch(() => null);
+    if (fbStats) {
+      const adjusted = adjustScore(result.confidenceScore / 100, listId, listRef, candidate, fbStats);
+      result.confidenceScore = Math.round(adjusted.score * 100);
+      result.falsePositiveProbability = Math.round((1 - adjusted.score) * 100);
+      if (adjusted.reason) result.keyFactors = [...result.keyFactors, adjusted.reason];
+      if (result.confidenceScore < 30) result.recommendation = "clear";
+    }
+
     return NextResponse.json(result, { headers: gate.headers });
   } catch (err) {
     console.warn("[confidence-score] LLM failed, using deterministic template:", err instanceof Error ? err.message : err);
