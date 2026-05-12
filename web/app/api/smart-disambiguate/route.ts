@@ -177,7 +177,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   });
 
   if (!apiKey) {
-    return NextResponse.json({ ...buildTemplate(), degraded: true, degradedReason: "ANTHROPIC_API_KEY not configured — deterministic template used." }, { headers: gate.headers });
+    return NextResponse.json({ ok: true, ...buildTemplate(), degraded: true, degradedReason: "ANTHROPIC_API_KEY not configured — deterministic template used." }, { headers: gate.headers });
   }
 
   const userMessage = `Disambiguate these screening hits for client: ${JSON.stringify(client)}. Hits to assess: ${JSON.stringify(hits)}`;

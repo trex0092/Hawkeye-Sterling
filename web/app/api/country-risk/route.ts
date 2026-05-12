@@ -114,8 +114,12 @@ export async function POST(req: Request) {
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
     return NextResponse.json(
-      { ok: false, error: "Country risk unavailable — ANTHROPIC_API_KEY not configured on server." },
-      { status: 503 },
+      {
+        ...FALLBACK,
+        country: country || FALLBACK.country,
+        simulationWarning: "ANTHROPIC_API_KEY not configured — this is a simulated template for UAE, NOT a real country risk assessment. All scores and risk ratings are illustrative examples only. Obtain a real AI-generated assessment before making any compliance decisions.",
+      },
+      { status: 200, headers: gate.headers },
     );
   }
 

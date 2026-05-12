@@ -113,7 +113,7 @@ const CATEGORY_PROFILES: Record<string, CategoryProfile> = {
     fatfRecs: ['R.5', 'R.6', 'R.20', 'R.21'],
     predicates: ['Terrorist financing (FATF R.5)'],
     modes: ['filing_str_narrative', 'escalation_trigger', 'sanctions_regime_matrix', 'list_walk'],
-    doctrines: ['uae_fdl_20_2018', 'uae_cd_74_2020'],
+    doctrines: ['uae_fdl_10_2025', 'uae_cd_74_2020'],
   },
   proliferation_financing: {
     severity: 'critical',
@@ -134,28 +134,28 @@ const CATEGORY_PROFILES: Record<string, CategoryProfile> = {
     fatfRecs: ['R.3', 'R.10', 'R.20', 'R.21'],
     predicates: ['Money laundering (FATF R.3)', 'Financial crime predicate offense'],
     modes: ['filing_str_narrative', 'predicate_crime_cascade', 'source_triangulation', 'professional_ml_ecosystem', 'invoice_fabrication_pattern'],
-    doctrines: ['uae_fdl_20_2018', 'fatf_rba'],
+    doctrines: ['uae_fdl_10_2025', 'fatf_rba'],
   },
   corruption_organised_crime: {
     severity: 'high',
     fatfRecs: ['R.3', 'R.12', 'R.20'],
     predicates: ['Corruption/bribery predicate', 'Organised crime proceeds'],
     modes: ['pep_domestic_minister', 'community_detection', 'link_analysis', 'funnel_mule_cascade'],
-    doctrines: ['uae_fdl_20_2018', 'wolfsberg_faq'],
+    doctrines: ['uae_fdl_10_2025', 'wolfsberg_faq'],
   },
   human_trafficking_modern_slavery: {
     severity: 'high',
     fatfRecs: ['R.3', 'R.20'],
     predicates: ['Human trafficking predicate (FATF R.3)', 'Modern slavery proceeds'],
     modes: ['human_trafficking_predicate', 'predicate_crime_cascade', 'filing_str_narrative'],
-    doctrines: ['uae_fdl_20_2018'],
+    doctrines: ['uae_fdl_10_2025'],
   },
   drug_trafficking: {
     severity: 'medium',
     fatfRecs: ['R.3', 'R.20'],
     predicates: ['Drug trafficking predicate (FATF R.3)'],
     modes: ['predicate_crime_cascade', 'community_detection', 'link_analysis'],
-    doctrines: ['uae_fdl_20_2018'],
+    doctrines: ['uae_fdl_10_2025'],
   },
   cybercrime: {
     severity: 'medium',
@@ -169,7 +169,7 @@ const CATEGORY_PROFILES: Record<string, CategoryProfile> = {
     fatfRecs: ['R.3', 'R.10', 'R.20'],
     predicates: ['Tax crime predicate (FATF R.3)', 'Offshore fiscal fraud'],
     modes: ['tax_evasion_predicate', 'jurisdiction_cascade', 'ubo_tree_walk'],
-    doctrines: ['uae_fdl_20_2018', 'fatf_rba'],
+    doctrines: ['uae_fdl_10_2025', 'fatf_rba'],
   },
   legal_criminal_regulatory: {
     severity: 'medium',
@@ -240,7 +240,7 @@ function sarBasisNarrative(findings: AdverseMediaFinding[]): string {
   const top = findings[0];
   if (!top) return 'No adverse findings — no reporting obligation.';
   if (top.severity === 'critical') {
-    return `FATF R.20 reporting obligation triggered: critical adverse-media finding — "${top.title}" (${top.source}, ${top.published.slice(0, 10)}). Predicates: ${top.fatfPredicates.join('; ')}. File STR/SAR without delay; tipping-off prohibition (R.21 / doctrine: uae_fdl_20_2018) applies.`;
+    return `FATF R.20 reporting obligation triggered: critical adverse-media finding — "${top.title}" (${top.source}, ${top.published.slice(0, 10)}). Predicates: ${top.fatfPredicates.join('; ')}. File STR/SAR without delay; tipping-off prohibition (R.21 / doctrine: uae_fdl_10_2025) applies.`;
   }
   if (top.severity === 'high') {
     return `FATF R.20 SAR consideration: high-severity adverse media — "${top.title}" (${top.source}). Categories: ${top.categories.join(', ')}. MLRO review required within 24 h.`;
@@ -284,10 +284,10 @@ function investigationLines(
 
   if (riskTier === 'critical') {
     lines.push(`Immediate MLRO escalation required for "${subject}" — critical adverse media.`);
-    lines.push(`Freeze all pending transactions pending SAR filing (FATF R.20 / doctrine: uae_fdl_20_2018).`);
+    lines.push(`Freeze all pending transactions pending SAR filing (FATF R.20 / doctrine: uae_fdl_10_2025).`);
     lines.push(`Cross-reference against OFAC SDN, UN Consolidated, EU Consolidated lists.`);
     lines.push(`Commission full EDD — document source of funds, UBO chain (FATF R.10, R.24).`);
-    lines.push(`Tipping-off prohibition in force (FATF R.21 / doctrine: uae_fdl_20_2018) — do not alert subject.`);
+    lines.push(`Tipping-off prohibition in force (FATF R.21 / doctrine: uae_fdl_10_2025) — do not alert subject.`);
   } else if (riskTier === 'high') {
     lines.push(`Enhanced Due Diligence triggered for "${subject}" (FATF R.10, R.19).`);
     lines.push(`Senior management sign-off required before continuing relationship.`);

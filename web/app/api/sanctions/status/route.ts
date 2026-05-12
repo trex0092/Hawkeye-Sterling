@@ -39,7 +39,7 @@ import { enforce } from "@/lib/server/enforce";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 15;
+export const maxDuration = 20;
 
 type ListStatus = "healthy" | "stale" | "missing" | "unconfigured";
 
@@ -271,11 +271,22 @@ async function handleGet(req: Request): Promise<Response> {
 
   const ok = summary.missing === 0 && summary.stale === 0;
 
+  // Build per-list freshness summary for compliance audit trail
+  const dataFreshness: Record<string, { lastRefreshed: string | null; ageHours: number | null; status: ListStatus }> = {};
+  for (const l of lists) {
+    dataFreshness[l.listId] = {
+      lastRefreshed: l.lastModified,
+      ageHours: l.ageHours,
+      status: l.status,
+    };
+  }
+
   return NextResponse.json(
     {
       ok,
       generatedAt: new Date().toISOString(),
       staleThresholdHours: staleHours,
+      dataFreshness,
       summary,
       lists,
       env,

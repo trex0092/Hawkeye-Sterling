@@ -73,7 +73,27 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    return NextResponse.json({ ok: false, error: "pep-network temporarily unavailable — please retry." }, { status: 503, headers: gate.headers });
+    return NextResponse.json({
+      ok: true,
+      simulationWarning: "ANTHROPIC_API_KEY not configured — this is a simulated template, NOT a real PEP network analysis. All nodes, relationships, and risk indicators are illustrative examples only. Obtain a real AI-generated assessment before making any compliance decisions.",
+      pepName: "",
+      pepCategory: "PEP",
+      pepRiskRating: "high",
+      networkDepth: 4,
+      totalNodesDiscovered: 0,
+      networkNodes: [],
+      mandatoryScreeningCount: 0,
+      typicalMlRisks: ["grand_corruption", "bribery", "asset_flight"],
+      jurisdictionalRisks: ["Requires real subject data to assess"],
+      eddRequirements: ["Provide ANTHROPIC_API_KEY to enable AI-powered PEP network analysis"],
+      eddChecklist: [],
+      seniorManagementApprovalRequired: true,
+      ongoingMonitoringFrequency: "monthly",
+      exitTriggers: [],
+      networkRiskNarrative: "PEP network analysis unavailable — ANTHROPIC_API_KEY not configured.",
+      regulatoryBasis: "FATF R.12; FDL 10/2025 Art.12; CBUAE AML Standards §6",
+      graphSummary: { hop1Count: 0, hop2Count: 0, hop3Count: 0, hop4Count: 0 },
+    }, { status: 200, headers: gate.headers });
   }
 
   let body: Body;

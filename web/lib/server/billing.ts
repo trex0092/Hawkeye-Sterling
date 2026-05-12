@@ -66,8 +66,8 @@ export async function incrementUsage(
     bucket.counters[metric] = (bucket.counters[metric] ?? 0) + by;
     bucket.lastUpdated = new Date().toISOString();
     await store.set(key, JSON.stringify(bucket));
-  } catch {
-    // best-effort — billing IO must not break the calling route.
+  } catch (err) {
+    console.error("[billing] increment failed — usage may be underreported:", err instanceof Error ? err.message : err);
   }
 }
 

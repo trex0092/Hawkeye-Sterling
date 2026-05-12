@@ -174,8 +174,8 @@ function parseRss(xml: string, subject: string, variants: string[], lang: string
           fuzzyMethod = m.best.method;
           matchedVariant = v === subject ? undefined : v;
         }
-      } catch {
-        /* ignore per-variant errors */
+      } catch (err) {
+        console.warn("[news-search] name-variant match failed:", err instanceof Error ? err.message : err);
       }
     }
     // Supplement: token presence in full text (title + snippet) catches
@@ -230,9 +230,13 @@ async function fetchLocaleFeed(
   locale: (typeof LOCALES)[number],
   variants: string[],
 ): Promise<Article[]> {
-  const modifiers = LOCALE_MODIFIERS[locale.code] ?? LOCALE_MODIFIERS["en"] ?? "";
-  const enriched = `"${q}" (${modifiers})`;
-  const feed = `https://news.google.com/rss/search?q=${encodeURIComponent(enriched)}&hl=${locale.hl}&gl=${locale.gl}&ceid=${locale.ceid}`;
+  // Do NOT append LOCALE_MODIFIERS to the URL query — embedding adversarial
+  // crime keywords (fraud, arrest, laundering…) into the RSS search URL
+  // causes Google News to return zero results for regulatory/compliance
+  // topic queries. Adverse keyword classification is applied post-fetch by
+  // classifyAdverseKeywords() in parseRss(), which does not need the URL
+  // modifiers to work correctly.
+  const feed = `https://news.google.com/rss/search?q=${encodeURIComponent(`"${q}"`)}&hl=${locale.hl}&gl=${locale.gl}&ceid=${locale.ceid}`;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FEED_TIMEOUT_MS);
   try {

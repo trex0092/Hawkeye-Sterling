@@ -110,7 +110,7 @@ function classifyItem(item: InboxItem): {
         reason: "Sanctions match requires immediate freeze and regulatory reporting",
         timeToAct: "immediately",
         action: "Freeze transaction/account, notify MLRO, file EOCN report within 2 hours, escalate to senior management",
-        basis: "FDL 10/2025 Art.11; UAE Cabinet Resolution 10/2019",
+        basis: "FDL No.10/2025 Art.11; CR No.134/2025",
         assignee: "mlro",
       };
 

@@ -165,7 +165,7 @@ export const RED_FLAGS_EXTENDED: RedFlag[] = [
   { id: 'rfx_cb_third_party_beneficiary_disclosed', typology: 'onboarding_evasion', indicator: 'Identifies a third party as actual beneficiary mid-onboarding contradicting earlier declaration.', severity: 'high', reasoningModes: ['ubo_tree_walk', 'narrative_coherence'], sources: ['FATF R.10'] },
   { id: 'rfx_cb_reluctant_specify_pattern', typology: 'onboarding_evasion', indicator: 'Reluctant to specify expected transaction patterns when asked.', severity: 'medium', reasoningModes: ['narrative_coherence'], sources: [] },
   { id: 'rfx_cb_queries_edd_trigger', typology: 'onboarding_evasion', indicator: 'Customer queries the enhanced-due-diligence trigger as if to avoid it.', severity: 'high', reasoningModes: ['narrative_coherence', 'structuring_pattern'], sources: [] },
-  { id: 'rfx_cb_refuses_tipping_off_ack', typology: 'onboarding_evasion', indicator: 'Refuses to acknowledge tipping-off / confidentiality clause at onboarding.', severity: 'medium', reasoningModes: ['narrative_coherence'], sources: ['FDL 20/2018'] },
+  { id: 'rfx_cb_refuses_tipping_off_ack', typology: 'onboarding_evasion', indicator: 'Refuses to acknowledge tipping-off / confidentiality clause at onboarding.', severity: 'medium', reasoningModes: ['narrative_coherence'], sources: ['FDL No.10/2025 Art.25'] },
   { id: 'rfx_cb_introducer_filters_comms', typology: 'onboarding_evasion', indicator: 'Accountancy or legal "introducer" insists on filtering all communication with the customer.', severity: 'medium', reasoningModes: ['link_analysis', 'documentation_quality'], sources: [] },
 
   // — Identity & document tells (10)

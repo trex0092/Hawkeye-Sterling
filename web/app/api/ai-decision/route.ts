@@ -27,6 +27,7 @@ export interface DecisionRequest {
   screeningTopScore?: number;
   screeningSeverity?: string;
   notes?: string;
+  test?: boolean;
 }
 
 export interface DecisionResponse {
@@ -41,6 +42,7 @@ export interface DecisionResponse {
   regulatoryBasis: string;
   asanaTaskUrl?: string;
   asanaTaskGid?: string;
+  asanaSkipped?: true;
 }
 
 // ── Feedback store key ────────────────────────────────────────────────────────
@@ -90,7 +92,7 @@ function buildLearningContext(feedback: FeedbackRecord[]): string {
 
 // ── Decision prompt ───────────────────────────────────────────────────────────
 
-const STATIC_SYSTEM_PROMPT = `You are the Hawkeye Sterling AI Decision Engine — an AML compliance automation agent for a UAE-regulated gold trading firm operating under FDL 20/2018, FDL 10/2025, and CBUAE AML Standards.
+const STATIC_SYSTEM_PROMPT = `You are the Hawkeye Sterling AI Decision Engine — an AML compliance automation agent for a UAE-regulated gold trading firm operating under Federal Decree-Law No. 10 of 2025 on AML/CFT/CPF (FDL No.10/2025, in force 14 Oct 2025), Cabinet Resolution No. 134 of 2025 (CR No.134/2025), and CBUAE AML Standards. FDL No. 20/2018 and Cabinet Decision No. 10/2019 have been superseded and must NOT be cited.
 
 Your role is to AUTOMATICALLY decide the disposition for each screened subject. You must output a single JSON object with no markdown fences.
 
@@ -329,7 +331,11 @@ export async function POST(req: Request) {
   }
 
   // Auto-create Asana task (fire in parallel with response)
-  const asana = await createAsanaTask(body, decision, rationale, nextSteps, decisionId);
+  // Skip task creation in test/sandbox mode
+  let asana: { taskUrl?: string; taskGid?: string } = {};
+  if (body.test !== true) {
+    asana = await createAsanaTask(body, decision, rationale, nextSteps, decisionId);
+  }
 
   const responseBody: DecisionResponse = {
     ok: true,
@@ -341,8 +347,12 @@ export async function POST(req: Request) {
     keyFactors,
     nextSteps,
     regulatoryBasis,
-    ...(asana.taskUrl ? { asanaTaskUrl: asana.taskUrl } : {}),
-    ...(asana.taskGid ? { asanaTaskGid: asana.taskGid } : {}),
+    ...(body.test === true
+      ? { asanaSkipped: true as const }
+      : {
+          ...(asana.taskUrl ? { asanaTaskUrl: asana.taskUrl } : {}),
+          ...(asana.taskGid ? { asanaTaskGid: asana.taskGid } : {}),
+        }),
   };
 
   return NextResponse.json(responseBody, { status: 200 , headers: gate.headers});

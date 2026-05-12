@@ -25,7 +25,7 @@
 // register them as `input_schema` tools without re-curating the corpus.
 
 export interface RegulatoryAnchor {
-  /** Canonical short citation, e.g. "FDL 20/2018 Art.16(2)". */
+  /** Canonical short citation, e.g. "FDL No.10/2025 Art.16(2)". */
   citation: string;
   /** One-sentence description of what the anchor governs. */
   topic: string;
@@ -49,7 +49,7 @@ export const ANCHOR_LIBRARY: AnchorEntry[] = [
       { citation: 'FATF R.12 INR.12', topic: 'PEP CDD obligations + family/close associate scope', jurisdiction: 'FATF/Global' },
       { citation: 'EU 5AMLD Art.20-23', topic: 'PEP definition + EDD measures + 12-month declassification window', jurisdiction: 'EU' },
       { citation: 'FDL 10/2025 Art.16(1)(b)', topic: 'PEP enhanced due diligence — UAE statutory mandate', jurisdiction: 'UAE' },
-      { citation: 'Cabinet Decision 10/2019 Art.15', topic: 'PEP EDD operational requirements + senior-management approval', jurisdiction: 'UAE' },
+      { citation: 'CR No.134/2025 Art.15', topic: 'PEP EDD operational requirements + senior-management approval', jurisdiction: 'UAE' },
       { citation: 'MLR 2017 Reg.35', topic: 'UK domestic + foreign PEP CDD measures', jurisdiction: 'UK' },
     ],
   },
@@ -59,7 +59,7 @@ export const ANCHOR_LIBRARY: AnchorEntry[] = [
       { citation: 'FATF R.10 INR.10(b)', topic: 'EDD trigger conditions and measures', jurisdiction: 'FATF/Global' },
       { citation: 'EU 5AMLD Art.18-18a', topic: 'High-risk-third-country EDD + PEP EDD', jurisdiction: 'EU' },
       { citation: 'FDL 10/2025 Art.16', topic: 'UAE EDD statutory requirements', jurisdiction: 'UAE' },
-      { citation: 'Cabinet Decision 10/2019 Art.6', topic: 'UAE EDD operational measures', jurisdiction: 'UAE' },
+      { citation: 'CR No.134/2025 Art.6', topic: 'UAE EDD operational measures', jurisdiction: 'UAE' },
     ],
   },
   {
@@ -68,7 +68,7 @@ export const ANCHOR_LIBRARY: AnchorEntry[] = [
       { citation: 'FATF R.10', topic: 'CDD core obligations', jurisdiction: 'FATF/Global' },
       { citation: 'EU 4AMLD Art.13', topic: 'EU CDD identification + verification + ongoing monitoring', jurisdiction: 'EU' },
       { citation: 'FDL 10/2025 Art.15', topic: 'UAE CDD statutory mandate', jurisdiction: 'UAE' },
-      { citation: 'Cabinet Decision 10/2019 Art.5', topic: 'UAE CDD operational requirements', jurisdiction: 'UAE' },
+      { citation: 'CR No.134/2025 Art.5', topic: 'UAE CDD operational requirements', jurisdiction: 'UAE' },
       { citation: 'MLR 2017 Reg.27-28', topic: 'UK CDD obligations + simplified CDD scope', jurisdiction: 'UK' },
     ],
   },
@@ -134,7 +134,7 @@ export const ANCHOR_LIBRARY: AnchorEntry[] = [
     keywords: ['record', 'retention', 'recordkeeping', 'record-keeping'],
     anchors: [
       { citation: 'FATF R.11', topic: 'Five-year record-retention requirement', jurisdiction: 'FATF/Global' },
-      { citation: 'FDL 10/2025 Art.24(1)', topic: 'UAE 10-year record retention (updated from FDL 20/2018 Art.16(3) via crosswalk)', jurisdiction: 'UAE' },
+      { citation: 'FDL No.10/2025 Art.19', topic: 'UAE 10-year record retention', jurisdiction: 'UAE' },
       { citation: 'EU 4AMLD Art.40', topic: 'EU 5-year retention (extendable to 10y)', jurisdiction: 'EU' },
     ],
   },

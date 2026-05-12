@@ -422,7 +422,7 @@ void SHELL_TYPOLOGIES_RX; // reserved for future shell-detection hook
 
 export const WAVE4_MODES: ReasoningMode[] = [
   // ── PREDICATE CRIME ANALYSIS ─────────────────────────────────────────
-  m('predicate_crime_cascade', 'Predicate Crime Cascade', 'predicate_crime', ['reasoning','intelligence'], 'Maps all applicable ML predicate offences under FDL 20/2018 to the evidence set.'),
+  m('predicate_crime_cascade', 'Predicate Crime Cascade', 'predicate_crime', ['reasoning','intelligence'], 'Maps all applicable ML/CPF predicate offences under FDL No.10/2025 to the evidence set.'),
   m('environmental_predicate', 'Environmental Predicate Assessment', 'predicate_crime', ['reasoning','intelligence'], 'FATF R.3 (2021 revision) — wildlife, timber, fisheries, waste, emissions.'),
   m('tax_evasion_predicate', 'Tax Evasion Predicate', 'predicate_crime', ['reasoning','inference'], 'Determines whether fiscal misconduct crosses the ML predicate threshold.'),
   m('insider_trading_predicate', 'Insider Trading / Market Abuse Predicate', 'predicate_crime', ['reasoning','smartness'], 'Front-running, tipper-tippee, market manipulation as ML predicates.'),

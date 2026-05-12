@@ -150,7 +150,7 @@ Assess whether this is a true sanctions/PEP/watchlist match or a false positive.
     const listId = body.hit?.listName ?? "unknown";
     const listRef = body.hit?.matchedName ?? body.subject?.name ?? "unknown";
     const candidate = body.subject?.name ?? "unknown";
-    const fbStats = await feedbackStats().catch(() => null);
+    const fbStats = await feedbackStats().catch((err) => { console.warn("[confidence-score] feedbackStats failed:", err instanceof Error ? err.message : err); return null; });
     if (fbStats) {
       const adjusted = adjustScore(result.confidenceScore / 100, listId, listRef, candidate, fbStats);
       result.confidenceScore = Math.round(adjusted.score * 100);

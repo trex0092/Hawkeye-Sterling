@@ -104,7 +104,10 @@ async function getBlobs(): Promise<any | null> {
 export async function getLastUpdated(): Promise<string | null> {
   const store = await getBlobs();
   if (!store) return null;
-  const rec = await store.get(BLOB_KEY_UPDATED, { type: "json" }).catch(() => null) as { updatedAt?: string } | null;
+  const rec = await store.get(BLOB_KEY_UPDATED, { type: "json" }).catch((err: unknown) => {
+    console.warn("[openSanctions] getLastUpdated blob failed:", err instanceof Error ? err.message : err);
+    return null;
+  }) as { updatedAt?: string } | null;
   return rec?.updatedAt ?? null;
 }
 
@@ -237,7 +240,10 @@ export async function lookupByName(name: string): Promise<SanctionsCandidate[]> 
   if (!store) return [];
 
   try {
-    const indexRecord = await store.get(BLOB_KEY_INDEX, { type: "json" }).catch(() => null) as {
+    const indexRecord = await store.get(BLOB_KEY_INDEX, { type: "json" }).catch((err: unknown) => {
+      console.warn("[openSanctions] index blob failed:", err instanceof Error ? err.message : err);
+      return null;
+    }) as {
       index: Record<string, string[]>;
       chunkCount: number;
       totalEntities: number;
@@ -256,14 +262,18 @@ export async function lookupByName(name: string): Promise<SanctionsCandidate[]> 
     // Load all chunks and find matching entities
     const results: SanctionsCandidate[] = [];
     for (let c = 0; c < indexRecord.chunkCount; c++) {
-      const chunk = await store.get(`os-sanctions/entities-${c}.json`, { type: "json" }).catch(() => null) as SanctionsCandidate[] | null;
+      const chunk = await store.get(`os-sanctions/entities-${c}.json`, { type: "json" }).catch((err: unknown) => {
+        console.warn(`[openSanctions] chunk ${c} blob failed:`, err instanceof Error ? err.message : err);
+        return null;
+      }) as SanctionsCandidate[] | null;
       if (!chunk) continue;
       for (const entity of chunk) {
         if (candidateIds.has(entity.id)) results.push(entity);
       }
     }
     return results;
-  } catch {
+  } catch (err) {
+    console.warn("[openSanctions] lookupByName failed:", err instanceof Error ? err.message : err);
     return [];
   }
 }

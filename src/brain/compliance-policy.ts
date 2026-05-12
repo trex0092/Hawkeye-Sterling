@@ -4,10 +4,10 @@
 // live at the end of the file.
 //
 // REGULATORY CONTEXT:
-//   - Federal Decree-Law 20 of 2018 (as amended — incl. Federal Decree-Law 10
-//     of 2025 where applicable)
-//   - Cabinet Decision 10 of 2019 (Executive Regulations, as amended — incl.
-//     Cabinet Resolution 134 of 2025 where applicable)
+//   - Federal Decree-Law No. 10 of 2025 on AML/CFT/CPF (FDL No.10/2025) —
+//     in force 14 October 2025; supersedes FDL No. 20/2018 entirely
+//   - Cabinet Resolution No. 134 of 2025 (Executive Regulations) —
+//     in force 30 September 2025; supersedes Cabinet Decision No. 10/2019
 //   - Cabinet Decision 74 of 2020 on Terrorism Lists and TFS
 //   - Cabinet Resolution 16 of 2021 on administrative penalties
 //   - MoE DNFBP circulars and guidance for the precious metals sector
@@ -68,7 +68,7 @@ export const PROHIBITIONS: CompliancePolicyProhibition[] = [
       'alert a subject to the existence or contemplation of an internal suspicion, ' +
       'investigation, STR/SAR/FFR/PNMR, consent request, or regulatory enquiry.',
     fallback:
-      'Refuse and cite Article 25 of Federal Decree-Law 20 of 2018 (as amended). ' +
+      'Refuse and cite Article 25 of Federal Decree-Law No. 10 of 2025 (tipping-off prohibition). ' +
       'Offer neutral offboarding language without reasons.',
   },
   {
@@ -235,8 +235,8 @@ export const REFUSAL_TRIGGERS: string[] = [
 
 // ─── REGULATORY ANCHORS ───────────────────────────────────────────────
 export const UAE_REGULATORY_ANCHORS = [
-  'Federal Decree-Law No. 20 of 2018 (as amended — incl. Federal Decree-Law No. 10 of 2025 where applicable)',
-  'Cabinet Decision No. 10 of 2019 (Executive Regulations, as amended — incl. Cabinet Resolution 134 of 2025 where applicable)',
+  'Federal Decree-Law No. 10 of 2025 on AML/CFT/CPF (in force 14 Oct 2025; supersedes FDL No. 20/2018)',
+  'Cabinet Resolution No. 134 of 2025 — AML/CFT Executive Regulations (in force 30 Sep 2025; supersedes Cabinet Decision No. 10/2019)',
   'Cabinet Decision No. 74 of 2020 on Terrorism Lists and TFS',
   'Cabinet Resolution No. 16 of 2021 on administrative penalties',
   'MoE DNFBP circulars and guidance for the precious metals sector',

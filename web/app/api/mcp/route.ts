@@ -133,7 +133,7 @@ function wrapWithGovernance(toolName: string, level: ConsequenceLevel, result: u
       _provenance: {
         tool: toolName,
         engineVersion: process.env["BRAIN_VERSION"] ?? "wave-5",
-        commitRef: (process.env["COMMIT_REF"] ?? process.env["NETLIFY_COMMIT_REF"] ?? "dev").slice(0, 7),
+        commitRef: (process.env["NEXT_PUBLIC_COMMIT_REF"] ?? process.env["COMMIT_REF"] ?? process.env["NETLIFY_COMMIT_REF"] ?? "dev").slice(0, 7),
         generatedAt: new Date().toISOString(),
         dataSources: ["ofac-sdn", "eu-fsf", "uk-ofsi", "uae-eocn", "uae-ltl", "un-consolidated", "gdelt", "google-news-rss"],
       },
@@ -224,8 +224,8 @@ async function logToolCall(entry: McpLogEntry): Promise<void> {
     // Lexicographic sort = chronological order; prefix "entry/" for easy listing.
     const key = `entry/${entry.timestamp.replace(/[:.]/g, "-")}-${entry.id}`;
     await store.setJSON(key, entry);
-  } catch {
-    // Logging must never break the tool call
+  } catch (err) {
+    console.warn("[mcp] activity log persist failed:", err instanceof Error ? err.message : err);
   }
 }
 
@@ -268,6 +268,16 @@ async function callApi(
       ...(body ? { body: JSON.stringify(body) } : {}),
       signal: AbortSignal.timeout(timeoutMs ?? ctx?.timeoutMs ?? 55_000),
     });
+    const ct = res.headers.get("content-type") ?? "";
+    if (!ct.includes("application/json")) {
+      const text = await res.text().catch(() => "");
+      return {
+        ok: res.ok,
+        status: res.status,
+        format: ct.includes("text/html") ? "html" : "text",
+        message: `Report generated (${text.length} bytes). Open the Hawkeye Sterling web interface to view the full rendered report.`,
+      };
+    }
     return await res.json().catch(() => ({ ok: res.ok, status: res.status }));
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : String(err) };

@@ -252,7 +252,7 @@ export const preMortemApply = async (ctx: BrainContext): Promise<Finding> => {
   const failureModes = [
     'false positive on name-only match freezes legitimate client (reputational + complaint risk)',
     'false negative on training-data-only recall lets a designated party proceed (charter P1/P8 breach)',
-    'tipping-off leak via customer communication (charter P4 breach, Art.25 FDL 20/2018)',
+    'tipping-off leak via customer communication (charter P4 breach, Art.25 FDL No.10/2025)',
     'disposition recorded without two-sign-off four-eyes (Cabinet Resolution 134/2025 Art.19)',
     'STR filed on insufficient evidence bypassing MLRO review (regulator challenge risk)',
   ];

@@ -205,7 +205,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json(
       {
         ok: true,
-        answer: `**MLRO Advisor — Offline Mode**\n\nYour question has been received but the AI advisor is currently unavailable (ANTHROPIC_API_KEY not configured). Please consult your designated MLRO or compliance officer directly. Under UAE FDL 20/2018 and FATF Recommendations, all compliance decisions must be reviewed and documented by a qualified MLRO. Set ANTHROPIC_API_KEY in your Netlify environment variables to enable AI-powered advisory.`,
+        answer: `**MLRO Advisor — Offline Mode**\n\nYour question has been received but the AI advisor is currently unavailable (ANTHROPIC_API_KEY not configured). Please consult your designated MLRO or compliance officer directly. Under UAE FDL No.10/2025 and FATF Recommendations, all compliance decisions must be reviewed and documented by a qualified MLRO. Set ANTHROPIC_API_KEY in your Netlify environment variables to enable AI-powered advisory.`,
         advisorScore: null,
         citations: [],
         elapsedMs: 0,
@@ -655,7 +655,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json(
       {
         ok: true,
-        answer: "The MLRO advisor encountered a temporary error. Please retry your question. If the issue persists, consult your compliance officer directly for guidance under UAE FDL 20/2018 and FATF Recommendations.",
+        answer: "The MLRO advisor encountered a temporary error. Please retry your question. If the issue persists, consult your compliance officer directly for guidance under UAE FDL No.10/2025 and FATF Recommendations.",
         advisorScore: null,
         citations: [],
         elapsedMs: 0,

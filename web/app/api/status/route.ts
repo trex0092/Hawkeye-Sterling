@@ -35,7 +35,7 @@ async function safe<T>(label: string, fn: () => Promise<T> | T, fallback: T): Pr
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 20;
+export const maxDuration = 30;
 
 const STARTED_AT = new Date().toISOString();
 
@@ -276,7 +276,7 @@ async function checkGdelt(): Promise<Check> {
 
   const r = await time(async () => {
     const controller = new AbortController();
-    const t = setTimeout(() => controller.abort(), 20_000);
+    const t = setTimeout(() => controller.abort(), 10_000);
     try {
       const params = new URLSearchParams({
         query: "compliance",
@@ -718,7 +718,7 @@ async function checkSanctionsFreshness(): Promise<SanctionsFreshness> {
       void reports.setJSON("freshness/snapshot.json", {
         savedAt: now,
         lists: per,
-      }).catch(() => {});
+      }).catch((err) => console.warn("[status] freshness snapshot persist failed:", err instanceof Error ? err.message : err));
     }
 
     // Cold start — all blobs empty (no cron has run yet). Fall back to snapshot.
@@ -925,7 +925,7 @@ export async function GET(): Promise<NextResponse> {
   // Derived from env (set by CI) or from committed manifest values.
   const feedVersions = {
     brain: process.env["BRAIN_VERSION"] ?? "wave-5",
-    commitSha: (process.env["COMMIT_REF"] ?? process.env["NETLIFY_COMMIT_REF"] ?? "dev").slice(0, 7),
+    commitSha: (process.env["NEXT_PUBLIC_COMMIT_REF"] ?? process.env["COMMIT_REF"] ?? process.env["NETLIFY_COMMIT_REF"] ?? "dev").slice(0, 7),
     adverseMediaCategories: 13,
     adverseMediaKeywords: 1066,
     knownPepEntries: 6,

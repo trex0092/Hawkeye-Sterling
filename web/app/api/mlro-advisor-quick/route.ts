@@ -342,7 +342,7 @@ export async function POST(req: Request): Promise<Response> {
   if (!apiKey) {
     return NextResponse.json({
       ok: true,
-      answer: `**MLRO Advisory — Offline Mode**\n\nYour question: *${question}*\n\nThe AI advisor is currently unavailable (ANTHROPIC_API_KEY not configured). Based on the UAE AML/CFT framework and FATF Recommendations, please consult your compliance officer or MLRO directly for guidance on this matter. All compliance decisions must be documented and filed in accordance with FDL 20/2018 and Cabinet Resolution 134/2025.`,
+      answer: `**MLRO Advisory — Offline Mode**\n\nYour question: *${question}*\n\nThe AI advisor is currently unavailable (ANTHROPIC_API_KEY not configured). Based on the UAE AML/CFT framework and FATF Recommendations, please consult your compliance officer or MLRO directly for guidance on this matter. All compliance decisions must be documented and filed in accordance with FDL No.10/2025 and CR No.134/2025.`,
       elapsedMs: Date.now() - startedAt,
       advisorScore: null,
       citationReport: null,
@@ -448,7 +448,7 @@ export async function POST(req: Request): Promise<Response> {
       // API error — return offline response instead of 502
       return NextResponse.json({
         ok: true,
-        answer: `**MLRO Advisory — Offline Mode**\n\nYour question: *${question}*\n\nThe AI advisor is temporarily unavailable. Based on established UAE AML/CFT principles under FDL 20/2018 and FATF Recommendations, please consult your compliance officer or MLRO directly for guidance. All compliance decisions must be documented in accordance with FDL 10/2025 Art.26-27.`,
+        answer: `**MLRO Advisory — Offline Mode**\n\nYour question: *${question}*\n\nThe AI advisor is temporarily unavailable. Based on established UAE AML/CFT principles under FDL No.10/2025 and FATF Recommendations, please consult your compliance officer or MLRO directly for guidance. All compliance decisions must be documented in accordance with FDL No.10/2025 Art.26-27.`,
         elapsedMs: Date.now() - startedAt,
         advisorScore: null,
         citationReport: null,
@@ -498,6 +498,14 @@ export async function POST(req: Request): Promise<Response> {
     const probeWrap = extractAndStripProbe(answer, "escalate");
     answer = probeWrap.cleanAnswer;
 
+    // Prominently surface quality gate failures so operators cannot miss them.
+    // Prepending to the answer text ensures the warning is visible regardless
+    // of how the UI renders the verification chips.
+    if (!verification.passed) {
+      const defectList = verification.defects.map((d) => d.detail).join(" | ");
+      answer = `⚠ QUALITY GATE FAILED: This output did not pass internal quality validation. Defects: ${defectList}. Human MLRO review is mandatory before any action is taken.\n\n${answer}`;
+    }
+
     // Confidence + citations + follow-ups — same intelligence pack the
     // deep advisor returns. AdvisorScore reflects whichever draft we
     // ultimately chose.
@@ -540,6 +548,17 @@ export async function POST(req: Request): Promise<Response> {
         },
         { status: 200, headers: corsHeaders(origin) },
       );
+    }
+
+    // Surface retrieval-grounded citation failures so operators see unverified
+    // claims inline, not just buried in retrievalGroundedValidation metadata.
+    if (!postGen.validation.passed && postGen.validation.ungroundedClaims.length > 0) {
+      const claimWarning = `⚠ CITATION WARNING: ${postGen.validation.ungroundedClaims.length} claim(s) could not be verified against retrieved regulatory sources. Treat unverified assertions as unconfirmed pending MLRO review.\n\n`;
+      if (!answer.startsWith("⚠ QUALITY GATE FAILED")) {
+        answer = claimWarning + answer;
+      } else {
+        answer = answer.replace("\n\n", `\n${claimWarning}`);
+      }
     }
 
     // Layer 4 audit log — fire-and-forget; persists to Netlify Blobs.

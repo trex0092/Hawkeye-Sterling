@@ -6,6 +6,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { lookupLei, searchGleif } from "../../../../dist/src/integrations/gleif.js";
 import { LIVE_GLEIF_ADAPTER } from "@/lib/intelligence/liveAdapters";
+import { withRetry } from "@/lib/server/circuitBreaker";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -49,7 +50,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     let results: Awaited<ReturnType<typeof searchGleif>> = [];
     let degraded = false;
     try {
-      results = await searchGleif(body.query.trim(), body.limit ?? 20);
+      results = await withRetry("gleif", () => searchGleif(body.query!.trim(), body.limit ?? 20));
     } catch (err) {
       console.warn("[gleif] searchGleif failed, falling back to live adapter:", err instanceof Error ? err.message : err);
       degraded = true;
@@ -78,7 +79,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   let result: Awaited<ReturnType<typeof lookupLei>>;
   try {
-    result = await lookupLei(body.lei.trim(), { maxDepth: body.maxDepth ?? 3 });
+    result = await withRetry("gleif", () => lookupLei(body.lei!.trim(), { maxDepth: body.maxDepth ?? 3 }));
   } catch (err) {
     console.error("[gleif] lookupLei failed", err);
     return NextResponse.json(

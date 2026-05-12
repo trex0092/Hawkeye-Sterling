@@ -2,7 +2,7 @@
 // Detects CDD gaps in NPO grant disbursements — particularly cash and
 // CAHRA-jurisdiction recipients. Anchors: FATF R.8 (Non-profits),
 // UAE Cabinet Decision 50/2018 (NPO sector AML/CFT regulation),
-// UAE Federal Decree-Law 20/2018 Art.15 (NPO supervision).
+// UAE Federal Decree-Law No. 10/2025 Art.15 (NPO supervision).
 
 import type { BrainContext, FacultyId, Finding, ReasoningCategory, Verdict } from '../types.js';
 
@@ -82,7 +82,7 @@ export const npoGranteeDiligenceApply = async (ctx: BrainContext): Promise<Findi
     rationale: [
       summary,
       hits.length > 0 ? `Composite ${score.toFixed(2)}.` : '',
-      'Anchors: FATF R.8 · UAE CD 50/2018 · UAE FDL 20/2018 Art.15.',
+      'Anchors: FATF R.8 · UAE CD 50/2018 · FDL No.10/2025 Art.15.',
     ].filter(Boolean).join(' '),
     evidence: hits.slice(0, 8).map((h) => h.evidence),
     producedAt: Date.now(),

@@ -598,7 +598,7 @@ interface SanctionsExposureResult { overallExposure: "confirmed_hit"|"high"|"med
 
 // ── Suggested questions ───────────────────────────────────────────────────────
 // Sources: UAE FDL 10/2025 & Cabinet Resolution 134/2025 (which together
-// repealed and replaced the previous FDL 20/2018 + Cabinet Decision 10/2019),
+// repealed and replaced the previous FDL No.10/2025 + Cabinet Decision 10/2019),
 // MoE DPMS rules, UAE FIU (goAML), EOCN sanctions guidance, LBMA Responsible
 // Gold Guidance, OECD CAHRA 5-step Due Diligence, FATF 40 Recommendations,
 // RMI RMAP / CMRT, ESG frameworks (EU CSDDD / CSRD), UN Guiding Principles
@@ -7954,7 +7954,7 @@ export default function MlroAdvisorPage() {
               <div className="space-y-4">
                 <div>
                   <div className="text-13 font-semibold text-ink-0">Cross-Border Wire Transfer Analyser</div>
-                  <div className="text-11 text-ink-2 mt-0.5">FATF R.16 · UAE Cabinet Decision 10/2019 · Travel Rule compliance and corridor risk</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.16 · CR No.134/2025 · Travel Rule compliance and corridor risk</div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Originator Name</label><input value={crossBorderInput.originatorName} onChange={e => setCrossBorderInput(p => ({...p, originatorName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Sending party name" /></div>
@@ -10263,7 +10263,7 @@ export default function MlroAdvisorPage() {
               <div className="space-y-4">
                 <div>
                   <div className="text-13 font-semibold text-ink-0">🔍 AML Framework Gap Analyser</div>
-                  <div className="text-11 text-ink-2 mt-0.5">FATF R.1 · UAE FDL 20/2018</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.1 · FDL No.10/2025</div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Institution Type</label><input value={ntIn("institutionType")} onChange={e => { if (superToolsTab !== "aml-framework-gap") { setNt({}); setNtResult(null); } ntSet("institutionType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. bank, VASP, DNFBP" /></div>
@@ -10935,7 +10935,7 @@ export default function MlroAdvisorPage() {
               <div className="space-y-4">
                 <div>
                   <div className="text-13 font-semibold text-ink-0">📋 UAE/Local KYC Requirements Guide</div>
-                  <div className="text-11 text-ink-2 mt-0.5">UAE FDL 20/2018 · CRS · FATCA</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FDL No.10/2025 · CRS · FATCA</div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity Type</label><input value={ntIn("entityType")} onChange={e => { if (superToolsTab !== "local-kyc-requirements") { setNt({}); setNtResult(null); } ntSet("entityType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Obliged entity type" /></div>

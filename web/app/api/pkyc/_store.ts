@@ -63,11 +63,17 @@ export async function listSubjects(): Promise<PKycSubject[]> {
     const keys = await listKeys("pkyc/subject/");
     const subjects = await Promise.all(keys.map((k) => getJson<PKycSubject>(k)));
     return subjects.filter((s): s is PKycSubject => s !== null);
-  } catch { return []; }
+  } catch (err) {
+    console.error("[pkyc] listSubjects failed:", err instanceof Error ? err.message : err);
+    return [];
+  }
 }
 
 export async function getSubject(id: string): Promise<PKycSubject | null> {
-  return getJson<PKycSubject>(`pkyc/subject/${id}`).catch(() => null);
+  return getJson<PKycSubject>(`pkyc/subject/${id}`).catch((err) => {
+    console.error("[pkyc] getSubject failed:", err instanceof Error ? err.message : err);
+    return null;
+  });
 }
 
 export async function saveSubject(subject: PKycSubject): Promise<void> {
@@ -76,7 +82,9 @@ export async function saveSubject(subject: PKycSubject): Promise<void> {
 
 export async function deleteSubject(id: string): Promise<void> {
   // store.ts has no delete — overwrite with tombstone marker
-  await setJson(`pkyc/subject/${id}`, null).catch(() => {});
+  await setJson(`pkyc/subject/${id}`, null).catch((err) =>
+    console.error("[pkyc] deleteSubject failed:", err instanceof Error ? err.message : err)
+  );
 }
 
 export async function saveDelta(delta: PKycDelta): Promise<void> {

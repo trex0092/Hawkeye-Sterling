@@ -52,7 +52,7 @@ export const THRESHOLDS: Threshold[] = [
     currency: 'AED',
     scope: 'Any suspicion regardless of amount.',
     action: 'File STR via goAML within statutory deadline; no tipping-off.',
-    regulatoryAnchor: 'FDL 20/2018 Art.15 / FDL 10/2025',
+    regulatoryAnchor: 'FDL No.10/2025 Art.22 (STR filing obligation)',
   },
   {
     id: 'ffr_freeze_window',

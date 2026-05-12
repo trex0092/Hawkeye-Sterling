@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { withGuard } from "@/lib/server/guard";
+import { enforce } from "@/lib/server/enforce";
 import { postWebhook } from "@/lib/server/webhook";
 import { getEntity } from "@/lib/config/entities";
 import { serialiseGoamlXml } from "../../../../dist/src/integrations/goaml-xml.js";
@@ -612,7 +612,11 @@ async function handleSarReport(req: Request): Promise<Response> {
   }, { status: 201 });
 }
 
-export const POST = withGuard(handleSarReport);
+export async function POST(req: Request) {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
+  return handleSarReport(req);
+}
 
 function autoNarrative(body: Body): string {
   const bits: string[] = [];

@@ -96,7 +96,7 @@ export const scenarioPlanningApply = async (ctx: BrainContext): Promise<Finding>
     'Base case: evidence as-given; verdict follows fusion.',
     'Upside: sanctions hit resolves to a same-name collision; cleared after disambiguation.',
     'Downside: adverse media expands to confirm corruption linkage; posterior rises sharply.',
-    'Tail: subject is a front for a designated party; freeze warranted under FDL 20/2018.',
+    'Tail: subject is a front for a designated party; freeze warranted under FDL No.10/2025.',
   ];
   return mk('scenario_planning', 'strategic', ['deep_thinking'],
     'clear', 0, 0.7,

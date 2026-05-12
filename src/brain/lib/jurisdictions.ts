@@ -80,10 +80,14 @@ const SANCTIONED_REGIMES: Record<string, string> = {
 };
 
 // EU high-risk third countries (Commission Delegated Regulation, running list).
+// NOTE: UAE (AE) was REMOVED from this list in August 2025 — do NOT re-add.
+// UAE was also removed from the FATF grey list in February 2024.
+// UAE FATF 5th Round Mutual Evaluation: June 2026 — treat as elevated scrutiny period.
 const EU_HIGH_RISK: Record<string, true> = {
   AF:true, BB:true, BF:true, KH:true, KY:true, CD:true, GI:true, HT:true,
   IR:true, JM:true, JO:true, ML:true, MZ:true, MM:true, NI:true, PA:true,
-  PH:true, SN:true, SS:true, SY:true, TZ:true, TT:true, UG:true, AE:true,
+  PH:true, SN:true, SS:true, SY:true, TZ:true, TT:true, UG:true,
+  // AE removed August 2025 — Commission Delegated Regulation update
   VU:true, YE:true, ZW:true,
 };
 
@@ -104,6 +108,13 @@ export function jurisdictionProfile(rawCode: string): JurisdictionProfile {
   if (SANCTIONED_REGIMES[code]) { tiers.push('sanctioned_regime'); notes.push(`Sanctions exposure: ${SANCTIONED_REGIMES[code]}`); }
   if (EU_HIGH_RISK[code] && !tiers.includes('fatf_black') && !tiers.includes('fatf_grey')) {
     tiers.push('elevated'); notes.push('EU high-risk third country');
+  }
+  // UAE-specific: removed from FATF grey list Feb 2024, EU high-risk list Aug 2025.
+  // FATF 5th Round Mutual Evaluation scheduled June 2026 — elevated scrutiny period.
+  if (code === 'AE') {
+    notes.push('Removed from FATF grey list: February 2024');
+    notes.push('Removed from EU high-risk third country list: August 2025');
+    notes.push('FATF 5th Round Mutual Evaluation: June 2026 — elevated scrutiny period; apply enhanced monitoring');
   }
   if (tiers.length === 0) tiers.push('standard');
 

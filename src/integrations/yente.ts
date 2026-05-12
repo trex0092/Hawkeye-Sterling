@@ -3,9 +3,15 @@
 // on FollowTheMoney (FtM) schemas. It exposes /match for batch entity
 // disambiguation against 120+ sanctions/PEP/crime datasets.
 //
+// FIX-08 / FIX-09: defaults to the OpenSanctions public API when YENTE_URL
+// is not set. The public API is free, requires no API key, covers 120+
+// sanctions AND PEP datasets (UN, OFAC, EU, UK, politicians, etc.).
+// Rate limit: ~60 req/min unauthenticated. Register a free API key at
+// opensanctions.org and set YENTE_API_KEY for higher limits.
+//
 // Env vars:
-//   YENTE_URL      — base URL of the running yente instance (required)
-//   YENTE_API_KEY  — API key if yente is configured with token auth (optional)
+//   YENTE_URL      — yente base URL (optional — defaults to OpenSanctions public API)
+//   YENTE_API_KEY  — API key (optional — required only for premium rate limits)
 
 import { fetchJsonWithRetry } from './httpRetry.js';
 import type { NormalisedListEntry } from '../brain/watchlist-adapters.js';
@@ -75,10 +81,10 @@ export async function yenteMatch(
   queries: YenteMatchQuery[],
   opts: YenteMatchOptions = {},
 ): Promise<YenteMatchResult[]> {
-  const endpoint = opts.endpoint ?? (typeof process !== 'undefined' ? process.env?.YENTE_URL : undefined);
-  if (!endpoint) {
-    return queries.map((q) => ({ ok: false, query: q, hits: [], error: 'YENTE_URL not configured' }));
-  }
+  // Default to the free OpenSanctions public API when no self-hosted instance is configured.
+  const endpoint = opts.endpoint
+    ?? (typeof process !== 'undefined' ? process.env?.YENTE_URL : undefined)
+    ?? 'https://api.opensanctions.org';
 
   const apiKey = opts.apiKey ?? (typeof process !== 'undefined' ? process.env?.YENTE_API_KEY : undefined);
   const dataset = opts.dataset ?? 'default';

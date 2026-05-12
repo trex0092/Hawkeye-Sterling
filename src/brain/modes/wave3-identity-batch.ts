@@ -1,5 +1,5 @@
 // Hawkeye Sterling — wave-3 identity / KYC batch (8 modes).
-// Anchors: FATF R.10 (CDD) · UAE FDL 10/2025 Art.10 · Cabinet Res 10/2019.
+// Anchors: FATF R.10 (CDD) · UAE FDL 10/2025 Art.10 · CR No.134/2025.
 
 import type { BrainContext, FacultyId, Finding, ReasoningCategory, Verdict } from '../types.js';
 
@@ -56,7 +56,7 @@ const addressAggregationApply: ModeApply = async (ctx) => {
     if ((i.uniqueCustomers ?? 0) >= 5) hits.push({ id: 'address_aggregation', label: `${i.uniqueCustomers} customers at one address`, weight: 0.4, evidence: i.addressKey });
     if ((i.sharedDevicesCount ?? 0) >= 3) hits.push({ id: 'shared_devices', label: `${i.sharedDevicesCount} shared devices`, weight: 0.3, evidence: i.addressKey });
   }
-  return build('address_aggregation_red_flag', hits, items.length, 'FATF R.10 · UAE Cabinet Res 10/2019');
+  return build('address_aggregation_red_flag', hits, items.length, 'FATF R.10 · UAE CR No.134/2025');
 };
 
 interface DeviceCluster { deviceFingerprint: string; accountCount?: number; ipChangesPerHour?: number; }

@@ -108,9 +108,9 @@ const AUTHORITY_DETAILS: Record<RecipientAuthority, { fullName: string; address:
 const CORRESPONDENCE_REGULATORY_BASIS: Record<CorrespondenceType, string> = {
   str_cover_letter: "FDL 10/2025 Art.15 (STR filing obligation); CBUAE AML Standards §9; goAML Filing Procedures",
   cbuae_audit_response: "FDL 10/2025 Art.19 (record keeping); CBUAE AML Standards §12 (supervisory cooperation)",
-  examination_document_response: "FDL 10/2025 Art.19; UAE Cabinet Decision No. 10/2019 Art.20",
+  examination_document_response: "FDL 10/2025 Art.19; CR No.134/2025 Art.20",
   voluntary_disclosure: "FDL 10/2025 Art.15(5) (voluntary disclosure provisions); FATF R.20",
-  freeze_notification_response: "FDL 10/2025 Art.24 (freezing obligations); UAE Cabinet Decision No. 10/2019 Art.28",
+  freeze_notification_response: "FDL 10/2025 Art.24 (freezing obligations); CR No.134/2025 Art.28",
   correspondent_bank_edd_response: "FATF R.13 (correspondent banking); CBUAE AML Standards §7.4",
   regulator_inquiry_response: "FDL 10/2025 Art.17 (cooperation with competent authorities); FATF R.31",
   customer_exit_notification: "FDL 10/2025 Art.10 (CDD obligations); CBUAE AML Standards §5.3",
@@ -148,7 +148,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const response = await client.messages.create({
     model: "claude-haiku-4-5-20251001",
     max_tokens: 2000,
-    system: `You are a UAE AML compliance specialist and legal drafter with expertise in regulatory correspondence for DPMS (gold and precious metals dealers) under FDL 10/2025, CBUAE AML Standards, and UAE Cabinet Decision No. 10/2019.
+    system: `You are a UAE AML compliance specialist and legal drafter with expertise in regulatory correspondence for DPMS (gold and precious metals dealers) under FDL 10/2025, CBUAE AML Standards, and CR No.134/2025.
 
 Draft formal regulatory correspondence with:
 - Correct formal salutation and closing

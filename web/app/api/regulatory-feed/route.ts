@@ -462,6 +462,24 @@ const GNEWS_QUERIES: GNewsQuery[] = [
   { q: 'LBMA gold bar seized counterfeit fraudulent refinery hallmark', source: "LBMA", category: "DPMS", tone: "red" },
 ];
 
+/** Extract the actual publisher from a Google News RSS item.
+ *  Google News embeds the real publisher in <source url="...">Name</source>.
+ *  Falling back to the URL domain prevents misattributing Reuters/Bloomberg
+ *  articles to UAE regulatory agencies based solely on query keywords. */
+function extractRssSource(body: string, articleUrl: string): string {
+  // Try <source url="...">Publisher Name</source>
+  const sourceTagMatch = body.match(/<source[^>]*>([^<]{2,120})<\/source>/i);
+  if (sourceTagMatch?.[1]) {
+    return stripHtml(sourceTagMatch[1].trim().replace(/^<!\[CDATA\[|\]\]>$/g, ""));
+  }
+  // Fall back to domain of the article URL
+  try {
+    const domain = new URL(articleUrl).hostname.replace(/^www\./, "");
+    if (domain) return domain;
+  } catch { /* malformed URL — leave empty */ }
+  return "";
+}
+
 function parseGNewsRss(xml: string, meta: GNewsQuery): RegulatoryItem[] {
   const items = xml.split(/<item>/i).slice(1);
   const out: RegulatoryItem[] = [];
@@ -478,12 +496,15 @@ function parseGNewsRss(xml: string, meta: GNewsQuery): RegulatoryItem[] {
     const pubDate = pick("pubDate");
     const description = pick("description");
     if (!title) continue;
+    // Use the real publisher from the RSS item, not the query's source label.
+    // meta.source is a query-routing hint and must NOT be used as attribution.
+    const actualSource = extractRssSource(body, link) || meta.source;
     out.push({
       id: `gnews-${meta.source.replace(/\s/g, "_")}-${Buffer.from(title).toString("base64").slice(0, 12)}`,
       title,
       url: link || `https://news.google.com/search?q=${encodeURIComponent(meta.q)}`,
       pubDate,
-      source: meta.source,
+      source: actualSource,
       category: meta.category,
       tone: meta.tone,
       snippet: description.slice(0, 200) || undefined,
