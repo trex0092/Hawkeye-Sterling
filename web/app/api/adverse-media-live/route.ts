@@ -176,15 +176,8 @@ function inferCategories(title: string, domain: string): string[] {
   return cats;
 }
 
-async function queryGdelt(subjectName: string): Promise<GdeltArticle[]> {
-  // Canonical FATF-aligned multilingual keyword set lives in
-  // lib/intelligence/amlKeywords.ts — same source feeds the Claude LLM
-  // prompt and the free-RSS aggregator's filter.
+async function queryGdelt(subjectName: string): Promise<{ articles: GdeltArticle[]; serviceError: boolean }> {
   const rawQuery = `"${subjectName}" AND (${gdeltKeywordOr()})`;
-  // Art.19 rolling 10-year window — anchored to "now" at request time
-  // so the lookback advances day-by-day. Earlier revisions hard-coded
-  // timespan=7d, which silently scored decade-old prosecutions as CLEAR
-  // (e.g. the Reuters Istanbul Gold Refinery arrest reporting).
   const { start, end } = art19Window();
   const params = new URLSearchParams({
     query: rawQuery,
@@ -196,23 +189,33 @@ async function queryGdelt(subjectName: string): Promise<GdeltArticle[]> {
     enddatetime: gdeltDateTime(end),
   });
   const url = `${GDELT_BASE}?${params.toString()}`;
-  const { signal, clear } = mkAbort(FETCH_TIMEOUT_MS);
-  try {
-    const res = await fetch(url, {
-      headers: {
-        "user-agent": "Mozilla/5.0 (compatible; HawkeyeSterling/1.0; adverse-media-live)",
-        accept: "application/json",
-      },
-      signal,
-    });
-    if (!res.ok) return [];
-    const data = (await res.json()) as GdeltResponse;
-    return Array.isArray(data.articles) ? data.articles.filter((a) => a.url && a.title) : [];
-  } catch {
-    return [];
-  } finally {
-    clear();
+
+  // Retry once with 3s backoff on transient failures (429, timeout, network error)
+  for (let attempt = 0; attempt < 2; attempt++) {
+    if (attempt > 0) await new Promise((r) => setTimeout(r, 3_000));
+    const { signal, clear } = mkAbort(FETCH_TIMEOUT_MS);
+    try {
+      const res = await fetch(url, {
+        headers: {
+          "user-agent": "Mozilla/5.0 (compatible; HawkeyeSterling/1.0; adverse-media-live)",
+          accept: "application/json",
+        },
+        signal,
+      });
+      if (res.status === 429) { clear(); continue; } // rate-limited — retry
+      if (!res.ok) { clear(); return { articles: [], serviceError: true }; }
+      const data = (await res.json()) as GdeltResponse;
+      clear();
+      return {
+        articles: Array.isArray(data.articles) ? data.articles.filter((a) => a.url && a.title) : [],
+        serviceError: false,
+      };
+    } catch {
+      clear();
+      // timeout or network error — retry once, then report service error
+    }
   }
+  return { articles: [], serviceError: true };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -427,10 +430,14 @@ export async function POST(req: Request): Promise<NextResponse> {
   // silently dropped by the exact-phrase match.
   const variants = generateNameVariants(subjectName, body.aliases);
   let rawArticles: GdeltArticle[] = [];
+  let gdeltServiceError = false;
   try {
-    const results = await Promise.all(variants.map((v) => queryGdelt(v).catch(() => [] as GdeltArticle[])));
+    const results = await Promise.all(
+      variants.map((v) => queryGdelt(v).catch(() => ({ articles: [] as GdeltArticle[], serviceError: true }))),
+    );
+    gdeltServiceError = results.every((r) => r.serviceError);
     const seenUrls = new Set<string>();
-    for (const arr of results) {
+    for (const { articles: arr } of results) {
       for (const a of arr) {
         const key = (a.url ?? "").toLowerCase();
         if (!key || seenUrls.has(key)) continue;
@@ -486,6 +493,19 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   // Only return FALLBACK when both GDELT and all vendor adapters found nothing.
   if (articles.length === 0) {
+    // If GDELT failed (rate-limited/timeout) AND no vendor adapters had keys,
+    // do NOT return CLEAR — that would be a false negative. Return degraded instead.
+    if (gdeltServiceError && vendorProviders.length === 0) {
+      return NextResponse.json(
+        {
+          ok: false,
+          degraded: true,
+          subject: subjectName,
+          error: "Adverse media services temporarily unavailable — GDELT rate-limited and no vendor API keys configured. Cannot confirm clear status. Manual MLRO review required before any compliance decision.",
+        },
+        { status: 503, headers: gate.headers },
+      );
+    }
     return NextResponse.json({
       ...FALLBACK,
       subject: subjectName,

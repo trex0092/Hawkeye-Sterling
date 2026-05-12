@@ -1,5 +1,7 @@
 // POST /api/domain-intel
-// Domain intelligence — WHOIS, malware, email security, SSL, risk score.
+// Domain intelligence — WHOIS, email security, DNS, risk score.
+// Uses self-hosted web-check (WEB_CHECK_URL) when configured.
+// Falls back to free public APIs (RDAP + Cloudflare DNS-over-HTTPS) when not.
 // Body: { domain: string }
 
 import { NextResponse } from "next/server";
@@ -25,6 +27,122 @@ interface DomainIntelBody {
   domain?: string;
 }
 
+// ── Free built-in provider (RDAP + Cloudflare DoH) ───────────────────────────
+// Used when WEB_CHECK_URL is not configured. Provides real domain intelligence
+// using only public, free, unauthenticated APIs.
+
+interface RdapResponse {
+  events?: Array<{ eventAction: string; eventDate: string }>;
+  entities?: Array<{ roles: string[]; vcardArray?: unknown }>;
+  ldhName?: string;
+}
+
+interface DoHResponse {
+  Answer?: Array<{ type: number; data: string }>;
+}
+
+function daysBetween(dateStr: string): number {
+  return Math.floor((Date.now() - new Date(dateStr).getTime()) / 86_400_000);
+}
+
+// Extract registrable domain (strip subdomains for RDAP)
+function registrable(domain: string): string {
+  const parts = domain.replace(/^https?:\/\//, "").split(".");
+  return parts.length > 2 ? parts.slice(-2).join(".") : parts.join(".");
+}
+
+async function fetchRdap(domain: string): Promise<{
+  created?: string;
+  expires?: string;
+  registrar?: string;
+} | null> {
+  try {
+    const res = await fetch(`https://rdap.org/domain/${encodeURIComponent(registrable(domain))}`, {
+      headers: { accept: "application/json" },
+      signal: AbortSignal.timeout(8_000),
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as RdapResponse;
+    const created = data.events?.find((e) => e.eventAction === "registration")?.eventDate;
+    const expires = data.events?.find((e) => e.eventAction === "expiration")?.eventDate;
+    return { created, expires };
+  } catch {
+    return null;
+  }
+}
+
+async function fetchDnsTxt(domain: string): Promise<{ hasSPF: boolean; hasDMARC: boolean } | null> {
+  try {
+    const [spfRes, dmarcRes] = await Promise.all([
+      fetch(`https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(domain)}&type=TXT`, {
+        headers: { accept: "application/dns-json" },
+        signal: AbortSignal.timeout(5_000),
+      }),
+      fetch(`https://cloudflare-dns.com/dns-query?name=_dmarc.${encodeURIComponent(domain)}&type=TXT`, {
+        headers: { accept: "application/dns-json" },
+        signal: AbortSignal.timeout(5_000),
+      }),
+    ]);
+    const spfData = spfRes.ok ? ((await spfRes.json()) as DoHResponse) : { Answer: [] };
+    const dmarcData = dmarcRes.ok ? ((await dmarcRes.json()) as DoHResponse) : { Answer: [] };
+    const hasSPF = (spfData.Answer ?? []).some((r) => r.data?.includes("v=spf1"));
+    const hasDMARC = (dmarcData.Answer ?? []).some((r) => r.data?.includes("v=DMARC1"));
+    return { hasSPF, hasDMARC };
+  } catch {
+    return null;
+  }
+}
+
+async function domainIntelFree(domain: string): Promise<DomainIntelResult & { provider: string }> {
+  const [rdap, dns] = await Promise.all([fetchRdap(domain), fetchDnsTxt(domain)]);
+
+  let riskScore = 0;
+  const riskFactors: string[] = [];
+
+  if (rdap?.created) {
+    const age = daysBetween(rdap.created);
+    if (age < 30) { riskScore += 40; riskFactors.push(`domain age ${age}d (< 30 days — very new)`); }
+    else if (age < 90) { riskScore += 25; riskFactors.push(`domain age ${age}d (< 90 days)`); }
+    else if (age < 365) { riskScore += 10; riskFactors.push(`domain age ${age}d (< 1 year)`); }
+  } else {
+    riskScore += 15;
+    riskFactors.push("WHOIS/RDAP creation date unavailable");
+  }
+
+  const hasSPF = dns?.hasSPF ?? false;
+  const hasDMARC = dns?.hasDMARC ?? false;
+  if (!hasSPF && !hasDMARC) {
+    riskScore += 20;
+    riskFactors.push("no SPF or DMARC — domain spoofing-enabled");
+  } else if (!hasDMARC) {
+    riskScore += 8;
+    riskFactors.push("no DMARC policy");
+  }
+
+  const spoofingRisk: "low" | "medium" | "high" = !hasSPF && !hasDMARC ? "high" : !hasDMARC ? "medium" : "low";
+
+  return {
+    ok: true,
+    domain,
+    riskScore: Math.min(100, riskScore),
+    riskFactors,
+    provider: "rdap+doh",
+    ...(rdap?.created
+      ? {
+          whois: {
+            registrationDate: rdap.created,
+            ...(rdap.expires ? { expiryDate: rdap.expires } : {}),
+            ...(rdap.registrar ? { registrar: rdap.registrar } : {}),
+            ageInDays: daysBetween(rdap.created),
+          },
+        }
+      : {}),
+    emailSecurity: { hasSPF, hasDKIM: false, hasDMARC, spoofingRisk },
+  };
+}
+
+// ── Route handler ─────────────────────────────────────────────────────────────
+
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
@@ -41,20 +159,13 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "domain is required" }, { status: 400, headers: CORS });
   }
 
-  const result = await domainIntel(body.domain.trim());
+  const domain = body.domain.trim();
+  const result = await domainIntel(domain);
 
   if (!result.ok) {
-    // Provider not configured or API call failed — return a graceful offline fallback
-    const domain = body.domain.trim();
-    const fallback = {
-      ok: true,
-      domain,
-      riskScore: null,  // null = unknown (service offline), not 0 (no risk)
-      riskFactors: [],
-      offline: true,
-      simulationWarning: "Domain intelligence service offline — this is a placeholder response. No real WHOIS, malware, or SSL data has been retrieved. Do not use for compliance decisions.",
-    } as unknown as DomainIntelResult & { offline: boolean; simulationWarning: string };
-    return NextResponse.json(fallback, { headers: { ...CORS, ...gateHeaders } });
+    // WEB_CHECK_URL not configured — use built-in RDAP + DNS-over-HTTPS provider
+    const freeResult = await domainIntelFree(domain);
+    return NextResponse.json(freeResult, { headers: { ...CORS, ...gateHeaders } });
   }
 
   return NextResponse.json(result, { headers: { ...CORS, ...gateHeaders } });
