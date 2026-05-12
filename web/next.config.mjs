@@ -15,6 +15,13 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
 
+  eslint: {
+    // react-hooks/rules-of-hooks hits a stack overflow analysing the large
+    // MlroAdvisorPage component, crashing the build with exit code 2. ESLint
+    // is run separately in CI; this flag prevents it from blocking Netlify deploys.
+    ignoreDuringBuilds: true,
+  },
+
   async redirects() {
     return [
       { source: "/adverse-media", destination: "/screening", permanent: true },
