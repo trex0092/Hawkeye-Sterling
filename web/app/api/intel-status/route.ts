@@ -96,7 +96,7 @@ const PROVIDER_CATALOG: ProviderStatus[] = [
 
   // ── Tier 3 — commercial sanctions/PEP ───────────────────────────
   { id: "complyadvantage", category: "sanctions", tier: "commercial", configured: false, envVars: ["COMPLYADVANTAGE_API_KEY"], signupUrl: "https://complyadvantage.com/contact-sales/" },
-  { id: "lseg-world-check", category: "sanctions", tier: "commercial", configured: false, envVars: ["LSEG_WORLDCHECK_API_KEY", "LSEG_WORLDCHECK_API_SECRET"], signupUrl: "https://www.lseg.com/en/risk-intelligence/world-check" },
+  { id: "lseg-world-check", category: "sanctions", tier: "commercial", configured: false, envVars: ["LSEG_WORLDCHECK_API_KEY"], signupUrl: "https://www.lseg.com/en/risk-intelligence/world-check" },
   { id: "dowjones-rc", category: "sanctions", tier: "commercial", configured: false, envVars: ["DOWJONES_RC_API_KEY"], signupUrl: "https://professional.dowjones.com/risk/" },
   { id: "sayari", category: "sanctions", tier: "commercial", configured: false, envVars: ["SAYARI_API_KEY"], signupUrl: "https://sayari.com/contact/" },
   { id: "acuris-rdc", category: "sanctions", tier: "commercial", configured: false, envVars: ["ACURIS_RDC_API_KEY"], signupUrl: "https://www.acurisriskintelligence.com/" },

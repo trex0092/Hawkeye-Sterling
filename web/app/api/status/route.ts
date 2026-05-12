@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 
-import { classifyAdverseKeywords } from "@/lib/data/adverse-keywords";
+import { classifyAdverseKeywords, ADVERSE_KEYWORDS } from "@/lib/data/adverse-keywords";
+import { KNOWN_PEPS, KNOWN_ADVERSE } from "@/lib/data/known-entities";
 import { getJson, isInMemoryFallback } from "@/lib/server/store";
 
 // Brain modules are compiled separately; dynamic import so the route module
@@ -940,22 +941,24 @@ async function _handleGet(): Promise<NextResponse> {
   // Derived from env (set by CI) or from committed manifest values.
   const brainReviewedAt = process.env["BRAIN_REVIEWED_AT"] ?? "2026-04-01";
   // World-Check covers ~5M PEP/sanctions profiles; LSEG data platform adds additional coverage.
-  // Fall back to KNOWN_PEP_ENTRIES env var or the hardcoded default.
+  // Use the static known-entities list count as the minimum floor so the metric
+  // is never misleadingly low (the old default "6" understated actual coverage).
+  const staticPepCount = KNOWN_PEPS.length + KNOWN_ADVERSE.length;
   const knownPepEntries = process.env["LSEG_WORLDCHECK_API_KEY"]
     ? 5_000_000
-    : Number(process.env["KNOWN_PEP_ENTRIES"] ?? "6");
+    : Math.max(staticPepCount, Number(process.env["KNOWN_PEP_ENTRIES"] ?? "0"));
   const feedVersions = {
     brain: process.env["BRAIN_VERSION"] ?? "wave-5",
     commitSha: (process.env["NEXT_PUBLIC_COMMIT_SHA"] ?? process.env["NEXT_PUBLIC_COMMIT_REF"] ?? process.env["COMMIT_REF"] ?? process.env["NETLIFY_COMMIT_REF"] ?? "dev").slice(0, 7),
-    adverseMediaCategories: 13,
-    adverseMediaKeywords: 1066,
+    adverseMediaCategories: ADVERSE_KEYWORDS.length,
+    adverseMediaKeywords: ADVERSE_KEYWORDS.reduce((n, r) => n + r.terms.length, 0),
     knownPepEntries,
     reviewedAt: brainReviewedAt,
   };
 
   // ENH-F: warn if PEP corpus < 500,000 entries
   const pepCountWarning = knownPepEntries < 500_000
-    ? `PEP corpus has only ${knownPepEntries.toLocaleString("en-US")} entries — expected ≥500,000. Set KNOWN_PEP_ENTRIES env var or re-run PEP ingestion.`
+    ? `PEP corpus: ${knownPepEntries.toLocaleString("en-US")} static entries (${KNOWN_PEPS.length} PEPs + ${KNOWN_ADVERSE.length} adverse subjects). Live coverage requires LSEG World-Check API key or OPENSANCTIONS_API_KEY. Set KNOWN_PEP_ENTRIES if you have a custom corpus.`
     : undefined;
 
   // ENH-G: warn if brain catalogue review > 30 days old

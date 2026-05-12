@@ -41,8 +41,8 @@ const ENV_SPECS: EnvSpec[] = [
 
   // goAML / FIU Reporting
   { id: "goaml_entities", label: "HAWKEYE_ENTITIES", group: "goAML / FIU Reporting", required: true, vars: ["HAWKEYE_ENTITIES", "GOAML_RENTITY_ID"], hint: "Reporting entity JSON array (or legacy GOAML_RENTITY_ID). Required for STR/SAR filing." },
-  { id: "goaml_mlro_name", label: "GOAML_MLRO_FULL_NAME", group: "goAML / FIU Reporting", required: true, vars: ["GOAML_MLRO_FULL_NAME"], hint: "MLRO full name for STR filings." },
-  { id: "goaml_mlro_email", label: "GOAML_MLRO_EMAIL", group: "goAML / FIU Reporting", required: true, vars: ["GOAML_MLRO_EMAIL"], hint: "MLRO email address for STR filings." },
+  { id: "goaml_mlro_name", label: "GOAML_MLRO_FULL_NAME", group: "goAML / FIU Reporting", required: false, vars: ["GOAML_MLRO_FULL_NAME"], hint: "MLRO full name for STR filings." },
+  { id: "goaml_mlro_email", label: "GOAML_MLRO_EMAIL", group: "goAML / FIU Reporting", required: false, vars: ["GOAML_MLRO_EMAIL"], hint: "MLRO email address for STR filings." },
   { id: "goaml_mlro_phone", label: "GOAML_MLRO_PHONE", group: "goAML / FIU Reporting", required: false, vars: ["GOAML_MLRO_PHONE"], hint: "MLRO phone number for STR filings." },
 
   // Sanctions Sources
