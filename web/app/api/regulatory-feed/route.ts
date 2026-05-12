@@ -46,8 +46,10 @@ export interface RegulatoryItem {
 interface FeedResult {
   ok: true;
   items: RegulatoryItem[];
+  totalCount: number;
   sources: string[];
   fetchedAt: string;
+  latencyMs: number;
   errors: string[];
 }
 
@@ -823,19 +825,38 @@ export async function GET(req: Request): Promise<NextResponse> {
 }
 
 async function _handleGet(req: Request): Promise<NextResponse> {
+  const t0 = Date.now();
   // Operator-pressed refresh button passes ?force=1 to bypass the
   // 15-min module-level cache. Auto-refresh (timer) doesn't pass it,
   // so the cache still spares the upstream sites in steady state.
   const url = new URL(req.url);
   const force = url.searchParams.get("force") === "1";
+  const categoryFilter = url.searchParams.get("category")?.toLowerCase() ?? null;
+  const limitParam = parseInt(url.searchParams.get("limit") ?? "20", 10);
+  const limit = Number.isFinite(limitParam) && limitParam > 0 ? Math.min(limitParam, 200) : 20;
+  const offsetParam = parseInt(url.searchParams.get("offset") ?? "0", 10);
+  const offset = Number.isFinite(offsetParam) && offsetParam >= 0 ? offsetParam : 0;
+  const includeArchived = url.searchParams.get("includeArchived") === "true";
+  const ARCHIVE_CUTOFF_MS = 36 * 30 * 24 * 60 * 60 * 1_000; // 36 months
 
   // Return cached payload if still fresh (15-minute TTL) — but only
   // when the caller didn't explicitly ask for a fresh fetch.
   const cached = _cache[CACHE_KEY];
   if (!force && cached && Date.now() - cached.ts < CACHE_TTL_MS) {
-    return NextResponse.json(cached.payload, {
-      headers: { "Cache-Control": "s-maxage=900, stale-while-revalidate=1800", "X-Cache": "HIT" },
-    });
+    let items = cached.payload.items;
+    if (categoryFilter) items = items.filter((i) => i.category.toLowerCase().includes(categoryFilter));
+    if (!includeArchived) {
+      const cutoff = Date.now() - ARCHIVE_CUTOFF_MS;
+      items = items.filter((i) => {
+        const d = new Date(i.publishedAt ?? i.pubDate ?? "").getTime();
+        return isNaN(d) || d >= cutoff;
+      });
+    }
+    const totalCount = items.length;
+    return NextResponse.json(
+      { ...cached.payload, items: items.slice(offset, offset + limit), totalCount, latencyMs: Date.now() - t0 },
+      { headers: { "Cache-Control": "s-maxage=900, stale-while-revalidate=1800", "X-Cache": "HIT" } },
+    );
   }
 
   const errors: string[] = [];
@@ -958,22 +979,57 @@ async function _handleGet(req: Request): Promise<NextResponse> {
     return (toneRank[b.tone] ?? 0) - (toneRank[a.tone] ?? 0);
   });
 
-  const payload: FeedResult = {
+  // Add sourceType to items and exclude items older than 36 months unless
+  // includeArchived is requested.
+  const ARCHIVE_CUTOFF_MS = 36 * 30 * 24 * 60 * 60 * 1_000;
+  const cutoff = Date.now() - ARCHIVE_CUTOFF_MS;
+  const sourceTypeMap: Record<string, string> = {
+    "MoET": "government", "UAE IEC": "government", "CBUAE": "government",
+    "UAEFIU": "government", "FATF": "international_body", "OFAC": "sanctions_authority",
+    "UN Security Council": "international_body", "Google News": "news_aggregator",
+    "GDELT": "news_aggregator",
+  };
+  for (const item of allItems) {
+    if (!(item as RegulatoryItem & { sourceType?: string }).sourceType) {
+      (item as RegulatoryItem & { sourceType?: string }).sourceType =
+        sourceTypeMap[item.source] ?? "news_aggregator";
+    }
+  }
+
+  let filteredItems = allItems.slice(0, 200);
+  if (!includeArchived) {
+    filteredItems = filteredItems.filter((i) => {
+      const d = new Date(i.publishedAt ?? i.pubDate ?? "").getTime();
+      return isNaN(d) || d >= cutoff;
+    });
+  }
+  if (categoryFilter) {
+    filteredItems = filteredItems.filter((i) => i.category.toLowerCase().includes(categoryFilter));
+  }
+  const totalCount = filteredItems.length;
+  const pagedItems = filteredItems.slice(offset, offset + limit);
+
+  const fullPayload: FeedResult = {
     ok: true,
-    items: allItems.slice(0, 120),
+    items: allItems.slice(0, 200),
+    totalCount: allItems.slice(0, 200).length,
     sources: Array.from(sourcesHit),
     fetchedAt: new Date().toISOString(),
+    latencyMs: Date.now() - t0,
     errors,
   };
 
-  // Write to cache
-  _cache[CACHE_KEY] = { payload, ts: Date.now() };
+  // Write to cache (unfiltered full set)
+  _cache[CACHE_KEY] = { payload: fullPayload, ts: Date.now() };
 
-  return NextResponse.json(payload, {
-    headers: {
-      "Cache-Control": "no-store, no-cache, must-revalidate",
-      "Pragma": "no-cache",
-      "X-Cache": "MISS",
+  return NextResponse.json(
+    { ...fullPayload, items: pagedItems, totalCount, latencyMs: Date.now() - t0 },
+    {
+      headers: {
+        "Cache-Control": "no-store, no-cache, must-revalidate",
+        "Pragma": "no-cache",
+        "X-Cache": "MISS",
+      },
     },
-  });
+  );
 }

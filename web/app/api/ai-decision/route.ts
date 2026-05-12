@@ -45,6 +45,98 @@ export interface DecisionResponse {
   asanaSkipped?: true;
 }
 
+// ── Sanctions list integrity check ───────────────────────────────────────────
+// Before any decision is generated, verify that the three critical sanctions
+// lists (OFAC SDN, UN Consolidated, EU FSF) are actually present in blob
+// storage. If any are missing the tool must return BLOCKED_DATA_INTEGRITY so
+// that no AI-generated compliance approval is backed by phantom data.
+
+const CRITICAL_LISTS = ["ofac_sdn", "un_consolidated", "eu_fsf"] as const;
+type CriticalList = typeof CRITICAL_LISTS[number];
+
+interface ListInfo {
+  listId: CriticalList;
+  entityCount: number | null;
+  lastRefreshed: string | null;
+}
+
+interface ListsIntegrityResult {
+  listsVerified: boolean;
+  missingLists: string[];
+  listsQueried: ListInfo[];
+}
+
+async function checkListsIntegrity(): Promise<ListsIntegrityResult> {
+  const result: ListsIntegrityResult = {
+    listsVerified: false,
+    missingLists: [],
+    listsQueried: [],
+  };
+
+  let blobsMod: typeof import("@netlify/blobs") | null = null;
+  try {
+    blobsMod = await import("@netlify/blobs");
+  } catch {
+    // Not in a Netlify context — treat all lists as missing to be safe
+    result.missingLists = [...CRITICAL_LISTS];
+    result.listsQueried = CRITICAL_LISTS.map((id) => ({ listId: id, entityCount: null, lastRefreshed: null }));
+    return result;
+  }
+
+  const { getStore } = blobsMod;
+  const onNetlify = Boolean(process.env["NETLIFY"]) || Boolean(process.env["NETLIFY_LOCAL"]);
+  const siteID = process.env["NETLIFY_SITE_ID"] ?? process.env["SITE_ID"];
+  const token =
+    process.env["NETLIFY_API_TOKEN"] ??
+    process.env["NETLIFY_AUTH_TOKEN"] ??
+    process.env["NETLIFY_BLOBS_TOKEN"];
+
+  let store: ReturnType<typeof getStore>;
+  try {
+    const opts = !onNetlify && siteID && token
+      ? { name: "hawkeye-lists", siteID, token, consistency: "strong" as const }
+      : { name: "hawkeye-lists" };
+    store = getStore(opts);
+  } catch {
+    result.missingLists = [...CRITICAL_LISTS];
+    result.listsQueried = CRITICAL_LISTS.map((id) => ({ listId: id, entityCount: null, lastRefreshed: null }));
+    return result;
+  }
+
+  const missing: string[] = [];
+  const queried: ListInfo[] = [];
+
+  for (const listId of CRITICAL_LISTS) {
+    try {
+      const raw = await store.get(`${listId}/latest.json`, { type: "json" }) as {
+        entities?: unknown[];
+        report?: { fetchedAt?: number; recordCount?: number };
+        fetchedAt?: number;
+      } | null;
+
+      if (!raw || !Array.isArray(raw.entities) || raw.entities.length === 0) {
+        missing.push(listId);
+        queried.push({ listId, entityCount: null, lastRefreshed: null });
+      } else {
+        const fetchedAt = raw.report?.fetchedAt ?? (raw as { fetchedAt?: number }).fetchedAt ?? null;
+        queried.push({
+          listId,
+          entityCount: raw.entities.length,
+          lastRefreshed: fetchedAt ? new Date(fetchedAt).toISOString() : null,
+        });
+      }
+    } catch {
+      missing.push(listId);
+      queried.push({ listId, entityCount: null, lastRefreshed: null });
+    }
+  }
+
+  result.missingLists = missing;
+  result.listsQueried = queried;
+  result.listsVerified = missing.length === 0;
+  return result;
+}
+
 // ── Feedback store key ────────────────────────────────────────────────────────
 
 const FEEDBACK_STORE_KEY = "ai-decision:feedback:v1";
@@ -172,6 +264,7 @@ async function createAsanaTask(
   rationale: string,
   nextSteps: string[],
   decisionId: string,
+  integrity?: ListsIntegrityResult,
 ): Promise<{ taskGid?: string; taskUrl?: string }> {
   const token = process.env["ASANA_TOKEN"];
   if (!token) return {};
@@ -185,11 +278,27 @@ async function createAsanaTask(
 
   const projectGidEnv = DECISION_PROJECT_MAP[decision];
   const projectGid = process.env[projectGidEnv] ?? MASTER_INBOX;
+  const listsVerified = integrity?.listsVerified ?? true;
+  const missingLists = integrity?.missingLists ?? [];
   const taskName = `[AI DECISION — ${decisionLabel[decision]}] ${req.name} · ${new Date().toISOString().slice(0, 10)}`;
+  const integrityWarning = !listsVerified
+    ? [
+        `⚠️  WARNING: One or more sanctions lists were unavailable when this decision was generated.`,
+        `    Missing: ${missingLists.join(", ")}`,
+        `    This decision must not be acted upon until data integrity is restored.`,
+        ``,
+      ]
+    : [];
+  const listsQueriedLines = (integrity?.listsQueried ?? []).map(
+    (l) => `    ${l.listId}: entityCount=${l.entityCount ?? "null"} lastRefreshed=${l.lastRefreshed ?? "null"}`,
+  );
   const notes = [
+    ...(integrityWarning.length ? integrityWarning : []),
     `HAWKEYE STERLING · AI DECISION ENGINE`,
-    `Decision ID : ${decisionId}`,
-    `Generated   : ${new Date().toUTCString().replace(" GMT", " UTC")}`,
+    `Decision ID    : ${decisionId}`,
+    `Generated      : ${new Date().toUTCString().replace(" GMT", " UTC")}`,
+    `listsVerified  : ${listsVerified}`,
+    ...(missingLists.length ? [`missingLists   : ${missingLists.join(", ")}`] : []),
     ``,
     `SUBJECT`,
     `Name        : ${req.name}`,
@@ -200,6 +309,10 @@ async function createAsanaTask(
     `Exposure    : AED ${req.exposureAED ?? "unknown"}`,
     ``,
     `AI DECISION : ${decisionLabel[decision]}`,
+    `Confidence  : ${typeof (arguments[5] as unknown) === "undefined" ? "n/a" : "see response"}`,
+    ``,
+    `SANCTIONS LISTS QUERIED`,
+    ...(listsQueriedLines.length ? listsQueriedLines : ["    (none)"]),
     ``,
     `RATIONALE`,
     rationale,
@@ -207,8 +320,8 @@ async function createAsanaTask(
     `NEXT STEPS`,
     ...nextSteps.map((s) => `• ${s}`),
     ``,
-    `Legal basis : FDL 10/2025 Art.20, Art.26-27 · CBUAE AML Standards`,
-    `Auto-created by Hawkeye Sterling AI Decision Engine — human review required`,
+    `Legal basis : FDL 10/2025 Art.18, Art.20, Art.26-27 · CBUAE AML Standards`,
+    `Auto-created by Hawkeye Sterling AI Decision Engine — MLRO four-eyes review required per FDL No.10/2025 Art.18`,
   ].join("\n");
 
   try {
@@ -253,9 +366,74 @@ async function createAsanaTask(
   }
 }
 
+// ADD-03: Immediately after creating the parent decision task, create a
+// blocking subtask enforcing four-eyes MLRO review per FDL No. 10/2025 Art. 18.
+async function createMlroReviewSubtask(
+  parentTaskGid: string,
+  decisionId: string,
+  subjectName: string,
+  listsVerified: boolean,
+): Promise<void> {
+  const token = process.env["ASANA_TOKEN"];
+  if (!token || !parentTaskGid) return;
+  const subtaskNotes = [
+    `MLRO FOUR-EYES REVIEW — MANDATORY`,
+    ``,
+    `This subtask is a blocking gate under FDL No. 10/2025 Art. 18.`,
+    `NO compliance action (CDD completion, onboarding, offboarding, STR filing,`,
+    `transaction blocking) may be taken until this subtask is marked complete`,
+    `by the designated MLRO or authorised deputy.`,
+    ``,
+    `Decision ID : ${decisionId}`,
+    `Subject     : ${subjectName}`,
+    `Lists OK    : ${listsVerified}`,
+    `Created at  : ${new Date().toUTCString().replace(" GMT", " UTC")}`,
+    ``,
+    `REVIEW CHECKLIST`,
+    `[ ] AI decision reviewed against raw screening data`,
+    `[ ] Sanctions hits (if any) independently verified`,
+    `[ ] Adverse media review completed`,
+    `[ ] Risk rating concurred with or overridden with documented rationale`,
+    `[ ] FDL No. 10/2025 Art. 18 sign-off recorded in goAML audit trail`,
+    ``,
+    `Legal basis: FDL No. 10/2025 Art. 18 — AI-generated compliance decisions`,
+    `require human review before any action is taken.`,
+  ].join("\n");
+  try {
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), 8_000);
+    try {
+      const res = await fetch(`https://app.asana.com/api/1.0/tasks/${parentTaskGid}/subtasks`, {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${token}`,
+          "content-type": "application/json",
+          accept: "application/json",
+        },
+        body: JSON.stringify({
+          data: {
+            name: "MLRO REVIEW REQUIRED — Four-eyes sign-off before any compliance action",
+            notes: subtaskNotes,
+            assignee: process.env["ASANA_ASSIGNEE_GID"] ?? DEFAULT_ASSIGNEE,
+          },
+        }),
+        signal: ctl.signal,
+      });
+      if (!res.ok) {
+        console.warn("[hawkeye] ai-decision MLRO subtask creation returned HTTP", res.status);
+      }
+    } finally {
+      clearTimeout(timer);
+    }
+  } catch (err) {
+    console.warn("[hawkeye] ai-decision MLRO subtask creation failed (non-fatal):", err);
+  }
+}
+
 // ── Handler ───────────────────────────────────────────────────────────────────
 
 export async function POST(req: Request) {
+  const t0 = Date.now();
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
   let body: DecisionRequest;
@@ -267,6 +445,40 @@ export async function POST(req: Request) {
 
   if (!body.name || !body.subjectId) {
     return NextResponse.json({ ok: false, error: "name and subjectId are required" }, { status: 400 , headers: gate.headers});
+  }
+
+  // ── Data integrity gate (FDL 10/2025 Art.18) ─────────────────────────────
+  // Verify critical sanctions lists are loaded before generating any decision.
+  const integrity = await checkListsIntegrity();
+  if (!integrity.listsVerified) {
+    console.error(
+      `[ai-decision] DATA INTEGRITY GATE TRIGGERED decisionId=pending missingLists=${JSON.stringify(integrity.missingLists)}`,
+    );
+    return NextResponse.json(
+      {
+        ok: false,
+        decision: "BLOCKED_DATA_INTEGRITY",
+        confidence: 0,
+        dataIntegrityWarning: true,
+        missingDataSources: integrity.missingLists,
+        _provenance: {
+          listsVerified: false,
+          listsQueried: integrity.listsQueried,
+          missingLists: integrity.missingLists,
+          generatedAt: new Date().toISOString(),
+        },
+        _governance: {
+          humanReviewRequired: true,
+          reviewNote:
+            "WARNING: One or more declared data sources were unavailable at time of screening. " +
+            "This decision must not be acted upon. Resolve data integrity issues and re-run.",
+        },
+        message:
+          "Decision blocked: one or more required sanctions lists are not loaded. " +
+          `Missing: ${integrity.missingLists.join(", ")}. Run sanctions refresh and retry.`,
+      },
+      { status: 503, headers: gate.headers },
+    );
   }
 
   // Fetch learning context from Netlify Blobs
@@ -334,10 +546,22 @@ export async function POST(req: Request) {
   // Skip task creation in test/sandbox mode
   let asana: { taskUrl?: string; taskGid?: string } = {};
   if (body.test !== true) {
-    asana = await createAsanaTask(body, decision, rationale, nextSteps, decisionId);
+    asana = await createAsanaTask(body, decision, rationale, nextSteps, decisionId, integrity);
+    // ADD-03: Immediately create a blocking MLRO review subtask (four-eyes enforcement).
+    if (asana.taskGid) {
+      void createMlroReviewSubtask(asana.taskGid, decisionId, body.name, integrity.listsVerified);
+    }
   }
 
-  const responseBody: DecisionResponse = {
+  const responseBody: DecisionResponse & {
+    _provenance: {
+      listsVerified: boolean;
+      listsQueried: ListInfo[];
+      missingLists?: string[];
+      generatedAt: string;
+    };
+    _governance: { humanReviewRequired: boolean; reviewNote: string };
+  } = {
     ok: true,
     decisionId,
     decision,
@@ -347,6 +571,17 @@ export async function POST(req: Request) {
     keyFactors,
     nextSteps,
     regulatoryBasis,
+    _provenance: {
+      listsVerified: integrity.listsVerified,
+      listsQueried: integrity.listsQueried,
+      ...(integrity.missingLists.length > 0 ? { missingLists: integrity.missingLists } : {}),
+      generatedAt: new Date().toISOString(),
+    },
+    _governance: {
+      humanReviewRequired: true,
+      reviewNote:
+        "AI-generated output — MLRO review required before any compliance action per FDL No.10/2025 Art.18.",
+    },
     ...(body.test === true
       ? { asanaSkipped: true as const }
       : {
@@ -355,7 +590,9 @@ export async function POST(req: Request) {
         }),
   };
 
-  return NextResponse.json(responseBody, { status: 200 , headers: gate.headers});
+  const latencyMs = Date.now() - t0;
+  if (latencyMs > 5000) console.warn(`[ai-decision] slow response latencyMs=${latencyMs}`);
+  return NextResponse.json({ ...responseBody, latencyMs }, { status: 200 , headers: gate.headers});
 }
 
 // ── Rule-based fallback ───────────────────────────────────────────────────────

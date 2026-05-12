@@ -195,14 +195,32 @@ export async function POST(req: Request): Promise<NextResponse> {
       .catch((err) => console.error("[transaction-anomaly] flag persist failed:", err));
   }
 
+  const MINIMUM_OBSERVATIONS = 30;
+  const obs = streamingGate.observations;
+  const dataQuality = {
+    sufficient: obs >= MINIMUM_OBSERVATIONS,
+    currentObservations: obs,
+    minimumRequired: MINIMUM_OBSERVATIONS,
+    ...(obs < MINIMUM_OBSERVATIONS
+      ? {
+          warningMessage:
+            `Only ${obs} transaction(s) observed in this session. ` +
+            `The model requires at least ${MINIMUM_OBSERVATIONS} observations to produce reliable anomaly scores. ` +
+            `Scores below this threshold are indicative only — do not use as the sole basis for compliance action.`,
+        }
+      : {}),
+  };
+  const effectiveTier = obs < MINIMUM_OBSERVATIONS ? "insufficient_data" : result.tier;
+
   return NextResponse.json(
     {
       ok: true,
       sessionId,
-      observations: streamingGate.observations,
+      observations: obs,
       score: result.score,
-      tier: result.tier,
+      tier: effectiveTier,
       drivers: result.drivers,
+      dataQuality,
       detail: {
         hstScore: mlResult.hstScore,
         zScore: mlResult.zScore,

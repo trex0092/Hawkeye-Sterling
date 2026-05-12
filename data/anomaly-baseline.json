@@ -1,0 +1,7334 @@
+[
+  {
+    "amountUsd": 6655.02,
+    "amountAed": 24449.01,
+    "timestampUtc": "2026-05-08T18:45:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 30,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 20461.15,
+      "stdAmount": 1610.44,
+      "txnPer7d": 4
+    }
+  },
+  {
+    "amountUsd": 118381.69,
+    "amountAed": 434907.01,
+    "timestampUtc": "2026-05-04T16:04:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 22,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 13425.76,
+      "stdAmount": 1388.44,
+      "txnPer7d": 3
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 67191.62,
+    "amountAed": 246846.49,
+    "timestampUtc": "2026-03-13T11:29:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 20,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 15332.72,
+      "stdAmount": 4731.65,
+      "txnPer7d": 7
+    }
+  },
+  {
+    "amountUsd": 17152.35,
+    "amountAed": 63013.77,
+    "timestampUtc": "2026-04-23T17:48:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 37,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 11633.79,
+      "stdAmount": 5073.84,
+      "txnPer7d": 8
+    },
+    "assetClass": "jewellery"
+  },
+  {
+    "amountUsd": 106599.52,
+    "amountAed": 391622.03,
+    "timestampUtc": "2026-03-03T13:09:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 29,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 21484.89,
+      "stdAmount": 3563.42,
+      "txnPer7d": 1
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 34976.98,
+    "amountAed": 128497.37,
+    "timestampUtc": "2026-02-18T12:18:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 54,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 11443.81,
+      "stdAmount": 5030.61,
+      "txnPer7d": 4
+    }
+  },
+  {
+    "amountUsd": 68788.3,
+    "amountAed": 252712.35,
+    "timestampUtc": "2026-04-18T10:30:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 45,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 9696.31,
+      "stdAmount": 2439.31,
+      "txnPer7d": 6
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 57071.02,
+    "amountAed": 209665.75,
+    "timestampUtc": "2026-03-12T15:16:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 59,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 18160.86,
+      "stdAmount": 5235.53,
+      "txnPer7d": 6
+    }
+  },
+  {
+    "amountUsd": 33852.22,
+    "amountAed": 124365.26,
+    "timestampUtc": "2026-04-08T10:14:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 24,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 15605.74,
+      "stdAmount": 2778.92,
+      "txnPer7d": 8
+    }
+  },
+  {
+    "amountUsd": 50232.79,
+    "amountAed": 184543.69,
+    "timestampUtc": "2026-04-15T18:44:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 22,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 12894.98,
+      "stdAmount": 1017.43,
+      "txnPer7d": 7
+    },
+    "assetClass": "watches"
+  },
+  {
+    "amountUsd": 99290.83,
+    "amountAed": 364771.59,
+    "timestampUtc": "2026-04-18T10:03:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": true,
+    "countryRiskScore": 21,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 12054.16,
+      "stdAmount": 5314.23,
+      "txnPer7d": 4
+    }
+  },
+  {
+    "amountUsd": 122737.31,
+    "amountAed": 450908.56,
+    "timestampUtc": "2026-03-21T11:20:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 39,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 8623.89,
+      "stdAmount": 3634.01,
+      "txnPer7d": 8
+    }
+  },
+  {
+    "amountUsd": 47723.91,
+    "amountAed": 175326.63,
+    "timestampUtc": "2026-03-23T18:03:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 27,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 3336.66,
+      "stdAmount": 5292.99,
+      "txnPer7d": 4
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 4207.94,
+    "amountAed": 15459.01,
+    "timestampUtc": "2026-05-06T08:03:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 22,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 14648.82,
+      "stdAmount": 4657.69,
+      "txnPer7d": 3
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 100692.12,
+    "amountAed": 369919.63,
+    "timestampUtc": "2026-03-30T13:28:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 34,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 12549.46,
+      "stdAmount": 1677.4,
+      "txnPer7d": 5
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 14412.02,
+    "amountAed": 52946.44,
+    "timestampUtc": "2026-03-07T11:12:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 21,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 18782.26,
+      "stdAmount": 4450.49,
+      "txnPer7d": 6
+    }
+  },
+  {
+    "amountUsd": 15539.03,
+    "amountAed": 57086.8,
+    "timestampUtc": "2026-03-01T13:43:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 33,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 21386.1,
+      "stdAmount": 1019.1,
+      "txnPer7d": 5
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 102053.89,
+    "amountAed": 374922.44,
+    "timestampUtc": "2026-05-12T14:28:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 17,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 9580.28,
+      "stdAmount": 1688.33,
+      "txnPer7d": 2
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 23456.61,
+    "amountAed": 86174.17,
+    "timestampUtc": "2026-03-08T12:26:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 42,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 2429.76,
+      "stdAmount": 2047.68,
+      "txnPer7d": 2
+    }
+  },
+  {
+    "amountUsd": 113138.65,
+    "amountAed": 415645.29,
+    "timestampUtc": "2026-02-15T08:30:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 50,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 20186.39,
+      "stdAmount": 3830.59,
+      "txnPer7d": 1
+    }
+  },
+  {
+    "amountUsd": 13809.53,
+    "amountAed": 50733.02,
+    "timestampUtc": "2026-03-10T08:12:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 59,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 6058.33,
+      "stdAmount": 2184.99,
+      "txnPer7d": 8
+    }
+  },
+  {
+    "amountUsd": 89495.49,
+    "amountAed": 328785.8,
+    "timestampUtc": "2026-05-12T13:40:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 12,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 20991.96,
+      "stdAmount": 1011.58,
+      "txnPer7d": 5
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 5826.73,
+    "amountAed": 21406.05,
+    "timestampUtc": "2026-03-05T13:47:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 35,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 10684.54,
+      "stdAmount": 4919.17,
+      "txnPer7d": 3
+    }
+  },
+  {
+    "amountUsd": 34917.92,
+    "amountAed": 128280.38,
+    "timestampUtc": "2026-02-19T11:44:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 20,
+    "jurisdiction": "SA",
+    "customerBaseline": {
+      "meanAmount": 9965.1,
+      "stdAmount": 3252.74,
+      "txnPer7d": 1
+    }
+  },
+  {
+    "amountUsd": 21771.98,
+    "amountAed": 79985.22,
+    "timestampUtc": "2026-02-20T10:04:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 48,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 2722.73,
+      "stdAmount": 4157.22,
+      "txnPer7d": 8
+    }
+  },
+  {
+    "amountUsd": 68501.18,
+    "amountAed": 251657.53,
+    "timestampUtc": "2026-04-28T15:51:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 32,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 19787.89,
+      "stdAmount": 2555.22,
+      "txnPer7d": 6
+    }
+  },
+  {
+    "amountUsd": 56445.01,
+    "amountAed": 207365.95,
+    "timestampUtc": "2026-03-12T10:40:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 12,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 17293.79,
+      "stdAmount": 4679.55,
+      "txnPer7d": 4
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 76127.08,
+    "amountAed": 279673.32,
+    "timestampUtc": "2026-05-10T09:12:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": true,
+    "countryRiskScore": 31,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 4674.1,
+      "stdAmount": 3524.83,
+      "txnPer7d": 7
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 57613.59,
+    "amountAed": 211659.05,
+    "timestampUtc": "2026-02-22T10:33:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 40,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 15486.35,
+      "stdAmount": 1208.7,
+      "txnPer7d": 7
+    }
+  },
+  {
+    "amountUsd": 33102.63,
+    "amountAed": 121611.42,
+    "timestampUtc": "2026-04-06T11:45:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": true,
+    "countryRiskScore": 39,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 21080.95,
+      "stdAmount": 1551.99,
+      "txnPer7d": 7
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 103884.77,
+    "amountAed": 381648.69,
+    "timestampUtc": "2026-02-19T15:36:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 42,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 21141.19,
+      "stdAmount": 3345.98,
+      "txnPer7d": 1
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 47439.54,
+    "amountAed": 174281.93,
+    "timestampUtc": "2026-05-10T15:30:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 16,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 5333.47,
+      "stdAmount": 1288.79,
+      "txnPer7d": 7
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 49809.68,
+    "amountAed": 182989.27,
+    "timestampUtc": "2026-03-21T10:56:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 58,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 20844.74,
+      "stdAmount": 3208.58,
+      "txnPer7d": 4
+    },
+    "assetClass": "jewellery"
+  },
+  {
+    "amountUsd": 1614.95,
+    "amountAed": 5932.94,
+    "timestampUtc": "2026-02-17T14:26:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 49,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 11788.17,
+      "stdAmount": 2413.57,
+      "txnPer7d": 2
+    },
+    "assetClass": "watches"
+  },
+  {
+    "amountUsd": 29096.26,
+    "amountAed": 106892.95,
+    "timestampUtc": "2026-03-18T13:18:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 30,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 12285.05,
+      "stdAmount": 5254.97,
+      "txnPer7d": 7
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 100123.56,
+    "amountAed": 367830.86,
+    "timestampUtc": "2026-05-06T09:15:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 51,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 13628.11,
+      "stdAmount": 721.38,
+      "txnPer7d": 8
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 70856.43,
+    "amountAed": 260310.19,
+    "timestampUtc": "2026-03-21T14:22:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 15,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 15187.19,
+      "stdAmount": 3540.96,
+      "txnPer7d": 7
+    }
+  },
+  {
+    "amountUsd": 126734.21,
+    "amountAed": 465592.25,
+    "timestampUtc": "2026-05-10T11:03:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 11,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 20595.7,
+      "stdAmount": 3455.65,
+      "txnPer7d": 6
+    }
+  },
+  {
+    "amountUsd": 97425.48,
+    "amountAed": 357918.75,
+    "timestampUtc": "2026-04-18T08:21:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 57,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 4755.79,
+      "stdAmount": 4662.46,
+      "txnPer7d": 2
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 109012.28,
+    "amountAed": 400485.98,
+    "timestampUtc": "2026-05-06T11:11:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 21,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 16522.05,
+      "stdAmount": 3285.72,
+      "txnPer7d": 8
+    }
+  },
+  {
+    "amountUsd": 126288.49,
+    "amountAed": 463954.77,
+    "timestampUtc": "2026-05-08T11:21:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": true,
+    "countryRiskScore": 50,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 11094.55,
+      "stdAmount": 1051.91,
+      "txnPer7d": 6
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 135197.45,
+    "amountAed": 496684.22,
+    "timestampUtc": "2026-02-17T13:13:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 54,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 20932.81,
+      "stdAmount": 3176.27,
+      "txnPer7d": 5
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 3724.77,
+    "amountAed": 13683.94,
+    "timestampUtc": "2026-05-06T16:49:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": true,
+    "countryRiskScore": 54,
+    "jurisdiction": "KW",
+    "customerBaseline": {
+      "meanAmount": 20887.2,
+      "stdAmount": 5360.78,
+      "txnPer7d": 3
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 35385.56,
+    "amountAed": 129998.4,
+    "timestampUtc": "2026-03-07T18:07:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 15,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 6565.62,
+      "stdAmount": 5251.33,
+      "txnPer7d": 8
+    },
+    "assetClass": "jewellery"
+  },
+  {
+    "amountUsd": 83699.53,
+    "amountAed": 307492.75,
+    "timestampUtc": "2026-05-11T11:08:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 10,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 16536.71,
+      "stdAmount": 1628.55,
+      "txnPer7d": 1
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 8527.74,
+    "amountAed": 31328.95,
+    "timestampUtc": "2026-02-19T18:37:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": true,
+    "countryRiskScore": 26,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 20020.46,
+      "stdAmount": 2374.9,
+      "txnPer7d": 3
+    },
+    "assetClass": "watches"
+  },
+  {
+    "amountUsd": 18980.51,
+    "amountAed": 69730.02,
+    "timestampUtc": "2026-02-12T11:09:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 54,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 15188.14,
+      "stdAmount": 993.12,
+      "txnPer7d": 4
+    },
+    "assetClass": "watches"
+  },
+  {
+    "amountUsd": 121649.01,
+    "amountAed": 446910.41,
+    "timestampUtc": "2026-04-30T10:31:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 21,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 11790.11,
+      "stdAmount": 1366.34,
+      "txnPer7d": 6
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 71022,
+    "amountAed": 260918.44,
+    "timestampUtc": "2026-04-07T14:13:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": true,
+    "countryRiskScore": 13,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 16329.93,
+      "stdAmount": 3705.04,
+      "txnPer7d": 5
+    }
+  },
+  {
+    "amountUsd": 28626.82,
+    "amountAed": 105168.35,
+    "timestampUtc": "2026-03-18T09:04:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": true,
+    "countryRiskScore": 30,
+    "jurisdiction": "SA",
+    "customerBaseline": {
+      "meanAmount": 11555.29,
+      "stdAmount": 3714.2,
+      "txnPer7d": 6
+    }
+  },
+  {
+    "amountUsd": 49080.21,
+    "amountAed": 180309.38,
+    "timestampUtc": "2026-05-06T18:58:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 24,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 16722.53,
+      "stdAmount": 3167.2,
+      "txnPer7d": 7
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 3089.55,
+    "amountAed": 11350.31,
+    "timestampUtc": "2026-04-03T15:51:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 43,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 5875.21,
+      "stdAmount": 4901.17,
+      "txnPer7d": 5
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 97611.48,
+    "amountAed": 358602.07,
+    "timestampUtc": "2026-02-14T17:22:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": true,
+    "countryRiskScore": 46,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 2723.61,
+      "stdAmount": 3962.82,
+      "txnPer7d": 3
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 120379.62,
+    "amountAed": 442246.93,
+    "timestampUtc": "2026-04-13T15:52:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 24,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 18495.9,
+      "stdAmount": 1134.48,
+      "txnPer7d": 2
+    }
+  },
+  {
+    "amountUsd": 106147.99,
+    "amountAed": 389963.24,
+    "timestampUtc": "2026-04-20T10:01:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 50,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 2216.67,
+      "stdAmount": 4668.33,
+      "txnPer7d": 7
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 1902.62,
+    "amountAed": 6989.77,
+    "timestampUtc": "2026-03-19T11:27:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 32,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 17865.07,
+      "stdAmount": 4601.96,
+      "txnPer7d": 8
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 29933.32,
+    "amountAed": 109968.11,
+    "timestampUtc": "2026-03-07T11:12:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 28,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 12752.77,
+      "stdAmount": 1944.25,
+      "txnPer7d": 7
+    }
+  },
+  {
+    "amountUsd": 58598.56,
+    "amountAed": 215277.58,
+    "timestampUtc": "2026-02-25T13:55:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": true,
+    "countryRiskScore": 24,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 21331,
+      "stdAmount": 2604.66,
+      "txnPer7d": 7
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 52893.97,
+    "amountAed": 194320.25,
+    "timestampUtc": "2026-03-21T14:07:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 14,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 10267.26,
+      "stdAmount": 2871.79,
+      "txnPer7d": 4
+    }
+  },
+  {
+    "amountUsd": 29488.52,
+    "amountAed": 108334.01,
+    "timestampUtc": "2026-04-07T11:04:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 41,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 20906.77,
+      "stdAmount": 1040.87,
+      "txnPer7d": 3
+    }
+  },
+  {
+    "amountUsd": 4422.03,
+    "amountAed": 16245.53,
+    "timestampUtc": "2026-05-12T13:31:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": true,
+    "countryRiskScore": 23,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 4795.97,
+      "stdAmount": 5060.04,
+      "txnPer7d": 6
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 68550.51,
+    "amountAed": 251838.74,
+    "timestampUtc": "2026-05-07T11:14:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 40,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 7747.63,
+      "stdAmount": 2359.06,
+      "txnPer7d": 3
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 134683.78,
+    "amountAed": 494797.15,
+    "timestampUtc": "2026-03-22T17:44:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 23,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 16599.79,
+      "stdAmount": 1135.45,
+      "txnPer7d": 1
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 130122.98,
+    "amountAed": 478041.82,
+    "timestampUtc": "2026-03-06T15:46:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": true,
+    "countryRiskScore": 20,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 8396.24,
+      "stdAmount": 3141.44,
+      "txnPer7d": 2
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 99263.97,
+    "amountAed": 364672.92,
+    "timestampUtc": "2026-04-12T17:24:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 28,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 8433.06,
+      "stdAmount": 2512.09,
+      "txnPer7d": 5
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 6117.05,
+    "amountAed": 22472.64,
+    "timestampUtc": "2026-04-12T08:32:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 42,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 21156.17,
+      "stdAmount": 4953.87,
+      "txnPer7d": 7
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 82238.9,
+    "amountAed": 302126.74,
+    "timestampUtc": "2026-03-15T11:01:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 19,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 5321.29,
+      "stdAmount": 2414.43,
+      "txnPer7d": 1
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 38748.03,
+    "amountAed": 142351.32,
+    "timestampUtc": "2026-02-25T18:56:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 40,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 4044.98,
+      "stdAmount": 3631.83,
+      "txnPer7d": 8
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 5925.4,
+    "amountAed": 21768.56,
+    "timestampUtc": "2026-04-01T17:07:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 28,
+    "jurisdiction": "KW",
+    "customerBaseline": {
+      "meanAmount": 14401.25,
+      "stdAmount": 3808.28,
+      "txnPer7d": 5
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 71518.91,
+    "amountAed": 262743.96,
+    "timestampUtc": "2026-04-13T12:43:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 33,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 7668.17,
+      "stdAmount": 3888.11,
+      "txnPer7d": 8
+    },
+    "assetClass": "jewellery"
+  },
+  {
+    "amountUsd": 68082.1,
+    "amountAed": 250117.93,
+    "timestampUtc": "2026-02-23T12:42:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": true,
+    "countryRiskScore": 44,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 6034.19,
+      "stdAmount": 5369.59,
+      "txnPer7d": 5
+    },
+    "assetClass": "watches"
+  },
+  {
+    "amountUsd": 25036.76,
+    "amountAed": 91979.29,
+    "timestampUtc": "2026-05-02T17:51:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 59,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 10889.06,
+      "stdAmount": 638.56,
+      "txnPer7d": 4
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 36443.42,
+    "amountAed": 133884.72,
+    "timestampUtc": "2026-02-18T09:03:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 56,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 16150.61,
+      "stdAmount": 4089.65,
+      "txnPer7d": 5
+    }
+  },
+  {
+    "amountUsd": 54297.43,
+    "amountAed": 199476.25,
+    "timestampUtc": "2026-05-10T17:27:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": true,
+    "countryRiskScore": 10,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 18779.01,
+      "stdAmount": 4218.2,
+      "txnPer7d": 2
+    }
+  },
+  {
+    "amountUsd": 130351.25,
+    "amountAed": 478880.42,
+    "timestampUtc": "2026-02-16T12:06:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 11,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 16390.06,
+      "stdAmount": 2216.2,
+      "txnPer7d": 6
+    }
+  },
+  {
+    "amountUsd": 7883.96,
+    "amountAed": 28963.86,
+    "timestampUtc": "2026-05-12T18:13:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": true,
+    "countryRiskScore": 39,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 10302.21,
+      "stdAmount": 1861.29,
+      "txnPer7d": 4
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 25076.87,
+    "amountAed": 92126.63,
+    "timestampUtc": "2026-02-13T14:24:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 34,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 8161.29,
+      "stdAmount": 675.24,
+      "txnPer7d": 3
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 23545.93,
+    "amountAed": 86502.3,
+    "timestampUtc": "2026-04-10T16:12:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 36,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 9687.28,
+      "stdAmount": 4952.06,
+      "txnPer7d": 6
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 103905.97,
+    "amountAed": 381726.57,
+    "timestampUtc": "2026-04-23T08:15:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 34,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 9687.03,
+      "stdAmount": 1964.16,
+      "txnPer7d": 4
+    }
+  },
+  {
+    "amountUsd": 13659.71,
+    "amountAed": 50182.62,
+    "timestampUtc": "2026-04-10T08:14:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 39,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 2815.66,
+      "stdAmount": 1050.29,
+      "txnPer7d": 8
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 64567.34,
+    "amountAed": 237205.5,
+    "timestampUtc": "2026-05-07T17:05:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 20,
+    "jurisdiction": "SA",
+    "customerBaseline": {
+      "meanAmount": 2338.17,
+      "stdAmount": 4490.3,
+      "txnPer7d": 5
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 94506.75,
+    "amountAed": 347195.98,
+    "timestampUtc": "2026-04-19T09:11:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 59,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 13261,
+      "stdAmount": 748.12,
+      "txnPer7d": 8
+    }
+  },
+  {
+    "amountUsd": 57393.07,
+    "amountAed": 210848.9,
+    "timestampUtc": "2026-02-21T15:17:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 11,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 8285.14,
+      "stdAmount": 2441.18,
+      "txnPer7d": 4
+    }
+  },
+  {
+    "amountUsd": 105002.49,
+    "amountAed": 385754.92,
+    "timestampUtc": "2026-02-20T17:28:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 53,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 19161.36,
+      "stdAmount": 3828.72,
+      "txnPer7d": 8
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 95989.07,
+    "amountAed": 352641.71,
+    "timestampUtc": "2026-04-30T15:17:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 49,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 11536.84,
+      "stdAmount": 4488.95,
+      "txnPer7d": 2
+    }
+  },
+  {
+    "amountUsd": 72327.93,
+    "amountAed": 265716.15,
+    "timestampUtc": "2026-02-27T15:03:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 13,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 16921.15,
+      "stdAmount": 3274.99,
+      "txnPer7d": 2
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 116560.56,
+    "amountAed": 428216.62,
+    "timestampUtc": "2026-04-01T11:05:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 11,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 12699.55,
+      "stdAmount": 3278.25,
+      "txnPer7d": 1
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 67121.74,
+    "amountAed": 246589.79,
+    "timestampUtc": "2026-03-30T15:38:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 27,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 10410.68,
+      "stdAmount": 4482.96,
+      "txnPer7d": 6
+    }
+  },
+  {
+    "amountUsd": 112340.14,
+    "amountAed": 412711.75,
+    "timestampUtc": "2026-04-03T11:18:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 51,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 6912.76,
+      "stdAmount": 535.83,
+      "txnPer7d": 6
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 104525.66,
+    "amountAed": 384003.16,
+    "timestampUtc": "2026-03-04T17:27:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 38,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 3492.52,
+      "stdAmount": 5213.97,
+      "txnPer7d": 8
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 35522.2,
+    "amountAed": 130500.36,
+    "timestampUtc": "2026-03-11T18:27:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 17,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 17124.41,
+      "stdAmount": 3786.34,
+      "txnPer7d": 8
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 30349.57,
+    "amountAed": 111497.32,
+    "timestampUtc": "2026-03-22T14:09:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 17,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 7273.94,
+      "stdAmount": 3611.61,
+      "txnPer7d": 2
+    }
+  },
+  {
+    "amountUsd": 12414.82,
+    "amountAed": 45609.2,
+    "timestampUtc": "2026-05-09T17:26:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 44,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 9648.81,
+      "stdAmount": 3162.78,
+      "txnPer7d": 7
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 82573.53,
+    "amountAed": 303356.1,
+    "timestampUtc": "2026-02-13T11:27:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 22,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 7410.39,
+      "stdAmount": 350.97,
+      "txnPer7d": 3
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 34771.15,
+    "amountAed": 127741.19,
+    "timestampUtc": "2026-03-29T17:39:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": true,
+    "countryRiskScore": 24,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 9017.94,
+      "stdAmount": 4834.32,
+      "txnPer7d": 7
+    }
+  },
+  {
+    "amountUsd": 62432.66,
+    "amountAed": 229363.2,
+    "timestampUtc": "2026-04-17T11:40:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 41,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 13870.24,
+      "stdAmount": 3610.34,
+      "txnPer7d": 4
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 85804.48,
+    "amountAed": 315225.85,
+    "timestampUtc": "2026-04-28T17:20:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 31,
+    "jurisdiction": "SA",
+    "customerBaseline": {
+      "meanAmount": 9780.4,
+      "stdAmount": 3385.7,
+      "txnPer7d": 7
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 107936.68,
+    "amountAed": 396534.45,
+    "timestampUtc": "2026-03-26T09:57:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 43,
+    "jurisdiction": "KW",
+    "customerBaseline": {
+      "meanAmount": 5663.77,
+      "stdAmount": 2387.16,
+      "txnPer7d": 4
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 60607.83,
+    "amountAed": 222659.18,
+    "timestampUtc": "2026-03-18T18:34:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 40,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 3500.65,
+      "stdAmount": 4901.16,
+      "txnPer7d": 5
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 98954.96,
+    "amountAed": 363537.71,
+    "timestampUtc": "2026-05-08T14:45:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 18,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 19709.27,
+      "stdAmount": 1021.3,
+      "txnPer7d": 1
+    }
+  },
+  {
+    "amountUsd": 64465.23,
+    "amountAed": 236830.39,
+    "timestampUtc": "2026-02-20T09:42:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 53,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 18209.93,
+      "stdAmount": 3647.71,
+      "txnPer7d": 2
+    },
+    "assetClass": "watches"
+  },
+  {
+    "amountUsd": 103835.99,
+    "amountAed": 381469.49,
+    "timestampUtc": "2026-04-21T13:13:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 17,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 17997.23,
+      "stdAmount": 1630.64,
+      "txnPer7d": 2
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 26469.36,
+    "amountAed": 97242.32,
+    "timestampUtc": "2026-04-27T09:05:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 19,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 14183.62,
+      "stdAmount": 961.34,
+      "txnPer7d": 4
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 22971.06,
+    "amountAed": 84390.37,
+    "timestampUtc": "2026-05-02T16:15:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 37,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 7183.57,
+      "stdAmount": 1301.6,
+      "txnPer7d": 2
+    },
+    "assetClass": "jewellery"
+  },
+  {
+    "amountUsd": 47015.67,
+    "amountAed": 172724.74,
+    "timestampUtc": "2026-04-18T11:39:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 48,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 9458.77,
+      "stdAmount": 4604.04,
+      "txnPer7d": 8
+    }
+  },
+  {
+    "amountUsd": 132395.42,
+    "amountAed": 486390.24,
+    "timestampUtc": "2026-04-06T10:04:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": true,
+    "countryRiskScore": 41,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 18393.83,
+      "stdAmount": 3178.24,
+      "txnPer7d": 6
+    }
+  },
+  {
+    "amountUsd": 37316.34,
+    "amountAed": 137091.61,
+    "timestampUtc": "2026-03-28T12:06:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 44,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 17799.14,
+      "stdAmount": 3431.27,
+      "txnPer7d": 6
+    },
+    "assetClass": "watches"
+  },
+  {
+    "amountUsd": 23781.33,
+    "amountAed": 87367.12,
+    "timestampUtc": "2026-03-15T09:45:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 47,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 16998.97,
+      "stdAmount": 5075.23,
+      "txnPer7d": 8
+    }
+  },
+  {
+    "amountUsd": 118752.78,
+    "amountAed": 436270.31,
+    "timestampUtc": "2026-03-06T16:27:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 21,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 17816.55,
+      "stdAmount": 419.82,
+      "txnPer7d": 4
+    },
+    "assetClass": "jewellery"
+  },
+  {
+    "amountUsd": 125070.51,
+    "amountAed": 459480.2,
+    "timestampUtc": "2026-02-17T11:34:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 56,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 4431.48,
+      "stdAmount": 4270.6,
+      "txnPer7d": 5
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 14959.7,
+    "amountAed": 54958.5,
+    "timestampUtc": "2026-05-07T15:34:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 30,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 12505.32,
+      "stdAmount": 759.34,
+      "txnPer7d": 8
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 28034.75,
+    "amountAed": 102993.2,
+    "timestampUtc": "2026-03-02T15:46:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 12,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 10774.92,
+      "stdAmount": 1307,
+      "txnPer7d": 7
+    },
+    "assetClass": "watches"
+  },
+  {
+    "amountUsd": 82150.67,
+    "amountAed": 301802.62,
+    "timestampUtc": "2026-02-16T14:37:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 25,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 12380.07,
+      "stdAmount": 4468.84,
+      "txnPer7d": 4
+    }
+  },
+  {
+    "amountUsd": 42086.91,
+    "amountAed": 154617.59,
+    "timestampUtc": "2026-03-20T15:14:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 57,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 13586.52,
+      "stdAmount": 594.5,
+      "txnPer7d": 8
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 121713.19,
+    "amountAed": 447146.16,
+    "timestampUtc": "2026-03-13T14:16:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 39,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 6872.5,
+      "stdAmount": 4702.46,
+      "txnPer7d": 2
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 108854.12,
+    "amountAed": 399904.91,
+    "timestampUtc": "2026-03-12T16:07:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 47,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 19781.07,
+      "stdAmount": 1412.88,
+      "txnPer7d": 3
+    }
+  },
+  {
+    "amountUsd": 99150.48,
+    "amountAed": 364255.97,
+    "timestampUtc": "2026-03-23T09:45:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 41,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 19853.82,
+      "stdAmount": 4441.31,
+      "txnPer7d": 1
+    }
+  },
+  {
+    "amountUsd": 84561.86,
+    "amountAed": 310660.78,
+    "timestampUtc": "2026-02-15T12:33:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": true,
+    "countryRiskScore": 23,
+    "jurisdiction": "KW",
+    "customerBaseline": {
+      "meanAmount": 2446.09,
+      "stdAmount": 2662.6,
+      "txnPer7d": 8
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 89762.79,
+    "amountAed": 329767.77,
+    "timestampUtc": "2026-03-14T16:21:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 29,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 13822.63,
+      "stdAmount": 369.31,
+      "txnPer7d": 2
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 1375.05,
+    "amountAed": 5051.6,
+    "timestampUtc": "2026-04-27T16:33:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 14,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 3861.56,
+      "stdAmount": 1844.32,
+      "txnPer7d": 2
+    },
+    "assetClass": "watches"
+  },
+  {
+    "amountUsd": 13263.49,
+    "amountAed": 48727.01,
+    "timestampUtc": "2026-03-29T13:25:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 29,
+    "jurisdiction": "SA",
+    "customerBaseline": {
+      "meanAmount": 16705.42,
+      "stdAmount": 1948.45,
+      "txnPer7d": 1
+    }
+  },
+  {
+    "amountUsd": 98076.56,
+    "amountAed": 360310.67,
+    "timestampUtc": "2026-03-13T15:34:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 10,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 11810.39,
+      "stdAmount": 4269.31,
+      "txnPer7d": 4
+    }
+  },
+  {
+    "amountUsd": 25755.89,
+    "amountAed": 94621.19,
+    "timestampUtc": "2026-02-16T14:38:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 58,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 12928.93,
+      "stdAmount": 2062.96,
+      "txnPer7d": 1
+    }
+  },
+  {
+    "amountUsd": 33857.11,
+    "amountAed": 124383.2,
+    "timestampUtc": "2026-04-29T11:09:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 45,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 13719.09,
+      "stdAmount": 5366.91,
+      "txnPer7d": 8
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 46333.18,
+    "amountAed": 170217.43,
+    "timestampUtc": "2026-04-06T10:48:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 16,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 8339.97,
+      "stdAmount": 4364.97,
+      "txnPer7d": 2
+    }
+  },
+  {
+    "amountUsd": 125706.17,
+    "amountAed": 461815.46,
+    "timestampUtc": "2026-05-08T18:51:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 51,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 9161.88,
+      "stdAmount": 1294.21,
+      "txnPer7d": 7
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 127257.98,
+    "amountAed": 467516.45,
+    "timestampUtc": "2026-04-05T13:41:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 31,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 11941.86,
+      "stdAmount": 2476.52,
+      "txnPer7d": 3
+    }
+  },
+  {
+    "amountUsd": 72257.81,
+    "amountAed": 265458.53,
+    "timestampUtc": "2026-05-03T08:17:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 46,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 6654.55,
+      "stdAmount": 3709.8,
+      "txnPer7d": 1
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 73231.4,
+    "amountAed": 269035.28,
+    "timestampUtc": "2026-03-25T12:00:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 58,
+    "jurisdiction": "KW",
+    "customerBaseline": {
+      "meanAmount": 14253.74,
+      "stdAmount": 2033.74,
+      "txnPer7d": 3
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 107815.11,
+    "amountAed": 396087.86,
+    "timestampUtc": "2026-04-07T10:43:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 21,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 17054.97,
+      "stdAmount": 626.99,
+      "txnPer7d": 7
+    },
+    "assetClass": "watches"
+  },
+  {
+    "amountUsd": 27986.96,
+    "amountAed": 102817.62,
+    "timestampUtc": "2026-04-24T10:14:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 51,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 7610.49,
+      "stdAmount": 1552.62,
+      "txnPer7d": 1
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 36807.52,
+    "amountAed": 135222.35,
+    "timestampUtc": "2026-03-22T09:15:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": true,
+    "countryRiskScore": 49,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 6496.29,
+      "stdAmount": 5325.9,
+      "txnPer7d": 8
+    }
+  },
+  {
+    "amountUsd": 116035.63,
+    "amountAed": 426288.14,
+    "timestampUtc": "2026-03-27T14:58:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": true,
+    "countryRiskScore": 35,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 15176.65,
+      "stdAmount": 3802.45,
+      "txnPer7d": 8
+    }
+  },
+  {
+    "amountUsd": 30848.51,
+    "amountAed": 113330.29,
+    "timestampUtc": "2026-05-05T09:36:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": true,
+    "countryRiskScore": 20,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 11855.98,
+      "stdAmount": 3761.65,
+      "txnPer7d": 7
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 108203,
+    "amountAed": 397512.85,
+    "timestampUtc": "2026-05-11T09:28:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 27,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 5902.06,
+      "stdAmount": 4388.59,
+      "txnPer7d": 6
+    }
+  },
+  {
+    "amountUsd": 53357.77,
+    "amountAed": 196024.15,
+    "timestampUtc": "2026-05-10T18:37:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 42,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 5533.13,
+      "stdAmount": 1255.74,
+      "txnPer7d": 3
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 54218.29,
+    "amountAed": 199185.48,
+    "timestampUtc": "2026-04-08T11:14:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 16,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 14266.07,
+      "stdAmount": 4657.42,
+      "txnPer7d": 6
+    }
+  },
+  {
+    "amountUsd": 5863.76,
+    "amountAed": 21542.09,
+    "timestampUtc": "2026-03-30T10:51:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 57,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 5382.6,
+      "stdAmount": 1731.21,
+      "txnPer7d": 5
+    },
+    "assetClass": "jewellery"
+  },
+  {
+    "amountUsd": 133089.24,
+    "amountAed": 488939.17,
+    "timestampUtc": "2026-03-11T10:17:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 59,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 19854.93,
+      "stdAmount": 4312.05,
+      "txnPer7d": 2
+    }
+  },
+  {
+    "amountUsd": 105421.21,
+    "amountAed": 387293.21,
+    "timestampUtc": "2026-03-13T10:43:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 23,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 5975.92,
+      "stdAmount": 1007.97,
+      "txnPer7d": 2
+    },
+    "assetClass": "jewellery"
+  },
+  {
+    "amountUsd": 31649.81,
+    "amountAed": 116274.12,
+    "timestampUtc": "2026-04-04T12:41:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 43,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 3752.49,
+      "stdAmount": 2949.72,
+      "txnPer7d": 1
+    },
+    "assetClass": "jewellery"
+  },
+  {
+    "amountUsd": 129223.47,
+    "amountAed": 474737.2,
+    "timestampUtc": "2026-04-10T15:56:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 26,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 2320.85,
+      "stdAmount": 1279.16,
+      "txnPer7d": 4
+    }
+  },
+  {
+    "amountUsd": 37374.85,
+    "amountAed": 137306.59,
+    "timestampUtc": "2026-04-09T11:30:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 21,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 13755.44,
+      "stdAmount": 4401.24,
+      "txnPer7d": 6
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 95034.73,
+    "amountAed": 349135.68,
+    "timestampUtc": "2026-04-08T10:01:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 47,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 3261.84,
+      "stdAmount": 485.95,
+      "txnPer7d": 2
+    },
+    "assetClass": "jewellery"
+  },
+  {
+    "amountUsd": 86465.86,
+    "amountAed": 317655.62,
+    "timestampUtc": "2026-02-24T14:10:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 59,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 15874.29,
+      "stdAmount": 1761.05,
+      "txnPer7d": 4
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 80481.38,
+    "amountAed": 295670.01,
+    "timestampUtc": "2026-04-29T11:02:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 22,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 9986.75,
+      "stdAmount": 1015.06,
+      "txnPer7d": 2
+    }
+  },
+  {
+    "amountUsd": 115784.31,
+    "amountAed": 425364.84,
+    "timestampUtc": "2026-05-11T16:13:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 33,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 18273.51,
+      "stdAmount": 2602.69,
+      "txnPer7d": 1
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 13080.78,
+    "amountAed": 48055.76,
+    "timestampUtc": "2026-04-20T13:54:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 35,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 15893.64,
+      "stdAmount": 3909.37,
+      "txnPer7d": 6
+    },
+    "assetClass": "watches"
+  },
+  {
+    "amountUsd": 103422.13,
+    "amountAed": 379949.03,
+    "timestampUtc": "2026-04-12T08:23:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 44,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 17920.01,
+      "stdAmount": 4266.52,
+      "txnPer7d": 5
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 16242.42,
+    "amountAed": 59670.92,
+    "timestampUtc": "2026-03-16T08:59:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 49,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 14784.63,
+      "stdAmount": 1213.27,
+      "txnPer7d": 5
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 21924.68,
+    "amountAed": 80546.22,
+    "timestampUtc": "2026-03-28T09:58:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": true,
+    "countryRiskScore": 59,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 10901.65,
+      "stdAmount": 3229.84,
+      "txnPer7d": 1
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 28161.79,
+    "amountAed": 103459.92,
+    "timestampUtc": "2026-03-06T18:36:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 36,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 21658.43,
+      "stdAmount": 2446.15,
+      "txnPer7d": 8
+    },
+    "assetClass": "jewellery"
+  },
+  {
+    "amountUsd": 129222.54,
+    "amountAed": 474733.79,
+    "timestampUtc": "2026-03-24T09:23:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 30,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 14597.21,
+      "stdAmount": 2918.38,
+      "txnPer7d": 5
+    }
+  },
+  {
+    "amountUsd": 97860.68,
+    "amountAed": 359517.57,
+    "timestampUtc": "2026-03-28T17:24:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 55,
+    "jurisdiction": "SA",
+    "customerBaseline": {
+      "meanAmount": 15174.23,
+      "stdAmount": 2462.49,
+      "txnPer7d": 8
+    }
+  },
+  {
+    "amountUsd": 40088.82,
+    "amountAed": 147277.07,
+    "timestampUtc": "2026-03-20T11:18:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 32,
+    "jurisdiction": "KW",
+    "customerBaseline": {
+      "meanAmount": 12624.45,
+      "stdAmount": 1954.67,
+      "txnPer7d": 8
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 109390.5,
+    "amountAed": 401875.45,
+    "timestampUtc": "2026-02-27T14:11:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 53,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 16365.81,
+      "stdAmount": 3114.36,
+      "txnPer7d": 2
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 86883.34,
+    "amountAed": 319189.36,
+    "timestampUtc": "2026-04-03T12:15:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 51,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 17625.02,
+      "stdAmount": 4243.59,
+      "txnPer7d": 1
+    }
+  },
+  {
+    "amountUsd": 62195.07,
+    "amountAed": 228490.33,
+    "timestampUtc": "2026-02-20T11:12:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 19,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 7670.39,
+      "stdAmount": 3640.11,
+      "txnPer7d": 5
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 59713.12,
+    "amountAed": 219372.23,
+    "timestampUtc": "2026-05-01T14:36:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 52,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 17575.08,
+      "stdAmount": 5152.96,
+      "txnPer7d": 4
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 88277.9,
+    "amountAed": 324312.65,
+    "timestampUtc": "2026-02-16T13:50:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 41,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 13895.58,
+      "stdAmount": 3729.79,
+      "txnPer7d": 6
+    }
+  },
+  {
+    "amountUsd": 84418.22,
+    "amountAed": 310133.05,
+    "timestampUtc": "2026-05-03T16:46:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 59,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 10314.38,
+      "stdAmount": 1266.69,
+      "txnPer7d": 4
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 112950.73,
+    "amountAed": 414954.91,
+    "timestampUtc": "2026-04-29T08:28:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 21,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 4028.08,
+      "stdAmount": 2329.11,
+      "txnPer7d": 3
+    },
+    "assetClass": "watches"
+  },
+  {
+    "amountUsd": 20089.17,
+    "amountAed": 73802.96,
+    "timestampUtc": "2026-04-20T11:58:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 15,
+    "jurisdiction": "KW",
+    "customerBaseline": {
+      "meanAmount": 17674.31,
+      "stdAmount": 1957.39,
+      "txnPer7d": 5
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 24573.9,
+    "amountAed": 90278.83,
+    "timestampUtc": "2026-03-29T10:46:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 24,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 20503.18,
+      "stdAmount": 2782.04,
+      "txnPer7d": 7
+    }
+  },
+  {
+    "amountUsd": 38905.86,
+    "amountAed": 142931.14,
+    "timestampUtc": "2026-05-12T17:11:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 13,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 17190,
+      "stdAmount": 2973.29,
+      "txnPer7d": 6
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 33117.88,
+    "amountAed": 121667.46,
+    "timestampUtc": "2026-04-01T10:03:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 44,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 13352.8,
+      "stdAmount": 780.23,
+      "txnPer7d": 4
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 97498.32,
+    "amountAed": 358186.34,
+    "timestampUtc": "2026-03-01T14:38:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": true,
+    "countryRiskScore": 57,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 14616.96,
+      "stdAmount": 2059.56,
+      "txnPer7d": 2
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 107371.63,
+    "amountAed": 394458.59,
+    "timestampUtc": "2026-04-06T11:35:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 46,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 9122.74,
+      "stdAmount": 2580.49,
+      "txnPer7d": 7
+    }
+  },
+  {
+    "amountUsd": 31533.6,
+    "amountAed": 115847.19,
+    "timestampUtc": "2026-04-10T13:15:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 48,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 5831.3,
+      "stdAmount": 4546.43,
+      "txnPer7d": 7
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 69498.56,
+    "amountAed": 255321.68,
+    "timestampUtc": "2026-02-22T13:03:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 38,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 15634.88,
+      "stdAmount": 3534.49,
+      "txnPer7d": 3
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 69853.29,
+    "amountAed": 256624.88,
+    "timestampUtc": "2026-03-25T12:05:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 55,
+    "jurisdiction": "SA",
+    "customerBaseline": {
+      "meanAmount": 4814.43,
+      "stdAmount": 1608.46,
+      "txnPer7d": 1
+    },
+    "assetClass": "jewellery"
+  },
+  {
+    "amountUsd": 116268.8,
+    "amountAed": 427144.74,
+    "timestampUtc": "2026-03-02T14:54:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 22,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 9395.52,
+      "stdAmount": 3137.34,
+      "txnPer7d": 6
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 85759.82,
+    "amountAed": 315061.79,
+    "timestampUtc": "2026-03-03T14:35:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 53,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 6118.33,
+      "stdAmount": 5261.35,
+      "txnPer7d": 3
+    }
+  },
+  {
+    "amountUsd": 124170.37,
+    "amountAed": 456173.3,
+    "timestampUtc": "2026-03-15T16:39:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 50,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 20943.1,
+      "stdAmount": 3228.83,
+      "txnPer7d": 7
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 16125.56,
+    "amountAed": 59241.6,
+    "timestampUtc": "2026-03-18T12:56:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 53,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 6643.63,
+      "stdAmount": 2196.82,
+      "txnPer7d": 6
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 84058.95,
+    "amountAed": 308813.2,
+    "timestampUtc": "2026-03-20T10:15:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 23,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 14787.16,
+      "stdAmount": 579.2,
+      "txnPer7d": 4
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 72088.71,
+    "amountAed": 264837.29,
+    "timestampUtc": "2026-04-29T08:25:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 29,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 3616.21,
+      "stdAmount": 608.3,
+      "txnPer7d": 1
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 109884.35,
+    "amountAed": 403689.76,
+    "timestampUtc": "2026-04-15T08:18:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": true,
+    "countryRiskScore": 15,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 8387.78,
+      "stdAmount": 465.3,
+      "txnPer7d": 7
+    },
+    "assetClass": "jewellery"
+  },
+  {
+    "amountUsd": 91575.61,
+    "amountAed": 336427.65,
+    "timestampUtc": "2026-03-06T11:45:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 58,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 11145.65,
+      "stdAmount": 1940.6,
+      "txnPer7d": 8
+    },
+    "assetClass": "jewellery"
+  },
+  {
+    "amountUsd": 76322.83,
+    "amountAed": 280392.48,
+    "timestampUtc": "2026-02-20T17:42:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 17,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 19242.85,
+      "stdAmount": 2280.19,
+      "txnPer7d": 7
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 120708.96,
+    "amountAed": 443456.88,
+    "timestampUtc": "2026-03-13T16:20:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": true,
+    "countryRiskScore": 46,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 12900.65,
+      "stdAmount": 1899.71,
+      "txnPer7d": 6
+    }
+  },
+  {
+    "amountUsd": 61503.99,
+    "amountAed": 225951.49,
+    "timestampUtc": "2026-03-15T18:10:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 43,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 4892.75,
+      "stdAmount": 3868.57,
+      "txnPer7d": 7
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 90941.11,
+    "amountAed": 334096.64,
+    "timestampUtc": "2026-04-16T10:49:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 11,
+    "jurisdiction": "SA",
+    "customerBaseline": {
+      "meanAmount": 14424.2,
+      "stdAmount": 2247.28,
+      "txnPer7d": 1
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 8580.53,
+    "amountAed": 31522.88,
+    "timestampUtc": "2026-03-02T14:42:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 10,
+    "jurisdiction": "SA",
+    "customerBaseline": {
+      "meanAmount": 13630.45,
+      "stdAmount": 4872.2,
+      "txnPer7d": 8
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 75441.58,
+    "amountAed": 277154.96,
+    "timestampUtc": "2026-04-18T15:51:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 57,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 15561.69,
+      "stdAmount": 4555.31,
+      "txnPer7d": 8
+    }
+  },
+  {
+    "amountUsd": 63671.2,
+    "amountAed": 233913.29,
+    "timestampUtc": "2026-03-05T15:51:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 41,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 17710.46,
+      "stdAmount": 551.6,
+      "txnPer7d": 8
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 125307.01,
+    "amountAed": 460349.05,
+    "timestampUtc": "2026-04-01T08:47:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 50,
+    "jurisdiction": "KW",
+    "customerBaseline": {
+      "meanAmount": 11609.85,
+      "stdAmount": 2075.42,
+      "txnPer7d": 6
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 119839.37,
+    "amountAed": 440262.18,
+    "timestampUtc": "2026-04-22T11:16:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 36,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 10756.91,
+      "stdAmount": 2536.52,
+      "txnPer7d": 7
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 89576.84,
+    "amountAed": 329084.66,
+    "timestampUtc": "2026-03-19T13:37:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 53,
+    "jurisdiction": "KW",
+    "customerBaseline": {
+      "meanAmount": 11100.3,
+      "stdAmount": 5278.94,
+      "txnPer7d": 1
+    }
+  },
+  {
+    "amountUsd": 50949.87,
+    "amountAed": 187178.07,
+    "timestampUtc": "2026-02-23T15:15:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 34,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 7108.62,
+      "stdAmount": 4175.25,
+      "txnPer7d": 6
+    }
+  },
+  {
+    "amountUsd": 85207,
+    "amountAed": 313030.84,
+    "timestampUtc": "2026-03-28T08:39:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 40,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 18250,
+      "stdAmount": 1815.3,
+      "txnPer7d": 4
+    },
+    "assetClass": "jewellery"
+  },
+  {
+    "amountUsd": 116161.86,
+    "amountAed": 426751.89,
+    "timestampUtc": "2026-03-07T16:59:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 11,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 13914.93,
+      "stdAmount": 1825.4,
+      "txnPer7d": 7
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 15487.18,
+    "amountAed": 56896.31,
+    "timestampUtc": "2026-03-17T09:42:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 56,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 11463.16,
+      "stdAmount": 3790.98,
+      "txnPer7d": 4
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 28726.99,
+    "amountAed": 105536.35,
+    "timestampUtc": "2026-03-26T09:17:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 54,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 16462.25,
+      "stdAmount": 2923.03,
+      "txnPer7d": 4
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 17903.59,
+    "amountAed": 65773.67,
+    "timestampUtc": "2026-02-13T11:29:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 19,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 10626.57,
+      "stdAmount": 4806.63,
+      "txnPer7d": 2
+    },
+    "assetClass": "watches"
+  },
+  {
+    "amountUsd": 135205.53,
+    "amountAed": 496713.92,
+    "timestampUtc": "2026-04-18T17:01:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 25,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 18977.08,
+      "stdAmount": 4386.82,
+      "txnPer7d": 7
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 37911.71,
+    "amountAed": 139278.89,
+    "timestampUtc": "2026-04-24T16:29:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 15,
+    "jurisdiction": "SA",
+    "customerBaseline": {
+      "meanAmount": 21125.96,
+      "stdAmount": 3020.49,
+      "txnPer7d": 8
+    },
+    "assetClass": "jewellery"
+  },
+  {
+    "amountUsd": 98585.03,
+    "amountAed": 362178.65,
+    "timestampUtc": "2026-03-30T18:17:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 58,
+    "jurisdiction": "SA",
+    "customerBaseline": {
+      "meanAmount": 11245.12,
+      "stdAmount": 5407.98,
+      "txnPer7d": 5
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 56269.41,
+    "amountAed": 206720.85,
+    "timestampUtc": "2026-02-16T18:36:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 15,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 8585.34,
+      "stdAmount": 4927.45,
+      "txnPer7d": 6
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 100174.14,
+    "amountAed": 368016.69,
+    "timestampUtc": "2026-05-07T15:47:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 28,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 17518.29,
+      "stdAmount": 3652.6,
+      "txnPer7d": 6
+    }
+  },
+  {
+    "amountUsd": 113182.7,
+    "amountAed": 415807.12,
+    "timestampUtc": "2026-02-16T09:55:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 23,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 14006.16,
+      "stdAmount": 1786.92,
+      "txnPer7d": 1
+    }
+  },
+  {
+    "amountUsd": 88626.34,
+    "amountAed": 325592.72,
+    "timestampUtc": "2026-03-08T12:08:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 24,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 15849.25,
+      "stdAmount": 4709.03,
+      "txnPer7d": 8
+    }
+  },
+  {
+    "amountUsd": 17307.13,
+    "amountAed": 63582.4,
+    "timestampUtc": "2026-03-12T14:07:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 51,
+    "jurisdiction": "KW",
+    "customerBaseline": {
+      "meanAmount": 16661.15,
+      "stdAmount": 5421.15,
+      "txnPer7d": 4
+    }
+  },
+  {
+    "amountUsd": 10955.87,
+    "amountAed": 40249.33,
+    "timestampUtc": "2026-02-15T18:11:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 17,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 6148.51,
+      "stdAmount": 901.99,
+      "txnPer7d": 3
+    },
+    "assetClass": "watches"
+  },
+  {
+    "amountUsd": 11064.26,
+    "amountAed": 40647.55,
+    "timestampUtc": "2026-02-16T16:41:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 38,
+    "jurisdiction": "KW",
+    "customerBaseline": {
+      "meanAmount": 6350.76,
+      "stdAmount": 1190.46,
+      "txnPer7d": 4
+    }
+  },
+  {
+    "amountUsd": 26669.64,
+    "amountAed": 97978.11,
+    "timestampUtc": "2026-02-12T08:16:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": true,
+    "countryRiskScore": 23,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 5237.4,
+      "stdAmount": 2804.15,
+      "txnPer7d": 1
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 120838.85,
+    "amountAed": 443934.06,
+    "timestampUtc": "2026-04-30T17:39:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 14,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 17418.57,
+      "stdAmount": 793.29,
+      "txnPer7d": 3
+    }
+  },
+  {
+    "amountUsd": 36179.79,
+    "amountAed": 132916.19,
+    "timestampUtc": "2026-04-14T13:11:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 37,
+    "jurisdiction": "SA",
+    "customerBaseline": {
+      "meanAmount": 6206.89,
+      "stdAmount": 4240.2,
+      "txnPer7d": 3
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 33314.5,
+    "amountAed": 122389.77,
+    "timestampUtc": "2026-04-16T09:05:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 39,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 3757.7,
+      "stdAmount": 4122.3,
+      "txnPer7d": 1
+    },
+    "assetClass": "watches"
+  },
+  {
+    "amountUsd": 112958.85,
+    "amountAed": 414984.77,
+    "timestampUtc": "2026-03-26T09:41:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": true,
+    "countryRiskScore": 48,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 7013.97,
+      "stdAmount": 399.75,
+      "txnPer7d": 2
+    },
+    "assetClass": "jewellery"
+  },
+  {
+    "amountUsd": 52831.93,
+    "amountAed": 194092.34,
+    "timestampUtc": "2026-03-08T12:21:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": true,
+    "countryRiskScore": 11,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 13503.4,
+      "stdAmount": 4670.68,
+      "txnPer7d": 8
+    }
+  },
+  {
+    "amountUsd": 4868.14,
+    "amountAed": 17884.41,
+    "timestampUtc": "2026-04-20T18:40:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 32,
+    "jurisdiction": "KW",
+    "customerBaseline": {
+      "meanAmount": 8078.72,
+      "stdAmount": 4103.04,
+      "txnPer7d": 8
+    }
+  },
+  {
+    "amountUsd": 27758.04,
+    "amountAed": 101976.62,
+    "timestampUtc": "2026-03-11T10:11:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 21,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 3655.84,
+      "stdAmount": 1253.17,
+      "txnPer7d": 5
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 7169.35,
+    "amountAed": 26338.54,
+    "timestampUtc": "2026-03-19T16:32:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 56,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 15571.09,
+      "stdAmount": 354.82,
+      "txnPer7d": 4
+    }
+  },
+  {
+    "amountUsd": 115663.17,
+    "amountAed": 424919.79,
+    "timestampUtc": "2026-03-28T16:12:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": true,
+    "countryRiskScore": 56,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 20155.71,
+      "stdAmount": 3928.88,
+      "txnPer7d": 6
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 127282.98,
+    "amountAed": 467608.31,
+    "timestampUtc": "2026-03-26T10:07:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 54,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 18384.44,
+      "stdAmount": 775.4,
+      "txnPer7d": 3
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 15120.73,
+    "amountAed": 55550.06,
+    "timestampUtc": "2026-04-11T10:56:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 44,
+    "jurisdiction": "SA",
+    "customerBaseline": {
+      "meanAmount": 3358.73,
+      "stdAmount": 2144.51,
+      "txnPer7d": 8
+    }
+  },
+  {
+    "amountUsd": 71513.9,
+    "amountAed": 262725.58,
+    "timestampUtc": "2026-03-31T13:09:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 10,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 11914.26,
+      "stdAmount": 3727.29,
+      "txnPer7d": 6
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 135492.23,
+    "amountAed": 497767.19,
+    "timestampUtc": "2026-03-06T16:32:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 20,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 5311.04,
+      "stdAmount": 529.1,
+      "txnPer7d": 8
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 31694.06,
+    "amountAed": 116436.66,
+    "timestampUtc": "2026-04-03T14:55:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 55,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 14209.46,
+      "stdAmount": 273.81,
+      "txnPer7d": 3
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 112101.56,
+    "amountAed": 411835.27,
+    "timestampUtc": "2026-03-08T15:01:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 59,
+    "jurisdiction": "KW",
+    "customerBaseline": {
+      "meanAmount": 20044.75,
+      "stdAmount": 2271.98,
+      "txnPer7d": 6
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 86496.24,
+    "amountAed": 317767.22,
+    "timestampUtc": "2026-04-12T16:06:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 37,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 17791.17,
+      "stdAmount": 1059.22,
+      "txnPer7d": 5
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 106012.62,
+    "amountAed": 389465.9,
+    "timestampUtc": "2026-02-24T14:47:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 58,
+    "jurisdiction": "SA",
+    "customerBaseline": {
+      "meanAmount": 16105.3,
+      "stdAmount": 925.16,
+      "txnPer7d": 7
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 18391.17,
+    "amountAed": 67564.92,
+    "timestampUtc": "2026-03-05T08:15:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 27,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 11508.94,
+      "stdAmount": 2894.87,
+      "txnPer7d": 5
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 12542.73,
+    "amountAed": 46079.1,
+    "timestampUtc": "2026-05-06T10:48:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 55,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 7726.5,
+      "stdAmount": 4748.01,
+      "txnPer7d": 1
+    }
+  },
+  {
+    "amountUsd": 29063.15,
+    "amountAed": 106771.3,
+    "timestampUtc": "2026-04-16T12:06:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": true,
+    "countryRiskScore": 35,
+    "jurisdiction": "SA",
+    "customerBaseline": {
+      "meanAmount": 5762.85,
+      "stdAmount": 3363.81,
+      "txnPer7d": 5
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 33625.93,
+    "amountAed": 123533.92,
+    "timestampUtc": "2026-03-14T11:30:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 25,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 10508.6,
+      "stdAmount": 3093.21,
+      "txnPer7d": 2
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 23478.79,
+    "amountAed": 86255.67,
+    "timestampUtc": "2026-04-30T09:03:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 18,
+    "jurisdiction": "SA",
+    "customerBaseline": {
+      "meanAmount": 4541.18,
+      "stdAmount": 2721.88,
+      "txnPer7d": 2
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 54465.49,
+    "amountAed": 200093.64,
+    "timestampUtc": "2026-02-16T18:01:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 25,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 20101.94,
+      "stdAmount": 4225.21,
+      "txnPer7d": 1
+    },
+    "assetClass": "watches"
+  },
+  {
+    "amountUsd": 62932.5,
+    "amountAed": 231199.48,
+    "timestampUtc": "2026-04-14T13:19:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 28,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 20723.48,
+      "stdAmount": 3238.27,
+      "txnPer7d": 2
+    }
+  },
+  {
+    "amountUsd": 91787.11,
+    "amountAed": 337204.65,
+    "timestampUtc": "2026-02-21T10:19:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 18,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 4307.67,
+      "stdAmount": 4652.15,
+      "txnPer7d": 4
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 40939.2,
+    "amountAed": 150401.18,
+    "timestampUtc": "2026-03-17T18:18:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 50,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 5741.04,
+      "stdAmount": 2636.43,
+      "txnPer7d": 3
+    }
+  },
+  {
+    "amountUsd": 65289.85,
+    "amountAed": 239859.84,
+    "timestampUtc": "2026-05-10T15:24:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 12,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 6762.52,
+      "stdAmount": 4530,
+      "txnPer7d": 8
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 62456.31,
+    "amountAed": 229450.07,
+    "timestampUtc": "2026-04-08T12:45:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 13,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 13003.47,
+      "stdAmount": 2214.53,
+      "txnPer7d": 4
+    }
+  },
+  {
+    "amountUsd": 23694.68,
+    "amountAed": 87048.79,
+    "timestampUtc": "2026-05-11T17:25:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 50,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 19014.85,
+      "stdAmount": 2828.54,
+      "txnPer7d": 1
+    }
+  },
+  {
+    "amountUsd": 99363.16,
+    "amountAed": 365037.32,
+    "timestampUtc": "2026-04-26T16:55:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 41,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 19597.63,
+      "stdAmount": 4017.3,
+      "txnPer7d": 1
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 74630.39,
+    "amountAed": 274174.82,
+    "timestampUtc": "2026-05-07T15:22:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 29,
+    "jurisdiction": "SA",
+    "customerBaseline": {
+      "meanAmount": 7666.77,
+      "stdAmount": 4104.42,
+      "txnPer7d": 8
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 74560.01,
+    "amountAed": 273916.26,
+    "timestampUtc": "2026-05-02T08:45:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 50,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 6307.18,
+      "stdAmount": 4676.32,
+      "txnPer7d": 5
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 37691.4,
+    "amountAed": 138469.51,
+    "timestampUtc": "2026-04-08T11:07:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 44,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 9731.23,
+      "stdAmount": 1247.88,
+      "txnPer7d": 6
+    }
+  },
+  {
+    "amountUsd": 127046.88,
+    "amountAed": 466740.94,
+    "timestampUtc": "2026-03-21T13:38:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 53,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 13530.3,
+      "stdAmount": 3156.26,
+      "txnPer7d": 3
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 18446.57,
+    "amountAed": 67768.43,
+    "timestampUtc": "2026-04-23T17:18:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 49,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 5762.4,
+      "stdAmount": 3227.5,
+      "txnPer7d": 7
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 14071.07,
+    "amountAed": 51693.87,
+    "timestampUtc": "2026-05-02T15:09:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 26,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 13591.43,
+      "stdAmount": 4177.7,
+      "txnPer7d": 6
+    }
+  },
+  {
+    "amountUsd": 122805.96,
+    "amountAed": 451160.75,
+    "timestampUtc": "2026-03-07T08:17:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 11,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 7425.94,
+      "stdAmount": 809.48,
+      "txnPer7d": 6
+    }
+  },
+  {
+    "amountUsd": 133447.36,
+    "amountAed": 490254.8,
+    "timestampUtc": "2026-05-06T13:20:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": true,
+    "countryRiskScore": 45,
+    "jurisdiction": "SA",
+    "customerBaseline": {
+      "meanAmount": 11787.51,
+      "stdAmount": 3201.6,
+      "txnPer7d": 3
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 97770.16,
+    "amountAed": 359185.01,
+    "timestampUtc": "2026-02-12T11:07:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 44,
+    "jurisdiction": "SA",
+    "customerBaseline": {
+      "meanAmount": 6682.32,
+      "stdAmount": 2413.93,
+      "txnPer7d": 7
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 4753.63,
+    "amountAed": 17463.76,
+    "timestampUtc": "2026-04-21T13:28:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 27,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 9092.39,
+      "stdAmount": 2182.76,
+      "txnPer7d": 3
+    }
+  },
+  {
+    "amountUsd": 16010.1,
+    "amountAed": 58817.4,
+    "timestampUtc": "2026-02-18T08:25:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 51,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 11676.56,
+      "stdAmount": 1755.39,
+      "txnPer7d": 8
+    },
+    "assetClass": "jewellery"
+  },
+  {
+    "amountUsd": 61473.31,
+    "amountAed": 225838.76,
+    "timestampUtc": "2026-05-05T15:20:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 47,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 3374,
+      "stdAmount": 2618.39,
+      "txnPer7d": 5
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 63518.23,
+    "amountAed": 233351.31,
+    "timestampUtc": "2026-03-10T14:46:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 14,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 6565.25,
+      "stdAmount": 3327.02,
+      "txnPer7d": 6
+    }
+  },
+  {
+    "amountUsd": 87508.63,
+    "amountAed": 321486.51,
+    "timestampUtc": "2026-05-06T15:28:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 49,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 14866.4,
+      "stdAmount": 504.02,
+      "txnPer7d": 6
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 10543.52,
+    "amountAed": 38734.45,
+    "timestampUtc": "2026-02-25T17:11:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 11,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 4184.37,
+      "stdAmount": 1530.36,
+      "txnPer7d": 4
+    }
+  },
+  {
+    "amountUsd": 131122.59,
+    "amountAed": 481714.13,
+    "timestampUtc": "2026-03-13T15:17:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 30,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 21050.65,
+      "stdAmount": 4200.74,
+      "txnPer7d": 2
+    }
+  },
+  {
+    "amountUsd": 125639.11,
+    "amountAed": 461569.09,
+    "timestampUtc": "2026-04-26T12:12:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 45,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 15482.84,
+      "stdAmount": 2723.73,
+      "txnPer7d": 2
+    },
+    "assetClass": "watches"
+  },
+  {
+    "amountUsd": 59575.32,
+    "amountAed": 218865.98,
+    "timestampUtc": "2026-05-01T13:45:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 26,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 21048.55,
+      "stdAmount": 1312.71,
+      "txnPer7d": 8
+    }
+  },
+  {
+    "amountUsd": 35667.42,
+    "amountAed": 131033.88,
+    "timestampUtc": "2026-03-07T17:33:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": true,
+    "countryRiskScore": 21,
+    "jurisdiction": "KW",
+    "customerBaseline": {
+      "meanAmount": 12044,
+      "stdAmount": 2262.97,
+      "txnPer7d": 1
+    }
+  },
+  {
+    "amountUsd": 16374.45,
+    "amountAed": 60155.97,
+    "timestampUtc": "2026-03-14T14:24:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 52,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 3470.3,
+      "stdAmount": 3791.5,
+      "txnPer7d": 1
+    }
+  },
+  {
+    "amountUsd": 117516.34,
+    "amountAed": 431727.92,
+    "timestampUtc": "2026-03-22T10:35:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 38,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 15284.48,
+      "stdAmount": 436.35,
+      "txnPer7d": 6
+    },
+    "assetClass": "watches"
+  },
+  {
+    "amountUsd": 66964.99,
+    "amountAed": 246013.93,
+    "timestampUtc": "2026-03-03T14:14:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 33,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 4130.69,
+      "stdAmount": 3104.53,
+      "txnPer7d": 3
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 45350.34,
+    "amountAed": 166606.69,
+    "timestampUtc": "2026-02-26T09:08:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 60,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 19593.33,
+      "stdAmount": 2808.22,
+      "txnPer7d": 8
+    },
+    "assetClass": "watches"
+  },
+  {
+    "amountUsd": 82946.86,
+    "amountAed": 304727.61,
+    "timestampUtc": "2026-04-02T18:50:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 24,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 20985.51,
+      "stdAmount": 2256.48,
+      "txnPer7d": 7
+    }
+  },
+  {
+    "amountUsd": 113140.5,
+    "amountAed": 415652.11,
+    "timestampUtc": "2026-03-03T08:28:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 58,
+    "jurisdiction": "SA",
+    "customerBaseline": {
+      "meanAmount": 13339.57,
+      "stdAmount": 4083.26,
+      "txnPer7d": 4
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 60548.66,
+    "amountAed": 222441.82,
+    "timestampUtc": "2026-03-28T12:15:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": true,
+    "countryRiskScore": 22,
+    "jurisdiction": "SA",
+    "customerBaseline": {
+      "meanAmount": 8973.05,
+      "stdAmount": 820.52,
+      "txnPer7d": 8
+    }
+  },
+  {
+    "amountUsd": 85917.62,
+    "amountAed": 315641.51,
+    "timestampUtc": "2026-04-26T09:32:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 44,
+    "jurisdiction": "KW",
+    "customerBaseline": {
+      "meanAmount": 3348.98,
+      "stdAmount": 3447.42,
+      "txnPer7d": 2
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 72347.2,
+    "amountAed": 265786.93,
+    "timestampUtc": "2026-02-13T10:31:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 35,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 14991.43,
+      "stdAmount": 3878.74,
+      "txnPer7d": 7
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 102680.58,
+    "amountAed": 377224.76,
+    "timestampUtc": "2026-03-12T15:33:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 36,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 12964.52,
+      "stdAmount": 2778.17,
+      "txnPer7d": 5
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 119437.47,
+    "amountAed": 438785.69,
+    "timestampUtc": "2026-03-13T15:35:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": true,
+    "countryRiskScore": 20,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 3050.52,
+      "stdAmount": 1956.96,
+      "txnPer7d": 1
+    }
+  },
+  {
+    "amountUsd": 22880.76,
+    "amountAed": 84058.64,
+    "timestampUtc": "2026-02-19T09:44:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 49,
+    "jurisdiction": "KW",
+    "customerBaseline": {
+      "meanAmount": 21004.1,
+      "stdAmount": 2924.21,
+      "txnPer7d": 6
+    }
+  },
+  {
+    "amountUsd": 63184.87,
+    "amountAed": 232126.65,
+    "timestampUtc": "2026-02-27T09:44:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 19,
+    "jurisdiction": "SA",
+    "customerBaseline": {
+      "meanAmount": 20750.51,
+      "stdAmount": 2288.79,
+      "txnPer7d": 6
+    }
+  },
+  {
+    "amountUsd": 126660.36,
+    "amountAed": 465320.93,
+    "timestampUtc": "2026-05-08T08:53:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 50,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 7468.57,
+      "stdAmount": 4377.94,
+      "txnPer7d": 1
+    }
+  },
+  {
+    "amountUsd": 100672.25,
+    "amountAed": 369846.6,
+    "timestampUtc": "2026-03-02T14:49:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 47,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 18135.72,
+      "stdAmount": 5293.46,
+      "txnPer7d": 8
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 13220.19,
+    "amountAed": 48567.93,
+    "timestampUtc": "2026-05-06T11:57:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 15,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 20313.13,
+      "stdAmount": 5129.12,
+      "txnPer7d": 1
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 2875.46,
+    "amountAed": 10563.78,
+    "timestampUtc": "2026-02-25T09:39:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 48,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 12622.45,
+      "stdAmount": 3184.85,
+      "txnPer7d": 2
+    }
+  },
+  {
+    "amountUsd": 115975.03,
+    "amountAed": 426065.51,
+    "timestampUtc": "2026-04-06T17:23:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 24,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 5308.13,
+      "stdAmount": 2367.1,
+      "txnPer7d": 8
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 38059.12,
+    "amountAed": 139820.42,
+    "timestampUtc": "2026-03-01T17:56:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": true,
+    "countryRiskScore": 57,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 11563.15,
+      "stdAmount": 5121.1,
+      "txnPer7d": 6
+    },
+    "assetClass": "watches"
+  },
+  {
+    "amountUsd": 123007.03,
+    "amountAed": 451899.44,
+    "timestampUtc": "2026-04-01T10:30:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": true,
+    "countryRiskScore": 59,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 17333.69,
+      "stdAmount": 1217.51,
+      "txnPer7d": 6
+    }
+  },
+  {
+    "amountUsd": 30621.89,
+    "amountAed": 112497.77,
+    "timestampUtc": "2026-02-23T09:46:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 11,
+    "jurisdiction": "KW",
+    "customerBaseline": {
+      "meanAmount": 10749.85,
+      "stdAmount": 2158.57,
+      "txnPer7d": 4
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 75509.87,
+    "amountAed": 277405.83,
+    "timestampUtc": "2026-03-30T10:52:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 33,
+    "jurisdiction": "KW",
+    "customerBaseline": {
+      "meanAmount": 15569.11,
+      "stdAmount": 2056.08,
+      "txnPer7d": 7
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 46478.97,
+    "amountAed": 170753.02,
+    "timestampUtc": "2026-05-07T18:14:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 22,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 11434.32,
+      "stdAmount": 3420.04,
+      "txnPer7d": 8
+    },
+    "assetClass": "watches"
+  },
+  {
+    "amountUsd": 135558.31,
+    "amountAed": 498009.94,
+    "timestampUtc": "2026-03-06T17:20:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 19,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 5849.64,
+      "stdAmount": 3052.64,
+      "txnPer7d": 5
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 46807.26,
+    "amountAed": 171959.06,
+    "timestampUtc": "2026-04-29T18:39:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 29,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 11415.71,
+      "stdAmount": 4284.09,
+      "txnPer7d": 3
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 126995,
+    "amountAed": 466550.34,
+    "timestampUtc": "2026-04-12T16:14:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 42,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 20934.91,
+      "stdAmount": 4410.07,
+      "txnPer7d": 2
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 98972.21,
+    "amountAed": 363601.07,
+    "timestampUtc": "2026-05-12T14:29:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 20,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 4398.7,
+      "stdAmount": 4605.62,
+      "txnPer7d": 8
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 15347.05,
+    "amountAed": 56381.51,
+    "timestampUtc": "2026-04-04T09:26:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 59,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 7585.4,
+      "stdAmount": 3194.64,
+      "txnPer7d": 6
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 45490.91,
+    "amountAed": 167123.12,
+    "timestampUtc": "2026-03-27T15:14:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 57,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 8513.12,
+      "stdAmount": 2797.84,
+      "txnPer7d": 8
+    }
+  },
+  {
+    "amountUsd": 12339.47,
+    "amountAed": 45332.36,
+    "timestampUtc": "2026-05-12T10:41:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 26,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 7688.03,
+      "stdAmount": 957.14,
+      "txnPer7d": 6
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 10210.61,
+    "amountAed": 37511.41,
+    "timestampUtc": "2026-04-27T11:08:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 23,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 9859.4,
+      "stdAmount": 3781.99,
+      "txnPer7d": 1
+    },
+    "assetClass": "jewellery"
+  },
+  {
+    "amountUsd": 120728.18,
+    "amountAed": 443527.47,
+    "timestampUtc": "2026-04-23T13:37:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 14,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 11000.13,
+      "stdAmount": 1682.75,
+      "txnPer7d": 7
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 131818.37,
+    "amountAed": 484270.27,
+    "timestampUtc": "2026-03-08T18:19:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 13,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 13566.88,
+      "stdAmount": 393.9,
+      "txnPer7d": 2
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 54519.12,
+    "amountAed": 200290.67,
+    "timestampUtc": "2026-03-30T08:19:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 48,
+    "jurisdiction": "SA",
+    "customerBaseline": {
+      "meanAmount": 9602.09,
+      "stdAmount": 746.61,
+      "txnPer7d": 5
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 40470.81,
+    "amountAed": 148680.43,
+    "timestampUtc": "2026-03-06T13:43:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 36,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 10063.62,
+      "stdAmount": 2132.33,
+      "txnPer7d": 5
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 30597.06,
+    "amountAed": 112406.52,
+    "timestampUtc": "2026-04-26T14:48:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 17,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 10854.03,
+      "stdAmount": 4227.2,
+      "txnPer7d": 8
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 30230.17,
+    "amountAed": 111058.66,
+    "timestampUtc": "2026-03-04T12:09:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 37,
+    "jurisdiction": "KW",
+    "customerBaseline": {
+      "meanAmount": 9557.75,
+      "stdAmount": 3537.41,
+      "txnPer7d": 2
+    }
+  },
+  {
+    "amountUsd": 44749.2,
+    "amountAed": 164398.25,
+    "timestampUtc": "2026-03-01T09:14:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 60,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 17801.02,
+      "stdAmount": 3353.13,
+      "txnPer7d": 2
+    }
+  },
+  {
+    "amountUsd": 60725.08,
+    "amountAed": 223089.95,
+    "timestampUtc": "2026-02-23T17:00:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 11,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 6786.28,
+      "stdAmount": 1981.02,
+      "txnPer7d": 2
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 126895,
+    "amountAed": 466182.94,
+    "timestampUtc": "2026-03-14T12:48:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 35,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 5326.99,
+      "stdAmount": 1378.66,
+      "txnPer7d": 7
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 5911.76,
+    "amountAed": 21718.43,
+    "timestampUtc": "2026-02-21T17:42:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 41,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 8296.88,
+      "stdAmount": 3149.08,
+      "txnPer7d": 6
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 91500.95,
+    "amountAed": 336153.37,
+    "timestampUtc": "2026-04-15T12:12:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 37,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 14437.38,
+      "stdAmount": 3767.9,
+      "txnPer7d": 2
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 53814.64,
+    "amountAed": 197702.59,
+    "timestampUtc": "2026-05-09T14:07:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 46,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 12539.07,
+      "stdAmount": 5037.69,
+      "txnPer7d": 4
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 38204.56,
+    "amountAed": 140354.74,
+    "timestampUtc": "2026-04-03T14:56:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 15,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 18121.79,
+      "stdAmount": 2038.36,
+      "txnPer7d": 5
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 130712.11,
+    "amountAed": 480206.15,
+    "timestampUtc": "2026-04-18T16:45:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 43,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 13591.16,
+      "stdAmount": 747.01,
+      "txnPer7d": 2
+    }
+  },
+  {
+    "amountUsd": 69976.22,
+    "amountAed": 257076.49,
+    "timestampUtc": "2026-03-28T14:31:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 12,
+    "jurisdiction": "SA",
+    "customerBaseline": {
+      "meanAmount": 14956.76,
+      "stdAmount": 390.84,
+      "txnPer7d": 5
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 112201.65,
+    "amountAed": 412202.99,
+    "timestampUtc": "2026-03-20T16:06:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 48,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 4919.82,
+      "stdAmount": 4308.91,
+      "txnPer7d": 3
+    }
+  },
+  {
+    "amountUsd": 117811.35,
+    "amountAed": 432811.7,
+    "timestampUtc": "2026-04-01T17:36:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 28,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 19489.51,
+      "stdAmount": 5139.54,
+      "txnPer7d": 7
+    }
+  },
+  {
+    "amountUsd": 29694.02,
+    "amountAed": 109088.98,
+    "timestampUtc": "2026-03-06T17:51:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 29,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 2219.96,
+      "stdAmount": 5161.26,
+      "txnPer7d": 5
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 115236.66,
+    "amountAed": 423352.91,
+    "timestampUtc": "2026-05-08T13:02:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 32,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 16359.44,
+      "stdAmount": 3244.14,
+      "txnPer7d": 4
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 82909.39,
+    "amountAed": 304589.95,
+    "timestampUtc": "2026-03-27T14:40:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 20,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 5483.41,
+      "stdAmount": 4617.62,
+      "txnPer7d": 7
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 18598.8,
+    "amountAed": 68327.68,
+    "timestampUtc": "2026-02-19T13:38:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 21,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 14881.91,
+      "stdAmount": 4344.52,
+      "txnPer7d": 8
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 33944.29,
+    "amountAed": 124703.5,
+    "timestampUtc": "2026-03-09T15:13:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 58,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 8899.42,
+      "stdAmount": 4744.92,
+      "txnPer7d": 1
+    }
+  },
+  {
+    "amountUsd": 58320.42,
+    "amountAed": 214255.77,
+    "timestampUtc": "2026-04-15T09:32:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": true,
+    "countryRiskScore": 27,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 7311.64,
+      "stdAmount": 2164.53,
+      "txnPer7d": 7
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 90681.32,
+    "amountAed": 333142.24,
+    "timestampUtc": "2026-03-19T11:09:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 49,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 12557.37,
+      "stdAmount": 1626.29,
+      "txnPer7d": 5
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 52954.11,
+    "amountAed": 194541.18,
+    "timestampUtc": "2026-04-15T18:46:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 18,
+    "jurisdiction": "SA",
+    "customerBaseline": {
+      "meanAmount": 3185.38,
+      "stdAmount": 3395.63,
+      "txnPer7d": 8
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 18247.89,
+    "amountAed": 67038.55,
+    "timestampUtc": "2026-02-23T09:56:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 55,
+    "jurisdiction": "SA",
+    "customerBaseline": {
+      "meanAmount": 5630.3,
+      "stdAmount": 1490.58,
+      "txnPer7d": 4
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 75699.28,
+    "amountAed": 278101.7,
+    "timestampUtc": "2026-04-21T14:23:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 33,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 4438.03,
+      "stdAmount": 1913.22,
+      "txnPer7d": 2
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 111866.36,
+    "amountAed": 410971.2,
+    "timestampUtc": "2026-04-16T16:49:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 43,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 4747.88,
+      "stdAmount": 2672.72,
+      "txnPer7d": 3
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 82520.77,
+    "amountAed": 303162.26,
+    "timestampUtc": "2026-04-06T14:32:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 33,
+    "jurisdiction": "KW",
+    "customerBaseline": {
+      "meanAmount": 14024.83,
+      "stdAmount": 5098.03,
+      "txnPer7d": 2
+    }
+  },
+  {
+    "amountUsd": 33664.6,
+    "amountAed": 123675.97,
+    "timestampUtc": "2026-03-26T08:45:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 37,
+    "jurisdiction": "SA",
+    "customerBaseline": {
+      "meanAmount": 18889.72,
+      "stdAmount": 3224.39,
+      "txnPer7d": 5
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 129588.84,
+    "amountAed": 476079.5,
+    "timestampUtc": "2026-05-09T14:56:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 11,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 21192.51,
+      "stdAmount": 3739.5,
+      "txnPer7d": 2
+    }
+  },
+  {
+    "amountUsd": 47736.88,
+    "amountAed": 175374.28,
+    "timestampUtc": "2026-03-02T14:28:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 40,
+    "jurisdiction": "SA",
+    "customerBaseline": {
+      "meanAmount": 2316.91,
+      "stdAmount": 4883.07,
+      "txnPer7d": 3
+    }
+  },
+  {
+    "amountUsd": 119026.74,
+    "amountAed": 437276.77,
+    "timestampUtc": "2026-03-19T13:26:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 31,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 14434.46,
+      "stdAmount": 3102.34,
+      "txnPer7d": 2
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 20627.87,
+    "amountAed": 75782.02,
+    "timestampUtc": "2026-02-12T09:43:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 60,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 8214.02,
+      "stdAmount": 1209.92,
+      "txnPer7d": 8
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 96071.82,
+    "amountAed": 352945.71,
+    "timestampUtc": "2026-04-25T18:34:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 43,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 21623.11,
+      "stdAmount": 1610.12,
+      "txnPer7d": 4
+    },
+    "assetClass": "jewellery"
+  },
+  {
+    "amountUsd": 133936.42,
+    "amountAed": 492051.51,
+    "timestampUtc": "2026-02-19T13:17:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 19,
+    "jurisdiction": "SA",
+    "customerBaseline": {
+      "meanAmount": 6203.94,
+      "stdAmount": 925.41,
+      "txnPer7d": 3
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 19872.18,
+    "amountAed": 73005.79,
+    "timestampUtc": "2026-04-03T11:54:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 59,
+    "jurisdiction": "SA",
+    "customerBaseline": {
+      "meanAmount": 2419.5,
+      "stdAmount": 4733.97,
+      "txnPer7d": 6
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 85987.58,
+    "amountAed": 315898.54,
+    "timestampUtc": "2026-03-20T11:54:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 28,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 3636.02,
+      "stdAmount": 5032.05,
+      "txnPer7d": 2
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 89116.17,
+    "amountAed": 327392.25,
+    "timestampUtc": "2026-04-18T08:52:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 54,
+    "jurisdiction": "KW",
+    "customerBaseline": {
+      "meanAmount": 4219.82,
+      "stdAmount": 3340.69,
+      "txnPer7d": 8
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 30677.12,
+    "amountAed": 112700.65,
+    "timestampUtc": "2026-03-25T17:42:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 15,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 19865.27,
+      "stdAmount": 771.32,
+      "txnPer7d": 4
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 98305.46,
+    "amountAed": 361151.58,
+    "timestampUtc": "2026-03-28T08:44:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 45,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 5607.95,
+      "stdAmount": 5210.88,
+      "txnPer7d": 7
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 30372.26,
+    "amountAed": 111580.67,
+    "timestampUtc": "2026-03-24T10:25:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 25,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 11852.82,
+      "stdAmount": 2887.51,
+      "txnPer7d": 8
+    },
+    "assetClass": "jewellery"
+  },
+  {
+    "amountUsd": 28410.96,
+    "amountAed": 104375.33,
+    "timestampUtc": "2026-03-05T15:13:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 57,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 21388.62,
+      "stdAmount": 1219.28,
+      "txnPer7d": 2
+    }
+  },
+  {
+    "amountUsd": 38472.33,
+    "amountAed": 141338.47,
+    "timestampUtc": "2026-04-23T10:01:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 48,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 14556.31,
+      "stdAmount": 417.15,
+      "txnPer7d": 6
+    }
+  },
+  {
+    "amountUsd": 8778.59,
+    "amountAed": 32250.52,
+    "timestampUtc": "2026-03-17T18:16:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 39,
+    "jurisdiction": "KW",
+    "customerBaseline": {
+      "meanAmount": 14222.42,
+      "stdAmount": 3581.75,
+      "txnPer7d": 4
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 18445.98,
+    "amountAed": 67766.27,
+    "timestampUtc": "2026-04-20T14:12:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": true,
+    "countryRiskScore": 16,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 13265.8,
+      "stdAmount": 1397.07,
+      "txnPer7d": 5
+    }
+  },
+  {
+    "amountUsd": 47670.76,
+    "amountAed": 175131.37,
+    "timestampUtc": "2026-04-28T10:12:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 43,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 2667.9,
+      "stdAmount": 2674.96,
+      "txnPer7d": 3
+    }
+  },
+  {
+    "amountUsd": 110842.33,
+    "amountAed": 407209.16,
+    "timestampUtc": "2026-04-29T15:15:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 53,
+    "jurisdiction": "SA",
+    "customerBaseline": {
+      "meanAmount": 14028.47,
+      "stdAmount": 1183.43,
+      "txnPer7d": 4
+    }
+  },
+  {
+    "amountUsd": 32163.71,
+    "amountAed": 118162.06,
+    "timestampUtc": "2026-05-10T18:08:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 33,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 20305.64,
+      "stdAmount": 319.06,
+      "txnPer7d": 2
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 95464.31,
+    "amountAed": 350713.86,
+    "timestampUtc": "2026-04-01T10:37:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 56,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 19987.49,
+      "stdAmount": 4691.63,
+      "txnPer7d": 7
+    }
+  },
+  {
+    "amountUsd": 87311.56,
+    "amountAed": 320762.53,
+    "timestampUtc": "2026-02-18T13:08:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 47,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 5045.76,
+      "stdAmount": 1253.9,
+      "txnPer7d": 5
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 115339.17,
+    "amountAed": 423729.5,
+    "timestampUtc": "2026-04-14T13:15:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 31,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 6435.68,
+      "stdAmount": 3935.56,
+      "txnPer7d": 7
+    }
+  },
+  {
+    "amountUsd": 44461.12,
+    "amountAed": 163339.9,
+    "timestampUtc": "2026-03-05T15:34:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 18,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 9199.14,
+      "stdAmount": 3865.43,
+      "txnPer7d": 3
+    }
+  },
+  {
+    "amountUsd": 134148.32,
+    "amountAed": 492829.98,
+    "timestampUtc": "2026-03-06T12:30:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 58,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 2298.54,
+      "stdAmount": 3687.11,
+      "txnPer7d": 1
+    },
+    "assetClass": "watches"
+  },
+  {
+    "amountUsd": 47629.81,
+    "amountAed": 174980.94,
+    "timestampUtc": "2026-02-16T09:36:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 23,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 21047.96,
+      "stdAmount": 3473.17,
+      "txnPer7d": 8
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 70412.19,
+    "amountAed": 258678.15,
+    "timestampUtc": "2026-05-06T10:38:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 58,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 14281.63,
+      "stdAmount": 3510.87,
+      "txnPer7d": 1
+    },
+    "assetClass": "watches"
+  },
+  {
+    "amountUsd": 3867.21,
+    "amountAed": 14207.23,
+    "timestampUtc": "2026-02-15T10:28:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 38,
+    "jurisdiction": "KW",
+    "customerBaseline": {
+      "meanAmount": 12318.25,
+      "stdAmount": 3712.7,
+      "txnPer7d": 3
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 25062.72,
+    "amountAed": 92074.65,
+    "timestampUtc": "2026-04-28T15:12:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": true,
+    "countryRiskScore": 16,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 6306.31,
+      "stdAmount": 2662.53,
+      "txnPer7d": 1
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 7082.65,
+    "amountAed": 26020.03,
+    "timestampUtc": "2026-02-27T18:59:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 44,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 19540.35,
+      "stdAmount": 3353.98,
+      "txnPer7d": 1
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 127911.07,
+    "amountAed": 469915.75,
+    "timestampUtc": "2026-05-06T10:35:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 59,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 5420.41,
+      "stdAmount": 1336.94,
+      "txnPer7d": 2
+    },
+    "assetClass": "watches"
+  },
+  {
+    "amountUsd": 27520.71,
+    "amountAed": 101104.75,
+    "timestampUtc": "2026-04-11T08:34:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 10,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 11275.26,
+      "stdAmount": 2201.83,
+      "txnPer7d": 4
+    }
+  },
+  {
+    "amountUsd": 128206.55,
+    "amountAed": 471001.29,
+    "timestampUtc": "2026-03-08T12:52:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 48,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 16255.82,
+      "stdAmount": 662.04,
+      "txnPer7d": 4
+    }
+  },
+  {
+    "amountUsd": 20124.37,
+    "amountAed": 73932.28,
+    "timestampUtc": "2026-04-06T18:48:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": true,
+    "countryRiskScore": 49,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 3075.41,
+      "stdAmount": 4931.83,
+      "txnPer7d": 3
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 56188.78,
+    "amountAed": 206424.62,
+    "timestampUtc": "2026-02-18T12:57:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 54,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 17456.54,
+      "stdAmount": 4423.89,
+      "txnPer7d": 7
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 52730.11,
+    "amountAed": 193718.26,
+    "timestampUtc": "2026-03-12T09:56:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 43,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 6148.79,
+      "stdAmount": 3194.13,
+      "txnPer7d": 1
+    },
+    "assetClass": "jewellery"
+  },
+  {
+    "amountUsd": 48077.37,
+    "amountAed": 176625.18,
+    "timestampUtc": "2026-02-20T10:11:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 19,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 20557.03,
+      "stdAmount": 2491,
+      "txnPer7d": 8
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 63256.16,
+    "amountAed": 232388.55,
+    "timestampUtc": "2026-03-09T09:14:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": true,
+    "countryRiskScore": 37,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 5804.38,
+      "stdAmount": 3952.05,
+      "txnPer7d": 8
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 61154.59,
+    "amountAed": 224667.84,
+    "timestampUtc": "2026-04-05T16:46:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 15,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 10168.09,
+      "stdAmount": 622.46,
+      "txnPer7d": 7
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 101507.16,
+    "amountAed": 372913.89,
+    "timestampUtc": "2026-02-17T12:16:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 34,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 21705.15,
+      "stdAmount": 1106.51,
+      "txnPer7d": 1
+    }
+  },
+  {
+    "amountUsd": 81735.58,
+    "amountAed": 300277.65,
+    "timestampUtc": "2026-04-27T13:16:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 56,
+    "jurisdiction": "SA",
+    "customerBaseline": {
+      "meanAmount": 19698.24,
+      "stdAmount": 1807.76,
+      "txnPer7d": 7
+    },
+    "assetClass": "jewellery"
+  },
+  {
+    "amountUsd": 22196.27,
+    "amountAed": 81543.97,
+    "timestampUtc": "2026-03-31T14:20:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 24,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 12232.99,
+      "stdAmount": 4732.82,
+      "txnPer7d": 6
+    }
+  },
+  {
+    "amountUsd": 109111.81,
+    "amountAed": 400851.61,
+    "timestampUtc": "2026-04-12T10:25:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 44,
+    "jurisdiction": "KW",
+    "customerBaseline": {
+      "meanAmount": 9728.45,
+      "stdAmount": 5180.09,
+      "txnPer7d": 1
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 62019.43,
+    "amountAed": 227845.06,
+    "timestampUtc": "2026-04-02T10:24:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": true,
+    "countryRiskScore": 51,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 11723.91,
+      "stdAmount": 1243.71,
+      "txnPer7d": 1
+    }
+  },
+  {
+    "amountUsd": 125258.16,
+    "amountAed": 460169.59,
+    "timestampUtc": "2026-05-10T17:55:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 34,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 10500.97,
+      "stdAmount": 4234.1,
+      "txnPer7d": 6
+    },
+    "assetClass": "watches"
+  },
+  {
+    "amountUsd": 81638.01,
+    "amountAed": 299919.21,
+    "timestampUtc": "2026-02-16T12:17:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 42,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 7505.12,
+      "stdAmount": 2888.3,
+      "txnPer7d": 6
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 103655.6,
+    "amountAed": 380806.76,
+    "timestampUtc": "2026-02-13T09:52:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 54,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 7674.78,
+      "stdAmount": 1664.5,
+      "txnPer7d": 3
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 91741.29,
+    "amountAed": 337036.32,
+    "timestampUtc": "2026-03-02T18:38:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 34,
+    "jurisdiction": "SA",
+    "customerBaseline": {
+      "meanAmount": 10495.48,
+      "stdAmount": 2966.59,
+      "txnPer7d": 8
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 55177.1,
+    "amountAed": 202707.93,
+    "timestampUtc": "2026-02-23T10:05:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 14,
+    "jurisdiction": "KW",
+    "customerBaseline": {
+      "meanAmount": 15552.63,
+      "stdAmount": 865.36,
+      "txnPer7d": 7
+    },
+    "assetClass": "jewellery"
+  },
+  {
+    "amountUsd": 63546.52,
+    "amountAed": 233455.27,
+    "timestampUtc": "2026-04-22T17:25:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": true,
+    "countryRiskScore": 57,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 5430.1,
+      "stdAmount": 4198.16,
+      "txnPer7d": 5
+    }
+  },
+  {
+    "amountUsd": 103124.88,
+    "amountAed": 378857.01,
+    "timestampUtc": "2026-02-20T14:03:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 46,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 11722.52,
+      "stdAmount": 1689.68,
+      "txnPer7d": 6
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 12105.06,
+    "amountAed": 44471.21,
+    "timestampUtc": "2026-02-14T14:08:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 26,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 10099.26,
+      "stdAmount": 4650.73,
+      "txnPer7d": 7
+    }
+  },
+  {
+    "amountUsd": 33233.41,
+    "amountAed": 122091.86,
+    "timestampUtc": "2026-04-05T12:13:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 41,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 13925.68,
+      "stdAmount": 778.94,
+      "txnPer7d": 4
+    },
+    "assetClass": "watches"
+  },
+  {
+    "amountUsd": 116154.15,
+    "amountAed": 426723.54,
+    "timestampUtc": "2026-02-12T08:44:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 55,
+    "jurisdiction": "SA",
+    "customerBaseline": {
+      "meanAmount": 14087.11,
+      "stdAmount": 2625.1,
+      "txnPer7d": 6
+    }
+  },
+  {
+    "amountUsd": 66977.65,
+    "amountAed": 246060.43,
+    "timestampUtc": "2026-03-11T09:42:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 26,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 13125.32,
+      "stdAmount": 5023.65,
+      "txnPer7d": 4
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 96286.61,
+    "amountAed": 353734.8,
+    "timestampUtc": "2026-03-23T11:14:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 26,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 20406.6,
+      "stdAmount": 2242.5,
+      "txnPer7d": 8
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 93655.81,
+    "amountAed": 344069.84,
+    "timestampUtc": "2026-04-16T10:14:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 43,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 10482.08,
+      "stdAmount": 5401.38,
+      "txnPer7d": 6
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 20324.93,
+    "amountAed": 74669.1,
+    "timestampUtc": "2026-05-11T15:57:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 44,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 9823.83,
+      "stdAmount": 4287.56,
+      "txnPer7d": 3
+    }
+  },
+  {
+    "amountUsd": 28121.49,
+    "amountAed": 103311.85,
+    "timestampUtc": "2026-04-23T12:18:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": true,
+    "countryRiskScore": 56,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 8029.1,
+      "stdAmount": 5062.22,
+      "txnPer7d": 8
+    }
+  },
+  {
+    "amountUsd": 23928.25,
+    "amountAed": 87906.86,
+    "timestampUtc": "2026-04-12T16:56:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 57,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 10183.87,
+      "stdAmount": 4562.1,
+      "txnPer7d": 2
+    }
+  },
+  {
+    "amountUsd": 75905.85,
+    "amountAed": 278860.57,
+    "timestampUtc": "2026-04-06T14:18:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 55,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 8094.41,
+      "stdAmount": 4130.75,
+      "txnPer7d": 8
+    }
+  },
+  {
+    "amountUsd": 9462.52,
+    "amountAed": 34763.11,
+    "timestampUtc": "2026-04-06T15:15:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 36,
+    "jurisdiction": "SA",
+    "customerBaseline": {
+      "meanAmount": 9577.79,
+      "stdAmount": 2686.37,
+      "txnPer7d": 7
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 125350.52,
+    "amountAed": 460508.9,
+    "timestampUtc": "2026-04-14T10:06:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 19,
+    "jurisdiction": "KW",
+    "customerBaseline": {
+      "meanAmount": 9649.17,
+      "stdAmount": 5238.49,
+      "txnPer7d": 6
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 86967.33,
+    "amountAed": 319497.91,
+    "timestampUtc": "2026-03-15T16:35:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 59,
+    "jurisdiction": "SA",
+    "customerBaseline": {
+      "meanAmount": 4603.5,
+      "stdAmount": 1560.56,
+      "txnPer7d": 4
+    },
+    "assetClass": "watches"
+  },
+  {
+    "amountUsd": 44377.53,
+    "amountAed": 163032.81,
+    "timestampUtc": "2026-02-13T15:01:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 50,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 17276.55,
+      "stdAmount": 499.73,
+      "txnPer7d": 6
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 27030.77,
+    "amountAed": 99304.81,
+    "timestampUtc": "2026-03-10T16:02:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 10,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 7534.54,
+      "stdAmount": 4126.62,
+      "txnPer7d": 1
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 89111.24,
+    "amountAed": 327374.14,
+    "timestampUtc": "2026-03-11T17:34:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 33,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 16615.96,
+      "stdAmount": 4435.03,
+      "txnPer7d": 7
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 4296.53,
+    "amountAed": 15784.47,
+    "timestampUtc": "2026-02-21T12:39:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 21,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 17509.71,
+      "stdAmount": 4837.65,
+      "txnPer7d": 6
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 114836.33,
+    "amountAed": 421882.18,
+    "timestampUtc": "2026-04-07T16:39:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 46,
+    "jurisdiction": "KW",
+    "customerBaseline": {
+      "meanAmount": 2942.61,
+      "stdAmount": 2060.97,
+      "txnPer7d": 2
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 64174.4,
+    "amountAed": 235761.93,
+    "timestampUtc": "2026-03-30T12:36:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 34,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 2976.77,
+      "stdAmount": 3609,
+      "txnPer7d": 4
+    },
+    "assetClass": "watches"
+  },
+  {
+    "amountUsd": 42592.39,
+    "amountAed": 156474.61,
+    "timestampUtc": "2026-04-23T15:31:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": true,
+    "countryRiskScore": 18,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 17174.74,
+      "stdAmount": 2033.88,
+      "txnPer7d": 4
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 106519.09,
+    "amountAed": 391326.56,
+    "timestampUtc": "2026-03-06T09:37:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 45,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 12325.67,
+      "stdAmount": 2072.2,
+      "txnPer7d": 3
+    },
+    "assetClass": "jewellery"
+  },
+  {
+    "amountUsd": 96313.44,
+    "amountAed": 353833.34,
+    "timestampUtc": "2026-03-16T08:46:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 49,
+    "jurisdiction": "KW",
+    "customerBaseline": {
+      "meanAmount": 7966.48,
+      "stdAmount": 2577.81,
+      "txnPer7d": 6
+    }
+  },
+  {
+    "amountUsd": 53750.27,
+    "amountAed": 197466.08,
+    "timestampUtc": "2026-03-18T09:36:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 26,
+    "jurisdiction": "KW",
+    "customerBaseline": {
+      "meanAmount": 17996.28,
+      "stdAmount": 701.07,
+      "txnPer7d": 1
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 16151.56,
+    "amountAed": 59337.12,
+    "timestampUtc": "2026-04-28T18:10:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 16,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 14656.24,
+      "stdAmount": 4300.71,
+      "txnPer7d": 1
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 114063.95,
+    "amountAed": 419044.63,
+    "timestampUtc": "2026-03-07T17:18:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 60,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 13425.38,
+      "stdAmount": 2220.05,
+      "txnPer7d": 1
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 68635.63,
+    "amountAed": 252151.48,
+    "timestampUtc": "2026-02-24T11:17:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 37,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 10271.42,
+      "stdAmount": 4902,
+      "txnPer7d": 1
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 69786.5,
+    "amountAed": 256379.49,
+    "timestampUtc": "2026-03-12T12:53:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 19,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 16247.23,
+      "stdAmount": 4696.71,
+      "txnPer7d": 8
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 128741.27,
+    "amountAed": 472965.72,
+    "timestampUtc": "2026-03-31T14:06:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": true,
+    "countryRiskScore": 49,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 13923.19,
+      "stdAmount": 4740.53,
+      "txnPer7d": 5
+    }
+  },
+  {
+    "amountUsd": 78937.02,
+    "amountAed": 289996.39,
+    "timestampUtc": "2026-03-17T13:47:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 30,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 14567.28,
+      "stdAmount": 923.45,
+      "txnPer7d": 7
+    },
+    "assetClass": "watches"
+  },
+  {
+    "amountUsd": 9830.36,
+    "amountAed": 36114.48,
+    "timestampUtc": "2026-04-17T10:33:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 16,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 15478.38,
+      "stdAmount": 4470.75,
+      "txnPer7d": 3
+    }
+  },
+  {
+    "amountUsd": 101123.35,
+    "amountAed": 371503.85,
+    "timestampUtc": "2026-05-04T18:46:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": true,
+    "countryRiskScore": 47,
+    "jurisdiction": "KW",
+    "customerBaseline": {
+      "meanAmount": 9592.44,
+      "stdAmount": 4884.76,
+      "txnPer7d": 6
+    }
+  },
+  {
+    "amountUsd": 85680.66,
+    "amountAed": 314770.97,
+    "timestampUtc": "2026-04-22T16:02:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 36,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 15562.3,
+      "stdAmount": 1375.59,
+      "txnPer7d": 1
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 10690.83,
+    "amountAed": 39275.65,
+    "timestampUtc": "2026-03-14T18:34:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 49,
+    "jurisdiction": "SA",
+    "customerBaseline": {
+      "meanAmount": 12282.74,
+      "stdAmount": 912.17,
+      "txnPer7d": 1
+    }
+  },
+  {
+    "amountUsd": 36347.17,
+    "amountAed": 133531.13,
+    "timestampUtc": "2026-04-07T14:40:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 35,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 7305.81,
+      "stdAmount": 737.77,
+      "txnPer7d": 5
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 50649.88,
+    "amountAed": 186075.99,
+    "timestampUtc": "2026-05-12T15:45:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 29,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 19449.57,
+      "stdAmount": 3482.92,
+      "txnPer7d": 8
+    }
+  },
+  {
+    "amountUsd": 119943.93,
+    "amountAed": 440646.34,
+    "timestampUtc": "2026-04-15T12:40:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": true,
+    "countryRiskScore": 39,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 8272.88,
+      "stdAmount": 2343.44,
+      "txnPer7d": 2
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 105501.03,
+    "amountAed": 387586.44,
+    "timestampUtc": "2026-04-25T16:36:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 15,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 11314.27,
+      "stdAmount": 5408.65,
+      "txnPer7d": 4
+    }
+  },
+  {
+    "amountUsd": 46493.21,
+    "amountAed": 170805.33,
+    "timestampUtc": "2026-02-14T11:13:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 49,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 8097.83,
+      "stdAmount": 5308.62,
+      "txnPer7d": 3
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 51452.48,
+    "amountAed": 189024.53,
+    "timestampUtc": "2026-02-27T17:39:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 35,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 13463.44,
+      "stdAmount": 4822.67,
+      "txnPer7d": 6
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 102496.95,
+    "amountAed": 376550.13,
+    "timestampUtc": "2026-02-20T13:00:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 10,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 3639.61,
+      "stdAmount": 3006.25,
+      "txnPer7d": 5
+    },
+    "assetClass": "watches"
+  },
+  {
+    "amountUsd": 119411.54,
+    "amountAed": 438690.47,
+    "timestampUtc": "2026-03-08T13:06:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 42,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 18284.55,
+      "stdAmount": 2679.94,
+      "txnPer7d": 3
+    }
+  },
+  {
+    "amountUsd": 66965.66,
+    "amountAed": 246016.37,
+    "timestampUtc": "2026-04-24T16:07:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 22,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 9033.08,
+      "stdAmount": 1013.41,
+      "txnPer7d": 8
+    },
+    "assetClass": "jewellery"
+  },
+  {
+    "amountUsd": 116684.87,
+    "amountAed": 428673.28,
+    "timestampUtc": "2026-05-01T13:44:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 42,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 19027.67,
+      "stdAmount": 3292.89,
+      "txnPer7d": 6
+    }
+  },
+  {
+    "amountUsd": 22440.1,
+    "amountAed": 82439.74,
+    "timestampUtc": "2026-03-13T08:15:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 48,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 18056.09,
+      "stdAmount": 5365.55,
+      "txnPer7d": 4
+    },
+    "assetClass": "watches"
+  },
+  {
+    "amountUsd": 4671.07,
+    "amountAed": 17160.44,
+    "timestampUtc": "2026-05-10T12:37:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 15,
+    "jurisdiction": "SA",
+    "customerBaseline": {
+      "meanAmount": 6045.79,
+      "stdAmount": 3609.87,
+      "txnPer7d": 4
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 90251.75,
+    "amountAed": 331564.1,
+    "timestampUtc": "2026-05-10T13:12:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 22,
+    "jurisdiction": "SA",
+    "customerBaseline": {
+      "meanAmount": 17863.09,
+      "stdAmount": 1603.62,
+      "txnPer7d": 4
+    }
+  },
+  {
+    "amountUsd": 93089.88,
+    "amountAed": 341990.75,
+    "timestampUtc": "2026-05-06T15:18:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": true,
+    "countryRiskScore": 46,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 19542.16,
+      "stdAmount": 351.02,
+      "txnPer7d": 6
+    }
+  },
+  {
+    "amountUsd": 116431.87,
+    "amountAed": 427743.83,
+    "timestampUtc": "2026-04-15T08:33:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 49,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 21076.74,
+      "stdAmount": 1877.91,
+      "txnPer7d": 6
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 124841.89,
+    "amountAed": 458640.3,
+    "timestampUtc": "2026-05-04T14:18:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 51,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 12498.48,
+      "stdAmount": 2379.93,
+      "txnPer7d": 4
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 86857.75,
+    "amountAed": 319095.33,
+    "timestampUtc": "2026-04-27T09:50:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 26,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 16403.55,
+      "stdAmount": 4585.88,
+      "txnPer7d": 7
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 69427.25,
+    "amountAed": 255059.68,
+    "timestampUtc": "2026-03-10T13:12:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": true,
+    "countryRiskScore": 22,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 6265.57,
+      "stdAmount": 3572.08,
+      "txnPer7d": 7
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 37148.48,
+    "amountAed": 136474.93,
+    "timestampUtc": "2026-04-21T11:05:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 52,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 2251.8,
+      "stdAmount": 2318.22,
+      "txnPer7d": 4
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 77287.15,
+    "amountAed": 283935.17,
+    "timestampUtc": "2026-04-17T09:33:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 22,
+    "jurisdiction": "KW",
+    "customerBaseline": {
+      "meanAmount": 20467.38,
+      "stdAmount": 3191.04,
+      "txnPer7d": 5
+    },
+    "assetClass": "jewellery"
+  },
+  {
+    "amountUsd": 97408.38,
+    "amountAed": 357855.92,
+    "timestampUtc": "2026-02-19T18:48:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 45,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 13485.11,
+      "stdAmount": 4384.53,
+      "txnPer7d": 7
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 82133.29,
+    "amountAed": 301738.75,
+    "timestampUtc": "2026-03-05T12:30:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 45,
+    "jurisdiction": "SA",
+    "customerBaseline": {
+      "meanAmount": 11668.34,
+      "stdAmount": 1926.19,
+      "txnPer7d": 8
+    },
+    "assetClass": "jewellery"
+  },
+  {
+    "amountUsd": 108404.98,
+    "amountAed": 398254.9,
+    "timestampUtc": "2026-04-22T18:09:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 12,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 7734.8,
+      "stdAmount": 1888.63,
+      "txnPer7d": 3
+    },
+    "assetClass": "jewellery"
+  },
+  {
+    "amountUsd": 41895.77,
+    "amountAed": 153915.4,
+    "timestampUtc": "2026-04-22T15:06:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 37,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 6996.62,
+      "stdAmount": 3007.56,
+      "txnPer7d": 1
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 107708.34,
+    "amountAed": 395695.58,
+    "timestampUtc": "2026-03-24T17:27:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 49,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 8793.81,
+      "stdAmount": 483.7,
+      "txnPer7d": 2
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 23580.63,
+    "amountAed": 86629.81,
+    "timestampUtc": "2026-03-20T10:08:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 51,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 16692.33,
+      "stdAmount": 1594.02,
+      "txnPer7d": 2
+    }
+  },
+  {
+    "amountUsd": 74880.91,
+    "amountAed": 275095.2,
+    "timestampUtc": "2026-02-24T15:26:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 29,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 9761.26,
+      "stdAmount": 3024.86,
+      "txnPer7d": 2
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 39083.26,
+    "amountAed": 143582.87,
+    "timestampUtc": "2026-03-02T11:38:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 60,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 15567.74,
+      "stdAmount": 2475.35,
+      "txnPer7d": 5
+    }
+  },
+  {
+    "amountUsd": 16725.55,
+    "amountAed": 61445.81,
+    "timestampUtc": "2026-02-21T16:44:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 56,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 12822.89,
+      "stdAmount": 1876.26,
+      "txnPer7d": 5
+    }
+  },
+  {
+    "amountUsd": 130182.15,
+    "amountAed": 478259.2,
+    "timestampUtc": "2026-04-16T08:02:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 11,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 2983.19,
+      "stdAmount": 1382.44,
+      "txnPer7d": 7
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 5524.48,
+    "amountAed": 20295.67,
+    "timestampUtc": "2026-04-07T12:31:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 13,
+    "jurisdiction": "KW",
+    "customerBaseline": {
+      "meanAmount": 12780.28,
+      "stdAmount": 636.96,
+      "txnPer7d": 5
+    },
+    "assetClass": "jewellery"
+  },
+  {
+    "amountUsd": 131544.14,
+    "amountAed": 483262.82,
+    "timestampUtc": "2026-04-25T15:26:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 10,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 19870.45,
+      "stdAmount": 1109.61,
+      "txnPer7d": 1
+    },
+    "assetClass": "jewellery"
+  },
+  {
+    "amountUsd": 119673.45,
+    "amountAed": 439652.65,
+    "timestampUtc": "2026-02-25T08:20:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 54,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 21133.87,
+      "stdAmount": 5161.98,
+      "txnPer7d": 6
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 133788.46,
+    "amountAed": 491507.93,
+    "timestampUtc": "2026-04-08T13:36:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 11,
+    "jurisdiction": "SA",
+    "customerBaseline": {
+      "meanAmount": 7952,
+      "stdAmount": 3845.93,
+      "txnPer7d": 5
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 9734.22,
+    "amountAed": 35761.29,
+    "timestampUtc": "2026-04-23T17:25:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 17,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 8795.86,
+      "stdAmount": 2629.68,
+      "txnPer7d": 1
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 112641.53,
+    "amountAed": 413819,
+    "timestampUtc": "2026-04-27T12:00:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 49,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 11879.65,
+      "stdAmount": 4719.45,
+      "txnPer7d": 8
+    },
+    "assetClass": "jewellery"
+  },
+  {
+    "amountUsd": 79953.68,
+    "amountAed": 293731.39,
+    "timestampUtc": "2026-03-31T14:29:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 47,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 17383.09,
+      "stdAmount": 5071.54,
+      "txnPer7d": 2
+    },
+    "assetClass": "watches"
+  },
+  {
+    "amountUsd": 55318.81,
+    "amountAed": 203228.56,
+    "timestampUtc": "2026-04-24T10:28:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 13,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 10454.96,
+      "stdAmount": 3384.72,
+      "txnPer7d": 6
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 44401.52,
+    "amountAed": 163120.95,
+    "timestampUtc": "2026-03-01T12:59:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 13,
+    "jurisdiction": "SA",
+    "customerBaseline": {
+      "meanAmount": 15564.58,
+      "stdAmount": 2149.44,
+      "txnPer7d": 1
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 42445.29,
+    "amountAed": 155934.19,
+    "timestampUtc": "2026-03-22T17:16:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 20,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 5374.99,
+      "stdAmount": 2622.02,
+      "txnPer7d": 2
+    }
+  },
+  {
+    "amountUsd": 116594.53,
+    "amountAed": 428341.4,
+    "timestampUtc": "2026-03-29T10:19:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 49,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 6229.84,
+      "stdAmount": 633.58,
+      "txnPer7d": 3
+    }
+  },
+  {
+    "amountUsd": 37542.82,
+    "amountAed": 137923.66,
+    "timestampUtc": "2026-03-08T11:15:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 25,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 6121.11,
+      "stdAmount": 3028.94,
+      "txnPer7d": 8
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 16851.59,
+    "amountAed": 61908.85,
+    "timestampUtc": "2026-04-28T08:11:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 48,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 16053.32,
+      "stdAmount": 4392.78,
+      "txnPer7d": 8
+    }
+  },
+  {
+    "amountUsd": 118817.88,
+    "amountAed": 436509.47,
+    "timestampUtc": "2026-03-22T16:03:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 34,
+    "jurisdiction": "KW",
+    "customerBaseline": {
+      "meanAmount": 8163.89,
+      "stdAmount": 618.65,
+      "txnPer7d": 6
+    },
+    "assetClass": "jewellery"
+  },
+  {
+    "amountUsd": 40118.69,
+    "amountAed": 147386.82,
+    "timestampUtc": "2026-03-13T09:48:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 10,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 12957.9,
+      "stdAmount": 5092.48,
+      "txnPer7d": 5
+    }
+  },
+  {
+    "amountUsd": 62119.02,
+    "amountAed": 228210.94,
+    "timestampUtc": "2026-02-22T14:22:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 38,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 18463.4,
+      "stdAmount": 4491.43,
+      "txnPer7d": 7
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 77991.85,
+    "amountAed": 286524.05,
+    "timestampUtc": "2026-03-18T09:39:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": true,
+    "countryRiskScore": 54,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 11716.96,
+      "stdAmount": 2898.54,
+      "txnPer7d": 2
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 93651.12,
+    "amountAed": 344052.62,
+    "timestampUtc": "2026-03-01T15:19:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 48,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 9088.04,
+      "stdAmount": 352.72,
+      "txnPer7d": 7
+    }
+  },
+  {
+    "amountUsd": 135870.72,
+    "amountAed": 499157.69,
+    "timestampUtc": "2026-02-20T09:22:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 33,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 9311.06,
+      "stdAmount": 3626.09,
+      "txnPer7d": 6
+    }
+  },
+  {
+    "amountUsd": 92959.61,
+    "amountAed": 341512.16,
+    "timestampUtc": "2026-02-21T15:19:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 32,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 7488.13,
+      "stdAmount": 3550.96,
+      "txnPer7d": 2
+    }
+  },
+  {
+    "amountUsd": 62849.79,
+    "amountAed": 230895.61,
+    "timestampUtc": "2026-03-11T17:32:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 37,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 15374.29,
+      "stdAmount": 2861.43,
+      "txnPer7d": 2
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 91728.18,
+    "amountAed": 336988.17,
+    "timestampUtc": "2026-02-15T10:28:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 42,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 3260.95,
+      "stdAmount": 5006.71,
+      "txnPer7d": 6
+    }
+  },
+  {
+    "amountUsd": 15048.25,
+    "amountAed": 55283.81,
+    "timestampUtc": "2026-04-07T14:36:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 59,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 4493.13,
+      "stdAmount": 2979.07,
+      "txnPer7d": 1
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 50109.59,
+    "amountAed": 184091.08,
+    "timestampUtc": "2026-04-08T13:15:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 11,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 11403.64,
+      "stdAmount": 3501.53,
+      "txnPer7d": 7
+    }
+  },
+  {
+    "amountUsd": 101954.21,
+    "amountAed": 374556.26,
+    "timestampUtc": "2026-03-10T16:33:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 28,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 17016.32,
+      "stdAmount": 4391.46,
+      "txnPer7d": 6
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 77213.41,
+    "amountAed": 283664.24,
+    "timestampUtc": "2026-04-11T11:21:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 49,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 3072.35,
+      "stdAmount": 4312.3,
+      "txnPer7d": 4
+    },
+    "assetClass": "watches"
+  },
+  {
+    "amountUsd": 84520.35,
+    "amountAed": 310508.28,
+    "timestampUtc": "2026-03-04T17:02:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 52,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 4952.09,
+      "stdAmount": 5221.64,
+      "txnPer7d": 4
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 135237.88,
+    "amountAed": 496832.78,
+    "timestampUtc": "2026-04-23T09:50:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 58,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 15059.56,
+      "stdAmount": 1889.36,
+      "txnPer7d": 7
+    }
+  },
+  {
+    "amountUsd": 37215.77,
+    "amountAed": 136722.17,
+    "timestampUtc": "2026-04-09T09:04:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 18,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 20199.5,
+      "stdAmount": 1504.79,
+      "txnPer7d": 4
+    },
+    "assetClass": "watches"
+  },
+  {
+    "amountUsd": 54598.4,
+    "amountAed": 200581.92,
+    "timestampUtc": "2026-03-12T17:03:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 13,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 12330.78,
+      "stdAmount": 3782.86,
+      "txnPer7d": 1
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 110012.44,
+    "amountAed": 404160.34,
+    "timestampUtc": "2026-03-25T10:37:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 54,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 11667.96,
+      "stdAmount": 2652.54,
+      "txnPer7d": 7
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 82026.56,
+    "amountAed": 301346.67,
+    "timestampUtc": "2026-02-26T14:54:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 38,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 4456.56,
+      "stdAmount": 2825.01,
+      "txnPer7d": 7
+    },
+    "assetClass": "watches"
+  },
+  {
+    "amountUsd": 133233.81,
+    "amountAed": 489470.27,
+    "timestampUtc": "2026-05-10T09:01:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 43,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 16527.65,
+      "stdAmount": 3783.61,
+      "txnPer7d": 4
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 4380.53,
+    "amountAed": 16093.06,
+    "timestampUtc": "2026-03-31T09:53:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 42,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 10213.47,
+      "stdAmount": 1647.36,
+      "txnPer7d": 8
+    }
+  },
+  {
+    "amountUsd": 44716.68,
+    "amountAed": 164278.75,
+    "timestampUtc": "2026-02-16T15:12:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 32,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 8618.7,
+      "stdAmount": 5256.27,
+      "txnPer7d": 7
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 33023.86,
+    "amountAed": 121322.06,
+    "timestampUtc": "2026-03-09T09:16:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 20,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 20096.78,
+      "stdAmount": 310.02,
+      "txnPer7d": 4
+    }
+  },
+  {
+    "amountUsd": 125109.82,
+    "amountAed": 459624.62,
+    "timestampUtc": "2026-04-08T11:35:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 28,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 6816.03,
+      "stdAmount": 1799.28,
+      "txnPer7d": 3
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 50755.79,
+    "amountAed": 186465.07,
+    "timestampUtc": "2026-05-04T09:06:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 59,
+    "jurisdiction": "SA",
+    "customerBaseline": {
+      "meanAmount": 10498.63,
+      "stdAmount": 3139.77,
+      "txnPer7d": 8
+    }
+  },
+  {
+    "amountUsd": 83761.35,
+    "amountAed": 307719.86,
+    "timestampUtc": "2026-02-27T14:55:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 40,
+    "jurisdiction": "KW",
+    "customerBaseline": {
+      "meanAmount": 14204.04,
+      "stdAmount": 1837.14,
+      "txnPer7d": 3
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 31982,
+    "amountAed": 117494.5,
+    "timestampUtc": "2026-05-11T16:06:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": true,
+    "countryRiskScore": 58,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 19430.8,
+      "stdAmount": 5155.14,
+      "txnPer7d": 3
+    }
+  },
+  {
+    "amountUsd": 53017.77,
+    "amountAed": 194775.05,
+    "timestampUtc": "2026-03-10T14:14:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 32,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 13576.11,
+      "stdAmount": 3867.94,
+      "txnPer7d": 1
+    }
+  },
+  {
+    "amountUsd": 103636.75,
+    "amountAed": 380737.49,
+    "timestampUtc": "2026-03-14T12:10:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 47,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 11676.63,
+      "stdAmount": 4499.58,
+      "txnPer7d": 3
+    }
+  },
+  {
+    "amountUsd": 118259.14,
+    "amountAed": 434456.8,
+    "timestampUtc": "2026-04-24T14:29:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 29,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 20120.49,
+      "stdAmount": 5293.91,
+      "txnPer7d": 7
+    }
+  },
+  {
+    "amountUsd": 115466.8,
+    "amountAed": 424198.37,
+    "timestampUtc": "2026-04-17T17:35:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 41,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 14059.23,
+      "stdAmount": 4573.9,
+      "txnPer7d": 7
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 16604.01,
+    "amountAed": 60999.31,
+    "timestampUtc": "2026-02-21T09:34:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 26,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 17022.25,
+      "stdAmount": 1002.04,
+      "txnPer7d": 8
+    },
+    "assetClass": "watches"
+  },
+  {
+    "amountUsd": 19134.69,
+    "amountAed": 70296.45,
+    "timestampUtc": "2026-05-03T12:52:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 50,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 15632.73,
+      "stdAmount": 5401.34,
+      "txnPer7d": 5
+    }
+  },
+  {
+    "amountUsd": 132579.53,
+    "amountAed": 487066.6,
+    "timestampUtc": "2026-05-10T11:47:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 17,
+    "jurisdiction": "QA",
+    "customerBaseline": {
+      "meanAmount": 3230.78,
+      "stdAmount": 3718.01,
+      "txnPer7d": 1
+    }
+  },
+  {
+    "amountUsd": 67043.79,
+    "amountAed": 246303.43,
+    "timestampUtc": "2026-04-21T11:15:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 30,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 5182.99,
+      "stdAmount": 1338.48,
+      "txnPer7d": 7
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 31447.15,
+    "amountAed": 115529.59,
+    "timestampUtc": "2026-03-22T14:47:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 48,
+    "jurisdiction": "KW",
+    "customerBaseline": {
+      "meanAmount": 9494.91,
+      "stdAmount": 845.16,
+      "txnPer7d": 5
+    },
+    "assetClass": "watches"
+  },
+  {
+    "amountUsd": 51724.75,
+    "amountAed": 190024.8,
+    "timestampUtc": "2026-02-27T16:31:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 49,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 20852.13,
+      "stdAmount": 3762.71,
+      "txnPer7d": 4
+    },
+    "assetClass": "watches"
+  },
+  {
+    "amountUsd": 128553.25,
+    "amountAed": 472275,
+    "timestampUtc": "2026-05-10T14:50:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 58,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 16568.71,
+      "stdAmount": 2664.19,
+      "txnPer7d": 5
+    }
+  },
+  {
+    "amountUsd": 77567.33,
+    "amountAed": 284964.46,
+    "timestampUtc": "2026-04-09T18:29:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 37,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 14140.98,
+      "stdAmount": 1226.42,
+      "txnPer7d": 7
+    }
+  },
+  {
+    "amountUsd": 127353.57,
+    "amountAed": 467867.63,
+    "timestampUtc": "2026-04-11T12:41:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 31,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 20079.94,
+      "stdAmount": 1496.87,
+      "txnPer7d": 5
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 71323.12,
+    "amountAed": 262024.67,
+    "timestampUtc": "2026-04-07T08:08:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 32,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 16270.87,
+      "stdAmount": 3906.78,
+      "txnPer7d": 4
+    }
+  },
+  {
+    "amountUsd": 19518.81,
+    "amountAed": 71707.62,
+    "timestampUtc": "2026-04-21T18:08:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 41,
+    "jurisdiction": "KW",
+    "customerBaseline": {
+      "meanAmount": 13243.34,
+      "stdAmount": 302.57,
+      "txnPer7d": 6
+    }
+  },
+  {
+    "amountUsd": 44354.61,
+    "amountAed": 162948.62,
+    "timestampUtc": "2026-03-04T09:30:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 10,
+    "jurisdiction": "KW",
+    "customerBaseline": {
+      "meanAmount": 6257.13,
+      "stdAmount": 2953.04,
+      "txnPer7d": 6
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 103976.55,
+    "amountAed": 381985.87,
+    "timestampUtc": "2026-05-11T09:23:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 58,
+    "jurisdiction": "KW",
+    "customerBaseline": {
+      "meanAmount": 4056.72,
+      "stdAmount": 1629.91,
+      "txnPer7d": 4
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 120813.79,
+    "amountAed": 443842.01,
+    "timestampUtc": "2026-04-03T11:27:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 22,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 6912.2,
+      "stdAmount": 2001.71,
+      "txnPer7d": 2
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 93201.7,
+    "amountAed": 342401.56,
+    "timestampUtc": "2026-03-31T16:22:00.000Z",
+    "paymentMethod": "cash",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 30,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 8495.91,
+      "stdAmount": 2745.84,
+      "txnPer7d": 2
+    }
+  },
+  {
+    "amountUsd": 117771.15,
+    "amountAed": 432664.04,
+    "timestampUtc": "2026-02-19T13:06:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": true,
+    "countryRiskScore": 16,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 8759.37,
+      "stdAmount": 4231.36,
+      "txnPer7d": 8
+    },
+    "assetClass": "jewellery"
+  },
+  {
+    "amountUsd": 83584.32,
+    "amountAed": 307069.51,
+    "timestampUtc": "2026-05-05T18:08:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 22,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 3896.86,
+      "stdAmount": 5215.83,
+      "txnPer7d": 3
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 107898.22,
+    "amountAed": 396393.17,
+    "timestampUtc": "2026-03-17T14:21:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": true,
+    "countryRiskScore": 35,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 10951.5,
+      "stdAmount": 1478.33,
+      "txnPer7d": 5
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 14312.49,
+    "amountAed": 52580.79,
+    "timestampUtc": "2026-04-24T12:25:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 53,
+    "jurisdiction": "SA",
+    "customerBaseline": {
+      "meanAmount": 5158.12,
+      "stdAmount": 3403.72,
+      "txnPer7d": 8
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 104828.05,
+    "amountAed": 385114.05,
+    "timestampUtc": "2026-03-20T17:01:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 52,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 18023.68,
+      "stdAmount": 3832.48,
+      "txnPer7d": 6
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 51093.75,
+    "amountAed": 187706.65,
+    "timestampUtc": "2026-02-25T08:30:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 50,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 12746.08,
+      "stdAmount": 1875.27,
+      "txnPer7d": 8
+    },
+    "assetClass": "watches"
+  },
+  {
+    "amountUsd": 97775.69,
+    "amountAed": 359205.34,
+    "timestampUtc": "2026-02-26T11:40:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 34,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 2460.5,
+      "stdAmount": 1957.64,
+      "txnPer7d": 5
+    },
+    "assetClass": "silver"
+  },
+  {
+    "amountUsd": 67131.76,
+    "amountAed": 246626.58,
+    "timestampUtc": "2026-04-09T09:06:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 52,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 21120.92,
+      "stdAmount": 741.54,
+      "txnPer7d": 2
+    }
+  },
+  {
+    "amountUsd": 68185.98,
+    "amountAed": 250499.55,
+    "timestampUtc": "2026-05-05T17:15:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 42,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 21483.29,
+      "stdAmount": 3932.65,
+      "txnPer7d": 1
+    },
+    "assetClass": "gold"
+  },
+  {
+    "amountUsd": 79057.23,
+    "amountAed": 290438.03,
+    "timestampUtc": "2026-03-06T10:45:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": true,
+    "countryRiskScore": 34,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 3854.33,
+      "stdAmount": 5327.28,
+      "txnPer7d": 1
+    },
+    "assetClass": "watches"
+  },
+  {
+    "amountUsd": 27683.26,
+    "amountAed": 101701.92,
+    "timestampUtc": "2026-02-16T11:04:00.000Z",
+    "paymentMethod": "trade",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 53,
+    "jurisdiction": "AE",
+    "customerBaseline": {
+      "meanAmount": 12525.95,
+      "stdAmount": 535.75,
+      "txnPer7d": 5
+    }
+  },
+  {
+    "amountUsd": 56330.64,
+    "amountAed": 206945.77,
+    "timestampUtc": "2026-04-11T14:01:00.000Z",
+    "paymentMethod": "wire",
+    "counterpartyFirstSeen": false,
+    "countryRiskScore": 51,
+    "jurisdiction": "UAE",
+    "customerBaseline": {
+      "meanAmount": 5426.97,
+      "stdAmount": 3749.32,
+      "txnPer7d": 5
+    },
+    "assetClass": "silver"
+  }
+]

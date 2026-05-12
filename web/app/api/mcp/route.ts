@@ -12,6 +12,7 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import { getToolLevel } from "@/lib/mcp/tool-manifest";
 import type { ConsequenceLevel } from "@/lib/mcp/tool-manifest";
+import { getSanctionsHealth, GATE_BLOCKED_TOOLS } from "@/lib/mcp/sanctions-gate";
 import type { McpLogEntry } from "@/app/api/operator/logs/route";
 
 import { enforce } from "@/lib/server/enforce";
@@ -785,15 +786,24 @@ const TOOLS: ToolDef[] = [
   },
   {
     name: "audit_trail",
-    description: "Retrieve the HMAC-signed immutable audit trail for a screening or case.",
+    description: "Retrieve the HMAC-signed immutable audit trail for a screening or case. Omit screeningId to return the 10 most recent trail records.",
     inputSchema: {
       type: "object",
       properties: {
-        screeningId: { type: "string" },
+        screeningId: { type: "string", description: "Specific screening ID to retrieve. Omit to return 10 most recent records." },
       },
     },
     handler: async ({ screeningId }) => {
-      if (!screeningId) return { ok: false, error: "screeningId is required — provide the ID from a prior screening run." };
+      // When no screeningId provided, call without it — the view route returns all entries,
+      // which we slice to the 10 most recent for the MCP response.
+      if (!screeningId) {
+        const result = await callApi("/api/audit/view", "GET") as Record<string, unknown> | null;
+        if (!result || !(result as Record<string, unknown>).ok) return result;
+        const entries = Array.isArray((result as Record<string, unknown>).entries)
+          ? ((result as Record<string, unknown>).entries as unknown[]).slice(-10)
+          : [];
+        return { ...result, entries, note: "Showing 10 most recent audit records. Provide screeningId for a specific case." };
+      }
       return callApi("/api/audit/view", "GET", undefined, { screeningId: String(screeningId) });
     },
   },
@@ -936,6 +946,39 @@ async function dispatch(msg: {
         isError: true,
       });
       return err(id, -32004, `Request blocked: potential prompt injection detected in input field "${injectedField}".`);
+    }
+
+    // Sanctions gate (ADD-01): block screening tools when critical lists are missing.
+    if (GATE_BLOCKED_TOOLS.has(toolName)) {
+      const health = await getSanctionsHealth();
+      if (!health.listsVerified) {
+        return ok(id, {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({
+                ok: false,
+                errorCode: "LISTS_MISSING",
+                errorType: "data_integrity",
+                tool: toolName,
+                message:
+                  "Screening blocked: one or more critical sanctions lists are not loaded. " +
+                  "Run `sanctions_status` to diagnose, then trigger a list refresh. " +
+                  "No compliance decision may be based on results from a degraded screening engine.",
+                missingLists: health.missingCritical,
+                missingAll: health.missingAll,
+                _governance: {
+                  humanReviewRequired: true,
+                  reviewNote:
+                    "FDL No. 10/2025 Art. 15: AI-generated screening results are invalid when the underlying data corpus is incomplete.",
+                },
+                checkedAt: health.checkedAt,
+              }, null, 2),
+            },
+          ],
+          isError: true,
+        });
+      }
     }
 
     // Anomaly detection (Control 21.08)

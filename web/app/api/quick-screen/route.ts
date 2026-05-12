@@ -128,13 +128,43 @@ export async function POST(req: Request): Promise<NextResponse> {
       );
       if (candidates.length === 0) {
         // Empty corpus means CLEAR would be returned for every subject — that
-        // is a safety failure. Fail loudly so the caller knows to retry.
-        return respond(503, { ok: false, error: "Sanctions lists not yet loaded — system initialising. Retry in 60 seconds.", detail: "no valid candidates loaded" }, gateHeaders);
+        // is a safety failure. Return a structured LISTS_MISSING error.
+        return respond(503, {
+          ok: false,
+          error: "LISTS_MISSING",
+          missingLists: ["ofac_sdn", "un_consolidated", "eu_fsf", "uk_ofsi", "uae_eocn", "uae_ltl"],
+          degraded: true,
+          message: "Screening cannot proceed: one or more required sanctions lists are not loaded. Run sanctions refresh and retry.",
+        } as QuickScreenResponse & { missingLists: string[]; degraded: boolean; message: string }, gateHeaders);
+      }
+
+      // Verify that the two most critical lists (OFAC SDN and UN Consolidated) are
+      // represented in the loaded corpus. If both are absent it means the cron has
+      // not run yet and only the static seed is present — block to prevent false CLEARs.
+      const loadedListIds = new Set(candidates.map((c) => c.listId));
+      const criticalLists = ["ofac_sdn", "un_consolidated"] as const;
+      const missingCritical = criticalLists.filter((id) => !loadedListIds.has(id));
+      if (missingCritical.length === criticalLists.length) {
+        // Neither critical list is present — refuse to screen.
+        return respond(503, {
+          ok: false,
+          error: "LISTS_MISSING",
+          missingLists: missingCritical,
+          degraded: true,
+          message: "Screening cannot proceed: one or more required sanctions lists are not loaded. Run sanctions refresh and retry.",
+        } as QuickScreenResponse & { missingLists: string[]; degraded: boolean; message: string }, gateHeaders);
       }
     } catch (err) {
       const detail = err instanceof Error ? err.message : String(err);
       console.error("[quick-screen] loadCandidates failed", detail);
-      return respond(503, { ok: false, error: "watchlist corpus unavailable", detail }, gateHeaders);
+      return respond(503, {
+        ok: false,
+        error: "LISTS_MISSING",
+        missingLists: ["ofac_sdn", "un_consolidated"],
+        degraded: true,
+        message: "Screening cannot proceed: watchlist corpus unavailable. Run sanctions refresh and retry.",
+        detail,
+      } as QuickScreenResponse & { missingLists: string[]; degraded: boolean; message: string; detail: string }, gateHeaders);
     }
   }
 

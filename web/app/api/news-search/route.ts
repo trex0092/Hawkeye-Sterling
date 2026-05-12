@@ -110,6 +110,8 @@ interface NewsResponse {
   articles: Article[];
   source: "google-news-rss" | "newsapi";
   languages: string[];
+  fetchMode: "live" | "cached" | "static_fallback";
+  fetchedAt: string;
 }
 
 function severityOrder(s: Article["severity"]): number {
@@ -345,7 +347,7 @@ function clusterArticles(articles: Article[]): Article[] {
   });
 }
 
-function emptyResponse(q: string): NewsResponse {
+function emptyResponse(q: string, fetchMode: NewsResponse["fetchMode"] = "live"): NewsResponse {
   return {
     ok: true,
     subject: q,
@@ -356,6 +358,8 @@ function emptyResponse(q: string): NewsResponse {
     articles: [],
     source: "google-news-rss",
     languages: [],
+    fetchMode,
+    fetchedAt: new Date().toISOString(),
   };
 }
 
@@ -390,6 +394,19 @@ export async function GET(req: Request): Promise<NextResponse> {
   // facing panel — surfacing "server 502" / "news fetch failed" to an
   // MLRO is worse than surfacing zero articles with the neutral
   // "No articles found" empty state.
+
+  // GOOGLE_NEWS_RSS_ENABLED can be set to "false" to disable live RSS fetches
+  // (e.g. during testing or when rate-limited). Defaults to enabled.
+  const rssEnabled = process.env["GOOGLE_NEWS_RSS_ENABLED"] !== "false";
+  const fetchedAt = new Date().toISOString();
+
+  if (!rssEnabled) {
+    return NextResponse.json(
+      { ...emptyResponse(q, "static_fallback"), fetchedAt },
+      { headers: gateHeaders },
+    );
+  }
+
   try {
     // Build a variant set (transliterated, phonetic, corp-suffix-stripped)
     // so foreign-script and alias mentions still match.
@@ -459,6 +476,8 @@ export async function GET(req: Request): Promise<NextResponse> {
       articles: parsed,
       source: "google-news-rss",
       languages: langCoverage,
+      fetchMode: "live",
+      fetchedAt,
     };
     return NextResponse.json(payload, { headers: gateHeaders });
   } catch (err) {
@@ -471,7 +490,7 @@ export async function GET(req: Request): Promise<NextResponse> {
       "Returning empty dossier; investigate variantsOf / keyword classification.",
       err,
     );
-    return NextResponse.json(emptyResponse(q), { headers: gateHeaders });
+    return NextResponse.json({ ...emptyResponse(q, "static_fallback"), fetchedAt }, { headers: gateHeaders });
   }
 }
 
