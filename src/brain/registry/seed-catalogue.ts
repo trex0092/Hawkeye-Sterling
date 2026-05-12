@@ -66,7 +66,7 @@ const FDL_10_2025_ARTICLES: Array<{ n: number; topic: string; tags: SubjectTag[]
   { n: 39, topic: 'Aggravating factors', tags: ['general'] },
   { n: 40, topic: 'Penalties — natural and legal persons', tags: ['general'] },
   { n: 41, topic: 'Recidivism', tags: ['general'] },
-  { n: 42, topic: 'Repeal of FDL 20/2018 — transitional provisions', tags: ['general'] },
+  { n: 42, topic: 'Repeal of FDL No. 20/2018 by FDL No.10/2025 — transitional provisions', tags: ['general'] },
 ];
 
 function fdl10_2025Shells(): ChunkInput[] {

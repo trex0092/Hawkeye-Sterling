@@ -167,7 +167,7 @@ export const STANDARD_POLICIES: Record<string, PolicyReference> = {
   FATF_R12: { policyId: 'FATF_R12', policyName: 'FATF Recommendation 12 — PEPs' },
   FATF_R20: { policyId: 'FATF_R20', policyName: 'FATF Recommendation 20 — Reporting of Suspicious Transactions' },
   FATF_R21: { policyId: 'FATF_R21', policyName: 'FATF Recommendation 21 — Tipping-Off and Confidentiality' },
-  UAE_FDL20: { policyId: 'UAE_FDL20', policyName: 'UAE Federal Decree-Law No. 20 of 2018', jurisdiction: 'AE' },
+  UAE_FDL10_2025: { policyId: 'UAE_FDL10_2025', policyName: 'Federal Decree-Law No. 10 of 2025 on AML/CFT/CPF', jurisdiction: 'AE' },
   UAE_CD74: { policyId: 'UAE_CD74', policyName: 'UAE Cabinet Decision No. 74 of 2020', jurisdiction: 'AE' },
   CBUAE_STD: { policyId: 'CBUAE_STD', policyName: 'CBUAE AML-CFT Standards', jurisdiction: 'AE' },
 };

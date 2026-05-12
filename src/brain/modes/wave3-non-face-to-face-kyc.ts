@@ -1,7 +1,7 @@
 // Hawkeye Sterling — wave-3 mode: non_face_to_face_kyc_anomaly
 // Detects insufficient verification on remote / non-face-to-face
 // onboarding. Anchors: FATF R.10 (CDD) · UAE FDL 10/2025 Art.10 ·
-// Cabinet Res 10/2019.
+// CR No.134/2025.
 
 import type { BrainContext, FacultyId, Finding, ReasoningCategory, Verdict } from '../types.js';
 
@@ -67,7 +67,7 @@ export const nonFaceToFaceKycApply = async (ctx: BrainContext): Promise<Finding>
     category: 'identity_fraud' as ReasoningCategory,
     faculties: ['data_analysis', 'forensic_accounting'] satisfies FacultyId[],
     score, confidence: hits.length === 0 ? 0.4 : Math.min(0.9, 0.5 + 0.05 * hits.length), verdict,
-    rationale: `${hits.length} non-F2F-KYC signal(s) over ${records.length} record(s). ${hits.slice(0, 6).map((h) => `${h.id}=${h.weight.toFixed(2)}`).join('; ')}. Anchors: FATF R.10 · UAE FDL 10/2025 Art.10 · Cabinet Res 10/2019.`,
+    rationale: `${hits.length} non-F2F-KYC signal(s) over ${records.length} record(s). ${hits.slice(0, 6).map((h) => `${h.id}=${h.weight.toFixed(2)}`).join('; ')}. Anchors: FATF R.10 · UAE FDL 10/2025 Art.10 · CR No.134/2025.`,
     evidence: hits.slice(0, 8).map((h) => h.evidence),
     producedAt: Date.now(),
   };

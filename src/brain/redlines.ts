@@ -49,7 +49,7 @@ export const REDLINES: Redline[] = [
     precondition: 'Tipping-off guard returns any high-severity match on outbound communication.',
     action: 'block',
     playbookId: 'pb_tipping_off_risk',
-    regulatoryAnchor: 'FDL 20/2018 Art.25',
+    regulatoryAnchor: 'FDL No.10/2025 Art.25',
     severity: 'critical',
   },
   {
@@ -107,7 +107,7 @@ export const REDLINES: Redline[] = [
     label: 'STR / goAML filing deadline exceeded without submission',
     precondition: 'Case status = "reportable" for > 24 hours and goAML submission has not been completed.',
     action: 'escalate_immediately',
-    regulatoryAnchor: 'FDL 20/2018 Art.15; Cabinet Resolution 10/2019',
+    regulatoryAnchor: 'FDL No.10/2025 Art.15; CR No.134/2025',
     severity: 'critical',
   },
   {
@@ -116,7 +116,7 @@ export const REDLINES: Redline[] = [
     precondition: 'Subject classified as PEP or PEP-RCA and EDD package is absent or > 12 months stale.',
     action: 'escalate_immediately',
     playbookId: 'pb_high_risk_customer',
-    regulatoryAnchor: 'FDL 20/2018 Art.14; Wolfsberg FAQ',
+    regulatoryAnchor: 'FDL No.10/2025 Art.14; Wolfsberg FAQ',
     severity: 'high',
   },
   {
@@ -124,7 +124,7 @@ export const REDLINES: Redline[] = [
     label: 'KYC/EDD expired > 12 months on active high-risk account',
     precondition: 'Account risk tier = HIGH and last full CDD review completed > 12 months ago.',
     action: 'escalate_immediately',
-    regulatoryAnchor: 'FDL 20/2018 Art.14; CBUAE Guidance 2023',
+    regulatoryAnchor: 'FDL No.10/2025 Art.14; CBUAE Guidance 2023',
     severity: 'high',
   },
   {
@@ -132,7 +132,7 @@ export const REDLINES: Redline[] = [
     label: 'UBO not identified above 25% threshold for entity relationship',
     precondition: 'Legal-entity subject with relationship value > AED 500k and no UBO declared above 25% ownership threshold.',
     action: 'do_not_onboard',
-    regulatoryAnchor: 'FDL 20/2018 Art.12; CBUAE AML Guidance',
+    regulatoryAnchor: 'FDL No.10/2025 Art.12; CBUAE AML Guidance',
     severity: 'high',
   },
   {
@@ -140,7 +140,7 @@ export const REDLINES: Redline[] = [
     label: 'CDD / transaction records destroyed before mandatory 5-year retention period',
     precondition: 'Record deletion event detected before the mandatory 5-year retention period has elapsed from relationship end or transaction date.',
     action: 'block',
-    regulatoryAnchor: 'FDL 20/2018 Art.24; FDL 45/2021 (PDPL)',
+    regulatoryAnchor: 'FDL No.10/2025 Art.24; FDL 45/2021 (PDPL)',
     severity: 'high',
   },
   {
@@ -180,7 +180,7 @@ export const REDLINES: Redline[] = [
     label: 'goAML system unavailable with STR deadline within 24 hours',
     precondition: 'goAML API or portal returns connectivity error and at least one pending STR filing has a statutory deadline within 24 hours.',
     action: 'escalate_immediately',
-    regulatoryAnchor: 'FDL 20/2018 Art.15; UAEFIU goAML TM v2',
+    regulatoryAnchor: 'FDL No.10/2025 Art.15; UAEFIU goAML TM v2',
     severity: 'critical',
   },
   // ── Wave 6 extended redlines ─────────────────────────────────────────────
@@ -206,7 +206,7 @@ export const REDLINES: Redline[] = [
     precondition: 'Entity is classified as NPO and no programme-level EDD (including geographic programme risk assessment) is on file or is more than 12 months stale.',
     action: 'escalate_immediately',
     playbookId: 'pb_high_risk_customer',
-    regulatoryAnchor: 'FATF R.8; FDL 20/2018 Art.14',
+    regulatoryAnchor: 'FATF R.8; FDL No.10/2025 Art.14',
     severity: 'high',
   },
   {
@@ -230,7 +230,7 @@ export const REDLINES: Redline[] = [
     label: 'Tax crime predicate offence detected without proactive disclosure',
     precondition: 'Transaction pattern is consistent with a tax-crime predicate offence (VAT carousel, undisclosed offshore account, or aggressive profit shifting) and no proactive regulatory disclosure has been initiated within 5 business days.',
     action: 'escalate_immediately',
-    regulatoryAnchor: 'FATF R.3; FDL 20/2018 Art.2; OECD BEPS Action 12',
+    regulatoryAnchor: 'FATF R.3; FDL No.10/2025 Art.2; OECD BEPS Action 12',
     severity: 'high',
   },
   {
@@ -246,7 +246,7 @@ export const REDLINES: Redline[] = [
     label: 'Shell bank identified in correspondent chain',
     precondition: 'Correspondent relationship review identifies a respondent or nested institution with no physical presence in any jurisdiction and not affiliated with a regulated group — i.e. a shell bank.',
     action: 'exit_relationship',
-    regulatoryAnchor: 'FATF R.13; FDL 20/2018 Art.17; Basel CDD Paper',
+    regulatoryAnchor: 'FATF R.13; FDL No.10/2025 Art.17; Basel CDD Paper',
     severity: 'critical',
   },
   {
@@ -270,7 +270,7 @@ export const REDLINES: Redline[] = [
     label: 'Human trafficking proceeds suspected without STR in SLA',
     precondition: 'Two or more human trafficking red-flag indicators fire on a case and no STR filing has been initiated within the 24-hour statutory window.',
     action: 'escalate_immediately',
-    regulatoryAnchor: 'FDL 20/2018 Art.15; FATF R.3; UN Palermo Protocol',
+    regulatoryAnchor: 'FDL No.10/2025 Art.15; FATF R.3; UN Palermo Protocol',
     severity: 'critical',
   },
   {
@@ -278,7 +278,7 @@ export const REDLINES: Redline[] = [
     label: 'PEP transaction processed without MLRO sign-off',
     precondition: 'A transaction involving a confirmed PEP or PEP-RCA is processed through the payments system without a recorded MLRO sign-off on that specific transaction.',
     action: 'block',
-    regulatoryAnchor: 'FDL 20/2018 Art.14; Wolfsberg PEP FAQ; CBUAE Guidance 2023',
+    regulatoryAnchor: 'FDL No.10/2025 Art.14; Wolfsberg PEP FAQ; CBUAE Guidance 2023',
     severity: 'high',
   },
   // ── Wave 7 redlines — common sense gates, data quality, and challenger integrity ──
@@ -287,7 +287,7 @@ export const REDLINES: Redline[] = [
     label: 'Narrative fails basic plausibility bounds — temporal, financial, or geographic',
     precondition: 'The subject\'s declared business narrative, source of wealth, or transaction rationale fails one or more plausibility bounds (temporal impossibility, financial implausibility versus declared scale, geographic irrationality) and no alternative explanation is documented.',
     action: 'escalate_immediately',
-    regulatoryAnchor: 'Charter P10 (insufficient information); FDL 20/2018 Art.12',
+    regulatoryAnchor: 'Charter P10 (insufficient information); FDL No.10/2025 Art.12',
     severity: 'high',
   },
   {
@@ -312,7 +312,7 @@ export const REDLINES: Redline[] = [
     label: 'KYC document scoring ≥2 deepfake indicators not referred for forensic review',
     precondition: 'A submitted KYC document returns ≥2 deepfake or document-fraud indicators (EXIF anomaly, GAN artefacts, MRZ checksum failure, font inconsistency, metadata mismatch) and the case has not been escalated for forensic document examination before any onboarding decision proceeds.',
     action: 'do_not_onboard',
-    regulatoryAnchor: 'FDL 20/2018 Art.12; CBUAE AML Guidance 2023; FATF R.10',
+    regulatoryAnchor: 'FDL No.10/2025 Art.12; CBUAE AML Guidance 2023; FATF R.10',
     severity: 'critical',
   },
   {
@@ -320,7 +320,7 @@ export const REDLINES: Redline[] = [
     label: 'UBO chain has a verified break and EDD not initiated within 24 hours',
     precondition: 'A beneficial-ownership chain walk identifies a layer where the legal owner cannot be confirmed (nominee indicators, missing registry data, jurisdiction with no disclosure obligation) and no EDD has been initiated within 24 hours of identifying the break.',
     action: 'escalate_immediately',
-    regulatoryAnchor: 'FATF R.24/25; FDL 20/2018 Art.12; UAE Companies Law Federal Decree-Law No. 32/2021 Art.24',
+    regulatoryAnchor: 'FATF R.24/25; FDL No.10/2025 Art.12; UAE Companies Law Federal Decree-Law No. 32/2021 Art.24',
     severity: 'high',
   },
   {
@@ -328,7 +328,7 @@ export const REDLINES: Redline[] = [
     label: 'Economically irrational structure documented but not escalated',
     precondition: 'The economic rationality test identifies a structure or transaction whose cost, complexity, or routing is materially inconsistent with the declared legitimate purpose — i.e., a rational legitimate actor would not choose this arrangement — and the finding has not triggered an EDD request or MLRO escalation.',
     action: 'escalate_immediately',
-    regulatoryAnchor: 'Charter P9 (opaque risk methodology); FDL 20/2018 Art.14; FATF R.10',
+    regulatoryAnchor: 'Charter P9 (opaque risk methodology); FDL No.10/2025 Art.14; FATF R.10',
     severity: 'high',
   },
   // ── Wave 8 redlines — game theory, mechanism design, and strategic rationality gates ──
@@ -337,7 +337,7 @@ export const REDLINES: Redline[] = [
     label: 'Synthetic identity detected but onboarding not blocked',
     precondition: 'KYC analysis returns ≥2 synthetic-identity indicators (real-attribute / fabricated-attribute mix, AI-generated documentation, Emirates ID number mismatch with ICP registry response) and the subject has been onboarded or a relationship has been approved without MLRO sign-off on the synthetic-identity finding.',
     action: 'do_not_onboard',
-    regulatoryAnchor: 'FDL 20/2018 Art.12; CBUAE AML Guidance 2023; FATF R.10',
+    regulatoryAnchor: 'FDL No.10/2025 Art.12; CBUAE AML Guidance 2023; FATF R.10',
     severity: 'critical',
   },
   {
@@ -354,7 +354,7 @@ export const REDLINES: Redline[] = [
     label: 'Structure achieves regulatory opacity by mechanism design across ≥2 jurisdictions',
     precondition: 'Mechanism design audit (mc.mechanism-design-audit) identifies a cross-jurisdictional structure that systematically places the UBO outside every applicable regulatory perimeter and routes transactions below reporting thresholds in each jurisdiction — achieving opacity as a systematic engineering outcome, not incidentally — and no legitimate business rationale has been established for the structure.',
     action: 'block',
-    regulatoryAnchor: 'FATF R.24/25 (beneficial ownership); FDL 20/2018 Art.12; FATF R.10 INR.10(b)',
+    regulatoryAnchor: 'FATF R.24/25 (beneficial ownership); FDL No.10/2025 Art.12; FATF R.10 INR.10(b)',
     severity: 'critical',
   },
   {
@@ -362,7 +362,7 @@ export const REDLINES: Redline[] = [
     label: 'Subject compliance commitment deemed not credible and risk tier maintained at LOW',
     precondition: 'The commitment-credibility test (mc.commitment-credibility-test) returns LOW credibility for a subject\'s remediation plan, compliance undertaking, or cooperation representation — because the commitment is unverifiable, the subject lacks an enforcement mechanism, or the subject has a history of non-performance — yet the overall risk tier has been set to LOW in reliance on that commitment.',
     action: 'escalate_immediately',
-    regulatoryAnchor: 'Charter P9 (opaque risk scoring); FDL 20/2018 Art.14; CBUAE Guidance 2023',
+    regulatoryAnchor: 'Charter P9 (opaque risk scoring); FDL No.10/2025 Art.14; CBUAE Guidance 2023',
     severity: 'high',
   },
   {

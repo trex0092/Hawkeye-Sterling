@@ -290,7 +290,7 @@ export default function MoeSurveyPage() {
                       <Toggle checked={survey.cnmrProcedure} onChange={(v) => update({ cnmrProcedure: v })} label="CNMR filing procedure documented (5-business-day deadline)" />
                       <Toggle checked={survey.dpmsrProcedure} onChange={(v) => update({ dpmsrProcedure: v })} label="DPMSR AED 55,000 threshold procedure documented (CR134/2025)" />
                       <Toggle checked={survey.boVerificationProcedure} onChange={(v) => update({ boVerificationProcedure: v })} label="Beneficial Ownership (BO) verification procedure documented (CD10/2019 Art.5)" />
-                      <Toggle checked={survey.recordRetention5Year} onChange={(v) => update({ recordRetention5Year: v })} label="5-year minimum record retention confirmed (FDL 20/2018 Art.22)" />
+                      <Toggle checked={survey.recordRetention5Year} onChange={(v) => update({ recordRetention5Year: v })} label="10-year minimum record retention confirmed (FDL No.10/2025 Art.19)" />
                     </div>
                   </>
                 )}
@@ -485,7 +485,7 @@ export default function MoeSurveyPage() {
                 {sec.id === "internal-audit" && (
                   <>
                     <div className="bg-amber-dim border border-amber/20 rounded p-3 text-11 text-ink-1 mb-2">
-                      <strong>FDL 20/2018 Art.20</strong> requires periodic independent AML/CFT review. MoE inspectors will ask for the last audit report, findings, and board sign-off.
+                      <strong>FDL No.10/2025 Art.20</strong> requires periodic independent AML/CFT review. MoE inspectors will ask for the last audit report, findings, and board sign-off.
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div><FieldLabel>Last AML/CFT audit date</FieldLabel>
@@ -536,7 +536,7 @@ export default function MoeSurveyPage() {
                           <option value="annually">Annually</option>
                         </select></div>
                     </div>
-                    <Toggle checked={survey.whistleblowerChannelExists} onChange={(v) => update({ whistleblowerChannelExists: v })} label="Whistleblower / internal reporting channel exists — staff can report concerns without fear of retaliation (FDL 20/2018 Art.24)" />
+                    <Toggle checked={survey.whistleblowerChannelExists} onChange={(v) => update({ whistleblowerChannelExists: v })} label="Whistleblower / internal reporting channel exists — staff can report concerns without fear of retaliation (FDL No.10/2025 Art.24)" />
                   </>
                 )}
 

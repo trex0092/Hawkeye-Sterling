@@ -68,10 +68,10 @@ const HEDGE_SAFE_LABEL = /(forward[- ]looking|counterfactual|hypothetical|predic
 // A citation is anything that names a recognisable instrument followed by an
 // article / section / recommendation / paragraph reference.
 const CITATION_PATTERNS: RegExp[] = [
-  // FDL 20/2018 Art.16 / FDL No. 20 of 2018 Art.16(2)
+  // FDL No.10/2025 Art.16
   /\bFDL\s*(?:No\.?\s*)?\d+\s*\/\s*\d{4}\s*Art\.?\s*\d+/i,
   /\bFederal\s+Decree[- ]Law\s+(?:No\.?\s*)?\d+\s+of\s+\d{4}\b/i,
-  // Cabinet Decision 10/2019 Art.6
+  // CR No.134/2025 Art.6
   /\bCabinet\s+(?:Decision|Resolution)\s*(?:No\.?\s*)?\d+\s*(?:\/|of)\s*\d{4}\b/i,
   // FATF R.10 / FATF Rec 10 / FATF Recommendation 10 / R.16 INR.16
   /\bFATF\s+(?:R\.?|Rec\.?|Recommendation)\s*\d+/i,

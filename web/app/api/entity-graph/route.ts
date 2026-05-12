@@ -415,6 +415,10 @@ export async function POST(req: Request): Promise<NextResponse> {
       {
         ...UAE_DPMS_FALLBACK,
         subject: companyName,
+        // MANDATORY FABRICATION WARNING — must be the first field checked by callers.
+        // No real registry API is connected; all data below is a static illustrative
+        // example and MUST NOT be used for any compliance decision.
+        simulationWarning: "⚠ DATA IS SIMULATED — NO REAL REGISTRY API IS CONNECTED. DO NOT USE THIS OUTPUT FOR ANY COMPLIANCE DECISION. Source: internal fallback dataset. Not verified against any live corporate registry.",
         coverageHint: `No corporate registry data found for "${companyName}"${body.jurisdiction ? ` in ${body.jurisdiction}` : ""}. Configure UAE_DED_API_KEY (UAE DED), SAYARI_API_KEY (commercial UBO), or DNB_API_KEY (D&B) for fuller coverage.`,
       },
       { status: 200, headers: CORS },

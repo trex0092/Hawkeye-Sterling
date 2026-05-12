@@ -17,7 +17,7 @@ export interface CommonSenseRule {
 
 export const COMMON_SENSE_RULES: readonly CommonSenseRule[] = [
   // ── CDD ────────────────────────────────────────────────────────────────
-  { id: 'cs_cdd_01', topic: 'cdd', rule: 'Verify natural-person identity with primary photo-ID + proof of address dated within 90 days; copies must show full document.', doctrineAnchor: 'UAE FDL 20/2018 Art.6' },
+  { id: 'cs_cdd_01', topic: 'cdd', rule: 'Verify natural-person identity with primary photo-ID + proof of address dated within 90 days; copies must show full document.', doctrineAnchor: 'FDL No.10/2025 Art.10' },
   { id: 'cs_cdd_02', topic: 'cdd', rule: 'For legal persons, walk the ownership chain to natural persons holding ≥25% control; if you stop at another legal person, the file is incomplete.', doctrineAnchor: 'UAE Cabinet Resolution 58/2020' },
   { id: 'cs_cdd_03', topic: 'cdd', rule: 'Risk-rate every customer at onboarding and re-rate on triggers (relationship change, adverse media, sanctions update); never skip the rating step.', doctrineAnchor: 'FATF R.10 INR.10' },
   { id: 'cs_cdd_04', topic: 'cdd', rule: 'Capture purpose-and-intended-nature of relationship in the customer\'s own words; vague answers ("personal use", "business") trigger follow-up.', doctrineAnchor: 'FATF R.10' },
@@ -26,9 +26,9 @@ export const COMMON_SENSE_RULES: readonly CommonSenseRule[] = [
   // ── EDD ────────────────────────────────────────────────────────────────
   { id: 'cs_edd_01', topic: 'edd', rule: 'EDD is mandatory for high-risk customers, PEPs, complex/unusual transactions, and CAHRA-domiciled relationships — not optional even with senior approval.', doctrineAnchor: 'FATF R.10 INR.10(b), R.12, R.19' },
   { id: 'cs_edd_02', topic: 'edd', rule: 'Source-of-wealth and source-of-funds must be evidenced (bank statements, sale deed, tax filing, employment contract) — verbal declarations alone are insufficient.', doctrineAnchor: 'FATF R.12 INR.12' },
-  { id: 'cs_edd_03', topic: 'edd', rule: 'Senior-management approval (not branch manager) is required to establish or continue any high-risk business relationship.', doctrineAnchor: 'FATF R.12, FDL 20/2018 Art.10' },
+  { id: 'cs_edd_03', topic: 'edd', rule: 'Senior-management approval (not branch manager) is required to establish or continue any high-risk business relationship.', doctrineAnchor: 'FATF R.12, FDL No.10/2025 Art.10' },
   { id: 'cs_edd_04', topic: 'edd', rule: 'Apply enhanced ongoing monitoring with shorter review cycles (max 12 months for high-risk; quarterly for PEP) and tighter alert thresholds.', doctrineAnchor: 'FATF R.10 INR.10(d)' },
-  { id: 'cs_edd_05', topic: 'edd', rule: 'EDD findings must be documented in a memo signed by the MLRO, retained for 5 years, and reviewable on FIU request.', doctrineAnchor: 'FATF R.11; UAE FDL 20/2018 Art.16' },
+  { id: 'cs_edd_05', topic: 'edd', rule: 'EDD findings must be documented in a memo signed by the MLRO, retained for 5 years, and reviewable on FIU request.', doctrineAnchor: 'FATF R.11; UAE FDL No.10/2025 Art.16' },
 
   // ── Ongoing monitoring ────────────────────────────────────────────────
   { id: 'cs_om_01', topic: 'ongoing_monitoring', rule: 'Transaction monitoring must compare actual against expected behaviour; rules-only systems without anomaly detection are insufficient at scale.', doctrineAnchor: 'FATF R.10 INR.10(d)' },
@@ -76,7 +76,7 @@ export const COMMON_SENSE_RULES: readonly CommonSenseRule[] = [
   { id: 'cs_sanc_01', topic: 'sanctions_screening', rule: 'Screen at onboarding, on every transaction, and on every sanctions-list update; partial sweeps are non-compliant under UAE TFS regime.', doctrineAnchor: 'UAE Cabinet Decision 74/2020' },
   { id: 'cs_sanc_02', topic: 'sanctions_screening', rule: 'Screen against UN Consolidated, OFAC SDN, EU Consolidated, UK OFSI, and UAE EOCN at minimum; add jurisdiction-specific lists where exposed.', doctrineAnchor: 'UNSCR 1267/1988; UAE CD 74/2020' },
   { id: 'cs_sanc_03', topic: 'sanctions_screening', rule: 'Apply the OFAC 50%-Rule: aggregate ownership across multiple SDNs in the same entity counts; Russia/EU sectoral controls have different mechanics.', doctrineAnchor: 'OFAC FAQ 401; EU Reg 269/2014, 833/2014' },
-  { id: 'cs_sanc_04', topic: 'sanctions_screening', rule: 'On a possible match: freeze + notify regulator within 24 hours under FDL 20/2018; do NOT tip off the customer.', doctrineAnchor: 'UAE FDL 20/2018 Art.21; UAE CD 74/2020' },
+  { id: 'cs_sanc_04', topic: 'sanctions_screening', rule: 'On a possible match: freeze + notify regulator within 24 hours under FDL No.10/2025; do NOT tip off the customer.', doctrineAnchor: 'UAE FDL No.10/2025 Art.22; UAE CD 74/2020' },
   { id: 'cs_sanc_05', topic: 'sanctions_screening', rule: 'False-positive disposition requires documented match-key analysis (DOB, ID, nationality) and second-pair-of-eyes review.', doctrineAnchor: 'Wolfsberg Sanctions Screening Guidance' },
 
   // ── Adverse media ─────────────────────────────────────────────────────
@@ -87,21 +87,21 @@ export const COMMON_SENSE_RULES: readonly CommonSenseRule[] = [
   { id: 'cs_am_05', topic: 'adverse_media', rule: 'Document MLRO disposition for every material adverse-media hit (clear / EDD / decline / exit) with rationale and sources cited.', doctrineAnchor: 'FATF R.11' },
 
   // ── STR / SAR filing ──────────────────────────────────────────────────
-  { id: 'cs_str_01', topic: 'str_sar_filing', rule: 'STR filing duty triggers on reasonable suspicion of ML/TF — not certainty, not "proof beyond doubt"; under-filing breaches FDL 20/2018 Art.16.', doctrineAnchor: 'UAE FDL 20/2018 Art.16; FATF R.20' },
+  { id: 'cs_str_01', topic: 'str_sar_filing', rule: 'STR filing duty triggers on reasonable suspicion of ML/TF — not certainty, not "proof beyond doubt"; under-filing breaches FDL No.10/2025 Art.16.', doctrineAnchor: 'UAE FDL No.10/2025 Art.16; FATF R.20' },
   { id: 'cs_str_02', topic: 'str_sar_filing', rule: 'File via goAML within the regulator\'s window (UAE: without delay; some jurisdictions: 35 calendar days max). Document the trigger date.', doctrineAnchor: 'UAE FDL 10/2025 Art.26-27' },
   { id: 'cs_str_03', topic: 'str_sar_filing', rule: 'STRs are fact-only: dates, transactions, parties, indicators. No legal conclusions, no ethical labels, no allegation-to-finding upgrades.', doctrineAnchor: 'UAE FIU goAML Filing Manual' },
   { id: 'cs_str_04', topic: 'str_sar_filing', rule: 'STR drafting must be by trained personnel, MLRO-reviewed, and four-eyes signed off before submission.', doctrineAnchor: 'FATF R.18' },
   { id: 'cs_str_05', topic: 'str_sar_filing', rule: 'Continuing-activity STRs every 90 days while the relationship and suspicion persist; do not file once and forget.', doctrineAnchor: 'FATF R.20 INR.20' },
 
   // ── Recordkeeping ─────────────────────────────────────────────────────
-  { id: 'cs_rk_01', topic: 'recordkeeping', rule: 'Retain CDD, transaction, and STR records for 5 years from end-of-relationship or transaction date — UAE extends to 10 years for some categories.', doctrineAnchor: 'UAE FDL 20/2018 Art.17; UAE FDL 10/2025' },
+  { id: 'cs_rk_01', topic: 'recordkeeping', rule: 'Retain CDD, transaction, and STR records for 5 years from end-of-relationship or transaction date — UAE extends to 10 years for some categories.', doctrineAnchor: 'UAE FDL No.10/2025 Art.19; UAE FDL 10/2025' },
   { id: 'cs_rk_02', topic: 'recordkeeping', rule: 'Records must reconstruct the transaction sufficiently to support investigation; partial records (no narrative, no parties) are non-compliant.', doctrineAnchor: 'FATF R.11' },
   { id: 'cs_rk_03', topic: 'recordkeeping', rule: 'STR records and ancillary investigation files retain even longer (10 years) and survive customer-exit, GDPR-erasure requests, and migration.', doctrineAnchor: 'GDPR Art.17(3)(b); UAE PDPL FDL 45/2021' },
   { id: 'cs_rk_04', topic: 'recordkeeping', rule: 'Electronic recordkeeping must support legal admissibility: tamper-evidence, access audit trail, integrity hash.', doctrineAnchor: 'ISO 15489; UAE Cabinet Resolution 16/2021' },
   { id: 'cs_rk_05', topic: 'recordkeeping', rule: 'Record-destruction outside the retention window is itself a compliance event — document the disposal authorisation and method.', doctrineAnchor: 'UAE FDL 10/2025 retention rules' },
 
   // ── Training ──────────────────────────────────────────────────────────
-  { id: 'cs_tr_01', topic: 'training', rule: 'AML training is mandatory at onboarding and at least annually; role-specific (front office, ops, compliance) — generic training is insufficient.', doctrineAnchor: 'FATF R.18; UAE FDL 20/2018 Art.16' },
+  { id: 'cs_tr_01', topic: 'training', rule: 'AML training is mandatory at onboarding and at least annually; role-specific (front office, ops, compliance) — generic training is insufficient.', doctrineAnchor: 'FATF R.18; UAE FDL No.10/2025 Art.16' },
   { id: 'cs_tr_02', topic: 'training', rule: 'Track training completion and assessment scores; non-completion is a personal compliance breach for the employee and a control failure for the firm.', doctrineAnchor: 'FATF R.18' },
   { id: 'cs_tr_03', topic: 'training', rule: 'Refresh training when laws change (e.g. UAE FDL 10/2025) within 60 days; new-regulation knowledge cannot wait for the annual cycle.', doctrineAnchor: 'UAE MoE DNFBP Circular 4/2025' },
   { id: 'cs_tr_04', topic: 'training', rule: 'Senior management and Board members require dedicated AML training tailored to oversight responsibilities — operational training does not satisfy.', doctrineAnchor: 'FATF R.18; Wolfsberg AML Principles' },
@@ -109,7 +109,7 @@ export const COMMON_SENSE_RULES: readonly CommonSenseRule[] = [
 
   // ── Governance ────────────────────────────────────────────────────────
   { id: 'cs_gov_01', topic: 'governance', rule: 'AML governance follows the three lines of defence: business owns risk, compliance/MLRO oversees, internal audit assures — never collapse two into one.', doctrineAnchor: 'IIA Three Lines Model 2020' },
-  { id: 'cs_gov_02', topic: 'governance', rule: 'MLRO must report independently to the Board (or Audit Committee) at least quarterly; reporting via the CEO is a structural conflict.', doctrineAnchor: 'FATF R.18; UAE FDL 20/2018 Art.16' },
+  { id: 'cs_gov_02', topic: 'governance', rule: 'MLRO must report independently to the Board (or Audit Committee) at least quarterly; reporting via the CEO is a structural conflict.', doctrineAnchor: 'FATF R.18; UAE FDL No.10/2025 Art.16' },
   { id: 'cs_gov_03', topic: 'governance', rule: 'Approve AML policy at Board level annually; updates in-cycle for material regulatory change must be Board-noted within 60 days.', doctrineAnchor: 'COSO ERM 2017' },
   { id: 'cs_gov_04', topic: 'governance', rule: 'Key Risk Indicators must be reported to the Board with thresholds and trend analysis; raw counts without context are not governance-grade reporting.', doctrineAnchor: 'ISO 31000; COSO ERM' },
   { id: 'cs_gov_05', topic: 'governance', rule: 'Policy exceptions are themselves a control point: log every exception, name the approver, set a sunset, and report frequency to the Board.', doctrineAnchor: 'Wolfsberg AML Principles' },
@@ -154,7 +154,7 @@ export const COMMON_SENSE_RULES: readonly CommonSenseRule[] = [
   { id: 'cs_str2_02', topic: 'structuring', rule: 'Pattern of deposits clustered just below CTR / cash thresholds is structuring per se — file STR; do not request the customer "explain".', doctrineAnchor: 'UAE Cabinet Decision 10/2019' },
   { id: 'cs_str2_03', topic: 'structuring', rule: 'Smurfing: multiple low-tier customers funding one consolidator account triggers network analysis and STR on all participants.', doctrineAnchor: 'FATF Methodology IO.4' },
   { id: 'cs_str2_04', topic: 'structuring', rule: 'Cuckoo smurfing: legitimate beneficiary expecting wire receives offsetting cash deposits — verify originator and freeze pending check.', doctrineAnchor: 'FATF Cuckoo Smurfing Typology' },
-  { id: 'cs_str2_05', topic: 'structuring', rule: 'Threshold-avoidance behaviour persists despite RFI → relationship exit + STR; do not "explain" the threshold to the customer.', doctrineAnchor: 'UAE FDL 20/2018 Art.16' },
+  { id: 'cs_str2_05', topic: 'structuring', rule: 'Threshold-avoidance behaviour persists despite RFI → relationship exit + STR; do not "explain" the threshold to the customer.', doctrineAnchor: 'UAE FDL No.10/2025 Art.16' },
 
   // ── NPO risk ──────────────────────────────────────────────────────────
   { id: 'cs_npo_01', topic: 'npo_risk', rule: 'NPO sector requires risk-based oversight per FATF R.8 — not blanket EDD on all charities, but targeted on high-risk segments.', doctrineAnchor: 'FATF R.8 INR.8' },
@@ -188,25 +188,25 @@ export const COMMON_SENSE_RULES: readonly CommonSenseRule[] = [
   { id: 'cs_ra_01', topic: 'risk_appetite', rule: 'Risk appetite must be Board-approved, quantified per customer / product / geography segment, and reviewed annually.', doctrineAnchor: 'COSO ERM 2017; ISO 31000' },
   { id: 'cs_ra_02', topic: 'risk_appetite', rule: 'Out-of-appetite relationships require explicit documented Board or delegated-committee approval — never line-management exception.', doctrineAnchor: 'COSO ERM 2017' },
   { id: 'cs_ra_03', topic: 'risk_appetite', rule: 'Track residual risk vs appetite by segment; persistent breach triggers de-risking plan or appetite recalibration with rationale.', doctrineAnchor: 'ISO 31000; FATF R.1 INR.1' },
-  { id: 'cs_ra_04', topic: 'risk_appetite', rule: 'Appetite for sanctions and TF risk is structurally zero; "low" appetite is non-compliant — these risks must be eliminated, not tolerated.', doctrineAnchor: 'UAE FDL 20/2018; UNSCR 1267' },
+  { id: 'cs_ra_04', topic: 'risk_appetite', rule: 'Appetite for sanctions and TF risk is structurally zero; "low" appetite is non-compliant — these risks must be eliminated, not tolerated.', doctrineAnchor: 'FDL No.10/2025; UNSCR 1267' },
   { id: 'cs_ra_05', topic: 'risk_appetite', rule: 'KRI breaches are reported to the Board within the cycle they occur; "wait for the next quarterly report" is not adequate governance.', doctrineAnchor: 'COSO ERM 2017' },
 
   // ── Tipping-off guard ─────────────────────────────────────────────────
-  { id: 'cs_to_01', topic: 'tipping_off_guard', rule: 'Tipping-off prohibition covers any communication that could alert the subject to an investigation or STR — direct, indirect, or by inference.', doctrineAnchor: 'UAE FDL 20/2018 Art.18; FATF R.21' },
-  { id: 'cs_to_02', topic: 'tipping_off_guard', rule: 'Customer requests for KYC documents during an active STR must use neutral language — no implication of investigation, no acknowledgement.', doctrineAnchor: 'UAE FDL 20/2018 Art.18' },
+  { id: 'cs_to_01', topic: 'tipping_off_guard', rule: 'Tipping-off prohibition covers any communication that could alert the subject to an investigation or STR — direct, indirect, or by inference.', doctrineAnchor: 'UAE FDL No.10/2025 Art.25; FATF R.21' },
+  { id: 'cs_to_02', topic: 'tipping_off_guard', rule: 'Customer requests for KYC documents during an active STR must use neutral language — no implication of investigation, no acknowledgement.', doctrineAnchor: 'UAE FDL No.10/2025 Art.25' },
   { id: 'cs_to_03', topic: 'tipping_off_guard', rule: 'Account closure rationale during an active STR is "commercial reasons" — never "we cannot continue due to compliance concerns".', doctrineAnchor: 'UAE FIU goAML guidance' },
   { id: 'cs_to_04', topic: 'tipping_off_guard', rule: 'Internal disclosure of STR is on a strict need-to-know basis; relationship managers, frontline, and operations staff outside the loop.', doctrineAnchor: 'FATF R.21; Wolfsberg AML Principles' },
-  { id: 'cs_to_05', topic: 'tipping_off_guard', rule: 'External professional advice (legal, audit) requires legally-privileged channels; ad-hoc consultations risk inadvertent tipping-off.', doctrineAnchor: 'UAE FDL 20/2018 Art.18' },
+  { id: 'cs_to_05', topic: 'tipping_off_guard', rule: 'External professional advice (legal, audit) requires legally-privileged channels; ad-hoc consultations risk inadvertent tipping-off.', doctrineAnchor: 'UAE FDL No.10/2025 Art.25' },
 
   // ── Regulatory reporting ──────────────────────────────────────────────
   { id: 'cs_reg_01', topic: 'regulatory_reporting', rule: 'goAML STRs, EOCN annual return, sanctions blocking reports, and Board AML reports each have distinct windows — track separately.', doctrineAnchor: 'UAE FDL 10/2025; CD 74/2020; CD 10/2019' },
-  { id: 'cs_reg_02', topic: 'regulatory_reporting', rule: 'FIU information requests (RFIs) must be answered within the stated window; non-response is a strict-liability breach.', doctrineAnchor: 'UAE FDL 20/2018 Art.16; FATF R.29' },
+  { id: 'cs_reg_02', topic: 'regulatory_reporting', rule: 'FIU information requests (RFIs) must be answered within the stated window; non-response is a strict-liability breach.', doctrineAnchor: 'UAE FDL No.10/2025 Art.16; FATF R.29' },
   { id: 'cs_reg_03', topic: 'regulatory_reporting', rule: 'Cross-border transmission of regulatory reports requires authorised channel (Egmont, MLAT, MoU); informal sharing breaches data-protection law.', doctrineAnchor: 'Egmont Group; UAE PDPL FDL 45/2021' },
   { id: 'cs_reg_04', topic: 'regulatory_reporting', rule: 'Maintain a regulatory-correspondence log with traceable acknowledgements; lost or unacknowledged filings expose the firm to enforcement.', doctrineAnchor: 'FATF R.11; UAE MoE DNFBP supervision' },
   { id: 'cs_reg_05', topic: 'regulatory_reporting', rule: 'Material errors in prior filings require corrective filing within the FIU window — concealment compounds the original breach.', doctrineAnchor: 'UAE FIU goAML Filing Manual' },
 
   // ── Audit / examination ───────────────────────────────────────────────
-  { id: 'cs_aud_01', topic: 'audit_examination', rule: 'Independent AML audit at least every 24 months; high-risk firms annually. Internal audit must be independent of MLRO and compliance.', doctrineAnchor: 'FATF R.18; UAE FDL 20/2018 Art.16' },
+  { id: 'cs_aud_01', topic: 'audit_examination', rule: 'Independent AML audit at least every 24 months; high-risk firms annually. Internal audit must be independent of MLRO and compliance.', doctrineAnchor: 'FATF R.18; UAE FDL No.10/2025 Art.16' },
   { id: 'cs_aud_02', topic: 'audit_examination', rule: 'Regulatory examination preparation: maintain CDD, transaction, STR, and training files in audit-ready form at all times — not assembled on examiner request.', doctrineAnchor: 'FATF Methodology IO.4' },
   { id: 'cs_aud_03', topic: 'audit_examination', rule: 'Audit findings tracker: every finding has owner, deadline, action, and verification step. Closed-without-evidence is a finding in itself.', doctrineAnchor: 'IIA Standards 2017' },
   { id: 'cs_aud_04', topic: 'audit_examination', rule: 'Privileged information during examination requires legal-privilege handling protocol; default-share is a confidentiality breach.', doctrineAnchor: 'UAE PDPL FDL 45/2021; legal privilege doctrine' },
@@ -230,7 +230,7 @@ export const COMMON_SENSE_RULES: readonly CommonSenseRule[] = [
   { id: 'cs_dfk_01', topic: 'deepfake_kyc', rule: 'Onboarding liveness must meet ISO/IEC 30107-3 Level 2 (PAD) at minimum; Level 1 is bypassable with consumer-grade deepfakes.', doctrineAnchor: 'ISO/IEC 30107-3' },
   { id: 'cs_dfk_02', topic: 'deepfake_kyc', rule: 'Inject randomised challenges (head turn, blink count, smile) into the liveness flow; static head-on capture is the canonical deepfake bypass.', doctrineAnchor: 'NIST FRTE/SP 800-63 IAL' },
   { id: 'cs_dfk_03', topic: 'deepfake_kyc', rule: 'Detect virtual-camera injection attacks at the device layer (driver-level enumeration, signed-attestation); browser-side detection alone is insufficient.', doctrineAnchor: 'FIDO Alliance Face Verification Certification' },
-  { id: 'cs_dfk_04', topic: 'deepfake_kyc', rule: 'Confirmed deepfake KYC → file STR, retain biometric capture under legal hold, notify shared fraud bureau (HUNTER / SIRA), do not reuse the captured selfie elsewhere.', doctrineAnchor: 'UAE FDL 20/2018 Art.16' },
+  { id: 'cs_dfk_04', topic: 'deepfake_kyc', rule: 'Confirmed deepfake KYC → file STR, retain biometric capture under legal hold, notify shared fraud bureau (HUNTER / SIRA), do not reuse the captured selfie elsewhere.', doctrineAnchor: 'UAE FDL No.10/2025 Art.16' },
   { id: 'cs_dfk_05', topic: 'deepfake_kyc', rule: 'Vendor PAD providers must publish FRR/FAR/APCER metrics from independent testing (NIST, iBeta) — internal claims alone do not satisfy regulator expectations.', doctrineAnchor: 'iBeta Level 2 PAD certification' },
 
   // ── Fintech BaaS ──────────────────────────────────────────────────────

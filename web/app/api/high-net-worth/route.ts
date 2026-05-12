@@ -38,7 +38,7 @@ const FALLBACK: HnwRiskResult = {
     "Signed SOW declaration with supporting documentary evidence for each income stream",
   ],
   ongoingMonitoringPlan:
-    "Monthly automated TM review. Quarterly relationship review by Compliance. Annual EDD refresh. PEP re-screening on each adverse political event. CBUAE high-value customer reporting per Cabinet Decision 10/2019.",
+    "Monthly automated TM review. Quarterly relationship review by Compliance. Annual EDD refresh. PEP re-screening on each adverse political event. CBUAE high-value customer reporting per CR No.134/2025.",
   regulatoryBasis:
     "FATF R.10 (CDD), R.12 (PEP), UAE FDL 10/2025 Art.11, CBUAE AML Standards §3.4 (high-risk customers)",
 };

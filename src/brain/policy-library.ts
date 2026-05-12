@@ -15,7 +15,7 @@ export interface Policy {
 }
 
 export const POLICIES: Policy[] = [
-  { id: 'pol_aml_programme', title: 'AML / CFT / CPF Programme', owner: 'mlro', reviewMonths: 12, approvedBy: 'board', anchors: ['FDL 20/2018', 'FDL 10/2025', 'CD 10/2019', 'CR 134/2025'] },
+  { id: 'pol_aml_programme', title: 'AML / CFT / CPF Programme', owner: 'mlro', reviewMonths: 12, approvedBy: 'board', anchors: ['FDL No.10/2025', 'CR No.134/2025'] },
   { id: 'pol_cdd_edd', title: 'CDD / EDD Standard', owner: 'mlro', reviewMonths: 12, approvedBy: 'senior_management', anchors: ['FATF R.10/12/19', 'Wolfsberg FAQ'] },
   { id: 'pol_sanctions', title: 'Sanctions Screening + TFS', owner: 'mlro', reviewMonths: 12, approvedBy: 'board', anchors: ['CR 74/2020', 'UN 1267 et al.'] },
   { id: 'pol_transaction_monitoring', title: 'Transaction-Monitoring Rules + Thresholds', owner: 'mlro', reviewMonths: 12, approvedBy: 'senior_management', anchors: ['FATF RBA'] },

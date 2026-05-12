@@ -748,7 +748,7 @@ export const WAVE12_MODES: ReasoningMode[] = [
   // Record-keeping standard
   m('record_keeping_standard_reasoning', 'Record-Keeping Standard Reasoning', 'governance',
     ['ratiocination'],
-    'Reason over which record-keeping obligations apply (FATF R.11 5y; FDL 20/2018 Art.16 5y; Travel Rule originator-beneficiary set; PDPL retention limits) and detect gaps in the supplied evidence pack.',
+    'Reason over which record-keeping obligations apply (FATF R.11; FDL No.10/2025 Art.19 10-year retention; Travel Rule originator-beneficiary set; PDPL retention limits) and detect gaps in the supplied evidence pack.',
     applyRecordKeepingStandardReasoning,
   ),
 
@@ -769,7 +769,7 @@ export const WAVE12_MODES: ReasoningMode[] = [
   // Tipping-off analysis
   m('tipping_off_analysis', 'Tipping-Off Analysis', 'governance',
     ['introspection', 'argumentation'],
-    'Analyse outbound communications for tipping-off risk per FDL 20/2018 Art.25: explicit references to STR/SAR filings, hints of escalation, or any disclosure that would prejudice an investigation.',
+    'Analyse outbound communications for tipping-off risk per FDL No.10/2025 Art.25: explicit references to STR/SAR filings, hints of escalation, or any disclosure that would prejudice an investigation.',
     applyTippingOffAnalysis,
   ),
 

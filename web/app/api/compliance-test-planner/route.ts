@@ -42,7 +42,7 @@ const FALLBACK: ComplianceTestPlanResult = {
       sampleSize: "Full population review of all cash transactions in a 30-day sample period",
       frequency: "Quarterly",
       outputRequired: "CTR reconciliation report showing: total qualifying transactions, CTR filing rate (%), missed filings identified, timeliness analysis, and structuring pattern analysis with any suspicious findings escalated to MLRO",
-      legalBasis: "UAE FDL 10/2025 Art.17 (CTR obligation); Cabinet Decision 10/2019 (AED 55,000 threshold); goAML CTR filing requirements",
+      legalBasis: "UAE FDL 10/2025 Art.17 (CTR obligation); MoE Circular 2/2024 (AED 55,000 threshold); goAML CTR filing requirements",
     },
     {
       testId: "CT-2026-03",

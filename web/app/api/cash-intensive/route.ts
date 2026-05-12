@@ -46,7 +46,7 @@ const FALLBACK: CashIntensiveResult = {
     "CBUAE notification if aggregate suspicious cash exceeds AED 500K/month",
   ],
   regulatoryBasis:
-    "MoE Circular 2/2024 (DPMS AED 55K), UAE FDL 10/2025 Art.19, Cabinet Decision 10/2019 (CTR), FATF R.29 (cash couriers)",
+    "MoE Circular 2/2024 (DPMS AED 55K), UAE FDL 10/2025 Art.19, CR No.134/2025 (CTR), FATF R.29 (cash couriers)",
 };
 
 export async function POST(req: Request) {

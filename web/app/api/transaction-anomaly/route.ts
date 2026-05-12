@@ -73,11 +73,68 @@ interface TransactionPayload {
     txnPer7d?: number;
   };
   features?: AnomalyFeatureVector;
+  // DPMS compliance fields — used for rule-based override layer
+  paymentMethod?: "cash" | "wire" | "card" | "crypto" | "cheque" | "other";
+  assetClass?: "gold" | "silver" | "platinum" | "diamonds" | "precious_stones" | "jewellery" | "watches" | "other";
 }
 
 interface AnomalyRequestBody {
   transaction: TransactionPayload;
   sessionId?: string;
+}
+
+// AED/USD exchange rate for threshold conversion.
+// AED 55,000 mandatory CDD threshold (MoE Circular 2/2024) ≈ USD 14,985.
+const AED_55K_IN_USD = 14_985;
+
+// Precious metals and stones asset classes that trigger DPMS rules.
+const PRECIOUS_ASSET_CLASSES = new Set(["gold", "silver", "platinum", "diamonds", "precious_stones", "jewellery", "watches"]);
+
+/** Rule-based compliance override layer applied AFTER the ML score.
+ *  Implements hard floors mandated by UAE DPMS regulations:
+ *  - MoE Circular 2/2024: cash transactions ≥ AED 55,000 require CDD → flag minimum
+ *  - Cash payment for precious metals: documented ML red flag → add driver
+ *  - Round-number amounts: structuring signal → add driver
+ *  Returns updated { score, tier, drivers } — never downgrades an ML verdict. */
+function applyDpmsRules(
+  result: { score: number; tier: AnomalyTier; drivers: string[] },
+  tx: TransactionPayload,
+): { score: number; tier: AnomalyTier; drivers: string[] } {
+  const drivers = [...result.drivers];
+  let { score, tier } = result;
+
+  const isCash = tx.paymentMethod === "cash";
+  const isPrecious = tx.assetClass !== undefined && PRECIOUS_ASSET_CLASSES.has(tx.assetClass);
+  const aboveThreshold = tx.amountUsd >= AED_55K_IN_USD;
+  const isRound = tx.amountUsd > 3_000 && tx.amountUsd % 1_000 === 0;
+
+  if (isCash && isPrecious) {
+    if (!drivers.includes("cashPreciousMetals")) {
+      drivers.push("cashPreciousMetals");
+    }
+    // Cash gold/silver/precious stones is a documented ML red flag under UAE DPMS.
+    // Minimum tier is "flag"; never "pass" for this combination.
+    if (tier === "pass") { tier = "flag"; score = Math.max(score, 0.76); }
+  }
+
+  if (isCash && aboveThreshold) {
+    if (!drivers.includes("cashAboveAed55kThreshold")) {
+      drivers.push("cashAboveAed55kThreshold"); // MoE Circular 2/2024 mandatory CDD trigger
+    }
+    if (tier === "pass") { tier = "flag"; score = Math.max(score, 0.76); }
+  }
+
+  if (isRound && !drivers.includes("isRoundAmount")) {
+    drivers.push("isRoundAmount"); // Structuring signal — threshold avoidance indicator
+  }
+
+  // If score > 0.5 but drivers is still empty, add a generic high-score driver
+  // so operators can see why the transaction was elevated.
+  if (score > 0.5 && drivers.length === 0) {
+    drivers.push("mlAnomalyScore");
+  }
+
+  return { score, tier, drivers };
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
@@ -111,7 +168,11 @@ export async function POST(req: Request): Promise<NextResponse> {
     timestampUtc: tx.timestampUtc,
   });
 
-  const result = streamingGate.scoreAndUpdate(features);
+  const mlResult = streamingGate.scoreAndUpdate(features);
+
+  // Apply rule-based DPMS compliance override (cash threshold, precious metals,
+  // round-amount structuring signals) on top of the ML score.
+  const result = applyDpmsRules(mlResult, tx);
 
   // Persist flag/hold results to Blob storage so the transaction-monitor
   // cron can pick them up, run typology matching, and open cases.
@@ -143,8 +204,8 @@ export async function POST(req: Request): Promise<NextResponse> {
       tier: result.tier,
       drivers: result.drivers,
       detail: {
-        hstScore: result.hstScore,
-        zScore: result.zScore,
+        hstScore: mlResult.hstScore,
+        zScore: mlResult.zScore,
         features,
       },
     },
