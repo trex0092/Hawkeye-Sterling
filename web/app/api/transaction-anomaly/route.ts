@@ -16,7 +16,7 @@ import {
   StreamingAnomalyGate,
   extractFeatures,
 } from "../../../../dist/src/brain/streaming-anomaly.js";
-import type { AnomalyFeatureVector } from "../../../../dist/src/brain/streaming-anomaly.js";
+import type { AnomalyFeatureVector, AnomalyTier } from "../../../../dist/src/brain/streaming-anomaly.js";
 
 export interface TxnFlagRecord {
   flagId: string;
