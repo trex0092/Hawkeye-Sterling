@@ -304,7 +304,7 @@ async function checkGdelt(): Promise<Check> {
       return { degraded: false as const };
     } catch (err) {
       const isTimeout = err instanceof Error && (err.name === "AbortError" || err.message.includes("aborted"));
-      if (isTimeout) return { degraded: true as const, note: "GDELT timeout (>20s)" };
+      if (isTimeout) return { degraded: true as const, note: "GDELT timeout (>10s)" };
       throw err;
     } finally {
       clearTimeout(t);
