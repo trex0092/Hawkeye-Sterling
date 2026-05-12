@@ -580,6 +580,87 @@ function uaeDedAdapter(): CountryAdapter {
   };
 }
 
+// ── UAE: DIFC Companies Registry — free public search ───────────────
+// DIFC (Dubai International Financial Centre) entity search via
+// OpenCorporates free tier, filtered to DIFC jurisdiction.
+function uaeDifcAdapter(): CountryAdapter {
+  return {
+    jurisdiction: "AE",
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({
+          q: subjectName,
+          jurisdiction_code: "ae_difc",
+          per_page: String(Math.min(opts?.limit ?? 25, 30)),
+        });
+        const res = await abortable(
+          fetch(`https://api.opencorporates.com/v0.4/companies/search?${params.toString()}`, {
+            headers: { accept: "application/json", "user-agent": "HawkeyeSterling/1.0" },
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as { results?: { companies?: Array<{ company?: { name?: string; company_number?: string; current_status?: string; incorporation_date?: string } }> } };
+        return (json.results?.companies ?? [])
+          .map((c) => c.company)
+          .filter((c): c is NonNullable<typeof c> => !!c?.name)
+          .map((c) => ({
+            source: "uae-difc",
+            name: c.name!,
+            jurisdiction: "AE",
+            ...(c.company_number ? { registrationNumber: c.company_number } : {}),
+            ...(c.current_status ? { status: c.current_status } : {}),
+            ...(c.incorporation_date ? { incorporationDate: c.incorporation_date } : {}),
+            url: `https://www.difc.ae/business/companies/`,
+          } satisfies RegistryRecord));
+      } catch (err) {
+        console.warn("[uae-difc] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// ── UAE: ADGM Companies Register — free public search ───────────────
+// ADGM (Abu Dhabi Global Market) entities via OpenCorporates free tier.
+function uaeAdgmAdapter(): CountryAdapter {
+  return {
+    jurisdiction: "AE",
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({
+          q: subjectName,
+          jurisdiction_code: "ae_adgm",
+          per_page: String(Math.min(opts?.limit ?? 25, 30)),
+        });
+        const res = await abortable(
+          fetch(`https://api.opencorporates.com/v0.4/companies/search?${params.toString()}`, {
+            headers: { accept: "application/json", "user-agent": "HawkeyeSterling/1.0" },
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as { results?: { companies?: Array<{ company?: { name?: string; company_number?: string; current_status?: string; incorporation_date?: string } }> } };
+        return (json.results?.companies ?? [])
+          .map((c) => c.company)
+          .filter((c): c is NonNullable<typeof c> => !!c?.name)
+          .map((c) => ({
+            source: "uae-adgm",
+            name: c.name!,
+            jurisdiction: "AE",
+            ...(c.company_number ? { registrationNumber: c.company_number } : {}),
+            ...(c.current_status ? { status: c.current_status } : {}),
+            ...(c.incorporation_date ? { incorporationDate: c.incorporation_date } : {}),
+            url: `https://www.adgm.com/business/companies/`,
+          } satisfies RegistryRecord));
+      } catch (err) {
+        console.warn("[uae-adgm] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
 // ─────────────────────────────────────────────────────────────────────
 // LATIN AMERICA
 // ─────────────────────────────────────────────────────────────────────
@@ -1027,6 +1108,8 @@ const COUNTRY_ADAPTERS: Array<() => CountryAdapter> = [
   fcaRegisterAdapter, zefixAdapter, kvkAdapter, bronnoysundAdapter, cvrAdapter,
   ytjAdapter, nzCompaniesAdapter, abrAdapter, acraAdapter, hkCompaniesAdapter,
   croIeAdapter, deBundesanzeigerAdapter, inseeAdapter, inMcaAdapter, uaeDedAdapter,
+  // UAE free registries (DIFC + ADGM via OpenCorporates)
+  uaeDifcAdapter, uaeAdgmAdapter,
   // Latin America
   brReceitaAdapter, mxSatAdapter, arIgjAdapter, coRuesAdapter, clSiiAdapter, peSunatAdapter,
   // East Asia
@@ -1044,6 +1127,22 @@ const COUNTRY_ADAPTERS: Array<() => CountryAdapter> = [
 /** All configured country adapters whose env keys are present. */
 export function activeCountryRegistryAdapters(): CountryAdapter[] {
   return COUNTRY_ADAPTERS.map((f) => f()).filter((a) => a.isAvailable());
+}
+
+/**
+ * Post-filter: require that the returned company name shares ≥75% of the
+ * query's meaningful tokens (length ≥ 4). This prevents generic registries
+ * (e.g. Brønnøysund) from flooding results with loosely-matched entities
+ * when searching common English words like "Test Subject".
+ */
+function isRegistryRelevant(queryName: string, resultName: string): boolean {
+  const normalize = (s: string) =>
+    s.toLowerCase().replace(/[^a-z0-9]/g, " ").replace(/\s+/g, " ").trim();
+  const queryTokens = normalize(queryName).split(" ").filter((t) => t.length >= 4);
+  if (queryTokens.length === 0) return true; // no meaningful tokens → pass all
+  const resultNorm = normalize(resultName);
+  const matched = queryTokens.filter((t) => resultNorm.includes(t)).length;
+  return matched / queryTokens.length >= 0.75;
 }
 
 /**
@@ -1066,9 +1165,11 @@ export async function searchCountryRegistries(
     return [];
   })));
   const merged = results.flat();
+  // Relevance filter: only include records with meaningful name similarity
+  const relevant = merged.filter((r) => isRegistryRelevant(subjectName, r.name));
   // Dedupe by (source, name, regNo)
   const seen = new Set<string>();
-  const records = merged.filter((r) => {
+  const records = relevant.filter((r) => {
     const k = `${r.source}|${r.name.toLowerCase()}|${r.registrationNumber ?? ""}`;
     if (seen.has(k)) return false;
     seen.add(k);
