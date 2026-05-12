@@ -21,7 +21,8 @@
 //   filesets/<bucket>/<id>.json  → raw fileset metadata
 //   files/<bucket>/<fileId>.dat  → raw file content
 
-import type { Config } from '@netlify/functions';
+// Inline type — @netlify/functions is not a root dependency.
+type Config = { schedule?: string; path?: string };
 import { getStore } from '@netlify/blobs';
 import {
   getPackages,
@@ -69,7 +70,7 @@ async function getCheckpoint(
   bucket: string,
 ): Promise<string | null> {
   try {
-    return await store.get(`checkpoint/${bucket}`) ?? null;
+    return await store.get(`checkpoint/${bucket}`, { type: 'text' }) ?? null;
   } catch {
     return null;
   }
