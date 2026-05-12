@@ -21,8 +21,7 @@
 //   filesets/<bucket>/<id>.json  → raw fileset metadata
 //   files/<bucket>/<fileId>.dat  → raw file content
 
-// Inline type — @netlify/functions is not a root dependency.
-type Config = { schedule?: string; path?: string };
+import type { Config } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
 import {
   getPackages,

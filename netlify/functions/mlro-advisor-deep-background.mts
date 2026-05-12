@@ -34,7 +34,7 @@ interface Body {
   jobId?: string;
   question?: string;
   mode?: "balanced" | "multi_perspective";
-  audience?: "regulator" | "operator" | "internal";
+  audience?: "regulator" | "mlro" | "board";
   budgetMs?: number;
 }
 
