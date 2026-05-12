@@ -13,15 +13,11 @@
 import type { SourceAdapter, NormalisedEntity } from '../types.js';
 import { mkListing } from '../types.js';
 import { readFile } from 'node:fs/promises';
-import { resolve, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { resolve } from 'node:path';
 import { sha256Hex } from '../fetch-util.js';
 
 // Resolve the project root from this file's location (src/ingestion/sources/ → ../../..)
-const _dir = typeof __dirname !== 'undefined'
-  ? __dirname
-  : dirname(fileURLToPath(import.meta.url));
-const PROJECT_ROOT = resolve(_dir, '..', '..', '..');
+const PROJECT_ROOT = resolve(__dirname, '..', '..', '..');
 
 const DEFAULT_PATHS: Record<string, string> = {
   UAE_EOCN_SEED_PATH: resolve(PROJECT_ROOT, 'data', 'eocn_seed.json'),
