@@ -11,12 +11,56 @@ import { enforce } from "@/lib/server/enforce";
 
 const CORS: Record<string, string> = {
   "access-control-allow-origin": process.env["NEXT_PUBLIC_APP_URL"] ?? "https://hawkeye-sterling.netlify.app",
-  "access-control-allow-methods": "POST, OPTIONS",
+  "access-control-allow-methods": "GET, POST, OPTIONS",
   "access-control-allow-headers": "content-type, authorization, x-api-key",
 };
 
 export async function OPTIONS(): Promise<NextResponse> {
   return new NextResponse(null, { status: 204, headers: CORS });
+}
+
+export async function GET(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
+  const { searchParams } = new URL(req.url);
+  const lei = searchParams.get("lei")?.trim();
+  const legalName = searchParams.get("legalName")?.trim() ?? searchParams.get("name")?.trim();
+  if (!lei && !legalName) {
+    return NextResponse.json(
+      { ok: false, error: "Provide ?lei=<20-char LEI> or ?legalName=<name>" },
+      { status: 400, headers: CORS },
+    );
+  }
+  if (lei) {
+    if (lei.length !== 20) {
+      return NextResponse.json({ ok: false, error: "LEI must be exactly 20 characters" }, { status: 400, headers: CORS });
+    }
+    const record = await fetchLeiRecord(lei);
+    if (record) return NextResponse.json(record, { status: 200, headers: CORS });
+    return NextResponse.json({ ok: false, error: "GLEIF API temporarily unreachable — please retry.", degraded: true }, { status: 503, headers: CORS });
+  }
+  const matches = await searchByName(legalName!);
+  if (matches.length === 0) {
+    return NextResponse.json({ ok: false, error: "No LEI found for that name", degraded: true }, { status: 404, headers: CORS });
+  }
+  const topMatch = matches[0]!;
+  if (topMatch.lei) {
+    const record = await fetchLeiRecord(topMatch.lei);
+    if (record) return NextResponse.json(record, { status: 200, headers: CORS });
+  }
+  const minimal: LeiLookupResult = {
+    ok: true,
+    lei: topMatch.lei || "N/A",
+    legalName: topMatch.legalName,
+    jurisdiction: topMatch.jurisdiction,
+    legalForm: "Unknown",
+    status: (topMatch.status as LeiLookupResult["status"]) || "ISSUED",
+    registrationStatus: topMatch.status || "ISSUED",
+    headquartersAddress: "Not available",
+    registeredAddress: "Not available",
+    lastUpdated: new Date().toISOString(),
+  };
+  return NextResponse.json(minimal, { status: 200, headers: CORS });
 }
 
 export interface LeiLookupResult {

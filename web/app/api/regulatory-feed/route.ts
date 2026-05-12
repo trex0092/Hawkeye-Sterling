@@ -65,9 +65,11 @@ const CACHE_KEY = "__hsRegulatoryFeedCache";
 const CACHE_TTL_MS = 30 * 60_000; // 30 minutes
 
 const FETCH_TIMEOUT_MS = 5_000;
-// GDELT free API p95 is routinely 10-14s — give it a separate, longer budget
-// while keeping the aggressive 5s timeout for the faster RSS/XML sources.
-const GDELT_FETCH_TIMEOUT_MS = 18_000;
+// GDELT free API p95 is routinely 10-14s. Cap at 8s here (vs 18s before) so
+// the regulatory-feed route (maxDuration=30s) stays safely under budget when
+// multiple GDELT queries run concurrently. GDELT failures degrade gracefully
+// to the RSS/XML sources which have their own 5s timeout.
+const GDELT_FETCH_TIMEOUT_MS = 8_000;
 
 function mkAbort(ms: number): { signal: AbortSignal; clear: () => void } {
   const ctrl = new AbortController();

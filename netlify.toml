@@ -14,14 +14,14 @@
   # exit identifies the step that failed. Each step's exit code is also
   # echoed so a non-zero from a piped command is visible. `set -o pipefail`
   # ensures pipe failures (not just final command) propagate.
-  command = "set -eo pipefail; echo '>>> HS-STEP-1 npm ci root' && npm ci --include=dev && echo '>>> HS-STEP-1 ok' && echo '>>> HS-STEP-2 tsc root' && npm run build && echo '>>> HS-STEP-2 ok' && echo '>>> HS-STEP-3 weaponize' && node scripts/gen-weaponized-brain.cjs && echo '>>> HS-STEP-3 ok' && echo '>>> HS-STEP-4 cd web && npm ci' && cd web && npm ci --include=dev && echo '>>> HS-STEP-4 ok' && echo '>>> HS-STEP-4b patch-als' && node ../scripts/patch-als.cjs && echo '>>> HS-STEP-4b ok' && echo '>>> HS-STEP-4c patch-runtime-snapshot' && node ../scripts/patch-runtime-snapshot.cjs && echo '>>> HS-STEP-4c ok' && echo '>>> HS-STEP-5 clear .next' && rm -rf .next && echo '>>> HS-STEP-5 ok' && echo '>>> HS-STEP-6 next build' && npm run build && echo '>>> HS-STEP-6 ok >>> HS-STEP-DONE'"
+  command = "set -eo pipefail; echo '>>> HS-STEP-1 npm ci root' && npm ci --include=dev && echo '>>> HS-STEP-1 ok' && echo '>>> HS-STEP-2 tsc root' && npm run build && echo '>>> HS-STEP-2 ok' && echo '>>> HS-STEP-3 weaponize' && node scripts/gen-weaponized-brain.cjs && echo '>>> HS-STEP-3 ok' && echo '>>> HS-STEP-4 cd web && npm ci' && cd web && npm ci --include=dev && echo '>>> HS-STEP-4 ok' && echo '>>> HS-STEP-4b patch-als' && node ../scripts/patch-als.cjs && echo '>>> HS-STEP-4b ok' && echo '>>> HS-STEP-4c patch-runtime-snapshot' && node ../scripts/patch-runtime-snapshot.cjs && echo '>>> HS-STEP-4c ok' && echo '>>> HS-STEP-5 clear .next' && rm -rf .next && echo '>>> HS-STEP-5 ok' && echo '>>> HS-STEP-6 next build' && NEXT_PUBLIC_COMMIT_SHA=$COMMIT_REF npm run build && echo '>>> HS-STEP-6 ok >>> HS-STEP-DONE'"
   publish = "web/.next"
 
 [build.environment]
   NODE_VERSION = "22"
-  # Bake the real commit SHA into the Next.js build so MCP commitRef shows
-  # the actual SHA instead of the branch name (COMMIT_REF is branch name at runtime).
-  NEXT_PUBLIC_COMMIT_REF = "$COMMIT_REF"
+  # NEXT_PUBLIC_COMMIT_SHA is injected via the build command (NEXT_PUBLIC_COMMIT_SHA=$COMMIT_REF npm run build)
+  # because TOML [build.environment] values are NOT shell-expanded — "$COMMIT_REF" would be
+  # stored as the literal 7-char string, making .slice(0,7) return "$COMMIT".
   # Exclude LSEG credential env vars from Netlify secrets scanning so that
   # any incidental appearance of credentials in build logs or docs doesn't
   # block the deploy.  The actual values are never committed to source.

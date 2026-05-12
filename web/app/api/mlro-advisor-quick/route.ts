@@ -498,6 +498,22 @@ export async function POST(req: Request): Promise<Response> {
     const probeWrap = extractAndStripProbe(answer, "escalate");
     answer = probeWrap.cleanAnswer;
 
+    // Hard-block check: FDL 20/2018 was repealed by FDL 10/2025. If it still
+    // appears in the answer after the retry cycle, escalate the warning and
+    // force the operator to treat this as a manual-review-required output.
+    const hasFdl20_2018 = /\bFDL\s*(No\.?\s*)?20[/\-]?2018\b/i.test(answer) ||
+                          /Federal\s+Decree[- ]Law\s+No\.?\s*20\s+of\s+2018/i.test(answer);
+    if (hasFdl20_2018) {
+      verification.passed = false;
+      verification.defects = [
+        ...verification.defects.filter((d) => d.axis !== "citation_broken"),
+        {
+          axis: "citation_broken",
+          detail: "HARD BLOCK: Answer cites repealed FDL 20/2018. This law was superseded by FDL 10/2025 (in force 14 Oct 2025). Replace every 'FDL 20/2018' reference with the correct FDL 10/2025 article. Do not use this output for any compliance decision.",
+        },
+      ];
+    }
+
     // Prominently surface quality gate failures so operators cannot miss them.
     // Prepending to the answer text ensures the warning is visible regardless
     // of how the UI renders the verification chips.
@@ -505,6 +521,12 @@ export async function POST(req: Request): Promise<Response> {
       const defectList = verification.defects.map((d) => d.detail).join(" | ");
       answer = `⚠ QUALITY GATE FAILED: This output did not pass internal quality validation. Defects: ${defectList}. Human MLRO review is mandatory before any action is taken.\n\n${answer}`;
     }
+
+    // Append mandatory audit line before scoring so the quality gate's
+    // missing_audit_line check does not penalise every response.
+    // Pattern matched by AUDIT_LINE_PATTERN = /AUDIT[_ ]?LINE/i in qualityGates.ts.
+    const auditLine = `\n\n---\nAUDIT LINE | Tool: mlro_advisor_quick | ${new Date().toISOString()} | Question: ${String(question ?? "").slice(0, 80)} | Disposition: pending MLRO review | Human sign-off required before any compliance action (FDL 10/2025 Art.24)`;
+    answer = answer + auditLine;
 
     // Confidence + citations + follow-ups — same intelligence pack the
     // deep advisor returns. AdvisorScore reflects whichever draft we

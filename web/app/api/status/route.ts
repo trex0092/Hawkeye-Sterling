@@ -928,7 +928,7 @@ export async function GET(): Promise<NextResponse> {
   // Derived from env (set by CI) or from committed manifest values.
   const feedVersions = {
     brain: process.env["BRAIN_VERSION"] ?? "wave-5",
-    commitSha: (process.env["NEXT_PUBLIC_COMMIT_REF"] ?? process.env["COMMIT_REF"] ?? process.env["NETLIFY_COMMIT_REF"] ?? "dev").slice(0, 7),
+    commitSha: (process.env["NEXT_PUBLIC_COMMIT_SHA"] ?? process.env["NEXT_PUBLIC_COMMIT_REF"] ?? process.env["COMMIT_REF"] ?? process.env["NETLIFY_COMMIT_REF"] ?? "dev").slice(0, 7),
     adverseMediaCategories: 13,
     adverseMediaKeywords: 1066,
     knownPepEntries: 6,
