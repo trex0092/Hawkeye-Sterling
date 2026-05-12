@@ -10,7 +10,7 @@
 // Schedule: every 6 hours at :15 UTC (staggered off the hour).
 //
 // Environment variables required:
-//   LSEG_USERNAME       — LSEG account email (bulent.balkan@iar.com.tr)
+//   LSEG_USERNAME       — LSEG account email
 //   LSEG_PASSWORD       — LSEG account password
 //   LSEG_APP_KEY        — AppKey from LSEG AppKey Generator
 //   LSEG_SQS_ENDPOINT   — Full SQS queue URL (optional — for push notifications)
