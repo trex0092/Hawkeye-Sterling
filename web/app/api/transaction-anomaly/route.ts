@@ -138,6 +138,7 @@ function applyDpmsRules(
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
+  const t0 = Date.now();
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
   const gateHeaders = gate.ok ? gate.headers : {};
@@ -212,6 +213,8 @@ export async function POST(req: Request): Promise<NextResponse> {
   };
   const effectiveTier = obs < MINIMUM_OBSERVATIONS ? "insufficient_data" : result.tier;
 
+  const latencyMs = Date.now() - t0;
+  if (latencyMs > 5000) console.warn(`[transaction-anomaly] slow response latencyMs=${latencyMs}`);
   return NextResponse.json(
     {
       ok: true,
@@ -221,6 +224,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       tier: effectiveTier,
       drivers: result.drivers,
       dataQuality,
+      latencyMs,
       detail: {
         hstScore: mlResult.hstScore,
         zScore: mlResult.zScore,

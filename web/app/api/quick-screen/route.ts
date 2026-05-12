@@ -77,6 +77,7 @@ function respond(
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
+  const t0 = Date.now();
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
   const gateHeaders: Record<string, string> = gate.ok ? gate.headers : {};
@@ -131,11 +132,14 @@ export async function POST(req: Request): Promise<NextResponse> {
         // is a safety failure. Return a structured LISTS_MISSING error.
         return respond(503, {
           ok: false,
-          error: "LISTS_MISSING",
+          errorCode: "LISTS_MISSING",
+          errorType: "data_integrity",
+          tool: "screen_subject",
           missingLists: ["ofac_sdn", "un_consolidated", "eu_fsf", "uk_ofsi", "uae_eocn", "uae_ltl"],
           degraded: true,
           message: "Screening cannot proceed: one or more required sanctions lists are not loaded. Run sanctions refresh and retry.",
-        } as QuickScreenResponse & { missingLists: string[]; degraded: boolean; message: string }, gateHeaders);
+          requestId: Math.random().toString(36).slice(2, 10),
+        } as QuickScreenResponse & { errorCode: string; errorType: string; tool: string; missingLists: string[]; degraded: boolean; message: string; requestId: string }, gateHeaders);
       }
 
       // Verify that the two most critical lists (OFAC SDN and UN Consolidated) are
@@ -148,23 +152,29 @@ export async function POST(req: Request): Promise<NextResponse> {
         // Neither critical list is present — refuse to screen.
         return respond(503, {
           ok: false,
-          error: "LISTS_MISSING",
+          errorCode: "LISTS_MISSING",
+          errorType: "data_integrity",
+          tool: "screen_subject",
           missingLists: missingCritical,
           degraded: true,
           message: "Screening cannot proceed: one or more required sanctions lists are not loaded. Run sanctions refresh and retry.",
-        } as QuickScreenResponse & { missingLists: string[]; degraded: boolean; message: string }, gateHeaders);
+          requestId: Math.random().toString(36).slice(2, 10),
+        } as QuickScreenResponse & { errorCode: string; errorType: string; tool: string; missingLists: string[]; degraded: boolean; message: string; requestId: string }, gateHeaders);
       }
     } catch (err) {
       const detail = err instanceof Error ? err.message : String(err);
       console.error("[quick-screen] loadCandidates failed", detail);
       return respond(503, {
         ok: false,
-        error: "LISTS_MISSING",
+        errorCode: "LISTS_MISSING",
+        errorType: "data_integrity",
+        tool: "screen_subject",
         missingLists: ["ofac_sdn", "un_consolidated"],
         degraded: true,
         message: "Screening cannot proceed: watchlist corpus unavailable. Run sanctions refresh and retry.",
         detail,
-      } as QuickScreenResponse & { missingLists: string[]; degraded: boolean; message: string; detail: string }, gateHeaders);
+        requestId: Math.random().toString(36).slice(2, 10),
+      } as QuickScreenResponse & { errorCode: string; errorType: string; tool: string; missingLists: string[]; degraded: boolean; message: string; detail: string; requestId: string }, gateHeaders);
     }
   }
 
@@ -349,14 +359,16 @@ export async function POST(req: Request): Promise<NextResponse> {
         // Tell the operator UI whether common-name expansion fired so the
         // triage panel can show the appropriate banner.
         commonNameExpansion: isCommonName,
+        latencyMs: Date.now() - t0,
       } as QuickScreenResponse,
       gateHeaders,
     );
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);
+    if (Date.now() - t0 > 5000) console.warn(`[quick-screen] slow response latencyMs=${Date.now() - t0}`);
     return respond(
       500,
-      { ok: false, error: "quick-screen failed", detail },
+      { ok: false, errorCode: "HANDLER_EXCEPTION", errorType: "internal", tool: "screen_subject", error: "quick-screen failed", detail, requestId: Math.random().toString(36).slice(2, 10), latencyMs: Date.now() - t0 },
       gateHeaders,
     );
   }

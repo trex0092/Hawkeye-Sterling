@@ -34,6 +34,7 @@ export interface PepMatchResponse {
   queriedName: string;
   totalCorpus?: number;
   error?: string;
+  latencyMs?: number;
 }
 
 interface PepRecord {
@@ -201,6 +202,7 @@ function scoreRecord(qNorm: string, qTokens: Set<string>, rec: PepRecord): numbe
 // ── Route handler ─────────────────────────────────────────────────────────────
 
 export async function POST(req: Request): Promise<NextResponse> {
+  const t0 = Date.now();
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
   let body: { name?: string; birthYear?: string | number; aliases?: string[] };
@@ -264,5 +266,6 @@ export async function POST(req: Request): Promise<NextResponse> {
     source,
     queriedName: name,
     totalCorpus: corpus.length,
+    latencyMs: Date.now() - t0,
   } satisfies PepMatchResponse, { headers: gate.headers });
 }

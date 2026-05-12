@@ -107,6 +107,7 @@ function computeCheckpoints(
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
+  const t0 = Date.now();
   // Batch is the single highest-cost endpoint (500 rows × brain
   // screening each). Gate + rate-limit before touching the body.
   const gate = await enforce(req);
@@ -340,8 +341,10 @@ export async function POST(req: Request): Promise<NextResponse> {
     source: "hawkeye-sterling",
   }).catch((err) => console.error("[batch-screen] webhook failed", err));
 
+  const latencyMs = Date.now() - t0;
+  if (latencyMs > 5000) console.warn(`[batch-screen] slow response latencyMs=${latencyMs}`);
   return NextResponse.json(
-    { ok: true, summary, results, ...(asanaTaskUrl ? { asanaTaskUrl } : {}) },
+    { ok: true, summary, results, latencyMs, ...(asanaTaskUrl ? { asanaTaskUrl } : {}) },
     { headers: gateHeaders },
   );
 }

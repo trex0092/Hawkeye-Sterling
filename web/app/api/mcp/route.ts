@@ -13,6 +13,7 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import { getToolLevel } from "@/lib/mcp/tool-manifest";
 import type { ConsequenceLevel } from "@/lib/mcp/tool-manifest";
 import { getSanctionsHealth, GATE_BLOCKED_TOOLS } from "@/lib/mcp/sanctions-gate";
+import { resolveCommitRef, resolveEngineVersion } from "@/lib/server/api-error";
 import type { McpLogEntry } from "@/app/api/operator/logs/route";
 
 import { enforce } from "@/lib/server/enforce";
@@ -133,8 +134,8 @@ function wrapWithGovernance(toolName: string, level: ConsequenceLevel, result: u
       reviewNote: "AI-generated output — MLRO review required before any compliance action. FDL No.10/2025 Art.18.",
       _provenance: {
         tool: toolName,
-        engineVersion: process.env["BRAIN_VERSION"] ?? "wave-5",
-        commitRef: (process.env["NEXT_PUBLIC_COMMIT_REF"] ?? process.env["COMMIT_REF"] ?? process.env["NETLIFY_COMMIT_REF"] ?? "dev").slice(0, 7),
+        engineVersion: resolveEngineVersion(),
+        commitRef: resolveCommitRef(),
         generatedAt: new Date().toISOString(),
         dataSources: ["ofac-sdn", "eu-fsf", "uk-ofsi", "uae-eocn", "uae-ltl", "un-consolidated", "gdelt", "google-news-rss"],
       },

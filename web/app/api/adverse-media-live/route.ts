@@ -402,6 +402,7 @@ export async function OPTIONS(): Promise<NextResponse> {
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
+  const t0 = Date.now();
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
 
@@ -542,6 +543,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     riskRating,
   );
 
+  const latencyMs = Date.now() - t0;
+  if (latencyMs > 5000) console.warn(`[adverse-media-live] slow response latencyMs=${latencyMs}`);
   const result = {
     ok: true as const,
     subject: subjectName,
@@ -554,6 +557,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     enriched,
     sourcesSucceeded,
     sourcesFailed,
+    latencyMs,
     ...(partialResults ? { partialResults: true } : {}),
     ...(vendorProviders.length > 0 ? { vendorProviders } : {}),
     ...(enriched === false
