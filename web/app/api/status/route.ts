@@ -853,6 +853,18 @@ async function incidentHistory(): Promise<Incident[]> {
 }
 
 export async function GET(): Promise<NextResponse> {
+  try {
+    return await _handleGet();
+  } catch (err) {
+    console.error("[status] unhandled top-level error:", err instanceof Error ? err.message : err);
+    return NextResponse.json(
+      { ok: false, status: "down", error: "Status check failed — please retry.", degraded: true },
+      { status: 503 },
+    );
+  }
+}
+
+async function _handleGet(): Promise<NextResponse> {
   const [
     screening,
     superBrain,

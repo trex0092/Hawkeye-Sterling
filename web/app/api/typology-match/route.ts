@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { writeAuditEvent } from "@/lib/audit";
 import { enforce } from "@/lib/server/enforce";
+import { getAnthropicClient } from "@/lib/server/llm";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -109,10 +110,10 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (!gate.ok) return gate.response;
   const gateHeaders = gate.headers;
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-
   if (!apiKey) {
     return NextResponse.json({ ok: true, degraded: true, ...FALLBACK }, { headers: gateHeaders });
   }
+  const client = getAnthropicClient(apiKey, 22_000);
 
   let body: Body;
   try {
@@ -136,30 +137,13 @@ export async function POST(req: Request): Promise<NextResponse> {
   let result: TypologyMatchResult;
 
   try {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      signal: AbortSignal.timeout(22_000),
-      method: "POST",
-      headers: {
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 2048,
-        system: SYSTEM_PROMPT,
-        messages: [{ role: "user", content: userContent }],
-      }),
+    const response = await client.messages.create({
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 2048,
+      system: [{ type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
+      messages: [{ role: "user", content: userContent }],
     });
-
-    if (!res.ok) {
-      return NextResponse.json({ ok: false, error: "typology-match temporarily unavailable - please retry." }, { status: 503, headers: gateHeaders });
-    }
-
-    const data = (await res.json()) as {
-      content?: { type: string; text: string }[];
-    };
-    const raw = data?.content?.[0]?.text ?? "";
+    const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const cleaned = raw.replace(/^```json?\s*/i, "").replace(/\s*```$/i, "").trim();
     result = JSON.parse(cleaned) as TypologyMatchResult;
   } catch {

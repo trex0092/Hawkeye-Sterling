@@ -811,6 +811,18 @@ const STATIC_ITEMS: RegulatoryItem[] = [
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function GET(req: Request): Promise<NextResponse> {
+  try {
+    return await _handleGet(req);
+  } catch (err) {
+    console.error("[regulatory-feed] unhandled top-level error:", err instanceof Error ? err.message : err);
+    return NextResponse.json(
+      { ok: false, error: "regulatory-feed temporarily unavailable — please retry.", degraded: true },
+      { status: 503 },
+    );
+  }
+}
+
+async function _handleGet(req: Request): Promise<NextResponse> {
   // Operator-pressed refresh button passes ?force=1 to bypass the
   // 15-min module-level cache. Auto-refresh (timer) doesn't pass it,
   // so the cache still spares the upstream sites in steady state.
