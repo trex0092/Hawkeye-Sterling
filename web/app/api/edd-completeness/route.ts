@@ -2,7 +2,7 @@
 //
 // EDD File Completeness Checker.
 // Evaluates whether an Enhanced Due Diligence (EDD) file meets the minimum
-// documentation requirements under UAE FDL 20/2018 and FDL 10/2025.
+// documentation requirements under UAE FDL 10/2025.
 //
 // Checks:
 //   - Identity document (passport/Emirates ID/trade licence) — mandatory
@@ -20,7 +20,7 @@
 //
 // Returns: completeness score, missing items, gap narrative, recommendations.
 //
-// Regulatory basis: FDL 10/2025 Art.8; FDL 20/2018 Art.6; FATF R.10, R.12
+// Regulatory basis: FDL 10/2025 Art.8; FATF R.10, R.12
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
@@ -92,7 +92,7 @@ function buildRequirements(file: EddFile): EddRequirement[] {
       label: "Identity document (passport, Emirates ID, trade licence)",
       mandatory: true,
       present: !!file.hasIdentityDocument,
-      regulatoryBasis: "FDL 10/2025 Art.8(1); FDL 20/2018 Art.6",
+      regulatoryBasis: "FDL 10/2025 Art.8(1)",
       guidance: "Certified copy of valid government-issued ID; for corporates: trade licence + MoA",
     },
     {
@@ -124,7 +124,7 @@ function buildRequirements(file: EddFile): EddRequirement[] {
       label: "Beneficial ownership chain documentation",
       mandatory: isCorporate,
       present: !!file.hasBeneficialOwnership,
-      regulatoryBasis: "FDL 10/2025 Art.8(5); FDL 20/2018 Art.8",
+      regulatoryBasis: "FDL 10/2025 Art.8(5); CR 134/2025 Art.14 (UBO chain)",
       guidance: "UBO register extract or ownership chart showing all >25% beneficial owners",
     },
     {

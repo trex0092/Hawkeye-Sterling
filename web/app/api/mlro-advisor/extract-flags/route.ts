@@ -101,7 +101,7 @@ const RULES: Rule[] = [
     category: "ownership_opacity",
     severity: "high",
     fatfReference: "FATF R.24 Transparency of Legal Persons; FATF R.25 Transparency of Legal Arrangements",
-    uaeReference: "FDL 20/2018 Art.14(2)(d); Cabinet Res. 134/2025 Art.6; UAE UBO Regulation (Ministerial Decision 98/2016)",
+    uaeReference: "FDL 10/2025 Art.12(2)(d); Cabinet Res. 134/2025 Art.6; UAE UBO Regulation (Ministerial Decision 98/2016)",
     actionRequired: "Map full UBO chain to natural person(s). If UBO cannot be identified, treat as high-risk and obtain MLRO sign-off before proceeding.",
   },
   // ── Source of funds / wealth mismatch ────────────────────────────────────
@@ -181,7 +181,7 @@ const RULES: Rule[] = [
     category: "other",
     severity: "medium",
     fatfReference: "FATF R.20 Suspicious Transaction Reporting; FATF Guidance on Indicators of ML/TF",
-    uaeReference: "FDL 20/2018 Art.15(1); CR 134/2025 Art.12(2); goAML Reporting Guidelines (UAEFIU)",
+    uaeReference: "FDL 10/2025 Art.17(1); CR 134/2025 Art.12(2); goAML Reporting Guidelines (UAEFIU)",
     actionRequired: "Request written business justification from customer. Compare against peer group benchmarks. If unexplained, escalate to MLRO for STR consideration.",
   },
   // ── Real estate / property ────────────────────────────────────────────────
@@ -191,7 +191,7 @@ const RULES: Rule[] = [
     category: "placement",
     severity: "high",
     fatfReference: "FATF Guidance on ML through Real Estate 2022; FATF R.22 DNFBPs: Customer Due Diligence",
-    uaeReference: "FDL 20/2018 Art.14; Dubai Law 6/2021 (RE Reg.); RERA AML Circular 2022; CR 134/2025 Art.11",
+    uaeReference: "FDL 10/2025 Art.12; Dubai Law 6/2021 (RE Reg.); RERA AML Circular 2022; CR 134/2025 Art.11",
     actionRequired: "Verify source of funds for purchase. Identify and CDD all parties. Report to DLD if suspicious. File goAML STR if threshold met.",
   },
 ];
@@ -251,7 +251,7 @@ const SYSTEM_PROMPT = `You are a UAE DPMS/VASP AML analyst. Extract structured F
 STRICT RULES — violations will break downstream systems:
 1. Output ONLY a single JSON object, no markdown, no backticks, no prose.
 2. Every "fatfReference" must cite only real, existing FATF Recommendations and their Interpretive Notes.
-3. Every "uaeReference" must cite only real UAE legislation: FDL 20/2018, FDL 10/2025, CR 134/2025, Cabinet Res. 134/2025, MoE DNFBP circulars, CBUAE notices, or VARA regulations.
+3. Every "uaeReference" must cite only real UAE legislation: FDL 10/2025, CR 134/2025, Cabinet Res. 134/2025, MoE DNFBP circulars, CBUAE notices, or VARA regulations. Never cite repealed FDL 20/2018.
 4. "indicator" describes only what is STATED in the notes, never inferred beyond the text.
 5. If no red flags exist, return an empty flags array — do not invent flags.
 

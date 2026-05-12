@@ -22,7 +22,7 @@ const FALLBACK: RegulatoryCalendarResult = {
       obligation: "Cash Transaction Report (CTR) — filing for cash transactions ≥ AED 55,000",
       frequency: "Per transaction (same business day)",
       deadline: "Same business day as the transaction",
-      legalBasis: "UAE FDL 10/2025 Art.17; Cabinet Decision 10/2019 (AED 55,000 threshold)",
+      legalBasis: "UAE FDL 10/2025 Art.17; CR 134/2025 Art.14 (AED 55,000 threshold)",
       filingMethod: "goAML portal (https://goaml.uae.gov.ae) — CTR submission form",
       notes: "Applies to all licensed financial institutions and DNFBPs. Each qualifying transaction is a separate filing obligation. No minimum threshold — all cash ≥ AED 55,000 must be reported regardless of relationship status.",
       category: "reporting",
@@ -105,7 +105,7 @@ const FALLBACK: RegulatoryCalendarResult = {
       deadline: "Annual review — within 12 months of previous Board approval. Must be updated within 30 days of any material regulatory change (e.g., new FDL, CBUAE circular).",
       legalBasis: "UAE FDL 10/2025 Art.5; CBUAE AML/CFT Guidelines §2; FATF R.18",
       filingMethod: "Internal document — Board approval required. Current version must be accessible to all relevant staff. CBUAE may request copy during inspection.",
-      notes: "AML Policy must be updated to reflect UAE FDL 10/2025 (replacing FDL 20/2018). Must include: EWRA methodology, CDD/EDD procedures, STR/CTR procedures, PEP policy, tipping off prohibition, sanctions procedures, and PF provisions.",
+      notes: "AML Policy must be updated to reflect UAE FDL 10/2025 (in force 14 Oct 2025). Must include: EWRA methodology, CDD/EDD procedures, STR/CTR procedures, PEP policy, tipping off prohibition, sanctions procedures, and PF provisions.",
       category: "review",
     },
     {

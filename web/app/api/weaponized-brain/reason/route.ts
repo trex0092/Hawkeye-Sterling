@@ -80,7 +80,7 @@ export async function POST(req: Request): Promise<NextResponse> {
           label: "Manual review required",
           rationale: "Weaponized brain reasoning unavailable — scoring engine crashed. MLRO must manually clear before any onboarding or clearance decision. Do not treat as CLEAR.",
         },
-        narrative: "⚠ Weaponized brain reasoning temporarily unavailable. Manual compliance review required under UAE FDL 20/2018 Art.14 and FDL 10/2025 Art.19. Do not onboard or clear this subject without MLRO sign-off.",
+        narrative: "⚠ Weaponized brain reasoning temporarily unavailable. Manual compliance review required under UAE FDL 10/2025 Art.19. Do not onboard or clear this subject without MLRO sign-off.",
         counterfactuals: [],
         steelman: { argument: "Manual review required — engine unavailable", confidence: 0 },
         modeCoverage: [],

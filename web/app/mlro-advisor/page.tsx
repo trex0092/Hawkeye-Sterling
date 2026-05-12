@@ -598,7 +598,7 @@ interface SanctionsExposureResult { overallExposure: "confirmed_hit"|"high"|"med
 
 // ── Suggested questions ───────────────────────────────────────────────────────
 // Sources: UAE FDL 10/2025 & Cabinet Resolution 134/2025 (which together
-// repealed and replaced the previous FDL No.10/2025 + Cabinet Decision 10/2019),
+// repealed and replaced the previous FDL No.20/2018 + Cabinet Decision No.10/2019),
 // MoE DPMS rules, UAE FIU (goAML), EOCN sanctions guidance, LBMA Responsible
 // Gold Guidance, OECD CAHRA 5-step Due Diligence, FATF 40 Recommendations,
 // RMI RMAP / CMRT, ESG frameworks (EU CSDDD / CSRD), UN Guiding Principles
