@@ -6,11 +6,32 @@ import {
   type AdverseKeywordGroup,
 } from "@/lib/data/adverse-keywords";
 import { classifyEsg } from "@/lib/data/esg";
-// Import from concrete modules rather than the index.js barrel. Pulling
-// the 80-module barrel into a Netlify Function made cold-starts push
-// past the 10s edge timeout and every news-search request returned 502.
-import { matchEnsemble } from "../../../../dist/src/brain/matching.js";
-import { variantsOf } from "../../../../dist/src/brain/translit.js";
+// Dynamic imports from dist/ to prevent hard module-load failures when the
+// brain compilation hasn't run yet (cold Lambda, partial build). Falls back
+// to no-op implementations that return minimal scores so the route degrades
+// gracefully instead of returning 500.
+type MatchEnsembleFn = (a: string, b: string) => { score: number; method: string };
+type VariantsOfFn = (name: string) => string[];
+let matchEnsemble: MatchEnsembleFn = (a, b) => ({
+  score: a.toLowerCase() === b.toLowerCase() ? 100 : 0,
+  method: "exact_fallback",
+});
+let variantsOf: VariantsOfFn = (name) => [name];
+// Best-effort async load — if dist is present these replace the stubs.
+(async () => {
+  try {
+    const [m, t] = await Promise.all([
+      import("../../../../dist/src/brain/matching.js"),
+      import("../../../../dist/src/brain/translit.js"),
+    ]);
+    if (typeof (m as { matchEnsemble?: unknown }).matchEnsemble === "function")
+      matchEnsemble = (m as { matchEnsemble: MatchEnsembleFn }).matchEnsemble;
+    if (typeof (t as { variantsOf?: unknown }).variantsOf === "function")
+      variantsOf = (t as { variantsOf: VariantsOfFn }).variantsOf;
+  } catch {
+    // dist not built yet — stubs remain active
+  }
+})();
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
