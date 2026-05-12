@@ -2,6 +2,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
+import { enforce } from "@/lib/server/enforce";
 
 interface CountryRiskEntry {
   name: string;
@@ -52,21 +53,23 @@ function parseIban(iban: string): { countryCode: string; bban: string; valid: bo
 }
 
 export async function POST(req: Request) {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   let body: { iban: string };
   try {
     body = (await req.json()) as { iban: string };
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400, headers: gate.headers });
   }
 
   if (!body.iban?.trim()) {
-    return NextResponse.json({ ok: false, error: "iban required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "iban required" }, { status: 400, headers: gate.headers });
   }
 
   const { countryCode, bban, valid } = parseIban(body.iban);
 
   if (!valid) {
-    return NextResponse.json({ ok: false, error: "Invalid IBAN format" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid IBAN format" }, { status: 400, headers: gate.headers });
   }
 
   const entry = COUNTRY_RISK[countryCode] ?? {
@@ -87,5 +90,5 @@ export async function POST(req: Request) {
     notes: entry.notes,
     eddRequired: entry.riskLevel === "high" || entry.riskLevel === "critical",
     sanctionsCheck: entry.riskLevel === "critical",
-  });
+  }, { headers: gate.headers });
 }

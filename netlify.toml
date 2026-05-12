@@ -22,6 +22,10 @@
   # Bake the real commit SHA into the Next.js build so MCP commitRef shows
   # the actual SHA instead of the branch name (COMMIT_REF is branch name at runtime).
   NEXT_PUBLIC_COMMIT_REF = "$COMMIT_REF"
+  # Exclude LSEG credential env vars from Netlify secrets scanning so that
+  # any incidental appearance of credentials in build logs or docs doesn't
+  # block the deploy.  The actual values are never committed to source.
+  SECRETS_SCAN_OMIT_KEYS = "LSEG_USERNAME,LSEG_PASSWORD,LSEG_APP_KEY,LSEG_SQS_ENDPOINT"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
