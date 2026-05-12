@@ -144,7 +144,7 @@ const PROG_STATUS_LABEL: Record<ProgrammeStatus, string> = {
 const ANNUAL_PROGRAMME: ProgrammeSession[] = [
   // January
   { session: 1, month: "January", dateWeek: "Wk 1 · Jan 5", subject: "AML/CFT Foundations Refresher", durationHrs: 2, audience: "All Staff", areas: "AML/CFT fundamentals; regulatory landscape", activities: "Online module + quiz", regulatoryBasis: "FDL 10/2025 Art. 16", status: "completed" },
-  { session: 2, month: "January", dateWeek: "Wk 2 · Jan 12", subject: "Sanctions Screening Procedures", durationHrs: 3, audience: "Operations · Compliance", areas: "Sanctions compliance; list management", activities: "Workshop + scenario drill", regulatoryBasis: "Cabinet Res. 10/2019", status: "completed" },
+  { session: 2, month: "January", dateWeek: "Wk 2 · Jan 12", subject: "Sanctions Screening Procedures", durationHrs: 3, audience: "Operations · Compliance", areas: "Sanctions compliance; list management", activities: "Workshop + scenario drill", regulatoryBasis: "CR 134/2025 Art.14", status: "completed" },
   { session: 3, month: "January", dateWeek: "Wk 3 · Jan 19", subject: "PEP Identification & EDD", durationHrs: 2, audience: "MLRO · Compliance", areas: "PEP risk; enhanced due diligence", activities: "Case-study review", regulatoryBasis: "FATF R.12", status: "completed" },
   // February
   { session: 4, month: "February", dateWeek: "Wk 1 · Feb 2", subject: "goAML STR/SAR Filing", durationHrs: 3, audience: "MLRO · Compliance", areas: "Suspicious transaction reporting", activities: "Practical drill on goAML portal", regulatoryBasis: "CBUAE Notice 2021/8", status: "completed" },
@@ -176,7 +176,7 @@ const ANNUAL_PROGRAMME: ProgrammeSession[] = [
   { session: 24, month: "August", dateWeek: "Wk 3 · Aug 17", subject: "MLRO Desk Simulation", durationHrs: 4, audience: "MLRO", areas: "End-to-end case management; STR decision gate", activities: "Full simulation exercise", regulatoryBasis: "CBUAE MLRO Guidance 2022", status: "planned" },
   // September
   { session: 25, month: "September", dateWeek: "Wk 1 · Sep 7", subject: "Mid-Year Regulatory Update", durationHrs: 3, audience: "All Staff", areas: "New regulations; enforcement actions; FATF news", activities: "Webinar (external speaker)", regulatoryBasis: "Multiple — CBUAE/FATF", status: "planned" },
-  { session: 26, month: "September", dateWeek: "Wk 2 · Sep 14", subject: "Sanctions Evasion Red Flags", durationHrs: 3, audience: "Operations · Compliance", areas: "Evasion typologies; shell company indicators", activities: "Case-study review", regulatoryBasis: "Cabinet Res. 10/2019", status: "planned" },
+  { session: 26, month: "September", dateWeek: "Wk 2 · Sep 14", subject: "Sanctions Evasion Red Flags", durationHrs: 3, audience: "Operations · Compliance", areas: "Evasion typologies; shell company indicators", activities: "Case-study review", regulatoryBasis: "CR 134/2025 Art.14", status: "planned" },
   { session: 27, month: "September", dateWeek: "Wk 3 · Sep 21", subject: "ESG & Greenwashing Financial Crime", durationHrs: 2, audience: "Senior Management · MLRO", areas: "Environmental financial crime; green bond risk", activities: "Webinar", regulatoryBasis: "FATF Green Finance 2024", status: "planned" },
   // October
   { session: 28, month: "October", dateWeek: "Wk 1 · Oct 5", subject: "FATF Mutual Evaluation Readiness", durationHrs: 4, audience: "MLRO · Senior Management", areas: "MER preparation; effectiveness criteria", activities: "Workshop (external consultant)", regulatoryBasis: "FATF R.33–34", status: "planned" },

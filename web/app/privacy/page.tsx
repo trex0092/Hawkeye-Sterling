@@ -28,7 +28,7 @@ export default function PrivacyPage() {
         <Section title="3. Legal Basis for Processing">
           Processing is carried out under:
           <ul className="list-disc pl-4 space-y-1 mt-1">
-            <li><strong>Legal obligation</strong> — UAE FDL No. 20/2018 (AML Law), Cabinet Decision No. 10/2019, and CBUAE/FSRA/DFSA requirements mandate customer due diligence and sanctions screening.</li>
+            <li><strong>Legal obligation</strong> — UAE FDL No. 10 of 2025 (AML/CFT/CPF Law), Cabinet Resolution No. 134 of 2025, and CBUAE/FSRA/DFSA requirements mandate customer due diligence and sanctions screening.</li>
             <li><strong>Legitimate interests</strong> — Fraud prevention, platform security, and product improvement.</li>
             <li><strong>Contract</strong> — Providing the screening services under the operator&apos;s licence agreement.</li>
           </ul>

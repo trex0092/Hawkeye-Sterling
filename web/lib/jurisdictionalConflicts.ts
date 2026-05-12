@@ -95,18 +95,18 @@ export const JURISDICTIONAL_CONFLICTS: JurisdictionalConflict[] = [
   },
   {
     id: "fatf_r10_vs_uae_lite_kyc_thresholds",
-    title: "FATF R.10 simplified-CDD eligibility vs UAE Cabinet Decision 10/2019",
+    title: "FATF R.10 simplified-CDD eligibility vs UAE CR 134/2025",
     jurisdictions: ["INT", "AE"],
     regimes: ["FATF", "UAE_CABINET_10_2019"],
     severity: "low",
     description:
-      "FATF R.10 permits simplified CDD where ML/TF risk is low. UAE Cabinet Decision 10/2019 lists specific high-risk circumstances where SDD is forbidden regardless of FATF baseline (e.g., correspondent banking, PEPs, CAHRA suppliers, DPMS gold-trade). UAE rules prevail for UAE-licensed institutions.",
+      "FATF R.10 permits simplified CDD where ML/TF risk is low. UAE CR 134/2025 lists specific high-risk circumstances where SDD is forbidden regardless of FATF baseline (e.g., correspondent banking, PEPs, CAHRA suppliers, DPMS gold-trade). UAE rules prevail for UAE-licensed institutions.",
     mitigation: [
-      "Apply UAE Cabinet Decision 10/2019 as the binding floor; FATF R.10 cannot override.",
+      "Apply UAE CR 134/2025 as the binding floor; FATF R.10 cannot override.",
       "Do not apply SDD to PEPs, correspondents, CAHRA suppliers, or DPMS gold-trade subjects.",
       "Document the SDD eligibility assessment on file.",
     ],
-    authorities: ["FATF Recommendation 10", "UAE Cabinet Decision 10/2019"],
+    authorities: ["FATF Recommendation 10", "UAE CR 134/2025"],
   },
   {
     id: "lbma_rgg_vs_oecd_5step_disengagement",

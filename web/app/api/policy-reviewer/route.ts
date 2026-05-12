@@ -55,12 +55,12 @@ const FALLBACK: PolicyReviewResult = {
   ],
   outdatedReferences: [
     {
-      reference: "Federal Decree-Law No. 20 of 2018 (AML Law)",
+      reference: "Federal Decree-Law No. 10 of 2025 (AML/CFT/CPF Law — supersedes FDL 20/2018)",
       currentLaw: "Federal Decree-Law No. 10 of 2025 (FDL 10/2025)",
       detail: "FDL 20/2018 was repealed and replaced by FDL 10/2025. All references to FDL 20/2018, 'the 2018 AML Law', or 'Federal Decree-Law 20/2018' must be updated to reference FDL 10/2025 with the applicable article numbers. FDL 10/2025 introduced significant changes including enhanced PF provisions, updated PEP definitions, and revised penalty framework.",
     },
     {
-      reference: "Cabinet Decision No. 10 of 2019 on the Implementing Regulation of FDL 20/2018",
+      reference: "Cabinet Resolution No. 134 of 2025 (Executive Regulations — supersedes CD 10/2019)",
       currentLaw: "Cabinet Decision implementing FDL 10/2025 (to be confirmed upon publication)",
       detail: "The implementing regulation to FDL 20/2018 should be referenced as potentially superseded pending issuance of implementing regulation to FDL 10/2025. Policy should be updated to note pending implementing regulation and commit to updating upon publication.",
     },
@@ -90,7 +90,7 @@ const FALLBACK: PolicyReviewResult = {
     "Schedule next comprehensive review for January 2027 with semi-annual monitoring of regulatory changes",
   ],
   nextReviewDate: "2027-01-01",
-  regulatoryBasis: "UAE FDL 10/2025 (all applicable articles); FATF Recommendations (2012, as amended 2023); CBUAE AML/CFT Guidelines 2021; Cabinet Decision 10/2019; Cabinet Decision 58/2020 (UBO); Cabinet Decision 74/2020 (TFS)",
+  regulatoryBasis: "UAE FDL 10/2025 (all applicable articles); UAE CR 134/2025 (Executive Regulations); FATF Recommendations (2012, as amended 2023); CBUAE AML/CFT Guidelines 2021; Cabinet Decision 58/2020 (UBO); Cabinet Decision 74/2020 (TFS)",
 };
 
 export async function POST(req: Request) {

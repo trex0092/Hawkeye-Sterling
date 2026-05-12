@@ -61,7 +61,7 @@ const RULES: Rule[] = [
     category: "other",
     severity: "medium",
     fatfReference: "FATF R.10 Customer Due Diligence; FATF Guidance on CDD Measures",
-    uaeReference: "FDL 20/2018 Art.14(1); Cabinet Res. 10/2019 Art.4; CBUAE Notice 2983/2019",
+    uaeReference: "FDL 10/2025 Art.12; CR 134/2025 Art.4; CBUAE Notice 2983/2019",
     actionRequired: "Escalate to MLRO; document reasons for CDD difficulty; consider whether to proceed or exit relationship per internal risk appetite.",
   },
   // ── Cash / structuring / DPMS threshold ─────────────────────────────────
@@ -71,7 +71,7 @@ const RULES: Rule[] = [
     category: "structuring",
     severity: "high",
     fatfReference: "FATF R.20 Suspicious Transaction Reporting; FATF DPMS Guidance 2023 para 47",
-    uaeReference: "FDL 20/2018 Art.15–16; Cabinet Res. 10/2019 Art.12; MoE DNFBP Circular 08/2021",
+    uaeReference: "FDL 10/2025 Art.12–16; CR 134/2025 Art.12; MoE DNFBP Circular 08/2021",
     actionRequired: "File goAML STR if aggregate ≥ AED 55,000 or suspicious regardless of amount. Conduct EDD; verify and document source of funds.",
   },
   // ── PEP / politically exposed person ────────────────────────────────────
@@ -81,7 +81,7 @@ const RULES: Rule[] = [
     category: "pep",
     severity: "high",
     fatfReference: "FATF R.12 Politically Exposed Persons; FATF Interpretive Note R.12",
-    uaeReference: "FDL 20/2018 Art.16; Cabinet Res. 10/2019 Art.24; CBUAE EDD requirements",
+    uaeReference: "FDL 10/2025 Art.16; CR 134/2025 Art.24; CBUAE EDD requirements",
     actionRequired: "Apply Enhanced Due Diligence. Obtain senior-management approval before onboarding. Conduct ongoing monitoring of all transactions.",
   },
   // ── Sanctions / SDN / designation ────────────────────────────────────────
@@ -91,7 +91,7 @@ const RULES: Rule[] = [
     category: "sanctions",
     severity: "critical",
     fatfReference: "FATF R.6 Targeted Financial Sanctions — Terrorism & TF; FATF R.7 Targeted Financial Sanctions — Proliferation",
-    uaeReference: "FDL 20/2018 Art.18; Cabinet Res. 10/2019 Art.19; CBUAE Circular 2/2022; UAE EOCN designations",
+    uaeReference: "FDL 10/2025 Art.18; CR 134/2025 Art.19; CBUAE Circular 2/2022; UAE EOCN designations",
     actionRequired: "FREEZE funds immediately if confirmed match. File goAML TF report within 24 hours. Do NOT notify the customer (tipping-off prohibition, FDL Art.17).",
   },
   // ── Shell company / nominee / opacity ────────────────────────────────────
@@ -111,7 +111,7 @@ const RULES: Rule[] = [
     category: "layering",
     severity: "high",
     fatfReference: "FATF R.10(d) Source of Funds; FATF Guidance on Risk-Based Approach para 4.12",
-    uaeReference: "FDL 20/2018 Art.14(1)(c); Cabinet Res. 10/2019 Art.7; CBUAE RBA Guidelines 2023",
+    uaeReference: "FDL 10/2025 Art.12(c); CR 134/2025 Art.7; CBUAE RBA Guidelines 2023",
     actionRequired: "Obtain independent documentary evidence of SOF/SOW. If unsubstantiated, escalate to MLRO; consider STR filing.",
   },
   // ── Third-party payment ───────────────────────────────────────────────────
@@ -121,7 +121,7 @@ const RULES: Rule[] = [
     category: "layering",
     severity: "high",
     fatfReference: "FATF R.10 CDD; FATF TBML Typologies Report 2022 pp. 14–18",
-    uaeReference: "FDL 20/2018 Art.14(1)(b); Cabinet Res. 10/2019 Art.9(3)",
+    uaeReference: "FDL 10/2025 Art.12(b); CR 134/2025 Art.9",
     actionRequired: "Identify and CDD the third party. Obtain written explanation for the payment arrangement. If unexplained, escalate to MLRO.",
   },
   // ── Trade finance / TBML ──────────────────────────────────────────────────
@@ -131,7 +131,7 @@ const RULES: Rule[] = [
     category: "trade_ml",
     severity: "high",
     fatfReference: "FATF TBML Report 2022; FATF R.20 Suspicious Transactions",
-    uaeReference: "FDL 20/2018 Art.2 (predicate offences); Cabinet Res. 10/2019 Art.12; UAE Customs Authority circular",
+    uaeReference: "FDL 10/2025 Art.3 (predicate offences); CR 134/2025 Art.12; UAE Customs Authority circular",
     actionRequired: "Cross-check invoice values against trade data benchmarks. Request independent inspection reports. Escalate to MLRO if discrepancy unexplained.",
   },
   // ── Crypto / VASP ─────────────────────────────────────────────────────────
@@ -151,7 +151,7 @@ const RULES: Rule[] = [
     category: "proliferation",
     severity: "critical",
     fatfReference: "FATF R.7 Targeted Financial Sanctions (Proliferation); FATF Guidance on PF Risk Assessment 2021",
-    uaeReference: "Federal Law 13/2007 (Commodities Subject to Import and Export Control); Cabinet Res. 10/2019 Art.19(2); CBUAE Circular on PF",
+    uaeReference: "Federal Law 13/2007 (Commodities Subject to Import and Export Control); CR 134/2025 Art.19(2); CBUAE Circular on PF",
     actionRequired: "HALT transaction. Screen goods against UAE/EU/US dual-use control lists. Obtain independent export-control opinion. File goAML STR and notify MOEC if TFS hit confirmed.",
   },
   // ── Adverse media ─────────────────────────────────────────────────────────
@@ -161,7 +161,7 @@ const RULES: Rule[] = [
     category: "adverse_media",
     severity: "high",
     fatfReference: "FATF R.10 CDD (ongoing monitoring); FATF RBA Guidance — Adverse Media Screening",
-    uaeReference: "FDL 20/2018 Art.14(3); Cabinet Res. 10/2019 Art.10; CBUAE RBA Guidelines 2023 s.4.3",
+    uaeReference: "FDL 10/2025 Art.12(3); CR 134/2025 Art.10; CBUAE RBA Guidelines 2023 s.4.3",
     actionRequired: "Document sources and assess credibility. Apply Enhanced Due Diligence. Obtain MLRO sign-off. File STR if information meets suspicion threshold.",
   },
   // ── High-risk jurisdiction ────────────────────────────────────────────────
@@ -171,7 +171,7 @@ const RULES: Rule[] = [
     category: "jurisdiction_risk",
     severity: "high",
     fatfReference: "FATF R.19 Higher-Risk Countries; FATF R.20 Suspicious Transaction Reporting",
-    uaeReference: "Cabinet Res. 10/2019 Art.21; CBUAE Notice on High-Risk Jurisdictions; MoE DNFBP Circular",
+    uaeReference: "CR 134/2025 Art.21; CBUAE Notice on High-Risk Jurisdictions; MoE DNFBP Circular",
     actionRequired: "Apply Enhanced Due Diligence per FATF R.19. Obtain senior-management approval. Consider Correspondent Banking restrictions if applicable.",
   },
   // ── Unusual transaction patterns ──────────────────────────────────────────
@@ -181,7 +181,7 @@ const RULES: Rule[] = [
     category: "other",
     severity: "medium",
     fatfReference: "FATF R.20 Suspicious Transaction Reporting; FATF Guidance on Indicators of ML/TF",
-    uaeReference: "FDL 20/2018 Art.15(1); Cabinet Res. 10/2019 Art.12(2); goAML Reporting Guidelines (UAEFIU)",
+    uaeReference: "FDL 20/2018 Art.15(1); CR 134/2025 Art.12(2); goAML Reporting Guidelines (UAEFIU)",
     actionRequired: "Request written business justification from customer. Compare against peer group benchmarks. If unexplained, escalate to MLRO for STR consideration.",
   },
   // ── Real estate / property ────────────────────────────────────────────────
@@ -191,7 +191,7 @@ const RULES: Rule[] = [
     category: "placement",
     severity: "high",
     fatfReference: "FATF Guidance on ML through Real Estate 2022; FATF R.22 DNFBPs: Customer Due Diligence",
-    uaeReference: "FDL 20/2018 Art.14; Dubai Law 6/2021 (RE Reg.); RERA AML Circular 2022; Cabinet Res. 10/2019 Art.11",
+    uaeReference: "FDL 20/2018 Art.14; Dubai Law 6/2021 (RE Reg.); RERA AML Circular 2022; CR 134/2025 Art.11",
     actionRequired: "Verify source of funds for purchase. Identify and CDD all parties. Report to DLD if suspicious. File goAML STR if threshold met.",
   },
 ];
@@ -251,7 +251,7 @@ const SYSTEM_PROMPT = `You are a UAE DPMS/VASP AML analyst. Extract structured F
 STRICT RULES — violations will break downstream systems:
 1. Output ONLY a single JSON object, no markdown, no backticks, no prose.
 2. Every "fatfReference" must cite only real, existing FATF Recommendations and their Interpretive Notes.
-3. Every "uaeReference" must cite only real UAE legislation: FDL 20/2018, FDL 10/2025, Cabinet Res. 10/2019, Cabinet Res. 134/2025, MoE DNFBP circulars, CBUAE notices, or VARA regulations.
+3. Every "uaeReference" must cite only real UAE legislation: FDL 20/2018, FDL 10/2025, CR 134/2025, Cabinet Res. 134/2025, MoE DNFBP circulars, CBUAE notices, or VARA regulations.
 4. "indicator" describes only what is STATED in the notes, never inferred beyond the text.
 5. If no red flags exist, return an empty flags array — do not invent flags.
 

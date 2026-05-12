@@ -39,7 +39,7 @@ export const COMMON_SENSE_RULES: readonly CommonSenseRule[] = [
 
   // ── Source of funds ───────────────────────────────────────────────────
   { id: 'cs_sof_01', topic: 'source_of_funds', rule: 'Source-of-funds covers the immediate origin of the specific transaction (bank withdrawal, salary, asset sale); evidence must match value and timing.', doctrineAnchor: 'Wolfsberg SoW/SoF FAQ' },
-  { id: 'cs_sof_02', topic: 'source_of_funds', rule: 'Cash deposits ≥ AED 55,000 require source-of-funds documentation regardless of customer risk rating.', doctrineAnchor: 'UAE Cabinet Decision 10/2019' },
+  { id: 'cs_sof_02', topic: 'source_of_funds', rule: 'Cash deposits ≥ AED 55,000 require source-of-funds documentation regardless of customer risk rating.', doctrineAnchor: 'UAE CR 134/2025' },
   { id: 'cs_sof_03', topic: 'source_of_funds', rule: 'Third-party funding triggers EDD: confirm legitimate relationship, verify the third party, and document the rationale.', doctrineAnchor: 'FATF R.10 INR.10' },
   { id: 'cs_sof_04', topic: 'source_of_funds', rule: 'Crypto-funded fiat transactions require chain analysis attestation showing no exposure to mixers, sanctioned addresses, or known scams.', doctrineAnchor: 'FATF R.15 + Travel-Rule guidance' },
   { id: 'cs_sof_05', topic: 'source_of_funds', rule: 'Inheritance, gift, and lottery wins must be evidenced by court orders, gift declarations, or lottery payout confirmations — verbal narrative alone fails EDD.', doctrineAnchor: 'Wolfsberg SoW/SoF FAQ' },
@@ -59,7 +59,7 @@ export const COMMON_SENSE_RULES: readonly CommonSenseRule[] = [
   { id: 'cs_bo_05', topic: 'beneficial_ownership', rule: 'BO data must be filed with the UBO registry within 15 days of change; failure is a strict-liability offence under FDL 10/2025.', doctrineAnchor: 'UAE FDL 10/2025 Art.18' },
 
   // ── PEP handling ──────────────────────────────────────────────────────
-  { id: 'cs_pep_01', topic: 'pep_handling', rule: 'PEP determination uses the FATF four-tier framework: foreign / domestic / international-organisation / RCA — domestic PEPs require risk-based EDD, not blanket EDD.', doctrineAnchor: 'FATF R.12 INR.12; UAE Cabinet Decision 10/2019' },
+  { id: 'cs_pep_01', topic: 'pep_handling', rule: 'PEP determination uses the FATF four-tier framework: foreign / domestic / international-organisation / RCA — domestic PEPs require risk-based EDD, not blanket EDD.', doctrineAnchor: 'FATF R.12 INR.12; UAE CR 134/2025' },
   { id: 'cs_pep_02', topic: 'pep_handling', rule: 'Once PEP, always-PEP for foreign PEPs: continuing-influence test must justify any step-down, not just time-since-office.', doctrineAnchor: 'FATF R.12 INR.12(d)' },
   { id: 'cs_pep_03', topic: 'pep_handling', rule: 'Senior-management approval is mandatory before establishing or continuing a foreign PEP relationship — not the branch manager, not the relationship manager.', doctrineAnchor: 'FATF R.12 INR.12(b)' },
   { id: 'cs_pep_04', topic: 'pep_handling', rule: 'Take reasonable measures to establish source of wealth and source of funds for PEP, family members, and close associates.', doctrineAnchor: 'FATF R.12 INR.12(b)(c)' },
@@ -136,8 +136,8 @@ export const COMMON_SENSE_RULES: readonly CommonSenseRule[] = [
   { id: 'cs_vasp_05', topic: 'vasp_crypto', rule: 'Mixer / tumbler exposure (Tornado Cash, Sinbad, Wasabi CoinJoin) must be flagged at hop-depth 3; designated mixers require automatic block.', doctrineAnchor: 'OFAC SDN designations 2022-2024' },
 
   // ── DPMS / precious metals ────────────────────────────────────────────
-  { id: 'cs_dpms_01', topic: 'dpms_precious_metals', rule: 'DNFBP DPMS entities must register with the MoE supervisor and file annual EOCN return covering all qualifying cash transactions.', doctrineAnchor: 'UAE Cabinet Resolution 10/2019; UAE MoE DPMS Circulars' },
-  { id: 'cs_dpms_02', topic: 'dpms_precious_metals', rule: 'Cash transactions ≥ AED 55,000 (single or linked) trigger CDD + STR review and goAML reporting per Cabinet Decision 10/2019.', doctrineAnchor: 'UAE Cabinet Decision 10/2019' },
+  { id: 'cs_dpms_01', topic: 'dpms_precious_metals', rule: 'DNFBP DPMS entities must register with the MoE supervisor and file annual EOCN return covering all qualifying cash transactions.', doctrineAnchor: 'UAE CR 134/2025; UAE MoE DPMS Circulars' },
+  { id: 'cs_dpms_02', topic: 'dpms_precious_metals', rule: 'Cash transactions ≥ AED 55,000 (single or linked) trigger CDD + STR review and goAML reporting per CR 134/2025.', doctrineAnchor: 'UAE CR 134/2025' },
   { id: 'cs_dpms_03', topic: 'dpms_precious_metals', rule: 'Apply LBMA Responsible Gold Guidance Step-by-Step to upstream supply (mine, refinery, intermediate); CAHRA-origin requires OECD DDG Annex II.', doctrineAnchor: 'LBMA RGG; OECD DDG Annex II' },
   { id: 'cs_dpms_04', topic: 'dpms_precious_metals', rule: 'Maintain Kimberley Process certificates for diamonds; mismatch between certificate, customs, and invoice is an STR trigger.', doctrineAnchor: 'KPCS UAE Office; FATF R.20' },
   { id: 'cs_dpms_05', topic: 'dpms_precious_metals', rule: 'Annual public report on supply-chain due diligence is mandatory; non-publication is a strict-liability breach under DPMS Circulars.', doctrineAnchor: 'UAE MoE DPMS Annual Report Circular' },
@@ -151,7 +151,7 @@ export const COMMON_SENSE_RULES: readonly CommonSenseRule[] = [
 
   // ── Structuring ───────────────────────────────────────────────────────
   { id: 'cs_str2_01', topic: 'structuring', rule: 'Aggregate cash transactions across linked customers, accounts, branches, and time windows (rolling 7/30/90 days) — single-account view is non-compliant.', doctrineAnchor: 'FATF R.20; FinCEN structuring guidance' },
-  { id: 'cs_str2_02', topic: 'structuring', rule: 'Pattern of deposits clustered just below CTR / cash thresholds is structuring per se — file STR; do not request the customer "explain".', doctrineAnchor: 'UAE Cabinet Decision 10/2019' },
+  { id: 'cs_str2_02', topic: 'structuring', rule: 'Pattern of deposits clustered just below CTR / cash thresholds is structuring per se — file STR; do not request the customer "explain".', doctrineAnchor: 'UAE CR 134/2025' },
   { id: 'cs_str2_03', topic: 'structuring', rule: 'Smurfing: multiple low-tier customers funding one consolidator account triggers network analysis and STR on all participants.', doctrineAnchor: 'FATF Methodology IO.4' },
   { id: 'cs_str2_04', topic: 'structuring', rule: 'Cuckoo smurfing: legitimate beneficiary expecting wire receives offsetting cash deposits — verify originator and freeze pending check.', doctrineAnchor: 'FATF Cuckoo Smurfing Typology' },
   { id: 'cs_str2_05', topic: 'structuring', rule: 'Threshold-avoidance behaviour persists despite RFI → relationship exit + STR; do not "explain" the threshold to the customer.', doctrineAnchor: 'UAE FDL No.10/2025 Art.16' },
@@ -199,7 +199,7 @@ export const COMMON_SENSE_RULES: readonly CommonSenseRule[] = [
   { id: 'cs_to_05', topic: 'tipping_off_guard', rule: 'External professional advice (legal, audit) requires legally-privileged channels; ad-hoc consultations risk inadvertent tipping-off.', doctrineAnchor: 'UAE FDL No.10/2025 Art.25' },
 
   // ── Regulatory reporting ──────────────────────────────────────────────
-  { id: 'cs_reg_01', topic: 'regulatory_reporting', rule: 'goAML STRs, EOCN annual return, sanctions blocking reports, and Board AML reports each have distinct windows — track separately.', doctrineAnchor: 'UAE FDL 10/2025; CD 74/2020; CD 10/2019' },
+  { id: 'cs_reg_01', topic: 'regulatory_reporting', rule: 'goAML STRs, EOCN annual return, sanctions blocking reports, and Board AML reports each have distinct windows — track separately.', doctrineAnchor: 'UAE FDL 10/2025; CD 74/2020; CR 134/2025' },
   { id: 'cs_reg_02', topic: 'regulatory_reporting', rule: 'FIU information requests (RFIs) must be answered within the stated window; non-response is a strict-liability breach.', doctrineAnchor: 'UAE FDL No.10/2025 Art.16; FATF R.29' },
   { id: 'cs_reg_03', topic: 'regulatory_reporting', rule: 'Cross-border transmission of regulatory reports requires authorised channel (Egmont, MLAT, MoU); informal sharing breaches data-protection law.', doctrineAnchor: 'Egmont Group; UAE PDPL FDL 45/2021' },
   { id: 'cs_reg_04', topic: 'regulatory_reporting', rule: 'Maintain a regulatory-correspondence log with traceable acknowledgements; lost or unacknowledged filings expose the firm to enforcement.', doctrineAnchor: 'FATF R.11; UAE MoE DNFBP supervision' },
@@ -297,7 +297,7 @@ export const COMMON_SENSE_RULES: readonly CommonSenseRule[] = [
   { id: 'cs_gam_05', topic: 'gambling_betting', rule: 'iGaming KYC at registration + EDD on first deposit ≥ EUR 2,000 — then continuous monitoring of deposit / withdrawal patterns vs game volume.', doctrineAnchor: 'EU 4AMLD Art.11; EGBA Standards' },
 
   // ── Real-estate AML ───────────────────────────────────────────────────
-  { id: 'cs_re_01', topic: 'real_estate_aml', rule: 'Cash purchase of real estate at any value triggers CDD per FATF R.22; UAE thresholds apply at AED 55,000 and above with EOCN reporting.', doctrineAnchor: 'FATF R.22; UAE CD 10/2019' },
+  { id: 'cs_re_01', topic: 'real_estate_aml', rule: 'Cash purchase of real estate at any value triggers CDD per FATF R.22; UAE thresholds apply at AED 55,000 and above with EOCN reporting.', doctrineAnchor: 'FATF R.22; UAE CR 134/2025' },
   { id: 'cs_re_02', topic: 'real_estate_aml', rule: 'Off-plan / pre-construction purchases require additional diligence: developer escrow, construction-progress alignment with payments, source of funds at each milestone.', doctrineAnchor: 'UAE RERA Law 8/2007; Dubai Land Dept' },
   { id: 'cs_re_03', topic: 'real_estate_aml', rule: 'Corporate buyer with no operating substance + cash purchase + offshore UBO is a near-textbook ML pattern; require substance-test before transaction.', doctrineAnchor: 'FATF Real Estate Typology 2007/2022' },
   { id: 'cs_re_04', topic: 'real_estate_aml', rule: 'Title-deed transfers must align with payment-flow records; mismatch in price between contract, deed, and bank transfer is a TBML / sanctions-evasion red flag.', doctrineAnchor: 'FATF Real Estate Typology' },

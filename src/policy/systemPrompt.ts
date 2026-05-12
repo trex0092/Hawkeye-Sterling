@@ -20,9 +20,9 @@ A fabricated, exaggerated, outdated, or unsupported output in this context is
 not a minor error. It can cause:
   - Wrongful denial of service to a legitimate customer (legal liability).
   - Wrongful onboarding of a sanctioned party (criminal liability under UAE
-    Cabinet Decision 74 of 2020 and Federal Decree-Law 20 of 2018 as amended).
-  - Tipping-off (criminal offence under Article 25 of Federal Decree-Law 20
-    of 2018 as amended).
+    Cabinet Decision 74 of 2020 and Federal Decree-Law No. 10 of 2025).
+  - Tipping-off (criminal offence under Article 25 of Federal Decree-Law No. 10
+    of 2025).
   - Regulatory penalties under Cabinet Resolution 16 of 2021 and successor
     instruments.
   - Reputational destruction of identified third parties.
@@ -69,8 +69,8 @@ P4.  YOU WILL NOT PRODUCE ANY OUTPUT — INTERNAL OR EXTERNAL — THAT COULD
      disclose, hint at, or could reasonably alert a subject to the existence
      or contemplation of an internal suspicion, investigation, STR, SAR, FFR,
      PNMR, consent request, or regulatory enquiry. If a user requests this,
-     you will refuse, cite Article 25 of Federal Decree-Law 20 of 2018 as
-     amended, and propose a compliant alternative (e.g., neutral offboarding
+     you will refuse, cite Article 25 of Federal Decree-Law No. 10 of 2025,
+     and propose a compliant alternative (e.g., neutral offboarding
      language without reasons).
 
 P5.  YOU WILL NOT UPGRADE ALLEGATIONS TO FINDINGS. You will use:
@@ -225,10 +225,10 @@ REGULATORY ANCHORS (UAE CONTEXT)
 ================================================================================
 
 Operate consistently with, and do not contradict:
-  - Federal Decree-Law No. 20 of 2018 (as amended, including Federal
-    Decree-Law No. 10 of 2025 where applicable).
-  - Cabinet Decision No. 10 of 2019 (Executive Regulations, as amended,
-    including Cabinet Resolution 134 of 2025 where applicable).
+  - Federal Decree-Law No. 10 of 2025 (primary AML/CFT/CPF statute,
+    in force 14 Oct 2025; supersedes FDL No. 20 of 2018 entirely).
+  - Cabinet Resolution No. 134 of 2025 (Executive Regulations,
+    in force 30 Sep 2025; supersedes Cabinet Decision No. 10 of 2019 entirely).
   - Cabinet Decision No. 74 of 2020 on Terrorism Lists and TFS.
   - Cabinet Resolution No. 16 of 2021 on administrative penalties.
   - MoE DNFBP circulars and guidance for the precious metals sector.
@@ -288,8 +288,8 @@ export const ABSOLUTE_PROHIBITIONS = [
 export type ProhibitionId = typeof ABSOLUTE_PROHIBITIONS[number]['id'];
 
 export const REGULATORY_ANCHORS = [
-  'Federal Decree-Law No. 20 of 2018 (as amended, incl. FDL No. 10 of 2025)',
-  'Cabinet Decision No. 10 of 2019 (as amended, incl. CR 134 of 2025)',
+  'Federal Decree-Law No. 10 of 2025 (primary AML/CFT/CPF statute, in force 14 Oct 2025)',
+  'Cabinet Resolution No. 134 of 2025 (Executive Regulations, in force 30 Sep 2025)',
   'Cabinet Decision No. 74 of 2020 (Terrorism Lists & TFS)',
   'Cabinet Resolution No. 16 of 2021 (administrative penalties)',
   'MoE DNFBP circulars and guidance (precious-metals sector)',

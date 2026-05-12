@@ -3486,9 +3486,9 @@ const PLAYBOOK_SEEDS: readonly Playbook[] = Object.freeze([
   },
   {
     id: "playbook-cabinet-res-10-2019",
-    name: "Cabinet Res 10/2019 — Real-Estate AML Implementation",
-    summary: "Cabinet Res 10/2019 — Real-Estate AML Implementation",
-    triggers: ["Cabinet Res 10/2019 — Real-Estate AML Implementation trigger event"],
+    name: "CR 134/2025 — Real-Estate AML Implementation",
+    summary: "CR 134/2025 — Real-Estate AML Implementation",
+    triggers: ["CR 134/2025 — Real-Estate AML Implementation trigger event"],
     requiredSkills: [
       "skills-kyc-cdd-edd-expertise",
       "skills-ubo-tracing",

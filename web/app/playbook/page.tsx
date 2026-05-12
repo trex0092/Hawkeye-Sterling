@@ -2504,7 +2504,7 @@ const PLAYBOOKS: Playbook[] = [
     family: "PEP",
     steps: [
       { title: "1. Definition check", required: true, checks: [
-        "Confirm UAE Cabinet Decision 10/2019 + 74/2020 PEP scope (federal / emirate / state-owned)",
+        "Confirm UAE CR 134/2025 + 74/2020 PEP scope (federal / emirate / state-owned)",
         "Apply risk-based decision: not all domestic PEPs require EDD",
         "Document risk drivers triggering EDD, if any",
       ]},
@@ -3580,7 +3580,7 @@ const PLAYBOOKS: Playbook[] = [
   },
   {
     id: "cabinet-res-10-2019",
-    title: "Cabinet Res 10/2019 — Real-Estate AML Implementation",
+    title: "CR 134/2025 — Real-Estate AML Implementation",
     typology: "cabinet-res-10-2019",
     family: "REML",
     steps: [

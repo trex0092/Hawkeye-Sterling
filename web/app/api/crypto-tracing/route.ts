@@ -238,7 +238,7 @@ const FALLBACK: CryptoTracingResult = {
   regulatoryObligations: [
     {
       obligation: "File Suspicious Transaction Report (STR) to UAE FIU via goAML within 35 days of suspicion arising",
-      regulation: "UAE FDL 20/2018 Art.15; CBUAE AML Standards §10",
+      regulation: "UAE FDL 10/2025 Art.12; CBUAE AML Standards §10",
       authority: "UAE Financial Intelligence Unit (FIU)",
       deadline: "Within 35 days of suspicion (CBUAE) / immediately where TF suspected",
     },
@@ -268,7 +268,7 @@ const FALLBACK: CryptoTracingResult = {
     },
     {
       obligation: "Submit blockchain forensics report to internal AML committee and retain for 8 years per UAE record-keeping requirements",
-      regulation: "UAE FDL 20/2018 Art.16; CBUAE AML Standards §4.4",
+      regulation: "UAE FDL 10/2025 Art.16; CBUAE AML Standards §4.4",
       authority: "Internal / CBUAE",
       deadline: "Document immediately; retain 8 years from transaction date",
     },
@@ -316,7 +316,7 @@ const FALLBACK: CryptoTracingResult = {
     "Breadcrumbs.app (open-source)",
     "Etherscan / Blockchain.com (manual verification)",
   ],
-  summary: "This Ethereum wallet presents a CRITICAL risk profile (score: 82/100) based on confirmed OFAC SDN exposure via Tornado Cash, darknet marketplace proximity (67% confidence), and active ML typologies including peeling chain and DeFi layering. The transaction pattern is consistent with the layering stage of money laundering. Travel Rule non-compliance compounds regulatory exposure. Immediate STR filing with UAE FIU is required under UAE FDL 20/2018. OFAC reporting obligations must be assessed urgently given Tornado Cash SDN designation. Full blockchain forensics via Chainalysis or TRM Labs is recommended to quantify total tainted exposure and support law enforcement referral.",
+  summary: "This Ethereum wallet presents a CRITICAL risk profile (score: 82/100) based on confirmed OFAC SDN exposure via Tornado Cash, darknet marketplace proximity (67% confidence), and active ML typologies including peeling chain and DeFi layering. The transaction pattern is consistent with the layering stage of money laundering. Travel Rule non-compliance compounds regulatory exposure. Immediate STR filing with UAE FIU is required under UAE FDL 10/2025. OFAC reporting obligations must be assessed urgently given Tornado Cash SDN designation. Full blockchain forensics via Chainalysis or TRM Labs is recommended to quantify total tainted exposure and support law enforcement referral.",
 };
 
 // ── Comprehensive System Prompt ───────────────────────────────────────────────
@@ -524,7 +524,7 @@ UAE — CBUAE Virtual Asset Guidance (2023):
 • VASPs operating in UAE mainland must obtain CBUAE license/approval.
 • AML/CFT requirements: Travel Rule compliance, transaction monitoring, sanctions screening, STR filing.
 • CBUAE Notice 35/2023: updated virtual asset guidance — enhanced due diligence for high-risk VA transactions.
-• UAE FDL 20/2018 as amended: primary AML/CFT law; applies to VASPs.
+• UAE FDL 10/2025 (in force 14 Oct 2025): primary AML/CFT law; applies to VASPs.
 • STR filing to UAE FIU via goAML within 35 days of suspicion arising; immediately where TF suspected.
 • Record-keeping: 8 years from transaction date.
 

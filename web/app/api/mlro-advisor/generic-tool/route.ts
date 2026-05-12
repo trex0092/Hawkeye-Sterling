@@ -13,7 +13,7 @@ const TOOL_CONFIGS: Record<string, ToolConfig> = {
   "romance-fraud": {
     title: "Romance / Pig-Butchering Detector",
     systemPrompt:
-      "You are a UAE AML/CFT expert specialising in romance fraud and pig-butchering investment scams. Assess financial crime risk under FATF R.1/3/20 and UAE FDL 20/2018. Identify red flags, victim patterns, and SAR/STR obligations.",
+      "You are a UAE AML/CFT expert specialising in romance fraud and pig-butchering investment scams. Assess financial crime risk under FATF R.1/3/20 and UAE FDL 10/2025. Identify red flags, victim patterns, and SAR/STR obligations.",
   },
   "investment-fraud": {
     title: "Investment Fraud / Ponzi Screener",
@@ -145,7 +145,7 @@ const TOOL_CONFIGS: Record<string, ToolConfig> = {
   "aml-framework-gap": {
     title: "AML Framework Gap Analyser",
     systemPrompt:
-      "You are an AML expert specialising in framework gap analysis. Assess gaps under FATF R.1 and UAE FDL 20/2018. Identify policy weaknesses, monitoring gaps, and training deficiencies with remediation priorities.",
+      "You are an AML expert specialising in framework gap analysis. Assess gaps under FATF R.1 and UAE FDL 10/2025. Identify policy weaknesses, monitoring gaps, and training deficiencies with remediation priorities.",
   },
   "regulatory-breach-notice": {
     title: "Regulatory Breach Notification",
@@ -267,7 +267,7 @@ const TOOL_CONFIGS: Record<string, ToolConfig> = {
   "local-kyc-requirements": {
     title: "UAE/Local KYC Requirements Guide",
     systemPrompt:
-      "You are a UAE KYC expert specialising in local KYC requirements. Assess requirements under UAE FDL 20/2018, CRS, and FATCA. Identify specific customer due diligence obligations, documentation requirements, and risk-based thresholds.",
+      "You are a UAE KYC expert specialising in local KYC requirements. Assess requirements under UAE FDL 10/2025, CRS, and FATCA. Identify specific customer due diligence obligations, documentation requirements, and risk-based thresholds.",
   },
   "ekyc-risk": {
     title: "eKYC Risk Assessment",
@@ -567,7 +567,7 @@ export async function POST(req: Request) {
         "Document findings and maintain audit trail",
         "Consider voluntary disclosure to the relevant regulator",
       ],
-      regulatoryBasis: `Assessment conducted under UAE FDL 20/2018 (AML Law), FATF Recommendations, and applicable sector-specific guidance for ${toolTitle}.`,
+      regulatoryBasis: `Assessment conducted under UAE FDL 10/2025 (AML/CFT/CPF Law, in force 14 Oct 2025), FATF Recommendations, and applicable sector-specific guidance for ${toolTitle}.`,
     });
   }
 
@@ -596,7 +596,7 @@ export async function POST(req: Request) {
         summary: `AI analysis temporarily unavailable (API ${response.status}). Based on the provided inputs, elevated risk indicators warrant enhanced due diligence and MLRO review.`,
         findings: ["AI analysis unavailable — rule-based assessment applied", "Elevated risk indicators identified", "Manual review recommended"],
         recommendations: ["Conduct enhanced due diligence", "Escalate to MLRO", "Maintain audit trail"],
-        regulatoryBasis: `UAE FDL 20/2018, FATF Recommendations applicable to ${toolTitle}.`,
+        regulatoryBasis: `UAE FDL 10/2025, FATF Recommendations applicable to ${toolTitle}.`,
       });
     }
 
@@ -616,7 +616,7 @@ export async function POST(req: Request) {
         summary: `Assessment complete for ${toolTitle}. Enhanced due diligence required based on the inputs provided.`,
         findings: ["Risk indicators identified in subject profile", "Multiple FATF typology patterns may be present"],
         recommendations: ["Conduct enhanced due diligence", "Escalate to MLRO", "Document all findings"],
-        regulatoryBasis: `UAE FDL 20/2018, FATF Recommendations applicable to ${toolTitle}.`,
+        regulatoryBasis: `UAE FDL 10/2025, FATF Recommendations applicable to ${toolTitle}.`,
       });
     }
   } catch {
@@ -627,7 +627,7 @@ export async function POST(req: Request) {
       summary: `Assessment for ${toolTitle} could not be completed via AI. Manual review is required.`,
       findings: ["Analysis temporarily unavailable", "Manual risk assessment required"],
       recommendations: ["Escalate to MLRO for manual review", "Apply precautionary enhanced due diligence"],
-      regulatoryBasis: `UAE FDL 20/2018, FATF Recommendations applicable to ${toolTitle}.`,
+      regulatoryBasis: `UAE FDL 10/2025, FATF Recommendations applicable to ${toolTitle}.`,
     });
   }
 }

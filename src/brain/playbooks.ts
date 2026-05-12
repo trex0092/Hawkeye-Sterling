@@ -150,7 +150,7 @@ export const PLAYBOOKS: Playbook[] = [
     requiredAnchors: [],
     steps: [
       { n: 1, action: 'Freeze assets and block transactions under the customer relationship.', owner: 'system', sla: 'immediate; within 24 hours', citations: ['CR 74/2020 Art.4-7'] },
-      { n: 2, action: 'Do NOT notify the customer or any third party (tipping-off prohibition).', owner: 'analyst', sla: 'immediate', citations: ['FDL 20/2018 Art.25'] },
+      { n: 2, action: 'Do NOT notify the customer or any third party (tipping-off prohibition).', owner: 'analyst', sla: 'immediate', citations: ['FDL 10/2025 Art.25'] },
       { n: 3, action: 'Escalate to MLRO; MLRO corroborates match against original source list.', owner: 'mlro', sla: 'same business day', citations: [] },
       { n: 4, action: 'Prepare FFR envelope in Hawkeye Sterling and queue to goAML.', owner: 'analyst', sla: 'within 2 business days', citations: ['CR 74/2020 Art.7'] },
       { n: 5, action: 'Senior management approval of FFR.', owner: 'senior_management', sla: 'same business day as FFR preparation', citations: ['CR 134/2025 Art.19'] },
@@ -237,7 +237,7 @@ export const PLAYBOOKS: Playbook[] = [
     steps: [
       { n: 1, action: 'Build linked-party graph; identify connecting accounts / counterparties.', owner: 'analyst', sla: 'within 2 business days', citations: [] },
       { n: 2, action: 'Assess whether pattern supports suspicion; document observable facts only.', owner: 'mlro', sla: 'within 5 business days', citations: ['charter P3'] },
-      { n: 3, action: 'If suspicion confirmed: file STR; keep customer unaware (no tipping-off).', owner: 'mlro', sla: 'within 5 business days', citations: ['FDL 20/2018 Art.25'] },
+      { n: 3, action: 'If suspicion confirmed: file STR; keep customer unaware (no tipping-off).', owner: 'mlro', sla: 'within 5 business days', citations: ['FDL 10/2025 Art.25'] },
     ],
   },
   {
@@ -283,7 +283,7 @@ export const PLAYBOOKS: Playbook[] = [
     requiredAnalysis: [],
     requiredAnchors: [],
     steps: [
-      { n: 1, action: 'Block the communication or action; preserve evidence.', owner: 'system', sla: 'immediate', citations: ['FDL 20/2018 Art.25'] },
+      { n: 1, action: 'Block the communication or action; preserve evidence.', owner: 'system', sla: 'immediate', citations: ['FDL 10/2025 Art.25'] },
       { n: 2, action: 'Notify MLRO; substitute with neutral offboarding or status-only language.', owner: 'mlro', sla: 'same business day', citations: [] },
       { n: 3, action: 'Record incident in audit chain; review control effectiveness.', owner: 'system', sla: 'same business day', citations: ['FDL 10/2025 Art.24'] },
     ],
@@ -299,7 +299,7 @@ export const PLAYBOOKS: Playbook[] = [
     requiredAnalysis: [],
     requiredAnchors: [],
     steps: [
-      { n: 1, action: 'Use neutral offboarding language; no reasons tied to suspicion.', owner: 'analyst', sla: 'on event', citations: ['FDL 20/2018 Art.25'] },
+      { n: 1, action: 'Use neutral offboarding language; no reasons tied to suspicion.', owner: 'analyst', sla: 'on event', citations: ['FDL 10/2025 Art.25'] },
       { n: 2, action: 'Preserve all evidence and audit trail; retention policy applies.', owner: 'system', sla: 'on event', citations: ['FDL 10/2025 Art.24'] },
       { n: 3, action: 'Route residual balances only to verified instructed account.', owner: 'analyst', sla: 'per process', citations: [] },
     ],
@@ -351,10 +351,10 @@ export const PLAYBOOKS: Playbook[] = [
     requiredAnchors: [],
     steps: [
       { n: 1, action: 'Immediately revoke or suspend the account; preserve all access logs without alteration.', owner: 'system', sla: 'immediate', citations: ['Three Lines Model', 'ISO/IEC 42001'] },
-      { n: 2, action: 'Isolate and image the endpoint; do NOT alert the employee (tipping-off analogue).', owner: 'analyst', sla: 'within 2 hours', citations: ['FDL 20/2018 Art.25'] },
+      { n: 2, action: 'Isolate and image the endpoint; do NOT alert the employee (tipping-off analogue).', owner: 'analyst', sla: 'within 2 hours', citations: ['FDL 10/2025 Art.25'] },
       { n: 3, action: 'Trace the full privilege-abuse chain: authorised access → abnormal pattern → exfiltration vector → external recipient → monetisation path. Require every link evidenced.', owner: 'mlro', sla: 'within 24 hours', citations: [] },
       { n: 4, action: 'Assess whether financial data accessed could facilitate financial crime (customer lists, AML filings, sanction overrides). If so, treat as predicate.', owner: 'mlro', sla: 'within 24 hours', citations: ['FATF R.20'] },
-      { n: 5, action: 'If criminal nexus established: file STR citing insider-threat typology. Notify senior management and legal.', owner: 'mlro', sla: 'within 5 business days', citations: ['FDL 20/2018 Art.23'] },
+      { n: 5, action: 'If criminal nexus established: file STR citing insider-threat typology. Notify senior management and legal.', owner: 'mlro', sla: 'within 5 business days', citations: ['FDL 10/2025 Art.22'] },
       { n: 6, action: 'Record incident in audit chain; update insider-threat programme controls within 30 days.', owner: 'system', sla: 'same business day', citations: ['FDL 10/2025 Art.24'] },
     ],
   },
@@ -374,7 +374,7 @@ export const PLAYBOOKS: Playbook[] = [
       { n: 2, action: 'Require explicit CAHRA / supply-chain provenance evidence linking the predicate to the financial flow. ESG-only signals without the nexus are NOT AML predicates.', owner: 'mlro', sla: 'within 3 business days', citations: ['OECD DDG Annex II', 'LBMA RGG'] },
       { n: 3, action: 'Cross-check vessel tracking (IUU fishing), timber legality documents (logging), or waste-transfer certificates (waste trafficking) as applicable.', owner: 'analyst', sla: 'within 3 business days', citations: [] },
       { n: 4, action: 'If nexus evidenced: classify as high-risk; escalate to MLRO for STR assessment.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.20'] },
-      { n: 5, action: 'File STR if criminal proceeds suspected. Retain full evidence pack including provenance chain.', owner: 'mlro', sla: 'within 5 business days', citations: ['FDL 20/2018 Art.23', 'FDL 10/2025 Art.24'] },
+      { n: 5, action: 'File STR if criminal proceeds suspected. Retain full evidence pack including provenance chain.', owner: 'mlro', sla: 'within 5 business days', citations: ['FDL 10/2025 Art.22'] },
     ],
   },
   {
@@ -389,11 +389,11 @@ export const PLAYBOOKS: Playbook[] = [
     requiredAnalysis: [],
     requiredAnchors: [],
     steps: [
-      { n: 1, action: 'Suspend account and block transactions pending investigation. Do not alert the customer.', owner: 'system', sla: 'immediate', citations: ['FDL 20/2018 Art.25'] },
+      { n: 1, action: 'Suspend account and block transactions pending investigation. Do not alert the customer.', owner: 'system', sla: 'immediate', citations: ['FDL 10/2025 Art.25'] },
       { n: 2, action: 'Preserve all onboarding artefacts: video, liveness frames, submitted documents, IP/device metadata.', owner: 'analyst', sla: 'within 2 hours', citations: ['FDL 10/2025 Art.24'] },
       { n: 3, action: 'Re-run biometric verification with an independent liveness provider. Engage document forensics on submitted ID.', owner: 'analyst', sla: 'within 1 business day', citations: [] },
       { n: 4, action: 'MLRO reviews whether a synthetic-identity loan-mill, account-takeover, or money-mule pattern is present.', owner: 'mlro', sla: 'within 2 business days', citations: [] },
-      { n: 5, action: 'If fraud confirmed: exit the relationship; file STR citing synthetic-media fraud typology; notify senior management.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.20', 'FDL 20/2018 Art.23'] },
+      { n: 5, action: 'If fraud confirmed: exit the relationship; file STR citing synthetic-media fraud typology; notify senior management.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.20', 'FDL 10/2025 Art.22'] },
       { n: 6, action: 'Review KYC control effectiveness; update liveness-bypass detection parameters; record in AI incident register if AI tool was abused.', owner: 'system', sla: 'within 30 days', citations: ['EU AI Act Art.73'] },
     ],
   },
@@ -433,7 +433,7 @@ export const PLAYBOOKS: Playbook[] = [
       { n: 2, action: 'Cross-reference against all active sanctions lists, PEP databases, and the internal case register.', owner: 'system', sla: 'same business day', citations: [] },
       { n: 3, action: 'MLRO assesses credibility: source reliability, corroboration across ≥2 independent outlets, specificity of allegation.', owner: 'mlro', sla: 'within 24 hours', citations: ['charter P3 / P5'] },
       { n: 4, action: 'Initiate EDD refresh: re-run full KYC, update risk rating, review transaction history for last 12 months.', owner: 'analyst', sla: 'within 3 business days', citations: ['FATF R.10'] },
-      { n: 5, action: 'If transaction activity is consistent with the allegation: prepare STR; do not tip off. If allegation appears unfounded: document scope-declaration and close with MLRO sign-off (charter P7).', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.20', 'FDL 20/2018 Art.25'] },
+      { n: 5, action: 'If transaction activity is consistent with the allegation: prepare STR; do not tip off. If allegation appears unfounded: document scope-declaration and close with MLRO sign-off (charter P7).', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.20', 'FDL 10/2025 Art.25'] },
       { n: 6, action: 'Log to 10-year adverse-media lookback register per FDL 10/2025 Art.19.', owner: 'system', sla: 'same business day', citations: ['FDL 10/2025 Art.19'] },
     ],
   },
@@ -472,7 +472,7 @@ export const PLAYBOOKS: Playbook[] = [
       { n: 2, action: 'Obtain source of funds for the full acquisition price; reconcile with declared SoW.', owner: 'analyst', sla: 'within 5 business days', citations: ['FATF R.12'] },
       { n: 3, action: 'Check property valuation vs. market comps; flag discrepancy >15% as red flag.', owner: 'analyst', sla: 'within 3 business days', citations: [] },
       { n: 4, action: 'MLRO reviews layering indicators: opacity score, number of SPV layers, settlement method, rapid-resale timeline.', owner: 'mlro', sla: 'within 5 business days', citations: [] },
-      { n: 5, action: 'If layering confirmed or suspicion remains: file STR; do not tip off any party in the chain.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.20', 'FDL 20/2018 Art.25'] },
+      { n: 5, action: 'If layering confirmed or suspicion remains: file STR; do not tip off any party in the chain.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.20', 'FDL 10/2025 Art.25'] },
       { n: 6, action: 'Apply enhanced monitoring to all entities and individuals in the chain.', owner: 'system', sla: 'on STR filing', citations: [] },
     ],
   },
@@ -512,7 +512,7 @@ export const PLAYBOOKS: Playbook[] = [
       { n: 3, action: 'Cross-check commodity codes against export-control lists (EU Dual-Use Regulation, UAE MOF export-control schedule). Flag any controlled commodity.', owner: 'analyst', sla: 'within 1 business day', citations: [] },
       { n: 4, action: 'MLRO applies FATF R.7 targeted financial sanctions (TFS) obligations; assess whether end-use certificate is credible.', owner: 'mlro', sla: 'within 24 hours', citations: ['FATF R.7', 'CR 74/2020'] },
       { n: 5, action: 'Notify legal counsel; consider voluntary disclosure to UAE MoE or relevant export-control authority.', owner: 'senior_management', sla: 'within 24 hours', citations: [] },
-      { n: 6, action: 'File STR/FFR citing proliferation-financing typology. Retain full documentation of commodity, end-user, and financial flow.', owner: 'mlro', sla: 'within 5 business days', citations: ['FDL 20/2018 Art.23', 'FATF R.20'] },
+      { n: 6, action: 'File STR/FFR citing proliferation-financing typology. Retain full documentation of commodity, end-user, and financial flow.', owner: 'mlro', sla: 'within 5 business days', citations: ['FDL 10/2025 Art.22', 'FATF R.20'] },
     ],
   },
   {
@@ -531,7 +531,7 @@ export const PLAYBOOKS: Playbook[] = [
       { n: 2, action: 'Verify credit serial numbers against the issuance registry (Gold Standard, Verra VCS, CORSIA, or national registry). Confirm retirement status.', owner: 'analyst', sla: 'within 2 business days', citations: ['ICVCM Core Carbon Principles', 'Article 6 Paris Agreement'] },
       { n: 3, action: 'Check for corresponding adjustment under Article 6.2/6.4: confirm the host country has authorised the international transfer and issued an ITMO. Absence of authorisation = double-counting red flag.', owner: 'analyst', sla: 'within 3 business days', citations: ['Article 6 Paris Agreement'] },
       { n: 4, action: 'MLRO assesses whether the fraud proceeds constitute a predicate offence and whether AML reporting obligations are triggered.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.3 (2021)', 'FATF R.20'] },
-      { n: 5, action: 'If criminal proceeds suspected: file STR citing carbon-market fraud typology. Notify senior management.', owner: 'mlro', sla: 'within 5 business days', citations: ['FDL 20/2018 Art.23'] },
+      { n: 5, action: 'If criminal proceeds suspected: file STR citing carbon-market fraud typology. Notify senior management.', owner: 'mlro', sla: 'within 5 business days', citations: ['FDL 10/2025 Art.22'] },
       { n: 6, action: 'Retain full credit provenance chain, registry screenshots, and correspondence in the audit trail.', owner: 'system', sla: 'same business day', citations: ['FDL 10/2025 Art.24'] },
     ],
   },
@@ -549,7 +549,7 @@ export const PLAYBOOKS: Playbook[] = [
     requiredAnchors: [],
     slaHours: 48,
     steps: [
-      { n: 1, action: 'Collect and verify full legal name, date of birth, nationality, and residential address via primary identity document (passport, Emirates ID).', owner: 'analyst', sla: 'at onboarding', citations: ['FATF R.10', 'FDL 20/2018 Art.23'] },
+      { n: 1, action: 'Collect and verify full legal name, date of birth, nationality, and residential address via primary identity document (passport, Emirates ID).', owner: 'analyst', sla: 'at onboarding', citations: ['FATF R.10', 'FDL 10/2025 Art.10'] },
       { n: 2, action: 'Screen name against sanctions, PEP, and adverse-media databases; record results.', owner: 'system', sla: 'at onboarding', citations: ['FATF R.12'] },
       { n: 3, action: 'Assign initial risk rating; document SoF and SoW proportionate to risk; MLRO approves high-risk cases.', owner: 'mlro', sla: 'within 2 business days', citations: ['FATF R.10', 'FDL 10/2025 Art.24'] },
     ],
@@ -567,7 +567,7 @@ export const PLAYBOOKS: Playbook[] = [
     slaHours: 72,
     steps: [
       { n: 1, action: 'Obtain certificate of incorporation, memorandum and articles, register of directors and shareholders; verify currency with source registry.', owner: 'analyst', sla: 'at onboarding', citations: ['FATF R.24'] },
-      { n: 2, action: 'Resolve UBO chain to natural persons at 25% or effective-control threshold; screen all UBOs, directors, and authorised signatories.', owner: 'analyst', sla: 'within 3 business days', citations: ['FATF R.24', 'FDL 20/2018 Art.23'] },
+      { n: 2, action: 'Resolve UBO chain to natural persons at 25% or effective-control threshold; screen all UBOs, directors, and authorised signatories.', owner: 'analyst', sla: 'within 3 business days', citations: ['FATF R.24', 'FDL 10/2025 Art.10'] },
       { n: 3, action: 'Assign entity risk rating; obtain SoF/SoW proportionate to risk; MLRO approves before business relationship commences.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.10', 'FDL 10/2025 Art.24'] },
     ],
   },
@@ -583,7 +583,7 @@ export const PLAYBOOKS: Playbook[] = [
     requiredAnchors: [],
     slaHours: 72,
     steps: [
-      { n: 1, action: 'Upgrade CDD to EDD: obtain senior management approval, verify SoW via independent documentation, and increase transaction monitoring sensitivity.', owner: 'analyst', sla: 'within 3 business days', citations: ['FATF R.19', 'FDL 20/2018 Art.23'] },
+      { n: 1, action: 'Upgrade CDD to EDD: obtain senior management approval, verify SoW via independent documentation, and increase transaction monitoring sensitivity.', owner: 'analyst', sla: 'within 3 business days', citations: ['FATF R.19', 'FDL 10/2025 Art.16'] },
       { n: 2, action: 'Conduct enhanced adverse-media deep-dive and cross-check against law-enforcement intelligence if available.', owner: 'analyst', sla: 'within 3 business days', citations: ['FATF R.10'] },
       { n: 3, action: 'MLRO documents rationale for continued relationship or exit; sets enhanced review cadence (minimum annual).', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.10', 'FDL 10/2025 Art.24'] },
     ],
@@ -600,7 +600,7 @@ export const PLAYBOOKS: Playbook[] = [
     requiredAnchors: [],
     slaHours: 72,
     steps: [
-      { n: 1, action: 'Apply EDD; verify SoW through independent corroboration (audited accounts, legal counsel letter, public records of wealth accumulation).', owner: 'analyst', sla: 'before onboarding', citations: ['FATF R.12', 'FDL 20/2018 Art.23'] },
+      { n: 1, action: 'Apply EDD; verify SoW through independent corroboration (audited accounts, legal counsel letter, public records of wealth accumulation).', owner: 'analyst', sla: 'before onboarding', citations: ['FATF R.12', 'FDL 10/2025 Art.16'] },
       { n: 2, action: 'Conduct reputational-risk assessment; screen for adverse media, litigation, and public allegations.', owner: 'analyst', sla: 'before onboarding', citations: [] },
       { n: 3, action: 'Senior management approves relationship; set enhanced monitoring and annual EDD review cadence.', owner: 'senior_management', sla: 'before onboarding', citations: ['FATF R.12'] },
     ],
@@ -651,7 +651,7 @@ export const PLAYBOOKS: Playbook[] = [
     requiredAnchors: [],
     slaHours: 48,
     steps: [
-      { n: 1, action: 'Request and obtain primary SoF evidence: bank statements, salary slips, sale-of-asset proceeds, inheritance documents, or investment statements.', owner: 'analyst', sla: 'within 5 business days of request', citations: ['FATF R.10', 'FDL 20/2018 Art.23'] },
+      { n: 1, action: 'Request and obtain primary SoF evidence: bank statements, salary slips, sale-of-asset proceeds, inheritance documents, or investment statements.', owner: 'analyst', sla: 'within 5 business days of request', citations: ['FATF R.10', 'FDL 10/2025 Art.10'] },
       { n: 2, action: 'Validate consistency of declared SoF with customer profile, transaction history, and risk rating; flag discrepancies.', owner: 'analyst', sla: 'within 2 business days of receipt', citations: [] },
       { n: 3, action: 'MLRO accepts SoF or requires corroboration; documents disposition in KYC file.', owner: 'mlro', sla: 'within 3 business days', citations: ['FDL 10/2025 Art.24'] },
     ],
@@ -703,7 +703,7 @@ export const PLAYBOOKS: Playbook[] = [
     requiredAnchors: [],
     slaHours: 72,
     steps: [
-      { n: 1, action: 'Confirm domestic PEP classification per UAE and GCC list; apply high-risk designation; obtain full EDD pack including SoW and SoF.', owner: 'analyst', sla: 'before onboarding', citations: ['FATF R.12', 'FDL 20/2018 Art.23'] },
+      { n: 1, action: 'Confirm domestic PEP classification per UAE and GCC list; apply high-risk designation; obtain full EDD pack including SoW and SoF.', owner: 'analyst', sla: 'before onboarding', citations: ['FATF R.12', 'FDL 10/2025 Art.16'] },
       { n: 2, action: 'Obtain senior management written approval for the relationship.', owner: 'senior_management', sla: 'before onboarding', citations: ['FATF R.12'] },
       { n: 3, action: 'Set enhanced monitoring and minimum-annual EDD review; document in KYC file.', owner: 'system', sla: 'on onboarding', citations: ['FDL 10/2025 Art.24'] },
     ],
@@ -774,7 +774,7 @@ export const PLAYBOOKS: Playbook[] = [
     steps: [
       { n: 1, action: 'Hold transaction; record match score, matched list, and matched name variant in case file.', owner: 'system', sla: 'immediate', citations: ['CR 74/2020'] },
       { n: 2, action: 'Analyst performs initial disambiguation using strong identifiers (DOB, nationality, address, passport number) within the SLA window.', owner: 'analyst', sla: 'within 4 hours', citations: [] },
-      { n: 3, action: 'MLRO confirms: true match → freeze and FFR; false positive → document scope declaration and release; escalate to pb_confirmed_sanctions_match or pb_partial_sanctions_match as appropriate.', owner: 'mlro', sla: 'same business day', citations: ['CR 74/2020', 'FDL 20/2018 Art.25'] },
+      { n: 3, action: 'MLRO confirms: true match → freeze and FFR; false positive → document scope declaration and release; escalate to pb_confirmed_sanctions_match or pb_partial_sanctions_match as appropriate.', owner: 'mlro', sla: 'same business day', citations: ['CR 74/2020', 'FDL 10/2025 Art.25'] },
     ],
   },
   {
@@ -808,7 +808,7 @@ export const PLAYBOOKS: Playbook[] = [
     steps: [
       { n: 1, action: 'Immediately freeze all funds and block transaction; comprehensive sanctions apply per UN Security Council resolutions.', owner: 'system', sla: 'immediate', citations: ['UN SC Res. 1718', 'UN SC Res. 2270', 'CR 74/2020'] },
       { n: 2, action: 'Screen all parties against OFAC DPRK list, UN Consolidated List, and EU FSF; identify proliferation-financing indicators.', owner: 'analyst', sla: 'within 2 hours', citations: ['FATF R.7'] },
-      { n: 3, action: 'File FFR and STR; notify senior management and legal counsel; consider reporting to UAE EOCN and relevant authorities.', owner: 'mlro', sla: 'within 2 business days', citations: ['CR 74/2020', 'FDL 20/2018 Art.23'] },
+      { n: 3, action: 'File FFR and STR; notify senior management and legal counsel; consider reporting to UAE EOCN and relevant authorities.', owner: 'mlro', sla: 'within 2 business days', citations: ['CR 74/2020', 'FDL 10/2025 Art.22'] },
     ],
   },
   {
@@ -825,7 +825,7 @@ export const PLAYBOOKS: Playbook[] = [
     steps: [
       { n: 1, action: 'Hold all transactions; screen all parties against OFAC SDN, EU FSF, UN Consolidated, and UAE local lists for Iran-designated persons.', owner: 'system', sla: 'immediate', citations: ['UN SC Res. 2231', 'CR 74/2020'] },
       { n: 2, action: 'Assess whether the transaction falls under JCPOA carve-outs or primary/secondary sanctions scope; document the analysis.', owner: 'analyst', sla: 'within 4 hours', citations: ['FATF R.7'] },
-      { n: 3, action: 'MLRO decision: freeze and FFR if designated party confirmed; STR if additional predicate; retain full sanctions-nexus evidence.', owner: 'mlro', sla: 'within 5 business days', citations: ['CR 74/2020', 'FDL 20/2018 Art.23'] },
+      { n: 3, action: 'MLRO decision: freeze and FFR if designated party confirmed; STR if additional predicate; retain full sanctions-nexus evidence.', owner: 'mlro', sla: 'within 5 business days', citations: ['CR 74/2020', 'FDL 10/2025 Art.22'] },
     ],
   },
   {
@@ -859,7 +859,7 @@ export const PLAYBOOKS: Playbook[] = [
     steps: [
       { n: 1, action: 'Immediately freeze assets and block all transactions; UAE local list hits carry strict liability — no disambiguation delay is permissible.', owner: 'system', sla: 'immediate', citations: ['CR 74/2020 Art.4', 'CR 134/2025'] },
       { n: 2, action: 'Confirm hit against the current EOCN list; notify MLRO and senior management within the same business day.', owner: 'analyst', sla: 'within 2 hours', citations: ['CR 74/2020'] },
-      { n: 3, action: 'File FFR via goAML; notify EOCN directly if required by the listing notice; retain all evidence.', owner: 'mlro', sla: 'within 1 business day', citations: ['CR 74/2020 Art.7', 'FDL 20/2018 Art.23'] },
+      { n: 3, action: 'File FFR via goAML; notify EOCN directly if required by the listing notice; retain all evidence.', owner: 'mlro', sla: 'within 1 business day', citations: ['CR 74/2020 Art.7', 'FDL 10/2025 Art.22'] },
     ],
   },
   // VASP/Crypto
@@ -875,7 +875,7 @@ export const PLAYBOOKS: Playbook[] = [
     requiredAnchors: [],
     slaHours: 120,
     steps: [
-      { n: 1, action: 'Verify VASP regulatory licence or registration in its home jurisdiction; obtain AML/CFT policy, ownership structure, and board composition.', owner: 'analyst', sla: 'before onboarding', citations: ['FATF R.15', 'FDL 20/2018 Art.23'] },
+      { n: 1, action: 'Verify VASP regulatory licence or registration in its home jurisdiction; obtain AML/CFT policy, ownership structure, and board composition.', owner: 'analyst', sla: 'before onboarding', citations: ['FATF R.15', 'FDL 10/2025 Art.22'] },
       { n: 2, action: 'Assess jurisdiction risk; classify as high risk if domiciled in unlicensed or FATF-listed jurisdiction; apply EDD and senior management approval.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.15', 'FATF R.19'] },
       { n: 3, action: 'Establish Travel Rule data-sharing agreement; set ongoing monitoring including on-chain analytics; review annually.', owner: 'analyst', sla: 'on onboarding', citations: ['FATF R.16', 'FDL 10/2025 Art.24'] },
     ],
@@ -909,7 +909,7 @@ export const PLAYBOOKS: Playbook[] = [
     requiredAnchors: [],
     slaHours: 72,
     steps: [
-      { n: 1, action: 'Verify OTC desk regulatory status; identify counterparties for large block trades; obtain SoF for settlement flows.', owner: 'analyst', sla: 'before onboarding or within 2 business days of alert', citations: ['FATF R.15', 'FDL 20/2018 Art.23'] },
+      { n: 1, action: 'Verify OTC desk regulatory status; identify counterparties for large block trades; obtain SoF for settlement flows.', owner: 'analyst', sla: 'before onboarding or within 2 business days of alert', citations: ['FATF R.15', 'FDL 10/2025 Art.22'] },
       { n: 2, action: 'Run on-chain analytics on settlement wallets; flag high-risk exposure scores (mixers, darknet, gambling); obtain explanations for high-exposure addresses.', owner: 'analyst', sla: 'within 2 business days', citations: ['FATF R.16'] },
       { n: 3, action: 'MLRO decision: accept with enhanced monitoring, request additional SoF, or file STR if suspicion confirmed.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.20', 'FDL 10/2025 Art.24'] },
     ],
@@ -945,7 +945,7 @@ export const PLAYBOOKS: Playbook[] = [
     steps: [
       { n: 1, action: 'Hold transaction pending disposition; confirm privacy coin type and assess traceability limitations.', owner: 'system', sla: 'immediate', citations: ['FATF R.15'] },
       { n: 2, action: 'Assess firm policy on privacy coins; if policy prohibits, return or reject funds; document basis.', owner: 'analyst', sla: 'within 1 business day', citations: [] },
-      { n: 3, action: 'MLRO determines whether residual traceability evidence supports suspicion; file STR if laundering indicators present; retain analytics report.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.20', 'FDL 20/2018 Art.23'] },
+      { n: 3, action: 'MLRO determines whether residual traceability evidence supports suspicion; file STR if laundering indicators present; retain analytics report.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.20', 'FDL 10/2025 Art.22'] },
     ],
   },
   {
@@ -1013,7 +1013,7 @@ export const PLAYBOOKS: Playbook[] = [
     steps: [
       { n: 1, action: 'Identify NFT transaction pattern: self-dealing between related wallet addresses, rapid round-trip trades, inflated price progression without arms-length buyers.', owner: 'analyst', sla: 'within 2 business days', citations: ['FATF R.15 (2021)'] },
       { n: 2, action: 'Trace wallet cluster ownership; determine whether the same beneficial owner controls both buyer and seller wallets via on-chain analytics.', owner: 'analyst', sla: 'within 2 business days', citations: [] },
-      { n: 3, action: 'MLRO assesses whether wash-trading constitutes market manipulation and/or laundering predicate; file STR if suspicion confirmed; document analysis.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.20', 'FDL 20/2018 Art.23'] },
+      { n: 3, action: 'MLRO assesses whether wash-trading constitutes market manipulation and/or laundering predicate; file STR if suspicion confirmed; document analysis.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.20', 'FDL 10/2025 Art.22'] },
     ],
   },
   // Transaction Monitoring / Cash
@@ -1031,7 +1031,7 @@ export const PLAYBOOKS: Playbook[] = [
     steps: [
       { n: 1, action: 'Aggregate all transactions in the flagged window; map by date, amount, account, and counterparty to construct structuring pattern.', owner: 'analyst', sla: 'within 2 business days', citations: [] },
       { n: 2, action: 'Identify whether multiple accounts or persons are involved (smurfing); build linked-party graph.', owner: 'analyst', sla: 'within 3 business days', citations: ['FATF R.20'] },
-      { n: 3, action: 'MLRO assesses intentionality; if deliberate sub-threshold structuring confirmed, file STR without tipping off customer.', owner: 'mlro', sla: 'within 5 business days', citations: ['FDL 20/2018 Art.23', 'FDL 20/2018 Art.25'] },
+      { n: 3, action: 'MLRO assesses intentionality; if deliberate sub-threshold structuring confirmed, file STR without tipping off customer.', owner: 'mlro', sla: 'within 5 business days', citations: ['FDL 10/2025 Art.22', 'FDL 10/2025 Art.25'] },
     ],
   },
   {
@@ -1048,7 +1048,7 @@ export const PLAYBOOKS: Playbook[] = [
     steps: [
       { n: 1, action: 'Map all inbound and outbound flows; identify number of funding sources, geographical spread, and disbursement concentration.', owner: 'analyst', sla: 'within 2 business days', citations: [] },
       { n: 2, action: 'Cross-reference inbound sources against KYC profiles; determine whether aggregation is explicable by declared business activity.', owner: 'analyst', sla: 'within 3 business days', citations: ['FATF R.10'] },
-      { n: 3, action: 'MLRO assesses funnel-account typology; if laundering indicators confirmed, file STR and consider account restriction.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.20', 'FDL 20/2018 Art.23'] },
+      { n: 3, action: 'MLRO assesses funnel-account typology; if laundering indicators confirmed, file STR and consider account restriction.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.20', 'FDL 10/2025 Art.22'] },
     ],
   },
   {
@@ -1064,8 +1064,8 @@ export const PLAYBOOKS: Playbook[] = [
     slaHours: 24,
     steps: [
       { n: 1, action: 'Document red flags: unusual counterparty jurisdiction, inconsistency with customer profile, round-number amounts, vague payment references.', owner: 'analyst', sla: 'on event', citations: ['FATF R.16'] },
-      { n: 2, action: 'Request additional information from customer; verify originator/beneficiary data completeness per Travel Rule obligations.', owner: 'analyst', sla: 'within 1 business day', citations: ['FATF R.16', 'FDL 20/2018 Art.23'] },
-      { n: 3, action: 'MLRO decision: release, hold, reject, or file STR based on full assessment; document outcome.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.20', 'FDL 20/2018 Art.25'] },
+      { n: 2, action: 'Request additional information from customer; verify originator/beneficiary data completeness per Travel Rule obligations.', owner: 'analyst', sla: 'within 1 business day', citations: ['FATF R.16', 'FDL 10/2025 Art.22'] },
+      { n: 3, action: 'MLRO decision: release, hold, reject, or file STR based on full assessment; document outcome.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.20', 'FDL 10/2025 Art.25'] },
     ],
   },
   {
@@ -1080,7 +1080,7 @@ export const PLAYBOOKS: Playbook[] = [
     requiredAnchors: [],
     slaHours: 48,
     steps: [
-      { n: 1, action: 'Verify MVTS operator\'s licence in UAE and relevant sending/receiving jurisdictions; obtain KYC on the underlying remittance customers if accessible.', owner: 'analyst', sla: 'within 2 business days', citations: ['FATF R.14', 'FDL 20/2018 Art.23'] },
+      { n: 1, action: 'Verify MVTS operator\'s licence in UAE and relevant sending/receiving jurisdictions; obtain KYC on the underlying remittance customers if accessible.', owner: 'analyst', sla: 'within 2 business days', citations: ['FATF R.14', 'FDL 10/2025 Art.22'] },
       { n: 2, action: 'Assess remittance patterns: corridor risk, beneficiary concentration, sub-threshold structuring across multiple remittances.', owner: 'analyst', sla: 'within 2 business days', citations: [] },
       { n: 3, action: 'MLRO decision: proceed with enhanced monitoring, request further KYC, or file STR if suspicion confirmed.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.20', 'FDL 10/2025 Art.24'] },
     ],
@@ -1099,7 +1099,7 @@ export const PLAYBOOKS: Playbook[] = [
     steps: [
       { n: 1, action: 'Identify pattern indicators: offsetting payments in different currencies/jurisdictions, minimal wire references, no legitimate commercial purpose apparent, high-volume low-value flows.', owner: 'analyst', sla: 'within 3 business days', citations: ['FATF R.14'] },
       { n: 2, action: 'Investigate linked counterparties; determine whether a network of accounts is operating as an unlicensed MVTS.', owner: 'analyst', sla: 'within 3 business days', citations: [] },
-      { n: 3, action: 'MLRO assesses underground-banking typology; if confirmed, file STR citing informal value transfer; consider reporting to UAE CBUAE.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.20', 'FDL 20/2018 Art.23'] },
+      { n: 3, action: 'MLRO assesses underground-banking typology; if confirmed, file STR citing informal value transfer; consider reporting to UAE CBUAE.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.20', 'FDL 10/2025 Art.22'] },
     ],
   },
   {
@@ -1116,7 +1116,7 @@ export const PLAYBOOKS: Playbook[] = [
     steps: [
       { n: 1, action: 'Verify whether the hawala operator holds a UAE CBUAE Exchange Licence; unlicensed operation is itself a regulatory breach.', owner: 'analyst', sla: 'within 2 business days', citations: ['FATF R.14', 'CBUAE regulations'] },
       { n: 2, action: 'Map fund flows: identify correspondent settlements, value settlement instructions, and geographic reach of the network.', owner: 'analyst', sla: 'within 3 business days', citations: [] },
-      { n: 3, action: 'MLRO files STR if unlicensed operation or laundering through hawala confirmed; report to CBUAE if unlicensed MVTS activity identified.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.20', 'FDL 20/2018 Art.23'] },
+      { n: 3, action: 'MLRO files STR if unlicensed operation or laundering through hawala confirmed; report to CBUAE if unlicensed MVTS activity identified.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.20', 'FDL 10/2025 Art.22'] },
     ],
   },
   {
@@ -1133,7 +1133,7 @@ export const PLAYBOOKS: Playbook[] = [
     steps: [
       { n: 1, action: 'Identify accounts receiving unexpected inbound deposits from unknown third parties; confirm account holder is unaware of the deposits.', owner: 'analyst', sla: 'within 2 business days', citations: [] },
       { n: 2, action: 'Contact account holder through verified channels to confirm they did not initiate or expect the deposits; document response.', owner: 'analyst', sla: 'within 2 business days', citations: ['FATF R.10'] },
-      { n: 3, action: 'MLRO assesses cuckoo-smurfing typology; if confirmed, freeze unexpected deposits and file STR; protect account holder from tipping-off implications.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.20', 'FDL 20/2018 Art.25'] },
+      { n: 3, action: 'MLRO assesses cuckoo-smurfing typology; if confirmed, freeze unexpected deposits and file STR; protect account holder from tipping-off implications.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.20', 'FDL 10/2025 Art.25'] },
     ],
   },
   {
@@ -1150,7 +1150,7 @@ export const PLAYBOOKS: Playbook[] = [
     steps: [
       { n: 1, action: 'Immediately restrict affected accounts; alert fraud team; preserve ATM CCTV and transaction logs.', owner: 'system', sla: 'immediate', citations: [] },
       { n: 2, action: 'Map the coordinated withdrawal pattern: time, location, account, and cash amount; identify whether accounts were compromised via data breach.', owner: 'analyst', sla: 'within 4 hours', citations: [] },
-      { n: 3, action: 'MLRO assesses criminal proceeds dimension; file STR citing ATM cashout typology; notify card scheme and correspondent banks as applicable.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.20', 'FDL 20/2018 Art.23'] },
+      { n: 3, action: 'MLRO assesses criminal proceeds dimension; file STR citing ATM cashout typology; notify card scheme and correspondent banks as applicable.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.20', 'FDL 10/2025 Art.22'] },
     ],
   },
   {
@@ -1167,7 +1167,7 @@ export const PLAYBOOKS: Playbook[] = [
     steps: [
       { n: 1, action: 'Document the specific intelligence or transaction indicator linking the customer to bulk cash movement; obtain customs declaration records if available.', owner: 'analyst', sla: 'within 2 business days', citations: ['FATF R.32'] },
       { n: 2, action: 'Assess whether declared SoF and business activity are consistent with the cash volumes identified; check for currency-declaration violations.', owner: 'analyst', sla: 'within 2 business days', citations: [] },
-      { n: 3, action: 'MLRO files STR if bulk cash smuggling as predicate offence is suspected; coordinate with UAE FIU intelligence unit as appropriate.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.20', 'FDL 20/2018 Art.23'] },
+      { n: 3, action: 'MLRO files STR if bulk cash smuggling as predicate offence is suspected; coordinate with UAE FIU intelligence unit as appropriate.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.20', 'FDL 10/2025 Art.22'] },
     ],
   },
   {
@@ -1182,7 +1182,7 @@ export const PLAYBOOKS: Playbook[] = [
     requiredAnchors: [],
     slaHours: 120,
     steps: [
-      { n: 1, action: 'Establish cash-volume baseline from declared business activity (e.g., retail revenue, hospitality turnover); document methodology.', owner: 'analyst', sla: 'at onboarding or review', citations: ['FATF RBA', 'FDL 20/2018 Art.23'] },
+      { n: 1, action: 'Establish cash-volume baseline from declared business activity (e.g., retail revenue, hospitality turnover); document methodology.', owner: 'analyst', sla: 'at onboarding or review', citations: ['FATF RBA', 'FDL 10/2025 Art.22'] },
       { n: 2, action: 'Apply enhanced transaction monitoring rules calibrated to the business type; flag deviations >30% from declared baseline.', owner: 'system', sla: 'on onboarding', citations: [] },
       { n: 3, action: 'MLRO reviews periodic cash-flow analysis; files STR if unexplained deviations persist; adjusts monitoring thresholds annually.', owner: 'mlro', sla: 'quarterly review', citations: ['FATF R.20', 'FDL 10/2025 Art.24'] },
     ],
@@ -1201,7 +1201,7 @@ export const PLAYBOOKS: Playbook[] = [
     steps: [
       { n: 1, action: 'For suspected victims: identify pattern (sudden large outbound transfers to unknown crypto wallets or foreign accounts, emotional urgency); alert customer via verified channel.', owner: 'analyst', sla: 'on event', citations: [] },
       { n: 2, action: 'For suspected proceeds accounts: trace inbound funds via on-chain analytics; map receiving wallet cluster to pig-butchering infrastructure.', owner: 'analyst', sla: 'within 2 business days', citations: ['FATF R.20'] },
-      { n: 3, action: 'MLRO files STR in both scenarios; for victims, consider voluntary referral to UAE police; for proceeds accounts, freeze funds and exit relationship.', owner: 'mlro', sla: 'within 5 business days', citations: ['FDL 20/2018 Art.23', 'FATF R.20'] },
+      { n: 3, action: 'MLRO files STR in both scenarios; for victims, consider voluntary referral to UAE police; for proceeds accounts, freeze funds and exit relationship.', owner: 'mlro', sla: 'within 5 business days', citations: ['FDL 10/2025 Art.22', 'FATF R.20'] },
     ],
   },
   // TBML/Trade Finance
@@ -1219,7 +1219,7 @@ export const PLAYBOOKS: Playbook[] = [
     steps: [
       { n: 1, action: 'Identify TBML indicator: over/under-invoicing, multiple invoicing, falsely described goods, phantom shipment; document specific red flags.', owner: 'analyst', sla: 'within 2 business days', citations: ['FATF R.20', 'EGMONT Group'] },
       { n: 2, action: 'Obtain and cross-check trade documentation (invoice, bill of lading, packing list, inspection certificate) against market price benchmarks and vessel-tracking data.', owner: 'analyst', sla: 'within 3 business days', citations: ['UCP 600'] },
-      { n: 3, action: 'MLRO decides: release, enhanced monitoring, STR, or exit; document full rationale including commodity, counterparty risk, and trade-route risk.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.20', 'FDL 20/2018 Art.23'] },
+      { n: 3, action: 'MLRO decides: release, enhanced monitoring, STR, or exit; document full rationale including commodity, counterparty risk, and trade-route risk.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.20', 'FDL 10/2025 Art.22'] },
     ],
   },
   {
@@ -1253,7 +1253,7 @@ export const PLAYBOOKS: Playbook[] = [
     steps: [
       { n: 1, action: 'Verify EU FLEGT licence or CITES permit for regulated timber species; check origin country against high illegal-logging-risk list.', owner: 'analyst', sla: 'within 3 business days', citations: ['EU FLEGT Reg. 995/2010', 'CITES'] },
       { n: 2, action: 'Assess financial flows for TBML red flags: price discrepancy, phantom shipments, undocumented intermediaries.', owner: 'analyst', sla: 'within 3 business days', citations: ['FATF R.3 (2021)'] },
-      { n: 3, action: 'MLRO assesses environmental-crime predicate nexus; if criminal proceeds suspected, file STR citing illegal logging typology.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.20', 'FDL 20/2018 Art.23'] },
+      { n: 3, action: 'MLRO assesses environmental-crime predicate nexus; if criminal proceeds suspected, file STR citing illegal logging typology.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.20', 'FDL 10/2025 Art.22'] },
     ],
   },
   {
@@ -1270,7 +1270,7 @@ export const PLAYBOOKS: Playbook[] = [
     steps: [
       { n: 1, action: 'Review commodity type, origin jurisdiction, and counterparties for AML red flags: deforestation-linked sourcing, conflict-region origin, no phytosanitary documentation.', owner: 'analyst', sla: 'within 3 business days', citations: ['FATF R.3 (2021)'] },
       { n: 2, action: 'Verify trade documentation and cross-check pricing against commodity market benchmarks; flag >15% discrepancy.', owner: 'analyst', sla: 'within 3 business days', citations: [] },
-      { n: 3, action: 'MLRO assesses predicate-offence risk; if deforestation or illegal-land-acquisition nexus confirmed, file STR citing environmental crime.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.20', 'FDL 20/2018 Art.23'] },
+      { n: 3, action: 'MLRO assesses predicate-offence risk; if deforestation or illegal-land-acquisition nexus confirmed, file STR citing environmental crime.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.20', 'FDL 10/2025 Art.22'] },
     ],
   },
   {
@@ -1321,7 +1321,7 @@ export const PLAYBOOKS: Playbook[] = [
     steps: [
       { n: 1, action: 'Require country-of-origin certificate and conflict-free declaration for all coloured gemstones; verify against known conflict-gem source countries.', owner: 'analyst', sla: 'before transaction settlement', citations: ['OECD DDG', 'FATF DPMS guidance'] },
       { n: 2, action: 'Assess valuation against independent gemological appraisal; flag discrepancies >20% as TBML red flag.', owner: 'analyst', sla: 'within 3 business days', citations: [] },
-      { n: 3, action: 'MLRO decision: accept with documentation, reject if no provenance, or file STR if conflict-gem or laundering nexus suspected.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.20', 'FDL 20/2018 Art.23'] },
+      { n: 3, action: 'MLRO decision: accept with documentation, reject if no provenance, or file STR if conflict-gem or laundering nexus suspected.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.20', 'FDL 10/2025 Art.22'] },
     ],
   },
   {
@@ -1355,7 +1355,7 @@ export const PLAYBOOKS: Playbook[] = [
     steps: [
       { n: 1, action: 'Require valid Kimberley Process Certification Scheme (KPCS) certificate for all rough diamond transactions; reject any shipment without a valid certificate.', owner: 'analyst', sla: 'before settlement', citations: ['KPCS', 'FATF DPMS guidance'] },
       { n: 2, action: 'Verify certificate authenticity against issuing authority; check that the certificate covers the specific parcel being transacted.', owner: 'analyst', sla: 'within 2 business days', citations: [] },
-      { n: 3, action: 'MLRO decision: accept with KP-compliant documentation, or reject and file STR if conflict diamond or forgery suspected.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.20', 'FDL 20/2018 Art.23'] },
+      { n: 3, action: 'MLRO decision: accept with KP-compliant documentation, or reject and file STR if conflict diamond or forgery suspected.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.20', 'FDL 10/2025 Art.22'] },
     ],
   },
   {
@@ -1389,7 +1389,7 @@ export const PLAYBOOKS: Playbook[] = [
     steps: [
       { n: 1, action: 'Check vessel flag, IMO number, and fishing authorisation; verify vessel is not on RFMO IUU vessel lists (ICCAT, CCAMLR, WCPFC, etc.).', owner: 'analyst', sla: 'within 3 business days', citations: ['FAO IPOA-IUU', 'FATF R.3 (2021)'] },
       { n: 2, action: 'Assess financial flows for TBML indicators: over/under-invoicing of seafood, fictitious catch documentation, round-tripping between fishing entities.', owner: 'analyst', sla: 'within 3 business days', citations: [] },
-      { n: 3, action: 'MLRO determines environmental-crime predicate nexus; if criminal proceeds from IUU fishing confirmed, file STR.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.20', 'FDL 20/2018 Art.23'] },
+      { n: 3, action: 'MLRO determines environmental-crime predicate nexus; if criminal proceeds from IUU fishing confirmed, file STR.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.20', 'FDL 10/2025 Art.22'] },
     ],
   },
   {
@@ -1457,7 +1457,7 @@ export const PLAYBOOKS: Playbook[] = [
     steps: [
       { n: 1, action: 'Hold transaction immediately; screen all parties against DPRK, Iran, Syria proliferation lists (OFAC, UN, EU); assess commodity codes against WMD and missile-technology control lists.', owner: 'system', sla: 'immediate', citations: ['FATF R.7', 'UN SC Res. 1718', 'UN SC Res. 2231', 'CR 74/2020'] },
       { n: 2, action: 'Apply FATF proliferation-financing red flags: front companies, transshipment countries, vague commodity descriptions, inconsistent end-use claims.', owner: 'analyst', sla: 'within 24 hours', citations: ['FATF R.7'] },
-      { n: 3, action: 'MLRO files FFR and STR; notify senior management and legal counsel; consider voluntary disclosure to UAE EOCN.', owner: 'mlro', sla: 'within 2 business days', citations: ['CR 74/2020', 'FDL 20/2018 Art.23', 'FATF R.7'] },
+      { n: 3, action: 'MLRO files FFR and STR; notify senior management and legal counsel; consider voluntary disclosure to UAE EOCN.', owner: 'mlro', sla: 'within 2 business days', citations: ['CR 74/2020', 'FDL 10/2025 Art.22', 'FATF R.7'] },
     ],
   },
   // Real Estate
@@ -1475,7 +1475,7 @@ export const PLAYBOOKS: Playbook[] = [
     steps: [
       { n: 1, action: 'Identify AML red flags: all-cash purchase, third-party payment, nominee buyer/seller, price significantly above or below market, rapid resale.', owner: 'analyst', sla: 'within 2 business days', citations: ['FATF R.10', 'FATF real-estate guidance 2022'] },
       { n: 2, action: 'Obtain SoF for the full acquisition amount; verify UBO of purchasing entity; screen all parties against sanctions and adverse-media databases.', owner: 'analyst', sla: 'within 3 business days', citations: ['FATF R.24'] },
-      { n: 3, action: 'MLRO decision: proceed with enhanced monitoring, request additional documentation, or file STR if layering or integration pattern suspected.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.20', 'FDL 20/2018 Art.23'] },
+      { n: 3, action: 'MLRO decision: proceed with enhanced monitoring, request additional documentation, or file STR if layering or integration pattern suspected.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.20', 'FDL 10/2025 Art.22'] },
     ],
   },
   {
@@ -1490,9 +1490,9 @@ export const PLAYBOOKS: Playbook[] = [
     requiredAnchors: [],
     slaHours: 72,
     steps: [
-      { n: 1, action: 'Verify real estate agent is registered with UAE MoE DNFBP register; obtain their AML policy and evidence of training compliance.', owner: 'analyst', sla: 'at onboarding', citations: ['FDL 20/2018', 'MoE DNFBP circulars'] },
+      { n: 1, action: 'Verify real estate agent is registered with UAE MoE DNFBP register; obtain their AML policy and evidence of training compliance.', owner: 'analyst', sla: 'at onboarding', citations: ['FDL 10/2025', 'MoE DNFBP circulars'] },
       { n: 2, action: 'Apply EDD proportionate to the nature of transactions conducted through the agent; monitor for threshold-triggering transactions.', owner: 'analyst', sla: 'ongoing', citations: ['FATF R.22'] },
-      { n: 3, action: 'MLRO reports suspicious transactions facilitated by the agent; considers whether the agent is complicit or negligent in AML obligations.', owner: 'mlro', sla: 'within 5 business days of suspicion', citations: ['FATF R.20', 'FDL 20/2018 Art.23'] },
+      { n: 3, action: 'MLRO reports suspicious transactions facilitated by the agent; considers whether the agent is complicit or negligent in AML obligations.', owner: 'mlro', sla: 'within 5 business days of suspicion', citations: ['FATF R.20', 'FDL 10/2025 Art.22'] },
     ],
   },
   // UBO / Corporate Structure
@@ -1611,7 +1611,7 @@ export const PLAYBOOKS: Playbook[] = [
     requiredAnchors: [],
     slaHours: 240,
     steps: [
-      { n: 1, action: 'Assess branch-specific risk factors: customer base composition, product mix, geographic location, and local regulatory environment.', owner: 'analyst', sla: 'within 10 business days', citations: ['FATF RBA', 'FDL 20/2018 Art.23'] },
+      { n: 1, action: 'Assess branch-specific risk factors: customer base composition, product mix, geographic location, and local regulatory environment.', owner: 'analyst', sla: 'within 10 business days', citations: ['FATF RBA', 'FDL 10/2025 Art.22'] },
       { n: 2, action: 'Review branch transaction monitoring alert rates, SAR filing rates, and control-deficiency findings from last audit cycle.', owner: 'analyst', sla: 'within 10 business days', citations: [] },
       { n: 3, action: 'MLRO and senior management approve branch risk rating; implement risk-specific controls and monitoring enhancements; document in risk register.', owner: 'senior_management', sla: 'within 20 business days', citations: ['FDL 10/2025 Art.24'] },
     ],
@@ -1631,7 +1631,7 @@ export const PLAYBOOKS: Playbook[] = [
     steps: [
       { n: 1, action: 'Immediately lock account; preserve all access logs, device fingerprints, IP addresses, and session data without alteration.', owner: 'system', sla: 'immediate', citations: [] },
       { n: 2, action: 'Contact account holder through pre-verified contact details (not those changed during the suspected takeover) to confirm account compromise.', owner: 'analyst', sla: 'within 4 hours', citations: ['FATF R.10'] },
-      { n: 3, action: 'MLRO assesses whether funds were transferred out as proceeds of fraud; file STR citing account-takeover typology; assist customer with recovery steps.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.20', 'FDL 20/2018 Art.23'] },
+      { n: 3, action: 'MLRO assesses whether funds were transferred out as proceeds of fraud; file STR citing account-takeover typology; assist customer with recovery steps.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.20', 'FDL 10/2025 Art.22'] },
     ],
   },
   {
@@ -1663,9 +1663,9 @@ export const PLAYBOOKS: Playbook[] = [
     requiredAnchors: [],
     slaHours: 24,
     steps: [
-      { n: 1, action: 'Suspend onboarding; preserve all application data, documents, device metadata, and IP address.', owner: 'system', sla: 'immediate', citations: ['FDL 20/2018 Art.23'] },
+      { n: 1, action: 'Suspend onboarding; preserve all application data, documents, device metadata, and IP address.', owner: 'system', sla: 'immediate', citations: ['FDL 10/2025 Art.22'] },
       { n: 2, action: 'Re-verify identity via independent channel or in-person verification; run document forensics on submitted ID documents.', owner: 'analyst', sla: 'within 1 business day', citations: ['FATF R.10'] },
-      { n: 3, action: 'MLRO assesses fraud typology (first-party, third-party, synthetic); if confirmed, decline application and file STR; consider fraud-ring linkage.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.20', 'FDL 20/2018 Art.23'] },
+      { n: 3, action: 'MLRO assesses fraud typology (first-party, third-party, synthetic); if confirmed, decline application and file STR; consider fraud-ring linkage.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.20', 'FDL 10/2025 Art.22'] },
     ],
   },
   {
@@ -1680,9 +1680,9 @@ export const PLAYBOOKS: Playbook[] = [
     requiredAnchors: [],
     slaHours: 72,
     steps: [
-      { n: 1, action: 'Verify junket operator\'s gaming licence and AML programme; obtain UBO and key management details; classify as high risk.', owner: 'analyst', sla: 'before onboarding', citations: ['FATF R.22', 'FDL 20/2018 Art.23'] },
+      { n: 1, action: 'Verify junket operator\'s gaming licence and AML programme; obtain UBO and key management details; classify as high risk.', owner: 'analyst', sla: 'before onboarding', citations: ['FATF R.22', 'FDL 10/2025 Art.22'] },
       { n: 2, action: 'Obtain SoW for high-volume players; monitor chip-buy-in and cash-out patterns for structuring or rapid conversion indicative of placement.', owner: 'analyst', sla: 'ongoing', citations: ['FATF R.12'] },
-      { n: 3, action: 'MLRO files STR if gaming transactions present unexplained layering or conversion of criminal proceeds.', owner: 'mlro', sla: 'within 5 business days of suspicion', citations: ['FATF R.20', 'FDL 20/2018 Art.23'] },
+      { n: 3, action: 'MLRO files STR if gaming transactions present unexplained layering or conversion of criminal proceeds.', owner: 'mlro', sla: 'within 5 business days of suspicion', citations: ['FATF R.20', 'FDL 10/2025 Art.22'] },
     ],
   },
   {
@@ -1699,7 +1699,7 @@ export const PLAYBOOKS: Playbook[] = [
     steps: [
       { n: 1, action: 'Verify gaming/gambling licence validity and jurisdictional compliance; classify as higher-risk business type requiring enhanced monitoring.', owner: 'analyst', sla: 'at onboarding', citations: ['FATF R.22'] },
       { n: 2, action: 'Monitor cash-in and cash-out flows; assess whether transaction patterns are consistent with licensed gaming revenue.', owner: 'system', sla: 'ongoing', citations: ['FATF R.10'] },
-      { n: 3, action: 'MLRO reviews periodic transaction analysis; files STR if placement through gaming mechanism suspected.', owner: 'mlro', sla: 'within 5 business days of suspicion', citations: ['FATF R.20', 'FDL 20/2018 Art.23'] },
+      { n: 3, action: 'MLRO reviews periodic transaction analysis; files STR if placement through gaming mechanism suspected.', owner: 'mlro', sla: 'within 5 business days of suspicion', citations: ['FATF R.20', 'FDL 10/2025 Art.22'] },
     ],
   },
   {
@@ -1716,7 +1716,7 @@ export const PLAYBOOKS: Playbook[] = [
     steps: [
       { n: 1, action: 'Identify human-trafficking financial indicators: multiple persons sending money from same device or address, payment of debts by third parties, unusual cash payments to individuals in high-risk sectors.', owner: 'analyst', sla: 'within 2 business days', citations: ['FATF R.3', 'FATF human-trafficking guidance'] },
       { n: 2, action: 'Assess whether the customer profile and transaction pattern are consistent with labour-exploitation or sex-trafficking financial flows.', owner: 'analyst', sla: 'within 2 business days', citations: [] },
-      { n: 3, action: 'MLRO files STR citing human-trafficking typology; do not tip off; consider referral to UAE law enforcement if immediate victim risk exists.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.20', 'FDL 20/2018 Art.23'] },
+      { n: 3, action: 'MLRO files STR citing human-trafficking typology; do not tip off; consider referral to UAE law enforcement if immediate victim risk exists.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.20', 'FDL 10/2025 Art.22'] },
     ],
   },
   {
@@ -1731,9 +1731,9 @@ export const PLAYBOOKS: Playbook[] = [
     requiredAnchors: [],
     slaHours: 72,
     steps: [
-      { n: 1, action: 'Verify HVD is registered on UAE MoE DNFBP register; confirm compliance with AED 55,000 cash-transaction reporting threshold.', owner: 'analyst', sla: 'at onboarding', citations: ['FDL 20/2018', 'MoE DNFBP circulars'] },
+      { n: 1, action: 'Verify HVD is registered on UAE MoE DNFBP register; confirm compliance with AED 55,000 cash-transaction reporting threshold.', owner: 'analyst', sla: 'at onboarding', citations: ['FDL 10/2025', 'MoE DNFBP circulars'] },
       { n: 2, action: 'Monitor transactions for cash-intensive patterns, structuring, and unusual buyer/seller profiles inconsistent with declared trade goods.', owner: 'system', sla: 'ongoing', citations: ['FATF R.22'] },
-      { n: 3, action: 'MLRO files STR if suspicious transactions involving HVD confirmed; assesses whether HVD itself is compliant or complicit.', owner: 'mlro', sla: 'within 5 business days of suspicion', citations: ['FATF R.20', 'FDL 20/2018 Art.23'] },
+      { n: 3, action: 'MLRO files STR if suspicious transactions involving HVD confirmed; assesses whether HVD itself is compliant or complicit.', owner: 'mlro', sla: 'within 5 business days of suspicion', citations: ['FATF R.20', 'FDL 10/2025 Art.22'] },
     ],
   },
   {
@@ -1750,7 +1750,7 @@ export const PLAYBOOKS: Playbook[] = [
     steps: [
       { n: 1, action: 'Identify insurance AML red flags: early surrender, third-party premium payments, assignment to unconnected beneficiary, over-insurance, or unusual single-premium investment.', owner: 'analyst', sla: 'within 2 business days', citations: ['FATF R.10', 'FATF insurance guidance'] },
       { n: 2, action: 'Verify SoF for premium payment; assess beneficiary designation for legitimacy; cross-check policyholder against sanctions/PEP databases.', owner: 'analyst', sla: 'within 3 business days', citations: ['FATF R.12'] },
-      { n: 3, action: 'MLRO decision: accept with enhanced monitoring or file STR if placement through insurance mechanism suspected.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.20', 'FDL 20/2018 Art.23'] },
+      { n: 3, action: 'MLRO decision: accept with enhanced monitoring or file STR if placement through insurance mechanism suspected.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.20', 'FDL 10/2025 Art.22'] },
     ],
   },
   {
@@ -1766,8 +1766,8 @@ export const PLAYBOOKS: Playbook[] = [
     slaHours: 72,
     steps: [
       { n: 1, action: 'Document the specific tax-evasion predicate indicators: offshore account concealment, structured cash deposits, invoice manipulation, corporate-veil abuse for tax purposes.', owner: 'analyst', sla: 'within 3 business days', citations: ['FATF R.3'] },
-      { n: 2, action: 'Assess whether tax evasion constitutes a predicate offence under UAE law and FATF standards; confirm the financial-crime nexus to the transactions observed.', owner: 'mlro', sla: 'within 3 business days', citations: ['FDL 20/2018 Art.2'] },
-      { n: 3, action: 'MLRO files STR citing tax evasion as predicate; document scope declaration per charter P7 if financial-crime nexus cannot be established.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.20', 'FDL 20/2018 Art.23'] },
+      { n: 2, action: 'Assess whether tax evasion constitutes a predicate offence under UAE law and FATF standards; confirm the financial-crime nexus to the transactions observed.', owner: 'mlro', sla: 'within 3 business days', citations: ['FDL 10/2025 Art.2'] },
+      { n: 3, action: 'MLRO files STR citing tax evasion as predicate; document scope declaration per charter P7 if financial-crime nexus cannot be established.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.20', 'FDL 10/2025 Art.22'] },
     ],
   },
   {
@@ -1784,7 +1784,7 @@ export const PLAYBOOKS: Playbook[] = [
     steps: [
       { n: 1, action: 'Hold transaction; run on-chain analytics on all associated wallet addresses against ransomware attribution databases (Chainalysis, Elliptic, TRM Labs).', owner: 'system', sla: 'immediate', citations: ['FATF R.15'] },
       { n: 2, action: 'Screen ransomware group names and associated wallets against OFAC SDN list (many ransomware groups are OFAC-designated).', owner: 'analyst', sla: 'within 4 hours', citations: ['OFAC', 'CR 74/2020'] },
-      { n: 3, action: 'MLRO decision: if OFAC-linked group confirmed, freeze and file FFR; if non-designated proceeds confirmed, file STR; retain full analytics evidence.', owner: 'mlro', sla: 'within 5 business days', citations: ['CR 74/2020', 'FATF R.20', 'FDL 20/2018 Art.23'] },
+      { n: 3, action: 'MLRO decision: if OFAC-linked group confirmed, freeze and file FFR; if non-designated proceeds confirmed, file STR; retain full analytics evidence.', owner: 'mlro', sla: 'within 5 business days', citations: ['CR 74/2020', 'FATF R.20', 'FDL 10/2025 Art.22'] },
     ],
   },
   {
@@ -1801,7 +1801,7 @@ export const PLAYBOOKS: Playbook[] = [
     steps: [
       { n: 1, action: 'Immediately alert correspondent bank and SWIFT; request recall of any transfers sent under the compromised instruction; freeze outbound transfers pending investigation.', owner: 'analyst', sla: 'within 2 hours', citations: ['SWIFT CSP', 'FATF R.16'] },
       { n: 2, action: 'Preserve all email headers, SWIFT message logs, and system access records; engage cybersecurity incident response; assess scope of compromise.', owner: 'system', sla: 'within 2 hours', citations: [] },
-      { n: 3, action: 'MLRO files STR citing BEC/SWIFT fraud typology; notify senior management; assess whether financial crime proceeds were moved.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.20', 'FDL 20/2018 Art.23'] },
+      { n: 3, action: 'MLRO files STR citing BEC/SWIFT fraud typology; notify senior management; assess whether financial crime proceeds were moved.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.20', 'FDL 10/2025 Art.22'] },
     ],
   },
   {
@@ -1818,7 +1818,7 @@ export const PLAYBOOKS: Playbook[] = [
     steps: [
       { n: 1, action: 'Suspend account; preserve all onboarding records; conduct document forensics and cross-reference identity data against authoritative databases.', owner: 'system', sla: 'immediate', citations: ['FATF R.10'] },
       { n: 2, action: 'Analyse the identity components: are real elements (DOB, SSN equivalent, name) combined with fictitious others? Identify the synthetic-identity typology.', owner: 'analyst', sla: 'within 24 hours', citations: [] },
-      { n: 3, action: 'MLRO determines criminal intent (fraud, money-mule, loan stacking); exits relationship; files STR citing synthetic-identity typology.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.20', 'FDL 20/2018 Art.23'] },
+      { n: 3, action: 'MLRO determines criminal intent (fraud, money-mule, loan stacking); exits relationship; files STR citing synthetic-identity typology.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.20', 'FDL 10/2025 Art.22'] },
     ],
   },
   {
@@ -1835,7 +1835,7 @@ export const PLAYBOOKS: Playbook[] = [
     steps: [
       { n: 1, action: 'Document the specific environmental predicate: sector, commodity, geography, and the nexus between the predicate offence and the financial flows under review.', owner: 'analyst', sla: 'within 2 business days', citations: ['FATF R.3 (2021)'] },
       { n: 2, action: 'Obtain supply-chain provenance evidence; cross-check commodity documentation (CITES permits, FLEGT licences, mining permits) against transaction records.', owner: 'analyst', sla: 'within 3 business days', citations: ['OECD DDG Annex II'] },
-      { n: 3, action: 'MLRO files STR if criminal-proceeds nexus established; retains full evidence chain including provenance documentation.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.20', 'FDL 20/2018 Art.23', 'FDL 10/2025 Art.24'] },
+      { n: 3, action: 'MLRO files STR if criminal-proceeds nexus established; retains full evidence chain including provenance documentation.', owner: 'mlro', sla: 'within 5 business days', citations: ['FATF R.20', 'FDL 10/2025 Art.22'] },
     ],
   },
   {
@@ -1850,9 +1850,9 @@ export const PLAYBOOKS: Playbook[] = [
     requiredAnchors: [],
     slaHours: 72,
     steps: [
-      { n: 1, action: 'Verify NGO/NPO registration and licence; obtain governance documents, financial statements, and list of donors, beneficiaries, and programme countries.', owner: 'analyst', sla: 'at onboarding', citations: ['FATF R.8', 'FDL 20/2018 Art.23'] },
+      { n: 1, action: 'Verify NGO/NPO registration and licence; obtain governance documents, financial statements, and list of donors, beneficiaries, and programme countries.', owner: 'analyst', sla: 'at onboarding', citations: ['FATF R.8', 'FDL 10/2025 Art.22'] },
       { n: 2, action: 'Assess risk profile: programme countries (especially conflict zones), donor profile, cash usage, and wire-transfer patterns to high-risk jurisdictions.', owner: 'analyst', sla: 'within 3 business days', citations: ['FATF R.8'] },
-      { n: 3, action: 'MLRO approves relationship with enhanced monitoring; files STR if financial flows suggest diversion to terrorist or criminal purposes.', owner: 'mlro', sla: 'within 5 business days of suspicion', citations: ['FATF R.20', 'FDL 20/2018 Art.23'] },
+      { n: 3, action: 'MLRO approves relationship with enhanced monitoring; files STR if financial flows suggest diversion to terrorist or criminal purposes.', owner: 'mlro', sla: 'within 5 business days of suspicion', citations: ['FATF R.20', 'FDL 10/2025 Art.22'] },
     ],
   },
   {
@@ -1869,7 +1869,7 @@ export const PLAYBOOKS: Playbook[] = [
     steps: [
       { n: 1, action: 'Apply AED 55,000 cash-transaction threshold; collect full KYC at point of sale for qualifying transactions; retain receipt records.', owner: 'analyst', sla: 'at point of sale', citations: ['MoE DNFBP circulars', 'FATF R.22'] },
       { n: 2, action: 'Screen customer against sanctions and adverse-media databases; check for structuring across multiple transactions.', owner: 'system', sla: 'at point of sale', citations: [] },
-      { n: 3, action: 'MLRO files cash-transaction report or STR as applicable; reviews DPMS-specific typologies (smurfing, over-valuation, gemstone substitution).', owner: 'mlro', sla: 'within statutory window', citations: ['FDL 20/2018 Art.23', 'FATF R.20'] },
+      { n: 3, action: 'MLRO files cash-transaction report or STR as applicable; reviews DPMS-specific typologies (smurfing, over-valuation, gemstone substitution).', owner: 'mlro', sla: 'within statutory window', citations: ['FDL 10/2025 Art.22', 'FATF R.20'] },
     ],
   },
   {
@@ -1884,7 +1884,7 @@ export const PLAYBOOKS: Playbook[] = [
     requiredAnchors: [],
     slaHours: 120,
     steps: [
-      { n: 1, action: 'Confirm MoE DNFBP registration is current; prepare compliance documentation package for MoE supervisory visit or request.', owner: 'analyst', sla: 'within 5 business days of notification', citations: ['MoE DNFBP circulars', 'FDL 20/2018'] },
+      { n: 1, action: 'Confirm MoE DNFBP registration is current; prepare compliance documentation package for MoE supervisory visit or request.', owner: 'analyst', sla: 'within 5 business days of notification', citations: ['MoE DNFBP circulars', 'FDL 10/2025'] },
       { n: 2, action: 'Review and remediate any open MoE findings from prior examinations; update AML/CFT policies and training records.', owner: 'mlro', sla: 'within 10 business days', citations: [] },
       { n: 3, action: 'Senior management signs off on MoE response submission; MLRO coordinates regulatory examination.', owner: 'senior_management', sla: 'per MoE deadline', citations: ['FDL 10/2025 Art.24'] },
     ],
@@ -1918,9 +1918,9 @@ export const PLAYBOOKS: Playbook[] = [
     requiredAnchors: [],
     slaHours: 120,
     steps: [
-      { n: 1, action: 'Prepare STR/FFR using the Hawkeye Sterling goAML template; populate all mandatory fields including subject data, transaction data, and grounds for suspicion narrative.', owner: 'analyst', sla: 'within 3 business days', citations: ['FDL 20/2018 Art.23', 'UAE FIU goAML guidance'] },
+      { n: 1, action: 'Prepare STR/FFR using the Hawkeye Sterling goAML template; populate all mandatory fields including subject data, transaction data, and grounds for suspicion narrative.', owner: 'analyst', sla: 'within 3 business days', citations: ['FDL 10/2025 Art.22', 'UAE FIU goAML guidance'] },
       { n: 2, action: 'MLRO quality-reviews the draft per pb_sar_quality checklist; obtains senior management approval where required.', owner: 'mlro', sla: 'within 2 business days', citations: ['CR 134/2025 Art.19'] },
-      { n: 3, action: 'Submit via goAML portal; retain submission receipt and reference number; log in the STR register; monitor for FIU feedback.', owner: 'mlro', sla: 'within 5 business days of suspicion crystallisation', citations: ['FDL 20/2018 Art.23', 'FDL 10/2025 Art.24'] },
+      { n: 3, action: 'Submit via goAML portal; retain submission receipt and reference number; log in the STR register; monitor for FIU feedback.', owner: 'mlro', sla: 'within 5 business days of suspicion crystallisation', citations: ['FDL 10/2025 Art.22'] },
     ],
   },
   {
@@ -1936,7 +1936,7 @@ export const PLAYBOOKS: Playbook[] = [
     slaHours: 48,
     steps: [
       { n: 1, action: 'Review STR for completeness: all mandatory fields populated, narrative states specific observable facts (not suspicion labels), financial figures reconcile, supporting evidence referenced.', owner: 'deputy_mlro', sla: 'within 1 business day', citations: ['UAE FIU goAML guidance', 'FATF R.20'] },
-      { n: 2, action: 'MLRO confirms legal basis for filing and that the disclosure does not constitute tipping off; signs off on final draft.', owner: 'mlro', sla: 'within 1 business day', citations: ['FDL 20/2018 Art.23', 'FDL 20/2018 Art.25'] },
+      { n: 2, action: 'MLRO confirms legal basis for filing and that the disclosure does not constitute tipping off; signs off on final draft.', owner: 'mlro', sla: 'within 1 business day', citations: ['FDL 10/2025 Art.22', 'FDL 10/2025 Art.25'] },
       { n: 3, action: 'File via goAML; retain copy of filed report and all supporting evidence; update STR register and set follow-up action tracker.', owner: 'system', sla: 'same business day as sign-off', citations: ['FDL 10/2025 Art.24'] },
     ],
   },
@@ -1952,12 +1952,12 @@ export const PLAYBOOKS: Playbook[] = [
     requiredAnchors: [],
     slaHours: 120,
     steps: [
-      { n: 1, action: 'Issue exit notice using neutral commercial language only; do not reference suspicion, AML investigations, or regulatory reporting as a reason.', owner: 'analyst', sla: 'on MLRO instruction', citations: ['FDL 20/2018 Art.25'] },
+      { n: 1, action: 'Issue exit notice using neutral commercial language only; do not reference suspicion, AML investigations, or regulatory reporting as a reason.', owner: 'analyst', sla: 'on MLRO instruction', citations: ['FDL 10/2025 Art.25'] },
       { n: 2, action: 'Route residual balances only to a verified account in the customer\'s name at a regulated institution; retain all records per the retention policy.', owner: 'analyst', sla: 'within contractual notice period', citations: ['FDL 10/2025 Art.24'] },
-      { n: 3, action: 'Ensure STR/FFR has been filed if suspicion was the driver before the exit completes; preserve full AML/CDD file for minimum 5 years post-exit.', owner: 'mlro', sla: 'before relationship closure', citations: ['FDL 20/2018 Art.23', 'FDL 10/2025 Art.24'] },
+      { n: 3, action: 'Ensure STR/FFR has been filed if suspicion was the driver before the exit completes; preserve full AML/CDD file for minimum 5 years post-exit.', owner: 'mlro', sla: 'before relationship closure', citations: ['FDL 10/2025 Art.22'] },
     ],
   },
-  { id: 'pb_wildlife_trafficking', title: 'Wildlife trafficking proceeds', name: 'Wildlife trafficking proceeds', trigger: 'Transaction or customer linked to illegal wildlife trade (IWT) proceeds.', summary: 'Transaction or customer linked to illegal wildlife trade (IWT) proceeds.', requiredSkills: [], requiredReasoning: [], requiredAnalysis: [], requiredAnchors: [], steps: [{ n: 1, action: 'Identify financial flows linked to IWT: CITES-permit anomalies, payments to known IWT source regions, wildlife-product vendor accounts.', owner: 'analyst', sla: 'within 2 business days', citations: ['CITES', 'FATF R.3 (2021)'] }, { n: 2, action: 'MLRO applies FATF R.3 predicate analysis; assess whether proceeds constitute ML predicate in UAE law.', owner: 'mlro', sla: 'within 3 business days', citations: ['FATF R.3'] }, { n: 3, action: 'File STR for IWT-proceeds laundering; exit relationship; consider reporting to UAE CITES Management Authority.', owner: 'mlro', sla: 'within 5 business days', citations: ['FDL 20/2018 Art.23'] }] },
+  { id: 'pb_wildlife_trafficking', title: 'Wildlife trafficking proceeds', name: 'Wildlife trafficking proceeds', trigger: 'Transaction or customer linked to illegal wildlife trade (IWT) proceeds.', summary: 'Transaction or customer linked to illegal wildlife trade (IWT) proceeds.', requiredSkills: [], requiredReasoning: [], requiredAnalysis: [], requiredAnchors: [], steps: [{ n: 1, action: 'Identify financial flows linked to IWT: CITES-permit anomalies, payments to known IWT source regions, wildlife-product vendor accounts.', owner: 'analyst', sla: 'within 2 business days', citations: ['CITES', 'FATF R.3 (2021)'] }, { n: 2, action: 'MLRO applies FATF R.3 predicate analysis; assess whether proceeds constitute ML predicate in UAE law.', owner: 'mlro', sla: 'within 3 business days', citations: ['FATF R.3'] }, { n: 3, action: 'File STR for IWT-proceeds laundering; exit relationship; consider reporting to UAE CITES Management Authority.', owner: 'mlro', sla: 'within 5 business days', citations: ['FDL 10/2025 Art.22'] }] },
 ];
 
 export const PLAYBOOK_BY_ID: Map<PlaybookId, Playbook> = new Map(

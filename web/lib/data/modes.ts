@@ -782,7 +782,7 @@ export const MODES: ReasoningMode[] = [
     taxonomyIds: [...r("Regulatory Interpretation"), ...a("Cabinet Resolution Interpretation Analysis")] },
   { id: "RM-681", name: "CBUAE Circular Compliance", faculty: "regulatory",
     taxonomyIds: [...r("Cabinet Resolution Reasoning", "Regulatory Interpretation")] },
-  { id: "RM-682", name: "FDL 20/2018 Article Trace", faculty: "regulatory",
+  { id: "RM-682", name: "FDL 10/2025 Article Trace", faculty: "regulatory",
     taxonomyIds: [...r("Cabinet Resolution Reasoning"), ...a("TFS Compliance Deep Analysis")] },
   { id: "RM-683", name: "VARA Regulation Map", faculty: "regulatory",
     taxonomyIds: [...r("Digital Asset Reasoning", "VARA Reasoning"), ...a("Digital Asset Deep Analysis")] },

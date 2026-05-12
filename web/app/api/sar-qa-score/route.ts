@@ -46,7 +46,7 @@ function fallbackScores(cases: CaseInput[]): QaScore[] {
   }));
 }
 
-const SYSTEM_PROMPT = `You are a UAE DPMS/VASP SAR/STR quality assurance reviewer with deep expertise in FATF Recommendation 20, UAE Federal Decree-Law No. 20/2019 (AML Law), FDL Art. 26 filing standards, and goAML submission requirements.
+const SYSTEM_PROMPT = `You are a UAE DPMS/VASP SAR/STR quality assurance reviewer with deep expertise in FATF Recommendation 20, UAE Federal Decree-Law No. 10 of 2025 (AML/CFT/CPF Law), FDL Art. 26 filing standards, and goAML submission requirements.
 
 For each case you will score the SAR/STR narrative quality and completeness. Evaluate:
 
