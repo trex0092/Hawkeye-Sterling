@@ -87,6 +87,8 @@ const FALLBACK: PepProfileResult = {
 };
 
 export async function POST(req: Request) {
+  const _handlerStart = Date.now();
+  try {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
   let body: {
@@ -228,8 +230,23 @@ Perform a comprehensive PEP risk assessment grounded in the World-Check data abo
 
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as PepProfileResult;
-    return NextResponse.json({ ...result, worldCheckGrounded: !!wcKey }, { headers: gate.headers });
+    const latencyMs = Date.now() - _handlerStart;
+    if (latencyMs > 5000) console.warn(`[pep_profile] latencyMs=${latencyMs} exceeds 5000ms`);
+    return NextResponse.json({ ...result, worldCheckGrounded: !!wcKey, latencyMs }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "pep-profile temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({
+      ok: false,
+      errorCode: "HANDLER_EXCEPTION",
+      errorType: "internal",
+      tool: "pep_profile",
+      message,
+      retryAfterSeconds: null,
+      requestId: Math.random().toString(36).slice(2, 10),
+      latencyMs: Date.now() - _handlerStart,
+    }, { status: 500 });
   }
 }

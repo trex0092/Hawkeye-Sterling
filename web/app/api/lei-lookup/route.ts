@@ -294,6 +294,8 @@ interface LeiLookupBody {
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
+  const _handlerStart = Date.now();
+  try {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
 
@@ -369,5 +371,20 @@ export async function POST(req: Request): Promise<NextResponse> {
     lastUpdated: new Date().toISOString(),
   };
 
-  return NextResponse.json(minimal, { status: 200, headers: CORS });
+  const latencyMs = Date.now() - _handlerStart;
+  if (latencyMs > 5000) console.warn(`[lei_lookup] latencyMs=${latencyMs} exceeds 5000ms`);
+  return NextResponse.json({ ...minimal, latencyMs }, { status: 200, headers: CORS });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({
+      ok: false,
+      errorCode: "HANDLER_EXCEPTION",
+      errorType: "internal",
+      tool: "lei_lookup",
+      message,
+      retryAfterSeconds: null,
+      requestId: Math.random().toString(36).slice(2, 10),
+      latencyMs: Date.now() - _handlerStart,
+    }, { status: 500 });
+  }
 }

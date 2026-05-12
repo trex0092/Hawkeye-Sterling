@@ -791,6 +791,8 @@ function renderHtmlReport(text: string, input: ReportInput): string {
 
 
 async function handleComplianceReport(req: Request): Promise<Response> {
+  const _handlerStart = Date.now();
+  try {
   const gate = await enforce(req);
   // Rate-limit (429) is a hard stop; auth failures (401) fall through as
   // anonymous — the report is built entirely from the request payload so
@@ -872,13 +874,29 @@ async function handleComplianceReport(req: Request): Promise<Response> {
   }
 
   const filename = `hawkeye-report-${safeFilenameSegment(body.subject.id)}.txt`;
+  const latencyMs = Date.now() - _handlerStart;
+  if (latencyMs > 5000) console.warn(`[compliance_report] latencyMs=${latencyMs} exceeds 5000ms`);
   return new Response(report, {
     status: 200,
     headers: {
       "content-type": "text/plain; charset=utf-8",
       "content-disposition": `attachment; filename="${filename}"`,
+      "x-latency-ms": String(latencyMs),
     },
   });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({
+      ok: false,
+      errorCode: "HANDLER_EXCEPTION",
+      errorType: "internal",
+      tool: "compliance_report",
+      message,
+      retryAfterSeconds: null,
+      requestId: Math.random().toString(36).slice(2, 10),
+      latencyMs: Date.now() - _handlerStart,
+    }, { status: 500 });
+  }
 }
 
 export const POST = handleComplianceReport;

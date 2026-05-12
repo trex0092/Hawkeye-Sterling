@@ -21,11 +21,13 @@ const BUILD_ID =
   "unknown";
 
 const COMMIT_REF = (
+  process.env["APP_VERSION"] ??
+  process.env["GIT_COMMIT_SHA"] ??
   process.env["COMMIT_REF"] ??
   process.env["NETLIFY_COMMIT_REF"] ??
   process.env["VERCEL_GIT_COMMIT_SHA"] ??
   process.env["GIT_COMMIT"] ??
-  "dev"
+  "unknown"
 ).slice(0, 7);
 
 let brainOk: boolean | null = null;

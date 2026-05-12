@@ -695,6 +695,8 @@ function buildSCR(body: ReportInput, now: Date): ScreeningComplianceReport {
 // ── Route handler ─────────────────────────────────────────────────────────────
 
 async function handleScrReport(req: Request): Promise<Response> {
+  const _handlerStart = Date.now();
+  try {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
   const gateHeaders: Record<string, string> = gate.ok ? gate.headers : {};
@@ -766,6 +768,8 @@ async function handleScrReport(req: Request): Promise<Response> {
     );
   }
 
+  const latencyMs = Date.now() - _handlerStart;
+  if (latencyMs > 5000) console.warn(`[generate_screening_report] latencyMs=${latencyMs} exceeds 5000ms`);
   return new Response(html, {
     status: 200,
     headers: {
@@ -773,8 +777,22 @@ async function handleScrReport(req: Request): Promise<Response> {
       "content-type": "text/html; charset=utf-8",
       "content-disposition": `inline; filename="hs-scr-${safeFilenameSegment(body.subject.id)}.html"`,
       "cache-control": "no-store",
+      "x-latency-ms": String(latencyMs),
     },
   });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({
+      ok: false,
+      errorCode: "HANDLER_EXCEPTION",
+      errorType: "internal",
+      tool: "generate_screening_report",
+      message,
+      retryAfterSeconds: null,
+      requestId: Math.random().toString(36).slice(2, 10),
+      latencyMs: Date.now() - _handlerStart,
+    }, { status: 500 });
+  }
 }
 
 export const POST = handleScrReport;

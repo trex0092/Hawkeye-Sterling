@@ -133,6 +133,8 @@ interface Body {
 }
 
 async function handleSarReport(req: Request): Promise<Response> {
+  const _handlerStart = Date.now();
+  try {
   const token = process.env["ASANA_TOKEN"];
   const asanaEnabled = !!token;
 
@@ -595,6 +597,8 @@ async function handleSarReport(req: Request): Promise<Response> {
     source: "hawkeye-sterling",
   }).catch((err) => console.error("[sar-report] webhook failed", err));
 
+  const latencyMs = Date.now() - _handlerStart;
+  if (latencyMs > 5000) console.warn(`[generate_sar_report] latencyMs=${latencyMs} exceeds 5000ms`);
   return NextResponse.json({
     ok: true,
     filingType: body.filingType,
@@ -609,7 +613,21 @@ async function handleSarReport(req: Request): Promise<Response> {
       // Base64-encode XML so JSON serialisation is safe regardless of content.
       xmlBase64: goamlXml ? Buffer.from(goamlXml, "utf8").toString("base64") : null,
     },
+    latencyMs,
   }, { status: 201 });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({
+      ok: false,
+      errorCode: "HANDLER_EXCEPTION",
+      errorType: "internal",
+      tool: "generate_sar_report",
+      message,
+      retryAfterSeconds: null,
+      requestId: Math.random().toString(36).slice(2, 10),
+      latencyMs: Date.now() - _handlerStart,
+    }, { status: 500 });
+  }
 }
 
 export async function POST(req: Request) {

@@ -293,7 +293,9 @@ export async function OPTIONS(req: Request): Promise<Response> {
 }
 
 export async function POST(req: Request): Promise<Response> {
-  const startedAt = Date.now();
+  const _handlerStart = Date.now();
+  const startedAt = _handlerStart;
+  try {
   const origin = req.headers.get("origin");
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
@@ -628,11 +630,14 @@ export async function POST(req: Request): Promise<Response> {
       validation: postGen.validation,
     }).catch(() => ({ seq: 0, entryHash: "" }));
 
+    const latencyMs = Date.now() - _handlerStart;
+    if (latencyMs > 5000) console.warn(`[mlro_advisor_quick] latencyMs=${latencyMs} exceeds 5000ms`);
     return NextResponse.json(
       {
         ok: true,
         answer,
         elapsedMs: Date.now() - startedAt,
+        latencyMs,
         advisorScore,
         citationReport,
         suggestedFollowUps,
@@ -701,5 +706,18 @@ export async function POST(req: Request): Promise<Response> {
     );
   } finally {
     clearTimeout(killTimer);
+  }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({
+      ok: false,
+      errorCode: "HANDLER_EXCEPTION",
+      errorType: "internal",
+      tool: "mlro_advisor_quick",
+      message,
+      retryAfterSeconds: null,
+      requestId: Math.random().toString(36).slice(2, 10),
+      latencyMs: Date.now() - _handlerStart,
+    }, { status: 500 });
   }
 }

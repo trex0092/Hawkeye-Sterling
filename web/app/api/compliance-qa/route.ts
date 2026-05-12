@@ -229,6 +229,8 @@ function detectJurisdiction(text: string): string | undefined {
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
+  const _handlerStart = Date.now();
+  try {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
   const gateHeaders = gate.ok ? gate.headers : {};
@@ -433,6 +435,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     const answer = advisorResult.narrative ?? lastStep?.body ?? "";
     const score = scoreAdvisorAnswer(answer, advisorResult.complianceReview.advisorVerdict);
 
+    const latencyMs = Date.now() - _handlerStart;
+    if (latencyMs > 5000) console.warn(`[compliance_qa] latencyMs=${latencyMs} exceeds 5000ms`);
     return NextResponse.json(
       {
         ok: true,
@@ -447,6 +451,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         advisorVerdict: advisorResult.complianceReview.advisorVerdict,
         jurisdiction: detectedJurisdiction ?? undefined,
         source: "mlro-advisor-fallback",
+        latencyMs,
       },
       { headers: { ...CORS, ...gateHeaders } },
     );
@@ -465,5 +470,18 @@ export async function POST(req: Request): Promise<NextResponse> {
       },
       { status: 200, headers: { ...CORS, ...gateHeaders } },
     );
+  }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({
+      ok: false,
+      errorCode: "HANDLER_EXCEPTION",
+      errorType: "internal",
+      tool: "compliance_qa",
+      message,
+      retryAfterSeconds: null,
+      requestId: Math.random().toString(36).slice(2, 10),
+      latencyMs: Date.now() - _handlerStart,
+    }, { status: 500 });
   }
 }
