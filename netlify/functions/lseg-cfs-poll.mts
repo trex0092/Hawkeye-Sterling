@@ -95,8 +95,8 @@ async function pollBucket(
   const lastPoll = await getCheckpoint(store, bucket);
   const fileSetsRes = await getFileSets(bucket, lastPoll ? { contentFrom: lastPoll } : {});
 
-  if (!fileSetsRes.ok || !fileSetsRes.data) {
-    return { ...base, error: fileSetsRes.error ?? 'getFileSets failed' };
+  if (!fileSetsRes.ok) {
+    return { ...base, error: fileSetsRes.error };
   }
 
   const fileSets = fileSetsRes.data;
@@ -173,9 +173,15 @@ export default async function handler(req: Request): Promise<Response> {
 
   // 1. Discover entitled CFS packages
   const packagesRes = await getPackages();
-  if (!packagesRes.ok || !packagesRes.data?.length) {
+  if (!packagesRes.ok) {
     return jsonResponse(
-      { ok: false, label: RUN_LABEL, error: packagesRes.error ?? 'No CFS packages found for this account' },
+      { ok: false, label: RUN_LABEL, error: packagesRes.error },
+      502,
+    );
+  }
+  if (!packagesRes.data.length) {
+    return jsonResponse(
+      { ok: false, label: RUN_LABEL, error: 'No CFS packages found for this account' },
       502,
     );
   }

@@ -84,11 +84,9 @@ export interface LsegSqsCredentials {
   endpoint: string;
 }
 
-export interface LsegResult<T> {
-  ok: boolean;
-  data?: T;
-  error?: string;
-}
+export type LsegResult<T> =
+  | { ok: true; data: T }
+  | { ok: false; error: string };
 
 // ── Token cache (module-level — one per Lambda warm instance) ─────────────────
 
@@ -300,9 +298,8 @@ export async function getSqsCredentials(
     { endpoint },
   );
 
-  if (!res.ok || !res.data?.credentials) {
-    return { ok: false, error: res.error ?? 'No credentials in response' };
-  }
+  if (!res.ok) return { ok: false, error: res.error };
+  if (!res.data?.credentials) return { ok: false, error: 'No credentials in response' };
 
   return {
     ok: true,
