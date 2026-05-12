@@ -26,12 +26,14 @@ export const TOOL_MANIFEST: Record<string, ToolManifestEntry> = {
     description: "Google News RSS search across 7 locales",
   },
   pep_profile: {
-    level: "read-only",
-    description: "PEP profile lookup with role history",
+    level: "supervised",
+    description: "PEP profile lookup with World-Check grounding and role history",
+    regulatoryNote: "World-Check + LLM assessment — MLRO must review before any compliance decision",
   },
   pep_network: {
-    level: "read-only",
+    level: "supervised",
     description: "PEP association network mapping",
+    regulatoryNote: "LLM-generated network map — requires MLRO review before action",
   },
   country_risk: {
     level: "supervised",
