@@ -107,6 +107,57 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
   }
 
+  // ── World-Check lookup (LSEG Refinitiv) — grounded PEP data ─────────────
+  // Query World-Check before Claude so the LLM prompt contains real database
+  // hits rather than relying solely on training-data knowledge.
+  let worldCheckContext = "World-Check Database: not configured";
+  const wcKey = process.env["LSEG_WORLDCHECK_API_KEY"];
+  const wcSecret = process.env["LSEG_WORLDCHECK_API_SECRET"];
+  if (wcKey && wcSecret && body.name?.trim()) {
+    try {
+      const auth = Buffer.from(`${wcKey}:${wcSecret}`).toString("base64");
+      const wcRes = await fetch("https://api-worldcheck.refinitiv.com/v2/cases", {
+        method: "POST",
+        headers: {
+          Authorization: `Basic ${auth}`,
+          "content-type": "application/json",
+          accept: "application/json",
+        },
+        body: JSON.stringify({
+          name: body.name.trim(),
+          entityType: "INDIVIDUAL",
+          providerTypes: ["PEP", "WATCHLIST", "SANCTIONS", "ADVERSE_MEDIA"],
+        }),
+        signal: AbortSignal.timeout(8_000),
+      });
+      if (wcRes.ok) {
+        const wcData = (await wcRes.json()) as {
+          results?: Array<{
+            name?: string;
+            categories?: string[];
+            providers?: string[];
+            countryLinks?: string[];
+            dateOfBirth?: string;
+          }>;
+        };
+        const hits = wcData.results ?? [];
+        if (hits.length > 0) {
+          worldCheckContext = `World-Check Database Hits (${hits.length} match${hits.length > 1 ? "es" : ""}):\n` +
+            hits.slice(0, 5).map((h) =>
+              `- ${h.name ?? "Unknown"} | Categories: ${(h.categories ?? []).join(", ")} | Providers: ${(h.providers ?? []).join(", ")} | Countries: ${(h.countryLinks ?? []).join(", ")}`,
+            ).join("\n");
+        } else {
+          worldCheckContext = "World-Check Database: no matches found for this individual";
+        }
+      } else {
+        worldCheckContext = `World-Check Database: query failed (HTTP ${wcRes.status})`;
+      }
+    } catch (err) {
+      console.warn("[pep-profile] world-check lookup failed:", err instanceof Error ? err.message : err);
+      worldCheckContext = "World-Check Database: temporarily unavailable";
+    }
+  }
+
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) return NextResponse.json({
     ...FALLBACK,
@@ -166,14 +217,16 @@ Family Members / Known Associates: ${body.familyMembers ?? "None declared"}
 Source of Wealth: ${body.sourceOfWealth ?? "Not declared"}
 Declared Assets: ${body.declaredAssets ?? "Not declared"}
 
-Perform a comprehensive PEP risk assessment. Classify tier, assess source of wealth plausibility, map the political network, identify all risk factors, and provide required AML measures per FATF R.12 and UAE FDL 10/2025 Art.14.`,
+${worldCheckContext}
+
+Perform a comprehensive PEP risk assessment grounded in the World-Check data above. Classify tier, assess source of wealth plausibility, map the political network, identify all risk factors, and provide required AML measures per FATF R.12 and UAE FDL 10/2025 Art.14.`,
         },
       ],
     });
 
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as PepProfileResult;
-    return NextResponse.json(result, { headers: gate.headers });
+    return NextResponse.json({ ...result, worldCheckGrounded: !!wcKey }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "pep-profile temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
   }
