@@ -13,8 +13,6 @@ export type DoctrineId =
   | 'oecd_ddg'
   | 'egmont_fiu'
   | 'basel_aml_index'
-  | 'uae_fdl_20_2018'
-  | 'uae_cd_10_2019'
   | 'uae_cd_74_2020'
   | 'uae_cr_16_2021'
   | 'uae_cr_134_2025'
