@@ -18,6 +18,27 @@ import { scoreAdvisorAnswer } from "../../../../dist/src/integrations/qualityGat
 import { classifyMlroQuestion } from "../../../../dist/src/brain/mlro-question-classifier.js";
 import { gateMlroQuestion } from "@/lib/server/mlro-input-gate";
 
+// ── Citation extraction ───────────────────────────────────────────────────────
+
+function extractCitations(text: string): string[] {
+  const patterns = [
+    /\bFDL\s*No\.?\s*\d+\/\d{4}\s*Art\.?\s*[\d()]+/gi,
+    /\bFederal\s+Decree[- ]Law\s+(?:No\.?\s*)?\d+\s+of\s+\d{4}\b/gi,
+    /\bCabinet\s+(?:Decision|Resolution)\s*(?:No\.?\s*)?\d+\/\d{4}(?:\s+Art\.?\s*[\d()]+)?/gi,
+    /\bCR\s+No\.?\s*\d+\/\d{4}(?:\s+Art\.?\s*[\d()]+)?/gi,
+    /\bFATF\s+R(?:ec(?:ommendation)?)?\.?\s*\d+(?:\s+INR\.?\s*\d+)?/gi,
+    /\b(?:5AMLD|4AMLD|6AMLD)\s+Art\.?\s*[\d()]+/gi,
+    /\bWolfsberg\b[^.]{0,40}/gi,
+    /\bMoE\s+Circular\s+\d+\/\d{4}/gi,
+    /\bCBUAE\s+AML\s+Standards?\s*§?\s*\d+/gi,
+  ];
+  const found = new Set<string>();
+  for (const p of patterns) {
+    for (const m of text.matchAll(p)) found.add(m[0].trim());
+  }
+  return [...found].slice(0, 15);
+}
+
 const HAIKU_MODEL = "claude-haiku-4-5-20251001";
 const HAIKU_TIMEOUT_MS = 18_000;
 const HAIKU_SYSTEM_PROMPT =
@@ -266,7 +287,7 @@ export async function POST(req: Request): Promise<NextResponse> {
           ok: true,
           query: body.query.trim(),
           answer: fastResult.answer,
-          citations: [],
+          citations: extractCitations(fastResult.answer ?? ""),
           passedQualityGate: true,
           source: "mlro-advisor-quick",
           elapsedMs: fastResult.elapsedMs,
@@ -417,7 +438,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         ok: true,
         query: body.query.trim(),
         answer,
-        citations: [],
+        citations: extractCitations(answer),
         passedQualityGate: score.passedQualityGate,
         confidenceScore: score.confidenceScore,
         consistencyScore: score.consistencyScore,

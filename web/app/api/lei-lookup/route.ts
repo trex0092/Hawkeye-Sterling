@@ -4,7 +4,7 @@
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 20;
+export const maxDuration = 30;
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
@@ -285,10 +285,14 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (record) {
       return NextResponse.json(record, { status: 200, headers: CORS });
     }
-    // Fallback to sample record if GLEIF unreachable
+    // GLEIF API unreachable — return degraded response rather than misleading static data
     return NextResponse.json(
-      { ...UAE_BANK_FALLBACK, lei, legalName: `Unknown entity (${lei})` },
-      { status: 200, headers: CORS },
+      {
+        ok: false,
+        error: "GLEIF API temporarily unreachable — please retry in a few seconds.",
+        degraded: true,
+      },
+      { status: 503, headers: CORS },
     );
   }
 

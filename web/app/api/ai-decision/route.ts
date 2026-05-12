@@ -27,6 +27,7 @@ export interface DecisionRequest {
   screeningTopScore?: number;
   screeningSeverity?: string;
   notes?: string;
+  test?: boolean;
 }
 
 export interface DecisionResponse {
@@ -41,6 +42,7 @@ export interface DecisionResponse {
   regulatoryBasis: string;
   asanaTaskUrl?: string;
   asanaTaskGid?: string;
+  asanaSkipped?: true;
 }
 
 // ── Feedback store key ────────────────────────────────────────────────────────
@@ -329,7 +331,11 @@ export async function POST(req: Request) {
   }
 
   // Auto-create Asana task (fire in parallel with response)
-  const asana = await createAsanaTask(body, decision, rationale, nextSteps, decisionId);
+  // Skip task creation in test/sandbox mode
+  let asana: { taskUrl?: string; taskGid?: string } = {};
+  if (body.test !== true) {
+    asana = await createAsanaTask(body, decision, rationale, nextSteps, decisionId);
+  }
 
   const responseBody: DecisionResponse = {
     ok: true,
@@ -341,8 +347,12 @@ export async function POST(req: Request) {
     keyFactors,
     nextSteps,
     regulatoryBasis,
-    ...(asana.taskUrl ? { asanaTaskUrl: asana.taskUrl } : {}),
-    ...(asana.taskGid ? { asanaTaskGid: asana.taskGid } : {}),
+    ...(body.test === true
+      ? { asanaSkipped: true as const }
+      : {
+          ...(asana.taskUrl ? { asanaTaskUrl: asana.taskUrl } : {}),
+          ...(asana.taskGid ? { asanaTaskGid: asana.taskGid } : {}),
+        }),
   };
 
   return NextResponse.json(responseBody, { status: 200 , headers: gate.headers});

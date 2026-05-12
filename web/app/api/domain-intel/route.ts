@@ -46,12 +46,13 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (!result.ok) {
     // Provider not configured or API call failed — return a graceful offline fallback
     const domain = body.domain.trim();
-    const fallback: DomainIntelResult & { offline: boolean } = {
+    const fallback: DomainIntelResult & { offline: boolean; simulationWarning: string } = {
       ok: true,
       domain,
       riskScore: 0,
       riskFactors: [],
       offline: true,
+      simulationWarning: "Domain intelligence service offline — this is a placeholder response. No real WHOIS, malware, or SSL data has been retrieved. Do not use for compliance decisions.",
     };
     return NextResponse.json(fallback, { headers: { ...CORS, ...gateHeaders } });
   }
