@@ -85,6 +85,14 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
       // Wave 4 — export-control / dual-use diversion typologies.
       "missile technology", "end-user diversion", "end user diversion",
       "export control violation", "trans-shipment", "transhipment",
+      // Wave 5 — arms trade / broker / embargo terms missing from prior waves.
+      // Critical gap: "arms dealer" did not fire for OFAC-SDN subjects (e.g. Viktor Bout).
+      "arms dealer", "arms trade", "arms broker", "arms embargo",
+      "gunrunning", "gun dealer", "gun runner", "gun trafficking",
+      "illicit arms", "illegal arms", "weapons dealer", "weapons trade",
+      "weapons broker", "small arms", "light weapons", "salw",
+      "conventional weapons", "munitions", "explosives trafficking",
+      "military equipment", "defense export", "defence export",
     ],
   },
   {

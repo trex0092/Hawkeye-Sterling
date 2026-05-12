@@ -10,12 +10,20 @@ import { classifyEsg } from "@/lib/data/esg";
 // brain compilation hasn't run yet (cold Lambda, partial build). Falls back
 // to no-op implementations that return minimal scores so the route degrades
 // gracefully instead of returning 500.
-type MatchEnsembleFn = (a: string, b: string) => { score: number; method: string };
+// EnsembleMatch mirrors src/brain/matching.ts EnsembleMatch interface so the
+// stub and the real function share the same shape. The call site accesses
+// `m.best.score` — the old stub returned `{score, method}` which meant
+// `m.best` was always undefined when dist/ was not loaded, silently zeroing
+// all fuzzy scores and falling through to the token-presence fallback only.
+type MatchScore = { method: string; score: number; threshold: number; pass: boolean };
+type EnsembleMatch = { subject: string; candidate: string; scores: MatchScore[]; best: MatchScore; phoneticAgreement: boolean };
+type MatchEnsembleFn = (a: string, b: string) => EnsembleMatch;
 type VariantsOfFn = (name: string) => string[];
-let matchEnsemble: MatchEnsembleFn = (a, b) => ({
-  score: a.toLowerCase() === b.toLowerCase() ? 100 : 0,
-  method: "exact_fallback",
-});
+let matchEnsemble: MatchEnsembleFn = (a, b) => {
+  const exact = a.toLowerCase() === b.toLowerCase();
+  const score: MatchScore = { method: "exact_fallback", score: exact ? 1 : 0, threshold: 1, pass: exact };
+  return { subject: a, candidate: b, scores: [score], best: score, phoneticAgreement: false };
+};
 let variantsOf: VariantsOfFn = (name) => [name];
 // Best-effort async load — if dist is present these replace the stubs.
 (async () => {
