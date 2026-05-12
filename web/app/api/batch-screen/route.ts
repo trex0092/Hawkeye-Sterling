@@ -219,7 +219,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         topScore: screen.topScore,
         severity: screen.severity,
         hitCount: screen.hits.length,
-        listCoverage: Array.from(new Set(screen.hits.map((h) => h.listId))),
+        listCoverage: Array.from(new Set(CANDIDATES.map((c) => c.listId))),
         keywordGroups: kwGroups,
         esgCategories: esgCats,
         durationMs: Date.now() - t0,

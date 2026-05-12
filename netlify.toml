@@ -19,6 +19,9 @@
 
 [build.environment]
   NODE_VERSION = "22"
+  # Bake the real commit SHA into the Next.js build so MCP commitRef shows
+  # the actual SHA instead of the branch name (COMMIT_REF is branch name at runtime).
+  NEXT_PUBLIC_COMMIT_REF = "$COMMIT_REF"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"

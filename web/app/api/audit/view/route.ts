@@ -32,6 +32,7 @@ import { getJson, listKeys } from "@/lib/server/store";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 
 // ─── Shared types (must mirror sign/route.ts) ────────────────────────────────
 
