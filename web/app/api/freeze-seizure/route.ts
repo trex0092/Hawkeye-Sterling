@@ -16,7 +16,7 @@ export interface FreezeSeizureResult {
 
 const FALLBACK: FreezeSeizureResult = {
   legalBasis:
-    "UAE AML Law Art.24 (provisional measures), FDL 10/2025 Art.28 (freezing), UNSCR 1267/1373 (TF-related freezing). No court order required for UNSCR-listed individuals — immediate administrative freeze by CBUAE directive.",
+    "UAE FDL 10/2025 Art.28 (asset freezing), Art.29 (provisional measures), UNSCR 1267/1373 (TF-related freezing). No court order required for UNSCR-listed individuals — immediate administrative freeze by CBUAE directive.",
   eligibleAssets: [
     "Bank account balances: AED 1.2M (3 accounts)",
     "Gold bullion inventory: 22kg at current spot (est. AED 4.8M)",
@@ -37,7 +37,7 @@ const FALLBACK: FreezeSeizureResult = {
   internationalCooperation: true,
   mutualLegalAssistance: true,
   regulatoryBasis:
-    "UAE FDL 10/2025 Art.28-30, AML Law 2018 Art.24, FATF R.4, UAE-INTERPOL bilateral MLA treaty",
+    "UAE FDL 10/2025 Art.28-30, FATF R.4, UAE-INTERPOL bilateral MLA treaty",
 };
 
 export async function POST(req: Request) {
