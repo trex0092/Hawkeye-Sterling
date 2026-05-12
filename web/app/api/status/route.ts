@@ -264,19 +264,20 @@ async function checkGoogleNews(): Promise<Check> {
 // is reachable but throttling our probe, which is not a system outage; we treat
 // it as operational (using the cached last-good result if available).
 
-interface GdeltCacheEntry { result: Check; cachedAt: number }
+interface GdeltCacheEntry { result: Check; cachedAt: number; ttl: number }
 let _gdeltCache: GdeltCacheEntry | null = null;
-const GDELT_CACHE_TTL_MS = 5 * 60 * 1_000; // 5 minutes
+const GDELT_CACHE_TTL_OPERATIONAL_MS = 5 * 60 * 1_000; // 5 min for healthy results
+const GDELT_CACHE_TTL_DEGRADED_MS    = 60 * 1_000;     // 1 min for timeouts — recover quickly
 
 async function checkGdelt(): Promise<Check> {
   const now = Date.now();
-  if (_gdeltCache && now - _gdeltCache.cachedAt < GDELT_CACHE_TTL_MS) {
+  if (_gdeltCache && now - _gdeltCache.cachedAt < _gdeltCache.ttl) {
     return _gdeltCache.result;
   }
 
   const r = await time(async () => {
     const controller = new AbortController();
-    const t = setTimeout(() => controller.abort(), 10_000);
+    const t = setTimeout(() => controller.abort(), 15_000);
     try {
       const params = new URLSearchParams({
         query: "compliance",
@@ -320,11 +321,13 @@ async function checkGdelt(): Promise<Check> {
     result = { name: "gdelt-live-feed", status: "operational", latencyMs: r.latencyMs, note: (r.value as { note?: string }).note };
   }
 
-  // Only cache successful or rate-limited (operational) results — don't cache
-  // genuine failures so a transient outage clears on the next probe cycle.
-  if (result.status === "operational") {
-    _gdeltCache = { result, cachedAt: Date.now() };
-  }
+  // Cache both operational and degraded results to prevent a 15s stall on every
+  // status poll when GDELT is slow. Operational → 5 min; degraded/timeout → 1 min
+  // so the page recovers quickly once GDELT comes back.
+  const ttl = result.status === "operational"
+    ? GDELT_CACHE_TTL_OPERATIONAL_MS
+    : GDELT_CACHE_TTL_DEGRADED_MS;
+  _gdeltCache = { result, cachedAt: Date.now(), ttl };
   return result;
 }
 
@@ -1016,6 +1019,8 @@ export async function GET(): Promise<NextResponse> {
     { id: "anthropic",   label: "ANTHROPIC_API_KEY",       required: true  },
     { id: "admin_token", label: "ADMIN_TOKEN",              required: true  },
     { id: "audit_chain", label: "AUDIT_CHAIN_SECRET",       required: true  },
+    { id: "session_sec", label: "SESSION_SECRET",           required: true  },
+    { id: "jwt_secret",  label: "JWT_SIGNING_SECRET",       required: true  },
     { id: "app_url",     label: "NEXT_PUBLIC_APP_URL",      required: true  },
     { id: "ongoing_tok", label: "ONGOING_RUN_TOKEN",        required: true  },
     { id: "sanct_tok",   label: "SANCTIONS_CRON_TOKEN",     required: true  },
@@ -1029,6 +1034,8 @@ export async function GET(): Promise<NextResponse> {
     anthropic:   ["ANTHROPIC_API_KEY"],
     admin_token: ["ADMIN_TOKEN"],
     audit_chain: ["AUDIT_CHAIN_SECRET"],
+    session_sec: ["SESSION_SECRET"],
+    jwt_secret:  ["JWT_SIGNING_SECRET"],
     app_url:     ["NEXT_PUBLIC_APP_URL"],
     ongoing_tok: ["ONGOING_RUN_TOKEN"],
     sanct_tok:   ["SANCTIONS_CRON_TOKEN"],
