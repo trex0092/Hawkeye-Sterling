@@ -11,6 +11,7 @@ import { enforce } from "@/lib/server/enforce";
 import { searchAllRegistries } from "@/lib/intelligence/registryAdapters";
 import { searchCountryRegistries } from "@/lib/intelligence/countryRegistries";
 import { bestCommercialAdapter, activeCommercialProvider } from "@/lib/intelligence/commercialAdapters";
+import { matchEntity } from "@/lib/intelligence/openSanctionsAdapter";
 
 const CORS: Record<string, string> = {
   "access-control-allow-origin": process.env["NEXT_PUBLIC_APP_URL"] ?? "https://hawkeye-sterling.netlify.app",
@@ -349,6 +350,47 @@ interface EntityGraphBody {
   companyName?: string;
   jurisdiction?: string;
   companyNumber?: string;
+  lei?: string;
+}
+
+interface GleifLeiRecordResponse {
+  data?: {
+    attributes?: {
+      lei?: string;
+      entity?: {
+        legalName?: { name?: string };
+        jurisdiction?: string;
+        legalForm?: { id?: string };
+        status?: string;
+        legalAddress?: { addressLines?: string[]; city?: string; country?: string; postalCode?: string };
+        headquartersAddress?: { addressLines?: string[]; city?: string; country?: string; postalCode?: string };
+      };
+      registration?: { status?: string; lastUpdateDate?: string };
+    };
+    relationships?: {
+      "direct-parent"?: { data?: { id?: string } };
+      "ultimate-parent"?: { data?: { id?: string } };
+    };
+  };
+}
+
+async function fetchGleifLeiRecord(lei: string): Promise<GleifLeiRecordResponse | null> {
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 8_000);
+    try {
+      const res = await fetch(`https://api.gleif.org/api/v1/lei-records/${encodeURIComponent(lei)}`, {
+        headers: { accept: "application/vnd.api+json" },
+        signal: controller.signal,
+      });
+      if (!res.ok) return null;
+      return (await res.json()) as GleifLeiRecordResponse;
+    } finally {
+      clearTimeout(timer);
+    }
+  } catch {
+    return null;
+  }
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
@@ -381,8 +423,8 @@ export async function POST(req: Request): Promise<NextResponse> {
   // For UAE/GCC entities that aren't in OpenCorporates, these are the
   //  only sources that will return real data.
   const commAdapter = bestCommercialAdapter();
-  const [ocResults, gleifResults, registryAgg, countryRegistryAgg, commercialResults] =
-    await Promise.all([
+  const [ocResults, gleifResults, registryAgg, countryRegistryAgg, commercialResults, gleifLeiRecord, osMatches] =
+    await Promise.allSettled([
       queryOpenCorporates(companyName, body.jurisdiction, body.companyNumber),
       queryGleifFuzzy(companyName),
       searchAllRegistries(companyName, body.jurisdiction ? { jurisdiction: body.jurisdiction, limit: 25 } : { limit: 25 }).catch((err: unknown) => {
@@ -399,17 +441,35 @@ export async function POST(req: Request): Promise<NextResponse> {
             return [];
           })
         : Promise.resolve([]),
-    ]);
+      // ENH-10: if LEI provided, fetch real GLEIF ownership chain
+      body.lei?.trim()
+        ? fetchGleifLeiRecord(body.lei.trim())
+        : Promise.resolve(null),
+      // ENH-10: cross-check entity name against OpenSanctions
+      matchEntity({ name: companyName, schema: "Company" }).catch((err: unknown) => {
+        console.warn("[hawkeye] entity-graph OpenSanctions matchEntity failed:", err);
+        return [];
+      }),
+    ]).then((results) => results.map((r) => (r.status === "fulfilled" ? r.value : null)));
+
+  const ocResultsVal = (ocResults ?? []) as Awaited<ReturnType<typeof queryOpenCorporates>>;
+  const gleifResultsVal = (gleifResults ?? []) as Awaited<ReturnType<typeof queryGleifFuzzy>>;
+  const registryAggVal = (registryAgg ?? { records: [], providersUsed: [] }) as Awaited<ReturnType<typeof searchAllRegistries>>;
+  const countryRegistryAggVal = (countryRegistryAgg ?? { records: [], jurisdictions: [] }) as Awaited<ReturnType<typeof searchCountryRegistries>>;
+  const commercialResultsVal = (commercialResults ?? []) as Awaited<ReturnType<typeof commAdapter.lookup>>;
+  const gleifLeiRecordVal = gleifLeiRecord as GleifLeiRecordResponse | null;
+  const osMatchesVal = (osMatches ?? []) as Awaited<ReturnType<typeof matchEntity>>;
 
   // If no external data is available across ANY source, return the UAE
   // DPMS fallback — and tell the operator exactly which keys they could
   // configure to improve coverage.
   if (
-    ocResults.length === 0 &&
-    gleifResults.length === 0 &&
-    registryAgg.records.length === 0 &&
-    countryRegistryAgg.records.length === 0 &&
-    commercialResults.length === 0
+    ocResultsVal.length === 0 &&
+    gleifResultsVal.length === 0 &&
+    registryAggVal.records.length === 0 &&
+    countryRegistryAggVal.records.length === 0 &&
+    commercialResultsVal.length === 0 &&
+    !gleifLeiRecordVal
   ) {
     return NextResponse.json(
       {
@@ -431,7 +491,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const officerMap = new Map<string, EntityGraphResult["officers"][number]>();
   const sources: string[] = [];
 
-  for (const ocItem of ocResults.slice(0, 5)) {
+  for (const ocItem of ocResultsVal.slice(0, 5)) {
     const c = ocItem.company;
     const statusRaw = (c.current_status ?? "").toLowerCase();
     const status: EntityGraphResult["registrations"][number]["status"] =
@@ -470,7 +530,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   // ── Add GLEIF results as supplementary registrations ─────────────────────
 
-  for (const g of gleifResults.slice(0, 3)) {
+  for (const g of gleifResultsVal.slice(0, 3)) {
     if (!g.name) continue;
     const existing = registrations.find((r) => r.source === "gleif");
     if (!existing) {
@@ -506,10 +566,10 @@ export async function POST(req: Request): Promise<NextResponse> {
   const uboChain: EntityGraphResult["uboChain"] = [];
   uboChain.push({
     level: 1,
-    entityName: ocResults[0]?.company.name ?? companyName,
+    entityName: ocResultsVal[0]?.company.name ?? companyName,
     jurisdiction:
-      ocResults[0]
-        ? normaliseJurisdiction(ocResults[0].company.jurisdiction_code)
+      ocResultsVal[0]
+        ? normaliseJurisdiction(ocResultsVal[0].company.jurisdiction_code)
         : body.jurisdiction ?? "Unknown",
     ownershipPct: 100,
     isNaturalPerson: false,
@@ -569,7 +629,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   // ── Related entities from supplementary GLEIF hits ───────────────────────
 
   const relatedEntities: EntityGraphResult["relatedEntities"] = [];
-  for (const g of gleifResults.slice(1)) {
+  for (const g of gleifResultsVal.slice(1)) {
     if (g.name && g.name.toLowerCase() !== companyName.toLowerCase()) {
       relatedEntities.push({
         name: g.name,
@@ -589,7 +649,67 @@ export async function POST(req: Request): Promise<NextResponse> {
         ? "medium"
         : "low";
 
-  const result: EntityGraphResult = {
+  // ── ENH-10: Merge real GLEIF LEI record if provided ──────────────────────
+
+  let gleifEnrichment: {
+    lei: string;
+    gleifLegalName: string | null;
+    gleifJurisdiction: string | null;
+    gleifLegalForm: string | null;
+    gleifStatus: string | null;
+    gleifLastUpdated: string | null;
+    gleifDirectParentLei: string | null;
+    gleifUltimateParentLei: string | null;
+  } | undefined;
+
+  if (gleifLeiRecordVal?.data?.attributes) {
+    const attr = gleifLeiRecordVal.data.attributes;
+    const rel = gleifLeiRecordVal.data.relationships;
+    gleifEnrichment = {
+      lei: attr.lei ?? body.lei ?? "",
+      gleifLegalName: attr.entity?.legalName?.name ?? null,
+      gleifJurisdiction: attr.entity?.jurisdiction ?? null,
+      gleifLegalForm: attr.entity?.legalForm?.id ?? null,
+      gleifStatus: attr.entity?.status ?? attr.registration?.status ?? null,
+      gleifLastUpdated: attr.registration?.lastUpdateDate ?? null,
+      gleifDirectParentLei: rel?.["direct-parent"]?.data?.id ?? null,
+      gleifUltimateParentLei: rel?.["ultimate-parent"]?.data?.id ?? null,
+    };
+    if (!sources.includes("GLEIF (LEI direct)")) sources.push("GLEIF (LEI direct)");
+    // Add parent LEIs to UBO chain if available and not already there
+    if (gleifEnrichment.gleifDirectParentLei) {
+      relatedEntities.push({
+        name: `LEI: ${gleifEnrichment.gleifDirectParentLei}`,
+        relationship: "Direct parent (GLEIF)",
+        jurisdiction: gleifEnrichment.gleifJurisdiction ?? "Unknown",
+      });
+    }
+    if (gleifEnrichment.gleifUltimateParentLei && gleifEnrichment.gleifUltimateParentLei !== gleifEnrichment.gleifDirectParentLei) {
+      relatedEntities.push({
+        name: `LEI: ${gleifEnrichment.gleifUltimateParentLei}`,
+        relationship: "Ultimate parent (GLEIF)",
+        jurisdiction: gleifEnrichment.gleifJurisdiction ?? "Unknown",
+      });
+    }
+  }
+
+  // ── ENH-10: OpenSanctions cross-check ────────────────────────────────────
+
+  const sanctionsHits = osMatchesVal.filter((m) => m.match || m.score > 0.6);
+  if (sanctionsHits.length > 0) {
+    if (!sources.includes("OpenSanctions")) sources.push("OpenSanctions");
+    for (const hit of sanctionsHits.slice(0, 3)) {
+      riskFlags.push(
+        `OpenSanctions match: "${hit.caption}" (score ${Math.round(hit.score * 100)}%) — datasets: ${hit.datasets.join(", ")}`,
+      );
+    }
+  }
+
+  const result: EntityGraphResult & {
+    gleifEnrichment?: typeof gleifEnrichment;
+    sanctionsMatches?: typeof sanctionsHits;
+    simulationWarning?: string;
+  } = {
     ok: true,
     subject: companyName,
     entityType: "company",
@@ -600,6 +720,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     riskFlags,
     dataQuality,
     sources,
+    ...(gleifEnrichment ? { gleifEnrichment } : {}),
+    ...(sanctionsHits.length > 0 ? { sanctionsMatches: sanctionsHits } : {}),
   };
 
   return NextResponse.json(result, { status: 200, headers: CORS });
