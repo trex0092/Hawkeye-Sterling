@@ -148,7 +148,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   // ── Layer 4: Feedback-adjusted scores ────────────────────────────────────────
 
-  const fbStats = await feedbackStats().catch(() => null);
+  const fbStats = await feedbackStats().catch((err) => { console.warn("[enhanced-screening] feedbackStats failed:", err instanceof Error ? err.message : err); return null; });
   const feedbackAdjustments: Record<string, { delta: number; reason: string }> = {};
 
   if (fbStats) {

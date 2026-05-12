@@ -174,8 +174,8 @@ function parseRss(xml: string, subject: string, variants: string[], lang: string
           fuzzyMethod = m.best.method;
           matchedVariant = v === subject ? undefined : v;
         }
-      } catch {
-        /* ignore per-variant errors */
+      } catch (err) {
+        console.warn("[news-search] name-variant match failed:", err instanceof Error ? err.message : err);
       }
     }
     // Supplement: token presence in full text (title + snippet) catches

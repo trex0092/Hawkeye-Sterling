@@ -155,8 +155,8 @@ async function persistAuditRecord(record: AuditRecord): Promise<void> {
     // Cap per-day log at 50k entries to prevent runaway blob growth.
     const updated = [...existing, record].slice(-50_000);
     await setJson(key, updated);
-  } catch {
-    // Swallow — audit persistence is best-effort.
+  } catch (err) {
+    console.error("[guard] AUDIT PERSISTENCE FAILED — access record may be lost:", err instanceof Error ? err.message : err);
   }
 }
 
@@ -182,7 +182,7 @@ export function recentAudit(): ReadonlyArray<AuditRecord> {
 function auditAccess(record: AuditRecord): void {
   try {
     SINK(record);
-  } catch {
-    /* audit failures must never break the request path */
+  } catch (err) {
+    console.error("[guard] auditAccess sink failed:", err instanceof Error ? err.message : err);
   }
 }

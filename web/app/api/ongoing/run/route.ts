@@ -258,8 +258,8 @@ export async function POST(req: Request): Promise<NextResponse> {
           hitsEverSeen: Array.from(fingerprints).slice(-500),
         };
         await setJson(profileKey, updated);
-      } catch {
-        /* non-fatal — the ongoing heartbeat is the priority */
+      } catch (err) {
+        console.warn("[ongoing] profile snapshot update failed — monitoring history may be incomplete:", err instanceof Error ? err.message : err);
       }
 
       // Adverse-media sweep — hit Google News RSS for the subject's name.
@@ -424,8 +424,8 @@ export async function POST(req: Request): Promise<NextResponse> {
           adverseMediaRiskTier = verdict.riskTier;
           sarRecommended = verdict.sarRecommended;
         }
-      } catch {
-        /* non-fatal — Taranis not configured or unreachable */
+      } catch (err) {
+        console.warn("[ongoing] adverse media (Taranis) failed:", err instanceof Error ? err.message : err);
       }
 
       let asanaTaskUrl: string | undefined;

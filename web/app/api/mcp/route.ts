@@ -224,8 +224,8 @@ async function logToolCall(entry: McpLogEntry): Promise<void> {
     // Lexicographic sort = chronological order; prefix "entry/" for easy listing.
     const key = `entry/${entry.timestamp.replace(/[:.]/g, "-")}-${entry.id}`;
     await store.setJSON(key, entry);
-  } catch {
-    // Logging must never break the tool call
+  } catch (err) {
+    console.warn("[mcp] activity log persist failed:", err instanceof Error ? err.message : err);
   }
 }
 

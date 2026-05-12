@@ -83,7 +83,7 @@ export async function persistRegistry(registry: AgentRegistry): Promise<void> {
     if (!mod) return;
     const store = mod.getStore({ name: "mcp-agent-registry" });
     await store.setJSON("registry/manifest.json", registry);
-  } catch { /* non-blocking */ }
+  } catch (err) { console.warn("[agent-registry] persistRegistry failed:", err instanceof Error ? err.message : err); }
 }
 
 // Read registry from Netlify Blobs; fall back to built-in static registry.
@@ -95,6 +95,6 @@ export async function loadRegistry(): Promise<AgentRegistry> {
       const stored = await store.get("registry/manifest.json", { type: "json" }).catch(() => null) as AgentRegistry | null;
       if (stored && Array.isArray(stored.tools)) return stored;
     }
-  } catch { /* fall through */ }
+  } catch (err) { console.warn("[agent-registry] loadRegistry from Blobs failed, using built-in:", err instanceof Error ? err.message : err); }
   return buildRegistry();
 }

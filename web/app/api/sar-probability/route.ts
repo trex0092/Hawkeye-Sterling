@@ -98,8 +98,8 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   const [weights, fbStats] = await Promise.all([
-    getCurrentWeights().catch(() => ({} as Record<string, number>)),
-    feedbackStats().catch(() => null),
+    getCurrentWeights().catch((err) => { console.warn("[sar-probability] weights load failed:", err instanceof Error ? err.message : err); return {} as Record<string, number>; }),
+    feedbackStats().catch((err) => { console.warn("[sar-probability] feedbackStats failed:", err instanceof Error ? err.message : err); return null; }),
   ]);
 
   // Feedback-calibrated base probability

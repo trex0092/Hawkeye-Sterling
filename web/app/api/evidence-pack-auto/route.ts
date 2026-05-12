@@ -36,8 +36,14 @@ async function callInternal(path: string, body?: unknown): Promise<unknown> {
       ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
       signal: AbortSignal.timeout(20_000),
     });
-    return res.json().catch(() => null);
-  } catch { return null; }
+    return res.json().catch((err) => {
+      console.warn("[evidence-pack-auto] JSON parse failed:", err instanceof Error ? err.message : err);
+      return null;
+    });
+  } catch (err) {
+    console.warn("[evidence-pack-auto] internal fetch failed:", err instanceof Error ? err.message : err);
+    return null;
+  }
 }
 
 export async function POST(req: Request): Promise<NextResponse> {

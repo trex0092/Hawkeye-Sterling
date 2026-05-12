@@ -301,7 +301,9 @@ Perform a comprehensive insider threat assessment using the MICE model and CERT 
       escalationTriggered,
     };
 
-    void saveProfile(updatedProfile).catch(() => {});
+    void saveProfile(updatedProfile).catch((err) =>
+      console.error("[insider-threat] saveProfile failed — risk history not persisted:", err instanceof Error ? err.message : err)
+    );
 
     return NextResponse.json({
       ...result,
