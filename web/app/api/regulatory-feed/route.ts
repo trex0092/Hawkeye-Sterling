@@ -285,8 +285,8 @@ const UAE_STATIC: RegulatoryItem[] = [
     source: "UAE Cabinet",
     tone: "green",
     category: "legislation",
-    summary: "Federal Decree-Law No. 10 of 2025 on AML/CFT entered into force, replacing FDL 20/2019. Key changes: DPMS obligations, 10-year retention, enhanced UBO requirements.",
-    snippet: "Federal Decree-Law No. 10 of 2025 on AML/CFT entered into force, replacing FDL 20/2019. Key changes: DPMS obligations, 10-year retention, enhanced UBO requirements.",
+    summary: "Federal Decree-Law No. 10 of 2025 on AML/CFT entered into force, replacing FDL 20/2018. Key changes: DPMS obligations, 10-year retention, enhanced UBO requirements.",
+    snippet: "Federal Decree-Law No. 10 of 2025 on AML/CFT entered into force, replacing FDL 20/2018. Key changes: DPMS obligations, 10-year retention, enhanced UBO requirements.",
   },
   {
     id: "uae-002",

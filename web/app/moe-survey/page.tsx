@@ -289,7 +289,7 @@ export default function MoeSurveyPage() {
                       <Toggle checked={survey.freezeProcedure} onChange={(v) => update({ freezeProcedure: v })} label="Asset freeze procedure documented (CD74/2020)" />
                       <Toggle checked={survey.cnmrProcedure} onChange={(v) => update({ cnmrProcedure: v })} label="CNMR filing procedure documented (5-business-day deadline)" />
                       <Toggle checked={survey.dpmsrProcedure} onChange={(v) => update({ dpmsrProcedure: v })} label="DPMSR AED 55,000 threshold procedure documented (CR134/2025)" />
-                      <Toggle checked={survey.boVerificationProcedure} onChange={(v) => update({ boVerificationProcedure: v })} label="Beneficial Ownership (BO) verification procedure documented (CD10/2019 Art.5)" />
+                      <Toggle checked={survey.boVerificationProcedure} onChange={(v) => update({ boVerificationProcedure: v })} label="Beneficial Ownership (BO) verification procedure documented (CR 134/2025 Art.5)" />
                       <Toggle checked={survey.recordRetention5Year} onChange={(v) => update({ recordRetention5Year: v })} label="10-year minimum record retention confirmed (FDL No.10/2025 Art.19)" />
                     </div>
                   </>
@@ -378,7 +378,7 @@ export default function MoeSurveyPage() {
                 {/* ─── SECTION 7: Transaction Monitoring ─── */}
                 {sec.id === "tx-monitoring" && (
                   <>
-                    <Toggle checked={survey.txMonitoringProcedureExists} onChange={(v) => update({ txMonitoringProcedureExists: v })} label="Transaction monitoring procedure documented and implemented (CD10/2019 Art.12)" />
+                    <Toggle checked={survey.txMonitoringProcedureExists} onChange={(v) => update({ txMonitoringProcedureExists: v })} label="Transaction monitoring procedure documented and implemented (CR 134/2025 Art.12)" />
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div><FieldLabel>Monitoring type</FieldLabel>
                         <select value={survey.txMonitoringType} onChange={(e) => update({ txMonitoringType: e.target.value })} className={inputCls}>

@@ -91,7 +91,7 @@ const FALLBACK: LayeringResult = {
     "Conduct enhanced due diligence on all counterparties identified in transfer chain",
     "Document decision rationale in AML case management system",
   ],
-  regulatoryBasis: "UAE FDL 10/2025 Art.17 (STR obligation); Cabinet Decision 10/2019 (CTR thresholds); FATF R.3 (ML offence), R.16 (wire transfers); FATF Typologies — Placement, Layering, Integration; UAE Federal Law 4/2002 (proceeds of crime)",
+  regulatoryBasis: "UAE FDL 10/2025 Art.17 (STR obligation); CR 134/2025 Art.14 (CTR thresholds); FATF R.3 (ML offence), R.16 (wire transfers); FATF Typologies — Placement, Layering, Integration; UAE Federal Law 4/2002 (proceeds of crime)",
 };
 
 export async function POST(req: Request) {

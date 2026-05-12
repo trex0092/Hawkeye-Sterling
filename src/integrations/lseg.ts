@@ -84,11 +84,9 @@ export interface LsegSqsCredentials {
   endpoint: string;
 }
 
-export interface LsegResult<T> {
-  ok: boolean;
-  data?: T;
-  error?: string;
-}
+export type LsegResult<T> =
+  | { ok: true; data: T }
+  | { ok: false; error: string };
 
 // ── Token cache (module-level — one per Lambda warm instance) ─────────────────
 
@@ -206,7 +204,7 @@ export async function getPackages(): Promise<LsegResult<LsegPackage[]>> {
     '/file-store/v1/packages',
     { packageType: 'bulk' },
   );
-  if (!res.ok) return { ok: false, error: res.error };
+  if (!res.ok) return { ok: false, error: res.error ?? 'Unknown LSEG error' };
   return { ok: true, data: res.data?.value ?? [] };
 }
 
@@ -220,7 +218,7 @@ export async function getFileSets(
   if (options.packageId)   q['packageId']   = options.packageId;
 
   const res = await lsegGet<{ value: LsegFileSet[] }>('/file-store/v1/file-sets', q);
-  if (!res.ok) return { ok: false, error: res.error };
+  if (!res.ok) return { ok: false, error: res.error ?? 'Unknown LSEG error' };
   return { ok: true, data: res.data?.value ?? [] };
 }
 
@@ -230,7 +228,7 @@ export async function getFiles(filesetId: string): Promise<LsegResult<LsegFile[]
     '/file-store/v1/files',
     { filesetId },
   );
-  if (!res.ok) return { ok: false, error: res.error };
+  if (!res.ok) return { ok: false, error: res.error ?? 'Unknown LSEG error' };
   return { ok: true, data: res.data?.value ?? [] };
 }
 
@@ -260,7 +258,7 @@ export async function getNewsHeadlines(
   if (options.dateFrom) q['dateFrom'] = options.dateFrom;
 
   const res = await lsegGet<{ data: LsegNewsHeadline[] }>('/data/news/v1/headlines', q);
-  if (!res.ok) return { ok: false, error: res.error };
+  if (!res.ok) return { ok: false, error: res.error ?? 'Unknown LSEG error' };
   return { ok: true, data: res.data?.data ?? [] };
 }
 
@@ -273,7 +271,7 @@ export async function getAlerts(
     '/corporate/service-insight/v2/alerts',
     params,
   );
-  if (!res.ok) return { ok: false, error: res.error };
+  if (!res.ok) return { ok: false, error: res.error ?? 'Unknown LSEG error' };
   return { ok: true, data: res.data?.value ?? [] };
 }
 
@@ -300,9 +298,8 @@ export async function getSqsCredentials(
     { endpoint },
   );
 
-  if (!res.ok || !res.data?.credentials) {
-    return { ok: false, error: res.error ?? 'No credentials in response' };
-  }
+  if (!res.ok) return { ok: false, error: res.error };
+  if (!res.data?.credentials) return { ok: false, error: 'No credentials in response' };
 
   return {
     ok: true,

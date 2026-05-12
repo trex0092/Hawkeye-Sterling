@@ -35,7 +35,7 @@ const FALLBACK: AssetTracerResult = {
       jurisdictions: ["UAE"],
       amountAed: 1620000,
       evidenceType: "Bank transaction records, CCTV footage at deposit branches, CTR filings with goAML",
-      legalBasis: "UAE FDL 10/2025 Art.2 (ML offence); Cabinet Decision 10/2019 (CTR obligation)",
+      legalBasis: "UAE FDL 10/2025 Art.2 (ML offence); CR 134/2025 Art.14 (CTR obligation)",
     },
     {
       stage: 2,

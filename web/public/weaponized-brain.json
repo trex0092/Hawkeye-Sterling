@@ -1,10 +1,10 @@
 {
   "ok": true,
-  "generatedAt": "2026-05-11T12:14:06+00:00",
+  "generatedAt": "2026-05-12T12:10:44+00:00",
   "manifest": {
     "product": "Hawkeye Sterling",
     "version": "0.2.0",
-    "generatedAt": "2026-05-11T12:14:06+00:00",
+    "generatedAt": "2026-05-12T12:10:44+00:00",
     "charter": {
       "prohibitions": [
         {
@@ -65,8 +65,8 @@
         "AUDIT_LINE"
       ],
       "regulatoryAnchors": [
-        "Federal Decree-Law No. 20 of 2018 (as amended, incl. FDL No. 10 of 2025)",
-        "Cabinet Decision No. 10 of 2019 (as amended, incl. CR 134 of 2025)",
+        "Federal Decree-Law No. 10 of 2025 (primary AML/CFT/CPF statute, in force 14 Oct 2025)",
+        "Cabinet Resolution No. 134 of 2025 (Executive Regulations, in force 30 Sep 2025)",
         "Cabinet Decision No. 74 of 2020 (Terrorism Lists & TFS)",
         "Cabinet Resolution No. 16 of 2021 (administrative penalties)",
         "MoE DNFBP circulars and guidance (precious-metals sector)",
@@ -1382,14 +1382,14 @@
       }
     },
     "integrity": {
-      "charterHash": "65a67258",
-      "catalogueHash": "b8fd695c"
+      "charterHash": "91d21d6b",
+      "catalogueHash": "ef1802eb"
     }
   },
   "integrity": {
-    "charterHash": "65a67258",
-    "catalogueHash": "b8fd695c",
-    "compositeHash": "aa98cb5d"
+    "charterHash": "91d21d6b",
+    "catalogueHash": "ef1802eb",
+    "compositeHash": "ff26126e"
   },
   "enhanced": {
     "extended": {

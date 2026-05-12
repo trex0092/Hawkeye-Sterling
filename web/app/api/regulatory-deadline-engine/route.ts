@@ -244,7 +244,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       daysRemaining: days,
       priority: priorityFor(days),
       status: statusFor(days),
-      regulatoryBasis: "FDL 10/2025 Art.4; Cabinet Decision 10/2019 (DPMS)",
+      regulatoryBasis: "FDL 10/2025 Art.4; CR 134/2025 Art.14",
       penaltyExposure: "Business closure; AED 50,000–500,000",
       action: "Renew DPMS registration via MoE portal; update AML Policy and Procedure documents",
     });
@@ -320,7 +320,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       planned: deadlines.filter((d) => d.priority === "planned").length,
     },
     deadlines,
-    regulatoryFramework: "FDL 10/2025; Cabinet Decision 10/2019; CBUAE AML Standards; UAEFIU goAML Directives",
+    regulatoryFramework: "FDL 10/2025; CR 134/2025; CBUAE AML Standards; UAEFIU goAML Directives",
     generatedAt: new Date().toISOString(),
     referenceDate: isoDate(ref),
   }, { headers: gate.headers });

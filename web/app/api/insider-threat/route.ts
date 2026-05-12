@@ -203,7 +203,7 @@ REGULATORY FRAMEWORKS:
 - Basel Committee on Banking Supervision — Sound Practices for the Management of Operational Risk (2021)
 - ACAMS Insider Threat Framework — financial institution specific
 - UAE FDL 10/2025 (Updated AML Law) — Art.26 whistleblower protections; staff screening obligations
-- UAE FDL 20/2018 — employee obligations and institutional liability for ML facilitation
+- UAE FDL 10/2025 — employee obligations and institutional liability for ML facilitation
 - CBUAE AML Standards — §8 (HR screening), §6.4 (escalation procedures), internal controls
 - UAE Cabinet Decision on Implementing Regulations — employee fitness and propriety standards
 

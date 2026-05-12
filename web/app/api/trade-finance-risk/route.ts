@@ -105,7 +105,7 @@ const FALLBACK: TradeFinanceRiskResult = {
   ],
   sanctionedRouteRisk: "ELEVATED — Transit through Panama introduces exposure to OFAC-listed entities active in Central American trade lanes. Confirm no Panama-registered vessel or intermediary on OFAC SDN list.",
   regulatoryObligations: [
-    { obligation: "File Suspicious Transaction Report with UAE FIU (goAML) within 35 days of suspicion", regulation: "UAE FDL 20/2018 Art.15; FDL 10/2025 Art.9" },
+    { obligation: "File Suspicious Transaction Report with UAE FIU (goAML) within 2 business days of MLRO determination of suspicion", regulation: "UAE FDL 10/2025 Art.17(1)" },
     { obligation: "Conduct enhanced due diligence on all named counterparties and beneficial owners", regulation: "CBUAE AML Standards §5.3 — high-risk customer EDD" },
     { obligation: "Assess dual-use goods export licence compliance before processing payment", regulation: "UAE Federal Decree-Law 13/2021 on dual-use goods; UAE Strategic Goods List" },
     { obligation: "Notify senior management and MLRO immediately; document escalation", regulation: "FATF R.18; CBUAE AML Standards §6.4" },
@@ -183,7 +183,7 @@ REGULATORY FRAMEWORKS:
 - BIS (Bank for International Settlements) trade finance guidance on ML/TF risk
 - ICC (International Chamber of Commerce) Uniform Customs and Practice for Documentary Credits (UCP 600)
 - ICC Uniform Rules for Collections (URC 522)
-- UAE FDL 20/2018 (AML Law) and FDL 10/2025 (Updated AML Law)
+- UAE FDL 10/2025 (AML Law, in force 14 Oct 2025)
 - CBUAE AML Standards for Banks — trade finance chapter
 - UAE Cabinet Decision on DNFBP obligations in trade finance
 - UAE Strategic Goods Control & Dual-Use Goods regime

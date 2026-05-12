@@ -85,7 +85,7 @@ const FALLBACK: RealEstateMlResult = {
     "Prior property ownership history for buyer",
     "Latest sanctions screening certificate (EOCN, OFAC, UN)",
   ],
-  regulatoryBasis: "UAE FDL 10/2025 Art.12 (DNFBP obligations), Art.17 (STR filing); Cabinet Decision 10/2019; RERA/DLD Registration Procedures; FATF R.22 (DNFBPs); FATF Guidance on ML through the Real Estate Sector (2022); CBUAE AML/CFT Guidelines 2021 §6 (Real Estate)",
+  regulatoryBasis: "UAE FDL 10/2025 Art.12 (DNFBP obligations), Art.17 (STR filing); CR 134/2025 Art.14; RERA/DLD Registration Procedures; FATF R.22 (DNFBPs); FATF Guidance on ML through the Real Estate Sector (2022); CBUAE AML/CFT Guidelines 2021 §6 (Real Estate)",
 };
 
 export async function POST(req: Request) {

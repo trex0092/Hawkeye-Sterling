@@ -84,7 +84,7 @@ const FALLBACK: TradeInvoiceResult = {
     "Source of commodity — mine-to-market documentation",
     "Correspondence explaining pricing basis deviation from LBMA",
   ],
-  regulatoryBasis: "UAE FDL 10/2025 Art.12 (DNFBP — gold/precious metals dealers); Art.17 (STR); FATF R.4 (TBML); FATF Trade-Based ML Typologies; DMCC Precious Metals AML Requirements; UAE Cabinet Decision 10/2019; WCO Safe Framework on Trade Facilitation",
+  regulatoryBasis: "UAE FDL 10/2025 Art.12 (DNFBP — gold/precious metals dealers); Art.17 (STR); FATF R.4 (TBML); FATF Trade-Based ML Typologies; DMCC Precious Metals AML Requirements; CR 134/2025 Art.14; WCO Safe Framework on Trade Facilitation",
 };
 
 export async function POST(req: Request) {

@@ -1,6 +1,6 @@
 // Hawkeye Sterling — wave-3 mode: npo_high_risk_outflow
 // Detects NPO/charity flows to high-risk-jurisdiction terrorism-finance
-// nexuses. Anchors: FATF R.8 (NPOs) · UAE Cabinet Res 20/2018 (NPO
+// nexuses. Anchors: FATF R.8 (NPOs) · UAE FDL 10/2025 (NPO
 // regulation) · UNSCR 1373 / 2462.
 
 import type { BrainContext, FacultyId, Finding, ReasoningCategory, Verdict } from '../types.js';
@@ -66,7 +66,7 @@ export const npoHighRiskApply = async (ctx: BrainContext): Promise<Finding> => {
     category: 'predicate_crime' as ReasoningCategory,
     faculties: ['data_analysis', 'geopolitical_awareness'] satisfies FacultyId[],
     score, confidence: hits.length === 0 ? 0.4 : Math.min(0.9, 0.5 + 0.05 * hits.length), verdict,
-    rationale: `${hits.length} NPO-high-risk signal(s) over ${flows.length} flow(s). ${hits.slice(0, 6).map((h) => `${h.id}=${h.weight.toFixed(2)}`).join('; ')}. Anchors: FATF R.8 · UAE Cabinet Res 20/2018 · UNSCR 1373 / 2462.`,
+    rationale: `${hits.length} NPO-high-risk signal(s) over ${flows.length} flow(s). ${hits.slice(0, 6).map((h) => `${h.id}=${h.weight.toFixed(2)}`).join('; ')}. Anchors: FATF R.8 · UAE FDL 10/2025 · UNSCR 1373 / 2462.`,
     evidence: hits.slice(0, 8).map((h) => h.evidence),
     producedAt: Date.now(),
   };

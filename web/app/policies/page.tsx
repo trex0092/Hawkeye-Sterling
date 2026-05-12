@@ -612,9 +612,9 @@ const DEFAULT_POLICIES: Policy[] = [
   {
     id: "real-estate-aml",
     section: "Sector: Real Estate",
-    title: "Real-Estate AML Policy (Cabinet Res 10/2019)",
+    title: "Real-Estate AML Policy (CR 134/2025)",
     body:
-      "Brokers, agents, and developers covered by Cabinet Resolution 10/2019 must apply CDD on every buyer, seller, and intermediary. Cash, virtual asset, or single / linked transactions of AED 55,000 or equivalent trigger DPMS-equivalent EDD. Source-of-funds covering the full purchase price must be documented before completion. UBO of any corporate party is identified at the 25% threshold. Real-Estate Activity Reports (REAR) are filed on goAML within 30 days of the trigger event. Records and underlying evidence are retained for 10 years.",
+      "Brokers, agents, and developers covered by Cabinet Resolution No. 134 of 2025 must apply CDD on every buyer, seller, and intermediary. Cash, virtual asset, or single / linked transactions of AED 55,000 or equivalent trigger DPMS-equivalent EDD. Source-of-funds covering the full purchase price must be documented before completion. UBO of any corporate party is identified at the 25% threshold. Real-Estate Activity Reports (REAR) are filed on goAML within 30 days of the trigger event. Records and underlying evidence are retained for 10 years.",
     lastReviewed: "2026-04-15",
   },
   {

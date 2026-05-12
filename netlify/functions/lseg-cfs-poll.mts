@@ -10,7 +10,7 @@
 // Schedule: every 6 hours at :15 UTC (staggered off the hour).
 //
 // Environment variables required:
-//   LSEG_USERNAME       — LSEG account email (bulent.balkan@iar.com.tr)
+//   LSEG_USERNAME       — LSEG account email
 //   LSEG_PASSWORD       — LSEG account password
 //   LSEG_APP_KEY        — AppKey from LSEG AppKey Generator
 //   LSEG_SQS_ENDPOINT   — Full SQS queue URL (optional — for push notifications)
@@ -69,7 +69,7 @@ async function getCheckpoint(
   bucket: string,
 ): Promise<string | null> {
   try {
-    return await store.get(`checkpoint/${bucket}`) ?? null;
+    return await store.get(`checkpoint/${bucket}`, { type: 'text' }) ?? null;
   } catch {
     return null;
   }
@@ -95,8 +95,8 @@ async function pollBucket(
   const lastPoll = await getCheckpoint(store, bucket);
   const fileSetsRes = await getFileSets(bucket, lastPoll ? { contentFrom: lastPoll } : {});
 
-  if (!fileSetsRes.ok || !fileSetsRes.data) {
-    return { ...base, error: fileSetsRes.error ?? 'getFileSets failed' };
+  if (!fileSetsRes.ok) {
+    return { ...base, error: fileSetsRes.error };
   }
 
   const fileSets = fileSetsRes.data;
@@ -173,9 +173,15 @@ export default async function handler(req: Request): Promise<Response> {
 
   // 1. Discover entitled CFS packages
   const packagesRes = await getPackages();
-  if (!packagesRes.ok || !packagesRes.data?.length) {
+  if (!packagesRes.ok) {
     return jsonResponse(
-      { ok: false, label: RUN_LABEL, error: packagesRes.error ?? 'No CFS packages found for this account' },
+      { ok: false, label: RUN_LABEL, error: packagesRes.error },
+      502,
+    );
+  }
+  if (!packagesRes.data.length) {
+    return jsonResponse(
+      { ok: false, label: RUN_LABEL, error: 'No CFS packages found for this account' },
       502,
     );
   }

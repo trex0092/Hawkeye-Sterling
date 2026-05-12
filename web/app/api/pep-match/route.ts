@@ -209,7 +209,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   } catch {
     return NextResponse.json(
       { ok: false, hits: [], source: "none", queriedName: "", error: "Invalid JSON" } satisfies PepMatchResponse,
-      { status: 400 },
+      { status: 400, headers: gate.headers },
     );
   }
 
@@ -264,5 +264,5 @@ export async function POST(req: Request): Promise<NextResponse> {
     source,
     queriedName: name,
     totalCorpus: corpus.length,
-  } satisfies PepMatchResponse);
+  } satisfies PepMatchResponse, { headers: gate.headers });
 }

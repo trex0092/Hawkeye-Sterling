@@ -93,7 +93,7 @@ const FALLBACK: EnforcementExposureResult = {
     "Review and update AML policy to explicitly address CTR contingency procedures for system failures",
     "Document all remedial actions for CBUAE inspection file",
   ],
-  regulatoryBasis: "UAE FDL 10/2025 Art.17 (CTR filing obligation), Art.21 (MLRO personal obligations), Art.27 (criminal penalties), Art.28 (liability of legal persons); Cabinet Decision 10/2019 (AED 55,000 CTR threshold); CBUAE Administrative Sanctions Framework; FATF R.29 (FIU reporting obligations)",
+  regulatoryBasis: "UAE FDL 10/2025 Art.17 (CTR filing obligation), Art.21 (MLRO personal obligations), Art.27 (criminal penalties), Art.28 (liability of legal persons); CR 134/2025 Art.14 (AED 55,000 CTR threshold); CBUAE Administrative Sanctions Framework; FATF R.29 (FIU reporting obligations)",
 };
 
 export async function POST(req: Request) {
