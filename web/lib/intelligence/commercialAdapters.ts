@@ -79,22 +79,26 @@ function sayariAdapter(): CorporateRegistryAdapter {
 }
 
 // ── LSEG World-Check One ──────────────────────────────────────────────────
+// Auth: Basic (key:secret) when both vars are set; Bearer (key-only) when
+// only LSEG_WORLDCHECK_API_KEY is present — covers single-key deployments.
 function lsegWorldCheckAdapter(): CorporateRegistryAdapter {
   const key = process.env["LSEG_WORLDCHECK_API_KEY"];
+  if (!key) return NULL_CORPORATE_ADAPTER;
   const secret = process.env["LSEG_WORLDCHECK_API_SECRET"];
-  if (!key || !secret) return NULL_CORPORATE_ADAPTER;
+  const authHeader = secret
+    ? `Basic ${Buffer.from(`${key}:${secret}`).toString("base64")}`
+    : `Bearer ${key}`;
   return {
     isAvailable: () => true,
     lookup: async (name: string, _jurisdiction?: string): Promise<CorporateRecord[]> => {
       void _jurisdiction;
       if (!name.trim()) return [];
       try {
-        const auth = Buffer.from(`${key}:${secret}`).toString("base64");
         const res = await abortable(
           fetch("https://api-worldcheck.refinitiv.com/v2/cases", {
             method: "POST",
             headers: {
-              Authorization: `Basic ${auth}`,
+              Authorization: authHeader,
               "content-type": "application/json",
               accept: "application/json",
             },
@@ -105,7 +109,10 @@ function lsegWorldCheckAdapter(): CorporateRegistryAdapter {
             }),
           }),
         );
-        if (!res.ok) return [];
+        if (!res.ok) {
+          console.warn(`[lseg-world-check] HTTP ${res.status} — check API key/secret validity`);
+          return [];
+        }
         const json = (await res.json()) as {
           results?: Array<{
             name?: string;
@@ -856,7 +863,7 @@ export type CommercialProvider =
   | "encompass" | "themis" | "sigma-ratings" | "polixis" | "salv" | "none";
 
 export function activeCommercialProvider(): CommercialProvider {
-  if (process.env["LSEG_WORLDCHECK_API_KEY"] && process.env["LSEG_WORLDCHECK_API_SECRET"]) return "lseg-world-check";
+  if (process.env["LSEG_WORLDCHECK_API_KEY"]) return "lseg-world-check";
   if (process.env["DOWJONES_RC_API_KEY"]) return "dowjones-rc";
   if (process.env["SAYARI_API_KEY"]) return "sayari";
   if (process.env["COMPLYADVANTAGE_API_KEY"]) return "complyadvantage";
@@ -879,7 +886,7 @@ export function activeCommercialProvider(): CommercialProvider {
 
 export function activeCommercialProviders(): CommercialProvider[] {
   const all: Array<[boolean, CommercialProvider]> = [
-    [!!(process.env["LSEG_WORLDCHECK_API_KEY"] && process.env["LSEG_WORLDCHECK_API_SECRET"]), "lseg-world-check"],
+    [!!process.env["LSEG_WORLDCHECK_API_KEY"], "lseg-world-check"],
     [!!process.env["DOWJONES_RC_API_KEY"], "dowjones-rc"],
     [!!process.env["SAYARI_API_KEY"], "sayari"],
     [!!process.env["COMPLYADVANTAGE_API_KEY"], "complyadvantage"],

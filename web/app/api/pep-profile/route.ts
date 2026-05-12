@@ -113,13 +113,15 @@ export async function POST(req: Request) {
   let worldCheckContext = "World-Check Database: not configured";
   const wcKey = process.env["LSEG_WORLDCHECK_API_KEY"];
   const wcSecret = process.env["LSEG_WORLDCHECK_API_SECRET"];
-  if (wcKey && wcSecret && body.name?.trim()) {
+  const wcAuth = wcKey
+    ? (wcSecret ? `Basic ${Buffer.from(`${wcKey}:${wcSecret}`).toString("base64")}` : `Bearer ${wcKey}`)
+    : null;
+  if (wcAuth && body.name?.trim()) {
     try {
-      const auth = Buffer.from(`${wcKey}:${wcSecret}`).toString("base64");
       const wcRes = await fetch("https://api-worldcheck.refinitiv.com/v2/cases", {
         method: "POST",
         headers: {
-          Authorization: `Basic ${auth}`,
+          Authorization: wcAuth,
           "content-type": "application/json",
           accept: "application/json",
         },
