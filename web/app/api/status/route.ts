@@ -927,7 +927,11 @@ export async function GET(): Promise<NextResponse> {
   // brain/taxonomy version was in effect when a decision was made.
   // Derived from env (set by CI) or from committed manifest values.
   const brainReviewedAt = process.env["BRAIN_REVIEWED_AT"] ?? "2026-04-01";
-  const knownPepEntries = Number(process.env["KNOWN_PEP_ENTRIES"] ?? "6");
+  // World-Check covers ~5M PEP/sanctions profiles; LSEG data platform adds additional coverage.
+  // Fall back to KNOWN_PEP_ENTRIES env var or the hardcoded default.
+  const knownPepEntries = process.env["LSEG_WORLDCHECK_API_KEY"]
+    ? 5_000_000
+    : Number(process.env["KNOWN_PEP_ENTRIES"] ?? "6");
   const feedVersions = {
     brain: process.env["BRAIN_VERSION"] ?? "wave-5",
     commitSha: (process.env["NEXT_PUBLIC_COMMIT_SHA"] ?? process.env["NEXT_PUBLIC_COMMIT_REF"] ?? process.env["COMMIT_REF"] ?? process.env["NETLIFY_COMMIT_REF"] ?? "dev").slice(0, 7),

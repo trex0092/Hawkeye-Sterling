@@ -101,7 +101,7 @@ function lsegWorldCheckAdapter(): CorporateRegistryAdapter {
             body: JSON.stringify({
               name,
               entityType: "ORGANISATION",
-              providerTypes: ["WATCHLIST", "REGULATORY_ENFORCEMENT_LIST", "STATE_OWNED_COMPANY"],
+              providerTypes: ["WATCHLIST", "REGULATORY_ENFORCEMENT_LIST", "STATE_OWNED_COMPANY", "PEP", "SANCTIONS"],
             }),
           }),
         );
