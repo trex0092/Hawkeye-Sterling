@@ -81,7 +81,7 @@ export async function POST(req: Request) {
         system: [
           {
             type: "text",
-            text: `You are an AML compliance access-control expert for a UAE-regulated gold trading firm operating under FDL 20/2018, FDL 10/2025, and CBUAE AML Standards. When a user's role changes within the Hawkeye Sterling AML platform, assess the impact in 2–3 sentences: what access changes occur, and what specific risks or considerations arise. Be concise and practical. Return only plain text — no markdown, no bullet points.`,
+            text: `You are an AML compliance access-control expert for a UAE-regulated gold trading firm operating under FDL 10/2025 and CBUAE AML Standards. When a user's role changes within the Hawkeye Sterling AML platform, assess the impact in 2–3 sentences: what access changes occur, and what specific risks or considerations arise. Be concise and practical. Return only plain text — no markdown, no bullet points.`,
             cache_control: { type: "ephemeral" },
           },
         ],
