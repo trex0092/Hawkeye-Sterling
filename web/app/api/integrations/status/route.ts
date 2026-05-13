@@ -120,15 +120,24 @@ export async function GET(req: Request): Promise<NextResponse> {
   ];
 
   // Sanctions sources
+  // Each adapter that requires exceljs (XLSX parsing) is annotated as
+  // "opt-in" — its status reflects URL-availability, not whether exceljs
+  // is installed; the runtime adapter throws a clear error if exceljs is
+  // missing, which the ingest-error log captures.
   const sanctionsChecks: IntegrationCheck[] = [
     { id: "ofac_sdn", label: "OFAC SDN List", status: "healthy", critical: true, detail: "Direct URL (no key required)" },
     { id: "ofac_cons", label: "OFAC Consolidated Non-SDN", status: "healthy", critical: true, detail: "Direct URL (no key required)" },
     { id: "un_consolidated", label: "UN Consolidated Sanctions", status: "healthy", critical: true, detail: "Direct URL (no key required)" },
     { id: "eu_fsf", label: "EU Financial Sanctions Files", status: "healthy", critical: true, detail: "Direct URL (no key required)" },
     { id: "uk_ofsi", label: "UK OFSI Sanctions List", status: "healthy", critical: true, detail: "Direct URL (no key required)" },
+    { id: "ca_osfi", label: "Canada OSFI Consolidated Sanctions", status: "healthy", critical: false, detail: "Direct URL (no key required)" },
+    { id: "ch_seco", label: "Switzerland SECO Sanctions", status: "healthy", critical: false, detail: "Direct URL (no key required)" },
+    { id: "au_dfat", label: "Australia DFAT Consolidated Sanctions", status: "healthy", critical: false, detail: "Direct URL — opt-in: requires 'exceljs' npm package for XLSX parsing" },
+    envCheck("jp_mof", "Japan MOF Economic Sanctions", ["FEED_JP_MOF"], false, "Opt-in: set FEED_JP_MOF to comma-separated XLSX URLs + install 'exceljs' npm package"),
     { id: "fatf", label: "FATF Call-for-Action / Monitoring", status: "healthy", critical: false, detail: "Direct URL (no key required)" },
-    envCheck("uae_eocn", "UAE EOCN (Local Terrorist List)", ["UAE_EOCN_SEED_PATH", "UAE_EOCN_URL"], false, "Set UAE_EOCN_SEED_PATH to local JSON seed or UAE_EOCN_URL for live fetch"),
-    envCheck("uae_ltl", "UAE Local Terrorist List", ["UAE_LTL_SEED_PATH", "UAE_LTL_URL"], false, "Set UAE_LTL_SEED_PATH to local JSON seed"),
+    { id: "uae_eocn_xlsx", label: "UAE EOCN (Local Terrorist List, XLSX scraper)", status: "healthy", critical: false, detail: "Direct URL — opt-in: requires 'exceljs' npm package for XLSX parsing" },
+    envCheck("uae_eocn_seed", "UAE EOCN seed-based fallback", ["UAE_EOCN_SEED_PATH", "UAE_EOCN_URL"], false, "Set UAE_EOCN_SEED_PATH to local JSON seed (legacy path)"),
+    envCheck("uae_ltl", "UAE Local Terrorist List (seed fallback)", ["UAE_LTL_SEED_PATH", "UAE_LTL_URL"], false, "Set UAE_LTL_SEED_PATH to local JSON seed"),
   ];
 
   // Commercial screening vendors
