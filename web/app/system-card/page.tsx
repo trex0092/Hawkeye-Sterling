@@ -151,7 +151,7 @@ export default function SystemCardPage() {
         </div>
         <div style={{ marginBottom: 12 }}>
           <div style={{ color: "#e74c3c", fontSize: 13, fontWeight: 700, marginBottom: 8 }}>Where a human MLRO MUST intervene before action:</div>
-          {["SAR/STR filing decisions (GoAML portal — separate human step required)", "Sanctions freeze actions", "EDD escalation decisions", "PEP relationship approval or rejection", "Any action with legal consequence for a third party", "All ai_decision and mlro_advisor outputs"].map(i => (
+          {["SAR/STR filing decisions (GoAML portal — separate human step required)", "Sanctions freeze actions", "EDD escalation decisions", "PEP relationship approval or rejection", "Any action with legal consequence for a third party", "All disposition and mlro_analyze outputs"].map(i => (
             <div key={i} style={{ ...LIST_ITEM, color: "#e74c3c" }}>✗ {i}</div>
           ))}
         </div>

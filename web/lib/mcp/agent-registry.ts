@@ -33,7 +33,7 @@ export interface AgentRegistry {
 function riskRating(level: ConsequenceLevel, toolName: string): RegistryEntry["riskRating"] {
   if (level === "action") return "critical";
   if (level === "supervised") {
-    if (["generate_sar_report", "ai_decision", "batch_screen"].includes(toolName)) return "high";
+    if (["generate_sar_report", "disposition", "screen"].includes(toolName)) return "high";
     return "medium";
   }
   return "low";
@@ -41,7 +41,7 @@ function riskRating(level: ConsequenceLevel, toolName: string): RegistryEntry["r
 
 // Owner assigned by tool category
 function toolOwner(toolName: string): string {
-  if (["generate_sar_report", "generate_screening_report", "compliance_report", "mlro_advisor", "mlro_advisor_quick", "ai_decision"].includes(toolName)) {
+  if (["generate_sar_report", "generate_report", "mlro_analyze", "disposition"].includes(toolName)) {
     return "MLRO / Compliance Officer";
   }
   if (["call_api"].includes(toolName)) return "CTO / System Administrator";

@@ -21,19 +21,15 @@ export const TOOL_MANIFEST: Record<string, ToolManifestEntry> = {
     level: "read-only",
     description: "Name disambiguation with confidence scoring",
   },
-  news_search: {
-    level: "read-only",
-    description: "Google News RSS search across 7 locales",
-  },
-  pep_profile: {
+  intel_feed: {
     level: "supervised",
-    description: "PEP profile lookup with World-Check grounding and role history",
+    description: "Adverse intel — GDELT 10-y, Google News RSS (7 locales), or both",
+    regulatoryNote: "Art.19 FDL 10/2025 lookback when source includes gdelt — findings require MLRO review",
+  },
+  pep: {
+    level: "supervised",
+    description: "PEP profile (depth=0) and association network traversal (depth=1..3)",
     regulatoryNote: "World-Check + LLM assessment — MLRO must review before any compliance decision",
-  },
-  pep_network: {
-    level: "supervised",
-    description: "PEP association network mapping",
-    regulatoryNote: "LLM-generated network map — requires MLRO review before action",
   },
   country_risk: {
     level: "supervised",
@@ -44,9 +40,9 @@ export const TOOL_MANIFEST: Record<string, ToolManifestEntry> = {
     level: "read-only",
     description: "Sanctions list freshness and coverage check",
   },
-  entity_graph: {
+  relationship_graph: {
     level: "read-only",
-    description: "Corporate ownership and UBO chain",
+    description: "Relationship graph — corporate UBO chains, political associates, or both",
   },
   domain_intel: {
     level: "read-only",
@@ -93,29 +89,19 @@ export const TOOL_MANIFEST: Record<string, ToolManifestEntry> = {
   // ── Supervised ────────────────────────────────────────────────────────────
   // These tools generate documents or risk scores. A human must review
   // the output before taking any compliance action.
-  screen_subject: {
+  screen: {
     level: "supervised",
-    description: "Single subject screening (sanctions, PEP, adverse media)",
+    description: "Single or batch subject screening (sanctions, PEP, adverse media) — discriminator is subjects.length",
     regulatoryNote: "Result must be reviewed by MLRO before case action — CR No.134/2025 Art.18",
-  },
-  batch_screen: {
-    level: "supervised",
-    description: "Multi-subject batch screening (up to 10,000 subjects)",
-    regulatoryNote: "Results must be reviewed by MLRO before case action — CR No.134/2025 Art.18",
   },
   super_brain: {
     level: "supervised",
     description: "Full deep analysis with composite risk score",
     regulatoryNote: "AI-generated risk score — human MLRO review required before EDD/escalation",
   },
-  adverse_media_live: {
+  generate_report: {
     level: "supervised",
-    description: "GDELT 10-year adverse media lookup with tone scoring",
-    regulatoryNote: "Art.19 FDL 10/2025 lookback — findings require MLRO review",
-  },
-  generate_screening_report: {
-    level: "supervised",
-    description: "Full 14-section Screening Compliance Report (JSON or HTML)",
+    description: "Compliance report — scope='screening' (14-section SCR) or 'full' (screening + super-brain + audit)",
     regulatoryNote: "AI-generated draft — MLRO must review and sign off before filing",
   },
   generate_sar_report: {
@@ -123,24 +109,14 @@ export const TOOL_MANIFEST: Record<string, ToolManifestEntry> = {
     description: "SAR/STR narrative + GoAML-compatible XML (draft only — filed via FIU GoAML portal)",
     regulatoryNote: "DRAFT only. Human MLRO must file via goaml.uae.gov.ae — FDL 10/2025 Art.32",
   },
-  compliance_report: {
+  mlro_analyze: {
     level: "supervised",
-    description: "Full compliance report generation",
-    regulatoryNote: "AI-generated draft — human review required before submission",
-  },
-  mlro_advisor: {
-    level: "supervised",
-    description: "Deep MLRO analysis (executor / advisor / challenger modes)",
+    description: "MLRO analysis — depth='quick' (single-pass <5s) or 'deep' (executor/advisor/challenger consensus)",
     regulatoryNote: "Advisory output only — final decision rests with human MLRO",
   },
-  mlro_advisor_quick: {
+  disposition: {
     level: "supervised",
-    description: "Fast single-pass MLRO analysis (<5s)",
-    regulatoryNote: "Advisory output only — final decision rests with human MLRO",
-  },
-  ai_decision: {
-    level: "supervised",
-    description: "AI disposition engine (approve / EDD / escalate / STR)",
+    description: "Final disposition — mode='automated' (fast AI decide) or 'advisory' (multi-perspective MLRO)",
     regulatoryNote: "Recommendation only — human MLRO must approve any escalation or STR",
   },
   transaction_anomaly: {

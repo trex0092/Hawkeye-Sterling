@@ -31,14 +31,12 @@ const CACHE_TTL_MS = 5_000;
 // These tools produce screening verdicts, risk decisions, or compliance reports
 // that could result in false CLEAR outcomes if the list corpus is incomplete.
 export const GATE_BLOCKED_TOOLS = new Set([
-  "screen_subject",
-  "batch_screen",
+  "screen",            // merged: screen_subject + batch_screen
   "super_brain",
-  "ai_decision",
-  "compliance_report",
-  "generate_screening_report",
+  "disposition",       // merged: ai_decision + advisory mlro path
+  "generate_report",   // merged: generate_screening_report + compliance_report
   "generate_sar_report",
-  "pep_profile",
+  "pep",               // merged: pep_profile + pep_network — blocked when depth=0 (profile = screening-equivalent)
   "vessel_check",
 ]);
 
@@ -48,21 +46,18 @@ export const GATE_ALLOWED_TOOLS = new Set([
   "system_status",
   "sanctions_status",
   "regulatory_feed",
-  "news_search",
+  "intel_feed",          // merged: adverse_media_live + news_search
   "transaction_anomaly",
   "get_cases",
   "audit_trail",
   "typology_match",
   "country_risk",
-  "adverse_media_live",
   "domain_intel",
   "crypto_risk",
   "lei_lookup",
-  "pep_network",
-  "entity_graph",
+  "relationship_graph",  // merged: entity_graph + pep network branch
   "smart_disambiguate",
-  "mlro_advisor",
-  "mlro_advisor_quick",
+  "mlro_analyze",        // merged: mlro_advisor + mlro_advisor_quick
 ]);
 
 export interface SanctionsHealth {

@@ -247,7 +247,7 @@ export async function downloadFile(
   return { ok: true, data: result.body };
 }
 
-// ── News feed → feeds Hawkeye adverse_media_live ──────────────────────────────
+// ── News feed → feeds Hawkeye intel_feed (source=gdelt|news|both) ────────────
 
 export async function getNewsHeadlines(
   query: string,
@@ -262,7 +262,7 @@ export async function getNewsHeadlines(
   return { ok: true, data: res.data?.data ?? [] };
 }
 
-// ── Corporate alerts → feeds Hawkeye entity_graph ────────────────────────────
+// ── Corporate alerts → feeds Hawkeye relationship_graph (type=corporate) ─────
 
 export async function getAlerts(
   params: Record<string, string> = {},

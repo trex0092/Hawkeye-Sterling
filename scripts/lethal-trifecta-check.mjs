@@ -70,7 +70,7 @@ section("Tool manifest: consequence levels on high-risk tools");
     process.exit(1);
   }
 
-  const actionTools = ["generate_sar_report", "freeze_account", "ai_decision", "batch_screen"];
+  const actionTools = ["generate_sar_report", "freeze_account", "disposition", "screen"];
   for (const tool of actionTools) {
     // Tool should appear with level: "action"
     const toolBlock = new RegExp(`${tool}[\\s\\S]{0,200}?level:\\s*["']action["']`).test(src)

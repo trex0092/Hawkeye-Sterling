@@ -124,7 +124,7 @@ export default function OperatorConsolePage() {
       if (!j) continue;
       jCounts[j] = (jCounts[j] ?? 0) + 1;
       if (e.isError) jErrors[j] = (jErrors[j] ?? 0) + 1;
-      if (["screen_subject", "super_brain", "batch_screen", "pep_profile"].includes(e.tool))
+      if (["screen", "super_brain", "pep"].includes(e.tool))
         jScreening[j] = (jScreening[j] ?? 0) + 1;
     }
     const avgErrRate = entries.length > 0 ? stats.errors / entries.length : 0;
