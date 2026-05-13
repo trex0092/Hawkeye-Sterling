@@ -70,13 +70,17 @@ async function pingCheck(
   url: string,
   critical: boolean,
   timeoutMs = 3000,
+  method: "GET" | "HEAD" = "GET",
 ): Promise<IntegrationCheck> {
+  // GET by default. HEAD is rejected with 405 by several health endpoints
+  // (OpenSanctions /healthz, OFAC's CDN) which makes the probe report
+  // "degraded" for an upstream that is actually fine.
   const t0 = Date.now();
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const res = await fetch(url, {
-      method: "HEAD",
+      method,
       signal: controller.signal,
       headers: { "user-agent": "hawkeye-sterling-health/1" },
     });
@@ -128,8 +132,28 @@ export async function GET(req: Request): Promise<NextResponse> {
   ];
 
   // Commercial screening vendors
+  //
+  // LSEG has two distinct API surfaces wired in this codebase:
+  //   - World-Check One (REST, HMAC):  LSEG_WORLDCHECK_API_KEY + _SECRET
+  //     → consumed by web/app/api/pep-profile/route.ts
+  //   - CFS / RDP (OAuth2 password):    LSEG_USERNAME + LSEG_PASSWORD + LSEG_APP_KEY
+  //     → consumed by netlify/functions/lseg-cfs-poll.mts + src/integrations/lseg.ts
+  // Both are reported separately so an operator can see which integration
+  // path is active.
+  const lsegCfsPresent =
+    envPresent("LSEG_USERNAME") && envPresent("LSEG_PASSWORD") && envPresent("LSEG_APP_KEY");
+  const lsegCfsCheck: IntegrationCheck = {
+    id: "lseg_cfs",
+    label: "LSEG CFS / RDP (OAuth2)",
+    status: lsegCfsPresent ? "healthy" : "unconfigured",
+    critical: false,
+    detail: lsegCfsPresent
+      ? "Configured via LSEG_USERNAME + LSEG_PASSWORD + LSEG_APP_KEY (bulk CFS + news + alerts via netlify/functions/lseg-cfs-poll.mts every 6 h)"
+      : "Set LSEG_USERNAME + LSEG_PASSWORD + LSEG_APP_KEY to enable bulk CFS ingestion + news + alerts",
+  };
   const commercialChecks: IntegrationCheck[] = [
-    envCheck("lseg_worldcheck", "LSEG World-Check One", ["LSEG_WORLDCHECK_API_KEY"], false),
+    envCheck("lseg_worldcheck", "LSEG World-Check One (REST)", ["LSEG_WORLDCHECK_API_KEY"], false, "Set LSEG_WORLDCHECK_API_KEY (+ optional _SECRET) to enable per-screening World-Check lookup"),
+    lsegCfsCheck,
     envCheck("dowjones_rc", "Dow Jones Risk & Compliance", ["DOWJONES_RC_API_KEY"], false),
     envCheck("complyadvantage", "ComplyAdvantage", ["COMPLYADVANTAGE_API_KEY"], false),
     envCheck("sayari", "Sayari Graph", ["SAYARI_API_KEY"], false),
