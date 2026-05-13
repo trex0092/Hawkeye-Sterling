@@ -3,22 +3,16 @@
 // Web-only admin dashboard for sanctions ingestion. Lets MLROs:
 //   1. See current per-list freshness (recordCount, ageHours, status)
 //   2. See the most recent adapter failures from the ingest-error log
-//   3. Click "Refresh now" to force-run runIngestionAll() in-process
+//   3. Click "Refresh now" to force-run runIngestionAll() via the
+//      authenticated /api/admin/trigger-refresh endpoint
 //
-// Bypasses the scheduled-function lambda path entirely (which has been
-// silently failing in production despite "Function invoked successfully"
-// from Netlify). This page runs the same runIngestionAll() but inside
-// the Next.js function lambda, which is known to work — so any error
-// here is surfaced inline in the browser instead of swallowed by the
-// scheduler.
-//
-// Auth: standard portal session via enforce().
+// Auth: standard portal session via enforce(). The Server Action that
+// fires the refresh injects the server-side ADMIN_TOKEN into the
+// internal API call — the token never leaves the server.
 
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { enforce } from "@/lib/server/enforce";
-import { runIngestionAll } from "../../../../src/ingestion/run-all";
-import { listRecentIngestErrors } from "../../../../src/ingestion/error-log";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -35,42 +29,85 @@ interface IngestRunSummary {
     listId: string;
     sourceUrl: string;
     recordCount: number;
-    checksum: string;
-    fetchedAt: number;
     durationMs: number;
     errors: string[];
   }>;
+  triggeredAt?: string;
+  hint?: string;
 }
 
-// ─── Server Action: force a refresh ──────────────────────────────────────────
-async function triggerRefresh(): Promise<IngestRunSummary> {
-  "use server";
-  return runIngestionAll("admin-ui-trigger") as Promise<IngestRunSummary>;
+interface IngestErrorEntry {
+  at: string;
+  source: string;
+  adapterId: string;
+  phase: "fetch" | "parse" | "write" | "verify";
+  message: string;
+  httpStatus?: number;
 }
 
-// ─── Helper: read sanctions/status JSON directly (no extra HTTP) ─────────────
-async function loadSanctionsStatus(): Promise<{
-  lists: Array<{
-    listId: string;
-    displayName: string;
-    present: boolean;
-    entityCount: number | null;
-    ageHours: number | null;
-    status: string;
-  }>;
-} | null> {
+interface SanctionsStatusList {
+  listId: string;
+  displayName: string;
+  present: boolean;
+  entityCount: number | null;
+  ageHours: number | null;
+  status: string;
+}
+
+// ─── Server-side fetch helpers ───────────────────────────────────────────────
+
+function baseUrl(headersList: Headers): string {
+  const host = headersList.get("host") ?? "hawkeye-sterling.netlify.app";
+  const proto = headersList.get("x-forwarded-proto") ?? "https";
+  return `${proto}://${host}`;
+}
+
+async function loadStatus(headersList: Headers): Promise<SanctionsStatusList[]> {
   try {
-    const headersList = await headers();
-    const host = headersList.get("host") ?? "hawkeye-sterling.netlify.app";
-    const proto = headersList.get("x-forwarded-proto") ?? "https";
-    const res = await fetch(`${proto}://${host}/api/sanctions/status`, {
+    const res = await fetch(`${baseUrl(headersList)}/api/sanctions/status`, {
       cache: "no-store",
       headers: { cookie: headersList.get("cookie") ?? "" },
     });
-    if (!res.ok) return null;
-    return (await res.json()) as Awaited<ReturnType<typeof loadSanctionsStatus>>;
+    if (!res.ok) return [];
+    const j = (await res.json()) as { lists?: SanctionsStatusList[] };
+    return j.lists ?? [];
   } catch {
-    return null;
+    return [];
+  }
+}
+
+async function loadRecentErrors(headersList: Headers): Promise<IngestErrorEntry[]> {
+  try {
+    const res = await fetch(`${baseUrl(headersList)}/api/sanctions/last-errors?limit=20`, {
+      cache: "no-store",
+      headers: { cookie: headersList.get("cookie") ?? "" },
+    });
+    if (!res.ok) return [];
+    const j = (await res.json()) as { entries?: IngestErrorEntry[] };
+    return j.entries ?? [];
+  } catch {
+    return [];
+  }
+}
+
+// ─── Server Action: force a refresh ──────────────────────────────────────────
+async function triggerRefresh(): Promise<void> {
+  "use server";
+  const headersList = await headers();
+  const adminToken = process.env["ADMIN_TOKEN"];
+  if (!adminToken) {
+    redirect(`/admin/sanctions?error=${encodeURIComponent("ADMIN_TOKEN not configured on server")}`);
+  }
+  try {
+    const res = await fetch(`${baseUrl(headersList)}/api/admin/trigger-refresh`, {
+      method: "POST",
+      headers: { authorization: `Bearer ${adminToken}` },
+    });
+    const text = await res.text();
+    redirect(`/admin/sanctions?refreshed=${encodeURIComponent(text)}`);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    redirect(`/admin/sanctions?error=${encodeURIComponent(msg)}`);
   }
 }
 
@@ -78,23 +115,27 @@ async function loadSanctionsStatus(): Promise<{
 export default async function AdminSanctionsPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ refreshed?: string }>;
+  searchParams?: Promise<{ refreshed?: string; error?: string }>;
 }) {
-  // Auth gate. Reuses the standard portal session check.
-  const req = new Request("http://localhost/admin/sanctions", {
-    headers: await headers(),
-  });
+  const headersList = await headers();
+  const req = new Request(`${baseUrl(headersList)}/admin/sanctions`, { headers: headersList });
   const gate = await enforce(req);
   if (!gate.ok) {
     redirect("/login?next=/admin/sanctions");
   }
 
-  const status = await loadSanctionsStatus();
-  const recentErrors = await listRecentIngestErrors(20);
+  const [statusLists, recentErrors] = await Promise.all([
+    loadStatus(headersList),
+    loadRecentErrors(headersList),
+  ]);
   const params = (await searchParams) ?? {};
-  const lastResult: IngestRunSummary | null = params.refreshed
-    ? (JSON.parse(decodeURIComponent(params.refreshed)) as IngestRunSummary)
-    : null;
+  let lastResult: IngestRunSummary | null = null;
+  try {
+    if (params.refreshed) lastResult = JSON.parse(params.refreshed) as IngestRunSummary;
+  } catch {
+    lastResult = null;
+  }
+  const lastError = params.error ?? null;
 
   return (
     <div style={{ maxWidth: 980, margin: "32px auto", padding: "0 24px", fontFamily: "ui-sans-serif, system-ui, sans-serif" }}>
@@ -105,9 +146,15 @@ export default async function AdminSanctionsPage({
         run on demand.
       </p>
 
+      {lastError ? (
+        <div style={{ padding: 12, marginBottom: 24, background: "#fee2e2", borderRadius: 6, color: "#991b1b" }}>
+          <strong>Error:</strong> {lastError}
+        </div>
+      ) : null}
+
       <section style={{ marginBottom: 32 }}>
         <h2 style={{ fontSize: 18, fontWeight: 600, marginBottom: 12 }}>Current freshness</h2>
-        {status?.lists ? (
+        {statusLists.length > 0 ? (
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ background: "#f4f4f5", textAlign: "left" }}>
@@ -118,7 +165,7 @@ export default async function AdminSanctionsPage({
               </tr>
             </thead>
             <tbody>
-              {status.lists.map((l) => (
+              {statusLists.map((l) => (
                 <tr key={l.listId} style={{ borderBottom: "1px solid #e4e4e7" }}>
                   <td style={{ padding: 8 }}>{l.displayName}</td>
                   <td style={{ padding: 8 }}>{l.entityCount ?? "—"}</td>
@@ -148,17 +195,10 @@ export default async function AdminSanctionsPage({
       <section style={{ marginBottom: 32 }}>
         <h2 style={{ fontSize: 18, fontWeight: 600, marginBottom: 12 }}>Force refresh</h2>
         <p style={{ color: "#666", marginBottom: 12 }}>
-          Runs every adapter in parallel from this page. Each adapter has a
-          12-second timeout. Total wall-clock typically 12-15 s.
+          Runs every adapter in parallel via the authenticated admin endpoint.
+          Each adapter has a 12-second timeout. Total wall-clock typically 12-15 s.
         </p>
-        <form
-          action={async () => {
-            "use server";
-            const result = await triggerRefresh();
-            // URL-encode the result and redirect so it shows after navigation.
-            redirect(`/admin/sanctions?refreshed=${encodeURIComponent(JSON.stringify(result))}`);
-          }}
-        >
+        <form action={triggerRefresh}>
           <button
             type="submit"
             style={{
@@ -199,7 +239,7 @@ export default async function AdminSanctionsPage({
               </tr>
             </thead>
             <tbody>
-              {lastResult.summary.map((r) => (
+              {(lastResult.summary ?? []).map((r) => (
                 <tr key={r.listId} style={{ borderBottom: "1px solid #e4e4e7" }}>
                   <td style={{ padding: 8 }}>{r.listId}</td>
                   <td style={{ padding: 8 }}>{r.recordCount}</td>
