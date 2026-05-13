@@ -277,11 +277,29 @@ async function fetchLocaleFeed(
   // (fuzzyScore >= 55 OR keywordGroups.length > 0) is the relevance
   // filter — it works for both names and topics — so quoting is
   // redundant and actively harmful for topic queries. Quote only when
-  // q is a likely person/entity name: ≤4 words AND every word starts
-  // with an uppercase letter AND no digits.
+  // q is a likely person/entity name: ≤4 words, every word starts
+  // with an uppercase letter, no digits, and no common AML topic
+  // keywords (which would suggest a topic search even if capitalised).
+  const TOPIC_KEYWORDS = new Set([
+    "sanctions", "sanction", "laundering", "fraud", "corruption",
+    "bribery", "terrorism", "trafficking", "smuggling", "embezzlement",
+    "ml", "tf", "cft", "aml", "kyc", "edd", "cdd", "str", "sar",
+    "ofac", "fatf", "ofsi", "eu", "un", "unsc", "cbu", "cbuae",
+    "compliance", "regulatory", "investigation", "indictment", "freeze",
+    "designation", "wmd", "proliferation", "russia", "iran", "syria",
+    "yemen", "korea", "ukraine", "narcotics", "cartel", "scandal",
+  ]);
+  const words = q.split(/\s+/).filter(Boolean);
+  const lowered = q.toLowerCase();
+  const containsTopicKeyword = [...TOPIC_KEYWORDS].some((kw) => {
+    const rx = new RegExp(`(?:^|[^\\p{L}])${kw}(?:[^\\p{L}]|$)`, "iu");
+    return rx.test(lowered);
+  });
   const looksLikeName =
-    q.split(/\s+/).filter(Boolean).length <= 4 &&
-    /^(\p{Lu}[\p{L}'’-]*)(\s+\p{Lu}[\p{L}'’-]*)*$/u.test(q);
+    words.length <= 4 &&
+    /^(\p{Lu}[\p{L}'’-]*)(\s+\p{Lu}[\p{L}'’-]*)*$/u.test(q) &&
+    !/\d/.test(q) &&
+    !containsTopicKeyword;
   const queryParam = looksLikeName ? `"${q}"` : q;
   const feed = `https://news.google.com/rss/search?q=${encodeURIComponent(queryParam)}&hl=${locale.hl}&gl=${locale.gl}&ceid=${locale.ceid}`;
   const controller = new AbortController();

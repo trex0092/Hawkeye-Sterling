@@ -13,6 +13,12 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import { getToolLevel } from "@/lib/mcp/tool-manifest";
 import type { ConsequenceLevel } from "@/lib/mcp/tool-manifest";
 import { getSanctionsHealth, GATE_BLOCKED_TOOLS } from "@/lib/mcp/sanctions-gate";
+import {
+  checkAndIncrementRate,
+  isBreakerOpen,
+  recordBreakerSuccess,
+  recordBreakerFailure,
+} from "@/lib/mcp/shared-state";
 import { resolveCommitRef, resolveEngineVersion } from "@/lib/server/api-error";
 import type { McpLogEntry } from "@/app/api/operator/logs/route";
 
@@ -28,61 +34,13 @@ const CLASS_TIMEOUT_MS: Record<ConsequenceLevel, number> = {
   "action":     55_000,
 };
 
-// ── Rate limiter (Control 20.02/20.06) ───────────────────────────────────────
-// Calls per minute per tool class. Module-level; resets each minute window.
-const CLASS_RATE_LIMITS: Record<ConsequenceLevel, number> = {
-  "read-only":  120,
-  "supervised":  40,
-  "action":      10,
-};
-interface RateWindow { count: number; windowStart: number }
-const _rateWindows = new Map<string, RateWindow>();
-
-function checkRateLimit(toolName: string, level: ConsequenceLevel): { allowed: boolean; retryAfterMs?: number } {
-  const limit = CLASS_RATE_LIMITS[level];
-  const now = Date.now();
-  const win = _rateWindows.get(toolName);
-  if (!win || now - win.windowStart >= 60_000) {
-    _rateWindows.set(toolName, { count: 1, windowStart: now });
-    return { allowed: true };
-  }
-  if (win.count >= limit) {
-    return { allowed: false, retryAfterMs: 60_000 - (now - win.windowStart) };
-  }
-  win.count++;
-  return { allowed: true };
-}
-
-// ── Circuit breaker (Control 20.02) ──────────────────────────────────────────
-// Trip after 5 consecutive failures; auto-reset after 60 s.
-interface BreakerState { failures: number; tripTime: number | null }
-const _breakers = new Map<string, BreakerState>();
-const BREAKER_THRESHOLD = 5;
-const BREAKER_RESET_MS = 60_000;
-
-function isBreakerOpen(toolName: string): boolean {
-  const s = _breakers.get(toolName);
-  if (!s || s.tripTime === null) return false;
-  if (Date.now() - s.tripTime > BREAKER_RESET_MS) {
-    // Auto-reset (half-open)
-    s.tripTime = null;
-    s.failures = 0;
-    return false;
-  }
-  return true;
-}
-
-function recordBreakerSuccess(toolName: string): void {
-  const s = _breakers.get(toolName);
-  if (s) { s.failures = 0; s.tripTime = null; }
-}
-
-function recordBreakerFailure(toolName: string): void {
-  const s = _breakers.get(toolName) ?? { failures: 0, tripTime: null };
-  s.failures++;
-  if (s.failures >= BREAKER_THRESHOLD) s.tripTime = Date.now();
-  _breakers.set(toolName, s);
-}
+// ── Rate limiter + circuit breaker ───────────────────────────────────────────
+// Both live in @/lib/mcp/shared-state now (Blobs-backed with a short-lived
+// in-process cache). Previously these were module-level Maps which meant
+// each warm Lambda instance had its own counter — effective rate cap was
+// N × configured-limit where N = warm instance count. Same for the breaker:
+// one instance's failures didn't trip others. See shared-state.ts for the
+// consistency / latency trade-offs.
 
 // ── Prompt injection detection (Control 13.03/13.07) ─────────────────────────
 const INJECTION_PATTERNS: RegExp[] = [
@@ -1047,13 +1005,13 @@ async function dispatch(msg: {
     const level = getToolLevel(toolName);
     const timeoutMs = CLASS_TIMEOUT_MS[level];
 
-    // Circuit breaker check (Control 20.02)
-    if (isBreakerOpen(toolName)) {
+    // Circuit breaker check (Control 20.02) — Blobs-backed shared state.
+    if (await isBreakerOpen(toolName)) {
       return err(id, -32002, `Tool ${toolName} is temporarily unavailable (circuit breaker open). Retry in 60s.`);
     }
 
-    // Rate limit check (Control 20.06)
-    const rate = checkRateLimit(toolName, level);
+    // Rate limit check (Control 20.06) — Blobs-backed shared state.
+    const rate = await checkAndIncrementRate(toolName, level);
     if (!rate.allowed) {
       return err(id, -32003, `Rate limit exceeded for ${toolName}. Retry in ${Math.ceil((rate.retryAfterMs ?? 60_000) / 1_000)}s.`);
     }
@@ -1134,7 +1092,8 @@ async function dispatch(msg: {
         () => tool.handler(toolArgs),
       );
       const durationMs = Date.now() - t0;
-      recordBreakerSuccess(toolName);
+      // Fire-and-forget — breaker state shouldn't block the response.
+      void recordBreakerSuccess(toolName);
       const wrapped = wrapWithGovernance(
         toolName, level, result, durationMs,
         sanctionsHealth.listsVerified, sanctionsHealth.missingCritical,
@@ -1155,7 +1114,8 @@ async function dispatch(msg: {
       });
     } catch (e) {
       const durationMs = Date.now() - t0;
-      recordBreakerFailure(toolName);
+      // Fire-and-forget — breaker write shouldn't block the error response.
+      void recordBreakerFailure(toolName);
       const requestId = Math.random().toString(36).slice(2, 10);
       const errMsg = e instanceof Error ? e.message : String(e);
       void logToolCall({
