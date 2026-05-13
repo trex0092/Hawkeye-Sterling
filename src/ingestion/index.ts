@@ -14,6 +14,8 @@ import { ukOfsiAdapter } from './sources/uk-ofsi.js';
 import { unConsolidatedAdapter } from './sources/un-consolidated.js';
 import { caOsfiAdapter } from './sources/ca-osfi.js';
 import { chSecoAdapter } from './sources/ch-seco.js';
+import { auDfatAdapter } from './sources/au-dfat.js';
+import { jpMofAdapter } from './sources/jp-mof.js';
 
 // Registry consumed by netlify/functions/refresh-lists.ts cron.
 // Order is informational; each adapter runs independently.
@@ -39,7 +41,9 @@ export const SOURCE_ADAPTERS: readonly SourceAdapter[] = [
   ukOfsiAdapter,
   caOsfiAdapter,
   chSecoAdapter,
+  auDfatAdapter,      // opt-in: requires 'exceljs' for XLSX parsing
+  jpMofAdapter,       // opt-in: requires 'exceljs' + FEED_JP_MOF env (per-country URLs)
   fatfAdapter,
-  uaeEocnXlsxAdapter, // XLSX-fetched LTL from uaeiec.gov.ae (replaces seed-based)
+  uaeEocnXlsxAdapter, // opt-in: XLSX-fetched LTL from uaeiec.gov.ae
   uaeLtlAdapter,      // legacy seed-based fallback retained for offline / test
 ];

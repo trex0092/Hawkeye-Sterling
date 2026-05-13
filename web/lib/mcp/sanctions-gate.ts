@@ -16,6 +16,7 @@ const CRITICAL_LISTS = ["ofac_sdn", "un_consolidated", "eu_fsf"] as const;
 const ALL_LISTS = [
   "ofac_sdn", "un_consolidated", "eu_fsf",
   "uk_ofsi", "ca_osfi", "ch_seco",
+  "au_dfat", "jp_mof",
   "uae_eocn", "uae_ltl",
 ] as const;
 
