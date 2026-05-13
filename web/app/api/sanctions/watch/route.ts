@@ -29,7 +29,9 @@ export const maxDuration = 60;
 // so this is the wall-clock bound on the slowest single adapter, not a serial
 // budget across all eight. Previously 90 s × 8 sequential = ~12 min — far
 // outside any Netlify function ceiling.
-const ADAPTER_TIMEOUT_MS = 12_000;
+// Raised from 12 s to 20 s after observing eu_fsf + ca_osfi consistently
+// hitting the 12 s limit in real admin-trigger-refresh runs.
+const ADAPTER_TIMEOUT_MS = 20_000;
 
 // Inline the IngestionReport shape to avoid a cross-package type import
 // that might not survive the Next.js bundler in all environments.

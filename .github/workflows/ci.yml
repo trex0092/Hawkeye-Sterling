@@ -16,7 +16,10 @@ jobs:
           node-version: 22.x
           cache: npm
       - name: Install dependencies
-        run: npm ci --include=dev
+        # Root uses `npm install` (not `npm ci`) so optional XLSX-adapter
+        # deps (exceljs) can be added without committing a regenerated
+        # lockfile. Web tree still uses `npm ci` for reproducibility.
+        run: npm install --include=dev --no-audit --no-fund
       - name: Type check
         run: npm run typecheck
       - name: Tests
