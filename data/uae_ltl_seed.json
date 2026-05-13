@@ -1,0 +1,17 @@
+[
+  {
+    "id": "LTL-001",
+    "name": "SEED ENTRY — REPLACE WITH LIVE UAE LTL DATA",
+    "aliases": [],
+    "dob": null,
+    "nationality": "AE",
+    "listId": "uae_ltl",
+    "designation": "PLACEHOLDER — This seed file must be replaced with data obtained from the UAE Ministry of Interior Local Terrorist List (https://www.moi.gov.ae). See ENV_VARS_REQUIRED.md.",
+    "reference": "LTL-SEED-PLACEHOLDER",
+    "type": "individual",
+    "nationalities": ["AE"],
+    "program": "UAE Local Terrorist List",
+    "designatedAt": "2024-01-01",
+    "jurisdictions": ["AE"]
+  }
+]

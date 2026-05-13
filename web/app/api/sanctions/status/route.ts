@@ -223,6 +223,7 @@ async function inspectList(
 }
 
 async function handleGet(req: Request): Promise<Response> {
+  const t0 = Date.now();
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
 
@@ -281,6 +282,7 @@ async function handleGet(req: Request): Promise<Response> {
     };
   }
 
+  const latencyMs = Date.now() - t0;
   return NextResponse.json(
     {
       ok,
@@ -290,6 +292,7 @@ async function handleGet(req: Request): Promise<Response> {
       summary,
       lists,
       env,
+      latencyMs,
       hint: ok
         ? "All eight adapters present and within freshness threshold."
         : "One or more lists are missing or stale. Check refresh-lists cron logs (03:00 UTC daily). UAE adapters return empty unless UAE_EOCN_SEED_PATH / UAE_LTL_SEED_PATH point to a local JSON seed.",

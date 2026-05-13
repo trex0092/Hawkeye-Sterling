@@ -137,6 +137,7 @@ function makeRunId(): string {
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
+  const t0 = Date.now();
   // Gate + rate-limit BEFORE parsing the JSON body so an attacker can't
   // blast megabytes of junk into a free-tier endpoint. gateHeaders is
   // threaded through every exit path so clients always see their
@@ -580,6 +581,7 @@ export async function POST(req: Request): Promise<NextResponse> {
           pepPenalty,
         },
       },
+      latencyMs: Date.now() - t0,
     }, { headers: gateHeaders });
   } catch (err) {
     // Brain pipeline crashed — DO NOT return score:0 (CLEAR). A CLEAR

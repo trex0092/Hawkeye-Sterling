@@ -402,6 +402,7 @@ export async function OPTIONS(): Promise<NextResponse> {
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
+  const t0 = Date.now();
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
 
@@ -423,30 +424,33 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   }
 
-  // Fan-out GDELT queries across name variants (suffix-stripped,
-  // transliteration-folded, caller-provided aliases). Transliterated
-  // brand names (e.g. ISTANBUL GOLD REFINERY ↔ İstanbul Altın Rafinerisi)
-  // and suffix-stripped variants (FZE / LIMITED dropped) used to be
-  // silently dropped by the exact-phrase match.
   const variants = generateNameVariants(subjectName, body.aliases);
+
+  const sourcesFailed: Array<{ name: string; error: string }> = [];
+  const sourcesSucceeded: string[] = [];
+
+  // Fan-out GDELT queries — each name variant wrapped independently so a
+  // timeout on one variant cannot abort the others.
   let rawArticles: GdeltArticle[] = [];
-  let gdeltServiceError = false;
-  try {
-    const results = await Promise.all(
-      variants.map((v) => queryGdelt(v).catch(() => ({ articles: [] as GdeltArticle[], serviceError: true }))),
-    );
-    gdeltServiceError = results.every((r) => r.serviceError);
-    const seenUrls = new Set<string>();
-    for (const { articles: arr } of results) {
-      for (const a of arr) {
+  const gdeltSettled = await Promise.allSettled(variants.map((v) => queryGdelt(v)));
+
+  const seenGdeltUrls = new Set<string>();
+  let anyGdeltSucceeded = false;
+  for (const result of gdeltSettled) {
+    if (result.status === "fulfilled" && !result.value.serviceError) {
+      anyGdeltSucceeded = true;
+      for (const a of result.value.articles) {
         const key = (a.url ?? "").toLowerCase();
-        if (!key || seenUrls.has(key)) continue;
-        seenUrls.add(key);
+        if (!key || seenGdeltUrls.has(key)) continue;
+        seenGdeltUrls.add(key);
         rawArticles.push(a);
       }
     }
-  } catch {
-    rawArticles = []; // GDELT failed — fall through to vendor adapters below
+  }
+  if (anyGdeltSucceeded) {
+    sourcesSucceeded.push("gdelt");
+  } else {
+    sourcesFailed.push({ name: "gdelt", error: "GDELT API temporarily unavailable or rate-limited" });
   }
 
   // Map GDELT articles to our schema
@@ -461,55 +465,66 @@ export async function POST(req: Request): Promise<NextResponse> {
     snippet: "", // GDELT artlist mode doesn't return snippets
   }));
 
-  // Always try vendor adapters (NewsAPI, MarketAux, GNews, Mediastack, etc.)
-  // regardless of GDELT result. When GDELT is rate-limited (429) and returns 0
-  // articles, vendor adapters act as hot-standby so the search never returns
-  // a false CLEAR. Each adapter is env-key gated; absent keys degrade to no-op.
+  // Vendor adapters (NewsAPI, MarketAux, GNews, Mediastack, etc.) wrapped
+  // independently from GDELT — a GDELT failure cannot cascade here.
+  // Each adapter is env-key gated; absent keys degrade to no-op.
   let vendorProviders: string[] = [];
-  try {
-    const { articles: vendorArticles, providersUsed } = await searchAllNews(subjectName, { limit: 25 });
+  const vendorSettled = await Promise.allSettled([searchAllNews(subjectName, { limit: 25 })]);
+  if (vendorSettled[0]!.status === "fulfilled") {
+    const { articles: vendorArticles, providersUsed } = vendorSettled[0].value;
     vendorProviders = providersUsed;
-    if (vendorArticles.length > 0) {
-      const seen = new Set(articles.map((a) => a.url.toLowerCase()));
-      for (const va of vendorArticles) {
-        const key = va.url.toLowerCase();
-        if (!key || seen.has(key)) continue;
-        seen.add(key);
-        articles.push({
-          title: va.title,
-          source: va.outlet || va.source,
-          url: va.url,
-          publishedAt: va.publishedAt,
-          tone: typeof va.sentiment === "number" ? va.sentiment : 0,
-          relevanceScore: 60,
-          categories: inferCategories(va.title, va.outlet || va.source),
-          snippet: va.snippet ?? "",
-        });
-      }
+    const seen = new Set(articles.map((a) => a.url.toLowerCase()));
+    for (const va of vendorArticles) {
+      const key = va.url.toLowerCase();
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      articles.push({
+        title: va.title,
+        source: va.outlet || va.source,
+        url: va.url,
+        publishedAt: va.publishedAt,
+        tone: typeof va.sentiment === "number" ? va.sentiment : 0,
+        relevanceScore: 60,
+        categories: inferCategories(va.title, va.outlet || va.source),
+        snippet: va.snippet ?? "",
+      });
     }
-  } catch (err) {
-    console.warn("[adverse-media-live] vendor news augmentation failed:", err instanceof Error ? err.message : String(err));
+    if (providersUsed.length > 0) {
+      sourcesSucceeded.push(...providersUsed);
+    }
+  } else {
+    const errMsg = vendorSettled[0].reason instanceof Error
+      ? vendorSettled[0].reason.message
+      : String(vendorSettled[0].reason);
+    console.warn("[adverse-media-live] vendor news augmentation failed:", errMsg);
+    sourcesFailed.push({ name: "vendor-news", error: errMsg });
   }
 
-  // Only return FALLBACK when both GDELT and all vendor adapters found nothing.
+  const partialResults = sourcesFailed.length > 0 && sourcesSucceeded.length > 0;
+
+  // Return 503 only when ALL sources failed — a partial result is still actionable.
+  if (sourcesSucceeded.length === 0) {
+    return NextResponse.json(
+      {
+        ok: false,
+        degraded: true,
+        subject: subjectName,
+        sourcesFailed,
+        sourcesSucceeded,
+        error: "Adverse media services temporarily unavailable — GDELT rate-limited and no vendor API keys configured. Cannot confirm clear status. Manual MLRO review required before any compliance decision.",
+      },
+      { status: 503, headers: gate.headers },
+    );
+  }
+
   if (articles.length === 0) {
-    // If GDELT failed (rate-limited/timeout) AND no vendor adapters had keys,
-    // do NOT return CLEAR — that would be a false negative. Return degraded instead.
-    if (gdeltServiceError && vendorProviders.length === 0) {
-      return NextResponse.json(
-        {
-          ok: false,
-          degraded: true,
-          subject: subjectName,
-          error: "Adverse media services temporarily unavailable — GDELT rate-limited and no vendor API keys configured. Cannot confirm clear status. Manual MLRO review required before any compliance decision.",
-        },
-        { status: 503, headers: gate.headers },
-      );
-    }
     return NextResponse.json({
       ...FALLBACK,
       subject: subjectName,
-    } satisfies AdverseMediaLiveResult);
+      sourcesSucceeded,
+      sourcesFailed,
+      ...(partialResults ? { partialResults: true } : {}),
+    });
   }
 
   // Sort by tone ascending (most negative first)
@@ -528,8 +543,10 @@ export async function POST(req: Request): Promise<NextResponse> {
     riskRating,
   );
 
-  const result: AdverseMediaLiveResult & { enriched?: boolean; enrichmentNote?: string; vendorProviders?: string[] } = {
-    ok: true,
+  const latencyMs = Date.now() - t0;
+  if (latencyMs > 5000) console.warn(`[adverse-media-live] slow response latencyMs=${latencyMs}`);
+  const result = {
+    ok: true as const,
     subject: subjectName,
     totalHits: aggregatedTotal,
     riskScore,
@@ -538,6 +555,10 @@ export async function POST(req: Request): Promise<NextResponse> {
     summary,
     regulatoryBasis: "FATF R.10 (CDD), FDL 10/2025 Art.10 (ongoing monitoring)",
     enriched,
+    sourcesSucceeded,
+    sourcesFailed,
+    latencyMs,
+    ...(partialResults ? { partialResults: true } : {}),
     ...(vendorProviders.length > 0 ? { vendorProviders } : {}),
     ...(enriched === false
       ? { enrichmentNote: "Claude enrichment unavailable — article categories are regex-inferred only. Review findings manually for nuance." }

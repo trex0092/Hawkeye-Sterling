@@ -138,6 +138,7 @@ function applyDpmsRules(
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
+  const t0 = Date.now();
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
   const gateHeaders = gate.ok ? gate.headers : {};
@@ -195,14 +196,35 @@ export async function POST(req: Request): Promise<NextResponse> {
       .catch((err) => console.error("[transaction-anomaly] flag persist failed:", err));
   }
 
+  const MINIMUM_OBSERVATIONS = 30;
+  const obs = streamingGate.observations;
+  const dataQuality = {
+    sufficient: obs >= MINIMUM_OBSERVATIONS,
+    currentObservations: obs,
+    minimumRequired: MINIMUM_OBSERVATIONS,
+    ...(obs < MINIMUM_OBSERVATIONS
+      ? {
+          warningMessage:
+            `Only ${obs} transaction(s) observed in this session. ` +
+            `The model requires at least ${MINIMUM_OBSERVATIONS} observations to produce reliable anomaly scores. ` +
+            `Scores below this threshold are indicative only — do not use as the sole basis for compliance action.`,
+        }
+      : {}),
+  };
+  const effectiveTier = obs < MINIMUM_OBSERVATIONS ? "insufficient_data" : result.tier;
+
+  const latencyMs = Date.now() - t0;
+  if (latencyMs > 5000) console.warn(`[transaction-anomaly] slow response latencyMs=${latencyMs}`);
   return NextResponse.json(
     {
       ok: true,
       sessionId,
-      observations: streamingGate.observations,
+      observations: obs,
       score: result.score,
-      tier: result.tier,
+      tier: effectiveTier,
       drivers: result.drivers,
+      dataQuality,
+      latencyMs,
       detail: {
         hstScore: mlResult.hstScore,
         zScore: mlResult.zScore,

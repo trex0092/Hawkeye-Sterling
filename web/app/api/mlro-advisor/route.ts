@@ -181,6 +181,7 @@ function buildContextPreamble(pairs: ContextPair[]): string {
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
+  const t0 = Date.now();
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
   const gateHeaders: Record<string, string> = gate.ok ? gate.headers : {};
@@ -647,6 +648,7 @@ export async function POST(req: Request): Promise<NextResponse> {
             }
           : {}),
         auditEntrySeq: audit.seq,
+        latencyMs: Date.now() - t0,
       },
       { headers: gateHeaders },
     );
@@ -659,6 +661,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         advisorScore: null,
         citations: [],
         elapsedMs: 0,
+        latencyMs: Date.now() - t0,
         degraded: true,
       },
       { status: 200, headers: gateHeaders },

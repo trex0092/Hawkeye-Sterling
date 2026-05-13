@@ -1119,9 +1119,32 @@ async function _handleGet(): Promise<NextResponse> {
 
   const warnings = [sanctionsAgeWarning, pepCountWarning, brainCatalogueWarning].filter(Boolean) as string[];
 
+  // Structured service arrays required by system_status MCP tool
+  const servicesUp = [...internalChecks, ...externalChecks]
+    .filter((c) => c.status === "operational")
+    .map((c) => c.name);
+  const servicesDown = [...internalChecks, ...externalChecks]
+    .filter((c) => c.status !== "operational")
+    .map((c) => ({ name: c.name, status: c.status, note: c.note }));
+  const listsFreshness: Record<string, { lastRefreshed: string | null; ageHours: number | null; entityCount: number | null; status: string }> = {};
+  for (const l of sanctions.lists) {
+    listsFreshness[l.id] = {
+      lastRefreshed: l.ageH !== null ? new Date(Date.now() - l.ageH * 3_600_000).toISOString() : null,
+      ageHours: l.ageH,
+      entityCount: l.recordCount,
+      status: l.ageH === null ? "missing" : l.ageH > 48 ? "stale" : "healthy",
+    };
+  }
+
   return NextResponse.json({
     ok: true,
     status: worstStatus,
+    // MCP system_status contract fields
+    servicesUp,
+    servicesDown,
+    degraded: worstStatus !== "operational",
+    listsFreshness,
+    // Full rich fields
     externalStatus,
     configHealth,
     uptimeSec,
