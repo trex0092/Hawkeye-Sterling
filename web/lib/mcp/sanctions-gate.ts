@@ -14,7 +14,12 @@ const ALL_LISTS = [
   "uk_ofsi", "uae_eocn", "uae_ltl",
 ] as const;
 
-const CACHE_TTL_MS = 5 * 60 * 1_000; // 5 minutes
+// 5 s — short enough that an admin-triggered refresh becomes visible
+// almost immediately; long enough to amortise the read across a burst
+// of screening calls in the same warm Lambda. The previous 5-minute
+// cache was the actual reason screen_subject kept reporting
+// LISTS_MISSING for several minutes after the refresh wrote fresh data.
+const CACHE_TTL_MS = 5_000;
 
 // Tools that must be blocked when any critical sanctions list is missing.
 // These tools produce screening verdicts, risk decisions, or compliance reports
@@ -89,18 +94,47 @@ export async function getSanctionsHealth(): Promise<SanctionsHealth> {
     }
 
     const getStore = mod.getStore as typeof GetStoreFn;
-    const store = getStore({ name: "hawkeye-lists" });
+    // Match the read path in /api/sanctions/status and the write path in
+    // src/ingestion/blobs-store.ts: explicit credentials, strong consistency.
+    // Without these, getStore returns a handle to an unauthenticated default
+    // scope that NEVER sees the data the ingestion path writes to — the
+    // gate was therefore reporting EVERY list as missing despite the
+    // ingest succeeding. This was the actual root cause of the persistent
+    // LISTS_MISSING block.
+    const siteID = process.env["NETLIFY_SITE_ID"] ?? process.env["SITE_ID"];
+    const token =
+      process.env["NETLIFY_BLOBS_TOKEN"] ??
+      process.env["NETLIFY_API_TOKEN"] ??
+      process.env["NETLIFY_AUTH_TOKEN"];
+    const storeOpts: { name: string; siteID?: string; token?: string; consistency: "strong" | "eventual" } = {
+      name: "hawkeye-lists",
+      consistency: "strong",
+    };
+    if (siteID) storeOpts.siteID = siteID;
+    if (token) storeOpts.token = token;
+    const store = getStore(storeOpts);
 
     const missingCritical: string[] = [];
     const missingAll: string[] = [];
 
     // Check all lists; treat each independently so a single failure doesn't
-    // report all lists as missing.
+    // report all lists as missing. The blob KEY format is "<listId>/latest.json"
+    // — set by src/ingestion/blobs-store.ts putDataset(). Previously this
+    // code read just `listId` which never matched any written key, so every
+    // list reported as missing.
     await Promise.allSettled(
       (ALL_LISTS as readonly string[]).map(async (listId) => {
         try {
-          const value = await store.get(listId, { type: "text" });
-          if (!value) {
+          const value = await store.get(`${listId}/latest.json`, { type: "json" });
+          // A successful write is a non-null JSON object with an entities
+          // array. Anything else (null, empty string, non-object) is
+          // treated as missing — covers both "never written" and "write
+          // started but body never landed".
+          const hasEntities =
+            value !== null &&
+            typeof value === "object" &&
+            Array.isArray((value as { entities?: unknown }).entities);
+          if (!hasEntities) {
             missingAll.push(listId);
             if ((CRITICAL_LISTS as readonly string[]).includes(listId)) {
               missingCritical.push(listId);
