@@ -143,7 +143,7 @@ export default function BrainCataloguePage() {
 
   const catalogueChecklist: Array<{ label: string; count: number; guidance: string; threshold: number }> = [
     { label: "Faculties", count: catalogue?.faculties ?? 0, guidance: "Verify coverage vs CR 134/2025 — expected ≥15", threshold: 15 },
-    { label: "Reasoning modes", count: catalogue?.reasoningModes ?? 0, guidance: "Stubs expected; verify no deprecated modes under FDL 10/2025", threshold: 1 },
+    { label: "Reasoning modes", count: catalogue?.reasoningModes ?? 0, guidance: "412 unique post-dedup (444 raw across wave files). Stubs expected; verify no deprecated modes under FDL 10/2025", threshold: 1 },
     { label: "Meta-cognition entries", count: catalogue?.metaCognition ?? 0, guidance: "Verify alignment with Art.18 oversight requirements", threshold: 1 },
     { label: "MLRO skills", count: catalogue?.skills ?? 0, guidance: "Flag any deprecated skills under FDL 10/2025", threshold: 1 },
   ];

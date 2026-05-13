@@ -1,5 +1,9 @@
 // Hawkeye Sterling — reasoning-mode registry.
-// 412 modes across 50 categories, wave 1 + wave 2 + wave 3 + wave 4 + wave 5 + wave 6 + wave 11.
+// 444 mode definitions across all wave files (213 base + 73 wave3 + 29 wave4 +
+//   37 wave5 + 35 wave6 + 40 wave11 + 17 wave12); 412 unique IDs after merge
+//   dedup (32 wave-3/4/5/6 entries reuse existing base IDs to upgrade stub
+//   implementations to real apply() functions via the OVERRIDES path).
+// Categories: 50. Wave 1 + 2 + 3 + 4 + 5 + 6 + 11 + 12.
 // Each entry is registered metadata + either a real apply() (if src/brain/modes/registry.ts
 // or reasoning-modes-wave3.ts supplies an override) or a stub apply() that returns an
 // inconclusive placeholder Finding.  Real algorithms land mode-by-mode in Phase 7/8/11.
