@@ -91,24 +91,31 @@ async function loadRecentErrors(headersList: Headers): Promise<IngestErrorEntry[
 }
 
 // ─── Server Action: force a refresh ──────────────────────────────────────────
+// IMPORTANT: redirect() must not be called inside a try/catch — it throws
+// a NEXT_REDIRECT control-flow exception that catch would erroneously
+// handle as a real error. Pattern below: try only the fetch, redirect
+// at the top level.
 async function triggerRefresh(): Promise<void> {
   "use server";
   const headersList = await headers();
   const adminToken = process.env["ADMIN_TOKEN"];
   if (!adminToken) {
-    redirect(`/admin/sanctions?error=${encodeURIComponent("ADMIN_TOKEN not configured on server")}`);
+    return redirect(
+      `/admin/sanctions?error=${encodeURIComponent("ADMIN_TOKEN not configured on server")}`,
+    );
   }
+  let payload: string;
   try {
     const res = await fetch(`${baseUrl(headersList)}/api/admin/trigger-refresh`, {
       method: "POST",
       headers: { authorization: `Bearer ${adminToken}` },
     });
-    const text = await res.text();
-    redirect(`/admin/sanctions?refreshed=${encodeURIComponent(text)}`);
+    payload = await res.text();
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    redirect(`/admin/sanctions?error=${encodeURIComponent(msg)}`);
+    return redirect(`/admin/sanctions?error=${encodeURIComponent(msg)}`);
   }
+  return redirect(`/admin/sanctions?refreshed=${encodeURIComponent(payload)}`);
 }
 
 // ─── Page ────────────────────────────────────────────────────────────────────
