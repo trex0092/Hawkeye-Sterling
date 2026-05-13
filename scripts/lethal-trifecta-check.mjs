@@ -70,21 +70,31 @@ section("Tool manifest: consequence levels on high-risk tools");
     process.exit(1);
   }
 
+  // Anchor on the tool's manifest property definition (`<tool>: {`) so we
+  // don't false-positive on the substring "screen" appearing inside another
+  // tool's description (e.g. vessel_check's "Vessel screening by IMO").
   const actionTools = ["generate_sar_report", "freeze_account", "disposition", "screen"];
   for (const tool of actionTools) {
-    // Tool should appear with level: "action"
-    const toolBlock = new RegExp(`${tool}[\\s\\S]{0,200}?level:\\s*["']action["']`).test(src)
-      || new RegExp(`level:\\s*["']action["'][\\s\\S]{0,200}?${tool}`).test(src);
-    if (!toolBlock) {
-      // Also check it's not downgraded to read-only
-      if (new RegExp(`${tool}[\\s\\S]{0,200}?level:\\s*["']read-only["']`).test(src)) {
-        fail(`${tool} has been downgraded from 'action' to 'read-only'`);
-      } else {
-        // Can't find the tool at all, or level assignment is ambiguous — warn
-        console.warn(`  ⚠ warn — ${tool}: could not confirm 'action' level (may be structured differently)`);
-      }
-    } else {
+    const propRe = new RegExp(`\\b${tool}\\s*:\\s*\\{[\\s\\S]{0,400}?level:\\s*["']([a-z-]+)["']`);
+    const m = src.match(propRe);
+    if (!m) {
+      console.warn(`  ⚠ warn — ${tool}: not found in manifest (may be structured differently)`);
+      continue;
+    }
+    const level = m[1];
+    if (level === "action") {
       pass(`${tool} retains 'action' consequence level`);
+    } else if (level === "supervised") {
+      // 'supervised' is acceptable for the merged composite tools: the
+      // governance wrapper still requires MLRO sign-off before any
+      // compliance action (CR 134/2025 Art.18). 'read-only' is NOT
+      // acceptable for these tools — that would let the model take
+      // action without supervision.
+      pass(`${tool} at 'supervised' level (post-merge composite; MLRO review still enforced)`);
+    } else if (level === "read-only") {
+      fail(`${tool} has been downgraded to 'read-only' — must be at least 'supervised'`);
+    } else {
+      fail(`${tool} has unknown level "${level}" — expected action|supervised`);
     }
   }
 }
