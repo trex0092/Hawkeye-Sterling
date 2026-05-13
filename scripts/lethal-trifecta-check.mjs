@@ -118,22 +118,35 @@ section("MCP route: prompt-injection detection patterns");
 }
 
 // ── 4. MCP route: circuit breaker and rate limits must be present ─────────────
+// Rate-limit + breaker state was extracted into web/lib/mcp/shared-state.ts
+// in the operational-readiness PR so it can be Blobs-backed (distributed
+// across Lambda instances). The control here is "this logic exists in the
+// MCP code path", not "this logic is inlined in route.ts" — verify by
+// checking either file, prefer shared-state if present.
 section("MCP route: circuit breaker + rate limits");
 {
   const mcpPath = resolve(ROOT, "web/app/api/mcp/route.ts");
-  const src = readFileSync(mcpPath, "utf8");
+  const sharedStatePath = resolve(ROOT, "web/lib/mcp/shared-state.ts");
+  const mcpSrc = readFileSync(mcpPath, "utf8");
+  let sharedSrc = "";
+  try { sharedSrc = readFileSync(sharedStatePath, "utf8"); } catch { /* legacy layout */ }
+  const combined = mcpSrc + "\n" + sharedSrc;
 
-  const hasBreaker = /BREAKER_THRESHOLD|isBreakerOpen/.test(src);
-  if (!hasBreaker) fail("Circuit breaker logic removed from mcp/route.ts");
+  const hasBreaker =
+    /BREAKER_THRESHOLD|isBreakerOpen/.test(combined);
+  if (!hasBreaker) fail("Circuit breaker logic removed (checked mcp/route.ts + shared-state.ts)");
   else pass("Circuit breaker present");
 
-  const hasRateLimit = /CLASS_RATE_LIMITS|checkRateLimit/.test(src);
-  if (!hasRateLimit) fail("Rate limit logic removed from mcp/route.ts");
+  // Rate-limit logic exists if either the legacy inline names are present
+  // in route.ts OR the new shared-state module exports the equivalents.
+  const hasRateLimit =
+    /CLASS_RATE_LIMITS|checkRateLimit|checkAndIncrementRate/.test(combined);
+  if (!hasRateLimit) fail("Rate limit logic removed (checked mcp/route.ts + shared-state.ts)");
   else pass("Rate limit logic present");
 
   // Action-class rate limit must be ≤ 20 per minute (prevent abuse).
-  // The CLASS_RATE_LIMITS block comes after CLASS_TIMEOUT_MS; extract it specifically.
-  const rateLimitsBlock = src.match(/CLASS_RATE_LIMITS[\s\S]{0,500}?}/);
+  // Look in both files — CLASS_RATE_LIMITS moved to shared-state.ts.
+  const rateLimitsBlock = combined.match(/CLASS_RATE_LIMITS[\s\S]{0,500}?}/);
   const actionRateMatch = rateLimitsBlock?.[0]?.match(/"action":\s*(\d+)/);
   if (actionRateMatch) {
     const limit = parseInt(actionRateMatch[1], 10);
