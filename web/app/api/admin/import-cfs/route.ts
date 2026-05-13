@@ -17,6 +17,7 @@
 // data and which return empty payloads.
 
 import { NextResponse } from "next/server";
+import { parseCfsPayload } from "@/lib/lseg/cfs-parser";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -95,32 +96,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     consistency: "strong",
   });
 
-  // Dynamic-import the parser from dist/.
-  let parseCfsPayload: (payload: string, baseId?: string) => {
-    format: string;
-    entities: Array<{ id: string; primaryName: string; aliases: string[]; categories: string[] }>;
-    error?: string;
-  };
-  try {
-    const parserMod = (await import(
-      "../../../../../dist/web/lib/lseg/cfs-parser.js" as string
-    ).catch(async () => {
-      // Fallback: ts-compiled output may live at dist/lib/lseg/cfs-parser.js
-      // depending on the project's tsconfig outDir; try the more common path.
-      return await import(
-        "../../../../../dist/src/lseg/cfs-parser.js" as string
-      );
-    })) as { parseCfsPayload: typeof parseCfsPayload };
-    parseCfsPayload = parserMod.parseCfsPayload;
-  } catch (err) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: `parser module unavailable — ${err instanceof Error ? err.message : String(err)}. The web/lib/lseg/cfs-parser.ts file may not have been compiled by next build. Check tsconfig outDir.`,
-      },
-      { status: 503 },
-    );
-  }
+  // Parser is statically imported above — Next.js handles bundling.
 
   // List all files written by lseg-cfs-poll.
   let fileKeys: string[] = [];
@@ -150,8 +126,15 @@ export async function POST(req: Request): Promise<NextResponse> {
     entityCount: number;
     error?: string;
   }
+  interface IndexedEntity {
+    id: string;
+    primaryName: string;
+    aliases: string[];
+    categories: string[];
+    sourceFile: string;
+  }
   const perFile: PerFile[] = [];
-  const allEntities = new Map<string, { id: string; primaryName: string; aliases: string[]; categories: string[]; sourceFile: string }>();
+  const allEntities = new Map<string, IndexedEntity>();
 
   const CONCURRENCY = 4;
   for (let i = 0; i < fileKeys.length; i += CONCURRENCY) {
@@ -193,11 +176,16 @@ export async function POST(req: Request): Promise<NextResponse> {
   // Write the consolidated index. One blob per first-letter bucket so a
   // lookup doesn't require loading all entities into memory at query time.
   // Index manifest: list of buckets + total count + per-file summary.
-  const byBucket = new Map<string, Array<typeof allEntities extends Map<string, infer V> ? V : never>>();
+  const byBucket = new Map<string, IndexedEntity[]>();
   for (const e of allEntities.values()) {
-    const bucket = (e.primaryName[0]?.toLowerCase() ?? "_").match(/[a-z]/) ? e.primaryName[0]!.toLowerCase() : "_";
-    if (!byBucket.has(bucket)) byBucket.set(bucket, []);
-    byBucket.get(bucket)!.push(e);
+    const firstChar = e.primaryName.charAt(0).toLowerCase();
+    const bucket = /[a-z]/.test(firstChar) ? firstChar : "_";
+    const list = byBucket.get(bucket);
+    if (list) {
+      list.push(e);
+    } else {
+      byBucket.set(bucket, [e]);
+    }
   }
   try {
     for (const [bucket, entries] of byBucket) {

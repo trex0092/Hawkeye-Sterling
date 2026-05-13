@@ -34,8 +34,10 @@ import {
 } from "@/lib/data/adverse-keywords";
 import {
   lookupKnownPEP,
+  lookupKnownPEPLive,
   lookupKnownAdverse,
 } from "@/lib/data/known-entities";
+import { lookupLsegPepIndex } from "@/lib/lseg/pep-index";
 import { runIntelligencePipeline } from "@/lib/server/intelligence-pipeline";
 import type {
   QuickScreenCandidate,
@@ -176,8 +178,21 @@ export async function POST(req: Request): Promise<NextResponse> {
 
     // 0 · Known-entity fixtures — household-name PEPs and documented
     //     adverse-media subjects auto-flag even without roleText or live
-    //     external feeds (so demo subjects render a realistic posture).
-    const knownPep = lookupKnownPEP(body.subject.name);
+    //     external feeds. Three lookups in priority order, run in
+    //     parallel:
+    //       (a) static seed corpus     — synchronous, instant
+    //       (b) OpenSanctions live PEP — async, 30-min cached
+    //       (c) LSEG CFS PEP index     — async, populated by
+    //                                    /api/admin/import-cfs
+    //     First non-null hit wins; static remains canonical for backward
+    //     compat. Adverse-media uses the static seed only (it's a
+    //     curated list, not externally enrichable).
+    const [staticPep, livePep, cfsPep] = await Promise.all([
+      Promise.resolve(lookupKnownPEP(body.subject.name)),
+      lookupKnownPEPLive(body.subject.name).catch(() => null),
+      lookupLsegPepIndex(body.subject.name).catch(() => null),
+    ]);
+    const knownPep = staticPep ?? livePep ?? cfsPep;
     const knownAdverse = lookupKnownAdverse(body.subject.name);
 
     // 1 · Quick screen — against the live ingested watchlists (OFAC, UN, EU,
