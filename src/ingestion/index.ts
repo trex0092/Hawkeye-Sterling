@@ -8,7 +8,8 @@ import { euFsfAdapter } from './sources/eu-fsf.js';
 import { fatfAdapter } from './sources/fatf.js';
 import { ofacConsAdapter } from './sources/ofac-cons.js';
 import { ofacSdnAdapter } from './sources/ofac-sdn.js';
-import { uaeEocnAdapter, uaeLtlAdapter } from './sources/uae-seed.js';
+import { uaeLtlAdapter } from './sources/uae-seed.js';
+import { uaeEocnXlsxAdapter } from './sources/uae-eocn-xlsx.js';
 import { ukOfsiAdapter } from './sources/uk-ofsi.js';
 import { unConsolidatedAdapter } from './sources/un-consolidated.js';
 import { caOsfiAdapter } from './sources/ca-osfi.js';
@@ -39,6 +40,6 @@ export const SOURCE_ADAPTERS: readonly SourceAdapter[] = [
   caOsfiAdapter,
   chSecoAdapter,
   fatfAdapter,
-  uaeEocnAdapter,
-  uaeLtlAdapter,
+  uaeEocnXlsxAdapter, // XLSX-fetched LTL from uaeiec.gov.ae (replaces seed-based)
+  uaeLtlAdapter,      // legacy seed-based fallback retained for offline / test
 ];
