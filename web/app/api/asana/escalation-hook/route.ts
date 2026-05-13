@@ -105,7 +105,12 @@ async function verifySignature(body: string, signature: string, secret: string):
     const { createHmac, timingSafeEqual } = await import("crypto");
     const expected = createHmac("sha256", secret).update(body, "utf8").digest("hex");
     if (expected.length !== signature.length) return false;
-    return timingSafeEqual(Buffer.from(expected, "utf8"), Buffer.from(signature, "utf8"));
+    // Cast Buffer → Uint8Array view explicitly — Node Buffer extends Uint8Array
+    // at runtime, but TS 5.7+ strict typings require the explicit view to call
+    // timingSafeEqual without a type error.
+    const a = new Uint8Array(Buffer.from(expected, "utf8"));
+    const b = new Uint8Array(Buffer.from(signature, "utf8"));
+    return timingSafeEqual(a, b);
   } catch {
     return false;
   }
