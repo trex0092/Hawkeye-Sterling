@@ -7,7 +7,12 @@
 //   URL: https://hawkeye-sterling.netlify.app/api/mcp
 //
 // Kill switch: set MCP_ENABLED=false in Netlify env vars to instantly disable
-// all 28 tools. Set back to true (or remove) to re-enable.
+// all 24 tools. Set back to true (or remove) to re-enable.
+//
+// Tool surface: 24 tools (down from 29 after Section A merges). The seven
+// merged tools dispatch internally to their pre-merge handler routes (which
+// stay intact as internal endpoints): `screen`, `intel_feed`, `pep`,
+// `generate_report`, `mlro_analyze`, `disposition`, `relationship_graph`.
 
 import { AsyncLocalStorage } from "node:async_hooks";
 import { getToolLevel } from "@/lib/mcp/tool-manifest";
@@ -445,45 +450,32 @@ interface ToolDef {
 
 const TOOLS: ToolDef[] = [
   // ── SCREENING ───────────────────────────────────────────────────────────────
+  // Unified entry point. A length-1 subjects array dispatches to the single-
+  // subject quick-screen path; longer arrays go through the batch handler.
+  // Internal handler URLs (/api/quick-screen, /api/batch-screen) preserved so
+  // there's no risk of breaking the underlying logic during the merge.
   {
-    name: "screen_subject",
+    name: "screen",
     description:
-      "Screen a single subject against sanctions lists, PEP registers, and adverse media. Returns risk score, severity, hit list, and AI reasoning.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        name: { type: "string", description: "Full name of the subject" },
-        entityType: {
-          type: "string",
-          enum: ["individual", "organisation", "vessel", "aircraft", "other"],
-          description: "Entity type",
-        },
-        jurisdiction: { type: "string", description: "Country / jurisdiction, e.g. Russia" },
-        aliases: { type: "array", items: { type: "string" }, description: "Known aliases" },
-        dob: { type: "string", description: "Date of birth YYYY-MM-DD (individuals)" },
-        idNumber: { type: "string", description: "Passport or trade licence number" },
-      },
-      required: ["name"],
-    },
-    handler: async (args) => callApi("/api/quick-screen", "POST", { subject: args }),
-  },
-  {
-    name: "batch_screen",
-    description: "Screen multiple subjects in one call. Returns a result per subject plus a summary.",
+      "Screen one or more subjects against sanctions, PEP, and adverse-media lists. Pass subjects:[{name}] for single, subjects:[{...}, {...}] for batch.",
     inputSchema: {
       type: "object",
       properties: {
         subjects: {
           type: "array",
-          description: "List of subjects to screen (up to 10,000)",
+          description: "Subject(s) to screen. Length 1 = single subject, length >1 = batch (up to 10,000).",
           items: {
             type: "object",
             properties: {
-              name: { type: "string" },
-              entityType: { type: "string" },
-              jurisdiction: { type: "string" },
+              name: { type: "string", description: "Full name of the subject" },
+              entityType: {
+                type: "string",
+                enum: ["individual", "organisation", "vessel", "aircraft", "other"],
+              },
+              jurisdiction: { type: "string", description: "Country / jurisdiction" },
               aliases: { type: "array", items: { type: "string" } },
-              dob: { type: "string" },
+              dob: { type: "string", description: "YYYY-MM-DD" },
+              idNumber: { type: "string", description: "Passport or trade licence number" },
             },
             required: ["name"],
           },
@@ -491,8 +483,22 @@ const TOOLS: ToolDef[] = [
       },
       required: ["subjects"],
     },
-    handler: async (args) =>
-      callApi("/api/batch-screen", "POST", { rows: args["subjects"] }),
+    handler: async (args) => {
+      const subjects = Array.isArray(args["subjects"]) ? (args["subjects"] as unknown[]) : [];
+      if (subjects.length === 0) {
+        return { ok: false, error: "screen requires at least one subject in `subjects`." };
+      }
+      if (subjects.length === 1) {
+        const result = await callApi("/api/quick-screen", "POST", { subject: subjects[0] });
+        return typeof result === "object" && result !== null
+          ? { ...(result as Record<string, unknown>), _mode: "single" }
+          : result;
+      }
+      const result = await callApi("/api/batch-screen", "POST", { rows: subjects });
+      return typeof result === "object" && result !== null
+        ? { ...(result as Record<string, unknown>), _mode: "batch" }
+        : result;
+    },
   },
   {
     name: "super_brain",
@@ -531,7 +537,7 @@ const TOOLS: ToolDef[] = [
         context: { type: "string" },
         hits: {
           type: "array",
-          description: "Screening hits to disambiguate — from a prior screen_subject or batch_screen call",
+          description: "Screening hits to disambiguate — from a prior `screen` call",
           items: {
             type: "object",
             properties: {
@@ -556,11 +562,14 @@ const TOOLS: ToolDef[] = [
     },
   },
 
-  // ── ADVERSE MEDIA & NEWS ────────────────────────────────────────────────────
+  // ── INTEL FEED (adverse media + news) ───────────────────────────────────────
+  // Merges adverse_media_live (GDELT 10-y) and news_search (Google News RSS 7
+  // locales). source='both' fans out in parallel — same blast radius as the
+  // pre-merge tools but one MCP call instead of two.
   {
-    name: "adverse_media_live",
+    name: "intel_feed",
     description:
-      "Real-time GDELT 10-year adverse media lookup. Returns articles with tone scores, keyword categories, and AI summary.",
+      "Adverse intel feed. source='gdelt' (GDELT 10-y + tone), 'news' (Google News RSS, 7 locales), or 'both' (parallel union).",
     inputSchema: {
       type: "object",
       properties: {
@@ -568,58 +577,72 @@ const TOOLS: ToolDef[] = [
         entityType: { type: "string" },
         jurisdiction: { type: "string" },
         aliases: { type: "array", items: { type: "string" } },
+        source: { type: "string", enum: ["gdelt", "news", "both"], description: "Default: both" },
       },
       required: ["subjectName"],
     },
-    handler: async (args) => callApi("/api/adverse-media-live", "POST", args),
-  },
-  {
-    name: "news_search",
-    description:
-      "Search Google News RSS across 7 locales for a subject. Returns articles with severity classification and adverse-keyword tagging.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        query: { type: "string", description: "Search query — typically the subject name" },
-      },
-      required: ["query"],
+    handler: async (args) => {
+      const a = args as Record<string, unknown>;
+      const source = (a["source"] as string) ?? "both";
+      const subjectName = String(a["subjectName"] ?? "");
+      const gdeltPayload: Record<string, unknown> = { subjectName };
+      if (a["entityType"]) gdeltPayload["entityType"] = a["entityType"];
+      if (a["jurisdiction"]) gdeltPayload["jurisdiction"] = a["jurisdiction"];
+      if (a["aliases"]) gdeltPayload["aliases"] = a["aliases"];
+
+      if (source === "gdelt") {
+        const r = await callApi("/api/adverse-media-live", "POST", gdeltPayload);
+        return typeof r === "object" && r !== null ? { ...(r as Record<string, unknown>), _source: "gdelt" } : r;
+      }
+      if (source === "news") {
+        const r = await callApi("/api/news-search", "GET", undefined, { q: subjectName });
+        return typeof r === "object" && r !== null ? { ...(r as Record<string, unknown>), _source: "news" } : r;
+      }
+      // both — parallel fan-out
+      const [gdelt, news] = await Promise.all([
+        callApi("/api/adverse-media-live", "POST", gdeltPayload),
+        callApi("/api/news-search", "GET", undefined, { q: subjectName }),
+      ]);
+      return { gdelt, news, _source: "both" };
     },
-    handler: async ({ query }) =>
-      callApi("/api/news-search", "GET", undefined, { q: String(query) }),
   },
 
   // ── PEP & SANCTIONS ─────────────────────────────────────────────────────────
+  // Merged: pep_profile (depth=0) + pep_network (depth=1..3). maxDepth was
+  // renamed to depth for consistency; depth=0 is the new path that maps to
+  // pep_profile behaviour (no traversal).
   {
-    name: "pep_profile",
+    name: "pep",
     description:
-      "Detailed PEP profile including role history, family links, and associated entities.",
+      "PEP lookup. depth=0 returns the profile only (role history, family links). depth=1..3 traverses the association network at increasing breadth.",
     inputSchema: {
       type: "object",
       properties: {
-        name: { type: "string" },
+        subject: { type: "string", description: "Subject full name" },
         jurisdiction: { type: "string" },
         aliases: { type: "array", items: { type: "string" } },
-      },
-      required: ["name"],
-    },
-    handler: async (args) => callApi("/api/pep-profile", "POST", args),
-  },
-  {
-    name: "pep_network",
-    description:
-      "Map the PEP association network — family members, business associates, and shell entities.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        subject: { type: "string" },
-        maxDepth: { type: "number", description: "Traversal depth 1–3" },
+        depth: { type: "number", minimum: 0, maximum: 3, description: "0=profile only, 1-3=network depth. Default: 0" },
       },
       required: ["subject"],
     },
     handler: async (args) => {
       const a = args as Record<string, unknown>;
-      const { subject, maxDepth, ...rest } = a;
-      return callApi("/api/pep-network", "POST", { pepName: subject, maxDepth, ...rest });
+      const subject = String(a["subject"] ?? "");
+      const depth = typeof a["depth"] === "number" ? (a["depth"] as number) : 0;
+      const aliases = a["aliases"];
+      const jurisdiction = a["jurisdiction"];
+      if (depth <= 0) {
+        const payload: Record<string, unknown> = { name: subject };
+        if (jurisdiction) payload["jurisdiction"] = jurisdiction;
+        if (aliases) payload["aliases"] = aliases;
+        const r = await callApi("/api/pep-profile", "POST", payload);
+        return typeof r === "object" && r !== null ? { ...(r as Record<string, unknown>), _depth: 0 } : r;
+      }
+      const payload: Record<string, unknown> = { pepName: subject, maxDepth: depth };
+      if (jurisdiction) payload["jurisdiction"] = jurisdiction;
+      if (aliases) payload["aliases"] = aliases;
+      const r = await callApi("/api/pep-network", "POST", payload);
+      return typeof r === "object" && r !== null ? { ...(r as Record<string, unknown>), _depth: depth } : r;
     },
   },
   {
@@ -644,30 +667,50 @@ const TOOLS: ToolDef[] = [
   },
 
   // ── REPORTS ─────────────────────────────────────────────────────────────────
+  // generate_report merges generate_screening_report (scope=screening, 14-
+  // section SCR) and compliance_report (scope=full, SCR + super-brain + audit).
+  // generate_sar_report stays separate — its tipping-off guard (FDL Art.29) is
+  // delicate compliance logic that should NOT be silently merged into a
+  // generic dispatcher.
   {
-    name: "generate_screening_report",
+    name: "generate_report",
     description:
-      "Generate a full Screening Compliance Report (SCR) — 14 sections covering sanctions, PEP, adverse media, EDD, and regulatory basis.",
+      "Generate compliance report. scope='screening' → 14-section Screening Compliance Report. scope='full' → screening + super-brain + audit trail combined.",
     inputSchema: {
       type: "object",
       properties: {
         subjectName: { type: "string" },
         entityType: { type: "string" },
         jurisdiction: { type: "string" },
-        format: { type: "string", description: "Output format — currently always html; json planned" },
+        scope: { type: "string", enum: ["screening", "full"], description: "Default: screening" },
+        format: { type: "string", description: "json or html. Default: json" },
       },
       required: ["subjectName"],
     },
-    handler: async ({ subjectName, entityType, jurisdiction, format }) =>
-      callApi("/api/scr-report", "POST", {
+    handler: async (args) => {
+      const a = args as Record<string, unknown>;
+      const scope = (a["scope"] as string) ?? "screening";
+      const subjectName = String(a["subjectName"] ?? "");
+      const entityType = a["entityType"];
+      const jurisdiction = a["jurisdiction"];
+      const format = (a["format"] as string) ?? "json";
+      if (scope === "full") {
+        const r = await callApi("/api/compliance-report", "POST", {
+          subject: { name: subjectName, ...(entityType ? { entityType } : {}), ...(jurisdiction ? { jurisdiction } : {}) },
+        });
+        return typeof r === "object" && r !== null ? { ...(r as Record<string, unknown>), _scope: "full" } : r;
+      }
+      const r = await callApi("/api/scr-report", "POST", {
         subject: {
-          id: String(subjectName ?? "").slice(0, 32).replace(/[^A-Za-z0-9]/g, "-") || "subject",
+          id: subjectName.slice(0, 32).replace(/[^A-Za-z0-9]/g, "-") || "subject",
           name: subjectName,
-          entityType,
-          jurisdiction,
+          ...(entityType ? { entityType } : {}),
+          ...(jurisdiction ? { jurisdiction } : {}),
         },
-        format: format ?? "json",
-      }),
+        format,
+      });
+      return typeof r === "object" && r !== null ? { ...(r as Record<string, unknown>), _scope: "screening" } : r;
+    },
   },
   {
     name: "generate_sar_report",
@@ -696,126 +739,168 @@ const TOOLS: ToolDef[] = [
       });
     },
   },
+  // ── MLRO ANALYSIS ────────────────────────────────────────────────────────────
+  // Merged: mlro_advisor (deep, executor+advisor+challenger) + mlro_advisor_quick
+  // (single-pass <5 s). depth='quick' is the default for cost reasons.
   {
-    name: "compliance_report",
+    name: "mlro_analyze",
     description:
-      "Generate a module-level compliance report combining screening, super-brain, and audit trail.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        subjectName: { type: "string" },
-        entityType: { type: "string" },
-        jurisdiction: { type: "string" },
-      },
-      required: ["subjectName"],
-    },
-    handler: async ({ subjectName, ...rest }) =>
-      callApi("/api/compliance-report", "POST", {
-        subject: { name: subjectName, ...rest },
-      }),
-  },
-
-  // ── MLRO ADVISOR ────────────────────────────────────────────────────────────
-  {
-    name: "mlro_advisor",
-    description:
-      "Deep multi-perspective MLRO analysis (executor + advisor + challenger modes). Returns a consensus compliance verdict with confidence score.",
+      "MLRO analysis. depth='quick' = single-pass under 5s. depth='deep' = executor/advisor/challenger multi-perspective with consensus verdict.",
     inputSchema: {
       type: "object",
       properties: {
         question: { type: "string", description: "Compliance question or case to analyse" },
-        subjectName: { type: "string", description: "Full name of the subject being analysed" },
-        context: { type: "array", items: { type: "object", properties: { q: { type: "string" }, a: { type: "string" } } }, description: "Prior Q&A context pairs" },
-        mode: { type: "string", enum: ["executor", "advisor", "challenger", "all"] },
-      },
-      required: ["question", "subjectName"],
-    },
-    handler: async (args) => callApi("/api/mlro-advisor", "POST", args),
-  },
-  {
-    name: "mlro_advisor_quick",
-    description: "Fast single-pass MLRO analysis (<5s). Good for quick compliance questions and flag extraction.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        question: { type: "string" },
-        subjectName: { type: "string", description: "Full name of the subject being analysed" },
-        context: { type: "array", items: { type: "object", properties: { q: { type: "string" }, a: { type: "string" } } }, description: "Prior Q&A context pairs" },
+        subjectName: { type: "string", description: "Subject being analysed" },
+        context: { type: "array", items: { type: "object", properties: { q: { type: "string" }, a: { type: "string" } } } },
+        depth: { type: "string", enum: ["quick", "deep"], description: "Default: quick" },
+        mode: { type: "string", enum: ["executor", "advisor", "challenger", "all"], description: "Deep mode only: which perspective(s) to run" },
       },
       required: ["question"],
     },
-    handler: async (args) => callApi("/api/mlro-advisor-quick", "POST", args),
+    handler: async (args) => {
+      const a = args as Record<string, unknown>;
+      const depth = (a["depth"] as string) ?? "quick";
+      const { depth: _depth, ...rest } = a;
+      void _depth;
+      const path = depth === "deep" ? "/api/mlro-advisor" : "/api/mlro-advisor-quick";
+      const r = await callApi(path, "POST", rest);
+      return typeof r === "object" && r !== null ? { ...(r as Record<string, unknown>), _depth: depth } : r;
+    },
   },
+
+  // ── DISPOSITION ──────────────────────────────────────────────────────────────
+  // Merged: ai_decision (mode='automated', fast disposition with confidence) +
+  // deep mlro_analyze path (mode='advisory', multi-perspective deliberative).
+  // Output is unified — both modes return {subjectName, decision, confidence,
+  // reasoning, reviewRequired}.
   {
-    name: "ai_decision",
+    name: "disposition",
     description:
-      "AI Decision Engine: automatically decides disposition (approve / EDD / escalate / STR) with reasoning and confidence.",
+      "Final disposition decision. mode='automated' (fast AI verdict: approve / EDD / escalate / STR). mode='advisory' (multi-perspective MLRO consensus).",
     inputSchema: {
       type: "object",
       properties: {
-        subjectName: { type: "string", description: "Full name of the subject" },
-        subjectId: { type: "string", description: "Unique subject ID (use case ID or screening ID if available)" },
-        country: { type: "string", description: "Subject's country of residence or operation" },
-        entityType: { type: "string", description: "individual / company / vessel / etc." },
-        riskScore: { type: "number", description: "Pre-computed risk score 0–100" },
-        listCoverage: { type: "array", items: { type: "string" }, description: "Sanctions lists checked" },
-        sanctionsHits: { type: "array", items: { type: "object" }, description: "Hit objects from sanctions screen" },
-        adverseMedia: { type: "string", description: "Adverse media summary" },
-        pepTier: { type: "string", description: "PEP tier if applicable" },
-        exposureAED: { type: "string", description: "Estimated transaction exposure in AED" },
-        notes: { type: "string", description: "Additional compliance notes" },
+        subjectName: { type: "string" },
+        subjectId: { type: "string" },
+        country: { type: "string" },
+        entityType: { type: "string" },
+        riskScore: { type: "number", description: "Pre-computed 0–100" },
+        listCoverage: { type: "array", items: { type: "string" } },
+        sanctionsHits: { type: "array", items: { type: "object" } },
+        adverseMedia: { type: "string" },
+        pepTier: { type: "string" },
+        exposureAED: { type: "string" },
+        notes: { type: "string" },
+        mode: { type: "string", enum: ["automated", "advisory"], description: "Default: automated" },
       },
       required: ["subjectName"],
     },
     handler: async (args) => {
       const a = args as Record<string, unknown>;
-      const name = String(a.subjectName ?? "");
-      return callApi("/api/ai-decision", "POST", {
-        subjectId: a.subjectId ?? name,
+      const name = String(a["subjectName"] ?? "");
+      const mode = (a["mode"] as string) ?? "automated";
+      if (mode === "advisory") {
+        // Route through deep MLRO advisor for consensus verdict.
+        const raw = (await callApi("/api/mlro-advisor", "POST", {
+          question: `Render final disposition for subject ${name}. Decide approve / EDD / escalate / STR with reasoning.`,
+          subjectName: name,
+          context: [{
+            q: "Case context",
+            a: JSON.stringify({
+              riskScore: a["riskScore"], listCoverage: a["listCoverage"], sanctionsHits: a["sanctionsHits"],
+              adverseMedia: a["adverseMedia"], pepTier: a["pepTier"], country: a["country"],
+              entityType: a["entityType"], exposureAED: a["exposureAED"], notes: a["notes"],
+            }),
+          }],
+        })) as Record<string, unknown>;
+        return {
+          subjectName: name,
+          decision: raw["consensusVerdict"] ?? raw["verdict"] ?? raw["decision"] ?? "REVIEW",
+          confidence: typeof raw["confidence"] === "number" ? raw["confidence"] : 0.75,
+          reasoning: raw["synthesis"] ?? raw["reasoning"] ?? raw["rationale"] ?? "",
+          reviewRequired: true,
+          _mode: "advisory",
+          _raw: raw,
+        };
+      }
+      // automated — original ai_decision behaviour
+      const raw = (await callApi("/api/ai-decision", "POST", {
+        subjectId: a["subjectId"] ?? name,
         name,
-        country: a.country ?? "Unknown",
-        entityType: a.entityType ?? "individual",
-        riskScore: a.riskScore ?? 50,
-        listCoverage: a.listCoverage ?? [],
-        sanctionsHits: a.sanctionsHits ?? [],
-        adverseMedia: a.adverseMedia,
-        pepTier: a.pepTier,
-        exposureAED: a.exposureAED,
-        notes: a.notes,
-      });
+        country: a["country"] ?? "Unknown",
+        entityType: a["entityType"] ?? "individual",
+        riskScore: a["riskScore"] ?? 50,
+        listCoverage: a["listCoverage"] ?? [],
+        sanctionsHits: a["sanctionsHits"] ?? [],
+        adverseMedia: a["adverseMedia"],
+        pepTier: a["pepTier"],
+        exposureAED: a["exposureAED"],
+        notes: a["notes"],
+      })) as Record<string, unknown>;
+      return {
+        subjectName: name,
+        decision: raw["disposition"] ?? raw["decision"] ?? "REVIEW",
+        confidence: typeof raw["confidence"] === "number" ? raw["confidence"] : 0.75,
+        reasoning: raw["reasoning"] ?? raw["rationale"] ?? "",
+        reviewRequired: raw["humanReviewRequired"] !== false,
+        _mode: "automated",
+        _raw: raw,
+      };
     },
   },
 
   // ── ENTITY INTELLIGENCE ──────────────────────────────────────────────────────
+  // relationship_graph merges entity_graph (corporate UBO chains) and the
+  // network-traversal facet of pep_network (political associates). Note the
+  // overlap with `pep` (depth>0) is intentional — `pep` is the person-centric
+  // entry point; relationship_graph is the graph-shaped output for either
+  // corporate or political relationships or both.
   {
-    name: "entity_graph",
+    name: "relationship_graph",
     description:
-      "Build a corporate ownership knowledge graph: directorships, UBO chains, and related entities. Requires a company/organisation name. For individual persons use pep_network instead.",
+      "Relationship graph. type='corporate' (UBO chains, directorships), 'political' (PEP family/associates/shells), 'both' (combined).",
     inputSchema: {
       type: "object",
       properties: {
-        companyName: { type: "string" },
+        subject: { type: "string", description: "Subject name (person or company)" },
+        companyName: { type: "string", description: "Company name (for type=corporate)" },
         jurisdiction: { type: "string" },
         companyNumber: { type: "string" },
-        subject: { type: "string", description: "Deprecated alias — use pep_network for individuals" },
-        name: { type: "string", description: "Deprecated alias — use pep_network for individuals" },
+        type: { type: "string", enum: ["corporate", "political", "both"], description: "Default: corporate if companyName provided, else political" },
+        depth: { type: "number", minimum: 1, maximum: 3, description: "Political traversal depth. Default: 2" },
       },
-      required: [],
+      required: ["subject"],
     },
-    // BUG-01 fix: if caller passes a person name but no companyName, redirect to pep_network
     handler: async (args) => {
       const a = args as Record<string, unknown>;
-      if (!a.companyName && (a.subject || a.name)) {
-        const subject = String(a.subject ?? a.name ?? "");
-        return callApi("/api/pep-network", "POST", { pepName: subject, maxDepth: a.maxDepth ?? 2 });
+      const subject = String(a["subject"] ?? "");
+      const companyName = a["companyName"] as string | undefined;
+      const explicitType = a["type"] as string | undefined;
+      const depth = typeof a["depth"] === "number" ? (a["depth"] as number) : 2;
+      const type = explicitType ?? (companyName ? "corporate" : "political");
+
+      const runCorporate = async () => {
+        const payload: Record<string, unknown> = {};
+        if (companyName) payload["companyName"] = companyName;
+        else payload["companyName"] = subject; // fall back to subject as company name
+        if (a["jurisdiction"]) payload["jurisdiction"] = a["jurisdiction"];
+        if (a["companyNumber"]) payload["companyNumber"] = a["companyNumber"];
+        return callApi("/api/entity-graph", "POST", payload);
+      };
+      const runPolitical = async () =>
+        callApi("/api/pep-network", "POST", { pepName: subject, maxDepth: depth });
+
+      if (type === "corporate") {
+        const r = await runCorporate();
+        return typeof r === "object" && r !== null ? { ...(r as Record<string, unknown>), _type: "corporate" } : r;
       }
-      if (!a.companyName) {
-        return {
-          error: "entity_graph requires a companyName. For individuals, use the pep_network tool instead.",
-          routingHint: "pep_network",
-        };
+      if (type === "political") {
+        const r = await runPolitical();
+        return typeof r === "object" && r !== null ? { ...(r as Record<string, unknown>), _type: "political" } : r;
       }
-      return callApi("/api/entity-graph", "POST", args);
+      // both — parallel
+      const [corporate, political] = await Promise.all([runCorporate(), runPolitical()]);
+      return { corporate, political, _type: "both" };
     },
   },
   {
