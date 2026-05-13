@@ -19,9 +19,17 @@ import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 15;
+// Netlify Pro sync function max. Parallel ingestion below should complete in
+// ~12-15 s on the slowest adapter; 60 s leaves headroom for blob writes and
+// the tail-latency case. Previously 15 s, which the 90 s per-adapter serial
+// loop blew past on the first slow adapter — why no sanctions list ever landed.
+export const maxDuration = 60;
 
-const ADAPTER_TIMEOUT_MS = 90_000;
+// Per-adapter timeout. Each adapter runs in parallel via Promise.allSettled,
+// so this is the wall-clock bound on the slowest single adapter, not a serial
+// budget across all eight. Previously 90 s × 8 sequential = ~12 min — far
+// outside any Netlify function ceiling.
+const ADAPTER_TIMEOUT_MS = 12_000;
 
 // Inline the IngestionReport shape to avoid a cross-package type import
 // that might not survive the Next.js bundler in all environments.
@@ -122,9 +130,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   }
 
-  const summary: IngestionReport[] = [];
-
-  for (const adapter of SOURCE_ADAPTERS) {
+  const runAdapter = async (adapter: typeof SOURCE_ADAPTERS[number]): Promise<IngestionReport> => {
     const started = Date.now();
     const report: IngestionReport = {
       listId: adapter.id,
@@ -156,8 +162,25 @@ export async function POST(req: Request): Promise<NextResponse> {
       report.errors.push(err instanceof Error ? err.message : String(err));
       report.durationMs = Date.now() - started;
     }
-    summary.push(report);
-  }
+    return report;
+  };
+
+  // Parallel fan-out. allSettled so one slow/broken adapter cannot block the
+  // others — each captures its own errors into the IngestionReport.
+  const settled = await Promise.allSettled(SOURCE_ADAPTERS.map(runAdapter));
+  const summary: IngestionReport[] = settled.map((r, i) =>
+    r.status === "fulfilled"
+      ? r.value
+      : {
+          listId: SOURCE_ADAPTERS[i]!.id,
+          sourceUrl: SOURCE_ADAPTERS[i]!.sourceUrl,
+          recordCount: 0,
+          checksum: "",
+          fetchedAt: Date.now(),
+          durationMs: 0,
+          errors: [r.reason instanceof Error ? r.reason.message : String(r.reason)],
+        },
+  );
 
   const failedAdapters = summary.filter((r) => r.errors.length > 0);
   return NextResponse.json(
