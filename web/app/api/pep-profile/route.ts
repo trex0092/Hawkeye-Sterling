@@ -109,10 +109,14 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
   }
 
-  // ── World-Check lookup (LSEG Refinitiv) — grounded PEP data ─────────────
-  // Query World-Check before Claude so the LLM prompt contains real database
-  // hits rather than relying solely on training-data knowledge.
-  let worldCheckContext = "World-Check Database: not configured";
+  // ── Grounded PEP data — World-Check (LSEG) first, OpenSanctions fallback ──
+  // Query an external PEP database before Claude so the LLM prompt contains
+  // real database hits rather than relying solely on training-data knowledge.
+  // World-Check One has higher fidelity; OpenSanctions is free + open and
+  // gives us coverage when the commercial vendor isn't subscribed.
+  let pepDataContext = "PEP Database: not configured";
+  let pepDataSource: "worldcheck" | "opensanctions" | "none" = "none";
+
   const wcKey = process.env["LSEG_WORLDCHECK_API_KEY"];
   const wcSecret = process.env["LSEG_WORLDCHECK_API_SECRET"];
   const wcAuth = wcKey
@@ -146,21 +150,83 @@ export async function POST(req: Request) {
         };
         const hits = wcData.results ?? [];
         if (hits.length > 0) {
-          worldCheckContext = `World-Check Database Hits (${hits.length} match${hits.length > 1 ? "es" : ""}):\n` +
+          pepDataContext = `World-Check Database Hits (${hits.length} match${hits.length > 1 ? "es" : ""}):\n` +
             hits.slice(0, 5).map((h) =>
               `- ${h.name ?? "Unknown"} | Categories: ${(h.categories ?? []).join(", ")} | Providers: ${(h.providers ?? []).join(", ")} | Countries: ${(h.countryLinks ?? []).join(", ")}`,
             ).join("\n");
+          pepDataSource = "worldcheck";
         } else {
-          worldCheckContext = "World-Check Database: no matches found for this individual";
+          pepDataContext = "World-Check Database: no matches found for this individual";
+          pepDataSource = "worldcheck";
         }
       } else {
-        worldCheckContext = `World-Check Database: query failed (HTTP ${wcRes.status})`;
+        pepDataContext = `World-Check Database: query failed (HTTP ${wcRes.status})`;
       }
     } catch (err) {
       console.warn("[pep-profile] world-check lookup failed:", err instanceof Error ? err.message : err);
-      worldCheckContext = "World-Check Database: temporarily unavailable";
+      pepDataContext = "World-Check Database: temporarily unavailable";
     }
   }
+
+  // OpenSanctions fallback. Triggered when World-Check is unavailable or
+  // returned an HTTP error — never when it returned a clean "no matches".
+  // Free tier works without an API key; OPENSANCTIONS_API_KEY raises the
+  // quota. The /search/peps endpoint scopes the query to political-exposure
+  // datasets only (excludes plain sanctions to avoid cross-contaminating
+  // the LLM's tier classification).
+  if (pepDataSource === "none" && body.name?.trim()) {
+    try {
+      const osUrl = new URL("https://api.opensanctions.org/search/peps");
+      osUrl.searchParams.set("q", body.name.trim());
+      osUrl.searchParams.set("limit", "5");
+      const osHeaders: Record<string, string> = { accept: "application/json" };
+      const osKey = process.env["OPENSANCTIONS_API_KEY"];
+      if (osKey) osHeaders["Authorization"] = `Bearer ${osKey}`;
+      const osRes = await fetch(osUrl.toString(), {
+        method: "GET",
+        headers: osHeaders,
+        signal: AbortSignal.timeout(8_000),
+      });
+      if (osRes.ok) {
+        const osData = (await osRes.json()) as {
+          results?: Array<{
+            id?: string;
+            caption?: string;
+            schema?: string;
+            datasets?: string[];
+            properties?: Record<string, unknown>;
+          }>;
+        };
+        const hits = osData.results ?? [];
+        if (hits.length > 0) {
+          pepDataContext = `OpenSanctions PEP Database Hits (${hits.length} match${hits.length > 1 ? "es" : ""}):\n` +
+            hits.slice(0, 5).map((h) => {
+              const props = (h.properties ?? {}) as Record<string, unknown>;
+              const positions = Array.isArray(props["position"]) ? (props["position"] as string[]).slice(0, 3).join("; ") : "";
+              const country = Array.isArray(props["country"]) ? (props["country"] as string[]).join(", ") : "";
+              const topics = Array.isArray(props["topics"]) ? (props["topics"] as string[]).join(", ") : "";
+              const dob = Array.isArray(props["birthDate"]) ? (props["birthDate"] as string[])[0] : "";
+              return `- ${h.caption ?? "Unknown"} | Schema: ${h.schema ?? "—"} | Datasets: ${(h.datasets ?? []).join(", ")} | Positions: ${positions || "—"} | Country: ${country || "—"} | Topics: ${topics || "—"} | DOB: ${dob || "—"}`;
+            }).join("\n");
+          pepDataSource = "opensanctions";
+        } else {
+          pepDataContext = "OpenSanctions PEP Database: no matches found for this individual";
+          pepDataSource = "opensanctions";
+        }
+      } else {
+        // Don't overwrite a more useful World-Check error message.
+        if (pepDataContext === "PEP Database: not configured") {
+          pepDataContext = `OpenSanctions: query failed (HTTP ${osRes.status})`;
+        }
+      }
+    } catch (err) {
+      console.warn("[pep-profile] opensanctions lookup failed:", err instanceof Error ? err.message : err);
+      if (pepDataContext === "PEP Database: not configured") {
+        pepDataContext = "OpenSanctions: temporarily unavailable";
+      }
+    }
+  }
+
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) return NextResponse.json({
@@ -221,9 +287,9 @@ Family Members / Known Associates: ${body.familyMembers ?? "None declared"}
 Source of Wealth: ${body.sourceOfWealth ?? "Not declared"}
 Declared Assets: ${body.declaredAssets ?? "Not declared"}
 
-${worldCheckContext}
+${pepDataContext}
 
-Perform a comprehensive PEP risk assessment grounded in the World-Check data above. Classify tier, assess source of wealth plausibility, map the political network, identify all risk factors, and provide required AML measures per FATF R.12 and UAE FDL 10/2025 Art.14.`,
+Perform a comprehensive PEP risk assessment grounded in the PEP database data above (source: ${pepDataSource}). Classify tier, assess source of wealth plausibility, map the political network, identify all risk factors, and provide required AML measures per FATF R.12 and UAE FDL 10/2025 Art.14.`,
         },
       ],
     });
@@ -232,7 +298,15 @@ Perform a comprehensive PEP risk assessment grounded in the World-Check data abo
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as PepProfileResult;
     const latencyMs = Date.now() - _handlerStart;
     if (latencyMs > 5000) console.warn(`[pep_profile] latencyMs=${latencyMs} exceeds 5000ms`);
-    return NextResponse.json({ ...result, worldCheckGrounded: !!wcKey, latencyMs }, { headers: gate.headers });
+    return NextResponse.json(
+      {
+        ...result,
+        worldCheckGrounded: pepDataSource === "worldcheck",
+        pepDataSource,
+        latencyMs,
+      },
+      { headers: gate.headers },
+    );
   } catch {
     return NextResponse.json({ ok: false, error: "pep-profile temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
   }
