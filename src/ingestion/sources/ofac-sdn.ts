@@ -1,12 +1,16 @@
 // OFAC SDN XML adapter.
-// Source: https://www.treasury.gov/ofac/downloads/sdn.xml
+// Source migrated mid-2024 from treasury.gov/ofac/downloads to a dedicated
+// host. The legacy URL returns 404 since the migration — which is the
+// reason this adapter has been silently failing on every cron run.
+// Override at runtime via FEED_OFAC_SDN env var if OFAC migrates again.
 
 import type { SourceAdapter, NormalisedEntity, EntityType } from '../types.js';
 import { mkListing } from '../types.js';
 import { fetchText, sha256Hex } from '../fetch-util.js';
 import { parseXml, findAll, textOf } from '../xml-lite.js';
 
-const SOURCE_URL = 'https://www.treasury.gov/ofac/downloads/sdn.xml';
+const SOURCE_URL = process.env['FEED_OFAC_SDN']
+  ?? 'https://sanctionslistservice.ofac.treas.gov/api/PublicationPreview/exports/SDN.XML';
 
 export const ofacSdnAdapter: SourceAdapter = {
   id: 'ofac_sdn',

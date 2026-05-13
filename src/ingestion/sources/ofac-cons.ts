@@ -1,10 +1,13 @@
 // OFAC Consolidated Non-SDN — same schema as SDN XML, different URL.
+// Source migrated mid-2024; legacy treasury.gov/ofac/downloads/* paths
+// 404 since the move. Override via FEED_OFAC_CONS if OFAC migrates again.
 import type { SourceAdapter, NormalisedEntity, EntityType } from '../types.js';
 import { mkListing } from '../types.js';
 import { fetchText, sha256Hex } from '../fetch-util.js';
 import { parseXml, findAll, textOf } from '../xml-lite.js';
 
-const SOURCE_URL = 'https://www.treasury.gov/ofac/downloads/consolidated/consolidated.xml';
+const SOURCE_URL = process.env['FEED_OFAC_CONS']
+  ?? 'https://sanctionslistservice.ofac.treas.gov/api/PublicationPreview/exports/CONS_ADVANCED.XML';
 
 export const ofacConsAdapter: SourceAdapter = {
   id: 'ofac_cons',
