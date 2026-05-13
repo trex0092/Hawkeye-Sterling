@@ -1,0 +1,308 @@
+// POST /api/v2/intake — V2 subject intake handler (Section B1).
+//
+// Flow:
+//   1. Validate + parse the submitted subject.
+//   2. Create an Asana task in the Screening project (00 · Master Inbox / GID).
+//   3. Run quick-screen against the live watchlist corpus.
+//   4. POST a formatted analysis comment to the task (stories endpoint).
+//
+// The caller receives the Asana task URL and the full screening result so the
+// submitter can act immediately, while the MLRO sees the comment on the task
+// thread without having to navigate to a separate report.
+//
+// Asana stories endpoint:
+//   POST https://app.asana.com/api/1.0/tasks/{gid}/stories
+//   Authorization: Bearer $ASANA_TOKEN
+//   { "data": { "text": "…" } }
+//
+// Env vars consumed:
+//   ASANA_TOKEN              — Asana PAT
+//   ASANA_WORKSPACE_GID      — workspace (defaults to hardcoded)
+//   ASANA_ASSIGNEE_GID       — default task assignee (defaults to hardcoded)
+//   ASANA_SCREENING_PROJECT_GID / ASANA_PROJECT_GID — screening project
+
+import { NextResponse } from "next/server";
+import { enforce } from "@/lib/server/enforce";
+import { loadCandidates } from "@/lib/server/candidates-loader";
+import { asanaGids } from "@/lib/server/asanaConfig";
+import type {
+  QuickScreenCandidate,
+  QuickScreenSubject,
+  QuickScreenResult,
+} from "@/lib/api/quickScreen.types";
+import { quickScreen as _quickScreen } from "../../../../../dist/src/brain/quick-screen.js";
+
+type QuickScreenFn = (
+  subject: QuickScreenSubject,
+  candidates: QuickScreenCandidate[],
+) => QuickScreenResult;
+const quickScreen = _quickScreen as QuickScreenFn;
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+export const maxDuration = 60;
+
+const ASANA_BASE = "https://app.asana.com/api/1.0";
+const DEFAULT_WORKSPACE_GID = "1213645083721316";
+const DEFAULT_ASSIGNEE_GID = "1213645083721304";
+const ASANA_TIMEOUT_MS = 12_000;
+
+interface IntakeBody {
+  name: string;
+  entityType?: "individual" | "organisation" | "vessel" | "aircraft" | "other";
+  jurisdiction?: string;
+  aliases?: string[];
+  dateOfBirth?: string;
+  nationality?: string;
+  passportNumber?: string;
+  nationalIdNumber?: string;
+  // Optional intake metadata
+  submittedBy?: string;
+  referenceId?: string;
+  notes?: string;
+}
+
+function severityColor(s: string): string {
+  switch (s) {
+    case "critical": return "🔴";
+    case "high":     return "🟠";
+    case "medium":   return "🟡";
+    case "low":      return "🔵";
+    default:         return "🟢";
+  }
+}
+
+function buildScreeningComment(subject: IntakeBody, result: QuickScreenResult, taskGid: string): string {
+  const icon = severityColor(result.severity);
+  const runAt = result.generatedAt ?? new Date().toISOString();
+  const lines: string[] = [
+    `${icon} HAWKEYE STERLING · V2 AUTO-SCREEN`,
+    `Subject    : ${subject.name}${subject.entityType ? ` (${subject.entityType})` : ""}${subject.jurisdiction ? ` — ${subject.jurisdiction}` : ""}`,
+    `Run at     : ${runAt}`,
+    `Task GID   : ${taskGid}`,
+    ``,
+    `── RISK SUMMARY ──`,
+    `Severity   : ${result.severity.toUpperCase()}`,
+    `Top score  : ${result.topScore}`,
+    `Hits       : ${result.hits.length}`,
+    `Lists scanned : ${result.listsChecked}`,
+    `Candidates checked : ${result.candidatesChecked}`,
+    ``,
+  ];
+
+  if (result.hits.length > 0) {
+    lines.push(`── TOP HITS (up to 10) ──`);
+    for (const h of result.hits.slice(0, 10)) {
+      lines.push(
+        `• [${h.listId}] ${h.candidateName}` +
+          (h.matchedAlias ? ` (alias: ${h.matchedAlias})` : "") +
+          ` · score ${h.score}` +
+          (h.programs?.length ? ` · programs: ${h.programs.join(", ")}` : "") +
+          `\n  Reason: ${h.reason}`,
+      );
+    }
+    if (result.hits.length > 10) {
+      lines.push(`  … and ${result.hits.length - 10} further hit(s) — review full report.`);
+    }
+    lines.push(``);
+  }
+
+  lines.push(`── AI REASONING ──`);
+  if (result.severity === "critical" || result.severity === "high") {
+    lines.push(`Elevated risk detected. MLRO review required before any onboarding or transaction decision (FDL Art.26-27, CR 134/2025 Art.18).`);
+    if (result.hits.some(h => h.listId?.toLowerCase().includes("pep"))) {
+      lines.push(`PEP indicator present — Enhanced Due Diligence required (FDL Art.14).`);
+    }
+    if (result.hits.some(h => h.listId?.toLowerCase().includes("ofac") || h.listId?.toLowerCase().includes("sdn"))) {
+      lines.push(`OFAC SDN match — transaction processing BLOCKED pending legal review (US sanctions applicability).`);
+    }
+  } else if (result.severity === "medium") {
+    lines.push(`Medium risk — further investigation recommended before proceeding. Review hit context and consider source-of-funds verification.`);
+  } else {
+    lines.push(`No sanctions/watchlist matches above threshold. Routine CDD may proceed. Adverse media check recommended for onboarding.`);
+  }
+
+  lines.push(``);
+  lines.push(`Regulatory basis: UAE FDL No.10/2025 Art.14, 19, 26-27 · CR 134/2025 Art.18`);
+  lines.push(`Generated by Hawkeye Sterling v2 auto-screen. Human MLRO review required before any compliance action.`);
+
+  return lines.join("\n");
+}
+
+async function createAsanaTask(
+  subject: IntakeBody,
+  token: string,
+): Promise<{ gid: string; permalink_url: string } | null> {
+  const projectGid = asanaGids.screening();
+  const notes: string[] = [
+    `V2 Intake — ${new Date().toISOString()}`,
+    ``,
+    `Name        : ${subject.name}`,
+    subject.entityType ? `Entity type : ${subject.entityType}` : "",
+    subject.jurisdiction ? `Jurisdiction: ${subject.jurisdiction}` : "",
+    subject.aliases?.length ? `Aliases     : ${subject.aliases.join(", ")}` : "",
+    subject.dateOfBirth ? `DOB         : ${subject.dateOfBirth}` : "",
+    subject.nationality ? `Nationality : ${subject.nationality}` : "",
+    subject.passportNumber ? `Passport    : ${subject.passportNumber}` : "",
+    subject.nationalIdNumber ? `National ID : ${subject.nationalIdNumber}` : "",
+    subject.referenceId ? `Reference   : ${subject.referenceId}` : "",
+    subject.submittedBy ? `Submitted by: ${subject.submittedBy}` : "",
+    subject.notes ? `\nNotes:\n${subject.notes}` : "",
+  ].filter(Boolean);
+
+  const res = await fetch(`${ASANA_BASE}/tasks`, {
+    signal: AbortSignal.timeout(ASANA_TIMEOUT_MS),
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${token}`,
+      "content-type": "application/json",
+      accept: "application/json",
+    },
+    body: JSON.stringify({
+      data: {
+        name: `[V2 INTAKE] ${subject.name}${subject.entityType ? ` · ${subject.entityType}` : ""}`,
+        notes: notes.join("\n"),
+        projects: [projectGid],
+        workspace: process.env["ASANA_WORKSPACE_GID"] ?? DEFAULT_WORKSPACE_GID,
+        assignee: process.env["ASANA_ASSIGNEE_GID"] ?? DEFAULT_ASSIGNEE_GID,
+      },
+    }),
+  });
+
+  if (!res.ok) {
+    console.warn(`[v2/intake] Asana task creation HTTP ${res.status}`);
+    return null;
+  }
+
+  const payload = (await res.json().catch(() => null)) as {
+    data?: { gid?: string; permalink_url?: string };
+  } | null;
+
+  const gid = payload?.data?.gid;
+  const permalink_url = payload?.data?.permalink_url;
+  if (!gid || !permalink_url) return null;
+  return { gid, permalink_url };
+}
+
+async function postAsanaComment(
+  taskGid: string,
+  text: string,
+  token: string,
+): Promise<boolean> {
+  const res = await fetch(`${ASANA_BASE}/tasks/${taskGid}/stories`, {
+    signal: AbortSignal.timeout(ASANA_TIMEOUT_MS),
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${token}`,
+      "content-type": "application/json",
+      accept: "application/json",
+    },
+    body: JSON.stringify({ data: { text } }),
+  });
+  if (!res.ok) {
+    console.warn(`[v2/intake] Asana comment POST HTTP ${res.status} for task ${taskGid}`);
+  }
+  return res.ok;
+}
+
+export async function OPTIONS(): Promise<NextResponse> {
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      "access-control-allow-origin": process.env["NEXT_PUBLIC_APP_URL"] ?? "https://hawkeye-sterling.netlify.app",
+      "access-control-allow-methods": "POST, OPTIONS",
+      "access-control-allow-headers": "content-type, authorization, x-api-key",
+    },
+  });
+}
+
+export async function POST(req: Request): Promise<NextResponse> {
+  const t0 = Date.now();
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
+
+  let body: IntakeBody;
+  try {
+    body = (await req.json()) as IntakeBody;
+  } catch {
+    return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400 });
+  }
+
+  if (!body.name || typeof body.name !== "string" || !body.name.trim()) {
+    return NextResponse.json({ ok: false, error: "name required" }, { status: 400 });
+  }
+  if (body.name.length > 512) {
+    return NextResponse.json({ ok: false, error: "name exceeds 512 characters" }, { status: 400 });
+  }
+
+  const subject: QuickScreenSubject = {
+    name: body.name.trim(),
+    ...(body.aliases?.length ? { aliases: body.aliases } : {}),
+    ...(body.entityType ? { entityType: body.entityType as QuickScreenSubject["entityType"] } : {}),
+    ...(body.jurisdiction ? { jurisdiction: body.jurisdiction } : {}),
+    ...(body.dateOfBirth ? { dateOfBirth: body.dateOfBirth } : {}),
+    ...(body.nationality ? { nationality: body.nationality } : {}),
+    ...(body.passportNumber ? { passportNumber: body.passportNumber } : {}),
+    ...(body.nationalIdNumber ? { nationalIdNumber: body.nationalIdNumber } : {}),
+  };
+
+  // ── 1. Quick-screen against live corpus ──────────────────────────────────
+  let screenResult: QuickScreenResult | null = null;
+  let screenError: string | undefined;
+  try {
+    const candidates: QuickScreenCandidate[] = await loadCandidates();
+    screenResult = quickScreen(subject, candidates);
+  } catch (err) {
+    screenError = err instanceof Error ? err.message : String(err);
+    console.warn("[v2/intake] quick-screen failed:", screenError);
+  }
+
+  // ── 2. Create Asana task ─────────────────────────────────────────────────
+  const token = process.env["ASANA_TOKEN"];
+  let asanaTaskUrl: string | undefined;
+  let asanaTaskGid: string | undefined;
+
+  if (token) {
+    try {
+      const task = await createAsanaTask(body, token);
+      if (task) {
+        asanaTaskUrl = task.permalink_url;
+        asanaTaskGid = task.gid;
+      }
+    } catch (err) {
+      console.warn("[v2/intake] Asana task creation threw:", err instanceof Error ? err.message : err);
+    }
+  } else {
+    console.warn("[v2/intake] ASANA_TOKEN not set — skipping Asana integration");
+  }
+
+  // ── 3. Post screening comment on task ────────────────────────────────────
+  if (token && asanaTaskGid && screenResult) {
+    try {
+      const comment = buildScreeningComment(body, screenResult, asanaTaskGid);
+      await postAsanaComment(asanaTaskGid, comment, token);
+    } catch (err) {
+      console.warn("[v2/intake] Asana comment POST threw:", err instanceof Error ? err.message : err);
+    }
+  }
+
+  const latencyMs = Date.now() - t0;
+
+  return NextResponse.json({
+    ok: true,
+    subject: subject.name,
+    ...(asanaTaskUrl ? { asanaTaskUrl } : {}),
+    ...(asanaTaskGid ? { asanaTaskGid } : {}),
+    screening: screenResult
+      ? {
+          severity: screenResult.severity,
+          topScore: screenResult.topScore,
+          hitCount: screenResult.hits.length,
+          listsChecked: screenResult.listsChecked,
+          candidatesChecked: screenResult.candidatesChecked,
+          hits: screenResult.hits.slice(0, 10),
+        }
+      : { error: screenError ?? "screen unavailable" },
+    latencyMs,
+  });
+}

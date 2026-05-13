@@ -5,6 +5,8 @@ import path from "node:path";
 import { classifyAdverseKeywords, ADVERSE_KEYWORDS } from "@/lib/data/adverse-keywords";
 import { KNOWN_PEPS, KNOWN_ADVERSE } from "@/lib/data/known-entities";
 import { getJson, isInMemoryFallback } from "@/lib/server/store";
+import { gdeltCacheStats } from "@/lib/intelligence/gdelt-cache";
+import { isRedisConfigured } from "@/lib/cache/redis";
 
 // Brain modules are compiled separately; dynamic import so the route module
 // loads even when the dist/ folder hasn't been built yet (local dev).
@@ -1168,6 +1170,11 @@ async function _handleGet(): Promise<NextResponse> {
 
   const warnings = [sanctionsAgeWarning, pepCountWarning, brainCatalogueWarning].filter(Boolean) as string[];
 
+  const gdeltCache = {
+    ...gdeltCacheStats(),
+    redisConfigured: isRedisConfigured(),
+  };
+
   // Structured service arrays required by system_status MCP tool
   const servicesUp = [...internalChecks, ...externalChecks]
     .filter((c) => c.status === "operational")
@@ -1212,6 +1219,7 @@ async function _handleGet(): Promise<NextResponse> {
     cognitiveGrade,
     brainNarrative,
     threatSurface,
+    gdeltCache,
     warnings: warnings.length > 0 ? warnings : undefined,
     sla: {
       uptimeTargetPct: 99.99,

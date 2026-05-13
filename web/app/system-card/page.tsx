@@ -46,7 +46,7 @@ export default function SystemCardPage() {
         <Field label="Deployment context">AML/CFT/CPF compliance screening for UAE-licensed DPMS (Designated Non-Financial Business and Professions)</Field>
         <Field label="AI risk classification"><span style={BADGE("#e74c3c")}>HIGH RISK</span> — automated decisions affecting access to financial services (EU AI Act Annex III)</Field>
         <Field label="Primary model">Claude (Anthropic) — wave-5 brain configuration</Field>
-        <Field label="MCP server version">1.0.0 (28 tools)</Field>
+        <Field label="MCP server version">2.0.0 — 24 tools (Section A refactor merged 14 tools → 7 composite; total surface reduced from 28)</Field>
         <Field label="Governing law">UAE Federal Decree-Law No.(10) of 2025 · CR No.134/2025 · UAE PDPL · ISO/IEC 42001</Field>
         <Field label="Regulatory disclosure">This system is an AI tool. All outputs require human MLRO review before any compliance action is taken.</Field>
       </div>
@@ -118,8 +118,8 @@ export default function SystemCardPage() {
         <div style={H2}>Technical Safeguards Implemented</div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
           {[
-            { name: "Kill switch", detail: "MCP_ENABLED env var — disables all 28 tools instantly, no redeploy", control: "2.08/14.03" },
-            { name: "Tool risk manifest", detail: "All 28 tools classified: read-only / supervised / action", control: "1.01/1.05" },
+            { name: "Kill switch", detail: "MCP_ENABLED env var — disables all 24 tools instantly, no redeploy", control: "2.08/14.03" },
+            { name: "Tool risk manifest", detail: "All 24 tools classified: read-only / supervised / action", control: "1.01/1.05" },
             { name: "MCP activity log", detail: "Every tool call logged to Netlify Blobs with full audit trail", control: "21.02" },
             { name: "Operator console", detail: "/operator — filterable activity log, CSV export, live stats", control: "29.04" },
             { name: "Rate limiting", detail: "Per-tool-class call limits: read-only 120/min, supervised 40/min, action 10/min", control: "20.06" },
