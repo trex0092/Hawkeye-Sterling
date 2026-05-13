@@ -109,7 +109,13 @@ export default function PKycPage() {
   async function handleEnroll(e: React.FormEvent) {
     e.preventDefault();
     setEnrolling(true);
-    await fetch("/api/pkyc", { method: "POST", headers: authHeaders(), body: JSON.stringify(form) });
+    // Convert DD/MM/YYYY → YYYY-MM-DD for the API
+    let apiDob = form.dob;
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(form.dob)) {
+      const [dd, mm, yyyy] = form.dob.split("/");
+      apiDob = `${yyyy}-${mm}-${dd}`;
+    }
+    await fetch("/api/pkyc", { method: "POST", headers: authHeaders(), body: JSON.stringify({ ...form, dob: apiDob }) });
     setShowEnroll(false);
     setForm({ name: "", entityType: "individual", jurisdiction: "", dob: "", cadence: "monthly", notes: "", mlro: "" });
     setEnrolling(false);
@@ -285,8 +291,23 @@ export default function PKycPage() {
               <FormField label="Jurisdiction">
                 <input type="text" value={form.jurisdiction} onChange={(e) => setForm({ ...form, jurisdiction: e.target.value })} className={INPUT_CLS} />
               </FormField>
-              <FormField label="Date of Birth (YYYY-MM-DD)">
-                <input type="text" value={form.dob} onChange={(e) => setForm({ ...form, dob: e.target.value })} className={INPUT_CLS} />
+              <FormField label="Date of Birth / Registration">
+                <input
+                  type="text"
+                  placeholder="DD/MM/YYYY"
+                  value={form.dob}
+                  maxLength={10}
+                  onChange={(e) => {
+                    const digits = e.target.value.replace(/\D/g, "").slice(0, 8);
+                    const fmt = digits.length > 4
+                      ? `${digits.slice(0,2)}/${digits.slice(2,4)}/${digits.slice(4)}`
+                      : digits.length > 2
+                      ? `${digits.slice(0,2)}/${digits.slice(2)}`
+                      : digits;
+                    setForm({ ...form, dob: fmt });
+                  }}
+                  className={INPUT_CLS}
+                />
               </FormField>
               <FormField label="Review Cadence">
                 <select value={form.cadence} onChange={(e) => setForm({ ...form, cadence: e.target.value as PKycCadence })} className={SELECT_CLS}>
