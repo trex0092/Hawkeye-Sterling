@@ -3075,3 +3075,60 @@ export async function searchAllNews(
   });
   return { articles, providersUsed: activeNewsProviders() };
 }
+
+/**
+ * Run every active adapter independently via Promise.allSettled so that one
+ * adapter's failure cannot block or delay results from other adapters.
+ *
+ * Each adapter already has an internal try/catch that returns [] on error, so
+ * allSettled will almost always see fulfilled results. The rejected branch
+ * handles the rare case where an adapter throws despite its guard.
+ *
+ * sourcesSucceeded is derived from the unique `source` values present in the
+ * returned articles — only adapters that actually returned at least one article
+ * appear here. sourcesFailed lists adapters that threw an unhandled exception.
+ */
+export async function searchAllNewsWithStatus(
+  subjectName: string,
+  opts?: { limit?: number; since?: string },
+): Promise<{
+  articles: NewsArticle[];
+  sourcesSucceeded: string[];
+  sourcesFailed: Array<{ name: string; error: string }>;
+}> {
+  const adapters = activeNewsAdapters();
+  if (adapters.length === 0) {
+    return { articles: [], sourcesSucceeded: [], sourcesFailed: [] };
+  }
+
+  const settled = await Promise.allSettled(
+    adapters.map((a) => a.search(subjectName, opts)),
+  );
+
+  const sourcesFailed: Array<{ name: string; error: string }> = [];
+  const allArticles: NewsArticle[] = [];
+
+  for (let i = 0; i < settled.length; i++) {
+    const r = settled[i]!;
+    if (r.status === "fulfilled") {
+      allArticles.push(...r.value);
+    } else {
+      sourcesFailed.push({
+        name: `vendor_${i}`,
+        error: r.reason instanceof Error ? r.reason.message : String(r.reason),
+      });
+    }
+  }
+
+  const seen = new Set<string>();
+  const articles = allArticles.filter((a) => {
+    const k = a.url.toLowerCase();
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+
+  const sourcesSucceeded = [...new Set(articles.map((a) => a.source))];
+
+  return { articles, sourcesSucceeded, sourcesFailed };
+}

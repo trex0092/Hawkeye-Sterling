@@ -68,6 +68,7 @@ interface Body {
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
+  const _handlerStart = Date.now();
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
 
@@ -221,8 +222,20 @@ Return ONLY valid JSON with this exact structure:
 
     try { writeAuditEvent("mlro", "pep.deep-network-intelligence", pepName); } catch { /* non-blocking */ }
 
-    return NextResponse.json({ ok: true, ...output }, { headers: gate.headers });
-  } catch {
-    return NextResponse.json({ ok: false, error: "pep-network temporarily unavailable — please retry." }, { status: 503, headers: gate.headers });
+    const latencyMs = Date.now() - _handlerStart;
+    if (latencyMs > 5000) console.warn(`[pep-network] latencyMs=${latencyMs} exceeds 5000ms`);
+    return NextResponse.json({ ok: true, ...output, latencyMs }, { headers: gate.headers });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({
+      ok: false,
+      errorCode: "HANDLER_EXCEPTION",
+      errorType: "internal",
+      tool: "pep_network",
+      message,
+      retryAfterSeconds: null,
+      requestId: Math.random().toString(36).slice(2, 10),
+      latencyMs: Date.now() - _handlerStart,
+    }, { status: 503, headers: gate.headers });
   }
 }

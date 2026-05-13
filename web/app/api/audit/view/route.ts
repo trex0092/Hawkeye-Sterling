@@ -242,6 +242,8 @@ function buildCognitiveDepthSidecar(
 // ─── GET handler ─────────────────────────────────────────────────────────────
 
 async function handleGet(req: Request): Promise<NextResponse> {
+  const _handlerStart = Date.now();
+  try {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
   const gateHeaders = gate.headers;
@@ -250,54 +252,56 @@ async function handleGet(req: Request): Promise<NextResponse> {
   const screeningId = url.searchParams.get("screeningId");
   const format = url.searchParams.get("format") ?? "json";
 
-  // ── Export / signature-validation path (no screeningId) ──────────────────
+  // ── Step 8: no screeningId → return 10 most recent trails ────────────────
   if (!screeningId) {
     const secret = process.env["AUDIT_CHAIN_SECRET"];
-    if (!secret) {
-      return NextResponse.json(
-        {
-          ok: false,
-          error:
-            "AUDIT_CHAIN_SECRET not configured — signature validation unavailable.",
-        },
-        { status: 503, headers: gateHeaders },
-      );
-    }
 
     const entries = await loadAllEntries();
-    const validationResults = entries.map((e) => ({
-      sequence: e.sequence,
-      id: e.id,
-      at: e.at,
-      valid: verifyEntrySignature(e, secret),
-    }));
-    const allValid = validationResults.every((r) => r.valid);
-    const invalidCount = validationResults.filter((r) => !r.valid).length;
+    const recent = entries.slice(-10).reverse(); // last 10, most recent first
+
+    // Verify AUDIT_CHAIN_SECRET wiring
+    const secretPresent = Boolean(secret);
+    const validationResults = secret
+      ? recent.map((e) => ({
+          sequence: e.sequence,
+          id: e.id,
+          at: e.at,
+          valid: verifyEntrySignature(e, secret),
+        }))
+      : recent.map((e) => ({ sequence: e.sequence, id: e.id, at: e.at, valid: null, note: "AUDIT_CHAIN_SECRET not configured" }));
+
+    const allValid = secret ? validationResults.every((r) => r.valid === true) : false;
+    const invalidCount = validationResults.filter((r) => r.valid === false).length;
 
     if (format === "pdf") {
-      // PDF export is not yet implemented — return a structured error so
-      // callers can detect this gracefully rather than receiving a 500.
       return NextResponse.json(
         {
           ok: false,
-          error:
-            "PDF export is not yet implemented. Use format=json to retrieve the full audit chain.",
+          error: "PDF export is not yet implemented. Use format=json to retrieve the full audit chain.",
           totalEntries: entries.length,
         },
         { status: 501, headers: gateHeaders },
       );
     }
 
+    const latencyMs = Date.now() - _handlerStart;
+    if (latencyMs > 5000) console.warn(`[audit/view] latencyMs=${latencyMs} exceeds 5000ms`);
+
     return NextResponse.json(
       {
         ok: true,
+        mode: "recent",
+        note: "No screeningId provided — returning 10 most recent audit trails",
         allSignaturesValid: allValid,
+        auditChainSecretConfigured: secretPresent,
         invalidCount,
         totalEntries: entries.length,
+        recentCount: recent.length,
         validationResults,
-        entries,
+        entries: recent,
         exportedAt: new Date().toISOString(),
         format,
+        latencyMs,
       },
       { headers: gateHeaders },
     );
@@ -378,7 +382,22 @@ async function handleGet(req: Request): Promise<NextResponse> {
     hmac_signature: hmacSignature,
   };
 
-  return NextResponse.json(envelope, { headers: gateHeaders });
+  const latencyMs = Date.now() - _handlerStart;
+  if (latencyMs > 5000) console.warn(`[audit/view] latencyMs=${latencyMs} exceeds 5000ms`);
+  return NextResponse.json({ ...envelope, latencyMs }, { headers: gateHeaders });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({
+      ok: false,
+      errorCode: "HANDLER_EXCEPTION",
+      errorType: "internal",
+      tool: "audit_trail",
+      message,
+      retryAfterSeconds: null,
+      requestId: Math.random().toString(36).slice(2, 10),
+      latencyMs: Date.now() - _handlerStart,
+    }, { status: 500 });
+  }
 }
 
 // ─── POST handler — HMAC signature verification ──────────────────────────────

@@ -37,6 +37,8 @@ function detectAddressFormat(address: string): AddressFormat {
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
+  const _handlerStart = Date.now();
+  try {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
   const gateHeaders = gate.ok ? gate.headers : {};
@@ -74,5 +76,20 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json(fallback, { headers: { ...CORS, ...gateHeaders } });
   }
 
-  return NextResponse.json({ ...result, addressFormat }, { headers: { ...CORS, ...gateHeaders } });
+  const latencyMs = Date.now() - _handlerStart;
+  if (latencyMs > 5000) console.warn(`[crypto_risk] latencyMs=${latencyMs} exceeds 5000ms`);
+  return NextResponse.json({ ...result, addressFormat, latencyMs }, { headers: { ...CORS, ...gateHeaders } });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({
+      ok: false,
+      errorCode: "HANDLER_EXCEPTION",
+      errorType: "internal",
+      tool: "crypto_risk",
+      message,
+      retryAfterSeconds: null,
+      requestId: Math.random().toString(36).slice(2, 10),
+      latencyMs: Date.now() - _handlerStart,
+    }, { status: 500 });
+  }
 }
