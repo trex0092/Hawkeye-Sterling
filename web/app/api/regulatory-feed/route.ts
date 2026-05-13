@@ -368,9 +368,14 @@ interface GdeltResponse {
   articles?: GdeltArticle[];
 }
 
-// 30-min in-process cache — keyed by query string.
+// 30-min in-process cache — keyed by query string. Capped at 64 entries
+// (FIFO eviction via Map insertion order) so memory cannot grow unbounded
+// if the caller starts passing dynamic queries. Today only 3 fixed
+// regulatory queries hit this path, but the cap defends against future
+// expansion or an accidental hot-path sweep.
 const _gdeltFeedCache = new Map<string, { items: RegulatoryItem[]; expiresAt: number }>();
 const GDELT_FEED_TTL_MS = 30 * 60 * 1_000;
+const GDELT_FEED_CACHE_MAX = 64;
 
 function gdeltTone(tone: number): RegulatoryItem["tone"] {
   if (tone < -5) return "red";
@@ -421,6 +426,11 @@ async function fetchGdelt(query: string): Promise<RegulatoryItem[]> {
         } satisfies RegulatoryItem;
       });
     _gdeltFeedCache.set(query, { items, expiresAt: Date.now() + GDELT_FEED_TTL_MS });
+    while (_gdeltFeedCache.size > GDELT_FEED_CACHE_MAX) {
+      const oldest = _gdeltFeedCache.keys().next().value;
+      if (oldest === undefined) break;
+      _gdeltFeedCache.delete(oldest);
+    }
     return items;
   } catch {
     return cached?.items ?? [];
