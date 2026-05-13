@@ -16,6 +16,7 @@ import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
 import { searchAdverseMedia } from "../../../../dist/src/integrations/taranisAi.js";
 import { analyseAdverseMediaResult } from "../../../../dist/src/brain/adverse-media-analyser.js";
+import { fetchGdeltCached } from "@/lib/intelligence/gdelt-cache";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -155,73 +156,15 @@ export async function POST(req: Request): Promise<NextResponse> {
   );
 }
 
-// ─── GDELT live-news helpers (no API key required) ───────────────────────────
-// Queries the GDELT Project DOC 2.0 API with a 10-year Art.19 lookback window.
-// This replaces the old "Claude from memory" fallback which silently missed
-// post-training-cutoff articles (e.g. Oct 2025 Istanbul Gold Refinery arrests).
-
-const GDELT_ENDPOINT = "https://api.gdeltproject.org/api/v2/doc/doc";
-const GDELT_FETCH_TIMEOUT = 14_000;
-const GDELT_MAX_RECORDS = 50;
-
-interface GdeltRawItem {
-  url?: string;
-  title?: string;
-  seendate?: string; // "20251006T120000Z"
-  domain?: string;
-  tone?: number;
-}
-
-// Distinguishes "no articles found" (genuine CLEAR) from "fetch failed" (unknown).
-interface GdeltQueryResult {
-  items: GdeltRawItem[];
-  ok: boolean;        // false = network/timeout/HTTP error
-  error?: string;
-}
-
-function _gdeltFmt(d: Date): string {
-  const p = (n: number) => String(n).padStart(2, "0");
-  return `${d.getUTCFullYear()}${p(d.getUTCMonth() + 1)}${p(d.getUTCDate())}${p(d.getUTCHours())}${p(d.getUTCMinutes())}${p(d.getUTCSeconds())}`;
-}
+// ─── GDELT live-news — routed through shared 3-layer cache ──────────────────
+// Direct GDELT calls removed; all reads go through fetchGdeltCached()
+// (web/lib/intelligence/gdelt-cache.ts) which provides in-memory + optional
+// Upstash Redis caching and stale-fallback on GDELT outages.
 
 function _parseSeen(s: string | undefined): string {
   if (!s) return new Date().toISOString().slice(0, 10);
   const m = s.match(/^(\d{4})(\d{2})(\d{2})T/);
   return m ? `${m[1]}-${m[2]}-${m[3]}` : s.slice(0, 10);
-}
-
-async function _queryGdelt(subject: string): Promise<GdeltQueryResult> {
-  const now = new Date();
-  const start = new Date(now);
-  start.setUTCFullYear(start.getUTCFullYear() - 10); // FDL Art.19 10-year lookback
-  const query = `"${subject}" AND (sanctions OR fraud OR "money laundering" OR corruption OR crime OR arrest OR investigation OR indicted OR convicted)`;
-  const params = new URLSearchParams({
-    query,
-    mode: "artlist",
-    maxrecords: String(GDELT_MAX_RECORDS),
-    format: "json",
-    sort: "DateDesc",
-    startdatetime: _gdeltFmt(start),
-    enddatetime: _gdeltFmt(now),
-  });
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), GDELT_FETCH_TIMEOUT);
-  try {
-    const res = await fetch(`${GDELT_ENDPOINT}?${params.toString()}`, {
-      signal: ctrl.signal,
-      headers: { "user-agent": "HawkeyeSterling/2.0 adverse-media-live" },
-    });
-    if (!res.ok) return { items: [], ok: false, error: `GDELT HTTP ${res.status}` };
-    const data = (await res.json()) as { articles?: GdeltRawItem[] };
-    const items = Array.isArray(data.articles) ? data.articles.filter((a) => a.url && a.title) : [];
-    return { items, ok: true };
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    const isTimeout = ctrl.signal.aborted || msg.includes("abort");
-    return { items: [], ok: false, error: isTimeout ? "GDELT request timed out" : `GDELT fetch failed: ${msg}` };
-  } finally {
-    clearTimeout(timer);
-  }
 }
 
 // Replaces the old claudeAdverseMedia() that asked Claude from training memory.
@@ -231,15 +174,15 @@ async function liveAdverseMedia(subject: string) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY not configured");
 
-  // 1. Pull live articles (GDELT, 10-year Art.19 window, no API key)
-  const gdeltResult = await _queryGdelt(subject);
-  const items = gdeltResult.items;
+  // 1. Pull live articles via shared 3-layer cache (memory → Redis → GDELT live).
+  const gdeltResult = await fetchGdeltCached(subject);
+  const items = gdeltResult.articles;
 
   // If GDELT itself failed (timeout / HTTP error), we must NOT return CLEAR.
   // Return an explicit degraded verdict so the operator knows the lookup was
   // incomplete — the MLRO must perform a manual adverse-media check.
-  if (!gdeltResult.ok) {
-    console.warn(`[adverse-media] GDELT unavailable (subject redacted): ${gdeltResult.error}`);
+  if (gdeltResult.serviceError) {
+    console.warn(`[adverse-media] GDELT unavailable (subject redacted): serviceError`);
     const now = new Date().toISOString();
     const degraded: ReturnType<typeof analyseAdverseMediaResult> & {
       gdeltSource: boolean;
@@ -270,7 +213,6 @@ async function liveAdverseMedia(subject: string) {
       gdeltSource: true,
       gdeltArticleCount: 0,
       gdeltFailed: true,
-      ...(gdeltResult.error ? { gdeltError: gdeltResult.error } : {}),
     };
     return degraded;
   }

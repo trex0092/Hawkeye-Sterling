@@ -343,8 +343,9 @@ const UAE_STATIC: RegulatoryItem[] = [
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
-// GDELT Project API — live news with sentiment tone scores
-// Free, no API key. Tone < -5 → red, -5 to -2 → amber, else → green.
+// GDELT Project API — live news with sentiment tone scores (7-day regulatory feed)
+// Uses a lightweight in-process TTL cache (30 min) since these are fixed
+// regulatory queries rather than subject-specific adverse-media lookups.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const GDELT_BASE = "https://api.gdeltproject.org/api/v2/doc/doc";
@@ -359,13 +360,17 @@ interface GdeltArticle {
   title?: string;
   seendate?: string; // "20250501T120000Z"
   domain?: string;
-  tone?: number;    // sentiment: negative = bad news
+  tone?: number;
   relevance?: number;
 }
 
 interface GdeltResponse {
   articles?: GdeltArticle[];
 }
+
+// 30-min in-process cache — keyed by query string.
+const _gdeltFeedCache = new Map<string, { items: RegulatoryItem[]; expiresAt: number }>();
+const GDELT_FEED_TTL_MS = 30 * 60 * 1_000;
 
 function gdeltTone(tone: number): RegulatoryItem["tone"] {
   if (tone < -5) return "red";
@@ -375,13 +380,15 @@ function gdeltTone(tone: number): RegulatoryItem["tone"] {
 
 function gdeltDate(seendate: string | undefined): string {
   if (!seendate) return "";
-  // Format: "20250501T120000Z" → "2025-05-01T12:00:00Z"
   const m = seendate.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z?$/);
   if (!m) return seendate;
   return `${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:${m[6]}Z`;
 }
 
 async function fetchGdelt(query: string): Promise<RegulatoryItem[]> {
+  const cached = _gdeltFeedCache.get(query);
+  if (cached && Date.now() < cached.expiresAt) return cached.items;
+
   const url =
     `${GDELT_BASE}?query=${encodeURIComponent(query)}&mode=artlist&maxrecords=10&format=json&timespan=7d`;
   const { signal, clear } = mkAbort(GDELT_FETCH_TIMEOUT_MS);
@@ -393,10 +400,10 @@ async function fetchGdelt(query: string): Promise<RegulatoryItem[]> {
       },
       signal,
     });
-    if (!res.ok) return [];
+    if (!res.ok) return cached?.items ?? [];
     const data = (await res.json()) as GdeltResponse;
     if (!Array.isArray(data.articles)) return [];
-    return data.articles
+    const items = data.articles
       .filter((a) => a.url && a.title)
       .map((a) => {
         const tone = a.tone ?? 0;
@@ -413,8 +420,10 @@ async function fetchGdelt(query: string): Promise<RegulatoryItem[]> {
           snippet: undefined,
         } satisfies RegulatoryItem;
       });
+    _gdeltFeedCache.set(query, { items, expiresAt: Date.now() + GDELT_FEED_TTL_MS });
+    return items;
   } catch {
-    return [];
+    return cached?.items ?? [];
   } finally {
     clear();
   }
