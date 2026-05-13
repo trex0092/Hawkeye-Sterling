@@ -114,6 +114,8 @@ jobs:
         run: cd web && npm run build
         env:
           NODE_ENV: production
+          APP_VERSION: ${{ github.ref_type == 'tag' && github.ref_name || format('0.2.0-{0}', github.sha) }}
+          GIT_COMMIT_SHA: ${{ github.sha }}
       - name: Verify critical API route files exist in build output
         run: |
           REQUIRED_ROUTES=(
