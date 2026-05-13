@@ -21,7 +21,13 @@ import { getBlobsStore } from './blobs-store.js';
 import { logIngestError } from './error-log.js';
 import type { IngestionReport } from './types.js';
 
-const ADAPTER_TIMEOUT_MS = 12_000;
+// Raised from 12 s to 20 s after observing eu_fsf and ca_osfi consistently
+// timing out at 13-14 s in admin-trigger-refresh runs (webgate.ec.europa.eu
+// and international.gc.ca both serve large multi-MB payloads under
+// variable EU/transatlantic latency). The route's maxDuration is 60 s
+// so we have headroom; parallel fan-out means the slowest adapter still
+// dictates total wall-clock.
+const ADAPTER_TIMEOUT_MS = 20_000;
 
 function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
   return new Promise<T>((resolve, reject) => {

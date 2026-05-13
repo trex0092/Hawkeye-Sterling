@@ -28,7 +28,22 @@ export const chSecoAdapter: SourceAdapter = {
     const fetchedAt = Date.now();
     const entities: NormalisedEntity[] = [];
 
-    for (const m of xml.matchAll(/<target[^>]*>([\s\S]*?)<\/target>/g)) {
+    // Diagnostic: if the response doesn't look like XML at all, surface a
+    // clear error so /api/sanctions/last-errors captures the actual cause
+    // (probably the SESAM faceted-search URL returned HTML, not XML).
+    const trimmed = xml.trimStart();
+    const looksLikeXml = trimmed.startsWith('<?xml') || trimmed.startsWith('<sanctions') || trimmed.startsWith('<root') || trimmed.includes('<target');
+    if (!looksLikeXml) {
+      throw new Error(
+        `ch_seco: response is not XML — got ${trimmed.length} bytes starting with "${trimmed.slice(0, 80).replace(/\s+/g, ' ')}". ` +
+        `The SESAM URL may require session-based download; set FEED_CH_SECO to the direct XML endpoint.`,
+      );
+    }
+
+    // SECO publishes with two equivalent root-element conventions across
+    // schema revisions. Match both <target> and (rare) <sanction-target>.
+    const TARGET_RE = /<(?:target|sanction-target)[^>]*>([\s\S]*?)<\/(?:target|sanction-target)>/g;
+    for (const m of xml.matchAll(TARGET_RE)) {
       const block = m[1] ?? '';
       const ssid = xmlAttrFromOpening(m[0]!, 'ssid') || xmlField(block, 'ssid');
       const programs = xmlFieldAll(block, 'sanctions-program-set');
