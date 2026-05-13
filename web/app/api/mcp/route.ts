@@ -276,6 +276,55 @@ const CORS: Record<string, string> = {
   "access-control-allow-headers": "content-type, authorization, mcp-session-id",
 };
 
+// ── Sanctions-health cache (audit follow-up) ──────────────────────────────────
+// getSanctionsHealth() makes an internal fetch on every gated tool call.
+// Memoise for 30 s so a burst of screening calls in the same warm Lambda
+// shares one round-trip instead of N. The TTL is short enough that a
+// cron-driven sanctions refresh becomes visible within one window.
+interface CachedSanctionsHealth {
+  result: Awaited<ReturnType<typeof getSanctionsHealth>>;
+  expiresAt: number;
+}
+let _sanctionsHealthCache: CachedSanctionsHealth | null = null;
+const SANCTIONS_HEALTH_TTL_MS = 30_000;
+
+async function getSanctionsHealthMemoised(): Promise<Awaited<ReturnType<typeof getSanctionsHealth>>> {
+  const now = Date.now();
+  if (_sanctionsHealthCache && now < _sanctionsHealthCache.expiresAt) {
+    return _sanctionsHealthCache.result;
+  }
+  const result = await getSanctionsHealth();
+  _sanctionsHealthCache = { result, expiresAt: now + SANCTIONS_HEALTH_TTL_MS };
+  return result;
+}
+
+// ── Session-id resolution (audit follow-up) ───────────────────────────────────
+// Anomaly buckets are keyed by sessionId. When MCP clients omit the
+// `_sessionId` param the prior implementation coalesced every anonymous
+// caller into "default" — which then trivially trips the >50-calls-per-5min
+// threshold from unrelated traffic. Derive a stable per-caller id from the
+// X-Forwarded-For chain so each remote IP gets its own bucket. Strip the
+// last octet so the id is not a PII-grade IP record in the anomaly logs.
+function deriveSessionId(req: Request, explicit?: string): string {
+  if (explicit) return explicit;
+  const xff = req.headers.get("x-forwarded-for") ?? "";
+  const first = xff.split(",")[0]?.trim() ?? "";
+  if (!first) return "anonymous";
+  // IPv4: 1.2.3.4 → 1.2.3 ; IPv6: keep first 4 groups
+  if (first.includes(":")) {
+    return first.split(":").slice(0, 4).join(":") || "anonymous";
+  }
+  const parts = first.split(".");
+  return parts.length >= 3 ? parts.slice(0, 3).join(".") : "anonymous";
+}
+
+// ── Body-size guard (audit follow-up) ─────────────────────────────────────────
+// req.json() will happily attempt to parse a multi-MB body. Netlify caps at
+// 6 MB but we want a smaller explicit guard — MCP JSON-RPC bodies are
+// typically <100 KB. Reject anything over 1 MB up front so a single bad
+// caller cannot tie up Lambda memory parsing junk.
+const MAX_BODY_BYTES = 1_000_000;
+
 // ── Activity logger ───────────────────────────────────────────────────────────
 // Writes one blob per tool call to "mcp-activity-logs" store.
 // Fire-and-forget — never throws, never blocks the tool response.
@@ -301,7 +350,9 @@ function summarise(value: unknown, maxLen = 200): string {
 
 // Per-request context stored in AsyncLocalStorage so concurrent requests
 // don't share state (eliminates auth header and timeout cross-contamination).
-interface CallCtx { authHeader?: string; timeoutMs?: number }
+// sessionId is captured here so dispatch() can attribute anomaly events
+// without needing to thread the Request object through every layer.
+interface CallCtx { authHeader?: string; timeoutMs?: number; sessionId?: string }
 const _callCtx = new AsyncLocalStorage<CallCtx>();
 
 // ── Internal API proxy ────────────────────────────────────────────────────────
@@ -1024,8 +1075,10 @@ async function dispatch(msg: {
     }
 
     // Fetch sanctions health once — reused by gate check and wrapWithGovernance.
+    // Memoised for 30 s so a burst of screening calls in the same warm Lambda
+    // shares one upstream round-trip instead of N.
     const sanctionsHealth = GATE_BLOCKED_TOOLS.has(toolName)
-      ? await getSanctionsHealth()
+      ? await getSanctionsHealthMemoised()
       : { listsVerified: true, missingCritical: [] as string[], missingAll: [] as string[], checkedAt: new Date().toISOString() };
 
     // Sanctions gate (ADD-01): block screening tools when critical lists are missing.
@@ -1061,8 +1114,13 @@ async function dispatch(msg: {
       });
     }
 
-    // Anomaly detection (Control 21.08)
-    const sessionId = (params as Record<string, unknown>)["_sessionId"] as string | undefined ?? "default";
+    // Anomaly detection (Control 21.08). Prefer the explicit MCP-supplied
+    // _sessionId, then fall back to the per-request sessionId captured in
+    // AsyncLocalStorage (derived from X-Forwarded-For at POST entry), and
+    // finally "anonymous" so a missing IP doesn't coalesce unrelated callers.
+    const explicitSessionId = (params as Record<string, unknown>)["_sessionId"] as string | undefined;
+    const ctxSessionId = _callCtx.getStore()?.sessionId;
+    const sessionId = explicitSessionId ?? ctxSessionId ?? "anonymous";
     const anomaly = trackAndDetectAnomaly(sessionId, toolName, level);
 
     const t0 = Date.now();
@@ -1174,6 +1232,19 @@ export async function POST(req: Request): Promise<Response> {
     );
   }
 
+  // Body-size guard. Reject early (before req.json() buffers everything)
+  // so a single bad caller cannot tie up Lambda memory parsing junk.
+  const contentLengthHeader = req.headers.get("content-length");
+  if (contentLengthHeader) {
+    const declared = parseInt(contentLengthHeader, 10);
+    if (Number.isFinite(declared) && declared > MAX_BODY_BYTES) {
+      return json(
+        err(null, -32700, `Request body too large: ${declared} bytes (max ${MAX_BODY_BYTES})`),
+        413,
+      );
+    }
+  }
+
   let body: unknown;
   try {
     body = await req.json();
@@ -1181,13 +1252,15 @@ export async function POST(req: Request): Promise<Response> {
     return json(err(null, -32700, "Parse error"), 400);
   }
 
-  // Thread caller's auth into all internal callApi requests via AsyncLocalStorage
-  // so each concurrent request has its own isolated auth context.
+  // Thread caller's auth + derived sessionId into all internal callApi
+  // requests via AsyncLocalStorage so each concurrent request has its own
+  // isolated context.
   const authHeader = req.headers.get("authorization") ?? undefined;
+  const sessionId = deriveSessionId(req);
 
   // Batch request
   if (Array.isArray(body)) {
-    const results = await _callCtx.run({ authHeader }, () =>
+    const results = await _callCtx.run({ authHeader, sessionId }, () =>
       Promise.all(body.map((msg) => dispatch(msg as Parameters<typeof dispatch>[0]))),
     );
     const responses = results.filter((r) => r !== null);
@@ -1195,7 +1268,7 @@ export async function POST(req: Request): Promise<Response> {
   }
 
   // Single request
-  const result = await _callCtx.run({ authHeader }, () =>
+  const result = await _callCtx.run({ authHeader, sessionId }, () =>
     dispatch(body as Parameters<typeof dispatch>[0]),
   );
   if (result === null) {
