@@ -8,9 +8,12 @@ import { SOURCE_ADAPTERS } from '../../src/ingestion/index.js';
 import type { IngestionReport } from '../../src/ingestion/types.js';
 import { getBlobsStore } from '../../src/ingestion/blobs-store.js';
 
-// Per-adapter fetch timeout. A single hung adapter used to block the whole
-// job; now each one is races with a timeout and reported independently.
-const ADAPTER_TIMEOUT_MS = 90_000;
+// Per-adapter fetch timeout. Each adapter runs in parallel via
+// Promise.allSettled below, so this is the wall-clock bound on a single
+// adapter, not a serial budget across all eight. Previously 90 s ×
+// 8 sequential — well outside the 26 s Netlify scheduled-function ceiling,
+// which is why the cron has never successfully populated Blobs.
+const ADAPTER_TIMEOUT_MS = 12_000;
 
 function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
   return new Promise<T>((resolve, reject) => {
@@ -33,10 +36,10 @@ function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
 
 export default async (): Promise<Response> => {
   const store = await getBlobsStore();
-  const summary: IngestionReport[] = [];
-  let anyWriteFailed = false;
 
-  for (const adapter of SOURCE_ADAPTERS) {
+  const runAdapter = async (
+    adapter: typeof SOURCE_ADAPTERS[number],
+  ): Promise<{ report: IngestionReport; writeFailed: boolean }> => {
     const started = Date.now();
     const blobKey = `${adapter.id}/latest.json`;
     const report: IngestionReport = {
@@ -48,6 +51,7 @@ export default async (): Promise<Response> => {
       durationMs: 0,
       errors: [],
     };
+    let writeFailed = false;
     try {
       const { entities, rawChecksum, sourceVersion } = await withTimeout(
         adapter.fetch(),
@@ -59,7 +63,6 @@ export default async (): Promise<Response> => {
       if (sourceVersion) (report as IngestionReport & { sourceVersion: string }).sourceVersion = sourceVersion;
       report.durationMs = Date.now() - started;
 
-      // Write to blob storage
       try {
         await store.putDataset(adapter.id, entities, report);
 
@@ -71,7 +74,7 @@ export default async (): Promise<Response> => {
               `[refresh-lists] WRITE VERIFICATION FAILED list=${adapter.id} key=${blobKey} — report blob not found immediately after write`,
             );
             report.errors.push('write verification failed: blob not readable after write');
-            anyWriteFailed = true;
+            writeFailed = true;
           } else {
             console.log(
               `[refresh-lists] write verified list=${adapter.id} key=${blobKey} entityCount=${entities.length}`,
@@ -81,13 +84,13 @@ export default async (): Promise<Response> => {
           const msg = verifyErr instanceof Error ? verifyErr.message : String(verifyErr);
           console.error(`[refresh-lists] WRITE READ-BACK ERROR list=${adapter.id} key=${blobKey} error=${msg}`);
           report.errors.push(`write read-back error: ${msg}`);
-          anyWriteFailed = true;
+          writeFailed = true;
         }
       } catch (writeErr) {
         const msg = writeErr instanceof Error ? writeErr.message : String(writeErr);
         console.error(`[refresh-lists] BLOB WRITE FAILED list=${adapter.id} key=${blobKey} error=${msg}`);
         report.errors.push(`blob write failed: ${msg}`);
-        anyWriteFailed = true;
+        writeFailed = true;
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -95,7 +98,35 @@ export default async (): Promise<Response> => {
       report.errors.push(msg);
       report.durationMs = Date.now() - started;
     }
-    summary.push(report);
+    return { report, writeFailed };
+  };
+
+  // Parallel fan-out. allSettled so one slow adapter cannot starve the others.
+  const settled = await Promise.allSettled(SOURCE_ADAPTERS.map(runAdapter));
+  const summary: IngestionReport[] = [];
+  let anyWriteFailed = false;
+  for (let i = 0; i < settled.length; i++) {
+    const r = settled[i]!;
+    if (r.status === 'fulfilled') {
+      summary.push(r.value.report);
+      if (r.value.writeFailed) anyWriteFailed = true;
+    } else {
+      // Defensive — runAdapter catches everything, but if a top-level throw
+      // ever escapes, fabricate a failure report so the summary stays aligned.
+      const adapter = SOURCE_ADAPTERS[i]!;
+      const msg = r.reason instanceof Error ? r.reason.message : String(r.reason);
+      console.error(`[refresh-lists] UNCAUGHT REJECTION list=${adapter.id} error=${msg}`);
+      summary.push({
+        listId: adapter.id,
+        sourceUrl: adapter.sourceUrl,
+        recordCount: 0,
+        checksum: '',
+        fetchedAt: Date.now(),
+        durationMs: 0,
+        errors: [`unhandled rejection: ${msg}`],
+      });
+      anyWriteFailed = true;
+    }
   }
 
   // Log per-list summary so operators can read the full picture in function logs
