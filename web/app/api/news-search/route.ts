@@ -112,6 +112,7 @@ interface NewsResponse {
   languages: string[];
   fetchMode: "live" | "cached" | "static_fallback";
   fetchedAt: string;
+  latencyMs: number;
 }
 
 function severityOrder(s: Article["severity"]): number {
@@ -347,7 +348,7 @@ function clusterArticles(articles: Article[]): Article[] {
   });
 }
 
-function emptyResponse(q: string, fetchMode: NewsResponse["fetchMode"] = "live"): NewsResponse {
+function emptyResponse(q: string, fetchMode: NewsResponse["fetchMode"] = "live", latencyMs = 0): NewsResponse {
   return {
     ok: true,
     subject: q,
@@ -360,12 +361,14 @@ function emptyResponse(q: string, fetchMode: NewsResponse["fetchMode"] = "live")
     languages: [],
     fetchMode,
     fetchedAt: new Date().toISOString(),
+    latencyMs,
   };
 }
 
 const MAX_Q_LENGTH = 500;
 
 export async function GET(req: Request): Promise<NextResponse> {
+  const t0 = Date.now();
   // Gate the 7-locale RSS fan-out behind the per-key rate limiter.
   // Anonymous callers still get the free-tier burst window; without
   // this, a single user could trivially pin a Netlify Function into a
@@ -402,7 +405,7 @@ export async function GET(req: Request): Promise<NextResponse> {
 
   if (!rssEnabled) {
     return NextResponse.json(
-      { ...emptyResponse(q, "static_fallback"), fetchedAt },
+      { ...emptyResponse(q, "static_fallback", Date.now() - t0), fetchedAt },
       { headers: gateHeaders },
     );
   }
@@ -478,6 +481,7 @@ export async function GET(req: Request): Promise<NextResponse> {
       languages: langCoverage,
       fetchMode: "live",
       fetchedAt,
+      latencyMs: Date.now() - t0,
     };
     return NextResponse.json(payload, { headers: gateHeaders });
   } catch (err) {
@@ -490,7 +494,7 @@ export async function GET(req: Request): Promise<NextResponse> {
       "Returning empty dossier; investigate variantsOf / keyword classification.",
       err,
     );
-    return NextResponse.json({ ...emptyResponse(q, "static_fallback"), fetchedAt }, { headers: gateHeaders });
+    return NextResponse.json({ ...emptyResponse(q, "static_fallback", Date.now() - t0), fetchedAt }, { headers: gateHeaders });
   }
 }
 
