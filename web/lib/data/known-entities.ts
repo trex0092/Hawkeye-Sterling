@@ -650,4 +650,113 @@ export function lookupKnownAdverse(name: string): KnownAdverse | null {
   return null;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// LIVE EXTENSION — OpenSanctions PEP fallback
+// ─────────────────────────────────────────────────────────────────────────────
+// When the static list above doesn't match a name, query OpenSanctions
+// /search/peps as an enrichment. Results are mapped to the same KnownPEP
+// shape so downstream consumers (super-brain, ai-decision, pep-profile)
+// don't need to branch on origin. Cached per-name for 30 minutes to
+// avoid hammering the free tier on repeated screenings of the same subject.
+//
+// Free tier works without OPENSANCTIONS_API_KEY but is rate-limited;
+// setting the env var unlocks higher quota.
+
+interface PepCacheEntry { value: KnownPEP | null; expiresAt: number }
+const _livePepCache = new Map<string, PepCacheEntry>();
+const LIVE_PEP_CACHE_TTL_MS = 30 * 60 * 1_000;
+const LIVE_PEP_TIMEOUT_MS = 6_000;
+
+function tierFromOpenSanctionsTopics(topics: string[]): KnownPEP["tier"] {
+  const set = new Set(topics.map((t) => t.toLowerCase()));
+  if (set.has("role.pep") && (set.has("gov.head") || set.has("gov.executive"))) {
+    return "tier_1_head_of_state_or_gov";
+  }
+  if (set.has("role.pep") && (set.has("gov.national") || set.has("gov.judicial") || set.has("gov.military"))) {
+    return "tier_2_senior_political_judicial_military";
+  }
+  if (set.has("role.soe") || set.has("corp.executive")) {
+    return "tier_3_state_owned_enterprise_exec";
+  }
+  if (set.has("role.rca")) return "close_associate";
+  if (set.has("role.family")) return "family";
+  return "tier_4_party_official_senior_civil_servant";
+}
+
+/**
+ * Async PEP lookup with live OpenSanctions enrichment. Returns the static
+ * entry if one matches by name; otherwise consults OpenSanctions and
+ * caches the result (positive or negative) for 30 minutes.
+ *
+ * Callers that cannot await (synchronous brain hot paths) should keep
+ * using `lookupKnownPEP()`. New consumers and slow paths should prefer
+ * this function.
+ */
+export async function lookupKnownPEPLive(name: string): Promise<KnownPEP | null> {
+  const staticHit = lookupKnownPEP(name);
+  if (staticHit) return staticHit;
+
+  const q = norm(name);
+  if (!q) return null;
+
+  const cached = _livePepCache.get(q);
+  if (cached && Date.now() < cached.expiresAt) return cached.value;
+
+  // Skip live query if explicitly disabled — useful for tests / air-gapped
+  // deployments where outbound network is restricted.
+  if (process.env["OPENSANCTIONS_LIVE_PEP"] === "false") {
+    _livePepCache.set(q, { value: null, expiresAt: Date.now() + LIVE_PEP_CACHE_TTL_MS });
+    return null;
+  }
+
+  try {
+    const url = new URL("https://api.opensanctions.org/search/peps");
+    url.searchParams.set("q", name);
+    url.searchParams.set("limit", "1");
+    const headers: Record<string, string> = { accept: "application/json" };
+    const apiKey = process.env["OPENSANCTIONS_API_KEY"];
+    if (apiKey) headers["Authorization"] = `Bearer ${apiKey}`;
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), LIVE_PEP_TIMEOUT_MS);
+    let resJson: { results?: Array<{ caption?: string; properties?: Record<string, unknown>; datasets?: string[] }> };
+    try {
+      const res = await fetch(url.toString(), { headers, signal: ctrl.signal });
+      if (!res.ok) {
+        _livePepCache.set(q, { value: null, expiresAt: Date.now() + LIVE_PEP_CACHE_TTL_MS });
+        return null;
+      }
+      resJson = await res.json() as typeof resJson;
+    } finally {
+      clearTimeout(t);
+    }
+
+    const top = resJson.results?.[0];
+    if (!top) {
+      _livePepCache.set(q, { value: null, expiresAt: Date.now() + LIVE_PEP_CACHE_TTL_MS });
+      return null;
+    }
+
+    const props = (top.properties ?? {}) as Record<string, unknown>;
+    const topics: string[] = Array.isArray(props["topics"]) ? (props["topics"] as string[]) : [];
+    const positions: string[] = Array.isArray(props["position"]) ? (props["position"] as string[]) : [];
+    const countries: string[] = Array.isArray(props["country"]) ? (props["country"] as string[]) : [];
+    const aliases: string[] = Array.isArray(props["alias"]) ? (props["alias"] as string[]) : [];
+    const tier = tierFromOpenSanctionsTopics(topics);
+    const out: KnownPEP = {
+      names: [top.caption ?? name, ...aliases].filter(Boolean).slice(0, 6),
+      tier,
+      role: positions.slice(0, 2).join("; ") || "PEP (OpenSanctions classification)",
+      rationale: `OpenSanctions PEP entry — datasets: ${(top.datasets ?? []).slice(0, 4).join(", ") || "n/a"}; topics: ${topics.slice(0, 4).join(", ") || "n/a"}.`,
+      ...(countries[0] ? { jurisdiction: countries[0] } : {}),
+    };
+    _livePepCache.set(q, { value: out, expiresAt: Date.now() + LIVE_PEP_CACHE_TTL_MS });
+    return out;
+  } catch {
+    // Network / timeout / parse failure — cache the negative briefly so
+    // we don't retry on every screening for the next 30 min.
+    _livePepCache.set(q, { value: null, expiresAt: Date.now() + LIVE_PEP_CACHE_TTL_MS });
+    return null;
+  }
+}
+
 export { PEPS as KNOWN_PEPS, ADVERSE as KNOWN_ADVERSE };

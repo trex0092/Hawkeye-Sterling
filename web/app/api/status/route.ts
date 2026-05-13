@@ -938,8 +938,38 @@ async function _handleGet(): Promise<NextResponse> {
 
   // Data-feed version badges — auditors want to know exactly which
   // brain/taxonomy version was in effect when a decision was made.
-  // Derived from env (set by CI) or from committed manifest values.
-  const brainReviewedAt = process.env["BRAIN_REVIEWED_AT"] ?? "2026-04-01";
+  // Source priority: (1) Blob written by POST /api/admin/mark-catalogue-
+  // reviewed — gives MLROs a self-service "I reviewed it today" action
+  // without touching env vars; (2) BRAIN_REVIEWED_AT env var; (3) the
+  // hardcoded floor below.
+  let brainReviewedAt = process.env["BRAIN_REVIEWED_AT"] ?? "2026-04-01";
+  try {
+    const blobsMod = (await import("@netlify/blobs")) as unknown as {
+      getStore: (opts: { name: string; siteID?: string; token?: string; consistency?: string }) => {
+        get: (key: string, opts?: { type?: string }) => Promise<unknown>;
+      };
+    };
+    const siteID = process.env["NETLIFY_SITE_ID"] ?? process.env["SITE_ID"];
+    const token =
+      process.env["NETLIFY_BLOBS_TOKEN"] ??
+      process.env["NETLIFY_API_TOKEN"] ??
+      process.env["NETLIFY_AUTH_TOKEN"];
+    const opts: { name: string; siteID?: string; token?: string; consistency: string } = {
+      name: "hawkeye-brain-governance",
+      consistency: "strong",
+    };
+    if (siteID) opts.siteID = siteID;
+    if (token) opts.token = token;
+    const govStore = blobsMod.getStore(opts);
+    const reviewedBlob = (await govStore.get("catalogue-reviewed-at.json", { type: "json" })) as
+      | { reviewedAt?: string }
+      | null;
+    if (reviewedBlob && typeof reviewedBlob.reviewedAt === "string" && /^\d{4}-\d{2}-\d{2}$/.test(reviewedBlob.reviewedAt)) {
+      brainReviewedAt = reviewedBlob.reviewedAt;
+    }
+  } catch {
+    // Blob unavailable — fall back to env / default. Never blocks /api/status.
+  }
   // World-Check covers ~5M PEP/sanctions profiles; LSEG data platform adds additional coverage.
   // Use the static known-entities list count as the minimum floor so the metric
   // is never misleadingly low (the old default "6" understated actual coverage).
