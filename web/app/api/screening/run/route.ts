@@ -164,6 +164,8 @@ export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
 
+  const t0 = Date.now();
+
   // Structured request ID for observability
   const reqId = req.headers.get("x-request-id") ?? randomUUID();
   const responseHeaders: Record<string, string> = {
@@ -204,7 +206,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       const loaded = await loadCandidates();
       if (!Array.isArray(loaded) || loaded.length === 0) {
         return NextResponse.json(
-          { ok: false, error: "corpus_unavailable", message: "Watchlist corpus is unavailable. Run /api/sanctions/refresh to ingest lists.", requestId: reqId },
+          { ok: false, error: "corpus_unavailable", message: "Watchlist corpus is unavailable. Run /api/sanctions/refresh to ingest lists.", requestId: reqId, degraded: true, latencyMs: Date.now() - t0 },
           { status: 503, headers: responseHeaders },
         );
       }
@@ -220,7 +222,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       const detail = err instanceof Error ? err.message : String(err);
       console.error("[screening/run] loadCandidates failed", { reqId, detail });
       return NextResponse.json(
-        { ok: false, error: "corpus_unavailable", message: "Failed to load watchlist corpus", detail, requestId: reqId },
+        { ok: false, error: "corpus_unavailable", message: "Failed to load watchlist corpus", detail, requestId: reqId, degraded: true, latencyMs: Date.now() - t0 },
         { status: 503, headers: responseHeaders },
       );
     }
@@ -241,7 +243,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     const detail = err instanceof Error ? err.message : String(err);
     console.error("[screening/run] quickScreen threw", { reqId, resultId, detail });
     return NextResponse.json(
-      { ok: false, error: "screening_failed", message: "Screening engine error", detail, requestId: reqId, resultId },
+      { ok: false, error: "screening_failed", message: "Screening engine error", detail, requestId: reqId, resultId, latencyMs: Date.now() - t0 },
       { status: 500, headers: responseHeaders },
     );
   }
@@ -266,6 +268,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       ...result,
       negativeEvidence,
       confidenceNote,
+      latencyMs: Date.now() - t0,
       // Disambiguate unresolved ambiguity
       unresolvedAmbiguity:
         result.severity === "medium" || result.topScore >= 70

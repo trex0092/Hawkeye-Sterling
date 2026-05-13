@@ -33,9 +33,34 @@ async function handleGet(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
   const tenant = tenantIdFromGate(gate);
-  const cases = await loadAllCases(tenant);
+  const url = new URL(req.url);
+  const statusFilter = url.searchParams.get("status") ?? "all";
+  const includeArchived = url.searchParams.get("includeArchived") !== "false";
+  const category = url.searchParams.get("category");
+  const sourceType = url.searchParams.get("sourceType");
+  const limit = Math.min(parseInt(url.searchParams.get("limit") ?? "500", 10) || 500, 500);
+  const offset = Math.max(parseInt(url.searchParams.get("offset") ?? "0", 10) || 0, 0);
+
+  let cases = await loadAllCases(tenant);
+
+  if (statusFilter && statusFilter !== "all") {
+    cases = cases.filter((c) => c.status === statusFilter);
+  }
+  if (!includeArchived) {
+    cases = cases.filter((c) => c.status !== "closed");
+  }
+  if (category) {
+    cases = cases.filter((c) => c.badge === category || c.evidence?.some((e) => e.category === category));
+  }
+  if (sourceType) {
+    cases = cases.filter((c) => c.badge === sourceType);
+  }
+
+  const totalCount = cases.length;
+  const page = cases.slice(offset, offset + limit);
+
   return NextResponse.json(
-    { ok: true, tenant, cases },
+    { ok: true, tenant, cases: page, totalCount, limit, offset },
     { headers: gate.headers },
   );
 }

@@ -38,6 +38,7 @@ function validateRequest(raw: unknown): { ok: true; value: GoAmlEnvelope } | { o
 }
 
 export async function POST(req: Request): Promise<NextResponse | Response> {
+  const t0 = Date.now();
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
 
@@ -107,6 +108,7 @@ export async function POST(req: Request): Promise<NextResponse | Response> {
       "x-report-code": envelope.reportCode,
       "x-xml-sha256": xmlHash,
       "x-generated-at": ts,
+      "x-latency-ms": String(Date.now() - t0),
       "cache-control": "no-store",
     },
   });

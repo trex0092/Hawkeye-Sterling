@@ -799,16 +799,28 @@ const TOOLS: ToolDef[] = [
   // ── CASES & AUDIT ────────────────────────────────────────────────────────────
   {
     name: "get_cases",
-    description: "List all compliance cases with status, disposition, and risk scores.",
+    description: "List compliance cases with pagination and filtering. Returns totalCount for the full matching set.",
     inputSchema: {
       type: "object",
       properties: {
-        status: { type: "string", enum: ["active", "closed", "escalated", "all"] },
+        status: { type: "string", enum: ["active", "closed", "escalated", "all"], description: "Filter by case status" },
+        category: { type: "string", description: "Filter by badge/category label" },
+        sourceType: { type: "string", description: "Filter by source type (maps to badge)" },
+        includeArchived: { type: "boolean", description: "Include closed/archived cases (default true)" },
+        limit: { type: "number", description: "Max records to return (default 500, max 500)" },
+        offset: { type: "number", description: "Pagination offset (default 0)" },
       },
     },
-    handler: async ({ status }) =>
-      callApi("/api/cases", "GET", undefined,
-        status && status !== "all" ? { status: String(status) } : undefined),
+    handler: async ({ status, category, sourceType, includeArchived, limit, offset }) => {
+      const params: Record<string, string> = {};
+      if (status && status !== "all") params["status"] = String(status);
+      if (category) params["category"] = String(category);
+      if (sourceType) params["sourceType"] = String(sourceType);
+      if (includeArchived === false) params["includeArchived"] = "false";
+      if (limit !== undefined) params["limit"] = String(limit);
+      if (offset !== undefined) params["offset"] = String(offset);
+      return callApi("/api/cases", "GET", undefined, Object.keys(params).length ? params : undefined);
+    },
   },
   {
     name: "audit_trail",
