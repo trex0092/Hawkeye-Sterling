@@ -21,10 +21,12 @@
 //   · UK OFSI Consolidated                — JSON feed
 //   · UAE EOCN / Local Terrorist List     — local JSON drop
 //
-// This implementation INTENTIONALLY uses fetch with feed-URL placeholders
-// — a production wire-up swaps the placeholder URLs for the real
-// authoritative endpoints, with whatever auth/headers each demands. The
-// shape (fetch → normalise → diff → persist) is the production design.
+// Default URLs point at the current authoritative endpoints as of
+// 2026-05. Override per-feed at runtime via FEED_* env vars if any of
+// these change. OFAC moved off treasury.gov to sanctionslistservice
+// in mid-2024; the EU CFSP URL requires the well-known public
+// `token` query parameter; UK OFSI hosts on Azure Blob. UN 1267 is
+// served direct from the Security Council Sanctions Committee site.
 
 import type { Config } from "@netlify/functions";
 import { getStore } from "@netlify/blobs";
@@ -43,35 +45,54 @@ interface FeedSpec {
 
 const FEEDS: FeedSpec[] = [
   {
+    // UN Security Council Consolidated (1267 / 1988 / 1373 lists merged).
+    // Served directly by the UNSC Sanctions Committee.
     listId: "un_1267",
     url: process.env["FEED_UN_1267"] ?? "https://scsanctions.un.org/resources/xml/en/consolidated.xml",
     format: "xml",
   },
   {
+    // OFAC SDN (Specially Designated Nationals) — full XML.
+    // The legacy treasury.gov/ofac/downloads/sdn.xml URL was deprecated in 2024
+    // when OFAC moved publication to a dedicated host. The current
+    // canonical XML endpoint is on sanctionslistservice.ofac.treas.gov.
+    // The XML schema is parsed by normaliseXml's sdnEntry path.
     listId: "ofac_sdn",
-    url: process.env["FEED_OFAC_SDN"] ?? "https://www.treasury.gov/ofac/downloads/sdn.json",
-    format: "json",
-  },
-  {
-    listId: "eu_consolidated",
-    // EU CFSP consolidated XML list — publicly accessible via the EU sanctions portal.
-    // Override with FEED_EU_CFSP env var if the portal URL changes.
-    url: process.env["FEED_EU_CFSP"] ?? "https://webgate.ec.europa.eu/fsd/fsf/public/files/xmlFullSanctionsList_1_1/content",
+    url: process.env["FEED_OFAC_SDN"] ?? "https://sanctionslistservice.ofac.treas.gov/api/PublicationPreview/exports/SDN.XML",
     format: "xml",
   },
   {
+    // OFAC Consolidated Non-SDN (FSE / NS-PLC / 13599 / SSI / CAPTA / etc.).
+    // Companion list to SDN — covers sectoral and non-blocking sanctions.
+    listId: "ofac_cons",
+    url: process.env["FEED_OFAC_CONS"] ?? "https://sanctionslistservice.ofac.treas.gov/api/PublicationPreview/exports/CONS_ADVANCED.XML",
+    format: "xml",
+  },
+  {
+    // EU CFSP consolidated XML list. The webgate portal requires a
+    // public `token` query parameter — value below is the well-known
+    // 2017-era token still accepted by the portal for anonymous access.
+    // If the EU ever rotates this token, override via FEED_EU_CFSP.
+    listId: "eu_consolidated",
+    url: process.env["FEED_EU_CFSP"] ?? "https://webgate.ec.europa.eu/fsd/fsf/public/files/xmlFullSanctionsList_1_1/content?token=dG9rZW4tMjAxNw",
+    format: "xml",
+  },
+  {
+    // UK OFSI Consolidated List — published by HM Treasury on Azure Blob.
+    // The ConList.xml file is the legacy schema; OFSI also publishes a
+    // newer "2022format" variant. Stick with the legacy until parsers
+    // are updated to the new schema.
     listId: "uk_ofsi",
-    // UK OFSI consolidated list — publicly hosted on Azure Blob storage by HM Treasury.
-    // Override with FEED_UK_OFSI env var if the URL changes.
     url: process.env["FEED_UK_OFSI"] ?? "https://ofsistorage.blob.core.windows.net/publishlive/ConList.xml",
     format: "xml",
   },
   {
+    // UAE EOCN / Local Terrorist list — not publicly available via a
+    // stable URL. Set FEED_UAE_EOCN to the URL of your CBUAE data-
+    // sharing endpoint or a pre-extracted JSON/text file served from
+    // internal infrastructure. Skipped at runtime when the URL is empty.
     listId: "uae_eocn",
-    // UAE EOCN / Local Terrorist list — not publicly available via a stable URL.
-    // Set FEED_UAE_EOCN to the URL of your CBUAE data-sharing endpoint or
-    // a pre-extracted JSON/text file served from internal infrastructure.
-    url: process.env["FEED_UAE_EOCN"] ?? "",
+    url: process.env["FEED_UAE_EOCN"] ?? process.env["UAE_EOCN_URL"] ?? "",
     format: "json",
   },
 ];
