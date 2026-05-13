@@ -244,7 +244,12 @@ interface CachedSanctionsHealth {
   expiresAt: number;
 }
 let _sanctionsHealthCache: CachedSanctionsHealth | null = null;
-const SANCTIONS_HEALTH_TTL_MS = 30_000;
+// Reduced from 30 s to 5 s after observing that admin-triggered refreshes
+// (and the auto cron) write fresh data but the gate remained "LISTS_MISSING"
+// for up to 30 s afterwards. 5 s is short enough that operators see new
+// data ~immediately yet still amortises ~80% of read load when a burst of
+// screening calls hits the same warm Lambda.
+const SANCTIONS_HEALTH_TTL_MS = 5_000;
 
 async function getSanctionsHealthMemoised(): Promise<Awaited<ReturnType<typeof getSanctionsHealth>>> {
   const now = Date.now();
