@@ -1,13 +1,21 @@
-// OFAC Consolidated Non-SDN — same schema as SDN XML, different URL.
-// Source migrated mid-2024; legacy treasury.gov/ofac/downloads/* paths
-// 404 since the move. Override via FEED_OFAC_CONS if OFAC migrates again.
+// OFAC Consolidated Non-SDN — legacy sdnEntry schema.
+// Source migrated mid-2024 from treasury.gov/ofac/downloads/* to
+// sanctionslistservice.ofac.treas.gov. Within the new host, two schema
+// variants are available:
+//   · CONSOLIDATED.XML  → legacy sdnEntry-shape XML (same as SDN.XML)
+//   · CONS_ADVANCED.XML → Advanced XML with DistinctParty blocks
+// We use CONSOLIDATED.XML to reuse the existing sdnEntry parser. A
+// previous revision (PR #7 sanctions-ingest-real-feeds) pointed at
+// CONS_ADVANCED.XML, which returned 200 but parsed to 0 records because
+// the Advanced schema doesn't have sdnEntry elements. Override via
+// FEED_OFAC_CONS if OFAC migrates again.
 import type { SourceAdapter, NormalisedEntity, EntityType } from '../types.js';
 import { mkListing } from '../types.js';
 import { fetchText, sha256Hex } from '../fetch-util.js';
 import { parseXml, findAll, textOf } from '../xml-lite.js';
 
 const SOURCE_URL = process.env['FEED_OFAC_CONS']
-  ?? 'https://sanctionslistservice.ofac.treas.gov/api/PublicationPreview/exports/CONS_ADVANCED.XML';
+  ?? 'https://sanctionslistservice.ofac.treas.gov/api/PublicationPreview/exports/CONSOLIDATED.XML';
 
 export const ofacConsAdapter: SourceAdapter = {
   id: 'ofac_cons',
