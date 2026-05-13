@@ -73,12 +73,18 @@ export async function POST(req: Request): Promise<NextResponse> {
   const reviewer = url.searchParams.get("reviewer")?.slice(0, 200) ?? "anonymous";
   const note = url.searchParams.get("note")?.slice(0, 1_000) ?? "";
 
-  let mod: BlobsModuleShape;
+  let mod: BlobsModuleShape | null = null;
   try {
     mod = (await import("@netlify/blobs")) as unknown as BlobsModuleShape;
   } catch (err) {
     return NextResponse.json(
       { ok: false, error: `@netlify/blobs unavailable — ${err instanceof Error ? err.message : String(err)}` },
+      { status: 503 },
+    );
+  }
+  if (!mod) {
+    return NextResponse.json(
+      { ok: false, error: "@netlify/blobs returned null" },
       { status: 503 },
     );
   }

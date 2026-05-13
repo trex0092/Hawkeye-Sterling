@@ -72,12 +72,18 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "forbidden" }, { status: 403 });
   }
 
-  let mod: BlobsModuleShape;
+  let mod: BlobsModuleShape | null = null;
   try {
     mod = (await import("@netlify/blobs")) as unknown as BlobsModuleShape;
   } catch (err) {
     return NextResponse.json(
       { ok: false, error: `@netlify/blobs unavailable — ${err instanceof Error ? err.message : String(err)}` },
+      { status: 503 },
+    );
+  }
+  if (!mod) {
+    return NextResponse.json(
+      { ok: false, error: "@netlify/blobs returned null" },
       { status: 503 },
     );
   }
