@@ -113,7 +113,14 @@ function scanArgsForInjection(args: Record<string, unknown>): string | null {
 
 // ── Governance wrapper (Controls 2.05, 12.04) ─────────────────────────────────
 // Injects confidence score, human-review flag, and provenance onto supervised outputs.
-function wrapWithGovernance(toolName: string, level: ConsequenceLevel, result: unknown): unknown {
+function wrapWithGovernance(
+  toolName: string,
+  level: ConsequenceLevel,
+  result: unknown,
+  durationMs: number,
+  listsVerified: boolean,
+  missingLists: string[],
+): unknown {
   if (level === "read-only") return result;
   if (typeof result !== "object" || result === null) return result;
 
@@ -125,8 +132,26 @@ function wrapWithGovernance(toolName: string, level: ConsequenceLevel, result: u
     confidenceScore = rs > 70 ? 0.85 : rs > 40 ? 0.75 : 0.65;
   }
 
+  const engineVersion = resolveEngineVersion();
+  const commitRef = resolveCommitRef();
+  const generatedAt = new Date().toISOString();
+
   return {
     ...r,
+    // F-07 / E-05 — top-level standard fields on every non-read-only response
+    tool: r["tool"] ?? toolName,
+    engineVersion: r["engineVersion"] ?? engineVersion,
+    commitRef: r["commitRef"] ?? commitRef,
+    generatedAt: r["generatedAt"] ?? generatedAt,
+    latencyMs: r["latencyMs"] ?? durationMs,
+    // F-07 top-level _provenance (listsVerified / missingLists required by spec)
+    _provenance: {
+      ...(typeof r["_provenance"] === "object" && r["_provenance"] !== null
+        ? (r["_provenance"] as Record<string, unknown>)
+        : {}),
+      listsVerified,
+      missingLists,
+    },
     _governance: {
       confidenceScore: Math.round(confidenceScore * 100) / 100,
       humanReviewRequired: true,
@@ -134,9 +159,9 @@ function wrapWithGovernance(toolName: string, level: ConsequenceLevel, result: u
       reviewNote: "AI-generated output — MLRO review required before any compliance action. FDL No.10/2025 Art.18.",
       _provenance: {
         tool: toolName,
-        engineVersion: resolveEngineVersion(),
-        commitRef: resolveCommitRef(),
-        generatedAt: new Date().toISOString(),
+        engineVersion,
+        commitRef,
+        generatedAt,
         dataSources: ["ofac-sdn", "eu-fsf", "uk-ofsi", "uae-eocn", "uae-ltl", "un-consolidated", "gdelt", "google-news-rss"],
       },
     },
@@ -949,37 +974,42 @@ async function dispatch(msg: {
       return err(id, -32004, `Request blocked: potential prompt injection detected in input field "${injectedField}".`);
     }
 
+    // Fetch sanctions health once — reused by gate check and wrapWithGovernance.
+    const sanctionsHealth = GATE_BLOCKED_TOOLS.has(toolName)
+      ? await getSanctionsHealth()
+      : { listsVerified: true, missingCritical: [] as string[], missingAll: [] as string[], checkedAt: new Date().toISOString() };
+
     // Sanctions gate (ADD-01): block screening tools when critical lists are missing.
-    if (GATE_BLOCKED_TOOLS.has(toolName)) {
-      const health = await getSanctionsHealth();
-      if (!health.listsVerified) {
-        return ok(id, {
-          content: [
-            {
-              type: "text",
-              text: JSON.stringify({
-                ok: false,
-                errorCode: "LISTS_MISSING",
-                errorType: "data_integrity",
-                tool: toolName,
-                message:
-                  "Screening blocked: one or more critical sanctions lists are not loaded. " +
-                  "Run `sanctions_status` to diagnose, then trigger a list refresh. " +
-                  "No compliance decision may be based on results from a degraded screening engine.",
-                missingLists: health.missingCritical,
-                missingAll: health.missingAll,
-                _governance: {
-                  humanReviewRequired: true,
-                  reviewNote:
-                    "FDL No. 10/2025 Art. 15: AI-generated screening results are invalid when the underlying data corpus is incomplete.",
-                },
-                checkedAt: health.checkedAt,
-              }, null, 2),
-            },
-          ],
-          isError: true,
-        });
-      }
+    if (GATE_BLOCKED_TOOLS.has(toolName) && !sanctionsHealth.listsVerified) {
+      const requestId = Math.random().toString(36).slice(2, 10);
+      return ok(id, {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify({
+              ok: false,
+              tool: toolName,
+              errorCode: "LISTS_MISSING",
+              errorType: "data",
+              message:
+                "Screening blocked: one or more critical sanctions lists are not loaded. " +
+                "Run `sanctions_status` to diagnose, then trigger a list refresh. " +
+                "No compliance decision may be based on results from a degraded screening engine.",
+              retryAfterSeconds: null,
+              requestId,
+              missingLists: sanctionsHealth.missingCritical,
+              missingAll: sanctionsHealth.missingAll,
+              _governance: {
+                humanReviewRequired: true,
+                reviewNote:
+                  "FDL No. 10/2025 Art. 15: AI-generated screening results are invalid when the underlying data corpus is incomplete.",
+              },
+              checkedAt: sanctionsHealth.checkedAt,
+            }, null, 2),
+          },
+        ],
+        isError: true,
+      });
     }
 
     // Anomaly detection (Control 21.08)
@@ -998,7 +1028,10 @@ async function dispatch(msg: {
       );
       const durationMs = Date.now() - t0;
       recordBreakerSuccess(toolName);
-      const wrapped = wrapWithGovernance(toolName, level, result);
+      const wrapped = wrapWithGovernance(
+        toolName, level, result, durationMs,
+        sanctionsHealth.listsVerified, sanctionsHealth.missingCritical,
+      );
       void logToolCall({
         id: Math.random().toString(36).slice(2, 10),
         timestamp: new Date().toISOString(),
@@ -1016,18 +1049,30 @@ async function dispatch(msg: {
     } catch (e) {
       const durationMs = Date.now() - t0;
       recordBreakerFailure(toolName);
+      const requestId = Math.random().toString(36).slice(2, 10);
+      const errMsg = e instanceof Error ? e.message : String(e);
       void logToolCall({
-        id: Math.random().toString(36).slice(2, 10),
+        id: requestId,
         timestamp: new Date().toISOString(),
         tool: toolName,
         consequenceLevel: level,
         inputSummary: summarise(toolArgs),
-        outputSummary: e instanceof Error ? e.message : String(e),
+        outputSummary: errMsg,
         durationMs,
         isError: true,
       });
+      // F-07 standardised error schema
       return ok(id, {
-        content: [{ type: "text", text: `Error: ${e instanceof Error ? e.message : String(e)}` }],
+        content: [{ type: "text", text: JSON.stringify({
+          ok: false,
+          tool: toolName,
+          errorCode: "HANDLER_EXCEPTION",
+          errorType: "internal",
+          message: errMsg,
+          retryAfterSeconds: null,
+          requestId,
+          latencyMs: durationMs,
+        }, null, 2) }],
         isError: true,
       });
     }
