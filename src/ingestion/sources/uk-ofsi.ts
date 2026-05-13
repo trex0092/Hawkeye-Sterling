@@ -17,24 +17,45 @@ export const ukOfsiAdapter: SourceAdapter = {
   displayName: 'UK OFSI Consolidated List',
   sourceUrl: SOURCE_URL,
   async fetch() {
-    const csv = await fetchText(SOURCE_URL, { accept: 'text/csv' });
+    const csvRaw = await fetchText(SOURCE_URL, { accept: 'text/csv' });
+    // Strip UTF-8 BOM if present — OFSI's CSV exports include it, and a
+    // BOM-prefixed first column header (`﻿Group Type`) silently
+    // breaks exact-match column lookup.
+    const csv = csvRaw.replace(/^﻿/, '');
     const rawChecksum = await sha256Hex(csv);
     const fetchedAt = Date.now();
     const rows = parseCsv(csv);
     if (rows.length === 0) return { entities: [], rawChecksum };
-    const header = rows[0]!.map((h) => h.toLowerCase());
+    // 2022format OFSI CSV puts the header on row 2 (row 1 is a "Last updated"
+    // metadata line). Detect header by looking for recognised column names
+    // in the first 3 rows.
+    let headerRow = 0;
+    for (let r = 0; r < Math.min(3, rows.length); r++) {
+      const candidate = (rows[r] ?? []).map((h) => h.trim().toLowerCase());
+      if (candidate.some((h) => h === 'name 6' || h === 'name 1' || h === 'group type')) {
+        headerRow = r;
+        break;
+      }
+    }
+    const header = (rows[headerRow] ?? []).map((h) => h.trim().toLowerCase());
     const idx = (name: string) => header.findIndex((h) => h === name.toLowerCase());
     const iName6 = idx('name 6');
     const iName1 = idx('name 1');
     const iGroupType = idx('group type');
     const iGroupId = idx('group id');
-    const iRegime = idx('regime') >= 0 ? idx('regime') : idx('legal basis');
+    const iRegime = idx('regime') >= 0 ? idx('regime') : (idx('regime name') >= 0 ? idx('regime name') : idx('legal basis'));
     const iDob = idx('dob');
     const iNat = idx('nationality');
+    if (iName6 < 0 && iName1 < 0) {
+      // Couldn't find any name column — emit empty rather than garbage.
+      // The ingest-error log surfaces the cause via the parser's
+      // upstream signal (headers don't include "Name 6" / "Name 1").
+      return { entities: [], rawChecksum };
+    }
     const entities: NormalisedEntity[] = [];
     const byGroup = new Map<string, NormalisedEntity>();
 
-    for (let i = 1; i < rows.length; i++) {
+    for (let i = headerRow + 1; i < rows.length; i++) {
       const r = rows[i]!;
       const name = [iName1, iName6].filter((x) => x >= 0).map((x) => r[x] ?? '').filter(Boolean).join(' ').trim();
       if (!name) continue;
