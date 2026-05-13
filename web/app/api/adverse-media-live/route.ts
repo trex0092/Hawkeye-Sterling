@@ -13,6 +13,7 @@ import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { searchAllNews } from "@/lib/intelligence/newsAdapters";
 import { gdeltKeywordOr } from "@/lib/intelligence/amlKeywords";
+import { fetchGdeltCached } from "@/lib/intelligence/gdelt-cache";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 45;
@@ -176,46 +177,20 @@ function inferCategories(title: string, domain: string): string[] {
   return cats;
 }
 
-async function queryGdelt(subjectName: string): Promise<{ articles: GdeltArticle[]; serviceError: boolean }> {
-  const rawQuery = `"${subjectName}" AND (${gdeltKeywordOr()})`;
-  const { start, end } = art19Window();
-  const params = new URLSearchParams({
-    query: rawQuery,
-    mode: "artlist",
-    maxrecords: String(GDELT_MAX_RECORDS),
-    format: "json",
-    sort: "DateDesc",
-    startdatetime: gdeltDateTime(start),
-    enddatetime: gdeltDateTime(end),
-  });
-  const url = `${GDELT_BASE}?${params.toString()}`;
-
-  // Retry once with 3s backoff on transient failures (429, timeout, network error)
-  for (let attempt = 0; attempt < 2; attempt++) {
-    if (attempt > 0) await new Promise((r) => setTimeout(r, 3_000));
-    const { signal, clear } = mkAbort(FETCH_TIMEOUT_MS);
-    try {
-      const res = await fetch(url, {
-        headers: {
-          "user-agent": "Mozilla/5.0 (compatible; HawkeyeSterling/1.0; adverse-media-live)",
-          accept: "application/json",
-        },
-        signal,
-      });
-      if (res.status === 429) { clear(); continue; } // rate-limited — retry
-      if (!res.ok) { clear(); return { articles: [], serviceError: true }; }
-      const data = (await res.json()) as GdeltResponse;
-      clear();
-      return {
-        articles: Array.isArray(data.articles) ? data.articles.filter((a) => a.url && a.title) : [],
-        serviceError: false,
-      };
-    } catch {
-      clear();
-      // timeout or network error — retry once, then report service error
-    }
-  }
-  return { articles: [], serviceError: true };
+// Delegates to the shared GDELT cache layer (web/lib/intelligence/gdelt-cache).
+// All retry/timeout/Redis logic lives there now — keeping a second copy in this
+// route was the SPOF: a GDELT outage knocked out both adverse-media-live and
+// any other call site simultaneously. The cache also serves stale results on
+// upstream failure (tagged stale=true), which previously surfaced as a hard
+// "service unavailable" response here.
+async function queryGdelt(subjectName: string): Promise<{ articles: GdeltArticle[]; serviceError: boolean; stale?: boolean }> {
+  const customQuery = `"${subjectName}" AND (${gdeltKeywordOr()})`;
+  const cached = await fetchGdeltCached(subjectName, { query: customQuery });
+  return {
+    articles: cached.articles,
+    serviceError: cached.serviceError,
+    stale: cached.stale,
+  };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -430,15 +405,28 @@ export async function POST(req: Request): Promise<NextResponse> {
   const sourcesSucceeded: string[] = [];
 
   // Fan-out GDELT queries — each name variant wrapped independently so a
-  // timeout on one variant cannot abort the others.
+  // timeout on one variant cannot abort the others. Each variant routes
+  // through the GDELT cache layer (memory → Redis → live).
   let rawArticles: GdeltArticle[] = [];
   const gdeltSettled = await Promise.allSettled(variants.map((v) => queryGdelt(v)));
 
   const seenGdeltUrls = new Set<string>();
   let anyGdeltSucceeded = false;
+  let anyStale = false;
   for (const result of gdeltSettled) {
     if (result.status === "fulfilled" && !result.value.serviceError) {
       anyGdeltSucceeded = true;
+      if (result.value.stale) anyStale = true;
+      for (const a of result.value.articles) {
+        const key = (a.url ?? "").toLowerCase();
+        if (!key || seenGdeltUrls.has(key)) continue;
+        seenGdeltUrls.add(key);
+        rawArticles.push(a);
+      }
+    } else if (result.status === "fulfilled" && result.value.stale && result.value.articles.length > 0) {
+      // Live failed, cache layer returned stale data — count this as a
+      // partial success (we have *something* to reason about) but flag it.
+      anyStale = true;
       for (const a of result.value.articles) {
         const key = (a.url ?? "").toLowerCase();
         if (!key || seenGdeltUrls.has(key)) continue;
@@ -448,7 +436,10 @@ export async function POST(req: Request): Promise<NextResponse> {
     }
   }
   if (anyGdeltSucceeded) {
-    sourcesSucceeded.push("gdelt");
+    sourcesSucceeded.push(anyStale ? "gdelt (stale cache)" : "gdelt");
+  } else if (anyStale && rawArticles.length > 0) {
+    sourcesSucceeded.push("gdelt (stale cache only)");
+    sourcesFailed.push({ name: "gdelt-live", error: "GDELT live API unavailable — serving last-known cached results" });
   } else {
     sourcesFailed.push({ name: "gdelt", error: "GDELT API temporarily unavailable or rate-limited" });
   }
