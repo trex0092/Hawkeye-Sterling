@@ -110,6 +110,35 @@ export default async (): Promise<Response> => {
     );
   }
 
+  // Call sanctions_status to confirm storage state from the read path.
+  // Uses DEPLOY_PRIME_URL so it works on preview/branch deploys too.
+  const baseUrl =
+    process.env['URL'] ??
+    process.env['DEPLOY_PRIME_URL'] ??
+    'https://hawkeye-sterling.netlify.app';
+  try {
+    const ctl = new AbortController();
+    const t = setTimeout(() => ctl.abort(), 10_000);
+    try {
+      const res = await fetch(`${baseUrl}/api/sanctions/status`, {
+        headers: process.env['SANCTIONS_CRON_TOKEN']
+          ? { authorization: `Bearer ${process.env['SANCTIONS_CRON_TOKEN']}` }
+          : {},
+        signal: ctl.signal,
+      });
+      if (res.ok) {
+        const status = await res.json() as Record<string, unknown>;
+        console.log(`[refresh-lists] sanctions_status after refresh: ${JSON.stringify(status)}`);
+      } else {
+        console.warn(`[refresh-lists] sanctions_status returned HTTP ${res.status}`);
+      }
+    } finally {
+      clearTimeout(t);
+    }
+  } catch (err) {
+    console.warn('[refresh-lists] sanctions_status call failed (non-critical):', err instanceof Error ? err.message : err);
+  }
+
   const statusCode = anyWriteFailed ? 500 : 200;
   return new Response(
     JSON.stringify({ at: new Date().toISOString(), summary, anyWriteFailed }),
