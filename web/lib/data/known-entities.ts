@@ -716,16 +716,19 @@ export async function lookupKnownPEPLive(name: string): Promise<KnownPEP | null>
     const headers: Record<string, string> = { accept: "application/json" };
     const apiKey = process.env["OPENSANCTIONS_API_KEY"];
     if (apiKey) headers["Authorization"] = `Bearer ${apiKey}`;
+    interface OsResponse {
+      results?: Array<{ caption?: string; properties?: Record<string, unknown>; datasets?: string[] }>;
+    }
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), LIVE_PEP_TIMEOUT_MS);
-    let resJson: { results?: Array<{ caption?: string; properties?: Record<string, unknown>; datasets?: string[] }> };
+    let resJson: OsResponse = {};
     try {
       const res = await fetch(url.toString(), { headers, signal: ctrl.signal });
       if (!res.ok) {
         _livePepCache.set(q, { value: null, expiresAt: Date.now() + LIVE_PEP_CACHE_TTL_MS });
         return null;
       }
-      resJson = await res.json() as typeof resJson;
+      resJson = (await res.json()) as OsResponse;
     } finally {
       clearTimeout(t);
     }
