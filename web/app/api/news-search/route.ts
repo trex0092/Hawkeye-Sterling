@@ -268,7 +268,22 @@ async function fetchLocaleFeed(
   // topic queries. Adverse keyword classification is applied post-fetch by
   // classifyAdverseKeywords() in parseRss(), which does not need the URL
   // modifiers to work correctly.
-  const feed = `https://news.google.com/rss/search?q=${encodeURIComponent(`"${q}"`)}&hl=${locale.hl}&gl=${locale.gl}&ceid=${locale.ceid}`;
+  //
+  // Quote behaviour: a previous revision wrapped `q` in literal quotes
+  // (forcing exact-phrase match). That works for single-name subjects
+  // ("Vladimir Putin") but returns zero results for multi-word topic
+  // queries ("UAE money laundering 2026") because Google News doesn't
+  // index that exact phrase. The post-fetch fuzzy gate
+  // (fuzzyScore >= 55 OR keywordGroups.length > 0) is the relevance
+  // filter — it works for both names and topics — so quoting is
+  // redundant and actively harmful for topic queries. Quote only when
+  // q is a likely person/entity name: ≤4 words AND every word starts
+  // with an uppercase letter AND no digits.
+  const looksLikeName =
+    q.split(/\s+/).filter(Boolean).length <= 4 &&
+    /^(\p{Lu}[\p{L}'’-]*)(\s+\p{Lu}[\p{L}'’-]*)*$/u.test(q);
+  const queryParam = looksLikeName ? `"${q}"` : q;
+  const feed = `https://news.google.com/rss/search?q=${encodeURIComponent(queryParam)}&hl=${locale.hl}&gl=${locale.gl}&ceid=${locale.ceid}`;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FEED_TIMEOUT_MS);
   try {
