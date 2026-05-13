@@ -190,13 +190,19 @@ export const uaeEocnXlsxAdapter: SourceAdapter = {
   async fetch() {
     const fetchedAt = Date.now();
 
+    // Dynamic import with `as string` cast so TypeScript does NOT try to
+    // resolve 'exceljs' at build time. The package is opt-in: install it
+    // via `npm install exceljs --save` to activate this adapter. Without
+    // it, the adapter throws a clear error captured by run-all.ts and
+    // logged to /api/sanctions/last-errors — never blocks the build.
     let ExcelJS: ExcelJsModule;
     try {
-      ExcelJS = (await import('exceljs')) as unknown as ExcelJsModule;
+      ExcelJS = (await import('exceljs' as string)) as unknown as ExcelJsModule;
     } catch (err) {
       throw new Error(
         `uae_eocn requires the 'exceljs' npm package — ` +
-        `install it or remove uaeEocnXlsxAdapter from SOURCE_ADAPTERS. ` +
+        `install it with 'npm install exceljs --save' to enable XLSX ` +
+        `parsing of the UAE EOCN Local Terrorist List. ` +
         `Underlying error: ${err instanceof Error ? err.message : String(err)}`,
       );
     }
