@@ -1,11 +1,16 @@
 // UK OFSI Consolidated List — CSV export.
-// Source: https://ofsistorage.blob.core.windows.net/publishlive/ConList.csv
+// OFSI moved the consolidated list to a 2022format subdirectory; the
+// legacy /publishlive/ConList.csv URL began returning 404 sometime
+// after early 2024 (observed via /api/sanctions/last-errors). New
+// canonical URL below. Override via FEED_UK_OFSI env var if OFSI
+// migrates again.
 
 import type { SourceAdapter, NormalisedEntity, EntityType } from '../types.js';
 import { mkListing } from '../types.js';
 import { fetchText, sha256Hex } from '../fetch-util.js';
 
-const SOURCE_URL = 'https://ofsistorage.blob.core.windows.net/publishlive/ConList.csv';
+const SOURCE_URL = process.env['FEED_UK_OFSI']
+  ?? 'https://ofsistorage.blob.core.windows.net/publishlive/2022format/ConList.csv';
 
 export const ukOfsiAdapter: SourceAdapter = {
   id: 'uk_ofsi',

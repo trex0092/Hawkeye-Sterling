@@ -3,12 +3,9 @@
 // Web-only admin dashboard for sanctions ingestion. Lets MLROs:
 //   1. See current per-list freshness (recordCount, ageHours, status)
 //   2. See the most recent adapter failures from the ingest-error log
-//   3. Click "Refresh now" to force-run runIngestionAll() via the
-//      authenticated /api/admin/trigger-refresh endpoint
+//   3. Click "Refresh now" to force-run runIngestionAll() in-process
 //
-// Auth: standard portal session via enforce(). The Server Action that
-// fires the refresh injects the server-side ADMIN_TOKEN into the
-// internal API call — the token never leaves the server.
+// Auth: standard portal session via enforce().
 
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
@@ -32,8 +29,6 @@ interface IngestRunSummary {
     durationMs: number;
     errors: string[];
   }>;
-  triggeredAt?: string;
-  hint?: string;
 }
 
 interface IngestErrorEntry {
@@ -91,24 +86,33 @@ async function loadRecentErrors(headersList: Headers): Promise<IngestErrorEntry[
 }
 
 // ─── Server Action: force a refresh ──────────────────────────────────────────
+// Dynamic-imports runIngestionAll from the compiled brain output and calls
+// it directly in-process. Bypasses the self-fetch path (Netlify Lambdas
+// can't reliably TLS-handshake back to their own public origin).
+//
+// IMPORTANT: redirect() must NOT be called inside a try/catch — it throws
+// a NEXT_REDIRECT control-flow exception that catch would erroneously
+// handle as a real error (the "Error: NEXT_REDIRECT" banner). Pattern:
+// try only the work, redirect at the function tail.
 async function triggerRefresh(): Promise<void> {
   "use server";
-  const headersList = await headers();
-  const adminToken = process.env["ADMIN_TOKEN"];
-  if (!adminToken) {
-    redirect(`/admin/sanctions?error=${encodeURIComponent("ADMIN_TOKEN not configured on server")}`);
-  }
+  let outcome: { ok: true; result: IngestRunSummary } | { ok: false; message: string };
   try {
-    const res = await fetch(`${baseUrl(headersList)}/api/admin/trigger-refresh`, {
-      method: "POST",
-      headers: { authorization: `Bearer ${adminToken}` },
-    });
-    const text = await res.text();
-    redirect(`/admin/sanctions?refreshed=${encodeURIComponent(text)}`);
+    const mod = (await import(
+      "../../../../dist/src/ingestion/run-all.js" as string
+    )) as { runIngestionAll: (label: string) => Promise<IngestRunSummary> };
+    const result = await mod.runIngestionAll("admin-ui-trigger");
+    outcome = { ok: true, result };
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    redirect(`/admin/sanctions?error=${encodeURIComponent(msg)}`);
+    outcome = { ok: false, message: err instanceof Error ? err.message : String(err) };
   }
+  // Redirects are at the TOP LEVEL — outside any try/catch.
+  if (!outcome.ok) {
+    return redirect(`/admin/sanctions?error=${encodeURIComponent(outcome.message)}`);
+  }
+  return redirect(
+    `/admin/sanctions?refreshed=${encodeURIComponent(JSON.stringify(outcome.result))}`,
+  );
 }
 
 // ─── Page ────────────────────────────────────────────────────────────────────
@@ -121,7 +125,7 @@ export default async function AdminSanctionsPage({
   const req = new Request(`${baseUrl(headersList)}/admin/sanctions`, { headers: headersList });
   const gate = await enforce(req);
   if (!gate.ok) {
-    redirect("/login?next=/admin/sanctions");
+    return redirect("/login?next=/admin/sanctions");
   }
 
   const [statusLists, recentErrors] = await Promise.all([
@@ -195,8 +199,8 @@ export default async function AdminSanctionsPage({
       <section style={{ marginBottom: 32 }}>
         <h2 style={{ fontSize: 18, fontWeight: 600, marginBottom: 12 }}>Force refresh</h2>
         <p style={{ color: "#666", marginBottom: 12 }}>
-          Runs every adapter in parallel via the authenticated admin endpoint.
-          Each adapter has a 12-second timeout. Total wall-clock typically 12-15 s.
+          Runs every adapter in parallel in-process. Each adapter has a
+          12-second timeout. Total wall-clock typically 12-15 s.
         </p>
         <form action={triggerRefresh}>
           <button
