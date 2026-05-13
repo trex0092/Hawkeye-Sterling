@@ -314,6 +314,45 @@ interface CallCtx { authHeader?: string; timeoutMs?: number; sessionId?: string 
 const _callCtx = new AsyncLocalStorage<CallCtx>();
 
 // ── Internal API proxy ────────────────────────────────────────────────────────
+//
+// Self-fetch reliability on Netlify Lambdas has been historically flaky:
+// outbound HTTP from a Lambda back to its own public origin sometimes fails
+// the TLS handshake (~200 ms, generic "fetch failed") even though the
+// underlying service is healthy. The symptom is observed as cold-start MCP
+// timeouts (system_status / audit_trail). Retry once-with-backoff on
+// connection-level failures only. Do NOT retry on:
+//   · Timeouts — the AbortSignal fired; retrying inside the same parent
+//     deadline would just compound the delay.
+//   · Non-success HTTP status — that's an upstream service decision, not a
+//     transient connection failure.
+
+const CALLAPI_MAX_ATTEMPTS = 3;
+const CALLAPI_RETRY_BACKOFF_MS = [100, 250]; // applied before attempt 2, 3
+
+function isTransientFetchError(err: unknown): boolean {
+  if (!(err instanceof Error)) return false;
+  // Node fetch surfaces network-level failures as TypeError with cause set
+  // to ECONNRESET / ENOTFOUND / EAI_AGAIN / etc. Message "fetch failed" is
+  // the canonical Netlify Lambda self-fetch handshake failure.
+  const msg = err.message.toLowerCase();
+  if (msg.includes("fetch failed")) return true;
+  if (msg.includes("econnreset")) return true;
+  if (msg.includes("econnrefused")) return true;
+  if (msg.includes("etimedout") && !msg.includes("aborted")) return true;
+  if (msg.includes("enotfound")) return true;
+  if (msg.includes("eai_again")) return true;
+  if (msg.includes("socket hang up")) return true;
+  return false;
+}
+
+function isAbortLike(err: unknown): boolean {
+  if (!(err instanceof Error)) return false;
+  return err.name === "AbortError" ||
+    err.name === "TimeoutError" ||
+    err.message.includes("aborted") ||
+    err.message.includes("timed out");
+}
+
 async function callApi(
   path: string,
   method: "GET" | "POST",
@@ -331,40 +370,60 @@ async function callApi(
     for (const [k, v] of Object.entries(query)) url.searchParams.set(k, v);
   }
   const ctx = _callCtx.getStore();
-  try {
-    const res = await fetch(url.toString(), {
-      method,
-      headers: {
-        "content-type": "application/json",
-        ...(ctx?.authHeader ? { authorization: ctx.authHeader } : {}),
-      },
-      ...(body ? { body: JSON.stringify(body) } : {}),
-      signal: AbortSignal.timeout(timeoutMs ?? ctx?.timeoutMs ?? 55_000),
-    });
-    const ct = res.headers.get("content-type") ?? "";
-    if (!ct.includes("application/json")) {
-      const text = await res.text().catch(() => "");
-      return {
-        ok: res.ok,
-        status: res.status,
-        format: ct.includes("text/html") ? "html" : "text",
-        message: `Report generated (${text.length} bytes). Open the Hawkeye Sterling web interface to view the full rendered report.`,
-      };
+  const headers: Record<string, string> = {
+    "content-type": "application/json",
+    ...(ctx?.authHeader ? { authorization: ctx.authHeader } : {}),
+  };
+  const init: RequestInit = {
+    method,
+    headers,
+    ...(body ? { body: JSON.stringify(body) } : {}),
+    signal: AbortSignal.timeout(timeoutMs ?? ctx?.timeoutMs ?? 55_000),
+  };
+
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= CALLAPI_MAX_ATTEMPTS; attempt++) {
+    try {
+      const res = await fetch(url.toString(), init);
+      const ct = res.headers.get("content-type") ?? "";
+      if (!ct.includes("application/json")) {
+        const text = await res.text().catch(() => "");
+        return {
+          ok: res.ok,
+          status: res.status,
+          format: ct.includes("text/html") ? "html" : "text",
+          message: `Report generated (${text.length} bytes). Open the Hawkeye Sterling web interface to view the full rendered report.`,
+        };
+      }
+      return await res.json().catch(() => ({ ok: res.ok, status: res.status }));
+    } catch (err) {
+      lastError = err;
+      // Timeout → caller is past its budget. Don't retry.
+      if (isAbortLike(err)) {
+        return {
+          ok: false,
+          degraded: true,
+          error: `Tool timed out — the upstream service did not respond within the allowed window. Manual MLRO review is required for any case affected by this outage.`,
+          _governance: { humanReviewRequired: true, degradedService: path },
+          attempts: attempt,
+        };
+      }
+      // Transient connection error → retry with backoff.
+      if (isTransientFetchError(err) && attempt < CALLAPI_MAX_ATTEMPTS) {
+        const wait = CALLAPI_RETRY_BACKOFF_MS[attempt - 1] ?? 250;
+        await new Promise((r) => setTimeout(r, wait));
+        continue;
+      }
+      // Non-transient or out of attempts → bubble up.
+      break;
     }
-    return await res.json().catch(() => ({ ok: res.ok, status: res.status }));
-  } catch (err) {
-    const isTimeout = err instanceof Error &&
-      (err.name === "AbortError" || err.name === "TimeoutError" || err.message.includes("aborted") || err.message.includes("timed out"));
-    if (isTimeout) {
-      return {
-        ok: false,
-        degraded: true,
-        error: `Tool timed out — the upstream service did not respond within the allowed window. Manual MLRO review is required for any case affected by this outage.`,
-        _governance: { humanReviewRequired: true, degradedService: path },
-      };
-    }
-    return { ok: false, error: err instanceof Error ? err.message : String(err) };
   }
+
+  return {
+    ok: false,
+    error: lastError instanceof Error ? lastError.message : String(lastError),
+    attempts: CALLAPI_MAX_ATTEMPTS,
+  };
 }
 
 // ── Tool definitions ──────────────────────────────────────────────────────────
