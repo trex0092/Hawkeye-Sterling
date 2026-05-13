@@ -261,6 +261,9 @@ export async function POST(req: Request): Promise<NextResponse> {
   const token = process.env["ASANA_TOKEN"];
   let asanaTaskUrl: string | undefined;
   let asanaTaskGid: string | undefined;
+  let asanaTaskError: string | undefined;
+  let asanaCommentError: string | undefined;
+  let asanaSkipped = false;
 
   if (token) {
     try {
@@ -268,11 +271,16 @@ export async function POST(req: Request): Promise<NextResponse> {
       if (task) {
         asanaTaskUrl = task.permalink_url;
         asanaTaskGid = task.gid;
+      } else {
+        asanaTaskError = "Asana task creation returned no gid/permalink";
+        console.warn(`[v2/intake] ${asanaTaskError}`);
       }
     } catch (err) {
-      console.warn("[v2/intake] Asana task creation threw:", err instanceof Error ? err.message : err);
+      asanaTaskError = err instanceof Error ? err.message : String(err);
+      console.warn("[v2/intake] Asana task creation threw:", asanaTaskError);
     }
   } else {
+    asanaSkipped = true;
     console.warn("[v2/intake] ASANA_TOKEN not set — skipping Asana integration");
   }
 
@@ -280,17 +288,34 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (token && asanaTaskGid && screenResult) {
     try {
       const comment = buildScreeningComment(body, screenResult, asanaTaskGid);
-      await postAsanaComment(asanaTaskGid, comment, token);
+      const commentOk = await postAsanaComment(asanaTaskGid, comment, token);
+      if (!commentOk) {
+        asanaCommentError = "Asana comment POST returned non-2xx";
+      }
     } catch (err) {
-      console.warn("[v2/intake] Asana comment POST threw:", err instanceof Error ? err.message : err);
+      asanaCommentError = err instanceof Error ? err.message : String(err);
+      console.warn("[v2/intake] Asana comment POST threw:", asanaCommentError);
     }
   }
 
   const latencyMs = Date.now() - t0;
 
+  // Explicit Asana status so the caller never has to infer success from the
+  // mere presence/absence of asanaTaskUrl — every failure path is surfaced
+  // with a reason. Eliminates silent-failure ambiguity per FDL Art.18 audit
+  // traceability requirements.
+  const asana = asanaSkipped
+    ? { ok: false, skipped: true as const, reason: "ASANA_TOKEN not set" }
+    : asanaTaskError
+      ? { ok: false, skipped: false as const, reason: asanaTaskError }
+      : asanaCommentError
+        ? { ok: false, skipped: false as const, taskCreated: true, reason: asanaCommentError }
+        : { ok: true as const };
+
   return NextResponse.json({
     ok: true,
     subject: subject.name,
+    asana,
     ...(asanaTaskUrl ? { asanaTaskUrl } : {}),
     ...(asanaTaskGid ? { asanaTaskGid } : {}),
     screening: screenResult

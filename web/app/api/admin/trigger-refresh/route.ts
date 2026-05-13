@@ -83,7 +83,6 @@ export async function POST(req: Request): Promise<NextResponse> {
 
     return NextResponse.json(
       {
-        ok: result.ok,
         triggeredAt,
         ...result,
         hint: result.ok

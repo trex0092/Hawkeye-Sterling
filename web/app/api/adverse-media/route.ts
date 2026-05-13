@@ -192,7 +192,7 @@ async function liveAdverseMedia(subject: string) {
     } = {
       subject,
       riskTier: "unknown",
-      riskDetail: `Adverse media search incomplete — GDELT live feed unavailable (${gdeltResult.error}). Manual MLRO review required.`,
+      riskDetail: `Adverse media search incomplete — GDELT live feed unavailable (serviceError${gdeltResult.stale ? ", stale fallback unavailable" : ""}). Manual MLRO review required.`,
       totalItems: 0,
       adverseItems: 0,
       criticalCount: 0,
