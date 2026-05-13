@@ -8,8 +8,8 @@ import { euFsfAdapter } from './sources/eu-fsf.js';
 import { fatfAdapter } from './sources/fatf.js';
 import { ofacConsAdapter } from './sources/ofac-cons.js';
 import { ofacSdnAdapter } from './sources/ofac-sdn.js';
-import { uaeLtlAdapter } from './sources/uae-seed.js';
 import { uaeEocnXlsxAdapter } from './sources/uae-eocn-xlsx.js';
+import { uaeLtlXlsxAdapter } from './sources/uae-ltl-xlsx.js';
 import { ukOfsiAdapter } from './sources/uk-ofsi.js';
 import { unConsolidatedAdapter } from './sources/un-consolidated.js';
 import { caOsfiAdapter } from './sources/ca-osfi.js';
@@ -44,6 +44,6 @@ export const SOURCE_ADAPTERS: readonly SourceAdapter[] = [
   auDfatAdapter,      // opt-in: requires 'exceljs' for XLSX parsing
   jpMofAdapter,       // opt-in: requires 'exceljs' + FEED_JP_MOF env (per-country URLs)
   fatfAdapter,
-  uaeEocnXlsxAdapter, // opt-in: XLSX-fetched LTL from uaeiec.gov.ae
-  uaeLtlAdapter,      // legacy seed-based fallback retained for offline / test
+  uaeEocnXlsxAdapter,  // opt-in: XLSX-fetched EOCN list from uaeiec.gov.ae
+  uaeLtlXlsxAdapter,   // opt-in: XLSX-fetched UAE Terrorist List (FileID c2b2f915-...)
 ];
