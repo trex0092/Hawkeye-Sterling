@@ -132,6 +132,40 @@ function wrapWithGovernance(
     confidenceScore = rs > 70 ? 0.85 : rs > 40 ? 0.75 : 0.65;
   }
 
+  // ── Degraded-service surfacing (audit H-2) ─────────────────────────────────
+  // Tools previously emitted retrievalGroundedValidation.passed=false alongside
+  // verification.passed=true and humanReviewRequired=true at the same flat
+  // confidence — the two validators silently disagreed. Lift any layer-2 RGV
+  // failure into _governance so the operator dashboard can render it, and
+  // downgrade confidenceScore proportionally to the defect rate.
+  const degradedServices: string[] = [];
+  let rgvDefects: number | null = null;
+  let rgvUngroundedClaims: number | null = null;
+  const rgv = r["retrievalGroundedValidation"];
+  if (rgv && typeof rgv === "object") {
+    const rgvObj = rgv as Record<string, unknown>;
+    const rgvPassed = rgvObj["passed"];
+    if (rgvPassed === false) {
+      degradedServices.push("rag_grounding");
+      rgvDefects = typeof rgvObj["defectCount"] === "number" ? (rgvObj["defectCount"] as number) : null;
+      rgvUngroundedClaims = typeof rgvObj["ungroundedClaimCount"] === "number"
+        ? (rgvObj["ungroundedClaimCount"] as number)
+        : null;
+      // Confidence haircut. 0 defects = no haircut; ≥10 defects = capped at 0.5.
+      // Linear interpolation in between. This is a heuristic — the regulator
+      // still requires MLRO sign-off either way (humanReviewRequired=true).
+      const defects = rgvDefects ?? 0;
+      const haircut = Math.min(defects / 10, 1) * 0.25;
+      confidenceScore = Math.max(0.5, confidenceScore - haircut);
+    }
+  }
+  // LISTS_MISSING surfacing — when the brain ran on incomplete sanctions data
+  // it's a degraded service even if the underlying tool returned 200 with a
+  // well-formed body. listsVerified is the canonical signal from upstream.
+  if (!listsVerified || missingLists.length > 0) {
+    degradedServices.push("sanctions_lists");
+  }
+
   const engineVersion = resolveEngineVersion();
   const commitRef = resolveCommitRef();
   const generatedAt = new Date().toISOString();
@@ -157,6 +191,9 @@ function wrapWithGovernance(
       humanReviewRequired: true,
       consequenceLevel: level,
       reviewNote: "AI-generated output — MLRO review required before any compliance action. FDL No.10/2025 Art.18.",
+      ...(degradedServices.length > 0 ? { degradedServices } : {}),
+      ...(rgvDefects !== null ? { rgvDefects } : {}),
+      ...(rgvUngroundedClaims !== null ? { rgvUngroundedClaims } : {}),
       _provenance: {
         tool: toolName,
         engineVersion,
