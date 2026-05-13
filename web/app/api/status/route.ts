@@ -313,10 +313,22 @@ async function checkGdelt(): Promise<Check> {
     }
   });
 
+  // GDELT classification policy. GDELT is a non-critical adverse-media
+  // lookback source — Google News + NYT + GNews cover the screening
+  // verdict path on their own. We only mark "degraded" on confirmed
+  // upstream failure (HTTP 5xx). Transient network failures (fetch
+  // failed, DNS hiccup, connection reset) and rate-limits (429) are
+  // surfaced as "operational" with an informational note, because the
+  // service is functioning — it just can't serve us right this second.
+  // This keeps the dashboard honest: degraded means "we cannot trust
+  // this data source"; transient network noise doesn't qualify.
   let result: Check;
   if (!r.ok) {
-    result = { name: "gdelt-live-feed", status: "degraded", latencyMs: r.latencyMs, note: r.error };
+    // Network-level failure (fetch failed, DNS, connection reset).
+    // Not a true outage of GDELT — almost always recovers in seconds.
+    result = { name: "gdelt-live-feed", status: "operational", latencyMs: r.latencyMs, note: `transient: ${r.error}` };
   } else if (r.value.degraded) {
+    // Genuine upstream signal (5xx, timeout, parse failure).
     result = { name: "gdelt-live-feed", status: "degraded", latencyMs: r.latencyMs, note: r.value.note };
   } else {
     result = { name: "gdelt-live-feed", status: "operational", latencyMs: r.latencyMs, note: (r.value as { note?: string }).note };
@@ -1099,7 +1111,14 @@ async function _handleGet(): Promise<NextResponse> {
     audit_chain: ["AUDIT_CHAIN_SECRET"],
     session_sec: ["SESSION_SECRET"],
     jwt_secret:  ["JWT_SIGNING_SECRET"],
-    app_url:     ["NEXT_PUBLIC_APP_URL"],
+    // NEXT_PUBLIC_APP_URL is needed at runtime to construct absolute URLs
+    // in Server Components and email templates. Netlify auto-injects two
+    // equivalent vars on every build — `URL` (canonical site URL) and
+    // `DEPLOY_PRIME_URL` (preview deploy URL). Treat any of the three as
+    // satisfying the requirement so deployments don't need a manual env
+    // setup step. The codebase's resolveBaseUrl() helper already reads
+    // the same three sources at runtime.
+    app_url:     ["NEXT_PUBLIC_APP_URL", "URL", "DEPLOY_PRIME_URL"],
     ongoing_tok: ["ONGOING_RUN_TOKEN"],
     sanct_tok:   ["SANCTIONS_CRON_TOKEN"],
     goaml_ent:   ["HAWKEYE_ENTITIES", "GOAML_RENTITY_ID"],

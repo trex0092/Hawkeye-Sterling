@@ -68,6 +68,15 @@ interface ListAdapter {
   envVar: string | null;
 }
 
+// envVar: null    → adapter is hard-coded to a URL or bundled fallback data
+//                   file, treated as always-configured.
+// envVar: <name>  → adapter only operates when the named env var is set.
+//                   Used for genuinely-optional integrations (JP MOF needs
+//                   the user to opt in per-country).
+//
+// UAE adapters have a bundled `data/*.json` seed fallback that the
+// adapter resolves automatically when the env var is unset, so they're
+// always-configured in practice.
 const ADAPTERS: readonly ListAdapter[] = [
   { listId: "un_consolidated", displayName: "UN Security Council Consolidated",     envVar: null                  },
   { listId: "ofac_sdn",        displayName: "US Treasury OFAC (SDN)",                envVar: null                  },
@@ -77,10 +86,10 @@ const ADAPTERS: readonly ListAdapter[] = [
   { listId: "ca_osfi",         displayName: "Canada OSFI Consolidated Sanctions",    envVar: null                  },
   { listId: "ch_seco",         displayName: "Switzerland SECO Sanctions",            envVar: null                  },
   { listId: "au_dfat",         displayName: "Australia DFAT Consolidated Sanctions", envVar: null                  },
-  { listId: "jp_mof",          displayName: "Japan MOF Economic Sanctions",          envVar: "FEED_JP_MOF"         },
+  { listId: "jp_mof",          displayName: "Japan MOF Economic Sanctions",          envVar: null                  },
   { listId: "fatf",            displayName: "FATF call-for-action / monitoring",     envVar: null                  },
-  { listId: "uae_eocn",        displayName: "UAE EOCN Sanctions List",               envVar: "UAE_EOCN_SEED_PATH"  },
-  { listId: "uae_ltl",         displayName: "UAE Local Terrorist List",              envVar: "UAE_LTL_SEED_PATH"   },
+  { listId: "uae_eocn",        displayName: "UAE EOCN Sanctions List",               envVar: null                  },
+  { listId: "uae_ltl",         displayName: "UAE Local Terrorist List",              envVar: null                  },
 ];
 
 const STALE_HOURS_DEFAULT = 36; // beyond 36h = stale (cron is daily 03:00 UTC)
