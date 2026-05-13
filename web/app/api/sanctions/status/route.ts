@@ -74,6 +74,8 @@ const ADAPTERS: readonly ListAdapter[] = [
   { listId: "ofac_cons",       displayName: "US Treasury OFAC (Consolidated Non-SDN)", envVar: null                },
   { listId: "eu_fsf",          displayName: "EU Financial Sanctions",                envVar: null                  },
   { listId: "uk_ofsi",         displayName: "UK HM Treasury OFSI",                   envVar: null                  },
+  { listId: "ca_osfi",         displayName: "Canada OSFI Consolidated Sanctions",    envVar: null                  },
+  { listId: "ch_seco",         displayName: "Switzerland SECO Sanctions",            envVar: null                  },
   { listId: "fatf",            displayName: "FATF call-for-action / monitoring",     envVar: null                  },
   { listId: "uae_eocn",        displayName: "UAE EOCN Sanctions List",               envVar: "UAE_EOCN_SEED_PATH"  },
   { listId: "uae_ltl",         displayName: "UAE Local Terrorist List",              envVar: "UAE_LTL_SEED_PATH"   },

@@ -9,9 +9,14 @@
 import type { getStore as GetStoreFn } from "@netlify/blobs";
 
 const CRITICAL_LISTS = ["ofac_sdn", "un_consolidated", "eu_fsf"] as const;
+// All ingested lists. CA OSFI + CH SECO added in feat/sanctions-coverage-
+// expansion; not critical (their absence does not flip the gate to
+// LISTS_MISSING) but absence shows up in /api/sanctions/status as a
+// coverage warning.
 const ALL_LISTS = [
   "ofac_sdn", "un_consolidated", "eu_fsf",
-  "uk_ofsi", "uae_eocn", "uae_ltl",
+  "uk_ofsi", "ca_osfi", "ch_seco",
+  "uae_eocn", "uae_ltl",
 ] as const;
 
 // 5 s — short enough that an admin-triggered refresh becomes visible
