@@ -90,6 +90,61 @@ async function getStore(): Promise<ReturnType<BlobsModuleShape["getStore"]> | nu
   });
 }
 
+// ── Optional Upstash Redis path ──────────────────────────────────────────────
+// If UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN are set, prefer
+// Redis for rate-limit counters (atomic INCR with TTL). Redis gives us
+// genuinely-shared, race-free counts across Lambda instances — Blobs
+// can't, because it's read-modify-write without a CAS primitive. Falls
+// back to Blobs (and then in-process) if Redis is unavailable.
+
+const REDIS_URL = process.env["UPSTASH_REDIS_REST_URL"];
+const REDIS_TOKEN = process.env["UPSTASH_REDIS_REST_TOKEN"];
+const REDIS_ENABLED = Boolean(REDIS_URL && REDIS_TOKEN);
+
+async function redisCommand(args: (string | number)[]): Promise<unknown> {
+  if (!REDIS_ENABLED) return null;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 500);
+  try {
+    const res = await fetch(REDIS_URL as string, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${REDIS_TOKEN as string}`,
+      },
+      body: JSON.stringify(args),
+      signal: ctrl.signal,
+    });
+    if (!res.ok) return null;
+    const j = await res.json() as { result?: unknown };
+    return j.result ?? null;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+/**
+ * Atomic INCR-with-window via Upstash. Returns the new count and the
+ * window's TTL in ms. null = Redis unavailable; caller falls back.
+ */
+async function redisIncrementWindow(toolName: string): Promise<{ count: number; ttlMs: number } | null> {
+  // Use a 1-minute fixed window keyed by epoch-minute so window roll-over
+  // is automatic. Key = "hs:rate:<tool>:<epochMinute>".
+  const epochMinute = Math.floor(Date.now() / 60_000);
+  const key = `hs:rate:${toolName}:${epochMinute}`;
+  const incr = await redisCommand(["INCR", key]);
+  if (typeof incr !== "number") return null;
+  // Set TTL once on first INCR (count == 1). Best-effort; even if EXPIRE
+  // fails the key will simply hold the bucket value forever — not a leak
+  // in practice because next minute uses a different key.
+  if (incr === 1) await redisCommand(["EXPIRE", key, 65]);
+  // Window starts at epochMinute*60_000; ends at (epochMinute+1)*60_000.
+  const ttlMs = (epochMinute + 1) * 60_000 - Date.now();
+  return { count: incr, ttlMs: Math.max(ttlMs, 0) };
+}
+
 // ── Rate limiter ─────────────────────────────────────────────────────────────
 
 const CLASS_RATE_LIMITS: Record<ConsequenceLevel, number> = {
@@ -103,10 +158,25 @@ export async function checkAndIncrementRate(
   level: ConsequenceLevel,
 ): Promise<{ allowed: boolean; retryAfterMs?: number }> {
   const limit = CLASS_RATE_LIMITS[level];
+
+  // Preferred path: Upstash Redis with atomic INCR. Gives us race-free
+  // shared counters across Lambda instances. Falls back to Blobs below
+  // if Redis is unconfigured or unreachable.
+  if (REDIS_ENABLED) {
+    const redisResult = await redisIncrementWindow(toolName);
+    if (redisResult) {
+      if (redisResult.count > limit) {
+        return { allowed: false, retryAfterMs: redisResult.ttlMs };
+      }
+      return { allowed: true };
+    }
+    // Redis call returned null → fall through to Blobs path.
+  }
+
   const now = Date.now();
   const key = `rate/${toolName}`;
 
-  // Try shared (blobs) path first.
+  // Fallback: Blobs path with in-process cache.
   let win: RateWindow | null = null;
   const cached = _rateCache.get(toolName);
   if (cached && now < cached.expiresAt) {
