@@ -139,6 +139,22 @@ export default async (): Promise<Response> => {
     console.warn('[refresh-lists] sanctions_status call failed (non-critical):', err instanceof Error ? err.message : err);
   }
 
+  // Fire alert webhook on write failure so on-call is notified immediately.
+  if (anyWriteFailed && process.env['ALERT_WEBHOOK_URL']) {
+    try {
+      await fetch(process.env['ALERT_WEBHOOK_URL'], {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: `[Hawkeye Sterling] refresh-lists WRITE FAILED — ${failed} adapter(s) at ${new Date().toISOString()}. Screening is degraded until next successful run.`,
+          summary,
+        }),
+      });
+    } catch (webhookErr) {
+      console.warn('[refresh-lists] alert webhook failed (non-critical):', webhookErr instanceof Error ? webhookErr.message : webhookErr);
+    }
+  }
+
   const statusCode = anyWriteFailed ? 500 : 200;
   return new Response(
     JSON.stringify({ at: new Date().toISOString(), summary, anyWriteFailed }),
