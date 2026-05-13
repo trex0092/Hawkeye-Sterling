@@ -18,6 +18,7 @@
 
 import { SOURCE_ADAPTERS } from './index.js';
 import { getBlobsStore } from './blobs-store.js';
+import { logIngestError } from './error-log.js';
 import type { IngestionReport } from './types.js';
 
 const ADAPTER_TIMEOUT_MS = 12_000;
@@ -97,6 +98,13 @@ export async function runIngestionAll(label: string): Promise<IngestRunSummary> 
             );
             report.errors.push('write verification failed: blob not readable after write');
             writeFailed = true;
+            void logIngestError({
+              at: new Date().toISOString(),
+              source: label,
+              adapterId: adapter.id,
+              phase: 'verify',
+              message: 'blob not readable after write',
+            });
           } else {
             console.log(
               `[${label}] write verified list=${adapter.id} key=${blobKey} entityCount=${entities.length}`,
@@ -109,6 +117,13 @@ export async function runIngestionAll(label: string): Promise<IngestRunSummary> 
           );
           report.errors.push(`write read-back error: ${msg}`);
           writeFailed = true;
+          void logIngestError({
+            at: new Date().toISOString(),
+            source: label,
+            adapterId: adapter.id,
+            phase: 'verify',
+            message: msg,
+          });
         }
       } catch (writeErr) {
         const msg = writeErr instanceof Error ? writeErr.message : String(writeErr);
@@ -117,12 +132,30 @@ export async function runIngestionAll(label: string): Promise<IngestRunSummary> 
         );
         report.errors.push(`blob write failed: ${msg}`);
         writeFailed = true;
+        void logIngestError({
+          at: new Date().toISOString(),
+          source: label,
+          adapterId: adapter.id,
+          phase: 'write',
+          message: msg,
+        });
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       console.error(`[${label}] ADAPTER FETCH FAILED list=${adapter.id} error=${msg}`);
       report.errors.push(msg);
       report.durationMs = Date.now() - started;
+      // Categorise: HTTP status appears in messages like "HTTP 404" from
+      // fetch-util; capture it as a structured field for the dashboard.
+      const statusMatch = msg.match(/HTTP\s+(\d{3})/);
+      void logIngestError({
+        at: new Date().toISOString(),
+        source: label,
+        adapterId: adapter.id,
+        phase: 'fetch',
+        message: msg,
+        ...(statusMatch ? { httpStatus: Number.parseInt(statusMatch[1]!, 10) } : {}),
+      });
     }
     return { report, writeFailed };
   };

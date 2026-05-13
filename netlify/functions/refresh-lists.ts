@@ -1,148 +1,20 @@
-// Hawkeye Sterling — scheduled refresh function.
-// Iterates the SourceAdapter registry, fetches each, normalises to
-// NormalisedEntity[], writes the dataset + report to Blobs, and logs a JSON
-// summary to the function log. Invoked by cron (see netlify.toml).
+// Hawkeye Sterling — scheduled refresh function (daily 03:00 UTC).
+//
+// Delegates the per-adapter ingestion to runIngestionAll() so the
+// parallel runner + error-log wiring + blob-write verification stays
+// in one place (src/ingestion/run-all.ts). This function adds the
+// refresh-lists-specific tail: a post-refresh sanctions_status read
+// and an optional ALERT_WEBHOOK_URL fanout on write failure.
 
 import type { Config } from '@netlify/functions';
-import { SOURCE_ADAPTERS } from '../../src/ingestion/index.js';
-import type { IngestionReport } from '../../src/ingestion/types.js';
-import { getBlobsStore } from '../../src/ingestion/blobs-store.js';
+import { runIngestionAll } from '../../src/ingestion/run-all.js';
 
-// Per-adapter fetch timeout. Each adapter runs in parallel via
-// Promise.allSettled below, so this is the wall-clock bound on a single
-// adapter, not a serial budget across all eight. Previously 90 s ×
-// 8 sequential — well outside the 26 s Netlify scheduled-function ceiling,
-// which is why the cron has never successfully populated Blobs.
-const ADAPTER_TIMEOUT_MS = 12_000;
-
-function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
-  return new Promise<T>((resolve, reject) => {
-    const t = setTimeout(
-      () => reject(new Error(`${label} timed out after ${ms}ms`)),
-      ms,
-    );
-    p.then(
-      (v) => {
-        clearTimeout(t);
-        resolve(v);
-      },
-      (e) => {
-        clearTimeout(t);
-        reject(e);
-      },
-    );
-  });
-}
+const LABEL = 'refresh-lists';
 
 export default async (): Promise<Response> => {
-  const store = await getBlobsStore();
-
-  const runAdapter = async (
-    adapter: typeof SOURCE_ADAPTERS[number],
-  ): Promise<{ report: IngestionReport; writeFailed: boolean }> => {
-    const started = Date.now();
-    const blobKey = `${adapter.id}/latest.json`;
-    const report: IngestionReport = {
-      listId: adapter.id,
-      sourceUrl: adapter.sourceUrl,
-      recordCount: 0,
-      checksum: '',
-      fetchedAt: started,
-      durationMs: 0,
-      errors: [],
-    };
-    let writeFailed = false;
-    try {
-      const { entities, rawChecksum, sourceVersion } = await withTimeout(
-        adapter.fetch(),
-        ADAPTER_TIMEOUT_MS,
-        `adapter ${adapter.id}`,
-      );
-      report.recordCount = entities.length;
-      report.checksum = rawChecksum;
-      if (sourceVersion) (report as IngestionReport & { sourceVersion: string }).sourceVersion = sourceVersion;
-      report.durationMs = Date.now() - started;
-
-      try {
-        await store.putDataset(adapter.id, entities, report);
-
-        // Immediately read back to verify the write succeeded
-        try {
-          const verification = await store.getReport(adapter.id);
-          if (!verification) {
-            console.error(
-              `[refresh-lists] WRITE VERIFICATION FAILED list=${adapter.id} key=${blobKey} — report blob not found immediately after write`,
-            );
-            report.errors.push('write verification failed: blob not readable after write');
-            writeFailed = true;
-          } else {
-            console.log(
-              `[refresh-lists] write verified list=${adapter.id} key=${blobKey} entityCount=${entities.length}`,
-            );
-          }
-        } catch (verifyErr) {
-          const msg = verifyErr instanceof Error ? verifyErr.message : String(verifyErr);
-          console.error(`[refresh-lists] WRITE READ-BACK ERROR list=${adapter.id} key=${blobKey} error=${msg}`);
-          report.errors.push(`write read-back error: ${msg}`);
-          writeFailed = true;
-        }
-      } catch (writeErr) {
-        const msg = writeErr instanceof Error ? writeErr.message : String(writeErr);
-        console.error(`[refresh-lists] BLOB WRITE FAILED list=${adapter.id} key=${blobKey} error=${msg}`);
-        report.errors.push(`blob write failed: ${msg}`);
-        writeFailed = true;
-      }
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      console.error(`[refresh-lists] ADAPTER FETCH FAILED list=${adapter.id} error=${msg}`);
-      report.errors.push(msg);
-      report.durationMs = Date.now() - started;
-    }
-    return { report, writeFailed };
-  };
-
-  // Parallel fan-out. allSettled so one slow adapter cannot starve the others.
-  const settled = await Promise.allSettled(SOURCE_ADAPTERS.map(runAdapter));
-  const summary: IngestionReport[] = [];
-  let anyWriteFailed = false;
-  for (let i = 0; i < settled.length; i++) {
-    const r = settled[i]!;
-    if (r.status === 'fulfilled') {
-      summary.push(r.value.report);
-      if (r.value.writeFailed) anyWriteFailed = true;
-    } else {
-      // Defensive — runAdapter catches everything, but if a top-level throw
-      // ever escapes, fabricate a failure report so the summary stays aligned.
-      const adapter = SOURCE_ADAPTERS[i]!;
-      const msg = r.reason instanceof Error ? r.reason.message : String(r.reason);
-      console.error(`[refresh-lists] UNCAUGHT REJECTION list=${adapter.id} error=${msg}`);
-      summary.push({
-        listId: adapter.id,
-        sourceUrl: adapter.sourceUrl,
-        recordCount: 0,
-        checksum: '',
-        fetchedAt: Date.now(),
-        durationMs: 0,
-        errors: [`unhandled rejection: ${msg}`],
-      });
-      anyWriteFailed = true;
-    }
-  }
-
-  // Log per-list summary so operators can read the full picture in function logs
-  const ok = summary.filter(r => r.errors.length === 0).length;
-  const failed = summary.filter(r => r.errors.length > 0).length;
-  console.log(`[refresh-lists] SUMMARY ok=${ok} failed=${failed} anyWriteFailed=${anyWriteFailed}`);
-  for (const r of summary) {
-    const st = r.errors.length === 0 ? 'ok' : 'error';
-    console.log(
-      `[refresh-lists]   ${r.listId}: status=${st} entityCount=${r.recordCount}` +
-      (r.errors.length ? ` errors=${JSON.stringify(r.errors)}` : ''),
-    );
-  }
+  const result = await runIngestionAll(LABEL);
 
   // Call sanctions_status to confirm storage state from the read path.
-  // Uses DEPLOY_PRIME_URL so it works on preview/branch deploys too.
   const baseUrl =
     process.env['URL'] ??
     process.env['DEPLOY_PRIME_URL'] ??
@@ -159,36 +31,36 @@ export default async (): Promise<Response> => {
       });
       if (res.ok) {
         const status = await res.json() as Record<string, unknown>;
-        console.log(`[refresh-lists] sanctions_status after refresh: ${JSON.stringify(status)}`);
+        console.log(`[${LABEL}] sanctions_status after refresh: ${JSON.stringify(status)}`);
       } else {
-        console.warn(`[refresh-lists] sanctions_status returned HTTP ${res.status}`);
+        console.warn(`[${LABEL}] sanctions_status returned HTTP ${res.status}`);
       }
     } finally {
       clearTimeout(t);
     }
   } catch (err) {
-    console.warn('[refresh-lists] sanctions_status call failed (non-critical):', err instanceof Error ? err.message : err);
+    console.warn(`[${LABEL}] sanctions_status call failed (non-critical):`, err instanceof Error ? err.message : err);
   }
 
   // Fire alert webhook on write failure so on-call is notified immediately.
-  if (anyWriteFailed && process.env['ALERT_WEBHOOK_URL']) {
+  if (result.anyWriteFailed && process.env['ALERT_WEBHOOK_URL']) {
     try {
       await fetch(process.env['ALERT_WEBHOOK_URL'], {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          text: `[Hawkeye Sterling] refresh-lists WRITE FAILED — ${failed} adapter(s) at ${new Date().toISOString()}. Screening is degraded until next successful run.`,
-          summary,
+          text: `[Hawkeye Sterling] ${LABEL} WRITE FAILED — ${result.failed_count} adapter(s) at ${result.at}. Screening is degraded until next successful run.`,
+          summary: result.summary,
         }),
       });
     } catch (webhookErr) {
-      console.warn('[refresh-lists] alert webhook failed (non-critical):', webhookErr instanceof Error ? webhookErr.message : webhookErr);
+      console.warn(`[${LABEL}] alert webhook failed (non-critical):`, webhookErr instanceof Error ? webhookErr.message : webhookErr);
     }
   }
 
-  const statusCode = anyWriteFailed ? 500 : 200;
+  const statusCode = result.anyWriteFailed ? 500 : 200;
   return new Response(
-    JSON.stringify({ at: new Date().toISOString(), summary, anyWriteFailed }),
+    JSON.stringify({ at: result.at, summary: result.summary, anyWriteFailed: result.anyWriteFailed }),
     { status: statusCode, headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' } },
   );
 };
