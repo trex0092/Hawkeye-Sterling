@@ -45,11 +45,14 @@ function validateNewsResponseArray<T>(
   raw: unknown,
   accessor: (root: Record<string, unknown>) => unknown,
 ): T[] {
+  // Some providers (Tiingo, certain RSS-derived feeds) return a bare
+  // top-level array. The accessor doesn't apply — return as-is.
+  if (Array.isArray(raw)) return raw as T[];
   if (!raw || typeof raw !== "object") {
     const sig = `${provider}:non-object`;
     if (!_driftLogged.has(sig)) {
       _driftLogged.add(sig);
-      console.warn(`[${provider}] schema drift — response is ${typeof raw}, expected object`);
+      console.warn(`[${provider}] schema drift — response is ${typeof raw}, expected object or array`);
     }
     return [];
   }
@@ -348,18 +351,16 @@ function newsCatcherAdapter(): NewsAdapter {
             headers: { "x-api-key": key },
           }),
         );
-        if (!res.ok) return [];
-        const json = (await res.json()) as {
-          articles?: Array<{
-            clean_url?: string;
-            title?: string;
-            link?: string;
-            published_date?: string;
-            excerpt?: string;
-            language?: string;
-          }>;
-        };
-        return (json.articles ?? [])
+        if (!res.ok) { console.warn(`[newscatcher] HTTP ${res.status}`); return []; }
+        const articles = validateNewsResponseArray<{
+          clean_url?: string;
+          title?: string;
+          link?: string;
+          published_date?: string;
+          excerpt?: string;
+          language?: string;
+        }>("newscatcher", await res.json(), (r) => r["articles"]);
+        return articles
           .filter((a) => a.title && a.link)
           .map((a) => ({
             source: "newscatcher",
@@ -888,11 +889,12 @@ function tiingoAdapter(): NewsAdapter {
             headers: { accept: "application/json" },
           }),
         );
-        if (!res.ok) return [];
-        const json = (await res.json()) as Array<{
+        if (!res.ok) { console.warn(`[tiingo] HTTP ${res.status}`); return []; }
+        // Tiingo returns a bare top-level array — validator handles that path.
+        const items = validateNewsResponseArray<{
           id?: number; title?: string; url?: string; publishedDate?: string; description?: string; source?: string;
-        }>;
-        return (Array.isArray(json) ? json : [])
+        }>("tiingo", await res.json(), () => undefined);
+        return items
           .filter((a) => a.title && a.url)
           .map((a) => ({
             source: "tiingo",
@@ -1054,11 +1056,11 @@ function worldNewsAdapter(): NewsAdapter {
         const res = await abortable(
           fetch(`https://api.worldnewsapi.com/search-news?${params.toString()}`),
         );
-        if (!res.ok) return [];
-        const json = (await res.json()) as {
-          news?: Array<{ title?: string; url?: string; publish_date?: string; text?: string; source_country?: string; sentiment?: number }>;
-        };
-        return (json.news ?? [])
+        if (!res.ok) { console.warn(`[worldnews] HTTP ${res.status}`); return []; }
+        const news = validateNewsResponseArray<{
+          title?: string; url?: string; publish_date?: string; text?: string; source_country?: string; sentiment?: number;
+        }>("worldnews", await res.json(), (r) => r["news"]);
+        return news
           .filter((n) => n.title && n.url)
           .map((n) => ({
             source: "worldnews",
@@ -1094,11 +1096,11 @@ function alphaVantageAdapter(): NewsAdapter {
         const res = await abortable(
           fetch(`https://www.alphavantage.co/query?${params.toString()}`),
         );
-        if (!res.ok) return [];
-        const json = (await res.json()) as {
-          feed?: Array<{ title?: string; url?: string; time_published?: string; summary?: string; source?: string; overall_sentiment_score?: number }>;
-        };
-        return (json.feed ?? [])
+        if (!res.ok) { console.warn(`[alphavantage] HTTP ${res.status}`); return []; }
+        const feed = validateNewsResponseArray<{
+          title?: string; url?: string; time_published?: string; summary?: string; source?: string; overall_sentiment_score?: number;
+        }>("alphavantage", await res.json(), (r) => r["feed"]);
+        return feed
           .filter((f) => f.title && f.url)
           .map((f) => ({
             source: "alphavantage",
