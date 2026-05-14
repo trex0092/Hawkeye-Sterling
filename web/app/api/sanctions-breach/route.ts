@@ -1,7 +1,9 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;import { NextResponse } from "next/server";
+export const maxDuration = 60;
+import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { enforce } from "@/lib/server/enforce";
 export interface SanctionsBreachResult {
   breachSeverity: "critical" | "high" | "medium" | "low";
   voluntaryDisclosureRecommended: boolean;
@@ -13,36 +15,9 @@ export interface SanctionsBreachResult {
   regulatoryBasis: string;
 }
 
-const FALLBACK: SanctionsBreachResult = {
-  breachSeverity: "high",
-  voluntaryDisclosureRecommended: true,
-  estimatedPenaltyRange:
-    "AED 500,000 – AED 5,000,000 (per transaction) under UAE Exec. Order 2023 sanctions law",
-  mitigatingFactors: [
-    "Self-discovered breach — not identified by regulator",
-    "Prompt freezing of funds upon discovery",
-    "No prior enforcement history",
-    "Robust AML programme otherwise compliant",
-  ],
-  aggravatingFactors: [
-    "Breach persisted 45 days before detection",
-    "Total value AED 850,000 — material amount",
-    "Sanctioned party on both OFAC SDN and EU CFSP lists",
-  ],
-  immediateActions: [
-    "Freeze all accounts and transactions connected to sanctioned party immediately",
-    "Report to CBUAE Financial Crime Supervision within 24 hours (mandatory)",
-    "File STR with UAE FIU via goAML within 48 hours",
-    "Engage external sanctions counsel within 24 hours",
-    "Preserve all records — implement litigation hold",
-  ],
-  disclosureDraft:
-    "We, Hawkeye Sterling DPMS, write to notify the CBUAE Financial Crime Supervision Department of a potential sanctions compliance incident discovered on [DATE]. Upon routine screening review, we identified that transactions totalling AED [AMOUNT] were processed to/from a counterparty subsequently confirmed as appearing on the OFAC SDN List / EU CFSP Annex. All relevant accounts have been frozen. We are cooperating fully and request guidance on further steps. A comprehensive internal investigation report will be provided within 10 business days.",
-  regulatoryBasis:
-    "UAE Federal Decree-Law on Combating ML and TF; Exec. Order 2023 on Sanctions Compliance; OFAC reporting obligations; EU Reg 269/2014",
-};
-
 export async function POST(req: Request) {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   let body: {
     counterparty: string;
     transactionAmount: string;
