@@ -86,7 +86,11 @@ const ADAPTERS: readonly ListAdapter[] = [
   { listId: "ca_osfi",         displayName: "Canada OSFI Consolidated Sanctions",    envVar: null                  },
   { listId: "ch_seco",         displayName: "Switzerland SECO Sanctions",            envVar: null                  },
   { listId: "au_dfat",         displayName: "Australia DFAT Consolidated Sanctions", envVar: null                  },
-  { listId: "jp_mof",          displayName: "Japan MOF Economic Sanctions",          envVar: null                  },
+  // Audit H-03: jp_mof has no canonical consolidated URL — the adapter is
+  // dormant by design until FEED_JP_MOF is set to one or more comma-
+  // separated XLSX URLs. Declaring envVar here flips the status from
+  // misleading "healthy 0 entities" to honest "unconfigured" when unset.
+  { listId: "jp_mof",          displayName: "Japan MOF Economic Sanctions",          envVar: "FEED_JP_MOF"          },
   { listId: "fatf",            displayName: "FATF call-for-action / monitoring",     envVar: null                  },
   { listId: "uae_eocn",        displayName: "UAE EOCN Sanctions List",               envVar: null                  },
   { listId: "uae_ltl",         displayName: "UAE Local Terrorist List",              envVar: null                  },
