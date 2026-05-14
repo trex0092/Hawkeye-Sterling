@@ -22,11 +22,17 @@ export function GET(): NextResponse {
       ...(defaultId ? { defaultId } : {}),
     });
   } catch (err) {
-    console.error("[entities]", err instanceof Error ? err.message : err);
+    // Audit DR-02: returning 200 with empty entities masked HAWKEYE_ENTITIES
+    // JSON-parse failures as "no entities configured". MLRO forms rendered
+    // unusable but operators saw nothing wrong. Now: 503 surfaces the
+    // misconfiguration so monitors and the UI both treat it as a real fault.
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[entities]", message);
     return NextResponse.json({
-      ok: true,
-      entities: [],
-      note: "HAWKEYE_ENTITIES is malformed or missing — returned empty list. Check JSON syntax in Netlify env vars.",
-    });
+      ok: false,
+      error: "entities-config-malformed",
+      message,
+      hint: "HAWKEYE_ENTITIES is malformed or missing — check JSON syntax in Netlify env vars.",
+    }, { status: 503 });
   }
 }

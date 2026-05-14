@@ -113,15 +113,19 @@ async function handleWeaponizedBrain(): Promise<NextResponse> {
     const enhanced = enhance();
     return NextResponse.json({ ok: true, manifest, integrity, enhanced });
   } catch (err) {
-    console.error("[weaponized-brain]", err instanceof Error ? err.message : err);
+    // Audit DR-03: returning 200 with `offline: true` buried the signal
+    // inside the JSON body. Liveness probes that only inspect HTTP status
+    // saw "healthy" while the brain was dead. Now: 503 + structured
+    // payload so dashboards alarm on the infrastructure failure.
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[weaponized-brain]", message);
     return NextResponse.json({
-      ok: true,
+      ok: false,
       offline: true,
-      manifest: null,
-      integrity: null,
-      enhanced: null,
-      note: "weaponized brain unavailable — dist not built or corrupted",
-    });
+      error: "weaponized-brain-unavailable",
+      message,
+      hint: "dist/ artefact not built or corrupted; check Netlify build logs",
+    }, { status: 503 });
   }
 }
 
