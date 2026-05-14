@@ -39,24 +39,10 @@ export async function POST(req: Request) {
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 2048,
-        system: `You are an AML/CFT link-analysis intelligence engine. Given a subject and their known network, infer additional entities that investigators should look for. Base your reasoning on:
-- Corporate naming / holding patterns common to UAE/MENA structures
-- UBO residual tranches and nominee arrangements
-- Sector exposure (gold, real estate, DNFBP, crypto)
-- Shell entity typologies (BVI, Cayman, Seychelles SPVs)
-- Counterparty clustering around known flagged entities
-
-Respond ONLY with valid JSON — no markdown fences, no explanation outside the JSON:
-{ "discovered": [ { "label": string, "kind": "ubo"|"counterparty"|"ai_discovered", "relationship": string, "confidence": number, "reasoning": string } ] }
-
-Limit to 5 entities. Be specific, AML-grounded, and plausible.`,
+        system: `You are an AML/CFT link-analysis intelligence engine. Given a subject and their known network, infer additional entities that investigators should look for. Base your reasoning on:\n- Corporate naming / holding patterns common to UAE/MENA structures\n- UBO residual tranches and nominee arrangements\n- Sector exposure (gold, real estate, DNFBP, crypto)\n- Shell entity typologies (BVI, Cayman, Seychelles SPVs)\n- Counterparty clustering around known flagged entities\n\nRespond ONLY with valid JSON — no markdown fences, no explanation outside the JSON:\n{ "discovered": [ { "label": string, "kind": "ubo"|"counterparty"|"ai_discovered", "relationship": string, "confidence": number, "reasoning": string } ] }\n\nLimit to 5 entities. Be specific, AML-grounded, and plausible.`,
         messages: [{
           role: "user",
-          content: `Subject: ${subject}
-Known nodes: ${knownNodes.join(", ")}
-Known edges: ${JSON.stringify(knownEdges)}
-
-What additional entities should investigators look for?`,
+          content: `Subject: ${subject}\nKnown nodes: ${knownNodes.join(", ")}\nKnown edges: ${JSON.stringify(knownEdges)}\n\nWhat additional entities should investigators look for?`,
         }],
       });
 

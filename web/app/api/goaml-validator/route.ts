@@ -121,56 +121,10 @@ export async function POST(req: Request) {
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 1500,
-        system: `You are a UAE FIU goAML STR filing specialist. Validate an STR (Suspicious Transaction Report) draft against UAE FIU goAML requirements and UAE FDL 10/2025.
-
-goAML required fields for UAE STR:
-HEADER: Report type, reference, date
-REPORTING ENTITY: goAML ID, name, MLRO name, contact details
-SUBJECT: Full name, ID (Emirates ID/passport), DOB, nationality, address, occupation, employer
-ACCOUNTS: Account numbers, IBAN, account type, opening date
-TRANSACTIONS: Date, amount (AED), type (using goAML codes), counterparty, channel
-NARRATIVE: Clear description of suspicion, pattern, crystallisation date, legal basis
-
-Narrative quality standards (UAE FIU guidance):
-- State the specific suspicious activity factually
-- Reference comparison to customer's stated profile
-- Include suspicion crystallisation date and triggering event
-- Reference the specific AML law provision (FDL 10/2025 Art.26)
-- Name the predicate offence if identifiable
-- State no plausible innocent explanation found
-- Use professional, objective language — no speculation
-
-Respond ONLY with valid JSON — no markdown fences:
-{
-  "overallStatus": "ready_to_file"|"needs_corrections"|"incomplete"|"rejected",
-  "completenessScore": <0-100>,
-  "narrativeQuality": "excellent"|"good"|"adequate"|"poor"|"insufficient",
-  "fieldChecks": [{"field":"<name>","section":"header"|"subject"|"transactions"|"narrative"|"reporting_entity","status":"complete"|"incomplete"|"missing"|"invalid","currentValue":"<if known>","requiredFormat":"<if applicable>","issue":"<if not complete>","recommendation":"<fix>"}],
-  "criticalIssues": ["<issue>"],
-  "warnings": ["<warning>"],
-  "narrativeFeedback": "<paragraph>",
-  "narrativeStrengths": ["<strength>"],
-  "narrativeWeaknesses": ["<weakness>"],
-  "goAmlSpecificRequirements": ["<requirement>"],
-  "improvedNarrativeSuggestion": "<improved paragraph>",
-  "filingDeadlineAssessment": "<deadline analysis>",
-  "regulatoryBasis": "<citation>"
-}`,
+        system: `You are a UAE FIU goAML STR filing specialist. Validate an STR (Suspicious Transaction Report) draft against UAE FIU goAML requirements and UAE FDL 10/2025.\n\ngoAML required fields for UAE STR:\nHEADER: Report type, reference, date\nREPORTING ENTITY: goAML ID, name, MLRO name, contact details\nSUBJECT: Full name, ID (Emirates ID/passport), DOB, nationality, address, occupation, employer\nACCOUNTS: Account numbers, IBAN, account type, opening date\nTRANSACTIONS: Date, amount (AED), type (using goAML codes), counterparty, channel\nNARRATIVE: Clear description of suspicion, pattern, crystallisation date, legal basis\n\nNarrative quality standards (UAE FIU guidance):\n- State the specific suspicious activity factually\n- Reference comparison to customer's stated profile\n- Include suspicion crystallisation date and triggering event\n- Reference the specific AML law provision (FDL 10/2025 Art.26)\n- Name the predicate offence if identifiable\n- State no plausible innocent explanation found\n- Use professional, objective language — no speculation\n\nRespond ONLY with valid JSON — no markdown fences:\n{\n  "overallStatus": "ready_to_file"|"needs_corrections"|"incomplete"|"rejected",\n  "completenessScore": <0-100>,\n  "narrativeQuality": "excellent"|"good"|"adequate"|"poor"|"insufficient",\n  "fieldChecks": [{"field":"<name>","section":"header"|"subject"|"transactions"|"narrative"|"reporting_entity","status":"complete"|"incomplete"|"missing"|"invalid","currentValue":"<if known>","requiredFormat":"<if applicable>","issue":"<if not complete>","recommendation":"<fix>"}],\n  "criticalIssues": ["<issue>"],\n  "warnings": ["<warning>"],\n  "narrativeFeedback": "<paragraph>",\n  "narrativeStrengths": ["<strength>"],\n  "narrativeWeaknesses": ["<weakness>"],\n  "goAmlSpecificRequirements": ["<requirement>"],\n  "improvedNarrativeSuggestion": "<improved paragraph>",\n  "filingDeadlineAssessment": "<deadline analysis>",\n  "regulatoryBasis": "<citation>"\n}`,
         messages: [{
           role: "user",
-          content: `STR Narrative Draft: ${body.narrative}
-Subject Name: ${body.subjectName ?? "not provided"}
-Subject ID Number: ${body.subjectIdNumber ?? "not provided"}
-Subject DOB: ${body.subjectDob ?? "not provided"}
-Subject Nationality: ${body.subjectNationality ?? "not provided"}
-Subject Address: ${body.subjectAddress ?? "not provided"}
-Account Numbers: ${body.accountNumbers ?? "not provided"}
-Transaction Summary: ${body.transactionSummary ?? "not provided"}
-Reporting Entity: ${body.reportingEntityName ?? "not provided"}
-MLRO Name: ${body.mlroName ?? "not provided"}
-Additional Context: ${body.context ?? "none"}
-
-Validate this STR draft against UAE FIU goAML requirements.`,
+          content: `STR Narrative Draft: ${body.narrative}\nSubject Name: ${body.subjectName ?? "not provided"}\nSubject ID Number: ${body.subjectIdNumber ?? "not provided"}\nSubject DOB: ${body.subjectDob ?? "not provided"}\nSubject Nationality: ${body.subjectNationality ?? "not provided"}\nSubject Address: ${body.subjectAddress ?? "not provided"}\nAccount Numbers: ${body.accountNumbers ?? "not provided"}\nTransaction Summary: ${body.transactionSummary ?? "not provided"}\nReporting Entity: ${body.reportingEntityName ?? "not provided"}\nMLRO Name: ${body.mlroName ?? "not provided"}\nAdditional Context: ${body.context ?? "none"}\n\nValidate this STR draft against UAE FIU goAML requirements.`,
         }],
       });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";

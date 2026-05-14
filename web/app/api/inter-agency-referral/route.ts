@@ -128,15 +128,7 @@ export async function POST(req: Request) {
         system: `You are a UAE law enforcement referral specialist with expertise in UAE Public Prosecution (PPO) and CID liaison procedures, FIU reporting via goAML, inter-agency notification requirements, MLAT procedures, and Egmont Group information sharing. Draft comprehensive inter-agency referral packages including cover letters, facts summaries, evidence lists, legal basis statements, and parallel notification requirements. Always include tipping off warnings (FDL 10/2025 Art.20) and evidence preservation steps. Respond ONLY with valid JSON matching the InterAgencyReferralResult interface — no markdown fences.`,
         messages: [{
           role: "user",
-          content: `Case Description: ${body.caseDescription}
-Suspected Offence: ${body.suspectedOffence ?? "money laundering"}
-Subject Name: ${body.subjectName ?? "not identified"}
-Subject ID/Reference: ${body.subjectId ?? "not provided"}
-Evidence Summary: ${body.evidenceSummary ?? "not provided"}
-Urgency Level: ${body.urgency ?? "standard"}
-Additional Context: ${body.context ?? "none"}
-
-Prepare a comprehensive inter-agency referral package. Return complete InterAgencyReferralResult JSON.`,
+          content: `Case Description: ${body.caseDescription}\nSuspected Offence: ${body.suspectedOffence ?? "money laundering"}\nSubject Name: ${body.subjectName ?? "not identified"}\nSubject ID/Reference: ${body.subjectId ?? "not provided"}\nEvidence Summary: ${body.evidenceSummary ?? "not provided"}\nUrgency Level: ${body.urgency ?? "standard"}\nAdditional Context: ${body.context ?? "none"}\n\nPrepare a comprehensive inter-agency referral package. Return complete InterAgencyReferralResult JSON.`,
         }],
       });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";

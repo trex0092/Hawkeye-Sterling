@@ -131,14 +131,7 @@ export async function POST(req: Request) {
         system: `You are a UAE financial crime insider threat specialist with expertise in employee conduct risk, tipping off indicators (FDL 10/2025 Art.20), financial crime facilitation patterns, and CBUAE internal controls requirements. Assess employee behaviour, lifestyle indicators, system access patterns, and financial circumstances for insider threat risk. Identify threat categories (financial crime facilitation, data theft, tipping off, fraud, bribery) with specific indicators. Provide coordinated HR and compliance action recommendations. Respond ONLY with valid JSON matching the InsiderThreatResult interface — no markdown fences.`,
         messages: [{
           role: "user",
-          content: `Employee Name: ${body.employeeName ?? "not provided"}
-Employee Role/Position: ${body.employeeRole ?? "not specified"}
-Observed Behaviours: ${body.observedBehaviours ?? "not described"}
-System Access Level: ${body.accessLevel ?? "not specified"}
-Financial Circumstances: ${body.financialCircumstances ?? "not provided"}
-Additional Context: ${body.context ?? "none"}
-
-Assess this employee for insider threat risk. Return complete InsiderThreatResult JSON.`,
+          content: `Employee Name: ${body.employeeName ?? "not provided"}\nEmployee Role/Position: ${body.employeeRole ?? "not specified"}\nObserved Behaviours: ${body.observedBehaviours ?? "not described"}\nSystem Access Level: ${body.accessLevel ?? "not specified"}\nFinancial Circumstances: ${body.financialCircumstances ?? "not provided"}\nAdditional Context: ${body.context ?? "none"}\n\nAssess this employee for insider threat risk. Return complete InsiderThreatResult JSON.`,
         }],
       });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
