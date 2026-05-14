@@ -58,6 +58,33 @@ function redactSystem(
   });
 }
 
+// Audit ENH-01: automatic prompt caching for long system prompts.
+//
+// Anthropic's cache_control: ephemeral marker saves 90% on input tokens
+// for repeated prompts (5-minute TTL, but the cache is shared across all
+// requests within the lifetime). 183 routes in this codebase hardcode
+// long system prompts averaging ~1500 tokens; without cache_control every
+// invocation pays full input cost.
+//
+// This helper auto-promotes a string system prompt to a 1-element array
+// with cache_control marker IFF the prompt is long enough to be worth
+// caching (Anthropic charges a 25% cache-write premium, so very short
+// prompts come out negative).
+const CACHE_MIN_CHARS = 1024; // ~256 tokens; cache write cost amortises at ~2 hits
+function autoCacheSystem(
+  system: string | SystemBlock[] | undefined,
+): string | SystemBlock[] | undefined {
+  if (typeof system !== "string") return system; // caller has explicit blocks; respect their cache_control choices
+  if (system.length < CACHE_MIN_CHARS) return system; // too short to benefit
+  return [
+    {
+      type: "text" as const,
+      text: system,
+      cache_control: { type: "ephemeral" },
+    } as SystemBlock,
+  ];
+}
+
 // ── Guarded client ────────────────────────────────────────────────────────────
 
 // Default for routes on Netlify's standard Lambda budget (~26 s ceiling on
@@ -90,10 +117,12 @@ export class AnthropicGuard {
         const map: RedactionMap = {};
         const t0 = Date.now();
 
-        // Redact all outbound text
+        // Redact all outbound text. system is also auto-cached when it's a
+        // long string — saves 90% on input tokens for the 183 routes with
+        // hardcoded multi-paragraph compliance-analyst prompts (audit ENH-01).
         const safe = {
           ...opts,
-          system: redactSystem(opts.system, map),
+          system: autoCacheSystem(redactSystem(opts.system, map)),
           messages: ((opts.messages as Anthropic.Messages.MessageParam[]) ?? []).map((msg) => ({
             ...msg,
             content: redactContent(
