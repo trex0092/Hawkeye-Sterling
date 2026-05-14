@@ -221,8 +221,22 @@ async function reportToAsana(item: FourEyesItem, decision: "approve" | "reject",
     const payload = (await res.json().catch((err: unknown) => {
       console.warn("[hawkeye] four-eyes Asana POST response parse failed:", err);
       return null;
-    })) as { data?: { permalink_url?: string } } | null;
-    return payload?.data?.permalink_url ?? null;
+    })) as { data?: { gid?: string; permalink_url?: string }; errors?: Array<{ message?: string }> } | null;
+    // Audit DR-13: previously returned just permalink_url. If Asana
+    // returned 200 with no task gid (soft validation error), the caller
+    // treated the decision as Asana-linked when no task actually existed.
+    // Require gid before declaring the link valid; log soft errors so ops
+    // can triage the project/workspace config.
+    if (!res.ok || !payload?.data?.gid) {
+      const errMessages = payload?.errors?.map((e) => e.message).filter(Boolean).join("; ");
+      console.warn(
+        `[hawkeye] four-eyes Asana POST did not create a task — HTTP ${res.status}` +
+          (errMessages ? ` errors: ${errMessages}` : "") +
+          ". Decision logged locally without Asana mirror.",
+      );
+      return null;
+    }
+    return payload.data.permalink_url ?? null;
   } catch (err) {
     console.warn("[hawkeye] four-eyes reportToAsana threw — decision logged locally without Asana task:", err);
     return null;
