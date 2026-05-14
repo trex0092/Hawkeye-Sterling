@@ -218,22 +218,37 @@ export async function POST(req: Request): Promise<NextResponse> {
     type NewsResult = Awaited<ReturnType<typeof searchAllNews>>;
     type LlmResult  = Awaited<ReturnType<typeof llmAdapter.search>>;
 
+    // Per-adapter timeout: wrap each external lookup so any single slow
+    // provider can't drag the whole screen past Netlify's 26s sync ceiling.
+    // 4s was chosen because the 95th percentile for a healthy adapter is
+    // ~2.5s; anything beyond that is almost certainly a transient hang
+    // from a third-party that we'd rather degrade than block on. Returning
+    // the empty type matches the existing .catch fallback contract.
+    const ADAPTER_TIMEOUT_MS = 4_000;
+    const adapterTimeout = <T>(p: Promise<T>, fallback: T): Promise<T> => {
+      let to: NodeJS.Timeout | null = null;
+      const timeoutP = new Promise<T>((resolve) => {
+        to = setTimeout(() => { warn("adapter timeout >4s"); resolve(fallback); }, ADAPTER_TIMEOUT_MS);
+      });
+      return Promise.race([p, timeoutP]).finally(() => { if (to) clearTimeout(to); });
+    };
+
     const [
       openSanctionsResults, commercialResults, registryResults,
       countryRegistryResults, countrySanctionsResults, freeAdapterResults,
       rawNews, llmArts,
     ] = await Promise.all([
       // Group A — hit-gated (only when local hits sparse or common name)
-      hitGated ? LIVE_OPENSANCTIONS_ADAPTER.lookup(subject.name, subject.jurisdiction ?? undefined).catch((e): OSResult => { warn(e); return []; }) : Promise.resolve<OSResult>([]),
-      hitGated && commAdapter.isAvailable() ? commAdapter.lookup(subject.name, subject.jurisdiction ?? undefined).catch((e): CommResult => { warn(e); return []; }) : Promise.resolve<CommResult>([]),
-      hitGated ? searchAllRegistries(subject.name, subject.jurisdiction ? { jurisdiction: subject.jurisdiction, limit: ADAPTER_QUERY_LIMIT } : { limit: ADAPTER_QUERY_LIMIT }).catch((e): RegResult => { warn(e); return { records: [], providersUsed: [] }; }) : Promise.resolve<RegResult>({ records: [], providersUsed: [] }),
+      hitGated ? adapterTimeout(LIVE_OPENSANCTIONS_ADAPTER.lookup(subject.name, subject.jurisdiction ?? undefined).catch((e): OSResult => { warn(e); return []; }), [] as OSResult) : Promise.resolve<OSResult>([]),
+      hitGated && commAdapter.isAvailable() ? adapterTimeout(commAdapter.lookup(subject.name, subject.jurisdiction ?? undefined).catch((e): CommResult => { warn(e); return []; }), [] as CommResult) : Promise.resolve<CommResult>([]),
+      hitGated ? adapterTimeout(searchAllRegistries(subject.name, subject.jurisdiction ? { jurisdiction: subject.jurisdiction, limit: ADAPTER_QUERY_LIMIT } : { limit: ADAPTER_QUERY_LIMIT }).catch((e): RegResult => { warn(e); return { records: [], providersUsed: [] }; }), { records: [], providersUsed: [] } as RegResult) : Promise.resolve<RegResult>({ records: [], providersUsed: [] }),
       // Group B — authoritative country sources, always run
-      canAug ? searchCountryRegistries(subject.name, subject.jurisdiction ?? undefined, ADAPTER_QUERY_LIMIT).catch((e): CRegResult => { warn(e); return { records: [], jurisdictions: [] }; }) : Promise.resolve<CRegResult>({ records: [], jurisdictions: [] }),
-      canAug ? searchCountrySanctions(subject.name, subject.jurisdiction ?? undefined, ADAPTER_QUERY_LIMIT).catch((e): CSanResult => { warn(e); return { records: [], lists: [] }; }) : Promise.resolve<CSanResult>({ records: [], lists: [] }),
-      canAug ? searchFreeAdapters(subject.name, subject.jurisdiction ?? undefined, ADAPTER_QUERY_LIMIT).catch((e): FreeResult => { warn(e); return { records: [], providersUsed: [] }; }) : Promise.resolve<FreeResult>({ records: [], providersUsed: [] }),
+      canAug ? adapterTimeout(searchCountryRegistries(subject.name, subject.jurisdiction ?? undefined, ADAPTER_QUERY_LIMIT).catch((e): CRegResult => { warn(e); return { records: [], jurisdictions: [] }; }), { records: [], jurisdictions: [] } as CRegResult) : Promise.resolve<CRegResult>({ records: [], jurisdictions: [] }),
+      canAug ? adapterTimeout(searchCountrySanctions(subject.name, subject.jurisdiction ?? undefined, ADAPTER_QUERY_LIMIT).catch((e): CSanResult => { warn(e); return { records: [], lists: [] }; }), { records: [], lists: [] } as CSanResult) : Promise.resolve<CSanResult>({ records: [], lists: [] }),
+      canAug ? adapterTimeout(searchFreeAdapters(subject.name, subject.jurisdiction ?? undefined, ADAPTER_QUERY_LIMIT).catch((e): FreeResult => { warn(e); return { records: [], providersUsed: [] }; }), { records: [], providersUsed: [] } as FreeResult) : Promise.resolve<FreeResult>({ records: [], providersUsed: [] }),
       // Group C — news velocity + LLM adverse-media recall
-      canAug ? searchAllNews(subject.name, { limit: 50 }).catch((e): NewsResult => { warn(e); return { articles: [], providersUsed: [] }; }) : Promise.resolve<NewsResult>({ articles: [], providersUsed: [] }),
-      canAug && llmAdapter.isAvailable() ? llmAdapter.search(subject.name, { limit: 15 }).catch((e): LlmResult => { warn(e); return []; }) : Promise.resolve<LlmResult>([]),
+      canAug ? adapterTimeout(searchAllNews(subject.name, { limit: 50 }).catch((e): NewsResult => { warn(e); return { articles: [], providersUsed: [] }; }), { articles: [], providersUsed: [] } as NewsResult) : Promise.resolve<NewsResult>({ articles: [], providersUsed: [] }),
+      canAug && llmAdapter.isAvailable() ? adapterTimeout(llmAdapter.search(subject.name, { limit: 15 }).catch((e): LlmResult => { warn(e); return []; }), [] as LlmResult) : Promise.resolve<LlmResult>([]),
     ]);
 
     // Merge LLM adverse-media articles (prepend so they rank first)
