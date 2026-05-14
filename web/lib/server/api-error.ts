@@ -38,8 +38,12 @@ export interface StandardSuccessMeta {
 
 // Resolve commitRef from build-time / runtime env vars.
 // F-08: wire APP_VERSION and GIT_COMMIT_SHA from Netlify env vars.
+// HAWKEYE_BUILD_COMMIT_REF is inlined by next.config.mjs at build time so
+// the deployed SHA reaches serverless functions even when Netlify doesn't
+// forward COMMIT_REF to the Lambda runtime (audit M-06).
 export function resolveCommitRef(): string {
   return (
+    process.env["HAWKEYE_BUILD_COMMIT_REF"] ??
     process.env["APP_VERSION"] ??
     process.env["GIT_COMMIT_SHA"] ??
     process.env["NEXT_PUBLIC_COMMIT_REF"] ??

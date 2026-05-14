@@ -283,7 +283,21 @@ async function handleGet(req: Request): Promise<Response> {
     HS_DISABLED: Boolean(process.env["HS_DISABLED"]),
   };
 
-  const ok = summary.missing === 0 && summary.stale === 0;
+  // Audit L-03: `ok` previously flipped false whenever any list was missing
+  // or stale, even if 10 of 12 were healthy. That conflated partial
+  // degradation with total outage and produced constant red on monitors.
+  // Now: `ok=true` means the endpoint is operational and at least one list
+  // is healthy. Partial degradation surfaces via `degraded=true` + the
+  // `warnings` array. Reserve `ok=false` for total outage (zero healthy
+  // lists), where no screen can be trusted.
+  const ok = summary.healthy > 0;
+  const degraded = summary.missing > 0 || summary.stale > 0;
+  const warnings: string[] = [];
+  for (const l of lists) {
+    if (l.status === "missing") warnings.push(`${l.listId} (${l.displayName}): missing from blob storage`);
+    else if (l.status === "stale" && l.ageHours !== null) warnings.push(`${l.listId} (${l.displayName}): stale by ${l.ageHours}h`);
+    else if (l.status === "healthy" && l.entityCount === 0) warnings.push(`${l.listId} (${l.displayName}): blob present but zero entities — parser or upstream gap (audit H-03)`);
+  }
 
   // Build per-list freshness summary for compliance audit trail
   const dataFreshness: Record<string, { lastRefreshed: string | null; ageHours: number | null; status: ListStatus }> = {};
@@ -299,6 +313,8 @@ async function handleGet(req: Request): Promise<Response> {
   return NextResponse.json(
     {
       ok,
+      degraded,
+      warnings,
       generatedAt: new Date().toISOString(),
       staleThresholdHours: staleHours,
       dataFreshness,
@@ -306,9 +322,11 @@ async function handleGet(req: Request): Promise<Response> {
       lists,
       env,
       latencyMs,
-      hint: ok
-        ? "All eight adapters present and within freshness threshold."
-        : "One or more lists are missing or stale. Check refresh-lists cron logs (03:00 UTC daily). UAE adapters return empty unless UAE_EOCN_SEED_PATH / UAE_LTL_SEED_PATH point to a local JSON seed.",
+      hint: !ok
+        ? "Total outage — no healthy sanctions lists. Do not perform screening until at least one list is restored."
+        : degraded
+          ? "Partial degradation — see warnings[]. Check refresh-lists cron logs (03:00 UTC daily). UAE adapters return empty unless UAE_EOCN_SEED_PATH / UAE_LTL_SEED_PATH point to a local JSON seed."
+          : "All adapters present and within freshness threshold.",
     },
     { headers: gate.headers },
   );

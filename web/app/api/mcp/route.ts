@@ -956,25 +956,56 @@ const TOOLS: ToolDef[] = [
   },
 
   // ── TRANSACTIONS & TYPOLOGY ───────────────────────────────────────────────────
+  // Schema accepts two call shapes (audit H-05): the legacy flat form
+  // (`{ amountUsd, senderName, ... }`) and the explicit form that mirrors the
+  // underlying /api/transaction-anomaly contract (`{ transaction: {...},
+  // sessionId? }`). The handler normalises both into the API contract before
+  // dispatch so callers can't accidentally produce a 400 by omitting the
+  // `transaction` wrapper.
   {
     name: "transaction_anomaly",
-    description: "Real-time transaction anomaly scoring. Detects structuring, layering, smurfing, and FATF typology patterns.",
+    description: "Real-time transaction anomaly scoring. Detects structuring, layering, smurfing, and FATF typology patterns. Pass either flat fields (amountUsd, senderName, ...) or the explicit form ({ transaction: {...}, sessionId? }).",
     inputSchema: {
       type: "object",
       properties: {
-        amountUsd: { type: "number", description: "Transaction amount in USD" },
+        transaction: {
+          type: "object",
+          description: "Explicit form — matches the /api/transaction-anomaly payload shape.",
+          properties: {
+            amountUsd: { type: "number", description: "Transaction amount in USD" },
+            paymentMethod: { type: "string", description: "cash | wire | card | crypto | cheque | other" },
+            assetClass: { type: "string", description: "gold | silver | platinum | diamonds | precious_stones | jewellery | watches | other" },
+            counterpartyFirstSeen: { type: "boolean" },
+            countryRiskScore: { type: "number", description: "0-100 country risk score" },
+            timestampUtc: { type: "string" },
+          },
+          required: ["amountUsd"],
+        },
+        sessionId: { type: "string", description: "Groups transactions from the same customer session for streaming anomaly state." },
+        // Flat-form fields (legacy) — handler hoists into transaction.* if `transaction` is absent.
+        amountUsd: { type: "number", description: "Flat-form: transaction amount in USD" },
         senderName: { type: "string" },
         senderCountry: { type: "string" },
         receiverName: { type: "string" },
         receiverCountry: { type: "string" },
-        channel: { type: "string", description: "e.g. wire, cash, crypto, trade" },
+        channel: { type: "string" },
         narrative: { type: "string" },
-        countryRiskScore: { type: "number", description: "0-100 country risk score" },
+        countryRiskScore: { type: "number" },
         counterpartyFirstSeen: { type: "boolean" },
       },
-      required: ["amountUsd"],
     },
-    handler: async (args) => callApi("/api/transaction-anomaly", "POST", { transaction: args }),
+    handler: async (args) => {
+      // Normalise flat-form callers into the API's `{ transaction: {...} }` shape.
+      const a = args as Record<string, unknown>;
+      const hasExplicitTransaction = a["transaction"] && typeof a["transaction"] === "object";
+      const body = hasExplicitTransaction
+        ? { transaction: a["transaction"], ...(a["sessionId"] ? { sessionId: a["sessionId"] } : {}) }
+        : (() => {
+            const { sessionId: sid, ...rest } = a;
+            return { transaction: rest, ...(sid ? { sessionId: sid } : {}) };
+          })();
+      return callApi("/api/transaction-anomaly", "POST", body);
+    },
   },
   {
     name: "typology_match",
@@ -1042,11 +1073,30 @@ const TOOLS: ToolDef[] = [
   },
 
   // ── REGULATORY ───────────────────────────────────────────────────────────────
+  // Audit C-04: prior signature `async ()` ignored MCP-supplied args, which
+  // worked syntactically but made breaker-open / cold-start failures opaque
+  // (the MCP client surfaced a generic "tool execution error"). The handler
+  // now accepts and ignores `args` explicitly and bubbles upstream errors
+  // through callApi (which returns a structured object rather than throwing).
   {
     name: "regulatory_feed",
-    description: "Latest UAE regulatory AML/CFT notices from CBUAE, FSRA, SCA, and other authorities.",
-    inputSchema: { type: "object", properties: {} },
-    handler: async () => callApi("/api/regulatory-feed", "GET"),
+    description: "Latest UAE regulatory AML/CFT notices from CBUAE, FSRA, SCA, MoET, UAEFIU, FATF, OFAC, and UN sources. Returns up to ~80 items with tone (green/amber/red) and category labels.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        limit: { type: "number", description: "Cap returned items (1-100). Omit for server default." },
+      },
+    },
+    handler: async (args) => {
+      const limit = typeof args["limit"] === "number" ? Math.max(1, Math.min(100, args["limit"])) : undefined;
+      const result = await callApi("/api/regulatory-feed", "GET");
+      if (limit !== undefined && result && typeof result === "object" && Array.isArray((result as Record<string, unknown>)["items"])) {
+        const r = result as Record<string, unknown>;
+        const items = (r["items"] as unknown[]).slice(0, limit);
+        return { ...r, items, totalCount: items.length };
+      }
+      return result;
+    },
   },
   {
     name: "compliance_qa",
