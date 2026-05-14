@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { writeAuditEvent } from "@/lib/audit";
 import { enforce } from "@/lib/server/enforce";
-
 import { getAnthropicClient } from "@/lib/server/llm";
 
 export const runtime = "nodejs";
@@ -78,7 +77,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 22000);
     const res = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 2048,
@@ -92,10 +91,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         ],
       });
 
-    }
-
-    const data = (await res.json()) as { content?: { type: string; text: string }[] };
-    const text = data?.content?.[0]?.text ?? "";
+    const text = res.content?.[0]?.text ?? "";
     const stripped = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
     const parsed = JSON.parse(stripped) as AuditAnomalyResult;
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
