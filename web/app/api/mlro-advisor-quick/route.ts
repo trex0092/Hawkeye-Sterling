@@ -396,46 +396,16 @@ export async function POST(req: Request): Promise<Response> {
    *  or a follow-up rewrite prompt with defect feedback. Returns the
    *  full text or throws on upstream / network / abort errors. */
   async function callHaiku(userMessage: string): Promise<string> {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey!, 55000);
     const upstream = await client.messages.create({
         model: MODEL,
         max_tokens: MAX_TOKENS,
-        // Stream so we get text as soon as the first delta lands; we
-        // accumulate it inside the Lambda and return JSON.
-        stream: true,
         system: [
           { type: "text", text: appendProbeInstructions(SYSTEM_PROMPT_BASE), cache_control: { type: "ephemeral" } },
         ],
         messages: [{ role: "user", content: userMessage }],
       });
-
-    if (!upstream.ok || !upstream.body) {
-      const txt = await upstream.text().catch(() => "");
-      const err = new Error(`upstream ${upstream.status}: ${txt.slice(0, 240)}`);
-      (err as Error & { upstreamStatus?: number }).upstreamStatus = upstream.status;
-      throw err;
-    }
-
-    const reader = upstream.body.getReader();
-    const decoder = new TextDecoder();
-    let text = "";
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      const chunk = decoder.decode(value, { stream: true });
-      for (const rawLine of chunk.split("\n")) {
-        const line = rawLine.trim();
-        if (!line.startsWith("data:")) continue;
-        const payload = line.slice(5).trim();
-        if (!payload || payload === "[DONE]") continue;
-        let evt: { type?: string; delta?: { type?: string; text?: string } } | null = null;
-        try { evt = JSON.parse(payload); } catch { continue; }
-        if (evt?.type === "content_block_delta" && evt.delta?.type === "text_delta" && evt.delta.text) {
-          text += evt.delta.text;
-        }
-      }
-    }
-    return text;
+    return upstream.content[0]?.type === "text" ? upstream.content[0].text : "";
   }
 
   /** Build the rewrite prompt for the second pass. The original enriched

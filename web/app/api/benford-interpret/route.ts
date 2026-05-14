@@ -109,12 +109,8 @@ export async function POST(req: Request): Promise<NextResponse> {
         messages: [{ role: "user", content: userContent }],
       });
 
-    }
 
-    const data = (await res.json()) as {
-      content?: { type: string; text: string }[];
-    };
-    const text = data?.content?.[0]?.text ?? "";
+    const text = res.content[0]?.type === "text" ? res.content[0].text : "";
     const stripped = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
     result = JSON.parse(stripped) as BenfordInterpretation;
   } catch {

@@ -169,7 +169,6 @@ Additional Context: ${body.context ?? "none"}
 Assess these documents for fraud indicators.`,
         }],
       });
-    const data = (await response.json()) as { content: Array<{ type: string; text: string }> };
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as DocumentFraudResult;
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });

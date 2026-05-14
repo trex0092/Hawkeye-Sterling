@@ -134,7 +134,6 @@ Additional Context: ${body.context ?? "none"}
 Analyse this trade invoice for TBML indicators. Return complete TradeInvoiceResult JSON.`,
         }],
       });
-    const data = (await response.json()) as { content: Array<{ type: string; text: string }> };
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as TradeInvoiceResult;
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });

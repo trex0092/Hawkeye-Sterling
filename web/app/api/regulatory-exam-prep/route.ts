@@ -158,7 +158,6 @@ Additional Context: ${body.context ?? "none"}
 Generate comprehensive regulatory examination preparation materials for this topic. Return complete RegExamResult JSON.`,
         }],
       });
-    const data = (await response.json()) as { content: Array<{ type: string; text: string }> };
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as RegExamResult;
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });

@@ -311,21 +311,16 @@ export async function POST(req: Request): Promise<NextResponse> {
           messages: [{ role: "user", content: userContent }],
         });
 
-      if (res.ok) {
-        const data = (await res.json()) as {
-          content?: { type: string; text: string }[];
-        };
-        const raw = data?.content?.[0]?.text ?? "";
-        // Strip markdown code fences if model wraps them
-        const cleaned = raw
-          .replace(/^```(?:json)?\s*/i, "")
-          .replace(/\s*```$/i, "")
-          .trim();
-        const parsed = JSON.parse(cleaned) as ExtractFlagsResult;
-        // Sanity-check shape — if malformed fall through to rule-based
-        if (Array.isArray(parsed?.flags) && parsed?.overallRisk) {
-          result = parsed;
-        }
+      const raw = res.content[0]?.type === "text" ? res.content[0].text : "";
+      // Strip markdown code fences if model wraps them
+      const cleaned = raw
+        .replace(/^```(?:json)?\s*/i, "")
+        .replace(/\s*```$/i, "")
+        .trim();
+      const parsed = JSON.parse(cleaned) as ExtractFlagsResult;
+      // Sanity-check shape — if malformed fall through to rule-based
+      if (Array.isArray(parsed?.flags) && parsed?.overallRisk) {
+        result = parsed;
       }
     } catch {
       // API error — fall through to rule-based

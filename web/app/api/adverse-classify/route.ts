@@ -130,7 +130,6 @@ Classify this adverse media against FATF predicate offences and assess SAR thres
           },
         ],
       });
-    const data = (await response.json()) as { content: Array<{ type: string; text: string }> };
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as AdverseClassifyResult;
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });

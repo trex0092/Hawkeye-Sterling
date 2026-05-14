@@ -94,10 +94,7 @@ export async function POST(req: Request): Promise<NextResponse | Response> {
   }
 
   const { resultId, subject, verdict, generatedAt, reviewerName, chainAnchor } = validation.value;
-  const safeResultId = resultId.replace(/[^\x21-\x7E]/g, "").replace(/["\\]/g, "").slice(0, 64) || "unknown";
-  const ts = generatedAt && !Number.isNaN(Date.parse(generatedAt))
-    ? new Date(Date.parse(generatedAt)).toISOString()
-    : new Date().toISOString();
+  const ts = generatedAt ?? new Date().toISOString();
 
   // Build BrainVerdict-compatible object from the slim request payload.
   // We expose only what was verifiably provided — no hallucinated fields.
@@ -129,7 +126,7 @@ export async function POST(req: Request): Promise<NextResponse | Response> {
   let pdfBytes: Uint8Array;
   try {
     pdfBytes = renderEvidencePack(brainVerdict, {
-      title: `Hawkeye Sterling — Evidence Pack — ${safeResultId}`,
+      title: `Hawkeye Sterling — Evidence Pack — ${resultId}`,
       chainAnchor: chainAnchor ?? payloadHash,
     });
   } catch (err) {
@@ -141,7 +138,7 @@ export async function POST(req: Request): Promise<NextResponse | Response> {
     );
   }
 
-  const filename = `hawkeye-evidence-${safeResultId.slice(0, 12)}-${ts.slice(0, 10)}.pdf`;
+  const filename = `hawkeye-evidence-${resultId.slice(0, 12)}-${ts.slice(0, 10)}.pdf`;
   return new Response(pdfBytes as unknown as BodyInit, {
     status: 200,
     headers: {
@@ -149,7 +146,7 @@ export async function POST(req: Request): Promise<NextResponse | Response> {
       "content-type": "application/pdf",
       "content-disposition": `attachment; filename="${filename}"`,
       "content-length": String(pdfBytes.byteLength),
-      "x-result-id": safeResultId,
+      "x-result-id": resultId,
       "x-payload-hash": payloadHash,
       "x-generated-at": ts,
       "x-latency-ms": String(Date.now() - t0),

@@ -117,12 +117,8 @@ export async function POST(req: Request): Promise<NextResponse> {
         messages: [{ role: "user", content: userContent }],
       });
 
-    }
 
-    const data = (await res.json()) as {
-      content?: { type: string; text: string }[];
-    };
-    const raw = data?.content?.[0]?.text ?? "";
+    const raw = res.content[0]?.type === "text" ? res.content[0].text : "";
     const cleaned = raw.replace(/^```json?\s*/i, "").replace(/\s*```$/i, "").trim();
     result = JSON.parse(cleaned) as JurisdictionIntelResult;
   } catch {
