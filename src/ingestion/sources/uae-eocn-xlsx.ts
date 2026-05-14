@@ -210,6 +210,24 @@ export const uaeEocnXlsxAdapter: SourceAdapter = {
     const buf = await fetchXlsxBuffer(LTL_URL);
     const rawChecksum = await sha256Hex(buf.toString('base64'));
 
+    // Audit C-01: the uaeiec.gov.ae endpoint serves application/vnd.ms-excel
+    // with OLE/CFB magic bytes (D0 CF 11 E0), i.e. the legacy .xls binary
+    // format. `exceljs.xlsx.load` only handles the ZIP-based .xlsx format
+    // (50 4B 03 04 magic) so on .xls payloads it silently parses nothing
+    // and the adapter writes an empty dataset — the exact silent-failure
+    // mode the audit called out. Detect the format up front and throw a
+    // clear error if exceljs can't parse it.
+    const isXlsx = buf.length >= 4 && buf[0] === 0x50 && buf[1] === 0x4b && buf[2] === 0x03 && buf[3] === 0x04;
+    const isOleXls = buf.length >= 4 && buf[0] === 0xd0 && buf[1] === 0xcf && buf[2] === 0x11 && buf[3] === 0xe0;
+    if (!isXlsx) {
+      const magic = Array.from(buf.slice(0, 4)).map((b) => b.toString(16).padStart(2, '0')).join(' ');
+      throw new Error(
+        `uae_eocn: upstream returned ${isOleXls ? 'legacy .xls (OLE/CFB)' : `unknown binary format (magic ${magic})`}, ` +
+        `but the adapter only parses .xlsx (PK ZIP). Confirm FEED_UAE_LTL_FILE_ID points at the .xlsx variant of the list, ` +
+        `or use UAE_EOCN_SEED_PATH to feed a local JSON seed instead.`,
+      );
+    }
+
     const wb = new ExcelJS.Workbook();
     await wb.xlsx.load(buf);
     const sheet = wb.worksheets[0];

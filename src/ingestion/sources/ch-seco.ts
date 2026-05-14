@@ -28,15 +28,26 @@ export const chSecoAdapter: SourceAdapter = {
     const fetchedAt = Date.now();
     const entities: NormalisedEntity[] = [];
 
-    // Diagnostic: if the response doesn't look like XML at all, surface a
-    // clear error so /api/sanctions/last-errors captures the actual cause
-    // (probably the SESAM faceted-search URL returned HTML, not XML).
+    // Diagnostic: a `<?xml` prolog alone doesn't prove the body is the
+    // sanctions XML — SESAM's faceted-search portal serves XHTML pages
+    // that also start with `<?xml ...?>` followed by `<!DOCTYPE html ...>`.
+    // The audit-flagged H-03 ("ch_seco healthy with 0 entities") was
+    // exactly this: the URL returned the SESAM portal HTML, the prolog
+    // check passed, the TARGET_RE matched nothing, and the adapter wrote
+    // an empty dataset that the matcher treats as a clean screen.
+    //
+    // Require evidence of the sanctions XML structure (a <sanctions> root,
+    // a <target> block, or a SECO-specific element) before parsing. If
+    // absent, throw with a clear hint pointing at the URL configuration.
     const trimmed = xml.trimStart();
-    const looksLikeXml = trimmed.startsWith('<?xml') || trimmed.startsWith('<sanctions') || trimmed.startsWith('<root') || trimmed.includes('<target');
-    if (!looksLikeXml) {
+    const looksLikeXhtml = /<!DOCTYPE\s+html|<html[\s>]/i.test(trimmed.slice(0, 500));
+    const hasSanctionsRoot = /<(?:sanctions|sanction-list|sanction-target|target)[\s>]/i.test(trimmed);
+    if (looksLikeXhtml || !hasSanctionsRoot) {
       throw new Error(
-        `ch_seco: response is not XML — got ${trimmed.length} bytes starting with "${trimmed.slice(0, 80).replace(/\s+/g, ' ')}". ` +
-        `The SESAM URL may require session-based download; set FEED_CH_SECO to the direct XML endpoint.`,
+        `ch_seco: response is not the SECO sanctions XML — got ${trimmed.length} bytes` +
+        (looksLikeXhtml ? ` (XHTML portal page detected)` : ` (no <sanctions>/<target> root found)`) +
+        ` starting with "${trimmed.slice(0, 100).replace(/\s+/g, ' ')}". ` +
+        `The published SESAM endpoint may have moved; set FEED_CH_SECO to the direct XML download URL.`,
       );
     }
 
