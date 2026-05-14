@@ -984,25 +984,85 @@ async function _handleGet(): Promise<NextResponse> {
   } catch {
     // Blob unavailable — fall back to env / default. Never blocks /api/status.
   }
+  // Read the LSEG CFS index manifest if the operator has run /api/admin/import-cfs.
+  // The manifest is written by that route with { entitiesIndexed, builtAt, ... }.
+  // Audit H-06: pre-existing logic only credited LSEG_WORLDCHECK_API_KEY toward
+  // the corpus total, so a deployment that imported CFS bulk files via the
+  // admin route was still flagged as "73 static entries" because the imported
+  // index was invisible to the status check. Now both paths count.
+  let lsegCfsIndexed = 0;
+  let lsegCfsBuiltAt: string | undefined;
+  try {
+    const blobsMod = (await import("@netlify/blobs")) as unknown as {
+      getStore: (opts: { name: string; siteID?: string; token?: string; consistency?: string }) => {
+        get: (key: string, opts?: { type?: string }) => Promise<unknown>;
+      };
+    };
+    const siteID = process.env["NETLIFY_SITE_ID"] ?? process.env["SITE_ID"];
+    const token =
+      process.env["NETLIFY_BLOBS_TOKEN"] ??
+      process.env["NETLIFY_API_TOKEN"] ??
+      process.env["NETLIFY_AUTH_TOKEN"];
+    const opts: { name: string; siteID?: string; token?: string; consistency: string } = {
+      name: "hawkeye-lseg-pep-index",
+      consistency: "strong",
+    };
+    if (siteID) opts.siteID = siteID;
+    if (token) opts.token = token;
+    const lsegStore = blobsMod.getStore(opts);
+    const manifest = (await lsegStore.get("manifest.json", { type: "json" })) as
+      | { entitiesIndexed?: number; builtAt?: string }
+      | null;
+    if (manifest && typeof manifest.entitiesIndexed === "number") {
+      lsegCfsIndexed = manifest.entitiesIndexed;
+    }
+    if (manifest && typeof manifest.builtAt === "string") {
+      lsegCfsBuiltAt = manifest.builtAt;
+    }
+  } catch {
+    // Index not yet built or blobs unreachable — fall through silently.
+  }
+
   // World-Check covers ~5M PEP/sanctions profiles; LSEG data platform adds additional coverage.
   // Use the static known-entities list count as the minimum floor so the metric
   // is never misleadingly low (the old default "6" understated actual coverage).
   const staticPepCount = KNOWN_PEPS.length + KNOWN_ADVERSE.length;
-  const knownPepEntries = process.env["LSEG_WORLDCHECK_API_KEY"]
-    ? 5_000_000
-    : Math.max(staticPepCount, Number(process.env["KNOWN_PEP_ENTRIES"] ?? "0"));
+  const lsegLiveApi = Boolean(process.env["LSEG_WORLDCHECK_API_KEY"]);
+  const lsegLiveApiCount = lsegLiveApi ? 5_000_000 : 0;
+  const customCorpusOverride = Number(process.env["KNOWN_PEP_ENTRIES"] ?? "0");
+  // Total = live World-Check (if subscribed) + LSEG CFS imported index + static floor.
+  // The custom override (KNOWN_PEP_ENTRIES) is treated as the floor for the
+  // static portion only — operators who have neither LSEG path still get the
+  // documented value if they set it.
+  const knownPepEntries = Math.max(
+    customCorpusOverride,
+    lsegLiveApiCount + lsegCfsIndexed + staticPepCount,
+  );
   const feedVersions = {
     brain: process.env["BRAIN_VERSION"] ?? "wave-5",
     commitSha: (process.env["NEXT_PUBLIC_COMMIT_SHA"] ?? process.env["NEXT_PUBLIC_COMMIT_REF"] ?? process.env["COMMIT_REF"] ?? process.env["NETLIFY_COMMIT_REF"] ?? "dev").slice(0, 7),
     adverseMediaCategories: ADVERSE_KEYWORDS.length,
     adverseMediaKeywords: ADVERSE_KEYWORDS.reduce((n, r) => n + r.terms.length, 0),
     knownPepEntries,
+    pepSources: {
+      lsegWorldCheckApi: lsegLiveApi,
+      lsegCfsIndexed,
+      ...(lsegCfsBuiltAt ? { lsegCfsBuiltAt } : {}),
+      staticCorpus: staticPepCount,
+    },
     reviewedAt: brainReviewedAt,
   };
 
-  // ENH-F: warn if PEP corpus < 500,000 entries
+  // ENH-F: warn if PEP corpus < 500,000 entries — and tell the operator
+  // precisely which sources are missing.
   const pepCountWarning = knownPepEntries < 500_000
-    ? `PEP corpus: ${knownPepEntries.toLocaleString("en-US")} static entries (${KNOWN_PEPS.length} PEPs + ${KNOWN_ADVERSE.length} adverse subjects). Live coverage requires LSEG World-Check API key or OPENSANCTIONS_API_KEY. Set KNOWN_PEP_ENTRIES if you have a custom corpus.`
+    ? (() => {
+        const missing: string[] = [];
+        if (!lsegLiveApi) missing.push("set LSEG_WORLDCHECK_API_KEY (+ LSEG_WORLDCHECK_API_SECRET) for the live ~5M-record World-Check feed");
+        if (lsegCfsIndexed === 0) missing.push("run POST /api/admin/import-cfs to index LSEG CFS bulk files (if your subscription includes them)");
+        if (customCorpusOverride === 0) missing.push("set KNOWN_PEP_ENTRIES to document a manually-curated corpus size");
+        return `PEP corpus: ${knownPepEntries.toLocaleString("en-US")} entries (${KNOWN_PEPS.length} static PEPs + ${KNOWN_ADVERSE.length} adverse + ${lsegCfsIndexed.toLocaleString("en-US")} LSEG CFS). To raise coverage: ${missing.join("; ")}.`;
+      })()
     : undefined;
 
   // ENH-G: warn if brain catalogue review > 30 days old
