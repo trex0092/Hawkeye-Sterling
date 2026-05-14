@@ -62,6 +62,13 @@ export interface MlroRouteOptions<TBody, TResult> {
   offlineFallback?: TResult;
   /** Headers to merge into the response on success. Defaults to the gate's headers. */
   successHeaders?: Record<string, string>;
+  /**
+   * Fire-and-forget hook called after a successful LLM parse. Use for
+   * audit-event writes that reference the parsed result + the original
+   * body. Must NOT throw — exceptions are swallowed so the response
+   * pipeline is never blocked by audit-log failures.
+   */
+  onSuccess?: (result: TResult, body: TBody) => void;
 }
 
 /**
@@ -150,6 +157,11 @@ export async function withMlroLlm<TBody, TResult>(
         { ok: false, error: `${opts.route} returned invalid output — retry or escalate if persistent.` },
         { status: 502, headers },
       );
+    }
+    if (opts.onSuccess) {
+      try { opts.onSuccess(parsed, body); } catch (hookErr) {
+        console.warn(`[${opts.route}] onSuccess hook threw (non-blocking): ${hookErr instanceof Error ? hookErr.message : String(hookErr)}`);
+      }
     }
     return NextResponse.json({ ok: true, ...(parsed as Record<string, unknown>) }, { headers });
   } catch (err) {
