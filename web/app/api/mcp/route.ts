@@ -1190,7 +1190,7 @@ const TOOLS: ToolDef[] = [
     name: "system_status",
     description: "Check Hawkeye Sterling system health: all services, external dependencies, and sanctions list freshness.",
     inputSchema: { type: "object", properties: {} },
-    handler: async () => callApi("/api/status", "GET"),
+    handler: async () => callApi("/api/status", "GET", undefined, undefined, 25_000),
   },
 
   // ── GENERIC PROXY ────────────────────────────────────────────────────────────

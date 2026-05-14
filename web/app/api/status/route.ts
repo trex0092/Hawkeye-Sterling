@@ -266,6 +266,9 @@ async function checkGoogleNews(): Promise<Check> {
 // GDELT on every call and reliably trigger 429 rate-limits. A 429 means GDELT
 // is reachable but throttling our probe, which is not a system outage; we treat
 // it as operational (using the cached last-good result if available).
+//
+// Probe timeout is 8 s (reduced from 15 s) so the overall /api/status route
+// can complete well within the 25 s budget the MCP system_status tool allows.
 
 interface GdeltCacheEntry { result: Check; cachedAt: number; ttl: number }
 let _gdeltCache: GdeltCacheEntry | null = null;
@@ -280,7 +283,7 @@ async function checkGdelt(): Promise<Check> {
 
   const r = await time(async () => {
     const controller = new AbortController();
-    const t = setTimeout(() => controller.abort(), 15_000);
+    const t = setTimeout(() => controller.abort(), 8_000);
     try {
       const params = new URLSearchParams({
         query: "compliance",
@@ -308,7 +311,7 @@ async function checkGdelt(): Promise<Check> {
       return { degraded: false as const };
     } catch (err) {
       const isTimeout = err instanceof Error && (err.name === "AbortError" || err.message.includes("aborted"));
-      if (isTimeout) return { degraded: true as const, note: "GDELT timeout (>10s)" };
+      if (isTimeout) return { degraded: true as const, note: "GDELT timeout (>8s)" };
       throw err;
     } finally {
       clearTimeout(t);
