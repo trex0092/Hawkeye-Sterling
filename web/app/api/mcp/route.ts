@@ -671,7 +671,7 @@ const TOOLS: ToolDef[] = [
         const r = await callApi("/api/pep-profile", "POST", payload);
         return typeof r === "object" && r !== null ? { ...(r as Record<string, unknown>), _depth: 0 } : r;
       }
-      const payload: Record<string, unknown> = { pepName: subject, maxDepth: depth };
+      const payload: Record<string, unknown> = { pepName: subject, networkDepth: depth };
       if (jurisdiction) payload["jurisdiction"] = jurisdiction;
       if (aliases) payload["aliases"] = aliases;
       const r = await callApi("/api/pep-network", "POST", payload);
@@ -934,7 +934,7 @@ const TOOLS: ToolDef[] = [
         return callApi("/api/entity-graph", "POST", payload);
       };
       const runPolitical = async () =>
-        callApi("/api/pep-network", "POST", { pepName: subject, maxDepth: depth });
+        callApi("/api/pep-network", "POST", { pepName: subject, networkDepth: depth });
 
       if (type === "corporate") {
         const r = await runCorporate();
