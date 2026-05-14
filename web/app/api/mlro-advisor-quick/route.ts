@@ -61,6 +61,8 @@ let scoreAdvisorAnswer: ScoreFn = (_answer, _mode) => ({ passedQualityGate: true
   }
 })();
 import { verifyCitations, type CitationReport } from "@/lib/server/citation-verifier";
+import { getAnthropicClient } from "@/lib/server/llm";
+
 import {
   appendProbeInstructions,
   extractAndStripProbe,
@@ -394,14 +396,8 @@ export async function POST(req: Request): Promise<Response> {
    *  or a follow-up rewrite prompt with defect feedback. Returns the
    *  full text or throws on upstream / network / abort errors. */
   async function callHaiku(userMessage: string): Promise<string> {
-    const upstream = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "x-api-key": apiKey!,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
+    const client = getAnthropicClient(apiKey, 55000);
+    const upstream = await client.messages.create({
         model: MODEL,
         max_tokens: MAX_TOKENS,
         // Stream so we get text as soon as the first delta lands; we
@@ -411,9 +407,7 @@ export async function POST(req: Request): Promise<Response> {
           { type: "text", text: appendProbeInstructions(SYSTEM_PROMPT_BASE), cache_control: { type: "ephemeral" } },
         ],
         messages: [{ role: "user", content: userMessage }],
-      }),
-      signal: upstreamCtl.signal,
-    });
+      });
 
     if (!upstream.ok || !upstream.body) {
       const txt = await upstream.text().catch(() => "");

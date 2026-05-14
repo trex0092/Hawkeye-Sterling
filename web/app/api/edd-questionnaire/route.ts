@@ -4,6 +4,8 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 
+import { getAnthropicClient } from "@/lib/server/llm";
+
 export interface EddQuestion {
   id: string;
   category: string;
@@ -167,15 +169,8 @@ Respond ONLY with valid JSON — no markdown fences, no explanation:
 Generate 10–15 questions. Be specific to the UAE gold/DPMS context and the customer profile.`;
 
   try {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      signal: AbortSignal.timeout(55_000),
-      method: "POST",
-      headers: {
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
+    const client = getAnthropicClient(apiKey, 55000);
+    const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 2000,
         system: systemPrompt,
@@ -186,13 +181,11 @@ Risk Factors: ${riskFactors.join(", ")}${jurisdiction ? `\nJurisdiction: ${juris
 
 Generate the EDD questionnaire. ${sbContext?.eddLevel === "intensive" ? "This subject has INTENSIVE EDD indicators — include all mandatory questions plus additional deep-dive questions on each risk signal identified." : sbContext?.eddLevel === "enhanced" ? "This subject has ENHANCED EDD indicators — include all mandatory questions and tailor additional questions to the specific risk signals identified." : ""}`,
         }],
-      }),
-    });
+      });
 
-    if (!response.ok) return NextResponse.json({ ok: false, error: "edd-questionnaire temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
 
     const data = (await response.json()) as { content: Array<{ type: string; text: string }> };
-    const raw = data.content[0]?.type === "text" ? data.content[0].text : "{}";
+    const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const cleaned = raw.replace(/```json\n?|\n?```/g, "").trim();
     const result = JSON.parse(cleaned) as EddQuestionnaire;
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });

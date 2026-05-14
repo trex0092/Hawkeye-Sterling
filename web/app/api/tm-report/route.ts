@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { withGuard } from "@/lib/server/guard";
 import { postWebhook } from "@/lib/server/webhook";
 
+import { getAnthropicClient } from "@/lib/server/llm";
+
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -64,24 +66,15 @@ async function classifyTransaction(
     .filter(Boolean)
     .join("\n");
 
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-      signal: AbortSignal.timeout(22_000),
-    method: "POST",
-    headers: {
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
+  const client = getAnthropicClient(apiKey, 55000);
+  const res = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 2048,
       system:
         'You are a UAE-licensed AML typology classifier for a DPMS compliance platform. Analyze a transaction and return ONLY this JSON: { "typologies": ["string"], "narrative": "string", "severityUpgrade": boolean, "regulatoryBasis": "string" }. typologies = FATF ML/TF typology codes (e.g. \'ML-TF-01 Structuring\', \'ML-TF-09 Cash-intensive business\'). narrative = 1-2 sentence STR-ready description. severityUpgrade = true if you\'d recommend escalating severity. regulatoryBasis = specific UAE/FATF articles triggered.',
       messages: [{ role: "user", content: userContent }],
-    }),
-  });
+    });
 
-  if (!res.ok) return null;
 
   const data = (await res.json()) as {
     content?: { type: string; text: string }[];

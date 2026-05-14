@@ -30,6 +30,8 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 
+import { getAnthropicClient } from "@/lib/server/llm";
+
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -218,22 +220,14 @@ export async function POST(req: Request): Promise<Response> {
   const killTimer = setTimeout(() => upstreamCtl.abort(), HARD_TIMEOUT_MS);
 
   try {
-    const upstream = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
+    const client = getAnthropicClient(apiKey, 55000);
+    const upstream = await client.messages.create({
         model: MODEL,
         max_tokens: MAX_TOKENS,
         stream: true,
         system: [{ type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
         messages: [{ role: "user", content: userPrompt }],
-      }),
-      signal: upstreamCtl.signal,
-    });
+      });
 
     if (!upstream.ok || !upstream.body) {
       if (upstream.status === 429) {

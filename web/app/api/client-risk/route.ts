@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { writeAuditEvent } from "@/lib/audit";
 import { enforce } from "@/lib/server/enforce";
 
+import { getAnthropicClient } from "@/lib/server/llm";
+
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -91,15 +93,8 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   try {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      signal: AbortSignal.timeout(22_000),
-      method: "POST",
-      headers: {
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
+    const client = getAnthropicClient(apiKey, 55000);
+    const res = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 2048,
         system:
@@ -110,11 +105,8 @@ export async function POST(req: Request): Promise<NextResponse> {
             content: `Entity: ${JSON.stringify(entity)}. Shareholders: ${JSON.stringify(shareholders)}. Return ONLY this JSON: { "overallRisk": "critical"|"high"|"medium"|"low", "riskNarrative": "string", "jurisdictionalRisk": "string", "ownershipRisk": "string", "pepExposure": { "detected": boolean, "pepNames": ["string"], "mitigants": "string" }, "cddRequirements": ["string"], "eddRequired": boolean, "eddReason": "string", "enhancedMeasures": ["string"], "recommendedAction": "onboard_standard"|"onboard_with_edd"|"refer_to_mlro"|"reject"|"pending_docs", "regulatoryBasis": "string", "riskRating": "string" }`,
           },
         ],
-      }),
-    });
+      });
 
-    if (!res.ok) {
-      return NextResponse.json({ ok: false, error: "client-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
     }
 
     const data = (await res.json()) as { content?: { type: string; text: string }[] };

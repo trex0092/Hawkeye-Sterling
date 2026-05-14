@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { writeAuditEvent } from "@/lib/audit";
 import { enforce } from "@/lib/server/enforce";
 
+import { getAnthropicClient } from "@/lib/server/llm";
+
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -76,15 +78,8 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   try {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      signal: AbortSignal.timeout(22_000),
-      method: "POST",
-      headers: {
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
+    const client = getAnthropicClient(apiKey, 55000);
+    const res = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 2048,
         system:
@@ -95,11 +90,8 @@ export async function POST(req: Request): Promise<NextResponse> {
             content: `Audit trail (${periodDays} days, ${entries.length} entries): ${JSON.stringify(entries)}. Return ONLY this JSON: { "anomalyScore": number, "anomalyLevel": "critical"|"elevated"|"normal", "anomalies": [{ "type": "string", "description": "string", "severity": "high"|"medium"|"low", "affectedActors": ["string"], "recommendation": "string" }], "patternSummary": "string", "actorRisk": [{ "actor": "string", "riskFlag": "string", "actionCount": number }], "integrityNote": "string", "regulatoryNote": "string" }`,
           },
         ],
-      }),
-    });
+      });
 
-    if (!res.ok) {
-      return NextResponse.json({ ok: false, error: "audit-anomaly temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
     }
 
     const data = (await res.json()) as { content?: { type: string; text: string }[] };
