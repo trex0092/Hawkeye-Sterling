@@ -112,6 +112,16 @@ export async function POST(req: Request): Promise<NextResponse> {
     ...(creds.token ? { token: creds.token } : {}),
     consistency: "strong",
   });
+  // Vessel index — IMO-keyed lookup consumed by /api/vessel-check when the
+  // external Equasis/Datalastic provider isn't configured. LSEG CFS bulk
+  // files include OFAC SDN / EU / UN vessel sanctions records with IMO
+  // numbers; this index makes them queryable by IMO.
+  const vesselStore = mod.getStore({
+    name: "hawkeye-lseg-vessel-index",
+    ...(creds.siteID ? { siteID: creds.siteID } : {}),
+    ...(creds.token ? { token: creds.token } : {}),
+    consistency: "strong",
+  });
   // hawkeye-lists is the same store the primary refresh-lists cron writes
   // to. We never overwrite a primary blob — supplement entries are written
   // under `lseg_<listId>/latest.json` so the candidates loader can merge
@@ -202,6 +212,25 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
   const adverseEntities = new Map<string, AdverseIndexEntry>();
 
+  // Vessel entries keyed by 7-digit IMO. Shape mirrors VesselIndexEntry in
+  // web/lib/lseg/vessel-index.ts so lookupLsegVesselByImo() can consume
+  // these blobs directly without a translation layer.
+  interface VesselIndexEntry {
+    imoNumber: string;
+    primaryName: string;
+    aliases: string[];
+    flag?: string;
+    vesselType?: string;
+    mmsi?: string;
+    callSign?: string;
+    countries: string[];
+    sanctionsLists: string[];
+    categories: string[];
+    sourceFile: string;
+    lastUpdated: string;
+  }
+  const vesselByImo = new Map<string, VesselIndexEntry>();
+
   const CONCURRENCY = 4;
   for (let i = 0; i < fileKeys.length; i += CONCURRENCY) {
     const batch = fileKeys.slice(i, i + CONCURRENCY);
@@ -246,6 +275,36 @@ export async function POST(req: Request): Promise<NextResponse> {
                 listings: [{ source: lid, program, reference: e.id }],
                 source: lid,
               });
+            }
+          }
+          // Vessel index — only populated when LSEG flagged the entity as
+          // a vessel AND the parser extracted a valid 7-digit IMO. Used by
+          // /api/vessel-check to close audit C-02 without an external
+          // vessel-intel provider when LSEG carries the data already.
+          if (e.entityType === "vessel" && e.imoNumber && /^[0-9]{7}$/.test(e.imoNumber)) {
+            const sanctionsIds = classifyToSanctionsListIds(e.categories);
+            const existing = vesselByImo.get(e.imoNumber);
+            if (!existing) {
+              const vesselEntry: VesselIndexEntry = {
+                imoNumber: e.imoNumber,
+                primaryName: e.primaryName,
+                aliases: e.aliases,
+                countries: e.countries,
+                sanctionsLists: sanctionsIds,
+                categories: e.categories,
+                sourceFile: key,
+                lastUpdated: e.publishedAt ?? new Date().toISOString(),
+              };
+              if (e.flag)       vesselEntry.flag       = e.flag;
+              if (e.vesselType) vesselEntry.vesselType = e.vesselType;
+              if (e.mmsi)       vesselEntry.mmsi       = e.mmsi;
+              if (e.callSign)   vesselEntry.callSign   = e.callSign;
+              vesselByImo.set(e.imoNumber, vesselEntry);
+            } else {
+              // Merge sanctions-list attribution from a later CFS file. The
+              // same vessel often appears across multiple regime feeds.
+              const merged = new Set([...existing.sanctionsLists, ...sanctionsIds]);
+              existing.sanctionsLists = Array.from(merged);
             }
           }
           // Adverse-media classification — independent of sanctions
@@ -336,6 +395,22 @@ export async function POST(req: Request): Promise<NextResponse> {
     console.warn("[import-cfs] adverse-media index write failed:", err instanceof Error ? err.message : err);
   }
 
+  // Vessel index writes — one blob per IMO in hawkeye-lseg-vessel-index.
+  // Closes audit C-02 (vessel screening) using LSEG CFS bulk data instead
+  // of an Equasis/Datalastic external integration.
+  try {
+    for (const [imo, entry] of vesselByImo) {
+      await vesselStore.setJSON(`imo/${imo}.json`, entry);
+    }
+    await vesselStore.setJSON("manifest.json", {
+      builtAt: new Date().toISOString(),
+      filesProcessed: perFile.length,
+      vesselCount: vesselByImo.size,
+    });
+  } catch (err) {
+    console.warn("[import-cfs] vessel index write failed:", err instanceof Error ? err.message : err);
+  }
+
   // Sanctions supplement writes. One blob per supplement listId in the
   // hawkeye-lists store, alongside the primary refresh-lists cron output.
   // The candidates loader's ADAPTER_IDS includes these lseg_* ids so screen
@@ -367,10 +442,11 @@ export async function POST(req: Request): Promise<NextResponse> {
     buckets: Array.from(byBucket.keys()).sort(),
     sanctionsSupplement: sanctionsCounts,
     adverseIndexed: adverseEntities.size,
+    vesselsIndexed: vesselByImo.size,
     perFile,
     hint:
       allEntities.size === 0
         ? "Files parsed but no entities extracted — formats may differ from the assumed JSON/XML/CSV layouts. Inspect perFile[].format and perFile[].error to identify schemas the parser doesn't yet handle."
-        : "PEP index → hawkeye-lseg-pep-index. Sanctions supplements → hawkeye-lists/lseg_*. Adverse index → hawkeye-lseg-adverse-index. Re-run after each new CFS fileset arrives (6 h cron).",
+        : "PEP → hawkeye-lseg-pep-index. Sanctions → hawkeye-lists/lseg_*. Adverse → hawkeye-lseg-adverse-index. Vessels → hawkeye-lseg-vessel-index. Re-run after each new CFS fileset arrives (6 h cron).",
   });
 }

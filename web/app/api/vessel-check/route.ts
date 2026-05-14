@@ -8,6 +8,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { checkVessel, screenVessels } from "../../../../dist/src/integrations/vesselCheck.js";
 import { withRetry } from "@/lib/server/circuitBreaker";
+import { lookupLsegVesselByImo } from "@/lib/lseg/vessel-index";
 
 // IMO check digit validation
 function validateImo(imo: string): boolean {
@@ -71,17 +72,54 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (body.imoNumbers.length > 50) {
       return NextResponse.json({ ok: false, error: "batch limit is 50 IMO numbers" }, { status: 400, headers: CORS });
     }
+    // Audit C-02: probe LSEG vessel index for every IMO first. Each IMO
+    // that resolves locally bypasses the external provider entirely; only
+    // the leftover ones fall through to screenVessels(). When LSEG covers
+    // every requested IMO the external call is skipped completely.
+    const lsegHits = await Promise.all(
+      body.imoNumbers.map((imo) => lookupLsegVesselByImo(imo.trim()).catch(() => null)),
+    );
+    const remainder: string[] = [];
+    const lsegResults: Array<{ imoNumber: string; vessel: { vesselName: string; flag?: string; sanctionsLists: string[] }; sanctioned: boolean; source: "lseg-cfs" }> = [];
+    body.imoNumbers.forEach((imo, idx) => {
+      const hit = lsegHits[idx];
+      if (hit) {
+        lsegResults.push({
+          imoNumber: imo.trim(),
+          vessel: { vesselName: hit.primaryName, ...(hit.flag ? { flag: hit.flag } : {}), sanctionsLists: hit.sanctionsLists },
+          sanctioned: hit.sanctionsLists.length > 0,
+          source: "lseg-cfs",
+        });
+      } else {
+        remainder.push(imo);
+      }
+    });
+    if (remainder.length === 0) {
+      return NextResponse.json(
+        { ok: true, total: lsegResults.length, sources: { lseg: lsegResults.length, external: 0 }, results: lsegResults },
+        { status: 200, headers: { ...CORS, ...gateHeaders } },
+      );
+    }
     let result: Awaited<ReturnType<typeof screenVessels>>;
     try {
-      result = await withRetry("vessel-check", () => screenVessels(body.imoNumbers!));
+      result = await withRetry("vessel-check", () => screenVessels(remainder));
     } catch (err) {
       console.error("[vessel-check] screenVessels failed", err);
       return NextResponse.json(
-        { ok: false, error: "Vessel screening service unavailable — please retry. Do not treat absence of results as a clean screen." },
-        { status: 503, headers: { ...CORS, ...gateHeaders } },
+        {
+          ok: lsegResults.length > 0,
+          partial: true,
+          sources: { lseg: lsegResults.length, external: 0 },
+          lsegResults,
+          error: "External vessel screening unavailable — LSEG-only coverage returned. Do not treat absence of external results as a clean screen.",
+        },
+        { status: lsegResults.length > 0 ? 200 : 503, headers: { ...CORS, ...gateHeaders } },
       );
     }
-    return NextResponse.json({ ok: true, ...result }, { status: 200, headers: { ...CORS, ...gateHeaders } });
+    return NextResponse.json(
+      { ok: true, sources: { lseg: lsegResults.length, external: result.total }, lsegResults, ...result },
+      { status: 200, headers: { ...CORS, ...gateHeaders } },
+    );
   }
 
   // Single mode
@@ -92,6 +130,52 @@ export async function POST(req: Request): Promise<NextResponse> {
   const imoTrimmed = body.imoNumber.trim();
   if (!/^\d{7}$/.test(imoTrimmed)) {
     return NextResponse.json({ ok: false, error: "imoNumber must be exactly 7 digits (IMO format)" }, { status: 400, headers: CORS });
+  }
+
+  // Audit C-02 (closeout): consult the LSEG CFS vessel index FIRST. If
+  // /api/admin/import-cfs has been run and LSEG carries this vessel, we
+  // return its sanctions/regime attribution without touching any external
+  // provider. Equasis ToS forbid programmatic access; commercial provider
+  // (Datalastic, Lloyd's) is optional.
+  const lsegHit = await lookupLsegVesselByImo(imoTrimmed).catch(() => null);
+  if (lsegHit) {
+    const sanctioned = lsegHit.sanctionsLists.length > 0;
+    const flagRiskHigh = lsegHit.flag ? HIGH_RISK_FLAG_STATES[lsegHit.flag] : undefined;
+    const riskLevel: "blocked" | "high" | "elevated" | "clean" =
+      lsegHit.sanctionsLists.some((s) => s.includes("ofac") || s.includes("un_consolidated")) ? "blocked"
+        : sanctioned ? "high"
+        : flagRiskHigh ? "elevated"
+        : "clean";
+    const latencyMs = Date.now() - _handlerStart;
+    return NextResponse.json(
+      {
+        ok: true,
+        source: "lseg-cfs",
+        imoNumber: imoTrimmed,
+        vessel: {
+          imoNumber: imoTrimmed,
+          vesselName: lsegHit.primaryName,
+          aliases: lsegHit.aliases,
+          ...(lsegHit.flag ? { flag: lsegHit.flag } : {}),
+          ...(lsegHit.vesselType ? { type: lsegHit.vesselType } : {}),
+          ...(lsegHit.mmsi ? { mmsi: lsegHit.mmsi } : {}),
+          ...(lsegHit.callSign ? { callSign: lsegHit.callSign } : {}),
+          owners: [],
+          sanctionHits: lsegHit.sanctionsLists.map((listId) => ({
+            list: listId.replace(/^lseg_/, "").toUpperCase().replace(/_/g, " "),
+            entryId: lsegHit.imoNumber,
+          })),
+          lastUpdated: lsegHit.lastUpdated,
+        },
+        sanctioned,
+        riskLevel,
+        riskDetail: sanctioned
+          ? `${lsegHit.sanctionsLists.length} LSEG sanctions regime(s): ${lsegHit.sanctionsLists.join(", ")}`
+          : `No LSEG sanctions hits for IMO ${imoTrimmed} (${lsegHit.primaryName}); flag state ${lsegHit.flag ?? "unknown"}${flagRiskHigh ? ` — ${flagRiskHigh}` : ""}`,
+        latencyMs,
+      },
+      { status: 200, headers: { ...CORS, ...gateHeaders } },
+    );
   }
 
   let result: Awaited<ReturnType<typeof checkVessel>>;

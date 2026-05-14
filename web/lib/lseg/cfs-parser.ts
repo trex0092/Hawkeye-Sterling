@@ -29,6 +29,79 @@ export interface LsegCfsEntity {
   publishedAt?: string;
   // Original payload, kept for audit. Caller should NOT search this directly.
   rawHash: string;
+  // ── Vessel-specific identifiers (only populated when entityType === "vessel")
+  // Used by web/lib/lseg/vessel-index.ts to build the IMO-keyed lookup
+  // consumed by /api/vessel-check.
+  imoNumber?: string;
+  mmsi?: string;
+  callSign?: string;
+  flag?: string;
+  vesselType?: string;
+}
+
+// ── Vessel-identifier extraction helpers ────────────────────────────────────
+
+/**
+ * Pull IMO/MMSI/flag/callsign/type from a JSON row or XML block. The CFS
+ * payloads are inconsistent — some packages embed identifiers as siblings
+ * of `name`, others nest them under `identifiers[]` / `imoNumber`. Probe
+ * each known shape and return what we can find.
+ */
+function extractVesselFromJson(o: Record<string, unknown>): {
+  imoNumber?: string; mmsi?: string; callSign?: string; flag?: string; vesselType?: string;
+} {
+  const direct = {
+    imoNumber: typeof o["imoNumber"] === "string" ? o["imoNumber"] :
+               typeof o["imo"] === "string" ? o["imo"] :
+               typeof o["IMO"] === "string" ? o["IMO"] : undefined,
+    mmsi: typeof o["mmsi"] === "string" ? o["mmsi"] :
+          typeof o["MMSI"] === "string" ? o["MMSI"] : undefined,
+    callSign: typeof o["callSign"] === "string" ? o["callSign"] :
+              typeof o["callsign"] === "string" ? o["callsign"] : undefined,
+    flag: typeof o["flag"] === "string" ? o["flag"] :
+          typeof o["flagState"] === "string" ? o["flagState"] :
+          typeof o["flag_state"] === "string" ? o["flag_state"] : undefined,
+    vesselType: typeof o["vesselType"] === "string" ? o["vesselType"] :
+                typeof o["shipType"] === "string" ? o["shipType"] : undefined,
+  };
+  // Some shapes nest identifiers under `identifiers: [{ type, value }]` or
+  // `attributes: { ... }`. Probe both.
+  const idsRaw = o["identifiers"];
+  if (Array.isArray(idsRaw)) {
+    for (const id of idsRaw) {
+      if (!id || typeof id !== "object") continue;
+      const r = id as Record<string, unknown>;
+      const t = typeof r["type"] === "string" ? r["type"].toLowerCase() : "";
+      const v = typeof r["value"] === "string" ? r["value"] :
+                typeof r["number"] === "string" ? r["number"] : undefined;
+      if (!v) continue;
+      if (!direct.imoNumber && /imo/.test(t)) direct.imoNumber = v;
+      if (!direct.mmsi && /mmsi/.test(t)) direct.mmsi = v;
+      if (!direct.callSign && /call.?sign/.test(t)) direct.callSign = v;
+    }
+  }
+  // Normalise IMO to digits only (LSEG sometimes prefixes "IMO ").
+  if (direct.imoNumber) direct.imoNumber = direct.imoNumber.replace(/[^0-9]/g, "");
+  if (direct.imoNumber && direct.imoNumber.length !== 7) direct.imoNumber = undefined;
+  return direct;
+}
+
+function extractVesselFromXml(block: string): {
+  imoNumber?: string; mmsi?: string; callSign?: string; flag?: string; vesselType?: string;
+} {
+  const rawImo = xmlField(block, "imoNumber") || xmlField(block, "imo") || xmlField(block, "IMO");
+  const normalisedImo = rawImo ? rawImo.replace(/[^0-9]/g, "") : "";
+  const out: { imoNumber?: string; mmsi?: string; callSign?: string; flag?: string; vesselType?: string } = {};
+  if (normalisedImo.length === 7) out.imoNumber = normalisedImo;
+  const mmsi = xmlField(block, "mmsi") || xmlField(block, "MMSI");
+  if (mmsi) out.mmsi = mmsi;
+  const callSign = xmlField(block, "callSign") || xmlField(block, "callsign");
+  if (callSign) out.callSign = callSign;
+  const flag = xmlField(block, "flag") || xmlField(block, "flagState");
+  if (flag) out.flag = flag;
+  const vt = xmlField(block, "vesselType") || xmlField(block, "shipType");
+  if (vt) out.vesselType = vt;
+  return out;
 }
 
 function fnv1a(s: string): string {
@@ -93,18 +166,29 @@ function parseWorldCheckJson(payload: unknown, baseId: string): LsegCfsEntity[] 
       (typeof o["uid"] === "string" && o["uid"]) ||
       (typeof o["worldCheckId"] === "string" && o["worldCheckId"]) ||
       `${baseId}:${i}`;
+    const entityType = toEntityType(o["type"] ?? o["entityType"] ?? o["category"]);
     const ent: LsegCfsEntity = {
       id: String(idCandidate),
       source: "lseg-cfs",
       primaryName: String(primaryName).trim(),
       aliases: takeStringArray(aliasesSource),
-      entityType: toEntityType(o["type"] ?? o["entityType"] ?? o["category"]),
+      entityType,
       countries: takeStringArray(countriesSource, 8),
       categories: takeStringArray(categoriesSource, 16),
       rawHash: fnv1a(JSON.stringify(o)),
     };
     if (typeof o["publishedAt"] === "string") ent.publishedAt = o["publishedAt"] as string;
     else if (typeof o["lastUpdated"] === "string") ent.publishedAt = o["lastUpdated"] as string;
+    // Vessel-specific identifiers extracted only when the entity is a vessel
+    // — keeps individuals/entities clean of unused fields.
+    if (entityType === "vessel") {
+      const v = extractVesselFromJson(o);
+      if (v.imoNumber)  ent.imoNumber  = v.imoNumber;
+      if (v.mmsi)       ent.mmsi       = v.mmsi;
+      if (v.callSign)   ent.callSign   = v.callSign;
+      if (v.flag)       ent.flag       = v.flag;
+      if (v.vesselType) ent.vesselType = v.vesselType;
+    }
     out.push(ent);
   }
   return out;
@@ -168,17 +252,26 @@ function parseLsegXml(xml: string, baseId: string): LsegCfsEntity[] {
       ...xmlFieldAll(b, "riskFactor"),
     ];
     const publishedAt = xmlField(b, "publishedAt") || xmlField(b, "lastUpdated") || xmlField(b, "modifiedAt") || "";
+    const entityType = toEntityType(xmlField(b, "entityType") || xmlField(b, "type") || xmlField(b, "subjectType"));
     const ent: LsegCfsEntity = {
       id: idCandidate,
       source: "lseg-cfs",
       primaryName,
       aliases,
-      entityType: toEntityType(xmlField(b, "entityType") || xmlField(b, "type") || xmlField(b, "subjectType")),
+      entityType,
       countries,
       categories,
       rawHash: fnv1a(b),
     };
     if (publishedAt) ent.publishedAt = publishedAt;
+    if (entityType === "vessel") {
+      const v = extractVesselFromXml(b);
+      if (v.imoNumber)  ent.imoNumber  = v.imoNumber;
+      if (v.mmsi)       ent.mmsi       = v.mmsi;
+      if (v.callSign)   ent.callSign   = v.callSign;
+      if (v.flag)       ent.flag       = v.flag;
+      if (v.vesselType) ent.vesselType = v.vesselType;
+    }
     out.push(ent);
   }
   return out;
