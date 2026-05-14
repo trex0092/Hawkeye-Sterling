@@ -134,13 +134,7 @@ export async function POST(req: Request) {
         system: `You are a UAE AML compliance testing specialist with expertise in CBUAE testing expectations, FATF R.18 independent testing requirements, and sector-specific AML compliance testing methodologies. Design comprehensive compliance test plans with specific objectives, methodologies, sample sizes, frequencies, and output requirements. Plans should be practical and actionable for the institution's size and complexity. Reference UAE FDL 10/2025 and CBUAE Guidelines legal basis for each test. Respond ONLY with valid JSON matching the ComplianceTestPlanResult interface — no markdown fences.`,
         messages: [{
           role: "user",
-          content: `Institution Type: ${body.institutionType}
-Testing Area / Focus: ${body.testingArea ?? "comprehensive AML programme"}
-Risk Focus: ${body.riskFocus ?? "general AML/CFT obligations"}
-Staff Count: ${body.staffCount ?? "not specified"}
-Additional Context: ${body.context ?? "none"}
-
-Design a comprehensive AML compliance testing plan for this institution. Return complete ComplianceTestPlanResult JSON.`,
+          content: `Institution Type: ${body.institutionType}\nTesting Area / Focus: ${body.testingArea ?? "comprehensive AML programme"}\nRisk Focus: ${body.riskFocus ?? "general AML/CFT obligations"}\nStaff Count: ${body.staffCount ?? "not specified"}\nAdditional Context: ${body.context ?? "none"}\n\nDesign a comprehensive AML compliance testing plan for this institution. Return complete ComplianceTestPlanResult JSON.`,
         }],
       });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";

@@ -120,53 +120,10 @@ export async function POST(req: Request) {
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 1400,
-        system: `You are a UAE KYC/CDD document authenticity expert assessing identity documents and supporting KYC documents for fraud indicators under UAE FDL 10/2025.
-
-UAE document types and red flags:
-- Emirates ID (ICP-issued): MRZ uses OCR-B font, hologram post-2020 series, Gregorian+Hijri DOB must correspond, NFC chip
-- UAE passport: MRZ consistency, hologram, visa page security features
-- Salary certificates: MoHRE format, employer stamp, salary consistency with stated role
-- Bank statements: branch address, IBAN format (AE + 21 digits), realistic transaction patterns
-- Trade licences: DET/ADCCI/DIFC format, licence number format, activity codes
-- Corporate documents: MOEC format, attestation chains for offshore
-- Utility bills: DEWA/ADDC format, address consistency
-
-Red flag patterns:
-- Font inconsistency in MRZ zones
-- Hologram digital artefact (scan-and-paste)
-- Date inconsistency across documents
-- Salary implausible for stated occupation
-- Address mismatch across documents
-- Sequential or round-number ID/reference numbers (suggest fabrication)
-- Corporate stamps with digital artefacts
-- Offshore documents lacking apostille/notarisation chain
-
-Respond ONLY with valid JSON — no markdown fences:
-{
-  "fraudRisk": "critical"|"high"|"medium"|"low"|"clear",
-  "fraudProbability": <0-100>,
-  "documentAssessments": [{"docType":"<type>","authentic":"likely"|"suspect"|"counterfeit"|"unknown","redFlags":["<flag>"],"verificationRequired":["<step>"]}],
-  "indicators": [{"indicator":"<text>","severity":"critical"|"high"|"medium"|"low","documentType":"<doc>","detail":"<explanation>"}],
-  "identityConsistency": "consistent"|"inconsistent"|"partially_inconsistent"|"unknown",
-  "kycImpact": "reject"|"re_verify"|"enhanced_verification"|"acceptable",
-  "recommendedAction": "reject_onboarding"|"escalate_mlro"|"re_verify_documents"|"enhanced_dd"|"clear",
-  "actionRationale": "<paragraph>",
-  "requiredVerificationSteps": ["<step>"],
-  "externalVerificationSources": ["<source>"],
-  "regulatoryBasis": "<full citation>"
-}`,
+        system: `You are a UAE KYC/CDD document authenticity expert assessing identity documents and supporting KYC documents for fraud indicators under UAE FDL 10/2025.\n\nUAE document types and red flags:\n- Emirates ID (ICP-issued): MRZ uses OCR-B font, hologram post-2020 series, Gregorian+Hijri DOB must correspond, NFC chip\n- UAE passport: MRZ consistency, hologram, visa page security features\n- Salary certificates: MoHRE format, employer stamp, salary consistency with stated role\n- Bank statements: branch address, IBAN format (AE + 21 digits), realistic transaction patterns\n- Trade licences: DET/ADCCI/DIFC format, licence number format, activity codes\n- Corporate documents: MOEC format, attestation chains for offshore\n- Utility bills: DEWA/ADDC format, address consistency\n\nRed flag patterns:\n- Font inconsistency in MRZ zones\n- Hologram digital artefact (scan-and-paste)\n- Date inconsistency across documents\n- Salary implausible for stated occupation\n- Address mismatch across documents\n- Sequential or round-number ID/reference numbers (suggest fabrication)\n- Corporate stamps with digital artefacts\n- Offshore documents lacking apostille/notarisation chain\n\nRespond ONLY with valid JSON — no markdown fences:\n{\n  "fraudRisk": "critical"|"high"|"medium"|"low"|"clear",\n  "fraudProbability": <0-100>,\n  "documentAssessments": [{"docType":"<type>","authentic":"likely"|"suspect"|"counterfeit"|"unknown","redFlags":["<flag>"],"verificationRequired":["<step>"]}],\n  "indicators": [{"indicator":"<text>","severity":"critical"|"high"|"medium"|"low","documentType":"<doc>","detail":"<explanation>"}],\n  "identityConsistency": "consistent"|"inconsistent"|"partially_inconsistent"|"unknown",\n  "kycImpact": "reject"|"re_verify"|"enhanced_verification"|"acceptable",\n  "recommendedAction": "reject_onboarding"|"escalate_mlro"|"re_verify_documents"|"enhanced_dd"|"clear",\n  "actionRationale": "<paragraph>",\n  "requiredVerificationSteps": ["<step>"],\n  "externalVerificationSources": ["<source>"],\n  "regulatoryBasis": "<full citation>"\n}`,
         messages: [{
           role: "user",
-          content: `Document Types Presented: ${body.documentTypes}
-Document Details / Observations: ${body.documentDetails ?? "not provided"}
-Subject Name: ${body.subjectName ?? "not specified"}
-Subject Nationality: ${body.subjectNationality ?? "not specified"}
-Occupation Claimed: ${body.occupationClaimed ?? "not specified"}
-Income Claimed (AED/month): ${body.incomeClaimedAed ?? "not specified"}
-Inconsistencies Observed: ${body.inconsistenciesObserved ?? "none noted"}
-Additional Context: ${body.context ?? "none"}
-
-Assess these documents for fraud indicators.`,
+          content: `Document Types Presented: ${body.documentTypes}\nDocument Details / Observations: ${body.documentDetails ?? "not provided"}\nSubject Name: ${body.subjectName ?? "not specified"}\nSubject Nationality: ${body.subjectNationality ?? "not specified"}\nOccupation Claimed: ${body.occupationClaimed ?? "not specified"}\nIncome Claimed (AED/month): ${body.incomeClaimedAed ?? "not specified"}\nInconsistencies Observed: ${body.inconsistenciesObserved ?? "none noted"}\nAdditional Context: ${body.context ?? "none"}\n\nAssess these documents for fraud indicators.`,
         }],
       });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";

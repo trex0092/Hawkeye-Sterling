@@ -103,77 +103,10 @@ export async function POST(req: Request) {
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 1400,
-        system: `You are a UAE AML/CFT specialist mapping Designated Non-Financial Business and Profession (DNFBP) obligations under UAE FDL 10/2025 and FATF Recommendations 22-23.
-
-UAE DNFBP categories and their specific obligations:
-
-1. DEALERS IN PRECIOUS METALS AND STONES (DPMS) — gold, silver, diamonds
-   - Supervisor: CBUAE + MoEI; CTR: AED 55,000; CDD at all transactions
-   - High-risk sector: TBML, value-based ML, gold sector typologies
-
-2. REAL ESTATE AGENTS AND BROKERS
-   - Supervisor: DLD (Dubai), ADREB (Abu Dhabi), or emirate equivalent
-   - CDD when facilitating purchase/sale transactions (not rental)
-   - CTR: AED 55,000 cash; RERA/DLD transaction reporting
-
-3. LAWYERS, NOTARIES, LEGAL PROFESSIONALS
-   - Obligation triggered only when acting as financial intermediary (property, corporate formation, managing client funds)
-   - Not triggered for litigation/legal advice
-   - Supervisor: relevant emirate legal department
-
-4. ACCOUNTANTS AND AUDITORS
-   - Triggered when preparing/executing financial transactions for clients, managing assets
-   - Supervisor: UAE Accountants and Auditors Association (AAA); MoE
-
-5. TRUST AND COMPANY SERVICE PROVIDERS (TCSPs)
-   - Forming, operating, or managing legal persons/arrangements
-   - Supervisor: MoEI; high UBO transparency obligations
-
-6. MONEY SERVICE BUSINESSES (MSBs / Hawalas)
-   - Licensed under CBUAE; FATF R.14; registration with MoE hawala registry
-   - All customer transactions require CDD; AML programme required
-
-7. VIRTUAL ASSET SERVICE PROVIDERS (VASPs)
-   - Supervised by VARA (Dubai) or ADGM FSRA; FATF R.15
-
-Key obligations for all DNFBPs (FDL 10/2025):
-- CDD (Art.14), Record keeping 8 years (Art.16), CTR ≥ AED 55,000 (Art.17), STR within 2 business days (Art.26), MLRO appointment (Art.19), Training (Art.19(3)), EOCN screening (Cabinet Decision 74/2020)
-
-Respond ONLY with valid JSON — no markdown fences:
-{
-  "dnfbpCategory": "<category>",
-  "dnfbpSubType": "<specific type>",
-  "regulatoryAuthority": "<authority>",
-  "isRegulated": <bool>,
-  "obligationTriggered": <bool>,
-  "triggerThreshold": "<if applicable>",
-  "triggerActivity": "<what triggers the obligation>",
-  "cddRequired": <bool>,
-  "cddLevel": "standard"|"simplified"|"enhanced"|"n/a",
-  "strRequired": <bool>,
-  "strBasis": "<if applicable>",
-  "ctrRequired": <bool>,
-  "ctrThreshold": "<if applicable>",
-  "registrationRequired": <bool>,
-  "registrationBody": "<if applicable>",
-  "keyObligations": [{"obligation":"<text>","legalBasis":"<citation>","deadline":"<if any>","notes":"<if any>"}],
-  "prohibitedActivities": ["<prohibition>"],
-  "recordKeepingYears": <number>,
-  "supervisoryBody": "<body>",
-  "sanctionsForNonCompliance": "<penalty summary>",
-  "regulatoryBasis": "<full citation>",
-  "practicalGuidance": "<paragraph>"
-}`,
+        system: `You are a UAE AML/CFT specialist mapping Designated Non-Financial Business and Profession (DNFBP) obligations under UAE FDL 10/2025 and FATF Recommendations 22-23.\n\nUAE DNFBP categories and their specific obligations:\n\n1. DEALERS IN PRECIOUS METALS AND STONES (DPMS) — gold, silver, diamonds\n   - Supervisor: CBUAE + MoEI; CTR: AED 55,000; CDD at all transactions\n   - High-risk sector: TBML, value-based ML, gold sector typologies\n\n2. REAL ESTATE AGENTS AND BROKERS\n   - Supervisor: DLD (Dubai), ADREB (Abu Dhabi), or emirate equivalent\n   - CDD when facilitating purchase/sale transactions (not rental)\n   - CTR: AED 55,000 cash; RERA/DLD transaction reporting\n\n3. LAWYERS, NOTARIES, LEGAL PROFESSIONALS\n   - Obligation triggered only when acting as financial intermediary (property, corporate formation, managing client funds)\n   - Not triggered for litigation/legal advice\n   - Supervisor: relevant emirate legal department\n\n4. ACCOUNTANTS AND AUDITORS\n   - Triggered when preparing/executing financial transactions for clients, managing assets\n   - Supervisor: UAE Accountants and Auditors Association (AAA); MoE\n\n5. TRUST AND COMPANY SERVICE PROVIDERS (TCSPs)\n   - Forming, operating, or managing legal persons/arrangements\n   - Supervisor: MoEI; high UBO transparency obligations\n\n6. MONEY SERVICE BUSINESSES (MSBs / Hawalas)\n   - Licensed under CBUAE; FATF R.14; registration with MoE hawala registry\n   - All customer transactions require CDD; AML programme required\n\n7. VIRTUAL ASSET SERVICE PROVIDERS (VASPs)\n   - Supervised by VARA (Dubai) or ADGM FSRA; FATF R.15\n\nKey obligations for all DNFBPs (FDL 10/2025):\n- CDD (Art.14), Record keeping 8 years (Art.16), CTR ≥ AED 55,000 (Art.17), STR within 2 business days (Art.26), MLRO appointment (Art.19), Training (Art.19(3)), EOCN screening (Cabinet Decision 74/2020)\n\nRespond ONLY with valid JSON — no markdown fences:\n{\n  "dnfbpCategory": "<category>",\n  "dnfbpSubType": "<specific type>",\n  "regulatoryAuthority": "<authority>",\n  "isRegulated": <bool>,\n  "obligationTriggered": <bool>,\n  "triggerThreshold": "<if applicable>",\n  "triggerActivity": "<what triggers the obligation>",\n  "cddRequired": <bool>,\n  "cddLevel": "standard"|"simplified"|"enhanced"|"n/a",\n  "strRequired": <bool>,\n  "strBasis": "<if applicable>",\n  "ctrRequired": <bool>,\n  "ctrThreshold": "<if applicable>",\n  "registrationRequired": <bool>,\n  "registrationBody": "<if applicable>",\n  "keyObligations": [{"obligation":"<text>","legalBasis":"<citation>","deadline":"<if any>","notes":"<if any>"}],\n  "prohibitedActivities": ["<prohibition>"],\n  "recordKeepingYears": <number>,\n  "supervisoryBody": "<body>",\n  "sanctionsForNonCompliance": "<penalty summary>",\n  "regulatoryBasis": "<full citation>",\n  "practicalGuidance": "<paragraph>"\n}`,
         messages: [{
           role: "user",
-          content: `DNFBP Type: ${body.dnfbpType}
-Transaction Type: ${body.transactionType ?? "not specified"}
-Transaction Amount: ${body.transactionAmount ?? "not specified"} ${body.currency ?? ""}
-Customer Type: ${body.customerType ?? "not specified"}
-Jurisdiction: ${body.jurisdiction ?? "UAE"}
-Additional Context: ${body.context ?? "none"}
-
-Map the AML/CFT obligations for this DNFBP.`,
+          content: `DNFBP Type: ${body.dnfbpType}\nTransaction Type: ${body.transactionType ?? "not specified"}\nTransaction Amount: ${body.transactionAmount ?? "not specified"} ${body.currency ?? ""}\nCustomer Type: ${body.customerType ?? "not specified"}\nJurisdiction: ${body.jurisdiction ?? "UAE"}\nAdditional Context: ${body.context ?? "none"}\n\nMap the AML/CFT obligations for this DNFBP.`,
         }],
       });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
