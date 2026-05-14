@@ -1,10 +1,7 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
-import { NextResponse } from "next/server";
-import { enforce } from "@/lib/server/enforce";
-
-import { getAnthropicClient } from "@/lib/server/llm";
+import { stripJsonFences, withMlroLlm } from "@/lib/server/mlro-route-base";
 
 export interface MlroMemoResult {
   memoRef: string;
@@ -93,40 +90,39 @@ Deputy MLRO: ______________ Date: ___________
 This memorandum forms part of the entity's AML/CFT audit trail and is to be retained for a minimum of 8 years pursuant to UAE FDL 10/2025 Art.16.`,
 };
 
-export async function POST(req: Request) {
-  const gate = await enforce(req);
-  if (!gate.ok) return gate.response;
-  let body: {
-    subjectName: string;
-    subjectType?: string;
-    caseRef?: string;
-    activitySummary: string;
-    redFlags?: string[];
-    investigationSteps?: string;
-    proposedDecision?: string;
-    mlroName?: string;
-    date?: string;
-  };
-  try {
-    body = (await req.json()) as typeof body;
-  } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
-  }
-  if (!body.subjectName?.trim() || !body.activitySummary?.trim()) {
-    return NextResponse.json({ ok: false, error: "subjectName and activitySummary required" }, { status: 400 , headers: gate.headers});
-  }
+interface MlroMemoBody {
+  subjectName: string;
+  subjectType?: string;
+  caseRef?: string;
+  activitySummary: string;
+  redFlags?: string[];
+  investigationSteps?: string;
+  proposedDecision?: string;
+  mlroName?: string;
+  date?: string;
+}
 
-  const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "mlro-memo temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
-
-  const memoRef = `MLRO-MEMO-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 9000) + 1000)}`;
-
-  try {
-    const client = getAnthropicClient(apiKey, 55000);
-    const response = await client.messages.create({
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 2500,
-        system: `You are a senior UAE MLRO drafting a formal MLRO Decision Memorandum for the audit trail. This document will be reviewed by regulators (MoE, CBUAE, FIU) during inspections. It must be precise, formal, complete, and audit-ready.
+// Audit M7: post-consolidation, this route is a thin shell over the
+// shared withMlroLlm() base. The whole enforce → parse → fallback →
+// client → parse JSON → response envelope skeleton lives in
+// web/lib/server/mlro-route-base.ts. This file now only declares the
+// route's identity (system prompt, model, max_tokens, body/result shape).
+export const POST = (req: Request) => withMlroLlm<MlroMemoBody, MlroMemoResult>(req, {
+  route: "mlro-memo",
+  model: "claude-haiku-4-5-20251001",
+  maxTokens: 2500,
+  timeoutMs: 55_000,
+  offlineFallback: FALLBACK,
+  parseBody: (raw): MlroMemoBody | null => {
+    if (!raw || typeof raw !== "object") return null;
+    const b = raw as Partial<MlroMemoBody>;
+    if (!b.subjectName?.trim() || !b.activitySummary?.trim()) return null;
+    return b as MlroMemoBody;
+  },
+  buildRequest: (body) => {
+    const memoRef = `MLRO-MEMO-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 9000) + 1000)}`;
+    return {
+      system: `You are a senior UAE MLRO drafting a formal MLRO Decision Memorandum for the audit trail. This document will be reviewed by regulators (MoE, CBUAE, FIU) during inspections. It must be precise, formal, complete, and audit-ready.
 
 The memo must include:
 1. Header (reference, date, MLRO name, classification)
@@ -152,9 +148,7 @@ Respond ONLY with valid JSON — no markdown fences:
   "qualityScore": <0–100>,
   "regulatoryBasis": "<citation>"
 }`,
-        messages: [{
-          role: "user",
-          content: `Subject: ${body.subjectName}
+      userContent: `Subject: ${body.subjectName}
 Type: ${body.subjectType ?? "not specified"}
 Case Reference: ${body.caseRef ?? "to be assigned"}
 Activity Summary: ${body.activitySummary}
@@ -165,12 +159,7 @@ MLRO Name: ${body.mlroName ?? "[MLRO NAME]"}
 Date: ${body.date ?? new Date().toLocaleDateString("en-GB")}
 
 Draft the MLRO Decision Memorandum.`,
-        }],
-      });
-    const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
-    const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as MlroMemoResult;
-    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
-  } catch {
-    return NextResponse.json({ ok: false, error: "mlro-memo temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
-  }
-}
+    };
+  },
+  parseResult: (text) => JSON.parse(stripJsonFences(text)) as MlroMemoResult,
+});
