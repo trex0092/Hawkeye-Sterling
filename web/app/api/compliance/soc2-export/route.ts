@@ -45,15 +45,26 @@ interface ExportBundle {
   signature?: string;     // HMAC-SHA256 over bundleSha256, when WEBHOOK_HMAC_SECRET is set
 }
 
-async function readJsonBlob(store: string, key: string): Promise<unknown[]> {
+// Audit DR-06: previous `catch { return [] }` made Blobs failures
+// indistinguishable from "no data" in a SOC2 audit export. An operator
+// downloading the export for regulator review would receive an empty
+// bundle at HTTP 200 with no warning. Track failures so the route can
+// surface them in the response envelope instead of silently truncating.
+interface BlobReadResult {
+  records: unknown[];
+  error?: string;
+}
+async function readJsonBlob(store: string, key: string): Promise<BlobReadResult> {
   try {
     const s = getStore(store);
     const raw = await s.get(key, { type: "text" });
-    if (!raw) return [];
+    if (!raw) return { records: [] };
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
+    return { records: Array.isArray(parsed) ? parsed : [] };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error(`[soc2-export] readJsonBlob(${store}/${key}) failed:`, message);
+    return { records: [], error: `${store}/${key}: ${message}` };
   }
 }
 
@@ -77,14 +88,34 @@ async function handleGet(req: Request): Promise<NextResponse> {
 
   const allFeedback = await readJsonBlob(FEEDBACK_STORE, FEEDBACK_KEY);
   const allAudit = await readJsonBlob(AUDIT_STORE, AUDIT_KEY);
+  const readErrors: string[] = [];
+  if (allFeedback.error) readErrors.push(allFeedback.error);
+  if (allAudit.error) readErrors.push(allAudit.error);
 
-  const feedback = allFeedback.filter((r) => {
+  // Audit DR-06: a Blobs read failure must NOT be served as a clean SOC2
+  // export — the regulator could file the empty bundle thinking nothing
+  // happened. If either store failed, return 503 with the error surfaced.
+  if (readErrors.length > 0) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: "soc2-export-blob-read-failed",
+        message:
+          "One or more underlying Blobs stores failed to read. The audit bundle is incomplete; do not submit. " +
+          "Retry or investigate Netlify Blobs connectivity.",
+        readErrors,
+      },
+      { status: 503, headers: gate.headers },
+    );
+  }
+
+  const feedback = allFeedback.records.filter((r) => {
     if (typeof r === "object" && r !== null && "at" in r) {
       return inWindow((r as { at?: string }).at, since, until);
     }
     return true;
   });
-  const audit = allAudit.filter((r) => {
+  const audit = allAudit.records.filter((r) => {
     if (typeof r === "object" && r !== null && "at" in r) {
       return inWindow((r as { at?: string }).at, since, until);
     }

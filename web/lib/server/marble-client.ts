@@ -41,7 +41,12 @@ export async function checkMarble(
       }),
       signal: AbortSignal.timeout(5_000),
     });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      // Audit DR-07: silent `return null` made HTTP failures
+      // indistinguishable from "not configured". Log so ops can tell.
+      console.warn(`[marble-client] HTTP ${res.status} from ${base}`);
+      return null;
+    }
 
     const data = (await res.json()) as { matches?: MarbleMatch[] };
     const matches = data.matches ?? [];
@@ -49,7 +54,8 @@ export async function checkMarble(
 
     const top = matches[0]!;
     return { status: top.status, topMatch: top };
-  } catch {
+  } catch (err) {
+    console.warn(`[marble-client] request failed: ${err instanceof Error ? err.message : String(err)}`);
     return null;
   }
 }

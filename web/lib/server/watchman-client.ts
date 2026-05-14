@@ -29,7 +29,11 @@ export async function checkWatchman(name: string): Promise<WatchmanResult | null
       headers: { "x-user-id": "hawkeye-batch", accept: "application/json" },
       signal: AbortSignal.timeout(5_000),
     });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      // Audit DR-07: log HTTP failures so silent nulls become diagnosable.
+      console.warn(`[watchman-client] HTTP ${res.status}`);
+      return null;
+    }
 
     const data = (await res.json()) as {
       SDNs?: WatchmanEntity[];
@@ -40,7 +44,8 @@ export async function checkWatchman(name: string): Promise<WatchmanResult | null
       (e) => e.match >= 0.82,
     );
     return { hits, hitCount: hits.length };
-  } catch {
+  } catch (err) {
+    console.warn(`[watchman-client] request failed: ${err instanceof Error ? err.message : String(err)}`);
     return null;
   }
 }
