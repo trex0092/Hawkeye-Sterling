@@ -28,6 +28,13 @@ export interface GoAmlXmlResult {
   validationWarnings: string[];
   reportRef: string;            // e.g. UAE-STR-2025-{timestamp}
   submissionChecklist: string[];
+  // Audit DR-04: when buildXml() throws (unexpected schema field), the
+  // route used to silently substitute a [REPLACE_BEFORE_FILING] placeholder
+  // XML. MLROs could submit that broken XML to UAE FIU without realising.
+  // This flag is now lifted to the top level so the UI/MCP wrapper can
+  // refuse to surface the XML as final and humanReviewRequired stays true.
+  degraded?: true;
+  degradedReason?: string;
 }
 
 interface Transaction {
@@ -373,16 +380,20 @@ export async function POST(req: Request): Promise<Response> {
   const { errors, warnings } = validate(body ?? ({} as GoAmlXmlInput));
 
   let xml: string;
+  let degradedReason: string | undefined;
   if (errors.length > 0) {
     // Return fallback with placeholders so the operator can see the structure
     // even when validation fails. The checklist calls out the errors explicitly.
     xml = buildFallbackXml(reportRef, submissionDate);
+    degradedReason = `validation produced ${errors.length} error(s) — placeholder XML emitted; do NOT submit until fixed`;
   } else {
     try {
       xml = buildXml(body, reportRef, submissionDate);
     } catch (err) {
-      console.error("[goaml-xml] serialise error", err);
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error("[goaml-xml] serialise error", msg);
       xml = buildFallbackXml(reportRef, submissionDate);
+      degradedReason = `XML serialisation failed (${msg}) — placeholder XML emitted; do NOT submit until fixed`;
     }
   }
 
@@ -393,6 +404,7 @@ export async function POST(req: Request): Promise<Response> {
     validationWarnings: warnings,
     reportRef,
     submissionChecklist: SUBMISSION_CHECKLIST,
+    ...(degradedReason ? { degraded: true as const, degradedReason } : {}),
   };
 
   return NextResponse.json(result, {

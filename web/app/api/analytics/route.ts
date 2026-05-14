@@ -119,18 +119,21 @@ export async function GET(req: Request): Promise<NextResponse> {
     { headers: gate.headers },
   );
   } catch (err) {
+    // Audit DR-01: returning 200 with all-zero counters made the endpoint
+    // indistinguishable from a healthy "no activity" state on monitors. A
+    // single Blobs outage zeroed every dashboard. Now surface as 503 so
+    // monitoring sees the failure and operators don't read fake zeros as
+    // real signal. UI consumers should treat any non-200 as "data unavailable".
+    const message = err instanceof Error ? err.message : String(err);
     console.error("[analytics] unhandled error", err);
     return NextResponse.json(
       {
-        ok: true,
+        ok: false,
+        error: "analytics-temporarily-unavailable",
+        message,
         generatedAt: new Date().toISOString(),
-        commercial: { totalApiKeys: 0, tierBreakdown: {}, totalScreeningsThisMonth: 0 },
-        monitoring: { enrolledSubjects: 0, scheduledSubjects: 0, cadenceBreakdown: {} },
-        quality: { falsePositiveCount: 0, trueMatchCount: 0, falsePositiveRate: 0, verdictsLast24h: 0, totalVerdicts: 0 },
-        kpis: { defined: 0, sample: [] },
-        note: "Analytics data temporarily unavailable.",
       },
-      { status: 200 },
+      { status: 503 },
     );
   }
 }

@@ -183,9 +183,19 @@ export async function appendAuditEntry(input: AuditLogAppendInput): Promise<{ se
     finalAnswer: input.finalAnswer,
     ...(input.validation ? { validation: input.validation } : {}),
   });
-  // Fire-and-forget Blobs write. Errors are logged in the store wrapper.
-  void setJson(`${AUDIT_LOG_KEY_PREFIX}${entry.seq}`, entry).catch(() => {
-    // The store wrapper already logs; nothing to do here.
+  // Fire-and-forget Blobs write. Audit DR-05: the previous swallow-and-
+  // ignore catch made persistent-audit failures invisible even though the
+  // store wrapper logs them. An MLRO audit-log persistence failure is a
+  // compliance event in its own right (FDL 10/2025 Art.24 — 10-year audit
+  // retention). Surface it explicitly to console.error so the Netlify
+  // function log captures the seq + error reason instead of just the
+  // generic store-wrapper warning.
+  void setJson(`${AUDIT_LOG_KEY_PREFIX}${entry.seq}`, entry).catch((err: unknown) => {
+    const detail = err instanceof Error ? err.message : String(err);
+    console.error(
+      `[mlro-integration] audit log persist failed seq=${entry.seq} hash=${entry.entryHash} — ${detail}. ` +
+      `In-process entry retained; cold-start will lose it. Investigate Blobs connectivity.`,
+    );
   });
   return { seq: entry.seq, entryHash: entry.entryHash };
 }
