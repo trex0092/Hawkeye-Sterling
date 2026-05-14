@@ -114,13 +114,46 @@ const STATIC_COUNTRY_DATASET: StaticCountryEntry[] = [
   { iso2: "CU", iso3: "CUB", name: "Cuba",              fatfStatus: "non_member", cpiScore: 47, sanctionsRegime: "OFAC SDN",                  dpmsRiskTier: "high",     lastUpdated: "2026-02-14" },
 ];
 
+// Common short-forms that don't match the canonical `name` field. Audit C-03:
+// the auditor called country_risk with "UAE" and got nothing back from the
+// static dataset (canonical name is "United Arab Emirates"), so every
+// invocation hit the LLM. On a cold start the LLM exceeded the 10s timeout
+// and the deepest catch block surfaced "Real-time analysis temporarily
+// unavailable" instead of the cached static profile. Keep this list short
+// and unambiguous — common short-forms only, never substring matches that
+// could collide between countries.
+const COUNTRY_ALIASES: Record<string, string> = {
+  "uae": "AE",
+  "u.a.e.": "AE",
+  "u.a.e": "AE",
+  "emirates": "AE",
+  "uk": "GB",
+  "u.k.": "GB",
+  "britain": "GB",
+  "great britain": "GB",
+  "us": "US",
+  "u.s.": "US",
+  "u.s.a.": "US",
+  "usa": "US",
+  "america": "US",
+  "drc": "CD",
+  "dr congo": "CD",
+  "north korea": "KP",
+  "south korea": "KR",
+  "ksa": "SA",
+  "kingdom of saudi arabia": "SA",
+};
+
 function lookupStaticCountry(country: string): StaticCountryEntry | undefined {
   const q = country.toLowerCase().trim();
+  const alias = COUNTRY_ALIASES[q];
+  const aliasIso2 = alias ? alias.toLowerCase() : null;
   return STATIC_COUNTRY_DATASET.find(
     (e) =>
       e.name.toLowerCase() === q ||
       e.iso2.toLowerCase() === q ||
-      e.iso3.toLowerCase() === q,
+      e.iso3.toLowerCase() === q ||
+      (aliasIso2 !== null && e.iso2.toLowerCase() === aliasIso2),
   );
 }
 

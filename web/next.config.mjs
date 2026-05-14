@@ -3,10 +3,26 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+// Capture the deployed git SHA at build time. Netlify provides `COMMIT_REF`;
+// other CI providers expose it under different names. Without this, runtime
+// lookups against `process.env.COMMIT_REF` in serverless functions fall
+// through to "dev" because Next.js' Lambda runtime doesn't propagate build
+// env vars unless they're inlined here. Audit M-06 / governance trail.
+const BUILD_COMMIT_REF =
+  process.env.COMMIT_REF ??
+  process.env.GIT_COMMIT_SHA ??
+  process.env.NETLIFY_COMMIT_REF ??
+  process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA ??
+  "dev";
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: "standalone",
   reactStrictMode: true,
+
+  env: {
+    HAWKEYE_BUILD_COMMIT_REF: BUILD_COMMIT_REF,
+  },
 
   typescript: {
     // JSX implicit-any errors (TS7026/TS2741) are pre-existing across the entire

@@ -118,8 +118,24 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   if (!result.ok && result.error?.includes("not configured")) {
+    // Audit C-02: prior response was a flat error string that read-only MCP
+    // wrappers pass through without governance. Surface an explicit
+    // degradedService + humanReviewRequired block so dashboards, audit
+    // trails, and MLRO operators see this as a critical deficit rather
+    // than a silent "no hits" outcome.
     return NextResponse.json(
-      { ok: false, error: "Vessel screening service is not configured on the server. Do not treat absence of results as a clean screen." },
+      {
+        ok: false,
+        tool: "vessel_check",
+        errorCode: "UPSTREAM_UNAVAILABLE",
+        errorType: "upstream",
+        message: "Vessel screening service is not configured on the server. Do not treat absence of results as a clean screen. Configure a vessel-intelligence provider (Equasis, World Fleet Register, or equivalent) before relying on vessel screening for compliance decisions.",
+        _governance: {
+          humanReviewRequired: true,
+          degradedServices: ["vessel_screening"],
+          reviewNote: "FDL No.10/2025 Art.15: AI-generated screening results are invalid when an upstream data source is offline.",
+        },
+      },
       { status: 503, headers: { ...CORS, ...gateHeaders } },
     );
   }
