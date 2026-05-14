@@ -45,6 +45,19 @@ export async function OPTIONS(): Promise<NextResponse> {
   return new NextResponse(null, { status: 204, headers: CORS });
 }
 
+// Audit M-05: bare 405 on GET left operators guessing. Return a friendly
+// 405 that names the right method + body shape and points at /api/routes.
+export async function GET(): Promise<NextResponse> {
+  return NextResponse.json(
+    {
+      ok: false,
+      error: "Method Not Allowed",
+      message: "POST /api/transaction-anomaly with body { transaction: { amountUsd, ... }, sessionId? }. See /api/routes?mcpTool=transaction_anomaly.",
+    },
+    { status: 405, headers: { ...CORS, allow: "POST, OPTIONS" } },
+  );
+}
+
 // In-memory gate store keyed by sessionId.
 const gateStore = new Map<string, StreamingAnomalyGate>();
 
