@@ -84,20 +84,20 @@ interface BrainVerdictEnvelope {
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 /**
- * Load all audit entries from the Blobs store.
- * Returns entries sorted chronologically (lexical sort on the zero-padded
- * sequence key is equivalent to chronological order — same assumption as
- * sign/route.ts's handleList).
+ * Load audit entries from the Blobs store.
+ * Reads are parallelised with Promise.all to avoid sequential-IO timeouts on
+ * large chains. Pass `limit` to cap the number of entries returned (newest
+ * first when limit is set); omit to return the full chain.
  */
-async function loadAllEntries(): Promise<AuditEntry[]> {
+async function loadAllEntries(limit?: number): Promise<AuditEntry[]> {
   const keys = await listKeys("audit/entry/");
-  const sorted = keys.sort(); // lexical == chronological for zero-padded keys
-  const entries: AuditEntry[] = [];
-  for (const k of sorted) {
-    const e = await getJson<AuditEntry>(k);
-    if (e) entries.push(e);
+  let sorted = keys.sort(); // lexical == chronological for zero-padded keys
+  if (limit && limit > 0) {
+    // Take the last `limit` keys (most recent) for paginated callers.
+    sorted = sorted.slice(-limit);
   }
-  return entries;
+  const results = await Promise.all(sorted.map(k => getJson<AuditEntry>(k)));
+  return results.filter((e): e is AuditEntry => e !== null);
 }
 
 /**
@@ -256,7 +256,9 @@ async function handleGet(req: Request): Promise<NextResponse> {
   if (!screeningId) {
     const secret = process.env["AUDIT_CHAIN_SECRET"];
 
-    const entries = await loadAllEntries();
+    // Fetch only the last 50 entries in parallel — avoids a sequential full-
+    // chain read that would time-out on large audit logs (FIX C-02).
+    const entries = await loadAllEntries(50);
     const recent = entries.slice(-10).reverse(); // last 10, most recent first
 
     // Verify AUDIT_CHAIN_SECRET wiring

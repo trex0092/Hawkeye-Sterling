@@ -106,11 +106,10 @@ export async function recordApproval(input: {
 /** Read all approvals for a case and compute pass/reject state. */
 export async function getCaseApprovals(caseId: string): Promise<FourEyesStatus> {
   const keys = await listKeys(`${PREFIX}${caseId}/`);
-  const decisions: ApprovalEntry[] = [];
-  for (const k of keys) {
-    const e = await getJson<ApprovalEntry>(k);
-    if (e && e.approvalId && e.actor) decisions.push(e);
-  }
+  const results = await Promise.all(keys.map((k) => getJson<ApprovalEntry>(k)));
+  const decisions: ApprovalEntry[] = results.filter(
+    (e): e is ApprovalEntry => e != null && !!e.approvalId && !!e.actor,
+  );
   decisions.sort((a, b) => a.approvedAt.localeCompare(b.approvedAt));
 
   // Any reject short-circuits the chain.

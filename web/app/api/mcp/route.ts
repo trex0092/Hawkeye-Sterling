@@ -154,6 +154,17 @@ function wrapWithGovernance(
       humanReviewRequired: true,
       consequenceLevel: level,
       reviewNote: "AI-generated output — MLRO review required before any compliance action. FDL No.10/2025 Art.18.",
+      // Four-eyes approval instructions for tools that can produce regulator-facing output.
+      // Surfaces how to record approvals so operators see the path forward, not just a gate.
+      // Applied to: action-level tools AND the supervised tools that drive case disposition.
+      ...(level === "action" || ["pep", "disposition", "generate_report", "transaction_anomaly"].includes(toolName) ? {
+        approvalRequired: {
+          required: true,
+          instructions: "Record two distinct approver sign-offs at POST /api/four-eyes before any regulator-facing submission or STR filing. Body: { caseId, actor (approver email/GID), decision: 'approve', rationale }. Two distinct actors are required — a single approver approving twice is rejected.",
+          endpoint: "/api/four-eyes",
+          regulatoryBasis: ["UAE FDL 10/2025 Art.16 (dual-attestation)", "FATF R.26 (record-keeping + responsibility separation)"],
+        },
+      } : {}),
       ...(degradedServices.length > 0 ? { degradedServices } : {}),
       ...(rgvDefects !== null ? { rgvDefects } : {}),
       ...(rgvUngroundedClaims !== null ? { rgvUngroundedClaims } : {}),
@@ -398,11 +409,25 @@ async function callApi(
       const ct = res.headers.get("content-type") ?? "";
       if (!ct.includes("application/json")) {
         const text = await res.text().catch(() => "");
+        // Non-OK HTML responses are Next.js 404 / error pages — surface them
+        // as a proper error so callers don't confuse them with real reports.
+        if (!res.ok && ct.includes("text/html")) {
+          return {
+            ok: false,
+            status: res.status,
+            error: "endpoint_not_found",
+            path,
+            hint: "This API path does not exist or is not reachable. Verify the route name against the API documentation.",
+          };
+        }
+        // Non-JSON success responses (HTML reports, PDFs, etc.) are genuine.
         return {
           ok: res.ok,
           status: res.status,
           format: ct.includes("text/html") ? "html" : "text",
-          message: `Report generated (${text.length} bytes). Open the Hawkeye Sterling web interface to view the full rendered report.`,
+          message: res.ok
+            ? `Report generated (${text.length} bytes). Open the Hawkeye Sterling web interface to view the full rendered report.`
+            : `Upstream returned HTTP ${res.status} (${text.length} bytes).`,
         };
       }
       return await res.json().catch(() => ({ ok: res.ok, status: res.status }));
@@ -585,10 +610,18 @@ const TOOLS: ToolDef[] = [
       const a = args as Record<string, unknown>;
       const source = (a["source"] as string) ?? "both";
       const subjectName = String(a["subjectName"] ?? "");
-      const gdeltPayload: Record<string, unknown> = { subjectName };
-      if (a["entityType"]) gdeltPayload["entityType"] = a["entityType"];
-      if (a["jurisdiction"]) gdeltPayload["jurisdiction"] = a["jurisdiction"];
-      if (a["aliases"]) gdeltPayload["aliases"] = a["aliases"];
+      // Wrap in subject envelope per MCP payload standard.
+      const gdeltPayload: Record<string, unknown> = {
+        subject: {
+          name: subjectName,
+          ...(a["entityType"] ? { entityType: a["entityType"] } : {}),
+          ...(a["jurisdiction"] ? { jurisdiction: a["jurisdiction"] } : {}),
+        },
+        subjectName, // flat fallback for backward compat
+        ...(a["entityType"] ? { entityType: a["entityType"] } : {}),
+        ...(a["jurisdiction"] ? { jurisdiction: a["jurisdiction"] } : {}),
+        ...(a["aliases"] ? { aliases: a["aliases"] } : {}),
+      };
 
       if (source === "gdelt") {
         const r = await callApi("/api/adverse-media-live", "POST", gdeltPayload);
@@ -730,11 +763,24 @@ const TOOLS: ToolDef[] = [
       required: ["subjectName", "suspicionBasis"],
     },
     handler: async ({ suspicionBasis, subjectName, filingType, approver, ...rest }) => {
+      const finalType = (filingType as string) ?? "STR";
+      // Enforce four-eyes approver for final regulatory filings per FDL 10/2025 Art.16.
+      const requiresApprover = ["STR", "SAR", "CTR", "FFR"].includes(finalType);
+      if (requiresApprover && !String(approver ?? "").trim()) {
+        return {
+          ok: false,
+          errorCode: "APPROVER_REQUIRED",
+          errorType: "validation",
+          message: `Four-eyes approver is required for ${finalType} filings (UAE FDL 10/2025 Art.16). Provide the 'approver' field with the name/email of the second authorised reviewer. Record approvals at POST /api/four-eyes with caseId + actor + decision=approve + rationale.`,
+          filingType: finalType,
+          _governance: { humanReviewRequired: true, regulatoryBasis: ["FDL 10/2025 Art.16", "FATF R.26"] },
+        };
+      }
       const subjectId = String(subjectName ?? "").toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 40) + "-" + Date.now().toString(36);
       return callApi("/api/sar-report", "POST", {
         subject: { id: subjectId, name: subjectName, ...rest },
         narrative: suspicionBasis,
-        filingType: filingType ?? "STR",
+        filingType: finalType,
         approver,
       });
     },
@@ -927,7 +973,17 @@ const TOOLS: ToolDef[] = [
       },
       required: ["imoNumber"],
     },
-    handler: async (args) => callApi("/api/vessel-check", "POST", args),
+    handler: async (args) => {
+      const a = args as Record<string, unknown>;
+      return callApi("/api/vessel-check", "POST", {
+        subject: {
+          imoNumber: a["imoNumber"],
+          name: a["name"],
+          flagState: a["flagState"],
+          entityType: "vessel",
+        },
+      });
+    },
   },
   {
     name: "crypto_risk",
@@ -940,7 +996,12 @@ const TOOLS: ToolDef[] = [
       },
       required: ["address"],
     },
-    handler: async (args) => callApi("/api/crypto-risk", "POST", args),
+    handler: async (args) => {
+      const a = args as Record<string, unknown>;
+      return callApi("/api/crypto-risk", "POST", {
+        subject: { address: a["address"], chain: a["chain"] },
+      });
+    },
   },
   {
     name: "lei_lookup",
@@ -1019,7 +1080,16 @@ const TOOLS: ToolDef[] = [
       },
       required: ["facts"],
     },
-    handler: async (args) => callApi("/api/typology-match", "POST", args),
+    handler: async (args) => {
+      const a = args as Record<string, unknown>;
+      return callApi("/api/typology-match", "POST", {
+        subject: {
+          facts: a["facts"],
+          subjectType: a["subjectType"],
+          transactionType: a["transactionType"],
+        },
+      });
+    },
   },
 
   // ── CASES & AUDIT ────────────────────────────────────────────────────────────
@@ -1060,15 +1130,18 @@ const TOOLS: ToolDef[] = [
     handler: async ({ screeningId }) => {
       // When no screeningId provided, call without it — the view route returns all entries,
       // which we slice to the 10 most recent for the MCP response.
+      // 25s explicit timeout: audit/view reads blobs in parallel but can still
+      // be slow on large chains; the default read-only class budget (15s) is too tight.
+      const AUDIT_TIMEOUT_MS = 25_000;
       if (!screeningId) {
-        const result = await callApi("/api/audit/view", "GET") as Record<string, unknown> | null;
+        const result = await callApi("/api/audit/view", "GET", undefined, undefined, AUDIT_TIMEOUT_MS) as Record<string, unknown> | null;
         if (!result || !(result as Record<string, unknown>).ok) return result;
         const entries = Array.isArray((result as Record<string, unknown>).entries)
           ? ((result as Record<string, unknown>).entries as unknown[]).slice(-10)
           : [];
         return { ...result, entries, note: "Showing 10 most recent audit records. Provide screeningId for a specific case." };
       }
-      return callApi("/api/audit/view", "GET", undefined, { screeningId: String(screeningId) });
+      return callApi("/api/audit/view", "GET", undefined, { screeningId: String(screeningId) }, AUDIT_TIMEOUT_MS);
     },
   },
 

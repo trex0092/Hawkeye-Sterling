@@ -24,6 +24,8 @@ export async function OPTIONS(): Promise<NextResponse> {
 interface CryptoRiskBody {
   address?: string;
   chain?: CryptoChain;
+  // Subject-wrapped form (from MCP tool): { subject: { address, chain } }
+  subject?: { address?: string; chain?: CryptoChain };
 }
 
 type AddressFormat = "BTC-P2PKH" | "BTC-P2SH" | "BTC-bech32" | "ETH" | "unknown";
@@ -45,7 +47,11 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   let body: CryptoRiskBody;
   try {
-    body = (await req.json()) as CryptoRiskBody;
+    const raw = (await req.json()) as CryptoRiskBody;
+    // Unwrap subject envelope sent by the MCP tool layer.
+    body = (raw.subject && typeof raw.subject === "object")
+      ? { ...raw.subject, ...raw, subject: undefined }
+      : raw;
   } catch {
     return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400, headers: CORS });
   }

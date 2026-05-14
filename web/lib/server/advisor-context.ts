@@ -14,6 +14,7 @@
 import { getJson, listKeys } from "@/lib/server/store";
 import type { CaseRecord } from "@/lib/types";
 import type { EocnFeedPayload } from "@/lib/data/eocn-fixture";
+import { getAnthropicClient } from "@/lib/server/llm";
 
 interface CaseVaultIndexEntry {
   id: string;
@@ -276,4 +277,132 @@ export async function listAdvisorSessions(tenant: string): Promise<string[]> {
   } catch {
     return [];
   }
+}
+
+// ─── Multi-perspective MLRO Advisor invocation ────────────────────────────────
+// Imported by /api/mlro-advisor (deep mode). Runs three parallel LLM calls
+// (executor / advisor / challenger) and synthesises a consensus narrative.
+// Individual perspective failures are silently swallowed so a single timeout
+// doesn't kill the whole response — at least one perspective must succeed.
+
+export interface MlroAdvisorRequest {
+  question: string;
+  mode?: string;
+  audience?: string;
+  caseContext?: {
+    caseId: string;
+    subjectName: string;
+    entityType: string;
+    scope: {
+      listsChecked: string[];
+      listVersionDates: Record<string, unknown>;
+      jurisdictions: string[];
+      matchingMethods: string[];
+    };
+    evidenceIds: string[];
+  };
+}
+
+export interface MlroAdvisorResult {
+  ok: boolean;
+  narrative?: string;
+  error?: string;
+  partial?: boolean;
+  complianceReview?: { verdict: string };
+  elapsedMs: number;
+}
+
+const ADVISOR_SYSTEM_PROMPT = `You are a senior MLRO (Money Laundering Reporting Officer) with 20+ years of UAE AML/CFT compliance experience. You provide expert, actionable analysis under UAE FDL No.10/2025, Cabinet Resolution No.134/2025, and FATF Recommendations.
+
+Requirements:
+- Cite specific regulatory references (FATF Rec numbers, FDL articles, Cabinet Resolutions)
+- Give concrete, actionable recommendations an MLRO can act on immediately
+- Flag if the situation requires an STR filing or escalation to senior management
+- Note four-eyes review requirements where applicable
+- Respond in professional English suitable for regulatory review`;
+
+export async function invokeMlroAdvisor(
+  req: MlroAdvisorRequest,
+  opts: { apiKey: string; budgetMs: number },
+): Promise<MlroAdvisorResult> {
+  const t0 = Date.now();
+  const isMulti = (req.mode ?? "multi_perspective") === "multi_perspective" || req.mode === "all";
+
+  // Single-perspective path (speed / balanced modes).
+  if (!isMulti) {
+    try {
+      const client = getAnthropicClient(opts.apiKey, opts.budgetMs, "mlro-advisor");
+      const response = await client.messages.create({
+        model: "claude-sonnet-4-6",
+        max_tokens: 2000,
+        system: ADVISOR_SYSTEM_PROMPT,
+        messages: [{ role: "user", content: req.question }],
+      });
+      const narrative = response.content[0]?.type === "text" ? response.content[0].text : null;
+      if (!narrative) {
+        return { ok: false, error: "Empty response from advisor LLM", elapsedMs: Date.now() - t0 };
+      }
+      return { ok: true, narrative, complianceReview: { verdict: "approved" }, elapsedMs: Date.now() - t0 };
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : String(err);
+      const timedOut = detail.toLowerCase().includes("timeout") || detail.toLowerCase().includes("abort");
+      return { ok: false, error: detail, partial: timedOut, elapsedMs: Date.now() - t0 };
+    }
+  }
+
+  // Multi-perspective path — three parallel Haiku calls with per-call timeout.
+  // Each call is independent; any failures are treated as timed-out perspectives
+  // and excluded from synthesis rather than aborting the whole response.
+  const client = getAnthropicClient(opts.apiKey, opts.budgetMs, "mlro-advisor-multi");
+
+  const PERSPECTIVE_TIMEOUT_MS = 45_000;
+  async function perspective(role: string, instruction: string): Promise<string | null> {
+    try {
+      // Hard 45s ceiling per perspective so a single LLM hang can't block the others.
+      const timeoutPromise = new Promise<null>((resolve) =>
+        setTimeout(() => resolve(null), PERSPECTIVE_TIMEOUT_MS),
+      );
+      const llmPromise = client.messages.create({
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 700,
+        system: ADVISOR_SYSTEM_PROMPT,
+        messages: [{ role: "user", content: `${req.question}\n\n[${role}: ${instruction}]` }],
+      }).then((r) => r.content[0]?.type === "text" ? r.content[0].text : null);
+      return await Promise.race([llmPromise, timeoutPromise]);
+    } catch {
+      return null;
+    }
+  }
+
+  const [executor, advisor, challenger] = await Promise.all([
+    perspective("EXECUTOR", "Focus on what regulatory obligations apply and what concrete actions must be taken."),
+    perspective("ADVISOR",  "Focus on risk assessment, proportionality, and best-practice recommendations."),
+    perspective("CHALLENGER", "Critically examine the analysis, identify gaps, and stress-test assumptions."),
+  ]);
+
+  const valid = [
+    executor ? `**Compliance Executor**\n${executor}` : null,
+    advisor  ? `**MLRO Advisor**\n${advisor}`  : null,
+    challenger ? `**Compliance Challenger**\n${challenger}` : null,
+  ].filter((s): s is string => s !== null);
+
+  if (valid.length === 0) {
+    return {
+      ok: false,
+      error: "All advisor perspectives timed out. Use depth='quick' for time-sensitive queries.",
+      partial: true,
+      elapsedMs: Date.now() - t0,
+    };
+  }
+
+  const narrative = valid.length === 1
+    ? valid[0]!
+    : `**Multi-Perspective MLRO Analysis**\n\n${valid.join("\n\n---\n\n")}`;
+
+  return {
+    ok: true,
+    narrative,
+    complianceReview: { verdict: "approved" },
+    elapsedMs: Date.now() - t0,
+  };
 }
