@@ -8,12 +8,18 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getJson, setJson } from "@/lib/server/store";
+import { getAnthropicClient } from "@/lib/server/llm";
+import type { RedactionMap } from "@/lib/server/redact";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
 const batchIndexKey = (keyId: string) => `llm-batch/index/${keyId}`;
+// Per-batch redaction maps are persisted here so results retrieved hours
+// later can be rehydrated with the same maps that redacted the inputs.
+// Survives cold starts because Blobs are durable.
+const batchMapsKey = (anthropicBatchId: string) => `llm-batch/maps/${anthropicBatchId}.json`;
 
 interface BatchJob {
   batchId: string;
@@ -64,7 +70,10 @@ export async function POST(req: Request): Promise<NextResponse> {
   const DEFAULT_SYSTEM = "You are an AML compliance analyst. Respond concisely with valid JSON only.";
   const DEFAULT_MODEL = "claude-haiku-4-5-20251001";
 
-  // Build Anthropic batch payload
+  // Build Anthropic batch payload. Redaction happens inside the guarded
+  // client (`getAnthropicClient().messages.batches.create`) — it returns
+  // the live Anthropic response augmented with `_redactionMaps`
+  // (customId → RedactionMap) so the caller can rehydrate results later.
   const anthropicRequests = body.requests.map((r) => ({
     custom_id: r.customId,
     params: {
@@ -76,24 +85,20 @@ export async function POST(req: Request): Promise<NextResponse> {
   }));
 
   try {
-    const res = await fetch("https://api.anthropic.com/v1/messages/batches", {
-      method: "POST",
-      headers: {
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        "anthropic-beta": "message-batches-2024-09-24",
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({ requests: anthropicRequests }),
-      signal: AbortSignal.timeout(25_000),
-    });
+    const client = getAnthropicClient(apiKey, 25_000, "llm-batch");
+    const response = await client.messages.batches.create({ requests: anthropicRequests });
+    const anthropicBatch = response as { id: string; processing_status: string; _redactionMaps: Record<string, RedactionMap> };
 
-    if (!res.ok) {
-      const errBody = await res.text();
-      return NextResponse.json({ ok: false, error: `Anthropic batch API error: ${errBody.slice(0, 200)}` }, { status: res.status, headers: gate.headers });
+    // Persist per-customId redaction maps so result text retrieved hours
+    // later can be rehydrated against the same maps that redacted inputs.
+    // Stored under the Anthropic batch ID, which is what the results
+    // endpoint keys on.
+    try {
+      await setJson(batchMapsKey(anthropicBatch.id), anthropicBatch._redactionMaps);
+    } catch (mapErr) {
+      console.warn("[llm-batch] redaction-map persist failed:", mapErr instanceof Error ? mapErr.message : mapErr);
     }
 
-    const anthropicBatch = (await res.json()) as { id: string; processing_status: string };
     const batchId = `hk-batch-${Date.now()}`;
     const ownerId = gate.keyId ?? "unknown";
     const job: BatchJob = {
@@ -137,31 +142,25 @@ export async function GET(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "batch not found" }, { status: 404, headers: gate.headers });
   }
 
-  // Fetch live status from Anthropic if we have the upstream ID
+  // Fetch live status from Anthropic via the guarded client.
+  // The status response itself contains no PII (counts + processing_status
+  // only), so this is a passthrough; rehydration of actual result text
+  // happens at result-retrieval time using the persisted redaction maps.
   if (job.anthropicBatchId && apiKey) {
     try {
-      const statusRes = await fetch(`https://api.anthropic.com/v1/messages/batches/${job.anthropicBatchId}`, {
-        headers: {
-          "x-api-key": apiKey,
-          "anthropic-version": "2023-06-01",
-          "anthropic-beta": "message-batches-2024-09-24",
-        },
-        signal: AbortSignal.timeout(10_000),
-      });
-      if (statusRes.ok) {
-        const statusData = (await statusRes.json()) as {
-          processing_status: string;
-          request_counts: { processing: number; succeeded: number; errored: number; canceled: number; expired: number };
-          results_url?: string;
-        };
-        return NextResponse.json({
-          ok: true,
-          ...job,
-          liveStatus: statusData.processing_status,
-          requestCounts: statusData.request_counts,
-          // resultsUrl intentionally excluded — fetch results server-side only
-        }, { headers: gate.headers });
-      }
+      const client = getAnthropicClient(apiKey, 10_000, "llm-batch");
+      const statusData = (await client.messages.batches.retrieve(job.anthropicBatchId)) as {
+        processing_status: string;
+        request_counts: { processing: number; succeeded: number; errored: number; canceled: number; expired: number };
+        results_url?: string;
+      };
+      return NextResponse.json({
+        ok: true,
+        ...job,
+        liveStatus: statusData.processing_status,
+        requestCounts: statusData.request_counts,
+        // resultsUrl intentionally excluded — fetch results server-side only
+      }, { headers: gate.headers });
     } catch { /* fall through to cached status */ }
   }
 

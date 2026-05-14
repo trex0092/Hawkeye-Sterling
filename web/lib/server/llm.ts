@@ -127,6 +127,62 @@ export class AnthropicGuard {
 
         return { ...response, content: rehydratedContent } as Anthropic.Message;
       },
+
+      // ── Batches API ───────────────────────────────────────────────────────
+      // The Anthropic Messages Batches API submits many requests in one
+      // call and returns results asynchronously hours later. Synchronous
+      // redact-then-rehydrate doesn't fit: the redaction map must outlive
+      // the submission and survive cold starts so the caller can rehydrate
+      // results when they're retrieved.
+      //
+      // Contract: `create()` redacts each request's system + content with a
+      // fresh per-request RedactionMap, submits the redacted batch, and
+      // returns the Anthropic response augmented with `_redactionMaps`
+      // (custom_id → map). The caller is responsible for persisting the
+      // maps under the batch ID and applying `rehydrate()` from
+      // `@/lib/server/redact` to result text when retrieving results.
+      //
+      // `retrieve()` and `results()` are simple passthroughs — they don't
+      // own the redaction maps. Callers that retrieve raw result text must
+      // rehydrate it before exposing it anywhere a human reads.
+      batches: {
+        create: async (
+          opts: { requests: Array<{ custom_id: string; params: any }> },
+          requestOptions?: any,
+        ): Promise<any & { _redactionMaps: Record<string, RedactionMap> }> => {
+          const maps: Record<string, RedactionMap> = {};
+          const safeRequests = opts.requests.map((r) => {
+            const map: RedactionMap = {};
+            maps[r.custom_id] = map;
+            return {
+              custom_id: r.custom_id,
+              params: {
+                ...r.params,
+                system: redactSystem(r.params.system, map),
+                messages: ((r.params.messages as Anthropic.Messages.MessageParam[]) ?? []).map((msg) => ({
+                  ...msg,
+                  content: redactContent(msg.content as string | ContentBlock[], map),
+                })),
+              },
+            };
+          });
+
+          const innerBatches = (inner.messages as any).batches;
+          if (!innerBatches?.create) {
+            throw new Error("Anthropic SDK does not expose messages.batches.create on this client. Upgrade @anthropic-ai/sdk.");
+          }
+          const response = await innerBatches.create({ requests: safeRequests }, requestOptions);
+          return { ...response, _redactionMaps: maps };
+        },
+        retrieve: async (batchId: string, requestOptions?: any): Promise<any> => {
+          const innerBatches = (inner.messages as any).batches;
+          return innerBatches.retrieve(batchId, requestOptions);
+        },
+        results: async (batchId: string, requestOptions?: any): Promise<any> => {
+          const innerBatches = (inner.messages as any).batches;
+          return innerBatches.results(batchId, requestOptions);
+        },
+      },
     };
   }
 }
