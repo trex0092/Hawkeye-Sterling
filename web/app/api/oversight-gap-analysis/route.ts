@@ -6,13 +6,11 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { getAnthropicClient } from "@/lib/server/llm";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
-
-const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
-const ANTHROPIC_VERSION = "2023-06-01";
 
 const SYSTEM_PROMPT = `You are a UAE AML compliance gap analyzer. Analyze the provided compliance queue and return ONLY this JSON: { "gaps": string[], "overdueItems": string[], "breachRisks": string[], "deadlines": string[], "recommendation": string }. gaps = compliance gaps identified (max 5). overdueItems = items past SLA or due date (max 5). breachRisks = items that could constitute regulatory breach if not resolved (max 3). deadlines = critical upcoming deadlines with dates (max 4). recommendation = 1-2 sentence top priority action for the MLRO.`;
 
@@ -22,15 +20,6 @@ interface GapAnalysisResult {
   breachRisks: string[];
   deadlines: string[];
   recommendation: string;
-}
-
-interface AnthropicTextBlock {
-  type: "text";
-  text: string;
-}
-
-interface AnthropicResponse {
-  content: AnthropicTextBlock[];
 }
 
 const GAP_FALLBACK = {
@@ -54,35 +43,16 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "Invalid JSON body" }, { status: 400 , headers: gate.headers});
   }
 
-  let anthropicRes: Response;
-  try {
-    anthropicRes = await fetch(ANTHROPIC_API_URL, {
-      method: "POST",
-      signal: AbortSignal.timeout(20_000),
-      headers: {
-        "x-api-key": apiKey,
-        "anthropic-version": ANTHROPIC_VERSION,
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 2048,
-        system: SYSTEM_PROMPT,
-        messages: [{ role: "user", content: JSON.stringify(body) }],
-      }),
-    });
-  } catch {
-    return NextResponse.json({ ok: false, error: "oversight-gap-analysis temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
-  }
-
-  if (!anthropicRes.ok) {
-    return NextResponse.json({ ok: false, error: "oversight-gap-analysis temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
-  }
-
   let result: GapAnalysisResult;
   try {
-    const data = (await anthropicRes.json()) as AnthropicResponse;
-    const text = data.content.find((b) => b.type === "text")?.text ?? "{}";
+    const client = getAnthropicClient(apiKey, 55_000);
+    const response = await client.messages.create({
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 2048,
+      system: SYSTEM_PROMPT,
+      messages: [{ role: "user", content: JSON.stringify(body) }],
+    });
+    const text = response.content.find((b) => b.type === "text")?.text ?? "{}";
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       return NextResponse.json({ ok: false, error: "oversight-gap-analysis temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
