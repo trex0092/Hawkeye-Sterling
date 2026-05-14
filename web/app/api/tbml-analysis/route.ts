@@ -144,7 +144,6 @@ Perform TBML risk analysis.`,
       });
 
 
-    const data = (await response.json()) as { content: Array<{ type: string; text: string }> };
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const cleaned = raw.replace(/```json\n?|\n?```/g, "").trim();
     const result = JSON.parse(cleaned) as TbmlAnalysis;

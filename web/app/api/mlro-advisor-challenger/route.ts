@@ -223,58 +223,13 @@ export async function POST(req: Request): Promise<Response> {
     const client = getAnthropicClient(apiKey, 55000);
     const upstream = await client.messages.create({
         model: MODEL,
-        max_tokens: MAX_TOKENS,
-        stream: true,
-        system: [{ type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
+        max_tokens: MAX_TOKENS
+system: [{ type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
         messages: [{ role: "user", content: userPrompt }],
       });
 
-    if (!upstream.ok || !upstream.body) {
-      if (upstream.status === 429) {
-        const txt = await upstream.text().catch(() => "");
-        return NextResponse.json(
-          { ok: false, error: `upstream ${upstream.status}: ${txt.slice(0, 240)}`, elapsedMs: Date.now() - startedAt },
-          { status: 429, headers: CORS },
-        );
-      }
-      const txt = await upstream.text().catch(() => "");
-      console.error("[mlro-advisor-challenger] upstream error", upstream.status, txt.slice(0, 240));
-      return NextResponse.json(
-        {
-          ok: true,
-          outcome: undefined,
-          steelman: "Challenger service temporarily unavailable. Manual regulatory review required.",
-          weakCitations: [],
-          alternativeReadings: [],
-          hardenSuggestions: ["Conduct manual red-team review with a senior compliance officer."],
-          fullCritique: "",
-          elapsedMs: Date.now() - startedAt,
-          note: `Challenger unavailable (upstream ${upstream.status}) — manual review required.`,
-        },
-        { status: 200, headers: CORS },
-      );
-    }
 
-    const reader = upstream.body.getReader();
-    const decoder = new TextDecoder();
-    let raw = "";
-
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      const chunk = decoder.decode(value, { stream: true });
-      for (const rawLine of chunk.split("\n")) {
-        const line = rawLine.trim();
-        if (!line.startsWith("data:")) continue;
-        const payload = line.slice(5).trim();
-        if (!payload || payload === "[DONE]") continue;
-        let evt: { type?: string; delta?: { type?: string; text?: string } } | null = null;
-        try { evt = JSON.parse(payload); } catch { continue; }
-        if (evt?.type === "content_block_delta" && evt.delta?.type === "text_delta" && evt.delta.text) {
-          raw += evt.delta.text;
-        }
-      }
-    }
+    const raw = ((upstream.content[0] as {type: string; text: string} | undefined)?.type === "text" ? (upstream.content[0] as {type: string; text: string}).text : "") ?? "";
 
     const parsed = parseCritique(raw);
     return NextResponse.json(

@@ -78,9 +78,6 @@ export async function POST(req: Request) {
           },
         ],
       });
-    const data = (await response.json()) as {
-      content?: Array<{ type: string; text: string }>;
-    };
     const raw =
       data?.content?.[0]?.type === "text" ? response.content![0].text : "{}";
     const result = JSON.parse(

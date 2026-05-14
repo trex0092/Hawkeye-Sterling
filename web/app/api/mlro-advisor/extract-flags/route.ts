@@ -312,9 +312,6 @@ export async function POST(req: Request): Promise<NextResponse> {
         });
 
       if (res.ok) {
-        const data = (await res.json()) as {
-          content?: { type: string; text: string }[];
-        };
         const raw = data?.content?.[0]?.text ?? "";
         // Strip markdown code fences if model wraps them
         const cleaned = raw

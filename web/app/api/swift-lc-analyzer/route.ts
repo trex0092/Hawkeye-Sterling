@@ -149,7 +149,6 @@ Additional Context: ${body.context ?? "none"}
 Analyse this SWIFT/LC for TBML indicators. Return complete SwiftLcResult JSON.`,
         }],
       });
-    const data = (await response.json()) as { content: Array<{ type: string; text: string }> };
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as SwiftLcResult;
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });

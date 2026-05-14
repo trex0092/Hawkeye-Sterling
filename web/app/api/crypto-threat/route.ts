@@ -111,9 +111,6 @@ export async function POST(req: Request): Promise<NextResponse> {
 
     }
 
-    const data = (await res.json()) as {
-      content?: { type: string; text: string }[];
-    };
     const text = data?.content?.[0]?.text ?? "";
     const stripped = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
     result = JSON.parse(stripped) as CryptoThreat;

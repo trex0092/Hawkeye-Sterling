@@ -101,34 +101,11 @@ async function runHaikuQuick(question: string, contextPairs: HaikuPair[], apiKey
     const client = getAnthropicClient(apiKey, 55000);
     const upstream = await client.messages.create({
         model: HAIKU_MODEL,
-        max_tokens: 2048,
-        stream: true,
-        system: [{ type: "text", text: HAIKU_SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
+        max_tokens: 2048
+system: [{ type: "text", text: HAIKU_SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
         messages: [{ role: "user", content: buildHaikuPrompt(question, contextPairs) }],
       });
-    if (!upstream.ok || !upstream.body) {
-      const txt = await upstream.text().catch(() => "");
-      return { ok: false, error: `upstream ${upstream.status}: ${txt.slice(0, 240)}`, elapsedMs: Date.now() - startedAt };
-    }
-    const reader = upstream.body.getReader();
-    const decoder = new TextDecoder();
-    let answer = "";
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      const chunk = decoder.decode(value, { stream: true });
-      for (const rawLine of chunk.split("\n")) {
-        const line = rawLine.trim();
-        if (!line.startsWith("data:")) continue;
-        const payload = line.slice(5).trim();
-        if (!payload || payload === "[DONE]") continue;
-        let evt: { type?: string; delta?: { type?: string; text?: string } } | null = null;
-        try { evt = JSON.parse(payload); } catch { continue; }
-        if (evt?.type === "content_block_delta" && evt.delta?.type === "text_delta" && evt.delta.text) {
-          answer += evt.delta.text;
-        }
-      }
-    }
+    const raw = ((upstream.content[0] as {type: string; text: string} | undefined)?.type === "text" ? (upstream.content[0] as {type: string; text: string}).text : "") ?? "";
     return { ok: true, answer, elapsedMs: Date.now() - startedAt };
   } catch (err) {
     const aborted = ctl.signal.aborted;

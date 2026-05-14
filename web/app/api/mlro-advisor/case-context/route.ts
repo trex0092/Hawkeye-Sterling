@@ -81,9 +81,6 @@ export async function POST(req: Request): Promise<NextResponse> {
 
       priorityIds = [];
     } else {
-      const data = (await res.json()) as {
-        content?: { type: string; text: string }[];
-      };
       const text = data?.content?.[0]?.text ?? "";
 
       // Extract priority IDs line and clean the context block

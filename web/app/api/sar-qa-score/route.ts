@@ -126,7 +126,6 @@ Red Flags: ${redFlagsStr}`;
 
   interface ClaudeContent { type: string; text?: string }
   interface ClaudeResponse { content: ClaudeContent[] }
-  const claudeData = (await claudeRes.json()) as ClaudeResponse;
   const rawText = claudeData.content.find((b) => b.type === "text")?.text ?? "";
 
   let parsed: { scores: Array<{ id: string; score: number; missingElements: string[]; suggestions: string[]; fatalIssues: string[] }> };

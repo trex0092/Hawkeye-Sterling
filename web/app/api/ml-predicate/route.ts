@@ -138,7 +138,6 @@ Map these facts to applicable UAE ML predicate offences with penalties.`,
           },
         ],
       });
-    const data = (await response.json()) as { content: Array<{ type: string; text: string }> };
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as MlPredicateResult;
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });

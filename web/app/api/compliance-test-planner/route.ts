@@ -143,7 +143,6 @@ Additional Context: ${body.context ?? "none"}
 Design a comprehensive AML compliance testing plan for this institution. Return complete ComplianceTestPlanResult JSON.`,
         }],
       });
-    const data = (await response.json()) as { content: Array<{ type: string; text: string }> };
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as ComplianceTestPlanResult;
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });

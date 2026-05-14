@@ -54,9 +54,6 @@ export async function POST(req: NextRequest) {
 
   }
 
-  const claudeData = (await response.json()) as {
-    content: Array<{ type: string; text: string }>;
-  };
 
   const rawText = claudeData.content[0]?.text ?? "";
   const cleaned = rawText

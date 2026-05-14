@@ -116,7 +116,6 @@ SWIFT Reference: ${body.swiftRef ?? "not provided"}
 Assess FATF R.16 compliance.`,
         }],
       });
-    const data = (await response.json()) as { content: Array<{ type: string; text: string }> };
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as WireR16Result;
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
