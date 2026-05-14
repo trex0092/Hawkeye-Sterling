@@ -9,7 +9,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getJson, setJson } from "@/lib/server/store";
 import { getAnthropicClient } from "@/lib/server/llm";
-import type { RedactionMap } from "@/lib/server/redact";
+import { rehydrate, type RedactionMap } from "@/lib/server/redact";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -122,12 +122,75 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 }
 
+// Shape we accept from the Anthropic batch results stream. Iteration target.
+interface BatchResultEntry {
+  custom_id: string;
+  result: {
+    type: "succeeded" | "errored" | "canceled" | "expired";
+    message?: { content?: Array<{ type: string; text?: string }>; usage?: unknown };
+    error?: { type?: string; message?: string };
+  };
+}
+
+interface RehydratedResult {
+  customId: string;
+  status: BatchResultEntry["result"]["type"];
+  content?: Array<{ type: string; text?: string }>;
+  text?: string;
+  error?: string;
+}
+
+async function fetchAndRehydrateResults(
+  anthropicBatchId: string,
+  apiKey: string,
+): Promise<{ ok: true; results: RehydratedResult[] } | { ok: false; error: string }> {
+  // Load the per-customId redaction maps persisted at submission time.
+  // Missing maps → rehydrate is a no-op (we still return the raw text so
+  // the operator can see the redacted form rather than dropping data).
+  const mapsByCustomId = (await getJson<Record<string, RedactionMap>>(batchMapsKey(anthropicBatchId))) ?? {};
+
+  const client = getAnthropicClient(apiKey, 25_000, "llm-batch");
+  let iter: AsyncIterable<BatchResultEntry>;
+  try {
+    iter = (await client.messages.batches.results(anthropicBatchId)) as AsyncIterable<BatchResultEntry>;
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) };
+  }
+
+  const out: RehydratedResult[] = [];
+  for await (const entry of iter) {
+    const customId = entry.custom_id;
+    const map = mapsByCustomId[customId] ?? {};
+    if (entry.result.type === "succeeded" && entry.result.message?.content) {
+      const rehydratedContent = entry.result.message.content.map((block) => {
+        if (block.type === "text" && typeof block.text === "string") {
+          return { ...block, text: rehydrate(block.text, map) };
+        }
+        return block;
+      });
+      const joinedText = rehydratedContent
+        .filter((b) => b.type === "text" && typeof b.text === "string")
+        .map((b) => b.text ?? "")
+        .join("\n");
+      out.push({ customId, status: "succeeded", content: rehydratedContent, text: joinedText });
+    } else {
+      out.push({
+        customId,
+        status: entry.result.type,
+        ...(entry.result.error ? { error: entry.result.error.message ?? entry.result.error.type ?? "unknown" } : {}),
+      });
+    }
+  }
+  return { ok: true, results: out };
+}
+
 export async function GET(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
 
   const { searchParams } = new URL(req.url);
   const batchId = searchParams.get("id");
+  const fetchResults = searchParams.get("fetchResults") === "true";
   const apiKey = process.env.ANTHROPIC_API_KEY;
 
   const ownerId = gate.keyId ?? "unknown";
@@ -140,6 +203,18 @@ export async function GET(req: Request): Promise<NextResponse> {
   const job = index.find((j) => j.batchId === batchId);
   if (!job) {
     return NextResponse.json({ ok: false, error: "batch not found" }, { status: 404, headers: gate.headers });
+  }
+
+  // Caller asked for results — stream them from Anthropic and rehydrate
+  // each custom_id's text content using the persisted redaction map.
+  // Requires the batch to have ended; if upstream is still processing the
+  // call will surface that via the Anthropic SDK error path.
+  if (fetchResults && job.anthropicBatchId && apiKey) {
+    const r = await fetchAndRehydrateResults(job.anthropicBatchId, apiKey);
+    if (!r.ok) {
+      return NextResponse.json({ ok: false, ...job, error: r.error }, { status: 502, headers: gate.headers });
+    }
+    return NextResponse.json({ ok: true, ...job, results: r.results }, { headers: gate.headers });
   }
 
   // Fetch live status from Anthropic via the guarded client.
