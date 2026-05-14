@@ -84,8 +84,6 @@ const ROUTES: readonly RouteEntry[] = [
   { path: "/api/regulatory-feed",  method: "GET",  description: "Live UAE regulatory feed (CBUAE, MoET, FSRA, FATF, OFAC, UN, Google News).",              scope: "operator", mcpTools: ["regulatory_feed"] },
   { path: "/api/compliance-qa",    method: "POST", description: "Multi-agent regulatory Q&A with citations.",                                               scope: "mlro",     mcpTools: ["compliance_qa"] },
   { path: "/api/adverse-media",    method: "POST", description: "GDELT + Google News RSS adverse-media scan.",                                              scope: "operator", mcpTools: ["intel_feed"] },
-  { path: "/api/news-intel/feed",  method: "GET",  description: "Live news intelligence feed.",                                                              scope: "operator" },
-  { path: "/api/news-intel/analyze", method: "POST", description: "Synthesise news items into typology-tagged risk profile.",                                scope: "mlro" },
 
   // ── System / Health / MCP ──────────────────────────────────────────────────
   { path: "/api/mcp",              method: "POST", description: "MCP JSON-RPC endpoint (Streamable HTTP). Add to Claude.ai connectors.",                    scope: "public",   mcpTools: ["call_api"] },

@@ -88,13 +88,18 @@ interface ThreatProfile {
 async function loadProfile(employeeId: string): Promise<ThreatProfile | null> {
   try {
     return await getJson<ThreatProfile>(`insider-threat/profile/${employeeId}`);
-  } catch { return null; }
+  } catch (err) {
+    console.warn(`[insider-threat] loadProfile(${employeeId}) failed:`, err instanceof Error ? err.message : err);
+    return null;
+  }
 }
 
 async function saveProfile(profile: ThreatProfile): Promise<void> {
   try {
     await setJson(`insider-threat/profile/${profile.employeeId}`, profile);
-  } catch { /* best effort — profile persistence is non-blocking */ }
+  } catch (err) {
+    console.warn(`[insider-threat] saveProfile(${profile.employeeId}) failed:`, err instanceof Error ? err.message : err);
+  }
 }
 
 function computeDeltaSignals(previous: InsiderThreatResult, current: InsiderThreatResult): string[] {
