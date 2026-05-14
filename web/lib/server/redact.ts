@@ -134,7 +134,10 @@ export function redact(text: string, map: RedactionMap = {}): string {
     re.lastIndex = 0;
 
     out = out.replace(re, (match, group1?: string) => {
-      const value = group1 ?? match;
+      // For patterns without capture groups, JS passes (match, offset, string)
+      // so group1 receives the numeric offset — not a captured string. Guard
+      // against that so we never pass a number to createHash().update().
+      const value = typeof group1 === "string" ? group1 : match;
       if (validate && !validate(value)) return match;
       const tok = makeToken(type, value);
       map[tok] = value;

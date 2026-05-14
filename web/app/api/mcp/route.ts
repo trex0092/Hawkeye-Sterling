@@ -398,11 +398,25 @@ async function callApi(
       const ct = res.headers.get("content-type") ?? "";
       if (!ct.includes("application/json")) {
         const text = await res.text().catch(() => "");
+        // Non-OK HTML responses are Next.js 404 / error pages — surface them
+        // as a proper error so callers don't confuse them with real reports.
+        if (!res.ok && ct.includes("text/html")) {
+          return {
+            ok: false,
+            status: res.status,
+            error: "endpoint_not_found",
+            path,
+            hint: "This API path does not exist or is not reachable. Verify the route name against the API documentation.",
+          };
+        }
+        // Non-JSON success responses (HTML reports, PDFs, etc.) are genuine.
         return {
           ok: res.ok,
           status: res.status,
           format: ct.includes("text/html") ? "html" : "text",
-          message: `Report generated (${text.length} bytes). Open the Hawkeye Sterling web interface to view the full rendered report.`,
+          message: res.ok
+            ? `Report generated (${text.length} bytes). Open the Hawkeye Sterling web interface to view the full rendered report.`
+            : `Upstream returned HTTP ${res.status} (${text.length} bytes).`,
         };
       }
       return await res.json().catch(() => ({ ok: res.ok, status: res.status }));

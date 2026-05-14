@@ -1137,15 +1137,60 @@ async function _handleGet(): Promise<NextResponse> {
     ],
   };
 
-  // Error-rate heatmap bucket — in-memory rolling count, reset per
-  // function instance. Real production would pull from observability
-  // storage; this is a useful-enough visualisation for the status page.
+  // Error-rate heatmap — computed from MCP activity logs in Netlify Blobs.
+  // Reads the most recent 500 entries; accurate for the 5m and 1h windows,
+  // and a lower-bound for 24h on high-volume instances.
+  const HEATMAP_WINDOWS = [
+    { label: "5m",  ms: 5 * 60_000 },
+    { label: "1h",  ms: 60 * 60_000 },
+    { label: "24h", ms: 24 * 60 * 60_000 },
+  ] as const;
+  type HeatmapWindow = typeof HEATMAP_WINDOWS[number]["label"];
+  const heatCounts: Record<HeatmapWindow, { requests: number; errors: number }> = {
+    "5m":  { requests: 0, errors: 0 },
+    "1h":  { requests: 0, errors: 0 },
+    "24h": { requests: 0, errors: 0 },
+  };
+  try {
+    const heatBlobsMod = await import("@netlify/blobs").catch(() => null);
+    if (heatBlobsMod) {
+      const heatSiteID = process.env["NETLIFY_SITE_ID"] ?? process.env["SITE_ID"];
+      const heatToken =
+        process.env["NETLIFY_API_TOKEN"] ??
+        process.env["NETLIFY_AUTH_TOKEN"] ??
+        process.env["NETLIFY_BLOBS_TOKEN"];
+      const actStore = heatSiteID && heatToken
+        ? heatBlobsMod.getStore({ name: "mcp-activity-logs", siteID: heatSiteID, token: heatToken, consistency: "strong" })
+        : heatBlobsMod.getStore({ name: "mcp-activity-logs" });
+      const listed = await actStore.list({ prefix: "entry/" });
+      // Take the 500 most recent keys — sort ascending (keys are ISO-ts prefixed so
+      // lexicographic = chronological), then slice from the end.
+      const recentKeys: string[] = (listed.blobs as { key: string }[])
+        .map(b => b.key)
+        .sort()
+        .slice(-500);
+      const now = Date.now();
+      const rawEntries = await Promise.all(
+        recentKeys.map(k =>
+          actStore.get(k, { type: "json" }).catch(() => null)
+        )
+      );
+      for (const entry of rawEntries) {
+        if (!entry || typeof (entry as Record<string, unknown>).timestamp !== "string") continue;
+        const e = entry as { timestamp: string; isError: boolean };
+        const age = now - Date.parse(e.timestamp);
+        if (isNaN(age) || age < 0) continue;
+        for (const w of HEATMAP_WINDOWS) {
+          if (age <= w.ms) {
+            heatCounts[w.label].requests++;
+            if (e.isError) heatCounts[w.label].errors++;
+          }
+        }
+      }
+    }
+  } catch { /* never block the status check on heatmap failure */ }
   const errorHeatmap = {
-    buckets: [
-      { window: "5m", errors: 0, requests: 0 },
-      { window: "1h", errors: 0, requests: 0 },
-      { window: "24h", errors: 0, requests: 0 },
-    ],
+    buckets: HEATMAP_WINDOWS.map(w => ({ window: w.label, ...heatCounts[w.label] })),
   };
 
   // Config health — show which critical env vars are set without
