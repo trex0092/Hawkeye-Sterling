@@ -48,11 +48,15 @@ export async function POST(req: Request): Promise<NextResponse> {
     "corrections/",
   ];
   const deleted: string[] = [];
+  let totalKeysScanned = 0;
+  let recordsReadable = 0;
   for (const p of prefixes) {
     const keys = await listKeys(p);
+    totalKeysScanned += keys.length;
     for (const k of keys) {
       const rec = await getJson<Record<string, unknown>>(k);
       if (!rec) continue;
+      recordsReadable++;
       const idField = rec["id"];
       const emailField = rec["requesterEmail"] ?? rec["email"];
       const subjectField = rec["subjectId"] ?? rec["id"];
@@ -68,12 +72,20 @@ export async function POST(req: Request): Promise<NextResponse> {
       }
     }
   }
+  // Audit DR-09: previous response was `deletedCount: 0` on both zero-match
+  // and zero-data scenarios. The operator couldn't tell "subject not in
+  // our system" from "store empty / scan failed". Expose totalKeysScanned
+  // and recordsReadable so an audit log of the deletion request answers
+  // "did we look in the right place, and was anything there to look at?".
   return NextResponse.json({
     ok: true,
     regulation: "GDPR Art. 17",
     dryRun: Boolean(body.dryRun),
     deletedCount: deleted.length,
     deletedKeys: deleted,
+    totalKeysScanned,
+    recordsReadable,
+    matchPredicate: subjectId !== undefined ? `subjectId=${subjectId}` : `email=${email}`,
     retained: {
       reason:
         "Audit-chain anchors retained under GDPR Art. 17(3)(b) — legal obligation (AML record retention).",

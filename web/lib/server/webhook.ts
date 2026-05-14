@@ -63,9 +63,21 @@ export async function postWebhook(event: WebhookEvent): Promise<WebhookResult> {
       ...(res.ok ? {} : { error: `HTTP ${res.status}` }),
     };
   } catch (err) {
+    // Audit DR-08: previous code returned the raw Error.message which can
+    // leak Node internals (request URLs, ECONNRESET stack hints) into
+    // response payloads that downstream consumers persist. Map to a small
+    // set of stable error categories and keep the detail in console only.
+    const rawMessage = err instanceof Error ? err.message : String(err);
+    const lower = rawMessage.toLowerCase();
+    const category =
+      lower.includes("abort") || lower.includes("timeout") ? "timeout"
+        : lower.includes("econnreset") || lower.includes("network") || lower.includes("fetch failed") ? "network-error"
+        : lower.includes("enotfound") || lower.includes("dns") ? "dns-failure"
+        : "delivery-failed";
+    console.warn(`[webhook] ${category} delivering to ${url}: ${rawMessage}`);
     return {
       delivered: false,
-      error: err instanceof Error ? err.message : String(err),
+      error: category,
       url,
     };
   }

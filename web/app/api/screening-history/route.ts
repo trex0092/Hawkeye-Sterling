@@ -42,12 +42,23 @@ async function handleGet(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "subjectId required" }, { status: 400 });
   }
   const prefix = `screening-history/${subjectId}/`;
+  // Audit DR-10: previously a blob read failure produced the same empty
+  // entries array as a legitimate "no prior screenings" state. MLROs
+  // could read "no history" when history actually existed but Blobs was
+  // down. Surface the keys-found vs records-readable split so the UI can
+  // tell apart "no history" from "history but failed to load".
   const keys = await listKeys(prefix);
   const loaded = await Promise.all(keys.map((k) => getJson<ScreeningHistoryEntry>(k)));
   const entries = loaded.filter((e): e is ScreeningHistoryEntry => e !== null);
-  // Newest first.
+  const readFailures = loaded.length - entries.length;
   entries.sort((a, b) => b.at.localeCompare(a.at));
-  return NextResponse.json({ ok: true, count: entries.length, entries });
+  return NextResponse.json({
+    ok: true,
+    count: entries.length,
+    keysFound: keys.length,
+    ...(readFailures > 0 ? { readFailures, degraded: true } : {}),
+    entries,
+  });
 }
 
 async function handlePost(req: Request): Promise<NextResponse> {

@@ -35,7 +35,11 @@ export async function checkJube(
       }),
       signal: AbortSignal.timeout(5_000),
     });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      // Audit DR-07: log HTTP failures so silent nulls become diagnosable.
+      console.warn(`[jube-client] HTTP ${res.status}`);
+      return null;
+    }
 
     const data = (await res.json()) as {
       riskScore?: number;
@@ -45,7 +49,8 @@ export async function checkJube(
     const label: JubeRiskResult["label"] =
       score >= 70 ? "high" : score >= 40 ? "medium" : "low";
     return { riskScore: score, label };
-  } catch {
+  } catch (err) {
+    console.warn(`[jube-client] request failed: ${err instanceof Error ? err.message : String(err)}`);
     return null;
   }
 }
