@@ -186,6 +186,14 @@ const _sessionWindows = new Map<string, SessionWindow>();
 
 function trackAndDetectAnomaly(sessionId: string, toolName: string, level: ConsequenceLevel): string | null {
   const now = Date.now();
+  // Prune stale sessions (>10 min idle) when the map grows large to prevent
+  // unbounded memory growth on long-lived Lambda instances.
+  if (_sessionWindows.size > 5_000) {
+    const cutoff = now - 10 * 60_000;
+    for (const [id, w] of _sessionWindows) {
+      if (w.windowStart < cutoff) _sessionWindows.delete(id);
+    }
+  }
   const win = _sessionWindows.get(sessionId) ?? { calls: 0, actionCalls: 0, windowStart: now, flagged: false };
   if (now - win.windowStart >= 5 * 60_000) {
     // New window
@@ -1082,12 +1090,12 @@ const TOOLS: ToolDef[] = [
     },
     handler: async (args) => {
       const a = args as Record<string, unknown>;
+      // Send fields flat — the API reads transactionTypes from rawBody (not rawBody.subject),
+      // so nesting in a subject object silently drops the transaction type.
       return callApi("/api/typology-match", "POST", {
-        subject: {
-          facts: a["facts"],
-          subjectType: a["subjectType"],
-          transactionType: a["transactionType"],
-        },
+        facts: a["facts"],
+        subjectType: a["subjectType"],
+        transactionTypes: a["transactionType"] ? [a["transactionType"] as string] : undefined,
       });
     },
   },
