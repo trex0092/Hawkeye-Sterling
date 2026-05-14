@@ -258,18 +258,16 @@ function mediaStackAdapter(): NewsAdapter {
           ...(opts?.since ? { date: `${opts.since},now` } : {}),
         });
         const res = await abortable(fetch(`http://api.mediastack.com/v1/news?${params.toString()}`));
-        if (!res.ok) return [];
-        const json = (await res.json()) as {
-          data?: Array<{
-            source?: string;
-            title?: string;
-            url?: string;
-            published_at?: string;
-            description?: string;
-            language?: string;
-          }>;
-        };
-        return (json.data ?? [])
+        if (!res.ok) { console.warn(`[mediastack] HTTP ${res.status}`); return []; }
+        const articles = validateNewsResponseArray<{
+          source?: string;
+          title?: string;
+          url?: string;
+          published_at?: string;
+          description?: string;
+          language?: string;
+        }>("mediastack", await res.json(), (r) => r["data"]);
+        return articles
           .filter((a) => a.title && a.url)
           .map((a) => ({
             source: "mediastack",
@@ -303,18 +301,16 @@ function currentsAdapter(): NewsAdapter {
           language: "en",
         });
         const res = await abortable(fetch(`https://api.currentsapi.services/v1/search?${params.toString()}`));
-        if (!res.ok) return [];
-        const json = (await res.json()) as {
-          news?: Array<{
-            title?: string;
-            url?: string;
-            published?: string;
-            description?: string;
-            language?: string;
-            domain?: string;
-          }>;
-        };
-        return (json.news ?? [])
+        if (!res.ok) { console.warn(`[currents] HTTP ${res.status}`); return []; }
+        const articles = validateNewsResponseArray<{
+          title?: string;
+          url?: string;
+          published?: string;
+          description?: string;
+          language?: string;
+          domain?: string;
+        }>("currents", await res.json(), (r) => r["news"]);
+        return articles
           .filter((a) => a.title && a.url)
           .map((a) => ({
             source: "currents",
@@ -673,11 +669,18 @@ function nytAdapter(): NewsAdapter {
         const res = await abortable(
           fetch(`https://api.nytimes.com/svc/search/v2/articlesearch.json?${params.toString()}`),
         );
-        if (!res.ok) return [];
-        const json = (await res.json()) as {
-          response?: { docs?: Array<{ headline?: { main?: string }; web_url?: string; pub_date?: string; abstract?: string; source?: string }> };
-        };
-        return (json.response?.docs ?? [])
+        if (!res.ok) { console.warn(`[nyt] HTTP ${res.status}`); return []; }
+        const docs = validateNewsResponseArray<{
+          headline?: { main?: string };
+          web_url?: string;
+          pub_date?: string;
+          abstract?: string;
+          source?: string;
+        }>("nyt", await res.json(), (r) => {
+          const resp = r["response"];
+          return resp && typeof resp === "object" ? (resp as Record<string, unknown>)["docs"] : undefined;
+        });
+        return docs
           .filter((d) => d.web_url && d.headline?.main)
           .map((d) => ({
             source: "nyt",
@@ -1006,11 +1009,15 @@ function newsDataAdapter(): NewsAdapter {
         const res = await abortable(
           fetch(`https://newsdata.io/api/1/news?${params.toString()}`),
         );
-        if (!res.ok) return [];
-        const json = (await res.json()) as {
-          results?: Array<{ title?: string; link?: string; pubDate?: string; description?: string; source_id?: string }>;
-        };
-        return (json.results ?? [])
+        if (!res.ok) { console.warn(`[newsdata] HTTP ${res.status}`); return []; }
+        const results = validateNewsResponseArray<{
+          title?: string;
+          link?: string;
+          pubDate?: string;
+          description?: string;
+          source_id?: string;
+        }>("newsdata", await res.json(), (r) => r["results"]);
+        return results
           .filter((r) => r.title && r.link)
           .map((r) => ({
             source: "newsdata",
