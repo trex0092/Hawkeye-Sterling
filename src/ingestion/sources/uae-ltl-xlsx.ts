@@ -191,6 +191,20 @@ export const uaeLtlXlsxAdapter: SourceAdapter = {
     const buf = await fetchXlsxBuffer(TL_URL);
     const rawChecksum = await sha256Hex(buf.toString('base64'));
 
+    // Audit C-01 (parallel to uae_eocn): detect legacy .xls vs .xlsx so the
+    // adapter fails loud instead of silently writing 0 entities when
+    // uaeiec.gov.ae serves OLE/CFB (D0 CF 11 E0) instead of ZIP (50 4B 03 04).
+    const isXlsx = buf.length >= 4 && buf[0] === 0x50 && buf[1] === 0x4b && buf[2] === 0x03 && buf[3] === 0x04;
+    const isOleXls = buf.length >= 4 && buf[0] === 0xd0 && buf[1] === 0xcf && buf[2] === 0x11 && buf[3] === 0xe0;
+    if (!isXlsx) {
+      const magic = Array.from(buf.slice(0, 4)).map((b) => b.toString(16).padStart(2, '0')).join(' ');
+      throw new Error(
+        `uae_ltl: upstream returned ${isOleXls ? 'legacy .xls (OLE/CFB)' : `unknown binary format (magic ${magic})`}, ` +
+        `but the adapter only parses .xlsx (PK ZIP). Confirm FEED_UAE_TL_FILE_ID points at the .xlsx variant of the list, ` +
+        `or use UAE_LTL_SEED_PATH to feed a local JSON seed instead.`,
+      );
+    }
+
     const wb = new ExcelJS.Workbook();
     await wb.xlsx.load(buf);
     const sheet = wb.worksheets[0];

@@ -15,12 +15,17 @@ export const maxDuration = 5;
 // Resolve build identity from CI/CD environment variables injected at
 // build time. Checked in priority order: Netlify → Vercel → generic CI.
 const BUILD_ID =
+  process.env["HAWKEYE_BUILD_COMMIT_REF"] ??  // inlined by next.config.mjs (audit M-06)
   process.env["NETLIFY_BUILD_ID"] ??
   process.env["NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA"] ??
   process.env["BUILD_ID"] ??
   "unknown";
 
+// Audit M-06: Netlify doesn't forward COMMIT_REF to the Lambda runtime,
+// so direct process.env reads fall through to "unknown". next.config.mjs
+// inlines the build-time SHA as HAWKEYE_BUILD_COMMIT_REF; read that first.
 const COMMIT_REF = (
+  process.env["HAWKEYE_BUILD_COMMIT_REF"] ??
   process.env["APP_VERSION"] ??
   process.env["GIT_COMMIT_SHA"] ??
   process.env["COMMIT_REF"] ??
