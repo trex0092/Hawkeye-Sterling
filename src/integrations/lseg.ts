@@ -197,15 +197,44 @@ async function lsegGet<T>(
 }
 
 // ── CFS — Client File Store ───────────────────────────────────────────────────
+//
+// Audit DR-11: LSEG's data platform returns paged collections as
+// `{ value: [...] }`. Earlier code applied `?? []` to the array which
+// silently produced an empty collection if upstream ever renamed the
+// envelope field or wrapped it in a `data:` shell. Validate that the
+// `value` key actually exists and is an array — when it's missing,
+// surface as a structured error so caller distinguishes "empty list"
+// from "schema drift". A schema-drift incident at LSEG would otherwise
+// look like "your account has zero packages" — a wrong-but-plausible
+// silent-failure mode.
+function unwrapList<T>(
+  endpoint: string,
+  res: LsegResult<{ value: unknown }>,
+): LsegResult<T[]> {
+  if (!res.ok) return { ok: false, error: res.error ?? 'Unknown LSEG error' };
+  const value = res.data?.value;
+  if (value === undefined) {
+    return {
+      ok: false,
+      error: `LSEG ${endpoint}: response missing 'value' field — possible schema change. Body keys: ${Object.keys(res.data ?? {}).join(', ') || '(empty)'}`,
+    };
+  }
+  if (!Array.isArray(value)) {
+    return {
+      ok: false,
+      error: `LSEG ${endpoint}: 'value' is ${typeof value}, expected array — possible schema change.`,
+    };
+  }
+  return { ok: true, data: value as T[] };
+}
 
 // Discover which bulk data packages your account is entitled to.
 export async function getPackages(): Promise<LsegResult<LsegPackage[]>> {
-  const res = await lsegGet<{ value: LsegPackage[] }>(
+  const res = await lsegGet<{ value: unknown }>(
     '/file-store/v1/packages',
     { packageType: 'bulk' },
   );
-  if (!res.ok) return { ok: false, error: res.error ?? 'Unknown LSEG error' };
-  return { ok: true, data: res.data?.value ?? [] };
+  return unwrapList<LsegPackage>('/file-store/v1/packages', res);
 }
 
 // List filesets for a given bucket, optionally filtered by date.
@@ -217,19 +246,17 @@ export async function getFileSets(
   if (options.contentFrom) q['contentFrom'] = options.contentFrom;
   if (options.packageId)   q['packageId']   = options.packageId;
 
-  const res = await lsegGet<{ value: LsegFileSet[] }>('/file-store/v1/file-sets', q);
-  if (!res.ok) return { ok: false, error: res.error ?? 'Unknown LSEG error' };
-  return { ok: true, data: res.data?.value ?? [] };
+  const res = await lsegGet<{ value: unknown }>('/file-store/v1/file-sets', q);
+  return unwrapList<LsegFileSet>('/file-store/v1/file-sets', res);
 }
 
 // List files inside a fileset.
 export async function getFiles(filesetId: string): Promise<LsegResult<LsegFile[]>> {
-  const res = await lsegGet<{ value: LsegFile[] }>(
+  const res = await lsegGet<{ value: unknown }>(
     '/file-store/v1/files',
     { filesetId },
   );
-  if (!res.ok) return { ok: false, error: res.error ?? 'Unknown LSEG error' };
-  return { ok: true, data: res.data?.value ?? [] };
+  return unwrapList<LsegFile>('/file-store/v1/files', res);
 }
 
 // Download a file as a UTF-8 string (suitable for JSON/CSV bulk files).
