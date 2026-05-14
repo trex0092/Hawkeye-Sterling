@@ -28,6 +28,17 @@ const PUBLIC_PREFIXES = [
   "/icon-192.svg",
   "/icon-512.svg",
   "/icon-maskable.svg",
+  // RFC 5785 — regulator verifiers + JWT consumers fetch the report-signing
+  // pubkey and jwks at fixed paths under /.well-known/*. Without this here,
+  // unauthenticated curls (regulators, audit tooling) get redirected to /login
+  // and the response body becomes the SPA HTML instead of the PEM/JSON.
+  "/.well-known",
+  // Netlify Functions endpoints (scheduled-function HTTP triggers, etc.).
+  // Same-origin browser callers don't use these; external operators do. The
+  // function performs its own bearer-token auth (HAWKEYE_CRON_TOKEN); the
+  // middleware redirect would otherwise hijack the request before the
+  // function ever sees the header.
+  "/.netlify",
 ];
 
 function isPublic(pathname: string): boolean {
