@@ -156,7 +156,10 @@ async function loadObligations(tenant: string): Promise<DpmsrObligation[]> {
     const store = getStore({ name: STORE, consistency: "strong" });
     const raw = await store.get(`obligations-${tenant}`, { type: "text" });
     return raw ? (JSON.parse(raw) as DpmsrObligation[]) : [];
-  } catch { return []; }
+  } catch (err) {
+    console.warn(`[dpmsr-trigger] loadObligations(${tenant}) failed:`, err instanceof Error ? err.message : err);
+    return [];
+  }
 }
 
 async function saveObligations(tenant: string, items: DpmsrObligation[]): Promise<void> {

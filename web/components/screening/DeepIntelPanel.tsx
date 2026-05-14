@@ -2796,90 +2796,6 @@ function SanctionsEvasionSection({ subject }: { subject: Subject }) {
 // NEW SECTIONS — Group 5 additions (AI Analysis)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// ─── 40. News Sentiment Intelligence ─────────────────────────────────────────
-
-interface NewsIntelResult {
-  ok: boolean;
-  sentiment?: string;
-  sentimentScore?: number;
-  positiveCount?: number;
-  neutralCount?: number;
-  negativeCount?: number;
-  articles?: Array<{ headline: string; date: string; sentiment: string; source: string }>;
-  error?: string;
-}
-
-function NewsIntelSection({ subject }: { subject: Subject }) {
-  const [status, setStatus] = useState<SectionStatus>("idle");
-  const [result, setResult] = useState<NewsIntelResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  const mountedRef = useRef(true);
-  useEffect(() => () => { mountedRef.current = false; }, []);
-  async function run() {
-    setStatus("loading");
-    setError(null);
-    try {
-      const res = await fetch("/api/news-intel", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ name: subject.name }),
-      });
-      const data = (await res.json()) as NewsIntelResult;
-      if (!mountedRef.current) return;
-      setResult(data);
-      setStatus("done");
-    } catch (err) {
-      if (mountedRef.current) setError(String(err));
-      if (mountedRef.current) setStatus("error");
-    }
-  }
-
-  const total = (result?.positiveCount ?? 0) + (result?.neutralCount ?? 0) + (result?.negativeCount ?? 0);
-  const posPct = total > 0 ? Math.round(((result?.positiveCount ?? 0) / total) * 100) : 0;
-  const neuPct = total > 0 ? Math.round(((result?.neutralCount ?? 0) / total) * 100) : 0;
-  const negPct = total > 0 ? Math.round(((result?.negativeCount ?? 0) / total) * 100) : 0;
-
-  return (
-    <IntelSection title="News Sentiment Intelligence" icon="📰" status={status}>
-      <div className="space-y-3">
-        <div className="text-11 text-ink-3">Sentiment trajectory, news timeline, and adverse media clustering.</div>
-        <RunBtn onClick={run} disabled={status === "loading"} />
-        {error && <ErrorBox msg={error} />}
-        {result && (
-          <div className="space-y-3 mt-2">
-            {total > 0 && (
-              <div>
-                <div className="text-10 uppercase font-semibold text-ink-3 mb-1">Sentiment distribution ({total} articles)</div>
-                <div className="flex h-4 rounded overflow-hidden gap-px">
-                  {posPct > 0 && <div className="bg-green" style={{ width: `${posPct}%` }} title={`Positive: ${posPct}%`} />}
-                  {neuPct > 0 && <div className="bg-amber" style={{ width: `${neuPct}%` }} title={`Neutral: ${neuPct}%`} />}
-                  {negPct > 0 && <div className="bg-red" style={{ width: `${negPct}%` }} title={`Negative: ${negPct}%`} />}
-                </div>
-                <div className="flex gap-3 text-10 font-mono mt-1">
-                  <span className="text-green">+ {posPct}%</span>
-                  <span className="text-amber">~ {neuPct}%</span>
-                  <span className="text-red">- {negPct}%</span>
-                </div>
-              </div>
-            )}
-            {result.articles && result.articles.slice(0, 5).map((a, i) => (
-              <div key={i} className="bg-bg-2 rounded p-2">
-                <div className="flex items-center gap-2">
-                  <span className={`text-10 font-mono ${a.sentiment === "negative" ? "text-red" : a.sentiment === "positive" ? "text-green" : "text-amber"}`}>{a.sentiment}</span>
-                  <span className="text-10 text-ink-3">{a.date} · {a.source}</span>
-                </div>
-                <div className="text-11 text-ink-1 mt-0.5">{a.headline}</div>
-              </div>
-            ))}
-            {!result.articles && <JsonTree data={result} />}
-          </div>
-        )}
-      </div>
-    </IntelSection>
-  );
-}
-
 // ─── 41. SAR Narrative Generator ─────────────────────────────────────────────
 
 interface StrNarrativeResult {
@@ -7337,7 +7253,6 @@ export function DeepIntelPanel({ subject, screen, superBrain }: Props) {
       <DispositionPredictorSection subject={subject} screen={screen} superBrain={superBrain} />
       <BayesianTrajectorySection subject={subject} superBrain={superBrain} />
       <IndustryTypologySection subject={subject} />
-      <NewsIntelSection subject={subject} />
       <SarNarrativeSection subject={subject} />
       <EddQuestionnaireSection subject={subject} />
       <MlroAdvisorSection />

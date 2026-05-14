@@ -76,7 +76,10 @@ export function verifySession(token: string): SessionPayload | null {
   const sigRaw = Buffer.from(sig, "utf8");
   const sigBuf = sigRaw.length === expBuf.length
     ? sigRaw
-    : Buffer.concat([sigRaw.subarray(0, expBuf.length), Buffer.alloc(Math.max(0, expBuf.length - sigRaw.length))]);
+    : Buffer.concat([
+        new Uint8Array(sigRaw.buffer, sigRaw.byteOffset, Math.min(sigRaw.length, expBuf.length)),
+        new Uint8Array(Math.max(0, expBuf.length - sigRaw.length)),
+      ]);
   if (!timingSafeEqual(new Uint8Array(expBuf), new Uint8Array(sigBuf)) || sigRaw.length !== expBuf.length) return null;
   try {
     const payload = JSON.parse(Buffer.from(encoded, "base64url").toString()) as SessionPayload;

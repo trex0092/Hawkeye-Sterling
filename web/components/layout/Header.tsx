@@ -94,7 +94,6 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
     // Analytics, AI brain internals, investigation tools, system health
     title: "Intelligence",
     items: [
-      { label: "📰 News Intelligence", href: "/news-intel", hint: "Entity news analysis · sentiment · risk themes" },
       { label: "📈 Analytics", href: "/analytics", hint: "MLRO KPI digest + AI board insights" },
       { label: "🕵️ Investigation", href: "/investigation", hint: "Link-analysis canvas · network mapping" },
       { label: "🏢 Ownership Explorer", href: "/ownership", hint: "UBO mapping · shell risk · jurisdiction layering" },
