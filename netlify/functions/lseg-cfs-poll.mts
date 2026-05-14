@@ -147,13 +147,14 @@ export default async function handler(req: Request): Promise<Response> {
       const enc = new TextEncoder();
       const a = enc.encode(cronToken);
       const b = enc.encode(supplied);
+      const padded = new Uint8Array(a.byteLength);
+      padded.set(new Uint8Array(b.buffer, b.byteOffset, Math.min(b.byteLength, a.byteLength)));
       const match =
-        a.byteLength === b.byteLength &&
         (await import('node:crypto')
           .then(({ timingSafeEqual }) =>
-            timingSafeEqual(new Uint8Array(a.buffer), new Uint8Array(b.buffer)),
+            timingSafeEqual(new Uint8Array(a.buffer), padded),
           )
-          .catch(() => false));
+          .catch(() => false)) && a.byteLength === b.byteLength;
       if (!match) {
         return jsonResponse({ ok: false, label: RUN_LABEL, error: 'Unauthorized' }, 401);
       }

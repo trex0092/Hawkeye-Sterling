@@ -27,11 +27,16 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 20;
 
+const VALID_REPORT_CODES = new Set(["STR", "SAR", "AIF", "RFI", "FFR", "PNMR", "CTR", "EFT", "HRC"]);
+
 function validateRequest(raw: unknown): { ok: true; value: GoAmlEnvelope } | { ok: false; errors: string[] } {
   if (typeof raw !== "object" || raw === null) {
     return { ok: false, errors: ["Request body must be a JSON object (GoAmlEnvelope)"] };
   }
   const env = raw as GoAmlEnvelope;
+  if (!VALID_REPORT_CODES.has(String((env as Record<string, unknown>)["reportCode"] ?? ""))) {
+    return { ok: false, errors: [`reportCode must be one of: ${[...VALID_REPORT_CODES].join(", ")}`] };
+  }
   const errors = validateGoamlEnvelope(env);
   if (errors.length > 0) return { ok: false, errors };
   return { ok: true, value: env };
