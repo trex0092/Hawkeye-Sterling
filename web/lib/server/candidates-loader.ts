@@ -16,7 +16,12 @@
 import type { QuickScreenCandidate } from "@/lib/api/quickScreen.types";
 import { CANDIDATES as STATIC_CANDIDATES } from "@/lib/data/candidates";
 
-// Adapter IDs written by netlify/functions/refresh-lists.ts
+// Adapter IDs written by netlify/functions/refresh-lists.ts (primary feeds)
+// plus LSEG-derived supplement IDs written by /api/admin/import-cfs.
+// Audit H-01/H-02/H-03/C-01: when a primary feed is missing/empty/stale,
+// the LSEG CFS supplement backfills so the screening engine still has
+// coverage of that regime — the listId in the candidate result tells the
+// MLRO which source produced the hit ("lseg_uae_eocn" vs "uae_eocn").
 const ADAPTER_IDS = [
   "un_consolidated",
   "ofac_sdn",
@@ -25,6 +30,18 @@ const ADAPTER_IDS = [
   "uk_ofsi",
   "uae_eocn",
   "uae_ltl",
+  // LSEG supplements — only present if /api/admin/import-cfs has run.
+  "lseg_un_consolidated",
+  "lseg_ofac_sdn",
+  "lseg_ofac_cons",
+  "lseg_eu_fsf",
+  "lseg_uk_ofsi",
+  "lseg_ca_osfi",
+  "lseg_au_dfat",
+  "lseg_ch_seco",
+  "lseg_jp_mof",
+  "lseg_uae_eocn",
+  "lseg_uae_ltl",
 ] as const;
 
 // Ingestion NormalisedEntity shape (mirrors src/ingestion/types.ts without

@@ -18,6 +18,15 @@
 
 import { NextResponse } from "next/server";
 import { parseCfsPayload } from "@/lib/lseg/cfs-parser";
+import {
+  classifyToSanctionsListIds,
+  LSEG_SUPPLEMENT_LIST_IDS,
+  type SanctionsListId,
+} from "@/lib/lseg/sanctions-classifier";
+import {
+  classifyAdverseCategories,
+  type AdverseCategoryId,
+} from "@/lib/lseg/adverse-classifier";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -95,6 +104,24 @@ export async function POST(req: Request): Promise<NextResponse> {
     ...(creds.token ? { token: creds.token } : {}),
     consistency: "strong",
   });
+  // Adverse-media bucketed index — same shape as the PEP index but keyed
+  // by adverse-media categories. Read by lookupLsegAdverseIndex().
+  const adverseStore = mod.getStore({
+    name: "hawkeye-lseg-adverse-index",
+    ...(creds.siteID ? { siteID: creds.siteID } : {}),
+    ...(creds.token ? { token: creds.token } : {}),
+    consistency: "strong",
+  });
+  // hawkeye-lists is the same store the primary refresh-lists cron writes
+  // to. We never overwrite a primary blob — supplement entries are written
+  // under `lseg_<listId>/latest.json` so the candidates loader can merge
+  // them alongside the official feeds (audit H-01/H-02/H-03/C-01).
+  const listsStore = mod.getStore({
+    name: "hawkeye-lists",
+    ...(creds.siteID ? { siteID: creds.siteID } : {}),
+    ...(creds.token ? { token: creds.token } : {}),
+    consistency: "strong",
+  });
 
   // Parser is statically imported above — Next.js handles bundling.
 
@@ -133,8 +160,47 @@ export async function POST(req: Request): Promise<NextResponse> {
     categories: string[];
     sourceFile: string;
   }
+  // Shape consumed by the existing candidates loader (mirrors
+  // src/ingestion/types.NormalisedEntity). Sanctions supplement entries
+  // are converted into this shape so the loader treats LSEG-derived
+  // entities identically to the primary cron output.
+  interface NormalisedEntity {
+    id: string;
+    name: string;
+    aliases: string[];
+    type: string;
+    nationalities: string[];
+    jurisdictions: string[];
+    listings: Array<{ source: string; program?: string; reference?: string }>;
+    source: string;
+  }
+
+  function entityTypeForLoader(raw: string): string {
+    if (raw === "individual") return "individual";
+    if (raw === "vessel") return "vessel";
+    if (raw === "aircraft") return "aircraft";
+    if (raw === "entity") return "entity";
+    return "unknown";
+  }
+
   const perFile: PerFile[] = [];
   const allEntities = new Map<string, IndexedEntity>();
+  // Per-listId sanctions buckets keyed by listId, then by lowercased name
+  // for dedup. Each entity is the candidates-loader shape so the live
+  // sanctions matcher can consume it without further conversion.
+  const sanctionsByList = new Map<SanctionsListId, Map<string, NormalisedEntity>>();
+  for (const lid of LSEG_SUPPLEMENT_LIST_IDS) sanctionsByList.set(lid, new Map());
+  // Adverse-media entries keyed by lowercased name. Shape matches what
+  // lookupLsegAdverseIndex() reads back from hawkeye-lseg-adverse-index.
+  interface AdverseIndexEntry {
+    id: string;
+    primaryName: string;
+    aliases: string[];
+    categories: AdverseCategoryId[];
+    rawCategories: string[];
+    sourceFile: string;
+  }
+  const adverseEntities = new Map<string, AdverseIndexEntry>();
 
   const CONCURRENCY = 4;
   for (let i = 0; i < fileKeys.length; i += CONCURRENCY) {
@@ -161,6 +227,43 @@ export async function POST(req: Request): Promise<NextResponse> {
               sourceFile: key,
             });
           }
+          // Classify the entity into one or more sanctions regimes by its
+          // LSEG category labels. Sanctions-bearing entries are written
+          // to per-list supplement blobs so the screening engine matches
+          // them as if they came from the primary feed.
+          const sanctionsIds = classifyToSanctionsListIds(e.categories);
+          for (const lid of sanctionsIds) {
+            const bucket = sanctionsByList.get(lid)!;
+            if (!bucket.has(k)) {
+              const program = e.categories.find((c) => c.length > 0) ?? lid.replace(/^lseg_/, "");
+              bucket.set(k, {
+                id: `${lid}:${e.id}`,
+                name: e.primaryName,
+                aliases: e.aliases,
+                type: entityTypeForLoader(e.entityType),
+                nationalities: e.countries,
+                jurisdictions: e.countries,
+                listings: [{ source: lid, program, reference: e.id }],
+                source: lid,
+              });
+            }
+          }
+          // Adverse-media classification — independent of sanctions
+          // categorisation. LSEG flags many entities with adverse risk
+          // factors (fraud, corruption, ML, etc.) without putting them on
+          // any sanctions list; those still need to surface in adverse-
+          // media screens.
+          const adverseCats = classifyAdverseCategories(e.categories);
+          if (adverseCats.length > 0 && !adverseEntities.has(k)) {
+            adverseEntities.set(k, {
+              id: e.id,
+              primaryName: e.primaryName,
+              aliases: e.aliases,
+              categories: adverseCats,
+              rawCategories: e.categories,
+              sourceFile: key,
+            });
+          }
         }
       } catch (err) {
         perFile.push({
@@ -173,9 +276,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     }));
   }
 
-  // Write the consolidated index. One blob per first-letter bucket so a
+  // Write the consolidated PEP index. One blob per first-letter bucket so a
   // lookup doesn't require loading all entities into memory at query time.
-  // Index manifest: list of buckets + total count + per-file summary.
   const byBucket = new Map<string, IndexedEntity[]>();
   for (const e of allEntities.values()) {
     const firstChar = e.primaryName.charAt(0).toLowerCase();
@@ -211,15 +313,64 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   }
 
+  // Adverse-media bucketed index — same first-letter bucketing as the
+  // PEP index. Read by lookupLsegAdverseIndex() at screening time.
+  const adverseByBucket = new Map<string, AdverseIndexEntry[]>();
+  for (const e of adverseEntities.values()) {
+    const firstChar = e.primaryName.charAt(0).toLowerCase();
+    const bucket = /[a-z]/.test(firstChar) ? firstChar : "_";
+    const list = adverseByBucket.get(bucket);
+    if (list) list.push(e); else adverseByBucket.set(bucket, [e]);
+  }
+  try {
+    for (const [bucket, entries] of adverseByBucket) {
+      await adverseStore.setJSON(`bucket/${bucket}.json`, entries);
+    }
+    await adverseStore.setJSON("manifest.json", {
+      builtAt: new Date().toISOString(),
+      filesProcessed: perFile.length,
+      entitiesIndexed: adverseEntities.size,
+      buckets: Array.from(adverseByBucket.keys()).sort(),
+    });
+  } catch (err) {
+    console.warn("[import-cfs] adverse-media index write failed:", err instanceof Error ? err.message : err);
+  }
+
+  // Sanctions supplement writes. One blob per supplement listId in the
+  // hawkeye-lists store, alongside the primary refresh-lists cron output.
+  // The candidates loader's ADAPTER_IDS includes these lseg_* ids so screen
+  // routes match against the supplement too. Shape is identical to the
+  // primary feed: { entities: NormalisedEntity[], fetchedAt, ... }.
+  const sanctionsCounts: Record<string, number> = {};
+  const fetchedAt = Date.now();
+  try {
+    for (const [lid, bucket] of sanctionsByList) {
+      const entities = Array.from(bucket.values());
+      sanctionsCounts[lid] = entities.length;
+      // Always write — empty arrays let downstream consumers detect that we
+      // ran but found no entries (vs blob missing → never ran).
+      await listsStore.setJSON(`${lid}/latest.json`, {
+        entities,
+        fetchedAt,
+        generatedAt: new Date().toISOString(),
+        source: "lseg-cfs-import",
+      });
+    }
+  } catch (err) {
+    console.warn("[import-cfs] sanctions supplement write failed:", err instanceof Error ? err.message : err);
+  }
+
   return NextResponse.json({
     ok: true,
     filesProcessed: perFile.length,
     entitiesIndexed: allEntities.size,
     buckets: Array.from(byBucket.keys()).sort(),
+    sanctionsSupplement: sanctionsCounts,
+    adverseIndexed: adverseEntities.size,
     perFile,
     hint:
       allEntities.size === 0
         ? "Files parsed but no entities extracted — formats may differ from the assumed JSON/XML/CSV layouts. Inspect perFile[].format and perFile[].error to identify schemas the parser doesn't yet handle."
-        : "Index written to hawkeye-lseg-pep-index Blob store. Consumers should look up by first-letter bucket key.",
+        : "PEP index → hawkeye-lseg-pep-index. Sanctions supplements → hawkeye-lists/lseg_*. Adverse index → hawkeye-lseg-adverse-index. Re-run after each new CFS fileset arrives (6 h cron).",
   });
 }

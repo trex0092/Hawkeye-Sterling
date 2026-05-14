@@ -38,6 +38,7 @@ import {
   lookupKnownAdverse,
 } from "@/lib/data/known-entities";
 import { lookupLsegPepIndex } from "@/lib/lseg/pep-index";
+import { lookupLsegAdverseIndex } from "@/lib/lseg/adverse-classifier";
 import { runIntelligencePipeline } from "@/lib/server/intelligence-pipeline";
 import type {
   QuickScreenCandidate,
@@ -187,13 +188,18 @@ export async function POST(req: Request): Promise<NextResponse> {
     //     First non-null hit wins; static remains canonical for backward
     //     compat. Adverse-media uses the static seed only (it's a
     //     curated list, not externally enrichable).
-    const [staticPep, livePep, cfsPep] = await Promise.all([
+    // Adverse-media lookup now consults the LSEG CFS adverse index as well
+    // as the static curated fixture. First non-null wins; the static
+    // fixture remains canonical for backward compat with existing tests.
+    const [staticPep, livePep, cfsPep, cfsAdverse] = await Promise.all([
       Promise.resolve(lookupKnownPEP(body.subject.name)),
       lookupKnownPEPLive(body.subject.name).catch(() => null),
       lookupLsegPepIndex(body.subject.name).catch(() => null),
+      lookupLsegAdverseIndex(body.subject.name).catch(() => null),
     ]);
     const knownPep = staticPep ?? livePep ?? cfsPep;
-    const knownAdverse = lookupKnownAdverse(body.subject.name);
+    const staticAdverse = lookupKnownAdverse(body.subject.name);
+    const knownAdverse = staticAdverse ?? cfsAdverse;
 
     // 1 · Quick screen — against the live ingested watchlists (OFAC, UN, EU,
     //     UK, UAE-EOCN/LTL) merged with the static seed corpus as fallback.
