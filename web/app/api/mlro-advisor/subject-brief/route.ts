@@ -1,8 +1,5 @@
-import { NextResponse } from "next/server";
 import { writeAuditEvent } from "@/lib/audit";
-import { enforce } from "@/lib/server/enforce";
-
-import { getAnthropicClient } from "@/lib/server/llm";
+import { stripJsonFences, withMlroLlm } from "@/lib/server/mlro-route-base";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -47,38 +44,11 @@ const FALLBACK: SubjectBriefResult = {
   regulatoryContext: "",
 };
 
-export async function POST(req: Request): Promise<NextResponse> {
-  const gate = await enforce(req);
-  if (!gate.ok) return gate.response;
-  const apiKey = process.env["ANTHROPIC_API_KEY"];
-
-  if (!apiKey) {
-    return NextResponse.json({ ok: false, error: "mlro-advisor/subject-brief temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
-  }
-
-  let body: Body;
-  try {
-    body = (await req.json()) as Body;
-  } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
-  }
-
-  if (!body?.subjectName?.trim()) {
-    return NextResponse.json({ ok: false, error: "subjectName is required" }, { status: 400 , headers: gate.headers});
-  }
-
-  const lines: string[] = [`Subject name: ${body.subjectName.trim()}`];
-  if (body.jurisdiction) lines.push(`Jurisdiction: ${body.jurisdiction}`);
-  if (body.entityType) lines.push(`Entity type: ${body.entityType}`);
-  if (body.context) lines.push(`Context: ${body.context.slice(0, 500)}`);
-
-  const userContent = `${lines.join("\n")}\n\nGenerate a pre-screening intelligence brief for this subject and output the structured JSON.`;
-
-  const systemPrompt = [
-    "You are a UAE MLRO conducting a pre-screening intelligence brief on a subject. Before any compliance interaction, generate a concise intelligence assessment. Consider: name etymology (common name in sanctioned jurisdictions?), entity type risk, jurisdiction exposure, likely typologies to probe for, and the 5 highest-value questions a compliance officer should ask.",
-    "",
-    "Output ONLY valid JSON in this exact shape:",
-    `{
+const SYSTEM_PROMPT = [
+  "You are a UAE MLRO conducting a pre-screening intelligence brief on a subject. Before any compliance interaction, generate a concise intelligence assessment. Consider: name etymology (common name in sanctioned jurisdictions?), entity type risk, jurisdiction exposure, likely typologies to probe for, and the 5 highest-value questions a compliance officer should ask.",
+  "",
+  "Output ONLY valid JSON in this exact shape:",
+  `{
   "riskProfile": {
     "nameRisk": "high" | "medium" | "low",
     "jurisdictionRisk": "high" | "medium" | "low",
@@ -92,37 +62,47 @@ export async function POST(req: Request): Promise<NextResponse> {
   "dueDiligenceChecklist": ["string array — specific documents to request"],
   "regulatoryContext": "string — relevant UAE/FATF framework for this subject type"
 }`,
-  ].join("\n");
+].join("\n");
 
-  let result: SubjectBriefResult;
-
-  try {
-    const client = getAnthropicClient(apiKey, 55000);
-    const res = await client.messages.create({
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 2048,
-        system: systemPrompt,
-        messages: [{ role: "user", content: userContent }],
-      });
-
-    const raw = res.content[0]?.type === "text" ? res.content[0].text : "";
-    const cleaned = raw.replace(/^```json?\s*/i, "").replace(/\s*```$/i, "").trim();
+// Audit M7: post-consolidation, this route is a thin shell over the
+// shared withMlroLlm() base — the entire boilerplate (enforce → parse →
+// no-key fallback → client → response) lives in mlro-route-base.ts.
+export const POST = (req: Request) => withMlroLlm<Body, SubjectBriefResult>(req, {
+  route: "mlro-advisor/subject-brief",
+  model: "claude-haiku-4-5-20251001",
+  maxTokens: 2048,
+  parseBody: (raw): Body | null => {
+    if (!raw || typeof raw !== "object") return null;
+    const b = raw as Partial<Body>;
+    if (!b.subjectName?.trim()) return null;
+    return b as Body;
+  },
+  buildRequest: (body) => {
+    const lines: string[] = [`Subject name: ${body.subjectName.trim()}`];
+    if (body.jurisdiction) lines.push(`Jurisdiction: ${body.jurisdiction}`);
+    if (body.entityType) lines.push(`Entity type: ${body.entityType}`);
+    if (body.context) lines.push(`Context: ${body.context.slice(0, 500)}`);
+    return {
+      system: SYSTEM_PROMPT,
+      userContent: `${lines.join("\n")}\n\nGenerate a pre-screening intelligence brief for this subject and output the structured JSON.`,
+    };
+  },
+  parseResult: (text): SubjectBriefResult => {
     try {
-      result = JSON.parse(cleaned) as SubjectBriefResult;
+      return JSON.parse(stripJsonFences(text)) as SubjectBriefResult;
     } catch {
-      result = { ...FALLBACK, riskProfile: { ...FALLBACK.riskProfile, rationale: "AI response could not be parsed — manual review required." } };
+      // Parse failures gracefully degrade to FALLBACK (preserves prior
+      // behaviour — the route always returned ok:true even when the
+      // model output was malformed).
+      return { ...FALLBACK, riskProfile: { ...FALLBACK.riskProfile, rationale: "AI response could not be parsed — manual review required." } };
     }
-  } catch {
-    result = { ...FALLBACK, riskProfile: { ...FALLBACK.riskProfile, rationale: "AI analysis temporarily unavailable — manual review required." } };
-  }
-
-  try {
+  },
+  onSuccess: (result, body) => {
     writeAuditEvent(
       "mlro",
       "advisor.subject-brief",
       `${body.subjectName.trim()} → compositeRisk: ${result.riskProfile.compositeRisk}, sanctionsExposure: ${result.sanctionsExposure.slice(0, 80)}`,
     );
-  } catch { /* non-blocking */ }
-
-  return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
-}
+  },
+  offlineFallback: FALLBACK,
+});

@@ -1,8 +1,5 @@
-import { NextResponse } from "next/server";
 import { writeAuditEvent } from "@/lib/audit";
-import { enforce } from "@/lib/server/enforce";
-
-import { getAnthropicClient } from "@/lib/server/llm";
+import { stripJsonFences, withMlroLlm } from "@/lib/server/mlro-route-base";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -53,44 +50,11 @@ const FALLBACK: CasePatternsResult = {
   summary: "Insufficient cases for pattern analysis",
 };
 
-export async function POST(req: Request): Promise<NextResponse> {
-  const gate = await enforce(req);
-  if (!gate.ok) return gate.response;
-  const apiKey = process.env["ANTHROPIC_API_KEY"];
-
-  let body: Body;
-  try {
-    body = (await req.json()) as Body;
-  } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
-  }
-
-  const cases = body?.cases ?? [];
-
-  if (!apiKey || cases.length < 2) {
-    return NextResponse.json({ ok: false, error: "mlro-advisor/case-patterns temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
-  }
-
-  const casesSummary = cases
-    .map((c) =>
-      [
-        `Case ID: ${c.id}`,
-        `Subject: ${c.subject}`,
-        `Meta: ${c.meta}`,
-        `Status: ${c.status}`,
-        `Opened: ${c.openedAt}`,
-        ...(c.reportKind ? [`Report Kind: ${c.reportKind}`] : []),
-      ].join(" | "),
-    )
-    .join("\n");
-
-  const userContent = `Analyze the following ${cases.length} compliance cases for cross-case patterns and output the structured JSON:\n\n${casesSummary}`;
-
-  const systemPrompt = [
-    "You are a UAE MLRO analyzing a portfolio of compliance cases for cross-case patterns. Look for: coordinated structuring (multiple cases with similar amounts/timing), shared counterparties or beneficial owners, typology clusters (same ML method across cases), jurisdictional concentration, escalating risk trends, cases that should be consolidated into a single SAR.",
-    "",
-    "Output ONLY valid JSON in this exact shape:",
-    `{
+const SYSTEM_PROMPT = [
+  "You are a UAE MLRO analyzing a portfolio of compliance cases for cross-case patterns. Look for: coordinated structuring (multiple cases with similar amounts/timing), shared counterparties or beneficial owners, typology clusters (same ML method across cases), jurisdictional concentration, escalating risk trends, cases that should be consolidated into a single SAR.",
+  "",
+  "Output ONLY valid JSON in this exact shape:",
+  `{
   "patterns": [
     {
       "type": "coordinated_structuring" | "shared_counterparty" | "typology_cluster" | "jurisdiction_concentration" | "escalating_trend" | "consolidation_candidate" | "other",
@@ -106,37 +70,52 @@ export async function POST(req: Request): Promise<NextResponse> {
   "immediateEscalations": ["string array of case IDs needing immediate escalation"],
   "summary": "string — 2-sentence portfolio risk summary for the MLRO"
 }`,
-  ].join("\n");
+].join("\n");
 
-  let result: CasePatternsResult;
-
-  try {
-    const client = getAnthropicClient(apiKey, 55000);
-    const res = await client.messages.create({
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 2048,
-        system: systemPrompt,
-        messages: [{ role: "user", content: userContent }],
-      });
-
-    const raw = res.content[0]?.type === "text" ? res.content[0].text : "";
-    const cleaned = raw.replace(/^```json?\s*/i, "").replace(/\s*```$/i, "").trim();
+// Audit M7: thin shell over withMlroLlm — see web/lib/server/mlro-route-base.ts.
+// Note: pre-consolidation route returned 503 for cases.length < 2; the
+// corrected status is 400 (client error — not enough cases supplied).
+export const POST = (req: Request) => withMlroLlm<Body, CasePatternsResult>(req, {
+  route: "mlro-advisor/case-patterns",
+  model: "claude-haiku-4-5-20251001",
+  maxTokens: 2048,
+  parseBody: (raw): Body | null => {
+    if (!raw || typeof raw !== "object") return null;
+    const b = raw as Partial<Body>;
+    if (!Array.isArray(b.cases) || b.cases.length < 2) return null;
+    return b as Body;
+  },
+  buildRequest: (body) => {
+    const casesSummary = body.cases
+      .map((c) =>
+        [
+          `Case ID: ${c.id}`,
+          `Subject: ${c.subject}`,
+          `Meta: ${c.meta}`,
+          `Status: ${c.status}`,
+          `Opened: ${c.openedAt}`,
+          ...(c.reportKind ? [`Report Kind: ${c.reportKind}`] : []),
+        ].join(" | "),
+      )
+      .join("\n");
+    return {
+      system: SYSTEM_PROMPT,
+      userContent: `Analyze the following ${body.cases.length} compliance cases for cross-case patterns and output the structured JSON:\n\n${casesSummary}`,
+    };
+  },
+  parseResult: (text): CasePatternsResult => {
     try {
-      result = JSON.parse(cleaned) as CasePatternsResult;
+      return JSON.parse(stripJsonFences(text)) as CasePatternsResult;
     } catch {
-      result = { ...FALLBACK, summary: "AI response could not be parsed — manual review required." };
+      return { ...FALLBACK, summary: "AI response could not be parsed — manual review required." };
     }
-  } catch {
-    result = { ...FALLBACK, summary: `AI pattern analysis temporarily unavailable — manual review of ${cases.length} case(s) required.` };
-  }
-
-  try {
+  },
+  onSuccess: (result, body) => {
     writeAuditEvent(
       "mlro",
       "advisor.case-patterns",
-      `${cases.length} case(s) analyzed → ${result.patterns.length} pattern(s), portfolioRisk: ${result.portfolioRisk}, consolidation: ${result.consolidationRequired}`,
+      `${body.cases.length} case(s) analyzed → ${result.patterns.length} pattern(s), portfolioRisk: ${result.portfolioRisk}, consolidation: ${result.consolidationRequired}`,
     );
-  } catch { /* non-blocking */ }
-
-  return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
-}
+  },
+  offlineFallback: FALLBACK,
+});
