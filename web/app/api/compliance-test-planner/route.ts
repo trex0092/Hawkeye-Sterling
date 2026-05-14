@@ -4,6 +4,8 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 
+import { getAnthropicClient } from "@/lib/server/llm";
+
 export interface ComplianceTestPlanResult {
   testPlan: Array<{
     testId: string;
@@ -125,11 +127,8 @@ export async function POST(req: Request) {
   if (!apiKey) return NextResponse.json({ ok: false, error: "compliance-test-planner temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
 
   try {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      signal: AbortSignal.timeout(55_000),
-      method: "POST",
-      headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-      body: JSON.stringify({
+    const client = getAnthropicClient(apiKey, 55000);
+    const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 1500,
         system: `You are a UAE AML compliance testing specialist with expertise in CBUAE testing expectations, FATF R.18 independent testing requirements, and sector-specific AML compliance testing methodologies. Design comprehensive compliance test plans with specific objectives, methodologies, sample sizes, frequencies, and output requirements. Plans should be practical and actionable for the institution's size and complexity. Reference UAE FDL 10/2025 and CBUAE Guidelines legal basis for each test. Respond ONLY with valid JSON matching the ComplianceTestPlanResult interface — no markdown fences.`,
@@ -143,11 +142,9 @@ Additional Context: ${body.context ?? "none"}
 
 Design a comprehensive AML compliance testing plan for this institution. Return complete ComplianceTestPlanResult JSON.`,
         }],
-      }),
-    });
-    if (!response.ok) return NextResponse.json({ ok: false, error: "compliance-test-planner temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+      });
     const data = (await response.json()) as { content: Array<{ type: string; text: string }> };
-    const raw = data.content[0]?.type === "text" ? data.content[0].text : "{}";
+    const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as ComplianceTestPlanResult;
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {

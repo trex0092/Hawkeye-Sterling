@@ -4,6 +4,8 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 
+import { getAnthropicClient } from "@/lib/server/llm";
+
 export interface DnfbpObligationsResult {
   dnfbpCategory: string;
   dnfbpSubType: string;
@@ -97,11 +99,8 @@ export async function POST(req: Request) {
   if (!apiKey) return NextResponse.json({ ok: false, error: "dnfbp-obligations temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
 
   try {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      signal: AbortSignal.timeout(55_000),
-      method: "POST",
-      headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-      body: JSON.stringify({
+    const client = getAnthropicClient(apiKey, 55000);
+    const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 1400,
         system: `You are a UAE AML/CFT specialist mapping Designated Non-Financial Business and Profession (DNFBP) obligations under UAE FDL 10/2025 and FATF Recommendations 22-23.
@@ -176,11 +175,9 @@ Additional Context: ${body.context ?? "none"}
 
 Map the AML/CFT obligations for this DNFBP.`,
         }],
-      }),
-    });
-    if (!response.ok) return NextResponse.json({ ok: false, error: "dnfbp-obligations temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+      });
     const data = (await response.json()) as { content: Array<{ type: string; text: string }> };
-    const raw = data.content[0]?.type === "text" ? data.content[0].text : "{}";
+    const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as DnfbpObligationsResult;
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {

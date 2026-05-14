@@ -6,6 +6,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { writeAuditEvent } from "@/lib/audit";
 import { enforce } from "@/lib/server/enforce";
 
+import { getAnthropicClient } from "@/lib/server/llm";
+
 interface CaseInput {
   id: string;
   title: string;
@@ -51,15 +53,8 @@ export async function POST(req: NextRequest) {
 
   const userMessage = `Here are the active STR/SAR cases for today's briefing:\n\n${JSON.stringify(cases, null, 2)}\n\nToday's date: ${new Date().toISOString().slice(0, 10)}`;
 
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
-      signal: AbortSignal.timeout(22_000),
-    method: "POST",
-    headers: {
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
+  const client = getAnthropicClient(apiKey, 55000);
+  const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 1500,
       system:
@@ -70,11 +65,8 @@ export async function POST(req: NextRequest) {
           content: userMessage,
         },
       ],
-    }),
-  });
+    });
 
-  if (!response.ok) {
-    return NextResponse.json({ ok: true, briefing: EMPTY_BRIEFING }, { headers: gate.headers });
   }
 
   const claudeData = (await response.json()) as {

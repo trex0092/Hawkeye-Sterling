@@ -4,6 +4,8 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 
+import { getAnthropicClient } from "@/lib/server/llm";
+
 export interface SanctionsListHit {
   list: string;
   listAuthority: string;
@@ -91,11 +93,8 @@ export async function POST(req: Request) {
   if (!apiKey) return NextResponse.json({ ok: false, error: "sanctions-exposure-mapper temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
 
   try {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      signal: AbortSignal.timeout(55_000),
-      method: "POST",
-      headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-      body: JSON.stringify({
+    const client = getAnthropicClient(apiKey, 55000);
+    const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 1300,
         system: `You are a UAE sanctions compliance specialist mapping multi-list exposure for a named entity. Analyse exposure across all major sanctions lists and produce a structured compliance output.
@@ -133,11 +132,9 @@ Additional Context: ${body.context ?? "none"}
 
 Map sanctions list exposure and compliance obligations for this entity.`,
         }],
-      }),
-    });
-    if (!response.ok) return NextResponse.json({ ok: false, error: "sanctions-exposure-mapper temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+      });
     const data = (await response.json()) as { content: Array<{ type: string; text: string }> };
-    const raw = data.content[0]?.type === "text" ? data.content[0].text : "{}";
+    const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as SanctionsExposureResult;
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {

@@ -6,6 +6,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { writeAuditEvent } from "@/lib/audit";
 import { enforce } from "@/lib/server/enforce";
 
+import { getAnthropicClient } from "@/lib/server/llm";
+
 interface QaAnswer {
   answer: string;
   citations: string[];
@@ -36,15 +38,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, ...EMPTY_ANSWER }, { headers: gate.headers });
   }
 
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
-      signal: AbortSignal.timeout(22_000),
-    method: "POST",
-    headers: {
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
+  const client = getAnthropicClient(apiKey, 55000);
+  const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 1200,
       system:
@@ -55,11 +50,8 @@ export async function POST(req: NextRequest) {
           content: question,
         },
       ],
-    }),
-  });
+    });
 
-  if (!response.ok) {
-    return NextResponse.json({ ok: true, ...EMPTY_ANSWER }, { headers: gate.headers });
   }
 
   const claudeData = (await response.json()) as {

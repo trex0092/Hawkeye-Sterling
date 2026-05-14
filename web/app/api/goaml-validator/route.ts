@@ -4,6 +4,8 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 
+import { getAnthropicClient } from "@/lib/server/llm";
+
 export interface GoAmlFieldCheck {
   field: string;
   section: "header" | "subject" | "transactions" | "narrative" | "reporting_entity";
@@ -115,11 +117,8 @@ export async function POST(req: Request) {
   if (!apiKey) return NextResponse.json({ ok: false, error: "goaml-validator temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
 
   try {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      signal: AbortSignal.timeout(55_000),
-      method: "POST",
-      headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-      body: JSON.stringify({
+    const client = getAnthropicClient(apiKey, 55000);
+    const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 1500,
         system: `You are a UAE FIU goAML STR filing specialist. Validate an STR (Suspicious Transaction Report) draft against UAE FIU goAML requirements and UAE FDL 10/2025.
@@ -173,11 +172,9 @@ Additional Context: ${body.context ?? "none"}
 
 Validate this STR draft against UAE FIU goAML requirements.`,
         }],
-      }),
-    });
-    if (!response.ok) return NextResponse.json({ ok: false, error: "goaml-validator temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+      });
     const data = (await response.json()) as { content: Array<{ type: string; text: string }> };
-    const raw = data.content[0]?.type === "text" ? data.content[0].text : "{}";
+    const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as GoAmlValidatorResult;
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {

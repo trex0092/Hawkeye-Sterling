@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { writeAuditEvent } from "@/lib/audit";
 
+import { getAnthropicClient } from "@/lib/server/llm";
+import { enforce } from "@/lib/server/enforce";
+
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -79,6 +82,8 @@ Output ONLY valid JSON, no markdown fences, in this exact shape:
 }`;
 
 export async function POST(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   const apiKey = process.env["ANTHROPIC_API_KEY"];
 
   if (!apiKey) {
@@ -104,24 +109,14 @@ export async function POST(req: Request): Promise<NextResponse> {
   let result: JurisdictionIntelResult;
 
   try {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      signal: AbortSignal.timeout(22_000),
-      method: "POST",
-      headers: {
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
+    const client = getAnthropicClient(apiKey, 55000);
+    const res = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 2048,
         system: SYSTEM_PROMPT,
         messages: [{ role: "user", content: userContent }],
-      }),
-    });
+      });
 
-    if (!res.ok) {
-      return NextResponse.json({ ok: false, error: "jurisdiction-intel temporarily unavailable - please retry." }, { status: 503 });
     }
 
     const data = (await res.json()) as {

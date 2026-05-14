@@ -4,6 +4,8 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 
+import { getAnthropicClient } from "@/lib/server/llm";
+
 export interface TradeInvoiceResult {
   tbmlRisk: "critical" | "high" | "medium" | "low" | "clear";
   overInvoicing: boolean;
@@ -112,11 +114,8 @@ export async function POST(req: Request) {
   if (!apiKey) return NextResponse.json({ ok: false, error: "trade-invoice-analyzer temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
 
   try {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      signal: AbortSignal.timeout(55_000),
-      method: "POST",
-      headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-      body: JSON.stringify({
+    const client = getAnthropicClient(apiKey, 55000);
+    const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 1500,
         system: `You are a trade-based money laundering (TBML) specialist with expertise in FATF trade-based ML typologies, HS code analysis, and world commodity price benchmarks. Analyse trade invoices and documents for over/under-invoicing, quantity-value mismatches, HS code manipulation, and suspicious routing patterns. Reference LBMA (gold), LME (metals), and other recognised world price benchmarks when assessing price deviations. Apply UAE AML obligations for DNFBPs involved in trade finance. Respond ONLY with valid JSON matching the TradeInvoiceResult interface — no markdown fences.`,
@@ -134,11 +133,9 @@ Additional Context: ${body.context ?? "none"}
 
 Analyse this trade invoice for TBML indicators. Return complete TradeInvoiceResult JSON.`,
         }],
-      }),
-    });
-    if (!response.ok) return NextResponse.json({ ok: false, error: "trade-invoice-analyzer temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+      });
     const data = (await response.json()) as { content: Array<{ type: string; text: string }> };
-    const raw = data.content[0]?.type === "text" ? data.content[0].text : "{}";
+    const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as TradeInvoiceResult;
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {

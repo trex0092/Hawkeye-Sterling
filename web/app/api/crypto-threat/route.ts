@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { writeAuditEvent } from "@/lib/audit";
 import { enforce } from "@/lib/server/enforce";
 
+import { getAnthropicClient } from "@/lib/server/llm";
+
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -98,25 +100,15 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   let result: CryptoThreat;
   try {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      signal: AbortSignal.timeout(22_000),
-      method: "POST",
-      headers: {
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
+    const client = getAnthropicClient(apiKey, 55000);
+    const res = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 1500,
         system:
           "You are a UAE VASP compliance analyst specializing in blockchain forensics and FATF R.15 virtual asset risk. Analyze this on-chain risk data and produce a compliance assessment. Return ONLY valid JSON — no markdown fences, no commentary.",
         messages: [{ role: "user", content: userContent }],
-      }),
-    });
+      });
 
-    if (!res.ok) {
-      return NextResponse.json({ ok: false, error: "crypto-threat temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
     }
 
     const data = (await res.json()) as {

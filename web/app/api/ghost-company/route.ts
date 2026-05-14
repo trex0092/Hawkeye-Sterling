@@ -3,6 +3,8 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;import { NextResponse } from "next/server";
 
 import { enforce } from "@/lib/server/enforce";
+import { getAnthropicClient } from "@/lib/server/llm";
+
 export interface GhostCompanyResult {
   ghostRisk: "critical" | "high" | "medium" | "low";
   ghostScore: number;
@@ -66,15 +68,8 @@ export async function POST(req: Request) {
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) return NextResponse.json({ ok: false, error: "ghost-company temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
   try {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      signal: AbortSignal.timeout(55_000),
-      method: "POST",
-      headers: {
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
+    const client = getAnthropicClient(apiKey, 55000);
+    const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 1500,
         system:
@@ -85,14 +80,12 @@ export async function POST(req: Request) {
             content: `Assess ghost/shell company risk for this entity.\n\nCompany: ${body.companyName}\nIncorporation Date: ${body.incorporationDate}\nTrade Activity: ${body.tradeActivity}\nEmployee Count: ${body.employeeCount}\nPhysical Address: ${body.physicalAddress}\nContext: ${body.context}\n\nReturn JSON with fields: ghostRisk, ghostScore (0-100), indicators[], economicSubstanceGaps[], verificationSteps[], recommendedAction, regulatoryBasis.`,
           },
         ],
-      }),
-    });
-    if (!response.ok) return NextResponse.json({ ok: false, error: "ghost-company temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+      });
     const data = (await response.json()) as {
       content: Array<{ type: string; text: string }>;
     };
     const raw =
-      data.content[0]?.type === "text" ? data.content[0].text : "{}";
+      response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(
       raw.replace(/```json\n?|\n?```/g, "").trim()
     ) as GhostCompanyResult;

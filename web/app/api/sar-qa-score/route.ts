@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { writeAuditEvent } from "@/lib/audit";
 import { enforce } from "@/lib/server/enforce";
 
+import { getAnthropicClient } from "@/lib/server/llm";
+
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -107,15 +109,8 @@ Red Flags: ${redFlagsStr}`;
     })
     .join("\n\n---\n\n");
 
-  const claudeRes = await fetch("https://api.anthropic.com/v1/messages", {
-      signal: AbortSignal.timeout(22_000),
-    method: "POST",
-    headers: {
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
+  const client = getAnthropicClient(apiKey, 55000);
+  const claudeRes = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 2048,
       system: SYSTEM_PROMPT,
@@ -125,11 +120,8 @@ Red Flags: ${redFlagsStr}`;
           content: `Please score the following SAR/STR cases:\n\n${userContent}`,
         },
       ],
-    }),
-  });
+    });
 
-  if (!claudeRes.ok) {
-    return NextResponse.json({ ok: true, scores: fallbackScores(cases) }, { headers: gate.headers });
   }
 
   interface ClaudeContent { type: string; text?: string }

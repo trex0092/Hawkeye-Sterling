@@ -18,6 +18,8 @@ import { scoreAdvisorAnswer } from "../../../../dist/src/integrations/qualityGat
 import { classifyMlroQuestion } from "../../../../dist/src/brain/mlro-question-classifier.js";
 import { gateMlroQuestion } from "@/lib/server/mlro-input-gate";
 
+import { getAnthropicClient } from "@/lib/server/llm";
+
 // ── Citation extraction ───────────────────────────────────────────────────────
 
 function extractCitations(text: string): string[] {
@@ -96,22 +98,14 @@ async function runHaikuQuick(question: string, contextPairs: HaikuPair[], apiKey
   const ctl = new AbortController();
   const killTimer = setTimeout(() => ctl.abort(), HAIKU_TIMEOUT_MS);
   try {
-    const upstream = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
+    const client = getAnthropicClient(apiKey, 55000);
+    const upstream = await client.messages.create({
         model: HAIKU_MODEL,
         max_tokens: 2048,
         stream: true,
         system: [{ type: "text", text: HAIKU_SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
         messages: [{ role: "user", content: buildHaikuPrompt(question, contextPairs) }],
-      }),
-      signal: ctl.signal,
-    });
+      });
     if (!upstream.ok || !upstream.body) {
       const txt = await upstream.text().catch(() => "");
       return { ok: false, error: `upstream ${upstream.status}: ${txt.slice(0, 240)}`, elapsedMs: Date.now() - startedAt };

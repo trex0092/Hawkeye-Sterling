@@ -4,6 +4,8 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 
+import { getAnthropicClient } from "@/lib/server/llm";
+
 export interface EwraResult {
   overallRisk: "critical" | "high" | "medium" | "low";
   riskNarrative: string;
@@ -125,11 +127,8 @@ export async function POST(req: Request) {
   if (!apiKey) return NextResponse.json({ ok: false, error: "ewra-generator temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
 
   try {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      signal: AbortSignal.timeout(55_000),
-      method: "POST",
-      headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-      body: JSON.stringify({
+    const client = getAnthropicClient(apiKey, 55000);
+    const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 1500,
         system: `You are a UAE Enterprise-Wide Risk Assessment (EWRA) specialist with expertise in CBUAE guidelines, FATF Recommendation 1 risk-based approach, and sector-specific ML/TF/CPF risk profiling. Generate comprehensive EWRAs assessing four risk dimensions: customer, product/service, geographic, and channel risks. Apply UAE national risk assessment findings, FATF grey-list/blacklist status, sector typologies, and CBUAE-specific requirements. Determine inherent risk, control effectiveness, and residual risk. Include realistic mitigation measures and Board approval requirements.\n\nIMPORTANT — CPF (Counter-Proliferation Financing) is a STANDALONE risk domain alongside AML and TF, mandated by UAE FDL 10/2025 Art.1 and FATF R.7. Assess CPF risk separately: dual-use goods exposure, sanctions evasion for WMD programs, front company indicators, and proliferation network red flags. Include CPF-specific mitigations such as UNSC Resolution 1540 compliance checks and dual-use goods controls. Respond ONLY with valid JSON matching the EwraResult interface — no markdown fences.`,
@@ -145,11 +144,9 @@ Additional Context: ${body.context ?? "none"}
 
 Generate a comprehensive EWRA for this institution. Return complete EwraResult JSON.`,
         }],
-      }),
-    });
-    if (!response.ok) return NextResponse.json({ ok: false, error: "ewra-generator temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+      });
     const data = (await response.json()) as { content: Array<{ type: string; text: string }> };
-    const raw = data.content[0]?.type === "text" ? data.content[0].text : "{}";
+    const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as EwraResult;
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {

@@ -3,6 +3,8 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;import { NextResponse } from "next/server";
 
 import { enforce } from "@/lib/server/enforce";
+import { getAnthropicClient } from "@/lib/server/llm";
+
 export interface PepCorporateResult {
   pepExposureLevel: "direct" | "indirect" | "none";
   riskRating: "critical" | "high" | "medium" | "low";
@@ -63,15 +65,8 @@ export async function POST(req: Request) {
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) return NextResponse.json({ ok: false, error: "pep-corporate temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
   try {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      signal: AbortSignal.timeout(55_000),
-      method: "POST",
-      headers: {
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
+    const client = getAnthropicClient(apiKey, 55000);
+    const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 1500,
         system:
@@ -82,14 +77,12 @@ export async function POST(req: Request) {
             content: `Assess PEP exposure for this corporate customer.\n\nCompany: ${body.companyName}\nPEP Name: ${body.pepName}\nPEP Role: ${body.pepRole}\nOwnership %: ${body.ownershipPct}\nIndustry Context: ${body.industryContext}\nContext: ${body.context}\n\nReturn JSON with fields: pepExposureLevel, riskRating, politicalConnections[], corruptionRiskFactors[], eddMeasures[], approvalRequired, regulatoryBasis.`,
           },
         ],
-      }),
-    });
-    if (!response.ok) return NextResponse.json({ ok: false, error: "pep-corporate temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+      });
     const data = (await response.json()) as {
       content: Array<{ type: string; text: string }>;
     };
     const raw =
-      data.content[0]?.type === "text" ? data.content[0].text : "{}";
+      response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(
       raw.replace(/```json\n?|\n?```/g, "").trim()
     ) as PepCorporateResult;

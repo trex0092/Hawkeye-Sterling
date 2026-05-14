@@ -3,6 +3,9 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 import { NextResponse } from "next/server";
 
+import { getAnthropicClient } from "@/lib/server/llm";
+import { enforce } from "@/lib/server/enforce";
+
 interface ToolConfig {
   title: string;
   systemPrompt: string;
@@ -526,6 +529,8 @@ const GENERIC_SYSTEM_PROMPT =
   "You are an expert UAE AML/CFT compliance advisor. Analyse the provided information for financial crime risk and regulatory compliance. Provide a structured risk assessment with clear findings and actionable recommendations.";
 
 export async function POST(req: Request) {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   let body: { toolId: string; inputs: Record<string, string> };
   try {
     body = (await req.json()) as typeof body;
@@ -572,38 +577,20 @@ export async function POST(req: Request) {
   }
 
   try {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      signal: AbortSignal.timeout(22_000),
-      method: "POST",
-      headers: {
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
+    const client = getAnthropicClient(apiKey, 55000);
+    const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 1500,
         system: systemPrompt,
         messages: [{ role: "user", content: userPrompt }],
-      }),
-    });
-
-    if (!response.ok) {
-      return NextResponse.json({
-        ok: true,
-        riskRating: "high",
-        riskScore: 72,
-        summary: `AI analysis temporarily unavailable (API ${response.status}). Based on the provided inputs, elevated risk indicators warrant enhanced due diligence and MLRO review.`,
-        findings: ["AI analysis unavailable — rule-based assessment applied", "Elevated risk indicators identified", "Manual review recommended"],
-        recommendations: ["Conduct enhanced due diligence", "Escalate to MLRO", "Maintain audit trail"],
-        regulatoryBasis: `UAE FDL 10/2025, FATF Recommendations applicable to ${toolTitle}.`,
       });
+
     }
 
     const data = (await response.json()) as {
       content: Array<{ type: string; text: string }>;
     };
-    const raw = data.content[0]?.type === "text" ? data.content[0].text : "{}";
+    const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const cleaned = raw.replace(/```json\n?|\n?```/g, "").trim();
     try {
       const result = JSON.parse(cleaned) as Record<string, unknown>;
