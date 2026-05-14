@@ -119,22 +119,24 @@ export default function SystemCardPage() {
           <div>
             <div className="text-12 font-semibold font-mono uppercase tracking-wide-4 text-green mb-3">Capabilities</div>
             {[
-              "Screens against 7+ official sanctions lists covering UN, OFAC, EU, UK, UAE, CA, AU, JP, CH",
+              "Screens against 11 primary sanctions lists (UN, OFAC SDN, OFAC Consolidated, EU, UK OFSI, CA OSFI, CH SECO, AU DFAT, JP MOF, UAE EOCN, UAE LTL) backstopped by 11 parallel LSEG CFS supplements covering the same regimes",
+              "PEP screening across static curated corpus + OpenSanctions live + LSEG CFS World-Check bulk index",
+              "Adverse media: GDELT 10-year lookback with tone scoring + LSEG CFS adverse-categorised index across 16 categories (money laundering, terrorism financing, fraud, corruption, narcotics, trafficking, organised crime, cybercrime, environmental crime, weapons proliferation, modern slavery, regulatory enforcement, litigation, tax evasion, sanctions evasion, financial crime)",
+              "PII-guarded Anthropic client wraps every LLM call (sync + Batches API) — redaction in, rehydration out",
               "Detects Tier 1–4 PEPs with role history and network mapping",
-              "GDELT 10-year adverse media lookback with tone scoring",
               "GoAML-compatible SAR/STR XML generation (draft only)",
               "132 machine-enforceable compliance directives",
-              "HMAC-signed immutable audit trail",
+              "HMAC-signed immutable audit trail with build-time SHA in every provenance block",
               "Arabic, Cyrillic, and CJK phonetic name matching",
             ].map(c => <ListItem key={c} tone="neutral">✓ {c}</ListItem>)}
           </div>
           <div>
             <div className="text-12 font-semibold font-mono uppercase tracking-wide-4 text-amber mb-3">Known Limitations</div>
             {[
-              "Adverse media coverage limited to English-primary GDELT articles",
-              "PEP database contains ~6 seed entries (OpenSanctions API supplements this per-request)",
-              "Commercial KYC vendors not configured — free-tier providers only",
+              "Vessel screening (IMO lookup, flag-state, ownership) not configured — Equasis ToS forbid programmatic access; commercial provider (Datalastic, Lloyd's, Marine Traffic) required",
               "Crypto on-chain risk requires CHAINALYSIS or similar (not configured)",
+              "GDELT cache survives cold starts only when Upstash Redis is configured (UPSTASH_REDIS_REST_URL)",
+              "LSEG CFS supplements depend on the 6-hour CFS poll cron + a successful /api/admin/import-cfs run — re-import after each fileset refresh to keep the supplement current",
               "Confidence scores are AI-derived estimates — not statistical certainty",
               "All supervised outputs require MLRO human review before action",
               "Not a substitute for legal advice or law enforcement referral",
