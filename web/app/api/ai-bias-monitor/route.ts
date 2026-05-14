@@ -6,13 +6,11 @@
 import { NextResponse } from "next/server";
 import { writeAuditEvent } from "@/lib/audit";
 import { enforce } from "@/lib/server/enforce";
+import { getAnthropicClient } from "@/lib/server/llm";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
-
-const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
-const ANTHROPIC_VERSION = "2023-06-01";
 
 interface SubjectInput {
   name: string;
@@ -39,15 +37,6 @@ interface BiasMonitorResponse {
   recommendedActions: string[];
   unescoAlignment: string;
   monitoringFrequency: string;
-}
-
-interface AnthropicTextBlock {
-  type: "text";
-  text: string;
-}
-
-interface AnthropicResponse {
-  content: AnthropicTextBlock[];
 }
 
 interface RequestBody {
@@ -106,33 +95,20 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   try {
-    const res = await fetch(ANTHROPIC_API_URL, {
-      method: "POST",
-      signal: AbortSignal.timeout(20_000),
-      headers: {
-        "x-api-key": apiKey,
-        "anthropic-version": ANTHROPIC_VERSION,
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 2048,
-        system: SYSTEM_PROMPT,
-        messages: [
-          {
-            role: "user",
-            content: JSON.stringify({ subjects, queueSize: subjects.length }),
-          },
-        ],
-      }),
+    const client = getAnthropicClient(apiKey, 55_000);
+    const response = await client.messages.create({
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 2048,
+      system: SYSTEM_PROMPT,
+      messages: [
+        {
+          role: "user",
+          content: JSON.stringify({ subjects, queueSize: subjects.length }),
+        },
+      ],
     });
 
-    if (!res.ok) {
-      throw new Error(`Anthropic API error ${res.status}`);
-    }
-
-    const data = (await res.json()) as AnthropicResponse;
-    const raw = (data.content[0]?.text ?? "{}").trim();
+    const raw = (response.content[0]?.type === "text" ? response.content[0].text : "{}").trim();
 
     // Strip markdown fences before JSON.parse
     const stripped = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "");

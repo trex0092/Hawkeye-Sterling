@@ -14,13 +14,11 @@
 import { NextResponse } from "next/server";
 import { writeAuditEvent } from "@/lib/audit";
 import { enforce } from "@/lib/server/enforce";
+import { getAnthropicClient } from "@/lib/server/llm";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
-
-const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
-const ANTHROPIC_VERSION = "2023-06-01";
 
 // ── Legacy interface exported for ScreeningToolbar compatibility ──────────────
 
@@ -103,15 +101,6 @@ interface ParseResult {
   reasoning: string;
 }
 
-interface AnthropicTextBlock {
-  type: "text";
-  text: string;
-}
-
-interface AnthropicResponse {
-  content: AnthropicTextBlock[];
-}
-
 const SYSTEM_PROMPT = `You are a precision AML case filter parser for a UAE-licensed DPMS/VASP compliance platform.
 
 Your job: parse a compliance officer's plain-English query into structured JSON filters so the case queue can be filtered programmatically.
@@ -168,26 +157,14 @@ async function parseQuery(query: string): Promise<ParseResult> {
   }
 
   try {
-    const res = await fetch(ANTHROPIC_API_URL, {
-      signal: AbortSignal.timeout(20_000),
-      method: "POST",
-      headers: {
-        "x-api-key": apiKey,
-        "anthropic-version": ANTHROPIC_VERSION,
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 1024,
-        system: SYSTEM_PROMPT,
-        messages: [{ role: "user", content: `Query: "${query}"` }],
-      }),
+    const client = getAnthropicClient(apiKey, 22_000);
+    const response = await client.messages.create({
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 1024,
+      system: SYSTEM_PROMPT,
+      messages: [{ role: "user", content: `Query: "${query}"` }],
     });
-    if (!res.ok) {
-      return { filters: {}, interpretation: query, confidence: 0, reasoning: `API error ${res.status}` };
-    }
-    const data = (await res.json()) as AnthropicResponse;
-    const text = (data.content?.[0]?.text ?? "{}").trim();
+    const text = (response.content[0]?.type === "text" ? response.content[0].text : "{}").trim();
     let parsed: { filters?: ParsedFilters; interpretation?: string; confidence?: number; reasoning?: string };
     try {
       // Strip markdown fences if model ignored instructions

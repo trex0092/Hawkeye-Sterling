@@ -8,13 +8,11 @@ import { NextResponse } from "next/server";
 import { writeAuditEvent } from "@/lib/audit";
 import { withLlmFallback } from "@/lib/server/llm-fallback";
 import { enforce } from "@/lib/server/enforce";
+import { getAnthropicClient } from "@/lib/server/llm";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
-
-const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
-const ANTHROPIC_VERSION = "2023-06-01";
 
 interface AiDecision {
   module: string;
@@ -34,15 +32,6 @@ interface EthicalImpactResponse {
   documentationRequired: string[];
   unescoAlignment: string;
   reviewRecommendation: string;
-}
-
-interface AnthropicTextBlock {
-  type: "text";
-  text: string;
-}
-
-interface AnthropicResponse {
-  content: AnthropicTextBlock[];
 }
 
 interface RequestBody {
@@ -148,33 +137,24 @@ export async function POST(req: Request): Promise<NextResponse> {
     templateFallback: buildTemplate,
     aiCall: async () => {
       const apiKey = process.env["ANTHROPIC_API_KEY"]!;
-      const res = await fetch(ANTHROPIC_API_URL, {
-        method: "POST",
-        headers: {
-          "x-api-key": apiKey,
-          "anthropic-version": ANTHROPIC_VERSION,
-          "content-type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "claude-haiku-4-5-20251001",
-          max_tokens: 2048,
-          system: SYSTEM_PROMPT,
-          messages: [{
-            role: "user",
-            content: JSON.stringify({
-              subjectName,
-              aiDecisions: body.aiDecisions,
-              riskScore: body.riskScore,
-              cddPosture: body.cddPosture,
-              nationality: body.nationality,
-              context: body.context,
-            }),
-          }],
-        }),
+      const client = getAnthropicClient(apiKey, 25_000);
+      const response = await client.messages.create({
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 2048,
+        system: SYSTEM_PROMPT,
+        messages: [{
+          role: "user",
+          content: JSON.stringify({
+            subjectName,
+            aiDecisions: body.aiDecisions,
+            riskScore: body.riskScore,
+            cddPosture: body.cddPosture,
+            nationality: body.nationality,
+            context: body.context,
+          }),
+        }],
       });
-      if (!res.ok) throw new Error(`Anthropic API error ${res.status}`);
-      const data = (await res.json()) as AnthropicResponse;
-      const raw = (data.content[0]?.text ?? "{}").trim();
+      const raw = (response.content[0]?.type === "text" ? response.content[0].text : "{}").trim();
       const stripped = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "");
       return JSON.parse(stripped) as EthicalImpactResponse;
     },

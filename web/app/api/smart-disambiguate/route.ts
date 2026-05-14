@@ -7,13 +7,11 @@
 import { NextResponse } from "next/server";
 import { writeAuditEvent } from "@/lib/audit";
 import { enforce } from "@/lib/server/enforce";
+import { getAnthropicClient } from "@/lib/server/llm";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
-
-const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
-const ANTHROPIC_VERSION = "2023-06-01";
 
 interface ClientInput {
   name: string;
@@ -68,15 +66,6 @@ interface DisambiguationResult {
   escalationItems: string[];
   regulatoryNote: string;
   processingTime: string;
-}
-
-interface AnthropicTextBlock {
-  type: "text";
-  text: string;
-}
-
-interface AnthropicResponse {
-  content: AnthropicTextBlock[];
 }
 
 const SYSTEM_PROMPT = `You are a UAE AML screening specialist with expertise in name disambiguation for high-frequency names across South Asian, Arab, and African populations. Your goal is to help analysts efficiently resolve large volumes of screening hits for common names by applying systematic multi-factor analysis under FDL 10/2025 and FATF R.10.
@@ -184,28 +173,15 @@ export async function POST(req: Request): Promise<NextResponse> {
   const userMessage = `Disambiguate these screening hits for client: ${JSON.stringify(client)}. Hits to assess: ${JSON.stringify(hits)}`;
 
   try {
-    const res = await fetch(ANTHROPIC_API_URL, {
-      signal: AbortSignal.timeout(20_000),
-      method: "POST",
-      headers: {
-        "x-api-key": apiKey,
-        "anthropic-version": ANTHROPIC_VERSION,
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 1024,
-        system: SYSTEM_PROMPT,
-        messages: [{ role: "user", content: userMessage }],
-      }),
+    const client = getAnthropicClient(apiKey, 55_000);
+    const response = await client.messages.create({
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 1024,
+      system: SYSTEM_PROMPT,
+      messages: [{ role: "user", content: userMessage }],
     });
 
-    if (!res.ok) {
-      throw new Error(`Anthropic API error ${res.status}`);
-    }
-
-    const data = (await res.json()) as AnthropicResponse;
-    const raw = (data.content[0]?.text ?? "{}").trim();
+    const raw = (response.content[0]?.type === "text" ? response.content[0].text : "{}").trim();
 
     // Strip markdown fences before JSON.parse
     const stripped = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "");

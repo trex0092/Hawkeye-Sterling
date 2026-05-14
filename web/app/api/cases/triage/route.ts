@@ -12,13 +12,12 @@
 import { NextResponse } from "next/server";
 import { writeAuditEvent } from "@/lib/audit";
 import { enforce } from "@/lib/server/enforce";
+import { getAnthropicClient, type AnthropicGuard } from "@/lib/server/llm";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
-const ANTHROPIC_VERSION = "2023-06-01";
 const BATCH_SIZE = 10;
 
 interface CaseInput {
@@ -38,48 +37,25 @@ interface TriageResult {
   similarityGroup: string;
 }
 
-interface AnthropicTextBlock {
-  type: "text";
-  text: string;
-}
-
-interface AnthropicResponse {
-  content: AnthropicTextBlock[];
-}
-
 const SYSTEM_PROMPT = `You are a UAE AML case triage engine. For each case in the input array, return a JSON array (same order) of objects with: typologies (array of FATF codes e.g. 'ML-TF-01 Structuring'), narrative (1 sentence summary), mostSerious (highest-risk typology label), escalation ('immediate'|'within_24h'|'routine'|'none'), similarityGroup (short tag for grouping similar cases e.g. 'structuring-gold' or 'pep-exposure'). Return ONLY the JSON array.`;
 
 async function triageBatch(
   cases: CaseInput[],
-  apiKey: string,
+  client: AnthropicGuard,
 ): Promise<TriageResult[]> {
-  const res = await fetch(ANTHROPIC_API_URL, {
-    signal: AbortSignal.timeout(20_000),
-    method: "POST",
-    headers: {
-      "x-api-key": apiKey,
-      "anthropic-version": ANTHROPIC_VERSION,
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 1024,
-      system: SYSTEM_PROMPT,
-      messages: [
-        {
-          role: "user",
-          content: JSON.stringify(cases),
-        },
-      ],
-    }),
+  const response = await client.messages.create({
+    model: "claude-haiku-4-5-20251001",
+    max_tokens: 1024,
+    system: SYSTEM_PROMPT,
+    messages: [
+      {
+        role: "user",
+        content: JSON.stringify(cases),
+      },
+    ],
   });
 
-  if (!res.ok) {
-    throw new Error(`Anthropic API error ${res.status}`);
-  }
-
-  const data = (await res.json()) as AnthropicResponse;
-  const text = (data.content?.[0]?.text ?? "[]").trim();
+  const text = (response.content[0]?.type === "text" ? response.content[0].text : "[]").trim();
 
   // Strip markdown fences if model ignored the instruction
   const clean = text
@@ -184,8 +160,9 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const triaged: TriageResult[] = [];
   try {
+    const client = getAnthropicClient(apiKey, 55_000);
     for (const batch of batches) {
-      const results = await triageBatch(batch, apiKey);
+      const results = await triageBatch(batch, client);
       triaged.push(...results);
     }
   } catch (err) {

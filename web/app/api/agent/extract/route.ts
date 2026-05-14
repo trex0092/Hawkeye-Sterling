@@ -30,13 +30,12 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { getAnthropicClient } from "@/lib/server/llm";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
-const ANTHROPIC_VERSION = "2023-06-01";
 const DEFAULT_MODEL = "claude-opus-4-7";
 const MAX_OUTPUT_TOKENS = 4096;
 const BUDGET_MS = 45_000;
@@ -186,53 +185,23 @@ export async function POST(req: Request): Promise<NextResponse> {
         source: { type: "url", url: body.documentUrl },
       };
 
-  const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), BUDGET_MS);
-
   try {
-    const res = await fetch(ANTHROPIC_API_URL, {
-      method: "POST",
-      headers: {
-        "x-api-key": apiKey,
-        "anthropic-version": ANTHROPIC_VERSION,
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        model,
-        max_tokens: MAX_OUTPUT_TOKENS,
-        messages: [
-          {
-            role: "user",
-            content: [documentBlock, { type: "text", text: buildPrompt(schema, body.hint) }],
-          },
-        ],
-      }),
-      signal: ctrl.signal,
-    });
-    clearTimeout(t);
-
-    if (!res.ok) {
-      console.warn("[agent/extract] Anthropic API", res.status);
-      return NextResponse.json(
+    const client = getAnthropicClient(apiKey, BUDGET_MS);
+    const response = await client.messages.create({
+      model,
+      max_tokens: MAX_OUTPUT_TOKENS,
+      messages: [
         {
-          ok: true,
-          schema,
-          extracted: {},
-          evidenceItem: null,
-          rawText: "",
-          model: null,
-          usage: null,
-          degraded: true,
+          role: "user",
+          content: [documentBlock, { type: "text", text: buildPrompt(schema, body.hint) }],
         },
-        { headers: gateHeaders },
-      );
-    }
-    const data = (await res.json()) as {
-      content: Array<{ type: string; text?: string }>;
-      model: string;
-      usage?: Record<string, number>;
-    };
-    const text = data.content.filter((c) => c.type === "text").map((c) => c.text ?? "").join("\n");
+      ],
+    });
+
+    const text = response.content
+      .filter((c) => c.type === "text")
+      .map((c) => (c.type === "text" ? c.text : ""))
+      .join("\n");
 
     let extracted: Record<string, unknown> = {};
     try {
@@ -254,13 +223,12 @@ export async function POST(req: Request): Promise<NextResponse> {
         extracted,
         ...(evidenceItem ? { evidenceItem } : {}),
         rawText: text,
-        model: data.model,
-        usage: data.usage ?? null,
+        model: response.model,
+        usage: response.usage ?? null,
       },
       { headers: gateHeaders },
     );
   } catch (err) {
-    clearTimeout(t);
     console.error("[agent/extract]", err instanceof Error ? err.message : String(err));
     return NextResponse.json(
       {

@@ -7,13 +7,11 @@
 import { NextResponse } from "next/server";
 import { writeAuditEvent } from "@/lib/audit";
 import { enforce } from "@/lib/server/enforce";
+import { getAnthropicClient } from "@/lib/server/llm";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
-
-const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
-const ANTHROPIC_VERSION = "2023-06-01";
 
 interface SherlockProfile { site: string; url: string; exists: boolean }
 interface SocialProfile { platform: string; url: string; score: number }
@@ -37,15 +35,6 @@ interface ThreatProfile {
   adverseMediaIndicators: string[];
   recommendedNextSteps: string[];
   complianceNarrative: string;
-}
-
-interface AnthropicTextBlock {
-  type: "text";
-  text: string;
-}
-
-interface AnthropicResponse {
-  content: AnthropicTextBlock[];
 }
 
 const SYSTEM_PROMPT = `You are a UAE DPMS/VASP compliance OSINT analyst synthesizing open-source intelligence findings into a structured threat profile. Analyze the digital footprint and produce a compliance-focused risk assessment.
@@ -121,28 +110,15 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   let profile: ThreatProfile;
   try {
-    const res = await fetch(ANTHROPIC_API_URL, {
-      method: "POST",
-      signal: AbortSignal.timeout(20_000),
-      headers: {
-        "x-api-key": apiKey,
-        "anthropic-version": ANTHROPIC_VERSION,
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 2048,
-        system: SYSTEM_PROMPT,
-        messages: [{ role: "user", content: userContent }],
-      }),
+    const client = getAnthropicClient(apiKey, 55_000);
+    const response = await client.messages.create({
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 2048,
+      system: SYSTEM_PROMPT,
+      messages: [{ role: "user", content: userContent }],
     });
 
-    if (!res.ok) {
-      return NextResponse.json({ ok: false, error: "osint-synthesis temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
-    }
-
-    const data = (await res.json()) as AnthropicResponse;
-    const text = (data.content?.[0]?.text ?? "{}").trim();
+    const text = (response.content[0]?.type === "text" ? response.content[0].text : "{}").trim();
 
     // Strip markdown fences before JSON.parse
     const clean = text

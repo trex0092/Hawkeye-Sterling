@@ -29,14 +29,13 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { getAnthropicClient } from "@/lib/server/llm";
 import { weaponizedSystemPrompt } from "../../../../../dist/src/brain/weaponized.js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
-const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
-const ANTHROPIC_VERSION = "2023-06-01";
 const DEFAULT_MODEL = "claude-opus-4-7";
 const MAX_OUTPUT_TOKENS = 4096;
 const BUDGET_MS = 22_000;
@@ -127,52 +126,21 @@ export async function POST(req: Request): Promise<NextResponse> {
     audience: "MLRO",
   });
 
-  const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), BUDGET_MS);
-
   try {
     const userMsg = `Current verdict outcome: ${body.verdict.outcome}\nTarget outcome to flip to: ${target}\n\nSubject + evidence pack:\n\`\`\`json\n${JSON.stringify({ subject: body.subject, evidence: body.evidence ?? {}, verdictSummary: { outcome: body.verdict.outcome, aggregateScore: body.verdict.aggregateScore, posterior: body.verdict.posterior } }, null, 2)}\n\`\`\`\n\n${COUNTERFACTUAL_INSTRUCTION(target)}`;
 
-    const res = await fetch(ANTHROPIC_API_URL, {
-      method: "POST",
-      headers: {
-        "x-api-key": apiKey,
-        "anthropic-version": ANTHROPIC_VERSION,
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        model,
-        max_tokens: MAX_OUTPUT_TOKENS,
-        system: [{ type: "text", text: systemPrompt, cache_control: { type: "ephemeral" } }],
-        messages: [{ role: "user", content: userMsg }],
-      }),
-      signal: ctrl.signal,
+    const client = getAnthropicClient(apiKey, BUDGET_MS);
+    const response = await client.messages.create({
+      model,
+      max_tokens: MAX_OUTPUT_TOKENS,
+      system: [{ type: "text", text: systemPrompt, cache_control: { type: "ephemeral" } }],
+      messages: [{ role: "user", content: userMsg }],
     });
-    clearTimeout(t);
 
-    if (!res.ok) {
-      console.warn("[agent/counterfactual] Anthropic API", res.status);
-      return NextResponse.json(
-        {
-          ok: true,
-          currentOutcome: body.verdict.outcome,
-          targetOutcome: target,
-          counterfactuals: [],
-          rawText: "",
-          model: null,
-          usage: null,
-          degraded: true,
-        },
-        { headers: gateHeaders },
-      );
-    }
-
-    const data = (await res.json()) as {
-      content: Array<{ type: string; text?: string }>;
-      model: string;
-      usage?: Record<string, number>;
-    };
-    const text = data.content.filter((c) => c.type === "text").map((c) => c.text ?? "").join("\n");
+    const text = response.content
+      .filter((c) => c.type === "text")
+      .map((c) => (c.type === "text" ? c.text : ""))
+      .join("\n");
 
     let counterfactuals: unknown = [];
     try {
@@ -194,13 +162,12 @@ export async function POST(req: Request): Promise<NextResponse> {
         targetOutcome: target,
         counterfactuals,
         rawText: text,
-        model: data.model,
-        usage: data.usage ?? null,
+        model: response.model,
+        usage: response.usage ?? null,
       },
       { headers: gateHeaders },
     );
   } catch (err) {
-    clearTimeout(t);
     console.error("[agent/counterfactual]", err instanceof Error ? err.message : String(err));
     return NextResponse.json(
       {
