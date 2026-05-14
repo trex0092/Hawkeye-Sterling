@@ -169,7 +169,7 @@ function normaliseJson(listId: string, raw: unknown): NormalisedListEntry[] {
     .filter((x): x is NormalisedListEntry => x !== null);
 }
 
-// ── Shared XML helpers ────────────────────────────────────────────────────────
+// ── Shared XML helpers ─────────────────────────────────────────────────────────────────
 
 function xmlTag(block: string, name: string): string {
   return block.match(new RegExp(`<${name}[^>]*>([\\s\\S]*?)<\\/${name}>`, "s"))?.[1]?.trim() ?? "";
@@ -195,7 +195,7 @@ function normaliseXml(listId: string, raw: string): NormalisedListEntry[] {
   const out: NormalisedListEntry[] = [];
   const now = new Date().toISOString();
 
-  // UN 1267 format ─────────────────────────────────────────────────────────────
+  // UN 1267 format ────────────────────────────────────────────────────────────────────────────
   if (listId === "un_1267") {
     for (const m of raw.matchAll(/<INDIVIDUAL>([\s\S]*?)<\/INDIVIDUAL>/g)) {
       const block = m[1] ?? "";
@@ -224,7 +224,7 @@ function normaliseXml(listId: string, raw: string): NormalisedListEntry[] {
     return out;
   }
 
-  // EU CFSP format ─────────────────────────────────────────────────────────────
+  // EU CFSP format ───────────────────────────────────────────────────────────────────
   if (listId === "eu_consolidated") {
     for (const m of raw.matchAll(/<sanctionEntity([^>]*)>([\s\S]*?)<\/sanctionEntity>/g)) {
       const attrStr = m[1] ?? "";
@@ -246,7 +246,7 @@ function normaliseXml(listId: string, raw: string): NormalisedListEntry[] {
     return out;
   }
 
-  // OFAC SDN / Consolidated format (sdnEntry schema) ──────────────────────────
+  // OFAC SDN / Consolidated format (sdnEntry schema) ──────────────────────────────
   for (const m of raw.matchAll(/<sdnEntry>([\s\S]*?)<\/sdnEntry>/g)) {
     const block = m[1] ?? "";
     const uid = xmlTag(block, "uid");
@@ -372,10 +372,12 @@ export default async function handler(req: Request): Promise<Response> {
     const enc = new TextEncoder();
     const a = enc.encode(cronToken);
     const b = enc.encode(supplied);
-    const match = a.byteLength === b.byteLength &&
+    const padded = new Uint8Array(a.byteLength);
+    padded.set(new Uint8Array(b.buffer, b.byteOffset, Math.min(b.byteLength, a.byteLength)));
+    const match =
       (await import("node:crypto").then(({ timingSafeEqual }) =>
-        timingSafeEqual(new Uint8Array(a.buffer), new Uint8Array(b.buffer)),
-      ).catch(() => false));
+        timingSafeEqual(new Uint8Array(a.buffer), padded),
+      ).catch(() => false)) && a.byteLength === b.byteLength;
     if (!match) {
       return jsonResponse({ ok: false, label: RUN_LABEL, error: "Unauthorized" }, 401);
     }

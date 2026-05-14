@@ -62,7 +62,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     body = (await req.json()) as RequestBody;
   } catch {
     return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
-  }
+    }
 
   const { entries, periodDays } = body;
   if (!entries || !Array.isArray(entries)) {
@@ -92,10 +92,8 @@ export async function POST(req: Request): Promise<NextResponse> {
         ],
       });
 
-    }
 
-    const data = (await res.json()) as { content?: { type: string; text: string }[] };
-    const text = data?.content?.[0]?.text ?? "";
+    const text = res.content[0]?.type === "text" ? res.content[0].text : "";
     const stripped = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
     const parsed = JSON.parse(stripped) as AuditAnomalyResult;
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });

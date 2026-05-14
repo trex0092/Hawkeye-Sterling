@@ -71,13 +71,13 @@ export function verifySession(token: string): SessionPayload | null {
   const encoded = token.slice(0, dot);
   const sig = token.slice(dot + 1);
   const expected = createHmac("sha256", getSecret()).update(encoded).digest("base64url");
-  // constant-time compare
-  if (expected.length !== sig.length) return null;
-  let diff = 0;
-  for (let i = 0; i < expected.length; i++) {
-    diff |= expected.charCodeAt(i) ^ sig.charCodeAt(i);
-  }
-  if (diff !== 0) return null;
+  // constant-time compare — pad to avoid length-based timing side-channel
+  const expBuf = Buffer.from(expected, "utf8");
+  const sigRaw = Buffer.from(sig, "utf8");
+  const sigBuf = sigRaw.length === expBuf.length
+    ? sigRaw
+    : Buffer.concat([sigRaw.subarray(0, expBuf.length), Buffer.alloc(Math.max(0, expBuf.length - sigRaw.length))]);
+  if (!timingSafeEqual(new Uint8Array(expBuf), new Uint8Array(sigBuf)) || sigRaw.length !== expBuf.length) return null;
   try {
     const payload = JSON.parse(Buffer.from(encoded, "base64url").toString()) as SessionPayload;
     if (payload.exp < Math.floor(Date.now() / 1000)) return null;

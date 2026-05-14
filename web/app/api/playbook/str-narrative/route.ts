@@ -90,8 +90,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       });
 
 
-    const data = (await res.json()) as { content?: { type: string; text: string }[] };
-    const first = data?.content?.[0];
+    const first = res.content[0];
     const raw = (first?.type === "text" ? first.text : undefined) ?? "";
     const cleaned = raw.replace(/^```json?\s*/i, "").replace(/\s*```$/i, "").trim();
     const result = JSON.parse(cleaned) as STRNarrativeResult;

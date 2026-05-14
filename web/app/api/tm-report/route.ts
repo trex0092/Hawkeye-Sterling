@@ -76,10 +76,7 @@ async function classifyTransaction(
     });
 
 
-  const data = (await res.json()) as {
-    content?: { type: string; text: string }[];
-  };
-  const text = data?.content?.[0]?.text ?? "";
+  const text = res.content[0]?.type === "text" ? res.content[0].text : "";
 
   // Strip markdown fences before parsing
   const stripped = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();

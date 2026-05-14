@@ -132,7 +132,6 @@ Additional Context: ${body.context ?? "none"}
 Review this AML policy for compliance with UAE FDL 10/2025. Return complete PolicyReviewResult JSON.`,
         }],
       });
-    const data = (await response.json()) as { content: Array<{ type: string; text: string }> };
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as PolicyReviewResult;
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });

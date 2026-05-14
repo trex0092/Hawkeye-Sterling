@@ -176,7 +176,6 @@ Additional Context: ${body.context ?? "none"}
 Map the AML/CFT obligations for this DNFBP.`,
         }],
       });
-    const data = (await response.json()) as { content: Array<{ type: string; text: string }> };
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as DnfbpObligationsResult;
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
