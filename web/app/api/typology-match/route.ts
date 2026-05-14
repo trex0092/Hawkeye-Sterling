@@ -127,11 +127,25 @@ export async function POST(req: Request): Promise<NextResponse> {
     }
     const client = getAnthropicClient(apiKey, 22_000);
 
-    let body: Body;
+    let rawBody: Body & { subject?: { facts?: string; subjectType?: string; transactionType?: string } };
     try {
-      body = (await req.json()) as Body;
+      rawBody = (await req.json()) as typeof rawBody;
     } catch {
       return NextResponse.json({ ok: false, errorCode: "HANDLER_EXCEPTION", errorType: "internal", message: "invalid JSON body", tool: "typology_match" }, { status: 400, headers: gateHeaders });
+    }
+
+    // Unwrap subject envelope sent by the MCP tool layer.
+    let body: Body;
+    if (rawBody.subject && typeof rawBody.subject === "object") {
+      body = {
+        facts: rawBody.subject.facts ?? rawBody.facts ?? "",
+        subjectType: rawBody.subject.subjectType ?? rawBody.subjectType,
+        transactionTypes: rawBody.transactionTypes,
+        jurisdictions: rawBody.jurisdictions,
+        redFlags: rawBody.redFlags,
+      };
+    } else {
+      body = rawBody as Body;
     }
 
     if (!body?.facts?.trim()) {

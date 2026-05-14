@@ -355,15 +355,20 @@ export async function invokeMlroAdvisor(
   // and excluded from synthesis rather than aborting the whole response.
   const client = getAnthropicClient(opts.apiKey, opts.budgetMs, "mlro-advisor-multi");
 
+  const PERSPECTIVE_TIMEOUT_MS = 45_000;
   async function perspective(role: string, instruction: string): Promise<string | null> {
     try {
-      const r = await client.messages.create({
+      // Hard 45s ceiling per perspective so a single LLM hang can't block the others.
+      const timeoutPromise = new Promise<null>((resolve) =>
+        setTimeout(() => resolve(null), PERSPECTIVE_TIMEOUT_MS),
+      );
+      const llmPromise = client.messages.create({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 700,
         system: ADVISOR_SYSTEM_PROMPT,
         messages: [{ role: "user", content: `${req.question}\n\n[${role}: ${instruction}]` }],
-      });
-      return r.content[0]?.type === "text" ? r.content[0].text : null;
+      }).then((r) => r.content[0]?.type === "text" ? r.content[0].text : null);
+      return await Promise.race([llmPromise, timeoutPromise]);
     } catch {
       return null;
     }

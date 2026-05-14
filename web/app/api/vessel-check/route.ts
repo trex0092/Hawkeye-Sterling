@@ -51,6 +51,8 @@ export async function OPTIONS(): Promise<NextResponse> {
 interface VesselCheckBody {
   imoNumber?: string;
   imoNumbers?: string[];
+  // Subject-wrapped form (from MCP tool): { subject: { imoNumber, name, flagState } }
+  subject?: { imoNumber?: string; imoNumbers?: string[]; name?: string; flagState?: string; entityType?: string };
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
@@ -65,6 +67,12 @@ export async function POST(req: Request): Promise<NextResponse> {
     body = (await req.json()) as VesselCheckBody;
   } catch {
     return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400, headers: CORS });
+  }
+
+  // Unwrap subject envelope sent by the MCP tool layer.
+  if (body.subject && typeof body.subject === "object") {
+    body = { ...body.subject, ...body };
+    delete body.subject;
   }
 
   // Batch mode

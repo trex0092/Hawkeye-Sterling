@@ -70,12 +70,10 @@ async function bumpStats(record: FeedbackRecord): Promise<void> {
 
 export async function listFeedback(): Promise<FeedbackRecord[]> {
   const keys = await listKeys(PREFIX);
-  const out: FeedbackRecord[] = [];
-  for (const k of keys) {
-    const r = await getJson<FeedbackRecord>(k);
-    if (r) out.push(r);
-  }
-  return out.sort((a, b) => b.submittedAt.localeCompare(a.submittedAt));
+  const results = await Promise.all(keys.map((k) => getJson<FeedbackRecord>(k)));
+  return results
+    .filter((r): r is FeedbackRecord => r !== null)
+    .sort((a, b) => b.submittedAt.localeCompare(a.submittedAt));
 }
 
 export async function stats(): Promise<FeedbackStats> {
