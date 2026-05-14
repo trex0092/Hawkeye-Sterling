@@ -45,6 +45,16 @@ interface PollOutcome {
   error?: string;
 }
 
+interface ImportResult {
+  ok: boolean;
+  status?: number;
+  filesProcessed?: number;
+  entitiesIndexed?: number;
+  adverseIndexed?: number;
+  sanctionsSupplement?: Record<string, number>;
+  error?: string;
+}
+
 interface IngestSummary {
   ok: boolean;
   label: string;
@@ -52,6 +62,7 @@ interface IngestSummary {
   buckets: PollOutcome[];
   newsHeadlines?: number;
   corporateAlerts?: number;
+  importCfs?: ImportResult;
   durationMs: number;
 }
 
@@ -214,6 +225,64 @@ export default async function handler(req: Request): Promise<Response> {
     }
   } catch { /* non-fatal */ }
 
+  // 5. Auto-trigger the indexer so freshly downloaded files become live PEP /
+  //    sanctions / adverse coverage without a manual operator round-trip.
+  //    Previously the System Card warned that operators had to re-run
+  //    /api/admin/import-cfs after every CFS fileset refresh — that limitation
+  //    is removed here: the cron POSTs to the indexer using the ADMIN_TOKEN
+  //    from env and folds the result into the summary.
+  //
+  //    Skipped when ADMIN_TOKEN is missing (would 503 anyway) or when no new
+  //    files were downloaded (re-indexing the same corpus is wasted work).
+  let importCfs: ImportResult | undefined;
+  const anyNewFiles = outcomes.some((o) => o.filesDownloaded > 0);
+  const adminToken = process.env['ADMIN_TOKEN'];
+  if (anyNewFiles && adminToken) {
+    const baseUrl =
+      process.env['URL'] ??
+      process.env['DEPLOY_PRIME_URL'] ??
+      'https://hawkeye-sterling.netlify.app';
+    try {
+      const ctl = new AbortController();
+      const t = setTimeout(() => ctl.abort(), 55_000);
+      try {
+        const res = await fetch(`${baseUrl}/api/admin/import-cfs`, {
+          method: 'POST',
+          headers: { authorization: `Bearer ${adminToken}`, 'content-type': 'application/json' },
+          signal: ctl.signal,
+        });
+        if (res.ok) {
+          const body = await res.json() as Record<string, unknown>;
+          importCfs = {
+            ok: Boolean(body['ok']),
+            status: res.status,
+            ...(typeof body['filesProcessed'] === 'number' ? { filesProcessed: body['filesProcessed'] as number } : {}),
+            ...(typeof body['entitiesIndexed'] === 'number' ? { entitiesIndexed: body['entitiesIndexed'] as number } : {}),
+            ...(typeof body['adverseIndexed'] === 'number' ? { adverseIndexed: body['adverseIndexed'] as number } : {}),
+            ...(body['sanctionsSupplement'] && typeof body['sanctionsSupplement'] === 'object'
+              ? { sanctionsSupplement: body['sanctionsSupplement'] as Record<string, number> }
+              : {}),
+          };
+        } else {
+          importCfs = {
+            ok: false,
+            status: res.status,
+            error: `HTTP ${res.status}`,
+          };
+        }
+      } finally {
+        clearTimeout(t);
+      }
+    } catch (err) {
+      importCfs = {
+        ok: false,
+        error: err instanceof Error ? err.message : String(err),
+      };
+    }
+  } else if (anyNewFiles && !adminToken) {
+    importCfs = { ok: false, error: 'ADMIN_TOKEN not set — auto-import skipped, run /api/admin/import-cfs manually' };
+  }
+
   const summary: IngestSummary = {
     ok: outcomes.every((o) => o.ok),
     label: RUN_LABEL,
@@ -221,6 +290,7 @@ export default async function handler(req: Request): Promise<Response> {
     buckets: outcomes,
     ...(newsCount !== undefined ? { newsHeadlines: newsCount } : {}),
     ...(alertsCount !== undefined ? { corporateAlerts: alertsCount } : {}),
+    ...(importCfs !== undefined ? { importCfs } : {}),
     durationMs: Date.now() - startedAt,
   };
 

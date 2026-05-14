@@ -136,7 +136,7 @@ export default function SystemCardPage() {
               "Vessel screening (IMO lookup, flag-state, ownership) not configured — Equasis ToS forbid programmatic access; commercial provider (Datalastic, Lloyd's, Marine Traffic) required",
               "Crypto on-chain risk requires CHAINALYSIS or similar (not configured)",
               "GDELT cache survives cold starts only when Upstash Redis is configured (UPSTASH_REDIS_REST_URL)",
-              "LSEG CFS supplements depend on the 6-hour CFS poll cron + a successful /api/admin/import-cfs run — re-import after each fileset refresh to keep the supplement current",
+              "LSEG CFS supplements are populated by the 6-hour CFS poll cron, which auto-triggers /api/admin/import-cfs when new filesets arrive — manual re-import only needed if the cron fails or for an immediate refresh",
               "Confidence scores are AI-derived estimates — not statistical certainty",
               "All supervised outputs require MLRO human review before action",
               "Not a substitute for legal advice or law enforcement referral",
