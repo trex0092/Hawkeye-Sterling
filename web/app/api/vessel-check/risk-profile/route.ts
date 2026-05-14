@@ -4,6 +4,20 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+
+// Audit M-05: GET requests previously got the Next.js default bare 405 with no
+// body, leaving operators to guess the correct method. Return a friendly
+// 405 that names the right method + endpoint.
+export async function GET(): Promise<NextResponse> {
+  return NextResponse.json(
+    {
+      ok: false,
+      error: "Method Not Allowed",
+      message: "POST /api/vessel-check/risk-profile with body { vesselName?, imo?, flag?, owner?, operator?, lastPorts?, cargoTypes?, sanctionedConnections? }. See /api/routes for the public endpoint index.",
+    },
+    { status: 405, headers: { allow: "POST" } },
+  );
+}
 export type RiskTier = "Low" | "Medium" | "High" | "Critical";
 
 export interface VesselRiskProfileResult {
