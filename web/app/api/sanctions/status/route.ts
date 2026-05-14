@@ -94,6 +94,22 @@ const ADAPTERS: readonly ListAdapter[] = [
   { listId: "fatf",            displayName: "FATF call-for-action / monitoring",     envVar: null                  },
   { listId: "uae_eocn",        displayName: "UAE EOCN Sanctions List",               envVar: null                  },
   { listId: "uae_ltl",         displayName: "UAE Local Terrorist List",              envVar: null                  },
+  // LSEG CFS supplements — populated when /api/admin/import-cfs has been
+  // run against a CFS subscription with sanctions/World-Check entitlements.
+  // Treated as additional independently-reported adapters so operators see
+  // exactly which regimes have LSEG backfill in addition to (or in lieu
+  // of) the primary cron feeds.
+  { listId: "lseg_un_consolidated", displayName: "UN Consolidated (LSEG supplement)",          envVar: null         },
+  { listId: "lseg_ofac_sdn",        displayName: "OFAC SDN (LSEG supplement)",                envVar: null         },
+  { listId: "lseg_ofac_cons",       displayName: "OFAC Consolidated Non-SDN (LSEG supplement)", envVar: null        },
+  { listId: "lseg_eu_fsf",          displayName: "EU Financial Sanctions (LSEG supplement)",  envVar: null         },
+  { listId: "lseg_uk_ofsi",         displayName: "UK OFSI (LSEG supplement)",                 envVar: null         },
+  { listId: "lseg_ca_osfi",         displayName: "Canada OSFI (LSEG supplement)",             envVar: null         },
+  { listId: "lseg_au_dfat",         displayName: "Australia DFAT (LSEG supplement)",          envVar: null         },
+  { listId: "lseg_ch_seco",         displayName: "Switzerland SECO (LSEG supplement)",        envVar: null         },
+  { listId: "lseg_jp_mof",          displayName: "Japan MOF (LSEG supplement)",               envVar: null         },
+  { listId: "lseg_uae_eocn",        displayName: "UAE EOCN (LSEG supplement)",                envVar: null         },
+  { listId: "lseg_uae_ltl",         displayName: "UAE Local Terrorist List (LSEG supplement)", envVar: null        },
 ];
 
 const STALE_HOURS_DEFAULT = 36; // beyond 36h = stale (cron is daily 03:00 UTC)
