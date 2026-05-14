@@ -40,9 +40,6 @@
 [functions]
   # Look for the scheduled Netlify Function(s) at the repo root.
   directory = "netlify/functions"
-  # Global function timeout — 26s matches Netlify's edge inactivity ceiling.
-  # The MLRO deep background function overrides this to 900s below.
-  timeout = 26
   # Bundle the compiled brain + policy + integrations modules.
   # weaponized.ts imports ../policy/systemPrompt.js transitively, and the
   # mlro-advisor-deep-background function imports invokeMlroAdvisor +
@@ -58,8 +55,7 @@
 
 # MLRO deep background function — needs the full 15-minute platform ceiling
 # (900 s) because the multi-perspective advisor pipeline can run three parallel
-# Haiku calls followed by a synthesis pass. The global functions.timeout of 26s
-# would kill it mid-flight.
+# Haiku calls followed by a synthesis pass.
 [functions."mlro-advisor-deep-background"]
   timeout = 900
 
