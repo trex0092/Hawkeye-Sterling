@@ -24,6 +24,57 @@ function abortable<T>(p: Promise<T>, ms = FETCH_TIMEOUT_MS): Promise<T> {
   ]);
 }
 
+// ── Audit DR-15: shared response-shape validator ─────────────────────────
+//
+// 25+ news adapters in this file each independently assume the upstream
+// response shape (`{ articles: [...] }`, `{ data: [...] }`, etc.) and
+// return `[]` when the field is missing. Adapter outages that look like
+// "zero results" make schema drift indistinguishable from a quiet news
+// day, starving downstream intelligence without alerting operators.
+//
+// This validator centralises the shape check + extraction. On schema
+// drift it returns an empty array AND console.warns with the actual
+// keys received so the adapter can be patched quickly.
+//
+// Track recent drift warnings per-provider so we only log each unique
+// drift signature once per Lambda warm life — high-volume routes don't
+// flood the log.
+const _driftLogged = new Set<string>();
+function validateNewsResponseArray<T>(
+  provider: string,
+  raw: unknown,
+  accessor: (root: Record<string, unknown>) => unknown,
+): T[] {
+  if (!raw || typeof raw !== "object") {
+    const sig = `${provider}:non-object`;
+    if (!_driftLogged.has(sig)) {
+      _driftLogged.add(sig);
+      console.warn(`[${provider}] schema drift — response is ${typeof raw}, expected object`);
+    }
+    return [];
+  }
+  const root = raw as Record<string, unknown>;
+  const value = accessor(root);
+  if (value === undefined) {
+    const keys = Object.keys(root).slice(0, 8).join(", ") || "(empty)";
+    const sig = `${provider}:missing-array-key:${keys}`;
+    if (!_driftLogged.has(sig)) {
+      _driftLogged.add(sig);
+      console.warn(`[${provider}] schema drift — expected array key missing; response keys: ${keys}`);
+    }
+    return [];
+  }
+  if (!Array.isArray(value)) {
+    const sig = `${provider}:wrong-type:${typeof value}`;
+    if (!_driftLogged.has(sig)) {
+      _driftLogged.add(sig);
+      console.warn(`[${provider}] schema drift — value is ${typeof value}, expected array`);
+    }
+    return [];
+  }
+  return value as T[];
+}
+
 export interface NewsArticle {
   source: string;             // provider id ("newsapi" | "marketaux" | etc.)
   outlet: string;             // domain / publisher
@@ -62,17 +113,19 @@ function newsApiAdapter(): NewsAdapter {
           ...(opts?.since ? { from: opts.since } : {}),
         });
         const res = await abortable(fetch(`https://newsapi.org/v2/everything?${params.toString()}`));
-        if (!res.ok) return [];
-        const json = (await res.json()) as {
-          articles?: Array<{
-            source?: { name?: string };
-            title?: string;
-            url?: string;
-            publishedAt?: string;
-            description?: string;
-          }>;
-        };
-        return (json.articles ?? [])
+        if (!res.ok) {
+          console.warn(`[newsapi] HTTP ${res.status}`);
+          return [];
+        }
+        const raw = await res.json();
+        const articles = validateNewsResponseArray<{
+          source?: { name?: string };
+          title?: string;
+          url?: string;
+          publishedAt?: string;
+          description?: string;
+        }>("newsapi", raw, (r) => r["articles"]);
+        return articles
           .filter((a) => a.title && a.url)
           .map((a) => ({
             source: "newsapi",
@@ -107,20 +160,22 @@ function marketAuxAdapter(): NewsAdapter {
           ...(opts?.since ? { published_after: opts.since } : {}),
         });
         const res = await abortable(fetch(`https://api.marketaux.com/v1/news/all?${params.toString()}`));
-        if (!res.ok) return [];
-        const json = (await res.json()) as {
-          data?: Array<{
-            uuid?: string;
-            source?: string;
-            title?: string;
-            url?: string;
-            published_at?: string;
-            description?: string;
-            sentiment?: number;
-            language?: string;
-          }>;
-        };
-        return (json.data ?? [])
+        if (!res.ok) {
+          console.warn(`[marketaux] HTTP ${res.status}`);
+          return [];
+        }
+        const raw = await res.json();
+        const articles = validateNewsResponseArray<{
+          uuid?: string;
+          source?: string;
+          title?: string;
+          url?: string;
+          published_at?: string;
+          description?: string;
+          sentiment?: number;
+          language?: string;
+        }>("marketaux", raw, (r) => r["data"]);
+        return articles
           .filter((a) => a.title && a.url)
           .map((a) => ({
             source: "marketaux",
@@ -156,17 +211,19 @@ function gNewsAdapter(): NewsAdapter {
           ...(opts?.since ? { from: opts.since } : {}),
         });
         const res = await abortable(fetch(`https://gnews.io/api/v4/search?${params.toString()}`));
-        if (!res.ok) return [];
-        const json = (await res.json()) as {
-          articles?: Array<{
-            source?: { name?: string };
-            title?: string;
-            url?: string;
-            publishedAt?: string;
-            description?: string;
-          }>;
-        };
-        return (json.articles ?? [])
+        if (!res.ok) {
+          console.warn(`[gnews] HTTP ${res.status}`);
+          return [];
+        }
+        const raw = await res.json();
+        const articles = validateNewsResponseArray<{
+          source?: { name?: string };
+          title?: string;
+          url?: string;
+          publishedAt?: string;
+          description?: string;
+        }>("gnews", raw, (r) => r["articles"]);
+        return articles
           .filter((a) => a.title && a.url)
           .map((a) => ({
             source: "gnews",
