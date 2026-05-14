@@ -118,14 +118,12 @@ export async function POST(req: Request): Promise<NextResponse> {
         messages: [{ role: "user", content: userContent }],
       });
 
-    } else {
-      const raw = data?.content?.[0]?.text ?? "";
-      const cleaned = raw.replace(/^```json?\s*/i, "").replace(/\s*```$/i, "").trim();
-      try {
-        decision = JSON.parse(cleaned) as EscalationDecision;
-      } catch {
-        decision = { ...FALLBACK, primaryTrigger: "Parse error", rationale: "AI response could not be parsed — manual review required." };
-      }
+    const raw = res.content[0]?.type === "text" ? res.content[0].text : "";
+    const cleaned = raw.replace(/^```json?\s*/i, "").replace(/\s*```$/i, "").trim();
+    try {
+      decision = JSON.parse(cleaned) as EscalationDecision;
+    } catch {
+      decision = { ...FALLBACK, primaryTrigger: "Parse error", rationale: "AI response could not be parsed — manual review required." };
     }
   } catch {
     decision = { ...FALLBACK, primaryTrigger: "AI temporarily unavailable", rationale: "Manual escalation review required." };

@@ -137,10 +137,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         messages: [{ role: "user", content: userContent }],
       });
 
-      return NextResponse.json({ ok: false, error: "sanctions-indirect temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
-    }
-
-    const raw = data?.content?.[0]?.text ?? "";
+    const raw = res.content[0]?.type === "text" ? res.content[0].text : "";
     const cleaned = raw.replace(/^```json?\s*/i, "").replace(/\s*```$/i, "").trim();
     try {
       result = JSON.parse(cleaned) as SanctionsNexusResult;

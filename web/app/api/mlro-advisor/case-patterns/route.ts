@@ -119,14 +119,12 @@ export async function POST(req: Request): Promise<NextResponse> {
         messages: [{ role: "user", content: userContent }],
       });
 
-    } else {
-      const raw = data?.content?.[0]?.text ?? "";
-      const cleaned = raw.replace(/^```json?\s*/i, "").replace(/\s*```$/i, "").trim();
-      try {
-        result = JSON.parse(cleaned) as CasePatternsResult;
-      } catch {
-        result = { ...FALLBACK, summary: "AI response could not be parsed — manual review required." };
-      }
+    const raw = res.content[0]?.type === "text" ? res.content[0].text : "";
+    const cleaned = raw.replace(/^```json?\s*/i, "").replace(/\s*```$/i, "").trim();
+    try {
+      result = JSON.parse(cleaned) as CasePatternsResult;
+    } catch {
+      result = { ...FALLBACK, summary: "AI response could not be parsed — manual review required." };
     }
   } catch {
     result = { ...FALLBACK, summary: `AI pattern analysis temporarily unavailable — manual review of ${cases.length} case(s) required.` };

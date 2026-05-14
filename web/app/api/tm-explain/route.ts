@@ -97,9 +97,8 @@ export async function POST(req: Request): Promise<NextResponse> {
         messages: [{ role: "user", content: userContent }],
       });
 
-    }
 
-    const text = data?.content?.[0]?.text ?? "";
+    const text = res.content[0]?.type === "text" ? res.content[0].text : "";
     const stripped = text
       .replace(/^```json?\s*/i, "")
       .replace(/\s*```$/i, "")

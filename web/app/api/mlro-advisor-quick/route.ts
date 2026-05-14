@@ -396,21 +396,16 @@ export async function POST(req: Request): Promise<Response> {
    *  or a follow-up rewrite prompt with defect feedback. Returns the
    *  full text or throws on upstream / network / abort errors. */
   async function callHaiku(userMessage: string): Promise<string> {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey!, 55000);
     const upstream = await client.messages.create({
         model: MODEL,
         max_tokens: MAX_TOKENS,
-        // Stream so we get text as soon as the first delta lands; we
-        // accumulate it inside the Lambda and return JSON.
-system: [
+        system: [
           { type: "text", text: appendProbeInstructions(SYSTEM_PROMPT_BASE), cache_control: { type: "ephemeral" } },
         ],
         messages: [{ role: "user", content: userMessage }],
       });
-
-
-    const text = ((upstream.content[0] as {type: string; text: string} | undefined)?.type === "text" ? (upstream.content[0] as {type: string; text: string}).text : "") ?? "";
-    return text;
+    return upstream.content[0]?.type === "text" ? upstream.content[0].text : "";
   }
 
   /** Build the rewrite prompt for the second pass. The original enriched

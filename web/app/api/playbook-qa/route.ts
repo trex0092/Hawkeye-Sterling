@@ -52,10 +52,7 @@ export async function POST(req: NextRequest) {
       ],
     });
 
-  }
-
-
-  const rawText = claudeData.content[0]?.text ?? "";
+  const rawText = response.content[0]?.type === "text" ? response.content[0].text : "";
   const cleaned = rawText
     .replace(/^```json?\s*/i, "")
     .replace(/\s*```$/i, "")

@@ -223,14 +223,12 @@ export async function POST(req: Request): Promise<Response> {
     const client = getAnthropicClient(apiKey, 55000);
     const upstream = await client.messages.create({
         model: MODEL,
-        max_tokens: MAX_TOKENS
-system: [{ type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
+        max_tokens: MAX_TOKENS,
+        system: [{ type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
         messages: [{ role: "user", content: userPrompt }],
       });
 
-
-    const raw = ((upstream.content[0] as {type: string; text: string} | undefined)?.type === "text" ? (upstream.content[0] as {type: string; text: string}).text : "") ?? "";
-
+    const raw = upstream.content[0]?.type === "text" ? upstream.content[0].text : "";
     const parsed = parseCritique(raw);
     return NextResponse.json(
       {

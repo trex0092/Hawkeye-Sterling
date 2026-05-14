@@ -122,11 +122,7 @@ Red Flags: ${redFlagsStr}`;
       ],
     });
 
-  }
-
-  interface ClaudeContent { type: string; text?: string }
-  interface ClaudeResponse { content: ClaudeContent[] }
-  const rawText = claudeData.content.find((b) => b.type === "text")?.text ?? "";
+  const rawText = claudeRes.content.find((b) => b.type === "text" && "text" in b)?.text ?? "";
 
   let parsed: { scores: Array<{ id: string; score: number; missingElements: string[]; suggestions: string[]; fatalIssues: string[] }> };
   try {

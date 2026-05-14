@@ -101,11 +101,11 @@ async function runHaikuQuick(question: string, contextPairs: HaikuPair[], apiKey
     const client = getAnthropicClient(apiKey, 55000);
     const upstream = await client.messages.create({
         model: HAIKU_MODEL,
-        max_tokens: 2048
-system: [{ type: "text", text: HAIKU_SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
+        max_tokens: 2048,
+        system: [{ type: "text", text: HAIKU_SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
         messages: [{ role: "user", content: buildHaikuPrompt(question, contextPairs) }],
       });
-    const raw = ((upstream.content[0] as {type: string; text: string} | undefined)?.type === "text" ? (upstream.content[0] as {type: string; text: string}).text : "") ?? "";
+    const answer = upstream.content[0]?.type === "text" ? upstream.content[0].text : "";
     return { ok: true, answer, elapsedMs: Date.now() - startedAt };
   } catch (err) {
     const aborted = ctl.signal.aborted;

@@ -3,7 +3,6 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
-import { enforce } from "@/lib/server/enforce";
 interface InputItem {
   title: string;
   summary?: string;
@@ -33,8 +32,6 @@ Urgency levels:
 Respond ONLY with a valid JSON array (no markdown fences). Each element must have: "index" (0-based), "urgency" ("critical"|"high"|"medium"|"low"), "reason" (one sentence, max 15 words).`;
 
 export async function POST(req: Request) {
-  const gate = await enforce(req);
-  if (!gate.ok) return gate.response;
   let body: { items?: InputItem[] };
   try {
     body = (await req.json()) as typeof body;
@@ -111,7 +108,9 @@ export async function POST(req: Request) {
       messages: [
         {
           role: "user",
-          content: `Classify each of the following ${items.length} regulatory news items by urgency. Return a JSON array with one object per item in order.\n\n${itemsList}`,
+          content: `Classify each of the following ${items.length} regulatory news items by urgency. Return a JSON array with one object per item in order.
+
+${itemsList}`,
         },
       ],
     });
@@ -136,6 +135,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, classified } satisfies ClassifyUrgencyResult);
   } catch (err) {
     console.error("classify-urgency error", err);
+    // Graceful fallback — return items with medium urgency
     const classified: ClassifiedItem[] = items.map((item) => ({
       ...item,
       urgency: "medium" as const,

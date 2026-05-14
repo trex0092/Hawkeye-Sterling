@@ -79,7 +79,7 @@ export async function POST(req: Request) {
         ],
       });
     const raw =
-      data?.content?.[0]?.type === "text" ? response.content![0].text : "{}";
+      response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(
       raw.replace(/```json\n?|\n?```/g, "").trim()
     ) as TradeFinanceRfResult;

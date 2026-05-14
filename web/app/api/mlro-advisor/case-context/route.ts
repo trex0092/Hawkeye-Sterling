@@ -79,19 +79,16 @@ export async function POST(req: Request): Promise<NextResponse> {
         messages: [{ role: "user", content: userContent }],
       });
 
-      priorityIds = [];
-    } else {
-      const text = data?.content?.[0]?.text ?? "";
+    const text = res.content[0]?.type === "text" ? res.content[0].text : "";
 
-      // Extract priority IDs line and clean the context block
-      const priorityMatch = /PRIORITY_IDS:\s*([^\n]*)/i.exec(text);
-      const rawPriorityIds = priorityMatch?.[1]?.trim() ?? "";
-      priorityIds = rawPriorityIds
-        ? rawPriorityIds.split(",").map((id) => id.trim()).filter((id) => id.length > 0)
-        : [];
+    // Extract priority IDs line and clean the context block
+    const priorityMatch = /PRIORITY_IDS:\s*([^\n]*)/i.exec(text);
+    const rawPriorityIds = priorityMatch?.[1]?.trim() ?? "";
+    priorityIds = rawPriorityIds
+      ? rawPriorityIds.split(",").map((id) => id.trim()).filter((id) => id.length > 0)
+      : [];
 
-      contextBlock = text.replace(/PRIORITY_IDS:[^\n]*/i, "").trim();
-    }
+    contextBlock = text.replace(/PRIORITY_IDS:[^\n]*/i, "").trim();
   } catch {
     contextBlock = `AI case context temporarily unavailable. ${cases.length} case(s) require manual review.`;
     priorityIds = [];

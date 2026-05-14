@@ -105,14 +105,12 @@ export async function POST(req: Request): Promise<NextResponse> {
         messages: [{ role: "user", content: userContent }],
       });
 
-    } else {
-      const raw = data?.content?.[0]?.text ?? "";
-      const cleaned = raw.replace(/^```json?\s*/i, "").replace(/\s*```$/i, "").trim();
-      try {
-        result = JSON.parse(cleaned) as SubjectBriefResult;
-      } catch {
-        result = { ...FALLBACK, riskProfile: { ...FALLBACK.riskProfile, rationale: "AI response could not be parsed — manual review required." } };
-      }
+    const raw = res.content[0]?.type === "text" ? res.content[0].text : "";
+    const cleaned = raw.replace(/^```json?\s*/i, "").replace(/\s*```$/i, "").trim();
+    try {
+      result = JSON.parse(cleaned) as SubjectBriefResult;
+    } catch {
+      result = { ...FALLBACK, riskProfile: { ...FALLBACK.riskProfile, rationale: "AI response could not be parsed — manual review required." } };
     }
   } catch {
     result = { ...FALLBACK, riskProfile: { ...FALLBACK.riskProfile, rationale: "AI analysis temporarily unavailable — manual review required." } };
