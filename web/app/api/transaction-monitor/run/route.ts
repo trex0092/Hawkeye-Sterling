@@ -298,7 +298,7 @@ async function postDailyTMReport(args: {
   totalAlerts: number;
   rolls: SubjectAlertRoll[];
   originUrl: string;
-}): Promise<{ delivered: boolean; url?: string; error?: string }> {
+}): Promise<{ delivered: boolean; url?: string; error?: string; taskGid?: string }> {
   const token = process.env["ASANA_TOKEN"];
   if (!token) {
     return { delivered: false, error: "ASANA_TOKEN not set" };
@@ -370,12 +370,26 @@ async function postDailyTMReport(args: {
       console.warn("[hawkeye] tm-run Asana POST response parse failed:", err);
       return null;
     })) as
-      | { data?: { permalink_url?: string } }
+      | { data?: { gid?: string; permalink_url?: string }; errors?: Array<{ message?: string }> }
       | null;
+    // Audit DR-13: previously `delivered: res.ok` made an HTTP-200 response
+    // with a soft error body indistinguishable from a real task creation.
+    // Asana sometimes returns 200 + `errors[]` (deprecated workflow, project
+    // archived, custom-field validation soft-fail). Require BOTH res.ok AND
+    // payload.data.gid to declare success — gid is the canonical proof the
+    // task exists.
+    const gid = payload?.data?.gid;
+    const errMessages = payload?.errors?.map((e) => e.message).filter(Boolean).join("; ");
+    if (!res.ok || !gid) {
+      return {
+        delivered: false,
+        error: !res.ok ? `HTTP ${res.status}` : errMessages || "asana returned 200 with no task gid",
+      };
+    }
     return {
-      delivered: res.ok,
+      delivered: true,
+      taskGid: gid,
       ...(payload?.data?.permalink_url ? { url: payload.data.permalink_url } : {}),
-      ...(res.ok ? {} : { error: `HTTP ${res.status}` }),
     };
   } catch (err) {
     return {

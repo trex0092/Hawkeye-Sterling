@@ -88,6 +88,8 @@ export function classifyAdverseCategories(categories: readonly string[]): Advers
 
 // ── Blob-backed lookup index ──────────────────────────────────────────────
 
+import { getNamedStore } from "@/lib/server/blob-getter";
+
 interface AdverseIndexEntry {
   id: string;
   primaryName: string;
@@ -97,20 +99,8 @@ interface AdverseIndexEntry {
   sourceFile: string;
 }
 
-interface BlobsModuleShape {
-  getStore: (opts: {
-    name: string;
-    siteID?: string;
-    token?: string;
-    consistency?: "strong" | "eventual";
-  }) => {
-    get: (key: string, opts?: { type?: string }) => Promise<unknown>;
-  };
-}
-
 const _bucketCache = new Map<string, { entries: AdverseIndexEntry[]; expiresAt: number }>();
 const BUCKET_CACHE_TTL_MS = 5 * 60 * 1_000;
-const LOOKUP_TIMEOUT_MS = 1_500;
 
 function normName(s: string): string {
   return s.trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
@@ -120,51 +110,18 @@ function bucketKey(name: string): string {
   return first && /[a-z]/.test(first) ? first : "_";
 }
 
-let _blobsMod: BlobsModuleShape | null | undefined;
-async function loadBlobs(): Promise<BlobsModuleShape | null> {
-  if (_blobsMod !== undefined) return _blobsMod;
-  try {
-    _blobsMod = (await import("@netlify/blobs")) as unknown as BlobsModuleShape;
-  } catch {
-    _blobsMod = null;
-  }
-  return _blobsMod;
-}
-
-function credentials(): { siteID?: string; token?: string } {
-  const siteID = process.env["NETLIFY_SITE_ID"] ?? process.env["SITE_ID"];
-  const token =
-    process.env["NETLIFY_BLOBS_TOKEN"] ??
-    process.env["NETLIFY_API_TOKEN"] ??
-    process.env["NETLIFY_AUTH_TOKEN"];
-  const out: { siteID?: string; token?: string } = {};
-  if (siteID) out.siteID = siteID;
-  if (token) out.token = token;
-  return out;
-}
-
 async function loadBucket(bucket: string): Promise<AdverseIndexEntry[]> {
   const cached = _bucketCache.get(bucket);
   if (cached && Date.now() < cached.expiresAt) return cached.entries;
-  const mod = await loadBlobs();
-  if (!mod) return [];
-  const creds = credentials();
-  const store = mod.getStore({
-    name: "hawkeye-lseg-adverse-index",
-    ...(creds.siteID ? { siteID: creds.siteID } : {}),
-    ...(creds.token ? { token: creds.token } : {}),
-    consistency: "strong",
-  });
+  // Audit DR-14: dropped duplicated loadBlobs() + credentials() helpers in
+  // favour of the shared web/lib/server/blob-getter so all per-store
+  // accessors share one source of truth for the @netlify/blobs dynamic
+  // import + env-var resolution.
+  const store = await getNamedStore("hawkeye-lseg-adverse-index");
+  if (!store) return [];
   try {
-    const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), LOOKUP_TIMEOUT_MS);
-    let entries: AdverseIndexEntry[] = [];
-    try {
-      const raw = await store.get(`bucket/${bucket}.json`, { type: "json" });
-      if (Array.isArray(raw)) entries = raw as AdverseIndexEntry[];
-    } finally {
-      clearTimeout(t);
-    }
+    const raw = await store.get(`bucket/${bucket}.json`, { type: "json" });
+    const entries = Array.isArray(raw) ? (raw as AdverseIndexEntry[]) : [];
     _bucketCache.set(bucket, { entries, expiresAt: Date.now() + BUCKET_CACHE_TTL_MS });
     return entries;
   } catch {
