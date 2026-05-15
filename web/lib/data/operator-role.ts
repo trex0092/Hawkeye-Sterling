@@ -37,14 +37,14 @@ export function isBrowser(): boolean {
 }
 
 export function loadOperatorRole(): OperatorRole {
-  if (!isBrowser()) return "mlro";
+  if (!isBrowser()) return "analyst";
   try {
     const raw = window.localStorage.getItem(ROLE_STORAGE_KEY);
     if (raw && (ALL_ROLES as string[]).includes(raw)) return raw as OperatorRole;
   } catch (err) {
-    console.warn("[hawkeye] operator-role load failed (localStorage disabled?) — defaulting to mlro:", err);
+    console.warn("[hawkeye] operator-role load failed (localStorage disabled?) — defaulting to analyst:", err);
   }
-  return "mlro";
+  return "analyst";
 }
 
 export function saveOperatorRole(role: OperatorRole): void {

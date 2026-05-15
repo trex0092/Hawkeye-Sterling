@@ -101,6 +101,8 @@ function entityToCandidate(e: NormalisedEntity): QuickScreenCandidate {
 let _cached: QuickScreenCandidate[] | null = null;
 let _cachedAt = 0;
 const CACHE_TTL_MS = 5 * 60 * 1_000; // 5 minutes
+// In-flight promise deduplication — prevents cache stampede on first cold load.
+let _loadInFlight: Promise<QuickScreenCandidate[]> | null = null;
 
 async function loadFromBlobs(): Promise<QuickScreenCandidate[] | null> {
   let blobsMod: typeof import("@netlify/blobs") | null = null;
@@ -169,7 +171,14 @@ async function loadFromBlobs(): Promise<QuickScreenCandidate[] | null> {
 export async function loadCandidates(): Promise<QuickScreenCandidate[]> {
   const now = Date.now();
   if (_cached && now - _cachedAt < CACHE_TTL_MS) return _cached;
+  if (_loadInFlight) return _loadInFlight;
 
+  _loadInFlight = _doLoad().finally(() => { _loadInFlight = null; });
+  return _loadInFlight;
+}
+
+async function _doLoad(): Promise<QuickScreenCandidate[]> {
+  const now = Date.now();
   try {
     const live = await loadFromBlobs();
 

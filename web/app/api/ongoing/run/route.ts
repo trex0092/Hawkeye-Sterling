@@ -289,14 +289,18 @@ export async function POST(req: Request): Promise<NextResponse> {
       let newsAlertTaskUrl: string | undefined;
       let newAdverseArticles: NewsArticle[] = [];
       try {
+        const adminToken = process.env["ADMIN_TOKEN"];
         const newsRes = await fetch(
           new URL(
             `/api/news-search?q=${encodeURIComponent(s.name)}`,
             appBaseForNews,
           ).toString(),
           {
-            signal: AbortSignal.timeout(15_000),
-            headers: { accept: "application/json" },
+            signal: AbortSignal.timeout(8_000),
+            headers: {
+              accept: "application/json",
+              ...(adminToken ? { authorization: `Bearer ${adminToken}` } : {}),
+            },
           },
         );
         if (newsRes.ok) {
@@ -417,7 +421,10 @@ export async function POST(req: Request): Promise<NextResponse> {
       let adverseMediaRiskTier: string | undefined;
       let sarRecommended: boolean | undefined;
       try {
-        const taranisResult = await searchAdverseMedia(s.name, { limit: 30, minRelevance: 0 });
+        const taranisResult = await Promise.race([
+          searchAdverseMedia(s.name, { limit: 30, minRelevance: 0 }),
+          new Promise<never>((_, reject) => setTimeout(() => reject(new Error("searchAdverseMedia timeout")), 20_000)),
+        ]);
         if (taranisResult.ok && taranisResult.items.length > 0) {
           const verdict = analyseAdverseMediaItems(s.name, taranisResult.items);
           adverseMediaRiskTier = verdict.riskTier;

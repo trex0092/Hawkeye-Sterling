@@ -817,9 +817,10 @@ async function handleComplianceReport(req: Request): Promise<Response> {
       { status: 400, headers: gateHeaders },
     );
   }
-  // BUG-03 fix: allow standalone calls without a prior screening result
+  // When no prior screening result is supplied, inject a placeholder that
+  // clearly marks the report as unscreened — never a CLEAR verdict.
   if (!body.result) {
-    (body as any).result = { topScore: 0, severity: "clear", hits: [] };
+    (body as any).result = { topScore: 0, severity: "pending", hits: [], _unscreened: true };
   } else if (!Array.isArray(body.result.hits)) {
     body.result.hits = [];
   }

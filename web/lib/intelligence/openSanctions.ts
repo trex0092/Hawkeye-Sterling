@@ -78,11 +78,18 @@ const CAHRA_ISO2: ReadonlySet<string> = new Set([
 let _records: OpenSanctionsRecord[] | null = null;
 let _loadAttempted = false;
 let _loadError: string | null = null;
+let _loadInFlight: Promise<OpenSanctionsRecord[]> | null = null;
 
 async function loadFromBlobs(): Promise<OpenSanctionsRecord[]> {
   if (_records !== null) return _records;
-  if (_loadAttempted && _records === null) return [];
+  if (_loadAttempted) return [];
+  if (_loadInFlight) return _loadInFlight;
   _loadAttempted = true;
+  _loadInFlight = _doLoadFromBlobs().finally(() => { _loadInFlight = null; });
+  return _loadInFlight;
+}
+
+async function _doLoadFromBlobs(): Promise<OpenSanctionsRecord[]> {
 
   let mod: typeof import("@netlify/blobs") | null = null;
   try {

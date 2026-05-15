@@ -276,7 +276,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     // override its own composite outcome based on it (the MLRO Advisor +
     // disposition flow consume `crossRegimeConflict` to escalate).
     const REGIME_LIST_IDS = [
-      "un_1267",
+      "un_consolidated",
       "ofac_sdn",
       "eu_consolidated",
       "uk_ofsi",

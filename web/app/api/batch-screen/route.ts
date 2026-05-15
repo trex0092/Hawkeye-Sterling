@@ -217,7 +217,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         topScore: screen.topScore,
         severity: screen.severity,
         hitCount: screen.hits.length,
-        listCoverage: Array.from(new Set(CANDIDATES.map((c) => c.listId))),
+        listCoverage: Array.from(new Set(screen.hits.map((h) => h.listId))),
         keywordGroups: kwGroups,
         esgCategories: esgCats,
         durationMs: Date.now() - t0,
@@ -329,7 +329,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     severity: summary.critical > 0 ? "critical" : summary.high > 0 ? "high" : summary.medium > 0 ? "medium" : "clear",
     topScore: Math.max(...results.map((r) => r.topScore), 0),
     newHits: elevated.slice(0, 10).map((r) => ({
-      listId: r.listCoverage[0] ?? "batch",
+      listId: r.listCoverage[0] ?? "unknown",
       listRef: r.name,
       candidateName: r.name,
     })),

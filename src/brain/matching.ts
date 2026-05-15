@@ -414,7 +414,7 @@ export function matchTokenSortRatio(a: string, b: string, threshold = 0.85): Mat
   const sa = normalise(a).split(' ').filter(Boolean).sort().join(' ');
   const sb = normalise(b).split(' ').filter(Boolean).sort().join(' ');
   const maxLen = Math.max(sa.length, sb.length);
-  if (maxLen === 0) return { method: 'fuzzball_token_sort', score: 1, threshold, pass: true };
+  if (maxLen === 0) return { method: 'fuzzball_token_sort', score: 0, threshold, pass: false };
   const d = levenshteinDistance(sa, sb);
   const score = 1 - d / maxLen;
   return { method: 'fuzzball_token_sort', score, threshold, pass: score >= threshold };

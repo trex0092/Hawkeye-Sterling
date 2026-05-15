@@ -207,7 +207,7 @@ export default function StrCasesPage() {
       cancelled = true;
     };
   }, []);
-  const [noTippingOff, setNoTippingOff] = useState(true);
+  const [noTippingOff, setNoTippingOff] = useState(false);
   const [flash, setFlash] = useState<Flash | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [briefing, setBriefing] = useState<MlroBriefing | null>(null);

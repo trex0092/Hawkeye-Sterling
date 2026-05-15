@@ -512,10 +512,10 @@ async function handleScreeningReport(req: Request): Promise<NextResponse> {
           : asanaRes.status === 401 || asanaRes.status === 403
             ? 503
             : 422;
-      return respond(200, {
-        ok: true,
+      return respond(mappedStatus, {
+        ok: false,
         asanaSkipped: true,
-        asanaNote: `Asana filing failed (${msg}) — report generated successfully.`,
+        asanaNote: `Asana filing failed (HTTP ${asanaRes.status}: ${msg}) — report generated but not filed.`,
         reportName: name,
         reportNotes: notes,
       });
