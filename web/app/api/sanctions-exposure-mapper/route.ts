@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export interface SanctionsListHit {
   list: string;
@@ -121,14 +122,14 @@ Note: You are assessing RISK AND OBLIGATION — not conducting a live database s
 Respond ONLY with valid JSON — no markdown fences matching SanctionsExposureResult interface.`,
         messages: [{
           role: "user",
-          content: `Entity Name: ${body.entityName}
-Entity Type: ${body.entityType ?? "not specified"}
-Nationality / Country of Incorporation: ${body.nationality ?? "not specified"}
-Date of Birth: ${body.dob ?? "not specified"}
-Passport / ID Number: ${body.passportNumber ?? "not provided"}
-Known Aliases: ${body.aliases ?? "none"}
-Jurisdiction of Activity: ${body.jurisdiction ?? "UAE"}
-Additional Context: ${body.context ?? "none"}
+          content: `Entity Name: ${sanitizeField(body.entityName, 500)}
+Entity Type: ${sanitizeField(body.entityType, 100) ?? "not specified"}
+Nationality / Country of Incorporation: ${sanitizeField(body.nationality, 100) ?? "not specified"}
+Date of Birth: ${sanitizeField(body.dob, 50) ?? "not specified"}
+Passport / ID Number: ${sanitizeField(body.passportNumber, 100) ?? "not provided"}
+Known Aliases: ${sanitizeText(body.aliases, 1000) ?? "none"}
+Jurisdiction of Activity: ${sanitizeField(body.jurisdiction, 100) ?? "UAE"}
+Additional Context: ${sanitizeText(body.context, 2000) ?? "none"}
 
 Map sanctions list exposure and compliance obligations for this entity.`,
         }],

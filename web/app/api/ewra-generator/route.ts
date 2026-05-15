@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export interface EwraResult {
   overallRisk: "critical" | "high" | "medium" | "low";
@@ -134,13 +135,13 @@ export async function POST(req: Request) {
         system: `You are a UAE Enterprise-Wide Risk Assessment (EWRA) specialist with expertise in CBUAE guidelines, FATF Recommendation 1 risk-based approach, and sector-specific ML/TF/CPF risk profiling. Generate comprehensive EWRAs assessing four risk dimensions: customer, product/service, geographic, and channel risks. Apply UAE national risk assessment findings, FATF grey-list/blacklist status, sector typologies, and CBUAE-specific requirements. Determine inherent risk, control effectiveness, and residual risk. Include realistic mitigation measures and Board approval requirements.\n\nIMPORTANT — CPF (Counter-Proliferation Financing) is a STANDALONE risk domain alongside AML and TF, mandated by UAE FDL 10/2025 Art.1 and FATF R.7. Assess CPF risk separately: dual-use goods exposure, sanctions evasion for WMD programs, front company indicators, and proliferation network red flags. Include CPF-specific mitigations such as UNSC Resolution 1540 compliance checks and dual-use goods controls. Respond ONLY with valid JSON matching the EwraResult interface — no markdown fences.`,
         messages: [{
           role: "user",
-          content: `Institution Type: ${body.institutionType}
-Products/Services: ${body.productsServices ?? "not specified"}
-Customer Base Description: ${body.customerBase ?? "not described"}
-Geographic Footprint: ${body.geographicFootprint ?? "not specified"}
-Transaction Volume: ${body.transactionVolume ?? "not provided"}
-Existing Controls: ${body.existingControls ?? "not described"}
-Additional Context: ${body.context ?? "none"}
+          content: `Institution Type: ${sanitizeField(body.institutionType, 500)}
+Products/Services: ${sanitizeText(body.productsServices, 2000) ?? "not specified"}
+Customer Base Description: ${sanitizeText(body.customerBase, 2000) ?? "not described"}
+Geographic Footprint: ${sanitizeText(body.geographicFootprint, 2000) ?? "not specified"}
+Transaction Volume: ${sanitizeField(body.transactionVolume, 500) ?? "not provided"}
+Existing Controls: ${sanitizeText(body.existingControls, 2000) ?? "not described"}
+Additional Context: ${sanitizeText(body.context, 2000) ?? "none"}
 
 Generate a comprehensive EWRA for this institution. Return complete EwraResult JSON.`,
         }],

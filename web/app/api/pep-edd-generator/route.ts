@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export interface PepEddResult {
   pepClassification: "domestic_pep" | "foreign_pep" | "international_organisation_pep" | "former_pep" | "pep_family" | "pep_associate" | "not_pep";
@@ -139,14 +140,14 @@ UAE-specific: FDL 10/2025 Art.14(2)(b) — mandatory senior management approval 
 Respond ONLY with valid JSON — no markdown fences matching the PepEddResult interface structure.`,
         messages: [{
           role: "user",
-          content: `PEP Name: ${body.pepName}
-PEP Role/Position: ${body.pepRole ?? "not specified"}
-PEP Jurisdiction: ${body.pepJurisdiction ?? "not specified"}
-PEP Classification: ${body.pepClassification ?? "to be determined"}
-Proposed Relationship Type: ${body.relationshipType ?? "not specified"}
-Proposed Products/Services: ${body.proposedProducts ?? "not specified"}
-Known Wealth/Income: ${body.knownWealth ?? "not disclosed"}
-Additional Context: ${body.context ?? "none"}
+          content: `PEP Name: ${sanitizeField(body.pepName, 500)}
+PEP Role/Position: ${sanitizeField(body.pepRole, 200) || "not specified"}
+PEP Jurisdiction: ${sanitizeField(body.pepJurisdiction, 100) || "not specified"}
+PEP Classification: ${sanitizeField(body.pepClassification, 100) || "to be determined"}
+Proposed Relationship Type: ${sanitizeField(body.relationshipType, 100) || "not specified"}
+Proposed Products/Services: ${sanitizeField(body.proposedProducts, 200) || "not specified"}
+Known Wealth/Income: ${sanitizeField(body.knownWealth, 200) || "not disclosed"}
+Additional Context: ${sanitizeText(body.context, 2000) || "none"}
 
 Generate a complete PEP EDD package for this individual.`,
         }],

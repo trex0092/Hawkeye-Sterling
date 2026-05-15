@@ -4,6 +4,7 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 export interface LayeringResult {
   layeringRisk: "critical" | "high" | "medium" | "low" | "none";
   placementIndicators: string[];
@@ -128,11 +129,11 @@ export async function POST(req: Request) {
       ],
       messages: [{
         role: "user",
-        content: `Transaction Description: ${body.transactions}
-Subject Name: ${body.subjectName ?? "not provided"}
-Account References: ${body.accountRefs ?? "not provided"}
-Period Under Review: ${body.periodDays ? body.periodDays + " days" : "not specified"}
-Additional Context: ${body.context ?? "none"}
+        content: `Transaction Description: ${sanitizeText(body.transactions, 2000)}
+Subject Name: ${sanitizeField(body.subjectName, 500) ?? "not provided"}
+Account References: ${sanitizeField(body.accountRefs, 500) ?? "not provided"}
+Period Under Review: ${body.periodDays ? sanitizeField(body.periodDays, 50) + " days" : "not specified"}
+Additional Context: ${sanitizeText(body.context, 2000) ?? "none"}
 
 Analyse for money laundering placement, layering, and integration stages. Return complete LayeringResult JSON.`,
       }],

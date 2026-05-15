@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export interface DnfbpObligationsResult {
   dnfbpCategory: string;
@@ -166,12 +167,12 @@ Respond ONLY with valid JSON — no markdown fences:
 }`,
         messages: [{
           role: "user",
-          content: `DNFBP Type: ${body.dnfbpType}
-Transaction Type: ${body.transactionType ?? "not specified"}
-Transaction Amount: ${body.transactionAmount ?? "not specified"} ${body.currency ?? ""}
-Customer Type: ${body.customerType ?? "not specified"}
-Jurisdiction: ${body.jurisdiction ?? "UAE"}
-Additional Context: ${body.context ?? "none"}
+          content: `DNFBP Type: ${sanitizeField(body.dnfbpType, 100)}
+Transaction Type: ${sanitizeField(body.transactionType, 100) || "not specified"}
+Transaction Amount: ${sanitizeField(body.transactionAmount, 50) || "not specified"} ${sanitizeField(body.currency, 10)}
+Customer Type: ${sanitizeField(body.customerType, 100) || "not specified"}
+Jurisdiction: ${sanitizeField(body.jurisdiction, 100) || "UAE"}
+Additional Context: ${sanitizeText(body.context, 2000) || "none"}
 
 Map the AML/CFT obligations for this DNFBP.`,
         }],

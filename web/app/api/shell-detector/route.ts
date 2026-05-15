@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export interface ShellRedFlag {
   flag: string;
@@ -107,14 +108,14 @@ Respond ONLY with valid JSON — no markdown fences:
         messages: [
           {
             role: "user",
-            content: `Entity Name: ${body.entityName}
-Jurisdiction of Incorporation: ${body.jurisdictionOfIncorporation ?? "not specified"}
-Director Names: ${body.directorNames ?? "not specified"}
-Shareholder Structure: ${body.shareholderStructure ?? "not specified"}
-Business Activity: ${body.businessActivity ?? "not specified"}
-Years Active: ${body.yearsActive ?? "not specified"}
-Banking Arrangements: ${body.bankingArrangements ?? "not specified"}
-Additional Context: ${body.context ?? "none"}
+            content: `Entity Name: ${sanitizeField(body.entityName, 500)}
+Jurisdiction of Incorporation: ${sanitizeField(body.jurisdictionOfIncorporation, 100) ?? "not specified"}
+Director Names: ${sanitizeText(body.directorNames, 2000) ?? "not specified"}
+Shareholder Structure: ${sanitizeText(body.shareholderStructure, 2000) ?? "not specified"}
+Business Activity: ${sanitizeText(body.businessActivity, 2000) ?? "not specified"}
+Years Active: ${sanitizeField(body.yearsActive, 50) ?? "not specified"}
+Banking Arrangements: ${sanitizeText(body.bankingArrangements, 2000) ?? "not specified"}
+Additional Context: ${sanitizeText(body.context, 2000) ?? "none"}
 
 Assess this corporate structure for shell company red flags.`,
           },

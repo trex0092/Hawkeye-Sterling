@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 import { enforce } from "@/lib/server/enforce";
 export interface AssetTracerResult {
   tracingRisk: "critical" | "high" | "medium" | "low";
@@ -126,12 +127,12 @@ export async function POST(req: Request) {
       ],
       messages: [{
         role: "user",
-        content: `Initial Funds Description: ${body.initialFunds}
-Suspected Criminal Source: ${body.suspectedSource ?? "not specified"}
-Tracing Period: ${body.tracingPeriod ?? "not specified"}
-Subject Name: ${body.subjectName ?? "not identified"}
-Jurisdictions Involved: ${body.jurisdictions ?? "not specified"}
-Additional Context: ${body.context ?? "none"}
+        content: `Initial Funds Description: ${sanitizeText(body.initialFunds, 2000)}
+Suspected Criminal Source: ${sanitizeText(body.suspectedSource ?? "not specified", 2000)}
+Tracing Period: ${sanitizeField(body.tracingPeriod ?? "not specified", 100)}
+Subject Name: ${sanitizeField(body.subjectName ?? "not identified", 500)}
+Jurisdictions Involved: ${sanitizeField(body.jurisdictions ?? "not specified", 500)}
+Additional Context: ${sanitizeText(body.context ?? "none", 2000)}
 
 Trace these funds through money laundering stages and assess asset recovery potential. Return complete AssetTracerResult JSON.`,
       }],

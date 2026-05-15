@@ -4,6 +4,7 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 export interface RealEstateMlResult {
   mlRisk: "critical" | "high" | "medium" | "low" | "clear";
   dldRegistrationRisk: string;
@@ -125,14 +126,14 @@ export async function POST(req: Request) {
       ],
       messages: [{
         role: "user",
-        content: `Property Details: ${body.propertyDetails}
-Buyer Name: ${body.buyerName ?? "not provided"}
-Buyer Nationality: ${body.buyerNationality ?? "not provided"}
-Payment Method: ${body.paymentMethod ?? "not specified"}
-Purchase Price: ${body.purchasePrice ?? "not disclosed"}
-Market Value / Benchmark: ${body.marketValue ?? "not provided"}
-Agent/Broker Name: ${body.agentName ?? "not provided"}
-Additional Context: ${body.context ?? "none"}
+        content: `Property Details: ${sanitizeText(body.propertyDetails, 2000)}
+Buyer Name: ${sanitizeField(body.buyerName, 500) ?? "not provided"}
+Buyer Nationality: ${sanitizeField(body.buyerNationality, 100) ?? "not provided"}
+Payment Method: ${sanitizeField(body.paymentMethod, 100) ?? "not specified"}
+Purchase Price: ${sanitizeField(body.purchasePrice, 100) ?? "not disclosed"}
+Market Value / Benchmark: ${sanitizeField(body.marketValue, 100) ?? "not provided"}
+Agent/Broker Name: ${sanitizeField(body.agentName, 500) ?? "not provided"}
+Additional Context: ${sanitizeText(body.context, 2000) ?? "none"}
 
 Assess this real estate transaction for money laundering risk indicators. Return complete RealEstateMlResult JSON.`,
       }],

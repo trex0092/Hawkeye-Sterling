@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export interface ComplianceTestPlanResult {
   testPlan: Array<{
@@ -134,11 +135,11 @@ export async function POST(req: Request) {
         system: `You are a UAE AML compliance testing specialist with expertise in CBUAE testing expectations, FATF R.18 independent testing requirements, and sector-specific AML compliance testing methodologies. Design comprehensive compliance test plans with specific objectives, methodologies, sample sizes, frequencies, and output requirements. Plans should be practical and actionable for the institution's size and complexity. Reference UAE FDL 10/2025 and CBUAE Guidelines legal basis for each test. Respond ONLY with valid JSON matching the ComplianceTestPlanResult interface — no markdown fences.`,
         messages: [{
           role: "user",
-          content: `Institution Type: ${body.institutionType}
-Testing Area / Focus: ${body.testingArea ?? "comprehensive AML programme"}
-Risk Focus: ${body.riskFocus ?? "general AML/CFT obligations"}
-Staff Count: ${body.staffCount ?? "not specified"}
-Additional Context: ${body.context ?? "none"}
+          content: `Institution Type: ${sanitizeField(body.institutionType, 100)}
+Testing Area / Focus: ${sanitizeText(body.testingArea, 2000) ?? "comprehensive AML programme"}
+Risk Focus: ${sanitizeText(body.riskFocus, 2000) ?? "general AML/CFT obligations"}
+Staff Count: ${sanitizeField(body.staffCount, 50) ?? "not specified"}
+Additional Context: ${sanitizeText(body.context, 2000) ?? "none"}
 
 Design a comprehensive AML compliance testing plan for this institution. Return complete ComplianceTestPlanResult JSON.`,
         }],

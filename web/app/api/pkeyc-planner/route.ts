@@ -4,6 +4,7 @@ export const maxDuration = 60;import { NextResponse } from "next/server";
 
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export interface PkycPlannerResult {
   reviewFrequency: "monthly" | "quarterly" | "bi-annual" | "annual";
@@ -101,7 +102,7 @@ export async function POST(req: Request) {
         messages: [
           {
             role: "user",
-            content: `Generate a periodic KYC review plan.\n\nCustomer Count: ${body.customerCount}\nHigh-Risk Count: ${body.highRiskCount}\nPEP Count: ${body.pepCount}\nOverdue Count: ${body.overdueCount}\nInstitution Type: ${body.institutionType}\nContext: ${body.context}\n\nReturn JSON with fields: reviewFrequency, triggerEvents[], nextReviewDate, overdueItems[], automationOpportunities[], kycRefreshPlan[] (each with customer, priority, dueDate, action), regulatoryBasis.`,
+            content: `Generate a periodic KYC review plan.\n\nCustomer Count: ${body.customerCount}\nHigh-Risk Count: ${body.highRiskCount}\nPEP Count: ${body.pepCount}\nOverdue Count: ${body.overdueCount}\nInstitution Type: ${sanitizeField(body.institutionType, 100)}\nContext: ${sanitizeText(body.context, 2000)}\n\nReturn JSON with fields: reviewFrequency, triggerEvents[], nextReviewDate, overdueItems[], automationOpportunities[], kycRefreshPlan[] (each with customer, priority, dueDate, action), regulatoryBasis.`,
           },
         ],
       });

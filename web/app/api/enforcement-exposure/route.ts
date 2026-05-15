@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 export interface EnforcementExposureResult {
   violationCategory: string;
   penaltyRange: {
@@ -129,12 +130,12 @@ export async function POST(req: Request) {
       ],
       messages: [{
         role: "user",
-        content: `Violation Description: ${body.violation}
-Institution Type: ${body.institutionType ?? "UAE licensed financial institution"}
-Violation Period: ${body.violationPeriod ?? "not specified"}
-Self-Reported: ${body.selfReported ?? "not yet"}
-Prior Enforcement History: ${body.priorHistory ?? "none known"}
-Additional Context: ${body.context ?? "none"}
+        content: `Violation Description: ${sanitizeText(body.violation, 2000)}
+Institution Type: ${sanitizeField(body.institutionType, 500) ?? "UAE licensed financial institution"}
+Violation Period: ${sanitizeField(body.violationPeriod, 100) ?? "not specified"}
+Self-Reported: ${sanitizeField(body.selfReported, 100) ?? "not yet"}
+Prior Enforcement History: ${sanitizeText(body.priorHistory, 2000) ?? "none known"}
+Additional Context: ${sanitizeText(body.context, 2000) ?? "none"}
 
 Assess regulatory enforcement exposure for this AML violation. Return complete EnforcementExposureResult JSON.`,
       }],

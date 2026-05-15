@@ -12,6 +12,7 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -195,16 +196,16 @@ Return ONLY valid JSON:
 }`,
     messages: [{
       role: "user",
-      content: `Document Type: ${body.documentType}
+      content: `Document Type: ${sanitizeField(body.documentType, 100)}
 
 Document Text:
-${body.documentText}
+${sanitizeText(body.documentText, 2000)}
 
-${body.commodity ? `Declared Commodity: ${body.commodity}` : ""}
-${body.declaredValue ? `Declared Value: ${body.declaredValue} ${body.currency ?? ""}` : ""}
-${body.unitPrice ? `Unit Price: ${body.unitPrice} ${body.currency ?? ""}` : ""}
-${body.originCountry ? `Origin: ${body.originCountry}` : ""}
-${body.destinationCountry ? `Destination: ${body.destinationCountry}` : ""}
+${body.commodity ? `Declared Commodity: ${sanitizeField(body.commodity, 100)}` : ""}
+${body.declaredValue ? `Declared Value: ${body.declaredValue} ${sanitizeField(body.currency, 10) ?? ""}` : ""}
+${body.unitPrice ? `Unit Price: ${body.unitPrice} ${sanitizeField(body.currency, 10) ?? ""}` : ""}
+${body.originCountry ? `Origin: ${sanitizeField(body.originCountry, 100)}` : ""}
+${body.destinationCountry ? `Destination: ${sanitizeField(body.destinationCountry, 100)}` : ""}
 
 Pre-identified static flags: ${JSON.stringify(staticFlags)}
 Benchmark assessment: ${JSON.stringify(benchmarkAssessment)}

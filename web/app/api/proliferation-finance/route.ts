@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export interface PfIndicator {
   indicator: string;
@@ -150,17 +151,17 @@ Respond ONLY with valid JSON — no markdown fences:
 }`,
         messages: [{
           role: "user",
-          content: `Subject: ${body.subject}
-Subject Country: ${body.subjectCountry ?? "not specified"}
-Counterparty: ${body.counterparty ?? "not specified"}
-Counterparty Country: ${body.counterpartyCountry ?? "not specified"}
-Goods / Services: ${body.goods ?? "not specified"}
-Transaction Type: ${body.transactionType ?? "not specified"}
-Amount: ${body.amount ?? "not specified"} ${body.currency ?? ""}
-End User: ${body.endUser ?? "not specified"}
-End User Country: ${body.endUserCountry ?? "not specified"}
+          content: `Subject: ${sanitizeField(body.subject, 500)}
+Subject Country: ${sanitizeField(body.subjectCountry ?? "not specified", 100)}
+Counterparty: ${sanitizeField(body.counterparty ?? "not specified", 500)}
+Counterparty Country: ${sanitizeField(body.counterpartyCountry ?? "not specified", 100)}
+Goods / Services: ${sanitizeText(body.goods ?? "not specified", 2000)}
+Transaction Type: ${sanitizeField(body.transactionType ?? "not specified", 100)}
+Amount: ${body.amount ?? "not specified"} ${sanitizeField(body.currency ?? "", 10)}
+End User: ${sanitizeField(body.endUser ?? "not specified", 500)}
+End User Country: ${sanitizeField(body.endUserCountry ?? "not specified", 100)}
 Existing Red Flags: ${body.existingRedFlags?.join("; ") ?? "none"}
-Additional Context: ${body.context ?? "none"}
+Additional Context: ${sanitizeText(body.context ?? "none", 2000)}
 
 Assess for proliferation financing risk.`,
         }],
