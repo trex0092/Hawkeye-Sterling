@@ -183,8 +183,13 @@ export function extractKey(req: Request): string | null {
   }
   const header = req.headers.get("x-api-key");
   if (header) return header.trim();
-  // Query-string extraction intentionally removed: keys in URLs appear in
-  // server logs, CDN access logs, browser history, and Referer headers.
+  // Query-param fallback for MCP clients that cannot set custom headers
+  // (e.g. Claude.ai connector URL). Keys in URLs do appear in server/CDN
+  // logs — prefer header auth where possible.
+  try {
+    const queryKey = new URL(req.url).searchParams.get("api_key");
+    if (queryKey) return queryKey.trim();
+  } catch { /* invalid URL — fall through */ }
   return null;
 }
 

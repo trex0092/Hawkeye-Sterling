@@ -1495,7 +1495,13 @@ export async function POST(req: Request): Promise<Response> {
   // Thread caller's auth + derived sessionId into all internal callApi
   // requests via AsyncLocalStorage so each concurrent request has its own
   // isolated context.
-  const authHeader = req.headers.get("authorization") ?? undefined;
+  const { searchParams } = new URL(req.url);
+  const queryKey = searchParams.get('api_key');
+  const authHeader =
+    req.headers.get('authorization') ||
+    req.headers.get('x-api-key') ||
+    (queryKey ? `Bearer ${queryKey}` : null) ||
+    undefined;
   const sessionId = deriveSessionId(req);
 
   // Batch request
