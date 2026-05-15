@@ -7,6 +7,7 @@
 // Response: { ok: true, status: "healthy", ts, runtime, buildId, commitRef }
 
 import { NextResponse } from "next/server";
+import { enforce } from "@/lib/server/enforce";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -45,7 +46,7 @@ async function checkBrain(): Promise<{ ok: boolean; detail: string }> {
     const quickScreen = (mod as { quickScreen?: unknown } | null)?.quickScreen;
     if (typeof quickScreen !== "function") {
       brainOk = false;
-      brainDetail = "brain not built — dist/src/brain/quick-screen.js missing";
+      brainDetail = "BRAIN_MODULE_MISSING";
     } else {
       const probe = (quickScreen as (s: unknown, c: unknown[], o: unknown) => unknown)({ name: "HealthProbe" }, [], { maxHits: 0 });
       brainOk = typeof probe === "object" && probe !== null;
@@ -58,19 +59,23 @@ async function checkBrain(): Promise<{ ok: boolean; detail: string }> {
   return { ok: brainOk!, detail: brainDetail! };
 }
 
-export async function GET(): Promise<NextResponse> {
+export async function GET(req: Request): Promise<NextResponse> {
   const brain = await checkBrain();
   const status = brain.ok ? "healthy" : "degraded";
   const code = brain.ok ? 200 : 200; // always 200 for liveness; use status field to detect degraded
+
+  // Only expose deployment details (buildId, commitRef) to authenticated callers.
+  const gate = await enforce(req, { requireAuth: false });
+  const authenticated = gate.ok && gate.keyId !== "anonymous";
+
   return NextResponse.json(
     {
       ok: true,
       status,
       ts: new Date().toISOString(),
       runtime: "nodejs",
-      buildId: BUILD_ID,
-      commitRef: COMMIT_REF,
-      brain: { ok: brain.ok, detail: brain.detail },
+      ...(authenticated ? { buildId: BUILD_ID, commitRef: COMMIT_REF } : {}),
+      brain: { ok: brain.ok, detail: brain.ok ? brain.detail : "BRAIN_CHECK_FAILED" },
     },
     { status: code },
   );
