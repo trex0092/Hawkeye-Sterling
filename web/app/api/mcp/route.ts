@@ -1201,6 +1201,21 @@ const TOOLS: ToolDef[] = [
     handler: async () => callApi("/api/status", "GET", undefined, undefined, 25_000),
   },
   {
+    name: "opensanctions_check",
+    description:
+      "Look up a subject in the OpenSanctions consolidated sanctions dataset (~67k entities across UN / US OFAC / EU / UK / Canada OSFI / Australia DFAT / UAE EOCN / Switzerland SECO / Japan METI etc., vendored from data.opensanctions.org). Returns the matched record, AML risk signals (regimeCount, cahraNexus, usOfac, un, eu, uk), and all name-based duplicates when shared across feeds.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        name: { type: "string", description: "Subject name (person or organization)" },
+        identifier: { type: "string", description: "Passport / company registration / IMO / other identifier" },
+        id: { type: "string", description: "OpenSanctions canonical id (e.g. NK-...)" },
+        country: { type: "string", description: "ISO-2 country code — country-only mode lists all sanctioned entities tied to that country (max 100 returned)" },
+      },
+    },
+    handler: async (args) => callApi("/api/opensanctions-check", "POST", args),
+  },
+  {
     name: "open_banking_check",
     description:
       "Look up a financial-institution counterparty in the Open Banking Tracker dataset (~57k banks worldwide, vendored from not-a-bank/open-banking-tracker-data). Returns the matched provider, AML risk signals (state-owned, PSD2 compliance status, CAHRA jurisdictions, listed/private), the bank's API-aggregator integrations (relationship-graph edges), and the ownership chain.",

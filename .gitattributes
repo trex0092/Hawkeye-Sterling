@@ -2,6 +2,7 @@
 # does not perform CRLF normalisation on the 11 MB providers.json. Line-
 # ending churn on these files would otherwise dominate every diff.
 web/lib/data/open-banking/*.json   binary
+web/lib/data/opensanctions/*.json  binary
 
 # UAE seed JSON files: keep LF on commit (Windows checkouts may have
 # CRLF locally — Git won't store the conversion).

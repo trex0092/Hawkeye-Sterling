@@ -41,6 +41,7 @@ import { lookupLsegPepIndex } from "@/lib/lseg/pep-index";
 import { lookupLsegAdverseIndex } from "@/lib/lseg/adverse-classifier";
 import { runIntelligencePipeline } from "@/lib/server/intelligence-pipeline";
 import { enrichSubject as enrichOpenBanking } from "@/lib/intelligence/openBankingTracker";
+import { enrichSubject as enrichOpenSanctions } from "@/lib/intelligence/openSanctions";
 import type {
   QuickScreenCandidate,
   QuickScreenResult,
@@ -586,6 +587,26 @@ export async function POST(req: Request): Promise<NextResponse> {
       }
     })();
 
+    // OpenSanctions enrichment — secondary source of sanctions matches
+    // that complements Hawkeye's primary regulator-direct feeds. Closes
+    // the audit gap on Canada OSFI + Australia DFAT (both included in
+    // OpenSanctions' aggregation) and adds depth for UAE / Switzerland
+    // / Japan etc. When this matches, the subject is sanctioned by at
+    // least one regime — surfaces in the verdict's risk signals.
+    const openSanctions = (() => {
+      try {
+        const subj = body.subject as { name?: string; passportNumber?: string; identifier?: string };
+        const enr = enrichOpenSanctions({
+          name: subj.name,
+          identifier: subj.passportNumber ?? subj.identifier,
+        });
+        return enr.match ? enr : null;
+      } catch (err) {
+        noteDegradation("openSanctions", err);
+        return null;
+      }
+    })();
+
     return NextResponse.json({
       ok: true,
       // When non-empty, downstream consumers (compliance report, MLRO UI)
@@ -594,6 +615,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       ...(degradation.length > 0 ? { degradation } : {}),
       ...(intelligence ? { intelligence } : {}),
       ...(openBanking ? { openBanking } : {}),
+      ...(openSanctions ? { openSanctions } : {}),
       audit,
       screen,
       pep,
