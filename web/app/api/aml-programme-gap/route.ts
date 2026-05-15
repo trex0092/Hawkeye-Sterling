@@ -4,6 +4,7 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 export interface AmlProgrammeGapResult {
   overallMaturity: "advanced" | "adequate" | "developing" | "inadequate";
   cbuaeReadinessScore: number;
@@ -141,12 +142,12 @@ export async function POST(req: Request) {
       ],
       messages: [{
         role: "user",
-        content: `Institution Type: ${body.institutionType}
-AML Programme Description: ${body.programmeDescription ?? "not provided"}
-Current Controls in Place: ${body.currentControls ?? "not described"}
-Last Audit/Review Date: ${body.lastAuditDate ?? "unknown"}
-Staff Count: ${body.staffCount ?? "not provided"}
-Additional Context: ${body.context ?? "none"}
+        content: `Institution Type: ${sanitizeField(body.institutionType, 500)}
+AML Programme Description: ${sanitizeText(body.programmeDescription, 2000) ?? "not provided"}
+Current Controls in Place: ${sanitizeText(body.currentControls, 2000) ?? "not described"}
+Last Audit/Review Date: ${sanitizeField(body.lastAuditDate, 50) ?? "unknown"}
+Staff Count: ${sanitizeField(body.staffCount, 100) ?? "not provided"}
+Additional Context: ${sanitizeText(body.context, 2000) ?? "none"}
 
 Conduct a comprehensive AML programme gap analysis. Return complete AmlProgrammeGapResult JSON.`,
       }],

@@ -18,6 +18,7 @@
 
 import { NextResponse } from "next/server";
 import { parseCfsPayload } from "@/lib/lseg/cfs-parser";
+import { invalidateCandidateCache } from "@/lib/server/candidates-loader";
 import {
   classifyToSanctionsListIds,
   LSEG_SUPPLEMENT_LIST_IDS,
@@ -434,6 +435,10 @@ export async function POST(req: Request): Promise<NextResponse> {
   } catch (err) {
     console.warn("[import-cfs] sanctions supplement write failed:", err instanceof Error ? err.message : err);
   }
+
+  // Invalidate the in-process candidates cache so screening routes immediately
+  // pick up the newly imported LSEG sanctions supplement instead of waiting for the TTL.
+  invalidateCandidateCache();
 
   return NextResponse.json({
     ok: true,

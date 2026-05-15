@@ -4,6 +4,7 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 export interface PepProfileResult {
   ok: true;
   pepTier: "tier1" | "tier2" | "tier3" | "rca";
@@ -277,15 +278,15 @@ export async function POST(req: Request) {
           role: "user",
           content: `PEP Profile Assessment Request:
 
-Name: ${body.name ?? "Unknown"}
-Country: ${body.country ?? "Not specified"}
-Position: ${body.position ?? "Not specified"}
-Organization: ${body.organization ?? "Not specified"}
-Political Party: ${body.politicalParty ?? "Not specified"}
+Name: ${sanitizeField(body.name) || "Unknown"}
+Country: ${sanitizeField(body.country) || "Not specified"}
+Position: ${sanitizeField(body.position) || "Not specified"}
+Organization: ${sanitizeField(body.organization) || "Not specified"}
+Political Party: ${sanitizeField(body.politicalParty) || "Not specified"}
 Years in Office: ${body.yearsInOffice ?? "Not specified"}
-Family Members / Known Associates: ${body.familyMembers ?? "None declared"}
-Source of Wealth: ${body.sourceOfWealth ?? "Not declared"}
-Declared Assets: ${body.declaredAssets ?? "Not declared"}
+Family Members / Known Associates: ${sanitizeText(body.familyMembers) || "None declared"}
+Source of Wealth: ${sanitizeText(body.sourceOfWealth) || "Not declared"}
+Declared Assets: ${sanitizeText(body.declaredAssets) || "Not declared"}
 
 ${pepDataContext}
 

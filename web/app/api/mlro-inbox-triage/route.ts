@@ -22,6 +22,7 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -260,12 +261,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400, headers: gate.headers });
   }
 
   const { items = [], generateNarrative = false } = body;
   if (!Array.isArray(items) || items.length === 0) {
-    return NextResponse.json({ error: "items array is required and must be non-empty" }, { status: 400 });
+    return NextResponse.json({ error: "items array is required and must be non-empty" }, { status: 400, headers: gate.headers });
   }
 
   const triaged: TriagedItem[] = items.map((item) => {
@@ -317,8 +318,8 @@ export async function POST(req: Request): Promise<NextResponse> {
 Total items: ${items.length}
 Critical: ${counts.critical} | High: ${counts.high} | Medium: ${counts.medium} | Low: ${counts.low}
 
-${criticalItems.length > 0 ? `CRITICAL items:\n${criticalItems.map((t) => `- ${t.subject}: ${t.priorityReason}`).join("\n")}` : ""}
-${highItems.length > 0 ? `HIGH priority:\n${highItems.map((t) => `- ${t.subject}: ${t.priorityReason}`).join("\n")}` : ""}
+${criticalItems.length > 0 ? `CRITICAL items:\n${criticalItems.map((t) => `- ${sanitizeField(t.subject, 200)}: ${t.priorityReason}`).join("\n")}` : ""}
+${highItems.length > 0 ? `HIGH priority:\n${highItems.map((t) => `- ${sanitizeField(t.subject, 200)}: ${t.priorityReason}`).join("\n")}` : ""}
 
 Write a 3-4 sentence MLRO triage briefing for today's inbox. Highlight the most urgent regulatory obligations and recommended sequencing of actions.`;
 
@@ -333,5 +334,5 @@ Write a 3-4 sentence MLRO triage briefing for today's inbox. Highlight the most 
     }
   }
 
-  return NextResponse.json(result);
+  return NextResponse.json(result, { headers: gate.headers });
 }

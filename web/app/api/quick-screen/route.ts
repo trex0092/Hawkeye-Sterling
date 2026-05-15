@@ -251,6 +251,28 @@ export async function POST(req: Request): Promise<NextResponse> {
       maxHits: body.options?.maxHits ?? HIT_LIMIT_LOCAL,
     };
     const result = quickScreen(subject, candidates, screenOptions);
+
+    // Hard 3-second SLA: if the enrichment adapters haven't resolved with
+    // enough budget remaining, return the deterministic list-match result
+    // immediately. Sanctions hits are always present (local match is O(1));
+    // only the enrichment layer (news, registries, LLM) is deferred.
+    // The client can re-poll for an enriched result if needed.
+    const HARD_DEADLINE_MS = 2_800;
+    const elapsedMs = Date.now() - t0;
+    if (elapsedMs >= HARD_DEADLINE_MS - 100) {
+      return respond(200, {
+        ok: true, ...result,
+        enrichmentPending: true,
+        latencyMs: Date.now() - t0,
+      } as QuickScreenResponse, gateHeaders);
+    }
+    // Budget remaining for the entire augmentation + response section.
+    const augBudgetMs = Math.max(200, HARD_DEADLINE_MS - (Date.now() - t0) - 150);
+    let _deadlineTimer: NodeJS.Timeout | null = null;
+    const deadlineP = new Promise<"timeout">((resolve) => {
+      _deadlineTimer = setTimeout(() => resolve("timeout"), augBudgetMs);
+    });
+
     // Augment with OpenSanctions live results when local matcher returns
     // few/no hits — adds a free additional signal layer beyond the bundled
     // watchlists. Best-effort: failure here doesn't 5xx the screening.
@@ -297,11 +319,8 @@ export async function POST(req: Request): Promise<NextResponse> {
       fraudShield: { available: false, reason: "no_key" },
     };
 
-    const [
-      openSanctionsResults, commercialResults, registryResults,
-      countryRegistryResults, countrySanctionsResults, freeAdapterResults,
-      rawNews, llmArts, enrichmentBundle,
-    ] = await Promise.all([
+    const augRace = await Promise.race([
+      Promise.all([
       // Group A — hit-gated (only when local hits sparse or common name)
       hitGated ? adapterTimeout(LIVE_OPENSANCTIONS_ADAPTER.lookup(subject.name, subject.jurisdiction ?? undefined).catch((e): OSResult => { warn(e); return []; }), [] as OSResult) : Promise.resolve<OSResult>([]),
       hitGated && commAdapter.isAvailable() ? adapterTimeout(commAdapter.lookup(subject.name, subject.jurisdiction ?? undefined).catch((e): CommResult => { warn(e); return []; }), [] as CommResult) : Promise.resolve<CommResult>([]),
@@ -315,7 +334,25 @@ export async function POST(req: Request): Promise<NextResponse> {
       canAug && llmAdapter.isAvailable() ? adapterTimeout(llmAdapter.search(subject.name, { limit: 15 }).catch((e): LlmResult => { warn(e); return []; }), [] as LlmResult) : Promise.resolve<LlmResult>([]),
       // Group D — public-API enrichment (IP / blockchain / breach / domain / phone / fraud)
       adapterTimeout(runEnrichmentAdapters(hints).catch((e): EnrichmentBundle => { warn(e); return NULL_ENRICHMENT; }), NULL_ENRICHMENT),
+      ]).then((r) => r as [OSResult, CommResult, RegResult, CRegResult, CSanResult, FreeResult, NewsResult, LlmResult, EnrichmentBundle]),
+      deadlineP,
     ]);
+    if (_deadlineTimer) clearTimeout(_deadlineTimer);
+
+    // If the deadline fired before adapters resolved, return fast-path result.
+    if (augRace === "timeout") {
+      return respond(200, {
+        ok: true, ...result,
+        enrichmentPending: true,
+        latencyMs: Date.now() - t0,
+      } as QuickScreenResponse, gateHeaders);
+    }
+
+    const [
+      openSanctionsResults, commercialResults, registryResults,
+      countryRegistryResults, countrySanctionsResults, freeAdapterResults,
+      rawNews, llmArts, enrichmentBundle,
+    ] = augRace;
 
     // Merge LLM adverse-media articles (prepend so they rank first)
     let newsArticles: NewsResult = llmArts.length > 0
@@ -460,7 +497,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);
-    if (Date.now() - t0 > 5000) console.warn(`[quick-screen] slow response latencyMs=${Date.now() - t0}`);
+    if (Date.now() - t0 > 3000) console.warn(`[quick-screen] slow response latencyMs=${Date.now() - t0}`);
     return respond(
       500,
       { ok: false, errorCode: "HANDLER_EXCEPTION", errorType: "internal", tool: "screen_subject", error: "quick-screen failed", detail, requestId: Math.random().toString(36).slice(2, 10), latencyMs: Date.now() - t0 } as QuickScreenResponse & { errorCode: string; errorType: string; tool: string; requestId: string; latencyMs: number },

@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export interface TfIndicator {
   indicator: string;
@@ -156,17 +157,17 @@ Respond ONLY with valid JSON — no markdown fences:
 }`,
         messages: [{
           role: "user",
-          content: `Subject: ${body.subject}
-Subject Country: ${body.subjectCountry ?? "not specified"}
-Counterparty: ${body.counterparty ?? "not specified"}
-Counterparty Country: ${body.counterpartyCountry ?? "not specified"}
-Transaction Type: ${body.transactionType ?? "not specified"}
-Amount: ${body.amount ?? "not specified"} ${body.currency ?? ""}
-Destination Jurisdiction: ${body.destinationJurisdiction ?? "not specified"}
-Goods / Services: ${body.goods ?? "not specified"}
-Customer Type: ${body.customerType ?? "not specified"}
+          content: `Subject: ${sanitizeField(body.subject, 500)}
+Subject Country: ${sanitizeField(body.subjectCountry, 100) ?? "not specified"}
+Counterparty: ${sanitizeField(body.counterparty, 500) ?? "not specified"}
+Counterparty Country: ${sanitizeField(body.counterpartyCountry, 100) ?? "not specified"}
+Transaction Type: ${sanitizeField(body.transactionType, 100) ?? "not specified"}
+Amount: ${sanitizeField(body.amount, 100) ?? "not specified"} ${sanitizeField(body.currency, 20) ?? ""}
+Destination Jurisdiction: ${sanitizeField(body.destinationJurisdiction, 100) ?? "not specified"}
+Goods / Services: ${sanitizeField(body.goods, 500) ?? "not specified"}
+Customer Type: ${sanitizeField(body.customerType, 100) ?? "not specified"}
 Existing Red Flags: ${body.existingRedFlags?.join("; ") ?? "none"}
-Additional Context: ${body.context ?? "none"}
+Additional Context: ${sanitizeText(body.context, 2000) ?? "none"}
 
 Assess for terrorism financing risk.`,
         }],

@@ -1414,10 +1414,13 @@ export default function MlroAdvisorPage() {
   const [mode, setMode] = useState<ReasoningMode>("quick");
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Advisor conversation history is stored in sessionStorage (not localStorage)
+  // because MLRO conversations may contain case PII — they should clear when
+  // the tab closes and not be readable by other sessions on a shared workstation.
   const [advisorHistory, setAdvisorHistory] = useState<AdvisorHistoryEntry[]>(() => {
     if (typeof window === "undefined") return [];
     try {
-      const raw = window.localStorage.getItem("hawkeye.mlro.advisor.v1");
+      const raw = window.sessionStorage.getItem("hawkeye.mlro.advisor.v1");
       return raw ? (JSON.parse(raw) as AdvisorHistoryEntry[]) : [];
     } catch (err) {
       console.error("[hawkeye] mlro-advisor: history parse failed — returning empty:", err);
@@ -1425,7 +1428,7 @@ export default function MlroAdvisorPage() {
     }
   });
   useEffect(() => {
-    try { window.localStorage.setItem(ADVISOR_STORAGE, JSON.stringify(advisorHistory.slice(0, 50))); }
+    try { window.sessionStorage.setItem(ADVISOR_STORAGE, JSON.stringify(advisorHistory.slice(0, 50))); }
     catch (err) {
       console.warn("[hawkeye] mlro-advisor: history persist failed (storage quota):", err);
     }

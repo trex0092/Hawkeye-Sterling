@@ -4,6 +4,7 @@ export const maxDuration = 60;import { NextResponse } from "next/server";
 
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export interface StrQualityResult {
   qualityScore: number;
@@ -77,7 +78,7 @@ export async function POST(req: Request) {
         messages: [
           {
             role: "user",
-            content: `Assess the STR narrative quality for goAML submission.\n\nSubject: ${body.subjectName}\nTotal Amount: ${body.totalAmount}\nTransaction Count: ${body.transactionCount}\nSuspected Offence: ${body.suspectedOffence}\nContext: ${body.context}\n\nNarrative Text:\n${body.narrativeText}\n\nReturn JSON with fields: qualityScore (0-100), grade (A/B/C/D/F), goamlReadiness, missingElements[], narrativeWeaknesses[], strengths[], revisedNarrativeSuggestions[], regulatoryBasis.`,
+            content: `Assess the STR narrative quality for goAML submission.\n\nSubject: ${sanitizeField(body.subjectName)}\nTotal Amount: ${sanitizeField(body.totalAmount)}\nTransaction Count: ${sanitizeField(body.transactionCount)}\nSuspected Offence: ${sanitizeField(body.suspectedOffence)}\nContext: ${sanitizeText(body.context)}\n\nNarrative Text:\n${sanitizeText(body.narrativeText)}\n\nReturn JSON with fields: qualityScore (0-100), grade (A/B/C/D/F), goamlReadiness, missingElements[], narrativeWeaknesses[], strengths[], revisedNarrativeSuggestions[], regulatoryBasis.`,
           },
         ],
       });

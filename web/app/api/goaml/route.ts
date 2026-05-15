@@ -146,6 +146,18 @@ async function handleGoaml(req: Request): Promise<Response> {
       { status: 400, headers: gateHeaders },
     );
   }
+  if (body.subject.name.length > 500) {
+    return NextResponse.json(
+      { ok: false, error: "subject.name exceeds 500-character limit" },
+      { status: 400, headers: gateHeaders },
+    );
+  }
+  if (body.narrative.length > 10_000) {
+    return NextResponse.json(
+      { ok: false, error: "narrative exceeds 10,000-character limit" },
+      { status: 400, headers: gateHeaders },
+    );
+  }
   if (!body.subject.entityType) {
     return NextResponse.json(
       { ok: false, error: "subject.entityType is required (individual or entity)" },

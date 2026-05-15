@@ -4,6 +4,7 @@ export const maxDuration = 60;
 import { enforce } from "@/lib/server/enforce";
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 export interface SupplierRisk {
   name: string;
   country: string;
@@ -273,8 +274,8 @@ Return ONLY valid JSON with this exact structure (no markdown fences):
       messages: [
         {
           role: "user",
-          content: `Company: ${body.company ?? "Unknown"}
-Sector: ${body.sector ?? "Unknown"}
+          content: `Company: ${sanitizeField(body.company ?? "Unknown", 200)}
+Sector: ${sanitizeField(body.sector ?? "Unknown", 200)}
 Tier-1 Suppliers: ${JSON.stringify(body.tier1Suppliers ?? [])}
 Key Source Countries: ${JSON.stringify(body.keySourceCountries ?? [])}
 Commodities: ${JSON.stringify(body.commodities ?? [])}

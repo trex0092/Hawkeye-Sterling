@@ -11,6 +11,34 @@ import type {
   QuickScreenSubject,
 } from "@/lib/api/quickScreen.types";
 import { loadCandidates } from "@/lib/server/candidates-loader";
+import { classifyAdverseKeywords } from "@/lib/data/adverse-keywords";
+
+const KEYWORD_GROUP_WEIGHT: Record<string, number> = {
+  "terrorism-financing": 20,
+  "proliferation-wmd": 20,
+  "regulatory-action": 14,
+  "bribery-corruption": 14,
+  "money-laundering": 14,
+  "organised-crime": 14,
+  "environmental-crime": 12,
+  "human-trafficking": 12,
+  "fraud-forgery": 12,
+  "market-abuse": 10,
+  "tax-crime": 10,
+  "cybercrime": 10,
+  "insider-threat": 10,
+  "ai-misuse": 10,
+  "law-enforcement": 6,
+  "political-exposure": 2,
+};
+
+function scoreToBand(score: number): string {
+  if (score >= 85) return "critical";
+  if (score >= 70) return "high";
+  if (score >= 50) return "medium";
+  if (score >= 25) return "low";
+  return "clear";
+}
 
 type QuickScreenFn = (
   subject: QuickScreenSubject,
@@ -119,6 +147,11 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
   }
 
+  const asanaToken = process.env["ASANA_TOKEN"];
+  if (!asanaToken) {
+    console.warn("[ongoing/run] ASANA_TOKEN not set — all Asana task creation will be skipped. Compliance audit trail may be incomplete.");
+  }
+
   const keys = await listKeys("ongoing/subject/");
   // Load subjects in parallel — sequential awaits would time out for large portfolios.
   const loadedSubjects = await Promise.all(keys.map((key) => getJson<EnrolledSubject>(key)));
@@ -135,6 +168,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     subjectId: string;
     subjectName: string;
     topScore: number;
+    rawScore: number;
     severity: string;
     scoreDelta: number;
     escalated: boolean;
@@ -176,6 +210,17 @@ export async function POST(req: Request): Promise<NextResponse> {
         subject,
         CANDIDATES as Parameters<typeof quickScreen>[1],
       );
+
+      // Keyword-adjusted composite score — adverse-media keywords must factor
+      // into risk severity so a subject with terrorism-financing or
+      // money-laundering coverage cannot score "clear".
+      const kwHaystack = [s.name, ...(s.aliases ?? [])].join(" ");
+      const kw = classifyAdverseKeywords(kwHaystack);
+      const kwGroups = Array.from(new Set(kw.map((k) => k.group)));
+      const kwBoost = Math.min(30, kwGroups.reduce((sum, g) => sum + (KEYWORD_GROUP_WEIGHT[g] ?? 0), 0));
+      const adjustedScore = Math.min(100, screen.topScore + kwBoost);
+      const adjustedSeverity = scoreToBand(adjustedScore);
+
       const prev = await getJson<LastSnapshot>(`ongoing/last/${s.id}`);
       const prevFps = prev ? fingerprints(prev.hits) : new Set<string>();
       const newHits = screen.hits.filter(
@@ -186,14 +231,14 @@ export async function POST(req: Request): Promise<NextResponse> {
       // ESCALATION_DELTA between runs, emit a dedicated escalation
       // webhook so the MLRO is paged rather than waiting on the next
       // four-eyes review.
-      const scoreDelta = prev ? screen.topScore - prev.topScore : 0;
+      const scoreDelta = prev ? adjustedScore - prev.topScore : 0;
       const escalated = scoreDelta >= ESCALATION_DELTA;
 
-      // Persist the fresh snapshot.
+      // Persist the fresh snapshot (using keyword-adjusted score/severity).
       const snapshot: LastSnapshot = {
         runAt,
-        topScore: screen.topScore,
-        severity: screen.severity,
+        topScore: adjustedScore,
+        severity: adjustedSeverity,
         hits: screen.hits.map((h) => ({
           listRef: h.listRef,
           candidateName: h.candidateName,
@@ -225,8 +270,9 @@ export async function POST(req: Request): Promise<NextResponse> {
         const nowIso = runAt;
         const snap = {
           at: nowIso,
-          topScore: screen.topScore,
-          severity: screen.severity,
+          topScore: adjustedScore,
+          rawScore: screen.topScore,
+          severity: adjustedSeverity,
           hits: screen.hits.map((h) => ({
             listId: h.listId,
             listRef: h.listRef,
@@ -309,8 +355,10 @@ export async function POST(req: Request): Promise<NextResponse> {
                 },
               },
             );
-            if (newsRes.ok) {
-              const newsPayload = (await newsRes.json().catch((err: unknown) => { console.warn("[hawkeye] ongoing/run JSON parse failed:", err); return null; })) as
+            if (!newsRes.ok) {
+              console.warn(`[ongoing/run] news-search failed for ${s.id}: HTTP ${newsRes.status}`);
+            } else {
+            const newsPayload = (await newsRes.json().catch((err: unknown) => { console.warn("[hawkeye] ongoing/run JSON parse failed:", err); return null; })) as
                 | NewsResponseShape
                 | null;
               const articles = newsPayload?.articles ?? [];
@@ -413,7 +461,7 @@ export async function POST(req: Request): Promise<NextResponse> {
                   }
                 }
               }
-            }
+            } // end else (newsRes.ok)
           } catch (err) {
             console.warn(
               `[ongoing/run] adverse-media sweep failed for ${s.id}:`,
@@ -537,7 +585,17 @@ export async function POST(req: Request): Promise<NextResponse> {
       // added — every Asana task now lands on Luisa's queue by default
       // via ASANA_ASSIGNEE_GID (overridable via env).
       if (escalated) {
-        if (!asanaToken) {
+        // Deduplication: only fire escalation task when severity bucket changes,
+        // not on every tick where the score stays elevated (which would flood
+        // the escalations board with duplicate tasks for the same subject).
+        const escKey = `ongoing/escalation-seen/${s.id}`;
+        const lastEsc = await getJson<{ severity: string; firedAt: string }>(escKey);
+        const currentSeverity = adjustedSeverity; // e.g. "high", "critical"
+        const escalationIsDuplicate = Boolean(lastEsc && lastEsc.severity === currentSeverity);
+
+        if (escalationIsDuplicate) {
+          escalationSkipReason = `already filed for severity=${currentSeverity} at ${lastEsc!.firedAt}`;
+        } else if (!asanaToken) {
           escalationSkipReason = "ASANA_TOKEN not set";
           console.warn(
             `[ongoing/run] escalation detected for ${s.id} but ASANA_TOKEN is not set — no task filed`,
@@ -556,9 +614,9 @@ export async function POST(req: Request): Promise<NextResponse> {
                   `Subject: ${s.name} (${s.id})`,
                   `Jurisdiction: ${s.jurisdiction ?? "—"}`,
                   `Previous top score: ${prev?.topScore ?? "n/a"}`,
-                  `New top score: ${screen.topScore}`,
+                  `New top score: ${adjustedScore} (raw: ${screen.topScore}, kw boost: +${kwBoost})`,
                   `Delta: +${scoreDelta} (threshold ≥ ${ESCALATION_DELTA})`,
-                  `Severity: ${screen.severity}`,
+                  `Severity: ${adjustedSeverity}`,
                   `New hits: ${newHits.length}`,
                   `Triggered at: ${runAt}`,
                 ].join("\n"),
@@ -600,6 +658,9 @@ export async function POST(req: Request): Promise<NextResponse> {
                 | null;
               if (data?.data?.permalink_url) {
                 escalationTaskUrl = data.data.permalink_url;
+                // Persist fingerprint so future ticks with same severity
+                // bucket don't re-create a duplicate escalation task.
+                await setJson(escKey, { severity: currentSeverity, firedAt: runAt });
               } else {
                 escalationSkipReason = "asana 2xx with no permalink_url";
                 console.error(
@@ -628,8 +689,8 @@ export async function POST(req: Request): Promise<NextResponse> {
         type: webhookType,
         subjectId: s.id,
         subjectName: s.name,
-        severity: screen.severity,
-        topScore: screen.topScore,
+        severity: adjustedSeverity,
+        topScore: adjustedScore,
         scoreDelta,
         escalated,
         newHits: newHits.map((h) => ({
@@ -661,8 +722,9 @@ export async function POST(req: Request): Promise<NextResponse> {
       results.push({
         subjectId: s.id,
         subjectName: s.name,
-        topScore: screen.topScore,
-        severity: screen.severity,
+        topScore: adjustedScore,
+        rawScore: screen.topScore,
+        severity: adjustedSeverity,
         scoreDelta,
         escalated,
         newHits: newHits.map((h) => ({
@@ -684,6 +746,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         subjectId: s.id,
         subjectName: s.name ?? "",
         topScore: 0,
+        rawScore: 0,
         severity: "error",
         scoreDelta: 0,
         escalated: false,

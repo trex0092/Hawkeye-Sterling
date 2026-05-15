@@ -99,6 +99,9 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (!body.target || !body.mode) {
     return NextResponse.json({ ok: false, error: "target and mode are required" }, { status: 400 , headers: gate.headers});
   }
+  if (body.target.length > 2000) {
+    return NextResponse.json({ ok: false, error: "target exceeds 2000-character limit" }, { status: 400, headers: gate.headers });
+  }
 
   const userContent = JSON.stringify({
     target: body.target,

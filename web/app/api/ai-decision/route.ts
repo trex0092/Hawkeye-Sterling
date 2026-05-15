@@ -8,6 +8,7 @@ import { enforce } from "@/lib/server/enforce";
 import { getJson } from "@/lib/server/store";
 import { randomBytes } from "node:crypto";
 import { asanaGids } from "@/lib/server/asanaConfig";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -242,19 +243,19 @@ function buildUserMessage(req: DecisionRequest): string {
     ? req.sanctionsHits.map((h) => `${h.list} (score: ${h.score}${h.details ? `, ${h.details}` : ""})`).join("; ")
     : "None";
   return `SUBJECT FOR DECISION:
-Name: ${req.name}
-Entity type: ${req.entityType}
-Country: ${req.country}
+Name: ${sanitizeField(req.name, 500)}
+Entity type: ${sanitizeField(req.entityType, 100)}
+Country: ${sanitizeField(req.country, 100)}
 Risk score: ${req.riskScore}/100
 Sanctions hits: ${hits}
-Lists checked: ${req.listCoverage.join(", ") || "N/A"}
-Adverse media: ${req.adverseMedia || "None identified"}
-PEP status: ${req.pepTier || "Not a PEP"}
-Exposure (AED): ${req.exposureAED || "Unknown"}
-CDD posture: ${req.cddPosture || "CDD"}
+Lists checked: ${req.listCoverage.map((l) => sanitizeField(l, 100)).join(", ") || "N/A"}
+Adverse media: ${sanitizeText(req.adverseMedia, 2000) || "None identified"}
+PEP status: ${sanitizeField(req.pepTier, 100) || "Not a PEP"}
+Exposure (AED): ${sanitizeField(req.exposureAED, 50) || "Unknown"}
+CDD posture: ${sanitizeField(req.cddPosture, 50) || "CDD"}
 Screening top score: ${req.screeningTopScore ?? req.riskScore}/100
-Screening severity: ${req.screeningSeverity || "unknown"}
-Notes: ${req.notes || "None"}
+Screening severity: ${sanitizeField(req.screeningSeverity, 50) || "unknown"}
+Notes: ${sanitizeText(req.notes, 1000) || "None"}
 
 Make your decision now.`;
 }

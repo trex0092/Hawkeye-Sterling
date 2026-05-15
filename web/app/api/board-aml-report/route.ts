@@ -4,6 +4,7 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 export interface BoardAmlReportResult {
   executiveSummary: string;
   keyMetrics: Array<{
@@ -145,13 +146,13 @@ export async function POST(req: Request) {
       ],
       messages: [{
         role: "user",
-        content: `Institution Name: ${body.institutionName ?? "not specified"}
-Reporting Period: ${body.reportingPeriod ?? "current quarter"}
+        content: `Institution Name: ${sanitizeField(body.institutionName, 300) || "not specified"}
+Reporting Period: ${sanitizeField(body.reportingPeriod, 50) || "current quarter"}
 STR Count: ${body.strCount ?? "not provided"}
 CTR Count: ${body.ctrCount ?? "not provided"}
 Training Completion: ${body.trainingCompletion ?? "not provided"}
 Open Audit Findings: ${body.openFindings ?? "not provided"}
-Additional Context: ${body.context ?? "none"}
+Additional Context: ${sanitizeText(body.context, 2000) || "none"}
 
 Generate a comprehensive quarterly Board AML/CFT report. Return complete BoardAmlReportResult JSON.`,
       }],

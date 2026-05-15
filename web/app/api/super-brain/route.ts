@@ -259,18 +259,42 @@ export async function POST(req: Request): Promise<NextResponse> {
     // 4 · Jurisdiction profile.
     const jurisdiction = resolveJurisdiction(body.subject.jurisdiction);
 
-    // 5 · Redlines (charter prohibitions triggered by name/alias keywords).
-    const redlineKeywords = [
-      body.subject.name,
-      ...(body.subject.aliases ?? []),
-      body.roleText ?? "",
-      body.adverseMediaText ?? "",
-    ]
-      .join(" ")
-      .toLowerCase()
-      .split(/\W+/)
-      .filter((t) => t.length >= 3);
-    const redlines = evaluateRedlines(redlineKeywords);
+    // 5 · Redlines — derive fired redline IDs from screening results.
+    // evaluateRedlines() takes canonical redline IDs (e.g. "rl_ofac_sdn_confirmed"),
+    // NOT keyword tokens. Build the fired-ID list from confirmed sanctions hits
+    // (score ≥ 0.85 on the 0-1 hit score scale), jurisdiction risk, and PEP state.
+    // This runs before hitsByList is built so we do the map here inline.
+    const _redlineHitsByList = new Map<string, typeof screen.hits>();
+    for (const h of screen.hits) {
+      const arr = _redlineHitsByList.get(h.listId);
+      if (arr) arr.push(h); else _redlineHitsByList.set(h.listId, [h]);
+    }
+    const firedRedlineIds: string[] = [];
+    const SANCTIONS_REDLINE_MAP: Array<[string, string]> = [
+      ["ofac_sdn", "rl_ofac_sdn_confirmed"],
+      ["un_consolidated", "rl_un_consolidated_confirmed"],
+      ["eu_fsf", "rl_eu_cfsp_confirmed"],
+      ["uk_ofsi", "rl_uk_ofsi_confirmed"],
+    ];
+    for (const [listId, redlineId] of SANCTIONS_REDLINE_MAP) {
+      if ((_redlineHitsByList.get(listId) ?? []).some((h) => h.score >= 0.85)) {
+        firedRedlineIds.push(redlineId);
+      }
+    }
+    // UAE EOCN + Local Terrorist List → same redline
+    const uaeHitsForRedline = [
+      ...(_redlineHitsByList.get("uae_eocn") ?? []),
+      ...(_redlineHitsByList.get("uae_ltl") ?? []),
+    ];
+    if (uaeHitsForRedline.some((h) => h.score >= 0.85)) firedRedlineIds.push("rl_eocn_confirmed");
+    // LSEG supplements for Canada + Australia
+    if ((_redlineHitsByList.get("lseg_ca_osfi") ?? []).some((h) => h.score >= 0.85)) firedRedlineIds.push("rl_canada_osfi_confirmed");
+    if ((_redlineHitsByList.get("lseg_au_dfat") ?? []).some((h) => h.score >= 0.85)) firedRedlineIds.push("rl_australia_dfat_confirmed");
+    // CAHRA jurisdiction — subject country is a Conflict-Affected and High-Risk Area
+    if (jurisdiction?.cahra) firedRedlineIds.push("rl_dpms_cahra_without_oecd");
+    // PEP without EDD — high-salience political exposure with no enhanced DD indicator
+    if (pep && pep.salience > 0.5) firedRedlineIds.push("rl_pep_edd_not_completed");
+    const redlines = evaluateRedlines(firedRedlineIds);
 
     // 5b · Cross-regime conflict detection. Builds per-regime designation
     // status from the quickScreen hits across the six core authoritative
@@ -283,10 +307,10 @@ export async function POST(req: Request): Promise<NextResponse> {
     const REGIME_LIST_IDS = [
       "un_consolidated",
       "ofac_sdn",
-      "eu_consolidated",
+      "eu_fsf",
       "uk_ofsi",
       "uae_eocn",
-      "uae_local_terrorist",
+      "uae_ltl",
     ] as const;
     const hitsByList = new Map<string, typeof screen.hits>();
     for (const h of screen.hits) {
@@ -660,7 +684,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         adverseKeywords: [],
         adverseKeywordGroups: [],
         jurisdiction: null,
-        redlines: { fired: [], checked: 0 },
+        redlines: { fired: [], action: null, summary: "No redlines fired." },
         variants: { aliasExpansion: [], nameVariants: [], doubleMetaphone: [], soundex: "" },
         jurisdictionRich: null,
         typologies: { hits: [], compositeScore: 0 },

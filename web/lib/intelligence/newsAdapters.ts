@@ -2949,6 +2949,150 @@ const nikkeiAsiaAdapter = (): NewsAdapter => makeNewsAdapter({
     .map((r) => ({ title: r.title, url: r.url, publishedAt: r.published_at, snippet: r.description })),
 });
 
+// ── Tavily Search API ─────────────────────────────────────────────────
+// Tavily is a search API designed for AI agents. It returns synthesised
+// answers + source articles with relevance scores. For AML we use the
+// raw search results (type:"news") to surface adverse media.
+// Env: TAVILY_API_KEY   Free tier: 1 000 req/month. $0.005/req thereafter.
+// Docs: https://docs.tavily.com/docs/rest-api/api-reference
+const tavilyAdapter = (): NewsAdapter => {
+  const key = process.env["TAVILY_API_KEY"];
+  if (!key) return { source: "tavily", isAvailable: () => false, search: async () => [] };
+  return {
+    source: "tavily",
+    isAvailable: () => true,
+    search: async (name, opts) => {
+      try {
+        const res = await fetch("https://api.tavily.com/search", {
+          method: "POST",
+          headers: { "content-type": "application/json", authorization: `Bearer ${key}` },
+          body: JSON.stringify({
+            query: `"${name}" sanctions OR fraud OR money laundering OR criminal OR corruption`,
+            topic: "news",
+            search_depth: "basic",
+            max_results: Math.min(opts?.limit ?? 10, 20),
+            include_domains: [],
+            exclude_domains: [],
+          }),
+        });
+        if (!res.ok) return [];
+        const json = (await res.json()) as { results?: Array<{ title?: string; url?: string; published_date?: string; content?: string; score?: number }> };
+        return (json.results ?? [])
+          .filter((r) => r.url && r.title)
+          .map((r) => ({
+            title: r.title!,
+            url: r.url!,
+            publishedAt: r.published_date,
+            snippet: r.content?.slice(0, 300),
+            source: "tavily",
+            outlet: new URL(r.url!).hostname,
+            relevanceScore: r.score,
+          } satisfies NewsArticle));
+      } catch (err) {
+        console.warn("[tavily] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+};
+
+// ── Exa.ai Neural Search ──────────────────────────────────────────────
+// Exa uses neural/embedding-based retrieval — finds semantically relevant
+// pages even when the subject name doesn't appear verbatim. Particularly
+// strong for finding adverse media on obscure entities, aliases, and
+// transliterated names. Returns full page content.
+// Env: EXA_API_KEY    Free tier: 1 000 req/month via exa.ai.
+// Docs: https://docs.exa.ai/reference/search
+const exaAdapter = (): NewsAdapter => {
+  const key = process.env["EXA_API_KEY"];
+  if (!key) return { source: "exa", isAvailable: () => false, search: async () => [] };
+  return {
+    source: "exa",
+    isAvailable: () => true,
+    search: async (name, opts) => {
+      try {
+        const res = await fetch("https://api.exa.ai/search", {
+          method: "POST",
+          headers: { "content-type": "application/json", "x-api-key": key },
+          body: JSON.stringify({
+            query: `${name} financial crime money laundering sanctions fraud`,
+            type: "neural",
+            numResults: Math.min(opts?.limit ?? 10, 25),
+            contents: { text: { maxCharacters: 400 } },
+            category: "news",
+          }),
+        });
+        if (!res.ok) return [];
+        const json = (await res.json()) as { results?: Array<{ title?: string; url?: string; publishedDate?: string; text?: string; score?: number }> };
+        return (json.results ?? [])
+          .filter((r) => r.url && r.title)
+          .map((r) => ({
+            title: r.title!,
+            url: r.url!,
+            publishedAt: r.publishedDate,
+            snippet: r.text?.slice(0, 300),
+            source: "exa",
+            outlet: (() => { try { return new URL(r.url!).hostname; } catch { return "exa"; } })(),
+            relevanceScore: r.score,
+          } satisfies NewsArticle));
+      } catch (err) {
+        console.warn("[exa] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+};
+
+// ── Perplexity Sonar API ──────────────────────────────────────────────
+// Perplexity Sonar returns synthesised answers with cited sources.
+// For AML we extract the citations and use them as adverse-media articles.
+// Strong for regulatory context and recent enforcement actions.
+// Env: PERPLEXITY_API_KEY   sonar-pro: $3/1000 req.
+// Docs: https://docs.perplexity.ai/reference/post_chat_completions
+const perplexityAdapter = (): NewsAdapter => {
+  const key = process.env["PERPLEXITY_API_KEY"];
+  if (!key) return { source: "perplexity", isAvailable: () => false, search: async () => [] };
+  return {
+    source: "perplexity",
+    isAvailable: () => true,
+    search: async (name) => {
+      try {
+        const res = await fetch("https://api.perplexity.ai/chat/completions", {
+          method: "POST",
+          headers: { "content-type": "application/json", authorization: `Bearer ${key}` },
+          body: JSON.stringify({
+            model: "sonar",
+            messages: [
+              {
+                role: "user",
+                content: `Find recent news about "${name}" related to: money laundering, sanctions, financial crime, fraud, corruption, criminal proceedings, regulatory action. List sources.`,
+              },
+            ],
+            return_citations: true,
+            search_domain_filter: [],
+            max_tokens: 400,
+          }),
+        });
+        if (!res.ok) return [];
+        const json = (await res.json()) as { citations?: string[]; choices?: Array<{ message?: { content?: string } }> };
+        const citations = json.citations ?? [];
+        const content = json.choices?.[0]?.message?.content ?? "";
+        if (citations.length === 0 && !content) return [];
+        return citations.slice(0, 10).map((url) => ({
+          title: `Perplexity — ${name} adverse media`,
+          url,
+          snippet: content.slice(0, 300),
+          source: "perplexity",
+          outlet: (() => { try { return new URL(url).hostname; } catch { return "perplexity"; } })(),
+        } satisfies NewsArticle));
+      } catch (err) {
+        console.warn("[perplexity] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+};
+
 // ── Master aggregator ───────────────────────────────────────────────────
 /**
  * Returns ALL available news adapters whose env keys are configured.
@@ -3032,6 +3176,10 @@ export function activeNewsAdapters(): NewsAdapter[] {
     omfifAdapter(), centralBankingAdapter(), globalFinanceAdapter(),
     eurofinasAdapter(), ihsMarkitAdapter(), eikonNewsAdapter(), nikkeiAsiaAdapter(),
     freeRssAdapter(),
+    // ── New AI-native research adapters ──────────────────────────────
+    tavilyAdapter(),      // TAVILY_API_KEY — deep web search for AI agents
+    exaAdapter(),         // EXA_API_KEY — neural/embedding search
+    perplexityAdapter(),  // PERPLEXITY_API_KEY — synthesised adverse media
   ].filter((a) => a.isAvailable());
 }
 
@@ -3118,6 +3266,10 @@ export function activeNewsProviders(): string[] {
     ["AMLWATCHDOG_API_KEY", "aml-watchdog"],
     ["PEGASUS_API_KEY", "pegasus"],
     ["FREE_RSS_ENABLED", "free-rss-aggregator"],
+    // AI-native research adapters
+    ["TAVILY_API_KEY", "tavily"],
+    ["EXA_API_KEY", "exa"],
+    ["PERPLEXITY_API_KEY", "perplexity"],
   ];
   return keys.filter(([envKey]) => process.env[envKey]).map(([, name]) => name);
 }

@@ -3,8 +3,8 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
-
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export interface CddRefreshTriggerResult {
   refreshRequired: boolean;
@@ -127,15 +127,15 @@ Respond ONLY with valid JSON — no markdown fences:
 }`,
         messages: [{
           role: "user",
-          content: `Customer Name: ${body.customerName ?? "not specified"}
-Customer Type: ${body.customerType ?? "not specified"}
-Current Risk Tier: ${body.currentRiskTier ?? "not specified"}
-Last CDD Date: ${body.lastCddDate ?? "not specified"}
-Reported Trigger Events: ${body.triggerEvents ?? "none specified"}
-Transaction Pattern Change: ${body.transactionPatternChange ?? "none noted"}
-Adverse Media Hit: ${body.adverseMediaHit ?? "none"}
-Ownership Change: ${body.ownershipChange ?? "none reported"}
-Additional Context: ${body.context ?? "none"}
+          content: `Customer Name: ${sanitizeField(body.customerName ?? "not specified", 500)}
+Customer Type: ${sanitizeField(body.customerType ?? "not specified", 100)}
+Current Risk Tier: ${sanitizeField(body.currentRiskTier ?? "not specified", 100)}
+Last CDD Date: ${sanitizeField(body.lastCddDate ?? "not specified", 50)}
+Reported Trigger Events: ${sanitizeText(body.triggerEvents ?? "none specified", 2000)}
+Transaction Pattern Change: ${sanitizeText(body.transactionPatternChange ?? "none noted", 2000)}
+Adverse Media Hit: ${sanitizeText(body.adverseMediaHit ?? "none", 2000)}
+Ownership Change: ${sanitizeText(body.ownershipChange ?? "none reported", 1000)}
+Additional Context: ${sanitizeText(body.context ?? "none", 2000)}
 
 Determine if CDD refresh is required.`,
         }],

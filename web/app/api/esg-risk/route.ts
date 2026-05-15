@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 export type EsgRating = "AAA" | "AA" | "A" | "BBB" | "BB" | "B" | "CCC";
 export type MlRiskLevel = "low" | "medium" | "high";
 
@@ -234,11 +235,11 @@ Return ONLY valid JSON (no markdown fences):
       messages: [
         {
           role: "user",
-          content: `Entity: ${body.entity ?? "Unknown entity"}
-Sector: ${body.sector ?? "Not specified"}
-Primary Jurisdiction: ${body.jurisdiction ?? "Not specified"}
-Operations Description: ${body.operations ?? "Not specified"}
-Supplier Countries: ${(body.supplierCountries ?? []).join(", ") || "Not specified"}
+          content: `Entity: ${sanitizeField(body.entity ?? "Unknown entity", 500)}
+Sector: ${sanitizeField(body.sector ?? "Not specified", 100)}
+Primary Jurisdiction: ${sanitizeField(body.jurisdiction ?? "Not specified", 100)}
+Operations Description: ${sanitizeText(body.operations ?? "Not specified", 2000)}
+Supplier Countries: ${sanitizeField((body.supplierCountries ?? []).join(", ") || "Not specified", 500)}
 Employee Count: ${body.employeeCount ?? "Not specified"}
 Publicly Listed: ${body.publiclyListed ?? false ? "Yes" : "No"}
 

@@ -4,6 +4,7 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 export interface TypologyResult {
   id: string;
   name: string;
@@ -363,7 +364,7 @@ export async function POST(req: Request) {
       messages: [
         {
           role: "user",
-          content: `Search query: "${body.query ?? ""}"
+          content: `Search query: "${sanitizeField(body.query ?? "", 500)}"
 ${filterStr}
 
 Find the most relevant AML/CFT typologies matching this search. Return comprehensive detail for each typology.`,

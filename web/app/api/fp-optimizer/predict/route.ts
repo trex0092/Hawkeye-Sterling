@@ -4,6 +4,7 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 export interface PredictRequest {
   subject: string;
   listName: string;
@@ -163,11 +164,11 @@ Guidelines:
         {
           role: "user",
           content: `New Screening Hit:
-- Subject: ${body.subject}
-- List: ${body.listName}
+- Subject: ${sanitizeField(body.subject, 500)}
+- List: ${sanitizeField(body.listName, 100)}
 - Match Score: ${body.matchScore}
-- Client Type: ${body.clientType}
-- Jurisdiction: ${body.jurisdiction}
+- Client Type: ${sanitizeField(body.clientType, 100)}
+- Jurisdiction: ${sanitizeField(body.jurisdiction, 100)}
 
 Predict whether this is a false positive and recommend the appropriate action.`,
         },

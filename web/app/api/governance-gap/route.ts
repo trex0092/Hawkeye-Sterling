@@ -4,6 +4,7 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 export interface GapFinding {
   area: string;
   finding: string;
@@ -231,7 +232,7 @@ export async function POST(req: Request) {
       messages: [
         {
           role: "user",
-          content: `Institution: ${body.institutionName ?? "Hawkeye Sterling"}
+          content: `Institution: ${sanitizeField(body.institutionName ?? "Hawkeye Sterling", 200)}
 Approvals: ${JSON.stringify(body.approvals ?? [], null, 2)}
 Meeting Minutes: ${JSON.stringify(body.minutes ?? [], null, 2)}
 Regulatory Circulars: ${JSON.stringify(body.circulars ?? [], null, 2)}

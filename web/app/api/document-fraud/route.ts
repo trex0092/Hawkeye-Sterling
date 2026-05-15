@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export interface DocFraudIndicator {
   indicator: string;
@@ -157,14 +158,14 @@ Respond ONLY with valid JSON — no markdown fences:
 }`,
         messages: [{
           role: "user",
-          content: `Document Types Presented: ${body.documentTypes}
-Document Details / Observations: ${body.documentDetails ?? "not provided"}
-Subject Name: ${body.subjectName ?? "not specified"}
-Subject Nationality: ${body.subjectNationality ?? "not specified"}
-Occupation Claimed: ${body.occupationClaimed ?? "not specified"}
-Income Claimed (AED/month): ${body.incomeClaimedAed ?? "not specified"}
-Inconsistencies Observed: ${body.inconsistenciesObserved ?? "none noted"}
-Additional Context: ${body.context ?? "none"}
+          content: `Document Types Presented: ${sanitizeField(body.documentTypes, 500)}
+Document Details / Observations: ${sanitizeText(body.documentDetails ?? "not provided", 2000)}
+Subject Name: ${sanitizeField(body.subjectName ?? "not specified", 500)}
+Subject Nationality: ${sanitizeField(body.subjectNationality ?? "not specified", 100)}
+Occupation Claimed: ${sanitizeField(body.occupationClaimed ?? "not specified", 200)}
+Income Claimed (AED/month): ${sanitizeField(body.incomeClaimedAed ?? "not specified", 50)}
+Inconsistencies Observed: ${sanitizeText(body.inconsistenciesObserved ?? "none noted", 2000)}
+Additional Context: ${sanitizeText(body.context ?? "none", 2000)}
 
 Assess these documents for fraud indicators.`,
         }],

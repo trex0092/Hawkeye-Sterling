@@ -4,6 +4,7 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 export interface SynthesisSource {
   source: string;
   content: string;
@@ -119,8 +120,8 @@ Scoring guidance:
       messages: [
         {
           role: "user",
-          content: `Subject: ${body.subject}
-Subject Type: ${body.subjectType ?? "individual"}
+          content: `Subject: ${sanitizeField(body.subject, 500)}
+Subject Type: ${sanitizeField(body.subjectType, 100) ?? "individual"}
 
 Intelligence Sources (${body.sources.length} total):
 

@@ -169,7 +169,12 @@ async function handlePost(req: Request): Promise<NextResponse> {
       body: body.xml,
     });
     const upstreamText = await upstream.text();
-    console.error("[goaml/auto-submit] upstream response:", upstream.status, upstreamText.slice(0, 2000));
+    // Log only on failure — success body may contain FIU-internal data.
+    if (!upstream.ok) {
+      console.error("[goaml/auto-submit] upstream rejected submission:", upstream.status, upstreamText.slice(0, 500));
+    } else {
+      console.info("[goaml/auto-submit] submission accepted:", upstream.status);
+    }
     return NextResponse.json(
       {
         ok: upstream.ok,

@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export interface SarTriageResult {
   decision: "file_str" | "no_file" | "more_info" | "escalate_mlro";
@@ -129,14 +130,14 @@ Respond ONLY with valid JSON — no markdown fences:
 }`,
         messages: [{
           role: "user",
-          content: `Suspicious Activity Description: ${body.suspiciousActivity}
-Subject Name: ${body.subjectName ?? "not specified"}
-Subject Type: ${body.subjectType ?? "not specified"}
-Account Reference: ${body.accountRef ?? "not specified"}
-Transaction Summary: ${body.transactionSummary ?? "not specified"}
-Existing CDD Notes: ${body.existingCddNotes ?? "none"}
-MLRO Notes: ${body.mlroNotes ?? "none"}
-Additional Context: ${body.context ?? "none"}
+          content: `Suspicious Activity Description: ${sanitizeText(body.suspiciousActivity, 2000)}
+Subject Name: ${sanitizeField(body.subjectName, 500) || "not specified"}
+Subject Type: ${sanitizeField(body.subjectType, 100) || "not specified"}
+Account Reference: ${sanitizeField(body.accountRef, 100) || "not specified"}
+Transaction Summary: ${sanitizeText(body.transactionSummary, 2000) || "not specified"}
+Existing CDD Notes: ${sanitizeText(body.existingCddNotes, 2000) || "none"}
+MLRO Notes: ${sanitizeText(body.mlroNotes, 2000) || "none"}
+Additional Context: ${sanitizeText(body.context, 2000) || "none"}
 
 Make an STR triage decision.`,
         }],

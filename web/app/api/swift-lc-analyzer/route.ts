@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export interface SwiftLcResult {
   tbmlRisk: "critical" | "high" | "medium" | "low" | "clear";
@@ -138,13 +139,13 @@ export async function POST(req: Request) {
         system: `You are a trade finance TBML specialist with expertise in SWIFT MT700/710/720 field-by-field analysis, FATF trade-based money laundering guidance, documentary credit structures, and world commodity price benchmarking. Analyse SWIFT messages and LC terms for TBML indicators including vague goods descriptions, over/under-invoicing, suspicious routing, amendment patterns, and beneficiary/applicant risk. Apply ICC UCP 600 standards and FATF 2021 trade finance risk guidance. Reference specific SWIFT field numbers in your analysis. Respond ONLY with valid JSON matching the SwiftLcResult interface — no markdown fences.`,
         messages: [{
           role: "user",
-          content: `SWIFT Message / LC Terms: ${body.swiftMessage}
-Message Type: ${body.messageType ?? "to be determined"}
-Beneficiary Country: ${body.beneficiaryCountry ?? "not specified"}
-Applicant Country: ${body.applicantCountry ?? "not specified"}
-Goods Description: ${body.goodsDescription ?? "as per message"}
-LC Value: ${body.lcValue ?? "as per message"}
-Additional Context: ${body.context ?? "none"}
+          content: `SWIFT Message / LC Terms: ${sanitizeText(body.swiftMessage, 2000)}
+Message Type: ${sanitizeField(body.messageType, 100) ?? "to be determined"}
+Beneficiary Country: ${sanitizeField(body.beneficiaryCountry, 100) ?? "not specified"}
+Applicant Country: ${sanitizeField(body.applicantCountry, 100) ?? "not specified"}
+Goods Description: ${sanitizeField(body.goodsDescription, 500) ?? "as per message"}
+LC Value: ${sanitizeField(body.lcValue, 100) ?? "as per message"}
+Additional Context: ${sanitizeText(body.context, 2000) ?? "none"}
 
 Analyse this SWIFT/LC for TBML indicators. Return complete SwiftLcResult JSON.`,
         }],

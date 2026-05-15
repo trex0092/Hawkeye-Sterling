@@ -4,6 +4,7 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 export interface EthicsAssessmentResult {
   overallScore: number; // 0–100
   rating: "exemplary" | "good" | "adequate" | "needs-improvement" | "critical";
@@ -111,15 +112,15 @@ export async function POST(req: Request) {
   if (!apiKey) return NextResponse.json({ ok: false, error: "ai-ethics-assessment temporarily unavailable - please retry." }, { status: 503 });
 
   const modelSummary = (body.models ?? [])
-    .map((m) => `${m.name} (${m.riskTier} risk, purpose: ${m.purpose}, bias audit: ${m.biasAuditStatus})`)
+    .map((m) => `${sanitizeField(m.name, 100)} (${sanitizeField(m.riskTier, 50)} risk, purpose: ${sanitizeField(m.purpose, 200)}, bias audit: ${sanitizeField(m.biasAuditStatus, 50)})`)
     .join("; ");
 
   const incidentSummary = (body.incidents ?? [])
-    .map((i) => `${i.severity} — ${i.type} (${i.model})`)
+    .map((i) => `${sanitizeField(i.severity, 50)} — ${sanitizeField(i.type, 100)} (${sanitizeField(i.model, 100)})`)
     .join("; ");
 
   const biasSummary = (body.biasData ?? [])
-    .map((b) => `${b.segment}: ${b.fprPct}% FPR`)
+    .map((b) => `${sanitizeField(b.segment, 100)}: ${b.fprPct}% FPR`)
     .join("; ");
 
   try {

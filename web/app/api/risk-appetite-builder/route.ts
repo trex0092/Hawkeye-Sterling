@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export interface RiskAppetiteResult {
   riskAppetiteStatement: string;
@@ -123,11 +124,11 @@ export async function POST(req: Request) {
         system: `You are a UAE AML governance specialist with expertise in Board-level risk appetite frameworks, UAE FDL 10/2025 governance requirements, and CBUAE AML programme expectations. Draft comprehensive AML/CFT Risk Appetite Statements including risk tolerances (zero/low/medium/high) with specific KRIs and thresholds, prohibited activities, escalation triggers, and board approval requirements. Ensure statements are legally grounded, operationally actionable, and reflect UAE regulatory expectations. Respond ONLY with valid JSON matching the RiskAppetiteResult interface — no markdown fences.`,
         messages: [{
           role: "user",
-          content: `Institution Type: ${body.institutionType}
-Current Risk Profile: ${body.riskProfile ?? "not specified"}
-Board's Stated Position on Risk: ${body.boardPosition ?? "not specified"}
-Key Products/Services: ${body.keyProducts ?? "not specified"}
-Additional Context: ${body.context ?? "none"}
+          content: `Institution Type: ${sanitizeField(body.institutionType, 100)}
+Current Risk Profile: ${sanitizeText(body.riskProfile, 2000) ?? "not specified"}
+Board's Stated Position on Risk: ${sanitizeText(body.boardPosition, 2000) ?? "not specified"}
+Key Products/Services: ${sanitizeText(body.keyProducts, 2000) ?? "not specified"}
+Additional Context: ${sanitizeText(body.context, 2000) ?? "none"}
 
 Draft a comprehensive AML/CFT Risk Appetite Statement for this institution. Return complete RiskAppetiteResult JSON.`,
         }],

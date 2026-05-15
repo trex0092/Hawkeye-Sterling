@@ -4,6 +4,7 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 const FALLBACK = {
   ok: true,
   riskTier: "high",
@@ -51,10 +52,10 @@ export async function POST(req: Request) {
       messages: [
         {
           role: "user",
-          content: `VASP Name: ${body.vasp ?? "Unknown VASP"}
-Jurisdiction: ${body.jurisdiction ?? "Not stated"}
-Products/Services: ${(body.products ?? []).join(", ") || "Not stated"}
-Monthly Volume: ${body.volumes ?? "Not stated"}
+          content: `VASP Name: ${sanitizeField(body.vasp) || "Unknown VASP"}
+Jurisdiction: ${sanitizeField(body.jurisdiction) || "Not stated"}
+Products/Services: ${(body.products ?? []).map((p) => sanitizeField(p)).join(", ") || "Not stated"}
+Monthly Volume: ${sanitizeField(body.volumes) || "Not stated"}
 
 Assess FATF R.15/R.16 compliance, travel rule status, DeFi exposure, mixer/tumbler connections, and overall VASP risk tier. Identify red flags and provide a compliance recommendation.`,
         },

@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export interface InterAgencyReferralResult {
   referralAgency: string;
@@ -128,13 +129,13 @@ export async function POST(req: Request) {
         system: `You are a UAE law enforcement referral specialist with expertise in UAE Public Prosecution (PPO) and CID liaison procedures, FIU reporting via goAML, inter-agency notification requirements, MLAT procedures, and Egmont Group information sharing. Draft comprehensive inter-agency referral packages including cover letters, facts summaries, evidence lists, legal basis statements, and parallel notification requirements. Always include tipping off warnings (FDL 10/2025 Art.20) and evidence preservation steps. Respond ONLY with valid JSON matching the InterAgencyReferralResult interface — no markdown fences.`,
         messages: [{
           role: "user",
-          content: `Case Description: ${body.caseDescription}
-Suspected Offence: ${body.suspectedOffence ?? "money laundering"}
-Subject Name: ${body.subjectName ?? "not identified"}
-Subject ID/Reference: ${body.subjectId ?? "not provided"}
-Evidence Summary: ${body.evidenceSummary ?? "not provided"}
-Urgency Level: ${body.urgency ?? "standard"}
-Additional Context: ${body.context ?? "none"}
+          content: `Case Description: ${sanitizeText(body.caseDescription, 2000)}
+Suspected Offence: ${sanitizeField(body.suspectedOffence, 100) ?? "money laundering"}
+Subject Name: ${sanitizeField(body.subjectName, 500) ?? "not identified"}
+Subject ID/Reference: ${sanitizeField(body.subjectId, 100) ?? "not provided"}
+Evidence Summary: ${sanitizeText(body.evidenceSummary, 2000) ?? "not provided"}
+Urgency Level: ${sanitizeField(body.urgency, 50) ?? "standard"}
+Additional Context: ${sanitizeText(body.context, 2000) ?? "none"}
 
 Prepare a comprehensive inter-agency referral package. Return complete InterAgencyReferralResult JSON.`,
         }],

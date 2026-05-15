@@ -123,9 +123,8 @@ const DEFAULT_ADVISOR  = 'claude-opus-4-7';
 const SPEED_EXECUTOR   = 'claude-haiku-4-5-20251001';
 
 const EXECUTOR_DEFAULT_TOKENS    = 10_000;
-// Speed mode caps output at 600 tokens — enough for a focused MLRO answer
-// and keeps latency well under the 5 s target.
-const SPEED_EXECUTOR_TOKENS      =    600;
+// Speed mode caps output at 400 tokens — targets sub-3 s with Haiku at ~150 tok/s.
+const SPEED_EXECUTOR_TOKENS      =    400;
 const ADVISOR_DEFAULT_TOKENS     = 16_000;
 const CHALLENGER_DEFAULT_TOKENS  =  8_000;
 

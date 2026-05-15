@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export interface PfRisk {
   category: "dprk" | "iran" | "dual_use" | "unscr" | "proliferator_network" | "other";
@@ -107,14 +108,14 @@ Respond ONLY with valid JSON — no markdown fences:
 }`,
         messages: [{
           role: "user",
-          content: `Subject: ${body.subject}
-Subject Country: ${body.subjectCountry ?? "not specified"}
-Counterparty: ${body.counterparty ?? "not specified"}
-Counterparty Country: ${body.counterpartyCountry ?? "not specified"}
-Goods/Services: ${body.goods ?? "not specified"}
-Transaction Type: ${body.transactionType ?? "not specified"}
-Amount: ${body.amount ?? "not specified"}
-Additional Context: ${body.context ?? "none"}
+          content: `Subject: ${sanitizeField(body.subject, 500)}
+Subject Country: ${sanitizeField(body.subjectCountry, 100) ?? "not specified"}
+Counterparty: ${sanitizeField(body.counterparty, 500) ?? "not specified"}
+Counterparty Country: ${sanitizeField(body.counterpartyCountry, 100) ?? "not specified"}
+Goods/Services: ${sanitizeText(body.goods, 2000) ?? "not specified"}
+Transaction Type: ${sanitizeField(body.transactionType, 100) ?? "not specified"}
+Amount: ${sanitizeField(body.amount, 100) ?? "not specified"}
+Additional Context: ${sanitizeText(body.context, 2000) ?? "none"}
 
 Assess proliferation financing risk.`,
         }],

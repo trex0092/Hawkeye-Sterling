@@ -3,6 +3,7 @@ import { writeAuditEvent } from "@/lib/audit";
 import { enforce } from "@/lib/server/enforce";
 
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -51,6 +52,9 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (!body.narrative?.trim()) {
     return NextResponse.json({ ok: false, error: "narrative is required" }, { status: 400 , headers: gate.headers});
   }
+  if (body.narrative.length > 10_000) {
+    return NextResponse.json({ ok: false, error: "narrative exceeds 10,000-character limit" }, { status: 400, headers: gate.headers });
+  }
 
   writeAuditEvent(
     "mlro",
@@ -64,13 +68,13 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   const userContent = [
-    `Report code: ${body.reportCode}`,
-    `Subject name: ${body.subjectName}`,
-    `Subject entity type: ${body.subjectEntityType}`,
-    body.amountAed ? `Amount (AED): ${body.amountAed}` : null,
+    `Report code: ${sanitizeField(body.reportCode, 50)}`,
+    `Subject name: ${sanitizeField(body.subjectName, 500)}`,
+    `Subject entity type: ${sanitizeField(body.subjectEntityType, 50)}`,
+    body.amountAed ? `Amount (AED): ${sanitizeField(body.amountAed, 50)}` : null,
     "",
     "Narrative to validate:",
-    body.narrative,
+    sanitizeText(body.narrative, 10000),
     "",
     "Return ONLY valid JSON matching this exact schema (score ≥75 → PASS, ≥50 → CONDITIONAL_PASS, <50 → FAIL):",
     `{`,

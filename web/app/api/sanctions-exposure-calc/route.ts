@@ -4,6 +4,7 @@ export const maxDuration = 60;import { NextResponse } from "next/server";
 
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export interface SanctionsExposureCalcResult {
   overallExposure: "critical" | "high" | "medium" | "low";
@@ -91,7 +92,7 @@ export async function POST(req: Request) {
         messages: [
           {
             role: "user",
-            content: `Calculate sanctions exposure and penalty estimate.\n\nEntity: ${body.entityName}\nEntity Type: ${body.entityType}\nJurisdictions: ${body.jurisdictions}\nTransaction Count: ${body.transactionCount}\nTotal Value (USD): ${body.totalValueUsd}\nContext: ${body.context}\n\nReturn JSON with fields: overallExposure, listExposures[] (each with list, matchType, entity, confidence), penaltyEstimate, immediateActions[], voluntaryDisclosureDeadline, debarmentRisk, regulatoryBasis.`,
+            content: `Calculate sanctions exposure and penalty estimate.\n\nEntity: ${sanitizeField(body.entityName)}\nEntity Type: ${sanitizeField(body.entityType)}\nJurisdictions: ${sanitizeField(body.jurisdictions)}\nTransaction Count: ${sanitizeField(body.transactionCount)}\nTotal Value (USD): ${sanitizeField(body.totalValueUsd)}\nContext: ${sanitizeText(body.context)}\n\nReturn JSON with fields: overallExposure, listExposures[] (each with list, matchType, entity, confidence), penaltyEstimate, immediateActions[], voluntaryDisclosureDeadline, debarmentRisk, regulatoryBasis.`,
           },
         ],
       });

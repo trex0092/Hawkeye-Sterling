@@ -4,6 +4,7 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 import { withLlmFallback } from "@/lib/server/llm-fallback";
 import { writeAuditEvent } from "@/lib/audit";
 
@@ -206,17 +207,17 @@ Respond ONLY with valid JSON — no markdown fences:
       ],
       messages: [{
         role: "user",
-        content: `Institution: ${body.institutionName ?? "UAE Financial Institution"}
-Reporting Period: ${body.reportingPeriod ?? "Current year"}
+        content: `Institution: ${sanitizeField(body.institutionName ?? "UAE Financial Institution", 200)}
+Reporting Period: ${sanitizeField(body.reportingPeriod ?? "Current year", 100)}
 ${body.overallInherent !== undefined ? `Overall Inherent Risk: ${body.overallInherent}/5` : ""}
 ${body.overallResidual !== undefined ? `Overall Residual Risk: ${body.overallResidual}/5` : ""}
-${body.approvedBy ? `Last Approved By: ${body.approvedBy}` : ""}
-${body.lastApproved ? `Last Approval Date: ${body.lastApproved}` : ""}
+${body.approvedBy ? `Last Approved By: ${sanitizeField(body.approvedBy, 200)}` : ""}
+${body.lastApproved ? `Last Approval Date: ${sanitizeField(body.lastApproved, 100)}` : ""}
 
 Risk Dimension Scores:
 ${dimensionText}
 
-Additional Context: ${body.context ?? "none"}
+Additional Context: ${sanitizeField(body.context ?? "none", 500)}
 
 Generate the board EWRA report.`,
       }],

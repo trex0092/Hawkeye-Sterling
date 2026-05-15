@@ -195,6 +195,18 @@ export async function POST(req: Request): Promise<Response> {
       { status: 400, headers: CORS },
     );
   }
+  if (question.length > 2000) {
+    return NextResponse.json(
+      { ok: false, error: "question exceeds 2000-character limit", elapsedMs: 0 },
+      { status: 400, headers: CORS },
+    );
+  }
+  if (narrative.length > 10_000) {
+    return NextResponse.json(
+      { ok: false, error: "narrative exceeds 10,000-character limit", elapsedMs: 0 },
+      { status: 400, headers: CORS },
+    );
+  }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {

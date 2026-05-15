@@ -18,6 +18,7 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -195,8 +196,8 @@ Return ONLY valid JSON:
 }`,
     messages: [{
       role: "user",
-      content: `Commodity: ${body.commodity}
-Final Form: ${body.finalForm ?? "not specified"}
+      content: `Commodity: ${sanitizeField(body.commodity, 100)}
+Final Form: ${sanitizeField(body.finalForm, 100) || "not specified"}
 Total Weight: ${body.totalWeight ? `${body.totalWeight}g` : "not specified"}
 Chain Length: ${body.chain.length} hops
 

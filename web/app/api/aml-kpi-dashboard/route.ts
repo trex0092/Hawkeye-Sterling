@@ -4,6 +4,7 @@ export const maxDuration = 60;import { NextResponse } from "next/server";
 
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export interface AmlKpiDashboardResult {
   overallHealth: "excellent" | "good" | "needs-attention" | "critical";
@@ -126,7 +127,7 @@ export async function POST(req: Request) {
         messages: [
           {
             role: "user",
-            content: `Generate an AML KPI dashboard assessment.\n\nInstitution Type: ${body.institutionType}\nSTR Count: ${body.strCount}\nFalse Positive Rate: ${body.falsePositiveRate}\nTraining Completion: ${body.trainingCompletion}\nOpen Findings: ${body.openFindings}\nContext: ${body.context}\n\nReturn JSON with fields: overallHealth, healthScore (0-100), kpis[] (each with name, value, target, status, trend), topRisks[], recommendations[], regulatoryBasis.`,
+            content: `Generate an AML KPI dashboard assessment.\n\nInstitution Type: ${sanitizeField(body.institutionType, 100)}\nSTR Count: ${body.strCount}\nFalse Positive Rate: ${body.falsePositiveRate}\nTraining Completion: ${body.trainingCompletion}\nOpen Findings: ${body.openFindings}\nContext: ${sanitizeText(body.context, 2000)}\n\nReturn JSON with fields: overallHealth, healthScore (0-100), kpis[] (each with name, value, target, status, trend), topRisks[], recommendations[], regulatoryBasis.`,
           },
         ],
       });

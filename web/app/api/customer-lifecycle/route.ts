@@ -4,6 +4,7 @@ export const maxDuration = 60;import { NextResponse } from "next/server";
 
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export interface CustomerLifecycleResult {
   currentStage: "onboarding" | "active" | "dormant" | "exit";
@@ -99,7 +100,7 @@ export async function POST(req: Request) {
         messages: [
           {
             role: "user",
-            content: `Assess AML risk across the customer lifecycle.\n\nCustomer: ${body.customerName}\nOnboarding Date: ${body.onboardingDate}\nCurrent Risk Rating: ${body.currentRiskRating}\nRecent Changes: ${body.recentChanges}\nTransaction Volume: ${body.transactionVolume}\nContext: ${body.context}\n\nReturn JSON with fields: currentStage, riskTrajectory, stageRisks[] (each with stage, risks[], controls[]), nextReviewTriggers[], cddRefreshRequired, exitRiskIndicators[], regulatoryBasis.`,
+            content: `Assess AML risk across the customer lifecycle.\n\nCustomer: ${sanitizeField(body.customerName)}\nOnboarding Date: ${sanitizeField(body.onboardingDate)}\nCurrent Risk Rating: ${sanitizeField(body.currentRiskRating)}\nRecent Changes: ${sanitizeField(body.recentChanges)}\nTransaction Volume: ${sanitizeField(body.transactionVolume)}\nContext: ${sanitizeText(body.context)}\n\nReturn JSON with fields: currentStage, riskTrajectory, stageRisks[] (each with stage, risks[], controls[]), nextReviewTriggers[], cddRefreshRequired, exitRiskIndicators[], regulatoryBasis.`,
           },
         ],
       });

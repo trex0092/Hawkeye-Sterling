@@ -4,6 +4,7 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 export interface SowCalculatorResult {
   sowRisk: "critical" | "high" | "medium" | "low" | "clear";
   totalDeclaredIncomeAed: number;
@@ -144,7 +145,7 @@ export async function POST(req: Request) {
       ],
       messages: [{
         role: "user",
-        content: `Subject Name: ${body.subjectName ?? "not identified"}
+        content: `Subject Name: ${sanitizeField(body.subjectName)}
 Declared Income (description): ${body.declaredIncome}
 Declared Assets: ${body.declaredAssets ?? "not provided"}
 Review Period (years): ${body.periodYears ?? "not specified"}

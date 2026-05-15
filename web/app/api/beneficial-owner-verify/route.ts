@@ -4,6 +4,7 @@ export const maxDuration = 60;import { NextResponse } from "next/server";
 
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export interface BeneficialOwnerVerifyResult {
   uboConfirmed: boolean;
@@ -73,7 +74,7 @@ export async function POST(req: Request) {
         messages: [
           {
             role: "user",
-            content: `Assess beneficial ownership verification status.\n\nEntity: ${body.entityName}\nOwnership Structure: ${body.ownershipStructure}\nJurisdictions: ${body.jurisdictions}\nLayer Count: ${body.layerCount}\nUBO Name: ${body.uboName}\nContext: ${body.context}\n\nReturn JSON with fields: uboConfirmed, ownershipChainDepth, controlPercentage, verificationStatus, gaps[], verificationSteps[], uboRegisterRequired, registrationDeadline, regulatoryBasis.`,
+            content: `Assess beneficial ownership verification status.\n\nEntity: ${sanitizeField(body.entityName)}\nOwnership Structure: ${sanitizeField(body.ownershipStructure)}\nJurisdictions: ${sanitizeField(body.jurisdictions)}\nLayer Count: ${sanitizeField(body.layerCount)}\nUBO Name: ${sanitizeField(body.uboName)}\nContext: ${sanitizeText(body.context)}\n\nReturn JSON with fields: uboConfirmed, ownershipChainDepth, controlPercentage, verificationStatus, gaps[], verificationSteps[], uboRegisterRequired, registrationDeadline, regulatoryBasis.`,
           },
         ],
       });

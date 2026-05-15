@@ -56,6 +56,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
   }
 
+  if (body.email && body.email.length > 500) {
+    return NextResponse.json({ ok: false, error: "email exceeds 500-character limit" }, { status: 400, headers: gate.headers });
+  }
+  if (body.domain && body.domain.length > 2000) {
+    return NextResponse.json({ ok: false, error: "domain exceeds 2000-character limit" }, { status: 400, headers: gate.headers });
+  }
+
   const rawDomain = body.domain ?? body.email?.split("@")[1] ?? "";
   const domain = rawDomain.toLowerCase().trim();
 

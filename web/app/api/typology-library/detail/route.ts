@@ -4,6 +4,7 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 export interface TypologyDetailResult {
   name: string;
   category: string;
@@ -216,7 +217,7 @@ export async function POST(req: Request) {
       messages: [
         {
           role: "user",
-          content: `Provide a comprehensive deep-dive analysis of this AML/CFT typology: "${body.typologyName ?? "Trade Invoice Fraud"}"\n\nInclude historical background, step-by-step ML process (at least 4-6 steps across placement/layering/integration phases), a detailed real case study, detection techniques, and regulatory guidance. Make it expert-level and comprehensive.`,
+          content: `Provide a comprehensive deep-dive analysis of this AML/CFT typology: "${sanitizeField(body.typologyName ?? "Trade Invoice Fraud", 200)}"\n\nInclude historical background, step-by-step ML process (at least 4-6 steps across placement/layering/integration phases), a detailed real case study, detection techniques, and regulatory guidance. Make it expert-level and comprehensive.`,
         },
       ],
     });

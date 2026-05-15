@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export interface VaspRiskResult {
   overallRisk: "critical" | "high" | "medium" | "low";
@@ -117,17 +118,17 @@ Red flags: unregulated, no Travel Rule, P2P with unhosted wallets, high-risk jur
 Respond ONLY with valid JSON — no markdown fences matching the VaspRiskResult interface.`,
         messages: [{
           role: "user",
-          content: `VASP Name: ${body.vaspName}
-VASP Jurisdiction: ${body.vaspJurisdiction ?? "not specified"}
-Exchange Type: ${body.exchangeType ?? "not specified"}
-Custody Model: ${body.custodyModel ?? "not specified"}
-Supported Assets: ${body.supportedAssets ?? "not specified"}
-Travel Rule Protocol: ${body.travelRuleProtocol ?? "not specified"}
-Licence Number: ${body.licenceNumber ?? "not provided"}
-Geographic Reach: ${body.geographicReach ?? "not specified"}
-AML Policy Available: ${body.amlPolicyAvailable ?? "not specified"}
-Blockchain Analytics Tool: ${body.blockchainAnalyticsTool ?? "not specified"}
-Additional Context: ${body.context ?? "none"}
+          content: `VASP Name: ${sanitizeField(body.vaspName, 500)}
+VASP Jurisdiction: ${sanitizeField(body.vaspJurisdiction, 100) || "not specified"}
+Exchange Type: ${sanitizeField(body.exchangeType, 100) || "not specified"}
+Custody Model: ${sanitizeField(body.custodyModel, 100) || "not specified"}
+Supported Assets: ${sanitizeField(body.supportedAssets, 200) || "not specified"}
+Travel Rule Protocol: ${sanitizeField(body.travelRuleProtocol, 100) || "not specified"}
+Licence Number: ${sanitizeField(body.licenceNumber, 100) || "not provided"}
+Geographic Reach: ${sanitizeField(body.geographicReach, 200) || "not specified"}
+AML Policy Available: ${sanitizeField(body.amlPolicyAvailable, 100) || "not specified"}
+Blockchain Analytics Tool: ${sanitizeField(body.blockchainAnalyticsTool, 100) || "not specified"}
+Additional Context: ${sanitizeText(body.context, 2000) || "none"}
 
 Assess this VASP for onboarding risk.`,
         }],

@@ -177,7 +177,7 @@ async function runSubject(subject: PKycSubject, force = false): Promise<RunSubje
           if (drift.length) behavioralDrift = drift;
         }
       }
-    } catch { /* baseline is non-blocking */ }
+    } catch (err) { console.warn("[pkyc/run] behavioral baseline comparison failed (non-blocking):", err instanceof Error ? err.message : String(err)); }
 
     // Build cadence-specific next-run date
     const cadenceMs: Record<string, number> = {

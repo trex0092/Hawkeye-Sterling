@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export interface RegExamResult {
   examArea: string;
@@ -151,9 +152,9 @@ export async function POST(req: Request) {
         system: `You are a CBUAE examination specialist with expertise in UAE AML/CFT inspection methodology, typical CBUAE examination questions, and model answers for regulated financial institutions. Generate realistic examination preparation materials including likely questions, model answers, documentation requirements, common findings, and best practices. Base questions on UAE FDL 10/2025, CBUAE AML/CFT Guidelines, and FATF Recommendations. Model answers should reflect what an inspector expects to hear — specific, procedure-oriented, legally grounded. Respond ONLY with valid JSON matching the RegExamResult interface — no markdown fences.`,
         messages: [{
           role: "user",
-          content: `Exam Area / Topic: ${body.examArea}
-Institution Type: ${body.institutionType ?? "UAE licensed bank"}
-Additional Context: ${body.context ?? "none"}
+          content: `Exam Area / Topic: ${sanitizeField(body.examArea, 500)}
+Institution Type: ${sanitizeField(body.institutionType, 100) ?? "UAE licensed bank"}
+Additional Context: ${sanitizeText(body.context, 2000) ?? "none"}
 
 Generate comprehensive regulatory examination preparation materials for this topic. Return complete RegExamResult JSON.`,
         }],

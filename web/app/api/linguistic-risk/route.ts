@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -52,7 +53,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         messages: [
           {
             role: "user",
-            content: `You are an AML linguistic analyst. Analyse the following text for deception markers, evasive language, and inconsistencies related to subject "${subjectName}".
+            content: `You are an AML linguistic analyst. Analyse the following text for deception markers, evasive language, and inconsistencies related to subject "${sanitizeField(subjectName)}".
 
 Text: """${text.substring(0, 2000)}"""
 

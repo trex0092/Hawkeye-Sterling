@@ -12,6 +12,7 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { loadAllCases } from "@/lib/server/case-vault";
 
@@ -133,10 +134,10 @@ Return ONLY valid JSON:
 }`,
     messages: [{
       role: "user",
-      content: `High-Risk Entity: ${body.entityName}
-Entity Type: ${body.entityType ?? "unknown"}
-Risk Reason: ${body.highRiskReason}
-List/Source: ${body.listId ?? "not specified"}
+      content: `High-Risk Entity: ${sanitizeField(body.entityName, 500)}
+Entity Type: ${sanitizeField(body.entityType, 100) ?? "unknown"}
+Risk Reason: ${sanitizeText(body.highRiskReason, 2000)}
+List/Source: ${sanitizeField(body.listId, 100) ?? "not specified"}
 Starting Contamination Score: ${startingScore}/100
 
 Customer Base (${caseDigests.length} cases):
