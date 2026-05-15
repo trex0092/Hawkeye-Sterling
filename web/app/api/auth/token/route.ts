@@ -61,11 +61,11 @@ export async function POST(req: Request): Promise<NextResponse> {
       { iss: "hawkeye-sterling" },
     );
   } catch (err) {
-    console.error("[auth/token]", err instanceof Error ? err.message : err);
+    console.error("[auth/token] JWT signing failed:", err);
     return NextResponse.json(
       {
         ok: false,
-        error: `JWT signing unavailable: ${err instanceof Error ? err.message : "JWT_SIGNING_SECRET may not be configured"}`,
+        error: "JWT signing unavailable — contact administrator",
       },
       { status: 503, headers: rateLimitHeaders(rl) },
     );

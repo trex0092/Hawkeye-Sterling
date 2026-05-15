@@ -1393,6 +1393,17 @@ function Section({ label, children }: { label: string; children: React.ReactNode
   );
 }
 
+// ── Module-scope constants ────────────────────────────────────────────────────
+
+const ADVISOR_STORAGE = "hawkeye.mlro.advisor.v1";
+
+const CLIENT_TIMEOUTS: Record<ReasoningMode, number> = {
+  quick: 15_000,
+  speed: 9_000,
+  balanced: 45_000,
+  multi_perspective: 600_000,
+};
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function MlroAdvisorPage() {
@@ -1403,7 +1414,6 @@ export default function MlroAdvisorPage() {
   const [mode, setMode] = useState<ReasoningMode>("quick");
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const ADVISOR_STORAGE = "hawkeye.mlro.advisor.v1";
   const [advisorHistory, setAdvisorHistory] = useState<AdvisorHistoryEntry[]>(() => {
     if (typeof window === "undefined") return [];
     try {
@@ -1419,19 +1429,12 @@ export default function MlroAdvisorPage() {
     catch (err) {
       console.warn("[hawkeye] mlro-advisor: history persist failed (storage quota):", err);
     }
-  }, [advisorHistory, ADVISOR_STORAGE]);
+  }, [advisorHistory]);
 
   /** ID of the entry currently being streamed (Quick mode). null when idle. */
   const [streamingEntryId, setStreamingEntryId] = useState<string | null>(null);
   /** Advisor entry currently open in the goAML draft modal (null = closed). */
   const [strDraftFor, setStrDraftFor] = useState<AdvisorHistoryEntry | null>(null);
-
-  const CLIENT_TIMEOUTS: Record<ReasoningMode, number> = {
-    quick: 15_000,
-    speed: 9_000,
-    balanced: 45_000,
-    multi_perspective: 600_000,
-  };
 
   const recordAdvisorEntry = useCallback((q: string, m: ReasoningMode, data: AdvisorResult) => {
     setAdvisorHistory((prev) => [

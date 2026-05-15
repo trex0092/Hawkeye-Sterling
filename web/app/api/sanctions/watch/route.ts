@@ -76,7 +76,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (!expected) {
     // Env var not configured on this Netlify site — lock the endpoint.
     return NextResponse.json(
-      { ok: false, error: "service unavailable — SANCTIONS_CRON_TOKEN not set" },
+      { ok: false, error: "service unavailable" },
       { status: 503 },
     );
   }

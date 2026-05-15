@@ -527,7 +527,7 @@ export default function AccessControlPage() {
   const mountedRef = useRef(true);
   useEffect(() => () => { mountedRef.current = false; }, []);
 
-  // Load from localStorage or API
+  // Load from sessionStorage or API (sessionStorage so sensitive user lists don't persist across sessions)
   const fetchUsers = useCallback(async () => {
     setLoadingUsers(true);
     try {
@@ -535,11 +535,11 @@ export default function AccessControlPage() {
       const data = (await resp.json()) as { ok: boolean; users?: AccessUser[] };
       if (data.ok && data.users && mountedRef.current) {
         setUsers(data.users);
-        localStorage.setItem("hawkeye.access.users", JSON.stringify(data.users));
+        sessionStorage.setItem("hawkeye.access.users", JSON.stringify(data.users));
       }
     } catch {
       try {
-        const cached = localStorage.getItem("hawkeye.access.users");
+        const cached = sessionStorage.getItem("hawkeye.access.users");
         if (cached && mountedRef.current) setUsers(JSON.parse(cached) as AccessUser[]);
       } catch { /* corrupted cache — ignore */ }
     } finally {
@@ -554,11 +554,11 @@ export default function AccessControlPage() {
       const data = (await resp.json()) as { ok: boolean; log?: PermissionLogEntry[] };
       if (data.ok && data.log && mountedRef.current) {
         setLog(data.log);
-        localStorage.setItem("hawkeye.access.log", JSON.stringify(data.log));
+        sessionStorage.setItem("hawkeye.access.log", JSON.stringify(data.log));
       }
     } catch {
       try {
-        const cached = localStorage.getItem("hawkeye.access.log");
+        const cached = sessionStorage.getItem("hawkeye.access.log");
         if (cached && mountedRef.current) setLog(JSON.parse(cached) as PermissionLogEntry[]);
       } catch { /* corrupted cache — ignore */ }
     } finally {
@@ -567,11 +567,11 @@ export default function AccessControlPage() {
   }, []);
 
   useEffect(() => {
-    // Hydrate from localStorage immediately (guarded against corrupted data)
+    // Hydrate from sessionStorage immediately (guarded against corrupted data)
     try {
-      const cachedUsers = localStorage.getItem("hawkeye.access.users");
+      const cachedUsers = sessionStorage.getItem("hawkeye.access.users");
       if (cachedUsers) setUsers(JSON.parse(cachedUsers) as AccessUser[]);
-      const cachedLog = localStorage.getItem("hawkeye.access.log");
+      const cachedLog = sessionStorage.getItem("hawkeye.access.log");
       if (cachedLog) setLog(JSON.parse(cachedLog) as PermissionLogEntry[]);
     } catch { /* corrupted cache — will be replaced by API response */ }
 

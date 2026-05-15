@@ -86,7 +86,14 @@ function loadTxs(): TxRow[] {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw) as unknown;
-    return Array.isArray(parsed) ? (parsed as TxRow[]) : [];
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(
+      (row): row is TxRow =>
+        row !== null &&
+        typeof row === "object" &&
+        typeof (row as Record<string, unknown>).amount === "string" &&
+        typeof (row as Record<string, unknown>).occurredOn === "string",
+    );
   } catch {
     return [];
   }

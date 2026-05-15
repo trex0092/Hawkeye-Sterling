@@ -65,7 +65,7 @@ async function handlePost(req: Request): Promise<NextResponse> {
   const secret = process.env[SIGNING_SECRET_ENV];
   if (!secret) {
     return NextResponse.json(
-      { ok: false, error: `${SIGNING_SECRET_ENV} not configured` },
+      { ok: false, error: "signing key not configured — contact administrator" },
       { status: 503, headers: gateHeaders },
     );
   }
@@ -151,7 +151,7 @@ async function handlePost(req: Request): Promise<NextResponse> {
   const apiKey = process.env[GOAML_API_KEY_ENV];
   if (!endpoint || !apiKey) {
     return NextResponse.json(
-      { ok: false, error: `${GOAML_ENDPOINT_ENV} or ${GOAML_API_KEY_ENV} not configured for live submit` },
+      { ok: false, error: "live submission endpoint not configured — contact administrator" },
       { status: 503, headers: gateHeaders },
     );
   }
@@ -169,6 +169,7 @@ async function handlePost(req: Request): Promise<NextResponse> {
       body: body.xml,
     });
     const upstreamText = await upstream.text();
+    console.error("[goaml/auto-submit] upstream response:", upstream.status, upstreamText.slice(0, 2000));
     return NextResponse.json(
       {
         ok: upstream.ok,
@@ -177,7 +178,7 @@ async function handlePost(req: Request): Promise<NextResponse> {
         twoEyesVerified,
         dryRun: false,
         upstreamStatus: upstream.status,
-        upstreamBody: upstreamText.slice(0, 2000),
+        upstreamBody: upstream.ok ? "accepted" : "upstream rejection",
       },
       { status: upstream.ok ? 200 : 502, headers: gateHeaders },
     );
