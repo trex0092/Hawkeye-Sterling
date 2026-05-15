@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 interface InputItem {
   title: string;
   summary?: string;
@@ -91,7 +92,7 @@ export async function POST(req: Request) {
     const itemsList = items
       .map(
         (item, i) =>
-          `[${i}] title: "${item.title ?? ""}" | source: "${item.source ?? ""}" | date: "${item.date ?? ""}" | summary: "${(item.summary ?? "").slice(0, 200)}"`,
+          `[${i}] title: "${sanitizeField(item.title, 300)}" | source: "${sanitizeField(item.source, 100)}" | date: "${sanitizeField(item.date, 50)}" | summary: "${sanitizeText(item.summary, 1000).slice(0, 200)}"`,
       )
       .join("\n");
 

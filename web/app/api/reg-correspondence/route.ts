@@ -15,6 +15,7 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -178,26 +179,26 @@ Return ONLY valid JSON:
       role: "user",
       content: `Draft the following regulatory correspondence:
 
-Type: ${body.correspondenceType}
+Type: ${sanitizeField(body.correspondenceType, 200)}
 Recipient: ${authority.fullName}
 ${authority.address}
 ${authority.salutation}
 
-Subject: ${body.subject}
+Subject: ${sanitizeField(body.subject, 200)}
 Urgency: ${body.urgency ?? "routine"}
-Institution: ${body.institutionName ?? "[Institution Name]"}
-MLRO: ${body.mlroName ?? "[MLRO Name]"}
-Reference Number: ${body.referenceNumber ?? "auto-generate"}
-${body.caseId ? `Case ID: ${body.caseId}` : ""}
-${body.subjectName ? `Subject of Matter: ${body.subjectName}` : ""}
-${body.inResponseTo ? `In Response To: ${body.inResponseTo}` : ""}
+Institution: ${sanitizeField(body.institutionName, 200) || "[Institution Name]"}
+MLRO: ${sanitizeField(body.mlroName, 200) || "[MLRO Name]"}
+Reference Number: ${sanitizeField(body.referenceNumber, 200) || "auto-generate"}
+${body.caseId ? `Case ID: ${sanitizeField(body.caseId, 200)}` : ""}
+${body.subjectName ? `Subject of Matter: ${sanitizeField(body.subjectName, 200)}` : ""}
+${body.inResponseTo ? `In Response To: ${sanitizeField(body.inResponseTo, 200)}` : ""}
 ${body.regulatoryDeadline ? `Regulatory Deadline: ${body.regulatoryDeadline}` : ""}
 
 Key Facts to Include:
-${body.keyFacts.map((f, i) => `${i + 1}. ${f}`).join("\n")}
+${body.keyFacts.map((f, i) => `${i + 1}. ${sanitizeField(f, 500)}`).join("\n")}
 
-${body.requestedResponse ? `Requested Response/Action: ${body.requestedResponse}` : ""}
-${body.additionalContext ? `Additional Context: ${body.additionalContext}` : ""}
+${body.requestedResponse ? `Requested Response/Action: ${sanitizeText(body.requestedResponse, 3000)}` : ""}
+${body.additionalContext ? `Additional Context: ${sanitizeText(body.additionalContext, 3000)}` : ""}
 
 Regulatory Basis: ${regulatoryBasis}
 

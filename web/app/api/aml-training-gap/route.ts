@@ -4,6 +4,7 @@ export const maxDuration = 60;import { NextResponse } from "next/server";
 
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export interface AmlTrainingGapResult {
   completionRate: number;
@@ -99,7 +100,7 @@ export async function POST(req: Request) {
         messages: [
           {
             role: "user",
-            content: `Assess AML training gaps and generate a remediation plan.\n\nStaff Count: ${body.staffCount}\nCompletion Rate: ${body.completionRate}\nHigh-Risk Roles: ${body.highRiskRoles}\nOverdue Count: ${body.overdueCount}\nLast Training Date: ${body.lastTrainingDate}\nContext: ${body.context}\n\nReturn JSON with fields: completionRate (0-100), gapRating, overdueStaff[], highRiskRoleGaps[], mandatoryModules[], trainingPlan[] (each with module, audience, deadline, deliveryMethod), regulatoryBasis.`,
+            content: `Assess AML training gaps and generate a remediation plan.\n\nStaff Count: ${body.staffCount}\nCompletion Rate: ${body.completionRate}\nHigh-Risk Roles: ${body.highRiskRoles}\nOverdue Count: ${body.overdueCount}\nLast Training Date: ${body.lastTrainingDate}\nContext: ${sanitizeText(body.context, 2000)}\n\nReturn JSON with fields: completionRate (0-100), gapRating, overdueStaff[], highRiskRoleGaps[], mandatoryModules[], trainingPlan[] (each with module, audience, deadline, deliveryMethod), regulatoryBasis.`,
           },
         ],
       });

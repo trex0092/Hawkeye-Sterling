@@ -15,6 +15,7 @@ import { NextResponse } from "next/server";
 import { writeAuditEvent } from "@/lib/audit";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -162,7 +163,7 @@ async function parseQuery(query: string): Promise<ParseResult> {
       model: "claude-haiku-4-5-20251001",
       max_tokens: 1024,
       system: SYSTEM_PROMPT,
-      messages: [{ role: "user", content: `Query: "${query}"` }],
+      messages: [{ role: "user", content: `Query: "${sanitizeField(query, 500)}"` }],
     });
     const text = (response.content[0]?.type === "text" ? response.content[0].text : "{}").trim();
     let parsed: { filters?: ParsedFilters; interpretation?: string; confidence?: number; reasoning?: string };

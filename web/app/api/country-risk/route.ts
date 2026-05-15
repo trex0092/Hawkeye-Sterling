@@ -7,6 +7,7 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 export interface CountryRiskDimensions {
   amlRisk: number;
   baselScore: number;
@@ -387,7 +388,7 @@ Return ONLY valid JSON with this exact structure (no markdown fences):
       messages: [
         {
           role: "user",
-          content: `Analyse country risk for: ${country}
+          content: `Analyse country risk for: ${sanitizeField(country, 100)}
 
 Analysis depth: ${depth}
 
