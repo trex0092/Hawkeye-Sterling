@@ -273,7 +273,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     const SANCTIONS_REDLINE_MAP: Array<[string, string]> = [
       ["ofac_sdn", "rl_ofac_sdn_confirmed"],
       ["un_consolidated", "rl_un_consolidated_confirmed"],
-      ["eu_consolidated", "rl_eu_cfsp_confirmed"],
+      ["eu_fsf", "rl_eu_cfsp_confirmed"],
       ["uk_ofsi", "rl_uk_ofsi_confirmed"],
     ];
     for (const [listId, redlineId] of SANCTIONS_REDLINE_MAP) {
@@ -284,7 +284,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     // UAE EOCN + Local Terrorist List → same redline
     const uaeHitsForRedline = [
       ...(_redlineHitsByList.get("uae_eocn") ?? []),
-      ...(_redlineHitsByList.get("uae_local_terrorist") ?? []),
+      ...(_redlineHitsByList.get("uae_ltl") ?? []),
     ];
     if (uaeHitsForRedline.some((h) => h.score >= 0.85)) firedRedlineIds.push("rl_eocn_confirmed");
     // LSEG supplements for Canada + Australia
@@ -307,10 +307,10 @@ export async function POST(req: Request): Promise<NextResponse> {
     const REGIME_LIST_IDS = [
       "un_consolidated",
       "ofac_sdn",
-      "eu_consolidated",
+      "eu_fsf",
       "uk_ofsi",
       "uae_eocn",
-      "uae_local_terrorist",
+      "uae_ltl",
     ] as const;
     const hitsByList = new Map<string, typeof screen.hits>();
     for (const h of screen.hits) {
@@ -684,7 +684,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         adverseKeywords: [],
         adverseKeywordGroups: [],
         jurisdiction: null,
-        redlines: { fired: [], checked: 0 },
+        redlines: { fired: [], action: null, summary: "No redlines fired." },
         variants: { aliasExpansion: [], nameVariants: [], doubleMetaphone: [], soundex: "" },
         jurisdictionRich: null,
         typologies: { hits: [], compositeScore: 0 },

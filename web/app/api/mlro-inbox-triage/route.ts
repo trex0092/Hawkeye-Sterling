@@ -261,12 +261,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400, headers: gate.headers });
   }
 
   const { items = [], generateNarrative = false } = body;
   if (!Array.isArray(items) || items.length === 0) {
-    return NextResponse.json({ error: "items array is required and must be non-empty" }, { status: 400 });
+    return NextResponse.json({ error: "items array is required and must be non-empty" }, { status: 400, headers: gate.headers });
   }
 
   const triaged: TriagedItem[] = items.map((item) => {
@@ -334,5 +334,5 @@ Write a 3-4 sentence MLRO triage briefing for today's inbox. Highlight the most 
     }
   }
 
-  return NextResponse.json(result);
+  return NextResponse.json(result, { headers: gate.headers });
 }
