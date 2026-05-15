@@ -222,3 +222,7 @@ export function invalidateCandidateCache(): void {
   _cached = null;
   _cachedAt = 0;
 }
+
+// Eagerly start loading on module import so the first real request hits a warm
+// cache instead of waiting for the full Blobs fetch inline.
+void loadCandidates().catch(() => {/* silent — cache will load on first real request */});
