@@ -69,7 +69,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({
       ok: true,
       match: null,
-      hint: "No OpenSanctions record matched. The dataset covers ~67k sanctioned entities aggregated from ~200 sources; absence is not a guarantee of clearance — manual review still required for high-risk subjects.",
+      hint: "No OpenSanctions record matched in the loaded corpus. Coverage depends on the OPENSANCTIONS_DATASETS env var (default: ae_local_terrorists only — ~30 entities). Set OPENSANCTIONS_DATASETS to a comma-separated list of slugs (e.g. 'us_ofac_sdn,eu_fsf,gb_hmt_sanctions,un_sc_sanctions') and trigger /api/admin/opensanctions-refresh to expand. Absence is not a guarantee of clearance — manual review still required for high-risk subjects.",
     });
   }
 
