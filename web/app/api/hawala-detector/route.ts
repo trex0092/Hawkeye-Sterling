@@ -4,6 +4,7 @@ export const maxDuration = 60;import { NextResponse } from "next/server";
 
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export interface HawalaDetectorResult {
   riskRating: "critical" | "high" | "medium" | "low";
@@ -72,7 +73,7 @@ export async function POST(req: Request) {
         messages: [
           {
             role: "user",
-            content: `Analyse for hawala/IVTS indicators.\n\nSubject: ${body.subjectName}\nBusiness Type: ${body.businessType}\nTransaction Pattern: ${body.transactionPattern}\nCounterparties: ${body.counterparties}\nCash Volume: ${body.cashVolume}\nContext: ${body.context}\n\nReturn JSON with fields: riskRating, ivtsIndicators[], settlementMechanism, estimatedVolume, counterpartiesIdentified[], regulatoryAction, reportingRequired, regulatoryBasis.`,
+            content: `Analyse for hawala/IVTS indicators.\n\nSubject: ${sanitizeField(body.subjectName)}\nBusiness Type: ${sanitizeField(body.businessType)}\nTransaction Pattern: ${sanitizeField(body.transactionPattern)}\nCounterparties: ${sanitizeField(body.counterparties)}\nCash Volume: ${sanitizeField(body.cashVolume)}\nContext: ${sanitizeText(body.context)}\n\nReturn JSON with fields: riskRating, ivtsIndicators[], settlementMechanism, estimatedVolume, counterpartiesIdentified[], regulatoryAction, reportingRequired, regulatoryBasis.`,
           },
         ],
       });

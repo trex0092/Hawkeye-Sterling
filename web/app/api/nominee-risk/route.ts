@@ -4,6 +4,7 @@ export const maxDuration = 60;import { NextResponse } from "next/server";
 
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export interface NomineeRiskResult {
   riskRating: "critical" | "high" | "medium" | "low";
@@ -70,7 +71,7 @@ export async function POST(req: Request) {
         messages: [
           {
             role: "user",
-            content: `Assess nominee director and UBO obscuration risk.\n\nCompany: ${body.companyName}\nDirector: ${body.directorName}\nIncorporation Date: ${body.incorporationDate}\nBusiness Activity: ${body.businessActivity}\nController Details: ${body.controllerDetails}\nContext: ${body.context}\n\nReturn JSON with fields: riskRating, nomineeIndicators[], uboObscured, estimatedLayersToUbo, verificationRequired[], legalAction, regulatoryBasis.`,
+            content: `Assess nominee director and UBO obscuration risk.\n\nCompany: ${sanitizeField(body.companyName)}\nDirector: ${sanitizeField(body.directorName)}\nIncorporation Date: ${sanitizeField(body.incorporationDate)}\nBusiness Activity: ${sanitizeField(body.businessActivity)}\nController Details: ${sanitizeField(body.controllerDetails)}\nContext: ${sanitizeText(body.context)}\n\nReturn JSON with fields: riskRating, nomineeIndicators[], uboObscured, estimatedLayersToUbo, verificationRequired[], legalAction, regulatoryBasis.`,
           },
         ],
       });

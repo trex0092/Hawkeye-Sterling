@@ -4,6 +4,7 @@ export const maxDuration = 60;import { NextResponse } from "next/server";
 
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export interface PepCorporateResult {
   pepExposureLevel: "direct" | "indirect" | "none";
@@ -74,7 +75,7 @@ export async function POST(req: Request) {
         messages: [
           {
             role: "user",
-            content: `Assess PEP exposure for this corporate customer.\n\nCompany: ${body.companyName}\nPEP Name: ${body.pepName}\nPEP Role: ${body.pepRole}\nOwnership %: ${body.ownershipPct}\nIndustry Context: ${body.industryContext}\nContext: ${body.context}\n\nReturn JSON with fields: pepExposureLevel, riskRating, politicalConnections[], corruptionRiskFactors[], eddMeasures[], approvalRequired, regulatoryBasis.`,
+            content: `Assess PEP exposure for this corporate customer.\n\nCompany: ${sanitizeField(body.companyName)}\nPEP Name: ${sanitizeField(body.pepName)}\nPEP Role: ${sanitizeField(body.pepRole)}\nOwnership %: ${sanitizeField(body.ownershipPct)}\nIndustry Context: ${sanitizeField(body.industryContext)}\nContext: ${sanitizeText(body.context)}\n\nReturn JSON with fields: pepExposureLevel, riskRating, politicalConnections[], corruptionRiskFactors[], eddMeasures[], approvalRequired, regulatoryBasis.`,
           },
         ],
       });

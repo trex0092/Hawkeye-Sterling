@@ -4,6 +4,7 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 export interface SowCalculatorResult {
   sowRisk: "critical" | "high" | "medium" | "low" | "clear";
   totalDeclaredIncomeAed: number;

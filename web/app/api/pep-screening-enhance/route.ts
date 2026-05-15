@@ -4,6 +4,7 @@ export const maxDuration = 60;import { NextResponse } from "next/server";
 
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export interface PepScreeningEnhanceResult {
   pepClassification: "PEP-1" | "PEP-2" | "PEP-3" | "Former-PEP" | "Not-PEP";
@@ -70,7 +71,7 @@ export async function POST(req: Request) {
         messages: [
           {
             role: "user",
-            content: `Perform enhanced PEP screening and classification.\n\nSubject: ${body.subjectName}\nCurrent Role: ${body.currentRole}\nJurisdiction: ${body.jurisdiction}\nWealth Estimate: ${body.wealthEstimate}\nKnown Connections: ${body.knownConnections}\nContext: ${body.context}\n\nReturn JSON with fields: pepClassification, riskRating, pepRole, corruptionExposure, eddChecklist[], monitoringPlan, exitCriteria, regulatoryBasis.`,
+            content: `Perform enhanced PEP screening and classification.\n\nSubject: ${sanitizeField(body.subjectName)}\nCurrent Role: ${sanitizeField(body.currentRole)}\nJurisdiction: ${sanitizeField(body.jurisdiction)}\nWealth Estimate: ${sanitizeField(body.wealthEstimate)}\nKnown Connections: ${sanitizeField(body.knownConnections)}\nContext: ${sanitizeText(body.context)}\n\nReturn JSON with fields: pepClassification, riskRating, pepRole, corruptionExposure, eddChecklist[], monitoringPlan, exitCriteria, regulatoryBasis.`,
           },
         ],
       });

@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export interface GoAmlFieldCheck {
   field: string;

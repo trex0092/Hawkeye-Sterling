@@ -4,6 +4,7 @@ export const maxDuration = 60;import { NextResponse } from "next/server";
 
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export interface TradeFinanceRfResult {
   riskRating: "critical" | "high" | "medium" | "low";
@@ -74,7 +75,7 @@ export async function POST(req: Request) {
         messages: [
           {
             role: "user",
-            content: `Assess this trade finance transaction for TBML red flags.\n\nTransaction Type: ${body.transactionType}\nCommodity: ${body.commodity}\nImporter: ${body.importerName}\nExporter: ${body.exporterName}\nInvoice Value: ${body.invoiceValue}\nMarket Value: ${body.marketValue}\nShipping Route: ${body.shippingRoute}\nContext: ${body.context}\n\nReturn JSON with fields: riskRating, tbmlScore (0-100), redFlags[], documentaryDiscrepancies[], commodityRisk, counterpartyRisk, recommendedAction, regulatoryBasis.`,
+            content: `Assess this trade finance transaction for TBML red flags.\n\nTransaction Type: ${sanitizeField(body.transactionType)}\nCommodity: ${sanitizeField(body.commodity)}\nImporter: ${sanitizeField(body.importerName)}\nExporter: ${sanitizeField(body.exporterName)}\nInvoice Value: ${sanitizeField(body.invoiceValue)}\nMarket Value: ${sanitizeField(body.marketValue)}\nShipping Route: ${sanitizeField(body.shippingRoute)}\nContext: ${sanitizeText(body.context)}\n\nReturn JSON with fields: riskRating, tbmlScore (0-100), redFlags[], documentaryDiscrepancies[], commodityRisk, counterpartyRisk, recommendedAction, regulatoryBasis.`,
           },
         ],
       });
