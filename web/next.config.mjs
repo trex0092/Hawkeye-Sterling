@@ -42,32 +42,11 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
 
-  // Security headers — netlify.toml's [[headers]] block only applies to
-  // static assets served from the edge cache. Next.js SSR pages and API
-  // route responses come from Lambda functions and bypass it. Setting
-  // them here ensures they land on every response surface (verified post-
-  // deploy by curl-probing /login and /api/health). HSTS is set by
-  // Netlify automatically; CSP is set per-request by middleware.ts.
-  async headers() {
-    const baseSecurity = [
-      { key: "X-Content-Type-Options",     value: "nosniff" },
-      { key: "X-Frame-Options",            value: "SAMEORIGIN" },
-      { key: "Referrer-Policy",            value: "strict-origin-when-cross-origin" },
-      { key: "Permissions-Policy",         value: "camera=(), microphone=(), geolocation=(), payment=()" },
-      { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
-    ];
-    return [
-      { source: "/(.*)", headers: baseSecurity },
-      {
-        source: "/api/(.*)",
-        headers: [
-          ...baseSecurity,
-          { key: "Cross-Origin-Resource-Policy", value: "same-origin" },
-          { key: "Cache-Control",                value: "no-store" },
-        ],
-      },
-    ];
-  },
+  // NOTE: Next.js `async headers()` was tried in PR #496 but @netlify/plugin-nextjs
+  // 5.7.2 silently ignores it for SSR + Lambda responses (verified empirically:
+  // headers landed on /manifest.webmanifest from netlify.toml, but NOT on /login
+  // or /api/health). Security headers for dynamic surfaces are now set in
+  // web/middleware.ts via applySecurityHeaders().
 
   async redirects() {
     return [
