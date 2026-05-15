@@ -82,8 +82,8 @@ let _loadInFlight: Promise<OpenSanctionsRecord[]> | null = null;
 
 async function loadFromBlobs(): Promise<OpenSanctionsRecord[]> {
   if (_records !== null) return _records;
-  if (_loadAttempted) return [];
   if (_loadInFlight) return _loadInFlight;
+  if (_loadAttempted) return [];
   _loadAttempted = true;
   _loadInFlight = _doLoadFromBlobs().finally(() => { _loadInFlight = null; });
   return _loadInFlight;
