@@ -14,6 +14,7 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -106,7 +107,7 @@ Return ONLY valid JSON:
 }`,
     messages: [{
       role: "user",
-      content: `Provide AML geopolitical intelligence for: ${body.jurisdiction}\n\nKnown static profile: ${JSON.stringify(staticProfile, null, 2)}`,
+      content: `Provide AML geopolitical intelligence for: ${sanitizeField(body.jurisdiction, 100)}\n\nKnown static profile: ${JSON.stringify(staticProfile, null, 2)}`,
     }],
   });
 
