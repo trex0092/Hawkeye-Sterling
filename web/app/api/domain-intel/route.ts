@@ -161,6 +161,9 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (!body.domain?.trim()) {
     return NextResponse.json({ ok: false, error: "domain is required" }, { status: 400, headers: CORS });
   }
+  if (body.domain.length > 2000) {
+    return NextResponse.json({ ok: false, error: "domain exceeds 2000-character limit" }, { status: 400, headers: CORS });
+  }
 
   const domain = body.domain.trim();
   const result = await domainIntel(domain);

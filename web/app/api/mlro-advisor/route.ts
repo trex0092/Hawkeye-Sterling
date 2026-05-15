@@ -222,6 +222,12 @@ export async function POST(req: Request): Promise<NextResponse> {
       { status: 400, headers: gateHeaders },
     );
   }
+  if (body.subjectName.length > 500) {
+    return NextResponse.json(
+      { ok: false, error: "subjectName exceeds 500-character limit" },
+      { status: 400, headers: gateHeaders },
+    );
+  }
 
   // Shared input gate — refuses empty / oversize / prompt-injection
   // inputs before they hit Claude. redTeamMode bypasses injection check
