@@ -245,11 +245,6 @@ export async function POST(req: Request): Promise<NextResponse> {
     // when the corresponding env key is absent or the hint field is missing.
     const hints: EnrichmentHints = body.enrichmentHints ?? {};
     const NULL_ENRICHMENT: EnrichmentBundle = {
-      abuseIp: { available: false, reason: "no_key" },
-      etherscan: { available: false, reason: "no_key" },
-      hibp: { available: false, reason: "no_key" },
-      urlScan: { available: false, reason: "no_key" },
-      numverify: { available: false, reason: "no_key" },
       fraudShield: { available: false, reason: "no_key" },
     };
 
