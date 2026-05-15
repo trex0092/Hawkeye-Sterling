@@ -46,9 +46,8 @@ export const CREDIBILITY_TIER: Record<string, number> = {
   "sg-mas": 1.0, "ae-eocn": 1.0, "jp-meti": 1.0, "fatf": 1.0,
   "worldbank-debar": 1.0,
 
-  // Enrichment adapters — public APIs (0.82–0.90)
-  "abuseipdb": 0.88, "etherscan": 0.85, "hibp": 0.87,
-  "urlscan": 0.85, "numverify": 0.82, "fraudshield": 0.88,
+  // FraudShield enrichment adapter (0.88)
+  "fraudshield": 0.88,
 
   // Tier 2: tier-1 commercial PEP/sanctions vendors (0.95)
   "lseg-world-check": 0.95, "dowjones-rc": 0.95, "sayari": 0.95,
@@ -651,18 +650,8 @@ export interface BuildConsensusInputsArgs {
   freeProviders: string[];
   freeCount: number;
   adverseMediaArticles?: Array<{ source: string; outlet: string; title: string; url: string }>;
-  // Enrichment adapter signals (public-API layer)
+  // FraudShield enrichment signal
   enrichmentSignals?: {
-    abuseIpRisk?: "clear" | "low" | "medium" | "high" | "critical" | null;
-    abuseIpScore?: number;
-    etherscanRisk?: "clear" | "low" | "medium" | "high" | "critical" | null;
-    hibpBreachCount?: number;
-    hibpRisk?: "clear" | "low" | "medium" | "high" | "critical" | null;
-    urlScanMalicious?: boolean;
-    urlScanRisk?: "clear" | "low" | "medium" | "high" | "critical" | null;
-    numverifyVoip?: boolean;
-    numverifyValid?: boolean;
-    numverifyRisk?: "clear" | "low" | "medium" | "high" | null;
     fraudShieldScore?: number;
     fraudShieldRisk?: "clear" | "low" | "medium" | "high" | "critical" | null;
     fraudShieldFlags?: string[];
@@ -748,123 +737,25 @@ export function buildConsensusInputsFromAugmentation(a: BuildConsensusInputsArgs
     }
   }
 
-  // ── Enrichment adapter signals ────────────────────────────────────────
-  // Each available adapter contributes a consensus input. A non-clear
-  // risk level is treated as affirming evidence (match) with a raw score
-  // derived from the signal severity. Clear results are "uncertain" (not
-  // denying — absence of a fraud signal isn't exculpatory on its own).
+  // ── FraudShield enrichment signal ────────────────────────────────────
   const riskToScore: Record<string, number> = {
     critical: 90, high: 70, medium: 50, low: 25, clear: 0,
   };
   const e = a.enrichmentSignals;
-  if (e) {
-    if (e.abuseIpRisk !== undefined && e.abuseIpRisk !== null) {
-      const score = riskToScore[e.abuseIpRisk] ?? 0;
-      consensusInputs.push({
-        source: "abuseipdb",
-        evidence: score > 0 ? "match" : "uncertain",
-        rawScore: score,
-      });
-      if (score >= 50) {
-        contradictionItems.push({
-          source: "abuseipdb",
-          topic: "ip-reputation",
-          stance: "affirm",
-          detail: `IP abuse confidence ${e.abuseIpScore ?? score}/100 — risk: ${e.abuseIpRisk}`,
-        });
-      }
-    }
-
-    if (e.etherscanRisk !== undefined && e.etherscanRisk !== null) {
-      const score = riskToScore[e.etherscanRisk] ?? 0;
-      consensusInputs.push({
-        source: "etherscan",
-        evidence: score > 0 ? "match" : "uncertain",
-        rawScore: score,
-      });
-      if (score >= 50) {
-        contradictionItems.push({
-          source: "etherscan",
-          topic: "wallet-age",
-          stance: "affirm",
-          detail: `On-chain wallet risk: ${e.etherscanRisk}`,
-        });
-      }
-    }
-
-    if (e.hibpRisk !== undefined && e.hibpRisk !== null) {
-      const score = riskToScore[e.hibpRisk] ?? 0;
-      consensusInputs.push({
-        source: "hibp",
-        evidence: score > 0 ? "match" : "uncertain",
-        rawScore: score,
-      });
-      if (e.hibpBreachCount && e.hibpBreachCount > 0) {
-        contradictionItems.push({
-          source: "hibp",
-          topic: "data-breach",
-          stance: "affirm",
-          detail: `Email found in ${e.hibpBreachCount} data breach(es) — digital-footprint risk`,
-        });
-      }
-    }
-
-    if (e.urlScanRisk !== undefined && e.urlScanRisk !== null) {
-      const score = riskToScore[e.urlScanRisk] ?? 0;
-      consensusInputs.push({
-        source: "urlscan",
-        evidence: score > 0 || e.urlScanMalicious ? "match" : "uncertain",
-        rawScore: e.urlScanMalicious ? Math.max(score, 85) : score,
-      });
-      if (e.urlScanMalicious) {
-        contradictionItems.push({
-          source: "urlscan",
-          topic: "website-malicious",
-          stance: "affirm",
-          detail: "Declared website classified as malicious by URLScan.io",
-        });
-      }
-    }
-
-    if (e.numverifyRisk !== undefined && e.numverifyRisk !== null) {
-      const score = riskToScore[e.numverifyRisk] ?? 0;
-      consensusInputs.push({
-        source: "numverify",
-        evidence: score > 0 ? "match" : "uncertain",
-        rawScore: score,
-      });
-      if (e.numverifyVoip) {
-        contradictionItems.push({
-          source: "numverify",
-          topic: "phone-voip",
-          stance: "affirm",
-          detail: "VoIP phone number — anonymously obtainable, higher KYC risk",
-        });
-      } else if (e.numverifyValid === false) {
-        contradictionItems.push({
-          source: "numverify",
-          topic: "phone-invalid",
-          stance: "affirm",
-          detail: "Phone number failed validation — possible fictitious identity detail",
-        });
-      }
-    }
-
-    if (e.fraudShieldRisk !== undefined && e.fraudShieldRisk !== null) {
-      const score = riskToScore[e.fraudShieldRisk] ?? (e.fraudShieldScore ?? 0);
-      consensusInputs.push({
+  if (e?.fraudShieldRisk !== undefined && e.fraudShieldRisk !== null) {
+    const score = riskToScore[e.fraudShieldRisk] ?? (e.fraudShieldScore ?? 0);
+    consensusInputs.push({
+      source: "fraudshield",
+      evidence: score > 0 ? "match" : "uncertain",
+      rawScore: score,
+    });
+    if (score >= 35) {
+      contradictionItems.push({
         source: "fraudshield",
-        evidence: score > 0 ? "match" : "uncertain",
-        rawScore: score,
+        topic: "fraud-intelligence",
+        stance: "affirm",
+        detail: `FraudShield score ${e.fraudShieldScore ?? score}/100${e.fraudShieldFlags?.length ? ` — flags: ${e.fraudShieldFlags.slice(0, 5).join(", ")}` : ""}`,
       });
-      if (score >= 35) {
-        contradictionItems.push({
-          source: "fraudshield",
-          topic: "fraud-intelligence",
-          stance: "affirm",
-          detail: `FraudShield score ${e.fraudShieldScore ?? score}/100${e.fraudShieldFlags?.length ? ` — flags: ${e.fraudShieldFlags.slice(0, 5).join(", ")}` : ""}`,
-        });
-      }
     }
   }
 

@@ -317,21 +317,9 @@ export async function POST(req: Request): Promise<NextResponse> {
       freeConfigured: activeFreeProviders().length,
       freeAvailable: 6,
     });
-    // Extract enrichment signals for consensus layer
+    // Extract FraudShield signal for consensus layer
     const eb = enrichmentBundle;
     const enrichmentSignals = {
-      abuseIpRisk: eb.abuseIp.available ? eb.abuseIp.riskLevel : null,
-      abuseIpScore: eb.abuseIp.available ? eb.abuseIp.abuseConfidenceScore : undefined,
-      etherscanRisk: eb.etherscan.available ? eb.etherscan.riskLevel : null,
-      hibpBreachCount: eb.hibp.available ? eb.hibp.breachCount : undefined,
-      hibpRisk: eb.hibp.available ? eb.hibp.riskLevel : null,
-      urlScanMalicious: eb.urlScan.available ? eb.urlScan.malicious : undefined,
-      urlScanRisk: eb.urlScan.available ? eb.urlScan.riskLevel : null,
-      numverifyVoip: eb.numverify.available ? eb.numverify.isVoip : undefined,
-      numverifyValid: eb.numverify.available ? eb.numverify.valid : undefined,
-      numverifyRisk: eb.numverify.available
-        ? (eb.numverify.riskLevel as "clear" | "low" | "medium" | "high")
-        : null,
       fraudShieldScore: eb.fraudShield.available ? eb.fraudShield.riskScore : undefined,
       fraudShieldRisk: eb.fraudShield.available ? eb.fraudShield.normalisedRisk : null,
       fraudShieldFlags: eb.fraudShield.available ? eb.fraudShield.flags : undefined,
@@ -415,19 +403,9 @@ export async function POST(req: Request): Promise<NextResponse> {
               freeAdapterProviders: freeAdapterResults.providersUsed,
             }
           : {}),
-        // Enrichment adapter signals (IP reputation, blockchain, breach, URL, phone, fraud)
-        ...(enrichmentSignals.activeProviders.length > 0
-          ? {
-              enrichmentSignals: {
-                providers: enrichmentSignals.activeProviders,
-                ...(eb.abuseIp.available ? { abuseIp: eb.abuseIp } : {}),
-                ...(eb.etherscan.available ? { etherscan: eb.etherscan } : {}),
-                ...(eb.hibp.available ? { hibp: eb.hibp } : {}),
-                ...(eb.urlScan.available ? { urlScan: eb.urlScan } : {}),
-                ...(eb.numverify.available ? { numverify: eb.numverify } : {}),
-                ...(eb.fraudShield.available ? { fraudShield: eb.fraudShield } : {}),
-              },
-            }
+        // FraudShield enrichment signal
+        ...(eb.fraudShield.available
+          ? { fraudShield: eb.fraudShield }
           : {}),
         // Tell the operator UI whether common-name expansion fired so the
         // triage panel can show the appropriate banner.
