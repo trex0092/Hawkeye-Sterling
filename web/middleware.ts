@@ -55,6 +55,27 @@ function generateNonce(): string {
   return hex;
 }
 
+// Defense-in-depth security headers. We set these in middleware (not
+// next.config.mjs `headers()`) because @netlify/plugin-nextjs silently
+// ignores the Next config for SSR/Lambda responses — only static-asset
+// responses pick up netlify.toml [[headers]]. Verified empirically post
+// PR #496: headers() landed on /manifest.webmanifest but NOT on /login
+// or /api/*. Middleware runs on every matched route and is the only
+// surface where we can guarantee these land on dynamic responses.
+function applySecurityHeaders(response: NextResponse, isApi: boolean): void {
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.set("X-Frame-Options", "SAMEORIGIN");
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  response.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()");
+  response.headers.set("Cross-Origin-Opener-Policy", "same-origin");
+  if (isApi) {
+    response.headers.set("Cross-Origin-Resource-Policy", "same-origin");
+    // Cache-Control: no-store on auth-gated JSON. Individual routes that
+    // want different caching can override on their NextResponse.json call.
+    response.headers.set("Cache-Control", "no-store");
+  }
+}
+
 function buildCspHeader(_nonce: string): string {
   return [
     "default-src 'self'",
@@ -124,7 +145,9 @@ export function middleware(req: NextRequest): NextResponse {
   if (pathname.startsWith("/api/") && !isPublic(pathname)) {
     // External callers supply their own auth — don't override.
     if (req.headers.get("authorization") || req.headers.get("x-api-key")) {
-      return NextResponse.next();
+      const r = NextResponse.next();
+      applySecurityHeaders(r, true);
+      return r;
     }
 
     const adminToken = process.env["ADMIN_TOKEN"];
@@ -142,22 +165,25 @@ export function middleware(req: NextRequest): NextResponse {
       if (isSameOrigin) {
         const requestHeaders = new Headers(req.headers);
         requestHeaders.set("authorization", `Bearer ${adminToken}`);
-        return NextResponse.next({ request: { headers: requestHeaders } });
+        const r = NextResponse.next({ request: { headers: requestHeaders } });
+        applySecurityHeaders(r, true);
+        return r;
       }
     }
-    // Non-same-origin API call — pass through untouched (no CSP needed
-    // on API JSON responses; the static netlify.toml header still applies
-    // as a defence-in-depth baseline).
-    return NextResponse.next();
+    // Non-same-origin API call — pass through with security headers.
+    const r = NextResponse.next();
+    applySecurityHeaders(r, true);
+    return r;
   }
 
-  // ── 3. CSP for HTML routes ────────────────────────────────────────────────
+  // ── 3. CSP + security headers for HTML routes ────────────────────────────
   // Set consistent CSP on every HTML navigation. The nonce approach was
   // abandoned because Next.js App Router injects hydration scripts that do
   // not carry a nonce, causing 17+ CSP violations that block client-side
   // navigation entirely. Use 'unsafe-inline' (consistent with netlify.toml).
   const response = NextResponse.next();
   response.headers.set("Content-Security-Policy", buildCspHeader(""));
+  applySecurityHeaders(response, false);
   return response;
 }
 
