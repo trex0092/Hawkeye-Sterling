@@ -267,7 +267,7 @@ export default function SupplyChainPage() {
         eyebrow="ESG · Responsible Sourcing · AML"
         title="Supply"
         titleEm="chain."
-        moduleNumber={42}
+
         kpis={[
           { value: kpiCompanies, label: "Companies assessed" },
           { value: kpiHighRisk, label: "High-risk suppliers", tone: result && parseInt(kpiHighRisk) > 0 ? "red" : undefined },

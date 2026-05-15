@@ -198,7 +198,7 @@ export default function OsintPage() {
   return (
     <ModuleLayout asanaModule="osint" asanaLabel="OSINT Intelligence">
       <ModuleHero
-        moduleNumber={34}
+
         eyebrow="Enrichment · Open Source Intelligence"
         title="OSINT"
         titleEm="Intelligence."

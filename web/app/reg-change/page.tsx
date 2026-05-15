@@ -348,7 +348,7 @@ export default function RegChangePage() {
         eyebrow="Compliance · Regulatory Intelligence · Change Management"
         title="Regulatory"
         titleEm="changes."
-        moduleNumber={43}
+
         kpis={[
           { value: String(totalChanges), label: "Changes tracked" },
           { value: String(criticalCount), label: "Critical upcoming", tone: criticalCount > 0 ? "red" : undefined },

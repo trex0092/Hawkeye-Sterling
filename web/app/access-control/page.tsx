@@ -649,7 +649,7 @@ export default function AccessControlPage() {
   return (
     <ModuleLayout engineLabel="Access control engine" asanaModule="access-control" asanaLabel="Access & Permissions">
       <ModuleHero
-        moduleNumber={34}
+
         eyebrow="Module 34 · Governance"
         title="Access &"
         titleEm="permissions."

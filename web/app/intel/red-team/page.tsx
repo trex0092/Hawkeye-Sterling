@@ -160,7 +160,7 @@ export default function RedTeamPage() {
   return (
     <ModuleLayout asanaModule="red-team" asanaLabel="Red-Team Prompt Tests">
       <ModuleHero
-        moduleNumber={45}
+
         eyebrow="Module · Red-Team Prompt Tests"
         title="Adversarial"
         titleEm="catalogue."

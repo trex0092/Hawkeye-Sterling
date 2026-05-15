@@ -3344,7 +3344,7 @@ export default function MlroAdvisorPage() {
   return (
     <ModuleLayout asanaModule="mlro-advisor" asanaLabel="MLRO Advisor" engineLabel="MLRO Advisor">
       <ModuleHero
-        moduleNumber={7}
+
         eyebrow="Module 09 · Deep Reasoning"
         title="MLRO"
         titleEm="advisor."

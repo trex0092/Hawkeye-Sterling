@@ -151,7 +151,7 @@ export default function BenfordPage() {
   return (
     <ModuleLayout asanaModule="benford" asanaLabel="Benford Analysis" engineLabel="Benford Analysis">
       <ModuleHero
-        moduleNumber={39}
+
         eyebrow="Module · Forensic Accounting"
         title="Benford's Law"
         titleEm="analysis."

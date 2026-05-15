@@ -600,7 +600,7 @@ export default function GrievancesWhistleblowingPage() {
                   </div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 17, fontWeight: 700, letterSpacing: "4px", color: "#141414" }}>HAWKEYE  ·  STERLING</div>
-                    <div style={{ fontSize: 7.5, letterSpacing: "2px", color: "#464646", marginTop: 2 }}>GOVERNANCE & WHISTLEBLOWING MODULE</div>
+                    <div style={{ fontSize: 7.5, letterSpacing: "2px", color: "#464646", marginTop: 2 }}>GOVERNANCE & WHISTLEBLOWING</div>
                   </div>
                   <div style={{ fontSize: 7.5, letterSpacing: ".5px", color: "#464646" }}>GVW/004</div>
                 </div>

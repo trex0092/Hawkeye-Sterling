@@ -797,7 +797,7 @@ export default function PoliciesPage() {
   return (
     <ModuleLayout asanaModule="policies" asanaLabel="Policies">
         <ModuleHero
-          moduleNumber={32}
+
           eyebrow="Module 17 · SOP vault"
           title="Policies"
           titleEm="charter."

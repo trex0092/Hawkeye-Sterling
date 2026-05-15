@@ -268,7 +268,7 @@ function EwraPreview() {
       {/* Cover */}
       <CoverFrame
         reportRef="EWRA-2026-BOARD"
-        module="MODULE 23  ·  RISK ASSESSMENT"
+        module="RISK ASSESSMENT"
         cap="E" rest="nterprise-Wide Risk Assessment — Board Report"
         description="Annual enterprise-wide risk assessment under UAE FDL 10/2025 Art.4 and CBUAE AML Standards §2. Scope: customer, geographic, products, channels, delivery mechanisms."
         leftCard={<Card label="REPORTING ENTITY" title="Hawkeye Sterling DPMS" tags="LICENSED DPMS  ·  DMCC  ·  UAE  ·  EWRA-2026-BOARD" />}

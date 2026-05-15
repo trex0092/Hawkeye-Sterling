@@ -461,7 +461,7 @@ export default function CddReviewPage() {
     <ModuleLayout asanaModule="cdd-review" asanaLabel="CDD Review">
       {/* ── Section 1: Module Header & KPIs ── */}
       <ModuleHero
-        moduleNumber={22}
+
         eyebrow="Module 22 · CDD Lifecycle"
         title="Periodic CDD"
         titleEm="review."

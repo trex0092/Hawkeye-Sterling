@@ -96,7 +96,7 @@ export default function ProfilePage() {
         eyebrow="Account Settings"
         title="Your"
         titleEm="profile."
-        moduleNumber={0}
+
         kpis={[]}
         intro="Manage your account credentials and view your session details."
       />

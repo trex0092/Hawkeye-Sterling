@@ -209,7 +209,7 @@ export default function GeopoliticalPage() {
         eyebrow="Intelligence · AML · Sanctions"
         title="Geopolitical"
         titleEm="risk."
-        moduleNumber={44}
+
         kpis={[
           { value: String(kpiActiveEvents || "—"), label: "Active events" },
           { value: String(kpiCritical || "—"), label: "Critical alerts", tone: kpiCritical > 0 ? "red" : undefined },

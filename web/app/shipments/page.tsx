@@ -1109,7 +1109,7 @@ export default function ShipmentsPage() {
   return (
     <ModuleLayout asanaModule="shipments" asanaLabel="Shipments" engineLabel="Bullion compliance engine">
       <ModuleHero
-        moduleNumber={22}
+
         eyebrow="Module 24 · Bullion Logistics"
         title="Bullion chain-of-custody"
         titleEm="register."

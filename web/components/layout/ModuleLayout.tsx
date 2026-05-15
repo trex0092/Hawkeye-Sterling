@@ -103,7 +103,6 @@ interface ModuleHeroProps {
   eyebrow: string;
   title: string;
   titleEm?: string | undefined; // italic trailing word (e.g. "trail.", "standard.")
-  moduleNumber?: number | undefined; // amber MODULE XX chip above eyebrow
   kpis?:
     | Array<{
         value: string;
@@ -118,7 +117,6 @@ export function ModuleHero({
   eyebrow,
   title,
   titleEm,
-  moduleNumber,
   kpis,
   intro,
 }: ModuleHeroProps) {

@@ -256,7 +256,7 @@ export default function CnmrPage() {
   return (
     <ModuleLayout asanaModule="cnmr" asanaLabel="CNMR Workflow" engineLabel="CNMR compliance engine">
       <ModuleHero
-        moduleNumber={51}
+
         eyebrow="Module 51 · Sanctions Compliance"
         title="CNMR — Confirmed Name Match"
         titleEm="report."
