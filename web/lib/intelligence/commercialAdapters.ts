@@ -84,8 +84,9 @@ function sayariAdapter(): CorporateRegistryAdapter {
 // rate-limiting, and retries; this adapter just talks JSON-RPC to it.
 // Falls back transparently to lsegWorldCheckAdapter() when the env var is absent.
 function lsegWc1McpAdapter(): CorporateRegistryAdapter {
-  const mcpUrl = process.env["LSEG_WC1_MCP_URL"];
-  if (!mcpUrl) return NULL_CORPORATE_ADAPTER;
+  const mcpUrlRaw = process.env["LSEG_WC1_MCP_URL"];
+  if (!mcpUrlRaw) return NULL_CORPORATE_ADAPTER;
+  const mcpUrl: string = mcpUrlRaw;
 
   let _toolName: string | null | undefined = undefined; // undefined = not yet discovered
 
