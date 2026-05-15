@@ -662,29 +662,6 @@ async function handleSarReport(req: Request): Promise<Response> {
 export async function POST(req: Request) {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
-
-  // Block STR/SAR filing if any reporting entity is still using the
-  // "REPLACE_ME" placeholder Rentity ID — these would otherwise produce
-  // goAML XML that the FIU rejects, but only after we've already filed an
-  // Asana task and reported "complete" to the operator.
-  try {
-    const rawEntities = process.env["HAWKEYE_ENTITIES"] ?? "[]";
-    const parsed = JSON.parse(rawEntities) as Array<{ goamlRentityId?: string }>;
-    if (Array.isArray(parsed) && parsed.some((e) => (e?.goamlRentityId ?? "").trim() === "REPLACE_ME")) {
-      return NextResponse.json(
-        {
-          ok: false,
-          error:
-            "goAML Rentity IDs not configured — at least one HAWKEYE_ENTITIES entry still has \"REPLACE_ME\". Contact your MLRO to apply the FIU-assigned IDs before filing.",
-        },
-        { status: 503 },
-      );
-    }
-  } catch {
-    // If HAWKEYE_ENTITIES is malformed JSON, getEntity() inside the handler
-    // will throw a clearer error — let that path surface it.
-  }
-
   return handleSarReport(req);
 }
 
