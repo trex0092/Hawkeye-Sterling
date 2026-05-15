@@ -593,10 +593,13 @@ export async function POST(req: Request): Promise<NextResponse> {
     // OpenSanctions' aggregation) and adds depth for UAE / Switzerland
     // / Japan etc. When this matches, the subject is sanctioned by at
     // least one regime — surfaces in the verdict's risk signals.
-    const openSanctions = (() => {
+    // Async because the dataset is loaded from Netlify Blobs lazily on
+    // first call per warm Lambda — see openSanctions.ts header for the
+    // bundle-size history that forced the Blobs architecture.
+    const openSanctions = await (async () => {
       try {
         const subj = body.subject as { name?: string; passportNumber?: string; identifier?: string };
-        const enr = enrichOpenSanctions({
+        const enr = await enrichOpenSanctions({
           name: subj.name,
           identifier: subj.passportNumber ?? subj.identifier,
         });

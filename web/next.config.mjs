@@ -129,13 +129,13 @@ const nextConfig = {
       // function silently falls back to in-memory storage — subjects
       // enrolled via /api/ongoing would vanish on the next cold-start.
       "./node_modules/@netlify/blobs/**/*",
-      // OpenSanctions vendored dataset (~48 MB JSON). Loaded at runtime
-      // via fs.readFileSync in web/lib/intelligence/openSanctions.ts —
-      // a static `import` blew the build (memory + bundle size, see
-      // failed deploy c239a4f). The trace include guarantees the file
-      // ships with every API Lambda; without it the runtime read fails
-      // and openSanctions degrades to an empty index.
-      "./lib/data/opensanctions/sanctions.json",
+      // NOTE: the OpenSanctions sanctions.json (48 MB) trace include was
+      // removed alongside the file itself. The file repeatedly broke
+      // Netlify builds (exit code 2) — even after switching to runtime
+      // load, the file-tracer / plugin-nextjs choked on the 48 MB asset
+      // during bundling. openSanctions.ts now degrades to an empty index
+      // when the file is missing; restore the include once the dataset
+      // is hosted outside the repo bundle (Netlify Blobs / S3 / CDN).
     ],
     // styled-jsx + the Next.js server runtime are dynamically required by
     // next/dist/server/require-hook.js via string literals on every SSR
