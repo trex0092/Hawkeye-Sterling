@@ -62,6 +62,12 @@ function generateNonce(): string {
 // PR #496: headers() landed on /manifest.webmanifest but NOT on /login
 // or /api/*. Middleware runs on every matched route and is the only
 // surface where we can guarantee these land on dynamic responses.
+//
+// Cache-Control is deliberately NOT forced on every /api/* response —
+// /api/well-known/jwks.json + /api/well-known/hawkeye-pubkey.pem set
+// `public, max-age=300, must-revalidate` so verifiers can cache the
+// signing keys per RFC. The route's setting takes precedence; routes
+// that handle dynamic auth-gated data set their own no-store.
 function applySecurityHeaders(response: NextResponse, isApi: boolean): void {
   response.headers.set("X-Content-Type-Options", "nosniff");
   response.headers.set("X-Frame-Options", "SAMEORIGIN");
@@ -70,9 +76,6 @@ function applySecurityHeaders(response: NextResponse, isApi: boolean): void {
   response.headers.set("Cross-Origin-Opener-Policy", "same-origin");
   if (isApi) {
     response.headers.set("Cross-Origin-Resource-Policy", "same-origin");
-    // Cache-Control: no-store on auth-gated JSON. Individual routes that
-    // want different caching can override on their NextResponse.json call.
-    response.headers.set("Cache-Control", "no-store");
   }
 }
 
