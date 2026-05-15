@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 export interface TrustStructuresResult {
   opacityScore: number;
   riskRating: "critical" | "high" | "medium" | "low";
@@ -77,12 +78,12 @@ export async function POST(req: Request) {
       messages: [{
         role: "user",
         content: `Analyse the following trust/legal structure:
-- Entity Name: ${body.entityName}
-- Structure Type: ${body.structureType}
-- Jurisdictions: ${body.jurisdictions}
-- Number of Layers: ${body.layerCount}
-- Stated Purpose: ${body.purposeStated}
-- Additional Context: ${body.context}`,
+- Entity Name: ${sanitizeField(body.entityName)}
+- Structure Type: ${sanitizeField(body.structureType)}
+- Jurisdictions: ${sanitizeField(body.jurisdictions)}
+- Number of Layers: ${sanitizeField(body.layerCount)}
+- Stated Purpose: ${sanitizeText(body.purposeStated)}
+- Additional Context: ${sanitizeText(body.context)}`,
       }],
     });
     const text = response.content[0]?.type === "text" ? response.content[0].text : "{}";

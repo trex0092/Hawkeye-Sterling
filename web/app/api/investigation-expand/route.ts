@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -52,8 +53,8 @@ Respond ONLY with valid JSON — no markdown fences, no explanation outside the 
 Limit to 5 entities. Be specific, AML-grounded, and plausible.`,
         messages: [{
           role: "user",
-          content: `Subject: ${subject}
-Known nodes: ${knownNodes.join(", ")}
+          content: `Subject: ${sanitizeField(subject)}
+Known nodes: ${knownNodes.map((n) => sanitizeField(n)).join(", ")}
 Known edges: ${JSON.stringify(knownEdges)}
 
 What additional entities should investigators look for?`,

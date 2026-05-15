@@ -22,6 +22,7 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -317,8 +318,8 @@ export async function POST(req: Request): Promise<NextResponse> {
 Total items: ${items.length}
 Critical: ${counts.critical} | High: ${counts.high} | Medium: ${counts.medium} | Low: ${counts.low}
 
-${criticalItems.length > 0 ? `CRITICAL items:\n${criticalItems.map((t) => `- ${t.subject}: ${t.priorityReason}`).join("\n")}` : ""}
-${highItems.length > 0 ? `HIGH priority:\n${highItems.map((t) => `- ${t.subject}: ${t.priorityReason}`).join("\n")}` : ""}
+${criticalItems.length > 0 ? `CRITICAL items:\n${criticalItems.map((t) => `- ${sanitizeField(t.subject, 200)}: ${t.priorityReason}`).join("\n")}` : ""}
+${highItems.length > 0 ? `HIGH priority:\n${highItems.map((t) => `- ${sanitizeField(t.subject, 200)}: ${t.priorityReason}`).join("\n")}` : ""}
 
 Write a 3-4 sentence MLRO triage briefing for today's inbox. Highlight the most urgent regulatory obligations and recommended sequencing of actions.`;
 

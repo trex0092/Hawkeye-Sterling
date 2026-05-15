@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -75,8 +76,8 @@ export async function POST(req: Request): Promise<NextResponse> {
             role: "user",
             content: `You are an AML plausibility analyst. Score the following subject across 10 dimensions (0-100 each).
 
-Subject: "${subjectName}", Type: ${entityType}, Industry: ${industry}, Jurisdiction: ${jurisdiction}
-Declared Activity: "${declaredActivity.substring(0, 500)}"
+Subject: "${sanitizeField(subjectName)}", Type: ${sanitizeField(entityType)}, Industry: ${sanitizeField(industry)}, Jurisdiction: ${sanitizeField(jurisdiction)}
+Declared Activity: "${sanitizeText(declaredActivity)}"
 
 Dimensions to score: Entity-Activity Alignment, Jurisdiction Coherence, Income Plausibility, Corporate Structure Logic, Geographic Consistency, Declared Activity Specificity, Counterparty Profile Match, Regulatory Footprint, Economic Substance, Transaction Pattern Logic.
 

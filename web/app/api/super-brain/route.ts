@@ -290,6 +290,10 @@ export async function POST(req: Request): Promise<NextResponse> {
     // LSEG supplements for Canada + Australia
     if ((_redlineHitsByList.get("lseg_ca_osfi") ?? []).some((h) => h.score >= 0.85)) firedRedlineIds.push("rl_canada_osfi_confirmed");
     if ((_redlineHitsByList.get("lseg_au_dfat") ?? []).some((h) => h.score >= 0.85)) firedRedlineIds.push("rl_australia_dfat_confirmed");
+    // CAHRA jurisdiction — subject country is a Conflict-Affected and High-Risk Area
+    if (jurisdiction?.cahra) firedRedlineIds.push("rl_dpms_cahra_without_oecd");
+    // PEP without EDD — high-salience political exposure with no enhanced DD indicator
+    if (pep && pep.salience > 0.5) firedRedlineIds.push("rl_pep_edd_not_completed");
     const redlines = evaluateRedlines(firedRedlineIds);
 
     // 5b · Cross-regime conflict detection. Builds per-regime designation

@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
-
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 import { getAnthropicClient } from "@/lib/server/llm";
 
 export interface NetworkMapResult {
@@ -163,12 +163,12 @@ export async function POST(req: Request) {
         system: `You are a UAE AML network analysis specialist with expertise in entity relationship mapping, corporate structure analysis, and ML network identification. Map entities, identify connections (director, shareholder, address, transaction, family), detect circular ownership, shell network patterns, and layering structures. Apply UAE FDL 10/2025 beneficial ownership requirements and FATF R.24/25 transparency standards. Assign unique node IDs (N1, N2, etc.) to each entity. Respond ONLY with valid JSON matching the NetworkMapResult interface — no markdown fences.`,
         messages: [{
           role: "user",
-          content: `Entities (names/roles/descriptions): ${body.entities}
-Shared Addresses: ${body.sharedAddresses ?? "not provided"}
-Shared Directors/Officers: ${body.sharedDirectors ?? "not provided"}
-Shared Accounts: ${body.sharedAccounts ?? "not provided"}
-Transaction Links: ${body.transactionLinks ?? "not provided"}
-Additional Context: ${body.context ?? "none"}
+          content: `Entities (names/roles/descriptions): ${sanitizeText(body.entities, 3000)}
+Shared Addresses: ${sanitizeField(body.sharedAddresses ?? "not provided", 1000)}
+Shared Directors/Officers: ${sanitizeField(body.sharedDirectors ?? "not provided", 1000)}
+Shared Accounts: ${sanitizeField(body.sharedAccounts ?? "not provided", 500)}
+Transaction Links: ${sanitizeField(body.transactionLinks ?? "not provided", 500)}
+Additional Context: ${sanitizeText(body.context ?? "none", 2000)}
 
 Map this entity network and identify ML risk connections. Return complete NetworkMapResult JSON.`,
         }],
@@ -176,7 +176,8 @@ Map this entity network and identify ML risk connections. Return complete Networ
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as NetworkMapResult;
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.error("[network-mapper] LLM call failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "network-mapper temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
   }
 }

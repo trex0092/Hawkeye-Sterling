@@ -4,6 +4,7 @@ import { postWebhook } from "@/lib/server/webhook";
 
 import { getAnthropicClient } from "@/lib/server/llm";
 import { asanaGids } from "@/lib/server/asanaConfig";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -47,14 +48,14 @@ async function classifyTransaction(
   if (!apiKey) return null;
 
   const userContent = [
-    `Transaction ref: ${ref}`,
-    `Counterparty: ${counterparty}`,
-    counterpartyCountry ? `Counterparty country: ${counterpartyCountry}` : null,
-    `Amount: ${currency} ${amount}`,
-    `Channel: ${channel}`,
-    `Direction: ${direction}`,
-    behaviouralFlags.length > 0 ? `Behavioural flags: ${behaviouralFlags.join(", ")}` : null,
-    notes ? `Notes: ${notes}` : null,
+    `Transaction ref: ${sanitizeField(ref, 200)}`,
+    `Counterparty: ${sanitizeField(counterparty, 500)}`,
+    counterpartyCountry ? `Counterparty country: ${sanitizeField(counterpartyCountry, 100)}` : null,
+    `Amount: ${sanitizeField(currency, 10)} ${sanitizeField(amount, 50)}`,
+    `Channel: ${sanitizeField(channel, 100)}`,
+    `Direction: ${sanitizeField(direction, 50)}`,
+    behaviouralFlags.length > 0 ? `Behavioural flags: ${behaviouralFlags.map((f) => sanitizeField(f, 200)).join(", ")}` : null,
+    notes ? `Notes: ${sanitizeField(notes, 2000)}` : null,
   ]
     .filter(Boolean)
     .join("\n");

@@ -13,6 +13,7 @@
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -84,13 +85,21 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400, headers: gate.headers });
   }
 
-  const { subjectName, entityType, riskScore, jurisdiction, additionalContext } = body;
-  if (!subjectName || !entityType || riskScore === undefined || !jurisdiction) {
+  const { subjectName: rawSubjectName, entityType: rawEntityType, riskScore, jurisdiction: rawJurisdiction, additionalContext: rawContext } = body;
+  if (!rawSubjectName || !rawEntityType || riskScore === undefined || !rawJurisdiction) {
     return NextResponse.json(
       { ok: false, error: "subjectName, entityType, riskScore, and jurisdiction are required" },
       { status: 400, headers: gate.headers },
     );
   }
+  if (typeof rawSubjectName !== "string" || rawSubjectName.length > 500) {
+    return NextResponse.json({ ok: false, error: "subjectName max 500 chars" }, { status: 400, headers: gate.headers });
+  }
+
+  const subjectName = sanitizeField(rawSubjectName, 500);
+  const entityType = sanitizeField(rawEntityType, 100);
+  const jurisdiction = sanitizeField(rawJurisdiction, 200);
+  const additionalContext = rawContext ? sanitizeField(rawContext, 1000) : undefined;
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
@@ -167,7 +176,8 @@ Decide: close (no action) | monitor (ongoing CDD) | edd (enhanced due diligence)
       stages,
       completedAt: new Date().toISOString(),
     }, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.error("[autonomous-investigate] stage chain failed — returning heuristic fallback:", err instanceof Error ? err.message : String(err));
     const fallback = heuristicInvestigation(subjectName, entityType, riskScore, jurisdiction);
     return NextResponse.json({ ok: true, ...fallback, stages }, { headers: gate.headers });
   }

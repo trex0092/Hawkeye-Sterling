@@ -8,6 +8,7 @@ import { NextResponse } from "next/server";
 import { writeAuditEvent } from "@/lib/audit";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -170,7 +171,32 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: true, ...buildTemplate(), degraded: true, degradedReason: "ANTHROPIC_API_KEY not configured — deterministic template used.", latencyMs: Date.now() - t0 }, { headers: gate.headers });
   }
 
-  const userMessage = `Disambiguate these screening hits for client: ${JSON.stringify(client)}. Hits to assess: ${JSON.stringify(hits)}`;
+  const sanitizedClient = {
+    name: sanitizeField(client.name),
+    nationality: sanitizeField(client.nationality),
+    dob: sanitizeField(client.dob),
+    gender: sanitizeField(client.gender),
+    idNumber: sanitizeField(client.idNumber),
+    address: sanitizeField(client.address),
+    occupation: sanitizeField(client.occupation),
+    employer: sanitizeField(client.employer),
+    businessType: sanitizeField(client.businessType),
+    knownAliases: (client.knownAliases ?? []).map((a) => sanitizeField(a)),
+    context: sanitizeText(client.context),
+  };
+  const sanitizedHits = hits.map((h) => ({
+    hitId: sanitizeField(h.hitId),
+    hitName: sanitizeField(h.hitName),
+    hitCategory: sanitizeField(h.hitCategory),
+    hitCountry: sanitizeField(h.hitCountry),
+    hitDob: sanitizeField(h.hitDob),
+    hitGender: sanitizeField(h.hitGender),
+    hitRole: sanitizeField(h.hitRole),
+    hitNationality: sanitizeField(h.hitNationality),
+    matchScore: h.matchScore,
+    additionalInfo: sanitizeText(h.additionalInfo),
+  }));
+  const userMessage = `Disambiguate these screening hits for client: ${JSON.stringify(sanitizedClient)}. Hits to assess: ${JSON.stringify(sanitizedHits)}`;
 
   try {
     const client = getAnthropicClient(apiKey, 55_000);

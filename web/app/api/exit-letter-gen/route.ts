@@ -26,6 +26,7 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -174,15 +175,15 @@ This exit is being conducted under FDL 10/2025 and the entity's risk appetite po
 ${tippingOffInstruction}
 
 LETTER DETAILS:
-- Entity sending the letter: ${entityName}
-- Customer name: ${customerName} (${customerType})
-- Customer address: ${customerAddress ?? "To be inserted"}
-- Account/case reference: ${accountOrCaseRef ?? "N/A"}
+- Entity sending the letter: ${sanitizeField(entityName)}
+- Customer name: ${sanitizeField(customerName)} (${sanitizeField(customerType)})
+- Customer address: ${sanitizeField(customerAddress) || "To be inserted"}
+- Account/case reference: ${sanitizeField(accountOrCaseRef) || "N/A"}
 - Date of letter: ${effectiveDateStr}
 - Exit effective date: ${exitDate} (${noticePeriodDays} days notice)
 - Reason to state to customer: "${customerReason}"
-- Entity address: ${entityAddress ?? "Dubai, UAE"}
-- Entity contact: ${entityPhone ?? ""} / ${entityEmail ?? ""}
+- Entity address: ${sanitizeField(entityAddress) || "Dubai, UAE"}
+- Entity contact: ${sanitizeField(entityPhone) || ""} / ${sanitizeField(entityEmail) || ""}
 
 REQUIREMENTS:
 1. Professional, formal tone appropriate for a regulated entity

@@ -20,6 +20,7 @@ import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { loadAllCases } from "@/lib/server/case-vault";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -228,7 +229,7 @@ Return ONLY valid JSON:
 }`,
     messages: [{
       role: "user",
-      content: `Subject Case ID: ${subjectId}
+      content: `Subject Case ID: ${sanitizeField(subjectId)}
 Subject Data: ${JSON.stringify(subjectCase ?? { id: subjectId, name: body.subjectName ?? "unknown" })}
 Subject Risk Score: ${subjectScore}
 
