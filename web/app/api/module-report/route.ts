@@ -237,7 +237,7 @@ function buildNotes(b: Body, gen: Date): string {
   const moduleLabel = MODULE_LABELS[b.module] ?? b.module.toUpperCase();
   const board = PROJECT_BOARD[b.module] ?? "00 · Master Inbox";
   const lines: string[] = [];
-  lines.push(`HAWKEYE STERLING · ${moduleLabel.toUpperCase()} MODULE REPORT`);
+  lines.push(`HAWKEYE STERLING · ${moduleLabel.toUpperCase()} REPORT`);
   lines.push(`Generated   : ${gen.toUTCString().replace(" GMT", " UTC")}`);
   lines.push(`Module      : ${moduleLabel}`);
   lines.push(`Board       : ${board}`);
