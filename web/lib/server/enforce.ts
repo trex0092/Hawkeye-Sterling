@@ -6,9 +6,14 @@
 //   3. applies the tier's per-second and per-minute rate limits
 // If any check fails, returns a NextResponse to short-circuit the route.
 //
-// If NO key is present AND requireAuth is false (default), the request is
-// allowed through on the `free` tier — so the sandbox keeps working for
-// anonymous testing without a key.
+// Default is FAIL-CLOSED: anonymous callers get a 401 unless the route opts
+// in to the free-tier sandbox by passing `{ requireAuth: false }`. This
+// closes the prior bypass where 300+ compliance routes (super-brain, mcp,
+// screening/run, etc.) silently accepted unauthenticated traffic because
+// they used the default-permissive `enforce(req)` call form.
+//
+// To deliberately allow anonymous traffic on a sandbox/demo route:
+//   const gate = await enforce(req, { requireAuth: false });
 
 import { NextResponse } from "next/server";
 import { extractKey, validateAndConsume } from "./api-keys";
@@ -31,7 +36,7 @@ export type EnforcementResult = EnforcementAllow | { ok: false; response: NextRe
 
 export async function enforce(
   req: Request,
-  opts: { requireAuth?: boolean } = {},
+  opts: { requireAuth?: boolean } = { requireAuth: true },
 ): Promise<EnforcementResult> {
   const plaintext = extractKey(req);
   const anonymous = plaintext === null;

@@ -88,8 +88,25 @@
     Referrer-Policy = "strict-origin-when-cross-origin"
     Strict-Transport-Security = "max-age=63072000; includeSubDomains; preload"
     Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=()"
+    # COOP=same-origin isolates the browsing context from cross-origin
+    # popups/iframes — reduces Spectre attack surface. Safe addition.
+    # NOTE: COEP=require-corp deliberately omitted — it would require
+    # fonts.bunny.net responses to carry CORP=cross-origin, which they
+    # don't, so enabling it would break the font load and the login page.
+    Cross-Origin-Opener-Policy = "same-origin"
     # CSP is now set per-request by web/middleware.ts with a fresh nonce,
     # so 'unsafe-inline' is no longer needed. Multiple CSP headers
     # *intersect* (most-restrictive wins), so a static fallback here
     # would clash with the middleware-set policy. API routes (which don't
     # render HTML) get no CSP — script-src is moot for JSON responses.
+
+# CORP=same-origin on API responses prevents cross-origin documents from
+# embedding our JSON via <img>/<script> spec quirks. Defense-in-depth
+# alongside the enforce() auth gate. Cache-Control: no-store ensures
+# auth-dependent responses aren't cached at edge / browser layer.
+[[headers]]
+  for = "/api/*"
+  [headers.values]
+    Cross-Origin-Resource-Policy = "same-origin"
+    Cache-Control = "no-store"
+    X-Content-Type-Options = "nosniff"

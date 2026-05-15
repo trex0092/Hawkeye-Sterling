@@ -1,15 +1,19 @@
 import { NextResponse } from "next/server";
 import { loadEntities } from "@/lib/config/entities";
+import { enforce } from "@/lib/server/enforce";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// Public list of reporting entities — populates the STR/SAR form's
-// entity dropdown. Only id + name are returned; goAML rentity IDs and
-// branch codes stay server-side to avoid leaking the FIU registration
-// numbers into the browser bundle.
+// Reporting-entity dropdown for the STR/SAR form. Only id + name are
+// returned; goAML rentity IDs and branch codes stay server-side. Auth-
+// required (defense-in-depth): the form is already behind portal login,
+// and same-origin portal calls pass through via the middleware-injected
+// ADMIN_TOKEN — so this gate only blocks unauthenticated direct hits.
 
-export function GET(): NextResponse {
+export async function GET(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   try {
     const entities = loadEntities().map((e) => ({
       id: e.id,

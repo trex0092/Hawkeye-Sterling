@@ -46,13 +46,16 @@ jobs:
       - name: Install root dependencies
         run: npm ci --include=dev
       - name: Dependency vulnerability audit (root)
-        # Fail on high/critical severity vulnerabilities. Audit errors (no
-        # registry access in sandboxed CI) are non-blocking.
-        run: npm audit --audit-level=high || true
+        # Fail on high/critical severity vulnerabilities. The previous
+        # `|| true` masked real findings — if the npm registry is
+        # unreachable that's a CI-infra problem that should also be
+        # visible, not silently swallowed alongside actual security
+        # signal.
+        run: npm audit --audit-level=high
       - name: Install web dependencies
         run: cd web && npm ci --include=dev
       - name: Dependency vulnerability audit (web)
-        run: cd web && npm audit --audit-level=high || true
+        run: cd web && npm audit --audit-level=high
       - name: PII guard — no direct Anthropic client instantiation
         run: |
           cd web && npm run check:pii-guard
@@ -76,6 +79,22 @@ jobs:
             exit 1
           fi
           echo "No server-secret exposure in client components"
+      - name: Auth coverage gate — no silent opt-outs of enforce()
+        run: |
+          # After enforce() defaults to requireAuth:true (web/lib/server/enforce.ts),
+          # any route that explicitly opts out with `{ requireAuth: false }` must
+          # be deliberately reviewed. The current allowed count is 0 — bump this
+          # number when adding a deliberate public/sandbox route, and document why.
+          OPTED_OUT=$(grep -rE "requireAuth:\s*false" web/app/api \
+            --include="route.ts" 2>/dev/null | wc -l | tr -d ' ')
+          ALLOWED_COUNT=0
+          echo "Routes with explicit requireAuth:false: $OPTED_OUT (allowed: $ALLOWED_COUNT)"
+          if [ "$OPTED_OUT" -gt "$ALLOWED_COUNT" ]; then
+            echo "FAIL: $OPTED_OUT route(s) have opted out of auth — review and bump ALLOWED_COUNT in this workflow with justification"
+            grep -rE "requireAuth:\s*false" web/app/api --include="route.ts" -l 2>/dev/null
+            exit 1
+          fi
+          echo "PASS"
 
   lint-web:
     runs-on: ubuntu-latest
