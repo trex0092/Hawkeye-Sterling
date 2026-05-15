@@ -510,9 +510,10 @@ async function main() {
   if (!projectId) {
     console.log("Creating MoonDB project 'hawkeye-sterling'…");
     const res = await api("POST", "/v1/projects", { name: "hawkeye-sterling" });
-    projectId = res.data.project_id;
-    adminKey = res.data.admin_key;
-    publicKey = res.data.public_key;
+    if (process.env.MOONDB_DEBUG) console.log("  raw response:", JSON.stringify(res, null, 2));
+    projectId = res.data.project_id ?? res.data.projectId ?? res.data.id;
+    adminKey = res.data.admin_key ?? res.data.adminKey;
+    publicKey = res.data.public_key ?? res.data.publicKey;
     console.log(`  project_id  : ${projectId}`);
     console.log(`  admin_key   : ${adminKey}`);
     console.log(`  public_key  : ${publicKey}`);
