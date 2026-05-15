@@ -40,6 +40,7 @@ import {
 import { lookupLsegPepIndex } from "@/lib/lseg/pep-index";
 import { lookupLsegAdverseIndex } from "@/lib/lseg/adverse-classifier";
 import { runIntelligencePipeline } from "@/lib/server/intelligence-pipeline";
+import { enrichSubject as enrichOpenBanking } from "@/lib/intelligence/openBankingTracker";
 import type {
   QuickScreenCandidate,
   QuickScreenResult,
@@ -565,6 +566,26 @@ export async function POST(req: Request): Promise<NextResponse> {
       }
     })();
 
+    // Open Banking Tracker enrichment — attempt match by name first, then
+    // fall back to BIC / website / id from the subject envelope. Pure
+    // in-memory lookup; no I/O. Null when no match.
+    const openBanking = (() => {
+      try {
+        const subj = body.subject as { name?: string; bic?: string; website?: string; websiteUrl?: string; id?: string };
+        const enr = enrichOpenBanking({
+          name: subj.name,
+          bic: subj.bic,
+          domain: subj.website ?? subj.websiteUrl,
+          websiteUrl: subj.websiteUrl ?? subj.website,
+          id: subj.id,
+        });
+        return enr.provider ? enr : null;
+      } catch (err) {
+        noteDegradation("openBankingTracker", err);
+        return null;
+      }
+    })();
+
     return NextResponse.json({
       ok: true,
       // When non-empty, downstream consumers (compliance report, MLRO UI)
@@ -572,6 +593,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       // degraded — the composite score is missing that signal.
       ...(degradation.length > 0 ? { degradation } : {}),
       ...(intelligence ? { intelligence } : {}),
+      ...(openBanking ? { openBanking } : {}),
       audit,
       screen,
       pep,

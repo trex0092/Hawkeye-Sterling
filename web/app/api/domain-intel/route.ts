@@ -8,6 +8,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { domainIntel } from "../../../../dist/src/integrations/webCheck.js";
 import type { DomainIntelResult } from "../../../../dist/src/integrations/webCheck.js";
+import { lookupProviderByDomain, deriveRiskSignals } from "@/lib/intelligence/openBankingTracker";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -164,15 +165,32 @@ export async function POST(req: Request): Promise<NextResponse> {
   const domain = body.domain.trim();
   const result = await domainIntel(domain);
 
+  // Open Banking Tracker enrichment — if the domain matches a known bank,
+  // attach its profile + AML risk signals. Pure in-memory lookup; no I/O.
+  const obProvider = lookupProviderByDomain(domain);
+  const openBanking = obProvider
+    ? {
+        provider: obProvider,
+        signals: deriveRiskSignals(obProvider),
+        matchedBy: "domain" as const,
+      }
+    : null;
+
   if (!result.ok) {
     // WEB_CHECK_URL not configured — use built-in RDAP + DNS-over-HTTPS provider
     const freeResult = await domainIntelFree(domain);
-    return NextResponse.json(freeResult, { headers: { ...CORS, ...gateHeaders } });
+    return NextResponse.json(
+      { ...freeResult, ...(openBanking ? { openBanking } : {}) },
+      { headers: { ...CORS, ...gateHeaders } },
+    );
   }
 
   const latencyMs = Date.now() - _handlerStart;
   if (latencyMs > 5000) console.warn(`[domain_intel] latencyMs=${latencyMs} exceeds 5000ms`);
-  return NextResponse.json({ ...result, latencyMs }, { headers: { ...CORS, ...gateHeaders } });
+  return NextResponse.json(
+    { ...result, latencyMs, ...(openBanking ? { openBanking } : {}) },
+    { headers: { ...CORS, ...gateHeaders } },
+  );
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     return NextResponse.json({
