@@ -160,7 +160,19 @@ export async function GET(req: Request): Promise<NextResponse> {
       ? "Configured via LSEG_USERNAME + LSEG_PASSWORD + LSEG_APP_KEY (bulk CFS + news + alerts via netlify/functions/lseg-cfs-poll.mts every 6 h)"
       : "Set LSEG_USERNAME + LSEG_PASSWORD + LSEG_APP_KEY to enable bulk CFS ingestion + news + alerts",
   };
+  const wc1McpUrl = process.env["LSEG_WC1_MCP_URL"];
+  const lsegWc1McpCheck: IntegrationCheck = wc1McpUrl
+    ? await pingCheck("lseg_wc1_mcp", "LSEG World-Check One MCP Server", `${wc1McpUrl.replace(/\/mcp$/, "")}/health`, false, 5000)
+    : {
+        id: "lseg_wc1_mcp",
+        label: "LSEG World-Check One MCP Server",
+        status: "unconfigured",
+        critical: false,
+        detail: "Set LSEG_WC1_MCP_URL=http://localhost:3001/mcp to route WC1 screening through the local MCP server",
+      };
+
   const commercialChecks: IntegrationCheck[] = [
+    lsegWc1McpCheck,
     envCheck("lseg_worldcheck", "LSEG World-Check One (REST)", ["LSEG_WORLDCHECK_API_KEY"], false, "Set LSEG_WORLDCHECK_API_KEY (+ optional _SECRET) to enable per-screening World-Check lookup"),
     lsegCfsCheck,
     envCheck("dowjones_rc", "Dow Jones Risk & Compliance", ["DOWJONES_RC_API_KEY"], false),

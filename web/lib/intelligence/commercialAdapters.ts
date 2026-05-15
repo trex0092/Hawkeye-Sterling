@@ -78,6 +78,123 @@ function sayariAdapter(): CorporateRegistryAdapter {
   };
 }
 
+// ── LSEG World-Check One via MCP server ──────────────────────────────────────
+// When LSEG_WC1_MCP_URL is set, screen through the local WC1 MCP HTTP server
+// instead of calling the REST API directly. The MCP server handles auth,
+// rate-limiting, and retries; this adapter just talks JSON-RPC to it.
+// Falls back transparently to lsegWorldCheckAdapter() when the env var is absent.
+function lsegWc1McpAdapter(): CorporateRegistryAdapter {
+  const mcpUrl = process.env["LSEG_WC1_MCP_URL"];
+  if (!mcpUrl) return NULL_CORPORATE_ADAPTER;
+
+  let _toolName: string | null | undefined = undefined; // undefined = not yet discovered
+
+  async function discoverScreenTool(): Promise<string | null> {
+    if (_toolName !== undefined) return _toolName;
+    try {
+      const res = await abortable(
+        fetch(mcpUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json, text/event-stream" },
+          body: JSON.stringify({ jsonrpc: "2.0", method: "tools/list", id: 1 }),
+        }),
+      );
+      if (!res.ok) { _toolName = null; return null; }
+      const json = (await res.json()) as { result?: { tools?: Array<{ name: string }> } };
+      const names = (json.result?.tools ?? []).map((t) => t.name);
+      const preference = [
+        "wc1_screen", "screen", "search_cases", "create_case",
+        "wc1_search", "search", "screen_entity", "lookup",
+      ];
+      _toolName = preference.find((p) => names.includes(p)) ??
+        names.find((n) => /screen|search|lookup/i.test(n)) ?? null;
+    } catch {
+      _toolName = null;
+    }
+    return _toolName;
+  }
+
+  return {
+    isAvailable: () => true,
+    lookup: async (name: string, _jurisdiction?: string): Promise<CorporateRecord[]> => {
+      if (!name.trim()) return [];
+      const toolName = await discoverScreenTool();
+      if (!toolName) {
+        console.warn("[lseg-wc1-mcp] no screening tool discovered on MCP server");
+        return [];
+      }
+      try {
+        let id = 2;
+        const callRes = await abortable(
+          fetch(mcpUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Accept: "application/json, text/event-stream" },
+            body: JSON.stringify({
+              jsonrpc: "2.0",
+              method: "tools/call",
+              id: id++,
+              params: { name: toolName, arguments: { name, entityType: "ORGANISATION" } },
+            }),
+          }),
+        );
+        if (!callRes.ok) {
+          console.warn(`[lseg-wc1-mcp] tools/call HTTP ${callRes.status}`);
+          return [];
+        }
+        const callJson = (await callRes.json()) as {
+          result?: { content?: Array<{ type: string; text?: string }>; isError?: boolean };
+        };
+        if (callJson.result?.isError) {
+          console.warn("[lseg-wc1-mcp] tool returned isError=true");
+          return [];
+        }
+        const textContent = callJson.result?.content?.find((c) => c.type === "text")?.text;
+        if (!textContent) return [];
+
+        let parsed: unknown;
+        try { parsed = JSON.parse(textContent); } catch { return []; }
+
+        const root = parsed as Record<string, unknown>;
+        const arr: unknown[] = Array.isArray(parsed)
+          ? parsed
+          : Array.isArray(root["results"]) ? root["results"]
+          : Array.isArray(root["hits"]) ? root["hits"]
+          : Array.isArray(root["matches"]) ? root["matches"]
+          : Array.isArray(root["data"]) ? root["data"]
+          : [];
+
+        return arr
+          .filter((item): item is Record<string, unknown> => !!item && typeof item === "object")
+          .map((o) => {
+            const legalName =
+              (typeof o["name"] === "string" ? o["name"] : null) ??
+              (typeof o["primaryName"] === "string" ? o["primaryName"] : null) ??
+              (typeof o["fullName"] === "string" ? o["fullName"] : null) ?? "";
+            if (!legalName) return null;
+            const countries = o["countries"] ?? o["country"] ?? o["nationality"];
+            const country = Array.isArray(countries) ? (countries[0] ?? "?") :
+              typeof countries === "string" ? countries : "?";
+            const providers = o["sources"] ?? o["providers"] ?? o["lists"] ?? o["categories"];
+            const providerStr = Array.isArray(providers) ? providers.slice(0, 4).join(", ") :
+              typeof providers === "string" ? providers : undefined;
+            const refId = o["entityId"] ?? o["id"] ?? o["uid"] ?? o["worldCheckId"];
+            return {
+              source: "lseg-wc1-mcp",
+              jurisdiction: typeof country === "string" ? country : "?",
+              legalName,
+              ...(typeof refId === "string" ? { registrationNumber: refId } : {}),
+              ...(providerStr ? { status: providerStr } : {}),
+            } satisfies CorporateRecord;
+          })
+          .filter((r): r is CorporateRecord => r !== null);
+      } catch (err) {
+        console.warn("[lseg-wc1-mcp] lookup failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
 // ── LSEG World-Check One ──────────────────────────────────────────────────
 // Auth: Basic (key:secret) when both vars are set; Bearer (key-only) when
 // only LSEG_WORLDCHECK_API_KEY is present — covers single-key deployments.
@@ -824,9 +941,12 @@ function napierAdapter(): CorporateRegistryAdapter {
 
 /**
  * Returns the first available commercial adapter (priority order).
+ * lseg-wc1-mcp takes highest priority when LSEG_WC1_MCP_URL is set —
+ * it routes through the local WC1 MCP server rather than the REST API.
  */
 export function bestCommercialAdapter(): CorporateRegistryAdapter {
   const candidates = [
+    lsegWc1McpAdapter(),
     lsegWorldCheckAdapter(),
     dowJonesAdapter(),
     sayariAdapter(),
@@ -857,12 +977,13 @@ export function bestCommercialAdapter(): CorporateRegistryAdapter {
 }
 
 export type CommercialProvider =
-  | "lseg-world-check" | "dowjones-rc" | "sayari" | "complyadvantage"
+  | "lseg-wc1-mcp" | "lseg-world-check" | "dowjones-rc" | "sayari" | "complyadvantage"
   | "acuris-rdc" | "quantexa" | "castellum" | "kompany" | "namescan"
   | "bridger-insight" | "sanctions.io" | "opensanctions-pro" | "smartsearch"
   | "encompass" | "themis" | "sigma-ratings" | "polixis" | "salv" | "none";
 
 export function activeCommercialProvider(): CommercialProvider {
+  if (process.env["LSEG_WC1_MCP_URL"]) return "lseg-wc1-mcp";
   if (process.env["LSEG_WORLDCHECK_API_KEY"]) return "lseg-world-check";
   if (process.env["DOWJONES_RC_API_KEY"]) return "dowjones-rc";
   if (process.env["SAYARI_API_KEY"]) return "sayari";
@@ -886,6 +1007,7 @@ export function activeCommercialProvider(): CommercialProvider {
 
 export function activeCommercialProviders(): CommercialProvider[] {
   const all: Array<[boolean, CommercialProvider]> = [
+    [!!process.env["LSEG_WC1_MCP_URL"], "lseg-wc1-mcp"],
     [!!process.env["LSEG_WORLDCHECK_API_KEY"], "lseg-world-check"],
     [!!process.env["DOWJONES_RC_API_KEY"], "dowjones-rc"],
     [!!process.env["SAYARI_API_KEY"], "sayari"],
