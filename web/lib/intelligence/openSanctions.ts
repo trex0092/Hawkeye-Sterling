@@ -17,8 +17,18 @@
 //     the response shows ALL programs (not just the first match)
 //
 // License: vendored data is CC BY-NC 4.0 — see NOTICE.md alongside.
+//
+// IMPORTANT: the JSON file is loaded at RUNTIME via fs.readFileSync, not
+// `import`-ed statically. A static import of a 48 MB JSON file blew up
+// the Next.js build (memory + bundle-size, exit code 2 — see deploy
+// failure on c239a4f). Runtime load reads the file on first call inside
+// the warm Lambda — ~600 ms one-time cost, then O(1). The file ships
+// with the Lambda bundle via `outputFileTracingIncludes` in
+// `web/next.config.mjs` for `/api/**/*` routes.
 
-import sanctionsRaw from "@/lib/data/opensanctions/sanctions.json";
+import { readFileSync, existsSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -63,9 +73,55 @@ const CAHRA_ISO2: ReadonlySet<string> = new Set([
   "ir", "ru", "kp", "sy", "sd", "af", "by", "cu", "mm", "ve", "ye", "lb", "iq", "ly", "ss",
 ]);
 
-// ── Lazy index construction ────────────────────────────────────────────────
+// ── Runtime dataset load ───────────────────────────────────────────────────
 
-const records = sanctionsRaw as OpenSanctionsRecord[];
+// Resolve the JSON path at first use. We try several candidate locations
+// because the cwd inside a Netlify Lambda depends on Next.js' output layout
+// (standalone vs default) and outputFileTracingRoot setting. First match wins.
+let _records: OpenSanctionsRecord[] | null = null;
+let _loadError: string | null = null;
+
+function candidatePaths(): string[] {
+  const here = path.dirname(fileURLToPath(import.meta.url));
+  return [
+    // Same source-tree layout — works when traced files preserve relative paths.
+    path.join(here, "..", "data", "opensanctions", "sanctions.json"),
+    // Lambda cwd is the web/ project root (Next.js default).
+    path.join(process.cwd(), "lib", "data", "opensanctions", "sanctions.json"),
+    // Lambda cwd is the repo root (outputFileTracingRoot = repo root in this app).
+    path.join(process.cwd(), "web", "lib", "data", "opensanctions", "sanctions.json"),
+  ];
+}
+
+function loadRecords(): OpenSanctionsRecord[] {
+  if (_records !== null) return _records;
+
+  for (const candidate of candidatePaths()) {
+    try {
+      if (!existsSync(candidate)) continue;
+      const raw = readFileSync(candidate, "utf-8");
+      const parsed = JSON.parse(raw) as OpenSanctionsRecord[];
+      if (Array.isArray(parsed)) {
+        _records = parsed;
+        return _records;
+      }
+    } catch (err) {
+      _loadError = err instanceof Error ? err.message : String(err);
+    }
+  }
+
+  // Degraded mode: file is missing from the bundle. Log once, return empty.
+  // The route layer surfaces this as "no OpenSanctions matches found" rather
+  // than throwing — screening still proceeds against the 6 primary feeds.
+  if (!_loadError) {
+    _loadError = `sanctions.json not found in any candidate path: ${candidatePaths().join(", ")}`;
+  }
+  console.warn("[openSanctions] dataset unavailable — degrading to empty index:", _loadError);
+  _records = [];
+  return _records;
+}
+
+// ── Lazy index construction ────────────────────────────────────────────────
 
 let _byId: Map<string, OpenSanctionsRecord> | null = null;
 let _byNameLower: Map<string, OpenSanctionsRecord[]> | null = null;
@@ -80,6 +136,7 @@ function buildIndices(): void {
   const byIdentifier = new Map<string, OpenSanctionsRecord>();
   const byCountry = new Map<string, OpenSanctionsRecord[]>();
 
+  const records = loadRecords();
   for (const r of records) {
     if (!r.id || !r.name) continue;
     byId.set(r.id, r);
@@ -227,6 +284,7 @@ export function openSanctionsStats(): {
   uniqueDatasets: number;
 } {
   buildIndices();
+  const records = loadRecords();
   const datasetSet = new Set<string>();
   for (const r of records) {
     if (r.datasets) for (const d of r.datasets) datasetSet.add(d);
