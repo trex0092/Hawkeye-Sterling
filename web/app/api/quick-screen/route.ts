@@ -85,7 +85,12 @@ function respond(
 
 export async function POST(req: Request): Promise<NextResponse> {
   const t0 = Date.now();
-  const gate = await enforce(req);
+  // Require authentication — UAE FDL Art. 20 requires every screening
+  // action to be traceable to a natural person. Anonymous screening (free
+  // tier without an API key) leaves audit chain entries with no operator
+  // identity. For a public demo, use the separate /api/demo/quick-screen
+  // path (if added) which logs actor: "public-demo" explicitly.
+  const gate = await enforce(req, { requireAuth: true });
   if (!gate.ok) return gate.response;
   const gateHeaders: Record<string, string> = gate.ok ? gate.headers : {};
 

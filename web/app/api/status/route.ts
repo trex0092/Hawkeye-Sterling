@@ -972,7 +972,7 @@ async function _handleGet(isAdmin: boolean): Promise<NextResponse> {
   // reviewed — gives MLROs a self-service "I reviewed it today" action
   // without touching env vars; (2) BRAIN_REVIEWED_AT env var; (3) the
   // hardcoded floor below.
-  let brainReviewedAt = process.env["BRAIN_REVIEWED_AT"] ?? "2026-04-01";
+  let brainReviewedAt = process.env["BRAIN_REVIEWED_AT"] ?? "2026-05-15";
   try {
     const blobsMod = (await import("@netlify/blobs")) as unknown as {
       getStore: (opts: { name: string; siteID?: string; token?: string; consistency?: string }) => {
