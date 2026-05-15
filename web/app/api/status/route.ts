@@ -7,6 +7,8 @@ import { KNOWN_PEPS, KNOWN_ADVERSE } from "@/lib/data/known-entities";
 import { getJson, isInMemoryFallback } from "@/lib/server/store";
 import { gdeltCacheStats } from "@/lib/intelligence/gdelt-cache";
 import { isRedisConfigured } from "@/lib/cache/redis";
+import { enforce } from "@/lib/server/enforce";
+import type { EnforcementAllow } from "@/lib/server/enforce";
 
 // Brain modules are compiled separately; dynamic import so the route module
 // loads even when the dist/ folder hasn't been built yet (local dev).
@@ -870,9 +872,20 @@ async function incidentHistory(): Promise<Incident[]> {
   return [];
 }
 
-export async function GET(): Promise<NextResponse> {
+export async function GET(req: Request): Promise<NextResponse> {
+  // Auth-required after the enforce() default flip. Same-origin portal callers
+  // get the ADMIN_TOKEN auto-injected by middleware.ts and pass through with
+  // the enterprise tier; external monitors must present their own API key.
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
+  const okGate = gate as EnforcementAllow;
+  // Admin = portal callers (same-origin, middleware-injected ADMIN_TOKEN) or
+  // explicit enterprise-tier API keys. Only admins see env-var names, brain
+  // integrity hashes, build SHAs, and the full configHealth check list.
+  const isAdmin = okGate.keyId === "portal_admin" || okGate.tier?.id === "enterprise";
+
   try {
-    return await _handleGet();
+    return await _handleGet(isAdmin);
   } catch (err) {
     console.error("[status] unhandled top-level error:", err instanceof Error ? err.message : err);
     return NextResponse.json(
@@ -882,7 +895,7 @@ export async function GET(): Promise<NextResponse> {
   }
 }
 
-async function _handleGet(): Promise<NextResponse> {
+async function _handleGet(isAdmin: boolean): Promise<NextResponse> {
   const [
     screening,
     superBrain,
@@ -1300,6 +1313,34 @@ async function _handleGet(): Promise<NextResponse> {
     };
   }
 
+  // Defense-in-depth: even authenticated non-admin callers don't need
+  // env-var names, build SHAs, or brain integrity hashes. Those fields are
+  // operationally useful only to admins / portal MLROs and recon-useful to
+  // anyone else. configHealth keeps the aggregate counts so non-admins still
+  // see "8/9 required configured" without learning the missing var's name.
+  const configHealthOut = isAdmin
+    ? configHealth
+    : {
+        requiredTotal: configHealth.requiredTotal,
+        requiredConfigured: configHealth.requiredConfigured,
+        requiredMissingCount: configHealth.requiredMissing.length,
+        optionalTotal: configHealth.optionalTotal,
+        optionalConfigured: configHealth.optionalConfigured,
+      };
+  const brainSoulOut = isAdmin
+    ? brainSoul
+    : {
+        status: brainSoul.status,
+        amplifierVersion: brainSoul.amplifierVersion,
+        catalogue: brainSoul.catalogue,
+      };
+  const deploysOut = isAdmin
+    ? deploys
+    : deploys.map(({ sha: _sha, ...rest }) => rest);
+  const feedVersionsOut = isAdmin
+    ? feedVersions
+    : (() => { const { commitSha: _c, ...rest } = feedVersions; return rest; })();
+
   return NextResponse.json({
     ok: true,
     status: worstStatus,
@@ -1310,7 +1351,7 @@ async function _handleGet(): Promise<NextResponse> {
     listsFreshness,
     // Full rich fields
     externalStatus,
-    configHealth,
+    configHealth: configHealthOut,
     uptimeSec,
     startedAt: STARTED_AT,
     now: new Date().toISOString(),
@@ -1319,11 +1360,11 @@ async function _handleGet(): Promise<NextResponse> {
     sanctions,
     incidents,
     maintenance,
-    feedVersions,
-    deploys,
+    feedVersions: feedVersionsOut,
+    deploys: deploysOut,
     dependencyGraph,
     errorHeatmap,
-    brainSoul,
+    brainSoul: brainSoulOut,
     cognitiveGrade,
     brainNarrative,
     threatSurface,
