@@ -460,7 +460,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);
-    if (Date.now() - t0 > 5000) console.warn(`[quick-screen] slow response latencyMs=${Date.now() - t0}`);
+    if (Date.now() - t0 > 3000) console.warn(`[quick-screen] slow response latencyMs=${Date.now() - t0}`);
     return respond(
       500,
       { ok: false, errorCode: "HANDLER_EXCEPTION", errorType: "internal", tool: "screen_subject", error: "quick-screen failed", detail, requestId: Math.random().toString(36).slice(2, 10), latencyMs: Date.now() - t0 } as QuickScreenResponse & { errorCode: string; errorType: string; tool: string; requestId: string; latencyMs: number },
