@@ -1468,14 +1468,18 @@ export default function ScreeningPage() {
                 onClick={async () => {
                   // Force a full sanctions list re-ingestion server-side.
                   // Lists can take ~15-30 s to refresh; the response is awaited.
-                  const res = await fetch("/api/sanctions/operator-refresh", { method: "POST" });
-                  if (res.ok) {
-                    const data = (await res.json().catch(() => null)) as { ok_count?: number; failed_count?: number } | null;
-                    const okCount = data?.ok_count ?? 0;
-                    const failedCount = data?.failed_count ?? 0;
-                    alert(`Sanctions refresh complete — ${okCount} lists OK, ${failedCount} failed. Reload to see updated timestamps.`);
-                  } else {
-                    alert(`Refresh failed (HTTP ${res.status}). Check /api/sanctions/last-errors for detail.`);
+                  try {
+                    const res = await fetch("/api/sanctions/operator-refresh", { method: "POST" });
+                    if (res.ok) {
+                      const data = (await res.json().catch(() => null)) as { ok_count?: number; failed_count?: number } | null;
+                      const okCount = data?.ok_count ?? 0;
+                      const failedCount = data?.failed_count ?? 0;
+                      alert(`Sanctions refresh complete — ${okCount} lists OK, ${failedCount} failed. Reload to see updated timestamps.`);
+                    } else {
+                      alert(`Refresh failed (HTTP ${res.status}). Check /api/sanctions/last-errors for detail.`);
+                    }
+                  } catch (err) {
+                    alert(`Sanctions refresh could not be reached — check your connection and try again. (${err instanceof Error ? err.message : "Network error"})`);
                   }
                 }}
                 className="text-11 font-semibold px-3 py-1.5 rounded border border-amber text-amber hover:bg-amber/10 transition-colors"
