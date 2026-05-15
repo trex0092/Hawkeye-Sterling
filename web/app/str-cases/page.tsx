@@ -420,13 +420,10 @@ export default function StrCasesPage() {
 
   return (
     <ModuleLayout asanaModule="str-cases" asanaLabel="STR / SAR Cases">
-      <div className="font-mono text-10 font-semibold text-amber tracking-wide-4 uppercase mb-1">
-        MODULE 05
-      </div>
       <ModuleHeader
             title="STR Case"
             titleEm="Management"
-            subtitle="Module 05 · file without delay · no tipping-off"
+            subtitle="file without delay · no tipping-off"
             dotColor="brand"
             badge={{
               label: "FDL Art. 26–27 · File without delay",
