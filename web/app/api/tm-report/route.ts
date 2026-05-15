@@ -151,8 +151,8 @@ async function handleTmReport(req: Request): Promise<NextResponse> {
       t.behaviouralFlags ?? [],
       t.notes,
     );
-  } catch {
-    // Classification failed — proceed without enrichment
+  } catch (err) {
+    console.warn("[tm-report] typology classification failed — proceeding without enrichment:", err instanceof Error ? err.message : String(err));
   }
 
   if (typologyResult) {
