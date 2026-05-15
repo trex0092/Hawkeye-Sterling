@@ -136,25 +136,31 @@ async function loadFromBlobs(): Promise<QuickScreenCandidate[] | null> {
     return null;
   }
 
+  // Read all adapter blobs in parallel (was sequential — each network round-trip
+  // added ~80-200ms; with 18 adapters that was 1.5-3.6s on cold start).
+  // Individual failures are swallowed so one missing list never blocks others.
+  const PER_KEY_TIMEOUT_MS = 1_200;
+  const results = await Promise.all(
+    ADAPTER_IDS.map(async (adapterId) => {
+      try {
+        const raw = await Promise.race([
+          store.get(`${adapterId}/latest.json`, { type: "json" }) as Promise<{ entities: NormalisedEntity[] } | null>,
+          new Promise<null>((_, reject) => setTimeout(() => reject(new Error("blob read timeout")), PER_KEY_TIMEOUT_MS)),
+        ]);
+        return raw?.entities ?? null;
+      } catch {
+        return null;
+      }
+    }),
+  );
+
   const live: QuickScreenCandidate[] = [];
   let anyLoaded = false;
-
-  for (const adapterId of ADAPTER_IDS) {
-    try {
-      const raw = (await store.get(`${adapterId}/latest.json`, {
-        type: "json",
-      })) as { entities: NormalisedEntity[] } | null;
-      if (!raw?.entities?.length) continue;
-      anyLoaded = true;
-      for (const e of raw.entities) {
-        try {
-          live.push(entityToCandidate(e));
-        } catch {
-          // malformed entity — skip and continue
-        }
-      }
-    } catch {
-      // individual list failure — degrade gracefully, try others
+  for (const entities of results) {
+    if (!entities?.length) continue;
+    anyLoaded = true;
+    for (const e of entities) {
+      try { live.push(entityToCandidate(e)); } catch { /* malformed — skip */ }
     }
   }
 
