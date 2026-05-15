@@ -115,13 +115,50 @@ async function fetchWithTimeout(url: string, timeoutMs = FETCH_TIMEOUT_MS): Prom
     return await fetch(url, {
       headers: {
         "user-agent": "HawkeyeSterling/1.0 (+https://hawkeye-sterling.netlify.app)",
-        accept: "application/json",
+        accept: "text/csv, application/json",
       },
       signal: ctrl.signal,
     });
   } finally {
     clearTimeout(t);
   }
+}
+
+// Minimal CSV parser — handles RFC 4180 quoted fields with embedded
+// commas, newlines, and ""-escaped quotes. Sufficient for OpenSanctions'
+// targets.simple.csv. We don't use a dependency because @neat-csv et al
+// would push the function bundle over Netlify's compressed limit.
+function parseCsv(text: string): Record<string, string>[] {
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let cur = "";
+  let inQ = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQ) {
+      if (c === '"' && text[i + 1] === '"') { cur += '"'; i++; }
+      else if (c === '"') inQ = false;
+      else cur += c;
+    } else {
+      if (c === '"') inQ = true;
+      else if (c === ',') { row.push(cur); cur = ""; }
+      else if (c === '\r') { /* skip — \n on next iteration finalises row */ }
+      else if (c === '\n') { row.push(cur); rows.push(row); row = []; cur = ""; }
+      else cur += c;
+    }
+  }
+  if (cur !== "" || row.length > 0) { row.push(cur); rows.push(row); }
+  if (rows.length === 0) return [];
+  const header = rows[0]!;
+  const out: Record<string, string>[] = [];
+  for (let i = 1; i < rows.length; i++) {
+    const r = rows[i]!;
+    if (r.length === 1 && r[0] === "") continue; // skip empty trailing lines
+    const obj: Record<string, string> = {};
+    for (let j = 0; j < header.length; j++) obj[header[j]!] = r[j] ?? "";
+    out.push(obj);
+  }
+  return out;
 }
 
 export interface DatasetFetchOutcome {
@@ -137,7 +174,11 @@ export async function fetchOneDataset(datasetId: string): Promise<{
   records: OpenSanctionsRecord[];
 }> {
   const start = Date.now();
-  const url = `${OPENSANCTIONS_BASE}/${encodeURIComponent(datasetId)}/targets.simple.json`;
+  // OpenSanctions does NOT publish `targets.simple.json` — that filename
+  // returns 404 for every dataset (verified 2026-05-15). The simple format
+  // is CSV-only at `targets.simple.csv`. Each row maps onto a RawTarget
+  // Simple object via the column header, then through normaliseRecord.
+  const url = `${OPENSANCTIONS_BASE}/${encodeURIComponent(datasetId)}/targets.simple.csv`;
   try {
     const res = await fetchWithTimeout(url);
     if (!res.ok) {
@@ -147,35 +188,34 @@ export async function fetchOneDataset(datasetId: string): Promise<{
       };
     }
     const text = await res.text();
-    // targets.simple.json is NDJSON (newline-delimited JSON), one record per
-    // line. Fall back to JSON-array parse for datasets that use the array
-    // format — both are valid in the OpenSanctions catalogue.
+    const rows = parseCsv(text);
     const records: OpenSanctionsRecord[] = [];
-    if (text.startsWith("[")) {
-      const parsed = JSON.parse(text) as RawTargetSimple[];
-      if (!Array.isArray(parsed)) {
-        return {
-          outcome: { datasetId, ok: false, count: 0, error: "expected JSON array", durationMs: Date.now() - start },
-          records: [],
-        };
-      }
-      for (const raw of parsed) {
-        const r = normaliseRecord(raw, datasetId);
-        if (r) records.push(r);
-      }
-    } else {
-      for (const line of text.split(/\r?\n/)) {
-        const trimmed = line.trim();
-        if (!trimmed) continue;
-        try {
-          const raw = JSON.parse(trimmed) as RawTargetSimple;
-          const r = normaliseRecord(raw, datasetId);
-          if (r) records.push(r);
-        } catch {
-          // Skip malformed lines; OpenSanctions does occasionally publish a
-          // trailing empty/partial line in NDJSON exports.
-        }
-      }
+    for (const row of rows) {
+      // OpenSanctions targets.simple.csv columns:
+      //   id, schema, name, aliases, birth_date, countries, addresses,
+      //   identifiers, sanctions, phones, emails, program_ids, dataset,
+      //   first_seen, last_seen, last_change
+      // Map onto RawTargetSimple — semicolon-separated multi-value cells
+      // are converted to arrays inside normaliseRecord via asArray().
+      const raw: RawTargetSimple = {
+        id: row["id"] || undefined,
+        schema: row["schema"] || undefined,
+        name: row["name"] || undefined,
+        aliases: row["aliases"] || undefined,
+        birth_date: row["birth_date"] || undefined,
+        countries: row["countries"] || undefined,
+        identifiers: row["identifiers"] || undefined,
+        sanctions: row["sanctions"] || undefined,
+        // CSV column is `program_ids` (snake_case); the raw shape calls
+        // it `programs`. Map across so normaliseRecord picks it up.
+        programs: row["program_ids"] || undefined,
+        // CSV column is `dataset` (singular). Pass through as datasets so
+        // normaliseRecord's union-with-source logic still works.
+        datasets: row["dataset"] || undefined,
+        last_change: row["last_change"] || undefined,
+      };
+      const r = normaliseRecord(raw, datasetId);
+      if (r) records.push(r);
     }
     return {
       outcome: { datasetId, ok: true, count: records.length, durationMs: Date.now() - start },
