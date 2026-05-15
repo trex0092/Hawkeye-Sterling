@@ -26,7 +26,7 @@ export async function POST(req: Request) {
 
   const cover: CoverData = {
     reportId, regs,
-    module: "MODULE 23 · RISK ASSESSMENT",
+    module: "RISK ASSESSMENT",
     title: "Enterprise-Wide Risk Assessment — Board Report",
     subtitle: "Annual enterprise-wide risk assessment under UAE FDL 10/2025 Art.4 and CBUAE AML Standards §2. Scope: customer, geographic, products, channels, delivery mechanisms.",
     subjectLabel: "REPORTING ENTITY",

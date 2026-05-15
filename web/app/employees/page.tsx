@@ -321,7 +321,7 @@ export default function EmployeesPage() {
   return (
     <ModuleLayout asanaModule="employees" asanaLabel="Employees">
         <ModuleHero
-          moduleNumber={17}
+
           eyebrow="Module 16 · HR registry"
           title="Employee"
           titleEm="information."

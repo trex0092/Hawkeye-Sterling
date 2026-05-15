@@ -125,7 +125,7 @@ export default function OwnershipPage() {
       engineLabel="Ownership analysis engine"
     >
       <ModuleHero
-        moduleNumber={37}
+
         eyebrow="Module 37 · KYC / Beneficial Ownership"
         title="Ownership"
         titleEm="explorer."

@@ -155,7 +155,7 @@ export default function FpOptimizerPage() {
         eyebrow="ML Screening · Pattern Analysis · Threshold Optimisation"
         title="False Positive"
         titleEm="optimizer."
-        moduleNumber={45}
+
         kpis={[
           { value: kpiFpRate, label: "FP rate", tone: analysisResult && analysisResult.fpRate > 70 ? "red" : analysisResult ? "amber" : undefined },
           { value: kpiTimeSaved, label: "Time saved / month" },

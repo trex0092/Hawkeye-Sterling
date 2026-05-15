@@ -393,7 +393,7 @@ export default function AnalyticsPage() {
     const coverData: CoverData = {
       reportId,
       regs,
-      module: "MODULE 40 · ANALYTICS · MLRO PERFORMANCE DIGEST",
+      module: "ANALYTICS · MLRO PERFORMANCE DIGEST",
       title: "MLRO Performance Digest",
       subtitle: `Period: ${formatPeriod(ts)} — generated ${ts.toUTCString().replace(" GMT", " UTC")}`,
       subjectLabel: "INSTITUTION",

@@ -212,7 +212,7 @@ export default function SanctionsEvasionPage() {
         eyebrow="AI-Powered Sanctions Intelligence"
         title="Sanctions"
         titleEm="evasion."
-        moduleNumber={39}
+
         kpis={[
           { value: "4,821", label: "Entities screened" },
           { value: "147", label: "Evasion patterns detected", tone: "amber" },

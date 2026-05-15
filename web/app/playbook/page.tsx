@@ -5925,7 +5925,7 @@ export default function PlaybookPage() {
   return (
     <ModuleLayout asanaModule="playbook" asanaLabel="Playbook">
       <ModuleHero
-        moduleNumber={33}
+
         eyebrow="Module 16 · Guided due-diligence"
         title="Playbook"
         titleEm="engine."

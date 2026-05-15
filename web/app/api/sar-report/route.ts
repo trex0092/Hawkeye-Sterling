@@ -408,7 +408,7 @@ async function handleSarReport(req: Request): Promise<Response> {
 
     const coverData: CoverData = {
       reportId, regs,
-      module: `MODULE · ${body.filingType} FILING`,
+      module: `${body.filingType} FILING`,
       title: `${body.filingType} Filing Dossier`,
       subtitle: `${body.filingType} draft prepared for goAML submission. MLRO review required before lodgement.`,
       subjectLabel: "SUBJECT",

@@ -130,7 +130,7 @@ export default function MoeSurveyPage() {
   return (
     <ModuleLayout asanaModule="moe-survey" asanaLabel="MoE 2026 AML/CFT Survey" engineLabel="Compliance survey engine">
       <ModuleHero
-        moduleNumber={53}
+
         eyebrow="Module 53 · Regulatory Compliance"
         title="MoE 2026 mandatory AML/CFT"
         titleEm="survey."

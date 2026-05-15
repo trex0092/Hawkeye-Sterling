@@ -240,7 +240,7 @@ export default function EocnPage() {
   return (
     <ModuleLayout asanaModule="eocn" asanaLabel="EOCN Trade Compliance" engineLabel="EOCN sanctions engine">
       <ModuleHero
-        moduleNumber={24}
+
         eyebrow="Module 27 · Sanctions"
         title="EOCN targeted financial"
         titleEm="sanctions."
