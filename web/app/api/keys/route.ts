@@ -46,6 +46,18 @@ export async function POST(req: Request): Promise<NextResponse> {
       { status: 400 },
     );
   }
+  if (name.length > 500) {
+    return NextResponse.json(
+      { ok: false, error: "name exceeds 500-character limit" },
+      { status: 400, headers: gate.headers },
+    );
+  }
+  if (email.length > 500) {
+    return NextResponse.json(
+      { ok: false, error: "email exceeds 500-character limit" },
+      { status: 400, headers: gate.headers },
+    );
+  }
   if (!TIERS[tier]) {
     return NextResponse.json({ ok: false, error: "unknown tier" }, { status: 400 , headers: gate.headers});
   }

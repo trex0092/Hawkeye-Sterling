@@ -57,6 +57,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (!body.name?.trim()) {
     return NextResponse.json({ ok: false, error: "name is required" }, { status: 400, headers: CORS });
   }
+  if (body.name.length > 500) {
+    return NextResponse.json({ ok: false, error: "name exceeds 500-character limit" }, { status: 400, headers: CORS });
+  }
+  if (body.domain && body.domain.length > 2000) {
+    return NextResponse.json({ ok: false, error: "domain exceeds 2000-character limit" }, { status: 400, headers: CORS });
+  }
 
   const name = body.name.trim();
   // Coerce to strict boolean — prevents a truthy string like "true" from

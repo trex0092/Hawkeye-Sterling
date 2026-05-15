@@ -44,6 +44,15 @@ export async function POST(req: Request): Promise<NextResponse> {
       { status: 400 },
     );
   }
+  if (body.name && body.name.length > 500) {
+    return NextResponse.json({ ok: false, error: "name exceeds 500-character limit" }, { status: 400 });
+  }
+  if (body.domain && body.domain.length > 2000) {
+    return NextResponse.json({ ok: false, error: "domain exceeds 2000-character limit" }, { status: 400 });
+  }
+  if (body.websiteUrl && body.websiteUrl.length > 2000) {
+    return NextResponse.json({ ok: false, error: "websiteUrl exceeds 2000-character limit" }, { status: 400 });
+  }
 
   const enrichment = enrichSubject(body);
 

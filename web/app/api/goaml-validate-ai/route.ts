@@ -51,6 +51,9 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (!body.narrative?.trim()) {
     return NextResponse.json({ ok: false, error: "narrative is required" }, { status: 400 , headers: gate.headers});
   }
+  if (body.narrative.length > 10_000) {
+    return NextResponse.json({ ok: false, error: "narrative exceeds 10,000-character limit" }, { status: 400, headers: gate.headers });
+  }
 
   writeAuditEvent(
     "mlro",
