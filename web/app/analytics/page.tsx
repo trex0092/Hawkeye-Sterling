@@ -15,6 +15,7 @@ import {
   hsScorebox,
   hsNarrative,
   hsKvGrid,
+  hsFindings,
   type CoverData,
 } from "@/lib/reportHtml";
 
@@ -473,7 +474,7 @@ export default function AnalyticsPage() {
       content: `
         <h2 class="hs-section-h" style="margin-top:0">AI insights</h2>
         ${aiInsights ? hsNarrative(aiInsights.headline) : hsNarrative("Run AI insights from the digest to populate this section.")}
-        ${aiInsights?.boardTalkingPoints?.length ? `<ul class="hs-findings">${aiInsights.boardTalkingPoints.map((p) => `<li>${p}</li>`).join("")}</ul>` : ""}
+        ${aiInsights?.boardTalkingPoints?.length ? hsFindings(aiInsights.boardTalkingPoints) : ""}
         <h2 class="hs-section-h" style="margin-top:14px">Audit & integrity</h2>
         ${hsKvGrid([
           { k: "Report ID", v: reportId },

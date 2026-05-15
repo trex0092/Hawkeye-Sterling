@@ -23,7 +23,10 @@ export function MultiSelect({
   const [internal, setInternal] = useState<Set<string>>(
     () => new Set(value ?? []),
   );
-  const selected = value ? new Set(value) : internal;
+  const selected = useMemo(
+    () => (value ? new Set(value) : internal),
+    [value, internal],
+  );
   const setSelected = (next: Set<string>) => {
     if (onChange) onChange(Array.from(next));
     else setInternal(next);

@@ -292,24 +292,17 @@ export async function POST(req: Request): Promise<NextResponse> {
   // Server-side session turns merged with any in-memory `context`
   // pairs the client supplied. In-memory wins on overlap (it's the
   // most recent state the operator saw).
-  const persistedTurns = sessionKey
-    ? await loadAdvisorSession(tenant, sessionKey)
-    : [];
-  const mergedContext: ContextPair[] = [
-    ...persistedTurns.slice(-3).map((t) => ({ q: t.q, a: t.a })),
-    ...(body.context ?? []),
-  ];
-
-  const preamble = buildContextPreamble(mergedContext);
-  const subjectPreamble = buildSubjectPreamble(body.superBrain);
-
-  // ── Tier-2 augmentations ──────────────────────────────────────
-  // Each builder produces an empty string when not applicable, so
-  // the prompt isn't padded with "no signal" boilerplate.
+  // ── Tier-2 augmentations ─────────────────────────────────────────
+  // Parallelise all three async context builders so the round-trips to
+  // Netlify Blobs (session + case index + EOCN blob) happen concurrently
+  // rather than serially. Each builder returns "" when not applicable.
   const jurisdictionDirective = buildJurisdictionComparator(
     analysis.jurisdictions ?? [],
   );
-  const [casePrecedent, regulatoryUpdates] = await Promise.all([
+  const [persistedTurns, casePrecedent, regulatoryUpdates] = await Promise.all([
+    sessionKey
+      ? loadAdvisorSession(tenant, sessionKey)
+      : Promise.resolve([] as import("@/lib/server/advisor-context").AdvisorTurn[]),
     buildCasePrecedentPreamble(tenant, {
       jurisdiction:
         body.jurisdiction ?? body.superBrain?.jurisdiction?.iso2,
@@ -323,6 +316,14 @@ export async function POST(req: Request): Promise<NextResponse> {
     }),
     buildRegulatoryUpdatePreamble(analysis.topics ?? []),
   ]);
+
+  const mergedContext: ContextPair[] = [
+    ...persistedTurns.slice(-3).map((t) => ({ q: t.q, a: t.a })),
+    ...(body.context ?? []),
+  ];
+
+  const preamble = buildContextPreamble(mergedContext);
+  const subjectPreamble = buildSubjectPreamble(body.superBrain);
 
   // Order: session continuity → subject posture → case precedent →
   // regulatory updates → jurisdiction directive → classifier

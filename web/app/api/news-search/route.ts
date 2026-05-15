@@ -247,10 +247,10 @@ function parseRss(xml: string, subject: string, variants: string[], lang: string
 }
 
 // Per-locale RSS timeout. With 7 locales fanning out in parallel, any single
-// stalled feed would otherwise hold up the whole response. A 4-second
+// stalled feed would otherwise hold up the whole response. A 2-second
 // AbortSignal bounds each feed so the slowest locale is skipped rather than
 // blocking the others.
-const FEED_TIMEOUT_MS = 4_000;
+const FEED_TIMEOUT_MS = 2_000;
 
 // Overall timebox for the whole fan-out. We return with whatever articles
 // have arrived by this deadline so a slow Google News cluster never burns
@@ -527,7 +527,7 @@ export async function GET(req: Request): Promise<NextResponse> {
       "Returning empty dossier; investigate variantsOf / keyword classification.",
       err,
     );
-    return NextResponse.json({ ...emptyResponse(q, "static_fallback", Date.now() - t0), fetchedAt }, { headers: gateHeaders });
+    return NextResponse.json({ ...emptyResponse(q, "static_fallback", Date.now() - t0), fetchedAt, degraded: true }, { headers: gateHeaders });
   }
 }
 

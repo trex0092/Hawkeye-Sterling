@@ -1468,7 +1468,10 @@ export async function OPTIONS(): Promise<Response> {
   return new Response(null, { status: 204, headers: CORS });
 }
 
-export async function GET(): Promise<Response> {
+export async function GET(req: Request): Promise<Response> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
+
   // Claude.ai sends a GET to discover the MCP endpoint.
   // Return a minimal SSE stream that immediately closes.
   const body = new ReadableStream({

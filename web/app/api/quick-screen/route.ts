@@ -280,11 +280,11 @@ export async function POST(req: Request): Promise<NextResponse> {
     // ~2.5s; anything beyond that is almost certainly a transient hang
     // from a third-party that we'd rather degrade than block on. Returning
     // the empty type matches the existing .catch fallback contract.
-    const ADAPTER_TIMEOUT_MS = 4_000;
+    const ADAPTER_TIMEOUT_MS = 2_500;
     const adapterTimeout = <T>(p: Promise<T>, fallback: T): Promise<T> => {
       let to: NodeJS.Timeout | null = null;
       const timeoutP = new Promise<T>((resolve) => {
-        to = setTimeout(() => { warn("adapter timeout >4s"); resolve(fallback); }, ADAPTER_TIMEOUT_MS);
+        to = setTimeout(() => { warn("adapter timeout >2.5s"); resolve(fallback); }, ADAPTER_TIMEOUT_MS);
       });
       return Promise.race([p, timeoutP]).finally(() => { if (to) clearTimeout(to); });
     };

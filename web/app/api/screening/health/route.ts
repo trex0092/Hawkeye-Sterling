@@ -39,11 +39,11 @@ async function checkBrainEngine(): Promise<ComponentCheck> {
       detail: ok ? "quickScreen callable" : "returned null",
       latencyMs: Date.now() - t0,
     };
-  } catch (err) {
+  } catch {
     return {
       name: "brain_engine",
       status: "down",
-      detail: err instanceof Error ? err.message : String(err),
+      detail: "BRAIN_MODULE_MISSING",
       latencyMs: Date.now() - t0,
     };
   }
@@ -67,11 +67,11 @@ async function checkWatchlistCorpus(): Promise<ComponentCheck> {
       detail: `${candidates.length.toLocaleString()} entries loaded`,
       latencyMs: Date.now() - t0,
     };
-  } catch (err) {
+  } catch {
     return {
       name: "watchlist_corpus",
       status: "down",
-      detail: err instanceof Error ? err.message : String(err),
+      detail: "CORPUS_LOAD_ERROR",
       latencyMs: Date.now() - t0,
     };
   }
@@ -87,7 +87,7 @@ async function checkSanctionsLists(): Promise<ComponentCheck> {
       return {
         name: "sanctions_lists",
         status: "degraded",
-        detail: "sanctions/meta.json not found in store — run /api/sanctions/refresh",
+        detail: "CORPUS_MISSING",
         latencyMs: Date.now() - t0,
       };
     }
@@ -100,11 +100,11 @@ async function checkSanctionsLists(): Promise<ComponentCheck> {
       detail: `${meta.totalEntries ?? "?"} entries, last updated ${meta.updatedAt ?? "unknown"} (${stale ? "STALE" : "fresh"})`,
       latencyMs: Date.now() - t0,
     };
-  } catch (err) {
+  } catch {
     return {
       name: "sanctions_lists",
       status: "degraded",
-      detail: err instanceof Error ? err.message : String(err),
+      detail: "CORPUS_READ_ERROR",
       latencyMs: Date.now() - t0,
     };
   }

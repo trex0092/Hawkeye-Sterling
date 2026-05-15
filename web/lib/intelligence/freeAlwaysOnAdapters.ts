@@ -37,7 +37,7 @@ export function wikidataAdapter(): RegistryAdapter {
             SERVICE wikibase:mwapi {
               bd:serviceParam wikibase:api "EntitySearch" .
               bd:serviceParam wikibase:endpoint "www.wikidata.org" .
-              bd:serviceParam mwapi:search "${subjectName.replace(/"/g, "")}" .
+              bd:serviceParam mwapi:search "${subjectName.replace(/[\\"'\n\r\t]/g, " ").trim()}" .
               bd:serviceParam mwapi:language "en" .
               ?item wikibase:apiOutputItem mwapi:item .
             }

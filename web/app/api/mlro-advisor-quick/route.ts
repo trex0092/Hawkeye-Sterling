@@ -96,7 +96,9 @@ if (typeof process !== "undefined" && !guardHost[REJECTION_GUARD_KEY]) {
 }
 
 const MODEL = "claude-haiku-4-5-20251001";
-const MAX_TOKENS = 1024;
+// 600 tokens keeps single-pass Haiku responses well under the 5 s target
+// while still delivering 4-10 substantive paragraphs of compliance guidance.
+const MAX_TOKENS = 600;
 // Hard cap inside the Lambda. Netlify's edge inactivity timeout is ~26 s,
 // so we abort upstream well before that to guarantee we always have time
 // to return a clean JSON response (rather than letting Netlify replace

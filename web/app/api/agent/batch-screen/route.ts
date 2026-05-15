@@ -113,7 +113,7 @@ async function handlePost(req: Request): Promise<NextResponse> {
             .filter((t) => t.length >= 3);
           redlinesFiredCount = evaluateRedlines(keywords).fired.length;
 
-          const REGIME_LIST_IDS = ["un_1267", "ofac_sdn", "eu_consolidated", "uk_ofsi", "uae_eocn", "uae_local_terrorist"] as const;
+          const REGIME_LIST_IDS = ["un_consolidated", "ofac_sdn", "eu_consolidated", "uk_ofsi", "uae_eocn", "uae_local_terrorist"] as const;
           const hitsByList = new Map<string, typeof hits>();
           for (const h of hits) {
             const arr = hitsByList.get(h.listId);

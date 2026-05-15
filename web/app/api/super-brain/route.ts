@@ -193,11 +193,16 @@ export async function POST(req: Request): Promise<NextResponse> {
     // Adverse-media lookup now consults the LSEG CFS adverse index as well
     // as the static curated fixture. First non-null wins; the static
     // fixture remains canonical for backward compat with existing tests.
-    const [staticPep, livePep, cfsPep, cfsAdverse] = await Promise.all([
+    const _subj = body.subject as { name?: string; passportNumber?: string; identifier?: string };
+    const [staticPep, livePep, cfsPep, cfsAdverse, _openSanctionsEarly] = await Promise.all([
       Promise.resolve(lookupKnownPEP(body.subject.name)),
       lookupKnownPEPLive(body.subject.name).catch(() => null),
       lookupLsegPepIndex(body.subject.name).catch(() => null),
       lookupLsegAdverseIndex(body.subject.name).catch(() => null),
+      enrichOpenSanctions({
+        name: _subj.name,
+        identifier: _subj.passportNumber ?? _subj.identifier,
+      }).catch((err) => { noteDegradation("openSanctions", err); return null; }),
     ]);
     const knownPep = staticPep ?? livePep ?? cfsPep;
     const staticAdverse = lookupKnownAdverse(body.subject.name);
@@ -276,7 +281,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     // override its own composite outcome based on it (the MLRO Advisor +
     // disposition flow consume `crossRegimeConflict` to escalate).
     const REGIME_LIST_IDS = [
-      "un_1267",
+      "un_consolidated",
       "ofac_sdn",
       "eu_consolidated",
       "uk_ofsi",
@@ -587,27 +592,11 @@ export async function POST(req: Request): Promise<NextResponse> {
       }
     })();
 
-    // OpenSanctions enrichment — secondary source of sanctions matches
-    // that complements Hawkeye's primary regulator-direct feeds. Closes
-    // the audit gap on Canada OSFI + Australia DFAT (both included in
-    // OpenSanctions' aggregation) and adds depth for UAE / Switzerland
-    // / Japan etc. When this matches, the subject is sanctioned by at
-    // least one regime — surfaces in the verdict's risk signals.
-    // Async because the dataset is loaded from Netlify Blobs lazily on
-    // first call per warm Lambda — see openSanctions.ts header for the
-    // bundle-size history that forced the Blobs architecture.
-    const openSanctions = await (async () => {
-      try {
-        const subj = body.subject as { name?: string; passportNumber?: string; identifier?: string };
-        const enr = await enrichOpenSanctions({
-          name: subj.name,
-          identifier: subj.passportNumber ?? subj.identifier,
-        });
-        return enr.match ? enr : null;
-      } catch (err) {
-        noteDegradation("openSanctions", err);
-        return null;
-      }
+    // OpenSanctions enrichment — result was already fetched in parallel with
+    // the PEP lookups above (see _openSanctionsEarly in Promise.all).
+    const openSanctions = (() => {
+      if (!_openSanctionsEarly) return null;
+      return _openSanctionsEarly.match ? _openSanctionsEarly : null;
     })();
 
     return NextResponse.json({

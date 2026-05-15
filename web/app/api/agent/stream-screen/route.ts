@@ -76,7 +76,7 @@ export async function GET(req: Request): Promise<Response> {
         send({ phase: "redlines", fired: redlines.fired.map((r: { id: string }) => r.id), action: redlines.action }, "phase");
 
         // Phase 4 — cross-regime
-        const REGIMES = ["un_1267", "ofac_sdn", "eu_consolidated", "uk_ofsi", "uae_eocn", "uae_local_terrorist"] as const;
+        const REGIMES = ["un_consolidated", "ofac_sdn", "eu_consolidated", "uk_ofsi", "uae_eocn", "uae_local_terrorist"] as const;
         const hitsByList = new Map<string, typeof screen.hits>();
         for (const h of screen.hits ?? []) {
           const arr = hitsByList.get(h.listId);

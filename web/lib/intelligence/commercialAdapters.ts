@@ -86,6 +86,10 @@ function sayariAdapter(): CorporateRegistryAdapter {
 function lsegWc1McpAdapter(): CorporateRegistryAdapter {
   const mcpUrlRaw = process.env["LSEG_WC1_MCP_URL"];
   if (!mcpUrlRaw) return NULL_CORPORATE_ADAPTER;
+  if (!mcpUrlRaw.startsWith("https://")) {
+    console.warn("[commercialAdapters] LSEG_WC1_MCP_URL must use HTTPS — adapter disabled");
+    return NULL_CORPORATE_ADAPTER;
+  }
   const mcpUrl: string = mcpUrlRaw;
 
   let _toolName: string | null | undefined = undefined; // undefined = not yet discovered
@@ -364,6 +368,10 @@ function quantexaAdapter(): CorporateRegistryAdapter {
   const key = process.env["QUANTEXA_API_KEY"];
   const baseUrl = process.env["QUANTEXA_BASE_URL"];
   if (!key || !baseUrl) return NULL_CORPORATE_ADAPTER;
+  if (!baseUrl.startsWith("https://")) {
+    console.warn("[commercialAdapters] QUANTEXA_BASE_URL must use HTTPS — adapter disabled");
+    return NULL_CORPORATE_ADAPTER;
+  }
   return {
     isAvailable: () => true,
     lookup: async (name: string, jurisdiction?: string): Promise<CorporateRecord[]> => {

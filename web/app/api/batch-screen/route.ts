@@ -147,11 +147,102 @@ export async function POST(req: Request): Promise<NextResponse> {
   // ~1ms/row so 10,000 rows completes in ~10s well within maxDuration.
   const useFastPath = body.rows.length > 500;
 
+  // For small batches (≤500 rows) that use external validators, process rows in
+  // concurrent chunks so multiple external calls overlap. Fast-path (>500 rows)
+  // skips external validators and runs at ~1ms/row so chunking adds no value.
+  const BATCH_CONCURRENCY = 10;
+
   const started = Date.now();
   const results: RowResult[] = [];
-  for (const row of body.rows) {
-    try {
-      if (!row?.name?.trim()) {
+
+  async function processRow(row: (typeof body.rows)[number]): Promise<RowResult> {
+    if (!row?.name?.trim()) {
+      return {
+        name: row?.name ?? "",
+        topScore: 0,
+        severity: "error",
+        hitCount: 0,
+        listCoverage: [],
+        keywordGroups: [],
+        esgCategories: [],
+        durationMs: 0,
+        error: "empty name",
+      };
+    }
+    const t0 = Date.now();
+    // Validate alias elements — drop non-string entries to prevent type confusion.
+    const cleanAliases = Array.isArray(row.aliases)
+      ? (row.aliases as unknown[]).filter((a): a is string => typeof a === "string")
+      : [];
+    const subject = {
+      name: row.name.trim(),
+      ...(cleanAliases.length ? { aliases: cleanAliases } : {}),
+      ...(row.entityType ? { entityType: row.entityType } : {}),
+      ...(row.jurisdiction ? { jurisdiction: row.jurisdiction } : {}),
+    };
+    const screen = quickScreen(subject, CANDIDATES);
+    const haystack = `${row.name} ${(row.aliases ?? []).join(" ")}`;
+    const kw = classifyAdverseKeywords(haystack);
+    const esg = classifyEsg(haystack);
+    const kwGroups = Array.from(new Set(kw.map((k) => k.group)));
+    const esgCats = Array.from(new Set(esg.map((e) => e.categoryId)));
+    const checkpoints = computeCheckpoints(row, screen, kwGroups, esgCats);
+
+    // External cross-validation is skipped for large batches (>500 rows) —
+    // each service adds 1-5s per row which would exhaust the function budget.
+    const [watchmanRes, marbleRes, jubeRes, yenteRes] = useFastPath
+      ? [null, null, null, null]
+      : await Promise.all([
+          checkWatchman(row.name),
+          checkMarble(row.name, row.entityType),
+          checkJube(row.name, row.entityType, row.jurisdiction),
+          yenteMatch([{
+            name: row.name,
+            schema: row.entityType === "individual" ? "Person" : row.entityType === "organisation" ? "Organization" : "LegalEntity",
+            ...(row.jurisdiction ? { nationality: row.jurisdiction } : {}),
+          }]).catch((err: unknown) => {
+            console.warn("[hawkeye] batch-screen yenteMatch failed for row:", row.name, err);
+            return null;
+          }),
+        ]);
+
+    const crossRef: CrossRef = {};
+    if (watchmanRes !== null) crossRef.watchmanHits = watchmanRes.hitCount;
+    if (marbleRes !== null) crossRef.marbleStatus = marbleRes.status;
+    if (jubeRes !== null) crossRef.jubeRisk = jubeRes.riskScore;
+    const yenteTop = Array.isArray(yenteRes) ? yenteRes[0]?.hits[0] : null;
+    if (yenteTop) {
+      crossRef.yenteScore = yenteTop.score;
+      crossRef.yenteDatasets = yenteTop.datasets;
+    }
+
+    const row_result: RowResult = {
+      name: row.name,
+      topScore: screen.topScore,
+      severity: screen.severity,
+      hitCount: screen.hits.length,
+      listCoverage: Array.from(new Set(screen.hits.map((h) => h.listId))),
+      keywordGroups: kwGroups,
+      esgCategories: esgCats,
+      durationMs: Date.now() - t0,
+      checkpoints,
+      ...(Object.keys(crossRef).length > 0 ? { crossRef } : {}),
+    };
+    if (row.entityType) row_result.entityType = row.entityType;
+    if (row.aliases && row.aliases.length) row_result.aliases = row.aliases;
+    if (row.dob) row_result.dob = row.dob;
+    if (row.gender) row_result.gender = row.gender;
+    if (row.jurisdiction) row_result.jurisdiction = row.jurisdiction;
+    if (row.idNumber) row_result.idNumber = row.idNumber;
+    return row_result;
+  }
+
+  if (useFastPath) {
+    // Fast-path: sequential, ~1ms/row, no external I/O — chunking adds overhead.
+    for (const row of body.rows) {
+      try {
+        results.push(await processRow(row));
+      } catch (err) {
         results.push({
           name: row?.name ?? "",
           topScore: 0,
@@ -161,88 +252,31 @@ export async function POST(req: Request): Promise<NextResponse> {
           keywordGroups: [],
           esgCategories: [],
           durationMs: 0,
-          error: "empty name",
+          error: err instanceof Error ? err.message : String(err),
         });
-        continue;
       }
-      const t0 = Date.now();
-      // Validate alias elements — drop non-string entries to prevent type confusion.
-      const cleanAliases = Array.isArray(row.aliases)
-        ? (row.aliases as unknown[]).filter((a): a is string => typeof a === "string")
-        : [];
-      const subject = {
-        name: row.name.trim(),
-        ...(cleanAliases.length ? { aliases: cleanAliases } : {}),
-        ...(row.entityType ? { entityType: row.entityType } : {}),
-        ...(row.jurisdiction ? { jurisdiction: row.jurisdiction } : {}),
-      };
-      const screen = quickScreen(subject, CANDIDATES);
-      const haystack = `${row.name} ${(row.aliases ?? []).join(" ")}`;
-      const kw = classifyAdverseKeywords(haystack);
-      const esg = classifyEsg(haystack);
-      const kwGroups = Array.from(new Set(kw.map((k) => k.group)));
-      const esgCats = Array.from(new Set(esg.map((e) => e.categoryId)));
-      const checkpoints = computeCheckpoints(row, screen, kwGroups, esgCats);
-
-      // External cross-validation is skipped for large batches (>500 rows) —
-      // each service adds 1-5s per row which would exhaust the function budget.
-      const [watchmanRes, marbleRes, jubeRes, yenteRes] = useFastPath
-        ? [null, null, null, null]
-        : await Promise.all([
-            checkWatchman(row.name),
-            checkMarble(row.name, row.entityType),
-            checkJube(row.name, row.entityType, row.jurisdiction),
-            yenteMatch([{
-              name: row.name,
-              schema: row.entityType === "individual" ? "Person" : row.entityType === "organisation" ? "Organization" : "LegalEntity",
-              ...(row.jurisdiction ? { nationality: row.jurisdiction } : {}),
-            }]).catch((err: unknown) => {
-              console.warn("[hawkeye] batch-screen yenteMatch failed for row:", row.name, err);
-              return null;
-            }),
-          ]);
-
-      const crossRef: CrossRef = {};
-      if (watchmanRes !== null) crossRef.watchmanHits = watchmanRes.hitCount;
-      if (marbleRes !== null) crossRef.marbleStatus = marbleRes.status;
-      if (jubeRes !== null) crossRef.jubeRisk = jubeRes.riskScore;
-      const yenteTop = Array.isArray(yenteRes) ? yenteRes[0]?.hits[0] : null;
-      if (yenteTop) {
-        crossRef.yenteScore = yenteTop.score;
-        crossRef.yenteDatasets = yenteTop.datasets;
-      }
-
-      const row_result: RowResult = {
-        name: row.name,
-        topScore: screen.topScore,
-        severity: screen.severity,
-        hitCount: screen.hits.length,
-        listCoverage: Array.from(new Set(CANDIDATES.map((c) => c.listId))),
-        keywordGroups: kwGroups,
-        esgCategories: esgCats,
-        durationMs: Date.now() - t0,
-        checkpoints,
-        ...(Object.keys(crossRef).length > 0 ? { crossRef } : {}),
-      };
-      if (row.entityType) row_result.entityType = row.entityType;
-      if (row.aliases && row.aliases.length) row_result.aliases = row.aliases;
-      if (row.dob) row_result.dob = row.dob;
-      if (row.gender) row_result.gender = row.gender;
-      if (row.jurisdiction) row_result.jurisdiction = row.jurisdiction;
-      if (row.idNumber) row_result.idNumber = row.idNumber;
-      results.push(row_result);
-    } catch (err) {
-      results.push({
-        name: row?.name ?? "",
-        topScore: 0,
-        severity: "error",
-        hitCount: 0,
-        listCoverage: [],
-        keywordGroups: [],
-        esgCategories: [],
-        durationMs: 0,
-        error: err instanceof Error ? err.message : String(err),
-      });
+    }
+  } else {
+    // Small batches with external validators: process in concurrent chunks so
+    // external calls for different rows overlap and reduce total wall-clock time.
+    for (let i = 0; i < body.rows.length; i += BATCH_CONCURRENCY) {
+      const chunk = body.rows.slice(i, i + BATCH_CONCURRENCY);
+      const chunkResults = await Promise.all(
+        chunk.map((row) =>
+          processRow(row).catch((err: unknown) => ({
+            name: row?.name ?? "",
+            topScore: 0,
+            severity: "error" as const,
+            hitCount: 0,
+            listCoverage: [] as string[],
+            keywordGroups: [] as string[],
+            esgCategories: [] as string[],
+            durationMs: 0,
+            error: err instanceof Error ? err.message : String(err),
+          }))
+        )
+      );
+      results.push(...chunkResults);
     }
   }
 
@@ -329,7 +363,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     severity: summary.critical > 0 ? "critical" : summary.high > 0 ? "high" : summary.medium > 0 ? "medium" : "clear",
     topScore: Math.max(...results.map((r) => r.topScore), 0),
     newHits: elevated.slice(0, 10).map((r) => ({
-      listId: r.listCoverage[0] ?? "batch",
+      listId: r.listCoverage[0] ?? "unknown",
       listRef: r.name,
       candidateName: r.name,
     })),

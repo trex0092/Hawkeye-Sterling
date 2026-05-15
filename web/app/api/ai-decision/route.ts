@@ -67,7 +67,17 @@ interface ListsIntegrityResult {
   listsQueried: ListInfo[];
 }
 
+// Module-level cache so repeated requests within a Lambda warm window skip
+// the Netlify Blobs round-trips (saves 1-2 s per call after the first).
+let _integrityCache: { result: ListsIntegrityResult; checkedAt: number } | null = null;
+const INTEGRITY_TTL_MS = 60 * 60 * 1_000; // 1 hour
+
 async function checkListsIntegrity(): Promise<ListsIntegrityResult> {
+  // Return cached result when it's still fresh (1-hour TTL).
+  if (_integrityCache && Date.now() - _integrityCache.checkedAt < INTEGRITY_TTL_MS) {
+    return _integrityCache.result;
+  }
+
   const result: ListsIntegrityResult = {
     listsVerified: false,
     missingLists: [],
@@ -135,6 +145,9 @@ async function checkListsIntegrity(): Promise<ListsIntegrityResult> {
   result.missingLists = missing;
   result.listsQueried = queried;
   result.listsVerified = missing.length === 0;
+  // Populate the module-level cache so the next request within 1 hour skips
+  // the Blobs round-trips entirely.
+  _integrityCache = { result, checkedAt: Date.now() };
   return result;
 }
 
@@ -543,11 +556,18 @@ export async function POST(req: Request) {
   // Auto-create Asana task (fire in parallel with response)
   // Skip task creation in test/sandbox mode
   let asana: { taskUrl?: string; taskGid?: string } = {};
+  let fourEyesWarning = false;
   if (body.test !== true) {
     asana = await createAsanaTask(body, decision, rationale, nextSteps, decisionId, integrity);
-    // ADD-03: Immediately create a blocking MLRO review subtask (four-eyes enforcement).
+    // ADD-03: Await the blocking MLRO review subtask (four-eyes enforcement per FDL 10/2025 Art.18).
     if (asana.taskGid) {
-      void createMlroReviewSubtask(asana.taskGid, decisionId, body.name, integrity.listsVerified);
+      const subtaskResult = await createMlroReviewSubtask(asana.taskGid, decisionId, body.name, integrity.listsVerified).catch((err: unknown) => {
+        console.error("[ai-decision] MLRO four-eyes subtask failed — compliance gate may be missing:", err);
+        return null;
+      });
+      if (subtaskResult === null) {
+        fourEyesWarning = true;
+      }
     }
   }
 
@@ -559,6 +579,7 @@ export async function POST(req: Request) {
       generatedAt: string;
     };
     _governance: { humanReviewRequired: boolean; reviewNote: string };
+    fourEyesWarning?: boolean;
   } = {
     ok: true,
     decisionId,
@@ -586,6 +607,7 @@ export async function POST(req: Request) {
           ...(asana.taskUrl ? { asanaTaskUrl: asana.taskUrl } : {}),
           ...(asana.taskGid ? { asanaTaskGid: asana.taskGid } : {}),
         }),
+    ...(fourEyesWarning ? { fourEyesWarning: true } : {}),
   };
 
   const latencyMs = Date.now() - t0;
