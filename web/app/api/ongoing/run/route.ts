@@ -355,8 +355,10 @@ export async function POST(req: Request): Promise<NextResponse> {
                 },
               },
             );
-            if (newsRes.ok) {
-              const newsPayload = (await newsRes.json().catch((err: unknown) => { console.warn("[hawkeye] ongoing/run JSON parse failed:", err); return null; })) as
+            if (!newsRes.ok) {
+              console.warn(`[ongoing/run] news-search failed for ${s.id}: HTTP ${newsRes.status}`);
+            } else {
+            const newsPayload = (await newsRes.json().catch((err: unknown) => { console.warn("[hawkeye] ongoing/run JSON parse failed:", err); return null; })) as
                 | NewsResponseShape
                 | null;
               const articles = newsPayload?.articles ?? [];
@@ -459,7 +461,7 @@ export async function POST(req: Request): Promise<NextResponse> {
                   }
                 }
               }
-            }
+            } // end else (newsRes.ok)
           } catch (err) {
             console.warn(
               `[ongoing/run] adverse-media sweep failed for ${s.id}:`,

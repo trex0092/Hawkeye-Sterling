@@ -17,6 +17,7 @@ import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { loadAllCases } from "@/lib/server/case-vault";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -120,7 +121,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         system: `You are a UAE AML sanctions specialist. Given a live sanctions sweep result, provide triage priority and action recommendations. Return JSON: { "sweepNarrative": "<2-3 sentence summary>", "triage": [{ "caseId": "<id>", "priority": "immediate|high|medium", "recommendedAction": "<action>", "freezeRequired": true|false }] }`,
         messages: [{
           role: "user",
-          content: `Sweep reason: ${body.sweepReason ?? "delta_sweep"}
+          content: `Sweep reason: ${sanitizeField(body.sweepReason ?? "delta_sweep", 100)}
 Designations screened: ${body.designations.length}
 Cases in base: ${allCases.length}
 Matches found: ${filteredMatches.length}
