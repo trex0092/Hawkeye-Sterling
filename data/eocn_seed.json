@@ -1,17 +1,1 @@
-[
-  {
-    "id": "EOCN-001",
-    "name": "SEED ENTRY — REPLACE WITH LIVE EOCN DATA",
-    "aliases": [],
-    "dob": null,
-    "nationality": "AE",
-    "listId": "uae_eocn",
-    "designation": "PLACEHOLDER — This seed file must be replaced with data downloaded from the EOCN feed (EOCN_FEED_URL). See ENV_VARS_REQUIRED.md.",
-    "reference": "EOCN-SEED-PLACEHOLDER",
-    "type": "entity",
-    "nationalities": ["AE"],
-    "program": "UAE EOCN",
-    "designatedAt": "2024-01-01",
-    "jurisdictions": ["AE"]
-  }
-]
+[]
