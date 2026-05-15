@@ -15,11 +15,5 @@
     { "src": "/icon-192.svg",      "sizes": "192x192", "type": "image/svg+xml" },
     { "src": "/icon-512.svg",      "sizes": "512x512", "type": "image/svg+xml" },
     { "src": "/icon-maskable.svg", "sizes": "512x512", "type": "image/svg+xml", "purpose": "maskable" }
-  ],
-  "shortcuts": [
-    { "name": "Screening",          "short_name": "Screen",   "url": "/screening" },
-    { "name": "Onboarding Wizard",  "short_name": "Onboard",  "url": "/operations/onboard" },
-    { "name": "goAML Export",       "short_name": "goAML",    "url": "/goaml-export" },
-    { "name": "Geographic Heatmap", "short_name": "Heatmap",  "url": "/intel/heatmap" }
   ]
 }

@@ -20,6 +20,10 @@ const nextConfig = {
   output: "standalone",
   reactStrictMode: true,
 
+  // Don't disclose the framework + version to attackers. Removes the default
+  // `x-powered-by: Next.js` response header. Zero functional impact.
+  poweredByHeader: false,
+
   env: {
     HAWKEYE_BUILD_COMMIT_REF: BUILD_COMMIT_REF,
   },
