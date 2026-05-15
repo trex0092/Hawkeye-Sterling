@@ -8,6 +8,7 @@ import type {
 } from "@/lib/api/quickScreen.types";
 import { enforce } from "@/lib/server/enforce";
 import { loadCandidates } from "@/lib/server/candidates-loader";
+import { lookupWhitelist } from "@/lib/server/whitelist";
 import { LIVE_OPENSANCTIONS_ADAPTER } from "@/lib/intelligence/liveAdapters";
 import { bestCommercialAdapter, activeCommercialProvider } from "@/lib/intelligence/commercialAdapters";
 import { searchAllRegistries } from "@/lib/intelligence/registryAdapters";
@@ -111,6 +112,49 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
   if (subject.name.length > 512) {
     return respond(400, { ok: false, error: "subject.name exceeds 512-character limit" }, gateHeaders);
+  }
+
+  // Whitelist short-circuit — if the operator's tenant has previously
+  // cleared this subject (false-positive disposition recorded via
+  // /api/whitelist), skip the expensive list match and surface a clean
+  // result with the original approver metadata attached. Anonymous /
+  // portal-admin callers (record === null) skip this check.
+  const tenantId = gate.record?.email;
+  if (tenantId) {
+    try {
+      const match = await lookupWhitelist(tenantId, {
+        name: subject.name,
+        ...(subject.jurisdiction ? { jurisdiction: subject.jurisdiction } : {}),
+      });
+      if (match) {
+        const whitelistedResult: QuickScreenResult = {
+          subject,
+          hits: [],
+          topScore: 0,
+          severity: "clear",
+          listsChecked: 0,
+          candidatesChecked: 0,
+          durationMs: Date.now() - t0,
+          generatedAt: new Date().toISOString(),
+          whitelisted: {
+            entryId: match.id,
+            approvedBy: match.approvedBy,
+            approverRole: match.approverRole,
+            approvedAt: match.approvedAt,
+            reason: match.reason,
+          },
+        };
+        return respond(200, { ok: true, ...whitelistedResult }, gateHeaders);
+      }
+    } catch (err) {
+      // Whitelist lookup failure must never block screening — degrade to
+      // full list match. The MLRO sees the false-positive again, which is
+      // the safe default if the whitelist store is unavailable.
+      console.warn(
+        "[quick-screen] whitelist lookup failed — falling through to full screen:",
+        err instanceof Error ? err.message : err,
+      );
+    }
   }
 
   let candidates: QuickScreenCandidate[];
