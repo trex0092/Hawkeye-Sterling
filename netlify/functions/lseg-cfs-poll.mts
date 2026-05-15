@@ -149,6 +149,31 @@ async function pollBucket(
 // ── Main handler ──────────────────────────────────────────────────────────────
 
 export default async function handler(req: Request): Promise<Response> {
+  return await runHandler(req).catch((err: unknown) => {
+    // ABSOLUTE LAST-RESORT CATCH. The Lambda must return valid JSON on
+    // every code path — Netlify wraps any uncaught throw in a generic
+    // "error decoding lambda response: unexpected end of JSON input" 502
+    // that hides the real cause. This catch makes sure the operator
+    // always sees what actually broke.
+    const detail = err instanceof Error ? { message: err.message, stack: err.stack?.split('\n').slice(0, 5).join(' | ') } : { message: String(err) };
+    return jsonResponse({ ok: false, label: RUN_LABEL, error: 'unhandled exception', detail }, 500);
+  });
+}
+
+async function runHandler(req: Request): Promise<Response> {
+  // ── Kill switch ───────────────────────────────────────────────────────
+  // Set LSEG_DISABLED=true to stop the cron from attempting LSEG calls
+  // while the integration is being debugged. Returns 200 so the schedule
+  // doesn't generate every-6h alarm noise.
+  if (process.env['LSEG_DISABLED'] === 'true') {
+    return jsonResponse({
+      ok: true,
+      label: RUN_LABEL,
+      skipped: 'LSEG_DISABLED env var is set — cron disabled',
+      runAt: new Date().toISOString(),
+    });
+  }
+
   // Protect HTTP-triggered invocations with bearer token
   const cronToken = process.env['HAWKEYE_CRON_TOKEN'];
   if (cronToken) {

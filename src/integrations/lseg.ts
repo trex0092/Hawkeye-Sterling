@@ -104,7 +104,7 @@ function credentialsFromEnv(): { username: string; password: string; appKey: str
 
 async function fetchToken(
   body: Record<string, string>,
-  timeoutMs = 15_000,
+  timeoutMs = 30_000,
 ): Promise<LsegTokenCache> {
   const form = Object.entries(body)
     .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
@@ -125,7 +125,33 @@ async function fetchToken(
   );
 
   if (!result.ok || !result.json) {
-    throw new Error(`LSEG auth failed (${result.status}): ${result.error ?? result.body}`);
+    // Capture every diagnostic detail LSEG gave us. Their OAuth endpoint
+    // typically returns a JSON envelope { error, error_description } that
+    // names the failure ("invalid_grant" / "invalid_client" / "unauthorized
+    // _client" / "invalid_scope"). Surfacing this verbatim is the only way
+    // to tell whether the credential is wrong vs. the account isn't
+    // entitled for password-grant vs. the AppKey doesn't match.
+    let parsedError: string | undefined;
+    let parsedDescription: string | undefined;
+    if (typeof result.body === 'string' && result.body.length > 0) {
+      try {
+        const j = JSON.parse(result.body) as { error?: string; error_description?: string };
+        parsedError = j.error;
+        parsedDescription = j.error_description;
+      } catch {
+        // Body wasn't JSON — leave undefined; raw body still emitted below
+      }
+    }
+    const grantType = body['grant_type'] ?? 'unknown';
+    const detail = JSON.stringify({
+      grantType,
+      httpStatus: result.status,
+      lsegError: parsedError,
+      lsegDescription: parsedDescription,
+      rawBody: typeof result.body === 'string' ? result.body.slice(0, 500) : null,
+      networkError: result.error,
+    });
+    throw new Error(`LSEG auth failed: ${detail}`);
   }
 
   return {
