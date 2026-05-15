@@ -106,7 +106,8 @@ See `.env.example` for the complete list (~80 keys). Priority keys for UAE DPMS 
 | Variable | Vendor | Purpose |
 |----------|--------|---------|
 | `COMPLYADVANTAGE_API_KEY` | ComplyAdvantage | PEP + sanctions enhanced screening |
-| `LSEG_WORLDCHECK_API_KEY` / `LSEG_WORLDCHECK_API_SECRET` | LSEG World-Check | Commercial PEP/sanctions |
+| `LSEG_WC1_MCP_URL` | LSEG World-Check One MCP | MCP HTTP endpoint for local WC1 server (takes priority over REST key) |
+| `LSEG_WORLDCHECK_API_KEY` / `LSEG_WORLDCHECK_API_SECRET` | LSEG World-Check | Commercial PEP/sanctions (direct REST — use MCP server when available) |
 | `ALEPH_API_KEY` | OCCRP Aleph | Investigative journalism / leaks |
 | `OPENSANCTIONS_PRO_API_KEY` | OpenSanctions Pro | Commercial grade list access |
 | `CHAINALYSIS_API_KEY` | Chainalysis | Crypto on-chain risk |
