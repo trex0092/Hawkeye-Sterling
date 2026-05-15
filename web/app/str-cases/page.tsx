@@ -404,8 +404,21 @@ export default function StrCasesPage() {
     }
   };
 
-  // Render nothing until role resolves to avoid FOUC on access-denied screen.
-  if (!roleLoaded) return null;
+  // Show a skeleton until role resolves so the page never renders an empty shell
+  // (blank-page issue caused by SSR/initial-hydration returning null).
+  if (!roleLoaded)
+    return (
+      <ModuleLayout asanaModule="str-cases" asanaLabel="STR / SAR Cases">
+        <div className="font-mono text-10 font-semibold text-amber tracking-wide-4 uppercase mb-1">
+          MODULE 05
+        </div>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-12 text-ink-3 font-mono animate-pulse">
+            Loading STR module…
+          </div>
+        </div>
+      </ModuleLayout>
+    );
   if (!canPerform(role, "str_read")) return <AccessDeniedScreen role={role} onRoleChange={setRole} />;
 
   return (
