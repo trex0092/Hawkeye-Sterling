@@ -527,7 +527,7 @@ export async function GET(req: Request): Promise<NextResponse> {
       "Returning empty dossier; investigate variantsOf / keyword classification.",
       err,
     );
-    return NextResponse.json({ ...emptyResponse(q, "static_fallback", Date.now() - t0), fetchedAt }, { headers: gateHeaders });
+    return NextResponse.json({ ...emptyResponse(q, "static_fallback", Date.now() - t0), fetchedAt, degraded: true }, { headers: gateHeaders });
   }
 }
 

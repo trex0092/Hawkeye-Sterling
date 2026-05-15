@@ -543,11 +543,18 @@ export async function POST(req: Request) {
   // Auto-create Asana task (fire in parallel with response)
   // Skip task creation in test/sandbox mode
   let asana: { taskUrl?: string; taskGid?: string } = {};
+  let fourEyesWarning = false;
   if (body.test !== true) {
     asana = await createAsanaTask(body, decision, rationale, nextSteps, decisionId, integrity);
-    // ADD-03: Immediately create a blocking MLRO review subtask (four-eyes enforcement).
+    // ADD-03: Await the blocking MLRO review subtask (four-eyes enforcement per FDL 10/2025 Art.18).
     if (asana.taskGid) {
-      void createMlroReviewSubtask(asana.taskGid, decisionId, body.name, integrity.listsVerified);
+      const subtaskResult = await createMlroReviewSubtask(asana.taskGid, decisionId, body.name, integrity.listsVerified).catch((err: unknown) => {
+        console.error("[ai-decision] MLRO four-eyes subtask failed — compliance gate may be missing:", err);
+        return null;
+      });
+      if (subtaskResult === null) {
+        fourEyesWarning = true;
+      }
     }
   }
 
@@ -559,6 +566,7 @@ export async function POST(req: Request) {
       generatedAt: string;
     };
     _governance: { humanReviewRequired: boolean; reviewNote: string };
+    fourEyesWarning?: boolean;
   } = {
     ok: true,
     decisionId,
@@ -586,6 +594,7 @@ export async function POST(req: Request) {
           ...(asana.taskUrl ? { asanaTaskUrl: asana.taskUrl } : {}),
           ...(asana.taskGid ? { asanaTaskGid: asana.taskGid } : {}),
         }),
+    ...(fourEyesWarning ? { fourEyesWarning: true } : {}),
   };
 
   const latencyMs = Date.now() - t0;

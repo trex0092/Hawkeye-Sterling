@@ -151,11 +151,12 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const nowMs = Date.now();
 
-  // Process all subjects in parallel — each writes to its own blob keys
-  // (ongoing/last/${id}, profile/${id}, etc.) so there are no conflicts.
-  // Sequential processing timed out on portfolios > ~20 subjects due to
-  // the 15s news-search call per subject adding up serially.
-  await Promise.all(subjects.map(async (s) => {
+  // Process subjects in concurrency-limited batches — firing all subjects
+  // concurrently bursts Asana API rate limits and risks the 30s Lambda timeout.
+  // Batch size 8 keeps parallelism high while staying within API rate limits.
+  const CONCURRENCY = 8;
+  for (let i = 0; i < subjects.length; i += CONCURRENCY) {
+  await Promise.all(subjects.slice(i, i + CONCURRENCY).map(async (s) => {
     try {
       // Respect per-subject schedule. If a schedule exists and the next
       // run isn't due yet, skip this subject. Subjects without a
@@ -686,6 +687,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       });
     }
   }));
+  } // end CONCURRENCY batch loop
 
   return NextResponse.json({
     ok: true,
