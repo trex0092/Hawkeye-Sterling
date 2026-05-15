@@ -1200,6 +1200,22 @@ const TOOLS: ToolDef[] = [
     inputSchema: { type: "object", properties: {} },
     handler: async () => callApi("/api/status", "GET", undefined, undefined, 25_000),
   },
+  {
+    name: "open_banking_check",
+    description:
+      "Look up a financial-institution counterparty in the Open Banking Tracker dataset (~57k banks worldwide, vendored from not-a-bank/open-banking-tracker-data). Returns the matched provider, AML risk signals (state-owned, PSD2 compliance status, CAHRA jurisdictions, listed/private), the bank's API-aggregator integrations (relationship-graph edges), and the ownership chain.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        name: { type: "string", description: "Bank/institution name (e.g. \"HSBC\")" },
+        bic: { type: "string", description: "8 or 11 character BIC/SWIFT code (e.g. HBUKGB4B)" },
+        domain: { type: "string", description: "Bank domain (e.g. hsbc.com)" },
+        websiteUrl: { type: "string", description: "Full URL — will extract domain" },
+        id: { type: "string", description: "open-banking-tracker provider id (e.g. hsbc-gb)" },
+      },
+    },
+    handler: async (args) => callApi("/api/open-banking-check", "POST", args),
+  },
 
   // ── GENERIC PROXY ────────────────────────────────────────────────────────────
   {
