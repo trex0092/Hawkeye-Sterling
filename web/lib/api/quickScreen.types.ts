@@ -78,6 +78,16 @@ export interface QuickScreenResult {
   candidatesChecked: number;
   durationMs: number;
   generatedAt: string;
+  // Populated when the subject matched a tenant-scoped whitelist entry —
+  // hits[] is then empty and severity is "clear". Callers can branch on
+  // whitelisted !== undefined to render a different UI / verdict.
+  whitelisted?: {
+    entryId: string;
+    approvedBy: string;
+    approverRole: "co" | "mlro" | "admin";
+    approvedAt: string;
+    reason: string;
+  };
 }
 
 export type QuickScreenResponse =
