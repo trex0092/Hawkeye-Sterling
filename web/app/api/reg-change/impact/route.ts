@@ -4,6 +4,7 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 export interface ImpactAssessmentResult {
   ok: true;
   regulation: string;
@@ -214,13 +215,13 @@ Return ONLY valid JSON with this exact structure (no markdown fences):
       messages: [
         {
           role: "user",
-          content: `Regulation: ${body.regulation ?? "Unknown regulation"}
+          content: `Regulation: ${sanitizeField(body.regulation ?? "Unknown regulation", 500)}
 
 Institution profile:
-Type: ${body.institution?.type ?? "Financial institution"}
-Jurisdictions: ${JSON.stringify(body.institution?.jurisdictions ?? [])}
-Products: ${JSON.stringify(body.institution?.products ?? [])}
-Client Types: ${JSON.stringify(body.institution?.clientTypes ?? [])}
+Type: ${sanitizeField(body.institution?.type ?? "Financial institution", 200)}
+Jurisdictions: ${sanitizeField(JSON.stringify(body.institution?.jurisdictions ?? []), 500)}
+Products: ${sanitizeField(JSON.stringify(body.institution?.products ?? []), 500)}
+Client Types: ${sanitizeField(JSON.stringify(body.institution?.clientTypes ?? []), 500)}
 
 Produce a comprehensive impact assessment for how this regulation affects this specific institution. Include all material obligations, implementation roadmap, cost/resource estimates, legal risk exposure, gaps to remediate, and quick wins.`,
         },

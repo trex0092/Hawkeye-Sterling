@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export interface InsiderThreatResult {
   threatRisk: "critical" | "high" | "medium" | "low" | "clear";
@@ -131,12 +132,12 @@ export async function POST(req: Request) {
         system: `You are a UAE financial crime insider threat specialist with expertise in employee conduct risk, tipping off indicators (FDL 10/2025 Art.20), financial crime facilitation patterns, and CBUAE internal controls requirements. Assess employee behaviour, lifestyle indicators, system access patterns, and financial circumstances for insider threat risk. Identify threat categories (financial crime facilitation, data theft, tipping off, fraud, bribery) with specific indicators. Provide coordinated HR and compliance action recommendations. Respond ONLY with valid JSON matching the InsiderThreatResult interface — no markdown fences.`,
         messages: [{
           role: "user",
-          content: `Employee Name: ${body.employeeName ?? "not provided"}
-Employee Role/Position: ${body.employeeRole ?? "not specified"}
-Observed Behaviours: ${body.observedBehaviours ?? "not described"}
-System Access Level: ${body.accessLevel ?? "not specified"}
-Financial Circumstances: ${body.financialCircumstances ?? "not provided"}
-Additional Context: ${body.context ?? "none"}
+          content: `Employee Name: ${sanitizeField(body.employeeName ?? "not provided", 200)}
+Employee Role/Position: ${sanitizeField(body.employeeRole ?? "not specified", 200)}
+Observed Behaviours: ${sanitizeText(body.observedBehaviours ?? "not described", 2000)}
+System Access Level: ${sanitizeField(body.accessLevel ?? "not specified", 200)}
+Financial Circumstances: ${sanitizeText(body.financialCircumstances ?? "not provided", 1000)}
+Additional Context: ${sanitizeText(body.context ?? "none", 500)}
 
 Assess this employee for insider threat risk. Return complete InsiderThreatResult JSON.`,
         }],

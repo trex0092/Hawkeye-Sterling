@@ -21,6 +21,7 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -218,9 +219,9 @@ export async function POST(req: Request): Promise<NextResponse> {
         system: `You are a UAE AML/CFT specialist analysing FATF money laundering typology patterns. Given a typology analysis, determine if STR filing is required, if EDD is required, and construct the most likely ML typology chain. Return JSON: { "strTrigger": bool, "strBasis": "string", "eddRequired": bool, "typologyChain": ["step1", "step2", ...], "narrative": "2-3 sentence compliance narrative", "keyRiskFactor": "string" }`,
         messages: [{
           role: "user",
-          content: `Industry: ${body.industry ?? "dpms"}, Jurisdiction: ${body.jurisdiction ?? "AE"}
-Narrative: ${body.narrative ?? "Not provided"}
-Red flags: ${(body.redFlags ?? []).join("; ") || "None listed"}
+          content: `Industry: ${sanitizeField(body.industry ?? "dpms", 100)}, Jurisdiction: ${sanitizeField(body.jurisdiction ?? "AE", 100)}
+Narrative: ${sanitizeText(body.narrative ?? "Not provided", 2000)}
+Red flags: ${sanitizeText((body.redFlags ?? []).join("; ") || "None listed", 1000)}
 Matched typologies: ${staticMatches.slice(0, 5).map((m) => `${m.typologyId} ${m.typologyName} (${m.riskRating})`).join(", ")}
 Transaction count: ${body.transactions?.length ?? 0}
 Determine STR trigger, EDD requirement, typology chain, and risk narrative.`,
