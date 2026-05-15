@@ -26,6 +26,16 @@
 
 [build.environment]
   NODE_VERSION = "22"
+  # Bump Node's max old-space size for the build. Default is ~1.5 GB on
+  # the Linux build agents, which has been hitting OOM during the
+  # `next build` step now that the bundle includes Open Banking 11 MB
+  # of vendored data + Anthropic SDK + Upstash Box + zod + the compiled
+  # brain dist. Failures verified post-PR #515 (2026-05-15 17:00+ UTC):
+  # local builds succeed (this dev box has 16 GB+), Netlify builds fail
+  # with exit code 2 on the same SHA. 8 GB is well inside Netlify's
+  # build-agent ceiling and gives webpack room to grow further before
+  # we have to do another bundle-shrink pass.
+  NODE_OPTIONS = "--max-old-space-size=8192"
   # NEXT_PUBLIC_COMMIT_SHA is injected via the build command (NEXT_PUBLIC_COMMIT_SHA=$COMMIT_REF npm run build)
   # because TOML [build.environment] values are NOT shell-expanded — "$COMMIT_REF" would be
   # stored as the literal 7-char string, making .slice(0,7) return "$COMMIT".
