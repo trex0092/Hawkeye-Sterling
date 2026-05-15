@@ -51,7 +51,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   // Country-only mode: list all sanctioned entities tied to a given ISO-2 country.
   if (!body.name && !body.identifier && !body.id && body.country) {
-    const matches = lookupByCountry(body.country);
+    const matches = await lookupByCountry(body.country);
     return NextResponse.json({
       ok: true,
       mode: "country-listing",
@@ -63,7 +63,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     });
   }
 
-  const enr = enrichSubject(body);
+  const enr = await enrichSubject(body);
 
   if (!enr.match) {
     return NextResponse.json({
@@ -86,5 +86,5 @@ export async function POST(req: Request): Promise<NextResponse> {
 export async function GET(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
-  return NextResponse.json({ ok: true, corpus: openSanctionsStats() });
+  return NextResponse.json({ ok: true, corpus: await openSanctionsStats() });
 }

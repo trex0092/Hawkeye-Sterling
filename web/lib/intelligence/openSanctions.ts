@@ -1,34 +1,42 @@
 // Hawkeye Sterling — OpenSanctions integration.
 //
-// Wraps the vendored OpenSanctions consolidated sanctions dataset
-// (`web/lib/data/opensanctions/sanctions.json`, ~67k entities across UN /
-// US OFAC / EU / UK / Canada OSFI / Australia DFAT / UAE EOCN / etc.)
-// into name / identifier / country lookups usable by the screening
-// pipeline. Builds in-memory indices once per warm Lambda instance —
-// first call costs ~600 ms (parsing the 47 MB JSON), subsequent O(1).
+// Loads ~67k sanctioned entities from a Netlify Blobs key (NOT bundled —
+// see why below). Builds in-memory indices once per warm Lambda instance.
+// First call costs ~1s (Blob fetch + parse + index build); subsequent
+// O(1) per warm instance.
 //
 // AML use cases unlocked:
-//   - Closes the audit gap on Canada OSFI + Australia DFAT (both
-//     covered by OpenSanctions' aggregation)
+//   - Closes audit gap on Canada OSFI + Australia DFAT (both included
+//     in OpenSanctions' aggregation)
 //   - Fills UAE EOCN coverage where the seed file is empty
 //   - Expands sanctions matching beyond the 6 primary feeds Hawkeye
 //     already ingests directly from regulators
-//   - Cross-program lookup: if a name appears on multiple regimes,
-//     the response shows ALL programs (not just the first match)
+//   - Cross-program lookup: surfaces ALL programs hitting a subject
 //
-// License: vendored data is CC BY-NC 4.0 — see NOTICE.md alongside.
+// License: dataset is CC BY-NC 4.0 — see NOTICE.md alongside.
 //
-// IMPORTANT: the JSON file is loaded at RUNTIME via fs.readFileSync, not
-// `import`-ed statically. A static import of a 48 MB JSON file blew up
-// the Next.js build (memory + bundle-size, exit code 2 — see deploy
-// failure on c239a4f). Runtime load reads the file on first call inside
-// the warm Lambda — ~600 ms one-time cost, then O(1). The file ships
-// with the Lambda bundle via `outputFileTracingIncludes` in
-// `web/next.config.mjs` for `/api/**/*` routes.
+// IMPORTANT — why the JSON is NOT in the repo / bundle:
+//   The first attempt vendored sanctions.json (47 MB) into the repo
+//   with a static `import`. That broke the Next.js build outright
+//   (memory + bundle-size, exit code 2 — see failed deploy c239a4f).
+//   The second attempt switched to fs.readFileSync + outputFileTracing
+//   Includes — that pushed the Lambda bundle past Netlify's compressed
+//   size limit, so the deploy still 404'd (PR #510, no improvement).
+//   Storing the JSON in Netlify Blobs keeps the bundle small and lets
+//   the operator refresh data independently of code deploys.
+//
+// Operator workflow:
+//   1. Run `scripts/refresh-opensanctions.cjs` locally to download +
+//      normalize the OpenSanctions sanctions/targets.simple.csv to a
+//      compact JSON (~47 MB).
+//   2. POST that JSON body to /api/admin/opensanctions-import with
+//      `Authorization: Bearer $ADMIN_TOKEN`. The route writes it to
+//      the `hawkeye-opensanctions` Blob store.
+//   3. The adapter reads the Blob on first lookup per warm Lambda.
+//      Until step 2 completes, lookups return null gracefully.
 
-import { readFileSync, existsSync } from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
+const STORE_NAME = "hawkeye-opensanctions";
+const BLOB_KEY = "sanctions.json";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -39,33 +47,25 @@ export type OpenSanctionsSchema =
 
 export interface OpenSanctionsRecord {
   id: string;
-  schema: string;          // OpenSanctionsSchema, but kept loose for forward-compat
+  schema: string;
   name: string;
   aliases?: string[];
-  birthDate?: string;      // ISO date or year-only
-  countries?: string[];    // ISO-2 lowercase
-  identifiers?: string[];  // passport / company-reg / IMO / etc.
-  sanctions?: string[];    // human-readable program descriptions
-  programIds?: string[];   // canonical program codes (US-GLOMAG, EU-FSF-RUS, ...)
-  datasets?: string[];     // originating sources
-  lastChange?: string;     // ISO timestamp
+  birthDate?: string;
+  countries?: string[];
+  identifiers?: string[];
+  sanctions?: string[];
+  programIds?: string[];
+  datasets?: string[];
+  lastChange?: string;
 }
 
-/** Risk signals derived from a matched sanctioned entity. */
 export interface OpenSanctionsRiskSignals {
-  /** Subject is sanctioned by ≥1 regime — always true for any match. */
   sanctioned: true;
-  /** Number of distinct sanctions regimes hitting this subject. */
   regimeCount: number;
-  /** Subject is on a CAHRA-jurisdiction sanctions program. */
   cahraNexus: boolean;
-  /** Subject is sanctioned by US OFAC (highest-priority for USD-denominated transactions). */
   usOfac: boolean;
-  /** Subject is on the UN Security Council Consolidated List. */
   un: boolean;
-  /** Subject is on EU consolidated. */
   eu: boolean;
-  /** Subject is on UK OFSI. */
   uk: boolean;
 }
 
@@ -73,78 +73,79 @@ const CAHRA_ISO2: ReadonlySet<string> = new Set([
   "ir", "ru", "kp", "sy", "sd", "af", "by", "cu", "mm", "ve", "ye", "lb", "iq", "ly", "ss",
 ]);
 
-// ── Runtime dataset load ───────────────────────────────────────────────────
+// ── Blobs-backed dataset load ─────────────────────────────────────────────
 
-// Resolve the JSON path at first use. We try several candidate locations
-// because the cwd inside a Netlify Lambda depends on Next.js' output layout
-// (standalone vs default) and outputFileTracingRoot setting. First match wins.
 let _records: OpenSanctionsRecord[] | null = null;
+let _loadAttempted = false;
 let _loadError: string | null = null;
 
-function candidatePaths(): string[] {
-  const here = path.dirname(fileURLToPath(import.meta.url));
-  return [
-    // Same source-tree layout — works when traced files preserve relative paths.
-    path.join(here, "..", "data", "opensanctions", "sanctions.json"),
-    // Lambda cwd is the web/ project root (Next.js default).
-    path.join(process.cwd(), "lib", "data", "opensanctions", "sanctions.json"),
-    // Lambda cwd is the repo root (outputFileTracingRoot = repo root in this app).
-    path.join(process.cwd(), "web", "lib", "data", "opensanctions", "sanctions.json"),
-  ];
-}
-
-function loadRecords(): OpenSanctionsRecord[] {
+async function loadFromBlobs(): Promise<OpenSanctionsRecord[]> {
   if (_records !== null) return _records;
+  if (_loadAttempted && _records === null) return [];
+  _loadAttempted = true;
 
-  for (const candidate of candidatePaths()) {
-    try {
-      if (!existsSync(candidate)) continue;
-      const raw = readFileSync(candidate, "utf-8");
-      const parsed = JSON.parse(raw) as OpenSanctionsRecord[];
-      if (Array.isArray(parsed)) {
-        _records = parsed;
-        return _records;
-      }
-    } catch (err) {
-      _loadError = err instanceof Error ? err.message : String(err);
+  let mod: typeof import("@netlify/blobs") | null = null;
+  try {
+    mod = await import("@netlify/blobs");
+  } catch (err) {
+    _loadError = `@netlify/blobs unavailable — ${err instanceof Error ? err.message : String(err)}`;
+    console.warn("[openSanctions]", _loadError);
+    _records = [];
+    return _records;
+  }
+
+  try {
+    const siteID = process.env["NETLIFY_SITE_ID"] ?? process.env["SITE_ID"];
+    const token =
+      process.env["NETLIFY_BLOBS_TOKEN"] ??
+      process.env["NETLIFY_API_TOKEN"] ??
+      process.env["NETLIFY_AUTH_TOKEN"];
+    const opts: { name: string; siteID?: string; token?: string; consistency: "strong" } = {
+      name: STORE_NAME,
+      consistency: "strong",
+    };
+    if (siteID) opts.siteID = siteID;
+    if (token) opts.token = token;
+    const store = mod.getStore(opts);
+
+    const raw = await store.get(BLOB_KEY, { type: "json" }) as OpenSanctionsRecord[] | null;
+    if (Array.isArray(raw)) {
+      _records = raw;
+      return _records;
     }
+    _loadError = "Blob is missing or empty — operator must POST the dataset to /api/admin/opensanctions-import once after deploy";
+    console.warn("[openSanctions]", _loadError);
+    _records = [];
+    return _records;
+  } catch (err) {
+    _loadError = `Blobs read failed — ${err instanceof Error ? err.message : String(err)}`;
+    console.warn("[openSanctions]", _loadError);
+    _records = [];
+    return _records;
   }
-
-  // Degraded mode: file is missing from the bundle. Log once, return empty.
-  // The route layer surfaces this as "no OpenSanctions matches found" rather
-  // than throwing — screening still proceeds against the 6 primary feeds.
-  if (!_loadError) {
-    _loadError = `sanctions.json not found in any candidate path: ${candidatePaths().join(", ")}`;
-  }
-  console.warn("[openSanctions] dataset unavailable — degrading to empty index:", _loadError);
-  _records = [];
-  return _records;
 }
 
-// ── Lazy index construction ────────────────────────────────────────────────
+// ── Lazy index construction (over the loaded records) ─────────────────────
 
 let _byId: Map<string, OpenSanctionsRecord> | null = null;
 let _byNameLower: Map<string, OpenSanctionsRecord[]> | null = null;
 let _byIdentifier: Map<string, OpenSanctionsRecord> | null = null;
 let _byCountry: Map<string, OpenSanctionsRecord[]> | null = null;
 
-function buildIndices(): void {
+async function buildIndices(): Promise<void> {
   if (_byId !== null) return;
+
+  const records = await loadFromBlobs();
 
   const byId = new Map<string, OpenSanctionsRecord>();
   const byName = new Map<string, OpenSanctionsRecord[]>();
   const byIdentifier = new Map<string, OpenSanctionsRecord>();
   const byCountry = new Map<string, OpenSanctionsRecord[]>();
 
-  const records = loadRecords();
   for (const r of records) {
     if (!r.id || !r.name) continue;
     byId.set(r.id, r);
 
-    // Index primary name + every alias under lowercase normalised key.
-    // OpenSanctions consolidates duplicates across feeds, but the same
-    // person can still appear under variant transliterations across
-    // datasets, so keep the value as an array.
     const indexName = (n: string) => {
       const k = n.toLowerCase().trim();
       if (!k) return;
@@ -180,31 +181,28 @@ function buildIndices(): void {
 
 // ── Public lookup API ──────────────────────────────────────────────────────
 
-export function lookupById(id: string): OpenSanctionsRecord | null {
+export async function lookupById(id: string): Promise<OpenSanctionsRecord | null> {
   if (!id) return null;
-  buildIndices();
+  await buildIndices();
   return _byId!.get(id) ?? null;
 }
 
-/** Returns ALL records matching this name across feeds (often 0 or 1; can be >1 for shared names). */
-export function lookupByName(name: string): OpenSanctionsRecord[] {
+export async function lookupByName(name: string): Promise<OpenSanctionsRecord[]> {
   if (!name) return [];
-  buildIndices();
+  await buildIndices();
   return _byNameLower!.get(name.toLowerCase().trim()) ?? [];
 }
 
-/** Lookup by passport / company-reg / IMO / etc. Returns one record. */
-export function lookupByIdentifier(identifier: string): OpenSanctionsRecord | null {
+export async function lookupByIdentifier(identifier: string): Promise<OpenSanctionsRecord | null> {
   if (!identifier) return null;
-  buildIndices();
+  await buildIndices();
   const k = identifier.replace(/\s+/g, "").toUpperCase();
   return _byIdentifier!.get(k) ?? null;
 }
 
-/** All sanctioned entities tied to a given country (ISO-2 lowercase). */
-export function lookupByCountry(iso2: string): OpenSanctionsRecord[] {
+export async function lookupByCountry(iso2: string): Promise<OpenSanctionsRecord[]> {
   if (!iso2) return [];
-  buildIndices();
+  await buildIndices();
   return _byCountry!.get(iso2.toLowerCase()) ?? [];
 }
 
@@ -230,34 +228,30 @@ export function deriveRiskSignals(r: OpenSanctionsRecord): OpenSanctionsRiskSign
 // ── Convenience: enrich a screening subject ────────────────────────────────
 
 export interface OpenSanctionsEnrichment {
-  /** Best matched record (highest-precedence: identifier > name). */
   match: OpenSanctionsRecord | null;
-  /** How the match was made. */
   matchedBy: "identifier" | "name" | null;
-  /** All matched records when looked up by name (often more than one for common names). */
   allNameMatches: OpenSanctionsRecord[];
-  /** Risk signals derived from the best match. */
   signals: OpenSanctionsRiskSignals | null;
 }
 
-export function enrichSubject(input: {
+export async function enrichSubject(input: {
   name?: string;
   identifier?: string;
   id?: string;
-}): OpenSanctionsEnrichment {
+}): Promise<OpenSanctionsEnrichment> {
   let match: OpenSanctionsRecord | null = null;
   let matchedBy: OpenSanctionsEnrichment["matchedBy"] = null;
   let allNameMatches: OpenSanctionsRecord[] = [];
 
   if (input.id) {
-    match = lookupById(input.id);
+    match = await lookupById(input.id);
   }
   if (!match && input.identifier) {
-    match = lookupByIdentifier(input.identifier);
+    match = await lookupByIdentifier(input.identifier);
     if (match) matchedBy = "identifier";
   }
   if (input.name) {
-    allNameMatches = lookupByName(input.name);
+    allNameMatches = await lookupByName(input.name);
     if (!match && allNameMatches.length > 0) {
       match = allNameMatches[0]!;
       matchedBy = "name";
@@ -272,9 +266,9 @@ export function enrichSubject(input: {
   };
 }
 
-// ── Stats (for /api/status surfacing) ──────────────────────────────────────
+// ── Stats ──────────────────────────────────────────────────────────────────
 
-export function openSanctionsStats(): {
+export async function openSanctionsStats(): Promise<{
   total: number;
   persons: number;
   organizations: number;
@@ -282,9 +276,11 @@ export function openSanctionsStats(): {
   withAliases: number;
   withIdentifiers: number;
   uniqueDatasets: number;
-} {
-  buildIndices();
-  const records = loadRecords();
+  source: "blobs" | "missing";
+  loadError: string | null;
+}> {
+  await buildIndices();
+  const records = await loadFromBlobs();
   const datasetSet = new Set<string>();
   for (const r of records) {
     if (r.datasets) for (const d of r.datasets) datasetSet.add(d);
@@ -297,5 +293,7 @@ export function openSanctionsStats(): {
     withAliases: records.filter(r => r.aliases && r.aliases.length > 0).length,
     withIdentifiers: records.filter(r => r.identifiers && r.identifiers.length > 0).length,
     uniqueDatasets: datasetSet.size,
+    source: records.length > 0 ? "blobs" : "missing",
+    loadError: _loadError,
   };
 }
