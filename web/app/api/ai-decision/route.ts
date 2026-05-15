@@ -67,7 +67,17 @@ interface ListsIntegrityResult {
   listsQueried: ListInfo[];
 }
 
+// Module-level cache so repeated requests within a Lambda warm window skip
+// the Netlify Blobs round-trips (saves 1-2 s per call after the first).
+let _integrityCache: { result: ListsIntegrityResult; checkedAt: number } | null = null;
+const INTEGRITY_TTL_MS = 60 * 60 * 1_000; // 1 hour
+
 async function checkListsIntegrity(): Promise<ListsIntegrityResult> {
+  // Return cached result when it's still fresh (1-hour TTL).
+  if (_integrityCache && Date.now() - _integrityCache.checkedAt < INTEGRITY_TTL_MS) {
+    return _integrityCache.result;
+  }
+
   const result: ListsIntegrityResult = {
     listsVerified: false,
     missingLists: [],
@@ -135,6 +145,9 @@ async function checkListsIntegrity(): Promise<ListsIntegrityResult> {
   result.missingLists = missing;
   result.listsQueried = queried;
   result.listsVerified = missing.length === 0;
+  // Populate the module-level cache so the next request within 1 hour skips
+  // the Blobs round-trips entirely.
+  _integrityCache = { result, checkedAt: Date.now() };
   return result;
 }
 

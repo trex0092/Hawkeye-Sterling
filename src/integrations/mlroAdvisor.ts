@@ -118,8 +118,14 @@ export const BUDGET_GUIDANCE =
 
 const DEFAULT_EXECUTOR = 'claude-sonnet-4-6';
 const DEFAULT_ADVISOR  = 'claude-opus-4-7';
+// Speed mode overrides — Haiku is 3-5× faster than Sonnet for single-pass
+// answers and easily stays under 5 s on short questions.
+const SPEED_EXECUTOR   = 'claude-haiku-4-5-20251001';
 
 const EXECUTOR_DEFAULT_TOKENS    = 10_000;
+// Speed mode caps output at 600 tokens — enough for a focused MLRO answer
+// and keeps latency well under the 5 s target.
+const SPEED_EXECUTOR_TOKENS      =    600;
 const ADVISOR_DEFAULT_TOKENS     = 16_000;
 const CHALLENGER_DEFAULT_TOKENS  =  8_000;
 
@@ -386,7 +392,9 @@ export async function invokeMlroAdvisor(
   const totalBudget = Math.min(budget.totalMs, hardCeiling);
   const t0 = Date.now();
   const trail: ReasoningTrailStep[] = [];
-  const execModel       = cfg.executorModel  ?? DEFAULT_EXECUTOR;
+  // Speed mode uses Haiku for the executor to hit sub-5 s latency targets.
+  // Multi-perspective and balanced modes keep Sonnet/Opus for quality.
+  const execModel       = cfg.executorModel  ?? (mode === 'speed' ? SPEED_EXECUTOR : DEFAULT_EXECUTOR);
   const advModel        = cfg.advisorModel   ?? DEFAULT_ADVISOR;
   const chalModel       = cfg.challengerModel ?? DEFAULT_EXECUTOR;
   const useThinking     = cfg.enableThinking    !== false;

@@ -329,12 +329,17 @@ export async function invokeMlroAdvisor(
   const isMulti = (req.mode ?? "multi_perspective") === "multi_perspective" || req.mode === "all";
 
   // Single-perspective path (speed / balanced modes).
+  // speed → Haiku (fastest, cheapest) with reduced max_tokens for sub-5 s responses.
+  // balanced → Sonnet for higher quality; still cap tokens to keep latency reasonable.
   if (!isMulti) {
+    const isSpeed = req.mode === "speed";
+    const singleModel = isSpeed ? "claude-haiku-4-5-20251001" : "claude-sonnet-4-6";
+    const singleMaxTokens = isSpeed ? 600 : 2000;
     try {
       const client = getAnthropicClient(opts.apiKey, opts.budgetMs, "mlro-advisor");
       const response = await client.messages.create({
-        model: "claude-sonnet-4-6",
-        max_tokens: 2000,
+        model: singleModel,
+        max_tokens: singleMaxTokens,
         system: ADVISOR_SYSTEM_PROMPT,
         messages: [{ role: "user", content: req.question }],
       });
