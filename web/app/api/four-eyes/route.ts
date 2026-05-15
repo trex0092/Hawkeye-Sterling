@@ -19,6 +19,7 @@ import { del, getJson, listKeys, setJson } from "@/lib/server/store";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
 import type { FourEyesAction, FourEyesItem, FourEyesStatus } from "@/lib/types";
+import { asanaGids } from "@/lib/server/asanaConfig";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -170,10 +171,7 @@ async function reportToAsana(item: FourEyesItem, decision: "approve" | "reject",
   const token = process.env["ASANA_TOKEN"];
   if (!token) return null;
 
-  const projectGid =
-    process.env["ASANA_FOUR_EYES_PROJECT_GID"] ??
-    process.env["ASANA_PROJECT_GID"] ??
-    "1214148630166524";
+  const projectGid = asanaGids.fourEyes();
 
   const date = new Date().toISOString().slice(0, 10);
   const decisionLabel = decision === "approve" ? "APPROVED" : "REJECTED";
@@ -212,8 +210,8 @@ async function reportToAsana(item: FourEyesItem, decision: "approve" | "reject",
           name: taskName,
           notes: lines.join("\n"),
           projects: [projectGid],
-          workspace: process.env["ASANA_WORKSPACE_GID"] ?? "1213645083721316",
-          assignee: process.env["ASANA_ASSIGNEE_GID"] ?? "1213645083721304",
+          workspace: asanaGids.workspace(),
+          assignee: asanaGids.assignee(),
         },
       }),
       signal: AbortSignal.timeout(8_000),

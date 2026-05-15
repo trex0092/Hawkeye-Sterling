@@ -85,7 +85,7 @@ export default function IntelligenceToolsPage() {
   return (
     <ModuleLayout asanaModule="intelligence-tools" asanaLabel="Intelligence Tools">
       <ModuleHero
-        eyebrow="MODULE · DETERMINISTIC INTELLIGENCE"
+        eyebrow="DETERMINISTIC INTELLIGENCE"
         title="Intelligence"
         titleEm="tools."
         intro={

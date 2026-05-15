@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { withGuard } from "@/lib/server/guard";
 import { classifyEsg } from "@/lib/data/esg";
 import { postWebhook } from "@/lib/server/webhook";
+import { asanaGids } from "@/lib/server/asanaConfig";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -22,31 +23,17 @@ if (typeof process !== "undefined" && !guardHost[REJECTION_GUARD_KEY]) {
 // MLRO triage inbox — "00 · Master Inbox". All form submissions land here
 // first; MLRO routes them to downstream Projects 01–19.
 // Route: ASANA_SCREENING_PROJECT_GID → 01 · Screening — Sanctions & Watchlists
-// Fallback: ASANA_PROJECT_GID → Master Inbox (00)
-const DEFAULT_PROJECT_GID   = "1214148630166524"; // 00 · Master Inbox (fallback only)
-const DEFAULT_WORKSPACE_GID = "1213645083721316";
-const DEFAULT_ASSIGNEE_GID  = "1213645083721304"; // Luisa Fernanda — primary MLRO
-
-// Resolve the screening project GID: dedicated board first, then legacy
-// ASANA_PROJECT_GID, then hardcoded Master Inbox as last resort.
-function screeningProjectGid(): string {
-  return (
-    process.env["ASANA_SCREENING_PROJECT_GID"] ??
-    process.env["ASANA_PROJECT_GID"] ??
-    DEFAULT_PROJECT_GID
-  );
-}
-
 // Asana custom field GIDs. The Asana API requires numeric GID keys, not
 // human-readable names. Without GIDs the fields are silently ignored on
 // task create. Obtain GIDs via GET https://app.asana.com/api/1.0/custom_fields
-// and set them as env vars. When absent, custom fields are skipped entirely
-// so the task still creates — structured metadata just won't be populated.
+// and set them via ASANA_GIDS_JSON. When absent, custom fields are skipped
+// entirely so the task still creates — structured metadata just won't be
+// populated.
 function buildCustomFields(): Record<string, string | number> | undefined {
-  const subjectGid   = process.env["ASANA_CF_SUBJECT_GID"];
-  const entityGid    = process.env["ASANA_CF_ENTITY_TYPE_GID"];
-  const modeGid      = process.env["ASANA_CF_MODE_GID"];
-  const matchesGid   = process.env["ASANA_CF_TOTAL_MATCHES_GID"];
+  const subjectGid   = asanaGids.cfSubject()    || undefined;
+  const entityGid    = asanaGids.cfEntityType()  || undefined;
+  const modeGid      = asanaGids.cfMode()        || undefined;
+  const matchesGid   = asanaGids.cfTotalMatches() || undefined;
   if (!subjectGid && !entityGid && !modeGid && !matchesGid) return undefined;
   return {
     ...(subjectGid  ? { [subjectGid]:  "" } : {}),
@@ -467,10 +454,10 @@ async function handleScreeningReport(req: Request): Promise<NextResponse> {
       const customFields: Record<string, string | number> | undefined = cfTemplate
         ? {
             ...cfTemplate,
-            ...(process.env["ASANA_CF_SUBJECT_GID"]      ? { [process.env["ASANA_CF_SUBJECT_GID"]]:      body.subject.name } : {}),
-            ...(process.env["ASANA_CF_ENTITY_TYPE_GID"]  ? { [process.env["ASANA_CF_ENTITY_TYPE_GID"]]:  body.subject.entityType ?? "" } : {}),
-            ...(process.env["ASANA_CF_MODE_GID"]         ? { [process.env["ASANA_CF_MODE_GID"]]:         body.trigger ?? "screen" } : {}),
-            ...(process.env["ASANA_CF_TOTAL_MATCHES_GID"] ? { [process.env["ASANA_CF_TOTAL_MATCHES_GID"]]: body.result.hits.length } : {}),
+            ...(asanaGids.cfSubject()      ? { [asanaGids.cfSubject()]:      body.subject.name } : {}),
+            ...(asanaGids.cfEntityType()   ? { [asanaGids.cfEntityType()]:   body.subject.entityType ?? "" } : {}),
+            ...(asanaGids.cfMode()         ? { [asanaGids.cfMode()]:         body.trigger ?? "screen" } : {}),
+            ...(asanaGids.cfTotalMatches() ? { [asanaGids.cfTotalMatches()]: body.result.hits.length } : {}),
           }
         : undefined;
 
@@ -485,9 +472,9 @@ async function handleScreeningReport(req: Request): Promise<NextResponse> {
           data: {
             name,
             notes,
-            projects: [screeningProjectGid()],
-            workspace: process.env["ASANA_WORKSPACE_GID"] ?? DEFAULT_WORKSPACE_GID,
-            assignee: process.env["ASANA_ASSIGNEE_GID"] ?? DEFAULT_ASSIGNEE_GID,
+            projects: [asanaGids.screening()],
+            workspace: asanaGids.workspace(),
+            assignee: asanaGids.assignee(),
             ...(customFields ? { custom_fields: customFields } : {}),
           },
         }),
@@ -511,9 +498,9 @@ async function handleScreeningReport(req: Request): Promise<NextResponse> {
         asanaStatus: asanaRes.status,
         asanaError: msg,
         asanaFullErrors: payload?.errors,
-        projectGid: screeningProjectGid(),
-        workspaceGid: process.env["ASANA_WORKSPACE_GID"] ?? DEFAULT_WORKSPACE_GID,
-        assigneeGid: process.env["ASANA_ASSIGNEE_GID"] ?? DEFAULT_ASSIGNEE_GID,
+        projectGid: asanaGids.screening(),
+        workspaceGid: asanaGids.workspace(),
+        assigneeGid: asanaGids.assignee(),
       });
       // Map upstream status so monitoring alerts differentiate misconfig
       // (401/403 → 503 Service Unavailable on our side) from a real

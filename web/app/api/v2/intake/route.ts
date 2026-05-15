@@ -43,8 +43,6 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 const ASANA_BASE = "https://app.asana.com/api/1.0";
-const DEFAULT_WORKSPACE_GID = "1213645083721316";
-const DEFAULT_ASSIGNEE_GID = "1213645083721304";
 const ASANA_TIMEOUT_MS = 12_000;
 
 interface IntakeBody {
@@ -163,8 +161,8 @@ async function createAsanaTask(
         name: `[V2 INTAKE] ${subject.name}${subject.entityType ? ` · ${subject.entityType}` : ""}`,
         notes: notes.join("\n"),
         projects: [projectGid],
-        workspace: process.env["ASANA_WORKSPACE_GID"] ?? DEFAULT_WORKSPACE_GID,
-        assignee: process.env["ASANA_ASSIGNEE_GID"] ?? DEFAULT_ASSIGNEE_GID,
+        workspace: asanaGids.workspace(),
+        assignee: asanaGids.assignee(),
       },
     }),
   });

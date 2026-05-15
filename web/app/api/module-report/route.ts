@@ -1,77 +1,32 @@
 import { NextResponse } from "next/server";
 import { withGuard } from "@/lib/server/guard";
+import { asanaGids } from "@/lib/server/asanaConfig";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 15;
 
-const MASTER_INBOX_GID    = "1214148630166524"; // 00 · Master Inbox (fallback)
-const DEFAULT_WORKSPACE_GID = "1213645083721316";
-const DEFAULT_ASSIGNEE_GID  = "1213645083721304"; // Luisa Fernanda
-
-// Per-module Asana project routing — mapped to 19 Asana boards.
-// Env vars to set in Netlify → Site settings → Environment variables:
-//   ASANA_SCREENING_PROJECT_GID      → 01 · Screening — Sanctions & Adverse Media
-//   ASANA_MLRO_DAILY_PROJECT_GID     → 02 · Central MLRO Daily Digest
-//   ASANA_AUDIT_LOG_PROJECT_GID      → 03 · Audit Log 10-Year Trail
-//   ASANA_FOUR_EYES_PROJECT_GID      → 04 · Four-Eyes Approvals
-//   ASANA_SAR_PROJECT_GID            → 05 · STR/SAR/CTR/PMR GoAML Filings
-//   ASANA_FFR_PROJECT_GID            → 06 · FFR Incidents & Asset Freezes
-//   ASANA_KYC_PROJECT_GID            → 07 · CDD/SDD/EDD/KYC — Customer Due Diligence
-//   ASANA_TM_PROJECT_GID             → 08 · Transaction Monitoring
-//   ASANA_COMPLIANCE_OPS_PROJECT_GID → 09 · Compliance Ops — Daily & Weekly Tasks
-//   ASANA_SHIPMENTS_PROJECT_GID      → 10 · Shipments — Tracking
-//   ASANA_EMPLOYEES_PROJECT_GID      → 11 · Employees
-//   ASANA_TRAINING_PROJECT_GID       → 12 · Training
-//   ASANA_GOVERNANCE_PROJECT_GID     → 13 · Compliance Governance
-//   ASANA_ROUTINES_PROJECT_GID       → 14 · Routines — Scheduled
-//   ASANA_MLRO_PROJECT_GID           → 15 · MLRO Workbench
-//   ASANA_SUPPLYCHAIN_PROJECT_GID    → 16 · Supply Chain, ESG & LBMA Gold
-//   ASANA_EXPORT_CTRL_PROJECT_GID    → 17 · Export Control & Dual-Use
-//   ASANA_REGULATOR_PROJECT_GID      → 18 · Regulator Portal Handoff
-//   ASANA_INCIDENTS_PROJECT_GID      → 19 · Incidents & Grievances
 function projectGidForModule(module: string): string {
-  const inbox = process.env["ASANA_PROJECT_GID"] ?? MASTER_INBOX_GID;
   switch (module) {
-    // 01 · Screening — Sanctions & Adverse Media
-    // Primary nav: Screening, Batch · Governance: AM Lookback · Live Adverse Media
     case "screening":
     case "batch":
     case "adverse-media-lookback":
     case "adverse-media":
     case "adverse-media-live":
-      return process.env["ASANA_SCREENING_PROJECT_GID"] ?? inbox;
-
-    // 02 · Central MLRO Daily Digest
-    // Intelligence: Analytics (MLRO performance digest)
+      return asanaGids.screening();
     case "analytics":
-      return process.env["ASANA_MLRO_DAILY_PROJECT_GID"] ?? inbox;
-
-    // 03 · Audit Log 10-Year Trail
-    // Governance: Audit (immutable audit chain)
+      return asanaGids.mlroDaily();
     case "audit-trail":
-      return process.env["ASANA_AUDIT_LOG_PROJECT_GID"] ?? inbox;
-
-    // 04 · Four-Eyes Approvals
-    // Governance: SAR QA (literal "four-eyes review" module per nav hint)
+      return asanaGids.auditLog();
     case "sar-qa":
-      return process.env["ASANA_FOUR_EYES_PROJECT_GID"] ?? inbox;
-
-    // 05 · STR/SAR/CTR/PMR GoAML Filings
-    // Primary nav: STR/SAR, Cases (case-management & filings), goAML Submission wizard
+      return asanaGids.fourEyes();
     case "str-cases":
     case "cases":
     case "goaml-submission":
-      return process.env["ASANA_SAR_PROJECT_GID"] ?? inbox;
-
-    // 06 · FFR Incidents & Asset Freezes
-    // Enrichment: Benford (forensic fraud detection)
+    case "goaml":
+      return asanaGids.sar();
     case "benford":
-      return process.env["ASANA_FFR_PROJECT_GID"] ?? inbox;
-
-    // 07 · CDD/SDD/EDD/KYC — Customer Due Diligence
-    // Enrichment: GLEIF, Domain Intel, Crypto Risk, Entity Graph
-    // Operations: Client portal, UBO declaration, Supplier DD, CDD Review
+      return asanaGids.ffr();
     case "gleif":
     case "domain-intel":
     case "crypto-risk":
@@ -80,55 +35,30 @@ function projectGidForModule(module: string): string {
     case "ubo-declaration":
     case "cdd-review":
     case "entity-graph":
-      return process.env["ASANA_KYC_PROJECT_GID"] ?? inbox;
-
-    // 08 · Transaction Monitoring
-    // Primary nav: Transaction monitor
+    case "onboarding":
+      return asanaGids.kyc();
     case "transaction-monitor":
-      return process.env["ASANA_TM_PROJECT_GID"] ?? inbox;
-
-    // 09 · Compliance Ops — Daily & Weekly Tasks
-    // Governance: Regulatory, Policies, Playbook
-    // Intelligence: Data quality · Operations: Corrections
+      return asanaGids.tm();
     case "policies":
     case "regulatory":
     case "playbook":
     case "data-quality":
     case "corrections":
-      return process.env["ASANA_COMPLIANCE_OPS_PROJECT_GID"] ?? inbox;
-
-    // 10 · Shipments — Tracking
-    // Operations: Shipments (bullion chain-of-custody)
+      return asanaGids.complianceOps();
     case "shipments":
-      return process.env["ASANA_SHIPMENTS_PROJECT_GID"] ?? inbox;
-
-    // 11 · Employees
-    // Operations: Employees (HR registry)
+      return asanaGids.shipments();
     case "employees":
-      return process.env["ASANA_EMPLOYEES_PROJECT_GID"] ?? inbox;
-
-    // 12 · Training
-    // Operations: Training (staff certification)
+      return asanaGids.employees();
     case "training":
-      return process.env["ASANA_TRAINING_PROJECT_GID"] ?? inbox;
-
-    // 13 · Compliance Governance
-    // Governance: EWRA, Oversight, Enforcement, Responsible AI, Eval KPIs
+      return asanaGids.training();
     case "ewra":
     case "oversight":
     case "enforcement":
     case "responsible-ai":
     case "eval-kpi":
-      return process.env["ASANA_GOVERNANCE_PROJECT_GID"] ?? inbox;
-
-    // 14 · Routines — Scheduled
-    // Primary nav: Monitoring (ongoing-monitor scheduled runs)
+      return asanaGids.governance();
     case "ongoing-monitor":
-      return process.env["ASANA_ROUTINES_PROJECT_GID"] ?? inbox;
-
-    // 15 · MLRO Workbench
-    // Primary nav: MLRO Advisor, Intel
-    // Intelligence: Workbench, Investigation, Brain, OSINT, Heatmap, Telemetry, Red-Team
+      return asanaGids.routines();
     case "mlro-advisor":
     case "workbench":
     case "investigation":
@@ -138,40 +68,18 @@ function projectGidForModule(module: string): string {
     case "heatmap":
     case "telemetry":
     case "red-team":
-      return process.env["ASANA_MLRO_PROJECT_GID"] ?? inbox;
-
-    // 16 · Supply Chain, ESG & LBMA Gold
-    // Enrichment: Vessel Check · Governance: RMI / RMAP (Responsible Minerals)
+      return asanaGids.mlro();
     case "vessel-check":
     case "rmi":
-      return process.env["ASANA_SUPPLYCHAIN_PROJECT_GID"] ?? inbox;
-
-    // 17 · Export Control & Dual-Use
-    // Governance: EOCN (UAE TFS list & dual-use declarations)
+      return asanaGids.supplyChain();
     case "eocn":
-      return process.env["ASANA_EXPORT_CTRL_PROJECT_GID"] ?? inbox;
-
-    // 18 · Regulator Portal Handoff
-    // Governance: Inspection Room
+      return asanaGids.exportCtrl();
     case "inspection-room":
-      return process.env["ASANA_REGULATOR_PROJECT_GID"] ?? inbox;
-
-    // 19 · Incidents & Grievances
-    // Governance: Grievances & Whistleblowing portal (FG/GVW/004)
+      return asanaGids.regulator();
     case "grievances-whistleblowing":
-      return process.env["ASANA_INCIDENTS_PROJECT_GID"] ?? inbox;
-
-    // 07 · CDD/KYC — Onboarding Wizard
-    case "onboarding":
-      return process.env["ASANA_KYC_PROJECT_GID"] ?? inbox;
-
-    // 05 · STR/SAR — legacy goAML export
-    case "goaml":
-      return process.env["ASANA_SAR_PROJECT_GID"] ?? inbox;
-
-    // Everything else (status, …) lands in 00 · Master Inbox.
+      return asanaGids.incidents();
     default:
-      return inbox;
+      return asanaGids.master();
   }
 }
 
@@ -396,8 +304,8 @@ async function handleModuleReport(req: Request): Promise<NextResponse> {
             name: taskName,
             notes,
             projects: [projectGid],
-            workspace: process.env["ASANA_WORKSPACE_GID"] ?? DEFAULT_WORKSPACE_GID,
-            assignee: process.env["ASANA_ASSIGNEE_GID"] ?? DEFAULT_ASSIGNEE_GID,
+            workspace: asanaGids.workspace(),
+            assignee: asanaGids.assignee(),
           },
         }),
         signal: ctl.signal,

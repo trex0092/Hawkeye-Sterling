@@ -2,7 +2,7 @@ export function WorkbenchHero() {
   return (
     <div className="mb-8">
       <div className="font-mono text-11 tracking-wide-8 uppercase text-ink-2 mb-2">
-        MODULE 03 · COGNITIVE ENGINE
+        COGNITIVE ENGINE
       </div>
       <h1 className="font-display font-normal text-48 tracking-tightest m-0 mb-2 text-ink-0">
         Deep <em className="italic text-brand">reasoning.</em>

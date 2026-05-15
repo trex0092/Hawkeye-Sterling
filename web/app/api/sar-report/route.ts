@@ -21,11 +21,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-// Luisa's SAR/STR board — "05 · STR/SAR/CTR/PMR GoAML Filings".
-// Overridable via ASANA_SAR_PROJECT_GID / ASANA_ASSIGNEE_GID env vars.
-const DEFAULT_SAR_PROJECT_GID = "1214148631336502";
-const DEFAULT_WORKSPACE_GID   = "1213645083721316";
-const DEFAULT_ASSIGNEE_GID    = "1213645083721304"; // Luisa Fernanda — primary MLRO
+import { asanaGids } from "@/lib/server/asanaConfig";
 
 type FilingType =
   | "STR"
@@ -206,10 +202,8 @@ async function handleSarReport(req: Request): Promise<Response> {
     );
   }
 
-  const projectGid =
-    process.env["ASANA_SAR_PROJECT_GID"] ?? DEFAULT_SAR_PROJECT_GID;
-  const workspaceGid =
-    process.env["ASANA_WORKSPACE_GID"] ?? DEFAULT_WORKSPACE_GID;
+  const projectGid = asanaGids.sar();
+  const workspaceGid = asanaGids.workspace();
   const now = new Date().toISOString();
 
   const name = `[${body.filingType}] DRAFT · ${body.subject.name}${
@@ -568,7 +562,7 @@ async function handleSarReport(req: Request): Promise<Response> {
           notes: lines.join("\n"),
           projects: [projectGid],
           workspace: workspaceGid,
-          assignee: process.env["ASANA_ASSIGNEE_GID"] ?? DEFAULT_ASSIGNEE_GID,
+          assignee: asanaGids.assignee(),
         },
       }),
       signal: asanaCtl.signal,

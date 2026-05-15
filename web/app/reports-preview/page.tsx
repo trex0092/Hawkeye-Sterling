@@ -559,7 +559,6 @@ export default function ReportsPreviewPage() {
       <Header />
       <div className="min-h-[calc(100vh-84px)] bg-bg px-4 py-8 md:px-10">
         <div className="mb-6">
-          <div className="font-mono text-10 font-semibold text-amber tracking-wide-4 uppercase mb-1">MODULE 00</div>
           <div className="flex items-center gap-1.5 font-mono text-11 tracking-wide-8 uppercase text-brand mb-2">
             <span className="w-1.5 h-1.5 rounded-full bg-brand shrink-0 shadow-[0_0_6px_var(--brand)] opacity-80" />
             PDF OUTPUT LIBRARY
