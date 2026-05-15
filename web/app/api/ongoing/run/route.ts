@@ -19,6 +19,7 @@ type QuickScreenFn = (
 const quickScreen = _quickScreen as QuickScreenFn;
 import { getJson, listKeys, setJson } from "@/lib/server/store";
 import { postWebhook } from "@/lib/server/webhook";
+import { asanaGids } from "@/lib/server/asanaConfig";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -326,7 +327,7 @@ export async function POST(req: Request): Promise<NextResponse> {
           }
           if (newAdverseArticles.length > 0) {
             const asanaToken = process.env["ASANA_TOKEN"];
-            const inboxProject = process.env["ASANA_SCREENING_PROJECT_GID"] ?? process.env["ASANA_PROJECT_GID"];
+            const inboxProject = asanaGids.screening();
             if (asanaToken && inboxProject) {
               try {
                 const topSeverity = newAdverseArticles.some(
@@ -363,10 +364,8 @@ export async function POST(req: Request): Promise<NextResponse> {
                     name: `🟥 [ADVERSE-MEDIA · ${topSeverity}] ${s.name} (${s.id}) · ${newAdverseArticles.length} new`,
                     notes: lines.join("\n"),
                     projects: [inboxProject],
-                    workspace:
-                      process.env["ASANA_WORKSPACE_GID"] ?? "1213645083721316",
-                    assignee:
-                      process.env["ASANA_ASSIGNEE_GID"] ?? "1213645083721304",
+                    workspace: asanaGids.workspace(),
+                    assignee: asanaGids.assignee(),
                   },
                 };
                 const r = await fetch("https://app.asana.com/api/1.0/tasks", {
@@ -515,7 +514,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       // detected an escalation but had nowhere to file it".
       let escalationTaskUrl: string | undefined;
       let escalationSkipReason: string | undefined;
-      const escalationsProject = process.env["ASANA_ESCALATIONS_PROJECT_GID"];
+      const escalationsProject = asanaGids.escalations();
       const asanaToken = process.env["ASANA_TOKEN"];
       // Keep our branch's detailed skip-reason logging (so ops sees WHY an
       // escalation was dropped) AND pick up the assignee field that main
@@ -528,9 +527,9 @@ export async function POST(req: Request): Promise<NextResponse> {
             `[ongoing/run] escalation detected for ${s.id} but ASANA_TOKEN is not set — no task filed`,
           );
         } else if (!escalationsProject) {
-          escalationSkipReason = "ASANA_ESCALATIONS_PROJECT_GID not set";
+          escalationSkipReason = "escalations project not configured";
           console.warn(
-            `[ongoing/run] escalation detected for ${s.id} but ASANA_ESCALATIONS_PROJECT_GID is not set — no task filed`,
+            `[ongoing/run] escalation detected for ${s.id} but escalations project GID is not set — no task filed`,
           );
         } else {
           try {
@@ -548,8 +547,8 @@ export async function POST(req: Request): Promise<NextResponse> {
                   `Triggered at: ${runAt}`,
                 ].join("\n"),
                 projects: [escalationsProject],
-                workspace: process.env["ASANA_WORKSPACE_GID"] ?? "1213645083721316",
-                assignee: process.env["ASANA_ASSIGNEE_GID"] ?? "1213645083721304",
+                workspace: asanaGids.workspace(),
+                assignee: asanaGids.assignee(),
               },
             };
             const r = await fetch("https://app.asana.com/api/1.0/tasks", {

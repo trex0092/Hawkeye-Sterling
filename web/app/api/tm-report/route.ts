@@ -3,18 +3,11 @@ import { withGuard } from "@/lib/server/guard";
 import { postWebhook } from "@/lib/server/webhook";
 
 import { getAnthropicClient } from "@/lib/server/llm";
+import { asanaGids } from "@/lib/server/asanaConfig";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
-
-// Dedicated endpoint for Transaction-Monitor compliance reports. Files
-// one Asana task per transaction into ASANA_TM_PROJECT_GID (separate
-// board from screening / STR / escalations so the TM queue stays
-// focused). Mirrors the shape of /api/sar-report but with a transaction-
-// centric notes body.
-const DEFAULT_WORKSPACE_GID = "1213645083721316";
-const DEFAULT_ASSIGNEE_GID = "1213645083721304";
 
 interface Body {
   transaction: {
@@ -89,8 +82,8 @@ async function classifyTransaction(
 
 async function handleTmReport(req: Request): Promise<NextResponse> {
   const token = process.env["ASANA_TOKEN"];
-  const asanaEnabled = !!token && !!process.env["ASANA_TM_PROJECT_GID"];
-  const projectGid = process.env["ASANA_TM_PROJECT_GID"] ?? "";
+  const projectGid = asanaGids.tm();
+  const asanaEnabled = !!token && !!projectGid;
 
   let body: Body;
   try {
@@ -233,8 +226,8 @@ async function handleTmReport(req: Request): Promise<NextResponse> {
           name,
           notes: lines.join("\n"),
           projects: [projectGid],
-          workspace: process.env["ASANA_WORKSPACE_GID"] ?? DEFAULT_WORKSPACE_GID,
-          assignee: process.env["ASANA_ASSIGNEE_GID"] ?? DEFAULT_ASSIGNEE_GID,
+          workspace: asanaGids.workspace(),
+          assignee: asanaGids.assignee(),
         },
       }),
     });

@@ -409,9 +409,6 @@ export default function StrCasesPage() {
   if (!roleLoaded)
     return (
       <ModuleLayout asanaModule="str-cases" asanaLabel="STR / SAR Cases">
-        <div className="font-mono text-10 font-semibold text-amber tracking-wide-4 uppercase mb-1">
-          MODULE 05
-        </div>
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-12 text-ink-3 font-mono animate-pulse">
             Loading STR module…

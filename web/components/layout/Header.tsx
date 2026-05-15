@@ -172,7 +172,6 @@ export function Header() {
           </span>
           <span className="hidden sm:flex flex-col leading-none gap-[2px]">
             <span className="text-[13px] font-semibold tracking-tight text-ink-0">Hawkeye Sterling</span>
-            <span className="text-[8.5px] font-mono uppercase tracking-[0.14em] text-ink-3">Precision Screening · UAE</span>
           </span>
         </a>
 

@@ -18,20 +18,17 @@ import { checkWatchman } from "@/lib/server/watchman-client";   // moov-io/watch
 import { checkMarble } from "@/lib/server/marble-client";       // checkmarble/marble
 import { checkJube } from "@/lib/server/jube-client";           // jube AML
 import { yenteMatch } from "../../../../dist/src/integrations/yente.js"; // opensanctions/yente FtM matching
-
-const MASTER_INBOX_GID     = "1214148630166524"; // 00 · Master Inbox (fallback)
-const DEFAULT_WORKSPACE_GID = "1213645083721316";
-const DEFAULT_ASSIGNEE_GID  = "1213645083721304";
-// Route batch screening to 01 · Screening — Sanctions & Watchlists
-function batchScreenProjectGid(): string {
-  return process.env["ASANA_SCREENING_PROJECT_GID"] ?? process.env["ASANA_PROJECT_GID"] ?? MASTER_INBOX_GID;
-}
+import { asanaGids } from "@/lib/server/asanaConfig";
 
 type QuickScreenFn = (
   subject: QuickScreenSubject,
   candidates: QuickScreenCandidate[],
 ) => QuickScreenResult;
 const quickScreen = _quickScreen as QuickScreenFn;
+
+function batchScreenProjectGid(): string {
+  return asanaGids.screening();
+}
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -306,8 +303,8 @@ export async function POST(req: Request): Promise<NextResponse> {
             name: `[BATCH · ${topSeverity}] ${elevated.length} elevated subject(s) — ${results.length} total screened`,
             notes: lines.join("\n"),
             projects: [batchScreenProjectGid()],
-            workspace: process.env["ASANA_WORKSPACE_GID"] ?? DEFAULT_WORKSPACE_GID,
-            assignee: process.env["ASANA_ASSIGNEE_GID"] ?? DEFAULT_ASSIGNEE_GID,
+            workspace: asanaGids.workspace(),
+            assignee: asanaGids.assignee(),
           },
         }),
       });

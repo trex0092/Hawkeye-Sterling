@@ -77,7 +77,7 @@ export default function IntelStatusPage(): React.ReactElement {
           <header className="mb-6">
             <div className="flex items-center gap-1.5 font-mono text-11 tracking-wide-8 uppercase text-brand mb-2">
               <span className="w-1.5 h-1.5 rounded-full bg-brand shrink-0 shadow-[0_0_6px_var(--brand)] opacity-80" />
-              MODULE 50 · ENRICHMENT
+              ENRICHMENT
             </div>
             <h1 className="font-display font-normal text-36 leading-tight tracking-tightest text-ink-0 mb-1">
               Intelligence sources · <em className="italic text-brand">status.</em>

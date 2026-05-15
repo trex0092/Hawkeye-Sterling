@@ -7,6 +7,7 @@ import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
 import { getJson } from "@/lib/server/store";
 import { randomBytes } from "node:crypto";
+import { asanaGids } from "@/lib/server/asanaConfig";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -247,16 +248,14 @@ Make your decision now.`;
 
 // ── Auto-Asana task creation ──────────────────────────────────────────────────
 
-const DECISION_PROJECT_MAP: Record<AIDecision, string> = {
-  str: "ASANA_SAR_PROJECT_GID",
-  escalate: "ASANA_MLRO_PROJECT_GID",
-  edd: "ASANA_KYC_PROJECT_GID",
-  approve: "ASANA_SCREENING_PROJECT_GID",
-};
-
-const MASTER_INBOX = "1214148630166524";
-const DEFAULT_WORKSPACE = "1213645083721316";
-const DEFAULT_ASSIGNEE = "1213645083721304";
+function decisionProjectGid(decision: AIDecision): string {
+  switch (decision) {
+    case "str":      return asanaGids.sar();
+    case "escalate": return asanaGids.mlro();
+    case "edd":      return asanaGids.kyc();
+    case "approve":  return asanaGids.screening();
+  }
+}
 
 async function createAsanaTask(
   req: DecisionRequest,
@@ -276,8 +275,7 @@ async function createAsanaTask(
     str: "STR — FILE IMMEDIATELY",
   };
 
-  const projectGidEnv = DECISION_PROJECT_MAP[decision];
-  const projectGid = process.env[projectGidEnv] ?? MASTER_INBOX;
+  const projectGid = decisionProjectGid(decision);
   const listsVerified = integrity?.listsVerified ?? true;
   const missingLists = integrity?.missingLists ?? [];
   const taskName = `[AI DECISION — ${decisionLabel[decision]}] ${req.name} · ${new Date().toISOString().slice(0, 10)}`;
@@ -341,8 +339,8 @@ async function createAsanaTask(
             name: taskName,
             notes,
             projects: [projectGid],
-            workspace: process.env["ASANA_WORKSPACE_GID"] ?? DEFAULT_WORKSPACE,
-            assignee: process.env["ASANA_ASSIGNEE_GID"] ?? DEFAULT_ASSIGNEE,
+            workspace: asanaGids.workspace(),
+            assignee: asanaGids.assignee(),
           },
         }),
         signal: ctl.signal,
@@ -414,7 +412,7 @@ async function createMlroReviewSubtask(
           data: {
             name: "MLRO REVIEW REQUIRED — Four-eyes sign-off before any compliance action",
             notes: subtaskNotes,
-            assignee: process.env["ASANA_ASSIGNEE_GID"] ?? DEFAULT_ASSIGNEE,
+            assignee: asanaGids.assignee(),
           },
         }),
         signal: ctl.signal,
