@@ -133,6 +133,20 @@ function hostnameOf(value: string): string | null {
 export function middleware(req: NextRequest): NextResponse {
   const { pathname } = req.nextUrl;
 
+  // ── 0. /.well-known rewrites ──────────────────────────────────────────────
+  // Next.js rewrites declared in next.config.mjs don't reach Lambda when
+  // routed through @netlify/plugin-nextjs — verified empirically: the
+  // /.well-known/* paths returned 404 in production while the underlying
+  // /api/well-known/* routes responded 200. Doing the rewrite in middleware
+  // guarantees regulator JWT verifiers can fetch the signing key set at
+  // the RFC-conformant path.
+  if (pathname === "/.well-known/jwks.json") {
+    return NextResponse.rewrite(new URL("/api/well-known/jwks.json", req.url));
+  }
+  if (pathname === "/.well-known/hawkeye-pubkey.pem") {
+    return NextResponse.rewrite(new URL("/api/well-known/hawkeye-pubkey.pem", req.url));
+  }
+
   // ── 1. Session guard (non-API routes) ──────────────────────────────────────
   if (!pathname.startsWith("/api/") && !isPublic(pathname)) {
     const token = req.cookies.get(SESSION_COOKIE)?.value ?? "";

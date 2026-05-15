@@ -55,22 +55,12 @@ const nextConfig = {
     ];
   },
 
-  // .well-known endpoints — Next can't host directories that start with
-  // a dot, so /.well-known/* lives at /api/well-known/* and is rewritten
-  // here. Lets verifiers fetch the report-signing public key at the
-  // RFC-conformant path without code-side knowledge of our route layout.
-  async rewrites() {
-    return [
-      {
-        source: "/.well-known/jwks.json",
-        destination: "/api/well-known/jwks.json",
-      },
-      {
-        source: "/.well-known/hawkeye-pubkey.pem",
-        destination: "/api/well-known/hawkeye-pubkey.pem",
-      },
-    ];
-  },
+  // NOTE: .well-known rewrites used to live here as Next.js `rewrites()`
+  // entries. Verified empirically that @netlify/plugin-nextjs does not
+  // honour Next rewrites for dot-prefix paths in production — /.well-known/
+  // calls returned 404 while the underlying /api/well-known/ routes worked.
+  // The rewrite is now done in web/middleware.ts (early-return NextResponse
+  // .rewrite) which the plugin DOES honour.
 
   // @netlify/blobs is imported dynamically inside ../dist/src/ingestion/blobs-store.js.
   // Webpack resolves modules relative to each source file's location, so when processing

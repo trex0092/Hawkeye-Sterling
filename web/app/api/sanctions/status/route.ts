@@ -313,10 +313,29 @@ async function handleGet(req: Request): Promise<Response> {
   const ok = summary.healthy > 0;
   const degraded = summary.missing > 0 || summary.stale > 0;
   const warnings: string[] = [];
+  // Adapters where entityCount=0 is an EXPECTED state, not a parser
+  // gap: UAE seed files were intentionally emptied (see commit 2e87659
+  // — placeholder text replaced with []) and LSEG supplements are only
+  // populated after /api/admin/import-cfs runs against a CFS-entitled
+  // subscription. Both can sit at zero indefinitely without indicating
+  // a bug. The original "audit H-03" warning was designed to catch
+  // genuine parser failures on URL-driven adapters; surface a different
+  // message for the seed/supplement cases so operators know the cause.
+  function emptyIsExpected(listId: string): boolean {
+    return listId === "uae_eocn" || listId === "uae_ltl" || listId.startsWith("lseg_");
+  }
   for (const l of lists) {
     if (l.status === "missing") warnings.push(`${l.listId} (${l.displayName}): missing from blob storage`);
     else if (l.status === "stale" && l.ageHours !== null) warnings.push(`${l.listId} (${l.displayName}): stale by ${l.ageHours}h`);
-    else if (l.status === "healthy" && l.entityCount === 0) warnings.push(`${l.listId} (${l.displayName}): blob present but zero entities — parser or upstream gap (audit H-03)`);
+    else if (l.status === "healthy" && l.entityCount === 0) {
+      if (emptyIsExpected(l.listId)) {
+        // Informational only — don't push to warnings (would flip the
+        // dashboard yellow indefinitely). entityCount=0 is visible in
+        // the lists[] array for any operator who wants to drill in.
+        continue;
+      }
+      warnings.push(`${l.listId} (${l.displayName}): blob present but zero entities — parser or upstream gap (audit H-03)`);
+    }
   }
 
   // Build per-list freshness summary for compliance audit trail
