@@ -425,8 +425,10 @@ export async function invokeMlroAdvisor(
     const executor = buildExecutorRequest(req);
     const execStart = new Date().toISOString();
     const execBudget = Math.min(budget.executorMs ?? totalBudget, totalBudget);
+    // Speed mode caps output to 600 tokens (Haiku) to stay under the 5 s target.
+    const execMaxTokens = cfg.maxTokens ?? (mode === 'speed' ? SPEED_EXECUTOR_TOKENS : EXECUTOR_DEFAULT_TOKENS);
     const { result: execRes, timedOut, thrownError: execThrown } = await withBudget(execBudget, (signal) =>
-      chat({ model: execModel, system: executor.system, user: executor.user, maxTokens: cfg.maxTokens ?? EXECUTOR_DEFAULT_TOKENS, apiKey: cfg.apiKey, signal, thinking: useThinking, effort: 'high', cacheSystem: useCache }),
+      chat({ model: execModel, system: executor.system, user: executor.user, maxTokens: execMaxTokens, apiKey: cfg.apiKey, signal, thinking: useThinking, effort: 'high', cacheSystem: useCache }),
     );
     if (timedOut || !execRes?.ok) {
       trail.push({ stepNo: 1, actor: 'executor', modelId: execModel, at: execStart, summary: timedOut ? 'Executor budget exceeded — partial output.' : 'Executor failed.', body: execRes?.text ?? '', ...(execRes?.thinking !== undefined ? { thinkingSummary: execRes.thinking } : {}), citedModeIds: [], citedDoctrineIds: [], citedRedFlagIds: [], citedEvidenceIds: [] });
