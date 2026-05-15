@@ -46,6 +46,9 @@ export const CREDIBILITY_TIER: Record<string, number> = {
   "sg-mas": 1.0, "ae-eocn": 1.0, "jp-meti": 1.0, "fatf": 1.0,
   "worldbank-debar": 1.0,
 
+  // FraudShield enrichment adapter (0.88)
+  "fraudshield": 0.88,
+
   // Tier 2: tier-1 commercial PEP/sanctions vendors (0.95)
   "lseg-world-check": 0.95, "dowjones-rc": 0.95, "sayari": 0.95,
   "complyadvantage": 0.95, "acuris-rdc": 0.95, "quantexa": 0.92,
@@ -647,6 +650,13 @@ export interface BuildConsensusInputsArgs {
   freeProviders: string[];
   freeCount: number;
   adverseMediaArticles?: Array<{ source: string; outlet: string; title: string; url: string }>;
+  // FraudShield enrichment signal
+  enrichmentSignals?: {
+    fraudShieldScore?: number;
+    fraudShieldRisk?: "clear" | "low" | "medium" | "high" | "critical" | null;
+    fraudShieldFlags?: string[];
+    activeProviders?: string[];
+  };
 }
 
 export function buildConsensusInputsFromAugmentation(a: BuildConsensusInputsArgs): {
@@ -723,6 +733,28 @@ export function buildConsensusInputsFromAugmentation(a: BuildConsensusInputsArgs
         topic: "adverse-media",
         stance: "affirm",
         detail: art.title.slice(0, 120),
+      });
+    }
+  }
+
+  // ── FraudShield enrichment signal ────────────────────────────────────
+  const riskToScore: Record<string, number> = {
+    critical: 90, high: 70, medium: 50, low: 25, clear: 0,
+  };
+  const e = a.enrichmentSignals;
+  if (e?.fraudShieldRisk !== undefined && e.fraudShieldRisk !== null) {
+    const score = riskToScore[e.fraudShieldRisk] ?? (e.fraudShieldScore ?? 0);
+    consensusInputs.push({
+      source: "fraudshield",
+      evidence: score > 0 ? "match" : "uncertain",
+      rawScore: score,
+    });
+    if (score >= 35) {
+      contradictionItems.push({
+        source: "fraudshield",
+        topic: "fraud-intelligence",
+        stance: "affirm",
+        detail: `FraudShield score ${e.fraudShieldScore ?? score}/100${e.fraudShieldFlags?.length ? ` — flags: ${e.fraudShieldFlags.slice(0, 5).join(", ")}` : ""}`,
       });
     }
   }

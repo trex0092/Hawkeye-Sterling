@@ -29,6 +29,12 @@ import { searchAllNews } from "@/lib/intelligence/newsAdapters";
 import { ingestUrls } from "@/lib/intelligence/urlIngestion";
 import { llmAdverseMediaAdapter } from "@/lib/intelligence/llmAdverseMedia";
 import { assessCommonName } from "@/lib/intelligence/commonNames";
+import {
+  runEnrichmentAdapters,
+  activeEnrichmentProviders,
+  type EnrichmentHints,
+  type EnrichmentBundle,
+} from "@/lib/intelligence/publicApiAdapters";
 
 // Compiled backend entry point. The root `tsc` build (npm run build at the repo root)
 // must run before this API route is bundled. Netlify build order is encoded in
@@ -53,6 +59,7 @@ interface QuickScreenRequestBody {
   candidates?: QuickScreenCandidate[];
   options?: QuickScreenOptions;
   evidenceUrls?: string[];        // operator-provided adverse-media URLs to ingest as evidence
+  enrichmentHints?: EnrichmentHints; // email/phone/IP/wallet/URL for API enrichment adapters
 }
 
 const MAX_CANDIDATES = 5_000;
@@ -233,10 +240,18 @@ export async function POST(req: Request): Promise<NextResponse> {
       return Promise.race([p, timeoutP]).finally(() => { if (to) clearTimeout(to); });
     };
 
+    // Enrichment hints supplied by the caller (email / phone / IP / wallet / URL).
+    // All six adapters run in parallel with the rest; each degrades gracefully
+    // when the corresponding env key is absent or the hint field is missing.
+    const hints: EnrichmentHints = body.enrichmentHints ?? {};
+    const NULL_ENRICHMENT: EnrichmentBundle = {
+      fraudShield: { available: false, reason: "no_key" },
+    };
+
     const [
       openSanctionsResults, commercialResults, registryResults,
       countryRegistryResults, countrySanctionsResults, freeAdapterResults,
-      rawNews, llmArts,
+      rawNews, llmArts, enrichmentBundle,
     ] = await Promise.all([
       // Group A — hit-gated (only when local hits sparse or common name)
       hitGated ? adapterTimeout(LIVE_OPENSANCTIONS_ADAPTER.lookup(subject.name, subject.jurisdiction ?? undefined).catch((e): OSResult => { warn(e); return []; }), [] as OSResult) : Promise.resolve<OSResult>([]),
@@ -249,6 +264,8 @@ export async function POST(req: Request): Promise<NextResponse> {
       // Group C — news velocity + LLM adverse-media recall
       canAug ? adapterTimeout(searchAllNews(subject.name, { limit: 50 }).catch((e): NewsResult => { warn(e); return { articles: [], providersUsed: [] }; }), { articles: [], providersUsed: [] } as NewsResult) : Promise.resolve<NewsResult>({ articles: [], providersUsed: [] }),
       canAug && llmAdapter.isAvailable() ? adapterTimeout(llmAdapter.search(subject.name, { limit: 15 }).catch((e): LlmResult => { warn(e); return []; }), [] as LlmResult) : Promise.resolve<LlmResult>([]),
+      // Group D — public-API enrichment (IP / blockchain / breach / domain / phone / fraud)
+      adapterTimeout(runEnrichmentAdapters(hints).catch((e): EnrichmentBundle => { warn(e); return NULL_ENRICHMENT; }), NULL_ENRICHMENT),
     ]);
 
     // Merge LLM adverse-media articles (prepend so they rank first)
@@ -295,6 +312,15 @@ export async function POST(req: Request): Promise<NextResponse> {
       freeConfigured: activeFreeProviders().length,
       freeAvailable: 6,
     });
+    // Extract FraudShield signal for consensus layer
+    const eb = enrichmentBundle;
+    const enrichmentSignals = {
+      fraudShieldScore: eb.fraudShield.available ? eb.fraudShield.riskScore : undefined,
+      fraudShieldRisk: eb.fraudShield.available ? eb.fraudShield.normalisedRisk : null,
+      fraudShieldFlags: eb.fraudShield.available ? eb.fraudShield.flags : undefined,
+      activeProviders: activeEnrichmentProviders(eb),
+    };
+
     const { consensusInputs, contradictionItems } = buildConsensusInputsFromAugmentation({
       hits: result.hits,
       openSanctionsCount: openSanctionsResults.length,
@@ -311,6 +337,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       adverseMediaArticles: newsArticles.articles.map((a) => ({
         source: a.source, outlet: a.outlet, title: a.title, url: a.url,
       })),
+      enrichmentSignals,
     });
     const reasoning = buildScreeningReasoning({
       subject,
@@ -370,6 +397,10 @@ export async function POST(req: Request): Promise<NextResponse> {
               freeAdapterAugmentation: freeAdapterResults.records.slice(0, HIT_LIMIT_AUG_HIGH),
               freeAdapterProviders: freeAdapterResults.providersUsed,
             }
+          : {}),
+        // FraudShield enrichment signal
+        ...(eb.fraudShield.available
+          ? { fraudShield: eb.fraudShield }
           : {}),
         // Tell the operator UI whether common-name expansion fired so the
         // triage panel can show the appropriate banner.
