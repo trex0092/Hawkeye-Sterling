@@ -145,7 +145,7 @@ export async function POST(req: Request) {
       ],
       messages: [{
         role: "user",
-        content: `Subject Name: ${body.subjectName ?? "not identified"}
+        content: `Subject Name: ${sanitizeField(body.subjectName)}
 Declared Income (description): ${body.declaredIncome}
 Declared Assets: ${body.declaredAssets ?? "not provided"}
 Review Period (years): ${body.periodYears ?? "not specified"}

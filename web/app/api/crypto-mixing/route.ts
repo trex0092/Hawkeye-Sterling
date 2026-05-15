@@ -71,7 +71,7 @@ export async function POST(req: Request) {
         messages: [
           {
             role: "user",
-            content: `Analyse for cryptocurrency mixing and obfuscation risk.\n\nWallet Address: ${body.walletAddress}\nCrypto Type: ${body.cryptoType}\nTransaction Hashes: ${body.transactionHashes}\nExchange Context: ${body.exchangeContext}\nAmount (USD): ${body.amountUsd}\nContext: ${body.context}\n\nReturn JSON with fields: mixingRisk, mixingTechniques[], obfuscationScore (0-100), traceabilityRating, blockchainIntelligence, recommendedAction, reportingBasis, regulatoryBasis.`,
+            content: `Analyse for cryptocurrency mixing and obfuscation risk.\n\nWallet Address: ${sanitizeField(body.walletAddress)}\nCrypto Type: ${sanitizeField(body.cryptoType)}\nTransaction Hashes: ${sanitizeField(body.transactionHashes)}\nExchange Context: ${sanitizeField(body.exchangeContext)}\nAmount (USD): ${sanitizeField(body.amountUsd)}\nContext: ${sanitizeText(body.context)}\n\nReturn JSON with fields: mixingRisk, mixingTechniques[], obfuscationScore (0-100), traceabilityRating, blockchainIntelligence, recommendedAction, reportingBasis, regulatoryBasis.`,
           },
         ],
       });

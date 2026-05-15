@@ -159,7 +159,7 @@ Respond ONLY with valid JSON — no markdown fences:
 }`,
         messages: [{
           role: "user",
-          content: `STR Narrative Draft: ${body.narrative}
+          content: `STR Narrative Draft: ${sanitizeText(body.narrative)}
 Subject Name: ${body.subjectName ?? "not provided"}
 Subject ID Number: ${body.subjectIdNumber ?? "not provided"}
 Subject DOB: ${body.subjectDob ?? "not provided"}

@@ -78,7 +78,7 @@ export async function POST(req: Request) {
         messages: [
           {
             role: "user",
-            content: `Assess this whistleblower case and generate an action plan.\n\nAllegation: ${body.allegation}\nReport Source: ${body.reportSource}\nAccused Role: ${body.accusedRole}\nEvidence Described: ${body.evidenceDescribed}\nAffected Customers: ${body.affectedCustomers}\nContext: ${body.context}\n\nReturn JSON with fields: caseUrgency, allegationCategories[], protectionMeasures[], investigationSteps[], regulatoryReportingRequired, hrEngagementPlan, timelineRequirements, regulatoryBasis.`,
+            content: `Assess this whistleblower case and generate an action plan.\n\nAllegation: ${sanitizeText(body.allegation)}\nReport Source: ${sanitizeField(body.reportSource)}\nAccused Role: ${sanitizeField(body.accusedRole)}\nEvidence Described: ${sanitizeText(body.evidenceDescribed)}\nAffected Customers: ${sanitizeField(body.affectedCustomers)}\nContext: ${sanitizeText(body.context)}\n\nReturn JSON with fields: caseUrgency, allegationCategories[], protectionMeasures[], investigationSteps[], regulatoryReportingRequired, hrEngagementPlan, timelineRequirements, regulatoryBasis.`,
           },
         ],
       });

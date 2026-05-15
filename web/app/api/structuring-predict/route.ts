@@ -230,7 +230,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     system: "You are a UAE AML transaction monitoring specialist. Given structuring analysis results, write a 2-3 paragraph SAR-ready narrative and list FATF typology matches. Return JSON: { \"sarNarrative\": \"<text>\", \"fatfTypologies\": [\"<typology>\"], \"additionalPatterns\": [\"<pattern>\"], \"confidence\": \"high|medium|low\" }",
     messages: [{
       role: "user",
-      content: `Subject: ${body.subjectName ?? "unknown"}\nStructuring Score: ${analysis.structuringScore}/100\nPatterns: ${JSON.stringify(analysis.patterns)}\nTotal Volume: ${analysis.totalVolume.toLocaleString()} ${body.baseCurrency ?? "AED"}\nTransaction Count: ${analysis.txnCount}\nReporting Threshold: ${threshold.toLocaleString()}\n\nWrite SAR narrative and classify typologies.`,
+      content: `Subject: ${sanitizeField(body.subjectName)}\nStructuring Score: ${analysis.structuringScore}/100\nPatterns: ${JSON.stringify(analysis.patterns)}\nTotal Volume: ${analysis.totalVolume.toLocaleString()} ${body.baseCurrency ?? "AED"}\nTransaction Count: ${analysis.txnCount}\nReporting Threshold: ${threshold.toLocaleString()}\n\nWrite SAR narrative and classify typologies.`,
     }],
   });
 
