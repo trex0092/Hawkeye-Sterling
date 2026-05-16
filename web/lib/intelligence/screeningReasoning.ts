@@ -148,6 +148,8 @@ export const CREDIBILITY_TIER: Record<string, number> = {
   // a higher-tier source. Operators should manually verify LLM-only
   // hits since model recall isn't perfect.
   "claude-adverse-media": 0.65,
+  "groq-adverse-media": 0.60,
+  "gemini-adverse-media": 0.60,
 
   // URL-direct ingestion: trust matches the outlet domain we extract;
   // baseline 0.75 since the operator explicitly pointed us at it.

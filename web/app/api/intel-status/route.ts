@@ -190,6 +190,8 @@ const PROVIDER_CATALOG: ProviderStatus[] = [
 
   // ── LLM (operator already has this for AI features) ─────────────
   { id: "claude-adverse-media", category: "news", tier: "free", configured: false, envVars: ["ANTHROPIC_API_KEY"], signupUrl: "https://console.anthropic.com/" },
+  { id: "groq-adverse-media", category: "news", tier: "free", configured: false, envVars: ["GROQ_API_KEY"], signupUrl: "https://console.groq.com/" },
+  { id: "gemini-adverse-media", category: "news", tier: "free", configured: false, envVars: ["GEMINI_API_KEY"], signupUrl: "https://aistudio.google.com/app/apikey" },
 ];
 
 function isToggleOn(envKey: string): boolean {
