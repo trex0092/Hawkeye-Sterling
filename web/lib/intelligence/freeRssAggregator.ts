@@ -341,8 +341,12 @@ function parseFeed(xml: string, source: string, outlet: string): NewsArticle[] {
     if (!title || !link) continue;
     // Some feeds wrap link in atom self-closing; ensure absolute URL.
     if (!/^https?:\/\//i.test(link)) {
-      const base = new URL(`https://${outlet}`);
-      link = new URL(link, base).toString();
+      try {
+        const base = new URL(`https://${outlet}`);
+        link = new URL(link, base).toString();
+      } catch {
+        continue;
+      }
     }
     const pub =
       /<pubDate>([\s\S]*?)<\/pubDate>/.exec(it)?.[1]?.trim()
