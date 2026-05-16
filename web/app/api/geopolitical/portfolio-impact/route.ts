@@ -46,8 +46,8 @@ export async function POST(req: Request) {
     );
   }
 
-  const events = body.events ?? [];
-  const portfolio = body.portfolio ?? [];
+  const events = Array.isArray(body.events) ? body.events : [];
+  const portfolio = Array.isArray(body.portfolio) ? body.portfolio : [];
 
   if (!events.length || !portfolio.length) {
     return NextResponse.json(

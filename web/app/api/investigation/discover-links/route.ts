@@ -119,8 +119,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
-  const entities = body.entities ?? [];
-  const existingLinks = body.existingLinks ?? [];
+  const entities = Array.isArray(body.entities) ? body.entities : [];
+  const existingLinks = Array.isArray(body.existingLinks) ? body.existingLinks : [];
 
   if (entities.length === 0) {
     return NextResponse.json({ ok: false, error: "entities array is required" }, { status: 400 , headers: gate.headers });

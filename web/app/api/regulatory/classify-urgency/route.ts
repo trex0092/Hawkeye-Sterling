@@ -40,7 +40,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
   }
 
-  const items = body.items ?? [];
+  const items = Array.isArray(body.items) ? body.items : [];
   if (items.length === 0) {
     return NextResponse.json({ ok: true, classified: [] } satisfies ClassifyUrgencyResult);
   }

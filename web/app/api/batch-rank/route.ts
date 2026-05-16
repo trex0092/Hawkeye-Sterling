@@ -83,7 +83,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ error: "invalid JSON body" }, { status: 400 , headers: gate.headers });
   }
 
-  const results = body.results ?? [];
+  const results = Array.isArray(body.results) ? body.results : [];
 
   if (results.length === 0) {
     writeAuditEvent("analyst", "batch.ai-priority-ranking", "no results — skipped");
