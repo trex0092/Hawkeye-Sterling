@@ -320,9 +320,10 @@ Write a practical 4-6 bullet remediation plan focused on the weakest areas (${we
         max_tokens: 400,
         messages: [{ role: "user", content: prompt }],
       });
-      result.aiRemediationPlan = (msg.content[0] as { type: string; text: string }).text?.trim();
-    } catch {
-      // best-effort
+      const block = msg.content[0];
+      result.aiRemediationPlan = block?.type === "text" ? (block as { type: "text"; text: string }).text.trim() : undefined;
+    } catch (err) {
+      console.warn("[aml-health-score] AI remediation plan failed:", err instanceof Error ? err.message : err);
     }
   }
 

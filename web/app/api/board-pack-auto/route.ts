@@ -192,7 +192,8 @@ Ensure each field is a complete, well-written paragraph or set of bullet points 
       messages: [{ role: "user", content: prompt }],
     });
 
-    const raw = (msg.content[0] as { type: string; text: string }).text?.trim() ?? "";
+    const block = msg.content[0];
+    const raw = block?.type === "text" ? (block as { type: "text"; text: string }).text.trim() : "";
     let sections: Record<string, string> = {};
 
     // Parse JSON response

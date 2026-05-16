@@ -347,9 +347,10 @@ Provide a concise 2-3 sentence AML compliance narrative explaining the risk, cit
         max_tokens: 200,
         messages: [{ role: "user", content: prompt }],
       });
-      result.aiNarrative = (msg.content[0] as { type: string; text: string }).text?.trim();
-    } catch {
-      // AI enrichment is best-effort
+      const block = msg.content[0];
+      result.aiNarrative = block?.type === "text" ? (block as { type: "text"; text: string }).text.trim() : undefined;
+    } catch (err) {
+      console.warn("[realtime-tx-risk] AI narrative failed:", err instanceof Error ? err.message : err);
     }
   }
 

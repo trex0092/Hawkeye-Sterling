@@ -300,9 +300,10 @@ Write a 3-4 sentence gap analysis memo suitable for MLRO review. Be specific abo
         max_tokens: 250,
         messages: [{ role: "user", content: prompt }],
       });
-      result.aiGapAnalysis = (msg.content[0] as { type: string; text: string }).text?.trim();
-    } catch {
-      // best-effort
+      const block = msg.content[0];
+      result.aiGapAnalysis = block?.type === "text" ? (block as { type: "text"; text: string }).text.trim() : undefined;
+    } catch (err) {
+      console.warn("[edd-completeness] AI gap analysis failed:", err instanceof Error ? err.message : err);
     }
   }
 

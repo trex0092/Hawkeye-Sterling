@@ -328,9 +328,10 @@ Write a 3-4 sentence MLRO triage briefing for today's inbox. Highlight the most 
         max_tokens: 250,
         messages: [{ role: "user", content: prompt }],
       });
-      result.triageNarrative = (msg.content[0] as { type: string; text: string }).text?.trim();
-    } catch {
-      // best-effort
+      const block = msg.content[0];
+      result.triageNarrative = block?.type === "text" ? (block as { type: "text"; text: string }).text.trim() : undefined;
+    } catch (err) {
+      console.warn("[mlro-inbox-triage] narrative generation failed:", err instanceof Error ? err.message : err);
     }
   }
 

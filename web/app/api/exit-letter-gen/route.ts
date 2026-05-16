@@ -203,7 +203,8 @@ Generate the complete letter text only — no commentary, no additional explanat
       messages: [{ role: "user", content: prompt }],
     });
 
-    const letterText = (msg.content[0] as { type: string; text: string }).text?.trim() ?? "";
+    const block = msg.content[0];
+    const letterText = block?.type === "text" ? (block as { type: "text"; text: string }).text.trim() : "";
 
     const result: ExitLetterResult = {
       customerName,

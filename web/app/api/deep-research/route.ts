@@ -72,6 +72,7 @@ interface SearchResult { title: string; url: string; snippet?: string; score?: n
 async function tavilySearch(query: string, apiKey: string): Promise<SearchResult[]> {
   const res = await fetch("https://api.tavily.com/search", {
     method: "POST",
+    signal: AbortSignal.timeout(8_000),
     headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` },
     body: JSON.stringify({
       query,
@@ -94,6 +95,7 @@ async function tavilySearch(query: string, apiKey: string): Promise<SearchResult
 async function exaSearch(query: string, apiKey: string): Promise<SearchResult[]> {
   const res = await fetch("https://api.exa.ai/search", {
     method: "POST",
+    signal: AbortSignal.timeout(8_000),
     headers: { "content-type": "application/json", "x-api-key": apiKey },
     body: JSON.stringify({
       query,
@@ -114,7 +116,7 @@ async function exaSearch(query: string, apiKey: string): Promise<SearchResult[]>
 
 async function serpSearch(query: string, apiKey: string): Promise<SearchResult[]> {
   const params = new URLSearchParams({ api_key: apiKey, q: query, tbm: "nws", num: "8" });
-  const res = await fetch(`https://serpapi.com/search.json?${params.toString()}`);
+  const res = await fetch(`https://serpapi.com/search.json?${params.toString()}`, { signal: AbortSignal.timeout(8_000) });
   if (!res.ok) return [];
   const json = (await res.json()) as { news_results?: Array<{ title?: string; link?: string; snippet?: string }> };
   return (json.news_results ?? []).map((r) => ({
@@ -271,7 +273,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const focusAreas = (body.focusAreas ?? []).map((f) => sanitizeField(f, 100)).slice(0, 5);
 
   const t0 = Date.now();
-  const anthropic = getAnthropicClient(apiKey, 55_000, "deep-research");
+  const anthropic = getAnthropicClient(apiKey, 45_000, "deep-research");
   const allFindings: Array<{ query: string; results: SearchResult[] }> = [];
   const citations: Citation[] = [];
   const seenUrls = new Set<string>();

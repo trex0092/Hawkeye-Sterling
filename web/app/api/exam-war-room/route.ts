@@ -264,7 +264,8 @@ Be specific to this entity's actual situation. Reference UAE FDL 10/2025 article
       messages: [{ role: "user", content: prompt }],
     });
 
-    const content = (msg.content[0] as { type: string; text: string }).text?.trim() ?? "";
+    const block = msg.content[0];
+    const content = block?.type === "text" ? (block as { type: "text"; text: string }).text.trim() : "";
 
     // Parse sections from AI output — split on numbered headers or markdown headers
     const rawSections = content.split(/\n(?=#{1,3}\s|\d+\.\s+[A-Z])/);

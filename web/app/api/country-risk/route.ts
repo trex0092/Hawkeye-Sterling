@@ -415,7 +415,7 @@ Provide a complete country risk intelligence assessment covering AML/CFT risk, F
           error: `Country-risk analysis returned invalid JSON for ${country}. Retry, or escalate if persistent.`,
           detail: parseErr instanceof Error ? parseErr.message : String(parseErr),
         },
-        { status: 502 },
+        { status: 502, headers: gate.headers },
       );
     }
     const latencyMs = Date.now() - t0;
@@ -446,7 +446,7 @@ Provide a complete country risk intelligence assessment covering AML/CFT risk, F
         detail,
         latencyMs: Date.now() - t0,
       },
-      { status: 503 },
+      { status: 503, headers: gate.headers },
     );
   }
 }
