@@ -72,7 +72,7 @@ test.describe("API health checks", () => {
 
   test("POST /api/auth/login with unknown user returns 401", async ({ request }) => {
     const response = await request.post("/api/auth/login", {
-      data: { username: "nonexistent_user_xyz", password: "P@ssw0rd123!" },
+      data: { username: "nonexistent_user_xyz", password: "not-a-real-password" },
     });
     expect(response.status()).toBe(401);
     const body = await response.json() as { ok: boolean; error?: string };

@@ -87,7 +87,7 @@ test.describe("Auth login route handler — unit-level HTTP tests", () => {
     const response = await request.post(ENDPOINT, {
       data: {
         username: "definitely_not_a_real_user_xyz_12345",
-        password: "SomeP@ssw0rd!",
+        password: "not-a-real-password",
       },
       timeout: 15_000,
     });
@@ -112,7 +112,7 @@ test.describe("Auth login route handler — unit-level HTTP tests", () => {
     const response = await request.post(ENDPOINT, {
       data: {
         username: "a".repeat(257),
-        password: "SomeP@ssw0rd!",
+        password: "not-a-real-password",
       },
     });
 
