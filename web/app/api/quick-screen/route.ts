@@ -29,6 +29,7 @@ import { activeFreeProviders } from "@/lib/intelligence/freeAlwaysOnAdapters";
 import { searchAllNews } from "@/lib/intelligence/newsAdapters";
 import { ingestUrls } from "@/lib/intelligence/urlIngestion";
 import { llmAdverseMediaAdapter } from "@/lib/intelligence/llmAdverseMedia";
+import { groqAdverseMediaAdapter, geminiAdverseMediaAdapter } from "@/lib/intelligence/llmAdverseMediaAlt";
 import { assessCommonName } from "@/lib/intelligence/commonNames";
 import {
   runEnrichmentAdapters,
@@ -283,6 +284,8 @@ export async function POST(req: Request): Promise<NextResponse> {
       jurisdiction: subject.jurisdiction,
       entityType: subject.entityType,
     });
+    const groqAdapter = groqAdverseMediaAdapter();
+    const geminiAdapter = geminiAdverseMediaAdapter();
     const warn = (err: unknown) => console.warn("[hawkeye] quick-screen: best-effort adapter failed:", err);
     const canAug = subject.name.length >= 3;
     const hitGated = (result.hits.length < 3 || isCommonName) && canAug;
@@ -329,12 +332,14 @@ export async function POST(req: Request): Promise<NextResponse> {
       canAug ? adapterTimeout(searchCountryRegistries(subject.name, subject.jurisdiction ?? undefined, ADAPTER_QUERY_LIMIT).catch((e): CRegResult => { warn(e); return { records: [], jurisdictions: [] }; }), { records: [], jurisdictions: [] } as CRegResult) : Promise.resolve<CRegResult>({ records: [], jurisdictions: [] }),
       canAug ? adapterTimeout(searchCountrySanctions(subject.name, subject.jurisdiction ?? undefined, ADAPTER_QUERY_LIMIT).catch((e): CSanResult => { warn(e); return { records: [], lists: [] }; }), { records: [], lists: [] } as CSanResult) : Promise.resolve<CSanResult>({ records: [], lists: [] }),
       canAug ? adapterTimeout(searchFreeAdapters(subject.name, subject.jurisdiction ?? undefined, ADAPTER_QUERY_LIMIT).catch((e): FreeResult => { warn(e); return { records: [], providersUsed: [] }; }), { records: [], providersUsed: [] } as FreeResult) : Promise.resolve<FreeResult>({ records: [], providersUsed: [] }),
-      // Group C — news velocity + LLM adverse-media recall
+      // Group C — news velocity + LLM adverse-media recall (Claude + Groq + Gemini in parallel)
       canAug ? adapterTimeout(searchAllNews(subject.name, { limit: 50 }).catch((e): NewsResult => { warn(e); return { articles: [], providersUsed: [] }; }), { articles: [], providersUsed: [] } as NewsResult) : Promise.resolve<NewsResult>({ articles: [], providersUsed: [] }),
       canAug && llmAdapter.isAvailable() ? adapterTimeout(llmAdapter.search(subject.name, { limit: 15 }).catch((e): LlmResult => { warn(e); return []; }), [] as LlmResult) : Promise.resolve<LlmResult>([]),
+      canAug && groqAdapter.isAvailable() ? adapterTimeout(groqAdapter.search(subject.name, { limit: 15 }).catch((e): LlmResult => { warn(e); return []; }), [] as LlmResult) : Promise.resolve<LlmResult>([]),
+      canAug && geminiAdapter.isAvailable() ? adapterTimeout(geminiAdapter.search(subject.name, { limit: 15 }).catch((e): LlmResult => { warn(e); return []; }), [] as LlmResult) : Promise.resolve<LlmResult>([]),
       // Group D — public-API enrichment (IP / blockchain / breach / domain / phone / fraud)
       adapterTimeout(runEnrichmentAdapters(hints).catch((e): EnrichmentBundle => { warn(e); return NULL_ENRICHMENT; }), NULL_ENRICHMENT),
-      ]).then((r) => r as [OSResult, CommResult, RegResult, CRegResult, CSanResult, FreeResult, NewsResult, LlmResult, EnrichmentBundle]),
+      ]).then((r) => r as [OSResult, CommResult, RegResult, CRegResult, CSanResult, FreeResult, NewsResult, LlmResult, LlmResult, LlmResult, EnrichmentBundle]),
       deadlineP,
     ]);
     if (_deadlineTimer) clearTimeout(_deadlineTimer);
@@ -351,12 +356,18 @@ export async function POST(req: Request): Promise<NextResponse> {
     const [
       openSanctionsResults, commercialResults, registryResults,
       countryRegistryResults, countrySanctionsResults, freeAdapterResults,
-      rawNews, llmArts, enrichmentBundle,
+      rawNews, llmArts, groqArts, geminiArts, enrichmentBundle,
     ] = augRace;
 
-    // Merge LLM adverse-media articles (prepend so they rank first)
-    let newsArticles: NewsResult = llmArts.length > 0
-      ? { articles: [...llmArts, ...rawNews.articles], providersUsed: [...rawNews.providersUsed, "claude-adverse-media"] }
+    // Merge LLM adverse-media articles from all three AI providers
+    const aiArts = [...llmArts, ...groqArts, ...geminiArts];
+    const aiProviders = [
+      ...(llmArts.length > 0 ? ["claude-adverse-media"] : []),
+      ...(groqArts.length > 0 ? ["groq-adverse-media"] : []),
+      ...(geminiArts.length > 0 ? ["gemini-adverse-media"] : []),
+    ];
+    let newsArticles: NewsResult = aiArts.length > 0
+      ? { articles: [...aiArts, ...rawNews.articles], providersUsed: [...rawNews.providersUsed, ...aiProviders] }
       : rawNews;
 
     // URL-direct ingestion: when the operator passes evidenceUrls[]
