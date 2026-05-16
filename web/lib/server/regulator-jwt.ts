@@ -158,7 +158,10 @@ export function verifyRegulatorToken(token: string): RegulatorTokenClaims | null
   if (claims.iss !== "hawkeye-sterling") return null;
   if (claims.aud !== "regulator-read-only") return null;
   const now = Math.floor(Date.now() / 1000);
-  if (typeof claims.exp !== "number" || claims.exp < now) return null;
+  // RFC 7519 §4.1.4: token is valid only if exp is *strictly after* the current
+  // time. Using `<= now` ensures a token with exp == now is treated as expired
+  // (the prior `< now` would have accepted it for the remainder of that second).
+  if (typeof claims.exp !== "number" || claims.exp <= now) return null;
   if (typeof claims.nbf === "number" && claims.nbf > now) return null;
 
   const pub = loadPublicKey();

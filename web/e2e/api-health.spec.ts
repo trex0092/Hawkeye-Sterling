@@ -79,4 +79,56 @@ test.describe("API health checks", () => {
     expect(body.ok).toBe(false);
     expect(body.error).toMatch(/Invalid username or password/i);
   });
+
+  test("POST /api/auth/logout returns 200 and clears the session cookie", async ({ request }) => {
+    const response = await request.post("/api/auth/logout");
+    expect(response.status()).toBe(200);
+    const body = await response.json() as { ok: boolean };
+    expect(body.ok).toBe(true);
+    // The Set-Cookie header should expire the hs_session cookie
+    const setCookie = response.headers()["set-cookie"] ?? "";
+    expect(setCookie).toContain("hs_session=");
+    expect(setCookie).toMatch(/max-age=0/i);
+  });
+
+  test("POST /api/iban-risk with missing iban returns 400", async ({ request }) => {
+    const response = await request.post("/api/iban-risk", {
+      data: {},
+    });
+    expect(response.status()).toBe(400);
+    const body = await response.json() as { ok: boolean; error?: string };
+    expect(body.ok).toBe(false);
+  });
+
+  test("POST /api/iban-risk with UK IBAN returns 200 with low risk", async ({ request }) => {
+    const response = await request.post("/api/iban-risk", {
+      data: { iban: "GB29NWBK60161331926819" },
+    });
+    expect(response.status()).toBe(200);
+    const body = await response.json() as { ok: boolean; countryCode: string; riskLevel: string };
+    expect(body.ok).toBe(true);
+    expect(body.countryCode).toBe("GB");
+    expect(body.riskLevel).toBe("low");
+  });
+
+  test("POST /api/country-risk with missing country returns 400", async ({ request }) => {
+    const response = await request.post("/api/country-risk", {
+      data: {},
+    });
+    expect(response.status()).toBe(400);
+    const body = await response.json() as { ok: boolean; error?: string };
+    expect(body.ok).toBe(false);
+  });
+
+  test("POST /api/country-risk for UAE returns 200 with static data", async ({ request }) => {
+    const response = await request.post("/api/country-risk", {
+      data: { country: "UAE" },
+    });
+    expect(response.status()).toBe(200);
+    const body = await response.json() as { ok: boolean; country: string; fatfStatus: string };
+    expect(body.ok).toBe(true);
+    // Response should reference UAE or United Arab Emirates
+    expect(body.country).toMatch(/emirates|UAE/i);
+    expect(body.fatfStatus).toBe("member");
+  });
 });

@@ -310,9 +310,19 @@ export async function getNewsHeadlines(
   if (options.count)    q['count']    = String(options.count);
   if (options.dateFrom) q['dateFrom'] = options.dateFrom;
 
-  const res = await lsegGet<{ data: LsegNewsHeadline[] }>('/data/news/v1/headlines', q);
+  const res = await lsegGet<{ data: unknown }>('/data/news/v1/headlines', q);
   if (!res.ok) return { ok: false, error: res.error ?? 'Unknown LSEG error' };
-  return { ok: true, data: res.data?.data ?? [] };
+  // Guard against schema drift — the `data` field must be an array.
+  // Using `?? []` without this check silently returns empty on any
+  // non-array response (e.g. LSEG renaming the field to `items`).
+  const raw = res.data?.data;
+  if (!Array.isArray(raw)) {
+    return {
+      ok: false,
+      error: `LSEG /data/news/v1/headlines: 'data' field is ${typeof raw}, expected array — possible schema change. Keys: ${Object.keys(res.data ?? {}).join(', ') || '(empty)'}`,
+    };
+  }
+  return { ok: true, data: raw as LsegNewsHeadline[] };
 }
 
 // ── Corporate alerts → feeds Hawkeye relationship_graph (type=corporate) ─────
@@ -320,12 +330,13 @@ export async function getNewsHeadlines(
 export async function getAlerts(
   params: Record<string, string> = {},
 ): Promise<LsegResult<LsegAlert[]>> {
-  const res = await lsegGet<{ value: LsegAlert[] }>(
+  const res = await lsegGet<{ value: unknown }>(
     '/corporate/service-insight/v2/alerts',
     params,
   );
-  if (!res.ok) return { ok: false, error: res.error ?? 'Unknown LSEG error' };
-  return { ok: true, data: res.data?.value ?? [] };
+  // Delegate to unwrapList so schema drift is surfaced the same way as
+  // packages / filesets / files — `?? []` previously silenced any field rename.
+  return unwrapList<LsegAlert>('/corporate/service-insight/v2/alerts', res);
 }
 
 // ── SQS cloud credentials ─────────────────────────────────────────────────────

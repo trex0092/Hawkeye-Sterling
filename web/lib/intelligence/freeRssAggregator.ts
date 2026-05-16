@@ -15,15 +15,6 @@ import { flagOn } from "./featureFlags";
 
 const FETCH_TIMEOUT_MS = 8_000;
 
-function abortable<T>(p: Promise<T>, ms = FETCH_TIMEOUT_MS): Promise<T> {
-  return Promise.race([
-    p,
-    new Promise<T>((_, reject) =>
-      setTimeout(() => reject(new Error(`rss feed exceeded ${ms}ms`)), ms),
-    ),
-  ]);
-}
-
 interface RssFeed {
   source: string;        // provider id ("reuters", "bbc-rss" etc.)
   outlet: string;        // domain
@@ -375,12 +366,14 @@ function stripCdata(s: string | undefined): string | undefined {
 
 async function fetchOne(feed: RssFeed): Promise<string | null> {
   try {
-    const res = await abortable(
-      fetch(feed.url, {
-        headers: { accept: "application/rss+xml,application/atom+xml,application/xml,text/xml,*/*", "user-agent": "HawkeyeSterling/1.0 (compatible; adverse-media)" },
-        redirect: "follow",
-      }),
-    );
+    // AbortSignal.timeout() actually cancels the underlying fetch when the
+    // deadline fires — unlike Promise.race + setTimeout which left the fetch
+    // running in the background, leaking sockets and Lambda CPU budget.
+    const res = await fetch(feed.url, {
+      headers: { accept: "application/rss+xml,application/atom+xml,application/xml,text/xml,*/*", "user-agent": "HawkeyeSterling/1.0 (compatible; adverse-media)" },
+      redirect: "follow",
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+    });
     if (!res.ok) return null;
     return await res.text();
   } catch {

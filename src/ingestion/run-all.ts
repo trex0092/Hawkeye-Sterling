@@ -82,11 +82,25 @@ export async function runIngestionAll(label: string): Promise<IngestRunSummary> 
     };
     let writeFailed = false;
     try {
-      const { entities, rawChecksum, sourceVersion } = await withTimeout(
+      const { entities: rawEntities, rawChecksum, sourceVersion } = await withTimeout(
         adapter.fetch(),
         ADAPTER_TIMEOUT_MS,
         `adapter ${adapter.id}`,
       );
+      // Deduplicate by entity ID within each adapter run. Source XML/CSV can
+      // contain duplicate records (same UID with different program entries).
+      // Last-writer-wins per ID preserves the most-recently-seen version.
+      const seenIds = new Set<string>();
+      const entities = rawEntities.filter((e) => {
+        if (seenIds.has(e.id)) return false;
+        seenIds.add(e.id);
+        return true;
+      });
+      if (entities.length < rawEntities.length) {
+        console.warn(
+          `[${label}] dedup dropped ${rawEntities.length - entities.length} duplicate IDs from ${adapter.id}`,
+        );
+      }
       report.recordCount = entities.length;
       report.checksum = rawChecksum;
       if (sourceVersion) {
