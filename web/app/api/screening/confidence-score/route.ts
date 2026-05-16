@@ -76,7 +76,7 @@ export async function POST(req: Request) {
   if (!body.subject?.name || !body.hit?.listName) {
     return NextResponse.json(
       { ok: false, error: "subject.name and hit.listName are required" },
-      { status: 400 },
+      { status: 400, headers: gate.headers },
     );
   }
 
@@ -167,6 +167,6 @@ Assess whether this is a true sanctions/PEP/watchlist match or a false positive.
       ...buildTemplate(),
       degraded: true,
       degradedReason: `LLM call failed: ${err instanceof Error ? err.message : String(err)}`,
-    });
+    }, { headers: gate.headers });
   }
 }

@@ -103,10 +103,10 @@ export async function POST(req: Request) {
   }
 
   const subjects = body.subjects ?? [];
-  if (subjects.length === 0) {
+  if (!Array.isArray(body.subjects) || subjects.length === 0) {
     return NextResponse.json(
-      { ok: false, error: "subjects array is required and must not be empty" },
-      { status: 400 },
+      { ok: false, error: "subjects must be a non-empty array" },
+      { status: 400, headers: gate.headers },
     );
   }
 

@@ -121,7 +121,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   // Deduplicate aliases: original + all script variants
-  const existingAliases: string[] = (body.subject?.aliases ?? []) as string[];
+  const existingAliases: string[] = Array.isArray(body.subject?.aliases) ? (body.subject.aliases as string[]) : [];
   const expandedAliases = Array.from(new Set([
     ...existingAliases,
     ...normalized.variants.filter((v) => v.toLowerCase() !== subjectName.toLowerCase()),
