@@ -125,7 +125,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (!apiKey) {
       return NextResponse.json({ ok: true, degraded: true, ...FALLBACK }, { headers: gateHeaders });
     }
-    const client = getAnthropicClient(apiKey, 22_000);
+    const client = getAnthropicClient(apiKey, 4_500);
 
     let rawBody: Body & { subject?: { facts?: string; subjectType?: string; transactionType?: string } };
     try {
@@ -165,7 +165,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     try {
       const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 2048,
+        max_tokens: 700,
         system: [{ type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
         messages: [{ role: "user", content: userContent }],
       });

@@ -150,10 +150,10 @@ export async function POST(req: Request): Promise<NextResponse> {
     }, { headers: gate.headers });
   }
 
-  const client = getAnthropicClient(apiKey, 22_000, "trade-doc-intel");
+  const client = getAnthropicClient(apiKey, 4_500, "trade-doc-intel");
   const response = await client.messages.create({
     model: "claude-haiku-4-5-20251001",
-    max_tokens: 1200,
+    max_tokens: 600,
     system: `You are a TBML (Trade-Based Money Laundering) intelligence specialist with expertise in precious metals, gold trading, and UAE DPMS compliance under FDL 10/2025 and FATF R.14.
 
 Analyse the trade document for:

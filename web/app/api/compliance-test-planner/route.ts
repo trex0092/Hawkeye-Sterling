@@ -128,10 +128,10 @@ export async function POST(req: Request) {
   if (!apiKey) return NextResponse.json({ ok: false, error: "compliance-test-planner temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 1500,
+        max_tokens: 700,
         system: `You are a UAE AML compliance testing specialist with expertise in CBUAE testing expectations, FATF R.18 independent testing requirements, and sector-specific AML compliance testing methodologies. Design comprehensive compliance test plans with specific objectives, methodologies, sample sizes, frequencies, and output requirements. Plans should be practical and actionable for the institution's size and complexity. Reference UAE FDL 10/2025 and CBUAE Guidelines legal basis for each test. Respond ONLY with valid JSON matching the ComplianceTestPlanResult interface — no markdown fences.`,
         messages: [{
           role: "user",

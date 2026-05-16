@@ -81,10 +81,10 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const res = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 2048,
+        max_tokens: 700,
         system:
           "You are a UAE AML/CFT specialist in Trade-Based Money Laundering (TBML) detection for precious metals and bullion shipments. Analyze these consignments against FATF TBML typologies, LBMA RGG v9 chain-of-custody requirements, and UAE MoE Circular 2/2024 (conflict minerals). Output JSON (ONLY valid JSON, no markdown).",
         messages: [

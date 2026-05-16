@@ -95,10 +95,10 @@ export async function POST(req: Request) {
   if (!apiKey) return NextResponse.json({ ok: false, error: "adverse-classify temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 1400,
+        max_tokens: 700,
         system: `You are a UAE MLRO specialist classifying adverse media against FATF Recommendation 3 predicate offences and UAE FDL 10/2025 AML/CFT thresholds. Apply the 23 FATF predicate offence categories. Assess whether the information meets reasonable grounds for suspicion under UAE FDL 10/2025 Art.21.
 
 Respond ONLY with valid JSON — no markdown fences:

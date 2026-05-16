@@ -117,10 +117,10 @@ export async function POST(req: Request) {
   if (!apiKey) return NextResponse.json({ ok: false, error: "enforcement-exposure temporarily unavailable - please retry." }, { status: 503 });
 
   try {
-    const client = getAnthropicClient(apiKey, 55_000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 1450,
+      max_tokens: 700,
       system: [
         {
           type: "text",

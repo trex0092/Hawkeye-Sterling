@@ -66,11 +66,11 @@ export async function POST(req: Request): Promise<NextResponse> {
     }, { headers: gate.headers });
   }
 
-  const client = getAnthropicClient(apiKey, 55_000, "sanctions-delta-intel");
+  const client = getAnthropicClient(apiKey, 4_500, "sanctions-delta-intel");
 
   const response = await client.messages.create({
     model: "claude-sonnet-4-6",
-    max_tokens: 2048,
+    max_tokens: 700,
     system: `You are an AML sanctions intelligence analyst. Given a new designation event and a customer base, you:
 1. Extract the "risk signature" of the designation (what pattern of behaviour led to listing)
 2. Score each customer in the base for how closely they match that signature

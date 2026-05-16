@@ -102,10 +102,10 @@ export async function POST(req: Request) {
   if (!apiKey) return NextResponse.json({ ok: false, error: "tf-screener temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 1500,
+        max_tokens: 700,
         system: `You are a UAE counter-terrorism financing (CTF) specialist with deep expertise in FATF recommendations on terrorist financing, UN Security Council sanctions regimes, UAE CTF law, and TF typologies.
 
 Assess the subject/transaction for terrorism financing risk. This is DISTINCT from general ML risk — TF involves funding terrorist acts, organisations, or foreign fighters and is subject to immediate freeze obligations without court order when designated entities are involved.

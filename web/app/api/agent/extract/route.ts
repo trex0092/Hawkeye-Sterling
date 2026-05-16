@@ -38,7 +38,7 @@ export const maxDuration = 60;
 
 const DEFAULT_MODEL = "claude-opus-4-7";
 const MAX_OUTPUT_TOKENS = 4096;
-const BUDGET_MS = 45_000;
+const BUDGET_MS = 4_500;
 
 type Schema =
   | "corporate_registry"

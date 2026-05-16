@@ -340,7 +340,7 @@ export async function POST(req: Request) {
   try {
     // Netlify Functions cap at 26s gateway timeout; SDK timeout must
     // sit comfortably below or callers see HTTP 504.
-    const client = getAnthropicClient(apiKey, 22_000);
+    const client = getAnthropicClient(apiKey, 4_500);
 
     const filterStr = body.filters
       ? `Filters: sector=${body.filters.sector ?? "any"}, jurisdiction=${body.filters.jurisdictionType ?? "any"}, riskLevel=${body.filters.riskLevel ?? "any"}, fatfCategory=${body.filters.fatfCategory ?? "any"}`
@@ -351,7 +351,7 @@ export async function POST(req: Request) {
       // Reduced from 4096 → 2000 to fit the 22s SDK budget. Each
       // typology entry is ~200 tokens; 2000 covers 8-10 entries which
       // is the cap requested in the system prompt anyway.
-      max_tokens: 2000,
+      max_tokens: 700,
       system: [
         {
           type: "text",

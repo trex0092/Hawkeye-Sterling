@@ -177,7 +177,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   });
 
   if (apiKey && possibleHits.length > 0) {
-    const client = getAnthropicClient(apiKey, 20_000, "screening/enhanced");
+    const client = getAnthropicClient(apiKey, 4_500, "screening/enhanced");
     const TRIAGE_SYSTEM = `You are an AML sanctions-screening specialist. For each watchlist hit, assess if it is a true match or false positive. Return ONLY JSON: {"confidenceScore":<0-100>,"recommendation":"clear"|"escalate"|"file_str"|"manual_review","reasoning":"<1-2 sentences>"}`;
 
     await Promise.allSettled(possibleHits.map(async (hit) => {

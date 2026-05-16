@@ -97,12 +97,12 @@ export async function POST(req: Request): Promise<NextResponse> {
     }, { headers: gate.headers });
   }
 
-  const client = getAnthropicClient(apiKey, 55_000, "counterparty-propagate");
+  const client = getAnthropicClient(apiKey, 4_500, "counterparty-propagate");
 
   // LLM identifies which cases are directly/indirectly linked to the high-risk entity
   const response = await client.messages.create({
     model: "claude-sonnet-4-6",
-    max_tokens: 3000,
+    max_tokens: 800,
     system: `You are an AML network contamination analyst. Given a high-risk entity and a customer case base, identify all customers with direct or indirect exposure to this entity.
 
 For DIRECT exposure: customer has the entity as a counterparty, or their name/subject matches the entity.

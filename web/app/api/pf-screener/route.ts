@@ -78,10 +78,10 @@ export async function POST(req: Request) {
   if (!apiKey) return NextResponse.json({ ok: false, error: "pf-screener temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 1200,
+        max_tokens: 600,
         system: `You are a UAE Proliferation Financing (PF) and sanctions specialist. You assess transactions and entities for proliferation financing risk under FATF Recommendation 7 and UN Security Council Resolutions.
 
 Focus specifically on:

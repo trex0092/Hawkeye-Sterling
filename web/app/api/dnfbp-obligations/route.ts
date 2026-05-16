@@ -100,10 +100,10 @@ export async function POST(req: Request) {
   if (!apiKey) return NextResponse.json({ ok: false, error: "dnfbp-obligations temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 1400,
+        max_tokens: 700,
         system: `You are a UAE AML/CFT specialist mapping Designated Non-Financial Business and Profession (DNFBP) obligations under UAE FDL 10/2025 and FATF Recommendations 22-23.
 
 UAE DNFBP categories and their specific obligations:

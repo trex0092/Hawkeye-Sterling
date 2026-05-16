@@ -89,10 +89,10 @@ export async function POST(req: Request) {
   if (!apiKey) return NextResponse.json({ ok: true, degraded: true, ...FALLBACK }, { headers: gate.headers });
 
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 1200,
+        max_tokens: 600,
         system: `You are a UAE CDD/EDD specialist determining whether a customer due diligence refresh is legally required under UAE FDL 10/2025.
 
 CDD refresh triggers (UAE law):

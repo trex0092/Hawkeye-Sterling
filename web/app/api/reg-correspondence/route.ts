@@ -145,10 +145,10 @@ export async function POST(req: Request): Promise<NextResponse> {
     }, { status: 503, headers: gate.headers });
   }
 
-  const client = getAnthropicClient(apiKey, 22_000, "reg-correspondence");
+  const client = getAnthropicClient(apiKey, 4_500, "reg-correspondence");
   const response = await client.messages.create({
     model: "claude-haiku-4-5-20251001",
-    max_tokens: 2000,
+    max_tokens: 700,
     system: `You are a UAE AML compliance specialist and legal drafter with expertise in regulatory correspondence for DPMS (gold and precious metals dealers) under FDL 10/2025, CBUAE AML Standards, and CR No.134/2025.
 
 Draft formal regulatory correspondence with:

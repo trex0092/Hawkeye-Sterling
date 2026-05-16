@@ -48,12 +48,12 @@ export async function POST(req: Request) {
   const chainStart = Date.now();
 
   try {
-    const client = getAnthropicClient(apiKey, 22_000);
+    const client = getAnthropicClient(apiKey, 4_500);
 
     // ── Step 1: Subject Brief ──────────────────────────────────────────────
     const step1 = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 1500,
+      max_tokens: 700,
       system: [
         {
           type: "text",
@@ -82,7 +82,7 @@ Respond in plain prose only — no bullet points, no headers.`,
     // ── Step 2: Typology Match ─────────────────────────────────────────────
     const step2 = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 1500,
+      max_tokens: 700,
       system: [
         {
           type: "text",
@@ -110,7 +110,7 @@ Transaction Pattern: ${transactionPattern || "Not provided"}`,
     // ── Step 3: STR Recommendation ────────────────────────────────────────
     const step3 = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 2048,
+      max_tokens: 700,
       system: [
         {
           type: "text",

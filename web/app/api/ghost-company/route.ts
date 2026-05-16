@@ -69,10 +69,10 @@ export async function POST(req: Request) {
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) return NextResponse.json({ ok: false, error: "ghost-company temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 1500,
+        max_tokens: 700,
         system:
           "You are a UAE AML/CFT compliance expert specialising in shell and ghost company detection. Assess economic substance and ghost company indicators under UAE regulations and FATF standards. Return valid JSON only matching the GhostCompanyResult interface.",
         messages: [

@@ -83,10 +83,10 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const res = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 1500,
+        max_tokens: 700,
         system:
           "You are a UAE AML compliance officer specializing in staff vetting and ongoing monitoring under FDL 10/2025 Art.21 (internal controls) and FATF R.18 (internal programs). Assess employee document compliance, identify screening risks, and flag staff requiring immediate attention. Return ONLY valid JSON, no markdown fences.",
         messages: [

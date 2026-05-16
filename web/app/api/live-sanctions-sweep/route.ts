@@ -113,7 +113,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   let triage: unknown[] = [];
 
   if (apiKey && filteredMatches.length > 0) {
-    const client = getAnthropicClient(apiKey, 22_000, "live-sanctions-sweep");
+    const client = getAnthropicClient(apiKey, 4_500, "live-sanctions-sweep");
     try {
       const res = await client.messages.create({
         model: "claude-haiku-4-5-20251001",

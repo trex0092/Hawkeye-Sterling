@@ -53,10 +53,10 @@ export async function POST(req: NextRequest) {
 
   const userMessage = `Here are the active STR/SAR cases for today's briefing:\n\n${JSON.stringify(cases, null, 2)}\n\nToday's date: ${new Date().toISOString().slice(0, 10)}`;
 
-  const client = getAnthropicClient(apiKey, 55000);
+  const client = getAnthropicClient(apiKey, 4_500);
   const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 1500,
+      max_tokens: 700,
       system:
         "You are preparing a concise daily briefing for the MLRO about active STR/SAR cases. Identify priority cases needing immediate attention, flag any apparent duplicates (same subject filed multiple times), note regulatory deadlines (FDL Art. 26 requires filing within 30 days of detection), and list required MLRO actions. Output clean JSON only.",
       messages: [

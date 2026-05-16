@@ -117,10 +117,10 @@ export async function POST(req: Request) {
   if (!apiKey) return NextResponse.json({ ok: false, error: "risk-appetite-builder temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 1450,
+        max_tokens: 700,
         system: `You are a UAE AML governance specialist with expertise in Board-level risk appetite frameworks, UAE FDL 10/2025 governance requirements, and CBUAE AML programme expectations. Draft comprehensive AML/CFT Risk Appetite Statements including risk tolerances (zero/low/medium/high) with specific KRIs and thresholds, prohibited activities, escalation triggers, and board approval requirements. Ensure statements are legally grounded, operationally actionable, and reflect UAE regulatory expectations. Respond ONLY with valid JSON matching the RiskAppetiteResult interface — no markdown fences.`,
         messages: [{
           role: "user",

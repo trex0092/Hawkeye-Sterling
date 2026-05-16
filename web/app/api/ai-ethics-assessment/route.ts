@@ -124,10 +124,10 @@ export async function POST(req: Request) {
     .join("; ");
 
   try {
-    const client = getAnthropicClient(apiKey, 22_000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 2000,
+      max_tokens: 700,
       system: [
         {
           type: "text",

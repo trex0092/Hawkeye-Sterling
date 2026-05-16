@@ -303,10 +303,10 @@ export async function POST(req: Request): Promise<NextResponse> {
   // ── Try Anthropic API ────────────────────────────────────────────────────
   if (apiKey) {
     try {
-      const client = getAnthropicClient(apiKey, 55000);
+      const client = getAnthropicClient(apiKey, 4_500);
       const res = await client.messages.create({
           model: "claude-haiku-4-5-20251001",
-          max_tokens: 2048,
+          max_tokens: 700,
           system: SYSTEM_PROMPT,
           messages: [{ role: "user", content: userContent }],
         });

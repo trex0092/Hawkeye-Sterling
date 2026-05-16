@@ -116,7 +116,7 @@ export async function POST(req: Request) {
   if (!apiKey) return NextResponse.json(buildFallback(subjects), { headers: gate.headers });
 
   try {
-    const client = getAnthropicClient(apiKey, 22_000);
+    const client = getAnthropicClient(apiKey, 4_500);
 
     // Slim the payload to keep tokens reasonable — names and nationalities
     // are the only differentiators the engine needs for a realistic simulation.
@@ -136,7 +136,7 @@ Simulate a full portfolio re-screen against the new list version. Generate reali
 
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 2048,
+      max_tokens: 700,
       system: [
         {
           type: "text",

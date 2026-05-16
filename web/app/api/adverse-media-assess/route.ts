@@ -68,10 +68,10 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const res = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 2048,
+        max_tokens: 700,
         system:
           "You are a UAE AML/CFT senior compliance analyst specializing in adverse media assessment for DPMS/VASP regulated entities. Assess the overall risk profile of this subject based on all adverse media findings and provide FATF-aligned compliance guidance for the MLRO. Return ONLY valid JSON, no markdown fences.",
         messages: [

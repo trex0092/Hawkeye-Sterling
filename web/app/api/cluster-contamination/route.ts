@@ -206,11 +206,11 @@ export async function POST(req: Request): Promise<NextResponse> {
     }, { headers: gate.headers });
   }
 
-  const client = getAnthropicClient(apiKey, 55_000, "cluster-contamination");
+  const client = getAnthropicClient(apiKey, 4_500, "cluster-contamination");
 
   const clusterResponse = await client.messages.create({
     model: "claude-sonnet-4-6",
-    max_tokens: 2000,
+    max_tokens: 700,
     system: `You are an AML network analyst. Given a subject entity and a customer base, identify which other customers form a risk cluster with the subject — i.e., they share counterparties, jurisdictions, typological patterns, or ownership linkages that suggest network connectivity.
 
 Return ONLY valid JSON:

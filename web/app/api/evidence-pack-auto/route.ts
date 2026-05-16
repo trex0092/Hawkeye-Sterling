@@ -135,7 +135,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (apiKey) {
       try {
-        const client = getAnthropicClient(apiKey, 22_000, "evidence-pack-auto");
+        const client = getAnthropicClient(apiKey, 4_500, "evidence-pack-auto");
         const res = await client.messages.create({
           model: "claude-haiku-4-5-20251001",
           max_tokens: 500,

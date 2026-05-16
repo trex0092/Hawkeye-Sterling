@@ -85,7 +85,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   }));
 
   try {
-    const client = getAnthropicClient(apiKey, 25_000, "llm-batch");
+    const client = getAnthropicClient(apiKey, 4_500, "llm-batch");
     const response = await client.messages.batches.create({ requests: anthropicRequests });
     const anthropicBatch = response as { id: string; processing_status: string; _redactionMaps: Record<string, RedactionMap> };
 
@@ -149,7 +149,7 @@ async function fetchAndRehydrateResults(
   // the operator can see the redacted form rather than dropping data).
   const mapsByCustomId = (await getJson<Record<string, RedactionMap>>(batchMapsKey(anthropicBatchId))) ?? {};
 
-  const client = getAnthropicClient(apiKey, 25_000, "llm-batch");
+  const client = getAnthropicClient(apiKey, 4_500, "llm-batch");
   let iter: AsyncIterable<BatchResultEntry>;
   try {
     iter = (await client.messages.batches.results(anthropicBatchId)) as AsyncIterable<BatchResultEntry>;
@@ -223,7 +223,7 @@ export async function GET(req: Request): Promise<NextResponse> {
   // happens at result-retrieval time using the persisted redaction maps.
   if (job.anthropicBatchId && apiKey) {
     try {
-      const client = getAnthropicClient(apiKey, 10_000, "llm-batch");
+      const client = getAnthropicClient(apiKey, 4_500, "llm-batch");
       const statusData = (await client.messages.batches.retrieve(job.anthropicBatchId)) as {
         processing_status: string;
         request_counts: { processing: number; succeeded: number; errored: number; canceled: number; expired: number };

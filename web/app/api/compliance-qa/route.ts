@@ -98,10 +98,10 @@ async function runHaikuQuick(question: string, contextPairs: HaikuPair[], apiKey
   const ctl = new AbortController();
   const killTimer = setTimeout(() => ctl.abort(), HAIKU_TIMEOUT_MS);
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const upstream = await client.messages.create({
         model: HAIKU_MODEL,
-        max_tokens: 2048,
+        max_tokens: 700,
         system: [{ type: "text", text: HAIKU_SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
         messages: [{ role: "user", content: buildHaikuPrompt(question, contextPairs) }],
       });

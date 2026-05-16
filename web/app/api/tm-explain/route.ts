@@ -88,10 +88,10 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   let result: ExplanationResult;
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const res = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 1500,
+        max_tokens: 700,
         system:
           'You are a UAE DPMS transaction monitoring analyst. You are analyzing a single financial transaction for a UAE-licensed DPMS/VASP under MoE Circular 08/AML/2021 and FATF Rec. 20. Explain in plain English WHY this transaction fired compliance alerts, what specific typologies are present (e.g. structuring, rapid in-out, third-party payment), and recommend a disposition: dismiss (no concern), monitor (watch for pattern), escalate (internal MLRO review needed), or report (STR/SAR should be filed). Be concise — max 3 sentences for explanation. Return ONLY this JSON: { "explanation": "string", "disposition": "dismiss"|"monitor"|"escalate"|"report", "dispositionReason": "string", "regulatoryBasis": "string", "typologies": ["string"] }',
         messages: [{ role: "user", content: userContent }],

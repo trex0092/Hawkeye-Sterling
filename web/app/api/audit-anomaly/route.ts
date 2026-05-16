@@ -78,10 +78,10 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const res = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 2048,
+        max_tokens: 700,
         system:
           "You are a UAE AML internal audit specialist. Analyze this audit trail for suspicious access patterns, operational anomalies, and compliance gaps that could indicate insider threat, system manipulation, or procedural failures under FDL 10/2025 Art.21 and FATF R.18. Return ONLY valid JSON, no markdown fences.",
         messages: [

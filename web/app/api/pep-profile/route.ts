@@ -237,10 +237,10 @@ export async function POST(req: Request) {
   }, { status: 200, headers: gate.headers });
 
   try {
-    const client = getAnthropicClient(apiKey, 22_000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 2500,
+      max_tokens: 800,
       system: [
         {
           type: "text",

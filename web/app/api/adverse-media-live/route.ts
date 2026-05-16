@@ -246,7 +246,7 @@ async function enrichWithClaude(
     return { summary: buildFallbackSummary(subjectName, articles, riskScore, riskRating), articlesWithCategories: articles, enriched: false };
   }
 
-  const client = getAnthropicClient(apiKey, 22_000);
+  const client = getAnthropicClient(apiKey, 4_500);
 
   const articleSummaries = articles
     .slice(0, 8)
@@ -278,7 +278,7 @@ Generate the JSON response.`;
   try {
     const msg = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 1500,
+      max_tokens: 700,
       system: [{ type: "text", text: systemPrompt, cache_control: { type: "ephemeral" } }],
       messages: [{ role: "user", content: userPrompt }],
     });

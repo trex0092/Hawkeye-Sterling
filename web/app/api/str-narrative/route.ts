@@ -132,7 +132,7 @@ Respond ONLY with valid JSON — no markdown fences:
   "regulatoryBasis": "<full citation>"
 }`;
 
-  const client = getAnthropicClient(apiKey, 55_000, "str-narrative");
+  const client = getAnthropicClient(apiKey, 4_500, "str-narrative");
 
   try {
     let best: StrNarrativeResult | null = null;
@@ -142,7 +142,7 @@ Respond ONLY with valid JSON — no markdown fences:
     while (iterations < MAX_ITERATIONS) {
       const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 2000,
+        max_tokens: 700,
         system: SYSTEM,
         messages: [{ role: "user", content: userContent }],
       });

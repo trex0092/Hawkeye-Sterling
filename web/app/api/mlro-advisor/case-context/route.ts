@@ -70,10 +70,10 @@ export async function POST(req: Request): Promise<NextResponse> {
   let priorityIds: string[];
 
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const res = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 1500,
+        max_tokens: 700,
         system:
           'You are summarizing open compliance cases for an MLRO advisor context injection. Create a compact, structured summary (under 200 words) highlighting: total cases, any with critical risk indicators, subjects from high-risk jurisdictions, cases approaching regulatory deadlines, patterns across cases. Format as clean prose, not JSON. This will be injected as context for the MLRO AI advisor. After your prose summary, on a new line output: PRIORITY_IDS: followed by a comma-separated list of case IDs that are highest priority (empty if none).',
         messages: [{ role: "user", content: userContent }],

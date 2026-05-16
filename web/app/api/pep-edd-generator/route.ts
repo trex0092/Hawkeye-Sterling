@@ -115,10 +115,10 @@ export async function POST(req: Request) {
   if (!apiKey) return NextResponse.json({ ok: false, error: "pep-edd-generator temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 1800,
+        max_tokens: 700,
         system: `You are a UAE PEP (Politically Exposed Person) EDD specialist. Generate a comprehensive PEP enhanced due diligence package under UAE FDL 10/2025 Art.14(2) and FATF R.12.
 
 PEP categories (UAE definition per FDL 10/2025):

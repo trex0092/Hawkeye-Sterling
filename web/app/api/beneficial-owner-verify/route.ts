@@ -65,10 +65,10 @@ export async function POST(req: Request) {
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) return NextResponse.json({ ok: false, error: "beneficial-owner-verify temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 1500,
+        max_tokens: 700,
         system:
           "You are a UAE AML/CFT compliance expert specialising in beneficial ownership verification and UBO register compliance. Assess UBO verification status and gaps under UAE Cabinet Resolution 132/2023 and FATF standards. Return valid JSON only matching the BeneficialOwnerVerifyResult interface.",
         messages: [

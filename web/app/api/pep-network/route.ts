@@ -110,11 +110,11 @@ export async function POST(req: Request): Promise<NextResponse> {
   const networkDepth = Math.min(body.networkDepth ?? 4, 4) as 1 | 2 | 3 | 4;
 
   try {
-    const client = getAnthropicClient(apiKey, 55_000, "pep-network");
+    const client = getAnthropicClient(apiKey, 4_500, "pep-network");
 
     const response = await client.messages.create({
       model: "claude-sonnet-4-6",
-      max_tokens: 4000,
+      max_tokens: 800,
       system: [
         {
           type: "text",
