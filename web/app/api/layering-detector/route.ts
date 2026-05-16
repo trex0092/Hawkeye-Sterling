@@ -140,6 +140,11 @@ Analyse for money laundering placement, layering, and integration stages. Return
     });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as LayeringResult;
+    if (!Array.isArray(result.placementIndicators)) result.placementIndicators = [];
+    if (!Array.isArray(result.layeringIndicators)) result.layeringIndicators = [];
+    if (!Array.isArray(result.integrationIndicators)) result.integrationIndicators = [];
+    if (!Array.isArray(result.indicators)) result.indicators = [];
+    if (!Array.isArray(result.requiredActions)) result.requiredActions = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "layering-detector temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});

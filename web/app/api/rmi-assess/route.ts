@@ -99,6 +99,11 @@ export async function POST(req: Request): Promise<NextResponse> {
     const text = res.content[0]?.type === "text" ? res.content[0].text : "";
     const stripped = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
     const parsed = JSON.parse(stripped) as RmiAssessmentResult;
+    if (!Array.isArray(parsed.criticalSmelters)) parsed.criticalSmelters = [];
+    if (!Array.isArray(parsed.oecdGaps)) parsed.oecdGaps = [];
+    if (!Array.isArray(parsed.lbmaAlignmentIssues)) parsed.lbmaAlignmentIssues = [];
+    if (!Array.isArray(parsed.recommendedActions)) parsed.recommendedActions = [];
+    if (!Array.isArray(parsed.auditPriority)) parsed.auditPriority = [];
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "rmi-assess temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});

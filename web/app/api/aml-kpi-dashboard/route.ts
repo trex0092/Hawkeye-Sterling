@@ -136,6 +136,9 @@ export async function POST(req: Request) {
     const result = JSON.parse(
       raw.replace(/```json\n?|\n?```/g, "").trim()
     ) as AmlKpiDashboardResult;
+    if (!Array.isArray(result.kpis)) result.kpis = [];
+    if (!Array.isArray(result.topRisks)) result.topRisks = [];
+    if (!Array.isArray(result.recommendations)) result.recommendations = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "aml-kpi-dashboard temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});

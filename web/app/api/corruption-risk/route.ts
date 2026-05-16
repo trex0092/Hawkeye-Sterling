@@ -280,6 +280,11 @@ Produce a fully weaponized corruption risk assessment covering FATF R.12 PEP obl
     });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as CorruptionRiskResult;
+    if (!Array.isArray(result.contractRedFlags)) result.contractRedFlags = [];
+    if (!Array.isArray(result.regulatoryRequirements)) result.regulatoryRequirements = [];
+    if (!Array.isArray(result.redFlags)) result.redFlags = [];
+    if (!Array.isArray(result.requiredApprovals)) result.requiredApprovals = [];
+    if (!Array.isArray(result.reportingObligations)) result.reportingObligations = [];
     return NextResponse.json(result, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "corruption-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});

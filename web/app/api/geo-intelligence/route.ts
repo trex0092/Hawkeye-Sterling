@@ -113,7 +113,10 @@ Return ONLY valid JSON:
 
   const raw = response.content[0]?.type === "text" ? (response.content[0] as { type: "text"; text: string }).text : "{}";
   try {
-    const aiResult = JSON.parse(raw.match(/\{[\s\S]*\}/)?.[0] ?? "{}");
+    const aiResult = JSON.parse(raw.match(/\{[\s\S]*\}/)?.[0] ?? "{}") as Record<string, unknown>;
+    if (!Array.isArray(aiResult["keyRisks"])) aiResult["keyRisks"] = [];
+    if (!Array.isArray(aiResult["recentEnforcementActions"])) aiResult["recentEnforcementActions"] = [];
+    if (!Array.isArray(aiResult["uaeSpecificObligations"])) aiResult["uaeSpecificObligations"] = [];
     return NextResponse.json({
       ok: true,
       jurisdiction: body.jurisdiction,

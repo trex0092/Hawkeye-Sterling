@@ -113,6 +113,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     const text = res.content[0]?.type === "text" ? res.content[0].text : "";
     const stripped = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
     result = JSON.parse(stripped) as CryptoThreat;
+    if (!Array.isArray(result.typologies)) result.typologies = [];
+    if (!Array.isArray(result.requiredActions)) result.requiredActions = [];
   } catch {
     return NextResponse.json({ ok: false, error: "crypto-threat temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
   }

@@ -122,6 +122,9 @@ Assess proliferation financing risk.`,
       });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as PfScreenerResult;
+    if (!Array.isArray(result.risks)) result.risks = [];
+    if (!Array.isArray(result.applicableUnscrs)) result.applicableUnscrs = [];
+    if (!Array.isArray(result.requiredChecks)) result.requiredChecks = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "pf-screener temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});

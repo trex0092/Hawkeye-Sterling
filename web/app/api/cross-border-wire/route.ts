@@ -96,6 +96,9 @@ export async function POST(req: Request) {
     if (!jsonMatch) return NextResponse.json({ ok: false, error: "cross-border-wire temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
 
     const parsed = JSON.parse(jsonMatch[0]) as CrossBorderWireResult;
+    if (!Array.isArray(parsed.redFlags)) parsed.redFlags = [];
+    if (!Array.isArray(parsed.missingOriginatorInfo)) parsed.missingOriginatorInfo = [];
+    if (!Array.isArray(parsed.missingBeneficiaryInfo)) parsed.missingBeneficiaryInfo = [];
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "cross-border-wire temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});

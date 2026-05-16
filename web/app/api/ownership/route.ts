@@ -174,6 +174,9 @@ Map the ownership structure, identify UBOs, assess shell company risk and jurisd
 
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as OwnershipResult;
+    if (!Array.isArray(result.ownershipTree)) result.ownershipTree = [];
+    if (!Array.isArray(result.jurisdictionLayering)) result.jurisdictionLayering = [];
+    if (!Array.isArray(result.beneficialOwners)) result.beneficialOwners = [];
     return NextResponse.json(result, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "ownership temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});

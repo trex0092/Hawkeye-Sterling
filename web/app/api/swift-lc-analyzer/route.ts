@@ -152,6 +152,8 @@ Analyse this SWIFT/LC for TBML indicators. Return complete SwiftLcResult JSON.`,
       });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as SwiftLcResult;
+    if (!Array.isArray(result.fieldAnalysis)) result.fieldAnalysis = [];
+    if (!Array.isArray(result.indicators)) result.indicators = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "swift-lc-analyzer temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});

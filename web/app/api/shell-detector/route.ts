@@ -123,6 +123,9 @@ Assess this corporate structure for shell company red flags.`,
       });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as ShellDetectorResult;
+    if (!Array.isArray(result.redFlags)) result.redFlags = [];
+    if (!Array.isArray(result.structureIndicators)) result.structureIndicators = [];
+    if (!Array.isArray(result.requiredDocumentation)) result.requiredDocumentation = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "shell-detector temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});

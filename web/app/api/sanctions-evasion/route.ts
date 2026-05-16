@@ -273,6 +273,12 @@ Conduct a comprehensive sanctions evasion risk assessment. Identify all evasion 
 
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as SanctionsEvasionResult;
+    if (!Array.isArray(result.detectedPatterns)) result.detectedPatterns = [];
+    if (!Array.isArray(result.frontCompanyIndicators)) result.frontCompanyIndicators = [];
+    if (!Array.isArray(result.jurisdictionLayering)) result.jurisdictionLayering = [];
+    if (!Array.isArray(result.nameVariationFlags)) result.nameVariationFlags = [];
+    if (!Array.isArray(result.splitPaymentPatterns)) result.splitPaymentPatterns = [];
+    if (!Array.isArray(result.immediateActions)) result.immediateActions = [];
     return NextResponse.json(result, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "sanctions-evasion temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
