@@ -287,6 +287,12 @@ Perform a comprehensive supply chain risk assessment covering: geographic concen
     });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as SupplyChainRiskResult;
+    if (!Array.isArray(result.tier1Risk)) result.tier1Risk = [];
+    else for (const s of result.tier1Risk) { if (!Array.isArray(s.specificRisks)) s.specificRisks = []; if (!Array.isArray(s.environmentalFlags)) s.environmentalFlags = []; if (!Array.isArray(s.labourFlags)) s.labourFlags = []; }
+    if (!Array.isArray(result.complianceGaps)) result.complianceGaps = [];
+    if (!Array.isArray(result.regulatoryObligations)) result.regulatoryObligations = [];
+    if (!Array.isArray(result.redFlags)) result.redFlags = [];
+    if (!Array.isArray(result.actionPlan)) result.actionPlan = [];
     return NextResponse.json(result, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "supply-chain/risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});

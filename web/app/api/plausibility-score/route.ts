@@ -95,6 +95,7 @@ Respond ONLY with valid JSON:
       const raw = response.content[0]?.type === "text" ? (response.content[0] as { type: "text"; text: string }).text : "";
       const parsed = JSON.parse(raw.match(/\{[\s\S]*\}/)?.[0] ?? "{}");
       if (parsed.overallScore !== undefined) {
+        if (!Array.isArray(parsed.dimensions)) parsed.dimensions = [];
         return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
       }
     } catch {

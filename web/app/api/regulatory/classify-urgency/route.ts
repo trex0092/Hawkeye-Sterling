@@ -118,7 +118,9 @@ ${itemsList}`,
 
     const raw = response.content[0]?.type === "text" ? response.content[0].text.trim() : "[]";
     const cleaned = raw.replace(/```json\n?|\n?```/g, "").trim();
-    const classifications = JSON.parse(cleaned) as Array<{
+    const classificationsRaw = JSON.parse(cleaned);
+    if (!Array.isArray(classificationsRaw)) throw new Error("invalid LLM response");
+    const classifications = classificationsRaw as Array<{
       index: number;
       urgency: ClassifiedItem["urgency"];
       reason: string;

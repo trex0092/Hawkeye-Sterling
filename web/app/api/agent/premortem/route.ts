@@ -143,8 +143,8 @@ export async function POST(req: Request): Promise<NextResponse> {
       const e = text.lastIndexOf("}");
       if (s >= 0 && e > s) {
         const parsed = JSON.parse(text.slice(s, e + 1)) as { scenarios?: unknown; mitigations?: unknown };
-        scenarios = parsed.scenarios ?? [];
-        mitigations = parsed.mitigations ?? [];
+        scenarios = Array.isArray(parsed.scenarios) ? parsed.scenarios : [];
+        mitigations = Array.isArray(parsed.mitigations) ? parsed.mitigations : [];
       }
     } catch (perr) {
       console.warn("[agent/premortem] parse failed", perr);

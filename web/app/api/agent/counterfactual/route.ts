@@ -149,7 +149,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       const jsonEnd = text.lastIndexOf("}");
       if (jsonStart >= 0 && jsonEnd > jsonStart) {
         const parsed = JSON.parse(text.slice(jsonStart, jsonEnd + 1)) as { counterfactuals?: unknown };
-        counterfactuals = parsed.counterfactuals ?? [];
+        counterfactuals = Array.isArray(parsed.counterfactuals) ? parsed.counterfactuals : [];
       }
     } catch (parseErr) {
       console.warn("[agent/counterfactual] parse failed", parseErr);

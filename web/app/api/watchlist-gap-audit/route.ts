@@ -108,7 +108,7 @@ async function handler(req: Request): Promise<NextResponse> {
       });
       const raw = res.content[0]?.type === "text" ? (res.content[0] as { type: "text"; text: string }).text : "{}";
       const parsed = JSON.parse(raw.match(/\{[\s\S]*\}/)?.[0] ?? "{}");
-      aiRecommendations = parsed.recommendations ?? [];
+      aiRecommendations = Array.isArray(parsed.recommendations) ? parsed.recommendations : [];
     } catch { /* best effort */ }
   }
 

@@ -193,7 +193,7 @@ Return ONLY valid JSON with this exact structure:
     const cleaned = raw.replace(/^```json?\s*/i, "").replace(/\s*```$/i, "").trim();
     const result = JSON.parse(cleaned.match(/\{[\s\S]*\}/)?.[0] ?? "{}") as Omit<PepNetworkDeepResult, "pepName" | "networkDepth" | "totalNodesDiscovered" | "mandatoryScreeningCount" | "graphSummary">;
 
-    const nodes: NetworkNode[] = result.networkNodes ?? [];
+    const nodes: NetworkNode[] = Array.isArray(result.networkNodes) ? result.networkNodes : [];
     const hopCounts = { hop1Count: 0, hop2Count: 0, hop3Count: 0, hop4Count: 0 };
     for (const n of nodes) {
       const key = `hop${n.hopDistance}Count` as keyof typeof hopCounts;
@@ -208,13 +208,13 @@ Return ONLY valid JSON with this exact structure:
       totalNodesDiscovered: nodes.length,
       networkNodes: nodes,
       mandatoryScreeningCount: nodes.filter((n) => n.screeningPriority === "mandatory").length,
-      typicalMlRisks: result.typicalMlRisks ?? [],
-      jurisdictionalRisks: result.jurisdictionalRisks ?? [],
-      eddRequirements: result.eddRequirements ?? [],
-      eddChecklist: result.eddChecklist ?? [],
+      typicalMlRisks: Array.isArray(result.typicalMlRisks) ? result.typicalMlRisks : [],
+      jurisdictionalRisks: Array.isArray(result.jurisdictionalRisks) ? result.jurisdictionalRisks : [],
+      eddRequirements: Array.isArray(result.eddRequirements) ? result.eddRequirements : [],
+      eddChecklist: Array.isArray(result.eddChecklist) ? result.eddChecklist : [],
       seniorManagementApprovalRequired: result.seniorManagementApprovalRequired ?? true,
       ongoingMonitoringFrequency: result.ongoingMonitoringFrequency ?? "quarterly",
-      exitTriggers: result.exitTriggers ?? [],
+      exitTriggers: Array.isArray(result.exitTriggers) ? result.exitTriggers : [],
       networkRiskNarrative: result.networkRiskNarrative ?? "",
       regulatoryBasis: result.regulatoryBasis ?? "FATF R.12; FDL 10/2025 Art.12; CBUAE AML Standards §6",
       graphSummary: hopCounts,

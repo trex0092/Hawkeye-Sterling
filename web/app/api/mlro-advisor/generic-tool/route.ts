@@ -589,6 +589,8 @@ export async function POST(req: Request) {
     const cleaned = raw.replace(/```json\n?|\n?```/g, "").trim();
     try {
       const result = JSON.parse(cleaned) as Record<string, unknown>;
+      if (!Array.isArray(result["findings"])) result["findings"] = [];
+      if (!Array.isArray(result["recommendations"])) result["recommendations"] = [];
       return NextResponse.json({ ok: true, ...result });
     } catch {
       return NextResponse.json({

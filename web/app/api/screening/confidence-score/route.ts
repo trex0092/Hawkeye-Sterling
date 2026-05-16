@@ -145,6 +145,7 @@ Assess whether this is a true sanctions/PEP/watchlist match or a false positive.
     const result = JSON.parse(
       raw.replace(/```json\n?|\n?```/g, "").trim(),
     ) as ConfidenceScoreResult;
+    if (!Array.isArray(result.keyFactors)) result.keyFactors = [];
 
     // Apply historical false-positive feedback to adjust the LLM score
     const listId = body.hit?.listName ?? "unknown";
