@@ -165,7 +165,7 @@ export async function searchRss(feedUrl: string, opts: SearchOptions = {}): Prom
   const extract = (block: string, tag: string): string | undefined => {
     const m = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, 'i').exec(block);
     if (!m) return undefined;
-    return m[1]!.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1').trim();
+    return (m[1] ?? '').replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1').trim();
   };
   let m;
   while ((m = itemRx.exec(xml)) !== null) {

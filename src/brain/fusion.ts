@@ -75,7 +75,7 @@ export function fuseFindings(findings: Finding[], opts: FuseOptions = {}): Fusio
   for (const f of contributors) {
     const h = f.hypothesis ?? primary;
     if (!byH.has(h)) byH.set(h, []);
-    byH.get(h)!.push(f);
+    (byH.get(h) ?? []).push(f);
   }
 
   const posteriorsByHypothesis: Partial<Record<Hypothesis, number>> = {};
@@ -286,7 +286,7 @@ function detectConflicts(findings: Finding[], delta: number): FindingConflict[] 
   for (const f of findings) {
     const h: Hypothesis = f.hypothesis ?? 'illicit_risk';
     if (!byH.has(h)) byH.set(h, []);
-    byH.get(h)!.push(f);
+    (byH.get(h) ?? []).push(f);
   }
   for (const [h, arr] of byH.entries()) {
     const sorted = [...arr].sort((a, b) => b.score - a.score);

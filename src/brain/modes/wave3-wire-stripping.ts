@@ -48,7 +48,7 @@ export const wireStrippingApply = async (ctx: BrainContext): Promise<Finding> =>
       hits.push({ id: 'missing_beneficiary', label: 'Wire without complete beneficiary', weight: 0.3, evidence: `${w.wireId}: name=${w.beneficiaryName ? 'y' : 'n'} acct=${w.beneficiaryAccount ? 'y' : 'n'}` });
     }
     if ((w.intermediaryBanks ?? []).length >= 3) {
-      hits.push({ id: 'long_intermediary_chain', label: `${w.intermediaryBanks!.length} intermediary banks`, weight: 0.2, evidence: `${w.wireId}: ${w.intermediaryBanks!.slice(0, 4).join(' → ')}` });
+      hits.push({ id: 'long_intermediary_chain', label: `${(w.intermediaryBanks ?? []).length} intermediary banks`, weight: 0.2, evidence: `${w.wireId}: ${(w.intermediaryBanks ?? []).slice(0, 4).join(' → ')}` });
     }
   }
 

@@ -285,7 +285,7 @@ export const REASONING_MODES: ReasoningMode[] = [
 
 // Apply wave 1/2 real implementations from modes/registry.ts.
 for (let i = 0; i < REASONING_MODES.length; i++) {
-  const r = REASONING_MODES[i]!;
+  const r = REASONING_MODES[i]; if (!r) continue;
   const override = MODE_OVERRIDES[r.id];
   if (override) REASONING_MODES[i] = { ...r, apply: override };
 }
@@ -297,7 +297,7 @@ for (const m of WAVE3_MODES) {
 }
 // Apply WAVE3_OVERRIDES — replaces stubs in wave 1/2 with working implementations.
 for (let i = 0; i < REASONING_MODES.length; i++) {
-  const r = REASONING_MODES[i]!;
+  const r = REASONING_MODES[i]; if (!r) continue;
   const w3override = WAVE3_OVERRIDES.find((o) => o.id === r.id);
   if (w3override) REASONING_MODES[i] = w3override;
 }
@@ -309,7 +309,7 @@ for (const m of WAVE4_MODES) {
 }
 // Apply WAVE4_OVERRIDES.
 for (let i = 0; i < REASONING_MODES.length; i++) {
-  const r = REASONING_MODES[i]!;
+  const r = REASONING_MODES[i]; if (!r) continue;
   const w4override = WAVE4_OVERRIDES.find((o) => o.id === r.id);
   if (w4override) REASONING_MODES[i] = w4override;
 }
@@ -322,7 +322,7 @@ for (const m of WAVE5_MODES) {
 }
 // Apply WAVE5_OVERRIDES.
 for (let i = 0; i < REASONING_MODES.length; i++) {
-  const r = REASONING_MODES[i]!;
+  const r = REASONING_MODES[i]; if (!r) continue;
   const w5override = WAVE5_OVERRIDES.find((o) => o.id === r.id);
   if (w5override) REASONING_MODES[i] = w5override;
 }
@@ -336,7 +336,7 @@ for (const m of WAVE6_MODES) {
 }
 // Apply WAVE6_OVERRIDES.
 for (let i = 0; i < REASONING_MODES.length; i++) {
-  const r = REASONING_MODES[i]!;
+  const r = REASONING_MODES[i]; if (!r) continue;
   const w6override = WAVE6_OVERRIDES.find((o) => o.id === r.id);
   if (w6override) REASONING_MODES[i] = w6override;
 }
@@ -349,7 +349,7 @@ for (const m of WAVE11_MODES) {
 }
 // Apply WAVE11_OVERRIDES.
 for (let i = 0; i < REASONING_MODES.length; i++) {
-  const r = REASONING_MODES[i]!;
+  const r = REASONING_MODES[i]; if (!r) continue;
   const w11override = WAVE11_OVERRIDES.find((o) => o.id === r.id);
   if (w11override) REASONING_MODES[i] = w11override;
 }
@@ -362,7 +362,7 @@ for (const m of WAVE12_MODES) {
   if (!existingIdsW12.has(m.id)) REASONING_MODES.push(m);
 }
 for (let i = 0; i < REASONING_MODES.length; i++) {
-  const r = REASONING_MODES[i]!;
+  const r = REASONING_MODES[i]; if (!r) continue;
   const w12override = WAVE12_OVERRIDES.find((o) => o.id === r.id);
   if (w12override) REASONING_MODES[i] = w12override;
 }

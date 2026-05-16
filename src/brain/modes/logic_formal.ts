@@ -164,8 +164,9 @@ const modalLogicApply = async (ctx: BrainContext): Promise<Finding> => {
   const score = clamp01((unjustifiedNecessary.length + unjustifiedImpossible.length) * 0.4);
   const verdict: Verdict = (unjustifiedNecessary.length + unjustifiedImpossible.length) >= 2
     ? 'escalate' : (unjustifiedNecessary.length + unjustifiedImpossible.length) >= 1 ? 'flag' : 'clear';
+  const topNecessary = unjustifiedNecessary[0];
   const rationale = unjustifiedNecessary.length > 0
-    ? `${unjustifiedNecessary.length} necessity claim(s) with weak/no evidential basis: "${unjustifiedNecessary[0]!.claim}". Modal necessity requires strong grounding.`
+    ? `${unjustifiedNecessary.length} necessity claim(s) with weak/no evidential basis: "${topNecessary?.claim ?? ''}". Modal necessity requires strong grounding.`
     : unjustifiedImpossible.length > 0
       ? `${unjustifiedImpossible.length} impossibility claim(s) inadequately justified.`
       : `${claims.length} modal claim(s) appropriately supported.`;
@@ -415,7 +416,7 @@ const lensShiftApply = async (ctx: BrainContext): Promise<Finding> => {
   const score = clamp01(escalating.length / views.length * 0.8 + flagging.length / views.length * 0.3);
   const verdict: Verdict = escalating.length >= 2 ? 'escalate' : escalating.length >= 1 || flagging.length > clearing.length ? 'flag' : 'clear';
   const rationale = convergent && escalating.length === 0
-    ? `All ${views.length} lens(es) converge on "${views[0]!.verdict}" — consider whether a challenging lens was omitted (groupthink risk).`
+    ? `All ${views.length} lens(es) converge on "${views[0]?.verdict ?? ''}" — consider whether a challenging lens was omitted (groupthink risk).`
     : escalating.length > 0
       ? `${escalating.length}/${views.length} lens(es) escalate: ${escalating.map((v) => v.lens).join(', ')}.`
       : flagging.length > 0
@@ -474,7 +475,7 @@ const typologyCatalogueApply = async (ctx: BrainContext): Promise<Finding> => {
     'inconclusive', 0, 0.2, 'No typology matches supplied. Mode requires typologyMatches[] (charter P1).');
   const strong = matches.filter((m) => m.matchScore >= 0.7);
   const moderate = matches.filter((m) => m.matchScore >= 0.4 && m.matchScore < 0.7);
-  const topMatch = [...matches].sort((a, b) => b.matchScore - a.matchScore)[0]!;
+  const topMatch = [...matches].sort((a, b) => b.matchScore - a.matchScore)[0] as TypologyMatch;
   const score = clamp01(strong.length * 0.4 + moderate.length * 0.15);
   const verdict: Verdict = strong.length >= 2 ? 'escalate' : strong.length >= 1 ? 'flag' : moderate.length > 0 ? 'flag' : 'clear';
   const rationale = strong.length > 0

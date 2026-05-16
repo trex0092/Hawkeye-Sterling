@@ -59,8 +59,8 @@ export const chainOfCustodyBreakApply = async (ctx: BrainContext): Promise<Findi
 
     // Temporal-gap detection (released → next received > N hours).
     for (let i = 0; i < events.length - 1; i++) {
-      const released = events[i]?.releasedAt ? Date.parse(events[i]!.releasedAt!) : NaN;
-      const nextRcv = events[i + 1]?.receivedAt ? Date.parse(events[i + 1]!.receivedAt!) : NaN;
+      const released = events[i]?.releasedAt ? Date.parse(events[i]?.releasedAt ?? '') : NaN;
+      const nextRcv = events[i + 1]?.receivedAt ? Date.parse(events[i + 1]?.receivedAt ?? '') : NaN;
       if (!Number.isNaN(released) && !Number.isNaN(nextRcv)) {
         const gapHours = (nextRcv - released) / (1000 * 60 * 60);
         if (gapHours > TEMPORAL_GAP_FLAG_HOURS) {

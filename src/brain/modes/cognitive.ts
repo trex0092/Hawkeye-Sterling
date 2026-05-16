@@ -111,7 +111,7 @@ export const fiveWhysApply = async (ctx: BrainContext): Promise<Finding> => {
     return mk('five_whys', 'forensic', ['ratiocination'],
       'inconclusive', 0, 0.4, 'Five whys: no priors.');
   }
-  const leader = [...p].sort((a, b) => b.score - a.score)[0]!;
+  const leader = [...p].sort((a, b) => b.score - a.score)[0] as Finding;
   const q = [
     `1. Why was "${leader.modeId}" scored ${leader.score.toFixed(2)}? — ${leader.rationale.slice(0, 100)}`,
     `2. Why did that evidence obtain? — depends on evidence channel availability (see provenance_trace).`,
@@ -132,16 +132,16 @@ export const fishboneApply = async (ctx: BrainContext): Promise<Finding> => {
     return mk('fishbone', 'forensic', ['ratiocination'],
       'inconclusive', 0, 0.4, 'Fishbone: no priors.');
   }
-  const buckets: Record<string, string[]> = {
+  const buckets: { people: string[]; process: string[]; data: string[]; jurisdiction: string[]; evidence: string[]; controls: string[] } = {
     people: [], process: [], data: [], jurisdiction: [], evidence: [], controls: [],
   };
   for (const f of p) {
-    if (f.faculties.includes('introspection')) buckets.people!.push(f.modeId);
-    else if (f.category === 'compliance_framework' || f.category === 'governance') buckets.process!.push(f.modeId);
-    else if (f.category === 'data_quality' || f.category === 'statistical') buckets.data!.push(f.modeId);
-    else if (f.rationale.toLowerCase().includes('jurisdiction')) buckets.jurisdiction!.push(f.modeId);
-    else if (f.evidence.length > 0) buckets.evidence!.push(f.modeId);
-    else buckets.controls!.push(f.modeId);
+    if (f.faculties.includes('introspection')) buckets.people.push(f.modeId);
+    else if (f.category === 'compliance_framework' || f.category === 'governance') buckets.process.push(f.modeId);
+    else if (f.category === 'data_quality' || f.category === 'statistical') buckets.data.push(f.modeId);
+    else if (f.rationale.toLowerCase().includes('jurisdiction')) buckets.jurisdiction.push(f.modeId);
+    else if (f.evidence.length > 0) buckets.evidence.push(f.modeId);
+    else buckets.controls.push(f.modeId);
   }
   const used = Object.entries(buckets).filter(([, v]) => v.length > 0);
   return mk('fishbone', 'forensic', ['ratiocination'],
@@ -202,7 +202,7 @@ export const adversarialRedTeamApply = async (ctx: BrainContext): Promise<Findin
     return mk('adversarial_red_team', 'cognitive_science', ['reasoning', 'argumentation'],
       'inconclusive', 0, 0.5, 'Adversarial red team: no prior findings to steelman against.');
   }
-  const leader = [...p].sort((a, b) => b.score - a.score)[0]!;
+  const leader = [...p].sort((a, b) => b.score - a.score)[0] as Finding;
   // Look for explicit counter-narrative language in the prior findings.
   const counterTerms = ['innocent explanation', 'alternative', 'however', 'benign', 'counter', 'but note', 'caveat'];
   const hasCounter = p.some((f) => {

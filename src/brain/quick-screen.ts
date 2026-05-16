@@ -90,13 +90,13 @@ function parseDobParts(raw: string): DobParts | null {
   const s = raw.trim();
   // ISO: YYYY-MM-DD or YYYY/MM/DD
   const isoM = s.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/);
-  if (isoM) return { y: +isoM[1]!, m: +isoM[2]!, d: +isoM[3]! };
+  if (isoM) return { y: +(isoM[1] ?? '0'), m: +(isoM[2] ?? '0'), d: +(isoM[3] ?? '0') };
   // European: DD/MM/YYYY or DD.MM.YYYY
   const dmyM = s.match(/^(\d{1,2})[./](\d{1,2})[./](\d{4})$/);
-  if (dmyM) return { y: +dmyM[3]!, m: +dmyM[2]!, d: +dmyM[1]! };
+  if (dmyM) return { y: +(dmyM[3] ?? '0'), m: +(dmyM[2] ?? '0'), d: +(dmyM[1] ?? '0') };
   // Year only
   const yM = s.match(/^(\d{4})$/);
-  if (yM) return { y: +yM[1]! };
+  if (yM) return { y: +(yM[1] ?? '0') };
   return null;
 }
 

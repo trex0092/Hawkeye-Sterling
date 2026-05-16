@@ -57,10 +57,11 @@ export function dsCombine(a: DSMass, b: DSMass): { fused: DSMass; conflict: numb
 }
 export function dsCombineAll(masses: ReadonlyArray<DSMass>): { fused: DSMass; conflict: number } {
   if (masses.length === 0) return { fused: { h: 0, notH: 0, theta: 1 }, conflict: 0 };
-  let current: DSMass = masses[0]!;
+  let current: DSMass = masses[0] ?? { h: 0, notH: 0, theta: 1 };
   let conflict = 0;
   for (let i = 1; i < masses.length; i++) {
-    const next = masses[i]!;
+    const next = masses[i];
+    if (!next) continue;
     const r = dsCombine(current, next);
     current = r.fused;
     conflict = 1 - (1 - conflict) * (1 - r.conflict);

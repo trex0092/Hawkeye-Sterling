@@ -66,7 +66,7 @@ export const SOURCE_REGISTRY: SourceProfile[] = [
 ];
 
 const SOURCE_BY_DOMAIN = new Map(
-  SOURCE_REGISTRY.filter((s) => s.domain).map((s) => [s.domain!, s])
+  SOURCE_REGISTRY.filter((s) => s.domain).map((s) => [s.domain ?? '', s])
 );
 
 // ── Domain extraction ─────────────────────────────────────────────────────────
@@ -194,7 +194,7 @@ export function scoreCorroboration(sources: ReliabilityScore[]): CorroborationRe
     recommendation = 'No sources provided; cannot assess corroboration.';
   } else if (sources.length === 1) {
     strength = 'single_source';
-    recommendation = sources[0]!.isOfficial
+    recommendation = sources[0]?.isOfficial
       ? 'Single official source — sufficient for sanctions hits; seek media corroboration for adverse media.'
       : 'Single non-official source — corroboration required before escalation.';
   } else if (officiallySourced && highRel.length >= 2) {

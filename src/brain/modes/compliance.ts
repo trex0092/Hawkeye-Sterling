@@ -241,9 +241,9 @@ const velocityApply = async (ctx: BrainContext): Promise<Finding> => {
   const sorted = [...txs].sort((a, b) => Date.parse(a.at) - Date.parse(b.at));
   const counts: number[] = [];
   for (let i = 0; i < sorted.length; i++) {
-    const cutoff = Date.parse(sorted[i]!.at) - 7 * 86_400_000;
+    const cutoff = Date.parse(sorted[i]?.at ?? '') - 7 * 86_400_000;
     let c = 0;
-    for (let j = i; j >= 0 && Date.parse(sorted[j]!.at) >= cutoff; j--) c++;
+    for (let j = i; j >= 0 && Date.parse(sorted[j]?.at ?? '') >= cutoff; j--) c++;
     counts.push(c);
   }
   const maxWindow = Math.max(...counts);

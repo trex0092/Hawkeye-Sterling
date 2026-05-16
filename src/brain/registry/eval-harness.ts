@@ -207,7 +207,7 @@ export class EvalHarness {
       byCluster[r.scenario.cluster] = (byCluster[r.scenario.cluster] ?? 0) + 1;
       byMode[r.mode] = (byMode[r.mode] ?? 0) + 1;
       if (!elapsedByMode.has(r.mode)) elapsedByMode.set(r.mode, []);
-      elapsedByMode.get(r.mode)!.push(r.elapsedMs);
+      (elapsedByMode.get(r.mode) ?? []).push(r.elapsedMs);
       if (r.validation) {
         totalCitations += r.validation.summary.citationCount;
         matchedCitations += r.validation.summary.matchedCount;
@@ -290,7 +290,7 @@ function median(xs: number[]): number {
   if (xs.length === 0) return 0;
   const sorted = [...xs].sort((a, b) => a - b);
   const mid = Math.floor(sorted.length / 2);
-  return sorted.length % 2 === 0 ? (sorted[mid - 1]! + sorted[mid]!) / 2 : sorted[mid]!;
+  return sorted.length % 2 === 0 ? ((sorted[mid - 1] ?? 0) + (sorted[mid] ?? 0)) / 2 : (sorted[mid] ?? 0);
 }
 
 // ── Worked-example seed scenarios (to be grown by MLRO) ────────────────────

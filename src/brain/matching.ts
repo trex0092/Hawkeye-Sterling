@@ -186,7 +186,7 @@ export function matchJaroWinkler(a: string, b: string, threshold = 0.9): MatchSc
 export function soundex(input: string): string {
   const s = normalise(toLatinScript(input)).replace(/\s+/g, '');
   if (!s) return '';
-  const first = s[0]!.toUpperCase();
+  const first = (s[0] ?? '').toUpperCase();
   const map: Record<string, string> = {
     b: '1', f: '1', p: '1', v: '1',
     c: '2', g: '2', j: '2', k: '2', q: '2', s: '2', x: '2', z: '2',
@@ -196,9 +196,9 @@ export function soundex(input: string): string {
     r: '6',
   };
   let out = first;
-  let prev = map[s[0]!] ?? '';
+  let prev = map[s[0] ?? ''] ?? '';
   for (let i = 1; i < s.length && out.length < 4; i++) {
-    const ch = s[i]!;
+    const ch = s[i] ?? '';
     const code = map[ch] ?? '';
     if (code) {
       if (code !== prev) out += code;

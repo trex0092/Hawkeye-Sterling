@@ -206,7 +206,7 @@ export class AuditLogStore {
   append(input: AuditEntryInput, opts?: { now?: () => string }): AuditEntryV1 {
     const now = opts?.now ?? (() => new Date().toISOString());
     const seq = this.entries.length + 1;
-    const prevHash = this.entries.length === 0 ? '0'.repeat(64) : this.entries[this.entries.length - 1]!.entryHash;
+    const prevHash = this.entries.length === 0 ? '0'.repeat(64) : (this.entries[this.entries.length - 1]?.entryHash ?? '0'.repeat(64));
     const verdict = input.finalAnswer?.decision.verdict;
     const confidence = input.finalAnswer?.confidence.score;
     const escalated = verdict ? ESCALATING_VERDICTS.has(verdict) : false;
@@ -232,16 +232,18 @@ export class AuditLogStore {
   setFeedback(seq: number, feedback: UserFeedback): AuditEntryV1 {
     const idx = this.entries.findIndex((e) => e.seq === seq);
     if (idx < 0) throw new Error(`audit-log: seq ${seq} not found`);
-    const original = this.entries[idx]!;
-    const prevHash = idx === 0 ? '0'.repeat(64) : this.entries[idx - 1]!.entryHash;
+    const original = this.entries[idx];
+    if (!original) throw new Error(`audit-log: entry at index ${idx} unexpectedly missing`);
+    const prevHash = idx === 0 ? '0'.repeat(64) : (this.entries[idx - 1]?.entryHash ?? '0'.repeat(64));
     const partial: Omit<AuditEntryV1, 'entryHash'> = { ...original, feedback, prevHash };
     const updated: AuditEntryV1 = { ...partial, entryHash: hashEntry(partial) };
     this.entries[idx] = updated;
     // Re-hash forward chain from idx+1 onwards — every downstream
     // entry's prevHash now points at the new updated.entryHash.
     for (let i = idx + 1; i < this.entries.length; i++) {
-      const e = this.entries[i]!;
-      const newPrev = this.entries[i - 1]!.entryHash;
+      const e = this.entries[i];
+      if (!e) continue;
+      const newPrev = this.entries[i - 1]?.entryHash ?? '0'.repeat(64);
       const partialFwd: Omit<AuditEntryV1, 'entryHash'> = { ...e, prevHash: newPrev };
       this.entries[i] = { ...partialFwd, entryHash: hashEntry(partialFwd) };
     }

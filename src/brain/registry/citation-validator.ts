@@ -266,10 +266,10 @@ function indexRetrievedChunks(retrieved: RegistryChunk[]): ChunkIndex {
   for (const ch of retrieved) {
     sourceIds.add(ch.metadata.sourceId);
     if (!byArticle.has(ch.metadata.sourceId)) byArticle.set(ch.metadata.sourceId, new Set());
-    byArticle.get(ch.metadata.sourceId)!.add(ch.metadata.articleRef);
+    (byArticle.get(ch.metadata.sourceId) ?? new Set()).add(ch.metadata.articleRef);
     if (ch.metadata.articleNumber !== null && ch.metadata.articleNumber !== undefined) {
       if (!byNumber.has(ch.metadata.sourceId)) byNumber.set(ch.metadata.sourceId, new Set());
-      byNumber.get(ch.metadata.sourceId)!.add(ch.metadata.articleNumber);
+      (byNumber.get(ch.metadata.sourceId) ?? new Set()).add(ch.metadata.articleNumber);
     }
   }
   return { byArticle, byNumber, sourceIds };

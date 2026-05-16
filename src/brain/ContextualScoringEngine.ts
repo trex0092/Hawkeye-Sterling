@@ -125,7 +125,7 @@ export function scoreContextual(
 
   // 2. Sanctions list weight
   const listKey = (ctx.sanctionsList ?? 'unknown').toLowerCase().replace(/\s+/g, '_');
-  const listWeight = SANCTIONS_LIST_WEIGHT[listKey] ?? SANCTIONS_LIST_WEIGHT['unknown']!;
+  const listWeight = SANCTIONS_LIST_WEIGHT[listKey] ?? SANCTIONS_LIST_WEIGHT['unknown'] ?? 1.0;
   if (listWeight > 1.0) {
     const boost = (listWeight - 1.0) * rawScore * 0.15;
     score += boost;
@@ -266,8 +266,10 @@ export const WEIGHT_PROFILES: Record<string, ContextualWeightProfile> = {
 
 export function selectWeightProfile(ctx: ContextualInput): ContextualWeightProfile {
   const list = (ctx.sanctionsList ?? '').toLowerCase();
-  if (list.includes('sdn') && ctx.entityType === 'individual') return WEIGHT_PROFILES.ofac_sdn_individual!;
-  if (list.includes('un')) return WEIGHT_PROFILES.un_consolidated_entity!;
-  if (list.includes('pep')) return WEIGHT_PROFILES.pep_monitoring!;
-  return WEIGHT_PROFILES.default!;
+  const fallback = WEIGHT_PROFILES.default;
+  if (!fallback) throw new Error('Missing default weight profile');
+  if (list.includes('sdn') && ctx.entityType === 'individual') return WEIGHT_PROFILES.ofac_sdn_individual ?? fallback;
+  if (list.includes('un')) return WEIGHT_PROFILES.un_consolidated_entity ?? fallback;
+  if (list.includes('pep')) return WEIGHT_PROFILES.pep_monitoring ?? fallback;
+  return fallback;
 }

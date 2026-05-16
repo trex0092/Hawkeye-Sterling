@@ -333,7 +333,7 @@ const presumptionInnocenceApply = async (ctx: BrainContext): Promise<Finding> =>
     ? 'escalate'
     : overReach.length > 0 ? 'flag' : 'clear';
   const rationale = overReach.length > 0
-    ? `${overReach.length} conclusion(s) reached without sufficient affirmative evidence: "${overReach[0]!.conclusion}"${overReach.length > 1 ? ` +${overReach.length - 1} more` : ''}. Presumption of innocence requires stronger basis.`
+    ? `${overReach.length} conclusion(s) reached without sufficient affirmative evidence: "${overReach[0]?.conclusion ?? ''}"${overReach.length > 1 ? ` +${overReach.length - 1} more` : ''}. Presumption of innocence requires stronger basis.`
     : `All ${checks.length} conclusion(s) supported by ${balanced.length > 0 ? 'moderate or strong' : 'adequate'} evidence (avg strength ${(avgStrength * 100).toFixed(0)}%).`;
   return mkFinding('presumption_innocence', 'logic', ['argumentation'],
     verdict, score, 0.8, rationale, checks.map((c) => c.sourceRef));
@@ -358,7 +358,7 @@ const saturationApply = async (ctx: BrainContext): Promise<Finding> => {
       'No evidence rounds supplied. Mode requires evidenceRounds[] (charter P1).');
   }
   const sorted = [...rounds].sort((a, b) => a.round - b.round);
-  const deltas = sorted.slice(1).map((r, i) => Math.abs(r.conclusionScore - sorted[i]!.conclusionScore));
+  const deltas = sorted.slice(1).map((r, i) => Math.abs(r.conclusionScore - (sorted[i]?.conclusionScore ?? 0)));
   const avgDelta = deltas.length > 0 ? deltas.reduce((s, d) => s + d, 0) / deltas.length : 1;
   const lastDelta = deltas[deltas.length - 1] ?? 1;
   const saturated = lastDelta < 0.02 && sorted.length >= 3;

@@ -49,8 +49,9 @@ export const artProvenanceGapApply = async (ctx: BrainContext): Promise<Finding>
     } else {
       // Detect time gaps > 20 years between consecutive owners.
       for (let i = 1; i < chain.length; i++) {
-        const prev = chain[i - 1]!;
-        const cur = chain[i]!;
+        const prev = chain[i - 1];
+        const cur = chain[i];
+        if (!prev || !cur) continue;
         if (!prev.to || !cur.from) continue;
         const gap = (Date.parse(cur.from) - Date.parse(prev.to)) / (365 * 86_400_000);
         if (gap > 20) {

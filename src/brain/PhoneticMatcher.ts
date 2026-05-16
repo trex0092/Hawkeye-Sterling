@@ -75,9 +75,9 @@ export function colognePhonetic(input: string): string {
 
   let code = '';
   for (let i = 0; i < prep.length; i++) {
-    const prev = i > 0 ? prep[i - 1]! : '';
-    const curr = prep[i]!;
-    const next = i < prep.length - 1 ? prep[i + 1]! : '';
+    const prev = i > 0 ? (prep[i - 1] ?? '') : '';
+    const curr = prep[i] ?? '';
+    const next = i < prep.length - 1 ? (prep[i + 1] ?? '') : '';
     const digit = cologneCharCode(prev, curr, next);
     for (const d of digit) code += d;
   }
@@ -85,7 +85,7 @@ export function colognePhonetic(input: string): string {
   // Remove consecutive duplicates
   let deduped = '';
   for (let i = 0; i < code.length; i++) {
-    if (i === 0 || code[i] !== code[i - 1]) deduped += code[i]!;
+    if (i === 0 || code[i] !== code[i - 1]) deduped += code[i] ?? '';
   }
 
   // Remove embedded zeros (except leading)

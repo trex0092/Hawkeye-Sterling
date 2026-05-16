@@ -89,7 +89,7 @@ const attackTreeApply = async (ctx: BrainContext): Promise<Finding> => {
       'inconclusive', 0, 0.2, 'No attack-tree leaves supplied. Mode requires attackLeaves[].');
   }
   // path of least resistance: max( successP * (1 - detectionP) * impact )
-  let worst = leaves[0]!;
+  let worst = leaves[0] as AttackLeaf;
   let worstScore = worst.successP * (1 - worst.detectionP) * worst.impact;
   for (const l of leaves) {
     const s = l.successP * (1 - l.detectionP) * l.impact;
@@ -161,7 +161,7 @@ const fmeaApply = async (ctx: BrainContext): Promise<Finding> => {
   const veryHigh = ranked.filter((r) => r.rpn >= 200);
   const score = clamp01(veryHigh.length * 0.4 + high.length * 0.15);
   const verdict: Verdict = veryHigh.length > 0 ? 'escalate' : high.length > 0 ? 'flag' : 'clear';
-  const top = ranked[0]!;
+  const top = ranked[0] as (FmeaItem & { rpn: number });
   const rationale = high.length > 0
     ? `${high.length} failure mode(s) with RPN >=100 (top: "${top.failureMode}" RPN=${top.rpn}). ${veryHigh.length > 0 ? 'Critical — apply preventive + detective controls.' : 'Plan corrective action.'}`
     : `${items.length} failure mode(s) reviewed; top RPN=${top.rpn} below action threshold.`;
@@ -256,7 +256,7 @@ const expectedUtilityApply = async (ctx: BrainContext): Promise<Finding> => {
     eu: a.scenarios.reduce((s, sc) => s + sc.probability * sc.utility, 0),
   }));
   eu.sort((a, b) => b.eu - a.eu);
-  const optimal = eu[0]!;
+  const optimal = eu[0] as { action: string; eu: number };
   const chosen = eu.find((x) => x.action === p.chosen);
   const aligned = chosen?.action === optimal.action;
   const gap = chosen ? optimal.eu - chosen.eu : optimal.eu;
@@ -285,7 +285,7 @@ const maximinApply = async (ctx: BrainContext): Promise<Finding> => {
       'inconclusive', 0, 0.2, 'No maximin probe supplied. Mode requires maximinProbe with alternatives[].');
   }
   const sorted = [...p.alternatives].sort((a, b) => b.worstCasePayoff - a.worstCasePayoff);
-  const optimal = sorted[0]!;
+  const optimal = sorted[0] as { action: string; worstCasePayoff: number };
   const aligned = optimal.action === p.chosen;
   const score = aligned ? 0.05 : 0.4;
   const verdict: Verdict = aligned ? 'clear' : 'flag';
@@ -332,7 +332,7 @@ const costBenefitApply = async (ctx: BrainContext): Promise<Finding> => {
   };
   const ranked = p.programmes.map((g) => ({ name: g.name, npv: npv(g) }))
     .sort((a, b) => b.npv - a.npv);
-  const optimal = ranked[0]!;
+  const optimal = ranked[0] as { name: string; npv: number };
   const chosenNpv = ranked.find((x) => x.name === p.chosen);
   const aligned = chosenNpv?.name === optimal.name;
   const score = aligned ? 0.05 : 0.4;

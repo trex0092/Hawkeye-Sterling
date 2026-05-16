@@ -56,7 +56,7 @@ export const insBeneficiaryRotationApply = async (ctx: BrainContext): Promise<Fi
   for (const c of items) {
     const pid = c.policyId ?? '(unknown)';
     if (!byPolicy.has(pid)) byPolicy.set(pid, []);
-    byPolicy.get(pid)!.push(c);
+    (byPolicy.get(pid) ?? []).push(c);
   }
 
   for (const [pid, changes] of byPolicy) {

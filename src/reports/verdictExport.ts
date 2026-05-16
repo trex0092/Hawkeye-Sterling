@@ -239,7 +239,7 @@ function markdownToHtml(md: string): string {
     if (inTable) { out.push('</tbody></table>'); inTable = false; }
   };
   for (let i = 0; i < lines.length; i++) {
-    const raw = lines[i]!;
+    const raw = lines[i] ?? '';
     const line = raw;
     if (/^# /.test(line)) { flushList(); flushTable(); out.push(`<h1>${inline(esc(line.slice(2)))}</h1>`); continue; }
     if (/^## /.test(line)) { flushList(); flushTable(); out.push(`<h2>${inline(esc(line.slice(3)))}</h2>`); continue; }

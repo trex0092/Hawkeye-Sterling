@@ -155,11 +155,11 @@ export function normalizeArabic(input: string): string {
   // 4. Normalize character variants
   s = s.replace(/./gu, (ch) => {
     const cp = ch.codePointAt(0) ?? 0;
-    if (ALEF_VARIANTS[cp]) return ALEF_VARIANTS[cp]!;
-    if (WAW_VARIANTS[cp]) return WAW_VARIANTS[cp]!;
-    if (YAA_VARIANTS[cp]) return YAA_VARIANTS[cp]!;
-    if (KAF_VARIANTS[cp]) return KAF_VARIANTS[cp]!;
-    if (URDU_EXTRA[cp]) return URDU_EXTRA[cp]!;
+    if (ALEF_VARIANTS[cp]) return ALEF_VARIANTS[cp] ?? ch;
+    if (WAW_VARIANTS[cp]) return WAW_VARIANTS[cp] ?? ch;
+    if (YAA_VARIANTS[cp]) return YAA_VARIANTS[cp] ?? ch;
+    if (KAF_VARIANTS[cp]) return KAF_VARIANTS[cp] ?? ch;
+    if (URDU_EXTRA[cp]) return URDU_EXTRA[cp] ?? ch;
     return ch;
   });
 

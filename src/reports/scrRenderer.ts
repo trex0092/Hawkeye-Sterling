@@ -1141,8 +1141,8 @@ export function renderSCR(r: ScreeningComplianceReport): string {
     <span>${r.totalSections} SECTIONS · ${r.totalParagraphs} NUMBERED PARAGRAPHS · 2 INDICES</span>
   </div>
   <div class="contents-grid">
-    <div>${contentsLeft.map(([n, t, p]) => `<div class="contents-row"><span class="cnum">${esc(n!)}</span><span class="ctitle">${esc(t!)}</span><span class="cpage">${esc(p!)}</span></div>`).join('')}</div>
-    <div>${contentsRight.map(([n, t, p]) => `<div class="contents-row"><span class="cnum">${esc(n!)}</span><span class="ctitle">${esc(t!)}</span><span class="cpage">${esc(p!)}</span></div>`).join('')}</div>
+    <div>${contentsLeft.map(([n, t, p]) => `<div class="contents-row"><span class="cnum">${esc(n ?? '')}</span><span class="ctitle">${esc(t ?? '')}</span><span class="cpage">${esc(p ?? '')}</span></div>`).join('')}</div>
+    <div>${contentsRight.map(([n, t, p]) => `<div class="contents-row"><span class="cnum">${esc(n ?? '')}</span><span class="ctitle">${esc(t ?? '')}</span><span class="cpage">${esc(p ?? '')}</span></div>`).join('')}</div>
   </div>
 </div>`;
 
@@ -1182,7 +1182,7 @@ export function renderSCR(r: ScreeningComplianceReport): string {
     ['BUREAU', dc.bureau],
     ['APPROVED', dc.approved],
     ['SLA', dc.sla],
-  ].map(([k, v]) => `<div class="dc-row"><span class="dc-key">${esc(k!)}</span><span class="dc-val">${esc(v!)}</span></div>`).join('')}
+  ].map(([k, v]) => `<div class="dc-row"><span class="dc-key">${esc(k ?? '')}</span><span class="dc-val">${esc(v ?? '')}</span></div>`).join('')}
 </div>`;
 
   // Section 01 — Executive summary
@@ -1265,7 +1265,7 @@ ${renderAuthLine('Purpose. To document the matching algorithm and its parameters
 ${renderSectionDivider('05', 'Domain I · Targeted *Financial Sanctions*.')}
 ${renderAuthLine('Authorities. FATF Rec. 6 · UNSC Res. 1267 / 1989 / 2253 / 2231 · Cabinet Resolution 74/2020 · EOCN Guidance 01/2023 · OFAC E.O. 13382 · EU CFSP 2014/145.')}
 <div class="section-body">
-  ${hasHits ? renderSanctionsHits(d1.hits!) : zeroHitsLabel}
+  ${hasHits ? renderSanctionsHits(d1.hits ?? []) : zeroHitsLabel}
   <table class="scr-table" style="margin:8px 0">
     <thead><tr><th>REGISTER</th><th>VERSION · REFRESH</th><th>RECORDS</th><th>HITS</th><th>COVERAGE</th><th>AUTHORITY</th></tr></thead>
     <tbody>${regTableRows}</tbody>
@@ -1290,8 +1290,8 @@ ${renderAuthLine('Authorities. FATF Rec. 6 · UNSC Res. 1267 / 1989 / 2253 / 223
 
   const hasPepHits = !!(d23.pepHits && d23.pepHits.length > 0);
   const hasAmHits  = !!(d23.adverseMediaHits && d23.adverseMediaHits.length > 0);
-  const pepHitsHtml = hasPepHits ? renderPepHits(d23.pepHits!) : '';
-  const amHitsHtml  = hasAmHits  ? renderAdverseMediaHits(d23.adverseMediaHits!) : '';
+  const pepHitsHtml = hasPepHits ? renderPepHits(d23.pepHits ?? []) : '';
+  const amHitsHtml  = hasAmHits  ? renderAdverseMediaHits(d23.adverseMediaHits ?? []) : '';
   const newsDossierHtml = d23.newsDossierArticles && d23.newsDossierArticles.length > 0 ? renderNewsDossierArticles(d23.newsDossierArticles) : '';
 
   // Table labels shift when hits are present so numbers don't repeat

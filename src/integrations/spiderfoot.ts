@@ -191,7 +191,7 @@ export async function spiderFootScan(
   const findings: SpiderFootFinding[] = rawEvents
     .filter((e) => e.type && AML_EVENT_TYPES.has(e.type))
     .map((e) => ({
-      type: e.type!,
+      type: e.type ?? '',
       data: e.data ?? '',
       module: e.module ?? '',
       confidence: e.confidence ?? 100,

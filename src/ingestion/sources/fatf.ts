@@ -74,11 +74,11 @@ interface ScrapedJurisdiction { name: string; iso2: string }
 function scrapeJurisdictions(html: string, lookup: Record<string, string>): ScrapedJurisdiction[] {
   // Heuristic 1: <h2>/<h3>/<strong>Country</strong> markers used on FATF pages.
   const headings = [...html.matchAll(/<(?:h2|h3|strong)[^>]*>\s*([A-Z][A-Za-zÀ-ſ \-’']{2,60})\s*<\/(?:h2|h3|strong)>/g)]
-    .map((m) => m[1]!.replace(/\s+/g, ' ').trim());
+    .map((m) => (m[1] ?? '').replace(/\s+/g, ' ').trim());
 
   // Heuristic 2: bullet list items often contain just the country name.
-  const bullets = [...html.matchAll(/<li[^>]*>\s*([A-Z][A-Za-zÀ-ſ \-’']{2,60})\s*<\/li>/g)]
-    .map((m) => m[1]!.replace(/\s+/g, ' ').trim());
+  const bullets = [...html.matchAll(/<li[^>]*>\s*([A-Z][A-Za-zÀ-ſ \-’’]{2,60})\s*<\/li>/g)]
+    .map((m) => (m[1] ?? '').replace(/\s+/g, ' ').trim());
 
   const seen = new Set<string>();
   const out: ScrapedJurisdiction[] = [];

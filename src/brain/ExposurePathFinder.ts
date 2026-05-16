@@ -174,7 +174,8 @@ function findAllPaths(
   }];
 
   while (queue.length > 0) {
-    const state = queue.shift()!;
+    const state = queue.shift();
+    if (!state) break;
     if (state.steps.length > maxHops) continue;
     if (state.cumulativeScore < minScore) continue;
 

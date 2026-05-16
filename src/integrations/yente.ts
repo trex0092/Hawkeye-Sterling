@@ -136,7 +136,7 @@ export async function yenteMatch(
 
   return queries.slice(0, 100).map((q, i) => {
     const key = `q${i}`;
-    const resp = result.json!.responses![key];
+    const resp = result.json?.responses?.[key];
     const hits: YenteMatchHit[] = (resp?.results ?? []).map((r) => ({
       id: r.id,
       caption: r.caption,

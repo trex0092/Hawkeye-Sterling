@@ -80,5 +80,5 @@ export function candidatePairs(
 function add<T>(m: Map<string, T[]>, key: string, v: T): void {
   if (!key) return;
   if (!m.has(key)) m.set(key, []);
-  m.get(key)!.push(v);
+  (m.get(key) ?? []).push(v);
 }

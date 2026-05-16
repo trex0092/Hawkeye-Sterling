@@ -122,8 +122,9 @@ export class AuditChain {
 
   verify(): { ok: boolean; firstBreakAt?: number } {
     for (let i = 0; i < this.entries.length; i++) {
-      const e = this.entries[i]!;
-      const expectedPrev = i === 0 ? '0'.repeat(8) : this.entries[i - 1]!.entryHash;
+      const e = this.entries[i];
+      if (!e) continue;
+      const expectedPrev = i === 0 ? '0'.repeat(8) : (this.entries[i - 1]?.entryHash ?? '0'.repeat(8));
       if (e.prevHash !== expectedPrev) return { ok: false, firstBreakAt: e.seq };
       const body = `${e.seq}|${e.timestamp}|${e.actor}|${e.action}|${canonicalise(e.payload)}|${e.prevHash}`;
       if (this.hasher(body) !== e.entryHash) return { ok: false, firstBreakAt: e.seq };

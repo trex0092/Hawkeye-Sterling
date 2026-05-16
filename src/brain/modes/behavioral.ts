@@ -95,8 +95,8 @@ export const velocityAnalysisApply = async (ctx: BrainContext): Promise<Finding>
   const mid = Math.floor(ts.length / 2);
   const first = ts.slice(0, mid);
   const second = ts.slice(mid);
-  const spanA = (first.at(-1)! - first[0]!) / 86_400_000 || 1;
-  const spanB = (second.at(-1)! - second[0]!) / 86_400_000 || 1;
+  const spanA = ((first.at(-1) ?? 0) - (first[0] ?? 0)) / 86_400_000 || 1;
+  const spanB = ((second.at(-1) ?? 0) - (second[0] ?? 0)) / 86_400_000 || 1;
   const rateA = first.length / spanA;
   const rateB = second.length / spanB;
   const uplift = rateA > 0 ? rateB / rateA : rateB > 0 ? Infinity : 1;
@@ -144,7 +144,7 @@ export const patternOfLifeApply = async (ctx: BrainContext): Promise<Finding> =>
       `Pattern-of-life: n=${ts.length} < 6 events.`);
   }
   const gaps: number[] = [];
-  for (let i = 1; i < ts.length; i++) gaps.push((ts[i]! - ts[i - 1]!) / 60_000);
+  for (let i = 1; i < ts.length; i++) gaps.push(((ts[i] ?? 0) - (ts[i - 1] ?? 0)) / 60_000);
   const m = mean(gaps);
   const sd = Math.sqrt(variance(gaps));
   const cv = m > 0 ? sd / m : 0;

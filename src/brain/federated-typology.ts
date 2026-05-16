@@ -89,7 +89,8 @@ function bandHash(vector: readonly number[], planes: number[][]): number {
   let bits = 0;
   for (let p = 0; p < planes.length; p++) {
     let dot = 0;
-    const plane = planes[p]!;
+    const plane = planes[p];
+    if (!plane) continue;
     const minLen = Math.min(vector.length, plane.length);
     for (let i = 0; i < minLen; i++) dot += (vector[i] ?? 0) * (plane[i] ?? 0);
     if (dot >= 0) bits |= 1 << p;

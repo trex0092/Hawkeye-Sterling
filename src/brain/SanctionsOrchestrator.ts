@@ -263,7 +263,7 @@ const snapshotHistory: Map<SanctionsSourceId, IngestionSnapshot[]> = new Map();
 
 function pushSnapshot(sourceId: SanctionsSourceId, snapshot: IngestionSnapshot): void {
   if (!snapshotHistory.has(sourceId)) snapshotHistory.set(sourceId, []);
-  const history = snapshotHistory.get(sourceId)!;
+  const history = snapshotHistory.get(sourceId) ?? [];
   history.push(snapshot);
   if (history.length > 10) history.shift(); // keep last 10
 }

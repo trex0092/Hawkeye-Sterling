@@ -125,7 +125,7 @@ function entryKey(e: NormalisedListEntry): { name: string; aliases?: string[]; d
   if (e.aliases.length > 0) out.aliases = e.aliases;
   const dob = e.identifiers.find((i) => i.kind.toLowerCase() === 'dob');
   if (dob) out.dob = dob.number;
-  if (e.nationalities && e.nationalities.length > 0) out.nationality = e.nationalities[0]!;
+  if (e.nationalities && e.nationalities.length > 0) out.nationality = e.nationalities[0] ?? '';
   if (e.identifiers.length > 0) {
     const idMap: Record<string, string> = {};
     for (const i of e.identifiers) if (!(i.kind in idMap)) idMap[i.kind] = i.number;

@@ -55,7 +55,7 @@ export const chSecoAdapter: SourceAdapter = {
     const TARGET_RE = /<(?:target|sanction-target)[^>]*>([\s\S]*?)<\/(?:target|sanction-target)>/g;
     for (const m of xml.matchAll(TARGET_RE)) {
       const block = m[1] ?? '';
-      const ssid = xmlAttrFromOpening(m[0]!, 'ssid') || xmlField(block, 'ssid');
+      const ssid = xmlAttrFromOpening(m[0] ?? '', 'ssid') || xmlField(block, 'ssid');
       const programs = xmlFieldAll(block, 'sanctions-program-set');
       const programFallback = xmlField(block, 'general-info').match(/sanctions[\s-]program[s]?[:>]([^<]+)/i)?.[1] ?? '';
 

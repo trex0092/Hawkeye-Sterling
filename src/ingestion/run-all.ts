@@ -174,7 +174,7 @@ export async function runIngestionAll(label: string): Promise<IngestRunSummary> 
         adapterId: adapter.id,
         phase: 'fetch',
         message: msg,
-        ...(statusMatch ? { httpStatus: Number.parseInt(statusMatch[1]!, 10) } : {}),
+        ...(statusMatch ? { httpStatus: Number.parseInt(statusMatch[1] ?? '0', 10) } : {}),
       });
     }
     return { report, writeFailed };
@@ -184,12 +184,13 @@ export async function runIngestionAll(label: string): Promise<IngestRunSummary> 
   const summary: IngestionReport[] = [];
   let anyWriteFailed = false;
   for (let i = 0; i < settled.length; i++) {
-    const r = settled[i]!;
+    const r = settled[i];
+    if (!r) continue;
     if (r.status === 'fulfilled') {
       summary.push(r.value.report);
       if (r.value.writeFailed) anyWriteFailed = true;
     } else {
-      const adapter = SOURCE_ADAPTERS[i]!;
+      const adapter = SOURCE_ADAPTERS[i] ?? { id: 'unknown', sourceUrl: '' };
       const msg = r.reason instanceof Error ? r.reason.message : String(r.reason);
       console.error(`[${label}] UNCAUGHT REJECTION list=${adapter.id} error=${msg}`);
       summary.push({
