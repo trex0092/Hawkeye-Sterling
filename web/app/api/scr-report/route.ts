@@ -136,7 +136,7 @@ function safeFilenameSegment(s: string | undefined | null): string {
 function deriveDisposition(body: ReportInput): SCRDisposition {
   const hits = body.result?.hits ?? [];
   const sev = body.result?.severity ?? "clear";
-  const triage = body.triageResolutions ?? [];
+  const triage = Array.isArray(body.triageResolutions) ? body.triageResolutions : [];
 
   // Any triage resolution explicitly marked positive → prohibited
   if (triage.some((t) => t.resolution === "positive")) return "prohibited";

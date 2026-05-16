@@ -102,7 +102,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
-  const subjects = body.subjects ?? [];
+  const subjects = Array.isArray(body.subjects) ? body.subjects : [];
   if (!Array.isArray(body.subjects) || subjects.length === 0) {
     return NextResponse.json(
       { ok: false, error: "subjects must be a non-empty array" },

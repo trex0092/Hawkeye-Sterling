@@ -71,7 +71,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
-  const transactions = body.transactions ?? [];
+  const transactions = Array.isArray(body.transactions) ? body.transactions : [];
   if (transactions.length === 0) {
     return NextResponse.json({
       tagged: [],

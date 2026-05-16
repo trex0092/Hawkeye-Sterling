@@ -261,7 +261,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     const body = (await req.json()) as { query?: string; subjects?: SubjectSlim[]; actor?: string };
     const query = (body.query ?? "").trim();
-    const subjects = body.subjects ?? [];
+    const subjects = Array.isArray(body.subjects) ? body.subjects : [];
     if (!query) {
       return NextResponse.json({ ok: false, error: "query required" }, { status: 400 , headers: gate.headers });
     }

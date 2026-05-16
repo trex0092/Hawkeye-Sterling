@@ -85,7 +85,7 @@ export async function POST(req: Request) {
   }
 
   const company = body.company ?? "Company";
-  const suppliers = body.suppliers ?? [];
+  const suppliers = Array.isArray(body.suppliers) ? body.suppliers : [];
 
   // Build nodes
   const nodes: MapNode[] = [];

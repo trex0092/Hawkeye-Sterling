@@ -99,8 +99,8 @@ export async function POST(req: Request) {
   }
 
   const caseTitle = body.caseTitle ?? "Untitled Investigation";
-  const entities = body.entities ?? [];
-  const links = body.links ?? [];
+  const entities = Array.isArray(body.entities) ? body.entities : [];
+  const links = Array.isArray(body.links) ? body.links : [];
   const narrative = body.narrative ?? "";
   const analyst = body.analyst ?? "System";
   const generatedAt = new Date().toISOString();

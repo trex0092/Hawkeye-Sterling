@@ -512,6 +512,7 @@ async function handleSarReport(req: Request, gateHeaders: Record<string, string>
     return new Response(html, {
       status: 200,
       headers: {
+        ...gateHeaders,
         "content-type": "text/html; charset=utf-8",
         "content-disposition": `inline; filename="hawkeye-${body.filingType.toLowerCase()}-${body.subject.id}.html"`,
         "cache-control": "no-store",
