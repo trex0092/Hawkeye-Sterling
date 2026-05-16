@@ -148,6 +148,11 @@ Generate a comprehensive EWRA for this institution. Return complete EwraResult J
       });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as EwraResult;
+    if (!Array.isArray(result.mitigationMeasures)) result.mitigationMeasures = [];
+    if (result.customerRisk && !Array.isArray(result.customerRisk.keyFactors)) result.customerRisk.keyFactors = [];
+    if (result.productRisk && !Array.isArray(result.productRisk.keyFactors)) result.productRisk.keyFactors = [];
+    if (result.geographicRisk && !Array.isArray(result.geographicRisk.keyFactors)) result.geographicRisk.keyFactors = [];
+    if (result.channelRisk && !Array.isArray(result.channelRisk.keyFactors)) result.channelRisk.keyFactors = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "ewra-generator temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});

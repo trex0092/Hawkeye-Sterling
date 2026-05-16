@@ -86,6 +86,9 @@ export async function POST(req: Request): Promise<NextResponse> {
     const text = res.content[0]?.type === "text" ? res.content[0].text : "";
     const stripped = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
     const parsed = JSON.parse(stripped) as AmAssessmentResult;
+    if (!Array.isArray(parsed.topConcerns)) parsed.topConcerns = [];
+    if (!Array.isArray(parsed.fatfTypologies)) parsed.fatfTypologies = [];
+    if (!Array.isArray(parsed.uaeSpecificRisks)) parsed.uaeSpecificRisks = [];
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "adverse-media-assess temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
