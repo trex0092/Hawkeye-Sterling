@@ -51,6 +51,11 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
       "luxury goods laundering", "art laundering", "yacht laundering",
       "crypto laundering", "crypto mixer", "crypto tumbler",
       "chain hopping", "chain-hopping",
+      // DPMS sector laundering typologies (gold as placement vehicle)
+      "gold laundering", "precious metals laundering", "gold as currency",
+      "dpms", "dealer in precious metals", "dealer in precious stones",
+      "cash for gold", "gold bar scheme", "bullion fraud", "gold vault fraud",
+      "jewellery laundering", "diamond laundering",
     ],
   },
   {
@@ -101,6 +106,11 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
     terms: [
       "organised crime", "organized crime",
       "drug trafficking", "narcotics", "cartel", "mafia",
+      // DPMS / precious-metals illicit trade — critical for UAE gold dealer context
+      "gold smuggling", "gold traffick", "precious metals smuggling", "precious metal smuggling",
+      "diamond smuggling", "diamond traffick", "gemstone smuggling",
+      "illicit gold", "contraband gold", "illegal gold", "gold dealer arrested",
+      "smuggling ring", "illicit trade", "contraband", "smuggled gold",
     ],
   },
   {
@@ -135,6 +145,9 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
       // Wave 4 — synthetic / fabricated identity fraud typology.
       "synthetic identity", "synthetic identity fraud",
       "fabricated identity", "ghost identity", "identity stacking",
+      // DPMS sector fraud
+      "gold fraud", "gold scam", "fake gold", "gold bar fraud", "precious metals fraud",
+      "jewellery fraud", "diamond fraud", "gem fraud", "counterfeit gold",
     ],
   },
   {
@@ -204,6 +217,11 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
       "illegal mining", "illegal logging", "illegal fishing",
       "iuu fishing", "illegal waste dumping", "illegal dumping",
       "waste trafficking", "pollution crime",
+      // Conflict minerals — FATF predicate and DPMS sector red flag
+      "conflict gold", "blood gold", "artisanal gold", "artisanal mining",
+      "conflict mineral", "conflict minerals", "conflict diamond", "blood diamond",
+      "rough diamond", "kimberley process violation", "illegal gold mining",
+      "alluvial gold", "gold mine fraud", "galamsey",
     ],
   },
   // AI-misuse / algorithmic-harm floor, informed by Hartono et al., "The Dual
