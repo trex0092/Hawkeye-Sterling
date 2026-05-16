@@ -83,7 +83,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       read: false,
     };
     await writeAlert(alert);
-    return NextResponse.json({ ok: true , headers: {} });
+    return NextResponse.json({ ok: true }, { headers: {} });
   } catch (err) {
     console.error("[alerts POST]", err instanceof Error ? err.message : err);
     return NextResponse.json(

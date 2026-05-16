@@ -98,7 +98,7 @@ async function handleGet(req: Request): Promise<NextResponse> {
   }
   // Newest first.
   items.sort((a, b) => b.initiatedAt.localeCompare(a.initiatedAt));
-  return NextResponse.json({ ok: true, count: items.length, items , headers: {} });
+  return NextResponse.json({ ok: true, count: items.length, items }, { headers: {} });
 }
 
 async function handlePost(req: Request): Promise<NextResponse> {
@@ -106,10 +106,10 @@ async function handlePost(req: Request): Promise<NextResponse> {
   if (!gate.ok) return gate.response;
   let raw: unknown;
   try { raw = await req.json(); } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers });
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: {} });
   }
   if (!isRecord(raw)) {
-    return NextResponse.json({ ok: false, error: "body must be a JSON object" }, { status: 400 , headers: gate.headers });
+    return NextResponse.json({ ok: false, error: "body must be a JSON object" }, { status: 400 , headers: {} });
   }
   const subjectId = safeId(raw["subjectId"]);
   const subjectName = stringField(raw["subjectName"]);
@@ -117,10 +117,10 @@ async function handlePost(req: Request): Promise<NextResponse> {
   const initiatedBy = stringField(raw["initiatedBy"]) ?? "analyst";
   const reason = stringField(raw["reason"]) ?? "";
   if (!subjectId || !subjectName) {
-    return NextResponse.json({ ok: false, error: "subjectId + subjectName required" }, { status: 400 , headers: gate.headers });
+    return NextResponse.json({ ok: false, error: "subjectId + subjectName required" }, { status: 400 , headers: {} });
   }
   if (!actionRaw || !ALLOWED_ACTIONS.has(actionRaw as FourEyesAction)) {
-    return NextResponse.json({ ok: false, error: `action must be one of ${[...ALLOWED_ACTIONS].join(", ")}` }, { status: 400 , headers: gate.headers });
+    return NextResponse.json({ ok: false, error: `action must be one of ${[...ALLOWED_ACTIONS].join(", ")}` }, { status: 400 , headers: {} });
   }
   const id = `fe-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
   const item: FourEyesItem = {
@@ -156,7 +156,7 @@ async function handlePost(req: Request): Promise<NextResponse> {
   };
 
   await setJson(`four-eyes/${id}`, enrichedItem);
-  return NextResponse.json({ ok: true, item: enrichedItem }, { headers: gate.headers });
+  return NextResponse.json({ ok: true, item: enrichedItem }, { headers: {} });
 }
 
 const ACTION_LABEL_MAP: Record<FourEyesAction, string> = {

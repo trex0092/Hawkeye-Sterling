@@ -885,7 +885,7 @@ export async function GET(req: Request): Promise<NextResponse> {
   const isAdmin = okGate.keyId === "portal_admin" || okGate.tier?.id === "enterprise";
 
   try {
-    return await _handleGet(isAdmin);
+    return await _handleGet(isAdmin, gate.headers);
   } catch (err) {
     console.error("[status] unhandled top-level error:", err instanceof Error ? err.message : err);
     return NextResponse.json(
@@ -895,7 +895,7 @@ export async function GET(req: Request): Promise<NextResponse> {
   }
 }
 
-async function _handleGet(isAdmin: boolean): Promise<NextResponse> {
+async function _handleGet(isAdmin: boolean, gateHeaders: Record<string, string> = {}): Promise<NextResponse> {
   const [
     screening,
     superBrain,
@@ -1375,5 +1375,5 @@ async function _handleGet(isAdmin: boolean): Promise<NextResponse> {
       rolling: currentSla(worstStatus),
       url: "/status",
     },
-  }, { headers: {} });
+  }, { headers: gateHeaders });
 }
