@@ -684,6 +684,6 @@ export async function POST(req: Request): Promise<Response> {
       retryAfterSeconds: null,
       requestId: Math.random().toString(36).slice(2, 10),
       latencyMs: Date.now() - _handlerStart,
-    }, { status: 500 , headers: {} });
+    }, { status: 500, headers: {} });
   }
 }

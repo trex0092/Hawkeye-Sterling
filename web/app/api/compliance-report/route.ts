@@ -865,6 +865,7 @@ async function handleComplianceReport(req: Request): Promise<Response> {
     return new Response(html, {
       status: 200,
       headers: {
+        ...gateHeaders,
         "content-type": "text/html; charset=utf-8",
         // inline so the browser renders it directly; user saves as PDF
         // via the auto-opened print dialog.
@@ -880,6 +881,7 @@ async function handleComplianceReport(req: Request): Promise<Response> {
   return new Response(report, {
     status: 200,
     headers: {
+      ...gateHeaders,
       "content-type": "text/plain; charset=utf-8",
       "content-disposition": `attachment; filename="${filename}"`,
       "x-latency-ms": String(latencyMs),
@@ -896,7 +898,7 @@ async function handleComplianceReport(req: Request): Promise<Response> {
       retryAfterSeconds: null,
       requestId: Math.random().toString(36).slice(2, 10),
       latencyMs: Date.now() - _handlerStart,
-    }, { status: 500 , headers: {} });
+    }, { status: 500, headers: {} });
   }
 }
 

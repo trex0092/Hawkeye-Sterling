@@ -325,7 +325,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const mergedContext: ContextPair[] = [
     ...persistedTurns.slice(-3).map((t) => ({ q: t.q, a: t.a })),
-    ...(body.context ?? []),
+    ...(Array.isArray(body.context) ? body.context : []),
   ];
 
   const preamble = buildContextPreamble(mergedContext);
@@ -359,9 +359,9 @@ export async function POST(req: Request): Promise<NextResponse> {
   // Build a rich evidence ID list — caller-supplied + classifier hints.
   const evidenceIds = Array.from(
     new Set([
-      ...(body.evidenceIds ?? []),
-      ...(body.typologyIds ?? []),
-      ...(body.adverseGroups ?? []).map((g) => `adverse:${g}`),
+      ...(Array.isArray(body.evidenceIds) ? body.evidenceIds : []),
+      ...(Array.isArray(body.typologyIds) ? body.typologyIds : []),
+      ...(Array.isArray(body.adverseGroups) ? body.adverseGroups : []).map((g) => `adverse:${g}`),
       ...analysis.typologies.map((t: string) => `typology:${t}`),
       ...analysis.doctrineHints.map((d: string) => `doctrine:${d}`),
       ...analysis.playbookHints.map((p: string) => `playbook:${p}`),

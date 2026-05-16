@@ -54,7 +54,7 @@ export async function POST(req: Request) {
           role: "user",
           content: `VASP Name: ${sanitizeField(body.vasp) || "Unknown VASP"}
 Jurisdiction: ${sanitizeField(body.jurisdiction) || "Not stated"}
-Products/Services: ${(body.products ?? []).map((p) => sanitizeField(p)).join(", ") || "Not stated"}
+Products/Services: ${(Array.isArray(body.products) ? body.products : []).map((p) => sanitizeField(p)).join(", ") || "Not stated"}
 Monthly Volume: ${sanitizeField(body.volumes) || "Not stated"}
 
 Assess FATF R.15/R.16 compliance, travel rule status, DeFi exposure, mixer/tumbler connections, and overall VASP risk tier. Identify red flags and provide a compliance recommendation.`,

@@ -46,7 +46,7 @@ function requireAdminToken(req: Request): NextResponse | null {
   const b = enc.encode(bearer);
   const match = a.byteLength === b.byteLength && timingSafeEqual(a, b);
   if (!match) {
-    return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 , headers: {} });
+    return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401, headers: {} });
   }
   return null;
 }

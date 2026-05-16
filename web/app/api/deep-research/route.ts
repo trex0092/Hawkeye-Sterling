@@ -270,7 +270,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const jurisdiction = sanitizeField(body.jurisdiction ?? "", 100);
   const entityType = sanitizeField(body.entityType ?? "", 50);
   const rounds = Math.min(Math.max(body.rounds ?? 3, 1), 4);
-  const focusAreas = (body.focusAreas ?? []).map((f) => sanitizeField(f, 100)).slice(0, 5);
+  const focusAreas = (Array.isArray(body.focusAreas) ? body.focusAreas : []).map((f) => sanitizeField(f, 100)).slice(0, 5);
 
   const t0 = Date.now();
   const anthropic = getAnthropicClient(apiKey, 4_500, "deep-research");

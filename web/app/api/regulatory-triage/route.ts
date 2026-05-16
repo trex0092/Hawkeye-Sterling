@@ -38,7 +38,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   let items: TriageItem[];
   try {
     const body = (await req.json()) as { items: TriageItem[] };
-    items = (body.items ?? []).slice(0, 20);
+    items = (Array.isArray(body.items) ? body.items : []).slice(0, 20);
   } catch {
     return NextResponse.json({ ok: false, error: "Invalid JSON body" }, { status: 400 , headers: gate.headers });
   }

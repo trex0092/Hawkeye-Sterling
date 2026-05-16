@@ -70,7 +70,7 @@ async function generateApprovalSummary(
     `Initiated by: ${initiatedBy}`,
   ].join("\n");
 
-  const client = getAnthropicClient(apiKey);
+  const client = getAnthropicClient(apiKey, 10_000);
   const msg = await client.messages.create({
     model: "claude-haiku-4-5-20251001",
     max_tokens: 700,
@@ -280,15 +280,15 @@ async function handlePatch(req: Request): Promise<NextResponse> {
     return null;
   });
 
-  return NextResponse.json({ ok: true, item: updated, ...(asanaTaskUrl ? { asanaTaskUrl } : {}) , headers: {} });
+  return NextResponse.json({ ok: true, item: updated, ...(asanaTaskUrl ? { asanaTaskUrl } : {}) });
 }
 
 async function handleDelete(req: Request): Promise<NextResponse> {
   const url = new URL(req.url);
   const id = safeId(url.searchParams.get("id"));
-  if (!id) return NextResponse.json({ ok: false, error: "id required" }, { status: 400 , headers: {} });
+  if (!id) return NextResponse.json({ ok: false, error: "id required" }, { status: 400 });
   await del(`four-eyes/${id}`);
-  return NextResponse.json({ ok: true , headers: {} });
+  return NextResponse.json({ ok: true });
 }
 
 export const GET = withGuard(handleGet);

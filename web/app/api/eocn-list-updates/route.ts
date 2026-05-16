@@ -286,9 +286,9 @@ async function fetchUpstream(): Promise<{
 async function handleGet(_req: Request): Promise<NextResponse> {
   const cached = await getJson<EocnFeedPayload>(BLOB_KEY);
   if (cached && cached.listUpdates && cached.listUpdates.length > 0) {
-    return NextResponse.json(cached, { status: 200 , headers: {} });
+    return NextResponse.json(cached, { status: 200, headers: {} });
   }
-  return NextResponse.json(fixturePayload(), { status: 200 , headers: {} });
+  return NextResponse.json(fixturePayload(), { status: 200, headers: {} });
 }
 
 // Constant-time token comparison — rejects timing oracles on the

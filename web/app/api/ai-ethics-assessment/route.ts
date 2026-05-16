@@ -111,15 +111,15 @@ export async function POST(req: Request) {
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) return NextResponse.json({ ok: false, error: "ai-ethics-assessment temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
-  const modelSummary = (body.models ?? [])
+  const modelSummary = (Array.isArray(body.models) ? body.models : [])
     .map((m) => `${sanitizeField(m.name, 100)} (${sanitizeField(m.riskTier, 50)} risk, purpose: ${sanitizeField(m.purpose, 200)}, bias audit: ${sanitizeField(m.biasAuditStatus, 50)})`)
     .join("; ");
 
-  const incidentSummary = (body.incidents ?? [])
+  const incidentSummary = (Array.isArray(body.incidents) ? body.incidents : [])
     .map((i) => `${sanitizeField(i.severity, 50)} — ${sanitizeField(i.type, 100)} (${sanitizeField(i.model, 100)})`)
     .join("; ");
 
-  const biasSummary = (body.biasData ?? [])
+  const biasSummary = (Array.isArray(body.biasData) ? body.biasData : [])
     .map((b) => `${sanitizeField(b.segment, 100)}: ${b.fprPct}% FPR`)
     .join("; ");
 

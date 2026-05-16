@@ -141,8 +141,8 @@ export async function POST(req: Request) {
     return {
       overallRisk,
       executiveSummary: `Enterprise-Wide Risk Assessment for ${body.institutionName ?? "the institution"} — reporting period ${body.reportingPeriod ?? new Date().getFullYear()}. Overall inherent risk scored ${inh}/5; overall residual risk ${res}/5 (band: ${overallRisk.toUpperCase()}). Assessment performed across ${body.dimensions?.length ?? 0} dimensions in line with FATF R.1 and FDL 10/2025 Art.4. The Board is asked to note residual exposure and approve the action plan below.`,
-      keyFindings: (body.dimensions ?? []).slice(0, 5).map((d) => `${d.dimension} — inherent ${d.inherent}/5, controls ${d.controls}/5${d.notes ? ` (${d.notes})` : ""}`),
-      dimensionNarratives: (body.dimensions ?? []).map((d) => ({
+      keyFindings: (Array.isArray(body.dimensions) ? body.dimensions : []).slice(0, 5).map((d) => `${d.dimension} — inherent ${d.inherent}/5, controls ${d.controls}/5${d.notes ? ` (${d.notes})` : ""}`),
+      dimensionNarratives: (Array.isArray(body.dimensions) ? body.dimensions : []).map((d) => ({
         dimension: d.dimension,
         inherentRisk: d.inherent >= 4 ? "high" : d.inherent >= 3 ? "medium" : "low",
         residualRisk: Math.max(0, d.inherent - d.controls) >= 3 ? "elevated" : "tolerable",

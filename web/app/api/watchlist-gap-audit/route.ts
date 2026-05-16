@@ -82,7 +82,7 @@ async function handler(req: Request): Promise<NextResponse> {
   }
 
   const institutionType = body.institutionType ?? "DPMS";
-  const configuredLower = new Set((body.configuredLists ?? []).map((s) => s.toLowerCase()));
+  const configuredLower = new Set((Array.isArray(body.configuredLists) ? body.configuredLists : []).map((s) => s.toLowerCase()));
 
   const applicable = REQUIRED_WATCHLISTS.filter((w) => w.mandatoryFor.includes(institutionType));
   const covered = applicable.filter((w) => configuredLower.has(w.id) || [...configuredLower].some((c) => c.includes(w.id.replace(/-/g, "")) || w.name.toLowerCase().includes(c)));
