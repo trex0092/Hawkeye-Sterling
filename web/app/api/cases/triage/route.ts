@@ -160,7 +160,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const triaged: TriageResult[] = [];
   try {
-    const client = getAnthropicClient(apiKey, 4_500);
+    const client = getAnthropicClient(apiKey, 55_000);
     for (const batch of batches) {
       const results = await triageBatch(batch, client);
       triaged.push(...results);

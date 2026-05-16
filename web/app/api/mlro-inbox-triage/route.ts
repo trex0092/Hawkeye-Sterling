@@ -309,7 +309,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (generateNarrative && triaged.length > 0) {
     try {
       const apiKey = process.env.ANTHROPIC_API_KEY ?? "";
-      const anthropic = getAnthropicClient(apiKey, 4_500, "mlro-inbox-triage");
+      const anthropic = getAnthropicClient(apiKey, 55_000, "mlro-inbox-triage");
       const criticalItems = triaged.filter((t) => t.priority === "critical");
       const highItems = triaged.filter((t) => t.priority === "high");
 

@@ -98,7 +98,7 @@ async function runHaikuQuick(question: string, contextPairs: HaikuPair[], apiKey
   const ctl = new AbortController();
   const killTimer = setTimeout(() => ctl.abort(), HAIKU_TIMEOUT_MS);
   try {
-    const client = getAnthropicClient(apiKey, 4_500);
+    const client = getAnthropicClient(apiKey, 115_000);
     const upstream = await client.messages.create({
         model: HAIKU_MODEL,
         max_tokens: 700,

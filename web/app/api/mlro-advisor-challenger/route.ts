@@ -232,7 +232,7 @@ export async function POST(req: Request): Promise<Response> {
   const killTimer = setTimeout(() => upstreamCtl.abort(), HARD_TIMEOUT_MS);
 
   try {
-    const client = getAnthropicClient(apiKey, 4_500);
+    const client = getAnthropicClient(apiKey, 55_000);
     const upstream = await client.messages.create({
         model: MODEL,
         max_tokens: MAX_TOKENS,

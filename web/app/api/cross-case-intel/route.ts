@@ -63,7 +63,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     }, { headers: gate.headers });
   }
 
-  const client = getAnthropicClient(apiKey, 4_500, "cross-case-intel");
+  const client = getAnthropicClient(apiKey, 55_000, "cross-case-intel");
 
   const response = await client.messages.create({
     model: "claude-sonnet-4-6",

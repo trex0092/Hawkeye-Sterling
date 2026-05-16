@@ -89,7 +89,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: true, jurisdiction: body.jurisdiction, ...staticProfile, aiEnriched: false }, { headers: gate.headers });
   }
 
-  const client = getAnthropicClient(apiKey, 4_500, "geo-intelligence");
+  const client = getAnthropicClient(apiKey, 25_000, "geo-intelligence");
   const response = await client.messages.create({
     model: "claude-haiku-4-5-20251001",
     max_tokens: 800,

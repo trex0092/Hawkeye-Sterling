@@ -164,7 +164,7 @@ This exit is being conducted under FDL 10/2025 and the entity's risk appetite po
 
   try {
     const apiKey = process.env.ANTHROPIC_API_KEY ?? "";
-    const anthropic = getAnthropicClient(apiKey, 4_500, "exit-letter-gen");
+    const anthropic = getAnthropicClient(apiKey, 55_000, "exit-letter-gen");
 
     const tippingOffInstruction = strFiled
       ? "CRITICAL: A Suspicious Transaction Report (STR) has been filed in relation to this customer. You MUST NOT mention AML, money laundering, suspicious activity, investigations, or regulatory filings in the letter. Use only neutral business language."

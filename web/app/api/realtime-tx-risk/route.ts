@@ -327,7 +327,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (enrichWithAI && score >= 50) {
     try {
       const apiKey = process.env.ANTHROPIC_API_KEY ?? "";
-      const anthropic = getAnthropicClient(apiKey, 4_500, "realtime-tx-risk");
+      const anthropic = getAnthropicClient(apiKey, 25_000, "realtime-tx-risk");
       const prompt = `You are a UAE DPMS AML compliance specialist. A transaction has been scored ${score}/100 (${band} risk).
 
 Transaction details:

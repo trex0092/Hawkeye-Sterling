@@ -96,7 +96,7 @@ async function handler(req: Request): Promise<NextResponse> {
   let aiRecommendations: string[] = [];
   if (apiKey && (body.includeAiRecommendations !== false) && gaps.length > 0) {
     try {
-      const client = getAnthropicClient(apiKey, 4_500, "watchlist-gap-audit");
+      const client = getAnthropicClient(apiKey, 25_000, "watchlist-gap-audit");
       const res = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 500,

@@ -158,7 +158,7 @@ async function parseQuery(query: string): Promise<ParseResult> {
   }
 
   try {
-    const client = getAnthropicClient(apiKey, 4_500);
+    const client = getAnthropicClient(apiKey, 25_000);
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 1024,

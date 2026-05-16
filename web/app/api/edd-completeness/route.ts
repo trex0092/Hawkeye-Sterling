@@ -282,7 +282,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (generateNarrative && missing.length > 0) {
     try {
       const apiKey = process.env.ANTHROPIC_API_KEY ?? "";
-      const anthropic = getAnthropicClient(apiKey, 4_500, "edd-completeness");
+      const anthropic = getAnthropicClient(apiKey, 25_000, "edd-completeness");
       const prompt = `You are a UAE AML compliance officer reviewing an EDD file. The file has the following gaps:
 
 Subject: ${eddFile.subjectName ?? "Unknown"}

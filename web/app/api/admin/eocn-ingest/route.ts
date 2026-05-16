@@ -154,7 +154,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     ? ("application/pdf" as const)
     : ("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" as const);
 
-  const anthropic = getAnthropicClient(apiKey, 4_500, "eocn-ingest");
+  const anthropic = getAnthropicClient(apiKey, 55_000, "eocn-ingest");
 
   const warnings: string[] = [];
 

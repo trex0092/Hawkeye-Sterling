@@ -199,7 +199,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const userMessage = `Disambiguate these screening hits for client: ${JSON.stringify(sanitizedClient)}. Hits to assess: ${JSON.stringify(sanitizedHits)}`;
 
   try {
-    const client = getAnthropicClient(apiKey, 4_500);
+    const client = getAnthropicClient(apiKey, 55_000);
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 1024,

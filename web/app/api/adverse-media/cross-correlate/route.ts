@@ -65,7 +65,7 @@ export async function POST(req: Request) {
   if (!apiKey) return NextResponse.json({ ok: false, error: "adverse-media/cross-correlate temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
-    const client = getAnthropicClient(apiKey, 4_500);
+    const client = getAnthropicClient(apiKey, 55_000);
 
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",

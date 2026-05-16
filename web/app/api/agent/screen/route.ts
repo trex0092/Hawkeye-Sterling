@@ -247,7 +247,7 @@ async function callAnthropic(
   abortSignal: AbortSignal,
 ): Promise<AnthropicResponse> {
   // 55 s client-level timeout — the route has maxDuration: 60.
-  const client = getAnthropicClient(apiKey, 4_500);
+  const client = getAnthropicClient(apiKey, 55_000);
   const response = await client.messages.create(
     {
       model,

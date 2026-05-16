@@ -132,7 +132,7 @@ Respond ONLY with valid JSON — no markdown fences:
   "regulatoryBasis": "<full citation>"
 }`;
 
-  const client = getAnthropicClient(apiKey, 4_500, "str-narrative");
+  const client = getAnthropicClient(apiKey, 55_000, "str-narrative");
 
   try {
     let best: StrNarrativeResult | null = null;

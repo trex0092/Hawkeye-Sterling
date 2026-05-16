@@ -273,7 +273,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const focusAreas = (Array.isArray(body.focusAreas) ? body.focusAreas : []).map((f) => sanitizeField(f, 100)).slice(0, 5);
 
   const t0 = Date.now();
-  const anthropic = getAnthropicClient(apiKey, 4_500, "deep-research");
+  const anthropic = getAnthropicClient(apiKey, 55_000, "deep-research");
   const allFindings: Array<{ query: string; results: SearchResult[] }> = [];
   const citations: Citation[] = [];
   const seenUrls = new Set<string>();

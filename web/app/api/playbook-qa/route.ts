@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, ...EMPTY_ANSWER }, { headers: gate.headers });
   }
 
-  const client = getAnthropicClient(apiKey, 4_500);
+  const client = getAnthropicClient(apiKey, 55_000);
   const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 600,

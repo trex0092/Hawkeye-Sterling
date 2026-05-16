@@ -87,7 +87,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const client = getAnthropicClient(apiKey, 4_500);
+    const client = getAnthropicClient(apiKey, 55_000);
 
     const itemsList = items
       .map(

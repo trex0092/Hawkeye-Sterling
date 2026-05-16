@@ -66,7 +66,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     }, { headers: gate.headers });
   }
 
-  const client = getAnthropicClient(apiKey, 4_500, "sanctions-delta-intel");
+  const client = getAnthropicClient(apiKey, 55_000, "sanctions-delta-intel");
 
   const response = await client.messages.create({
     model: "claude-sonnet-4-6",

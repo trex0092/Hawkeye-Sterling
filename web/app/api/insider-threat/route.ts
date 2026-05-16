@@ -194,7 +194,7 @@ export async function POST(req: Request) {
   const previousProfile = mode === "monitor" ? await loadProfile(employeeId) : null;
 
   try {
-    const client = getAnthropicClient(apiKey, 4_500, "insider-threat");
+    const client = getAnthropicClient(apiKey, 55_000, "insider-threat");
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 800,

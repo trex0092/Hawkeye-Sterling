@@ -211,7 +211,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   let typologyChain: string[] = [];
 
   if (apiKey && staticMatches.length > 0) {
-    const client = getAnthropicClient(apiKey, 4_500, "typology-chain");
+    const client = getAnthropicClient(apiKey, 40_000, "typology-chain");
     try {
       const res = await client.messages.create({
         model: "claude-haiku-4-5-20251001",

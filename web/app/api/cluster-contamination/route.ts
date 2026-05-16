@@ -206,7 +206,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     }, { headers: gate.headers });
   }
 
-  const client = getAnthropicClient(apiKey, 4_500, "cluster-contamination");
+  const client = getAnthropicClient(apiKey, 55_000, "cluster-contamination");
 
   const clusterResponse = await client.messages.create({
     model: "claude-sonnet-4-6",

@@ -169,7 +169,7 @@ Respond ONLY with valid JSON — no markdown fences, no explanation:
 Generate 10–15 questions. Be specific to the UAE gold/DPMS context and the customer profile.`;
 
   try {
-    const client = getAnthropicClient(apiKey, 4_500);
+    const client = getAnthropicClient(apiKey, 55_000);
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 700,

@@ -48,7 +48,7 @@ export async function POST(req: Request) {
   const chainStart = Date.now();
 
   try {
-    const client = getAnthropicClient(apiKey, 4_500);
+    const client = getAnthropicClient(apiKey, 55_000);
 
     // ── Step 1: Subject Brief ──────────────────────────────────────────────
     const step1 = await client.messages.create({

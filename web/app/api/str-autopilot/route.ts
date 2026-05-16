@@ -175,7 +175,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     }, { headers: gate.headers });
   }
 
-  const client = getAnthropicClient(apiKey, 4_500, "str-autopilot");
+  const client = getAnthropicClient(apiKey, 55_000, "str-autopilot");
 
   // Stage 1: Draft/enhance narrative
   const narrativeRes = await client.messages.create({

@@ -101,7 +101,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     }, { headers: gate.headers });
   }
 
-  const client = getAnthropicClient(apiKey, 4_500, "programme-examiner");
+  const client = getAnthropicClient(apiKey, 55_000, "programme-examiner");
 
   const response = await client.messages.create({
     model: "claude-opus-4-7",

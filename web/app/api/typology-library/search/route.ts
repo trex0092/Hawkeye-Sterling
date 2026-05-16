@@ -340,7 +340,7 @@ export async function POST(req: Request) {
   try {
     // Netlify Functions cap at 26s gateway timeout; SDK timeout must
     // sit comfortably below or callers see HTTP 504.
-    const client = getAnthropicClient(apiKey, 4_500);
+    const client = getAnthropicClient(apiKey, 55_000);
 
     const filterStr = body.filters
       ? `Filters: sector=${body.filters.sector ?? "any"}, jurisdiction=${body.filters.jurisdictionType ?? "any"}, riskLevel=${body.filters.riskLevel ?? "any"}, fatfCategory=${body.filters.fatfCategory ?? "any"}`

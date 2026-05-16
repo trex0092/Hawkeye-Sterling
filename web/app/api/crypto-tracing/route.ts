@@ -695,7 +695,7 @@ export async function POST(req: Request) {
   if (!apiKey) return NextResponse.json({ ok: false, error: "crypto-tracing temporarily unavailable - please retry." }, { status: 503 });
 
   try {
-    const client = getAnthropicClient(apiKey, 4_500);
+    const client = getAnthropicClient(apiKey, 55_000);
 
     const tp = body.transactionPatterns ?? {};
     const rf = body.riskFlags ?? {};

@@ -165,7 +165,7 @@ ${metrics.regulatoryChanges?.join("\n") ?? "None noted"}
 
   try {
     const apiKey = process.env.ANTHROPIC_API_KEY ?? "";
-    const anthropic = getAnthropicClient(apiKey, 4_500, "board-pack-auto");
+    const anthropic = getAnthropicClient(apiKey, 85_000, "board-pack-auto");
     const prompt = `You are a senior UAE AML/CFT compliance advisor preparing a board-level AML report for a DPMS (gold/precious metals dealer). Write a professional, compliance-grade board AML report using the data below.
 
 ${dataContext}

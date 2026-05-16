@@ -223,7 +223,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     }, { headers: gate.headers });
   }
 
-  const client = getAnthropicClient(apiKey, 4_500, "structuring-predict");
+  const client = getAnthropicClient(apiKey, 25_000, "structuring-predict");
   const res = await client.messages.create({
     model: "claude-haiku-4-5-20251001",
     max_tokens: 600,
