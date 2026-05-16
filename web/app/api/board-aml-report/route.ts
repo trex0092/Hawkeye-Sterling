@@ -4,6 +4,7 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 export interface BoardAmlReportResult {
   executiveSummary: string;
   keyMetrics: Array<{
@@ -122,20 +123,20 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
   if (!body.reportingPeriod?.trim() && !body.institutionName?.trim()) {
-    return NextResponse.json({ ok: false, error: "reportingPeriod or institutionName required" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "reportingPeriod or institutionName required" }, { status: 400 , headers: gate.headers });
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "board-aml-report temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "board-aml-report temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
-    const client = getAnthropicClient(apiKey, 22_000);
+    const client = getAnthropicClient(apiKey, 55_000);
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 1500,
+      max_tokens: 700,
       system: [
         {
           type: "text",
@@ -145,21 +146,26 @@ export async function POST(req: Request) {
       ],
       messages: [{
         role: "user",
-        content: `Institution Name: ${body.institutionName ?? "not specified"}
-Reporting Period: ${body.reportingPeriod ?? "current quarter"}
+        content: `Institution Name: ${sanitizeField(body.institutionName, 300) || "not specified"}
+Reporting Period: ${sanitizeField(body.reportingPeriod, 50) || "current quarter"}
 STR Count: ${body.strCount ?? "not provided"}
 CTR Count: ${body.ctrCount ?? "not provided"}
 Training Completion: ${body.trainingCompletion ?? "not provided"}
 Open Audit Findings: ${body.openFindings ?? "not provided"}
-Additional Context: ${body.context ?? "none"}
+Additional Context: ${sanitizeText(body.context, 2000) || "none"}
 
 Generate a comprehensive quarterly Board AML/CFT report. Return complete BoardAmlReportResult JSON.`,
       }],
     });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as BoardAmlReportResult;
+    if (!Array.isArray(result.keyMetrics)) result.keyMetrics = [];
+    if (!Array.isArray(result.regulatoryHighlights)) result.regulatoryHighlights = [];
+    if (!Array.isArray(result.openAuditFindings)) result.openAuditFindings = [];
+    if (!Array.isArray(result.upcomingObligations)) result.upcomingObligations = [];
+    if (!Array.isArray(result.boardRecommendations)) result.boardRecommendations = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "board-aml-report temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "board-aml-report temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

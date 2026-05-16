@@ -4,6 +4,7 @@ export const maxDuration = 60;import { NextResponse } from "next/server";
 
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export interface StrQualityResult {
   qualityScore: number;
@@ -62,22 +63,22 @@ export async function POST(req: Request) {
   } catch {
     return NextResponse.json(
       { ok: false, error: "Invalid JSON" },
-      { status: 400 }
+      { status: 400, headers: gate.headers }
     );
   }
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "str-quality temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "str-quality temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 55_000);
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 1500,
+        max_tokens: 700,
         system:
           "You are a UAE AML/CFT compliance expert specialising in goAML STR quality assessment. Evaluate STR narratives for UAE FIU/goAML submission readiness. Return valid JSON only matching the StrQualityResult interface.",
         messages: [
           {
             role: "user",
-            content: `Assess the STR narrative quality for goAML submission.\n\nSubject: ${body.subjectName}\nTotal Amount: ${body.totalAmount}\nTransaction Count: ${body.transactionCount}\nSuspected Offence: ${body.suspectedOffence}\nContext: ${body.context}\n\nNarrative Text:\n${body.narrativeText}\n\nReturn JSON with fields: qualityScore (0-100), grade (A/B/C/D/F), goamlReadiness, missingElements[], narrativeWeaknesses[], strengths[], revisedNarrativeSuggestions[], regulatoryBasis.`,
+            content: `Assess the STR narrative quality for goAML submission.\n\nSubject: ${sanitizeField(body.subjectName)}\nTotal Amount: ${sanitizeField(body.totalAmount)}\nTransaction Count: ${sanitizeField(body.transactionCount)}\nSuspected Offence: ${sanitizeField(body.suspectedOffence)}\nContext: ${sanitizeText(body.context)}\n\nNarrative Text:\n${sanitizeText(body.narrativeText)}\n\nReturn JSON with fields: qualityScore (0-100), grade (A/B/C/D/F), goamlReadiness, missingElements[], narrativeWeaknesses[], strengths[], revisedNarrativeSuggestions[], regulatoryBasis.`,
           },
         ],
       });
@@ -86,8 +87,12 @@ export async function POST(req: Request) {
     const result = JSON.parse(
       raw.replace(/```json\n?|\n?```/g, "").trim()
     ) as StrQualityResult;
+    if (!Array.isArray(result.missingElements)) result.missingElements = [];
+    if (!Array.isArray(result.narrativeWeaknesses)) result.narrativeWeaknesses = [];
+    if (!Array.isArray(result.strengths)) result.strengths = [];
+    if (!Array.isArray(result.revisedNarrativeSuggestions)) result.revisedNarrativeSuggestions = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "str-quality temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "str-quality temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

@@ -70,7 +70,7 @@ function typedEvidence<T>(ctx: BrainContext, key: string): T[] {
 
 function singleEvidence<T>(ctx: BrainContext, key: string): T | undefined {
   const v = (ctx.evidence as Record<string, unknown> | undefined)?.[key];
-  return v == null ? undefined : (v as T);
+  return v === null || v === undefined ? undefined : (v as T);
 }
 
 // ──────────────────────────────────────────────────────────────────────
@@ -250,13 +250,13 @@ const threeLinesDefenceApply = async (ctx: BrainContext): Promise<Finding> => {
   const broken = lines.filter(
     (l) => !l.responsibilitiesDefined || !l.independenceAdequate || !l.reportingLineClean,
   );
-  const undefined = lines.filter((l) => !l.responsibilitiesDefined);
-  const score = clamp01(undefined.length * 0.5 + broken.length * 0.25);
-  const verdict: Verdict = undefined.length > 0
+  const undefinedLines = lines.filter((l) => !l.responsibilitiesDefined);
+  const score = clamp01(undefinedLines.length * 0.5 + broken.length * 0.25);
+  const verdict: Verdict = undefinedLines.length > 0
     ? 'escalate'
     : broken.length > 0 ? 'flag' : 'clear';
-  const rationale = undefined.length > 0
-    ? `Line ${undefined.map((l) => l.line).join('/')} responsibilities not defined. Three-lines model non-functional.`
+  const rationale = undefinedLines.length > 0
+    ? `Line ${undefinedLines.map((l) => l.line).join('/')} responsibilities not defined. Three-lines model non-functional.`
     : broken.length > 0
       ? `${broken.length} line(s) with independence or reporting-line weakness: ${broken.map((l) => `Line ${l.line}`).join(', ')}.`
       : `All three lines defined, independent, and reporting cleanly.`;
@@ -333,7 +333,7 @@ const presumptionInnocenceApply = async (ctx: BrainContext): Promise<Finding> =>
     ? 'escalate'
     : overReach.length > 0 ? 'flag' : 'clear';
   const rationale = overReach.length > 0
-    ? `${overReach.length} conclusion(s) reached without sufficient affirmative evidence: "${overReach[0]!.conclusion}"${overReach.length > 1 ? ` +${overReach.length - 1} more` : ''}. Presumption of innocence requires stronger basis.`
+    ? `${overReach.length} conclusion(s) reached without sufficient affirmative evidence: "${overReach[0]?.conclusion ?? ''}"${overReach.length > 1 ? ` +${overReach.length - 1} more` : ''}. Presumption of innocence requires stronger basis.`
     : `All ${checks.length} conclusion(s) supported by ${balanced.length > 0 ? 'moderate or strong' : 'adequate'} evidence (avg strength ${(avgStrength * 100).toFixed(0)}%).`;
   return mkFinding('presumption_innocence', 'logic', ['argumentation'],
     verdict, score, 0.8, rationale, checks.map((c) => c.sourceRef));
@@ -358,7 +358,7 @@ const saturationApply = async (ctx: BrainContext): Promise<Finding> => {
       'No evidence rounds supplied. Mode requires evidenceRounds[] (charter P1).');
   }
   const sorted = [...rounds].sort((a, b) => a.round - b.round);
-  const deltas = sorted.slice(1).map((r, i) => Math.abs(r.conclusionScore - sorted[i]!.conclusionScore));
+  const deltas = sorted.slice(1).map((r, i) => Math.abs(r.conclusionScore - (sorted[i]?.conclusionScore ?? 0)));
   const avgDelta = deltas.length > 0 ? deltas.reduce((s, d) => s + d, 0) / deltas.length : 1;
   const lastDelta = deltas[deltas.length - 1] ?? 1;
   const saturated = lastDelta < 0.02 && sorted.length >= 3;
@@ -632,8 +632,8 @@ const postMortemApply = async (ctx: BrainContext): Promise<Finding> => {
     `${pm.rootCauses.length} root cause(s), ${pm.controlFailures.length} control failure(s), ${pm.missedSignals.length} missed signal(s).`,
   ];
   if (pm.preventable) parts.push('Incident was preventable.');
-  if (pm.timeToDetectDays != null) parts.push(`Time to detect: ${pm.timeToDetectDays}d.`);
-  if (pm.timeToContainDays != null) parts.push(`Time to contain: ${pm.timeToContainDays}d.`);
+  if (pm.timeToDetectDays !== null && pm.timeToDetectDays !== undefined) parts.push(`Time to detect: ${pm.timeToDetectDays}d.`);
+  if (pm.timeToContainDays !== null && pm.timeToContainDays !== undefined) parts.push(`Time to contain: ${pm.timeToContainDays}d.`);
   return mkFinding('post_mortem', 'cognitive_science', ['deep_thinking', 'introspection'],
     verdict, severityScore, 0.85, parts.join(' '), [pm.sourceRef]);
 };

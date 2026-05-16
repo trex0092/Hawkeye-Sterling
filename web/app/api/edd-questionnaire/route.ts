@@ -120,12 +120,12 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
   const { customerType, riskFactors, jurisdiction, productTypes, context, superBrainResult } = body;
   const sbContext = superBrainResult ? deriveEddContext(superBrainResult) : null;
   if (!customerType?.trim()) {
-    return NextResponse.json({ ok: false, error: "customerType required" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "customerType required" }, { status: 400 , headers: gate.headers });
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
@@ -169,10 +169,10 @@ Respond ONLY with valid JSON — no markdown fences, no explanation:
 Generate 10–15 questions. Be specific to the UAE gold/DPMS context and the customer profile.`;
 
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 55_000);
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 2000,
+        max_tokens: 700,
         system: systemPrompt,
         messages: [{
           role: "user",
@@ -187,8 +187,10 @@ Generate the EDD questionnaire. ${sbContext?.eddLevel === "intensive" ? "This su
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const cleaned = raw.replace(/```json\n?|\n?```/g, "").trim();
     const result = JSON.parse(cleaned) as EddQuestionnaire;
+    if (!Array.isArray(result.categories)) result.categories = [];
+    if (!Array.isArray(result.documentationRequired)) result.documentationRequired = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "edd-questionnaire temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "edd-questionnaire temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

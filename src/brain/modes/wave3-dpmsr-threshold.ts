@@ -101,11 +101,13 @@ export const dpmsrThresholdApply = async (ctx: BrainContext): Promise<Finding> =
     const sorted = [...customerTxns].sort((a, b) => Date.parse(a.at) - Date.parse(b.at));
     // Sliding window: find groups within LINK_WINDOW_DAYS that aggregate to ≥ 55k.
     for (let i = 0; i < sorted.length; i++) {
-      const anchor = sorted[i]!;
+      const anchor = sorted[i];
+      if (!anchor) continue;
       const window: DpmsrTransaction[] = [anchor];
       let total = anchor.amountAed;
       for (let j = i + 1; j < sorted.length; j++) {
-        const next = sorted[j]!;
+        const next = sorted[j];
+        if (!next) continue;
         if (daysBetween(anchor.at, next.at) <= LINK_WINDOW_DAYS) {
           window.push(next);
           total += next.amountAed;

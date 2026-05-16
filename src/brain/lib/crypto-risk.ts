@@ -48,14 +48,16 @@ export function analyseCryptoEvidence(evidence: unknown): CryptoAnalysis {
       if (typeof f === 'string' && typeof to === 'string') {
         if (!adj.has(f)) adj.set(f, new Set());
         if (!adj.has(to)) adj.set(to, new Set());
-        adj.get(f)!.add(to);
-        adj.get(to)!.add(f);
+        (adj.get(f) ?? new Set()).add(to);
+        (adj.get(to) ?? new Set()).add(f);
       }
     }
     const q: Array<{ a: string; d: number }> = addresses.map((a) => ({ a: a.toLowerCase(), d: 0 }));
     const seen = new Set<string>(addresses.map((a) => a.toLowerCase()));
     while (q.length > 0) {
-      const { a, d } = q.shift()!;
+      const item = q.shift();
+      if (!item) break;
+      const { a, d } = item;
       if (d > 0 && KNOWN_MIXERS_SEED.has(a)) { mixerHops = Math.min(mixerHops, d); break; }
       if (d >= 6) continue;
       for (const nb of adj.get(a) ?? []) {

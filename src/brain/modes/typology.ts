@@ -377,11 +377,11 @@ export const phoenixCompanyApply = async (ctx: BrainContext): Promise<Finding> =
   let phoenixHits = 0;
   const hitPairs: string[] = [];
   for (let i = 0; i < parsed.length; i++) {
-    const a = parsed[i]!;
-    if (a.dissolved === null) continue;
+    const a = parsed[i];
+    if (!a || a.dissolved === null) continue;
     for (let j = i + 1; j < parsed.length; j++) {
-      const b = parsed[j]!;
-      if (b.incorporated < a.dissolved) continue;
+      const b = parsed[j];
+      if (!b || b.incorporated < a.dissolved) continue;
       const gapYears = (b.incorporated - a.dissolved) / (365 * 86_400_000);
       if (gapYears > 2) continue;
       const overlap = [...a.directors].filter((d) => b.directors.has(d)).length;
@@ -508,7 +508,7 @@ export const romanceScamApply = async (ctx: BrainContext): Promise<Finding> => {
   if (txs.length >= 3) {
     const amounts = txs.map((t) => Math.abs(Number((t as Record<string, unknown>)['amount'])));
     let up = 0;
-    for (let i = 1; i < amounts.length; i++) if (amounts[i]! > amounts[i - 1]!) up++;
+    for (let i = 1; i < amounts.length; i++) if ((amounts[i] ?? 0) > (amounts[i - 1] ?? 0)) up++;
     escalating = up >= Math.floor(amounts.length * 0.6);
   }
 

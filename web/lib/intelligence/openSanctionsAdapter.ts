@@ -65,7 +65,7 @@ function osEntityToCandidate(entity: OSEntity): SanctionsCandidate {
   const names = p.name ?? [];
   const primaryName = entity.caption || names[0] || entity.id;
   const aliases = [...new Set([...names, ...(p.alias ?? [])].filter((n) => n !== primaryName))];
-  const listSources = entity.datasets.map((ds) => `OS-${ds.toUpperCase().slice(0, 12)}`);
+  const listSources = (entity.datasets ?? []).map((ds) => `OS-${ds.toUpperCase().slice(0, 12)}`);
   const listId = listSources[0] ?? "OS-DEFAULT";
 
   return {
@@ -140,7 +140,8 @@ export async function syncOpenSanctions(apiKey?: string): Promise<SyncResult> {
         const errText = await res.text().catch(() => "");
         throw new Error(`OpenSanctions API ${res.status}: ${errText.slice(0, 200)}`);
       }
-      const data = (await res.json()) as { results: OSEntity[]; total: { value: number }; next?: string };
+      const data = (await res.json()) as { results?: OSEntity[]; total?: { value: number }; next?: string };
+      if (!Array.isArray(data.results)) break;
       const candidates = data.results.map(osEntityToCandidate);
       all.push(...candidates);
       fetched += candidates.length;
@@ -225,10 +226,19 @@ export async function matchEntity(query: MatchQuery, apiKey?: string): Promise<M
       body: JSON.stringify(body),
       signal: AbortSignal.timeout(10_000),
     });
-    if (!res.ok) return [];
+    if (!res.ok) {
+      console.warn(`[openSanctions] matchEntity: API returned HTTP ${res.status} — treating as no match`);
+      return [];
+    }
     const data = (await res.json()) as { responses?: { q?: { results?: MatchResult[] } } };
-    return data?.responses?.q?.results ?? [];
-  } catch {
+    const results = data?.responses?.q?.results;
+    if (!Array.isArray(results)) {
+      console.warn("[openSanctions] matchEntity: unexpected response shape — 'responses.q.results' is not an array");
+      return [];
+    }
+    return results;
+  } catch (err) {
+    console.warn("[openSanctions] matchEntity: fetch failed —", err instanceof Error ? err.message : String(err));
     return [];
   }
 }
@@ -249,7 +259,7 @@ export async function lookupByName(name: string): Promise<SanctionsCandidate[]> 
       totalEntities: number;
     } | null;
 
-    if (!indexRecord?.index) return [];
+    if (!indexRecord?.index || typeof indexRecord.chunkCount !== "number" || indexRecord.chunkCount <= 0) return [];
 
     const tokens = name.toLowerCase().split(/\s+/).filter((t) => t.length >= 3);
     const candidateIds = new Set<string>();
@@ -265,9 +275,9 @@ export async function lookupByName(name: string): Promise<SanctionsCandidate[]> 
       const chunk = await store.get(`os-sanctions/entities-${c}.json`, { type: "json" }).catch((err: unknown) => {
         console.warn(`[openSanctions] chunk ${c} blob failed:`, err instanceof Error ? err.message : err);
         return null;
-      }) as SanctionsCandidate[] | null;
-      if (!chunk) continue;
-      for (const entity of chunk) {
+      }) as unknown;
+      if (!chunk || !Array.isArray(chunk)) continue;
+      for (const entity of chunk as SanctionsCandidate[]) {
         if (candidateIds.has(entity.id)) results.push(entity);
       }
     }

@@ -121,7 +121,7 @@ export function matchLevenshtein(a: string, b: string, threshold = 0.82): MatchS
   const s = normalise(a);
   const t = normalise(b);
   const maxLen = Math.max(s.length, t.length);
-  if (maxLen === 0) return { method: 'levenshtein', score: 1, threshold, pass: true };
+  if (maxLen === 0) return { method: 'levenshtein', score: 0, threshold, pass: false };
   const d = levenshteinDistance(s, t);
   const score = 1 - d / maxLen;
   return { method: 'levenshtein', score, threshold, pass: score >= threshold };
@@ -131,10 +131,10 @@ export function matchLevenshtein(a: string, b: string, threshold = 0.82): MatchS
 export function jaro(a: string, b: string): number {
   const s = normalise(a);
   const t = normalise(b);
-  if (s === t) return 1;
   const m = s.length;
   const n = t.length;
   if (m === 0 || n === 0) return 0;
+  if (s === t) return 1;
   const matchWindow = Math.max(0, Math.floor(Math.max(m, n) / 2) - 1);
   const sFlags = new Array<boolean>(m).fill(false);
   const tFlags = new Array<boolean>(n).fill(false);
@@ -186,7 +186,7 @@ export function matchJaroWinkler(a: string, b: string, threshold = 0.9): MatchSc
 export function soundex(input: string): string {
   const s = normalise(toLatinScript(input)).replace(/\s+/g, '');
   if (!s) return '';
-  const first = s[0]!.toUpperCase();
+  const first = (s[0] ?? '').toUpperCase();
   const map: Record<string, string> = {
     b: '1', f: '1', p: '1', v: '1',
     c: '2', g: '2', j: '2', k: '2', q: '2', s: '2', x: '2', z: '2',
@@ -196,9 +196,9 @@ export function soundex(input: string): string {
     r: '6',
   };
   let out = first;
-  let prev = map[s[0]!] ?? '';
+  let prev = map[s[0] ?? ''] ?? '';
   for (let i = 1; i < s.length && out.length < 4; i++) {
-    const ch = s[i]!;
+    const ch = s[i] ?? '';
     const code = map[ch] ?? '';
     if (code) {
       if (code !== prev) out += code;

@@ -29,6 +29,7 @@ import { activeFreeProviders } from "@/lib/intelligence/freeAlwaysOnAdapters";
 import { searchAllNews } from "@/lib/intelligence/newsAdapters";
 import { ingestUrls } from "@/lib/intelligence/urlIngestion";
 import { llmAdverseMediaAdapter } from "@/lib/intelligence/llmAdverseMedia";
+import { groqAdverseMediaAdapter, geminiAdverseMediaAdapter } from "@/lib/intelligence/llmAdverseMediaAlt";
 import { assessCommonName } from "@/lib/intelligence/commonNames";
 import {
   runEnrichmentAdapters,
@@ -42,6 +43,88 @@ import {
 // netlify.toml; local dev runs `npm run build` at the root once to produce dist/.
 // @brain/* is resolved via web/tsconfig.json paths → ../dist/src/brain/*.
 import { quickScreen as brainQuickScreen } from "@brain/quick-screen.js";
+
+// ── Sanctions list health snapshot ─────────────────────────────────────────
+// Attached to every screening response so audit records capture which lists
+// had data (and how fresh) at the moment of screening. A "clear" verdict
+// against empty UAE lists is a compliance failure — not a real clear.
+
+const LIST_IDS = [
+  "un_consolidated", "ofac_sdn", "ofac_cons", "eu_fsf", "uk_ofsi",
+  "ca_osfi", "ch_seco", "au_dfat", "fatf", "uae_eocn", "uae_ltl",
+] as const;
+
+type ListHealthStatus = "healthy" | "stale" | "missing";
+
+interface ListHealthEntry {
+  entityCount: number | null;
+  ageHours: number | null;
+  status: ListHealthStatus;
+}
+
+type ListHealthSnapshot = Record<string, ListHealthEntry>;
+
+async function fetchListHealth(): Promise<ListHealthSnapshot> {
+  const STALE_HOURS = 36;
+  const HOUR_MS = 3_600_000;
+  const snapshot: ListHealthSnapshot = {};
+
+  let store: { get: (key: string, opts?: { type?: string }) => Promise<unknown> } | null = null;
+  try {
+    const { getStore } = await import("@netlify/blobs");
+    const siteID = process.env["NETLIFY_SITE_ID"] ?? process.env["SITE_ID"];
+    const token =
+      process.env["NETLIFY_BLOBS_TOKEN"] ??
+      process.env["NETLIFY_API_TOKEN"] ??
+      process.env["NETLIFY_AUTH_TOKEN"];
+    store = siteID && token
+      ? getStore({ name: "hawkeye-lists", siteID, token, consistency: "strong" })
+      : getStore({ name: "hawkeye-lists" });
+  } catch {
+    for (const id of LIST_IDS) {
+      snapshot[id] = { entityCount: null, ageHours: null, status: "missing" };
+    }
+    return snapshot;
+  }
+
+  await Promise.all(LIST_IDS.map(async (listId) => {
+    try {
+      const raw = await store!.get(`${listId}/latest.json`, { type: "json" }) as {
+        entities?: unknown[]; report?: { fetchedAt?: number }; fetchedAt?: number;
+      } | null;
+      if (!raw || !Array.isArray(raw.entities)) {
+        snapshot[listId] = { entityCount: null, ageHours: null, status: "missing" };
+        return;
+      }
+      const entityCount = raw.entities.length;
+      const fetchedAtMs = raw.report?.fetchedAt ?? raw.fetchedAt ?? null;
+      const ageHours = typeof fetchedAtMs === "number"
+        ? Math.round((Date.now() - fetchedAtMs) / HOUR_MS * 10) / 10
+        : null;
+      const status: ListHealthStatus =
+        ageHours !== null && ageHours > STALE_HOURS ? "stale" : "healthy";
+      snapshot[listId] = { entityCount, ageHours, status };
+    } catch {
+      snapshot[listId] = { entityCount: null, ageHours: null, status: "missing" };
+    }
+  }));
+
+  return snapshot;
+}
+
+function buildScreeningWarnings(health: ListHealthSnapshot): string[] {
+  const warnings: string[] = [];
+  for (const [listId, entry] of Object.entries(health)) {
+    if (entry.status === "missing") {
+      warnings.push(`${listId} list is missing from blob store at time of screening — no match possible against this list`);
+    } else if (entry.entityCount === 0) {
+      warnings.push(`${listId} had 0 entities at time of screening — no match possible against this list`);
+    } else if (entry.status === "stale") {
+      warnings.push(`${listId} data is stale (${entry.ageHours}h old) at time of screening — may not reflect recent designations`);
+    }
+  }
+  return warnings;
+}
 
 type QuickScreenFn = (
   subject: QuickScreenSubject,
@@ -86,6 +169,10 @@ function respond(
 
 export async function POST(req: Request): Promise<NextResponse> {
   const t0 = Date.now();
+  // Start list health check immediately — runs in parallel with auth + corpus
+  // loading so it doesn't add latency to the critical path.
+  const listHealthPromise = fetchListHealth().catch(() => null);
+
   // Require authentication — UAE FDL Art. 20 requires every screening
   // action to be traceable to a natural person. Anonymous screening (free
   // tier without an API key) leaves audit chain entries with no operator
@@ -112,6 +199,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
   if (subject.name.length > 512) {
     return respond(400, { ok: false, error: "subject.name exceeds 512-character limit" }, gateHeaders);
+  }
+  if (Array.isArray(subject.aliases) && subject.aliases.length > 50) {
+    return respond(400, { ok: false, error: "aliases exceeds 50-entry limit" }, gateHeaders);
+  }
+  if (Array.isArray(body.evidenceUrls) && body.evidenceUrls.length > 20) {
+    return respond(400, { ok: false, error: "evidenceUrls exceeds 20-entry limit" }, gateHeaders);
   }
 
   // Whitelist short-circuit — if the operator's tenant has previously
@@ -218,8 +311,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         } as QuickScreenResponse & { errorCode: string; errorType: string; tool: string; missingLists: string[]; degraded: boolean; message: string; requestId: string }, gateHeaders);
       }
     } catch (err) {
-      const detail = err instanceof Error ? err.message : String(err);
-      console.error("[quick-screen] loadCandidates failed", detail);
+      console.error("[quick-screen] loadCandidates failed:", err instanceof Error ? err.message : String(err));
       return respond(503, {
         ok: false,
         errorCode: "LISTS_MISSING",
@@ -228,9 +320,8 @@ export async function POST(req: Request): Promise<NextResponse> {
         missingLists: ["ofac_sdn", "un_consolidated"],
         degraded: true,
         message: "Screening cannot proceed: watchlist corpus unavailable. Run sanctions refresh and retry.",
-        detail,
         requestId: Math.random().toString(36).slice(2, 10),
-      } as QuickScreenResponse & { errorCode: string; errorType: string; tool: string; missingLists: string[]; degraded: boolean; message: string; detail: string; requestId: string }, gateHeaders);
+      } as QuickScreenResponse & { errorCode: string; errorType: string; tool: string; missingLists: string[]; degraded: boolean; message: string; requestId: string }, gateHeaders);
     }
   }
 
@@ -251,6 +342,28 @@ export async function POST(req: Request): Promise<NextResponse> {
       maxHits: body.options?.maxHits ?? HIT_LIMIT_LOCAL,
     };
     const result = quickScreen(subject, candidates, screenOptions);
+
+    // Hard 3-second SLA: if the enrichment adapters haven't resolved with
+    // enough budget remaining, return the deterministic list-match result
+    // immediately. Sanctions hits are always present (local match is O(1));
+    // only the enrichment layer (news, registries, LLM) is deferred.
+    // The client can re-poll for an enriched result if needed.
+    const HARD_DEADLINE_MS = 2_800;
+    const elapsedMs = Date.now() - t0;
+    if (elapsedMs >= HARD_DEADLINE_MS - 100) {
+      return respond(200, {
+        ok: true, ...result,
+        enrichmentPending: true,
+        latencyMs: Date.now() - t0,
+      } as QuickScreenResponse, gateHeaders);
+    }
+    // Budget remaining for the entire augmentation + response section.
+    const augBudgetMs = Math.max(200, HARD_DEADLINE_MS - (Date.now() - t0) - 150);
+    let _deadlineTimer: NodeJS.Timeout | null = null;
+    const deadlineP = new Promise<"timeout">((resolve) => {
+      _deadlineTimer = setTimeout(() => resolve("timeout"), augBudgetMs);
+    });
+
     // Augment with OpenSanctions live results when local matcher returns
     // few/no hits — adds a free additional signal layer beyond the bundled
     // watchlists. Best-effort: failure here doesn't 5xx the screening.
@@ -261,6 +374,8 @@ export async function POST(req: Request): Promise<NextResponse> {
       jurisdiction: subject.jurisdiction,
       entityType: subject.entityType,
     });
+    const groqAdapter = groqAdverseMediaAdapter();
+    const geminiAdapter = geminiAdverseMediaAdapter();
     const warn = (err: unknown) => console.warn("[hawkeye] quick-screen: best-effort adapter failed:", err);
     const canAug = subject.name.length >= 3;
     const hitGated = (result.hits.length < 3 || isCommonName) && canAug;
@@ -297,11 +412,8 @@ export async function POST(req: Request): Promise<NextResponse> {
       fraudShield: { available: false, reason: "no_key" },
     };
 
-    const [
-      openSanctionsResults, commercialResults, registryResults,
-      countryRegistryResults, countrySanctionsResults, freeAdapterResults,
-      rawNews, llmArts, enrichmentBundle,
-    ] = await Promise.all([
+    const augRace = await Promise.race([
+      Promise.all([
       // Group A — hit-gated (only when local hits sparse or common name)
       hitGated ? adapterTimeout(LIVE_OPENSANCTIONS_ADAPTER.lookup(subject.name, subject.jurisdiction ?? undefined).catch((e): OSResult => { warn(e); return []; }), [] as OSResult) : Promise.resolve<OSResult>([]),
       hitGated && commAdapter.isAvailable() ? adapterTimeout(commAdapter.lookup(subject.name, subject.jurisdiction ?? undefined).catch((e): CommResult => { warn(e); return []; }), [] as CommResult) : Promise.resolve<CommResult>([]),
@@ -310,16 +422,42 @@ export async function POST(req: Request): Promise<NextResponse> {
       canAug ? adapterTimeout(searchCountryRegistries(subject.name, subject.jurisdiction ?? undefined, ADAPTER_QUERY_LIMIT).catch((e): CRegResult => { warn(e); return { records: [], jurisdictions: [] }; }), { records: [], jurisdictions: [] } as CRegResult) : Promise.resolve<CRegResult>({ records: [], jurisdictions: [] }),
       canAug ? adapterTimeout(searchCountrySanctions(subject.name, subject.jurisdiction ?? undefined, ADAPTER_QUERY_LIMIT).catch((e): CSanResult => { warn(e); return { records: [], lists: [] }; }), { records: [], lists: [] } as CSanResult) : Promise.resolve<CSanResult>({ records: [], lists: [] }),
       canAug ? adapterTimeout(searchFreeAdapters(subject.name, subject.jurisdiction ?? undefined, ADAPTER_QUERY_LIMIT).catch((e): FreeResult => { warn(e); return { records: [], providersUsed: [] }; }), { records: [], providersUsed: [] } as FreeResult) : Promise.resolve<FreeResult>({ records: [], providersUsed: [] }),
-      // Group C — news velocity + LLM adverse-media recall
+      // Group C — news velocity + LLM adverse-media recall (Claude + Groq + Gemini in parallel)
       canAug ? adapterTimeout(searchAllNews(subject.name, { limit: 50 }).catch((e): NewsResult => { warn(e); return { articles: [], providersUsed: [] }; }), { articles: [], providersUsed: [] } as NewsResult) : Promise.resolve<NewsResult>({ articles: [], providersUsed: [] }),
       canAug && llmAdapter.isAvailable() ? adapterTimeout(llmAdapter.search(subject.name, { limit: 15 }).catch((e): LlmResult => { warn(e); return []; }), [] as LlmResult) : Promise.resolve<LlmResult>([]),
+      canAug && groqAdapter.isAvailable() ? adapterTimeout(groqAdapter.search(subject.name, { limit: 15 }).catch((e): LlmResult => { warn(e); return []; }), [] as LlmResult) : Promise.resolve<LlmResult>([]),
+      canAug && geminiAdapter.isAvailable() ? adapterTimeout(geminiAdapter.search(subject.name, { limit: 15 }).catch((e): LlmResult => { warn(e); return []; }), [] as LlmResult) : Promise.resolve<LlmResult>([]),
       // Group D — public-API enrichment (IP / blockchain / breach / domain / phone / fraud)
       adapterTimeout(runEnrichmentAdapters(hints).catch((e): EnrichmentBundle => { warn(e); return NULL_ENRICHMENT; }), NULL_ENRICHMENT),
+      ]).then((r) => r as [OSResult, CommResult, RegResult, CRegResult, CSanResult, FreeResult, NewsResult, LlmResult, LlmResult, LlmResult, EnrichmentBundle]),
+      deadlineP,
     ]);
+    if (_deadlineTimer) clearTimeout(_deadlineTimer);
 
-    // Merge LLM adverse-media articles (prepend so they rank first)
-    let newsArticles: NewsResult = llmArts.length > 0
-      ? { articles: [...llmArts, ...rawNews.articles], providersUsed: [...rawNews.providersUsed, "claude-adverse-media"] }
+    // If the deadline fired before adapters resolved, return fast-path result.
+    if (augRace === "timeout") {
+      return respond(200, {
+        ok: true, ...result,
+        enrichmentPending: true,
+        latencyMs: Date.now() - t0,
+      } as QuickScreenResponse, gateHeaders);
+    }
+
+    const [
+      openSanctionsResults, commercialResults, registryResults,
+      countryRegistryResults, countrySanctionsResults, freeAdapterResults,
+      rawNews, llmArts, groqArts, geminiArts, enrichmentBundle,
+    ] = augRace;
+
+    // Merge LLM adverse-media articles from all three AI providers
+    const aiArts = [...llmArts, ...groqArts, ...geminiArts];
+    const aiProviders = [
+      ...(llmArts.length > 0 ? ["claude-adverse-media"] : []),
+      ...(groqArts.length > 0 ? ["groq-adverse-media"] : []),
+      ...(geminiArts.length > 0 ? ["gemini-adverse-media"] : []),
+    ];
+    let newsArticles: NewsResult = aiArts.length > 0
+      ? { articles: [...aiArts, ...rawNews.articles], providersUsed: [...rawNews.providersUsed, ...aiProviders] }
       : rawNews;
 
     // URL-direct ingestion: when the operator passes evidenceUrls[]
@@ -408,6 +546,14 @@ export async function POST(req: Request): Promise<NextResponse> {
       knownSanctioned: result.hits.map((h) => ({ name: h.candidateName, listId: h.listId })),
     });
 
+    // Collect list health — cap wait at 800ms so a slow blob read can't
+    // push past the function deadline. If not resolved, skip the snapshot.
+    const listHealth = await Promise.race([
+      listHealthPromise,
+      new Promise<null>((r) => setTimeout(() => r(null), 800)),
+    ]);
+    const screeningWarnings = listHealth ? buildScreeningWarnings(listHealth) : [];
+
     return respond(
       200,
       {
@@ -455,12 +601,17 @@ export async function POST(req: Request): Promise<NextResponse> {
         // triage panel can show the appropriate banner.
         commonNameExpansion: isCommonName,
         latencyMs: Date.now() - t0,
+        // Sanctions list health at the moment of screening — required for
+        // auditable compliance records. A "clear" against empty UAE lists
+        // is a false clear, not a real one.
+        ...(listHealth ? { listHealthAtScreeningTime: listHealth } : {}),
+        ...(screeningWarnings.length > 0 ? { screeningWarnings } : {}),
       } as QuickScreenResponse,
       gateHeaders,
     );
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);
-    if (Date.now() - t0 > 5000) console.warn(`[quick-screen] slow response latencyMs=${Date.now() - t0}`);
+    if (Date.now() - t0 > 3000) console.warn(`[quick-screen] slow response latencyMs=${Date.now() - t0}`);
     return respond(
       500,
       { ok: false, errorCode: "HANDLER_EXCEPTION", errorType: "internal", tool: "screen_subject", error: "quick-screen failed", detail, requestId: Math.random().toString(36).slice(2, 10), latencyMs: Date.now() - t0 } as QuickScreenResponse & { errorCode: string; errorType: string; tool: string; requestId: string; latencyMs: number },

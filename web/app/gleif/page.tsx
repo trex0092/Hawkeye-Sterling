@@ -101,7 +101,7 @@ export default function GleifPage() {
       const data = await res.json() as { ok: boolean; results: SearchResult[]; error?: string };
       if (!mountedRef.current) return;
       if (!data.ok) setError(data.error ?? "Search failed");
-      else setSearchResults(data.results);
+      else setSearchResults(Array.isArray(data.results) ? data.results : []);
     } catch (err) {
       if (mountedRef.current) setError(err instanceof Error ? err.message : "Request failed");
     } finally { if (mountedRef.current) setLoading(false); }

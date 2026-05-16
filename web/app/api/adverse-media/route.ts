@@ -49,14 +49,15 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as AdverseMediaBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400, headers: CORS });
+    return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400, headers: { ...gate.headers, ...CORS } });
   }
 
   if (!body.subject?.trim()) {
-    return NextResponse.json({ ok: false, error: "subject is required" }, { status: 400, headers: CORS });
+    return NextResponse.json({ ok: false, error: "subject is required" }, { status: 400, headers: { ...gate.headers, ...CORS } });
   }
 
   const subject = body.subject.trim();
+  const routeStartMs = Date.now();
 
   // Bound the upstream call so a hung Taranis can't burn the whole 30s
   // function budget. Any timeout or thrown error short-circuits to the
@@ -86,7 +87,9 @@ export async function POST(req: Request): Promise<NextResponse> {
     // and return a properly-typed degraded verdict so the caller never sees a
     // silent CLEAR or an unhandled 500.
     try {
-      const verdict = await liveAdverseMedia(subject);
+      const elapsedMs = Date.now() - routeStartMs;
+      const remainingBudgetMs = Math.max(5_000, 27_000 - elapsedMs); // 27s safety buffer (30s maxDuration - 3s)
+      const verdict = await liveAdverseMedia(subject, remainingBudgetMs);
       return NextResponse.json(
         {
           ok: true,
@@ -170,12 +173,13 @@ function _parseSeen(s: string | undefined): string {
 // Replaces the old claudeAdverseMedia() that asked Claude from training memory.
 // Now: fetch REAL live articles from GDELT, then have Claude analyse those
 // specific articles — completely eliminating the knowledge-cutoff blind spot.
-async function liveAdverseMedia(subject: string) {
+async function liveAdverseMedia(subject: string, budgetMs = 20_000) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY not configured");
 
   // 1. Pull live articles via shared 3-layer cache (memory → Redis → GDELT live).
-  const gdeltResult = await fetchGdeltCached(subject);
+  // Forward remaining budget so GDELT doesn't overrun the route deadline.
+  const gdeltResult = await fetchGdeltCached(subject, { budgetMs });
   const items = gdeltResult.articles;
 
   // If GDELT itself failed (timeout / HTTP error), we must NOT return CLEAR.
@@ -219,23 +223,25 @@ async function liveAdverseMedia(subject: string) {
 
   const now = new Date().toISOString();
 
-  // 2. Build article block — Claude analyses REAL headlines, not training memory
+  // 2. Build article block — Claude analyses REAL headlines with enriched metadata
   const articleBlock =
     items.length > 0
       ? items
-          .slice(0, 30)
+          .slice(0, 50)
           .map((a, i) => {
             const date = _parseSeen(a.seendate);
             const tone = (a.tone ?? 0).toFixed(1);
-            return `[${i + 1}] ${date} | ${a.domain ?? "unknown"} | tone:${tone} | "${a.title}"`;
+            const srcScore = a.sourceScore != null ? ` | rep:${a.sourceScore.toFixed(2)}` : "";
+            const cats = a.riskCategories?.length ? ` | [${a.riskCategories.join(",")}]` : "";
+            return `[${i + 1}] ${date} | ${a.domain ?? "unknown"}${srcScore}${cats} | tone:${tone} | "${a.title}"`;
           })
           .join("\n")
       : "No articles found in GDELT 10-year corpus for this subject.";
 
-  const client = getAnthropicClient(apiKey, 55_000);
+  const client = getAnthropicClient(apiKey, 25_000);
   const response = await client.messages.create({
     model: "claude-haiku-4-5-20251001",
-    max_tokens: 3000,
+    max_tokens: 800,
     system: [
       {
         type: "text",

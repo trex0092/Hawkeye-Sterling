@@ -68,16 +68,16 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
-  const transactions = body.transactions ?? [];
+  const transactions = Array.isArray(body.transactions) ? body.transactions : [];
   if (transactions.length === 0) {
     return NextResponse.json({
       tagged: [],
       highRiskCount: 0,
       summary: "No transactions provided.",
-    });
+    }, { headers: gate.headers });
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
@@ -88,7 +88,7 @@ export async function POST(req: Request) {
 
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 4096,
+      max_tokens: 800,
       system: [
         {
           type: "text",
@@ -141,7 +141,7 @@ ${JSON.stringify(transactions, null, 2)}`,
 
     // Merge AI tags back onto original transaction objects
     const tagMap = new Map(
-      (parsed.tagged ?? []).map((t) => [t.id, t]),
+      (Array.isArray(parsed.tagged) ? parsed.tagged : []).map((t) => [t.id, t]),
     );
 
     const tagged: TaggedTx[] = transactions.map((tx) => {
@@ -166,7 +166,7 @@ ${JSON.stringify(transactions, null, 2)}`,
       tagged,
       highRiskCount,
       summary: parsed.summary ?? "",
-    } satisfies TypologyTagResult);
+    } satisfies TypologyTagResult, { headers: gate.headers });
   } catch {
     return NextResponse.json(buildFallback(transactions), { headers: gate.headers });
   }

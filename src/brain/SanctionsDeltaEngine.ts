@@ -101,15 +101,6 @@ function identKey(id: { kind: string; number: string }): string {
   return `${id.kind}::${id.number.replace(/\s+/g, '')}`;
 }
 
-// ── Field significance mapper ─────────────────────────────────────────────────
-
-function fieldSignificance(fieldName: string): ChangeSignificance {
-  if (['primary_name', 'entity_type', 'programs'].includes(fieldName)) return 'critical';
-  if (['aliases', 'identifiers', 'dob', 'nationalities', 'native_name'].includes(fieldName)) return 'high';
-  if (['addresses', 'remarks', 'basis_for_listing', 'relationships'].includes(fieldName)) return 'medium';
-  return 'low';
-}
-
 // ── Entity comparator ─────────────────────────────────────────────────────────
 
 function compareEntities(before: SanctionsEntity, after: SanctionsEntity): FieldChange[] {

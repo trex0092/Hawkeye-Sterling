@@ -26,6 +26,7 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -102,7 +103,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const {
@@ -125,7 +126,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   } = body;
 
   if (!customerName || !exitReason) {
-    return NextResponse.json({ error: "customerName and exitReason are required" }, { status: 400 });
+    return NextResponse.json({ error: "customerName and exitReason are required" }, { status: 400 , headers: gate.headers });
   }
 
   const tippingOffRisk = strFiled;
@@ -163,7 +164,7 @@ This exit is being conducted under FDL 10/2025 and the entity's risk appetite po
 
   try {
     const apiKey = process.env.ANTHROPIC_API_KEY ?? "";
-    const anthropic = getAnthropicClient(apiKey, 40_000, "exit-letter-gen");
+    const anthropic = getAnthropicClient(apiKey, 55_000, "exit-letter-gen");
 
     const tippingOffInstruction = strFiled
       ? "CRITICAL: A Suspicious Transaction Report (STR) has been filed in relation to this customer. You MUST NOT mention AML, money laundering, suspicious activity, investigations, or regulatory filings in the letter. Use only neutral business language."
@@ -174,15 +175,15 @@ This exit is being conducted under FDL 10/2025 and the entity's risk appetite po
 ${tippingOffInstruction}
 
 LETTER DETAILS:
-- Entity sending the letter: ${entityName}
-- Customer name: ${customerName} (${customerType})
-- Customer address: ${customerAddress ?? "To be inserted"}
-- Account/case reference: ${accountOrCaseRef ?? "N/A"}
+- Entity sending the letter: ${sanitizeField(entityName)}
+- Customer name: ${sanitizeField(customerName)} (${sanitizeField(customerType)})
+- Customer address: ${sanitizeField(customerAddress) || "To be inserted"}
+- Account/case reference: ${sanitizeField(accountOrCaseRef) || "N/A"}
 - Date of letter: ${effectiveDateStr}
 - Exit effective date: ${exitDate} (${noticePeriodDays} days notice)
 - Reason to state to customer: "${customerReason}"
-- Entity address: ${entityAddress ?? "Dubai, UAE"}
-- Entity contact: ${entityPhone ?? ""} / ${entityEmail ?? ""}
+- Entity address: ${sanitizeField(entityAddress) || "Dubai, UAE"}
+- Entity contact: ${sanitizeField(entityPhone) || ""} / ${sanitizeField(entityEmail) || ""}
 
 REQUIREMENTS:
 1. Professional, formal tone appropriate for a regulated entity
@@ -202,7 +203,8 @@ Generate the complete letter text only — no commentary, no additional explanat
       messages: [{ role: "user", content: prompt }],
     });
 
-    const letterText = (msg.content[0] as { type: string; text: string }).text?.trim() ?? "";
+    const block = msg.content[0];
+    const letterText = block?.type === "text" ? (block as { type: "text"; text: string }).text.trim() : "";
 
     const result: ExitLetterResult = {
       customerName,
@@ -215,11 +217,12 @@ Generate the complete letter text only — no commentary, no additional explanat
       generatedAt: new Date().toISOString(),
     };
 
-    return NextResponse.json(result);
+    return NextResponse.json(result, { headers: gate.headers });
   } catch (err) {
+    console.error("[exit-letter-gen] unhandled exception:", err instanceof Error ? err.message : err);
     return NextResponse.json(
-      { error: "Letter generation failed", detail: err instanceof Error ? err.message : String(err) },
-      { status: 500 }
+      { error: "Letter generation failed — please retry or contact support." },
+      { status: 500, headers: gate.headers }
     );
   }
 }

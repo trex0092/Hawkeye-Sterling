@@ -89,27 +89,27 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as RequestBody;
   } catch {
-    return NextResponse.json({ error: "invalid JSON body" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ error: "invalid JSON body" }, { status: 400 , headers: gate.headers });
   }
 
-  const subjects = body.subjects ?? [];
+  const subjects = Array.isArray(body.subjects) ? body.subjects : [];
 
   if (subjects.length === 0) {
     writeAuditEvent("mlro", "ongoing-monitor.ai-analysis", "no subjects — skipped");
-    return NextResponse.json({ ok: false, error: "ongoing-monitor-ai temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "ongoing-monitor-ai temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     writeAuditEvent("mlro", "ongoing-monitor.ai-analysis", `no-api-key — ${subjects.length} subjects skipped`);
-    return NextResponse.json({ ok: false, error: "ongoing-monitor-ai temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "ongoing-monitor-ai temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 
   try {
     const client = getAnthropicClient(apiKey, 55_000);
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 1500,
+      max_tokens: 700,
       system: SYSTEM_PROMPT,
       messages: [
         {
@@ -125,6 +125,9 @@ export async function POST(req: Request): Promise<NextResponse> {
     const stripped = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "");
 
     const parsed = JSON.parse(stripped) as MonitorAlertsResponse;
+    if (!Array.isArray(parsed.alerts)) parsed.alerts = [];
+    if (!Array.isArray(parsed.immediateEscalations)) parsed.immediateEscalations = [];
+    if (!Array.isArray(parsed.cadenceRecommendations)) parsed.cadenceRecommendations = [];
 
     writeAuditEvent(
       "mlro",
@@ -136,6 +139,6 @@ export async function POST(req: Request): Promise<NextResponse> {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     writeAuditEvent("mlro", "ongoing-monitor.ai-analysis", `error — ${msg}`);
-    return NextResponse.json({ ok: false, error: "ongoing-monitor-ai temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "ongoing-monitor-ai temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

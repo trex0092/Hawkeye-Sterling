@@ -4,6 +4,7 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 export interface SowCalculatorResult {
   sowRisk: "critical" | "high" | "medium" | "low" | "clear";
   totalDeclaredIncomeAed: number;
@@ -123,18 +124,18 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
-  if (!body.declaredIncome?.trim()) return NextResponse.json({ ok: false, error: "declaredIncome required" }, { status: 400 , headers: gate.headers});
+  if (!body.declaredIncome?.trim()) return NextResponse.json({ ok: false, error: "declaredIncome required" }, { status: 400 , headers: gate.headers });
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "sow-calculator temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "sow-calculator temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
-    const client = getAnthropicClient(apiKey, 22_000);
+    const client = getAnthropicClient(apiKey, 55_000);
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 1450,
+      max_tokens: 700,
       system: [
         {
           type: "text",
@@ -144,7 +145,7 @@ export async function POST(req: Request) {
       ],
       messages: [{
         role: "user",
-        content: `Subject Name: ${body.subjectName ?? "not identified"}
+        content: `Subject Name: ${sanitizeField(body.subjectName)}
 Declared Income (description): ${body.declaredIncome}
 Declared Assets: ${body.declaredAssets ?? "not provided"}
 Review Period (years): ${body.periodYears ?? "not specified"}
@@ -156,8 +157,12 @@ Conduct a source of wealth reconciliation analysis. Return complete SowCalculato
     });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as SowCalculatorResult;
+    if (!Array.isArray(result.incomeStreams)) result.incomeStreams = [];
+    if (!Array.isArray(result.assetsSummary)) result.assetsSummary = [];
+    if (!Array.isArray(result.redFlags)) result.redFlags = [];
+    if (!Array.isArray(result.requiredDocumentation)) result.requiredDocumentation = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "sow-calculator temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "sow-calculator temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

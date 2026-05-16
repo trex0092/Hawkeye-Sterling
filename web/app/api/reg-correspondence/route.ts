@@ -15,6 +15,7 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -128,7 +129,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (!body.correspondenceType || !body.recipientAuthority || !body.subject) {
     return NextResponse.json({ ok: false, error: "correspondenceType, recipientAuthority, and subject required" }, { status: 400, headers: gate.headers });
   }
-  if (!body.keyFacts?.length) {
+  if (!Array.isArray(body.keyFacts) || body.keyFacts.length === 0) {
     return NextResponse.json({ ok: false, error: "keyFacts array required (min 1 fact)" }, { status: 400, headers: gate.headers });
   }
 
@@ -144,10 +145,10 @@ export async function POST(req: Request): Promise<NextResponse> {
     }, { status: 503, headers: gate.headers });
   }
 
-  const client = getAnthropicClient(apiKey, 22_000, "reg-correspondence");
+  const client = getAnthropicClient(apiKey, 40_000, "reg-correspondence");
   const response = await client.messages.create({
     model: "claude-haiku-4-5-20251001",
-    max_tokens: 2000,
+    max_tokens: 700,
     system: `You are a UAE AML compliance specialist and legal drafter with expertise in regulatory correspondence for DPMS (gold and precious metals dealers) under FDL 10/2025, CBUAE AML Standards, and CR No.134/2025.
 
 Draft formal regulatory correspondence with:
@@ -178,26 +179,26 @@ Return ONLY valid JSON:
       role: "user",
       content: `Draft the following regulatory correspondence:
 
-Type: ${body.correspondenceType}
+Type: ${sanitizeField(body.correspondenceType, 200)}
 Recipient: ${authority.fullName}
 ${authority.address}
 ${authority.salutation}
 
-Subject: ${body.subject}
+Subject: ${sanitizeField(body.subject, 200)}
 Urgency: ${body.urgency ?? "routine"}
-Institution: ${body.institutionName ?? "[Institution Name]"}
-MLRO: ${body.mlroName ?? "[MLRO Name]"}
-Reference Number: ${body.referenceNumber ?? "auto-generate"}
-${body.caseId ? `Case ID: ${body.caseId}` : ""}
-${body.subjectName ? `Subject of Matter: ${body.subjectName}` : ""}
-${body.inResponseTo ? `In Response To: ${body.inResponseTo}` : ""}
+Institution: ${sanitizeField(body.institutionName, 200) || "[Institution Name]"}
+MLRO: ${sanitizeField(body.mlroName, 200) || "[MLRO Name]"}
+Reference Number: ${sanitizeField(body.referenceNumber, 200) || "auto-generate"}
+${body.caseId ? `Case ID: ${sanitizeField(body.caseId, 200)}` : ""}
+${body.subjectName ? `Subject of Matter: ${sanitizeField(body.subjectName, 200)}` : ""}
+${body.inResponseTo ? `In Response To: ${sanitizeField(body.inResponseTo, 200)}` : ""}
 ${body.regulatoryDeadline ? `Regulatory Deadline: ${body.regulatoryDeadline}` : ""}
 
 Key Facts to Include:
-${body.keyFacts.map((f, i) => `${i + 1}. ${f}`).join("\n")}
+${body.keyFacts.map((f, i) => `${i + 1}. ${sanitizeField(f, 500)}`).join("\n")}
 
-${body.requestedResponse ? `Requested Response/Action: ${body.requestedResponse}` : ""}
-${body.additionalContext ? `Additional Context: ${body.additionalContext}` : ""}
+${body.requestedResponse ? `Requested Response/Action: ${sanitizeText(body.requestedResponse, 3000)}` : ""}
+${body.additionalContext ? `Additional Context: ${sanitizeText(body.additionalContext, 3000)}` : ""}
 
 Regulatory Basis: ${regulatoryBasis}
 
@@ -207,7 +208,9 @@ Draft a formal, professional regulatory letter.`,
 
   const raw = response.content[0]?.type === "text" ? (response.content[0] as { type: "text"; text: string }).text : "{}";
   try {
-    const letter = JSON.parse(raw.match(/\{[\s\S]*\}/)?.[0] ?? "{}");
+    const letter = JSON.parse(raw.match(/\{[\s\S]*\}/)?.[0] ?? "{}") as Record<string, unknown>;
+    if (!Array.isArray(letter["bodyParagraphs"])) letter["bodyParagraphs"] = [];
+    if (!Array.isArray(letter["attachmentsList"])) letter["attachmentsList"] = [];
     return NextResponse.json({
       ok: true,
       correspondenceType: body.correspondenceType,

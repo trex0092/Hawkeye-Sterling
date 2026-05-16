@@ -174,7 +174,7 @@ export async function GET(req: Request): Promise<NextResponse> {
 
   return NextResponse.json(result, {
     headers: {
+      ...gate.headers,
       "Cache-Control": "no-store",
-    },
-  });
+    } });
 }

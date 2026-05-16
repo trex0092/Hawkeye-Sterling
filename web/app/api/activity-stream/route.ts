@@ -171,17 +171,17 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   let raw: unknown;
   try { raw = await req.json(); } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers });
   }
   if (typeof raw !== "object" || raw === null) {
-    return NextResponse.json({ ok: false, error: "body must be an object" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "body must be an object" }, { status: 400 , headers: gate.headers });
   }
   const r = raw as Record<string, unknown>;
   const text = typeof r["text"] === "string" ? r["text"] : "";
   const kindRaw = typeof r["kind"] === "string" ? r["kind"] : "SYS";
   const allowedKinds = new Set(["HIT", "CLEAR", "SYS", "EU", "WARN", "ERR"]);
   const kind = (allowedKinds.has(kindRaw) ? kindRaw : "SYS") as EngineEvent["kind"];
-  if (!text.trim()) return NextResponse.json({ ok: false, error: "text required" }, { status: 400 , headers: gate.headers});
+  if (!text.trim()) return NextResponse.json({ ok: false, error: "text required" }, { status: 400 , headers: gate.headers });
   const at = new Date().toISOString();
   const ev: EngineEvent = {
     id: `pe-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,

@@ -77,20 +77,24 @@ function unifiedDiff(a: string, b: string): { text: string; added: number; remov
   const dp: number[][] = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(0));
   for (let i = 1; i <= n; i++) {
     for (let j = 1; j <= m; j++) {
-      if (A[i - 1] === B[j - 1]) dp[i]![j] = dp[i - 1]![j - 1]! + 1;
-      else dp[i]![j] = Math.max(dp[i - 1]![j]!, dp[i]![j - 1]!);
+      const rowI = dp[i];
+      const rowPrev = dp[i - 1];
+      if (rowI && rowPrev) {
+        if (A[i - 1] === B[j - 1]) rowI[j] = (rowPrev[j - 1] ?? 0) + 1;
+        else rowI[j] = Math.max(rowPrev[j] ?? 0, rowI[j - 1] ?? 0);
+      }
     }
   }
   // Backtrack.
   const ops: Array<{ op: ' ' | '+' | '-'; line: string }> = [];
   let i = n, j = m;
   while (i > 0 && j > 0) {
-    if (A[i - 1] === B[j - 1]) { ops.push({ op: ' ', line: A[i - 1]! }); i--; j--; }
-    else if (dp[i - 1]![j]! >= dp[i]![j - 1]!) { ops.push({ op: '-', line: A[i - 1]! }); i--; }
-    else { ops.push({ op: '+', line: B[j - 1]! }); j--; }
+    if (A[i - 1] === B[j - 1]) { ops.push({ op: ' ', line: A[i - 1] ?? '' }); i--; j--; }
+    else if ((dp[i - 1]?.[j] ?? 0) >= (dp[i]?.[j - 1] ?? 0)) { ops.push({ op: '-', line: A[i - 1] ?? '' }); i--; }
+    else { ops.push({ op: '+', line: B[j - 1] ?? '' }); j--; }
   }
-  while (i > 0) { ops.push({ op: '-', line: A[i - 1]! }); i--; }
-  while (j > 0) { ops.push({ op: '+', line: B[j - 1]! }); j--; }
+  while (i > 0) { ops.push({ op: '-', line: A[i - 1] ?? '' }); i--; }
+  while (j > 0) { ops.push({ op: '+', line: B[j - 1] ?? '' }); j--; }
   ops.reverse();
   let added = 0, removed = 0;
   for (const o of ops) { if (o.op === '+') added++; else if (o.op === '-') removed++; }

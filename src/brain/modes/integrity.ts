@@ -60,7 +60,7 @@ function typedEvidence<T>(ctx: BrainContext, key: string): T[] {
 
 function singleEvidence<T>(ctx: BrainContext, key: string): T | undefined {
   const v = (ctx.evidence as Record<string, unknown> | undefined)?.[key];
-  return v == null ? undefined : (v as T);
+  return v === null || v === undefined ? undefined : (v as T);
 }
 
 // ──────────────────────────────────────────────────────────────────────
@@ -509,15 +509,15 @@ function levenshtein(a: string, b: string): number {
   const dp: number[] = Array(n + 1).fill(0);
   for (let j = 0; j <= n; j++) dp[j] = j;
   for (let i = 1; i <= m; i++) {
-    let prev = dp[0]!;
+    let prev = dp[0] ?? 0;
     dp[0] = i;
     for (let j = 1; j <= n; j++) {
-      const tmp = dp[j]!;
-      dp[j] = a[i - 1] === b[j - 1] ? prev : 1 + Math.min(prev, dp[j]!, dp[j - 1]!);
+      const tmp = dp[j] ?? 0;
+      dp[j] = a[i - 1] === b[j - 1] ? prev : 1 + Math.min(prev, dp[j] ?? 0, dp[j - 1] ?? 0);
       prev = tmp;
     }
   }
-  return dp[n]!;
+  return dp[n] ?? 0;
 }
 
 const linguisticForensicsApply = async (ctx: BrainContext): Promise<Finding> => {

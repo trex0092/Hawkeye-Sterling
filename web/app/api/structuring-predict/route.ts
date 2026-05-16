@@ -17,6 +17,7 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -222,14 +223,14 @@ export async function POST(req: Request): Promise<NextResponse> {
     }, { headers: gate.headers });
   }
 
-  const client = getAnthropicClient(apiKey, 18_000, "structuring-predict");
+  const client = getAnthropicClient(apiKey, 25_000, "structuring-predict");
   const res = await client.messages.create({
     model: "claude-haiku-4-5-20251001",
     max_tokens: 600,
     system: "You are a UAE AML transaction monitoring specialist. Given structuring analysis results, write a 2-3 paragraph SAR-ready narrative and list FATF typology matches. Return JSON: { \"sarNarrative\": \"<text>\", \"fatfTypologies\": [\"<typology>\"], \"additionalPatterns\": [\"<pattern>\"], \"confidence\": \"high|medium|low\" }",
     messages: [{
       role: "user",
-      content: `Subject: ${body.subjectName ?? "unknown"}\nStructuring Score: ${analysis.structuringScore}/100\nPatterns: ${JSON.stringify(analysis.patterns)}\nTotal Volume: ${analysis.totalVolume.toLocaleString()} ${body.baseCurrency ?? "AED"}\nTransaction Count: ${analysis.txnCount}\nReporting Threshold: ${threshold.toLocaleString()}\n\nWrite SAR narrative and classify typologies.`,
+      content: `Subject: ${sanitizeField(body.subjectName)}\nStructuring Score: ${analysis.structuringScore}/100\nPatterns: ${JSON.stringify(analysis.patterns)}\nTotal Volume: ${analysis.totalVolume.toLocaleString()} ${body.baseCurrency ?? "AED"}\nTransaction Count: ${analysis.txnCount}\nReporting Threshold: ${threshold.toLocaleString()}\n\nWrite SAR narrative and classify typologies.`,
     }],
   });
 

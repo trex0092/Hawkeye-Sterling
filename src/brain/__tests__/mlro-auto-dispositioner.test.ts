@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { proposeDisposition } from '../mlro-auto-dispositioner.js';
-import type { AutoDispositionInput } from '../mlro-auto-dispositioner.js';
+import { type AutoDispositionInput, proposeDisposition } from '../mlro-auto-dispositioner.js';
 
 function base(overrides: Partial<AutoDispositionInput> = {}): AutoDispositionInput {
   return {

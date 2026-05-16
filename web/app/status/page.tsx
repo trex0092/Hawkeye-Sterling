@@ -163,9 +163,11 @@ function fmtUptime(sec: number): string {
 // fabricate a false 0% historical uptime. Only actual "down" events
 // are represented as outage days in the history.
 function synth90d(current: Check["status"]): Check["status"][] {
-  const hist: Check["status"] = current === "down" ? "down" : "operational";
-  const samples: Check["status"][] = Array.from({ length: 90 }, () => hist);
-  // Mark only today (last bar) with the real current status
+  // Historical bars are always "operational" — we don't have 90 days of
+  // durable availability data. Showing "down" for all historical bars
+  // when the current status is "down" would falsely imply 0% historical
+  // uptime when the outage may have started minutes ago.
+  const samples: Check["status"][] = Array.from({ length: 90 }, () => "operational" as const);
   samples[89] = current;
   return samples;
 }

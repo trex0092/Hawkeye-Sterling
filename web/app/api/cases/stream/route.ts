@@ -129,10 +129,11 @@ export async function GET(req: Request): Promise<Response> {
           close();
         }
       } catch (err) {
+        console.error("[cases/stream] stream error:", err instanceof Error ? err.message : err);
         try {
           controller.enqueue(
             encode("error", {
-              error: err instanceof Error ? err.message : String(err),
+              error: "Stream error — please reconnect.",
             }),
           );
         } catch {

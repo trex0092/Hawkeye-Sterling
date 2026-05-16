@@ -52,12 +52,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as ReqBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const { subjectName } = body;
   if (!subjectName) {
-    return NextResponse.json({ ok: false, error: "subjectName is required" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "subjectName is required" }, { status: 400 , headers: gate.headers });
   }
 
   const hash = hashStr(subjectName);
@@ -89,5 +89,5 @@ export async function POST(req: Request): Promise<NextResponse> {
     path,
     riskLevel,
     explanation,
-  });
+  }, { headers: gate.headers });
 }

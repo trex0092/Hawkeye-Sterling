@@ -90,9 +90,11 @@ function splitSections(text: string): Partial<Record<Section, string>> {
     positions.push({ name, start: m.index, end: m.index + m[0].length });
   }
   for (let i = 0; i < positions.length; i++) {
-    const start = positions[i]!.end;
-    const end = i + 1 < positions.length ? positions[i + 1]!.start : text.length;
-    const name = positions[i]!.name;
+    const pos = positions[i];
+    if (!pos) continue;
+    const start = pos.end;
+    const end = i + 1 < positions.length ? (positions[i + 1]?.start ?? text.length) : text.length;
+    const name = pos.name;
     if ((SECTION_HEADERS as readonly string[]).includes(name)) {
       out[name as Section] = text.slice(start, end).trim();
     }
@@ -111,7 +113,7 @@ function mergeSections(all: Array<Partial<Record<Section, string>>>): Record<str
   }
   const out: Record<string, string> = {};
   for (const h of SECTION_HEADERS) {
-    if (merged[h]) out[h] = merged[h]!.join('\n\n---\n\n');
+    if (merged[h]) out[h] = (merged[h] ?? []).join('\n\n---\n\n');
   }
   return out;
 }

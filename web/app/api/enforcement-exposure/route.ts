@@ -3,6 +3,8 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
+import { enforce } from "@/lib/server/enforce";
 export interface EnforcementExposureResult {
   violationCategory: string;
   penaltyRange: {
@@ -97,6 +99,9 @@ const FALLBACK: EnforcementExposureResult = {
 };
 
 export async function POST(req: Request) {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
+
   let body: {
     violation: string;
     institutionType?: string;
@@ -119,7 +124,7 @@ export async function POST(req: Request) {
     const client = getAnthropicClient(apiKey, 55_000);
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 1450,
+      max_tokens: 700,
       system: [
         {
           type: "text",
@@ -129,18 +134,22 @@ export async function POST(req: Request) {
       ],
       messages: [{
         role: "user",
-        content: `Violation Description: ${body.violation}
-Institution Type: ${body.institutionType ?? "UAE licensed financial institution"}
-Violation Period: ${body.violationPeriod ?? "not specified"}
-Self-Reported: ${body.selfReported ?? "not yet"}
-Prior Enforcement History: ${body.priorHistory ?? "none known"}
-Additional Context: ${body.context ?? "none"}
+        content: `Violation Description: ${sanitizeText(body.violation, 2000)}
+Institution Type: ${sanitizeField(body.institutionType, 500) ?? "UAE licensed financial institution"}
+Violation Period: ${sanitizeField(body.violationPeriod, 100) ?? "not specified"}
+Self-Reported: ${sanitizeField(body.selfReported, 100) ?? "not yet"}
+Prior Enforcement History: ${sanitizeText(body.priorHistory, 2000) ?? "none known"}
+Additional Context: ${sanitizeText(body.context, 2000) ?? "none"}
 
 Assess regulatory enforcement exposure for this AML violation. Return complete EnforcementExposureResult JSON.`,
       }],
     });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as EnforcementExposureResult;
+    if (!Array.isArray(result.mitigatingFactors)) result.mitigatingFactors = [];
+    if (!Array.isArray(result.aggravatingFactors)) result.aggravatingFactors = [];
+    if (!Array.isArray(result.precedentCases)) result.precedentCases = [];
+    if (!Array.isArray(result.remedialActions)) result.remedialActions = [];
     return NextResponse.json({ ok: true, ...result });
   } catch {
     return NextResponse.json({ ok: false, error: "enforcement-exposure temporarily unavailable - please retry." }, { status: 503 });

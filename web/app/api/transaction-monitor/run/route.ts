@@ -389,9 +389,10 @@ async function postDailyTMReport(args: {
       ...(payload?.data?.permalink_url ? { url: payload.data.permalink_url } : {}),
     };
   } catch (err) {
+    console.error("[transaction-monitor/run] webhook failed:", err instanceof Error ? err.message : err);
     return {
       delivered: false,
-      error: err instanceof Error ? err.message : String(err),
+      error: "Webhook delivery failed — please retry.",
     };
   }
 }

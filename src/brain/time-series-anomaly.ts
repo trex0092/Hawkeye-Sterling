@@ -33,14 +33,15 @@ function median(xs: number[]): number {
   const s = [...xs].sort((a, b) => a - b);
   const n = s.length;
   if (n === 0) return 0;
-  return n % 2 === 1 ? s[(n - 1) >> 1]! : (s[n / 2 - 1]! + s[n / 2]!) / 2;
+  return n % 2 === 1 ? (s[(n - 1) >> 1] ?? 0) : ((s[n / 2 - 1] ?? 0) + (s[n / 2] ?? 0)) / 2;
 }
 
 export function detectAnomalies(series: TimePoint[], opts: Partial<AnomalyOptions> = {}): AnomalyPoint[] {
   const cfg = { ...DEFAULTS, ...opts };
   const out: AnomalyPoint[] = [];
   for (let i = 0; i < series.length; i++) {
-    const pt = series[i]!;
+    const pt = series[i];
+    if (!pt) continue;
     const start = Math.max(0, i - cfg.window);
     const past = series.slice(start, i).map((p) => p.v);
     if (past.length < Math.max(3, cfg.window / 2)) {
@@ -49,11 +50,11 @@ export function detectAnomalies(series: TimePoint[], opts: Partial<AnomalyOption
     }
     const m = mean(past);
     const s = std(past);
-    const z = s < 1e-9 ? 0 : (pt.v - m) / s;
+    const z = s < 1e-9 ? (Math.abs(pt.v - m) > 1e-9 ? Infinity : 0) : (pt.v - m) / s;
     const med = median(past);
     const dev = past.map((v) => Math.abs(v - med));
     const mad = median(dev);
-    const madScore = mad < 1e-9 ? 0 : Math.abs(pt.v - med) / (mad * 1.4826);
+    const madScore = mad < 1e-9 ? (Math.abs(pt.v - med) > 1e-9 ? Infinity : 0) : Math.abs(pt.v - med) / (mad * 1.4826);
     const anomaly = Math.abs(z) > cfg.zThreshold || madScore > cfg.madThreshold;
     out.push({ ...pt, z, mad: madScore, anomaly });
   }

@@ -14,8 +14,7 @@
 import type { SanctionDelta } from '../brain/sanction-delta.js';
 import type { NormalisedListEntry } from '../brain/watchlist-adapters.js';
 import type { SubjectStore, RegisteredSubject } from './subject-registry.js';
-import type { AlertSink, MonitoringAlert } from './alerts.js';
-import { severityFor } from './alerts.js';
+import { type AlertSink, type MonitoringAlert, severityFor } from './alerts.js';
 import { matchIdentities, type IdentityMatchResult } from '../brain/identity-multiscript.js';
 import { fnv1a } from '../brain/audit-chain.js';
 
@@ -126,7 +125,7 @@ function entryKey(e: NormalisedListEntry): { name: string; aliases?: string[]; d
   if (e.aliases.length > 0) out.aliases = e.aliases;
   const dob = e.identifiers.find((i) => i.kind.toLowerCase() === 'dob');
   if (dob) out.dob = dob.number;
-  if (e.nationalities && e.nationalities.length > 0) out.nationality = e.nationalities[0]!;
+  if (e.nationalities && e.nationalities.length > 0) out.nationality = e.nationalities[0] ?? '';
   if (e.identifiers.length > 0) {
     const idMap: Record<string, string> = {};
     for (const i of e.identifiers) if (!(i.kind in idMap)) idMap[i.kind] = i.number;

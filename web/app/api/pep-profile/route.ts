@@ -4,6 +4,7 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 export interface PepProfileResult {
   ok: true;
   pepTier: "tier1" | "tier2" | "tier3" | "rca";
@@ -88,8 +89,9 @@ const FALLBACK: PepProfileResult = {
 
 export async function POST(req: Request) {
   const _handlerStart = Date.now();
+  let gate: Awaited<ReturnType<typeof enforce>> | undefined;
   try {
-  const gate = await enforce(req);
+  gate = await enforce(req);
   if (!gate.ok) return gate.response;
   let body: {
     name?: string;
@@ -106,7 +108,7 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   // ── Grounded PEP data — World-Check (LSEG) first, OpenSanctions fallback ──
@@ -235,10 +237,10 @@ export async function POST(req: Request) {
   }, { status: 200, headers: gate.headers });
 
   try {
-    const client = getAnthropicClient(apiKey, 22_000);
+    const client = getAnthropicClient(apiKey, 55_000);
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 2500,
+      max_tokens: 800,
       system: [
         {
           type: "text",
@@ -277,15 +279,15 @@ export async function POST(req: Request) {
           role: "user",
           content: `PEP Profile Assessment Request:
 
-Name: ${body.name ?? "Unknown"}
-Country: ${body.country ?? "Not specified"}
-Position: ${body.position ?? "Not specified"}
-Organization: ${body.organization ?? "Not specified"}
-Political Party: ${body.politicalParty ?? "Not specified"}
+Name: ${sanitizeField(body.name) || "Unknown"}
+Country: ${sanitizeField(body.country) || "Not specified"}
+Position: ${sanitizeField(body.position) || "Not specified"}
+Organization: ${sanitizeField(body.organization) || "Not specified"}
+Political Party: ${sanitizeField(body.politicalParty) || "Not specified"}
 Years in Office: ${body.yearsInOffice ?? "Not specified"}
-Family Members / Known Associates: ${body.familyMembers ?? "None declared"}
-Source of Wealth: ${body.sourceOfWealth ?? "Not declared"}
-Declared Assets: ${body.declaredAssets ?? "Not declared"}
+Family Members / Known Associates: ${sanitizeText(body.familyMembers) || "None declared"}
+Source of Wealth: ${sanitizeText(body.sourceOfWealth) || "Not declared"}
+Declared Assets: ${sanitizeText(body.declaredAssets) || "Not declared"}
 
 ${pepDataContext}
 
@@ -296,6 +298,8 @@ Perform a comprehensive PEP risk assessment grounded in the PEP database data ab
 
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as PepProfileResult;
+    if (!Array.isArray(result.networkMap)) result.networkMap = [];
+    if (!Array.isArray(result.requiredMeasures)) result.requiredMeasures = [];
     const latencyMs = Date.now() - _handlerStart;
     if (latencyMs > 5000) console.warn(`[pep_profile] latencyMs=${latencyMs} exceeds 5000ms`);
     return NextResponse.json(
@@ -308,7 +312,7 @@ Perform a comprehensive PEP risk assessment grounded in the PEP database data ab
       { headers: gate.headers },
     );
   } catch {
-    return NextResponse.json({ ok: false, error: "pep-profile temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "pep-profile temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
@@ -321,6 +325,6 @@ Perform a comprehensive PEP risk assessment grounded in the PEP database data ab
       retryAfterSeconds: null,
       requestId: Math.random().toString(36).slice(2, 10),
       latencyMs: Date.now() - _handlerStart,
-    }, { status: 500 });
+    }, { status: 500 , headers: gate && gate.ok ? gate.headers : {} });
   }
 }

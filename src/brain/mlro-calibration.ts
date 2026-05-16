@@ -92,7 +92,8 @@ export class CalibrationLedger {
       }
     }
     for (const m of Object.keys(byMode)) {
-      byMode[m]!.brier = byMode[m]!.n === 0 ? 0 : byMode[m]!.brier / byMode[m]!.n;
+      const bm = byMode[m];
+      if (bm) bm.brier = bm.n === 0 ? 0 : bm.brier / bm.n;
     }
 
     const total = rows.length;

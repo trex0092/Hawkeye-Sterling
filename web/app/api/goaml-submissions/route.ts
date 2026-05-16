@@ -42,7 +42,7 @@ export async function GET(req: Request): Promise<NextResponse> {
 
   if (ref) {
     const record = await getGoAmlSubmission(tenant, ref);
-    if (!record) return NextResponse.json({ ok: false, error: "not found" }, { status: 404 });
+    if (!record) return NextResponse.json({ ok: false, error: "not found" }, { status: 404, headers: gate.headers });
     return NextResponse.json({ ok: true, record }, { headers: gate.headers });
   }
 
@@ -73,16 +73,16 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as UpdateInput;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   if (!body.reportRef?.trim()) {
-    return NextResponse.json({ ok: false, error: "reportRef required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "reportRef required" }, { status: 400 , headers: gate.headers });
   }
   if (!body.status || !VALID_STATUSES.has(body.status)) {
     return NextResponse.json(
       { ok: false, error: `status must be one of: ${[...VALID_STATUSES].join(", ")}` },
-      { status: 400 },
+      { status: 400, headers: gate.headers }
     );
   }
 
@@ -98,7 +98,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (!existing) {
     return NextResponse.json(
       { ok: false, error: `submission ${body.reportRef} not found — it is created automatically by /api/goaml` },
-      { status: 404 },
+      { status: 404, headers: gate.headers }
     );
   }
 
@@ -138,12 +138,12 @@ export async function DELETE(req: Request): Promise<NextResponse> {
   const { searchParams } = new URL(req.url);
   const ref = searchParams.get("ref");
   if (!ref?.trim()) {
-    return NextResponse.json({ ok: false, error: "ref query param required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "ref query param required" }, { status: 400 , headers: gate.headers });
   }
 
   const existing = await getGoAmlSubmission(tenant, ref);
   if (!existing) {
-    return NextResponse.json({ ok: false, error: "not found" }, { status: 404 });
+    return NextResponse.json({ ok: false, error: "not found" }, { status: 404, headers: gate.headers });
   }
 
   await deleteGoAmlSubmission(tenant, ref);

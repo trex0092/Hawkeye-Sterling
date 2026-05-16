@@ -10,7 +10,7 @@
 // Operates on the EntityGraph from entity-graph.ts.
 // Designed for Neo4j-compatible graph queries when a graph DB is available.
 
-import { EntityGraph, type GraphNode, type GraphEdge, type EdgeKind } from './entity-graph.js';
+import { EntityGraph, type GraphNode, type EdgeKind } from './entity-graph.js';
 
 // ── Detection types ───────────────────────────────────────────────────────────
 
@@ -83,7 +83,6 @@ const HIGH_RISK_JURISDICTIONS = new Set([
 ]);
 
 const OWNERSHIP_EDGES: EdgeKind[] = ['owns', 'controls', 'shareholder_of'];
-const DIRECTOR_EDGES: EdgeKind[] = ['director_of'];
 const PEP_EDGES: EdgeKind[] = ['family_of', 'spouse_of', 'close_associate_of'];
 const ALL_CORPORATE_EDGES: EdgeKind[] = ['owns', 'controls', 'shareholder_of', 'director_of', 'nominee_for', 'beneficiary_of'];
 
@@ -92,7 +91,7 @@ const ALL_CORPORATE_EDGES: EdgeKind[] = ['owns', 'controls', 'shareholder_of', '
 export function detectUBOChains(
   graph: EntityGraph,
   subjectId: string,
-  maxDepth = 6,
+  _maxDepth = 6,
 ): UBOChain[] {
   const chains: UBOChain[] = [];
   const subject = graph.node(subjectId);
@@ -351,7 +350,7 @@ export function buildRelationshipIntelligenceReport(
   graph: EntityGraph,
   subjectId: string,
   sanctionedNodeIds: string[] = [],
-  pepNodeIds: string[] = [],
+  _pepNodeIds: string[] = [],
 ): GraphIntelligenceReport {
   const subject = graph.node(subjectId);
   const allNodeIds = graph.nodes().map((n) => n.id);

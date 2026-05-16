@@ -44,12 +44,151 @@ const DISPOSITION_LABEL: Record<MatchDisposition, string> = {
 
 // Annual declarations tab removed — the operator already files them
 // directly to EOCN out-of-band; the tab was a static placeholder.
-type Tab = "registration" | "list-updates" | "matches" | "control-list";
+type Tab = "registration" | "list-updates" | "pdf-upload" | "matches" | "control-list";
 
 const EOCN_DELETED_KEY = "hawkeye.eocn.matches.deleted.v1";
 const EOCN_CUSTOM_KEY = "hawkeye.eocn.matches.custom.v1";
 
 type MatchEditDraft = Pick<EocnMatch, "disposition" | "notes" | "goAmlRef" | "mlroSignedOff">;
+
+// ── EOCN PDF Upload Panel ─────────────────────────────────────────────────────
+// The UAE EOCN body does not provide a public API. When the list changes they
+// email a PDF to all registered NAS/ARS entities. This panel lets the MLRO
+// upload that PDF so Hawkeye can extract and persist the designations for
+// screening — no manual re-keying required.
+function EocnPdfUploadPanel() {
+  const [listId, setListId] = useState<"uae_eocn" | "uae_ltl">("uae_eocn");
+  const [file, setFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [result, setResult] = useState<null | { ok: boolean; entitiesExtracted?: number; entitiesWritten?: number; warnings?: string[]; error?: string; fileName?: string; uploadedAt?: string }>(null);
+
+  const handleUpload = async () => {
+    if (!file) return;
+    setUploading(true);
+    setResult(null);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("listId", listId);
+      const res = await fetch("/api/admin/eocn-ingest", { method: "POST", body: fd });
+      const json = await res.json() as typeof result;
+      setResult(json);
+    } catch (err) {
+      setResult({ ok: false, error: err instanceof Error ? err.message : "Upload failed" });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-4">
+      {/* Explainer */}
+      <div className="bg-amber-dim border border-amber/30 rounded-lg px-4 py-3 text-12 text-ink-1 leading-relaxed">
+        <span className="font-semibold text-amber">How this works: </span>
+        The EOCN body emails a PDF (and sometimes Excel) when the UAE TFS list changes.
+        Upload that file here — Claude extracts all designated entities and updates the screening
+        watchlist immediately. No manual re-keying. The list goes live for all subsequent screenings.
+      </div>
+
+      {/* Form */}
+      <div className="bg-bg-panel border border-hair-2 rounded-xl p-5 flex flex-col gap-4">
+        <div className="text-13 font-semibold text-ink-0">Upload EOCN / LTL designation document</div>
+
+        {/* List selector */}
+        <div className="flex flex-col gap-1.5">
+          <label className="text-11 font-mono uppercase tracking-wide-3 text-ink-2">List type</label>
+          <div className="flex gap-2">
+            {([["uae_eocn", "UAE EOCN (TFS)"], ["uae_ltl", "UAE Local Terrorist List"]] as const).map(([id, label]) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setListId(id)}
+                className={`px-3 py-1.5 rounded-md text-12 font-medium border transition-colors ${listId === id ? "bg-brand text-white border-brand" : "border-hair-2 text-ink-1 hover:bg-bg-1"}`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* File input */}
+        <div className="flex flex-col gap-1.5">
+          <label className="text-11 font-mono uppercase tracking-wide-3 text-ink-2">File (PDF or Excel)</label>
+          <input
+            type="file"
+            accept=".pdf,.xlsx,.xls,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            onChange={(e) => { setFile(e.target.files?.[0] ?? null); setResult(null); }}
+            className="text-12 text-ink-1 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border file:border-hair-2 file:text-12 file:font-medium file:bg-bg-1 file:text-ink-0 hover:file:bg-bg-2"
+          />
+          {file && (
+            <div className="text-11 text-ink-3">{file.name} · {(file.size / 1024).toFixed(0)} KB</div>
+          )}
+        </div>
+
+        <button
+          type="button"
+          disabled={!file || uploading}
+          onClick={() => { void handleUpload(); }}
+          className="self-start px-4 py-2 rounded-lg bg-brand text-white text-13 font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+        >
+          {uploading ? "Extracting & importing…" : "Upload & import"}
+        </button>
+      </div>
+
+      {/* Result */}
+      {result && (
+        <div className={`border rounded-xl p-5 flex flex-col gap-2 ${result.ok ? "bg-green-dim border-green/30" : "bg-red-dim border-red/30"}`}>
+          <div className={`text-13 font-semibold ${result.ok ? "text-green" : "text-red"}`}>
+            {result.ok ? "✓ Import successful" : "✗ Import failed"}
+          </div>
+          {result.ok ? (
+            <>
+              <div className="text-12 text-ink-1">
+                <span className="font-medium">{result.entitiesWritten}</span> entities written to{" "}
+                <span className="font-mono text-ink-0">{listId}</span> watchlist
+                {result.entitiesExtracted !== result.entitiesWritten && (
+                  <span className="text-ink-3"> ({result.entitiesExtracted} extracted)</span>
+                )}
+              </div>
+              <div className="text-11 text-ink-3">
+                {result.fileName} · {result.uploadedAt ? new Date(result.uploadedAt).toLocaleString() : ""}
+              </div>
+              <div className="text-12 text-amber mt-1">
+                Re-screen your portfolio within <strong>24 hours</strong> to comply with EOCN SLA.
+              </div>
+            </>
+          ) : (
+            <div className="text-12 text-ink-1">{result.error}</div>
+          )}
+          {result.warnings && result.warnings.length > 0 && (
+            <div className="flex flex-col gap-1 mt-1">
+              {result.warnings.map((w, i) => (
+                <div key={i} className="text-11 text-amber">⚠ {w}</div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Instructions */}
+      <div className="bg-bg-panel border border-hair-2 rounded-xl p-5 text-12 text-ink-2 leading-relaxed">
+        <div className="font-semibold text-ink-0 mb-2">EOCN notification workflow</div>
+        <ol className="list-decimal list-inside flex flex-col gap-1.5">
+          <li>Register on NAS and ARS at <span className="font-mono text-ink-0">uaeiec.gov.ae</span> (Registration tab)</li>
+          <li>When you receive a PDF email from EOCN, open this tab</li>
+          <li>Select list type (EOCN TFS or Local Terrorist List)</li>
+          <li>Upload the PDF — Hawkeye automatically extracts all designees</li>
+          <li>Run &ldquo;Re-screen portfolio&rdquo; on the Screening page within 24 hours</li>
+          <li>Any new hits create automatic MLRO inbox alerts for 24-hour freeze decision</li>
+        </ol>
+        <div className="mt-3 text-11 text-ink-3">
+          Regulatory basis: UAE Cabinet Resolution 74/2020; FDL 10/2025 Art.11 (24-hour freeze obligation).
+          All uploads are logged in the audit trail with uploader identity and timestamp.
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function EocnPage() {
   const [tab, setTab] = useState<Tab>("registration");
@@ -294,6 +433,7 @@ export default function EocnPage() {
         {([
           { key: "registration" as Tab, label: "⚙ Registration", warn: registration && (!registration.nas.confirmed || !registration.ars.confirmed) },
           { key: "list-updates" as Tab, label: "List updates" },
+          { key: "pdf-upload" as Tab, label: "📥 Upload PDF" },
           { key: "matches" as Tab, label: "Matches & dispositions" },
           { key: "control-list" as Tab, label: "UAE Control List" },
         ]).map((t) => (
@@ -433,6 +573,9 @@ export default function EocnPage() {
           </p>
         </div>
       )}
+
+      {/* PDF UPLOAD TAB — Manual EOCN/LTL PDF ingest */}
+      {tab === "pdf-upload" && <EocnPdfUploadPanel />}
 
       {/* CONTROL LIST TAB — UAE Cabinet Resolution 156/2025 */}
       {tab === "control-list" && (

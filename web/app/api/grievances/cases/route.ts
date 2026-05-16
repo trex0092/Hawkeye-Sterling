@@ -49,8 +49,7 @@ export async function GET(req: Request) {
   const cases = filtered.slice(0, limit);
 
   return NextResponse.json({ cases, total: filtered.length }, {
-    headers: { "Cache-Control": "no-store" },
-  });
+    headers: { ...gate.headers, "Cache-Control": "no-store" } });
 }
 
 export async function POST(req: Request) {
@@ -97,9 +96,10 @@ export async function POST(req: Request) {
     await store.set("cases.json", JSON.stringify([newCase, ...existing]));
     return NextResponse.json({ ok: true, case: newCase }, { status: 201, headers: gate.headers });
   } catch (err) {
+    console.error("[grievances/cases] store error:", err instanceof Error ? err.message : err);
     return NextResponse.json(
-      { error: `store unavailable: ${err instanceof Error ? err.message : String(err)}` },
-      { status: 503 },
+      { error: "Store temporarily unavailable — please retry." },
+      { status: 503, headers: gate.headers }
     );
   }
 }

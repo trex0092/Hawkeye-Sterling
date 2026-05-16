@@ -4,6 +4,7 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 import { withLlmFallback } from "@/lib/server/llm-fallback";
 import { writeAuditEvent } from "@/lib/audit";
 
@@ -113,7 +114,7 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   // Audit the report generation
@@ -140,8 +141,8 @@ export async function POST(req: Request) {
     return {
       overallRisk,
       executiveSummary: `Enterprise-Wide Risk Assessment for ${body.institutionName ?? "the institution"} — reporting period ${body.reportingPeriod ?? new Date().getFullYear()}. Overall inherent risk scored ${inh}/5; overall residual risk ${res}/5 (band: ${overallRisk.toUpperCase()}). Assessment performed across ${body.dimensions?.length ?? 0} dimensions in line with FATF R.1 and FDL 10/2025 Art.4. The Board is asked to note residual exposure and approve the action plan below.`,
-      keyFindings: (body.dimensions ?? []).slice(0, 5).map((d) => `${d.dimension} — inherent ${d.inherent}/5, controls ${d.controls}/5${d.notes ? ` (${d.notes})` : ""}`),
-      dimensionNarratives: (body.dimensions ?? []).map((d) => ({
+      keyFindings: (Array.isArray(body.dimensions) ? body.dimensions : []).slice(0, 5).map((d) => `${d.dimension} — inherent ${d.inherent}/5, controls ${d.controls}/5${d.notes ? ` (${d.notes})` : ""}`),
+      dimensionNarratives: (Array.isArray(body.dimensions) ? body.dimensions : []).map((d) => ({
         dimension: d.dimension,
         inherentRisk: d.inherent >= 4 ? "high" : d.inherent >= 3 ? "medium" : "low",
         residualRisk: Math.max(0, d.inherent - d.controls) >= 3 ? "elevated" : "tolerable",
@@ -173,7 +174,7 @@ export async function POST(req: Request) {
       const client = getAnthropicClient(apiKey, 55_000);
       const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 2000,
+      max_tokens: 700,
       system: [
         {
           type: "text",
@@ -206,24 +207,31 @@ Respond ONLY with valid JSON — no markdown fences:
       ],
       messages: [{
         role: "user",
-        content: `Institution: ${body.institutionName ?? "UAE Financial Institution"}
-Reporting Period: ${body.reportingPeriod ?? "Current year"}
+        content: `Institution: ${sanitizeField(body.institutionName ?? "UAE Financial Institution", 200)}
+Reporting Period: ${sanitizeField(body.reportingPeriod ?? "Current year", 100)}
 ${body.overallInherent !== undefined ? `Overall Inherent Risk: ${body.overallInherent}/5` : ""}
 ${body.overallResidual !== undefined ? `Overall Residual Risk: ${body.overallResidual}/5` : ""}
-${body.approvedBy ? `Last Approved By: ${body.approvedBy}` : ""}
-${body.lastApproved ? `Last Approval Date: ${body.lastApproved}` : ""}
+${body.approvedBy ? `Last Approved By: ${sanitizeField(body.approvedBy, 200)}` : ""}
+${body.lastApproved ? `Last Approval Date: ${sanitizeField(body.lastApproved, 100)}` : ""}
 
 Risk Dimension Scores:
 ${dimensionText}
 
-Additional Context: ${body.context ?? "none"}
+Additional Context: ${sanitizeField(body.context ?? "none", 500)}
 
 Generate the board EWRA report.`,
       }],
     });
 
       const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
-      return JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as EwraBoardReportResult;
+      const parsed = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as EwraBoardReportResult;
+      if (!Array.isArray(parsed.keyFindings)) parsed.keyFindings = [];
+      if (!Array.isArray(parsed.dimensionNarratives)) parsed.dimensionNarratives = [];
+      else for (const d of parsed.dimensionNarratives) { if (!Array.isArray(d.controlGaps)) d.controlGaps = []; if (!Array.isArray(d.recommendedActions)) d.recommendedActions = []; }
+      if (!Array.isArray(parsed.boardRecommendations)) parsed.boardRecommendations = [];
+      if (!Array.isArray(parsed.nextSteps)) parsed.nextSteps = [];
+      if (!Array.isArray(parsed.immediateActions)) parsed.immediateActions = [];
+      return parsed;
     },
   });
 
@@ -231,5 +239,5 @@ Generate the board EWRA report.`,
     ok: true,
     ...fallback.result,
     ...(fallback.degraded ? { degraded: true, degradedReason: fallback.degradedReason } : {}),
-  });
+  }, { headers: gate.headers });
 }

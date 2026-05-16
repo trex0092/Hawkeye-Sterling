@@ -11,8 +11,7 @@
 import type {
   BrainContext, FacultyId, Finding, ReasoningCategory, Verdict,
 } from '../types.js';
-import type { EvidenceItem } from '../evidence.js';
-import { credibilityScore, freshnessDays, isStale } from '../evidence.js';
+import { type EvidenceItem, credibilityScore, freshnessDays, isStale } from '../evidence.js';
 
 function mk(
   modeId: string,

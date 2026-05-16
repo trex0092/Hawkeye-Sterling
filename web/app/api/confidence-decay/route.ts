@@ -34,12 +34,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as ReqBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const { lastScreenedAt, verdict, riskScore, entityType } = body;
   if (!lastScreenedAt || !verdict || riskScore === undefined || !entityType) {
-    return NextResponse.json({ ok: false, error: "lastScreenedAt, verdict, riskScore, and entityType are required" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "lastScreenedAt, verdict, riskScore, and entityType are required" }, { status: 400 , headers: gate.headers });
   }
 
   const screenedDate = new Date(lastScreenedAt);
@@ -80,5 +80,5 @@ export async function POST(req: Request): Promise<NextResponse> {
     recommendedRescreen,
     daysUntilStale,
     urgency,
-  });
+  }, { headers: gate.headers });
 }

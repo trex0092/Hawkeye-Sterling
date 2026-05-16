@@ -53,8 +53,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400, headers: gate.headers });
   }
 
-  if (!body.requests?.length) {
-    return NextResponse.json({ ok: false, error: "requests array required" }, { status: 400, headers: gate.headers });
+  if (!Array.isArray(body.requests) || body.requests.length === 0) {
+    return NextResponse.json({ ok: false, error: "requests must be a non-empty array" }, { status: 400, headers: gate.headers });
   }
   if (body.requests.length > 100) {
     return NextResponse.json({ ok: false, error: "maximum 100 requests per batch" }, { status: 400, headers: gate.headers });
@@ -118,7 +118,8 @@ export async function POST(req: Request): Promise<NextResponse> {
 
     return NextResponse.json({ ok: true, batchId, anthropicBatchId: anthropicBatch.id, requestCount: body.requests.length }, { status: 202, headers: gate.headers });
   } catch (err) {
-    return NextResponse.json({ ok: false, error: err instanceof Error ? err.message : String(err) }, { status: 503, headers: gate.headers });
+    console.error("[llm-batch] submission failed:", err instanceof Error ? err.message : err);
+    return NextResponse.json({ ok: false, error: "Batch submission temporarily failed — please retry." }, { status: 503, headers: gate.headers });
   }
 }
 
@@ -154,7 +155,8 @@ async function fetchAndRehydrateResults(
   try {
     iter = (await client.messages.batches.results(anthropicBatchId)) as AsyncIterable<BatchResultEntry>;
   } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : String(err) };
+    console.error("[llm-batch] fetchAndRehydrateResults failed:", err instanceof Error ? err.message : err);
+    return { ok: false, error: "Failed to retrieve batch results — please retry." };
   }
 
   const out: RehydratedResult[] = [];
@@ -223,7 +225,7 @@ export async function GET(req: Request): Promise<NextResponse> {
   // happens at result-retrieval time using the persisted redaction maps.
   if (job.anthropicBatchId && apiKey) {
     try {
-      const client = getAnthropicClient(apiKey, 10_000, "llm-batch");
+      const client = getAnthropicClient(apiKey, 25_000, "llm-batch");
       const statusData = (await client.messages.batches.retrieve(job.anthropicBatchId)) as {
         processing_status: string;
         request_counts: { processing: number; succeeded: number; errored: number; canceled: number; expired: number };

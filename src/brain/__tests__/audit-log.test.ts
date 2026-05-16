@@ -13,8 +13,7 @@ import {
   persistedSourceFromChunk,
   type AuditEntryInput,
 } from '../registry/audit-log.js';
-import { buildSeedRegistry, retrieve } from '../registry/index.js';
-import type { AdvisorResponseV1, Verdict } from '../registry/index.js';
+import { type AdvisorResponseV1, type Verdict, buildSeedRegistry, retrieve } from '../registry/index.js';
 
 function makeAnswer(verdict: Verdict, confidence: 1 | 2 | 3 | 4 | 5): AdvisorResponseV1 {
   return {

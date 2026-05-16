@@ -111,6 +111,7 @@ async function handleHealth(_req: Request, ctx: RequestContext): Promise<NextRes
     ok: true,
     at: new Date(now).toISOString(),
     health,
+    asanaConfigured: Boolean(process.env["ASANA_TOKEN"]),
     summary: {
       enrolled,
       scheduled: scheduledCount,

@@ -165,7 +165,7 @@ export async function searchRss(feedUrl: string, opts: SearchOptions = {}): Prom
   const extract = (block: string, tag: string): string | undefined => {
     const m = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, 'i').exec(block);
     if (!m) return undefined;
-    return m[1]!.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1').trim();
+    return (m[1] ?? '').replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1').trim();
   };
   let m;
   while ((m = itemRx.exec(xml)) !== null) {
@@ -183,7 +183,7 @@ export async function searchRss(feedUrl: string, opts: SearchOptions = {}): Prom
   return items.slice(0, opts.limit ?? 25).map((it) => {
     const text = `${it.title} ${it.description ?? ''}`;
     let sourceDomain: string | undefined;
-    try { sourceDomain = new URL(it.link).hostname; } catch (_) { /* ignore */ }
+    try { sourceDomain = new URL(it.link).hostname; } catch { /* ignore */ }
     return {
       source: 'rss' as const,
       ...(sourceDomain !== undefined ? { sourceDomain } : {}),

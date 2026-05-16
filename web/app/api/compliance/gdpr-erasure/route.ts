@@ -89,7 +89,7 @@ async function handlePost(req: Request): Promise<NextResponse> {
     return NextResponse.json({
       ok: true,
       stored: false,
-      note: `case store unavailable — erasure not applied: ${err instanceof Error ? err.message : String(err)}`,
+      note: "case store temporarily unavailable — erasure not applied. Please retry.",
     }, { headers: gateHeaders });
   }
   if (!raw) {
@@ -127,7 +127,7 @@ async function handlePost(req: Request): Promise<NextResponse> {
     return NextResponse.json({
       ok: true,
       stored: false,
-      note: `case store write unavailable — erasure not persisted: ${err instanceof Error ? err.message : String(err)}`,
+      note: "case store write temporarily unavailable — erasure not persisted. Please retry.",
     }, { headers: gateHeaders });
   }
 

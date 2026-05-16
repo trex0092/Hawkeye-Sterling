@@ -8,6 +8,7 @@ import { enforce } from "@/lib/server/enforce";
 import { getJson } from "@/lib/server/store";
 import { randomBytes } from "node:crypto";
 import { asanaGids } from "@/lib/server/asanaConfig";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -242,19 +243,19 @@ function buildUserMessage(req: DecisionRequest): string {
     ? req.sanctionsHits.map((h) => `${h.list} (score: ${h.score}${h.details ? `, ${h.details}` : ""})`).join("; ")
     : "None";
   return `SUBJECT FOR DECISION:
-Name: ${req.name}
-Entity type: ${req.entityType}
-Country: ${req.country}
+Name: ${sanitizeField(req.name, 500)}
+Entity type: ${sanitizeField(req.entityType, 100)}
+Country: ${sanitizeField(req.country, 100)}
 Risk score: ${req.riskScore}/100
 Sanctions hits: ${hits}
-Lists checked: ${req.listCoverage.join(", ") || "N/A"}
-Adverse media: ${req.adverseMedia || "None identified"}
-PEP status: ${req.pepTier || "Not a PEP"}
-Exposure (AED): ${req.exposureAED || "Unknown"}
-CDD posture: ${req.cddPosture || "CDD"}
+Lists checked: ${req.listCoverage.map((l) => sanitizeField(l, 100)).join(", ") || "N/A"}
+Adverse media: ${sanitizeText(req.adverseMedia, 2000) || "None identified"}
+PEP status: ${sanitizeField(req.pepTier, 100) || "Not a PEP"}
+Exposure (AED): ${sanitizeField(req.exposureAED, 50) || "Unknown"}
+CDD posture: ${sanitizeField(req.cddPosture, 50) || "CDD"}
 Screening top score: ${req.screeningTopScore ?? req.riskScore}/100
-Screening severity: ${req.screeningSeverity || "unknown"}
-Notes: ${req.notes || "None"}
+Screening severity: ${sanitizeField(req.screeningSeverity, 50) || "unknown"}
+Notes: ${sanitizeText(req.notes, 1000) || "None"}
 
 Make your decision now.`;
 }
@@ -451,11 +452,11 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as DecisionRequest;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   if (!body.name || !body.subjectId) {
-    return NextResponse.json({ ok: false, error: "name and subjectId are required" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "name and subjectId are required" }, { status: 400 , headers: gate.headers });
   }
 
   // ── Data integrity gate (FDL 10/2025 Art.18) ─────────────────────────────
@@ -509,10 +510,10 @@ export async function POST(req: Request) {
 
   if (apiKey) {
     try {
-      const client = getAnthropicClient(apiKey);
+      const client = getAnthropicClient(apiKey, 20_000);
       const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 2048,
+        max_tokens: 700,
         system: buildSystemBlocks(learningCtx),
         messages: [{ role: "user", content: buildUserMessage(body) }],
       });
@@ -530,8 +531,8 @@ export async function POST(req: Request) {
       confidence = parsed.confidence ?? 70;
       urgency = (parsed.urgency as "low" | "medium" | "high" | "critical") ?? "medium";
       rationale = parsed.rationale ?? "Decision based on risk profile analysis.";
-      keyFactors = parsed.keyFactors ?? [];
-      nextSteps = parsed.nextSteps ?? [];
+      keyFactors = Array.isArray(parsed.keyFactors) ? parsed.keyFactors : [];
+      nextSteps = Array.isArray(parsed.nextSteps) ? parsed.nextSteps : [];
       regulatoryBasis = parsed.regulatoryBasis ?? "FDL 10/2025";
     } catch {
       // Fallback to rule-based
@@ -612,7 +613,7 @@ export async function POST(req: Request) {
 
   const latencyMs = Date.now() - t0;
   if (latencyMs > 5000) console.warn(`[ai-decision] slow response latencyMs=${latencyMs}`);
-  return NextResponse.json({ ...responseBody, latencyMs }, { status: 200 , headers: gate.headers});
+  return NextResponse.json({ ...responseBody, latencyMs }, { status: 200 , headers: gate.headers });
 }
 
 // ── Rule-based fallback ───────────────────────────────────────────────────────

@@ -234,7 +234,7 @@ async function runScreenViaApi(draft: Draft): Promise<{ hits: ScreeningHit[]; so
     const json = (await res.json()) as QuickScreenResponse;
     if (json.ok) {
       return {
-        hits: json.hits.map((h) => ({
+        hits: (Array.isArray(json.hits) ? json.hits : []).map((h) => ({
           listId: h.listId,
           candidateName: h.candidateName,
           score: h.score,

@@ -38,7 +38,7 @@ export const maxDuration = 30;
 
 const DEFAULT_MODEL = "claude-opus-4-7";
 const MAX_OUTPUT_TOKENS = 4096;
-const BUDGET_MS = 22_000;
+const BUDGET_MS = 4_500;
 
 type Outcome = "clear" | "flag" | "escalate" | "inconclusive" | "block";
 
@@ -149,7 +149,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       const jsonEnd = text.lastIndexOf("}");
       if (jsonStart >= 0 && jsonEnd > jsonStart) {
         const parsed = JSON.parse(text.slice(jsonStart, jsonEnd + 1)) as { counterfactuals?: unknown };
-        counterfactuals = parsed.counterfactuals ?? [];
+        counterfactuals = Array.isArray(parsed.counterfactuals) ? parsed.counterfactuals : [];
       }
     } catch (parseErr) {
       console.warn("[agent/counterfactual] parse failed", parseErr);

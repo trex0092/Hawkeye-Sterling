@@ -90,7 +90,7 @@ export async function yenteMatch(
   const dataset = opts.dataset ?? 'default';
   const threshold = opts.threshold ?? 0.5;
   const limit = opts.limit ?? 10;
-  const fetchImpl = opts.fetchImpl ?? fetch;
+  const _fetchImpl = opts.fetchImpl ?? fetch;
 
   // Build the FtM-format match request body. yente expects a map of
   // query-id → { schema, properties }.
@@ -136,7 +136,7 @@ export async function yenteMatch(
 
   return queries.slice(0, 100).map((q, i) => {
     const key = `q${i}`;
-    const resp = result.json!.responses![key];
+    const resp = result.json?.responses?.[key];
     const hits: YenteMatchHit[] = (resp?.results ?? []).map((r) => ({
       id: r.id,
       caption: r.caption,

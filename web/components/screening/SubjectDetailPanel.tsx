@@ -238,10 +238,16 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
     if (news.status === "success" && news.result.articles.length > 0) {
       return news.result.articles
         .slice(0, 15)
-        .map((a) => a.title)
-        .join(". ");
+        .map((a) => [a.title, a.snippet].filter(Boolean).join(". "))
+        .join(" | ");
     }
-    return subject.adverseMedia?.name ?? subject.meta ?? "";
+    // Fallback: combine adverseMedia reference (contains match context) with meta
+    const parts = [
+      subject.adverseMedia?.name,
+      subject.adverseMedia?.reference,
+      subject.meta,
+    ].filter((s): s is string => Boolean(s?.trim()));
+    return parts.join(". ");
   }, [news, subject.adverseMedia, subject.meta]);
   // Pass the canonical name to super-brain too so lookupKnownPEP /
   // lookupKnownAdverse hit the fixture (e.g. "nicolas maduro" → state_leader,
@@ -402,8 +408,11 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
     if (superBrain.status === "success" && onUpdate) {
       onUpdate(subject.id, { riskScore: superBrain.result.composite.score });
     }
+  // onUpdate is stable (useCallback in parent); subject.id and
+  // superBrain.result are intentionally read from the latest closure —
+  // the effect should only fire when status transitions to "success".
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [superBrain.status]);
+  }, [superBrain.status, subject.id, onUpdate]);
 
   const asanaReport = useAutoReport({
     subjectId: subject.id,

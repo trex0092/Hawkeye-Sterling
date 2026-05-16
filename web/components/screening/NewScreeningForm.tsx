@@ -143,8 +143,11 @@ export function NewScreeningForm({
           setPepStatus("hit");
           // Auto-bump to EDD when a high-confidence PEP is found and
           // the analyst hasn't already set a stronger posture.
-          if (data.hits[0]!.score >= 0.85 && form.cddPosture === "CDD") {
-            patch({ cddPosture: "EDD" });
+          // Use functional setForm to avoid stale-closure reads of
+          // form.cddPosture — the debounce fires 600 ms after the effect
+          // captured the closure, so cddPosture may have changed.
+          if (data.hits[0]!.score >= 0.85) {
+            setForm((f) => f.cddPosture === "CDD" ? { ...f, cddPosture: "EDD" } : f);
           }
         } else {
           setPepHits([]);
@@ -159,6 +162,10 @@ export function NewScreeningForm({
       cancelled = true;
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
+  // form.alternateNames intentionally omitted — including it would trigger a
+  // redundant API call on every alias addition; name/entityType/dob are the
+  // meaningful PEP-lookup discriminators. form.cddPosture is now read inside
+  // a functional setState so it is no longer a stale-closure risk.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.name, form.entityType, form.dob]);
 

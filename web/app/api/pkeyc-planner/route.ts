@@ -4,6 +4,7 @@ export const maxDuration = 60;import { NextResponse } from "next/server";
 
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export interface PkycPlannerResult {
   reviewFrequency: "monthly" | "quarterly" | "bi-annual" | "annual";
@@ -86,22 +87,22 @@ export async function POST(req: Request) {
   } catch {
     return NextResponse.json(
       { ok: false, error: "Invalid JSON" },
-      { status: 400 }
+      { status: 400, headers: gate.headers }
     );
   }
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "pkeyc-planner temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "pkeyc-planner temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 55_000);
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 1500,
+        max_tokens: 700,
         system:
           "You are a UAE AML/CFT compliance expert specialising in periodic KYC review planning. Generate structured KYC refresh plans under UAE FDL and FATF standards. Return valid JSON only matching the PkycPlannerResult interface.",
         messages: [
           {
             role: "user",
-            content: `Generate a periodic KYC review plan.\n\nCustomer Count: ${body.customerCount}\nHigh-Risk Count: ${body.highRiskCount}\nPEP Count: ${body.pepCount}\nOverdue Count: ${body.overdueCount}\nInstitution Type: ${body.institutionType}\nContext: ${body.context}\n\nReturn JSON with fields: reviewFrequency, triggerEvents[], nextReviewDate, overdueItems[], automationOpportunities[], kycRefreshPlan[] (each with customer, priority, dueDate, action), regulatoryBasis.`,
+            content: `Generate a periodic KYC review plan.\n\nCustomer Count: ${body.customerCount}\nHigh-Risk Count: ${body.highRiskCount}\nPEP Count: ${body.pepCount}\nOverdue Count: ${body.overdueCount}\nInstitution Type: ${sanitizeField(body.institutionType, 100)}\nContext: ${sanitizeText(body.context, 2000)}\n\nReturn JSON with fields: reviewFrequency, triggerEvents[], nextReviewDate, overdueItems[], automationOpportunities[], kycRefreshPlan[] (each with customer, priority, dueDate, action), regulatoryBasis.`,
           },
         ],
       });
@@ -110,8 +111,12 @@ export async function POST(req: Request) {
     const result = JSON.parse(
       raw.replace(/```json\n?|\n?```/g, "").trim()
     ) as PkycPlannerResult;
+    if (!Array.isArray(result.triggerEvents)) result.triggerEvents = [];
+    if (!Array.isArray(result.overdueItems)) result.overdueItems = [];
+    if (!Array.isArray(result.automationOpportunities)) result.automationOpportunities = [];
+    if (!Array.isArray(result.kycRefreshPlan)) result.kycRefreshPlan = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "pkeyc-planner temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "pkeyc-planner temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

@@ -209,7 +209,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         answer: `**MLRO Advisor — Offline Mode**\n\nYour question has been received but the AI advisor is currently unavailable (ANTHROPIC_API_KEY not configured). Please consult your designated MLRO or compliance officer directly. Under UAE FDL No.10/2025 and FATF Recommendations, all compliance decisions must be reviewed and documented by a qualified MLRO. Set ANTHROPIC_API_KEY in your Netlify environment variables to enable AI-powered advisory.`,
         advisorScore: null,
         citations: [],
-        elapsedMs: 0,
+        latencyMs: 0,
         offline: true,
       },
       { status: 200, headers: gateHeaders },
@@ -219,6 +219,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (!body?.subjectName?.trim()) {
     return NextResponse.json(
       { ok: false, error: "subjectName is required" },
+      { status: 400, headers: gateHeaders },
+    );
+  }
+  if (body.subjectName.length > 500) {
+    return NextResponse.json(
+      { ok: false, error: "subjectName exceeds 500-character limit" },
       { status: 400, headers: gateHeaders },
     );
   }
@@ -319,7 +325,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const mergedContext: ContextPair[] = [
     ...persistedTurns.slice(-3).map((t) => ({ q: t.q, a: t.a })),
-    ...(body.context ?? []),
+    ...(Array.isArray(body.context) ? body.context : []),
   ];
 
   const preamble = buildContextPreamble(mergedContext);
@@ -353,9 +359,9 @@ export async function POST(req: Request): Promise<NextResponse> {
   // Build a rich evidence ID list — caller-supplied + classifier hints.
   const evidenceIds = Array.from(
     new Set([
-      ...(body.evidenceIds ?? []),
-      ...(body.typologyIds ?? []),
-      ...(body.adverseGroups ?? []).map((g) => `adverse:${g}`),
+      ...(Array.isArray(body.evidenceIds) ? body.evidenceIds : []),
+      ...(Array.isArray(body.typologyIds) ? body.typologyIds : []),
+      ...(Array.isArray(body.adverseGroups) ? body.adverseGroups : []).map((g) => `adverse:${g}`),
       ...analysis.typologies.map((t: string) => `typology:${t}`),
       ...analysis.doctrineHints.map((d: string) => `doctrine:${d}`),
       ...analysis.playbookHints.map((p: string) => `playbook:${p}`),
@@ -661,7 +667,6 @@ export async function POST(req: Request): Promise<NextResponse> {
         answer: "The MLRO advisor encountered a temporary error. Please retry your question. If the issue persists, consult your compliance officer directly for guidance under UAE FDL No.10/2025 and FATF Recommendations.",
         advisorScore: null,
         citations: [],
-        elapsedMs: 0,
         latencyMs: Date.now() - t0,
         degraded: true,
       },

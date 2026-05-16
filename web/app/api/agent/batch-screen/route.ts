@@ -106,13 +106,6 @@ async function handlePost(req: Request): Promise<NextResponse> {
         let redlinesFiredCount = 0;
         let crossRegime: BatchResult["crossRegime"] = null;
         if (mode === "full") {
-          const keywords = [sub.name, ...(sub.aliases ?? [])]
-            .join(" ")
-            .toLowerCase()
-            .split(/\W+/)
-            .filter((t) => t.length >= 3);
-          redlinesFiredCount = evaluateRedlines(keywords).fired.length;
-
           const REGIME_LIST_IDS = ["un_consolidated", "ofac_sdn", "eu_consolidated", "uk_ofsi", "uae_eocn", "uae_local_terrorist"] as const;
           const hitsByList = new Map<string, typeof hits>();
           for (const h of hits) {
@@ -120,6 +113,20 @@ async function handlePost(req: Request): Promise<NextResponse> {
             if (arr) arr.push(h);
             else hitsByList.set(h.listId, [h]);
           }
+          // Derive fired redline IDs from confirmed hits (score is 0-1 scale)
+          const firedRedlineIds: string[] = [];
+          const SANCTIONS_REDLINE_MAP: Array<[string, string]> = [
+            ["ofac_sdn", "rl_ofac_sdn_confirmed"],
+            ["un_consolidated", "rl_un_consolidated_confirmed"],
+            ["eu_consolidated", "rl_eu_cfsp_confirmed"],
+            ["uk_ofsi", "rl_uk_ofsi_confirmed"],
+          ];
+          for (const [lid, rid] of SANCTIONS_REDLINE_MAP) {
+            if ((hitsByList.get(lid) ?? []).some((h) => h.score >= 0.85)) firedRedlineIds.push(rid);
+          }
+          const uaeHits = [...(hitsByList.get("uae_eocn") ?? []), ...(hitsByList.get("uae_local_terrorist") ?? [])];
+          if (uaeHits.some((h) => h.score >= 0.85)) firedRedlineIds.push("rl_eocn_confirmed");
+          redlinesFiredCount = evaluateRedlines(firedRedlineIds).fired.length;
           const statuses: RegimeStatus[] = REGIME_LIST_IDS.map((listId) => {
             const list = hitsByList.get(listId);
             let hit: RegimeStatus["hit"] = "not_designated";
@@ -145,11 +152,12 @@ async function handlePost(req: Request): Promise<NextResponse> {
           durationMs: Date.now() - subStartedAt,
         };
       } catch (err) {
+        console.error("[agent/batch-screen] subject screening failed:", err instanceof Error ? err.message : err);
         return {
           subjectIndex: i,
           ok: false,
           subjectName: sub.name,
-          error: err instanceof Error ? err.message : String(err),
+          error: "Screening failed — please retry.",
           durationMs: Date.now() - subStartedAt,
         };
       }

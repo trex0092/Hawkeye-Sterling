@@ -359,7 +359,7 @@ export function applyAutoEscalationPolicy(
     if (currentIdx < tierOrder.length - 1) {
       return {
         shouldEscalate: true,
-        targetTier: tierOrder[currentIdx + 1]!,
+        targetTier: tierOrder[currentIdx + 1] ?? tierOrder[tierOrder.length - 1] ?? 'L5_regulator',
         reason: `SLA breached at ${currentCase.currentTier} — auto-escalating to next tier`,
       };
     }

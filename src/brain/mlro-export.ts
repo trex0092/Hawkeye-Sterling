@@ -62,7 +62,8 @@ function exportMarkdown(result: MlroPipelineResult, opts: { caseId: string; subj
   lines.push('');
   lines.push('## Reasoning chain');
   for (let i = 0; i < result.stepResults.length; i++) {
-    const s = result.stepResults[i]!;
+    const s = result.stepResults[i];
+    if (!s) continue;
     lines.push('');
     lines.push(`### ${i + 1}. \`${s.modeId}\` — ${s.elapsedMs}ms ${s.partial ? '(partial)' : s.ok ? '' : '(failed)'}`);
     lines.push('');

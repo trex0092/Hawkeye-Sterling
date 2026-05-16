@@ -147,8 +147,8 @@ export function charterDiff(text: string): CharterDiff {
                      /\b(UN(\s+Consolidated)?|OFAC|UK OFSI|EU Consolidated|EOCN)\b/i.test(text);
     if (hasScope) {
       const i = failed.findIndex((f) => f.id === 'P7');
-      const p7 = failed.splice(i, 1)[0]!;
-      passed.push({ ...p7, match: null, matchIndex: null });
+      const p7 = failed.splice(i, 1)[0];
+      if (p7) passed.push({ ...p7, match: null, matchIndex: null });
     }
   }
   // Confirm we spanned the charter.

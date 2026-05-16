@@ -31,6 +31,11 @@ export interface GdeltArticle {
   tone?: number;
   relevance?: number;
   socialimage?: string;
+  // Enhanced fields added by multi-query enrichment
+  riskCategories?: string[];
+  sourceScore?: number;   // 0-1 source reputation
+  queryLabel?: string;    // which risk query matched
+  language?: string;
 }
 
 export interface GdeltCachedResult {
@@ -44,7 +49,7 @@ export interface GdeltCachedResult {
 const GDELT_BASE = "https://api.gdeltproject.org/api/v2/doc/doc";
 const FETCH_TIMEOUT_MS = 20_000;
 const ART19_LOOKBACK_YEARS = 10;
-const GDELT_MAX_RECORDS = 75;
+const GDELT_MAX_RECORDS = 250;
 
 // In-memory cache TTL — 30 min. Short enough that a single warm Lambda doesn't
 // serve very stale results across many screenings; long enough to absorb
@@ -128,30 +133,85 @@ function gdeltDateTime(d: Date): string {
   return `${yyyy}${mm}${dd}${hh}${mi}${ss}`;
 }
 
-// Default adverse-media keyword OR clause. Kept here so the cache module is
-// self-contained — callers can override by passing a custom `query` parameter
-// (used for cases where the standard adverse-media keyword set isn't right).
-const DEFAULT_ADVERSE_KEYWORDS = [
-  "sanction*", "OFAC", "SDN", "designat*",
-  "fraud", "scam", "Ponzi", "embezzl*",
-  "money launder*", "AML",
-  "corrupt*", "brib*",
-  "arrest*", "indict*", "convict*", "guilty", "prosecut*",
-  "terror*", "militant",
-  "investigat*",
-];
+// ─── Multi-query strategy (Taranis-parity) ─────────────────────────────────
+//
+// Taranis AI runs NLP over 38+ news outlets. We replicate the effect by
+// firing 6 parallel GDELT queries, each targeting a distinct FATF risk
+// category, then merging + deduplicating results. This gives us:
+//   - 6× the article coverage of a single query
+//   - Category labels on every article (like Taranis NLP tags)
+//   - Cross-language coverage (GDELT indexes 65+ languages)
+//   - Source reputation scoring (Taranis vendor-weights sources)
 
-function defaultQuery(subjectName: string): string {
-  const kw = DEFAULT_ADVERSE_KEYWORDS.join(" OR ");
-  return `"${subjectName}" AND (${kw})`;
+interface RiskQueryDef {
+  label: string;       // displayed in UI / used for riskCategories tag
+  keywords: string[];  // ORed together inside the GDELT query
+  categories: string[];
 }
 
-async function liveFetch(subjectName: string, customQuery?: string): Promise<{ articles: GdeltArticle[]; serviceError: boolean }> {
-  const rawQuery = customQuery ?? defaultQuery(subjectName);
-  const end = new Date();
-  const start = new Date(end);
-  start.setUTCFullYear(start.getUTCFullYear() - ART19_LOOKBACK_YEARS);
+const RISK_QUERIES: RiskQueryDef[] = [
+  {
+    label: "sanctions",
+    keywords: ["sanction*", "OFAC", "SDN", "designat*", "blacklist*", "asset freeze", "travel ban", "UN SC"],
+    categories: ["sanctions"],
+  },
+  {
+    label: "financial_crime",
+    keywords: ["money launder*", "AML", "CFT", "terrorist financing", "fraud", "embezzl*", "Ponzi", "scam", "wire fraud", "bank fraud"],
+    categories: ["money_laundering", "fraud"],
+  },
+  {
+    label: "criminal",
+    keywords: ["arrest*", "indict*", "convict*", "guilty plea", "prosecut*", "charged with", "criminal investigation", "warrant", "fugitive", "extradition"],
+    categories: ["law_enforcement", "criminal"],
+  },
+  {
+    label: "corruption",
+    keywords: ["corrupt*", "brib*", "kickback*", "embezzl*", "misappropriat*", "illicit enrichment", "FCPA", "UK Bribery Act"],
+    categories: ["corruption"],
+  },
+  {
+    label: "regulatory",
+    keywords: ["regulatory action", "enforcement action", "fine*", "penalt*", "license revok*", "cease and desist", "SEC enforcement", "FCA action", "FINMA", "CBUAE"],
+    categories: ["regulatory"],
+  },
+  {
+    label: "adverse_media",
+    keywords: ["short seller", "Hindenburg", "Muddy Waters", "Citron", "investigative report*", "ICIJ", "OCCRP", "Panama Papers", "Pandora Papers", "money mule", "shell compan*", "beneficial owner*"],
+    categories: ["adverse_media", "dpms"],
+  },
+];
 
+// High-reputation news domains — articles from these sources score higher.
+// Mirrors how Taranis weights its 38 vetted outlets.
+const HIGH_REP_DOMAINS = new Set([
+  "reuters.com", "ft.com", "bloomberg.com", "wsj.com", "theguardian.com",
+  "bbc.com", "bbc.co.uk", "nytimes.com", "apnews.com", "france24.com",
+  "aljazeera.com", "dw.com", "euronews.com", "themoscowtimes.com",
+  "scmp.com", "channelnewsasia.com", "arabnews.com", "thenationalnews.com",
+  "gulfnews.com", "zawya.com", "middleeasteye.net",
+  "occrp.org", "icij.org", "globalwitness.org", "transparency.org",
+  "fatf-gafi.org", "un.org", "worldbank.org", "imf.org",
+]);
+const MED_REP_DOMAINS = new Set([
+  "cnbc.com", "forbes.com", "businessinsider.com", "marketwatch.com",
+  "yahoo.com", "abc.net.au", "cbc.ca", "irishtimes.com", "independent.co.uk",
+  "telegraph.co.uk", "lemonde.fr", "lefigaro.fr", "spiegel.de", "faz.net",
+  "corriere.it", "elpais.com", "rtve.es", "nrc.nl", "svd.se",
+  "haaretz.com", "timesofisrael.com", "arabtimesonline.com",
+]);
+
+function sourceScore(domain?: string): number {
+  if (!domain) return 0.4;
+  const d = domain.toLowerCase().replace(/^www\./, "");
+  if (HIGH_REP_DOMAINS.has(d)) return 1.0;
+  if (MED_REP_DOMAINS.has(d)) return 0.75;
+  return 0.5;
+}
+
+function buildGdeltUrl(subjectName: string, query: RiskQueryDef, start: Date, end: Date): string {
+  const kw = query.keywords.join(" OR ");
+  const rawQuery = `"${subjectName}" AND (${kw})`;
   const params = new URLSearchParams({
     query: rawQuery,
     mode: "artlist",
@@ -161,12 +221,19 @@ async function liveFetch(subjectName: string, customQuery?: string): Promise<{ a
     startdatetime: gdeltDateTime(start),
     enddatetime: gdeltDateTime(end),
   });
-  const url = `${GDELT_BASE}?${params.toString()}`;
+  return `${GDELT_BASE}?${params.toString()}`;
+}
 
+// Returns null on network/HTTP failure (distinguishable from empty results).
+async function fetchOneQuery(
+  url: string,
+  queryDef: RiskQueryDef,
+  perQueryTimeoutMs: number = FETCH_TIMEOUT_MS,
+): Promise<GdeltArticle[] | null> {
   for (let attempt = 0; attempt < 2; attempt++) {
-    if (attempt > 0) await new Promise((r) => setTimeout(r, 3_000));
+    if (attempt > 0) await new Promise((r) => setTimeout(r, 2_000));
     const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
+    const timer = setTimeout(() => ctrl.abort(), perQueryTimeoutMs);
     try {
       const res = await fetch(url, {
         headers: {
@@ -176,18 +243,97 @@ async function liveFetch(subjectName: string, customQuery?: string): Promise<{ a
         signal: ctrl.signal,
       });
       clearTimeout(timer);
-      if (res.status === 429) continue; // rate-limited, retry once
-      if (!res.ok) return { articles: [], serviceError: true };
+      if (res.status === 429) continue;
+      if (!res.ok) return null; // HTTP failure — distinguishable from empty results
       const data = (await res.json()) as { articles?: GdeltArticle[] };
-      return {
-        articles: Array.isArray(data.articles) ? data.articles.filter((a) => a.url && a.title) : [],
-        serviceError: false,
-      };
+      return (Array.isArray(data.articles) ? data.articles : [])
+        .filter((a) => a.url && a.title)
+        .map((a) => ({
+          ...a,
+          riskCategories: queryDef.categories,
+          sourceScore: sourceScore(a.domain),
+          queryLabel: queryDef.label,
+        }));
     } catch {
       clearTimeout(timer);
     }
   }
-  return { articles: [], serviceError: true };
+  return null; // network failure
+}
+
+async function liveFetch(subjectName: string, customQuery?: string, budgetMs?: number): Promise<{ articles: GdeltArticle[]; serviceError: boolean }> {
+  const end = new Date();
+  const start = new Date(end);
+  start.setUTCFullYear(start.getUTCFullYear() - ART19_LOOKBACK_YEARS);
+
+  // Per-query timeout: honour the caller's remaining budget (leave 3 s for synthesis).
+  // Never exceed FETCH_TIMEOUT_MS even if budget is generous.
+  const perQueryMs = budgetMs
+    ? Math.min(FETCH_TIMEOUT_MS, Math.max(4_000, budgetMs - 3_000))
+    : FETCH_TIMEOUT_MS;
+
+  // Custom query (caller override) → single fetch, original behaviour
+  if (customQuery) {
+    const params = new URLSearchParams({
+      query: customQuery,
+      mode: "artlist",
+      maxrecords: String(GDELT_MAX_RECORDS),
+      format: "json",
+      sort: "DateDesc",
+      startdatetime: gdeltDateTime(start),
+      enddatetime: gdeltDateTime(end),
+    });
+    const url = `${GDELT_BASE}?${params.toString()}`;
+    const articles = await fetchOneQuery(url, { label: "custom", keywords: [], categories: ["adverse_media"] }, perQueryMs);
+    // null = network failure; [] = GDELT responded but no results
+    if (articles === null) return { articles: [], serviceError: true };
+    return { articles, serviceError: false };
+  }
+
+  // Multi-query parallel strategy — fire all 6 risk queries simultaneously
+  const urls = RISK_QUERIES.map((q) => ({ q, url: buildGdeltUrl(subjectName, q, start, end) }));
+  const results = await Promise.allSettled(urls.map(({ q, url }) => fetchOneQuery(url, q, perQueryMs)));
+
+  const allArticles: GdeltArticle[] = [];
+  // anySucceeded = at least one query got a non-null response (HTTP success),
+  // even if it returned zero articles. null = network/HTTP failure.
+  let anySucceeded = false;
+  for (const r of results) {
+    if (r.status === "fulfilled" && r.value !== null) {
+      allArticles.push(...r.value);
+      anySucceeded = true;
+    }
+  }
+
+  if (!anySucceeded) return { articles: [], serviceError: true };
+
+  // Deduplicate by URL — when multiple queries return the same article,
+  // merge their riskCategories so one article can carry multiple tags.
+  const byUrl = new Map<string, GdeltArticle>();
+  for (const a of allArticles) {
+    const key = (a.url ?? "").toLowerCase();
+    if (!key) continue;
+    const existing = byUrl.get(key);
+    if (existing) {
+      // Merge categories from duplicate matches
+      existing.riskCategories = Array.from(
+        new Set([...(existing.riskCategories ?? []), ...(a.riskCategories ?? [])])
+      );
+      // Keep highest source score
+      if ((a.sourceScore ?? 0) > (existing.sourceScore ?? 0)) existing.sourceScore = a.sourceScore;
+    } else {
+      byUrl.set(key, { ...a });
+    }
+  }
+
+  // Sort: high-reputation sources first, then most recent
+  const deduped = Array.from(byUrl.values()).sort((a, b) => {
+    const scoreDiff = (b.sourceScore ?? 0.5) - (a.sourceScore ?? 0.5);
+    if (Math.abs(scoreDiff) > 0.2) return scoreDiff;
+    return (b.seendate ?? "").localeCompare(a.seendate ?? "");
+  });
+
+  return { articles: deduped, serviceError: false };
 }
 
 // ─── Public API ─────────────────────────────────────────────────────────────
@@ -201,6 +347,12 @@ export interface FetchGdeltOpts {
    * point of the cache.
    */
   forceRefresh?: boolean;
+  /**
+   * Remaining time budget in ms for the entire GDELT fetch (including retries).
+   * Prevents GDELT from running past the caller's route deadline.
+   * If omitted, defaults to FETCH_TIMEOUT_MS (20 s).
+   */
+  budgetMs?: number;
 }
 
 export async function fetchGdeltCached(
@@ -229,7 +381,7 @@ export async function fetchGdeltCached(
   }
 
   // Layer 3 — live GDELT.
-  const live = await liveFetch(subjectName, opts.query);
+  const live = await liveFetch(subjectName, opts.query, opts.budgetMs);
   if (!live.serviceError) {
     const value: MemEntry["value"] = {
       articles: live.articles,

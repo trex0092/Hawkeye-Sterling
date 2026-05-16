@@ -40,11 +40,13 @@ const CACHED_NAME_KEY = "hawkeye.four-eyes-operator";
 
 function loadCachedName(): string {
   if (typeof window === "undefined") return "";
-  return window.localStorage.getItem(CACHED_NAME_KEY) ?? "";
+  // Use sessionStorage so the MLRO name is not persisted across sessions
+  // on a shared workstation — it clears when the tab closes.
+  return window.sessionStorage.getItem(CACHED_NAME_KEY) ?? "";
 }
 
 function saveCachedName(name: string) {
-  try { window.localStorage.setItem(CACHED_NAME_KEY, name); }
+  try { window.sessionStorage.setItem(CACHED_NAME_KEY, name); }
   catch (err) { console.warn("[hawkeye] four-eyes cached-name persist failed:", err); }
 }
 

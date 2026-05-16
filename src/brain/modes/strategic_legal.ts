@@ -74,7 +74,7 @@ function typedEvidence<T>(ctx: BrainContext, key: string): T[] {
 
 function singleEvidence<T>(ctx: BrainContext, key: string): T | undefined {
   const v = (ctx.evidence as Record<string, unknown> | undefined)?.[key];
-  return v == null ? undefined : (v as T);
+  return v === null || v === undefined ? undefined : (v as T);
 }
 
 // ──────────────────────────────────────────────────────────────────────
@@ -105,7 +105,7 @@ const adversarialCollaborationApply = async (ctx: BrainContext): Promise<Finding
     ? proposed.length > 0 ? 'flag' : 'escalate'
     : 'clear';
   const rationale = agreed.length > 0
-    ? `${agreed.length} jointly-agreed discriminating test(s): "${agreed[0]!.test}"${agreed.length > 1 ? ` +${agreed.length - 1} more` : ''}. Collaboration converged.`
+    ? `${agreed.length} jointly-agreed discriminating test(s): "${agreed[0]?.test ?? ''}"${agreed.length > 1 ? ` +${agreed.length - 1} more` : ''}. Collaboration converged.`
     : proposed.length > 0
       ? `${proposed.length} discriminating test(s) proposed but not yet agreed by both parties. Convene to reach agreement.`
       : `No discriminating test proposed or agreed. Disagreement cannot be settled without one.`;
@@ -140,7 +140,7 @@ const counterexampleSearchApply = async (ctx: BrainContext): Promise<Finding> =>
     ? 'escalate'
     : moderateUnrefuted.length > 0 ? 'flag' : 'clear';
   const rationale = strongUnrefuted.length > 0
-    ? `${strongUnrefuted.length} strong unrefuted counterexample(s): "${strongUnrefuted[0]!.description}". Hypothesis requires revision.`
+    ? `${strongUnrefuted.length} strong unrefuted counterexample(s): "${strongUnrefuted[0]?.description ?? ''}". Hypothesis requires revision.`
     : moderateUnrefuted.length > 0
       ? `${moderateUnrefuted.length} moderate unrefuted counterexample(s). Strengthen or narrow the hypothesis.`
       : `${examples.length} candidate counterexample(s) examined; all refuted or weak. Hypothesis stands.`;
@@ -652,7 +652,7 @@ const oodaApply = async (ctx: BrainContext): Promise<Finding> => {
   }
   const phaseMap = new Map(phases.map((p) => [p.phase, p]));
   const missing = OODA_ORDER.filter((ph) => !phaseMap.has(ph));
-  const incomplete = OODA_ORDER.filter((ph) => phaseMap.get(ph) && !phaseMap.get(ph)!.complete);
+  const incomplete = OODA_ORDER.filter((ph) => phaseMap.get(ph) && !phaseMap.get(ph)?.complete);
   const totalLag = phases.reduce((s, p) => s + p.lagDays, 0);
   const bottleneck = phases.sort((a, b) => b.lagDays - a.lagDays)[0];
   const score = clamp01(missing.length * 0.4 + incomplete.length * 0.25 + totalLag / 30 * 0.1);

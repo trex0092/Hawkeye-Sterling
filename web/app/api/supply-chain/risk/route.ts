@@ -4,6 +4,7 @@ export const maxDuration = 60;
 import { enforce } from "@/lib/server/enforce";
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 export interface SupplierRisk {
   name: string;
   country: string;
@@ -234,17 +235,17 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "supply-chain/risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "supply-chain/risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
-    const client = getAnthropicClient(apiKey, 22_000);
+    const client = getAnthropicClient(apiKey, 55_000);
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 4000,
+      max_tokens: 800,
       system: [
         {
           type: "text",
@@ -273,8 +274,8 @@ Return ONLY valid JSON with this exact structure (no markdown fences):
       messages: [
         {
           role: "user",
-          content: `Company: ${body.company ?? "Unknown"}
-Sector: ${body.sector ?? "Unknown"}
+          content: `Company: ${sanitizeField(body.company ?? "Unknown", 200)}
+Sector: ${sanitizeField(body.sector ?? "Unknown", 200)}
 Tier-1 Suppliers: ${JSON.stringify(body.tier1Suppliers ?? [])}
 Key Source Countries: ${JSON.stringify(body.keySourceCountries ?? [])}
 Commodities: ${JSON.stringify(body.commodities ?? [])}
@@ -286,8 +287,14 @@ Perform a comprehensive supply chain risk assessment covering: geographic concen
     });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as SupplyChainRiskResult;
+    if (!Array.isArray(result.tier1Risk)) result.tier1Risk = [];
+    else for (const s of result.tier1Risk) { if (!Array.isArray(s.specificRisks)) s.specificRisks = []; if (!Array.isArray(s.environmentalFlags)) s.environmentalFlags = []; if (!Array.isArray(s.labourFlags)) s.labourFlags = []; }
+    if (!Array.isArray(result.complianceGaps)) result.complianceGaps = [];
+    if (!Array.isArray(result.regulatoryObligations)) result.regulatoryObligations = [];
+    if (!Array.isArray(result.redFlags)) result.redFlags = [];
+    if (!Array.isArray(result.actionPlan)) result.actionPlan = [];
     return NextResponse.json(result, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "supply-chain/risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "supply-chain/risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

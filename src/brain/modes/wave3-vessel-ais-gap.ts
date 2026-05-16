@@ -80,12 +80,12 @@ function detectDarkPeriods(reports: AisReport[]): SignalHit[] {
   if (reports.length < 2) return [];
   const sorted = [...reports]
     .filter((r) => r.timestamp)
-    .sort((a, b) => Date.parse(a.timestamp!) - Date.parse(b.timestamp!));
+    .sort((a, b) => Date.parse(a.timestamp ?? '') - Date.parse(b.timestamp ?? ''));
   const hits: SignalHit[] = [];
   for (let i = 1; i < sorted.length; i++) {
-    const prev = sorted[i - 1]!;
-    const cur = sorted[i]!;
-    const hours = hoursBetween(prev.timestamp!, cur.timestamp!);
+    const prev = sorted[i - 1] as AisReport;
+    const cur = sorted[i] as AisReport;
+    const hours = hoursBetween(prev.timestamp ?? '', cur.timestamp ?? '');
     if (hours >= AIS_DARK_GAP_HOURS) {
       hits.push({
         id: 'ais_dark_period',

@@ -97,12 +97,13 @@ async function pingCheck(
   } catch (err) {
     clearTimeout(timer);
     const isTimeout = err instanceof Error && err.name === "AbortError";
+    console.error(`[integrations/status] probe ${id} failed:`, err instanceof Error ? err.message : err);
     return {
       id,
       label,
       status: "down",
       critical,
-      detail: isTimeout ? "timeout" : err instanceof Error ? err.message : String(err),
+      detail: isTimeout ? "timeout" : "probe failed",
       latencyMs: Date.now() - t0,
     };
   }

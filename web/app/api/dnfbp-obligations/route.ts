@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export interface DnfbpObligationsResult {
   dnfbpCategory: string;
@@ -91,18 +92,18 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
-  if (!body.dnfbpType?.trim()) return NextResponse.json({ ok: false, error: "dnfbpType required" }, { status: 400 , headers: gate.headers});
+  if (!body.dnfbpType?.trim()) return NextResponse.json({ ok: false, error: "dnfbpType required" }, { status: 400 , headers: gate.headers });
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "dnfbp-obligations temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "dnfbp-obligations temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 55_000);
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 1400,
+        max_tokens: 700,
         system: `You are a UAE AML/CFT specialist mapping Designated Non-Financial Business and Profession (DNFBP) obligations under UAE FDL 10/2025 and FATF Recommendations 22-23.
 
 UAE DNFBP categories and their specific obligations:
@@ -166,20 +167,22 @@ Respond ONLY with valid JSON — no markdown fences:
 }`,
         messages: [{
           role: "user",
-          content: `DNFBP Type: ${body.dnfbpType}
-Transaction Type: ${body.transactionType ?? "not specified"}
-Transaction Amount: ${body.transactionAmount ?? "not specified"} ${body.currency ?? ""}
-Customer Type: ${body.customerType ?? "not specified"}
-Jurisdiction: ${body.jurisdiction ?? "UAE"}
-Additional Context: ${body.context ?? "none"}
+          content: `DNFBP Type: ${sanitizeField(body.dnfbpType, 100)}
+Transaction Type: ${sanitizeField(body.transactionType, 100) || "not specified"}
+Transaction Amount: ${sanitizeField(body.transactionAmount, 50) || "not specified"} ${sanitizeField(body.currency, 10)}
+Customer Type: ${sanitizeField(body.customerType, 100) || "not specified"}
+Jurisdiction: ${sanitizeField(body.jurisdiction, 100) || "UAE"}
+Additional Context: ${sanitizeText(body.context, 2000) || "none"}
 
 Map the AML/CFT obligations for this DNFBP.`,
         }],
       });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as DnfbpObligationsResult;
+    if (!Array.isArray(result.keyObligations)) result.keyObligations = [];
+    if (!Array.isArray(result.prohibitedActivities)) result.prohibitedActivities = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "dnfbp-obligations temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "dnfbp-obligations temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

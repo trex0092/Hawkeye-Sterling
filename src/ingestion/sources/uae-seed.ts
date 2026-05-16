@@ -10,8 +10,7 @@
 // or the legacy ingestion schema:
 //   { name, aliases, nationalities, type, identifiers, addresses, program, reference, designatedAt }
 
-import type { SourceAdapter, NormalisedEntity } from '../types.js';
-import { mkListing } from '../types.js';
+import { type SourceAdapter, type NormalisedEntity, mkListing } from '../types.js';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { sha256Hex } from '../fetch-util.js';

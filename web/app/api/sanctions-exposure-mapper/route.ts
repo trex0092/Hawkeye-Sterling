@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export interface SanctionsListHit {
   list: string;
@@ -85,15 +86,15 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
-  if (!body.entityName?.trim()) return NextResponse.json({ ok: false, error: "entityName required" }, { status: 400 , headers: gate.headers});
+  if (!body.entityName?.trim()) return NextResponse.json({ ok: false, error: "entityName required" }, { status: 400 , headers: gate.headers });
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "sanctions-exposure-mapper temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "sanctions-exposure-mapper temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 55_000);
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 1300,
@@ -121,22 +122,25 @@ Note: You are assessing RISK AND OBLIGATION — not conducting a live database s
 Respond ONLY with valid JSON — no markdown fences matching SanctionsExposureResult interface.`,
         messages: [{
           role: "user",
-          content: `Entity Name: ${body.entityName}
-Entity Type: ${body.entityType ?? "not specified"}
-Nationality / Country of Incorporation: ${body.nationality ?? "not specified"}
-Date of Birth: ${body.dob ?? "not specified"}
-Passport / ID Number: ${body.passportNumber ?? "not provided"}
-Known Aliases: ${body.aliases ?? "none"}
-Jurisdiction of Activity: ${body.jurisdiction ?? "UAE"}
-Additional Context: ${body.context ?? "none"}
+          content: `Entity Name: ${sanitizeField(body.entityName, 500)}
+Entity Type: ${sanitizeField(body.entityType, 100) ?? "not specified"}
+Nationality / Country of Incorporation: ${sanitizeField(body.nationality, 100) ?? "not specified"}
+Date of Birth: ${sanitizeField(body.dob, 50) ?? "not specified"}
+Passport / ID Number: ${sanitizeField(body.passportNumber, 100) ?? "not provided"}
+Known Aliases: ${sanitizeText(body.aliases, 1000) ?? "none"}
+Jurisdiction of Activity: ${sanitizeField(body.jurisdiction, 100) ?? "UAE"}
+Additional Context: ${sanitizeText(body.context, 2000) ?? "none"}
 
 Map sanctions list exposure and compliance obligations for this entity.`,
         }],
       });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as SanctionsExposureResult;
+    if (!Array.isArray(result.listHits)) result.listHits = [];
+    if (!Array.isArray(result.applicableRegime)) result.applicableRegime = [];
+    if (!Array.isArray(result.complianceObligations)) result.complianceObligations = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "sanctions-exposure-mapper temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "sanctions-exposure-mapper temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

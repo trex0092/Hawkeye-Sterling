@@ -35,7 +35,7 @@ export async function GET(req: Request): Promise<NextResponse> {
       alerts: sorted,
       unreadCount: unread.length,
       criticalCount: unread.filter((a) => a.severity === "critical").length,
-    });
+    }, { headers: gate.headers });
   } catch (err) {
     console.error("[alerts GET]", err instanceof Error ? err.message : err);
     const demos = getDemoAlerts();
@@ -45,7 +45,7 @@ export async function GET(req: Request): Promise<NextResponse> {
       alerts: demos,
       unreadCount: unread.length,
       criticalCount: unread.filter((a) => a.severity === "critical").length,
-    });
+    }, { headers: gate.headers });
   }
 }
 
@@ -88,7 +88,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     console.error("[alerts POST]", err instanceof Error ? err.message : err);
     return NextResponse.json(
       { ok: false, error: "alert store unavailable — alert not persisted" },
-      { status: 503 },
+      { status: 503 }
     );
   }
 }
@@ -109,7 +109,7 @@ export async function DELETE(req: Request): Promise<NextResponse> {
     console.error("[alerts DELETE]", err instanceof Error ? err.message : err);
     return NextResponse.json(
       { ok: false, error: "alert store unavailable — dismiss not persisted" },
-      { status: 503 },
+      { status: 503, headers: gate.headers }
     );
   }
 }

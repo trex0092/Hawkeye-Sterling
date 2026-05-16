@@ -108,7 +108,8 @@ export function propagateBeliefs(
       { id: src.nodeId, depth: 0, via: [src.nodeId], cum: 1 },
     ];
     while (queue.length > 0) {
-      const cur = queue.shift()!;
+      const cur = queue.shift();
+      if (!cur) break;
       const slot = nodeStates.get(cur.id) ?? [];
       slot.push({ fromSource: src.nodeId, via: cur.via, cumWeight: cur.cum });
       nodeStates.set(cur.id, slot);

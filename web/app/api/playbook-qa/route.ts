@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
   const question = body.question ?? "";
 
@@ -38,10 +38,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, ...EMPTY_ANSWER }, { headers: gate.headers });
   }
 
-  const client = getAnthropicClient(apiKey, 55000);
+  const client = getAnthropicClient(apiKey, 55_000);
   const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 1200,
+      max_tokens: 600,
       system:
         "You are an AML compliance expert for a UAE-licensed DPMS/VASP. You answer \"what do I do if…\" questions using UAE AML procedures, FATF recommendations, and compliance playbooks. Always cite the specific regulatory basis (FDL article, FATF Rec, Cabinet Decision, MoE Circular). Keep answers concise and action-oriented — numbered steps where appropriate. Output JSON with: answer (markdown allowed, max 400 words), citations (array of strings like \"FATF R.20\", \"FDL Art.26\"), confidence (0-1), relatedPlaybooks (array of playbook names relevant to this question).",
       messages: [
@@ -61,6 +61,8 @@ export async function POST(req: NextRequest) {
   let qaAnswer: QaAnswer;
   try {
     qaAnswer = JSON.parse(cleaned) as QaAnswer;
+    if (!Array.isArray(qaAnswer.citations)) qaAnswer.citations = [];
+    if (!Array.isArray(qaAnswer.relatedPlaybooks)) qaAnswer.relatedPlaybooks = [];
   } catch {
     qaAnswer = { ...EMPTY_ANSWER, answer: rawText.slice(0, 1600), confidence: 0.5 };
   }

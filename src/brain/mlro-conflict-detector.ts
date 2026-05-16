@@ -113,12 +113,12 @@ export function detectConflicts(runs: readonly RunOutput[]): ConflictReport {
   // Citation overlap.
   const modes = runs.map((r) => r.modeId);
   const sets = modes.map((m) => new Set(citByMode[m]));
-  const shared = sets.length === 0 ? [] : [...sets[0]!].filter((x) => sets.every((s) => s.has(x))).sort();
+  const shared = sets.length === 0 ? [] : [...(sets[0] ?? new Set<string>())].filter((x) => sets.every((s) => s.has(x))).sort();
   const uniqueByMode: Record<string, string[]> = {};
   for (let i = 0; i < modes.length; i++) {
     const others = new Set<string>();
-    for (let j = 0; j < modes.length; j++) if (j !== i) sets[j]!.forEach((v) => others.add(v));
-    uniqueByMode[modes[i]!] = [...sets[i]!].filter((x) => !others.has(x)).sort();
+    for (let j = 0; j < modes.length; j++) if (j !== i) sets[j]?.forEach((v) => others.add(v));
+    uniqueByMode[modes[i] ?? ''] = [...(sets[i] ?? new Set<string>())].filter((x) => !others.has(x)).sort();
   }
 
   // Textual Jaccard — average pairwise.
@@ -126,7 +126,7 @@ export function detectConflicts(runs: readonly RunOutput[]): ConflictReport {
   let pairs = 0, total = 0;
   for (let i = 0; i < tokens.length; i++) {
     for (let j = i + 1; j < tokens.length; j++) {
-      total += jaccard(tokens[i]!, tokens[j]!);
+      total += jaccard(tokens[i] ?? new Set<string>(), tokens[j] ?? new Set<string>());
       pairs++;
     }
   }
@@ -137,7 +137,7 @@ export function detectConflicts(runs: readonly RunOutput[]): ConflictReport {
   if (confAgreement === 'split') conflicts.push({ kind: 'confidence', detail: 'Match-confidence classification differs with no majority.' });
   for (const m of modes) {
     if ((uniqueByMode[m] ?? []).length > 0 && runs.length >= 2) {
-      conflicts.push({ kind: 'citation', detail: `${m} cites ${uniqueByMode[m]!.length} unique authority/article not referenced by peers.` });
+      conflicts.push({ kind: 'citation', detail: `${m} cites ${(uniqueByMode[m] ?? []).length} unique authority/article not referenced by peers.` });
     }
   }
 

@@ -67,7 +67,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as RequestBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers });
     }
 
   const { consignments } = body;
@@ -77,14 +77,14 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
-    return NextResponse.json({ ok: false, error: "shipment-tbml temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "shipment-tbml temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 55_000);
     const res = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 2048,
+        max_tokens: 700,
         system:
           "You are a UAE AML/CFT specialist in Trade-Based Money Laundering (TBML) detection for precious metals and bullion shipments. Analyze these consignments against FATF TBML typologies, LBMA RGG v9 chain-of-custody requirements, and UAE MoE Circular 2/2024 (conflict minerals). Output JSON (ONLY valid JSON, no markdown).",
         messages: [
@@ -99,8 +99,16 @@ export async function POST(req: Request): Promise<NextResponse> {
     const text = res.content[0]?.type === "text" ? res.content[0].text : "";
     const stripped = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
     const parsed = JSON.parse(stripped) as TbmlResult;
+    if (!Array.isArray(parsed.flaggedShipments)) parsed.flaggedShipments = [];
+    else for (const s of parsed.flaggedShipments) {
+      if (!Array.isArray(s.tbmlIndicators)) s.tbmlIndicators = [];
+      if (!Array.isArray(s.fatfTypologies)) s.fatfTypologies = [];
+    }
+    if (!Array.isArray(parsed.systemicRisks)) parsed.systemicRisks = [];
+    if (!Array.isArray(parsed.lbmaGaps)) parsed.lbmaGaps = [];
+    if (!Array.isArray(parsed.immediateHolds)) parsed.immediateHolds = [];
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "shipment-tbml temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "shipment-tbml temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

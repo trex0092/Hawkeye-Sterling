@@ -20,11 +20,16 @@ export type FreeFlag =
   | "ae-eocn" | "jp-meti"
   | "wikidata" | "worldbank-debar" | "fatf"
   | "gleif" | "opensanctions-free" | "opencorporates-free"
-  | "sec-edgar" | "icij-offshore-leaks"
+  | "sec-edgar"
   | "br-receita" | "co-rues" | "ua-yedr"
   | "zefix" | "bronnoysund" | "ytj"
   | "google-news-rss" | "hacker-news"
-  | "free-rss";
+  | "free-rss"
+  | "interpol-red-notices" | "fbi-most-wanted" | "occrp-aleph"
+  | "eu-fsf" | "un-sc-sanctions" | "bis-entity-list"
+  | "samgov-exclusions" | "open-ownership" | "eu-transparency-register"
+  | "dfsa-register" | "adgm-register" | "cbuae-licensed"
+  | "court-listener" | "icij-offshore-leaks" | "imo-ship-registry" | "faa-aircraft-registry";
 
 // Maps each flag to its legacy env var name for backwards compatibility.
 const LEGACY_ENV_VAR: Record<FreeFlag, string> = {
@@ -45,7 +50,6 @@ const LEGACY_ENV_VAR: Record<FreeFlag, string> = {
   "opensanctions-free": "OPENSANCTIONS_FREE_ENABLED",
   "opencorporates-free": "OPENCORPORATES_FREE_ENABLED",
   "sec-edgar": "SEC_EDGAR_ENABLED",
-  "icij-offshore-leaks": "ICIJ_OFFSHORE_LEAKS_ENABLED",
   "br-receita": "BR_RECEITA_ENABLED",
   "co-rues": "CO_RUES_ENABLED",
   "ua-yedr": "UA_YEDR_ENABLED",
@@ -55,6 +59,22 @@ const LEGACY_ENV_VAR: Record<FreeFlag, string> = {
   "google-news-rss": "GOOGLE_NEWS_RSS_ENABLED",
   "hacker-news": "HACKER_NEWS_ENABLED",
   "free-rss": "FREE_RSS_DISABLED",
+  "interpol-red-notices": "INTERPOL_RED_NOTICES_ENABLED",
+  "fbi-most-wanted": "FBI_MOST_WANTED_ENABLED",
+  "occrp-aleph": "OCCRP_ALEPH_ENABLED",
+  "eu-fsf": "EU_FSF_ENABLED",
+  "un-sc-sanctions": "UN_SC_SANCTIONS_ENABLED",
+  "bis-entity-list": "BIS_ENTITY_LIST_ENABLED",
+  "samgov-exclusions": "SAMGOV_EXCLUSIONS_ENABLED",
+  "open-ownership": "OPEN_OWNERSHIP_ENABLED",
+  "eu-transparency-register": "EU_TRANSPARENCY_REGISTER_ENABLED",
+  "dfsa-register": "DFSA_REGISTER_ENABLED",
+  "adgm-register": "ADGM_REGISTER_ENABLED",
+  "cbuae-licensed": "CBUAE_LICENSED_ENABLED",
+  "court-listener": "COURT_LISTENER_ENABLED",
+  "icij-offshore-leaks": "ICIJ_OFFSHORE_LEAKS_ENABLED",
+  "imo-ship-registry": "IMO_SHIP_REGISTRY_ENABLED",
+  "faa-aircraft-registry": "FAA_AIRCRAFT_REGISTRY_ENABLED",
 };
 
 function parseDisabledList(): Set<string> {

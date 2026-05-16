@@ -148,6 +148,12 @@ export async function spiderFootScan(
   const started = Date.now();
   let status = 'RUNNING';
   while (status === 'RUNNING' || status === 'STARTED') {
+    // Sleep BEFORE the timeout check so the first status poll fires immediately
+    // after the scan is submitted. Timeout guard is placed before the sleep so
+    // we don't overshoot the deadline by a full pollIntervalMs on the final
+    // iteration — previously the sleep always preceded the check, adding up
+    // to one extra pollIntervalMs of delay after the budget had expired.
+    await sleep(pollIntervalMs);
     if (Date.now() - started > maxWaitMs) {
       return {
         ok: false, scanId, target, status: 'TIMEOUT', findings: [],
@@ -155,7 +161,6 @@ export async function spiderFootScan(
         error: `Scan timed out after ${maxWaitMs}ms`,
       };
     }
-    await sleep(pollIntervalMs);
 
     const statusResult = await fetchJsonWithRetry<SpiderFootScanStatus>(
       `${base}/scanstatus?id=${encodeURIComponent(scanId)}`,
@@ -180,11 +185,13 @@ export async function spiderFootScan(
     { perAttemptMs: timeoutMs, maxAttempts: 2 },
   );
 
-  const rawEvents = eventsResult.json ?? [];
+  // Guard against non-array responses — the API may return an object or error
+  // body instead of an array if the scan ID is stale or the server is degraded.
+  const rawEvents = Array.isArray(eventsResult.json) ? eventsResult.json : [];
   const findings: SpiderFootFinding[] = rawEvents
     .filter((e) => e.type && AML_EVENT_TYPES.has(e.type))
     .map((e) => ({
-      type: e.type!,
+      type: e.type ?? '',
       data: e.data ?? '',
       module: e.module ?? '',
       confidence: e.confidence ?? 100,

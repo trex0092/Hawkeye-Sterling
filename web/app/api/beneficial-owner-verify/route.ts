@@ -4,6 +4,7 @@ export const maxDuration = 60;import { NextResponse } from "next/server";
 
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export interface BeneficialOwnerVerifyResult {
   uboConfirmed: boolean;
@@ -58,22 +59,22 @@ export async function POST(req: Request) {
   } catch {
     return NextResponse.json(
       { ok: false, error: "Invalid JSON" },
-      { status: 400 }
+      { status: 400, headers: gate.headers }
     );
   }
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "beneficial-owner-verify temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "beneficial-owner-verify temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 55_000);
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 1500,
+        max_tokens: 700,
         system:
           "You are a UAE AML/CFT compliance expert specialising in beneficial ownership verification and UBO register compliance. Assess UBO verification status and gaps under UAE Cabinet Resolution 132/2023 and FATF standards. Return valid JSON only matching the BeneficialOwnerVerifyResult interface.",
         messages: [
           {
             role: "user",
-            content: `Assess beneficial ownership verification status.\n\nEntity: ${body.entityName}\nOwnership Structure: ${body.ownershipStructure}\nJurisdictions: ${body.jurisdictions}\nLayer Count: ${body.layerCount}\nUBO Name: ${body.uboName}\nContext: ${body.context}\n\nReturn JSON with fields: uboConfirmed, ownershipChainDepth, controlPercentage, verificationStatus, gaps[], verificationSteps[], uboRegisterRequired, registrationDeadline, regulatoryBasis.`,
+            content: `Assess beneficial ownership verification status.\n\nEntity: ${sanitizeField(body.entityName)}\nOwnership Structure: ${sanitizeField(body.ownershipStructure)}\nJurisdictions: ${sanitizeField(body.jurisdictions)}\nLayer Count: ${sanitizeField(body.layerCount)}\nUBO Name: ${sanitizeField(body.uboName)}\nContext: ${sanitizeText(body.context)}\n\nReturn JSON with fields: uboConfirmed, ownershipChainDepth, controlPercentage, verificationStatus, gaps[], verificationSteps[], uboRegisterRequired, registrationDeadline, regulatoryBasis.`,
           },
         ],
       });
@@ -82,8 +83,10 @@ export async function POST(req: Request) {
     const result = JSON.parse(
       raw.replace(/```json\n?|\n?```/g, "").trim()
     ) as BeneficialOwnerVerifyResult;
+    if (!Array.isArray(result.gaps)) result.gaps = [];
+    if (!Array.isArray(result.verificationSteps)) result.verificationSteps = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "beneficial-owner-verify temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "beneficial-owner-verify temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

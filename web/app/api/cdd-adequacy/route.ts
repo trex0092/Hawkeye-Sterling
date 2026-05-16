@@ -79,22 +79,22 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as RequestBody;
   } catch {
-    return NextResponse.json({ error: "invalid JSON body" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ error: "invalid JSON body" }, { status: 400 , headers: gate.headers });
   }
 
-  const reviews = body.reviews ?? [];
+  const reviews = Array.isArray(body.reviews) ? body.reviews : [];
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     writeAuditEvent("mlro", "cdd.ai-adequacy-check", `no-api-key — ${reviews.length} subjects skipped`);
-    return NextResponse.json({ ok: false, error: "cdd-adequacy temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "cdd-adequacy temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 
   try {
     const client = getAnthropicClient(apiKey, 55_000);
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 4096,
+      max_tokens: 800,
       system: SYSTEM_PROMPT,
       messages: [
         {
@@ -111,6 +111,16 @@ export async function POST(req: Request): Promise<NextResponse> {
 
     const parsed = JSON.parse(stripped) as CddAdequacyResponse;
 
+    // Normalize assessment arrays — LLM occasionally returns null or a
+    // plain string instead of an array, which causes .map() crashes in the UI.
+    if (Array.isArray(parsed.assessments)) {
+      for (const a of parsed.assessments) {
+        if (!Array.isArray(a.gaps)) a.gaps = [];
+        if (!Array.isArray(a.recommendedActions)) a.recommendedActions = [];
+      }
+    }
+    if (!Array.isArray(parsed.criticalSubjects)) parsed.criticalSubjects = [];
+
     writeAuditEvent(
       "mlro",
       "cdd.ai-adequacy-check",
@@ -121,6 +131,6 @@ export async function POST(req: Request): Promise<NextResponse> {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     writeAuditEvent("mlro", "cdd.ai-adequacy-check", `error — ${msg}`);
-    return NextResponse.json({ ok: false, error: "cdd-adequacy temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "cdd-adequacy temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

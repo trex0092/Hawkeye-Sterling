@@ -38,9 +38,9 @@ export async function POST(req: Request): Promise<NextResponse> {
   let items: TriageItem[];
   try {
     const body = (await req.json()) as { items: TriageItem[] };
-    items = (body.items ?? []).slice(0, 20);
+    items = (Array.isArray(body.items) ? body.items : []).slice(0, 20);
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON body" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON body" }, { status: 400 , headers: gate.headers });
   }
 
   if (items.length === 0) {
@@ -50,7 +50,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (!apiKey) {
     return NextResponse.json(
       { ok: false, error: "Regulatory triage unavailable — please retry. An empty list here is not a 'no items' finding." },
-      { status: 503 },
+      { status: 503, headers: gate.headers }
     );
   }
 
@@ -67,7 +67,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     const client = getAnthropicClient(apiKey, 55_000);
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 2048,
+      max_tokens: 700,
       system: SYSTEM_PROMPT,
       messages: [{ role: "user", content: JSON.stringify(compact) }],
     });
@@ -76,14 +76,15 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (!jsonMatch) {
       return NextResponse.json(
         { ok: false, error: "Regulatory triage unavailable — please retry. An empty list here is not a 'no items' finding." },
-        { status: 503 },
+        { status: 503, headers: gate.headers }
       );
     }
     results = JSON.parse(jsonMatch[0]) as TriageResult[];
+    if (!Array.isArray(results)) results = [];
   } catch {
     return NextResponse.json(
       { ok: false, error: "Regulatory triage unavailable — please retry. An empty list here is not a 'no items' finding." },
-      { status: 503 },
+      { status: 503, headers: gate.headers }
     );
   }
 

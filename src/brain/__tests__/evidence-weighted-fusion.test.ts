@@ -86,4 +86,45 @@ describe('evidence-weighted-fusion', () => {
     // posterior should move closer to prior (0.2) than base posterior (0.5).
     expect(Math.abs(r.posterior - base.prior)).toBeLessThan(Math.abs(base.posterior - base.prior));
   });
+
+  it('correctly attenuates posterior downward when brain rates lower risk than prior', () => {
+    // prior=0.7, base.posterior=0.3 — brain says LOWER risk than the prior.
+    // With authoritative+fresh evidence the posterior should be close to 0.3.
+    // With stale/weak evidence it should revert toward 0.7 (the prior).
+    const base: import('../types.js').FusionResult = {
+      outcome: 'monitor',
+      score: 0.3,
+      confidence: 0.7,
+      weightedScore: 0.3,
+      prior: 0.7,
+      posterior: 0.3,
+      primaryHypothesis: 'illicit_risk',
+      posteriorsByHypothesis: { illicit_risk: 0.3 },
+      conflicts: [],
+      consensus: 'weak',
+      contributorCount: 2,
+      methodology: 'base fusion',
+      firepower: {
+        activations: [],
+        modesFired: 2,
+        facultiesEngaged: 1,
+        categoriesSpanned: 1,
+        independentEvidenceCount: 1,
+        firepowerScore: 0.3,
+      },
+    };
+    const freshAuth = new Date().toISOString();
+    const findingsAuth = [finding('m1', 0.3, 0.8, ['ev1'])];
+    const ixAuth = indexEvidence([ev('ev1', 'authoritative', freshAuth, 'regulator_press_release')]);
+    const rAuth = adjustForEvidence(base, findingsAuth, ixAuth, { evidenceWeight: 0.7 });
+    // Authoritative + fresh: posterior should be pulled toward base.posterior (0.3), i.e. below prior (0.7)
+    expect(rAuth.posterior).toBeLessThan(base.prior);
+
+    const veryOld = '2015-01-01T00:00:00Z';
+    const findingsStale = [finding('m1', 0.3, 0.6, ['ev1'])];
+    const ixStale = indexEvidence([ev('ev1', 'reputable', veryOld)]);
+    const rStale = adjustForEvidence(base, findingsStale, ixStale);
+    // Stale: posterior should revert toward prior (0.7), so be higher than base.posterior (0.3)
+    expect(rStale.posterior).toBeGreaterThan(base.posterior);
+  });
 });

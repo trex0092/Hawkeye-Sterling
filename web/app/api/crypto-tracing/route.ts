@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { enforce } from "@/lib/server/enforce";
 // ── Request Body ──────────────────────────────────────────────────────────────
 
 export interface CryptoTracingBody {
@@ -680,6 +681,9 @@ Be exhaustive, technically precise, and maximally helpful to an MLRO making cons
 // ── POST Handler ──────────────────────────────────────────────────────────────
 
 export async function POST(req: Request) {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
+
   let body: Partial<CryptoTracingBody>;
   try {
     body = (await req.json()) as Partial<CryptoTracingBody>;
@@ -730,7 +734,7 @@ Perform a comprehensive blockchain forensics and crypto AML analysis. Assess all
 
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 4096,
+      max_tokens: 800,
       system: [
         {
           type: "text",
@@ -748,6 +752,19 @@ Perform a comprehensive blockchain forensics and crypto AML analysis. Assess all
 
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as CryptoTracingResult;
+    if (!Array.isArray(result.blockchainAnalysis?.analysisLimitations)) { if (result.blockchainAnalysis) result.blockchainAnalysis.analysisLimitations = []; }
+    if (!Array.isArray(result.darknetExposure?.marketplaces)) { if (result.darknetExposure) result.darknetExposure.marketplaces = []; }
+    if (!Array.isArray(result.ransomwareLinks?.knownGroups)) { if (result.ransomwareLinks) result.ransomwareLinks.knownGroups = []; }
+    if (!Array.isArray(result.ransomwareLinks?.associatedIncidents)) { if (result.ransomwareLinks) result.ransomwareLinks.associatedIncidents = []; }
+    if (!Array.isArray(result.sanctionsExposure?.matchedAddresses)) { if (result.sanctionsExposure) result.sanctionsExposure.matchedAddresses = []; }
+    if (!Array.isArray(result.typologyAnalysis)) result.typologyAnalysis = [];
+    if (!Array.isArray(result.travelRuleCompliance?.missingInformation)) { if (result.travelRuleCompliance) result.travelRuleCompliance.missingInformation = []; }
+    if (!Array.isArray(result.financialCrimeLinks)) result.financialCrimeLinks = [];
+    if (!Array.isArray(result.regulatoryObligations)) result.regulatoryObligations = [];
+    if (!Array.isArray(result.redFlags)) result.redFlags = [];
+    if (!Array.isArray(result.immediateActions)) result.immediateActions = [];
+    if (!Array.isArray(result.investigativeNextSteps)) result.investigativeNextSteps = [];
+    if (!Array.isArray(result.blockchainForensicsTools)) result.blockchainForensicsTools = [];
     return NextResponse.json(result);
   } catch {
     return NextResponse.json({ ok: false, error: "crypto-tracing temporarily unavailable - please retry." }, { status: 503 });

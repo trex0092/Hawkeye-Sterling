@@ -97,7 +97,7 @@ function edgeExposureWeight(edge: GraphEdge): number {
 
 // ── Exposure score calculator ─────────────────────────────────────────────────
 
-function calculateExposureScore(steps: PathStep[], graph: EntityGraph): number {
+function calculateExposureScore(steps: PathStep[], _graph: EntityGraph): number {
   if (steps.length === 0) return 0;
 
   let score = 1.0;
@@ -152,7 +152,7 @@ interface BFSState {
   cumulativeScore: number;
 }
 
-const ALL_EDGE_KINDS: EdgeKind[] = [
+const _ALL_EDGE_KINDS: EdgeKind[] = [
   'owns', 'controls', 'shareholder_of', 'director_of', 'nominee_for',
   'beneficiary_of', 'spouse_of', 'family_of', 'close_associate_of',
   'associated_with', 'wire_to', 'paid', 'received', 'transacted_with', 'custody_of',
@@ -174,7 +174,8 @@ function findAllPaths(
   }];
 
   while (queue.length > 0) {
-    const state = queue.shift()!;
+    const state = queue.shift();
+    if (!state) break;
     if (state.steps.length > maxHops) continue;
     if (state.cumulativeScore < minScore) continue;
 

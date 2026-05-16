@@ -52,7 +52,7 @@ async function handleGet(req: Request): Promise<NextResponse> {
 
   const store = await getStore();
   if (!store) {
-    return NextResponse.json({ ok: true, entries: [], note: "Blobs not available in this environment" });
+    return NextResponse.json({ ok: true, entries: [], note: "Blobs not available in this environment" }, { headers: gate.headers });
   }
 
   let entries: McpLogEntry[] = [];
@@ -73,9 +73,10 @@ async function handleGet(req: Request): Promise<NextResponse> {
       )
     ).filter((e): e is McpLogEntry => e !== null);
   } catch (err) {
+    console.error("[operator/logs] store error:", err instanceof Error ? err.message : err);
     return NextResponse.json(
-      { ok: false, error: err instanceof Error ? err.message : String(err) },
-      { status: 500 },
+      { ok: false, error: "Log store temporarily unavailable — please retry." },
+      { status: 500, headers: gate.headers }
     );
   }
 

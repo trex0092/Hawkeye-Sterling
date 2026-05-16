@@ -388,13 +388,13 @@ async function handleGet(req: Request): Promise<NextResponse> {
   if (latencyMs > 5000) console.warn(`[audit/view] latencyMs=${latencyMs} exceeds 5000ms`);
   return NextResponse.json({ ...envelope, latencyMs }, { headers: gateHeaders });
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
+    console.error("[audit/view] unhandled exception:", err instanceof Error ? err.message : err);
     return NextResponse.json({
       ok: false,
       errorCode: "HANDLER_EXCEPTION",
       errorType: "internal",
       tool: "audit_trail",
-      message,
+      error: "An unexpected error occurred. Please retry or contact support.",
       retryAfterSeconds: null,
       requestId: Math.random().toString(36).slice(2, 10),
       latencyMs: Date.now() - _handlerStart,

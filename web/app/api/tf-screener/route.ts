@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export interface TfIndicator {
   indicator: string;
@@ -93,18 +94,18 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
-  if (!body.subject?.trim()) return NextResponse.json({ ok: false, error: "subject required" }, { status: 400 , headers: gate.headers});
+  if (!body.subject?.trim()) return NextResponse.json({ ok: false, error: "subject required" }, { status: 400 , headers: gate.headers });
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "tf-screener temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "tf-screener temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 55_000);
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 1500,
+        max_tokens: 700,
         system: `You are a UAE counter-terrorism financing (CTF) specialist with deep expertise in FATF recommendations on terrorist financing, UN Security Council sanctions regimes, UAE CTF law, and TF typologies.
 
 Assess the subject/transaction for terrorism financing risk. This is DISTINCT from general ML risk — TF involves funding terrorist acts, organisations, or foreign fighters and is subject to immediate freeze obligations without court order when designated entities are involved.
@@ -156,25 +157,29 @@ Respond ONLY with valid JSON — no markdown fences:
 }`,
         messages: [{
           role: "user",
-          content: `Subject: ${body.subject}
-Subject Country: ${body.subjectCountry ?? "not specified"}
-Counterparty: ${body.counterparty ?? "not specified"}
-Counterparty Country: ${body.counterpartyCountry ?? "not specified"}
-Transaction Type: ${body.transactionType ?? "not specified"}
-Amount: ${body.amount ?? "not specified"} ${body.currency ?? ""}
-Destination Jurisdiction: ${body.destinationJurisdiction ?? "not specified"}
-Goods / Services: ${body.goods ?? "not specified"}
-Customer Type: ${body.customerType ?? "not specified"}
+          content: `Subject: ${sanitizeField(body.subject, 500)}
+Subject Country: ${sanitizeField(body.subjectCountry, 100) ?? "not specified"}
+Counterparty: ${sanitizeField(body.counterparty, 500) ?? "not specified"}
+Counterparty Country: ${sanitizeField(body.counterpartyCountry, 100) ?? "not specified"}
+Transaction Type: ${sanitizeField(body.transactionType, 100) ?? "not specified"}
+Amount: ${sanitizeField(body.amount, 100) ?? "not specified"} ${sanitizeField(body.currency, 20) ?? ""}
+Destination Jurisdiction: ${sanitizeField(body.destinationJurisdiction, 100) ?? "not specified"}
+Goods / Services: ${sanitizeField(body.goods, 500) ?? "not specified"}
+Customer Type: ${sanitizeField(body.customerType, 100) ?? "not specified"}
 Existing Red Flags: ${body.existingRedFlags?.join("; ") ?? "none"}
-Additional Context: ${body.context ?? "none"}
+Additional Context: ${sanitizeText(body.context, 2000) ?? "none"}
 
 Assess for terrorism financing risk.`,
         }],
       });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as TfScreenerResult;
+    if (!Array.isArray(result.indicators)) result.indicators = [];
+    if (!Array.isArray(result.requiredActions)) result.requiredActions = [];
+    if (!Array.isArray(result.applicableRegime)) result.applicableRegime = [];
+    if (!Array.isArray(result.ctfObligations)) result.ctfObligations = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "tf-screener temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "tf-screener temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

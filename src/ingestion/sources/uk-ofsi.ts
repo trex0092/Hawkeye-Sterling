@@ -5,8 +5,7 @@
 // canonical URL below. Override via FEED_UK_OFSI env var if OFSI
 // migrates again.
 
-import type { SourceAdapter, NormalisedEntity, EntityType } from '../types.js';
-import { mkListing } from '../types.js';
+import { type SourceAdapter, type NormalisedEntity, type EntityType, mkListing } from '../types.js';
 import { fetchText, sha256Hex } from '../fetch-util.js';
 
 const SOURCE_URL = process.env['FEED_UK_OFSI']
@@ -56,7 +55,7 @@ export const ukOfsiAdapter: SourceAdapter = {
     const byGroup = new Map<string, NormalisedEntity>();
 
     for (let i = headerRow + 1; i < rows.length; i++) {
-      const r = rows[i]!;
+      const r = rows[i] ?? [];
       const name = [iName1, iName6].filter((x) => x >= 0).map((x) => r[x] ?? '').filter(Boolean).join(' ').trim();
       if (!name) continue;
       const groupType = (iGroupType >= 0 ? r[iGroupType] ?? '' : '').toLowerCase();
@@ -101,7 +100,7 @@ function parseCsv(text: string): string[][] {
   let field = '';
   let inQuotes = false;
   for (let i = 0; i < text.length; i++) {
-    const c = text[i]!;
+    const c = text[i] ?? '';
     if (inQuotes) {
       if (c === '"' && i + 1 < text.length && text[i + 1] === '"') { field += '"'; i++; }
       else if (c === '"') { inQuotes = false; }

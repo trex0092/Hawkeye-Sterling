@@ -95,12 +95,12 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const caseTitle = body.caseTitle ?? "Untitled Investigation";
-  const entities = body.entities ?? [];
-  const links = body.links ?? [];
+  const entities = Array.isArray(body.entities) ? body.entities : [];
+  const links = Array.isArray(body.links) ? body.links : [];
   const narrative = body.narrative ?? "";
   const analyst = body.analyst ?? "System";
   const generatedAt = new Date().toISOString();
@@ -111,11 +111,11 @@ export async function POST(req: Request) {
   }
 
   try {
-    const client = getAnthropicClient(apiKey, 22_000);
+    const client = getAnthropicClient(apiKey, 55_000);
 
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 3000,
+      max_tokens: 800,
       system: [
         {
           type: "text",
@@ -161,6 +161,8 @@ Generate a court-ready evidence pack summary covering: case overview, entity pro
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const cleaned = raw.replace(/```json\n?|\n?```/g, "").trim();
     const result = JSON.parse(cleaned) as Omit<EvidencePackResult, "ok" | "generatedAt">;
+    if (!Array.isArray(result.evidencePoints)) result.evidencePoints = [];
+    if (!Array.isArray(result.nextSteps)) result.nextSteps = [];
     return NextResponse.json({ ok: true, ...result, generatedAt }, { headers: gate.headers });
   } catch {
     return NextResponse.json(buildFallback(caseTitle, entities, links, narrative, analyst), { headers: gate.headers });

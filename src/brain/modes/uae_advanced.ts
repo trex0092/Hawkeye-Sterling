@@ -62,7 +62,7 @@ function typedEvidence<T>(ctx: BrainContext, key: string): T[] {
 
 function singleEvidence<T>(ctx: BrainContext, key: string): T | undefined {
   const v = (ctx.evidence as Record<string, unknown> | undefined)?.[key];
-  return v == null ? undefined : (v as T);
+  return v === null || v === undefined ? undefined : (v as T);
 }
 
 // ──────────────────────────────────────────────────────────────────────
@@ -266,8 +266,9 @@ const auditTrailReconstructionApply = async (ctx: BrainContext): Promise<Finding
   let chainBreaks = 0;
   let backdated = 0;
   for (let i = 1; i < sorted.length; i++) {
-    const cur = sorted[i]!;
-    const prev = sorted[i - 1]!;
+    const cur = sorted[i];
+    const prev = sorted[i - 1];
+    if (!cur || !prev) continue;
     if (cur.prevHash && cur.prevHash !== prev.entryHash) chainBreaks += 1;
     if (cur.at < prev.at) backdated += 1;
   }
@@ -494,7 +495,7 @@ const ghostEmployeesApply = async (ctx: BrainContext): Promise<Finding> => {
   for (const r of recipients) {
     if (r.bankAccount) {
       acctCount[r.bankAccount] = (acctCount[r.bankAccount] ?? 0) + 1;
-      if (acctCount[r.bankAccount]! > 1) sharedAccounts.add(r.bankAccount);
+      if ((acctCount[r.bankAccount] ?? 0) > 1) sharedAccounts.add(r.bankAccount);
     }
   }
   const score = clamp01(

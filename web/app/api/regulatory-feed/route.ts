@@ -13,6 +13,7 @@
 // so a single unavailable government portal never blocks the feed.
 
 import { NextResponse } from "next/server";
+import { enforce } from "@/lib/server/enforce";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -832,6 +833,9 @@ const STATIC_ITEMS: RegulatoryItem[] = [
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function GET(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
+
   try {
     return await _handleGet(req);
   } catch (err) {

@@ -136,7 +136,7 @@ function safeFilenameSegment(s: string | undefined | null): string {
 function deriveDisposition(body: ReportInput): SCRDisposition {
   const hits = body.result?.hits ?? [];
   const sev = body.result?.severity ?? "clear";
-  const triage = body.triageResolutions ?? [];
+  const triage = Array.isArray(body.triageResolutions) ? body.triageResolutions : [];
 
   // Any triage resolution explicitly marked positive → prohibited
   if (triage.some((t) => t.resolution === "positive")) return "prohibited";
@@ -738,7 +738,7 @@ async function handleScrReport(req: Request): Promise<Response> {
   } catch (err) {
     console.error("scr-report build failed", err);
     return NextResponse.json(
-      { ok: false, error: err instanceof Error ? err.message : String(err) },
+      { ok: false, error: "Report generation failed — please retry or contact support." },
       { status: 500, headers: gateHeaders },
     );
   }
@@ -763,7 +763,7 @@ async function handleScrReport(req: Request): Promise<Response> {
   } catch (err) {
     console.error("scr-report render failed", err);
     return NextResponse.json(
-      { ok: false, error: err instanceof Error ? err.message : String(err) },
+      { ok: false, error: "Report rendering failed — please retry or contact support." },
       { status: 500, headers: gateHeaders },
     );
   }
@@ -781,13 +781,13 @@ async function handleScrReport(req: Request): Promise<Response> {
     },
   });
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
+    console.error("[scr-report] unhandled exception:", err instanceof Error ? err.message : err);
     return NextResponse.json({
       ok: false,
       errorCode: "HANDLER_EXCEPTION",
       errorType: "internal",
       tool: "generate_screening_report",
-      message,
+      error: "An unexpected error occurred. Please retry or contact support.",
       retryAfterSeconds: null,
       requestId: Math.random().toString(36).slice(2, 10),
       latencyMs: Date.now() - _handlerStart,

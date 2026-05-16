@@ -51,11 +51,17 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as EnrichBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400, headers: CORS });
+    return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400, headers: { ...gate.headers, ...CORS } });
   }
 
   if (!body.name?.trim()) {
-    return NextResponse.json({ ok: false, error: "name is required" }, { status: 400, headers: CORS });
+    return NextResponse.json({ ok: false, error: "name is required" }, { status: 400, headers: { ...gate.headers, ...CORS } });
+  }
+  if (body.name.length > 500) {
+    return NextResponse.json({ ok: false, error: "name exceeds 500-character limit" }, { status: 400, headers: { ...gate.headers, ...CORS } });
+  }
+  if (body.domain && body.domain.length > 2000) {
+    return NextResponse.json({ ok: false, error: "domain exceeds 2000-character limit" }, { status: 400, headers: { ...gate.headers, ...CORS } });
   }
 
   const name = body.name.trim();

@@ -13,6 +13,7 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -174,7 +175,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     }, { headers: gate.headers });
   }
 
-  const client = getAnthropicClient(apiKey, 22_000, "str-autopilot");
+  const client = getAnthropicClient(apiKey, 55_000, "str-autopilot");
 
   // Stage 1: Draft/enhance narrative
   const narrativeRes = await client.messages.create({
@@ -196,7 +197,7 @@ Length: 300-500 words. Professional, formal tone.
 Return JSON: { "narrative": "<full STR narrative text>", "typologyCode": "<FATF/goAML typology code>", "predicateOffense": "<predicate if identifiable>" }`,
     messages: [{
       role: "user",
-      content: `Subject: ${body.subjectName}
+      content: `Subject: ${sanitizeField(body.subjectName)}
 Subject Type: ${body.subjectType ?? "individual"}
 Nationality: ${body.nationality ?? "unknown"}
 Risk Score: ${body.riskScore ?? "not scored"}

@@ -93,16 +93,16 @@ export function changePoint(xs: ReadonlyArray<number>): { index: number; ratio: 
   const sum = new Float64Array(n + 1);
   const sum2 = new Float64Array(n + 1);
   for (let i = 0; i < n; i++) {
-    sum[i + 1] = sum[i]! + (xs[i] ?? 0);
-    sum2[i + 1] = sum2[i]! + (xs[i] ?? 0) ** 2;
+    sum[i + 1] = (sum[i] ?? 0) + (xs[i] ?? 0);
+    sum2[i + 1] = (sum2[i] ?? 0) + (xs[i] ?? 0) ** 2;
   }
 
   // Segment variance using the identity Var = E[X²] - E[X]² (no subtraction loop needed).
   const segVar = (lo: number, hi: number): number => {
     const len = hi - lo;
     if (len <= 0) return 0;
-    const s = sum[hi]! - sum[lo]!;
-    const s2 = sum2[hi]! - sum2[lo]!;
+    const s = (sum[hi] ?? 0) - (sum[lo] ?? 0);
+    const s2 = (sum2[hi] ?? 0) - (sum2[lo] ?? 0);
     return s2 - (s * s) / len;
   };
 

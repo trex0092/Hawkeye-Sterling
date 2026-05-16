@@ -82,11 +82,25 @@ export async function runIngestionAll(label: string): Promise<IngestRunSummary> 
     };
     let writeFailed = false;
     try {
-      const { entities, rawChecksum, sourceVersion } = await withTimeout(
+      const { entities: rawEntities, rawChecksum, sourceVersion } = await withTimeout(
         adapter.fetch(),
         ADAPTER_TIMEOUT_MS,
         `adapter ${adapter.id}`,
       );
+      // Deduplicate by entity ID within each adapter run. Source XML/CSV can
+      // contain duplicate records (same UID with different program entries).
+      // Last-writer-wins per ID preserves the most-recently-seen version.
+      const seenIds = new Set<string>();
+      const entities = rawEntities.filter((e) => {
+        if (seenIds.has(e.id)) return false;
+        seenIds.add(e.id);
+        return true;
+      });
+      if (entities.length < rawEntities.length) {
+        console.warn(
+          `[${label}] dedup dropped ${rawEntities.length - entities.length} duplicate IDs from ${adapter.id}`,
+        );
+      }
       report.recordCount = entities.length;
       report.checksum = rawChecksum;
       if (sourceVersion) {
@@ -112,7 +126,7 @@ export async function runIngestionAll(label: string): Promise<IngestRunSummary> 
               message: 'blob not readable after write',
             });
           } else {
-            console.log(
+            console.info(
               `[${label}] write verified list=${adapter.id} key=${blobKey} entityCount=${entities.length}`,
             );
           }
@@ -160,7 +174,7 @@ export async function runIngestionAll(label: string): Promise<IngestRunSummary> 
         adapterId: adapter.id,
         phase: 'fetch',
         message: msg,
-        ...(statusMatch ? { httpStatus: Number.parseInt(statusMatch[1]!, 10) } : {}),
+        ...(statusMatch ? { httpStatus: Number.parseInt(statusMatch[1] ?? '0', 10) } : {}),
       });
     }
     return { report, writeFailed };
@@ -170,12 +184,13 @@ export async function runIngestionAll(label: string): Promise<IngestRunSummary> 
   const summary: IngestionReport[] = [];
   let anyWriteFailed = false;
   for (let i = 0; i < settled.length; i++) {
-    const r = settled[i]!;
+    const r = settled[i];
+    if (!r) continue;
     if (r.status === 'fulfilled') {
       summary.push(r.value.report);
       if (r.value.writeFailed) anyWriteFailed = true;
     } else {
-      const adapter = SOURCE_ADAPTERS[i]!;
+      const adapter = SOURCE_ADAPTERS[i] ?? { id: 'unknown', sourceUrl: '' };
       const msg = r.reason instanceof Error ? r.reason.message : String(r.reason);
       console.error(`[${label}] UNCAUGHT REJECTION list=${adapter.id} error=${msg}`);
       summary.push({
@@ -193,7 +208,7 @@ export async function runIngestionAll(label: string): Promise<IngestRunSummary> 
 
   const ok_count = summary.filter((r) => r.errors.length === 0).length;
   const failed_count = summary.filter((r) => r.errors.length > 0).length;
-  console.log(
+  console.info(
     `[${label}] SUMMARY ok=${ok_count} failed=${failed_count} anyWriteFailed=${anyWriteFailed}`,
   );
 

@@ -82,7 +82,7 @@ async function handler(req: Request): Promise<NextResponse> {
   }
 
   const institutionType = body.institutionType ?? "DPMS";
-  const configuredLower = new Set((body.configuredLists ?? []).map((s) => s.toLowerCase()));
+  const configuredLower = new Set((Array.isArray(body.configuredLists) ? body.configuredLists : []).map((s) => s.toLowerCase()));
 
   const applicable = REQUIRED_WATCHLISTS.filter((w) => w.mandatoryFor.includes(institutionType));
   const covered = applicable.filter((w) => configuredLower.has(w.id) || [...configuredLower].some((c) => c.includes(w.id.replace(/-/g, "")) || w.name.toLowerCase().includes(c)));
@@ -96,7 +96,7 @@ async function handler(req: Request): Promise<NextResponse> {
   let aiRecommendations: string[] = [];
   if (apiKey && (body.includeAiRecommendations !== false) && gaps.length > 0) {
     try {
-      const client = getAnthropicClient(apiKey, 18_000, "watchlist-gap-audit");
+      const client = getAnthropicClient(apiKey, 25_000, "watchlist-gap-audit");
       const res = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 500,
@@ -108,7 +108,7 @@ async function handler(req: Request): Promise<NextResponse> {
       });
       const raw = res.content[0]?.type === "text" ? (res.content[0] as { type: "text"; text: string }).text : "{}";
       const parsed = JSON.parse(raw.match(/\{[\s\S]*\}/)?.[0] ?? "{}");
-      aiRecommendations = parsed.recommendations ?? [];
+      aiRecommendations = Array.isArray(parsed.recommendations) ? parsed.recommendations : [];
     } catch { /* best effort */ }
   }
 

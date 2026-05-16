@@ -125,7 +125,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (!apiKey) {
       return NextResponse.json({ ok: true, degraded: true, ...FALLBACK }, { headers: gateHeaders });
     }
-    const client = getAnthropicClient(apiKey, 22_000);
+    const client = getAnthropicClient(apiKey, 55_000);
 
     let rawBody: Body & { subject?: { facts?: string; subjectType?: string; transactionType?: string } };
     try {
@@ -165,13 +165,17 @@ export async function POST(req: Request): Promise<NextResponse> {
     try {
       const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 2048,
+        max_tokens: 700,
         system: [{ type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
         messages: [{ role: "user", content: userContent }],
       });
       const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
       const cleaned = raw.replace(/^```json?\s*/i, "").replace(/\s*```$/i, "").trim();
       result = JSON.parse(cleaned) as TypologyMatchResult;
+      if (!Array.isArray(result.secondaryTypologies)) result.secondaryTypologies = [];
+      if (!Array.isArray(result.keyIndicators)) result.keyIndicators = [];
+      if (!Array.isArray(result.missingIndicators)) result.missingIndicators = [];
+      if (!Array.isArray(result.investigativePriorities)) result.investigativePriorities = [];
     } catch {
       return NextResponse.json({ ok: true, degraded: true, ...FALLBACK }, { headers: gateHeaders });
     }
@@ -190,12 +194,12 @@ export async function POST(req: Request): Promise<NextResponse> {
         ok: false,
         errorCode: "HANDLER_EXCEPTION",
         errorType: "internal",
-        message: err instanceof Error ? err.message : String(err),
+        error: "An unexpected error occurred. Please retry or contact support.",
         tool: "typology_match",
         requestId: Math.random().toString(36).slice(2, 10),
         latencyMs: Date.now() - t0,
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

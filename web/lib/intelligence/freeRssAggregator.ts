@@ -15,15 +15,6 @@ import { flagOn } from "./featureFlags";
 
 const FETCH_TIMEOUT_MS = 8_000;
 
-function abortable<T>(p: Promise<T>, ms = FETCH_TIMEOUT_MS): Promise<T> {
-  return Promise.race([
-    p,
-    new Promise<T>((_, reject) =>
-      setTimeout(() => reject(new Error(`rss feed exceeded ${ms}ms`)), ms),
-    ),
-  ]);
-}
-
 interface RssFeed {
   source: string;        // provider id ("reuters", "bbc-rss" etc.)
   outlet: string;        // domain
@@ -341,8 +332,12 @@ function parseFeed(xml: string, source: string, outlet: string): NewsArticle[] {
     if (!title || !link) continue;
     // Some feeds wrap link in atom self-closing; ensure absolute URL.
     if (!/^https?:\/\//i.test(link)) {
-      const base = new URL(`https://${outlet}`);
-      link = new URL(link, base).toString();
+      try {
+        const base = new URL(`https://${outlet}`);
+        link = new URL(link, base).toString();
+      } catch {
+        continue;
+      }
     }
     const pub =
       /<pubDate>([\s\S]*?)<\/pubDate>/.exec(it)?.[1]?.trim()
@@ -371,12 +366,14 @@ function stripCdata(s: string | undefined): string | undefined {
 
 async function fetchOne(feed: RssFeed): Promise<string | null> {
   try {
-    const res = await abortable(
-      fetch(feed.url, {
-        headers: { accept: "application/rss+xml,application/atom+xml,application/xml,text/xml,*/*", "user-agent": "HawkeyeSterling/1.0 (compatible; adverse-media)" },
-        redirect: "follow",
-      }),
-    );
+    // AbortSignal.timeout() actually cancels the underlying fetch when the
+    // deadline fires — unlike Promise.race + setTimeout which left the fetch
+    // running in the background, leaking sockets and Lambda CPU budget.
+    const res = await fetch(feed.url, {
+      headers: { accept: "application/rss+xml,application/atom+xml,application/xml,text/xml,*/*", "user-agent": "HawkeyeSterling/1.0 (compatible; adverse-media)" },
+      redirect: "follow",
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+    });
     if (!res.ok) return null;
     return await res.text();
   } catch {

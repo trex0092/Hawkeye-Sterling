@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export interface PepEddResult {
   pepClassification: "domestic_pep" | "foreign_pep" | "international_organisation_pep" | "former_pep" | "pep_family" | "pep_associate" | "not_pep";
@@ -106,18 +107,18 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
-  if (!body.pepName?.trim()) return NextResponse.json({ ok: false, error: "pepName required" }, { status: 400 , headers: gate.headers});
+  if (!body.pepName?.trim()) return NextResponse.json({ ok: false, error: "pepName required" }, { status: 400 , headers: gate.headers });
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "pep-edd-generator temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "pep-edd-generator temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 55_000);
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 1800,
+        max_tokens: 700,
         system: `You are a UAE PEP (Politically Exposed Person) EDD specialist. Generate a comprehensive PEP enhanced due diligence package under UAE FDL 10/2025 Art.14(2) and FATF R.12.
 
 PEP categories (UAE definition per FDL 10/2025):
@@ -139,22 +140,26 @@ UAE-specific: FDL 10/2025 Art.14(2)(b) — mandatory senior management approval 
 Respond ONLY with valid JSON — no markdown fences matching the PepEddResult interface structure.`,
         messages: [{
           role: "user",
-          content: `PEP Name: ${body.pepName}
-PEP Role/Position: ${body.pepRole ?? "not specified"}
-PEP Jurisdiction: ${body.pepJurisdiction ?? "not specified"}
-PEP Classification: ${body.pepClassification ?? "to be determined"}
-Proposed Relationship Type: ${body.relationshipType ?? "not specified"}
-Proposed Products/Services: ${body.proposedProducts ?? "not specified"}
-Known Wealth/Income: ${body.knownWealth ?? "not disclosed"}
-Additional Context: ${body.context ?? "none"}
+          content: `PEP Name: ${sanitizeField(body.pepName, 500)}
+PEP Role/Position: ${sanitizeField(body.pepRole, 200) || "not specified"}
+PEP Jurisdiction: ${sanitizeField(body.pepJurisdiction, 100) || "not specified"}
+PEP Classification: ${sanitizeField(body.pepClassification, 100) || "to be determined"}
+Proposed Relationship Type: ${sanitizeField(body.relationshipType, 100) || "not specified"}
+Proposed Products/Services: ${sanitizeField(body.proposedProducts, 200) || "not specified"}
+Known Wealth/Income: ${sanitizeField(body.knownWealth, 200) || "not disclosed"}
+Additional Context: ${sanitizeText(body.context, 2000) || "none"}
 
 Generate a complete PEP EDD package for this individual.`,
         }],
       });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as PepEddResult;
+    if (!Array.isArray(result.eddQuestionnaire)) result.eddQuestionnaire = [];
+    if (!Array.isArray(result.requiredDocumentation)) result.requiredDocumentation = [];
+    if (!Array.isArray(result.ongoingMonitoringMeasures)) result.ongoingMonitoringMeasures = [];
+    if (!Array.isArray(result.screeningRequirements)) result.screeningRequirements = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "pep-edd-generator temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "pep-edd-generator temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

@@ -12,6 +12,7 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { loadAllCases } from "@/lib/server/case-vault";
 
@@ -101,7 +102,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   // LLM identifies which cases are directly/indirectly linked to the high-risk entity
   const response = await client.messages.create({
     model: "claude-sonnet-4-6",
-    max_tokens: 3000,
+    max_tokens: 800,
     system: `You are an AML network contamination analyst. Given a high-risk entity and a customer case base, identify all customers with direct or indirect exposure to this entity.
 
 For DIRECT exposure: customer has the entity as a counterparty, or their name/subject matches the entity.
@@ -133,10 +134,10 @@ Return ONLY valid JSON:
 }`,
     messages: [{
       role: "user",
-      content: `High-Risk Entity: ${body.entityName}
-Entity Type: ${body.entityType ?? "unknown"}
-Risk Reason: ${body.highRiskReason}
-List/Source: ${body.listId ?? "not specified"}
+      content: `High-Risk Entity: ${sanitizeField(body.entityName, 500)}
+Entity Type: ${sanitizeField(body.entityType, 100) ?? "unknown"}
+Risk Reason: ${sanitizeText(body.highRiskReason, 2000)}
+List/Source: ${sanitizeField(body.listId, 100) ?? "not specified"}
 Starting Contamination Score: ${startingScore}/100
 
 Customer Base (${caseDigests.length} cases):
@@ -161,6 +162,8 @@ Identify all direct and ${includeIndirect ? "indirect (up to " + maxHops + " hop
     aiResult = {};
   }
 
+  if (!Array.isArray(aiResult.directLinks)) aiResult.directLinks = [];
+  if (!Array.isArray(aiResult.indirectLinks)) aiResult.indirectLinks = [];
   const directLinks = aiResult.directLinks ?? [];
   const indirectLinks = (includeIndirect ? aiResult.indirectLinks : []) ?? [];
 

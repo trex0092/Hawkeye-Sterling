@@ -27,7 +27,7 @@ export const maxDuration = 30;
 
 const DEFAULT_MODEL = "claude-opus-4-7";
 const MAX_OUTPUT_TOKENS = 4096;
-const BUDGET_MS = 22_000;
+const BUDGET_MS = 4_500;
 
 interface Body {
   verdict: { outcome: string; aggregateScore?: number; posterior?: number; [k: string]: unknown };

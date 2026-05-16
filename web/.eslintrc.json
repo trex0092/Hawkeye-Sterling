@@ -2,7 +2,21 @@
   "extends": ["next/core-web-vitals"],
   "rules": {
     "react/no-unescaped-entities": "warn",
-    "react/no-string-refs": "warn",
-    "@next/next/no-html-link-for-pages": "warn"
+    "react/no-string-refs": "error",
+    "@next/next/no-html-link-for-pages": "warn",
+    "eqeqeq": ["error", "always"],
+    "prefer-const": "error",
+    "no-var": "error",
+    "no-duplicate-imports": "error",
+    "no-self-compare": "error",
+    "no-unreachable": "error",
+    "use-isnan": "error",
+    "valid-typeof": "error",
+    "no-loss-of-precision": "error",
+    "no-throw-literal": "error",
+    "no-return-assign": "error",
+    "no-sequences": "error",
+    "radix": "error",
+    "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }]
   }
 }

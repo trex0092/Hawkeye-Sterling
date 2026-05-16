@@ -16,8 +16,8 @@ export function buildGraph(edges: ReadonlyArray<Edge>): EntityGraph {
     if (!e.from || !e.to || e.from === e.to) continue;
     if (!adj.has(e.from)) adj.set(e.from, new Set());
     if (!adj.has(e.to)) adj.set(e.to, new Set());
-    adj.get(e.from)!.add(e.to);
-    adj.get(e.to)!.add(e.from);
+    (adj.get(e.from) ?? new Set()).add(e.to);
+    (adj.get(e.to) ?? new Set()).add(e.from);
     const key = [e.from, e.to].sort().join('|');
     w.set(key, (w.get(key) ?? 0) + (e.weight ?? 1));
   }
@@ -87,20 +87,20 @@ export function betweenness(g: EntityGraph): Map<string, number> {
     sigma.set(s, 1); d.set(s, 0);
     const Q: string[] = [s];
     while (Q.length > 0) {
-      const v = Q.shift()!;
+      const v = Q.shift() ?? '';
       S.push(v);
       for (const w of g.adjacency.get(v) ?? []) {
         if ((d.get(w) ?? -1) < 0) { Q.push(w); d.set(w, (d.get(v) ?? 0) + 1); }
         if ((d.get(w) ?? -1) === (d.get(v) ?? 0) + 1) {
           sigma.set(w, (sigma.get(w) ?? 0) + (sigma.get(v) ?? 0));
-          P.get(w)!.push(v);
+          (P.get(w) ?? []).push(v);
         }
       }
     }
     const delta = new Map<string, number>();
     for (const n of g.nodes) delta.set(n, 0);
     while (S.length > 0) {
-      const w = S.pop()!;
+      const w = S.pop() ?? '';
       for (const v of P.get(w) ?? []) {
         const add = ((sigma.get(v) ?? 0) / (sigma.get(w) ?? 1)) * (1 + (delta.get(w) ?? 0));
         delta.set(v, (delta.get(v) ?? 0) + add);
@@ -154,13 +154,13 @@ export function bridges(g: EntityGraph): Array<[string, string]> {
     const stack: string[] = [start];
 
     while (stack.length > 0) {
-      const u = stack[stack.length - 1]!;
-      const neighbors = nbCache.get(u)!;
+      const u = stack[stack.length - 1] ?? '';
+      const neighbors = nbCache.get(u) ?? [];
       const idx = neighborIdx.get(u) ?? 0;
 
       if (idx < neighbors.length) {
         neighborIdx.set(u, idx + 1);
-        const v = neighbors[idx]!;
+        const v = neighbors[idx] ?? '';
         if (!disc.has(v)) {
           disc.set(v, timer); low.set(v, timer); timer++;
           parent.set(v, u);
@@ -240,7 +240,7 @@ export function triadicGaps(g: EntityGraph): number {
     const neigh = [...(g.adjacency.get(n) ?? [])];
     for (let i = 0; i < neigh.length; i++) {
       for (let j = i + 1; j < neigh.length; j++) {
-        const a = neigh[i]!, b = neigh[j]!;
+        const a = neigh[i] ?? '', b = neigh[j] ?? '';
         if (!(g.adjacency.get(a)?.has(b) ?? false)) gaps++;
       }
     }
@@ -255,7 +255,7 @@ export function shortestPath(g: EntityGraph, src: string, dst: string): string[]
   prev.set(src, null);
   const q: string[] = [src];
   while (q.length > 0) {
-    const u = q.shift()!;
+    const u = q.shift() ?? '';
     for (const v of g.adjacency.get(u) ?? []) {
       if (prev.has(v)) continue;
       prev.set(v, u);

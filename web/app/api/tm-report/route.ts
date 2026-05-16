@@ -4,6 +4,7 @@ import { postWebhook } from "@/lib/server/webhook";
 
 import { getAnthropicClient } from "@/lib/server/llm";
 import { asanaGids } from "@/lib/server/asanaConfig";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -47,22 +48,22 @@ async function classifyTransaction(
   if (!apiKey) return null;
 
   const userContent = [
-    `Transaction ref: ${ref}`,
-    `Counterparty: ${counterparty}`,
-    counterpartyCountry ? `Counterparty country: ${counterpartyCountry}` : null,
-    `Amount: ${currency} ${amount}`,
-    `Channel: ${channel}`,
-    `Direction: ${direction}`,
-    behaviouralFlags.length > 0 ? `Behavioural flags: ${behaviouralFlags.join(", ")}` : null,
-    notes ? `Notes: ${notes}` : null,
+    `Transaction ref: ${sanitizeField(ref, 200)}`,
+    `Counterparty: ${sanitizeField(counterparty, 500)}`,
+    counterpartyCountry ? `Counterparty country: ${sanitizeField(counterpartyCountry, 100)}` : null,
+    `Amount: ${sanitizeField(currency, 10)} ${sanitizeField(amount, 50)}`,
+    `Channel: ${sanitizeField(channel, 100)}`,
+    `Direction: ${sanitizeField(direction, 50)}`,
+    behaviouralFlags.length > 0 ? `Behavioural flags: ${behaviouralFlags.map((f) => sanitizeField(f, 200)).join(", ")}` : null,
+    notes ? `Notes: ${sanitizeField(notes, 2000)}` : null,
   ]
     .filter(Boolean)
     .join("\n");
 
-  const client = getAnthropicClient(apiKey, 55000);
+  const client = getAnthropicClient(apiKey, 55_000);
   const res = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 2048,
+      max_tokens: 700,
       system:
         'You are a UAE-licensed AML typology classifier for a DPMS compliance platform. Analyze a transaction and return ONLY this JSON: { "typologies": ["string"], "narrative": "string", "severityUpgrade": boolean, "regulatoryBasis": "string" }. typologies = FATF ML/TF typology codes (e.g. \'ML-TF-01 Structuring\', \'ML-TF-09 Cash-intensive business\'). narrative = 1-2 sentence STR-ready description. severityUpgrade = true if you\'d recommend escalating severity. regulatoryBasis = specific UAE/FATF articles triggered.',
       messages: [{ role: "user", content: userContent }],
@@ -74,7 +75,10 @@ async function classifyTransaction(
   // Strip markdown fences before parsing
   const stripped = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
   try {
-    return JSON.parse(stripped) as TypologyResult;
+    const result = JSON.parse(stripped) as TypologyResult;
+    // Normalize — LLM occasionally returns null instead of [].
+    if (!Array.isArray(result.typologies)) result.typologies = [];
+    return result;
   } catch {
     return null;
   }
@@ -151,8 +155,8 @@ async function handleTmReport(req: Request): Promise<NextResponse> {
       t.behaviouralFlags ?? [],
       t.notes,
     );
-  } catch {
-    // Classification failed — proceed without enrichment
+  } catch (err) {
+    console.warn("[tm-report] typology classification failed — proceeding without enrichment:", err instanceof Error ? err.message : String(err));
   }
 
   if (typologyResult) {
