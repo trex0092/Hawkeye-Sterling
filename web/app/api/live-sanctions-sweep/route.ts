@@ -142,7 +142,7 @@ Triage and recommend actions.`,
       const raw = res.content[0]?.type === "text" ? (res.content[0] as { type: "text"; text: string }).text : "{}";
       const parsed = JSON.parse(raw.match(/\{[\s\S]*\}/)?.[0] ?? "{}");
       aiNarrative = parsed.sweepNarrative ?? "";
-      triage = parsed.triage ?? [];
+      triage = Array.isArray(parsed.triage) ? parsed.triage : [];
     } catch { /* triage is non-blocking */ }
   }
 

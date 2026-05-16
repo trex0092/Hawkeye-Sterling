@@ -73,6 +73,7 @@ async function tavilySearch(query: string, apiKey: string): Promise<SearchResult
   const res = await fetch("https://api.tavily.com/search", {
     method: "POST",
     headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` },
+    signal: AbortSignal.timeout(10_000),
     body: JSON.stringify({
       query,
       topic: "general",
@@ -95,6 +96,7 @@ async function exaSearch(query: string, apiKey: string): Promise<SearchResult[]>
   const res = await fetch("https://api.exa.ai/search", {
     method: "POST",
     headers: { "content-type": "application/json", "x-api-key": apiKey },
+    signal: AbortSignal.timeout(10_000),
     body: JSON.stringify({
       query,
       type: "neural",
@@ -114,7 +116,7 @@ async function exaSearch(query: string, apiKey: string): Promise<SearchResult[]>
 
 async function serpSearch(query: string, apiKey: string): Promise<SearchResult[]> {
   const params = new URLSearchParams({ api_key: apiKey, q: query, tbm: "nws", num: "8" });
-  const res = await fetch(`https://serpapi.com/search.json?${params.toString()}`);
+  const res = await fetch(`https://serpapi.com/search.json?${params.toString()}`, { signal: AbortSignal.timeout(10_000) });
   if (!res.ok) return [];
   const json = (await res.json()) as { news_results?: Array<{ title?: string; link?: string; snippet?: string }> };
   return (json.news_results ?? []).map((r) => ({

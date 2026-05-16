@@ -249,8 +249,8 @@ Identify all cases that form a risk cluster with the subject. Only include cases
   } = {};
   try { clusterResult = JSON.parse(clusterRaw.match(/\{[\s\S]*\}/)?.[0] ?? "{}"); } catch { /* best effort */ }
 
-  const clusterMembers = clusterResult.clusterMembers ?? [];
-  const discoveredEdges = clusterResult.edges ?? [];
+  const clusterMembers = Array.isArray(clusterResult.clusterMembers) ? clusterResult.clusterMembers : [];
+  const discoveredEdges = Array.isArray(clusterResult.edges) ? clusterResult.edges : [];
   const clusterIds = clusterMembers.map((m) => m.caseId);
 
   // Merge confidence-weighted scores into entityScores
