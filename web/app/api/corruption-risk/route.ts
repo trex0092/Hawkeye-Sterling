@@ -267,7 +267,7 @@ Jurisdiction: ${body.jurisdiction ?? "Not specified"}
 Sector: ${body.sector ?? "Not specified"}
 PEP Status: ${body.pepStatus ? "YES" : "NO"}
 PEP Tier: ${body.pepTier ?? "none"}
-Contract Types: ${(body.contractTypes ?? []).join(", ") || "Not specified"}
+Contract Types: ${( Array.isArray(body.contractTypes) ? body.contractTypes : []).join(", ") || "Not specified"}
 Source of Wealth: ${body.sourceOfWealth ?? "Not disclosed"}
 Beneficial Owner Opacity: ${body.beneficialOwnerOpacity ? "YES — structure obscures UBO" : "NO"}
 Adverse Media (Corruption): ${body.adverseMediaCorruption ? "YES — adverse media present" : "NO"}
