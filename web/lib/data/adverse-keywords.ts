@@ -56,6 +56,28 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
       "dpms", "dealer in precious metals", "dealer in precious stones",
       "cash for gold", "gold bar scheme", "bullion fraud", "gold vault fraud",
       "jewellery laundering", "diamond laundering",
+      // Transaction structuring (Smurfing without using the word)
+      // "structuring" omitted bare — indexOf matches "restructuring" (false positive).
+      "transaction structuring", "cash structuring", "deposit structuring",
+      "structured deposits", "structured payments",
+      // Informal value transfer — major UAE/DPMS risk vector
+      "hawala", "hundi", "fei-ch'ien", "informal value transfer",
+      "underground banking", "informal remittance", "unregulated remittance",
+      // Mule and nominee networks
+      "money mule", "mule account", "mule network", "account mule",
+      "nominee account", "nominee director", "nominee shareholder",
+      "bearer shares", "bearer bonds", "bearer instrument",
+      "beneficial ownership concealment", "hidden ownership",
+      // Trade-based ML
+      "over-invoicing", "under-invoicing", "mis-invoicing", "trade misinvoicing",
+      "false invoice", "phantom invoice", "multiple invoicing", "document fraud",
+      "phantom shipment", "ghost shipment",
+      // VAT / carousel fraud (major UAE gold vector)
+      "carousel fraud", "missing trader fraud", "missing trader",
+      "vat carousel", "intra-community fraud",
+      // Layering vehicles
+      "layering scheme", "placement scheme",
+      "ghost company", "phantom company", "front company",
     ],
   },
   {
@@ -65,6 +87,13 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
       "bribe", "bribery", "corrupt", "corruption",
       "abuse of power", "conflict of interest", "misuse of funds",
       "kleptocracy", "state capture",
+      "facilitation payment", "grease payment",
+      "nepotism", "cronyism", "patronage network",
+      "bid rigging", "collusion", "cartel behaviour", "cartel behavior",
+      "graft", "embezzlement of public funds", "misappropriation of public funds",
+      "diversion of funds", "diversion of public funds",
+      "influence peddling", "pay-to-play", "pay to play",
+      "kickback scheme",
     ],
   },
   {
@@ -75,6 +104,14 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
       "financing of terrorism", "terror funding",
       "extremist", "radicalisation", "radicalization",
       "designated terrorist", "militant",
+      // Terror networks — avoid bare "isis" (substring of "crisis")
+      "islamic state", "daesh", "isil", "al-qaeda", "al qaeda",
+      "hezbollah", "hamas", "al-shabaab", "boko haram", "ltte",
+      "jihadist", "jihad network",
+      "terror cell", "terror network", "sleeper cell",
+      "foreign terrorist fighter", "foreign fighter",
+      "hawala network", "hawaldar",
+      "terror financing network", "terrorist financing network",
     ],
   },
   {
@@ -106,6 +143,11 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
     terms: [
       "organised crime", "organized crime",
       "drug trafficking", "narcotics", "cartel", "mafia",
+      "criminal network", "criminal enterprise", "criminal organisation", "criminal organization",
+      "criminal syndicate", "syndicate", "underworld",
+      "cocaine", "heroin", "fentanyl", "methamphetamine", "amphetamine",
+      "drug lord", "drug kingpin", "drug baron", "drug dealer",
+      "extortion racket", "protection racket",
       // DPMS / precious-metals illicit trade — critical for UAE gold dealer context
       "gold smuggling", "gold traffick", "precious metals smuggling", "precious metal smuggling",
       "diamond smuggling", "diamond traffick", "gemstone smuggling",
@@ -154,6 +196,13 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
       // DPMS sector fraud
       "gold fraud", "gold scam", "fake gold", "gold bar fraud", "precious metals fraud",
       "jewellery fraud", "diamond fraud", "gem fraud", "counterfeit gold",
+      "refinery fraud", "gold refinery fraud",
+      "assay fraud", "assay manipulation", "assay falsification",
+      "hallmark fraud", "hallmark forgery", "hallmark falsification",
+      "tungsten bar", "tungsten-filled", "gold-plated bar", "salted bar",
+      "investment scheme", "investment scam", "gold investment fraud",
+      "gold certificate fraud", "gold lease fraud", "mint fraud",
+      "bullion certificate fraud",
     ],
   },
   {
@@ -161,6 +210,12 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
     label: "Tax crime",
     terms: [
       "tax evasion", "tax fraud", "vat fraud",
+      "tax haven", "tax shelter", "tax avoidance scheme",
+      "offshore account", "offshore banking", "offshore assets",
+      "undeclared income", "undeclared assets", "unreported assets", "undeclared funds",
+      "transfer pricing abuse", "base erosion", "profit shifting", "beps violation",
+      "fatca violation", "crs violation", "common reporting standard violation",
+      "double taxation fraud", "tax amnesty evasion",
     ],
   },
   {
@@ -168,6 +223,14 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
     label: "Market abuse",
     terms: [
       "insider trading", "market manipulation",
+      "price manipulation", "price fixing",
+      "front running", "front-running",
+      "wash trading", "wash trade",
+      "pump and dump", "pump-and-dump",
+      "bear raid", "short squeeze manipulation",
+      "spoofing order", "layering order",
+      "gold price fixing", "gold price manipulation",
+      "benchmark manipulation", "libor manipulation",
     ],
   },
   {
@@ -185,7 +248,14 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
       "charged with", "indicted", "indictment", "sentenced",
       "seized", "confiscated", "forfeited", "forfeiture",
       "searched", "raided", "raid", "under investigation",
-      "suspect", "suspect in", "fugitive", "warrant",
+      // "suspect" omitted — indexOf matches "unsuspected" (false positive).
+      // Use specific phrases instead:
+      "prime suspect", "named as suspect", "person of interest",
+      "suspected of", "suspects ", "fugitive", "warrant",
+      "plea deal", "plea bargain", "pled guilty", "pleaded guilty",
+      "extradited", "extradition", "interpol", "red notice",
+      "taken into custody", "remanded in custody", "remand custody",
+      "criminal complaint", "criminal charges filed",
     ],
   },
   {
@@ -195,6 +265,24 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
       "sanctions", "sanctioned",
       "debarred", "debarment", "blacklisted", "blacklist",
       "regulatory breach", "breach",
+      // Key regulators & watchlists
+      "ofac", "fincen", "egmont", "goaml", "fatf blacklist", "fatf greylist",
+      "specially designated", "specially designated national",
+      // Asset-freezing enforcement
+      "asset freeze", "frozen assets", "frozen account", "account frozen",
+      "travel ban", "entry ban", "visa ban",
+      // AML/compliance violations
+      "aml violation", "aml breach", "aml failure", "aml fine",
+      "kyc failure", "kyc violation", "cdd failure", "due diligence failure",
+      "compliance failure", "compliance breach",
+      "regulatory fine", "regulatory penalty", "financial penalty",
+      // Suspicious transaction reporting
+      "suspicious transaction", "suspicious activity",
+      "str filed", "sar filed", "suspicious transaction report",
+      // Licence/permit actions
+      "licence revoked", "license revoked", "licence suspended", "license suspended",
+      "operating licence withdrawn", "banned from operating",
+      "financial services ban",
     ],
   },
   {
