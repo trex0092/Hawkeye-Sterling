@@ -146,6 +146,9 @@ Design a comprehensive AML compliance testing plan for this institution. Return 
       });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as ComplianceTestPlanResult;
+    if (!Array.isArray(result.testPlan)) result.testPlan = [];
+    if (!Array.isArray(result.priorityAreas)) result.priorityAreas = [];
+    if (!Array.isArray(result.reportingRequirements)) result.reportingRequirements = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "compliance-test-planner temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});

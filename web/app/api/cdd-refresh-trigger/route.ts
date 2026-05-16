@@ -142,6 +142,9 @@ Determine if CDD refresh is required.`,
       });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as CddRefreshTriggerResult;
+    if (!Array.isArray(result.triggerEvents)) result.triggerEvents = [];
+    if (!Array.isArray(result.fieldsToReverify)) result.fieldsToReverify = [];
+    if (!Array.isArray(result.additionalDocumentsRequired)) result.additionalDocumentsRequired = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "cdd-refresh-trigger temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});

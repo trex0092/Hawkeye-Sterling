@@ -115,6 +115,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     const stripped = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "");
 
     const parsed = JSON.parse(stripped) as AnalyticsInsightsResponse;
+    if (!Array.isArray(parsed.insights)) parsed.insights = [];
+    if (!Array.isArray(parsed.boardTalkingPoints)) parsed.boardTalkingPoints = [];
 
     writeAuditEvent(
       "analyst",

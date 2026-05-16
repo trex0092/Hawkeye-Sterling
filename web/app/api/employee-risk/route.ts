@@ -101,6 +101,11 @@ export async function POST(req: Request): Promise<NextResponse> {
     const text = res.content[0]?.type === "text" ? res.content[0].text : "";
     const stripped = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
     const parsed = JSON.parse(stripped) as EmployeeRiskResult;
+    if (!Array.isArray(parsed.criticalExpiries)) parsed.criticalExpiries = [];
+    if (!Array.isArray(parsed.screeningAlerts)) parsed.screeningAlerts = [];
+    if (!Array.isArray(parsed.highRiskNationalities)) parsed.highRiskNationalities = [];
+    if (!Array.isArray(parsed.multiEntityRisk)) parsed.multiEntityRisk = [];
+    if (!Array.isArray(parsed.immediateActions)) parsed.immediateActions = [];
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "employee-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});

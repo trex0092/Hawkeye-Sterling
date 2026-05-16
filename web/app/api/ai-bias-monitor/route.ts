@@ -114,6 +114,9 @@ export async function POST(req: Request): Promise<NextResponse> {
     const stripped = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "");
 
     const parsed = JSON.parse(stripped) as BiasMonitorResponse;
+    if (!Array.isArray(parsed.nationalityDistribution)) parsed.nationalityDistribution = [];
+    if (!Array.isArray(parsed.potentialBiasIndicators)) parsed.potentialBiasIndicators = [];
+    if (!Array.isArray(parsed.recommendedActions)) parsed.recommendedActions = [];
 
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch (err) {

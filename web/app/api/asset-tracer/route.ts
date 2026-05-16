@@ -139,6 +139,10 @@ Trace these funds through money laundering stages and assess asset recovery pote
     });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as AssetTracerResult;
+    if (!Array.isArray(result.tracingStages)) result.tracingStages = [];
+    else for (const s of result.tracingStages) { if (!Array.isArray(s.accountsInvolved)) s.accountsInvolved = []; if (!Array.isArray(s.jurisdictions)) s.jurisdictions = []; }
+    if (!Array.isArray(result.evidenceGaps)) result.evidenceGaps = [];
+    if (!Array.isArray(result.investigativeSteps)) result.investigativeSteps = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "asset-tracer temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});

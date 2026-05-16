@@ -187,6 +187,8 @@ Generate the EDD questionnaire. ${sbContext?.eddLevel === "intensive" ? "This su
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const cleaned = raw.replace(/```json\n?|\n?```/g, "").trim();
     const result = JSON.parse(cleaned) as EddQuestionnaire;
+    if (!Array.isArray(result.categories)) result.categories = [];
+    if (!Array.isArray(result.documentationRequired)) result.documentationRequired = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "edd-questionnaire temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
