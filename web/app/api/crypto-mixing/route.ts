@@ -80,6 +80,7 @@ export async function POST(req: Request) {
     const result = JSON.parse(
       raw.replace(/```json\n?|\n?```/g, "").trim()
     ) as CryptoMixingResult;
+    if (!Array.isArray(result.mixingTechniques)) result.mixingTechniques = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "crypto-mixing temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});

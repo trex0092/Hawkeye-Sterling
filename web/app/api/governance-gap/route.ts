@@ -243,6 +243,10 @@ Perform a comprehensive AML governance gap analysis. Identify all gaps, risks, a
     });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as GovernanceGapResult;
+    if (!Array.isArray(result.criticalGaps)) result.criticalGaps = [];
+    if (!Array.isArray(result.findings)) result.findings = [];
+    if (!Array.isArray(result.recommendations)) result.recommendations = [];
+    if (!Array.isArray(result.regulatoryRisks)) result.regulatoryRisks = [];
     return NextResponse.json(result, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "governance-gap temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});

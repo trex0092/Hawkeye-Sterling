@@ -114,10 +114,10 @@ Return ONLY valid JSON:
     return NextResponse.json({
       ok: true,
       caseCount: allCases.length,
-      patterns: result.patterns ?? [],
-      clusters: result.clusters ?? [],
+      patterns: Array.isArray(result.patterns) ? result.patterns : [],
+      clusters: Array.isArray(result.clusters) ? result.clusters : [],
       summary: result.summary ?? "",
-      organizedCrimeSignals: result.organizedCrimeSignals ?? [],
+      organizedCrimeSignals: Array.isArray(result.organizedCrimeSignals) ? result.organizedCrimeSignals : [],
     }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "pattern analysis failed — retry" }, { status: 500, headers: gate.headers });

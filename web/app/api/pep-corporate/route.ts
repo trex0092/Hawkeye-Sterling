@@ -84,6 +84,9 @@ export async function POST(req: Request) {
     const result = JSON.parse(
       raw.replace(/```json\n?|\n?```/g, "").trim()
     ) as PepCorporateResult;
+    if (!Array.isArray(result.politicalConnections)) result.politicalConnections = [];
+    if (!Array.isArray(result.corruptionRiskFactors)) result.corruptionRiskFactors = [];
+    if (!Array.isArray(result.eddMeasures)) result.eddMeasures = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "pep-corporate temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});

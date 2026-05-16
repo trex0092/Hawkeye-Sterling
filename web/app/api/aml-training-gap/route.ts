@@ -109,6 +109,10 @@ export async function POST(req: Request) {
     const result = JSON.parse(
       raw.replace(/```json\n?|\n?```/g, "").trim()
     ) as AmlTrainingGapResult;
+    if (!Array.isArray(result.overdueStaff)) result.overdueStaff = [];
+    if (!Array.isArray(result.highRiskRoleGaps)) result.highRiskRoleGaps = [];
+    if (!Array.isArray(result.mandatoryModules)) result.mandatoryModules = [];
+    if (!Array.isArray(result.trainingPlan)) result.trainingPlan = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "aml-training-gap temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
