@@ -7,14 +7,14 @@
 # any unset variable or pipe failure is treated as an error.
 #
 # Build order:
-#   1. npm install root  → deps incl. optional exceljs for XLSX adapters
-#   2. tsc root          → compiles src/brain → dist/
+#   1. npm install root    → deps incl. optional exceljs for XLSX adapters
+#   2. tsc root            → compiles src/brain → dist/
 #   3. gen-weaponized-brain → weaponizes the compiled brain
-#   4. patch-als         → patches async-local-storage for Next.js 15 compat
-#   4b. patch-runtime-snapshot → injects runtime snapshot for the web build
-#   5. npm ci web        → reproducible install for Next.js tree
-#   6. clear .next cache → avoids stale chunk refs after major dep bumps
-#   7. next build        → produces the Next.js 15 SSR bundle
+#   4. cd web && npm ci   → reproducible install for Next.js tree
+#   4b. patch-als          → patches async-local-storage for Next.js 15 compat
+#   4c. patch-runtime-snapshot → injects runtime snapshot for the web build
+#   5. clear .next cache   → avoids stale chunk refs after major dep bumps
+#   6. next build          → produces the Next.js 15 SSR bundle
 
 set -euo pipefail
 

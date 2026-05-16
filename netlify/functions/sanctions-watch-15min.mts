@@ -200,6 +200,17 @@ export default async (_req: Request): Promise<Response> => {
   const totalAdded = changes.reduce((s, c) => s + c.added.length, 0);
   const totalRemoved = changes.reduce((s, c) => s + c.removed.length, 0);
 
+  // Write heartbeat so health-monitor can detect if this function stops running.
+  // Only written on successful ingestion runs.
+  if (result.ok) {
+    try {
+      const hbStore = getStore("hawkeye-function-heartbeats");
+      await hbStore.setJSON(LABEL, { lastSuccess: new Date().toISOString(), label: LABEL });
+    } catch (err) {
+      console.warn(`[${LABEL}] heartbeat write failed (non-critical):`, err instanceof Error ? err.message : String(err));
+    }
+  }
+
   return new Response(
     JSON.stringify({
       cadence: "15min",

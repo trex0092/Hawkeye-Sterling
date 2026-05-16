@@ -66,6 +66,30 @@ export async function enforce(
     return { ok: true, tier: rl.tier, keyId: "portal_admin", record: null, remainingMonthly: null, headers: rateLimitHeaders(rl) };
   }
 
+  // Cron bypass: SANCTIONS_CRON_TOKEN allows internal scheduled functions
+  // (health-monitor, sanctions-daily-report, refresh-lists) to call protected
+  // API routes without consuming an API key quota. Same constant-time compare.
+  const cronToken = process.env["SANCTIONS_CRON_TOKEN"];
+  const cronMatch = cronToken && plaintext !== null && (() => {
+    const enc = new TextEncoder();
+    const a = enc.encode(cronToken);
+    const b = enc.encode(plaintext);
+    return a.byteLength === b.byteLength && timingSafeEqual(a, b);
+  })();
+  if (cronMatch) {
+    const rl = await consumeRateLimit("cron_internal", "enterprise");
+    if (!rl.allowed) {
+      return {
+        ok: false,
+        response: NextResponse.json(
+          { ok: false, error: "rate limit exceeded", retryAfterSec: rl.retryAfterSec },
+          { status: 429, headers: rateLimitHeaders(rl) },
+        ),
+      };
+    }
+    return { ok: true, tier: rl.tier, keyId: "cron_internal", record: null, remainingMonthly: null, headers: rateLimitHeaders(rl) };
+  }
+
   if (anonymous && opts.requireAuth) {
     return {
       ok: false,

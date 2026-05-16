@@ -34,8 +34,15 @@ async function fetchStatus(baseUrl: string): Promise<StatusResponse | null> {
     const ctl = new AbortController();
     const timer = setTimeout(() => ctl.abort(), 15_000);
     try {
+      // Use SANCTIONS_CRON_TOKEN (or ADMIN_TOKEN as fallback) so enforce()
+      // allows this internal cron call — without auth the endpoint returns 401.
+      const cronToken =
+        process.env["SANCTIONS_CRON_TOKEN"] ?? process.env["ADMIN_TOKEN"];
       const res = await fetch(`${baseUrl}/api/status`, {
-        headers: { "content-type": "application/json" },
+        headers: {
+          "content-type": "application/json",
+          ...(cronToken ? { authorization: `Bearer ${cronToken}` } : {}),
+        },
         signal: ctl.signal,
       });
       if (!res.ok) return null;
@@ -114,9 +121,10 @@ async function createAsanaAlert(notes: string): Promise<void> {
 // Scheduled functions that write heartbeats and their max allowed silence in hours
 // (1.5× their cron interval, rounded up).
 const HEARTBEAT_SPECS: Array<{ label: string; maxSilenceHours: number }> = [
-  { label: "adverse-media-rss", maxSilenceHours: 2 },    // every 30 min → alert after 2h
-  { label: "refresh-lists",     maxSilenceHours: 10 },    // daily 03:00 → alert after 10h
-  { label: "eocn-poll",         maxSilenceHours: 10 },    // every 6h → alert after 10h
+  { label: "sanctions-watch-15min", maxSilenceHours: 1  }, // every 15 min → alert after 1h
+  { label: "adverse-media-rss",     maxSilenceHours: 2  }, // every 30 min → alert after 2h
+  { label: "refresh-lists",         maxSilenceHours: 10 }, // daily 03:00 → alert after 10h
+  { label: "eocn-poll",             maxSilenceHours: 10 }, // every 6h → alert after 10h
 ];
 
 interface HeartbeatEntry {
@@ -205,7 +213,8 @@ export default async (_req: Request): Promise<Response> => {
   const requiredListCount = 6;
 
   const listIds = Object.keys(freshness);
-  const healthyLists = listIds.filter((id) => freshness[id]?.status === "ok" || freshness[id]?.status === "fresh");
+  // /api/status emits status: "healthy" | "stale" | "missing" — not "ok"/"fresh".
+  const healthyLists = listIds.filter((id) => freshness[id]?.status === "healthy");
   const staleLists = listIds.filter((id) => {
     const f = freshness[id];
     return f && typeof f.ageHours === "number" && f.ageHours > staleThresholdHours;
