@@ -21,6 +21,20 @@ const REPORT_LIST_IDS = [
   "fatf",
 ] as const;
 
+const LIST_DISPLAY_NAMES: Record<string, string> = {
+  un_consolidated: "UN Consolidated",
+  ofac_sdn:        "OFAC SDN",
+  ofac_cons:       "OFAC Consolidated",
+  eu_fsf:          "EU Financial Sanctions",
+  uk_ofsi:         "UK OFSI",
+  uae_eocn:        "UAE EOCN",
+  uae_ltl:         "UAE Local Terrorist List",
+  ch_seco:         "Switzerland SECO",
+  fatf:            "FATF",
+};
+
+const BORDER = "━".repeat(56);
+
 interface SanctionsList {
   listId: string;
   displayName: string;
@@ -45,13 +59,17 @@ function icon(l: SanctionsList): string {
 }
 
 function fmtCount(n: number | null): string {
-  if (n === null) return "     —";
-  return n.toLocaleString("en-US").padStart(6);
+  if (n === null) return "      —";
+  return n.toLocaleString("en-US").padStart(7);
 }
 
 function fmtAge(h: number | null): string {
   if (h === null) return "    —";
   return `${h.toFixed(1)}h`.padStart(5);
+}
+
+function displayName(l: SanctionsList): string {
+  return LIST_DISPLAY_NAMES[l.listId] ?? l.displayName ?? l.listId;
 }
 
 export interface ReportOptions {
@@ -116,9 +134,11 @@ export async function runSanctionsReport(opts: ReportOptions): Promise<ReportRes
 
   const taskName = `[SANCTIONS REPORT] ${opts.reportLabel} · ${dateStr} · ${healthLabel}`;
 
+  // ── Build report body ────────────────────────────────────────────────────
   const lines: string[] = [
+    BORDER,
     `HAWKEYE STERLING — DAILY SANCTIONS STATUS REPORT`,
-    ``,
+    BORDER,
     `Report time  : ${opts.reportLabel} (${now.toISOString()})`,
     `Next report  : ${opts.nextLabel}`,
     ``,
@@ -132,18 +152,21 @@ export async function runSanctionsReport(opts: ReportOptions): Promise<ReportRes
     const missingCount = lists.filter(
       (l) => l.status === "missing" || l.status === "unconfigured" || (l.entityCount ?? 0) === 0,
     ).length;
-    const overallLabel = (staleCount + missingCount) > 0 ? "⚠️  DEGRADED" : "✅ HEALTHY";
+    const overallLabel = (staleCount + missingCount) > 0
+      ? `⚠️  DEGRADED — ${healthyCount}/${total} HEALTHY`
+      : `✅ ALL ${total} HEALTHY`;
 
     lines.push(`OVERALL STATUS: ${overallLabel}`);
-    lines.push(`  Healthy    : ${healthyCount}`);
-    lines.push(`  Stale      : ${staleCount}`);
-    lines.push(`  Problem    : ${missingCount}`);
+    lines.push(`  Healthy  : ${healthyCount}`);
+    lines.push(`  Stale    : ${staleCount}`);
+    lines.push(`  Problem  : ${missingCount}`);
     lines.push(``);
     lines.push(`LIST DETAIL`);
+    lines.push(BORDER);
 
     for (const l of lists) {
       const ic   = icon(l);
-      const name = (l.displayName ?? l.listId).padEnd(24);
+      const name = displayName(l).padEnd(26);
       const cnt  = fmtCount(l.entityCount);
       const age  = fmtAge(l.ageHours);
       lines.push(`  ${ic} ${name} | ${cnt} entities | ${age} old`);
@@ -153,13 +176,16 @@ export async function runSanctionsReport(opts: ReportOptions): Promise<ReportRes
       lines.push(`  (no list data available)`);
     }
 
+    lines.push(BORDER);
+
     const degraded = lists.filter(
       (l) => l.status !== "healthy" || (l.entityCount ?? 0) === 0,
     );
 
     if (degraded.length > 0) {
       lines.push(``);
-      lines.push(`DEGRADED LISTS — MLRO ACTION REQUIRED`);
+      lines.push(`⚠️  DEGRADED LISTS — MLRO ACTION REQUIRED`);
+      lines.push(BORDER);
       for (const l of degraded) {
         const reason =
           (l.entityCount ?? 0) === 0 && l.status === "healthy"
@@ -169,16 +195,18 @@ export async function runSanctionsReport(opts: ReportOptions): Promise<ReportRes
             : l.status === "missing" || l.status === "unconfigured"
             ? "not loaded"
             : l.status;
-        lines.push(`  • ${l.displayName ?? l.listId}: ${reason}`);
+        lines.push(`  • ${displayName(l)}: ${reason}`);
       }
       lines.push(``);
       lines.push(`Customers cleared against these lists should be re-screened`);
       lines.push(`once the affected lists are restored.`);
+      lines.push(BORDER);
     }
 
     if (status.warnings && status.warnings.length > 0) {
       lines.push(``);
       lines.push(`SYSTEM WARNINGS`);
+      lines.push(BORDER);
       for (const w of status.warnings) lines.push(`  • ${w}`);
     }
   }
