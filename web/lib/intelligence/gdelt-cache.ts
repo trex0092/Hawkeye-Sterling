@@ -224,14 +224,16 @@ function buildGdeltUrl(subjectName: string, query: RiskQueryDef, start: Date, en
   return `${GDELT_BASE}?${params.toString()}`;
 }
 
+// Returns null on network/HTTP failure (distinguishable from empty results).
 async function fetchOneQuery(
   url: string,
   queryDef: RiskQueryDef,
-): Promise<GdeltArticle[]> {
+  perQueryTimeoutMs: number = FETCH_TIMEOUT_MS,
+): Promise<GdeltArticle[] | null> {
   for (let attempt = 0; attempt < 2; attempt++) {
     if (attempt > 0) await new Promise((r) => setTimeout(r, 2_000));
     const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
+    const timer = setTimeout(() => ctrl.abort(), perQueryTimeoutMs);
     try {
       const res = await fetch(url, {
         headers: {
@@ -242,7 +244,7 @@ async function fetchOneQuery(
       });
       clearTimeout(timer);
       if (res.status === 429) continue;
-      if (!res.ok) return [];
+      if (!res.ok) return null; // HTTP failure — distinguishable from empty results
       const data = (await res.json()) as { articles?: GdeltArticle[] };
       return (Array.isArray(data.articles) ? data.articles : [])
         .filter((a) => a.url && a.title)
@@ -256,13 +258,19 @@ async function fetchOneQuery(
       clearTimeout(timer);
     }
   }
-  return [];
+  return null; // network failure
 }
 
-async function liveFetch(subjectName: string, customQuery?: string): Promise<{ articles: GdeltArticle[]; serviceError: boolean }> {
+async function liveFetch(subjectName: string, customQuery?: string, budgetMs?: number): Promise<{ articles: GdeltArticle[]; serviceError: boolean }> {
   const end = new Date();
   const start = new Date(end);
   start.setUTCFullYear(start.getUTCFullYear() - ART19_LOOKBACK_YEARS);
+
+  // Per-query timeout: honour the caller's remaining budget (leave 3 s for synthesis).
+  // Never exceed FETCH_TIMEOUT_MS even if budget is generous.
+  const perQueryMs = budgetMs
+    ? Math.min(FETCH_TIMEOUT_MS, Math.max(4_000, budgetMs - 3_000))
+    : FETCH_TIMEOUT_MS;
 
   // Custom query (caller override) → single fetch, original behaviour
   if (customQuery) {
@@ -276,18 +284,22 @@ async function liveFetch(subjectName: string, customQuery?: string): Promise<{ a
       enddatetime: gdeltDateTime(end),
     });
     const url = `${GDELT_BASE}?${params.toString()}`;
-    const articles = await fetchOneQuery(url, { label: "custom", keywords: [], categories: ["adverse_media"] });
-    return { articles, serviceError: articles.length === 0 };
+    const articles = await fetchOneQuery(url, { label: "custom", keywords: [], categories: ["adverse_media"] }, perQueryMs);
+    // null = network failure; [] = GDELT responded but no results
+    if (articles === null) return { articles: [], serviceError: true };
+    return { articles, serviceError: false };
   }
 
   // Multi-query parallel strategy — fire all 6 risk queries simultaneously
   const urls = RISK_QUERIES.map((q) => ({ q, url: buildGdeltUrl(subjectName, q, start, end) }));
-  const results = await Promise.allSettled(urls.map(({ q, url }) => fetchOneQuery(url, q)));
+  const results = await Promise.allSettled(urls.map(({ q, url }) => fetchOneQuery(url, q, perQueryMs)));
 
   const allArticles: GdeltArticle[] = [];
+  // anySucceeded = at least one query got a non-null response (HTTP success),
+  // even if it returned zero articles. null = network/HTTP failure.
   let anySucceeded = false;
   for (const r of results) {
-    if (r.status === "fulfilled" && r.value.length >= 0) {
+    if (r.status === "fulfilled" && r.value !== null) {
       allArticles.push(...r.value);
       anySucceeded = true;
     }
@@ -335,6 +347,12 @@ export interface FetchGdeltOpts {
    * point of the cache.
    */
   forceRefresh?: boolean;
+  /**
+   * Remaining time budget in ms for the entire GDELT fetch (including retries).
+   * Prevents GDELT from running past the caller's route deadline.
+   * If omitted, defaults to FETCH_TIMEOUT_MS (20 s).
+   */
+  budgetMs?: number;
 }
 
 export async function fetchGdeltCached(
@@ -363,7 +381,7 @@ export async function fetchGdeltCached(
   }
 
   // Layer 3 — live GDELT.
-  const live = await liveFetch(subjectName, opts.query);
+  const live = await liveFetch(subjectName, opts.query, opts.budgetMs);
   if (!live.serviceError) {
     const value: MemEntry["value"] = {
       articles: live.articles,
