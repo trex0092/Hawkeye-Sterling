@@ -389,7 +389,7 @@ export async function POST(req: Request): Promise<Response> {
   }
 
   const analysis = classifyMlroQuestion(question);
-  const userPrompt = `${retrieval.promptBlock}\n\n${buildEnrichedUserPrompt(question, body.context ?? [])}`;
+  const userPrompt = `${retrieval.promptBlock}\n\n${buildEnrichedUserPrompt(question, Array.isArray(body.context) ? body.context : [])}`;
 
   const upstreamCtl = new AbortController();
   const killTimer = setTimeout(() => upstreamCtl.abort(), HARD_TIMEOUT_MS);

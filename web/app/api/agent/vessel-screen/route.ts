@@ -72,7 +72,7 @@ async function handlePost(req: Request): Promise<NextResponse> {
     },
     evidence: {
       vessel: body.vessel as never,
-      aisReports: body.aisReports ?? [],
+      aisReports: Array.isArray(body.aisReports) ? body.aisReports : [],
     },
     priorFindings: [],
     domains: ["sanctions", "tf"],

@@ -253,7 +253,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         { status: 200, headers: { ...CORS, ...gateHeaders } },
       );
     }
-    const fastResult = await runHaikuQuick(body.query.trim(), body.context ?? [], apiKey);
+    const fastResult = await runHaikuQuick(body.query.trim(), Array.isArray(body.context) ? body.context : [], apiKey);
     if (fastResult.ok) {
       return NextResponse.json(
         {
@@ -325,7 +325,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   }
 
-  const preamble = buildContextPreamble(body.context ?? []);
+  const preamble = buildContextPreamble(Array.isArray(body.context) ? body.context : []);
   const enrichedQuestion = `${preamble}${body.query.trim()}`.slice(0, 3500);
   const detectedJurisdiction = detectJurisdiction(body.query);
 
