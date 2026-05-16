@@ -190,5 +190,5 @@ export async function POST(req: Request): Promise<NextResponse> {
     text: text.slice(0, 500),
   };
   await setJson(`engine-events/${at}-${ev.id}`, ev);
-  return NextResponse.json({ ok: true, event: ev , headers: gate.headers });
+  return NextResponse.json({ ok: true, event: ev }, { headers: gate.headers });
 }

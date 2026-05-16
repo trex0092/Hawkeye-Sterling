@@ -158,5 +158,5 @@ export async function POST(req: Request): Promise<NextResponse> {
     writeAuditEvent("mlro", "sanctions.ai-indirect-exposure", subject);
   } catch { /* non-blocking */ }
 
-  return NextResponse.json({ ok: true, ...result , headers: gate.headers });
+  return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
 }

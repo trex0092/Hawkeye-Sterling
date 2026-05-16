@@ -86,7 +86,7 @@ export async function POST(req: Request) {
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: true, degraded: true, ...FALLBACK , headers: gate.headers });
+  if (!apiKey) return NextResponse.json({ ok: true, degraded: true, ...FALLBACK }, { headers: gate.headers });
 
   try {
     const client = getAnthropicClient(apiKey, 55000);
@@ -145,7 +145,7 @@ Determine if CDD refresh is required.`,
     if (!Array.isArray(result.triggerEvents)) result.triggerEvents = [];
     if (!Array.isArray(result.fieldsToReverify)) result.fieldsToReverify = [];
     if (!Array.isArray(result.additionalDocumentsRequired)) result.additionalDocumentsRequired = [];
-    return NextResponse.json({ ok: true, ...result , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "cdd-refresh-trigger temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }

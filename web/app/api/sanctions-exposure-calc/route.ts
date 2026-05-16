@@ -103,7 +103,7 @@ export async function POST(req: Request) {
     ) as SanctionsExposureCalcResult;
     if (!Array.isArray(result.listExposures)) result.listExposures = [];
     if (!Array.isArray(result.immediateActions)) result.immediateActions = [];
-    return NextResponse.json({ ok: true, ...result , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "sanctions-exposure-calc temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }

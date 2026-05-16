@@ -144,7 +144,7 @@ Return ONLY valid JSON:
     if (!Array.isArray(result.examinerQuestions)) result.examinerQuestions = [];
     if (!Array.isArray(result.remediationRoadmap)) result.remediationRoadmap = [];
     if (!Array.isArray(result.strengthAreas)) result.strengthAreas = [];
-    return NextResponse.json({ ok: true, ...result , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "examiner analysis failed — retry" }, { status: 500, headers: gate.headers });
   }

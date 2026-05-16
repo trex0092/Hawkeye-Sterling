@@ -163,7 +163,7 @@ Generate a court-ready evidence pack summary covering: case overview, entity pro
     const result = JSON.parse(cleaned) as Omit<EvidencePackResult, "ok" | "generatedAt">;
     if (!Array.isArray(result.evidencePoints)) result.evidencePoints = [];
     if (!Array.isArray(result.nextSteps)) result.nextSteps = [];
-    return NextResponse.json({ ok: true, ...result, generatedAt , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...result, generatedAt }, { headers: gate.headers });
   } catch {
     return NextResponse.json(buildFallback(caseTitle, entities, links, narrative, analyst), { headers: gate.headers });
   }

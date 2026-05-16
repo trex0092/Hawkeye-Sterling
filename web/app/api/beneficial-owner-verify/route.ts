@@ -85,7 +85,7 @@ export async function POST(req: Request) {
     ) as BeneficialOwnerVerifyResult;
     if (!Array.isArray(result.gaps)) result.gaps = [];
     if (!Array.isArray(result.verificationSteps)) result.verificationSteps = [];
-    return NextResponse.json({ ok: true, ...result , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "beneficial-owner-verify temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }

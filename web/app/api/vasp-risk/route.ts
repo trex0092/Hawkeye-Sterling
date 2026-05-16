@@ -139,7 +139,7 @@ Assess this VASP for onboarding risk.`,
     if (!Array.isArray(result.riskIndicators)) result.riskIndicators = [];
     if (!Array.isArray(result.requiredDocumentation)) result.requiredDocumentation = [];
     if (!Array.isArray(result.regulatoryObligations)) result.regulatoryObligations = [];
-    return NextResponse.json({ ok: true, ...result , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "vasp-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }

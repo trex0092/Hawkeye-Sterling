@@ -144,7 +144,7 @@ Map these facts to applicable UAE ML predicate offences with penalties.`,
     if (!Array.isArray(result.investigativeActions)) result.investigativeActions = [];
     if (!Array.isArray(result.jurisdictionalIssues)) result.jurisdictionalIssues = [];
     if (!Array.isArray(result.fatfR3Categories)) result.fatfR3Categories = [];
-    return NextResponse.json({ ok: true, ...result , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "ml-predicate temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }

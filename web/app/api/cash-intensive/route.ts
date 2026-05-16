@@ -105,7 +105,7 @@ export async function POST(req: Request) {
     if (!Array.isArray(parsed.controlGaps)) parsed.controlGaps = [];
     if (!Array.isArray(parsed.enhancedMeasures)) parsed.enhancedMeasures = [];
     if (!Array.isArray(parsed.reportingObligations)) parsed.reportingObligations = [];
-    return NextResponse.json({ ok: true, ...parsed , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "cash-intensive temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }

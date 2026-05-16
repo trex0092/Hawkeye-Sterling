@@ -104,7 +104,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (!Array.isArray(parsed.lbmaAlignmentIssues)) parsed.lbmaAlignmentIssues = [];
     if (!Array.isArray(parsed.recommendedActions)) parsed.recommendedActions = [];
     if (!Array.isArray(parsed.auditPriority)) parsed.auditPriority = [];
-    return NextResponse.json({ ok: true, ...parsed , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "rmi-assess temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }

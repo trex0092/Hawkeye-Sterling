@@ -89,7 +89,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (!Array.isArray(parsed.topConcerns)) parsed.topConcerns = [];
     if (!Array.isArray(parsed.fatfTypologies)) parsed.fatfTypologies = [];
     if (!Array.isArray(parsed.uaeSpecificRisks)) parsed.uaeSpecificRisks = [];
-    return NextResponse.json({ ok: true, ...parsed , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "adverse-media-assess temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }

@@ -68,7 +68,7 @@ export async function GET(req: Request): Promise<NextResponse> {
   if (!gate.ok) return gate.response;
   const tenant = (gate.record?.id ?? "anon").slice(0, 32);
   const record = await loadRecord(tenant);
-  return NextResponse.json({ ok: true, registration: record , headers: gate.headers });
+  return NextResponse.json({ ok: true, registration: record }, { headers: gate.headers });
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
@@ -102,5 +102,5 @@ export async function POST(req: Request): Promise<NextResponse> {
   };
 
   await saveRecord(tenant, updated);
-  return NextResponse.json({ ok: true, registration: updated , headers: gate.headers });
+  return NextResponse.json({ ok: true, registration: updated }, { headers: gate.headers });
 }

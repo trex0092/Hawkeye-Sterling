@@ -63,7 +63,7 @@ export async function GET(req: Request): Promise<NextResponse> {
     items.push(r);
   }
   items.sort((a, b) => b.submittedAt.localeCompare(a.submittedAt));
-  return NextResponse.json({ ok: true, count: items.length, requests: items , headers: gate.headers });
+  return NextResponse.json({ ok: true, count: items.length, requests: items }, { headers: gate.headers });
 }
 
 export async function POST(req: Request): Promise<NextResponse> {

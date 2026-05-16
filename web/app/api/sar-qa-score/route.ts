@@ -92,7 +92,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const apiKey = process.env["ANTHROPIC_API_KEY"];
 
   if (!apiKey) {
-    return NextResponse.json({ ok: true, scores: fallbackScores(cases) , headers: gate.headers });
+    return NextResponse.json({ ok: true, scores: fallbackScores(cases) }, { headers: gate.headers });
   }
 
   const userContent = cases
@@ -133,7 +133,7 @@ Red Flags: ${redFlagsStr}`;
     parsed = JSON.parse(cleaned) as typeof parsed;
     if (!Array.isArray(parsed.scores)) parsed.scores = [];
   } catch {
-    return NextResponse.json({ ok: true, scores: fallbackScores(cases) , headers: gate.headers });
+    return NextResponse.json({ ok: true, scores: fallbackScores(cases) }, { headers: gate.headers });
   }
 
   const scores: QaScore[] = parsed.scores.map((s) => ({
@@ -153,5 +153,5 @@ Red Flags: ${redFlagsStr}`;
     // Non-fatal — server-side localStorage is unavailable
   }
 
-  return NextResponse.json({ ok: true, scores , headers: gate.headers });
+  return NextResponse.json({ ok: true, scores }, { headers: gate.headers });
 }

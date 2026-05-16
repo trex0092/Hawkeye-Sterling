@@ -94,7 +94,7 @@ export async function POST(req: Request) {
     if (!Array.isArray(parsed.alternativesMitigants)) parsed.alternativesMitigants = [];
     if (!Array.isArray(parsed.exitProcessRequirements)) parsed.exitProcessRequirements = [];
     if (!Array.isArray(parsed.documentationRequired)) parsed.documentationRequired = [];
-    return NextResponse.json({ ok: true, ...parsed , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "derisking-impact temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }

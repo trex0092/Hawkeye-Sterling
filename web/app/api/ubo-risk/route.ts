@@ -94,7 +94,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (!Array.isArray(parsed.nationalityRisks)) parsed.nationalityRisks = [];
     if (!Array.isArray(parsed.cddGaps)) parsed.cddGaps = [];
     if (!Array.isArray(parsed.recommendedActions)) parsed.recommendedActions = [];
-    return NextResponse.json({ ok: true, ...parsed , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "ubo-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }

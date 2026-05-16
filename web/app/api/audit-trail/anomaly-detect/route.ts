@@ -44,7 +44,7 @@ export async function POST(req: Request) {
   }
 
   if (!Array.isArray(body.events) || body.events.length === 0) {
-    return NextResponse.json({ anomalies: [], riskScore: 0 , headers: gate.headers });
+    return NextResponse.json({ anomalies: [], riskScore: 0 }, { headers: gate.headers });
   }
   const events = body.events;
 

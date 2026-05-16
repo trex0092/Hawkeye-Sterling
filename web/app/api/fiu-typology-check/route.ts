@@ -86,7 +86,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       return NextResponse.json({ ok: false, error: `typology ${body.typologyId} not found` }, { status: 404, headers: gate.headers });
     }
     const matrix = (getCoverageMatrix() as CoverageEntry[]).find((m: CoverageEntry) => m.typologyId === body.typologyId);
-    return NextResponse.json({ ok: true, typology, coverage: matrix , headers: gate.headers });
+    return NextResponse.json({ ok: true, typology, coverage: matrix }, { headers: gate.headers });
   }
 
   // Full matrix

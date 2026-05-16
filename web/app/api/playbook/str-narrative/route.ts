@@ -102,7 +102,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       writeAuditEvent("mlro", "playbook.str-narrative", `${body.playbookTitle} → ${result.recommendedDisposition} (${body.completedChecks.length} checks completed)`);
     } catch { /* non-blocking */ }
 
-    return NextResponse.json({ ok: true, ...result , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "playbook/str-narrative temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }

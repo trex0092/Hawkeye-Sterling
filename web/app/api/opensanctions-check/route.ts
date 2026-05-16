@@ -86,5 +86,5 @@ export async function POST(req: Request): Promise<NextResponse> {
 export async function GET(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
-  return NextResponse.json({ ok: true, corpus: await openSanctionsStats() , headers: gate.headers });
+  return NextResponse.json({ ok: true, corpus: await openSanctionsStats() }, { headers: gate.headers });
 }

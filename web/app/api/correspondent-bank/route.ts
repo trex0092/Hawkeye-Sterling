@@ -82,7 +82,7 @@ export async function POST(req: Request) {
 
     const parsed = JSON.parse(jsonMatch[0]) as CorrespondentBankResult;
     if (!Array.isArray(parsed.requiredEnhancements)) parsed.requiredEnhancements = [];
-    return NextResponse.json({ ok: true, ...parsed , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "correspondent-bank temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }

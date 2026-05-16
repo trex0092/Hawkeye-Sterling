@@ -139,7 +139,7 @@ Analyse this trade invoice for TBML indicators. Return complete TradeInvoiceResu
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as TradeInvoiceResult;
     if (!Array.isArray(result.indicators)) result.indicators = [];
     if (!Array.isArray(result.requiredDocumentation)) result.requiredDocumentation = [];
-    return NextResponse.json({ ok: true, ...result , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "trade-invoice-analyzer temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }

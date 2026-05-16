@@ -86,7 +86,7 @@ export async function POST(req: Request) {
     ) as TradeFinanceRfResult;
     if (!Array.isArray(result.redFlags)) result.redFlags = [];
     if (!Array.isArray(result.documentaryDiscrepancies)) result.documentaryDiscrepancies = [];
-    return NextResponse.json({ ok: true, ...result , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "trade-finance-rf temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }

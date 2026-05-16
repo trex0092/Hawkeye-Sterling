@@ -424,7 +424,7 @@ Provide a complete country risk intelligence assessment covering AML/CFT risk, F
     if (!Array.isArray(result.regulatoryObligations)) result.regulatoryObligations = [];
     const latencyMs = Date.now() - t0;
     if (latencyMs > 5000) console.warn(`[country-risk] slow response latencyMs=${latencyMs}`);
-    return NextResponse.json({ ...result, latencyMs , headers: gate.headers });
+    return NextResponse.json({ ...result, latencyMs }, { headers: gate.headers });
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);
     console.warn("[country-risk] LLM call failed:", detail);

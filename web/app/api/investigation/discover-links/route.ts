@@ -187,7 +187,7 @@ Identify hidden connections not yet reflected in the confirmed links. Focus on: 
     const cleaned = raw.replace(/```json\n?|\n?```/g, "").trim();
     const result = JSON.parse(cleaned) as Omit<DiscoverLinksResult, "ok">;
     if (!Array.isArray(result.suggestedLinks)) result.suggestedLinks = [];
-    return NextResponse.json({ ok: true, ...result , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json(buildFallback(entities, existingLinks), { headers: gate.headers });
   }

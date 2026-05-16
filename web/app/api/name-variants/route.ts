@@ -84,7 +84,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    return NextResponse.json({ ok: true, ...buildFallback(trimmedName) , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...buildFallback(trimmedName) }, { headers: gate.headers });
   }
 
   const userMessage = `Generate all name variants for AML screening: Name: ${trimmedName}, Nationality: ${nationality ?? "unknown"}, DOB: ${dob ?? "unknown"}, Context: ${context ?? "none"}`;
@@ -112,10 +112,10 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (!Array.isArray(parsed.entityVariants)) parsed.entityVariants = [];
     if (!Array.isArray(parsed.screeningStrings)) parsed.screeningStrings = [];
     if (!Array.isArray(parsed.scriptVariants)) parsed.scriptVariants = [];
-    return NextResponse.json({ ok: true, ...parsed , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     writeAuditEvent("analyst", "screening.name-variants.error", `${trimmedName} — ${msg}`);
-    return NextResponse.json({ ok: true, ...buildFallback(trimmedName) , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...buildFallback(trimmedName) }, { headers: gate.headers });
   }
 }

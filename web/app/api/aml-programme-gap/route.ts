@@ -159,7 +159,7 @@ Conduct a comprehensive AML programme gap analysis. Return complete AmlProgramme
     if (!Array.isArray(result.criticalFindings)) result.criticalFindings = [];
     if (!Array.isArray(result.priorityRemediation)) result.priorityRemediation = [];
     if (!Array.isArray(result.nextSteps)) result.nextSteps = [];
-    return NextResponse.json({ ok: true, ...result , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "aml-programme-gap temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }

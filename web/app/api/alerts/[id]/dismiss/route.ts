@@ -25,7 +25,7 @@ export async function POST(
     } catch { /* body is optional */ }
     const ok = await dismissAlert(id, dismissedBy);
     if (!ok) return NextResponse.json({ ok: false, error: "alert not found" }, { status: 404 , headers: gate.headers });
-    return NextResponse.json({ ok: true , headers: gate.headers });
+    return NextResponse.json({ ok: true }, { headers: gate.headers });
   } catch (err) {
     console.error("[alerts/dismiss]", err instanceof Error ? err.message : err);
     return NextResponse.json(

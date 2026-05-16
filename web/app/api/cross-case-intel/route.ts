@@ -28,7 +28,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const allCases = await loadAllCases(tenant);
 
   if (allCases.length === 0) {
-    return NextResponse.json({ ok: true, patterns: [], clusters: [], summary: "No cases found.", caseCount: 0 , headers: gate.headers });
+    return NextResponse.json({ ok: true, patterns: [], clusters: [], summary: "No cases found.", caseCount: 0 }, { headers: gate.headers });
   }
 
   // Distill cases to a compact representation (no raw PII in prompt)

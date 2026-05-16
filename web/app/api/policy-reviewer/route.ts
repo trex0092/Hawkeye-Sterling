@@ -139,7 +139,7 @@ Review this AML policy for compliance with UAE FDL 10/2025. Return complete Poli
     if (!Array.isArray(result.outdatedReferences)) result.outdatedReferences = [];
     if (!Array.isArray(result.strengths)) result.strengths = [];
     if (!Array.isArray(result.recommendations)) result.recommendations = [];
-    return NextResponse.json({ ok: true, ...result , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "policy-reviewer temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }

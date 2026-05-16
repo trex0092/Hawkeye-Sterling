@@ -126,7 +126,7 @@ Assess this corporate structure for shell company red flags.`,
     if (!Array.isArray(result.redFlags)) result.redFlags = [];
     if (!Array.isArray(result.structureIndicators)) result.structureIndicators = [];
     if (!Array.isArray(result.requiredDocumentation)) result.requiredDocumentation = [];
-    return NextResponse.json({ ok: true, ...result , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "shell-detector temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }

@@ -113,7 +113,7 @@ export async function POST(req: Request) {
     if (!Array.isArray(result.highRiskRoleGaps)) result.highRiskRoleGaps = [];
     if (!Array.isArray(result.mandatoryModules)) result.mandatoryModules = [];
     if (!Array.isArray(result.trainingPlan)) result.trainingPlan = [];
-    return NextResponse.json({ ok: true, ...result , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "aml-training-gap temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }

@@ -106,7 +106,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (!Array.isArray(parsed.highRiskNationalities)) parsed.highRiskNationalities = [];
     if (!Array.isArray(parsed.multiEntityRisk)) parsed.multiEntityRisk = [];
     if (!Array.isArray(parsed.immediateActions)) parsed.immediateActions = [];
-    return NextResponse.json({ ok: true, ...parsed , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "employee-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }

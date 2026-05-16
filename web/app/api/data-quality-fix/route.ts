@@ -89,7 +89,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (!Array.isArray(parsed.remediationPlan)) parsed.remediationPlan = [];
     else for (const r of parsed.remediationPlan) { if (!Array.isArray(r.requiredActions)) r.requiredActions = []; }
     if (!Array.isArray(parsed.topGaps)) parsed.topGaps = [];
-    return NextResponse.json({ ok: true, ...parsed , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "data-quality-fix temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }

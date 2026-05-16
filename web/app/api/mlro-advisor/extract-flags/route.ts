@@ -340,5 +340,5 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   } catch { /* non-blocking */ }
 
-  return NextResponse.json({ ok: true, ...result , headers: gate.headers });
+  return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
 }

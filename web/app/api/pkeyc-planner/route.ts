@@ -115,7 +115,7 @@ export async function POST(req: Request) {
     if (!Array.isArray(result.overdueItems)) result.overdueItems = [];
     if (!Array.isArray(result.automationOpportunities)) result.automationOpportunities = [];
     if (!Array.isArray(result.kycRefreshPlan)) result.kycRefreshPlan = [];
-    return NextResponse.json({ ok: true, ...result , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "pkeyc-planner temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }

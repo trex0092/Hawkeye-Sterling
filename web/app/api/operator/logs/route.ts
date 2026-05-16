@@ -52,7 +52,7 @@ async function handleGet(req: Request): Promise<NextResponse> {
 
   const store = await getStore();
   if (!store) {
-    return NextResponse.json({ ok: true, entries: [], note: "Blobs not available in this environment" , headers: gate.headers });
+    return NextResponse.json({ ok: true, entries: [], note: "Blobs not available in this environment" }, { headers: gate.headers });
   }
 
   let entries: McpLogEntry[] = [];

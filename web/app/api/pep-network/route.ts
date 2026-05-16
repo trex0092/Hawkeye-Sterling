@@ -224,7 +224,7 @@ Return ONLY valid JSON with this exact structure:
 
     const latencyMs = Date.now() - _handlerStart;
     if (latencyMs > 5000) console.warn(`[pep-network] latencyMs=${latencyMs} exceeds 5000ms`);
-    return NextResponse.json({ ok: true, ...output, latencyMs , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...output, latencyMs }, { headers: gate.headers });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     return NextResponse.json({

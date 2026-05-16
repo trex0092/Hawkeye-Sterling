@@ -150,7 +150,7 @@ Perform TBML risk analysis.`,
     if (!Array.isArray(result.indicators)) result.indicators = [];
     if (!Array.isArray(result.documentationGaps)) result.documentationGaps = [];
     if (!Array.isArray(result.investigativeSteps)) result.investigativeSteps = [];
-    return NextResponse.json({ ok: true, ...result , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "tbml-analysis temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }

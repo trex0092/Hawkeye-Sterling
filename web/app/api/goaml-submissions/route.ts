@@ -43,7 +43,7 @@ export async function GET(req: Request): Promise<NextResponse> {
   if (ref) {
     const record = await getGoAmlSubmission(tenant, ref);
     if (!record) return NextResponse.json({ ok: false, error: "not found" }, { status: 404, headers: gate.headers });
-    return NextResponse.json({ ok: true, record , headers: gate.headers });
+    return NextResponse.json({ ok: true, record }, { headers: gate.headers });
   }
 
   const submissions = await listGoAmlSubmissions(tenant);
@@ -127,7 +127,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   } catch { /* browser-only audit — best-effort on server */ }
 
-  return NextResponse.json({ ok: true, record: updated , headers: gate.headers });
+  return NextResponse.json({ ok: true, record: updated }, { headers: gate.headers });
 }
 
 export async function DELETE(req: Request): Promise<NextResponse> {
@@ -148,5 +148,5 @@ export async function DELETE(req: Request): Promise<NextResponse> {
 
   await deleteGoAmlSubmission(tenant, ref);
   try { writeAuditEvent("mlro", "goaml.submission.deleted", `${ref} (${existing.reportCode} / ${existing.subjectName})`); } catch { /* browser-only audit */ }
-  return NextResponse.json({ ok: true, deleted: ref , headers: gate.headers });
+  return NextResponse.json({ ok: true, deleted: ref }, { headers: gate.headers });
 }

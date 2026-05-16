@@ -91,7 +91,7 @@ export async function POST(req: Request) {
     if (!Array.isArray(result.narrativeWeaknesses)) result.narrativeWeaknesses = [];
     if (!Array.isArray(result.strengths)) result.strengths = [];
     if (!Array.isArray(result.revisedNarrativeSuggestions)) result.revisedNarrativeSuggestions = [];
-    return NextResponse.json({ ok: true, ...result , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "str-quality temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }

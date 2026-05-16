@@ -123,5 +123,5 @@ export async function POST(req: Request): Promise<NextResponse> {
     }
   }
 
-  return NextResponse.json({ ok: true, ...result , headers: gate.headers });
+  return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
 }

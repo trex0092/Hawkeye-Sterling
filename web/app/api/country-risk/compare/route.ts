@@ -37,7 +37,7 @@ export async function POST(req: Request) {
   if (!apiKey) {
     // Return deterministic fallback for up to 5 countries
     const fallbacks = countries.map((c) => buildFallback(c));
-    return NextResponse.json({ ok: true, countries: fallbacks, comparedAt: new Date().toISOString() , headers: gate.headers });
+    return NextResponse.json({ ok: true, countries: fallbacks, comparedAt: new Date().toISOString() }, { headers: gate.headers });
   }
 
   try {

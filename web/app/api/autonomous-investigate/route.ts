@@ -103,7 +103,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    return NextResponse.json({ ok: true, ...heuristicInvestigation(subjectName, entityType, riskScore, jurisdiction) , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...heuristicInvestigation(subjectName, entityType, riskScore, jurisdiction) }, { headers: gate.headers });
   }
 
   const client = getAnthropicClient(apiKey, 55_000, "autonomous-investigate");
@@ -179,6 +179,6 @@ Decide: close (no action) | monitor (ongoing CDD) | edd (enhanced due diligence)
   } catch (err) {
     console.error("[autonomous-investigate] stage chain failed — returning heuristic fallback:", err instanceof Error ? err.message : String(err));
     const fallback = heuristicInvestigation(subjectName, entityType, riskScore, jurisdiction);
-    return NextResponse.json({ ok: true, ...fallback, stages , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...fallback, stages }, { headers: gate.headers });
   }
 }

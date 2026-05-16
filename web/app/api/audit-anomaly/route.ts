@@ -99,7 +99,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (!Array.isArray(parsed.anomalies)) parsed.anomalies = [];
     else for (const a of parsed.anomalies) { if (!Array.isArray(a.affectedActors)) a.affectedActors = []; }
     if (!Array.isArray(parsed.actorRisk)) parsed.actorRisk = [];
-    return NextResponse.json({ ok: true, ...parsed , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "audit-anomaly temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }

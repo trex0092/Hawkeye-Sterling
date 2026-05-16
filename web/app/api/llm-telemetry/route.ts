@@ -19,7 +19,7 @@ export async function GET(req: Request): Promise<NextResponse> {
 
   try {
     const [calls, summary] = await Promise.all([listCalls(limit), getSummary()]);
-    return NextResponse.json({ ok: true, summary, calls, count: calls.length , headers: gate.headers });
+    return NextResponse.json({ ok: true, summary, calls, count: calls.length }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "telemetry store unavailable — please retry." }, { status: 503, headers: gate.headers });
   }

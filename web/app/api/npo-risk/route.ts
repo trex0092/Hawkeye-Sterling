@@ -85,7 +85,7 @@ export async function POST(req: Request) {
     if (!Array.isArray(parsed.keyRedFlags)) parsed.keyRedFlags = [];
     if (!Array.isArray(parsed.tfIndicators)) parsed.tfIndicators = [];
     if (!Array.isArray(parsed.dueDiligenceSteps)) parsed.dueDiligenceSteps = [];
-    return NextResponse.json({ ok: true, ...parsed , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "npo-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }

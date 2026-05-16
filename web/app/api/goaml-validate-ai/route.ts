@@ -113,5 +113,5 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "goaml-validate-ai temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 
-  return NextResponse.json({ ok: true, ...result , headers: gate.headers });
+  return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
 }

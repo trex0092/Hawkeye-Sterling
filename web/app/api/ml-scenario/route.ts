@@ -100,7 +100,7 @@ export async function POST(req: Request) {
     const parsed = JSON.parse(jsonMatch[0]) as MlScenarioResult;
     if (!Array.isArray(parsed.keyVehicles)) parsed.keyVehicles = [];
     if (!Array.isArray(parsed.redFlagSummary)) parsed.redFlagSummary = [];
-    return NextResponse.json({ ok: true, ...parsed , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "ml-scenario temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }

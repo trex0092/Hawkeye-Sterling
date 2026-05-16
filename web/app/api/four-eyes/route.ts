@@ -156,7 +156,7 @@ async function handlePost(req: Request): Promise<NextResponse> {
   };
 
   await setJson(`four-eyes/${id}`, enrichedItem);
-  return NextResponse.json({ ok: true, item: enrichedItem , headers: gate.headers });
+  return NextResponse.json({ ok: true, item: enrichedItem }, { headers: gate.headers });
 }
 
 const ACTION_LABEL_MAP: Record<FourEyesAction, string> = {

@@ -93,7 +93,7 @@ export async function POST(req: Request) {
     const parsed = JSON.parse(jsonMatch[0]) as StaffAlertResult;
     if (!Array.isArray(parsed.verificationSteps)) parsed.verificationSteps = [];
     if (!Array.isArray(parsed.mlroActions)) parsed.mlroActions = [];
-    return NextResponse.json({ ok: true, ...parsed , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "staff-alert temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }

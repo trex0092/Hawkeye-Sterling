@@ -124,7 +124,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       `period: ${period} · trend: ${parsed.riskTrend} · insights: ${(parsed.insights ?? []).length}`,
     );
 
-    return NextResponse.json({ ok: true, ...parsed , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     writeAuditEvent("analyst", "analytics.ai-insights", `error — ${msg}`);

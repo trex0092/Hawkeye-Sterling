@@ -176,7 +176,7 @@ Assess these documents for fraud indicators.`,
     else for (const d of result.documentAssessments) { if (!Array.isArray(d.redFlags)) d.redFlags = []; if (!Array.isArray(d.verificationRequired)) d.verificationRequired = []; }
     if (!Array.isArray(result.requiredVerificationSteps)) result.requiredVerificationSteps = [];
     if (!Array.isArray(result.externalVerificationSources)) result.externalVerificationSources = [];
-    return NextResponse.json({ ok: true, ...result , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "document-fraud temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }

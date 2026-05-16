@@ -107,7 +107,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (!Array.isArray(parsed.systemicRisks)) parsed.systemicRisks = [];
     if (!Array.isArray(parsed.lbmaGaps)) parsed.lbmaGaps = [];
     if (!Array.isArray(parsed.immediateHolds)) parsed.immediateHolds = [];
-    return NextResponse.json({ ok: true, ...parsed , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "shipment-tbml temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }

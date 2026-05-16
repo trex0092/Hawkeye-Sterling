@@ -90,7 +90,7 @@ export async function POST(req: Request) {
     if (!Array.isArray(result.indicators)) result.indicators = [];
     if (!Array.isArray(result.economicSubstanceGaps)) result.economicSubstanceGaps = [];
     if (!Array.isArray(result.verificationSteps)) result.verificationSteps = [];
-    return NextResponse.json({ ok: true, ...result , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "ghost-company temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }

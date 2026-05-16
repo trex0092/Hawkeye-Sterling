@@ -125,7 +125,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       `${results.length} results ranked — immediate: ${parsed.immediateCount ?? 0} · urgent: ${parsed.urgentCount ?? 0} · topThreats: ${(parsed.topThreats ?? []).join(", ")}`,
     );
 
-    return NextResponse.json({ ok: true, ...parsed , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     writeAuditEvent("analyst", "batch.ai-priority-ranking", `error — ${msg}`);

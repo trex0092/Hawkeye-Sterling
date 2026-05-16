@@ -81,7 +81,7 @@ export async function POST(req: Request) {
       raw.replace(/```json\n?|\n?```/g, "").trim()
     ) as PepScreeningEnhanceResult;
     if (!Array.isArray(result.eddChecklist)) result.eddChecklist = [];
-    return NextResponse.json({ ok: true, ...result , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "pep-screening-enhance temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }

@@ -36,7 +36,7 @@ export async function GET(req: Request): Promise<NextResponse> {
   if (id) {
     const record = await getCddReview(tenant, id);
     if (!record) return NextResponse.json({ ok: false, error: "not found" }, { status: 404, headers: gate.headers });
-    return NextResponse.json({ ok: true, record , headers: gate.headers });
+    return NextResponse.json({ ok: true, record }, { headers: gate.headers });
   }
 
   const reviews = await listCddReviews(tenant);
@@ -179,5 +179,5 @@ export async function DELETE(req: Request): Promise<NextResponse> {
 
   await deleteCddReview(tenant, id);
   try { writeAuditEvent("mlro", "cdd.review.deleted", `${existing.subject} (${id})`); } catch { /* browser-only audit */ }
-  return NextResponse.json({ ok: true, deleted: id , headers: gate.headers });
+  return NextResponse.json({ ok: true, deleted: id }, { headers: gate.headers });
 }

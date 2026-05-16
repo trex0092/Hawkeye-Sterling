@@ -173,7 +173,7 @@ Assess for proliferation financing risk.`,
     if (!Array.isArray(result.requiredActions)) result.requiredActions = [];
     if (!Array.isArray(result.applicableRegime)) result.applicableRegime = [];
     if (!Array.isArray(result.pfObligations)) result.pfObligations = [];
-    return NextResponse.json({ ok: true, ...result , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "proliferation-finance temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }

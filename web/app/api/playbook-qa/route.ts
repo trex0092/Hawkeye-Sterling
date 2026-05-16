@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    return NextResponse.json({ ok: true, ...EMPTY_ANSWER , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...EMPTY_ANSWER }, { headers: gate.headers });
   }
 
   const client = getAnthropicClient(apiKey, 55000);
@@ -69,5 +69,5 @@ export async function POST(req: NextRequest) {
 
   writeAuditEvent("playbook-qa", "playbook.qa-asked", question.slice(0, 200));
 
-  return NextResponse.json({ ok: true, ...qaAnswer , headers: gate.headers });
+  return NextResponse.json({ ok: true, ...qaAnswer }, { headers: gate.headers });
 }

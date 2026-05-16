@@ -64,7 +64,7 @@ What additional entities should investigators look for?`,
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const cleaned = raw.replace(/```json\n?|\n?```/g, "").trim();
     const result = JSON.parse(cleaned) as { discovered: DiscoveredEntity[] };
-    return NextResponse.json({ ok: true, discovered: Array.isArray(result.discovered) ? result.discovered : [] , headers: gate.headers });
+    return NextResponse.json({ ok: true, discovered: Array.isArray(result.discovered) ? result.discovered : [] }, { headers: gate.headers });
   } catch {
     return NextResponse.json(
       { ok: false, error: "Investigation expand temporarily unavailable — please retry." },

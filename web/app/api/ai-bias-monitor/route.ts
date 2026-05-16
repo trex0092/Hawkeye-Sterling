@@ -118,7 +118,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (!Array.isArray(parsed.potentialBiasIndicators)) parsed.potentialBiasIndicators = [];
     if (!Array.isArray(parsed.recommendedActions)) parsed.recommendedActions = [];
 
-    return NextResponse.json({ ok: true, ...parsed , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     writeAuditEvent("mlro", "ai.bias-monitor.error", msg);

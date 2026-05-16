@@ -48,5 +48,5 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   // Log 2: full detail with recommendation excerpt
   writeAuditEvent(actor, `ai.${humanDecision}`, `${aiModule}: ${aiRecommendation.slice(0, 100)}`);
 
-  return NextResponse.json({ ok: true, logged: true, at: new Date().toISOString() , headers: gate.headers });
+  return NextResponse.json({ ok: true, logged: true, at: new Date().toISOString() }, { headers: gate.headers });
 }

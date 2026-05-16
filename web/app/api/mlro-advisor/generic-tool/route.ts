@@ -591,7 +591,7 @@ export async function POST(req: Request) {
       const result = JSON.parse(cleaned) as Record<string, unknown>;
       if (!Array.isArray(result["findings"])) result["findings"] = [];
       if (!Array.isArray(result["recommendations"])) result["recommendations"] = [];
-      return NextResponse.json({ ok: true, ...result , headers: gate.headers });
+      return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
     } catch {
       return NextResponse.json({
         ok: true,

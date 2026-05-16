@@ -97,7 +97,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (!Array.isArray(result.regulatoryExposure)) result.regulatoryExposure = [];
     if (!Array.isArray(result.priorityActions)) result.priorityActions = [];
 
-    return NextResponse.json({ ok: true, ...result , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "playbook/gap-analysis temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }

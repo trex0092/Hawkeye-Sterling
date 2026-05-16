@@ -133,5 +133,5 @@ export async function POST(req: Request): Promise<NextResponse> {
     writeAuditEvent("analyst", "jurisdiction.ai-intelligence", body.country.trim());
   } catch { /* non-blocking */ }
 
-  return NextResponse.json({ ok: true, ...result , headers: gate.headers });
+  return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
 }

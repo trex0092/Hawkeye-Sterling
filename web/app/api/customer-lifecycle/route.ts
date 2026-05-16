@@ -113,7 +113,7 @@ export async function POST(req: Request) {
     else for (const s of result.stageRisks) { if (!Array.isArray(s.risks)) s.risks = []; if (!Array.isArray(s.controls)) s.controls = []; }
     if (!Array.isArray(result.nextReviewTriggers)) result.nextReviewTriggers = [];
     if (!Array.isArray(result.exitRiskIndicators)) result.exitRiskIndicators = [];
-    return NextResponse.json({ ok: true, ...result , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "customer-lifecycle temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }

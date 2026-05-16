@@ -81,12 +81,12 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   // AI enrichment with current-knowledge context
   if (body.includeAiEnrichment === false) {
-    return NextResponse.json({ ok: true, jurisdiction: body.jurisdiction, ...staticProfile, aiEnriched: false , headers: gate.headers });
+    return NextResponse.json({ ok: true, jurisdiction: body.jurisdiction, ...staticProfile, aiEnriched: false }, { headers: gate.headers });
   }
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    return NextResponse.json({ ok: true, jurisdiction: body.jurisdiction, ...staticProfile, aiEnriched: false , headers: gate.headers });
+    return NextResponse.json({ ok: true, jurisdiction: body.jurisdiction, ...staticProfile, aiEnriched: false }, { headers: gate.headers });
   }
 
   const client = getAnthropicClient(apiKey, 20_000, "geo-intelligence");
@@ -126,6 +126,6 @@ Return ONLY valid JSON:
       generatedAt: new Date().toISOString(),
     }, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: true, jurisdiction: body.jurisdiction, ...staticProfile, aiEnriched: false , headers: gate.headers });
+    return NextResponse.json({ ok: true, jurisdiction: body.jurisdiction, ...staticProfile, aiEnriched: false }, { headers: gate.headers });
   }
 }

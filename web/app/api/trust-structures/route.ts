@@ -93,7 +93,7 @@ export async function POST(req: Request) {
     const parsed = JSON.parse(jsonMatch[0]) as TrustStructuresResult;
     if (!Array.isArray(parsed.structureRedFlags)) parsed.structureRedFlags = [];
     if (!Array.isArray(parsed.uboVerificationSteps)) parsed.uboVerificationSteps = [];
-    return NextResponse.json({ ok: true, ...parsed , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "trust-structures temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }

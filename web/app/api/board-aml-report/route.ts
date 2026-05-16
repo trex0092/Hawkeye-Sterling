@@ -164,7 +164,7 @@ Generate a comprehensive quarterly Board AML/CFT report. Return complete BoardAm
     if (!Array.isArray(result.openAuditFindings)) result.openAuditFindings = [];
     if (!Array.isArray(result.upcomingObligations)) result.upcomingObligations = [];
     if (!Array.isArray(result.boardRecommendations)) result.boardRecommendations = [];
-    return NextResponse.json({ ok: true, ...result , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "board-aml-report temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }

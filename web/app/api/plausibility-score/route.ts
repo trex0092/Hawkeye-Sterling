@@ -96,7 +96,7 @@ Respond ONLY with valid JSON:
       const parsed = JSON.parse(raw.match(/\{[\s\S]*\}/)?.[0] ?? "{}");
       if (parsed.overallScore !== undefined) {
         if (!Array.isArray(parsed.dimensions)) parsed.dimensions = [];
-        return NextResponse.json({ ok: true, ...parsed , headers: gate.headers });
+        return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
       }
     } catch {
       // fall through to heuristic
@@ -104,5 +104,5 @@ Respond ONLY with valid JSON:
   }
 
   const result = heuristicFallback(body);
-  return NextResponse.json({ ok: true, ...result , headers: gate.headers });
+  return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
 }

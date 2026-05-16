@@ -157,5 +157,5 @@ export async function POST(req: Request) {
     body = {};
   }
   void body; // institutionType reserved for future filtering
-  return NextResponse.json({ ok: true, ...FALLBACK , headers: gate.headers });
+  return NextResponse.json({ ok: true, ...FALLBACK }, { headers: gate.headers });
 }

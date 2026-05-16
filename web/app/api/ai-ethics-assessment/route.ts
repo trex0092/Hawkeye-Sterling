@@ -154,7 +154,7 @@ Return complete EthicsAssessmentResult JSON with overallScore (0-100), rating, u
     if (!Array.isArray(result.findings)) result.findings = [];
     if (!Array.isArray(result.strengths)) result.strengths = [];
     if (!Array.isArray(result.priorities)) result.priorities = [];
-    return NextResponse.json({ ok: true, ...result , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "ai-ethics-assessment temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }

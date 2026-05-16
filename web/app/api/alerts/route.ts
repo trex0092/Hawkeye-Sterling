@@ -104,7 +104,7 @@ export async function DELETE(req: Request): Promise<NextResponse> {
       if (typeof body.dismissedBy === "string") dismissedBy = body.dismissedBy;
     } catch { /* body optional */ }
     const count = await dismissAllUnread(dismissedBy);
-    return NextResponse.json({ ok: true, dismissed: count , headers: gate.headers });
+    return NextResponse.json({ ok: true, dismissed: count }, { headers: gate.headers });
   } catch (err) {
     console.error("[alerts DELETE]", err instanceof Error ? err.message : err);
     return NextResponse.json(

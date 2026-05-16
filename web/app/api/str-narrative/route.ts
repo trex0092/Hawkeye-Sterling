@@ -179,7 +179,7 @@ Produce a revised narrative that scores ≥${QUALITY_THRESHOLD}/100.`;
     }
 
     if (!best) return NextResponse.json({ ok: false, error: "str-narrative temporarily unavailable - please retry." }, { status: 503, headers: gate.headers });
-    return NextResponse.json({ ok: true, ...best, iterations , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...best, iterations }, { headers: gate.headers });
   } catch (err) {
     console.error("[str-narrative] failed:", err instanceof Error ? err.message : err);
     return NextResponse.json({ ok: false, error: "str-narrative temporarily unavailable - please retry." }, { status: 503, headers: gate.headers });

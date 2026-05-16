@@ -146,5 +146,5 @@ export async function POST(req: Request) {
     regulatoryBasis: "UAE FDL 10/2025 Art.17 (CTR ≥ AED 55,000); Art.26 (STR — no threshold); Federal Law 4/2002 Art.2 (ML predicates including structuring); FATF R.20; CBUAE Anti-Money Laundering Guidelines 2021",
   };
 
-  return NextResponse.json({ ok: true, ...result , headers: gate.headers });
+  return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
 }

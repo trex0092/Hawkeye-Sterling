@@ -74,7 +74,7 @@ Respond ONLY with valid JSON matching this schema:
       if (parsed["deceptionScore"] !== undefined) {
         if (!Array.isArray(parsed["evasiveLanguage"])) parsed["evasiveLanguage"] = [];
         if (!Array.isArray(parsed["inconsistencies"])) parsed["inconsistencies"] = [];
-        return NextResponse.json({ ok: true, ...parsed , headers: gate.headers });
+        return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
       }
     } catch {
       // fall through to heuristic
@@ -82,5 +82,5 @@ Respond ONLY with valid JSON matching this schema:
   }
 
   const result = heuristicFallback(text, subjectName);
-  return NextResponse.json({ ok: true, ...result , headers: gate.headers });
+  return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
 }

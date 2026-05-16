@@ -147,7 +147,7 @@ Prepare a comprehensive inter-agency referral package. Return complete InterAgen
     if (!Array.isArray(result.referralPackage.requestedActions)) result.referralPackage.requestedActions = [];
     if (!Array.isArray(result.parallelNotifications)) result.parallelNotifications = [];
     if (!Array.isArray(result.evidencePreservationSteps)) result.evidencePreservationSteps = [];
-    return NextResponse.json({ ok: true, ...result , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "inter-agency-referral temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }

@@ -91,7 +91,7 @@ export async function POST(req: Request) {
     const parsed = JSON.parse(jsonMatch[0]) as FiuFeedbackResult;
     if (!Array.isArray(parsed.keyPoints)) parsed.keyPoints = [];
     if (!Array.isArray(parsed.requiredActions)) parsed.requiredActions = [];
-    return NextResponse.json({ ok: true, ...parsed , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "fiu-feedback temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }

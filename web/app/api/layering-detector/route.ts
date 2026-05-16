@@ -145,7 +145,7 @@ Analyse for money laundering placement, layering, and integration stages. Return
     if (!Array.isArray(result.integrationIndicators)) result.integrationIndicators = [];
     if (!Array.isArray(result.indicators)) result.indicators = [];
     if (!Array.isArray(result.requiredActions)) result.requiredActions = [];
-    return NextResponse.json({ ok: true, ...result , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "layering-detector temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }

@@ -181,7 +181,7 @@ Map the AML/CFT obligations for this DNFBP.`,
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as DnfbpObligationsResult;
     if (!Array.isArray(result.keyObligations)) result.keyObligations = [];
     if (!Array.isArray(result.prohibitedActivities)) result.prohibitedActivities = [];
-    return NextResponse.json({ ok: true, ...result , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "dnfbp-obligations temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }

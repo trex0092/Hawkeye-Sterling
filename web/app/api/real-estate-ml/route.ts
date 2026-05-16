@@ -142,7 +142,7 @@ Assess this real estate transaction for money laundering risk indicators. Return
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as RealEstateMlResult;
     if (!Array.isArray(result.indicators)) result.indicators = [];
     if (!Array.isArray(result.requiredDocumentation)) result.requiredDocumentation = [];
-    return NextResponse.json({ ok: true, ...result , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "real-estate-ml temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }

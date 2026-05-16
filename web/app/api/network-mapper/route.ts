@@ -179,7 +179,7 @@ Map this entity network and identify ML risk connections. Return complete Networ
     if (!Array.isArray(result.nodes)) result.nodes = [];
     if (!Array.isArray(result.connections)) result.connections = [];
     if (!Array.isArray(result.keyHubs)) result.keyHubs = [];
-    return NextResponse.json({ ok: true, ...result , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch (err) {
     console.error("[network-mapper] LLM call failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "network-mapper temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });

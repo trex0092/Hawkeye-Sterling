@@ -124,5 +124,5 @@ Existing Flags: ${supplier.flags.length > 0 ? supplier.flags.join(", ") : "none"
     // Non-fatal — server-side localStorage is unavailable
   }
 
-  return NextResponse.json({ ok: true, result , headers: gate.headers });
+  return NextResponse.json({ ok: true, result }, { headers: gate.headers });
 }

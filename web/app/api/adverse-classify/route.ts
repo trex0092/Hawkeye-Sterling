@@ -136,7 +136,7 @@ Classify this adverse media against FATF predicate offences and assess SAR thres
     if (!Array.isArray(result.keyEntities)) result.keyEntities = [];
     if (!Array.isArray(result.corroborationRequired)) result.corroborationRequired = [];
     if (!Array.isArray(result.fatfR3Predicates)) result.fatfR3Predicates = [];
-    return NextResponse.json({ ok: true, ...result , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "adverse-classify temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }

@@ -151,7 +151,7 @@ Assess this employee for insider threat risk. Return complete InsiderThreatResul
     if (!Array.isArray(result.behaviouralIndicators)) result.behaviouralIndicators = [];
     if (!Array.isArray(result.hrActions)) result.hrActions = [];
     if (!Array.isArray(result.complianceActions)) result.complianceActions = [];
-    return NextResponse.json({ ok: true, ...result , headers: gate.headers });
+    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "insider-threat-screen temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
