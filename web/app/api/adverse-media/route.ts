@@ -219,15 +219,17 @@ async function liveAdverseMedia(subject: string) {
 
   const now = new Date().toISOString();
 
-  // 2. Build article block — Claude analyses REAL headlines, not training memory
+  // 2. Build article block — Claude analyses REAL headlines with enriched metadata
   const articleBlock =
     items.length > 0
       ? items
-          .slice(0, 30)
+          .slice(0, 50)
           .map((a, i) => {
             const date = _parseSeen(a.seendate);
             const tone = (a.tone ?? 0).toFixed(1);
-            return `[${i + 1}] ${date} | ${a.domain ?? "unknown"} | tone:${tone} | "${a.title}"`;
+            const srcScore = a.sourceScore != null ? ` | rep:${a.sourceScore.toFixed(2)}` : "";
+            const cats = a.riskCategories?.length ? ` | [${a.riskCategories.join(",")}]` : "";
+            return `[${i + 1}] ${date} | ${a.domain ?? "unknown"}${srcScore}${cats} | tone:${tone} | "${a.title}"`;
           })
           .join("\n")
       : "No articles found in GDELT 10-year corpus for this subject.";
