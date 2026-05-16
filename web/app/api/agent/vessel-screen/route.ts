@@ -82,7 +82,7 @@ async function handlePost(req: Request): Promise<NextResponse> {
 
   // HS-code high-risk overlay.
   const dualUseFlags: string[] = [];
-  for (const code of body.hsCodes ?? []) {
+  for (const code of (Array.isArray(body.hsCodes) ? body.hsCodes : [])) {
     const prefix = code.slice(0, 2);
     if (HIGH_RISK_HS_PREFIXES.includes(prefix)) {
       dualUseFlags.push(`HS ${code} — dual-use / proliferation-sensitive prefix`);

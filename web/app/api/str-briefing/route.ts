@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
   } catch {
     return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
-  const cases = body.cases ?? [];
+  const cases = Array.isArray(body.cases) ? body.cases : [];
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {

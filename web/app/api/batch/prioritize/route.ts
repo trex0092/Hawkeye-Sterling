@@ -46,7 +46,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
-  const subjects = body.subjects ?? [];
+  const subjects = Array.isArray(body.subjects) ? body.subjects : [];
   if (subjects.length === 0) {
     return NextResponse.json({ ok: false, error: "No subjects provided" }, { status: 400 , headers: gate.headers });
   }

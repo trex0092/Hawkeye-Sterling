@@ -58,7 +58,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
-  const cases = body.cases ?? [];
+  const cases = Array.isArray(body.cases) ? body.cases : [];
 
   if (cases.length < 2) {
     return NextResponse.json({ ok: false, error: "str-cases/pattern-detect temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });

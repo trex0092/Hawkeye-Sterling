@@ -282,8 +282,8 @@ export async function POST(req: Request) {
 Entity: ${body.entity ?? "Unknown"}
 Entity Type: ${body.entityType ?? "corporate"}
 Commodities Involved: ${(body.commodities ?? []).join(", ") || "Not specified"}
-Trade Routes: ${(body.tradeRoutes ?? []).join("; ") || "Not specified"}
-Jurisdictions: ${(body.jurisdictions ?? []).join(", ") || "Not specified"}
+Trade Routes: ${( Array.isArray(body.tradeRoutes) ? body.tradeRoutes : []).join("; ") || "Not specified"}
+Jurisdictions: ${( Array.isArray(body.jurisdictions) ? body.jurisdictions : []).join(", ") || "Not specified"}
 Shell Company Flags: ${body.shellCompanyFlags ? "YES" : "NO"}
 Cash Intensive: ${body.cashIntensive ? "YES" : "NO"}
 Additional Context: ${body.context ?? "None provided"}

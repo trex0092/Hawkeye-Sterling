@@ -243,7 +243,7 @@ Return ONLY valid JSON (no markdown fences):
 Sector: ${sanitizeField(body.sector ?? "Not specified", 100)}
 Primary Jurisdiction: ${sanitizeField(body.jurisdiction ?? "Not specified", 100)}
 Operations Description: ${sanitizeText(body.operations ?? "Not specified", 2000)}
-Supplier Countries: ${sanitizeField((body.supplierCountries ?? []).join(", ") || "Not specified", 500)}
+Supplier Countries: ${sanitizeField(( Array.isArray(body.supplierCountries) ? body.supplierCountries : []).join(", ") || "Not specified", 500)}
 Employee Count: ${body.employeeCount ?? "Not specified"}
 Publicly Listed: ${body.publiclyListed ?? false ? "Yes" : "No"}
 

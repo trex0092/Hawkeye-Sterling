@@ -221,7 +221,7 @@ export async function POST(req: Request): Promise<NextResponse> {
           role: "user",
           content: `Industry: ${sanitizeField(body.industry ?? "dpms", 100)}, Jurisdiction: ${sanitizeField(body.jurisdiction ?? "AE", 100)}
 Narrative: ${sanitizeText(body.narrative ?? "Not provided", 2000)}
-Red flags: ${sanitizeText((body.redFlags ?? []).join("; ") || "None listed", 1000)}
+Red flags: ${sanitizeText(( Array.isArray(body.redFlags) ? body.redFlags : []).join("; ") || "None listed", 1000)}
 Matched typologies: ${staticMatches.slice(0, 5).map((m) => `${m.typologyId} ${m.typologyName} (${m.riskRating})`).join(", ")}
 Transaction count: ${body.transactions?.length ?? 0}
 Determine STR trigger, EDD requirement, typology chain, and risk narrative.`,
