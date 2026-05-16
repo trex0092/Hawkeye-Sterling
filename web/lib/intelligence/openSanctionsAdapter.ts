@@ -65,7 +65,7 @@ function osEntityToCandidate(entity: OSEntity): SanctionsCandidate {
   const names = p.name ?? [];
   const primaryName = entity.caption || names[0] || entity.id;
   const aliases = [...new Set([...names, ...(p.alias ?? [])].filter((n) => n !== primaryName))];
-  const listSources = entity.datasets.map((ds) => `OS-${ds.toUpperCase().slice(0, 12)}`);
+  const listSources = (entity.datasets ?? []).map((ds) => `OS-${ds.toUpperCase().slice(0, 12)}`);
   const listId = listSources[0] ?? "OS-DEFAULT";
 
   return {
@@ -140,7 +140,8 @@ export async function syncOpenSanctions(apiKey?: string): Promise<SyncResult> {
         const errText = await res.text().catch(() => "");
         throw new Error(`OpenSanctions API ${res.status}: ${errText.slice(0, 200)}`);
       }
-      const data = (await res.json()) as { results: OSEntity[]; total: { value: number }; next?: string };
+      const data = (await res.json()) as { results?: OSEntity[]; total?: { value: number }; next?: string };
+      if (!Array.isArray(data.results)) break;
       const candidates = data.results.map(osEntityToCandidate);
       all.push(...candidates);
       fetched += candidates.length;

@@ -57,7 +57,7 @@ function typedEvidence<T>(ctx: BrainContext, key: string): T[] {
 
 function singleEvidence<T>(ctx: BrainContext, key: string): T | undefined {
   const v = (ctx.evidence as Record<string, unknown> | undefined)?.[key];
-  return v == null ? undefined : (v as T);
+  return v === null || v === undefined ? undefined : (v as T);
 }
 
 // ──────────────────────────────────────────────────────────────────────
@@ -163,7 +163,7 @@ const availabilityCheckApply = async (ctx: BrainContext): Promise<Finding> => {
   if (p.recentCaseCited && p.recentCaseAgeDays <= 30 && !p.baseRateConsulted) {
     score += 0.5; reasons.push('decision cites a single recent case without consulting base rate');
   }
-  if (p.baseRateConsulted && p.baseRateValue != null) {
+  if (p.baseRateConsulted && p.baseRateValue !== null && p.baseRateValue !== undefined) {
     const gap = Math.abs(p.decisionScore - p.baseRateValue);
     if (gap >= 0.4) {
       score += 0.25; reasons.push(`decision ${p.decisionScore.toFixed(2)} departs ${gap.toFixed(2)} from base rate ${p.baseRateValue.toFixed(2)}`);

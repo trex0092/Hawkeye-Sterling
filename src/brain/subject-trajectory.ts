@@ -69,7 +69,7 @@ export function analyseTrajectory(subjectId: string, screens: readonly SubjectSc
     slope > 0.02 ? "rising" : slope < -0.02 ? "falling" : "stable";
 
   // Outcome streak — last contiguous run of identical outcomes.
-  let streakOut = last.outcome;
+  const streakOut = last.outcome;
   let streakCount = 1;
   for (let i = sorted.length - 2; i >= 0; i--) {
     if (sorted[i]!.outcome === streakOut) streakCount++;

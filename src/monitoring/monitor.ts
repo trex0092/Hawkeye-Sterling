@@ -14,8 +14,7 @@
 import type { SanctionDelta } from '../brain/sanction-delta.js';
 import type { NormalisedListEntry } from '../brain/watchlist-adapters.js';
 import type { SubjectStore, RegisteredSubject } from './subject-registry.js';
-import type { AlertSink, MonitoringAlert } from './alerts.js';
-import { severityFor } from './alerts.js';
+import { type AlertSink, type MonitoringAlert, severityFor } from './alerts.js';
 import { matchIdentities, type IdentityMatchResult } from '../brain/identity-multiscript.js';
 import { fnv1a } from '../brain/audit-chain.js';
 

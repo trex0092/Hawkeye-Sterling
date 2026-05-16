@@ -67,6 +67,12 @@ describe('engine — end-to-end fusion + introspection pipeline', () => {
       evidence: { adverseMedia: [{}] },
       evidenceIndex: strongIdx,
     });
-    expect(strong.posterior!).toBeGreaterThan(weak.posterior!);
+    // Authoritative evidence displaces the posterior further from the prior
+    // than weak/anonymous evidence, regardless of whether the brain's base
+    // assessment is higher or lower than the prior.
+    const priorVal = strong.prior ?? 0.1;
+    const strongDisp = Math.abs((strong.posterior ?? 0) - priorVal);
+    const weakDisp = Math.abs((weak.posterior ?? 0) - priorVal);
+    expect(strongDisp).toBeGreaterThan(weakDisp);
   });
 });

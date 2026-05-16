@@ -4,8 +4,7 @@
 // reason this adapter has been silently failing on every cron run.
 // Override at runtime via FEED_OFAC_SDN env var if OFAC migrates again.
 
-import type { SourceAdapter, NormalisedEntity, EntityType } from '../types.js';
-import { mkListing } from '../types.js';
+import { type SourceAdapter, type NormalisedEntity, type EntityType, mkListing } from '../types.js';
 import { fetchText, sha256Hex } from '../fetch-util.js';
 import { parseXml, findAll, textOf } from '../xml-lite.js';
 

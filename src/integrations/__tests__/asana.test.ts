@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { deliverToAsana, buildAsanaEnvelope, type AsanaConfig } from '../asana.js';
 import type { CaseReport } from '../../reports/caseReport.js';
 
@@ -51,9 +51,7 @@ function mockFetch(overrides?: {
   attachmentStatus?: number;
 }) {
   const { taskStatus = 200, taskBody, attachmentStatus = 200 } = overrides ?? {};
-  let callCount = 0;
   return vi.fn(async (url: string | URL) => {
-    callCount++;
     const u = String(url);
     if (u.includes('/tasks') && !u.includes('/attachments')) {
       return new Response(

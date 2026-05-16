@@ -16,8 +16,7 @@
 // `base` so auditors can see both.
 
 import type { Finding, FusionResult, Hypothesis } from './types.js';
-import type { EvidenceItem } from './evidence.js';
-import { credibilityScore, freshnessDays, isStale } from './evidence.js';
+import { type EvidenceItem, credibilityScore, freshnessDays, isStale } from './evidence.js';
 
 export interface EvidenceWeightedVerdict {
   base: FusionResult;                         // original, untouched
@@ -139,25 +138,21 @@ export function adjustForEvidence(
   }
 
   // Posterior: weak sources attenuate the posterior toward the prior;
-  // authoritative sources preserve the brain's signal magnitude. We
-  // express that as `posterior = prior + |gap| × trust` so the
-  // engine-fusion 'attenuates posterior when evidenceIndex reports weak
-  // sources' test sees a strict ordering regardless of the direction of
-  // the underlying gap. Direction information lives in the methodology
-  // string + the gap sign (preserved when callers want to inspect raw
-  // base output).
+  // authoritative sources recover the brain's full signal magnitude.
   //
-  // The previous code normalised confidence by weight, mathematically
-  // cancelling credibility for single-citation findings — so weak and
-  // authoritative runs landed on the exact same posterior.
+  //   trust = 1.0 (authoritative + fresh) → posterior = prior + gap = base.posterior
+  //   trust = 0.0 (untrusted / fully stale) → posterior = prior
   //
-  //   avgCredFresh = 1.0 (authoritative + fresh) → posterior = prior + |gap|
-  //   avgCredFresh = 0.0 (untrusted / fully stale) → posterior = prior
+  // The signed gap is preserved so that evidence suggesting *lower* risk
+  // (base.posterior < base.prior) correctly pulls the posterior down, not
+  // up. Using Math.abs() here was a bug: it would reflect negative gaps
+  // to positive, moving the posterior in the wrong direction whenever the
+  // brain rated a subject as less risky than its prior.
   const trust = Math.max(0, Math.min(1, avgCredFresh));
   const priorGap = base.posterior - base.prior;
   const posterior = Math.max(
     0,
-    Math.min(1, base.prior + Math.abs(priorGap) * trust),
+    Math.min(1, base.prior + priorGap * trust),
   );
 
   if (stalePenalty > citations.length * 0.5) {

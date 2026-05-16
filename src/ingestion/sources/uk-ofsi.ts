@@ -5,8 +5,7 @@
 // canonical URL below. Override via FEED_UK_OFSI env var if OFSI
 // migrates again.
 
-import type { SourceAdapter, NormalisedEntity, EntityType } from '../types.js';
-import { mkListing } from '../types.js';
+import { type SourceAdapter, type NormalisedEntity, type EntityType, mkListing } from '../types.js';
 import { fetchText, sha256Hex } from '../fetch-util.js';
 
 const SOURCE_URL = process.env['FEED_UK_OFSI']

@@ -47,7 +47,6 @@ export function candidatePairs(
 ): Array<[string, string]> {
   const pairs: Array<[string, string]> = [];
   // Index B by each blocking key.
-  const idx: Record<string, Set<string>> = { initial: new Set(), soundex: new Set(), dm: new Set(), tok: new Set(), canon: new Set() };
   const byInitial = new Map<string, string[]>();
   const bySoundex = new Map<string, string[]>();
   const byDm = new Map<string, string[]>();

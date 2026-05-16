@@ -1371,7 +1371,6 @@ async function addressPoisoningApply(ctx: BrainContext): Promise<Finding> {
     const amt = Number(t['amount'] ?? t['value'] ?? NaN);
     return Number.isFinite(amt) && amt > 0 && amt < 0.001;
   });
-  const poisonSignals = lookalikePairs.length + dustTxs.length;
   const score = Math.min(1, lookalikePairs.length * 0.5 + dustTxs.length * 0.1);
   return {
     modeId: 'address_poisoning',

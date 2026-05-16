@@ -65,7 +65,6 @@ export const SOURCE_REGISTRY: SourceProfile[] = [
   { id: 'global_witness', name: 'Global Witness', domain: 'globalwitness.org', tier: 'tier_ngo', baseReliability: 0.85, languages: ['en'], isOfficial: false, isPaywalled: false, hasBylineVerification: true, specialties: ['corruption', 'environmental_crime'] },
 ];
 
-const SOURCE_BY_ID = new Map(SOURCE_REGISTRY.map((s) => [s.id, s]));
 const SOURCE_BY_DOMAIN = new Map(
   SOURCE_REGISTRY.filter((s) => s.domain).map((s) => [s.domain!, s])
 );

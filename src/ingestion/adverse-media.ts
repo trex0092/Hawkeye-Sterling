@@ -183,7 +183,7 @@ export async function searchRss(feedUrl: string, opts: SearchOptions = {}): Prom
   return items.slice(0, opts.limit ?? 25).map((it) => {
     const text = `${it.title} ${it.description ?? ''}`;
     let sourceDomain: string | undefined;
-    try { sourceDomain = new URL(it.link).hostname; } catch (_) { /* ignore */ }
+    try { sourceDomain = new URL(it.link).hostname; } catch { /* ignore */ }
     return {
       source: 'rss' as const,
       ...(sourceDomain !== undefined ? { sourceDomain } : {}),

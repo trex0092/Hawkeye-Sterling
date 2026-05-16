@@ -425,7 +425,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const matches = await searchByName(legalName!);
   if (matches.length === 0) {
     // Return fallback
-    return NextResponse.json({ ok: false, error: "lei-lookup temporarily unavailable - please retry." }, { status: 503, headers: {} });
+    return NextResponse.json({ ok: false, error: "lei-lookup temporarily unavailable - please retry." }, { status: 503, headers: { ...CORS } });
   }
 
   const topMatch = matches[0]!;
@@ -464,6 +464,6 @@ export async function POST(req: Request): Promise<NextResponse> {
       retryAfterSeconds: null,
       requestId: Math.random().toString(36).slice(2, 10),
       latencyMs: Date.now() - _handlerStart,
-    }, { status: 500, headers: {} });
+    }, { status: 500, headers: { ...CORS } });
   }
 }

@@ -29,26 +29,6 @@ function freeTextOf(ctx: BrainContext): string {
   return parts.join(' ').toLowerCase();
 }
 
-function amountsOf(ctx: BrainContext): number[] {
-  const out: number[] = [];
-  const txs = ctx.evidence.transactions;
-  if (Array.isArray(txs)) {
-    for (const t of txs) {
-      if (t && typeof t === 'object' && 'amount' in t) {
-        const a = (t as { amount: unknown }).amount;
-        if (typeof a === 'number' && a > 0) out.push(a);
-        else if (typeof a === 'string' && /^[\d.,]+$/.test(a)) {
-          const n = Number(a.replace(/,/g, ''));
-          if (Number.isFinite(n) && n > 0) out.push(n);
-        }
-      } else if (typeof t === 'number' && t > 0) {
-        out.push(t);
-      }
-    }
-  }
-  return out;
-}
-
 /** Factory: returns an async apply function that searches freeText + prior
  *  rationales for the given keyword list and maps hit-count to a verdict. */
 function linguisticApply(

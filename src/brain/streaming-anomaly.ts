@@ -286,6 +286,7 @@ export class StreamingAnomalyGate {
 // Convenience: score a raw transaction object without pre-extracting features.
 export function extractFeatures(tx: {
   amountUsd: number;
+  actualTxnCount7d?: number;
   customerBaseline?: { meanAmount?: number; stdAmount?: number; txnPer7d?: number };
   counterpartyFirstSeen?: boolean;
   countryRiskScore?: number;
@@ -296,7 +297,8 @@ export function extractFeatures(tx: {
   const amountZscore = (tx.amountUsd - mean) / std;
 
   const expected7d = tx.customerBaseline?.txnPer7d ?? 5;
-  const velocityRatio7d = 1 / Math.max(0.1, expected7d);
+  const actualCount = tx.actualTxnCount7d ?? 1;
+  const velocityRatio7d = actualCount / Math.max(0.1, expected7d);
 
   const ts = tx.timestampUtc ? new Date(tx.timestampUtc) : new Date();
   const hourOfDay = ts.getUTCHours();

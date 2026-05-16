@@ -70,7 +70,7 @@ function typedEvidence<T>(ctx: BrainContext, key: string): T[] {
 
 function singleEvidence<T>(ctx: BrainContext, key: string): T | undefined {
   const v = (ctx.evidence as Record<string, unknown> | undefined)?.[key];
-  return v == null ? undefined : (v as T);
+  return v === null || v === undefined ? undefined : (v as T);
 }
 
 // ──────────────────────────────────────────────────────────────────────
@@ -632,8 +632,8 @@ const postMortemApply = async (ctx: BrainContext): Promise<Finding> => {
     `${pm.rootCauses.length} root cause(s), ${pm.controlFailures.length} control failure(s), ${pm.missedSignals.length} missed signal(s).`,
   ];
   if (pm.preventable) parts.push('Incident was preventable.');
-  if (pm.timeToDetectDays != null) parts.push(`Time to detect: ${pm.timeToDetectDays}d.`);
-  if (pm.timeToContainDays != null) parts.push(`Time to contain: ${pm.timeToContainDays}d.`);
+  if (pm.timeToDetectDays !== null && pm.timeToDetectDays !== undefined) parts.push(`Time to detect: ${pm.timeToDetectDays}d.`);
+  if (pm.timeToContainDays !== null && pm.timeToContainDays !== undefined) parts.push(`Time to contain: ${pm.timeToContainDays}d.`);
   return mkFinding('post_mortem', 'cognitive_science', ['deep_thinking', 'introspection'],
     verdict, severityScore, 0.85, parts.join(' '), [pm.sourceRef]);
 };
