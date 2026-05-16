@@ -89,12 +89,12 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
-  if (!body.vaspName?.trim()) return NextResponse.json({ ok: false, error: "vaspName required" }, { status: 400 , headers: gate.headers});
+  if (!body.vaspName?.trim()) return NextResponse.json({ ok: false, error: "vaspName required" }, { status: 400 , headers: gate.headers });
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "vasp-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "vasp-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
     const client = getAnthropicClient(apiKey, 55000);
@@ -139,8 +139,8 @@ Assess this VASP for onboarding risk.`,
     if (!Array.isArray(result.riskIndicators)) result.riskIndicators = [];
     if (!Array.isArray(result.requiredDocumentation)) result.requiredDocumentation = [];
     if (!Array.isArray(result.regulatoryObligations)) result.regulatoryObligations = [];
-    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
+    return NextResponse.json({ ok: true, ...result , headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "vasp-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "vasp-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

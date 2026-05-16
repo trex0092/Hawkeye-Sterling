@@ -57,7 +57,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as RequestBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers });
     }
 
   const { entity, registered, ubos } = body;
@@ -67,7 +67,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
-    return NextResponse.json({ ok: false, error: "ubo-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "ubo-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 
   try {
@@ -94,8 +94,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (!Array.isArray(parsed.nationalityRisks)) parsed.nationalityRisks = [];
     if (!Array.isArray(parsed.cddGaps)) parsed.cddGaps = [];
     if (!Array.isArray(parsed.recommendedActions)) parsed.recommendedActions = [];
-    return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
+    return NextResponse.json({ ok: true, ...parsed , headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "ubo-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "ubo-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

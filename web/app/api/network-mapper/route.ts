@@ -148,12 +148,12 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
-  if (!body.entities?.trim()) return NextResponse.json({ ok: false, error: "entities required" }, { status: 400 , headers: gate.headers});
+  if (!body.entities?.trim()) return NextResponse.json({ ok: false, error: "entities required" }, { status: 400 , headers: gate.headers });
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "network-mapper temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "network-mapper temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
     const client = getAnthropicClient(apiKey, 55000);
@@ -179,9 +179,9 @@ Map this entity network and identify ML risk connections. Return complete Networ
     if (!Array.isArray(result.nodes)) result.nodes = [];
     if (!Array.isArray(result.connections)) result.connections = [];
     if (!Array.isArray(result.keyHubs)) result.keyHubs = [];
-    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
+    return NextResponse.json({ ok: true, ...result , headers: gate.headers });
   } catch (err) {
     console.error("[network-mapper] LLM call failed:", err instanceof Error ? err.message : String(err));
-    return NextResponse.json({ ok: false, error: "network-mapper temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "network-mapper temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

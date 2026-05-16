@@ -56,12 +56,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as ReqBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const { subjectName, entityType, industry, jurisdiction, declaredActivity } = body;
   if (!subjectName || !entityType || !industry || !jurisdiction || !declaredActivity) {
-    return NextResponse.json({ ok: false, error: "all fields are required" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "all fields are required" }, { status: 400 , headers: gate.headers });
   }
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -96,7 +96,7 @@ Respond ONLY with valid JSON:
       const parsed = JSON.parse(raw.match(/\{[\s\S]*\}/)?.[0] ?? "{}");
       if (parsed.overallScore !== undefined) {
         if (!Array.isArray(parsed.dimensions)) parsed.dimensions = [];
-        return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
+        return NextResponse.json({ ok: true, ...parsed , headers: gate.headers });
       }
     } catch {
       // fall through to heuristic
@@ -104,5 +104,5 @@ Respond ONLY with valid JSON:
   }
 
   const result = heuristicFallback(body);
-  return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
+  return NextResponse.json({ ok: true, ...result , headers: gate.headers });
 }

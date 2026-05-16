@@ -85,12 +85,12 @@ export async function POST(req: Request): Promise<NextResponse | Response> {
   try {
     raw = await req.json();
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid_json" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "invalid_json" }, { status: 400 , headers: gate.headers });
   }
 
   const validation = validatePdfRequest(raw);
   if (!validation.ok) {
-    return NextResponse.json({ ok: false, error: "validation_error", detail: validation.error }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "validation_error", detail: validation.error }, { status: 400 , headers: gate.headers });
   }
 
   const { resultId, subject, verdict, generatedAt, reviewerName, chainAnchor } = validation.value;
@@ -134,7 +134,7 @@ export async function POST(req: Request): Promise<NextResponse | Response> {
     console.error("[reports/pdf] renderEvidencePack failed", { resultId, detail });
     return NextResponse.json(
       { ok: false, error: "pdf_generation_failed", detail },
-      { status: 500 },
+      { status: 500, headers: gate.headers }
     );
   }
 

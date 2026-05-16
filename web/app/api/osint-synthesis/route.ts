@@ -86,18 +86,18 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (!gate.ok) return gate.response;
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
-    return NextResponse.json({ ok: false, error: "osint-synthesis temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "osint-synthesis temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 
   let body: RequestBody;
   try {
     body = (await req.json()) as RequestBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   if (!body.target || !body.mode) {
-    return NextResponse.json({ ok: false, error: "target and mode are required" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "target and mode are required" }, { status: 400 , headers: gate.headers });
   }
   if (body.target.length > 2000) {
     return NextResponse.json({ ok: false, error: "target exceeds 2000-character limit" }, { status: 400, headers: gate.headers });
@@ -133,7 +133,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     try {
       parsed = JSON.parse(clean);
     } catch {
-      return NextResponse.json({ ok: false, error: "osint-synthesis temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+      return NextResponse.json({ ok: false, error: "osint-synthesis temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
     }
 
     const raw = parsed as Record<string, unknown>;
@@ -150,12 +150,12 @@ export async function POST(req: Request): Promise<NextResponse> {
       complianceNarrative: typeof raw["complianceNarrative"] === "string" ? raw["complianceNarrative"] : "",
     };
   } catch {
-    return NextResponse.json({ ok: false, error: "osint-synthesis temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "osint-synthesis temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 
   try {
     writeAuditEvent("analyst", "osint.ai-synthesis", body.target);
   } catch { /* non-blocking */ }
 
-  return NextResponse.json({ ok: true, ...profile }, { headers: gate.headers });
+  return NextResponse.json({ ok: true, ...profile , headers: gate.headers });
 }

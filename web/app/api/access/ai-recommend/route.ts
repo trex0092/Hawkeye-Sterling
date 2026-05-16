@@ -44,16 +44,16 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const { userName, jobTitle, department, responsibilities } = body;
   if (!userName || !jobTitle || !department || !responsibilities) {
-    return NextResponse.json({ ok: false, error: "userName, jobTitle, department and responsibilities are required" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "userName, jobTitle, department and responsibilities are required" }, { status: 400 , headers: gate.headers });
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "access/ai-recommend temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "access/ai-recommend temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
     const client = getAnthropicClient(apiKey, 22_000);
@@ -89,8 +89,8 @@ Return ONLY valid JSON (no markdown fences):
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as RoleRecommendation;
     if (!Array.isArray(result.suggestedModules)) result.suggestedModules = [];
     if (!Array.isArray(result.risks)) result.risks = [];
-    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
+    return NextResponse.json({ ok: true, ...result , headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "access/ai-recommend temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "access/ai-recommend temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

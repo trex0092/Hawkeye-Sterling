@@ -51,16 +51,16 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
   const { narrative, customerType, jurisdiction, amounts } = body;
   if (!narrative?.trim()) {
-    return NextResponse.json({ ok: false, error: "narrative required" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "narrative required" }, { status: 400 , headers: gate.headers });
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
-    return NextResponse.json({ ok: false, error: "transaction-narrative temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "transaction-narrative temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 
   const systemPrompt = `You are a senior UAE AML/CFT analyst specialising in DPMS, gold trading, and transaction monitoring. You receive raw transaction narratives or monitoring alert text and produce a structured AML analysis.
@@ -108,8 +108,8 @@ Respond ONLY with valid JSON — no markdown, no explanation:
     if (!Array.isArray(result.redFlags)) result.redFlags = [];
     if (!Array.isArray(result.missingInformation)) result.missingInformation = [];
     if (!Array.isArray(result.investigativeQuestions)) result.investigativeQuestions = [];
-    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
+    return NextResponse.json({ ok: true, ...result , headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "transaction-narrative temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "transaction-narrative temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

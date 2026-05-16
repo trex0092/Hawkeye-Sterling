@@ -275,12 +275,12 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const country = (body.country ?? "").trim();
   if (!country) {
-    return NextResponse.json({ ok: false, error: "country is required" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "country is required" }, { status: 400 , headers: gate.headers });
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
@@ -415,7 +415,7 @@ Provide a complete country risk intelligence assessment covering AML/CFT risk, F
           error: `Country-risk analysis returned invalid JSON for ${country}. Retry, or escalate if persistent.`,
           detail: parseErr instanceof Error ? parseErr.message : String(parseErr),
         },
-        { status: 502 },
+        { status: 502, headers: gate.headers }
       );
     }
     // Normalize arrays — LLM occasionally returns null instead of [].
@@ -424,7 +424,7 @@ Provide a complete country risk intelligence assessment covering AML/CFT risk, F
     if (!Array.isArray(result.regulatoryObligations)) result.regulatoryObligations = [];
     const latencyMs = Date.now() - t0;
     if (latencyMs > 5000) console.warn(`[country-risk] slow response latencyMs=${latencyMs}`);
-    return NextResponse.json({ ...result, latencyMs }, { headers: gate.headers });
+    return NextResponse.json({ ...result, latencyMs , headers: gate.headers });
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);
     console.warn("[country-risk] LLM call failed:", detail);
@@ -450,7 +450,7 @@ Provide a complete country risk intelligence assessment covering AML/CFT risk, F
         detail,
         latencyMs: Date.now() - t0,
       },
-      { status: 503 },
+      { status: 503, headers: gate.headers }
     );
   }
 }

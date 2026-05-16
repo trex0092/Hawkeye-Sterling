@@ -318,7 +318,7 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
@@ -334,7 +334,7 @@ export async function POST(req: Request) {
       ...buildTemplate(),
       degraded: true,
       degradedReason: "ANTHROPIC_API_KEY not configured — typology-library AI search disabled. Set the key on the deployment to enable.",
-    });
+    }, { headers: gate.headers });
   }
 
   try {
@@ -390,6 +390,6 @@ Find the most relevant AML/CFT typologies matching this search. Return comprehen
       ...buildTemplate(),
       degraded: true,
       degradedReason: `Typology search AI call failed: ${err instanceof Error ? err.message : String(err)}.`,
-    });
+    }, { headers: gate.headers });
   }
 }

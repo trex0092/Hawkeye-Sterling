@@ -60,7 +60,7 @@ export async function GET(req: Request): Promise<NextResponse> {
 
   try {
     const [records, summary] = await Promise.all([listFeedback(), stats()]);
-    return NextResponse.json({ ok: true, records, summary }, { headers: gate.headers });
+    return NextResponse.json({ ok: true, records, summary , headers: gate.headers });
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);
     console.error("[screening/feedback] GET failed:", detail);

@@ -152,12 +152,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const { context: ctx, mode = "full_war_room" } = body;
   if (!ctx) {
-    return NextResponse.json({ error: "context is required" }, { status: 400 });
+    return NextResponse.json({ error: "context is required" }, { status: 400 , headers: gate.headers });
   }
 
   const examinerBody = ctx.examinerBody ?? "Regulatory Authority";
@@ -295,11 +295,11 @@ Be specific to this entity's actual situation. Reference UAE FDL 10/2025 article
       generatedAt: new Date().toISOString(),
     };
 
-    return NextResponse.json(result);
+    return NextResponse.json(result, { headers: gate.headers });
   } catch (err) {
     return NextResponse.json(
       { error: "War room generation failed", detail: err instanceof Error ? err.message : String(err) },
-      { status: 500 }
+      { status: 500, headers: gate.headers }
     );
   }
 }

@@ -115,14 +115,14 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
   if (!body.observedBehaviours?.trim() && !body.employeeRole?.trim()) {
-    return NextResponse.json({ ok: false, error: "observedBehaviours or employeeRole required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "observedBehaviours or employeeRole required" }, { status: 400 , headers: gate.headers });
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "insider-threat-screen temporarily unavailable - please retry." }, { status: 503 });
+  if (!apiKey) return NextResponse.json({ ok: false, error: "insider-threat-screen temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
     const client = getAnthropicClient(apiKey, 55000);
@@ -151,8 +151,8 @@ Assess this employee for insider threat risk. Return complete InsiderThreatResul
     if (!Array.isArray(result.behaviouralIndicators)) result.behaviouralIndicators = [];
     if (!Array.isArray(result.hrActions)) result.hrActions = [];
     if (!Array.isArray(result.complianceActions)) result.complianceActions = [];
-    return NextResponse.json({ ok: true, ...result });
+    return NextResponse.json({ ok: true, ...result , headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "insider-threat-screen temporarily unavailable - please retry." }, { status: 503 });
+    return NextResponse.json({ ok: false, error: "insider-threat-screen temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

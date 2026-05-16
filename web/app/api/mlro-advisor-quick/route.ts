@@ -308,7 +308,7 @@ export async function POST(req: Request): Promise<Response> {
   try {
     body = (await req.json()) as Body;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400, headers: corsHeaders(origin) });
+    return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400, headers: { ...gate.headers, ...corsHeaders(origin) } });
   }
 
   // Shared input gate — refuses empty / oversize / prompt-injection
@@ -326,7 +326,7 @@ export async function POST(req: Request): Promise<Response> {
         reason: gateResult.reason,
         ...(gateResult.hint ? { hint: gateResult.hint } : {}),
       },
-      { status: gateResult.status, headers: corsHeaders(origin) },
+      { status: gateResult.status, headers: { ...gate.headers, ...corsHeaders(origin) } }
     );
   }
   const question = gateResult.question;
@@ -370,7 +370,7 @@ export async function POST(req: Request): Promise<Response> {
         escalation: preGen.escalation,
         elapsedMs: Date.now() - startedAt,
       },
-      { status: 200, headers: corsHeaders(origin) },
+      { status: 200, headers: { ...gate.headers, ...corsHeaders(origin) } }
     );
   }
 
@@ -385,7 +385,7 @@ export async function POST(req: Request): Promise<Response> {
       suggestedFollowUps: ["Consult your designated MLRO", "Review applicable CBUAE guidance", "Check FATF Recommendations R.6-R.25"],
       verification: { passed: false, defects: ["offline-mode"] },
       offline: true,
-    }, { status: 200, headers: corsHeaders(origin) });
+    }, { status: 200, headers: { ...gate.headers, ...corsHeaders(origin) } });
   }
 
   const analysis = classifyMlroQuestion(question);
@@ -440,7 +440,7 @@ export async function POST(req: Request): Promise<Response> {
       if (typeof status === "number" && status === 429) {
         return NextResponse.json(
           { ok: false, error: "Rate limited — please try again in a moment", elapsedMs: Date.now() - startedAt },
-          { status: 429, headers: corsHeaders(origin) },
+          { status: 429, headers: { ...gate.headers, ...corsHeaders(origin) } }
         );
       }
       // API error — return offline response instead of 502
@@ -453,7 +453,7 @@ export async function POST(req: Request): Promise<Response> {
         suggestedFollowUps: ["Consult your designated MLRO", "Review applicable CBUAE guidance", "Check FATF Recommendations"],
         verification: { passed: false, defects: ["offline-mode"] },
         offline: true,
-      }, { status: 200, headers: corsHeaders(origin) });
+      }, { status: 200, headers: { ...gate.headers, ...corsHeaders(origin) } });
     }
 
     let citationReport = verifyCitations(answer);
@@ -566,7 +566,7 @@ export async function POST(req: Request): Promise<Response> {
           escalation: postGen.router.escalation,
           elapsedMs: Date.now() - startedAt,
         },
-        { status: 200, headers: corsHeaders(origin) },
+        { status: 200, headers: { ...gate.headers, ...corsHeaders(origin) } }
       );
     }
 
@@ -655,7 +655,7 @@ export async function POST(req: Request): Promise<Response> {
         })),
         auditEntrySeq: audit.seq,
       },
-      { status: 200, headers: corsHeaders(origin) },
+      { status: 200, headers: { ...gate.headers, ...corsHeaders(origin) } }
     );
   } catch (err) {
     const aborted = upstreamCtl.signal.aborted;
@@ -668,7 +668,7 @@ export async function POST(req: Request): Promise<Response> {
           : `upstream connect failed: ${msg}`,
         elapsedMs: Date.now() - startedAt,
       },
-      { status: aborted ? 504 : 502, headers: corsHeaders(origin) },
+      { status: aborted ? 504 : 502, headers: { ...gate.headers, ...corsHeaders(origin) } }
     );
   } finally {
     clearTimeout(killTimer);
@@ -684,6 +684,6 @@ export async function POST(req: Request): Promise<Response> {
       retryAfterSeconds: null,
       requestId: Math.random().toString(36).slice(2, 10),
       latencyMs: Date.now() - _handlerStart,
-    }, { status: 500 });
+    }, { status: 500 , headers: {} });
   }
 }

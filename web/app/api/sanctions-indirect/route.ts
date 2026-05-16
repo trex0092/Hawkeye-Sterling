@@ -92,19 +92,19 @@ export async function POST(req: Request): Promise<NextResponse> {
   const apiKey = process.env["ANTHROPIC_API_KEY"];
 
   if (!apiKey) {
-    return NextResponse.json({ ok: false, error: "sanctions-indirect temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "sanctions-indirect temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 
   let body: Body;
   try {
     body = (await req.json()) as Body;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const subject = body?.subject?.trim();
   if (!subject) {
-    return NextResponse.json({ ok: false, error: "subject is required" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "subject is required" }, { status: 400 , headers: gate.headers });
   }
 
   const parts: string[] = [
@@ -147,16 +147,16 @@ export async function POST(req: Request): Promise<NextResponse> {
       if (!Array.isArray(result.requiredChecks)) result.requiredChecks = [];
     } catch {
       console.error("[sanctions-indirect] failed to parse AI response");
-      return NextResponse.json({ ok: false, error: "sanctions-indirect temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+      return NextResponse.json({ ok: false, error: "sanctions-indirect temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
     }
   } catch (err) {
     console.error("[sanctions-indirect] fetch failed", err);
-    return NextResponse.json({ ok: false, error: "sanctions-indirect temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "sanctions-indirect temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 
   try {
     writeAuditEvent("mlro", "sanctions.ai-indirect-exposure", subject);
   } catch { /* non-blocking */ }
 
-  return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
+  return NextResponse.json({ ok: true, ...result , headers: gate.headers });
 }

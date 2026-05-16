@@ -53,7 +53,7 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as { email?: string; domain?: string };
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   if (body.email && body.email.length > 500) {
@@ -67,7 +67,7 @@ export async function POST(req: Request) {
   const domain = rawDomain.toLowerCase().trim();
 
   if (!domain) {
-    return NextResponse.json({ ok: false, error: "email or domain required" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "email or domain required" }, { status: 400 , headers: gate.headers });
   }
 
   const isDisposable = DISPOSABLE_DOMAINS.has(domain);
@@ -92,5 +92,5 @@ export async function POST(req: Request) {
       domain.endsWith(".ru") || domain.endsWith(".cn") ? "High-risk TLD jurisdiction" : null,
       fraudScore < 10 ? "Domain appears legitimate and low-risk" : null,
     ].filter(Boolean),
-  });
+  }, { headers: gate.headers });
 }

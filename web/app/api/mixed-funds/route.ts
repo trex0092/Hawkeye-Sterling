@@ -52,12 +52,12 @@ export async function POST(req: Request) {
   } catch {
     return NextResponse.json(
       { ok: false, error: "Invalid JSON" },
-      { status: 400 }
+      { status: 400, headers: gate.headers }
     );
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "mixed-funds temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "mixed-funds temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
     const client = getAnthropicClient(apiKey, 55_000);
@@ -84,12 +84,12 @@ export async function POST(req: Request) {
     });
     const text = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) return NextResponse.json({ ok: false, error: "mixed-funds temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    if (!jsonMatch) return NextResponse.json({ ok: false, error: "mixed-funds temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
     const parsed = JSON.parse(jsonMatch[0]) as MixedFundsResult;
     if (!Array.isArray(parsed.investigativeSteps)) parsed.investigativeSteps = [];
-    return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
+    return NextResponse.json({ ok: true, ...parsed , headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "mixed-funds temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "mixed-funds temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

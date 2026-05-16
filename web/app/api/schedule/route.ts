@@ -58,7 +58,7 @@ export async function GET(req: Request): Promise<NextResponse> {
     const s = await getJson<Schedule>(k);
     if (s) out.push(s);
   }
-  return NextResponse.json({ ok: true, count: out.length, schedules: out }, { headers: gate.headers });
+  return NextResponse.json({ ok: true, count: out.length, schedules: out , headers: gate.headers });
 }
 
 interface UpsertBody {
@@ -133,7 +133,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     nextRunAt,
   };
   await setJson(`${PREFIX}${subjectId}`, record);
-  return NextResponse.json({ ok: true, schedule: record }, { headers: gate.headers });
+  return NextResponse.json({ ok: true, schedule: record , headers: gate.headers });
 }
 
 export async function DELETE(req: Request): Promise<NextResponse> {
@@ -149,5 +149,5 @@ export async function DELETE(req: Request): Promise<NextResponse> {
     );
   }
   await del(`${PREFIX}${id}`);
-  return NextResponse.json({ ok: true }, { headers: gate.headers });
+  return NextResponse.json({ ok: true , headers: gate.headers });
 }

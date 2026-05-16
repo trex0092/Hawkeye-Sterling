@@ -94,12 +94,12 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
-  if (!body.subject?.trim()) return NextResponse.json({ ok: false, error: "subject required" }, { status: 400 , headers: gate.headers});
+  if (!body.subject?.trim()) return NextResponse.json({ ok: false, error: "subject required" }, { status: 400 , headers: gate.headers });
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "tf-screener temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "tf-screener temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
     const client = getAnthropicClient(apiKey, 55000);
@@ -178,8 +178,8 @@ Assess for terrorism financing risk.`,
     if (!Array.isArray(result.requiredActions)) result.requiredActions = [];
     if (!Array.isArray(result.applicableRegime)) result.applicableRegime = [];
     if (!Array.isArray(result.ctfObligations)) result.ctfObligations = [];
-    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
+    return NextResponse.json({ ok: true, ...result , headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "tf-screener temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "tf-screener temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

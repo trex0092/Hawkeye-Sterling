@@ -59,7 +59,7 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const historicalData = body.historicalData ?? {};
@@ -67,7 +67,7 @@ export async function POST(req: Request) {
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
-    return NextResponse.json({ ok: false, error: "analytics/predict-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "analytics/predict-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 
   try {
@@ -145,6 +145,6 @@ Predict the risk trajectory. Identify which categories are accelerating. Suggest
     if (!Array.isArray(result.interventions)) result.interventions = [];
     return NextResponse.json(result, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "analytics/predict-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "analytics/predict-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

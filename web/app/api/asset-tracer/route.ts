@@ -106,12 +106,12 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
-  if (!body.initialFunds?.trim()) return NextResponse.json({ ok: false, error: "initialFunds required" }, { status: 400 , headers: gate.headers});
+  if (!body.initialFunds?.trim()) return NextResponse.json({ ok: false, error: "initialFunds required" }, { status: 400 , headers: gate.headers });
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "asset-tracer temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "asset-tracer temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
     const client = getAnthropicClient(apiKey, 55_000);
@@ -143,8 +143,8 @@ Trace these funds through money laundering stages and assess asset recovery pote
     else for (const s of result.tracingStages) { if (!Array.isArray(s.accountsInvolved)) s.accountsInvolved = []; if (!Array.isArray(s.jurisdictions)) s.jurisdictions = []; }
     if (!Array.isArray(result.evidenceGaps)) result.evidenceGaps = [];
     if (!Array.isArray(result.investigativeSteps)) result.investigativeSteps = [];
-    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
+    return NextResponse.json({ ok: true, ...result , headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "asset-tracer temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "asset-tracer temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

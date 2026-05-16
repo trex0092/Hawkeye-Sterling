@@ -42,6 +42,6 @@ export async function GET(req: Request): Promise<NextResponse> {
       report: null,
       integrity: null,
       note: `audit gate error: ${err instanceof Error ? err.message : String(err)}`,
-    });
+    }, { headers: {} });
   }
 }

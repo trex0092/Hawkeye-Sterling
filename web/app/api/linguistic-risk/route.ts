@@ -35,12 +35,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as ReqBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const { text, subjectName } = body;
   if (!text || !subjectName) {
-    return NextResponse.json({ ok: false, error: "text and subjectName are required" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "text and subjectName are required" }, { status: 400 , headers: gate.headers });
   }
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -74,7 +74,7 @@ Respond ONLY with valid JSON matching this schema:
       if (parsed["deceptionScore"] !== undefined) {
         if (!Array.isArray(parsed["evasiveLanguage"])) parsed["evasiveLanguage"] = [];
         if (!Array.isArray(parsed["inconsistencies"])) parsed["inconsistencies"] = [];
-        return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
+        return NextResponse.json({ ok: true, ...parsed , headers: gate.headers });
       }
     } catch {
       // fall through to heuristic
@@ -82,5 +82,5 @@ Respond ONLY with valid JSON matching this schema:
   }
 
   const result = heuristicFallback(text, subjectName);
-  return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
+  return NextResponse.json({ ok: true, ...result , headers: gate.headers });
 }

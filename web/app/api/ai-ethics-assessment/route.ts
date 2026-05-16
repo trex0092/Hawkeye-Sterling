@@ -105,11 +105,11 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "ai-ethics-assessment temporarily unavailable - please retry." }, { status: 503 });
+  if (!apiKey) return NextResponse.json({ ok: false, error: "ai-ethics-assessment temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   const modelSummary = (body.models ?? [])
     .map((m) => `${sanitizeField(m.name, 100)} (${sanitizeField(m.riskTier, 50)} risk, purpose: ${sanitizeField(m.purpose, 200)}, bias audit: ${sanitizeField(m.biasAuditStatus, 50)})`)
@@ -154,8 +154,8 @@ Return complete EthicsAssessmentResult JSON with overallScore (0-100), rating, u
     if (!Array.isArray(result.findings)) result.findings = [];
     if (!Array.isArray(result.strengths)) result.strengths = [];
     if (!Array.isArray(result.priorities)) result.priorities = [];
-    return NextResponse.json({ ok: true, ...result });
+    return NextResponse.json({ ok: true, ...result , headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "ai-ethics-assessment temporarily unavailable - please retry." }, { status: 503 });
+    return NextResponse.json({ ok: false, error: "ai-ethics-assessment temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

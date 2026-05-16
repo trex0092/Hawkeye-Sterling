@@ -80,7 +80,7 @@ export async function GET(req: Request): Promise<NextResponse> {
       ? ("overdue" as CnmrCase["status"])
       : c.status,
   }));
-  return NextResponse.json({ ok: true, cases: updated }, { headers: gate.headers });
+  return NextResponse.json({ ok: true, cases: updated , headers: gate.headers });
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
@@ -121,7 +121,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   cases.unshift(newCase);
   await saveCases(tenant, cases);
 
-  return NextResponse.json({ ok: true, case: newCase }, { headers: gate.headers });
+  return NextResponse.json({ ok: true, case: newCase , headers: gate.headers });
 }
 
 export async function PATCH(req: Request): Promise<NextResponse> {
@@ -150,5 +150,5 @@ export async function PATCH(req: Request): Promise<NextResponse> {
   cases[idx] = updated;
   await saveCases(tenant, cases);
 
-  return NextResponse.json({ ok: true, case: updated }, { headers: gate.headers });
+  return NextResponse.json({ ok: true, case: updated , headers: gate.headers });
 }

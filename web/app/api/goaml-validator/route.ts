@@ -110,13 +110,13 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
-  if (!body.narrative?.trim()) return NextResponse.json({ ok: false, error: "narrative required" }, { status: 400 , headers: gate.headers});
+  if (!body.narrative?.trim()) return NextResponse.json({ ok: false, error: "narrative required" }, { status: 400 , headers: gate.headers });
   if (body.narrative.length > 10_000) return NextResponse.json({ ok: false, error: "narrative exceeds 10,000-character limit" }, { status: 400, headers: gate.headers });
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "goaml-validator temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "goaml-validator temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
     const client = getAnthropicClient(apiKey, 55000);
@@ -183,8 +183,8 @@ Validate this STR draft against UAE FIU goAML requirements.`,
     if (!Array.isArray(result.narrativeStrengths)) result.narrativeStrengths = [];
     if (!Array.isArray(result.narrativeWeaknesses)) result.narrativeWeaknesses = [];
     if (!Array.isArray(result.goAmlSpecificRequirements)) result.goAmlSpecificRequirements = [];
-    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
+    return NextResponse.json({ ok: true, ...result , headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "goaml-validator temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "goaml-validator temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

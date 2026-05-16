@@ -56,11 +56,11 @@ export async function POST(req: Request) {
   } catch {
     return NextResponse.json(
       { ok: false, error: "Invalid JSON" },
-      { status: 400 }
+      { status: 400, headers: gate.headers }
     );
   }
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "nominee-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "nominee-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   try {
     const client = getAnthropicClient(apiKey, 55000);
     const response = await client.messages.create({
@@ -82,8 +82,8 @@ export async function POST(req: Request) {
     ) as NomineeRiskResult;
     if (!Array.isArray(result.nomineeIndicators)) result.nomineeIndicators = [];
     if (!Array.isArray(result.verificationRequired)) result.verificationRequired = [];
-    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
+    return NextResponse.json({ ok: true, ...result , headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "nominee-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "nominee-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

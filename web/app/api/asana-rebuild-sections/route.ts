@@ -179,7 +179,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({
       ok: false,
       error: "ASANA_TOKEN environment variable is not set in Netlify.",
-    }, { status: 503 });
+    }, { status: 503 , headers: gate.headers });
   }
 
   // Verify token
@@ -189,7 +189,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   }).then((r) => r.ok ? r.json() : null).catch((err: unknown) => { console.warn("[hawkeye] asana-rebuild-sections fetch failed:", err); return null; }) as { data?: { name: string } } | null;
 
   if (!me?.data?.name) {
-    return NextResponse.json({ ok: false, error: "ASANA_TOKEN is invalid or expired." }, { status: 401 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "ASANA_TOKEN is invalid or expired." }, { status: 401 , headers: gate.headers });
   }
 
   const results: Array<{
@@ -265,5 +265,5 @@ export async function POST(req: Request): Promise<NextResponse> {
     ok: allOk,
     authenticatedAs: me.data.name,
     results,
-  });
+  }, { headers: gate.headers });
 }

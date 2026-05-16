@@ -95,7 +95,7 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const caseTitle = body.caseTitle ?? "Untitled Investigation";
@@ -163,7 +163,7 @@ Generate a court-ready evidence pack summary covering: case overview, entity pro
     const result = JSON.parse(cleaned) as Omit<EvidencePackResult, "ok" | "generatedAt">;
     if (!Array.isArray(result.evidencePoints)) result.evidencePoints = [];
     if (!Array.isArray(result.nextSteps)) result.nextSteps = [];
-    return NextResponse.json({ ok: true, ...result, generatedAt }, { headers: gate.headers });
+    return NextResponse.json({ ok: true, ...result, generatedAt , headers: gate.headers });
   } catch {
     return NextResponse.json(buildFallback(caseTitle, entities, links, narrative, analyst), { headers: gate.headers });
   }

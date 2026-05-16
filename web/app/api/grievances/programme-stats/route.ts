@@ -9,6 +9,6 @@ export async function GET(req: Request) {
   if (!gate.ok) return gate.response;
   return NextResponse.json(
     { open: 14, resolved: 31, escalated: 2, slaHitPct: 100, windowDays: 30 },
-    { headers: { "Cache-Control": "no-store" } },
+    { headers: { ...gate.headers, "Cache-Control": "no-store" } },
   );
 }

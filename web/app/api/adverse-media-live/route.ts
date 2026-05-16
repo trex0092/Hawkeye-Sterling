@@ -387,7 +387,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   } catch {
     return NextResponse.json(
       { ok: false, error: "invalid JSON body" },
-      { status: 400 },
+      { status: 400, headers: gate.headers }
     );
   }
 
@@ -395,7 +395,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (!subjectName) {
     return NextResponse.json(
       { ok: false, error: "subjectName is required" },
-      { status: 400 },
+      { status: 400, headers: gate.headers }
     );
   }
 
@@ -515,7 +515,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       sourcesSucceeded,
       sourcesFailed,
       ...(partialResults ? { partialResults: true } : {}),
-    });
+    }, { headers: gate.headers });
   }
 
   // Sort by tone ascending (most negative first)

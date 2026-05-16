@@ -199,7 +199,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         requestId: Math.random().toString(36).slice(2, 10),
         latencyMs: Date.now() - t0,
       },
-      { status: 500 },
+      { status: 500, headers: {} }
     );
   }
 }

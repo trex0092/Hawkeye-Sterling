@@ -11,5 +11,5 @@ export async function GET(req: Request) {
   const users = await loadUsers();
   // Strip password fields before returning to client
   const safe = users.map(({ passwordHash: _h, passwordSalt: _s, ...u }) => u);
-  return NextResponse.json({ ok: true, users: safe }, { headers: gate.headers });
+  return NextResponse.json({ ok: true, users: safe , headers: gate.headers });
 }

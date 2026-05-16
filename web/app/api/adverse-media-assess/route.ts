@@ -50,12 +50,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as RequestBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers });
     }
 
   const { subject, entries } = body;
   if (!subject) {
-    return NextResponse.json({ ok: false, error: "subject is required" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "subject is required" }, { status: 400 , headers: gate.headers });
   }
 
   // Non-blocking audit event
@@ -64,7 +64,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
-    return NextResponse.json({ ok: false, error: "adverse-media-assess temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "adverse-media-assess temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 
   try {
@@ -89,8 +89,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (!Array.isArray(parsed.topConcerns)) parsed.topConcerns = [];
     if (!Array.isArray(parsed.fatfTypologies)) parsed.fatfTypologies = [];
     if (!Array.isArray(parsed.uaeSpecificRisks)) parsed.uaeSpecificRisks = [];
-    return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
+    return NextResponse.json({ ok: true, ...parsed , headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "adverse-media-assess temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "adverse-media-assess temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

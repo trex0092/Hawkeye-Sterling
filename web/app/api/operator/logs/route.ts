@@ -52,7 +52,7 @@ async function handleGet(req: Request): Promise<NextResponse> {
 
   const store = await getStore();
   if (!store) {
-    return NextResponse.json({ ok: true, entries: [], note: "Blobs not available in this environment" });
+    return NextResponse.json({ ok: true, entries: [], note: "Blobs not available in this environment" , headers: gate.headers });
   }
 
   let entries: McpLogEntry[] = [];
@@ -75,7 +75,7 @@ async function handleGet(req: Request): Promise<NextResponse> {
   } catch (err) {
     return NextResponse.json(
       { ok: false, error: err instanceof Error ? err.message : String(err) },
-      { status: 500 },
+      { status: 500, headers: gate.headers }
     );
   }
 

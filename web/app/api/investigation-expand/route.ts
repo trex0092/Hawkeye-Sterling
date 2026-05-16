@@ -23,7 +23,7 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
   const { subject, knownNodes, knownEdges } = body;
 
@@ -31,7 +31,7 @@ export async function POST(req: Request) {
   if (!apiKey) {
     return NextResponse.json(
       { ok: false, error: "Investigation expand unavailable — ANTHROPIC_API_KEY not configured." },
-      { status: 503 },
+      { status: 503, headers: gate.headers }
     );
   }
 
@@ -64,11 +64,11 @@ What additional entities should investigators look for?`,
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const cleaned = raw.replace(/```json\n?|\n?```/g, "").trim();
     const result = JSON.parse(cleaned) as { discovered: DiscoveredEntity[] };
-    return NextResponse.json({ ok: true, discovered: Array.isArray(result.discovered) ? result.discovered : [] }, { headers: gate.headers });
+    return NextResponse.json({ ok: true, discovered: Array.isArray(result.discovered) ? result.discovered : [] , headers: gate.headers });
   } catch {
     return NextResponse.json(
       { ok: false, error: "Investigation expand temporarily unavailable — please retry." },
-      { status: 503 },
+      { status: 503, headers: gate.headers }
     );
   }
 }

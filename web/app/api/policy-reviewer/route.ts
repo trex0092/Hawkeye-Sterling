@@ -109,12 +109,12 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
-  if (!body.policyText?.trim()) return NextResponse.json({ ok: false, error: "policyText required" }, { status: 400 , headers: gate.headers});
+  if (!body.policyText?.trim()) return NextResponse.json({ ok: false, error: "policyText required" }, { status: 400 , headers: gate.headers });
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "policy-reviewer temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "policy-reviewer temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
     const client = getAnthropicClient(apiKey, 55000);
@@ -139,8 +139,8 @@ Review this AML policy for compliance with UAE FDL 10/2025. Return complete Poli
     if (!Array.isArray(result.outdatedReferences)) result.outdatedReferences = [];
     if (!Array.isArray(result.strengths)) result.strengths = [];
     if (!Array.isArray(result.recommendations)) result.recommendations = [];
-    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
+    return NextResponse.json({ ok: true, ...result , headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "policy-reviewer temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "policy-reviewer temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

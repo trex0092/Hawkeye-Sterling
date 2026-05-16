@@ -76,12 +76,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as RequestBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers });
     }
 
   const { entity, shareholders } = body;
   if (!entity?.name) {
-    return NextResponse.json({ ok: false, error: "entity.name is required" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "entity.name is required" }, { status: 400 , headers: gate.headers });
   }
 
   try { writeAuditEvent("analyst", "client-portal.ai-risk-assessment", entity.name); }
@@ -89,7 +89,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
-    return NextResponse.json({ ok: false, error: "client-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "client-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 
   try {
@@ -114,8 +114,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (!Array.isArray(parsed.pepExposure?.pepNames)) { if (parsed.pepExposure) parsed.pepExposure.pepNames = []; }
     if (!Array.isArray(parsed.cddRequirements)) parsed.cddRequirements = [];
     if (!Array.isArray(parsed.enhancedMeasures)) parsed.enhancedMeasures = [];
-    return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
+    return NextResponse.json({ ok: true, ...parsed , headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "client-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "client-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

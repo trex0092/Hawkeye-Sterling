@@ -452,11 +452,11 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as DecisionRequest;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   if (!body.name || !body.subjectId) {
-    return NextResponse.json({ ok: false, error: "name and subjectId are required" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "name and subjectId are required" }, { status: 400 , headers: gate.headers });
   }
 
   // ── Data integrity gate (FDL 10/2025 Art.18) ─────────────────────────────
@@ -613,7 +613,7 @@ export async function POST(req: Request) {
 
   const latencyMs = Date.now() - t0;
   if (latencyMs > 5000) console.warn(`[ai-decision] slow response latencyMs=${latencyMs}`);
-  return NextResponse.json({ ...responseBody, latencyMs }, { status: 200 , headers: gate.headers});
+  return NextResponse.json({ ...responseBody, latencyMs }, { status: 200 , headers: gate.headers });
 }
 
 // ── Rule-based fallback ───────────────────────────────────────────────────────

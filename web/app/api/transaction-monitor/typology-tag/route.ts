@@ -68,7 +68,7 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const transactions = body.transactions ?? [];
@@ -77,7 +77,7 @@ export async function POST(req: Request) {
       tagged: [],
       highRiskCount: 0,
       summary: "No transactions provided.",
-    });
+    }, { headers: gate.headers });
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
@@ -166,7 +166,7 @@ ${JSON.stringify(transactions, null, 2)}`,
       tagged,
       highRiskCount,
       summary: parsed.summary ?? "",
-    } satisfies TypologyTagResult);
+    } satisfies TypologyTagResult, { headers: gate.headers });
   } catch {
     return NextResponse.json(buildFallback(transactions), { headers: gate.headers });
   }

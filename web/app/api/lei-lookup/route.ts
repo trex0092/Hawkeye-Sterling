@@ -28,25 +28,25 @@ export async function GET(req: Request): Promise<NextResponse> {
   if (!lei && !legalName) {
     return NextResponse.json(
       { ok: false, error: "Provide ?lei=<20-char LEI> or ?legalName=<name>" },
-      { status: 400, headers: CORS },
+      { status: 400, headers: { ...gate.headers, ...CORS } }
     );
   }
   if (lei) {
     if (lei.length !== 20) {
-      return NextResponse.json({ ok: false, error: "LEI must be exactly 20 characters" }, { status: 400, headers: CORS });
+      return NextResponse.json({ ok: false, error: "LEI must be exactly 20 characters" }, { status: 400, headers: { ...gate.headers, ...CORS } });
     }
     const record = await fetchLeiRecord(lei);
-    if (record) return NextResponse.json(record, { status: 200, headers: CORS });
-    return NextResponse.json({ ok: false, error: "GLEIF API temporarily unreachable — please retry.", degraded: true }, { status: 503, headers: CORS });
+    if (record) return NextResponse.json(record, { status: 200, headers: { ...gate.headers, ...CORS } });
+    return NextResponse.json({ ok: false, error: "GLEIF API temporarily unreachable — please retry.", degraded: true }, { status: 503, headers: { ...gate.headers, ...CORS } });
   }
   const matches = await searchByName(legalName!);
   if (matches.length === 0) {
-    return NextResponse.json({ ok: false, error: "No LEI found for that name", degraded: true }, { status: 404, headers: CORS });
+    return NextResponse.json({ ok: false, error: "No LEI found for that name", degraded: true }, { status: 404, headers: { ...gate.headers, ...CORS } });
   }
   const topMatch = matches[0]!;
   if (topMatch.lei) {
     const record = await fetchLeiRecord(topMatch.lei);
-    if (record) return NextResponse.json(record, { status: 200, headers: CORS });
+    if (record) return NextResponse.json(record, { status: 200, headers: { ...gate.headers, ...CORS } });
   }
   const minimal: LeiLookupResult = {
     ok: true,
@@ -60,7 +60,7 @@ export async function GET(req: Request): Promise<NextResponse> {
     registeredAddress: "Not available",
     lastUpdated: new Date().toISOString(),
   };
-  return NextResponse.json(minimal, { status: 200, headers: CORS });
+  return NextResponse.json(minimal, { status: 200, headers: { ...gate.headers, ...CORS } });
 }
 
 export interface LeiLookupResult {
@@ -384,7 +384,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   } catch {
     return NextResponse.json(
       { ok: false, error: "Invalid JSON body" },
-      { status: 400, headers: CORS },
+      { status: 400, headers: { ...gate.headers, ...CORS } }
     );
   }
 
@@ -394,7 +394,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (!lei && !legalName) {
     return NextResponse.json(
       { ok: false, error: "lei or legalName is required" },
-      { status: 400, headers: CORS },
+      { status: 400, headers: { ...gate.headers, ...CORS } }
     );
   }
 
@@ -403,12 +403,12 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (lei.length !== 20) {
       return NextResponse.json(
         { ok: false, error: "LEI must be exactly 20 characters" },
-        { status: 400, headers: CORS },
+        { status: 400, headers: { ...gate.headers, ...CORS } }
       );
     }
     const record = await fetchLeiRecord(lei);
     if (record) {
-      return NextResponse.json(record, { status: 200, headers: CORS });
+      return NextResponse.json(record, { status: 200, headers: { ...gate.headers, ...CORS } });
     }
     // GLEIF API unreachable — return degraded response rather than misleading static data
     return NextResponse.json(
@@ -417,7 +417,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         error: "GLEIF API temporarily unreachable — please retry in a few seconds.",
         degraded: true,
       },
-      { status: 503, headers: CORS },
+      { status: 503, headers: { ...gate.headers, ...CORS } }
     );
   }
 
@@ -425,14 +425,14 @@ export async function POST(req: Request): Promise<NextResponse> {
   const matches = await searchByName(legalName!);
   if (matches.length === 0) {
     // Return fallback
-    return NextResponse.json({ ok: false, error: "lei-lookup temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "lei-lookup temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 
   const topMatch = matches[0]!;
   if (topMatch.lei) {
     const record = await fetchLeiRecord(topMatch.lei);
     if (record) {
-      return NextResponse.json(record, { status: 200, headers: CORS });
+      return NextResponse.json(record, { status: 200, headers: { ...gate.headers, ...CORS } });
     }
   }
 
@@ -452,7 +452,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const latencyMs = Date.now() - _handlerStart;
   if (latencyMs > 5000) console.warn(`[lei_lookup] latencyMs=${latencyMs} exceeds 5000ms`);
-  return NextResponse.json({ ...minimal, latencyMs }, { status: 200, headers: CORS });
+  return NextResponse.json({ ...minimal, latencyMs }, { status: 200, headers: { ...gate.headers, ...CORS } });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     return NextResponse.json({
@@ -464,6 +464,6 @@ export async function POST(req: Request): Promise<NextResponse> {
       retryAfterSeconds: null,
       requestId: Math.random().toString(36).slice(2, 10),
       latencyMs: Date.now() - _handlerStart,
-    }, { status: 500 });
+    }, { status: 500 , headers: {} });
   }
 }

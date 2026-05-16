@@ -197,7 +197,7 @@ export async function GET(req: Request): Promise<NextResponse> {
   const index = (await getJson<BatchJob[]>(batchIndexKey(ownerId))) ?? [];
 
   if (!batchId) {
-    return NextResponse.json({ ok: true, batches: index }, { headers: gate.headers });
+    return NextResponse.json({ ok: true, batches: index , headers: gate.headers });
   }
 
   const job = index.find((j) => j.batchId === batchId);
@@ -214,7 +214,7 @@ export async function GET(req: Request): Promise<NextResponse> {
     if (!r.ok) {
       return NextResponse.json({ ok: false, ...job, error: r.error }, { status: 502, headers: gate.headers });
     }
-    return NextResponse.json({ ok: true, ...job, results: r.results }, { headers: gate.headers });
+    return NextResponse.json({ ok: true, ...job, results: r.results , headers: gate.headers });
   }
 
   // Fetch live status from Anthropic via the guarded client.
@@ -239,5 +239,5 @@ export async function GET(req: Request): Promise<NextResponse> {
     } catch { /* fall through to cached status */ }
   }
 
-  return NextResponse.json({ ok: true, ...job }, { headers: gate.headers });
+  return NextResponse.json({ ok: true, ...job , headers: gate.headers });
 }

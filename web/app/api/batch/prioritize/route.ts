@@ -43,12 +43,12 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const subjects = body.subjects ?? [];
   if (subjects.length === 0) {
-    return NextResponse.json({ ok: false, error: "No subjects provided" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "No subjects provided" }, { status: 400 , headers: gate.headers });
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
@@ -128,6 +128,6 @@ Analyse and prioritise these subjects for AML re-screening urgency. Flag immedia
     if (!Array.isArray(result.prioritized)) result.prioritized = [];
     return NextResponse.json(result, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "batch/prioritize temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "batch/prioritize temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

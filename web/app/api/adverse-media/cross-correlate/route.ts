@@ -50,19 +50,19 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const { subjectName, articles } = body;
   if (!subjectName || !articles?.length) {
     return NextResponse.json(
       { ok: false, error: "subjectName and articles are required" },
-      { status: 400 },
+      { status: 400, headers: gate.headers }
     );
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "adverse-media/cross-correlate temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "adverse-media/cross-correlate temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
     const client = getAnthropicClient(apiKey, 55_000);
@@ -126,6 +126,6 @@ Perform entity disambiguation, theme grouping, trend analysis, score computation
     if (result.themes == null || typeof result.themes !== "object" || Array.isArray(result.themes)) result.themes = {};
     return NextResponse.json(result, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "adverse-media/cross-correlate temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "adverse-media/cross-correlate temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

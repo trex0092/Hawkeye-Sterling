@@ -46,7 +46,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as BenfordInterpretBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   writeAuditEvent(
@@ -57,7 +57,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
-    return NextResponse.json({ ok: false, error: "benford-interpret temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "benford-interpret temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 
   const madCategory =
@@ -117,8 +117,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (!Array.isArray(result.recommendedActions)) result.recommendedActions = [];
     if (!Array.isArray(result.mlTypologies)) result.mlTypologies = [];
   } catch {
-    return NextResponse.json({ ok: false, error: "benford-interpret temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "benford-interpret temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 
-  return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
+  return NextResponse.json({ ok: true, ...result , headers: gate.headers });
 }

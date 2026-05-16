@@ -40,17 +40,17 @@ export async function POST(req: Request): Promise<NextResponse> {
     const body = (await req.json()) as { items: TriageItem[] };
     items = (body.items ?? []).slice(0, 20);
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON body" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON body" }, { status: 400 , headers: gate.headers });
   }
 
   if (items.length === 0) {
-    return NextResponse.json({ ok: true, results: [] }, { headers: gate.headers });
+    return NextResponse.json({ ok: true, results: [] , headers: gate.headers });
   }
 
   if (!apiKey) {
     return NextResponse.json(
       { ok: false, error: "Regulatory triage unavailable — please retry. An empty list here is not a 'no items' finding." },
-      { status: 503 },
+      { status: 503, headers: gate.headers }
     );
   }
 
@@ -76,7 +76,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (!jsonMatch) {
       return NextResponse.json(
         { ok: false, error: "Regulatory triage unavailable — please retry. An empty list here is not a 'no items' finding." },
-        { status: 503 },
+        { status: 503, headers: gate.headers }
       );
     }
     results = JSON.parse(jsonMatch[0]) as TriageResult[];
@@ -84,9 +84,9 @@ export async function POST(req: Request): Promise<NextResponse> {
   } catch {
     return NextResponse.json(
       { ok: false, error: "Regulatory triage unavailable — please retry. An empty list here is not a 'no items' finding." },
-      { status: 503 },
+      { status: 503, headers: gate.headers }
     );
   }
 
-  return NextResponse.json({ ok: true, results }, { headers: gate.headers });
+  return NextResponse.json({ ok: true, results , headers: gate.headers });
 }

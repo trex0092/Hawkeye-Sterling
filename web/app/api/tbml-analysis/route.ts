@@ -80,16 +80,16 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
   const { invoiceDescription, supplierCountry, buyerCountry, declaredValue, commodity, paymentRoute, additionalContext } = body;
   if (!invoiceDescription?.trim()) {
-    return NextResponse.json({ ok: false, error: "invoiceDescription required" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "invoiceDescription required" }, { status: 400 , headers: gate.headers });
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
-    return NextResponse.json({ ok: false, error: "tbml-analysis temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "tbml-analysis temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 
   const systemPrompt = `You are a UAE TBML (Trade-Based Money Laundering) specialist with deep expertise in gold/precious metals trade finance, DPMS/LBMA standards, OECD CAHRA 5-step due diligence, and FATF typologies.
@@ -150,8 +150,8 @@ Perform TBML risk analysis.`,
     if (!Array.isArray(result.indicators)) result.indicators = [];
     if (!Array.isArray(result.documentationGaps)) result.documentationGaps = [];
     if (!Array.isArray(result.investigativeSteps)) result.investigativeSteps = [];
-    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
+    return NextResponse.json({ ok: true, ...result , headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "tbml-analysis temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "tbml-analysis temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

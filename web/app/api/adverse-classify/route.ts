@@ -87,12 +87,12 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
-  if (!body.articleText?.trim()) return NextResponse.json({ ok: false, error: "articleText required" }, { status: 400 , headers: gate.headers});
+  if (!body.articleText?.trim()) return NextResponse.json({ ok: false, error: "articleText required" }, { status: 400 , headers: gate.headers });
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "adverse-classify temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "adverse-classify temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
     const client = getAnthropicClient(apiKey, 55000);
@@ -136,8 +136,8 @@ Classify this adverse media against FATF predicate offences and assess SAR thres
     if (!Array.isArray(result.keyEntities)) result.keyEntities = [];
     if (!Array.isArray(result.corroborationRequired)) result.corroborationRequired = [];
     if (!Array.isArray(result.fatfR3Predicates)) result.fatfR3Predicates = [];
-    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
+    return NextResponse.json({ ok: true, ...result , headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "adverse-classify temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "adverse-classify temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

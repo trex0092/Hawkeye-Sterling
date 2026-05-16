@@ -240,7 +240,7 @@ export async function GET(req: Request): Promise<NextResponse> {
   if (!gate.ok) return gate.response;
   const tenant = (gate.record?.id ?? "anon").slice(0, 32);
   const state = await loadState(tenant);
-  return NextResponse.json({ ok: true, survey: state }, { headers: gate.headers });
+  return NextResponse.json({ ok: true, survey: state , headers: gate.headers });
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
@@ -255,5 +255,5 @@ export async function POST(req: Request): Promise<NextResponse> {
   const existing = await loadState(tenant);
   const updated: MoeSurveyState = { ...existing, ...body, tenant, updatedAt: new Date().toISOString() };
   await saveState(tenant, updated);
-  return NextResponse.json({ ok: true, survey: updated }, { headers: gate.headers });
+  return NextResponse.json({ ok: true, survey: updated , headers: gate.headers });
 }

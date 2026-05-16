@@ -230,12 +230,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const { eddFile, generateNarrative = false } = body;
   if (!eddFile) {
-    return NextResponse.json({ error: "eddFile is required" }, { status: 400 });
+    return NextResponse.json({ error: "eddFile is required" }, { status: 400 , headers: gate.headers });
   }
 
   const reqs = buildRequirements(eddFile);
@@ -306,5 +306,5 @@ Write a 3-4 sentence gap analysis memo suitable for MLRO review. Be specific abo
     }
   }
 
-  return NextResponse.json(result);
+  return NextResponse.json(result, { headers: gate.headers });
 }

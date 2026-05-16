@@ -22,22 +22,22 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
-  const countries = (body.countries ?? []).slice(0, 5).map((c) => c.trim()).filter(Boolean);
-  if (countries.length < 2) {
+  if (!Array.isArray(body.countries) || body.countries.length < 2) {
     return NextResponse.json(
       { ok: false, error: "At least 2 countries required for comparison" },
-      { status: 400 },
+      { status: 400, headers: gate.headers }
     );
   }
+  const countries = body.countries.slice(0, 5).map((c) => c.trim()).filter(Boolean);
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
     // Return deterministic fallback for up to 5 countries
     const fallbacks = countries.map((c) => buildFallback(c));
-    return NextResponse.json({ ok: true, countries: fallbacks, comparedAt: new Date().toISOString() }, { headers: gate.headers });
+    return NextResponse.json({ ok: true, countries: fallbacks, comparedAt: new Date().toISOString() , headers: gate.headers });
   }
 
   try {
@@ -108,14 +108,14 @@ For each country provide complete risk scoring, FATF status, sanctions profile (
       ok: true,
       countries: results,
       comparedAt: new Date().toISOString(),
-    });
+    }, { headers: gate.headers });
   } catch {
     return NextResponse.json(
       {
         ok: false,
         error: `Real-time comparison temporarily unavailable for: ${countries.join(", ")}. Please retry in a moment.`,
       },
-      { status: 503 },
+      { status: 503, headers: gate.headers }
     );
   }
 }

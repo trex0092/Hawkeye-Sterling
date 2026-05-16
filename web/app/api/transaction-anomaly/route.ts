@@ -160,14 +160,14 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as AnomalyRequestBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400, headers: CORS });
+    return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400, headers: { ...gate.headers, ...CORS } });
   }
 
   const tx = body.transaction;
   if (!tx || typeof tx.amountUsd !== "number" || tx.amountUsd < 0) {
     return NextResponse.json(
       { ok: false, error: "transaction.amountUsd must be a non-negative number" },
-      { status: 400, headers: CORS },
+      { status: 400, headers: { ...gate.headers, ...CORS } }
     );
   }
 

@@ -50,15 +50,15 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   if (!body.scenario?.trim()) {
-    return NextResponse.json({ error: "scenario is required" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ error: "scenario is required" }, { status: 400 , headers: gate.headers });
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "playbook/scenario-simulate temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "playbook/scenario-simulate temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
     const client = getAnthropicClient(apiKey, 55_000);
@@ -134,6 +134,6 @@ Identify the relevant playbook chapters, red flags present, step-by-step recomme
     if (!Array.isArray(result.regulatoryRefs)) result.regulatoryRefs = [];
     return NextResponse.json(result, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "playbook/scenario-simulate temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "playbook/scenario-simulate temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

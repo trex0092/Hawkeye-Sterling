@@ -42,7 +42,7 @@ export async function POST(req: Request) {
   } catch {
     return NextResponse.json(
       { ok: false, error: "Invalid JSON" },
-      { status: 400 }
+      { status: 400, headers: gate.headers }
     );
   }
 
@@ -52,7 +52,7 @@ export async function POST(req: Request) {
   if (!events.length || !portfolio.length) {
     return NextResponse.json(
       { ok: false, error: "events and portfolio are required" },
-      { status: 400 }
+      { status: 400, headers: gate.headers }
     );
   }
 
@@ -115,7 +115,7 @@ export async function POST(req: Request) {
         "File STR if any sanctions links confirmed",
       ],
       summary: `Portfolio analysis complete. ${exposed.length} of ${portfolio.length} clients have geopolitical exposure.`,
-    });
+    }, { headers: gate.headers });
   }
 
   try {
@@ -231,6 +231,6 @@ Assess which portfolio clients are exposed to which geopolitical events. Conside
         "File STR if any sanctions links confirmed",
       ],
       summary: `Portfolio analysis complete. ${exposed.length} of ${portfolio.length} clients have geopolitical exposure.`,
-    } satisfies PortfolioImpactResult);
+    } satisfies PortfolioImpactResult, { headers: gate.headers });
   }
 }

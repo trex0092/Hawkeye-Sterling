@@ -132,16 +132,16 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
-  const decisions = body.decisions ?? [];
-  if (!decisions.length) {
-    return NextResponse.json({ ok: false, error: "fp-optimizer/analyze temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!Array.isArray(body.decisions) || body.decisions.length === 0) {
+    return NextResponse.json({ ok: false, error: "decisions must be a non-empty array" }, { status: 400, headers: gate.headers });
   }
+  const decisions = body.decisions;
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "fp-optimizer/analyze temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "fp-optimizer/analyze temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
     const client = getAnthropicClient(apiKey, 22_000);
@@ -206,6 +206,6 @@ Analyse these decisions to identify false positive patterns, suggest threshold o
     if (!Array.isArray(result.systemicIssues)) result.systemicIssues = [];
     return NextResponse.json(result, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "fp-optimizer/analyze temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "fp-optimizer/analyze temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

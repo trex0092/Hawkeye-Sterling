@@ -181,7 +181,7 @@ export async function GET(req: Request): Promise<NextResponse> {
       ? ("overdue" as DpmsrObligation["status"])
       : o.status,
   }));
-  return NextResponse.json({ ok: true, obligations: updated }, { headers: gate.headers });
+  return NextResponse.json({ ok: true, obligations: updated , headers: gate.headers });
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
@@ -204,7 +204,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (body.patch.status === "filed" && !existingObl.filedAt) updated.filedAt = new Date().toISOString();
     obligations[idx] = updated;
     await saveObligations(tenant, obligations);
-    return NextResponse.json({ ok: true, obligation: updated }, { headers: gate.headers });
+    return NextResponse.json({ ok: true, obligation: updated , headers: gate.headers });
   }
 
   if (!Array.isArray(body.transactions) || body.transactions.length === 0) {
@@ -224,7 +224,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     }));
     obligations.unshift(...newObs);
     await saveObligations(tenant, obligations);
-    return NextResponse.json({ ok: true, obligationsCreated: newObs.length, obligations: newObs }, { headers: gate.headers });
+    return NextResponse.json({ ok: true, obligationsCreated: newObs.length, obligations: newObs , headers: gate.headers });
   }
 
   return NextResponse.json({

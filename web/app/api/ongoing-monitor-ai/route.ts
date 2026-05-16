@@ -89,20 +89,20 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as RequestBody;
   } catch {
-    return NextResponse.json({ error: "invalid JSON body" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ error: "invalid JSON body" }, { status: 400 , headers: gate.headers });
   }
 
   const subjects = body.subjects ?? [];
 
   if (subjects.length === 0) {
     writeAuditEvent("mlro", "ongoing-monitor.ai-analysis", "no subjects — skipped");
-    return NextResponse.json({ ok: false, error: "ongoing-monitor-ai temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "ongoing-monitor-ai temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     writeAuditEvent("mlro", "ongoing-monitor.ai-analysis", `no-api-key — ${subjects.length} subjects skipped`);
-    return NextResponse.json({ ok: false, error: "ongoing-monitor-ai temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "ongoing-monitor-ai temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 
   try {
@@ -139,6 +139,6 @@ export async function POST(req: Request): Promise<NextResponse> {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     writeAuditEvent("mlro", "ongoing-monitor.ai-analysis", `error — ${msg}`);
-    return NextResponse.json({ ok: false, error: "ongoing-monitor-ai temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "ongoing-monitor-ai temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

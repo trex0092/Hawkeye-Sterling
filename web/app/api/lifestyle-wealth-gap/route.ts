@@ -17,12 +17,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as ReqBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const { name, declaredIncome = 0, declaredNetWorth = 0 } = body;
   if (!name) {
-    return NextResponse.json({ ok: false, error: "name is required" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "name is required" }, { status: 400 , headers: gate.headers });
   }
 
   // Deterministic heuristics
@@ -65,5 +65,5 @@ export async function POST(req: Request): Promise<NextResponse> {
     indicators,
     plausibilityScore,
     redFlags,
-  });
+  }, { headers: gate.headers });
 }

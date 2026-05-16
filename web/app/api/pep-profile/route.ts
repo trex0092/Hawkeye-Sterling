@@ -107,7 +107,7 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   // ── Grounded PEP data — World-Check (LSEG) first, OpenSanctions fallback ──
@@ -311,7 +311,7 @@ Perform a comprehensive PEP risk assessment grounded in the PEP database data ab
       { headers: gate.headers },
     );
   } catch {
-    return NextResponse.json({ ok: false, error: "pep-profile temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "pep-profile temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
@@ -324,6 +324,6 @@ Perform a comprehensive PEP risk assessment grounded in the PEP database data ab
       retryAfterSeconds: null,
       requestId: Math.random().toString(36).slice(2, 10),
       latencyMs: Date.now() - _handlerStart,
-    }, { status: 500 });
+    }, { status: 500 , headers: {} });
   }
 }

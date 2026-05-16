@@ -21,7 +21,7 @@ export async function GET(
   if (!record) {
     return NextResponse.json({ ok: false, error: "not found" }, { status: 404, headers: gate.headers });
   }
-  return NextResponse.json({ ok: true, request: record }, { headers: gate.headers });
+  return NextResponse.json({ ok: true, request: record , headers: gate.headers });
 
 }
 

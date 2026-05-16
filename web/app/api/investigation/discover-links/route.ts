@@ -116,14 +116,14 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const entities = body.entities ?? [];
   const existingLinks = body.existingLinks ?? [];
 
   if (entities.length === 0) {
-    return NextResponse.json({ ok: false, error: "entities array is required" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "entities array is required" }, { status: 400 , headers: gate.headers });
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
@@ -187,7 +187,7 @@ Identify hidden connections not yet reflected in the confirmed links. Focus on: 
     const cleaned = raw.replace(/```json\n?|\n?```/g, "").trim();
     const result = JSON.parse(cleaned) as Omit<DiscoverLinksResult, "ok">;
     if (!Array.isArray(result.suggestedLinks)) result.suggestedLinks = [];
-    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
+    return NextResponse.json({ ok: true, ...result , headers: gate.headers });
   } catch {
     return NextResponse.json(buildFallback(entities, existingLinks), { headers: gate.headers });
   }

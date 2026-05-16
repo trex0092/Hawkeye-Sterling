@@ -80,20 +80,20 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as RequestBody;
   } catch {
-    return NextResponse.json({ error: "invalid JSON body" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ error: "invalid JSON body" }, { status: 400 , headers: gate.headers });
   }
 
   const results = body.results ?? [];
 
   if (results.length === 0) {
     writeAuditEvent("analyst", "batch.ai-priority-ranking", "no results — skipped");
-    return NextResponse.json({ ok: false, error: "batch-rank temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "batch-rank temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     writeAuditEvent("analyst", "batch.ai-priority-ranking", `no-api-key — ${results.length} results skipped`);
-    return NextResponse.json({ ok: false, error: "batch-rank temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "batch-rank temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 
   try {
@@ -125,10 +125,10 @@ export async function POST(req: Request): Promise<NextResponse> {
       `${results.length} results ranked — immediate: ${parsed.immediateCount ?? 0} · urgent: ${parsed.urgentCount ?? 0} · topThreats: ${(parsed.topThreats ?? []).join(", ")}`,
     );
 
-    return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
+    return NextResponse.json({ ok: true, ...parsed , headers: gate.headers });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     writeAuditEvent("analyst", "batch.ai-priority-ranking", `error — ${msg}`);
-    return NextResponse.json({ ok: false, error: "batch-rank temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "batch-rank temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

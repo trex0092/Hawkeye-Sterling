@@ -24,7 +24,7 @@ export async function GET(req: Request): Promise<NextResponse> {
       ok: true,
       entities,
       ...(defaultId ? { defaultId } : {}),
-    });
+    }, { headers: gate.headers });
   } catch (err) {
     // Audit DR-02: returning 200 with empty entities masked HAWKEYE_ENTITIES
     // JSON-parse failures as "no entities configured". MLRO forms rendered
@@ -37,6 +37,6 @@ export async function GET(req: Request): Promise<NextResponse> {
       error: "entities-config-malformed",
       message,
       hint: "HAWKEYE_ENTITIES is malformed or missing — check JSON syntax in Netlify env vars.",
-    }, { status: 503 });
+    }, { status: 503 , headers: gate.headers });
   }
 }

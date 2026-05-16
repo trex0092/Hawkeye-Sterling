@@ -87,18 +87,18 @@ export async function POST(req: Request): Promise<NextResponse> {
   const apiKey = process.env["ANTHROPIC_API_KEY"];
 
   if (!apiKey) {
-    return NextResponse.json({ ok: false, error: "jurisdiction-intel temporarily unavailable - please retry." }, { status: 503 });
+    return NextResponse.json({ ok: false, error: "jurisdiction-intel temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 
   let body: Body;
   try {
     body = (await req.json()) as Body;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   if (!body?.country?.trim()) {
-    return NextResponse.json({ ok: false, error: "country is required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "country is required" }, { status: 400 , headers: gate.headers });
   }
 
   const lines: string[] = [`Country: ${body.country.trim()}`];
@@ -126,12 +126,12 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (!Array.isArray(result.typologiesPrevalent)) result.typologiesPrevalent = [];
     if (!Array.isArray(result.riskMitigation)) result.riskMitigation = [];
   } catch {
-    return NextResponse.json({ ok: false, error: "jurisdiction-intel temporarily unavailable - please retry." }, { status: 503 });
+    return NextResponse.json({ ok: false, error: "jurisdiction-intel temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 
   try {
     writeAuditEvent("analyst", "jurisdiction.ai-intelligence", body.country.trim());
   } catch { /* non-blocking */ }
 
-  return NextResponse.json({ ok: true, ...result });
+  return NextResponse.json({ ok: true, ...result , headers: gate.headers });
 }

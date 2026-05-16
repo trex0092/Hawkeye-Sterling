@@ -109,12 +109,12 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
-  if (!body.documentTypes?.trim()) return NextResponse.json({ ok: false, error: "documentTypes required" }, { status: 400 , headers: gate.headers});
+  if (!body.documentTypes?.trim()) return NextResponse.json({ ok: false, error: "documentTypes required" }, { status: 400 , headers: gate.headers });
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "document-fraud temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "document-fraud temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
     const client = getAnthropicClient(apiKey, 55000);
@@ -176,8 +176,8 @@ Assess these documents for fraud indicators.`,
     else for (const d of result.documentAssessments) { if (!Array.isArray(d.redFlags)) d.redFlags = []; if (!Array.isArray(d.verificationRequired)) d.verificationRequired = []; }
     if (!Array.isArray(result.requiredVerificationSteps)) result.requiredVerificationSteps = [];
     if (!Array.isArray(result.externalVerificationSources)) result.externalVerificationSources = [];
-    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
+    return NextResponse.json({ ok: true, ...result , headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "document-fraud temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "document-fraud temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

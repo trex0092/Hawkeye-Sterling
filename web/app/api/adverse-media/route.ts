@@ -49,11 +49,11 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as AdverseMediaBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400, headers: CORS });
+    return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400, headers: { ...gate.headers, ...CORS } });
   }
 
   if (!body.subject?.trim()) {
-    return NextResponse.json({ ok: false, error: "subject is required" }, { status: 400, headers: CORS });
+    return NextResponse.json({ ok: false, error: "subject is required" }, { status: 400, headers: { ...gate.headers, ...CORS } });
   }
 
   const subject = body.subject.trim();

@@ -94,12 +94,12 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
-  if (!body.facts?.trim()) return NextResponse.json({ ok: false, error: "facts required" }, { status: 400 , headers: gate.headers});
+  if (!body.facts?.trim()) return NextResponse.json({ ok: false, error: "facts required" }, { status: 400 , headers: gate.headers });
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "ml-predicate temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "ml-predicate temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
     const client = getAnthropicClient(apiKey, 55000);
@@ -144,8 +144,8 @@ Map these facts to applicable UAE ML predicate offences with penalties.`,
     if (!Array.isArray(result.investigativeActions)) result.investigativeActions = [];
     if (!Array.isArray(result.jurisdictionalIssues)) result.jurisdictionalIssues = [];
     if (!Array.isArray(result.fatfR3Categories)) result.fatfR3Categories = [];
-    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
+    return NextResponse.json({ ok: true, ...result , headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "ml-predicate temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "ml-predicate temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

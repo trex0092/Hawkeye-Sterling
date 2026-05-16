@@ -114,12 +114,12 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
-  if (!body.caseDescription?.trim()) return NextResponse.json({ ok: false, error: "caseDescription required" }, { status: 400 });
+  if (!body.caseDescription?.trim()) return NextResponse.json({ ok: false, error: "caseDescription required" }, { status: 400 , headers: gate.headers });
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "inter-agency-referral temporarily unavailable - please retry." }, { status: 503 });
+  if (!apiKey) return NextResponse.json({ ok: false, error: "inter-agency-referral temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
     const client = getAnthropicClient(apiKey, 55000);
@@ -147,8 +147,8 @@ Prepare a comprehensive inter-agency referral package. Return complete InterAgen
     if (!Array.isArray(result.referralPackage.requestedActions)) result.referralPackage.requestedActions = [];
     if (!Array.isArray(result.parallelNotifications)) result.parallelNotifications = [];
     if (!Array.isArray(result.evidencePreservationSteps)) result.evidencePreservationSteps = [];
-    return NextResponse.json({ ok: true, ...result });
+    return NextResponse.json({ ok: true, ...result , headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "inter-agency-referral temporarily unavailable - please retry." }, { status: 503 });
+    return NextResponse.json({ ok: false, error: "inter-agency-referral temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

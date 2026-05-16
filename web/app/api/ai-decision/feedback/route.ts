@@ -47,11 +47,11 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as FeedbackBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   if (!body.decisionId || !body.outcome) {
-    return NextResponse.json({ ok: false, error: "decisionId and outcome are required" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "decisionId and outcome are required" }, { status: 400 , headers: gate.headers });
   }
 
   const record: FeedbackRecord = {
@@ -83,12 +83,12 @@ export async function POST(req: Request) {
       totalFeedback: trimmed.length,
       acceptanceRate: trimmed.length > 0 ? Math.round((accepted / trimmed.length) * 100) : null,
       overrideRate: trimmed.length > 0 ? Math.round((overridden / trimmed.length) * 100) : null,
-    });
+    }, { headers: gate.headers });
   } catch (err) {
     console.error("[hawkeye] ai-decision/feedback: store write failed — record not persisted:", err);
     return NextResponse.json(
       { ok: false, error: "feedback store unavailable — record not persisted" },
-      { status: 503 },
+      { status: 503, headers: gate.headers }
     );
   }
 }
@@ -107,7 +107,7 @@ export async function GET(req: Request) {
       overridden,
       acceptanceRate: records.length > 0 ? Math.round((accepted / records.length) * 100) : null,
       recentDecisions: records.slice(-5).reverse(),
-    });
+    }, { headers: gate.headers });
   } catch (err) {
     console.error(
       "[hawkeye] ai-decision/feedback GET: store read failed — returning empty stats with fallback:true",
@@ -122,6 +122,6 @@ export async function GET(req: Request) {
       recentDecisions: [],
       fallback: true,
       fallbackReason: "store_read_failed",
-    });
+    }, { headers: gate.headers });
   }
 }

@@ -39,13 +39,13 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as Body;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400 , headers: gate.headers });
   }
 
   if (!body.name && !body.identifier && !body.id && !body.country) {
     return NextResponse.json(
       { ok: false, error: "at least one of name, identifier, id, or country is required" },
-      { status: 400 },
+      { status: 400, headers: gate.headers }
     );
   }
 
@@ -60,7 +60,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       // Cap at first 100 to keep response reasonable; caller pages with the cursor pattern if needed.
       matches: matches.slice(0, 100),
       truncated: matches.length > 100,
-    });
+    }, { headers: gate.headers });
   }
 
   const enr = await enrichSubject(body);
@@ -70,7 +70,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       ok: true,
       match: null,
       hint: "No OpenSanctions record matched in the loaded corpus. Coverage depends on the OPENSANCTIONS_DATASETS env var (default: ae_local_terrorists only — ~30 entities). Set OPENSANCTIONS_DATASETS to a comma-separated list of slugs (e.g. 'us_ofac_sdn,eu_fsf,gb_hmt_sanctions,un_sc_sanctions') and trigger /api/admin/opensanctions-refresh to expand. Absence is not a guarantee of clearance — manual review still required for high-risk subjects.",
-    });
+    }, { headers: gate.headers });
   }
 
   return NextResponse.json({
@@ -79,12 +79,12 @@ export async function POST(req: Request): Promise<NextResponse> {
     matchedBy: enr.matchedBy,
     signals: enr.signals,
     allNameMatches: enr.allNameMatches.length > 1 ? enr.allNameMatches : undefined,
-  });
+  }, { headers: gate.headers });
 }
 
 // GET /api/opensanctions-check  — corpus stats (operator dashboard probe).
 export async function GET(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
-  return NextResponse.json({ ok: true, corpus: await openSanctionsStats() });
+  return NextResponse.json({ ok: true, corpus: await openSanctionsStats() , headers: gate.headers });
 }

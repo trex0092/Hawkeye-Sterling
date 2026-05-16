@@ -53,7 +53,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as RequestBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers });
     }
 
   const { rows } = body;
@@ -64,7 +64,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
-    return NextResponse.json({ ok: false, error: "data-quality-fix temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "data-quality-fix temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 
   try {
@@ -89,8 +89,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (!Array.isArray(parsed.remediationPlan)) parsed.remediationPlan = [];
     else for (const r of parsed.remediationPlan) { if (!Array.isArray(r.requiredActions)) r.requiredActions = []; }
     if (!Array.isArray(parsed.topGaps)) parsed.topGaps = [];
-    return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
+    return NextResponse.json({ ok: true, ...parsed , headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "data-quality-fix temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "data-quality-fix temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

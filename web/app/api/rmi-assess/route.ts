@@ -64,12 +64,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as RequestBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers });
     }
 
   const { smelters } = body;
   if (!smelters || !Array.isArray(smelters) || smelters.length === 0) {
-    return NextResponse.json({ ok: false, error: "smelters array is required" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "smelters array is required" }, { status: 400 , headers: gate.headers });
   }
 
   try { writeAuditEvent("analyst", "rmi.ai-supply-chain-assessment", "smelter-portfolio"); }
@@ -77,7 +77,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
-    return NextResponse.json({ ok: false, error: "rmi-assess temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "rmi-assess temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 
   try {
@@ -104,8 +104,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (!Array.isArray(parsed.lbmaAlignmentIssues)) parsed.lbmaAlignmentIssues = [];
     if (!Array.isArray(parsed.recommendedActions)) parsed.recommendedActions = [];
     if (!Array.isArray(parsed.auditPriority)) parsed.auditPriority = [];
-    return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
+    return NextResponse.json({ ok: true, ...parsed , headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "rmi-assess temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "rmi-assess temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

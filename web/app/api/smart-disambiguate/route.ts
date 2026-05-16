@@ -124,15 +124,15 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as RequestBody;
   } catch {
-    return NextResponse.json({ error: "invalid JSON body" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ error: "invalid JSON body" }, { status: 400 , headers: gate.headers });
   }
 
   const { client, hits } = body;
   if (!client?.name) {
-    return NextResponse.json({ error: "client.name is required" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ error: "client.name is required" }, { status: 400 , headers: gate.headers });
   }
   if (!Array.isArray(hits) || hits.length === 0) {
-    return NextResponse.json({ error: "hits array is required and must not be empty" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ error: "hits array is required and must not be empty" }, { status: 400 , headers: gate.headers });
   }
 
   writeAuditEvent("analyst", "screening.smart-disambiguate", client.name);
@@ -142,7 +142,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (hits.length > 20) {
     return NextResponse.json(
       { error: `hits array exceeds maximum batch size of 20 (received ${hits.length}). Split into multiple requests.` },
-      { status: 400 },
+      { status: 400, headers: gate.headers }
     );
   }
   // Deterministic template — applied when no API key is set OR the LLM fails.
@@ -168,7 +168,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   });
 
   if (!apiKey) {
-    return NextResponse.json({ ok: true, ...buildTemplate(), degraded: true, degradedReason: "ANTHROPIC_API_KEY not configured — deterministic template used.", latencyMs: Date.now() - t0 }, { headers: gate.headers });
+    return NextResponse.json({ ok: true, ...buildTemplate(), degraded: true, degradedReason: "ANTHROPIC_API_KEY not configured — deterministic template used.", latencyMs: Date.now() - t0 , headers: gate.headers });
   }
 
   const sanitizedClient = {
@@ -219,10 +219,10 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (!Array.isArray(parsed.clarificationQuestions)) parsed.clarificationQuestions = [];
     if (!Array.isArray(parsed.escalationItems)) parsed.escalationItems = [];
 
-    return NextResponse.json({ ok: true, ...parsed, latencyMs: Date.now() - t0 }, { headers: gate.headers });
+    return NextResponse.json({ ok: true, ...parsed, latencyMs: Date.now() - t0 , headers: gate.headers });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     writeAuditEvent("analyst", "screening.smart-disambiguate.error", `${client.name} — ${msg}`);
-    return NextResponse.json({ ...buildTemplate(), degraded: true, degradedReason: `LLM call failed: ${msg}`, latencyMs: Date.now() - t0 }, { headers: gate.headers });
+    return NextResponse.json({ ...buildTemplate(), degraded: true, degradedReason: `LLM call failed: ${msg}`, latencyMs: Date.now() - t0 , headers: gate.headers });
   }
 }

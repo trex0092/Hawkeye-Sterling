@@ -107,7 +107,7 @@ Return ONLY valid JSON:
     const result = JSON.parse(raw.match(/\{[\s\S]*\}/)?.[0] ?? "{}");
     if (!Array.isArray(result.customerMatches)) result.customerMatches = [];
     if (!Array.isArray(result.proactiveActions)) result.proactiveActions = [];
-    return NextResponse.json({ ok: true, ...result, customerCount: caseDigests.length }, { headers: gate.headers });
+    return NextResponse.json({ ok: true, ...result, customerCount: caseDigests.length , headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "delta analysis failed — retry" }, { status: 500, headers: gate.headers });
   }

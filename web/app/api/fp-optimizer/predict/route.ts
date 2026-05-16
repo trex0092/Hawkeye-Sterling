@@ -108,13 +108,13 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as PredictRequest;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   if (!body.subject || !body.listName || body.matchScore === undefined) {
     return NextResponse.json(
       { ok: false, error: "subject, listName, and matchScore are required" },
-      { status: 400 }
+      { status: 400, headers: gate.headers }
     );
   }
 

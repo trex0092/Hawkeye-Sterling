@@ -51,7 +51,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as CryptoThreatBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   writeAuditEvent(
@@ -62,7 +62,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
-    return NextResponse.json({ ok: false, error: "crypto-threat temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "crypto-threat temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 
   const userContent = [
@@ -116,8 +116,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (!Array.isArray(result.typologies)) result.typologies = [];
     if (!Array.isArray(result.requiredActions)) result.requiredActions = [];
   } catch {
-    return NextResponse.json({ ok: false, error: "crypto-threat temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "crypto-threat temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 
-  return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
+  return NextResponse.json({ ok: true, ...result , headers: gate.headers });
 }

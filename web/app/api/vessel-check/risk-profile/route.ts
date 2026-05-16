@@ -70,18 +70,18 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   if (!body.vesselName && !body.imo) {
     return NextResponse.json(
       { ok: false, error: "vesselName or imo is required" },
-      { status: 400 }
+      { status: 400, headers: gate.headers }
     );
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "vessel-check/risk-profile temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "vessel-check/risk-profile temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
     const client = getAnthropicClient(apiKey, 22_000);
@@ -145,6 +145,6 @@ Generate a comprehensive vessel risk profile including AIS pattern anomaly analy
     if (!Array.isArray(result.anomalies)) result.anomalies = [];
     return NextResponse.json(result, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "vessel-check/risk-profile temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "vessel-check/risk-profile temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

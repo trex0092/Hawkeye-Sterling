@@ -38,7 +38,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as GleifBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400, headers: CORS });
+    return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400, headers: { ...gate.headers, ...CORS } });
   }
 
   // Name search mode
@@ -74,7 +74,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   // LEI lookup mode
   if (!body.lei?.trim()) {
-    return NextResponse.json({ ok: false, error: "lei or query is required" }, { status: 400, headers: CORS });
+    return NextResponse.json({ ok: false, error: "lei or query is required" }, { status: 400, headers: { ...gate.headers, ...CORS } });
   }
 
   let result: Awaited<ReturnType<typeof lookupLei>>;

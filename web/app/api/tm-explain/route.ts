@@ -46,21 +46,21 @@ export async function POST(req: Request): Promise<NextResponse> {
       dispositionReason: "Manual review required",
       regulatoryBasis: "",
       typologies: [],
-    });
+    }, { headers: gate.headers });
   }
 
   let body: Body;
   try {
     body = (await req.json()) as Body;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const t = body?.transaction;
   if (!t?.id || !t?.ref) {
     return NextResponse.json(
       { ok: false, error: "transaction.id and ref are required" },
-      { status: 400 },
+      { status: 400, headers: gate.headers }
     );
   }
 
@@ -113,7 +113,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       dispositionReason: "Manual review required",
       regulatoryBasis: "",
       typologies: [],
-    });
+    }, { headers: gate.headers });
   }
 
   try {
@@ -127,5 +127,5 @@ export async function POST(req: Request): Promise<NextResponse> {
     dispositionReason: result.dispositionReason,
     regulatoryBasis: result.regulatoryBasis,
     typologies: result.typologies,
-  });
+  }, { headers: gate.headers });
 }

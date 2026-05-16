@@ -103,7 +103,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const {
@@ -126,7 +126,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   } = body;
 
   if (!customerName || !exitReason) {
-    return NextResponse.json({ error: "customerName and exitReason are required" }, { status: 400 });
+    return NextResponse.json({ error: "customerName and exitReason are required" }, { status: 400 , headers: gate.headers });
   }
 
   const tippingOffRisk = strFiled;
@@ -216,11 +216,11 @@ Generate the complete letter text only — no commentary, no additional explanat
       generatedAt: new Date().toISOString(),
     };
 
-    return NextResponse.json(result);
+    return NextResponse.json(result, { headers: gate.headers });
   } catch (err) {
     return NextResponse.json(
       { error: "Letter generation failed", detail: err instanceof Error ? err.message : String(err) },
-      { status: 500 }
+      { status: 500, headers: gate.headers }
     );
   }
 }

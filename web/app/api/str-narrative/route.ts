@@ -83,14 +83,14 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
   if (!body.subjectName?.trim() || !body.activityDescription?.trim()) {
-    return NextResponse.json({ ok: false, error: "subjectName and activityDescription required" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "subjectName and activityDescription required" }, { status: 400 , headers: gate.headers });
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "str-narrative temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "str-narrative temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   const QUALITY_THRESHOLD = 80;
   const MAX_ITERATIONS = 3;
@@ -179,7 +179,7 @@ Produce a revised narrative that scores ≥${QUALITY_THRESHOLD}/100.`;
     }
 
     if (!best) return NextResponse.json({ ok: false, error: "str-narrative temporarily unavailable - please retry." }, { status: 503, headers: gate.headers });
-    return NextResponse.json({ ok: true, ...best, iterations }, { headers: gate.headers });
+    return NextResponse.json({ ok: true, ...best, iterations , headers: gate.headers });
   } catch (err) {
     console.error("[str-narrative] failed:", err instanceof Error ? err.message : err);
     return NextResponse.json({ ok: false, error: "str-narrative temporarily unavailable - please retry." }, { status: 503, headers: gate.headers });

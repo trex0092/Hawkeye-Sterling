@@ -108,12 +108,12 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
-  if (!body.transactions?.trim()) return NextResponse.json({ ok: false, error: "transactions required" }, { status: 400 , headers: gate.headers});
+  if (!body.transactions?.trim()) return NextResponse.json({ ok: false, error: "transactions required" }, { status: 400 , headers: gate.headers });
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "layering-detector temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "layering-detector temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
     const client = getAnthropicClient(apiKey, 55_000);
@@ -145,8 +145,8 @@ Analyse for money laundering placement, layering, and integration stages. Return
     if (!Array.isArray(result.integrationIndicators)) result.integrationIndicators = [];
     if (!Array.isArray(result.indicators)) result.indicators = [];
     if (!Array.isArray(result.requiredActions)) result.requiredActions = [];
-    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
+    return NextResponse.json({ ok: true, ...result , headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "layering-detector temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "layering-detector temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

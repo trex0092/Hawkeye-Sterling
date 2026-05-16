@@ -97,12 +97,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const { metrics } = body;
   if (!metrics || !metrics.periodStart || !metrics.periodEnd) {
-    return NextResponse.json({ error: "metrics with periodStart and periodEnd are required" }, { status: 400 });
+    return NextResponse.json({ error: "metrics with periodStart and periodEnd are required" }, { status: 400 , headers: gate.headers });
   }
 
   const strRate = metrics.totalTransactions && metrics.strsFiled
@@ -225,11 +225,11 @@ Ensure each field is a complete, well-written paragraph or set of bullet points 
       generatedAt: new Date().toISOString(),
     };
 
-    return NextResponse.json(result);
+    return NextResponse.json(result, { headers: gate.headers });
   } catch (err) {
     return NextResponse.json(
       { error: "Report generation failed", detail: err instanceof Error ? err.message : String(err) },
-      { status: 500 }
+      { status: 500, headers: gate.headers }
     );
   }
 }

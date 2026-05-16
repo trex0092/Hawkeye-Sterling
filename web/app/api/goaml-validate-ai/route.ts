@@ -46,11 +46,11 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as ValidateBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   if (!body.narrative?.trim()) {
-    return NextResponse.json({ ok: false, error: "narrative is required" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "narrative is required" }, { status: 400 , headers: gate.headers });
   }
   if (body.narrative.length > 10_000) {
     return NextResponse.json({ ok: false, error: "narrative exceeds 10,000-character limit" }, { status: 400, headers: gate.headers });
@@ -64,7 +64,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
-    return NextResponse.json({ ok: false, error: "goaml-validate-ai temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "goaml-validate-ai temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 
   const userContent = [
@@ -110,8 +110,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (!Array.isArray(result.suggestions)) result.suggestions = [];
     if (!Array.isArray(result.fatalIssues)) result.fatalIssues = [];
   } catch {
-    return NextResponse.json({ ok: false, error: "goaml-validate-ai temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "goaml-validate-ai temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 
-  return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
+  return NextResponse.json({ ok: true, ...result , headers: gate.headers });
 }

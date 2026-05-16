@@ -41,15 +41,15 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as FtmExportBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400, headers: CORS });
+    return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400, headers: { ...gate.headers, ...CORS } });
   }
 
   if (!Array.isArray(body.entries) || body.entries.length === 0) {
-    return NextResponse.json({ ok: false, error: "entries must be a non-empty array" }, { status: 400, headers: CORS });
+    return NextResponse.json({ ok: false, error: "entries must be a non-empty array" }, { status: 400, headers: { ...gate.headers, ...CORS } });
   }
 
   if (body.entries.length > 10_000) {
-    return NextResponse.json({ ok: false, error: "max 10,000 entries per export" }, { status: 400, headers: CORS });
+    return NextResponse.json({ ok: false, error: "max 10,000 entries per export" }, { status: 400, headers: { ...gate.headers, ...CORS } });
   }
 
   const ndjson = entriesToFtmStream(body.entries, body.includeSanctions ?? true);

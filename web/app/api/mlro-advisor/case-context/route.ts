@@ -31,14 +31,14 @@ export async function POST(req: Request): Promise<NextResponse> {
       contextBlock: "Case context unavailable — API key not configured",
       caseCount: 0,
       priorityIds: [],
-    });
+    }, { headers: gate.headers });
   }
 
   let body: Body;
   try {
     body = (await req.json()) as Body;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const cases = body?.cases ?? [];
@@ -49,7 +49,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       contextBlock: "No open cases.",
       caseCount: 0,
       priorityIds: [],
-    });
+    }, { headers: gate.headers });
   }
 
   const casesSummary = cases
@@ -107,5 +107,5 @@ export async function POST(req: Request): Promise<NextResponse> {
     contextBlock,
     caseCount: cases.length,
     priorityIds,
-  });
+  }, { headers: gate.headers });
 }

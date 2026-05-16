@@ -24,25 +24,25 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const { userId, newRole, reason, assignedBy } = body;
   if (!userId || !newRole || !reason || !assignedBy) {
-    return NextResponse.json({ ok: false, error: "userId, newRole, reason and assignedBy are required" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "userId, newRole, reason and assignedBy are required" }, { status: 400 , headers: gate.headers });
   }
 
   if (!(newRole in ROLE_MODULES)) {
     return NextResponse.json(
       { ok: false, error: `newRole must be one of: ${Object.keys(ROLE_MODULES).join(", ")}` },
-      { status: 400 },
+      { status: 400, headers: gate.headers }
     );
   }
 
   const users = await loadUsers();
   const userIdx = users.findIndex((u) => u.id === userId);
   if (userIdx === -1) {
-    return NextResponse.json({ ok: false, error: "User not found" }, { status: 404 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "User not found" }, { status: 404 , headers: gate.headers });
   }
 
   const user = users[userIdx]!;
@@ -104,5 +104,5 @@ export async function POST(req: Request) {
     user: updatedUsers[userIdx],
     logEntry,
     impactAssessment,
-  });
+  }, { headers: gate.headers });
 }

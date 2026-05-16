@@ -263,7 +263,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     const query = (body.query ?? "").trim();
     const subjects = body.subjects ?? [];
     if (!query) {
-      return NextResponse.json({ ok: false, error: "query required" }, { status: 400 , headers: gate.headers});
+      return NextResponse.json({ ok: false, error: "query required" }, { status: 400 , headers: gate.headers });
     }
 
     const { filters, interpretation, confidence, reasoning } = await parseQuery(query);
@@ -288,7 +288,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       reasoning,
       matchCount: matchIds.length,
       auditLogged: true,
-    });
+    }, { headers: gate.headers });
   } catch (err) {
     console.error(
       "[hawkeye] cases/nl-search: AI parse failed — returning empty matchIds " +
@@ -305,6 +305,6 @@ export async function POST(req: Request): Promise<NextResponse> {
       matchCount: 0,
       auditLogged: false,
       fallback: true,
-    });
+    }, { headers: gate.headers });
   }
 }

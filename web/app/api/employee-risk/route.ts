@@ -66,12 +66,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as RequestBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers });
     }
 
   const { employees, today } = body;
   if (!Array.isArray(employees)) {
-    return NextResponse.json({ ok: false, error: "employees array is required" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "employees array is required" }, { status: 400 , headers: gate.headers });
   }
 
   try { writeAuditEvent("mlro", "employees.ai-risk-scan", "employee-portfolio"); }
@@ -79,7 +79,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
-    return NextResponse.json({ ok: false, error: "employee-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "employee-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 
   try {
@@ -106,8 +106,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (!Array.isArray(parsed.highRiskNationalities)) parsed.highRiskNationalities = [];
     if (!Array.isArray(parsed.multiEntityRisk)) parsed.multiEntityRisk = [];
     if (!Array.isArray(parsed.immediateActions)) parsed.immediateActions = [];
-    return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
+    return NextResponse.json({ ok: true, ...parsed , headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "employee-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "employee-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }
