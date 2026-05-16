@@ -75,7 +75,10 @@ async function classifyTransaction(
   // Strip markdown fences before parsing
   const stripped = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
   try {
-    return JSON.parse(stripped) as TypologyResult;
+    const result = JSON.parse(stripped) as TypologyResult;
+    // Normalize — LLM occasionally returns null instead of [].
+    if (!Array.isArray(result.typologies)) result.typologies = [];
+    return result;
   } catch {
     return null;
   }

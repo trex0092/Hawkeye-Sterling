@@ -106,6 +106,9 @@ export async function POST(req: Request): Promise<NextResponse> {
     const text = res.content[0]?.type === "text" ? res.content[0].text : "";
     const stripped = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
     result = JSON.parse(stripped) as ValidationResult;
+    if (!Array.isArray(result.missingElements)) result.missingElements = [];
+    if (!Array.isArray(result.suggestions)) result.suggestions = [];
+    if (!Array.isArray(result.fatalIssues)) result.fatalIssues = [];
   } catch {
     return NextResponse.json({ ok: false, error: "goaml-validate-ai temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
   }

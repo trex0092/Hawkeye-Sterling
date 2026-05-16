@@ -157,6 +157,10 @@ Conduct a source of wealth reconciliation analysis. Return complete SowCalculato
     });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as SowCalculatorResult;
+    if (!Array.isArray(result.incomeStreams)) result.incomeStreams = [];
+    if (!Array.isArray(result.assetsSummary)) result.assetsSummary = [];
+    if (!Array.isArray(result.redFlags)) result.redFlags = [];
+    if (!Array.isArray(result.requiredDocumentation)) result.requiredDocumentation = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "sow-calculator temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});

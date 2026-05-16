@@ -98,6 +98,12 @@ For each country provide complete risk scoring, FATF status, sanctions profile (
 
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "[]";
     const results = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as CountryRiskResult[];
+    // Normalize arrays in each country result — LLM may return null instead of [].
+    for (const r of Array.isArray(results) ? results : []) {
+      if (!Array.isArray(r.keyRisks)) r.keyRisks = [];
+      if (!Array.isArray(r.recentDevelopments)) r.recentDevelopments = [];
+      if (!Array.isArray(r.regulatoryObligations)) r.regulatoryObligations = [];
+    }
     return NextResponse.json({
       ok: true,
       countries: results,

@@ -381,6 +381,8 @@ Find the most relevant AML/CFT typologies matching this search. Return comprehen
     const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
     const jsonStr = jsonMatch ? jsonMatch[0] : cleaned;
     const result = JSON.parse(jsonStr) as TypologySearchResponse;
+    if (!Array.isArray(result.results)) result.results = [];
+    if (!Array.isArray(result.relatedCategories)) result.relatedCategories = [];
     return NextResponse.json(result, { headers: gate.headers });
   } catch (err) {
     console.warn("[typology-library/search] LLM failed:", err instanceof Error ? err.message : err);

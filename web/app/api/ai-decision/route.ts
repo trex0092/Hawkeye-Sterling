@@ -531,8 +531,8 @@ export async function POST(req: Request) {
       confidence = parsed.confidence ?? 70;
       urgency = (parsed.urgency as "low" | "medium" | "high" | "critical") ?? "medium";
       rationale = parsed.rationale ?? "Decision based on risk profile analysis.";
-      keyFactors = parsed.keyFactors ?? [];
-      nextSteps = parsed.nextSteps ?? [];
+      keyFactors = Array.isArray(parsed.keyFactors) ? parsed.keyFactors : [];
+      nextSteps = Array.isArray(parsed.nextSteps) ? parsed.nextSteps : [];
       regulatoryBasis = parsed.regulatoryBasis ?? "FDL 10/2025";
     } catch {
       // Fallback to rule-based

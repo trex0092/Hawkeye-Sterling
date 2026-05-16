@@ -175,6 +175,10 @@ Map this entity network and identify ML risk connections. Return complete Networ
       });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as NetworkMapResult;
+    // Normalize arrays — LLM occasionally returns null/undefined instead of [].
+    if (!Array.isArray(result.nodes)) result.nodes = [];
+    if (!Array.isArray(result.connections)) result.connections = [];
+    if (!Array.isArray(result.keyHubs)) result.keyHubs = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch (err) {
     console.error("[network-mapper] LLM call failed:", err instanceof Error ? err.message : String(err));

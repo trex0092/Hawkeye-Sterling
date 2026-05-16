@@ -418,6 +418,10 @@ Provide a complete country risk intelligence assessment covering AML/CFT risk, F
         { status: 502 },
       );
     }
+    // Normalize arrays — LLM occasionally returns null instead of [].
+    if (!Array.isArray(result.keyRisks)) result.keyRisks = [];
+    if (!Array.isArray(result.recentDevelopments)) result.recentDevelopments = [];
+    if (!Array.isArray(result.regulatoryObligations)) result.regulatoryObligations = [];
     const latencyMs = Date.now() - t0;
     if (latencyMs > 5000) console.warn(`[country-risk] slow response latencyMs=${latencyMs}`);
     return NextResponse.json({ ...result, latencyMs }, { headers: gate.headers });

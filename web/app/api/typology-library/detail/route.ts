@@ -224,6 +224,11 @@ export async function POST(req: Request) {
 
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as TypologyDetailResult;
+    if (!Array.isArray(result.mlProcess)) result.mlProcess = [];
+    if (!Array.isArray(result.detectionTechniques)) result.detectionTechniques = [];
+    if (!Array.isArray(result.regulatoryGuidance)) result.regulatoryGuidance = [];
+    if (!Array.isArray(result.relatedTypologies)) result.relatedTypologies = [];
+    if (!Array.isArray(result.preventionMeasures)) result.preventionMeasures = [];
     return NextResponse.json(result, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "typology-library/detail temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});

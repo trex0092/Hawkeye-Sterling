@@ -111,6 +111,16 @@ export async function POST(req: Request): Promise<NextResponse> {
 
     const parsed = JSON.parse(stripped) as CddAdequacyResponse;
 
+    // Normalize assessment arrays — LLM occasionally returns null or a
+    // plain string instead of an array, which causes .map() crashes in the UI.
+    if (Array.isArray(parsed.assessments)) {
+      for (const a of parsed.assessments) {
+        if (!Array.isArray(a.gaps)) a.gaps = [];
+        if (!Array.isArray(a.recommendedActions)) a.recommendedActions = [];
+      }
+    }
+    if (!Array.isArray(parsed.criticalSubjects)) parsed.criticalSubjects = [];
+
     writeAuditEvent(
       "mlro",
       "cdd.ai-adequacy-check",

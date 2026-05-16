@@ -297,6 +297,8 @@ Perform a comprehensive PEP risk assessment grounded in the PEP database data ab
 
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as PepProfileResult;
+    if (!Array.isArray(result.networkMap)) result.networkMap = [];
+    if (!Array.isArray(result.requiredMeasures)) result.requiredMeasures = [];
     const latencyMs = Date.now() - _handlerStart;
     if (latencyMs > 5000) console.warn(`[pep_profile] latencyMs=${latencyMs} exceeds 5000ms`);
     return NextResponse.json(

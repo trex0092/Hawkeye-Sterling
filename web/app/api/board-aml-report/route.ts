@@ -159,6 +159,11 @@ Generate a comprehensive quarterly Board AML/CFT report. Return complete BoardAm
     });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as BoardAmlReportResult;
+    if (!Array.isArray(result.keyMetrics)) result.keyMetrics = [];
+    if (!Array.isArray(result.regulatoryHighlights)) result.regulatoryHighlights = [];
+    if (!Array.isArray(result.openAuditFindings)) result.openAuditFindings = [];
+    if (!Array.isArray(result.upcomingObligations)) result.upcomingObligations = [];
+    if (!Array.isArray(result.boardRecommendations)) result.boardRecommendations = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "board-aml-report temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});

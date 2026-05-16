@@ -201,6 +201,9 @@ Analyse these decisions to identify false positive patterns, suggest threshold o
 
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as FpAnalysisResult;
+    if (!Array.isArray(result.patterns)) result.patterns = [];
+    if (!Array.isArray(result.thresholdSuggestions)) result.thresholdSuggestions = [];
+    if (!Array.isArray(result.systemicIssues)) result.systemicIssues = [];
     return NextResponse.json(result, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "fp-optimizer/analyze temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});

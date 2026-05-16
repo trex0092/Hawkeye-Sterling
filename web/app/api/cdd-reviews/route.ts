@@ -89,6 +89,30 @@ export async function POST(req: Request): Promise<NextResponse> {
       { status: 400 },
     );
   }
+  if (body.outcome !== undefined && !["adequate", "marginal", "inadequate"].includes(body.outcome as string)) {
+    return NextResponse.json(
+      { ok: false, error: "outcome must be adequate | marginal | inadequate" },
+      { status: 400 },
+    );
+  }
+  if (body.adequacyScore !== undefined && (typeof body.adequacyScore !== "number" || body.adequacyScore < 0 || body.adequacyScore > 100)) {
+    return NextResponse.json(
+      { ok: false, error: "adequacyScore must be a number 0–100" },
+      { status: 400 },
+    );
+  }
+  if (body.gaps !== undefined && (!Array.isArray(body.gaps) || !(body.gaps as unknown[]).every((g) => typeof g === "string"))) {
+    return NextResponse.json(
+      { ok: false, error: "gaps must be an array of strings" },
+      { status: 400 },
+    );
+  }
+  if (body.recommendedActions !== undefined && (!Array.isArray(body.recommendedActions) || !(body.recommendedActions as unknown[]).every((a) => typeof a === "string"))) {
+    return NextResponse.json(
+      { ok: false, error: "recommendedActions must be an array of strings" },
+      { status: 400 },
+    );
+  }
 
   const nextReviewDate = computeNextReviewDate(body.tier, body.reviewDate);
   const daysOverdue = computeDaysOverdue(nextReviewDate);

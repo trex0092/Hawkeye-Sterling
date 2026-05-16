@@ -214,6 +214,11 @@ export async function POST(req: Request): Promise<NextResponse> {
 
     const parsed = JSON.parse(stripped) as DisambiguationResult;
 
+    // Normalize arrays — LLM occasionally returns null instead of [].
+    if (!Array.isArray(parsed.hits)) parsed.hits = [];
+    if (!Array.isArray(parsed.clarificationQuestions)) parsed.clarificationQuestions = [];
+    if (!Array.isArray(parsed.escalationItems)) parsed.escalationItems = [];
+
     return NextResponse.json({ ok: true, ...parsed, latencyMs: Date.now() - t0 }, { headers: gate.headers });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);

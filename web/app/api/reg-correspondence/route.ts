@@ -208,7 +208,9 @@ Draft a formal, professional regulatory letter.`,
 
   const raw = response.content[0]?.type === "text" ? (response.content[0] as { type: "text"; text: string }).text : "{}";
   try {
-    const letter = JSON.parse(raw.match(/\{[\s\S]*\}/)?.[0] ?? "{}");
+    const letter = JSON.parse(raw.match(/\{[\s\S]*\}/)?.[0] ?? "{}") as Record<string, unknown>;
+    if (!Array.isArray(letter["bodyParagraphs"])) letter["bodyParagraphs"] = [];
+    if (!Array.isArray(letter["attachmentsList"])) letter["attachmentsList"] = [];
     return NextResponse.json({
       ok: true,
       correspondenceType: body.correspondenceType,

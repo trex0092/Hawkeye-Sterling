@@ -87,9 +87,11 @@ export interface NewsArticle {
   snippet?: string;
   sentiment?: number;         // -1..+1 when provider supplies it
   language?: string;
+  relevanceScore?: number;    // 0–1 relevance from provider (tavily, exa)
 }
 
 export interface NewsAdapter {
+  source?: string;
   isAvailable(): boolean;
   search(subjectName: string, opts?: { limit?: number; since?: string }): Promise<NewsArticle[]>;
 }
@@ -2982,7 +2984,7 @@ const tavilyAdapter = (): NewsAdapter => {
           .map((r) => ({
             title: r.title!,
             url: r.url!,
-            publishedAt: r.published_date,
+            publishedAt: r.published_date ?? new Date().toISOString(),
             snippet: r.content?.slice(0, 300),
             source: "tavily",
             outlet: new URL(r.url!).hostname,
@@ -3029,7 +3031,7 @@ const exaAdapter = (): NewsAdapter => {
           .map((r) => ({
             title: r.title!,
             url: r.url!,
-            publishedAt: r.publishedDate,
+            publishedAt: r.publishedDate ?? new Date().toISOString(),
             snippet: r.text?.slice(0, 300),
             source: "exa",
             outlet: (() => { try { return new URL(r.url!).hostname; } catch { return "exa"; } })(),
@@ -3081,6 +3083,7 @@ const perplexityAdapter = (): NewsAdapter => {
         return citations.slice(0, 10).map((url) => ({
           title: `Perplexity — ${name} adverse media`,
           url,
+          publishedAt: new Date().toISOString(),
           snippet: content.slice(0, 300),
           source: "perplexity",
           outlet: (() => { try { return new URL(url).hostname; } catch { return "perplexity"; } })(),
