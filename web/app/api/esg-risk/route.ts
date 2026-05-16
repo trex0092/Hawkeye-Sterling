@@ -4,6 +4,7 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
+import { enforce } from "@/lib/server/enforce";
 export type EsgRating = "AAA" | "AA" | "A" | "BBB" | "BB" | "B" | "CCC";
 export type MlRiskLevel = "low" | "medium" | "high";
 
@@ -128,6 +129,9 @@ const FALLBACK: EsgRiskResult = {
 };
 
 export async function POST(req: Request) {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
+
   let body: {
     entity?: string;
     sector?: string;

@@ -84,7 +84,10 @@ const PROVIDER_CATALOG: ProviderStatus[] = [
   { id: "mediacloud", category: "news", tier: "free", configured: false, envVars: ["MEDIACLOUD_API_KEY"], signupUrl: "https://mediacloud.org/" },
   { id: "stocknews", category: "news", tier: "free", configured: false, envVars: ["STOCKNEWS_API_KEY"], signupUrl: "https://stocknewsapi.com/" },
 
-  // ── Tier 1 — free corporate registries ──────────────────────────
+  // ── AI-native search adapters (adverse media) ───────────────────
+  { id: "tavily", category: "news", tier: "free", configured: false, envVars: ["TAVILY_API_KEY"], signupUrl: "https://app.tavily.com/" },
+  { id: "exa", category: "news", tier: "free", configured: false, envVars: ["EXA_API_KEY"], signupUrl: "https://exa.ai/" },
+  { id: "perplexity", category: "news", tier: "free", configured: false, envVars: ["PERPLEXITY_API_KEY"], signupUrl: "https://www.perplexity.ai/settings/api" },
   { id: "companies-house", category: "country-registry", tier: "free", configured: false, envVars: ["COMPANIES_HOUSE_API_KEY"], signupUrl: "https://developer-specs.company-information.service.gov.uk/" },
   { id: "opencorporates", category: "registry", tier: "free", configured: false, envVars: ["OPENCORPORATES_API_KEY"], signupUrl: "https://opencorporates.com/api_accounts/new" },
   { id: "fca-register", category: "country-registry", tier: "free", configured: false, envVars: ["FCA_API_KEY", "FCA_API_EMAIL"], signupUrl: "https://register.fca.org.uk/Services/V0.1/Documentation" },

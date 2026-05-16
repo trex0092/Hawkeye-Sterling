@@ -57,6 +57,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   const subject = body.subject.trim();
+  const routeStartMs = Date.now();
 
   // Bound the upstream call so a hung Taranis can't burn the whole 30s
   // function budget. Any timeout or thrown error short-circuits to the
@@ -86,7 +87,9 @@ export async function POST(req: Request): Promise<NextResponse> {
     // and return a properly-typed degraded verdict so the caller never sees a
     // silent CLEAR or an unhandled 500.
     try {
-      const verdict = await liveAdverseMedia(subject);
+      const elapsedMs = Date.now() - routeStartMs;
+      const remainingBudgetMs = Math.max(5_000, 27_000 - elapsedMs); // 27s safety buffer (30s maxDuration - 3s)
+      const verdict = await liveAdverseMedia(subject, remainingBudgetMs);
       return NextResponse.json(
         {
           ok: true,
@@ -170,7 +173,7 @@ function _parseSeen(s: string | undefined): string {
 // Replaces the old claudeAdverseMedia() that asked Claude from training memory.
 // Now: fetch REAL live articles from GDELT, then have Claude analyse those
 // specific articles — completely eliminating the knowledge-cutoff blind spot.
-async function liveAdverseMedia(subject: string) {
+async function liveAdverseMedia(subject: string, budgetMs = 20_000) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY not configured");
 
@@ -232,7 +235,7 @@ async function liveAdverseMedia(subject: string) {
           .join("\n")
       : "No articles found in GDELT 10-year corpus for this subject.";
 
-  const client = getAnthropicClient(apiKey, 55_000);
+  const client = getAnthropicClient(apiKey, Math.min(budgetMs - 2_000, 20_000));
   const response = await client.messages.create({
     model: "claude-haiku-4-5-20251001",
     max_tokens: 3000,
