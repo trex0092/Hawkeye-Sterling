@@ -111,6 +111,12 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
       "diamond smuggling", "diamond traffick", "gemstone smuggling",
       "illicit gold", "contraband gold", "illegal gold", "gold dealer arrested",
       "smuggling ring", "illicit trade", "contraband", "smuggled gold",
+      // Factual descriptions of gold-transport offences (no "smuggling" word)
+      "gold bars", "gold bar", "gold bullion", "gold bricks", "gold nugget",
+      "pounds of gold", "kilos of gold", "kilograms of gold", "ounces of gold",
+      "gold in luggage", "gold in their luggage", "gold in his luggage",
+      "undeclared gold", "unreported gold", "undisclosed gold",
+      "customs with gold", "airport with gold", "border with gold",
     ],
   },
   {
@@ -174,6 +180,12 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
       "litigate", "litigation",
       "murder", "prosecute", "prosecuted", "prosecution",
       "theft", "unlawful", "verdict",
+      // Common enforcement synonyms missing from prior waves
+      "detained", "detain", "apprehended", "apprehend",
+      "charged with", "indicted", "indictment", "sentenced",
+      "seized", "confiscated", "forfeited", "forfeiture",
+      "searched", "raided", "raid", "under investigation",
+      "suspect", "suspect in", "fugitive", "warrant",
     ],
   },
   {
