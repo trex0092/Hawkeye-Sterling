@@ -142,6 +142,11 @@ Prepare a comprehensive inter-agency referral package. Return complete InterAgen
       });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as InterAgencyReferralResult;
+    if (!result.referralPackage || typeof result.referralPackage !== "object") result.referralPackage = { coverLetter: "", factsSummary: "", evidenceList: [], legalBasis: "", requestedActions: [] };
+    if (!Array.isArray(result.referralPackage.evidenceList)) result.referralPackage.evidenceList = [];
+    if (!Array.isArray(result.referralPackage.requestedActions)) result.referralPackage.requestedActions = [];
+    if (!Array.isArray(result.parallelNotifications)) result.parallelNotifications = [];
+    if (!Array.isArray(result.evidencePreservationSteps)) result.evidencePreservationSteps = [];
     return NextResponse.json({ ok: true, ...result });
   } catch {
     return NextResponse.json({ ok: false, error: "inter-agency-referral temporarily unavailable - please retry." }, { status: 503 });

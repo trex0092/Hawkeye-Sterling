@@ -94,6 +94,9 @@ export async function POST(req: Request): Promise<NextResponse> {
     const raw = (first?.type === "text" ? first.text : undefined) ?? "";
     const cleaned = raw.replace(/^```json?\s*/i, "").replace(/\s*```$/i, "").trim();
     const result = JSON.parse(cleaned) as STRNarrativeResult;
+    if (!Array.isArray(result.suspiciousBehaviours)) result.suspiciousBehaviours = [];
+    if (!Array.isArray(result.regulatoryBasis)) result.regulatoryBasis = [];
+    if (!Array.isArray(result.missingElements)) result.missingElements = [];
 
     try {
       writeAuditEvent("mlro", "playbook.str-narrative", `${body.playbookTitle} → ${result.recommendedDisposition} (${body.completedChecks.length} checks completed)`);

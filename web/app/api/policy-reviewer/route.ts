@@ -135,6 +135,10 @@ Review this AML policy for compliance with UAE FDL 10/2025. Return complete Poli
       });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as PolicyReviewResult;
+    if (!Array.isArray(result.missingProvisions)) result.missingProvisions = [];
+    if (!Array.isArray(result.outdatedReferences)) result.outdatedReferences = [];
+    if (!Array.isArray(result.strengths)) result.strengths = [];
+    if (!Array.isArray(result.recommendations)) result.recommendations = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "policy-reviewer temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});

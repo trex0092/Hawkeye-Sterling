@@ -128,6 +128,10 @@ Identify the relevant playbook chapters, red flags present, step-by-step recomme
 
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as ScenarioSimulateResult;
+    if (!Array.isArray(result.chapters)) result.chapters = [];
+    if (!Array.isArray(result.redFlags)) result.redFlags = [];
+    if (!Array.isArray(result.actions)) result.actions = [];
+    if (!Array.isArray(result.regulatoryRefs)) result.regulatoryRefs = [];
     return NextResponse.json(result, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "playbook/scenario-simulate temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});

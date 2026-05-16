@@ -168,9 +168,9 @@ Decide: close (no action) | monitor (ongoing CDD) | edd (enhanced due diligence)
     return NextResponse.json({
       ok: true,
       investigationSummary: s5["investigationSummary"] ?? `5-stage autonomous investigation completed for ${subjectName}.`,
-      keyFindings: s5["keyFindings"] ?? s3["redFlags"] ?? [],
+      keyFindings: Array.isArray(s5["keyFindings"]) ? s5["keyFindings"] : Array.isArray(s3["redFlags"]) ? s3["redFlags"] : [],
       riskAssessment: s5["riskAssessment"] ?? `Risk score ${riskScore}/100 in ${jurisdiction}.`,
-      recommendedActions: s5["recommendedActions"] ?? [],
+      recommendedActions: Array.isArray(s5["recommendedActions"]) ? s5["recommendedActions"] : [],
       decision: s5["decision"] ?? "monitor",
       rationale: s5["rationale"] ?? "",
       stages,

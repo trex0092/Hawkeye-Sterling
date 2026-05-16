@@ -93,6 +93,9 @@ export async function POST(req: Request): Promise<NextResponse> {
     const raw = (first?.type === "text" ? first.text : undefined) ?? "";
     const cleaned = raw.replace(/^```json?\s*/i, "").replace(/\s*```$/i, "").trim();
     const result = JSON.parse(cleaned) as GapResult;
+    if (!Array.isArray(result.criticalGaps)) result.criticalGaps = [];
+    if (!Array.isArray(result.regulatoryExposure)) result.regulatoryExposure = [];
+    if (!Array.isArray(result.priorityActions)) result.priorityActions = [];
 
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {

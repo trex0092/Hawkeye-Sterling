@@ -105,6 +105,9 @@ Respond ONLY with valid JSON — no markdown, no explanation:
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const cleaned = raw.replace(/```json\n?|\n?```/g, "").trim();
     const result = JSON.parse(cleaned) as TransactionAnalysis;
+    if (!Array.isArray(result.redFlags)) result.redFlags = [];
+    if (!Array.isArray(result.missingInformation)) result.missingInformation = [];
+    if (!Array.isArray(result.investigativeQuestions)) result.investigativeQuestions = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "transaction-narrative temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});

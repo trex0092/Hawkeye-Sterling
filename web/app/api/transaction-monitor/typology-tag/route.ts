@@ -141,7 +141,7 @@ ${JSON.stringify(transactions, null, 2)}`,
 
     // Merge AI tags back onto original transaction objects
     const tagMap = new Map(
-      (parsed.tagged ?? []).map((t) => [t.id, t]),
+      (Array.isArray(parsed.tagged) ? parsed.tagged : []).map((t) => [t.id, t]),
     );
 
     const tagged: TaggedTx[] = transactions.map((tx) => {

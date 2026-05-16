@@ -80,6 +80,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       );
     }
     results = JSON.parse(jsonMatch[0]) as TriageResult[];
+    if (!Array.isArray(results)) results = [];
   } catch {
     return NextResponse.json(
       { ok: false, error: "Regulatory triage unavailable — please retry. An empty list here is not a 'no items' finding." },

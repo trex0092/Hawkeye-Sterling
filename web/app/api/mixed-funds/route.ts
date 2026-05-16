@@ -87,6 +87,7 @@ export async function POST(req: Request) {
     if (!jsonMatch) return NextResponse.json({ ok: false, error: "mixed-funds temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
 
     const parsed = JSON.parse(jsonMatch[0]) as MixedFundsResult;
+    if (!Array.isArray(parsed.investigativeSteps)) parsed.investigativeSteps = [];
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "mixed-funds temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});

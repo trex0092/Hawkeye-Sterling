@@ -161,6 +161,11 @@ Generate comprehensive regulatory examination preparation materials for this top
       });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as RegExamResult;
+    if (!Array.isArray(result.likelyQuestions)) result.likelyQuestions = [];
+    else for (const q of result.likelyQuestions) { if (!Array.isArray(q.documentationRequired)) q.documentationRequired = []; }
+    if (!Array.isArray(result.commonFindings)) result.commonFindings = [];
+    if (!Array.isArray(result.bestPractices)) result.bestPractices = [];
+    if (!Array.isArray(result.preparationSteps)) result.preparationSteps = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "regulatory-exam-prep temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});

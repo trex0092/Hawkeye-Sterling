@@ -154,6 +154,11 @@ Conduct a comprehensive AML programme gap analysis. Return complete AmlProgramme
     });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as AmlProgrammeGapResult;
+    if (!Array.isArray(result.gaps)) result.gaps = [];
+    if (!Array.isArray(result.strengths)) result.strengths = [];
+    if (!Array.isArray(result.criticalFindings)) result.criticalFindings = [];
+    if (!Array.isArray(result.priorityRemediation)) result.priorityRemediation = [];
+    if (!Array.isArray(result.nextSteps)) result.nextSteps = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "aml-programme-gap temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});

@@ -144,6 +144,13 @@ Assess this employee for insider threat risk. Return complete InsiderThreatResul
       });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as InsiderThreatResult;
+    if (!Array.isArray(result.threatCategories)) result.threatCategories = [];
+    else for (const c of result.threatCategories) { if (!Array.isArray(c.indicators)) c.indicators = []; }
+    if (!Array.isArray(result.lifestyleRiskFlags)) result.lifestyleRiskFlags = [];
+    if (!Array.isArray(result.accessRiskFlags)) result.accessRiskFlags = [];
+    if (!Array.isArray(result.behaviouralIndicators)) result.behaviouralIndicators = [];
+    if (!Array.isArray(result.hrActions)) result.hrActions = [];
+    if (!Array.isArray(result.complianceActions)) result.complianceActions = [];
     return NextResponse.json({ ok: true, ...result });
   } catch {
     return NextResponse.json({ ok: false, error: "insider-threat-screen temporarily unavailable - please retry." }, { status: 503 });

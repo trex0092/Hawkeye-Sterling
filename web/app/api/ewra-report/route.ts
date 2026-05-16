@@ -224,7 +224,14 @@ Generate the board EWRA report.`,
     });
 
       const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
-      return JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as EwraBoardReportResult;
+      const parsed = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as EwraBoardReportResult;
+      if (!Array.isArray(parsed.keyFindings)) parsed.keyFindings = [];
+      if (!Array.isArray(parsed.dimensionNarratives)) parsed.dimensionNarratives = [];
+      else for (const d of parsed.dimensionNarratives) { if (!Array.isArray(d.controlGaps)) d.controlGaps = []; if (!Array.isArray(d.recommendedActions)) d.recommendedActions = []; }
+      if (!Array.isArray(parsed.boardRecommendations)) parsed.boardRecommendations = [];
+      if (!Array.isArray(parsed.nextSteps)) parsed.nextSteps = [];
+      if (!Array.isArray(parsed.immediateActions)) parsed.immediateActions = [];
+      return parsed;
     },
   });
 
