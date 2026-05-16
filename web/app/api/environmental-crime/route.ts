@@ -263,10 +263,10 @@ export async function POST(req: Request) {
   if (!apiKey) return NextResponse.json({ ok: false, error: "environmental-crime temporarily unavailable - please retry." }, { status: 503 });
 
   try {
-    const client = getAnthropicClient(apiKey, 55_000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 3000,
+      max_tokens: 800,
       system: [
         {
           type: "text",
@@ -294,6 +294,13 @@ Produce a fully weaponized environmental crime risk assessment covering all appl
     });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as EnvironmentalCrimeResult;
+    if (!Array.isArray(result.crimeCategories)) result.crimeCategories = [];
+    else for (const cat of result.crimeCategories) { if (!Array.isArray(cat.indicators)) cat.indicators = []; }
+    if (!Array.isArray(result.jurisdictionRisk)) result.jurisdictionRisk = [];
+    if (!Array.isArray(result.financialFlowPatterns)) result.financialFlowPatterns = [];
+    if (!Array.isArray(result.regulatoryObligations)) result.regulatoryObligations = [];
+    if (!Array.isArray(result.redFlags)) result.redFlags = [];
+    if (!Array.isArray(result.recommendedActions)) result.recommendedActions = [];
     return NextResponse.json(result);
   } catch {
     return NextResponse.json({ ok: false, error: "environmental-crime temporarily unavailable - please retry." }, { status: 503 });

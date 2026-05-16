@@ -57,7 +57,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as RequestBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers });
     }
 
   const { entity, registered, ubos } = body;
@@ -67,14 +67,14 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
-    return NextResponse.json({ ok: false, error: "ubo-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "ubo-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const res = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 2048,
+        max_tokens: 700,
         system:
           "You are a UAE AML/CFT specialist in beneficial ownership and UBO risk assessment under FDL 10/2025 Art.10 and Cabinet Decision 58/2020. Assess this UBO declaration for money laundering risk, PEP exposure, ownership structure concerns, and CDD gaps. Output JSON (ONLY valid JSON, no markdown).",
         messages: [
@@ -89,8 +89,13 @@ export async function POST(req: Request): Promise<NextResponse> {
     const text = res.content[0]?.type === "text" ? res.content[0].text : "";
     const stripped = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
     const parsed = JSON.parse(stripped) as UboRiskResult;
+    // Normalize arrays — LLM occasionally returns null/string instead of [].
+    if (!Array.isArray(parsed.pepRiskFlags)) parsed.pepRiskFlags = [];
+    if (!Array.isArray(parsed.nationalityRisks)) parsed.nationalityRisks = [];
+    if (!Array.isArray(parsed.cddGaps)) parsed.cddGaps = [];
+    if (!Array.isArray(parsed.recommendedActions)) parsed.recommendedActions = [];
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "ubo-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "ubo-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

@@ -109,18 +109,18 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
-  if (!body.documentTypes?.trim()) return NextResponse.json({ ok: false, error: "documentTypes required" }, { status: 400 , headers: gate.headers});
+  if (!body.documentTypes?.trim()) return NextResponse.json({ ok: false, error: "documentTypes required" }, { status: 400 , headers: gate.headers });
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "document-fraud temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "document-fraud temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 1400,
+        max_tokens: 700,
         system: `You are a UAE KYC/CDD document authenticity expert assessing identity documents and supporting KYC documents for fraud indicators under UAE FDL 10/2025.
 
 UAE document types and red flags:
@@ -172,8 +172,12 @@ Assess these documents for fraud indicators.`,
       });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as DocumentFraudResult;
+    if (!Array.isArray(result.documentAssessments)) result.documentAssessments = [];
+    else for (const d of result.documentAssessments) { if (!Array.isArray(d.redFlags)) d.redFlags = []; if (!Array.isArray(d.verificationRequired)) d.verificationRequired = []; }
+    if (!Array.isArray(result.requiredVerificationSteps)) result.requiredVerificationSteps = [];
+    if (!Array.isArray(result.externalVerificationSources)) result.externalVerificationSources = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "document-fraud temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "document-fraud temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

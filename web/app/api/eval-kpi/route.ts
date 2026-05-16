@@ -37,7 +37,7 @@ export async function GET(req: Request): Promise<Response> {
   try {
     const raw = await fs.readFile(SNAPSHOT_PATH, "utf8");
     const snap = JSON.parse(raw);
-    return NextResponse.json({ ok: true, snapshot: snap }, { headers: CORS });
+    return NextResponse.json({ ok: true, snapshot: snap }, { headers: { ...gate.headers, ...CORS } });
   } catch (err) {
     const code = (err as NodeJS.ErrnoException).code;
     if (code === "ENOENT") {
@@ -48,13 +48,13 @@ export async function GET(req: Request): Promise<Response> {
           message:
             "No KPI snapshot on disk yet. The nightly regression run produces this; expect ~24h after first deploy.",
         },
-        { headers: CORS },
+        { headers: { ...gate.headers, ...CORS } }
       );
     }
     console.error("[eval-kpi] failed to read snapshot", err);
     return NextResponse.json(
       { ok: true, snapshot: null, message: "KPI snapshot could not be read. It will be available after the nightly regression run." },
-      { headers: CORS },
+      { headers: { ...gate.headers, ...CORS } }
     );
   }
 }

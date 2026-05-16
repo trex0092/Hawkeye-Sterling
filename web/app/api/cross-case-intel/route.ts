@@ -63,11 +63,11 @@ export async function POST(req: Request): Promise<NextResponse> {
     }, { headers: gate.headers });
   }
 
-  const client = getAnthropicClient(apiKey, 55_000, "cross-case-intel");
+  const client = getAnthropicClient(apiKey, 4_500, "cross-case-intel");
 
   const response = await client.messages.create({
     model: "claude-sonnet-4-6",
-    max_tokens: 2048,
+    max_tokens: 700,
     system: `You are an AML network intelligence analyst specialising in cross-case pattern recognition for UAE DPMS (gold traders) under FDL 10/2025.
 
 Analyse the provided case digest array and identify:
@@ -114,10 +114,10 @@ Return ONLY valid JSON:
     return NextResponse.json({
       ok: true,
       caseCount: allCases.length,
-      patterns: result.patterns ?? [],
-      clusters: result.clusters ?? [],
+      patterns: Array.isArray(result.patterns) ? result.patterns : [],
+      clusters: Array.isArray(result.clusters) ? result.clusters : [],
       summary: result.summary ?? "",
-      organizedCrimeSignals: result.organizedCrimeSignals ?? [],
+      organizedCrimeSignals: Array.isArray(result.organizedCrimeSignals) ? result.organizedCrimeSignals : [],
     }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "pattern analysis failed — retry" }, { status: 500, headers: gate.headers });

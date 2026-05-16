@@ -68,15 +68,15 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   if (!body.subject || !body.sources || body.sources.length === 0) {
-    return NextResponse.json({ ok: false, error: "subject and sources are required" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "subject and sources are required" }, { status: 400 , headers: gate.headers });
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "osint/synthesize temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "osint/synthesize temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   const sourcesText = body.sources
     .map(
@@ -86,10 +86,10 @@ export async function POST(req: Request) {
     .join("\n\n");
 
   try {
-    const client = getAnthropicClient(apiKey, 55_000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 2048,
+      max_tokens: 700,
       system: [
         {
           type: "text",
@@ -136,8 +136,12 @@ Synthesise all source intelligence into a coherent subject profile. Identify cor
     const result = JSON.parse(
       raw.replace(/```json\n?|\n?```/g, "").trim()
     ) as OsintSynthesisResult;
+    if (!Array.isArray(result.corroborating)) result.corroborating = [];
+    if (!Array.isArray(result.contradicting)) result.contradicting = [];
+    if (!Array.isArray(result.intelligenceGaps)) result.intelligenceGaps = [];
+    if (!Array.isArray(result.recommendedActions)) result.recommendedActions = [];
     return NextResponse.json(result, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "osint/synthesize temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "osint/synthesize temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

@@ -108,13 +108,13 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as PredictRequest;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   if (!body.subject || !body.listName || body.matchScore === undefined) {
     return NextResponse.json(
       { ok: false, error: "subject, listName, and matchScore are required" },
-      { status: 400 }
+      { status: 400, headers: gate.headers }
     );
   }
 
@@ -122,10 +122,10 @@ export async function POST(req: Request) {
   if (!apiKey) return NextResponse.json(simplePredictFallback(body), { headers: gate.headers });
 
   try {
-    const client = getAnthropicClient(apiKey, 22_000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 1500,
+      max_tokens: 700,
       system: [
         {
           type: "text",
@@ -177,6 +177,9 @@ Predict whether this is a false positive and recommend the appropriate action.`,
 
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as PredictResult;
+    if (!Array.isArray(result.similarCases)) result.similarCases = [];
+    if (!Array.isArray(result.riskFactors)) result.riskFactors = [];
+    if (!Array.isArray(result.mitigatingFactors)) result.mitigatingFactors = [];
     return NextResponse.json(result, { headers: gate.headers });
   } catch {
     return NextResponse.json(simplePredictFallback(body), { headers: gate.headers });

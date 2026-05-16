@@ -107,18 +107,18 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
-  if (!body.pepName?.trim()) return NextResponse.json({ ok: false, error: "pepName required" }, { status: 400 , headers: gate.headers});
+  if (!body.pepName?.trim()) return NextResponse.json({ ok: false, error: "pepName required" }, { status: 400 , headers: gate.headers });
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "pep-edd-generator temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "pep-edd-generator temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 1800,
+        max_tokens: 700,
         system: `You are a UAE PEP (Politically Exposed Person) EDD specialist. Generate a comprehensive PEP enhanced due diligence package under UAE FDL 10/2025 Art.14(2) and FATF R.12.
 
 PEP categories (UAE definition per FDL 10/2025):
@@ -154,8 +154,12 @@ Generate a complete PEP EDD package for this individual.`,
       });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as PepEddResult;
+    if (!Array.isArray(result.eddQuestionnaire)) result.eddQuestionnaire = [];
+    if (!Array.isArray(result.requiredDocumentation)) result.requiredDocumentation = [];
+    if (!Array.isArray(result.ongoingMonitoringMeasures)) result.ongoingMonitoringMeasures = [];
+    if (!Array.isArray(result.screeningRequirements)) result.screeningRequirements = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "pep-edd-generator temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "pep-edd-generator temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

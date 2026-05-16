@@ -56,16 +56,16 @@ export async function POST(req: Request) {
   } catch {
     return NextResponse.json(
       { ok: false, error: "Invalid JSON" },
-      { status: 400 }
+      { status: 400, headers: gate.headers }
     );
   }
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "nominee-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "nominee-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 1500,
+        max_tokens: 700,
         system:
           "You are a UAE AML/CFT compliance expert specialising in nominee director and UBO obscuration risk. Assess nominee risk and UBO verification gaps under UAE FDL and FATF standards. Return valid JSON only matching the NomineeRiskResult interface.",
         messages: [
@@ -80,8 +80,10 @@ export async function POST(req: Request) {
     const result = JSON.parse(
       raw.replace(/```json\n?|\n?```/g, "").trim()
     ) as NomineeRiskResult;
+    if (!Array.isArray(result.nomineeIndicators)) result.nomineeIndicators = [];
+    if (!Array.isArray(result.verificationRequired)) result.verificationRequired = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "nominee-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "nominee-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

@@ -92,19 +92,19 @@ export async function POST(req: Request): Promise<NextResponse> {
   const apiKey = process.env["ANTHROPIC_API_KEY"];
 
   if (!apiKey) {
-    return NextResponse.json({ ok: false, error: "sanctions-indirect temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "sanctions-indirect temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 
   let body: Body;
   try {
     body = (await req.json()) as Body;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const subject = body?.subject?.trim();
   if (!subject) {
-    return NextResponse.json({ ok: false, error: "subject is required" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "subject is required" }, { status: 400 , headers: gate.headers });
   }
 
   const parts: string[] = [
@@ -129,10 +129,10 @@ export async function POST(req: Request): Promise<NextResponse> {
   let result: SanctionsNexusResult;
 
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const res = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 2048,
+        max_tokens: 700,
         system: SYSTEM_PROMPT,
         messages: [{ role: "user", content: userContent }],
       });
@@ -141,13 +141,17 @@ export async function POST(req: Request): Promise<NextResponse> {
     const cleaned = raw.replace(/^```json?\s*/i, "").replace(/\s*```$/i, "").trim();
     try {
       result = JSON.parse(cleaned) as SanctionsNexusResult;
+      if (!Array.isArray(result.directRisks)) result.directRisks = [];
+      if (!Array.isArray(result.indirectRisks)) result.indirectRisks = [];
+      if (!Array.isArray(result.jurisdictionalExposure)) result.jurisdictionalExposure = [];
+      if (!Array.isArray(result.requiredChecks)) result.requiredChecks = [];
     } catch {
       console.error("[sanctions-indirect] failed to parse AI response");
-      return NextResponse.json({ ok: false, error: "sanctions-indirect temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+      return NextResponse.json({ ok: false, error: "sanctions-indirect temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
     }
   } catch (err) {
     console.error("[sanctions-indirect] fetch failed", err);
-    return NextResponse.json({ ok: false, error: "sanctions-indirect temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "sanctions-indirect temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 
   try {

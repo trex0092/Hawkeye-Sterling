@@ -89,7 +89,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: true, jurisdiction: body.jurisdiction, ...staticProfile, aiEnriched: false }, { headers: gate.headers });
   }
 
-  const client = getAnthropicClient(apiKey, 20_000, "geo-intelligence");
+  const client = getAnthropicClient(apiKey, 4_500, "geo-intelligence");
   const response = await client.messages.create({
     model: "claude-haiku-4-5-20251001",
     max_tokens: 800,
@@ -113,7 +113,10 @@ Return ONLY valid JSON:
 
   const raw = response.content[0]?.type === "text" ? (response.content[0] as { type: "text"; text: string }).text : "{}";
   try {
-    const aiResult = JSON.parse(raw.match(/\{[\s\S]*\}/)?.[0] ?? "{}");
+    const aiResult = JSON.parse(raw.match(/\{[\s\S]*\}/)?.[0] ?? "{}") as Record<string, unknown>;
+    if (!Array.isArray(aiResult["keyRisks"])) aiResult["keyRisks"] = [];
+    if (!Array.isArray(aiResult["recentEnforcementActions"])) aiResult["recentEnforcementActions"] = [];
+    if (!Array.isArray(aiResult["uaeSpecificObligations"])) aiResult["uaeSpecificObligations"] = [];
     return NextResponse.json({
       ok: true,
       jurisdiction: body.jurisdiction,

@@ -113,7 +113,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   let triage: unknown[] = [];
 
   if (apiKey && filteredMatches.length > 0) {
-    const client = getAnthropicClient(apiKey, 22_000, "live-sanctions-sweep");
+    const client = getAnthropicClient(apiKey, 4_500, "live-sanctions-sweep");
     try {
       const res = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
@@ -142,7 +142,7 @@ Triage and recommend actions.`,
       const raw = res.content[0]?.type === "text" ? (res.content[0] as { type: "text"; text: string }).text : "{}";
       const parsed = JSON.parse(raw.match(/\{[\s\S]*\}/)?.[0] ?? "{}");
       aiNarrative = parsed.sweepNarrative ?? "";
-      triage = parsed.triage ?? [];
+      triage = Array.isArray(parsed.triage) ? parsed.triage : [];
     } catch { /* triage is non-blocking */ }
   }
 

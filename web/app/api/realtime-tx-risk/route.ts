@@ -293,12 +293,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const { transaction: tx, enrichWithAI = false } = body;
   if (!tx || typeof tx.amount !== "number") {
-    return NextResponse.json({ error: "transaction.amount is required" }, { status: 400 });
+    return NextResponse.json({ error: "transaction.amount is required" }, { status: 400 , headers: gate.headers });
   }
 
   const { score, flags } = scoreTransaction(tx);
@@ -327,7 +327,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (enrichWithAI && score >= 50) {
     try {
       const apiKey = process.env.ANTHROPIC_API_KEY ?? "";
-      const anthropic = getAnthropicClient(apiKey, 20_000, "realtime-tx-risk");
+      const anthropic = getAnthropicClient(apiKey, 4_500, "realtime-tx-risk");
       const prompt = `You are a UAE DPMS AML compliance specialist. A transaction has been scored ${score}/100 (${band} risk).
 
 Transaction details:
@@ -354,5 +354,5 @@ Provide a concise 2-3 sentence AML compliance narrative explaining the risk, cit
     }
   }
 
-  return NextResponse.json(result);
+  return NextResponse.json(result, { headers: gate.headers });
 }

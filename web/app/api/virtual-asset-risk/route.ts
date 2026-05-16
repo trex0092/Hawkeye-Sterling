@@ -24,16 +24,16 @@ export async function POST(req: Request) {
   if (!gate.ok) return gate.response;
   let body: { vasp?: string; jurisdiction?: string; products?: string[]; volumes?: string };
   try { body = (await req.json()) as typeof body; }
-  catch { return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 }); }
+  catch { return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400, headers: gate.headers }); }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "virtual-asset-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "virtual-asset-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
-    const client = getAnthropicClient(apiKey, 22_000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 1200,
+      max_tokens: 600,
       system: [
         {
           type: "text",
@@ -62,9 +62,11 @@ Assess FATF R.15/R.16 compliance, travel rule status, DeFi exposure, mixer/tumbl
       ],
     });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
-    const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim());
+    const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as Record<string, unknown>;
+    // Normalize arrays — LLM occasionally returns null instead of [].
+    if (!Array.isArray(result["redFlags"])) result["redFlags"] = [];
     return NextResponse.json(result, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "virtual-asset-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "virtual-asset-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

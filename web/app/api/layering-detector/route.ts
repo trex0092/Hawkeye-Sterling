@@ -108,18 +108,18 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
-  if (!body.transactions?.trim()) return NextResponse.json({ ok: false, error: "transactions required" }, { status: 400 , headers: gate.headers});
+  if (!body.transactions?.trim()) return NextResponse.json({ ok: false, error: "transactions required" }, { status: 400 , headers: gate.headers });
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "layering-detector temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "layering-detector temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
-    const client = getAnthropicClient(apiKey, 55_000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 1500,
+      max_tokens: 700,
       system: [
         {
           type: "text",
@@ -140,8 +140,13 @@ Analyse for money laundering placement, layering, and integration stages. Return
     });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as LayeringResult;
+    if (!Array.isArray(result.placementIndicators)) result.placementIndicators = [];
+    if (!Array.isArray(result.layeringIndicators)) result.layeringIndicators = [];
+    if (!Array.isArray(result.integrationIndicators)) result.integrationIndicators = [];
+    if (!Array.isArray(result.indicators)) result.indicators = [];
+    if (!Array.isArray(result.requiredActions)) result.requiredActions = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "layering-detector temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "layering-detector temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

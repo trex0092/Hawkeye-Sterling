@@ -135,14 +135,14 @@ export async function POST(req: Request): Promise<NextResponse> {
   } catch {
     return NextResponse.json(
       { ok: false, error: "invalid JSON" },
-      { status: 400 },
+      { status: 400, headers: gate.headers }
     );
   }
 
   if (!Array.isArray(body.cases) || body.cases.length === 0) {
     return NextResponse.json(
       { ok: false, error: "body.cases must be a non-empty array" },
-      { status: 400 },
+      { status: 400, headers: gate.headers }
     );
   }
 
@@ -160,7 +160,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const triaged: TriageResult[] = [];
   try {
-    const client = getAnthropicClient(apiKey, 55_000);
+    const client = getAnthropicClient(apiKey, 4_500);
     for (const batch of batches) {
       const results = await triageBatch(batch, client);
       triaged.push(...results);

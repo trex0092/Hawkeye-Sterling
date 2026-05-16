@@ -64,12 +64,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as RequestBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers });
     }
 
   const { smelters } = body;
   if (!smelters || !Array.isArray(smelters) || smelters.length === 0) {
-    return NextResponse.json({ ok: false, error: "smelters array is required" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "smelters array is required" }, { status: 400 , headers: gate.headers });
   }
 
   try { writeAuditEvent("analyst", "rmi.ai-supply-chain-assessment", "smelter-portfolio"); }
@@ -77,14 +77,14 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
-    return NextResponse.json({ ok: false, error: "rmi-assess temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "rmi-assess temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const res = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 1500,
+        max_tokens: 700,
         system:
           "You are a UAE precious-metals supply chain compliance expert specializing in RMI/OECD Due Diligence Guidance (DDG) and LBMA Responsible Gold Guidance v9. Assess this smelter/refiner portfolio for conflict minerals risk, CAHRA exposure, and OECD DDG compliance gaps. Return ONLY valid JSON, no markdown fences.",
         messages: [
@@ -99,8 +99,13 @@ export async function POST(req: Request): Promise<NextResponse> {
     const text = res.content[0]?.type === "text" ? res.content[0].text : "";
     const stripped = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
     const parsed = JSON.parse(stripped) as RmiAssessmentResult;
+    if (!Array.isArray(parsed.criticalSmelters)) parsed.criticalSmelters = [];
+    if (!Array.isArray(parsed.oecdGaps)) parsed.oecdGaps = [];
+    if (!Array.isArray(parsed.lbmaAlignmentIssues)) parsed.lbmaAlignmentIssues = [];
+    if (!Array.isArray(parsed.recommendedActions)) parsed.recommendedActions = [];
+    if (!Array.isArray(parsed.auditPriority)) parsed.auditPriority = [];
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "rmi-assess temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "rmi-assess temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

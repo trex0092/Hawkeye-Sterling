@@ -114,18 +114,18 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
-  if (!body.caseDescription?.trim()) return NextResponse.json({ ok: false, error: "caseDescription required" }, { status: 400 });
+  if (!body.caseDescription?.trim()) return NextResponse.json({ ok: false, error: "caseDescription required" }, { status: 400 , headers: gate.headers });
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "inter-agency-referral temporarily unavailable - please retry." }, { status: 503 });
+  if (!apiKey) return NextResponse.json({ ok: false, error: "inter-agency-referral temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 1500,
+        max_tokens: 700,
         system: `You are a UAE law enforcement referral specialist with expertise in UAE Public Prosecution (PPO) and CID liaison procedures, FIU reporting via goAML, inter-agency notification requirements, MLAT procedures, and Egmont Group information sharing. Draft comprehensive inter-agency referral packages including cover letters, facts summaries, evidence lists, legal basis statements, and parallel notification requirements. Always include tipping off warnings (FDL 10/2025 Art.20) and evidence preservation steps. Respond ONLY with valid JSON matching the InterAgencyReferralResult interface — no markdown fences.`,
         messages: [{
           role: "user",
@@ -142,8 +142,13 @@ Prepare a comprehensive inter-agency referral package. Return complete InterAgen
       });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as InterAgencyReferralResult;
-    return NextResponse.json({ ok: true, ...result });
+    if (!result.referralPackage || typeof result.referralPackage !== "object") result.referralPackage = { coverLetter: "", factsSummary: "", evidenceList: [], legalBasis: "", requestedActions: [] };
+    if (!Array.isArray(result.referralPackage.evidenceList)) result.referralPackage.evidenceList = [];
+    if (!Array.isArray(result.referralPackage.requestedActions)) result.referralPackage.requestedActions = [];
+    if (!Array.isArray(result.parallelNotifications)) result.parallelNotifications = [];
+    if (!Array.isArray(result.evidencePreservationSteps)) result.evidencePreservationSteps = [];
+    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "inter-agency-referral temporarily unavailable - please retry." }, { status: 503 });
+    return NextResponse.json({ ok: false, error: "inter-agency-referral temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

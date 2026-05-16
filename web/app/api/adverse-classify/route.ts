@@ -87,18 +87,18 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
-  if (!body.articleText?.trim()) return NextResponse.json({ ok: false, error: "articleText required" }, { status: 400 , headers: gate.headers});
+  if (!body.articleText?.trim()) return NextResponse.json({ ok: false, error: "articleText required" }, { status: 400 , headers: gate.headers });
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "adverse-classify temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "adverse-classify temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 1400,
+        max_tokens: 700,
         system: `You are a UAE MLRO specialist classifying adverse media against FATF Recommendation 3 predicate offences and UAE FDL 10/2025 AML/CFT thresholds. Apply the 23 FATF predicate offence categories. Assess whether the information meets reasonable grounds for suspicion under UAE FDL 10/2025 Art.21.
 
 Respond ONLY with valid JSON — no markdown fences:
@@ -132,8 +132,12 @@ Classify this adverse media against FATF predicate offences and assess SAR thres
       });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as AdverseClassifyResult;
+    if (!Array.isArray(result.predicateOffences)) result.predicateOffences = [];
+    if (!Array.isArray(result.keyEntities)) result.keyEntities = [];
+    if (!Array.isArray(result.corroborationRequired)) result.corroborationRequired = [];
+    if (!Array.isArray(result.fatfR3Predicates)) result.fatfR3Predicates = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "adverse-classify temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "adverse-classify temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

@@ -318,7 +318,7 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
@@ -334,13 +334,13 @@ export async function POST(req: Request) {
       ...buildTemplate(),
       degraded: true,
       degradedReason: "ANTHROPIC_API_KEY not configured — typology-library AI search disabled. Set the key on the deployment to enable.",
-    });
+    }, { headers: gate.headers });
   }
 
   try {
     // Netlify Functions cap at 26s gateway timeout; SDK timeout must
     // sit comfortably below or callers see HTTP 504.
-    const client = getAnthropicClient(apiKey, 22_000);
+    const client = getAnthropicClient(apiKey, 4_500);
 
     const filterStr = body.filters
       ? `Filters: sector=${body.filters.sector ?? "any"}, jurisdiction=${body.filters.jurisdictionType ?? "any"}, riskLevel=${body.filters.riskLevel ?? "any"}, fatfCategory=${body.filters.fatfCategory ?? "any"}`
@@ -351,7 +351,7 @@ export async function POST(req: Request) {
       // Reduced from 4096 → 2000 to fit the 22s SDK budget. Each
       // typology entry is ~200 tokens; 2000 covers 8-10 entries which
       // is the cap requested in the system prompt anyway.
-      max_tokens: 2000,
+      max_tokens: 700,
       system: [
         {
           type: "text",
@@ -381,6 +381,8 @@ Find the most relevant AML/CFT typologies matching this search. Return comprehen
     const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
     const jsonStr = jsonMatch ? jsonMatch[0] : cleaned;
     const result = JSON.parse(jsonStr) as TypologySearchResponse;
+    if (!Array.isArray(result.results)) result.results = [];
+    if (!Array.isArray(result.relatedCategories)) result.relatedCategories = [];
     return NextResponse.json(result, { headers: gate.headers });
   } catch (err) {
     console.warn("[typology-library/search] LLM failed:", err instanceof Error ? err.message : err);
@@ -388,6 +390,6 @@ Find the most relevant AML/CFT typologies matching this search. Return comprehen
       ...buildTemplate(),
       degraded: true,
       degradedReason: `Typology search AI call failed: ${err instanceof Error ? err.message : String(err)}.`,
-    });
+    }, { headers: gate.headers });
   }
 }

@@ -152,12 +152,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const { context: ctx, mode = "full_war_room" } = body;
   if (!ctx) {
-    return NextResponse.json({ error: "context is required" }, { status: 400 });
+    return NextResponse.json({ error: "context is required" }, { status: 400 , headers: gate.headers });
   }
 
   const examinerBody = ctx.examinerBody ?? "Regulatory Authority";
@@ -245,7 +245,7 @@ Base your analysis on the ${examinerBody}'s known examination priorities and the
 
   try {
     const apiKey = process.env.ANTHROPIC_API_KEY ?? "";
-    const anthropic = getAnthropicClient(apiKey, 60_000, "exam-war-room");
+    const anthropic = getAnthropicClient(apiKey, 4_500, "exam-war-room");
     const prompt = `You are a specialist UAE AML examination preparation consultant with deep knowledge of ${examinerBody} examination methodology and UAE FDL 10/2025 requirements.
 
 ENTITY CONTEXT:
@@ -260,7 +260,7 @@ Be specific to this entity's actual situation. Reference UAE FDL 10/2025 article
 
     const msg = await anthropic.messages.create({
       model: "claude-sonnet-4-6",
-      max_tokens: 3000,
+      max_tokens: 800,
       messages: [{ role: "user", content: prompt }],
     });
 
@@ -296,11 +296,11 @@ Be specific to this entity's actual situation. Reference UAE FDL 10/2025 article
       generatedAt: new Date().toISOString(),
     };
 
-    return NextResponse.json(result);
+    return NextResponse.json(result, { headers: gate.headers });
   } catch (err) {
     return NextResponse.json(
       { error: "War room generation failed", detail: err instanceof Error ? err.message : String(err) },
-      { status: 500 }
+      { status: 500, headers: gate.headers }
     );
   }
 }

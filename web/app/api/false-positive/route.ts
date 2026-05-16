@@ -91,14 +91,14 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as RequestBody;
   } catch {
-    return NextResponse.json({ error: "invalid JSON body" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ error: "invalid JSON body" }, { status: 400 , headers: gate.headers });
   }
 
   const { screenedName, hitName, hitCategory, hitCountry } = body;
   if (!screenedName || !hitName || !hitCategory || !hitCountry) {
     return NextResponse.json(
       { error: "screenedName, hitName, hitCategory, and hitCountry are required" },
-      { status: 400 },
+      { status: 400, headers: gate.headers }
     );
   }
 
@@ -106,7 +106,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    return NextResponse.json({ ok: false, error: "false-positive temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "false-positive temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 
   const userMessage = [
@@ -126,10 +126,10 @@ export async function POST(req: Request): Promise<NextResponse> {
     .join("\n");
 
   try {
-    const client = getAnthropicClient(apiKey, 55_000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 2048,
+      max_tokens: 700,
       system: SYSTEM_PROMPT,
       messages: [{ role: "user", content: userMessage }],
     });
@@ -140,10 +140,13 @@ export async function POST(req: Request): Promise<NextResponse> {
     const stripped = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "");
 
     const parsed = JSON.parse(stripped) as FalsePositiveResponse;
+    if (!Array.isArray(parsed.matchingFactors)) parsed.matchingFactors = [];
+    if (!Array.isArray(parsed.differentiatingFactors)) parsed.differentiatingFactors = [];
+    if (!Array.isArray(parsed.additionalChecksRequired)) parsed.additionalChecksRequired = [];
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     writeAuditEvent("analyst", "screening.false-positive-assess.error", `${screenedName} — ${msg}`);
-    return NextResponse.json({ ok: false, error: "false-positive temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "false-positive temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

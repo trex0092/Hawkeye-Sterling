@@ -49,11 +49,11 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as AdverseMediaBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400, headers: CORS });
+    return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400, headers: { ...gate.headers, ...CORS } });
   }
 
   if (!body.subject?.trim()) {
-    return NextResponse.json({ ok: false, error: "subject is required" }, { status: 400, headers: CORS });
+    return NextResponse.json({ ok: false, error: "subject is required" }, { status: 400, headers: { ...gate.headers, ...CORS } });
   }
 
   const subject = body.subject.trim();
@@ -235,10 +235,10 @@ async function liveAdverseMedia(subject: string, budgetMs = 20_000) {
           .join("\n")
       : "No articles found in GDELT 10-year corpus for this subject.";
 
-  const client = getAnthropicClient(apiKey, Math.min(budgetMs - 2_000, 20_000));
+  const client = getAnthropicClient(apiKey, 4_500);
   const response = await client.messages.create({
     model: "claude-haiku-4-5-20251001",
-    max_tokens: 3000,
+    max_tokens: 800,
     system: [
       {
         type: "text",

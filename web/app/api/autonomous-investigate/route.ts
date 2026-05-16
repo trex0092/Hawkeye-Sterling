@@ -106,7 +106,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: true, ...heuristicInvestigation(subjectName, entityType, riskScore, jurisdiction) }, { headers: gate.headers });
   }
 
-  const client = getAnthropicClient(apiKey, 55_000, "autonomous-investigate");
+  const client = getAnthropicClient(apiKey, 4_500, "autonomous-investigate");
   const stages: StageResult[] = [];
   const ctxStr = additionalContext ? ` | Context: ${additionalContext}` : "";
 
@@ -168,9 +168,9 @@ Decide: close (no action) | monitor (ongoing CDD) | edd (enhanced due diligence)
     return NextResponse.json({
       ok: true,
       investigationSummary: s5["investigationSummary"] ?? `5-stage autonomous investigation completed for ${subjectName}.`,
-      keyFindings: s5["keyFindings"] ?? s3["redFlags"] ?? [],
+      keyFindings: Array.isArray(s5["keyFindings"]) ? s5["keyFindings"] : Array.isArray(s3["redFlags"]) ? s3["redFlags"] : [],
       riskAssessment: s5["riskAssessment"] ?? `Risk score ${riskScore}/100 in ${jurisdiction}.`,
-      recommendedActions: s5["recommendedActions"] ?? [],
+      recommendedActions: Array.isArray(s5["recommendedActions"]) ? s5["recommendedActions"] : [],
       decision: s5["decision"] ?? "monitor",
       rationale: s5["rationale"] ?? "",
       stages,

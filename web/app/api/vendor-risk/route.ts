@@ -75,14 +75,14 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as RequestBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
   const { supplier } = body;
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
 
   if (!apiKey) {
-    return NextResponse.json({ ok: false, error: "vendor-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "vendor-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 
   const userContent = `Assess the supply-chain risk for the following supplier:
@@ -95,7 +95,7 @@ LBMA Good Delivery Listed: ${supplier.lbmaListed ? "Yes" : "No"}
 DGD (Dubai Good Delivery) Listed: ${supplier.dgdListed ? "Yes" : "No"}
 Existing Flags: ${supplier.flags.length > 0 ? supplier.flags.join(", ") : "none"}`;
 
-  const client = getAnthropicClient(apiKey, 55000);
+  const client = getAnthropicClient(apiKey, 4_500);
   const claudeRes = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 1024,
@@ -112,8 +112,10 @@ Existing Flags: ${supplier.flags.length > 0 ? supplier.flags.join(", ") : "none"
       .replace(/\s*```$/i, "")
       .trim();
     result = JSON.parse(cleaned) as VendorRiskResult;
+    if (!Array.isArray(result.findings)) result.findings = [];
+    if (!Array.isArray(result.redFlags)) result.redFlags = [];
   } catch {
-    return NextResponse.json({ ok: false, error: "vendor-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "vendor-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 
   try {

@@ -535,7 +535,7 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const { toolId, inputs } = body;
@@ -573,14 +573,14 @@ export async function POST(req: Request) {
         "Consider voluntary disclosure to the relevant regulator",
       ],
       regulatoryBasis: `Assessment conducted under UAE FDL 10/2025 (AML/CFT/CPF Law, in force 14 Oct 2025), FATF Recommendations, and applicable sector-specific guidance for ${toolTitle}.`,
-    });
+    }, { headers: gate.headers });
   }
 
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 1500,
+        max_tokens: 700,
         system: systemPrompt,
         messages: [{ role: "user", content: userPrompt }],
       });
@@ -589,7 +589,9 @@ export async function POST(req: Request) {
     const cleaned = raw.replace(/```json\n?|\n?```/g, "").trim();
     try {
       const result = JSON.parse(cleaned) as Record<string, unknown>;
-      return NextResponse.json({ ok: true, ...result });
+      if (!Array.isArray(result["findings"])) result["findings"] = [];
+      if (!Array.isArray(result["recommendations"])) result["recommendations"] = [];
+      return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
     } catch {
       return NextResponse.json({
         ok: true,
@@ -599,7 +601,7 @@ export async function POST(req: Request) {
         findings: ["Risk indicators identified in subject profile", "Multiple FATF typology patterns may be present"],
         recommendations: ["Conduct enhanced due diligence", "Escalate to MLRO", "Document all findings"],
         regulatoryBasis: `UAE FDL 10/2025, FATF Recommendations applicable to ${toolTitle}.`,
-      });
+      }, { headers: gate.headers });
     }
   } catch {
     return NextResponse.json({
@@ -610,6 +612,6 @@ export async function POST(req: Request) {
       findings: ["Analysis temporarily unavailable", "Manual risk assessment required"],
       recommendations: ["Escalate to MLRO for manual review", "Apply precautionary enhanced due diligence"],
       regulatoryBasis: `UAE FDL 10/2025, FATF Recommendations applicable to ${toolTitle}.`,
-    });
+    }, { headers: gate.headers });
   }
 }

@@ -211,7 +211,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   let typologyChain: string[] = [];
 
   if (apiKey && staticMatches.length > 0) {
-    const client = getAnthropicClient(apiKey, 22_000, "typology-chain");
+    const client = getAnthropicClient(apiKey, 4_500, "typology-chain");
     try {
       const res = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
@@ -231,7 +231,7 @@ Determine STR trigger, EDD requirement, typology chain, and risk narrative.`,
       const parsed = JSON.parse(raw.match(/\{[\s\S]*\}/)?.[0] ?? "{}");
       strTrigger = parsed.strTrigger ?? criticalCount > 0;
       eddRequired = parsed.eddRequired ?? highCount > 0;
-      typologyChain = parsed.typologyChain ?? [];
+      typologyChain = Array.isArray(parsed.typologyChain) ? parsed.typologyChain : [];
       aiNarrative = parsed.narrative ?? "";
     } catch { /* non-blocking */ }
   } else {

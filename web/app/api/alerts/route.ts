@@ -35,7 +35,7 @@ export async function GET(req: Request): Promise<NextResponse> {
       alerts: sorted,
       unreadCount: unread.length,
       criticalCount: unread.filter((a) => a.severity === "critical").length,
-    });
+    }, { headers: gate.headers });
   } catch (err) {
     console.error("[alerts GET]", err instanceof Error ? err.message : err);
     const demos = getDemoAlerts();
@@ -45,7 +45,7 @@ export async function GET(req: Request): Promise<NextResponse> {
       alerts: demos,
       unreadCount: unread.length,
       criticalCount: unread.filter((a) => a.severity === "critical").length,
-    });
+    }, { headers: gate.headers });
   }
 }
 
@@ -54,7 +54,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     // Auth — ALERTS_CRON_TOKEN bearer (fail-closed: token must always be set)
     const token = process.env["ALERTS_CRON_TOKEN"];
     if (!token) {
-      return NextResponse.json({ ok: false, error: "ALERTS_CRON_TOKEN not configured" }, { status: 503 });
+      return NextResponse.json({ ok: false, error: "ALERTS_CRON_TOKEN not configured" }, { status: 503 , headers: {} });
     }
     const got = (req.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "");
     const { timingSafeEqual } = await import("crypto");
@@ -64,11 +64,11 @@ export async function POST(req: Request): Promise<NextResponse> {
     const gotBuf = new Uint8Array(expBuf.length);
     gotBuf.set(gotRaw.slice(0, expBuf.length));
     if (got.length !== token.length || !timingSafeEqual(expBuf, gotBuf)) {
-      return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
+      return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 , headers: {} });
     }
     const body = (await req.json()) as Partial<DesignationAlert>;
     if (!body.id || !body.listId || !body.matchedEntry) {
-      return NextResponse.json({ ok: false, error: "id, listId, matchedEntry required" }, { status: 400 });
+      return NextResponse.json({ ok: false, error: "id, listId, matchedEntry required" }, { status: 400 , headers: {} });
     }
     const alert: DesignationAlert = {
       id: body.id,
@@ -83,12 +83,12 @@ export async function POST(req: Request): Promise<NextResponse> {
       read: false,
     };
     await writeAlert(alert);
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true }, { headers: {} });
   } catch (err) {
     console.error("[alerts POST]", err instanceof Error ? err.message : err);
     return NextResponse.json(
       { ok: false, error: "alert store unavailable — alert not persisted" },
-      { status: 503 },
+      { status: 503, headers: {} }
     );
   }
 }
@@ -109,7 +109,7 @@ export async function DELETE(req: Request): Promise<NextResponse> {
     console.error("[alerts DELETE]", err instanceof Error ? err.message : err);
     return NextResponse.json(
       { ok: false, error: "alert store unavailable — dismiss not persisted" },
-      { status: 503 },
+      { status: 503, headers: gate.headers }
     );
   }
 }

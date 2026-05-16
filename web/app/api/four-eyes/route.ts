@@ -73,7 +73,7 @@ async function generateApprovalSummary(
   const client = getAnthropicClient(apiKey);
   const msg = await client.messages.create({
     model: "claude-haiku-4-5-20251001",
-    max_tokens: 1500,
+    max_tokens: 700,
     system: [{ type: "text" as const, text: 'You are an AML four-eyes approval assessor. Return ONLY this JSON: { "aiSummary": "string", "aiRegulatoryAnchor": "string", "aiRiskLevel": "critical|high|medium|low" }. aiSummary = 1 sentence: what this action means for the subject and why a second approver should care. aiRegulatoryAnchor = the specific UAE/FATF regulation that requires this action (e.g. \'FDL 10/2025 Art.22 — STR filing obligation\'). aiRiskLevel = the risk level of the action.', cache_control: { type: "ephemeral" as const } }],
     messages: [{ role: "user", content: userContent }],
   });
@@ -98,7 +98,7 @@ async function handleGet(req: Request): Promise<NextResponse> {
   }
   // Newest first.
   items.sort((a, b) => b.initiatedAt.localeCompare(a.initiatedAt));
-  return NextResponse.json({ ok: true, count: items.length, items });
+  return NextResponse.json({ ok: true, count: items.length, items }, { headers: {} });
 }
 
 async function handlePost(req: Request): Promise<NextResponse> {
@@ -106,10 +106,10 @@ async function handlePost(req: Request): Promise<NextResponse> {
   if (!gate.ok) return gate.response;
   let raw: unknown;
   try { raw = await req.json(); } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: {} });
   }
   if (!isRecord(raw)) {
-    return NextResponse.json({ ok: false, error: "body must be a JSON object" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "body must be a JSON object" }, { status: 400 , headers: {} });
   }
   const subjectId = safeId(raw["subjectId"]);
   const subjectName = stringField(raw["subjectName"]);
@@ -117,10 +117,10 @@ async function handlePost(req: Request): Promise<NextResponse> {
   const initiatedBy = stringField(raw["initiatedBy"]) ?? "analyst";
   const reason = stringField(raw["reason"]) ?? "";
   if (!subjectId || !subjectName) {
-    return NextResponse.json({ ok: false, error: "subjectId + subjectName required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "subjectId + subjectName required" }, { status: 400 , headers: {} });
   }
   if (!actionRaw || !ALLOWED_ACTIONS.has(actionRaw as FourEyesAction)) {
-    return NextResponse.json({ ok: false, error: `action must be one of ${[...ALLOWED_ACTIONS].join(", ")}` }, { status: 400 });
+    return NextResponse.json({ ok: false, error: `action must be one of ${[...ALLOWED_ACTIONS].join(", ")}` }, { status: 400 , headers: {} });
   }
   const id = `fe-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
   const item: FourEyesItem = {
@@ -156,7 +156,7 @@ async function handlePost(req: Request): Promise<NextResponse> {
   };
 
   await setJson(`four-eyes/${id}`, enrichedItem);
-  return NextResponse.json({ ok: true, item: enrichedItem });
+  return NextResponse.json({ ok: true, item: enrichedItem }, { headers: {} });
 }
 
 const ACTION_LABEL_MAP: Record<FourEyesAction, string> = {
@@ -244,27 +244,27 @@ async function reportToAsana(item: FourEyesItem, decision: "approve" | "reject",
 async function handlePatch(req: Request): Promise<NextResponse> {
   const url = new URL(req.url);
   const id = safeId(url.searchParams.get("id"));
-  if (!id) return NextResponse.json({ ok: false, error: "id required" }, { status: 400 });
+  if (!id) return NextResponse.json({ ok: false, error: "id required" }, { status: 400 , headers: {} });
   let raw: unknown;
   try { raw = await req.json(); } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: {} });
   }
   if (!isRecord(raw)) {
-    return NextResponse.json({ ok: false, error: "body must be a JSON object" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "body must be a JSON object" }, { status: 400 , headers: {} });
   }
   const action = stringField(raw["decision"]); // "approve" | "reject"
   const operator = stringField(raw["operator"]);
-  if (!operator) return NextResponse.json({ ok: false, error: "operator required" }, { status: 400 });
+  if (!operator) return NextResponse.json({ ok: false, error: "operator required" }, { status: 400 , headers: {} });
   if (action !== "approve" && action !== "reject") {
-    return NextResponse.json({ ok: false, error: "decision must be 'approve' or 'reject'" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "decision must be 'approve' or 'reject'" }, { status: 400 , headers: {} });
   }
   const existing = await getJson<FourEyesItem>(`four-eyes/${id}`);
-  if (!existing) return NextResponse.json({ ok: false, error: "not found" }, { status: 404 });
+  if (!existing) return NextResponse.json({ ok: false, error: "not found" }, { status: 404 , headers: {} });
   if (existing.status !== "pending") {
-    return NextResponse.json({ ok: false, error: `item already ${existing.status}` }, { status: 409 });
+    return NextResponse.json({ ok: false, error: `item already ${existing.status}` }, { status: 409 , headers: {} });
   }
   if (operator === existing.initiatedBy) {
-    return NextResponse.json({ ok: false, error: "second approver must be different from initiator (FATF four-eyes)" }, { status: 403 });
+    return NextResponse.json({ ok: false, error: "second approver must be different from initiator (FATF four-eyes)" }, { status: 403 , headers: {} });
   }
   const now = new Date().toISOString();
   const updated: FourEyesItem =
@@ -280,15 +280,15 @@ async function handlePatch(req: Request): Promise<NextResponse> {
     return null;
   });
 
-  return NextResponse.json({ ok: true, item: updated, ...(asanaTaskUrl ? { asanaTaskUrl } : {}) });
+  return NextResponse.json({ ok: true, item: updated, ...(asanaTaskUrl ? { asanaTaskUrl } : {}) , headers: {} });
 }
 
 async function handleDelete(req: Request): Promise<NextResponse> {
   const url = new URL(req.url);
   const id = safeId(url.searchParams.get("id"));
-  if (!id) return NextResponse.json({ ok: false, error: "id required" }, { status: 400 });
+  if (!id) return NextResponse.json({ ok: false, error: "id required" }, { status: 400 , headers: {} });
   await del(`four-eyes/${id}`);
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true , headers: {} });
 }
 
 export const GET = withGuard(handleGet);

@@ -66,12 +66,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as RequestBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers });
     }
 
   const { employees, today } = body;
   if (!Array.isArray(employees)) {
-    return NextResponse.json({ ok: false, error: "employees array is required" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "employees array is required" }, { status: 400 , headers: gate.headers });
   }
 
   try { writeAuditEvent("mlro", "employees.ai-risk-scan", "employee-portfolio"); }
@@ -79,14 +79,14 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
-    return NextResponse.json({ ok: false, error: "employee-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "employee-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const res = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 1500,
+        max_tokens: 700,
         system:
           "You are a UAE AML compliance officer specializing in staff vetting and ongoing monitoring under FDL 10/2025 Art.21 (internal controls) and FATF R.18 (internal programs). Assess employee document compliance, identify screening risks, and flag staff requiring immediate attention. Return ONLY valid JSON, no markdown fences.",
         messages: [
@@ -101,8 +101,13 @@ export async function POST(req: Request): Promise<NextResponse> {
     const text = res.content[0]?.type === "text" ? res.content[0].text : "";
     const stripped = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
     const parsed = JSON.parse(stripped) as EmployeeRiskResult;
+    if (!Array.isArray(parsed.criticalExpiries)) parsed.criticalExpiries = [];
+    if (!Array.isArray(parsed.screeningAlerts)) parsed.screeningAlerts = [];
+    if (!Array.isArray(parsed.highRiskNationalities)) parsed.highRiskNationalities = [];
+    if (!Array.isArray(parsed.multiEntityRisk)) parsed.multiEntityRisk = [];
+    if (!Array.isArray(parsed.immediateActions)) parsed.immediateActions = [];
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "employee-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "employee-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

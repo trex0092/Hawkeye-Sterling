@@ -79,7 +79,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as RequestBody;
   } catch {
-    return NextResponse.json({ error: "invalid JSON body" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ error: "invalid JSON body" }, { status: 400 , headers: gate.headers });
   }
 
   const subjectName = body.subjectName ?? "unknown";
@@ -137,10 +137,10 @@ export async function POST(req: Request): Promise<NextResponse> {
     templateFallback: buildTemplate,
     aiCall: async () => {
       const apiKey = process.env["ANTHROPIC_API_KEY"]!;
-      const client = getAnthropicClient(apiKey, 25_000);
+      const client = getAnthropicClient(apiKey, 4_500);
       const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 2048,
+        max_tokens: 700,
         system: SYSTEM_PROMPT,
         messages: [{
           role: "user",
@@ -156,7 +156,12 @@ export async function POST(req: Request): Promise<NextResponse> {
       });
       const raw = (response.content[0]?.type === "text" ? response.content[0].text : "{}").trim();
       const stripped = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "");
-      return JSON.parse(stripped) as EthicalImpactResponse;
+      const parsed = JSON.parse(stripped) as EthicalImpactResponse;
+      if (!Array.isArray(parsed.rightsImpacted)) parsed.rightsImpacted = [];
+      if (!Array.isArray(parsed.mitigationMeasures)) parsed.mitigationMeasures = [];
+      if (!Array.isArray(parsed.subjectRights)) parsed.subjectRights = [];
+      if (!Array.isArray(parsed.documentationRequired)) parsed.documentationRequired = [];
+      return parsed;
     },
   });
 
@@ -166,5 +171,5 @@ export async function POST(req: Request): Promise<NextResponse> {
     ok: true,
     ...fallback.result,
     ...(fallback.degraded ? { degraded: true, degradedReason: fallback.degradedReason } : {}),
-  });
+  }, { headers: gate.headers });
 }

@@ -184,7 +184,7 @@ export async function POST(req: Request): Promise<Response> {
   try {
     body = (await req.json()) as Body;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON body", elapsedMs: 0 }, { status: 400, headers: CORS });
+    return NextResponse.json({ ok: false, error: "invalid JSON body", elapsedMs: 0 }, { status: 400, headers: { ...gate.headers, ...CORS } });
   }
 
   const question = body.question?.trim();
@@ -192,19 +192,19 @@ export async function POST(req: Request): Promise<Response> {
   if (!question || !narrative) {
     return NextResponse.json(
       { ok: false, error: "question and narrative are required", elapsedMs: 0 },
-      { status: 400, headers: CORS },
+      { status: 400, headers: { ...gate.headers, ...CORS } }
     );
   }
   if (question.length > 2000) {
     return NextResponse.json(
       { ok: false, error: "question exceeds 2000-character limit", elapsedMs: 0 },
-      { status: 400, headers: CORS },
+      { status: 400, headers: { ...gate.headers, ...CORS } }
     );
   }
   if (narrative.length > 10_000) {
     return NextResponse.json(
       { ok: false, error: "narrative exceeds 10,000-character limit", elapsedMs: 0 },
-      { status: 400, headers: CORS },
+      { status: 400, headers: { ...gate.headers, ...CORS } }
     );
   }
 
@@ -222,7 +222,7 @@ export async function POST(req: Request): Promise<Response> {
         elapsedMs: 0,
         note: "Challenger unavailable — API key not configured.",
       },
-      { status: 200, headers: CORS },
+      { status: 200, headers: { ...gate.headers, ...CORS } }
     );
   }
 
@@ -232,7 +232,7 @@ export async function POST(req: Request): Promise<Response> {
   const killTimer = setTimeout(() => upstreamCtl.abort(), HARD_TIMEOUT_MS);
 
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const upstream = await client.messages.create({
         model: MODEL,
         max_tokens: MAX_TOKENS,
@@ -253,7 +253,7 @@ export async function POST(req: Request): Promise<Response> {
         fullCritique: raw,
         elapsedMs: Date.now() - startedAt,
       },
-      { status: 200, headers: CORS },
+      { status: 200, headers: { ...gate.headers, ...CORS } }
     );
   } catch (err) {
     const aborted = upstreamCtl.signal.aborted;
@@ -273,7 +273,7 @@ export async function POST(req: Request): Promise<Response> {
         elapsedMs: Date.now() - startedAt,
         note: aborted ? "Challenger timed out." : `upstream connect failed: ${msg}`,
       },
-      { status: 200, headers: CORS },
+      { status: 200, headers: { ...gate.headers, ...CORS } }
     );
   } finally {
     clearTimeout(killTimer);

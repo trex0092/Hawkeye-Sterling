@@ -85,16 +85,16 @@ export async function POST(req: Request) {
   } catch {
     return NextResponse.json(
       { ok: false, error: "Invalid JSON" },
-      { status: 400 }
+      { status: 400, headers: gate.headers }
     );
   }
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "aml-training-gap temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "aml-training-gap temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 1500,
+        max_tokens: 700,
         system:
           "You are a UAE AML/CFT compliance expert specialising in AML training programme management. Identify training gaps and generate remediation plans under UAE FDL and FATF standards. Return valid JSON only matching the AmlTrainingGapResult interface.",
         messages: [
@@ -109,8 +109,12 @@ export async function POST(req: Request) {
     const result = JSON.parse(
       raw.replace(/```json\n?|\n?```/g, "").trim()
     ) as AmlTrainingGapResult;
+    if (!Array.isArray(result.overdueStaff)) result.overdueStaff = [];
+    if (!Array.isArray(result.highRiskRoleGaps)) result.highRiskRoleGaps = [];
+    if (!Array.isArray(result.mandatoryModules)) result.mandatoryModules = [];
+    if (!Array.isArray(result.trainingPlan)) result.trainingPlan = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "aml-training-gap temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "aml-training-gap temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

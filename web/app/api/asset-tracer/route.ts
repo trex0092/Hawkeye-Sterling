@@ -106,18 +106,18 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
-  if (!body.initialFunds?.trim()) return NextResponse.json({ ok: false, error: "initialFunds required" }, { status: 400 , headers: gate.headers});
+  if (!body.initialFunds?.trim()) return NextResponse.json({ ok: false, error: "initialFunds required" }, { status: 400 , headers: gate.headers });
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "asset-tracer temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "asset-tracer temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
-    const client = getAnthropicClient(apiKey, 55_000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 1500,
+      max_tokens: 700,
       system: [
         {
           type: "text",
@@ -139,8 +139,12 @@ Trace these funds through money laundering stages and assess asset recovery pote
     });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as AssetTracerResult;
+    if (!Array.isArray(result.tracingStages)) result.tracingStages = [];
+    else for (const s of result.tracingStages) { if (!Array.isArray(s.accountsInvolved)) s.accountsInvolved = []; if (!Array.isArray(s.jurisdictions)) s.jurisdictions = []; }
+    if (!Array.isArray(result.evidenceGaps)) result.evidenceGaps = [];
+    if (!Array.isArray(result.investigativeSteps)) result.investigativeSteps = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "asset-tracer temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "asset-tracer temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

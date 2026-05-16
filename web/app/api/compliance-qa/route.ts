@@ -98,10 +98,10 @@ async function runHaikuQuick(question: string, contextPairs: HaikuPair[], apiKey
   const ctl = new AbortController();
   const killTimer = setTimeout(() => ctl.abort(), HAIKU_TIMEOUT_MS);
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const upstream = await client.messages.create({
         model: HAIKU_MODEL,
-        max_tokens: 2048,
+        max_tokens: 700,
         system: [{ type: "text", text: HAIKU_SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
         messages: [{ role: "user", content: buildHaikuPrompt(question, contextPairs) }],
       });
@@ -210,7 +210,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as ComplianceQaBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400, headers: CORS });
+    return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400, headers: { ...gate.headers, ...CORS } });
   }
 
   // Shared input gate — refuses empty / oversize / prompt-injection
@@ -226,7 +226,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         reason: gateResult.reason,
         ...(gateResult.hint ? { hint: gateResult.hint } : {}),
       },
-      { status: gateResult.status, headers: CORS },
+      { status: gateResult.status, headers: { ...gate.headers, ...CORS } }
     );
   }
   body.query = gateResult.question;
@@ -452,6 +452,6 @@ export async function POST(req: Request): Promise<NextResponse> {
       retryAfterSeconds: null,
       requestId: Math.random().toString(36).slice(2, 10),
       latencyMs: Date.now() - _handlerStart,
-    }, { status: 500 });
+    }, { status: 500 , headers: {} });
   }
 }

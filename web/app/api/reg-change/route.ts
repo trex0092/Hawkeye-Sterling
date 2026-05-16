@@ -246,14 +246,14 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "reg-change temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "reg-change temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
-    const client = getAnthropicClient(apiKey, 55_000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 5000,
@@ -308,8 +308,17 @@ Generate a comprehensive regulatory change roadmap covering all material upcomin
     });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as RegChangeResult;
+    if (!Array.isArray(result.upcomingChanges)) result.upcomingChanges = [];
+    else for (const c of result.upcomingChanges) {
+      if (!Array.isArray(c.affectedProducts)) c.affectedProducts = [];
+      if (!Array.isArray(c.affectedClientTypes)) c.affectedClientTypes = [];
+      if (!Array.isArray(c.requiredActions)) c.requiredActions = [];
+    }
+    if (!Array.isArray(result.immediateActions)) result.immediateActions = [];
+    if (!Array.isArray(result.complianceRoadmap)) result.complianceRoadmap = [];
+    else for (const m of result.complianceRoadmap) { if (!Array.isArray(m.actions)) m.actions = []; }
     return NextResponse.json(result, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "reg-change temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "reg-change temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

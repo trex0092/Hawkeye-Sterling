@@ -51,7 +51,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as CryptoThreatBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   writeAuditEvent(
@@ -62,7 +62,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
-    return NextResponse.json({ ok: false, error: "crypto-threat temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "crypto-threat temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 
   const userContent = [
@@ -100,10 +100,10 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   let result: CryptoThreat;
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const res = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 1500,
+        max_tokens: 700,
         system:
           "You are a UAE VASP compliance analyst specializing in blockchain forensics and FATF R.15 virtual asset risk. Analyze this on-chain risk data and produce a compliance assessment. Return ONLY valid JSON — no markdown fences, no commentary.",
         messages: [{ role: "user", content: userContent }],
@@ -113,8 +113,10 @@ export async function POST(req: Request): Promise<NextResponse> {
     const text = res.content[0]?.type === "text" ? res.content[0].text : "";
     const stripped = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
     result = JSON.parse(stripped) as CryptoThreat;
+    if (!Array.isArray(result.typologies)) result.typologies = [];
+    if (!Array.isArray(result.requiredActions)) result.requiredActions = [];
   } catch {
-    return NextResponse.json({ ok: false, error: "crypto-threat temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "crypto-threat temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 
   return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });

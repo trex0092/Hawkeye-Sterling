@@ -46,7 +46,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as BenfordInterpretBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   writeAuditEvent(
@@ -57,7 +57,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
-    return NextResponse.json({ ok: false, error: "benford-interpret temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "benford-interpret temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 
   const madCategory =
@@ -100,10 +100,10 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   let result: BenfordInterpretation;
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const res = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 1500,
+        max_tokens: 700,
         system:
           "You are a UAE AML forensic accountant expert in Benford's Law analysis for financial crime detection. Interpret these statistical results and provide a compliance-focused assessment for the MLRO. MAD interpretation: <0.006 = close conformity, 0.006-0.012 = acceptable, 0.012-0.015 = marginal, >0.015 = nonconformity. Flagged digits: suppression of digit 1 or digit 9 → structuring; elevation of digit 5 → round-number bias; systematic deviation → potential invoice manipulation. Return ONLY valid JSON — no markdown fences, no commentary.",
         messages: [{ role: "user", content: userContent }],
@@ -113,8 +113,11 @@ export async function POST(req: Request): Promise<NextResponse> {
     const text = res.content[0]?.type === "text" ? res.content[0].text : "";
     const stripped = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
     result = JSON.parse(stripped) as BenfordInterpretation;
+    if (!Array.isArray(result.financialCrimeIndicators)) result.financialCrimeIndicators = [];
+    if (!Array.isArray(result.recommendedActions)) result.recommendedActions = [];
+    if (!Array.isArray(result.mlTypologies)) result.mlTypologies = [];
   } catch {
-    return NextResponse.json({ ok: false, error: "benford-interpret temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "benford-interpret temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 
   return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });

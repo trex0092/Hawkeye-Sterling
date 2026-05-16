@@ -79,20 +79,20 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
   if (!body.triggerEvents?.trim() && !body.adverseMediaHit?.trim() && !body.transactionPatternChange?.trim()) {
-    return NextResponse.json({ ok: false, error: "At least one trigger event, adverseMediaHit, or transactionPatternChange required" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "At least one trigger event, adverseMediaHit, or transactionPatternChange required" }, { status: 400 , headers: gate.headers });
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) return NextResponse.json({ ok: true, degraded: true, ...FALLBACK }, { headers: gate.headers });
 
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 1200,
+        max_tokens: 600,
         system: `You are a UAE CDD/EDD specialist determining whether a customer due diligence refresh is legally required under UAE FDL 10/2025.
 
 CDD refresh triggers (UAE law):
@@ -142,8 +142,11 @@ Determine if CDD refresh is required.`,
       });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as CddRefreshTriggerResult;
+    if (!Array.isArray(result.triggerEvents)) result.triggerEvents = [];
+    if (!Array.isArray(result.fieldsToReverify)) result.fieldsToReverify = [];
+    if (!Array.isArray(result.additionalDocumentsRequired)) result.additionalDocumentsRequired = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "cdd-refresh-trigger temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "cdd-refresh-trigger temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

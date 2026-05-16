@@ -150,10 +150,10 @@ export async function POST(req: Request): Promise<NextResponse> {
     }, { headers: gate.headers });
   }
 
-  const client = getAnthropicClient(apiKey, 22_000, "trade-doc-intel");
+  const client = getAnthropicClient(apiKey, 4_500, "trade-doc-intel");
   const response = await client.messages.create({
     model: "claude-haiku-4-5-20251001",
-    max_tokens: 1200,
+    max_tokens: 600,
     system: `You are a TBML (Trade-Based Money Laundering) intelligence specialist with expertise in precious metals, gold trading, and UAE DPMS compliance under FDL 10/2025 and FATF R.14.
 
 Analyse the trade document for:
@@ -217,6 +217,16 @@ Analyse for TBML risk.`,
   const raw = response.content[0]?.type === "text" ? (response.content[0] as { type: "text"; text: string }).text : "{}";
   try {
     const aiResult = JSON.parse(raw.match(/\{[\s\S]*\}/)?.[0] ?? "{}");
+    if (!Array.isArray(aiResult.tbmlIndicators)) aiResult.tbmlIndicators = [];
+    if (!Array.isArray(aiResult.missingDocuments)) aiResult.missingDocuments = [];
+    if (!Array.isArray(aiResult.sanctionsNexus)) aiResult.sanctionsNexus = [];
+    if (!Array.isArray(aiResult.recommendedActions)) aiResult.recommendedActions = [];
+    if (aiResult.cahraAssessment) {
+      if (!Array.isArray(aiResult.cahraAssessment.certificationGaps)) aiResult.cahraAssessment.certificationGaps = [];
+      if (!Array.isArray(aiResult.cahraAssessment.requiredActions)) aiResult.cahraAssessment.requiredActions = [];
+    }
+    if (aiResult.extractedFields && !Array.isArray(aiResult.extractedFields.routingCountries)) aiResult.extractedFields.routingCountries = [];
+    if (aiResult.extractedFields && !Array.isArray(aiResult.extractedFields.certifications)) aiResult.extractedFields.certifications = [];
     return NextResponse.json({
       ok: true,
       documentType: body.documentType,

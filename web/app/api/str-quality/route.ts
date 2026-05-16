@@ -63,16 +63,16 @@ export async function POST(req: Request) {
   } catch {
     return NextResponse.json(
       { ok: false, error: "Invalid JSON" },
-      { status: 400 }
+      { status: 400, headers: gate.headers }
     );
   }
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "str-quality temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "str-quality temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 1500,
+        max_tokens: 700,
         system:
           "You are a UAE AML/CFT compliance expert specialising in goAML STR quality assessment. Evaluate STR narratives for UAE FIU/goAML submission readiness. Return valid JSON only matching the StrQualityResult interface.",
         messages: [
@@ -87,8 +87,12 @@ export async function POST(req: Request) {
     const result = JSON.parse(
       raw.replace(/```json\n?|\n?```/g, "").trim()
     ) as StrQualityResult;
+    if (!Array.isArray(result.missingElements)) result.missingElements = [];
+    if (!Array.isArray(result.narrativeWeaknesses)) result.narrativeWeaknesses = [];
+    if (!Array.isArray(result.strengths)) result.strengths = [];
+    if (!Array.isArray(result.revisedNarrativeSuggestions)) result.revisedNarrativeSuggestions = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "str-quality temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "str-quality temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

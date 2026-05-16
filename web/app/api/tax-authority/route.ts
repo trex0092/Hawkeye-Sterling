@@ -20,12 +20,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as ReqBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const { name, jurisdiction } = body;
   if (!name || !jurisdiction) {
-    return NextResponse.json({ ok: false, error: "name and jurisdiction are required" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "name and jurisdiction are required" }, { status: 400 , headers: gate.headers });
   }
 
   const hash = name.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
@@ -53,5 +53,5 @@ export async function POST(req: Request): Promise<NextResponse> {
     taxHavens,
     disputes,
     riskLevel,
-  });
+  }, { headers: gate.headers });
 }

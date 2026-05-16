@@ -59,12 +59,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as ReqBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const { subjectId, redlines = [], currentData = {} } = body;
   if (!subjectId) {
-    return NextResponse.json({ ok: false, error: "subjectId is required" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "subjectId is required" }, { status: 400 , headers: gate.headers });
   }
 
   const triggered: TriggeredRedline[] = [];
@@ -89,5 +89,5 @@ export async function POST(req: Request): Promise<NextResponse> {
     triggered,
     clear,
     total: redlines.length,
-  });
+  }, { headers: gate.headers });
 }

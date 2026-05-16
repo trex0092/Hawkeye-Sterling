@@ -53,7 +53,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as RequestBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers });
     }
 
   const { rows } = body;
@@ -64,14 +64,14 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
-    return NextResponse.json({ ok: false, error: "data-quality-fix temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "data-quality-fix temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const res = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 1500,
+        max_tokens: 700,
         system:
           "You are a UAE AML data governance expert. Analyze these CDD data quality gaps for a licensed DPMS/VASP and provide a prioritized remediation plan for the MLRO. Focus on regulatory risk from incomplete records under FDL 10/2025 and FATF R.10. Return ONLY valid JSON, no markdown fences.",
         messages: [
@@ -86,8 +86,11 @@ export async function POST(req: Request): Promise<NextResponse> {
     const text = res.content[0]?.type === "text" ? res.content[0].text : "";
     const stripped = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
     const parsed = JSON.parse(stripped) as DataQualityPlanResult;
+    if (!Array.isArray(parsed.remediationPlan)) parsed.remediationPlan = [];
+    else for (const r of parsed.remediationPlan) { if (!Array.isArray(r.requiredActions)) r.requiredActions = []; }
+    if (!Array.isArray(parsed.topGaps)) parsed.topGaps = [];
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "data-quality-fix temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "data-quality-fix temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

@@ -17,6 +17,10 @@ export async function GET(req: Request): Promise<NextResponse> {
   const rawLimit = parseInt(searchParams.get("limit") ?? "", 10);
   const limit = Math.min(isNaN(rawLimit) ? 100 : rawLimit, 500);
 
-  const [calls, summary] = await Promise.all([listCalls(limit), getSummary()]);
-  return NextResponse.json({ ok: true, summary, calls, count: calls.length }, { headers: gate.headers });
+  try {
+    const [calls, summary] = await Promise.all([listCalls(limit), getSummary()]);
+    return NextResponse.json({ ok: true, summary, calls, count: calls.length }, { headers: gate.headers });
+  } catch {
+    return NextResponse.json({ ok: false, error: "telemetry store unavailable — please retry." }, { status: 503, headers: gate.headers });
+  }
 }

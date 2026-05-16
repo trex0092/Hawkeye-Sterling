@@ -59,7 +59,7 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const historicalData = body.historicalData ?? {};
@@ -67,15 +67,15 @@ export async function POST(req: Request) {
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
-    return NextResponse.json({ ok: false, error: "analytics/predict-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "analytics/predict-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 
   try {
-    const client = getAnthropicClient(apiKey, 55_000);
+    const client = getAnthropicClient(apiKey, 4_500);
 
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 2500,
+      max_tokens: 800,
       system: [
         {
           type: "text",
@@ -140,8 +140,11 @@ Predict the risk trajectory. Identify which categories are accelerating. Suggest
 
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as PredictRiskResult;
+    if (!Array.isArray(result.riskTrajectory)) result.riskTrajectory = [];
+    if (!Array.isArray(result.acceleratingRisks)) result.acceleratingRisks = [];
+    if (!Array.isArray(result.interventions)) result.interventions = [];
     return NextResponse.json(result, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "analytics/predict-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "analytics/predict-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

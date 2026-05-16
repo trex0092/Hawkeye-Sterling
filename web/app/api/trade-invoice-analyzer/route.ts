@@ -107,18 +107,18 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
-  if (!body.invoiceDetails?.trim()) return NextResponse.json({ ok: false, error: "invoiceDetails required" }, { status: 400 , headers: gate.headers});
+  if (!body.invoiceDetails?.trim()) return NextResponse.json({ ok: false, error: "invoiceDetails required" }, { status: 400 , headers: gate.headers });
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "trade-invoice-analyzer temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "trade-invoice-analyzer temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 1500,
+        max_tokens: 700,
         system: `You are a trade-based money laundering (TBML) specialist with expertise in FATF trade-based ML typologies, HS code analysis, and world commodity price benchmarks. Analyse trade invoices and documents for over/under-invoicing, quantity-value mismatches, HS code manipulation, and suspicious routing patterns. Reference LBMA (gold), LME (metals), and other recognised world price benchmarks when assessing price deviations. Apply UAE AML obligations for DNFBPs involved in trade finance. Respond ONLY with valid JSON matching the TradeInvoiceResult interface — no markdown fences.`,
         messages: [{
           role: "user",
@@ -137,8 +137,10 @@ Analyse this trade invoice for TBML indicators. Return complete TradeInvoiceResu
       });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as TradeInvoiceResult;
+    if (!Array.isArray(result.indicators)) result.indicators = [];
+    if (!Array.isArray(result.requiredDocumentation)) result.requiredDocumentation = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "trade-invoice-analyzer temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "trade-invoice-analyzer temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

@@ -89,8 +89,9 @@ const FALLBACK: PepProfileResult = {
 
 export async function POST(req: Request) {
   const _handlerStart = Date.now();
+  let gate: Awaited<ReturnType<typeof enforce>> | undefined;
   try {
-  const gate = await enforce(req);
+  gate = await enforce(req);
   if (!gate.ok) return gate.response;
   let body: {
     name?: string;
@@ -107,7 +108,7 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   // ── Grounded PEP data — World-Check (LSEG) first, OpenSanctions fallback ──
@@ -236,10 +237,10 @@ export async function POST(req: Request) {
   }, { status: 200, headers: gate.headers });
 
   try {
-    const client = getAnthropicClient(apiKey, 22_000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 2500,
+      max_tokens: 800,
       system: [
         {
           type: "text",
@@ -297,6 +298,8 @@ Perform a comprehensive PEP risk assessment grounded in the PEP database data ab
 
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as PepProfileResult;
+    if (!Array.isArray(result.networkMap)) result.networkMap = [];
+    if (!Array.isArray(result.requiredMeasures)) result.requiredMeasures = [];
     const latencyMs = Date.now() - _handlerStart;
     if (latencyMs > 5000) console.warn(`[pep_profile] latencyMs=${latencyMs} exceeds 5000ms`);
     return NextResponse.json(
@@ -309,7 +312,7 @@ Perform a comprehensive PEP risk assessment grounded in the PEP database data ab
       { headers: gate.headers },
     );
   } catch {
-    return NextResponse.json({ ok: false, error: "pep-profile temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "pep-profile temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
@@ -322,6 +325,6 @@ Perform a comprehensive PEP risk assessment grounded in the PEP database data ab
       retryAfterSeconds: null,
       requestId: Math.random().toString(36).slice(2, 10),
       latencyMs: Date.now() - _handlerStart,
-    }, { status: 500 });
+    }, { status: 500 , headers: gate && gate.ok ? gate.headers : {} });
   }
 }

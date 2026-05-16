@@ -255,12 +255,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const { programmeData, generateRemediationPlan = false } = body;
   if (!programmeData) {
-    return NextResponse.json({ error: "programmeData is required" }, { status: 400 });
+    return NextResponse.json({ error: "programmeData is required" }, { status: 400 , headers: gate.headers });
   }
 
   const pillars = [
@@ -303,7 +303,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (generateRemediationPlan) {
     try {
       const apiKey = process.env.ANTHROPIC_API_KEY ?? "";
-      const anthropic = getAnthropicClient(apiKey, 20_000, "aml-health-score");
+      const anthropic = getAnthropicClient(apiKey, 4_500, "aml-health-score");
       const weakPillars = pillars.filter((p) => p.score < 60);
       const prompt = `You are a UAE AML compliance consultant. The following AML programme assessment has been completed:
 
@@ -327,5 +327,5 @@ Write a practical 4-6 bullet remediation plan focused on the weakest areas (${we
     }
   }
 
-  return NextResponse.json(result);
+  return NextResponse.json(result, { headers: gate.headers });
 }

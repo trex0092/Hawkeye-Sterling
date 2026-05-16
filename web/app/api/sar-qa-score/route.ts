@@ -85,7 +85,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as RequestBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
   const { cases } = body;
 
@@ -109,10 +109,10 @@ Red Flags: ${redFlagsStr}`;
     })
     .join("\n\n---\n\n");
 
-  const client = getAnthropicClient(apiKey, 55000);
+  const client = getAnthropicClient(apiKey, 4_500);
   const claudeRes = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 2048,
+      max_tokens: 700,
       system: SYSTEM_PROMPT,
       messages: [
         {
@@ -131,6 +131,7 @@ Red Flags: ${redFlagsStr}`;
       .replace(/\s*```$/i, "")
       .trim();
     parsed = JSON.parse(cleaned) as typeof parsed;
+    if (!Array.isArray(parsed.scores)) parsed.scores = [];
   } catch {
     return NextResponse.json({ ok: true, scores: fallbackScores(cases) }, { headers: gate.headers });
   }
@@ -139,9 +140,9 @@ Red Flags: ${redFlagsStr}`;
     id: s.id,
     score: s.score,
     grade: toGrade(s.score),
-    missingElements: s.missingElements,
-    suggestions: s.suggestions,
-    fatalIssues: s.fatalIssues,
+    missingElements: Array.isArray(s.missingElements) ? s.missingElements : [],
+    suggestions: Array.isArray(s.suggestions) ? s.suggestions : [],
+    fatalIssues: Array.isArray(s.fatalIssues) ? s.fatalIssues : [],
   }));
 
   // Write audit event (server-side call — note: writeAuditEvent uses localStorage

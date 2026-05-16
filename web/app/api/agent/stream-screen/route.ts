@@ -38,7 +38,7 @@ export async function GET(req: Request): Promise<Response> {
 
   const url = new URL(req.url);
   const name = url.searchParams.get("name");
-  if (!name) return new Response("name query param required", { status: 400 });
+  if (!name) return new Response("name query param required", { status: 400, headers: gate.headers });
   const subject: StreamSubject = {
     name,
     type: url.searchParams.get("type") ?? undefined,
@@ -123,6 +123,7 @@ export async function GET(req: Request): Promise<Response> {
       "cache-control": "no-cache, no-transform",
       connection: "keep-alive",
       "x-accel-buffering": "no",
+      ...gate.headers,
     },
   });
 }

@@ -61,12 +61,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as RequestBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers });
     }
 
   const { entries, periodDays } = body;
   if (!entries || !Array.isArray(entries)) {
-    return NextResponse.json({ ok: false, error: "entries array is required" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "entries array is required" }, { status: 400 , headers: gate.headers });
   }
 
   try { writeAuditEvent("mlro", "audit-trail.ai-anomaly-scan", "trail"); }
@@ -74,14 +74,14 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
-    return NextResponse.json({ ok: false, error: "audit-anomaly temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "audit-anomaly temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const res = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 2048,
+        max_tokens: 700,
         system:
           "You are a UAE AML internal audit specialist. Analyze this audit trail for suspicious access patterns, operational anomalies, and compliance gaps that could indicate insider threat, system manipulation, or procedural failures under FDL 10/2025 Art.21 and FATF R.18. Return ONLY valid JSON, no markdown fences.",
         messages: [
@@ -96,8 +96,11 @@ export async function POST(req: Request): Promise<NextResponse> {
     const text = res.content[0]?.type === "text" ? res.content[0].text : "";
     const stripped = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
     const parsed = JSON.parse(stripped) as AuditAnomalyResult;
+    if (!Array.isArray(parsed.anomalies)) parsed.anomalies = [];
+    else for (const a of parsed.anomalies) { if (!Array.isArray(a.affectedActors)) a.affectedActors = []; }
+    if (!Array.isArray(parsed.actorRisk)) parsed.actorRisk = [];
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "audit-anomaly temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "audit-anomaly temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

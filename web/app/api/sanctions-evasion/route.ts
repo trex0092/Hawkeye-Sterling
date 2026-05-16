@@ -235,18 +235,18 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "sanctions-evasion temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "sanctions-evasion temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
-    const client = getAnthropicClient(apiKey, 55_000);
+    const client = getAnthropicClient(apiKey, 4_500);
 
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 4096,
+      max_tokens: 800,
       system: [
         {
           type: "text",
@@ -273,8 +273,14 @@ Conduct a comprehensive sanctions evasion risk assessment. Identify all evasion 
 
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as SanctionsEvasionResult;
+    if (!Array.isArray(result.detectedPatterns)) result.detectedPatterns = [];
+    if (!Array.isArray(result.frontCompanyIndicators)) result.frontCompanyIndicators = [];
+    if (!Array.isArray(result.jurisdictionLayering)) result.jurisdictionLayering = [];
+    if (!Array.isArray(result.nameVariationFlags)) result.nameVariationFlags = [];
+    if (!Array.isArray(result.splitPaymentPatterns)) result.splitPaymentPatterns = [];
+    if (!Array.isArray(result.immediateActions)) result.immediateActions = [];
     return NextResponse.json(result, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "sanctions-evasion temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "sanctions-evasion temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

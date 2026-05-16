@@ -66,17 +66,17 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "cdd-review/edd-checklist temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "cdd-review/edd-checklist temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
-    const client = getAnthropicClient(apiKey, 55_000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 3000,
+      max_tokens: 800,
       system: [
         {
           type: "text",
@@ -126,8 +126,12 @@ Generate a comprehensive, tailored EDD checklist with specific documents to obta
 
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as EddChecklistResult;
+    if (!Array.isArray(result.documents)) result.documents = [];
+    if (!Array.isArray(result.questions)) result.questions = [];
+    if (!Array.isArray(result.verifications)) result.verifications = [];
+    if (!Array.isArray(result.redFlagsToMonitor)) result.redFlagsToMonitor = [];
     return NextResponse.json(result, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "cdd-review/edd-checklist temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "cdd-review/edd-checklist temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

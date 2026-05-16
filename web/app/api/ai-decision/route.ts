@@ -452,11 +452,11 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as DecisionRequest;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   if (!body.name || !body.subjectId) {
-    return NextResponse.json({ ok: false, error: "name and subjectId are required" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "name and subjectId are required" }, { status: 400 , headers: gate.headers });
   }
 
   // ── Data integrity gate (FDL 10/2025 Art.18) ─────────────────────────────
@@ -513,7 +513,7 @@ export async function POST(req: Request) {
       const client = getAnthropicClient(apiKey);
       const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 2048,
+        max_tokens: 700,
         system: buildSystemBlocks(learningCtx),
         messages: [{ role: "user", content: buildUserMessage(body) }],
       });
@@ -531,8 +531,8 @@ export async function POST(req: Request) {
       confidence = parsed.confidence ?? 70;
       urgency = (parsed.urgency as "low" | "medium" | "high" | "critical") ?? "medium";
       rationale = parsed.rationale ?? "Decision based on risk profile analysis.";
-      keyFactors = parsed.keyFactors ?? [];
-      nextSteps = parsed.nextSteps ?? [];
+      keyFactors = Array.isArray(parsed.keyFactors) ? parsed.keyFactors : [];
+      nextSteps = Array.isArray(parsed.nextSteps) ? parsed.nextSteps : [];
       regulatoryBasis = parsed.regulatoryBasis ?? "FDL 10/2025";
     } catch {
       // Fallback to rule-based
@@ -613,7 +613,7 @@ export async function POST(req: Request) {
 
   const latencyMs = Date.now() - t0;
   if (latencyMs > 5000) console.warn(`[ai-decision] slow response latencyMs=${latencyMs}`);
-  return NextResponse.json({ ...responseBody, latencyMs }, { status: 200 , headers: gate.headers});
+  return NextResponse.json({ ...responseBody, latencyMs }, { status: 200 , headers: gate.headers });
 }
 
 // ── Rule-based fallback ───────────────────────────────────────────────────────

@@ -183,11 +183,11 @@ export async function POST(req: Request) {
   if (!apiKey) return NextResponse.json({ ok: false, error: "human-trafficking temporarily unavailable - please retry." }, { status: 503 });
 
   try {
-    const client = getAnthropicClient(apiKey, 55_000);
+    const client = getAnthropicClient(apiKey, 4_500);
 
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 3000,
+      max_tokens: 800,
       system: [
         {
           type: "text",
@@ -293,6 +293,11 @@ Perform a comprehensive human trafficking money laundering risk assessment. Appl
 
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as HumanTraffickingResult;
+    if (!Array.isArray(result.iloIndicatorsPresent)) result.iloIndicatorsPresent = [];
+    if (!Array.isArray(result.financialPatterns)) result.financialPatterns = [];
+    if (!Array.isArray(result.victimProfileIndicators)) result.victimProfileIndicators = [];
+    if (!Array.isArray(result.controllerNetworkFlags)) result.controllerNetworkFlags = [];
+    if (!Array.isArray(result.regulatoryObligations)) result.regulatoryObligations = [];
     return NextResponse.json(result);
   } catch {
     return NextResponse.json({ ok: false, error: "human-trafficking temporarily unavailable - please retry." }, { status: 503 });

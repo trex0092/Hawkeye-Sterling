@@ -120,18 +120,18 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
-  if (!body.institutionType?.trim()) return NextResponse.json({ ok: false, error: "institutionType required" }, { status: 400 , headers: gate.headers});
+  if (!body.institutionType?.trim()) return NextResponse.json({ ok: false, error: "institutionType required" }, { status: 400 , headers: gate.headers });
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "ewra-generator temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "ewra-generator temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 1500,
+        max_tokens: 700,
         system: `You are a UAE Enterprise-Wide Risk Assessment (EWRA) specialist with expertise in CBUAE guidelines, FATF Recommendation 1 risk-based approach, and sector-specific ML/TF/CPF risk profiling. Generate comprehensive EWRAs assessing four risk dimensions: customer, product/service, geographic, and channel risks. Apply UAE national risk assessment findings, FATF grey-list/blacklist status, sector typologies, and CBUAE-specific requirements. Determine inherent risk, control effectiveness, and residual risk. Include realistic mitigation measures and Board approval requirements.\n\nIMPORTANT — CPF (Counter-Proliferation Financing) is a STANDALONE risk domain alongside AML and TF, mandated by UAE FDL 10/2025 Art.1 and FATF R.7. Assess CPF risk separately: dual-use goods exposure, sanctions evasion for WMD programs, front company indicators, and proliferation network red flags. Include CPF-specific mitigations such as UNSC Resolution 1540 compliance checks and dual-use goods controls. Respond ONLY with valid JSON matching the EwraResult interface — no markdown fences.`,
         messages: [{
           role: "user",
@@ -148,8 +148,13 @@ Generate a comprehensive EWRA for this institution. Return complete EwraResult J
       });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as EwraResult;
+    if (!Array.isArray(result.mitigationMeasures)) result.mitigationMeasures = [];
+    if (result.customerRisk && !Array.isArray(result.customerRisk.keyFactors)) result.customerRisk.keyFactors = [];
+    if (result.productRisk && !Array.isArray(result.productRisk.keyFactors)) result.productRisk.keyFactors = [];
+    if (result.geographicRisk && !Array.isArray(result.geographicRisk.keyFactors)) result.geographicRisk.keyFactors = [];
+    if (result.channelRisk && !Array.isArray(result.channelRisk.keyFactors)) result.channelRisk.keyFactors = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "ewra-generator temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "ewra-generator temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

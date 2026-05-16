@@ -87,9 +87,11 @@ export interface NewsArticle {
   snippet?: string;
   sentiment?: number;         // -1..+1 when provider supplies it
   language?: string;
+  relevanceScore?: number;    // 0–1 relevance from provider (tavily, exa)
 }
 
 export interface NewsAdapter {
+  source?: string;
   isAvailable(): boolean;
   search(subjectName: string, opts?: { limit?: number; since?: string }): Promise<NewsArticle[]>;
 }

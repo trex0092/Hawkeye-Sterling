@@ -40,23 +40,23 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
-  const events = body.events ?? [];
-  if (events.length === 0) {
+  if (!Array.isArray(body.events) || body.events.length === 0) {
     return NextResponse.json({ anomalies: [], riskScore: 0 }, { headers: gate.headers });
   }
+  const events = body.events;
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) return NextResponse.json(buildFallback(), { headers: gate.headers });
 
   try {
-    const client = getAnthropicClient(apiKey, 22_000);
+    const client = getAnthropicClient(apiKey, 4_500);
 
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 3000,
+      max_tokens: 800,
       system: [
         {
           type: "text",
@@ -109,7 +109,7 @@ ${JSON.stringify(events, null, 2)}`,
     return NextResponse.json({
       anomalies: Array.isArray(parsed.anomalies) ? parsed.anomalies : [],
       riskScore: typeof parsed.riskScore === "number" ? Math.min(100, Math.max(0, parsed.riskScore)) : 0,
-    } satisfies AnomalyDetectResult);
+    } satisfies AnomalyDetectResult, { headers: gate.headers });
   } catch (err) {
     console.error("[hawkeye] audit-trail/anomaly-detect: LLM call or parse failed — returning empty fallback:", err);
     return NextResponse.json(

@@ -275,12 +275,12 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const country = (body.country ?? "").trim();
   if (!country) {
-    return NextResponse.json({ ok: false, error: "country is required" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "country is required" }, { status: 400 , headers: gate.headers });
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
@@ -312,7 +312,7 @@ export async function POST(req: Request) {
 
   // Netlify edge gateway has a 26s inactivity timeout. Keep both modes well
   // under that ceiling: Haiku at ≤1800 tokens reliably responds in 8-15s.
-  const sdkTimeoutMs = 10_000;
+  const sdkTimeoutMs = 4_500;
 
   try {
     const client = getAnthropicClient(apiKey, sdkTimeoutMs);
@@ -418,6 +418,10 @@ Provide a complete country risk intelligence assessment covering AML/CFT risk, F
         { status: 502, headers: gate.headers },
       );
     }
+    // Normalize arrays — LLM occasionally returns null instead of [].
+    if (!Array.isArray(result.keyRisks)) result.keyRisks = [];
+    if (!Array.isArray(result.recentDevelopments)) result.recentDevelopments = [];
+    if (!Array.isArray(result.regulatoryObligations)) result.regulatoryObligations = [];
     const latencyMs = Date.now() - t0;
     if (latencyMs > 5000) console.warn(`[country-risk] slow response latencyMs=${latencyMs}`);
     return NextResponse.json({ ...result, latencyMs }, { headers: gate.headers });

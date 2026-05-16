@@ -114,13 +114,13 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (!upstashKey) {
     return NextResponse.json(
       { ok: false, error: "service unavailable — UPSTASH_BOX_API_KEY not set" },
-      { status: 503 },
+      { status: 503, headers: gate.headers }
     );
   }
   if (!anthropicKey) {
     return NextResponse.json(
       { ok: false, error: "service unavailable — ANTHROPIC_API_KEY not set" },
-      { status: 503 },
+      { status: 503, headers: gate.headers }
     );
   }
 
@@ -128,10 +128,10 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as Body;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400 , headers: gate.headers });
   }
   if (!body.prompt?.trim()) {
-    return NextResponse.json({ ok: false, error: "prompt is required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "prompt is required" }, { status: 400 , headers: gate.headers });
   }
   if (!body.task_type) body.task_type = "OTHER";
 
@@ -169,7 +169,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       box_id: box.id,
       cost: run.cost,
       durationMs: Date.now() - startedAt,
-    });
+    }, { headers: gate.headers });
   } catch (err) {
     return NextResponse.json(
       {
@@ -177,7 +177,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         error: `compliance-box run failed: ${err instanceof Error ? err.message : String(err)}`,
         durationMs: Date.now() - startedAt,
       },
-      { status: 502 },
+      { status: 502, headers: gate.headers }
     );
   }
 }

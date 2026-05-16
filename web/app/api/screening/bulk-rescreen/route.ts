@@ -99,14 +99,14 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const subjects = body.subjects ?? [];
-  if (subjects.length === 0) {
+  if (!Array.isArray(body.subjects) || subjects.length === 0) {
     return NextResponse.json(
-      { ok: false, error: "subjects array is required and must not be empty" },
-      { status: 400 },
+      { ok: false, error: "subjects must be a non-empty array" },
+      { status: 400, headers: gate.headers },
     );
   }
 
@@ -116,7 +116,7 @@ export async function POST(req: Request) {
   if (!apiKey) return NextResponse.json(buildFallback(subjects), { headers: gate.headers });
 
   try {
-    const client = getAnthropicClient(apiKey, 22_000);
+    const client = getAnthropicClient(apiKey, 4_500);
 
     // Slim the payload to keep tokens reasonable — names and nationalities
     // are the only differentiators the engine needs for a realistic simulation.
@@ -136,7 +136,7 @@ Simulate a full portfolio re-screen against the new list version. Generate reali
 
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 2048,
+      max_tokens: 700,
       system: [
         {
           type: "text",
@@ -157,6 +157,8 @@ Simulate a full portfolio re-screen against the new list version. Generate reali
     const result = JSON.parse(
       raw.replace(/```json\n?|\n?```/g, "").trim(),
     ) as BulkRescreenResult;
+    if (!Array.isArray(result.newHits)) result.newHits = [];
+    if (!Array.isArray(result.cleared)) result.cleared = [];
     // Enforce rescreened count equals actual subject count regardless of
     // what the model returns — prevents confusing UX.
     result.rescreened = subjects.length;

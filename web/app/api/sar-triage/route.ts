@@ -81,18 +81,18 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
-  if (!body.suspiciousActivity?.trim()) return NextResponse.json({ ok: false, error: "suspiciousActivity required" }, { status: 400 , headers: gate.headers});
+  if (!body.suspiciousActivity?.trim()) return NextResponse.json({ ok: false, error: "suspiciousActivity required" }, { status: 400 , headers: gate.headers });
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "sar-triage temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "sar-triage temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 1400,
+        max_tokens: 700,
         system: `You are a UAE MLRO (Money Laundering Reporting Officer) making an STR triage decision under UAE FDL 10/2025 and FATF R.20.
 
 Your role: determine whether to file an STR (Suspicious Transaction Report) via UAE FIU goAML system, request more information, or close without filing. Apply the UAE standard precisely:
@@ -144,8 +144,11 @@ Make an STR triage decision.`,
       });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as SarTriageResult;
+    if (!Array.isArray(result.requiredFields)) result.requiredFields = [];
+    if (!Array.isArray(result.missingInformation)) result.missingInformation = [];
+    if (!Array.isArray(result.narrativeSuggestions)) result.narrativeSuggestions = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "sar-triage temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "sar-triage temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

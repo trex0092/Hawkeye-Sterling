@@ -48,7 +48,7 @@ export async function POST(req: Request): Promise<Response> {
   try {
     body = (await req.json()) as Body;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400, headers: CORS });
+    return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400, headers: { ...gate.headers, ...CORS } });
   }
 
   const userId = body.userId ?? "anonymous";
@@ -77,6 +77,6 @@ export async function POST(req: Request): Promise<Response> {
 
   return NextResponse.json(
     { ok: true, seq: audit.seq, entryHash: audit.entryHash },
-    { headers: CORS },
+    { headers: { ...gate.headers, ...CORS } }
   );
 }

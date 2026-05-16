@@ -60,16 +60,16 @@ export async function POST(req: Request) {
   } catch {
     return NextResponse.json(
       { ok: false, error: "Invalid JSON" },
-      { status: 400 }
+      { status: 400, headers: gate.headers }
     );
   }
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "trade-finance-rf temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "trade-finance-rf temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 1500,
+        max_tokens: 700,
         system:
           "You are a UAE AML/CFT compliance expert specialising in trade-based money laundering (TBML) and trade finance red flags. Assess trade finance transactions for TBML indicators under FATF and UAE standards. Return valid JSON only matching the TradeFinanceRfResult interface.",
         messages: [
@@ -84,8 +84,10 @@ export async function POST(req: Request) {
     const result = JSON.parse(
       raw.replace(/```json\n?|\n?```/g, "").trim()
     ) as TradeFinanceRfResult;
+    if (!Array.isArray(result.redFlags)) result.redFlags = [];
+    if (!Array.isArray(result.documentaryDiscrepancies)) result.documentaryDiscrepancies = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "trade-finance-rf temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "trade-finance-rf temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

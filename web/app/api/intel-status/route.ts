@@ -263,6 +263,7 @@ export async function GET(req: Request): Promise<NextResponse> {
     },
     {
       headers: {
+        ...gate.headers,
         "cache-control": "no-store",
         "access-control-allow-origin": process.env["NEXT_PUBLIC_APP_URL"] ?? "https://hawkeye-sterling.netlify.app",
       },

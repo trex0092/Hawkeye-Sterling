@@ -106,18 +106,18 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
-  if (!body.subject?.trim()) return NextResponse.json({ ok: false, error: "subject required" }, { status: 400 , headers: gate.headers});
+  if (!body.subject?.trim()) return NextResponse.json({ ok: false, error: "subject required" }, { status: 400 , headers: gate.headers });
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "proliferation-finance temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "proliferation-finance temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 1500,
+        max_tokens: 700,
         system: `You are a UAE proliferation financing (PF) specialist. Assess transactions/entities for weapons of mass destruction proliferation financing risk under FATF R.7, UAE FDL 10/2025, and UN WMD sanctions regimes.
 
 Key frameworks:
@@ -168,8 +168,13 @@ Assess for proliferation financing risk.`,
       });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as PfScreenerResult;
+    if (!Array.isArray(result.dualUseCategories)) result.dualUseCategories = [];
+    if (!Array.isArray(result.indicators)) result.indicators = [];
+    if (!Array.isArray(result.requiredActions)) result.requiredActions = [];
+    if (!Array.isArray(result.applicableRegime)) result.applicableRegime = [];
+    if (!Array.isArray(result.pfObligations)) result.pfObligations = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "proliferation-finance temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "proliferation-finance temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

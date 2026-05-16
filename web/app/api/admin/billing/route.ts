@@ -36,7 +36,7 @@ function requireAdminToken(req: Request): NextResponse | null {
   if (!adminToken) {
     return NextResponse.json(
       { ok: false, error: "Admin billing endpoint is not configured (ADMIN_TOKEN not set)" },
-      { status: 503 },
+      { status: 503, headers: {} }
     );
   }
   const auth = req.headers.get("authorization") ?? "";
@@ -46,7 +46,7 @@ function requireAdminToken(req: Request): NextResponse | null {
   const b = enc.encode(bearer);
   const match = a.byteLength === b.byteLength && timingSafeEqual(a, b);
   if (!match) {
-    return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 , headers: {} });
   }
   return null;
 }

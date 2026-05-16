@@ -43,12 +43,12 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const subjects = body.subjects ?? [];
   if (subjects.length === 0) {
-    return NextResponse.json({ ok: false, error: "No subjects provided" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "No subjects provided" }, { status: 400 , headers: gate.headers });
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
@@ -66,11 +66,11 @@ export async function POST(req: Request) {
   }
 
   try {
-    const client = getAnthropicClient(apiKey, 55_000);
+    const client = getAnthropicClient(apiKey, 4_500);
 
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 3000,
+      max_tokens: 800,
       system: [
         {
           type: "text",
@@ -125,8 +125,9 @@ Analyse and prioritise these subjects for AML re-screening urgency. Flag immedia
 
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as PrioritizeResult;
+    if (!Array.isArray(result.prioritized)) result.prioritized = [];
     return NextResponse.json(result, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "batch/prioritize temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "batch/prioritize temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

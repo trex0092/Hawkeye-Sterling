@@ -116,14 +116,14 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
-  const entities = body.entities ?? [];
-  const existingLinks = body.existingLinks ?? [];
+  const entities = Array.isArray(body.entities) ? body.entities : [];
+  const existingLinks = Array.isArray(body.existingLinks) ? body.existingLinks : [];
 
   if (entities.length === 0) {
-    return NextResponse.json({ ok: false, error: "entities array is required" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "entities array is required" }, { status: 400 , headers: gate.headers });
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
@@ -132,11 +132,11 @@ export async function POST(req: Request) {
   }
 
   try {
-    const client = getAnthropicClient(apiKey, 22_000);
+    const client = getAnthropicClient(apiKey, 4_500);
 
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 1800,
+      max_tokens: 700,
       system: [
         {
           type: "text",
@@ -186,6 +186,7 @@ Identify hidden connections not yet reflected in the confirmed links. Focus on: 
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const cleaned = raw.replace(/```json\n?|\n?```/g, "").trim();
     const result = JSON.parse(cleaned) as Omit<DiscoverLinksResult, "ok">;
+    if (!Array.isArray(result.suggestedLinks)) result.suggestedLinks = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json(buildFallback(entities, existingLinks), { headers: gate.headers });

@@ -103,7 +103,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const {
@@ -126,7 +126,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   } = body;
 
   if (!customerName || !exitReason) {
-    return NextResponse.json({ error: "customerName and exitReason are required" }, { status: 400 });
+    return NextResponse.json({ error: "customerName and exitReason are required" }, { status: 400 , headers: gate.headers });
   }
 
   const tippingOffRisk = strFiled;
@@ -164,7 +164,7 @@ This exit is being conducted under FDL 10/2025 and the entity's risk appetite po
 
   try {
     const apiKey = process.env.ANTHROPIC_API_KEY ?? "";
-    const anthropic = getAnthropicClient(apiKey, 40_000, "exit-letter-gen");
+    const anthropic = getAnthropicClient(apiKey, 4_500, "exit-letter-gen");
 
     const tippingOffInstruction = strFiled
       ? "CRITICAL: A Suspicious Transaction Report (STR) has been filed in relation to this customer. You MUST NOT mention AML, money laundering, suspicious activity, investigations, or regulatory filings in the letter. Use only neutral business language."
@@ -217,11 +217,11 @@ Generate the complete letter text only — no commentary, no additional explanat
       generatedAt: new Date().toISOString(),
     };
 
-    return NextResponse.json(result);
+    return NextResponse.json(result, { headers: gate.headers });
   } catch (err) {
     return NextResponse.json(
       { error: "Letter generation failed", detail: err instanceof Error ? err.message : String(err) },
-      { status: 500 }
+      { status: 500, headers: gate.headers }
     );
   }
 }

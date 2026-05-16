@@ -110,19 +110,19 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
-  if (!body.narrative?.trim()) return NextResponse.json({ ok: false, error: "narrative required" }, { status: 400 , headers: gate.headers});
+  if (!body.narrative?.trim()) return NextResponse.json({ ok: false, error: "narrative required" }, { status: 400 , headers: gate.headers });
   if (body.narrative.length > 10_000) return NextResponse.json({ ok: false, error: "narrative exceeds 10,000-character limit" }, { status: 400, headers: gate.headers });
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "goaml-validator temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "goaml-validator temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 1500,
+        max_tokens: 700,
         system: `You are a UAE FIU goAML STR filing specialist. Validate an STR (Suspicious Transaction Report) draft against UAE FIU goAML requirements and UAE FDL 10/2025.
 
 goAML required fields for UAE STR:
@@ -177,8 +177,14 @@ Validate this STR draft against UAE FIU goAML requirements.`,
       });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as GoAmlValidatorResult;
+    if (!Array.isArray(result.fieldChecks)) result.fieldChecks = [];
+    if (!Array.isArray(result.criticalIssues)) result.criticalIssues = [];
+    if (!Array.isArray(result.warnings)) result.warnings = [];
+    if (!Array.isArray(result.narrativeStrengths)) result.narrativeStrengths = [];
+    if (!Array.isArray(result.narrativeWeaknesses)) result.narrativeWeaknesses = [];
+    if (!Array.isArray(result.goAmlSpecificRequirements)) result.goAmlSpecificRequirements = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "goaml-validator temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "goaml-validator temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

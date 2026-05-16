@@ -71,12 +71,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as RequestBody;
   } catch {
-    return NextResponse.json({ error: "invalid JSON body" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ error: "invalid JSON body" }, { status: 400 , headers: gate.headers });
   }
 
   const { name, nationality, dob, context } = body;
   if (!name || typeof name !== "string" || !name.trim()) {
-    return NextResponse.json({ error: "name is required" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ error: "name is required" }, { status: 400 , headers: gate.headers });
   }
 
   const trimmedName = name.trim();
@@ -90,10 +90,10 @@ export async function POST(req: Request): Promise<NextResponse> {
   const userMessage = `Generate all name variants for AML screening: Name: ${trimmedName}, Nationality: ${nationality ?? "unknown"}, DOB: ${dob ?? "unknown"}, Context: ${context ?? "none"}`;
 
   try {
-    const client = getAnthropicClient(apiKey, 55_000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 1500,
+      max_tokens: 700,
       system: SYSTEM_PROMPT,
       messages: [{ role: "user", content: userMessage }],
     });
@@ -104,6 +104,14 @@ export async function POST(req: Request): Promise<NextResponse> {
     const stripped = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "");
 
     const parsed = JSON.parse(stripped) as NameVariantsResponse;
+    if (!Array.isArray(parsed.variants)) parsed.variants = [];
+    if (!Array.isArray(parsed.transliterations)) parsed.transliterations = [];
+    if (!Array.isArray(parsed.patronymics)) parsed.patronymics = [];
+    if (!Array.isArray(parsed.maidenNames)) parsed.maidenNames = [];
+    if (!Array.isArray(parsed.aliases)) parsed.aliases = [];
+    if (!Array.isArray(parsed.entityVariants)) parsed.entityVariants = [];
+    if (!Array.isArray(parsed.screeningStrings)) parsed.screeningStrings = [];
+    if (!Array.isArray(parsed.scriptVariants)) parsed.scriptVariants = [];
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);

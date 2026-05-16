@@ -30,7 +30,7 @@ export async function GET(
   if (!JOB_ID_RE.test(jobId)) {
     return NextResponse.json(
       { ok: false, error: "invalid jobId" },
-      { status: 400 },
+      { status: 400, headers: gate.headers }
     );
   }
 
@@ -41,14 +41,14 @@ export async function GET(
   } catch {
     return NextResponse.json(
       { ok: true, status: "pending", jobId },
-      { status: 200 },
+      { status: 200, headers: gate.headers }
     );
   }
 
   if (!raw) {
     return NextResponse.json(
       { ok: false, status: "pending", error: "job not found yet — keep polling" },
-      { status: 404 },
+      { status: 404, headers: gate.headers }
     );
   }
 
@@ -66,7 +66,7 @@ export async function GET(
   } catch {
     return NextResponse.json(
       { ok: true, status: "pending", jobId, note: "job record unreadable — keep polling" },
-      { status: 200 },
+      { status: 200, headers: gate.headers }
     );
   }
 }

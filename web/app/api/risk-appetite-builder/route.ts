@@ -109,18 +109,18 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
-  if (!body.institutionType?.trim()) return NextResponse.json({ ok: false, error: "institutionType required" }, { status: 400 , headers: gate.headers});
+  if (!body.institutionType?.trim()) return NextResponse.json({ ok: false, error: "institutionType required" }, { status: 400 , headers: gate.headers });
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "risk-appetite-builder temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "risk-appetite-builder temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 1450,
+        max_tokens: 700,
         system: `You are a UAE AML governance specialist with expertise in Board-level risk appetite frameworks, UAE FDL 10/2025 governance requirements, and CBUAE AML programme expectations. Draft comprehensive AML/CFT Risk Appetite Statements including risk tolerances (zero/low/medium/high) with specific KRIs and thresholds, prohibited activities, escalation triggers, and board approval requirements. Ensure statements are legally grounded, operationally actionable, and reflect UAE regulatory expectations. Respond ONLY with valid JSON matching the RiskAppetiteResult interface — no markdown fences.`,
         messages: [{
           role: "user",
@@ -135,8 +135,11 @@ Draft a comprehensive AML/CFT Risk Appetite Statement for this institution. Retu
       });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as RiskAppetiteResult;
+    if (!Array.isArray(result.riskTolerances)) result.riskTolerances = [];
+    if (!Array.isArray(result.prohibitedActivities)) result.prohibitedActivities = [];
+    if (!Array.isArray(result.escalationTriggers)) result.escalationTriggers = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "risk-appetite-builder temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "risk-appetite-builder temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

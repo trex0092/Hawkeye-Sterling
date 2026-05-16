@@ -49,8 +49,7 @@ export async function GET(req: Request) {
   const cases = filtered.slice(0, limit);
 
   return NextResponse.json({ cases, total: filtered.length }, {
-    headers: { "Cache-Control": "no-store" },
-  });
+    headers: { ...gate.headers, "Cache-Control": "no-store" } });
 }
 
 export async function POST(req: Request) {
@@ -99,7 +98,7 @@ export async function POST(req: Request) {
   } catch (err) {
     return NextResponse.json(
       { error: `store unavailable: ${err instanceof Error ? err.message : String(err)}` },
-      { status: 503 },
+      { status: 503, headers: gate.headers }
     );
   }
 }

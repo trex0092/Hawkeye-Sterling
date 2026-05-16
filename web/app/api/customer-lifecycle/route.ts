@@ -85,16 +85,16 @@ export async function POST(req: Request) {
   } catch {
     return NextResponse.json(
       { ok: false, error: "Invalid JSON" },
-      { status: 400 }
+      { status: 400, headers: gate.headers }
     );
   }
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "customer-lifecycle temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "customer-lifecycle temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 1500,
+        max_tokens: 700,
         system:
           "You are a UAE AML/CFT compliance expert specialising in customer lifecycle risk management. Assess AML risk across the full customer lifecycle under UAE FDL and FATF standards. Return valid JSON only matching the CustomerLifecycleResult interface.",
         messages: [
@@ -109,8 +109,12 @@ export async function POST(req: Request) {
     const result = JSON.parse(
       raw.replace(/```json\n?|\n?```/g, "").trim()
     ) as CustomerLifecycleResult;
+    if (!Array.isArray(result.stageRisks)) result.stageRisks = [];
+    else for (const s of result.stageRisks) { if (!Array.isArray(s.risks)) s.risks = []; if (!Array.isArray(s.controls)) s.controls = []; }
+    if (!Array.isArray(result.nextReviewTriggers)) result.nextReviewTriggers = [];
+    if (!Array.isArray(result.exitRiskIndicators)) result.exitRiskIndicators = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "customer-lifecycle temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "customer-lifecycle temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

@@ -230,12 +230,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const { eddFile, generateNarrative = false } = body;
   if (!eddFile) {
-    return NextResponse.json({ error: "eddFile is required" }, { status: 400 });
+    return NextResponse.json({ error: "eddFile is required" }, { status: 400 , headers: gate.headers });
   }
 
   const reqs = buildRequirements(eddFile);
@@ -282,7 +282,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (generateNarrative && missing.length > 0) {
     try {
       const apiKey = process.env.ANTHROPIC_API_KEY ?? "";
-      const anthropic = getAnthropicClient(apiKey, 20_000, "edd-completeness");
+      const anthropic = getAnthropicClient(apiKey, 4_500, "edd-completeness");
       const prompt = `You are a UAE AML compliance officer reviewing an EDD file. The file has the following gaps:
 
 Subject: ${eddFile.subjectName ?? "Unknown"}
@@ -307,5 +307,5 @@ Write a 3-4 sentence gap analysis memo suitable for MLRO review. Be specific abo
     }
   }
 
-  return NextResponse.json(result);
+  return NextResponse.json(result, { headers: gate.headers });
 }

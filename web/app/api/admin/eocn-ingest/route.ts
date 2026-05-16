@@ -154,7 +154,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     ? ("application/pdf" as const)
     : ("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" as const);
 
-  const anthropic = getAnthropicClient(apiKey, 55_000, "eocn-ingest");
+  const anthropic = getAnthropicClient(apiKey, 4_500, "eocn-ingest");
 
   const warnings: string[] = [];
 
@@ -162,7 +162,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     const msg = await anthropic.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 4000,
+      max_tokens: 800,
       system: `You are a UAE AML compliance data extraction specialist. Extract ALL sanctioned/designated entities from this UAE EOCN or Local Terrorist List document.
 
 Return ONLY valid JSON — no prose, no markdown fences. The JSON must be an array of objects with this exact shape:

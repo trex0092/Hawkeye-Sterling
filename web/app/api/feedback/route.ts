@@ -32,13 +32,17 @@ export async function GET(req: Request): Promise<NextResponse> {
   if (!gate.ok) return gate.response;
   const gateHeaders: Record<string, string> = gate.ok ? gate.headers : {};
 
-  const [records, s] = await Promise.all([listFeedback(), stats()]);
-  return NextResponse.json({
-    ok: true,
-    totalVerdicts: s.totalVerdicts,
-    stats: s,
-    records: records.slice(0, 100),
-  });
+  try {
+    const [records, s] = await Promise.all([listFeedback(), stats()]);
+    return NextResponse.json({
+      ok: true,
+      totalVerdicts: s.totalVerdicts,
+      stats: s,
+      records: records.slice(0, 100),
+    }, { headers: gate.headers });
+  } catch {
+    return NextResponse.json({ ok: false, error: "feedback store unavailable — please retry." }, { status: 503, headers: gate.headers });
+  }
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
