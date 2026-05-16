@@ -69,7 +69,8 @@ async function fetchListHealth(): Promise<ListHealthSnapshot> {
   const HOUR_MS = 3_600_000;
   const snapshot: ListHealthSnapshot = {};
 
-  let store: { get: (key: string, opts?: { type?: string }) => Promise<unknown> } | null = null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let store: { get: (key: string, opts?: any) => Promise<unknown> } | null = null;
   try {
     const { getStore } = await import("@netlify/blobs");
     const siteID = process.env["NETLIFY_SITE_ID"] ?? process.env["SITE_ID"];

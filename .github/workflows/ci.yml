@@ -83,11 +83,13 @@ jobs:
         run: |
           # After enforce() defaults to requireAuth:true (web/lib/server/enforce.ts),
           # any route that explicitly opts out with `{ requireAuth: false }` must
-          # be deliberately reviewed. The current allowed count is 0 — bump this
+          # be deliberately reviewed. The current allowed count is 1 — bump this
           # number when adding a deliberate public/sandbox route, and document why.
+          # Allowed opt-outs:
+          #   1. web/app/api/health/route.ts — public liveness probe, no data exposed.
           OPTED_OUT=$(grep -rE "requireAuth:\s*false" web/app/api \
             --include="route.ts" 2>/dev/null | wc -l | tr -d ' ')
-          ALLOWED_COUNT=0
+          ALLOWED_COUNT=1
           echo "Routes with explicit requireAuth:false: $OPTED_OUT (allowed: $ALLOWED_COUNT)"
           if [ "$OPTED_OUT" -gt "$ALLOWED_COUNT" ]; then
             echo "FAIL: $OPTED_OUT route(s) have opted out of auth — review and bump ALLOWED_COUNT in this workflow with justification"
@@ -110,6 +112,12 @@ jobs:
         run: npm run build
       - name: Install web dependencies
         run: cd web && npm ci --include=dev
+      - name: Generate Next.js type stubs
+        # next-env.d.ts is gitignored but required for tsc to resolve React
+        # types. Next.js generates it at build/dev time; replicate it here.
+        run: |
+          printf '/// <reference types="next" />\n/// <reference types="next/image-types/global" />\n' \
+            > web/next-env.d.ts
       - name: Web typecheck
         run: cd web && npm run typecheck
       - name: ESLint (root)
