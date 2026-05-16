@@ -152,11 +152,12 @@ async function handlePost(req: Request): Promise<NextResponse> {
           durationMs: Date.now() - subStartedAt,
         };
       } catch (err) {
+        console.error("[agent/batch-screen] subject screening failed:", err instanceof Error ? err.message : err);
         return {
           subjectIndex: i,
           ok: false,
           subjectName: sub.name,
-          error: err instanceof Error ? err.message : String(err),
+          error: "Screening failed — please retry.",
           durationMs: Date.now() - subStartedAt,
         };
       }

@@ -89,13 +89,14 @@ export async function POST(req: Request): Promise<NextResponse> {
         expectedBehavior: probe.expectedBehavior,
       };
     } catch (err) {
+      console.error(`[adversarial-probe] probe ${probe.id} failed:`, err instanceof Error ? err.message : err);
       return {
         id: probe.id,
         category: probe.category,
         name: probe.name,
         passed: false,
         latencyMs: Date.now() - start,
-        error: err instanceof Error ? err.message : String(err),
+        error: "Probe execution failed — please retry.",
         expectedBehavior: probe.expectedBehavior,
       };
     }

@@ -118,7 +118,8 @@ export async function POST(req: Request): Promise<NextResponse> {
 
     return NextResponse.json({ ok: true, batchId, anthropicBatchId: anthropicBatch.id, requestCount: body.requests.length }, { status: 202, headers: gate.headers });
   } catch (err) {
-    return NextResponse.json({ ok: false, error: err instanceof Error ? err.message : String(err) }, { status: 503, headers: gate.headers });
+    console.error("[llm-batch] submission failed:", err instanceof Error ? err.message : err);
+    return NextResponse.json({ ok: false, error: "Batch submission temporarily failed — please retry." }, { status: 503, headers: gate.headers });
   }
 }
 
@@ -154,7 +155,8 @@ async function fetchAndRehydrateResults(
   try {
     iter = (await client.messages.batches.results(anthropicBatchId)) as AsyncIterable<BatchResultEntry>;
   } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : String(err) };
+    console.error("[llm-batch] fetchAndRehydrateResults failed:", err instanceof Error ? err.message : err);
+    return { ok: false, error: "Failed to retrieve batch results — please retry." };
   }
 
   const out: RehydratedResult[] = [];

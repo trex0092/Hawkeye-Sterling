@@ -336,10 +336,10 @@ async function handleModuleReport(req: Request): Promise<NextResponse> {
       ...(payload.data.permalink_url ? { taskUrl: payload.data.permalink_url } : {}),
     });
   } catch (err) {
+    console.error("[module-report] Asana request failed:", err instanceof Error ? err.message : err);
     return respond(500, {
       ok: false,
-      error: "asana request failed",
-      detail: err instanceof Error ? err.message : String(err),
+      error: "Asana request failed — please retry or contact support.",
     });
   }
 }

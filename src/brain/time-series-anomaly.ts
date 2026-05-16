@@ -49,11 +49,11 @@ export function detectAnomalies(series: TimePoint[], opts: Partial<AnomalyOption
     }
     const m = mean(past);
     const s = std(past);
-    const z = s < 1e-9 ? 0 : (pt.v - m) / s;
+    const z = s < 1e-9 ? (Math.abs(pt.v - m) > 1e-9 ? Infinity : 0) : (pt.v - m) / s;
     const med = median(past);
     const dev = past.map((v) => Math.abs(v - med));
     const mad = median(dev);
-    const madScore = mad < 1e-9 ? 0 : Math.abs(pt.v - med) / (mad * 1.4826);
+    const madScore = mad < 1e-9 ? (Math.abs(pt.v - med) > 1e-9 ? Infinity : 0) : Math.abs(pt.v - med) / (mad * 1.4826);
     const anomaly = Math.abs(z) > cfg.zThreshold || madScore > cfg.madThreshold;
     out.push({ ...pt, z, mad: madScore, anomaly });
   }

@@ -753,9 +753,10 @@ export async function POST(req: Request): Promise<NextResponse> {
         newHits: [],
         webhook: {
           delivered: false,
-          error: err instanceof Error ? err.message : String(err),
+          error: "Webhook delivery failed — please retry.",
         },
       });
+      console.error("[ongoing/run] subject processing failed:", err instanceof Error ? err.message : err);
     }
   }));
   } // end CONCURRENCY batch loop

@@ -111,7 +111,8 @@ export async function GET(req: Request): Promise<Response> {
         send({ phase: "done", at: new Date().toISOString() }, "phase");
         controller.close();
       } catch (err) {
-        send({ phase: "error", message: err instanceof Error ? err.message : String(err) }, "error");
+        console.error("[agent/stream-screen] stream error:", err instanceof Error ? err.message : err);
+        send({ phase: "error", message: "Screening failed — please retry." }, "error");
         controller.close();
       }
     },

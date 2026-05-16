@@ -620,6 +620,104 @@ describe('POST /api/country-risk (static fallback)', () => {
   });
 });
 
+// ─── Mock intelligence adapters used by the quick-screen route ───────────────
+// These modules make external HTTP calls and must be stubbed out for tests.
+// Each adapter export is mocked to return a null / empty result so the route
+// still runs its full logic path but never hits the network.
+vi.mock('@/lib/intelligence/liveAdapters', () => ({
+  LIVE_OPENSANCTIONS_ADAPTER: {
+    lookup: vi.fn(async () => []),
+    isAvailable: vi.fn(() => false),
+  },
+  activeOnChainProviders: vi.fn(() => []),
+}));
+vi.mock('@/lib/intelligence/commercialAdapters', () => ({
+  bestCommercialAdapter: vi.fn(() => ({
+    lookup: vi.fn(async () => []),
+    isAvailable: vi.fn(() => false),
+  })),
+  activeCommercialProvider: vi.fn(() => null),
+  activeCommercialProviders: vi.fn(() => []),
+}));
+vi.mock('@/lib/intelligence/registryAdapters', () => ({
+  searchAllRegistries: vi.fn(async () => ({ records: [], providersUsed: [] })),
+  activeRegistryProviders: vi.fn(() => []),
+}));
+vi.mock('@/lib/intelligence/countryRegistries', () => ({
+  searchCountryRegistries: vi.fn(async () => ({ records: [], jurisdictions: [] })),
+}));
+vi.mock('@/lib/intelligence/countrySanctions', () => ({
+  searchCountrySanctions: vi.fn(async () => ({ records: [], lists: [] })),
+}));
+vi.mock('@/lib/intelligence/freeAlwaysOnAdapters', () => ({
+  searchFreeAdapters: vi.fn(async () => ({ records: [], providersUsed: [] })),
+  activeFreeProviders: vi.fn(() => []),
+}));
+vi.mock('@/lib/intelligence/newsAdapters', () => ({
+  activeNewsProviders: vi.fn(() => []),
+  searchAllNews: vi.fn(async () => ({ articles: [], providersUsed: [] })),
+}));
+vi.mock('@/lib/intelligence/llmAdverseMedia', () => ({
+  llmAdverseMediaAdapter: vi.fn(() => ({
+    isAvailable: vi.fn(() => false),
+    search: vi.fn(async () => []),
+  })),
+}));
+vi.mock('@/lib/intelligence/llmAdverseMediaAlt', () => ({
+  groqAdverseMediaAdapter: vi.fn(() => ({
+    isAvailable: vi.fn(() => false),
+    search: vi.fn(async () => []),
+  })),
+  geminiAdverseMediaAdapter: vi.fn(() => ({
+    isAvailable: vi.fn(() => false),
+    search: vi.fn(async () => []),
+  })),
+}));
+vi.mock('@/lib/intelligence/publicApiAdapters', () => ({
+  runEnrichmentAdapters: vi.fn(async () => ({ fraudShield: { available: false, reason: 'no_key' } })),
+  activeEnrichmentProviders: vi.fn(() => []),
+}));
+vi.mock('@/lib/intelligence/urlIngestion', () => ({
+  ingestUrls: vi.fn(async () => []),
+}));
+vi.mock('@/lib/intelligence/kycVendorAdapters', () => ({
+  activeKycProviders: vi.fn(() => []),
+}));
+vi.mock('@/lib/server/candidates-loader', () => ({
+  loadCandidates: vi.fn(async () => []),
+}));
+vi.mock('@/lib/server/whitelist', () => ({
+  lookupWhitelist: vi.fn(async () => null),
+}));
+
+// ─── Mock the audit helper ────────────────────────────────────────────────────
+// writeAuditEvent uses window.localStorage which doesn't exist in Node.js.
+vi.mock('@/lib/audit', () => ({
+  writeAuditEvent: vi.fn(() => ({ id: 'ae-mock', timestamp: new Date().toISOString(), actor: 'test', action: 'test', target: 'test', hash: 'hs:0000' })),
+  loadAuditEntries: vi.fn(() => []),
+}));
+
+// ─── Mock the LLM client for adverse-media-assess ────────────────────────────
+// The real client makes an Anthropic API call; in tests we don't want that.
+vi.mock('@/lib/server/llm', () => ({
+  getAnthropicClient: vi.fn(() => ({
+    messages: {
+      create: vi.fn(async () => ({
+        content: [{ type: 'text', text: JSON.stringify({
+          overallRisk: 'low',
+          threatNarrative: 'No significant adverse media found.',
+          topConcerns: [],
+          fatfTypologies: [],
+          regulatoryLinks: '',
+          recommendedAction: 'standard_monitoring',
+          actionRationale: 'Clean profile.',
+          uaeSpecificRisks: [],
+        }) }],
+      })),
+    },
+  })),
+}));
+
 // ─────────────────────────────────────────────────────────────────────────────
 // iban-risk route tests
 // ─────────────────────────────────────────────────────────────────────────────
@@ -726,5 +824,333 @@ describe('POST /api/iban-risk', () => {
     expect(body.ok).toBe(true);
     expect(body.riskLevel).toBe('medium');
     expect(body.countryCode).toBe('ZZ');
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// quick-screen route tests  (/api/quick-screen)
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('POST /api/quick-screen', () => {
+  let POST: (req: Request) => Promise<Response>;
+
+  beforeEach(async () => {
+    const mod = await import('@/app/api/quick-screen/route');
+    POST = mod.POST as unknown as (req: Request) => Promise<Response>;
+  });
+
+  it('returns 400 when subject is missing', async () => {
+    // Provide candidates so the route does not call loadCandidates.
+    const req = makeRequest('http://localhost/api/quick-screen', {
+      method: 'POST',
+      body: { candidates: [] },
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+    const body = await jsonBody(res) as { ok: boolean; error: string };
+    expect(body.ok).toBe(false);
+    expect(body.error).toMatch(/subject\.name required/i);
+  });
+
+  it('returns 400 when subject.name is an empty string', async () => {
+    const req = makeRequest('http://localhost/api/quick-screen', {
+      method: 'POST',
+      body: { subject: { name: '   ' }, candidates: [] },
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+    const body = await jsonBody(res) as { ok: boolean; error: string };
+    expect(body.ok).toBe(false);
+  });
+
+  it('returns 400 when subject.name exceeds 512 characters', async () => {
+    const req = makeRequest('http://localhost/api/quick-screen', {
+      method: 'POST',
+      body: { subject: { name: 'a'.repeat(513) }, candidates: [] },
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+    const body = await jsonBody(res) as { ok: boolean; error: string };
+    expect(body.ok).toBe(false);
+    expect(body.error).toMatch(/512/);
+  });
+
+  it('returns 400 for invalid JSON body', async () => {
+    const req = new Request('http://localhost/api/quick-screen', {
+      method: 'POST',
+      body: 'not-json',
+      headers: { 'content-type': 'application/json' },
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+    const body = await jsonBody(res) as { ok: boolean };
+    expect(body.ok).toBe(false);
+  });
+
+  it('returns 200 with ok:true and a hits array when candidates are provided', async () => {
+    // Provide one known-clear candidate.  With a unique query name and no
+    // matching candidates the engine returns severity:"clear" and hits:[].
+    const req = makeRequest('http://localhost/api/quick-screen', {
+      method: 'POST',
+      body: {
+        subject: { name: 'John Smith Test' },
+        candidates: [
+          {
+            listId: 'ofac_sdn',
+            listRef: 'SDN-001',
+            name: 'Completely Different Person',
+          },
+        ],
+      },
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+    const body = await jsonBody(res) as { ok: boolean; hits: unknown[] };
+    expect(body.ok).toBe(true);
+    expect(Array.isArray(body.hits)).toBe(true);
+  });
+
+  it('returns 401 when enforce() denies the request', async () => {
+    const { enforce } = await import('@/lib/server/enforce');
+    const enforceMock = enforce as ReturnType<typeof vi.fn>;
+    enforceMock.mockImplementationOnce(async () => ({
+      ok: false,
+      response: new Response(JSON.stringify({ ok: false, error: 'Unauthorized' }), {
+        status: 401,
+        headers: { 'content-type': 'application/json' },
+      }),
+    }));
+
+    const req = makeRequest('http://localhost/api/quick-screen', {
+      method: 'POST',
+      body: { subject: { name: 'Test Person' }, candidates: [] },
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(401);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// sanctions/status route tests  (/api/sanctions/status)
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('GET /api/sanctions/status', () => {
+  let GET: (req: Request) => Promise<Response>;
+
+  beforeEach(async () => {
+    const mod = await import('@/app/api/sanctions/status/route');
+    GET = mod.GET as unknown as (req: Request) => Promise<Response>;
+  });
+
+  it('returns 200 with ok, summary, and lists array when enforce() permits', async () => {
+    const req = makeRequest('http://localhost/api/sanctions/status');
+    const res = await GET(req);
+    expect(res.status).toBe(200);
+    const body = await jsonBody(res) as {
+      ok: boolean;
+      summary: Record<string, number>;
+      lists: unknown[];
+      generatedAt: string;
+    };
+    expect(typeof body.ok).toBe('boolean');
+    expect(Array.isArray(body.lists)).toBe(true);
+    expect(typeof body.summary).toBe('object');
+    expect(body.summary).toHaveProperty('healthy');
+    expect(body.summary).toHaveProperty('missing');
+    expect(typeof body.generatedAt).toBe('string');
+  });
+
+  it('returns degraded:true and warnings when blobs store has no lists', async () => {
+    // The in-memory mock blob store is empty, so every list is "missing".
+    const req = makeRequest('http://localhost/api/sanctions/status');
+    const res = await GET(req);
+    expect(res.status).toBe(200);
+    const body = await jsonBody(res) as { degraded: boolean; warnings: unknown[] };
+    // All lists are absent from the in-memory store — degraded must be true.
+    expect(body.degraded).toBe(true);
+    expect(Array.isArray(body.warnings)).toBe(true);
+  });
+
+  it('env block contains only boolean values (no secrets)', async () => {
+    const req = makeRequest('http://localhost/api/sanctions/status');
+    const res = await GET(req);
+    const body = await jsonBody(res) as { env: Record<string, unknown> };
+    for (const val of Object.values(body.env)) {
+      expect(typeof val).toBe('boolean');
+    }
+  });
+
+  it('returns 401 when enforce() denies the request', async () => {
+    const { enforce } = await import('@/lib/server/enforce');
+    const enforceMock = enforce as ReturnType<typeof vi.fn>;
+    enforceMock.mockImplementationOnce(async () => ({
+      ok: false,
+      response: new Response(JSON.stringify({ ok: false, error: 'API key required' }), {
+        status: 401,
+        headers: { 'content-type': 'application/json' },
+      }),
+    }));
+
+    const req = makeRequest('http://localhost/api/sanctions/status');
+    const res = await GET(req);
+    expect(res.status).toBe(401);
+    const body = await jsonBody(res) as { ok: boolean };
+    expect(body.ok).toBe(false);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// adverse-media-assess route tests  (/api/adverse-media-assess)
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('POST /api/adverse-media-assess', () => {
+  let POST: (req: Request) => Promise<Response>;
+
+  beforeEach(async () => {
+    // Ensure no ANTHROPIC_API_KEY for the "unavailable" path tests.
+    delete process.env['ANTHROPIC_API_KEY'];
+    const mod = await import('@/app/api/adverse-media-assess/route');
+    POST = mod.POST as unknown as (req: Request) => Promise<Response>;
+  });
+
+  it('returns 400 when subject is missing', async () => {
+    const req = makeRequest('http://localhost/api/adverse-media-assess', {
+      method: 'POST',
+      body: { entries: [] },
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+    const body = await jsonBody(res) as { ok: boolean; error: string };
+    expect(body.ok).toBe(false);
+    expect(body.error).toMatch(/subject/i);
+  });
+
+  it('returns 400 for invalid JSON body', async () => {
+    const req = new Request('http://localhost/api/adverse-media-assess', {
+      method: 'POST',
+      body: 'not-json',
+      headers: { 'content-type': 'application/json' },
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+    const body = await jsonBody(res) as { ok: boolean };
+    expect(body.ok).toBe(false);
+  });
+
+  it('returns 503 when ANTHROPIC_API_KEY is not set', async () => {
+    // ANTHROPIC_API_KEY is absent (deleted in beforeEach).
+    const req = makeRequest('http://localhost/api/adverse-media-assess', {
+      method: 'POST',
+      body: { subject: 'Test Corp', entries: [] },
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(503);
+    const body = await jsonBody(res) as { ok: boolean };
+    expect(body.ok).toBe(false);
+  });
+
+  it('returns 200 with ok:true when ANTHROPIC_API_KEY is set (LLM mocked)', async () => {
+    // Set the API key — the LLM client is mocked globally to return a valid
+    // JSON assessment without making a real network call.
+    process.env['ANTHROPIC_API_KEY'] = 'sk-ant-test-key';
+    // Re-import so the route picks up the new env var.
+    vi.resetModules();
+    const mod = await import('@/app/api/adverse-media-assess/route');
+    const postFn = mod.POST as unknown as (req: Request) => Promise<Response>;
+
+    const req = makeRequest('http://localhost/api/adverse-media-assess', {
+      method: 'POST',
+      body: {
+        subject: 'Acme Corp',
+        entries: [
+          {
+            headline: 'Acme Corp fined for AML violations',
+            category: 'regulatory',
+            severity: 'high',
+            source: 'Reuters',
+            articleDate: '2024-01-15',
+          },
+        ],
+      },
+    });
+    const res = await postFn(req);
+    expect(res.status).toBe(200);
+    const body = await jsonBody(res) as { ok: boolean };
+    expect(body.ok).toBe(true);
+
+    delete process.env['ANTHROPIC_API_KEY'];
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// pep-match route tests  (/api/pep-match)
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('POST /api/pep-match', () => {
+  let POST: (req: Request) => Promise<Response>;
+
+  beforeEach(async () => {
+    const mod = await import('@/app/api/pep-match/route');
+    POST = mod.POST as unknown as (req: Request) => Promise<Response>;
+  });
+
+  it('returns 400 for invalid JSON body', async () => {
+    const req = new Request('http://localhost/api/pep-match', {
+      method: 'POST',
+      body: 'not-json',
+      headers: { 'content-type': 'application/json' },
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+    const body = await jsonBody(res) as { ok: boolean };
+    expect(body.ok).toBe(false);
+  });
+
+  it('returns 200 with empty hits when name is too short (< 2 chars)', async () => {
+    // The route returns early with ok:true and no hits for names shorter than 2 chars.
+    const req = makeRequest('http://localhost/api/pep-match', {
+      method: 'POST',
+      body: { name: 'A' },
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+    const body = await jsonBody(res) as { ok: boolean; hits: unknown[]; source: string };
+    expect(body.ok).toBe(true);
+    expect(body.hits).toHaveLength(0);
+    expect(body.source).toBe('none');
+  });
+
+  it('returns 200 with ok:true and hits array when corpus is empty (no blob/CDN data)', async () => {
+    // Blob mock returns null for "pep/current.json" and CDN fetch will fail
+    // in the test environment → corpus stays empty → hits:[].
+    const req = makeRequest('http://localhost/api/pep-match', {
+      method: 'POST',
+      body: { name: 'Vladimir Putin' },
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+    const body = await jsonBody(res) as { ok: boolean; hits: unknown[]; queriedName: string };
+    expect(body.ok).toBe(true);
+    expect(Array.isArray(body.hits)).toBe(true);
+    expect(body.queriedName).toBe('Vladimir Putin');
+  });
+
+  it('returns 401 when enforce() denies the request', async () => {
+    const { enforce } = await import('@/lib/server/enforce');
+    const enforceMock = enforce as ReturnType<typeof vi.fn>;
+    enforceMock.mockImplementationOnce(async () => ({
+      ok: false,
+      response: new Response(JSON.stringify({ ok: false, error: 'API key required' }), {
+        status: 401,
+        headers: { 'content-type': 'application/json' },
+      }),
+    }));
+
+    const req = makeRequest('http://localhost/api/pep-match', {
+      method: 'POST',
+      body: { name: 'Test PEP' },
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(401);
   });
 });
