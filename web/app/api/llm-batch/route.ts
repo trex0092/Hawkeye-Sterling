@@ -53,8 +53,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400, headers: gate.headers });
   }
 
-  if (!body.requests?.length) {
-    return NextResponse.json({ ok: false, error: "requests array required" }, { status: 400, headers: gate.headers });
+  if (!Array.isArray(body.requests) || body.requests.length === 0) {
+    return NextResponse.json({ ok: false, error: "requests must be a non-empty array" }, { status: 400, headers: gate.headers });
   }
   if (body.requests.length > 100) {
     return NextResponse.json({ ok: false, error: "maximum 100 requests per batch" }, { status: 400, headers: gate.headers });

@@ -284,13 +284,13 @@ export async function POST(req: Request): Promise<NextResponse> {
       { timeoutMs: 18_000 },
     );
   } catch (err) {
-    console.error("[compliance-qa] RAG call threw", err);
+    console.error("[compliance-qa] RAG call threw", err instanceof Error ? err.message : err);
     result = {
       ok: false,
       query: body.query.trim(),
       citations: [],
       passedQualityGate: false,
-      error: `RAG client error: ${err instanceof Error ? err.message : String(err)}`,
+      error: "RAG service temporarily unavailable",
     };
   }
 
@@ -426,8 +426,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       { headers: { ...CORS, ...gateHeaders } },
     );
   } catch (err) {
-    console.error("[compliance-qa] advisor fallback threw", err);
-    const detail = err instanceof Error ? err.message : String(err);
+    console.error("[compliance-qa] advisor fallback threw", err instanceof Error ? err.message : err);
     return NextResponse.json(
       {
         ok: true,
@@ -436,19 +435,19 @@ export async function POST(req: Request): Promise<NextResponse> {
         citations: [],
         passedQualityGate: false,
         source: "fallback",
-        note: `Advisor fallback unavailable: ${detail}`,
+        note: "Advisor fallback temporarily unavailable — please retry.",
       },
       { status: 200, headers: { ...CORS, ...gateHeaders } },
     );
   }
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
+    console.error("[compliance-qa] unhandled exception:", err instanceof Error ? err.message : err);
     return NextResponse.json({
       ok: false,
       errorCode: "HANDLER_EXCEPTION",
       errorType: "internal",
       tool: "compliance_qa",
-      message,
+      error: "An unexpected error occurred. Please retry or contact support.",
       retryAfterSeconds: null,
       requestId: Math.random().toString(36).slice(2, 10),
       latencyMs: Date.now() - _handlerStart,

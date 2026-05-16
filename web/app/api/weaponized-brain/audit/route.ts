@@ -41,7 +41,7 @@ export async function GET(req: Request): Promise<NextResponse> {
       offline: true,
       report: null,
       integrity: null,
-      note: `audit gate error: ${err instanceof Error ? err.message : String(err)}`,
+      note: "Audit service temporarily unavailable — please retry.",
     }, { headers: {} });
   }
 }

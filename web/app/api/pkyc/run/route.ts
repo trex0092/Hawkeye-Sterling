@@ -223,6 +223,7 @@ async function runSubject(subject: PKycSubject, force = false): Promise<RunSubje
 
     return { id: subject.id, name: subject.name, band, composite, hits, changed, behavioralDrift };
   } catch (err) {
+    console.error(`[pkyc/run] runSubject failed for ${subject.id}:`, err instanceof Error ? err.message : err);
     return {
       id: subject.id,
       name: subject.name,
@@ -230,7 +231,7 @@ async function runSubject(subject: PKycSubject, force = false): Promise<RunSubje
       composite: subject.lastComposite ?? 0,
       hits: subject.lastHits,
       changed: false,
-      error: err instanceof Error ? err.message : String(err),
+      error: "Screening failed — please retry.",
     };
   }
 }

@@ -40,7 +40,9 @@ function cologneCharCode(prev: string, curr: string, next: string): string {
   if ('GKQ'.includes(c)) return '4';
   // C before AHKLOQRUX → 4; before EIY or after SZ → 8
   if (c === 'C') {
-    if ('SZ'.includes(p)) return '8';
+    // `p &&` guard: String.prototype.includes('') always returns true, so an
+    // empty prev (word-start position) would wrongly trigger the SZ branch.
+    if (p && 'SZ'.includes(p)) return '8';
     if ('AHKLOQRUX'.includes(n)) return '4';
     if ('EIYJÄÖÜ'.includes(n)) return '8';
     return '4';

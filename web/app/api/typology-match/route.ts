@@ -194,12 +194,12 @@ export async function POST(req: Request): Promise<NextResponse> {
         ok: false,
         errorCode: "HANDLER_EXCEPTION",
         errorType: "internal",
-        message: err instanceof Error ? err.message : String(err),
+        error: "An unexpected error occurred. Please retry or contact support.",
         tool: "typology_match",
         requestId: Math.random().toString(36).slice(2, 10),
         latencyMs: Date.now() - t0,
       },
-      { status: 500, headers: {} }
+      { status: 500 }
     );
   }
 }

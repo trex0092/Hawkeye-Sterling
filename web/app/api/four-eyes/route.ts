@@ -17,7 +17,7 @@ import { NextResponse } from "next/server";
 import { withGuard } from "@/lib/server/guard";
 import { del, getJson, listKeys, setJson } from "@/lib/server/store";
 import { getAnthropicClient } from "@/lib/server/llm";
-import { enforce } from "@/lib/server/enforce";
+// enforce is provided by withGuard; no direct import needed here.
 import type { FourEyesAction, FourEyesItem, FourEyesStatus } from "@/lib/types";
 import { asanaGids } from "@/lib/server/asanaConfig";
 
@@ -102,14 +102,13 @@ async function handleGet(req: Request): Promise<NextResponse> {
 }
 
 async function handlePost(req: Request): Promise<NextResponse> {
-  const gate = await enforce(req);
-  if (!gate.ok) return gate.response;
+  // Auth is already enforced by withGuard — no second enforce() call needed.
   let raw: unknown;
   try { raw = await req.json(); } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: {} });
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
   }
   if (!isRecord(raw)) {
-    return NextResponse.json({ ok: false, error: "body must be a JSON object" }, { status: 400 , headers: {} });
+    return NextResponse.json({ ok: false, error: "body must be a JSON object" }, { status: 400 });
   }
   const subjectId = safeId(raw["subjectId"]);
   const subjectName = stringField(raw["subjectName"]);
@@ -117,10 +116,10 @@ async function handlePost(req: Request): Promise<NextResponse> {
   const initiatedBy = stringField(raw["initiatedBy"]) ?? "analyst";
   const reason = stringField(raw["reason"]) ?? "";
   if (!subjectId || !subjectName) {
-    return NextResponse.json({ ok: false, error: "subjectId + subjectName required" }, { status: 400 , headers: {} });
+    return NextResponse.json({ ok: false, error: "subjectId + subjectName required" }, { status: 400 });
   }
   if (!actionRaw || !ALLOWED_ACTIONS.has(actionRaw as FourEyesAction)) {
-    return NextResponse.json({ ok: false, error: `action must be one of ${[...ALLOWED_ACTIONS].join(", ")}` }, { status: 400 , headers: {} });
+    return NextResponse.json({ ok: false, error: `action must be one of ${[...ALLOWED_ACTIONS].join(", ")}` }, { status: 400 });
   }
   const id = `fe-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
   const item: FourEyesItem = {

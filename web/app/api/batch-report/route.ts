@@ -1,5 +1,6 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import {
   buildHtmlDoc, hsPage, hsCover, hsSection, hsPill, hsNarrative,
@@ -22,6 +23,10 @@ export async function POST(req: Request) {
       severity: string; disposition: string; date: string;
     }>;
   };
+
+  if (!Array.isArray(body?.results)) {
+    return NextResponse.json({ ok: false, error: "results must be an array" }, { status: 400, headers: gate.headers });
+  }
 
   const { dateStr, time } = nowMeta();
   const dd = dateStr.slice(0,2), mm = dateStr.slice(3,5), yyyy = dateStr.slice(6);

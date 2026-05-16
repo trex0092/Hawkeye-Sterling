@@ -408,8 +408,11 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
     if (superBrain.status === "success" && onUpdate) {
       onUpdate(subject.id, { riskScore: superBrain.result.composite.score });
     }
+  // onUpdate is stable (useCallback in parent); subject.id and
+  // superBrain.result are intentionally read from the latest closure —
+  // the effect should only fire when status transitions to "success".
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [superBrain.status]);
+  }, [superBrain.status, subject.id, onUpdate]);
 
   const asanaReport = useAutoReport({
     subjectId: subject.id,

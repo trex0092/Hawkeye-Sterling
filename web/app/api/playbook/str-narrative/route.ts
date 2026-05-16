@@ -51,6 +51,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (!body?.playbookTitle?.trim()) {
     return NextResponse.json({ ok: false, error: "playbookTitle is required" }, { status: 400 , headers: gate.headers });
   }
+  if (!Array.isArray(body.completedChecks)) {
+    return NextResponse.json({ ok: false, error: "completedChecks must be an array" }, { status: 400, headers: gate.headers });
+  }
+  if (!Array.isArray(body.incompleteChecks)) {
+    return NextResponse.json({ ok: false, error: "incompleteChecks must be an array" }, { status: 400, headers: gate.headers });
+  }
 
   const systemPrompt = [
     "You are a UAE MLRO drafting a Suspicious Transaction Report (STR) narrative under FDL 10/2025, Cabinet Resolution 134/2025, and FATF Recommendations. Based on completed AML playbook checks, draft a professional STR narrative suitable for submission to the UAE Financial Intelligence Unit via goAML.",

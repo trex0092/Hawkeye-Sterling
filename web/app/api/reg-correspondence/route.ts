@@ -129,7 +129,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (!body.correspondenceType || !body.recipientAuthority || !body.subject) {
     return NextResponse.json({ ok: false, error: "correspondenceType, recipientAuthority, and subject required" }, { status: 400, headers: gate.headers });
   }
-  if (!body.keyFacts?.length) {
+  if (!Array.isArray(body.keyFacts) || body.keyFacts.length === 0) {
     return NextResponse.json({ ok: false, error: "keyFacts array required (min 1 fact)" }, { status: 400, headers: gate.headers });
   }
 

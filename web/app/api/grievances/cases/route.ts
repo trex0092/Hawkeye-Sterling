@@ -96,8 +96,9 @@ export async function POST(req: Request) {
     await store.set("cases.json", JSON.stringify([newCase, ...existing]));
     return NextResponse.json({ ok: true, case: newCase }, { status: 201, headers: gate.headers });
   } catch (err) {
+    console.error("[grievances/cases] store error:", err instanceof Error ? err.message : err);
     return NextResponse.json(
-      { error: `store unavailable: ${err instanceof Error ? err.message : String(err)}` },
+      { error: "Store temporarily unavailable — please retry." },
       { status: 503, headers: gate.headers }
     );
   }

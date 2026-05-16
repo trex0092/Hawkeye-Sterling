@@ -270,10 +270,10 @@ async function handleGoaml(req: Request): Promise<Response> {
   try {
     xml = serialiseGoamlXml(envelope);
   } catch (err) {
-    console.error("goaml serialise failed", err);
+    console.error("goaml serialise failed", err instanceof Error ? err.message : err);
     return NextResponse.json({
       ok: false,
-      error: `goAML serialisation failed: ${err instanceof Error ? err.message : String(err)}`,
+      error: "goAML serialisation failed — please check your input data and retry.",
     }, { status: 500, headers: gateHeaders });
   }
 

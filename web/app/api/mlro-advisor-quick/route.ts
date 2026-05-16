@@ -674,16 +674,17 @@ export async function POST(req: Request): Promise<Response> {
     clearTimeout(killTimer);
   }
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
+    console.error("[mlro-advisor-quick] unhandled exception:", err instanceof Error ? err.message : err);
+    const origin = req.headers.get("origin");
     return NextResponse.json({
       ok: false,
       errorCode: "HANDLER_EXCEPTION",
       errorType: "internal",
       tool: "mlro_advisor_quick",
-      message,
+      error: "An unexpected error occurred. Please retry or contact support.",
       retryAfterSeconds: null,
       requestId: Math.random().toString(36).slice(2, 10),
       latencyMs: Date.now() - _handlerStart,
-    }, { status: 500, headers: {} });
+    }, { status: 500, headers: { ...corsHeaders(origin) } });
   }
 }

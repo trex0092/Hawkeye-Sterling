@@ -219,8 +219,9 @@ Generate the complete letter text only — no commentary, no additional explanat
 
     return NextResponse.json(result, { headers: gate.headers });
   } catch (err) {
+    console.error("[exit-letter-gen] unhandled exception:", err instanceof Error ? err.message : err);
     return NextResponse.json(
-      { error: "Letter generation failed", detail: err instanceof Error ? err.message : String(err) },
+      { error: "Letter generation failed — please retry or contact support." },
       { status: 500, headers: gate.headers }
     );
   }

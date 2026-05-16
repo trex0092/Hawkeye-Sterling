@@ -44,7 +44,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   // Resolve which probes to run
   let probes = PROBES;
-  if (body.probeIds?.length) {
+  if (Array.isArray(body.probeIds) && body.probeIds.length > 0) {
     probes = body.probeIds.map((id) => getProbeById(id)).filter(Boolean) as typeof PROBES;
     if (!probes.length) return NextResponse.json({ ok: false, error: "no matching probe IDs" }, { status: 400, headers: gate.headers });
   } else if (body.category) {

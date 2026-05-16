@@ -139,8 +139,9 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     screenResult = await callScreeningRun({ ...body, subject: enhancedSubject });
   } catch (err) {
+    console.error("[screening/enhanced] screening engine error:", err instanceof Error ? err.message : err);
     return NextResponse.json(
-      { ok: false, error: `screening engine unavailable: ${err instanceof Error ? err.message : String(err)}` },
+      { ok: false, error: "Screening engine temporarily unavailable — please retry." },
       { status: 503, headers: gate.headers },
     );
   }

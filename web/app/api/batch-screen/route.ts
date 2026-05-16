@@ -281,6 +281,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       try {
         results.push(await processRow(row));
       } catch (err) {
+        console.error("[batch-screen] processRow failed:", err instanceof Error ? err.message : err);
         results.push({
           name: row?.name ?? "",
           topScore: 0,
@@ -291,7 +292,7 @@ export async function POST(req: Request): Promise<NextResponse> {
           keywordGroups: [],
           esgCategories: [],
           durationMs: 0,
-          error: err instanceof Error ? err.message : String(err),
+          error: "Screening failed — please retry.",
         });
       }
     }
@@ -302,18 +303,21 @@ export async function POST(req: Request): Promise<NextResponse> {
       const chunk = body.rows.slice(i, i + BATCH_CONCURRENCY);
       const chunkResults = await Promise.all(
         chunk.map((row) =>
-          processRow(row).catch((err: unknown) => ({
-            name: row?.name ?? "",
-            topScore: 0,
-            rawScore: 0,
-            severity: "error" as const,
-            hitCount: 0,
-            listCoverage: [] as string[],
-            keywordGroups: [] as string[],
-            esgCategories: [] as string[],
-            durationMs: 0,
-            error: err instanceof Error ? err.message : String(err),
-          }))
+          processRow(row).catch((err: unknown) => {
+            console.error("[batch-screen] processRow chunk failed:", err instanceof Error ? err.message : err);
+            return {
+              name: row?.name ?? "",
+              topScore: 0,
+              rawScore: 0,
+              severity: "error" as const,
+              hitCount: 0,
+              listCoverage: [] as string[],
+              keywordGroups: [] as string[],
+              esgCategories: [] as string[],
+              durationMs: 0,
+              error: "Screening failed — please retry.",
+            };
+          })
         )
       );
       results.push(...chunkResults);

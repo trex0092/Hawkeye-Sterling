@@ -196,7 +196,10 @@ export const regimeChangeApply = async (ctx: BrainContext): Promise<Finding> => 
   const va = variance(a); const vb = variance(b);
   const pooled = Math.sqrt((va * (a.length - 1) + vb * (b.length - 1)) / Math.max(1, a.length + b.length - 2));
   const se = pooled * Math.sqrt(1 / a.length + 1 / b.length);
-  const t = se > 0 ? Math.abs(mb - ma) / se : 0;
+  // When se == 0 but means differ, the change is maximally significant
+  // (both halves are constant at different levels). Returning 0 would mask
+  // an obvious structural break; use Infinity so verdict is always 'flag'.
+  const t = se > 0 ? Math.abs(mb - ma) / se : (mb !== ma ? Infinity : 0);
   const verdict: Verdict = t > 2.5 ? 'flag' : 'clear';
   return mk('regime_change', 'behavioral_signals', ['data_analysis'],
     verdict, Math.min(1, t / 4), 0.85,

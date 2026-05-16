@@ -171,10 +171,11 @@ export async function POST(req: Request): Promise<NextResponse> {
       durationMs: Date.now() - startedAt,
     }, { headers: gate.headers });
   } catch (err) {
+    console.error("[compliance-box] unhandled exception:", err instanceof Error ? err.message : err);
     return NextResponse.json(
       {
         ok: false,
-        error: `compliance-box run failed: ${err instanceof Error ? err.message : String(err)}`,
+        error: "compliance-box temporarily unavailable — please retry or contact support.",
         durationMs: Date.now() - startedAt,
       },
       { status: 502, headers: gate.headers }

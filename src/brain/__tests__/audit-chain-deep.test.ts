@@ -3,7 +3,7 @@
 // single entry, multi-entry verify(), tamper detection at every position,
 // fromEntries() restore, AuditChain.head(), export() deep clone semantics.
 
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { AuditChain, fnv1a, sha256hex } from '../audit-chain.js';
 
 // ── fnv1a ────────────────────────────────────────────────────────────────────
@@ -193,8 +193,8 @@ describe('AuditChain — canonical payload serialisation', () => {
     const c1 = new AuditChain(fnv1a);
     const c2 = new AuditChain(fnv1a);
     // Use a fixed timestamp so hashes are deterministic — inject a known actor/action.
-    const e1 = c1.append('u', 'a', { a: 1, b: 2 });
-    const e2 = c2.append('u', 'a', { b: 2, a: 1 });
+    c1.append('u', 'a', { a: 1, b: 2 });
+    c2.append('u', 'a', { b: 2, a: 1 });
     // The body includes the timestamp which differs; we can only check that
     // the resulting hashes are the same shape and each chain verifies.
     expect(c1.verify().ok).toBe(true);

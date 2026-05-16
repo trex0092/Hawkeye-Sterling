@@ -250,13 +250,13 @@ const threeLinesDefenceApply = async (ctx: BrainContext): Promise<Finding> => {
   const broken = lines.filter(
     (l) => !l.responsibilitiesDefined || !l.independenceAdequate || !l.reportingLineClean,
   );
-  const undefined = lines.filter((l) => !l.responsibilitiesDefined);
-  const score = clamp01(undefined.length * 0.5 + broken.length * 0.25);
-  const verdict: Verdict = undefined.length > 0
+  const undefinedLines = lines.filter((l) => !l.responsibilitiesDefined);
+  const score = clamp01(undefinedLines.length * 0.5 + broken.length * 0.25);
+  const verdict: Verdict = undefinedLines.length > 0
     ? 'escalate'
     : broken.length > 0 ? 'flag' : 'clear';
-  const rationale = undefined.length > 0
-    ? `Line ${undefined.map((l) => l.line).join('/')} responsibilities not defined. Three-lines model non-functional.`
+  const rationale = undefinedLines.length > 0
+    ? `Line ${undefinedLines.map((l) => l.line).join('/')} responsibilities not defined. Three-lines model non-functional.`
     : broken.length > 0
       ? `${broken.length} line(s) with independence or reporting-line weakness: ${broken.map((l) => `Line ${l.line}`).join(', ')}.`
       : `All three lines defined, independent, and reporting cleanly.`;

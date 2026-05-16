@@ -1,5 +1,6 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import {
   buildHtmlDoc, hsPage, hsCover, hsSection, hsPill, hsKvGrid,
@@ -17,6 +18,13 @@ export async function POST(req: Request) {
     composite: number;
     jurisdiction: string;
   };
+
+  if (!body?.subject || !body?.jurisdiction) {
+    return NextResponse.json({ ok: false, error: "subject and jurisdiction are required" }, { status: 400, headers: gate.headers });
+  }
+  if (!Array.isArray(body.transactions)) {
+    return NextResponse.json({ ok: false, error: "transactions must be an array" }, { status: 400, headers: gate.headers });
+  }
 
   const { dateStr, time } = nowMeta();
   const dd = dateStr.slice(0,2), mm = dateStr.slice(3,5), yyyy = dateStr.slice(6);

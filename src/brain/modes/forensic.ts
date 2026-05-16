@@ -49,7 +49,11 @@ function walkUbo(g: EntityGraph, rootId: string, maxDepth = 8): { paths: UboWalk
     }
     const next = new Set(visited).add(id);
     for (const e of owners) {
-      const w = typeof e.weight === 'number' ? e.weight : 1;
+      // Normalise percentage weights (e.g. 51 for 51%) to fractions, consistent
+      // with belief-propagation.ts effectiveEdgeWeight(). Without this, a weight
+      // of 51 would multiply the cumulative share by 51× rather than 0.51×.
+      const raw = typeof e.weight === 'number' ? e.weight : 1;
+      const w = raw > 1 ? raw / 100 : raw;
       walk(e.to, next, [...trail, id], share * w, depth + 1);
     }
   };

@@ -888,17 +888,17 @@ async function handleComplianceReport(req: Request): Promise<Response> {
     },
   });
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
+    console.error("[compliance-report] unhandled exception:", err instanceof Error ? err.message : err);
     return NextResponse.json({
       ok: false,
       errorCode: "HANDLER_EXCEPTION",
       errorType: "internal",
       tool: "compliance_report",
-      message,
+      error: "An unexpected error occurred. Please retry or contact support.",
       retryAfterSeconds: null,
       requestId: Math.random().toString(36).slice(2, 10),
       latencyMs: Date.now() - _handlerStart,
-    }, { status: 500, headers: {} });
+    }, { status: 500 });
   }
 }
 

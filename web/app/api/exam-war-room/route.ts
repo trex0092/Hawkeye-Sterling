@@ -298,8 +298,9 @@ Be specific to this entity's actual situation. Reference UAE FDL 10/2025 article
 
     return NextResponse.json(result, { headers: gate.headers });
   } catch (err) {
+    console.error("[exam-war-room] unhandled exception:", err instanceof Error ? err.message : err);
     return NextResponse.json(
-      { error: "War room generation failed", detail: err instanceof Error ? err.message : String(err) },
+      { error: "War room generation failed — please retry or contact support." },
       { status: 500, headers: gate.headers }
     );
   }
