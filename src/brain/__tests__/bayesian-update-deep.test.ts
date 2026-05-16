@@ -1,7 +1,6 @@
 // Deep tests for bayesian-update.ts — update formulas, clamping, scoring
 import { describe, it, expect } from 'vitest';
-import { bayesUpdate, brierScore, logScore } from '../bayesian-update.js';
-import type { LikelihoodRatio } from '../bayesian-update.js';
+import { bayesUpdate, brierScore, logScore, type LikelihoodRatio } from '../bayesian-update.js';
 
 // ─── bayesUpdate: basic mechanics ────────────────────────────────────────────
 

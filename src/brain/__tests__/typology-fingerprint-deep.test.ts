@@ -1,7 +1,6 @@
 // Deep tests for typology-fingerprint.ts — band8(), cosineSimilarity(), fingerprint matching
 import { describe, it, expect } from 'vitest';
-import { typologyFingerprint, cosineSimilarity, nearest } from '../typology-fingerprint.js';
-import type { TypologyFingerprint } from '../typology-fingerprint.js';
+import { typologyFingerprint, cosineSimilarity, nearest, type TypologyFingerprint } from '../typology-fingerprint.js';
 
 // ─── minimal helpers ──────────────────────────────────────────────────────────
 

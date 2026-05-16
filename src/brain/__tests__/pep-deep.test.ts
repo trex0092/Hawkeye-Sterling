@@ -1,7 +1,6 @@
 // Deep tests for lib/pep.ts — tier weights, highest-tier selection, assessPEP
 import { describe, it, expect } from 'vitest';
-import { assessPEP } from '../lib/pep.js';
-import type { PEPAssessment, PEPTier } from '../lib/pep.js';
+import { assessPEP, type PEPTier } from '../lib/pep.js';
 
 // ─── empty / no PEP ──────────────────────────────────────────────────────────
 

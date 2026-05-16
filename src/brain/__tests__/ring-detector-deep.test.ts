@@ -1,7 +1,6 @@
 // Deep tests for ring-detector.ts — detectRings(), classifyRing(), all ring types
 import { describe, it, expect } from 'vitest';
-import { detectRings, classifyRing } from '../ring-detector.js';
-import type { SubjectFingerprint, Ring } from '../ring-detector.js';
+import { detectRings, classifyRing, type SubjectFingerprint, type Ring } from '../ring-detector.js';
 
 // ─── detectRings ────────────────────────────────────────────────────────────
 

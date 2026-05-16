@@ -6,8 +6,6 @@ import { describe, it, expect } from 'vitest';
 import {
   parseCitations,
   validateCitations,
-  type ParsedCitation,
-  type CitationDefect,
 } from '../registry/citation-validator.js';
 import { buildSeedRegistry, retrieve } from '../registry/index.js';
 import type { RegistryChunk } from '../registry/types.js';

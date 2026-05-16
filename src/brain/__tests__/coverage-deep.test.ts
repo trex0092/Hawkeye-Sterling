@@ -8,7 +8,6 @@ import {
   definedAnchorIds,
   type ModeLike,
   type ComputeCoverageInput,
-  type CoverageReport,
 } from '../coverage.js';
 import { REGULATORY_PLAYBOOKS } from '../regulatory-playbooks.js';
 

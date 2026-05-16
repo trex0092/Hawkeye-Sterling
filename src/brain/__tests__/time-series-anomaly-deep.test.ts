@@ -1,7 +1,6 @@
 // Deep tests for time-series-anomaly.ts — detectAnomalies, CUSUM, MAD, z-score
 import { describe, it, expect } from 'vitest';
-import { detectAnomalies } from '../time-series-anomaly.js';
-import type { TimePoint } from '../time-series-anomaly.js';
+import { detectAnomalies, type TimePoint } from '../time-series-anomaly.js';
 
 function pts(values: number[]): TimePoint[] {
   return values.map((v, i) => ({ t: i * 1000, v }));
