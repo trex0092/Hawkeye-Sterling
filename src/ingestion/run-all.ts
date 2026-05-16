@@ -112,7 +112,7 @@ export async function runIngestionAll(label: string): Promise<IngestRunSummary> 
               message: 'blob not readable after write',
             });
           } else {
-            console.log(
+            console.info(
               `[${label}] write verified list=${adapter.id} key=${blobKey} entityCount=${entities.length}`,
             );
           }
@@ -193,7 +193,7 @@ export async function runIngestionAll(label: string): Promise<IngestRunSummary> 
 
   const ok_count = summary.filter((r) => r.errors.length === 0).length;
   const failed_count = summary.filter((r) => r.errors.length > 0).length;
-  console.log(
+  console.info(
     `[${label}] SUMMARY ok=${ok_count} failed=${failed_count} anyWriteFailed=${anyWriteFailed}`,
   );
 

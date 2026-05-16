@@ -91,7 +91,7 @@ export const dualProcessApply = async (ctx: BrainContext): Promise<Finding> => {
 };
 
 // ── scenario_planning ───────────────────────────────────────────────────
-export const scenarioPlanningApply = async (ctx: BrainContext): Promise<Finding> => {
+export const scenarioPlanningApply = async (_ctx: BrainContext): Promise<Finding> => {
   const branches = [
     'Base case: evidence as-given; verdict follows fusion.',
     'Upside: sanctions hit resolves to a same-name collision; cleared after disambiguation.',

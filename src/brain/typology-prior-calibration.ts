@@ -27,14 +27,6 @@ export interface TypologyPriorEntry {
   confidence: 'low' | 'medium' | 'high';   // banded by caseCount
 }
 
-interface CaseLike {
-  modeIds?: string[];
-  sector?: string;
-  jurisdiction?: string;
-  // groundTruth: 'confirmed' = positive, 'reversed' = negative, 'pending' = excluded.
-  groundTruth?: 'confirmed' | 'reversed' | 'pending';
-}
-
 const DEFAULT_PRIOR_ALPHA = 1;
 const DEFAULT_PRIOR_BETA = 9;
 

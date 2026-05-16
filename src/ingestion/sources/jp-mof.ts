@@ -13,8 +13,7 @@
 //
 // Same opt-in exceljs pattern as au_dfat and uae_eocn.
 
-import type { SourceAdapter, NormalisedEntity, EntityType } from '../types.js';
-import { mkListing } from '../types.js';
+import { type SourceAdapter, type NormalisedEntity, type EntityType, mkListing } from '../types.js';
 import { sha256Hex } from '../fetch-util.js';
 
 const FETCH_TIMEOUT_MS = 20_000;

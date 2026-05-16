@@ -2,8 +2,7 @@
 // Source (anonymous endpoint): https://webgate.ec.europa.eu/fsd/fsf/public/files/xmlFullSanctionsList_1_1/content?token=dG9rZW4tMjAxNw
 // Official EEAS consolidated XML — token is public, embedded in the portal.
 
-import type { SourceAdapter, NormalisedEntity, EntityType } from '../types.js';
-import { mkListing } from '../types.js';
+import { type SourceAdapter, type NormalisedEntity, type EntityType, mkListing } from '../types.js';
 import { fetchText, sha256Hex } from '../fetch-util.js';
 import { parseXml, findAll } from '../xml-lite.js';
 

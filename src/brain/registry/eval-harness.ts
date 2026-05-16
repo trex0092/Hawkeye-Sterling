@@ -28,13 +28,7 @@ import type {
   AuditLogStore,
   AdvisorMode,
 } from './audit-log.js';
-import type {
-  Verdict,
-  ConfidenceScore,
-  AdvisorResponseV1,
-  CompletionDefect,
-} from './response-schema.js';
-import { checkCompletion } from './response-schema.js';
+import { type Verdict, type ConfidenceScore, type AdvisorResponseV1, type CompletionDefect, checkCompletion } from './response-schema.js';
 import type { ValidationReport } from './citation-validator.js';
 
 // ── Scenario shape ─────────────────────────────────────────────────────────

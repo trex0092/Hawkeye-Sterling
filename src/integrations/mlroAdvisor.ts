@@ -471,7 +471,7 @@ export async function invokeMlroAdvisor(
     const chalBudget = Math.min(budget.challengerMs ?? remainingAfterAdvisor, remainingAfterAdvisor);
     if (chalBudget > 5_000) {
       const challenger = buildChallengerRequest(req, executorBody, body);
-      const { result: chalRes, timedOut: chalTimedOut, thrownError: chalThrown } = await withBudget(chalBudget, (signal) =>
+      const { result: chalRes, timedOut: chalTimedOut, thrownError: _chalThrown } = await withBudget(chalBudget, (signal) =>
         chat({ model: chalModel, system: challenger.system, user: challenger.user, maxTokens: cfg.maxTokens ?? CHALLENGER_DEFAULT_TOKENS, apiKey: cfg.apiKey, signal, thinking: useThinking, effort: 'xhigh', cacheSystem: useCache }),
       );
       if (!chalTimedOut && chalRes?.ok) {

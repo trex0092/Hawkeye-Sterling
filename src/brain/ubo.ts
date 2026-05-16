@@ -41,10 +41,6 @@ export interface UboResolution {
 
 const THRESHOLD = 0.25;
 
-function mul(chain: number[]): number {
-  return chain.reduce((acc, v) => acc * v, 1);
-}
-
 export function resolveUbo(
   subjectId: string,
   parties: PartyNode[],

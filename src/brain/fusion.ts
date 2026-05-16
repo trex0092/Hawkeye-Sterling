@@ -13,12 +13,10 @@ import type {
   Finding, FindingConflict, FusionResult, Hypothesis, LikelihoodRatio,
   Verdict,
 } from './types.js';
-import type { EvidenceItem } from './evidence.js';
-import { credibilityScore, freshnessFactor } from './evidence.js';
+import { type EvidenceItem, credibilityScore, freshnessFactor } from './evidence.js';
 import { bayesUpdate } from './bayesian-update.js';
 import { FACULTIES } from './faculties.js';
-import { corroborate } from './evidence-corroboration.js';
-import type { CorroborationResult } from './evidence-corroboration.js';
+import { type CorroborationResult, corroborate } from './evidence-corroboration.js';
 
 const EPS = 1e-9;
 const DEFAULT_PRIOR = 0.10;             // base rate for illicit_risk absent strong signal

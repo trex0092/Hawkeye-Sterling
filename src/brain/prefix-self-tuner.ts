@@ -9,7 +9,6 @@
 // the MLRO transcripts that motivated it.
 
 import type { OutcomeRecord } from './outcome-feedback.js';
-import type { CaseSignals } from './mlro-context-builder.js';
 
 export interface PrefixRetuneCandidate {
   modeId: string;

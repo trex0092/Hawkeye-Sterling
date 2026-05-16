@@ -51,19 +51,6 @@ const KAF_VARIANTS: Record<number, string> = {
   0x06A9: 'ك', // ک → ك
 };
 
-// Arabic definite article: ال and its variants
-const DEFINITE_ARTICLE = /^ال\s*|[\s]ال\s*/gu;
-
-// Patronymic particles and prefixes (case-insensitive, Arabic script)
-const PATRONYMIC_AR: Record<string, string> = {
-  'بن': 'بن',    // bin — canonical
-  'ابن': 'بن',   // ibn → bin
-  'بنت': 'بنت',  // bint
-  'ابنة': 'بنت', // ibnat → bint
-  'ام': 'ام',    // umm
-  'ابو': 'ابو',  // abu
-};
-
 // ── Latin/Romanisation equivalence clusters ───────────────────────────────────
 
 // Abd cluster: عبد — all romanisations collapse to "abd"

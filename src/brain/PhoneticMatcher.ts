@@ -12,11 +12,6 @@
 // RFC: Hans Joachim Postel, 1969.
 // Produces a digit string; leading zeros are collapsed.
 
-const COLOGNE_MAP: Array<[string, string, string]> = [
-  // [code, before-set, char-set]
-  // processed left-to-right; first match wins
-];
-
 // Cologne code table: maps characters to codes.
 // H and silent letters → ''; vowels → '0'
 function cologneCharCode(prev: string, curr: string, next: string): string {

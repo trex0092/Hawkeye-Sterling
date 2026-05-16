@@ -16,8 +16,7 @@
 // `base` so auditors can see both.
 
 import type { Finding, FusionResult, Hypothesis } from './types.js';
-import type { EvidenceItem } from './evidence.js';
-import { credibilityScore, freshnessDays, isStale } from './evidence.js';
+import { type EvidenceItem, credibilityScore, freshnessDays, isStale } from './evidence.js';
 
 export interface EvidenceWeightedVerdict {
   base: FusionResult;                         // original, untouched

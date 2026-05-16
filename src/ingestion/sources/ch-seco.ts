@@ -11,8 +11,7 @@
 //
 // Override via FEED_CH_SECO env var.
 
-import type { SourceAdapter, NormalisedEntity, EntityType } from '../types.js';
-import { mkListing } from '../types.js';
+import { type SourceAdapter, type NormalisedEntity, type EntityType, mkListing } from '../types.js';
 import { fetchText, sha256Hex } from '../fetch-util.js';
 
 const SOURCE_URL = process.env['FEED_CH_SECO']

@@ -16,8 +16,7 @@
 //   2. Falls back to a curated static list (sourceVersion = `static-${date}`)
 //      when scrape yields nothing — guarantees the cron is never empty.
 
-import type { SourceAdapter, NormalisedEntity } from '../types.js';
-import { mkListing } from '../types.js';
+import { type SourceAdapter, type NormalisedEntity, mkListing } from '../types.js';
 import { fetchText, sha256Hex } from '../fetch-util.js';
 
 const CALL_FOR_ACTION_URL =

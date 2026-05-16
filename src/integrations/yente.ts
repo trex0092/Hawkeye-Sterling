@@ -90,7 +90,7 @@ export async function yenteMatch(
   const dataset = opts.dataset ?? 'default';
   const threshold = opts.threshold ?? 0.5;
   const limit = opts.limit ?? 10;
-  const fetchImpl = opts.fetchImpl ?? fetch;
+  const _fetchImpl = opts.fetchImpl ?? fetch;
 
   // Build the FtM-format match request body. yente expects a map of
   // query-id → { schema, properties }.

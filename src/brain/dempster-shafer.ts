@@ -70,10 +70,6 @@ function intersect(a: FocalSet, b: FocalSet): FocalSet {
   return a.filter((x) => sb.has(x));
 }
 
-function union(a: FocalSet, b: FocalSet): FocalSet {
-  return [...new Set([...a, ...b])].sort();
-}
-
 function isSubsetOf(a: FocalSet, b: FocalSet): boolean {
   const sb = new Set(b);
   return a.every((x) => sb.has(x));

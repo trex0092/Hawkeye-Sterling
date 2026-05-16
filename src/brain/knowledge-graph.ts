@@ -9,8 +9,8 @@
 // The graph is built lazily from the existing maps (no separate registry
 // of edges to maintain) so every classifier-side update propagates here.
 
-import { TYPOLOGIES, type TypologyId } from './typologies.js';
-import { DOCTRINES, type DoctrineId } from './doctrines.js';
+import { TYPOLOGIES } from './typologies.js';
+import { DOCTRINES } from './doctrines.js';
 import { FATF_RECOMMENDATIONS } from './fatf-recommendations.js';
 import { COMMON_SENSE_RULES } from './mlro-common-sense.js';
 import { classifyMlroQuestion, type MlroTopic } from './mlro-question-classifier.js';

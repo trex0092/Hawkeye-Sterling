@@ -276,19 +276,19 @@ export class AuditLogStore {
       if (toTs && e.timestamp > toTs) continue;
       if (q.modes && !q.modes.includes(e.mode)) continue;
       if (q.verdicts && (!e.verdict || !q.verdicts.includes(e.verdict))) continue;
-      if (q.confidenceBelow != null && (e.confidence == null || e.confidence >= q.confidenceBelow)) continue;
-      if (q.confidenceAbove != null && (e.confidence == null || e.confidence <= q.confidenceAbove)) continue;
+      if (q.confidenceBelow !== null && q.confidenceBelow !== undefined && (e.confidence === null || e.confidence === undefined || e.confidence >= q.confidenceBelow)) continue;
+      if (q.confidenceAbove !== null && q.confidenceAbove !== undefined && (e.confidence === null || e.confidence === undefined || e.confidence <= q.confidenceAbove)) continue;
       if (q.userId && e.userId !== q.userId) continue;
-      if (q.completionGateTripped != null) {
-        const tripped = e.finalAnswer == null;
+      if (q.completionGateTripped !== null && q.completionGateTripped !== undefined) {
+        const tripped = e.finalAnswer === null || e.finalAnswer === undefined;
         if (tripped !== q.completionGateTripped) continue;
       }
-      if (q.validationFailed != null) {
+      if (q.validationFailed !== null && q.validationFailed !== undefined) {
         const failed = !!(e.validation && !e.validation.passed);
         if (failed !== q.validationFailed) continue;
       }
-      if (q.hasFeedback != null) {
-        const has = e.feedback != null;
+      if (q.hasFeedback !== null && q.hasFeedback !== undefined) {
+        const has = e.feedback !== null && e.feedback !== undefined;
         if (has !== q.hasFeedback) continue;
       }
       if (q.feedbackVerdicts && (!e.feedback || !q.feedbackVerdicts.includes(e.feedback.verdict))) continue;

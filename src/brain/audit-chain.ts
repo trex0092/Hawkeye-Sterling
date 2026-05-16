@@ -28,7 +28,7 @@ function getCreateHash() {
   // Dynamic require keeps this module importable in non-Node environments
   // (browser bundles) where it would be unused.
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
+     
     _cryptoCreateHash = (require('node:crypto') as { createHash: typeof _cryptoCreateHash }).createHash;
   } catch (err) {
     // CRITICAL: tamper-evident audit chain falls back to FNV-1a (non-cryptographic)
