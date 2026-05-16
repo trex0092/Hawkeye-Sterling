@@ -140,6 +140,10 @@ Map these facts to applicable UAE ML predicate offences with penalties.`,
       });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as MlPredicateResult;
+    if (!Array.isArray(result.secondaryPredicates)) result.secondaryPredicates = [];
+    if (!Array.isArray(result.investigativeActions)) result.investigativeActions = [];
+    if (!Array.isArray(result.jurisdictionalIssues)) result.jurisdictionalIssues = [];
+    if (!Array.isArray(result.fatfR3Categories)) result.fatfR3Categories = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "ml-predicate temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});

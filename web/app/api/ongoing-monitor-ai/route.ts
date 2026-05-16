@@ -125,6 +125,9 @@ export async function POST(req: Request): Promise<NextResponse> {
     const stripped = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "");
 
     const parsed = JSON.parse(stripped) as MonitorAlertsResponse;
+    if (!Array.isArray(parsed.alerts)) parsed.alerts = [];
+    if (!Array.isArray(parsed.immediateEscalations)) parsed.immediateEscalations = [];
+    if (!Array.isArray(parsed.cadenceRecommendations)) parsed.cadenceRecommendations = [];
 
     writeAuditEvent(
       "mlro",

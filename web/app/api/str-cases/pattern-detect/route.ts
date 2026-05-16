@@ -128,6 +128,8 @@ Identify all statistically significant or operationally relevant patterns across
     const result = JSON.parse(
       raw.replace(/```json\n?|\n?```/g, "").trim(),
     ) as PatternDetectResult;
+    if (!Array.isArray(result.patterns)) result.patterns = [];
+    else for (const p of result.patterns) { if (!Array.isArray(p.caseIds)) p.caseIds = []; }
     return NextResponse.json(result, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "str-cases/pattern-detect temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});

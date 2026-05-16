@@ -154,6 +154,10 @@ Generate a complete PEP EDD package for this individual.`,
       });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as PepEddResult;
+    if (!Array.isArray(result.eddQuestionnaire)) result.eddQuestionnaire = [];
+    if (!Array.isArray(result.requiredDocumentation)) result.requiredDocumentation = [];
+    if (!Array.isArray(result.ongoingMonitoringMeasures)) result.ongoingMonitoringMeasures = [];
+    if (!Array.isArray(result.screeningRequirements)) result.screeningRequirements = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "pep-edd-generator temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});

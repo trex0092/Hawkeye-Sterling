@@ -131,6 +131,7 @@ Red Flags: ${redFlagsStr}`;
       .replace(/\s*```$/i, "")
       .trim();
     parsed = JSON.parse(cleaned) as typeof parsed;
+    if (!Array.isArray(parsed.scores)) parsed.scores = [];
   } catch {
     return NextResponse.json({ ok: true, scores: fallbackScores(cases) }, { headers: gate.headers });
   }
@@ -139,9 +140,9 @@ Red Flags: ${redFlagsStr}`;
     id: s.id,
     score: s.score,
     grade: toGrade(s.score),
-    missingElements: s.missingElements,
-    suggestions: s.suggestions,
-    fatalIssues: s.fatalIssues,
+    missingElements: Array.isArray(s.missingElements) ? s.missingElements : [],
+    suggestions: Array.isArray(s.suggestions) ? s.suggestions : [],
+    fatalIssues: Array.isArray(s.fatalIssues) ? s.fatalIssues : [],
   }));
 
   // Write audit event (server-side call — note: writeAuditEvent uses localStorage

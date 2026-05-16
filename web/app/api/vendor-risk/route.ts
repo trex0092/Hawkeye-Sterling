@@ -112,6 +112,8 @@ Existing Flags: ${supplier.flags.length > 0 ? supplier.flags.join(", ") : "none"
       .replace(/\s*```$/i, "")
       .trim();
     result = JSON.parse(cleaned) as VendorRiskResult;
+    if (!Array.isArray(result.findings)) result.findings = [];
+    if (!Array.isArray(result.redFlags)) result.redFlags = [];
   } catch {
     return NextResponse.json({ ok: false, error: "vendor-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
   }

@@ -76,6 +76,9 @@ export async function POST(req: NextRequest) {
   let briefing: MlroBriefing;
   try {
     briefing = JSON.parse(cleaned) as MlroBriefing;
+    if (!Array.isArray(briefing.priorityCases)) briefing.priorityCases = [];
+    if (!Array.isArray(briefing.actionItems)) briefing.actionItems = [];
+    if (!Array.isArray(briefing.regulatoryDeadlines)) briefing.regulatoryDeadlines = [];
   } catch {
     briefing = { ...EMPTY_BRIEFING, summary: rawText.slice(0, 400) };
   }

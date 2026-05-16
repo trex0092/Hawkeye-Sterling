@@ -99,6 +99,14 @@ export async function POST(req: Request): Promise<NextResponse> {
     const text = res.content[0]?.type === "text" ? res.content[0].text : "";
     const stripped = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
     const parsed = JSON.parse(stripped) as TbmlResult;
+    if (!Array.isArray(parsed.flaggedShipments)) parsed.flaggedShipments = [];
+    else for (const s of parsed.flaggedShipments) {
+      if (!Array.isArray(s.tbmlIndicators)) s.tbmlIndicators = [];
+      if (!Array.isArray(s.fatfTypologies)) s.fatfTypologies = [];
+    }
+    if (!Array.isArray(parsed.systemicRisks)) parsed.systemicRisks = [];
+    if (!Array.isArray(parsed.lbmaGaps)) parsed.lbmaGaps = [];
+    if (!Array.isArray(parsed.immediateHolds)) parsed.immediateHolds = [];
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "shipment-tbml temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});

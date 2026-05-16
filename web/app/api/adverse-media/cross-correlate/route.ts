@@ -121,6 +121,9 @@ Perform entity disambiguation, theme grouping, trend analysis, score computation
     const result = JSON.parse(
       raw.replace(/```json\n?|\n?```/g, "").trim(),
     ) as CrossCorrelateResult;
+    if (!Array.isArray(result.confirmed)) result.confirmed = [];
+    if (!Array.isArray(result.dismissed)) result.dismissed = [];
+    if (result.themes == null || typeof result.themes !== "object" || Array.isArray(result.themes)) result.themes = {};
     return NextResponse.json(result, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "adverse-media/cross-correlate temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});

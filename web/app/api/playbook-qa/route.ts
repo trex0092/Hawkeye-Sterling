@@ -61,6 +61,8 @@ export async function POST(req: NextRequest) {
   let qaAnswer: QaAnswer;
   try {
     qaAnswer = JSON.parse(cleaned) as QaAnswer;
+    if (!Array.isArray(qaAnswer.citations)) qaAnswer.citations = [];
+    if (!Array.isArray(qaAnswer.relatedPlaybooks)) qaAnswer.relatedPlaybooks = [];
   } catch {
     qaAnswer = { ...EMPTY_ANSWER, answer: rawText.slice(0, 1600), confidence: 0.5 };
   }

@@ -217,6 +217,16 @@ Analyse for TBML risk.`,
   const raw = response.content[0]?.type === "text" ? (response.content[0] as { type: "text"; text: string }).text : "{}";
   try {
     const aiResult = JSON.parse(raw.match(/\{[\s\S]*\}/)?.[0] ?? "{}");
+    if (!Array.isArray(aiResult.tbmlIndicators)) aiResult.tbmlIndicators = [];
+    if (!Array.isArray(aiResult.missingDocuments)) aiResult.missingDocuments = [];
+    if (!Array.isArray(aiResult.sanctionsNexus)) aiResult.sanctionsNexus = [];
+    if (!Array.isArray(aiResult.recommendedActions)) aiResult.recommendedActions = [];
+    if (aiResult.cahraAssessment) {
+      if (!Array.isArray(aiResult.cahraAssessment.certificationGaps)) aiResult.cahraAssessment.certificationGaps = [];
+      if (!Array.isArray(aiResult.cahraAssessment.requiredActions)) aiResult.cahraAssessment.requiredActions = [];
+    }
+    if (aiResult.extractedFields && !Array.isArray(aiResult.extractedFields.routingCountries)) aiResult.extractedFields.routingCountries = [];
+    if (aiResult.extractedFields && !Array.isArray(aiResult.extractedFields.certifications)) aiResult.extractedFields.certifications = [];
     return NextResponse.json({
       ok: true,
       documentType: body.documentType,

@@ -157,6 +157,8 @@ Simulate a full portfolio re-screen against the new list version. Generate reali
     const result = JSON.parse(
       raw.replace(/```json\n?|\n?```/g, "").trim(),
     ) as BulkRescreenResult;
+    if (!Array.isArray(result.newHits)) result.newHits = [];
+    if (!Array.isArray(result.cleared)) result.cleared = [];
     // Enforce rescreened count equals actual subject count regardless of
     // what the model returns — prevents confusing UX.
     result.rescreened = subjects.length;

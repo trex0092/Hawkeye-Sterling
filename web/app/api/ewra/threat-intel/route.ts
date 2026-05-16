@@ -188,6 +188,9 @@ Generate threat intelligence for the EWRA. Focus on the top 5 current ML/TF typo
     const parsed = JSON.parse(
       raw.replace(/```json\n?|\n?```/g, "").trim(),
     ) as ThreatIntelResult;
+    if (!Array.isArray(parsed.typologies)) parsed.typologies = [];
+    if (!Array.isArray(parsed.regulatoryChanges)) parsed.regulatoryChanges = [];
+    if (!Array.isArray(parsed.scoreAdjustments)) parsed.scoreAdjustments = [];
     const result: ThreatIntelResult = {
       ...parsed,
       generatedAt: parsed.generatedAt ?? new Date().toISOString(),

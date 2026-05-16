@@ -308,6 +308,15 @@ Generate a comprehensive regulatory change roadmap covering all material upcomin
     });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as RegChangeResult;
+    if (!Array.isArray(result.upcomingChanges)) result.upcomingChanges = [];
+    else for (const c of result.upcomingChanges) {
+      if (!Array.isArray(c.affectedProducts)) c.affectedProducts = [];
+      if (!Array.isArray(c.affectedClientTypes)) c.affectedClientTypes = [];
+      if (!Array.isArray(c.requiredActions)) c.requiredActions = [];
+    }
+    if (!Array.isArray(result.immediateActions)) result.immediateActions = [];
+    if (!Array.isArray(result.complianceRoadmap)) result.complianceRoadmap = [];
+    else for (const m of result.complianceRoadmap) { if (!Array.isArray(m.actions)) m.actions = []; }
     return NextResponse.json(result, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "reg-change temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});

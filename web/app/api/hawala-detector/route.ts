@@ -82,6 +82,8 @@ export async function POST(req: Request) {
     const result = JSON.parse(
       raw.replace(/```json\n?|\n?```/g, "").trim()
     ) as HawalaDetectorResult;
+    if (!Array.isArray(result.ivtsIndicators)) result.ivtsIndicators = [];
+    if (!Array.isArray(result.counterpartiesIdentified)) result.counterpartiesIdentified = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "hawala-detector temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});

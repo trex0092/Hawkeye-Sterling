@@ -286,6 +286,17 @@ Perform a comprehensive insider threat assessment using the MICE model and CERT 
 
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as InsiderThreatResult;
+    if (!Array.isArray(result.recommendedControls)) result.recommendedControls = [];
+    if (!Array.isArray(result.hrActions)) result.hrActions = [];
+    if (!Array.isArray(result.investigativeSteps)) result.investigativeSteps = [];
+    if (!Array.isArray(result.redFlags)) result.redFlags = [];
+    if (!Array.isArray(result.escalationPath)) result.escalationPath = [];
+    if (!Array.isArray(result.threatCategory)) result.threatCategory = [];
+    else for (const cat of result.threatCategory) { if (!Array.isArray(cat.indicators)) cat.indicators = []; }
+    if (result.behaviouralRiskProfile) {
+      if (!Array.isArray(result.behaviouralRiskProfile.stressors)) result.behaviouralRiskProfile.stressors = [];
+      if (!Array.isArray(result.behaviouralRiskProfile.warningBehaviours)) result.behaviouralRiskProfile.warningBehaviours = [];
+    }
 
     // Update persistent profile
     const now = new Date().toISOString();

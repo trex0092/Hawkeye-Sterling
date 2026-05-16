@@ -80,6 +80,8 @@ export async function POST(req: Request) {
     const result = JSON.parse(
       raw.replace(/```json\n?|\n?```/g, "").trim()
     ) as NomineeRiskResult;
+    if (!Array.isArray(result.nomineeIndicators)) result.nomineeIndicators = [];
+    if (!Array.isArray(result.verificationRequired)) result.verificationRequired = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "nominee-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});

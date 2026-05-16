@@ -177,6 +177,12 @@ Validate this STR draft against UAE FIU goAML requirements.`,
       });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as GoAmlValidatorResult;
+    if (!Array.isArray(result.fieldChecks)) result.fieldChecks = [];
+    if (!Array.isArray(result.criticalIssues)) result.criticalIssues = [];
+    if (!Array.isArray(result.warnings)) result.warnings = [];
+    if (!Array.isArray(result.narrativeStrengths)) result.narrativeStrengths = [];
+    if (!Array.isArray(result.narrativeWeaknesses)) result.narrativeWeaknesses = [];
+    if (!Array.isArray(result.goAmlSpecificRequirements)) result.goAmlSpecificRequirements = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "goaml-validator temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});

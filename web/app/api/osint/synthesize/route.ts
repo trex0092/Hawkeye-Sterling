@@ -136,6 +136,10 @@ Synthesise all source intelligence into a coherent subject profile. Identify cor
     const result = JSON.parse(
       raw.replace(/```json\n?|\n?```/g, "").trim()
     ) as OsintSynthesisResult;
+    if (!Array.isArray(result.corroborating)) result.corroborating = [];
+    if (!Array.isArray(result.contradicting)) result.contradicting = [];
+    if (!Array.isArray(result.intelligenceGaps)) result.intelligenceGaps = [];
+    if (!Array.isArray(result.recommendedActions)) result.recommendedActions = [];
     return NextResponse.json(result, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "osint/synthesize temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});

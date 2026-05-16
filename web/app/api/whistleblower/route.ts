@@ -87,6 +87,9 @@ export async function POST(req: Request) {
     const result = JSON.parse(
       raw.replace(/```json\n?|\n?```/g, "").trim()
     ) as WhistleblowerResult;
+    if (!Array.isArray(result.allegationCategories)) result.allegationCategories = [];
+    if (!Array.isArray(result.protectionMeasures)) result.protectionMeasures = [];
+    if (!Array.isArray(result.investigationSteps)) result.investigationSteps = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "whistleblower temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});

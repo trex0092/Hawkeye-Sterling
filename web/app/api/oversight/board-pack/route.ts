@@ -150,6 +150,8 @@ Generate a comprehensive, formal board pack suitable for presentation to the Man
     const result = JSON.parse(
       raw.replace(/```json\n?|\n?```/g, "").trim(),
     ) as BoardPackResult;
+    if (!Array.isArray(result.pendingItems)) result.pendingItems = [];
+    if (!Array.isArray(result.recommendations)) result.recommendations = [];
     // Ensure generatedAt is always set
     if (!result.generatedAt) result.generatedAt = new Date().toISOString();
     return NextResponse.json(result, { headers: gate.headers });

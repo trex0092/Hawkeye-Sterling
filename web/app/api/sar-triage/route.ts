@@ -144,6 +144,9 @@ Make an STR triage decision.`,
       });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as SarTriageResult;
+    if (!Array.isArray(result.requiredFields)) result.requiredFields = [];
+    if (!Array.isArray(result.missingInformation)) result.missingInformation = [];
+    if (!Array.isArray(result.narrativeSuggestions)) result.narrativeSuggestions = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "sar-triage temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});

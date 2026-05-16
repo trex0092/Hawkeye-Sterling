@@ -91,6 +91,9 @@ export async function POST(req: Request) {
     if (!jsonMatch) return NextResponse.json({ ok: false, error: "sanctions-breach temporarily unavailable - please retry." }, { status: 503 });
 
     const parsed = JSON.parse(jsonMatch[0]) as SanctionsBreachResult;
+    if (!Array.isArray(parsed.mitigatingFactors)) parsed.mitigatingFactors = [];
+    if (!Array.isArray(parsed.aggravatingFactors)) parsed.aggravatingFactors = [];
+    if (!Array.isArray(parsed.immediateActions)) parsed.immediateActions = [];
     return NextResponse.json({ ok: true, ...parsed });
   } catch {
     return NextResponse.json({ ok: false, error: "sanctions-breach temporarily unavailable - please retry." }, { status: 503 });

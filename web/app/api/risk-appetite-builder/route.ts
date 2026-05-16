@@ -135,6 +135,9 @@ Draft a comprehensive AML/CFT Risk Appetite Statement for this institution. Retu
       });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as RiskAppetiteResult;
+    if (!Array.isArray(result.riskTolerances)) result.riskTolerances = [];
+    if (!Array.isArray(result.prohibitedActivities)) result.prohibitedActivities = [];
+    if (!Array.isArray(result.escalationTriggers)) result.escalationTriggers = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "risk-appetite-builder temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});

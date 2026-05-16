@@ -152,6 +152,8 @@ Respond ONLY with valid JSON — no markdown fences:
       let candidate: StrNarrativeResult | null = null;
       try {
         candidate = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as StrNarrativeResult;
+        if (!Array.isArray(candidate.fatfR20Coverage)) candidate.fatfR20Coverage = [];
+        if (!Array.isArray(candidate.missingElements)) candidate.missingElements = [];
       } catch {
         break; // parse failure — keep best from prior iterations
       }

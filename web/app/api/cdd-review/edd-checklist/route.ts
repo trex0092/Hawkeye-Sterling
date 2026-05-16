@@ -126,6 +126,10 @@ Generate a comprehensive, tailored EDD checklist with specific documents to obta
 
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as EddChecklistResult;
+    if (!Array.isArray(result.documents)) result.documents = [];
+    if (!Array.isArray(result.questions)) result.questions = [];
+    if (!Array.isArray(result.verifications)) result.verifications = [];
+    if (!Array.isArray(result.redFlagsToMonitor)) result.redFlagsToMonitor = [];
     return NextResponse.json(result, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "cdd-review/edd-checklist temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});

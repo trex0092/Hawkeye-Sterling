@@ -58,6 +58,10 @@ export async function POST(req: Request): Promise<NextResponse> {
       return NextResponse.json({ ok: false, error: "oversight-gap-analysis temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
     }
     result = JSON.parse(jsonMatch[0]) as GapAnalysisResult;
+    if (!Array.isArray(result.gaps)) result.gaps = [];
+    if (!Array.isArray(result.overdueItems)) result.overdueItems = [];
+    if (!Array.isArray(result.breachRisks)) result.breachRisks = [];
+    if (!Array.isArray(result.deadlines)) result.deadlines = [];
   } catch {
     return NextResponse.json({ ok: false, error: "oversight-gap-analysis temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
   }

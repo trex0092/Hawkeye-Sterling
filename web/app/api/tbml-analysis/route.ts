@@ -147,6 +147,9 @@ Perform TBML risk analysis.`,
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const cleaned = raw.replace(/```json\n?|\n?```/g, "").trim();
     const result = JSON.parse(cleaned) as TbmlAnalysis;
+    if (!Array.isArray(result.indicators)) result.indicators = [];
+    if (!Array.isArray(result.documentationGaps)) result.documentationGaps = [];
+    if (!Array.isArray(result.investigativeSteps)) result.investigativeSteps = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "tbml-analysis temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});

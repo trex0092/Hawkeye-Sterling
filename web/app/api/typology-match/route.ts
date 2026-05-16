@@ -172,6 +172,10 @@ export async function POST(req: Request): Promise<NextResponse> {
       const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
       const cleaned = raw.replace(/^```json?\s*/i, "").replace(/\s*```$/i, "").trim();
       result = JSON.parse(cleaned) as TypologyMatchResult;
+      if (!Array.isArray(result.secondaryTypologies)) result.secondaryTypologies = [];
+      if (!Array.isArray(result.keyIndicators)) result.keyIndicators = [];
+      if (!Array.isArray(result.missingIndicators)) result.missingIndicators = [];
+      if (!Array.isArray(result.investigativePriorities)) result.investigativePriorities = [];
     } catch {
       return NextResponse.json({ ok: true, degraded: true, ...FALLBACK }, { headers: gateHeaders });
     }

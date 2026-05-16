@@ -168,6 +168,11 @@ Assess for proliferation financing risk.`,
       });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as PfScreenerResult;
+    if (!Array.isArray(result.dualUseCategories)) result.dualUseCategories = [];
+    if (!Array.isArray(result.indicators)) result.indicators = [];
+    if (!Array.isArray(result.requiredActions)) result.requiredActions = [];
+    if (!Array.isArray(result.applicableRegime)) result.applicableRegime = [];
+    if (!Array.isArray(result.pfObligations)) result.pfObligations = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "proliferation-finance temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});

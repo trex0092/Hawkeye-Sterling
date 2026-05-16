@@ -174,6 +174,10 @@ Assess for terrorism financing risk.`,
       });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as TfScreenerResult;
+    if (!Array.isArray(result.indicators)) result.indicators = [];
+    if (!Array.isArray(result.requiredActions)) result.requiredActions = [];
+    if (!Array.isArray(result.applicableRegime)) result.applicableRegime = [];
+    if (!Array.isArray(result.ctfObligations)) result.ctfObligations = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "tf-screener temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});

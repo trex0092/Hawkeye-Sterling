@@ -82,6 +82,9 @@ export async function POST(req: Request) {
     if (!jsonMatch) return NextResponse.json({ ok: false, error: "npo-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
 
     const parsed = JSON.parse(jsonMatch[0]) as NpoRiskResult;
+    if (!Array.isArray(parsed.keyRedFlags)) parsed.keyRedFlags = [];
+    if (!Array.isArray(parsed.tfIndicators)) parsed.tfIndicators = [];
+    if (!Array.isArray(parsed.dueDiligenceSteps)) parsed.dueDiligenceSteps = [];
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "npo-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});

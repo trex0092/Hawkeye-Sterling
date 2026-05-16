@@ -135,6 +135,10 @@ Assess this VASP for onboarding risk.`,
       });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as VaspRiskResult;
+    if (!Array.isArray(result.highRiskJurisdictions)) result.highRiskJurisdictions = [];
+    if (!Array.isArray(result.riskIndicators)) result.riskIndicators = [];
+    if (!Array.isArray(result.requiredDocumentation)) result.requiredDocumentation = [];
+    if (!Array.isArray(result.regulatoryObligations)) result.regulatoryObligations = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "vasp-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});

@@ -104,6 +104,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       .replace(/\s*```$/i, "")
       .trim();
     result = JSON.parse(stripped) as ExplanationResult;
+    if (!Array.isArray(result.typologies)) result.typologies = [];
   } catch {
     return NextResponse.json({
       ok: true,

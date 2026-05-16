@@ -140,6 +140,10 @@ Return ONLY valid JSON:
   const raw = response.content[0]?.type === "text" ? (response.content[0] as { type: "text"; text: string }).text : "{}";
   try {
     const result = JSON.parse(raw.match(/\{[\s\S]*\}/)?.[0] ?? "{}");
+    if (!Array.isArray(result.gaps)) result.gaps = [];
+    if (!Array.isArray(result.examinerQuestions)) result.examinerQuestions = [];
+    if (!Array.isArray(result.remediationRoadmap)) result.remediationRoadmap = [];
+    if (!Array.isArray(result.strengthAreas)) result.strengthAreas = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "examiner analysis failed — retry" }, { status: 500, headers: gate.headers });

@@ -141,6 +141,10 @@ export async function POST(req: Request): Promise<NextResponse> {
     const cleaned = raw.replace(/^```json?\s*/i, "").replace(/\s*```$/i, "").trim();
     try {
       result = JSON.parse(cleaned) as SanctionsNexusResult;
+      if (!Array.isArray(result.directRisks)) result.directRisks = [];
+      if (!Array.isArray(result.indirectRisks)) result.indirectRisks = [];
+      if (!Array.isArray(result.jurisdictionalExposure)) result.jurisdictionalExposure = [];
+      if (!Array.isArray(result.requiredChecks)) result.requiredChecks = [];
     } catch {
       console.error("[sanctions-indirect] failed to parse AI response");
       return NextResponse.json({ ok: false, error: "sanctions-indirect temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});

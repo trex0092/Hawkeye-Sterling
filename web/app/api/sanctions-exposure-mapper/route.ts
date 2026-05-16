@@ -136,6 +136,9 @@ Map sanctions list exposure and compliance obligations for this entity.`,
       });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as SanctionsExposureResult;
+    if (!Array.isArray(result.listHits)) result.listHits = [];
+    if (!Array.isArray(result.applicableRegime)) result.applicableRegime = [];
+    if (!Array.isArray(result.complianceObligations)) result.complianceObligations = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "sanctions-exposure-mapper temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});

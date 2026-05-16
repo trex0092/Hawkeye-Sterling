@@ -104,6 +104,14 @@ export async function POST(req: Request): Promise<NextResponse> {
     const stripped = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "");
 
     const parsed = JSON.parse(stripped) as NameVariantsResponse;
+    if (!Array.isArray(parsed.variants)) parsed.variants = [];
+    if (!Array.isArray(parsed.transliterations)) parsed.transliterations = [];
+    if (!Array.isArray(parsed.patronymics)) parsed.patronymics = [];
+    if (!Array.isArray(parsed.maidenNames)) parsed.maidenNames = [];
+    if (!Array.isArray(parsed.aliases)) parsed.aliases = [];
+    if (!Array.isArray(parsed.entityVariants)) parsed.entityVariants = [];
+    if (!Array.isArray(parsed.screeningStrings)) parsed.screeningStrings = [];
+    if (!Array.isArray(parsed.scriptVariants)) parsed.scriptVariants = [];
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);

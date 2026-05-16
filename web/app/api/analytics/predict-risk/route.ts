@@ -140,6 +140,9 @@ Predict the risk trajectory. Identify which categories are accelerating. Suggest
 
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as PredictRiskResult;
+    if (!Array.isArray(result.riskTrajectory)) result.riskTrajectory = [];
+    if (!Array.isArray(result.acceleratingRisks)) result.acceleratingRisks = [];
+    if (!Array.isArray(result.interventions)) result.interventions = [];
     return NextResponse.json(result, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "analytics/predict-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});

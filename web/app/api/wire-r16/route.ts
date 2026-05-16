@@ -118,6 +118,9 @@ Assess FATF R.16 compliance.`,
       });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as WireR16Result;
+    if (!Array.isArray(result.requiredActions)) result.requiredActions = [];
+    if (result.originatorCheck && !Array.isArray(result.originatorCheck.missing)) result.originatorCheck.missing = [];
+    if (result.beneficiaryCheck && !Array.isArray(result.beneficiaryCheck.missing)) result.beneficiaryCheck.missing = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "wire-r16 temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});

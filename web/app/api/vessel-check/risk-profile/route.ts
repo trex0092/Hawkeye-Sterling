@@ -142,6 +142,7 @@ Generate a comprehensive vessel risk profile including AIS pattern anomaly analy
     const result = JSON.parse(
       raw.replace(/```json\n?|\n?```/g, "").trim()
     ) as VesselRiskProfileResult;
+    if (!Array.isArray(result.anomalies)) result.anomalies = [];
     return NextResponse.json(result, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "vessel-check/risk-profile temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
