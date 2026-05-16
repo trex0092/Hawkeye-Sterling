@@ -596,6 +596,238 @@ export function euTransparencyRegisterAdapter(): RegistryAdapter {
   };
 }
 
+// ── DFSA Public Register — Dubai Financial Services Authority ────────
+// Directly relevant: UAE DPMS gold dealers deal with DIFC-regulated firms.
+export function dfsaRegisterAdapter(): RegistryAdapter {
+  if (!flagOn("dfsa-register")) return NULL_REGISTRY_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({ name: subjectName, pageSize: String(Math.min(opts?.limit ?? 20, 50)), pageNumber: "1" });
+        const res = await abortable(
+          fetch(`https://www.dfsa.ae/api/PublicRegister/Search?${params.toString()}`, {
+            headers: { accept: "application/json", "user-agent": "HawkeyeSterling/1.0" },
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as { data?: Array<{ name?: string; referenceNumber?: string; status?: string; category?: string; licenceType?: string; authorizationDate?: string }> };
+        return (json.data ?? []).filter((e) => e.name).map((e) => ({
+          source: "dfsa-register",
+          name: e.name!,
+          jurisdiction: "AE-DU",
+          ...(e.referenceNumber ? { registrationNumber: e.referenceNumber } : {}),
+          ...(e.authorizationDate ? { incorporationDate: e.authorizationDate } : {}),
+          status: [e.status, e.licenceType].filter(Boolean).join(" — ") || "DFSA Registered",
+          url: `https://www.dfsa.ae/public-register`,
+        } satisfies RegistryRecord));
+      } catch (err) {
+        console.warn("[dfsa-register] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// ── ADGM Financial Services Register — Abu Dhabi Global Market ──────
+export function adgmRegisterAdapter(): RegistryAdapter {
+  if (!flagOn("adgm-register")) return NULL_REGISTRY_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({ q: subjectName, pageSize: String(Math.min(opts?.limit ?? 20, 50)) });
+        const res = await abortable(
+          fetch(`https://www.adgm.com/api/fsra/public-register/search?${params.toString()}`, {
+            headers: { accept: "application/json", "user-agent": "HawkeyeSterling/1.0" },
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as { results?: Array<{ entityName?: string; referenceNumber?: string; status?: string; category?: string; effectiveDate?: string }> };
+        return (json.results ?? []).filter((e) => e.entityName).map((e) => ({
+          source: "adgm-register",
+          name: e.entityName!,
+          jurisdiction: "AE-AZ",
+          ...(e.referenceNumber ? { registrationNumber: e.referenceNumber } : {}),
+          ...(e.effectiveDate ? { incorporationDate: e.effectiveDate } : {}),
+          status: [e.status, e.category].filter(Boolean).join(" — ") || "ADGM Registered",
+          url: "https://www.adgm.com/fsra/public-register",
+        } satisfies RegistryRecord));
+      } catch (err) {
+        console.warn("[adgm-register] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// ── CBUAE Licensed Institutions — Central Bank of UAE ───────────────
+export function cbuaeLicensedAdapter(): RegistryAdapter {
+  if (!flagOn("cbuae-licensed")) return NULL_REGISTRY_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({ search: subjectName, limit: String(Math.min(opts?.limit ?? 20, 50)) });
+        const res = await abortable(
+          fetch(`https://centralbank.ae/api/v1/licensed-institutions?${params.toString()}`, {
+            headers: { accept: "application/json", "user-agent": "HawkeyeSterling/1.0" },
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as { data?: Array<{ name?: string; licenceNumber?: string; status?: string; type?: string; licenceDate?: string; emirate?: string }> };
+        const needle = subjectName.toLowerCase();
+        return (json.data ?? [])
+          .filter((e) => e.name?.toLowerCase().includes(needle))
+          .slice(0, opts?.limit ?? 20)
+          .map((e) => ({
+            source: "cbuae-licensed",
+            name: e.name!,
+            jurisdiction: e.emirate ? `AE-${e.emirate.slice(0, 2).toUpperCase()}` : "AE",
+            ...(e.licenceNumber ? { registrationNumber: e.licenceNumber } : {}),
+            ...(e.licenceDate ? { incorporationDate: e.licenceDate } : {}),
+            status: [e.status, e.type].filter(Boolean).join(" — ") || "CBUAE Licensed",
+            url: "https://centralbank.ae/en/licensed-institutions",
+          } satisfies RegistryRecord));
+      } catch (err) {
+        console.warn("[cbuae-licensed] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// ── CourtListener — US federal court cases, free, no key ─────────────
+export function courtListenerAdapter(): RegistryAdapter {
+  if (!flagOn("court-listener")) return NULL_REGISTRY_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({ q: `"${subjectName}"`, type: "r", format: "json", page_size: String(Math.min(opts?.limit ?? 20, 20)) });
+        const res = await abortable(
+          fetch(`https://www.courtlistener.com/api/rest/v4/search/?${params.toString()}`, {
+            headers: { accept: "application/json", "user-agent": "HawkeyeSterling/1.0" },
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as { results?: Array<{ id?: number; caseName?: string; court?: string; dateFiled?: string; docketNumber?: string; absoluteUrl?: string; status?: string }> };
+        return (json.results ?? []).filter((r) => r.caseName).map((r) => ({
+          source: "court-listener",
+          name: r.caseName!,
+          jurisdiction: "US",
+          ...(r.docketNumber ? { registrationNumber: r.docketNumber } : {}),
+          ...(r.dateFiled ? { incorporationDate: r.dateFiled } : {}),
+          status: [r.status, r.court].filter(Boolean).join(" | ") || "Court Record",
+          url: r.absoluteUrl ? `https://www.courtlistener.com${r.absoluteUrl}` : "https://www.courtlistener.com",
+        } satisfies RegistryRecord));
+      } catch (err) {
+        console.warn("[court-listener] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// ── ICIJ Offshore Leaks — Panama / Pandora / Bahamas Papers ─────────
+export function icijOffshoreLeaksAdapter(): RegistryAdapter {
+  if (!flagOn("icij-offshore-leaks")) return NULL_REGISTRY_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const params = new URLSearchParams({ q: subjectName, cat: "entity,officer,intermediary,address", page: "1" });
+        const res = await abortable(
+          fetch(`https://offshoreleaks.icij.org/api/v1/search?${params.toString()}`, {
+            headers: { accept: "application/json", "user-agent": "HawkeyeSterling/1.0" },
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as { nodes?: Array<{ name?: string; jurisdiction?: string; country_codes?: string[]; node_id?: string; sourceids?: string[]; datasets?: string[] }> };
+        const lim = opts?.limit ?? 25;
+        return (json.nodes ?? []).slice(0, lim).filter((n) => n.name).map((n) => ({
+          source: "icij-offshore-leaks",
+          name: n.name!,
+          ...(n.country_codes?.[0] ? { jurisdiction: n.country_codes[0].toUpperCase() } : n.jurisdiction ? { jurisdiction: n.jurisdiction } : {}),
+          ...(n.node_id ? { registrationNumber: n.node_id } : {}),
+          status: `ICIJ Leak: ${(n.datasets ?? n.sourceids ?? []).join(", ") || "offshore"}`,
+          url: n.node_id ? `https://offshoreleaks.icij.org/nodes/${n.node_id}` : "https://offshoreleaks.icij.org/",
+        } satisfies RegistryRecord));
+      } catch (err) {
+        console.warn("[icij-offshore-leaks] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// ── IMO Ship Registry — International Maritime Organization ──────────
+// Catches vessels owned/operated by screened entities (gold smuggling routes).
+export function imoShipRegistryAdapter(): RegistryAdapter {
+  if (!flagOn("imo-ship-registry")) return NULL_REGISTRY_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        // GISIS public search — returns ships by owner/company name
+        const params = new URLSearchParams({ companyName: subjectName, pageNo: "1", pageSize: String(Math.min(opts?.limit ?? 20, 50)) });
+        const res = await abortable(
+          fetch(`https://gisis.imo.org/public/ships/getShipList?${params.toString()}`, {
+            headers: { accept: "application/json", "user-agent": "HawkeyeSterling/1.0" },
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as { data?: Array<{ shipName?: string; imoNumber?: string; flagState?: string; shipType?: string; grossTonnage?: string; registeredOwner?: string }> };
+        return (json.data ?? []).filter((s) => s.shipName).map((s) => ({
+          source: "imo-ship-registry",
+          name: s.shipName!,
+          ...(s.flagState ? { jurisdiction: s.flagState } : {}),
+          ...(s.imoNumber ? { registrationNumber: s.imoNumber } : {}),
+          status: [s.shipType, s.registeredOwner ? `Owner: ${s.registeredOwner}` : ""].filter(Boolean).join(" | ") || "IMO Vessel",
+          url: s.imoNumber ? `https://gisis.imo.org/public/ships/details/${s.imoNumber}` : "https://gisis.imo.org/",
+        } satisfies RegistryRecord));
+      } catch (err) {
+        console.warn("[imo-ship-registry] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// ── FAA Aircraft Registry — US-registered aircraft owners ───────────
+// Catches private jets / cargo aircraft linked to screened entities.
+export function faaAircraftRegistryAdapter(): RegistryAdapter {
+  if (!flagOn("faa-aircraft-registry")) return NULL_REGISTRY_ADAPTER;
+  return {
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        // FAA's public aircraft inquiry API
+        const params = new URLSearchParams({ OwnerName: subjectName, PageNumber: "1", PageSize: String(Math.min(opts?.limit ?? 20, 50)) });
+        const res = await abortable(
+          fetch(`https://registry.faa.gov/aircraftinquiry/api/v1/aircraft/owner?${params.toString()}`, {
+            headers: { accept: "application/json", "user-agent": "HawkeyeSterling/1.0" },
+          }),
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as { items?: Array<{ nNumber?: string; serialNumber?: string; model?: string; ownerName?: string; city?: string; state?: string; country?: string; certIssueDate?: string; airWorthDate?: string }> };
+        return (json.items ?? []).filter((a) => a.ownerName).map((a) => ({
+          source: "faa-aircraft-registry",
+          name: a.ownerName!,
+          jurisdiction: a.country ?? "US",
+          ...(a.nNumber ? { registrationNumber: `N${a.nNumber}` } : {}),
+          ...(a.certIssueDate ? { incorporationDate: a.certIssueDate } : {}),
+          status: a.model ? `FAA Aircraft: ${a.model}` : "FAA Aircraft",
+          url: a.nNumber ? `https://registry.faa.gov/aircraftinquiry/Search/NNumberInquiry?nNumberTxt=${a.nNumber}` : "https://registry.faa.gov/",
+        } satisfies RegistryRecord));
+      } catch (err) {
+        console.warn("[faa-aircraft-registry] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
 // Convenience aggregator — every free always-on source in this file.
 export function activeFreeAdapters(): RegistryAdapter[] {
   return [
@@ -615,6 +847,13 @@ export function activeFreeAdapters(): RegistryAdapter[] {
     samGovExclusionsAdapter(),
     openOwnershipAdapter(),
     euTransparencyRegisterAdapter(),
+    dfsaRegisterAdapter(),
+    adgmRegisterAdapter(),
+    cbuaeLicensedAdapter(),
+    courtListenerAdapter(),
+    icijOffshoreLeaksAdapter(),
+    imoShipRegistryAdapter(),
+    faaAircraftRegistryAdapter(),
   ].filter((a) => a.isAvailable());
 }
 
@@ -636,6 +875,13 @@ export function activeFreeProviders(): string[] {
   if (flagOn("samgov-exclusions")) out.push("samgov-exclusions");
   if (flagOn("open-ownership")) out.push("open-ownership");
   if (flagOn("eu-transparency-register")) out.push("eu-transparency-register");
+  if (flagOn("dfsa-register")) out.push("dfsa-register");
+  if (flagOn("adgm-register")) out.push("adgm-register");
+  if (flagOn("cbuae-licensed")) out.push("cbuae-licensed");
+  if (flagOn("court-listener")) out.push("court-listener");
+  if (flagOn("icij-offshore-leaks")) out.push("icij-offshore-leaks");
+  if (flagOn("imo-ship-registry")) out.push("imo-ship-registry");
+  if (flagOn("faa-aircraft-registry")) out.push("faa-aircraft-registry");
   return out;
 }
 
