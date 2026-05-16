@@ -142,6 +142,10 @@ Assess regulatory enforcement exposure for this AML violation. Return complete E
     });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as EnforcementExposureResult;
+    if (!Array.isArray(result.mitigatingFactors)) result.mitigatingFactors = [];
+    if (!Array.isArray(result.aggravatingFactors)) result.aggravatingFactors = [];
+    if (!Array.isArray(result.precedentCases)) result.precedentCases = [];
+    if (!Array.isArray(result.remedialActions)) result.remedialActions = [];
     return NextResponse.json({ ok: true, ...result });
   } catch {
     return NextResponse.json({ ok: false, error: "enforcement-exposure temporarily unavailable - please retry." }, { status: 503 });

@@ -91,6 +91,9 @@ export async function POST(req: Request) {
     if (!jsonMatch) return NextResponse.json({ ok: false, error: "derisking-impact temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
 
     const parsed = JSON.parse(jsonMatch[0]) as DerisiskingImpactResult;
+    if (!Array.isArray(parsed.alternativesMitigants)) parsed.alternativesMitigants = [];
+    if (!Array.isArray(parsed.exitProcessRequirements)) parsed.exitProcessRequirements = [];
+    if (!Array.isArray(parsed.documentationRequired)) parsed.documentationRequired = [];
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "derisking-impact temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});

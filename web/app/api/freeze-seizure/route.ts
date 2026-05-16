@@ -91,6 +91,8 @@ export async function POST(req: Request) {
     if (!jsonMatch) return NextResponse.json({ ok: false, error: "freeze-seizure temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
 
     const parsed = JSON.parse(jsonMatch[0]) as FreezeSeizureResult;
+    if (!Array.isArray(parsed.eligibleAssets)) parsed.eligibleAssets = [];
+    if (!Array.isArray(parsed.procedureSteps)) parsed.procedureSteps = [];
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "freeze-seizure temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});

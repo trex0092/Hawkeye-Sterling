@@ -748,6 +748,19 @@ Perform a comprehensive blockchain forensics and crypto AML analysis. Assess all
 
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as CryptoTracingResult;
+    if (!Array.isArray(result.blockchainAnalysis?.analysisLimitations)) { if (result.blockchainAnalysis) result.blockchainAnalysis.analysisLimitations = []; }
+    if (!Array.isArray(result.darknetExposure?.marketplaces)) { if (result.darknetExposure) result.darknetExposure.marketplaces = []; }
+    if (!Array.isArray(result.ransomwareLinks?.knownGroups)) { if (result.ransomwareLinks) result.ransomwareLinks.knownGroups = []; }
+    if (!Array.isArray(result.ransomwareLinks?.associatedIncidents)) { if (result.ransomwareLinks) result.ransomwareLinks.associatedIncidents = []; }
+    if (!Array.isArray(result.sanctionsExposure?.matchedAddresses)) { if (result.sanctionsExposure) result.sanctionsExposure.matchedAddresses = []; }
+    if (!Array.isArray(result.typologyAnalysis)) result.typologyAnalysis = [];
+    if (!Array.isArray(result.travelRuleCompliance?.missingInformation)) { if (result.travelRuleCompliance) result.travelRuleCompliance.missingInformation = []; }
+    if (!Array.isArray(result.financialCrimeLinks)) result.financialCrimeLinks = [];
+    if (!Array.isArray(result.regulatoryObligations)) result.regulatoryObligations = [];
+    if (!Array.isArray(result.redFlags)) result.redFlags = [];
+    if (!Array.isArray(result.immediateActions)) result.immediateActions = [];
+    if (!Array.isArray(result.investigativeNextSteps)) result.investigativeNextSteps = [];
+    if (!Array.isArray(result.blockchainForensicsTools)) result.blockchainForensicsTools = [];
     return NextResponse.json(result);
   } catch {
     return NextResponse.json({ ok: false, error: "crypto-tracing temporarily unavailable - please retry." }, { status: 503 });

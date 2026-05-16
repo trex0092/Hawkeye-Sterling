@@ -101,6 +101,9 @@ Simulate an examiner review. Respond ONLY with valid JSON:
       const raw = response.content[0]?.type === "text" ? (response.content[0] as { type: "text"; text: string }).text : "";
       const parsed = JSON.parse(raw.match(/\{[\s\S]*\}/)?.[0] ?? "{}");
       if (parsed.examinerFindings !== undefined) {
+        if (!Array.isArray(parsed.examinerFindings)) parsed.examinerFindings = [];
+        if (!Array.isArray(parsed.challengeAreas)) parsed.challengeAreas = [];
+        if (!Array.isArray(parsed.recommendations)) parsed.recommendations = [];
         return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
       }
     } catch {

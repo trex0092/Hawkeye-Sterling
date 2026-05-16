@@ -162,6 +162,8 @@ Identify all direct and ${includeIndirect ? "indirect (up to " + maxHops + " hop
     aiResult = {};
   }
 
+  if (!Array.isArray(aiResult.directLinks)) aiResult.directLinks = [];
+  if (!Array.isArray(aiResult.indirectLinks)) aiResult.indirectLinks = [];
   const directLinks = aiResult.directLinks ?? [];
   const indirectLinks = (includeIndirect ? aiResult.indirectLinks : []) ?? [];
 

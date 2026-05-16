@@ -156,7 +156,12 @@ export async function POST(req: Request): Promise<NextResponse> {
       });
       const raw = (response.content[0]?.type === "text" ? response.content[0].text : "{}").trim();
       const stripped = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "");
-      return JSON.parse(stripped) as EthicalImpactResponse;
+      const parsed = JSON.parse(stripped) as EthicalImpactResponse;
+      if (!Array.isArray(parsed.rightsImpacted)) parsed.rightsImpacted = [];
+      if (!Array.isArray(parsed.mitigationMeasures)) parsed.mitigationMeasures = [];
+      if (!Array.isArray(parsed.subjectRights)) parsed.subjectRights = [];
+      if (!Array.isArray(parsed.documentationRequired)) parsed.documentationRequired = [];
+      return parsed;
     },
   });
 

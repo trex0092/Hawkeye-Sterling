@@ -111,6 +111,9 @@ export async function POST(req: Request): Promise<NextResponse> {
     const text = res.content[0]?.type === "text" ? res.content[0].text : "";
     const stripped = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
     const parsed = JSON.parse(stripped) as ClientRiskResult;
+    if (!Array.isArray(parsed.pepExposure?.pepNames)) { if (parsed.pepExposure) parsed.pepExposure.pepNames = []; }
+    if (!Array.isArray(parsed.cddRequirements)) parsed.cddRequirements = [];
+    if (!Array.isArray(parsed.enhancedMeasures)) parsed.enhancedMeasures = [];
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "client-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
