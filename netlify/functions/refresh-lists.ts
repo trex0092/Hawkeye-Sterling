@@ -7,6 +7,7 @@
 // and an optional ALERT_WEBHOOK_URL fanout on write failure.
 
 import type { Config } from '@netlify/functions';
+import { getStore } from '@netlify/blobs';
 import { runIngestionAll } from '../../src/ingestion/run-all.js';
 
 const LABEL = 'refresh-lists';
@@ -76,6 +77,16 @@ export default async (): Promise<Response> => {
       });
     } catch (webhookErr) {
       console.warn(`[${LABEL}] alert webhook failed (non-critical):`, webhookErr instanceof Error ? webhookErr.message : webhookErr);
+    }
+  }
+
+  // Write heartbeat on success so health-monitor can detect silent cron failures.
+  if (!result.anyWriteFailed) {
+    try {
+      const hbStore = getStore('hawkeye-function-heartbeats');
+      await hbStore.setJSON(LABEL, { lastSuccess: new Date().toISOString(), label: LABEL });
+    } catch (hbErr) {
+      console.warn(`[${LABEL}] heartbeat write failed (non-critical):`, hbErr instanceof Error ? hbErr.message : hbErr);
     }
   }
 

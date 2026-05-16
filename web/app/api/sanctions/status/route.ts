@@ -299,8 +299,10 @@ async function handleGet(req: Request): Promise<Response> {
     CURRENTS_API_KEY: Boolean(process.env["CURRENTS_API_KEY"]),
     TIINGO_API_KEY: Boolean(process.env["TIINGO_API_KEY"]),
     ALPHAVANTAGE_API_KEY: Boolean(process.env["ALPHAVANTAGE_API_KEY"]),
-    GOOGLE_NEWS_RSS_ENABLED: Boolean(process.env["GOOGLE_NEWS_RSS_ENABLED"]),
-    HS_DISABLED: Boolean(process.env["HS_DISABLED"]),
+    // Feature-flag env vars are "true"/"false" strings, not presence checks.
+    // Boolean("false") === true, so we must compare the string value explicitly.
+    GOOGLE_NEWS_RSS_ENABLED: process.env["GOOGLE_NEWS_RSS_ENABLED"] !== "false",
+    HS_DISABLED: process.env["HS_DISABLED"] === "true",
   };
 
   // Audit L-03: `ok` previously flipped false whenever any list was missing
