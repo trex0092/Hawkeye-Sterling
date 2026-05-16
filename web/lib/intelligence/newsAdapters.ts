@@ -2957,9 +2957,8 @@ const nikkeiAsiaAdapter = (): NewsAdapter => makeNewsAdapter({
 // Docs: https://docs.tavily.com/docs/rest-api/api-reference
 const tavilyAdapter = (): NewsAdapter => {
   const key = process.env["TAVILY_API_KEY"];
-  if (!key) return { source: "tavily", isAvailable: () => false, search: async () => [] };
+  if (!key) return NULL_NEWS_ADAPTER;
   return {
-    source: "tavily",
     isAvailable: () => true,
     search: async (name, opts) => {
       try {
@@ -2979,15 +2978,14 @@ const tavilyAdapter = (): NewsAdapter => {
         const json = (await res.json()) as { results?: Array<{ title?: string; url?: string; published_date?: string; content?: string; score?: number }> };
         return (json.results ?? [])
           .filter((r) => r.url && r.title)
-          .map((r) => ({
+          .map((r): NewsArticle => ({
             title: r.title!,
             url: r.url!,
-            publishedAt: r.published_date,
+            publishedAt: r.published_date ?? new Date().toISOString(),
             snippet: r.content?.slice(0, 300),
             source: "tavily",
-            outlet: new URL(r.url!).hostname,
-            relevanceScore: r.score,
-          } satisfies NewsArticle));
+            outlet: (() => { try { return new URL(r.url!).hostname; } catch { return "tavily"; } })(),
+          }));
       } catch (err) {
         console.warn("[tavily] failed:", err instanceof Error ? err.message : err);
         return [];
@@ -3005,9 +3003,8 @@ const tavilyAdapter = (): NewsAdapter => {
 // Docs: https://docs.exa.ai/reference/search
 const exaAdapter = (): NewsAdapter => {
   const key = process.env["EXA_API_KEY"];
-  if (!key) return { source: "exa", isAvailable: () => false, search: async () => [] };
+  if (!key) return NULL_NEWS_ADAPTER;
   return {
-    source: "exa",
     isAvailable: () => true,
     search: async (name, opts) => {
       try {
@@ -3026,15 +3023,14 @@ const exaAdapter = (): NewsAdapter => {
         const json = (await res.json()) as { results?: Array<{ title?: string; url?: string; publishedDate?: string; text?: string; score?: number }> };
         return (json.results ?? [])
           .filter((r) => r.url && r.title)
-          .map((r) => ({
+          .map((r): NewsArticle => ({
             title: r.title!,
             url: r.url!,
-            publishedAt: r.publishedDate,
+            publishedAt: r.publishedDate ?? new Date().toISOString(),
             snippet: r.text?.slice(0, 300),
             source: "exa",
             outlet: (() => { try { return new URL(r.url!).hostname; } catch { return "exa"; } })(),
-            relevanceScore: r.score,
-          } satisfies NewsArticle));
+          }));
       } catch (err) {
         console.warn("[exa] failed:", err instanceof Error ? err.message : err);
         return [];
@@ -3051,9 +3047,8 @@ const exaAdapter = (): NewsAdapter => {
 // Docs: https://docs.perplexity.ai/reference/post_chat_completions
 const perplexityAdapter = (): NewsAdapter => {
   const key = process.env["PERPLEXITY_API_KEY"];
-  if (!key) return { source: "perplexity", isAvailable: () => false, search: async () => [] };
+  if (!key) return NULL_NEWS_ADAPTER;
   return {
-    source: "perplexity",
     isAvailable: () => true,
     search: async (name) => {
       try {
@@ -3078,13 +3073,14 @@ const perplexityAdapter = (): NewsAdapter => {
         const citations = json.citations ?? [];
         const content = json.choices?.[0]?.message?.content ?? "";
         if (citations.length === 0 && !content) return [];
-        return citations.slice(0, 10).map((url) => ({
+        return citations.slice(0, 10).map((url): NewsArticle => ({
           title: `Perplexity — ${name} adverse media`,
           url,
+          publishedAt: new Date().toISOString(),
           snippet: content.slice(0, 300),
           source: "perplexity",
           outlet: (() => { try { return new URL(url).hostname; } catch { return "perplexity"; } })(),
-        } satisfies NewsArticle));
+        }));
       } catch (err) {
         console.warn("[perplexity] failed:", err instanceof Error ? err.message : err);
         return [];
