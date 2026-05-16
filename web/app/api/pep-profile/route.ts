@@ -89,8 +89,9 @@ const FALLBACK: PepProfileResult = {
 
 export async function POST(req: Request) {
   const _handlerStart = Date.now();
+  let gate: Awaited<ReturnType<typeof enforce>> | undefined;
   try {
-  const gate = await enforce(req);
+  gate = await enforce(req);
   if (!gate.ok) return gate.response;
   let body: {
     name?: string;
@@ -324,6 +325,6 @@ Perform a comprehensive PEP risk assessment grounded in the PEP database data ab
       retryAfterSeconds: null,
       requestId: Math.random().toString(36).slice(2, 10),
       latencyMs: Date.now() - _handlerStart,
-    }, { status: 500 , headers: {} });
+    }, { status: 500 , headers: gate && gate.ok ? gate.headers : {} });
   }
 }
