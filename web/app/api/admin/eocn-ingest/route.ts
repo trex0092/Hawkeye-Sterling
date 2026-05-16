@@ -70,6 +70,19 @@ interface IngestResult {
   warnings: string[];
 }
 
+async function readExistingEntities(listId: string): Promise<NormalisedEntity[]> {
+  try {
+    const { getStore } = await import("@netlify/blobs");
+    const store = getStore(BLOB_STORE_NAME);
+    const raw = await store.get(`${listId}/latest.json`, { type: "json" }) as {
+      entities?: NormalisedEntity[];
+    } | null;
+    return raw?.entities ?? [];
+  } catch {
+    return [];
+  }
+}
+
 async function writeToBlobStore(
   listId: string,
   entities: NormalisedEntity[],
@@ -84,6 +97,75 @@ async function writeToBlobStore(
     return true;
   } catch {
     return false;
+  }
+}
+
+async function fireDesignationAlert(
+  listId: string,
+  added: NormalisedEntity[],
+  removed: NormalisedEntity[],
+  uploadedBy: string,
+): Promise<void> {
+  const webhookUrl = process.env["ALERT_WEBHOOK_URL"];
+  if (!webhookUrl || (added.length === 0 && removed.length === 0)) return;
+
+  const SAMPLE = 20;
+  const lines: string[] = [
+    `⚡ HAWKEYE STERLING — UAE SANCTIONS LIST UPDATED (MANUAL UPLOAD)`,
+    ``,
+    `List         : ${listId.toUpperCase()}`,
+    `Uploaded by  : ${uploadedBy}`,
+    `Detected at  : ${new Date().toISOString()}`,
+    `New designations : ${added.length}`,
+    `Delistings       : ${removed.length}`,
+    ``,
+  ];
+
+  if (added.length > 0) {
+    lines.push(`NEW DESIGNATIONS — ACTION REQUIRED`);
+    lines.push(`Screen all active customers and monitored entities immediately.`);
+    lines.push(`Legal basis: CBUAE AML guidance — freeze obligations arise at the moment of designation.`);
+    lines.push(``);
+    for (const e of added.slice(0, SAMPLE)) {
+      lines.push(`  + ${e.name}  [${e.listings[0]?.reference ?? e.id}]`);
+    }
+    if (added.length > SAMPLE) lines.push(`  … and ${added.length - SAMPLE} more`);
+    lines.push(``);
+  }
+
+  if (removed.length > 0) {
+    lines.push(`DELISTINGS — ACTION REQUIRED`);
+    lines.push(`Review all frozen assets / blocked relationships for these persons or entities.`);
+    lines.push(`Delisted persons may be entitled to asset unblocking — consult MLRO before taking action.`);
+    lines.push(``);
+    for (const e of removed.slice(0, SAMPLE)) {
+      lines.push(`  - ${e.name}  [${e.listings[0]?.reference ?? e.id}]`);
+    }
+    if (removed.length > SAMPLE) lines.push(`  … and ${removed.length - SAMPLE} more`);
+    lines.push(``);
+  }
+
+  try {
+    await fetch(webhookUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        text: lines.join("\n"),
+        event: "uae_manual_upload_designation_change",
+        listId,
+        totalAdded: added.length,
+        totalRemoved: removed.length,
+        detectedAt: new Date().toISOString(),
+        added: added.slice(0, SAMPLE).map((e) => ({ name: e.name, reference: e.listings[0]?.reference })),
+        removed: removed.slice(0, SAMPLE).map((e) => ({ name: e.name, reference: e.listings[0]?.reference })),
+      }),
+      signal: AbortSignal.timeout(8_000),
+    });
+  } catch (err) {
+    console.warn(
+      `[eocn-ingest] designation-change webhook failed:`,
+      err instanceof Error ? err.message : String(err),
+    );
   }
 }
 
@@ -272,6 +354,9 @@ Rules:
     warnings.push("No entities were extracted — verify the file is the correct EOCN/LTL document");
   }
 
+  // Snapshot existing entities before overwriting (for designation-change diff).
+  const existingEntities = entities.length > 0 ? await readExistingEntities(listId) : [];
+
   // Write to blob store
   let written = false;
   if (entities.length > 0) {
@@ -281,6 +366,16 @@ Rules:
     } else {
       // Invalidate in-process candidate cache so next screen uses fresh data
       invalidateCandidateCache();
+
+      // Fire immediate alert for any new designations or delistings.
+      const existingIds = new Set(existingEntities.map((e) => e.id));
+      const newIds = new Set(entities.map((e) => e.id));
+      const added   = entities.filter((e) => !existingIds.has(e.id));
+      const removed = existingEntities.filter((e) => !newIds.has(e.id));
+      // Skip diff on first-ever upload (existingEntities empty) to avoid false floods.
+      if (existingEntities.length > 0) {
+        void fireDesignationAlert(listId, added, removed, gate.keyId ?? "MLRO");
+      }
     }
   }
 

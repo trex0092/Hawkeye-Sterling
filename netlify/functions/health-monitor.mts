@@ -7,6 +7,7 @@
 //   2. Creates an Asana task in the Master Inbox project assigned to the MLRO
 
 import type { Config } from "@netlify/functions";
+import { getStore } from "@netlify/blobs";
 
 const MASTER_INBOX = "1214148630166524";
 const DEFAULT_WORKSPACE = "1213645083721316";
@@ -110,6 +111,48 @@ async function createAsanaAlert(notes: string): Promise<void> {
   }
 }
 
+// Scheduled functions that write heartbeats and their max allowed silence in hours
+// (1.5× their cron interval, rounded up).
+const HEARTBEAT_SPECS: Array<{ label: string; maxSilenceHours: number }> = [
+  { label: "adverse-media-rss", maxSilenceHours: 2 },    // every 30 min → alert after 2h
+  { label: "refresh-lists",     maxSilenceHours: 10 },    // daily 03:00 → alert after 10h
+  { label: "eocn-poll",         maxSilenceHours: 10 },    // every 6h → alert after 10h
+];
+
+interface HeartbeatEntry {
+  lastSuccess: string;
+  label: string;
+}
+
+async function checkHeartbeats(): Promise<string[]> {
+  const overdueAlerts: string[] = [];
+  try {
+    const store = getStore("hawkeye-function-heartbeats");
+    const now = Date.now();
+    for (const spec of HEARTBEAT_SPECS) {
+      try {
+        const raw = await store.get(spec.label, { type: "json" }) as HeartbeatEntry | null;
+        if (!raw?.lastSuccess) {
+          overdueAlerts.push(`${spec.label}: no heartbeat recorded — function may never have run successfully`);
+          continue;
+        }
+        const lastMs = new Date(raw.lastSuccess).getTime();
+        const ageHours = (now - lastMs) / 3_600_000;
+        if (ageHours > spec.maxSilenceHours) {
+          overdueAlerts.push(
+            `${spec.label}: last success ${ageHours.toFixed(1)}h ago (limit ${spec.maxSilenceHours}h) — scheduled function may be failing silently`,
+          );
+        }
+      } catch {
+        overdueAlerts.push(`${spec.label}: heartbeat read failed — cannot verify function health`);
+      }
+    }
+  } catch (err) {
+    console.warn("[health-monitor] heartbeat store unavailable:", err instanceof Error ? err.message : err);
+  }
+  return overdueAlerts;
+}
+
 export default async (_req: Request): Promise<Response> => {
   const baseUrl =
     process.env["URL"] ??
@@ -119,7 +162,12 @@ export default async (_req: Request): Promise<Response> => {
   const checkedAt = new Date().toISOString();
   console.info("[health-monitor] starting health check at", checkedAt);
 
-  const status = await fetchStatus(baseUrl);
+  // Run status fetch and heartbeat checks in parallel.
+  const [status, heartbeatAlerts] = await Promise.all([
+    fetchStatus(baseUrl),
+    checkHeartbeats(),
+  ]);
+
   if (!status) {
     console.error("[health-monitor] could not reach /api/status — health check failed");
     const alertBody = {
@@ -127,6 +175,7 @@ export default async (_req: Request): Promise<Response> => {
       reason: "Could not reach /api/status endpoint",
       checkedAt,
       baseUrl,
+      heartbeatAlerts,
     };
     const webhookUrl = process.env["ALERT_WEBHOOK_URL"];
     if (webhookUrl) await postWebhookAlert(webhookUrl, alertBody);
@@ -138,11 +187,14 @@ export default async (_req: Request): Promise<Response> => {
         `Time     : ${checkedAt}`,
         `Reason   : Could not reach ${baseUrl}/api/status`,
         ``,
+        ...(heartbeatAlerts.length > 0
+          ? [`SCHEDULED FUNCTION ALERTS`, ...heartbeatAlerts.map((a) => `  ${a}`), ``]
+          : []),
         `ACTION REQUIRED: Verify Netlify deployment and function health dashboard.`,
         `Auto-created by health-monitor scheduled function (0 */6 * * *)`,
       ].join("\n"),
     );
-    return new Response(JSON.stringify({ ok: false, reason: "status endpoint unreachable", checkedAt }), {
+    return new Response(JSON.stringify({ ok: false, reason: "status endpoint unreachable", heartbeatAlerts, checkedAt }), {
       status: 200,
       headers: { "content-type": "application/json" },
     });
@@ -161,15 +213,16 @@ export default async (_req: Request): Promise<Response> => {
   const missingLists = listIds.filter((id) => !freshness[id]?.lastRefreshed);
 
   const healthyCount = healthyLists.length;
-  const degraded = healthyCount < requiredListCount || staleLists.length > 0;
+  const listsDegraded = healthyCount < requiredListCount || staleLists.length > 0;
+  const degraded = listsDegraded || heartbeatAlerts.length > 0;
 
   console.info(
-    `[health-monitor] healthy=${healthyCount}/${requiredListCount} stale=${staleLists.length} missing=${missingLists.length} degraded=${degraded}`,
+    `[health-monitor] healthy=${healthyCount}/${requiredListCount} stale=${staleLists.length} missing=${missingLists.length} overdueHeartbeats=${heartbeatAlerts.length} degraded=${degraded}`,
   );
 
   if (!degraded) {
     return new Response(
-      JSON.stringify({ ok: true, healthyLists: healthyCount, staleLists: staleLists.length, checkedAt }),
+      JSON.stringify({ ok: true, healthyLists: healthyCount, staleLists: staleLists.length, heartbeatAlerts: [], checkedAt }),
       { status: 200, headers: { "content-type": "application/json" } },
     );
   }
@@ -181,7 +234,7 @@ export default async (_req: Request): Promise<Response> => {
   });
 
   const alertNotes = [
-    `⚠️  HAWKEYE STERLING — SANCTIONS LISTS DEGRADED`,
+    `⚠️  HAWKEYE STERLING — SYSTEM HEALTH DEGRADED`,
     ``,
     `Alert    : ${ALERT_TITLE}`,
     `Time     : ${checkedAt}`,
@@ -190,10 +243,18 @@ export default async (_req: Request): Promise<Response> => {
     `  Healthy lists  : ${healthyCount} / ${requiredListCount}`,
     `  Stale lists    : ${staleLists.join(", ") || "none"}`,
     `  Missing lists  : ${missingLists.join(", ") || "none"}`,
+    `  Function alerts: ${heartbeatAlerts.length}`,
     ``,
     `LIST FRESHNESS`,
     ...freshnessLines,
     ``,
+    ...(heartbeatAlerts.length > 0
+      ? [
+          `SCHEDULED FUNCTION ALERTS`,
+          ...heartbeatAlerts.map((a) => `  ${a}`),
+          ``,
+        ]
+      : []),
     `IMPACT`,
     `  Screening tools are blocked by the sanctions gate until all critical lists are loaded.`,
     `  Affected tools: screen, super_brain, disposition, generate_report,`,
@@ -203,6 +264,7 @@ export default async (_req: Request): Promise<Response> => {
     `  1. Check Netlify Blobs for hawkeye-lists store`,
     `  2. Trigger manual refresh: POST /api/sanctions/watch with SANCTIONS_CRON_TOKEN`,
     `  3. Verify NETLIFY_BLOBS_TOKEN is set and has write permissions`,
+    `  4. Check Netlify Functions dashboard for scheduled function failures`,
     ``,
     `Legal basis: FDL No. 10/2025 Art. 15 — screening is prohibited on incomplete corpus`,
     `Auto-created by health-monitor scheduled function (0 */6 * * *)`,
@@ -215,6 +277,7 @@ export default async (_req: Request): Promise<Response> => {
     requiredListCount,
     staleLists,
     missingLists,
+    heartbeatAlerts,
     freshness,
     checkedAt,
   };
@@ -225,7 +288,7 @@ export default async (_req: Request): Promise<Response> => {
   await Promise.allSettled(tasks);
 
   return new Response(
-    JSON.stringify({ ok: false, degraded: true, healthyLists: healthyCount, staleLists, missingLists, checkedAt }),
+    JSON.stringify({ ok: false, degraded: true, healthyLists: healthyCount, staleLists, missingLists, heartbeatAlerts, checkedAt }),
     { status: 200, headers: { "content-type": "application/json" } },
   );
 };

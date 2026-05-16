@@ -391,9 +391,14 @@ function gdeltDate(seendate: string | undefined): string {
   return `${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:${m[6]}Z`;
 }
 
-async function fetchGdelt(query: string): Promise<RegulatoryItem[]> {
+interface GdeltFetchResult {
+  items: RegulatoryItem[];
+  timedOut: boolean;
+}
+
+async function fetchGdelt(query: string): Promise<GdeltFetchResult> {
   const cached = _gdeltFeedCache.get(query);
-  if (cached && Date.now() < cached.expiresAt) return cached.items;
+  if (cached && Date.now() < cached.expiresAt) return { items: cached.items, timedOut: false };
 
   const url =
     `${GDELT_BASE}?query=${encodeURIComponent(query)}&mode=artlist&maxrecords=10&format=json&timespan=7d`;
@@ -406,9 +411,9 @@ async function fetchGdelt(query: string): Promise<RegulatoryItem[]> {
       },
       signal,
     });
-    if (!res.ok) return cached?.items ?? [];
+    if (!res.ok) return { items: cached?.items ?? [], timedOut: false };
     const data = (await res.json()) as GdeltResponse;
-    if (!Array.isArray(data.articles)) return [];
+    if (!Array.isArray(data.articles)) return { items: [], timedOut: false };
     const items = data.articles
       .filter((a) => a.url && a.title)
       .map((a) => {
@@ -432,9 +437,13 @@ async function fetchGdelt(query: string): Promise<RegulatoryItem[]> {
       if (oldest === undefined) break;
       _gdeltFeedCache.delete(oldest);
     }
-    return items;
-  } catch {
-    return cached?.items ?? [];
+    return { items, timedOut: false };
+  } catch (err) {
+    const timedOut = err instanceof Error && err.name === "AbortError";
+    if (timedOut) {
+      console.error(`[regulatory-feed] GDELT timed out (>${GDELT_FETCH_TIMEOUT_MS}ms): ${query}`);
+    }
+    return { items: cached?.items ?? [], timedOut };
   } finally {
     clear();
   }
@@ -919,15 +928,24 @@ async function _handleGet(req: Request): Promise<NextResponse> {
 
   // GDELT results — collect, deduplicate later, sort by tone (most negative first)
   const gdeltItems: RegulatoryItem[] = [];
+  let gdeltTimedOut = false;
   for (let i = 0; i < GDELT_QUERIES.length; i++) {
     const r = gdeltResults[i];
     if (!r) continue;
-    if (r.status === "fulfilled" && r.value.length > 0) {
-      gdeltItems.push(...r.value);
-      sourcesHit.add("GDELT");
+    if (r.status === "fulfilled") {
+      if (r.value.items.length > 0) {
+        gdeltItems.push(...r.value.items);
+        sourcesHit.add("GDELT");
+      }
+      if (r.value.timedOut) gdeltTimedOut = true;
     } else if (r.status === "rejected") {
       errors.push(`GDELT[${i}]: fetch failed`);
     }
+  }
+  if (gdeltTimedOut) {
+    errors.push(
+      `GDELT: fetch timed out (>${GDELT_FETCH_TIMEOUT_MS}ms) — adverse media results may be incomplete`,
+    );
   }
 
   // Deduplicate GDELT by URL and sort most negative tone first
