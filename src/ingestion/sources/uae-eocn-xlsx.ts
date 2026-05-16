@@ -21,4 +21,5 @@ export const uaeEocnXlsxAdapter = makeUaeIecXlsxAdapter({
   displayName: 'UAE EOCN Local Terrorist List (XLSX)',
   fileIdEnvVar: 'FEED_UAE_LTL_FILE_ID',
   defaultFileId: '0433bfdb-8a3d-44db-9015-90cbbf48f6f6',
+  seedPathEnvVar: 'UAE_EOCN_SEED_PATH',
 });

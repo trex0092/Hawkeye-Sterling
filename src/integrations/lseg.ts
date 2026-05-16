@@ -93,11 +93,17 @@ export type LsegResult<T> =
 let _tokenCache: LsegTokenCache | null = null;
 
 function credentialsFromEnv(): { username: string; password: string; appKey: string } {
-  const username = process.env['LSEG_USERNAME'];
-  const password = process.env['LSEG_PASSWORD'];
+  // Accept both naming conventions so deployments that stored credentials
+  // under the World-Check API naming (LSEG_WORLDCHECK_API_KEY / _SECRET)
+  // work without re-keying environment variables in Netlify dashboard.
+  const username = process.env['LSEG_USERNAME'] ?? process.env['LSEG_WORLDCHECK_API_KEY'];
+  const password = process.env['LSEG_PASSWORD'] ?? process.env['LSEG_WORLDCHECK_API_SECRET'];
   const appKey   = process.env['LSEG_APP_KEY'];
   if (!username || !password || !appKey) {
-    throw new Error('Missing LSEG credentials: LSEG_USERNAME, LSEG_PASSWORD, LSEG_APP_KEY must be set');
+    throw new Error(
+      'Missing LSEG credentials: set LSEG_USERNAME (or LSEG_WORLDCHECK_API_KEY), ' +
+      'LSEG_PASSWORD (or LSEG_WORLDCHECK_API_SECRET), and LSEG_APP_KEY',
+    );
   }
   return { username, password, appKey };
 }

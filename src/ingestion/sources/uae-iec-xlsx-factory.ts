@@ -153,6 +153,29 @@ function rowToEntity(
   };
 }
 
+async function loadSeedFallback(
+  listId: string,
+  seedPathEnvVar: string,
+): Promise<{ entities: NormalisedEntity[]; rawChecksum: string } | null> {
+  const seedPath = process.env[seedPathEnvVar];
+  if (!seedPath) return null;
+  try {
+    const { readFileSync } = await import('node:fs');
+    const raw = readFileSync(seedPath, 'utf8');
+    const entities = JSON.parse(raw) as NormalisedEntity[];
+    if (!Array.isArray(entities)) {
+      console.warn(`[${listId}] seed at ${seedPath} is not an array — ignoring`);
+      return null;
+    }
+    const rawChecksum = await sha256Hex(`seed:${seedPath}:${entities.length}`);
+    console.info(`[${listId}] loaded ${entities.length} entities from seed ${seedPath}`);
+    return { entities, rawChecksum };
+  } catch (err) {
+    console.warn(`[${listId}] seed load failed (${seedPath}): ${err instanceof Error ? err.message : String(err)}`);
+    return null;
+  }
+}
+
 async function fetchXlsxBuffer(url: string): Promise<Buffer> {
   const controller = new AbortController();
   const t = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
@@ -180,6 +203,12 @@ export interface UaeIecXlsxAdapterConfig {
   fileIdEnvVar: string;
   /** Default FileID used when the env var is unset. */
   defaultFileId: string;
+  /**
+   * Env var that points to a local JSON seed file (absolute path) containing
+   * a pre-parsed NormalisedEntity array. Used as fallback when the XLSX
+   * download or parsing fails. Example: UAE_EOCN_SEED_PATH=/data/eocn.json
+   */
+  seedPathEnvVar: string;
 }
 
 export function makeUaeIecXlsxAdapter(config: UaeIecXlsxAdapterConfig): SourceAdapter {
@@ -193,71 +222,103 @@ export function makeUaeIecXlsxAdapter(config: UaeIecXlsxAdapterConfig): SourceAd
     async fetch() {
       const fetchedAt = Date.now();
 
-      let ExcelJS: ExcelJsModule;
-      try {
-        ExcelJS = (await import('exceljs' as string)) as unknown as ExcelJsModule;
-      } catch (err) {
-        throw new Error(
-          `${config.listId} requires the 'exceljs' npm package — install it with 'npm install exceljs --save'. ` +
-          `Underlying error: ${err instanceof Error ? err.message : String(err)}`,
-        );
-      }
-
-      const buf = await fetchXlsxBuffer(sourceUrl);
-      const rawChecksum = await sha256Hex(buf.toString('base64'));
-
-      // Audit C-01: uaeiec.gov.ae has been observed to serve application/
-      // vnd.ms-excel with OLE/CFB magic bytes (D0 CF 11 E0) — that's legacy
-      // .xls, not .xlsx (PK ZIP, 50 4B 03 04). exceljs.xlsx.load cannot
-      // parse the legacy format and silently produces zero rows. Detect
-      // the format up front and fail loud so the alert webhook fires.
-      const isXlsx = buf.length >= 4 && buf[0] === 0x50 && buf[1] === 0x4b && buf[2] === 0x03 && buf[3] === 0x04;
-      const isOleXls = buf.length >= 4 && buf[0] === 0xd0 && buf[1] === 0xcf && buf[2] === 0x11 && buf[3] === 0xe0;
-      if (!isXlsx) {
-        const magic = Array.from(buf.slice(0, 4)).map((b) => b.toString(16).padStart(2, '0')).join(' ');
-        throw new Error(
-          `${config.listId}: upstream returned ${isOleXls ? 'legacy .xls (OLE/CFB)' : `unknown binary format (magic ${magic})`}, ` +
-          `but the adapter only parses .xlsx (PK ZIP). Confirm ${config.fileIdEnvVar} points at the .xlsx variant of the list, ` +
-          `or use the corresponding *_SEED_PATH env var to feed a local JSON seed.`,
-        );
-      }
-
-      const wb = new ExcelJS.Workbook();
-      await wb.xlsx.load(buf);
-      const sheet = wb.worksheets[0];
-      if (!sheet) return { entities: [], rawChecksum };
-
-      // Locate header row — EOCN/LTL sheets sometimes have title/preamble
-      // rows; scan first 5 for one with ≥3 recognisable column names.
-      let headerRowNum = 1;
-      let headers: string[] = [];
-      for (let r = 1; r <= Math.min(5, sheet.rowCount); r++) {
-        const row = sheet.getRow(r);
-        const vals = (row.values ?? []) as unknown[];
-        const candidate = vals.slice(1).map((v) => cellText(v));
-        const recognised = candidate.filter((h) => normaliseHeader(h).match(/name|alias|type|date|passport|nationality|reference/)).length;
-        if (recognised >= 3) {
-          headerRowNum = r;
-          headers = candidate;
-          break;
+      // Inner helper so XLSX errors can fall through to seed.
+      const tryXlsx = async (): Promise<{ entities: NormalisedEntity[]; rawChecksum: string }> => {
+        let ExcelJS: ExcelJsModule;
+        try {
+          ExcelJS = (await import('exceljs' as string)) as unknown as ExcelJsModule;
+        } catch (err) {
+          throw new Error(
+            `${config.listId} requires the 'exceljs' npm package — install it with 'npm install exceljs --save'. ` +
+            `Underlying error: ${err instanceof Error ? err.message : String(err)}`,
+          );
         }
-      }
-      if (headers.length === 0) {
-        const row = sheet.getRow(1);
-        headers = ((row.values ?? []) as unknown[]).slice(1).map((v) => cellText(v));
-      }
 
-      const cols = detectColumns(headers);
-      if (cols.name < 0) return { entities: [], rawChecksum };
+        const buf = await fetchXlsxBuffer(sourceUrl);
+        const rawChecksum = await sha256Hex(buf.toString('base64'));
 
-      const entities: NormalisedEntity[] = [];
-      for (let r = headerRowNum + 1; r <= sheet.rowCount; r++) {
-        const row = sheet.getRow(r);
-        const ent = rowToEntity(config.listId, row, cols, r, fetchedAt);
-        if (ent) entities.push(ent);
+        // Audit C-01: uaeiec.gov.ae has been observed to serve application/
+        // vnd.ms-excel with OLE/CFB magic bytes (D0 CF 11 E0) — that's legacy
+        // .xls, not .xlsx (PK ZIP, 50 4B 03 04). exceljs.xlsx.load cannot
+        // parse the legacy format and silently produces zero rows. Detect
+        // the format up front and fail loud so the alert webhook fires.
+        const isXlsx = buf.length >= 4 && buf[0] === 0x50 && buf[1] === 0x4b && buf[2] === 0x03 && buf[3] === 0x04;
+        const isOleXls = buf.length >= 4 && buf[0] === 0xd0 && buf[1] === 0xcf && buf[2] === 0x11 && buf[3] === 0xe0;
+        if (!isXlsx) {
+          const magic = Array.from(buf.slice(0, 4)).map((b) => b.toString(16).padStart(2, '0')).join(' ');
+          throw new Error(
+            `${config.listId}: upstream returned ${isOleXls ? 'legacy .xls (OLE/CFB)' : `unknown binary format (magic ${magic})`}, ` +
+            `but the adapter only parses .xlsx (PK ZIP). Confirm ${config.fileIdEnvVar} points at the .xlsx variant of the list, ` +
+            `or set ${config.seedPathEnvVar} to a JSON seed file path as a fallback.`,
+          );
+        }
+
+        const wb = new ExcelJS.Workbook();
+        await wb.xlsx.load(buf);
+        const sheet = wb.worksheets[0];
+        if (!sheet) {
+          throw new Error(
+            `${config.listId}: XLSX workbook has no worksheets. ` +
+            `The file at FileID=${fileId} may be empty or corrupt. ` +
+            `Set ${config.seedPathEnvVar} to a JSON seed file path as a fallback.`,
+          );
+        }
+
+        // Locate header row — EOCN/LTL sheets sometimes have title/preamble
+        // rows; scan first 5 for one with ≥3 recognisable column names.
+        let headerRowNum = 1;
+        let headers: string[] = [];
+        for (let r = 1; r <= Math.min(5, sheet.rowCount); r++) {
+          const row = sheet.getRow(r);
+          const vals = (row.values ?? []) as unknown[];
+          const candidate = vals.slice(1).map((v) => cellText(v));
+          const recognised = candidate.filter((h) => normaliseHeader(h).match(/name|alias|type|date|passport|nationality|reference/)).length;
+          if (recognised >= 3) {
+            headerRowNum = r;
+            headers = candidate;
+            break;
+          }
+        }
+        if (headers.length === 0) {
+          const row = sheet.getRow(1);
+          headers = ((row.values ?? []) as unknown[]).slice(1).map((v) => cellText(v));
+        }
+
+        const cols = detectColumns(headers);
+        if (cols.name < 0) {
+          throw new Error(
+            `${config.listId}: no 'name' column found in XLSX headers [${headers.slice(0, 10).join(', ')}]. ` +
+            `The portal file format may have changed — verify FileID=${fileId} serves the correct list. ` +
+            `Set ${config.seedPathEnvVar} to a JSON seed file path as a fallback.`,
+          );
+        }
+
+        const entities: NormalisedEntity[] = [];
+        for (let r = headerRowNum + 1; r <= sheet.rowCount; r++) {
+          const row = sheet.getRow(r);
+          const ent = rowToEntity(config.listId, row, cols, r, fetchedAt);
+          if (ent) entities.push(ent);
+        }
+
+        return { entities, rawChecksum };
+      };
+
+      try {
+        return await tryXlsx();
+      } catch (xlsxErr) {
+        // XLSX fetch/parse failed — attempt seed fallback before re-throwing.
+        const seed = await loadSeedFallback(config.listId, config.seedPathEnvVar);
+        if (seed && seed.entities.length > 0) {
+          console.warn(
+            `[${config.listId}] XLSX failed (${xlsxErr instanceof Error ? xlsxErr.message : String(xlsxErr)}); ` +
+            `using ${seed.entities.length}-entity JSON seed from ${config.seedPathEnvVar}.`,
+          );
+          return seed;
+        }
+        // No seed available — re-throw so run-all logs the error and fires
+        // the alert webhook. Do NOT write 0-entity blob silently.
+        throw xlsxErr;
       }
-
-      return { entities, rawChecksum };
     },
   };
 }

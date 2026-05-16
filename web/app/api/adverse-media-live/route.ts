@@ -435,13 +435,20 @@ export async function POST(req: Request): Promise<NextResponse> {
       }
     }
   }
-  if (anyGdeltSucceeded) {
-    sourcesSucceeded.push(anyStale ? "gdelt (stale cache)" : "gdelt");
+  let gdeltStatus: "ok" | "stale" | "timeout" | "unavailable";
+  if (anyGdeltSucceeded && !anyStale) {
+    gdeltStatus = "ok";
+    sourcesSucceeded.push("gdelt");
+  } else if (anyGdeltSucceeded && anyStale) {
+    gdeltStatus = "stale";
+    sourcesSucceeded.push("gdelt (stale cache)");
   } else if (anyStale && rawArticles.length > 0) {
+    gdeltStatus = "stale";
     sourcesSucceeded.push("gdelt (stale cache only)");
     sourcesFailed.push({ name: "gdelt-live", error: "GDELT live API unavailable — serving last-known cached results" });
   } else {
-    sourcesFailed.push({ name: "gdelt", error: "GDELT API temporarily unavailable or rate-limited" });
+    gdeltStatus = "timeout";
+    sourcesFailed.push({ name: "gdelt", error: "GDELT API timed out or unavailable — results may be incomplete" });
   }
 
   // Map GDELT articles to our schema
@@ -500,6 +507,14 @@ export async function POST(req: Request): Promise<NextResponse> {
         ok: false,
         degraded: true,
         subject: subjectName,
+        gdeltStatus,
+        adverseMedia: {
+          gdelt: {
+            results: [],
+            status: gdeltStatus,
+            message: "GDELT unavailable at screening time — results may be incomplete. Manual MLRO review required.",
+          },
+        },
         sourcesFailed,
         sourcesSucceeded,
         error: "Adverse media services temporarily unavailable — GDELT rate-limited and no vendor API keys configured. Cannot confirm clear status. Manual MLRO review required before any compliance decision.",
@@ -512,6 +527,18 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({
       ...FALLBACK,
       subject: subjectName,
+      gdeltStatus,
+      ...(gdeltStatus !== "ok" ? {
+        adverseMedia: {
+          gdelt: {
+            results: [],
+            status: gdeltStatus,
+            message: gdeltStatus === "timeout"
+              ? "GDELT unavailable at screening time — results may be incomplete"
+              : `GDELT cache stale at screening time — results may not reflect recent news`,
+          },
+        },
+      } : {}),
       sourcesSucceeded,
       sourcesFailed,
       ...(partialResults ? { partialResults: true } : {}),
@@ -546,6 +573,18 @@ export async function POST(req: Request): Promise<NextResponse> {
     summary,
     regulatoryBasis: "FATF R.10 (CDD), FDL 10/2025 Art.10 (ongoing monitoring)",
     enriched,
+    gdeltStatus,
+    ...(gdeltStatus !== "ok" ? {
+      adverseMedia: {
+        gdelt: {
+          results: articlesWithCategories.filter((a) => a.source?.includes("GDELT") || a.source?.toLowerCase().includes("gdelt")),
+          status: gdeltStatus,
+          message: gdeltStatus === "stale"
+            ? "GDELT results served from stale cache — may not reflect news from the last 6+ hours"
+            : "GDELT live feed unavailable — results from cached or vendor sources only",
+        },
+      },
+    } : {}),
     sourcesSucceeded,
     sourcesFailed,
     latencyMs,

@@ -44,6 +44,88 @@ import {
 // @brain/* is resolved via web/tsconfig.json paths → ../dist/src/brain/*.
 import { quickScreen as brainQuickScreen } from "@brain/quick-screen.js";
 
+// ── Sanctions list health snapshot ─────────────────────────────────────────
+// Attached to every screening response so audit records capture which lists
+// had data (and how fresh) at the moment of screening. A "clear" verdict
+// against empty UAE lists is a compliance failure — not a real clear.
+
+const LIST_IDS = [
+  "un_consolidated", "ofac_sdn", "ofac_cons", "eu_fsf", "uk_ofsi",
+  "ca_osfi", "ch_seco", "au_dfat", "fatf", "uae_eocn", "uae_ltl",
+] as const;
+
+type ListHealthStatus = "healthy" | "stale" | "missing";
+
+interface ListHealthEntry {
+  entityCount: number | null;
+  ageHours: number | null;
+  status: ListHealthStatus;
+}
+
+type ListHealthSnapshot = Record<string, ListHealthEntry>;
+
+async function fetchListHealth(): Promise<ListHealthSnapshot> {
+  const STALE_HOURS = 36;
+  const HOUR_MS = 3_600_000;
+  const snapshot: ListHealthSnapshot = {};
+
+  let store: { get: (key: string, opts?: { type?: string }) => Promise<unknown> } | null = null;
+  try {
+    const { getStore } = await import("@netlify/blobs");
+    const siteID = process.env["NETLIFY_SITE_ID"] ?? process.env["SITE_ID"];
+    const token =
+      process.env["NETLIFY_BLOBS_TOKEN"] ??
+      process.env["NETLIFY_API_TOKEN"] ??
+      process.env["NETLIFY_AUTH_TOKEN"];
+    store = siteID && token
+      ? getStore({ name: "hawkeye-lists", siteID, token, consistency: "strong" })
+      : getStore({ name: "hawkeye-lists" });
+  } catch {
+    for (const id of LIST_IDS) {
+      snapshot[id] = { entityCount: null, ageHours: null, status: "missing" };
+    }
+    return snapshot;
+  }
+
+  await Promise.all(LIST_IDS.map(async (listId) => {
+    try {
+      const raw = await store!.get(`${listId}/latest.json`, { type: "json" }) as {
+        entities?: unknown[]; report?: { fetchedAt?: number }; fetchedAt?: number;
+      } | null;
+      if (!raw || !Array.isArray(raw.entities)) {
+        snapshot[listId] = { entityCount: null, ageHours: null, status: "missing" };
+        return;
+      }
+      const entityCount = raw.entities.length;
+      const fetchedAtMs = raw.report?.fetchedAt ?? raw.fetchedAt ?? null;
+      const ageHours = typeof fetchedAtMs === "number"
+        ? Math.round((Date.now() - fetchedAtMs) / HOUR_MS * 10) / 10
+        : null;
+      const status: ListHealthStatus =
+        ageHours !== null && ageHours > STALE_HOURS ? "stale" : "healthy";
+      snapshot[listId] = { entityCount, ageHours, status };
+    } catch {
+      snapshot[listId] = { entityCount: null, ageHours: null, status: "missing" };
+    }
+  }));
+
+  return snapshot;
+}
+
+function buildScreeningWarnings(health: ListHealthSnapshot): string[] {
+  const warnings: string[] = [];
+  for (const [listId, entry] of Object.entries(health)) {
+    if (entry.status === "missing") {
+      warnings.push(`${listId} list is missing from blob store at time of screening — no match possible against this list`);
+    } else if (entry.entityCount === 0) {
+      warnings.push(`${listId} had 0 entities at time of screening — no match possible against this list`);
+    } else if (entry.status === "stale") {
+      warnings.push(`${listId} data is stale (${entry.ageHours}h old) at time of screening — may not reflect recent designations`);
+    }
+  }
+  return warnings;
+}
+
 type QuickScreenFn = (
   subject: QuickScreenSubject,
   candidates: QuickScreenCandidate[],
@@ -87,6 +169,10 @@ function respond(
 
 export async function POST(req: Request): Promise<NextResponse> {
   const t0 = Date.now();
+  // Start list health check immediately — runs in parallel with auth + corpus
+  // loading so it doesn't add latency to the critical path.
+  const listHealthPromise = fetchListHealth().catch(() => null);
+
   // Require authentication — UAE FDL Art. 20 requires every screening
   // action to be traceable to a natural person. Anonymous screening (free
   // tier without an API key) leaves audit chain entries with no operator
@@ -456,6 +542,14 @@ export async function POST(req: Request): Promise<NextResponse> {
       knownSanctioned: result.hits.map((h) => ({ name: h.candidateName, listId: h.listId })),
     });
 
+    // Collect list health — cap wait at 800ms so a slow blob read can't
+    // push past the function deadline. If not resolved, skip the snapshot.
+    const listHealth = await Promise.race([
+      listHealthPromise,
+      new Promise<null>((r) => setTimeout(() => r(null), 800)),
+    ]);
+    const screeningWarnings = listHealth ? buildScreeningWarnings(listHealth) : [];
+
     return respond(
       200,
       {
@@ -503,6 +597,11 @@ export async function POST(req: Request): Promise<NextResponse> {
         // triage panel can show the appropriate banner.
         commonNameExpansion: isCommonName,
         latencyMs: Date.now() - t0,
+        // Sanctions list health at the moment of screening — required for
+        // auditable compliance records. A "clear" against empty UAE lists
+        // is a false clear, not a real one.
+        ...(listHealth ? { listHealthAtScreeningTime: listHealth } : {}),
+        ...(screeningWarnings.length > 0 ? { screeningWarnings } : {}),
       } as QuickScreenResponse,
       gateHeaders,
     );
