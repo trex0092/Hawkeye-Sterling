@@ -51,7 +51,6 @@ const PROVIDER_CATALOG: ProviderStatus[] = [
   { id: "interpol-red-notices", category: "free-always-on", tier: "free-toggle", configured: false, envVars: ["INTERPOL_RED_NOTICES_ENABLED"], signupUrl: "https://www.interpol.int/en/How-we-work/Notices/Red-Notices/View-Red-Notices" },
   { id: "fbi-most-wanted", category: "free-always-on", tier: "free-toggle", configured: false, envVars: ["FBI_MOST_WANTED_ENABLED"], signupUrl: "https://www.fbi.gov/wanted" },
   { id: "occrp-aleph", category: "free-always-on", tier: "free-toggle", configured: false, envVars: ["OCCRP_ALEPH_ENABLED"], signupUrl: "https://aleph.occrp.org/" },
-  { id: "ofac-sdn", category: "free-always-on", tier: "free-toggle", configured: false, envVars: ["OFAC_SDN_ENABLED"], signupUrl: "https://www.opensanctions.org/datasets/us_ofac_sdn/" },
   { id: "eu-fsf", category: "free-always-on", tier: "free-toggle", configured: false, envVars: ["EU_FSF_ENABLED"], signupUrl: "https://www.opensanctions.org/datasets/eu_fsf/" },
   { id: "un-sc-sanctions", category: "free-always-on", tier: "free-toggle", configured: false, envVars: ["UN_SC_SANCTIONS_ENABLED"], signupUrl: "https://www.opensanctions.org/datasets/un_sc_sanctions/" },
   { id: "bis-entity-list", category: "free-always-on", tier: "free-toggle", configured: false, envVars: ["BIS_ENTITY_LIST_ENABLED"], signupUrl: "https://www.opensanctions.org/datasets/us_bis_elist/" },
