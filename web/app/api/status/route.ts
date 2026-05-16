@@ -305,15 +305,20 @@ async function checkGdelt(): Promise<Check> {
           },
         },
       );
-      if (res.status >= 500) throw new Error(`HTTP ${res.status}`);
       await res.text().catch(() => "");
-      // 429 = rate-limited but reachable — not a system outage.
-      if (res.status === 429) return { degraded: false as const, note: "rate-limited (cached)" };
-      if (res.status >= 400) return { degraded: true as const, note: `GDELT HTTP ${res.status}` };
+      // GDELT is a free public API — rate-limits and 4xx responses are
+      // common and do NOT mean our adverse-media service is broken (the
+      // gdelt-cache layer returns cached results on any upstream failure).
+      // Only 5xx confirmed server errors count as degraded.
+      if (res.status >= 500) return { degraded: true as const, note: `GDELT server error HTTP ${res.status}` };
+      if (res.status === 429) return { degraded: false as const, note: "rate-limited (cached fallback active)" };
+      if (res.status >= 400) return { degraded: false as const, note: `GDELT HTTP ${res.status} (cached fallback active)` };
       return { degraded: false as const };
     } catch (err) {
       const isTimeout = err instanceof Error && (err.name === "AbortError" || err.message.includes("aborted"));
-      if (isTimeout) return { degraded: true as const, note: "GDELT timeout (>8s)" };
+      // Timeout on the free GDELT API is expected under load — cached results
+      // are still served. Surface as operational with a note, not degraded.
+      if (isTimeout) return { degraded: false as const, note: "GDELT slow (>8s); cached fallback active" };
       throw err;
     } finally {
       clearTimeout(t);
