@@ -57,7 +57,18 @@ export default async (_req: Request): Promise<Response> => {
     process.env["URL"] ??
     process.env["DEPLOY_PRIME_URL"] ??
     "https://hawkeye-sterling.netlify.app";
-  const token = process.env["ALERTS_CRON_TOKEN"] ?? "";
+  const token = process.env["ALERTS_CRON_TOKEN"];
+
+  // ALERTS_CRON_TOKEN is required: without it every POST to /api/alerts
+  // returns 401/503 and the MLRO bell icon never shows new designations.
+  // Fail loudly so Netlify function logs surface the missing env var.
+  if (!token) {
+    console.error("[designation-alert-check] ALERTS_CRON_TOKEN not set — bell alerts will NOT fire. Set this env var in Netlify dashboard.");
+    return new Response(
+      JSON.stringify({ ok: false, error: "ALERTS_CRON_TOKEN not configured", at: new Date().toISOString() }),
+      { status: 503, headers: { "content-type": "application/json" } },
+    );
+  }
 
   let alertsWritten = 0;
   let errors = 0;
@@ -92,7 +103,7 @@ export default async (_req: Request): Promise<Response> => {
               method: "POST",
               headers: {
                 "content-type": "application/json",
-                ...(token ? { authorization: `Bearer ${token}` } : {}),
+                authorization: `Bearer ${token}`,
               },
               body: JSON.stringify({
                 id: alertId,
