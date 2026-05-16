@@ -178,7 +178,8 @@ async function liveAdverseMedia(subject: string, budgetMs = 20_000) {
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY not configured");
 
   // 1. Pull live articles via shared 3-layer cache (memory → Redis → GDELT live).
-  const gdeltResult = await fetchGdeltCached(subject);
+  // Forward remaining budget so GDELT doesn't overrun the route deadline.
+  const gdeltResult = await fetchGdeltCached(subject, { budgetMs });
   const items = gdeltResult.articles;
 
   // If GDELT itself failed (timeout / HTTP error), we must NOT return CLEAR.
