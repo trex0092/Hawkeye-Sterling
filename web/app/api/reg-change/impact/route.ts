@@ -229,10 +229,10 @@ Produce a comprehensive impact assessment for how this regulation affects this s
     });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as ImpactAssessmentResult;
-    if (!result.costBenefit || typeof result.costBenefit !== "object") result.costBenefit = { operationalChanges: [], systemChanges: [], staffingNeeds: [] };
-    if (!Array.isArray(result.costBenefit.operationalChanges)) result.costBenefit.operationalChanges = [];
-    if (!Array.isArray(result.costBenefit.systemChanges)) result.costBenefit.systemChanges = [];
-    if (!Array.isArray(result.costBenefit.staffingNeeds)) result.costBenefit.staffingNeeds = [];
+    if (!result.businessImpact || typeof result.businessImpact !== "object") result.businessImpact = { operationalChanges: [], systemChanges: [], staffingNeeds: [], estimatedCost: "", implementationMonths: 0 };
+    if (!Array.isArray(result.businessImpact.operationalChanges)) result.businessImpact.operationalChanges = [];
+    if (!Array.isArray(result.businessImpact.systemChanges)) result.businessImpact.systemChanges = [];
+    if (!Array.isArray(result.businessImpact.staffingNeeds)) result.businessImpact.staffingNeeds = [];
     if (!Array.isArray(result.keyObligations)) result.keyObligations = [];
     if (!Array.isArray(result.implementationRoadmap)) result.implementationRoadmap = [];
     else for (const r of result.implementationRoadmap) { if (!Array.isArray(r.actions)) r.actions = []; if (!Array.isArray(r.dependencies)) r.dependencies = []; }

@@ -102,7 +102,7 @@ export async function POST(req: Request) {
     };
   };
   if (!apiKey) {
-    return NextResponse.json({ ...buildTemplate(), degraded: true, degradedReason: "ANTHROPIC_API_KEY not configured — deterministic template used." , headers: gate.headers });
+    return NextResponse.json({ ...buildTemplate(), degraded: true, degradedReason: "ANTHROPIC_API_KEY not configured — deterministic template used." }, { headers: gate.headers });
   }
 
   try {
