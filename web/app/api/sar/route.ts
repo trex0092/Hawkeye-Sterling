@@ -26,6 +26,7 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import type { ApiKeyRecord } from "@/lib/server/api-keys";
 import { getJson, setJson, listKeys } from "@/lib/server/store";
 
 export const runtime = "nodejs";
@@ -88,7 +89,7 @@ async function checkFourEyes(caseId: string, req: Request): Promise<{
     (i) =>
       i.status === "approved" &&
       (i.action === "str" || i.action === "escalate" || i.action === "freeze") &&
-      (i.subjectId === caseId || i.id.includes(caseId) || i.subjectId.includes(caseId)),
+      (i.subjectId === caseId || i.id === caseId),
   );
 
   // Count distinct approvers (initiatedBy is the first signer, approvedBy is the second).
@@ -121,7 +122,7 @@ async function handleGet(req: Request): Promise<NextResponse> {
   return NextResponse.json({ ok: true, count: filtered.length, records: filtered });
 }
 
-async function handlePost(req: Request): Promise<NextResponse> {
+async function handlePost(req: Request, callerRecord: ApiKeyRecord | null): Promise<NextResponse> {
   let raw: unknown;
   try {
     raw = await req.json();
@@ -138,6 +139,18 @@ async function handlePost(req: Request): Promise<NextResponse> {
   const filingType = str(raw["filingType"]) ?? "STR";
   const bypassFourEyes = raw["bypassFourEyes"] === true;
   const generatedBy = str(raw["generatedBy"]) ?? "mlro";
+
+  // Only MLRO or compliance_admin roles may bypass the four-eyes gate.
+  // Reject any other caller who sets bypassFourEyes=true (UAE FDL 10/2025 Art.16).
+  if (bypassFourEyes) {
+    const callerRole = callerRecord?.role ?? "";
+    if (callerRole !== "mlro" && callerRole !== "compliance_admin") {
+      return NextResponse.json(
+        { ok: false, error: "Insufficient permissions to bypass four-eyes requirement" },
+        { status: 403 },
+      );
+    }
+  }
 
   if (!caseId) {
     return NextResponse.json({ ok: false, error: "caseId required" }, { status: 400 });
@@ -256,5 +269,5 @@ export async function GET(req: Request): Promise<NextResponse> {
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req as Parameters<typeof enforce>[0]);
   if (!gate.ok) return gate.response as unknown as NextResponse;
-  return handlePost(req);
+  return handlePost(req, gate.record);
 }

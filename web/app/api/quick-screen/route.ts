@@ -200,6 +200,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (subject.name.length > 512) {
     return respond(400, { ok: false, error: "subject.name exceeds 512-character limit" }, gateHeaders);
   }
+  if (Array.isArray(subject.aliases) && subject.aliases.length > 50) {
+    return respond(400, { ok: false, error: "aliases exceeds 50-entry limit" }, gateHeaders);
+  }
+  if (Array.isArray(body.evidenceUrls) && body.evidenceUrls.length > 20) {
+    return respond(400, { ok: false, error: "evidenceUrls exceeds 20-entry limit" }, gateHeaders);
+  }
 
   // Whitelist short-circuit — if the operator's tenant has previously
   // cleared this subject (false-positive disposition recorded via
@@ -305,8 +311,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         } as QuickScreenResponse & { errorCode: string; errorType: string; tool: string; missingLists: string[]; degraded: boolean; message: string; requestId: string }, gateHeaders);
       }
     } catch (err) {
-      const detail = err instanceof Error ? err.message : String(err);
-      console.error("[quick-screen] loadCandidates failed", detail);
+      console.error("[quick-screen] loadCandidates failed:", err instanceof Error ? err.message : String(err));
       return respond(503, {
         ok: false,
         errorCode: "LISTS_MISSING",
@@ -315,9 +320,8 @@ export async function POST(req: Request): Promise<NextResponse> {
         missingLists: ["ofac_sdn", "un_consolidated"],
         degraded: true,
         message: "Screening cannot proceed: watchlist corpus unavailable. Run sanctions refresh and retry.",
-        detail,
         requestId: Math.random().toString(36).slice(2, 10),
-      } as QuickScreenResponse & { errorCode: string; errorType: string; tool: string; missingLists: string[]; degraded: boolean; message: string; detail: string; requestId: string }, gateHeaders);
+      } as QuickScreenResponse & { errorCode: string; errorType: string; tool: string; missingLists: string[]; degraded: boolean; message: string; requestId: string }, gateHeaders);
     }
   }
 
