@@ -133,12 +133,14 @@ export default async function handler(_req: Request): Promise<Response> {
   const watchlist = (await loadWatchlist(store)).map((s) => s.toLowerCase());
 
   const all: ProcessedItem[] = [];
+  let successfulFeeds = 0;
   for (const spec of feeds) {
     try {
       const res = await fetchWithTimeout(spec.url);
       if (!res.ok) continue;
       const xml = await res.text();
       const items = parseRssMinimal(xml);
+      successfulFeeds++;
       const fetchedAt = new Date().toISOString();
       for (const it of items) {
         const blob = `${it.title} ${it.description ?? ""}`.toLowerCase();
@@ -170,12 +172,18 @@ export default async function handler(_req: Request): Promise<Response> {
     }
   }
 
-  // Write heartbeat so health-monitor can detect silent cron failures.
-  try {
-    const hbStore = getStore(HEARTBEAT_STORE);
-    await hbStore.setJSON(RUN_LABEL, { lastSuccess: new Date().toISOString(), label: RUN_LABEL });
-  } catch (err) {
-    console.warn("[adverse-media-rss] heartbeat write failed (non-critical):", err instanceof Error ? err.message : String(err));
+  // Write heartbeat only when at least one feed was fetched successfully.
+  // If ALL feeds fail (network outage, all URLs non-200), do NOT write a
+  // heartbeat — health-monitor should detect and alert on the silence.
+  if (successfulFeeds > 0) {
+    try {
+      const hbStore = getStore(HEARTBEAT_STORE);
+      await hbStore.setJSON(RUN_LABEL, { lastSuccess: new Date().toISOString(), label: RUN_LABEL });
+    } catch (err) {
+      console.warn("[adverse-media-rss] heartbeat write failed (non-critical):", err instanceof Error ? err.message : String(err));
+    }
+  } else {
+    console.warn("[adverse-media-rss] all feeds failed — heartbeat NOT written so health-monitor will alert after", 2, "hours");
   }
 
   return jsonResponse({

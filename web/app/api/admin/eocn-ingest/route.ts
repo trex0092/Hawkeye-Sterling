@@ -244,7 +244,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     const msg = await anthropic.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 800,
+      max_tokens: 8192, // Full EOCN/LTL lists can contain 100s of entities; 800 caused silent truncation
       system: `You are a UAE AML compliance data extraction specialist. Extract ALL sanctioned/designated entities from this UAE EOCN or Local Terrorist List document.
 
 Return ONLY valid JSON — no prose, no markdown fences. The JSON must be an array of objects with this exact shape:
@@ -384,6 +384,7 @@ Rules:
     listId,
     entitiesExtracted: rawEntities.length,
     entitiesWritten: written ? entities.length : 0,
+    uploadedBy: gate.keyId,
     uploadedAt: new Date().toISOString(),
     fileName,
     fileBytes,

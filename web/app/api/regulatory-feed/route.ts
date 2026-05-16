@@ -55,7 +55,7 @@ interface FeedResult {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 15-minute module-level cache
+// 30-minute module-level cache
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface CacheEntry {
