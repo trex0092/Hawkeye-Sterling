@@ -30,7 +30,7 @@ test.describe("Login page", () => {
     const passwordInput = page.locator('input[type="password"]').first();
 
     await usernameInput.fill("invalid_user_xyz");
-    await passwordInput.fill("wrong_password_123!");
+    await passwordInput.fill("not-a-real-password");
 
     const submitButton = page.locator('button[type="submit"]').first();
     await submitButton.click();
