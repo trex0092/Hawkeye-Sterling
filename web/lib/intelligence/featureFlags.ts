@@ -24,7 +24,10 @@ export type FreeFlag =
   | "br-receita" | "co-rues" | "ua-yedr"
   | "zefix" | "bronnoysund" | "ytj"
   | "google-news-rss" | "hacker-news"
-  | "free-rss";
+  | "free-rss"
+  | "interpol-red-notices" | "fbi-most-wanted" | "occrp-aleph"
+  | "eu-fsf" | "un-sc-sanctions" | "bis-entity-list"
+  | "samgov-exclusions" | "open-ownership" | "eu-transparency-register";
 
 // Maps each flag to its legacy env var name for backwards compatibility.
 const LEGACY_ENV_VAR: Record<FreeFlag, string> = {
@@ -55,6 +58,15 @@ const LEGACY_ENV_VAR: Record<FreeFlag, string> = {
   "google-news-rss": "GOOGLE_NEWS_RSS_ENABLED",
   "hacker-news": "HACKER_NEWS_ENABLED",
   "free-rss": "FREE_RSS_DISABLED",
+  "interpol-red-notices": "INTERPOL_RED_NOTICES_ENABLED",
+  "fbi-most-wanted": "FBI_MOST_WANTED_ENABLED",
+  "occrp-aleph": "OCCRP_ALEPH_ENABLED",
+  "eu-fsf": "EU_FSF_ENABLED",
+  "un-sc-sanctions": "UN_SC_SANCTIONS_ENABLED",
+  "bis-entity-list": "BIS_ENTITY_LIST_ENABLED",
+  "samgov-exclusions": "SAMGOV_EXCLUSIONS_ENABLED",
+  "open-ownership": "OPEN_OWNERSHIP_ENABLED",
+  "eu-transparency-register": "EU_TRANSPARENCY_REGISTER_ENABLED",
 };
 
 function parseDisabledList(): Set<string> {
