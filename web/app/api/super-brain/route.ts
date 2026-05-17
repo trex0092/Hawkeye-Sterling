@@ -750,7 +750,7 @@ function resolveJurisdiction(
     : byName?.iso2 ?? COMMON_NAME_ISO2[raw.toLowerCase()] ?? raw.toUpperCase();
   const regimes = (() => {
     try {
-      return regimesForJurisdiction(iso2Guess).map((r: SanctionRegime) => r.id);
+      return regimesForJurisdiction(iso2Guess).map((r) => r.id);
     } catch {
       return [];
     }
