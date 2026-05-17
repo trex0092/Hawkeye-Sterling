@@ -11,8 +11,7 @@
 //
 // Each adapter is independently gated and gracefully returns [] on any error.
 
-import type { NewsAdapter, NewsArticle } from "./newsAdapters";
-import { NULL_NEWS_ADAPTER } from "./newsAdapters";
+import { NULL_NEWS_ADAPTER, type NewsAdapter, type NewsArticle } from "./newsAdapters";
 import { AML_KEYWORDS_EN } from "./amlKeywords";
 
 const TIMEOUT_MS = 12_000;

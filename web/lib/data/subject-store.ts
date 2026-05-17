@@ -1,15 +1,15 @@
 "use client";
 
-import type {
-  EddChecklistItem,
-  EvidenceEntry,
-  HitResolution,
-  HitResolutionVerdict,
-  SubjectDetail,
-  TimelineEvent,
-  UboEntry,
+import {
+  EDD_CHECKLIST_DEFAULTS,
+  type EddChecklistItem,
+  type EvidenceEntry,
+  type HitResolution,
+  type HitResolutionVerdict,
+  type SubjectDetail,
+  type TimelineEvent,
+  type UboEntry,
 } from "@/lib/types";
-import { EDD_CHECKLIST_DEFAULTS } from "@/lib/types";
 
 const KEY = "hawkeye.subject-details.v1";
 

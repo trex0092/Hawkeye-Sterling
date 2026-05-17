@@ -10,8 +10,7 @@
 // `searchCountryRegistries(name, jurisdiction)` which dispatches only
 // to the registries serving the matching country code.
 
-import type { RegistryAdapter, RegistryRecord } from "./registryAdapters";
-import { NULL_REGISTRY_ADAPTER } from "./registryAdapters";
+import { NULL_REGISTRY_ADAPTER, type RegistryAdapter, type RegistryRecord } from "./registryAdapters";
 import { flagOn } from "./featureFlags";
 
 const FETCH_TIMEOUT_MS = 12_000;

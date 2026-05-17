@@ -7,8 +7,7 @@
 // Once the operator drops a key into Netlify env vars and pushes a
 // deploy, these wrappers light up automatically — no code change needed.
 
-import type { CorporateRegistryAdapter, CorporateRecord } from "./externalAdapters";
-import { NULL_CORPORATE_ADAPTER } from "./externalAdapters";
+import { NULL_CORPORATE_ADAPTER, type CorporateRegistryAdapter, type CorporateRecord } from "./externalAdapters";
 
 const FETCH_TIMEOUT_MS = 12_000;
 

@@ -8,8 +8,7 @@
 // skipped. Output deduped by URL and emitted as NewsArticle for the
 // existing searchAllNews aggregator to merge.
 
-import type { NewsArticle, NewsAdapter } from "./newsAdapters";
-import { NULL_NEWS_ADAPTER } from "./newsAdapters";
+import { NULL_NEWS_ADAPTER, type NewsArticle, type NewsAdapter } from "./newsAdapters";
 import { textMentionsAml, matchAmlKeywords } from "./amlKeywords";
 import { flagOn } from "./featureFlags";
 

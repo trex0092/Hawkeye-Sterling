@@ -7,8 +7,7 @@
 // - World Bank Listing of Ineligible Firms (debarment list, free CSV/JSON)
 // - FATF high-risk / monitored jurisdictions (free public list)
 
-import type { RegistryAdapter, RegistryRecord } from "./registryAdapters";
-import { NULL_REGISTRY_ADAPTER } from "./registryAdapters";
+import { NULL_REGISTRY_ADAPTER, type RegistryAdapter, type RegistryRecord } from "./registryAdapters";
 import { flagOn } from "./featureFlags";
 
 const FETCH_TIMEOUT_MS = 12_000;
