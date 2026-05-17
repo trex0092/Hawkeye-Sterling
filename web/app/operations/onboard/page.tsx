@@ -1011,7 +1011,7 @@ export default function OnboardingWizardPage() {
             })()}
 
             {/* Show adaptive EDD answers as read-only context */}
-            {draft.adaptiveAnswers && Object.values(draft.adaptiveAnswers).some(Boolean) && (
+            {draft.adaptiveAnswers && (Object.values(draft.adaptiveAnswers) as (string | boolean | undefined)[]).some(Boolean) && (
               <div className="mt-3 border border-amber-200 rounded p-3 bg-amber-50 text-12">
                 <div className="text-10 font-mono uppercase text-amber-700 mb-2">EDD answers from step 3</div>
                 {draft.adaptiveAnswers.eddJustification && (
@@ -1158,7 +1158,7 @@ function AdvisorNarrativePanel({ response }: { response: AdvisorResponseV1 }) {
       )}
       <div className="font-mono text-10 uppercase text-ink-3">3 · Citations</div>
       <div className="ml-2">
-        {Object.entries(response.frameworkCitations.byClass)
+        {(Object.entries(response.frameworkCitations.byClass) as [string, string[] | undefined][])
           .filter(([, list]) => (list?.length ?? 0) > 0)
           .map(([cls, list]) => (
             <div key={cls}><span className="font-mono text-10 text-ink-3">Class {cls}:</span> {(list ?? []).join(" · ")}</div>

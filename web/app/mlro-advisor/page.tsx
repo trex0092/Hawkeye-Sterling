@@ -1275,7 +1275,7 @@ const VERDICT_TONE: Record<string, string> = {
 
 function StructuredAdvisorView({ response }: { response: AdvisorResponseV1 }) {
   const tone = VERDICT_TONE[response.decision.verdict] ?? "bg-gray-100 text-gray-700 border-gray-300";
-  const citationGroups = Object.entries(response.frameworkCitations.byClass).filter(([, list]) => (list?.length ?? 0) > 0);
+  const citationGroups = (Object.entries(response.frameworkCitations.byClass) as [string, string[] | undefined][]).filter(([, list]) => (list?.length ?? 0) > 0);
   return (
     <div className="bg-bg-panel border border-brand/40 rounded-lg p-4 space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
@@ -5715,8 +5715,8 @@ export default function MlroAdvisorPage() {
                   const decisionCls = (m.decision === "file_str" || m.decision === "escalate_senior") ? "bg-red text-white" : m.decision === "enhanced_cdd" ? "bg-amber-dim text-amber" : m.decision === "monitor_and_review" ? "bg-brand-dim text-brand" : "bg-green-dim text-green";
                   const qScore = m.qualityScore;
                   const qCls = qScore >= 80 ? "bg-green-dim text-green" : qScore >= 55 ? "bg-amber-dim text-amber" : "bg-red-dim text-red";
-                  const auditPassed = Object.values(m.auditElements).filter(Boolean).length;
-                  const auditTotal = Object.values(m.auditElements).length;
+                  const auditPassed = (Object.values(m.auditElements) as boolean[]).filter(Boolean).length;
+                  const auditTotal = (Object.values(m.auditElements) as boolean[]).length;
                   return (
                     <div className="space-y-4 border border-hair-2 rounded-lg p-4 bg-bg-1">
                       <div className="flex items-center gap-3 flex-wrap">
@@ -5731,7 +5731,7 @@ export default function MlroAdvisorPage() {
                         <pre className="text-11 text-ink-0 whitespace-pre-wrap leading-relaxed font-mono">{m.memo}</pre>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-10">
-                        {Object.entries(m.auditElements).map(([k, v]) => (
+                        {(Object.entries(m.auditElements) as [string, boolean][]).map(([k, v]) => (
                           <div key={k} className={`flex items-center gap-1.5 px-2 py-1 rounded border ${v ? "border-green/30 bg-green-dim text-green" : "border-red/30 bg-red-dim text-red"}`}>
                             <span className="font-bold">{v ? "✓" : "✗"}</span>
                             <span className="font-mono">{k.replace(/([A-Z])/g, " $1").trim()}</span>
@@ -6265,7 +6265,7 @@ export default function MlroAdvisorPage() {
                       {jr.cahraStatus && <div className="px-3 py-1.5 bg-amber-dim border border-amber/30 rounded text-11 text-amber"><span className="font-semibold">CAHRA:</span> {jr.cahraStatus}</div>}
                       {jr.fatfDetail && <p className="text-12 text-ink-1">{jr.fatfDetail}</p>}
                       <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-                        {Object.entries(jr.sanctionsExposure).map(([k, v]) => v ? (
+                        {(Object.entries(jr.sanctionsExposure) as [string, string][]).map(([k, v]) => v ? (
                           <div key={k} className="px-2 py-1.5 bg-red-dim border border-red/20 rounded text-center">
                             <div className="text-10 font-mono text-red uppercase">{k}</div>
                             <div className="text-10 text-ink-2 truncate">{v}</div>
