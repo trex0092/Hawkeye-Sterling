@@ -871,6 +871,21 @@ export async function POST(req: Request): Promise<NextResponse> {
         // Country-risk tier from FATF/UAE classification (separate from match severity).
         riskLevel,
         ...(countryRisk ? { riskBasis: countryRisk.basis } : {}),
+        // Structured breakdown of list coverage at screening time.
+        // listsChecked (scalar) is preserved for backward compatibility;
+        // listsCheckedDetails adds per-category detail for compliance UIs.
+        ...(listHealth ? {
+          listsCheckedDetails: {
+            total: Object.keys(listHealth).length,
+            checked: listsCheckedWithData,
+            skipped: [
+              ...degradedListIds.map((id) => ({ listId: id, reason: "empty — zero entities" })),
+              ...missingLists.map((id) => ({ listId: id, reason: "missing — no blob" })),
+            ],
+            degraded: staleListIds.map((id) => ({ listId: id, note: "stale — exceeds 36h threshold" })),
+            listIds: finalResult.listIds ?? [],
+          },
+        } : {}),
     } as QuickScreenResponse;
     // If this was a re-enrichment poll call, persist the full result so
     // subsequent polls return the cached enriched data without re-running adapters.
