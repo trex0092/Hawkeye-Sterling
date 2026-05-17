@@ -3,8 +3,7 @@ import { enforce } from "@/lib/server/enforce";
 import { postWebhook } from "@/lib/server/webhook";
 import { getEntity } from "@/lib/config/entities";
 import { serialiseGoamlXml } from "../../../../dist/src/integrations/goaml-xml.js";
-import { validateGoamlEnvelope } from "../../../../dist/src/brain/goaml-shapes.js";
-import type { GoAmlEnvelope, GoAmlPerson, GoAmlEntity, GoAmlReportCode } from "../../../../dist/src/brain/goaml-shapes.js";
+import { validateGoamlEnvelope, type GoAmlEnvelope, type GoAmlPerson, type GoAmlEntity, type GoAmlReportCode } from "../../../../dist/src/brain/goaml-shapes.js";
 import {
   buildHtmlDoc,
   hsCover,

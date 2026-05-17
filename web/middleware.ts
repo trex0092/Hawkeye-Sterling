@@ -100,7 +100,7 @@ function buildCspHeader(_nonce: string): string {
     "style-src 'self' 'unsafe-inline' https://fonts.bunny.net",
     "img-src 'self' data:",
     "font-src 'self' data: https://fonts.bunny.net",
-    "connect-src 'self' https://app.asana.com https://api.anthropic.com",
+    "connect-src 'self' https://app.asana.com",
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",

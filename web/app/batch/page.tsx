@@ -102,7 +102,7 @@ function parseCsv(text: string): ParsedRow[] {
 }
 
 function csvEscape(value: string | number | null | undefined): string {
-  if (value == null || value === "") return "";
+  if (value === null || value === undefined || value === "") return "";
   const str = String(value);
   return /[",\r\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
 }

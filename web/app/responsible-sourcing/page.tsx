@@ -250,7 +250,7 @@ export default function ResponsibleSourcingPage() {
                             <option value="other">Other</option>
                           </select></div>
                         <div><label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">Record-keeping period (years)</label>
-                          <input type="number" value={s.recordKeepingPeriodYears} onChange={(e) => updateStep(stepKey, { recordKeepingPeriodYears: parseInt(e.target.value) || 10 })} className={inputCls} /></div>
+                          <input type="number" value={s.recordKeepingPeriodYears} onChange={(e) => updateStep(stepKey, { recordKeepingPeriodYears: parseInt(e.target.value, 10) || 10 })} className={inputCls} /></div>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                         <Toggle checked={s.supplyChainPolicyExists} onChange={(v) => updateStep(stepKey, { supplyChainPolicyExists: v })} label="Supply chain policy exists and is board-approved" />
@@ -266,9 +266,9 @@ export default function ResponsibleSourcingPage() {
                     <div className="space-y-3">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div><label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">Smelters identified</label>
-                          <input type="number" value={s.smeltersIdentified} onChange={(e) => updateStep(stepKey, { smeltersIdentified: parseInt(e.target.value) || 0 })} className={inputCls} /></div>
+                          <input type="number" value={s.smeltersIdentified} onChange={(e) => updateStep(stepKey, { smeltersIdentified: parseInt(e.target.value, 10) || 0 })} className={inputCls} /></div>
                         <div><label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">RMAP-conformant smelters</label>
-                          <input type="number" value={s.smeltersRmapConformant} onChange={(e) => updateStep(stepKey, { smeltersRmapConformant: parseInt(e.target.value) || 0 })} className={inputCls} /></div>
+                          <input type="number" value={s.smeltersRmapConformant} onChange={(e) => updateStep(stepKey, { smeltersRmapConformant: parseInt(e.target.value, 10) || 0 })} className={inputCls} /></div>
                       </div>
                       <Toggle checked={s.supplyChainMapped} onChange={(v) => updateStep(stepKey, { supplyChainMapped: v })} label="Supply chain mapped to source (origin country identified for all consignments)" />
                       <div>
@@ -318,7 +318,7 @@ export default function ResponsibleSourcingPage() {
                             <option value="pending">Pending review</option>
                           </select></div>
                         <div><label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">Critical findings</label>
-                          <input type="number" value={s.criticalFindingsCount} onChange={(e) => updateStep(stepKey, { criticalFindingsCount: parseInt(e.target.value) || 0 })} className={inputCls} /></div>
+                          <input type="number" value={s.criticalFindingsCount} onChange={(e) => updateStep(stepKey, { criticalFindingsCount: parseInt(e.target.value, 10) || 0 })} className={inputCls} /></div>
                       </div>
                       <Toggle checked={s.auditConducted} onChange={(v) => updateStep(stepKey, { auditConducted: v })} label="Third-party audit has been conducted by accredited auditor" />
                       <Toggle checked={s.criticalFindingsResolved} onChange={(v) => updateStep(stepKey, { criticalFindingsResolved: v })} label="All critical audit findings resolved with documented corrective actions" />

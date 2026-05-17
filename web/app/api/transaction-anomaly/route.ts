@@ -15,8 +15,9 @@ import { setJson } from "@/lib/server/store";
 import {
   StreamingAnomalyGate,
   extractFeatures,
+  type AnomalyFeatureVector,
+  type AnomalyTier,
 } from "../../../../dist/src/brain/streaming-anomaly.js";
-import type { AnomalyFeatureVector, AnomalyTier } from "../../../../dist/src/brain/streaming-anomaly.js";
 
 export interface TxnFlagRecord {
   flagId: string;

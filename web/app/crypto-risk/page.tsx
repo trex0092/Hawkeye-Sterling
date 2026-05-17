@@ -298,9 +298,9 @@ export default function CryptoRiskPage() {
               </div>
             )}
 
-            {(result.taintedTransactions != null || result.firstSeen) && (
+            {(result.taintedTransactions !== null || result.firstSeen) && (
               <div className={`${cardCls} grid grid-cols-1 md:grid-cols-2 gap-3 text-12`}>
-                {result.taintedTransactions != null && (
+                {result.taintedTransactions !== null && (
                   <div>
                     <div className="text-ink-3 mb-0.5">Tainted Transactions</div>
                     <div className="font-medium text-ink-0">{result.taintedTransactions} / {result.totalTransactions ?? "?"}</div>

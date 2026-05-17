@@ -621,7 +621,7 @@ function deriveRuleBasedDecision(req: DecisionRequest): AIDecision {
   const hasConfirmedHit = req.sanctionsHits.some((h) => h.score >= 0.85);
   if (hasConfirmedHit) return "str";
   const isPEP12 = req.pepTier === "1" || req.pepTier === "2" || req.pepTier === "Tier 1" || req.pepTier === "Tier 2";
-  const highExposure = parseInt(req.exposureAED?.replace(/[^\d]/g, "") || "0") > 100000;
+  const highExposure = parseInt(req.exposureAED?.replace(/[^\d]/g, "") || "0", 10) > 100000;
   if (isPEP12 && highExposure) return "escalate";
   if (req.riskScore >= 80 && req.adverseMedia) return "escalate";
   if (req.riskScore >= 65 || req.sanctionsHits.length > 0) return "edd";

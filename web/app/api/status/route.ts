@@ -7,8 +7,7 @@ import { KNOWN_PEPS, KNOWN_ADVERSE } from "@/lib/data/known-entities";
 import { getJson, isInMemoryFallback } from "@/lib/server/store";
 import { gdeltCacheStats } from "@/lib/intelligence/gdelt-cache";
 import { isRedisConfigured } from "@/lib/cache/redis";
-import { enforce } from "@/lib/server/enforce";
-import type { EnforcementAllow } from "@/lib/server/enforce";
+import { enforce, type EnforcementAllow } from "@/lib/server/enforce";
 
 // Brain modules are compiled separately; dynamic import so the route module
 // loads even when the dist/ folder hasn't been built yet (local dev).

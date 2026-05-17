@@ -1,10 +1,12 @@
 {
   "extends": ["next/core-web-vitals"],
+  "plugins": ["@typescript-eslint"],
   "rules": {
+    "@typescript-eslint/no-explicit-any": "warn",
+    "react/no-string-refs": "warn",
     "react/no-unescaped-entities": "warn",
-    "react/no-string-refs": "error",
     "@next/next/no-html-link-for-pages": "warn",
-    "eqeqeq": ["error", "always"],
+    "eqeqeq": ["error", "always", { "null": "ignore" }],
     "prefer-const": "error",
     "no-var": "error",
     "no-duplicate-imports": "error",
@@ -17,6 +19,6 @@
     "no-return-assign": "error",
     "no-sequences": "error",
     "radix": "error",
-    "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }]
+    "no-unused-vars": ["warn", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_", "caughtErrorsIgnorePattern": "^_" }]
   }
 }

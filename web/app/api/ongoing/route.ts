@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { withGuard } from "@/lib/server/guard";
-import type { RequestContext } from "@/lib/server/guard";
+import { withGuard, type RequestContext } from "@/lib/server/guard";
 import { del, getJson, listKeys, setJson } from "@/lib/server/store";
 
 export const runtime = "nodejs";

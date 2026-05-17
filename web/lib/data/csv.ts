@@ -15,7 +15,7 @@ export function parseCsv(input: string): CsvParseResult {
   if (!input.trim()) return { headers: [], rows: [], errors: ["empty input"] };
 
   // Strip UTF-8 BOM the way Excel writes it.
-  let src = input.replace(/^﻿/, "");
+  const src = input.replace(/^﻿/, "");
 
   // Detect delimiter — comma vs semicolon vs tab. Score the first line.
   const firstLine = src.split(/\r?\n/, 1)[0] ?? "";

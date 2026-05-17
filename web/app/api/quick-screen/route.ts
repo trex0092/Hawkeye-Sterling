@@ -10,24 +10,19 @@ import type {
 import { enforce } from "@/lib/server/enforce";
 import { loadCandidates } from "@/lib/server/candidates-loader";
 import { lookupWhitelist } from "@/lib/server/whitelist";
-import { LIVE_OPENSANCTIONS_ADAPTER } from "@/lib/intelligence/liveAdapters";
-import { bestCommercialAdapter, activeCommercialProvider } from "@/lib/intelligence/commercialAdapters";
-import { searchAllRegistries } from "@/lib/intelligence/registryAdapters";
+import { LIVE_OPENSANCTIONS_ADAPTER, activeOnChainProviders } from "@/lib/intelligence/liveAdapters";
+import { bestCommercialAdapter, activeCommercialProvider, activeCommercialProviders } from "@/lib/intelligence/commercialAdapters";
+import { searchAllRegistries, activeRegistryProviders } from "@/lib/intelligence/registryAdapters";
 import { searchCountryRegistries } from "@/lib/intelligence/countryRegistries";
 import { searchCountrySanctions } from "@/lib/intelligence/countrySanctions";
-import { searchFreeAdapters } from "@/lib/intelligence/freeAlwaysOnAdapters";
+import { searchFreeAdapters, activeFreeProviders } from "@/lib/intelligence/freeAlwaysOnAdapters";
 import {
   buildScreeningReasoning,
   buildConsensusInputsFromAugmentation,
   buildCoverageGapReport,
 } from "@/lib/intelligence/screeningReasoning";
-import { activeNewsProviders } from "@/lib/intelligence/newsAdapters";
-import { activeCommercialProviders } from "@/lib/intelligence/commercialAdapters";
-import { activeRegistryProviders } from "@/lib/intelligence/registryAdapters";
+import { activeNewsProviders, searchAllNews } from "@/lib/intelligence/newsAdapters";
 import { activeKycProviders } from "@/lib/intelligence/kycVendorAdapters";
-import { activeOnChainProviders } from "@/lib/intelligence/liveAdapters";
-import { activeFreeProviders } from "@/lib/intelligence/freeAlwaysOnAdapters";
-import { searchAllNews } from "@/lib/intelligence/newsAdapters";
 import { ingestUrls } from "@/lib/intelligence/urlIngestion";
 import { llmAdverseMediaAdapter } from "@/lib/intelligence/llmAdverseMedia";
 import { groqAdverseMediaAdapter, geminiAdverseMediaAdapter } from "@/lib/intelligence/llmAdverseMediaAlt";
@@ -147,7 +142,7 @@ const quickScreen = brainQuickScreen as QuickScreenFn;
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 interface QuickScreenRequestBody {
   subject?: QuickScreenSubject;

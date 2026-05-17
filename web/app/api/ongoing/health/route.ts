@@ -12,8 +12,7 @@
 // alert system. Auth: withGuard (same gate as the rest of /api/ongoing/*).
 
 import { NextResponse } from "next/server";
-import { withGuard } from "@/lib/server/guard";
-import type { RequestContext } from "@/lib/server/guard";
+import { withGuard, type RequestContext } from "@/lib/server/guard";
 import { getJson, listKeys } from "@/lib/server/store";
 
 export const runtime = "nodejs";
