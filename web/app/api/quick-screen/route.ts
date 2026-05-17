@@ -45,6 +45,10 @@ import {
 // @brain/* is resolved via web/tsconfig.json paths → ../dist/src/brain/*.
 import { quickScreen as brainQuickScreen } from "@brain/quick-screen.js";
 import { getCountryRisk } from "@/lib/server/high-risk-countries";
+import { insertCaseRecord } from "@/lib/server/case-vault";
+import { tenantIdFromGate } from "@/lib/server/tenant";
+import { saveSubject, getSubject } from "../pkyc/_store";
+import type { CaseRecord } from "@/lib/types";
 
 // ── Sanctions list health snapshot ─────────────────────────────────────────
 // Attached to every screening response so audit records capture which lists
@@ -671,6 +675,105 @@ export async function POST(req: Request): Promise<NextResponse> {
       listsChecked: finalResult.listsChecked,
       listsDegraded: screeningWarnings.length,
     });
+
+    // Auto-open a server-side case record when the screening yields hits.
+    // Fire-and-forget — never blocks the response.
+    if (finalResult.hits.length > 0 && finalResult.severity !== "clear") {
+      const autoTenant = tenantIdFromGate(gate);
+      const caseNow = new Date().toISOString();
+      const autoCaseId = `case-auto-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      const badgeTone: CaseRecord["badgeTone"] =
+        finalResult.severity === "critical" ? "violet" : "orange";
+      const autoCase: CaseRecord = {
+        id: autoCaseId,
+        badge: "sanctions_hit",
+        badgeTone,
+        subject: subject.name,
+        meta: `${finalResult.severity} · ${finalResult.hits.length} hit(s) · ${subject.entityType ?? "unknown"}`,
+        status: "active",
+        evidenceCount: String(finalResult.hits.length),
+        lastActivity: caseNow,
+        opened: caseNow,
+        statusLabel: "Open",
+        statusDetail: "Pending MLRO triage",
+        evidence: finalResult.hits.slice(0, 10).map((h) => ({
+          category: "screening-report" as const,
+          title: `${h.listId}: ${h.candidateName}`,
+          meta: `Score ${Math.round(h.score * 100)}% via ${h.method}`,
+          detail: h.listRef ?? "",
+        })),
+        timeline: [
+          { timestamp: caseNow, event: `Auto-opened: ${finalResult.severity} severity, ${finalResult.hits.length} hit(s) across ${finalResult.listsChecked} lists` },
+        ],
+        screeningSnapshot: {
+          subject: {
+            id: autoCaseId,
+            name: subject.name,
+            entityType: (subject.entityType ?? "other") as "individual" | "organisation" | "vessel" | "aircraft" | "other",
+            jurisdiction: subject.jurisdiction,
+            aliases: subject.aliases,
+          },
+          result: {
+            topScore: finalResult.topScore,
+            severity: finalResult.severity,
+            hits: finalResult.hits.slice(0, 20).map((h) => ({
+              listId: h.listId,
+              listRef: h.listRef,
+              candidateName: h.candidateName,
+              score: h.score,
+              method: h.method,
+              programs: h.programs,
+            })),
+          },
+          capturedAt: caseNow,
+        },
+      };
+      void insertCaseRecord(autoTenant, autoCase).catch((err: unknown) => {
+        console.warn("[quick-screen] auto-case insert failed:", err instanceof Error ? err.message : String(err));
+      });
+    }
+
+    // Auto-enroll in pKYC ongoing monitoring for medium+ severity subjects.
+    // Uses a deterministic ID keyed on name so re-screening the same subject
+    // does not create duplicate monitoring subjects.
+    if (["medium", "high", "critical"].includes(finalResult.severity)) {
+      const pkycId = `pkyc-auto-${subject.name.toLowerCase().replace(/[^a-z0-9]/g, "-").slice(0, 40)}`;
+      void (async () => {
+        try {
+          const existing = await getSubject(pkycId);
+          if (!existing) {
+            const cadence = finalResult.severity === "critical" ? "weekly" : finalResult.severity === "high" ? "monthly" : "quarterly";
+            const pkycNow = new Date().toISOString();
+            const nextRun = new Date(pkycNow);
+            if (cadence === "weekly") nextRun.setUTCDate(nextRun.getUTCDate() + 7);
+            else if (cadence === "monthly") nextRun.setUTCMonth(nextRun.getUTCMonth() + 1);
+            else nextRun.setUTCMonth(nextRun.getUTCMonth() + 3);
+            await saveSubject({
+              id: pkycId,
+              name: subject.name,
+              entityType: subject.entityType,
+              jurisdiction: subject.jurisdiction,
+              nationality: subject.nationality,
+              dob: subject.dateOfBirth,
+              aliases: subject.aliases,
+              cadence,
+              status: "active",
+              enrolledAt: pkycNow,
+              lastRunAt: null,
+              nextRunAt: nextRun.toISOString(),
+              lastBand: null,
+              lastComposite: null,
+              lastHits: finalResult.hits.length,
+              runCount: 0,
+              alertCount: 0,
+              notes: `Auto-enrolled from screening: ${finalResult.severity} severity`,
+            });
+          }
+        } catch (err) {
+          console.warn("[quick-screen] pkyc auto-enroll failed:", err instanceof Error ? err.message : String(err));
+        }
+      })();
+    }
 
     return respond(
       200,
