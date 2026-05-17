@@ -357,6 +357,7 @@ const _callCtx = new AsyncLocalStorage<CallCtx>();
 
 const CALLAPI_MAX_ATTEMPTS = 3;
 const CALLAPI_RETRY_BACKOFF_MS = [100, 250]; // applied before attempt 2, 3
+const CALLAPI_RATE_LIMIT_BACKOFF_MS = [2_000, 4_000]; // 429/503 backoff before attempts 2, 3
 
 function isTransientFetchError(err: unknown): boolean {
   if (!(err instanceof Error)) return false;
@@ -437,6 +438,15 @@ async function callApi(
             ? `Report generated (${text.length} bytes). Open the Hawkeye Sterling web interface to view the full rendered report.`
             : `Upstream returned HTTP ${res.status} (${text.length} bytes).`,
         };
+      }
+      // Retry 429 (rate limit) and 503 (service unavailable) with backoff.
+      if ((res.status === 429 || res.status === 503) && attempt < CALLAPI_MAX_ATTEMPTS) {
+        const retryAfterHeader = res.headers.get("retry-after");
+        const backoffMs = retryAfterHeader
+          ? Math.min(parseInt(retryAfterHeader, 10) * 1_000, 8_000)
+          : (CALLAPI_RATE_LIMIT_BACKOFF_MS[attempt - 1] ?? 4_000);
+        await new Promise((r) => setTimeout(r, backoffMs));
+        continue;
       }
       return await res.json().catch(() => ({ ok: res.ok, status: res.status }));
     } catch (err) {

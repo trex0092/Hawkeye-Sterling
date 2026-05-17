@@ -865,6 +865,8 @@ export async function POST(req: Request): Promise<NextResponse> {
           staleListIds,
           degradedListIds,
           listHealthAvailable: listHealth !== null,
+          newsAdaptersUsed: newsArticles.providersUsed,
+          newsArticleCount: newsArticles.articles.length,
         },
         // Country-risk tier from FATF/UAE classification (separate from match severity).
         riskLevel,
