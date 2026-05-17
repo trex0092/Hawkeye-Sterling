@@ -41,7 +41,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 20;
 
-type ListStatus = "healthy" | "stale" | "missing" | "unconfigured";
+type ListStatus = "healthy" | "stale" | "missing" | "unconfigured" | "degraded";
 
 interface ListReport {
   listId: string;
@@ -192,6 +192,13 @@ function readFetchedAtMs(snapshot: SnapshotShape | null): number | null {
   return null;
 }
 
+// entityCount=0 is expected for seed/supplement adapters that may not yet
+// have been populated. URL-driven adapters returning 0 entities indicate a
+// parser or upstream gap and should be flagged "degraded", not "healthy".
+function emptyEntityCountExpected(listId: string): boolean {
+  return listId === "uae_eocn" || listId === "uae_ltl" || listId.startsWith("lseg_");
+}
+
 async function inspectList(
   store: BlobStore | null,
   adapter: ListAdapter,
@@ -238,6 +245,7 @@ async function inspectList(
   let status: ListStatus;
   if (!configured) status = "unconfigured";
   else if (!present) status = "missing";
+  else if (entityCount === 0 && !emptyEntityCountExpected(adapter.listId)) status = "degraded";
   else if (ageHours !== null && ageHours > staleHours) status = "stale";
   else status = "healthy";
 
@@ -272,7 +280,7 @@ async function handleGet(req: Request): Promise<Response> {
     lists.push(await inspectList(store, adapter, staleHours));
   }
 
-  const summary = { healthy: 0, stale: 0, missing: 0, unconfigured: 0 };
+  const summary = { healthy: 0, stale: 0, missing: 0, unconfigured: 0, degraded: 0 };
   for (const l of lists) summary[l.status]++;
 
   // Booleans only — never values. Names mirror what netlify.toml +
@@ -313,30 +321,16 @@ async function handleGet(req: Request): Promise<Response> {
   // `warnings` array. Reserve `ok=false` for total outage (zero healthy
   // lists), where no screen can be trusted.
   const ok = summary.healthy > 0;
-  const degraded = summary.missing > 0 || summary.stale > 0;
+  const degraded = summary.missing > 0 || summary.stale > 0 || summary.degraded > 0;
   const warnings: string[] = [];
-  // Adapters where entityCount=0 is an EXPECTED state, not a parser
-  // gap: UAE seed files were intentionally emptied (see commit 2e87659
-  // — placeholder text replaced with []) and LSEG supplements are only
-  // populated after /api/admin/import-cfs runs against a CFS-entitled
-  // subscription. Both can sit at zero indefinitely without indicating
-  // a bug. The original "audit H-03" warning was designed to catch
-  // genuine parser failures on URL-driven adapters; surface a different
-  // message for the seed/supplement cases so operators know the cause.
-  function emptyIsExpected(listId: string): boolean {
-    return listId === "uae_eocn" || listId === "uae_ltl" || listId.startsWith("lseg_");
-  }
   for (const l of lists) {
     if (l.status === "missing") warnings.push(`${l.listId} (${l.displayName}): missing from blob storage`);
     else if (l.status === "stale" && l.ageHours !== null) warnings.push(`${l.listId} (${l.displayName}): stale by ${l.ageHours}h`);
-    else if (l.status === "healthy" && l.entityCount === 0) {
-      if (emptyIsExpected(l.listId)) {
-        // Informational only — don't push to warnings (would flip the
-        // dashboard yellow indefinitely). entityCount=0 is visible in
-        // the lists[] array for any operator who wants to drill in.
-        continue;
-      }
-      warnings.push(`${l.listId} (${l.displayName}): blob present but zero entities — parser or upstream gap (audit H-03)`);
+    else if (l.status === "degraded") warnings.push(`${l.listId} (${l.displayName}): blob present but zero entities — parser or upstream gap (audit H-03)`);
+    else if (l.status === "healthy" && l.entityCount === 0 && emptyEntityCountExpected(l.listId)) {
+      // Informational only — don't push to warnings (would flip the
+      // dashboard yellow indefinitely). entityCount=0 is visible in
+      // the lists[] array for any operator who wants to drill in.
     }
   }
 
@@ -366,7 +360,7 @@ async function handleGet(req: Request): Promise<Response> {
       hint: !ok
         ? "Total outage — no healthy sanctions lists. Do not perform screening until at least one list is restored."
         : degraded
-          ? "Partial degradation — see warnings[]. Check refresh-lists cron logs (03:00 UTC daily). UAE adapters return empty unless UAE_EOCN_SEED_PATH / UAE_LTL_SEED_PATH point to a local JSON seed."
+          ? "Partial degradation — see warnings[]. Check refresh-lists cron logs (03:00 UTC daily). Degraded lists have a blob but zero entities (parser/upstream gap). UAE adapters return empty unless UAE_EOCN_SEED_PATH / UAE_LTL_SEED_PATH point to a local JSON seed."
           : "All adapters present and within freshness threshold.",
     },
     { headers: gate.headers },
