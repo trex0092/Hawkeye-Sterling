@@ -1543,7 +1543,7 @@ export async function POST(req: Request): Promise<Response> {
     const results = await _callCtx.run({ authHeader, sessionId }, () =>
       Promise.all(body.map((msg) => dispatch(msg as Parameters<typeof dispatch>[0]))),
     );
-    const responses = results.filter((r) => r !== null);
+    const responses = results.filter((r: unknown) => r !== null);
     return json(responses);
   }
 

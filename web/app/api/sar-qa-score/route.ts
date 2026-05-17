@@ -122,7 +122,7 @@ Red Flags: ${redFlagsStr}`;
       ],
     });
 
-  const rawText = claudeRes.content.find((b) => b.type === "text" && "text" in b)?.text ?? "";
+  const rawText = claudeRes.content.find((b: { type: string; text?: string }) => b.type === "text" && "text" in b)?.text ?? "";
 
   let parsed: { scores: Array<{ id: string; score: number; missingElements: string[]; suggestions: string[]; fatalIssues: string[] }> };
   try {

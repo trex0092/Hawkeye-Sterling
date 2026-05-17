@@ -21,7 +21,7 @@ async function alertOnStaleBlobs(): Promise<void> {
     const now = Date.now();
     for (const listId of CRITICAL_LISTS) {
       try {
-        const blob = await store.get(`${listId}/latest.json`, { type: "json" }) as { fetchedAt?: number } | null;
+        const blob = await store.getReport(listId);
         if (!blob?.fetchedAt) {
           console.error(`[${LABEL}] CRITICAL_ALERT list=${listId} status=missing_blob age=unknown`);
           continue;

@@ -60,7 +60,7 @@ async function handleGet(req: Request): Promise<NextResponse> {
   // Cold-start hydration from Blobs — idempotent after first call.
   await hydrateJournalFromBlobs();
 
-  const all = getJournal().list().filter((r) => {
+  const all = getJournal().list().filter((r: OutcomeRecord) => {
     const t = Date.parse(r.at);
     if (Number.isNaN(t)) return true;
     if (t < since) return false;

@@ -86,7 +86,7 @@ export default function ModeTelemetryPage() {
     const everFired = Object.keys(fires).length;
     const neverFired = totalModes - everFired;
     const cutoff = Date.now() - DRIFT_DAYS * 86_400_000;
-    const drifted = Object.values(fires).filter((f) => f.lastAt < cutoff).length;
+    const drifted = (Object.values(fires) as { lastAt: number }[]).filter((f) => f.lastAt < cutoff).length;
     const activatedTaxIds = new Set<string>();
     for (const m of MODES) {
       if (fires[m.id]) for (const t of m.taxonomyIds) activatedTaxIds.add(t);

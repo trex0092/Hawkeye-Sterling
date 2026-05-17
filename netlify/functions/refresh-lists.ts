@@ -26,12 +26,15 @@ async function snapshotLists(store: ReturnType<typeof getStore>): Promise<ListSn
   const snap: ListSnapshot = new Map();
   await Promise.all(WATCHED_LIST_IDS.map(async (listId) => {
     try {
+      // NormalisedEntity shape: { id, name, listings: [{ reference? }], ... }
+      // listRef is NOT a top-level field — it is derived from listings[0].reference ?? id.
       const raw = await store.get(`${listId}/latest.json`, { type: 'json' }) as {
-        entities?: Array<{ listRef?: string; name?: string }>;
+        entities?: Array<{ id?: string; name?: string; listings?: Array<{ reference?: string }> }>;
       } | null;
       const m = new Map<string, string>();
       for (const e of raw?.entities ?? []) {
-        if (e.listRef && e.name) m.set(e.listRef, e.name);
+        const listRef = e.listings?.[0]?.reference ?? e.id;
+        if (listRef && e.name) m.set(listRef, e.name);
       }
       snap.set(listId, m);
     } catch {

@@ -283,7 +283,7 @@ Generate the JSON response.`;
       messages: [{ role: "user", content: userPrompt }],
     });
 
-    const text = msg.content.find((b) => b.type === "text")?.text ?? "";
+    const text = msg.content.find((b: { type: string; text?: string }) => b.type === "text")?.text ?? "";
     // Extract JSON from response — null match goes through the catch
     // below as "no JSON in response", never as a TypeError.
     const jsonMatch = text.match(/\{[\s\S]*\}/);

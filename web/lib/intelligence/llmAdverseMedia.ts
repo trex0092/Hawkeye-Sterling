@@ -119,7 +119,7 @@ export function llmAdverseMediaAdapter(opts: { jurisdiction?: string; entityType
           system: SYSTEM_PROMPT,
           messages: [{ role: "user", content: buildUserPrompt(subjectName, opts.jurisdiction, opts.entityType) }],
         });
-        const text = msg.content.find((b) => b.type === "text")?.text ?? "";
+        const text = msg.content.find((b: { type: string; text?: string }) => b.type === "text")?.text ?? "";
         const parsed = parseClaudeResponse(text);
         if (!parsed || !parsed.found || !parsed.items) return [];
 

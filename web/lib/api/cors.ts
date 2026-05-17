@@ -22,7 +22,7 @@
 
 const ENV_ALLOWED_ORIGINS = (process.env["CORS_ALLOWED_ORIGINS"] ?? "")
   .split(",")
-  .map((o) => o.trim())
+  .map((o: string) => o.trim())
   .filter(Boolean);
 
 const BASE_ALLOWED_ORIGINS = [

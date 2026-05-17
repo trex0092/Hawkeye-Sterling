@@ -312,8 +312,7 @@ async function fetchLocaleFeed(
         accept: "application/rss+xml,application/xml,text/xml,*/*;q=0.8",
       },
       signal: controller.signal,
-      next: { revalidate: 300 },
-    });
+    } as RequestInit);
     if (!res.ok) {
       console.warn(`[hawkeye] news-search/fetchLocaleFeed ${locale.code} HTTP ${res.status}`);
       return [];

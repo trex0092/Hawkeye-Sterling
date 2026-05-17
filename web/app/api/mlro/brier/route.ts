@@ -15,6 +15,7 @@ import { enforce } from "@/lib/server/enforce";
 import { getJournal } from "../../../../../dist/src/brain/feedback-journal-instance.js";
 import { hydrateJournalFromBlobs } from "../../../../../dist/src/brain/feedback-journal-blobs.js";
 import { brierScore, logScore } from "../../../../../dist/src/brain/bayesian-update.js";
+import type { OutcomeRecord } from "../../../../../dist/src/brain/outcome-feedback.js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -98,7 +99,7 @@ async function handleGet(req: Request): Promise<NextResponse> {
 
   await hydrateJournalFromBlobs();
 
-  const all = getJournal().list().filter((r) => {
+  const all = getJournal().list().filter((r: OutcomeRecord) => {
     const t = Date.parse(r.at);
     if (Number.isNaN(t)) return true;
     return t >= since && t <= until;
@@ -168,7 +169,7 @@ async function handleGet(req: Request): Promise<NextResponse> {
   // ── 30-day Brier history (daily buckets) ──────────────────────────────────
   const now = Date.now();
   const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
-  const thirtyDayRecords = getJournal().list().filter((r) => {
+  const thirtyDayRecords = getJournal().list().filter((r: OutcomeRecord) => {
     const t = Date.parse(r.at);
     return !Number.isNaN(t) && t >= now - thirtyDaysMs;
   });
@@ -189,12 +190,12 @@ async function handleGet(req: Request): Promise<NextResponse> {
 
   // ── Expected Calibration Error ────────────────────────────────────────────
   const eceRecords = all
-    .map((r) => ({ autoConfidence: r.autoConfidence ?? 0.5, truth: classifyGroundTruth(r.groundTruth) }))
-    .filter((r): r is { autoConfidence: number; truth: 0 | 1 } => r.truth !== null);
+    .map((r: OutcomeRecord) => ({ autoConfidence: r.autoConfidence ?? 0.5, truth: classifyGroundTruth(r.groundTruth) }))
+    .filter((r: { autoConfidence: number; truth: 0 | 1 | null }): r is { autoConfidence: number; truth: 0 | 1 } => r.truth !== null);
   const current_ece = computeECE(eceRecords);
 
   // ── Under-triangulation percentage ───────────────────────────────────────
-  const underTriangulated = all.filter((r) => {
+  const underTriangulated = all.filter((r: OutcomeRecord) => {
     const sources = ((r as unknown) as Record<string, unknown>)["sourcesCount"] as number | undefined;
     return sources !== undefined ? sources < 3 : false;
   });
