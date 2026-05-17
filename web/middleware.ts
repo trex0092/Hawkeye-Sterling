@@ -68,7 +68,15 @@ function generateNonce(): string {
 // `public, max-age=300, must-revalidate` so verifiers can cache the
 // signing keys per RFC. The route's setting takes precedence; routes
 // that handle dynamic auth-gated data set their own no-store.
-function applySecurityHeaders(response: NextResponse, isApi: boolean): void {
+function generateRequestId(): string {
+  const buf = new Uint8Array(12);
+  crypto.getRandomValues(buf);
+  let hex = "";
+  for (const b of buf) hex += b.toString(16).padStart(2, "0");
+  return hex;
+}
+
+function applySecurityHeaders(response: NextResponse, isApi: boolean, requestId?: string): void {
   response.headers.set("X-Content-Type-Options", "nosniff");
   response.headers.set("X-Frame-Options", "SAMEORIGIN");
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
@@ -76,6 +84,9 @@ function applySecurityHeaders(response: NextResponse, isApi: boolean): void {
   response.headers.set("Cross-Origin-Opener-Policy", "same-origin");
   if (isApi) {
     response.headers.set("Cross-Origin-Resource-Policy", "same-origin");
+    if (requestId) {
+      response.headers.set("X-Request-ID", requestId);
+    }
   }
 }
 
@@ -160,10 +171,11 @@ export function middleware(req: NextRequest): NextResponse {
 
   // ── 2. API token injection (same-origin only) ─────────────────────────────
   if (pathname.startsWith("/api/") && !isPublic(pathname)) {
+    const reqId = req.headers.get("x-request-id") ?? generateRequestId();
     // External callers supply their own auth — don't override.
     if (req.headers.get("authorization") || req.headers.get("x-api-key")) {
       const r = NextResponse.next();
-      applySecurityHeaders(r, true);
+      applySecurityHeaders(r, true, reqId);
       return r;
     }
 
@@ -190,13 +202,13 @@ export function middleware(req: NextRequest): NextResponse {
         const requestHeaders = new Headers(req.headers);
         requestHeaders.set("authorization", `Bearer ${adminToken}`);
         const r = NextResponse.next({ request: { headers: requestHeaders } });
-        applySecurityHeaders(r, true);
+        applySecurityHeaders(r, true, reqId);
         return r;
       }
     }
     // Non-same-origin API call — pass through with security headers.
     const r = NextResponse.next();
-    applySecurityHeaders(r, true);
+    applySecurityHeaders(r, true, reqId);
     return r;
   }
 

@@ -44,6 +44,12 @@ export interface RegulatoryItem {
   snippet?: string;
 }
 
+interface FilterMetadata {
+  totalBeforeFilter: number;
+  totalAfterFilter: number;
+  filtersApplied: string[];
+}
+
 interface FeedResult {
   ok: true;
   items: RegulatoryItem[];
@@ -52,6 +58,8 @@ interface FeedResult {
   fetchedAt: string;
   latencyMs: number;
   errors: string[];
+  filterMetadata?: FilterMetadata;
+  lowConfidence?: Array<{ id: string; reason: string }>;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1025,7 +1033,17 @@ async function _handleGet(req: Request): Promise<NextResponse> {
     );
   }
 
+  const totalBeforeWhitelist = live.length;
   const whitelistedLive = live.filter(isWhitelistedItem);
+  const whitelistRemovedCount = totalBeforeWhitelist - whitelistedLive.length;
+
+  // Identify low-confidence items: GDELT/GNews items with no snippet/summary.
+  const lowConfidence: Array<{ id: string; reason: string }> = [];
+  for (const item of whitelistedLive) {
+    if ((item.id.startsWith("gdelt-") || item.id.startsWith("gnews-")) && !item.snippet && !item.summary) {
+      lowConfidence.push({ id: item.id, reason: "no snippet — headline only" });
+    }
+  }
 
   // Deduplicate all live items by URL
   const seen = new Set<string>();
@@ -1097,6 +1115,9 @@ async function _handleGet(req: Request): Promise<NextResponse> {
   const totalCount = filteredItems.length;
   const pagedItems = filteredItems.slice(offset, offset + limit);
 
+  const filtersApplied: string[] = ["deduplication"];
+  if (whitelistRemovedCount > 0) filtersApplied.push(`domain-whitelist (removed ${whitelistRemovedCount})`);
+
   const fullPayload: FeedResult = {
     ok: true,
     items: allItems.slice(0, 200),
@@ -1105,6 +1126,12 @@ async function _handleGet(req: Request): Promise<NextResponse> {
     fetchedAt: new Date().toISOString(),
     latencyMs: Date.now() - t0,
     errors,
+    filterMetadata: {
+      totalBeforeFilter: totalBeforeWhitelist,
+      totalAfterFilter: whitelistedLive.length,
+      filtersApplied,
+    },
+    lowConfidence: lowConfidence.length > 0 ? lowConfidence : undefined,
   };
 
   // Write to cache (unfiltered full set)

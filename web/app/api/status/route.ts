@@ -1057,7 +1057,7 @@ async function _handleGet(isAdmin: boolean, gateHeaders: Record<string, string> 
   );
   const feedVersions = {
     brain: process.env["BRAIN_VERSION"] ?? "wave-5",
-    commitSha: (process.env["NEXT_PUBLIC_COMMIT_SHA"] ?? process.env["NEXT_PUBLIC_COMMIT_REF"] ?? process.env["COMMIT_REF"] ?? process.env["NETLIFY_COMMIT_REF"] ?? "dev").slice(0, 7),
+    commitSha: process.env["NEXT_PUBLIC_COMMIT_SHA"] ?? process.env["NEXT_PUBLIC_COMMIT_REF"] ?? process.env["COMMIT_REF"] ?? process.env["NETLIFY_COMMIT_REF"] ?? "dev",
     adverseMediaCategories: ADVERSE_KEYWORDS.length,
     adverseMediaKeywords: ADVERSE_KEYWORDS.reduce((n, r) => n + r.terms.length, 0),
     knownPepEntries,
@@ -1290,11 +1290,16 @@ async function _handleGet(isAdmin: boolean, gateHeaders: Record<string, string> 
     }).catch((err: unknown) => console.warn("[status] alert webhook failed:", err instanceof Error ? err.message : err));
   }
 
-  const warnings = [sanctionsAgeWarning, pepCountWarning, brainCatalogueWarning].filter(Boolean) as string[];
+  const redisAvailable = isRedisConfigured();
+  const redisWarning = !redisAvailable
+    ? "Redis not configured (UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN unset) — GDELT adverse-media cache is in-memory only; cache will not persist across Lambda cold starts."
+    : undefined;
+
+  const warnings = [sanctionsAgeWarning, pepCountWarning, brainCatalogueWarning, redisWarning].filter(Boolean) as string[];
 
   const gdeltCache = {
     ...gdeltCacheStats(),
-    redisConfigured: isRedisConfigured(),
+    redisConfigured: redisAvailable,
   };
 
   // Structured service arrays required by system_status MCP tool

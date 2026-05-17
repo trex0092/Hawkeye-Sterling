@@ -58,6 +58,10 @@ export interface QuickScreenHit {
   nationalityMatch?: boolean;
   // Per-algorithm score breakdown (present when opts.includeScoreBreakdown = true)
   scores?: Partial<Record<MatchingMethod, number>>;
+  // Disambiguation confidence 0..100 and resulting recommendation.
+  // Derived from discriminator signals (DOB, nationality, phonetics).
+  disambiguationConfidence?: number;
+  recommendation?: 'match' | 'review' | 'dismiss';
 }
 
 export interface QuickScreenOptions {
@@ -77,10 +81,55 @@ export interface QuickScreenResult {
   candidatesChecked: number;
   durationMs: number;
   generatedAt: string;
+  // Weighted risk scoring across hits — accounts for regulatory importance of
+  // each sanctions list (OFAC SDN, EOCN > bilateral > informational).
+  totalWeightedScore?: number;       // 0..100 weighted composite across all hit lists
+  confidenceScore?: number;          // 0..100 aggregate discriminator confidence
+  listBreakdown?: Record<string, {   // per-list summary (only lists with hits)
+    hits: number;
+    topScore: number;                // 0..100
+    weight: number;                  // list regulatory weight
+  }>;
 }
 
 const DEFAULT_THRESHOLD = 0.82;
 const DEFAULT_MAX_HITS = 25;
+
+// Regulatory weight per sanctions list.  Higher = more consequential for
+// the UAE AML/CFT framework.  Unknown lists default to 10.
+const LIST_WEIGHTS: Record<string, number> = {
+  un_consolidated: 40, un_1267: 40,
+  ofac_sdn: 38, ofac_cons: 30,
+  uae_eocn: 40, uae_ltl: 35,
+  eu_fsf: 25, uk_ofsi: 22,
+  ca_osfi: 20, ch_seco: 20, au_dfat: 20,
+  jp_mof: 15,
+};
+const DEFAULT_LIST_WEIGHT = 10;
+
+function listWeight(listId: string): number {
+  return LIST_WEIGHTS[listId] ?? DEFAULT_LIST_WEIGHT;
+}
+
+function disambiguationConfidenceFor(
+  dobMatch: DobMatch,
+  nationalityMatch: boolean | undefined,
+  phonetic: boolean,
+): number {
+  let conf = 50; // neutral baseline
+  if (dobMatch === 'exact')    conf += 40;
+  else if (dobMatch === 'year') conf += 20;
+  else if (dobMatch === 'conflict') conf -= 40;
+  if (nationalityMatch === true)  conf += 20;
+  if (phonetic) conf += 10;
+  return Math.min(100, Math.max(0, conf));
+}
+
+function recommendationFor(disambConf: number): 'match' | 'review' | 'dismiss' {
+  if (disambConf >= 75) return 'match';
+  if (disambConf >= 40) return 'review';
+  return 'dismiss';
+}
 
 // ── DOB matching ──────────────────────────────────────────────────────────────
 
@@ -204,6 +253,7 @@ export function quickScreen(
     }
 
     if (adjScore >= threshold) {
+      const disambConf = disambiguationConfidenceFor(dobMatchResult, nationalityMatch, phonetic);
       const hit: QuickScreenHit = {
         listId: cand.listId,
         listRef: cand.listRef,
@@ -213,6 +263,8 @@ export function quickScreen(
         method: bestMethod,
         phoneticAgreement: phonetic,
         reason: reasonFor(bestMethod, phonetic, subject, cand, dobMatchResult),
+        disambiguationConfidence: disambConf,
+        recommendation: recommendationFor(disambConf),
       };
       if (bestAlias !== undefined) hit.matchedAlias = bestAlias;
       if (cand.programs !== undefined) hit.programs = cand.programs;
@@ -241,6 +293,37 @@ export function quickScreen(
   const topScore = Math.round(topRaw * 100);
   const severity = severityFromScore(topScore, clipped.length);
 
+  // ── Weighted scoring across all hits ──────────────────────────────────────
+  // Build per-list summary; use the highest-scoring hit per list.
+  const listBreakdown: Record<string, { hits: number; topScore: number; weight: number }> = {};
+  for (const h of clipped) {
+    const rec = listBreakdown[h.listId];
+    const hs100 = Math.round(h.score * 100);
+    if (!rec) {
+      listBreakdown[h.listId] = { hits: 1, topScore: hs100, weight: listWeight(h.listId) };
+    } else {
+      rec.hits++;
+      if (hs100 > rec.topScore) rec.topScore = hs100;
+    }
+  }
+
+  let totalWeightedScore: number | undefined;
+  if (clipped.length > 0) {
+    let wSum = 0; let wTotal = 0;
+    for (const rec of Object.values(listBreakdown)) {
+      wSum += rec.topScore * rec.weight;
+      wTotal += rec.weight;
+    }
+    totalWeightedScore = wTotal > 0 ? Math.round(wSum / wTotal) : topScore;
+  }
+
+  // Aggregate confidence: mean of per-hit disambiguation confidences.
+  let confidenceScore: number | undefined;
+  if (clipped.length > 0) {
+    const sum = clipped.reduce((acc, h) => acc + (h.disambiguationConfidence ?? 50), 0);
+    confidenceScore = Math.round(sum / clipped.length);
+  }
+
   return {
     subject,
     hits: clipped,
@@ -250,6 +333,9 @@ export function quickScreen(
     candidatesChecked: candidates.length,
     durationMs: Math.max(0, clock() - start),
     generatedAt: now(),
+    ...(totalWeightedScore !== undefined ? { totalWeightedScore } : {}),
+    ...(confidenceScore !== undefined ? { confidenceScore } : {}),
+    ...(clipped.length > 0 ? { listBreakdown } : {}),
   };
 }
 
