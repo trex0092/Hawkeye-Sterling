@@ -213,9 +213,12 @@ export function soundex(input: string): string {
   return (out + '000').slice(0, 4);
 }
 
+// Soundex is a coarse 4-code encoder — a match is evidence of phonetic
+// similarity but not identity. Cap at 0.60 so a soundex-only signal stays
+// below the "medium" severity band (≥0.70) and cannot inflate topScore to 100.
 export function matchSoundex(a: string, b: string): MatchScore {
   const pass = soundex(a) === soundex(b) && soundex(a) !== '';
-  return { method: 'soundex', score: pass ? 1 : 0, threshold: 1, pass };
+  return { method: 'soundex', score: pass ? 0.60 : 0, threshold: 0.60, pass };
 }
 
 // ---------- Double Metaphone (ASCII-subset pragmatic port)
@@ -342,13 +345,16 @@ export function doubleMetaphone(input: string): { primary: string; alternate: st
   return { primary: primary.slice(0, 4), alternate: alternate.slice(0, 4) };
 }
 
+// Double Metaphone is finer-grained than Soundex (captures primary + alternate
+// forms) but still phonetic-only. Cap at 0.65 so it stays below "high" (≥0.85)
+// and cannot inflate topScore to 100 on its own.
 export function matchDoubleMetaphone(a: string, b: string): MatchScore {
   const pa = doubleMetaphone(a);
   const pb = doubleMetaphone(b);
   const pass =
     (pa.primary !== '' && (pa.primary === pb.primary || pa.primary === pb.alternate)) ||
     (pa.alternate !== '' && (pa.alternate === pb.primary || pa.alternate === pb.alternate));
-  return { method: 'double_metaphone', score: pass ? 1 : 0, threshold: 1, pass };
+  return { method: 'double_metaphone', score: pass ? 0.65 : 0, threshold: 0.65, pass };
 }
 
 // ---------- trigram (character n-gram Jaccard)
@@ -378,9 +384,22 @@ export function matchTrigram(a: string, b: string, threshold = 0.5): MatchScore 
 // ---------- partial token-set (subset ratio)
 // Measures intersection / min(|A|, |B|) so a name that is a strict subset
 // of another (e.g. "Mohammed Khan" ⊂ "Mohammed Abdul Khan") still scores 1.
+
+// Generic words that appear in almost every corporate/org name — shared only
+// because both entities are companies, not because they are related.
+// Excluded from token-set intersection to prevent "International Trading LLC"
+// matching every other company whose name contains any of these tokens.
+const ENTITY_STOP_WORDS = new Set([
+  'international', 'group', 'limited', 'llc', 'ltd', 'inc', 'corp', 'co',
+  'company', 'corporation', 'trading', 'holding', 'holdings', 'investment',
+  'investments', 'services', 'enterprise', 'enterprises', 'global', 'general',
+  'national', 'united', 'management', 'financial', 'capital', 'bank',
+  'and', 'the', 'for', 'of',
+]);
+
 export function matchPartialTokenSet(a: string, b: string, threshold = 0.85): MatchScore {
-  const ta = normalise(a).split(' ').filter(Boolean);
-  const tb = normalise(b).split(' ').filter(Boolean);
+  const ta = normalise(a).split(' ').filter((t) => Boolean(t) && !ENTITY_STOP_WORDS.has(t));
+  const tb = normalise(b).split(' ').filter((t) => Boolean(t) && !ENTITY_STOP_WORDS.has(t));
   if (ta.length === 0 || tb.length === 0) {
     return { method: 'partial_token_set', score: 0, threshold, pass: false };
   }
@@ -394,8 +413,8 @@ export function matchPartialTokenSet(a: string, b: string, threshold = 0.85): Ma
 
 // ---------- token-set (order-insensitive)
 export function matchTokenSet(a: string, b: string, threshold = 0.8): MatchScore {
-  const tokensA = new Set(normalise(a).split(' ').filter(Boolean));
-  const tokensB = new Set(normalise(b).split(' ').filter(Boolean));
+  const tokensA = new Set(normalise(a).split(' ').filter((t) => Boolean(t) && !ENTITY_STOP_WORDS.has(t)));
+  const tokensB = new Set(normalise(b).split(' ').filter((t) => Boolean(t) && !ENTITY_STOP_WORDS.has(t)));
   if (tokensA.size === 0 || tokensB.size === 0) {
     return { method: 'token_set', score: 0, threshold, pass: false };
   }
@@ -425,6 +444,10 @@ export function matchTokenSortRatio(a: string, b: string, threshold = 0.85): Mat
 // Levenshtein ratio over all windows. Catches embedded abbreviations and
 // entity names that appear as a substring of a longer description.
 // e.g. "Al Shabaab" inside "Hassan Al Shabaab Mukhtar".
+// Minimum length guard: very short strings (abbreviations, single-char codes)
+// slide trivially across longer strings and produce spurious 1.0 matches.
+const MIN_PARTIAL_RATIO_LEN = 4;
+
 export function matchPartialRatio(a: string, b: string, threshold = 0.9): MatchScore {
   const s = normalise(a);
   const t = normalise(b);
@@ -432,6 +455,10 @@ export function matchPartialRatio(a: string, b: string, threshold = 0.9): MatchS
     return { method: 'fuzzball_partial', score: 0, threshold, pass: false };
   }
   const [shorter, longer] = s.length <= t.length ? [s, t] : [t, s];
+  // Guard: if the shorter string is too brief to be meaningful, skip sliding.
+  if (shorter.length < MIN_PARTIAL_RATIO_LEN) {
+    return { method: 'fuzzball_partial', score: 0, threshold, pass: false };
+  }
   if (shorter.length === longer.length) {
     const d = levenshteinDistance(shorter, longer);
     const score = shorter.length === 0 ? 1 : 1 - d / shorter.length;
@@ -569,12 +596,12 @@ export function matchEnsemble(subject: string, candidate: string): EnsembleMatch
   const anyNonSoundexPasses = scores.some(
     (s) => s.method !== 'soundex' && s.pass,
   );
-  if (best.method === 'soundex' && best.score === 1 && !anyNonSoundexPasses) {
+  if (best.method === 'soundex' && best.pass && !anyNonSoundexPasses) {
     return {
       subject,
       candidate,
       scores,
-      best: { method: 'soundex', score: 0, threshold: 1, pass: false },
+      best: { method: 'soundex', score: 0, threshold: 0.60, pass: false },
       phoneticAgreement: false,
     };
   }

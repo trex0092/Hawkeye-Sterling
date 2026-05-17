@@ -44,6 +44,7 @@ import {
 // netlify.toml; local dev runs `npm run build` at the root once to produce dist/.
 // @brain/* is resolved via web/tsconfig.json paths → ../dist/src/brain/*.
 import { quickScreen as brainQuickScreen } from "@brain/quick-screen.js";
+import { getCountryRisk } from "@/lib/server/high-risk-countries";
 
 // ── Sanctions list health snapshot ─────────────────────────────────────────
 // Attached to every screening response so audit records capture which lists
@@ -191,23 +192,40 @@ export async function POST(req: Request): Promise<NextResponse> {
     return respond(400, { ok: false, error: "invalid JSON body" }, gateHeaders);
   }
 
-  const subject = body.subject;
+  const rawSubject = body.subject;
   // If the caller supplies candidates use them; otherwise screen against the
   // live ingested watchlists (OFAC, UN, EU, UK, UAE-EOCN/LTL + seed corpus).
   const callerCandidates = body.candidates;
 
-  if (!subject || typeof subject.name !== "string" || !subject.name.trim()) {
+  if (!rawSubject || typeof rawSubject.name !== "string" || !rawSubject.name.trim()) {
     return respond(400, { ok: false, error: "subject.name required" }, gateHeaders);
   }
-  if (subject.name.length > 512) {
+  if (rawSubject.name.length > 512) {
     return respond(400, { ok: false, error: "subject.name exceeds 512-character limit" }, gateHeaders);
   }
-  if (Array.isArray(subject.aliases) && subject.aliases.length > 50) {
+  if (Array.isArray(rawSubject.aliases) && rawSubject.aliases.length > 50) {
     return respond(400, { ok: false, error: "aliases exceeds 50-entry limit" }, gateHeaders);
   }
   if (Array.isArray(body.evidenceUrls) && body.evidenceUrls.length > 20) {
     return respond(400, { ok: false, error: "evidenceUrls exceeds 20-entry limit" }, gateHeaders);
   }
+
+  // Sanitize optional discriminator fields — coerce to string/undefined so
+  // the brain engine never receives unexpected types from the MCP tool.
+  const subject: QuickScreenSubject = {
+    ...rawSubject,
+    name: rawSubject.name.trim(),
+    dateOfBirth: typeof rawSubject.dateOfBirth === "string" ? rawSubject.dateOfBirth.trim() || undefined
+      : typeof (rawSubject as unknown as Record<string, unknown>)["dob"] === "string"
+        ? String((rawSubject as unknown as Record<string, unknown>)["dob"]).trim() || undefined
+        : undefined,
+    nationality: typeof rawSubject.nationality === "string"
+      ? rawSubject.nationality.trim().slice(0, 3) || undefined
+      : undefined,
+    aliases: Array.isArray(rawSubject.aliases)
+      ? rawSubject.aliases.filter((a): a is string => typeof a === "string" && a.trim().length > 0)
+      : undefined,
+  };
 
   // Whitelist short-circuit — if the operator's tenant has previously
   // cleared this subject (false-positive disposition recorded via
@@ -353,6 +371,17 @@ export async function POST(req: Request): Promise<NextResponse> {
     const HARD_DEADLINE_MS = 2_800;
     const elapsedMs = Date.now() - t0;
     if (elapsedMs >= HARD_DEADLINE_MS - 100) {
+      // Audit chain must fire even when the enrichment deadline is exceeded.
+      void writeAuditChainEntry({
+        event: "screening.completed",
+        actor: gate.record?.email ?? gate.keyId ?? "unknown",
+        subject: subject.name,
+        severity: result.severity,
+        hitsCount: result.hits.length,
+        listsChecked: result.listsChecked,
+        listsDegraded: 0,
+        enrichmentPending: true,
+      });
       return respond(200, {
         ok: true, ...result,
         enrichmentPending: true,
@@ -438,6 +467,16 @@ export async function POST(req: Request): Promise<NextResponse> {
 
     // If the deadline fired before adapters resolved, return fast-path result.
     if (augRace === "timeout") {
+      void writeAuditChainEntry({
+        event: "screening.completed",
+        actor: gate.record?.email ?? gate.keyId ?? "unknown",
+        subject: subject.name,
+        severity: result.severity,
+        hitsCount: result.hits.length,
+        listsChecked: result.listsChecked,
+        listsDegraded: 0,
+        enrichmentPending: true,
+      });
       return respond(200, {
         ok: true, ...result,
         enrichmentPending: true,
@@ -556,15 +595,65 @@ export async function POST(req: Request): Promise<NextResponse> {
     ]);
     const screeningWarnings = listHealth ? buildScreeningWarnings(listHealth) : [];
 
+    // _provenance — compact machine-readable summary of list health at
+    // screening time. Used by MCP call_api and diagnostic tools.
+    const missingLists = listHealth
+      ? Object.entries(listHealth).filter(([, e]) => e.status === "missing").map(([id]) => id)
+      : [];
+    const staleListIds = listHealth
+      ? Object.entries(listHealth).filter(([, e]) => e.status === "stale").map(([id]) => id)
+      : [];
+    const degradedListIds = listHealth
+      ? Object.entries(listHealth).filter(([, e]) => e.entityCount === 0 && e.status !== "missing").map(([id]) => id)
+      : [];
+    // Lists that actually had data at screening time (entityCount > 0, not missing/stale)
+    const listsCheckedWithData = listHealth
+      ? Object.values(listHealth).filter((e) => e.entityCount !== null && (e.entityCount ?? 0) > 0).length
+      : result.listsChecked;
+
+    // riskLevel — AML risk tier based on FATF/UAE country classification
+    // for the subject's nationality and/or jurisdiction. Distinct from
+    // `severity` which reflects the match quality against sanctions lists.
+    const subjectCountry = subject.nationality ?? subject.jurisdiction;
+    const countryRisk = getCountryRisk(subjectCountry);
+    const riskLevel: string = countryRisk
+      ? countryRisk.tier === "blacklist" ? "very_high"
+        : countryRisk.tier === "greylist" ? "high"
+        : "medium"
+      : "standard";
+
+    // Deduplicate hits — the same sanctioned entity may appear in multiple
+    // regimes (UN + OFAC + UK OFSI). Group by normalised candidateName, keep
+    // the highest-scoring occurrence as primary, and add matchedLists[] so
+    // downstream consumers see all regimes that designated the entity.
+    type HitWithLists = typeof result.hits[0] & { matchedLists?: string[] };
+    const deduped: HitWithLists[] = [];
+    const hitsByName = new Map<string, HitWithLists>();
+    for (const hit of result.hits) {
+      const key = hit.candidateName.toLowerCase().trim();
+      const existing = hitsByName.get(key);
+      if (!existing) {
+        const enriched: HitWithLists = { ...hit, matchedLists: [hit.listId] };
+        hitsByName.set(key, enriched);
+        deduped.push(enriched);
+      } else {
+        existing.matchedLists!.push(hit.listId);
+        if (hit.score > existing.score) {
+          Object.assign(existing, { ...hit, matchedLists: existing.matchedLists });
+        }
+      }
+    }
+    const finalResult = { ...result, hits: deduped };
+
     // Write tamper-evident audit chain entry. Fire-and-forget: must never
     // block the screening response. Failure logged inside writeAuditChainEntry.
     void writeAuditChainEntry({
       event: "screening.completed",
       actor: gate.record?.email ?? gate.keyId ?? "unknown",
       subject: subject.name,
-      severity: result.severity,
-      hitsCount: result.hits.length,
-      listsChecked: result.listsChecked,
+      severity: finalResult.severity,
+      hitsCount: finalResult.hits.length,
+      listsChecked: finalResult.listsChecked,
       listsDegraded: screeningWarnings.length,
     });
 
@@ -572,7 +661,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       200,
       {
         ok: true,
-        ...result,
+        ...finalResult,
         reasoning,
         ...(openSanctionsResults.length > 0
           ? { openSanctionsAugmentation: openSanctionsResults.slice(0, HIT_LIMIT_AUG_LOW) }
@@ -620,6 +709,18 @@ export async function POST(req: Request): Promise<NextResponse> {
         // is a false clear, not a real one.
         ...(listHealth ? { listHealthAtScreeningTime: listHealth } : {}),
         ...(screeningWarnings.length > 0 ? { screeningWarnings } : {}),
+        // Machine-readable provenance — list health at screening time.
+        _provenance: {
+          listsChecked: result.listsChecked,
+          listsCheckedWithData,
+          listsNotLoaded: missingLists.length,
+          missingLists,
+          staleListIds,
+          degradedListIds,
+        },
+        // Country-risk tier from FATF/UAE classification (separate from match severity).
+        riskLevel,
+        ...(countryRisk ? { riskBasis: countryRisk.basis } : {}),
       } as QuickScreenResponse,
       gateHeaders,
     );
