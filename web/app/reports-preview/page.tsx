@@ -231,8 +231,8 @@ function PlainTable({ head, rows, colWidths }: { head: string[]; rows: string[][
   );
 }
 
-function SigFooter({ ref: reportRef, signers }: {
-  ref: string;
+function SigFooter({ docRef: reportRef, signers }: {
+  docRef: string;
   signers: Array<{name:string;role:string;id?:string;date?:string;extra?:string}>;
 }) {
   return (
@@ -316,7 +316,7 @@ function EwraPreview() {
           </div>
           <PartHeader label="PART FOUR" num="04" title="Regulatory context" />
           <p style={{fontSize:9,color:"#141414",lineHeight:1.6,marginBottom:16}}>UAE FDL No.10/2025 Art.4 requires annual enterprise-wide risk assessments. This report satisfies the CBUAE AML Standards §2 board sign-off obligation. Next assessment due: 04/05/2027.</p>
-          <SigFooter ref="EWRA-2026-BOARD" signers={[
+          <SigFooter docRef="EWRA-2026-BOARD" signers={[
             {name:"L. Fernanda",role:"COMPLIANCE OFFICER / MLRO",id:"HS-MLRO-0428",date:TODAY},
             {name:"Board Chair",role:"AML SIGN-OFF",id:"Board Resolution 2026-04",date:TODAY},
             {name:"Independent Director",role:"AML OVERSIGHT",id:"—",date:"—"},
@@ -375,7 +375,7 @@ function StrPreview() {
             colWidths={["15%","20%","65%"]}
           />
           <p style={{fontFamily:"Georgia,'Times New Roman',serif",fontStyle:"italic",fontSize:7.5,color:"#464646",lineHeight:1.5,marginBottom:16}}>This draft STR has been prepared for MLRO review. It must not be disclosed to the subject. Filing is required within the timeframe prescribed by CBUAE AML Standards §8 and UAE FDL 10/2025 Art.14.</p>
-          <SigFooter ref="STR-DRAFT-04-05-2026" signers={[
+          <SigFooter docRef="STR-DRAFT-04-05-2026" signers={[
             {name:"L. Fernanda",role:"CO/MLRO  ·  AUTHOR",id:"HS-MLRO-0428",date:TODAY},
             {name:"FIU goAML",role:"SUBMISSION PENDING",id:"FIU-AE-DMCC-0428",date:"—"},
             {name:"Senior Management",role:"AWARENESS",id:"Not to be disclosed to subject",date:TODAY},
@@ -464,7 +464,7 @@ function BatchPreview() {
           </table>
           <PartHeader label="PART TWO" num="02" title="List coverage applied" />
           <p style={{fontSize:9,color:"#464646",marginBottom:16}}>UN Consolidated  ·  OFAC SDN  ·  OFAC Non-SDN  ·  EU CFSP  ·  UK OFSI  ·  UAE EOCN  ·  UAE LTL</p>
-          <SigFooter ref="HWK-BATCH-04052026" signers={[
+          <SigFooter docRef="HWK-BATCH-04052026" signers={[
             {name:"L. Fernanda",role:"CO/MLRO  ·  REVIEWER",id:"HS-MLRO-0428",date:TODAY},
             {name:"Engine Operator",role:"BATCH ENGINE",id:"HWK-ENG-0042",date:TODAY},
             {name:"QA Reviewer",role:"SAMPLE AUDIT 5%",id:"HS-QA-0019",date:TODAY},
@@ -527,7 +527,7 @@ function EvidencePackPreview() {
             ["FATF RECOMMENDATIONS","R.12 (PEPs) · R.20 (STR) · R.6 (Targeted Financial Sanctions)"],
             ["RED FLAGS","Structuring · Sanctioned jurisdiction nexus · PEP SOW mismatch"],
           ]} labelW={145} />
-          <SigFooter ref="EVIDENCE-04052026-001" signers={[
+          <SigFooter docRef="EVIDENCE-04052026-001" signers={[
             {name:"L. Fernanda",role:"CO/MLRO  ·  REVIEWER",id:"HS-MLRO-0428",date:TODAY},
             {name:"Advisor Model",role:"CLAUDE-OPUS-4-7",id:"sha256:a3f9c2e1...d84b",extra:"AUTO-SIGNED"},
             {name:"Senior Management",role:"APPROVAL REQUIRED",id:"—",date:"—"},

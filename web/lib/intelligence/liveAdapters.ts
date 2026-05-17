@@ -11,21 +11,19 @@
 // Every adapter has a 10 s timeout and clean error propagation — it
 // never throws, it returns null / [].
 
-import type {
-  GleifAdapter,
-  LeiRecord,
-  CorporateRegistryAdapter,
-  CorporateRecord,
-  OnChainAdapter,
-  OnChainAnalytic,
-  HsCodeAdapter,
-  HsCodeReference,
-} from "./externalAdapters";
 import {
   NULL_GLEIF_ADAPTER,
   NULL_CORPORATE_ADAPTER,
   NULL_ONCHAIN_ADAPTER,
   NULL_HS_CODE_ADAPTER,
+  type GleifAdapter,
+  type LeiRecord,
+  type CorporateRegistryAdapter,
+  type CorporateRecord,
+  type OnChainAdapter,
+  type OnChainAnalytic,
+  type HsCodeAdapter,
+  type HsCodeReference,
 } from "./externalAdapters";
 
 const FETCH_TIMEOUT_MS = 10_000;
