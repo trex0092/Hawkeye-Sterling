@@ -113,44 +113,52 @@ async function loadFromBlobs(): Promise<QuickScreenCandidate[] | null> {
   }
 
   const { getStore } = blobsMod;
-  // Next.js API routes do NOT receive NETLIFY_BLOBS_CONTEXT auto-injection from
-  // plugin-nextjs — explicit credentials are always required. NETLIFY_BLOBS_TOKEN
-  // is the confirmed working token for blob access from Next.js routes (v8 audit).
-  // Read from hawkeye-list-reports: ingestion writes {…report, entities} there,
-  // making entity data accessible without the auto-injection constraint.
+  // Next.js API routes do NOT receive NETLIFY_BLOBS_CONTEXT auto-injection —
+  // explicit credentials are always required. NETLIFY_BLOBS_TOKEN is the
+  // confirmed working token (v8 audit).
+  //
+  // Dual-store strategy: try hawkeye-list-reports first (ingestion now writes
+  // entities there too). If a list has no entity data there yet (pre-first-
+  // ingestion-after-deploy), fall back to hawkeye-lists where entities are
+  // written by the native Netlify Function. This ensures screening works both
+  // before and after the new ingestion path is populated.
   const siteID = process.env["NETLIFY_SITE_ID"] ?? process.env["SITE_ID"];
   const token =
     process.env["NETLIFY_BLOBS_TOKEN"] ??
     process.env["NETLIFY_API_TOKEN"] ??
     process.env["NETLIFY_AUTH_TOKEN"];
 
-  const storeOpts =
-    siteID && token
-      ? ({ name: "hawkeye-list-reports", siteID, token, consistency: "strong" } as Parameters<typeof getStore>[0])
-      : ({ name: "hawkeye-list-reports" } as Parameters<typeof getStore>[0]);
+  function makeStore(name: string) {
+    return siteID && token
+      ? getStore({ name, siteID, token, consistency: "strong" } as Parameters<typeof getStore>[0])
+      : getStore({ name } as Parameters<typeof getStore>[0]);
+  }
 
-  let store: ReturnType<typeof getStore>;
+  let storeReports: ReturnType<typeof getStore>;
+  let storeLists: ReturnType<typeof getStore>;
   try {
-    store = getStore(storeOpts);
+    storeReports = makeStore("hawkeye-list-reports");
+    storeLists   = makeStore("hawkeye-lists");
   } catch {
     return null;
   }
 
-  // Read all adapter blobs in parallel (was sequential — each network round-trip
-  // added ~80-200ms; with 18 adapters that was 1.5-3.6s on cold start).
-  // Individual failures are swallowed so one missing list never blocks others.
+  // Read all adapter blobs in parallel — try hawkeye-list-reports first,
+  // fall back to hawkeye-lists per adapter if no entity data found.
   const PER_KEY_TIMEOUT_MS = 1_200;
   const results = await Promise.all(
     ADAPTER_IDS.map(async (adapterId) => {
-      try {
-        const raw = await Promise.race([
-          store.get(`${adapterId}/latest.json`, { type: "json" }) as Promise<{ entities: NormalisedEntity[] } | null>,
-          new Promise<null>((_, reject) => setTimeout(() => reject(new Error("blob read timeout")), PER_KEY_TIMEOUT_MS)),
-        ]);
-        return raw?.entities ?? null;
-      } catch {
-        return null;
+      const key = `${adapterId}/latest.json`;
+      for (const store of [storeReports, storeLists]) {
+        try {
+          const raw = await Promise.race([
+            store.get(key, { type: "json" }) as Promise<{ entities: NormalisedEntity[] } | null>,
+            new Promise<null>((_, reject) => setTimeout(() => reject(new Error("blob read timeout")), PER_KEY_TIMEOUT_MS)),
+          ]);
+          if (raw?.entities?.length) return raw.entities;
+        } catch { /* try next store */ }
       }
+      return null;
     }),
   );
 

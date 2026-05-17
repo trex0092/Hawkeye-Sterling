@@ -72,20 +72,20 @@ async function fetchListHealth(): Promise<ListHealthSnapshot> {
   const snapshot: ListHealthSnapshot = {};
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let store: { get: (key: string, opts?: any) => Promise<unknown> } | null = null;
+  let stores: { get: (key: string, opts?: any) => Promise<unknown> }[] = [];
   try {
     const { getStore } = await import("@netlify/blobs");
     const siteID = process.env["NETLIFY_SITE_ID"] ?? process.env["SITE_ID"];
-    // NETLIFY_BLOBS_TOKEN is the confirmed working token for blob access from
-    // Next.js routes (v8 audit). Read from hawkeye-list-reports which has
-    // entity data co-written by ingestion alongside the report metadata.
+    // Dual-store: try hawkeye-list-reports (entities written there post-deploy)
+    // then hawkeye-lists (entities present now from existing ingestion runs).
     const token =
       process.env["NETLIFY_BLOBS_TOKEN"] ??
       process.env["NETLIFY_API_TOKEN"] ??
       process.env["NETLIFY_AUTH_TOKEN"];
-    store = siteID && token
-      ? getStore({ name: "hawkeye-list-reports", siteID, token, consistency: "strong" })
-      : getStore({ name: "hawkeye-list-reports" });
+    const mkStore = (name: string) => siteID && token
+      ? getStore({ name, siteID, token, consistency: "strong" })
+      : getStore({ name });
+    stores = [mkStore("hawkeye-list-reports"), mkStore("hawkeye-lists")];
   } catch {
     for (const id of LIST_IDS) {
       snapshot[id] = { entityCount: null, ageHours: null, status: "missing" };
@@ -94,25 +94,25 @@ async function fetchListHealth(): Promise<ListHealthSnapshot> {
   }
 
   await Promise.all(LIST_IDS.map(async (listId) => {
-    try {
-      const raw = await store!.get(`${listId}/latest.json`, { type: "json" }) as {
-        entities?: unknown[]; report?: { fetchedAt?: number }; fetchedAt?: number;
-      } | null;
-      if (!raw || !Array.isArray(raw.entities)) {
-        snapshot[listId] = { entityCount: null, ageHours: null, status: "missing" };
-        return;
-      }
-      const entityCount = raw.entities.length;
-      const fetchedAtMs = raw.report?.fetchedAt ?? raw.fetchedAt ?? null;
-      const ageHours = typeof fetchedAtMs === "number"
-        ? Math.round((Date.now() - fetchedAtMs) / HOUR_MS * 10) / 10
-        : null;
-      const status: ListHealthStatus =
-        ageHours !== null && ageHours > STALE_HOURS ? "stale" : "healthy";
-      snapshot[listId] = { entityCount, ageHours, status };
-    } catch {
-      snapshot[listId] = { entityCount: null, ageHours: null, status: "missing" };
+    const key = `${listId}/latest.json`;
+    for (const store of stores) {
+      try {
+        const raw = await store.get(key, { type: "json" }) as {
+          entities?: unknown[]; report?: { fetchedAt?: number }; fetchedAt?: number;
+        } | null;
+        if (!raw || !Array.isArray(raw.entities)) continue;
+        const entityCount = raw.entities.length;
+        const fetchedAtMs = raw.report?.fetchedAt ?? raw.fetchedAt ?? null;
+        const ageHours = typeof fetchedAtMs === "number"
+          ? Math.round((Date.now() - fetchedAtMs) / HOUR_MS * 10) / 10
+          : null;
+        const status: ListHealthStatus =
+          ageHours !== null && ageHours > STALE_HOURS ? "stale" : "healthy";
+        snapshot[listId] = { entityCount, ageHours, status };
+        return; // found data — skip fallback store
+      } catch { /* try next store */ }
     }
+    snapshot[listId] = { entityCount: null, ageHours: null, status: "missing" };
   }));
 
   return snapshot;
