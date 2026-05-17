@@ -44,8 +44,14 @@ export async function getEnrichmentJob(jobId: string): Promise<EnrichmentJob | n
     const raw = await store.get(jobKey(jobId));
     if (!raw) return null;
     const job = JSON.parse(raw) as EnrichmentJob;
-    // Treat jobs older than 30 minutes as expired.
-    if (Date.now() - new Date(job.requestedAt).getTime() > JOB_TTL_MS) return null;
+    // Treat jobs older than 30 minutes as expired.  Delete the blob to prevent
+    // indefinite accumulation — without cleanup, expired jobs accumulate forever.
+    if (Date.now() - new Date(job.requestedAt).getTime() > JOB_TTL_MS) {
+      void store.delete(jobKey(jobId)).catch((err: unknown) => {
+        console.warn("[enrichment-jobs] expired job cleanup failed (non-critical):", err instanceof Error ? err.message : String(err));
+      });
+      return null;
+    }
     return job;
   } catch {
     return null;
@@ -61,6 +67,8 @@ export async function completeEnrichmentJob(
     const raw = await store.get(jobKey(jobId));
     if (!raw) return;
     const job = JSON.parse(raw) as EnrichmentJob;
+    // Do not update already-expired jobs — prevents resurrection of old blobs.
+    if (Date.now() - new Date(job.requestedAt).getTime() > JOB_TTL_MS) return;
     job.status = "complete";
     job.fullResult = fullResult;
     job.completedAt = new Date().toISOString();

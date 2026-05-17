@@ -103,7 +103,7 @@ Existing Flags: ${supplier.flags.length > 0 ? supplier.flags.join(", ") : "none"
       messages: [{ role: "user", content: userContent }],
     });
 
-  const rawText = claudeRes.content.find((b: { type: string; text?: string }) => b.type === "text" && "text" in b)?.text ?? "";
+  const rawText = (claudeRes.content.find(b => b.type === "text") as { text: string } | undefined)?.text ?? "";
 
   let result: VendorRiskResult;
   try {

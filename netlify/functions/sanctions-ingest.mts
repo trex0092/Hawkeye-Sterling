@@ -31,6 +31,18 @@
 import type { Config } from "@netlify/functions";
 import { getStore } from "@netlify/blobs";
 
+async function writeHeartbeat(): Promise<void> {
+  try {
+    const hb = getStore("hawkeye-function-heartbeats");
+    await hb.setJSON("sanctions-ingest", {
+      lastSuccess: new Date().toISOString(),
+      label: "sanctions-ingest",
+    });
+  } catch (err) {
+    console.warn("[sanctions-ingest] heartbeat write failed (non-critical):", err instanceof Error ? err.message : String(err));
+  }
+}
+
 const STORE_NAME = "hawkeye-sanctions-feeds";
 const RUN_LABEL = "sanctions-ingest";
 const FETCH_TIMEOUT_MS = 25_000;
@@ -406,10 +418,7 @@ export default async function handler(req: Request): Promise<Response> {
     return jsonResponse({ ok: false, label: RUN_LABEL, error: `getStore failed: ${err instanceof Error ? err.message : String(err)}` }, 503);
   }
 
-  const outcomes: IngestOutcome[] = [];
-  for (const spec of FEEDS) {
-    outcomes.push(await ingestOne(spec, store));
-  }
+  const outcomes: IngestOutcome[] = await Promise.all(FEEDS.map((spec) => ingestOne(spec, store)));
 
   const totalDiff = outcomes.reduce(
     (acc, o) => ({
@@ -420,6 +429,7 @@ export default async function handler(req: Request): Promise<Response> {
     { additions: 0, removals: 0, amendments: 0 },
   );
 
+  await writeHeartbeat();
   return jsonResponse({
     ok: outcomes.every((o) => o.ok),
     label: RUN_LABEL,

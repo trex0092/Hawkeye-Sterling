@@ -6,6 +6,7 @@
 //           and auto-opens cases for strong/moderate hits or any HOLD tier.
 
 import type { Config } from "@netlify/functions";
+import { writeHeartbeat } from "../lib/heartbeat.js";
 
 export default async (_req: Request) => {
   const base =
@@ -28,6 +29,7 @@ export default async (_req: Request) => {
       signal: controller.signal,
     });
     const text = await res.text();
+    if (res.ok) await writeHeartbeat("transaction-monitor");
     return new Response(
       JSON.stringify({
         triggered: true,

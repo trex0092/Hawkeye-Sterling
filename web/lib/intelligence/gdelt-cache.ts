@@ -60,10 +60,10 @@ const MEMORY_TTL_MS = 30 * 60 * 1_000;
 // cost (one upstream call per subject per 6 h instead of per request).
 const REDIS_TTL_SECONDS = 6 * 3_600;
 
-// Stale window — return Redis-cached results up to 7 days old on GDELT failure.
-// Past this point the staleness exceeds compliance value (FDL Art.19 expects
-// reasonably current data) and we surface the upstream error instead.
-const STALE_OK_SECONDS = 7 * 24 * 3_600;
+// Stale window — return Redis-cached results up to 48 h old on GDELT failure.
+// Reduced from 7 d: same-day adverse media (fraud arrests, sanctions designations)
+// must surface within 48 h to satisfy FDL Art.19 current-data obligation.
+const STALE_OK_SECONDS = 2 * 24 * 3_600;
 
 // ─── In-memory layer ────────────────────────────────────────────────────────
 

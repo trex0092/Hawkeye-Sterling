@@ -30,6 +30,7 @@
 
 import type { Config } from "@netlify/functions";
 import { getStore } from "@netlify/blobs";
+import { writeHeartbeat } from "../lib/heartbeat.js";
 
 const STORE_NAME = "hawkeye-feedback-journal";
 const SNAPSHOT_KEY = "all-records.json";
@@ -178,6 +179,7 @@ export default async function handler(_req: Request): Promise<Response> {
     // Operators should monitor for missing audit entries separately.
   }
 
+  await writeHeartbeat(RUN_LABEL);
   return jsonResponse({
     ok: true,
     label: RUN_LABEL,

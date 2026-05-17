@@ -626,7 +626,7 @@ export default function GrievancesWhistleblowingPage() {
 
                 {/* Meta grid */}
                 <div style={{ border: "1px solid #e5e5e5", display: "grid", gridTemplateColumns: "repeat(3,1fr)", fontSize: 7 }}>
-                  {[["Policy Code","GVW/004"],["Version","004"],["Effective","28 NOV 2025"],["Next Review","JUN 2026"],["Owner","Compliance Dpt"],["Classification","CONFIDENTIAL"]].map(([k,v],i) => (
+                  {([["Policy Code","GVW/004"],["Version","004"],["Effective","28 NOV 2025"],["Next Review","JUN 2026"],["Owner","Compliance Dpt"],["Classification","CONFIDENTIAL"]] as [string, string][]).map(([k,v],i) => (
                     <div key={k} style={{ padding: "7px 10px", borderRight: i%3<2 ? "1px solid #e5e5e5" : "none", borderBottom: i<3 ? "1px solid #e5e5e5" : "none" }}>
                       <div style={{ color: "#828282", letterSpacing: ".8px", textTransform: "uppercase", marginBottom: 2 }}>{k}</div>
                       <div style={{ fontWeight: 700, color: k==="Classification" ? "#ec4899" : "#141414" }}>{v}</div>
@@ -636,14 +636,14 @@ export default function GrievancesWhistleblowingPage() {
 
                 {/* Policy sections */}
                 <div style={{ marginTop: 20, borderTop: "1px solid #e5e5e5", paddingTop: 16 }}>
-                  {[
+                  {([
                     ["1. Purpose", "Establishes a confidential mechanism for all parties to raise concerns or report misconduct without fear of retaliation. Fine Gold LLC is committed to the highest standards of ethics and regulatory compliance."],
                     ["2. Scope", "Applies to all employees, contractors, board members, agents, and third parties acting on behalf of Fine Gold LLC, for all activities within and outside the UAE."],
                     ["3. Regulatory Basis", "FDL No.10/2025 Arts.16,17,20 · CR No.134/2025 Art.50 · CR No.24/2022 · MoE AML/CFT Guidelines §6 · ISO 37002:2021 · FATF R.18 · PDPL FDL No.45/2021"],
                     ["4. Reportable Matters", "AML/CFT · Bribery · Fraud · Misconduct · KYC/EDD · Data Breach · Operational · Customer Grievance · Conflict of Interest · Regulatory Non-Compliance · Third-Party Misconduct · ESG · Proliferation Financing · EOCN/CNMR · STR Failure · Tipping-Off · MLRO Independence · EWRA Failure · Training · Internal Audit · TBML · DPMSR · Wire Transfer · UBO Concealment · Record-Keeping · Defensive Reporting"],
                     ["5. Resolution Pipeline", "01 Acknowledge ≤2 BD → 02 Assess ≤5 BD → 03 Investigate ≤30 days → 04 Decide ≤5 BD → 05 Escalate ≤10 BD. All SLA-tracked. Interim protective measures applied at Stage 02 where risk warrants."],
                     ["6. Anti-Retaliation", "Reports made in good faith are protected under FDL No.10/2025 regardless of substantiation. Retaliation = disciplinary offence up to termination and/or legal action."],
-                  ].map(([title, body]) => (
+                  ] as [string, string][]).map(([title, body]) => (
                     <div key={title} style={{ marginBottom: 10 }}>
                       <div style={{ fontWeight: 700, fontSize: 8, marginBottom: 2 }}>{title}</div>
                       <div style={{ color: "#464646", fontSize: 7.5 }}>{body}</div>
@@ -653,7 +653,7 @@ export default function GrievancesWhistleblowingPage() {
 
                 {/* Signature block */}
                 <div style={{ marginTop: 20, borderTop: "1px solid #e5e5e5", paddingTop: 14, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
-                  {[["Approver","Management"],["Compliance Dpt","Date"]].map(([label]) => (
+                  {([["Approver","Management"],["Compliance Dpt","Date"]] as [string, string][]).map(([label]) => (
                     <div key={label}>
                       <div style={{ borderBottom: "1px solid #999", height: 24, marginBottom: 4 }} />
                       <div style={{ fontSize: 7.5, color: "#828282" }}>{label}</div>

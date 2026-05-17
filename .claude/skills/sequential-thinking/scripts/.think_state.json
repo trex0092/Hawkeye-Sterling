@@ -1,16 +1,34 @@
 {
   "thoughtHistory": [
     {
-      "thought": "Mapping all areas to audit for 100% correctness in Hawkeye-Sterling. The tool is an AML compliance platform. From session history, known pending items: (1) STC academic search - never built, (2) saved-searches withGuard auth - marked as 'worth confirming', (3) newsAdapters Tavily/Exa/Perplexity - just fixed TS errors, need to verify wiring in the aggregator, (4) GDELT status fix - committed, need to verify it reads correctly, (5) STR taxonomy 20 groups 2012 items - committed and clean. NEW items discovered in last pass: (6) unsafe content[0] casts - fixed in 7 routes, (7) missing fetch timeouts in deep-research - fixed, (8) missing gate.headers in country-risk - fixed. What remains unknown: are there other API routes with broken LLM wiring? Are frontend components actually calling the right endpoints? Are there any routes that import functions but never call them? Is the intelligence brain (super-brain, weaponized-brain, etc) properly wired? Are there 3s SLA violations beyond what was fixed?",
+      "thought": "The Hawkeye Sterling codebase is a large AML compliance platform. A comprehensive production-grade audit needs to cover: (1) Core screening engine accuracy and reliability, (2) Security hardening (auth, injection, RBAC, secrets), (3) Data integrity (audit chain, case vault, blob storage), (4) API correctness (types, validation, error handling), (5) Background jobs / scheduled functions, (6) Observability / alerting, (7) CI/CD and deployment, (8) Compliance readiness. Given previous fixes already addressed: e.listRef, BlobsStore.get(), delta format, enrichmentPending polling, implicit-any, ContentBlock.text — the remaining risk areas are: unvalidated API inputs, race conditions in case vault writes, missing retry logic, incomplete error propagation, scoring calibration, observability gaps. The most efficient approach is to dispatch parallel agents across 6 audit tracks, each reading their domain files and reporting findings, then I implement fixes batch by batch.",
       "thoughtNumber": 1,
-      "totalThoughts": 6,
+      "totalThoughts": 5,
       "nextThoughtNeeded": true
     },
     {
-      "thought": "Audit plan — 8 parallel tracks: TRACK A: TypeScript clean build (already confirmed 0 errors). TRACK B: Wiring audit — do the 3 new adapters (Tavily, Exa, Perplexity) appear in getNewsAdapters() aggregator? TRACK C: STC academic search — was this ever supposed to be built or just discussed? Check if there's a typology-library or similar route that needs it. TRACK D: Routes with HARD_DEADLINE_MS / 3s SLA — find all routes that do LLM calls without a timeout guard. TRACK E: Routes missing withGuard — compare exported POST/GET handlers against those using withGuard. TRACK F: Silent errors in non-API code (intelligence layer, cache, etc). TRACK G: Frontend wiring — do key components reference endpoints that exist? TRACK H: Status page accuracy — GDELT fix, intel-status endpoint listing all adapters. Execute all tracks in parallel.",
+      "thought": "Parallel audit tracks optimized for coverage and non-overlap: TRACK A — Screening Engine Deep Dive: read quick-screen/route.ts, candidates-loader.ts, scoring engine, fuzzy match algorithms, threshold logic, consensus engine, PEP/adverse media integration, risk scoring weighting. TRACK B — Security & Auth: read enforce.ts, middleware.ts, RBAC definitions, all API routes for auth bypass risks, input validation gaps, injection surface, secret handling, rate limiting. TRACK C — Data Layer & Integrity: read case-vault.ts, enrichment-jobs.ts, store.ts, audit chain (FNV hash), pKYC storage, blob store patterns, concurrency in writes. TRACK D — Background Jobs & Cron: read all netlify/functions/*.mts, heartbeat system, sanctions-watch, designation-alert-check, health-monitor, eocn-poll, adverse-media-rss. TRACK E — API Contracts & Error Handling: read all web/app/api routes for: missing validation, swallowed errors, incorrect HTTP status codes, incomplete response shapes, missing timeout handling. TRACK F — Intelligence & Integrations: read opensanctions-datasets.ts, llmAdverseMedia.ts, commercialAdapters.ts, newsAdapters.ts, lei_lookup, OpenBanking, MCP route, Asana. These tracks can run simultaneously — no shared file conflicts.",
       "thoughtNumber": 2,
-      "totalThoughts": 6,
+      "totalThoughts": 5,
       "nextThoughtNeeded": true
+    },
+    {
+      "thought": "For maximum audit depth without blowing context windows: each track agent should (a) read and analyze files in its domain, (b) categorize findings by severity CRITICAL/HIGH/MEDIUM/LOW, (c) return a structured findings report with file:line references, (d) flag items they can directly fix vs items needing the main agent. The main agent then: reads all 6 reports, prioritizes by severity, implements CRITICAL and HIGH fixes directly in this context, writes the full audit report as a markdown file, commits everything in one batch. Estimated file count per track: A=15 files, B=20 files, C=8 files, D=12 files, E=25 files, F=10 files. All 6 agents can run concurrently — total elapsed time ~same as single agent.",
+      "thoughtNumber": 3,
+      "totalThoughts": 5,
+      "nextThoughtNeeded": true
+    },
+    {
+      "thought": "Key known risk areas to emphasize in agent prompts based on codebase knowledge: (1) quick-screen early-return paths — listsDegraded peek is done via Promise.race but the result is never surfaced in the early-return audit blob correctly (already partially fixed in bcce185 but worth re-verifying). (2) Case vault insertCaseRecord — reads index, appends, writes back — not atomic, race condition if two screens happen for same subject simultaneously. (3) Designation-alert-check — uses store.list() to find delta blobs then parses them — need to verify the prefix pattern matches what sanctions-ingest writes. (4) pKYC storage — getSubject/saveSubject not validated for concurrent writes. (5) Audit chain FNV-1a — need to verify hash chain is actually verified on read, not just written. (6) enforce() — verify the default requireAuth:true is correct, check for bypass via header spoofing. (7) Scoring engine — verify JARO_WINKLER vs LEVENSHTEIN weighting, PEP boost factors, DOB match bonuses, false positive rates for common names. (8) MCP route — verify it doesn't expose internal tool execution without proper sandboxing.",
+      "thoughtNumber": 4,
+      "totalThoughts": 5,
+      "nextThoughtNeeded": true
+    },
+    {
+      "thought": "Final plan: Dispatch 6 parallel Explore/general-purpose agents. Each gets a precise brief with files to read, specific risk hypotheses to test, and a structured output format. After collecting all reports, I implement fixes in priority order: CRITICAL first (security/data integrity), then HIGH (reliability/accuracy), then MEDIUM (observability/validation). I write a comprehensive AUDIT-REPORT.md covering all 12 required sections, commit all changes, and push. The audit report file itself is a deliverable — not just a chat response. Total estimated implementation: 40-60 file edits across all fixes.",
+      "thoughtNumber": 5,
+      "totalThoughts": 5,
+      "nextThoughtNeeded": false
     }
   ],
   "branches": {}

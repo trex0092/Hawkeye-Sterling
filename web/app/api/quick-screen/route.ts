@@ -198,7 +198,9 @@ export async function POST(req: Request): Promise<NextResponse> {
   // When the poll endpoint re-calls quick-screen for full enrichment it sets
   // this header. With it present, the hard-deadline early-return is skipped
   // so the adapters run to completion and the result is written to the job blob.
-  const enrichJobId = req.headers.get("x-enrich-job-id") ?? null;
+  const rawEnrichJobId = req.headers.get("x-enrich-job-id") ?? null;
+  // Validate format to prevent blob-key injection: only allow alphanumeric, hyphens, underscores (max 80 chars).
+  const enrichJobId = rawEnrichJobId && /^[A-Za-z0-9_-]{1,80}$/.test(rawEnrichJobId) ? rawEnrichJobId : null;
 
   let body: QuickScreenRequestBody;
   try {
@@ -273,6 +275,19 @@ export async function POST(req: Request): Promise<NextResponse> {
             reason: match.reason,
           },
         };
+        // Compliance: whitelist matches MUST still produce an audit-chain entry so
+        // regulators can verify every screening event, including those that were
+        // cleared via the tenant whitelist (UAE FDL Art. 20 traceability requirement).
+        void writeAuditChainEntry({
+          event: "screening.whitelisted",
+          actor: gate.record?.email ?? gate.keyId ?? "unknown",
+          subject: subject.name,
+          severity: "clear",
+          hitsCount: 0,
+          whitelistEntryId: match.id,
+          approvedBy: match.approvedBy,
+          approverRole: match.approverRole,
+        });
         return respond(200, { ok: true, ...whitelistedResult }, gateHeaders);
       }
     } catch (err) {
@@ -403,7 +418,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         listsDegraded: earlyDegraded1,
         enrichmentPending: true,
       });
-      const newJobId1 = `hwk-e-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      const newJobId1 = `hwk-e-${crypto.randomUUID()}`;
       void saveEnrichmentJob(newJobId1, subject, { ok: true, ...result } as Record<string, unknown>);
       return respond(200, {
         ok: true, ...result,
@@ -505,7 +520,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         listsDegraded: earlyDegraded2,
         enrichmentPending: true,
       });
-      const newJobId2 = enrichJobId ?? `hwk-e-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      const newJobId2 = enrichJobId ?? `hwk-e-${crypto.randomUUID()}`;
       if (!enrichJobId) {
         void saveEnrichmentJob(newJobId2, subject, { ok: true, ...result } as Record<string, unknown>);
       }
@@ -680,6 +695,8 @@ export async function POST(req: Request): Promise<NextResponse> {
 
     // Write tamper-evident audit chain entry. Fire-and-forget: must never
     // block the screening response. Failure logged inside writeAuditChainEntry.
+    // listsDegraded uses degradedListIds.length (consistent with early-return paths
+    // which also count empty-entity non-missing lists, not screeningWarnings.length).
     void writeAuditChainEntry({
       event: "screening.completed",
       actor: gate.record?.email ?? gate.keyId ?? "unknown",
@@ -687,7 +704,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       severity: finalResult.severity,
       hitsCount: finalResult.hits.length,
       listsChecked: finalResult.listsChecked,
-      listsDegraded: screeningWarnings.length,
+      listsDegraded: degradedListIds.length,
     });
 
     // Auto-open a server-side case record when the screening yields hits.
@@ -695,7 +712,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (finalResult.hits.length > 0 && finalResult.severity !== "clear") {
       const autoTenant = tenantIdFromGate(gate);
       const caseNow = new Date().toISOString();
-      const autoCaseId = `case-auto-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      const autoCaseId = `case-auto-${crypto.randomUUID()}`;
       const badgeTone: CaseRecord["badgeTone"] =
         finalResult.severity === "critical" ? "violet" : "orange";
       const autoCase: CaseRecord = {
@@ -848,6 +865,8 @@ export async function POST(req: Request): Promise<NextResponse> {
           staleListIds,
           degradedListIds,
           listHealthAvailable: listHealth !== null,
+          newsAdaptersUsed: newsArticles.providersUsed,
+          newsArticleCount: newsArticles.articles.length,
         },
         // Country-risk tier from FATF/UAE classification (separate from match severity).
         riskLevel,

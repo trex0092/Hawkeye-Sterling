@@ -52,7 +52,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       system: SYSTEM_PROMPT,
       messages: [{ role: "user", content: JSON.stringify(body) }],
     });
-    const text = response.content.find((b: { type: string; text?: string }) => b.type === "text")?.text ?? "{}";
+    const text = (response.content.find(b => b.type === "text") as { text: string } | undefined)?.text ?? "{}";
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       return NextResponse.json({ ok: false, error: "oversight-gap-analysis temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
