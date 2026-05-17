@@ -113,57 +113,67 @@ async function loadFromBlobs(): Promise<QuickScreenCandidate[] | null> {
   }
 
   const { getStore } = blobsMod;
-  // Use explicit credentials (NETLIFY_API_TOKEN = proper PAT) whenever they
-  // are available. NETLIFY_API_TOKEN is checked first so the proper PAT takes
-  // precedence over NETLIFY_BLOBS_TOKEN which may be a non-PAT custom value.
-  // Next.js API routes do NOT receive NETLIFY_BLOBS_CONTEXT auto-injection
-  // from plugin-nextjs, so without explicit credentials the store opens
-  // against an unbound context and every read returns null → seed-corpus
-  // fallback → LISTS_MISSING gate fires even when the lists are healthy.
+  // Next.js API routes do NOT receive NETLIFY_BLOBS_CONTEXT auto-injection —
+  // explicit credentials are always required. NETLIFY_BLOBS_TOKEN is the
+  // confirmed working token (v8 audit).
+  //
+  // Dual-store strategy: try hawkeye-list-reports first (ingestion now writes
+  // entities there too). If a list has no entity data there yet (pre-first-
+  // ingestion-after-deploy), fall back to hawkeye-lists where entities are
+  // written by the native Netlify Function. This ensures screening works both
+  // before and after the new ingestion path is populated.
   const siteID = process.env["NETLIFY_SITE_ID"] ?? process.env["SITE_ID"];
   const token =
+    process.env["NETLIFY_BLOBS_TOKEN"] ??
     process.env["NETLIFY_API_TOKEN"] ??
-    process.env["NETLIFY_AUTH_TOKEN"] ??
-    process.env["NETLIFY_BLOBS_TOKEN"];
+    process.env["NETLIFY_AUTH_TOKEN"];
 
-  const storeOpts =
-    siteID && token
-      ? ({ name: "hawkeye-lists", siteID, token, consistency: "strong" } as Parameters<typeof getStore>[0])
-      : ({ name: "hawkeye-lists" } as Parameters<typeof getStore>[0]);
+  function makeStore(name: string) {
+    return siteID && token
+      ? getStore({ name, siteID, token, consistency: "strong" } as Parameters<typeof getStore>[0])
+      : getStore({ name } as Parameters<typeof getStore>[0]);
+  }
 
-  let store: ReturnType<typeof getStore>;
+  let storeReports: ReturnType<typeof getStore>;
+  let storeLists: ReturnType<typeof getStore>;
   try {
-    store = getStore(storeOpts);
+    storeReports = makeStore("hawkeye-list-reports");
+    storeLists   = makeStore("hawkeye-lists");
   } catch {
     return null;
   }
 
-  // Read all adapter blobs in parallel (was sequential — each network round-trip
-  // added ~80-200ms; with 18 adapters that was 1.5-3.6s on cold start).
-  // Individual failures are swallowed so one missing list never blocks others.
+  // Read all adapter blobs in parallel — try hawkeye-list-reports first,
+  // fall back to hawkeye-lists per adapter if no entity data found.
   const PER_KEY_TIMEOUT_MS = 1_200;
   const results = await Promise.all(
     ADAPTER_IDS.map(async (adapterId) => {
-      try {
-        const raw = await Promise.race([
-          store.get(`${adapterId}/latest.json`, { type: "json" }) as Promise<{ entities: NormalisedEntity[] } | null>,
-          new Promise<null>((_, reject) => setTimeout(() => reject(new Error("blob read timeout")), PER_KEY_TIMEOUT_MS)),
-        ]);
-        return raw?.entities ?? null;
-      } catch {
-        return null;
+      const key = `${adapterId}/latest.json`;
+      for (const store of [storeReports, storeLists]) {
+        try {
+          const raw = await Promise.race([
+            store.get(key, { type: "json" }) as Promise<{ entities: NormalisedEntity[] } | null>,
+            new Promise<null>((_, reject) => setTimeout(() => reject(new Error("blob read timeout")), PER_KEY_TIMEOUT_MS)),
+          ]);
+          if (raw?.entities?.length) return raw.entities;
+        } catch { /* try next store */ }
       }
+      return null;
     }),
   );
 
   const live: QuickScreenCandidate[] = [];
   let anyLoaded = false;
+  let totalMalformed = 0;
   for (const entities of results) {
     if (!entities?.length) continue;
     anyLoaded = true;
     for (const e of entities) {
-      try { live.push(entityToCandidate(e)); } catch { /* malformed — skip */ }
+      try { live.push(entityToCandidate(e)); } catch { totalMalformed++; }
     }
+  }
+  if (totalMalformed > 0) {
+    console.warn(`[candidates-loader] Skipped ${totalMalformed} malformed entities — screening corpus is incomplete`);
   }
 
   return anyLoaded ? live : null;

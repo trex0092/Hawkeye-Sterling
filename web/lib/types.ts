@@ -173,9 +173,15 @@ export type FourEyesStatus = "pending" | "approved" | "rejected" | "expired";
 export interface FourEyesItem {
   id: string;
   subjectId: string;
+  /** Explicit case reference — stored separately from subjectId so the SAR
+   *  gate and GET ?caseId filter can match without conflating two concepts. */
+  caseId?: string;
   subjectName: string;
   action: FourEyesAction;
   initiatedBy: string;
+  /** Alias for initiatedBy — persisted for external API compat (governance
+   *  docs use "actor"; internal code uses "initiatedBy"). */
+  actor?: string;
   initiatedAt: string;
   reason: string;
   /** Optional Asana / case URL that the action will write into. */

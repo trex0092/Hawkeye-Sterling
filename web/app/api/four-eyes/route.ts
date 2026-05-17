@@ -91,6 +91,7 @@ async function generateApprovalSummary(
 async function handleGet(req: Request): Promise<NextResponse> {
   const url = new URL(req.url);
   const wantStatus = url.searchParams.get("status")?.trim();
+  const wantCaseId = url.searchParams.get("caseId")?.trim();
   let keys: string[];
   try {
     keys = await listKeys("four-eyes/");
@@ -104,6 +105,11 @@ async function handleGet(req: Request): Promise<NextResponse> {
   let items = loaded.filter((s): s is FourEyesItem => s !== null);
   if (wantStatus && ALLOWED_STATUSES.has(wantStatus as FourEyesStatus)) {
     items = items.filter((i) => i.status === wantStatus);
+  }
+  if (wantCaseId) {
+    items = items.filter(
+      (i) => i.caseId === wantCaseId || i.subjectId === wantCaseId,
+    );
   }
   // Newest first.
   items.sort((a, b) => b.initiatedAt.localeCompare(a.initiatedAt));
@@ -158,13 +164,20 @@ async function handlePost(req: Request): Promise<NextResponse> {
     );
   }
 
+  // Capture explicit caseId if provided (may differ from subjectId).
+  const explicitCaseId = safeId(raw["caseId"]);
+  // Capture actor alias if provided (for external API compat).
+  const actorAlias = stringField(raw["actor"]);
+
   const id = `fe-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
   const item: FourEyesItem = {
     id,
     subjectId,
+    ...(explicitCaseId ? { caseId: explicitCaseId } : {}),
     subjectName,
     action: actionRaw as FourEyesAction,
     initiatedBy,
+    ...(actorAlias ? { actor: actorAlias } : {}),
     initiatedAt: new Date().toISOString(),
     reason,
     status: "pending",
@@ -197,7 +210,7 @@ async function handlePost(req: Request): Promise<NextResponse> {
   void writeAuditChainEntry({
     event: "four_eyes.enqueued",
     actor: initiatedBy,
-    caseId: subjectId,
+    caseId: enrichedItem.caseId ?? enrichedItem.subjectId,
     itemId: id,
     subjectName: enrichedItem.subjectName,
     fourEyesAction: enrichedItem.action,
@@ -326,11 +339,12 @@ async function handlePatch(req: Request): Promise<NextResponse> {
   void writeAuditChainEntry({
     event: `four_eyes.${action}d`,
     actor: operator,
-    caseId: updated.subjectId,
+    caseId: updated.caseId ?? updated.subjectId,
     itemId: id,
     subjectName: updated.subjectName,
     fourEyesAction: updated.action,
     initiatedBy: updated.initiatedBy,
+    ...(action === "reject" && updated.rejectionReason ? { rejectionReason: updated.rejectionReason } : {}),
   });
 
   // Report to Asana Four-Eyes board — non-blocking, best effort

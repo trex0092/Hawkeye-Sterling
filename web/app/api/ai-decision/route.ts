@@ -96,16 +96,15 @@ async function checkListsIntegrity(): Promise<ListsIntegrityResult> {
   }
 
   const { getStore } = blobsMod;
-  const onNetlify = Boolean(process.env["NETLIFY"]) || Boolean(process.env["NETLIFY_LOCAL"]);
   const siteID = process.env["NETLIFY_SITE_ID"] ?? process.env["SITE_ID"];
   const token =
+    process.env["NETLIFY_BLOBS_TOKEN"] ??
     process.env["NETLIFY_API_TOKEN"] ??
-    process.env["NETLIFY_AUTH_TOKEN"] ??
-    process.env["NETLIFY_BLOBS_TOKEN"];
+    process.env["NETLIFY_AUTH_TOKEN"];
 
   let store: ReturnType<typeof getStore>;
   try {
-    const opts = !onNetlify && siteID && token
+    const opts = siteID && token
       ? { name: "hawkeye-lists", siteID, token, consistency: "strong" as const }
       : { name: "hawkeye-lists" };
     store = getStore(opts);

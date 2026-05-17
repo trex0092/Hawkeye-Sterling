@@ -32,9 +32,9 @@ async function getStore() {
   try {
     const siteID = process.env["NETLIFY_SITE_ID"] ?? process.env["SITE_ID"];
     const token =
+      process.env["NETLIFY_BLOBS_TOKEN"] ??
       process.env["NETLIFY_API_TOKEN"] ??
-      process.env["NETLIFY_AUTH_TOKEN"] ??
-      process.env["NETLIFY_BLOBS_TOKEN"];
+      process.env["NETLIFY_AUTH_TOKEN"];
     return siteID && token
       ? mod.getStore({ name: "mcp-activity-logs", siteID, token, consistency: "strong" })
       : mod.getStore({ name: "mcp-activity-logs" });

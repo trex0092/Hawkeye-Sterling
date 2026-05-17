@@ -29,7 +29,10 @@ export async function GET(req: Request): Promise<NextResponse> {
       ...(e.goamlBranch ? { goamlBranch: e.goamlBranch } : {}),
       jurisdiction: e.jurisdiction ?? "AE",
     }));
-    const defaultId = process.env["HAWKEYE_DEFAULT_ENTITY_ID"] ?? entities[0]?.id;
+    const envDefaultId = process.env["HAWKEYE_DEFAULT_ENTITY_ID"];
+    const defaultId = (envDefaultId && entities.some((e) => e.id === envDefaultId))
+      ? envDefaultId
+      : entities[0]?.id;
     return NextResponse.json(
       { ok: true, entities, ...(defaultId ? { defaultId } : {}) },
       { headers: gate.headers },
