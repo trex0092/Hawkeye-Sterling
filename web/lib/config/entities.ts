@@ -79,7 +79,21 @@ function legacyFallback(): ReportingEntity[] {
 export function loadEntities(): ReportingEntity[] {
   if (cached) return cached;
   const raw = process.env["HAWKEYE_ENTITIES"];
-  cached = raw && raw.trim() ? parseEntitiesJson(raw) : legacyFallback();
+  if (raw && raw.trim()) {
+    try {
+      cached = parseEntitiesJson(raw);
+    } catch (err) {
+      // Malformed HAWKEYE_ENTITIES (e.g. plain string instead of JSON array).
+      // Fall back to the legacy env var path so the system remains operational.
+      console.warn(
+        "[entities] HAWKEYE_ENTITIES parse failed — falling back to legacy env vars.",
+        err instanceof Error ? err.message : String(err),
+      );
+      cached = legacyFallback();
+    }
+  } else {
+    cached = legacyFallback();
+  }
   return cached;
 }
 

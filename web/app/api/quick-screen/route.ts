@@ -76,10 +76,12 @@ async function fetchListHealth(): Promise<ListHealthSnapshot> {
   try {
     const { getStore } = await import("@netlify/blobs");
     const siteID = process.env["NETLIFY_SITE_ID"] ?? process.env["SITE_ID"];
+    // NETLIFY_API_TOKEN (proper PAT) must precede NETLIFY_BLOBS_TOKEN (may be
+    // a custom non-PAT value that causes 401 on explicit-credential reads).
     const token =
-      process.env["NETLIFY_BLOBS_TOKEN"] ??
       process.env["NETLIFY_API_TOKEN"] ??
-      process.env["NETLIFY_AUTH_TOKEN"];
+      process.env["NETLIFY_AUTH_TOKEN"] ??
+      process.env["NETLIFY_BLOBS_TOKEN"];
     store = siteID && token
       ? getStore({ name: "hawkeye-lists", siteID, token, consistency: "strong" })
       : getStore({ name: "hawkeye-lists" });
