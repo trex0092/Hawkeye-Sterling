@@ -61,6 +61,7 @@
     "dist/src/policy/**/*.js.map",
     "dist/src/integrations/**/*.js",
     "dist/src/integrations/**/*.js.map",
+    "data/**",
   ]
 
 # MLRO deep background function — needs the full 15-minute platform ceiling

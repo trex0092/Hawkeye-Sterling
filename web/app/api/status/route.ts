@@ -1294,7 +1294,21 @@ async function _handleGet(isAdmin: boolean, gateHeaders: Record<string, string> 
     ? "Redis not configured (UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN unset) — GDELT adverse-media cache is in-memory only; cache will not persist across Lambda cold starts."
     : undefined;
 
-  const warnings = [sanctionsAgeWarning, pepCountWarning, brainCatalogueWarning, redisWarning].filter(Boolean) as string[];
+  // Section 1.4: UAE mandatory list warnings
+  const uaeEocnWarning = !process.env["UAE_EOCN_SEED_PATH"]
+    ? (
+      "UAE_EOCN_SEED_PATH not set — UAE EOCN list using bundled seed fallback. " +
+      "Regulatory risk: FDL No.10/2025 Art.10(1). Set UAE_EOCN_SEED_PATH in Netlify to the path of the current EOCN seed JSON."
+    )
+    : undefined;
+  const uaeLtlWarning = !process.env["UAE_LTL_SEED_PATH"]
+    ? (
+      "UAE_LTL_SEED_PATH not set — UAE Local Terrorist List using bundled seed fallback. " +
+      "Regulatory risk: FDL No.10/2025 Art.10(1). Set UAE_LTL_SEED_PATH in Netlify to the path of the current LTL seed JSON."
+    )
+    : undefined;
+
+  const warnings = [sanctionsAgeWarning, pepCountWarning, brainCatalogueWarning, redisWarning, uaeEocnWarning, uaeLtlWarning].filter(Boolean) as string[];
 
   const gdeltCache = {
     ...gdeltCacheStats(),
