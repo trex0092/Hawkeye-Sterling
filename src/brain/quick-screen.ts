@@ -77,10 +77,14 @@ export interface QuickScreenResult {
   hits: QuickScreenHit[];
   topScore: number;                 // 0..100 (scaled from hits[0].score)
   severity: QuickScreenSeverity;
-  listsChecked: number;
+  listsChecked: number;             // count of unique lists in the candidate pool
   candidatesChecked: number;
   durationMs: number;
   generatedAt: string;
+  // Structured list coverage — provides the detail behind `listsChecked`.
+  // listIds:  every listId seen in the candidate pool (sorted).
+  // listBreakdown is present only when there are hits (lists with matches).
+  listIds?: string[];
   // Weighted risk scoring across hits — accounts for regulatory importance of
   // each sanctions list (OFAC SDN, EOCN > bilateral > informational).
   totalWeightedScore?: number;       // 0..100 weighted composite across all hit lists
@@ -330,6 +334,7 @@ export function quickScreen(
     topScore,
     severity,
     listsChecked: listsSeen.size,
+    listIds: [...listsSeen].sort(),
     candidatesChecked: candidates.length,
     durationMs: Math.max(0, clock() - start),
     generatedAt: now(),

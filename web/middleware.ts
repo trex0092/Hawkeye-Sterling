@@ -144,7 +144,7 @@ function hostnameOf(value: string): string | null {
 export function middleware(req: NextRequest): NextResponse {
   const { pathname } = req.nextUrl;
 
-  // ── 0. /.well-known rewrites ──────────────────────────────────────────────
+  // ── 0. /.well-known + /api/v1/ rewrites ──────────────────────────────────
   // Next.js rewrites declared in next.config.mjs don't reach Lambda when
   // routed through @netlify/plugin-nextjs — verified empirically: the
   // /.well-known/* paths returned 404 in production while the underlying
@@ -156,6 +156,16 @@ export function middleware(req: NextRequest): NextResponse {
   }
   if (pathname === "/.well-known/hawkeye-pubkey.pem") {
     return NextResponse.rewrite(new URL("/api/well-known/hawkeye-pubkey.pem", req.url));
+  }
+  // /api/v1/* → /api/* stable alias. Allows callers to pin a versioned
+  // prefix and survive future /api/v2/* breakouts without changing URLs.
+  // This rewrite is transparent — the canonical route still lives under
+  // /api/ and handles all business logic.
+  if (pathname.startsWith("/api/v1/")) {
+    const canonical = pathname.replace(/^\/api\/v1\//, "/api/");
+    const target = new URL(req.url);
+    target.pathname = canonical;
+    return NextResponse.rewrite(target);
   }
 
   // ── 1. Session guard (non-API routes) ──────────────────────────────────────

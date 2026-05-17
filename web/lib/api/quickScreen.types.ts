@@ -77,6 +77,8 @@ export interface QuickScreenResult {
   topScore: number;
   severity: QuickScreenSeverity;
   listsChecked: number;
+  /** Every listId seen in the candidate pool (sorted). Structured companion to listsChecked. */
+  listIds?: string[];
   candidatesChecked: number;
   durationMs: number;
   generatedAt: string;
