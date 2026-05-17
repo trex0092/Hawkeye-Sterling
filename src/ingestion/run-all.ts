@@ -180,7 +180,10 @@ export async function runIngestionAll(label: string): Promise<IngestRunSummary> 
     return { report, writeFailed };
   };
 
-  const settled = await Promise.allSettled(SOURCE_ADAPTERS.map(runAdapter));
+  // Skip adapters that declare themselves disabled (e.g. jp_mof without FEED_JP_MOF).
+  // Disabled adapters are not counted as failures and do not write blobs.
+  const activeAdapters = SOURCE_ADAPTERS.filter((a) => a.isEnabled?.() !== false);
+  const settled = await Promise.allSettled(activeAdapters.map(runAdapter));
   const summary: IngestionReport[] = [];
   let anyWriteFailed = false;
   for (let i = 0; i < settled.length; i++) {
@@ -190,7 +193,7 @@ export async function runIngestionAll(label: string): Promise<IngestRunSummary> 
       summary.push(r.value.report);
       if (r.value.writeFailed) anyWriteFailed = true;
     } else {
-      const adapter = SOURCE_ADAPTERS[i] ?? { id: 'unknown', sourceUrl: '' };
+      const adapter = activeAdapters[i] ?? { id: 'unknown', sourceUrl: '' };
       const msg = r.reason instanceof Error ? r.reason.message : String(r.reason);
       console.error(`[${label}] UNCAUGHT REJECTION list=${adapter.id} error=${msg}`);
       summary.push({

@@ -159,7 +159,7 @@ async function alertDesignationChanges(
   }
 }
 
-interface SanctionsStatusList { listId: string; displayName: string; status: string; entityCount: number | null }
+interface SanctionsStatusList { listId: string; displayName: string; status: 'healthy' | 'degraded' | 'stale' | 'missing' | 'unconfigured'; entityCount: number | null }
 interface SanctionsStatusResponse { lists?: SanctionsStatusList[] }
 
 export default async (): Promise<Response> => {
@@ -184,7 +184,7 @@ export default async (): Promise<Response> => {
     'https://hawkeye-sterling.netlify.app';
   // Audit H-03 / P2-07: a list can write successfully but parse to zero
   // entities (parser bug or empty upstream feed). Detect those by reading
-  // sanctions_status after the refresh and surfacing any `status: healthy`
+  // sanctions_status after the refresh and surfacing any healthy or degraded
   // adapter whose entityCount is 0.
   const zeroEntityLists: string[] = [];
   try {
@@ -201,8 +201,8 @@ export default async (): Promise<Response> => {
         const status = await res.json() as SanctionsStatusResponse;
         console.log(`[${LABEL}] sanctions_status after refresh: ${JSON.stringify(status)}`);
         for (const l of status.lists ?? []) {
-          if (l.status === 'healthy' && l.entityCount === 0) {
-            zeroEntityLists.push(`${l.listId} (${l.displayName})`);
+          if (l.entityCount === 0 && (l.status === 'healthy' || l.status === 'degraded')) {
+            zeroEntityLists.push(`${l.listId} (${l.displayName}) [${l.status}]`);
           }
         }
       } else {

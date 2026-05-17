@@ -19,7 +19,20 @@ export const euFsfAdapter: SourceAdapter = {
     const fetchedAt = Date.now();
     const entities: NormalisedEntity[] = [];
 
-    for (const entry of findAll(root, 'sanctionEntity')) {
+    // Diagnostic: log the top-level element names actually present in the
+    // XML root so any future schema change is immediately visible in logs.
+    const topTags = [...new Set(root.children.map((c) => c.tag))].slice(0, 10);
+    const sanctionEntries = findAll(root, 'sanctionEntity');
+    if (sanctionEntries.length === 0) {
+      console.warn(
+        `[eu_fsf] findAll('sanctionEntity') returned 0 nodes. ` +
+        `Top-level tags: [${topTags.join(', ')}]. ` +
+        `XML length: ${xml.length} bytes. ` +
+        `First 300 chars: ${xml.slice(0, 300).replace(/\s+/g, ' ')}`,
+      );
+    }
+
+    for (const entry of sanctionEntries) {
       const logicalId = entry.attrs['logicalId'] ?? entry.attrs['euReferenceNumber'] ?? '';
       const subject = findAll(entry, 'subjectType')[0];
       const subjectCode = subject?.attrs['code']?.toLowerCase();
