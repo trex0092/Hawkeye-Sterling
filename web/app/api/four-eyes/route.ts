@@ -88,22 +88,25 @@ async function generateApprovalSummary(
   }
 }
 
+const OVERDUE_THRESHOLD_MS = 24 * 60 * 60 * 1000; // 24 h
+
 async function handleGet(req: Request): Promise<NextResponse> {
   const url = new URL(req.url);
-  const wantStatus = url.searchParams.get("status")?.trim();
+  // Default to pending queue; caller can override with ?status=approved|rejected|expired
+  const wantStatus = url.searchParams.get("status")?.trim() ?? "pending";
   const wantCaseId = url.searchParams.get("caseId")?.trim();
   let keys: string[];
   try {
     keys = await listKeys("four-eyes/");
   } catch (err) {
     console.warn("[hawkeye] four-eyes GET listKeys failed:", err instanceof Error ? err.message : String(err));
-    return NextResponse.json({ ok: true, count: 0, items: [] }, { headers: {} });
+    return NextResponse.json({ ok: true, pending: [], total: 0, items: [] }, { headers: {} });
   }
   const loaded = await Promise.all(
     keys.map((k) => getJson<FourEyesItem>(k).catch(() => null)),
   );
   let items = loaded.filter((s): s is FourEyesItem => s !== null);
-  if (wantStatus && ALLOWED_STATUSES.has(wantStatus as FourEyesStatus)) {
+  if (ALLOWED_STATUSES.has(wantStatus as FourEyesStatus)) {
     items = items.filter((i) => i.status === wantStatus);
   }
   if (wantCaseId) {
@@ -113,7 +116,20 @@ async function handleGet(req: Request): Promise<NextResponse> {
   }
   // Newest first.
   items.sort((a, b) => b.initiatedAt.localeCompare(a.initiatedAt));
-  return NextResponse.json({ ok: true, count: items.length, items }, { headers: {} });
+
+  // Flag items that have been pending longer than 24 hours.
+  const now = Date.now();
+  const enriched = items.map((i) => {
+    const age = now - new Date(i.initiatedAt).getTime();
+    return i.status === "pending" && age > OVERDUE_THRESHOLD_MS
+      ? { ...i, overdue: true, overdueHours: Math.floor(age / 3_600_000) }
+      : i;
+  });
+
+  return NextResponse.json(
+    { ok: true, pending: enriched, total: enriched.length, items: enriched },
+    { headers: {} },
+  );
 }
 
 async function handlePost(req: Request): Promise<NextResponse> {

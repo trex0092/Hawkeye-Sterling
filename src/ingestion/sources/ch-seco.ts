@@ -109,6 +109,15 @@ export const chSecoAdapter: SourceAdapter = {
       entities.push(ent);
     }
 
+    if (entities.length === 0) {
+      throw new Error(
+        `[ch_seco] parsed 0 entities — refusing to write empty blob. ` +
+        `XML length: ${xml.length} bytes. ` +
+        `Check that ${SOURCE_URL} still returns the SECO consolidated XML, ` +
+        `or set FEED_CH_SECO to the direct XML download URL.`,
+      );
+    }
+    console.info(`[ch_seco] parsed ${entities.length} entities`);
     return { entities, rawChecksum };
   },
 };

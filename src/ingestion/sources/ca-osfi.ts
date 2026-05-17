@@ -26,7 +26,12 @@ export const caOsfiAdapter: SourceAdapter = {
     const rawChecksum = await sha256Hex(csv);
     const fetchedAt = Date.now();
     const rows = parseCsv(csv);
-    if (rows.length < 2) return { entities: [], rawChecksum };
+    if (rows.length < 2) {
+      throw new Error(
+        `[ca_osfi] CSV has fewer than 2 rows (got ${rows.length}) — no data to parse. ` +
+        `Check that ${SOURCE_URL} still returns the SEMA/OSFI consolidated CSV.`,
+      );
+    }
 
     const header = (rows[0] ?? []).map((h) => h.trim().toLowerCase());
     const idx = (...candidates: string[]): number => {
@@ -88,6 +93,13 @@ export const caOsfiAdapter: SourceAdapter = {
       };
       entities.push(ent);
     }
+    if (entities.length === 0) {
+      throw new Error(
+        `[ca_osfi] parsed 0 entities from ${rows.length - 1} data rows — ` +
+        `the CSV schema may have changed. Check ${SOURCE_URL}.`,
+      );
+    }
+    console.info(`[ca_osfi] parsed ${entities.length} entities`);
     return { entities, rawChecksum };
   },
 };
