@@ -197,10 +197,15 @@ export default async (_req: Request): Promise<Response> => {
 
     const recentKeys = result.blobs.filter((b) => {
       // Key format: delta/<listId>-<isoTimestamp>.json
-      const parts = b.key.replace("delta/", "").replace(".json", "").split("-");
-      const ts = parts.slice(1).join("-");
-      if (!ts) return false;
-      const t = Date.parse(ts);
+      // The timestamp is written by sanctions-ingest with : and . replaced by -,
+      // producing e.g. "2026-05-17T10-30-00-000Z". Restore the original ISO
+      // characters before calling Date.parse, otherwise it always returns NaN.
+      const base = b.key.replace("delta/", "").replace(".json", "");
+      const dashIdx = base.indexOf("-");
+      if (dashIdx === -1) return false;
+      const rawTs = base.slice(dashIdx + 1);
+      const isoTs = rawTs.replace(/-(\d{2})-(\d{2})-(\d{3})Z$/, ":$1:$2.$3Z");
+      const t = Date.parse(isoTs);
       return !isNaN(t) && t >= twoHoursAgo;
     });
 
