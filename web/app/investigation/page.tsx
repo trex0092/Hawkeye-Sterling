@@ -115,7 +115,7 @@ export default function InvestigationPage() {
   const suggestions = useMemo(() => {
     const q = subject.trim().toLowerCase();
     return Array.from(new Set(allCases.map((c) => c.subject))).sort()
-      .filter((n) => n.toLowerCase().includes(q)).slice(0, 6);
+      .filter((n) => (n as string).toLowerCase().includes(q)).slice(0, 6);
   }, [subject, allCases]);
 
   const matchedCases = useMemo(() =>

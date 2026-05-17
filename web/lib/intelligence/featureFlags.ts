@@ -80,7 +80,7 @@ const LEGACY_ENV_VAR: Record<FreeFlag, string> = {
 function parseDisabledList(): Set<string> {
   const raw = process.env["HS_DISABLED"];
   if (!raw) return new Set();
-  return new Set(raw.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean));
+  return new Set(raw.split(",").map((s: string) => s.trim().toLowerCase()).filter(Boolean));
 }
 
 /**

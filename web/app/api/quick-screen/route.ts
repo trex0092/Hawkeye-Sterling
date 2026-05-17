@@ -45,6 +45,11 @@ import {
 // @brain/* is resolved via web/tsconfig.json paths → ../dist/src/brain/*.
 import { quickScreen as brainQuickScreen } from "@brain/quick-screen.js";
 import { getCountryRisk } from "@/lib/server/high-risk-countries";
+import { insertCaseRecord } from "@/lib/server/case-vault";
+import { tenantIdFromGate } from "@/lib/server/tenant";
+import { saveSubject, getSubject } from "../pkyc/_store";
+import type { CaseRecord } from "@/lib/types";
+import { saveEnrichmentJob, completeEnrichmentJob } from "@/lib/server/enrichment-jobs";
 
 // ── Sanctions list health snapshot ─────────────────────────────────────────
 // Attached to every screening response so audit records capture which lists
@@ -189,6 +194,11 @@ export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req, { requireAuth: true });
   if (!gate.ok) return gate.response;
   const gateHeaders: Record<string, string> = gate.ok ? gate.headers : {};
+
+  // When the poll endpoint re-calls quick-screen for full enrichment it sets
+  // this header. With it present, the hard-deadline early-return is skipped
+  // so the adapters run to completion and the result is written to the job blob.
+  const enrichJobId = req.headers.get("x-enrich-job-id") ?? null;
 
   let body: QuickScreenRequestBody;
   try {
@@ -376,8 +386,13 @@ export async function POST(req: Request): Promise<NextResponse> {
     // The client can re-poll for an enriched result if needed.
     const HARD_DEADLINE_MS = 2_800;
     const elapsedMs = Date.now() - t0;
-    if (elapsedMs >= HARD_DEADLINE_MS - 100) {
+    if (!enrichJobId && elapsedMs >= HARD_DEADLINE_MS - 100) {
       // Audit chain must fire even when the enrichment deadline is exceeded.
+      // Peek at listHealthPromise without adding latency — it may already be resolved.
+      const peekHealth1 = await Promise.race([listHealthPromise, Promise.resolve(null)]);
+      const earlyDegraded1 = peekHealth1
+        ? Object.values(peekHealth1).filter((e) => e.entityCount === 0 && e.status !== "missing").length
+        : 0;
       void writeAuditChainEntry({
         event: "screening.completed",
         actor: gate.record?.email ?? gate.keyId ?? "unknown",
@@ -385,12 +400,15 @@ export async function POST(req: Request): Promise<NextResponse> {
         severity: result.severity,
         hitsCount: result.hits.length,
         listsChecked: result.listsChecked,
-        listsDegraded: 0,
+        listsDegraded: earlyDegraded1,
         enrichmentPending: true,
       });
+      const newJobId1 = `hwk-e-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      void saveEnrichmentJob(newJobId1, subject, { ok: true, ...result } as Record<string, unknown>);
       return respond(200, {
         ok: true, ...result,
         enrichmentPending: true,
+        enrichJobId: newJobId1,
         latencyMs: Date.now() - t0,
       } as QuickScreenResponse, gateHeaders);
     }
@@ -473,6 +491,10 @@ export async function POST(req: Request): Promise<NextResponse> {
 
     // If the deadline fired before adapters resolved, return fast-path result.
     if (augRace === "timeout") {
+      const peekHealth2 = await Promise.race([listHealthPromise, Promise.resolve(null)]);
+      const earlyDegraded2 = peekHealth2
+        ? Object.values(peekHealth2).filter((e) => e.entityCount === 0 && e.status !== "missing").length
+        : 0;
       void writeAuditChainEntry({
         event: "screening.completed",
         actor: gate.record?.email ?? gate.keyId ?? "unknown",
@@ -480,12 +502,17 @@ export async function POST(req: Request): Promise<NextResponse> {
         severity: result.severity,
         hitsCount: result.hits.length,
         listsChecked: result.listsChecked,
-        listsDegraded: 0,
+        listsDegraded: earlyDegraded2,
         enrichmentPending: true,
       });
+      const newJobId2 = enrichJobId ?? `hwk-e-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      if (!enrichJobId) {
+        void saveEnrichmentJob(newJobId2, subject, { ok: true, ...result } as Record<string, unknown>);
+      }
       return respond(200, {
         ok: true, ...result,
         enrichmentPending: true,
+        enrichJobId: newJobId2,
         latencyMs: Date.now() - t0,
       } as QuickScreenResponse, gateHeaders);
     }
@@ -663,12 +690,109 @@ export async function POST(req: Request): Promise<NextResponse> {
       listsDegraded: screeningWarnings.length,
     });
 
-    return respond(
-      200,
-      {
-        ok: true,
-        ...finalResult,
-        reasoning,
+    // Auto-open a server-side case record when the screening yields hits.
+    // Fire-and-forget — never blocks the response.
+    if (finalResult.hits.length > 0 && finalResult.severity !== "clear") {
+      const autoTenant = tenantIdFromGate(gate);
+      const caseNow = new Date().toISOString();
+      const autoCaseId = `case-auto-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      const badgeTone: CaseRecord["badgeTone"] =
+        finalResult.severity === "critical" ? "violet" : "orange";
+      const autoCase: CaseRecord = {
+        id: autoCaseId,
+        badge: "sanctions_hit",
+        badgeTone,
+        subject: subject.name,
+        meta: `${finalResult.severity} · ${finalResult.hits.length} hit(s) · ${subject.entityType ?? "unknown"}`,
+        status: "active",
+        evidenceCount: String(finalResult.hits.length),
+        lastActivity: caseNow,
+        opened: caseNow,
+        statusLabel: "Open",
+        statusDetail: "Pending MLRO triage",
+        evidence: finalResult.hits.slice(0, 10).map((h) => ({
+          category: "screening-report" as const,
+          title: `${h.listId}: ${h.candidateName}`,
+          meta: `Score ${Math.round(h.score * 100)}% via ${h.method}`,
+          detail: h.listRef ?? "",
+        })),
+        timeline: [
+          { timestamp: caseNow, event: `Auto-opened: ${finalResult.severity} severity, ${finalResult.hits.length} hit(s) across ${finalResult.listsChecked} lists` },
+        ],
+        screeningSnapshot: {
+          subject: {
+            id: autoCaseId,
+            name: subject.name,
+            entityType: (subject.entityType ?? "other") as "individual" | "organisation" | "vessel" | "aircraft" | "other",
+            jurisdiction: subject.jurisdiction,
+            aliases: subject.aliases,
+          },
+          result: {
+            topScore: finalResult.topScore,
+            severity: finalResult.severity,
+            hits: finalResult.hits.slice(0, 20).map((h) => ({
+              listId: h.listId,
+              listRef: h.listRef,
+              candidateName: h.candidateName,
+              score: h.score,
+              method: h.method,
+              programs: h.programs,
+            })),
+          },
+          capturedAt: caseNow,
+        },
+      };
+      void insertCaseRecord(autoTenant, autoCase).catch((err: unknown) => {
+        console.warn("[quick-screen] auto-case insert failed:", err instanceof Error ? err.message : String(err));
+      });
+    }
+
+    // Auto-enroll in pKYC ongoing monitoring for medium+ severity subjects.
+    // Uses a deterministic ID keyed on name so re-screening the same subject
+    // does not create duplicate monitoring subjects.
+    if (["medium", "high", "critical"].includes(finalResult.severity)) {
+      const pkycId = `pkyc-auto-${subject.name.toLowerCase().replace(/[^a-z0-9]/g, "-").slice(0, 40)}`;
+      void (async () => {
+        try {
+          const existing = await getSubject(pkycId);
+          if (!existing) {
+            const cadence = finalResult.severity === "critical" ? "weekly" : finalResult.severity === "high" ? "monthly" : "quarterly";
+            const pkycNow = new Date().toISOString();
+            const nextRun = new Date(pkycNow);
+            if (cadence === "weekly") nextRun.setUTCDate(nextRun.getUTCDate() + 7);
+            else if (cadence === "monthly") nextRun.setUTCMonth(nextRun.getUTCMonth() + 1);
+            else nextRun.setUTCMonth(nextRun.getUTCMonth() + 3);
+            await saveSubject({
+              id: pkycId,
+              name: subject.name,
+              entityType: subject.entityType,
+              jurisdiction: subject.jurisdiction,
+              nationality: subject.nationality,
+              dob: subject.dateOfBirth,
+              aliases: subject.aliases,
+              cadence,
+              status: "active",
+              enrolledAt: pkycNow,
+              lastRunAt: null,
+              nextRunAt: nextRun.toISOString(),
+              lastBand: null,
+              lastComposite: null,
+              lastHits: finalResult.hits.length,
+              runCount: 0,
+              alertCount: 0,
+              notes: `Auto-enrolled from screening: ${finalResult.severity} severity`,
+            });
+          }
+        } catch (err) {
+          console.warn("[quick-screen] pkyc auto-enroll failed:", err instanceof Error ? err.message : String(err));
+        }
+      })();
+    }
+
+    const fullPayload = {
+      ok: true,
+      ...finalResult,
+      reasoning,
         ...(openSanctionsResults.length > 0
           ? { openSanctionsAugmentation: openSanctionsResults.slice(0, HIT_LIMIT_AUG_LOW) }
           : {}),
@@ -728,9 +852,13 @@ export async function POST(req: Request): Promise<NextResponse> {
         // Country-risk tier from FATF/UAE classification (separate from match severity).
         riskLevel,
         ...(countryRisk ? { riskBasis: countryRisk.basis } : {}),
-      } as QuickScreenResponse,
-      gateHeaders,
-    );
+    } as QuickScreenResponse;
+    // If this was a re-enrichment poll call, persist the full result so
+    // subsequent polls return the cached enriched data without re-running adapters.
+    if (enrichJobId) {
+      void completeEnrichmentJob(enrichJobId, fullPayload as Record<string, unknown>);
+    }
+    return respond(200, fullPayload, gateHeaders);
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);
     if (Date.now() - t0 > 3000) console.warn(`[quick-screen] slow response latencyMs=${Date.now() - t0}`);

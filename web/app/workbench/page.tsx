@@ -170,7 +170,7 @@ export default function WorkbenchPage() {
     setBrainError(null);
     setBrainResult(null);
 
-    const ids = Array.from(selectedIds);
+    const ids = Array.from(selectedIds) as string[];
     const selectedModes = MODES.filter((m) => ids.includes(m.id));
     const taxonomyIds = Array.from(
       new Set(selectedModes.flatMap((m) => m.taxonomyIds)),
@@ -401,7 +401,7 @@ export default function WorkbenchPage() {
 
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-4 text-11.5">
                         {Object.entries(brainResult.composite.breakdown).map(([k, v]) =>
-                          v > 0 ? (
+                          (v as number) > 0 ? (
                             <div key={k} className="flex justify-between bg-bg-1 rounded px-2.5 py-1.5 border border-hair-1">
                               <span className="text-ink-2 capitalize">{k.replace(/([A-Z])/g, ' $1').trim()}</span>
                               <span className="font-semibold text-ink-0">+{v}</span>

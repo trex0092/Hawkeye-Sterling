@@ -419,7 +419,7 @@ export default function TransactionMonitorPage() {
           )}
           {(() => {
             const counts: Partial<Record<TypologyKind, number>> = {};
-            for (const tag of Object.values(typologyTags)) {
+            for (const tag of Object.values(typologyTags) as TxTypologyTag[]) {
               if (tag.typology !== "none") {
                 counts[tag.typology] = (counts[tag.typology] ?? 0) + 1;
               }

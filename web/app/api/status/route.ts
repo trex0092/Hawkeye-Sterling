@@ -742,7 +742,7 @@ async function checkSanctionsFreshness(): Promise<SanctionsFreshness> {
       void reports.setJSON("freshness/snapshot.json", {
         savedAt: now,
         lists: per,
-      }).catch((err) => console.warn("[status] freshness snapshot persist failed:", err instanceof Error ? err.message : err));
+      }).catch((err: unknown) => console.warn("[status] freshness snapshot persist failed:", err instanceof Error ? err.message : err));
     }
 
     // Cold start — all blobs empty (no cron has run yet). Fall back to snapshot.

@@ -88,6 +88,11 @@ export interface QuickScreenResult {
     approvedAt: string;
     reason: string;
   };
+  // Set when the response was returned before LLM/registry enrichment
+  // completed. Poll GET /api/quick-screen/enrich/{enrichJobId} to retrieve
+  // the full enriched result.
+  enrichmentPending?: boolean;
+  enrichJobId?: string;
 }
 
 export type QuickScreenResponse =

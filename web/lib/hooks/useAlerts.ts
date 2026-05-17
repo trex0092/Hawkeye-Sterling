@@ -163,7 +163,7 @@ export function useAlerts(): UseAlertsReturn {
   const dismissedRef = useRef<Set<string>>(new Set());
   const seenRef = useRef<Set<string>>(new Set());
 
-  const unreadCount = alerts.filter((a) => !a.read).length;
+  const unreadCount = alerts.filter((a: DesignationAlert) => !a.read).length;
 
   const remerge = useCallback((apiAlerts: DesignationAlert[]) => {
     const local = loadBellEvents();
@@ -263,9 +263,9 @@ export function useAlerts(): UseAlertsReturn {
     dismissedRef.current = new Set([...dismissedRef.current, id]);
     saveDismissed(dismissedRef.current);
     markBellEventRead(id);
-    setAlerts((prev) => {
-      const updated = prev.map((a) => a.id === id ? { ...a, read: true } : a);
-      saveCache(updated.filter((a) => !loadBellEvents().some((e) => e.id === a.id)));
+    setAlerts((prev: DesignationAlert[]) => {
+      const updated = prev.map((a: DesignationAlert) => a.id === id ? { ...a, read: true } : a);
+      saveCache(updated.filter((a: DesignationAlert) => !loadBellEvents().some((e) => e.id === a.id)));
       return updated;
     });
     try {

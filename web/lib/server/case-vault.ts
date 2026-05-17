@@ -212,6 +212,34 @@ export async function saveAllCases(
   await bumpMeta(tenant, "write");
 }
 
+/**
+ * Insert a single new case without reading all existing cases.
+ * Used by automated case-open (e.g. post-screening auto-open on hits).
+ * Idempotent: skips write if a record with the same id already exists at
+ * an equal-or-newer lastActivity timestamp.
+ * Non-throwing: logs and returns on any storage error.
+ */
+export async function insertCaseRecord(tenant: string, c: CaseRecord): Promise<void> {
+  try {
+    await maybeMigrateLegacy();
+    const key = caseKey(tenant, c.id);
+    const existing = await getJson<CaseRecord>(key);
+    if (existing && existing.lastActivity >= c.lastActivity) return;
+    await setJson(key, c);
+    const idx = await readIndex(tenant);
+    const pos = idx.entries.findIndex((e) => e.id === c.id);
+    if (pos === -1) {
+      idx.entries.unshift(entryFromCase(c));
+    } else {
+      idx.entries[pos] = entryFromCase(c);
+    }
+    await writeIndex(tenant, idx.entries);
+    await bumpMeta(tenant, "write");
+  } catch (err) {
+    console.warn("[case-vault] insertCaseRecord non-fatal:", err instanceof Error ? err.message : String(err));
+  }
+}
+
 export async function deleteCaseById(
   tenant: string,
   id: string,

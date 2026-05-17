@@ -55,6 +55,32 @@ const UAE_156_STATIC_SEED: ControlledGoodsEntry[] = [
   { listId: "uae_156_2025", hsCode: "8456.10", description: "Laser machine-tools — Wassenaar precision manufacturing", category: "dual_use", controlReason: "CR 156/2025 Dual-Use" },
 ];
 
+const EU_DUAL_USE_STATIC_SEED: ControlledGoodsEntry[] = [
+  { listId: "eu_dual_use", hsCode: "8486.10", description: "Semiconductor lithography equipment", category: "dual_use", controlReason: "EU 2021/821 Annex I Cat.3 — nuclear dual-use" },
+  { listId: "eu_dual_use", hsCode: "8486.20", description: "Ion implantation machines for semiconductor manufacture", category: "dual_use", controlReason: "EU 2021/821 Annex I Cat.3 — semiconductor processing" },
+  { listId: "eu_dual_use", hsCode: "8471.50", description: "Processing units for computers — HPC class", category: "dual_use", controlReason: "EU 2021/821 Annex I Cat.4 — cryptography and computers" },
+  { listId: "eu_dual_use", hsCode: "2524.10", description: "Crocidolite (asbestos) and products", category: "dual_use", controlReason: "EU 2021/821 Annex I Cat.1 — chemicals" },
+  { listId: "eu_dual_use", hsCode: "8806.91", description: "Unmanned aircraft (MTOW >150kg)", category: "missile", controlReason: "EU 2021/821 Annex I Cat.9 — aerospace and propulsion" },
+  { listId: "eu_dual_use", hsCode: "8412.10", description: "Reaction engines — controlled thrust range", category: "missile", controlReason: "EU 2021/821 Annex I Cat.9 — propulsion" },
+  { listId: "eu_dual_use", hsCode: "8543.70", description: "IMSI catchers and lawful-intercept devices", category: "cyber_surveillance", controlReason: "EU 2021/821 Annex I Cat.5 — telecom and IP security" },
+  { listId: "eu_dual_use", hsCode: "9014.80", description: "Inertial navigation equipment — MTCR Cat.II", category: "dual_use", controlReason: "EU 2021/821 Annex I Cat.7 — navigation and avionics" },
+  { listId: "eu_dual_use", hsCode: "2612.10", description: "Uranium ores and concentrates", category: "nuclear", controlReason: "EU 2021/821 Annex I Cat.0 — nuclear materials" },
+  { listId: "eu_dual_use", hsCode: "2844.10", description: "Natural uranium, alloys and compounds", category: "nuclear", controlReason: "EU 2021/821 Annex I Cat.0 — nuclear materials" },
+];
+
+const US_CCL_STATIC_SEED: ControlledGoodsEntry[] = [
+  { listId: "us_ccl", hsCode: "8486.10", description: "Semiconductor manufacturing equipment — EAR99 exclusions apply", category: "dual_use", controlReason: "15 CFR Pt.774 ECCN 3B001 — manufacturing and test equipment" },
+  { listId: "us_ccl", hsCode: "8471.50", description: "High-performance computing units — export-controlled chips", category: "dual_use", controlReason: "15 CFR Pt.774 ECCN 4A003 — computers" },
+  { listId: "us_ccl", hsCode: "8806.91", description: "Military UAS — ITAR/EAR dual coverage", category: "missile", controlReason: "15 CFR Pt.774 ECCN 9A012 — aircraft and related articles" },
+  { listId: "us_ccl", hsCode: "8412.10", description: "Reaction engines — MTCR-controlled propulsion systems", category: "missile", controlReason: "15 CFR Pt.774 ECCN 9A001 — aircraft engines" },
+  { listId: "us_ccl", hsCode: "8543.70", description: "Surveillance / monitoring equipment — encryption-capable", category: "cyber_surveillance", controlReason: "15 CFR Pt.774 ECCN 5A002 — telecommunications and information security" },
+  { listId: "us_ccl", hsCode: "9014.80", description: "GPS/INS navigation systems — Cat.7 controlled", category: "dual_use", controlReason: "15 CFR Pt.774 ECCN 7A001 — navigation and avionics" },
+  { listId: "us_ccl", hsCode: "2612.10", description: "Uranium ores — NRC-licensed export", category: "nuclear", controlReason: "15 CFR Pt.774 ECCN 0C001 — nuclear materials" },
+  { listId: "us_ccl", hsCode: "2844.20", description: "Enriched uranium — DOE/NRC export authorisation", category: "nuclear", controlReason: "15 CFR Pt.774 ECCN 0C002 — source and special nuclear materials" },
+  { listId: "us_ccl", hsCode: "2930.90", description: "Organo-sulfur chemicals — CWC Schedule 1 precursors", category: "chemical", controlReason: "15 CFR Pt.774 ECCN 1C011 — precursor chemicals" },
+  { listId: "us_ccl", hsCode: "9301.00", description: "Military weapons and parts — ITAR/EAR overlap", category: "weapons_munitions", controlReason: "15 CFR Pt.774 ECCN 0A501 — firearms and parts" },
+];
+
 async function fetchWithTimeout(url: string): Promise<Response | null> {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
@@ -105,6 +131,20 @@ export default async function handler(_req: Request): Promise<Response> {
         try {
           await store.set(`current/${spec.listId}.json`, JSON.stringify(UAE_156_STATIC_SEED));
           outcomes.push({ listId: spec.listId, ok: true, entries: UAE_156_STATIC_SEED.length, error: "static seed (no live feed)" });
+        } catch (err) {
+          outcomes.push({ listId: spec.listId, ok: false, error: `static seed write failed: ${err instanceof Error ? err.message : String(err)}` });
+        }
+      } else if (spec.listId === "eu_dual_use") {
+        try {
+          await store.set(`current/${spec.listId}.json`, JSON.stringify(EU_DUAL_USE_STATIC_SEED));
+          outcomes.push({ listId: spec.listId, ok: true, entries: EU_DUAL_USE_STATIC_SEED.length, error: "static seed (no live feed)" });
+        } catch (err) {
+          outcomes.push({ listId: spec.listId, ok: false, error: `static seed write failed: ${err instanceof Error ? err.message : String(err)}` });
+        }
+      } else if (spec.listId === "us_ccl") {
+        try {
+          await store.set(`current/${spec.listId}.json`, JSON.stringify(US_CCL_STATIC_SEED));
+          outcomes.push({ listId: spec.listId, ok: true, entries: US_CCL_STATIC_SEED.length, error: "static seed (no live feed)" });
         } catch (err) {
           outcomes.push({ listId: spec.listId, ok: false, error: `static seed write failed: ${err instanceof Error ? err.message : String(err)}` });
         }

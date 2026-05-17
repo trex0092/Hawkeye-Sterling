@@ -111,7 +111,7 @@ export function getStore(): MinimalStore {
       list: async (opts) => {
         try {
           const r = await ns.list({ ...(opts?.prefix ? { prefix: opts.prefix } : {}) });
-          return { blobs: r.blobs.map((b) => ({ key: b.key })) };
+          return { blobs: r.blobs.map((b: { key: string }) => ({ key: b.key })) };
         } catch (err) {
           if (onNetlify) throw err;
           if (!usingInMemoryFallback) {
