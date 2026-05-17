@@ -44,6 +44,7 @@ import {
 // netlify.toml; local dev runs `npm run build` at the root once to produce dist/.
 // @brain/* is resolved via web/tsconfig.json paths → ../dist/src/brain/*.
 import { quickScreen as brainQuickScreen } from "@brain/quick-screen.js";
+import { getCountryRisk } from "@/lib/server/high-risk-countries";
 
 // ── Sanctions list health snapshot ─────────────────────────────────────────
 // Attached to every screening response so audit records capture which lists
@@ -556,6 +557,29 @@ export async function POST(req: Request): Promise<NextResponse> {
     ]);
     const screeningWarnings = listHealth ? buildScreeningWarnings(listHealth) : [];
 
+    // _provenance — compact machine-readable summary of list health at
+    // screening time. Used by MCP call_api and diagnostic tools.
+    const missingLists = listHealth
+      ? Object.entries(listHealth).filter(([, e]) => e.status === "missing").map(([id]) => id)
+      : [];
+    const staleListIds = listHealth
+      ? Object.entries(listHealth).filter(([, e]) => e.status === "stale").map(([id]) => id)
+      : [];
+    const degradedListIds = listHealth
+      ? Object.entries(listHealth).filter(([, e]) => e.entityCount === 0 && e.status !== "missing").map(([id]) => id)
+      : [];
+
+    // riskLevel — AML risk tier based on FATF/UAE country classification
+    // for the subject's nationality and/or jurisdiction. Distinct from
+    // `severity` which reflects the match quality against sanctions lists.
+    const subjectCountry = subject.nationality ?? subject.jurisdiction;
+    const countryRisk = getCountryRisk(subjectCountry);
+    const riskLevel: string = countryRisk
+      ? countryRisk.tier === "blacklist" ? "very_high"
+        : countryRisk.tier === "greylist" ? "high"
+        : "medium"
+      : "standard";
+
     // Write tamper-evident audit chain entry. Fire-and-forget: must never
     // block the screening response. Failure logged inside writeAuditChainEntry.
     void writeAuditChainEntry({
@@ -620,6 +644,16 @@ export async function POST(req: Request): Promise<NextResponse> {
         // is a false clear, not a real one.
         ...(listHealth ? { listHealthAtScreeningTime: listHealth } : {}),
         ...(screeningWarnings.length > 0 ? { screeningWarnings } : {}),
+        // Machine-readable provenance — list health at screening time.
+        _provenance: {
+          listsChecked: result.listsChecked,
+          missingLists,
+          staleListIds,
+          degradedListIds,
+        },
+        // Country-risk tier from FATF/UAE classification (separate from match severity).
+        riskLevel,
+        ...(countryRisk ? { riskBasis: countryRisk.basis } : {}),
       } as QuickScreenResponse,
       gateHeaders,
     );
