@@ -49,6 +49,7 @@ import { insertCaseRecord } from "@/lib/server/case-vault";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { saveSubject, getSubject } from "../pkyc/_store";
 import type { CaseRecord } from "@/lib/types";
+import { saveEnrichmentJob, completeEnrichmentJob } from "@/lib/server/enrichment-jobs";
 
 // ── Sanctions list health snapshot ─────────────────────────────────────────
 // Attached to every screening response so audit records capture which lists
@@ -193,6 +194,11 @@ export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req, { requireAuth: true });
   if (!gate.ok) return gate.response;
   const gateHeaders: Record<string, string> = gate.ok ? gate.headers : {};
+
+  // When the poll endpoint re-calls quick-screen for full enrichment it sets
+  // this header. With it present, the hard-deadline early-return is skipped
+  // so the adapters run to completion and the result is written to the job blob.
+  const enrichJobId = req.headers.get("x-enrich-job-id") ?? null;
 
   let body: QuickScreenRequestBody;
   try {
@@ -380,7 +386,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     // The client can re-poll for an enriched result if needed.
     const HARD_DEADLINE_MS = 2_800;
     const elapsedMs = Date.now() - t0;
-    if (elapsedMs >= HARD_DEADLINE_MS - 100) {
+    if (!enrichJobId && elapsedMs >= HARD_DEADLINE_MS - 100) {
       // Audit chain must fire even when the enrichment deadline is exceeded.
       // Peek at listHealthPromise without adding latency — it may already be resolved.
       const peekHealth1 = await Promise.race([listHealthPromise, Promise.resolve(null)]);
@@ -397,9 +403,12 @@ export async function POST(req: Request): Promise<NextResponse> {
         listsDegraded: earlyDegraded1,
         enrichmentPending: true,
       });
+      const newJobId1 = `hwk-e-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      void saveEnrichmentJob(newJobId1, subject, { ok: true, ...result } as Record<string, unknown>);
       return respond(200, {
         ok: true, ...result,
         enrichmentPending: true,
+        enrichJobId: newJobId1,
         latencyMs: Date.now() - t0,
       } as QuickScreenResponse, gateHeaders);
     }
@@ -496,9 +505,14 @@ export async function POST(req: Request): Promise<NextResponse> {
         listsDegraded: earlyDegraded2,
         enrichmentPending: true,
       });
+      const newJobId2 = enrichJobId ?? `hwk-e-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      if (!enrichJobId) {
+        void saveEnrichmentJob(newJobId2, subject, { ok: true, ...result } as Record<string, unknown>);
+      }
       return respond(200, {
         ok: true, ...result,
         enrichmentPending: true,
+        enrichJobId: newJobId2,
         latencyMs: Date.now() - t0,
       } as QuickScreenResponse, gateHeaders);
     }
@@ -775,12 +789,10 @@ export async function POST(req: Request): Promise<NextResponse> {
       })();
     }
 
-    return respond(
-      200,
-      {
-        ok: true,
-        ...finalResult,
-        reasoning,
+    const fullPayload = {
+      ok: true,
+      ...finalResult,
+      reasoning,
         ...(openSanctionsResults.length > 0
           ? { openSanctionsAugmentation: openSanctionsResults.slice(0, HIT_LIMIT_AUG_LOW) }
           : {}),
@@ -840,9 +852,13 @@ export async function POST(req: Request): Promise<NextResponse> {
         // Country-risk tier from FATF/UAE classification (separate from match severity).
         riskLevel,
         ...(countryRisk ? { riskBasis: countryRisk.basis } : {}),
-      } as QuickScreenResponse,
-      gateHeaders,
-    );
+    } as QuickScreenResponse;
+    // If this was a re-enrichment poll call, persist the full result so
+    // subsequent polls return the cached enriched data without re-running adapters.
+    if (enrichJobId) {
+      void completeEnrichmentJob(enrichJobId, fullPayload as Record<string, unknown>);
+    }
+    return respond(200, fullPayload, gateHeaders);
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);
     if (Date.now() - t0 > 3000) console.warn(`[quick-screen] slow response latencyMs=${Date.now() - t0}`);
