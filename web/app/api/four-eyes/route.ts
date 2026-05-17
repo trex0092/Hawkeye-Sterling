@@ -91,8 +91,16 @@ async function generateApprovalSummary(
 async function handleGet(req: Request): Promise<NextResponse> {
   const url = new URL(req.url);
   const wantStatus = url.searchParams.get("status")?.trim();
-  const keys = await listKeys("four-eyes/");
-  const loaded = await Promise.all(keys.map((k) => getJson<FourEyesItem>(k)));
+  let keys: string[];
+  try {
+    keys = await listKeys("four-eyes/");
+  } catch (err) {
+    console.warn("[hawkeye] four-eyes GET listKeys failed:", err instanceof Error ? err.message : String(err));
+    return NextResponse.json({ ok: true, count: 0, items: [] }, { headers: {} });
+  }
+  const loaded = await Promise.all(
+    keys.map((k) => getJson<FourEyesItem>(k).catch(() => null)),
+  );
   let items = loaded.filter((s): s is FourEyesItem => s !== null);
   if (wantStatus && ALLOWED_STATUSES.has(wantStatus as FourEyesStatus)) {
     items = items.filter((i) => i.status === wantStatus);
@@ -156,6 +164,18 @@ async function handlePost(req: Request): Promise<NextResponse> {
   };
 
   await setJson(`four-eyes/${id}`, enrichedItem);
+
+  // Write audit chain entry for the enqueue action (fire-and-forget).
+  void writeAuditChainEntry({
+    event: "four_eyes.enqueued",
+    actor: initiatedBy,
+    caseId: subjectId,
+    itemId: id,
+    subjectName: enrichedItem.subjectName,
+    fourEyesAction: enrichedItem.action,
+    reason: enrichedItem.reason,
+  });
+
   return NextResponse.json({ ok: true, item: enrichedItem }, { headers: {} });
 }
 

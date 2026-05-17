@@ -1308,13 +1308,27 @@ async function _handleGet(isAdmin: boolean, gateHeaders: Record<string, string> 
   const servicesDown = [...internalChecks, ...externalChecks]
     .filter((c) => c.status !== "operational")
     .map((c) => ({ name: c.name, status: c.status, note: c.note }));
+  // Adapters that legitimately return 0 entities (seed/supplement only) — exempt
+  // from the "degraded" check so they don't create false-positive red signals.
+  // Mirrors emptyEntityCountExpected() in /api/sanctions/status.
+  const EXEMPT_ZERO_ENTITY = new Set(["uae_eocn", "uae_ltl"]);
   const listsFreshness: Record<string, { lastRefreshed: string | null; ageHours: number | null; entityCount: number | null; status: string }> = {};
   for (const l of sanctions.lists) {
+    let listStatus: string;
+    if (l.ageH === null) {
+      listStatus = "missing";
+    } else if (l.ageH > 48) {
+      listStatus = "stale";
+    } else if (l.recordCount === 0 && !EXEMPT_ZERO_ENTITY.has(l.id)) {
+      listStatus = "degraded";
+    } else {
+      listStatus = "healthy";
+    }
     listsFreshness[l.id] = {
       lastRefreshed: l.ageH !== null ? new Date(Date.now() - l.ageH * 3_600_000).toISOString() : null,
       ageHours: l.ageH,
       entityCount: l.recordCount,
-      status: l.ageH === null ? "missing" : l.ageH > 48 ? "stale" : "healthy",
+      status: listStatus,
     };
   }
 
