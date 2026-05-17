@@ -8,6 +8,7 @@
 
 import type { Config } from "@netlify/functions";
 import { getStore } from "@netlify/blobs";
+import { writeHeartbeat } from "../lib/heartbeat.js";
 
 const MASTER_INBOX = "1214148630166524";
 const DEFAULT_WORKSPACE = "1213645083721316";
@@ -121,12 +122,26 @@ async function createAsanaAlert(notes: string): Promise<void> {
 // Scheduled functions that write heartbeats and their max allowed silence in hours
 // (1.5× their cron interval, rounded up).
 const HEARTBEAT_SPECS: Array<{ label: string; maxSilenceHours: number }> = [
-  { label: "sanctions-watch-15min", maxSilenceHours: 1  }, // every 15 min → alert after 1h
-  { label: "adverse-media-rss",     maxSilenceHours: 2  }, // every 30 min → alert after 2h
-  { label: "refresh-lists",         maxSilenceHours: 10 }, // daily 03:00 → alert after 10h
-  { label: "eocn-poll",             maxSilenceHours: 10 }, // every 6h → alert after 10h
-  { label: "sanctions-watch-1100",  maxSilenceHours: 26 }, // daily 11:00 UTC → alert after 26h
-  { label: "sanctions-watch-1330",  maxSilenceHours: 26 }, // daily 13:30 UTC → alert after 26h
+  { label: "sanctions-watch-15min",  maxSilenceHours: 1  }, // every 15 min → alert after 1h
+  { label: "warm-pool",              maxSilenceHours: 1  }, // every 4 min → alert after 1h
+  { label: "transaction-monitor",    maxSilenceHours: 2  }, // every 1h → alert after 2h
+  { label: "audit-chain-probe",      maxSilenceHours: 2  }, // every 1h → alert after 2h
+  { label: "adverse-media-rss",      maxSilenceHours: 2  }, // every 30 min → alert after 2h
+  { label: "designation-alert-check",maxSilenceHours: 2  }, // every 1h → alert after 2h
+  { label: "sanctions-ingest",       maxSilenceHours: 9  }, // every 4h → alert after 9h
+  { label: "eocn-poll",              maxSilenceHours: 10 }, // every 6h → alert after 10h
+  { label: "goods-control-ingest",   maxSilenceHours: 10 }, // every 6h → alert after 10h
+  { label: "lseg-cfs-poll",          maxSilenceHours: 10 }, // every 6h → alert after 10h
+  { label: "pkyc-monitor",           maxSilenceHours: 10 }, // every 6h → alert after 10h
+  { label: "health-monitor",         maxSilenceHours: 10 }, // every 6h → alert after 10h
+  { label: "refresh-lists",          maxSilenceHours: 10 }, // daily 03:00 → alert after 10h
+  { label: "sanctions-watch-cron",   maxSilenceHours: 26 }, // daily 04:30 UTC → alert after 26h
+  { label: "retention-scheduler",    maxSilenceHours: 26 }, // daily 23:15 UTC → alert after 26h
+  { label: "sanctions-watch-1100",   maxSilenceHours: 26 }, // daily 11:00 UTC → alert after 26h
+  { label: "sanctions-watch-1330",   maxSilenceHours: 26 }, // daily 13:30 UTC → alert after 26h
+  { label: "sanctions-daily-0830",   maxSilenceHours: 26 }, // daily 04:30 UTC → alert after 26h
+  { label: "sanctions-daily-1300",   maxSilenceHours: 26 }, // daily 09:00 UTC → alert after 26h
+  { label: "sanctions-daily-1730",   maxSilenceHours: 26 }, // daily 13:30 UTC → alert after 26h
 ];
 
 interface HeartbeatEntry {
@@ -232,6 +247,7 @@ export default async (_req: Request): Promise<Response> => {
   );
 
   if (!degraded) {
+    await writeHeartbeat("health-monitor");
     return new Response(
       JSON.stringify({ ok: true, healthyLists: healthyCount, staleLists: staleLists.length, heartbeatAlerts: [], checkedAt }),
       { status: 200, headers: { "content-type": "application/json" } },
@@ -298,6 +314,7 @@ export default async (_req: Request): Promise<Response> => {
   tasks.push(createAsanaAlert(alertNotes));
   await Promise.allSettled(tasks);
 
+  await writeHeartbeat("health-monitor");
   return new Response(
     JSON.stringify({ ok: false, degraded: true, healthyLists: healthyCount, staleLists, missingLists, heartbeatAlerts, checkedAt }),
     { status: 200, headers: { "content-type": "application/json" } },

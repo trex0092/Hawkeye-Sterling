@@ -6,6 +6,7 @@
 // Controls: 3.01 (ongoing CDD), 3.04 (periodic review), 20.09 (telemetry)
 
 import type { Config } from "@netlify/functions";
+import { writeHeartbeat } from "../lib/heartbeat.js";
 
 export default async (_req: Request) => {
   const base =
@@ -29,6 +30,7 @@ export default async (_req: Request) => {
       signal: controller.signal,
     });
     const body = await res.text();
+    if (res.ok) await writeHeartbeat("pkyc-monitor");
     return new Response(
       JSON.stringify({ triggered: true, status: res.status, body: body.slice(0, 2000), at: new Date().toISOString() }),
       { status: res.ok ? 200 : 502, headers: { "content-type": "application/json" } },

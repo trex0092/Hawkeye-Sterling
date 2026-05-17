@@ -23,6 +23,7 @@
 
 import type { Config } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
+import { writeHeartbeat } from '../lib/heartbeat.js';
 import {
   getPackages,
   getFileSets,
@@ -319,6 +320,7 @@ async function runHandler(req: Request): Promise<Response> {
     durationMs: Date.now() - startedAt,
   };
 
+  await writeHeartbeat(RUN_LABEL);
   return jsonResponse(summary);
 }
 

@@ -62,7 +62,7 @@ export async function writeAuditChainEntry(event: AuditChainEvent): Promise<bool
   try {
     const store = await loadAuditStore();
     const raw = await store.get("chain.json", { type: "json" }) as ChainEntry[] | null;
-    const chain: ChainEntry[] = Array.isArray(raw) ? raw : [];
+    const chain: ChainEntry[] = Array.isArray(raw) ? structuredClone(raw) : [];
     const prev = chain[chain.length - 1];
     const seq = (prev?.seq ?? -1) + 1;
     const at = new Date().toISOString();

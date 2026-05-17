@@ -9,6 +9,7 @@
 
 import type { Config } from "@netlify/functions";
 import { getStore } from "@netlify/blobs";
+import { writeHeartbeat } from "../lib/heartbeat.js";
 
 const STORE_NAME = "hawkeye-goods-control";
 const RUN_LABEL = "goods-control-ingest";
@@ -171,6 +172,7 @@ export default async function handler(_req: Request): Promise<Response> {
     }
   }
 
+  await writeHeartbeat(RUN_LABEL);
   return jsonResponse({
     ok: outcomes.every((o) => o.ok),
     label: RUN_LABEL,

@@ -418,10 +418,7 @@ export default async function handler(req: Request): Promise<Response> {
     return jsonResponse({ ok: false, label: RUN_LABEL, error: `getStore failed: ${err instanceof Error ? err.message : String(err)}` }, 503);
   }
 
-  const outcomes: IngestOutcome[] = [];
-  for (const spec of FEEDS) {
-    outcomes.push(await ingestOne(spec, store));
-  }
+  const outcomes: IngestOutcome[] = await Promise.all(FEEDS.map((spec) => ingestOne(spec, store)));
 
   const totalDiff = outcomes.reduce(
     (acc, o) => ({

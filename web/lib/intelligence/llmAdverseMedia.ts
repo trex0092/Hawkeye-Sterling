@@ -19,7 +19,43 @@
 import type { NewsAdapter, NewsArticle } from "./newsAdapters";
 import { NULL_NEWS_ADAPTER } from "./newsAdapters";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { getStore } from "@/lib/server/store";
 import { AML_KEYWORDS_EN } from "./amlKeywords";
+
+const LLM_CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 h
+
+interface CacheEntry {
+  cachedAt: string;
+  articles: NewsArticle[];
+}
+
+function cacheKey(subjectName: string, jurisdiction?: string, entityType?: string): string {
+  const safe = `${subjectName}|${jurisdiction ?? ""}|${entityType ?? ""}`.replace(/[^A-Za-z0-9|._-]/g, "_").slice(0, 200);
+  return `llm-adverse-media-cache/${safe}`;
+}
+
+async function readCache(key: string): Promise<NewsArticle[] | null> {
+  try {
+    const store = getStore();
+    const raw = await store.get(key);
+    if (!raw) return null;
+    const entry = JSON.parse(raw) as CacheEntry;
+    if (Date.now() - new Date(entry.cachedAt).getTime() > LLM_CACHE_TTL_MS) return null;
+    return entry.articles;
+  } catch {
+    return null;
+  }
+}
+
+async function writeCache(key: string, articles: NewsArticle[]): Promise<void> {
+  try {
+    const store = getStore();
+    const entry: CacheEntry = { cachedAt: new Date().toISOString(), articles };
+    await store.set(key, JSON.stringify(entry));
+  } catch {
+    // non-critical
+  }
+}
 
 const TIMEOUT_MS = 35_000;
 
@@ -111,6 +147,10 @@ export function llmAdverseMediaAdapter(opts: { jurisdiction?: string; entityType
     isAvailable: () => true,
     search: async (subjectName, _query) => {
       void _query;
+      const key = cacheKey(subjectName, opts.jurisdiction, opts.entityType);
+      const cached = await readCache(key);
+      if (cached) return cached;
+
       try {
         const client = getAnthropicClient(apiKey, TIMEOUT_MS);
         const msg = await client.messages.create({
@@ -127,7 +167,7 @@ export function llmAdverseMediaAdapter(opts: { jurisdiction?: string; entityType
         // NewsArticle shape — we synthesize a deterministic placeholder
         // when Claude doesn't recall the canonical URL so the dedupe
         // key remains stable.
-        return parsed.items.map((it, i) => {
+        const articles = parsed.items.map((it, i) => {
           const url = it.url && /^https?:\/\//i.test(it.url)
             ? it.url
             : `claude://adverse-media/${encodeURIComponent(subjectName)}/${i}`;
@@ -142,6 +182,9 @@ export function llmAdverseMediaAdapter(opts: { jurisdiction?: string; entityType
             sentiment: severityWeight,
           } as NewsArticle;
         });
+
+        await writeCache(key, articles);
+        return articles;
       } catch (err) {
         console.warn("[claude-adverse-media] failed:", err instanceof Error ? err.message : err);
         return [];

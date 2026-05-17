@@ -225,13 +225,27 @@ export async function insertCaseRecord(tenant: string, c: CaseRecord): Promise<v
     const key = caseKey(tenant, c.id);
     const existing = await getJson<CaseRecord>(key);
     if (existing && existing.lastActivity >= c.lastActivity) return;
+    // Write the case blob first — it is the authoritative record. UUID keys
+    // (introduced in this audit) eliminate identity collisions entirely.
     await setJson(key, c);
+    // Re-read the index immediately before writing to narrow (not eliminate)
+    // the concurrent-insert race window. Netlify Blobs has no compare-and-swap,
+    // so a narrow window remains; worst case is one index entry lost until the
+    // next reconcile. The case blob itself is always safe.
     const idx = await readIndex(tenant);
     const pos = idx.entries.findIndex((e) => e.id === c.id);
+    const entry = entryFromCase(c);
     if (pos === -1) {
-      idx.entries.unshift(entryFromCase(c));
+      idx.entries.unshift(entry);
+    } else if ((idx.entries[pos]?.lastActivity ?? "") < c.lastActivity) {
+      // Only clobber the index entry if ours is strictly newer — a concurrent
+      // write that finished first may already have advanced the index further.
+      idx.entries[pos] = entry;
     } else {
-      idx.entries[pos] = entryFromCase(c);
+      // Index already has an equal-or-newer entry; skip index write to avoid
+      // overwriting a concurrent insertion, but still bump meta.
+      await bumpMeta(tenant, "write");
+      return;
     }
     await writeIndex(tenant, idx.entries);
     await bumpMeta(tenant, "write");

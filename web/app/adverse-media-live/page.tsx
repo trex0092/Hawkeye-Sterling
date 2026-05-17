@@ -613,14 +613,20 @@ export default function AdverseMediaLivePage() {
                       >
                         {/* Title */}
                         <td className="px-3 py-2.5 max-w-[300px]">
-                          <a
-                            href={article.url}
-                            target="_blank"
-                            rel="noreferrer noopener"
-                            className="text-ink-0 hover:text-brand font-medium leading-snug line-clamp-2"
-                          >
-                            {article.title}
-                          </a>
+                          {/^https?:\/\//i.test(article.url) ? (
+                            <a
+                              href={article.url}
+                              target="_blank"
+                              rel="noreferrer noopener"
+                              className="text-ink-0 hover:text-brand font-medium leading-snug line-clamp-2"
+                            >
+                              {article.title}
+                            </a>
+                          ) : (
+                            <span className="text-ink-0 font-medium leading-snug line-clamp-2" title="LLM recall — no source URL">
+                              {article.title}
+                            </span>
+                          )}
                         </td>
                         {/* Source */}
                         <td className="px-3 py-2.5 whitespace-nowrap">

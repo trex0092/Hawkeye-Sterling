@@ -4,6 +4,7 @@
 
 import type { Config } from "@netlify/functions";
 import { runSanctionsReport } from "../../dist/src/integrations/sanctions-daily-report.js";
+import { writeHeartbeat } from "../lib/heartbeat.js";
 
 export default async (_req: Request): Promise<Response> => {
   const baseUrl =
@@ -17,6 +18,7 @@ export default async (_req: Request): Promise<Response> => {
     baseUrl,
   });
 
+  if (result.ok) await writeHeartbeat("sanctions-daily-1300");
   return new Response(JSON.stringify(result), {
     status: result.ok ? 200 : 500,
     headers: { "content-type": "application/json" },
