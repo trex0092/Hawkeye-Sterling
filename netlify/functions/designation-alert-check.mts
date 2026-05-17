@@ -16,6 +16,18 @@
 import type { Config } from "@netlify/functions";
 import { getStore } from "@netlify/blobs";
 
+async function writeHeartbeat(): Promise<void> {
+  try {
+    const hb = getStore("hawkeye-function-heartbeats");
+    await hb.setJSON("designation-alert-check", {
+      lastSuccess: new Date().toISOString(),
+      label: "designation-alert-check",
+    });
+  } catch (err) {
+    console.warn("[designation-alert-check] heartbeat write failed (non-critical):", err instanceof Error ? err.message : String(err));
+  }
+}
+
 const SANCTIONS_STORE = "hawkeye-sanctions-feeds";
 const FETCH_TIMEOUT_MS = 20_000;
 
@@ -117,7 +129,12 @@ export default async (_req: Request): Promise<Response> => {
               }),
               signal: ctrl.signal,
             });
-            if (res.ok) alertsWritten++;
+            if (res.ok) {
+              alertsWritten++;
+            } else {
+              errors++;
+              console.warn(`[designation-alert-check] /api/alerts POST returned ${res.status} for ${alertId}`);
+            }
           } catch { errors++; }
           finally { clearTimeout(deadline); }
         }
@@ -130,6 +147,7 @@ export default async (_req: Request): Promise<Response> => {
     );
   }
 
+  await writeHeartbeat();
   return new Response(
     JSON.stringify({ ok: true, alertsWritten, errors, at: new Date().toISOString() }),
     { status: 200, headers: { "content-type": "application/json" } },

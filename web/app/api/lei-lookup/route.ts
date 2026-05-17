@@ -23,7 +23,7 @@ export async function GET(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
   const { searchParams } = new URL(req.url);
-  const lei = searchParams.get("lei")?.trim();
+  const lei = searchParams.get("lei")?.trim().toUpperCase();
   const legalName = searchParams.get("legalName")?.trim() ?? searchParams.get("name")?.trim();
   if (!lei && !legalName) {
     return NextResponse.json(
@@ -388,7 +388,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   }
 
-  const lei = body.lei?.trim();
+  const lei = body.lei?.trim().toUpperCase();
   const legalName = body.legalName?.trim();
 
   if (!lei && !legalName) {
