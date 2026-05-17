@@ -378,6 +378,11 @@ export async function POST(req: Request): Promise<NextResponse> {
     const elapsedMs = Date.now() - t0;
     if (elapsedMs >= HARD_DEADLINE_MS - 100) {
       // Audit chain must fire even when the enrichment deadline is exceeded.
+      // Peek at listHealthPromise without adding latency — it may already be resolved.
+      const peekHealth1 = await Promise.race([listHealthPromise, Promise.resolve(null)]);
+      const earlyDegraded1 = peekHealth1
+        ? Object.values(peekHealth1).filter((e) => e.entityCount === 0 && e.status !== "missing").length
+        : 0;
       void writeAuditChainEntry({
         event: "screening.completed",
         actor: gate.record?.email ?? gate.keyId ?? "unknown",
@@ -385,7 +390,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         severity: result.severity,
         hitsCount: result.hits.length,
         listsChecked: result.listsChecked,
-        listsDegraded: 0,
+        listsDegraded: earlyDegraded1,
         enrichmentPending: true,
       });
       return respond(200, {
@@ -473,6 +478,10 @@ export async function POST(req: Request): Promise<NextResponse> {
 
     // If the deadline fired before adapters resolved, return fast-path result.
     if (augRace === "timeout") {
+      const peekHealth2 = await Promise.race([listHealthPromise, Promise.resolve(null)]);
+      const earlyDegraded2 = peekHealth2
+        ? Object.values(peekHealth2).filter((e) => e.entityCount === 0 && e.status !== "missing").length
+        : 0;
       void writeAuditChainEntry({
         event: "screening.completed",
         actor: gate.record?.email ?? gate.keyId ?? "unknown",
@@ -480,7 +489,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         severity: result.severity,
         hitsCount: result.hits.length,
         listsChecked: result.listsChecked,
-        listsDegraded: 0,
+        listsDegraded: earlyDegraded2,
         enrichmentPending: true,
       });
       return respond(200, {

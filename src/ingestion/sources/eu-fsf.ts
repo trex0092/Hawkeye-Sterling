@@ -19,21 +19,31 @@ export const euFsfAdapter: SourceAdapter = {
     const fetchedAt = Date.now();
     const entities: NormalisedEntity[] = [];
 
-    // Diagnostic: log the top-level element names actually present in the
-    // XML root so any future schema change is immediately visible in logs.
     const topTags = [...new Set(root.children.map((c) => c.tag))].slice(0, 10);
-    const sanctionEntries = findAll(root, 'sanctionEntity');
+    let sanctionEntries = findAll(root, 'sanctionEntity');
+
+    // EU FSF schema migration: v1.x uses <sanctionEntity>, v2.x uses <subject>.
+    // Try both so the adapter survives a schema upgrade without a deploy.
     if (sanctionEntries.length === 0) {
-      console.warn(
-        `[eu_fsf] findAll('sanctionEntity') returned 0 nodes. ` +
-        `Top-level tags: [${topTags.join(', ')}]. ` +
-        `XML length: ${xml.length} bytes. ` +
-        `First 300 chars: ${xml.slice(0, 300).replace(/\s+/g, ' ')}`,
-      );
+      const subjectEntries = findAll(root, 'subject');
+      if (subjectEntries.length > 0) {
+        console.info(
+          `[eu_fsf] fallback: found ${subjectEntries.length} <subject> nodes (v2 schema). ` +
+          `Top-level tags: [${topTags.join(', ')}]`,
+        );
+        sanctionEntries = subjectEntries;
+      } else {
+        console.warn(
+          `[eu_fsf] findAll('sanctionEntity'/'subject') both returned 0 nodes. ` +
+          `Top-level tags: [${topTags.join(', ')}]. ` +
+          `XML length: ${xml.length} bytes. ` +
+          `First 400 chars: ${xml.slice(0, 400).replace(/\s+/g, ' ')}`,
+        );
+      }
     }
 
     for (const entry of sanctionEntries) {
-      const logicalId = entry.attrs['logicalId'] ?? entry.attrs['euReferenceNumber'] ?? '';
+      const logicalId = entry.attrs['logicalId'] ?? entry.attrs['euReferenceNumber'] ?? entry.attrs['id'] ?? '';
       const subject = findAll(entry, 'subjectType')[0];
       const subjectCode = subject?.attrs['code']?.toLowerCase();
       const t: EntityType = subjectCode === 'person' ? 'individual'
