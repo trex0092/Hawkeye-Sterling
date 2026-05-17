@@ -113,23 +113,21 @@ async function loadFromBlobs(): Promise<QuickScreenCandidate[] | null> {
   }
 
   const { getStore } = blobsMod;
-  // Use explicit credentials (NETLIFY_API_TOKEN = proper PAT) whenever they
-  // are available. NETLIFY_API_TOKEN is checked first so the proper PAT takes
-  // precedence over NETLIFY_BLOBS_TOKEN which may be a non-PAT custom value.
-  // Next.js API routes do NOT receive NETLIFY_BLOBS_CONTEXT auto-injection
-  // from plugin-nextjs, so without explicit credentials the store opens
-  // against an unbound context and every read returns null → seed-corpus
-  // fallback → LISTS_MISSING gate fires even when the lists are healthy.
+  // Next.js API routes do NOT receive NETLIFY_BLOBS_CONTEXT auto-injection from
+  // plugin-nextjs — explicit credentials are always required. NETLIFY_BLOBS_TOKEN
+  // is the confirmed working token for blob access from Next.js routes (v8 audit).
+  // Read from hawkeye-list-reports: ingestion writes {…report, entities} there,
+  // making entity data accessible without the auto-injection constraint.
   const siteID = process.env["NETLIFY_SITE_ID"] ?? process.env["SITE_ID"];
   const token =
+    process.env["NETLIFY_BLOBS_TOKEN"] ??
     process.env["NETLIFY_API_TOKEN"] ??
-    process.env["NETLIFY_AUTH_TOKEN"] ??
-    process.env["NETLIFY_BLOBS_TOKEN"];
+    process.env["NETLIFY_AUTH_TOKEN"];
 
   const storeOpts =
     siteID && token
-      ? ({ name: "hawkeye-lists", siteID, token, consistency: "strong" } as Parameters<typeof getStore>[0])
-      : ({ name: "hawkeye-lists" } as Parameters<typeof getStore>[0]);
+      ? ({ name: "hawkeye-list-reports", siteID, token, consistency: "strong" } as Parameters<typeof getStore>[0])
+      : ({ name: "hawkeye-list-reports" } as Parameters<typeof getStore>[0]);
 
   let store: ReturnType<typeof getStore>;
   try {

@@ -41,7 +41,14 @@ export async function GET(req: Request): Promise<NextResponse> {
       );
     }
 
-    const store = blobsMod.getStore(STORE_NAME);
+    const siteID = process.env["NETLIFY_SITE_ID"] ?? process.env["SITE_ID"];
+    const blobsToken =
+      process.env["NETLIFY_BLOBS_TOKEN"] ??
+      process.env["NETLIFY_API_TOKEN"] ??
+      process.env["NETLIFY_AUTH_TOKEN"];
+    const store = siteID && blobsToken
+      ? blobsMod.getStore({ name: STORE_NAME, siteID, token: blobsToken, consistency: "strong" })
+      : blobsMod.getStore(STORE_NAME);
     const raw = await store.get(SNAPSHOT_KEY, { type: "text" }).catch(() => null) as string | null;
     if (!raw) {
       return NextResponse.json(

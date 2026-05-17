@@ -28,6 +28,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import type { ApiKeyRecord } from "@/lib/server/api-keys";
 import { getJson, setJson, listKeys } from "@/lib/server/store";
+import { getEntity } from "@/lib/config/entities";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -49,6 +50,7 @@ interface SarRecord {
 interface FourEyesItem {
   id: string;
   subjectId: string;
+  caseId?: string;
   subjectName: string;
   action: string;
   initiatedBy: string;
@@ -84,12 +86,12 @@ async function checkFourEyes(caseId: string, req: Request): Promise<{
   const items = loaded.filter((i): i is FourEyesItem => i !== null);
 
   // Filter to approvals relevant to this case: action "str" or "escalate",
-  // status "approved", and where the subjectId or id contains the caseId.
+  // status "approved", matching via caseId (explicit), subjectId, or item id.
   const relevant = items.filter(
     (i) =>
       i.status === "approved" &&
       (i.action === "str" || i.action === "escalate" || i.action === "freeze") &&
-      (i.subjectId === caseId || i.id === caseId),
+      (i.caseId === caseId || i.subjectId === caseId || i.id === caseId),
   );
 
   // Count distinct approvers (initiatedBy is the first signer, approvedBy is the second).
@@ -157,6 +159,25 @@ async function handlePost(req: Request, callerRecord: ApiKeyRecord | null): Prom
   }
   if (!narrative) {
     return NextResponse.json({ ok: false, error: "narrative required" }, { status: 400 });
+  }
+
+  // ── Reporting entity sanity check ─────────────────────────────────────────
+  // Block SAR generation when the entity hasn't been configured with a real
+  // FIU-assigned goAML reporting entity ID. A SAR generated with a placeholder
+  // ID will be rejected by goAML and constitutes a regulatory filing failure.
+  const reportingEntity = getEntity();
+  if (reportingEntity.goamlRentityId === "PENDING_FIU_ASSIGNMENT") {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: "reporting_entity_not_configured",
+        message:
+          "Cannot generate SAR: reporting entity goAML ID is still set to the placeholder value " +
+          "'PENDING_FIU_ASSIGNMENT'. Configure a real FIU-assigned goamlRentityId in HAWKEYE_ENTITIES " +
+          "before submitting any regulatory filings.",
+      },
+      { status: 503 },
+    );
   }
 
   // ── Four-eyes pre-check (UAE FDL 10/2025 Art.16) ─────────────────────────

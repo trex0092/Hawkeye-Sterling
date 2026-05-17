@@ -76,15 +76,16 @@ async function fetchListHealth(): Promise<ListHealthSnapshot> {
   try {
     const { getStore } = await import("@netlify/blobs");
     const siteID = process.env["NETLIFY_SITE_ID"] ?? process.env["SITE_ID"];
-    // NETLIFY_API_TOKEN (proper PAT) must precede NETLIFY_BLOBS_TOKEN (may be
-    // a custom non-PAT value that causes 401 on explicit-credential reads).
+    // NETLIFY_BLOBS_TOKEN is the confirmed working token for blob access from
+    // Next.js routes (v8 audit). Read from hawkeye-list-reports which has
+    // entity data co-written by ingestion alongside the report metadata.
     const token =
+      process.env["NETLIFY_BLOBS_TOKEN"] ??
       process.env["NETLIFY_API_TOKEN"] ??
-      process.env["NETLIFY_AUTH_TOKEN"] ??
-      process.env["NETLIFY_BLOBS_TOKEN"];
+      process.env["NETLIFY_AUTH_TOKEN"];
     store = siteID && token
-      ? getStore({ name: "hawkeye-lists", siteID, token, consistency: "strong" })
-      : getStore({ name: "hawkeye-lists" });
+      ? getStore({ name: "hawkeye-list-reports", siteID, token, consistency: "strong" })
+      : getStore({ name: "hawkeye-list-reports" });
   } catch {
     for (const id of LIST_IDS) {
       snapshot[id] = { entityCount: null, ageHours: null, status: "missing" };
@@ -145,6 +146,8 @@ export const maxDuration = 30;
 
 interface QuickScreenRequestBody {
   subject?: QuickScreenSubject;
+  /** Backward-compat: first element used when subject is absent. */
+  subjects?: QuickScreenSubject[];
   candidates?: QuickScreenCandidate[];
   options?: QuickScreenOptions;
   evidenceUrls?: string[];        // operator-provided adverse-media URLs to ingest as evidence
@@ -194,7 +197,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     return respond(400, { ok: false, error: "invalid JSON body" }, gateHeaders);
   }
 
-  const rawSubject = body.subject;
+  // Accept {subject:{}} (primary) or {subjects:[]} (backward-compat array form).
+  const rawSubject = body.subject ?? (Array.isArray(body.subjects) ? body.subjects[0] : undefined);
   // If the caller supplies candidates use them; otherwise screen against the
   // live ingested watchlists (OFAC, UN, EU, UK, UAE-EOCN/LTL + seed corpus).
   const callerCandidates = body.candidates;
