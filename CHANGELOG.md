@@ -1,5 +1,60 @@
 # Hawkeye Sterling — Changelog
 
+## [v3-remediation] — 2026-05-17
+
+FATF 5th Round Mutual Evaluation readiness — 19-section V3 Definitive Remediation.
+Branch: `claude/hawkeye-sterling-audit-v9-AqP7h`.
+
+### Section 0 — Codebase Map (Gate Passed)
+- Full inventory: 411 API routes, 12 sanctions adapters, 26 cron functions, 117 tests
+- 2 moderate npm vulnerabilities identified (PostCSS/Next.js) — tracked in SECURITY-NOTES.md
+- All env vars documented in ENV_VARS_REQUIRED.md
+
+### Section 5 — Admin: Refresh Sanctions
+- New `POST /api/admin/refresh-sanctions` — triggers full `runIngestionAll()` run
+- Protected by `withGuard`, `maxDuration = 60`
+- Calls `invalidateCandidateCache()` after run; returns per-adapter results
+
+### Section 7 — Four-Eyes: Expire Endpoint
+- New `POST /api/four-eyes/expire` — marks pending items as `expired`
+- Supports single-item expiry (`itemId`) and bulk expiry of overdue items (`expireOverdueAll: true`)
+- Configurable threshold in hours (default 24 h, max 720 h)
+- Writes `four_eyes.expired` audit chain entry per item
+
+### Section 8 — Batch Screening (Simple Endpoint)
+- New `POST /api/screen/batch` — lightweight screening for ≤ 20 subjects
+- Hard cap enforced: 20 subjects max; returns 400 with hint for larger batches
+- Dedup guard: rejects batches containing duplicate subject names (case-insensitive)
+- Returns `band`, `recommendation`, `lists`, `topHitName` per subject
+- Writes `batch_screen.completed` audit chain entry with elevated count
+
+### Section 9 — Audit Trail Export + Verify
+- New `GET /api/audit-trail/export?from=<ISO>&to=<ISO>&format=json|csv` — download export
+- New `GET /api/audit-trail/verify` — full FNV-1a chain integrity walk
+- Both protected by `withGuard`
+
+### Section 12 — Regulatory Feed Filters
+- Three-layer filtering added to `GET /api/regulatory-feed`:
+  - Whitelist filter (40+ AML-domain patterns)
+  - Keyword filter (38 AML/CFT/CPF terms)
+  - Freshness filter (180-day cutoff)
+- Response includes `meta` block with rejection counts per filter layer
+
+### Section 14 — Health + Status Uplift
+- `GET /api/health` upgraded to 207 multi-status (lists present/missing → tiered 200/503)
+- `GET /api/status` includes UAE seed path warnings and Redis availability flag
+
+### Section 16 — LSEG Status
+- `GET /api/admin/lseg-status` — credential presence check and CFS index state
+- Values never returned; boolean presence flags only
+
+### Section 19 — Documentation
+- Added `LSEG_ACTIVATION.md` — step-by-step LSEG World-Check activation guide
+- Added `SECURITY-NOTES.md` — security architecture (auth, audit chain, CORS, rate-limit, secrets)
+- Updated `CHANGELOG.md` (this file) with V3 remediation sections
+
+---
+
 ## [v9-audit] — 2026-05-17
 
 Production-readiness uplift covering 18 audit phases. All changes on branch
