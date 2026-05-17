@@ -124,15 +124,15 @@ async function handleGet(req: Request): Promise<NextResponse> {
   return NextResponse.json({ ok: true, count: filtered.length, records: filtered });
 }
 
-async function handlePost(req: Request, callerRecord: ApiKeyRecord | null): Promise<NextResponse> {
+async function handlePost(req: Request, callerRecord: ApiKeyRecord | null, gateHeaders: Record<string, string> = {}): Promise<NextResponse> {
   let raw: unknown;
   try {
     raw = await req.json();
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400, headers: gateHeaders });
   }
   if (!isRecord(raw)) {
-    return NextResponse.json({ ok: false, error: "body must be a JSON object" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "body must be a JSON object" }, { status: 400, headers: gateHeaders });
   }
 
   const caseId = str(raw["caseId"]);
@@ -149,16 +149,16 @@ async function handlePost(req: Request, callerRecord: ApiKeyRecord | null): Prom
     if (callerRole !== "mlro" && callerRole !== "compliance_admin") {
       return NextResponse.json(
         { ok: false, error: "Insufficient permissions to bypass four-eyes requirement" },
-        { status: 403 },
+        { status: 403, headers: gateHeaders },
       );
     }
   }
 
   if (!caseId) {
-    return NextResponse.json({ ok: false, error: "caseId required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "caseId required" }, { status: 400, headers: gateHeaders });
   }
   if (!narrative) {
-    return NextResponse.json({ ok: false, error: "narrative required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "narrative required" }, { status: 400, headers: gateHeaders });
   }
 
   // ── Reporting entity sanity check ─────────────────────────────────────────
@@ -176,7 +176,7 @@ async function handlePost(req: Request, callerRecord: ApiKeyRecord | null): Prom
           "'PENDING_FIU_ASSIGNMENT'. Configure a real FIU-assigned goamlRentityId in HAWKEYE_ENTITIES " +
           "before submitting any regulatory filings.",
       },
-      { status: 503 },
+      { status: 503, headers: gateHeaders },
     );
   }
 
@@ -195,7 +195,7 @@ async function handlePost(req: Request, callerRecord: ApiKeyRecord | null): Prom
           distinctApprovers: feCheck.distinctApprovers,
           action: "POST a four-eyes approval via /api/four-eyes with action='str' before retrying",
         },
-        { status: 403 },
+        { status: 403, headers: gateHeaders },
       );
     }
     console.info(
@@ -271,12 +271,12 @@ async function handlePost(req: Request, callerRecord: ApiKeyRecord | null): Prom
       sarId,
       record,
       ...(sarReportResult ? { report: sarReportResult } : {}),
-    });
+    }, { headers: gateHeaders });
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);
     return NextResponse.json(
       { ok: false, error: "SAR generation failed", detail },
-      { status: 500 },
+      { status: 500, headers: gateHeaders },
     );
   }
 }
@@ -290,5 +290,5 @@ export async function GET(req: Request): Promise<NextResponse> {
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
-  return handlePost(req, gate.record);
+  return handlePost(req, gate.record, gate.headers);
 }

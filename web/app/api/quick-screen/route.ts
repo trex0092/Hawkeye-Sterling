@@ -723,6 +723,7 @@ export async function POST(req: Request): Promise<NextResponse> {
           missingLists,
           staleListIds,
           degradedListIds,
+          listHealthAvailable: listHealth !== null,
         },
         // Country-risk tier from FATF/UAE classification (separate from match severity).
         riskLevel,

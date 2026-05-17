@@ -56,6 +56,7 @@ function buildStoreOptions(): Parameters<typeof getNetlifyStore>[0] {
 
 export function getStore(): MinimalStore {
   if (cached) return cached;
+  const onNetlify = Boolean(process.env["NETLIFY"]) || Boolean(process.env["NETLIFY_LOCAL"]);
   try {
     const ns = getNetlifyStore(buildStoreOptions());
     // IMPORTANT — do NOT flip `usingInMemoryFallback` based on per-operation
@@ -66,7 +67,6 @@ export function getStore(): MinimalStore {
     // through to the wrappers (getJson / setJson / del / listKeys) which
     // already log loudly and return null/empty. usingInMemoryFallback is
     // ONLY set when getNetlifyStore() itself throws on init.
-    const onNetlify = Boolean(process.env["NETLIFY"]) || Boolean(process.env["NETLIFY_LOCAL"]);
     cached = {
       get: async (key) => {
         try {
@@ -132,8 +132,7 @@ export function getStore(): MinimalStore {
     cached = buildMemoryStore();
     usingInMemoryFallback = true;
     const detail = err instanceof Error ? err.message : String(err);
-    const isNetlify = Boolean(process.env["NETLIFY"]) || Boolean(process.env["NETLIFY_LOCAL"]);
-    if (isNetlify) {
+    if (onNetlify) {
       console.error(
         `[store] Netlify Blobs unavailable — falling back to in-memory store. ` +
           `Writes will be lost on cold-start. Reason: ${detail}`,
