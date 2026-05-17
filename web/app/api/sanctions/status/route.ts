@@ -275,10 +275,7 @@ async function handleGet(req: Request): Promise<Response> {
   );
 
   const store = await loadStore();
-  const lists: ListReport[] = [];
-  for (const adapter of ADAPTERS) {
-    lists.push(await inspectList(store, adapter, staleHours));
-  }
+  const lists = await Promise.all(ADAPTERS.map((adapter) => inspectList(store, adapter, staleHours)));
 
   const summary = { healthy: 0, stale: 0, missing: 0, unconfigured: 0, degraded: 0 };
   for (const l of lists) summary[l.status]++;

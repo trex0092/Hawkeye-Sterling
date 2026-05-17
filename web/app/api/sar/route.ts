@@ -282,13 +282,13 @@ async function handlePost(req: Request, callerRecord: ApiKeyRecord | null): Prom
 }
 
 export async function GET(req: Request): Promise<NextResponse> {
-  const gate = await enforce(req as Parameters<typeof enforce>[0]);
-  if (!gate.ok) return gate.response as unknown as NextResponse;
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   return handleGet(req);
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
-  const gate = await enforce(req as Parameters<typeof enforce>[0]);
-  if (!gate.ok) return gate.response as unknown as NextResponse;
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   return handlePost(req, gate.record);
 }

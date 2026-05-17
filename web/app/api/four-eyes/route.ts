@@ -339,11 +339,12 @@ async function handlePatch(req: Request): Promise<NextResponse> {
   void writeAuditChainEntry({
     event: `four_eyes.${action}d`,
     actor: operator,
-    caseId: updated.subjectId,
+    caseId: updated.caseId ?? updated.subjectId,
     itemId: id,
     subjectName: updated.subjectName,
     fourEyesAction: updated.action,
     initiatedBy: updated.initiatedBy,
+    ...(action === "reject" && updated.rejectionReason ? { rejectionReason: updated.rejectionReason } : {}),
   });
 
   // Report to Asana Four-Eyes board — non-blocking, best effort

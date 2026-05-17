@@ -164,12 +164,16 @@ async function loadFromBlobs(): Promise<QuickScreenCandidate[] | null> {
 
   const live: QuickScreenCandidate[] = [];
   let anyLoaded = false;
+  let totalMalformed = 0;
   for (const entities of results) {
     if (!entities?.length) continue;
     anyLoaded = true;
     for (const e of entities) {
-      try { live.push(entityToCandidate(e)); } catch { /* malformed — skip */ }
+      try { live.push(entityToCandidate(e)); } catch { totalMalformed++; }
     }
+  }
+  if (totalMalformed > 0) {
+    console.warn(`[candidates-loader] Skipped ${totalMalformed} malformed entities — screening corpus is incomplete`);
   }
 
   return anyLoaded ? live : null;
