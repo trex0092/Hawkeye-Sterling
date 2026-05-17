@@ -222,7 +222,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   }
 
-  type QuickScreenFn = (subject: QuickScreenSubject, candidates: QuickScreenCandidate[]) => QuickScreenResult;
+  type QuickScreenFn = (_subject: QuickScreenSubject, _candidates: QuickScreenCandidate[]) => QuickScreenResult;
 
   // Dynamic import of quickScreen to avoid cold-start barrel overhead.
   let quickScreen: QuickScreenFn;
