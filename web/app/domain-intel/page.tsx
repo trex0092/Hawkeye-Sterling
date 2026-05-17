@@ -144,7 +144,7 @@ export default function DomainIntelPage() {
                   <div className="space-y-1.5 text-12">
                     <div className="flex justify-between">
                       <span className="text-ink-3">Age</span>
-                      <span className="font-medium text-ink-0">{result.whois.ageInDays != null ? `${result.whois.ageInDays} days` : "—"}</span>
+                      <span className="font-medium text-ink-0">{result.whois.ageInDays !== null ? `${result.whois.ageInDays} days` : "—"}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-ink-3">Registered</span>

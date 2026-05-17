@@ -36,8 +36,30 @@ export type EnforcementResult = EnforcementAllow | { ok: false; response: NextRe
 
 export async function enforce(
   req: Request,
-  opts: { requireAuth?: boolean } = { requireAuth: true },
+  opts: { requireAuth?: boolean; requireJsonBody?: boolean } = { requireAuth: true },
 ): Promise<EnforcementResult> {
+  // Content-Type guard — for JSON-body methods, callers must declare
+  // application/json so the handler can safely call req.json().
+  // Skip GET/HEAD/DELETE/OPTIONS which have no body by convention.
+  // Set requireJsonBody: false to bypass (e.g. multipart upload routes).
+  const bodyMethod = ["POST", "PUT", "PATCH"].includes(req.method);
+  const requireJson = opts.requireJsonBody !== false && bodyMethod;
+  if (requireJson) {
+    const ct = req.headers.get("content-type") ?? "";
+    const hasBody =
+      req.headers.has("content-length")
+        ? (parseInt(req.headers.get("content-length") ?? "0", 10) > 0)
+        : req.headers.has("transfer-encoding");
+    if (hasBody && !ct.toLowerCase().includes("application/json")) {
+      return {
+        ok: false,
+        response: NextResponse.json(
+          { ok: false, error: "Content-Type: application/json required for POST/PUT/PATCH requests with a body", code: "UNSUPPORTED_MEDIA_TYPE" },
+          { status: 415 },
+        ),
+      };
+    }
+  }
   const plaintext = extractKey(req);
   const anonymous = plaintext === null;
 

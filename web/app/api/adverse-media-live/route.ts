@@ -407,7 +407,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   // Fan-out GDELT queries — each name variant wrapped independently so a
   // timeout on one variant cannot abort the others. Each variant routes
   // through the GDELT cache layer (memory → Redis → live).
-  let rawArticles: GdeltArticle[] = [];
+  const rawArticles: GdeltArticle[] = [];
   const gdeltSettled = await Promise.allSettled(variants.map((v) => queryGdelt(v)));
 
   const seenGdeltUrls = new Set<string>();

@@ -61,6 +61,8 @@ export interface QuickScreenHit {
   dobMatch?: DobMatch;
   nationalityMatch?: boolean;
   scores?: Partial<Record<MatchingMethod, number>>;
+  disambiguationConfidence?: number;
+  recommendation?: 'match' | 'review' | 'dismiss';
 }
 
 export interface QuickScreenOptions {
@@ -75,9 +77,17 @@ export interface QuickScreenResult {
   topScore: number;
   severity: QuickScreenSeverity;
   listsChecked: number;
+  /** Every listId seen in the candidate pool (sorted). Structured companion to listsChecked. */
+  listIds?: string[];
   candidatesChecked: number;
   durationMs: number;
   generatedAt: string;
+  // Weighted composite score across all hit lists (0..100).
+  totalWeightedScore?: number;
+  // Aggregate discriminator confidence across all hits (0..100).
+  confidenceScore?: number;
+  // Per-list breakdown — only present when there are hits.
+  listBreakdown?: Record<string, { hits: number; topScore: number; weight: number }>;
   // Populated when the subject matched a tenant-scoped whitelist entry —
   // hits[] is then empty and severity is "clear". Callers can branch on
   // whitelisted !== undefined to render a different UI / verdict.

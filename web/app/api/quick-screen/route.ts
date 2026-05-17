@@ -10,24 +10,19 @@ import type {
 import { enforce } from "@/lib/server/enforce";
 import { loadCandidates } from "@/lib/server/candidates-loader";
 import { lookupWhitelist } from "@/lib/server/whitelist";
-import { LIVE_OPENSANCTIONS_ADAPTER } from "@/lib/intelligence/liveAdapters";
-import { bestCommercialAdapter, activeCommercialProvider } from "@/lib/intelligence/commercialAdapters";
-import { searchAllRegistries } from "@/lib/intelligence/registryAdapters";
+import { LIVE_OPENSANCTIONS_ADAPTER, activeOnChainProviders } from "@/lib/intelligence/liveAdapters";
+import { bestCommercialAdapter, activeCommercialProvider, activeCommercialProviders } from "@/lib/intelligence/commercialAdapters";
+import { searchAllRegistries, activeRegistryProviders } from "@/lib/intelligence/registryAdapters";
 import { searchCountryRegistries } from "@/lib/intelligence/countryRegistries";
 import { searchCountrySanctions } from "@/lib/intelligence/countrySanctions";
-import { searchFreeAdapters } from "@/lib/intelligence/freeAlwaysOnAdapters";
+import { searchFreeAdapters, activeFreeProviders } from "@/lib/intelligence/freeAlwaysOnAdapters";
 import {
   buildScreeningReasoning,
   buildConsensusInputsFromAugmentation,
   buildCoverageGapReport,
 } from "@/lib/intelligence/screeningReasoning";
-import { activeNewsProviders } from "@/lib/intelligence/newsAdapters";
-import { activeCommercialProviders } from "@/lib/intelligence/commercialAdapters";
-import { activeRegistryProviders } from "@/lib/intelligence/registryAdapters";
+import { activeNewsProviders, searchAllNews } from "@/lib/intelligence/newsAdapters";
 import { activeKycProviders } from "@/lib/intelligence/kycVendorAdapters";
-import { activeOnChainProviders } from "@/lib/intelligence/liveAdapters";
-import { activeFreeProviders } from "@/lib/intelligence/freeAlwaysOnAdapters";
-import { searchAllNews } from "@/lib/intelligence/newsAdapters";
 import { ingestUrls } from "@/lib/intelligence/urlIngestion";
 import { llmAdverseMediaAdapter } from "@/lib/intelligence/llmAdverseMedia";
 import { groqAdverseMediaAdapter, geminiAdverseMediaAdapter } from "@/lib/intelligence/llmAdverseMediaAlt";
@@ -147,7 +142,7 @@ const quickScreen = brainQuickScreen as QuickScreenFn;
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 interface QuickScreenRequestBody {
   subject?: QuickScreenSubject;
@@ -871,6 +866,21 @@ export async function POST(req: Request): Promise<NextResponse> {
         // Country-risk tier from FATF/UAE classification (separate from match severity).
         riskLevel,
         ...(countryRisk ? { riskBasis: countryRisk.basis } : {}),
+        // Structured breakdown of list coverage at screening time.
+        // listsChecked (scalar) is preserved for backward compatibility;
+        // listsCheckedDetails adds per-category detail for compliance UIs.
+        ...(listHealth ? {
+          listsCheckedDetails: {
+            total: Object.keys(listHealth).length,
+            checked: listsCheckedWithData,
+            skipped: [
+              ...degradedListIds.map((id) => ({ listId: id, reason: "empty — zero entities" })),
+              ...missingLists.map((id) => ({ listId: id, reason: "missing — no blob" })),
+            ],
+            degraded: staleListIds.map((id) => ({ listId: id, note: "stale — exceeds 36h threshold" })),
+            listIds: finalResult.listIds ?? [],
+          },
+        } : {}),
     } as QuickScreenResponse;
     // If this was a re-enrichment poll call, persist the full result so
     // subsequent polls return the cached enriched data without re-running adapters.

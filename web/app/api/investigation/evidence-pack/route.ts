@@ -53,7 +53,7 @@ function buildFallback(
 
   const entityProfiles: Record<string, string> = {};
   for (const e of entities) {
-    entityProfiles[e.name] = `${e.name} is classified as a ${e.kind ?? e.type ?? "entity"} within the investigation network${e.jurisdiction ? ` registered in ${e.jurisdiction}` : ""}. ${e.relationship ? `Their role in the network: ${e.relationship}.` : ""} ${e.reasoning ?? ""} ${e.riskScore != null ? `Risk score: ${e.riskScore}/100.` : ""}`.trim();
+    entityProfiles[e.name] = `${e.name} is classified as a ${e.kind ?? e.type ?? "entity"} within the investigation network${e.jurisdiction ? ` registered in ${e.jurisdiction}` : ""}. ${e.relationship ? `Their role in the network: ${e.relationship}.` : ""} ${e.reasoning ?? ""} ${e.riskScore !== null ? `Risk score: ${e.riskScore}/100.` : ""}`.trim();
   }
 
   return {

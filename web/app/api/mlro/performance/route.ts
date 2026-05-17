@@ -29,8 +29,7 @@ import {
   hydrateJournal,
 } from "../../../../../dist/src/brain/feedback-journal-instance.js";
 import { hydrateJournalFromBlobs } from "../../../../../dist/src/brain/feedback-journal-blobs.js";
-import { OutcomeFeedbackJournal } from "../../../../../dist/src/brain/outcome-feedback.js";
-import type { OutcomeRecord } from "../../../../../dist/src/brain/outcome-feedback.js";
+import { OutcomeFeedbackJournal, type OutcomeRecord } from "../../../../../dist/src/brain/outcome-feedback.js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

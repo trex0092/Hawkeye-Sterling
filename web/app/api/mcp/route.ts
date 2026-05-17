@@ -15,8 +15,7 @@
 // `generate_report`, `mlro_analyze`, `disposition`, `relationship_graph`.
 
 import { AsyncLocalStorage } from "node:async_hooks";
-import { getToolLevel } from "@/lib/mcp/tool-manifest";
-import type { ConsequenceLevel } from "@/lib/mcp/tool-manifest";
+import { getToolLevel, type ConsequenceLevel } from "@/lib/mcp/tool-manifest";
 import { getSanctionsHealth, GATE_BLOCKED_TOOLS } from "@/lib/mcp/sanctions-gate";
 import {
   checkAndIncrementRate,

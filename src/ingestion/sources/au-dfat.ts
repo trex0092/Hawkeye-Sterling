@@ -225,6 +225,13 @@ export const auDfatAdapter: SourceAdapter = {
       primary.aliases = aliases;
       entities.push(primary);
     }
+    if (entities.length === 0) {
+      throw new Error(
+        `[au_dfat] parsed 0 entities from XLSX (${sheet.rowCount} rows, header at row ${headerRowNum}) — ` +
+        `the column layout may have changed. Check ${SOURCE_URL}.`,
+      );
+    }
+    console.info(`[au_dfat] parsed ${entities.length} entities`);
     return { entities, rawChecksum };
   },
 };

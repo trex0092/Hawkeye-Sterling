@@ -14,8 +14,7 @@
 // withGuard auth gate is the hard line.
 
 import { NextResponse } from "next/server";
-import { withGuard } from "@/lib/server/guard";
-import type { RequestContext } from "@/lib/server/guard";
+import { withGuard, type RequestContext } from "@/lib/server/guard";
 import { getJson, setJson } from "@/lib/server/store";
 import {
   addWhitelistEntry,

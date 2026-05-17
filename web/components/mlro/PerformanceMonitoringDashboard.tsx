@@ -339,7 +339,7 @@ function OverviewTab({
   brierError: string | null;
 }) {
   const eceBreached =
-    brierData != null && brierData.currentEce > (brierData.alertThreshold ?? ECE_ALERT_THRESHOLD);
+    brierData !== null && brierData.currentEce > (brierData.alertThreshold ?? ECE_ALERT_THRESHOLD);
 
   return (
     <div className="space-y-6">

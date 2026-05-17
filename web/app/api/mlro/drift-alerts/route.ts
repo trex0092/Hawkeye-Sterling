@@ -14,8 +14,7 @@ import { enforce } from "@/lib/server/enforce";
 import { getJournal } from "../../../../../dist/src/brain/feedback-journal-instance.js";
 import { hydrateJournalFromBlobs } from "../../../../../dist/src/brain/feedback-journal-blobs.js";
 import { brierScore, logScore } from "../../../../../dist/src/brain/bayesian-update.js";
-import { evaluateDrift } from "../../../../../dist/src/brain/drift-alerts.js";
-import type { DriftAlert, ModeWindowMetrics } from "../../../../../dist/src/brain/drift-alerts.js";
+import { evaluateDrift, type DriftAlert, type ModeWindowMetrics } from "../../../../../dist/src/brain/drift-alerts.js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

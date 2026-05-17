@@ -77,10 +77,10 @@ export const POST = (req: Request) => withMlroLlm<Body, EscalationDecision>(req,
   },
   buildRequest: (body) => {
     const signals: string[] = [];
-    if (body.riskScore != null) signals.push(`Risk score: ${body.riskScore}/100`);
+    if (body.riskScore !== null) signals.push(`Risk score: ${body.riskScore}/100`);
     if (body.sanctionsHits?.length) signals.push(`Sanctions hits: ${body.sanctionsHits.join(", ")}`);
     if (body.pepTier) signals.push(`PEP tier: ${body.pepTier}`);
-    if (body.adverseMediaCount != null) signals.push(`Adverse media hits: ${body.adverseMediaCount}`);
+    if (body.adverseMediaCount !== null) signals.push(`Adverse media hits: ${body.adverseMediaCount}`);
     if (body.typologies?.length) signals.push(`Typologies: ${body.typologies.join(", ")}`);
     if (body.jurisdictions?.length) signals.push(`Jurisdictions: ${body.jurisdictions.join(", ")}`);
     if (body.amountAed != null) signals.push(`Amount (AED): ${body.amountAed.toLocaleString()}`);

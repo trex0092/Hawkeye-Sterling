@@ -44,6 +44,12 @@ export interface RegulatoryItem {
   snippet?: string;
 }
 
+interface FilterMetadata {
+  totalBeforeFilter: number;
+  totalAfterFilter: number;
+  filtersApplied: string[];
+}
+
 interface FeedResult {
   ok: true;
   items: RegulatoryItem[];
@@ -52,6 +58,8 @@ interface FeedResult {
   fetchedAt: string;
   latencyMs: number;
   errors: string[];
+  filterMetadata?: FilterMetadata;
+  lowConfidence?: Array<{ id: string; reason: string }>;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -869,7 +877,7 @@ async function _handleGet(req: Request): Promise<NextResponse> {
   const offsetParam = parseInt(url.searchParams.get("offset") ?? "0", 10);
   const offset = Number.isFinite(offsetParam) && offsetParam >= 0 ? offsetParam : 0;
   const includeArchived = url.searchParams.get("includeArchived") === "true";
-  const ARCHIVE_CUTOFF_MS = 36 * 30 * 24 * 60 * 60 * 1_000; // 36 months
+  const ARCHIVE_CUTOFF_MS = 180 * 24 * 60 * 60 * 1_000; // 180 days
 
   // Return cached payload if still fresh (15-minute TTL) — but only
   // when the caller didn't explicitly ask for a fresh fetch.
@@ -880,6 +888,9 @@ async function _handleGet(req: Request): Promise<NextResponse> {
     if (!includeArchived) {
       const cutoff = Date.now() - ARCHIVE_CUTOFF_MS;
       items = items.filter((i) => {
+        // Static regulatory items (UAE legislation, FATF, OECD standards) are
+        // timeless reference material — exclude from freshness pruning.
+        if (i.id.startsWith("static-") || i.id.startsWith("uae-")) return true;
         const d = new Date(i.publishedAt ?? i.pubDate ?? "").getTime();
         return isNaN(d) || d >= cutoff;
       });
@@ -980,9 +991,63 @@ async function _handleGet(req: Request): Promise<NextResponse> {
     sourcesHit.add("UN Security Council");
   }
 
+  // Source-domain whitelist — applied to GDELT and Google News items only.
+  // Direct scrapers (scrape-*), static items, FATF RSS, OFAC, UN SC are
+  // trusted sources and bypass this filter. The whitelist excludes random
+  // state-government press releases and general news that GDELT/GNews can
+  // surface despite targeted query strings.
+  const TRUSTED_DOMAINS = new Set([
+    // UAE government
+    "moet.gov.ae", "uaeiec.gov.ae", "centralbank.ae", "uaefiu.gov.ae",
+    "eocn.gov.ae", "vara.ae", "moec.gov.ae", "mof.gov.ae", "u.ae",
+    // International bodies
+    "fatf-gafi.org", "un.org", "oecd.org", "egmontgroup.org", "fsb.org",
+    "baselbfs.org", "wolfsberg-principles.com",
+    // Sanctions authorities
+    "ofac.treasury.gov", "treasury.gov", "hmtreasury.gov.uk", "gov.uk",
+    "eeas.europa.eu", "ec.europa.eu", "sanctionsmap.eu",
+    // DPMS / gold
+    "lbma.org.uk", "responsibleminerals.org", "worldgoldcouncil.com",
+    // Law firms
+    "herbertsmithfreehills.com", "simmons-simmons.com", "aoshearman.com",
+    "pinsentmasons.com", "steptoe.com", "gibsondunn.com",
+    // RegTech / compliance media
+    "complyadvantage.com", "trmLabs.com", "trmlabs.com", "kroll.com",
+    "acams.org", "acfcs.org", "finextra.com", "lexology.com",
+    "globalinvestigationsreview.com", "sanctionsnews.com",
+    "regulationtomorrow.com", "mondaq.com",
+  ]);
+
+  function extractDomain(url: string): string {
+    try { return new URL(url).hostname.replace(/^www\./, ""); } catch { return ""; }
+  }
+
+  function isWhitelistedItem(item: RegulatoryItem): boolean {
+    // Only GDELT and GNews items need domain-level vetting.
+    if (!item.id.startsWith("gdelt-") && !item.id.startsWith("gnews-")) return true;
+    const domain = extractDomain(item.url);
+    if (!domain) return false;
+    // Exact match or subdomain of a trusted domain
+    return Array.from(TRUSTED_DOMAINS).some(
+      (td) => domain === td || domain.endsWith(`.${td}`),
+    );
+  }
+
+  const totalBeforeWhitelist = live.length;
+  const whitelistedLive = live.filter(isWhitelistedItem);
+  const whitelistRemovedCount = totalBeforeWhitelist - whitelistedLive.length;
+
+  // Identify low-confidence items: GDELT/GNews items with no snippet/summary.
+  const lowConfidence: Array<{ id: string; reason: string }> = [];
+  for (const item of whitelistedLive) {
+    if ((item.id.startsWith("gdelt-") || item.id.startsWith("gnews-")) && !item.snippet && !item.summary) {
+      lowConfidence.push({ id: item.id, reason: "no snippet — headline only" });
+    }
+  }
+
   // Deduplicate all live items by URL
   const seen = new Set<string>();
-  const deduped = live.filter((item) => {
+  const deduped = whitelistedLive.filter((item) => {
     if (seen.has(item.url)) return false;
     seen.add(item.url);
     return true;
@@ -1020,7 +1085,7 @@ async function _handleGet(req: Request): Promise<NextResponse> {
     return (toneRank[b.tone] ?? 0) - (toneRank[a.tone] ?? 0);
   });
 
-  // Add sourceType to items and exclude items older than 36 months unless
+  // Add sourceType to items and exclude items older than 180 days unless
   // includeArchived is requested.
   const cutoff = Date.now() - ARCHIVE_CUTOFF_MS;
   const sourceTypeMap: Record<string, string> = {
@@ -1039,6 +1104,7 @@ async function _handleGet(req: Request): Promise<NextResponse> {
   let filteredItems = allItems.slice(0, 200);
   if (!includeArchived) {
     filteredItems = filteredItems.filter((i) => {
+      if (i.id.startsWith("static-") || i.id.startsWith("uae-")) return true;
       const d = new Date(i.publishedAt ?? i.pubDate ?? "").getTime();
       return isNaN(d) || d >= cutoff;
     });
@@ -1049,6 +1115,9 @@ async function _handleGet(req: Request): Promise<NextResponse> {
   const totalCount = filteredItems.length;
   const pagedItems = filteredItems.slice(offset, offset + limit);
 
+  const filtersApplied: string[] = ["deduplication"];
+  if (whitelistRemovedCount > 0) filtersApplied.push(`domain-whitelist (removed ${whitelistRemovedCount})`);
+
   const fullPayload: FeedResult = {
     ok: true,
     items: allItems.slice(0, 200),
@@ -1057,6 +1126,12 @@ async function _handleGet(req: Request): Promise<NextResponse> {
     fetchedAt: new Date().toISOString(),
     latencyMs: Date.now() - t0,
     errors,
+    filterMetadata: {
+      totalBeforeFilter: totalBeforeWhitelist,
+      totalAfterFilter: whitelistedLive.length,
+      filtersApplied,
+    },
+    lowConfidence: lowConfidence.length > 0 ? lowConfidence : undefined,
   };
 
   // Write to cache (unfiltered full set)

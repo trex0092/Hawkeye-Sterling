@@ -1,4 +1,5 @@
 import { getStore } from "@/lib/server/store";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import type { QuickScreenSubject } from "@/lib/api/quickScreen.types";
 
 const JOB_PREFIX = "enrichment-jobs/";
@@ -73,6 +74,18 @@ export async function completeEnrichmentJob(
     job.fullResult = fullResult;
     job.completedAt = new Date().toISOString();
     await store.set(jobKey(jobId), JSON.stringify(job));
+    // Write a correlated audit chain entry so the audit trail reflects that
+    // enrichment completed. The original "screening.completed" entry stays
+    // immutable; this new entry references it by enrichJobId for correlation.
+    void writeAuditChainEntry({
+      event: "enrichment.completed",
+      actor: "system",
+      subject: job.subject.name,
+      enrichJobId: jobId,
+      enrichmentPending: false,
+      enrichmentCompletedAt: job.completedAt,
+      enrichmentResultId: jobId,
+    });
   } catch (err) {
     console.warn("[enrichment-jobs] completeEnrichmentJob failed (non-critical):", err instanceof Error ? err.message : String(err));
   }

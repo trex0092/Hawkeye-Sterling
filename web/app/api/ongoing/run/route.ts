@@ -48,6 +48,7 @@ const quickScreen = _quickScreen as QuickScreenFn;
 import { getJson, listKeys, setJson } from "@/lib/server/store";
 import { postWebhook } from "@/lib/server/webhook";
 import { asanaGids } from "@/lib/server/asanaConfig";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -676,6 +677,29 @@ export async function POST(req: Request): Promise<NextResponse> {
             );
           }
         }
+      }
+
+      // Write audit chain entry when there are new sanctions hits — creates
+      // an immutable trail that a regulator can replay to verify ongoing
+      // monitoring is actually running and escalating. Fire-and-forget so
+      // a blob write failure never breaks the screening loop.
+      if (newHits.length > 0) {
+        void writeAuditChainEntry({
+          event: "new_hits_alert",
+          actor: "cron_internal",
+          subjectId: s.id,
+          subjectName: s.name,
+          severity: adjustedSeverity,
+          topScore: adjustedScore,
+          scoreDelta,
+          newHitCount: newHits.length,
+          runAt,
+          newHits: newHits.slice(0, 10).map((h) => ({
+            listId: h.listId,
+            listRef: h.listRef,
+            candidateName: h.candidateName,
+          })),
+        });
       }
 
       const webhookType: "screening.escalated" | "screening.delta" | "ongoing.rerun" =

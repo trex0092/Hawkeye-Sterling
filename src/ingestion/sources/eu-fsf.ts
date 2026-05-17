@@ -75,6 +75,14 @@ export const euFsfAdapter: SourceAdapter = {
         source: 'eu_fsf', fetchedAt,
       });
     }
+    if (entities.length === 0) {
+      throw new Error(
+        `[eu_fsf] parsed 0 entities — refusing to write empty blob. ` +
+        `XML length: ${xml.length} bytes. Top-level tags: [${topTags.join(", ")}]. ` +
+        `Check that ${SOURCE_URL} still returns the consolidated sanctions XML.`,
+      );
+    }
+    console.info(`[eu_fsf] parsed ${entities.length} entities`);
     return { entities, rawChecksum };
   },
 };

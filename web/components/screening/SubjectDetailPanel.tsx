@@ -6,7 +6,7 @@ import { useAutoReport } from "@/lib/hooks/useAutoReport";
 import { useSuperBrain, type SuperBrainResult } from "@/lib/hooks/useSuperBrain";
 import { useNewsSearch, type NewsSearchState } from "@/lib/hooks/useNewsSearch";
 import { toQuickScreenSubject } from "@/lib/data/subjects";
-import type { AdverseMediaMatch, Subject } from "@/lib/types";
+import { riskLevelForVerdict, type AdverseMediaMatch, type Subject, type HitResolutionReasonCategory } from "@/lib/types";
 import type {
   QuickScreenHit,
   QuickScreenResult,
@@ -85,7 +85,6 @@ import {
   type HitResolution,
   type HitResolutionVerdict,
 } from "@/lib/data/subject-store";
-import { riskLevelForVerdict, type HitResolutionReasonCategory } from "@/lib/types";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 // Timeline tab removed — its content was a placeholder + the same

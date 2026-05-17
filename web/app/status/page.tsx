@@ -506,21 +506,21 @@ export default function StatusPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1 text-11 font-mono">
                     {data.sanctions.lists.map((l) => {
                       const tone =
-                        l.ageH == null
+                        l.ageH === null
                           ? "text-ink-3"
                           : l.ageH > 48
                             ? "text-red"
                             : l.ageH > 24
                               ? "text-amber"
                               : "text-green";
-                      const nextRefreshH = l.ageH != null ? Math.max(0, 24 - l.ageH) : null;
+                      const nextRefreshH = l.ageH !== null ? Math.max(0, 24 - l.ageH) : null;
                       return (
                         <div key={l.id} className="flex justify-between gap-2">
                           <span className="text-ink-2">{l.id}</span>
                           <span className={tone}>
-                            {l.ageH == null
+                            {l.ageH === null
                               ? "not fetched yet"
-                              : `${l.ageH}h ago${l.recordCount ? ` · ${l.recordCount.toLocaleString()} records` : ""}${nextRefreshH === 0 ? " · refresh due" : nextRefreshH != null ? ` · next in ${nextRefreshH}h` : ""}`}
+                              : `${l.ageH}h ago${l.recordCount ? ` · ${l.recordCount.toLocaleString()} records` : ""}${nextRefreshH === 0 ? " · refresh due" : nextRefreshH !== null ? ` · next in ${nextRefreshH}h` : ""}`}
                           </span>
                         </div>
                       );

@@ -4,8 +4,7 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
-import { scoreWallet } from "../../../../dist/src/integrations/cryptoRisk.js";
-import type { CryptoChain, WalletRiskResult } from "../../../../dist/src/integrations/cryptoRisk.js";
+import { scoreWallet, type CryptoChain, type WalletRiskResult } from "../../../../dist/src/integrations/cryptoRisk.js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

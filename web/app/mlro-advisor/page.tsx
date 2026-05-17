@@ -2682,7 +2682,7 @@ export default function MlroAdvisorPage() {
     setCtrLoading(true); setCtrResult(null);
     setToolErrors((p) => { const n = {...p}; delete n["ctrStructuring"]; return n; });
     try {
-      const res = await fetch("/api/ctr-structuring", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ amounts: ctrAmounts, periodDays: parseInt(ctrPeriodDays) || 30, subjectName: ctrSubject }) });
+      const res = await fetch("/api/ctr-structuring", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ amounts: ctrAmounts, periodDays: parseInt(ctrPeriodDays, 10) || 30, subjectName: ctrSubject }) });
       if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as CtrStructuringResult;
       if (!mountedRef.current) return;

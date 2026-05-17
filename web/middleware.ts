@@ -68,7 +68,15 @@ function generateNonce(): string {
 // `public, max-age=300, must-revalidate` so verifiers can cache the
 // signing keys per RFC. The route's setting takes precedence; routes
 // that handle dynamic auth-gated data set their own no-store.
-function applySecurityHeaders(response: NextResponse, isApi: boolean): void {
+function generateRequestId(): string {
+  const buf = new Uint8Array(12);
+  crypto.getRandomValues(buf);
+  let hex = "";
+  for (const b of buf) hex += b.toString(16).padStart(2, "0");
+  return hex;
+}
+
+function applySecurityHeaders(response: NextResponse, isApi: boolean, requestId?: string): void {
   response.headers.set("X-Content-Type-Options", "nosniff");
   response.headers.set("X-Frame-Options", "SAMEORIGIN");
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
@@ -76,6 +84,9 @@ function applySecurityHeaders(response: NextResponse, isApi: boolean): void {
   response.headers.set("Cross-Origin-Opener-Policy", "same-origin");
   if (isApi) {
     response.headers.set("Cross-Origin-Resource-Policy", "same-origin");
+    if (requestId) {
+      response.headers.set("X-Request-ID", requestId);
+    }
   }
 }
 
@@ -89,7 +100,7 @@ function buildCspHeader(_nonce: string): string {
     "style-src 'self' 'unsafe-inline' https://fonts.bunny.net",
     "img-src 'self' data:",
     "font-src 'self' data: https://fonts.bunny.net",
-    "connect-src 'self' https://app.asana.com https://api.anthropic.com",
+    "connect-src 'self' https://app.asana.com",
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",
@@ -133,7 +144,7 @@ function hostnameOf(value: string): string | null {
 export function middleware(req: NextRequest): NextResponse {
   const { pathname } = req.nextUrl;
 
-  // ── 0. /.well-known rewrites ──────────────────────────────────────────────
+  // ── 0. /.well-known + /api/v1/ rewrites ──────────────────────────────────
   // Next.js rewrites declared in next.config.mjs don't reach Lambda when
   // routed through @netlify/plugin-nextjs — verified empirically: the
   // /.well-known/* paths returned 404 in production while the underlying
@@ -145,6 +156,16 @@ export function middleware(req: NextRequest): NextResponse {
   }
   if (pathname === "/.well-known/hawkeye-pubkey.pem") {
     return NextResponse.rewrite(new URL("/api/well-known/hawkeye-pubkey.pem", req.url));
+  }
+  // /api/v1/* → /api/* stable alias. Allows callers to pin a versioned
+  // prefix and survive future /api/v2/* breakouts without changing URLs.
+  // This rewrite is transparent — the canonical route still lives under
+  // /api/ and handles all business logic.
+  if (pathname.startsWith("/api/v1/")) {
+    const canonical = pathname.replace(/^\/api\/v1\//, "/api/");
+    const target = new URL(req.url);
+    target.pathname = canonical;
+    return NextResponse.rewrite(target);
   }
 
   // ── 1. Session guard (non-API routes) ──────────────────────────────────────
@@ -160,10 +181,11 @@ export function middleware(req: NextRequest): NextResponse {
 
   // ── 2. API token injection (same-origin only) ─────────────────────────────
   if (pathname.startsWith("/api/") && !isPublic(pathname)) {
+    const reqId = req.headers.get("x-request-id") ?? generateRequestId();
     // External callers supply their own auth — don't override.
     if (req.headers.get("authorization") || req.headers.get("x-api-key")) {
       const r = NextResponse.next();
-      applySecurityHeaders(r, true);
+      applySecurityHeaders(r, true, reqId);
       return r;
     }
 
@@ -190,13 +212,13 @@ export function middleware(req: NextRequest): NextResponse {
         const requestHeaders = new Headers(req.headers);
         requestHeaders.set("authorization", `Bearer ${adminToken}`);
         const r = NextResponse.next({ request: { headers: requestHeaders } });
-        applySecurityHeaders(r, true);
+        applySecurityHeaders(r, true, reqId);
         return r;
       }
     }
     // Non-same-origin API call — pass through with security headers.
     const r = NextResponse.next();
-    applySecurityHeaders(r, true);
+    applySecurityHeaders(r, true, reqId);
     return r;
   }
 
