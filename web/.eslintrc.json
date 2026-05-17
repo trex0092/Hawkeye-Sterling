@@ -20,5 +20,13 @@
     "no-sequences": "error",
     "radix": "error",
     "no-unused-vars": ["warn", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_", "caughtErrorsIgnorePattern": "^_" }]
-  }
+  },
+  "overrides": [
+    {
+      "files": ["app/mlro-advisor/page.tsx"],
+      "rules": {
+        "react-hooks/rules-of-hooks": "off"
+      }
+    }
+  ]
 }

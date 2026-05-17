@@ -16,8 +16,7 @@
 //   const gate = await enforce(req, { requireAuth: false });
 
 import { NextResponse } from "next/server";
-import { extractKey, validateAndConsume } from "./api-keys";
-import type { ApiKeyRecord } from "./api-keys";
+import { extractKey, validateAndConsume, type ApiKeyRecord } from "./api-keys";
 import { consumeRateLimit, rateLimitHeaders } from "./rate-limit";
 import { tierFor } from "@/lib/data/tiers";
 import { createHash, timingSafeEqual } from "node:crypto";

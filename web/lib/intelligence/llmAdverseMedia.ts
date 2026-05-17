@@ -16,8 +16,7 @@
 //   - Ourominas DTVM (ReporterBrasil illegal-gold investigation 2021)
 //   - Istanbul Gold Refinery / Halaç family (Patronlar Dünyası)
 
-import type { NewsAdapter, NewsArticle } from "./newsAdapters";
-import { NULL_NEWS_ADAPTER } from "./newsAdapters";
+import { NULL_NEWS_ADAPTER, type NewsAdapter, type NewsArticle } from "./newsAdapters";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { getStore } from "@/lib/server/store";
 import { AML_KEYWORDS_EN } from "./amlKeywords";
