@@ -42,7 +42,8 @@ interface HitInput {
 }
 
 interface RequestBody {
-  client: ClientInput;
+  client?: ClientInput;
+  profile?: ClientInput;  // accepted alias — MCP tool sends { profile: { name: ... } }
   hits: HitInput[];
 }
 
@@ -127,9 +128,11 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ error: "invalid JSON body" }, { status: 400 , headers: gate.headers });
   }
 
-  const { client, hits } = body;
+  const { hits } = body;
+  // Accept both { client: { name } } and { profile: { name } } shapes.
+  const client: ClientInput = (body.client ?? body.profile) as ClientInput;
   if (!client?.name) {
-    return NextResponse.json({ error: "client.name is required" }, { status: 400 , headers: gate.headers });
+    return NextResponse.json({ error: "client.name or profile.name is required" }, { status: 400 , headers: gate.headers });
   }
   if (!Array.isArray(hits) || hits.length === 0) {
     return NextResponse.json({ error: "hits array is required and must not be empty" }, { status: 400 , headers: gate.headers });
