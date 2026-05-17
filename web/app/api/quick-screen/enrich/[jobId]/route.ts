@@ -14,6 +14,10 @@ import { type NextRequest, NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getEnrichmentJob } from "@/lib/server/enrichment-jobs";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+export const maxDuration = 25;
+
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ jobId: string }> },
