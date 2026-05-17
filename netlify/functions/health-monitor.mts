@@ -125,6 +125,8 @@ const HEARTBEAT_SPECS: Array<{ label: string; maxSilenceHours: number }> = [
   { label: "adverse-media-rss",     maxSilenceHours: 2  }, // every 30 min → alert after 2h
   { label: "refresh-lists",         maxSilenceHours: 10 }, // daily 03:00 → alert after 10h
   { label: "eocn-poll",             maxSilenceHours: 10 }, // every 6h → alert after 10h
+  { label: "sanctions-watch-1100",  maxSilenceHours: 26 }, // daily 11:00 UTC → alert after 26h
+  { label: "sanctions-watch-1330",  maxSilenceHours: 26 }, // daily 13:30 UTC → alert after 26h
 ];
 
 interface HeartbeatEntry {
