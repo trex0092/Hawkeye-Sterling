@@ -15,9 +15,8 @@
 // Returns { ok: false, error, triggeredAt } with status 500 on failure.
 
 import { NextResponse } from "next/server";
-import { withGuard } from "@/lib/server/guard";
+import { withGuard, type RequestContext } from "@/lib/server/guard";
 import { invalidateCandidateCache } from "@/lib/server/candidates-loader";
-import type { RequestContext } from "@/lib/server/guard";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
