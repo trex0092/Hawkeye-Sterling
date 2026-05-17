@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import type {
   QuickScreenCandidate,
   QuickScreenOptions,
@@ -554,6 +555,18 @@ export async function POST(req: Request): Promise<NextResponse> {
       new Promise<null>((r) => setTimeout(() => r(null), 800)),
     ]);
     const screeningWarnings = listHealth ? buildScreeningWarnings(listHealth) : [];
+
+    // Write tamper-evident audit chain entry. Fire-and-forget: must never
+    // block the screening response. Failure logged inside writeAuditChainEntry.
+    void writeAuditChainEntry({
+      event: "screening.completed",
+      actor: gate.record?.email ?? gate.keyId ?? "unknown",
+      subject: subject.name,
+      severity: result.severity,
+      hitsCount: result.hits.length,
+      listsChecked: result.listsChecked,
+      listsDegraded: screeningWarnings.length,
+    });
 
     return respond(
       200,

@@ -60,10 +60,24 @@ function decodeEntities(s: string): string {
     .replace(/&#x([0-9a-fA-F]+);/g, (_, n) => String.fromCharCode(parseInt(n, 16)));
 }
 
+// Strip namespace prefix (e.g. "fsf:sanctionEntity" → "sanctionEntity") for
+// comparison. When the search tag has no prefix we match both exact and
+// namespace-prefixed variants, making the parser robust against feeds that
+// add or change XML namespace prefixes between schema revisions.
+function localName(tag: string): string {
+  const colon = tag.lastIndexOf(':');
+  return colon >= 0 ? tag.slice(colon + 1) : tag;
+}
+
+function tagMatches(nodeTag: string, search: string): boolean {
+  const sl = search.toLowerCase();
+  return nodeTag.toLowerCase() === sl || localName(nodeTag).toLowerCase() === sl;
+}
+
 export function findAll(node: XmlNode, tag: string): XmlNode[] {
   const out: XmlNode[] = [];
   const visit = (n: XmlNode) => {
-    if (n.tag.toLowerCase() === tag.toLowerCase()) out.push(n);
+    if (tagMatches(n.tag, tag)) out.push(n);
     for (const c of n.children) visit(c);
   };
   visit(node);
@@ -72,6 +86,6 @@ export function findAll(node: XmlNode, tag: string): XmlNode[] {
 
 export function textOf(node: XmlNode | undefined, tag: string): string {
   if (!node) return '';
-  for (const c of node.children) if (c.tag.toLowerCase() === tag.toLowerCase()) return c.text;
+  for (const c of node.children) if (tagMatches(c.tag, tag)) return c.text;
   return '';
 }

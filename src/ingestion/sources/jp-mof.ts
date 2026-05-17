@@ -184,14 +184,14 @@ export const jpMofAdapter: SourceAdapter = {
   id: 'jp_mof',
   displayName: 'Japan MOF Economic Sanctions',
   sourceUrl: 'https://www.mof.go.jp/policy/international_policy/gaitame_kawase/gaitame/economic_sanctions/list.html',
+  // Dormant until FEED_JP_MOF is set. run-all.ts skips disabled adapters
+  // entirely so no 0-entity blob is written when the env var is absent.
+  isEnabled: () => Boolean(process.env['FEED_JP_MOF']),
   async fetch() {
     const fetchedAt = Date.now();
     const urls = resolveUrls();
     if (urls.length === 0) {
-      // No URL configured — adapter is dormant by design. JP MOF's per-
-      // country lists don't have a single canonical aggregated URL; the
-      // user supplies one or more comma-separated XLSX URLs via the
-      // FEED_JP_MOF env var.
+      // Guard: isEnabled() should prevent reaching here, but be safe.
       return { entities: [], rawChecksum: await sha256Hex('jp_mof:no-urls-configured') };
     }
 

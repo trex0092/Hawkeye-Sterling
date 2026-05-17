@@ -15,6 +15,7 @@
 
 import { NextResponse } from "next/server";
 import { withGuard } from "@/lib/server/guard";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { del, getJson, listKeys, setJson } from "@/lib/server/store";
 import { getAnthropicClient } from "@/lib/server/llm";
 // enforce is provided by withGuard; no direct import needed here.
@@ -272,6 +273,17 @@ async function handlePatch(req: Request): Promise<NextResponse> {
       : { ...existing, status: "rejected", rejectedBy: operator, rejectedAt: now,
           ...(stringField(raw["rejectionReason"]) ? { rejectionReason: stringField(raw["rejectionReason"])! } : {}) };
   await setJson(`four-eyes/${id}`, updated);
+
+  // Write audit chain entry — fire-and-forget, must not block the response.
+  void writeAuditChainEntry({
+    event: `four_eyes.${action}d`,
+    actor: operator,
+    caseId: updated.subjectId,
+    itemId: id,
+    subjectName: updated.subjectName,
+    fourEyesAction: updated.action,
+    initiatedBy: updated.initiatedBy,
+  });
 
   // Report to Asana Four-Eyes board — non-blocking, best effort
   const asanaTaskUrl = await reportToAsana(updated, action, operator).catch((err: unknown) => {
