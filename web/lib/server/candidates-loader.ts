@@ -113,11 +113,13 @@ async function loadFromBlobs(): Promise<QuickScreenCandidate[] | null> {
   }
 
   const { getStore } = blobsMod;
-  // On Netlify's own runtime, trust the auto-injected NETLIFY_BLOBS_CONTEXT.
-  // Using explicit NETLIFY_BLOBS_TOKEN (a custom non-PAT value) overrides the
-  // injection and causes every read to 401 → silent fallback to the 50-entry
-  // demo fixture — real OFAC/UN/EU/UAE designees are never screened.
-  const onNetlify = Boolean(process.env["NETLIFY"]) || Boolean(process.env["NETLIFY_LOCAL"]);
+  // Use explicit credentials (NETLIFY_API_TOKEN = proper PAT) whenever they
+  // are available. NETLIFY_API_TOKEN is checked first so the proper PAT takes
+  // precedence over NETLIFY_BLOBS_TOKEN which may be a non-PAT custom value.
+  // Next.js API routes do NOT receive NETLIFY_BLOBS_CONTEXT auto-injection
+  // from plugin-nextjs, so without explicit credentials the store opens
+  // against an unbound context and every read returns null → seed-corpus
+  // fallback → LISTS_MISSING gate fires even when the lists are healthy.
   const siteID = process.env["NETLIFY_SITE_ID"] ?? process.env["SITE_ID"];
   const token =
     process.env["NETLIFY_API_TOKEN"] ??
@@ -125,7 +127,7 @@ async function loadFromBlobs(): Promise<QuickScreenCandidate[] | null> {
     process.env["NETLIFY_BLOBS_TOKEN"];
 
   const storeOpts =
-    !onNetlify && siteID && token
+    siteID && token
       ? ({ name: "hawkeye-lists", siteID, token, consistency: "strong" } as Parameters<typeof getStore>[0])
       : ({ name: "hawkeye-lists" } as Parameters<typeof getStore>[0]);
 

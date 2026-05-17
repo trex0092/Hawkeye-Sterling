@@ -119,17 +119,45 @@ async function handlePost(req: Request): Promise<NextResponse> {
   if (!isRecord(raw)) {
     return NextResponse.json({ ok: false, error: "body must be a JSON object" }, { status: 400 });
   }
-  const subjectId = safeId(raw["subjectId"]);
+  // Accept both field names used in governance docs (actor/rationale/caseId)
+  // and the internal names (initiatedBy/reason/subjectId).
+  const subjectId = safeId(raw["subjectId"] ?? raw["caseId"]);
   const subjectName = stringField(raw["subjectName"]);
   const actionRaw = stringField(raw["action"]);
-  const initiatedBy = stringField(raw["initiatedBy"]) ?? "analyst";
-  const reason = stringField(raw["reason"]) ?? "";
+  const initiatedBy = stringField(raw["initiatedBy"] ?? raw["actor"]) ?? "analyst";
+  const reason = stringField(raw["reason"] ?? raw["rationale"]) ?? "";
   if (!subjectId || !subjectName) {
-    return NextResponse.json({ ok: false, error: "subjectId + subjectName required" }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, error: "subjectId (or caseId) + subjectName required" },
+      { status: 400 },
+    );
   }
   if (!actionRaw || !ALLOWED_ACTIONS.has(actionRaw as FourEyesAction)) {
     return NextResponse.json({ ok: false, error: `action must be one of ${[...ALLOWED_ACTIONS].join(", ")}` }, { status: 400 });
   }
+
+  // Duplicate-actor check: prevent the same person from submitting multiple
+  // entries for the same subject (UAE FDL 10/2025 Art.16 — two DISTINCT
+  // actors required). This is a pre-write guard; PATCH /four-eyes?id also
+  // enforces initiatedBy ≠ approvedBy at approval time.
+  const existingKeys = await listKeys("four-eyes/").catch(() => [] as string[]);
+  const existingItems = (await Promise.all(
+    existingKeys.map((k) => getJson<FourEyesItem>(k).catch(() => null)),
+  )).filter((i): i is FourEyesItem => i !== null);
+  const alreadySubmitted = existingItems.some(
+    (i) => i.subjectId === subjectId && i.initiatedBy === initiatedBy && i.status === "pending",
+  );
+  if (alreadySubmitted) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: "duplicate_approver",
+        message: `${initiatedBy} has already submitted a pending four-eyes entry for this subject. Two distinct actors are required. UAE FDL 10/2025 Art.16.`,
+      },
+      { status: 409 },
+    );
+  }
+
   const id = `fe-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
   const item: FourEyesItem = {
     id,
