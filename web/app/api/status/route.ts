@@ -704,17 +704,13 @@ async function checkSanctionsFreshness(): Promise<SanctionsFreshness> {
     }
     if (!blobsMod) return null;
     const { getStore } = blobsMod;
-    // On Netlify's runtime, trust the auto-injected NETLIFY_BLOBS_CONTEXT.
-    // Providing explicit credentials overrides the injection and causes 401s
-    // when NETLIFY_BLOBS_TOKEN is a custom (non-PAT) value.
-    const onNetlify = Boolean(process.env["NETLIFY"]) || Boolean(process.env["NETLIFY_LOCAL"]);
     const blobSiteId = process.env["NETLIFY_SITE_ID"] ?? process.env["SITE_ID"];
     const blobToken =
+      process.env["NETLIFY_BLOBS_TOKEN"] ??
       process.env["NETLIFY_API_TOKEN"] ??
-      process.env["NETLIFY_AUTH_TOKEN"] ??
-      process.env["NETLIFY_BLOBS_TOKEN"];
+      process.env["NETLIFY_AUTH_TOKEN"];
     const reportsOpts =
-      !onNetlify && blobSiteId && blobToken
+      blobSiteId && blobToken
         ? { name: "hawkeye-list-reports", siteID: blobSiteId, token: blobToken, consistency: "strong" as const }
         : { name: "hawkeye-list-reports" };
     const reports = getStore(reportsOpts);
@@ -1177,9 +1173,9 @@ async function _handleGet(isAdmin: boolean, gateHeaders: Record<string, string> 
     if (heatBlobsMod) {
       const heatSiteID = process.env["NETLIFY_SITE_ID"] ?? process.env["SITE_ID"];
       const heatToken =
+        process.env["NETLIFY_BLOBS_TOKEN"] ??
         process.env["NETLIFY_API_TOKEN"] ??
-        process.env["NETLIFY_AUTH_TOKEN"] ??
-        process.env["NETLIFY_BLOBS_TOKEN"];
+        process.env["NETLIFY_AUTH_TOKEN"];
       const actStore = heatSiteID && heatToken
         ? heatBlobsMod.getStore({ name: "mcp-activity-logs", siteID: heatSiteID, token: heatToken, consistency: "strong" })
         : heatBlobsMod.getStore({ name: "mcp-activity-logs" });
