@@ -60,7 +60,7 @@ function EocnPdfUploadPanel() {
   const [listId, setListId] = useState<"uae_eocn" | "uae_ltl">("uae_eocn");
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [result, setResult] = useState<null | { ok: boolean; entitiesExtracted?: number; entitiesWritten?: number; warnings?: string[]; error?: string; fileName?: string; uploadedAt?: string }>(null);
+  const [result, setResult] = useState<null | { ok: boolean; entitiesExtracted?: number; entitiesWritten?: number; warnings?: string[]; error?: string; fileName?: string; uploadedAt?: string; parseMethod?: string }>(null);
 
   const handleUpload = async () => {
     if (!file) return;
@@ -85,9 +85,10 @@ function EocnPdfUploadPanel() {
       {/* Explainer */}
       <div className="bg-amber-dim border border-amber/30 rounded-lg px-4 py-3 text-12 text-ink-1 leading-relaxed">
         <span className="font-semibold text-amber">How this works: </span>
-        The EOCN body emails a PDF (and sometimes Excel) when the UAE TFS list changes.
-        Upload that file here — Claude extracts all designated entities and updates the screening
-        watchlist immediately. No manual re-keying. The list goes live for all subsequent screenings.
+        The EOCN body emails an Excel (.xls) or PDF when the UAE TFS list changes.
+        Upload that file here — Hawkeye parses all designated entities structurally
+        and updates the screening watchlist immediately. No manual re-keying.
+        The list goes live for all subsequent screenings.
       </div>
 
       {/* Form */}
@@ -148,6 +149,11 @@ function EocnPdfUploadPanel() {
                 <span className="font-mono text-ink-0">{listId}</span> watchlist
                 {result.entitiesExtracted !== result.entitiesWritten && (
                   <span className="text-ink-3"> ({result.entitiesExtracted} extracted)</span>
+                )}
+                {result.parseMethod && (
+                  <span className="ml-2 px-1.5 py-0.5 rounded text-10 font-mono bg-bg-1 text-ink-2">
+                    {result.parseMethod === "structural" ? "structural parse" : result.parseMethod === "ai" ? "AI extract" : ""}
+                  </span>
                 )}
               </div>
               <div className="text-11 text-ink-3">
