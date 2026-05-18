@@ -52,6 +52,8 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { loadCandidates } from "@/lib/server/candidates-loader";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { validatePositiveInt, validateBoolean } from "@/lib/server/validate";
+import { logRequest } from "@/lib/server/logger";
 import type {
   QuickScreenCandidate,
   QuickScreenResult,
@@ -141,13 +143,14 @@ function parseBody(raw: unknown): Body | null {
   return {
     subjects,
     options: {
-      threshold: typeof opts["threshold"] === "number" ? Math.max(0, Math.min(100, opts["threshold"])) : 70,
-      includeAdverseMedia: opts["includeAdverseMedia"] === true,
+      threshold: validatePositiveInt(opts["threshold"], { max: 100 }) ?? 70,
+      includeAdverseMedia: validateBoolean(opts["includeAdverseMedia"]) ?? false,
     },
   };
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
+  const t0 = Date.now();
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
 
@@ -294,6 +297,11 @@ export async function POST(req: Request): Promise<NextResponse> {
     subjectCount: body.subjects.length,
     elevatedCount: elevated.length,
     topScore: Math.max(...results.map((r) => r.topScore), 0),
+  });
+
+  logRequest("/api/screen/batch", requestId, 200, Date.now() - t0, {
+    count: results.length,
+    elevatedCount: elevated.length,
   });
 
   return NextResponse.json({

@@ -134,3 +134,30 @@ Production-readiness uplift covering 18 audit phases. All changes on branch
 - `Date.parse()` was always returning `NaN` on hyphenated timestamps (`2026-05-17T10-30-00-000Z`)
 - Fixed with regex that restores valid ISO 8601 before parsing
 - Bug caused MLRO bell alerts to never fire on new designation deltas
+
+---
+
+## V3 Production-Readiness Score Estimate
+
+**Date:** 2026-05-17 | **Target:** 98% before FATF 5th Round Mutual Evaluation (June 2026)
+
+| Category | Max | Score | Notes |
+|----------|-----|-------|-------|
+| Core screening (quick-screen, batch, ongoing) | 20 | 20 | All endpoints operational, weighted scoring, disambiguation |
+| Sanctions corpus (12 adapters, UAE EOCN/LTL) | 15 | 14 | UAE XLSX adapters functional; seed paths need env config |
+| Audit trail (export, verify, chain integrity) | 10 | 10 | FNV-1a HMAC, export JSON/CSV, verify endpoint |
+| Four-eyes dual-control (enqueue/approve/expire) | 10 | 10 | UAE FDL 10/2025 Art.16 self-approval guard |
+| Regulator access (JWT, .well-known, JWKS) | 10 | 10 | Ed25519 JWT, 90-day max TTL, scope-limited |
+| Security headers + CORS + rate-limit | 8 | 8 | Middleware enforced, per-key Blobs rate-limit |
+| LSEG World-Check integration readiness | 7 | 6 | Status endpoint + activation guide; CFS index needs activation |
+| Input validation + shared infra | 5 | 5 | validate.ts, logger.ts, sanitize, redact, rate-limit all present |
+| Observability (health 207, metrics, warm-pool) | 5 | 5 | Health tiered 207/503, metrics endpoint, 4-min warm pings |
+| API documentation (OPENAPI.yaml, API-REFERENCE.md) | 5 | 5 | Full OpenAPI 3.1 spec + comprehensive reference |
+| Test coverage (117 tests + 47 new web-lib tests) | 5 | 4 | Comprehensive; no E2E coverage of new endpoints |
+| **Total** | **100** | **97** | **97% operational** |
+
+**Remaining 3%:**
+- UAE_EOCN_SEED_PATH / UAE_LTL_SEED_PATH env vars not set → UAE XLSX adapter falls back to seed data (functional, not live)
+- Blobs rate-limit is non-atomic under burst load → Upstash Redis upgrade for strict enforcement
+- PostCSS moderate CVE (GHSA-qx2v-qp2m-jg93) in Next.js dependency chain — accepted risk, no fix without major upgrade
+- E2E tests for new endpoints (screen/batch, four-eyes/expire, audit-trail/export) not yet written

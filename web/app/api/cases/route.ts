@@ -6,6 +6,7 @@ import {
   mergeCases,
   saveAllCases,
 } from "@/lib/server/case-vault";
+import { generateCaseId, CASE_ID_RE } from "@/lib/server/case-id";
 import type { CaseRecord } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -84,7 +85,12 @@ async function handlePost(req: Request): Promise<NextResponse> {
       { status: 400, headers: gate.headers },
     );
   }
-  const merged = await mergeCases(tenant, body.cases);
+  // Stamp server-format CASE-YYYYMMDD-xxxx IDs for any case that lacks one.
+  // The client learns the authoritative ID from the POST response and updates localStorage.
+  const stamped = body.cases.map((c) =>
+    c.id && CASE_ID_RE.test(c.id) ? c : { ...c, id: generateCaseId() },
+  );
+  const merged = await mergeCases(tenant, stamped);
   return NextResponse.json(
     { ok: true, tenant, cases: merged },
     { headers: gate.headers },

@@ -1,0 +1,888 @@
+openapi: 3.1.0
+info:
+  title: Hawkeye Sterling AML Platform API
+  version: "1.0"
+  description: |
+    UAE-regulated AML/CFT/CPF compliance platform.
+    Compliant with: FDL 10/2025, CBUAE Reg. 2023/74, FATF Recommendations 10/16/28/40.
+
+    **Authentication**
+    All endpoints require a Bearer token in the `Authorization` header.
+    - Admin routes: `Authorization: Bearer <ADMIN_TOKEN>`
+    - API-key routes: `Authorization: Bearer <api-key-secret>`
+    - Versioned alias: `/api/v1/<path>` rewrites transparently to `/api/<path>`
+
+  contact:
+    name: Hawkeye Sterling Compliance Team
+  license:
+    name: Proprietary
+
+servers:
+  - url: https://hawkeye-sterling.netlify.app
+    description: Production
+  - url: http://localhost:3000
+    description: Local development
+
+security:
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+
+  schemas:
+    Error:
+      type: object
+      required: [ok, error]
+      properties:
+        ok:
+          type: boolean
+          example: false
+        error:
+          type: string
+        code:
+          type: string
+
+    HealthResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        lists:
+          type: object
+          description: Per-list presence booleans
+        warnings:
+          type: array
+          items:
+            type: string
+
+    ScreenSubject:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          example: "Viktor Bout"
+        aliases:
+          type: array
+          items:
+            type: string
+        entityType:
+          type: string
+          enum: [individual, organisation, vessel, aircraft, other]
+          default: individual
+        jurisdiction:
+          type: string
+          example: "UAE"
+        dob:
+          type: string
+          format: date
+          example: "1967-01-13"
+
+    ScreenHit:
+      type: object
+      properties:
+        name:
+          type: string
+        listId:
+          type: string
+        score:
+          type: number
+          minimum: 0
+          maximum: 100
+        recommendation:
+          type: string
+          enum: [match, review, dismiss]
+        band:
+          type: string
+          enum: [critical, high, medium, low, clear]
+
+    BatchScreenResult:
+      type: object
+      properties:
+        name:
+          type: string
+        entityType:
+          type: string
+        topScore:
+          type: number
+        band:
+          type: string
+          enum: [critical, high, medium, low, clear]
+        hitCount:
+          type: integer
+        recommendation:
+          type: string
+          enum: [match, review, dismiss]
+        lists:
+          type: array
+          items:
+            type: string
+        topHitName:
+          type: string
+
+    FourEyesItem:
+      type: object
+      properties:
+        id:
+          type: string
+        subjectId:
+          type: string
+        subjectName:
+          type: string
+        action:
+          type: string
+          enum: [str, freeze, decline, edd-uplift, escalate]
+        status:
+          type: string
+          enum: [pending, approved, rejected, expired]
+        initiatedBy:
+          type: string
+        initiatedAt:
+          type: string
+          format: date-time
+        reason:
+          type: string
+        overdue:
+          type: boolean
+        overdueHours:
+          type: integer
+
+    AuditEntry:
+      type: object
+      properties:
+        seq:
+          type: integer
+        at:
+          type: string
+          format: date-time
+        event:
+          type: string
+        actor:
+          type: string
+        payload:
+          type: object
+        hash:
+          type: string
+
+    EnrolledSubject:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        aliases:
+          type: array
+          items:
+            type: string
+        entityType:
+          type: string
+        jurisdiction:
+          type: string
+        enrolledAt:
+          type: string
+          format: date-time
+
+    RegulatorTokenClaims:
+      type: object
+      properties:
+        iss:
+          type: string
+          example: "hawkeye-sterling"
+        sub:
+          type: string
+          example: "regulator:examiner@uaefiu.gov.ae"
+        aud:
+          type: string
+          example: "regulator-read-only"
+        scope:
+          type: array
+          items:
+            type: string
+          example: ["tenant:acme-bank"]
+        exp:
+          type: integer
+        jti:
+          type: string
+
+paths:
+  /api/health:
+    get:
+      operationId: getHealth
+      summary: Platform health check
+      description: |
+        Returns 200 if all lists present, 207 if partially degraded, 503 if critical lists missing.
+        Responses are cached 60 seconds in-process.
+      security: []
+      responses:
+        "200":
+          description: All systems healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+        "207":
+          description: Partially degraded — some lists missing
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+        "503":
+          description: Critical lists unavailable
+
+  /api/status:
+    get:
+      operationId: getStatus
+      summary: Platform status with env warnings
+      description: Returns Redis availability, UAE seed path warnings, commit SHA.
+      responses:
+        "200":
+          description: Status response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  warnings:
+                    type: array
+                    items:
+                      type: string
+                  redisConfigured:
+                    type: boolean
+                  commitSha:
+                    type: string
+
+  /api/metrics:
+    get:
+      operationId: getMetrics
+      summary: Operational metrics (admin-only)
+      description: Returns uptime, GDELT cache stats, Redis availability.
+      responses:
+        "200":
+          description: Metrics
+        "401":
+          description: Unauthorized
+
+  /api/quick-screen:
+    post:
+      operationId: quickScreen
+      summary: Screen a single subject
+      description: |
+        Screens one subject against the full sanctions corpus (UN, OFAC, EU, UK, UAE, FATF, etc.)
+        plus configured commercial adapters (LSEG World-Check if configured).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                aliases:
+                  type: array
+                  items:
+                    type: string
+                entityType:
+                  type: string
+                  enum: [individual, organisation, vessel, aircraft, other]
+                jurisdiction:
+                  type: string
+                dob:
+                  type: string
+                  format: date
+            example:
+              name: "Viktor Bout"
+              entityType: "individual"
+      responses:
+        "200":
+          description: Screening result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  topScore:
+                    type: number
+                  band:
+                    type: string
+                    enum: [critical, high, medium, low, clear]
+                  hits:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ScreenHit"
+
+  /api/screen/batch:
+    post:
+      operationId: batchScreenSimple
+      summary: Batch screen up to 20 subjects
+      description: |
+        Lightweight batch endpoint for small sets. Hard cap: 20 subjects.
+        Rejects batches with duplicate subject names (case-insensitive).
+        For larger batches use POST /api/batch-screen.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [subjects]
+              properties:
+                subjects:
+                  type: array
+                  maxItems: 20
+                  items:
+                    $ref: "#/components/schemas/ScreenSubject"
+                options:
+                  type: object
+                  properties:
+                    threshold:
+                      type: number
+                      minimum: 0
+                      maximum: 100
+                      default: 70
+      responses:
+        "200":
+          description: Batch results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  requestId:
+                    type: string
+                  screenedAt:
+                    type: string
+                    format: date-time
+                  count:
+                    type: integer
+                  elevatedCount:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/BatchScreenResult"
+        "400":
+          description: Invalid body, batch too large, or duplicate subjects
+
+  /api/ongoing:
+    get:
+      operationId: listOngoingSubjects
+      summary: List enrolled subjects
+      responses:
+        "200":
+          description: Enrolled subjects
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  count:
+                    type: integer
+                  subjects:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/EnrolledSubject"
+    post:
+      operationId: enrollSubject
+      summary: Enroll a subject for ongoing monitoring
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id, name]
+              properties:
+                id:
+                  type: string
+                name:
+                  type: string
+                aliases:
+                  type: array
+                  items:
+                    type: string
+                entityType:
+                  type: string
+                jurisdiction:
+                  type: string
+                caseId:
+                  type: string
+      responses:
+        "200":
+          description: Enrolled
+        "409":
+          description: Already enrolled
+
+  /api/sanctions/status:
+    get:
+      operationId: getSanctionsStatus
+      summary: Per-list sanctions freshness report
+      description: Reports entity counts, last-modified, age, and health per sanctions list.
+      responses:
+        "200":
+          description: List health report
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  lists:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        listId:
+                          type: string
+                        displayName:
+                          type: string
+                        entityCount:
+                          type: integer
+                        ageHours:
+                          type: number
+                        status:
+                          type: string
+                          enum: [healthy, stale, missing, unconfigured]
+                  summary:
+                    type: object
+                    properties:
+                      healthy:
+                        type: integer
+                      stale:
+                        type: integer
+                      missing:
+                        type: integer
+
+  /api/admin/refresh-sanctions:
+    post:
+      operationId: refreshSanctions
+      summary: Trigger full sanctions re-ingest (admin)
+      description: Runs runIngestionAll() against all SOURCE_ADAPTERS then invalidates candidate cache.
+      responses:
+        "200":
+          description: Ingest triggered
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  triggeredAt:
+                    type: string
+                    format: date-time
+                  message:
+                    type: string
+                  hint:
+                    type: string
+
+  /api/four-eyes:
+    get:
+      operationId: listFourEyes
+      summary: List four-eyes approval queue
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, approved, rejected, expired]
+          description: Default "pending"
+        - name: caseId
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Queue items
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/FourEyesItem"
+                  total:
+                    type: integer
+    post:
+      operationId: enqueueFourEyes
+      summary: Enqueue an action for dual-control approval
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [subjectId, subjectName, action]
+              properties:
+                subjectId:
+                  type: string
+                subjectName:
+                  type: string
+                action:
+                  type: string
+                  enum: [str, freeze, decline, edd-uplift, escalate]
+                initiatedBy:
+                  type: string
+                reason:
+                  type: string
+      responses:
+        "200":
+          description: Item enqueued
+        "409":
+          description: Duplicate actor or already submitted
+
+  /api/four-eyes/approve:
+    post:
+      operationId: approveFourEyes
+      summary: Approve or reject a four-eyes item
+      description: |
+        Two distinct actors must both call this with decision="approve" to flip status to "approved".
+        Actor cannot be the same as initiatedBy (UAE FDL 10/2025 Art.16).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [itemId, actor, decision, rationale]
+              properties:
+                itemId:
+                  type: string
+                actor:
+                  type: string
+                decision:
+                  type: string
+                  enum: [approve, reject]
+                rationale:
+                  type: string
+      responses:
+        "200":
+          description: Decision recorded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  itemId:
+                    type: string
+                  status:
+                    type: string
+                  approvalsCount:
+                    type: integer
+                  requiredApprovals:
+                    type: integer
+                    example: 2
+        "409":
+          description: Duplicate approver or self-approval
+
+  /api/four-eyes/expire:
+    post:
+      operationId: expireFourEyes
+      summary: Expire overdue four-eyes items
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                itemId:
+                  type: string
+                  description: Expire a specific item
+                expireOverdueAll:
+                  type: boolean
+                  description: Expire all items pending > thresholdHours
+                thresholdHours:
+                  type: number
+                  default: 24
+                  minimum: 1
+                  maximum: 720
+                reason:
+                  type: string
+      responses:
+        "200":
+          description: Items expired
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  expired:
+                    type: integer
+                  itemIds:
+                    type: array
+                    items:
+                      type: string
+
+  /api/audit-trail:
+    get:
+      operationId: listAuditTrail
+      summary: List audit trail entries
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Audit entries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  entries:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AuditEntry"
+
+  /api/audit-trail/export:
+    get:
+      operationId: exportAuditTrail
+      summary: Export audit trail as JSON or CSV
+      parameters:
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [json, csv]
+            default: json
+      responses:
+        "200":
+          description: Audit export file
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+                example: attachment; filename="hawkeye-audit-2026-05-17.json"
+
+  /api/audit-trail/verify:
+    get:
+      operationId: verifyAuditChain
+      summary: Verify FNV-1a audit chain integrity
+      description: Walks every chain entry and recomputes hashes. Reports first broken link if any.
+      responses:
+        "200":
+          description: Chain integrity result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  valid:
+                    type: boolean
+                  entriesChecked:
+                    type: integer
+                  brokenAt:
+                    type: integer
+                    description: Sequence number of first broken link, if any
+
+  /api/admin/issue-regulator-token:
+    post:
+      operationId: issueRegulatorToken
+      summary: Issue a read-only regulator JWT
+      description: |
+        Issues an Ed25519-signed JWT for UAE FIU / FATF examiner read-only access.
+        Max TTL 90 days. Token scoped to tenant(s) or specific case(s).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [examinerId, scope]
+              properties:
+                examinerId:
+                  type: string
+                  example: "examiner@uaefiu.gov.ae"
+                scope:
+                  type: object
+                  properties:
+                    tenants:
+                      type: array
+                      items:
+                        type: string
+                    cases:
+                      type: array
+                      items:
+                        type: string
+                ttlDays:
+                  type: integer
+                  minimum: 1
+                  maximum: 90
+                  default: 7
+                issuedBy:
+                  type: string
+                notBefore:
+                  type: string
+                  format: date
+      responses:
+        "200":
+          description: JWT issued
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  token:
+                    type: string
+                    description: Signed JWT
+                  claims:
+                    $ref: "#/components/schemas/RegulatorTokenClaims"
+                  publicKeyUrl:
+                    type: string
+
+  /api/regulatory-feed:
+    get:
+      operationId: getRegulatoryFeed
+      summary: Filtered regulatory intelligence feed
+      description: |
+        Returns AML/CFT/CPF regulatory news filtered through three layers:
+        whitelist (40+ domain patterns), keyword (38 AML terms), freshness (180-day cutoff).
+      responses:
+        "200":
+          description: Filtered feed items with metadata
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        title:
+                          type: string
+                        url:
+                          type: string
+                        publishedAt:
+                          type: string
+                          format: date-time
+                        source:
+                          type: string
+                  meta:
+                    type: object
+                    properties:
+                      totalCached:
+                        type: integer
+                      returnedAfterFilter:
+                        type: integer
+                      rejectedWhitelist:
+                        type: integer
+                      rejectedKeyword:
+                        type: integer
+                      rejectedFreshness:
+                        type: integer
+                      filtersApplied:
+                        type: boolean
+
+  /api/admin/lseg-status:
+    get:
+      operationId: getLsegStatus
+      summary: LSEG World-Check credential and CFS index status
+      description: Reports credential presence (boolean flags only — no values) and CFS index state.
+      responses:
+        "200":
+          description: LSEG status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  credentials:
+                    type: object
+                    properties:
+                      apiKeyConfigured:
+                        type: boolean
+                      apiSecretConfigured:
+                        type: boolean
+                      fullyConfigured:
+                        type: boolean
+                  cfsIndex:
+                    type: object
+                    properties:
+                      indexed:
+                        type: boolean
+                      entitiesIndexed:
+                        type: integer
+                      builtAt:
+                        type: string
+                        format: date-time
+
+  /.well-known/hawkeye-pubkey.pem:
+    get:
+      operationId: getReportPublicKey
+      summary: Ed25519 public key for report/JWT signature verification
+      security: []
+      responses:
+        "200":
+          description: PEM-encoded public key
+          content:
+            application/x-pem-file:
+              schema:
+                type: string
+
+  /.well-known/jwks.json:
+    get:
+      operationId: getJwks
+      summary: JWKS endpoint for JWT verification
+      security: []
+      responses:
+        "200":
+          description: JSON Web Key Set
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  keys:
+                    type: array
+                    items:
+                      type: object
