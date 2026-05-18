@@ -15,30 +15,6 @@ export interface StaffAlertResult {
   regulatoryBasis: string;
 }
 
-const FALLBACK: StaffAlertResult = {
-  credibilityScore: 72,
-  urgencyLevel: "high",
-  verificationSteps: [
-    "Pull all transactions processed by the employee in the past 90 days — flag anomalies",
-    "Review badge access logs and after-hours system access for the employee",
-    "Check whether employee has unreported external business interests (gift/conflict register)",
-    "Obtain IT logs for data downloads or printing of customer records",
-    "Cross-reference alert with any recent lifestyle changes (car, jewellery) inconsistent with salary",
-  ],
-  mlroActions: [
-    "Convene immediate MLRO/HR/Legal meeting — within 2 hours of receipt",
-    "Do NOT confront employee until investigation baseline is established",
-    "Preserve all digital evidence — IT forensic hold on employee device and email",
-    "Review whether any customers associated with employee require enhanced monitoring",
-    "Consider whether STR is required if insider ML/TF facilitation is suspected",
-  ],
-  hrCoordinationRequired: true,
-  regulatoryReportingRequired: true,
-  confidentialityProtocol:
-    "Alert restricted to MLRO, Managing Director, HR Director, and Legal Counsel only. Do not discuss via email — use encrypted channel. Whistleblower identity must be protected absolutely under UAE Labour Law Art.36 and Whistleblower Protection Decree 2021.",
-  regulatoryBasis:
-    "UAE FDL 10/2025 Art.21 (internal reporting), CBUAE AML Standards §6.4 (insider risk), UAE Whistleblower Protection Decree 2021, FATF R.18 (internal controls)",
-};
 
 export async function POST(req: Request) {
   const gate = await enforce(req);

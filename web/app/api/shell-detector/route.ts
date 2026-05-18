@@ -28,39 +28,6 @@ export interface ShellDetectorResult {
   regulatoryBasis: string;
 }
 
-const FALLBACK: ShellDetectorResult = {
-  shellRisk: "high",
-  shellProbability: 65,
-  redFlags: [
-    {
-      flag: "Nominee directors identified with no apparent operational role",
-      severity: "high",
-      category: "director",
-      fatfRef: "FATF R.24; UAE Cabinet Resolution 109/2023 Art.5",
-      detail: "Nominee directors obscure the identity of natural persons exercising effective control, undermining UBO transparency obligations under FATF R.24 and UAE Cabinet Resolution 109/2023.",
-    },
-    {
-      flag: "BVI intermediate holding structure with no stated commercial rationale",
-      severity: "high",
-      category: "structure",
-      fatfRef: "FATF R.24; UAE FDL 10/2025 Art.7",
-      detail: "Use of British Virgin Islands intermediary adds an offshore secrecy layer without demonstrable business purpose, consistent with layering typologies identified in FATF Guidance on Beneficial Ownership (2023).",
-    },
-  ],
-  structureIndicators: ["nominee directors", "offshore holding structure"],
-  jurisdictionRisk: "high",
-  layeringRisk: "medium",
-  recommendedAction: "enhanced_dd",
-  actionRationale: "The combination of nominee directors and an offshore BVI holding layer without clear commercial rationale raises material shell company risk under FATF R.24. Enhanced due diligence is required to establish and verify the ultimate beneficial owner(s) before any business relationship is established or continued.",
-  requiredDocumentation: [
-    "Certified copy of certificate of incorporation and constitutional documents for all entities in the ownership chain",
-    "UBO register extract or equivalent disclosure of all natural persons holding 25%+ beneficial ownership",
-    "Signed nominee director disclosure and confirmation of identity of appointing principal",
-    "Evidence of genuine business activity: audited financial statements, contracts, or operational records",
-    "Explanation of commercial rationale for BVI / offshore holding structure from a senior officer",
-  ],
-  regulatoryBasis: "FATF R.24; UAE FDL 10/2025 Art.7; UAE Cabinet Resolution 109/2023 (UBO Register)",
-};
 
 export async function POST(req: Request) {
   const gate = await enforce(req);

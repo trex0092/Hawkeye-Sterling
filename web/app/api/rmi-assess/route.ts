@@ -45,17 +45,6 @@ interface RmiAssessmentResult {
   auditPriority: string[];
 }
 
-const FALLBACK: RmiAssessmentResult = {
-  portfolioRisk: "medium",
-  portfolioNarrative: "API key not configured — manual review required.",
-  criticalSmelters: [],
-  oecdGaps: [],
-  cahraExposure: "",
-  lbmaAlignmentIssues: [],
-  recommendedActions: [],
-  regulatoryExposure: "",
-  auditPriority: [],
-};
 
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);

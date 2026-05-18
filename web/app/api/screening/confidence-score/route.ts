@@ -34,19 +34,6 @@ Return ONLY valid JSON — no markdown fences, no commentary:
   "reasoning": "<2-3 sentence narrative>"
 }`;
 
-const FALLBACK: ConfidenceScoreResult = {
-  ok: true,
-  confidenceScore: 50,
-  falsePositiveProbability: 50,
-  keyFactors: [
-    "Name similarity score requires further review",
-    "Nationality and date of birth not yet verified",
-    "No corroborating adverse media identified at this time",
-  ],
-  recommendation: "manual_review",
-  reasoning:
-    "The available data is insufficient to make a confident determination. The name match warrants further investigation but differentiating identifiers (DOB, nationality, ID number) have not been confirmed. Manual review with client clarification is recommended before disposition.",
-};
 
 export async function POST(req: Request) {
   const gate = await enforce(req);

@@ -48,16 +48,6 @@ interface EmployeeRiskResult {
   regulatoryNote: string;
 }
 
-const FALLBACK: EmployeeRiskResult = {
-  portfolioStatus: "compliant",
-  summary: "API key not configured — manual review required.",
-  criticalExpiries: [],
-  screeningAlerts: [],
-  highRiskNationalities: [],
-  multiEntityRisk: [],
-  immediateActions: [],
-  regulatoryNote: "",
-};
 
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);

@@ -12,24 +12,6 @@ export interface NpoRiskResult {
   recommendedAction: string;
 }
 
-const FALLBACK: NpoRiskResult = {
-  riskRating: "high",
-  keyRedFlags: [
-    "Operates in conflict-affected jurisdiction (Syria, Yemen, Somalia)",
-    "Cash-based funding model — no banking trail",
-    "Anonymous donor base — no KYC on >10% of funders",
-    "Beneficiaries include sanctioned region (OFAC SDN active)",
-  ],
-  tfIndicators: [
-    "Historical link to entity on UNSCR 1267 list (Al-Qaeda)",
-    "Wire transfers routed via jurisdiction with known TF nexus",
-    "Programme activities inconsistent with stated charitable purpose",
-  ],
-  dueDiligenceSteps: [],
-  regulatoryBasis:
-    "FATF R.8 (NPO), UAE Cabinet Decision 74/2020 (Non-profit orgs), CBUAE AML Standards §4.3",
-  recommendedAction: "",
-};
 
 export async function POST(req: Request) {
   const gate = await enforce(req);

@@ -33,63 +33,6 @@ export interface GoAmlValidatorResult {
   regulatoryBasis: string;
 }
 
-const FALLBACK: GoAmlValidatorResult = {
-  overallStatus: "needs_corrections",
-  completenessScore: 68,
-  narrativeQuality: "adequate",
-  fieldChecks: [
-    { field: "Report Type", section: "header", status: "complete", currentValue: "STR" },
-    { field: "Reporting Entity Name", section: "reporting_entity", status: "complete" },
-    { field: "Reporting Entity goAML ID", section: "reporting_entity", status: "complete" },
-    { field: "MLRO Name", section: "reporting_entity", status: "complete" },
-    { field: "MLRO Contact", section: "reporting_entity", status: "complete" },
-    { field: "Subject Full Name", section: "subject", status: "complete" },
-    { field: "Subject Emirates ID / Passport", section: "subject", status: "complete" },
-    { field: "Subject Date of Birth", section: "subject", status: "complete" },
-    { field: "Subject Nationality", section: "subject", status: "complete" },
-    { field: "Subject Address", section: "subject", status: "incomplete", issue: "Only emirate provided, not full address", recommendation: "Include building, street, area, emirate" },
-    { field: "Account Number(s)", section: "transactions", status: "complete" },
-    { field: "Transaction Dates", section: "transactions", status: "complete" },
-    { field: "Transaction Amounts", section: "transactions", status: "complete" },
-    { field: "Transaction Types", section: "transactions", status: "incomplete", issue: "Generic 'cash deposit' — specify channel (branch/ATM/smart deposit)", recommendation: "Use goAML transaction type codes (e.g. CD01 = cash deposit branch)" },
-    { field: "Suspicion Narrative", section: "narrative", status: "incomplete", issue: "Narrative does not state the date suspicion crystallised", recommendation: "Add: 'Suspicion crystallised on [DATE] upon MLRO review of [EVENT]'" },
-    { field: "Related Accounts", section: "transactions", status: "missing", issue: "Linked accounts not referenced", recommendation: "List all accounts in customer's name or linked entities" },
-  ],
-  criticalIssues: [
-    "Suspicion crystallisation date missing — mandatory for 2-business-day deadline calculation",
-    "Related accounts not listed — UAE FIU goAML schema requires all linked accounts",
-  ],
-  warnings: [
-    "Transaction type codes should use goAML standard vocabulary, not free text",
-    "Subject address incomplete — may cause goAML validation error on submission",
-    "No supporting documents attached — attach transaction records and CDD extracts",
-  ],
-  narrativeFeedback: "The narrative establishes the pattern adequately but lacks temporal anchoring and does not state the legal basis for suspicion. UAE FIU expects explicit reference to the specific AML law provision that creates the suspicion.",
-  narrativeStrengths: [
-    "Pattern description is factual and specific (amounts, dates, frequency)",
-    "Comparison to stated transaction profile is referenced",
-    "No plausible innocent explanation statement included",
-  ],
-  narrativeWeaknesses: [
-    "Does not reference UAE FDL 10/2025 or specific AML law provision",
-    "Suspicion crystallisation event not pinpointed",
-    "No reference to CDD file review or adverse media check",
-    "Predicate offence (structuring) not explicitly named",
-  ],
-  goAmlSpecificRequirements: [
-    "File via UAE FIU goAML portal: https://goaml.uae.gov.ae",
-    "Use STR report type (not SAR)",
-    "Attach supporting documents as PDF — max 20MB per attachment",
-    "All monetary amounts in AED; foreign currency with conversion rate and date",
-    "Use DD/MM/YYYY date format throughout",
-    "Transaction types must use goAML standard codes",
-    "Save draft and validate before final submission",
-    "MLRO must digitally sign/authorise before filing",
-  ],
-  improvedNarrativeSuggestion: "On [DATE], [BANK NAME] identified suspicious cash deposit activity in account [XXXXXXXXX] held by [CUSTOMER NAME] (Emirates ID: [XXXXXXXXXXXXXXX]). Review of account activity from [START DATE] to [END DATE] revealed [X] cash deposits totalling AED [AMOUNT], each in the range of AED [RANGE], consistently below the AED 55,000 CTR threshold prescribed by UAE Federal Decree-Law No. 10 of 2025 Art.17 (in force 14 Oct 2025). This pattern is consistent with structuring to evade the mandatory CTR reporting obligation, which constitutes a predicate money laundering offence under UAE Federal Law No. 4/2002 as amended. No plausible legitimate explanation has been identified. CDD review found [FINDINGS]. Suspicion crystallised on [DATE] upon MLRO review. This STR is filed pursuant to UAE FDL 10/2025 Art.26 within 2 business days of crystallisation.",
-  filingDeadlineAssessment: "2 business days from suspicion crystallisation date — UAE FDL 10/2025 Art.26(1). Ensure MLRO sign-off and goAML submission within deadline.",
-  regulatoryBasis: "UAE FDL 10/2025 Art.26 (STR filing obligation); UAE FIU goAML Technical Manual v3.2; CBUAE Guidance on STR Filing; FATF R.20",
-};
 
 export async function POST(req: Request) {
   const gate = await enforce(req);

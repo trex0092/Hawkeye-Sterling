@@ -279,7 +279,7 @@ export default function RedTeamPage() {
 
       <div className="mt-6 text-11 text-ink-3 font-mono">
         Endpoint: POST /api/mlro-advisor-quick · 20s timeout · 200ms throttle on
-        Run-all · results persist to localStorage["hawkeye.red-team.v1"].
+        Run-all · results persist to localStorage[&quot;hawkeye.red-team.v1&quot;].
       </div>
     </ModuleLayout>
   );

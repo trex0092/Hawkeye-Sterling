@@ -26,36 +26,6 @@ export interface OsintSynthesisResult {
   recommendedActions: string[];
 }
 
-const FALLBACK: OsintSynthesisResult = {
-  ok: true,
-  profile:
-    "Insufficient data was provided to generate a subject profile. The sources supplied contain limited intelligence coverage. Additional open-source collection is recommended before drawing conclusions.",
-  corroborating: [
-    "Subject name appears consistently across multiple sources",
-    "Geographic references are internally consistent",
-  ],
-  contradicting: [
-    "Date-of-birth discrepancy noted between two sources",
-    "Conflicting nationality claims in separate records",
-  ],
-  confidenceScore: 32,
-  intelligenceGaps: [
-    "No beneficial owner data found",
-    "Limited transaction history available",
-    "No corporate registry cross-reference completed",
-    "Social media presence not independently verified",
-  ],
-  threatLevel: "low",
-  assessment:
-    "Based on available open-source intelligence, the subject profile is incomplete. Confidence in threat assessment is low due to insufficient corroborating data. A structured enhanced due diligence exercise is recommended before reaching a definitive conclusion.",
-  recommendedActions: [
-    "Conduct formal EDD investigation with primary-source document verification",
-    "Commission a commercial database check (World-Check, Dow Jones, LexisNexis)",
-    "Request certified KYC documentation from subject directly",
-    "Cross-reference against OFAC, UN, EU and UAE EOCN sanctions lists",
-    "Review corporate registry records in all identified jurisdictions",
-  ],
-};
 
 export async function POST(req: Request) {
   const gate = await enforce(req);

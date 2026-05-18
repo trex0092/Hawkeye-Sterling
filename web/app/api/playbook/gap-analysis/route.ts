@@ -25,15 +25,6 @@ interface GapResult {
   priorityActions: string[];
 }
 
-const FALLBACK: GapResult = {
-  riskRating: "high",
-  gapSummary: "AI gap analysis unavailable — check ANTHROPIC_API_KEY. Review incomplete checks manually.",
-  criticalGaps: [],
-  regulatoryExposure: [],
-  canFileSAR: false,
-  canFileReason: "Manual review required",
-  priorityActions: [],
-};
 
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);

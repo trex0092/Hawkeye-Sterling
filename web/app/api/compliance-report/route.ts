@@ -68,59 +68,6 @@ function bandForScore(score: number): "clear" | "low" | "medium" | "high" | "cri
   return "clear";
 }
 
-// MLRO POLICY: certain signals MUST escalate the dossier regardless of the
-// raw composite. A subject with confirmed adverse media at moderate+ severity
-// is HIGH-risk, full stop — even if the composite math hasn't crossed the
-// 60-point threshold yet. Same rule for any-tier PEP and any sanctions hit.
-// Without this override, a single "Istanbul Gold Refinery — bribery
-// indictment" article scores composite ~28 (LOW) and the dossier reads as
-// LOW while the CDD card simultaneously says EDD/zero-tolerance — that
-// inconsistency is exactly what the regulator flags as "negligent screening".
-function effectiveBand(
-  rawScore: number,
-  signals: {
-    sanctionsHits: number;
-    pepTier?: string | null;
-    amCompositeScore?: number;       // 0..1 from structured scorer
-    amCount?: number;                 // count fallback
-    redlinesFired?: number;
-    cahra?: boolean;
-  },
-): "clear" | "low" | "medium" | "high" | "critical" {
-  const base = bandForScore(rawScore);
-  const order = ["clear", "low", "medium", "high", "critical"] as const;
-  let band: typeof order[number] = base;
-  const escalateTo = (target: typeof order[number]): void => {
-    if (order.indexOf(target) > order.indexOf(band)) band = target;
-  };
-
-  // Sanctions hits — any positive match escalates immediately.
-  if (signals.sanctionsHits >= 1) escalateTo("high");
-  if (signals.sanctionsHits >= 2) escalateTo("critical");
-
-  // Adverse media — severity-weighted scorer dominates when available.
-  if (typeof signals.amCompositeScore === "number" && signals.amCompositeScore >= 0) {
-    if (signals.amCompositeScore >= 0.7) escalateTo("critical");
-    else if (signals.amCompositeScore >= 0.4) escalateTo("high");
-    else if (signals.amCompositeScore >= 0.1) escalateTo("high");  // any moderate signal → EDD
-    else if (signals.amCompositeScore > 0)   escalateTo("medium"); // limited signal → at least medium
-  } else if (typeof signals.amCount === "number" && signals.amCount > 0) {
-    // Count-only fallback when the structured scorer didn't run.
-    if (signals.amCount >= 4) escalateTo("high");
-    else escalateTo("medium");
-  }
-
-  // Any PEP tier triggers EDD per FATF R.12 / FDL 10/2025 Art.17.
-  if (signals.pepTier) escalateTo("high");
-
-  // Redlines — hard charter prohibitions. Any fire = critical.
-  if ((signals.redlinesFired ?? 0) > 0) escalateTo("critical");
-
-  // CAHRA jurisdiction adds at least medium pressure.
-  if (signals.cahra) escalateTo("medium");
-
-  return band;
-}
 
 function renderHtmlReport(text: string, input: ReportInput): string {
   const now = input.now ?? new Date();
@@ -450,7 +397,7 @@ function renderHtmlReport(text: string, input: ReportInput): string {
     ${amCategoriesTripped.slice(0, 6).map(c => `<span class="scr-am-chip">${e(c.replace(/_/g, " "))}</span>`).join("")}
   </div>` : "";
 
-  const p2 = `
+  const _p2 = `
   <div class="scr-sh" style="margin-top:0">2. Analysis</div>
   <p class="scr-para">${analysisText}</p>
   ${amBrief}

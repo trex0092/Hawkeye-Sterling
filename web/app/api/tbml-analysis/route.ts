@@ -31,39 +31,6 @@ export interface TbmlAnalysis {
   oecdStep: string;
 }
 
-const FALLBACK: TbmlAnalysis = {
-  tbmlRisk: "high",
-  tbmlTypology: "Trade-Based Money Laundering — Over-invoicing of gold bullion",
-  tbmlTypologyRef: "FATF TBML Report 2006 (rev. 2020) §3.1; OECD CAHRA Step 3",
-  overInvoicingRisk: "high",
-  underInvoicingRisk: "low",
-  phantomShipmentRisk: "medium",
-  multipleInvoicingRisk: "low",
-  indicators: [
-    { indicator: "Invoice price significantly above LBMA AM Fix reference", severity: "critical", category: "pricing", fatfRef: "FATF TBML §3.1", detail: "Gold invoiced at >5% premium to LBMA spot — consistent with value transfer via over-invoicing." },
-    { indicator: "Shipment route through CAHRA jurisdiction", severity: "high", category: "routing", fatfRef: "FATF R.19; OECD CAHRA Step 2", detail: "Transit via conflict-affected region increases risk of conflict mineral financing." },
-    { indicator: "Counterparty in FATF grey-list jurisdiction", severity: "high", category: "counterparty", fatfRef: "FATF R.19", detail: "Counterparty domicile on current FATF grey list — enhanced scrutiny mandatory." },
-    { indicator: "Vague goods description on commercial invoice", severity: "medium", category: "documentation", fatfRef: "FATF TBML §4.2", detail: "Invoice description does not specify purity, weight, assay certification — incomplete trade documentation." },
-  ],
-  recommendedAction: "escalate_mlro",
-  actionRationale: "Pattern is consistent with TBML over-invoicing used to transfer value across jurisdictions. MLRO must review before releasing transaction.",
-  documentationGaps: [
-    "LBMA AM/PM Fix reference price on invoice date",
-    "Assay certificate / bar list with serial numbers",
-    "Bill of lading / airway bill",
-    "RMAP / CMRT chain-of-custody certificate",
-    "Counterparty KYC including UBO declaration",
-  ],
-  investigativeSteps: [
-    "Compare invoice price against LBMA AM/PM Fix on invoice date — flag if >3% variance",
-    "Request assay certificate and verify bar serial numbers",
-    "Check counterparty against EOCN, UN, OFAC, EU, OFSI sanctions lists",
-    "Request freight/insurance documents to confirm shipment is real",
-    "Escalate to MLRO for STR consideration if documentation gaps cannot be resolved within 48 hours",
-  ],
-  regulatoryBasis: "FATF TBML Typologies Report (2006, rev. 2020); OECD CAHRA 5-Step Guidance Steps 2–3; UAE FDL 10/2025 Art.21; LBMA Responsible Gold Guidance Step 3; RMI RMAP",
-  oecdStep: "Step 3 — Identify and assess risk in the supply chain",
-};
 
 export async function POST(req: Request) {
   const gate = await enforce(req);

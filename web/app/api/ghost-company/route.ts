@@ -16,36 +16,6 @@ export interface GhostCompanyResult {
   regulatoryBasis: string;
 }
 
-const FALLBACK: GhostCompanyResult = {
-  ghostRisk: "critical",
-  ghostScore: 87,
-  indicators: [
-    "Company incorporated 18 months ago — zero filings since incorporation",
-    "Registered address is a PO box shared with 340 other entities",
-    "No employees — payroll records show nil returns for all 6 quarters",
-    "No phone number, website, or verifiable physical presence",
-    "Single bank account with only 2 transaction types: large inflows immediately withdrawn",
-    "Trade licence shows 'General Trading' — maximum opacity, minimum specificity",
-    "Director and shareholder are same individual, no independent governance",
-  ],
-  economicSubstanceGaps: [
-    "No physical office — economic substance test failed (UAEDT Cabinet Decision 57/2020)",
-    "No employees or operational expenditure consistent with stated revenue",
-    "No IT infrastructure or operational assets",
-    "Revenue pattern (AED 4.2M inflows) inconsistent with zero overhead",
-  ],
-  verificationSteps: [
-    "Physical site visit by compliance officer — photograph premises",
-    "Request audited financial statements signed by UAE-licensed auditor",
-    "Obtain bank statements from all accounts — identify counterparty pattern",
-    "Cross-check trade licence activity against transaction types",
-    "Demand explanation for economic substance test compliance",
-  ],
-  recommendedAction:
-    "Do not onboard without satisfactory resolution of all economic substance gaps. If existing customer: initiate enhanced CDD review and consider exit if substance cannot be demonstrated within 30 days.",
-  regulatoryBasis:
-    "UAE Economic Substance Regulations (Cabinet Decision 57/2020), FATF R.24 (legal persons), UAE FDL 10/2025 Art.7, CBUAE AML Standards §3.3",
-};
 
 export async function POST(req: Request) {
   const gate = await enforce(req);

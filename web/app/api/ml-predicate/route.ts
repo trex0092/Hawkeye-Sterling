@@ -38,48 +38,6 @@ export interface MlPredicateResult {
   fatfR3Categories: string[];
 }
 
-const FALLBACK: MlPredicateResult = {
-  primaryPredicate: {
-    offence: "Corruption / Bribery",
-    uaeLegalRef: "UAE Federal Anti-Corruption Law No. 6/2023; UAE Penal Code Art.234-239",
-    fatfCategory: "Corruption and bribery",
-    maxPenalty: "Life imprisonment + AED 1,000,000 fine",
-    imprisonmentYears: "Life",
-    fineAed: "1,000,000",
-  },
-  secondaryPredicates: [
-    {
-      offence: "Fraud / Misappropriation",
-      uaeLegalRef: "UAE Penal Code Art.399-402; UAE Federal Decree-Law No. 38/2016 (Commercial Fraud)",
-      fatfCategory: "Fraud",
-      maxPenalty: "Up to 5 years imprisonment + fine",
-      overlap: "Fraudulent misrepresentation may accompany corrupt payments to conceal their true nature and purpose.",
-    },
-    {
-      offence: "Tax Evasion",
-      uaeLegalRef: "UAE Federal Decree-Law No. 47/2022 (Corporate Tax); UAE Federal Law No. 7/2017 (Tax Procedures) Art.26",
-      fatfCategory: "Tax crimes",
-      maxPenalty: "Up to 5 years imprisonment + administrative penalties up to 500% of evaded tax",
-      overlap: "Proceeds of corruption may involve concealment of taxable income or structuring to avoid UAE corporate tax and VAT obligations.",
-    },
-  ],
-  mlOffenceApplicable: true,
-  mlLegalBasis: "UAE FDL 10/2025 Art.3",
-  proceedsEstimate: "Cannot be quantified from available facts — account records required",
-  selfLaunderingApplicable: true,
-  strRequired: true,
-  strBasis: "Reasonable grounds of ML under FDL 10/2025 Art.21",
-  investigativeActions: [
-    "Obtain and analyse full account transaction history to identify proceeds of the predicate offence",
-    "Request source-of-funds and source-of-wealth documentation from the subject",
-    "Screen subject and all associated entities against UAE EOCN, OFAC SDN, UN Consolidated List and PEP databases",
-    "Escalate to MLRO for STR assessment — STR must be filed within 2 business days of determination under FDL 10/2025 Art.26",
-    "Preserve all records in accordance with FDL 10/2025 Art.16 (8-year retention obligation)",
-  ],
-  jurisdictionalIssues: [],
-  regulatoryBasis: "UAE FDL 10/2025 Art.3, Art.21, Art.26; UAE Federal Anti-Corruption Law No. 6/2023; UAE Penal Code Art.234-239, Art.399-402; UAE Federal Decree-Law No. 38/2016; FATF R.3; FATF R.20",
-  fatfR3Categories: ["Corruption", "Fraud"],
-};
 
 export async function POST(req: Request) {
   const gate = await enforce(req);

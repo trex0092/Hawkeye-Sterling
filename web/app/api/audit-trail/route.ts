@@ -54,7 +54,7 @@ function computeEntryHash(prevHash: string | undefined, payload: unknown, at: st
 }
 
 interface BlobStoreI {
-  get: (key: string, opts?: { type?: string }) => Promise<unknown>;
+  get: (_key: string, _opts?: { type?: string }) => Promise<unknown>;
 }
 
 async function loadAuditStore(): Promise<BlobStoreI | null> {

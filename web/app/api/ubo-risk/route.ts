@@ -37,18 +37,6 @@ interface UboRiskResult {
   sanctionsScreeningRequired: boolean;
 }
 
-const FALLBACK: UboRiskResult = {
-  overallRisk: "medium",
-  riskNarrative: "API key not configured — manual review required.",
-  ownershipStructureRisk: "",
-  pepRiskFlags: [],
-  nationalityRisks: [],
-  cddGaps: [],
-  recommendedActions: [],
-  regulatoryBasis: "",
-  eddRequired: false,
-  sanctionsScreeningRequired: false,
-};
 
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);

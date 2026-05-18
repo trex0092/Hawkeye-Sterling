@@ -217,7 +217,7 @@ export default function ModeTelemetryPage() {
       </div>
 
       <div className="mt-4 text-11 text-ink-3 font-mono">
-        Source: localStorage["hawkeye.mode-telemetry.v1"] · written by Workbench
+        Source: localStorage[&quot;hawkeye.mode-telemetry.v1&quot;] · written by Workbench
         on every Run · {sorted.length} modes shown
       </div>
     </ModuleLayout>

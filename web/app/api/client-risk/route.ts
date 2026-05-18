@@ -54,20 +54,6 @@ interface ClientRiskResult {
   riskRating: string;
 }
 
-const FALLBACK: ClientRiskResult = {
-  overallRisk: "medium",
-  riskNarrative: "API key not configured — manual assessment required.",
-  jurisdictionalRisk: "",
-  ownershipRisk: "",
-  pepExposure: { detected: false, pepNames: [], mitigants: "" },
-  cddRequirements: [],
-  eddRequired: false,
-  eddReason: "",
-  enhancedMeasures: [],
-  recommendedAction: "pending_docs",
-  regulatoryBasis: "",
-  riskRating: "medium",
-};
 
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);

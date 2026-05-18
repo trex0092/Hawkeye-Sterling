@@ -74,13 +74,6 @@ Return ONLY a JSON object with this exact structure:
   "summary": "string — 2-sentence monitoring portfolio assessment"
 }`;
 
-const FALLBACK: MonitorAlertsResponse = {
-  alerts: [],
-  portfolioHealth: "healthy",
-  immediateEscalations: [],
-  cadenceRecommendations: [],
-  summary: "API key not configured",
-};
 
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);

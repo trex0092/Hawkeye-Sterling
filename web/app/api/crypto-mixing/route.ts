@@ -21,24 +21,6 @@ export interface CryptoMixingResult {
   regulatoryBasis: string;
 }
 
-const FALLBACK: CryptoMixingResult = {
-  mixingRisk: "critical",
-  mixingTechniques: [
-    "CoinJoin mixing — 47 inputs merged in single Bitcoin transaction",
-    "Chain-hopping: BTC → Monero → ETH → USDT across 4 exchanges",
-    "Peel chain — sequential small transactions to obfuscate trail",
-    "Tornado Cash interaction detected — OFAC-sanctioned mixer (Aug 2022)",
-  ],
-  obfuscationScore: 91,
-  traceabilityRating: "untraceable",
-  blockchainIntelligence:
-    "On-chain analysis (Chainalysis/Elliptic equivalent) shows funds originated from wallet cluster associated with 2024 DeFi exploit ($3.2M loss). Post-mixing destination wallet shows interaction with known darknet market deposit address. 91% of input value is of indeterminate origin after mixing.",
-  recommendedAction: "freeze-report",
-  reportingBasis:
-    "File STR immediately citing VASP exposure to OFAC-sanctioned mixer (Tornado Cash) and DeFi exploit origin. OFAC reporting obligation applies to UAE entities with US nexus. Freeze VASP account and reject withdrawal.",
-  regulatoryBasis:
-    "FATF R.15 (virtual assets), UAE CBUAE VASP Framework 2023, OFAC Advisory on Illicit Finance Risks of Crypto Mixing (Oct 2022), UAE FDL 10/2025 Art.2 (ML offence)",
-};
 
 export async function POST(req: Request) {
   const gate = await enforce(req);

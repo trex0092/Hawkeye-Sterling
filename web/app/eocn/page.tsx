@@ -343,7 +343,7 @@ export default function EocnPage() {
     catch (err) { console.warn("[hawkeye] eocn custom-matches persist failed:", err); }
   };
 
-  const restoreMatches = () => {
+  const _restoreMatches = () => {
     setDeletedMatchIds([]);
     setCustomMatches([]);
     try { localStorage.removeItem(EOCN_DELETED_KEY); }

@@ -159,7 +159,7 @@ function Inp({
 }: {
   label: string;
   value: string;
-  onChange: (v: string) => void;
+  onChange: (_v: string) => void;
   placeholder?: string;
   type?: string;
 }) {
