@@ -9,7 +9,7 @@ import { useState } from "react";
 
 interface DatePartsProps {
   value: string;
-  onChange: (next: string) => void;
+  onChange: (_next: string) => void;
   className?: string | undefined;
   ariaLabel?: string | undefined;
 }

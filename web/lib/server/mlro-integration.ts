@@ -22,7 +22,6 @@ import {
   postGenerationRouter,
   validateCitations,
   type RetrievalResult,
-  type RegistryChunk,
   type RouterOutcome,
   type ValidationReport,
   type AdvisorMode,

@@ -14,7 +14,7 @@ interface Props {
   compact?: boolean;
 }
 
-const TONE_CLASS: Record<NonNullable<BarDatum["tone"]>, string> = {
+const _TONE_CLASS: Record<NonNullable<BarDatum["tone"]>, string> = {
   brand: "fill-brand",
   violet: "fill-violet",
   amber: "fill-amber",

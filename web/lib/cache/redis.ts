@@ -15,7 +15,7 @@
 
 type RedisLike = {
   get<T = unknown>(_key: string): Promise<T | null>;
-  set(_key: string, _value: unknown, opts?: { ex?: number }): Promise<unknown>;
+  set(_key: string, _value: unknown, _opts?: { ex?: number }): Promise<unknown>;
 };
 
 let _client: RedisLike | null = null;
@@ -36,7 +36,7 @@ export async function getRedis(): Promise<RedisLike | null> {
     // non-literal dynamic imports — same pattern used elsewhere in this
     // repo for optional deps (e.g. exceljs in the XLSX adapters).
     const mod = await import("@upstash/redis" as string) as {
-      Redis: new (opts: { url: string; token: string }) => RedisLike;
+      Redis: new (_opts: { url: string; token: string }) => RedisLike;
     };
     _client = new mod.Redis({ url, token });
     return _client;

@@ -36,7 +36,7 @@ function randomHex4(): string {
   }
   // Node.js crypto fallback — always available in the serverless runtime.
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { randomBytes } = require("node:crypto") as { randomBytes: (n: number) => Buffer };
+  const { randomBytes } = require("node:crypto") as { randomBytes: (_n: number) => Buffer };
   return randomBytes(2).readUInt16LE(0).toString(16).padStart(4, "0");
 }
 

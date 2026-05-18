@@ -414,7 +414,7 @@ export interface ArrayOptions {
 
 export function validateArray<T>(
   v: unknown,
-  itemValidator: (x: unknown) => T | null,
+  itemValidator: (_x: unknown) => T | null,
   opts: ArrayOptions = {},
 ): T[] | null {
   if (!Array.isArray(v)) return null;

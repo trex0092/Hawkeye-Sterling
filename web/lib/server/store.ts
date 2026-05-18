@@ -3,10 +3,10 @@
 import { getStore as getNetlifyStore } from "@netlify/blobs";
 
 interface MinimalStore {
-  get(key: string): Promise<string | null>;
-  set(key: string, data: string): Promise<void>;
-  delete(key: string): Promise<void>;
-  list(opts?: { prefix?: string }): Promise<{ blobs: Array<{ key: string }> }>;
+  get(_key: string): Promise<string | null>;
+  set(_key: string, _data: string): Promise<void>;
+  delete(_key: string): Promise<void>;
+  list(_opts?: { prefix?: string }): Promise<{ blobs: Array<{ key: string }> }>;
 }
 
 const memoryStore = new Map<string, string>();

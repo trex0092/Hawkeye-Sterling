@@ -11,7 +11,7 @@ interface Props {
   groups: MultiSelectGroup[];
   placeholder?: string;
   value?: string[];
-  onChange?: (values: string[]) => void;
+  onChange?: (_values: string[]) => void;
 }
 
 export function MultiSelect({
@@ -206,7 +206,7 @@ export function MultiSelect({
 interface SingleSelectProps {
   options: Array<{ value: string; label: string }>;
   value: string;
-  onChange: (value: string) => void;
+  onChange: (_value: string) => void;
   placeholder?: string;
 }
 

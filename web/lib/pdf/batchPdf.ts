@@ -3,7 +3,7 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import {
-  PW, PH, ML, MR, CW, CONTENT_Y, BOTTOM_Y,
+  PW, ML, MR, CW, CONTENT_Y, BOTTOM_Y,
   BLACK, GRAY_D, GRAY_M, GRAY_L, WHITE, PINK,
   coverFrame, contentFrame, coverLogo, coverFooter,
   dropCapTitle, oneCard, metaGrid,

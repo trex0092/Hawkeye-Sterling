@@ -48,11 +48,11 @@ export interface MlroRouteOptions<TBody, TResult> {
   /** Anthropic client timeout in ms. Defaults to 55s. */
   timeoutMs?: number;
   /** Parse + validate the request body. Return null to short-circuit with a 400. */
-  parseBody: (raw: unknown) => TBody | null;
+  parseBody: (_raw: unknown) => TBody | null;
   /** Build the messages.create call from the parsed body. */
-  buildRequest: (body: TBody) => MlroBuildRequest;
+  buildRequest: (_body: TBody) => MlroBuildRequest;
   /** Parse the LLM text output into the structured response. Throw on parse failure. */
-  parseResult: (text: string) => TResult;
+  parseResult: (_text: string) => TResult;
   /**
    * Offline fallback returned with ok: true + degraded: true when the API
    * key is missing. Lets the UI render something instead of a hard 503.

@@ -17,9 +17,9 @@ import type { MouseEvent } from "react";
 
 interface RowActionsProps {
   // Click handler for edit (✎). When omitted, only delete is rendered.
-  onEdit?: ((e: MouseEvent<HTMLButtonElement>) => void) | undefined;
+  onEdit?: ((_e: MouseEvent<HTMLButtonElement>) => void) | undefined;
   // Click handler for delete (×). Required.
-  onDelete: (e: MouseEvent<HTMLButtonElement>) => void;
+  onDelete: (_e: MouseEvent<HTMLButtonElement>) => void;
   // Used for aria-label so screen readers announce which row is acted on.
   label: string;
   // When the host table has its own delete-confirm flow, set

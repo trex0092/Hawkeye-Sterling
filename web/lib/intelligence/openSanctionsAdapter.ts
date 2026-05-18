@@ -89,7 +89,7 @@ function osEntityToCandidate(entity: OSEntity): SanctionsCandidate {
 
 // ── Blob helpers ─────────────────────────────────────────────────────────────
 
-async function getBlobs(): Promise<any | null> {
+async function getBlobs(): Promise<unknown | null> {
   try {
     const mod = await import("@netlify/blobs").catch(() => null);
     if (!mod) return null;

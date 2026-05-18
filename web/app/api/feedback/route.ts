@@ -49,7 +49,6 @@ export async function POST(req: Request): Promise<NextResponse> {
   // we feed back into the match-score calibrator.
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
-  const gateHeaders: Record<string, string> = gate.ok ? gate.headers : {};
 
   let body: FeedbackBody;
   try {
@@ -57,7 +56,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   } catch {
     return NextResponse.json(
       { ok: false, error: "invalid JSON" },
-      { status: 400, headers: gateHeaders },
+      { status: 400, headers: gate.headers },
     );
   }
   const {
@@ -90,13 +89,13 @@ export async function POST(req: Request): Promise<NextResponse> {
         error:
           "subjectId, listId, listRef, candidateName, verdict and analyst required",
       },
-      { status: 400, headers: gateHeaders },
+      { status: 400, headers: gate.headers },
     );
   }
   if (!VALID_VERDICTS.has(verdict)) {
     return NextResponse.json(
       { ok: false, error: "invalid verdict" },
-      { status: 400, headers: gateHeaders },
+      { status: 400, headers: gate.headers },
     );
   }
   const record = await submitFeedback({
@@ -108,5 +107,5 @@ export async function POST(req: Request): Promise<NextResponse> {
     ...(reason && typeof reason === "string" ? { reason: reason.trim().slice(0, 2000) } : {}),
     analyst: clean.analyst,
   });
-  return NextResponse.json({ ok: true, record }, { headers: gateHeaders });
+  return NextResponse.json({ ok: true, record }, { headers: gate.headers });
 }

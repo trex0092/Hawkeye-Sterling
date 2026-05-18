@@ -23,7 +23,6 @@ import {
   articleToneClassifier,
   classifyPepTier,
   bayesianUpdate,
-  rationaleConsistency,
   correlateCrisis,
 } from "./reasoningExtensionsBatch3";
 
@@ -199,14 +198,12 @@ export function multiSourceConsensus(inputs: ConsensusInput[]): ConsensusOutput 
 
   let weightedFor = 0;
   let weightedAgainst = 0;
-  let weightedTotal = 0;
   let sourcesFor = 0;
   let sourcesAgainst = 0;
   let sourcesUncertain = 0;
 
   for (const inp of inputs) {
     const w = credibilityFor(inp.source);
-    weightedTotal += w;
     if (inp.evidence === "match") {
       // If a raw score is provided, blend it with the weight rather than
       // counting a 35% match as full strength.

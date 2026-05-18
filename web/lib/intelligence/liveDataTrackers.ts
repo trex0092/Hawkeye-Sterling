@@ -89,7 +89,7 @@ export interface CourtRecord {
 }
 export interface CourtRecordsAdapter {
   isAvailable(): boolean;
-  search(name: string, jurisdictionIso2?: string): Promise<CourtRecord[]>;
+  search(_name: string, _jurisdictionIso2?: string): Promise<CourtRecord[]>;
 }
 export const NULL_COURT_ADAPTER: CourtRecordsAdapter = {
   isAvailable: () => false,

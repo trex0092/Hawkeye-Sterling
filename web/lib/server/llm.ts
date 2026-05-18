@@ -112,7 +112,7 @@ export class AnthropicGuard {
     const inner = this.inner;
     const route = this.route;
     return {
-      create: async (opts: any, requestOptions?: any): Promise<Anthropic.Message> => {
+      create: async (opts: Anthropic.Messages.MessageCreateParamsNonStreaming, requestOptions?: Anthropic.RequestOptions): Promise<Anthropic.Message> => {
         const map: RedactionMap = {};
         const t0 = Date.now();
 
@@ -134,7 +134,7 @@ export class AnthropicGuard {
         const response = await inner.messages.create(safe, requestOptions);
 
         // Rehydrate response text blocks
-        const rehydratedContent = (response.content as any[]).map((block: any) => {
+        const rehydratedContent = (response.content as Anthropic.Messages.ContentBlock[]).map((block) => {
           if (block.type === "text" && typeof block.text === "string") {
             return { ...block, text: rehydrate(block.text, map) };
           }

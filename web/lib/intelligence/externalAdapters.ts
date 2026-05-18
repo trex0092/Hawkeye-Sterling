@@ -231,7 +231,7 @@ export interface CorporateRecord {
 
 export interface CorporateRegistryAdapter {
   isAvailable(): boolean;
-  lookup(name: string, jurisdiction?: string): Promise<CorporateRecord[]>;
+  lookup(_name: string, _jurisdiction?: string): Promise<CorporateRecord[]>;
 }
 
 export const NULL_CORPORATE_ADAPTER: CorporateRegistryAdapter = {
@@ -370,7 +370,7 @@ export interface OnChainAnalytic {
 
 export interface OnChainAdapter {
   isAvailable(): boolean;
-  analyse(address: string, chain: string): Promise<OnChainAnalytic | null>;
+  analyse(_address: string, _chain: string): Promise<OnChainAnalytic | null>;
 }
 
 export const NULL_ONCHAIN_ADAPTER: OnChainAdapter = {

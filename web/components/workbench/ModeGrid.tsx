@@ -6,7 +6,7 @@ import { TOTAL_MODES } from "@/lib/data/modes";
 interface ModeGridProps {
   modes: ReasoningMode[];
   selectedIds: Set<string>;
-  onToggle: (id: string) => void;
+  onToggle: (_id: string) => void;
   totalInFaculty: number;
 }
 

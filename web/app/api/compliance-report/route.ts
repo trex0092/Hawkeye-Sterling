@@ -57,18 +57,6 @@ const SCREEN_VECTORS = [
   { label: "Sanctions (AUS)",     engine: "Hawkeye native", rx: /\bDFAT\b|^AU[-_]/i },
 ];
 
-// Severity band derived from the headline composite — same lookup used
-// by the canonical text report so the HTML cover never disagrees with
-// the canonical body it embeds.
-function bandForScore(score: number): "clear" | "low" | "medium" | "high" | "critical" {
-  if (score >= 80) return "critical";
-  if (score >= 60) return "high";
-  if (score >= 40) return "medium";
-  if (score >= 20) return "low";
-  return "clear";
-}
-
-
 function renderHtmlReport(text: string, input: ReportInput): string {
   const now = input.now ?? new Date();
   const s   = input.subject;

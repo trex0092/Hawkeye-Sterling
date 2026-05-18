@@ -17,7 +17,7 @@ interface BlobStoreShape {
   get: (_key: string, _opts?: { type?: string }) => Promise<unknown>;
 }
 interface BlobsModuleShape {
-  getStore: (opts: { name: string; siteID?: string; token?: string; consistency?: string }) => BlobStoreShape;
+  getStore: (_opts: { name: string; siteID?: string; token?: string; consistency?: string }) => BlobStoreShape;
 }
 
 export async function GET(req: Request): Promise<NextResponse> {

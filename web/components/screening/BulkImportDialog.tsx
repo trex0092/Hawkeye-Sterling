@@ -7,7 +7,7 @@ import { fetchJson } from "@/lib/api/fetchWithRetry";
 interface Props {
   open: boolean;
   onClose: () => void;
-  onImported: (rows: BulkImportRow[]) => void;
+  onImported: (_rows: BulkImportRow[]) => void;
 }
 
 interface BatchSummary {
@@ -128,7 +128,7 @@ export function BulkImportDialog({ open, onClose, onImported }: Props) {
               }}
             />
             <span className="text-11 text-ink-3 self-center">
-              or paste below — Excel "Save as CSV" works.
+              or paste below — Excel &quot;Save as CSV&quot; works.
             </span>
           </div>
 

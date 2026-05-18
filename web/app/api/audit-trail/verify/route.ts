@@ -37,7 +37,7 @@ interface BlobStoreI {
 async function loadAuditStore(): Promise<BlobStoreI | null> {
   try {
     const { getStore } = await import("@netlify/blobs") as unknown as {
-      getStore: (opts: { name: string; siteID?: string; token?: string; consistency?: string }) => BlobStoreI;
+      getStore: (_opts: { name: string; siteID?: string; token?: string; consistency?: string }) => BlobStoreI;
     };
     const siteID = process.env["NETLIFY_SITE_ID"] ?? process.env["SITE_ID"];
     const token =

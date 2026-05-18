@@ -223,7 +223,7 @@ function sumsubAdapter(): KycVendorAdapter {
   if (!key) return NULL_KYC_ADAPTER;
   return {
     isAvailable: () => true,
-    createCheck: async (req) => {
+    createCheck: async (_req) => {
       try {
         const params = new URLSearchParams({ userId: `hs-${Date.now()}`, levelName: process.env["SUMSUB_LEVEL"] ?? "basic-kyc-level" });
         const res = await abortable(

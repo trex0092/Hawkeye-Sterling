@@ -41,8 +41,8 @@ interface BlobsModuleShape {
     consistency?: "strong" | "eventual";
   }) => {
     list: (_opts?: { prefix?: string }) => Promise<{ blobs?: Array<{ key: string }> }>;
-    get: (key: string, opts?: { type?: string }) => Promise<unknown>;
-    setJSON: (key: string, value: unknown) => Promise<void>;
+    get: (_key: string, _opts?: { type?: string }) => Promise<unknown>;
+    setJSON: (_key: string, _value: unknown) => Promise<void>;
   };
 }
 

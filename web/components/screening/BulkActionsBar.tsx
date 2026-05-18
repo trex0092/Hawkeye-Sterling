@@ -7,10 +7,10 @@ import { IsoDateInput } from "@/components/ui/IsoDateInput";
 interface Props {
   selectedIds: string[];
   onClear: () => void;
-  onApplyCdd: (posture: CDDPosture) => void;
+  onApplyCdd: (_posture: CDDPosture) => void;
   onMarkCleared: () => void;
-  onAssign: (operator: string) => void;
-  onSnoozeUntil: (iso: string, reason: string) => void;
+  onAssign: (_operator: string) => void;
+  onSnoozeUntil: (_iso: string, _reason: string) => void;
   onDelete: () => void;
 }
 

@@ -24,8 +24,8 @@ interface BlobsModuleShape {
     token?: string;
     consistency?: "strong" | "eventual";
   }) => {
-    setJSON: (_key: string, value: unknown) => Promise<void>;
-    get: (key: string, opts?: { type?: string }) => Promise<unknown>;
+    setJSON: (_key: string, _value: unknown) => Promise<void>;
+    get: (_key: string, _opts?: { type?: string }) => Promise<unknown>;
   };
 }
 
