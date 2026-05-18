@@ -24,14 +24,14 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 15;
 
 interface BlobsModuleShape {
-  getStore: (opts: {
+  getStore: (_opts: {
     name: string;
     siteID?: string;
     token?: string;
     consistency?: "strong" | "eventual";
   }) => {
-    list: (opts?: { prefix?: string }) => Promise<{ blobs?: Array<{ key: string; size?: number }> }>;
-    get: (key: string, opts?: { type?: string }) => Promise<unknown>;
+    list: (_opts?: { prefix?: string }) => Promise<{ blobs?: Array<{ key: string; size?: number }> }>;
+    get: (_key: string, _opts?: { type?: string }) => Promise<unknown>;
   };
 }
 

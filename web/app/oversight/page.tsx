@@ -870,7 +870,7 @@ export default function OversightPage() {
     setNewActionText(""); setNewActionOwner(""); setNewActionDue(""); setShowAddAction(false);
   };
 
-  const toggleActionItem = (minuteId: string, actionId: string, currentlyClosed: boolean) => {
+  const _toggleActionItem = (minuteId: string, actionId: string, currentlyClosed: boolean) => {
     const patchMinute = (m: Minute): Minute => {
       if (m.id !== minuteId) return m;
       return { ...m, actionItems: m.actionItems.map((ai) => ai.id === actionId ? { ...ai, closed: !currentlyClosed } : ai) };

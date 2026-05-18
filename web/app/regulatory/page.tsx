@@ -1003,7 +1003,7 @@ export default function RegulatoryPage() {
             <strong>Primary UAE DPMS regulatory bodies:</strong>{" "}
             FATF (global standards), CBUAE (licensed financial institutions), MoE (DPMS/DNFBPs),
             LBMA (responsible gold guidance), and EOCN (targeted financial sanctions &amp; conflict minerals).
-            Live feed auto-refreshes every 5 minutes. Calendar deadlines computed from today's date.
+            Live feed auto-refreshes every 5 minutes. Calendar deadlines computed from today&apos;s date.
           </>
         }
       />

@@ -18,8 +18,8 @@ import { searchAllNewsWithStatus } from "@/lib/intelligence/newsAdapters";
 // all fuzzy scores and falling through to the token-presence fallback only.
 type MatchScore = { method: string; score: number; threshold: number; pass: boolean };
 type EnsembleMatch = { subject: string; candidate: string; scores: MatchScore[]; best: MatchScore; phoneticAgreement: boolean };
-type MatchEnsembleFn = (a: string, b: string) => EnsembleMatch;
-type VariantsOfFn = (name: string) => string[];
+type MatchEnsembleFn = (_a: string, _b: string) => EnsembleMatch;
+type VariantsOfFn = (_name: string) => string[];
 let matchEnsemble: MatchEnsembleFn = (a, b) => {
   const exact = a.toLowerCase() === b.toLowerCase();
   const score: MatchScore = { method: "exact_fallback", score: exact ? 1 : 0, threshold: 1, pass: exact };
