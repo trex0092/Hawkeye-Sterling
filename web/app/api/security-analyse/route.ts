@@ -38,7 +38,7 @@ const SYSTEM_PROMPT = `You are a senior security researcher specialising in AML/
 }`;
 
 export async function POST(req: NextRequest) {
-  const gate = await enforce(req);
+  const gate = await enforce(req, { requireAuth: false });
   if (!gate.ok) return gate.response;
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
@@ -64,8 +64,8 @@ export async function POST(req: NextRequest) {
 
   try {
     const message = await client.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 1024,
+      model: "claude-sonnet-4-6",
+      max_tokens: 2048,
       system: SYSTEM_PROMPT,
       messages: [
         {
@@ -75,8 +75,8 @@ export async function POST(req: NextRequest) {
       ],
     });
 
-    const raw = (message.content.find((b) => b.type === "text") as { type: "text"; text: string } | undefined)?.text ?? "";
-    const clean = raw.replace(/```json|```/g, "").trim();
+    const raw = message.content[0]?.type === "text" ? message.content[0].text : "";
+    const clean = raw.replace(/```json\n?|\n?```/g, "").trim();
     const result = JSON.parse(clean) as AnalysisResult;
     return NextResponse.json(result, { headers: gate.headers });
   } catch (e) {

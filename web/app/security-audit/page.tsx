@@ -497,7 +497,7 @@ export default function SecurityAuditPage() {
                   const sev = SEV[f.severity] ?? SEV.INFO;
                   return (
                     <div
-                      key={i}
+                      key={`${f.severity}-${i}`}
                       className={`p-4 bg-bg-1 border border-hair border-l-4 ${sev.border} space-y-1.5`}
                     >
                       <div className="flex items-center gap-2.5 flex-wrap">
@@ -541,7 +541,7 @@ export default function SecurityAuditPage() {
             <div className="flex gap-2 flex-wrap">
               {TOOLS.map((t, i) => (
                 <button
-                  key={i}
+                  key={t.name}
                   onClick={() => setActiveTool(i)}
                   className={`px-4 py-1.5 font-mono text-[11px] uppercase tracking-widest transition-all border ${
                     activeTool === i
@@ -580,7 +580,7 @@ export default function SecurityAuditPage() {
                     </p>
                     <ol className="space-y-2">
                       {t.steps.map((s, i) => (
-                        <li key={i} className="flex gap-3 items-start">
+                        <li key={s} className="flex gap-3 items-start">
                           <span
                             className={`font-mono text-[12px] shrink-0 w-5 ${t.accentClass}`}
                           >
