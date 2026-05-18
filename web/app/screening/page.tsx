@@ -30,6 +30,7 @@ import { ComparePanel } from "@/components/screening/ComparePanel";
 import { useKeyboardShortcuts } from "@/lib/hooks/useKeyboardShortcuts";
 import { pushBellEvent } from "@/lib/bell-events";
 import { loadColumnVisibility, persistColumnVisibility } from "@/components/screening/ColumnChooser";
+import { ComtradePanel } from "@/components/tbml/ComtradePanel";
 
 // ── Bulk Re-Screen types ──────────────────────────────────────────────────────
 
@@ -1815,6 +1816,12 @@ export default function ScreeningPage() {
           })()}
         </div>
       </div>
+
+      {process.env.NEXT_PUBLIC_COMTRADE_ENABLED === "true" && (
+        <div className="px-6 py-4 border-t border-hair-2">
+          <ComtradePanel />
+        </div>
+      )}
 
       <BulkImportDialog
         open={bulkImportOpen}
