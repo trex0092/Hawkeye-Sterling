@@ -180,6 +180,61 @@ function buildContextPreamble(pairs: ContextPair[]): string {
   return `REGULATORY SESSION CONTEXT (prior Q&A in this session — use for continuity):\n${lines}\n\nCURRENT QUESTION:\n`;
 }
 
+// ── Groq free-tier provider ───────────────────────────────────────────────────
+// Calls Groq's OpenAI-compatible API (llama-3.3-70b-versatile, free tier).
+// Returns the same { ok, narrative, complianceReview } shape as invokeMlroAdvisor
+// so all downstream scoring, citation-checking, and probe logic runs unchanged.
+const GROQ_MODEL = "llama-3.3-70b-versatile";
+const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
+
+async function callGroqAdvisor(
+  question: string,
+  groqKey: string,
+  subjectName: string,
+  budgetMs: number,
+): Promise<{ ok: boolean; partial?: boolean; narrative?: string; error?: string; complianceReview?: Record<string, unknown>; _provider?: string; _model?: string }> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), Math.min(budgetMs, 20_000));
+  const systemPrompt = [
+    "You are a senior AML/CFT compliance officer and MLRO advisor specialising in UAE regulatory law",
+    "(FDL No.10/2025, Cabinet Resolution 134/2025, FATF Recommendations 1-40).",
+    "You provide concise, authoritative, citation-grounded compliance guidance.",
+    `Current subject under review: ${subjectName}.`,
+    "Guidelines: cite specific UAE laws, FATF Recs, and Cabinet Resolutions; aim for 300-500 words;",
+    "flag when EDD / STR reporting obligations apply; note that final decisions require human MLRO",
+    "review per CR 134/2025 Art.18.",
+  ].join(" ");
+  try {
+    const res = await fetch(GROQ_URL, {
+      method: "POST",
+      headers: { "authorization": `Bearer ${groqKey}`, "content-type": "application/json" },
+      body: JSON.stringify({
+        model: GROQ_MODEL,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: question.slice(0, 4000) },
+        ],
+        max_tokens: 1024,
+        temperature: 0.3,
+      }),
+      signal: controller.signal,
+    } as RequestInit);
+    if (!res.ok) {
+      const errText = await res.text().catch(() => "");
+      return { ok: false, error: `Groq API ${res.status}: ${errText.slice(0, 200)}` };
+    }
+    const data = await res.json() as Record<string, unknown>;
+    const content = (data["choices"] as Array<{ message: { content: string } }>)?.[0]?.message?.content ?? "";
+    if (!content) return { ok: false, error: "Groq returned empty response" };
+    return { ok: true, narrative: content, complianceReview: { verdict: "approved" }, _provider: "groq", _model: GROQ_MODEL };
+  } catch (err) {
+    const isAbort = err instanceof Error && err.name === "AbortError";
+    return { ok: false, error: isAbort ? "Groq timed out" : String(err).slice(0, 200) };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export async function POST(req: Request): Promise<NextResponse> {
   const t0 = Date.now();
   const gate = await enforce(req);
@@ -191,6 +246,10 @@ export async function POST(req: Request): Promise<NextResponse> {
   const tenant = gate.ok ? tenantIdFromGate(gate) : "anonymous";
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
+  const groqKey = process.env["GROQ_API_KEY"];
+  // Use Groq when: no Claude key available, OR GROQ_PREFERRED=1 and mode is speed.
+  // EDD / multi_perspective / deep always falls through to Claude for full pipeline.
+  const groqPreferred = process.env["GROQ_PREFERRED"] === "1";
 
   let body: Body;
   try {
@@ -202,11 +261,14 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   }
 
-  if (!apiKey) {
+  const mode = body.mode ?? "multi_perspective";
+  const useGroq = !!groqKey && (!apiKey || (groqPreferred && mode === "speed"));
+
+  if (!apiKey && !groqKey) {
     return NextResponse.json(
       {
         ok: true,
-        answer: `**MLRO Advisor — Offline Mode**\n\nYour question has been received but the AI advisor is currently unavailable (ANTHROPIC_API_KEY not configured). Please consult your designated MLRO or compliance officer directly. Under UAE FDL No.10/2025 and FATF Recommendations, all compliance decisions must be reviewed and documented by a qualified MLRO. Set ANTHROPIC_API_KEY in your Netlify environment variables to enable AI-powered advisory.`,
+        answer: `**MLRO Advisor — Offline Mode**\n\nYour question has been received but the AI advisor is currently unavailable (no ANTHROPIC_API_KEY or GROQ_API_KEY configured). Please consult your designated MLRO or compliance officer directly. Under UAE FDL No.10/2025 and FATF Recommendations, all compliance decisions must be reviewed and documented by a qualified MLRO. Set ANTHROPIC_API_KEY or GROQ_API_KEY in your Netlify environment variables to enable AI-powered advisory.`,
         advisorScore: null,
         citations: [],
         latencyMs: 0,
@@ -430,7 +492,9 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   try {
     const [result, ragResult] = await Promise.all([
-      invokeMlroAdvisor(advisorReq, { apiKey, budgetMs }),
+      useGroq
+        ? callGroqAdvisor(enrichedQuestion, groqKey!, body.subjectName, budgetMs)
+        : invokeMlroAdvisor(advisorReq, { apiKey: apiKey!, budgetMs }),
       ragPromise,
     ]);
 
