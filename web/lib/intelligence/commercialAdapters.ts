@@ -89,7 +89,9 @@ function lsegWc1McpAdapter(): CorporateRegistryAdapter {
     console.warn("[commercialAdapters] LSEG_WC1_MCP_URL must use HTTPS — adapter disabled");
     return NULL_CORPORATE_ADAPTER;
   }
-  const mcpUrl: string = mcpUrlRaw;
+  // Narrowing of `process.env[...]` from `string | undefined` does not propagate
+  // into closures below; bind to a typed local so fetch() arguments stay typed.
+  const url: string = mcpUrlRaw;
 
   let _toolName: string | null | undefined = undefined; // undefined = not yet discovered
 
@@ -97,7 +99,7 @@ function lsegWc1McpAdapter(): CorporateRegistryAdapter {
     if (_toolName !== undefined) return _toolName;
     try {
       const res = await abortable(
-        fetch(mcpUrl, {
+        fetch(url, {
           method: "POST",
           headers: { "Content-Type": "application/json", Accept: "application/json, text/event-stream" },
           body: JSON.stringify({ jsonrpc: "2.0", method: "tools/list", id: 1 }),
@@ -130,7 +132,7 @@ function lsegWc1McpAdapter(): CorporateRegistryAdapter {
       try {
         let id = 2;
         const callRes = await abortable(
-          fetch(mcpUrl, {
+          fetch(url, {
             method: "POST",
             headers: { "Content-Type": "application/json", Accept: "application/json, text/event-stream" },
             body: JSON.stringify({

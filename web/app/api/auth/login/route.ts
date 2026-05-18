@@ -17,6 +17,11 @@ const MAX_FAILURES = 10;
 const WINDOW_MS = 15 * 60 * 1000; // 15-minute sliding window
 const LOCK_PREFIX = "ratelimit/login-lock/";
 
+// Note: a previous in-memory `failureMap` with FIFO eviction lived here
+// (commit 52004ff3). Superseded on this merge by the Blobs-backed
+// `LOCK_PREFIX` counter above — Blobs persist across Lambdas and cold
+// starts, so the per-instance memory-bounded map is no longer needed.
+
 interface AttemptRecord {
   count: number;
   windowStart: number;

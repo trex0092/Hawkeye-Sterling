@@ -29,13 +29,20 @@ const nextConfig = {
   },
 
   typescript: {
-    // TypeScript is clean — tsc --noEmit exits 0 with no errors.
+    // Previously set ignoreBuildErrors: true for TS7026/TS2741 JSX implicit-any
+    // errors. Verified 2026-05-18 those errors no longer exist (bare
+    // `npx tsc --noEmit -p tsconfig.json` exits 0). Flag removed so build-time
+    // type errors fail the deploy instead of shipping silently.
     ignoreBuildErrors: false,
   },
 
   eslint: {
-    // ESLint is configured and errors are real. Warnings (unused-vars) are
-    // tolerated during builds; errors (eqeqeq, no-duplicate-imports) are fixed.
+    // Previously set ignoreDuringBuilds: true because react-hooks/rules-of-hooks
+    // hit a stack overflow analysing MlroAdvisorPage. Re-probing 2026-05-18:
+    // `next lint` completes (warnings only, no stack overflow), full
+    // `next build` exits 0. Flag removed so lint errors fail the deploy.
+    // If the stack overflow returns, restore the flag and split
+    // web/app/mlro-advisor/page.tsx (1398+ lines).
     ignoreDuringBuilds: false,
   },
 

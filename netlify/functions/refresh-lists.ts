@@ -12,6 +12,10 @@ import { getStore } from '@netlify/blobs';
 import { runIngestionAll } from '../../src/ingestion/run-all.js';
 
 const LABEL = 'refresh-lists';
+// Idempotency uses main's heartbeat-based lock (see line ~197 below) which
+// supersedes the cron-lock wrapper this branch shipped — both solve the same
+// retry-dedup problem; the heartbeat approach also auto-expires stale locks
+// when a crashed run leaves the lock orphaned.
 
 // Lists to watch for designation changes. Matches LIST_IDS in quick-screen/route.ts.
 const WATCHED_LIST_IDS = [
