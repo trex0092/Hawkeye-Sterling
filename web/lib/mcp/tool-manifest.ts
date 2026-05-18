@@ -125,6 +125,12 @@ export const TOOL_MANIFEST: Record<string, ToolManifestEntry> = {
     regulatoryNote: "Anomaly flags require human review before case creation",
   },
 
+  watchman_check: {
+    level: "supervised",
+    description: "Free sanctions screening via Moov Watchman (OFAC SDN, BIS Entity List, Military End-User, UK Consolidated, EU Consolidated, OFAC SSI). No API key required.",
+    regulatoryNote: "Cross-check result — Watchman covers OFAC/BIS/UK/EU; primary UAE lists (EOCN/LTL) remain in core screen tool",
+  },
+
   // ── Action ────────────────────────────────────────────────────────────────
   // These tools can modify external state. Use with explicit intent.
   call_api: {

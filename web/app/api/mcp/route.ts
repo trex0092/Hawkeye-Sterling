@@ -1241,6 +1241,28 @@ const TOOLS: ToolDef[] = [
     handler: async (args) => callApi("/api/open-banking-check", "POST", args),
   },
 
+  // ── FREE SANCTIONS — MOOV WATCHMAN ───────────────────────────────────────────
+  {
+    name: "watchman_check",
+    description:
+      "Free sanctions screening via Moov Watchman (moov-io/watchman). Covers OFAC SDN, BIS Entity List, Military End-User, UK Consolidated Sanctions, EU Consolidated Sanctions, and OFAC SSI — no API key required. Complements the core screen tool's UAE EOCN/LTL coverage.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        name: { type: "string", description: "Subject name (person or organisation)" },
+        limit: { type: "number", minimum: 1, maximum: 100, description: "Max results per list (default 20)" },
+      },
+      required: ["name"],
+    },
+    handler: async (args) => {
+      const a = args as Record<string, unknown>;
+      return callApi("/api/watchman-check", "POST", {
+        name: String(a["name"] ?? ""),
+        ...(typeof a["limit"] === "number" ? { limit: a["limit"] } : {}),
+      });
+    },
+  },
+
   // ── GENERIC PROXY ────────────────────────────────────────────────────────────
   {
     name: "call_api",

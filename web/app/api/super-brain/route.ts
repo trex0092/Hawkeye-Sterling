@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { getJson, setJson } from "@/lib/server/store";
 // Import each brain function from its concrete module rather than the
 // index.js barrel. The barrel re-exports 80+ modules (~20k lines of
 // catalogues); pulling it in at the top of a Netlify Function route was
@@ -149,9 +150,38 @@ const BUILD_SHA =
   "local";
 
 function makeRunId(): string {
-  // 8 hex chars is enough collision-resistance for an audit-trail id;
-  // we don't need crypto-strong uniqueness.
   return `sb_${Math.random().toString(16).slice(2, 10)}`;
+}
+
+// ── Result cache (cost reduction) ────────────────────────────────────────────
+// Super-brain is compute + I/O heavy (watchlist read, OpenSanctions, LSEG).
+// Cache full results for 4 hours keyed on the normalised input hash.
+// The ongoing thrice-daily screen cadence (08:30 / 15:00 / 17:30) has a 2.5h
+// gap between runs 2 and 3 — run 3 is always a cache hit, saving ~33% of calls.
+const SUPER_BRAIN_CACHE_TTL_MS = 4 * 60 * 60 * 1_000; // 4 hours
+
+function cacheHash(s: string): string {
+  let h = 5381;
+  for (let i = 0; i < s.length; i++) h = (Math.imul(h, 33) + s.charCodeAt(i)) | 0;
+  return (h >>> 0).toString(16).padStart(8, "0");
+}
+
+interface CachedSuperBrain {
+  cachedAt: string;
+  ttlMs: number;
+  result: Record<string, unknown>;
+}
+
+function buildCacheKey(body: Body): string {
+  const norm = JSON.stringify({
+    n: body.subject.name.trim().toLowerCase(),
+    a: (body.subject.aliases ?? []).map((x) => x.trim().toLowerCase()).sort(),
+    e: body.subject.entityType ?? "individual",
+    j: (body.subject.jurisdiction ?? "").trim().toLowerCase(),
+    r: (body.roleText ?? "").trim().toLowerCase(),
+    m: (body.adverseMediaText ?? "").trim().toLowerCase(),
+  });
+  return `super-brain-cache/${cacheHash(norm)}`;
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
@@ -178,6 +208,27 @@ export async function POST(req: Request): Promise<NextResponse> {
       { ok: false, error: "subject.name required (max 500 chars)" },
       { status: 400, headers: gateHeaders },
     );
+  }
+
+  // Cache check — skip when caller explicitly opts out via ?nocache=1
+  const { searchParams } = new URL(req.url);
+  const bypassCache = searchParams.get("nocache") === "1";
+  const cacheKey = buildCacheKey(body);
+  if (!bypassCache) {
+    try {
+      const cached = await getJson<CachedSuperBrain>(cacheKey);
+      if (cached && cached.cachedAt && cached.result) {
+        const age = Date.now() - new Date(cached.cachedAt).getTime();
+        if (age < cached.ttlMs) {
+          return NextResponse.json(
+            { ...cached.result, _cached: true, _cachedAt: cached.cachedAt, _cacheAgeMs: age },
+            { headers: gateHeaders },
+          );
+        }
+      }
+    } catch {
+      // Cache miss / error — fall through to full pipeline
+    }
   }
 
   try {
@@ -637,7 +688,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       return _openSanctionsEarly.match ? _openSanctionsEarly : null;
     })();
 
-    return NextResponse.json({
+    const responseBody = {
       ok: true,
       // When non-empty, downstream consumers (compliance report, MLRO UI)
       // MUST surface this list. Each entry means a brain module silently
@@ -677,7 +728,16 @@ export async function POST(req: Request): Promise<NextResponse> {
         },
       },
       latencyMs: Date.now() - t0,
-    }, { headers: gateHeaders });
+    };
+
+    // Fire-and-forget cache write — never blocks the response.
+    void setJson<CachedSuperBrain>(cacheKey, {
+      cachedAt: new Date().toISOString(),
+      ttlMs: SUPER_BRAIN_CACHE_TTL_MS,
+      result: responseBody as unknown as Record<string, unknown>,
+    }).catch(() => { /* cache write failures are silent */ });
+
+    return NextResponse.json(responseBody, { headers: gateHeaders });
   } catch (err) {
     // Brain pipeline crashed — DO NOT return score:0 (CLEAR). A CLEAR
     // disposition on a crashed analysis would let a sanctioned entity
