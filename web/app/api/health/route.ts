@@ -61,7 +61,12 @@ async function checkBrain(): Promise<{ ok: boolean; detail: string }> {
 export async function GET(): Promise<NextResponse> {
   const brain = await checkBrain();
   const status = brain.ok ? "healthy" : "degraded";
-  const code = brain.ok ? 200 : 200; // always 200 for liveness; use status field to detect degraded
+  // RULE: degraded subsystems must surface as HTTP 207 so external probes
+  // (Netlify, load balancers, regulator-side monitors) can distinguish
+  // "fully healthy" from "still serving but a component is impaired".
+  // Previously always returned 200 which made degraded states invisible
+  // to anything that didn't parse the JSON body.
+  const code = brain.ok ? 200 : 207;
   return NextResponse.json(
     {
       ok: true,
