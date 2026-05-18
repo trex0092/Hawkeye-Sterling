@@ -19,7 +19,15 @@
 import { SOURCE_ADAPTERS } from './index.js';
 import { getBlobsStore, EmptyOverwriteRefusedError } from './blobs-store.js';
 import { logIngestError } from './error-log.js';
+import { installGlobalAsyncSafetyNet } from './safe-async.js';
 import type { IngestionReport } from './types.js';
+
+// Idempotent process-level safety net: any unhandled rejection or
+// uncaught exception in this Lambda's lifetime gets a structured
+// log entry instead of an opaque Netlify-log stack trace. Every
+// `void logIngestError(...)` fire-and-forget in this module relies
+// on this net to catch rejection failures.
+installGlobalAsyncSafetyNet();
 
 // Raised from 12 s to 20 s after observing eu_fsf and ca_osfi consistently
 // timing out at 13-14 s in admin-trigger-refresh runs (webgate.ec.europa.eu
