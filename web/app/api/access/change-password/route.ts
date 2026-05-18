@@ -87,5 +87,18 @@ export async function POST(req: Request) {
     body: { role: session.role },
   });
 
-  return NextResponse.json({ ok: true });
+  // Invalidate the current session so the user must re-authenticate with the
+  // new password. Using maxAge:0 mirrors the logout route. Without this,
+  // the old session token would remain valid for up to SESSION_TTL_S after
+  // the password change, which is a security gap.
+  const isSecure = process.env["NODE_ENV"] !== "development";
+  const res = NextResponse.json({ ok: true, sessionInvalidated: true });
+  res.cookies.set(SESSION_COOKIE, "", {
+    maxAge: 0,
+    path: "/",
+    httpOnly: true,
+    sameSite: "lax",
+    secure: isSecure,
+  });
+  return res;
 }

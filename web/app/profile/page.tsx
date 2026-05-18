@@ -73,7 +73,7 @@ export default function ProfilePage() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ currentPassword, newPassword }),
       });
-      const json = (await res.json()) as { ok: boolean; error?: string };
+      const json = (await res.json()) as { ok: boolean; error?: string; sessionInvalidated?: boolean };
       if (!json.ok) {
         setSaveError(json.error ?? "Password change failed");
       } else {
@@ -81,6 +81,11 @@ export default function ProfilePage() {
         setCurrentPassword("");
         setNewPassword("");
         setConfirmPassword("");
+        // Session cookie was cleared server-side — redirect to login after a
+        // short pause so the user sees the success message.
+        if (json.sessionInvalidated) {
+          setTimeout(() => { window.location.href = "/login"; }, 2000);
+        }
       }
     } catch (err) {
       console.error("[hawkeye] profile change-password threw:", err);

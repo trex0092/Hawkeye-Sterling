@@ -1,6 +1,6 @@
 "use client";
 
-export default function RouteError({
+export default function InvestigationError({
   error,
   reset,
 }: {
@@ -11,7 +11,7 @@ export default function RouteError({
     <div className="min-h-screen flex items-center justify-center bg-bg-0">
       <div className="max-w-md text-center px-6">
         <div className="font-mono text-11 tracking-wide-8 uppercase text-ink-3 mb-3">
-          Runtime Error
+          Investigation · Error
         </div>
         <h1 className="font-display font-normal text-32 text-ink-0 mb-3">
           Something went wrong

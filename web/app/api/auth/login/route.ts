@@ -8,19 +8,27 @@ import { loadUsers, saveUsers } from "@/app/api/access/_store";
 import { verifyPassword, issueSession, SESSION_COOKIE, SESSION_TTL_S } from "@/lib/server/auth";
 import { getJson, setJson, del } from "@/lib/server/store";
 
-// ── Per-username brute-force protection ──────────────────────────────────────
-// Tracks failed attempts per normalised username. Hard-locks after
-// MAX_FAILURES within WINDOW_MS. Lock persisted in Netlify Blobs so it
-// survives Lambda cold-starts and is enforced across all concurrent instances.
+// ── Brute-force protection ────────────────────────────────────────────────────
+// Two independent guards — per-username AND per-IP — to block both targeted
+// account attacks and credential-spraying (many usernames from one IP).
+// Counters are persisted in Netlify Blobs so they survive Lambda cold-starts
+// and are enforced across all concurrent instances.
 
-const MAX_FAILURES = 10;
 const WINDOW_MS = 15 * 60 * 1000; // 15-minute sliding window
-const LOCK_PREFIX = "ratelimit/login-lock/";
+
+// Per-username: hard-lock after 10 failures → stops targeted brute-force.
+const USER_MAX_FAILURES = 10;
+const USER_LOCK_PREFIX = "ratelimit/login-lock/";
+
+// Per-IP: hard-lock after 50 failures → stops credential-spraying while
+// tolerating shared IPs (corporate NAT). Raw IP is never stored — only a
+// 16-char SHA-256 prefix.
+const IP_MAX_FAILURES = 50;
+const IP_LOCK_PREFIX = "ratelimit/login-ip/";
 
 // Note: a previous in-memory `failureMap` with FIFO eviction lived here
-// (commit 52004ff3). Superseded on this merge by the Blobs-backed
-// `LOCK_PREFIX` counter above — Blobs persist across Lambdas and cold
-// starts, so the per-instance memory-bounded map is no longer needed.
+// (commit 52004ff3). Superseded on this merge by the Blobs-backed counters
+// above — Blobs persist across Lambdas and cold-starts.
 
 interface AttemptRecord {
   count: number;
@@ -32,37 +40,45 @@ function usernameKey(username: string): string {
   return createHash("sha256").update(username.toLowerCase().trim()).digest("hex").slice(0, 16);
 }
 
-async function checkRateLimit(key: string): Promise<{ allowed: boolean; retryAfterSec?: number }> {
+function ipKey(ip: string): string {
+  return createHash("sha256").update(ip).digest("hex").slice(0, 16);
+}
+
+async function checkRateLimit(
+  prefix: string,
+  key: string,
+  maxFailures: number,
+): Promise<{ allowed: boolean; retryAfterSec?: number }> {
   const now = Date.now();
-  const rec = await getJson<AttemptRecord>(`${LOCK_PREFIX}${key}`).catch(() => null);
+  const rec = await getJson<AttemptRecord>(`${prefix}${key}`).catch(() => null);
   if (!rec) return { allowed: true };
   if (rec.lockedUntil > now) {
     return { allowed: false, retryAfterSec: Math.ceil((rec.lockedUntil - now) / 1000) };
   }
   if (now - rec.windowStart > WINDOW_MS) {
-    await del(`${LOCK_PREFIX}${key}`).catch(() => undefined);
+    await del(`${prefix}${key}`).catch(() => undefined);
     return { allowed: true };
   }
-  if (rec.count >= MAX_FAILURES) {
+  if (rec.count >= maxFailures) {
     const lockUntil = now + WINDOW_MS;
-    await setJson(`${LOCK_PREFIX}${key}`, { ...rec, lockedUntil: lockUntil }).catch(() => undefined);
+    await setJson(`${prefix}${key}`, { ...rec, lockedUntil: lockUntil }).catch(() => undefined);
     return { allowed: false, retryAfterSec: Math.ceil(WINDOW_MS / 1000) };
   }
   return { allowed: true };
 }
 
-async function recordFailure(key: string): Promise<void> {
+async function recordFailure(prefix: string, key: string): Promise<void> {
   const now = Date.now();
-  const rec = await getJson<AttemptRecord>(`${LOCK_PREFIX}${key}`).catch(() => null);
+  const rec = await getJson<AttemptRecord>(`${prefix}${key}`).catch(() => null);
   if (!rec || now - rec.windowStart > WINDOW_MS) {
-    await setJson(`${LOCK_PREFIX}${key}`, { count: 1, windowStart: now, lockedUntil: 0 }).catch(() => undefined);
+    await setJson(`${prefix}${key}`, { count: 1, windowStart: now, lockedUntil: 0 }).catch(() => undefined);
   } else {
-    await setJson(`${LOCK_PREFIX}${key}`, { ...rec, count: rec.count + 1 }).catch(() => undefined);
+    await setJson(`${prefix}${key}`, { ...rec, count: rec.count + 1 }).catch(() => undefined);
   }
 }
 
-async function recordSuccess(key: string): Promise<void> {
-  await del(`${LOCK_PREFIX}${key}`).catch(() => undefined);
+async function recordSuccess(prefix: string, key: string): Promise<void> {
+  await del(`${prefix}${key}`).catch(() => undefined);
 }
 
 function clientIp(req: Request): string {
@@ -87,15 +103,27 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "Invalid credentials" }, { status: 401 });
   }
 
-  const key = usernameKey(username);
+  const uKey = usernameKey(username);
   const ip = clientIp(req);
+  const iKey = ipKey(ip);
 
-  const rl = await checkRateLimit(key);
-  if (!rl.allowed) {
-    console.warn("[auth/login] rate-limited", { key, ip, retryAfterSec: rl.retryAfterSec });
+  // Per-IP check first — cheapest signal; catches credential-spraying.
+  const ipRl = await checkRateLimit(IP_LOCK_PREFIX, iKey, IP_MAX_FAILURES);
+  if (!ipRl.allowed) {
+    console.warn("[auth/login] ip-rate-limited", { iKey, retryAfterSec: ipRl.retryAfterSec });
     return NextResponse.json(
-      { ok: false, error: "Too many failed login attempts. Try again later.", retryAfterSec: rl.retryAfterSec },
-      { status: 429, headers: { "retry-after": String(rl.retryAfterSec ?? 900) } },
+      { ok: false, error: "Too many failed login attempts. Try again later.", retryAfterSec: ipRl.retryAfterSec },
+      { status: 429, headers: { "retry-after": String(ipRl.retryAfterSec ?? 900) } },
+    );
+  }
+
+  // Per-username check — catches targeted single-account attacks.
+  const userRl = await checkRateLimit(USER_LOCK_PREFIX, uKey, USER_MAX_FAILURES);
+  if (!userRl.allowed) {
+    console.warn("[auth/login] rate-limited", { uKey, ip, retryAfterSec: userRl.retryAfterSec });
+    return NextResponse.json(
+      { ok: false, error: "Too many failed login attempts. Try again later.", retryAfterSec: userRl.retryAfterSec },
+      { status: 429, headers: { "retry-after": String(userRl.retryAfterSec ?? 900) } },
     );
   }
 
@@ -112,12 +140,18 @@ export async function POST(req: Request) {
   ) {
     // Uniform delay to prevent user enumeration via timing side-channel
     await new Promise((r) => setTimeout(r, 400));
-    await recordFailure(key);
-    console.warn("[auth/login] failed attempt", { key, ip, userFound: !!user });
+    // Increment both counters on failure.
+    await Promise.all([
+      recordFailure(USER_LOCK_PREFIX, uKey),
+      recordFailure(IP_LOCK_PREFIX, iKey),
+    ]);
+    console.warn("[auth/login] failed attempt", { uKey, ip, userFound: !!user });
     return NextResponse.json({ ok: false, error: "Invalid username or password" }, { status: 401 });
   }
 
-  await recordSuccess(key);
+  // Clear the per-username counter on success (the IP counter intentionally
+  // stays to limit rapid username cycling from the same address).
+  await recordSuccess(USER_LOCK_PREFIX, uKey);
   const token = issueSession(user.id, user.username!, user.role);
 
   const isSecure = process.env["NODE_ENV"] === "production";
