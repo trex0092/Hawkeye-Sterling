@@ -7,6 +7,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
 import { NextResponse } from "next/server";
+import { enforce } from "@/lib/server/enforce";
 
 const ASANA_PROJECT_GID = "1214148630166524";
 const ASANA_ASSIGNEE_GID = "1213645083721304";
@@ -119,6 +120,8 @@ export interface CreateTaskResponse {
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   const token =
     process.env["ASANA_PAT"] ??
     process.env["ASANA_TOKEN"] ??

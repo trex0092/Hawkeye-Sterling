@@ -226,12 +226,13 @@ function renderHtmlReport(text: string, input: ReportInput): string {
     s.dob ? `DOB ${e(s.dob)}` : null,
   ].filter(Boolean).join(" · ");
 
+  const isLowRisk = sev === "clear" || sev === "low";
   const recLines = [
     `► ${rec}`,
-    sev === "clear" || sev === "low" ? "► PROCEED WITH STANDARD CDD" : "",
-    sev === "clear" || sev === "low" ? "► SDD ELIGIBLE (MoE Circular 6/2025) — MLRO DISCRETION APPLIES" : "",
-    "► NO goAML FILING REQUIRED",
-    "► STANDARD ONGOING MONITORING",
+    isLowRisk ? "► PROCEED WITH STANDARD CDD" : "",
+    isLowRisk ? "► SDD ELIGIBLE (MoE Circular 6/2025) — MLRO DISCRETION APPLIES" : "",
+    isLowRisk ? "► NO goAML FILING REQUIRED" : "",
+    isLowRisk ? "► STANDARD ONGOING MONITORING" : "► ENHANCED ONGOING MONITORING REQUIRED",
   ].filter(Boolean);
 
   const regItems = [

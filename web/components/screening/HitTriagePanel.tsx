@@ -10,7 +10,7 @@
 // post to /api/screening/resolve which writes to audit and — for
 // Positive — auto-creates the ongoing-monitoring task.
 
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 export interface TriageHit {
   id: string;                       // unique within this screening
@@ -264,9 +264,8 @@ export function HitTriagePanel({ subjectId, subjectName, hits, resolutions = {},
                 const r = resolutions[h.id] ?? "unspecified";
                 const expanded = expandedHitId === h.id;
                 return (
-                  <>
+                  <React.Fragment key={h.id}>
                     <tr
-                      key={h.id}
                       className="border-t border-white/5 hover:bg-bg-1/30 cursor-pointer"
                       onClick={() => setExpandedHitId(expanded ? null : h.id)}
                     >
@@ -432,7 +431,7 @@ export function HitTriagePanel({ subjectId, subjectName, hits, resolutions = {},
                         </td>
                       </tr>
                     )}
-                  </>
+                  </React.Fragment>
                 );
               })}
               {filteredHits.length === 0 && (
