@@ -15,7 +15,7 @@ export class QuickScreenError extends Error {
 
 interface QuickScreenInput {
   subject: QuickScreenSubject;
-  candidates: QuickScreenCandidate[];
+  candidates?: QuickScreenCandidate[];
   options?: QuickScreenOptions;
 }
 
