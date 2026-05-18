@@ -34,7 +34,10 @@ export interface IngestErrorEntry {
   at: string;            // ISO timestamp
   source: string;        // which cron / function logged it (e.g. "refresh-lists", "sanctions-watch-15min")
   adapterId: string;     // e.g. "ofac_sdn"
-  phase: 'fetch' | 'parse' | 'write' | 'verify';
+  // `integrity-guard` = feed-integrity refusal (empty parse refused vs.
+  // healthy snapshot). Distinct from `write` so the dashboard can show
+  // "data PROTECTED" instead of "storage failed".
+  phase: 'fetch' | 'parse' | 'write' | 'verify' | 'integrity-guard';
   message: string;
   httpStatus?: number;
 }
