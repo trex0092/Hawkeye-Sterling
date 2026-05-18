@@ -975,8 +975,8 @@ async function _handleGet(isAdmin: boolean, gateHeaders: Record<string, string> 
   let brainReviewedAt = process.env["BRAIN_REVIEWED_AT"] ?? "2026-05-15";
   try {
     const blobsMod = (await import("@netlify/blobs")) as unknown as {
-      getStore: (opts: { name: string; siteID?: string; token?: string; consistency?: string }) => {
-        get: (key: string, opts?: { type?: string }) => Promise<unknown>;
+      getStore: (_opts: { name: string; siteID?: string; token?: string; consistency?: string }) => {
+        get: (_key: string, _opts?: { type?: string }) => Promise<unknown>;
       };
     };
     const siteID = process.env["NETLIFY_SITE_ID"] ?? process.env["SITE_ID"];

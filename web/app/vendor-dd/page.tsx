@@ -33,7 +33,7 @@ function today(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-function addYears(iso: string, years: number): string {
+function _addYears(iso: string, years: number): string {
   const d = new Date(iso);
   d.setFullYear(d.getFullYear() + years);
   return d.toISOString().slice(0, 10);
@@ -70,7 +70,7 @@ function save(list: Supplier[]) {
   }
 }
 
-const XIcon = () => (
+const _XIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
     fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
     <line x1="18" y1="6" x2="6" y2="18" />
