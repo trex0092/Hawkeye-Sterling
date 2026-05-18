@@ -21,54 +21,6 @@ export interface AmlTrainingGapResult {
   regulatoryBasis: string;
 }
 
-const FALLBACK: AmlTrainingGapResult = {
-  completionRate: 86,
-  gapRating: "medium",
-  overdueStaff: [
-    "R. Fontaine (Relationship Manager) — AML Fundamentals overdue 45 days",
-    "J. Kapoor (Cashier) — Cash Transaction Reporting overdue 20 days",
-    "3 new joiners (March 2025) — induction AML training not yet scheduled",
-  ],
-  highRiskRoleGaps: [
-    "Gold counter staff: 2 of 6 have not completed DPMS-specific AML module (MoE requirement)",
-    "Senior management: Board Risk Committee — FATF R.1 responsibilities training not conducted this year",
-    "IT team: no AML data handling/privacy training — risk of inadvertent tipping-off via system changes",
-  ],
-  mandatoryModules: [
-    "AML/CFT Fundamentals (all staff — annual)",
-    "DPMS-Specific ML Typologies (gold counter, customer-facing)",
-    "Cash Transaction Reporting & MoE Circular 2/2024 (cashiers, RM)",
-    "STR/SAR Filing — goAML (compliance team, MLRO)",
-    "Sanctions Screening (all customer-facing)",
-    "Board AML Responsibilities (senior management, board — biennial)",
-  ],
-  trainingPlan: [
-    {
-      module: "AML Fundamentals Refresher",
-      audience: "R. Fontaine, J. Kapoor + 3 new joiners",
-      deadline: "15/05/2025",
-      deliveryMethod:
-        "E-learning platform — 2 hours, auto-graded assessment",
-    },
-    {
-      module: "DPMS ML Typologies",
-      audience: "Gold counter staff (all 6)",
-      deadline: "31/05/2025",
-      deliveryMethod:
-        "In-person workshop with MLRO — 3 hours, sign-off required",
-    },
-    {
-      module: "Board AML Responsibilities",
-      audience: "Board Risk Committee (5 members)",
-      deadline: "30/06/2025",
-      deliveryMethod:
-        "External trainer — ACAMS-certified, 4-hour session",
-    },
-  ],
-  regulatoryBasis:
-    "UAE FDL 10/2025 Art.22 (training obligation), FATF R.18 (training), CBUAE AML Standards §6.3, MoE Circular 2/2024 (DPMS training requirements)",
-};
-
 export async function POST(req: Request) {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;

@@ -138,7 +138,7 @@ function NewCnmrForm({ onCreated, onCancel }: NewCnmrFormProps) {
   );
 }
 
-interface CaseDetailProps { c: CnmrCase; onUpdate: (c: CnmrCase) => void; }
+interface CaseDetailProps { c: CnmrCase; onUpdate: (_c: CnmrCase) => void; }
 function CaseDetail({ c, onUpdate }: CaseDetailProps) {
   const [narrativeDraft, setNarrativeDraft] = useState(c.narrativeDraft);
   const [goAmlRef, setGoAmlRef] = useState(c.goAmlRef ?? "");
@@ -300,7 +300,7 @@ export default function CnmrPage() {
             className="inline-flex items-center gap-2 px-4 py-2 rounded bg-red text-white text-12 font-semibold hover:bg-red/90">
             + New CNMR case
           </button>
-          <span className="text-11 text-ink-3">Triggered automatically when a screening hit is resolved "Positive" on a TFS list — or enter manually.</span>
+          <span className="text-11 text-ink-3">Triggered automatically when a screening hit is resolved &quot;Positive&quot; on a TFS list — or enter manually.</span>
         </div>
       )}
 
@@ -313,7 +313,7 @@ export default function CnmrPage() {
         <div className="py-16 text-center">
           <div className="text-32 mb-3">✓</div>
           <div className="text-14 font-semibold text-ink-0 mb-1">No CNMR cases</div>
-          <p className="text-12 text-ink-2">No confirmed TFS list matches requiring CNMR filing. Cases are created when a screening hit is resolved as "Positive" against the UAE Local Terrorist List or UN Consolidated List.</p>
+          <p className="text-12 text-ink-2">No confirmed TFS list matches requiring CNMR filing. Cases are created when a screening hit is resolved as &quot;Positive&quot; against the UAE Local Terrorist List or UN Consolidated List.</p>
         </div>
       ) : (
         <div className="space-y-2">

@@ -37,7 +37,7 @@ function DeadlineBadge({ deadline, status }: { deadline: string; status: DpmsrOb
   );
 }
 
-interface EvaluateFormProps { onResult: (obs: DpmsrObligation[]) => void; }
+interface EvaluateFormProps { onResult: (_obs: DpmsrObligation[]) => void; }
 function EvaluateForm({ onResult }: EvaluateFormProps) {
   const [txnId, setTxnId] = useState("");
   const [amount, setAmount] = useState("");
@@ -49,7 +49,7 @@ function EvaluateForm({ onResult }: EvaluateFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [evalResult, setEvalResult] = useState<{ obligationsFound: number; obligations: DpmsrObligation[] } | null>(null);
-  const [saveMode, setSaveMode] = useState(false);
+  const [_saveMode, _setSaveMode] = useState(false);
   const mountedRef = useRef(true);
   useEffect(() => () => { mountedRef.current = false; }, []);
 
