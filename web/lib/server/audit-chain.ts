@@ -56,32 +56,43 @@ async function loadAuditStore() {
 
 /**
  * Appends one FNV-1a-signed entry to the server-side audit chain blob.
- * Returns true on success, false on failure (non-throwing — never blocks callers).
+ * Retries up to 3 times with exponential backoff on transient failures.
+ * Returns true on success, false after all retries exhausted (non-throwing).
  */
 export async function writeAuditChainEntry(event: AuditChainEvent): Promise<boolean> {
-  try {
-    const store = await loadAuditStore();
-    const raw = await store.get("chain.json", { type: "json" }) as ChainEntry[] | null;
-    const chain: ChainEntry[] = Array.isArray(raw) ? structuredClone(raw) : [];
-    const prev = chain[chain.length - 1];
-    const seq = (prev?.seq ?? -1) + 1;
-    const at = new Date().toISOString();
-    const { event: eventName, actor, caseId, ...rest } = event;
-    const payload: Record<string, unknown> = { event: eventName, actor };
-    if (caseId) payload["caseId"] = caseId;
-    Object.assign(payload, rest);
-    const hash = computeHash(prev?.entryHash, payload, at, seq);
-    chain.push({
-      seq,
-      ...(prev ? { prevHash: prev.entryHash } : {}),
-      entryHash: hash,
-      payload,
-      at,
-    });
-    await store.setJSON("chain.json", chain);
-    return true;
-  } catch (err) {
-    console.warn("[audit-chain] write failed (non-fatal):", err instanceof Error ? err.message : String(err));
-    return false;
+  const MAX_ATTEMPTS = 3;
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+    try {
+      const store = await loadAuditStore();
+      const raw = await store.get("chain.json", { type: "json" }) as ChainEntry[] | null;
+      const chain: ChainEntry[] = Array.isArray(raw) ? structuredClone(raw) : [];
+      const prev = chain[chain.length - 1];
+      const seq = (prev?.seq ?? -1) + 1;
+      const at = new Date().toISOString();
+      const { event: eventName, actor, caseId, ...rest } = event;
+      const payload: Record<string, unknown> = { event: eventName, actor };
+      if (caseId) payload["caseId"] = caseId;
+      Object.assign(payload, rest);
+      const hash = computeHash(prev?.entryHash, payload, at, seq);
+      chain.push({
+        seq,
+        ...(prev ? { prevHash: prev.entryHash } : {}),
+        entryHash: hash,
+        payload,
+        at,
+      });
+      await store.setJSON("chain.json", chain);
+      return true;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (attempt < MAX_ATTEMPTS - 1) {
+        const delayMs = 100 * (2 ** attempt); // 100ms, 200ms
+        console.warn(`[audit-chain] write failed (attempt ${attempt + 1}/${MAX_ATTEMPTS}), retrying in ${delayMs}ms: ${msg}`);
+        await new Promise((r) => setTimeout(r, delayMs));
+      } else {
+        console.error(`[audit-chain] write FAILED after ${MAX_ATTEMPTS} attempts — entry lost: ${msg}`, { event: event.event, actor: event.actor, caseId: event.caseId });
+      }
+    }
   }
+  return false;
 }

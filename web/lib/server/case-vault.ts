@@ -1,4 +1,5 @@
 import { getJson, setJson, del, listKeys } from "@/lib/server/store";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import type { CaseRecord } from "@/lib/types";
 
 // Server-side case vault — tenant-scoped, per-case Blob storage.
@@ -212,9 +213,31 @@ export async function saveAllCases(
   await bumpMeta(tenant, "write");
 }
 
+const INDEX_LOCK_TTL_MS = 8_000; // 8 s — longer than any expected index write
+
+function indexLockKey(tenant: string): string {
+  return `${tenantPrefix(tenant)}/_index.lock`;
+}
+
+async function acquireIndexLock(tenant: string): Promise<boolean> {
+  const lockKey = indexLockKey(tenant);
+  const existing = await getJson<{ lockedAt: string }>(lockKey).catch(() => null);
+  if (existing) {
+    const age = Date.now() - new Date(existing.lockedAt).getTime();
+    if (age < INDEX_LOCK_TTL_MS) return false; // lock held by another write
+  }
+  await setJson(lockKey, { lockedAt: new Date().toISOString() });
+  return true;
+}
+
+async function releaseIndexLock(tenant: string): Promise<void> {
+  await del(indexLockKey(tenant)).catch(() => undefined);
+}
+
 /**
  * Insert a single new case without reading all existing cases.
- * Used by automated case-open (e.g. post-screening auto-open on hits).
+ * Uses a blob-backed per-tenant lock to serialise concurrent index writes and
+ * prevent the read-modify-write race that can drop index entries.
  * Idempotent: skips write if a record with the same id already exists at
  * an equal-or-newer lastActivity timestamp.
  * Non-throwing: logs and returns on any storage error.
@@ -225,30 +248,46 @@ export async function insertCaseRecord(tenant: string, c: CaseRecord): Promise<v
     const key = caseKey(tenant, c.id);
     const existing = await getJson<CaseRecord>(key);
     if (existing && existing.lastActivity >= c.lastActivity) return;
-    // Write the case blob first — it is the authoritative record. UUID keys
-    // (introduced in this audit) eliminate identity collisions entirely.
+    // Write the case blob first — it is the authoritative record.
     await setJson(key, c);
-    // Re-read the index immediately before writing to narrow (not eliminate)
-    // the concurrent-insert race window. Netlify Blobs has no compare-and-swap,
-    // so a narrow window remains; worst case is one index entry lost until the
-    // next reconcile. The case blob itself is always safe.
-    const idx = await readIndex(tenant);
-    const pos = idx.entries.findIndex((e) => e.id === c.id);
-    const entry = entryFromCase(c);
-    if (pos === -1) {
-      idx.entries.unshift(entry);
-    } else if ((idx.entries[pos]?.lastActivity ?? "") < c.lastActivity) {
-      // Only clobber the index entry if ours is strictly newer — a concurrent
-      // write that finished first may already have advanced the index further.
-      idx.entries[pos] = entry;
-    } else {
-      // Index already has an equal-or-newer entry; skip index write to avoid
-      // overwriting a concurrent insertion, but still bump meta.
-      await bumpMeta(tenant, "write");
-      return;
+
+    // Acquire the index lock before reading+writing the index to eliminate
+    // the concurrent-insert race. Wait up to 3 s for a held lock to expire.
+    let lockAcquired = false;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      lockAcquired = await acquireIndexLock(tenant);
+      if (lockAcquired) break;
+      await new Promise((r) => setTimeout(r, 500 + attempt * 500));
     }
-    await writeIndex(tenant, idx.entries);
-    await bumpMeta(tenant, "write");
+
+    if (!lockAcquired) {
+      // Lock still held after retries — proceed without lock but log it.
+      console.warn("[case-vault] index lock contention for tenant:", tenant, "— index write may race");
+      void writeAuditChainEntry({
+        event: "case_vault.index_lock_contention",
+        actor: "system",
+        caseId: c.id,
+        tenant,
+      });
+    }
+
+    try {
+      const idx = await readIndex(tenant);
+      const pos = idx.entries.findIndex((e) => e.id === c.id);
+      const entry = entryFromCase(c);
+      if (pos === -1) {
+        idx.entries.unshift(entry);
+      } else if ((idx.entries[pos]?.lastActivity ?? "") < c.lastActivity) {
+        idx.entries[pos] = entry;
+      } else {
+        await bumpMeta(tenant, "write");
+        return;
+      }
+      await writeIndex(tenant, idx.entries);
+      await bumpMeta(tenant, "write");
+    } finally {
+      if (lockAcquired) await releaseIndexLock(tenant);
+    }
   } catch (err) {
     console.warn("[case-vault] insertCaseRecord non-fatal:", err instanceof Error ? err.message : String(err));
   }

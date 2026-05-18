@@ -7,6 +7,7 @@ import {
   saveAllCases,
 } from "@/lib/server/case-vault";
 import { generateCaseId, CASE_ID_RE } from "@/lib/server/case-id";
+import { verifyRegulatorToken, tokenCoversScope } from "@/lib/server/regulator-jwt";
 import type { CaseRecord } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -31,6 +32,53 @@ export const maxDuration = 30;
 //   (e.g. after a bulk import). Gated identically to POST.
 
 async function handleGet(req: Request): Promise<NextResponse> {
+  // Regulator read-only path: accept Ed25519-signed regulator tokens as an
+  // alternative to API-key auth. Scope is enforced — a case-scoped token
+  // only returns that specific case; a tenant-scoped token returns all cases
+  // for that tenant (read-only, no quota consumed).
+  const authHeader = req.headers.get("authorization") ?? "";
+  const rawToken = authHeader.replace(/^Bearer\s+/i, "").trim();
+  if (rawToken && !rawToken.startsWith("hks_live_")) {
+    const regClaims = verifyRegulatorToken(rawToken);
+    if (regClaims) {
+      // Determine tenant from scope (first tenant: entry, or "portal" default).
+      const tenantEntry = regClaims.scope.find((s) => s.startsWith("tenant:"));
+      const tenant = tenantEntry ? tenantEntry.slice(7) : "portal";
+      const allowedCaseIds = regClaims.scope
+        .filter((s) => s.startsWith("case:"))
+        .map((s) => s.slice(5));
+
+      const url = new URL(req.url);
+      const requestedCaseId = url.searchParams.get("caseId");
+
+      // Scope check: if a caseId is requested, it must be in the token scope.
+      if (requestedCaseId && !tokenCoversScope(regClaims, { caseId: requestedCaseId, tenantId: tenant })) {
+        return NextResponse.json(
+          { ok: false, error: "scope_denied", hint: "Token scope does not cover the requested case." },
+          { status: 403 },
+        );
+      }
+
+      let cases = await loadAllCases(tenant);
+      // If token has case-scope entries, restrict to those cases only.
+      if (allowedCaseIds.length > 0) {
+        cases = cases.filter((c) => allowedCaseIds.includes(c.id));
+      }
+      if (requestedCaseId) {
+        cases = cases.filter((c) => c.id === requestedCaseId);
+      }
+
+      return NextResponse.json({
+        ok: true,
+        tenant,
+        cases,
+        totalCount: cases.length,
+        regulatorAccess: true,
+        examinerId: regClaims.sub,
+      });
+    }
+  }
+
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
   const tenant = tenantIdFromGate(gate);

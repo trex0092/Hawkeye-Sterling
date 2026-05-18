@@ -94,6 +94,20 @@ export async function consumeRateLimit(
   prior.minute.count = nextMinute;
   await setJson(storageKey, prior);
 
+  // Post-write read-back: detect concurrent increments. If the stored value
+  // jumped further than our write (another Lambda incremented concurrently),
+  // log it so operators know the soft-limit is being exercised. The check
+  // is best-effort — a second concurrent read could mask the discrepancy.
+  // For hard enforcement, set UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN.
+  const readBack = await getJson<LimitState>(storageKey).catch(() => null);
+  if (readBack && readBack.second.count > nextSecond + 1) {
+    console.warn(
+      `[rate-limit] concurrent write detected for key=${keyId}: ` +
+      `expected count=${nextSecond}, stored count=${readBack.second.count} ` +
+      `— rate limit is soft-enforced (blob CAS unavailable)`,
+    );
+  }
+
   return {
     allowed: true,
     retryAfterSec: 0,

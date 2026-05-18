@@ -5,15 +5,16 @@ import { NextResponse } from "next/server";
 import { createHash } from "node:crypto";
 import { loadUsers, saveUsers } from "@/app/api/access/_store";
 import { verifyPassword, issueSession, SESSION_COOKIE, SESSION_TTL_S } from "@/lib/server/auth";
+import { getJson, setJson, del } from "@/lib/server/store";
 
 // ── Per-username brute-force protection ──────────────────────────────────────
 // Tracks failed attempts per normalised username. Hard-locks after
-// MAX_FAILURES within WINDOW_MS. Lock persists in this function instance.
-// For cross-instance protection in production, replace failureMap with
-// Upstash Redis (set UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN).
+// MAX_FAILURES within WINDOW_MS. Lock persisted in Netlify Blobs so it
+// survives Lambda cold-starts and is enforced across all concurrent instances.
 
 const MAX_FAILURES = 10;
 const WINDOW_MS = 15 * 60 * 1000; // 15-minute sliding window
+const LOCK_PREFIX = "ratelimit/login-lock/";
 
 interface AttemptRecord {
   count: number;
@@ -21,43 +22,41 @@ interface AttemptRecord {
   lockedUntil: number;
 }
 
-const failureMap = new Map<string, AttemptRecord>();
-
 function usernameKey(username: string): string {
   return createHash("sha256").update(username.toLowerCase().trim()).digest("hex").slice(0, 16);
 }
 
-function checkRateLimit(key: string): { allowed: boolean; retryAfterSec?: number } {
+async function checkRateLimit(key: string): Promise<{ allowed: boolean; retryAfterSec?: number }> {
   const now = Date.now();
-  const rec = failureMap.get(key);
+  const rec = await getJson<AttemptRecord>(`${LOCK_PREFIX}${key}`).catch(() => null);
   if (!rec) return { allowed: true };
   if (rec.lockedUntil > now) {
     return { allowed: false, retryAfterSec: Math.ceil((rec.lockedUntil - now) / 1000) };
   }
   if (now - rec.windowStart > WINDOW_MS) {
-    failureMap.delete(key);
+    await del(`${LOCK_PREFIX}${key}`).catch(() => undefined);
     return { allowed: true };
   }
   if (rec.count >= MAX_FAILURES) {
     const lockUntil = now + WINDOW_MS;
-    failureMap.set(key, { ...rec, lockedUntil: lockUntil });
+    await setJson(`${LOCK_PREFIX}${key}`, { ...rec, lockedUntil: lockUntil }).catch(() => undefined);
     return { allowed: false, retryAfterSec: Math.ceil(WINDOW_MS / 1000) };
   }
   return { allowed: true };
 }
 
-function recordFailure(key: string): void {
+async function recordFailure(key: string): Promise<void> {
   const now = Date.now();
-  const rec = failureMap.get(key);
+  const rec = await getJson<AttemptRecord>(`${LOCK_PREFIX}${key}`).catch(() => null);
   if (!rec || now - rec.windowStart > WINDOW_MS) {
-    failureMap.set(key, { count: 1, windowStart: now, lockedUntil: 0 });
+    await setJson(`${LOCK_PREFIX}${key}`, { count: 1, windowStart: now, lockedUntil: 0 }).catch(() => undefined);
   } else {
-    failureMap.set(key, { ...rec, count: rec.count + 1 });
+    await setJson(`${LOCK_PREFIX}${key}`, { ...rec, count: rec.count + 1 }).catch(() => undefined);
   }
 }
 
-function recordSuccess(key: string): void {
-  failureMap.delete(key);
+async function recordSuccess(key: string): Promise<void> {
+  await del(`${LOCK_PREFIX}${key}`).catch(() => undefined);
 }
 
 function clientIp(req: Request): string {
@@ -85,7 +84,7 @@ export async function POST(req: Request) {
   const key = usernameKey(username);
   const ip = clientIp(req);
 
-  const rl = checkRateLimit(key);
+  const rl = await checkRateLimit(key);
   if (!rl.allowed) {
     console.warn("[auth/login] rate-limited", { key, ip, retryAfterSec: rl.retryAfterSec });
     return NextResponse.json(
@@ -107,12 +106,12 @@ export async function POST(req: Request) {
   ) {
     // Uniform delay to prevent user enumeration via timing side-channel
     await new Promise((r) => setTimeout(r, 400));
-    recordFailure(key);
+    await recordFailure(key);
     console.warn("[auth/login] failed attempt", { key, ip, userFound: !!user });
     return NextResponse.json({ ok: false, error: "Invalid username or password" }, { status: 401 });
   }
 
-  recordSuccess(key);
+  await recordSuccess(key);
   const token = issueSession(user.id, user.username!, user.role);
 
   const isSecure = process.env["NODE_ENV"] === "production";
