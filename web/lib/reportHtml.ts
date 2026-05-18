@@ -9,8 +9,12 @@ export const REPORT_CSS = `
 /* Hawkeye Sterling — Report design system
    Aesthetic: editorial luxury · audit-grade typography · A4 portrait
    Source: Drive design reference (2026-05-05)
+   Note: fonts are loaded from the system font stack — no external requests
+   are made (UAE PDPL / Federal Decree-Law 45/2021 cross-border data transfer
+   compliance). 'Cormorant Garamond' and 'Inter Tight' are defined as first
+   preference so they render when the user has them installed locally; Georgia
+   and system-ui are the universally-available fallbacks.
 */
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&family=Inter+Tight:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
   --paper: oklch(97.5% 0.008 85);

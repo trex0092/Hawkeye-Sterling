@@ -47,6 +47,7 @@ import { checkMarble } from "@/lib/server/marble-client";       // checkmarble/m
 import { checkJube } from "@/lib/server/jube-client";           // jube AML
 import { yenteMatch } from "../../../../dist/src/integrations/yente.js"; // opensanctions/yente FtM matching
 import { asanaGids } from "@/lib/server/asanaConfig";
+import { runEgressCheck } from "@/lib/server/egress-check";
 
 type QuickScreenFn = (
   _subject: QuickScreenSubject,
@@ -390,6 +391,13 @@ export async function POST(req: Request): Promise<NextResponse> {
     lines.push(``);
     lines.push(`Summary: critical ${summary.critical} · high ${summary.high} · medium ${summary.medium} · low ${summary.low} · clear ${summary.clear}`);
     lines.push(`Legal   : FDL 10/2025 Art.26-27 · CR 134/2025 Art.18`);
+    // Egress gate: compliance pre-check before MLRO inbox delivery.
+    const egressResult = await runEgressCheck(lines.join("\n"), "Batch screening alert");
+    if (!egressResult.allowed) {
+      console.warn("[batch-screen] egress gate held Asana delivery:", egressResult.verdict, egressResult.reason);
+      // Do not surface gate decision to the caller — log it, skip Asana, continue response.
+      // (Batch screen returns results regardless; the gate only controls MLRO inbox delivery.)
+    } else {
     try {
       const res = await fetch("https://app.asana.com/api/1.0/tasks", {
         signal: AbortSignal.timeout(15_000),
@@ -419,7 +427,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     } catch (err) {
       console.warn("[hawkeye] batch-screen Asana POST threw — batch results still returned to caller:", err);
     }
-  }
+    } // end egress gate else
+  } // end if (elevated.length > 0 && token)
 
   // Fire webhook for batch completion (elevated subjects only surfaced
   // in newHits so the consumer can page/route without parsing the full list).

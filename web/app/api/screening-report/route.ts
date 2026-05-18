@@ -3,6 +3,7 @@ import { withGuard } from "@/lib/server/guard";
 import { classifyEsg } from "@/lib/data/esg";
 import { postWebhook } from "@/lib/server/webhook";
 import { asanaGids } from "@/lib/server/asanaConfig";
+import { runEgressCheck } from "@/lib/server/egress-check";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -433,6 +434,20 @@ async function handleScreeningReport(req: Request): Promise<NextResponse> {
       ok: true,
       asanaSkipped: true,
       asanaNote: "ASANA_TOKEN not configured — report generated but not filed to MLRO inbox. Set ASANA_TOKEN in Netlify env to enable automatic filing.",
+      reportName: name,
+      reportNotes: notes,
+    });
+  }
+
+  // Egress gate: compliance pre-check before MLRO inbox delivery.
+  // Gate is off by default; enable with EGRESS_GATE_ENABLED=true after MLRO
+  // confirms mandate (FDL 10/2025 Art.16, charter P3).
+  const egressResult = await runEgressCheck(notes, "Screening report");
+  if (!egressResult.allowed) {
+    return respond(451, {
+      ok: false,
+      asanaSkipped: true,
+      asanaNote: `Artefact held by egress gate (${egressResult.verdict}): ${egressResult.reason ?? "compliance pre-check failed"}`,
       reportName: name,
       reportNotes: notes,
     });

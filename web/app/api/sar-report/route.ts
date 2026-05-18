@@ -21,6 +21,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 import { asanaGids } from "@/lib/server/asanaConfig";
+import { runEgressCheck } from "@/lib/server/egress-check";
 
 type FilingType =
   | "STR"
@@ -534,6 +535,18 @@ async function handleSarReport(req: Request, gateHeaders: Record<string, string>
         xmlBase64: goamlXml ? Buffer.from(goamlXml, "utf8").toString("base64") : null,
       },
     }, { headers: gateHeaders });
+  }
+
+  // Egress gate: compliance pre-check before MLRO inbox delivery.
+  // Gate is off by default; enable with EGRESS_GATE_ENABLED=true after MLRO
+  // confirms mandate (FDL 10/2025 Art.16, charter P3).
+  const egressResult = await runEgressCheck(lines.join("\n"), `${body.filingType} filing`);
+  if (!egressResult.allowed) {
+    return NextResponse.json({
+      ok: false,
+      asanaSkipped: true,
+      asanaNote: `Artefact held by egress gate (${egressResult.verdict}): ${egressResult.reason ?? "compliance pre-check failed"}`,
+    }, { status: 451, headers: gateHeaders });
   }
 
   // Wrap the Asana call in try-catch so a network failure returns a clean
