@@ -100,7 +100,7 @@ export default function ReplayPage() {
           </h1>
           <p className="text-13 text-ink-2 mt-1">
             Subject <span className="font-mono">{subjectId}</span> — pick a historical snapshot
-            and re-run the brain at today's threshold.
+            and re-run the brain at today&apos;s threshold.
           </p>
         </div>
 
@@ -162,7 +162,7 @@ export default function ReplayPage() {
 
             <section className="bg-bg-panel border border-brand/30 rounded-xl p-5">
               <div className="flex items-center justify-between mb-2">
-                <div className="text-11 font-semibold uppercase tracking-wide-3 text-brand">Today's brain</div>
+                <div className="text-11 font-semibold uppercase tracking-wide-3 text-brand">Today&apos;s brain</div>
                 <button
                   type="button"
                   onClick={() => { void rerun(); }}
@@ -185,11 +185,11 @@ export default function ReplayPage() {
                       ))}
                     </ul>
                   ) : (
-                    <div className="text-11 text-ink-3">No hits at today's threshold.</div>
+                    <div className="text-11 text-ink-3">No hits at today&apos;s threshold.</div>
                   )}
                 </div>
               ) : (
-                <div className="text-11 text-ink-3 italic">Click "Re-run now" to compare.</div>
+                <div className="text-11 text-ink-3 italic">Click &quot;Re-run now&quot; to compare.</div>
               )}
             </section>
           </div>

@@ -528,7 +528,7 @@ export default function StatusPage() {
                   </div>
                 ) : (
                   <div className="text-11 font-mono text-ink-3">
-                    No list data yet — sanctions cron hasn't run. Lists refresh automatically on the 24-hour schedule.
+                    No list data yet — sanctions cron hasn&apos;t run. Lists refresh automatically on the 24-hour schedule.
                   </div>
                 )}
               </div>
@@ -781,7 +781,7 @@ function Arrow() {
 function ServiceDependencyMap({ checks, externalChecks }: { checks: Check[]; externalChecks: Check[] }) {
   const find = (name: string) => checks.find((c) => c.name === name)?.status ?? externalChecks.find((c) => c.name === name)?.status;
 
-  const rows: Array<{ label: string; from: string; to: string[] }> = [
+  const _rows: Array<{ label: string; from: string; to: string[] }> = [
     { label: "Core AI",     from: "super-brain",        to: ["adverse-media", "weaponized-brain"] },
     { label: "Screening",   from: "screening",           to: ["sanctions-lists"] },
     { label: "Adverse media", from: "adverse-media",    to: ["Google News", "GDELT"] },

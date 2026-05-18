@@ -96,7 +96,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     fetch(): Promise<{ entities: unknown[]; rawChecksum: string; sourceVersion?: string }>;
   }>;
   let getBlobsStore: () => Promise<{
-    putDataset(id: string, entities: unknown[], report: IngestionReport): Promise<void>;
+    putDataset(_id: string, _entities: unknown[], _report: IngestionReport): Promise<void>;
   }>;
 
   try {

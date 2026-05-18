@@ -4,7 +4,7 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
-import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 export interface SynthesisSource {
   source: string;
   content: string;

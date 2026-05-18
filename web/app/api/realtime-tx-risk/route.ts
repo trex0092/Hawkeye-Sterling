@@ -230,7 +230,7 @@ function scoreTransaction(tx: Transaction): { score: number; flags: RiskFlag[] }
 
     // Round-trip detection: similar amount in opposite direction within 48h
     const window48h = Date.now() - 48 * 60 * 60 * 1000;
-    const opposite = tx.direction === "in" ? "out" : "in";
+    const _opposite = tx.direction === "in" ? "out" : "in";
     const roundTrip = tx.recentTransactions.find((r) => {
       const ts = r.timestamp ? new Date(r.timestamp).getTime() : 0;
       const rAed = toAed(r.amount, r.currency ?? "AED");
