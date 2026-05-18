@@ -29,7 +29,7 @@ const SECTION_META = [
 const inputCls = "w-full text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-ink-0 focus:border-brand outline-none";
 const checkboxLabel = "flex items-center gap-2 text-12 text-ink-1 cursor-pointer";
 
-function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
+function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (_v: boolean) => void; label: string }) {
   return (
     <label className={checkboxLabel}>
       <button type="button" onClick={() => onChange(!checked)}
@@ -45,7 +45,7 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
   return <label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">{children}</label>;
 }
 
-function SectionHeader({ id, label, icon, desc, completed, active, onClick }: {
+function SectionHeader({ id: _id, label, icon, desc, completed, active, onClick }: {
   id: string; label: string; icon: string; desc: string; completed: boolean; active: boolean; onClick: () => void;
 }) {
   return (
@@ -144,7 +144,7 @@ export default function MoeSurveyPage() {
             <strong>MOET/AML/001/2026 — Mandatory for all mainland DNFBPs.</strong>{" "}
             The UAE Ministry of Economy launched a mandatory AML/CFT survey at the start of 2026. All DPMS dealers
             must respond. Non-submission triggers <strong className="text-red">immediate on-site inspection</strong> and
-            elevates risk rating to "High Risk". Complete all {totalSections} sections and export the readiness package before submitting.
+            elevates risk rating to &quot;High Risk&quot;. Complete all {totalSections} sections and export the readiness package before submitting.
           </>
         }
       />
@@ -646,7 +646,7 @@ export default function MoeSurveyPage() {
 
       <p className="text-10.5 text-ink-3 mt-4 leading-relaxed">
         MOET/AML/001/2026 · Mandatory for all mainland DNFBPs including DPMS dealers.
-        Non-submission triggers on-site inspection and "High Risk" classification.
+        Non-submission triggers on-site inspection and &quot;High Risk&quot; classification.
         Changes auto-save. All section responses are stored securely for audit purposes.
       </p>
     </ModuleLayout>

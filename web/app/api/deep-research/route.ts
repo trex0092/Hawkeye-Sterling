@@ -126,7 +126,7 @@ async function serpSearch(query: string, apiKey: string): Promise<SearchResult[]
   }));
 }
 
-function getSearchProvider(): { name: string; search: (q: string) => Promise<SearchResult[]> } | null {
+function getSearchProvider(): { name: string; search: (_q: string) => Promise<SearchResult[]> } | null {
   const tavily = process.env["TAVILY_API_KEY"];
   if (tavily) return { name: "tavily", search: (q) => tavilySearch(q, tavily) };
   const exa = process.env["EXA_API_KEY"];

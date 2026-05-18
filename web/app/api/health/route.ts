@@ -54,7 +54,7 @@ async function checkBrain(): Promise<{ ok: boolean; detail: string }> {
       brainOk = false;
       brainDetail = "BRAIN_MODULE_MISSING";
     } else {
-      const probe = (quickScreen as (s: unknown, c: unknown[], o: unknown) => unknown)({ name: "HealthProbe" }, [], { maxHits: 0 });
+      const probe = (quickScreen as (_s: unknown, _c: unknown[], _o: unknown) => unknown)({ name: "HealthProbe" }, [], { maxHits: 0 });
       brainOk = typeof probe === "object" && probe !== null;
       brainDetail = brainOk ? "ok" : "quickScreen returned non-object";
     }
@@ -93,7 +93,7 @@ async function checkMandatoryLists(): Promise<ListHealthEntry[]> {
     return _listHealthCache.results;
   }
 
-  let blobsMod: { getStore: (opts: { name: string; siteID?: string; token?: string; consistency?: string }) => { get: (key: string, opts?: { type?: string }) => Promise<unknown> } } | null = null;
+  let blobsMod: { getStore: (_opts: { name: string; siteID?: string; token?: string; consistency?: string }) => { get: (_key: string, _opts?: { type?: string }) => Promise<unknown> } } | null = null;
   try {
     blobsMod = (await import("@netlify/blobs")) as unknown as typeof blobsMod;
   } catch {
@@ -114,7 +114,7 @@ async function checkMandatoryLists(): Promise<ListHealthEntry[]> {
       ? { name: "hawkeye-lists", siteID, token, consistency: "strong" }
       : { name: "hawkeye-lists" };
 
-  let store: { get: (key: string, opts?: { type?: string }) => Promise<unknown> } | null = null;
+  let store: { get: (_key: string, _opts?: { type?: string }) => Promise<unknown> } | null = null;
   try {
     store = blobsMod!.getStore(storeOpts);
   } catch {

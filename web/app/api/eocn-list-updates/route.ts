@@ -85,7 +85,7 @@ function parseEocnHtml(html: string): ParsedUpdate[] {
     may: "05", june: "06", july: "07", august: "08",
     september: "09", october: "10", november: "11", december: "12",
   };
-  const datePatterns: Array<{ rx: RegExp; toIso: (m: RegExpMatchArray) => string | null }> = [
+  const datePatterns: Array<{ rx: RegExp; toIso: (_m: RegExpMatchArray) => string | null }> = [
     {
       rx: /(\d{1,2})[-/](\d{1,2})[-/](\d{4})/,
       toIso: (m) => {

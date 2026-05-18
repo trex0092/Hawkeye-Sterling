@@ -433,9 +433,9 @@ export default function OnboardingWizardPage() {
 
   // Layer 4 audit-log every step transition (option F). Fire-and-forget
   // — the wizard's UX never waits on the audit write.
-  const setStep = useCallback((next: Step | ((prev: Step) => Step)) => {
+  const setStep = useCallback((next: Step | ((_prev: Step) => Step)) => {
     setStepInternal((prev) => {
-      const resolved = typeof next === "function" ? (next as (p: Step) => Step)(prev) : next;
+      const resolved = typeof next === "function" ? (next as (_p: Step) => Step)(prev) : next;
       if (resolved !== prev) recordStepTransition(prev, resolved, draftRef.current);
       return resolved;
     });
@@ -564,7 +564,7 @@ export default function OnboardingWizardPage() {
             ✓ Onboarding complete and signed off by MLRO
           </div>
           <div className="text-12 text-ink-2 mb-4">
-            Record persisted to localStorage["hawkeye.onboarding.v1"]. Visit
+            Record persisted to localStorage[&quot;hawkeye.onboarding.v1&quot;]. Visit
             Inspection Room to see the count update.
           </div>
           <button
@@ -1129,8 +1129,8 @@ export default function OnboardingWizardPage() {
       </div>
 
       <div className="mt-4 text-11 text-ink-3 font-mono">
-        Draft auto-saves to localStorage["hawkeye.onboarding.draft.v1"] on every
-        change. Final record persists to localStorage["hawkeye.onboarding.v1"].
+        Draft auto-saves to localStorage[&quot;hawkeye.onboarding.draft.v1&quot;] on every
+        change. Final record persists to localStorage[&quot;hawkeye.onboarding.v1&quot;].
       </div>
     </ModuleLayout>
   );
@@ -1197,7 +1197,7 @@ function AdvisorNarrativePanel({ response }: { response: AdvisorResponseV1 }) {
 // close the panel.
 interface RelationshipMultiSelectProps {
   value: RelationshipType[];
-  onChange: (next: RelationshipType[]) => void;
+  onChange: (_next: RelationshipType[]) => void;
 }
 
 function RelationshipMultiSelect({ value, onChange }: RelationshipMultiSelectProps) {

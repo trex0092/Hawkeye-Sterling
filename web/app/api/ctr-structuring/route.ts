@@ -76,7 +76,7 @@ export async function POST(req: Request) {
 
   const maxProximity = Math.max(...amounts.map((a) => (a < CTR_THRESHOLD ? (a / CTR_THRESHOLD) * 100 : 0)));
 
-  const transactions = amounts.map((amount, i) => ({
+  const transactions = amounts.map((amount, _i) => ({
     amount,
     date: undefined as string | undefined,
     type: undefined as string | undefined,
