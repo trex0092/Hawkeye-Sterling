@@ -170,7 +170,7 @@ export function BrainReasoningChain({ result }: { result: SuperBrainResult }) {
         Each gate fires independently; the composite is the weighted sum
         (jurisdiction + regimes + redlines + adverse-media + adverse-keyword +
         PEP + quickScreen base). This chain is deterministic — the same
-        brain result always produces the same reasoning chain, so it's
+        brain result always produces the same reasoning chain, so it&apos;s
         audit-safe and regulator-replay-ready.
       </p>
     </div>

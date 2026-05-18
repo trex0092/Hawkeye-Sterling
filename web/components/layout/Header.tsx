@@ -6,14 +6,6 @@ import { RegulatoryTicker } from "./RegulatoryTicker";
 import { InstallAppButton } from "./InstallAppButton";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 
-const NAV_TABS = [
-  { key: "nav.screening", label: "🔎 Screening", href: "/screening" },
-  { key: "nav.cases", label: "🗂️ Cases", href: "/cases" },
-  { key: "nav.tm", label: "💸 Transaction Monitor", href: "/transaction-monitor" },
-  { key: "nav.str", label: "📁 STR Cases", href: "/str-cases" },
-  { key: "nav.monitor", label: "👁️ Ongoing Monitor", href: "/ongoing-monitor" },
-  { key: "nav.mlro", label: "🧠 MLRO Advisor", href: "/mlro-advisor" },
-] as const;
 
 // Secondary modules — rendered under a "More" dropdown so the top-row
 // stays readable.

@@ -7,7 +7,7 @@ import type {
 } from "./quickScreen.types";
 
 export class QuickScreenError extends Error {
-  constructor(message: string, readonly detail?: string) {
+  constructor(message: string, readonly _detail?: string) {
     super(message);
     this.name = "QuickScreenError";
   }

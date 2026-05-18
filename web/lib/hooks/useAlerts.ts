@@ -149,7 +149,7 @@ interface UseAlertsReturn {
   alerts: DesignationAlert[];
   unreadCount: number;
   loading: boolean;
-  dismiss: (id: string) => Promise<void>;
+  dismiss: (_id: string) => Promise<void>;
   refresh: () => void;
   requestNotificationPermission: () => Promise<NotificationPermission>;
   notificationPermission: NotificationPermission | "unsupported";

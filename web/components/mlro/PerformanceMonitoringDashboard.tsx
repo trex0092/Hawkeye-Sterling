@@ -679,7 +679,7 @@ function FairnessTab({
       </div>
       <p className="text-10 text-ink-3 mt-2 font-mono leading-relaxed">
         FPR = false-positive rate. FNR = false-negative rate. Disparate Impact = group rate / reference group
-        rate — values outside 0.8–1.25 ("80% rule") are flagged. Sorted worst-first.
+        rate — values outside 0.8–1.25 (&quot;80% rule&quot;) are flagged. Sorted worst-first.
       </p>
     </div>
   );
@@ -697,7 +697,7 @@ function DriftAlertsTab({
   data: DriftAlertsResponse | null;
   loading: boolean;
   error: string | null;
-  onInvestigate: (alertId: string) => void;
+  onInvestigate: (_alertId: string) => void;
   lastRefreshed: Date | null;
 }) {
   if (loading && !data) {
@@ -775,7 +775,7 @@ function DriftAlertCard({
   resolved = false,
 }: {
   alert: DriftAlert;
-  onInvestigate: (alertId: string) => void;
+  onInvestigate: (_alertId: string) => void;
   resolved?: boolean;
 }) {
   const borderLeft: Record<DriftAlert["severity"], string> = {

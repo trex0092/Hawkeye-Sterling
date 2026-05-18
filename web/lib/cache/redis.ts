@@ -14,8 +14,8 @@
 // package.json bump).
 
 type RedisLike = {
-  get<T = unknown>(key: string): Promise<T | null>;
-  set(key: string, value: unknown, opts?: { ex?: number }): Promise<unknown>;
+  get<T = unknown>(_key: string): Promise<T | null>;
+  set(_key: string, _value: unknown, opts?: { ex?: number }): Promise<unknown>;
 };
 
 let _client: RedisLike | null = null;

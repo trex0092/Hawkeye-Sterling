@@ -40,7 +40,7 @@ export interface KycCheckResult {
 
 export interface KycVendorAdapter {
   isAvailable(): boolean;
-  createCheck(req: KycCheckRequest): Promise<KycCheckResult>;
+  createCheck(_req: KycCheckRequest): Promise<KycCheckResult>;
 }
 
 export const NULL_KYC_ADAPTER: KycVendorAdapter = {

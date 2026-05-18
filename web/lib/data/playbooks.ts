@@ -20,10 +20,6 @@ export function taxId(category: "skills" | "reasoning" | "analysis", name: strin
   return `${category}-${slugifyTaxonomyName(name)}`;
 }
 
-const S = (name: string) => taxId("skills", name);
-const R = (name: string) => taxId("reasoning", name);
-const A = (name: string) => taxId("analysis", name);
-
 // Raw playbook seed. The exported `PLAYBOOKS` below hydrates each entry
 // with an inferred regulatory-anchor set so coverage scoring is meaningful
 // even for the auto-generated entries that ship with `requiredAnchors: []`.

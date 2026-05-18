@@ -15,7 +15,7 @@ export interface HsCodeReference {
 export interface HsCodeAdapter {
   isAvailable(): boolean;
   /** Returns the typical price band for a (hsCode, jurisdiction) combo. */
-  reference(hsCode: string, originIso2: string): Promise<HsCodeReference | null>;
+  reference(_hsCode: string, _originIso2: string): Promise<HsCodeReference | null>;
 }
 
 export const NULL_HS_CODE_ADAPTER: HsCodeAdapter = {
@@ -141,7 +141,7 @@ export interface LeiRecord {
 export interface GleifAdapter {
   isAvailable(): boolean;
   /** Looks up a candidate LEI by legal name. */
-  lookupByName(legalName: string): Promise<LeiRecord[]>;
+  lookupByName(_legalName: string): Promise<LeiRecord[]>;
 }
 
 export const NULL_GLEIF_ADAPTER: GleifAdapter = {

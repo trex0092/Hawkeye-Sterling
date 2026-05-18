@@ -480,7 +480,7 @@ export function AIDecisionEngine({
                   <span className="font-mono font-semibold">{state.override}</span>
                 </div>
                 {state.notes && (
-                  <div className="text-11 text-ink-2 mt-1 italic">"{state.notes}"</div>
+                  <div className="text-11 text-ink-2 mt-1 italic">&quot;{state.notes}&quot;</div>
                 )}
               </div>
               <div className="text-11 font-mono text-ink-3 flex items-center gap-1.5">
