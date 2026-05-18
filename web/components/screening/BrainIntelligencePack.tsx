@@ -100,8 +100,8 @@ export function BrainIntelligencePack({ subject, screen, superBrain }: Props) {
             ⚠ Brain modules degraded ({degradation.length})
           </div>
           <ul className="space-y-0.5 text-10 text-ink-1">
-            {degradation.map((d, i) => (
-              <li key={i}>
+            {degradation.map((d) => (
+              <li key={d.module}>
                 <span className="font-mono">{d.module}</span>: {d.reason}
               </li>
             ))}
@@ -227,8 +227,8 @@ export function BrainIntelligencePack({ subject, screen, superBrain }: Props) {
       {intel.escalations.length > 0 && (
         <Section title="Band escalations">
           <ol className="space-y-1.5">
-            {intel.escalations.map((esc, i) => (
-              <li key={i} className="text-11 text-ink-1 flex items-start gap-2">
+            {intel.escalations.map((esc) => (
+              <li key={`${esc.from}-${esc.to}`} className="text-11 text-ink-1 flex items-start gap-2">
                 <span className="font-mono text-10 text-ink-3">
                   {esc.from.toUpperCase()} → {esc.to.toUpperCase()}
                 </span>
@@ -269,8 +269,8 @@ export function BrainIntelligencePack({ subject, screen, superBrain }: Props) {
         )}
         {intel.geography.subject.notes.length > 0 && (
           <ul className="mt-1.5 space-y-0.5">
-            {intel.geography.subject.notes.map((n, i) => (
-              <li key={i} className="text-10 text-ink-2 italic">
+            {intel.geography.subject.notes.map((n) => (
+              <li key={n} className="text-10 text-ink-2 italic">
                 · {n}
               </li>
             ))}
@@ -371,8 +371,8 @@ export function BrainIntelligencePack({ subject, screen, superBrain }: Props) {
       {intel.anomalies.length > 0 && (
         <Section title="Anomaly flags" tone="amber">
           <ul className="space-y-1">
-            {intel.anomalies.map((a, i) => (
-              <li key={i} className="text-10 text-amber">
+            {intel.anomalies.map((a) => (
+              <li key={a} className="text-10 text-amber">
                 · {a}
               </li>
             ))}
@@ -384,8 +384,8 @@ export function BrainIntelligencePack({ subject, screen, superBrain }: Props) {
       {intel.requiredEvidence.length > 0 && (
         <Section title="Required evidence">
           <ul className="space-y-1">
-            {intel.requiredEvidence.map((ev, i) => (
-              <li key={i} className="text-11 text-ink-1 flex items-start gap-2">
+            {intel.requiredEvidence.map((ev) => (
+              <li key={ev} className="text-11 text-ink-1 flex items-start gap-2">
                 <span className="text-ink-3">·</span>
                 <span>{ev}</span>
               </li>
@@ -476,8 +476,8 @@ function PlaybookList({
         {label}
       </div>
       <ul className="space-y-0.5 pl-3 list-disc">
-        {items.map((it, i) => (
-          <li key={i} className="text-10 text-ink-1">
+        {items.map((it) => (
+          <li key={it} className="text-10 text-ink-1">
             {it}
           </li>
         ))}

@@ -86,7 +86,7 @@ export function BayesTraceInspector({ trace }: Props): JSX.Element | null {
             </thead>
             <tbody>
               {trace.steps.map((s, i) => (
-                <tr key={i} className={`border-b border-zinc-100 ${cls(s.effectiveWeight)}`}>
+                <tr key={s.evidenceId} className={`border-b border-zinc-100 ${cls(s.effectiveWeight)}`}>
                   <td className="px-2 py-1 text-zinc-500 tabular-nums">{i + 1}</td>
                   <td className="px-2 py-1 font-mono text-[10px] text-zinc-700">{s.evidenceId}</td>
                   <td className="px-2 py-1 text-right font-mono tabular-nums">{fmt(s.rawLR, 2)}</td>

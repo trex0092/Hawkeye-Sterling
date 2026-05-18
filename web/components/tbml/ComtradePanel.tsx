@@ -329,7 +329,7 @@ export function ComtradePanel() {
                         unitPriceUsdKg: r.netWgt && r.netWgt > 0 ? r.primaryValue / r.netWgt : null,
                         riskLevel: "LOW" as TBMLRiskLevel,
                       }))).map((row, i) => (
-                        <tr key={i} className={`${ROW_BG[row.riskLevel]} transition-colors`}>
+                        <tr key={`${row.record.partnerCode ?? i}-${row.record.period ?? i}`} className={`${ROW_BG[row.riskLevel]} transition-colors`}>
                           <td className="py-2 pr-4 text-ink-0 font-medium">
                             {row.record.partnerDesc || `Code ${row.record.partnerCode}`}
                           </td>
