@@ -29,6 +29,7 @@ import { NextResponse } from "next/server";
 import { createHmac } from "node:crypto";
 import { enforce } from "@/lib/server/enforce";
 import { getJson, listKeys } from "@/lib/server/store";
+import { getChainSecret } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -254,7 +255,7 @@ async function handleGet(req: Request): Promise<NextResponse> {
 
   // ── Step 8: no screeningId → return 10 most recent trails ────────────────
   if (!screeningId) {
-    const secret = process.env["AUDIT_CHAIN_SECRET"];
+    const secret = getChainSecret("default");
 
     // Fetch only the last 50 entries in parallel — avoids a sequential full-
     // chain read that would time-out on large audit logs (FIX C-02).
@@ -310,7 +311,7 @@ async function handleGet(req: Request): Promise<NextResponse> {
   }
 
   // ── Per-screening-ID view path ────────────────────────────────────────────
-  const secret = process.env["AUDIT_CHAIN_SECRET"];
+  const secret = getChainSecret("default");
 
   const allEntries = await loadAllEntries();
   // Filter to entries whose `target` matches the requested screening ID.
@@ -416,7 +417,7 @@ async function handlePost(req: Request): Promise<NextResponse> {
   if (!gate.ok) return gate.response;
   const gateHeaders = gate.headers;
 
-  const secret = process.env["AUDIT_CHAIN_SECRET"];
+  const secret = getChainSecret("default");
   if (!secret) {
     return NextResponse.json(
       {
