@@ -693,6 +693,7 @@ export default function TFSAlertsPage() {
         ]}
         intro={
           <>
+            EOCN Notification Alert System — UAE Local Terrorist List &amp; UN Consolidated List.
             Monitors Gmail for TFS alert emails from the UAE Executive Office for Control &amp;
             Non-Proliferation (EOCN) and creates Asana compliance tasks automatically.
           </>
