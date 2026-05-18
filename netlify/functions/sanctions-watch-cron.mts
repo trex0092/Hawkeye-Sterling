@@ -9,8 +9,12 @@
 import type { Config } from "@netlify/functions";
 import { runIngestionAll } from "../../src/ingestion/run-all.js";
 import { getBlobsStore } from "../../src/ingestion/blobs-store.js";
+import { acquireCronLock } from "../../src/ingestion/cron-lock.js";
 
 const LABEL = "sanctions-watch-cron";
+// Daily cadence (04:30 UTC) — 23h lock window blocks Netlify retries
+// of the same day's tick without affecting tomorrow's run.
+const LOCK_INTERVAL_MS = 23 * 60 * 60 * 1000;
 const CRITICAL_LISTS = ["ofac_sdn", "un_consolidated", "eu_fsf"] as const;
 const AGE_ALERT_MS = 24 * 60 * 60 * 1000; // 24 hours
 
@@ -47,6 +51,17 @@ async function alertOnStaleBlobs(): Promise<void> {
 
 export default async (_req: Request): Promise<Response> => {
   try {
+    const lock = await acquireCronLock(LABEL, LOCK_INTERVAL_MS);
+    if (!lock.acquired) {
+      console.log(`[${LABEL}] cron-lock held — skipping. priorAt=${lock.priorAt} ageMs=${lock.priorAgeMs}`);
+      // Still run stale-blob alerting so a held lock doesn't mask a
+      // genuinely stale snapshot from an earlier failed run.
+      await alertOnStaleBlobs();
+      return new Response(
+        JSON.stringify({ cadence: "0430", ok: true, skipped: true, reason: "cron-lock held", priorAt: lock.priorAt, priorAgeMs: lock.priorAgeMs, at: new Date().toISOString() }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      );
+    }
     const result = await runIngestionAll(LABEL);
     // Always check for stale blobs after the run — catches cases where the
     // run itself succeeded but a prior failure left a critical list stale.

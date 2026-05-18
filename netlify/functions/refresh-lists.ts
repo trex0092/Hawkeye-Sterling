@@ -8,13 +8,31 @@
 
 import type { Config } from '@netlify/functions';
 import { runIngestionAll } from '../../src/ingestion/run-all.js';
+import { acquireCronLock } from '../../src/ingestion/cron-lock.js';
 
 const LABEL = 'refresh-lists';
+// 23h lock — daily cadence (03:00 UTC); blocks Netlify retries and the
+// other sanctions-watch crons accidentally running this label.
+const LOCK_INTERVAL_MS = 23 * 60 * 60 * 1000;
 
 interface SanctionsStatusList { listId: string; displayName: string; status: string; entityCount: number | null }
 interface SanctionsStatusResponse { lists?: SanctionsStatusList[] }
 
 export default async (): Promise<Response> => {
+  const lock = await acquireCronLock(LABEL, LOCK_INTERVAL_MS);
+  if (!lock.acquired) {
+    console.log(`[${LABEL}] cron-lock held — skipping. priorAt=${lock.priorAt} ageMs=${lock.priorAgeMs}`);
+    return new Response(
+      JSON.stringify({
+        at: new Date().toISOString(),
+        skipped: true,
+        reason: 'cron-lock held — prior run within min-interval',
+        priorAt: lock.priorAt,
+        priorAgeMs: lock.priorAgeMs,
+      }),
+      { status: 200, headers: { 'Content-Type': 'application/json; charset=utf-8' } },
+    );
+  }
   const result = await runIngestionAll(LABEL);
 
   // Call sanctions_status to confirm storage state from the read path.
