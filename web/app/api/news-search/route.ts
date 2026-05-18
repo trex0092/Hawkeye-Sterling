@@ -188,6 +188,48 @@ const LOCALES: Array<{ code: string; hl: string; gl: string; ceid: string }> = [
   { code: "tw", hl: "tw", gl: "GH", ceid: "GH:tw" },
   { code: "ky", hl: "ky", gl: "KG", ceid: "KG:ky" },
   { code: "tg2", hl: "tg", gl: "AF", ceid: "AF:tg" },
+  // Tier-8: Central Asia / Caucasus
+  { code: "kk", hl: "kk", gl: "KZ", ceid: "KZ:kk" },
+  { code: "uz", hl: "uz", gl: "UZ", ceid: "UZ:uz" },
+  { code: "tk", hl: "tk", gl: "TM", ceid: "TM:tk" },
+  { code: "az", hl: "az", gl: "AZ", ceid: "AZ:az" },
+  { code: "ka", hl: "ka", gl: "GE", ceid: "GE:ka" },
+  { code: "hy", hl: "hy", gl: "AM", ceid: "AM:hy" },
+  { code: "tg", hl: "tg", gl: "TJ", ceid: "TJ:tg" },
+  // Tier-8: South Asia
+  { code: "bn", hl: "bn", gl: "BD", ceid: "BD:bn" },
+  { code: "ur", hl: "ur", gl: "PK", ceid: "PK:ur" },
+  { code: "ne", hl: "ne", gl: "NP", ceid: "NP:ne" },
+  { code: "si", hl: "si", gl: "LK", ceid: "LK:si" },
+  { code: "ta", hl: "ta", gl: "IN", ceid: "IN:ta" },
+  { code: "te", hl: "te", gl: "IN", ceid: "IN:te" },
+  { code: "ml", hl: "ml", gl: "IN", ceid: "IN:ml" },
+  { code: "kn", hl: "kn", gl: "IN", ceid: "IN:kn" },
+  { code: "gu", hl: "gu", gl: "IN", ceid: "IN:gu" },
+  { code: "mr", hl: "mr", gl: "IN", ceid: "IN:mr" },
+  { code: "pa", hl: "pa", gl: "IN", ceid: "IN:pa" },
+  // Tier-8: Southeast Asia
+  { code: "km", hl: "km", gl: "KH", ceid: "KH:km" },
+  { code: "my", hl: "my", gl: "MM", ceid: "MM:my" },
+  { code: "lo", hl: "lo", gl: "LA", ceid: "LA:lo" },
+  { code: "km2", hl: "km", gl: "KH", ceid: "KH:km" },
+  // Tier-8: East Asia
+  { code: "ja", hl: "ja", gl: "JP", ceid: "JP:ja" },
+  { code: "ko", hl: "ko", gl: "KR", ceid: "KR:ko" },
+  { code: "zh-TW", hl: "zh-TW", gl: "TW", ceid: "TW:zh-TW" },
+  // Tier-8: Eastern Europe
+  { code: "uk", hl: "uk", gl: "UA", ceid: "UA:uk" },
+  { code: "be", hl: "be", gl: "BY", ceid: "BY:be" },
+  { code: "sr", hl: "sr", gl: "RS", ceid: "RS:sr" },
+  { code: "hr", hl: "hr", gl: "HR", ceid: "HR:hr" },
+  { code: "bs", hl: "bs", gl: "BA", ceid: "BA:bs" },
+  { code: "mk", hl: "mk", gl: "MK", ceid: "MK:mk" },
+  { code: "sq", hl: "sq", gl: "AL", ceid: "AL:sq" },
+  { code: "sl", hl: "sl", gl: "SI", ceid: "SI:sl" },
+  { code: "sk", hl: "sk", gl: "SK", ceid: "SK:sk" },
+  { code: "lv", hl: "lv", gl: "LV", ceid: "LV:lv" },
+  { code: "lt", hl: "lt", gl: "LT", ceid: "LT:lt" },
+  { code: "et", hl: "et", gl: "EE", ceid: "EE:et" },
 ];
 
 // Multi-language adverse-media modifiers so each locale returns relevant
