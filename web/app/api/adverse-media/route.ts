@@ -14,11 +14,9 @@
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
-import { searchAdverseMedia } from "../../../../dist/src/integrations/taranisAi.js";
+import { searchAdverseMedia, type TaranisItem } from "../../../../dist/src/integrations/taranisAi.js";
 import { analyseAdverseMediaResult, analyseAdverseMediaItems } from "../../../../dist/src/brain/adverse-media-analyser.js";
-import type { TaranisItem } from "../../../../dist/src/integrations/taranisAi.js";
-import { fetchGdeltCached } from "@/lib/intelligence/gdelt-cache";
-import type { GdeltArticle } from "@/lib/intelligence/gdelt-cache";
+import { fetchGdeltCached, type GdeltArticle } from "@/lib/intelligence/gdelt-cache";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
