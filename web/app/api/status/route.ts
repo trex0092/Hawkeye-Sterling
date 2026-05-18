@@ -150,8 +150,8 @@ async function checkSuperBrain(): Promise<Check> {
     if (typeof quickScreen !== "function" || typeof evaluateRedlines !== "function") {
       throw new Error("brain not built — run tsc first");
     }
-    const qs = quickScreen as (s: unknown, c: unknown[], o: unknown) => unknown;
-    const er = evaluateRedlines as (r: unknown[]) => unknown;
+    const qs = quickScreen as (_s: unknown, _c: unknown[], _o: unknown) => unknown;
+    const er = evaluateRedlines as (_r: unknown[]) => unknown;
     const screen = qs({ name: "statusping" }, [], {});
     const redlines = er([]);
     return { screen, redlines };
@@ -475,7 +475,7 @@ function computeCognitiveGrade(
   soul: BrainSoul,
 ): CognitiveGrade {
   const all = [...internal, ...external];
-  const anyAnomaly = all.some((c) => c.anomalyHint);
+  const _anyAnomaly = all.some((c) => c.anomalyHint);
 
   const breakdown: GradeBreakdown[] = [
     {

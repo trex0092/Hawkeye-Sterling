@@ -116,7 +116,7 @@ function GoAMLModal({
   onConfirm,
   onCancel,
 }: {
-  onConfirm: (ref: string) => void;
+  onConfirm: (_ref: string) => void;
   onCancel: () => void;
 }) {
   const [ref, setRef] = useState("");
@@ -167,7 +167,7 @@ function MatchNotesModal({
   onConfirm,
   onCancel,
 }: {
-  onConfirm: (notes: string) => void;
+  onConfirm: (_notes: string) => void;
   onCancel: () => void;
 }) {
   const [notes, setNotes] = useState("");
@@ -217,8 +217,8 @@ function AlertRow({
   asanaRetrying,
 }: {
   alert: TFSAlert;
-  onStatusChange: (id: string, status: TFSAlertStatus, extra?: Partial<TFSAlert>) => void;
-  onRetryAsana: (id: string) => void;
+  onStatusChange: (_id: string, _status: TFSAlertStatus, _extra?: Partial<TFSAlert>) => void;
+  onRetryAsana: (_id: string) => void;
   asanaRetrying: boolean;
 }) {
   const [showGoAML, setShowGoAML] = useState(false);
