@@ -61,11 +61,6 @@ export async function GET(req: Request): Promise<NextResponse> {
   return NextResponse.json({ ok: true, count: out.length, schedules: out }, { headers: gate.headers });
 }
 
-interface UpsertBody {
-  subjectId?: string;
-  cadence?: Cadence; // thrice_daily is the default for compliance monitoring
-  scoreThreshold?: number;
-}
 
 const VALID_CADENCES: readonly Cadence[] = ["thrice_daily", "hourly", "daily", "weekly", "monthly"];
 

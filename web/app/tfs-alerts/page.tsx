@@ -49,7 +49,7 @@ function fmtDate(iso: string): string {
   }
 }
 
-function fmtDateShort(iso: string): string {
+function _fmtDateShort(iso: string): string {
   try {
     return new Date(iso).toLocaleDateString("en-GB", {
       day: "2-digit",

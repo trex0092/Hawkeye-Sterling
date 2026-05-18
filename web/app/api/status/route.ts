@@ -134,7 +134,7 @@ async function checkScreening(): Promise<Check> {
   const r = await time(async () => {
     const { quickScreen } = await loadBrain();
     if (typeof quickScreen !== "function") throw new Error("brain not built — run tsc first");
-    return (quickScreen as (s: unknown, c: unknown[], o: unknown) => unknown)({ name: "statusping" }, [], {});
+    return (quickScreen as (_s: unknown, _c: unknown[], _o: unknown) => unknown)({ name: "statusping" }, [], {});
   });
   if (!r.ok) return { name: "screening", status: "down", latencyMs: r.latencyMs, note: r.error };
   const result = r.value as { severity?: string };
