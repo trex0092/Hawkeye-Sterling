@@ -1301,8 +1301,8 @@ function StructuredAdvisorView({ response }: { response: AdvisorResponseV1 }) {
       {response.redFlags.flags.length > 0 ? (
         <Section label="2 · Red flags triggered">
           <ul className="space-y-1">
-            {response.redFlags.flags.map((f, i) => (
-              <li key={i} className="text-13 text-ink-0">
+            {response.redFlags.flags.map((f) => (
+              <li key={f.indicator} className="text-13 text-ink-0">
                 <span className="font-medium">{f.indicator}</span>
                 <span className="text-11 text-ink-3 ml-2">→ {f.typology.replace(/_/g, " ")}</span>
               </li>

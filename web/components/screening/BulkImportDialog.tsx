@@ -164,7 +164,7 @@ export function BulkImportDialog({ open, onClose, onImported }: Props) {
                 </thead>
                 <tbody>
                   {parsedRows.slice(0, 8).map((r, i) => (
-                    <tr key={i} className="border-t border-hair">
+                    <tr key={`${r.name}-${i}`} className="border-t border-hair">
                       <td className="px-2 py-1 text-ink-0 font-medium">{r.name}</td>
                       <td className="px-2 py-1 text-ink-2">{r.entityType ?? "—"}</td>
                       <td className="px-2 py-1 text-ink-2">{r.jurisdiction ?? "—"}</td>
@@ -180,7 +180,7 @@ export function BulkImportDialog({ open, onClose, onImported }: Props) {
             <div className="text-11 text-amber bg-amber-dim border border-amber/30 rounded p-2">
               <div className="font-semibold mb-1">Parse warnings:</div>
               <ul className="list-disc list-inside space-y-0.5">
-                {parseErrors.slice(0, 5).map((e, i) => <li key={i}>{e}</li>)}
+                {parseErrors.slice(0, 5).map((e) => <li key={e}>{e}</li>)}
                 {parseErrors.length > 5 && <li>…and {parseErrors.length - 5} more</li>}
               </ul>
             </div>

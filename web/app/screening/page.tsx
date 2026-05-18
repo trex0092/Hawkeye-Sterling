@@ -1600,8 +1600,8 @@ export default function ScreeningPage() {
                 </button>
               </div>
               <ul className="mt-1.5 space-y-0.5">
-                {listHealthWarnings.map((w, i) => (
-                  <li key={i} className="text-11 text-amber font-mono">{w}</li>
+                {listHealthWarnings.map((w) => (
+                  <li key={w} className="text-11 text-amber font-mono">{w}</li>
                 ))}
               </ul>
               <p className="text-10.5 text-ink-3 mt-1.5">
@@ -1980,7 +1980,7 @@ export default function ScreeningPage() {
                   <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2 mb-3">Investigation Actions</div>
                   <ol className="space-y-1.5">
                     {investigations.map((line, i) => (
-                      <li key={i} className="flex gap-2 text-12 text-ink-1">
+                      <li key={line} className="flex gap-2 text-12 text-ink-1">
                         <span className="text-ink-3 font-mono text-11 flex-shrink-0">{i + 1}.</span>
                         <span>{line}</span>
                       </li>
@@ -2053,7 +2053,7 @@ export default function ScreeningPage() {
                               <div>
                                 <p className="text-11 text-ink-3 font-semibold mb-1">FATF Predicates</p>
                                 <ul className="space-y-0.5">
-                                  {fatfPredicates.map((p, i) => <li key={i} className="text-11 text-ink-2">{p}</li>)}
+                                  {fatfPredicates.map((p) => <li key={p} className="text-11 text-ink-2">{p}</li>)}
                                 </ul>
                               </div>
                             )}

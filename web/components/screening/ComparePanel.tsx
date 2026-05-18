@@ -196,7 +196,7 @@ export function ComparePanel({ subjectA, subjectB, onClose, onSelect }: Props): 
           a={redlinesA.length > 0
             ? <div className="space-y-0.5">
                 {redlinesA.map((r, i) => (
-                  <div key={i} className="text-10 font-mono text-red">{r.id ?? r.label ?? "redline"}</div>
+                  <div key={r.id ?? r.label ?? i} className="text-10 font-mono text-red">{r.id ?? r.label ?? "redline"}</div>
                 ))}
                 {rA?.redlines?.action && (
                   <div className="text-10 font-bold text-red uppercase">{rA.redlines.action}</div>
@@ -206,7 +206,7 @@ export function ComparePanel({ subjectA, subjectB, onClose, onSelect }: Props): 
           b={redlinesB.length > 0
             ? <div className="space-y-0.5">
                 {redlinesB.map((r, i) => (
-                  <div key={i} className="text-10 font-mono text-red">{r.id ?? r.label ?? "redline"}</div>
+                  <div key={r.id ?? r.label ?? i} className="text-10 font-mono text-red">{r.id ?? r.label ?? "redline"}</div>
                 ))}
                 {rB?.redlines?.action && (
                   <div className="text-10 font-bold text-red uppercase">{rB.redlines.action}</div>
@@ -249,8 +249,8 @@ export function ComparePanel({ subjectA, subjectB, onClose, onSelect }: Props): 
             ? <div>
                 <span className="text-10 font-bold text-amber">{pepA.highestTier}</span>
                 <span className="ml-1 text-10 text-ink-2">score {pepA.riskScore}</span>
-                {pepA.matchedRoles?.slice(0, 2).map((r, i) => (
-                  <div key={i} className="text-9 text-ink-3">{r.label}</div>
+                {pepA.matchedRoles?.slice(0, 2).map((r) => (
+                  <div key={r.label} className="text-9 text-ink-3">{r.label}</div>
                 ))}
               </div>
             : pepA && "tier" in pepA
@@ -260,8 +260,8 @@ export function ComparePanel({ subjectA, subjectB, onClose, onSelect }: Props): 
             ? <div>
                 <span className="text-10 font-bold text-amber">{pepB.highestTier}</span>
                 <span className="ml-1 text-10 text-ink-2">score {pepB.riskScore}</span>
-                {pepB.matchedRoles?.slice(0, 2).map((r, i) => (
-                  <div key={i} className="text-9 text-ink-3">{r.label}</div>
+                {pepB.matchedRoles?.slice(0, 2).map((r) => (
+                  <div key={r.label} className="text-9 text-ink-3">{r.label}</div>
                 ))}
               </div>
             : pepB && "tier" in pepB
@@ -276,16 +276,16 @@ export function ComparePanel({ subjectA, subjectB, onClose, onSelect }: Props): 
           a={rA?.typologies?.hits?.length
             ? <div>
                 <span className="text-10 font-bold text-amber">{rA.typologies.compositeScore} composite</span>
-                {rA.typologies.hits.slice(0, 3).map((h, i) => (
-                  <div key={i} className="text-9 text-ink-2 font-mono">{h.name}</div>
+                {rA.typologies.hits.slice(0, 3).map((h) => (
+                  <div key={h.name} className="text-9 text-ink-2 font-mono">{h.name}</div>
                 ))}
               </div>
             : <span className="text-ink-3 text-10">{brainA.status === "loading" ? "…" : "none"}</span>}
           b={rB?.typologies?.hits?.length
             ? <div>
                 <span className="text-10 font-bold text-amber">{rB.typologies.compositeScore} composite</span>
-                {rB.typologies.hits.slice(0, 3).map((h, i) => (
-                  <div key={i} className="text-9 text-ink-2 font-mono">{h.name}</div>
+                {rB.typologies.hits.slice(0, 3).map((h) => (
+                  <div key={h.name} className="text-9 text-ink-2 font-mono">{h.name}</div>
                 ))}
               </div>
             : <span className="text-ink-3 text-10">{brainB.status === "loading" ? "…" : "none"}</span>}
@@ -297,15 +297,15 @@ export function ComparePanel({ subjectA, subjectB, onClose, onSelect }: Props): 
           differ={(rA?.adverseKeywordGroups?.length ?? 0) !== (rB?.adverseKeywordGroups?.length ?? 0)}
           a={rA?.adverseKeywordGroups?.length
             ? <div className="flex flex-wrap gap-0.5">
-                {rA.adverseKeywordGroups.slice(0, 4).map((g, i) => (
-                  <span key={i} className="text-9 font-mono px-1 rounded bg-red-dim text-red">{g.label} ({g.count})</span>
+                {rA.adverseKeywordGroups.slice(0, 4).map((g) => (
+                  <span key={g.label} className="text-9 font-mono px-1 rounded bg-red-dim text-red">{g.label} ({g.count})</span>
                 ))}
               </div>
             : <span className="text-ink-3 text-10">{brainA.status === "loading" ? "…" : "—"}</span>}
           b={rB?.adverseKeywordGroups?.length
             ? <div className="flex flex-wrap gap-0.5">
-                {rB.adverseKeywordGroups.slice(0, 4).map((g, i) => (
-                  <span key={i} className="text-9 font-mono px-1 rounded bg-red-dim text-red">{g.label} ({g.count})</span>
+                {rB.adverseKeywordGroups.slice(0, 4).map((g) => (
+                  <span key={g.label} className="text-9 font-mono px-1 rounded bg-red-dim text-red">{g.label} ({g.count})</span>
                 ))}
               </div>
             : <span className="text-ink-3 text-10">{brainB.status === "loading" ? "…" : "—"}</span>}
