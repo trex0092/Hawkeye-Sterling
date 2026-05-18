@@ -25,13 +25,17 @@ interface ChainEntry {
   seq: number;
   prevHash?: string;
   entryHash: string;
+  /** hashAlg absent = legacy FNV-1a; "sha256" = SHA-256 (no HMAC);
+   *  "hmac-sha256" = HMAC-SHA256 with per-tenant derived key (current). */
+  hashAlg?: 'sha256' | 'fnv1a' | 'hmac-sha256';
   payload: unknown;
   at: string;
 }
 
-// Mirrors src/brain/audit-chain.ts FNV-1a — kept inline so the scheduler
-// has zero dependency on the brain bundle being present in the function
-// runtime. If the brain implementation changes, update this constant.
+// Legacy FNV-1a implementation kept for backward-compatibility with entries
+// written before 2026-05-18. New entries use SHA-256 (hashAlg: "sha256").
+// If the write-side implementation changes again, update both this file and
+// web/lib/server/audit-chain.ts's computeHash function atomically.
 function fnv1a(input: string): string {
   let hash = 0x811c9dc5;
   for (let i = 0; i < input.length; i++) {
@@ -41,8 +45,78 @@ function fnv1a(input: string): string {
   return (hash >>> 0).toString(16).padStart(8, '0');
 }
 
-function computeEntryHash(prevHash: string | undefined, payload: unknown, at: string, seq: number): string {
+// crypto.createHash / createHmac not available in Deno (Netlify scheduled functions).
+// Use WebCrypto (SubtleCrypto) which is universally available.
+async function sha256Hex(input: string): Promise<string> {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(input));
+  return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function hmacSha256Hex(key: string, data: string): Promise<string> {
+  const keyMaterial = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(key),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign'],
+  );
+  const sig = await crypto.subtle.sign('HMAC', keyMaterial, new TextEncoder().encode(data));
+  return Array.from(new Uint8Array(sig)).map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+// Mirror the key derivation from audit-chain.ts (web/lib/server/audit-chain.ts).
+// Both sides MUST use the same domain label: "hawkeye-audit-chain-v1:<tenantId>".
+async function deriveChainKey(rootSecret: string, tenantId: string): Promise<string> {
+  return hmacSha256Hex(rootSecret, `hawkeye-audit-chain-v1:${tenantId}`);
+}
+
+// Safe env-var accessor that works in both Deno (Netlify scheduled functions)
+// and Node.js (local test runs). Deno.env.get() is the canonical path;
+// process.env is a common polyfill.
+function getEnv(key: string): string | undefined {
+  try {
+    // @ts-ignore — Deno global defined in Netlify scheduled function runtime.
+    if (typeof Deno !== 'undefined') return Deno.env.get(key);
+  } catch { /* not Deno */ }
+  return process?.env?.[key];
+}
+
+async function getProbeChainSecret(tenantId = 'default'): Promise<string | null> {
+  const envKey = `AUDIT_CHAIN_SECRET_${tenantId.toUpperCase().replace(/[^A-Z0-9]/g, '_')}`;
+  const perTenant = getEnv(envKey);
+  if (perTenant && perTenant.length >= 32) return perTenant;
+
+  const root = getEnv('AUDIT_CHAIN_SECRET');
+  if (!root || root.length < 32) return null;
+  return deriveChainKey(root, tenantId);
+}
+
+// Sentinel returned when an hmac-sha256 entry cannot be verified because
+// AUDIT_CHAIN_SECRET is absent from the probe environment. The probe loop
+// counts these separately so they are neither flagged as tampered nor as
+// verified — the operator is warned to configure the secret.
+const UNVERIFIABLE = 'UNVERIFIABLE_NO_SECRET';
+
+async function computeEntryHash(
+  prevHash: string | undefined,
+  payload: unknown,
+  at: string,
+  seq: number,
+  hashAlg?: string,
+  hmacSecret?: string | null,
+): Promise<string> {
   const material = `${prevHash ?? ''}::${seq}::${at}::${JSON.stringify(payload)}`;
+  if (hashAlg === 'hmac-sha256') {
+    // Without the signing secret we cannot reconstruct the HMAC — returning a
+    // sentinel prevents the entry from being silently compared using the wrong
+    // algorithm (e.g. fnv1a fallthrough), which would produce a false tamper alert.
+    if (!hmacSecret) return UNVERIFIABLE;
+    return hmacSha256Hex(hmacSecret, material);
+  }
+  if (hashAlg === 'sha256') {
+    return sha256Hex(material);
+  }
+  // Legacy FNV-1a for entries written before 2026-05-18.
   return fnv1a(material);
 }
 
@@ -50,8 +124,9 @@ interface ProbeOutcome {
   ok: boolean;
   totalEntries: number;
   verified: number;
-  tamperedAt?: number[];   // seqs that fail verification
-  brokenLinkAt?: number[];  // seqs whose prevHash != prior entry's entryHash
+  tamperedAt?: number[];      // seqs that fail verification
+  brokenLinkAt?: number[];    // seqs whose prevHash != prior entry's entryHash
+  unverifiableAt?: number[];  // seqs skipped because AUDIT_CHAIN_SECRET absent
   durationMs: number;
   error?: string;
 }
@@ -102,8 +177,13 @@ export default async function handler(_req: Request): Promise<Response> {
     }, 500);
   }
 
+  // Resolve the HMAC secret once — all HMAC entries in this chain share
+  // the same derived key (chain file = "default" tenant = chain.json).
+  const hmacSecret = await getProbeChainSecret('default');
+
   const tamperedAt: number[] = [];
   const brokenLinkAt: number[] = [];
+  const unverifiableAt: number[] = [];
   let prev: ChainEntry | undefined;
 
   for (const e of entries) {
@@ -111,13 +191,32 @@ export default async function handler(_req: Request): Promise<Response> {
       tamperedAt.push(-1);
       continue;
     }
-    const expected = computeEntryHash(e.prevHash, e.payload, e.at, e.seq);
-    if (expected !== e.entryHash) tamperedAt.push(e.seq);
+    // Dispatch to the correct algorithm based on hashAlg tag:
+    //   "hmac-sha256"  → HMAC-SHA256 with derived tenant key
+    //   "sha256"       → plain SHA-256 (no HMAC, pre-2026-05-19 entries)
+    //   absent/fnv1a   → legacy FNV-1a (pre-2026-05-18 entries)
+    const expected = await computeEntryHash(e.prevHash, e.payload, e.at, e.seq, e.hashAlg, hmacSecret);
+    if (expected === UNVERIFIABLE) {
+      // AUDIT_CHAIN_SECRET not configured — cannot verify HMAC entries.
+      // Counted separately: neither verified nor tampered.
+      unverifiableAt.push(e.seq);
+    } else if (expected !== e.entryHash) {
+      tamperedAt.push(e.seq);
+    }
     if (prev && e.prevHash !== prev.entryHash) brokenLinkAt.push(e.seq);
     prev = e;
   }
 
-  const verified = entries.length - tamperedAt.length - brokenLinkAt.length;
+  if (unverifiableAt.length > 0) {
+    console.warn(
+      `[audit-chain-probe] ${unverifiableAt.length} HMAC-signed entries could not be verified ` +
+      `because AUDIT_CHAIN_SECRET is not configured in the probe environment. ` +
+      `Set AUDIT_CHAIN_SECRET (min 32 chars) to enable full verification. ` +
+      `Unverifiable seqs: ${unverifiableAt.join(', ')}`,
+    );
+  }
+
+  const verified = entries.length - tamperedAt.length - brokenLinkAt.length - unverifiableAt.length;
   const ok = tamperedAt.length === 0 && brokenLinkAt.length === 0;
 
   const outcome: ProbeOutcome = {
@@ -128,6 +227,7 @@ export default async function handler(_req: Request): Promise<Response> {
   };
   if (tamperedAt.length > 0) outcome.tamperedAt = tamperedAt;
   if (brokenLinkAt.length > 0) outcome.brokenLinkAt = brokenLinkAt;
+  if (unverifiableAt.length > 0) outcome.unverifiableAt = unverifiableAt;
 
   // Tamper detected → fire critical webhook + write marker. Marker
   // includes the offending seqs so the operator dashboard can render

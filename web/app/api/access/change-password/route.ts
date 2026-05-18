@@ -18,6 +18,7 @@ import {
   SESSION_COOKIE,
 } from "@/lib/server/auth";
 import { cookies } from "next/headers";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export async function POST(req: Request) {
   const jar = await cookies();
@@ -75,8 +76,34 @@ export async function POST(req: Request) {
   const salt = generateSalt();
   const hash = hashPassword(newPassword, salt);
   const updatedUsers = [...users];
-  updatedUsers[idx] = { ...user, passwordHash: hash, passwordSalt: salt };
+  updatedUsers[idx] = {
+    ...user,
+    passwordHash: hash,
+    passwordSalt: salt,
+    pwVersion: (user.pwVersion ?? 0) + 1,
+  };
   await saveUsers(updatedUsers);
 
-  return NextResponse.json({ ok: true });
+  // FDL 10/2025 Art.24: every access-control change must be in the audit chain.
+  void writeAuditChainEntry({
+    event: "access.password_changed",
+    actor: session.username,
+    target: session.userId,
+    body: { role: session.role },
+  });
+
+  // Invalidate the current session so the user must re-authenticate with the
+  // new password. Using maxAge:0 mirrors the logout route. Without this,
+  // the old session token would remain valid for up to SESSION_TTL_S after
+  // the password change, which is a security gap.
+  const isSecure = process.env["NODE_ENV"] !== "development";
+  const res = NextResponse.json({ ok: true, sessionInvalidated: true });
+  res.cookies.set(SESSION_COOKIE, "", {
+    maxAge: 0,
+    path: "/",
+    httpOnly: true,
+    sameSite: "lax",
+    secure: isSecure,
+  });
+  return res;
 }

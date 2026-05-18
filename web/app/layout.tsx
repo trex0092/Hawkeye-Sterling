@@ -5,6 +5,8 @@ import { CaseVaultSyncer } from "@/components/CaseVaultSyncer";
 import { ServiceWorkerRegistrar } from "@/components/layout/ServiceWorkerRegistrar";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { LocaleProvider } from "@/lib/i18n/LocaleProvider";
+import { AlertToast } from "@/components/layout/AlertToast";
+import { SessionExpiryWatcher } from "@/components/layout/SessionExpiryWatcher";
 
 export const metadata: Metadata = {
   title: "Hawkeye Sterling",
@@ -60,6 +62,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <LocaleProvider>
           <CaseVaultSyncer />
           <ServiceWorkerRegistrar />
+          <AlertToast />
+          <SessionExpiryWatcher />
           <div className="flex-1">
             {children}
           </div>

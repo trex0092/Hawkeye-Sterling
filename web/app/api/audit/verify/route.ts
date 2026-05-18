@@ -36,6 +36,7 @@ import {
   GENESIS_HASH,
   computeId,
   computeSignature as expectedSignature,
+  getChainSecret,
   type AuditEntry,
   type VerificationFault,
   type SequenceGap,
@@ -69,7 +70,14 @@ async function handleGet(req: Request): Promise<Response> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
 
-  const secret = process.env["AUDIT_CHAIN_SECRET"];
+  const url = new URL(req.url);
+  // Sanitise tenantId: alphanumeric, hyphens, underscores only; max 64 chars.
+  const tenantId = ((url.searchParams.get("tenantId") ?? "default").replace(/[^a-zA-Z0-9_-]/g, "") || "default").slice(0, 64);
+
+  // Use the same derived key as the sign route (getChainSecret derives
+  // HMAC-SHA256(root, "hawkeye-audit-chain-v1:<tenantId>") to avoid using
+  // the root secret directly and to isolate tenants from each other).
+  const secret = getChainSecret(tenantId);
   if (!secret) {
     return NextResponse.json(
       {
@@ -81,7 +89,6 @@ async function handleGet(req: Request): Promise<Response> {
     );
   }
 
-  const url = new URL(req.url);
   const targetFilter =
     url.searchParams.get("screening_id") ?? url.searchParams.get("target");
   const sinceRaw = url.searchParams.get("since");
@@ -91,7 +98,12 @@ async function handleGet(req: Request): Promise<Response> {
   const maxRaw = Number.parseInt(url.searchParams.get("max") ?? "", 10);
   const max = Number.isFinite(maxRaw) && maxRaw > 0 ? maxRaw : DEFAULT_MAX;
 
-  const allKeys = (await listKeys("audit/entry/")).sort();
+  // Namespace storage by tenant: "default" uses the legacy paths for backward
+  // compat; all other tenants are isolated under audit/<tenantId>/.
+  const entryPrefix = tenantId === "default" ? "audit/entry/" : `audit/${tenantId}/entry/`;
+  const headKey = tenantId === "default" ? "audit/head.json" : `audit/${tenantId}/head.json`;
+
+  const allKeys = (await listKeys(entryPrefix)).sort();
   const brokenLinks: VerificationFault[] = [];
   const invalidIds: VerificationFault[] = [];
   const invalidSignatures: VerificationFault[] = [];
@@ -161,7 +173,7 @@ async function handleGet(req: Request): Promise<Response> {
     prevHash = e.id;
   }
 
-  const head = (await getJson<AuditHead>("audit/head.json")) ?? {
+  const head = (await getJson<AuditHead>(headKey)) ?? {
     sequence: 0,
     hash: GENESIS_HASH,
   };

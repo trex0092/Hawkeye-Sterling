@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createHash, createHmac } from "node:crypto";
 import { withGuard } from "@/lib/server/guard";
 import { getJson, listKeys, setJson } from "@/lib/server/store";
+import { getChainSecret } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -75,6 +76,11 @@ const ROLE_POWER: Record<string, number> = {
   managing_director:    3,
 };
 
+// Alias so the rest of this file is unchanged. getChainSecret derives
+// HMAC-SHA256(root, "hawkeye-audit-chain-v1:<tenantId>") — the same key
+// the verify route uses, ensuring sign and verify are always consistent.
+const getSigningKey = getChainSecret;
+
 interface SignBody {
   action: string;
   target: string;
@@ -83,6 +89,9 @@ interface SignBody {
     name?: string;
   };
   body?: Record<string, unknown>;
+  /** Tenant identifier for namespace isolation and per-tenant key derivation.
+   *  Defaults to "default". Alphanumeric + hyphens/underscores only. */
+  tenantId?: string;
 }
 
 interface AuditEntry {
@@ -107,22 +116,34 @@ function sha256Hex(input: string): string {
 }
 
 async function handleSign(req: Request): Promise<NextResponse> {
-  const secret = process.env["AUDIT_CHAIN_SECRET"];
-  if (!secret) {
-    return NextResponse.json(
-      {
-        ok: true,
-        entry: null,
-        warning: "AI analysis unavailable — manual review required. Set AUDIT_CHAIN_SECRET to enable the signed audit chain.",
-      },
-    );
-  }
-
   let body: SignBody;
   try {
     body = (await req.json()) as SignBody;
   } catch {
     return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
+  }
+
+  // Sanitise tenantId: alphanumeric, hyphens, underscores only; max 64 chars.
+  const tenantId = ((body.tenantId ?? "default").replace(/[^a-zA-Z0-9_-]/g, "") || "default").slice(0, 64);
+
+  const secret = getSigningKey(tenantId);
+  if (!secret) {
+    // Fail-closed: returning ok:true with entry:null silently confused callers
+    // into thinking audit writes succeeded. For FDL 10/2025 Art.24 compliance
+    // the chain MUST be written or the endpoint MUST surface a clear error.
+    console.error(
+      `[hawkeye] audit/sign: AUDIT_CHAIN_SECRET missing or too short for tenant "${tenantId}" — refusing to sign. ` +
+      "Generate with: openssl rand -hex 64",
+    );
+    return NextResponse.json(
+      {
+        ok: false,
+        error: "AUDIT_CHAIN_SECRET is not configured — audit signing is disabled. " +
+          "Set AUDIT_CHAIN_SECRET in Netlify environment variables (min 32 chars).",
+        code: "AUDIT_CHAIN_SECRET_MISSING",
+      },
+      { status: 503 },
+    );
   }
   if (!body?.action || !body?.target || !body?.actor?.role) {
     return NextResponse.json(
@@ -150,8 +171,13 @@ async function handleSign(req: Request): Promise<NextResponse> {
     );
   }
 
+  // Namespace storage by tenant: "default" uses the legacy paths for backward
+  // compat; all other tenants are isolated under audit/<tenantId>/.
+  const entryPrefix = tenantId === "default" ? "audit/entry" : `audit/${tenantId}/entry`;
+  const headKey = tenantId === "default" ? "audit/head.json" : `audit/${tenantId}/head.json`;
+
   // Load head to chain the new entry.
-  const head = (await getJson<AuditHead>("audit/head.json")) ?? {
+  const head = (await getJson<AuditHead>(headKey)) ?? {
     sequence: 0,
     hash: "0".repeat(64),
   };
@@ -189,12 +215,12 @@ async function handleSign(req: Request): Promise<NextResponse> {
   // Zero-pad to 10 digits so lexical blob listing = chronological order.
   const paddedSeq = String(nextSequence).padStart(10, "0");
   try {
-    await setJson(`audit/entry/${paddedSeq}.json`, entry);
+    await setJson(`${entryPrefix}/${paddedSeq}.json`, entry);
   } catch (err) {
     console.error(
       "[hawkeye] audit/sign: entry write failed — NOT persisted, sequence NOT advanced:",
       err,
-      { sequence: nextSequence, paddedSeq },
+      { sequence: nextSequence, paddedSeq, tenantId },
     );
     return NextResponse.json(
       { ok: false, error: "Audit entry could not be persisted to durable store" },
@@ -206,7 +232,7 @@ async function handleSign(req: Request): Promise<NextResponse> {
   // not updated) is logged accurately rather than misreporting the entry as
   // un-persisted.
   try {
-    await setJson("audit/head.json", { sequence: nextSequence, hash: id });
+    await setJson(headKey, { sequence: nextSequence, hash: id });
   } catch (err) {
     console.error(
       "[hawkeye] audit/sign: head pointer write failed — entry IS persisted but chain head NOT advanced (orphaned entry):",
@@ -222,8 +248,11 @@ async function handleSign(req: Request): Promise<NextResponse> {
   return NextResponse.json({ ok: true, entry });
 }
 
-async function handleList(_req: Request): Promise<NextResponse> {
-  const keys = await listKeys("audit/entry/");
+async function handleList(req: Request): Promise<NextResponse> {
+  const url = new URL(req.url);
+  const tenantId = ((url.searchParams.get("tenantId") ?? "default").replace(/[^a-zA-Z0-9_-]/g, "") || "default").slice(0, 64);
+  const listPrefix = tenantId === "default" ? "audit/entry/" : `audit/${tenantId}/entry/`;
+  const keys = await listKeys(listPrefix);
   const sorted = keys.sort(); // lexical sort = sequence order
   const entries: AuditEntry[] = [];
   for (const k of sorted.slice(-200)) {
@@ -232,6 +261,7 @@ async function handleList(_req: Request): Promise<NextResponse> {
   }
   return NextResponse.json({
     ok: true,
+    tenantId,
     count: entries.length,
     entries,
   });

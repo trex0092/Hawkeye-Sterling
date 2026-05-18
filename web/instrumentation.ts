@@ -34,10 +34,46 @@ if (process.env.NEXT_RUNTIME !== 'edge') {
   } catch { /* not available in this runtime */ }
 }
 
+// ── Startup environment validation ──────────────────────────────────────────
+// Validate required secrets at server startup so a misconfigured deploy
+// surfaces immediately in logs rather than silently failing on first request.
+// We WARN rather than throw — throwing here would crash the Lambda cold-start
+// even in local dev where secrets are intentionally absent. Ops teams should
+// monitor for these log lines and treat them as P0 deployment incidents.
+
+const REQUIRED_SECRETS: Array<{ key: string; minLen: number; genCmd: string }> = [
+  { key: "SESSION_SECRET", minLen: 32, genCmd: "openssl rand -hex 32" },
+  { key: "JWT_SIGNING_SECRET", minLen: 24, genCmd: "openssl rand -base64 32" },
+  { key: "AUDIT_CHAIN_SECRET", minLen: 32, genCmd: "openssl rand -hex 64" },
+  { key: "ADMIN_TOKEN", minLen: 16, genCmd: "openssl rand -hex 32" },
+];
+
+function validateSecrets(): void {
+  if (process.env.NEXT_RUNTIME === 'edge') return; // edge has limited env access
+  const isProduction = process.env.NODE_ENV === 'production';
+  for (const { key, minLen, genCmd } of REQUIRED_SECRETS) {
+    const val = process.env[key];
+    if (!val) {
+      const msg = `[startup] MISSING required env var ${key}. Generate with: ${genCmd}`;
+      if (isProduction) {
+        console.error(msg);
+      } else {
+        console.warn(msg);
+      }
+    } else if (val.length < minLen) {
+      console.error(
+        `[startup] ${key} is too short (${val.length} chars, min ${minLen}). ` +
+        `Generate a stronger value with: ${genCmd}`,
+      );
+    }
+  }
+}
+
 export async function register() {
   // Re-apply after Next.js startup completes in case globalThis.AsyncLocalStorage
   // was set after module evaluation (defensive — should already be set by now).
   if (process.env.NEXT_RUNTIME !== 'edge') {
     applySnapshotPolyfill((globalThis as Record<string, unknown>).AsyncLocalStorage)
+    validateSecrets();
   }
 }

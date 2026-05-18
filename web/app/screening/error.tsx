@@ -17,9 +17,11 @@ export default function ScreeningError({
           Something went wrong
         </h1>
         <p className="text-13 text-ink-2 mb-6 leading-relaxed">
-          {error.message || "An unexpected error occurred in the screening module."}
+          {process.env.NODE_ENV !== "production"
+            ? error.message || "An unexpected error occurred in the screening module."
+            : "An unexpected error occurred in the screening module. Please try again or contact your system administrator."}
         </p>
-        {error.stack && (
+        {error.stack && process.env.NODE_ENV !== "production" && (
           <pre className="text-left text-10 text-ink-3 bg-bg-1 border border-line-1 rounded p-4 mb-6 overflow-auto max-h-64 whitespace-pre-wrap break-all">
             {error.stack}
           </pre>
