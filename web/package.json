@@ -29,6 +29,7 @@
     "react-is": "19.2.6",
     "styled-jsx": "5.1.6",
     "swagger-ui-react": "^5.32.4",
+    "xlsx": "^0.18.5",
     "zod": "^4.4.3"
   },
   "devDependencies": {
