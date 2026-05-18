@@ -298,11 +298,6 @@ export function exportGapAnalysis(
     grade === "C" ? "amber" :
     grade === "A" || grade === "B" ? "green" : "neutral";
 
-  const severityTone = (sev: string): "red" | "amber" | "green" | "neutral" =>
-    sev === "critical" || sev === "high" ? "red" :
-    sev === "medium" ? "amber" :
-    sev === "low" ? "green" : "neutral";
-
   const sections: PdfSection[] = [
     { type: "header", content: "Governance Gap Analysis Report" },
     {

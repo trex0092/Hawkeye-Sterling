@@ -56,8 +56,8 @@ interface StoredSecret {
 }
 
 interface BlobLikeStore {
-  get(key: string, opts?: { type: "json" }): Promise<unknown>;
-  setJSON(key: string, value: unknown): Promise<unknown>;
+  get(_key: string, _opts?: { type: "json" }): Promise<unknown>;
+  setJSON(_key: string, _value: unknown): Promise<unknown>;
 }
 
 async function getBlobsStore(name: string): Promise<BlobLikeStore | null> {

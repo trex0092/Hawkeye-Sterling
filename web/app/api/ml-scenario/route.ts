@@ -16,36 +16,6 @@ export interface MlScenarioResult {
   regulatoryBasis: string;
 }
 
-const FALLBACK: MlScenarioResult = {
-  scenarioTitle:
-    "Gold-backed trade-based money laundering via DPMS sector",
-  predicate:
-    "Proceeds of corruption — senior official (PEP-1) received AED 12.5M in illicit payments from government contractor in exchange for inflated procurement contracts. Funds initially held in nominee accounts in jurisdiction with weak AML controls.",
-  placement:
-    "AED 3.2M introduced into UAE financial system via structured DPMS gold purchases across 4 dealers, each transaction below AED 55,000 MoE reporting threshold. Payment by cash and bank transfer from three different accounts in names of family members.",
-  layering:
-    "Physical gold converted to gold-backed trade finance instruments. Over-invoiced 'gold refining services' routed through DMCC free zone entity to Swiss counter-party. Wire transfers total AED 6.8M passed through 3 jurisdictions (UAE → Switzerland → Singapore). BVI holding company used as intermediate vehicle.",
-  integration:
-    "Proceeds re-invested into Dubai freehold property (2 apartments, Jumeirah Lakes Towers) in nominee name. Rental income provides legitimate ongoing income stream. Residual AED 2.5M held in VASP accounts across 3 crypto exchanges as Bitcoin.",
-  totalAmountAed: 12500000,
-  keyVehicles: [
-    "DPMS sector (gold purchase)",
-    "DMCC free zone entity",
-    "BVI holding company",
-    "UAE freehold property",
-    "Crypto VASP",
-  ],
-  redFlagSummary: [
-    "Structured DPMS purchases below AED 55K threshold across multiple dealers",
-    "PEP beneficial owner concealed behind nominee arrangement",
-    "Over-invoiced international trade finance transactions",
-    "Multi-jurisdiction layering via professional intermediaries",
-    "Investment in high-value real estate without mortgage",
-  ],
-  typologyCode: "TBML-DPMS-RE-PEP",
-  regulatoryBasis:
-    "FATF R.1/R.3 (risk assessment), UAE FDL 10/2025, LBMA RGG Step-4, MoE Circular 2/2024, FATF Typologies Report 2023",
-};
 
 export async function POST(req: Request) {
   const gate = await enforce(req);

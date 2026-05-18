@@ -32,17 +32,6 @@ interface AmAssessmentResult {
   uaeSpecificRisks: string[];
 }
 
-const FALLBACK: AmAssessmentResult = {
-  overallRisk: "medium",
-  threatNarrative: "API key not configured — manual review required.",
-  topConcerns: [],
-  fatfTypologies: [],
-  regulatoryLinks: "",
-  recommendedAction: "standard_monitoring",
-  actionRationale: "Manual assessment required.",
-  uaeSpecificRisks: [],
-};
-
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;

@@ -103,7 +103,7 @@ const VALID_UNSC = new Set([
 interface Pattern {
   rx: RegExp;
   category: CitationCheck["category"];
-  verify: (m: RegExpMatchArray) => { verified: boolean; note?: string };
+  verify: (_m: RegExpMatchArray) => { verified: boolean; note?: string };
 }
 
 const PATTERNS: Pattern[] = [

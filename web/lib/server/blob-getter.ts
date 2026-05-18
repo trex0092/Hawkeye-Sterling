@@ -17,15 +17,15 @@
 // per-store accessor patterns.
 
 export interface NamedBlobStore {
-  get: (key: string, opts?: { type?: string }) => Promise<unknown>;
-  setJSON?: (key: string, value: unknown) => Promise<void>;
-  set?: (key: string, value: string) => Promise<void>;
-  list?: (opts?: { prefix?: string }) => Promise<{ blobs?: Array<{ key: string }> }>;
-  delete?: (key: string) => Promise<void>;
+  get: (_key: string, _opts?: { type?: string }) => Promise<unknown>;
+  setJSON?: (_key: string, _value: unknown) => Promise<void>;
+  set?: (_key: string, _value: string) => Promise<void>;
+  list?: (_opts?: { prefix?: string }) => Promise<{ blobs?: Array<{ key: string }> }>;
+  delete?: (_key: string) => Promise<void>;
 }
 
 interface BlobsModuleShape {
-  getStore: (opts: {
+  getStore: (_opts: {
     name: string;
     siteID?: string;
     token?: string;

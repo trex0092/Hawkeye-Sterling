@@ -16,25 +16,6 @@ export interface MixedFundsResult {
   regulatoryBasis: string;
 }
 
-const FALLBACK: MixedFundsResult = {
-  taintPercentage: 47,
-  taintRating: "high",
-  taintedAmount: 2350000,
-  cleanAmount: 2650000,
-  tracingMethod: "proportional",
-  legalAnalysis:
-    "Applying the proportionality method under UAE FDL 10/2025 Art.26 tracing principles, AED 2.35M of the AED 5M pooled account balance is attributable to proceeds of the predicate offence. The FIFO method would yield a higher taint estimate (61%); courts typically accept the method most favourable to the prosecution unless clean funds were demonstrably deposited first.",
-  confiscationRisk: true,
-  evidenceStrength: "moderate",
-  investigativeSteps: [
-    "Obtain complete account statements for the full layering period",
-    "Forensic accountant engagement to reconstruct fund flows",
-    "Identify and segregate legitimate business income streams",
-    "Prepare confiscation schedule for CBUAE/Public Prosecutor",
-  ],
-  regulatoryBasis:
-    "UAE FDL 10/2025 Art.26 (tracing), FATF R.4 (confiscation), UAE AML Law Art.2",
-};
 
 export async function POST(req: Request) {
   const gate = await enforce(req);

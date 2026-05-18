@@ -13,22 +13,6 @@ export interface CorrespondentBankResult {
   regulatoryBasis: string;
 }
 
-const FALLBACK: CorrespondentBankResult = {
-  riskRating: "high",
-  kycStatus: "conditional",
-  amlProgrammeAssessment:
-    "Target bank operates in FATF grey-list jurisdiction. AML programme documentation is 18 months old and pre-dates 2024 regulatory update. Shell bank prohibition clause absent from correspondent agreement.",
-  shellBankRisk: false,
-  payableThrough: true,
-  requiredEnhancements: [
-    "Obtain current AML programme attestation signed by CCO",
-    "Add shell bank prohibition and payable-through restriction clause",
-    "Annual re-certification with updated FATF compliance confirmation",
-    "Nested correspondent banking prohibition must be explicit",
-  ],
-  regulatoryBasis:
-    "FATF R.13, Basel CDD Paper §III, UAE FDL 10/2025 Art.16, CBUAE AML Standards §5",
-};
 
 export async function POST(req: Request) {
   const gate = await enforce(req);

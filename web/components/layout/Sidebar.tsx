@@ -15,7 +15,7 @@ const SAVED_KEY  = "hawkeye.saved-filter-sets";
 interface SidebarProps {
   filters: QueueFilter[];
   activeFilters: FilterKey[];
-  onFiltersChange: (keys: FilterKey[]) => void;
+  onFiltersChange: (_keys: FilterKey[]) => void;
   onRefresh?: () => void;
 }
 

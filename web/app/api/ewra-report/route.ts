@@ -38,65 +38,6 @@ export interface EwraBoardReportResult {
   nextReviewDate?: string;
 }
 
-const FALLBACK: EwraBoardReportResult = {
-  overallRisk: "high",
-  executiveSummary:
-    "The Enterprise-Wide Risk Assessment (EWRA) for the current reporting period identifies an overall inherent risk rating of HIGH, with residual risk rated MEDIUM following application of existing controls. The assessment covers eight risk dimensions including customer base, products and services, geographic exposure, delivery channels, transaction types, TBML/trade finance, proliferation financing, and internal controls. Six of eight dimensions carry an inherent risk rating of High or Critical, reflecting the entity's profile as a UAE-based DPMS/gold sector participant with cross-border transaction exposure. Board approval and annual re-assessment are required under UAE FDL 10/2025 Art.4 and FATF R.1.",
-  keyFindings: [
-    "TBML / Trade Finance dimension carries the highest residual risk (Critical) due to limited automated monitoring of invoice price anomalies and HS code mismatches",
-    "Geographic Exposure remains High inherent risk, driven by CAHRA-jurisdiction sourcing and FATF grey-list counterparty exposure",
-    "Customer Base risk is High inherent: PEP client concentration and presence of DNFBP counterparties without full CDD verification",
-    "Products & Services risk is elevated due to physical gold trading, refining, and bullion storage — sectors identified as priority ML vectors in FATF DPMS Guidance (2023)",
-    "Internal Controls dimension shows the strongest control effectiveness (4/5), reflecting recent investments in training and MLRO independence",
-    "Proliferation Financing controls are adequate but dependent on manual SGCL screening — automation gap identified",
-  ],
-  dimensionNarratives: [
-    {
-      dimension: "Customer Base",
-      inherentRisk: "High (4/5)",
-      residualRisk: "Medium (3/5)",
-      narrative: "The customer portfolio includes politically exposed persons, high-net-worth individuals from FATF grey-list jurisdictions, and DNFBP counterparties. Enhanced due diligence is applied to high-risk segments, but gaps remain in periodic CDD refresh frequency for medium-risk corporate clients.",
-      controlGaps: ["Biennial CDD review cycle for medium-risk corporates overdue in 18% of cases", "PEP screening tool does not capture all associate relationships"],
-      recommendedActions: ["Accelerate CDD refresh for overdue medium-risk accounts within 90 days", "Upgrade PEP database to include associate and family member mapping"],
-    },
-    {
-      dimension: "TBML / Trade Finance",
-      inherentRisk: "High (4/5)",
-      residualRisk: "Critical (4/5)",
-      narrative: "Trade-based money laundering represents the most material control gap in the current assessment period. Manual invoice review processes are insufficient to detect systematic over/under-invoicing across the volume of trade finance transactions processed monthly. The FATF DPMS Guidance (2023) identifies gold sector participants as primary TBML vectors.",
-      controlGaps: ["No automated price-benchmarking against world gold prices for trade invoices", "HS code consistency checks performed manually and sporadically", "No end-to-end shipment tracking for physical gold movements"],
-      recommendedActions: ["Implement automated TBML detection for trade finance transactions within 6 months", "Subscribe to world price benchmarking data feed for commodity validation", "Mandate bill of lading cross-reference for all cross-border gold shipments > AED 500,000"],
-    },
-    {
-      dimension: "Geographic Exposure",
-      inherentRisk: "High (4/5)",
-      residualRisk: "High (3/5)",
-      narrative: "Exposure to CAHRA jurisdictions (Central African Republic, DRC, Mali, Sudan) through gold sourcing chains, combined with counterparties in FATF grey-list countries, sustains elevated geographic risk. Enhanced due diligence is applied to transactions with listed jurisdictions but monitoring frequency requires improvement.",
-      controlGaps: ["CAHRA jurisdiction mapping not fully embedded in transaction monitoring rules", "Third-country routing through UAE Free Zones without enhanced monitoring"],
-      recommendedActions: ["Update TM rules to flag all CAHRA-adjacent transactions for MLRO review", "Apply enhanced CDD to all Free Zone entities with CAHRA-jurisdiction UBOs"],
-    },
-  ],
-  boardRecommendations: [
-    "Board to formally approve this EWRA and record approval in Board Minutes — mandatory under FDL 10/2025 Art.4",
-    "Allocate budget for automated TBML detection tool — highest priority remediation item",
-    "Direct MLRO to present quarterly AML performance metrics to Board Risk Committee",
-    "Approve accelerated CDD refresh programme for overdue medium-risk accounts",
-    "Schedule next EWRA review date: 12 months from Board approval date",
-    "Commission independent AML programme audit (second line) within 6 months to validate control effectiveness scores",
-  ],
-  regulatoryContext:
-    "This EWRA is produced pursuant to UAE Federal Decree-Law No. 10/2025 Art.4 (annual EWRA obligation), FATF Recommendation 1 (risk-based approach), and CBUAE AML/CFT Guidelines 2021 §3. The assessment methodology applies the FATF risk-based approach framework: identify, assess, understand, and mitigate ML/TF/PF risks. Board approval and annual refresh are mandatory. Failure to maintain a current, Board-approved EWRA constitutes a reportable control deficiency under CBUAE inspection standards.",
-  approvalStatement:
-    "This Enterprise-Wide Risk Assessment has been prepared by the MLRO and approved by senior management. It is presented to the Board of Directors / Board Risk Committee for formal approval pursuant to UAE FDL 10/2025 Art.4. Upon Board approval, this document should be retained for a minimum of 8 years (FDL 10/2025 Art.16) and made available to the CBUAE on request.",
-  nextSteps: [
-    "Board formal approval and signature — record in Board Minutes",
-    "Distribute to all business line heads for risk awareness",
-    "Initiate TBML automated monitoring procurement process",
-    "Update AML risk appetite statement to reflect EWRA findings",
-    "Schedule follow-up MLRO presentation to Board Risk Committee in 90 days",
-    "File EWRA summary with CBUAE if required by applicable circular",
-  ],
-};
 
 export async function POST(req: Request) {
   const gate = await enforce(req);

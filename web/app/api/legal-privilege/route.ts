@@ -12,22 +12,6 @@ export interface LegalPrivilegeResult {
   regulatoryBasis: string;
 }
 
-const FALLBACK: LegalPrivilegeResult = {
-  privilegeApplies: false,
-  tippingOffRisk: "high",
-  disclosurePermitted: true,
-  safeProcedureSteps: [
-    "Do NOT inform subject that an STR has been filed or is under consideration — tipping-off prohibition is absolute",
-    "Legal professional privilege does NOT apply to transaction facilitation — only genuine legal advice",
-    "Consult external AML legal counsel before any communication with subject regarding account restrictions",
-    "If subject directly asks about account freeze, refer to 'routine compliance review' only — do not confirm or deny STR existence",
-    "Document all internal communications about this decision with timestamps for audit trail",
-    "STR must be filed regardless of legal relationship — no privilege exception for DPMS/DNFBP",
-  ],
-  legalCounselRequired: true,
-  regulatoryBasis:
-    "UAE FDL 10/2025 Art.30 (tipping-off), FATF Guidance on Legal Privilege (2013), UAE Legal Profession Law, CBUAE AML Standards §7.2 (confidentiality)",
-};
 
 export async function POST(req: Request) {
   const gate = await enforce(req);

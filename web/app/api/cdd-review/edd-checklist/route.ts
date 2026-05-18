@@ -11,42 +11,6 @@ export interface EddChecklistResult {
   estimatedDays: number;
 }
 
-const FALLBACK: EddChecklistResult = {
-  documents: [
-    { item: "Certified copy of valid passport or national ID", regulatoryBasis: "UAE FDL 10/2025 Art.6" },
-    { item: "Proof of residential address (utility bill or bank statement, <3 months)", regulatoryBasis: "UAE FDL 10/2025 Art.6" },
-    { item: "Source of wealth declaration — signed and notarised", regulatoryBasis: "CBUAE AML Standards §4.2" },
-    { item: "Bank reference letter from a regulated financial institution", regulatoryBasis: "CBUAE AML Standards §4.3" },
-    { item: "Tax returns or audited financial statements (last 2 years)", regulatoryBasis: "UAE FDL 10/2025 Art.11" },
-    { item: "Corporate registration documents and UBO declaration (if applicable)", regulatoryBasis: "UAE FDL 10/2025 Art.7" },
-    { item: "PEP declaration form (signed by client)", regulatoryBasis: "FATF R.12; UAE FDL 10/2025 Art.17" },
-  ],
-  questions: [
-    { item: "What is the primary source of the wealth you are investing/depositing?", regulatoryBasis: "CBUAE AML Standards §4.2" },
-    { item: "What is the expected volume and frequency of transactions through this account?", regulatoryBasis: "UAE FDL 10/2025 Art.11" },
-    { item: "Do you hold or have you held any public office or government position in the last 5 years?", regulatoryBasis: "FATF R.12" },
-    { item: "Are you subject to any ongoing legal proceedings, investigations, or enforcement actions?", regulatoryBasis: "CBUAE AML Standards §4.4" },
-    { item: "What is the nature and purpose of this business relationship?", regulatoryBasis: "UAE FDL 10/2025 Art.6" },
-    { item: "Do you control or have beneficial interest in any other entities through which funds may be transferred?", regulatoryBasis: "UAE FDL 10/2025 Art.7; FATF R.24" },
-  ],
-  verifications: [
-    { item: "Sanctions screening: OFAC, UN, EU, UK, and EOCN consolidated lists", regulatoryBasis: "UAE FDL 10/2025 Art.14; FATF R.6" },
-    { item: "PEP database check: World-Check, Dow Jones Risk & Compliance, or equivalent", regulatoryBasis: "FATF R.12; UAE FDL 10/2025 Art.17" },
-    { item: "Adverse media screening: past 5 years, full name variations", regulatoryBasis: "CBUAE AML Standards §4.4" },
-    { item: "Company registry verification for all associated corporate entities", regulatoryBasis: "UAE FDL 10/2025 Art.7; FATF R.24" },
-    { item: "GLEIF LEI lookup for any entity claiming regulatory status", regulatoryBasis: "FATF R.16; CBUAE AML Standards §5" },
-    { item: "Senior management sign-off (Board/CEO level) before relationship approval", regulatoryBasis: "UAE FDL 10/2025 Art.17; CBUAE AML Standards §4.3" },
-  ],
-  redFlagsToMonitor: [
-    { item: "Transactions inconsistent with declared source of wealth or business profile", regulatoryBasis: "UAE FDL 10/2025 Art.15" },
-    { item: "Rapid movement of large funds to or from high-risk jurisdictions", regulatoryBasis: "FATF R.16; CBUAE AML Standards §5.2" },
-    { item: "Third-party payments without documented commercial rationale", regulatoryBasis: "UAE FDL 10/2025 Art.12" },
-    { item: "Structuring of transactions below reporting thresholds (AED 55,000)", regulatoryBasis: "UAE FDL 10/2025 Art.15; MoE Circular 2/2024" },
-    { item: "Unexplained changes in transaction patterns or sudden spikes in activity", regulatoryBasis: "CBUAE AML Standards §5.3" },
-    { item: "New counterparties in high-risk jurisdictions without business justification", regulatoryBasis: "FATF R.10; CBUAE AML Standards §4.5" },
-  ],
-  estimatedDays: 14,
-};
 
 import { enforce } from "@/lib/server/enforce";
 

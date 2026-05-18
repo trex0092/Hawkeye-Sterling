@@ -46,7 +46,7 @@ function makeToken(type: string, value: string): string {
 interface Pattern {
   type: string;
   re: RegExp;
-  validate?: (match: string) => boolean;
+  validate?: (_match: string) => boolean;
 }
 
 // Patterns ordered highest-precision first. CARD uses Luhn to eliminate FP.

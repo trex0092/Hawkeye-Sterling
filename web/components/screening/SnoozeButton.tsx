@@ -6,7 +6,7 @@ import { IsoDateInput } from "@/components/ui/IsoDateInput";
 interface Props {
   snoozedUntil: string | null;
   snoozeReason: string | null;
-  onSnooze: (untilIso: string, reason: string) => void;
+  onSnooze: (_untilIso: string, _reason: string) => void;
   onClearSnooze: () => void;
 }
 

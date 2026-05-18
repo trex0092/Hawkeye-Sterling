@@ -127,7 +127,7 @@ export function InstallAppButton(): JSX.Element | null {
               </li>
               <li>
                 Scroll down and tap{" "}
-                <span className="font-semibold">"Add to Home Screen"</span>.
+                <span className="font-semibold">&quot;Add to Home Screen&quot;</span>.
               </li>
               <li>
                 Tap <span className="font-semibold">Add</span> in the top-right.
@@ -138,7 +138,7 @@ export function InstallAppButton(): JSX.Element | null {
               onClick={dismissForever}
               className="w-full text-11 text-ink-3 hover:text-ink-0 border border-hair-2 rounded py-1.5"
             >
-              Don't show again
+              Don&apos;t show again
             </button>
           </div>
         </div>

@@ -15,30 +15,6 @@ export interface TrustStructuresResult {
   regulatoryBasis: string;
 }
 
-const FALLBACK: TrustStructuresResult = {
-  opacityScore: 82,
-  riskRating: "critical",
-  uboIdentified: false,
-  jurisdictionRisk:
-    "Cayman Islands trust with BVI corporate trustee — both jurisdictions rated high risk for opacity. No public UBO register. No regulatory access without MLA request.",
-  layersCount: 4,
-  structureRedFlags: [
-    "Four-layer structure: Cayman trust → BVI corporate trustee → Seychelles holding company → UAE operating entity",
-    "Protector identity unknown — not disclosed in trust deed",
-    "Discretionary trust — no fixed beneficiaries, MLRO cannot identify natural persons",
-    "Trust established 3 months before large gold purchase — suspicious timing",
-    "Letter of wishes held by unknown third party in Geneva",
-  ],
-  uboVerificationSteps: [
-    "Request certified copy of full trust deed including all schedules and amendments",
-    "Identify and verify all trustees, protectors, settlors, and potential beneficiaries",
-    "Obtain signed UBO declaration from trustee with supporting evidence",
-    "Commission independent legal opinion in Cayman on disclosure obligations",
-    "If UBO cannot be confirmed: decline to onboard under FDL 10/2025 Art.7(3)",
-  ],
-  regulatoryBasis:
-    "UAE FDL 10/2025 Art.7 (UBO), FATF R.25 (legal arrangements), Cabinet Resolution 132/2023 (UBO register), CBUAE AML Standards §3.5",
-};
 
 export async function POST(req: Request) {
   const gate = await enforce(req);

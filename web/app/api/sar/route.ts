@@ -61,11 +61,6 @@ interface FourEyesItem {
   approvedAt?: string;
 }
 
-interface FourEyesResponse {
-  ok: boolean;
-  count: number;
-  items: FourEyesItem[];
-}
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);

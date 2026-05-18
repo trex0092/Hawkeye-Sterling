@@ -35,14 +35,14 @@ interface CachedResponse {
 }
 
 interface BlobsModuleShape {
-  getStore: (opts: {
+  getStore: (_opts: {
     name: string;
     siteID?: string;
     token?: string;
     consistency?: 'strong' | 'eventual';
   }) => {
-    setJSON: (key: string, value: unknown) => Promise<void>;
-    get: (key: string, opts?: { type?: string }) => Promise<unknown>;
+    setJSON: (_key: string, _value: unknown) => Promise<void>;
+    get: (_key: string, _opts?: { type?: string }) => Promise<unknown>;
   };
 }
 

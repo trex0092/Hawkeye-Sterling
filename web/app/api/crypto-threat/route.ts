@@ -32,17 +32,6 @@ interface CryptoThreat {
   reportingBasis: string;
 }
 
-const FALLBACK: CryptoThreat = {
-  complianceVerdict: "monitor",
-  fatfR15Exposure: "API key not configured",
-  varaUaeRelevance: "",
-  sanctionsNexus: "",
-  typologies: [],
-  narrative: "",
-  requiredActions: [],
-  reportingObligation: false,
-  reportingBasis: "",
-};
 
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);

@@ -75,7 +75,7 @@ function TagInput({
   label: string;
   placeholder: string;
   values: string[];
-  onChange: (v: string[]) => void;
+  onChange: (_v: string[]) => void;
 }) {
   const [draft, setDraft] = useState("");
   const add = () => {
@@ -114,7 +114,7 @@ function SupplierList({
   onChange,
 }: {
   suppliers: Supplier[];
-  onChange: (s: Supplier[]) => void;
+  onChange: (_s: Supplier[]) => void;
 }) {
   const [name, setName] = useState("");
   const [country, setCountry] = useState("");

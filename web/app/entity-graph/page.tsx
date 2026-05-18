@@ -18,7 +18,7 @@ const tdCls = "px-3 py-2 text-12 text-ink-0";
 const thCls =
   "text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono font-semibold";
 
-const JURISDICTIONS = [
+const _JURISDICTIONS = [
   { code: "", label: "Any jurisdiction" },
   { code: "ae", label: "UAE" },
   { code: "vg", label: "BVI" },

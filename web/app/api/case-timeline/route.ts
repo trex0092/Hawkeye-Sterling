@@ -26,39 +26,6 @@ export interface CaseTimelineResult {
   regulatoryBasis: string;
 }
 
-const FALLBACK: CaseTimelineResult = {
-  timeline: [
-    {
-      date: "01/01/2024",
-      event: "First cash deposit of AED 54,000 recorded — just below the AED 55,000 mandatory reporting threshold.",
-      significance: "high",
-      fatfRef: "FATF R.20; UAE FDL 10/2025 Art.21",
-      evidenceType: "transaction",
-    },
-    {
-      date: "15/02/2024",
-      event: "Second structured cash deposit of AED 54,500 received; same branch, same depositor. Pattern of structuring becomes apparent.",
-      significance: "critical",
-      fatfRef: "FATF R.20; UAE FDL 10/2025 Art.21(1)(c)",
-      evidenceType: "transaction",
-    },
-    {
-      date: "31/03/2025",
-      event: "Outbound international wire transfer of AED 108,000 to beneficiary in high-risk jurisdiction, exhausting accumulated balance. Rapid movement of structured funds.",
-      significance: "critical",
-      fatfRef: "FATF R.16; UAE FDL 10/2025 Art.21",
-      evidenceType: "transaction",
-    },
-  ],
-  narrativeSummary: "Between 01 January 2024 and 31 March 2025, the subject conducted a series of structured cash deposits consistently below the AED 55,000 mandatory reporting threshold, followed by a single consolidated outbound wire transfer to a high-risk jurisdiction. The pattern is consistent with the smurfing / threshold structuring typology identified in FATF Guidance on ML/TF (2023). Reasonable grounds for suspicion of money laundering under UAE FDL 10/2025 Art.21 crystallised upon identification of the structured deposit pattern.",
-  keyDateRange: "01/01/2024 – 31/03/2025",
-  totalDuration: "15 months",
-  patternIdentified: "Structured cash deposits below AED 55,000 threshold followed by rapid outbound wire transfers",
-  goAmlNarrativeBlock: "GOAML STR NARRATIVE\nCase Reference: [CASE-REF]\nSubject: [SUBJECT-NAME]\nReport Date: [TODAY]\n\nBetween 01/01/2024 and 31/03/2025 the subject conducted structured cash deposits consistently below the AED 55,000 cash transaction reporting threshold (01/01/2024: AED 54,000; 15/02/2024: AED 54,500), followed by a consolidated outbound wire transfer of AED 108,000 on 31/03/2025 to a beneficiary in a high-risk jurisdiction. The structuring pattern is consistent with deliberate threshold avoidance (smurfing) as described in FATF Typology Guidance. Suspicion crystalised on 15/02/2024 upon identification of the repeated below-threshold deposits by the same depositor. This STR is filed pursuant to UAE FDL 10/2025 Art.21 and Art.26 within the 2 business day reporting deadline.",
-  suspicionCrystallisedDate: "15/02/2024",
-  strDeadline: "19/02/2024",
-  regulatoryBasis: "UAE FDL 10/2025 Art.21, Art.26; FATF R.20",
-};
 
 export async function POST(req: Request) {
   const gate = await enforce(req);

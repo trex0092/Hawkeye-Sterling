@@ -71,15 +71,15 @@ export interface SidebarFilterItem<K extends string> {
 interface SidebarFilterListProps<K extends string> {
   items: SidebarFilterItem<K>[];
   activeKeys: K[];
-  onSelect: (key: K, multiSelect: boolean) => void;
+  onSelect: (_key: K, _multiSelect: boolean) => void;
   pinnedKeys?: K[];
-  onTogglePin?: (key: K) => void;
+  onTogglePin?: (_key: K) => void;
   countDeltas?: Record<string, number>;
   lastRefreshed?: Date | null;
   savedFilters?: SavedFilterSet[];
-  onSaveFilter?: (label: string) => void;
-  onDeleteSaved?: (id: string) => void;
-  onApplySaved?: (keys: FilterKey[]) => void;
+  onSaveFilter?: (_label: string) => void;
+  onDeleteSaved?: (_id: string) => void;
+  onApplySaved?: (_keys: FilterKey[]) => void;
 }
 
 // ─── Filter metadata ───────────────────────────────────────────────────────

@@ -6,6 +6,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
 import { NextResponse } from "next/server";
+import { enforce } from "@/lib/server/enforce";
 import { getJson, setJson } from "@/lib/server/store";
 import type { TFSAlert } from "@/lib/data/tfs-alert-store";
 
@@ -41,12 +42,16 @@ function mergeAlerts(server: TFSAlert[], client: TFSAlert[]): TFSAlert[] {
   );
 }
 
-export async function GET(): Promise<NextResponse> {
+export async function GET(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   const alerts = await loadServerAlerts();
   return NextResponse.json({ ok: true, alerts });
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   try {
     const body = (await req.json()) as { alerts?: TFSAlert[] };
     const clientAlerts = Array.isArray(body.alerts) ? body.alerts : [];

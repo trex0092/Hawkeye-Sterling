@@ -33,58 +33,6 @@ export interface PfScreenerResult {
   pfObligations: string[];
 }
 
-const FALLBACK: PfScreenerResult = {
-  pfRisk: "high",
-  wmdNexus: "possible",
-  sanctionedEntityHit: false,
-  dualUseGoodsDetected: true,
-  dualUseCategories: ["Category 3 — Electronics (EAR99 crossover)", "Dual-use ML-related components"],
-  indicators: [
-    {
-      indicator: "Payment for machine-tool components to entity in DPRK-linked jurisdiction",
-      severity: "critical",
-      category: "dual_use",
-      unscr: "UNSCR 1718 (2006); UNSCR 2397 (2017) — DPRK total embargo on industrial machinery",
-      detail: "Machine tools and precision components are controlled dual-use goods under UNSCR 2397 and UAE Cabinet Decision 57/2020 implementing WMD-related sanctions against DPRK.",
-    },
-    {
-      indicator: "Front company structure obscuring end-user identity in Iran/DPRK sanctions corridor",
-      severity: "high",
-      category: "sanctions_evasion",
-      unscr: "UNSCR 2231 (Iran); UNSCR 1718 (DPRK); UAE Federal Decree-Law 26/2021",
-      detail: "Use of front companies to circumvent WMD-related sanctions is a primary PF typology per FATF Guidance on Countering Proliferation Financing (2020).",
-    },
-  ],
-  primaryConcern: "Potential dual-use goods diversion to sanctioned WMD programme via front company",
-  mandatoryFreeze: false,
-  recommendedAction: "escalate_mlro",
-  actionRationale: "Dual-use goods payments with DPRK/Iran nexus require immediate MLRO escalation. If reasonable grounds for PF suspicion exist, STR must be filed under UAE FDL 10/2025 Art.26. CBUAE PF Circular 2023 requires enhanced CDD on all trade finance with WMD-risk jurisdictions.",
-  requiredActions: [
-    "Screen all parties against UNSCR 1718/1737/1267 consolidated lists via UAE EOCN",
-    "Verify end-user certificate and ultimate consignee for any goods with dual-use classification",
-    "Escalate to MLRO with full trade finance documentation",
-    "File STR if reasonable PF suspicion — no threshold under FDL 10/2025 Art.26",
-    "Check goods against UAE Strategic Goods Control List (SGCL) under MoEI",
-    "Assess whether export licence required under UAE Federal Decree-Law 26/2021",
-  ],
-  applicableRegime: [
-    "UNSCR 1718 (DPRK)",
-    "UNSCR 1737 (Iran nuclear)",
-    "UNSCR 2231 (Iran — JCPOA related)",
-    "UNSCR 2397 (DPRK industrial goods embargo)",
-    "UAE Federal Decree-Law 26/2021 (Strategic Goods Control)",
-    "UAE Cabinet Decision 57/2020 (DPRK implementing measures)",
-    "FATF R.7 — Targeted Financial Sanctions for PF",
-  ],
-  regulatoryBasis: "FATF R.7; UAE FDL 10/2025 Art.21(3); UAE Federal Decree-Law 26/2021; UAE Cabinet Decision 57/2020; CBUAE PF Circular 2023; UNSCR 1718, 1737, 2231, 2397",
-  pfObligations: [
-    "Immediate freeze if UNSCR-designated entity identified — no court order required (UAE Federal Decree-Law 26/2021 Art.9)",
-    "STR within 2 business days of PF suspicion — FDL 10/2025 Art.26 (no threshold for PF)",
-    "Enhanced due diligence on all correspondent relationships with WMD-risk jurisdictions — CBUAE PF Circular",
-    "Maintain SGCL screening records 8 years — FDL 10/2025 Art.16",
-    "Report suspected SGCL violation to UAE MoEI / CBUAE in parallel to FIU",
-  ],
-};
 
 export async function POST(req: Request) {
   const gate = await enforce(req);

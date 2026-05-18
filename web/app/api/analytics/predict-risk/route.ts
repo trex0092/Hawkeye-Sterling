@@ -33,7 +33,7 @@ interface PredictRiskResult {
   summary: string;
 }
 
-const FALLBACK: PredictRiskResult = {
+const _FALLBACK: PredictRiskResult = {
   ok: true,
   forecast: "Stable",
   riskTrajectory: [

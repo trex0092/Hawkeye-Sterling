@@ -21,28 +21,6 @@ export interface TransactionAnalysis {
   investigativeQuestions: string[];
 }
 
-const FALLBACK: TransactionAnalysis = {
-  typology: "Layering — cross-border wire structuring",
-  typologyFatfRef: "FATF R.20, UAE FDL 10/2025 Art.21",
-  strRequired: true,
-  strBasis: "Multiple cross-border wires below AED 55,000 threshold — structuring pattern consistent with layering.",
-  strDeadline: "2 business days from determination (FDL 10/2025 Art.26)",
-  riskVerdict: "high",
-  redFlags: [
-    { indicator: "Structured transactions below reporting threshold", severity: "high", fatfRef: "FATF R.20 §4" },
-    { indicator: "Cross-border wires to CAHRA jurisdiction", severity: "critical", fatfRef: "FATF R.19" },
-    { indicator: "No apparent business rationale", severity: "high", fatfRef: "FATF R.10" },
-  ],
-  recommendedAction: "escalate_mlro",
-  actionRationale: "Pattern consistent with TBML layering; MLRO review required before STR determination.",
-  regulatoryBasis: "UAE FDL 10/2025 Art.21(1)(b), Art.26; FATF R.20; Cabinet Resolution 134/2025",
-  missingInformation: ["Ultimate beneficiary identity", "Source of funds documentation", "Business relationship purpose"],
-  investigativeQuestions: [
-    "What is the stated purpose of each wire transfer?",
-    "Are there corresponding inbound flows from the same or related parties?",
-    "Does the customer have a documented gold trading relationship that explains the volume?",
-  ],
-};
 
 export async function POST(req: Request) {
   const gate = await enforce(req);

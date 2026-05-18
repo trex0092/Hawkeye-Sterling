@@ -45,20 +45,6 @@ interface SanctionsNexusResult {
   regulatoryBasis: string;
 }
 
-const FALLBACK: SanctionsNexusResult = {
-  directExposure: "none",
-  indirectExposure: "possible",
-  overallSanctionsRisk: "medium",
-  exposureNarrative: "API key not configured — manual review required.",
-  directRisks: [],
-  indirectRisks: [],
-  jurisdictionalExposure: [],
-  fiftyPercentRuleApplicable: false,
-  fiftyPercentAnalysis: "",
-  recommendedAction: "enhanced_dd",
-  requiredChecks: ["Manual sanctions review required"],
-  regulatoryBasis: "",
-};
 
 const SYSTEM_PROMPT = `You are a UAE AML/CFT sanctions compliance specialist with deep expertise in OFAC, UN, EU, UK, and UAE sanctions regimes. Assess indirect sanctions exposure beyond direct name hits — including beneficial ownership chains, jurisdiction-based exposure, correspondent banking risks, and 50% ownership rule applications under FATF R.6 and UAE Cabinet Resolution 134/2025.
 

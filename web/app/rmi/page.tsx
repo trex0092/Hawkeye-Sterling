@@ -187,7 +187,7 @@ const SMELTERS: Smelter[] = [
   },
 ];
 
-const AUDIT_LOG: RmapAuditLog[] = [
+const _AUDIT_LOG: RmapAuditLog[] = [
   { date: "2025-01-22", smelterName: "Argor-Heraeus SA", action: "RMAP audit completed", auditor: "Bureau Veritas", outcome: "Conformant — no findings" },
   { date: "2025-01-10", smelterName: "PAMP SA", action: "RMAP audit completed", auditor: "SGS SA", outcome: "Conformant — 1 observation, corrected" },
   { date: "2024-11-20", smelterName: "Umicore SA", action: "RMAP audit completed", auditor: "Deloitte", outcome: "Conformant — no findings" },
@@ -244,7 +244,7 @@ type SmelterEdit = Partial<Pick<Smelter, "name" | "country" | "countryCode" | "m
 
 export default function RmiPage() {
   const [mineralFilter, setMineralFilter] = useState<FilterMineral>("all");
-  const [showAuditLog, setShowAuditLog] = useState(false);
+  const [_showAuditLog, _setShowAuditLog] = useState(false);
   const [rmiAssess, setRmiAssess] = useState<RmiAssessment | null>(null);
   const [rmiAssessLoading, setRmiAssessLoading] = useState(false);
   const [deletedIds, setDeletedIds] = useState<string[]>([]);
@@ -273,7 +273,7 @@ export default function RmiPage() {
     catch (err) { console.error("[hawkeye] rmi delete persist failed:", err); }
   };
 
-  const restoreAll = () => {
+  const _restoreAll = () => {
     setDeletedIds([]);
     setEdits({});
     try {

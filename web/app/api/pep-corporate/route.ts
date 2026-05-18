@@ -16,33 +16,6 @@ export interface PepCorporateResult {
   regulatoryBasis: string;
 }
 
-const FALLBACK: PepCorporateResult = {
-  pepExposureLevel: "indirect",
-  riskRating: "high",
-  politicalConnections: [
-    "Company 40% owned by entity whose UBO is a serving Cabinet minister (PEP-1)",
-    "CEO is son of former Central Bank Governor — PEP-2 (family member within 1st degree)",
-    "Government entity holds golden share — political influence over corporate decisions",
-    "Company awarded 3 government contracts totalling AED 180M in past 24 months",
-  ],
-  corruptionRiskFactors: [
-    "Award of government contracts without public tender process documented",
-    "PEP family member receives consulting fees from company — potential conflict",
-    "Company incorporated in same month that PEP assumed office — suspicious timing",
-    "Cash dividends paid to PEP-linked entity exceed stated business income",
-  ],
-  eddMeasures: [
-    "Senior management approval required before onboarding (FDL Art.12(2))",
-    "Source of wealth and funds for all PEP-connected shareholders",
-    "Annual EDD refresh — every 12 months or on political event",
-    "Transaction monitoring with lower thresholds — flag all transactions >AED 50,000",
-    "Public procurement contract review — verify tender process compliance",
-  ],
-  approvalRequired:
-    "Managing Director and Board Risk Committee sign-off required. Cannot be approved by MLRO alone — FDL Art.12(2) explicit requirement.",
-  regulatoryBasis:
-    "FATF R.12 (PEPs), UAE FDL 10/2025 Art.12, CBUAE AML Standards §3.4 (PEP), Transparency International CPI context",
-};
 
 export async function POST(req: Request) {
   const gate = await enforce(req);

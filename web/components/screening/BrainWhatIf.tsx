@@ -119,7 +119,7 @@ export function BrainWhatIf({ result }: { result: SuperBrainResult }) {
       </div>
       {!noChange && (
         <p className="text-10 text-ink-3 mt-2 leading-relaxed">
-          Simulation only — the subject's stored posture and audit chain
+          Simulation only — the subject&apos;s stored posture and audit chain
           are unchanged. Useful for sanity-checking how much each signal
           drove the verdict before raising a four-eyes objection.
         </p>

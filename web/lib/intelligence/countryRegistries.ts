@@ -700,8 +700,8 @@ function brReceitaAdapter(): CountryAdapter {
 
 function genericKeyAdapter(opts: {
   envKey: string; jurisdiction: string; source: string; baseUrl: string; queryParam: string;
-  parser: (json: unknown) => RegistryRecord[];
-  authHeader?: (key: string) => Record<string, string>;
+  parser: (_json: unknown) => RegistryRecord[];
+  authHeader?: (_key: string) => Record<string, string>;
 }): CountryAdapter {
   const key = process.env[opts.envKey];
   if (!key) return nullCountry(opts.jurisdiction);

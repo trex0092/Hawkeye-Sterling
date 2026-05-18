@@ -2,7 +2,7 @@
 
 interface WorkbenchToolbarProps {
   query: string;
-  onQueryChange: (value: string) => void;
+  onQueryChange: (_value: string) => void;
   selectedCount: number;
   categoryLabel: string;
   onRun: () => void;

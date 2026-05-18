@@ -57,71 +57,6 @@ const SCREEN_VECTORS = [
   { label: "Sanctions (AUS)",     engine: "Hawkeye native", rx: /\bDFAT\b|^AU[-_]/i },
 ];
 
-// Severity band derived from the headline composite — same lookup used
-// by the canonical text report so the HTML cover never disagrees with
-// the canonical body it embeds.
-function bandForScore(score: number): "clear" | "low" | "medium" | "high" | "critical" {
-  if (score >= 80) return "critical";
-  if (score >= 60) return "high";
-  if (score >= 40) return "medium";
-  if (score >= 20) return "low";
-  return "clear";
-}
-
-// MLRO POLICY: certain signals MUST escalate the dossier regardless of the
-// raw composite. A subject with confirmed adverse media at moderate+ severity
-// is HIGH-risk, full stop — even if the composite math hasn't crossed the
-// 60-point threshold yet. Same rule for any-tier PEP and any sanctions hit.
-// Without this override, a single "Istanbul Gold Refinery — bribery
-// indictment" article scores composite ~28 (LOW) and the dossier reads as
-// LOW while the CDD card simultaneously says EDD/zero-tolerance — that
-// inconsistency is exactly what the regulator flags as "negligent screening".
-function effectiveBand(
-  rawScore: number,
-  signals: {
-    sanctionsHits: number;
-    pepTier?: string | null;
-    amCompositeScore?: number;       // 0..1 from structured scorer
-    amCount?: number;                 // count fallback
-    redlinesFired?: number;
-    cahra?: boolean;
-  },
-): "clear" | "low" | "medium" | "high" | "critical" {
-  const base = bandForScore(rawScore);
-  const order = ["clear", "low", "medium", "high", "critical"] as const;
-  let band: typeof order[number] = base;
-  const escalateTo = (target: typeof order[number]): void => {
-    if (order.indexOf(target) > order.indexOf(band)) band = target;
-  };
-
-  // Sanctions hits — any positive match escalates immediately.
-  if (signals.sanctionsHits >= 1) escalateTo("high");
-  if (signals.sanctionsHits >= 2) escalateTo("critical");
-
-  // Adverse media — severity-weighted scorer dominates when available.
-  if (typeof signals.amCompositeScore === "number" && signals.amCompositeScore >= 0) {
-    if (signals.amCompositeScore >= 0.7) escalateTo("critical");
-    else if (signals.amCompositeScore >= 0.4) escalateTo("high");
-    else if (signals.amCompositeScore >= 0.1) escalateTo("high");  // any moderate signal → EDD
-    else if (signals.amCompositeScore > 0)   escalateTo("medium"); // limited signal → at least medium
-  } else if (typeof signals.amCount === "number" && signals.amCount > 0) {
-    // Count-only fallback when the structured scorer didn't run.
-    if (signals.amCount >= 4) escalateTo("high");
-    else escalateTo("medium");
-  }
-
-  // Any PEP tier triggers EDD per FATF R.12 / FDL 10/2025 Art.17.
-  if (signals.pepTier) escalateTo("high");
-
-  // Redlines — hard charter prohibitions. Any fire = critical.
-  if ((signals.redlinesFired ?? 0) > 0) escalateTo("critical");
-
-  // CAHRA jurisdiction adds at least medium pressure.
-  if (signals.cahra) escalateTo("medium");
-
-  return band;
-}
-
 function renderHtmlReport(text: string, input: ReportInput): string {
   const now = input.now ?? new Date();
   const s   = input.subject;
@@ -291,12 +226,13 @@ function renderHtmlReport(text: string, input: ReportInput): string {
     s.dob ? `DOB ${e(s.dob)}` : null,
   ].filter(Boolean).join(" · ");
 
+  const isLowRisk = sev === "clear" || sev === "low";
   const recLines = [
     `► ${rec}`,
-    sev === "clear" || sev === "low" ? "► PROCEED WITH STANDARD CDD" : "",
-    sev === "clear" || sev === "low" ? "► SDD ELIGIBLE (MoE Circular 6/2025) — MLRO DISCRETION APPLIES" : "",
-    "► NO goAML FILING REQUIRED",
-    "► STANDARD ONGOING MONITORING",
+    isLowRisk ? "► PROCEED WITH STANDARD CDD" : "",
+    isLowRisk ? "► SDD ELIGIBLE (MoE Circular 6/2025) — MLRO DISCRETION APPLIES" : "",
+    isLowRisk ? "► NO goAML FILING REQUIRED" : "",
+    isLowRisk ? "► STANDARD ONGOING MONITORING" : "► ENHANCED ONGOING MONITORING REQUIRED",
   ].filter(Boolean);
 
   const regItems = [
@@ -450,7 +386,7 @@ function renderHtmlReport(text: string, input: ReportInput): string {
     ${amCategoriesTripped.slice(0, 6).map(c => `<span class="scr-am-chip">${e(c.replace(/_/g, " "))}</span>`).join("")}
   </div>` : "";
 
-  const p2 = `
+  const _p2 = `
   <div class="scr-sh" style="margin-top:0">2. Analysis</div>
   <p class="scr-para">${analysisText}</p>
   ${amBrief}
@@ -820,6 +756,7 @@ async function handleComplianceReport(req: Request): Promise<Response> {
   // When no prior screening result is supplied, inject a placeholder that
   // clearly marks the report as unscreened — never a CLEAR verdict.
   if (!body.result) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (body as any).result = { topScore: 0, severity: "pending", hits: [], _unscreened: true };
   } else if (!Array.isArray(body.result.hits)) {
     body.result.hits = [];

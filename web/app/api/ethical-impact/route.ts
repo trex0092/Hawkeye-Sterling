@@ -59,18 +59,6 @@ Output JSON (ONLY valid JSON, no markdown):
   "reviewRecommendation": "string — recommended follow-up review timeline"
 }`;
 
-const FALLBACK: EthicalImpactResponse = {
-  impactLevel: "medium",
-  impactNarrative: "API key not configured — manual impact assessment required.",
-  rightsImpacted: [],
-  proportionalityAssessment: "",
-  humanOversightStatus: "",
-  mitigationMeasures: [],
-  subjectRights: ["Right to human review of AI decisions", "Right to data correction"],
-  documentationRequired: ["AI decision log", "Human oversight record"],
-  unescoAlignment: "",
-  reviewRecommendation: "Manual review within 30 days",
-};
 
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);

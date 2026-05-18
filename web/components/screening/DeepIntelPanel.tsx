@@ -433,7 +433,7 @@ interface PremortemResult {
   error?: string;
 }
 
-function AdversarialRedTeamSection({ subject, screen }: { subject: Subject; screen: QuickScreenResult | null }) {
+function AdversarialRedTeamSection({ subject, screen: _screen }: { subject: Subject; screen: QuickScreenResult | null }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<PremortemResult | null>(null);
   const [error, setError] = useState<string>("");
@@ -839,8 +839,8 @@ function VoiceToCaseSection({ subject }: { subject: Subject }) {
   type SpeechRecErrorEvent = { error: string };
   type SpeechRecInstance = {
     lang: string; continuous: boolean; interimResults: boolean;
-    onresult: ((e: SpeechRecEvent) => void) | null;
-    onerror: ((e: SpeechRecErrorEvent) => void) | null;
+    onresult: ((_e: SpeechRecEvent) => void) | null;
+    onerror: ((_e: SpeechRecErrorEvent) => void) | null;
     onend: (() => void) | null;
     start(): void; stop(): void;
   };
@@ -1582,7 +1582,7 @@ function ContinuousMonitoringSection({ subject }: { subject: Subject }) {
 
 // ─── 18. Bayesian Risk Trajectory ────────────────────────────────────────────
 
-function BayesianTrajectorySection({ subject, superBrain }: { subject: Subject; superBrain: SuperBrainResult | null }) {
+function BayesianTrajectorySection({ subject, superBrain: _superBrain }: { subject: Subject; superBrain: SuperBrainResult | null }) {
   const baseScore = subject.riskScore;
 
   // Compute hypothetical evidence-adjusted scores (pure heuristic)
@@ -1674,7 +1674,7 @@ interface FiuTypologyCheckResult {
   error?: string;
 }
 
-function IndustryTypologySection({ subject }: { subject: Subject }) {
+function IndustryTypologySection({ subject: _subject }: { subject: Subject }) {
   const [status, setStatus] = useState<SectionStatus>("idle");
   const [result, setResult] = useState<FiuTypologyCheckResult | null>(null);
   const [error, setError] = useState<string>("");
@@ -4214,7 +4214,7 @@ function BenfordSection({ subject }: { subject: Subject }) {
   return (
     <IntelSection title="Benford's Law Analysis" icon="📊" status={status}>
       <div className="space-y-3">
-        <div className="text-11 text-ink-3">Apply Benford's Law to transaction amounts to detect structured / artificial round-number patterns that deviate significantly from natural first-digit distribution.</div>
+        <div className="text-11 text-ink-3">Apply Benford&apos;s Law to transaction amounts to detect structured / artificial round-number patterns that deviate significantly from natural first-digit distribution.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
         {error && <ErrorBox msg={error} />}
         {result != null && <JsonTree data={result} />}
@@ -4324,7 +4324,7 @@ function ExtraditionMapSection({ subject }: { subject: Subject }) {
   return (
     <IntelSection title="Extradition Treaty Map" icon="🗺️" status={status}>
       <div className="space-y-3">
-        <div className="text-11 text-ink-3">Map extradition treaty status between subject's jurisdiction and UAE / key partner states. Flag no-treaty or non-cooperative jurisdictions used as safe havens.</div>
+        <div className="text-11 text-ink-3">Map extradition treaty status between subject&apos;s jurisdiction and UAE / key partner states. Flag no-treaty or non-cooperative jurisdictions used as safe havens.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
         {error && <ErrorBox msg={error} />}
         {result != null && <JsonTree data={result} />}
@@ -6444,7 +6444,7 @@ function CounterfactualScenarioSection({ subject }: { subject: Subject }) {
   return (
     <IntelSection title="Counterfactual Scenario Builder" icon="🔄" status={status}>
       <div className="space-y-3">
-        <div className="text-11 text-ink-3">"What if this subject is entirely legitimate?" — builds the strongest possible counter-narrative to the current risk assessment, testing whether the suspicious hypothesis is actually the most parsimonious explanation.</div>
+        <div className="text-11 text-ink-3">&quot;What if this subject is entirely legitimate?&quot; — builds the strongest possible counter-narrative to the current risk assessment, testing whether the suspicious hypothesis is actually the most parsimonious explanation.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
         {error && <ErrorBox msg={error} />}
         {result != null && <JsonTree data={result} />}
@@ -6633,7 +6633,7 @@ function RegulatoryQaChallengerSection({ subject }: { subject: Subject }) {
   return (
     <IntelSection title="Regulatory Q&A Challenger" icon="🥊" status={status}>
       <div className="space-y-3">
-        <div className="text-11 text-ink-3">A second AI model plays devil's advocate — challenges every MLRO conclusion, tests the legal basis for each finding, and flags any conclusions that would not survive regulatory scrutiny before sign-off.</div>
+        <div className="text-11 text-ink-3">A second AI model plays devil&apos;s advocate — challenges every MLRO conclusion, tests the legal basis for each finding, and flags any conclusions that would not survive regulatory scrutiny before sign-off.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
         {error && <ErrorBox msg={error} />}
         {result != null && <JsonTree data={result} />}
@@ -6961,7 +6961,7 @@ function GameTheorySection({ subject }: { subject: Subject }) {
   return (
     <IntelSection title="Game Theory / Strategic Behaviour" icon="♟️" status={status}>
       <div className="space-y-3">
-        <div className="text-11 text-ink-3">Model how a rational, informed bad actor would behave given this subject's profile, resources, and exposure. Predicts likely next moves, evasion strategies, and asset concealment approaches — informs monitoring priorities.</div>
+        <div className="text-11 text-ink-3">Model how a rational, informed bad actor would behave given this subject&apos;s profile, resources, and exposure. Predicts likely next moves, evasion strategies, and asset concealment approaches — informs monitoring priorities.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
         {error && <ErrorBox msg={error} />}
         {result != null && <JsonTree data={result} />}
@@ -7069,7 +7069,7 @@ function AbductiveInferenceSection({ subject }: { subject: Subject }) {
   return (
     <IntelSection title="Abductive Inference Engine" icon="🔮" status={status}>
       <div className="space-y-3">
-        <div className="text-11 text-ink-3">"Best explanation" reasoning — given all available evidence, what is the single most probable true account? Inference to the best explanation, ranking competing hypotheses by explanatory power and parsimony.</div>
+        <div className="text-11 text-ink-3">&quot;Best explanation&quot; reasoning — given all available evidence, what is the single most probable true account? Inference to the best explanation, ranking competing hypotheses by explanatory power and parsimony.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
         {error && <ErrorBox msg={error} />}
         {result != null && <JsonTree data={result} />}

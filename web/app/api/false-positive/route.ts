@@ -71,18 +71,6 @@ Output ONLY valid JSON, no markdown, no explanation:
   "dispositionText": "string — ready-to-use disposition text for the compliance file"
 }`;
 
-const FALLBACK: FalsePositiveResponse = {
-  verdict: "possible_match",
-  confidence: "low",
-  confidenceScore: 50,
-  reasoning: "API key not configured — manual review required.",
-  matchingFactors: [],
-  differentiatingFactors: [],
-  additionalChecksRequired: ["Manual review required"],
-  recommendedAction: "escalate_to_mlro",
-  regulatoryNote: "",
-  dispositionText: "",
-};
 
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);

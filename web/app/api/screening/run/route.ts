@@ -234,7 +234,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   let result: QuickScreenResult;
   try {
-    result = (brainQuickScreen as (s: QuickScreenSubject, c: QuickScreenCandidate[], o?: QuickScreenOptions) => QuickScreenResult)(
+    result = (brainQuickScreen as (_s: QuickScreenSubject, _c: QuickScreenCandidate[], _o?: QuickScreenOptions) => QuickScreenResult)(
       subject,
       candidates,
       options,

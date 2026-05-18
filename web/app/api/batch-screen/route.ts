@@ -49,8 +49,8 @@ import { yenteMatch } from "../../../../dist/src/integrations/yente.js"; // open
 import { asanaGids } from "@/lib/server/asanaConfig";
 
 type QuickScreenFn = (
-  subject: QuickScreenSubject,
-  candidates: QuickScreenCandidate[],
+  _subject: QuickScreenSubject,
+  _candidates: QuickScreenCandidate[],
 ) => QuickScreenResult;
 const quickScreen = _quickScreen as QuickScreenFn;
 

@@ -29,15 +29,6 @@ interface BenfordInterpretation {
   verdict: "refer_to_mlro" | "enhanced_review" | "monitor" | "clear";
 }
 
-const FALLBACK: BenfordInterpretation = {
-  interpretation: "API key not configured",
-  financialCrimeIndicators: [],
-  regulatoryRelevance: "",
-  confidence: "low",
-  recommendedActions: [],
-  mlTypologies: [],
-  verdict: "monitor",
-};
 
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);

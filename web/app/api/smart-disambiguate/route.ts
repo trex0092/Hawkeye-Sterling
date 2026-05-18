@@ -104,18 +104,6 @@ Output ONLY valid JSON, no markdown, no explanation:
   "processingTime": "string"
 }`;
 
-const FALLBACK: DisambiguationResult & { ok: boolean } = {
-  ok: true,
-  overallAssessment: "API key not configured — manual review required.",
-  clientRiskProfile: "",
-  disambiguationStrategy: "",
-  hits: [],
-  clarificationQuestions: ["Please verify full name, DOB, nationality, and ID number with client"],
-  bulkDispositionText: "",
-  escalationItems: [],
-  regulatoryNote: "",
-  processingTime: "",
-};
 
 export async function POST(req: Request): Promise<NextResponse> {
   const t0 = Date.now();

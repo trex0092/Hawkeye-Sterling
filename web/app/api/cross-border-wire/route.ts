@@ -17,29 +17,6 @@ export interface CrossBorderWireResult {
   regulatoryBasis: string;
 }
 
-const FALLBACK: CrossBorderWireResult = {
-  corridorRisk: "high",
-  r16ComplianceStatus: "partial",
-  redFlags: [
-    "Wire originates from UAE to Pakistan — FATF grey-list corridor",
-    "Originator reference: 'TRADE PAYMENT' — insufficient specificity",
-    "Beneficiary address missing — field blank in MT103",
-    "Amount AED 490,000 — below CTR threshold but above FATF R.16 reporting threshold",
-    "Third-party payment — instructing party differs from account holder",
-  ],
-  missingOriginatorInfo: [
-    "Originator address (required per FATF R.16 for cross-border transfers)",
-    "Originator account number at sending institution",
-    "Originator national ID or passport number (UAE requirement for transfers >AED 5,000)",
-  ],
-  missingBeneficiaryInfo: [
-    "Beneficiary full address",
-    "Beneficiary account number (BIC/IBAN present but no account number)",
-  ],
-  recommendedAction: "hold-investigate",
-  regulatoryBasis:
-    "FATF R.16 (wire transfers), UAE CBUAE Notice 2023 (wire transfer requirements), SWIFT messaging standards MT103/103+, Wolfsberg Correspondent Banking Principles 2023",
-};
 
 export async function POST(req: Request) {
   const gate = await enforce(req);

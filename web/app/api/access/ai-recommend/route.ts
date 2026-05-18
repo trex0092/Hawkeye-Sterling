@@ -12,16 +12,6 @@ export interface RoleRecommendation {
   risks: string[];
 }
 
-const FALLBACK: RoleRecommendation = {
-  recommendedRole: "analyst",
-  rationale: "Based on the provided responsibilities, the Analyst role provides appropriate access to Screening, STR Cases and Investigation modules while maintaining the principle of least privilege. The role supports day-to-day compliance operations without granting administrative or MLRO-level capabilities.",
-  suggestedModules: ["Screening", "STR Cases", "Investigation", "Audit Trail"],
-  risks: [
-    "Ensure mandatory AML/CFT training is completed before activation.",
-    "Confirm separation of duties — the user should not approve their own STR submissions.",
-  ],
-};
-
 const ALL_MODULES = [
   "Screening",
   "STR Cases",

@@ -417,7 +417,7 @@ function SignBox({
   signer: string;
   signedAt?: string;
   editable?: boolean;
-  onNameChange?: (v: string) => void;
+  onNameChange?: (_v: string) => void;
 }) {
   return (
     <div className={`rounded p-2 border text-12 ${signedAt ? "border-green/30 bg-green-dim" : "border-hair-2 bg-bg-1"}`}>
@@ -440,7 +440,7 @@ function SignBox({
   );
 }
 
-function AddApprovalForm({ onAdd, onCancel }: { onAdd: (a: Approval) => void; onCancel: () => void }) {
+function AddApprovalForm({ onAdd, onCancel }: { onAdd: (_a: Approval) => void; onCancel: () => void }) {
   const [title, setTitle] = useState("");
   const [requestedBy, setRequestedBy] = useState("");
   const [category, setCategory] = useState("");
@@ -521,7 +521,7 @@ function AddApprovalForm({ onAdd, onCancel }: { onAdd: (a: Approval) => void; on
   );
 }
 
-function AddMinuteForm({ onAdd, onCancel }: { onAdd: (m: Minute) => void; onCancel: () => void }) {
+function AddMinuteForm({ onAdd, onCancel }: { onAdd: (_m: Minute) => void; onCancel: () => void }) {
   const [date, setDate] = useState("");
   const [title, setTitle] = useState("");
   const [minuteRef, setMinuteRef] = useState("");
@@ -600,7 +600,7 @@ function AddMinuteForm({ onAdd, onCancel }: { onAdd: (m: Minute) => void; onCanc
   );
 }
 
-function AddCircularForm({ onAdd, onCancel }: { onAdd: (c: Circular) => void; onCancel: () => void }) {
+function AddCircularForm({ onAdd, onCancel }: { onAdd: (_c: Circular) => void; onCancel: () => void }) {
   const [ref, setRef] = useState("");
   const [date, setDate] = useState("");
   const [issuer, setIssuer] = useState("");
@@ -810,16 +810,16 @@ export default function OversightPage() {
     });
   };
 
-  const handleFirstSign = (a: Approval) => {
+  const _handleFirstSign = (a: Approval) => {
     patchApproval(a.id, { firstSignedAt: nowTs() });
   };
 
-  const handleSecondSign = (a: Approval) => {
+  const _handleSecondSign = (a: Approval) => {
     const signer = mdName.trim() || a.secondReviewer;
     patchApproval(a.id, { secondSignedAt: nowTs(), status: "approved", secondReviewer: signer });
   };
 
-  const handleReject = (a: Approval) => {
+  const _handleReject = (a: Approval) => {
     patchApproval(a.id, { status: "rejected" });
   };
 
@@ -870,7 +870,7 @@ export default function OversightPage() {
     setNewActionText(""); setNewActionOwner(""); setNewActionDue(""); setShowAddAction(false);
   };
 
-  const toggleActionItem = (minuteId: string, actionId: string, currentlyClosed: boolean) => {
+  const _toggleActionItem = (minuteId: string, actionId: string, currentlyClosed: boolean) => {
     const patchMinute = (m: Minute): Minute => {
       if (m.id !== minuteId) return m;
       return { ...m, actionItems: m.actionItems.map((ai) => ai.id === actionId ? { ...ai, closed: !currentlyClosed } : ai) };

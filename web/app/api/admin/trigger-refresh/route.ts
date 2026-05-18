@@ -54,7 +54,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   // Dynamic-import the compiled ingestion runner from dist/ so this route
   // doesn't hard-require the build to have completed at type-check time.
-  let runIngestionAll: (label: string) => Promise<unknown>;
+  let runIngestionAll: (_label: string) => Promise<unknown>;
   try {
     const mod = (await import(
       "../../../../../dist/src/ingestion/run-all.js" as string

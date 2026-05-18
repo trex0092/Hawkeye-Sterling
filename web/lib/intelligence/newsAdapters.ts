@@ -43,7 +43,7 @@ const _driftLogged = new Set<string>();
 function validateNewsResponseArray<T>(
   provider: string,
   raw: unknown,
-  accessor: (root: Record<string, unknown>) => unknown,
+  accessor: (_root: Record<string, unknown>) => unknown,
 ): T[] {
   // Some providers (Tiingo, certain RSS-derived feeds) return a bare
   // top-level array. The accessor doesn't apply — return as-is.
@@ -93,7 +93,7 @@ export interface NewsArticle {
 export interface NewsAdapter {
   source?: string;
   isAvailable(): boolean;
-  search(subjectName: string, opts?: { limit?: number; since?: string }): Promise<NewsArticle[]>;
+  search(_subjectName: string, _opts?: { limit?: number; since?: string }): Promise<NewsArticle[]>;
 }
 
 export const NULL_NEWS_ADAPTER: NewsAdapter = {
@@ -2752,8 +2752,8 @@ function bingWebAdapter(): NewsAdapter {
 function makeNewsAdapter(opts: {
   envKey: string; source: string; outletDefault: string;
   baseUrl: string; queryParam: string;
-  authHeader?: (key: string) => Record<string, string>;
-  parser: (json: unknown) => Array<{ title?: string; url?: string; publishedAt?: string; snippet?: string; outlet?: string; sentiment?: number }>;
+  authHeader?: (_key: string) => Record<string, string>;
+  parser: (_json: unknown) => Array<{ title?: string; url?: string; publishedAt?: string; snippet?: string; outlet?: string; sentiment?: number }>;
 }): NewsAdapter {
   const key = process.env[opts.envKey];
   if (!key) return NULL_NEWS_ADAPTER;

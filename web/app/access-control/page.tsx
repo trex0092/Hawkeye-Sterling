@@ -200,7 +200,7 @@ function AccessCell({ level }: { level: AccessLevel }) {
 interface SidePanelProps {
   user: AccessUser;
   onClose: () => void;
-  onRoleChanged: (updated: AccessUser) => void;
+  onRoleChanged: (_updated: AccessUser) => void;
 }
 
 function UserSidePanel({ user, onClose, onRoleChanged }: SidePanelProps) {

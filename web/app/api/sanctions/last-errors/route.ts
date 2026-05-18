@@ -51,7 +51,7 @@ export async function GET(req: Request): Promise<NextResponse> {
     const mod = (await import(
       "../../../../../dist/src/ingestion/error-log.js" as string
     )) as {
-      listRecentIngestErrors: (limit?: number) => Promise<IngestErrorEntry[]>;
+      listRecentIngestErrors: (_limit?: number) => Promise<IngestErrorEntry[]>;
     };
     entries = await mod.listRecentIngestErrors(limit);
   } catch (err) {

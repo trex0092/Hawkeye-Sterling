@@ -33,30 +33,30 @@ const STATUS_OPTIONS: { value: Subject["status"] | "all"; label: string }[] = [
 
 interface ScreeningToolbarProps {
   query: string;
-  onQueryChange: (value: string) => void;
+  onQueryChange: (_value: string) => void;
   onNewScreening: () => void;
   sortKey: SortKey;
   sortDir: "asc" | "desc";
-  onSortChange: (key: SortKey) => void;
+  onSortChange: (_key: SortKey) => void;
   statusFilter: Subject["status"] | "all";
-  onStatusFilterChange: (v: Subject["status"] | "all") => void;
+  onStatusFilterChange: (_v: Subject["status"] | "all") => void;
   columns: Record<TableColumnKey, boolean>;
-  onColumnsChange: (next: Record<TableColumnKey, boolean>) => void;
+  onColumnsChange: (_next: Record<TableColumnKey, boolean>) => void;
   onBulkImport: () => void;
   onExport: () => void;
   /** Called with parsed AI filter criteria; null to clear. */
-  onAiFilter: (filter: NlSearchFilter | null, label?: string) => void;
+  onAiFilter: (_filter: NlSearchFilter | null, _label?: string) => void;
   /** Active AI filter label, if any. */
   aiFilterLabel?: string | null;
   /** AI natural-language search callback. */
-  onNLSearch?: (query: string) => void;
+  onNLSearch?: (_query: string) => void;
   /** Whether AI search mode is active (hides sort/filter, shows clear button). */
   nlSearchActive?: boolean;
   onNLSearchClear?: () => void;
   nlSearchLoading?: boolean;
   /** Severity tier filter — filters subjects by their risk score band. */
   severityFilter: QuickScreenSeverity | "all";
-  onSeverityFilterChange: (v: QuickScreenSeverity | "all") => void;
+  onSeverityFilterChange: (_v: QuickScreenSeverity | "all") => void;
 }
 
 export const ScreeningToolbar = forwardRef<HTMLInputElement, ScreeningToolbarProps>(function ScreeningToolbar({
@@ -77,7 +77,7 @@ export const ScreeningToolbar = forwardRef<HTMLInputElement, ScreeningToolbarPro
   onNLSearch,
   nlSearchActive,
   onNLSearchClear,
-  nlSearchLoading,
+  nlSearchLoading: _nlSearchLoading,
   severityFilter,
   onSeverityFilterChange,
 }: ScreeningToolbarProps, ref) {
@@ -224,7 +224,7 @@ export const ScreeningToolbar = forwardRef<HTMLInputElement, ScreeningToolbarPro
         <div className="px-4 py-3 bg-bg-0 border border-brand rounded-lg space-y-2">
           <div className="flex items-center gap-2">
             <span className="text-10 font-semibold uppercase tracking-wide-3 text-brand">✦ AI Search</span>
-            <span className="text-10 text-ink-3">— describe what you're looking for in plain English</span>
+            <span className="text-10 text-ink-3">— describe what you&apos;re looking for in plain English</span>
           </div>
           <div className="flex gap-2">
             <input

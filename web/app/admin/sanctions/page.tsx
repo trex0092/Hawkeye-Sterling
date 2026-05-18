@@ -100,7 +100,7 @@ async function triggerRefresh(): Promise<void> {
   try {
     const mod = (await import(
       "../../../../dist/src/ingestion/run-all.js" as string
-    )) as { runIngestionAll: (label: string) => Promise<IngestRunSummary> };
+    )) as { runIngestionAll: (_label: string) => Promise<IngestRunSummary> };
     const result = await mod.runIngestionAll("admin-ui-trigger");
     outcome = { ok: true, result };
   } catch (err) {

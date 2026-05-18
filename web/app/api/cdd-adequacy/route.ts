@@ -65,12 +65,6 @@ Return ONLY a JSON object with this exact structure:
   "summary": "string — 2-sentence portfolio CDD status"
 }`;
 
-const FALLBACK: CddAdequacyResponse = {
-  assessments: [],
-  portfolioStatus: "attention_required",
-  criticalSubjects: [],
-  summary: "API key not configured — manual review required",
-};
 
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);

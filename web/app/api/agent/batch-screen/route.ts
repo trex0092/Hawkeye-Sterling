@@ -25,7 +25,6 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 const MAX_SUBJECTS_PER_REQUEST = 100;
-const PER_SUBJECT_BUDGET_MS = 200;       // soft target; quickScreen is sub-ms typically
 
 interface SubjectInput {
   name: string;

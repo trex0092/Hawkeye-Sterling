@@ -14,40 +14,6 @@ export interface CashIntensiveResult {
   regulatoryBasis: string;
 }
 
-const FALLBACK: CashIntensiveResult = {
-  riskRating: "high",
-  cashRiskScore: 78,
-  redFlags: [
-    "Daily cash receipts consistently just below AED 55,000 MoE reporting threshold (AED 48–54K range)",
-    "No segregation between personal and business cash — commingled into single account",
-    "Customer declines to provide business records or invoices for cash sales",
-    "Rapid turnover — cash deposited and immediately wired to overseas supplier",
-  ],
-  typologiesMatched: [
-    "Structuring (placement)",
-    "DPMS cash threshold avoidance (MoE Circular 2/2024)",
-    "Funds commingling",
-  ],
-  controlGaps: [
-    "No cash transaction log maintained at counter level",
-    "CTR filing process absent — no AED 55K+ reporting implemented",
-    "Business verification not completed — trade licence expired 6 months ago",
-    "No beneficial ownership confirmation for cash-paying business entity",
-  ],
-  enhancedMeasures: [
-    "Implement daily cash receipt log with cumulative aggregation alerts",
-    "Require invoice/receipt for all cash transactions above AED 10,000",
-    "File CTR immediately for any single transaction ≥ AED 55,000",
-    "Obtain current trade licence and UBO confirmation before accepting further cash",
-  ],
-  reportingObligations: [
-    "MoE Circular 2/2024: CTR for DPMS cash ≥ AED 55,000 — mandatory, immediate",
-    "goAML STR if structuring pattern confirmed — 48-hour filing requirement",
-    "CBUAE notification if aggregate suspicious cash exceeds AED 500K/month",
-  ],
-  regulatoryBasis:
-    "MoE Circular 2/2024 (DPMS AED 55K), UAE FDL 10/2025 Art.19, CR No.134/2025 (CTR), FATF R.29 (cash couriers)",
-};
 
 export async function POST(req: Request) {
   const gate = await enforce(req);

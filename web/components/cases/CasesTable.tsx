@@ -6,9 +6,9 @@ import type { CaseBadgeTone, CaseRecord, CaseStatus } from "@/lib/types";
 interface CasesTableProps {
   cases: CaseRecord[];
   selectedId: string | null;
-  onSelect: (id: string) => void;
-  onDelete: (id: string) => void;
-  onOpenReport: (record: CaseRecord) => void;
+  onSelect: (_id: string) => void;
+  onDelete: (_id: string) => void;
+  onOpenReport: (_record: CaseRecord) => void;
 }
 
 export function CasesTable({

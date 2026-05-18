@@ -31,28 +31,6 @@ export interface PfScreenerResult {
   regulatoryBasis: string;
 }
 
-const FALLBACK: PfScreenerResult = {
-  pfRisk: "high",
-  dprkNexus: "possible",
-  iranNexus: "none",
-  dualUseRisk: "medium",
-  mandatoryFreezeRequired: false,
-  risks: [
-    { category: "dprk", description: "Counterparty in jurisdiction with documented DPRK front-company activity", severity: "high", unscr: "UNSCR 2375 (2017)", mandatoryFreeze: false, detail: "The counterparty jurisdiction has documented DPRK front companies operating in the precious metals and minerals sector per UN Panel of Experts reports." },
-    { category: "dual_use", description: "Transaction involves industrial equipment with potential dual-use application", severity: "medium", mandatoryFreeze: false, detail: "Gold refinery equipment and certain chemical compounds used in processing can have dual-use military applications subject to export controls." },
-  ],
-  recommendedAction: "escalate_mlro",
-  actionRationale: "DPRK nexus risk requires MLRO review and potential referral to UAE EOCN. FATF R.7 and UNSCR 1718/2375 obligations apply.",
-  applicableUnscrs: ["UNSCR 1718 (2006)", "UNSCR 2375 (2017)", "UNSCR 2397 (2017)"],
-  requiredChecks: [
-    "Screen all parties against UN Security Council Consolidated List",
-    "Check UAE EOCN list for DPRK-linked entities",
-    "Verify goods description against dual-use export control lists (UAE Cabinet Decision 57/2020)",
-    "Confirm no UN-prohibited financial services are being provided to DPRK-linked parties",
-    "Document assessment and escalate to senior management",
-  ],
-  regulatoryBasis: "UNSCR 1718 (2006); UNSCR 2375 (2017); FATF R.7; UAE FDL 10/2025 Art.14; UAE Cabinet Decision 57/2020 (Export Controls); EOCN guidance",
-};
 
 export async function POST(req: Request) {
   const gate = await enforce(req);

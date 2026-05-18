@@ -85,7 +85,7 @@ interface GoamlExportModalProps {
   prefill?: CasePrefill | undefined;
   /** Fires after a successful generate so the host can persist the
    *  export receipt on the case (filename + timestamp). */
-  onExportComplete?: ((info: { filename: string; xmlBytes: number }) => void) | undefined;
+  onExportComplete?: ((_info: { filename: string; xmlBytes: number }) => void) | undefined;
 }
 
 export function GoamlExportModal({ open, onClose, prefill, onExportComplete }: GoamlExportModalProps) {
@@ -482,7 +482,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-interface TextProps { label: string; value: string; onChange: (v: string) => void; placeholder?: string }
+interface TextProps { label: string; value: string; onChange: (_v: string) => void; placeholder?: string }
 
 function FieldText({ label, value, onChange, placeholder }: TextProps) {
   return (
@@ -512,7 +512,7 @@ function FieldArea({ label, value, onChange, rows = 6, placeholder }: TextProps 
   );
 }
 
-function FieldNumber({ label, value, onChange }: { label: string; value: number | ""; onChange: (v: number | "") => void }) {
+function FieldNumber({ label, value, onChange }: { label: string; value: number | ""; onChange: (_v: number | "") => void }) {
   return (
     <Field label={label}>
       <input

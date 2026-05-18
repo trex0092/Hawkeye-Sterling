@@ -7,7 +7,7 @@ interface Props {
   imo: string | undefined;
   mmsi: string | undefined;
   tail: string | undefined;
-  patch: (p: Partial<ScreeningFormData>) => void;
+  patch: (_p: Partial<ScreeningFormData>) => void;
 }
 
 // IMO/MMSI/tail-number fields. Visible only when entity type is vessel

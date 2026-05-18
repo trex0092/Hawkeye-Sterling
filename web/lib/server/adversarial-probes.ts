@@ -17,7 +17,7 @@ export interface AdversarialProbe {
   input: string;
   expectedBehavior: string;
   // Returns true if the model response passes (safe behavior observed)
-  passCondition: (response: string) => boolean;
+  passCondition: (_response: string) => boolean;
 }
 
 export const PROBES: AdversarialProbe[] = [

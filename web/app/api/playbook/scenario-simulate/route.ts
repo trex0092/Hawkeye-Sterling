@@ -13,30 +13,6 @@ export interface ScenarioSimulateResult {
   urgency: "immediate" | "24h" | "7d";
 }
 
-const FALLBACK: ScenarioSimulateResult = {
-  chapters: ["PEP Enhanced Due Diligence (FATF R.12)", "Wire Transfer Screening (FATF R.16)"],
-  redFlags: [
-    "Transaction inconsistent with declared business profile",
-    "Funds routed through multiple jurisdictions without commercial rationale",
-    "Client reluctant to provide source of funds documentation",
-  ],
-  actions: [
-    "1. Freeze the transaction pending MLRO review — do not process until cleared.",
-    "2. Obtain certified source-of-funds documentation from the client within 48 hours.",
-    "3. Run comprehensive sanctions screening across OFAC, UN, EU, and EOCN lists.",
-    "4. Perform adverse media search covering the past 5 years.",
-    "5. Escalate to MLRO with a full case summary and supporting documentation.",
-    "6. Await MLRO determination on whether to file an STR within the 35-day FDL deadline.",
-  ],
-  regulatoryRefs: [
-    "UAE FDL 10/2025 Art.15 (STR obligation)",
-    "UAE FDL 10/2025 Art.11 (CDD requirements)",
-    "FATF R.16 (Wire transfer due diligence)",
-    "CBUAE AML Standards §4.3 (EDD triggers)",
-  ],
-  recommendation: "Escalate to MLRO",
-  urgency: "24h",
-};
 
 export async function POST(req: Request) {
   const gate = await enforce(req);

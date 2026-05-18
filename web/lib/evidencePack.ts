@@ -3,7 +3,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import {
   PW, ML, MR, CW, CONTENT_Y, BOTTOM_Y,
-  PINK, BLACK, GRAY_D, GRAY_M, GRAY_L, WHITE,
+  BLACK, GRAY_D, GRAY_M, GRAY_L, WHITE,
   coverFrame, contentFrame, coverLogo, coverFooter,
   dropCapTitle, twoCards, metaGrid,
   partHeader, verdictBadge, kvRows, dropCapPara, sigFooter,

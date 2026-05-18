@@ -10,7 +10,7 @@
 // post to /api/screening/resolve which writes to audit and — for
 // Positive — auto-creates the ongoing-monitoring task.
 
-import { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 export interface TriageHit {
   id: string;                       // unique within this screening
@@ -39,7 +39,7 @@ interface Props {
   subjectName: string;
   hits: TriageHit[];
   resolutions?: Record<string, Resolution>;
-  onResolve?: (hitId: string, resolution: Resolution, reason?: string) => Promise<void>;
+  onResolve?: (_hitId: string, _resolution: Resolution, _reason?: string) => Promise<void>;
   /** True when the API expanded the hit caps because the subject name
    *  was detected as common (Mohamed Ali, John Smith, etc.). Triggers
    *  the "common-name expansion" banner above the table. */
@@ -128,7 +128,7 @@ export function HitTriagePanel({ subjectId, subjectName, hits, resolutions = {},
     [filteredHits, page],
   );
   // Reset page on filter change
-  useMemo(() => { setPage(0); }, [activeTab, filterType, filterCitizenship, filterMinStrength]);
+  useEffect(() => { setPage(0); }, [activeTab, filterType, filterCitizenship, filterMinStrength]);
 
   async function handleResolve(hitId: string, resolution: Resolution) {
     if (!onResolve) return;
@@ -157,7 +157,7 @@ export function HitTriagePanel({ subjectId, subjectName, hits, resolutions = {},
             Hit triage · <span className="text-ink-1">{hits.length}</span> matches for {subjectName}
           </h3>
           <p className="text-11 text-ink-3 mt-0.5">
-            Review each match against the subject's identity. Mark <strong className="text-red-300">Positive</strong> to auto-add to ongoing monitoring, <strong className="text-emerald-300">False</strong> to dismiss, <strong className="text-amber-300">Possible</strong> for MLRO review.
+            Review each match against the subject&apos;s identity. Mark <strong className="text-red-300">Positive</strong> to auto-add to ongoing monitoring, <strong className="text-emerald-300">False</strong> to dismiss, <strong className="text-amber-300">Possible</strong> for MLRO review.
           </p>
         </div>
         <div className="text-11 text-ink-3 font-mono">case#{subjectId}</div>
@@ -264,9 +264,8 @@ export function HitTriagePanel({ subjectId, subjectName, hits, resolutions = {},
                 const r = resolutions[h.id] ?? "unspecified";
                 const expanded = expandedHitId === h.id;
                 return (
-                  <>
+                  <React.Fragment key={h.id}>
                     <tr
-                      key={h.id}
                       className="border-t border-white/5 hover:bg-bg-1/30 cursor-pointer"
                       onClick={() => setExpandedHitId(expanded ? null : h.id)}
                     >
@@ -432,7 +431,7 @@ export function HitTriagePanel({ subjectId, subjectName, hits, resolutions = {},
                         </td>
                       </tr>
                     )}
-                  </>
+                  </React.Fragment>
                 );
               })}
               {filteredHits.length === 0 && (

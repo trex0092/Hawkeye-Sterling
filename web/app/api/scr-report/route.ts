@@ -214,7 +214,7 @@ function buildSCR(body: ReportInput, now: Date): ScreeningComplianceReport {
     edd_continuance: "amber",
     prohibited:      "red",
   };
-  const findColour = dispColour[disposition];
+  const _findColour = dispColour[disposition];
 
   // Subject type label
   const isEntity = s.entityType !== "individual";

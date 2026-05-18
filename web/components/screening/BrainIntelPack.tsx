@@ -5,7 +5,7 @@
 // self-contained card. Mounted into the SuperBrainPanel so every
 // subject opens with a full intelligence workbench.
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import type { SuperBrainResult } from "@/lib/hooks/useSuperBrain";
 
 // ─── 1. BrainAdversarial ───────────────────────────────────────────
@@ -409,9 +409,9 @@ export function BrainPolicySimulator({ result }: { result: SuperBrainResult }) {
   return (
     <Card title="Policy simulator">
       <div className="text-10.5 text-ink-3 mb-2">
-        Move sliders to re-weight signals and see how this subject's
-        composite would change. Changes are simulation-only — they don't
-        update the brain's configuration.
+        Move sliders to re-weight signals and see how this subject&apos;s
+        composite would change. Changes are simulation-only — they don&apos;t
+        update the brain&apos;s configuration.
       </div>
       <Slider label="PEP weight" value={pepWeight} onChange={setPepWeight} />
       <Slider label="Adverse-media weight" value={amWeight} onChange={setAmWeight} />
@@ -701,7 +701,7 @@ function Slider({
 }: {
   label: string;
   value: number;
-  onChange: (v: number) => void;
+  onChange: (_v: number) => void;
 }) {
   return (
     <div className="mt-1.5">
@@ -1631,7 +1631,7 @@ export function BrainJurisdictionClusters({ result }: { result: SuperBrainResult
   return (
     <Card title="Jurisdiction clusters">
       <div className="text-10.5 text-ink-3 mb-2">
-        CAHRA + FATF tier clustering for the subject's jurisdictional footprint.
+        CAHRA + FATF tier clustering for the subject&apos;s jurisdictional footprint.
       </div>
       {buckets.length === 0 ? (
         <div className="text-11 text-ink-2">No jurisdiction data available.</div>
@@ -1856,7 +1856,7 @@ export function BrainChainAttribution({ result }: { result: SuperBrainResult }) 
   return (
     <Card title="Score chain attribution">
       <div className="text-10.5 text-ink-3 mb-2">
-        Each signal's contribution to the composite score delta.
+        Each signal&apos;s contribution to the composite score delta.
       </div>
       {sorted.length === 0 ? (
         <div className="text-11 text-ink-2">No breakdown available.</div>

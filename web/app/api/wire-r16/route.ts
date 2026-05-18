@@ -30,24 +30,6 @@ export interface WireR16Result {
   regulatoryBasis: string;
 }
 
-const FALLBACK: WireR16Result = {
-  r16Compliant: false,
-  complianceLevel: "partially_compliant",
-  verdict: "hold_and_request",
-  verdictRationale: "Originator address / national ID number missing. Wire cannot be processed until FATF R.16 originator information is complete.",
-  originatorCheck: { namePresent: true, accountPresent: true, addressOrIdPresent: false, missing: ["Originator address or national identification number"] },
-  beneficiaryCheck: { namePresent: true, accountPresent: true, missing: [] },
-  thresholdApplicable: true,
-  thresholdAnalysis: "Transaction value exceeds USD 1,000 (AED 3,673) — full originator and beneficiary information mandatory under FATF R.16 §7.",
-  requiredActions: [
-    "Place wire transfer on hold",
-    "Contact ordering institution within 3 business days to obtain missing originator information",
-    "If information not received within 5 business days, return funds to sender",
-    "File STR if refusal to provide information raises suspicion",
-  ],
-  timeLimit: "3 business days to request; 5 business days before mandatory return",
-  regulatoryBasis: "FATF R.16 §7–§10; UAE FDL 10/2025 Art.19; Cabinet Resolution 134/2025 §4.3",
-};
 
 export async function POST(req: Request) {
   const gate = await enforce(req);

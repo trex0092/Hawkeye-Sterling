@@ -487,7 +487,7 @@ interface ToolDef {
     properties: Record<string, unknown>;
     required?: string[];
   };
-  handler: (args: Record<string, unknown>) => Promise<unknown>;
+  handler: (_args: Record<string, unknown>) => Promise<unknown>;
 }
 
 const TOOLS: ToolDef[] = [

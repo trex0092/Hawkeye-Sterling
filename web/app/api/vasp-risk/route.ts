@@ -29,46 +29,6 @@ export interface VaspRiskResult {
   regulatoryBasis: string;
 }
 
-const FALLBACK: VaspRiskResult = {
-  overallRisk: "high",
-  varaLicensed: false,
-  travelRuleCompliant: false,
-  travelRuleAssessment: "No evidence of Travel Rule compliance (FATF R.16 virtual asset equivalent). VASP does not implement originator/beneficiary information transmission for virtual asset transfers, creating a significant gap in AML/CFT transparency.",
-  custodyModel: "non_custodial",
-  exchangeType: "Peer-to-peer (P2P) exchange — unhosted wallet model",
-  geographicExposure: "high",
-  highRiskJurisdictions: ["Russia", "Iran", "Venezuela", "DPRK (indirect routing suspected)"],
-  sanctionedExposure: false,
-  darknetExposure: "possible",
-  mixingServiceExposure: "possible",
-  amlProgramAssessment: "VASP does not appear to have a documented AML/CFT programme. No published AML policy, no designated MLRO, no stated CDD procedures. Non-compliant with FATF R.15 standards.",
-  cddApproach: "weak",
-  riskIndicators: [
-    { indicator: "VASP not licensed under VARA (Dubai) or ADGM FSRA", severity: "critical", detail: "Operating as unregulated VASP in UAE is unlawful under VARA regulations. FIs must not establish correspondent relationships with unregulated VASPs." },
-    { indicator: "No Travel Rule implementation for VA transfers", severity: "high", detail: "Travel Rule (FATF R.16 VA equivalent) requires originator and beneficiary information to travel with each VA transfer above threshold. Non-compliance creates AML blind spot." },
-    { indicator: "P2P model with unhosted wallet support — no KYC on counterparties", severity: "high", detail: "P2P exchanges allowing unhosted wallet transactions without KYC are primary vector for darknet marketplace withdrawals and sanctions evasion per FATF Virtual Assets Guidance 2021." },
-    { indicator: "Geographic exposure to FATF high-risk jurisdictions", severity: "high", detail: "Transaction routing through Russia/Iran/Venezuela indicates potential sanctions exposure and FATF R.19 enhanced scrutiny requirement." },
-  ],
-  recommendedAction: "reject",
-  actionRationale: "Unregulated, non-Travel-Rule-compliant P2P exchange with high-risk jurisdiction exposure. Establishing or continuing any financial relationship constitutes material AML/CFT compliance risk. VARA requires FIs to apply enhanced CDD to all VA transactions and refuse relationships with non-compliant VASPs.",
-  requiredDocumentation: [
-    "VARA licence certificate or ADGM FSRA licence (mandatory for UAE-based VASPs)",
-    "AML/CFT programme documentation — policies, procedures, MLRO details",
-    "Travel Rule implementation evidence — protocol (TRISA, OpenVASP, IVMS101)",
-    "CDD procedures for exchange users",
-    "Blockchain analytics tools used (Chainalysis, Elliptic, TRM Labs)",
-    "Latest independent AML audit report",
-  ],
-  regulatoryObligations: [
-    "VARA Regulations (Virtual Assets and Related Activities Regulations 2023) — Dubai",
-    "ADGM FSRA — Guidance on Regulation of Digital Securities and Virtual Assets",
-    "UAE FDL 10/2025 Art.4(1)(h) — VASPs included in scope of UAE AML law",
-    "FATF R.15 — Virtual Assets and VASPs",
-    "FATF Guidance on Virtual Assets 2021 (Travel Rule, unhosted wallets)",
-    "CBUAE Circular 2023 on VASP correspondent relationships",
-  ],
-  regulatoryBasis: "UAE FDL 10/2025 Art.4(1)(h); VARA Regulations 2023; ADGM FSRA VASP rules; FATF R.15; FATF Guidance on Virtual Assets 2021; CBUAE Circular on VA Risks",
-};
 
 export async function POST(req: Request) {
   const gate = await enforce(req);

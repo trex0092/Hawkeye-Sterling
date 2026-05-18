@@ -33,8 +33,8 @@ import type {
 import { quickScreen as _quickScreen } from "../../../../../dist/src/brain/quick-screen.js";
 
 type QuickScreenFn = (
-  subject: QuickScreenSubject,
-  candidates: QuickScreenCandidate[],
+  _subject: QuickScreenSubject,
+  _candidates: QuickScreenCandidate[],
 ) => QuickScreenResult;
 const quickScreen = _quickScreen as QuickScreenFn;
 

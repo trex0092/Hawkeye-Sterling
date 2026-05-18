@@ -17,28 +17,6 @@ export interface PepScreeningEnhanceResult {
   regulatoryBasis: string;
 }
 
-const FALLBACK: PepScreeningEnhanceResult = {
-  pepClassification: "PEP-1",
-  riskRating: "critical",
-  pepRole:
-    "Serving minister in UAE federal cabinet — direct political authority over regulatory decisions affecting DPMS sector",
-  corruptionExposure:
-    "High corruption exposure index: role oversees government procurement (AED 8B annual budget). TI CPI score for jurisdiction: 28/100 (moderate). No known allegations — proactive EDD required regardless.",
-  eddChecklist: [
-    "Obtain and verify source of wealth — independent corroboration of stated wealth origin required",
-    "Obtain and verify source of funds for all transactions",
-    "Obtain senior management approval (MD + Board Risk) before onboarding or continuing relationship",
-    "Identify and verify all connected family members and known associates",
-    "Annual EDD refresh — every 12 months or on political event (election, appointment, removal)",
-    "Screen all associated entities (companies, trusts, foundations) individually",
-  ],
-  monitoringPlan:
-    "Monthly transaction review by MLRO. Quarterly relationship review. Annual EDD. Auto-escalate any transaction >AED 200,000 to MLRO queue. Adverse media re-screen every 30 days.",
-  exitCriteria:
-    "Relationship continues only while: source of wealth verified, no confirmed adverse media, annual EDD complete. Exit triggers: unexplained wealth increase >50%, confirmed corruption allegation, failure to provide EDD documents within 30 days.",
-  regulatoryBasis:
-    "FATF R.12 (PEPs), UAE FDL 10/2025 Art.12, CBUAE AML Standards §3.4, Egmont Group PEP Guidance 2024",
-};
 
 export async function POST(req: Request) {
   const gate = await enforce(req);

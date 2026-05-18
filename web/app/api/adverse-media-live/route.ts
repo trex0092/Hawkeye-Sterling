@@ -99,24 +99,6 @@ function generateNameVariants(name: string, aliases?: string[]): string[] {
 // GDELT helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
-const GDELT_BASE = "https://api.gdeltproject.org/api/v2/doc/doc";
-// GDELT free API with a 10-year lookback window can take 10-14s to respond.
-// 20s gives it room while staying well under the 45s maxDuration budget.
-const FETCH_TIMEOUT_MS = 20_000;
-
-// FDL 10/2025 Art.19 mandates a 10-year adverse-media lookback for every
-// CDD/EDD screening event. The window is rolling — anchored to the moment
-// the screening request lands on the server, not to a fixed cutoff — so
-// "today minus ten years" shifts forward each calendar day.
-const ART19_LOOKBACK_YEARS = 10;
-const GDELT_MAX_RECORDS = 75; // 7d→10y window expands result volume; cap at 75
-
-function mkAbort(ms: number): { signal: AbortSignal; clear: () => void } {
-  const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), ms);
-  return { signal: ctrl.signal, clear: () => clearTimeout(t) };
-}
-
 interface GdeltArticle {
   url?: string;
   title?: string;
@@ -127,37 +109,11 @@ interface GdeltArticle {
   socialimage?: string;
 }
 
-interface GdeltResponse {
-  articles?: GdeltArticle[];
-}
-
 function gdeltDate(seendate: string | undefined): string {
   if (!seendate) return new Date().toISOString();
   const m = seendate.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z?$/);
   if (!m) return seendate;
   return `${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:${m[6]}Z`;
-}
-
-// GDELT DOC 2.0 startdatetime / enddatetime expect YYYYMMDDHHMMSS in UTC.
-function gdeltDateTime(d: Date): string {
-  const yyyy = d.getUTCFullYear();
-  const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
-  const dd = String(d.getUTCDate()).padStart(2, "0");
-  const hh = String(d.getUTCHours()).padStart(2, "0");
-  const mi = String(d.getUTCMinutes()).padStart(2, "0");
-  const ss = String(d.getUTCSeconds()).padStart(2, "0");
-  return `${yyyy}${mm}${dd}${hh}${mi}${ss}`;
-}
-
-// Returns { start, end } where end is "now" and start is exactly N years
-// earlier on the same calendar date. Calendar arithmetic (setUTCFullYear)
-// handles leap years correctly — Feb 29 → Feb 28 / Mar 1 transitions are
-// resolved by the JS Date object the same way regulators expect.
-function art19Window(years = ART19_LOOKBACK_YEARS): { start: Date; end: Date } {
-  const end = new Date();
-  const start = new Date(end);
-  start.setUTCFullYear(start.getUTCFullYear() - years);
-  return { start, end };
 }
 
 // Infer broad categories from title/domain text

@@ -528,7 +528,7 @@ export default function StatusPage() {
                   </div>
                 ) : (
                   <div className="text-11 font-mono text-ink-3">
-                    No list data yet — sanctions cron hasn't run. Lists refresh automatically on the 24-hour schedule.
+                    No list data yet — sanctions cron hasn&apos;t run. Lists refresh automatically on the 24-hour schedule.
                   </div>
                 )}
               </div>
@@ -781,7 +781,7 @@ function Arrow() {
 function ServiceDependencyMap({ checks, externalChecks }: { checks: Check[]; externalChecks: Check[] }) {
   const find = (name: string) => checks.find((c) => c.name === name)?.status ?? externalChecks.find((c) => c.name === name)?.status;
 
-  const rows: Array<{ label: string; from: string; to: string[] }> = [
+  const _rows: Array<{ label: string; from: string; to: string[] }> = [
     { label: "Core AI",     from: "super-brain",        to: ["adverse-media", "weaponized-brain"] },
     { label: "Screening",   from: "screening",           to: ["sanctions-lists"] },
     { label: "Adverse media", from: "adverse-media",    to: ["Google News", "GDELT"] },
@@ -841,7 +841,7 @@ function ServiceDependencyMap({ checks, externalChecks }: { checks: Check[]; ext
   );
 }
 
-function SessionActivity({ historyRef, checks, externalChecks, sanctionsName, sanctionsStatus }: {
+function SessionActivity({ historyRef, checks, externalChecks, sanctionsName, sanctionsStatus: _sanctionsStatus }: {
   historyRef: React.MutableRefObject<Record<string, SvcStatus[]>>;
   checks: Check[];
   externalChecks: Check[];
@@ -1180,7 +1180,7 @@ function ThreatSurfacePanel({ surface }: { surface: ThreatSurface }) {
       <div className={`bg-bg-panel border rounded-lg p-4 ${critCount > 0 ? "border-red/40" : "border-amber/40"}`}>
         <div className="text-12 text-ink-0 font-medium mb-3">{headline}</div>
         <div className="space-y-1.5">
-          {surface.impaired.map((e, i) => {
+          {surface.impaired.map((e, _i) => {
             const tone = THREAT_SEV_TONE[e.severity];
             return (
               <div key={`${e.complianceFunction}-${e.affectedService}`} className="flex items-center gap-3 flex-wrap">

@@ -407,7 +407,7 @@ export default function CountryRiskPage() {
 
   const handleSearch = () => analyse(query);
 
-  const handleChip = (country: string) => {
+  const _handleChip = (country: string) => {
     setQuery(country);
     if (mode === "single") {
       analyse(country);

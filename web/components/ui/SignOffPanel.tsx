@@ -50,7 +50,7 @@ function SignerColumn({
   role: string;
   name: string;
   editable?: boolean;
-  onNameChange?: (v: string) => void;
+  onNameChange?: (_v: string) => void;
 }) {
   return (
     <div className="bg-bg-panel px-5 py-4">

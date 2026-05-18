@@ -9,6 +9,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
 import { NextResponse } from "next/server";
+import { enforce } from "@/lib/server/enforce";
 import { getGmailAccessToken } from "@/lib/server/gmail-token";
 
 const GMAIL_BASE = "https://www.googleapis.com/gmail/v1/users/me";
@@ -124,6 +125,8 @@ export interface TFSAlertCandidate {
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   let token: string;
   try {
     token = await getGmailAccessToken();

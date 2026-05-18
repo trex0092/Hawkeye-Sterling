@@ -67,15 +67,6 @@ riskTrend must be one of: "deteriorating", "stable", "improving".
 urgency must be one of: "immediate", "this_month", "quarterly".
 Provide exactly 3 boardTalkingPoints and 2-4 insights.`;
 
-const FALLBACK: AnalyticsInsightsResponse = {
-  headline: "API key not configured",
-  riskTrend: "stable",
-  insights: [],
-  regulatoryExposure: "",
-  boardTalkingPoints: [],
-  benchmarkComment: "",
-};
-
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
