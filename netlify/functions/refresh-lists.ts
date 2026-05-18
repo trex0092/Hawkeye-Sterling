@@ -167,101 +167,122 @@ interface SanctionsStatusResponse { lists?: SanctionsStatusList[] }
 
 export default async (): Promise<Response> => {
   const alertWebhook = process.env['ALERT_WEBHOOK_URL'];
+  const hbStore = getStore('hawkeye-function-heartbeats');
 
-  // Snapshot the current list entities BEFORE ingestion so we can diff
-  // and fire immediate designation-change / delisting alerts.
-  const listStore = getStore('hawkeye-lists');
-  const beforeSnap = await snapshotLists(listStore);
+  // Idempotency lock — prevents concurrent ingestion under Lambda warm-instance overlap.
+  // A stale lock (> 10 min) is silently broken to recover from a crashed run.
+  const LOCK_TTL_MS = 10 * 60 * 1000;
+  const existingLock = await hbStore.get(`${LABEL}/lock`, { type: 'json' }) as { lockedAt: string } | null;
+  if (existingLock) {
+    const lockAge = Date.now() - new Date(existingLock.lockedAt).getTime();
+    if (lockAge < LOCK_TTL_MS) {
+      console.info(`[${LABEL}] already running (lock age ${Math.round(lockAge / 1000)}s) — skipping`);
+      return new Response(
+        JSON.stringify({ skipped: true, reason: 'lock_held', lockedAt: existingLock.lockedAt }),
+        { status: 200, headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' } },
+      );
+    }
+  }
+  await hbStore.setJSON(`${LABEL}/lock`, { lockedAt: new Date().toISOString(), label: LABEL });
 
-  const result = await runIngestionAll(LABEL);
-
-  // Snapshot AFTER ingestion and diff — fire immediate alert on any change.
-  const afterSnap = await snapshotLists(listStore);
-  const changes = diffSnapshots(beforeSnap, afterSnap);
-  await alertDesignationChanges(changes, alertWebhook);
-
-  // Call sanctions_status to confirm storage state from the read path.
-  const baseUrl =
-    process.env['URL'] ??
-    process.env['DEPLOY_PRIME_URL'] ??
-    'https://hawkeye-sterling.netlify.app';
-  // Audit H-03 / P2-07: a list can write successfully but parse to zero
-  // entities (parser bug or empty upstream feed). Detect those by reading
-  // sanctions_status after the refresh and surfacing any healthy or degraded
-  // adapter whose entityCount is 0.
-  const zeroEntityLists: string[] = [];
   try {
-    const ctl = new AbortController();
-    const t = setTimeout(() => ctl.abort(), 10_000);
+    // Snapshot the current list entities BEFORE ingestion so we can diff
+    // and fire immediate designation-change / delisting alerts.
+    const listStore = getStore('hawkeye-lists');
+    const beforeSnap = await snapshotLists(listStore);
+
+    const result = await runIngestionAll(LABEL);
+
+    // Snapshot AFTER ingestion and diff — fire immediate alert on any change.
+    const afterSnap = await snapshotLists(listStore);
+    const changes = diffSnapshots(beforeSnap, afterSnap);
+    await alertDesignationChanges(changes, alertWebhook);
+
+    // Call sanctions_status to confirm storage state from the read path.
+    const baseUrl =
+      process.env['URL'] ??
+      process.env['DEPLOY_PRIME_URL'] ??
+      'https://hawkeye-sterling.netlify.app';
+    // Audit H-03 / P2-07: a list can write successfully but parse to zero
+    // entities (parser bug or empty upstream feed). Detect those by reading
+    // sanctions_status after the refresh and surfacing any healthy or degraded
+    // adapter whose entityCount is 0.
+    const zeroEntityLists: string[] = [];
     try {
-      const res = await fetch(`${baseUrl}/api/sanctions/status`, {
-        headers: process.env['SANCTIONS_CRON_TOKEN']
-          ? { authorization: `Bearer ${process.env['SANCTIONS_CRON_TOKEN']}` }
-          : {},
-        signal: ctl.signal,
-      });
-      if (res.ok) {
-        const status = await res.json() as SanctionsStatusResponse;
-        console.log(`[${LABEL}] sanctions_status after refresh: ${JSON.stringify(status)}`);
-        for (const l of status.lists ?? []) {
-          if (l.entityCount === 0 && (l.status === 'healthy' || l.status === 'degraded')) {
-            zeroEntityLists.push(`${l.listId} (${l.displayName}) [${l.status}]`);
+      const ctl = new AbortController();
+      const t = setTimeout(() => ctl.abort(), 10_000);
+      try {
+        const res = await fetch(`${baseUrl}/api/sanctions/status`, {
+          headers: process.env['SANCTIONS_CRON_TOKEN']
+            ? { authorization: `Bearer ${process.env['SANCTIONS_CRON_TOKEN']}` }
+            : {},
+          signal: ctl.signal,
+        });
+        if (res.ok) {
+          const status = await res.json() as SanctionsStatusResponse;
+          console.info(`[${LABEL}] sanctions_status after refresh: ${JSON.stringify(status)}`);
+          for (const l of status.lists ?? []) {
+            if (l.entityCount === 0 && (l.status === 'healthy' || l.status === 'degraded')) {
+              zeroEntityLists.push(`${l.listId} (${l.displayName}) [${l.status}]`);
+            }
           }
+        } else {
+          console.warn(`[${LABEL}] sanctions_status returned HTTP ${res.status}`);
         }
-      } else {
-        console.warn(`[${LABEL}] sanctions_status returned HTTP ${res.status}`);
+      } finally {
+        clearTimeout(t);
       }
-    } finally {
-      clearTimeout(t);
+    } catch (err) {
+      console.warn(`[${LABEL}] sanctions_status call failed (non-critical):`, err instanceof Error ? err.message : String(err));
     }
-  } catch (err) {
-    console.warn(`[${LABEL}] sanctions_status call failed (non-critical):`, err instanceof Error ? err.message : String(err));
-  }
 
-  // Fire alert webhook on write failure OR zero-entity ingest.
-  if (alertWebhook && (result.anyWriteFailed || zeroEntityLists.length > 0)) {
-    try {
-      const reasons: string[] = [];
-      if (result.anyWriteFailed) reasons.push(`${result.failed_count} adapter write(s) failed`);
-      if (zeroEntityLists.length > 0) reasons.push(`zero-entity ingest: ${zeroEntityLists.join(', ')}`);
-      await fetch(alertWebhook, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          text: `[Hawkeye Sterling] ${LABEL} DEGRADED — ${reasons.join('; ')} at ${result.at}. Screening is degraded until the next successful run.`,
-          summary: result.summary,
-          zeroEntityLists,
-        }),
-      });
-    } catch (webhookErr) {
-      console.warn(`[${LABEL}] alert webhook failed (non-critical):`, webhookErr instanceof Error ? webhookErr.message : webhookErr);
+    // Fire alert webhook on write failure OR zero-entity ingest.
+    if (alertWebhook && (result.anyWriteFailed || zeroEntityLists.length > 0)) {
+      try {
+        const reasons: string[] = [];
+        if (result.anyWriteFailed) reasons.push(`${result.failed_count} adapter write(s) failed`);
+        if (zeroEntityLists.length > 0) reasons.push(`zero-entity ingest: ${zeroEntityLists.join(', ')}`);
+        await fetch(alertWebhook, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            text: `[Hawkeye Sterling] ${LABEL} DEGRADED — ${reasons.join('; ')} at ${result.at}. Screening is degraded until the next successful run.`,
+            summary: result.summary,
+            zeroEntityLists,
+          }),
+        });
+      } catch (webhookErr) {
+        console.warn(`[${LABEL}] alert webhook failed (non-critical):`, webhookErr instanceof Error ? webhookErr.message : webhookErr);
+      }
     }
-  }
 
-  // Write heartbeat on success so health-monitor can detect silent cron failures.
-  if (!result.anyWriteFailed) {
-    try {
-      const hbStore = getStore('hawkeye-function-heartbeats');
-      await hbStore.setJSON(LABEL, { lastSuccess: new Date().toISOString(), label: LABEL });
-    } catch (hbErr) {
-      console.warn(`[${LABEL}] heartbeat write failed (non-critical):`, hbErr instanceof Error ? hbErr.message : hbErr);
+    // Write heartbeat on success so health-monitor can detect silent cron failures.
+    if (!result.anyWriteFailed) {
+      try {
+        await hbStore.setJSON(LABEL, { lastSuccess: new Date().toISOString(), label: LABEL });
+      } catch (hbErr) {
+        console.warn(`[${LABEL}] heartbeat write failed (non-critical):`, hbErr instanceof Error ? hbErr.message : hbErr);
+      }
     }
+
+    const totalAdded = changes.reduce((s, c) => s + c.added.length, 0);
+    const totalRemoved = changes.reduce((s, c) => s + c.removed.length, 0);
+
+    const statusCode = result.anyWriteFailed ? 500 : 200;
+    return new Response(
+      JSON.stringify({
+        at: result.at,
+        summary: result.summary,
+        anyWriteFailed: result.anyWriteFailed,
+        zeroEntityLists,
+        designationChanges: { totalAdded, totalRemoved, listsAffected: changes.length },
+      }),
+      { status: statusCode, headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' } },
+    );
+  } finally {
+    // Release idempotency lock regardless of outcome.
+    try { await hbStore.delete(`${LABEL}/lock`); } catch {}
   }
-
-  const totalAdded = changes.reduce((s, c) => s + c.added.length, 0);
-  const totalRemoved = changes.reduce((s, c) => s + c.removed.length, 0);
-
-  const statusCode = result.anyWriteFailed ? 500 : 200;
-  return new Response(
-    JSON.stringify({
-      at: result.at,
-      summary: result.summary,
-      anyWriteFailed: result.anyWriteFailed,
-      zeroEntityLists,
-      designationChanges: { totalAdded, totalRemoved, listsAffected: changes.length },
-    }),
-    { status: statusCode, headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' } },
-  );
 };
 
 export const config: Config = { schedule: '0 3 * * *' };

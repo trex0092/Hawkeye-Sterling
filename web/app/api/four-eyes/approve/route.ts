@@ -17,6 +17,8 @@ import { NextResponse } from "next/server";
 import { withGuard } from "@/lib/server/guard";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { getJson, setJson } from "@/lib/server/store";
+import { validateString, validateEnum } from "@/lib/server/validate";
+import { logRequest } from "@/lib/server/logger";
 import type { FourEyesItem } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -44,10 +46,6 @@ type FourEyesItemExtended = FourEyesItem & {
 // Helpers
 // ---------------------------------------------------------------------------
 
-function stringField(v: unknown): string | undefined {
-  return typeof v === "string" && v.trim() ? v.trim() : undefined;
-}
-
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);
 }
@@ -57,10 +55,12 @@ function isRecord(v: unknown): v is Record<string, unknown> {
 // ---------------------------------------------------------------------------
 
 async function handler(req: Request): Promise<NextResponse> {
+  const t0 = Date.now();
   let raw: unknown;
   try {
     raw = await req.json();
   } catch {
+    logRequest("/api/four-eyes/approve", "unknown", 400, Date.now() - t0, { error: "invalid_json" });
     return NextResponse.json(
       { ok: false, error: "invalid_json" },
       { status: 400 },
@@ -68,37 +68,30 @@ async function handler(req: Request): Promise<NextResponse> {
   }
 
   if (!isRecord(raw)) {
+    logRequest("/api/four-eyes/approve", "unknown", 400, Date.now() - t0, { error: "body_not_object" });
     return NextResponse.json(
       { ok: false, error: "body must be a JSON object" },
       { status: 400 },
     );
   }
 
-  // 1. Validate required fields.
-  const itemId = stringField(raw["itemId"]);
-  const actor = stringField(raw["actor"]);
-  const decisionRaw = stringField(raw["decision"]);
-  const rationale = stringField(raw["rationale"]);
+  // 1. Validate required fields using validate.ts helpers.
+  const itemId = validateString(raw["itemId"], { required: true });
+  const actor = validateString(raw["actor"], { required: true });
+  const decision = validateEnum(raw["decision"], ["approve", "reject"] as const);
+  const rationale = validateString(raw["rationale"], { required: true });
 
-  if (!itemId || !actor || !decisionRaw || !rationale) {
+  if (!itemId || !actor || !decision || !rationale) {
+    logRequest("/api/four-eyes/approve", "unknown", 400, Date.now() - t0, { error: "missing_fields" });
     return NextResponse.json(
       {
         ok: false,
         error: "missing_fields",
-        hint: "itemId, actor, decision, and rationale are all required and must be non-empty",
+        hint: "itemId, actor, decision ('approve'|'reject'), and rationale are all required and must be non-empty",
       },
       { status: 400 },
     );
   }
-
-  if (decisionRaw !== "approve" && decisionRaw !== "reject") {
-    return NextResponse.json(
-      { ok: false, error: "invalid_decision", hint: "decision must be 'approve' or 'reject'" },
-      { status: 400 },
-    );
-  }
-
-  const decision = decisionRaw as "approve" | "reject";
 
   // 2. Load the item.
   const item = await getJson<FourEyesItemExtended>(`four-eyes/${itemId}`);
@@ -207,6 +200,13 @@ async function handler(req: Request): Promise<NextResponse> {
       rationale,
     });
   }
+
+  const responseStatus = 200;
+  logRequest("/api/four-eyes/approve", itemId, responseStatus, Date.now() - t0, {
+    actor,
+    decision,
+    itemStatus: updatedItem.status,
+  });
 
   return NextResponse.json({
     ok: true,
