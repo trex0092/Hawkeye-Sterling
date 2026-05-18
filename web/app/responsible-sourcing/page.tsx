@@ -58,7 +58,7 @@ const OECD_STEPS = [
 
 const inputCls = "w-full text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-ink-0 focus:border-brand outline-none";
 
-function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
+function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (_v: boolean) => void; label: string }) {
   return (
     <label className="flex items-center gap-2 text-12 text-ink-1 cursor-pointer">
       <button type="button" onClick={() => onChange(!checked)}

@@ -424,7 +424,7 @@ function PrinciplesTab() {
 
 // ─── Tab: Model Registry ──────────────────────────────────────────────────────
 
-function AddModelForm({ onAdd, onCancel }: { onAdd: (m: AIModel) => void; onCancel: () => void }) {
+function AddModelForm({ onAdd, onCancel }: { onAdd: (_m: AIModel) => void; onCancel: () => void }) {
   const [name, setName] = useState("");
   const [version, setVersion] = useState("");
   const [riskTier, setRiskTier] = useState<RiskTier>("Medium");
@@ -632,7 +632,7 @@ function AddIncidentForm({
   onAdd,
   onCancel,
 }: {
-  onAdd: (i: AIIncident) => void;
+  onAdd: (_i: AIIncident) => void;
   onCancel: () => void;
 }) {
   const [title, setTitle] = useState("");
