@@ -221,7 +221,11 @@ export const jpMofAdapter: SourceAdapter = {
     if (errors.length > 0 && all.length === 0) {
       throw new Error(`jp_mof: all ${urls.length} feed URL(s) failed — ${errors.join('; ')}`);
     }
-    if (all.length === 0) {
+    // Guard: if URLs were configured but every one parsed to 0 entities (no
+    // errors thrown, just nothing extracted), refuse to overwrite existing list.
+    // Skip when urls is empty — that means FEED_JP_MOF is unset, which is a
+    // valid opt-out for deployments without a JP MOF subscription.
+    if (urls.length > 0 && all.length === 0) {
       throw new Error(
         `jp_mof: parsed 0 entities across ${urls.length} feed URL(s) — ` +
         `refusing to overwrite existing list. The XLSX column layout may have changed.`,

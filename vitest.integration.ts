@@ -24,6 +24,11 @@ export default defineConfig({
       // Resolve next/server from web/node_modules (Next.js is only installed there).
       { find: 'next/server', replacement: path.resolve(__dirname, 'web/node_modules/next/server.js') },
       { find: 'next/headers', replacement: path.resolve(__dirname, 'web/node_modules/next/headers.js') },
+      // Pin @netlify/blobs to the root copy so vi.mock('@netlify/blobs') intercepts
+      // both test-file imports and the dynamic import() inside route handlers (which
+      // otherwise resolve to web/node_modules/@netlify/blobs — a different module ID
+      // that the mock doesn't cover).
+      { find: '@netlify/blobs', replacement: path.resolve(__dirname, 'node_modules/@netlify/blobs') },
     ],
   },
 });

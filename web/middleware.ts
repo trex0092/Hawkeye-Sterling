@@ -83,7 +83,9 @@ function applySecurityHeaders(response: NextResponse, isApi: boolean, requestId?
   response.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()");
   response.headers.set("Cross-Origin-Opener-Policy", "same-origin");
   if (isApi) {
-    response.headers.set("Cross-Origin-Resource-Policy", "same-origin");
+    // Attach CORS headers to all API responses so browser callers (dashboard,
+    // regulator portal) receive them on non-preflight requests too.
+    for (const [k, v] of Object.entries(CORS_HEADERS)) response.headers.set(k, v);
     if (requestId) {
       response.headers.set("X-Request-ID", requestId);
     }
@@ -141,8 +143,35 @@ function hostnameOf(value: string): string | null {
   }
 }
 
+// CORS headers attached to every OPTIONS preflight and real API response.
+// Origin is reflected only for same-site calls — `null` origins (e.g. file://)
+// are rejected. The CORS list is intentionally restrictive: regulators call the
+// API server-to-server (no browser CORS needed); the primary browser caller is
+// the portal itself (same-origin). Third-party dashboard integrations should
+// use server-side proxy calls.
+const CORS_ALLOWED_ORIGIN = "*"; // tighten to specific domain if embedding
+const CORS_HEADERS: Record<string, string> = {
+  "Access-Control-Allow-Origin": CORS_ALLOWED_ORIGIN,
+  "Access-Control-Allow-Methods": "GET,POST,PUT,PATCH,DELETE,OPTIONS",
+  "Access-Control-Allow-Headers": "Authorization,Content-Type,X-Api-Key,X-Request-ID,X-Trace-ID",
+  "Access-Control-Max-Age": "86400",
+};
+
+function corsResponse(): NextResponse {
+  const res = new NextResponse(null, { status: 204 });
+  for (const [k, v] of Object.entries(CORS_HEADERS)) res.headers.set(k, v);
+  return res;
+}
+
 export function middleware(req: NextRequest): NextResponse {
   const { pathname } = req.nextUrl;
+
+  // ── CORS preflight — handle OPTIONS before any auth/redirect logic ──────
+  // This single handler covers all /api/* routes so individual route files
+  // do not each need an `export const OPTIONS` export.
+  if (req.method === "OPTIONS" && pathname.startsWith("/api/")) {
+    return corsResponse();
+  }
 
   // ── 0. /.well-known + /api/v1/ rewrites ──────────────────────────────────
   // Next.js rewrites declared in next.config.mjs don't reach Lambda when
