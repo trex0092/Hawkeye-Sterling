@@ -9,6 +9,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
 import { NextResponse } from "next/server";
+import { enforce } from "@/lib/server/enforce";
 
 const COMTRADE_BASE_URL =
   process.env["COMTRADE_BASE_URL"] ?? "https://comtradeapi.un.org/public/v1/preview";
@@ -68,6 +69,8 @@ interface ComtradeApiResponse {
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   let raw: unknown;
   try {
     raw = await req.json();
