@@ -76,7 +76,7 @@ export function MultiSelect({
   );
 
   const toggle = (v: string) => {
-    const next = new Set(selected);
+    const next = new Set<string>(selected);
     if (next.has(v)) next.delete(v);
     else next.add(v);
     setSelected(next);

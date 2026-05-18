@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -55,18 +56,18 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as ReqBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const { subjectName, entityType, industry, jurisdiction, declaredActivity } = body;
   if (!subjectName || !entityType || !industry || !jurisdiction || !declaredActivity) {
-    return NextResponse.json({ ok: false, error: "all fields are required" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "all fields are required" }, { status: 400 , headers: gate.headers });
   }
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (apiKey) {
     try {
-      const client = getAnthropicClient(apiKey);
+      const client = getAnthropicClient(apiKey, 55_000);
       const response = await client.messages.create({
         model: "claude-sonnet-4-6",
         max_tokens: 1024,
@@ -75,8 +76,8 @@ export async function POST(req: Request): Promise<NextResponse> {
             role: "user",
             content: `You are an AML plausibility analyst. Score the following subject across 10 dimensions (0-100 each).
 
-Subject: "${subjectName}", Type: ${entityType}, Industry: ${industry}, Jurisdiction: ${jurisdiction}
-Declared Activity: "${declaredActivity.substring(0, 500)}"
+Subject: "${sanitizeField(subjectName)}", Type: ${sanitizeField(entityType)}, Industry: ${sanitizeField(industry)}, Jurisdiction: ${sanitizeField(jurisdiction)}
+Declared Activity: "${sanitizeText(declaredActivity)}"
 
 Dimensions to score: Entity-Activity Alignment, Jurisdiction Coherence, Income Plausibility, Corporate Structure Logic, Geographic Consistency, Declared Activity Specificity, Counterparty Profile Match, Regulatory Footprint, Economic Substance, Transaction Pattern Logic.
 
@@ -94,6 +95,7 @@ Respond ONLY with valid JSON:
       const raw = response.content[0]?.type === "text" ? (response.content[0] as { type: "text"; text: string }).text : "";
       const parsed = JSON.parse(raw.match(/\{[\s\S]*\}/)?.[0] ?? "{}");
       if (parsed.overallScore !== undefined) {
+        if (!Array.isArray(parsed.dimensions)) parsed.dimensions = [];
         return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
       }
     } catch {

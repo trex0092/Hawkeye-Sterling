@@ -5,10 +5,12 @@
 // final disposition) behind the MLRO role so a single compromised login
 // can't bypass the four-eyes principle.
 //
-// Role is stored per-browser in localStorage. Real RBAC with a user store
-// + server session lands with the auth phase; this client-side shim is
-// enough to enforce the four-eyes UX today and the audit chain cares
-// about the signed intent anyway (see /api/audit/sign).
+// Role is stored in sessionStorage (cleared when the tab closes) so that
+// a shared workstation automatically reverts to the default "analyst" role
+// after the session ends. Real RBAC with a user store + server session lands
+// with the auth phase; this client-side shim is enough to enforce the
+// four-eyes UX today and the audit chain cares about the signed intent
+// anyway (see /api/audit/sign).
 
 // analyst              — front-line screening; may propose actions
 // compliance_assistant — supports CO; same action scope as analyst
@@ -33,16 +35,21 @@ const ALL_ROLES: OperatorRole[] = [
 ];
 
 export function isBrowser(): boolean {
-  return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
+  return typeof window !== "undefined" && typeof window.sessionStorage !== "undefined";
 }
 
 export function loadOperatorRole(): OperatorRole {
   if (!isBrowser()) return "analyst";
   try {
-    const raw = window.localStorage.getItem(ROLE_STORAGE_KEY);
+    // Prefer sessionStorage (written by saveOperatorRole). Fall back to
+    // localStorage for any pre-existing value so a page reload doesn't
+    // silently reset the role mid-session during the migration period.
+    const raw =
+      window.sessionStorage.getItem(ROLE_STORAGE_KEY) ??
+      window.localStorage.getItem(ROLE_STORAGE_KEY);
     if (raw && (ALL_ROLES as string[]).includes(raw)) return raw as OperatorRole;
   } catch (err) {
-    console.warn("[hawkeye] operator-role load failed (localStorage disabled?) — defaulting to analyst:", err);
+    console.warn("[hawkeye] operator-role load failed (storage disabled?) — defaulting to analyst:", err);
   }
   return "analyst";
 }
@@ -50,10 +57,15 @@ export function loadOperatorRole(): OperatorRole {
 export function saveOperatorRole(role: OperatorRole): void {
   if (!isBrowser()) return;
   try {
-    window.localStorage.setItem(ROLE_STORAGE_KEY, role);
+    // Write to sessionStorage only — clears when the tab closes so a
+    // shared workstation can't leave an elevated role (MLRO/MD) persisted.
+    window.sessionStorage.setItem(ROLE_STORAGE_KEY, role);
+    // Remove any legacy localStorage copy so the load fallback above
+    // doesn't resurrect a stale elevated role after the first save.
+    try { window.localStorage.removeItem(ROLE_STORAGE_KEY); } catch { /* ignore */ }
     window.dispatchEvent(new CustomEvent("hawkeye:operator-role-updated"));
   } catch {
-    /* localStorage quota / disabled */
+    /* sessionStorage quota / disabled */
   }
 }
 

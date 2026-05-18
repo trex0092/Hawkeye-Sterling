@@ -11,6 +11,7 @@ import { getStore } from "@netlify/blobs";
 import { emit } from "../../dist/src/integrations/webhook-emitter.js";
 
 const STORE_NAME = "hawkeye-adverse-media";
+const HEARTBEAT_STORE = "hawkeye-function-heartbeats";
 const RUN_LABEL = "adverse-media-rss";
 const FETCH_TIMEOUT_MS = 15_000;
 const MAX_ITEMS_PER_FEED = 50;
@@ -132,12 +133,14 @@ export default async function handler(_req: Request): Promise<Response> {
   const watchlist = (await loadWatchlist(store)).map((s) => s.toLowerCase());
 
   const all: ProcessedItem[] = [];
+  let successfulFeeds = 0;
   for (const spec of feeds) {
     try {
       const res = await fetchWithTimeout(spec.url);
       if (!res.ok) continue;
       const xml = await res.text();
       const items = parseRssMinimal(xml);
+      successfulFeeds++;
       const fetchedAt = new Date().toISOString();
       for (const it of items) {
         const blob = `${it.title} ${it.description ?? ""}`.toLowerCase();
@@ -167,6 +170,20 @@ export default async function handler(_req: Request): Promise<Response> {
       try { await emit("audit_drift", { kind: "adverse_media_critical", count: critical.length, sample: critical.slice(0, 5) }); }
       catch (err) { console.warn("[hawkeye] adverse-media-rss: audit_drift emit failed:", err); }
     }
+  }
+
+  // Write heartbeat only when at least one feed was fetched successfully.
+  // If ALL feeds fail (network outage, all URLs non-200), do NOT write a
+  // heartbeat — health-monitor should detect and alert on the silence.
+  if (successfulFeeds > 0) {
+    try {
+      const hbStore = getStore(HEARTBEAT_STORE);
+      await hbStore.setJSON(RUN_LABEL, { lastSuccess: new Date().toISOString(), label: RUN_LABEL });
+    } catch (err) {
+      console.warn("[adverse-media-rss] heartbeat write failed (non-critical):", err instanceof Error ? err.message : String(err));
+    }
+  } else {
+    console.warn("[adverse-media-rss] all feeds failed — heartbeat NOT written so health-monitor will alert after", 2, "hours");
   }
 
   return jsonResponse({

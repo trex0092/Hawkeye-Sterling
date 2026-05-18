@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 
 interface ReqBody {
   jurisdiction: string;
@@ -43,12 +44,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as ReqBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const { jurisdiction } = body;
   if (!jurisdiction) {
-    return NextResponse.json({ ok: false, error: "jurisdiction is required" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "jurisdiction is required" }, { status: 400 , headers: gate.headers });
   }
 
   const known = UAE_EXTRADITION_TREATIES[jurisdiction];
@@ -78,5 +79,5 @@ export async function POST(req: Request): Promise<NextResponse> {
     safeHavenRisk,
     notes,
     riskLevel,
-  });
+  }, { headers: gate.headers });
 }

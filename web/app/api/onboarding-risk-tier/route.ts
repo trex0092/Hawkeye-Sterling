@@ -18,6 +18,7 @@ import { classifyOnboardingRiskTier } from "../../../../dist/src/brain/onboardin
 import { enforce } from "@/lib/server/enforce";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 
 const CORS: Record<string, string> = {
   "access-control-allow-origin": process.env["NEXT_PUBLIC_APP_URL"] ?? "https://hawkeye-sterling.netlify.app",
@@ -47,7 +48,7 @@ export async function POST(req: Request): Promise<Response> {
   try {
     body = (await req.json()) as Body;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400, headers: CORS });
+    return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400, headers: { ...gate.headers, ...CORS } });
   }
   const result = classifyOnboardingRiskTier({
     ...(body.fullName !== undefined ? { fullName: body.fullName } : {}),
@@ -59,5 +60,5 @@ export async function POST(req: Request): Promise<Response> {
     ...(body.address !== undefined ? { address: body.address } : {}),
     ...(body.screeningHits !== undefined ? { screeningHits: body.screeningHits } : {}),
   });
-  return NextResponse.json({ ok: true, ...result }, { headers: CORS });
+  return NextResponse.json({ ok: true, ...result }, { headers: { ...gate.headers, ...CORS } });
 }

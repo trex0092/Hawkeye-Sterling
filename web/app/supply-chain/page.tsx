@@ -270,8 +270,8 @@ export default function SupplyChainPage() {
 
         kpis={[
           { value: kpiCompanies, label: "Companies assessed" },
-          { value: kpiHighRisk, label: "High-risk suppliers", tone: result && parseInt(kpiHighRisk) > 0 ? "red" : undefined },
-          { value: kpiGaps, label: "Compliance gaps", tone: result && parseInt(kpiGaps) > 0 ? "orange" : undefined },
+          { value: kpiHighRisk, label: "High-risk suppliers", tone: result && parseInt(kpiHighRisk, 10) > 0 ? "red" : undefined },
+          { value: kpiGaps, label: "Compliance gaps", tone: result && parseInt(kpiGaps, 10) > 0 ? "orange" : undefined },
           { value: kpiActions, label: "Action items" },
         ]}
         intro="Assess geographic concentration, sanctions exposure, environmental crime risk, labour exploitation, and regulatory compliance gaps across your supply chain (EU CSDDD, US UFLPA, Dodd-Frank §1502)."

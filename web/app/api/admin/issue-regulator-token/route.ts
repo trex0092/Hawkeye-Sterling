@@ -59,8 +59,8 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (!issuedBy) {
     return NextResponse.json({ ok: false, error: "issuedBy required (operator audit-trail attribution)" }, { status: 400 });
   }
-  const tenants = (body.tenants ?? []).filter((s) => typeof s === "string" && s.length > 0);
-  const cases = (body.cases ?? []).filter((s) => typeof s === "string" && s.length > 0);
+  const tenants = (Array.isArray(body.tenants) ? body.tenants : []).filter((s) => typeof s === "string" && s.length > 0);
+  const cases = (Array.isArray(body.cases) ? body.cases : []).filter((s) => typeof s === "string" && s.length > 0);
   if (tenants.length === 0 && cases.length === 0) {
     return NextResponse.json(
       { ok: false, error: "at least one tenant or case must be supplied in scope" },

@@ -48,8 +48,8 @@ export function validateImo(input: string): ValidationResult {
   const s = input.replace(/\s+/g, '').replace(/^IMO/i, '');
   if (!/^\d{7}$/.test(s)) return { valid: false, reason: 'format' };
   const digits = s.split('').map((c) => c.charCodeAt(0) - 48);
-  const expectedCheck = digits[6]!;
-  const sum = digits[0]! * 7 + digits[1]! * 6 + digits[2]! * 5 + digits[3]! * 4 + digits[4]! * 3 + digits[5]! * 2;
+  const expectedCheck = digits[6] ?? 0;
+  const sum = (digits[0] ?? 0) * 7 + (digits[1] ?? 0) * 6 + (digits[2] ?? 0) * 5 + (digits[3] ?? 0) * 4 + (digits[4] ?? 0) * 3 + (digits[5] ?? 0) * 2;
   if (sum % 10 !== expectedCheck) return { valid: false, reason: 'checksum' };
   return { valid: true, normalised: `IMO${s}` };
 }
@@ -61,12 +61,12 @@ export function validateEmiratesId(input: string): ValidationResult {
   if (!/^784\d{12}$/.test(s)) return { valid: false, reason: 'format' };
   const digits = s.split('').map((c) => c.charCodeAt(0) - 48);
   const body = digits.slice(0, 14);
-  const check = digits[14]!;
+  const check = digits[14] ?? 0;
   // Luhn-style over 14 body digits with standard doubling from the rightmost body.
   let sum = 0;
   let double = true;
   for (let i = body.length - 1; i >= 0; i--) {
-    let d = body[i]!;
+    let d = body[i] ?? 0;
     if (double) { d *= 2; if (d > 9) d -= 9; }
     sum += d;
     double = !double;

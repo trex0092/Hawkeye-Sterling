@@ -85,7 +85,7 @@ function parseMs(at: string): number {
 function withinWindow(ms: number[], windowMs: number): boolean {
   if (ms.length <= 1) return true;
   const sorted = [...ms].sort((a, b) => a - b);
-  return sorted[sorted.length - 1]! - sorted[0]! <= windowMs;
+  return (sorted[sorted.length - 1] ?? 0) - (sorted[0] ?? 0) <= windowMs;
 }
 
 export function detectSmurfing(
@@ -117,15 +117,20 @@ export function detectSmurfing(
     if (nearBand.length < cfg.minCount) continue;
     const sorted = [...nearBand].sort((a, b) => parseMs(a.at) - parseMs(b.at));
     for (let i = 0; i + cfg.minCount <= sorted.length; i++) {
-      const windowTxs: SmurfingTransaction[] = [sorted[i]!];
+      const startTx = sorted[i];
+      if (!startTx) continue;
+      const windowTxs: SmurfingTransaction[] = [startTx];
       for (let j = i + 1; j < sorted.length; j++) {
-        if (parseMs(sorted[j]!.at) - parseMs(sorted[i]!.at) <= windowMs) {
-          windowTxs.push(sorted[j]!);
+        const jTx = sorted[j];
+        if (jTx && parseMs(jTx.at) - parseMs(startTx.at) <= windowMs) {
+          windowTxs.push(jTx);
         } else break;
       }
       if (windowTxs.length >= cfg.minCount) {
         const totalAed = windowTxs.reduce((s, t) => s + t.amountAed, 0);
-        const spanDays = (parseMs(windowTxs[windowTxs.length - 1]!.at) - parseMs(windowTxs[0]!.at)) / 86_400_000;
+        const lastTx = windowTxs[windowTxs.length - 1];
+        const firstTx = windowTxs[0];
+        const spanDays = lastTx && firstTx ? (parseMs(lastTx.at) - parseMs(firstTx.at)) / 86_400_000 : 0;
         const severity: StructuringCluster['severity'] =
           windowTxs.length >= 6 || totalAed >= cfg.thresholdAed * 5 ? 'high' :
           windowTxs.length >= 4 ? 'medium' : 'low';

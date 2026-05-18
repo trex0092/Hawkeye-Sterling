@@ -591,6 +591,11 @@ export default function ScreeningPage() {
   // workflow. Populated from the same auto-screen response.
   const [latestTriage, setLatestTriage] = useState<{ subjectId: string; subjectName: string; hits: TriageHit[]; commonNameExpansion?: boolean } | null>(null);
   const [triageResolutions, setTriageResolutions] = useState<Record<string, Resolution>>({});
+  // Warnings from the most recent /api/quick-screen call — populated when one
+  // or more sanctions lists were empty or stale at screening time. Shown as a
+  // dismissible amber banner above the results so auditors can see the data
+  // quality caveat inline with the screen outcome.
+  const [listHealthWarnings, setListHealthWarnings] = useState<string[]>([]);
 
   // Adverse Media state
   const [amSubject, setAmSubject] = useState("");
@@ -1000,6 +1005,8 @@ export default function ScreeningPage() {
             freeAdapterAugmentation?: AugmentationRecord[];
             freeAdapterProviders?: string[];
             commonNameExpansion?: boolean;
+            screeningWarnings?: string[];
+            listHealthAtScreeningTime?: Record<string, { entityCount: number; ageHours: number; status: string }>;
           }
           // One-shot retry on transient failures (network blip, 5xx, timeout).
           // Many screen-failed states on the queue come from a single
@@ -1024,6 +1031,9 @@ export default function ScreeningPage() {
                 label: "Auto-screen failed (retry)",
               },
             );
+          }
+          if (res.ok && res.data?.screeningWarnings?.length) {
+            setListHealthWarnings(res.data.screeningWarnings);
           }
           if (res.ok && res.data?.ok && res.data.reasoning) {
             setLatestReasoning({ subjectName: subject.name, reasoning: res.data.reasoning });
@@ -1468,14 +1478,18 @@ export default function ScreeningPage() {
                 onClick={async () => {
                   // Force a full sanctions list re-ingestion server-side.
                   // Lists can take ~15-30 s to refresh; the response is awaited.
-                  const res = await fetch("/api/sanctions/operator-refresh", { method: "POST" });
-                  if (res.ok) {
-                    const data = (await res.json().catch(() => null)) as { ok_count?: number; failed_count?: number } | null;
-                    const okCount = data?.ok_count ?? 0;
-                    const failedCount = data?.failed_count ?? 0;
-                    alert(`Sanctions refresh complete — ${okCount} lists OK, ${failedCount} failed. Reload to see updated timestamps.`);
-                  } else {
-                    alert(`Refresh failed (HTTP ${res.status}). Check /api/sanctions/last-errors for detail.`);
+                  try {
+                    const res = await fetch("/api/sanctions/operator-refresh", { method: "POST" });
+                    if (res.ok) {
+                      const data = (await res.json().catch(() => null)) as { ok_count?: number; failed_count?: number } | null;
+                      const okCount = data?.ok_count ?? 0;
+                      const failedCount = data?.failed_count ?? 0;
+                      alert(`Sanctions refresh complete — ${okCount} lists OK, ${failedCount} failed. Reload to see updated timestamps.`);
+                    } else {
+                      alert(`Refresh failed (HTTP ${res.status}). Check /api/sanctions/last-errors for detail.`);
+                    }
+                  } catch (err) {
+                    alert(`Sanctions refresh could not be reached — check your connection and try again. (${err instanceof Error ? err.message : "Network error"})`);
                   }
                 }}
                 className="text-11 font-semibold px-3 py-1.5 rounded border border-amber text-amber hover:bg-amber/10 transition-colors"
@@ -1570,6 +1584,30 @@ export default function ScreeningPage() {
           </div>
           {/* ─────────────────────────────────────────────────────────────── */}
 
+          {listHealthWarnings.length > 0 && (
+            <div className="mb-4 border border-amber/30 bg-amber-dim rounded-lg p-3">
+              <div className="flex items-start gap-2">
+                <span className="text-amber font-semibold text-11 uppercase tracking-wide-3 shrink-0">
+                  ⚠ Screening data warning
+                </span>
+                <button
+                  onClick={() => setListHealthWarnings([])}
+                  className="ml-auto text-ink-3 hover:text-ink-1 text-12 leading-none"
+                  aria-label="Dismiss warning"
+                >
+                  ✕
+                </button>
+              </div>
+              <ul className="mt-1.5 space-y-0.5">
+                {listHealthWarnings.map((w, i) => (
+                  <li key={i} className="text-11 text-amber font-mono">{w}</li>
+                ))}
+              </ul>
+              <p className="text-10.5 text-ink-3 mt-1.5">
+                Results above may be incomplete. Notify your compliance administrator to resync the affected lists.
+              </p>
+            </div>
+          )}
           {latestReasoning && (
             <div className="mb-4">
               <div className="text-11 text-ink-3 mb-1">Latest reasoning · <span className="text-ink-2 font-medium">{latestReasoning.subjectName}</span></div>

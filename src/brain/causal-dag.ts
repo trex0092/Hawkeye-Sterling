@@ -98,7 +98,8 @@ export function buildCausalDag(findings: readonly FindingLite[]): CausalDAG {
     if (seen.has(m.from) && seen.has(m.to)) {
       // Skip self-loops and respect threshold semantics: only add the
       // edge if the upstream mode's score is non-trivial.
-      const upstream = seen.get(m.from)!;
+      const upstream = seen.get(m.from);
+      if (!upstream) continue;
       if ((upstream.score ?? 0) < 0.05 && m.mechanism === 'threshold_trigger') continue;
       edges.push({
         fromModeId: m.from,
@@ -147,7 +148,8 @@ export function buildCausalDag(findings: readonly FindingLite[]): CausalDAG {
     adj.set(e.fromModeId, list);
   }
   while (queue.length > 0) {
-    const id = queue.shift()!;
+    const id = queue.shift();
+    if (!id) break;
     topo.push(id);
     for (const next of adj.get(id) ?? []) {
       const d = (inDeg.get(next) ?? 0) - 1;
@@ -164,7 +166,8 @@ export function buildCausalDag(findings: readonly FindingLite[]): CausalDAG {
     for (const cn of cycleNodes) {
       // Drop incoming edges from non-placed nodes to break the cycle.
       for (let i = edges.length - 1; i >= 0; i--) {
-        const e = edges[i]!;
+        const e = edges[i];
+        if (!e) continue;
         if (e.toModeId === cn.modeId && !placed.has(e.fromModeId)) {
           edges.splice(i, 1);
         }

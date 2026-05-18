@@ -1,5 +1,6 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 import { enforce } from "@/lib/server/enforce";
 import {
   buildHtmlDoc, hsPage, hsCover, hsSection, hsPill, hsKvGrid, hsNarrative,
@@ -53,7 +54,7 @@ export async function POST(req: Request) {
     { k: "FROM", v: "L. Fernanda — MLRO" },
     { k: "DATE", v: dateStr },
     { k: "RE",   v: escHtml(body.re) },
-    ...(body.details ?? []).map(({ k, v }) => ({ k: escHtml(k), v: escHtml(v) })),
+    ...(Array.isArray(body.details) ? body.details : []).map(({ k, v }) => ({ k: escHtml(k), v: escHtml(v) })),
   ];
 
   const privilege = body.privilege ?? "This memorandum is legally privileged and confidential. It is prepared for the sole use of the addressee in connection with the matter described. It must not be disclosed to any other person without the express written consent of the MLRO.";
@@ -82,5 +83,5 @@ ${hsFinis(reportId, 2, 2)}`;
     ],
   });
 
-  return new Response(html, { headers: { "content-type": "text/html; charset=utf-8" } });
+  return new Response(html, { headers: { "content-type": "text/html; charset=utf-8", ...gate.headers } });
 }

@@ -20,6 +20,7 @@ import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { loadAllCases } from "@/lib/server/case-vault";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -209,7 +210,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const clusterResponse = await client.messages.create({
     model: "claude-sonnet-4-6",
-    max_tokens: 2000,
+    max_tokens: 700,
     system: `You are an AML network analyst. Given a subject entity and a customer base, identify which other customers form a risk cluster with the subject — i.e., they share counterparties, jurisdictions, typological patterns, or ownership linkages that suggest network connectivity.
 
 Return ONLY valid JSON:
@@ -228,7 +229,7 @@ Return ONLY valid JSON:
 }`,
     messages: [{
       role: "user",
-      content: `Subject Case ID: ${subjectId}
+      content: `Subject Case ID: ${sanitizeField(subjectId)}
 Subject Data: ${JSON.stringify(subjectCase ?? { id: subjectId, name: body.subjectName ?? "unknown" })}
 Subject Risk Score: ${subjectScore}
 
@@ -248,8 +249,8 @@ Identify all cases that form a risk cluster with the subject. Only include cases
   } = {};
   try { clusterResult = JSON.parse(clusterRaw.match(/\{[\s\S]*\}/)?.[0] ?? "{}"); } catch { /* best effort */ }
 
-  const clusterMembers = clusterResult.clusterMembers ?? [];
-  const discoveredEdges = clusterResult.edges ?? [];
+  const clusterMembers = Array.isArray(clusterResult.clusterMembers) ? clusterResult.clusterMembers : [];
+  const discoveredEdges = Array.isArray(clusterResult.edges) ? clusterResult.edges : [];
   const clusterIds = clusterMembers.map((m) => m.caseId);
 
   // Merge confidence-weighted scores into entityScores

@@ -45,13 +45,13 @@ export const tbmlInvoiceApply = async (ctx: BrainContext): Promise<Finding> => {
       else if (ratio <= 0.5) hits.push({ id: 'under_invoice', label: `Under-invoiced by ${(100 - ratio * 100).toFixed(0)}%`, weight: Math.min(0.35, 0.1 + (0.5 - ratio) * 0.5), evidence: `${i.invoiceId}: ${i.declaredUnitPrice} vs market ${i.marketUnitPrice}` });
     }
     if ((i.duplicatedInvoiceIds ?? []).length >= 1) {
-      hits.push({ id: 'multi_invoicing', label: `Duplicate invoice id(s): ${i.duplicatedInvoiceIds!.length}`, weight: 0.3, evidence: `${i.invoiceId} ↔ ${(i.duplicatedInvoiceIds ?? []).slice(0, 3).join(', ')}` });
+      hits.push({ id: 'multi_invoicing', label: `Duplicate invoice id(s): ${(i.duplicatedInvoiceIds ?? []).length}`, weight: 0.3, evidence: `${i.invoiceId} ↔ ${(i.duplicatedInvoiceIds ?? []).slice(0, 3).join(', ')}` });
     }
     if (!i.shipmentManifestRef && (i.totalDeclared ?? 0) > 0) {
       hits.push({ id: 'phantom_shipment_risk', label: 'Invoice without shipment manifest', weight: 0.2, evidence: `${i.invoiceId}: ${i.totalDeclared}` });
     }
     if ((i.partyChain ?? []).length >= 4) {
-      hits.push({ id: 'long_party_chain', label: `Party chain length ${i.partyChain!.length}`, weight: 0.15, evidence: i.partyChain!.join(' → ') });
+      hits.push({ id: 'long_party_chain', label: `Party chain length ${(i.partyChain ?? []).length}`, weight: 0.15, evidence: (i.partyChain ?? []).join(' → ') });
     }
   }
 

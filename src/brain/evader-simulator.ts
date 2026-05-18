@@ -143,10 +143,10 @@ export function simulateEvader(config: AgentConfiguration): StrategyEvaluation[]
   for (const h of HEURISTICS) {
     let pUndetected = h.baselinePUndetected;
     for (const [mode, delta] of Object.entries(h.modeImpact)) {
-      if (config.activeModes.includes(mode)) pUndetected += delta!;
+      if (config.activeModes.includes(mode)) pUndetected += delta ?? 0;
     }
     for (const [key, delta] of Object.entries(h.configImpact)) {
-      if (config[key as keyof AgentConfiguration]) pUndetected += delta!;
+      if (config[key as keyof AgentConfiguration]) pUndetected += delta ?? 0;
     }
     const pUndetectedClamped = clamp01(pUndetected);
     const expectedUtility = pUndetectedClamped - h.baselineCost;

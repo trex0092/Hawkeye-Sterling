@@ -333,7 +333,7 @@ export default function AdverseMediaLookbackPage() {
     : entries;
 
   // Coverage map: for visible/filtered subject, which years have entries?
-  const subjects = Array.from(new Set(entries.map((e) => e.subject)));
+  const subjects = Array.from(new Set(entries.map((e) => e.subject))) as string[];
   const selectedSubject = filterSubject
     ? entries.find((e) => e.subject.toLowerCase().includes(filterSubject.toLowerCase()))?.subject ?? null
     : null;
@@ -542,7 +542,7 @@ export default function AdverseMediaLookbackPage() {
                         {/* Theme breakdown */}
                         {Object.keys(corr.themes).length > 0 && (
                           <div className="flex flex-wrap gap-1.5">
-                            {Object.entries(corr.themes)
+                            {(Object.entries(corr.themes) as [string, CrossCorrelateArticle[]][])
                               .filter(([, arts]) => arts.length > 0)
                               .map(([theme, arts]) => (
                                 <span key={theme} className={`inline-flex items-center gap-1 px-2 py-0.5 rounded font-mono text-10 font-semibold ${THEME_TONE[theme] ?? "bg-bg-2 text-ink-2"}`}>

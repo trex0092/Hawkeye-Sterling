@@ -85,7 +85,7 @@ function NewCnmrForm({ onCreated, onCancel }: NewCnmrFormProps) {
       const res = await fetch("/api/cnmr", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ subjectName, sourceList, listEntry, matchScore: parseInt(matchScore) || 100, freezeDate: new Date(freezeDate).toISOString(), narrativeDraft, supervisoryAuthority }),
+        body: JSON.stringify({ subjectName, sourceList, listEntry, matchScore: parseInt(matchScore, 10) || 100, freezeDate: new Date(freezeDate).toISOString(), narrativeDraft, supervisoryAuthority }),
       });
       const data = (await res.json()) as { ok: boolean; case?: CnmrCase; error?: string };
       if (!mountedRef.current) return;

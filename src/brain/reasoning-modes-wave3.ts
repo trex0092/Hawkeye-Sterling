@@ -626,7 +626,7 @@ async function vendorMasterAnomalyApply(ctx: BrainContext): Promise<Finding> {
     if (!vendor) continue;
     if (bank) {
       if (!bankByVendor.has(vendor)) bankByVendor.set(vendor, new Set());
-      bankByVendor.get(vendor)!.add(bank);
+      bankByVendor.get(vendor)?.add(bank);
     }
     if (Number.isFinite(ts)) {
       const prev = firstSeen.get(vendor);
@@ -818,7 +818,7 @@ async function poFraudPatternApply(ctx: BrainContext): Promise<Finding> {
     const amt = toAmt(t['amount']);
     if (vendor && Number.isFinite(amt) && amt > 0) {
       if (!amtsByVendor.has(vendor)) amtsByVendor.set(vendor, []);
-      amtsByVendor.get(vendor)!.push(amt);
+      amtsByVendor.get(vendor)?.push(amt);
     }
   }
   const phantomVendors = [...amtsByVendor.entries()].filter(
@@ -837,7 +837,7 @@ async function poFraudPatternApply(ctx: BrainContext): Promise<Finding> {
     const ts = parseTs(t['timestamp'] ?? t['date']);
     if (vendor && Number.isFinite(amt) && amt > 0 && Number.isFinite(ts)) {
       if (!entriesByVendor.has(vendor)) entriesByVendor.set(vendor, []);
-      entriesByVendor.get(vendor)!.push({ amount: amt, ts });
+      entriesByVendor.get(vendor)?.push({ amount: amt, ts });
     }
   }
   for (const [vendor, entries] of entriesByVendor) {
@@ -1356,8 +1356,8 @@ async function addressPoisoningApply(ctx: BrainContext): Promise<Finding> {
   const lookalikePairs: string[] = [];
   for (let i = 0; i < addrList.length; i++) {
     for (let j = i + 1; j < addrList.length; j++) {
-      const a = addrList[i]!;
-      const b = addrList[j]!;
+      const a = addrList[i] ?? '';
+      const b = addrList[j] ?? '';
       if (a.length < 16 || b.length < 16 || a === b) continue;
       const prefixMatch = a.slice(0, 6) === b.slice(0, 6);
       const suffixMatch = a.slice(-6) === b.slice(-6);
@@ -1371,7 +1371,6 @@ async function addressPoisoningApply(ctx: BrainContext): Promise<Finding> {
     const amt = Number(t['amount'] ?? t['value'] ?? NaN);
     return Number.isFinite(amt) && amt > 0 && amt < 0.001;
   });
-  const poisonSignals = lookalikePairs.length + dustTxs.length;
   const score = Math.min(1, lookalikePairs.length * 0.5 + dustTxs.length * 0.1);
   return {
     modeId: 'address_poisoning',
@@ -1460,8 +1459,9 @@ async function chainHoppingVelocityApply(ctx: BrainContext): Promise<Finding> {
   let rapidHops = 0;
   const HOP_WINDOW_MS = 6 * 3600_000; // 6 hours
   for (let i = 1; i < timestampsWithChain.length; i++) {
-    const prev = timestampsWithChain[i - 1]!;
-    const curr = timestampsWithChain[i]!;
+    const prev = timestampsWithChain[i - 1];
+    const curr = timestampsWithChain[i];
+    if (!prev || !curr) continue;
     if (curr.chain !== prev.chain && curr.ts - prev.ts < HOP_WINDOW_MS) rapidHops++;
   }
   const score = Math.min(1, (chains.size - 1) * 0.20 + rapidHops * 0.25 + bridgeHits * 0.15);
@@ -1914,7 +1914,7 @@ async function kCoreAnalysisApply(ctx: BrainContext): Promise<Finding> {
     let deg = 0;
     for (let j = 0; j < ubo.length; j++) {
       if (i === j) continue;
-      if (attrs(ubo[j]!).some((a) => myAttrs.has(a))) deg++;
+      if (attrs(ubo[j] ?? {}).some((a) => myAttrs.has(a))) deg++;
     }
     return deg;
   });
@@ -1991,7 +1991,8 @@ async function temporalMotifApply(ctx: BrainContext): Promise<Finding> {
   const WINDOW = 7 * 86_400_000;
   let layeringMotifs = 0;
   for (let i = 0; i < edges.length; i++) {
-    const e1 = edges[i]!;
+    const e1 = edges[i];
+    if (!e1) continue;
     const fanOutDests = new Set(
       edges.filter((e) => e.from === e1.from && e.ts >= e1.ts && e.ts - e1.ts <= WINDOW).map((e) => e.to),
     );
@@ -2031,10 +2032,10 @@ async function triadicClosureApply(ctx: BrainContext): Promise<Finding> {
   let closedTriads = 0;
   for (let i = 0; i < ubo.length; i++) {
     for (let j = i + 1; j < ubo.length; j++) {
-      if (!linked(ubo[i]!, ubo[j]!)) continue;
+      if (!linked(ubo[i] ?? {}, ubo[j] ?? {})) continue;
       for (let k = 0; k < ubo.length; k++) {
-        if (k === i || k === j || !linked(ubo[j]!, ubo[k]!)) continue;
-        if (linked(ubo[i]!, ubo[k]!)) closedTriads++;
+        if (k === i || k === j || !linked(ubo[j] ?? {}, ubo[k] ?? {})) continue;
+        if (linked(ubo[i] ?? {}, ubo[k] ?? {})) closedTriads++;
         else openTriads++;
       }
     }
@@ -2066,13 +2067,14 @@ async function structuralHoleApply(ctx: BrainContext): Promise<Finding> {
   };
   const holeBrokers: string[] = [];
   for (let i = 0; i < ubo.length; i++) {
-    const node = ubo[i]!;
-    const neighbors = ubo.filter((_, j) => j !== i && connected(node, ubo[j]!));
+    const node = ubo[i];
+    if (!node) continue;
+    const neighbors = ubo.filter((_, j) => j !== i && connected(node, ubo[j] ?? {}));
     if (neighbors.length < 2) continue;
     let hasHole = false;
     for (let p = 0; p < neighbors.length && !hasHole; p++) {
       for (let q = p + 1; q < neighbors.length && !hasHole; q++) {
-        if (!connected(neighbors[p]!, neighbors[q]!)) hasHole = true;
+        if (!connected(neighbors[p] ?? {}, neighbors[q] ?? {})) hasHole = true;
       }
     }
     if (hasHole) holeBrokers.push(String(node['name'] ?? node['entity'] ?? `entity_${i}`));
@@ -2205,10 +2207,13 @@ async function peelChainApply(ctx: BrainContext): Promise<Finding> {
   edges.sort((a, b) => a.ts - b.ts);
   let peelSequences = 0;
   for (let i = 0; i < edges.length - 2; i++) {
-    let current = edges[i]!;
+    const startEdge = edges[i];
+    if (!startEdge) continue;
+    let current = startEdge;
     let length = 1;
     for (let j = i + 1; j < edges.length; j++) {
-      const next = edges[j]!;
+      const next = edges[j];
+      if (!next) continue;
       if (next.from !== current.to) continue;
       const ratio = next.amount / current.amount;
       if (ratio >= 0.70 && ratio <= 0.98) {

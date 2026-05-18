@@ -50,8 +50,9 @@ export function analyseTrajectory(subjectId: string, screens: readonly SubjectSc
   }
 
   const sorted = [...screens].sort((a, b) => Date.parse(a.at) - Date.parse(b.at));
-  const first = sorted[0]!;
-  const last = sorted[sorted.length - 1]!;
+  const first = sorted[0];
+  if (!first) return { subjectId, totalScreens: 0, spanDays: 0, outcomeStreak: { outcome: "inconclusive", count: 0 }, scoreTrend: "stable", inflections: [], flagBlockRatio: 0 };
+  const last = sorted[sorted.length - 1] ?? first;
   const spanDays = Math.max(0, Math.floor((Date.parse(last.at) - Date.parse(first.at)) / 86_400_000));
 
   // Score trend — simple linear OLS on (i, score).
@@ -60,7 +61,8 @@ export function analyseTrajectory(subjectId: string, screens: readonly SubjectSc
   const meanY = sorted.reduce((a, s) => a + s.aggregateScore, 0) / n;
   let cov = 0, varX = 0;
   for (let i = 0; i < n; i++) {
-    const s = sorted[i]!;
+    const s = sorted[i];
+    if (!s) continue;
     cov += (i - meanX) * (s.aggregateScore - meanY);
     varX += (i - meanX) ** 2;
   }
@@ -69,10 +71,10 @@ export function analyseTrajectory(subjectId: string, screens: readonly SubjectSc
     slope > 0.02 ? "rising" : slope < -0.02 ? "falling" : "stable";
 
   // Outcome streak — last contiguous run of identical outcomes.
-  let streakOut = last.outcome;
+  const streakOut = last.outcome;
   let streakCount = 1;
   for (let i = sorted.length - 2; i >= 0; i--) {
-    if (sorted[i]!.outcome === streakOut) streakCount++;
+    if (sorted[i]?.outcome === streakOut) streakCount++;
     else break;
   }
 
@@ -87,14 +89,14 @@ export function analyseTrajectory(subjectId: string, screens: readonly SubjectSc
       kind: "first_escalation",
       fromIndex: firstEscIdx - 1,
       toIndex: firstEscIdx,
-      description: `Subject crossed into escalate/block at screen ${firstEscIdx + 1} of ${n} (${sorted[firstEscIdx]!.at}).`,
-      delta: OUTCOME_RANK[sorted[firstEscIdx]!.outcome] - OUTCOME_RANK[sorted[firstEscIdx - 1]!.outcome],
+      description: `Subject crossed into escalate/block at screen ${firstEscIdx + 1} of ${n} (${sorted[firstEscIdx]?.at ?? ''}).`,
+      delta: OUTCOME_RANK[sorted[firstEscIdx]?.outcome ?? 'inconclusive'] - OUTCOME_RANK[sorted[firstEscIdx - 1]?.outcome ?? 'inconclusive'],
     });
   }
 
   // Score spike — single jump ≥ 0.3.
   for (let i = 1; i < n; i++) {
-    const dS = sorted[i]!.aggregateScore - sorted[i - 1]!.aggregateScore;
+    const dS = (sorted[i]?.aggregateScore ?? 0) - (sorted[i - 1]?.aggregateScore ?? 0);
     if (dS >= 0.3) {
       inflections.push({
         id: `score_spike_${i}`,
@@ -125,7 +127,7 @@ export function analyseTrajectory(subjectId: string, screens: readonly SubjectSc
   // Flap pattern — three or more outcome flips back and forth.
   let flips = 0;
   for (let i = 1; i < n; i++) {
-    if (sorted[i]!.outcome !== sorted[i - 1]!.outcome) flips++;
+    if (sorted[i]?.outcome !== sorted[i - 1]?.outcome) flips++;
   }
   if (flips >= 3 && n >= 4) {
     inflections.push({

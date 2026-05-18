@@ -2,6 +2,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { enforce } from "@/lib/server/enforce";
 export interface SanctionsBreachResult {
   breachSeverity: "critical" | "high" | "medium" | "low";
   voluntaryDisclosureRecommended: boolean;
@@ -43,6 +44,9 @@ const FALLBACK: SanctionsBreachResult = {
 };
 
 export async function POST(req: Request) {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
+
   let body: {
     counterparty: string;
     transactionAmount: string;
@@ -67,7 +71,7 @@ export async function POST(req: Request) {
     const client = getAnthropicClient(apiKey, 55_000);
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 1500,
+      max_tokens: 700,
       system: [
         {
           type: "text",
@@ -91,6 +95,9 @@ export async function POST(req: Request) {
     if (!jsonMatch) return NextResponse.json({ ok: false, error: "sanctions-breach temporarily unavailable - please retry." }, { status: 503 });
 
     const parsed = JSON.parse(jsonMatch[0]) as SanctionsBreachResult;
+    if (!Array.isArray(parsed.mitigatingFactors)) parsed.mitigatingFactors = [];
+    if (!Array.isArray(parsed.aggravatingFactors)) parsed.aggravatingFactors = [];
+    if (!Array.isArray(parsed.immediateActions)) parsed.immediateActions = [];
     return NextResponse.json({ ok: true, ...parsed });
   } catch {
     return NextResponse.json({ ok: false, error: "sanctions-breach temporarily unavailable - please retry." }, { status: 503 });

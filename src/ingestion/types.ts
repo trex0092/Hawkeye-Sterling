@@ -62,4 +62,10 @@ export interface SourceAdapter {
   displayName: string;
   sourceUrl: string;
   fetch: () => Promise<{ entities: NormalisedEntity[]; rawChecksum: string; sourceVersion?: string }>;
+  /**
+   * When defined and returning false, run-all.ts skips this adapter entirely —
+   * no blob is written and it is not counted as a failure. Use for opt-in
+   * adapters that are dormant until a configuring env var is set.
+   */
+  isEnabled?: () => boolean;
 }

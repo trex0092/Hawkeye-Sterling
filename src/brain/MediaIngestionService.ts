@@ -283,7 +283,7 @@ function parseRssXml(xml: string): RssFeedItem[] {
 
   let match;
   while ((match = itemRegex.exec(xml)) !== null) {
-    const block = match[1]!;
+    const block = match[1] ?? '';
     const extract = (tag: string): string => {
       const m = tagRegex(tag).exec(block);
       return (m?.[1] ?? m?.[2] ?? '').trim();

@@ -8,6 +8,9 @@ export default defineConfig({
     globals: false,
     environment: 'node',
     include: ['src/**/__tests__/**/*.test.ts', 'src/**/*.test.ts'],
+    // Exclude web API integration tests — they need Next.js path aliases and
+    // are run separately with:  vitest run --config vitest.integration.ts
+    exclude: ['src/__integration__/**'],
     passWithNoTests: true,
   },
   resolve: {

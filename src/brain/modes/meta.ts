@@ -68,10 +68,10 @@ export const cognitiveBiasAuditApply = async (ctx: BrainContext): Promise<Findin
 
   if (p.length >= 2) {
     const sorted = [...p].sort((a, b) => b.score - a.score);
-    const leader = sorted[0]!;
+    const leader = sorted[0];
     const rest = sorted.slice(1);
     const restMean = rest.reduce((a, f) => a + f.score, 0) / Math.max(1, rest.length);
-    if (leader.score > 0.7 && leader.score - restMean > 0.4) {
+    if (leader && leader.score > 0.7 && leader.score - restMean > 0.4) {
       biases.push(`anchoring:${leader.modeId} score ${leader.score.toFixed(2)} dominates rest (mean ${restMean.toFixed(2)})`);
     }
   }
@@ -184,7 +184,8 @@ export const popperFalsificationApply = async (ctx: BrainContext): Promise<Findi
     );
   }
   const sorted = [...p].sort((a, b) => b.score - a.score);
-  const leader = sorted[0]!;
+  const leader = sorted[0];
+  if (!leader) return metaFinding('popper_falsification', 'logic', ['reasoning'], 'inconclusive', 0, 'No findings to compare.');
   const dissenters = sorted.slice(1).filter((f) => leader.score - f.score >= 0.4);
 
   const activeFalsifiers = p.filter((f) =>

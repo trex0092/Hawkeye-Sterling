@@ -47,7 +47,6 @@ export function candidatePairs(
 ): Array<[string, string]> {
   const pairs: Array<[string, string]> = [];
   // Index B by each blocking key.
-  const idx: Record<string, Set<string>> = { initial: new Set(), soundex: new Set(), dm: new Set(), tok: new Set(), canon: new Set() };
   const byInitial = new Map<string, string[]>();
   const bySoundex = new Map<string, string[]>();
   const byDm = new Map<string, string[]>();
@@ -81,5 +80,5 @@ export function candidatePairs(
 function add<T>(m: Map<string, T[]>, key: string, v: T): void {
   if (!key) return;
   if (!m.has(key)) m.set(key, []);
-  m.get(key)!.push(v);
+  (m.get(key) ?? []).push(v);
 }

@@ -46,7 +46,7 @@ function median(xs: number[]): number {
   if (xs.length === 0) return 0;
   const s = [...xs].sort((a, b) => a - b);
   const n = s.length;
-  return n % 2 === 1 ? s[(n - 1) >> 1]! : (s[n / 2 - 1]! + s[n / 2]!) / 2;
+  return n % 2 === 1 ? (s[(n - 1) >> 1] ?? 0) : ((s[n / 2 - 1] ?? 0) + (s[n / 2] ?? 0)) / 2;
 }
 
 export interface CorroborationOptions {

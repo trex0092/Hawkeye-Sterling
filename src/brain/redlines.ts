@@ -453,9 +453,10 @@ export function evaluateRedlines(firedIds: string[]): RedlineCheck {
     freeze: 5, block: 4, escalate_immediately: 3, exit_relationship: 2, do_not_onboard: 1,
   };
   const sorted = [...fired].sort((a, b) => priority[b.action] - priority[a.action]);
+  const topAction = sorted[0]?.action ?? null;
   return {
     fired: sorted,
-    action: sorted[0]!.action,
-    summary: `Redlines fired: ${sorted.map((r) => r.id).join(', ')}. Overriding action: ${sorted[0]!.action}.`,
+    action: topAction,
+    summary: `Redlines fired: ${sorted.map((r) => r.id).join(', ')}. Overriding action: ${topAction ?? 'none'}.`,
   };
 }

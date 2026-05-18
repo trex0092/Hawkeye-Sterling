@@ -6,6 +6,7 @@
 // read-modify-write hazard. Cost is best-effort; individual records are still
 // stored append-first (newest at index 0) and truncated to MAX_RECORDS.
 
+import { randomBytes } from "node:crypto";
 import { getJson, setJson } from "./store";
 
 const CALLS_KEY = "llm-telemetry/calls";
@@ -47,7 +48,7 @@ function calcCost(model: string, inp: number, out: number, cacheRead: number, ca
 
 export async function recordCall(rec: Omit<LlmCallRecord, "id" | "at" | "costUsd">): Promise<void> {
   try {
-    const id = `${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    const id = `${Date.now()}_${randomBytes(4).toString("hex")}`;
     const costUsd = calcCost(rec.model, rec.inputTokens, rec.outputTokens, rec.cacheReadTokens, rec.cacheWriteTokens);
     const full: LlmCallRecord = { id, at: new Date().toISOString(), costUsd, ...rec };
 

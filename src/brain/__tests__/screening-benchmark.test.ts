@@ -17,8 +17,7 @@
 //   FPT — False-positive traps: common names, partial overlaps, should NOT match
 
 import { describe, expect, it } from 'vitest';
-import { quickScreen } from '../quick-screen.js';
-import type { QuickScreenCandidate } from '../quick-screen.js';
+import { type QuickScreenCandidate, quickScreen } from '../quick-screen.js';
 
 const MATCH_THRESHOLD = 0.75;   // score above which a hit is considered a match
 const BLOCK_THRESHOLD = 0.85;   // score below which FP traps must stay
@@ -172,7 +171,7 @@ describe("Screening benchmark — False-Positive Traps (single token)", () => {
       // Single tokens scoring "critical" is a known FP risk — document it.
       if (result.severity === "critical" || result.severity === "high") {
         // This is the documented known limitation — log for observability
-        console.log(`[benchmark] FP trap '${tc.subject}': severity=${result.severity}, topScore=${result.topScore.toFixed(3)} — requires human review`);
+        console.info(`[benchmark] FP trap '${tc.subject}': severity=${result.severity}, topScore=${result.topScore.toFixed(3)} — requires human review`);
       }
     });
   }

@@ -48,8 +48,23 @@ const PROVIDER_CATALOG: ProviderStatus[] = [
   { id: "gleif", category: "free-always-on", tier: "free-toggle", configured: false, envVars: ["GLEIF_ENABLED"], signupUrl: "https://www.gleif.org/en/lei-data/gleif-api" },
   { id: "opensanctions-free", category: "free-always-on", tier: "free-toggle", configured: false, envVars: ["OPENSANCTIONS_FREE_ENABLED"], signupUrl: "https://www.opensanctions.org/api/" },
   { id: "opencorporates-free", category: "free-always-on", tier: "free-toggle", configured: false, envVars: ["OPENCORPORATES_FREE_ENABLED"], signupUrl: "https://api.opencorporates.com/documentation/API-Reference" },
+  { id: "interpol-red-notices", category: "free-always-on", tier: "free-toggle", configured: false, envVars: ["INTERPOL_RED_NOTICES_ENABLED"], signupUrl: "https://www.interpol.int/en/How-we-work/Notices/Red-Notices/View-Red-Notices" },
+  { id: "fbi-most-wanted", category: "free-always-on", tier: "free-toggle", configured: false, envVars: ["FBI_MOST_WANTED_ENABLED"], signupUrl: "https://www.fbi.gov/wanted" },
+  { id: "occrp-aleph", category: "free-always-on", tier: "free-toggle", configured: false, envVars: ["OCCRP_ALEPH_ENABLED"], signupUrl: "https://aleph.occrp.org/" },
+  { id: "eu-fsf", category: "free-always-on", tier: "free-toggle", configured: false, envVars: ["EU_FSF_ENABLED"], signupUrl: "https://www.opensanctions.org/datasets/eu_fsf/" },
+  { id: "un-sc-sanctions", category: "free-always-on", tier: "free-toggle", configured: false, envVars: ["UN_SC_SANCTIONS_ENABLED"], signupUrl: "https://www.opensanctions.org/datasets/un_sc_sanctions/" },
+  { id: "bis-entity-list", category: "free-always-on", tier: "free-toggle", configured: false, envVars: ["BIS_ENTITY_LIST_ENABLED"], signupUrl: "https://www.opensanctions.org/datasets/us_bis_elist/" },
+  { id: "samgov-exclusions", category: "free-always-on", tier: "free-toggle", configured: false, envVars: ["SAMGOV_EXCLUSIONS_ENABLED"], signupUrl: "https://sam.gov/search/?index=ei" },
+  { id: "open-ownership", category: "free-always-on", tier: "free-toggle", configured: false, envVars: ["OPEN_OWNERSHIP_ENABLED"], signupUrl: "https://register.openownership.org/" },
+  { id: "eu-transparency-register", category: "free-always-on", tier: "free-toggle", configured: false, envVars: ["EU_TRANSPARENCY_REGISTER_ENABLED"], signupUrl: "https://ec.europa.eu/transparencyregister/" },
+  { id: "dfsa-register", category: "free-always-on", tier: "free-toggle", configured: false, envVars: ["DFSA_REGISTER_ENABLED"], signupUrl: "https://www.dfsa.ae/public-register" },
+  { id: "adgm-register", category: "free-always-on", tier: "free-toggle", configured: false, envVars: ["ADGM_REGISTER_ENABLED"], signupUrl: "https://www.adgm.com/fsra/public-register" },
+  { id: "cbuae-licensed", category: "free-always-on", tier: "free-toggle", configured: false, envVars: ["CBUAE_LICENSED_ENABLED"], signupUrl: "https://centralbank.ae/en/licensed-institutions" },
+  { id: "court-listener", category: "free-always-on", tier: "free-toggle", configured: false, envVars: ["COURT_LISTENER_ENABLED"], signupUrl: "https://www.courtlistener.com/api/" },
+  { id: "icij-offshore-leaks", category: "free-always-on", tier: "free-toggle", configured: false, envVars: ["ICIJ_OFFSHORE_LEAKS_ENABLED"], signupUrl: "https://offshoreleaks.icij.org/" },
+  { id: "imo-ship-registry", category: "free-always-on", tier: "free-toggle", configured: false, envVars: ["IMO_SHIP_REGISTRY_ENABLED"], signupUrl: "https://gisis.imo.org/public/ships/" },
+  { id: "faa-aircraft-registry", category: "free-always-on", tier: "free-toggle", configured: false, envVars: ["FAA_AIRCRAFT_REGISTRY_ENABLED"], signupUrl: "https://registry.faa.gov/aircraftinquiry/" },
   { id: "sec-edgar", category: "country-registry", tier: "free-toggle", configured: false, envVars: ["SEC_EDGAR_ENABLED"], signupUrl: "https://www.sec.gov/edgar.shtml" },
-  { id: "icij-offshore-leaks", category: "registry", tier: "free-toggle", configured: false, envVars: ["ICIJ_OFFSHORE_LEAKS_ENABLED"], signupUrl: "https://offshoreleaks.icij.org/" },
   { id: "br-receita", category: "country-registry", tier: "free-toggle", configured: false, envVars: ["BR_RECEITA_ENABLED"], signupUrl: "https://www.receita.fazenda.gov.br/" },
   { id: "co-rues", category: "country-registry", tier: "free-toggle", configured: false, envVars: ["CO_RUES_ENABLED"], signupUrl: "https://www.rues.org.co/" },
   { id: "ua-yedr", category: "country-registry", tier: "free-toggle", configured: false, envVars: ["UA_YEDR_ENABLED"], signupUrl: "https://opendatabot.ua/" },
@@ -61,7 +76,6 @@ const PROVIDER_CATALOG: ProviderStatus[] = [
   { id: "mastodon", category: "news", tier: "free-toggle", configured: false, envVars: ["MASTODON_INSTANCE"], signupUrl: "https://joinmastodon.org/" },
 
   // ── Tier 1 — free keys (news/adverse-media) ─────────────────────
-  { id: "occrp-aleph", category: "news", tier: "free", configured: false, envVars: ["ALEPH_API_KEY"], signupUrl: "https://aleph.occrp.org/" },
   { id: "propublica", category: "news", tier: "free", configured: false, envVars: ["PROPUBLICA_API_KEY"], signupUrl: "https://www.propublica.org/datastore/api" },
   { id: "newsapi", category: "news", tier: "free", configured: false, envVars: ["NEWSAPI_API_KEY"], signupUrl: "https://newsapi.org/register" },
   { id: "gnews", category: "news", tier: "free", configured: false, envVars: ["GNEWS_API_KEY"], signupUrl: "https://gnews.io/register" },
@@ -84,7 +98,10 @@ const PROVIDER_CATALOG: ProviderStatus[] = [
   { id: "mediacloud", category: "news", tier: "free", configured: false, envVars: ["MEDIACLOUD_API_KEY"], signupUrl: "https://mediacloud.org/" },
   { id: "stocknews", category: "news", tier: "free", configured: false, envVars: ["STOCKNEWS_API_KEY"], signupUrl: "https://stocknewsapi.com/" },
 
-  // ── Tier 1 — free corporate registries ──────────────────────────
+  // ── AI-native search adapters (adverse media) ───────────────────
+  { id: "tavily", category: "news", tier: "free", configured: false, envVars: ["TAVILY_API_KEY"], signupUrl: "https://app.tavily.com/" },
+  { id: "exa", category: "news", tier: "free", configured: false, envVars: ["EXA_API_KEY"], signupUrl: "https://exa.ai/" },
+  { id: "perplexity", category: "news", tier: "free", configured: false, envVars: ["PERPLEXITY_API_KEY"], signupUrl: "https://www.perplexity.ai/settings/api" },
   { id: "companies-house", category: "country-registry", tier: "free", configured: false, envVars: ["COMPANIES_HOUSE_API_KEY"], signupUrl: "https://developer-specs.company-information.service.gov.uk/" },
   { id: "opencorporates", category: "registry", tier: "free", configured: false, envVars: ["OPENCORPORATES_API_KEY"], signupUrl: "https://opencorporates.com/api_accounts/new" },
   { id: "fca-register", category: "country-registry", tier: "free", configured: false, envVars: ["FCA_API_KEY", "FCA_API_EMAIL"], signupUrl: "https://register.fca.org.uk/Services/V0.1/Documentation" },
@@ -176,6 +193,8 @@ const PROVIDER_CATALOG: ProviderStatus[] = [
 
   // ── LLM (operator already has this for AI features) ─────────────
   { id: "claude-adverse-media", category: "news", tier: "free", configured: false, envVars: ["ANTHROPIC_API_KEY"], signupUrl: "https://console.anthropic.com/" },
+  { id: "groq-adverse-media", category: "news", tier: "free", configured: false, envVars: ["GROQ_API_KEY"], signupUrl: "https://console.groq.com/" },
+  { id: "gemini-adverse-media", category: "news", tier: "free", configured: false, envVars: ["GEMINI_API_KEY"], signupUrl: "https://aistudio.google.com/app/apikey" },
 ];
 
 function isToggleOn(envKey: string): boolean {
@@ -260,6 +279,7 @@ export async function GET(req: Request): Promise<NextResponse> {
     },
     {
       headers: {
+        ...gate.headers,
         "cache-control": "no-store",
         "access-control-allow-origin": process.env["NEXT_PUBLIC_APP_URL"] ?? "https://hawkeye-sterling.netlify.app",
       },

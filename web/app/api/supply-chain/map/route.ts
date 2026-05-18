@@ -1,5 +1,6 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 
 import { NextResponse } from "next/server";
 
@@ -81,11 +82,11 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const company = body.company ?? "Company";
-  const suppliers = body.suppliers ?? [];
+  const suppliers = Array.isArray(body.suppliers) ? body.suppliers : [];
 
   // Build nodes
   const nodes: MapNode[] = [];
@@ -146,5 +147,5 @@ export async function POST(req: Request) {
     nodes,
     edges,
     countryRiskSummary,
-  } satisfies SupplyChainMapResult);
+  } satisfies SupplyChainMapResult, { headers: gate.headers });
 }

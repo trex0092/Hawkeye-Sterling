@@ -10,6 +10,33 @@ import type {
 } from "@/lib/api/quickScreen.types";
 import { loadCandidates } from "@/lib/server/candidates-loader";
 import { classifyAdverseKeywords } from "@/lib/data/adverse-keywords";
+
+const KEYWORD_GROUP_WEIGHT: Record<string, number> = {
+  "terrorism-financing": 20,
+  "proliferation-wmd": 20,
+  "regulatory-action": 14,
+  "bribery-corruption": 14,
+  "money-laundering": 14,
+  "organised-crime": 14,
+  "environmental-crime": 12,
+  "human-trafficking": 12,
+  "fraud-forgery": 12,
+  "market-abuse": 10,
+  "tax-crime": 10,
+  "cybercrime": 10,
+  "insider-threat": 10,
+  "ai-misuse": 10,
+  "law-enforcement": 6,
+  "political-exposure": 2,
+};
+
+function scoreToBand(score: number): string {
+  if (score >= 85) return "critical";
+  if (score >= 70) return "high";
+  if (score >= 50) return "medium";
+  if (score >= 25) return "low";
+  return "clear";
+}
 import { classifyEsg } from "@/lib/data/esg";
 import { enforce } from "@/lib/server/enforce";
 import { postWebhook } from "@/lib/server/webhook";
@@ -65,6 +92,7 @@ interface RowResult {
   jurisdiction?: string;
   idNumber?: string;
   topScore: number;
+  rawScore: number;
   severity: string;
   hitCount: number;
   listCoverage: string[];
@@ -160,6 +188,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       return {
         name: row?.name ?? "",
         topScore: 0,
+        rawScore: 0,
         severity: "error",
         hitCount: 0,
         listCoverage: [],
@@ -186,6 +215,14 @@ export async function POST(req: Request): Promise<NextResponse> {
     const esg = classifyEsg(haystack);
     const kwGroups = Array.from(new Set(kw.map((k) => k.group)));
     const esgCats = Array.from(new Set(esg.map((e) => e.categoryId)));
+
+    // Keyword-adjusted composite score — adverse-media keywords must factor
+    // into risk severity so a subject with terrorism-financing or
+    // money-laundering coverage cannot score "clear".
+    const kwBoost = Math.min(30, kwGroups.reduce((sum, g) => sum + (KEYWORD_GROUP_WEIGHT[g] ?? 0), 0));
+    const adjustedScore = Math.min(100, screen.topScore + kwBoost);
+    const adjustedSeverity = scoreToBand(adjustedScore);
+
     const checkpoints = computeCheckpoints(row, screen, kwGroups, esgCats);
 
     // External cross-validation is skipped for large batches (>500 rows) —
@@ -218,8 +255,9 @@ export async function POST(req: Request): Promise<NextResponse> {
 
     const row_result: RowResult = {
       name: row.name,
-      topScore: screen.topScore,
-      severity: screen.severity,
+      topScore: adjustedScore,
+      rawScore: screen.topScore,
+      severity: adjustedSeverity,
       hitCount: screen.hits.length,
       listCoverage: Array.from(new Set(screen.hits.map((h) => h.listId))),
       keywordGroups: kwGroups,
@@ -243,16 +281,18 @@ export async function POST(req: Request): Promise<NextResponse> {
       try {
         results.push(await processRow(row));
       } catch (err) {
+        console.error("[batch-screen] processRow failed:", err instanceof Error ? err.message : err);
         results.push({
           name: row?.name ?? "",
           topScore: 0,
+          rawScore: 0,
           severity: "error",
           hitCount: 0,
           listCoverage: [],
           keywordGroups: [],
           esgCategories: [],
           durationMs: 0,
-          error: err instanceof Error ? err.message : String(err),
+          error: "Screening failed — please retry.",
         });
       }
     }
@@ -263,17 +303,21 @@ export async function POST(req: Request): Promise<NextResponse> {
       const chunk = body.rows.slice(i, i + BATCH_CONCURRENCY);
       const chunkResults = await Promise.all(
         chunk.map((row) =>
-          processRow(row).catch((err: unknown) => ({
-            name: row?.name ?? "",
-            topScore: 0,
-            severity: "error" as const,
-            hitCount: 0,
-            listCoverage: [] as string[],
-            keywordGroups: [] as string[],
-            esgCategories: [] as string[],
-            durationMs: 0,
-            error: err instanceof Error ? err.message : String(err),
-          }))
+          processRow(row).catch((err: unknown) => {
+            console.error("[batch-screen] processRow chunk failed:", err instanceof Error ? err.message : err);
+            return {
+              name: row?.name ?? "",
+              topScore: 0,
+              rawScore: 0,
+              severity: "error" as const,
+              hitCount: 0,
+              listCoverage: [] as string[],
+              keywordGroups: [] as string[],
+              esgCategories: [] as string[],
+              durationMs: 0,
+              error: "Screening failed — please retry.",
+            };
+          })
         )
       );
       results.push(...chunkResults);

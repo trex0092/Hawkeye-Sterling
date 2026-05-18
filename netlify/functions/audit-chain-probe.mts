@@ -14,6 +14,7 @@
 import type { Config } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
 import { emit } from '../../dist/src/integrations/webhook-emitter.js';
+import { writeHeartbeat } from '../lib/heartbeat.js';
 
 const STORE_NAME = 'hawkeye-audit-chain';
 const CHAIN_KEY = 'chain.json';
@@ -158,6 +159,7 @@ export default async function handler(_req: Request): Promise<Response> {
     }
   }
 
+  await writeHeartbeat(RUN_LABEL);
   return jsonResponse({ label: RUN_LABEL, ...outcome });
 }
 

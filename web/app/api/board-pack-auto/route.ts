@@ -97,12 +97,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const { metrics } = body;
   if (!metrics || !metrics.periodStart || !metrics.periodEnd) {
-    return NextResponse.json({ error: "metrics with periodStart and periodEnd are required" }, { status: 400 });
+    return NextResponse.json({ error: "metrics with periodStart and periodEnd are required" }, { status: 400 , headers: gate.headers });
   }
 
   const strRate = metrics.totalTransactions && metrics.strsFiled
@@ -165,7 +165,7 @@ ${metrics.regulatoryChanges?.join("\n") ?? "None noted"}
 
   try {
     const apiKey = process.env.ANTHROPIC_API_KEY ?? "";
-    const anthropic = getAnthropicClient(apiKey, 60_000, "board-pack-auto");
+    const anthropic = getAnthropicClient(apiKey, 85_000, "board-pack-auto");
     const prompt = `You are a senior UAE AML/CFT compliance advisor preparing a board-level AML report for a DPMS (gold/precious metals dealer). Write a professional, compliance-grade board AML report using the data below.
 
 ${dataContext}
@@ -188,11 +188,12 @@ Ensure each field is a complete, well-written paragraph or set of bullet points 
 
     const msg = await anthropic.messages.create({
       model: "claude-sonnet-4-6",
-      max_tokens: 2000,
+      max_tokens: 700,
       messages: [{ role: "user", content: prompt }],
     });
 
-    const raw = (msg.content[0] as { type: string; text: string }).text?.trim() ?? "";
+    const block = msg.content[0];
+    const raw = block?.type === "text" ? (block as { type: "text"; text: string }).text.trim() : "";
     let sections: Record<string, string> = {};
 
     // Parse JSON response
@@ -225,11 +226,12 @@ Ensure each field is a complete, well-written paragraph or set of bullet points 
       generatedAt: new Date().toISOString(),
     };
 
-    return NextResponse.json(result);
+    return NextResponse.json(result, { headers: gate.headers });
   } catch (err) {
+    console.error("[board-pack-auto] unhandled exception:", err instanceof Error ? err.message : err);
     return NextResponse.json(
-      { error: "Report generation failed", detail: err instanceof Error ? err.message : String(err) },
-      { status: 500 }
+      { error: "Report generation failed — please retry or contact support." },
+      { status: 500, headers: gate.headers }
     );
   }
 }

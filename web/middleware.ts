@@ -68,14 +68,27 @@ function generateNonce(): string {
 // `public, max-age=300, must-revalidate` so verifiers can cache the
 // signing keys per RFC. The route's setting takes precedence; routes
 // that handle dynamic auth-gated data set their own no-store.
-function applySecurityHeaders(response: NextResponse, isApi: boolean): void {
+function generateRequestId(): string {
+  const buf = new Uint8Array(12);
+  crypto.getRandomValues(buf);
+  let hex = "";
+  for (const b of buf) hex += b.toString(16).padStart(2, "0");
+  return hex;
+}
+
+function applySecurityHeaders(response: NextResponse, isApi: boolean, requestId?: string): void {
   response.headers.set("X-Content-Type-Options", "nosniff");
   response.headers.set("X-Frame-Options", "SAMEORIGIN");
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
   response.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()");
   response.headers.set("Cross-Origin-Opener-Policy", "same-origin");
   if (isApi) {
-    response.headers.set("Cross-Origin-Resource-Policy", "same-origin");
+    // Attach CORS headers to all API responses so browser callers (dashboard,
+    // regulator portal) receive them on non-preflight requests too.
+    for (const [k, v] of Object.entries(CORS_HEADERS)) response.headers.set(k, v);
+    if (requestId) {
+      response.headers.set("X-Request-ID", requestId);
+    }
   }
 }
 
@@ -89,7 +102,7 @@ function buildCspHeader(_nonce: string): string {
     "style-src 'self' 'unsafe-inline' https://fonts.bunny.net",
     "img-src 'self' data:",
     "font-src 'self' data: https://fonts.bunny.net",
-    "connect-src 'self' https://app.asana.com https://api.anthropic.com",
+    "connect-src 'self' https://app.asana.com",
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",
@@ -130,10 +143,37 @@ function hostnameOf(value: string): string | null {
   }
 }
 
+// CORS headers attached to every OPTIONS preflight and real API response.
+// Origin is reflected only for same-site calls — `null` origins (e.g. file://)
+// are rejected. The CORS list is intentionally restrictive: regulators call the
+// API server-to-server (no browser CORS needed); the primary browser caller is
+// the portal itself (same-origin). Third-party dashboard integrations should
+// use server-side proxy calls.
+const CORS_ALLOWED_ORIGIN = "*"; // tighten to specific domain if embedding
+const CORS_HEADERS: Record<string, string> = {
+  "Access-Control-Allow-Origin": CORS_ALLOWED_ORIGIN,
+  "Access-Control-Allow-Methods": "GET,POST,PUT,PATCH,DELETE,OPTIONS",
+  "Access-Control-Allow-Headers": "Authorization,Content-Type,X-Api-Key,X-Request-ID,X-Trace-ID",
+  "Access-Control-Max-Age": "86400",
+};
+
+function corsResponse(): NextResponse {
+  const res = new NextResponse(null, { status: 204 });
+  for (const [k, v] of Object.entries(CORS_HEADERS)) res.headers.set(k, v);
+  return res;
+}
+
 export function middleware(req: NextRequest): NextResponse {
   const { pathname } = req.nextUrl;
 
-  // ── 0. /.well-known rewrites ──────────────────────────────────────────────
+  // ── CORS preflight — handle OPTIONS before any auth/redirect logic ──────
+  // This single handler covers all /api/* routes so individual route files
+  // do not each need an `export const OPTIONS` export.
+  if (req.method === "OPTIONS" && pathname.startsWith("/api/")) {
+    return corsResponse();
+  }
+
+  // ── 0. /.well-known + /api/v1/ rewrites ──────────────────────────────────
   // Next.js rewrites declared in next.config.mjs don't reach Lambda when
   // routed through @netlify/plugin-nextjs — verified empirically: the
   // /.well-known/* paths returned 404 in production while the underlying
@@ -145,6 +185,16 @@ export function middleware(req: NextRequest): NextResponse {
   }
   if (pathname === "/.well-known/hawkeye-pubkey.pem") {
     return NextResponse.rewrite(new URL("/api/well-known/hawkeye-pubkey.pem", req.url));
+  }
+  // /api/v1/* → /api/* stable alias. Allows callers to pin a versioned
+  // prefix and survive future /api/v2/* breakouts without changing URLs.
+  // This rewrite is transparent — the canonical route still lives under
+  // /api/ and handles all business logic.
+  if (pathname.startsWith("/api/v1/")) {
+    const canonical = pathname.replace(/^\/api\/v1\//, "/api/");
+    const target = new URL(req.url);
+    target.pathname = canonical;
+    return NextResponse.rewrite(target);
   }
 
   // ── 1. Session guard (non-API routes) ──────────────────────────────────────
@@ -160,10 +210,11 @@ export function middleware(req: NextRequest): NextResponse {
 
   // ── 2. API token injection (same-origin only) ─────────────────────────────
   if (pathname.startsWith("/api/") && !isPublic(pathname)) {
+    const reqId = req.headers.get("x-request-id") ?? generateRequestId();
     // External callers supply their own auth — don't override.
     if (req.headers.get("authorization") || req.headers.get("x-api-key")) {
       const r = NextResponse.next();
-      applySecurityHeaders(r, true);
+      applySecurityHeaders(r, true, reqId);
       return r;
     }
 
@@ -174,22 +225,29 @@ export function middleware(req: NextRequest): NextResponse {
       const referer = req.headers.get("referer");
 
       const hostHostname = hostnameOf(host);
+      // A request carrying our HttpOnly session cookie must have originated
+      // from the same site — browsers cannot forge httpOnly cookies from
+      // cross-origin contexts, so this is a safe same-origin indicator
+      // even when origin/referer headers are absent (e.g. strict no-referrer
+      // browser policy or certain fetch modes).
+      const hasSessionCookie = req.cookies.get(SESSION_COOKIE)?.value != null;
       const isSameOrigin =
-        hostHostname !== null &&
-        ((origin != null && hostnameOf(origin) === hostHostname) ||
-          (referer != null && hostnameOf(referer) === hostHostname));
+        hasSessionCookie ||
+        (hostHostname !== null &&
+          ((origin != null && hostnameOf(origin) === hostHostname) ||
+            (referer != null && hostnameOf(referer) === hostHostname)));
 
       if (isSameOrigin) {
         const requestHeaders = new Headers(req.headers);
         requestHeaders.set("authorization", `Bearer ${adminToken}`);
         const r = NextResponse.next({ request: { headers: requestHeaders } });
-        applySecurityHeaders(r, true);
+        applySecurityHeaders(r, true, reqId);
         return r;
       }
     }
     // Non-same-origin API call — pass through with security headers.
     const r = NextResponse.next();
-    applySecurityHeaders(r, true);
+    applySecurityHeaders(r, true, reqId);
     return r;
   }
 

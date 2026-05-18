@@ -93,7 +93,7 @@ export interface TransliterationResult {
 export function transliterate(input: string): TransliterationResult {
   if (!input) return { original: input, transliterated: input, scriptDetected: "unknown" };
 
-  let scriptCounts = { latin: 0, cyrillic: 0, arabic: 0, hebrew: 0, greek: 0, cjk: 0 };
+  const scriptCounts = { latin: 0, cyrillic: 0, arabic: 0, hebrew: 0, greek: 0, cjk: 0 };
   for (const ch of input) {
     const code = ch.codePointAt(0) ?? 0;
     if ((code >= 0x0041 && code <= 0x007A) || (code >= 0x00C0 && code <= 0x024F)) scriptCounts.latin++;

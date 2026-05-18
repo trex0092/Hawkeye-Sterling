@@ -54,6 +54,7 @@ async function handlePost(req: Request): Promise<NextResponse> {
   catch { return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 }); }
 
   if (!body.name) return NextResponse.json({ ok: false, error: "name is required" }, { status: 400 });
+  if (body.name.length > 500) return NextResponse.json({ ok: false, error: "name exceeds 500-character limit" }, { status: 400 });
 
   const id = body.id ?? `pkyc-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const now = new Date().toISOString();

@@ -18,6 +18,7 @@
 
 import { NextResponse } from "next/server";
 import { parseCfsPayload } from "@/lib/lseg/cfs-parser";
+import { invalidateCandidateCache } from "@/lib/server/candidates-loader";
 import {
   classifyToSanctionsListIds,
   LSEG_SUPPLEMENT_LIST_IDS,
@@ -66,6 +67,57 @@ function credentials(): { siteID?: string; token?: string } {
   if (siteID) out.siteID = siteID;
   if (token) out.token = token;
   return out;
+}
+
+// GET /api/admin/import-cfs — returns the manifest written by the last POST run.
+// Lets operators see when CFS import last ran and how many entities it indexed,
+// without triggering a full re-import.
+export async function GET(req: Request): Promise<NextResponse> {
+  const expected = process.env["ADMIN_TOKEN"];
+  if (!expected) {
+    return NextResponse.json(
+      { ok: false, error: "service unavailable — ADMIN_TOKEN not set" },
+      { status: 503 },
+    );
+  }
+  const got = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "";
+  if (!got || !(await timingSafeTokenCheck(got, expected))) {
+    return NextResponse.json({ ok: false, error: "forbidden" }, { status: 403 });
+  }
+
+  let mod: BlobsModuleShape;
+  try {
+    mod = (await import("@netlify/blobs")) as unknown as BlobsModuleShape;
+  } catch (err) {
+    return NextResponse.json(
+      { ok: false, error: `@netlify/blobs unavailable — ${err instanceof Error ? err.message : String(err)}` },
+      { status: 503 },
+    );
+  }
+
+  const creds = credentials();
+  const indexStore = mod.getStore({
+    name: "hawkeye-lseg-pep-index",
+    ...(creds.siteID ? { siteID: creds.siteID } : {}),
+    ...(creds.token ? { token: creds.token } : {}),
+    consistency: "strong",
+  });
+
+  try {
+    const manifest = await indexStore.get("manifest.json", { type: "json" });
+    if (!manifest) {
+      return NextResponse.json(
+        { ok: true, ran: false, hint: "No import has run yet. POST to this endpoint to import CFS files." },
+        { status: 200 },
+      );
+    }
+    return NextResponse.json({ ok: true, ran: true, manifest }, { status: 200 });
+  } catch (err) {
+    return NextResponse.json(
+      { ok: false, error: `manifest read failed — ${err instanceof Error ? err.message : String(err)}` },
+      { status: 503 },
+    );
+  }
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
@@ -434,6 +486,10 @@ export async function POST(req: Request): Promise<NextResponse> {
   } catch (err) {
     console.warn("[import-cfs] sanctions supplement write failed:", err instanceof Error ? err.message : err);
   }
+
+  // Invalidate the in-process candidates cache so screening routes immediately
+  // pick up the newly imported LSEG sanctions supplement instead of waiting for the TTL.
+  invalidateCandidateCache();
 
   return NextResponse.json({
     ok: true,

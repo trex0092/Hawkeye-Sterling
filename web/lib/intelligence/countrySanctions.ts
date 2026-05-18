@@ -8,8 +8,7 @@
 // keep the always-on surface explicit. They mirror RegistryAdapter so
 // they can plug straight into the country dispatcher.
 
-import type { RegistryAdapter, RegistryRecord } from "./registryAdapters";
-import { NULL_REGISTRY_ADAPTER } from "./registryAdapters";
+import { NULL_REGISTRY_ADAPTER, type RegistryAdapter, type RegistryRecord } from "./registryAdapters";
 
 const FETCH_TIMEOUT_MS = 12_000;
 

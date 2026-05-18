@@ -4,6 +4,7 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 export interface LayeringResult {
   layeringRisk: "critical" | "high" | "medium" | "low" | "none";
   placementIndicators: string[];
@@ -107,18 +108,18 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
-  if (!body.transactions?.trim()) return NextResponse.json({ ok: false, error: "transactions required" }, { status: 400 , headers: gate.headers});
+  if (!body.transactions?.trim()) return NextResponse.json({ ok: false, error: "transactions required" }, { status: 400 , headers: gate.headers });
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "layering-detector temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "layering-detector temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
     const client = getAnthropicClient(apiKey, 55_000);
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 1500,
+      max_tokens: 700,
       system: [
         {
           type: "text",
@@ -128,19 +129,24 @@ export async function POST(req: Request) {
       ],
       messages: [{
         role: "user",
-        content: `Transaction Description: ${body.transactions}
-Subject Name: ${body.subjectName ?? "not provided"}
-Account References: ${body.accountRefs ?? "not provided"}
-Period Under Review: ${body.periodDays ? body.periodDays + " days" : "not specified"}
-Additional Context: ${body.context ?? "none"}
+        content: `Transaction Description: ${sanitizeText(body.transactions, 2000)}
+Subject Name: ${sanitizeField(body.subjectName, 500) ?? "not provided"}
+Account References: ${sanitizeField(body.accountRefs, 500) ?? "not provided"}
+Period Under Review: ${body.periodDays ? sanitizeField(body.periodDays, 50) + " days" : "not specified"}
+Additional Context: ${sanitizeText(body.context, 2000) ?? "none"}
 
 Analyse for money laundering placement, layering, and integration stages. Return complete LayeringResult JSON.`,
       }],
     });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as LayeringResult;
+    if (!Array.isArray(result.placementIndicators)) result.placementIndicators = [];
+    if (!Array.isArray(result.layeringIndicators)) result.layeringIndicators = [];
+    if (!Array.isArray(result.integrationIndicators)) result.integrationIndicators = [];
+    if (!Array.isArray(result.indicators)) result.indicators = [];
+    if (!Array.isArray(result.requiredActions)) result.requiredActions = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "layering-detector temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "layering-detector temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

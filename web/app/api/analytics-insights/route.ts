@@ -83,7 +83,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as RequestBody;
   } catch {
-    return NextResponse.json({ error: "invalid JSON body" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ error: "invalid JSON body" }, { status: 400 , headers: gate.headers });
   }
 
   const kpis = body.kpis ?? {};
@@ -92,14 +92,14 @@ export async function POST(req: Request): Promise<NextResponse> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     writeAuditEvent("analyst", "analytics.ai-insights", `no-api-key — period: ${period}`);
-    return NextResponse.json({ ok: false, error: "analytics-insights temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "analytics-insights temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 
   try {
     const client = getAnthropicClient(apiKey, 55_000);
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 2048,
+      max_tokens: 700,
       system: SYSTEM_PROMPT,
       messages: [
         {
@@ -115,6 +115,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     const stripped = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "");
 
     const parsed = JSON.parse(stripped) as AnalyticsInsightsResponse;
+    if (!Array.isArray(parsed.insights)) parsed.insights = [];
+    if (!Array.isArray(parsed.boardTalkingPoints)) parsed.boardTalkingPoints = [];
 
     writeAuditEvent(
       "analyst",
@@ -126,6 +128,6 @@ export async function POST(req: Request): Promise<NextResponse> {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     writeAuditEvent("analyst", "analytics.ai-insights", `error — ${msg}`);
-    return NextResponse.json({ ok: false, error: "analytics-insights temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "analytics-insights temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

@@ -2,8 +2,7 @@
 // Source (anonymous endpoint): https://webgate.ec.europa.eu/fsd/fsf/public/files/xmlFullSanctionsList_1_1/content?token=dG9rZW4tMjAxNw
 // Official EEAS consolidated XML — token is public, embedded in the portal.
 
-import type { SourceAdapter, NormalisedEntity, EntityType } from '../types.js';
-import { mkListing } from '../types.js';
+import { type SourceAdapter, type NormalisedEntity, type EntityType, mkListing } from '../types.js';
 import { fetchText, sha256Hex } from '../fetch-util.js';
 import { parseXml, findAll } from '../xml-lite.js';
 
@@ -20,8 +19,31 @@ export const euFsfAdapter: SourceAdapter = {
     const fetchedAt = Date.now();
     const entities: NormalisedEntity[] = [];
 
-    for (const entry of findAll(root, 'sanctionEntity')) {
-      const logicalId = entry.attrs['logicalId'] ?? entry.attrs['euReferenceNumber'] ?? '';
+    const topTags = [...new Set(root.children.map((c) => c.tag))].slice(0, 10);
+    let sanctionEntries = findAll(root, 'sanctionEntity');
+
+    // EU FSF schema migration: v1.x uses <sanctionEntity>, v2.x uses <subject>.
+    // Try both so the adapter survives a schema upgrade without a deploy.
+    if (sanctionEntries.length === 0) {
+      const subjectEntries = findAll(root, 'subject');
+      if (subjectEntries.length > 0) {
+        console.info(
+          `[eu_fsf] fallback: found ${subjectEntries.length} <subject> nodes (v2 schema). ` +
+          `Top-level tags: [${topTags.join(', ')}]`,
+        );
+        sanctionEntries = subjectEntries;
+      } else {
+        console.warn(
+          `[eu_fsf] findAll('sanctionEntity'/'subject') both returned 0 nodes. ` +
+          `Top-level tags: [${topTags.join(', ')}]. ` +
+          `XML length: ${xml.length} bytes. ` +
+          `First 400 chars: ${xml.slice(0, 400).replace(/\s+/g, ' ')}`,
+        );
+      }
+    }
+
+    for (const entry of sanctionEntries) {
+      const logicalId = entry.attrs['logicalId'] ?? entry.attrs['euReferenceNumber'] ?? entry.attrs['id'] ?? '';
       const subject = findAll(entry, 'subjectType')[0];
       const subjectCode = subject?.attrs['code']?.toLowerCase();
       const t: EntityType = subjectCode === 'person' ? 'individual'
@@ -53,6 +75,14 @@ export const euFsfAdapter: SourceAdapter = {
         source: 'eu_fsf', fetchedAt,
       });
     }
+    if (entities.length === 0) {
+      throw new Error(
+        `[eu_fsf] parsed 0 entities — refusing to write empty blob. ` +
+        `XML length: ${xml.length} bytes. Top-level tags: [${topTags.join(", ")}]. ` +
+        `Check that ${SOURCE_URL} still returns the consolidated sanctions XML.`,
+      );
+    }
+    console.info(`[eu_fsf] parsed ${entities.length} entities`);
     return { entities, rawChecksum };
   },
 };

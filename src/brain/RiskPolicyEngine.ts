@@ -417,7 +417,7 @@ const POLICY_PROFILES: Record<string, PolicyWeights> = {
 
 export function computeRiskPolicy(input: RiskPolicyInput): RiskPolicyResult {
   const profileId = input.policyProfileId ?? 'default';
-  const weights = POLICY_PROFILES[profileId] ?? POLICY_PROFILES['default']!;
+  const weights = POLICY_PROFILES[profileId] ?? POLICY_PROFILES['default'] ?? ({} as typeof POLICY_PROFILES['default']);
 
   // Compute per-axis scores
   const nationalityRisk = jurisdictionRiskScore(input.nationalityIso ?? 'XX');

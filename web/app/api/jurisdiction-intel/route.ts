@@ -87,18 +87,18 @@ export async function POST(req: Request): Promise<NextResponse> {
   const apiKey = process.env["ANTHROPIC_API_KEY"];
 
   if (!apiKey) {
-    return NextResponse.json({ ok: false, error: "jurisdiction-intel temporarily unavailable - please retry." }, { status: 503 });
+    return NextResponse.json({ ok: false, error: "jurisdiction-intel temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 
   let body: Body;
   try {
     body = (await req.json()) as Body;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   if (!body?.country?.trim()) {
-    return NextResponse.json({ ok: false, error: "country is required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "country is required" }, { status: 400 , headers: gate.headers });
   }
 
   const lines: string[] = [`Country: ${body.country.trim()}`];
@@ -109,10 +109,10 @@ export async function POST(req: Request): Promise<NextResponse> {
   let result: JurisdictionIntelResult;
 
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 55_000);
     const res = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 2048,
+        max_tokens: 700,
         system: SYSTEM_PROMPT,
         messages: [{ role: "user", content: userContent }],
       });
@@ -121,13 +121,17 @@ export async function POST(req: Request): Promise<NextResponse> {
     const raw = res.content[0]?.type === "text" ? res.content[0].text : "";
     const cleaned = raw.replace(/^```json?\s*/i, "").replace(/\s*```$/i, "").trim();
     result = JSON.parse(cleaned) as JurisdictionIntelResult;
+    if (!Array.isArray(result.keyRisks)) result.keyRisks = [];
+    if (!Array.isArray(result.dpmsSpecificRisks)) result.dpmsSpecificRisks = [];
+    if (!Array.isArray(result.typologiesPrevalent)) result.typologiesPrevalent = [];
+    if (!Array.isArray(result.riskMitigation)) result.riskMitigation = [];
   } catch {
-    return NextResponse.json({ ok: false, error: "jurisdiction-intel temporarily unavailable - please retry." }, { status: 503 });
+    return NextResponse.json({ ok: false, error: "jurisdiction-intel temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 
   try {
     writeAuditEvent("analyst", "jurisdiction.ai-intelligence", body.country.trim());
   } catch { /* non-blocking */ }
 
-  return NextResponse.json({ ok: true, ...result });
+  return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
 }

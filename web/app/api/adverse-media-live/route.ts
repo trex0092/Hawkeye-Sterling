@@ -246,7 +246,7 @@ async function enrichWithClaude(
     return { summary: buildFallbackSummary(subjectName, articles, riskScore, riskRating), articlesWithCategories: articles, enriched: false };
   }
 
-  const client = getAnthropicClient(apiKey, 22_000);
+  const client = getAnthropicClient(apiKey, 40_000);
 
   const articleSummaries = articles
     .slice(0, 8)
@@ -278,12 +278,12 @@ Generate the JSON response.`;
   try {
     const msg = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 1500,
+      max_tokens: 700,
       system: [{ type: "text", text: systemPrompt, cache_control: { type: "ephemeral" } }],
       messages: [{ role: "user", content: userPrompt }],
     });
 
-    const text = msg.content.find((b) => b.type === "text")?.text ?? "";
+    const text = (msg.content.find(b => b.type === "text") as { text: string } | undefined)?.text ?? "";
     // Extract JSON from response — null match goes through the catch
     // below as "no JSON in response", never as a TypeError.
     const jsonMatch = text.match(/\{[\s\S]*\}/);
@@ -387,7 +387,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   } catch {
     return NextResponse.json(
       { ok: false, error: "invalid JSON body" },
-      { status: 400 },
+      { status: 400, headers: gate.headers }
     );
   }
 
@@ -395,7 +395,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (!subjectName) {
     return NextResponse.json(
       { ok: false, error: "subjectName is required" },
-      { status: 400 },
+      { status: 400, headers: gate.headers }
     );
   }
 
@@ -407,7 +407,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   // Fan-out GDELT queries — each name variant wrapped independently so a
   // timeout on one variant cannot abort the others. Each variant routes
   // through the GDELT cache layer (memory → Redis → live).
-  let rawArticles: GdeltArticle[] = [];
+  const rawArticles: GdeltArticle[] = [];
   const gdeltSettled = await Promise.allSettled(variants.map((v) => queryGdelt(v)));
 
   const seenGdeltUrls = new Set<string>();
@@ -435,13 +435,20 @@ export async function POST(req: Request): Promise<NextResponse> {
       }
     }
   }
-  if (anyGdeltSucceeded) {
-    sourcesSucceeded.push(anyStale ? "gdelt (stale cache)" : "gdelt");
+  let gdeltStatus: "ok" | "stale" | "timeout" | "unavailable";
+  if (anyGdeltSucceeded && !anyStale) {
+    gdeltStatus = "ok";
+    sourcesSucceeded.push("gdelt");
+  } else if (anyGdeltSucceeded && anyStale) {
+    gdeltStatus = "stale";
+    sourcesSucceeded.push("gdelt (stale cache)");
   } else if (anyStale && rawArticles.length > 0) {
+    gdeltStatus = "stale";
     sourcesSucceeded.push("gdelt (stale cache only)");
     sourcesFailed.push({ name: "gdelt-live", error: "GDELT live API unavailable — serving last-known cached results" });
   } else {
-    sourcesFailed.push({ name: "gdelt", error: "GDELT API temporarily unavailable or rate-limited" });
+    gdeltStatus = "timeout";
+    sourcesFailed.push({ name: "gdelt", error: "GDELT API timed out or unavailable — results may be incomplete" });
   }
 
   // Map GDELT articles to our schema
@@ -500,6 +507,14 @@ export async function POST(req: Request): Promise<NextResponse> {
         ok: false,
         degraded: true,
         subject: subjectName,
+        gdeltStatus,
+        adverseMedia: {
+          gdelt: {
+            results: [],
+            status: gdeltStatus,
+            message: "GDELT unavailable at screening time — results may be incomplete. Manual MLRO review required.",
+          },
+        },
         sourcesFailed,
         sourcesSucceeded,
         error: "Adverse media services temporarily unavailable — GDELT rate-limited and no vendor API keys configured. Cannot confirm clear status. Manual MLRO review required before any compliance decision.",
@@ -512,10 +527,22 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({
       ...FALLBACK,
       subject: subjectName,
+      gdeltStatus,
+      ...(gdeltStatus !== "ok" ? {
+        adverseMedia: {
+          gdelt: {
+            results: [],
+            status: gdeltStatus,
+            message: gdeltStatus === "timeout"
+              ? "GDELT unavailable at screening time — results may be incomplete"
+              : `GDELT cache stale at screening time — results may not reflect recent news`,
+          },
+        },
+      } : {}),
       sourcesSucceeded,
       sourcesFailed,
       ...(partialResults ? { partialResults: true } : {}),
-    });
+    }, { headers: gate.headers });
   }
 
   // Sort by tone ascending (most negative first)
@@ -546,6 +573,18 @@ export async function POST(req: Request): Promise<NextResponse> {
     summary,
     regulatoryBasis: "FATF R.10 (CDD), FDL 10/2025 Art.10 (ongoing monitoring)",
     enriched,
+    gdeltStatus,
+    ...(gdeltStatus !== "ok" ? {
+      adverseMedia: {
+        gdelt: {
+          results: articlesWithCategories.filter((a) => a.source?.includes("GDELT") || a.source?.toLowerCase().includes("gdelt")),
+          status: gdeltStatus,
+          message: gdeltStatus === "stale"
+            ? "GDELT results served from stale cache — may not reflect news from the last 6+ hours"
+            : "GDELT live feed unavailable — results from cached or vendor sources only",
+        },
+      },
+    } : {}),
     sourcesSucceeded,
     sourcesFailed,
     latencyMs,

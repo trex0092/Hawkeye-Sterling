@@ -405,7 +405,7 @@ export default function FpOptimizerPage() {
                   min={0}
                   max={100}
                   value={predictForm.matchScore}
-                  onChange={(e) => setPredictForm((f) => ({ ...f, matchScore: parseInt(e.target.value) || 0 }))}
+                  onChange={(e) => setPredictForm((f) => ({ ...f, matchScore: parseInt(e.target.value, 10) || 0 }))}
                   className="w-full bg-bg-0 border border-hair-2 rounded px-3 py-2 text-13 text-ink-0 outline-none focus:border-brand"
                 />
               </div>

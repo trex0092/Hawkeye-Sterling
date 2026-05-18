@@ -3,8 +3,7 @@
 // Each entry records: version, owner, approvedAt, expiresAt, riskRating, status.
 // Registry can be read via GET /api/operator/registry.
 
-import { TOOL_MANIFEST } from "./tool-manifest";
-import type { ConsequenceLevel } from "./tool-manifest";
+import { TOOL_MANIFEST, type ConsequenceLevel } from "./tool-manifest";
 
 export type RegistryStatus = "active" | "deprecated" | "suspended";
 

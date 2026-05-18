@@ -42,7 +42,7 @@ export function CaseVaultSyncer(): null {
       const params = new URLSearchParams({ since: lastSeen });
       const url = `/api/cases/stream?${params.toString()}`;
       try {
-        es = new EventSource(url, { withCredentials: false });
+        es = new EventSource(url, { withCredentials: true });
       } catch {
         return;
       }

@@ -83,7 +83,10 @@ export async function getBlobsStore(): Promise<BlobsStore> {
   cached = {
     async putDataset(listId, entities, report) {
       await data.setJSON(`${listId}/latest.json`, { entities, report });
-      await reports.setJSON(`${listId}/latest.json`, report);
+      // Mirror entity data into hawkeye-list-reports so Next.js API routes
+      // (which cannot read hawkeye-lists without auto-injection) can load
+      // the candidate list for screening. fetchedAt is top-level for compat.
+      await reports.setJSON(`${listId}/latest.json`, { ...report, entities });
     },
     async getLatest(listId) {
       const v = await data.get(`${listId}/latest.json`, { type: 'json' }) as {

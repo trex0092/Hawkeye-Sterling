@@ -9,3 +9,5 @@ next-env.d.ts
 .vercel
 .turbo
 tsconfig.tsbuildinfo
+playwright-report/
+test-results/

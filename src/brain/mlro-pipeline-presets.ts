@@ -160,6 +160,12 @@ export const PIPELINE_PRESET_BY_ID: Map<string, PipelinePreset> = new Map(
   PIPELINE_PRESETS.map((p) => [p.id, p]),
 );
 
+function getPreset(id: string): PipelinePreset {
+  const p = PIPELINE_PRESET_BY_ID.get(id);
+  if (!p) throw new Error(`Unknown pipeline preset: ${id}`);
+  return p;
+}
+
 export function recommendPreset(signals: {
   sector?: string;
   hasPep?: boolean;
@@ -177,19 +183,19 @@ export function recommendPreset(signals: {
   npoConflictZone?: boolean;
   audit?: boolean;
 }): PipelinePreset {
-  if (signals.tippingOff) return PIPELINE_PRESET_BY_ID.get('pp_tipping_off_intercept')!;
-  if (signals.eocnConfirmed) return PIPELINE_PRESET_BY_ID.get('pp_eocn_confirmed')!;
-  if (signals.eocnPartial) return PIPELINE_PRESET_BY_ID.get('pp_eocn_partial_match')!;
-  if (signals.cahra) return PIPELINE_PRESET_BY_ID.get('pp_cahra_gold_onboard')!;
-  if (signals.hasCrypto) return PIPELINE_PRESET_BY_ID.get('pp_vasp_mixer_inbound')!;
-  if (signals.hasPep) return PIPELINE_PRESET_BY_ID.get('pp_pep_wealth_mismatch')!;
-  if (signals.structuring) return PIPELINE_PRESET_BY_ID.get('pp_structuring_near_threshold')!;
-  if (signals.tbml) return PIPELINE_PRESET_BY_ID.get('pp_tbml_over_invoice')!;
-  if (signals.uboOpaque) return PIPELINE_PRESET_BY_ID.get('pp_ubo_opaque')!;
-  if (signals.nestedCorresp) return PIPELINE_PRESET_BY_ID.get('pp_corresp_nested')!;
-  if (signals.bec) return PIPELINE_PRESET_BY_ID.get('pp_bec_typosquat')!;
-  if (signals.realEstateCash) return PIPELINE_PRESET_BY_ID.get('pp_re_cash_shell')!;
-  if (signals.npoConflictZone) return PIPELINE_PRESET_BY_ID.get('pp_npo_conflict_zone')!;
-  if (signals.audit) return PIPELINE_PRESET_BY_ID.get('pp_audit_lookback')!;
-  return PIPELINE_PRESET_BY_ID.get('pp_baseline_triage')!;
+  if (signals.tippingOff) return getPreset('pp_tipping_off_intercept');
+  if (signals.eocnConfirmed) return getPreset('pp_eocn_confirmed');
+  if (signals.eocnPartial) return getPreset('pp_eocn_partial_match');
+  if (signals.cahra) return getPreset('pp_cahra_gold_onboard');
+  if (signals.hasCrypto) return getPreset('pp_vasp_mixer_inbound');
+  if (signals.hasPep) return getPreset('pp_pep_wealth_mismatch');
+  if (signals.structuring) return getPreset('pp_structuring_near_threshold');
+  if (signals.tbml) return getPreset('pp_tbml_over_invoice');
+  if (signals.uboOpaque) return getPreset('pp_ubo_opaque');
+  if (signals.nestedCorresp) return getPreset('pp_corresp_nested');
+  if (signals.bec) return getPreset('pp_bec_typosquat');
+  if (signals.realEstateCash) return getPreset('pp_re_cash_shell');
+  if (signals.npoConflictZone) return getPreset('pp_npo_conflict_zone');
+  if (signals.audit) return getPreset('pp_audit_lookback');
+  return getPreset('pp_baseline_triage');
 }

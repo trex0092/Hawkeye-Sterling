@@ -20,10 +20,15 @@
 // Authorization header and is allowed through automatically.
 
 import type { Config } from "@netlify/functions";
+import { getStore } from "@netlify/blobs";
 import {
   refreshOpenSanctionsBlob,
   type RefreshResult,
 } from "../../web/lib/intelligence/opensanctions-datasets.js";
+import { writeHeartbeat } from "../lib/heartbeat.js";
+
+const LABEL = "opensanctions-refresh";
+const LOCK_TTL_MS = 10 * 60 * 1000;
 
 export default async (req: Request): Promise<Response> => {
   const auth = req.headers.get("authorization");
@@ -38,8 +43,21 @@ export default async (req: Request): Promise<Response> => {
     }
   }
 
+  // Idempotency lock — prevents concurrent runs under Lambda warm-instance overlap.
+  const hbStore = getStore("hawkeye-function-heartbeats");
+  const existingLock = await hbStore.get(`${LABEL}/lock`, { type: "json" }).catch(() => null) as { lockedAt: string } | null;
+  if (existingLock) {
+    const lockAge = Date.now() - new Date(existingLock.lockedAt).getTime();
+    if (lockAge < LOCK_TTL_MS) {
+      console.info(`[${LABEL}] already running (lock age ${Math.round(lockAge / 1000)}s) — skipping`);
+      return json({ ok: true, skipped: true, reason: "lock_active", lockAgeMs: lockAge }, 200);
+    }
+  }
+  await hbStore.setJSON(`${LABEL}/lock`, { lockedAt: new Date().toISOString() }).catch(() => undefined);
+
   try {
     const result: RefreshResult = await refreshOpenSanctionsBlob();
+    if (result.ok) await writeHeartbeat(LABEL);
     return json(result, result.ok ? 200 : 502);
   } catch (err) {
     return json(
@@ -50,6 +68,8 @@ export default async (req: Request): Promise<Response> => {
       },
       500,
     );
+  } finally {
+    await hbStore.delete(`${LABEL}/lock`).catch(() => undefined);
   }
 };
 

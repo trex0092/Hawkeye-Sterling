@@ -8,7 +8,7 @@ import {
   type ScenarioRunResult,
 } from '../registry/eval-harness.js';
 import { AuditLogStore } from '../registry/audit-log.js';
-import type { AdvisorResponseV1, Verdict } from '../registry/response-schema.js';
+import type { AdvisorResponseV1 } from '../registry/response-schema.js';
 import type { ValidationReport } from '../registry/citation-validator.js';
 
 function answer(overrides?: Partial<AdvisorResponseV1>): AdvisorResponseV1 {

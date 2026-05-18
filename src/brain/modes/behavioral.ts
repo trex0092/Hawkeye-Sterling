@@ -95,8 +95,8 @@ export const velocityAnalysisApply = async (ctx: BrainContext): Promise<Finding>
   const mid = Math.floor(ts.length / 2);
   const first = ts.slice(0, mid);
   const second = ts.slice(mid);
-  const spanA = (first.at(-1)! - first[0]!) / 86_400_000 || 1;
-  const spanB = (second.at(-1)! - second[0]!) / 86_400_000 || 1;
+  const spanA = ((first.at(-1) ?? 0) - (first[0] ?? 0)) / 86_400_000 || 1;
+  const spanB = ((second.at(-1) ?? 0) - (second[0] ?? 0)) / 86_400_000 || 1;
   const rateA = first.length / spanA;
   const rateB = second.length / spanB;
   const uplift = rateA > 0 ? rateB / rateA : rateB > 0 ? Infinity : 1;
@@ -144,7 +144,7 @@ export const patternOfLifeApply = async (ctx: BrainContext): Promise<Finding> =>
       `Pattern-of-life: n=${ts.length} < 6 events.`);
   }
   const gaps: number[] = [];
-  for (let i = 1; i < ts.length; i++) gaps.push((ts[i]! - ts[i - 1]!) / 60_000);
+  for (let i = 1; i < ts.length; i++) gaps.push(((ts[i] ?? 0) - (ts[i - 1] ?? 0)) / 60_000);
   const m = mean(gaps);
   const sd = Math.sqrt(variance(gaps));
   const cv = m > 0 ? sd / m : 0;
@@ -196,7 +196,10 @@ export const regimeChangeApply = async (ctx: BrainContext): Promise<Finding> => 
   const va = variance(a); const vb = variance(b);
   const pooled = Math.sqrt((va * (a.length - 1) + vb * (b.length - 1)) / Math.max(1, a.length + b.length - 2));
   const se = pooled * Math.sqrt(1 / a.length + 1 / b.length);
-  const t = se > 0 ? Math.abs(mb - ma) / se : 0;
+  // When se == 0 but means differ, the change is maximally significant
+  // (both halves are constant at different levels). Returning 0 would mask
+  // an obvious structural break; use Infinity so verdict is always 'flag'.
+  const t = se > 0 ? Math.abs(mb - ma) / se : (mb !== ma ? Infinity : 0);
   const verdict: Verdict = t > 2.5 ? 'flag' : 'clear';
   return mk('regime_change', 'behavioral_signals', ['data_analysis'],
     verdict, Math.min(1, t / 4), 0.85,

@@ -185,7 +185,7 @@ function buildPdf(lines: string[], title: string, anchor: string | undefined): U
   const pagesId = addObject(`<< /Type /Pages /Count ${pageIds.length} /Kids [ ${pagesKids} ] >>`);
   // Patch the /Parent placeholder in each Page object (objects are 1-indexed).
   for (const pid of pageIds) {
-    objects[pid - 1] = objects[pid - 1]!.replace('/Parent 0 0 R', `/Parent ${pagesId} 0 R`);
+    objects[pid - 1] = (objects[pid - 1] ?? '').replace('/Parent 0 0 R', `/Parent ${pagesId} 0 R`);
   }
   const info: string[] = [
     `/Title (${pdfEscape(sanitise(title))})`,

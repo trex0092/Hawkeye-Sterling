@@ -43,7 +43,7 @@ export const dualUseRoutingApply = async (ctx: BrainContext): Promise<Finding> =
     if (s.isDualUse !== true) continue;
     const flags: string[] = [];
     if (s.endUserCountryIso2 && HIGH_RISK_END_USERS.has(s.endUserCountryIso2.toUpperCase())) flags.push('high_risk_end_user');
-    if ((s.routedThrough ?? []).length >= 3) flags.push(`routed_via_${s.routedThrough!.length}_intermediaries`);
+    if ((s.routedThrough ?? []).length >= 3) flags.push(`routed_via_${(s.routedThrough ?? []).length}_intermediaries`);
     if (s.endUserCertProvided === false) flags.push('no_end_user_cert');
     if (s.declaredEndUseCategory === 'unknown') flags.push('unknown_end_use');
     if (s.freeTradeZoneOrigin === true && (s.routedThrough ?? []).length >= 2) flags.push('ftz_relayed');

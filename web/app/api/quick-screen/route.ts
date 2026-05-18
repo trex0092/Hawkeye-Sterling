@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import type {
   QuickScreenCandidate,
   QuickScreenOptions,
@@ -9,26 +10,22 @@ import type {
 import { enforce } from "@/lib/server/enforce";
 import { loadCandidates } from "@/lib/server/candidates-loader";
 import { lookupWhitelist } from "@/lib/server/whitelist";
-import { LIVE_OPENSANCTIONS_ADAPTER } from "@/lib/intelligence/liveAdapters";
-import { bestCommercialAdapter, activeCommercialProvider } from "@/lib/intelligence/commercialAdapters";
-import { searchAllRegistries } from "@/lib/intelligence/registryAdapters";
+import { LIVE_OPENSANCTIONS_ADAPTER, activeOnChainProviders } from "@/lib/intelligence/liveAdapters";
+import { bestCommercialAdapter, activeCommercialProvider, activeCommercialProviders } from "@/lib/intelligence/commercialAdapters";
+import { searchAllRegistries, activeRegistryProviders } from "@/lib/intelligence/registryAdapters";
 import { searchCountryRegistries } from "@/lib/intelligence/countryRegistries";
 import { searchCountrySanctions } from "@/lib/intelligence/countrySanctions";
-import { searchFreeAdapters } from "@/lib/intelligence/freeAlwaysOnAdapters";
+import { searchFreeAdapters, activeFreeProviders } from "@/lib/intelligence/freeAlwaysOnAdapters";
 import {
   buildScreeningReasoning,
   buildConsensusInputsFromAugmentation,
   buildCoverageGapReport,
 } from "@/lib/intelligence/screeningReasoning";
-import { activeNewsProviders } from "@/lib/intelligence/newsAdapters";
-import { activeCommercialProviders } from "@/lib/intelligence/commercialAdapters";
-import { activeRegistryProviders } from "@/lib/intelligence/registryAdapters";
+import { activeNewsProviders, searchAllNews } from "@/lib/intelligence/newsAdapters";
 import { activeKycProviders } from "@/lib/intelligence/kycVendorAdapters";
-import { activeOnChainProviders } from "@/lib/intelligence/liveAdapters";
-import { activeFreeProviders } from "@/lib/intelligence/freeAlwaysOnAdapters";
-import { searchAllNews } from "@/lib/intelligence/newsAdapters";
 import { ingestUrls } from "@/lib/intelligence/urlIngestion";
 import { llmAdverseMediaAdapter } from "@/lib/intelligence/llmAdverseMedia";
+import { groqAdverseMediaAdapter, geminiAdverseMediaAdapter } from "@/lib/intelligence/llmAdverseMediaAlt";
 import { assessCommonName } from "@/lib/intelligence/commonNames";
 import {
   runEnrichmentAdapters,
@@ -42,6 +39,98 @@ import {
 // netlify.toml; local dev runs `npm run build` at the root once to produce dist/.
 // @brain/* is resolved via web/tsconfig.json paths → ../dist/src/brain/*.
 import { quickScreen as brainQuickScreen } from "@brain/quick-screen.js";
+import { getCountryRisk } from "@/lib/server/high-risk-countries";
+import { insertCaseRecord } from "@/lib/server/case-vault";
+import { tenantIdFromGate } from "@/lib/server/tenant";
+import { saveSubject, getSubject } from "../pkyc/_store";
+import type { CaseRecord } from "@/lib/types";
+import { saveEnrichmentJob, completeEnrichmentJob } from "@/lib/server/enrichment-jobs";
+
+// ── Sanctions list health snapshot ─────────────────────────────────────────
+// Attached to every screening response so audit records capture which lists
+// had data (and how fresh) at the moment of screening. A "clear" verdict
+// against empty UAE lists is a compliance failure — not a real clear.
+
+const LIST_IDS = [
+  "un_consolidated", "ofac_sdn", "ofac_cons", "eu_fsf", "uk_ofsi",
+  "ca_osfi", "ch_seco", "au_dfat", "fatf", "uae_eocn", "uae_ltl",
+] as const;
+
+type ListHealthStatus = "healthy" | "stale" | "missing";
+
+interface ListHealthEntry {
+  entityCount: number | null;
+  ageHours: number | null;
+  status: ListHealthStatus;
+}
+
+type ListHealthSnapshot = Record<string, ListHealthEntry>;
+
+async function fetchListHealth(): Promise<ListHealthSnapshot> {
+  const STALE_HOURS = 36;
+  const HOUR_MS = 3_600_000;
+  const snapshot: ListHealthSnapshot = {};
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let stores: { get: (key: string, opts?: any) => Promise<unknown> }[] = [];
+  try {
+    const { getStore } = await import("@netlify/blobs");
+    const siteID = process.env["NETLIFY_SITE_ID"] ?? process.env["SITE_ID"];
+    // Dual-store: try hawkeye-list-reports (entities written there post-deploy)
+    // then hawkeye-lists (entities present now from existing ingestion runs).
+    const token =
+      process.env["NETLIFY_BLOBS_TOKEN"] ??
+      process.env["NETLIFY_API_TOKEN"] ??
+      process.env["NETLIFY_AUTH_TOKEN"];
+    const mkStore = (name: string) => siteID && token
+      ? getStore({ name, siteID, token, consistency: "strong" })
+      : getStore({ name });
+    stores = [mkStore("hawkeye-list-reports"), mkStore("hawkeye-lists")];
+  } catch {
+    for (const id of LIST_IDS) {
+      snapshot[id] = { entityCount: null, ageHours: null, status: "missing" };
+    }
+    return snapshot;
+  }
+
+  await Promise.all(LIST_IDS.map(async (listId) => {
+    const key = `${listId}/latest.json`;
+    for (const store of stores) {
+      try {
+        const raw = await store.get(key, { type: "json" }) as {
+          entities?: unknown[]; report?: { fetchedAt?: number }; fetchedAt?: number;
+        } | null;
+        if (!raw || !Array.isArray(raw.entities)) continue;
+        const entityCount = raw.entities.length;
+        const fetchedAtMs = raw.report?.fetchedAt ?? raw.fetchedAt ?? null;
+        const ageHours = typeof fetchedAtMs === "number"
+          ? Math.round((Date.now() - fetchedAtMs) / HOUR_MS * 10) / 10
+          : null;
+        const status: ListHealthStatus =
+          ageHours !== null && ageHours > STALE_HOURS ? "stale" : "healthy";
+        snapshot[listId] = { entityCount, ageHours, status };
+        return; // found data — skip fallback store
+      } catch { /* try next store */ }
+    }
+    snapshot[listId] = { entityCount: null, ageHours: null, status: "missing" };
+  }));
+
+  return snapshot;
+}
+
+function buildScreeningWarnings(health: ListHealthSnapshot): string[] {
+  const warnings: string[] = [];
+  for (const [listId, entry] of Object.entries(health)) {
+    if (entry.status === "missing") {
+      warnings.push(`${listId} list is missing from blob store at time of screening — no match possible against this list`);
+    } else if (entry.entityCount === 0) {
+      warnings.push(`${listId} had 0 entities at time of screening — no match possible against this list`);
+    } else if (entry.status === "stale") {
+      warnings.push(`${listId} data is stale (${entry.ageHours}h old) at time of screening — may not reflect recent designations`);
+    }
+  }
+  return warnings;
+}
 
 type QuickScreenFn = (
   subject: QuickScreenSubject,
@@ -53,10 +142,12 @@ const quickScreen = brainQuickScreen as QuickScreenFn;
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 interface QuickScreenRequestBody {
   subject?: QuickScreenSubject;
+  /** Backward-compat: first element used when subject is absent. */
+  subjects?: QuickScreenSubject[];
   candidates?: QuickScreenCandidate[];
   options?: QuickScreenOptions;
   evidenceUrls?: string[];        // operator-provided adverse-media URLs to ingest as evidence
@@ -86,6 +177,10 @@ function respond(
 
 export async function POST(req: Request): Promise<NextResponse> {
   const t0 = Date.now();
+  // Start list health check immediately — runs in parallel with auth + corpus
+  // loading so it doesn't add latency to the critical path.
+  const listHealthPromise = fetchListHealth().catch(() => null);
+
   // Require authentication — UAE FDL Art. 20 requires every screening
   // action to be traceable to a natural person. Anonymous screening (free
   // tier without an API key) leaves audit chain entries with no operator
@@ -95,6 +190,13 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (!gate.ok) return gate.response;
   const gateHeaders: Record<string, string> = gate.ok ? gate.headers : {};
 
+  // When the poll endpoint re-calls quick-screen for full enrichment it sets
+  // this header. With it present, the hard-deadline early-return is skipped
+  // so the adapters run to completion and the result is written to the job blob.
+  const rawEnrichJobId = req.headers.get("x-enrich-job-id") ?? null;
+  // Validate format to prevent blob-key injection: only allow alphanumeric, hyphens, underscores (max 80 chars).
+  const enrichJobId = rawEnrichJobId && /^[A-Za-z0-9_-]{1,80}$/.test(rawEnrichJobId) ? rawEnrichJobId : null;
+
   let body: QuickScreenRequestBody;
   try {
     body = (await req.json()) as QuickScreenRequestBody;
@@ -102,17 +204,41 @@ export async function POST(req: Request): Promise<NextResponse> {
     return respond(400, { ok: false, error: "invalid JSON body" }, gateHeaders);
   }
 
-  const subject = body.subject;
+  // Accept {subject:{}} (primary) or {subjects:[]} (backward-compat array form).
+  const rawSubject = body.subject ?? (Array.isArray(body.subjects) ? body.subjects[0] : undefined);
   // If the caller supplies candidates use them; otherwise screen against the
   // live ingested watchlists (OFAC, UN, EU, UK, UAE-EOCN/LTL + seed corpus).
   const callerCandidates = body.candidates;
 
-  if (!subject || typeof subject.name !== "string" || !subject.name.trim()) {
+  if (!rawSubject || typeof rawSubject.name !== "string" || !rawSubject.name.trim()) {
     return respond(400, { ok: false, error: "subject.name required" }, gateHeaders);
   }
-  if (subject.name.length > 512) {
+  if (rawSubject.name.length > 512) {
     return respond(400, { ok: false, error: "subject.name exceeds 512-character limit" }, gateHeaders);
   }
+  if (Array.isArray(rawSubject.aliases) && rawSubject.aliases.length > 50) {
+    return respond(400, { ok: false, error: "aliases exceeds 50-entry limit" }, gateHeaders);
+  }
+  if (Array.isArray(body.evidenceUrls) && body.evidenceUrls.length > 20) {
+    return respond(400, { ok: false, error: "evidenceUrls exceeds 20-entry limit" }, gateHeaders);
+  }
+
+  // Sanitize optional discriminator fields — coerce to string/undefined so
+  // the brain engine never receives unexpected types from the MCP tool.
+  const subject: QuickScreenSubject = {
+    ...rawSubject,
+    name: rawSubject.name.trim(),
+    dateOfBirth: typeof rawSubject.dateOfBirth === "string" ? rawSubject.dateOfBirth.trim() || undefined
+      : typeof (rawSubject as unknown as Record<string, unknown>)["dob"] === "string"
+        ? String((rawSubject as unknown as Record<string, unknown>)["dob"]).trim() || undefined
+        : undefined,
+    nationality: typeof rawSubject.nationality === "string"
+      ? rawSubject.nationality.trim().slice(0, 3) || undefined
+      : undefined,
+    aliases: Array.isArray(rawSubject.aliases)
+      ? rawSubject.aliases.filter((a): a is string => typeof a === "string" && a.trim().length > 0)
+      : undefined,
+  };
 
   // Whitelist short-circuit — if the operator's tenant has previously
   // cleared this subject (false-positive disposition recorded via
@@ -144,6 +270,19 @@ export async function POST(req: Request): Promise<NextResponse> {
             reason: match.reason,
           },
         };
+        // Compliance: whitelist matches MUST still produce an audit-chain entry so
+        // regulators can verify every screening event, including those that were
+        // cleared via the tenant whitelist (UAE FDL Art. 20 traceability requirement).
+        void writeAuditChainEntry({
+          event: "screening.whitelisted",
+          actor: gate.record?.email ?? gate.keyId ?? "unknown",
+          subject: subject.name,
+          severity: "clear",
+          hitsCount: 0,
+          whitelistEntryId: match.id,
+          approvedBy: match.approvedBy,
+          approverRole: match.approverRole,
+        });
         return respond(200, { ok: true, ...whitelistedResult }, gateHeaders);
       }
     } catch (err) {
@@ -218,8 +357,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         } as QuickScreenResponse & { errorCode: string; errorType: string; tool: string; missingLists: string[]; degraded: boolean; message: string; requestId: string }, gateHeaders);
       }
     } catch (err) {
-      const detail = err instanceof Error ? err.message : String(err);
-      console.error("[quick-screen] loadCandidates failed", detail);
+      console.error("[quick-screen] loadCandidates failed:", err instanceof Error ? err.message : String(err));
       return respond(503, {
         ok: false,
         errorCode: "LISTS_MISSING",
@@ -228,9 +366,8 @@ export async function POST(req: Request): Promise<NextResponse> {
         missingLists: ["ofac_sdn", "un_consolidated"],
         degraded: true,
         message: "Screening cannot proceed: watchlist corpus unavailable. Run sanctions refresh and retry.",
-        detail,
         requestId: Math.random().toString(36).slice(2, 10),
-      } as QuickScreenResponse & { errorCode: string; errorType: string; tool: string; missingLists: string[]; degraded: boolean; message: string; detail: string; requestId: string }, gateHeaders);
+      } as QuickScreenResponse & { errorCode: string; errorType: string; tool: string; missingLists: string[]; degraded: boolean; message: string; requestId: string }, gateHeaders);
     }
   }
 
@@ -251,6 +388,47 @@ export async function POST(req: Request): Promise<NextResponse> {
       maxHits: body.options?.maxHits ?? HIT_LIMIT_LOCAL,
     };
     const result = quickScreen(subject, candidates, screenOptions);
+
+    // Hard 3-second SLA: if the enrichment adapters haven't resolved with
+    // enough budget remaining, return the deterministic list-match result
+    // immediately. Sanctions hits are always present (local match is O(1));
+    // only the enrichment layer (news, registries, LLM) is deferred.
+    // The client can re-poll for an enriched result if needed.
+    const HARD_DEADLINE_MS = 2_800;
+    const elapsedMs = Date.now() - t0;
+    if (!enrichJobId && elapsedMs >= HARD_DEADLINE_MS - 100) {
+      // Audit chain must fire even when the enrichment deadline is exceeded.
+      // Peek at listHealthPromise without adding latency — it may already be resolved.
+      const peekHealth1 = await Promise.race([listHealthPromise, Promise.resolve(null)]);
+      const earlyDegraded1 = peekHealth1
+        ? Object.values(peekHealth1).filter((e) => e.entityCount === 0 && e.status !== "missing").length
+        : 0;
+      void writeAuditChainEntry({
+        event: "screening.completed",
+        actor: gate.record?.email ?? gate.keyId ?? "unknown",
+        subject: subject.name,
+        severity: result.severity,
+        hitsCount: result.hits.length,
+        listsChecked: result.listsChecked,
+        listsDegraded: earlyDegraded1,
+        enrichmentPending: true,
+      });
+      const newJobId1 = `hwk-e-${crypto.randomUUID()}`;
+      void saveEnrichmentJob(newJobId1, subject, { ok: true, ...result } as Record<string, unknown>);
+      return respond(200, {
+        ok: true, ...result,
+        enrichmentPending: true,
+        enrichJobId: newJobId1,
+        latencyMs: Date.now() - t0,
+      } as QuickScreenResponse, gateHeaders);
+    }
+    // Budget remaining for the entire augmentation + response section.
+    const augBudgetMs = Math.max(200, HARD_DEADLINE_MS - (Date.now() - t0) - 150);
+    let _deadlineTimer: NodeJS.Timeout | null = null;
+    const deadlineP = new Promise<"timeout">((resolve) => {
+      _deadlineTimer = setTimeout(() => resolve("timeout"), augBudgetMs);
+    });
+
     // Augment with OpenSanctions live results when local matcher returns
     // few/no hits — adds a free additional signal layer beyond the bundled
     // watchlists. Best-effort: failure here doesn't 5xx the screening.
@@ -261,6 +439,8 @@ export async function POST(req: Request): Promise<NextResponse> {
       jurisdiction: subject.jurisdiction,
       entityType: subject.entityType,
     });
+    const groqAdapter = groqAdverseMediaAdapter();
+    const geminiAdapter = geminiAdverseMediaAdapter();
     const warn = (err: unknown) => console.warn("[hawkeye] quick-screen: best-effort adapter failed:", err);
     const canAug = subject.name.length >= 3;
     const hitGated = (result.hits.length < 3 || isCommonName) && canAug;
@@ -297,11 +477,8 @@ export async function POST(req: Request): Promise<NextResponse> {
       fraudShield: { available: false, reason: "no_key" },
     };
 
-    const [
-      openSanctionsResults, commercialResults, registryResults,
-      countryRegistryResults, countrySanctionsResults, freeAdapterResults,
-      rawNews, llmArts, enrichmentBundle,
-    ] = await Promise.all([
+    const augRace = await Promise.race([
+      Promise.all([
       // Group A — hit-gated (only when local hits sparse or common name)
       hitGated ? adapterTimeout(LIVE_OPENSANCTIONS_ADAPTER.lookup(subject.name, subject.jurisdiction ?? undefined).catch((e): OSResult => { warn(e); return []; }), [] as OSResult) : Promise.resolve<OSResult>([]),
       hitGated && commAdapter.isAvailable() ? adapterTimeout(commAdapter.lookup(subject.name, subject.jurisdiction ?? undefined).catch((e): CommResult => { warn(e); return []; }), [] as CommResult) : Promise.resolve<CommResult>([]),
@@ -310,16 +487,61 @@ export async function POST(req: Request): Promise<NextResponse> {
       canAug ? adapterTimeout(searchCountryRegistries(subject.name, subject.jurisdiction ?? undefined, ADAPTER_QUERY_LIMIT).catch((e): CRegResult => { warn(e); return { records: [], jurisdictions: [] }; }), { records: [], jurisdictions: [] } as CRegResult) : Promise.resolve<CRegResult>({ records: [], jurisdictions: [] }),
       canAug ? adapterTimeout(searchCountrySanctions(subject.name, subject.jurisdiction ?? undefined, ADAPTER_QUERY_LIMIT).catch((e): CSanResult => { warn(e); return { records: [], lists: [] }; }), { records: [], lists: [] } as CSanResult) : Promise.resolve<CSanResult>({ records: [], lists: [] }),
       canAug ? adapterTimeout(searchFreeAdapters(subject.name, subject.jurisdiction ?? undefined, ADAPTER_QUERY_LIMIT).catch((e): FreeResult => { warn(e); return { records: [], providersUsed: [] }; }), { records: [], providersUsed: [] } as FreeResult) : Promise.resolve<FreeResult>({ records: [], providersUsed: [] }),
-      // Group C — news velocity + LLM adverse-media recall
+      // Group C — news velocity + LLM adverse-media recall (Claude + Groq + Gemini in parallel)
       canAug ? adapterTimeout(searchAllNews(subject.name, { limit: 50 }).catch((e): NewsResult => { warn(e); return { articles: [], providersUsed: [] }; }), { articles: [], providersUsed: [] } as NewsResult) : Promise.resolve<NewsResult>({ articles: [], providersUsed: [] }),
       canAug && llmAdapter.isAvailable() ? adapterTimeout(llmAdapter.search(subject.name, { limit: 15 }).catch((e): LlmResult => { warn(e); return []; }), [] as LlmResult) : Promise.resolve<LlmResult>([]),
+      canAug && groqAdapter.isAvailable() ? adapterTimeout(groqAdapter.search(subject.name, { limit: 15 }).catch((e): LlmResult => { warn(e); return []; }), [] as LlmResult) : Promise.resolve<LlmResult>([]),
+      canAug && geminiAdapter.isAvailable() ? adapterTimeout(geminiAdapter.search(subject.name, { limit: 15 }).catch((e): LlmResult => { warn(e); return []; }), [] as LlmResult) : Promise.resolve<LlmResult>([]),
       // Group D — public-API enrichment (IP / blockchain / breach / domain / phone / fraud)
       adapterTimeout(runEnrichmentAdapters(hints).catch((e): EnrichmentBundle => { warn(e); return NULL_ENRICHMENT; }), NULL_ENRICHMENT),
+      ]).then((r) => r as [OSResult, CommResult, RegResult, CRegResult, CSanResult, FreeResult, NewsResult, LlmResult, LlmResult, LlmResult, EnrichmentBundle]),
+      deadlineP,
     ]);
+    if (_deadlineTimer) clearTimeout(_deadlineTimer);
 
-    // Merge LLM adverse-media articles (prepend so they rank first)
-    let newsArticles: NewsResult = llmArts.length > 0
-      ? { articles: [...llmArts, ...rawNews.articles], providersUsed: [...rawNews.providersUsed, "claude-adverse-media"] }
+    // If the deadline fired before adapters resolved, return fast-path result.
+    if (augRace === "timeout") {
+      const peekHealth2 = await Promise.race([listHealthPromise, Promise.resolve(null)]);
+      const earlyDegraded2 = peekHealth2
+        ? Object.values(peekHealth2).filter((e) => e.entityCount === 0 && e.status !== "missing").length
+        : 0;
+      void writeAuditChainEntry({
+        event: "screening.completed",
+        actor: gate.record?.email ?? gate.keyId ?? "unknown",
+        subject: subject.name,
+        severity: result.severity,
+        hitsCount: result.hits.length,
+        listsChecked: result.listsChecked,
+        listsDegraded: earlyDegraded2,
+        enrichmentPending: true,
+      });
+      const newJobId2 = enrichJobId ?? `hwk-e-${crypto.randomUUID()}`;
+      if (!enrichJobId) {
+        void saveEnrichmentJob(newJobId2, subject, { ok: true, ...result } as Record<string, unknown>);
+      }
+      return respond(200, {
+        ok: true, ...result,
+        enrichmentPending: true,
+        enrichJobId: newJobId2,
+        latencyMs: Date.now() - t0,
+      } as QuickScreenResponse, gateHeaders);
+    }
+
+    const [
+      openSanctionsResults, commercialResults, registryResults,
+      countryRegistryResults, countrySanctionsResults, freeAdapterResults,
+      rawNews, llmArts, groqArts, geminiArts, enrichmentBundle,
+    ] = augRace;
+
+    // Merge LLM adverse-media articles from all three AI providers
+    const aiArts = [...llmArts, ...groqArts, ...geminiArts];
+    const aiProviders = [
+      ...(llmArts.length > 0 ? ["claude-adverse-media"] : []),
+      ...(groqArts.length > 0 ? ["groq-adverse-media"] : []),
+      ...(geminiArts.length > 0 ? ["gemini-adverse-media"] : []),
+    ];
+    let newsArticles: NewsResult = aiArts.length > 0
+      ? { articles: [...aiArts, ...rawNews.articles], providersUsed: [...rawNews.providersUsed, ...aiProviders] }
       : rawNews;
 
     // URL-direct ingestion: when the operator passes evidenceUrls[]
@@ -408,12 +630,181 @@ export async function POST(req: Request): Promise<NextResponse> {
       knownSanctioned: result.hits.map((h) => ({ name: h.candidateName, listId: h.listId })),
     });
 
-    return respond(
-      200,
-      {
-        ok: true,
-        ...result,
-        reasoning,
+    // Collect list health — cap wait at 800ms so a slow blob read can't
+    // push past the function deadline. If not resolved, skip the snapshot.
+    const listHealth = await Promise.race([
+      listHealthPromise,
+      new Promise<null>((r) => setTimeout(() => r(null), 800)),
+    ]);
+    const screeningWarnings = listHealth ? buildScreeningWarnings(listHealth) : [];
+
+    // _provenance — compact machine-readable summary of list health at
+    // screening time. Used by MCP call_api and diagnostic tools.
+    const missingLists = listHealth
+      ? Object.entries(listHealth).filter(([, e]) => e.status === "missing").map(([id]) => id)
+      : [];
+    const staleListIds = listHealth
+      ? Object.entries(listHealth).filter(([, e]) => e.status === "stale").map(([id]) => id)
+      : [];
+    const degradedListIds = listHealth
+      ? Object.entries(listHealth).filter(([, e]) => e.entityCount === 0 && e.status !== "missing").map(([id]) => id)
+      : [];
+    // Lists that actually had data at screening time (entityCount > 0, not missing/stale)
+    const listsCheckedWithData = listHealth
+      ? Object.values(listHealth).filter((e) => e.entityCount !== null && (e.entityCount ?? 0) > 0).length
+      : result.listsChecked;
+
+    // riskLevel — AML risk tier based on FATF/UAE country classification
+    // for the subject's nationality and/or jurisdiction. Distinct from
+    // `severity` which reflects the match quality against sanctions lists.
+    const subjectCountry = subject.nationality ?? subject.jurisdiction;
+    const countryRisk = getCountryRisk(subjectCountry);
+    const riskLevel: string = countryRisk
+      ? countryRisk.tier === "blacklist" ? "very_high"
+        : countryRisk.tier === "greylist" ? "high"
+        : "medium"
+      : "standard";
+
+    // Deduplicate hits — the same sanctioned entity may appear in multiple
+    // regimes (UN + OFAC + UK OFSI). Group by normalised candidateName, keep
+    // the highest-scoring occurrence as primary, and add matchedLists[] so
+    // downstream consumers see all regimes that designated the entity.
+    type HitWithLists = typeof result.hits[0] & { matchedLists?: string[] };
+    const deduped: HitWithLists[] = [];
+    const hitsByName = new Map<string, HitWithLists>();
+    for (const hit of result.hits) {
+      const key = hit.candidateName.toLowerCase().trim();
+      const existing = hitsByName.get(key);
+      if (!existing) {
+        const enriched: HitWithLists = { ...hit, matchedLists: [hit.listId] };
+        hitsByName.set(key, enriched);
+        deduped.push(enriched);
+      } else {
+        existing.matchedLists!.push(hit.listId);
+        if (hit.score > existing.score) {
+          Object.assign(existing, { ...hit, matchedLists: existing.matchedLists });
+        }
+      }
+    }
+    const finalResult = { ...result, hits: deduped };
+
+    // Write tamper-evident audit chain entry. Fire-and-forget: must never
+    // block the screening response. Failure logged inside writeAuditChainEntry.
+    // listsDegraded uses degradedListIds.length (consistent with early-return paths
+    // which also count empty-entity non-missing lists, not screeningWarnings.length).
+    void writeAuditChainEntry({
+      event: "screening.completed",
+      actor: gate.record?.email ?? gate.keyId ?? "unknown",
+      subject: subject.name,
+      severity: finalResult.severity,
+      hitsCount: finalResult.hits.length,
+      listsChecked: finalResult.listsChecked,
+      listsDegraded: degradedListIds.length,
+    });
+
+    // Auto-open a server-side case record when the screening yields hits.
+    // Fire-and-forget — never blocks the response.
+    if (finalResult.hits.length > 0 && finalResult.severity !== "clear") {
+      const autoTenant = tenantIdFromGate(gate);
+      const caseNow = new Date().toISOString();
+      const autoCaseId = `case-auto-${crypto.randomUUID()}`;
+      const badgeTone: CaseRecord["badgeTone"] =
+        finalResult.severity === "critical" ? "violet" : "orange";
+      const autoCase: CaseRecord = {
+        id: autoCaseId,
+        badge: "sanctions_hit",
+        badgeTone,
+        subject: subject.name,
+        meta: `${finalResult.severity} · ${finalResult.hits.length} hit(s) · ${subject.entityType ?? "unknown"}`,
+        status: "active",
+        evidenceCount: String(finalResult.hits.length),
+        lastActivity: caseNow,
+        opened: caseNow,
+        statusLabel: "Open",
+        statusDetail: "Pending MLRO triage",
+        evidence: finalResult.hits.slice(0, 10).map((h) => ({
+          category: "screening-report" as const,
+          title: `${h.listId}: ${h.candidateName}`,
+          meta: `Score ${Math.round(h.score * 100)}% via ${h.method}`,
+          detail: h.listRef ?? "",
+        })),
+        timeline: [
+          { timestamp: caseNow, event: `Auto-opened: ${finalResult.severity} severity, ${finalResult.hits.length} hit(s) across ${finalResult.listsChecked} lists` },
+        ],
+        screeningSnapshot: {
+          subject: {
+            id: autoCaseId,
+            name: subject.name,
+            entityType: (subject.entityType ?? "other") as "individual" | "organisation" | "vessel" | "aircraft" | "other",
+            jurisdiction: subject.jurisdiction,
+            aliases: subject.aliases,
+          },
+          result: {
+            topScore: finalResult.topScore,
+            severity: finalResult.severity,
+            hits: finalResult.hits.slice(0, 20).map((h) => ({
+              listId: h.listId,
+              listRef: h.listRef,
+              candidateName: h.candidateName,
+              score: h.score,
+              method: h.method,
+              programs: h.programs,
+            })),
+          },
+          capturedAt: caseNow,
+        },
+      };
+      void insertCaseRecord(autoTenant, autoCase).catch((err: unknown) => {
+        console.warn("[quick-screen] auto-case insert failed:", err instanceof Error ? err.message : String(err));
+      });
+    }
+
+    // Auto-enroll in pKYC ongoing monitoring for medium+ severity subjects.
+    // Uses a deterministic ID keyed on name so re-screening the same subject
+    // does not create duplicate monitoring subjects.
+    if (["medium", "high", "critical"].includes(finalResult.severity)) {
+      const pkycId = `pkyc-auto-${subject.name.toLowerCase().replace(/[^a-z0-9]/g, "-").slice(0, 40)}`;
+      void (async () => {
+        try {
+          const existing = await getSubject(pkycId);
+          if (!existing) {
+            const cadence = finalResult.severity === "critical" ? "weekly" : finalResult.severity === "high" ? "monthly" : "quarterly";
+            const pkycNow = new Date().toISOString();
+            const nextRun = new Date(pkycNow);
+            if (cadence === "weekly") nextRun.setUTCDate(nextRun.getUTCDate() + 7);
+            else if (cadence === "monthly") nextRun.setUTCMonth(nextRun.getUTCMonth() + 1);
+            else nextRun.setUTCMonth(nextRun.getUTCMonth() + 3);
+            await saveSubject({
+              id: pkycId,
+              name: subject.name,
+              entityType: subject.entityType,
+              jurisdiction: subject.jurisdiction,
+              nationality: subject.nationality,
+              dob: subject.dateOfBirth,
+              aliases: subject.aliases,
+              cadence,
+              status: "active",
+              enrolledAt: pkycNow,
+              lastRunAt: null,
+              nextRunAt: nextRun.toISOString(),
+              lastBand: null,
+              lastComposite: null,
+              lastHits: finalResult.hits.length,
+              runCount: 0,
+              alertCount: 0,
+              notes: `Auto-enrolled from screening: ${finalResult.severity} severity`,
+            });
+          }
+        } catch (err) {
+          console.warn("[quick-screen] pkyc auto-enroll failed:", err instanceof Error ? err.message : String(err));
+        }
+      })();
+    }
+
+    const fullPayload = {
+      ok: true,
+      ...finalResult,
+      reasoning,
         ...(openSanctionsResults.length > 0
           ? { openSanctionsAugmentation: openSanctionsResults.slice(0, HIT_LIMIT_AUG_LOW) }
           : {}),
@@ -455,12 +846,51 @@ export async function POST(req: Request): Promise<NextResponse> {
         // triage panel can show the appropriate banner.
         commonNameExpansion: isCommonName,
         latencyMs: Date.now() - t0,
-      } as QuickScreenResponse,
-      gateHeaders,
-    );
+        // Sanctions list health at the moment of screening — required for
+        // auditable compliance records. A "clear" against empty UAE lists
+        // is a false clear, not a real one.
+        ...(listHealth ? { listHealthAtScreeningTime: listHealth } : {}),
+        ...(screeningWarnings.length > 0 ? { screeningWarnings } : {}),
+        // Machine-readable provenance — list health at screening time.
+        _provenance: {
+          listsChecked: result.listsChecked,
+          listsCheckedWithData,
+          listsNotLoaded: missingLists.length,
+          missingLists,
+          staleListIds,
+          degradedListIds,
+          listHealthAvailable: listHealth !== null,
+          newsAdaptersUsed: newsArticles.providersUsed,
+          newsArticleCount: newsArticles.articles.length,
+        },
+        // Country-risk tier from FATF/UAE classification (separate from match severity).
+        riskLevel,
+        ...(countryRisk ? { riskBasis: countryRisk.basis } : {}),
+        // Structured breakdown of list coverage at screening time.
+        // listsChecked (scalar) is preserved for backward compatibility;
+        // listsCheckedDetails adds per-category detail for compliance UIs.
+        ...(listHealth ? {
+          listsCheckedDetails: {
+            total: Object.keys(listHealth).length,
+            checked: listsCheckedWithData,
+            skipped: [
+              ...degradedListIds.map((id) => ({ listId: id, reason: "empty — zero entities" })),
+              ...missingLists.map((id) => ({ listId: id, reason: "missing — no blob" })),
+            ],
+            degraded: staleListIds.map((id) => ({ listId: id, note: "stale — exceeds 36h threshold" })),
+            listIds: finalResult.listIds ?? [],
+          },
+        } : {}),
+    } as QuickScreenResponse;
+    // If this was a re-enrichment poll call, persist the full result so
+    // subsequent polls return the cached enriched data without re-running adapters.
+    if (enrichJobId) {
+      void completeEnrichmentJob(enrichJobId, fullPayload as Record<string, unknown>);
+    }
+    return respond(200, fullPayload, gateHeaders);
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);
-    if (Date.now() - t0 > 5000) console.warn(`[quick-screen] slow response latencyMs=${Date.now() - t0}`);
+    if (Date.now() - t0 > 3000) console.warn(`[quick-screen] slow response latencyMs=${Date.now() - t0}`);
     return respond(
       500,
       { ok: false, errorCode: "HANDLER_EXCEPTION", errorType: "internal", tool: "screen_subject", error: "quick-screen failed", detail, requestId: Math.random().toString(36).slice(2, 10), latencyMs: Date.now() - t0 } as QuickScreenResponse & { errorCode: string; errorType: string; tool: string; requestId: string; latencyMs: number },

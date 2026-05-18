@@ -34,16 +34,17 @@ export function planBudget(
   // Apply min/max constraints.
   const out: number[] = initial.slice();
   for (let i = 0; i < steps.length; i++) {
-    const s = steps[i]!;
-    if (s.minMs !== undefined && out[i]! < s.minMs) out[i] = s.minMs;
-    if (s.maxMs !== undefined && out[i]! > s.maxMs) out[i] = s.maxMs!;
+    const s = steps[i];
+    if (!s) continue;
+    if (s.minMs !== undefined && (out[i] ?? 0) < s.minMs) out[i] = s.minMs;
+    if (s.maxMs !== undefined && (out[i] ?? 0) > s.maxMs) out[i] = s.maxMs;
   }
 
   // Re-normalise so sum <= total.
   let sum = out.reduce((a, b) => a + b, 0);
   if (sum > total) {
     const scale = total / sum;
-    for (let i = 0; i < out.length; i++) out[i] = Math.max(steps[i]!.minMs ?? 0, Math.floor(out[i]! * scale));
+    for (let i = 0; i < out.length; i++) out[i] = Math.max(steps[i]?.minMs ?? 0, Math.floor((out[i] ?? 0) * scale));
     sum = out.reduce((a, b) => a + b, 0);
   }
 
@@ -53,13 +54,13 @@ export function planBudget(
   let guard = 0;
   while (headroom > 0 && guard++ < 50) {
     const candidates = out
-      .map((v, i) => ({ i, room: (steps[i]!.maxMs ?? Infinity) - v }))
+      .map((v, i) => ({ i, room: (steps[i]?.maxMs ?? Infinity) - v }))
       .filter((c) => c.room > 0);
     if (candidates.length === 0) break;
     const share = Math.max(1, Math.floor(headroom / candidates.length));
     for (const c of candidates) {
       const bump = Math.min(share, c.room);
-      out[c.i] = out[c.i]! + bump;
+      out[c.i] = (out[c.i] ?? 0) + bump;
     }
     const newSum = out.reduce((a, b) => a + b, 0);
     if (newSum === sum) break;

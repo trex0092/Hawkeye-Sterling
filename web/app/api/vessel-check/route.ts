@@ -66,7 +66,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as VesselCheckBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400, headers: CORS });
+    return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400, headers: { ...gate.headers, ...CORS } });
   }
 
   // Unwrap subject envelope sent by the MCP tool layer.
@@ -78,7 +78,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   // Batch mode
   if (Array.isArray(body.imoNumbers) && body.imoNumbers.length > 0) {
     if (body.imoNumbers.length > 50) {
-      return NextResponse.json({ ok: false, error: "batch limit is 50 IMO numbers" }, { status: 400, headers: CORS });
+      return NextResponse.json({ ok: false, error: "batch limit is 50 IMO numbers" }, { status: 400, headers: { ...gate.headers, ...CORS } });
     }
     // Audit C-02: probe LSEG vessel index for every IMO first. Each IMO
     // that resolves locally bypasses the external provider entirely; only
@@ -132,12 +132,12 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   // Single mode
   if (!body.imoNumber?.trim()) {
-    return NextResponse.json({ ok: false, error: "imoNumber or imoNumbers is required" }, { status: 400, headers: CORS });
+    return NextResponse.json({ ok: false, error: "imoNumber or imoNumbers is required" }, { status: 400, headers: { ...gate.headers, ...CORS } });
   }
 
   const imoTrimmed = body.imoNumber.trim();
   if (!/^\d{7}$/.test(imoTrimmed)) {
-    return NextResponse.json({ ok: false, error: "imoNumber must be exactly 7 digits (IMO format)" }, { status: 400, headers: CORS });
+    return NextResponse.json({ ok: false, error: "imoNumber must be exactly 7 digits (IMO format)" }, { status: 400, headers: { ...gate.headers, ...CORS } });
   }
 
   // Audit C-02 (closeout): consult the LSEG CFS vessel index FIRST. If
@@ -246,6 +246,6 @@ export async function POST(req: Request): Promise<NextResponse> {
       retryAfterSeconds: null,
       requestId: Math.random().toString(36).slice(2, 10),
       latencyMs: Date.now() - _handlerStart,
-    }, { status: 500, headers: CORS });
+    }, { status: 500, headers: { ...{}, ...CORS } });
   }
 }

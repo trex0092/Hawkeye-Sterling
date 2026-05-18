@@ -98,10 +98,10 @@ async function runHaikuQuick(question: string, contextPairs: HaikuPair[], apiKey
   const ctl = new AbortController();
   const killTimer = setTimeout(() => ctl.abort(), HAIKU_TIMEOUT_MS);
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 115_000);
     const upstream = await client.messages.create({
         model: HAIKU_MODEL,
-        max_tokens: 2048,
+        max_tokens: 700,
         system: [{ type: "text", text: HAIKU_SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
         messages: [{ role: "user", content: buildHaikuPrompt(question, contextPairs) }],
       });
@@ -210,7 +210,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as ComplianceQaBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400, headers: CORS });
+    return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400, headers: { ...gate.headers, ...CORS } });
   }
 
   // Shared input gate — refuses empty / oversize / prompt-injection
@@ -226,7 +226,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         reason: gateResult.reason,
         ...(gateResult.hint ? { hint: gateResult.hint } : {}),
       },
-      { status: gateResult.status, headers: CORS },
+      { status: gateResult.status, headers: { ...gate.headers, ...CORS } }
     );
   }
   body.query = gateResult.question;
@@ -253,7 +253,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         { status: 200, headers: { ...CORS, ...gateHeaders } },
       );
     }
-    const fastResult = await runHaikuQuick(body.query.trim(), body.context ?? [], apiKey);
+    const fastResult = await runHaikuQuick(body.query.trim(), Array.isArray(body.context) ? body.context : [], apiKey);
     if (fastResult.ok) {
       return NextResponse.json(
         {
@@ -284,13 +284,13 @@ export async function POST(req: Request): Promise<NextResponse> {
       { timeoutMs: 18_000 },
     );
   } catch (err) {
-    console.error("[compliance-qa] RAG call threw", err);
+    console.error("[compliance-qa] RAG call threw", err instanceof Error ? err.message : err);
     result = {
       ok: false,
       query: body.query.trim(),
       citations: [],
       passedQualityGate: false,
-      error: `RAG client error: ${err instanceof Error ? err.message : String(err)}`,
+      error: "RAG service temporarily unavailable",
     };
   }
 
@@ -325,7 +325,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   }
 
-  const preamble = buildContextPreamble(body.context ?? []);
+  const preamble = buildContextPreamble(Array.isArray(body.context) ? body.context : []);
   const enrichedQuestion = `${preamble}${body.query.trim()}`.slice(0, 3500);
   const detectedJurisdiction = detectJurisdiction(body.query);
 
@@ -395,10 +395,9 @@ export async function POST(req: Request): Promise<NextResponse> {
           partialAnswer,
           source: "mlro-advisor-fallback",
         },
-        // Return 200 for advisor-logic failures so CDN/Netlify edge never
-        // replaces the JSON body with an HTML error page; ok:false in the body
-        // signals the error to the client. Reserve 504 for genuine timeouts.
-        { status: advisorResult.partial ? 504 : 200, headers: { ...CORS, ...gateHeaders } },
+        // Partial timeout → 504; complete failure → 503 (advisor pipeline
+        // unavailable). HTTP semantics require a 5xx for server-side failures.
+        { status: advisorResult.partial ? 504 : 503, headers: { ...CORS, ...gateHeaders } },
       );
     }
 
@@ -427,8 +426,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       { headers: { ...CORS, ...gateHeaders } },
     );
   } catch (err) {
-    console.error("[compliance-qa] advisor fallback threw", err);
-    const detail = err instanceof Error ? err.message : String(err);
+    console.error("[compliance-qa] advisor fallback threw", err instanceof Error ? err.message : err);
     return NextResponse.json(
       {
         ok: true,
@@ -437,22 +435,22 @@ export async function POST(req: Request): Promise<NextResponse> {
         citations: [],
         passedQualityGate: false,
         source: "fallback",
-        note: `Advisor fallback unavailable: ${detail}`,
+        note: "Advisor fallback temporarily unavailable — please retry.",
       },
       { status: 200, headers: { ...CORS, ...gateHeaders } },
     );
   }
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
+    console.error("[compliance-qa] unhandled exception:", err instanceof Error ? err.message : err);
     return NextResponse.json({
       ok: false,
       errorCode: "HANDLER_EXCEPTION",
       errorType: "internal",
       tool: "compliance_qa",
-      message,
+      error: "An unexpected error occurred. Please retry or contact support.",
       retryAfterSeconds: null,
       requestId: Math.random().toString(36).slice(2, 10),
       latencyMs: Date.now() - _handlerStart,
-    }, { status: 500 });
+    }, { status: 500, headers: { ...CORS } });
   }
 }

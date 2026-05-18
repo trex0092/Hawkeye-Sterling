@@ -1,5 +1,6 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import type { GovernanceGapResult } from "@/app/api/governance-gap/route";
@@ -97,5 +98,5 @@ ${hsFinis(reportId, 2, 2)}`;
     ],
   });
 
-  return new Response(html, { headers: { "content-type": "text/html; charset=utf-8" } });
+  return new Response(html, { headers: { "content-type": "text/html; charset=utf-8", ...gate.headers } });
 }

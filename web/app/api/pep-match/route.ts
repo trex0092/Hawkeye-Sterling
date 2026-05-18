@@ -1,5 +1,6 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 import { NextResponse } from "next/server";
 import { getStore } from "@netlify/blobs";
 import { enforce } from "@/lib/server/enforce";
@@ -231,8 +232,8 @@ export async function POST(req: Request): Promise<NextResponse> {
   const qTokens = tokenSet(name);
 
   // Also search across provided aliases.
-  const aliasNorms = (body.aliases ?? []).map(normName);
-  const aliasTokenSets = (body.aliases ?? []).map(tokenSet);
+  const aliasNorms = (Array.isArray(body.aliases) ? body.aliases : []).map(normName);
+  const aliasTokenSets = (Array.isArray(body.aliases) ? body.aliases : []).map(tokenSet);
 
   const scored: Array<{ rec: PepRecord; score: number }> = [];
   for (const rec of corpus) {

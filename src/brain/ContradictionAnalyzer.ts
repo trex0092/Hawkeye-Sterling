@@ -82,8 +82,8 @@ function checkDOB(subject: EntityProfile, candidate: EntityProfile): Contradicti
 
   return {
     field: 'dateOfBirth',
-    subjectValue: subject.dateOfBirth!,
-    candidateValue: candidate.dateOfBirth!,
+    subjectValue: subject.dateOfBirth ?? '',
+    candidateValue: candidate.dateOfBirth ?? '',
     reason: `Date of birth differs by ${diff.toFixed(1)} years (${subject.dateOfBirth} vs ${candidate.dateOfBirth})`,
     severity,
     confidenceImpact: impact,

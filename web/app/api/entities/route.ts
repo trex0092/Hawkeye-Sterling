@@ -4,6 +4,7 @@ import { enforce } from "@/lib/server/enforce";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 
 // Reporting-entity dropdown for the STR/SAR form. Only id + name are
 // returned; goAML rentity IDs and branch codes stay server-side. Auth-
@@ -24,7 +25,7 @@ export async function GET(req: Request): Promise<NextResponse> {
       ok: true,
       entities,
       ...(defaultId ? { defaultId } : {}),
-    });
+    }, { headers: gate.headers });
   } catch (err) {
     // Audit DR-02: returning 200 with empty entities masked HAWKEYE_ENTITIES
     // JSON-parse failures as "no entities configured". MLRO forms rendered
@@ -37,6 +38,6 @@ export async function GET(req: Request): Promise<NextResponse> {
       error: "entities-config-malformed",
       message,
       hint: "HAWKEYE_ENTITIES is malformed or missing — check JSON syntax in Netlify env vars.",
-    }, { status: 503 });
+    }, { status: 503 , headers: gate.headers });
   }
 }

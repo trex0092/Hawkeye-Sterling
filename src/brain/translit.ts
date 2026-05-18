@@ -68,14 +68,14 @@ export function normaliseArabicRoman(input: string): string {
   const tokens = s.split(' ').filter(Boolean);
   const out: string[] = [];
   for (let i = 0; i < tokens.length; i++) {
-    const t = tokens[i]!;
+    const t = tokens[i] ?? '';
     if (HONORIFICS.has(t)) continue;
     if (PARTICLES.has(t)) continue;
     // Collapse two-token compounds like "abdul rahman" before canonicalising.
     if (t === 'abdul' && tokens[i + 1]) {
-      const pair = `abdul ${tokens[i + 1]!.toLowerCase()}`;
+      const pair = `abdul ${(tokens[i + 1] ?? '').toLowerCase()}`;
       if (CANONICAL_BY_VARIANT.has(pair)) {
-        out.push(CANONICAL_BY_VARIANT.get(pair)!);
+        out.push(CANONICAL_BY_VARIANT.get(pair) ?? pair);
         i++;
         continue;
       }

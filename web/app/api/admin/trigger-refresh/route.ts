@@ -18,6 +18,7 @@
 // answers both.
 
 import { NextResponse } from "next/server";
+import { invalidateCandidateCache } from "@/lib/server/candidates-loader";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -81,12 +82,16 @@ export async function POST(req: Request): Promise<NextResponse> {
       summary: Array<{ listId: string; recordCount: number; errors: string[] }>;
     };
 
+    // Invalidate the in-process candidates cache so screening routes pick up
+    // the freshly ingested data immediately instead of waiting for the 5-minute TTL.
+    invalidateCandidateCache();
+
     return NextResponse.json(
       {
         triggeredAt,
         ...result,
         hint: result.ok
-          ? "Ingestion completed. Check /api/sanctions/status — recordCount should be > 0 within seconds."
+          ? "Ingestion completed. Cache invalidated — screening routes will reload on next request."
           : "Ingestion completed with errors. Check /api/sanctions/last-errors for per-adapter detail.",
       },
       { status: result.ok ? 200 : 502 },

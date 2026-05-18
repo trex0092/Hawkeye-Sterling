@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 
 interface ReqBody {
   name: string;
@@ -31,12 +32,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as ReqBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const { name, jurisdiction = "UAE" } = body;
   if (!name) {
-    return NextResponse.json({ ok: false, error: "name is required" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "name is required" }, { status: 400 , headers: gate.headers });
   }
 
   // Deterministic heuristic based on name hash
@@ -67,5 +68,5 @@ export async function POST(req: Request): Promise<NextResponse> {
     cases,
     totalCount: caseCount,
     riskLevel,
-  });
+  }, { headers: gate.headers });
 }

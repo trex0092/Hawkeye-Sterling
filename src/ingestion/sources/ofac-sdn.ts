@@ -4,8 +4,7 @@
 // reason this adapter has been silently failing on every cron run.
 // Override at runtime via FEED_OFAC_SDN env var if OFAC migrates again.
 
-import type { SourceAdapter, NormalisedEntity, EntityType } from '../types.js';
-import { mkListing } from '../types.js';
+import { type SourceAdapter, type NormalisedEntity, type EntityType, mkListing } from '../types.js';
 import { fetchText, sha256Hex } from '../fetch-util.js';
 import { parseXml, findAll, textOf } from '../xml-lite.js';
 
@@ -70,6 +69,17 @@ export const ofacSdnAdapter: SourceAdapter = {
         source: 'ofac_sdn',
         fetchedAt,
       });
+    }
+
+    // Guard against silently replacing a healthy list with an empty one
+    // (e.g. OFAC returns a 200 with an empty or malformed XML document).
+    // Throwing here surfaces the failure in the ingest pipeline and leaves
+    // the existing blob intact rather than overwriting it with zero records.
+    if (entities.length === 0) {
+      throw new Error(
+        `ofac_sdn: parsed 0 entities from ${SOURCE_URL} — refusing to overwrite existing list. ` +
+        `Check the feed URL and XML schema before retrying.`,
+      );
     }
 
     return { entities, rawChecksum };

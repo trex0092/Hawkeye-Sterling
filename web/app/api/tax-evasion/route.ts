@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { enforce } from "@/lib/server/enforce";
 export interface TaxEvasionRequest {
   entity: string;
   entityType: "individual" | "corporate" | "trust" | "foundation";
@@ -135,6 +136,9 @@ const FALLBACK: TaxEvasionResult = {
 };
 
 export async function POST(req: Request) {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
+
   let body: TaxEvasionRequest;
   try {
     body = (await req.json()) as TaxEvasionRequest;
@@ -150,7 +154,7 @@ export async function POST(req: Request) {
 
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 3000,
+      max_tokens: 800,
       system: [
         {
           type: "text",
@@ -246,6 +250,13 @@ Perform a comprehensive tax evasion ML risk assessment. Identify all schemes, cl
 
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as TaxEvasionResult;
+    if (!Array.isArray(result.identifiedSchemes)) result.identifiedSchemes = [];
+    if (!Array.isArray(result.jurisdictionAnalysis)) result.jurisdictionAnalysis = [];
+    if (!Array.isArray(result.crsGaps)) result.crsGaps = [];
+    if (!Array.isArray(result.transferPricingFlags)) result.transferPricingFlags = [];
+    if (!Array.isArray(result.roundTrippingIndicators)) result.roundTrippingIndicators = [];
+    if (!Array.isArray(result.regulatoryRequirements)) result.regulatoryRequirements = [];
+    if (!Array.isArray(result.redFlags)) result.redFlags = [];
     return NextResponse.json(result);
   } catch {
     return NextResponse.json({ ok: false, error: "tax-evasion temporarily unavailable - please retry." }, { status: 503 });

@@ -10,6 +10,7 @@ import { classifyMlroQuestion } from "../../../../dist/src/brain/mlro-question-c
 import { enforce } from "@/lib/server/enforce";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 
 const CORS: Record<string, string> = {
   "access-control-allow-origin": process.env["NEXT_PUBLIC_APP_URL"] ?? "https://hawkeye-sterling.netlify.app",
@@ -28,10 +29,10 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as { question?: unknown };
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400, headers: CORS });
+    return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400, headers: { ...gate.headers, ...CORS } });
   }
   if (typeof body.question !== "string" || !body.question.trim()) {
-    return NextResponse.json({ ok: false, error: "question is required" }, { status: 400, headers: CORS });
+    return NextResponse.json({ ok: false, error: "question is required" }, { status: 400, headers: { ...gate.headers, ...CORS } });
   }
   // Hard length cap — this route is called on every keystroke (debounced
   // by the UI) so a 50 KB paste would otherwise re-run the classifier
@@ -41,11 +42,11 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (body.question.length > 2000) {
     return NextResponse.json(
       { ok: false, error: "question exceeds 2000 characters" },
-      { status: 413, headers: CORS },
+      { status: 413, headers: { ...gate.headers, ...CORS } }
     );
   }
   return NextResponse.json(
     { ok: true, analysis: classifyMlroQuestion(body.question) },
-    { headers: CORS },
+    { headers: { ...gate.headers, ...CORS } }
   );
 }

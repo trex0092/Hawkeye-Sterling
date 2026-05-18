@@ -2,6 +2,7 @@
 // See sanctions-watch-cron.mts for the in-process rationale.
 
 import type { Config } from "@netlify/functions";
+import { getStore } from "@netlify/blobs";
 import { runIngestionAll } from "../../src/ingestion/run-all.js";
 
 const LABEL = "sanctions-watch-1100";
@@ -9,6 +10,16 @@ const LABEL = "sanctions-watch-1100";
 export default async (_req: Request): Promise<Response> => {
   try {
     const result = await runIngestionAll(LABEL);
+
+    if (result.ok) {
+      try {
+        const hbStore = getStore("hawkeye-function-heartbeats");
+        await hbStore.setJSON(LABEL, { lastSuccess: new Date().toISOString(), label: LABEL });
+      } catch (err) {
+        console.warn(`[${LABEL}] heartbeat write failed:`, err instanceof Error ? err.message : String(err));
+      }
+    }
+
     return new Response(JSON.stringify({ cadence: "1100", ...result }), {
       status: result.ok ? 200 : 502,
       headers: { "content-type": "application/json" },

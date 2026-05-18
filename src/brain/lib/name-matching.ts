@@ -138,20 +138,20 @@ export function damerauLevenshtein(a: string, b: string): number {
   for (let i = 1; i <= m; i++) {
     for (let j = 1; j <= n; j++) {
       const cost = a.charCodeAt(i - 1) === b.charCodeAt(j - 1) ? 0 : 1;
-      const row = d[i]!;
-      const prow = d[i - 1]!;
-      row[j] = Math.min(row[j - 1]! + 1, prow[j]! + 1, prow[j - 1]! + cost);
+      const row = d[i] ?? [];
+      const prow = d[i - 1] ?? [];
+      row[j] = Math.min((row[j - 1] ?? 0) + 1, (prow[j] ?? 0) + 1, (prow[j - 1] ?? 0) + cost);
       if (
         i > 1 && j > 1 &&
         a.charCodeAt(i - 1) === b.charCodeAt(j - 2) &&
         a.charCodeAt(i - 2) === b.charCodeAt(j - 1)
       ) {
-        const pprow = d[i - 2]!;
-        row[j] = Math.min(row[j]!, pprow[j - 2]! + 1);
+        const pprow = d[i - 2] ?? [];
+        row[j] = Math.min(row[j] ?? 0, (pprow[j - 2] ?? 0) + 1);
       }
     }
   }
-  return d[m]![n]!;
+  return (d[m] ?? [])[n] ?? Math.max(m, n);
 }
 
 // ── Jaro ─────────────────────────────────────────────────────────────────
@@ -221,7 +221,7 @@ export function metaphone(raw: string): string {
   if (/^(kn|gn|pn|ae|wr)/.test(s)) i = 1;
   else if (s.startsWith('x')) { out = 's'; i = 1; }
   while (i < s.length) {
-    const c = s[i]!;
+    const c = s[i] ?? '';
     const prev = out[out.length - 1];
     if (c === prev && c !== 'c') { i++; continue; }
     switch (c) {

@@ -114,6 +114,8 @@ export const CREDIBILITY_TIER: Record<string, number> = {
   "diffbot": 0.78, "webz": 0.72, "aylien": 0.78, "contextualweb": 0.65,
   "serpapi-googlenews": 0.75, "bing-news": 0.78, "bing-web": 0.65,
   "google-news-rss": 0.78,
+  // AI-native research providers (deep web synthesis)
+  "tavily": 0.82, "exa": 0.83, "perplexity": 0.85,
 
   // Tier 6: social / aggregator / blogs (0.50)
   "hackernews": 0.50, "reddit": 0.45, "mastodon": 0.40,
@@ -146,6 +148,8 @@ export const CREDIBILITY_TIER: Record<string, number> = {
   // a higher-tier source. Operators should manually verify LLM-only
   // hits since model recall isn't perfect.
   "claude-adverse-media": 0.65,
+  "groq-adverse-media": 0.60,
+  "gemini-adverse-media": 0.60,
 
   // URL-direct ingestion: trust matches the outlet domain we extract;
   // baseline 0.75 since the operator explicitly pointed us at it.

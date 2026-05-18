@@ -865,6 +865,7 @@ async function handleComplianceReport(req: Request): Promise<Response> {
     return new Response(html, {
       status: 200,
       headers: {
+        ...gateHeaders,
         "content-type": "text/html; charset=utf-8",
         // inline so the browser renders it directly; user saves as PDF
         // via the auto-opened print dialog.
@@ -880,19 +881,20 @@ async function handleComplianceReport(req: Request): Promise<Response> {
   return new Response(report, {
     status: 200,
     headers: {
+      ...gateHeaders,
       "content-type": "text/plain; charset=utf-8",
       "content-disposition": `attachment; filename="${filename}"`,
       "x-latency-ms": String(latencyMs),
     },
   });
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
+    console.error("[compliance-report] unhandled exception:", err instanceof Error ? err.message : err);
     return NextResponse.json({
       ok: false,
       errorCode: "HANDLER_EXCEPTION",
       errorType: "internal",
       tool: "compliance_report",
-      message,
+      error: "An unexpected error occurred. Please retry or contact support.",
       retryAfterSeconds: null,
       requestId: Math.random().toString(36).slice(2, 10),
       latencyMs: Date.now() - _handlerStart,

@@ -29,17 +29,14 @@ const nextConfig = {
   },
 
   typescript: {
-    // JSX implicit-any errors (TS7026/TS2741) are pre-existing across the entire
-    // codebase due to React types not being in the tsconfig lib. Runtime behaviour
-    // is correct; suppress them during build consistent with the ESLint pattern above.
-    ignoreBuildErrors: true,
+    // TypeScript is clean — tsc --noEmit exits 0 with no errors.
+    ignoreBuildErrors: false,
   },
 
   eslint: {
-    // react-hooks/rules-of-hooks hits a stack overflow analysing the large
-    // MlroAdvisorPage component, crashing the build with exit code 2. ESLint
-    // is run separately in CI; this flag prevents it from blocking Netlify deploys.
-    ignoreDuringBuilds: true,
+    // ESLint is configured and errors are real. Warnings (unused-vars) are
+    // tolerated during builds; errors (eqeqeq, no-duplicate-imports) are fixed.
+    ignoreDuringBuilds: false,
   },
 
   // NOTE: Next.js `async headers()` was tried in PR #496 but @netlify/plugin-nextjs

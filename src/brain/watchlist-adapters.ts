@@ -439,7 +439,7 @@ function parsePdfTextFallback(raw: string, listId: string): NormalisedListEntry[
     // Match: optional serial number/dot, then uppercase name tokens
     const nameMatch = line.match(/^(?:\d{1,4}[\.\)\-]\s*)?([A-Z][A-ZÀ-ɏ\s\-'.]+[A-ZÀ-ɏ])(?:\s+\d.*)?$/u);
     if (!nameMatch) continue;
-    const name = nameMatch[1]!.replace(/\s{2,}/g, ' ').trim();
+    const name = (nameMatch[1] ?? '').replace(/\s{2,}/g, ' ').trim();
     // Exclude header-like strings
     if (name.length < 4 || ['NAME', 'FULL NAME', 'ENTITY', 'INDIVIDUAL', 'LAST NAME', 'FIRST NAME'].includes(name)) continue;
     counter++;

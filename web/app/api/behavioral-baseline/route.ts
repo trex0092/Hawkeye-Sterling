@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 
 interface ReqBody {
   entityType: string;
@@ -21,12 +22,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as ReqBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const { entityType, industry, jurisdiction, riskScore } = body;
   if (!entityType || !industry || !jurisdiction) {
-    return NextResponse.json({ ok: false, error: "entityType, industry, and jurisdiction are required" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "entityType, industry, and jurisdiction are required" }, { status: 400 , headers: gate.headers });
   }
 
   const jurisRisk = HIGH_RISK_JURISDICTIONS.some(j => jurisdiction.toLowerCase().includes(j.toLowerCase()));
@@ -60,5 +61,5 @@ export async function POST(req: Request): Promise<NextResponse> {
     deviations,
     anomalyScore,
     peerComparison,
-  });
+  }, { headers: gate.headers });
 }

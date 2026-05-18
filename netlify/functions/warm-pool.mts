@@ -20,6 +20,7 @@
 // trivially identifiable as warming traffic, not real screening input.
 
 import type { Config } from '@netlify/functions';
+import { writeHeartbeat } from '../lib/heartbeat.js';
 
 const RUN_LABEL = 'warm-pool';
 const PING_TIMEOUT_MS = 4_000;
@@ -125,6 +126,7 @@ export default async function handler(req: Request): Promise<Response> {
     touchBrainModules(),
   ]);
 
+  await writeHeartbeat(RUN_LABEL);
   return new Response(
     JSON.stringify(
       {

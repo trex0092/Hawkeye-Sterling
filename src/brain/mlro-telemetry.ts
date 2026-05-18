@@ -34,7 +34,6 @@ export const NULL_SINK: TelemetrySink = () => {};
 /** Console sink — useful in dev. */
 export const CONSOLE_SINK: TelemetrySink = (e) => {
   // Keep it JSON-lineable so it pipes into log ingestion cleanly.
-  // eslint-disable-next-line no-console
   console.info('[hawkeye.telemetry]', JSON.stringify(e));
 };
 

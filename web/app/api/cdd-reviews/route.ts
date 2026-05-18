@@ -35,7 +35,7 @@ export async function GET(req: Request): Promise<NextResponse> {
 
   if (id) {
     const record = await getCddReview(tenant, id);
-    if (!record) return NextResponse.json({ ok: false, error: "not found" }, { status: 404 });
+    if (!record) return NextResponse.json({ ok: false, error: "not found" }, { status: 404, headers: gate.headers });
     return NextResponse.json({ ok: true, record }, { headers: gate.headers });
   }
 
@@ -71,22 +71,46 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as CddReviewInput;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   if (!body.subject?.trim()) {
-    return NextResponse.json({ ok: false, error: "subject required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "subject required" }, { status: 400 , headers: gate.headers });
   }
   if (!body.tier || !["high", "medium", "standard"].includes(body.tier)) {
     return NextResponse.json(
       { ok: false, error: "tier must be high | medium | standard" },
-      { status: 400 },
+      { status: 400, headers: gate.headers }
     );
   }
   if (!body.reviewDate || isNaN(new Date(body.reviewDate).getTime())) {
     return NextResponse.json(
       { ok: false, error: "reviewDate required (ISO date, e.g. 2025-03-01)" },
-      { status: 400 },
+      { status: 400, headers: gate.headers }
+    );
+  }
+  if (body.outcome !== undefined && !["adequate", "marginal", "inadequate"].includes(body.outcome as string)) {
+    return NextResponse.json(
+      { ok: false, error: "outcome must be adequate | marginal | inadequate" },
+      { status: 400, headers: gate.headers }
+    );
+  }
+  if (body.adequacyScore !== undefined && (typeof body.adequacyScore !== "number" || body.adequacyScore < 0 || body.adequacyScore > 100)) {
+    return NextResponse.json(
+      { ok: false, error: "adequacyScore must be a number 0–100" },
+      { status: 400, headers: gate.headers }
+    );
+  }
+  if (body.gaps !== undefined && (!Array.isArray(body.gaps) || !(body.gaps as unknown[]).every((g) => typeof g === "string"))) {
+    return NextResponse.json(
+      { ok: false, error: "gaps must be an array of strings" },
+      { status: 400, headers: gate.headers }
+    );
+  }
+  if (body.recommendedActions !== undefined && (!Array.isArray(body.recommendedActions) || !(body.recommendedActions as unknown[]).every((a) => typeof a === "string"))) {
+    return NextResponse.json(
+      { ok: false, error: "recommendedActions must be an array of strings" },
+      { status: 400, headers: gate.headers }
     );
   }
 
@@ -145,12 +169,12 @@ export async function DELETE(req: Request): Promise<NextResponse> {
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id");
   if (!id?.trim()) {
-    return NextResponse.json({ ok: false, error: "id query param required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "id query param required" }, { status: 400 , headers: gate.headers });
   }
 
   const existing = await getCddReview(tenant, id);
   if (!existing) {
-    return NextResponse.json({ ok: false, error: "not found" }, { status: 404 });
+    return NextResponse.json({ ok: false, error: "not found" }, { status: 404, headers: gate.headers });
   }
 
   await deleteCddReview(tenant, id);

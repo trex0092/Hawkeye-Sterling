@@ -148,7 +148,7 @@ export function jurisdictionCascadeRisk(codes: ReadonlyArray<string | undefined>
     const none: JurisdictionProfile = { code: '?', name: 'unknown', tiers: ['standard'], riskScore: 0, notes: ['no jurisdictions supplied'] };
     return { worst: none, chain: [], compositeScore: 0 };
   }
-  const worst = chain.reduce((best, p) => (p.riskScore > best.riskScore ? p : best), chain[0]!);
+  const worst = chain.reduce((best, p) => (p.riskScore > best.riskScore ? p : best), chain[0] ?? { code: '?', name: 'unknown', tiers: [], riskScore: 0, notes: [] });
   // Composite: worst wins, but chain length of secrecy hops compounds.
   const secrecyHops = chain.filter((p) => p.tiers.includes('secrecy_high') || p.tiers.includes('secrecy_moderate')).length;
   const composite = Math.min(1, worst.riskScore + 0.05 * Math.max(0, secrecyHops - 1));

@@ -12,11 +12,6 @@
 // RFC: Hans Joachim Postel, 1969.
 // Produces a digit string; leading zeros are collapsed.
 
-const COLOGNE_MAP: Array<[string, string, string]> = [
-  // [code, before-set, char-set]
-  // processed left-to-right; first match wins
-];
-
 // Cologne code table: maps characters to codes.
 // H and silent letters → ''; vowels → '0'
 function cologneCharCode(prev: string, curr: string, next: string): string {
@@ -45,7 +40,9 @@ function cologneCharCode(prev: string, curr: string, next: string): string {
   if ('GKQ'.includes(c)) return '4';
   // C before AHKLOQRUX → 4; before EIY or after SZ → 8
   if (c === 'C') {
-    if ('SZ'.includes(p)) return '8';
+    // `p &&` guard: String.prototype.includes('') always returns true, so an
+    // empty prev (word-start position) would wrongly trigger the SZ branch.
+    if (p && 'SZ'.includes(p)) return '8';
     if ('AHKLOQRUX'.includes(n)) return '4';
     if ('EIYJÄÖÜ'.includes(n)) return '8';
     return '4';
@@ -78,9 +75,9 @@ export function colognePhonetic(input: string): string {
 
   let code = '';
   for (let i = 0; i < prep.length; i++) {
-    const prev = i > 0 ? prep[i - 1]! : '';
-    const curr = prep[i]!;
-    const next = i < prep.length - 1 ? prep[i + 1]! : '';
+    const prev = i > 0 ? (prep[i - 1] ?? '') : '';
+    const curr = prep[i] ?? '';
+    const next = i < prep.length - 1 ? (prep[i + 1] ?? '') : '';
     const digit = cologneCharCode(prev, curr, next);
     for (const d of digit) code += d;
   }
@@ -88,7 +85,7 @@ export function colognePhonetic(input: string): string {
   // Remove consecutive duplicates
   let deduped = '';
   for (let i = 0; i < code.length; i++) {
-    if (i === 0 || code[i] !== code[i - 1]) deduped += code[i]!;
+    if (i === 0 || code[i] !== code[i - 1]) deduped += code[i] ?? '';
   }
 
   // Remove embedded zeros (except leading)

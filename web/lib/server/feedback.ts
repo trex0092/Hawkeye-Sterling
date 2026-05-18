@@ -6,6 +6,7 @@
 // been dismissed across the tenant, producing a real learning signal on
 // top of the static heuristics in src/brain/confidence.ts.
 
+import { randomBytes } from "node:crypto";
 import { getJson, listKeys, setJson } from "./store";
 
 const PREFIX = "feedback/";
@@ -39,7 +40,7 @@ function pairKey(listId: string, listRef: string, candidate: string): string {
 export async function submitFeedback(
   input: Omit<FeedbackRecord, "id" | "submittedAt">,
 ): Promise<FeedbackRecord> {
-  const id = `fb_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  const id = `fb_${Date.now()}_${randomBytes(4).toString("hex")}`;
   const record: FeedbackRecord = {
     ...input,
     id,

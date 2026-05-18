@@ -31,6 +31,18 @@
 import type { Config } from "@netlify/functions";
 import { getStore } from "@netlify/blobs";
 
+async function writeHeartbeat(): Promise<void> {
+  try {
+    const hb = getStore("hawkeye-function-heartbeats");
+    await hb.setJSON("sanctions-ingest", {
+      lastSuccess: new Date().toISOString(),
+      label: "sanctions-ingest",
+    });
+  } catch (err) {
+    console.warn("[sanctions-ingest] heartbeat write failed (non-critical):", err instanceof Error ? err.message : String(err));
+  }
+}
+
 const STORE_NAME = "hawkeye-sanctions-feeds";
 const RUN_LABEL = "sanctions-ingest";
 const FETCH_TIMEOUT_MS = 25_000;
@@ -321,23 +333,38 @@ async function ingestOne(spec: FeedSpec, store: ReturnType<typeof getStore>): Pr
     // canonical computeSanctionDelta() once import paths are wired.
     const prevByRef = new Map(previous.map((p) => [p.sourceRef, p]));
     const currByRef = new Map(current.map((c) => [c.sourceRef, c]));
-    let additions = 0, removals = 0, amendments = 0;
+    const addedEntries: NormalisedListEntry[] = [];
+    const removedEntries: NormalisedListEntry[] = [];
+    const changedEntries: NormalisedListEntry[] = [];
     for (const c of current) {
       const p = prevByRef.get(c.sourceRef);
-      if (!p) additions++;
-      else if (JSON.stringify(p) !== JSON.stringify(c)) amendments++;
+      if (!p) addedEntries.push(c);
+      else if (JSON.stringify(p) !== JSON.stringify(c)) changedEntries.push(c);
     }
     for (const p of previous) {
-      if (!currByRef.has(p.sourceRef)) removals++;
+      if (!currByRef.has(p.sourceRef)) removedEntries.push(p);
     }
+    const additions = addedEntries.length;
+    const removals = removedEntries.length;
+    const amendments = changedEntries.length;
 
     // Persist current snapshot + delta.
+    // Delta uses full entity arrays (capped at 500 each) so that
+    // designation-alert-check.mts can read entry.primaryName and
+    // entry.sourceRef when posting individual DesignationAlerts to
+    // /api/alerts. Writing just counts here caused alerts to never fire.
     await store.set(`current/${spec.listId}.json`, JSON.stringify(current));
     if (additions + removals + amendments > 0) {
       const ts = new Date().toISOString().replace(/[:.]/g, "-");
       await store.set(
         `delta/${spec.listId}-${ts}.json`,
-        JSON.stringify({ at: new Date().toISOString(), listId: spec.listId, additions, removals, amendments }),
+        JSON.stringify({
+          computedAt: new Date().toISOString(),
+          listId: spec.listId,
+          added: addedEntries.slice(0, 500),
+          removed: removedEntries.slice(0, 500),
+          changed: changedEntries.slice(0, 500),
+        }),
       );
     }
 
@@ -391,10 +418,7 @@ export default async function handler(req: Request): Promise<Response> {
     return jsonResponse({ ok: false, label: RUN_LABEL, error: `getStore failed: ${err instanceof Error ? err.message : String(err)}` }, 503);
   }
 
-  const outcomes: IngestOutcome[] = [];
-  for (const spec of FEEDS) {
-    outcomes.push(await ingestOne(spec, store));
-  }
+  const outcomes: IngestOutcome[] = await Promise.all(FEEDS.map((spec) => ingestOne(spec, store)));
 
   const totalDiff = outcomes.reduce(
     (acc, o) => ({
@@ -405,6 +429,7 @@ export default async function handler(req: Request): Promise<Response> {
     { additions: 0, removals: 0, amendments: 0 },
   );
 
+  await writeHeartbeat();
   return jsonResponse({
     ok: outcomes.every((o) => o.ok),
     label: RUN_LABEL,

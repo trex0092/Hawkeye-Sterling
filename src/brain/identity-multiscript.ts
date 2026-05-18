@@ -260,7 +260,7 @@ export function expandArabicVariants(input: string): string[] {
   const out: string[] = [];
   const walk = (i: number, acc: string[]): void => {
     if (i === variants.length) { out.push(acc.join(' ')); return; }
-    for (const v of variants[i]!) walk(i + 1, [...acc, v]);
+    for (const v of (variants[i] ?? [])) walk(i + 1, [...acc, v]);
   };
   walk(0, []);
   // Keep variant count bounded.
@@ -273,9 +273,9 @@ export function reorderNameParts(input: string): string[] {
   const tokens = tokeniseLatin(input);
   if (tokens.length === 0) return [input];
   if (tokens.length === 1) return tokens;
-  const head = tokens[0]!;
+  const head = tokens[0] ?? '';
   const tail = tokens.slice(1);
-  const last = tokens[tokens.length - 1]!;
+  const last = tokens[tokens.length - 1] ?? '';
   const head2 = tokens.slice(0, -1);
   const orderings = new Set<string>([
     tokens.join(' '),                    // original
@@ -292,7 +292,7 @@ export function reorderNameParts(input: string): string[] {
 export function parsePartialDate(s: string): { year: number; month?: number; day?: number } | null {
   const m = /^(\d{4})(?:-(\d{1,2}))?(?:-(\d{1,2}))?$/.exec(s.trim());
   if (!m) return null;
-  const year = Number.parseInt(m[1]!, 10);
+  const year = Number.parseInt(m[1] ?? '0', 10);
   if (!Number.isFinite(year) || year < 1800 || year > 2200) return null;
   const month = m[2] ? Number.parseInt(m[2], 10) : undefined;
   const day = m[3] ? Number.parseInt(m[3], 10) : undefined;
@@ -416,11 +416,11 @@ export function matchIdentities(a: IdentityMatchInput, b: IdentityMatchInput): I
   const idb = b.identifiers ?? {};
   for (const kind of Object.keys(ida)) {
     if (idb[kind]) {
-      if (normaliseId(ida[kind]!) === normaliseId(idb[kind]!)) {
-        strongIdHit = { kind, value: ida[kind]! };
+      if (normaliseId(ida[kind] ?? '') === normaliseId(idb[kind] ?? '')) {
+        strongIdHit = { kind, value: ida[kind] ?? '' };
         break;
       } else {
-        strongIdConflict = { kind, a: ida[kind]!, b: idb[kind]! };
+        strongIdConflict = { kind, a: ida[kind] ?? '', b: idb[kind] ?? '' };
       }
     }
   }
@@ -478,12 +478,12 @@ function toLatinish(input: string, script: ScriptRun): string {
       let mapped: string | undefined;
       for (const fam of Object.values(ARABIC_NAME_FAMILIES)) {
         for (const ar of fam.arabic) {
-          if (normaliseArabicName(ar) === tok) { mapped = fam.latin[0]!; break; }
+          if (normaliseArabicName(ar) === tok) { mapped = fam.latin[0] ?? ''; break; }
         }
         if (mapped) break;
         if (fam.persian) {
           for (const fa of fam.persian) {
-            if (normaliseArabicName(fa) === tok) { mapped = fam.latin[0]!; break; }
+            if (normaliseArabicName(fa) === tok) { mapped = fam.latin[0] ?? ''; break; }
           }
           if (mapped) break;
         }

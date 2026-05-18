@@ -250,7 +250,7 @@ export class AuditLedger {
     entries: LedgerEntry[];
   } {
     let subset = this.entries;
-    if (opts?.since) subset = subset.filter((e) => new Date(e.timestamp) >= new Date(opts.since!));
+    if (opts?.since) subset = subset.filter((e) => new Date(e.timestamp) >= new Date(opts.since ?? ''));
     if (opts?.category) subset = subset.filter((e) => e.category === opts.category);
     if (opts?.subjectId) subset = subset.filter((e) => e.subject?.subjectId === opts.subjectId);
 

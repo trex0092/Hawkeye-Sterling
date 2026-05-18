@@ -137,8 +137,8 @@ function detectChainReunion(txns: BridgeTxn[]): SignalHit[] {
   const window = 12 * 60 * 60 * 1000;
   for (let i = 0; i < sorted.length; i++) {
     for (let j = i + 1; j < sorted.length; j++) {
-      const a = sorted[i]!, b = sorted[j]!;
-      if (Date.parse(b.timestamp!) - Date.parse(a.timestamp!) > window) break;
+      const a = sorted[i] as BridgeTxn, b = sorted[j] as BridgeTxn;
+      if (Date.parse(b.timestamp ?? '') - Date.parse(a.timestamp ?? '') > window) break;
       if (a.sourceChain === b.sourceChain) continue;
       if (a.amount === undefined || b.amount === undefined) continue;
       const ratio = Math.abs(a.amount - b.amount) / Math.max(a.amount, b.amount);

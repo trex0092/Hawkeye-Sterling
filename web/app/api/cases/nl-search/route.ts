@@ -15,6 +15,7 @@ import { NextResponse } from "next/server";
 import { writeAuditEvent } from "@/lib/audit";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -157,12 +158,12 @@ async function parseQuery(query: string): Promise<ParseResult> {
   }
 
   try {
-    const client = getAnthropicClient(apiKey, 22_000);
+    const client = getAnthropicClient(apiKey, 25_000);
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 1024,
       system: SYSTEM_PROMPT,
-      messages: [{ role: "user", content: `Query: "${query}"` }],
+      messages: [{ role: "user", content: `Query: "${sanitizeField(query, 500)}"` }],
     });
     const text = (response.content[0]?.type === "text" ? response.content[0].text : "{}").trim();
     let parsed: { filters?: ParsedFilters; interpretation?: string; confidence?: number; reasoning?: string };
@@ -260,9 +261,9 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     const body = (await req.json()) as { query?: string; subjects?: SubjectSlim[]; actor?: string };
     const query = (body.query ?? "").trim();
-    const subjects = body.subjects ?? [];
+    const subjects = Array.isArray(body.subjects) ? body.subjects : [];
     if (!query) {
-      return NextResponse.json({ ok: false, error: "query required" }, { status: 400 , headers: gate.headers});
+      return NextResponse.json({ ok: false, error: "query required" }, { status: 400 , headers: gate.headers });
     }
 
     const { filters, interpretation, confidence, reasoning } = await parseQuery(query);
@@ -287,7 +288,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       reasoning,
       matchCount: matchIds.length,
       auditLogged: true,
-    });
+    }, { headers: gate.headers });
   } catch (err) {
     console.error(
       "[hawkeye] cases/nl-search: AI parse failed — returning empty matchIds " +
@@ -304,6 +305,6 @@ export async function POST(req: Request): Promise<NextResponse> {
       matchCount: 0,
       auditLogged: false,
       fallback: true,
-    });
+    }, { headers: gate.headers });
   }
 }

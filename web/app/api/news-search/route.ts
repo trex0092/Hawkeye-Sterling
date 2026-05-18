@@ -312,8 +312,7 @@ async function fetchLocaleFeed(
         accept: "application/rss+xml,application/xml,text/xml,*/*;q=0.8",
       },
       signal: controller.signal,
-      next: { revalidate: 300 },
-    });
+    } as RequestInit);
     if (!res.ok) {
       console.warn(`[hawkeye] news-search/fetchLocaleFeed ${locale.code} HTTP ${res.status}`);
       return [];
@@ -479,8 +478,12 @@ export async function GET(req: Request): Promise<NextResponse> {
       }
     }
     const filtered = Array.from(merged.values())
-      // Fuzzy gate: drop articles whose title doesn't resemble the subject.
-      .filter((a) => a.fuzzyScore >= 55 || a.keywordGroups.length > 0)
+      // Fuzzy gate: require either a strong name match (≥75) OR a weak name
+      // match (≥55) combined with at least one adverse keyword group. The OR-only
+      // form (fuzzyScore≥55 OR keywords>0) was too permissive: generic gold-market
+      // articles with no name match passed via keywords alone, polluting the
+      // dossier with unrelated content and causing false-positive composite scores.
+      .filter((a) => a.fuzzyScore >= 75 || (a.fuzzyScore >= 55 && a.keywordGroups.length > 0))
       .sort((a, b) => b.fuzzyScore - a.fuzzyScore);
     // Cluster near-duplicate articles into events. Two articles belong
     // to the same event when their normalised titles share ≥ 70% of

@@ -100,7 +100,7 @@ async function nestedAccountApply(ctx: BrainContext): Promise<Finding> {
     const beneficiary = String(t['beneficiary'] ?? t['to'] ?? '').toLowerCase();
     if (!intermediary || !beneficiary) continue;
     if (!downstreamByIntermediary.has(intermediary)) downstreamByIntermediary.set(intermediary, new Set());
-    downstreamByIntermediary.get(intermediary)!.add(beneficiary);
+    downstreamByIntermediary.get(intermediary)?.add(beneficiary);
   }
   const nested = [...downstreamByIntermediary.entries()].filter(([, bens]) => bens.size >= 5);
   return {
@@ -167,8 +167,9 @@ async function ransomwareCashoutApply(ctx: BrainContext): Promise<Finding> {
       return (Number.isFinite(ta) ? ta : 0) - (Number.isFinite(tb) ? tb : 0);
     });
     for (let i = 1; i < sorted.length; i++) {
-      const a = sorted[i - 1]!;
-      const b = sorted[i]!;
+      const a = sorted[i - 1];
+      const b = sorted[i];
+      if (!a || !b) continue;
       const ta = Date.parse(String(a['timestamp'] ?? a['date'] ?? ''));
       const tb = Date.parse(String(b['timestamp'] ?? b['date'] ?? ''));
       if (Number.isFinite(ta) && Number.isFinite(tb) && tb - ta < 6 * 3_600_000) rapidHops += 1;
@@ -298,11 +299,11 @@ async function funnelMuleApply(ctx: BrainContext): Promise<Finding> {
     if (!Number.isFinite(amount) || !Number.isFinite(ts)) continue;
     if (from) {
       if (!inflowsBySrc.has(from)) inflowsBySrc.set(from, []);
-      inflowsBySrc.get(from)!.push(amount);
+      inflowsBySrc.get(from)?.push(amount);
     }
     if (to) {
       if (!outflowsByDst.has(to)) outflowsByDst.set(to, []);
-      outflowsByDst.get(to)!.push(amount);
+      outflowsByDst.get(to)?.push(amount);
     }
   }
   const distinctSources = inflowsBySrc.size;

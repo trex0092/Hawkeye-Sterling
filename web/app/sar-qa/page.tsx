@@ -176,12 +176,12 @@ export default function SarQaPage() {
               tone: cases.some((c) => !reviews[c.id]) ? "amber" : undefined,
             },
             {
-              value: String(Object.values(reviews).filter((r) => r.state === "challenged").length),
+              value: String(Object.values(reviews).filter((r) => (r as QaReview).state === "challenged").length),
               label: "challenged",
-              tone: Object.values(reviews).some((r) => r.state === "challenged") ? "red" : undefined,
+              tone: Object.values(reviews).some((r) => (r as QaReview).state === "challenged") ? "red" : undefined,
             },
             {
-              value: String(Object.values(reviews).filter((r) => r.state === "approved").length),
+              value: String(Object.values(reviews).filter((r) => (r as QaReview).state === "approved").length),
               label: "approved",
             },
             { value: String(cases.length), label: "total filed" },

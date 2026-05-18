@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { asanaGids } from "@/lib/server/asanaConfig";
+import { enforce } from "@/lib/server/enforce";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -132,7 +133,10 @@ interface Result {
   error?:    string;
 }
 
-export async function POST(): Promise<NextResponse> {
+export async function POST(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
+
   const token = process.env["ASANA_TOKEN"];
   if (!token) {
     return NextResponse.json(

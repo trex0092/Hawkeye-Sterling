@@ -117,16 +117,16 @@ const MATCHERS: CitationMatcher[] = [
       const articleNumber = m[1] ? Number(m[1]) : undefined;
       const suffix = m[2] ?? '';
       const clauseNumber = m[3] ? Number(m[3]) : undefined;
-      const articleRef = articleNumber == null
+      const articleRef = articleNumber === null || articleNumber === undefined
         ? '(no article)'
-        : `Art.${articleNumber}${suffix}${clauseNumber != null ? ` Cl.${clauseNumber}` : ''}`;
+        : `Art.${articleNumber}${suffix}${clauseNumber !== null && clauseNumber !== undefined ? ` Cl.${clauseNumber}` : ''}`;
       return {
         raw: m[0],
         class: 'A',
         sourceId: 'FDL-10-2025',
         articleRef,
-        ...(articleNumber != null ? { articleNumber } : {}),
-        ...(clauseNumber != null ? { clauseNumber } : {}),
+        ...(articleNumber !== null && articleNumber !== undefined ? { articleNumber } : {}),
+        ...(clauseNumber !== null && clauseNumber !== undefined ? { clauseNumber } : {}),
         span: { start: m.index, end: m.index + m[0].length },
       };
     },
@@ -138,13 +138,13 @@ const MATCHERS: CitationMatcher[] = [
     parse: (m) => {
       const articleNumber = m[1] ? Number(m[1]) : undefined;
       const suffix = m[2] ?? '';
-      const articleRef = articleNumber == null ? '(no article)' : `Art.${articleNumber}${suffix}`;
+      const articleRef = articleNumber === null || articleNumber === undefined ? '(no article)' : `Art.${articleNumber}${suffix}`;
       return {
         raw: m[0],
         class: 'B',
         sourceId: 'CD-134-2025',
         articleRef,
-        ...(articleNumber != null ? { articleNumber } : {}),
+        ...(articleNumber !== null && articleNumber !== undefined ? { articleNumber } : {}),
         span: { start: m.index, end: m.index + m[0].length },
       };
     },
@@ -173,9 +173,9 @@ const MATCHERS: CitationMatcher[] = [
       const version = m[1] ? `v${m[1]}` : 'v9';
       const step = m[2] ? Number(m[2]) : null;
       const annex = m[3] ?? null;
-      const articleRef = step != null
+      const articleRef = step !== null && step !== undefined
         ? `Step ${step}`
-        : annex != null
+        : annex !== null && annex !== undefined
           ? `Annex ${annex}`
           : '(LBMA RGG)';
       return {
@@ -183,7 +183,7 @@ const MATCHERS: CitationMatcher[] = [
         class: 'D',
         sourceId: `LBMA-RGG-${version}`,
         articleRef,
-        ...(step != null ? { articleNumber: step } : {}),
+        ...(step !== null && step !== undefined ? { articleNumber: step } : {}),
         span: { start: m.index, end: m.index + m[0].length },
       };
     },
@@ -266,10 +266,10 @@ function indexRetrievedChunks(retrieved: RegistryChunk[]): ChunkIndex {
   for (const ch of retrieved) {
     sourceIds.add(ch.metadata.sourceId);
     if (!byArticle.has(ch.metadata.sourceId)) byArticle.set(ch.metadata.sourceId, new Set());
-    byArticle.get(ch.metadata.sourceId)!.add(ch.metadata.articleRef);
-    if (ch.metadata.articleNumber != null) {
+    (byArticle.get(ch.metadata.sourceId) ?? new Set()).add(ch.metadata.articleRef);
+    if (ch.metadata.articleNumber !== null && ch.metadata.articleNumber !== undefined) {
       if (!byNumber.has(ch.metadata.sourceId)) byNumber.set(ch.metadata.sourceId, new Set());
-      byNumber.get(ch.metadata.sourceId)!.add(ch.metadata.articleNumber);
+      (byNumber.get(ch.metadata.sourceId) ?? new Set()).add(ch.metadata.articleNumber);
     }
   }
   return { byArticle, byNumber, sourceIds };
@@ -324,7 +324,7 @@ export function validateCitations(
 
     // Failure 3: class conflation — Art.N cited under FDL but only
     // exists in CD-134, or vice versa.
-    if (c.sourceId === 'FDL-10-2025' && c.articleNumber != null) {
+    if (c.sourceId === 'FDL-10-2025' && c.articleNumber !== null && c.articleNumber !== undefined) {
       const fdlArts = index.byNumber.get('FDL-10-2025') ?? new Set();
       const cdArts = index.byNumber.get('CD-134-2025') ?? new Set();
       if (!fdlArts.has(c.articleNumber) && cdArts.has(c.articleNumber)) {

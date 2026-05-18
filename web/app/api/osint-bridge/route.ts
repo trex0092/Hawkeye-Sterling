@@ -67,7 +67,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   } catch {
     return NextResponse.json(
       { ok: false, error: "invalid JSON body" },
-      { status: 400, headers: CORS },
+      { status: 400, headers: { ...gate.headers, ...CORS } }
     );
   }
 
@@ -77,7 +77,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         ok: false,
         error: `tool must be one of: ${[...VALID_TOOLS].join(", ")}`,
       },
-      { status: 422, headers: CORS },
+      { status: 422, headers: { ...gate.headers, ...CORS } }
     );
   }
 
@@ -89,7 +89,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (!b.username?.trim()) {
       return NextResponse.json(
         { ok: false, error: "username is required for sherlock" },
-        { status: 422, headers: CORS },
+        { status: 422, headers: { ...gate.headers, ...CORS } }
       );
     }
     result = await sherlockSearch(b.username).catch((err: unknown) => ({
@@ -104,7 +104,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (!b.username?.trim()) {
       return NextResponse.json(
         { ok: false, error: "username is required for maigret" },
-        { status: 422, headers: CORS },
+        { status: 422, headers: { ...gate.headers, ...CORS } }
       );
     }
     result = await maigretProfile(b.username, {}, b.sites).catch((err: unknown) => ({
@@ -119,7 +119,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (!b.domain?.trim()) {
       return NextResponse.json(
         { ok: false, error: "domain is required for harvester" },
-        { status: 422, headers: CORS },
+        { status: 422, headers: { ...gate.headers, ...CORS } }
       );
     }
     result = await harvesterScan(b.domain, {}, b.sources).catch((err: unknown) => ({
@@ -135,7 +135,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (!b.person?.trim()) {
       return NextResponse.json(
         { ok: false, error: "person is required for social-analyzer" },
-        { status: 422, headers: CORS },
+        { status: 422, headers: { ...gate.headers, ...CORS } }
       );
     }
     result = await socialAnalyzerSearch(b.person, {}, b.platforms).catch((err: unknown) => ({
@@ -149,7 +149,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (!Array.isArray(b.features) || b.features.length === 0) {
       return NextResponse.json(
         { ok: false, error: "features (non-empty 2D array) is required for anomaly" },
-        { status: 422, headers: CORS },
+        { status: 422, headers: { ...gate.headers, ...CORS } }
       );
     }
     result = await detectAnomalies(b.features, b.algorithm ?? "IsolationForest").catch(
@@ -167,7 +167,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (!b.pattern?.trim()) {
       return NextResponse.json(
         { ok: false, error: "pattern is required for amlsim" },
-        { status: 422, headers: CORS },
+        { status: 422, headers: { ...gate.headers, ...CORS } }
       );
     }
     result = await amlSimPatterns(

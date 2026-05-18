@@ -109,6 +109,9 @@ export default function AuditTrailPage() {
       });
       if (res.ok) {
         const data = (await res.json()) as AuditAnomaly;
+        // Ensure anomalies array is present before storing — a malformed
+        // response (null/missing) would crash the useMemo iterators below.
+        if (!Array.isArray(data?.anomalies)) data.anomalies = [];
         if (mountedRef.current) setAnomaly(data);
       } else {
         if (!mountedRef.current) return;

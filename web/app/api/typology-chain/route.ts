@@ -21,6 +21,7 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -210,7 +211,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   let typologyChain: string[] = [];
 
   if (apiKey && staticMatches.length > 0) {
-    const client = getAnthropicClient(apiKey, 22_000, "typology-chain");
+    const client = getAnthropicClient(apiKey, 40_000, "typology-chain");
     try {
       const res = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
@@ -218,9 +219,9 @@ export async function POST(req: Request): Promise<NextResponse> {
         system: `You are a UAE AML/CFT specialist analysing FATF money laundering typology patterns. Given a typology analysis, determine if STR filing is required, if EDD is required, and construct the most likely ML typology chain. Return JSON: { "strTrigger": bool, "strBasis": "string", "eddRequired": bool, "typologyChain": ["step1", "step2", ...], "narrative": "2-3 sentence compliance narrative", "keyRiskFactor": "string" }`,
         messages: [{
           role: "user",
-          content: `Industry: ${body.industry ?? "dpms"}, Jurisdiction: ${body.jurisdiction ?? "AE"}
-Narrative: ${body.narrative ?? "Not provided"}
-Red flags: ${(body.redFlags ?? []).join("; ") || "None listed"}
+          content: `Industry: ${sanitizeField(body.industry ?? "dpms", 100)}, Jurisdiction: ${sanitizeField(body.jurisdiction ?? "AE", 100)}
+Narrative: ${sanitizeText(body.narrative ?? "Not provided", 2000)}
+Red flags: ${sanitizeText(( Array.isArray(body.redFlags) ? body.redFlags : []).join("; ") || "None listed", 1000)}
 Matched typologies: ${staticMatches.slice(0, 5).map((m) => `${m.typologyId} ${m.typologyName} (${m.riskRating})`).join(", ")}
 Transaction count: ${body.transactions?.length ?? 0}
 Determine STR trigger, EDD requirement, typology chain, and risk narrative.`,
@@ -230,7 +231,7 @@ Determine STR trigger, EDD requirement, typology chain, and risk narrative.`,
       const parsed = JSON.parse(raw.match(/\{[\s\S]*\}/)?.[0] ?? "{}");
       strTrigger = parsed.strTrigger ?? criticalCount > 0;
       eddRequired = parsed.eddRequired ?? highCount > 0;
-      typologyChain = parsed.typologyChain ?? [];
+      typologyChain = Array.isArray(parsed.typologyChain) ? parsed.typologyChain : [];
       aiNarrative = parsed.narrative ?? "";
     } catch { /* non-blocking */ }
   } else {

@@ -87,10 +87,9 @@ function autoCacheSystem(
 
 // ── Guarded client ────────────────────────────────────────────────────────────
 
-// Default for routes on Netlify's standard Lambda budget (~26 s ceiling on
-// Pro). Routes that opt into `export const maxDuration = 60` can pass a
-// larger `timeoutMs` to getAnthropicClient and get up to ~55 s of budget.
-const DEFAULT_ANTHROPIC_TIMEOUT_MS = 22_000;
+// Hard SLA: all LLM calls must return (or time out to fallback) within 5s.
+// Timeout is set to 4_500ms leaving 500ms for HTTP overhead and JSON parsing.
+const DEFAULT_ANTHROPIC_TIMEOUT_MS = 4_500;
 
 export class AnthropicGuard {
   private inner: Anthropic;

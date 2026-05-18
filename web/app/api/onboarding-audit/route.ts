@@ -22,6 +22,7 @@ import { appendAuditEntry } from "@/lib/server/mlro-integration";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 
 const CORS: Record<string, string> = {
   "access-control-allow-origin": process.env["NEXT_PUBLIC_APP_URL"] ?? "https://hawkeye-sterling.netlify.app",
@@ -48,7 +49,7 @@ export async function POST(req: Request): Promise<Response> {
   try {
     body = (await req.json()) as Body;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400, headers: CORS });
+    return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400, headers: { ...gate.headers, ...CORS } });
   }
 
   const userId = body.userId ?? "anonymous";
@@ -77,6 +78,6 @@ export async function POST(req: Request): Promise<Response> {
 
   return NextResponse.json(
     { ok: true, seq: audit.seq, entryHash: audit.entryHash },
-    { headers: CORS },
+    { headers: { ...gate.headers, ...CORS } }
   );
 }

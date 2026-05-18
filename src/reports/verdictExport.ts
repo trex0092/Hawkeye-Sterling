@@ -233,14 +233,13 @@ function markdownToHtml(md: string): string {
   const lines = md.split('\n');
   const out: string[] = [];
   let inTable = false;
-  let tableHeader: string[] = [];
   let inList = false;
   const flushList = (): void => { if (inList) { out.push('</ul>'); inList = false; } };
   const flushTable = (): void => {
-    if (inTable) { out.push('</tbody></table>'); inTable = false; tableHeader = []; }
+    if (inTable) { out.push('</tbody></table>'); inTable = false; }
   };
   for (let i = 0; i < lines.length; i++) {
-    const raw = lines[i]!;
+    const raw = lines[i] ?? '';
     const line = raw;
     if (/^# /.test(line)) { flushList(); flushTable(); out.push(`<h1>${inline(esc(line.slice(2)))}</h1>`); continue; }
     if (/^## /.test(line)) { flushList(); flushTable(); out.push(`<h2>${inline(esc(line.slice(3)))}</h2>`); continue; }
@@ -256,7 +255,6 @@ function markdownToHtml(md: string): string {
       const cells = line.slice(1, -1).split('|').map((c) => c.trim());
       const next = lines[i + 1] ?? '';
       if (!inTable && /^\|[\s\-:|]+\|$/.test(next)) {
-        tableHeader = cells;
         out.push('<table><thead><tr>');
         for (const c of cells) out.push(`<th>${inline(esc(c))}</th>`);
         out.push('</tr></thead><tbody>');

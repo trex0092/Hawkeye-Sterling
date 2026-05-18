@@ -126,6 +126,7 @@ ${items
     headers: {
       "content-type": "application/rss+xml; charset=utf-8",
       "cache-control": "no-store",
+      ...gate.headers,
     },
   });
 }

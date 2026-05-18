@@ -152,7 +152,8 @@ export function explainMode(id: string): ModeExplanation {
   const category = found ? categorise(id) : 'general';
   const prefix = MLRO_PREFIX_BY_ID.get(id)?.prefix;
   const hasAuthoredPrefix = typeof prefix === 'string' && prefix.length > 0;
-  const prefixPreview = hasAuthoredPrefix ? (prefix!.length > 200 ? prefix!.slice(0, 200) + '…' : prefix!) : undefined;
+  const prefixStr = prefix ?? '';
+  const prefixPreview = hasAuthoredPrefix ? (prefixStr.length > 200 ? prefixStr.slice(0, 200) + '…' : prefixStr) : undefined;
   const warnings: string[] = [];
   if (!found) warnings.push('mode id not in catalogue — will fall through to the default executor prompt');
   if (!hasAuthoredPrefix && found) warnings.push('no authored prefix in deep-reasoning.js — prompt will use the catalogue default');
@@ -161,7 +162,7 @@ export function explainMode(id: string): ModeExplanation {
     id,
     found,
     category,
-    categoryDescription: CATEGORY_DESC[category] ?? CATEGORY_DESC.general!,
+    categoryDescription: CATEGORY_DESC[category] ?? CATEGORY_DESC['general'] ?? '',
     engagedFaculties: CAT_TO_FACULTIES[category] ?? [],
     engagedCoreModes: CAT_TO_CORE_MODES[category] ?? [],
     hasAuthoredPrefix,

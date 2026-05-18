@@ -1,8 +1,7 @@
 // UN Security Council Consolidated List adapter.
 // Source: https://scsanctions.un.org/resources/xml/en/consolidated.xml
 
-import type { SourceAdapter, NormalisedEntity } from '../types.js';
-import { mkListing } from '../types.js';
+import { type SourceAdapter, type NormalisedEntity, mkListing } from '../types.js';
 import { fetchText, sha256Hex } from '../fetch-util.js';
 import { parseXml, findAll, textOf } from '../xml-lite.js';
 
@@ -82,6 +81,13 @@ export const unConsolidatedAdapter: SourceAdapter = {
         source: 'un_consolidated',
         fetchedAt,
       });
+    }
+
+    if (entities.length === 0) {
+      throw new Error(
+        `un_consolidated: parsed 0 entities from ${SOURCE_URL} — refusing to overwrite existing list. ` +
+        `Check the feed URL and XML schema before retrying.`,
+      );
     }
 
     return { entities, rawChecksum };

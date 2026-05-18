@@ -54,7 +54,7 @@ function typedEvidence<T>(ctx: BrainContext, key: string): T[] {
 
 function singleEvidence<T>(ctx: BrainContext, key: string): T | undefined {
   const v = (ctx.evidence as Record<string, unknown> | undefined)?.[key];
-  return v == null ? undefined : (v as T);
+  return v === null || v === undefined ? undefined : (v as T);
 }
 
 // ──────────────────────────────────────────────────────────────────────

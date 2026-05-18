@@ -3,6 +3,8 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
+import { enforce } from "@/lib/server/enforce";
 export type EsgRating = "AAA" | "AA" | "A" | "BBB" | "BB" | "B" | "CCC";
 export type MlRiskLevel = "low" | "medium" | "high";
 
@@ -127,6 +129,9 @@ const FALLBACK: EsgRiskResult = {
 };
 
 export async function POST(req: Request) {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
+
   let body: {
     entity?: string;
     sector?: string;
@@ -190,7 +195,7 @@ export async function POST(req: Request) {
     const client = getAnthropicClient(apiKey, 55_000);
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 3500,
+      max_tokens: 800,
       system: [
         {
           type: "text",
@@ -234,11 +239,11 @@ Return ONLY valid JSON (no markdown fences):
       messages: [
         {
           role: "user",
-          content: `Entity: ${body.entity ?? "Unknown entity"}
-Sector: ${body.sector ?? "Not specified"}
-Primary Jurisdiction: ${body.jurisdiction ?? "Not specified"}
-Operations Description: ${body.operations ?? "Not specified"}
-Supplier Countries: ${(body.supplierCountries ?? []).join(", ") || "Not specified"}
+          content: `Entity: ${sanitizeField(body.entity ?? "Unknown entity", 500)}
+Sector: ${sanitizeField(body.sector ?? "Not specified", 100)}
+Primary Jurisdiction: ${sanitizeField(body.jurisdiction ?? "Not specified", 100)}
+Operations Description: ${sanitizeText(body.operations ?? "Not specified", 2000)}
+Supplier Countries: ${sanitizeField(( Array.isArray(body.supplierCountries) ? body.supplierCountries : []).join(", ") || "Not specified", 500)}
 Employee Count: ${body.employeeCount ?? "Not specified"}
 Publicly Listed: ${body.publiclyListed ?? false ? "Yes" : "No"}
 
@@ -249,6 +254,20 @@ Generate a comprehensive ESG risk assessment with ML risk overlay for this entit
 
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as EsgRiskResult;
+    if (result.dimensions?.environmental) {
+      if (!Array.isArray(result.dimensions.environmental.risks)) result.dimensions.environmental.risks = [];
+      if (!Array.isArray(result.dimensions.environmental.opportunities)) result.dimensions.environmental.opportunities = [];
+    }
+    if (result.dimensions?.social) {
+      if (!Array.isArray(result.dimensions.social.risks)) result.dimensions.social.risks = [];
+      if (!Array.isArray(result.dimensions.social.opportunities)) result.dimensions.social.opportunities = [];
+    }
+    if (result.dimensions?.governance) {
+      if (!Array.isArray(result.dimensions.governance.risks)) result.dimensions.governance.risks = [];
+      if (!Array.isArray(result.dimensions.governance.opportunities)) result.dimensions.governance.opportunities = [];
+    }
+    if (!Array.isArray(result.regulatoryExposure)) result.regulatoryExposure = [];
+    if (!Array.isArray(result.redFlags)) result.redFlags = [];
     return NextResponse.json(result);
   } catch (err) {
     console.warn("[esg-risk] LLM failed:", err instanceof Error ? err.message : err);

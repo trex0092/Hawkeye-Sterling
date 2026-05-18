@@ -39,13 +39,13 @@ export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "playbook/gap-analysis temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "playbook/gap-analysis temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   let body: Body;
   try {
     body = (await req.json()) as Body;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const systemPrompt = [
@@ -80,7 +80,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   ].filter(Boolean).join("\n");
 
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 55_000);
     const res = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 1024,
@@ -93,9 +93,12 @@ export async function POST(req: Request): Promise<NextResponse> {
     const raw = (first?.type === "text" ? first.text : undefined) ?? "";
     const cleaned = raw.replace(/^```json?\s*/i, "").replace(/\s*```$/i, "").trim();
     const result = JSON.parse(cleaned) as GapResult;
+    if (!Array.isArray(result.criticalGaps)) result.criticalGaps = [];
+    if (!Array.isArray(result.regulatoryExposure)) result.regulatoryExposure = [];
+    if (!Array.isArray(result.priorityActions)) result.priorityActions = [];
 
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "playbook/gap-analysis temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "playbook/gap-analysis temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

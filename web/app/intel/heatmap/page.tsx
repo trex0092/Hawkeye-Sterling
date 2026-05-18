@@ -72,7 +72,7 @@ export default function HeatmapPage() {
   }, []);
 
   const rows = useMemo<ExposureRow[]>(() => {
-    const total = Object.values(exposure).reduce((s, n) => s + n, 0) || 1;
+    const total = (Object.values(exposure) as number[]).reduce((s, n) => s + n, 0) || 1;
     return JURISDICTION_RISK.map((j) => {
       const c = exposure[j.iso2] ?? 0;
       return {

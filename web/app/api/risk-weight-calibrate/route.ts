@@ -12,13 +12,18 @@ import {
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 
 export async function GET(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
 
-  const [current, history] = await Promise.all([getCurrentWeights(), getWeightHistory()]);
-  return NextResponse.json({ ok: true, current, defaults: DEFAULT_WEIGHTS, history }, { headers: gate.headers });
+  try {
+    const [current, history] = await Promise.all([getCurrentWeights(), getWeightHistory()]);
+    return NextResponse.json({ ok: true, current, defaults: DEFAULT_WEIGHTS, history }, { headers: gate.headers });
+  } catch {
+    return NextResponse.json({ ok: false, error: "weight store unavailable — please retry." }, { status: 503, headers: gate.headers });
+  }
 }
 
 export async function POST(req: Request): Promise<NextResponse> {

@@ -21,8 +21,7 @@
 // compliance-report and audit-certificate flows already use. Verifiers
 // fetch the public key from /.well-known/hawkeye-pubkey.pem.
 
-import { createHash, createPrivateKey, createPublicKey, sign as cryptoSign, verify as cryptoVerify } from "crypto";
-import type { KeyObject } from "crypto";
+import { createHash, createPrivateKey, createPublicKey, randomBytes, sign as cryptoSign, verify as cryptoVerify, type KeyObject } from "crypto";
 
 export interface RegulatorTokenClaims {
   iss: "hawkeye-sterling";
@@ -52,7 +51,8 @@ export interface IssueOptions {
 const TOKEN_VERSION = "v1";
 
 function base64url(input: Buffer | string): string {
-  return Buffer.from(input).toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  const buf = Buffer.isBuffer(input) ? input : Buffer.from(input);
+  return buf.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 function base64urlDecode(input: string): Buffer {
   const padded = input.replace(/-/g, "+").replace(/_/g, "/").padEnd(input.length + ((4 - (input.length % 4)) % 4), "=");
@@ -108,7 +108,7 @@ export function issueRegulatorToken(opts: IssueOptions): {
   for (const c of opts.scope.cases ?? []) scope.push(`case:${c}`);
   if (scope.length === 0) throw new Error("regulator-jwt: scope must include at least one tenant or case");
 
-  const jti = `reg_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+  const jti = `reg_${Date.now()}_${randomBytes(6).toString("hex")}`;
   const claims: RegulatorTokenClaims = {
     iss: "hawkeye-sterling",
     sub: `regulator:${opts.examinerId}`,
@@ -157,7 +157,10 @@ export function verifyRegulatorToken(token: string): RegulatorTokenClaims | null
   if (claims.iss !== "hawkeye-sterling") return null;
   if (claims.aud !== "regulator-read-only") return null;
   const now = Math.floor(Date.now() / 1000);
-  if (typeof claims.exp !== "number" || claims.exp < now) return null;
+  // RFC 7519 §4.1.4: token is valid only if exp is *strictly after* the current
+  // time. Using `<= now` ensures a token with exp == now is treated as expired
+  // (the prior `< now` would have accepted it for the remainder of that second).
+  if (typeof claims.exp !== "number" || claims.exp <= now) return null;
   if (typeof claims.nbf === "number" && claims.nbf > now) return null;
 
   const pub = loadPublicKey();

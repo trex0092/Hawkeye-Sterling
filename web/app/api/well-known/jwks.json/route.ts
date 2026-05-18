@@ -3,6 +3,7 @@ import { publicKeyJwk } from "@/lib/server/report-pubkey";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 
 // GET /.well-known/jwks.json
 //
