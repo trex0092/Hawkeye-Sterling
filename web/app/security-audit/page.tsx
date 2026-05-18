@@ -267,6 +267,22 @@ const SEV: Record<
 
 type ChecklistState = Record<string, boolean>;
 
+// ── Checklist persistence ─────────────────────────────────────────────────────
+
+const CHECKLIST_STORAGE = "hawkeye.security-audit.v1";
+
+function loadChecked(): ChecklistState {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(CHECKLIST_STORAGE);
+    return raw ? (JSON.parse(raw) as ChecklistState) : {};
+  } catch { return {}; }
+}
+
+function saveChecked(state: ChecklistState): void {
+  try { window.localStorage.setItem(CHECKLIST_STORAGE, JSON.stringify(state)); } catch { /* quota exceeded */ }
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function SecurityAuditPage() {
@@ -278,7 +294,7 @@ export default function SecurityAuditPage() {
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [activeTool, setActiveTool] = useState(0);
-  const [checked, setChecked] = useState<ChecklistState>({} as ChecklistState);
+  const [checked, setChecked] = useState<ChecklistState>(loadChecked);
   const resultRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -292,7 +308,11 @@ export default function SecurityAuditPage() {
   const pct = Math.round((doneCount / allItems.length) * 100);
 
   const toggleItem = (id: string) =>
-    setChecked((prev: ChecklistState) => ({ ...prev, [id]: !prev[id] }));
+    setChecked((prev: ChecklistState) => {
+      const next = { ...prev, [id]: !prev[id] };
+      saveChecked(next);
+      return next;
+    });
 
   const analyseCode = async () => {
     if (!code.trim()) return;
