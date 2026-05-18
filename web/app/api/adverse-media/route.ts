@@ -15,8 +15,10 @@ import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
 import { searchAdverseMedia } from "../../../../dist/src/integrations/taranisAi.js";
-import { analyseAdverseMediaResult } from "../../../../dist/src/brain/adverse-media-analyser.js";
+import { analyseAdverseMediaResult, analyseAdverseMediaItems } from "../../../../dist/src/brain/adverse-media-analyser.js";
+import type { TaranisItem } from "../../../../dist/src/integrations/taranisAi.js";
 import { fetchGdeltCached } from "@/lib/intelligence/gdelt-cache";
+import type { GdeltArticle } from "@/lib/intelligence/gdelt-cache";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -170,12 +172,36 @@ function _parseSeen(s: string | undefined): string {
   return m ? `${m[1]}-${m[2]}-${m[3]}` : s.slice(0, 10);
 }
 
-// Replaces the old claudeAdverseMedia() that asked Claude from training memory.
-// Now: fetch REAL live articles from GDELT, then have Claude analyse those
-// specific articles — completely eliminating the knowledge-cutoff blind spot.
+// Convert a GDELT article to the TaranisItem shape so the deterministic
+// 737-keyword classifier can process it without requiring an LLM.
+function gdeltToTaranisItem(a: GdeltArticle, index: number): TaranisItem {
+  const published = (() => {
+    if (!a.seendate) return new Date().toISOString();
+    const m = a.seendate.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z?$/);
+    return m ? `${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:${m[6]}Z` : a.seendate;
+  })();
+  return {
+    id: a.url ?? String(index),
+    title: a.title ?? "",
+    content: a.title ?? "",   // GDELT artlist mode has no body text; title is the best signal
+    source: a.domain ?? "gdelt",
+    published,
+    ...(a.url ? { url: a.url } : {}),
+    ...(a.language ? { language: a.language } : {}),
+    tags: a.riskCategories ?? [],
+    entities: [],
+    ...(a.relevance !== undefined ? { relevanceScore: a.relevance } : {}),
+  } as TaranisItem;
+}
+
+// Fetch REAL live articles from GDELT, then analyse them.
+// Primary path: Claude provides narrative + structured findings.
+// Fallback path: when ANTHROPIC_API_KEY is absent, the deterministic
+// 737-keyword classifier runs directly on the GDELT articles — no LLM needed.
+// This ensures the route always returns a meaningful verdict (not "unknown")
+// even before an Anthropic key is configured.
 async function liveAdverseMedia(subject: string, budgetMs = 20_000) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) throw new Error("ANTHROPIC_API_KEY not configured");
 
   // 1. Pull live articles via shared 3-layer cache (memory → Redis → GDELT live).
   // Forward remaining budget so GDELT doesn't overrun the route deadline.
@@ -219,6 +245,15 @@ async function liveAdverseMedia(subject: string, budgetMs = 20_000) {
       gdeltFailed: true,
     };
     return degraded;
+  }
+
+  // When no Anthropic key is configured, run the deterministic 737-keyword
+  // classifier directly on the GDELT articles. This is the "no-LLM" fallback
+  // that keeps screening functional without requiring a Claude API key.
+  if (!apiKey) {
+    const taranisItems = items.slice(0, 50).map(gdeltToTaranisItem);
+    const verdict = analyseAdverseMediaItems(subject, taranisItems);
+    return { ...verdict, gdeltSource: true, gdeltArticleCount: items.length, keywordClassifierOnly: true };
   }
 
   const now = new Date().toISOString();

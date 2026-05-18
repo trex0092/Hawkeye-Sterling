@@ -707,7 +707,7 @@ function SanctionsRefreshButton() {
     setState("running");
     setMsg("");
     try {
-      const res = await fetch("/api/sanctions/refresh", { method: "POST" });
+      const res = await fetch("/api/sanctions/refresh", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
       const json = await res.json() as { ok?: boolean; message?: string; error?: string };
       if (!mountedRef.current) return;
       if (json.ok) {
@@ -903,7 +903,7 @@ function AsanaRebuildSection() {
     setCmEnvBlock("");
     setCmErr("");
     try {
-      const res = await fetch("/api/asana-create-missing", { method: "POST" });
+      const res = await fetch("/api/asana-create-missing", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
       let json: { ok: boolean; results?: CmResult[]; envBlock?: string; summary?: { created: number; alreadyExists: number; failed: number }; error?: string };
       try {
         json = await res.json() as typeof json;
@@ -934,7 +934,7 @@ function AsanaRebuildSection() {
     setResults([]);
     setErrMsg("");
     try {
-      const res = await fetch("/api/asana-rebuild-sections", { method: "POST" });
+      const res = await fetch("/api/asana-rebuild-sections", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
       let data: { ok: boolean; results?: typeof results; error?: string; authenticatedAs?: string };
       try {
         data = await res.json() as typeof data;
