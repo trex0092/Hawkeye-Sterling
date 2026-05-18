@@ -162,6 +162,19 @@ const LOCALES: Array<{ code: string; hl: string; gl: string; ceid: string }> = [
   { code: "zu", hl: "zu", gl: "ZA", ceid: "ZA:zu" },
   { code: "ky", hl: "ky", gl: "KG", ceid: "KG:ky" },
   { code: "tk", hl: "tk", gl: "TM", ceid: "TM:tk" },
+  // Tier-6 — Indian regional + African languages + remaining
+  { code: "or", hl: "or", gl: "IN", ceid: "IN:or" },
+  { code: "kn", hl: "kn", gl: "IN", ceid: "IN:kn" },
+  { code: "as", hl: "as", gl: "IN", ceid: "IN:as" },
+  { code: "rw", hl: "rw", gl: "RW", ceid: "RW:rw" },
+  { code: "yo", hl: "yo", gl: "NG", ceid: "NG:yo" },
+  { code: "ha", hl: "ha", gl: "NG", ceid: "NG:ha" },
+  { code: "ps", hl: "ps", gl: "AF", ceid: "AF:ps" },
+  { code: "zh-TW", hl: "zh-TW", gl: "TW", ceid: "TW:zh-TW" },
+  { code: "jv", hl: "jv", gl: "ID", ceid: "ID:jv" },
+  { code: "ceb", hl: "ceb", gl: "PH", ceid: "PH:ceb" },
+  { code: "ig", hl: "ig", gl: "NG", ceid: "NG:ig" },
+  { code: "ny", hl: "ny", gl: "MW", ceid: "MW:ny" },
 ];
 
 // Multi-language adverse-media modifiers so each locale returns relevant
@@ -244,6 +257,18 @@ const LOCALE_MODIFIERS: Record<string, string> = {
   zu: "izijeziso OR inkohliso OR ukuxhashazwa OR ukugweba OR ukuboshwa OR ukuhlanza imali OR ubugqilikazi",
   ky: "санкциялар OR алдамчылык OR коррупция OR пара алуу OR камоо алуу OR акча жуу OR терроризм",
   tk: "sanksiýalar OR aldamak OR korrupsiýa OR para almak OR tussag etmek OR pul ýuwmak OR terrorçylyk",
+  or: "ନିଷେଧ OR ଜାଲିଆତି OR ଦୁର୍ନୀତି OR ଘୁଷ OR ଗ୍ରେଫ୍ତାର OR ଅର୍ଥ ଶୋଧ OR ଭୟଙ୍କରବାଦ",
+  kn: "ನಿರ್ಬಂಧಗಳು OR ವಂಚನೆ OR ಭ್ರಷ್ಟಾಚಾರ OR ಲಂಚ OR ಬಂಧನ OR ಹಣ ಅಕ್ರಮಸಾಗಣೆ OR ಭಯೋತ್ಪಾದನೆ",
+  as: "নিষেধাজ্ঞা OR প্ৰতাৰণা OR দুৰ্নীতি OR ঘুষ OR গ্ৰেপ্তাৰ OR ধন শোধন OR সন্ত্ৰাসবাদ",
+  rw: "ibihano OR uburiganya OR ruswa OR ruswa OR gufungwa OR gukaraba amafaranga OR iterabwoba",
+  yo: "ijiya OR ẹtan OR ibajẹ OR ẹṣẹ OR imuni OR fifọ owo OR ipanilaya",
+  ha: "hukunci OR yaudara OR cin hanci OR cin hancin karfi OR kamawa OR wankan kudi OR ta'addanci",
+  ps: "بندیزونه OR درغلي OR فساد OR رشوه OR نیول OR د پیسو وینځل OR ترهګري",
+  "zh-TW": "制裁 OR 欺詐 OR 腐敗 OR 賄賂 OR 逮捕 OR 洗錢 OR 販運 OR 恐怖主義",
+  jv: "sanksi OR penipuan OR korupsi OR suap OR penangkapan OR pencucian uang OR terorisme",
+  ceb: "silot OR panlimbong OR korapsyon OR suhol OR pagdakop OR paglaba og kwarta OR terorismo",
+  ig: "ntaramahụ OR aghụghọ OR ọ̀rụ ojii OR apaghị ala OR jide OR ịsa ego OR igbu ọchụ",
+  ny: "chilango OR chinyengo OR chinyengo chachikulu OR chiphuphu OR kugwidwa OR kusamba ndalama OR uchifundo",
 };
 
 interface NewsResponse {
