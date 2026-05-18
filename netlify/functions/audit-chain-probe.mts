@@ -91,6 +91,12 @@ async function getProbeChainSecret(tenantId = 'default'): Promise<string | null>
   return deriveChainKey(root, tenantId);
 }
 
+// Sentinel returned when an hmac-sha256 entry cannot be verified because
+// AUDIT_CHAIN_SECRET is absent from the probe environment. The probe loop
+// counts these separately so they are neither flagged as tampered nor as
+// verified — the operator is warned to configure the secret.
+const UNVERIFIABLE = 'UNVERIFIABLE_NO_SECRET';
+
 async function computeEntryHash(
   prevHash: string | undefined,
   payload: unknown,
@@ -100,7 +106,11 @@ async function computeEntryHash(
   hmacSecret?: string | null,
 ): Promise<string> {
   const material = `${prevHash ?? ''}::${seq}::${at}::${JSON.stringify(payload)}`;
-  if (hashAlg === 'hmac-sha256' && hmacSecret) {
+  if (hashAlg === 'hmac-sha256') {
+    // Without the signing secret we cannot reconstruct the HMAC — returning a
+    // sentinel prevents the entry from being silently compared using the wrong
+    // algorithm (e.g. fnv1a fallthrough), which would produce a false tamper alert.
+    if (!hmacSecret) return UNVERIFIABLE;
     return hmacSha256Hex(hmacSecret, material);
   }
   if (hashAlg === 'sha256') {
@@ -114,8 +124,9 @@ interface ProbeOutcome {
   ok: boolean;
   totalEntries: number;
   verified: number;
-  tamperedAt?: number[];   // seqs that fail verification
-  brokenLinkAt?: number[];  // seqs whose prevHash != prior entry's entryHash
+  tamperedAt?: number[];      // seqs that fail verification
+  brokenLinkAt?: number[];    // seqs whose prevHash != prior entry's entryHash
+  unverifiableAt?: number[];  // seqs skipped because AUDIT_CHAIN_SECRET absent
   durationMs: number;
   error?: string;
 }
@@ -172,6 +183,7 @@ export default async function handler(_req: Request): Promise<Response> {
 
   const tamperedAt: number[] = [];
   const brokenLinkAt: number[] = [];
+  const unverifiableAt: number[] = [];
   let prev: ChainEntry | undefined;
 
   for (const e of entries) {
@@ -184,12 +196,27 @@ export default async function handler(_req: Request): Promise<Response> {
     //   "sha256"       → plain SHA-256 (no HMAC, pre-2026-05-19 entries)
     //   absent/fnv1a   → legacy FNV-1a (pre-2026-05-18 entries)
     const expected = await computeEntryHash(e.prevHash, e.payload, e.at, e.seq, e.hashAlg, hmacSecret);
-    if (expected !== e.entryHash) tamperedAt.push(e.seq);
+    if (expected === UNVERIFIABLE) {
+      // AUDIT_CHAIN_SECRET not configured — cannot verify HMAC entries.
+      // Counted separately: neither verified nor tampered.
+      unverifiableAt.push(e.seq);
+    } else if (expected !== e.entryHash) {
+      tamperedAt.push(e.seq);
+    }
     if (prev && e.prevHash !== prev.entryHash) brokenLinkAt.push(e.seq);
     prev = e;
   }
 
-  const verified = entries.length - tamperedAt.length - brokenLinkAt.length;
+  if (unverifiableAt.length > 0) {
+    console.warn(
+      `[audit-chain-probe] ${unverifiableAt.length} HMAC-signed entries could not be verified ` +
+      `because AUDIT_CHAIN_SECRET is not configured in the probe environment. ` +
+      `Set AUDIT_CHAIN_SECRET (min 32 chars) to enable full verification. ` +
+      `Unverifiable seqs: ${unverifiableAt.join(', ')}`,
+    );
+  }
+
+  const verified = entries.length - tamperedAt.length - brokenLinkAt.length - unverifiableAt.length;
   const ok = tamperedAt.length === 0 && brokenLinkAt.length === 0;
 
   const outcome: ProbeOutcome = {
@@ -200,6 +227,7 @@ export default async function handler(_req: Request): Promise<Response> {
   };
   if (tamperedAt.length > 0) outcome.tamperedAt = tamperedAt;
   if (brokenLinkAt.length > 0) outcome.brokenLinkAt = brokenLinkAt;
+  if (unverifiableAt.length > 0) outcome.unverifiableAt = unverifiableAt;
 
   // Tamper detected → fire critical webhook + write marker. Marker
   // includes the offending seqs so the operator dashboard can render
