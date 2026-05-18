@@ -175,6 +175,19 @@ const LOCALES: Array<{ code: string; hl: string; gl: string; ceid: string }> = [
   { code: "ceb", hl: "ceb", gl: "PH", ceid: "PH:ceb" },
   { code: "ig", hl: "ig", gl: "NG", ceid: "NG:ig" },
   { code: "ny", hl: "ny", gl: "MW", ceid: "MW:ny" },
+  // Tier-7 — African languages + remaining world coverage
+  { code: "sn", hl: "sn", gl: "ZW", ceid: "ZW:sn" },
+  { code: "st", hl: "st", gl: "ZA", ceid: "ZA:st" },
+  { code: "ti", hl: "ti", gl: "ET", ceid: "ET:ti" },
+  { code: "om", hl: "om", gl: "ET", ceid: "ET:om" },
+  { code: "wo", hl: "wo", gl: "SN", ceid: "SN:wo" },
+  { code: "ln", hl: "ln", gl: "CD", ceid: "CD:ln" },
+  { code: "mg", hl: "mg", gl: "MG", ceid: "MG:mg" },
+  { code: "xh", hl: "xh", gl: "ZA", ceid: "ZA:xh" },
+  { code: "ee", hl: "ee", gl: "GH", ceid: "GH:ee" },
+  { code: "tw", hl: "tw", gl: "GH", ceid: "GH:tw" },
+  { code: "ky", hl: "ky", gl: "KG", ceid: "KG:ky" },
+  { code: "tg2", hl: "tg", gl: "AF", ceid: "AF:tg" },
 ];
 
 // Multi-language adverse-media modifiers so each locale returns relevant
