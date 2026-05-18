@@ -141,9 +141,18 @@ const nextConfig = {
       // when the file is missing; restore the include once the dataset
       // is hosted outside the repo bundle (Netlify Blobs / S3 / CDN).
     ],
-    // styled-jsx + the Next.js server runtime are dynamically required by
-    // next/dist/server/require-hook.js via string literals on every SSR
-    // route, so the static file tracer never picks them up.
+    // styled-jsx is dynamically resolved at runtime by
+    // next/dist/server/require-hook.js (defaultOverrides), so the static file
+    // tracer cannot pick it up. Keep this explicit include.
+    //
+    // REMOVED 2026-05-18: "./node_modules/next/dist/compiled/**/*" (1125 files)
+    // and "./node_modules/next/dist/server/**/*" (1243 files) — these globs
+    // add ALL files in those directories to EVERY route's .nft.json (509 routes
+    // × 2368 files = 1.2M trace entries), exhausting Netlify build-agent RAM
+    // during "Collecting build traces" (exit code 2). Both directories are
+    // already included automatically by Next.js's file tracer in the standalone
+    // output (.next/standalone/web/node_modules/next/dist/compiled+server) so
+    // removing them from outputFileTracingIncludes has no functional impact.
     //
     // IMPORTANT: do NOT include ./node_modules/react or ./node_modules/react-dom
     // here. next/dist/server/require-hook.js redirects require('react') and
@@ -153,8 +162,6 @@ const nextConfig = {
     // causes "a3.snapshot is not a function" on every page load.
     "/**": [
       "./node_modules/styled-jsx/**/*",
-      "./node_modules/next/dist/compiled/**/*",
-      "./node_modules/next/dist/server/**/*",
     ],
   },
   // outputFileTracingRoot is set to the repo root (one level above web/).
