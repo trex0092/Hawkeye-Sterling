@@ -86,6 +86,32 @@ const LOCALES: Array<{ code: string; hl: string; gl: string; ceid: string }> = [
   { code: "zh", hl: "zh-Hans", gl: "CN", ceid: "CN:zh-Hans" },
   { code: "ar", hl: "ar", gl: "AE", ceid: "AE:ar" },
   { code: "pt", hl: "pt-BR", gl: "BR", ceid: "BR:pt-419" },
+  // Extended coverage — critical for subjects from these jurisdictions
+  { code: "tr", hl: "tr", gl: "TR", ceid: "TR:tr" },
+  { code: "de", hl: "de", gl: "DE", ceid: "DE:de" },
+  { code: "it", hl: "it", gl: "IT", ceid: "IT:it" },
+  { code: "ja", hl: "ja", gl: "JP", ceid: "JP:ja" },
+  { code: "ko", hl: "ko", gl: "KR", ceid: "KR:ko" },
+  { code: "nl", hl: "nl", gl: "NL", ceid: "NL:nl" },
+  { code: "pl", hl: "pl", gl: "PL", ceid: "PL:pl" },
+  { code: "uk", hl: "uk", gl: "UA", ceid: "UA:uk" },
+  // Tier-2 jurisdictions — high-value for global AML coverage
+  { code: "sv", hl: "sv", gl: "SE", ceid: "SE:sv" },
+  { code: "el", hl: "el", gl: "GR", ceid: "GR:el" },
+  { code: "hi", hl: "hi", gl: "IN", ceid: "IN:hi" },
+  { code: "id", hl: "id", gl: "ID", ceid: "ID:id" },
+  { code: "vi", hl: "vi", gl: "VN", ceid: "VN:vi" },
+  { code: "ms", hl: "ms", gl: "MY", ceid: "MY:ms" },
+  { code: "he", hl: "iw", gl: "IL", ceid: "IL:iw" },
+  { code: "ro", hl: "ro", gl: "RO", ceid: "RO:ro" },
+  { code: "hu", hl: "hu", gl: "HU", ceid: "HU:hu" },
+  { code: "cs", hl: "cs", gl: "CZ", ceid: "CZ:cs" },
+  { code: "bg", hl: "bg", gl: "BG", ceid: "BG:bg" },
+  { code: "sr", hl: "sr", gl: "RS", ceid: "RS:sr" },
+  { code: "hr", hl: "hr", gl: "HR", ceid: "HR:hr" },
+  { code: "sk", hl: "sk", gl: "SK", ceid: "SK:sk" },
+  { code: "th", hl: "th", gl: "TH", ceid: "TH:th" },
+  { code: "ur", hl: "ur", gl: "PK", ceid: "PK:ur" },
 ];
 
 // Multi-language adverse-media modifiers so each locale returns relevant
@@ -98,6 +124,30 @@ const LOCALE_MODIFIERS: Record<string, string> = {
   zh: "制裁 OR 欺诈 OR 腐败 OR 贿赂 OR 逮捕 OR 洗钱 OR 贩运 OR 恐怖主义",
   ar: "عقوبات OR احتيال OR فساد OR رشوة OR اعتقال OR غسل OR تهريب OR إرهاب",
   pt: "sanções OR fraude OR corrupção OR suborno OR prisão OR lavagem OR tráfico OR terrorismo",
+  tr: "yaptırım OR dolandırıcılık OR yolsuzluk OR rüşvet OR tutuklama OR kara para OR kaçakçılık OR terör",
+  de: "Sanktionen OR Betrug OR Korruption OR Bestechung OR Verhaftung OR Geldwäsche OR Schmuggel OR Terrorismus",
+  it: "sanzioni OR frode OR corruzione OR arresto OR riciclaggio OR traffico OR terrorismo",
+  ja: "制裁 OR 詐欺 OR 汚職 OR 賄賂 OR 逮捕 OR マネーロンダリング OR 密輸 OR テロ",
+  ko: "제재 OR 사기 OR 부패 OR 뇌물 OR 체포 OR 자금세탁 OR 밀수 OR 테러",
+  nl: "sancties OR fraude OR corruptie OR omkoping OR arrestatie OR witwassen OR smokkel OR terrorisme",
+  pl: "sankcje OR oszustwo OR korupcja OR łapówka OR aresztowanie OR pranie pieniędzy OR przemyt OR terroryzm",
+  uk: "санкції OR шахрайство OR корупція OR хабар OR арешт OR відмивання OR тероризм",
+  sv: "sanktioner OR bedrägeri OR korruption OR mutor OR gripna OR penningtvätt OR smuggling OR terrorism",
+  el: "κυρώσεις OR απάτη OR διαφθορά OR δωροδοκία OR σύλληψη OR ξέπλυμα OR λαθρεμπόριο OR τρομοκρατία",
+  hi: "प्रतिबंध OR धोखाधड़ी OR भ्रष्टाचार OR रिश्वत OR गिरफ्तारी OR मनी लॉन्ड्रिंग OR तस्करी OR आतंकवाद",
+  id: "sanksi OR penipuan OR korupsi OR suap OR penangkapan OR pencucian uang OR penyelundupan OR terorisme",
+  vi: "trừng phạt OR gian lận OR tham nhũng OR hối lộ OR bắt giữ OR rửa tiền OR buôn lậu OR khủng bố",
+  ms: "sekatan OR penipuan OR rasuah OR rasuah OR tangkapan OR pengubahan wang haram OR penyeludupan OR keganasan",
+  he: "סנקציות OR הונאה OR שחיתות OR שוחד OR מעצר OR הלבנת הון OR סחר OR טרור",
+  ro: "sancțiuni OR fraudă OR corupție OR mită OR arest OR spălare de bani OR trafic OR terorism",
+  hu: "szankciók OR csalás OR korrupció OR vesztegetés OR letartóztatás OR pénzmosás OR csempészet OR terrorizmus",
+  cs: "sankce OR podvod OR korupce OR úplatek OR zatčení OR praní peněz OR pašování OR terorismus",
+  bg: "санкции OR измама OR корупция OR подкуп OR арест OR изпиране на пари OR тероризъм",
+  sr: "санкције OR превара OR корупција OR мито OR хапшење OR прање новца OR тероризам",
+  hr: "sankcije OR prijevara OR korupcija OR mito OR uhićenje OR pranje novca OR terorizam",
+  sk: "sankcie OR podvod OR korupcia OR úplatok OR zatýkanie OR pranie peňazí OR terorizmus",
+  th: "มาตรการคว่ำบาตร OR การฉ้อโกง OR การทุจริต OR สินบน OR การจับกุม OR การฟอกเงิน OR การก่อการร้าย",
+  ur: "پابندیاں OR دھوکہ دہی OR بدعنوانی OR رشوت OR گرفتاری OR منی لانڈرنگ OR اسمگلنگ OR دہشت گردی",
 };
 
 interface NewsResponse {
@@ -419,9 +469,19 @@ export async function GET(req: Request): Promise<NextResponse> {
     } catch (err) {
       console.warn("[hawkeye] news-search/variantsOf failed — using base query only:", err);
     }
-    const variants = Array.from(new Set(rawVariants)).slice(0, 8);
+    // Turkish diacritic expansion: terminal 'c'→'ç' and 'öz' prefix are the two
+    // most reliable heuristics for Turkish Latin names. Google News Turkish locale
+    // normalises queries anyway, but explicit variants improve post-fetch fuzzy scoring.
+    const turkishVariant = q
+      .toLowerCase()
+      .replace(/\boz/g, "öz")
+      .replace(/c\b/g, "ç")
+      .replace(/\bgul/g, "gül")
+      .replace(/\bgun/g, "gün");
+    if (turkishVariant !== q.toLowerCase()) rawVariants.push(turkishVariant);
+    const variants = Array.from(new Set(rawVariants)).slice(0, 10);
 
-    // Fan out to 7 locales in parallel (EN, ES, FR, RU, ZH, AR, PT). Each
+    // Fan out to all locales in parallel. Each
     // returns up to ~30 articles; we dedupe by URL and fuzzy-filter. Use
     // allSettled so one rejected fetch never rejects the whole batch —
     // combined with the per-feed AbortSignal and the overall timebox
