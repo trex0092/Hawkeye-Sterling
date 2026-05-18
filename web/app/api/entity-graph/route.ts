@@ -10,7 +10,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { searchAllRegistries } from "@/lib/intelligence/registryAdapters";
 import { searchCountryRegistries } from "@/lib/intelligence/countryRegistries";
-import { bestCommercialAdapter, activeCommercialProvider } from "@/lib/intelligence/commercialAdapters";
+import { bestCommercialAdapter } from "@/lib/intelligence/commercialAdapters";
 import { matchEntity } from "@/lib/intelligence/openSanctionsAdapter";
 
 const CORS: Record<string, string> = {

@@ -33,65 +33,6 @@ export interface DocumentFraudResult {
   regulatoryBasis: string;
 }
 
-const FALLBACK: DocumentFraudResult = {
-  fraudRisk: "high",
-  fraudProbability: 72,
-  documentAssessments: [
-    {
-      docType: "Emirates ID",
-      authentic: "suspect",
-      redFlags: [
-        "MRZ zone font inconsistency (Arial vs. OCR-B standard)",
-        "Hologram pattern differs from FINA post-2020 issuance series",
-        "Date of birth in Gregorian and Hijri fields do not correspond",
-      ],
-      verificationRequired: ["ICP online verification portal", "Physical chip scan (NFC)", "ICP biometric match"],
-    },
-    {
-      docType: "Salary certificate",
-      authentic: "suspect",
-      redFlags: [
-        "Company stamp digital artefacts suggest scan-and-insert fabrication",
-        "Salary figure inconsistent with stated occupation (AED 45,000/month for junior clerk)",
-        "Employer registration number not matching MoHRE database format",
-      ],
-      verificationRequired: ["MoHRE employer registry check", "Direct contact with stated employer HR department"],
-    },
-  ],
-  indicators: [
-    {
-      indicator: "MRZ zone font inconsistency on Emirates ID",
-      severity: "critical",
-      documentType: "Emirates ID",
-      detail: "UAE ICP-issued Emirates IDs use OCR-B typeface exclusively in the MRZ zone. Presence of proportional font suggests document alteration or production on non-official equipment.",
-    },
-    {
-      indicator: "Salary figure inconsistent with occupation/employer",
-      severity: "high",
-      documentType: "Salary certificate",
-      detail: "Source of funds claim rests on an income figure statistically inconsistent with the stated position. Inflated income documents are a primary method of concealing true source of funds in UAE ML cases.",
-    },
-  ],
-  identityConsistency: "inconsistent",
-  kycImpact: "re_verify",
-  recommendedAction: "escalate_mlro",
-  actionRationale: "Multiple document authenticity concerns across primary ID and SOF document require MLRO escalation. Business relationship must not proceed until independent verification is completed. If fraud confirmed, MLRO to consider STR under FDL 10/2025 Art.26 as document fraud may indicate identity theft (predicate offence under UAE Penal Code Art.206) or ML via false CDD.",
-  requiredVerificationSteps: [
-    "Emirates ID: ICP online verification at icp.gov.ae — name, DOB, ID number cross-check",
-    "Emirates ID: Physical NFC chip read to verify chip data matches printed data",
-    "Salary certificate: Direct verification call to stated employer HR (use independently sourced contact number)",
-    "Salary certificate: MoHRE establishment listing verification",
-    "Cross-check name spelling across all documents — Arabic vs. English transliteration consistency",
-    "Run name against UAE courts records for identity fraud history",
-  ],
-  externalVerificationSources: [
-    "ICP (Federal Authority for Identity and Citizenship) — icp.gov.ae",
-    "MoHRE (Ministry of Human Resources and Emiratisation) employer registry",
-    "UAE courts public records (where available)",
-    "Trade licence issuing authority (DET/ADCCI/DIFC) for business ownership claims",
-  ],
-  regulatoryBasis: "UAE FDL 10/2025 Art.14 (CDD obligations — verify identity documents); Art.26 (STR if fraud suspected); FATF R.10 (CDD); UAE Federal Law 4/2002 Art.2 (ML predicate); UAE Penal Code Art.206 (document forgery)",
-};
 
 export async function POST(req: Request) {
   const gate = await enforce(req);

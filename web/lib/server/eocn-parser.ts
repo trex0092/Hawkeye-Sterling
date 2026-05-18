@@ -51,9 +51,9 @@ export interface EocnParsedEntity {
 // ── SheetJS type stubs ────────────────────────────────────────────────────────
 
 interface XlsxModule {
-  read(data: Buffer, opts: { type: "buffer" }): XlsxWorkbook;
+  read(_data: Buffer, _opts: { type: "buffer" }): XlsxWorkbook;
   utils: {
-    sheet_to_json<T>(ws: XlsxWorksheet, opts: { header: 1; raw: false; defval: string }): T[][];
+    sheet_to_json<T>(_ws: XlsxWorksheet, _opts: { header: 1; raw: false; defval: string }): T[][];
   };
 }
 
@@ -114,7 +114,7 @@ function parseIndividualRow(row: string[], headers: string[]): EocnParsedEntity 
   const passportNum     = findCol(headers, /رقم جواز|رقم الجواز|جواز\s*سفر/);
   const nationalId      = findCol(headers, /رقم الوطنية|الرقم الوطني/);
   const otherInfo       = findCol(headers, /معلومات أخرى/);
-  const classification  = findCol(headers, /التصنيف/);
+  const _classification  = findCol(headers, /التصنيف/);
 
   // Primary name preference: Latin full name → Latin family name → Arabic
   let name = cell(row, latinFullName);

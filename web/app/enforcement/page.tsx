@@ -908,7 +908,7 @@ export default function EnforcementPage() {
 // can drop in ad-hoc supervisor circulars, board commitments, or one-off
 // audit items that aren't on the regulator-seeded baseline.
 // ─────────────────────────────────────────────────────────────────────
-function AddDeadlineForm({ onAdd }: { onAdd: (d: Deadline) => void }) {
+function AddDeadlineForm({ onAdd }: { onAdd: (_d: Deadline) => void }) {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [authority, setAuthority] = useState("");

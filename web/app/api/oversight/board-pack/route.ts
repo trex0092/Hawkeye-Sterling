@@ -31,49 +31,6 @@ export interface BoardPackResult {
   generatedAt: string;
 }
 
-const FALLBACK: BoardPackResult = {
-  executiveSummary:
-    "The AML/CFT compliance function remains operational with established four-eyes approval controls and a documented governance committee cadence. The current reporting period shows pending approvals requiring board attention and active regulatory gaps that must be resolved before the next supervisory review. The overall compliance posture is adequate but requires targeted remediation in identified gap areas.",
-  compliancePosture:
-    "The institution maintains a functioning AML/CFT framework aligned with UAE FDL 10/2025, CBUAE AML Standards §6, and FATF Recommendations. Four-eyes approval workflows are implemented across all high-risk decision categories. Board-level oversight is evidenced by documented committee minutes and a live regulatory circular tracker. However, the presence of unresolved regulatory gaps and SLA breaches in pending approvals indicates that the control environment requires strengthening in these specific areas.",
-  pendingItems: [
-    {
-      item: "Pending four-eyes approvals require board awareness — SLA compliance is a regulatory obligation under UAE FDL 10/2025 Art.20.",
-      priority: "high",
-      recommendation:
-        "The board should note the current count of pending approvals and direct management to confirm SLA compliance timelines at the next committee meeting.",
-    },
-    {
-      item: "Regulatory gap items identified in the circular tracker require remediation plans with confirmed deadlines.",
-      priority: "immediate",
-      recommendation:
-        "Each gap-identified circular should have a named owner and a board-approved remediation deadline. Status to be reported at each quarterly governance committee meeting.",
-    },
-  ],
-  regulatoryHorizon:
-    "Key upcoming regulatory obligations include FATF Mutual Evaluation follow-up actions, CBUAE thematic review readiness (DNFBP sector focus), and LBMA RGG Step-4 audit commissioning. The institution should ensure its compliance programme is fully documented and evidence-ready for any supervisory engagement in the next 12 months. The UAE National AML/CFT Strategy 2025–2027 requires DNFBPs to demonstrate risk-based programme enhancements by mid-2026.",
-  recommendations: [
-    {
-      resolution:
-        "Resolve all gap-identified regulatory circulars within 30 days with documented action plans and confirmed owners.",
-      owner: "Chief Compliance Officer / MLRO",
-      deadline: "Within 30 days of board meeting",
-    },
-    {
-      resolution:
-        "Establish automated SLA monitoring for four-eyes approvals to prevent future breaches and ensure proactive escalation.",
-      owner: "Compliance Technology / IT",
-      deadline: "Within 60 days",
-    },
-    {
-      resolution:
-        "Pre-schedule Q3 and Q4 governance committee meetings to maintain the required quarterly cadence under CBUAE AML Standards §6.",
-      owner: "Company Secretary / Compliance Officer",
-      deadline: "Within 14 days",
-    },
-  ],
-  generatedAt: new Date().toISOString(),
-};
 
 export async function POST(req: Request) {
   const gate = await enforce(req);

@@ -33,20 +33,6 @@ export interface PatternDetectResult {
   summary: string;
 }
 
-const FALLBACK: PatternDetectResult = {
-  patterns: [
-    {
-      type: "structuring_cluster",
-      severity: "high",
-      caseIds: [],
-      description:
-        "Insufficient cases to run a statistical clustering analysis. File additional STR/SAR cases to enable pattern detection across the register.",
-      regulatoryRef: "UAE FDL 10/2025 Art.16 · FATF R.20 (structuring indicators)",
-    },
-  ],
-  summary:
-    "Pattern detection requires at least two cases with overlapping attributes. Add more cases and re-run the analysis.",
-};
 
 export async function POST(req: Request) {
   const gate = await enforce(req);

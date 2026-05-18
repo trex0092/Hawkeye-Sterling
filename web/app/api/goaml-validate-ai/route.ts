@@ -28,16 +28,6 @@ interface ValidationResult {
   fiuReadiness: string;
 }
 
-const FALLBACK: ValidationResult = {
-  score: 0,
-  grade: "FAIL",
-  missingElements: ["API key not configured"],
-  tippingOffRisk: false,
-  tippingOffFlags: [],
-  suggestions: [],
-  fatalIssues: ["Manual review required"],
-  fiuReadiness: "Cannot assess",
-};
 
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);

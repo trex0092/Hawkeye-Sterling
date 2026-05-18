@@ -1023,7 +1023,7 @@ function pep(tier: string): string {
   return tier.replace(/^tier_/, "tier ").replace(/_/g, " ");
 }
 
-function formatRecommendation(type: ReportType, r: ReportScreeningResult): string[] {
+function formatRecommendation(type: ReportType, _r: ReportScreeningResult): string[] {
   const lines: string[] = [];
   lines.push(`${SUB.slice(0, 3)} RECOMMENDATION (SYSTEM) ${"─".repeat(51)}`);
   if (type === "SANCTIONS") {

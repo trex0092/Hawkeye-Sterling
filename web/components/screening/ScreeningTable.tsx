@@ -8,11 +8,11 @@ import type { CDDPosture, SanctionSource, SortKey, Subject, SubjectStatus, Table
 interface ScreeningTableProps {
   subjects: Subject[];
   selectedId: string | null;
-  onSelect: (id: string) => void;
-  onDelete: (id: string) => void;
+  onSelect: (_id: string) => void;
+  onDelete: (_id: string) => void;
   sortKey: SortKey;
   sortDir: "asc" | "desc";
-  onSortChange: (key: SortKey) => void;
+  onSortChange: (_key: SortKey) => void;
   /** Subject IDs currently being screened against the watchlist API. */
   pendingIds?: ReadonlySet<string>;
   /** Subject IDs whose last quick-screen call returned an error. */
@@ -21,11 +21,11 @@ interface ScreeningTableProps {
   columns?: Record<TableColumnKey, boolean>;
   /** When provided, render row checkboxes for bulk-action selection. */
   selectedRowIds?: ReadonlySet<string>;
-  onToggleRow?: (id: string) => void;
-  onToggleAllRows?: (allOn: boolean) => void;
+  onToggleRow?: (_id: string) => void;
+  onToggleAllRows?: (_allOn: boolean) => void;
   /** Up to 2 subject IDs pinned for side-by-side compare. */
   compareIds?: ReadonlySet<string>;
-  onToggleCompare?: (id: string) => void;
+  onToggleCompare?: (_id: string) => void;
 }
 
 const ALL_COLUMNS_ON: Record<TableColumnKey, boolean> = {
@@ -316,7 +316,7 @@ function SortableTh({
   colKey: SortKey;
   activeKey: SortKey;
   dir: "asc" | "desc";
-  onSort: (k: SortKey) => void;
+  onSort: (_k: SortKey) => void;
   className?: string;
 }) {
   const active = colKey === activeKey;

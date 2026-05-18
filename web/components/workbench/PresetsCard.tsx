@@ -4,7 +4,7 @@ import type { ReasoningPreset } from "@/lib/types";
 
 interface PresetsCardProps {
   presets: ReasoningPreset[];
-  onSelect: (preset: ReasoningPreset) => void;
+  onSelect: (_preset: ReasoningPreset) => void;
   activePresetId: string | null;
 }
 

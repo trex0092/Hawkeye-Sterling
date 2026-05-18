@@ -18,9 +18,9 @@ import type {
 } from "@/lib/api/quickScreen.types";
 
 type QuickScreenFn = (
-  subject: QuickScreenSubject,
-  candidates: QuickScreenCandidate[],
-  opts?: QuickScreenOptions,
+  _subject: QuickScreenSubject,
+  _candidates: QuickScreenCandidate[],
+  _opts?: QuickScreenOptions,
 ) => QuickScreenResult;
 
 const quickScreen = _quickScreen as QuickScreenFn;
@@ -59,7 +59,6 @@ interface Body {
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
-  const headers: Record<string, string> = gate.ok ? gate.headers : {};
 
   let body: Body;
   try { body = (await req.json()) as Body; } catch {

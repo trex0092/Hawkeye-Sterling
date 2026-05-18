@@ -124,11 +124,11 @@ interface SnapshotShape {
 }
 
 interface BlobStore {
-  get: (key: string, opts?: { type?: string }) => Promise<unknown>;
+  get: (_key: string, _opts?: { type?: string }) => Promise<unknown>;
 }
 
 interface BlobMod {
-  getStore: (opts: {
+  getStore: (_opts: {
     name: string;
     siteID?: string;
     token?: string;

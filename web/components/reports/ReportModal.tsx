@@ -20,7 +20,7 @@ interface ReportModalProps {
   // server returns a permalink. Hosts use this to persist the URL
   // against the underlying record (e.g. transaction row, case-store
   // entry) so the green pill survives across reloads.
-  onAsanaFiled?: (taskUrl: string) => void;
+  onAsanaFiled?: (_taskUrl: string) => void;
 }
 
 type ReportState =

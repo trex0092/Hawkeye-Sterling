@@ -78,7 +78,7 @@ const TOOLS = [
       "(freeze / block / escalate_immediately / exit_relationship / do_not_onboard). " +
       "Use after gathering evidence to check whether any hard-stop rule applies.",
     input_schema: {
-      type: "object",
+      type: "object" as const,
       properties: {
         firedIds: { type: "array", items: { type: "string" } },
       },
@@ -92,7 +92,7 @@ const TOOLS = [
       "the role string MUST come from a verifiable primary source already attached " +
       "to the case. Never invent a role.",
     input_schema: {
-      type: "object",
+      type: "object" as const,
       properties: { role: { type: "string" } },
       required: ["role"],
     },
@@ -106,7 +106,7 @@ const TOOLS = [
       "date proximity + nationality match + charter caps. Returns confidence band + " +
       "score + agreements + disagreements + caps.",
     input_schema: {
-      type: "object",
+      type: "object" as const,
       properties: {
         a: { type: "object" },
         b: { type: "object" },
@@ -121,7 +121,7 @@ const TOOLS = [
       "publishers / stale dates / low credibility / training-data citations; rewards " +
       "kind+publisher diversity, recency, primary sources. Conservative by design (P2/P8).",
     input_schema: {
-      type: "object",
+      type: "object" as const,
       properties: {
         items: { type: "array", items: { type: "object" } },
       },
@@ -135,7 +135,7 @@ const TOOLS = [
       "return the conflict report with recommendedAction. Surfaces split-regime cases " +
       "(one regime designates, another doesn't) and applies the most-restrictive-regime rule.",
     input_schema: {
-      type: "object",
+      type: "object" as const,
       properties: {
         statuses: { type: "array", items: { type: "object" } },
       },
@@ -148,7 +148,7 @@ const TOOLS = [
       "Diff two NormalisedListEntry snapshots of the same sanctions list. Returns " +
       "additions / removals / amendments. Use to surface what changed since the last screen.",
     input_schema: {
-      type: "object",
+      type: "object" as const,
       properties: {
         previous: { type: "array", items: { type: "object" } },
         current: { type: "array", items: { type: "object" } },
@@ -163,7 +163,7 @@ const TOOLS = [
       "shape: { id, url, title, content, publishedAt, language? }). Returns severity " +
       "tiers, SAR triggers (R.20), counterfactuals, and an investigation narrative.",
     input_schema: {
-      type: "object",
+      type: "object" as const,
       properties: {
         subject: { type: "string" },
         items: { type: "array", items: { type: "object" } },

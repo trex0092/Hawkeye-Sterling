@@ -13,7 +13,7 @@ interface LocaleCtx {
   locale: Locale;
   strings: LocaleStrings;
   dir: "ltr" | "rtl";
-  setLocale: (l: Locale) => void;
+  setLocale: (_l: Locale) => void;
 }
 
 const Ctx = createContext<LocaleCtx | null>(null);

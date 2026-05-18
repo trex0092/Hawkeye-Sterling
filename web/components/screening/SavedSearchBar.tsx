@@ -13,7 +13,7 @@ interface Props {
     minRisk?: number;
   };
   /** Apply a saved search's predicates to the page state. */
-  onApply: (search: SavedSearch) => void;
+  onApply: (_search: SavedSearch) => void;
   /** ID of the search currently rendered, if any (for highlight). */
   appliedId: string | null;
 }

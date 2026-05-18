@@ -30,7 +30,7 @@ export interface ErrorEnvelope {
   readonly traceId: string;
 }
 
-type Handler = (req: Request, ctx: RequestContext) => Promise<Response> | Response;
+type Handler = (_req: Request, _ctx: RequestContext) => Promise<Response> | Response;
 
 function newTraceId(): string {
   return randomBytes(8).toString("hex");
@@ -42,7 +42,7 @@ function sanitizeTraceId(raw: string): string {
   return raw.replace(/[^\x20-\x7E]/g, "").slice(0, 64);
 }
 
-export function withGuard(handler: Handler): (req: Request) => Promise<Response> {
+export function withGuard(handler: Handler): (_req: Request) => Promise<Response> {
   return async (req: Request): Promise<Response> => {
     const rawTrace = req.headers.get("x-trace-id");
     const traceId = rawTrace ? sanitizeTraceId(rawTrace) || newTraceId() : newTraceId();
@@ -130,7 +130,7 @@ export interface AuditRecord {
   at: string;
 }
 
-type AuditSink = (record: AuditRecord) => void;
+type AuditSink = (_record: AuditRecord) => void;
 
 // Fixed-capacity ring buffer with O(1) insert via index wraparound.
 // Serves same-instance "recent access" queries quickly. Records are also

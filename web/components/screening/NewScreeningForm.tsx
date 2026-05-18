@@ -66,8 +66,8 @@ export interface ScreeningFormData {
 
 interface NewScreeningFormProps {
   suggestedCaseId: string;
-  onScreen: (data: ScreeningFormData) => void;
-  onSave: (data: ScreeningFormData) => void;
+  onScreen: (_data: ScreeningFormData) => void;
+  onSave: (_data: ScreeningFormData) => void;
   onCancel: () => void;
 }
 

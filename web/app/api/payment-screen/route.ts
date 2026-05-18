@@ -16,8 +16,8 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 15;
 
 type QuickScreenFn = (
-  subject: QuickScreenSubject,
-  candidates: QuickScreenCandidate[],
+  _subject: QuickScreenSubject,
+  _candidates: QuickScreenCandidate[],
 ) => QuickScreenResult;
 const quickScreen = _quickScreen as QuickScreenFn;
 
@@ -121,6 +121,7 @@ async function handlePaymentScreen(req: Request): Promise<NextResponse> {
       : Promise.resolve(null),
   ]);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const yenteSummary = yenteResults?.map((r: any, i: number) => ({
     name: namesToMatch[i],
     topScore: r.hits[0]?.score ?? 0,

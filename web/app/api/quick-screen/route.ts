@@ -72,7 +72,7 @@ async function fetchListHealth(): Promise<ListHealthSnapshot> {
   const snapshot: ListHealthSnapshot = {};
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let stores: { get: (key: string, opts?: any) => Promise<unknown> }[] = [];
+  let stores: { get: (_key: string, _opts?: any) => Promise<unknown> }[] = [];
   try {
     const { getStore } = await import("@netlify/blobs");
     const siteID = process.env["NETLIFY_SITE_ID"] ?? process.env["SITE_ID"];
@@ -133,9 +133,9 @@ function buildScreeningWarnings(health: ListHealthSnapshot): string[] {
 }
 
 type QuickScreenFn = (
-  subject: QuickScreenSubject,
-  candidates: QuickScreenCandidate[],
-  options?: QuickScreenOptions,
+  _subject: QuickScreenSubject,
+  _candidates: QuickScreenCandidate[],
+  _options?: QuickScreenOptions,
 ) => QuickScreenResult;
 
 const quickScreen = brainQuickScreen as QuickScreenFn;

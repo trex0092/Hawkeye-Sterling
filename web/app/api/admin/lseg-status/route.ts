@@ -14,10 +14,10 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 15;
 
 interface BlobStoreShape {
-  get: (key: string, opts?: { type?: string }) => Promise<unknown>;
+  get: (_key: string, _opts?: { type?: string }) => Promise<unknown>;
 }
 interface BlobsModuleShape {
-  getStore: (opts: { name: string; siteID?: string; token?: string; consistency?: string }) => BlobStoreShape;
+  getStore: (_opts: { name: string; siteID?: string; token?: string; consistency?: string }) => BlobStoreShape;
 }
 
 export async function GET(req: Request): Promise<NextResponse> {

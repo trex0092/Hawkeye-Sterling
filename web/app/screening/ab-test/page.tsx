@@ -184,7 +184,7 @@ export default function AbTestPage() {
               </tbody>
             </table>
             <p className="text-10 text-ink-3 mt-3">
-              FP proxy = subjects with hits in this arm that <em>don't</em> hit at the strictest arm —
+              FP proxy = subjects with hits in this arm that <em>don&apos;t</em> hit at the strictest arm —
               the implicit cost of loosening the threshold.
             </p>
             <p className="text-10 text-ink-3 font-mono mt-1">

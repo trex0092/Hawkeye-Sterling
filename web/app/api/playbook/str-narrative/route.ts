@@ -26,14 +26,6 @@ interface STRNarrativeResult {
   missingElements: string[];
 }
 
-const FALLBACK: STRNarrativeResult = {
-  narrative: "AI narrative generation unavailable — check ANTHROPIC_API_KEY. Draft narrative manually based on completed checklist items.",
-  suspiciousBehaviours: [],
-  regulatoryBasis: [],
-  recommendedDisposition: "ESCALATE",
-  confidence: 0,
-  missingElements: [],
-};
 
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);

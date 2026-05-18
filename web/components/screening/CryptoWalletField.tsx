@@ -5,7 +5,7 @@ import { fetchJson } from "@/lib/api/fetchWithRetry";
 
 interface Props {
   wallets: string[];
-  onChange: (wallets: string[]) => void;
+  onChange: (_wallets: string[]) => void;
 }
 
 interface WalletRisk {

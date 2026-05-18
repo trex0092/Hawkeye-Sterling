@@ -22,11 +22,6 @@ interface GapAnalysisResult {
   recommendation: string;
 }
 
-const GAP_FALLBACK = {
-  gaps: [] as string[],
-  summary: "AI analysis unavailable — manual gap review required.",
-  fallback: true,
-};
 
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);

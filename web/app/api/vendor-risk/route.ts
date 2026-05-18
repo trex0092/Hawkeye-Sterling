@@ -32,15 +32,6 @@ interface RequestBody {
   supplier: Supplier;
 }
 
-const FALLBACK_RESULT: VendorRiskResult = {
-  riskScore: 0,
-  riskLevel: "low",
-  eddRequired: false,
-  findings: ["API key not configured"],
-  redFlags: [],
-  recommendation: "Manual review required",
-  regulatoryBasis: "",
-};
 
 const SYSTEM_PROMPT = `You are a UAE DPMS mineral supply-chain risk analyst specialising in precious metals compliance under:
 - LBMA Responsible Gold Guidance v9 (LBMA RGG v9)

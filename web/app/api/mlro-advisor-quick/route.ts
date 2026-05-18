@@ -29,7 +29,7 @@ import { enforce } from "@/lib/server/enforce";
 import { corsHeaders, corsPreflight } from "@/lib/api/cors";
 import { gateMlroQuestion } from "@/lib/server/mlro-input-gate";
 // Dynamic imports — prevents hard 500 on cold Lambda if dist/ isn't compiled yet.
-type ClassifyFn = (q: string) => {
+type ClassifyFn = (_q: string) => {
   primaryTopic: string; topics: string[]; jurisdictions: string[]; regimes: string[];
   fatfRecHints: string[]; fatfRecDetails: Array<{ num: number; title: string }>;
   doctrineHints: string[]; playbookHints: string[]; redFlagHints: string[];
@@ -37,7 +37,7 @@ type ClassifyFn = (q: string) => {
   suggestedFollowUps: string[]; confidence: string;
   intelligenceProfile: { coverageScore: number };
 };
-type ScoreFn = (answer: string, mode: string) => { passedQualityGate: boolean };
+type ScoreFn = (_answer: string, _mode: string) => { passedQualityGate: boolean };
 let classifyMlroQuestion: ClassifyFn = (_q) => ({
   primaryTopic: "general", topics: [], jurisdictions: [], regimes: [],
   fatfRecHints: [], fatfRecDetails: [], doctrineHints: [], playbookHints: [],

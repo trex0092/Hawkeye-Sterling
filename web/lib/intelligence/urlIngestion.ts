@@ -48,7 +48,7 @@ function ssrfCheck(raw: string): string | null {
   // network layer — out of scope for this function-level check).
   const numericIp = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(host);
   if (numericIp) {
-    const [, a, b, c] = numericIp.map(Number);
+    const [, a, b, _c] = numericIp.map(Number);
     if (
       a === 127 ||
       a === 10 ||

@@ -18,30 +18,6 @@ export interface BeneficialOwnerVerifyResult {
   regulatoryBasis: string;
 }
 
-const FALLBACK: BeneficialOwnerVerifyResult = {
-  uboConfirmed: false,
-  ownershipChainDepth: 4,
-  controlPercentage: 67,
-  verificationStatus: "partial",
-  gaps: [
-    "Layer 3: Seychelles holding company — registered agent refuses to confirm UBO without court order",
-    "Layer 4: Cayman trust — discretionary, no fixed beneficiaries, cannot identify natural person",
-    "Indirect controller at 67% — above 25% UAE UBO registration threshold but cannot be named",
-    "UBO declaration signed by corporate trustee, not natural person — not acceptable under Cabinet Res 132/2023",
-  ],
-  verificationSteps: [
-    "Obtain certified copy of trust deed and all schedules for Cayman structure",
-    "Require trustee to provide certified list of all discretionary beneficiaries (even if no fixed entitlement)",
-    "Commission Cayman-qualified legal opinion on disclosure obligations",
-    "If Seychelles company: request registered agent disclosure via formal legal channel",
-    "If UBO cannot be confirmed within 30 days: decline to onboard (FDL Art.7(4) mandatory)",
-  ],
-  uboRegisterRequired: true,
-  registrationDeadline:
-    "UAE UBO Register filing required within 15 days of onboarding (Cabinet Resolution 132/2023 Art.4). Current filing: overdue — company established 6 months ago with no registration.",
-  regulatoryBasis:
-    "UAE Cabinet Resolution 132/2023 (UBO register), UAE FDL 10/2025 Art.7 (UBO verification), FATF R.24-25 (legal persons/arrangements), CBUAE AML Standards §3.5",
-};
 
 export async function POST(req: Request) {
   const gate = await enforce(req);

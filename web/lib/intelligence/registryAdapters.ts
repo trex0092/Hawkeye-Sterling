@@ -37,7 +37,7 @@ export interface RegistryRecord {
 
 export interface RegistryAdapter {
   isAvailable(): boolean;
-  search(subjectName: string, opts?: { jurisdiction?: string; limit?: number }): Promise<RegistryRecord[]>;
+  search(_subjectName: string, _opts?: { jurisdiction?: string; limit?: number }): Promise<RegistryRecord[]>;
 }
 
 export const NULL_REGISTRY_ADAPTER: RegistryAdapter = {

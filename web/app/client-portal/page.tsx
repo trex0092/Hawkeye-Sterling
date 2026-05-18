@@ -115,7 +115,7 @@ function ShareholderCard({
 }: {
   sh: Shareholder;
   idx: number;
-  onChange: (updated: Shareholder) => void;
+  onChange: (_updated: Shareholder) => void;
   onRemove: () => void;
 }) {
   const set = (k: keyof Shareholder) =>
@@ -460,7 +460,7 @@ export default function ClientPortalPage() {
 
             {shareholders.length === 0 ? (
               <p className="text-11 text-ink-3 py-3 text-center border border-dashed border-hair-2 rounded">
-                No individuals added yet — click "+ Add Individual" above.
+                No individuals added yet — click &quot;+ Add Individual&quot; above.
                 <br />
                 <span className="text-10">
                   Add all UBOs ≥ 25%, directors, and nominee individuals per FDL 10/2025 Art.10 / Cabinet Decision 58/2020.

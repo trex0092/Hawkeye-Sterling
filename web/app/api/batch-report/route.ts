@@ -4,7 +4,7 @@ export const maxDuration = 30;
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import {
-  buildHtmlDoc, hsPage, hsCover, hsSection, hsPill, hsNarrative,
+  buildHtmlDoc, hsPage, hsCover, hsSection, hsNarrative,
   hsSignatureBlock, hsFinis, hsScorebox, hsSeverityCell, nowMeta, escHtml, type CoverData,
 } from "@/lib/reportHtml";
 
@@ -72,8 +72,6 @@ export async function POST(req: Request) {
     hsSeverityCell(r.disposition),
     `<span class="hs-mono-s">${escHtml(r.date)}</span>`,
   ]);
-
-  const tone = body.criticalHits > 0 ? "ember" : body.highRisk > 0 ? "amber" : "sage";
 
   const contentBody = `
 <div style="margin-bottom:14px">

@@ -34,25 +34,6 @@ export interface VesselRiskProfileResult {
   summary: string;
 }
 
-const FALLBACK: VesselRiskProfileResult = {
-  ok: true,
-  riskScore: 45,
-  riskTier: "Medium",
-  flagRisk: 50,
-  ownershipRisk: 55,
-  portRisk: 40,
-  cargoRisk: 35,
-  anomalies: [
-    "Vessel flag state has limited AIS monitoring capacity",
-    "Beneficial ownership chain not fully transparent",
-    "Port call history includes one jurisdiction subject to enhanced monitoring",
-  ],
-  recommendation: "Enhanced Monitoring",
-  regulatoryBasis:
-    "FATF Recommendation 14 (Wire Transfers); UAE Cabinet Resolution 74/2020; OFAC SDN guidance on maritime; IMO Resolution A.1159(32) on AIS; BIMCO due diligence guidelines",
-  summary:
-    "The vessel presents a medium risk profile based on flag state risk, ownership opacity, and port call history. No direct sanction connections identified, however the ownership structure warrants enhanced due diligence. Continued AIS monitoring is recommended. No cargo concerns identified at this stage.",
-};
 
 export async function POST(req: Request) {
   const gate = await enforce(req);

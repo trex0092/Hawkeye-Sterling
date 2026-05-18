@@ -27,7 +27,7 @@
 
 import { NextResponse } from "next/server";
 import { createHash } from "crypto";
-import { del, getJson, listKeys, setJson } from "@/lib/server/store";
+import { getJson, listKeys, setJson } from "@/lib/server/store";
 import { adminAuth } from "@/lib/server/admin-auth";
 
 export const runtime = "nodejs";

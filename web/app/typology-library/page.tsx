@@ -539,7 +539,7 @@ function TypologyCard({
   onDeepDive,
 }: {
   typology: TypologyResult;
-  onDeepDive: (name: string) => void;
+  onDeepDive: (_name: string) => void;
 }) {
   return (
     <div className="border border-hair rounded-lg p-4 bg-bg-panel hover:border-brand/30 transition-colors">

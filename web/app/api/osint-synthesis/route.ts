@@ -53,18 +53,6 @@ Return ONLY a JSON object with these exact fields:
   "complianceNarrative": "string — 3-sentence compliance-focused narrative for the case file"
 }`;
 
-const FALLBACK: ThreatProfile = {
-  threatScore: 0,
-  threatLevel: "clear",
-  subjectType: "individual",
-  keyFindings: ["API key not configured"],
-  redFlags: [],
-  jurisdictionExposure: [],
-  sanctionsRelevance: "",
-  adverseMediaIndicators: [],
-  recommendedNextSteps: [],
-  complianceNarrative: "",
-};
 
 function parseThreatLevel(val: unknown): ThreatProfile["threatLevel"] {
   if (val === "critical" || val === "high" || val === "medium" || val === "low" || val === "clear") return val;

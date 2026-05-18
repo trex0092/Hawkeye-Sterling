@@ -38,13 +38,6 @@ interface DataQualityPlanResult {
   regulatoryExposure: string;
 }
 
-const FALLBACK: DataQualityPlanResult = {
-  remediationPlan: [],
-  criticalCount: 0,
-  portfolioRisk: "API key not configured — manual review required.",
-  topGaps: [],
-  regulatoryExposure: "",
-};
 
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);

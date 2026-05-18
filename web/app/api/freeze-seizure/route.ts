@@ -14,31 +14,6 @@ export interface FreezeSeizureResult {
   regulatoryBasis: string;
 }
 
-const FALLBACK: FreezeSeizureResult = {
-  legalBasis:
-    "UAE FDL 10/2025 Art.28 (asset freezing), Art.29 (provisional measures), UNSCR 1267/1373 (TF-related freezing). No court order required for UNSCR-listed individuals — immediate administrative freeze by CBUAE directive.",
-  eligibleAssets: [
-    "Bank account balances: AED 1.2M (3 accounts)",
-    "Gold bullion inventory: 22kg at current spot (est. AED 4.8M)",
-    "UAE registered vehicle: Toyota Land Cruiser [Plate]",
-    "Beneficial interest in Dubai freehold property (DLD registered)",
-  ],
-  freezeOrderDraft:
-    "FREEZING NOTICE — [DATE]\nPursuant to UAE FDL 10/2025 Art.28 and instruction of the Competent Authority, you are hereby directed to immediately freeze all assets, accounts, and financial instruments held in the name of or beneficially owned by [SUBJECT], including but not limited to account nos. [ACCOUNTS]. No withdrawals, transfers, or encumbrances may be effected. Report confirmation of compliance within 2 business hours to the undersigned MLRO.",
-  procedureSteps: [
-    "Issue internal freeze notice to all account-holding departments immediately",
-    "Notify CBUAE Financial Crime Supervision within 24 hours",
-    "File STR / SAR with goAML citing Art.28 freeze",
-    "Engage external legal counsel for court-ordered continuation beyond 7-day administrative window",
-    "Coordinate with Public Prosecution if criminal referral required",
-  ],
-  timeConstraints:
-    "Administrative freeze: 7 days without court order. Court-ordered extension: unlimited pending trial. UNSCR-listed: indefinite — no time limit.",
-  internationalCooperation: true,
-  mutualLegalAssistance: true,
-  regulatoryBasis:
-    "UAE FDL 10/2025 Art.28-30, FATF R.4, UAE-INTERPOL bilateral MLA treaty",
-};
 
 export async function POST(req: Request) {
   const gate = await enforce(req);

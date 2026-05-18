@@ -7,7 +7,7 @@ interface Props {
   subject: Subject;
   /** Full queue — used to derive cross-subject edges. */
   allSubjects: Subject[];
-  onSelect?: (subjectId: string) => void;
+  onSelect?: (_subjectId: string) => void;
 }
 
 interface Edge {

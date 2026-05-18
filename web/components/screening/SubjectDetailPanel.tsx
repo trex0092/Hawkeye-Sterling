@@ -42,7 +42,7 @@ import {
   BrainAnomalyDetector,
   BrainOutcomeForecast,
   BrainSourceTriangulation,
-  BrainTemporalPattern,
+
   BrainTypologyConfidence,
   BrainJurisdictionClusters,
   BrainRegulatoryPredictor,
@@ -181,11 +181,11 @@ export interface TriageResolutionForReport {
 
 interface SubjectDetailPanelProps {
   subject: Subject;
-  onUpdate?: (id: string, update: Partial<Subject>) => void;
+  onUpdate?: (_id: string, _update: Partial<Subject>) => void;
   /** Full queue — used by the cross-subject link panel. */
   allSubjects?: Subject[];
   /** Switch the active subject (used by cross-subject link clicks). */
-  onSelectSubject?: (id: string) => void;
+  onSelectSubject?: (_id: string) => void;
   /** Operator-attested per-hit decisions for this subject — flow into the PDF audit trail. */
   triageResolutions?: TriageResolutionForReport[];
 }
@@ -2841,9 +2841,9 @@ function LiveReasoningTab({
   subjectId: string;
   news: NewsSearchState;
   roleOverride: string;
-  setRoleOverride: (v: string) => void;
+  setRoleOverride: (_v: string) => void;
   narrativeOverride: string;
-  setNarrativeOverride: (v: string) => void;
+  setNarrativeOverride: (_v: string) => void;
   liveNarrativePreview: string;
 }) {
   const [overridesOpen, setOverridesOpen] = useState(false);
@@ -3181,7 +3181,7 @@ function SuperBrainPanel({
                     {e.label}
                   </span>
                   <span className="font-mono text-10 text-ink-3" title={`keyword: ${e.keyword}`}>
-                    "{e.keyword}"
+                    &quot;{e.keyword}&quot;
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-1 mt-1">
@@ -3470,7 +3470,7 @@ function NewsDossierPanel({ state }: { state: NewsSearchState }) {
               <span>· {a.pubDate ? formatDMY(a.pubDate) : "—"}</span>
               <span>· <span className="uppercase text-violet">{a.lang}</span></span>
               <span>· fuzzy <span className="text-ink-0">{a.fuzzyScore}%</span> ({a.fuzzyMethod})</span>
-              {a.matchedVariant && <span>· via "{a.matchedVariant}"</span>}
+              {a.matchedVariant && <span>· via &quot;{a.matchedVariant}&quot;</span>}
             </div>
             {(a.keywordGroups.length > 0 || a.esgCategories.length > 0) && (
               <div className="flex flex-wrap gap-1 mt-1">

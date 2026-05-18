@@ -20,7 +20,7 @@ interface ModuleLayoutProps<K extends string = string> {
   children: ReactNode;
   filters?: SidebarFilterItem<K>[] | undefined;
   activeFilter?: K | undefined;
-  onFilterChange?: ((key: K) => void) | undefined;
+  onFilterChange?: ((_key: K) => void) | undefined;
   filtersTitle?: string | undefined;
   sidebarExtra?: ReactNode | undefined;
   detailPanel?: ReactNode | undefined;

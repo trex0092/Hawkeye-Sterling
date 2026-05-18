@@ -176,7 +176,7 @@ const ChevronIcon = ({ open }: { open: boolean }) => (
   </svg>
 );
 
-const SortIcon = ({ col, active, dir }: { col: string; active: boolean; dir: SortDir }) => (
+const SortIcon = ({ col: _col, active, dir }: { col: string; active: boolean; dir: SortDir }) => (
   <span className={`ml-1 font-mono text-9 ${active ? "text-brand" : "text-ink-3"}`}>
     {active ? (dir === "asc" ? "↑" : "↓") : "↕"}
   </span>

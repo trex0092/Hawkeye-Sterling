@@ -229,10 +229,10 @@ function computeHash(prevHash: string | undefined, payload: unknown, at: string,
 
 async function loadAuditStore() {
   const { getStore } = await import("@netlify/blobs") as unknown as {
-    getStore: (opts: { name: string; siteID?: string; token?: string; consistency?: string }) => {
+    getStore: (_opts: { name: string; siteID?: string; token?: string; consistency?: string }) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      get: (key: string, opts?: any) => Promise<unknown>;
-      setJSON: (key: string, value: unknown) => Promise<void>;
+      get: (_key: string, _opts?: any) => Promise<unknown>;
+      setJSON: (_key: string, _value: unknown) => Promise<void>;
     };
   };
   const siteID = process.env["NETLIFY_SITE_ID"] ?? process.env["SITE_ID"];

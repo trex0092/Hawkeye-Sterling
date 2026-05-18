@@ -34,7 +34,7 @@ interface ProgrammeStats {
 
 const MOCK_STATS: ProgrammeStats = { open: 14, resolved: 31, escalated: 2, slaHitPct: 100 };
 
-const MOCK_CASES: GwCase[] = [
+const _MOCK_CASES: GwCase[] = [
   { id: "FG-WB-2026-014", receivedAt: "02 MAY · 09:14", channel: "EMAIL",   category: "AML/CFT",    categoryVariant: "aml",     stage: "Investigation",    stageStatus: "open",      slaPct: 36,  slaVariant: "warn",   owner: "Compliance Dpt" },
   { id: "FG-WB-2026-013", receivedAt: "28 APR · 16:02", channel: "DIRECT",  category: "BRIBERY",    categoryVariant: "eth",     stage: "Decision",         stageStatus: "review",    slaPct: 88,  slaVariant: "ok",     owner: "Compliance Dpt" },
   { id: "FG-WB-2026-012", receivedAt: "22 APR · 11:48", channel: "WRITTEN", category: "HARASSMENT", categoryVariant: "hr",      stage: "Escalated · MD",   stageStatus: "escalated", slaPct: 94,  slaVariant: "danger", owner: "MD"             },
@@ -218,7 +218,7 @@ const PENALTIES = [
   { lab: "False / malicious",     prefix: "Liability",  em: " + termination",  desc: "Bad-faith reports are not tolerated."          },
 ];
 
-const CHANNELS = [
+const _CHANNELS = [
   { ix: "01", name: "Direct contact",     sub: "Primary FG representative" },
   { ix: "02", name: "Email reporting",    sub: "compliance@finegold.ae"    },
   { ix: "03", name: "Written submission", sub: "To management · physical"  },
@@ -400,24 +400,24 @@ function serif(style?: React.CSSProperties): React.CSSProperties {
   return { fontFamily: "'Newsreader','Cormorant Garamond',Georgia,serif", ...style };
 }
 
-const STATUS_DOT: Record<CaseStatus, string> = {
+const _STATUS_DOT: Record<CaseStatus, string> = {
   open:      V.ember,
   review:    V.teal,
   escalated: V.rose,
   closed:    V.muted,
 };
-const STATUS_GLOW: Record<CaseStatus, string> = {
+const _STATUS_GLOW: Record<CaseStatus, string> = {
   open:      `0 0 6px var(--gw-ember)`,
   review:    "none",
   escalated: `0 0 6px var(--gw-rose)`,
   closed:    "none",
 };
-const SLA_COLOR: Record<SlaVariant, string> = {
+const _SLA_COLOR: Record<SlaVariant, string> = {
   ok:     V.teal,
   warn:   V.ember,
   danger: V.rose,
 };
-const CAT_COLOR: Record<CategoryVariant, string> = {
+const _CAT_COLOR: Record<CategoryVariant, string> = {
   aml:     V.rose,
   eth:     V.ember,
   ops:     V.teal,

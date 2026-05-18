@@ -65,14 +65,6 @@ Return ONLY a JSON object with this exact structure:
 priorityLabel must be one of: "immediate", "urgent", "review", "monitor", "clear".
 priority is 1-99 (lower = higher urgency).`;
 
-const FALLBACK: BatchRankingResponse = {
-  ranked: [],
-  immediateCount: 0,
-  urgentCount: 0,
-  topThreats: [],
-  batchSummary: "API key not configured",
-};
-
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;

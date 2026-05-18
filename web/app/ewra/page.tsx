@@ -161,7 +161,7 @@ const RISK_TONE = (score: number) =>
 
 const inputCls = "w-full text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-ink-0";
 
-function ScoreSelector({ value, onChange }: { value: number; onChange: (n: number) => void }) {
+function ScoreSelector({ value, onChange }: { value: number; onChange: (_n: number) => void }) {
   return (
     <div className="flex gap-1">
       {[1, 2, 3, 4, 5].map((n) => (
@@ -180,7 +180,7 @@ function ScoreSelector({ value, onChange }: { value: number; onChange: (n: numbe
   );
 }
 
-const RISK_OVERALL: Record<number, EwraBoardReportResult["overallRisk"]> = {
+const _RISK_OVERALL: Record<number, EwraBoardReportResult["overallRisk"]> = {
   1: "low", 2: "low", 3: "medium", 4: "high", 5: "critical",
 };
 
@@ -691,7 +691,7 @@ export default function EwraPage() {
             <div className="border-t border-hair-2 divide-y divide-hair">
               {history.length === 0 && (
                 <div className="px-4 py-4 text-12 text-ink-3 text-center">
-                  No snapshots yet. Click "Save Snapshot" to capture the current state.
+                  No snapshots yet. Click &quot;Save Snapshot&quot; to capture the current state.
                 </div>
               )}
               {history.map((snap, i) => (

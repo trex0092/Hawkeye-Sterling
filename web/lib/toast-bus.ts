@@ -22,7 +22,7 @@ export function pushToast(payload: ToastPayload): void {
   window.dispatchEvent(new CustomEvent<ToastPayload>(EVENT_NAME, { detail: payload }));
 }
 
-export function subscribeToasts(handler: (payload: ToastPayload) => void): () => void {
+export function subscribeToasts(handler: (_payload: ToastPayload) => void): () => void {
   if (typeof window === "undefined") return () => undefined;
   const listener = (e: Event) => {
     const ce = e as CustomEvent<ToastPayload>;

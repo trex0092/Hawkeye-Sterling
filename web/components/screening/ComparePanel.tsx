@@ -15,7 +15,7 @@ interface Props {
   subjectA: Subject;
   subjectB: Subject;
   onClose: () => void;
-  onSelect: (id: string) => void;
+  onSelect: (_id: string) => void;
 }
 
 function riskColor(score: number): string {

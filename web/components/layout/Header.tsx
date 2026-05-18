@@ -1,19 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { RegulatoryTicker } from "./RegulatoryTicker";
 import { InstallAppButton } from "./InstallAppButton";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 
-const NAV_TABS = [
-  { key: "nav.screening", label: "🔎 Screening", href: "/screening" },
-  { key: "nav.cases", label: "🗂️ Cases", href: "/cases" },
-  { key: "nav.tm", label: "💸 Transaction Monitor", href: "/transaction-monitor" },
-  { key: "nav.str", label: "📁 STR Cases", href: "/str-cases" },
-  { key: "nav.monitor", label: "👁️ Ongoing Monitor", href: "/ongoing-monitor" },
-  { key: "nav.mlro", label: "🧠 MLRO Advisor", href: "/mlro-advisor" },
-] as const;
 
 // Secondary modules — rendered under a "More" dropdown so the top-row
 // stays readable.
@@ -165,7 +158,7 @@ export function Header() {
   return (
     <header className="sticky top-0 z-40 bg-bg-panel border-b border-hair-2 shadow-header">
       <nav className="flex items-center gap-2 h-[54px] px-4 md:px-6 overflow-x-auto">
-        <a
+        <Link
           href="/"
           className="inline-flex items-center gap-2.5 text-ink-0 no-underline shrink-0"
         >
@@ -175,7 +168,7 @@ export function Header() {
           <span className="hidden sm:flex flex-col leading-none gap-[2px]">
             <span className="text-[13px] font-semibold tracking-tight text-ink-0">Hawkeye Sterling</span>
           </span>
-        </a>
+        </Link>
 
         <div className="flex gap-0.5 ml-2 md:ml-8">
           {NAV_TABS_I18N.map((tab) => {

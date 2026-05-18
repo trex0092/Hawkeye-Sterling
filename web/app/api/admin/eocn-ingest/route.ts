@@ -208,7 +208,7 @@ Rules:
         content: [
           {
             type: "document",
-            source: { type: "base64", media_type: mediaType, data: base64 },
+            source: { type: "base64", media_type: mediaType as "application/pdf", data: base64 },
           },
           {
             type: "text",

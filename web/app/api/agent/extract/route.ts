@@ -177,12 +177,12 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const documentBlock = body.documentBase64
     ? {
-        type: "document",
-        source: { type: "base64", media_type: mediaType, data: body.documentBase64 },
+        type: "document" as const,
+        source: { type: "base64" as const, media_type: mediaType as "application/pdf", data: body.documentBase64 },
       }
     : {
-        type: "document",
-        source: { type: "url", url: body.documentUrl },
+        type: "document" as const,
+        source: { type: "url" as const, url: body.documentUrl! },
       };
 
   try {

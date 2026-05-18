@@ -132,7 +132,7 @@ export function TaxonomyLibrary() {
         })}
         {filtered.length === 0 && (
           <div className="text-11 text-ink-2 py-4">
-            No {activeTab.label.toLowerCase()} entries match "{query}".
+            No {activeTab.label.toLowerCase()} entries match &quot;{query}&quot;.
           </div>
         )}
       </div>

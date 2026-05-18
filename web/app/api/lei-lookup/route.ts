@@ -89,28 +89,6 @@ export interface LeiLookupResult {
 }
 
 // Fallback: Emirates NBD sample record (well-known UAE bank with public LEI)
-const UAE_BANK_FALLBACK: LeiLookupResult = {
-  ok: true,
-  lei: "529900S0LYEQVTRP7C22",
-  legalName: "Emirates NBD Bank PJSC",
-  jurisdiction: "AE",
-  legalForm: "Public Joint Stock Company",
-  status: "ISSUED",
-  registrationStatus: "ISSUED",
-  headquartersAddress: "Baniyas Road, Deira, P.O. Box 777, Dubai, United Arab Emirates",
-  registeredAddress: "Baniyas Road, Deira, P.O. Box 777, Dubai, United Arab Emirates",
-  ultimateParent: {
-    lei: "254900ICTBKL7ZHCQF72",
-    legalName: "Investment Corporation of Dubai",
-    relationship: "IS_ULTIMATELY_CONSOLIDATED_BY",
-  },
-  directParent: {
-    lei: "254900ICTBKL7ZHCQF72",
-    legalName: "Investment Corporation of Dubai",
-    relationship: "IS_DIRECTLY_CONSOLIDATED_BY",
-  },
-  lastUpdated: "2025-01-15T08:00:00Z",
-};
 
 // ── GLEIF API helpers ──────────────────────────────────────────────────────
 
@@ -180,9 +158,9 @@ const LEI_CACHE_STORE_NAME = "hawkeye-lei-cache";
 const LEI_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
 interface LeiCacheBlobMod {
-  getStore: (opts: { name: string; siteID?: string; token?: string }) => {
-    get: (key: string, opts?: { type?: string }) => Promise<unknown>;
-    setJSON: (key: string, value: unknown) => Promise<void>;
+  getStore: (_opts: { name: string; siteID?: string; token?: string }) => {
+    get: (_key: string, _opts?: { type?: string }) => Promise<unknown>;
+    setJSON: (_key: string, _value: unknown) => Promise<void>;
   };
 }
 

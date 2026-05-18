@@ -35,40 +35,6 @@ export interface SanctionsExposureResult {
   regulatoryBasis: string;
 }
 
-const FALLBACK: SanctionsExposureResult = {
-  overallExposure: "high",
-  immediateFreeze: false,
-  listHits: [
-    { list: "UAE EOCN Consolidated List", listAuthority: "UAE Executive Office for Control and Non-Proliferation", hitType: "possible", designationBasis: "Includes UNSCR 1267 Al-Qaida/IS and UAE domestic designations", assetFreezeRequired: true, freezeTimeline: "Immediate — no court order required under UAE CTF Law Art.7", dealingProhibition: true, reportingObligation: "File STR within 2 business days of confirmed designation hit — FDL 10/2025 Art.26" },
-    { list: "OFAC SDN List", listAuthority: "US Treasury Office of Foreign Assets Control", hitType: "possible", designationBasis: "Possible secondary sanctions exposure through counterparty transactions involving US-dollar clearing", assetFreezeRequired: false, dealingProhibition: true, reportingObligation: "OFAC report required if US person or US-nexus (dollar clearing) involved" },
-    { list: "UN Consolidated Sanctions List", listAuthority: "UN Security Council", hitType: "none", assetFreezeRequired: false, dealingProhibition: false },
-    { list: "EU Consolidated Sanctions List", listAuthority: "European Union", hitType: "none", assetFreezeRequired: false, dealingProhibition: false },
-    { list: "HMT UK Financial Sanctions List", listAuthority: "His Majesty's Treasury", hitType: "none", assetFreezeRequired: false, dealingProhibition: false },
-  ],
-  assetFreezeRequired: false,
-  dealingProhibition: true,
-  tippingOffRisk: true,
-  recommendedAction: "escalate_mlro",
-  actionRationale: "Possible EOCN/OFAC hit requires immediate MLRO review and manual de-confliction against confirmed designation lists. If EOCN designation confirmed, immediate asset freeze and STR filing within 2 business days. Do not inform customer of screening activity — tipping-off prohibition applies (FDL 10/2025 Art.25).",
-  frozenAssetReportingDeadline: "Immediate notification to UAE EOCN within 24 hours of confirmed designation hit — UAE Cabinet Decision 74/2020 Art.6",
-  applicableRegime: [
-    "UAE EOCN (Cabinet Decision 74/2020)",
-    "UAE CTF Law 7/2014",
-    "UNSCR 1267/1989/2253 (Al-Qaida/IS)",
-    "UNSCR 1988 (Taliban)",
-    "UNSCR 1718 (DPRK)",
-    "OFAC SDN (secondary sanctions exposure)",
-  ],
-  complianceObligations: [
-    "Immediate account freeze if EOCN/UNSCR designation confirmed — no court order required",
-    "Report frozen assets to UAE EOCN within 24 hours — Cabinet Decision 74/2020 Art.6",
-    "File STR within 2 business days — FDL 10/2025 Art.26",
-    "Tipping-off prohibition — do not inform customer — FDL 10/2025 Art.25",
-    "Record retention 8 years — FDL 10/2025 Art.16",
-    "No transactions permitted with designated party regardless of amount",
-  ],
-  regulatoryBasis: "UAE Cabinet Decision 74/2020 (EOCN — targeted financial sanctions implementation); UAE CTF Law 7/2014 Art.7; UAE FDL 10/2025 Art.25, Art.26; FATF R.6 (targeted financial sanctions); UNSCR 1267, 1373, 1718, 1988; OFAC 31 CFR Parts 500-598",
-};
 
 export async function POST(req: Request) {
   const gate = await enforce(req);

@@ -71,7 +71,7 @@ function AccessDeniedScreen({
   onRoleChange,
 }: {
   role: OperatorRole;
-  onRoleChange: (r: OperatorRole) => void;
+  onRoleChange: (_r: OperatorRole) => void;
 }) {
   const elevate = (r: OperatorRole) => {
     saveOperatorRole(r);

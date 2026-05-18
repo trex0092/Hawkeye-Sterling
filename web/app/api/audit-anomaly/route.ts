@@ -44,16 +44,6 @@ interface AuditAnomalyResult {
   regulatoryNote: string;
 }
 
-const FALLBACK: AuditAnomalyResult = {
-  anomalyScore: 0,
-  anomalyLevel: "normal",
-  anomalies: [],
-  patternSummary: "API key not configured — manual review required.",
-  actorRisk: [],
-  integrityNote: "",
-  regulatoryNote: "",
-};
-
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;

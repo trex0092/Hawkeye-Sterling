@@ -14,33 +14,6 @@ export interface DerisiskingImpactResult {
   regulatoryBasis: string;
 }
 
-const FALLBACK: DerisiskingImpactResult = {
-  justificationStrength: "moderate",
-  fatfConformant: true,
-  affectedCustomerCount: 47,
-  reputationalRisk: "medium",
-  alternativesMitigants: [
-    "Enhanced monitoring instead of exit for low-volume, long-standing customers",
-    "Restrict to non-cash transactions only rather than full exit",
-    "Require additional documentation as condition of continued service",
-    "Refer low-risk customers within segment to another compliant provider",
-  ],
-  exitProcessRequirements: [
-    "30-day written notice to affected customers (Consumer Protection requirements)",
-    "Return of all customer property and assets before account closure",
-    "Maintain records for 10 years post-exit (FDL Art.24)",
-    "Do not file STR solely because customer is in de-risked segment — this is inappropriate de-risking",
-    "Document risk-based justification for each individual exit decision",
-  ],
-  documentationRequired: [
-    "Board-approved de-risking policy with risk-based rationale",
-    "Individual customer risk assessments justifying exit decision",
-    "Evidence that alternatives were considered and rejected with reasons",
-    "Communication templates approved by Legal",
-  ],
-  regulatoryBasis:
-    "FATF Guidance on De-Risking (2021), UAE CBUAE Notice 2022 (proportionate CDD), UAE Consumer Protection Law, FDL 10/2025 Art.4-8",
-};
 
 export async function POST(req: Request) {
   const gate = await enforce(req);

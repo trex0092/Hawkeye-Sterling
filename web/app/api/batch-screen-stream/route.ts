@@ -34,8 +34,8 @@ const CORS_HEADERS: Record<string, string> = {
 };
 
 type QuickScreenFn = (
-  subject: QuickScreenSubject,
-  candidates: QuickScreenCandidate[],
+  _subject: QuickScreenSubject,
+  _candidates: QuickScreenCandidate[],
 ) => QuickScreenResult;
 const quickScreen = _quickScreen as QuickScreenFn;
 

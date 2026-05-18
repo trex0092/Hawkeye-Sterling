@@ -31,7 +31,7 @@ import { enforce, type EnforcementAllow } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 
 export interface MlroBuildRequest {
-  system: string | Array<{ type: "text"; text: string; cache_control?: unknown }>;
+  system: string | Array<{ type: "text"; text: string; cache_control?: { type: "ephemeral" } | null }>;
   userContent: string;
   /** Optional explicit override of model / max_tokens for one call. */
   modelOverride?: string;
@@ -48,11 +48,11 @@ export interface MlroRouteOptions<TBody, TResult> {
   /** Anthropic client timeout in ms. Defaults to 55s. */
   timeoutMs?: number;
   /** Parse + validate the request body. Return null to short-circuit with a 400. */
-  parseBody: (raw: unknown) => TBody | null;
+  parseBody: (_raw: unknown) => TBody | null;
   /** Build the messages.create call from the parsed body. */
-  buildRequest: (body: TBody) => MlroBuildRequest;
+  buildRequest: (_body: TBody) => MlroBuildRequest;
   /** Parse the LLM text output into the structured response. Throw on parse failure. */
-  parseResult: (text: string) => TResult;
+  parseResult: (_text: string) => TResult;
   /**
    * Offline fallback returned with ok: true + degraded: true when the API
    * key is missing. Lets the UI render something instead of a hard 503.
@@ -67,7 +67,7 @@ export interface MlroRouteOptions<TBody, TResult> {
    * body. Must NOT throw — exceptions are swallowed so the response
    * pipeline is never blocked by audit-log failures.
    */
-  onSuccess?: (result: TResult, body: TBody) => void;
+  onSuccess?: (_result: TResult, _body: TBody) => void;
 }
 
 /**

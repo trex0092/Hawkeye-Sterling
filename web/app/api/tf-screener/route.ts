@@ -37,42 +37,6 @@ export interface TfScreenerResult {
   ctfObligations: string[];
 }
 
-const FALLBACK: TfScreenerResult = {
-  tfRisk: "high",
-  designatedEntityHit: false,
-  unscr1267Hit: false,
-  unscr1373Nexus: "possible",
-  npOAbuseRisk: "medium",
-  hawalaNexus: "high",
-  cryptoTfRisk: "low",
-  primaryTypology: "Hawala / Informal Value Transfer System (IVTS) — TF conduit",
-  primaryTypologyRef: "FATF R.14; FATF Guidance on TF Risk Assessment (2019) §4.3",
-  indicators: [
-    { indicator: "Cross-border remittances via unregistered hawala operator to conflict-affected jurisdiction", severity: "critical", typology: "hawala_ivts", fatfRef: "FATF R.14; UAE FDL 10/2025 Art.21(2)", detail: "Unregistered hawala to Syria/Iraq/Yemen/Afghanistan is a primary TF conduit per FATF Guidance on TF." },
-    { indicator: "Transaction amounts consistent with foreign fighter financing pattern (USD 500–5,000)", severity: "high", typology: "foreign_fighter", fatfRef: "FATF R.5; UNSCR 2178 (2014)", detail: "Foreign fighter financing typically involves small transfers in the USD 500–5,000 range; patterns match FATF foreign fighter typology." },
-    { indicator: "Beneficiary in FATF grey-list jurisdiction with active terrorist designation activity", severity: "high", typology: "structured_transfers", fatfRef: "FATF R.6; UNSCR 1373", detail: "Destination jurisdiction listed under FATF R.19 enhanced scrutiny with documented IS/AQ activity per UN Security Council Monitoring Team reports." },
-  ],
-  recommendedAction: "escalate_mlro",
-  actionRationale: "Hawala transfers to conflict-affected jurisdiction with foreign fighter financing pattern require immediate MLRO escalation and UNSCR 1267/1373 list screening. If MLRO determines reasonable grounds for TF suspicion, STR must be filed within 2 business days under FDL 10/2025 Art.26. Freeze consideration mandatory if designated entity link confirmed.",
-  mandatoryFreeze: false,
-  requiredActions: [
-    "Screen all parties against UAE EOCN consolidated list (includes UNSCR 1267 Al-Qaida/Taliban and UNSCR 1988 Taliban)",
-    "Screen against US OFAC SDN, EU, UN Consolidated List for terrorist designations",
-    "Escalate to MLRO with full transaction record and customer CDD file",
-    "Assess whether to file STR under UAE FDL 10/2025 Art.26 — 2 business day deadline from determination",
-    "If hawala operator is unregistered, report to MoE / CBUAE as unlicensed money services business",
-    "Consider account freeze pending MLRO determination",
-  ],
-  applicableRegime: ["UAE EOCN (Cabinet Decision 74/2020)", "UNSCR 1267 (Al-Qaida/Taliban)", "UNSCR 1373 (General TF)", "UNSCR 2178 (Foreign Fighters)", "UAE CTF Law 7/2014"],
-  regulatoryBasis: "UAE Federal Law No. 7/2014 (CTF); UAE FDL 10/2025 Art.21(2), Art.26; FATF R.5, R.6, R.8, R.14; UNSCR 1267, 1373, 1988, 2178; UAE Cabinet Decision 74/2020 (EOCN)",
-  ctfObligations: [
-    "Immediate freeze obligation if UNSCR 1267/1988 designated entity identified (no delay, no court order required) — UAE CTF Law Art.7",
-    "STR within 2 business days of reasonable TF suspicion — FDL 10/2025 Art.26",
-    "Tipping-off prohibition applies — FDL 10/2025 Art.25",
-    "Record retention 8 years — FDL 10/2025 Art.16",
-    "No threshold applies to TF STR obligation — suspicion alone is sufficient (FATF R.20)",
-  ],
-};
 
 export async function POST(req: Request) {
   const gate = await enforce(req);

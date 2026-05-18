@@ -37,45 +37,6 @@ export interface DnfbpObligationsResult {
   practicalGuidance: string;
 }
 
-const FALLBACK: DnfbpObligationsResult = {
-  dnfbpCategory: "Dealers in Precious Metals and Stones (DPMS)",
-  dnfbpSubType: "Licensed gold refiner / bullion dealer",
-  regulatoryAuthority: "CBUAE / MoEI",
-  isRegulated: true,
-  obligationTriggered: true,
-  triggerThreshold: "Cash transactions ≥ AED 55,000 OR any suspicious transaction regardless of amount",
-  triggerActivity: "Purchase or sale of gold, silver, diamonds, or precious stones",
-  cddRequired: true,
-  cddLevel: "enhanced",
-  strRequired: true,
-  strBasis: "UAE FDL 10/2025 Art.26 — suspicion of ML/TF, no threshold. DPMS sector historically high-risk for TBML and value-based ML.",
-  ctrRequired: true,
-  ctrThreshold: "AED 55,000 per transaction — UAE FDL 10/2025 Art.17",
-  registrationRequired: true,
-  registrationBody: "MoEI Precious Metals and Stones Office + CBUAE goAML registration",
-  keyObligations: [
-    { obligation: "Customer identification and verification (CDD) before or during transaction", legalBasis: "UAE FDL 10/2025 Art.14", deadline: "Before transaction execution", notes: "UAE national: Emirates ID; Foreign national: passport + visa; Corporate: trade licence + UBO" },
-    { obligation: "CTR filing for cash transactions ≥ AED 55,000", legalBasis: "UAE FDL 10/2025 Art.17", deadline: "Same/next business day" },
-    { obligation: "STR filing within 2 business days of suspicion crystallisation", legalBasis: "UAE FDL 10/2025 Art.26" },
-    { obligation: "Maintain transaction records and CDD documentation", legalBasis: "UAE FDL 10/2025 Art.16", notes: "Minimum 8 years" },
-    { obligation: "Annual AML/CFT risk assessment update", legalBasis: "UAE FDL 10/2025 Art.20; CBUAE DPMS Guidelines 2022" },
-    { obligation: "Appoint a Compliance Officer / MLRO", legalBasis: "UAE FDL 10/2025 Art.19" },
-    { obligation: "Staff AML training — minimum annual", legalBasis: "UAE FDL 10/2025 Art.19(3)" },
-    { obligation: "Screen customers against UAE EOCN sanctions list before any transaction", legalBasis: "UAE Cabinet Decision 74/2020" },
-  ],
-  prohibitedActivities: [
-    "Cash transactions above AED 55,000 without CDD and CTR",
-    "Purchasing gold without verifying seller identity",
-    "Transactions with FATF grey/black list jurisdictions without enhanced CDD",
-    "Tipping off a customer that an STR has been filed — FDL 10/2025 Art.25",
-    "Purchasing gold from persons who cannot demonstrate legitimate source of the goods",
-  ],
-  recordKeepingYears: 8,
-  supervisoryBody: "CBUAE (primary AML/CFT supervisor for DPMS); MoEI (DPMS trade licensing and sector supervision)",
-  sanctionsForNonCompliance: "Administrative fines AED 50,000–AED 5,000,000; licence revocation; criminal prosecution of Compliance Officer/MLRO for non-filing",
-  regulatoryBasis: "UAE FDL 10/2025 Art.14, 16, 17, 19, 20, 26; UAE Cabinet Decision 74/2020; CBUAE DPMS AML/CFT Guidelines 2022; FATF R.22 (DNFBP CDD); FATF R.23 (DNFBP reporting); UAE Cabinet Resolution 109/2023",
-  practicalGuidance: "DPMS are among the highest-risk DNFBP sectors in UAE due to cash intensity, high value-to-weight ratio of gold, and use in TBML. Sector is a priority inspection target for CBUAE. Implement transaction monitoring, set cash acceptance policies, and ensure all staff complete annual FATF typology training specific to gold sector ML.",
-};
 
 export async function POST(req: Request) {
   const gate = await enforce(req);

@@ -266,41 +266,6 @@ Your task is to search this knowledge base and return the most relevant typologi
 Return ONLY valid JSON (no markdown fences) matching the exact structure requested.
 `;
 
-const FALLBACK: TypologySearchResponse = {
-  results: [
-    {
-      id: "TBML-001",
-      name: "Over-Invoicing of Goods",
-      category: "Trade-Based Money Laundering",
-      description:
-        "A trade-based money laundering technique where the price of goods or services on an invoice is intentionally inflated above their true market value. The excess payment transfers value from the buyer's country to the seller's country, allowing illicit funds to be integrated into the trade finance system.",
-      redFlags: [
-        "Invoice price significantly above or below market price for similar goods",
-        "Transactions with high-risk or sanctioned counterparties",
-        "Frequent amendments to letters of credit",
-        "Shipments routed through third countries without commercial logic",
-        "Use of free trade zones with weak oversight",
-      ],
-      realWorldExample:
-        "A UAE-based gold trader invoiced Hong Kong counterpart USD 2.3M for gold bullion worth USD 1.8M. The excess USD 500K represented criminal proceeds from a drug trafficking network. Detected via DMCC trade data cross-referencing.",
-      fatfRef: "FATF Report on Trade-Based Money Laundering (2020), Rec. 14",
-      riskLevel: "high",
-      sectors: ["Trade Finance", "Commodities", "Shipping", "Banking"],
-      jurisdictions: ["UAE", "Hong Kong", "Panama", "Singapore"],
-      relatedTypologies: ["Under-Invoicing", "Multiple Invoicing", "Phantom Shipments"],
-      detectionMethods: [
-        "Price benchmarking against market data",
-        "Trade data cross-referencing (DP World, DMCC)",
-        "STR filing analysis",
-        "TBML red flag monitoring",
-      ],
-      regulatoryResponse:
-        "UAE: Report to UAE FIU via goAML. FATF Recommendation 14 requires monitoring of trade finance. CBUAE AML Standards §8 applies to DNFBP trade participants.",
-    },
-  ],
-  totalFound: 1,
-  relatedCategories: ["TBML", "Sanctions Evasion", "Shell Companies"],
-};
 
 export async function POST(req: Request) {
   const gate = await enforce(req);

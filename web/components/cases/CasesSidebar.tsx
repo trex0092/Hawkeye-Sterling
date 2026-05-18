@@ -5,13 +5,12 @@ import {
   SidebarSection,
   SidebarShell,
 } from "@/components/layout/SidebarParts";
-import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 import type { CaseFilter, CaseFilterKey } from "@/lib/types";
 
 interface CasesSidebarProps {
   filters: CaseFilter[];
   activeFilter: CaseFilterKey;
-  onFilterChange: (key: CaseFilterKey) => void;
+  onFilterChange: (_key: CaseFilterKey) => void;
 }
 
 export function CasesSidebar({

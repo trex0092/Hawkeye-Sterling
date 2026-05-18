@@ -17,30 +17,6 @@ export interface HawalaDetectorResult {
   regulatoryBasis: string;
 }
 
-const FALLBACK: HawalaDetectorResult = {
-  riskRating: "high",
-  ivtsIndicators: [
-    "Frequent round-sum cash receipts matched by equivalent outbound wire transfers to Pakistan within 48 hours",
-    "Customer operates a money exchange business but is not registered as a Hawaladar with CBUAE",
-    "Multiple unrelated individuals paying cash to same account referencing 'family support' — classic IVTS placement",
-    "No invoice, contract, or trade documentation for any payment — purely value transfer",
-    "Counterpart in Karachi sends confirmation messages via encrypted WhatsApp",
-  ],
-  settlementMechanism:
-    "Classic hawala — broker in UAE receives cash from diaspora customers and notifies correspondent broker in Pakistan, who pays local beneficiaries. Settlement via periodic over/under-invoiced trade transactions. No formal fund transfer.",
-  estimatedVolume:
-    "AED 380,000/month estimated based on 90-day transaction pattern",
-  counterpartiesIdentified: [
-    "Karachi broker — identity unknown (referred to as 'Al-Malik' in messages)",
-    "15 individual UAE payers (names available from account records)",
-    "3 Pakistani beneficiaries referenced in transfer notes",
-  ],
-  regulatoryAction:
-    "File STR immediately. Consider SAR escalation to Public Prosecution. Report unregistered IVTS to CBUAE Financial Crime Supervision. Do NOT alert customer — tipping-off prohibition applies.",
-  reportingRequired: true,
-  regulatoryBasis:
-    "UAE FDL 10/2025 Art.15 (licensing of money services), CBUAE Circular 24/2022 (IVTS registration), FATF R.14 (money or value transfer services)",
-};
 
 export async function POST(req: Request) {
   const gate = await enforce(req);

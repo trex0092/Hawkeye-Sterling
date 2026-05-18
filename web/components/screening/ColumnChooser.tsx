@@ -5,7 +5,7 @@ import { ALL_COLUMNS, type TableColumnKey } from "@/lib/types";
 
 interface Props {
   visible: Record<TableColumnKey, boolean>;
-  onChange: (next: Record<TableColumnKey, boolean>) => void;
+  onChange: (_next: Record<TableColumnKey, boolean>) => void;
 }
 
 const STORAGE_KEY = "hawkeye.screening-columns.v1";

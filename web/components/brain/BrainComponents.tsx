@@ -476,7 +476,7 @@ export function BrainConsole({ initialValues }: { initialValues?: BrainConsoleIn
   const [result, setResult] = useState<ReasonResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const loadPreset = (id: string) => {
+  const _loadPreset = (id: string) => {
     const preset = SAMPLE_PRESETS.find((p) => p.id === id);
     if (!preset) return;
     setName(preset.payload.subject.name);
@@ -663,8 +663,8 @@ export function BrainConsole({ initialValues }: { initialValues?: BrainConsoleIn
               </div>
               <div className="text-10 text-ink-3 bg-bg-2 border border-hair-2 rounded p-2.5 space-y-1">
                 <div className="font-semibold text-ink-2">⚠ For accurate scoring — fill ALL fields:</div>
-                <div>• <strong>Jurisdiction</strong> — ISO-2 code or country name (e.g. "RU", "Russia", "TR", "AE")</div>
-                <div>• <strong>Sector</strong> — business activity (e.g. "gold refinery", "VASP", "real estate")</div>
+                <div>• <strong>Jurisdiction</strong> — ISO-2 code or country name (e.g. &quot;RU&quot;, &quot;Russia&quot;, &quot;TR&quot;, &quot;AE&quot;)</div>
+                <div>• <strong>Sector</strong> — business activity (e.g. &quot;gold refinery&quot;, &quot;VASP&quot;, &quot;real estate&quot;)</div>
                 <div>• <strong>Live intelligence</strong> — GDELT (10-year Art.19 lookback) is auto-fetched on every run. Add your own OSINT notes in the narrative box to combine with live data.</div>
                 <div className="mt-1 pt-1 border-t border-hair text-ink-3">The composite score shown here reflects ONLY what you input — it is independent of any screening-panel score for the same subject.</div>
               </div>

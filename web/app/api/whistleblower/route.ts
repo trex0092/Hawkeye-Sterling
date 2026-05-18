@@ -17,35 +17,6 @@ export interface WhistleblowerResult {
   regulatoryBasis: string;
 }
 
-const FALLBACK: WhistleblowerResult = {
-  caseUrgency: "high",
-  allegationCategories: [
-    "Insider facilitation of ML — employee allegedly tipping off customer before STR filing",
-    "Tipping-off violation (FDL Art.30) — potential criminal liability for employee and institution",
-    "Potential AML supervisory failure — MLRO may have known of suspicious activity and delayed reporting",
-  ],
-  protectionMeasures: [
-    "Whistleblower identity must be known ONLY to MLRO, MD, and Legal — written non-disclosure commitment from each",
-    "No retaliation of any kind — UAE Whistleblower Protection Decree 2021 creates criminal liability for retaliation",
-    "Whistleblower to be moved to a different reporting line immediately if they report to the accused",
-    "Create secure, encrypted channel for ongoing communication with whistleblower",
-    "Document all protection measures taken and timing",
-  ],
-  investigationSteps: [
-    "Appoint independent investigator — not line management of accused employee",
-    "Preserve all digital evidence immediately — email, system logs, access records",
-    "Interview whistleblower under legal privilege within 24 hours",
-    "Review all STR filings and goAML submissions by accused employee for past 24 months",
-    "Cross-check customer accounts managed by accused for unusual patterns",
-  ],
-  regulatoryReportingRequired: true,
-  hrEngagementPlan:
-    "HR to be engaged within 24 hours for employee suspension decision. Suspension should be precautionary — not disciplinary — pending investigation outcome. Employment counsel to advise on process.",
-  timelineRequirements:
-    "Preliminary assessment: 48 hours. Investigation report: 20 business days. Regulatory notification (if ML facilitation confirmed): immediate upon confirmation.",
-  regulatoryBasis:
-    "UAE Whistleblower Protection Decree 2021, UAE FDL 10/2025 Art.21 (internal reporting), CBUAE AML Standards §6.4, UAE Labour Law Art.36",
-};
 
 export async function POST(req: Request) {
   const gate = await enforce(req);

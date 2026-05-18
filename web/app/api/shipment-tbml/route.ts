@@ -50,15 +50,6 @@ interface TbmlResult {
   regulatoryExposure: string;
 }
 
-const FALLBACK: TbmlResult = {
-  portfolioTbmlRisk: "medium",
-  portfolioNarrative: "API key not configured — manual review required.",
-  flaggedShipments: [],
-  systemicRisks: [],
-  lbmaGaps: [],
-  immediateHolds: [],
-  regulatoryExposure: "",
-};
 
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);

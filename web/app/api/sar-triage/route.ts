@@ -28,42 +28,6 @@ export interface SarTriageResult {
   decisionRationale: string;
 }
 
-const FALLBACK: SarTriageResult = {
-  decision: "file_str",
-  confidenceLevel: "high",
-  suspicionTest: "met",
-  suspicionBasis: "Pattern of cash deposits just below AED 55,000 CTR threshold over 6 consecutive weeks, consistent with structuring to evade reporting obligations under UAE FDL 10/2025 Art.17.",
-  thresholdAnalysis: "STR filing obligation under FDL 10/2025 Art.26 has NO monetary threshold — suspicion alone is sufficient. The structuring pattern itself constitutes the suspicion trigger.",
-  tippingOffRisk: true,
-  tippingOffWarning: "DO NOT inform the customer that an STR is being filed or that they are under investigation. Tipping-off is a criminal offence under UAE FDL 10/2025 Art.25, carrying imprisonment up to 1 year and/or fine up to AED 100,000.",
-  fatfR20Assessment: "FATF R.20 requires FIs to file STRs when there are reasonable grounds to suspect proceeds of crime or TF. The structuring pattern satisfies the 'reasonable grounds' threshold. No minimum amount applies.",
-  strDeadline: "2 business days from crystallisation of suspicion",
-  strDeadlineBasis: "UAE FDL 10/2025 Art.26(1) — STR must be filed within 2 business days of forming the suspicion. Suspicion is deemed crystallised upon MLRO review and determination.",
-  requiredFields: [
-    { field: "Subject full name", status: "available" },
-    { field: "Emirates ID / passport number", status: "available" },
-    { field: "Account number(s)", status: "available" },
-    { field: "Transaction dates and amounts", status: "available" },
-    { field: "Suspicion narrative", status: "partial", note: "Expand to include all 6 transactions with dates" },
-    { field: "Source of funds declaration", status: "missing", note: "Obtain from CDD file or note absence" },
-  ],
-  missingInformation: [
-    "Complete transaction log with individual dates, amounts, and deposit location",
-    "Customer's stated source of funds from CDD file",
-    "Account balance trend over the structuring period",
-  ],
-  narrativeQuality: "needs_expansion",
-  narrativeSuggestions: [
-    "Include specific transaction dates and amounts for each of the 6 deposits",
-    "Reference the threshold proximity explicitly (e.g. each deposit AED 52,000–54,500)",
-    "Note any account activity change compared to stated transaction profile",
-    "State that no plausible innocent explanation has been identified",
-  ],
-  predetermination: "MLRO should proceed with STR filing. Structuring is a criminal predicate offence under UAE Federal Law 4/2002 as amended, and the pattern meets the 'reasonable grounds' test under FDL 10/2025 Art.26.",
-  supervisoryDisclosure: "Consider whether voluntary disclosure to CBUAE is warranted given the clear regulatory breach pattern.",
-  regulatoryBasis: "UAE FDL 10/2025 Art.26 (STR obligation); Art.25 (tipping-off prohibition); Art.17 (CTR threshold AED 55,000); FATF R.20; Federal Law 4/2002 Art.2 (ML predicate — structuring)",
-  decisionRationale: "Suspicion test is clearly met. Structuring is a statutory predicate offence and the 2-business-day filing clock has started. MLRO should review, sign off, and submit via goAML within the deadline.",
-};
 
 export async function POST(req: Request) {
   const gate = await enforce(req);

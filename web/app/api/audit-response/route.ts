@@ -18,43 +18,6 @@ export interface AuditResponseResult {
   regulatoryBasis: string;
 }
 
-const FALLBACK: AuditResponseResult = {
-  overallRating: "needs-improvement",
-  responses: [
-    {
-      finding: "CDD documentation incomplete for 7 high-risk customers",
-      response:
-        "We accept this finding. A full CDD refresh programme for all 12 high-risk customers has been initiated. 5 files have been completed; the remaining 7 will be finalised by 30 May 2025.",
-      rootCause:
-        "CDD refresh scheduling system failed to trigger reminders following the Q3 2024 system migration.",
-      remediation:
-        "Enhanced monitoring triggers have been implemented. All high-risk customers are now reviewed on a 6-month cycle with 30-day advance notification to the responsible KYC officer.",
-      owner: "N. Patel (KYC Officer)",
-      deadline: "30/05/2025",
-      evidence:
-        "Updated CDD files to be submitted to auditor by deadline date. System change log confirming new reminder triggers.",
-    },
-    {
-      finding:
-        "Transaction monitoring rule tuning not documented with Board sign-off",
-      response:
-        "We acknowledge the governance gap. All TM rule changes from Q4 2024 have been retrospectively documented. A formal TM governance policy has been drafted and will be presented to the Board Risk Committee at its next meeting (15 May 2025).",
-      rootCause:
-        "Prior practice relied on MLRO approval without formal escalation to Board committee.",
-      remediation:
-        "New TM Rule Change Policy requiring dual sign-off (MLRO + Board Risk Committee) effective immediately.",
-      owner: "H. Al-Mansoori (MLRO)",
-      deadline: "15/05/2025",
-      evidence:
-        "Draft TM governance policy v1.0, Board agenda item confirmation, retrospective sign-off minutes.",
-    },
-  ],
-  coveringLetter:
-    "Dear [Auditor Name],\n\nThank you for the draft audit report dated [DATE]. We welcome the findings as an opportunity to strengthen our AML/CFT framework.\n\nPlease find enclosed our management responses to each finding, along with root cause analyses, remediation plans, and committed deadlines. We are confident that the actions outlined will fully address all observations.\n\nWe remain committed to full compliance with UAE FDL 10/2025 and FATF Standards. We welcome the opportunity to discuss these responses at your convenience.\n\nYours faithfully,\n[MLRO Name]\nMLRO, Hawkeye Sterling DPMS",
-  regulatoryBasis:
-    "FATF R.26-28 (AML/CFT supervision), UAE FDL 10/2025 Art.20, CBUAE AML Standards §8 (audit)",
-};
-
 export async function POST(req: Request) {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;

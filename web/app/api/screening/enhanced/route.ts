@@ -28,7 +28,7 @@ export const maxDuration = 60;
 
 const BASE_URL =
   process.env.URL ?? process.env.DEPLOY_PRIME_URL ?? "http://localhost:3000";
-const ADMIN_TOKEN = process.env.ADMIN_TOKEN ?? "";
+const _ADMIN_TOKEN = process.env.ADMIN_TOKEN ?? "";
 
 interface ScreeningHit {
   listId?: string;

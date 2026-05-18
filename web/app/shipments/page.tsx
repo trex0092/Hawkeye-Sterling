@@ -459,7 +459,7 @@ const RISK_LEVEL_TONE: Record<string, string> = {
   "High-Risk":   "bg-red-dim text-red border-red/30",
 };
 
-function EditShipmentForm({ initial, onSave, onCancel }: { initial: Consignment; onSave: (c: Consignment) => void; onCancel: () => void }) {
+function EditShipmentForm({ initial, onSave, onCancel }: { initial: Consignment; onSave: (_c: Consignment) => void; onCancel: () => void }) {
   const [draft, setDraft] = useState<Consignment>(initial);
   const [err, setErr] = useState("");
 
@@ -740,7 +740,7 @@ function EditShipmentForm({ initial, onSave, onCancel }: { initial: Consignment;
   );
 }
 
-function AddShipmentForm({ onAdd, onCancel }: { onAdd: (c: Consignment) => void; onCancel: () => void }) {
+function AddShipmentForm({ onAdd, onCancel }: { onAdd: (_c: Consignment) => void; onCancel: () => void }) {
   const [reference, setReference] = useState("");
   const [origin, setOrigin] = useState("");
   const [originCountry, setOriginCountry] = useState("AE");
@@ -1053,7 +1053,7 @@ export default function ShipmentsPage() {
     setEditingShipment(null);
   };
 
-  const onRestoreAll = () => {
+  const _onRestoreAll = () => {
     setDeletedIds([]);
     saveDeletedIds([]);
   };

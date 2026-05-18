@@ -18,7 +18,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 async function handleOperatorRefresh(_req: Request): Promise<NextResponse> {
-  let runIngestionAll: (label: string) => Promise<unknown>;
+  let runIngestionAll: (_label: string) => Promise<unknown>;
   try {
     const mod = (await import(
       "../../../../../dist/src/ingestion/run-all.js" as string

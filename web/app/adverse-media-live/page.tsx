@@ -407,7 +407,7 @@ export default function AdverseMediaLivePage() {
             <strong>FATF R.10</strong> (ongoing CDD monitoring) ·{" "}
             <strong>FDL 10/2025 Art.10</strong> (continuous monitoring
             obligation) · <strong>Art.19</strong> (10-year lookback). Search
-            for adverse media on any subject using GDELT Project's real-time
+            for adverse media on any subject using GDELT Project&apos;s real-time
             global news index. Results are scored by hit volume, negative tone,
             and recency. Auto-refreshes every 60 seconds when a search is
             active.

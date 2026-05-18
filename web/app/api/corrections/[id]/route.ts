@@ -25,11 +25,6 @@ export async function GET(
 
 }
 
-interface PatchBody {
-  status?: CorrectionStatus;
-  resolutionNote?: string;
-  appeal?: { by: string; reason: string };
-}
 
 const VALID_STATUSES: readonly CorrectionStatus[] = [
   "received",

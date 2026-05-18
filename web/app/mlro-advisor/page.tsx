@@ -1207,7 +1207,7 @@ const tabCls = (active: boolean) =>
       : "bg-bg-1 text-ink-2 border-hair-2 hover:border-brand hover:text-ink-0"
   }`;
 
-const superTabCls = (active: boolean) =>
+const _superTabCls = (active: boolean) =>
   `px-2.5 py-1 rounded text-11 font-medium border transition-colors ${
     active
       ? "bg-brand text-white border-brand"
@@ -1545,7 +1545,7 @@ export default function MlroAdvisorPage() {
       clearTimeout(killTimer);
       if (mountedRef.current) setStreamingEntryId(null);
     }
-  }, [CLIENT_TIMEOUTS.quick, mountedRef]);
+  }, [mountedRef]);
 
   // multi_perspective is offloaded to the Netlify Background Function so it
   // is not killed by Netlify's ~26 s edge inactivity timeout. Speed and
@@ -1606,7 +1606,7 @@ export default function MlroAdvisorPage() {
       // status === "running" → keep polling
     }
     throw new Error("Multi (Deep) timed out — check Netlify function logs.");
-  }, [CLIENT_TIMEOUTS.multi_perspective, recordAdvisorEntry, mountedRef]);
+  }, [recordAdvisorEntry, mountedRef]);
 
   const runSynchronous = useCallback(async (q: string, m: ReasoningMode): Promise<void> => {
     const ctl = new AbortController();
@@ -1647,7 +1647,7 @@ export default function MlroAdvisorPage() {
     } finally {
       clearTimeout(timer);
     }
-  }, [CLIENT_TIMEOUTS, recordAdvisorEntry, mountedRef]);
+  }, [recordAdvisorEntry, mountedRef]);
 
   const handleAsk = useCallback(async () => {
     const q = question.trim();
@@ -4057,7 +4057,7 @@ export default function MlroAdvisorPage() {
                               <p className="text-12 font-medium text-ink-0">{c.document}</p>
                               {c.section && <p className="text-11 text-ink-3">§ {c.section}</p>}
                               {c.jurisdiction && <span className="text-11 text-brand">{c.jurisdiction}</span>}
-                              {c.excerpt && <p className="text-11 text-ink-2 mt-0.5 italic">"{c.excerpt}"</p>}
+                              {c.excerpt && <p className="text-11 text-ink-2 mt-0.5 italic">&quot;{c.excerpt}&quot;</p>}
                             </div>
                           ))}
                         </div>
@@ -5410,7 +5410,7 @@ export default function MlroAdvisorPage() {
               <div className="space-y-4">
                 <div>
                   <div className="text-12 font-semibold text-ink-0 mb-1">Wire Transfer R.16 Checker</div>
-                  <p className="text-11 text-ink-3 mb-3">Input originator and beneficiary details from a wire transfer. AI determines FATF R.16 compliance — whether mandatory information is present, what's missing, and whether to STP, hold, return, or freeze and report.</p>
+                  <p className="text-11 text-ink-3 mb-3">Input originator and beneficiary details from a wire transfer. AI determines FATF R.16 compliance — whether mandatory information is present, what&apos;s missing, and whether to STP, hold, return, or freeze and report.</p>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div className="col-span-3 text-10 font-semibold uppercase tracking-wide-3 text-ink-2 pt-1">Originator</div>
                     <div>
@@ -5814,7 +5814,7 @@ export default function MlroAdvisorPage() {
                   const riskCls = tf.tfRisk === "critical" ? "bg-red text-white" : tf.tfRisk === "high" ? "bg-red-dim text-red" : tf.tfRisk === "medium" ? "bg-amber-dim text-amber" : tf.tfRisk === "low" ? "bg-brand-dim text-brand" : "bg-green-dim text-green";
                   const actionCls = (tf.recommendedAction === "freeze_and_report_immediately" || tf.recommendedAction === "file_str") ? "bg-red text-white" : (tf.recommendedAction === "escalate_mlro") ? "bg-red-dim text-red" : (tf.recommendedAction === "enhanced_dd") ? "bg-amber-dim text-amber" : "bg-green-dim text-green";
                   const nexusCls = (v: string) => v === "confirmed" ? "bg-red text-white" : v === "possible" ? "bg-red-dim text-red" : v === "unlikely" ? "bg-amber-dim text-amber" : "bg-green-dim text-green";
-                  const riskLvlCls = (v: string) => v === "high" ? "text-red font-semibold" : v === "medium" ? "text-amber font-semibold" : v === "low" ? "text-ink-2" : v === "clear" || v === "none" ? "text-green" : "text-ink-3";
+                  const _riskLvlCls = (v: string) => v === "high" ? "text-red font-semibold" : v === "medium" ? "text-amber font-semibold" : v === "low" ? "text-ink-2" : v === "clear" || v === "none" ? "text-green" : "text-ink-3";
                   const typoCls: Record<string, string> = { structured_transfers: "bg-red-dim text-red", npo_abuse: "bg-violet-dim text-violet", hawala_ivts: "bg-amber-dim text-amber", crypto_tf: "bg-brand-dim text-brand", crowdfunding: "bg-violet-dim text-violet", foreign_fighter: "bg-red-dim text-red", lone_actor: "bg-red text-white", cash_courier: "bg-amber-dim text-amber", trade_based: "bg-amber-dim text-amber", other: "bg-bg-2 text-ink-2" };
                   return (
                     <div className="space-y-4 border border-red/30 rounded-lg p-4 bg-bg-1">
@@ -6550,7 +6550,7 @@ export default function MlroAdvisorPage() {
             {superToolsTab === "sar-triage" && (
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
                 <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">SAR/STR Triage Decision Engine · UAE FDL 10/2025 Art.26 · FATF R.20</div>
-                <p className="text-11 text-ink-3">File or no-file? Applies the UAE 'reasonable grounds to suspect' standard (no monetary threshold) and the 2-business-day filing deadline. Checks narrative completeness, missing fields, and tipping-off risk before generating an MLRO decision memorandum.</p>
+                <p className="text-11 text-ink-3">File or no-file? Applies the UAE &apos;reasonable grounds to suspect&apos; standard (no monetary threshold) and the 2-business-day filing deadline. Checks narrative completeness, missing fields, and tipping-off risk before generating an MLRO decision memorandum.</p>
                 <div className="space-y-3">
                   <div><label className="block text-10 text-ink-3 mb-1">Suspicious Activity Description *</label><textarea value={sarInput.suspiciousActivity} onChange={(e) => setSarInput((p) => ({...p, suspiciousActivity: e.target.value}))} rows={4} placeholder="Describe the suspicious activity in detail — what happened, when, amounts, patterns, customer behaviour..." className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 resize-none focus:outline-none focus:border-brand" /></div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -12648,7 +12648,7 @@ function ClassifierResultPanels({
   onPick,
 }: {
   analysis: QuestionAnalysis;
-  onPick: (q: string) => void;
+  onPick: (_q: string) => void;
 }) {
   const moduleChips: Array<[string, string]> = [
     ...analysis.doctrineHints.map((d) => ["doctrine", d] as [string, string]),

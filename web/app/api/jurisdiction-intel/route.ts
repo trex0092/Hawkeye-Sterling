@@ -38,22 +38,6 @@ interface JurisdictionIntelResult {
   riskMitigation: string[];
 }
 
-const FALLBACK: JurisdictionIntelResult = {
-  countryName: "country",
-  overallRisk: "medium",
-  fatfStatus: "API key not configured.",
-  fatfDetail: "",
-  sanctionsExposure: { uae: "", un: "", ofac: "", eu: "", uk: "" },
-  cahraStatus: "",
-  keyRisks: [],
-  dpmsSpecificRisks: [],
-  typologiesPrevalent: [],
-  cddImplications: "",
-  transactionRisks: "",
-  recentDevelopments: "",
-  uaeRegulatoryRequirement: "",
-  riskMitigation: [],
-};
 
 const SYSTEM_PROMPT = `You are a UAE AML/CFT geopolitical intelligence analyst specializing in jurisdiction risk assessment for DPMS/VASP entities. Provide a comprehensive intelligence brief covering FATF status, sanctions regimes, typology risks, and UAE-specific regulatory implications for this jurisdiction.
 

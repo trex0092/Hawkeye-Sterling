@@ -50,8 +50,8 @@ import type {
 } from "@/lib/api/quickScreen.types";
 
 type QuickScreenFn = (
-  subject: QuickScreenSubject,
-  candidates: QuickScreenCandidate[],
+  _subject: QuickScreenSubject,
+  _candidates: QuickScreenCandidate[],
 ) => QuickScreenResult;
 const quickScreen = _quickScreen as QuickScreenFn;
 
@@ -99,11 +99,6 @@ interface AdverseMediaHit {
   offset: number;
 }
 
-// Local mirror of SanctionRegime from src/brain/sanction-regimes.ts
-interface SanctionRegime {
-  id: string;
-  [key: string]: unknown;
-}
 
 // Audit-trail constants — surfaced in the response so the compliance
 // report can carry a defensible record of which weights produced the

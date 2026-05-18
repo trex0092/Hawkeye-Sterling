@@ -35,46 +35,6 @@ export interface AdverseClassifyResult {
   fatfR3Predicates: string[];
 }
 
-const FALLBACK: AdverseClassifyResult = {
-  adverseRisk: "high",
-  sarThresholdMet: true,
-  sarBasis: "The adverse media describes conduct that, if substantiated, would constitute predicate offences under UAE law. The information provides reasonable grounds to suspect that funds may represent proceeds of crime, meeting the suspicion threshold under UAE FDL 10/2025 Art.21.",
-  predicateOffences: [
-    {
-      offence: "Corruption / Bribery of public officials",
-      fatfPredicate: "Corruption and bribery",
-      severity: "high",
-      uaeLegalBasis: "UAE Federal Anti-Corruption Law No. 6/2023; UAE Penal Code Art.234-239; UAE FDL 10/2025 Art.3",
-      detail: "Reported conduct involves payments to public officials in exchange for regulatory approvals, meeting the elements of active bribery under UAE Federal Anti-Corruption Law No. 6/2023 and constituting a designated FATF R.3 predicate offence.",
-    },
-    {
-      offence: "Fraud / Misappropriation",
-      fatfPredicate: "Fraud",
-      severity: "high",
-      uaeLegalBasis: "UAE Penal Code Art.399-402; UAE Federal Decree-Law No. 38/2016 (Commercial Fraud); UAE FDL 10/2025 Art.3",
-      detail: "The media report describes misrepresentation of financial information to obtain funds from investors, constituting fraud under UAE Penal Code Art.399 and a FATF R.3 predicate offence.",
-    },
-  ],
-  keyEntities: [
-    {
-      name: "Subject (name from article)",
-      role: "Primary subject — alleged perpetrator of reported conduct",
-      relevance: "primary",
-    },
-  ],
-  mediaCredibility: "medium",
-  temporalRelevance: "current",
-  corroborationRequired: [
-    "Cross-reference subject name against UAE EOCN / OFAC / UN consolidated sanctions lists",
-    "Obtain court records or official regulatory filings referencing the reported conduct",
-    "Review subject's transaction history for patterns consistent with proceeds of reported offences",
-  ],
-  recommendedAction: "escalate_mlro",
-  actionRationale: "The adverse media describes conduct meeting multiple FATF R.3 predicate offence categories with current temporal relevance. The SAR suspicion threshold under UAE FDL 10/2025 Art.21 is met. MLRO must assess whether to file an STR within 2 business days of determination under Art.26. Tipping-off prohibition applies.",
-  regulatoryBasis: "UAE FDL 10/2025 Art.21; FATF R.3; FATF R.20",
-  fatfR3Predicates: ["Corruption", "Fraud"],
-};
-
 export async function POST(req: Request) {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;

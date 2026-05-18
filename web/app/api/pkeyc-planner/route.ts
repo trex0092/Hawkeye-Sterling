@@ -21,55 +21,6 @@ export interface PkycPlannerResult {
   regulatoryBasis: string;
 }
 
-const FALLBACK: PkycPlannerResult = {
-  reviewFrequency: "annual",
-  triggerEvents: [
-    "Adverse media hit on customer name or associated entities",
-    "Significant change in transaction pattern (>3× normal volume)",
-    "Customer-initiated change in beneficial ownership or UBO",
-    "Jurisdiction downgrade by FATF, EU, or CBUAE",
-    "Expiry of identity documents (passport, Emirates ID)",
-    "Sanctions list delta — customer name appears on updated screening list",
-    "Customer reports change in business activity or revenue source",
-  ],
-  nextReviewDate: "2026-01-15",
-  overdueItems: [
-    "Customer C-0041 (high-risk): CDD expired 45 days ago — last review Feb 2025",
-    "Customer C-0089 (PEP): Annual PEP re-verification overdue — PEP assumed new role in Nov 2024",
-    "Customer C-0103 (DPMS): Gold dealer licence renewal not confirmed — expired Jan 2025",
-  ],
-  automationOpportunities: [
-    "Automated passport expiry tracking — 90/60/30 day alerts via CRM",
-    "Adverse media webhook — auto-trigger enhanced review on confirmed hit",
-    "Sanctions list delta feed — auto-flag on match within 15 minutes of list update",
-    "Transaction anomaly trigger — auto-elevate to compliance queue on 3× volume spike",
-  ],
-  kycRefreshPlan: [
-    {
-      customer: "DPMS Customer C-0041",
-      priority: "critical",
-      dueDate: "2025-05-07",
-      action:
-        "Full CDD refresh — collect updated passport, proof of address, SOW declaration, and updated trade licence",
-    },
-    {
-      customer: "PEP Customer C-0089",
-      priority: "high",
-      dueDate: "2025-05-14",
-      action:
-        "Annual PEP re-verification — confirm current political role, update EDD file, obtain updated source of wealth declaration",
-    },
-    {
-      customer: "Gold Dealer C-0103",
-      priority: "high",
-      dueDate: "2025-05-20",
-      action:
-        "Confirm trade licence renewal — obtain certified copy. Suspend gold purchases pending confirmation.",
-    },
-  ],
-  regulatoryBasis:
-    "UAE FDL 10/2025 Art.10 (CDD updates), FATF R.10 (ongoing due diligence), CBUAE AML Standards §3.7 (CDD refresh triggers)",
-};
 
 export async function POST(req: Request) {
   const gate = await enforce(req);

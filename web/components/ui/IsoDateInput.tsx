@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 interface Props {
   value: string;
-  onChange: (iso: string) => void;
+  onChange: (_iso: string) => void;
   className?: string;
   placeholder?: string;
   required?: boolean;

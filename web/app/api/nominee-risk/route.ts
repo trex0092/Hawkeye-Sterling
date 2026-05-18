@@ -16,29 +16,6 @@ export interface NomineeRiskResult {
   regulatoryBasis: string;
 }
 
-const FALLBACK: NomineeRiskResult = {
-  riskRating: "high",
-  nomineeIndicators: [
-    "Director appointed 3 days before gold purchase — suspicious timing",
-    "Director is a professional nominee (same individual listed as director of 47 other UAE companies)",
-    "Director has no relevant industry experience and is not present at meetings",
-    "Company address is registered agent office — no physical presence",
-    "All instructions for account come from a third party not named on corporate documents",
-  ],
-  uboObscured: true,
-  estimatedLayersToUbo: 3,
-  verificationRequired: [
-    "Independent verification of beneficial owner identity via regulated third party",
-    "Source of instructions — obtain written authority from purported UBO confirming director relationship",
-    "Cross-check director against professional nominee service provider databases",
-    "Company search in all relevant jurisdictions for connected entities under same director",
-    "Require personal meeting with UBO (in-person or video-verified) before proceeding",
-  ],
-  legalAction:
-    "Place account under enhanced monitoring. Request UBO declaration signed by natural person within 5 business days. If UBO cannot be confirmed, initiate CDD failure exit process per FDL Art.7(4).",
-  regulatoryBasis:
-    "UAE FDL 10/2025 Art.7 (UBO verification), Cabinet Resolution 132/2023 (UBO register), FATF R.24 (legal persons), CBUAE AML Standards §3.5",
-};
 
 export async function POST(req: Request) {
   const gate = await enforce(req);

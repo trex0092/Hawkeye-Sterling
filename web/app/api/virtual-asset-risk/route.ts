@@ -5,19 +5,6 @@ import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
-const FALLBACK = {
-  ok: true,
-  riskTier: "high",
-  fatfCompliance: "VASP appears partially compliant with FATF R.15/16 requirements. Travel rule implementation is incomplete for cross-border transfers above USD 1,000. VARA licensing status could not be confirmed from the data provided.",
-  travelRuleStatus: "Non-compliant — travel rule data (originator/beneficiary) not transmitted for transfers above threshold. Risk of correspondent de-risking if not remediated within 90 days.",
-  redFlags: [
-    "No confirmed VARA or equivalent licence in stated jurisdiction",
-    "DeFi exposure without adequate counterparty identification",
-    "High monthly volumes inconsistent with stated customer base",
-    "Jurisdiction flagged on FATF grey list or equivalent",
-  ],
-  recommendation: "Apply enhanced CDD before onboarding. Obtain VARA licence confirmation, travel rule policy documentation, and AML programme evidence. Consider declining if travel rule non-compliance cannot be resolved.",
-};
 
 export async function POST(req: Request) {
   const gate = await enforce(req);

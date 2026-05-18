@@ -21,45 +21,6 @@ export interface SanctionsExposureCalcResult {
   regulatoryBasis: string;
 }
 
-const FALLBACK: SanctionsExposureCalcResult = {
-  overallExposure: "high",
-  listExposures: [
-    {
-      list: "OFAC SDN",
-      matchType: "ownership",
-      entity:
-        "Al-Baraka Trading LLC (50% owned by SDN-listed Tariq Al-Hassan)",
-      confidence: 87,
-    },
-    {
-      list: "EU CFSP Annex II",
-      matchType: "control",
-      entity: "Same entity — EU designation mirrors OFAC",
-      confidence: 87,
-    },
-    {
-      list: "UNSCR 2253",
-      matchType: "fuzzy",
-      entity:
-        "Tariq Al-Hassan — 79% name match to listed individual Ahmad Al-Hassan. Further verification required.",
-      confidence: 72,
-    },
-  ],
-  penaltyEstimate:
-    "OFAC civil penalty (strict liability): up to USD 356,579 per transaction. Criminal exposure if wilful: up to USD 1M + 20 years. UAE penalty: AED 500K–10M per FDL Art.34. Aggregate exposure estimate: USD 2–5M assuming 6 transactions.",
-  immediateActions: [
-    "Freeze all accounts associated with entity immediately",
-    "Do NOT process any pending transactions — hold in suspense",
-    "Report to OFAC FBAR within 10 days (if US nexus)",
-    "Report to CBUAE within 24 hours mandatory",
-    "Engage OFAC-specialist legal counsel within 2 hours",
-  ],
-  voluntaryDisclosureDeadline:
-    "OFAC: voluntary self-disclosure within 60 days of discovery typically reduces penalty by 50%. UAE: immediate mandatory disclosure — no discretion.",
-  debarmentRisk: true,
-  regulatoryBasis:
-    "OFAC regulations 31 CFR Part 501, EU Regulation 269/2014, UAE Exec. Order 2023 (sanctions), UAE FDL 10/2025 Art.14",
-};
 
 export async function POST(req: Request) {
   const gate = await enforce(req);
