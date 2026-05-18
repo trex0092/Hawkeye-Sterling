@@ -471,7 +471,7 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
     if (cahra) escalateTo("medium");
     return band;
   })();
-  const effectiveScore = brainScore ?? subject.riskScore;
+  const effectiveScore = brainScore || subject.riskScore;
   const barWidth = `${Math.min(effectiveScore, 100)}%`;
 
   const brainLists =

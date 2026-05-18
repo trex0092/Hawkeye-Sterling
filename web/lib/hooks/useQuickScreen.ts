@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { quickScreen, QuickScreenError } from "@/lib/api/quickScreen";
-import { CANDIDATES } from "@/lib/data/candidates";
 import type {
   QuickScreenResult,
   QuickScreenSubject,
@@ -33,7 +32,7 @@ export function useQuickScreen(subject: QuickScreenSubject | null): QuickScreenS
     setState({ status: "loading" });
 
     quickScreen(
-      { subject, candidates: CANDIDATES },
+      { subject },
       { signal: controller.signal },
     )
       .then((result) => {
