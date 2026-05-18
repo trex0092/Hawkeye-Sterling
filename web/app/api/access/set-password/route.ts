@@ -6,6 +6,7 @@ import { NextResponse } from "next/server";
 import { loadUsers, saveUsers } from "../_store";
 import { generateSalt, hashPassword, verifySession, SESSION_COOKIE } from "@/lib/server/auth";
 import { cookies } from "next/headers";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export async function POST(req: Request) {
   // Require an active session (only a logged-in CO/MLRO can reset passwords)
@@ -47,6 +48,16 @@ export async function POST(req: Request) {
     ...(username ? { username } : {}),
   };
   await saveUsers(updatedUsers);
+
+  // FDL 10/2025 Art.24: privileged password reset must be in the tamper-evident
+  // audit chain so regulators can review all access-control changes.
+  void writeAuditChainEntry({
+    event: "access.password_reset_by_admin",
+    actor: session.username,
+    target: userId,
+    usernameChanged: !!username,
+    role: session.role,
+  });
 
   return NextResponse.json({ ok: true, username: updatedUsers[idx]!.username });
 }

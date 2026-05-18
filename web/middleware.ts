@@ -153,17 +153,32 @@ function hostnameOf(value: string): string | null {
 }
 
 // CORS headers attached to every OPTIONS preflight and real API response.
-// Origin is reflected only for same-site calls — `null` origins (e.g. file://)
-// are rejected. The CORS list is intentionally restrictive: regulators call the
-// API server-to-server (no browser CORS needed); the primary browser caller is
-// the portal itself (same-origin). Third-party dashboard integrations should
-// use server-side proxy calls.
-const CORS_ALLOWED_ORIGIN = "*"; // tighten to specific domain if embedding
+// Origin policy:
+//   - If NEXT_PUBLIC_APP_URL is set (production deployment), restrict to that domain.
+//   - Otherwise fall back to "*" (local dev / preview — all routes require auth anyway).
+// Regulators call the API server-to-server (no browser CORS needed); the primary
+// browser caller is the portal itself (same-origin). Third-party integrations should
+// use server-side proxy calls and API keys, not browser-to-API CORS.
+function resolveAllowedOrigin(): string {
+  const appUrl = process.env["NEXT_PUBLIC_APP_URL"];
+  if (appUrl) {
+    try {
+      const { origin } = new URL(appUrl.startsWith("http") ? appUrl : `https://${appUrl}`);
+      return origin;
+    } catch {
+      // Malformed NEXT_PUBLIC_APP_URL — fall through to wildcard.
+    }
+  }
+  return "*";
+}
+const CORS_ALLOWED_ORIGIN = resolveAllowedOrigin();
 const CORS_HEADERS: Record<string, string> = {
   "Access-Control-Allow-Origin": CORS_ALLOWED_ORIGIN,
   "Access-Control-Allow-Methods": "GET,POST,PUT,PATCH,DELETE,OPTIONS",
   "Access-Control-Allow-Headers": "Authorization,Content-Type,X-Api-Key,X-Request-ID,X-Trace-ID",
   "Access-Control-Max-Age": "86400",
+  // Expose Vary so CDNs/proxies cache per-Origin when the allowed origin is dynamic.
+  ...(CORS_ALLOWED_ORIGIN !== "*" ? { Vary: "Origin" } : {}),
 };
 
 function corsResponse(): NextResponse {

@@ -32,9 +32,10 @@ export async function postWebhook(event: WebhookEvent): Promise<WebhookResult> {
   const url = process.env["HAWKEYE_WEBHOOK_URL"];
   if (!url) return { delivered: false, error: "HAWKEYE_WEBHOOK_URL not set" };
 
-  const secret = process.env["HAWKEYE_WEBHOOK_SECRET"] ?? "";
+  const secret = process.env["HAWKEYE_WEBHOOK_SECRET"];
   if (!secret) {
-    console.warn("[webhook] HAWKEYE_WEBHOOK_SECRET not set — outbound events will be unsigned");
+    console.warn("[webhook] HAWKEYE_WEBHOOK_SECRET not set — outbound events will be delivered unsigned. " +
+      "Set HAWKEYE_WEBHOOK_SECRET so receivers can verify payload integrity.");
   }
   const body = JSON.stringify(event);
   const timestamp = Date.now().toString();
@@ -43,7 +44,15 @@ export async function postWebhook(event: WebhookEvent): Promise<WebhookResult> {
         .createHmac("sha256", secret)
         .update(`${timestamp}.${body}`)
         .digest("hex")
-    : "";
+    : null;
+
+  // Only include the signature header when we actually computed one.
+  // Sending an empty string header signals to receivers that signing is
+  // not active, enabling downgrade attacks where an attacker strips the
+  // real signature and sends an empty header instead.
+  const signatureHeaders: Record<string, string> = signature
+    ? { "x-hawkeye-signature": `sha256=${signature}` }
+    : {};
 
   try {
     const res = await fetch(url, {
@@ -51,7 +60,7 @@ export async function postWebhook(event: WebhookEvent): Promise<WebhookResult> {
       headers: {
         "content-type": "application/json",
         "x-hawkeye-timestamp": timestamp,
-        "x-hawkeye-signature": signature ? `sha256=${signature}` : "",
+        ...signatureHeaders,
         "user-agent": "HawkeyeSterling/0.2 (+https://hawkeye-sterling.netlify.app)",
       },
       body,

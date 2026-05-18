@@ -25,13 +25,16 @@ interface ChainEntry {
   seq: number;
   prevHash?: string;
   entryHash: string;
+  /** hashAlg absent = legacy FNV-1a; "sha256" = SHA-256 (current, post 2026-05-18). */
+  hashAlg?: 'sha256' | 'fnv1a';
   payload: unknown;
   at: string;
 }
 
-// Mirrors src/brain/audit-chain.ts FNV-1a — kept inline so the scheduler
-// has zero dependency on the brain bundle being present in the function
-// runtime. If the brain implementation changes, update this constant.
+// Legacy FNV-1a implementation kept for backward-compatibility with entries
+// written before 2026-05-18. New entries use SHA-256 (hashAlg: "sha256").
+// If the write-side implementation changes again, update both this file and
+// web/lib/server/audit-chain.ts's computeHash function atomically.
 function fnv1a(input: string): string {
   let hash = 0x811c9dc5;
   for (let i = 0; i < input.length; i++) {
@@ -41,8 +44,20 @@ function fnv1a(input: string): string {
   return (hash >>> 0).toString(16).padStart(8, '0');
 }
 
-function computeEntryHash(prevHash: string | undefined, payload: unknown, at: string, seq: number): string {
+// crypto.createHash is not available in Netlify scheduled functions (Deno runtime).
+// Use the Web Crypto API (SubtleCrypto) which is available everywhere.
+async function sha256Hex(input: string): Promise<string> {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(input));
+  return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function computeEntryHash(prevHash: string | undefined, payload: unknown, at: string, seq: number, hashAlg?: string): Promise<string> {
   const material = `${prevHash ?? ''}::${seq}::${at}::${JSON.stringify(payload)}`;
+  // Entries with hashAlg: "sha256" (written post 2026-05-18) use SHA-256.
+  // Entries with no hashAlg or hashAlg: "fnv1a" use the legacy FNV-1a.
+  if (hashAlg === 'sha256') {
+    return sha256Hex(material);
+  }
   return fnv1a(material);
 }
 
@@ -111,7 +126,9 @@ export default async function handler(_req: Request): Promise<Response> {
       tamperedAt.push(-1);
       continue;
     }
-    const expected = computeEntryHash(e.prevHash, e.payload, e.at, e.seq);
+    // Pass hashAlg so legacy FNV-1a entries and new SHA-256 entries are
+    // each verified with the algorithm that was used to write them.
+    const expected = await computeEntryHash(e.prevHash, e.payload, e.at, e.seq, e.hashAlg);
     if (expected !== e.entryHash) tamperedAt.push(e.seq);
     if (prev && e.prevHash !== prev.entryHash) brokenLinkAt.push(e.seq);
     prev = e;

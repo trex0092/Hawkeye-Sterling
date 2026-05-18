@@ -71,8 +71,13 @@ export async function recordApproval(input: {
   rationale: string;
   parentJti?: string;
 }): Promise<{ status: FourEyesStatus; entry: ApprovalEntry; conflict?: string }> {
-  if (!input.caseId.trim() || !input.actor.trim() || !input.rationale.trim()) {
-    throw new Error("four-eyes: caseId, actor, rationale all required");
+  // Minimum rationale of 20 chars prevents trivially empty sign-offs like
+  // "ok", "approved", "x". Regulators require substantive reasoning.
+  if (!input.caseId.trim() || !input.actor.trim() || input.rationale.trim().length < 20) {
+    throw new Error(
+      "four-eyes: caseId and actor are required; rationale must be at least 20 characters " +
+      "(provide substantive reasoning per UAE FDL 10/2025 Art.16)"
+    );
   }
   // Inspect existing approvals — refuse same-actor double-approval.
   const existing = await getCaseApprovals(input.caseId);

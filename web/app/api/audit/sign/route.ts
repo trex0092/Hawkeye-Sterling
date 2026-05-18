@@ -108,13 +108,22 @@ function sha256Hex(input: string): string {
 
 async function handleSign(req: Request): Promise<NextResponse> {
   const secret = process.env["AUDIT_CHAIN_SECRET"];
-  if (!secret) {
+  if (!secret || secret.length < 32) {
+    // Fail-closed: returning ok:true with entry:null silently confused callers
+    // into thinking audit writes succeeded. For FDL 10/2025 Art.24 compliance
+    // the chain MUST be written or the endpoint MUST surface a clear error.
+    console.error(
+      "[hawkeye] audit/sign: AUDIT_CHAIN_SECRET missing or too short — refusing to sign. " +
+      "Generate with: openssl rand -hex 64",
+    );
     return NextResponse.json(
       {
-        ok: true,
-        entry: null,
-        warning: "AI analysis unavailable — manual review required. Set AUDIT_CHAIN_SECRET to enable the signed audit chain.",
+        ok: false,
+        error: "AUDIT_CHAIN_SECRET is not configured — audit signing is disabled. " +
+          "Set AUDIT_CHAIN_SECRET in Netlify environment variables (min 32 chars).",
+        code: "AUDIT_CHAIN_SECRET_MISSING",
       },
+      { status: 503 },
     );
   }
 

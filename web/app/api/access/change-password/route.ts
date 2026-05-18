@@ -18,6 +18,7 @@ import {
   SESSION_COOKIE,
 } from "@/lib/server/auth";
 import { cookies } from "next/headers";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export async function POST(req: Request) {
   const jar = await cookies();
@@ -77,6 +78,14 @@ export async function POST(req: Request) {
   const updatedUsers = [...users];
   updatedUsers[idx] = { ...user, passwordHash: hash, passwordSalt: salt };
   await saveUsers(updatedUsers);
+
+  // FDL 10/2025 Art.24: every access-control change must be in the audit chain.
+  void writeAuditChainEntry({
+    event: "access.password_changed",
+    actor: session.username,
+    target: session.userId,
+    body: { role: session.role },
+  });
 
   return NextResponse.json({ ok: true });
 }

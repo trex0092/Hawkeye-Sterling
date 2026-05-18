@@ -77,17 +77,27 @@ async function handler(req: Request): Promise<NextResponse> {
 
   // 1. Validate required fields using validate.ts helpers.
   const itemId = validateString(raw["itemId"], { required: true });
-  const actor = validateString(raw["actor"], { required: true });
+  // Normalize actor to lowercase-trimmed so "Alice Smith" and "alice smith"
+  // are treated as the same identity (prevents case-sensitivity bypass of
+  // the self-approval and duplicate-approver guards).
+  const actorRaw = validateString(raw["actor"], { required: true });
+  const actor = actorRaw ? actorRaw.toLowerCase().trim() : actorRaw;
   const decision = validateEnum(raw["decision"], ["approve", "reject"] as const);
   const rationale = validateString(raw["rationale"], { required: true });
 
-  if (!itemId || !actor || !decision || !rationale) {
+  // Minimum rationale: 20 characters — matches four-eyes-gate.ts enforcement.
+  // Prevents trivially empty sign-offs per UAE FDL 10/2025 Art.16.
+  const rationaleLength = rationale ? rationale.trim().length : 0;
+
+  if (!itemId || !actor || !decision || !rationale || rationaleLength < 20) {
     logRequest("/api/four-eyes/approve", "unknown", 400, Date.now() - t0, { error: "missing_fields" });
     return NextResponse.json(
       {
         ok: false,
         error: "missing_fields",
-        hint: "itemId, actor, decision ('approve'|'reject'), and rationale are all required and must be non-empty",
+        hint: rationaleLength > 0 && rationaleLength < 20
+          ? "rationale must be at least 20 characters (provide substantive reasoning)"
+          : "itemId, actor, decision ('approve'|'reject'), and rationale are all required and must be non-empty",
       },
       { status: 400 },
     );
@@ -112,9 +122,9 @@ async function handler(req: Request): Promise<NextResponse> {
     );
   }
 
-  // 5. Duplicate approver guard.
+  // 5. Duplicate approver guard. Actor is already normalized to lowercase-trim above.
   const existingApprovals: ApprovalRecord[] = item.approvals ?? [];
-  if (existingApprovals.some((a) => a.actor === actor)) {
+  if (existingApprovals.some((a) => a.actor.toLowerCase().trim() === actor)) {
     return NextResponse.json(
       {
         ok: false,
@@ -125,8 +135,9 @@ async function handler(req: Request): Promise<NextResponse> {
     );
   }
 
-  // 6. Self-approval guard — UAE FDL 10/2025 Art.16.
-  if (actor === item.initiatedBy) {
+  // 6. Self-approval guard — UAE FDL 10/2025 Art.16. Case-insensitive compare
+  // so "Alice Smith" cannot bypass the check by approving as "alice smith".
+  if (actor === (item.initiatedBy ?? "").toLowerCase().trim()) {
     return NextResponse.json(
       {
         ok: false,

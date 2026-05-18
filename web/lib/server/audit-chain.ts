@@ -188,13 +188,17 @@ export function buildEntry(
 // ───────────────────────────────────────────────────────────────────────────
 // Server-side tamper-evident audit chain writer (separate chain).
 //
-// Appends a signed entry to hawkeye-audit-chain/chain.json using an FNV-1a
-// hash chain that audit-chain-probe.mts verifies hourly and that
+// Appends a signed entry to hawkeye-audit-chain/chain.json using a
+// SHA-256 hash chain that audit-chain-probe.mts verifies hourly and that
 // GET /api/audit-trail reads back. This chain is DISTINCT from the
 // /api/audit/sign + /api/audit/verify chain above:
 //   - /api/audit/sign     → audit/entry/<key>      (sha256+HMAC, RULE 5)
-//   - writeAuditChainEntry → hawkeye-audit-chain/chain.json (FNV-1a)
+//   - writeAuditChainEntry → hawkeye-audit-chain/chain.json (sha256)
 // The two co-exist for different observability purposes; keep both.
+//
+// MIGRATION NOTE: entries written before 2026-05-18 used FNV-1a (32-bit).
+// New entries use SHA-256 and carry hashAlg: "sha256". The probe handles
+// both; legacy entries are verified with FNV-1a, new entries with SHA-256.
 //
 // Non-throwing: errors are logged and return false so callers never block
 // a compliance action on an audit-write failure.
@@ -210,21 +214,18 @@ interface ChainEntry {
   seq: number;
   prevHash?: string;
   entryHash: string;
+  /** hashAlg absent = legacy FNV-1a; "sha256" = SHA-256 (current). */
+  hashAlg?: "sha256" | "fnv1a";
   payload: unknown;
   at: string;
 }
 
-function fnv1a(input: string): string {
-  let hash = 0x811c9dc5;
-  for (let i = 0; i < input.length; i++) {
-    hash ^= input.charCodeAt(i);
-    hash = Math.imul(hash, 0x01000193);
-  }
-  return (hash >>> 0).toString(16).padStart(8, "0");
-}
-
+// SHA-256 for the write-side chain. FNV-1a (32-bit) had birthday-collision
+// risk at ~65k entries; SHA-256 provides 256-bit resistance suitable for
+// multi-year compliance audit chains.  Legacy FNV-1a function preserved
+// for reference by the probe (audit-chain-probe.mts) which handles migration.
 function computeHash(prevHash: string | undefined, payload: unknown, at: string, seq: number): string {
-  return fnv1a(`${prevHash ?? ""}::${seq}::${at}::${JSON.stringify(payload)}`);
+  return sha256Hex(`${prevHash ?? ""}::${seq}::${at}::${JSON.stringify(payload)}`);
 }
 
 async function loadAuditStore() {
@@ -246,11 +247,22 @@ async function loadAuditStore() {
 }
 
 /**
- * Appends one FNV-1a-signed entry to the server-side audit chain blob.
+ * Appends one SHA-256-hashed entry to the server-side audit chain blob.
  * Retries up to 3 times with exponential backoff on transient failures.
  * Returns true on success, false after all retries exhausted (non-throwing).
  */
 export async function writeAuditChainEntry(event: AuditChainEvent): Promise<boolean> {
+  // Warn loudly if AUDIT_CHAIN_SECRET is absent or too short — every compliance
+  // action that reaches here should have a properly configured secret.
+  const chainSecret = process.env["AUDIT_CHAIN_SECRET"];
+  if (!chainSecret || chainSecret.length < 32) {
+    console.error(
+      "[audit-chain] AUDIT_CHAIN_SECRET is missing or too short (min 32 chars). " +
+      "The write-side chain is being written without HMAC protection. " +
+      "Generate with: openssl rand -hex 64",
+    );
+  }
+
   const MAX_ATTEMPTS = 3;
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
     try {
@@ -264,11 +276,13 @@ export async function writeAuditChainEntry(event: AuditChainEvent): Promise<bool
       const payload: Record<string, unknown> = { event: eventName, actor };
       if (caseId) payload["caseId"] = caseId;
       Object.assign(payload, rest);
+      // SHA-256 is used for all new entries (replaces FNV-1a — see migration note above).
       const hash = computeHash(prev?.entryHash, payload, at, seq);
       chain.push({
         seq,
         ...(prev ? { prevHash: prev.entryHash } : {}),
         entryHash: hash,
+        hashAlg: "sha256",
         payload,
         at,
       });

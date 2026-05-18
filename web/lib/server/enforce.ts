@@ -21,6 +21,32 @@ import { consumeRateLimit, rateLimitHeaders } from "./rate-limit";
 import { tierFor } from "@/lib/data/tiers";
 import { createHash, timingSafeEqual } from "node:crypto";
 import { looksLikeJwt, verifyJwt } from "./jwt";
+import { log } from "./logger";
+
+/** Internal: emit a structured auth-failure log entry for every enforcement rejection. */
+function logAuthFailure(
+  req: Request,
+  reason: string,
+  status: number,
+  extra?: Record<string, unknown>,
+): void {
+  const fwd = req.headers.get("x-forwarded-for");
+  const ip = fwd ? fwd.split(",")[0]?.trim() : "unknown";
+  const requestId = req.headers.get("x-request-id") ?? "unset";
+  const route = new URL(req.url).pathname;
+  log({
+    level: "warn",
+    route,
+    event: "auth.failure",
+    detail: reason,
+    status,
+    requestId,
+    // IP hashed for PII hygiene — raw IP not logged.
+    ipHash: createHash("sha256").update(ip ?? "").digest("hex").slice(0, 16),
+    method: req.method,
+    ...extra,
+  });
+}
 
 export interface EnforcementAllow {
   ok: true;
@@ -78,6 +104,7 @@ export async function enforce(
   if (adminMatch) {
     const rl = await consumeRateLimit("portal_admin", "enterprise");
     if (!rl.allowed) {
+      logAuthFailure(req, "rate_limit_exceeded:portal_admin", 429);
       return {
         ok: false,
         response: NextResponse.json(
@@ -114,6 +141,7 @@ export async function enforce(
   }
 
   if (anonymous && opts.requireAuth) {
+    logAuthFailure(req, "anonymous_request_rejected", 401);
     return {
       ok: false,
       response: NextResponse.json(
@@ -137,6 +165,7 @@ export async function enforce(
   if (!anonymous && looksLikeJwt(plaintext)) {
     const v = verifyJwt(plaintext);
     if (!v.ok || !v.payload) {
+      logAuthFailure(req, `invalid_jwt:${v.reason ?? "unknown"}`, 401);
       return {
         ok: false,
         response: NextResponse.json(
@@ -146,6 +175,7 @@ export async function enforce(
       };
     }
     if (!v.payload.sub) {
+      logAuthFailure(req, "invalid_jwt:missing_sub", 401);
       return {
         ok: false,
         response: NextResponse.json(
@@ -179,18 +209,17 @@ export async function enforce(
   if (!anonymous) {
     const check = await validateAndConsume(plaintext);
     if (!check.ok) {
+      const failReason =
+        check.reason === "quota_exceeded"
+          ? "monthly quota exceeded"
+          : check.reason === "revoked"
+            ? "API key revoked"
+            : "invalid API key";
+      logAuthFailure(req, `api_key_${check.reason ?? "invalid"}`, check.reason === "quota_exceeded" ? 429 : 401, { keyIdPrefix: plaintext.slice(0, 8) });
       return {
         ok: false,
         response: NextResponse.json(
-          {
-            ok: false,
-            error:
-              check.reason === "quota_exceeded"
-                ? "monthly quota exceeded"
-                : check.reason === "revoked"
-                  ? "API key revoked"
-                  : "invalid API key",
-          },
+          { ok: false, error: failReason },
           {
             status: check.reason === "quota_exceeded" ? 429 : 401,
             headers: check.tier
