@@ -56,9 +56,9 @@ const DPMS_CASH_THRESHOLD_AED = 55_000;
 // threshold within a rolling 48-hour window.
 const STRUCTURING_WINDOW_HOURS = 48;
 
-function pickBrainFn(name: string): ((...args: unknown[]) => unknown) | null {
+function pickBrainFn(name: string): ((..._args: unknown[]) => unknown) | null {
   const v = (brain as Record<string, unknown>)[name];
-  return typeof v === "function" ? (v as (...args: unknown[]) => unknown) : null;
+  return typeof v === "function" ? (v as (..._args: unknown[]) => unknown) : null;
 }
 
 function detectStructuring(txs: Transaction[]): number {

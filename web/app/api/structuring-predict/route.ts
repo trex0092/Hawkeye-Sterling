@@ -42,7 +42,7 @@ interface StructuringRequest {
 }
 
 const DEFAULT_THRESHOLD_AED = 55_000;
-const DEFAULT_THRESHOLD_USD = 15_000;
+const _DEFAULT_THRESHOLD_USD = 15_000;
 const ROUND_NUMBER_AMOUNTS = [1000, 2000, 5000, 10000, 20000, 50000, 100000];
 
 function analyzeStructuring(txns: Transaction[], threshold: number): {

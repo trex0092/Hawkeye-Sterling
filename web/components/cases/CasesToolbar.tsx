@@ -2,7 +2,7 @@
 
 interface CasesToolbarProps {
   query: string;
-  onQueryChange: (value: string) => void;
+  onQueryChange: (_value: string) => void;
 }
 
 export function CasesToolbar({ query, onQueryChange }: CasesToolbarProps) {

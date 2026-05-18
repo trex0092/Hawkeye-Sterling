@@ -35,7 +35,7 @@ interface Props {
   autoConfidence: number;
   reviewerId?: string;
   userRole?: string;
-  onSubmit?: (result: { ok: boolean; recorded?: boolean; overridden?: boolean; persisted?: boolean; error?: string }) => void;
+  onSubmit?: (_result: { ok: boolean; recorded?: boolean; overridden?: boolean; persisted?: boolean; error?: string }) => void;
 }
 
 export function DispositionButton({
