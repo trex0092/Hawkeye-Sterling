@@ -164,7 +164,7 @@ export default function BenfordPage() {
             Forensic Accounting · Digit Test
           </div>
           <div className="text-12 text-ink-2">
-            Leading-digit distribution vs. Benford's expected curve — MAD + χ² dual signal
+            Leading-digit distribution vs. Benford&apos;s expected curve — MAD + χ² dual signal
           </div>
         </div>
 

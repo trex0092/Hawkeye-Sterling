@@ -11,7 +11,7 @@ import type { CnmrCase } from "@/app/api/cnmr/route";
 // requires a CNMR to be filed via goAML to EOCN and MoE within 5 business days
 // of the freezing measure. This module manages that workflow.
 
-const STORAGE_KEY = "hawkeye.cnmr.local.v1";
+const _STORAGE_KEY = "hawkeye.cnmr.local.v1";
 
 const STATUS_TONE: Record<CnmrCase["status"], string> = {
   pending: "bg-amber-dim text-amber border border-amber/30",
@@ -64,7 +64,7 @@ function SlaBar({ deadline, status }: { deadline: string; status: CnmrCase["stat
   );
 }
 
-interface NewCnmrFormProps { onCreated: (c: CnmrCase) => void; onCancel: () => void; }
+interface NewCnmrFormProps { onCreated: (_c: CnmrCase) => void; onCancel: () => void; }
 function NewCnmrForm({ onCreated, onCancel }: NewCnmrFormProps) {
   const [subjectName, setSubjectName] = useState("");
   const [sourceList, setSourceList] = useState<CnmrCase["sourceList"]>("uae-local-terrorist");
