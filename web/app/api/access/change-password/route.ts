@@ -76,7 +76,12 @@ export async function POST(req: Request) {
   const salt = generateSalt();
   const hash = hashPassword(newPassword, salt);
   const updatedUsers = [...users];
-  updatedUsers[idx] = { ...user, passwordHash: hash, passwordSalt: salt };
+  updatedUsers[idx] = {
+    ...user,
+    passwordHash: hash,
+    passwordSalt: salt,
+    pwVersion: (user.pwVersion ?? 0) + 1,
+  };
   await saveUsers(updatedUsers);
 
   // FDL 10/2025 Art.24: every access-control change must be in the audit chain.

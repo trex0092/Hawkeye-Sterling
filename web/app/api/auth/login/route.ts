@@ -152,7 +152,7 @@ export async function POST(req: Request) {
   // Clear the per-username counter on success (the IP counter intentionally
   // stays to limit rapid username cycling from the same address).
   await recordSuccess(USER_LOCK_PREFIX, uKey);
-  const token = issueSession(user.id, user.username!, user.role);
+  const token = issueSession(user.id, user.username!, user.role, user.pwVersion ?? 0);
 
   const isSecure = process.env["NODE_ENV"] === "production";
   const res = NextResponse.json({ ok: true, name: user.name, role: user.role });

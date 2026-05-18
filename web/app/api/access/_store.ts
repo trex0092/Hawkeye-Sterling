@@ -39,6 +39,9 @@ export interface AccessUser {
   username?: string;
   passwordHash?: string;
   passwordSalt?: string;
+  /** Incremented on every password change. Sessions carry this at issue time;
+   *  a mismatch means the session predates the latest password change. */
+  pwVersion?: number;
 }
 
 export interface PermissionLogEntry {

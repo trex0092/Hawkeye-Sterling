@@ -13,7 +13,7 @@ export async function POST(req: Request) {
   const jar = await cookies();
   const token = jar.get(SESSION_COOKIE)?.value ?? "";
   const session = verifySession(token);
-  if (!session || session.role !== "compliance") {
+  if (!session || (session.role !== "compliance" && session.role !== "mlro")) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 403 });
   }
 
@@ -45,6 +45,7 @@ export async function POST(req: Request) {
     ...users[idx]!,
     passwordHash: hash,
     passwordSalt: salt,
+    pwVersion: (users[idx]!.pwVersion ?? 0) + 1,
     ...(username ? { username } : {}),
   };
   await saveUsers(updatedUsers);

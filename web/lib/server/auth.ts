@@ -32,6 +32,10 @@ interface SessionPayload {
   role: string;
   iat: number;
   exp: number;
+  /** Password version at issue time — used to detect stale sessions after a
+   *  password reset. Absent on sessions issued before this field was added;
+   *  treat as 0 for backward compat. */
+  pwv?: number;
 }
 
 function getSecret(): string {
@@ -54,9 +58,9 @@ function getSecret(): string {
   );
 }
 
-export function issueSession(userId: string, username: string, role: string): string {
+export function issueSession(userId: string, username: string, role: string, pwVersion = 0): string {
   const now = Math.floor(Date.now() / 1000);
-  const payload: SessionPayload = { userId, username, role, iat: now, exp: now + SESSION_TTL_S };
+  const payload: SessionPayload = { userId, username, role, iat: now, exp: now + SESSION_TTL_S, pwv: pwVersion };
   const encoded = Buffer.from(JSON.stringify(payload)).toString("base64url");
   const sig = createHmac("sha256", getSecret()).update(encoded).digest("base64url");
   return `${encoded}.${sig}`;
