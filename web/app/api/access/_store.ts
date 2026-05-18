@@ -42,6 +42,9 @@ export interface AccessUser {
   /** Incremented on every password change. Sessions carry this at issue time;
    *  a mismatch means the session predates the latest password change. */
   pwVersion?: number;
+  /** SHA-256 prefix of the most recent login IP — used for geo-velocity
+   *  detection between sessions. Never stores the raw IP. */
+  lastIpHash?: string;
 }
 
 export interface PermissionLogEntry {

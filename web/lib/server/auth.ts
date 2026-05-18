@@ -2,7 +2,7 @@
 // Password hashing: scrypt(password, salt, 64) — work factor ~100ms, GPU-resistant
 // Session signing:  HMAC-SHA256 over base64url(payload) using SESSION_SECRET env var
 
-import { scryptSync, timingSafeEqual, createHmac, randomBytes } from "node:crypto";
+import { scryptSync, timingSafeEqual, createHmac, createHash, randomBytes } from "node:crypto";
 
 const SESSION_COOKIE = "hs_session";
 const SESSION_TTL_S = 8 * 60 * 60; // 8 hours
@@ -36,6 +36,9 @@ interface SessionPayload {
    *  password reset. Absent on sessions issued before this field was added;
    *  treat as 0 for backward compat. */
   pwv?: number;
+  /** 16-char SHA-256 prefix of login IP + User-Agent — used to detect
+   *  mid-session IP changes that may indicate session token theft. */
+  fpHash?: string;
 }
 
 function getSecret(): string {
@@ -58,12 +61,22 @@ function getSecret(): string {
   );
 }
 
-export function issueSession(userId: string, username: string, role: string, pwVersion = 0): string {
+export function issueSession(userId: string, username: string, role: string, pwVersion = 0, fpHash = ""): string {
   const now = Math.floor(Date.now() / 1000);
-  const payload: SessionPayload = { userId, username, role, iat: now, exp: now + SESSION_TTL_S, pwv: pwVersion };
+  const payload: SessionPayload = {
+    userId, username, role, iat: now, exp: now + SESSION_TTL_S, pwv: pwVersion,
+    ...(fpHash ? { fpHash } : {}),
+  };
   const encoded = Buffer.from(JSON.stringify(payload)).toString("base64url");
   const sig = createHmac("sha256", getSecret()).update(encoded).digest("base64url");
   return `${encoded}.${sig}`;
+}
+
+/** Compute a 16-char fingerprint from client IP and User-Agent.
+ *  Embeds in the session token at login; compared on each /api/auth/me
+ *  call to detect possible session token theft via IP change. */
+export function computeRequestFingerprint(ip: string, userAgent: string): string {
+  return createHash("sha256").update(`${ip}:${userAgent}`).digest("hex").slice(0, 16);
 }
 
 export function verifySession(token: string): SessionPayload | null {

@@ -17,6 +17,30 @@
 
 import { createHash, createHmac } from 'node:crypto';
 
+// ── Per-tenant key derivation ─────────────────────────────────────────────────
+// Derives a per-tenant HMAC signing key from the root AUDIT_CHAIN_SECRET.
+// An explicit AUDIT_CHAIN_SECRET_<TENANTID> env var takes full precedence so
+// operators can isolate tenant keys completely (a per-tenant secret compromise
+// does not affect other tenants even if an attacker cannot derive the root).
+//
+// Key material:  HMAC-SHA256(rootSecret, "hawkeye-audit-chain-v1:" + tenantId)
+// Domain label prevents cross-protocol key reuse with other HMAC contexts.
+export function deriveChainKey(rootSecret: string, tenantId: string): string {
+  return createHmac("sha256", rootSecret)
+    .update(`hawkeye-audit-chain-v1:${tenantId}`)
+    .digest("hex");
+}
+
+export function getChainSecret(tenantId = "default"): string | null {
+  const envKey = `AUDIT_CHAIN_SECRET_${tenantId.toUpperCase().replace(/[^A-Z0-9]/g, "_")}`;
+  const perTenant = process.env[envKey];
+  if (perTenant && perTenant.length >= 32) return perTenant;
+
+  const root = process.env["AUDIT_CHAIN_SECRET"];
+  if (!root || root.length < 32) return null;
+  return deriveChainKey(root, tenantId);
+}
+
 export interface AuditEntry {
   sequence: number;
   id: string;
@@ -214,18 +238,29 @@ interface ChainEntry {
   seq: number;
   prevHash?: string;
   entryHash: string;
-  /** hashAlg absent = legacy FNV-1a; "sha256" = SHA-256 (current). */
-  hashAlg?: "sha256" | "fnv1a";
+  /** hashAlg absent = legacy FNV-1a; "sha256" = SHA-256 (no HMAC);
+   *  "hmac-sha256" = HMAC-SHA256 with per-tenant derived key (current). */
+  hashAlg?: "sha256" | "fnv1a" | "hmac-sha256";
   payload: unknown;
   at: string;
 }
 
-// SHA-256 for the write-side chain. FNV-1a (32-bit) had birthday-collision
-// risk at ~65k entries; SHA-256 provides 256-bit resistance suitable for
-// multi-year compliance audit chains.  Legacy FNV-1a function preserved
-// for reference by the probe (audit-chain-probe.mts) which handles migration.
-function computeHash(prevHash: string | undefined, payload: unknown, at: string, seq: number): string {
-  return sha256Hex(`${prevHash ?? ""}::${seq}::${at}::${JSON.stringify(payload)}`);
+// Hash each chain entry. When a tenant signing key is available the material
+// is HMAC-SHA256-signed (unforgeability without the key). Without a key it
+// falls back to pure SHA-256 hash linking (tamper-detectable but forgeable
+// by anyone with Blobs write access). New entries always prefer HMAC.
+function computeHash(
+  prevHash: string | undefined,
+  payload: unknown,
+  at: string,
+  seq: number,
+  hmacSecret?: string | null,
+): string {
+  const material = `${prevHash ?? ""}::${seq}::${at}::${JSON.stringify(payload)}`;
+  if (hmacSecret) {
+    return createHmac("sha256", hmacSecret).update(material).digest("hex");
+  }
+  return sha256Hex(material);
 }
 
 async function loadAuditStore() {
@@ -247,27 +282,36 @@ async function loadAuditStore() {
 }
 
 /**
- * Appends one SHA-256-hashed entry to the server-side audit chain blob.
+ * Appends one HMAC-SHA256-signed entry to the server-side audit chain blob.
+ *
+ * @param event    - The compliance event payload to record.
+ * @param tenantId - Optional tenant identifier (default: "default"). Used to
+ *   derive an isolated signing key and to namespace the chain blob. A per-
+ *   tenant AUDIT_CHAIN_SECRET_<TENANTID> env var overrides derivation entirely
+ *   so operators can achieve complete key isolation between tenants.
+ *
  * Retries up to 3 times with exponential backoff on transient failures.
  * Returns true on success, false after all retries exhausted (non-throwing).
  */
-export async function writeAuditChainEntry(event: AuditChainEvent): Promise<boolean> {
-  // Warn loudly if AUDIT_CHAIN_SECRET is absent or too short — every compliance
-  // action that reaches here should have a properly configured secret.
-  const chainSecret = process.env["AUDIT_CHAIN_SECRET"];
-  if (!chainSecret || chainSecret.length < 32) {
+export async function writeAuditChainEntry(event: AuditChainEvent, tenantId = "default"): Promise<boolean> {
+  const chainSecret = getChainSecret(tenantId);
+  if (!chainSecret) {
     console.error(
       "[audit-chain] AUDIT_CHAIN_SECRET is missing or too short (min 32 chars). " +
-      "The write-side chain is being written without HMAC protection. " +
-      "Generate with: openssl rand -hex 64",
+      "Writing chain entry WITHOUT HMAC protection — chain is tamper-detectable " +
+      "but not tamper-proof. Generate with: openssl rand -hex 64",
     );
   }
+
+  // Tenant chains are stored in separate blobs for namespace isolation.
+  // The "default" tenant keeps "chain.json" for backward compatibility.
+  const chainFile = tenantId === "default" ? "chain.json" : `${tenantId}.json`;
 
   const MAX_ATTEMPTS = 3;
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
     try {
       const store = await loadAuditStore();
-      const raw = await store.get("chain.json", { type: "json" }) as ChainEntry[] | null;
+      const raw = await store.get(chainFile, { type: "json" }) as ChainEntry[] | null;
       const chain: ChainEntry[] = Array.isArray(raw) ? structuredClone(raw) : [];
       const prev = chain[chain.length - 1];
       const seq = (prev?.seq ?? -1) + 1;
@@ -276,17 +320,16 @@ export async function writeAuditChainEntry(event: AuditChainEvent): Promise<bool
       const payload: Record<string, unknown> = { event: eventName, actor };
       if (caseId) payload["caseId"] = caseId;
       Object.assign(payload, rest);
-      // SHA-256 is used for all new entries (replaces FNV-1a — see migration note above).
-      const hash = computeHash(prev?.entryHash, payload, at, seq);
+      const hash = computeHash(prev?.entryHash, payload, at, seq, chainSecret);
       chain.push({
         seq,
         ...(prev ? { prevHash: prev.entryHash } : {}),
         entryHash: hash,
-        hashAlg: "sha256",
+        hashAlg: chainSecret ? "hmac-sha256" : "sha256",
         payload,
         at,
       });
-      await store.setJSON("chain.json", chain);
+      await store.setJSON(chainFile, chain);
       return true;
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);

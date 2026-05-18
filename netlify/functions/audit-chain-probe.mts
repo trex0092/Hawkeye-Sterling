@@ -25,8 +25,9 @@ interface ChainEntry {
   seq: number;
   prevHash?: string;
   entryHash: string;
-  /** hashAlg absent = legacy FNV-1a; "sha256" = SHA-256 (current, post 2026-05-18). */
-  hashAlg?: 'sha256' | 'fnv1a';
+  /** hashAlg absent = legacy FNV-1a; "sha256" = SHA-256 (no HMAC);
+   *  "hmac-sha256" = HMAC-SHA256 with per-tenant derived key (current). */
+  hashAlg?: 'sha256' | 'fnv1a' | 'hmac-sha256';
   payload: unknown;
   at: string;
 }
@@ -44,20 +45,68 @@ function fnv1a(input: string): string {
   return (hash >>> 0).toString(16).padStart(8, '0');
 }
 
-// crypto.createHash is not available in Netlify scheduled functions (Deno runtime).
-// Use the Web Crypto API (SubtleCrypto) which is available everywhere.
+// crypto.createHash / createHmac not available in Deno (Netlify scheduled functions).
+// Use WebCrypto (SubtleCrypto) which is universally available.
 async function sha256Hex(input: string): Promise<string> {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(input));
   return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
-async function computeEntryHash(prevHash: string | undefined, payload: unknown, at: string, seq: number, hashAlg?: string): Promise<string> {
+async function hmacSha256Hex(key: string, data: string): Promise<string> {
+  const keyMaterial = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(key),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign'],
+  );
+  const sig = await crypto.subtle.sign('HMAC', keyMaterial, new TextEncoder().encode(data));
+  return Array.from(new Uint8Array(sig)).map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+// Mirror the key derivation from audit-chain.ts (web/lib/server/audit-chain.ts).
+// Both sides MUST use the same domain label: "hawkeye-audit-chain-v1:<tenantId>".
+async function deriveChainKey(rootSecret: string, tenantId: string): Promise<string> {
+  return hmacSha256Hex(rootSecret, `hawkeye-audit-chain-v1:${tenantId}`);
+}
+
+// Safe env-var accessor that works in both Deno (Netlify scheduled functions)
+// and Node.js (local test runs). Deno.env.get() is the canonical path;
+// process.env is a common polyfill.
+function getEnv(key: string): string | undefined {
+  try {
+    // @ts-ignore — Deno global defined in Netlify scheduled function runtime.
+    if (typeof Deno !== 'undefined') return Deno.env.get(key);
+  } catch { /* not Deno */ }
+  return process?.env?.[key];
+}
+
+async function getProbeChainSecret(tenantId = 'default'): Promise<string | null> {
+  const envKey = `AUDIT_CHAIN_SECRET_${tenantId.toUpperCase().replace(/[^A-Z0-9]/g, '_')}`;
+  const perTenant = getEnv(envKey);
+  if (perTenant && perTenant.length >= 32) return perTenant;
+
+  const root = getEnv('AUDIT_CHAIN_SECRET');
+  if (!root || root.length < 32) return null;
+  return deriveChainKey(root, tenantId);
+}
+
+async function computeEntryHash(
+  prevHash: string | undefined,
+  payload: unknown,
+  at: string,
+  seq: number,
+  hashAlg?: string,
+  hmacSecret?: string | null,
+): Promise<string> {
   const material = `${prevHash ?? ''}::${seq}::${at}::${JSON.stringify(payload)}`;
-  // Entries with hashAlg: "sha256" (written post 2026-05-18) use SHA-256.
-  // Entries with no hashAlg or hashAlg: "fnv1a" use the legacy FNV-1a.
+  if (hashAlg === 'hmac-sha256' && hmacSecret) {
+    return hmacSha256Hex(hmacSecret, material);
+  }
   if (hashAlg === 'sha256') {
     return sha256Hex(material);
   }
+  // Legacy FNV-1a for entries written before 2026-05-18.
   return fnv1a(material);
 }
 
@@ -117,6 +166,10 @@ export default async function handler(_req: Request): Promise<Response> {
     }, 500);
   }
 
+  // Resolve the HMAC secret once — all HMAC entries in this chain share
+  // the same derived key (chain file = "default" tenant = chain.json).
+  const hmacSecret = await getProbeChainSecret('default');
+
   const tamperedAt: number[] = [];
   const brokenLinkAt: number[] = [];
   let prev: ChainEntry | undefined;
@@ -126,9 +179,11 @@ export default async function handler(_req: Request): Promise<Response> {
       tamperedAt.push(-1);
       continue;
     }
-    // Pass hashAlg so legacy FNV-1a entries and new SHA-256 entries are
-    // each verified with the algorithm that was used to write them.
-    const expected = await computeEntryHash(e.prevHash, e.payload, e.at, e.seq, e.hashAlg);
+    // Dispatch to the correct algorithm based on hashAlg tag:
+    //   "hmac-sha256"  → HMAC-SHA256 with derived tenant key
+    //   "sha256"       → plain SHA-256 (no HMAC, pre-2026-05-19 entries)
+    //   absent/fnv1a   → legacy FNV-1a (pre-2026-05-18 entries)
+    const expected = await computeEntryHash(e.prevHash, e.payload, e.at, e.seq, e.hashAlg, hmacSecret);
     if (expected !== e.entryHash) tamperedAt.push(e.seq);
     if (prev && e.prevHash !== prev.entryHash) brokenLinkAt.push(e.seq);
     prev = e;

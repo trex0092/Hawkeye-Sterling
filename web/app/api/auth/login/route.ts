@@ -5,7 +5,8 @@ export const maxDuration = 30;
 import { NextResponse } from "next/server";
 import { createHash } from "node:crypto";
 import { loadUsers, saveUsers } from "@/app/api/access/_store";
-import { verifyPassword, issueSession, SESSION_COOKIE, SESSION_TTL_S } from "@/lib/server/auth";
+import { verifyPassword, issueSession, computeRequestFingerprint, SESSION_COOKIE, SESSION_TTL_S } from "@/lib/server/auth";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { getJson, setJson, del } from "@/lib/server/store";
 
 // ── Brute-force protection ────────────────────────────────────────────────────
@@ -152,7 +153,25 @@ export async function POST(req: Request) {
   // Clear the per-username counter on success (the IP counter intentionally
   // stays to limit rapid username cycling from the same address).
   await recordSuccess(USER_LOCK_PREFIX, uKey);
-  const token = issueSession(user.id, user.username!, user.role, user.pwVersion ?? 0);
+
+  // Fingerprint binds the session to this login's IP + User-Agent so
+  // /api/auth/me can detect mid-session IP changes.
+  const userAgent = req.headers.get("user-agent") ?? "";
+  const fpHash = computeRequestFingerprint(ip, userAgent);
+  const token = issueSession(user.id, user.username!, user.role, user.pwVersion ?? 0, fpHash);
+
+  // Geo-velocity: flag if the login IP changed since the last session.
+  // Write the audit event before updating lastIpHash so both old and new
+  // hashes are captured in the same record.
+  if (user.lastIpHash && user.lastIpHash !== iKey) {
+    void writeAuditChainEntry({
+      event: "auth.login_ip_changed",
+      actor: user.username ?? user.id,
+      userId: user.id,
+      prevIpHash: user.lastIpHash,
+      currIpHash: iKey,
+    });
+  }
 
   const isSecure = process.env["NODE_ENV"] === "production";
   const res = NextResponse.json({ ok: true, name: user.name, role: user.role });
@@ -164,9 +183,11 @@ export async function POST(req: Request) {
     path: "/",
   });
 
-  // Persist last-login timestamp so it survives cold restarts
+  // Persist last-login timestamp and IP hash for next-login geo-velocity check.
   const updatedUsers = users.map((u) =>
-    u.id === user.id ? { ...u, lastLogin: new Date().toISOString() } : u,
+    u.id === user.id
+      ? { ...u, lastLogin: new Date().toISOString(), lastIpHash: iKey }
+      : u,
   );
   await saveUsers(updatedUsers);
 

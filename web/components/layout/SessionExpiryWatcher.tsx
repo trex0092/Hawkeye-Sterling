@@ -20,9 +20,20 @@ export function SessionExpiryWatcher(): null {
 
     fetch("/api/auth/me", { cache: "no-store" })
       .then((r) => r.json())
-      .then((d: { ok: boolean; user?: { sessionExp?: number } }) => {
-        if (dead || !d.ok || !d.user?.sessionExp) return;
+      .then((d: { ok: boolean; user?: { sessionExp?: number }; warning?: { code: string; message: string } }) => {
+        if (dead) return;
+        if (!d.ok || !d.user?.sessionExp) return;
         expRef.current = d.user.sessionExp;
+        // IP change warning — possible session theft. Fire once per mount.
+        if (d.warning?.code === "IP_CHANGED") {
+          pushToast({
+            id: "session-ip-changed",
+            severity: "high",
+            title: "Session IP change detected",
+            body: "Your network address changed since login. If this wasn't you, contact your MLRO immediately and log out.",
+            ttlMs: 60_000,
+          });
+        }
       })
       .catch(() => undefined);
 
