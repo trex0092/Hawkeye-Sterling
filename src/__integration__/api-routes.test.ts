@@ -1121,18 +1121,26 @@ describe('POST /api/pep-match', () => {
   });
 
   it('returns 200 with ok:true and hits array when corpus is empty (no blob/CDN data)', async () => {
-    // Blob mock returns null for "pep/current.json" and CDN fetch will fail
-    // in the test environment → corpus stays empty → hits:[].
-    const req = makeRequest('http://localhost/api/pep-match', {
-      method: 'POST',
-      body: { name: 'Vladimir Putin' },
-    });
-    const res = await POST(req);
-    expect(res.status).toBe(200);
-    const body = await jsonBody(res) as { ok: boolean; hits: unknown[]; queriedName: string };
-    expect(body.ok).toBe(true);
-    expect(Array.isArray(body.hits)).toBe(true);
-    expect(body.queriedName).toBe('Vladimir Putin');
+    // Blob mock returns null for "pep/current.json"; mock the CDN fetch to 404
+    // so the route falls through to source:"none" without hitting the live
+    // OpenSanctions bulk URL (which would either hang past testTimeout or
+    // return real data and break the hermetic-test contract).
+    const origFetch = global.fetch;
+    global.fetch = vi.fn(async () => new Response('', { status: 404 })) as typeof fetch;
+    try {
+      const req = makeRequest('http://localhost/api/pep-match', {
+        method: 'POST',
+        body: { name: 'Vladimir Putin' },
+      });
+      const res = await POST(req);
+      expect(res.status).toBe(200);
+      const body = await jsonBody(res) as { ok: boolean; hits: unknown[]; queriedName: string };
+      expect(body.ok).toBe(true);
+      expect(Array.isArray(body.hits)).toBe(true);
+      expect(body.queriedName).toBe('Vladimir Putin');
+    } finally {
+      global.fetch = origFetch;
+    }
   });
 
   it('returns 401 when enforce() denies the request', async () => {
@@ -1527,6 +1535,60 @@ describe('GET /api/audit-trail/verify', () => {
         expect(body.compositeHash).toBe('811c9dc5');
       }
     }
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// /api/health — regression: anonymous callers must NOT receive build metadata.
+// enforce() identifies anonymous callers with keyId "anon_<sha-prefix>" (not
+// the literal string "anonymous"), so the prior `keyId !== "anonymous"` gate
+// matched every anon request and leaked buildId/commitRef. Verify the fix.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('GET /api/health — anonymous deployment-info leak guard', () => {
+  let GET: (req: Request) => Promise<Response>;
+
+  beforeEach(async () => {
+    const mod = await import('@/app/api/health/route');
+    GET = mod.GET as unknown as (req: Request) => Promise<Response>;
+  });
+
+  it('does NOT include buildId or commitRef in the body when caller is anonymous', async () => {
+    // enforce() identifies anon callers with keyId of the form "anon_<hash>".
+    // Override the module-level mock for this specific test to simulate that
+    // shape — the previous code path checked `keyId !== "anonymous"` (literal),
+    // which never matched and leaked build metadata. The fix is
+    // `!keyId.startsWith("anon_")`; this test verifies that fix.
+    const { enforce } = await import('@/lib/server/enforce');
+    const enforceMock = enforce as ReturnType<typeof vi.fn>;
+    enforceMock.mockImplementationOnce(async () => ({
+      ok: true,
+      tier: { id: 'free', callsPerSecond: 5, callsPerMinute: 60, monthlyQuota: 1000 },
+      keyId: 'anon_deadbeefcafe',
+      record: null,
+      remainingMonthly: null,
+      headers: {},
+    }));
+
+    const req = makeRequest('http://localhost/api/health');
+    const res = await GET(req);
+    const body = await jsonBody(res) as Record<string, unknown>;
+    expect(body).not.toHaveProperty('buildId');
+    expect(body).not.toHaveProperty('commitRef');
+    // Sanity: public liveness fields are still present.
+    expect(body).toHaveProperty('ok');
+    expect(body).toHaveProperty('status');
+    expect(body).toHaveProperty('mandatoryListsHealthy');
+  });
+
+  it('DOES include buildId and commitRef when caller is authenticated (non-anon keyId)', async () => {
+    // The default mock returns keyId: "test-key" which does not start with
+    // "anon_", so authenticated=true and the route should disclose build info.
+    const req = makeRequest('http://localhost/api/health');
+    const res = await GET(req);
+    const body = await jsonBody(res) as Record<string, unknown>;
+    expect(body).toHaveProperty('buildId');
+    expect(body).toHaveProperty('commitRef');
   });
 });
 
