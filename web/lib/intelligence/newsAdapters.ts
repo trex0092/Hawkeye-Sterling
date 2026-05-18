@@ -2955,6 +2955,73 @@ const nikkeiAsiaAdapter = (): NewsAdapter => makeNewsAdapter({
 // Tavily is a search API designed for AI agents. It returns synthesised
 // answers + source articles with relevance scores. For AML we use the
 // raw search results (type:"news") to surface adverse media.
+// ── Taranis AI OSINT ──────────────────────────────────────────────────
+// Taranis AI is a self-hosted OSINT aggregation platform that provides
+// AI-enriched news with NER entities, relevance scores, and AML category
+// tags. Items are pre-classified by Taranis's NLP pipeline before they
+// reach us, making them higher-signal than raw news feeds.
+// Env: TARANIS_URL      base URL of self-hosted Taranis instance
+//      TARANIS_API_KEY  Bearer token for Taranis REST API
+const taranisAdapter = (): NewsAdapter => {
+  const url = process.env["TARANIS_URL"];
+  const key = process.env["TARANIS_API_KEY"];
+  if (!url || !key) return NULL_NEWS_ADAPTER;
+  return {
+    source: "taranis",
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      try {
+        const endpoint = `${url.replace(/\/$/, "")}/api/v1/osint-items`;
+        const params = new URLSearchParams({
+          search: subjectName,
+          limit: String(Math.min(opts?.limit ?? 50, 100)),
+          offset: "0",
+        });
+        if (opts?.since) params.set("date_from", opts.since.slice(0, 10));
+        const res = await fetch(`${endpoint}?${params}`, {
+          headers: { Authorization: `Bearer ${key}`, accept: "application/json" },
+          signal: AbortSignal.timeout(12_000),
+        });
+        if (!res.ok) return [];
+        const json = (await res.json()) as {
+          items?: Array<{
+            id?: string; title?: string; content?: string; source?: string;
+            published?: string; url?: string; language?: string;
+            tags?: string[]; relevance_score?: number;
+          }>;
+        };
+        const ADVERSE_TAGS = new Set([
+          "sanction", "sanctions", "fraud", "money laundering", "aml",
+          "corruption", "bribery", "crime", "criminal", "arrest",
+          "conviction", "indictment", "investigation", "terrorist", "terrorism",
+          "drug trafficking", "cybercrime", "embezzlement", "enforcement",
+        ]);
+        return (json.items ?? [])
+          .filter((it) => it.title && it.id)
+          .map((it): NewsArticle => {
+            const tags = (it.tags ?? []).map((t) => t.toLowerCase());
+            const isAdverse = tags.some((t) => ADVERSE_TAGS.has(t));
+            const sentiment = isAdverse ? -0.6 : undefined;
+            return {
+              source: "taranis",
+              outlet: it.source ?? "taranis",
+              title: it.title!,
+              url: it.url ?? `taranis://item/${it.id}`,
+              publishedAt: it.published ?? new Date().toISOString(),
+              ...(it.content ? { snippet: it.content.slice(0, 400) } : {}),
+              ...(it.language ? { language: it.language } : {}),
+              ...(sentiment !== undefined ? { sentiment } : {}),
+              ...(it.relevance_score !== undefined ? { relevanceScore: it.relevance_score } : {}),
+            };
+          });
+      } catch (err) {
+        console.warn("[taranis] adapter failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+};
+
 // Env: TAVILY_API_KEY   Free tier: 1 000 req/month. $0.005/req thereafter.
 // Docs: https://docs.tavily.com/docs/rest-api/api-reference
 const tavilyAdapter = (): NewsAdapter => {
@@ -3174,7 +3241,9 @@ export function activeNewsAdapters(): NewsAdapter[] {
     omfifAdapter(), centralBankingAdapter(), globalFinanceAdapter(),
     eurofinasAdapter(), ihsMarkitAdapter(), eikonNewsAdapter(), nikkeiAsiaAdapter(),
     freeRssAdapter(),
-    // ── New AI-native research adapters ──────────────────────────────
+    // ── OSINT aggregation platform ────────────────────────────────────
+    taranisAdapter(),     // TARANIS_URL + TARANIS_API_KEY — NLP-enriched OSINT
+    // ── AI-native research adapters ───────────────────────────────────
     tavilyAdapter(),      // TAVILY_API_KEY — deep web search for AI agents
     exaAdapter(),         // EXA_API_KEY — neural/embedding search
     perplexityAdapter(),  // PERPLEXITY_API_KEY — synthesised adverse media
@@ -3264,6 +3333,8 @@ export function activeNewsProviders(): string[] {
     ["AMLWATCHDOG_API_KEY", "aml-watchdog"],
     ["PEGASUS_API_KEY", "pegasus"],
     ["FREE_RSS_ENABLED", "free-rss-aggregator"],
+    // OSINT aggregation
+    ["TARANIS_URL", "taranis"],
     // AI-native research adapters
     ["TAVILY_API_KEY", "tavily"],
     ["EXA_API_KEY", "exa"],
