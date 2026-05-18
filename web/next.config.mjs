@@ -37,10 +37,13 @@ const nextConfig = {
   },
 
   eslint: {
-    // react-hooks/rules-of-hooks hits a stack overflow analysing the large
-    // MlroAdvisorPage component, crashing the build with exit code 2. ESLint
-    // is run separately in CI; this flag prevents it from blocking Netlify deploys.
-    ignoreDuringBuilds: true,
+    // Previously set ignoreDuringBuilds: true because react-hooks/rules-of-hooks
+    // hit a stack overflow analysing MlroAdvisorPage. Re-probing 2026-05-18:
+    // `next lint` completes with exit 0 (warnings only, no stack overflow).
+    // Trying with ignoreDuringBuilds: false to surface lint regressions at
+    // build time; if the stack overflow returns, restore the flag and split
+    // web/app/mlro-advisor/page.tsx (1398+ lines).
+    ignoreDuringBuilds: false,
   },
 
   // NOTE: Next.js `async headers()` was tried in PR #496 but @netlify/plugin-nextjs
