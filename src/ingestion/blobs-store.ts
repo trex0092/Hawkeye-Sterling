@@ -167,8 +167,9 @@ export async function getBlobsStore(): Promise<BlobsStore> {
 
 // In-memory fallback for dev / test — keeps the same interface without Netlify.
 // Same feed-integrity guard applies so tests exercise the production
-// refusal path.
-function inMemoryStore(): BlobsStore {
+// refusal path. Exported for test files that need a clean store without
+// Netlify Blobs creds; production code should continue to use getBlobsStore().
+export function inMemoryStore(): BlobsStore {
   const datasets = new Map<string, { entities: NormalisedEntity[]; report: IngestionReport }>();
   const reports = new Map<string, IngestionReport>();
   return {
