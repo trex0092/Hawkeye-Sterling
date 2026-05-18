@@ -15,6 +15,19 @@ import { verifyPassword, issueSession, SESSION_COOKIE, SESSION_TTL_S } from "@/l
 const MAX_FAILURES = 10;
 const WINDOW_MS = 15 * 60 * 1000; // 15-minute sliding window
 
+// Bound the failure map so a username-probing attacker cannot exhaust
+// Lambda memory. At ~80 bytes per entry the 10 000 cap = ~800 KB —
+// well under Lambda limits — and is far higher than any legitimate
+// active-attempt churn (15-min window × realistic concurrent users).
+const FAILURE_MAP_CAP = 10_000;
+
+// Every Nth set() pass we sweep expired entries so legitimate users
+// don't anchor capacity needlessly. 64 is cheap (cap/64 ≈ 156 passes
+// per fill cycle) yet keeps the map free of stale entries between
+// the rare cold-start resets.
+const SWEEP_EVERY_N_SETS = 64;
+let _setCounter = 0;
+
 interface AttemptRecord {
   count: number;
   windowStart: number;
@@ -22,6 +35,32 @@ interface AttemptRecord {
 }
 
 const failureMap = new Map<string, AttemptRecord>();
+
+/** Drop entries whose window has fully expired AND whose lock has elapsed. */
+function sweepExpired(now: number): void {
+  for (const [k, rec] of failureMap) {
+    if (rec.lockedUntil > now) continue;
+    if (now - rec.windowStart > WINDOW_MS) failureMap.delete(k);
+  }
+}
+
+/**
+ * Insert/update with bounded-FIFO eviction. Map iteration order in V8
+ * is insertion order, so deleting the oldest key is O(1). Combined
+ * with periodic sweep, the map size is hard-bounded at FAILURE_MAP_CAP.
+ */
+function safeSet(key: string, value: AttemptRecord, now: number): void {
+  _setCounter = (_setCounter + 1) % SWEEP_EVERY_N_SETS;
+  if (_setCounter === 0) sweepExpired(now);
+  if (!failureMap.has(key) && failureMap.size >= FAILURE_MAP_CAP) {
+    // FIFO evict the oldest entry. We tolerate the (tiny) chance that
+    // an unexpired locked attacker gets evicted under sustained probing —
+    // the alternative is bursting memory.
+    const oldest = failureMap.keys().next().value;
+    if (oldest !== undefined) failureMap.delete(oldest);
+  }
+  failureMap.set(key, value);
+}
 
 function usernameKey(username: string): string {
   return createHash("sha256").update(username.toLowerCase().trim()).digest("hex").slice(0, 16);
@@ -40,7 +79,7 @@ function checkRateLimit(key: string): { allowed: boolean; retryAfterSec?: number
   }
   if (rec.count >= MAX_FAILURES) {
     const lockUntil = now + WINDOW_MS;
-    failureMap.set(key, { ...rec, lockedUntil: lockUntil });
+    safeSet(key, { ...rec, lockedUntil: lockUntil }, now);
     return { allowed: false, retryAfterSec: Math.ceil(WINDOW_MS / 1000) };
   }
   return { allowed: true };
@@ -50,9 +89,9 @@ function recordFailure(key: string): void {
   const now = Date.now();
   const rec = failureMap.get(key);
   if (!rec || now - rec.windowStart > WINDOW_MS) {
-    failureMap.set(key, { count: 1, windowStart: now, lockedUntil: 0 });
+    safeSet(key, { count: 1, windowStart: now, lockedUntil: 0 }, now);
   } else {
-    failureMap.set(key, { ...rec, count: rec.count + 1 });
+    safeSet(key, { ...rec, count: rec.count + 1 }, now);
   }
 }
 
