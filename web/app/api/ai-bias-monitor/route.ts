@@ -64,17 +64,6 @@ Output JSON (ONLY valid JSON, no markdown):
   "monitoringFrequency": "string — recommended re-assessment frequency"
 }`;
 
-const FALLBACK: BiasMonitorResponse = {
-  biasRisk: "low",
-  biasNarrative: "API key not configured — manual bias review required.",
-  nationalityDistribution: [],
-  potentialBiasIndicators: [],
-  falsePositiveRisk: "",
-  recommendedActions: ["Manual demographic review of screening queue recommended"],
-  unescoAlignment: "",
-  monitoringFrequency: "Monthly",
-};
-
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;

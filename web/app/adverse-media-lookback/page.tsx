@@ -182,7 +182,7 @@ const BLANK = {
   severity: "medium" as AmSeverity, headline: "", loggedBy: "",
 };
 
-const inputCls = "w-full text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-ink-0";
+const _inputCls = "w-full text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-ink-0";
 
 const RISK_TONE: Record<AmAssessment["overallRisk"], string> = {
   critical: "bg-red-dim text-red",
@@ -289,7 +289,7 @@ export default function AdverseMediaLookbackPage() {
     }
   };
 
-  const set = (k: keyof typeof BLANK) =>
+  const _set = (k: keyof typeof BLANK) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
       setDraft((d) => ({ ...d, [k]: e.target.value }));
 
@@ -297,7 +297,7 @@ export default function AdverseMediaLookbackPage() {
     (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
       setEditDraft((d) => ({ ...d, [k]: e.target.value }));
 
-  const add = () => {
+  const _add = () => {
     if (!draft.subject || !draft.headline || !draft.articleDate) return;
     const entry: AmEntry = {
       ...draft,
@@ -392,7 +392,7 @@ export default function AdverseMediaLookbackPage() {
             })}
           </div>
           <p className="text-10 text-ink-3 mt-2">
-            Gaps indicate years with no logged findings. Document "no adverse media found" explicitly for each gap year to satisfy Art.19 audit trail requirements.
+            Gaps indicate years with no logged findings. Document &quot;no adverse media found&quot; explicitly for each gap year to satisfy Art.19 audit trail requirements.
           </p>
         </div>
 
