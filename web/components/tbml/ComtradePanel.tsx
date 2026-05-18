@@ -1,10 +1,8 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { PRECIOUS_METALS_HS, UAE_REPORTER_CODE } from "@/lib/comtrade";
-import type { ComtradeRecord, ComtradeQueryResult, HsCode } from "@/lib/comtrade";
-import { runTBMLAnalysis } from "@/lib/tbml-analysis";
-import type { TBMLAnalysisResult, TBMLFlag, TBMLRiskLevel } from "@/lib/tbml-analysis";
+import { PRECIOUS_METALS_HS, UAE_REPORTER_CODE, type ComtradeRecord, type ComtradeQueryResult, type HsCode } from "@/lib/comtrade";
+import { runTBMLAnalysis, type TBMLAnalysisResult, type TBMLFlag, type TBMLRiskLevel } from "@/lib/tbml-analysis";
 import { fetchJson } from "@/lib/api/fetchWithRetry";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
