@@ -31,18 +31,6 @@ export interface CrossCorrelateResult {
   summary: string;
 }
 
-const FALLBACK: CrossCorrelateResult = {
-  ok: true,
-  confirmed: [],
-  dismissed: [],
-  themes: {},
-  trend: "stable",
-  score: 0,
-  themeScores: {},
-  recommendation: "Monitor",
-  summary: "Unable to reach AI service — results are unavailable. Please retry.",
-};
-
 export async function POST(req: Request) {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;

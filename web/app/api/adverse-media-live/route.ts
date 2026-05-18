@@ -99,11 +99,6 @@ function generateNameVariants(name: string, aliases?: string[]): string[] {
 // GDELT helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
-const GDELT_BASE = "https://api.gdeltproject.org/api/v2/doc/doc";
-// GDELT free API with a 10-year lookback window can take 10-14s to respond.
-// 20s gives it room while staying well under the 45s maxDuration budget.
-const FETCH_TIMEOUT_MS = 20_000;
-
 // FDL 10/2025 Art.19 mandates a 10-year adverse-media lookback for every
 // CDD/EDD screening event. The window is rolling — anchored to the moment
 // the screening request lands on the server, not to a fixed cutoff — so

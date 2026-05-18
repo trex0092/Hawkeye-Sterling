@@ -33,7 +33,7 @@ async function handleRefreshSanctions(
   // Attempt a full ingestion run via the compiled runner.
   // Dynamic-import so this route doesn't hard-require the dist/ build at
   // type-check time (mirrors the pattern in trigger-refresh/route.ts).
-  let runIngestionAll: (label: string) => Promise<unknown>;
+  let runIngestionAll: (_label: string) => Promise<unknown>;
   try {
     const mod = (await import(
       "../../../../../dist/src/ingestion/run-all.js" as string

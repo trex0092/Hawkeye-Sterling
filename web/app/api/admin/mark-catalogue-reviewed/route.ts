@@ -18,13 +18,13 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 15;
 
 interface BlobsModuleShape {
-  getStore: (opts: {
+  getStore: (_opts: {
     name: string;
     siteID?: string;
     token?: string;
     consistency?: "strong" | "eventual";
   }) => {
-    setJSON: (key: string, value: unknown) => Promise<void>;
+    setJSON: (_key: string, value: unknown) => Promise<void>;
     get: (key: string, opts?: { type?: string }) => Promise<unknown>;
   };
 }
