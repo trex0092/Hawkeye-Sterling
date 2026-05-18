@@ -1496,6 +1496,139 @@ const FREE_RSS_FEEDS: RssFeed[] = [
   { source: "kun-uz", outlet: "kun.uz", url: "https://kun.uz/en/rss" },
   { source: "total-news-tj", outlet: "news.tj", url: "https://news.tj/en/rss" },
   { source: "orient-tm", outlet: "orient.tm", url: "https://orient.tm/en/rss.xml" },
+
+  // ── Round 10: Environmental crime & natural-resource corruption ────────────
+  { source: "global-forest-watch", outlet: "globalforestwatch.org", url: "https://www.globalforestwatch.org/blog/feed" },
+  { source: "environmental-investigation-agency", outlet: "eia-international.org", url: "https://eia-international.org/feed/" },
+  { source: "eia-global", outlet: "eia-global.org", url: "https://eia-global.org/feed/" },
+  { source: "wildlife-justice", outlet: "wildlifejustice.org", url: "https://www.wildlifejustice.org/rss.xml" },
+  { source: "traffic-wildlife", outlet: "traffic.org", url: "https://www.traffic.org/news/rss/" },
+  { source: "wwf-crime", outlet: "worldwildlife.org", url: "https://www.worldwildlife.org/magazine/rss.xml" },
+  { source: "mongabay-rss", outlet: "mongabay.com", url: "https://news.mongabay.com/feed/" },
+  { source: "earth-rights-rss", outlet: "earthrights.org", url: "https://earthrights.org/feed/" },
+  { source: "global-canopy-rss", outlet: "globalcanopy.org", url: "https://globalcanopy.org/feed/" },
+  { source: "nrdc-international", outlet: "nrdc.org", url: "https://www.nrdc.org/rss.xml" },
+  { source: "iucn-news", outlet: "iucn.org", url: "https://www.iucn.org/news/rss.xml" },
+  { source: "unodc-wildlife", outlet: "unodc.org/wildlife", url: "https://www.unodc.org/rss/unodc_news.xml" },
+
+  // ── Round 10: Human trafficking & forced labour ───────────────────────────
+  { source: "polaris-project", outlet: "polarisproject.org", url: "https://polarisproject.org/feed/" },
+  { source: "antislavery-intl", outlet: "antislavery.org", url: "https://www.antislavery.org/feed/" },
+  { source: "walk-free-foundation", outlet: "walkfree.org", url: "https://www.walkfree.org/news/rss/" },
+  { source: "la-strada-intl", outlet: "lastradainternational.org", url: "https://www.lastradainternational.org/feed/" },
+  { source: "iom-news", outlet: "iom.int", url: "https://www.iom.int/rss.xml" },
+  { source: "unhcr-news", outlet: "unhcr.org", url: "https://www.unhcr.org/rss.xml" },
+  { source: "ilo-forced-labour", outlet: "ilo.org", url: "https://www.ilo.org/global/about-the-ilo/newsroom/news/lang--en/rss/index.xml" },
+
+  // ── Round 10: Proliferation finance / weapons ─────────────────────────────
+  { source: "sipri-rss", outlet: "sipri.org", url: "https://www.sipri.org/rss" },
+  { source: "arms-control-assoc", outlet: "armscontrol.org", url: "https://www.armscontrol.org/rss.xml" },
+  { source: "iiss-rss", outlet: "iiss.org", url: "https://www.iiss.org/rss" },
+  { source: "bellingcat-rss", outlet: "bellingcat.com", url: "https://www.bellingcat.com/feed/" },
+  { source: "conflict-armament", outlet: "conflictarm.com", url: "https://www.conflictarm.com/feed/" },
+  { source: "ipen-proliferation", outlet: "ipfmlibrary.org", url: "https://www.ipfmlibrary.org/rss.xml" },
+  { source: "crux-dprk", outlet: "38north.org", url: "https://www.38north.org/feed/" },
+  { source: "nti-nuclear", outlet: "nti.org", url: "https://www.nti.org/news/feed/" },
+  { source: "project-alpha-kcl", outlet: "kcl.ac.uk/project-alpha", url: "https://www.kcl.ac.uk/news/rss" },
+
+  // ── Round 10: Islamic finance / hawala monitoring ─────────────────────────
+  { source: "islamicfinancenews", outlet: "islamicfinancenews.com", url: "https://www.islamicfinancenews.com/rss" },
+  { source: "iifm-news", outlet: "iifm.net", url: "https://www.iifm.net/rss/news.xml" },
+  { source: "aaoifi-rss", outlet: "aaoifi.com", url: "https://aaoifi.com/feed/" },
+  { source: "ifsb-rss", outlet: "ifsb.org", url: "https://www.ifsb.org/rss/news.xml" },
+  { source: "salaamgateway", outlet: "salaamgateway.com", url: "https://salaamgateway.com/feed/" },
+  { source: "zawya-islamic", outlet: "zawya.com", url: "https://www.zawya.com/mena/en/islamic-finance/rss/" },
+
+  // ── Round 10: Shell-company / beneficial-ownership transparency ───────────
+  { source: "opencorporates-blog", outlet: "opencorporates.com", url: "https://blog.opencorporates.com/feed/" },
+  { source: "open-ownership-news", outlet: "openownership.org", url: "https://www.openownership.org/news/rss/" },
+  { source: "global-beneficial-ownership", outlet: "globalbeneficialownership.org", url: "https://globalbeneficialownership.org/feed/" },
+  { source: "b-team-rss", outlet: "bteam.org", url: "https://bteam.org/news/rss/" },
+  { source: "fairtax-rss", outlet: "fairtax.eu", url: "https://www.fairtax.eu/feed/" },
+  { source: "eu-tax-observatory", outlet: "taxobservatory.eu", url: "https://www.taxobservatory.eu/feed/" },
+  { source: "icij-offshore-leaks", outlet: "offshoreleaks.icij.org", url: "https://icij.org/feed/" },
+  { source: "transparency-register-eu", outlet: "ec.europa.eu/transparencyregister", url: "https://ec.europa.eu/transparencyregister/public/consultation/statistics/rss.xml" },
+
+  // ── Round 10: Sports corruption / FIFA / IOC ──────────────────────────────
+  { source: "play-the-game", outlet: "playthegame.org", url: "https://www.playthegame.org/rss.xml" },
+  { source: "sporting-intelligence", outlet: "sportingintelligence.com", url: "https://www.sportingintelligence.com/feed/" },
+  { source: "transparency-sport", outlet: "transparency.org/sport", url: "https://www.transparency.org/en/topics/sport/rss-feed" },
+  { source: "insidethegames-corruption", outlet: "insidethegames.biz", url: "https://www.insidethegames.biz/rss" },
+  { source: "the-athletic-investigations", outlet: "theathletic.com", url: "https://theathletic.com/rss/feed" },
+
+  // ── Round 10: Tax-haven & offshore financial centres ──────────────────────
+  { source: "jersey-evening-post", outlet: "jerseyeveningpost.com", url: "https://jerseyeveningpost.com/feed/" },
+  { source: "guernsey-press", outlet: "guernseypress.com", url: "https://guernseypress.com/feed/" },
+  { source: "iom-today", outlet: "iomtoday.co.im", url: "https://www.iomtoday.co.im/feed/" },
+  { source: "gibraltar-chronicle", outlet: "chronicle.gi", url: "https://www.chronicle.gi/feed/" },
+  { source: "liechtenstein-news", outlet: "volksblatt.li", url: "https://www.volksblatt.li/feed/" },
+  { source: "monaco-tribune", outlet: "monaco-tribune.com", url: "https://www.monaco-tribune.com/feed/" },
+  { source: "offshore-leaks-blog", outlet: "icij.org/offshore", url: "https://www.icij.org/investigations/offshore/feed/" },
+  { source: "panama-city-star", outlet: "thepanamastar.com", url: "https://thepanamastar.com/feed/" },
+  { source: "seychelles-finance", outlet: "fsaseychelles.sc", url: "https://fsaseychelles.sc/news/rss" },
+  { source: "mauritius-fsc", outlet: "fscmauritius.org", url: "https://www.fscmauritius.org/en/news/rss.xml" },
+  { source: "vanuatu-fiu", outlet: "vfiu.gov.vu", url: "https://www.vfiu.gov.vu/feed/" },
+
+  // ── Round 10: US state attorneys-general & local enforcement ─────────────
+  { source: "ny-ag-press", outlet: "ag.ny.gov", url: "https://ag.ny.gov/press-releases/rss.xml" },
+  { source: "ca-ag-press", outlet: "oag.ca.gov", url: "https://oag.ca.gov/news/rss.xml" },
+  { source: "il-ag-press", outlet: "illinoisattorneygeneral.gov", url: "https://illinoisattorneygeneral.gov/news/rss/news.rss" },
+  { source: "tx-ag-press", outlet: "texasattorneygeneral.gov", url: "https://www.texasattorneygeneral.gov/news/rss" },
+  { source: "fl-dbf", outlet: "flofr.gov", url: "https://www.flofr.gov/sitePages/NewsReleases.htm" },
+  { source: "ma-ag-press", outlet: "mass.gov/ag", url: "https://www.mass.gov/orgs/office-of-attorney-general/rss" },
+  { source: "pa-ag-press", outlet: "attorneygeneral.gov", url: "https://www.attorneygeneral.gov/press-release/rss/" },
+  { source: "nj-ag-press", outlet: "njoag.gov", url: "https://www.njoag.gov/news/rss/" },
+  { source: "cftc-enforcement", outlet: "cftc.gov", url: "https://www.cftc.gov/rss/enforcement.xml" },
+  { source: "sec-litigation", outlet: "sec.gov/litigation", url: "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&type=litreleases&dateb=&owner=include&count=40&search_text=&output=atom" },
+
+  // ── Round 10: Think tanks & policy (AML/CFT) ─────────────────────────────
+  { source: "chatham-house-rss", outlet: "chathamhouse.org", url: "https://www.chathamhouse.org/rss.xml" },
+  { source: "brookings-finance", outlet: "brookings.edu", url: "https://www.brookings.edu/feed/?post_type=research,blog&topic=finance" },
+  { source: "cfr-financial-crime", outlet: "cfr.org", url: "https://www.cfr.org/rss/financial-crime" },
+  { source: "carnegie-endowment", outlet: "carnegieendowment.org", url: "https://carnegieendowment.org/rss/solr/?query=corruption" },
+  { source: "wilson-center-rss", outlet: "wilsoncenter.org", url: "https://www.wilsoncenter.org/rss.xml" },
+  { source: "u4-anti-corruption", outlet: "u4.no", url: "https://www.u4.no/feed.rss" },
+  { source: "baseinstitute-rss", outlet: "baselgovernance.org", url: "https://www.baselgovernance.org/rss.xml" },
+  { source: "grips-forum", outlet: "grips.ac.jp", url: "https://www.grips.ac.jp/en/news/rss.xml" },
+  { source: "george-mason-crime", outlet: "criminology.gmu.edu", url: "https://criminology.gmu.edu/rss.xml" },
+  { source: "rand-corp-crime", outlet: "rand.org", url: "https://www.rand.org/topics/financial-crime.xml" },
+  { source: "rusi-aml", outlet: "rusi.org", url: "https://rusi.org/rss.xml" },
+  { source: "swift-insights", outlet: "swift.com/insights", url: "https://www.swift.com/news-events/news/rss.xml" },
+
+  // ── Round 10: Narcotics & cartel tracking ────────────────────────────────
+  { source: "insightcrime-gangs", outlet: "insightcrime.org/gangs", url: "https://insightcrime.org/category/criminal-networks/feed/" },
+  { source: "inl-us-state", outlet: "state.gov/inl", url: "https://www.state.gov/rss-feed/inl/" },
+  { source: "unodc-drugs", outlet: "unodc.org/drugs", url: "https://www.unodc.org/rss/frontpage_en.xml" },
+  { source: "emcdda-drugs", outlet: "emcdda.europa.eu/drugs", url: "https://www.emcdda.europa.eu/rss-feeds/news_en" },
+  { source: "incb-press", outlet: "incb.org", url: "https://www.incb.org/incb/en/news-and-events/news/rss.xml" },
+  { source: "mexico-organized-crime", outlet: "ocdajournal.com", url: "https://ocdajournal.com/feed/" },
+  { source: "plaza-publica-gt", outlet: "plazapublica.com.gt", url: "https://www.plazapublica.com.gt/feed/" },
+  { source: "verdad-abierta-co", outlet: "verdadabierta.com", url: "https://verdadabierta.com/feed/" },
+
+  // ── Round 10: South American financial crime specialists ─────────────────
+  { source: "gafi-latinoamerica", outlet: "gafilat.org", url: "https://www.gafilat.org/index.php/es/news-es?format=feed&type=rss" },
+  { source: "lavajato-monitor", outlet: "lawfareblog.com/lava-jato", url: "https://www.lawfaremedia.org/topic/lava-jato/feed" },
+  { source: "transparency-brasil", outlet: "transparencia.org.br", url: "https://www.transparencia.org.br/feed" },
+  { source: "agencia-publica-br", outlet: "apublica.org", url: "https://apublica.org/feed/" },
+  { source: "poder-360-br", outlet: "poder360.com.br", url: "https://www.poder360.com.br/feed/" },
+  { source: "the-intercept-br", outlet: "theintercept.com/brasil", url: "https://theintercept.com/brasil/feed/" },
+  { source: "noticias-aliadas-pe", outlet: "noticiasaliadas.org", url: "https://www.noticiasaliadas.org/feed/" },
+
+  // ── Round 10: Additional African investigative ───────────────────────────
+  { source: "the-continent-af", outlet: "thecontinent.org", url: "https://thecontinent.org/feed/" },
+  { source: "africaintelligence-rss", outlet: "africaintelligence.com", url: "https://www.africaintelligence.com/rss/all.xml" },
+  { source: "africa-times", outlet: "africatimes.com", url: "https://africatimes.com/feed/" },
+  { source: "the-africa-report-inv", outlet: "theafricareport.com/investigations", url: "https://www.theafricareport.com/category/investigations/feed/" },
+  { source: "oxpeckers-rss", outlet: "oxpeckers.org", url: "https://oxpeckers.org/feed/" },
+  { source: "financialafrik", outlet: "financialafrik.com", url: "https://www.financialafrik.com/feed/" },
+  { source: "jeune-afrique-eco", outlet: "jeuneafrique.com", url: "https://www.jeuneafrique.com/economie/rss/" },
+  { source: "africa-confidential-inv", outlet: "africa-confidential.com/investigations", url: "https://www.africa-confidential.com/rss/investigations" },
+  { source: "west-africa-weekly", outlet: "westafricaweekly.com", url: "https://westafricaweekly.com/feed/" },
+  { source: "businessday-ng", outlet: "businessday.ng", url: "https://businessday.ng/feed/" },
+  { source: "premium-times-ng", outlet: "premiumtimesng.com", url: "https://www.premiumtimesng.com/feed" },
+  { source: "icir-nigeria", outlet: "icirnigeria.org", url: "https://www.icirnigeria.org/feed/" },
+  { source: "peoples-gazette-ng", outlet: "gazettengr.com", url: "https://gazettengr.com/feed/" },
+  { source: "the-exchange-africa", outlet: "theexchangeafrica.com", url: "https://theexchangeafrica.com/feed/" },
 ];
 
 // Cheap RSS / Atom parser — extracts <item> or <entry> blocks; we don't
