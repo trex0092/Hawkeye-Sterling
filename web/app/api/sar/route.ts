@@ -29,6 +29,7 @@ import { enforce } from "@/lib/server/enforce";
 import type { ApiKeyRecord } from "@/lib/server/api-keys";
 import { getJson, setJson, listKeys } from "@/lib/server/store";
 import { getEntity } from "@/lib/config/entities";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -202,9 +203,21 @@ async function handlePost(req: Request, callerRecord: ApiKeyRecord | null, gateH
       `[sar] four-eyes verified: caseId=${caseId} approvers=[${feCheck.approvers.join(",")}]`,
     );
   } else {
+    const callerRole = callerRecord?.role ?? "unknown";
     console.warn(
-      `[sar] four-eyes BYPASSED: caseId=${caseId} generatedBy=${generatedBy} — audit record created`,
+      `[sar] four-eyes BYPASSED: caseId=${caseId} generatedBy=${generatedBy} role=${callerRole}`,
     );
+    // Write an immutable audit-chain entry so the bypass is permanently logged.
+    void writeAuditChainEntry({
+      event: "four_eyes.bypass",
+      actor: generatedBy,
+      caseId,
+      subjectName,
+      fourEyesAction: "sar_generation",
+      bypassReason: "role_override",
+      bypassRole: callerRole,
+      filingType,
+    });
   }
 
   // ── Delegate to sar-report route for actual generation ────────────────────

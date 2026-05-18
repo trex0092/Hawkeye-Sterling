@@ -71,6 +71,17 @@ export const ofacSdnAdapter: SourceAdapter = {
       });
     }
 
+    // Guard against silently replacing a healthy list with an empty one
+    // (e.g. OFAC returns a 200 with an empty or malformed XML document).
+    // Throwing here surfaces the failure in the ingest pipeline and leaves
+    // the existing blob intact rather than overwriting it with zero records.
+    if (entities.length === 0) {
+      throw new Error(
+        `ofac_sdn: parsed 0 entities from ${SOURCE_URL} — refusing to overwrite existing list. ` +
+        `Check the feed URL and XML schema before retrying.`,
+      );
+    }
+
     return { entities, rawChecksum };
   },
 };

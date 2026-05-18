@@ -679,10 +679,10 @@ export async function POST(req: Request): Promise<NextResponse> {
         }
       }
 
-      // Write audit chain entry when there are new sanctions hits — creates
-      // an immutable trail that a regulator can replay to verify ongoing
-      // monitoring is actually running and escalating. Fire-and-forget so
-      // a blob write failure never breaks the screening loop.
+      // Write audit chain entry for every monitoring run so a regulator can
+      // verify continuous coverage — not just when new hits are found.
+      // No-change runs use event "ongoing.monitor_tick" (a lightweight
+      // heartbeat); new-hit runs use "new_hits_alert" with full hit detail.
       if (newHits.length > 0) {
         void writeAuditChainEntry({
           event: "new_hits_alert",
@@ -699,6 +699,20 @@ export async function POST(req: Request): Promise<NextResponse> {
             listRef: h.listRef,
             candidateName: h.candidateName,
           })),
+        });
+      } else {
+        // Heartbeat entry: proves the subject was screened even with no new hits.
+        // Regulators can audit the complete monitoring cadence from these entries.
+        void writeAuditChainEntry({
+          event: "ongoing.monitor_tick",
+          actor: "cron_internal",
+          subjectId: s.id,
+          subjectName: s.name,
+          severity: adjustedSeverity,
+          topScore: adjustedScore,
+          scoreDelta: 0,
+          newHitCount: 0,
+          runAt,
         });
       }
 

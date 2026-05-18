@@ -173,8 +173,26 @@ async function alertDesignationChanges(
   }
 }
 
+const LOCK_TTL_MS = 12 * 60 * 1000; // 12 min — longer than schedule interval to handle slow runs
+
 export default async (_req: Request): Promise<Response> => {
   const alertWebhook = process.env["ALERT_WEBHOOK_URL"];
+
+  // Idempotency lock — prevents overlapping runs when a previous 15-min tick
+  // is still in-flight under Lambda warm-instance reuse.
+  const hbStore = getStore("hawkeye-function-heartbeats");
+  const existingLock = await hbStore.get(`${LABEL}/lock`, { type: "json" }).catch(() => null) as { lockedAt: string } | null;
+  if (existingLock) {
+    const lockAge = Date.now() - new Date(existingLock.lockedAt).getTime();
+    if (lockAge < LOCK_TTL_MS) {
+      console.info(`[${LABEL}] already running (lock age ${Math.round(lockAge / 1000)}s) — skipping`);
+      return new Response(
+        JSON.stringify({ cadence: "15min", ok: true, skipped: true, reason: "lock_active", lockAgeMs: lockAge }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      );
+    }
+  }
+  await hbStore.setJSON(`${LABEL}/lock`, { lockedAt: new Date().toISOString() }).catch(() => undefined);
 
   // Snapshot entity sets BEFORE ingestion.
   const listStore = getStore("hawkeye-lists");
@@ -184,6 +202,7 @@ export default async (_req: Request): Promise<Response> => {
   try {
     result = await runIngestionAll(LABEL);
   } catch (err) {
+    await hbStore.delete(`${LABEL}/lock`).catch(() => undefined);
     return new Response(
       JSON.stringify({
         cadence: "15min",
@@ -207,12 +226,14 @@ export default async (_req: Request): Promise<Response> => {
   // Only written on successful ingestion runs.
   if (result.ok) {
     try {
-      const hbStore = getStore("hawkeye-function-heartbeats");
       await hbStore.setJSON(LABEL, { lastSuccess: new Date().toISOString(), label: LABEL });
     } catch (err) {
       console.warn(`[${LABEL}] heartbeat write failed (non-critical):`, err instanceof Error ? err.message : String(err));
     }
   }
+
+  // Always release the lock (even on failure) so the next tick can proceed.
+  await hbStore.delete(`${LABEL}/lock`).catch(() => undefined);
 
   return new Response(
     JSON.stringify({

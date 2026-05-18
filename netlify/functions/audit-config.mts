@@ -18,6 +18,7 @@
 import type { Config } from '@netlify/functions';
 import { createHash, createHmac } from 'node:crypto';
 import { getStore } from '@netlify/blobs';
+import { writeHeartbeat } from '../lib/heartbeat.js';
 
 // Non-secret env vars whose values are stable and govern system behaviour.
 // Changes to these indicate a configuration drift that must be audited.
@@ -127,6 +128,8 @@ export default async function handler(_req: Request): Promise<Response> {
   } catch {
     // Non-fatal — primary record already written.
   }
+
+  await writeHeartbeat('audit-config');
 
   return jsonResp({
     ok: true,

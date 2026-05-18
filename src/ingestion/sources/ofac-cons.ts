@@ -50,6 +50,12 @@ export const ofacConsAdapter: SourceAdapter = {
         source: 'ofac_cons', fetchedAt,
       });
     }
+    if (entities.length === 0) {
+      throw new Error(
+        `ofac_cons: parsed 0 entities from ${SOURCE_URL} — refusing to overwrite existing list. ` +
+        `Check the feed URL and XML schema before retrying.`,
+      );
+    }
     return { entities, rawChecksum };
   },
 };

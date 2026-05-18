@@ -141,15 +141,26 @@ interface DobParts { y: number; m?: number; d?: number }
 
 function parseDobParts(raw: string): DobParts | null {
   const s = raw.trim();
+  const isValidMonth = (m: number) => m >= 1 && m <= 12;
+  const isValidDay = (d: number) => d >= 1 && d <= 31;
+  const isValidYear = (y: number) => y >= 1900 && y <= 2100;
   // ISO: YYYY-MM-DD or YYYY/MM/DD
   const isoM = s.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/);
-  if (isoM) return { y: +(isoM[1] ?? '0'), m: +(isoM[2] ?? '0'), d: +(isoM[3] ?? '0') };
+  if (isoM) {
+    const y = +(isoM[1] ?? '0'); const m = +(isoM[2] ?? '0'); const d = +(isoM[3] ?? '0');
+    if (!isValidYear(y) || !isValidMonth(m) || !isValidDay(d)) return null;
+    return { y, m, d };
+  }
   // European: DD/MM/YYYY or DD.MM.YYYY
   const dmyM = s.match(/^(\d{1,2})[./](\d{1,2})[./](\d{4})$/);
-  if (dmyM) return { y: +(dmyM[3] ?? '0'), m: +(dmyM[2] ?? '0'), d: +(dmyM[1] ?? '0') };
+  if (dmyM) {
+    const y = +(dmyM[3] ?? '0'); const m = +(dmyM[2] ?? '0'); const d = +(dmyM[1] ?? '0');
+    if (!isValidYear(y) || !isValidMonth(m) || !isValidDay(d)) return null;
+    return { y, m, d };
+  }
   // Year only
   const yM = s.match(/^(\d{4})$/);
-  if (yM) return { y: +(yM[1] ?? '0') };
+  if (yM) { const y = +(yM[1] ?? '0'); return isValidYear(y) ? { y } : null; }
   return null;
 }
 
@@ -184,7 +195,8 @@ export function quickScreen(
   candidates: QuickScreenCandidate[],
   opts: QuickScreenOptions = {},
 ): QuickScreenResult {
-  const threshold = opts.scoreThreshold ?? DEFAULT_THRESHOLD;
+  const rawThreshold = opts.scoreThreshold ?? DEFAULT_THRESHOLD;
+  const threshold = Math.max(0, Math.min(1, rawThreshold));
   const maxHits = opts.maxHits ?? DEFAULT_MAX_HITS;
   const clock = opts.clock ?? (() => Date.now());
   const now = opts.now ?? (() => new Date().toISOString());
@@ -322,10 +334,16 @@ export function quickScreen(
   }
 
   // Aggregate confidence: mean of per-hit disambiguation confidences.
+  // Only include hits that actually have a computed discriminator confidence;
+  // defaulting absent values to 50 would produce a spuriously confident
+  // aggregate when no discriminators are available.
   let confidenceScore: number | undefined;
   if (clipped.length > 0) {
-    const sum = clipped.reduce((acc, h) => acc + (h.disambiguationConfidence ?? 50), 0);
-    confidenceScore = Math.round(sum / clipped.length);
+    const withConfidence = clipped.filter((h) => h.disambiguationConfidence !== undefined);
+    if (withConfidence.length > 0) {
+      const sum = withConfidence.reduce((acc, h) => acc + (h.disambiguationConfidence as number), 0);
+      confidenceScore = Math.round(sum / withConfidence.length);
+    }
   }
 
   return {

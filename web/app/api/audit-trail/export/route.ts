@@ -6,9 +6,11 @@
 //   from    (ISO date, inclusive) — filter entries on or after this date
 //   to      (ISO date, inclusive) — filter entries on or before this date
 //   format  (json|csv, default json) — output format
+//   limit   (integer, default 5000, max 10000) — max entries per page
+//   offset  (integer, default 0) — entries to skip (for pagination)
 //
 // Response:
-//   JSON: { ok, format, count, from, to, entries, exportedAt }
+//   JSON: { ok, format, count, total, truncated, from, to, entries, exportedAt }
 //   CSV:  text/csv with columns seq,event,subject,actor,severity,hitsCount,
 //         listsChecked,enrichmentPending,caseId,asanaTaskId,at
 //
@@ -94,11 +96,21 @@ function entriesToCsv(entries: ChainEntry[]): string {
   return lines.join("\n");
 }
 
+const MAX_EXPORT_ROWS = 10_000;
+const DEFAULT_EXPORT_ROWS = 5_000;
+
 async function handleGet(req: Request): Promise<Response> {
   const url = new URL(req.url);
   const fromParam = url.searchParams.get("from") ?? null;
   const toParam = url.searchParams.get("to") ?? null;
   const format = url.searchParams.get("format") === "csv" ? "csv" : "json";
+
+  const rawLimit = parseInt(url.searchParams.get("limit") ?? "", 10);
+  const rawOffset = parseInt(url.searchParams.get("offset") ?? "0", 10);
+  const limit = isNaN(rawLimit) || rawLimit <= 0
+    ? DEFAULT_EXPORT_ROWS
+    : Math.min(rawLimit, MAX_EXPORT_ROWS);
+  const offset = isNaN(rawOffset) || rawOffset < 0 ? 0 : rawOffset;
 
   const fromDate = fromParam ? new Date(fromParam) : null;
   const toDate = toParam ? new Date(toParam) : null;
@@ -140,7 +152,7 @@ async function handleGet(req: Request): Promise<Response> {
   }
 
   // Filter by date range (inclusive).
-  const filtered = chain.filter((entry) => {
+  const allFiltered = chain.filter((entry) => {
     const at = new Date(entry.at);
     if (fromDate && at < fromDate) return false;
     if (toDate && at > toDate) return false;
@@ -148,7 +160,13 @@ async function handleGet(req: Request): Promise<Response> {
   });
 
   // Sort ascending by seq for export.
-  filtered.sort((a, b) => a.seq - b.seq);
+  allFiltered.sort((a, b) => a.seq - b.seq);
+
+  // Apply pagination — cap at MAX_EXPORT_ROWS to prevent data-exfiltration
+  // of the full 10-year audit trail in one unbounded request.
+  const total = allFiltered.length;
+  const page = allFiltered.slice(offset, offset + limit);
+  const truncated = offset + limit < total;
 
   const exportedAt = new Date().toISOString();
   const dateStamp = exportedAt.slice(0, 10);
@@ -156,12 +174,14 @@ async function handleGet(req: Request): Promise<Response> {
   const disposition = `attachment; filename="${filename}"`;
 
   if (format === "csv") {
-    const csv = entriesToCsv(filtered);
+    const csv = entriesToCsv(page);
     return new Response(csv, {
       status: 200,
       headers: {
         "content-type": "text/csv; charset=utf-8",
         "content-disposition": disposition,
+        "x-total-count": String(total),
+        "x-truncated": String(truncated),
       },
     });
   }
@@ -170,10 +190,14 @@ async function handleGet(req: Request): Promise<Response> {
   const body = JSON.stringify({
     ok: true,
     format: "json",
-    count: filtered.length,
+    count: page.length,
+    total,
+    truncated,
+    offset,
+    limit,
     from: fromParam ?? null,
     to: toParam ?? null,
-    entries: filtered,
+    entries: page,
     exportedAt,
   });
 
@@ -182,6 +206,8 @@ async function handleGet(req: Request): Promise<Response> {
     headers: {
       "content-type": "application/json",
       "content-disposition": disposition,
+      "x-total-count": String(total),
+      "x-truncated": String(truncated),
     },
   });
 }
