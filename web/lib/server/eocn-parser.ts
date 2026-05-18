@@ -185,6 +185,122 @@ function parseOrgRow(row: string[], headers: string[]): EocnParsedEntity | null 
   };
 }
 
+// ── XML parser ────────────────────────────────────────────────────────────────
+// EOCN XML format varies but typically wraps entries in <individual>, <entity>,
+// or <person> tags (similar to UN/OFAC schema), or in Arabic-keyed elements.
+// The parser is deliberately permissive: it scans for any recognised wrapper
+// tag and extracts fields by tag name rather than XPath, so minor schema
+// changes between EOCN releases do not break extraction.
+
+function xmlTag(block: string, ...names: string[]): string {
+  for (const name of names) {
+    const m = block.match(new RegExp(`<${name}[^>]*>([\\s\\S]*?)<\\/${name}>`, "si"));
+    if (m?.[1]) return m[1].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  }
+  return "";
+}
+
+function xmlAttr(tag: string, attr: string): string {
+  return tag.match(new RegExp(`${attr}="([^"]+)"`))?.[1] ?? "";
+}
+
+function xmlAll(xml: string, tag: string): string[] {
+  return Array.from(
+    xml.matchAll(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, "gsi")),
+    (m) => m[1] ?? "",
+  );
+}
+
+function cleanText(s: string): string {
+  return s.replace(/<[^>]+>/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/\s+/g, " ").trim();
+}
+
+export function parseEocnXml(xml: string): EocnParsedEntity[] {
+  const results: EocnParsedEntity[] = [];
+
+  // ── Individual entries ──────────────────────────────────────────────────────
+  // Try common wrapper tags used by EOCN/UAE government XML schemas
+  const individualTags = ["INDIVIDUAL", "individual", "person", "PERSON", "شخص", "فرد"];
+  for (const tag of individualTags) {
+    const blocks = xmlAll(xml, tag);
+    if (blocks.length === 0) continue;
+    for (const block of blocks) {
+      // Skip removed/delisted entries
+      if (/removed|مرفوع|delisted/i.test(xmlAttr(block, "status") + xmlAttr(block, "type"))) continue;
+
+      // Name: try multiple field name conventions
+      const latinName = cleanText(
+        xmlTag(block, "FULL_NAME", "fullName", "full_name", "NAME", "name", "latinName", "LATIN_NAME") ||
+        [xmlTag(block, "FIRST_NAME", "firstName", "first_name"),
+         xmlTag(block, "SECOND_NAME", "secondName"),
+         xmlTag(block, "LAST_NAME", "lastName", "last_name", "FAMILY_NAME", "familyName")].filter(Boolean).join(" "),
+      );
+      const arabicName = cleanText(
+        xmlTag(block, "arabicName", "ARABIC_NAME", "arabic_name", "nameArabic") ||
+        xmlTag(block, "الاسم", "الاسم_الكامل"),
+      );
+
+      if (!latinName && !arabicName) continue;
+
+      const nat = cleanText(xmlTag(block, "NATIONALITY", "nationality", "CITIZENSHIP", "citizenship", "الجنسية"));
+      const dob = cleanText(xmlTag(block, "DATE_OF_BIRTH", "dateOfBirth", "dob", "DOB", "BIRTH_DATE", "birthDate", "تاريخ_الميلاد"));
+      const passport = cleanText(xmlTag(block, "PASSPORT_NUMBER", "passportNumber", "passport", "PASSPORT", "رقم_الجواز"));
+      const nationalId = cleanText(xmlTag(block, "NATIONAL_ID", "nationalId", "NATIONAL_IDENTIFICATION_NUMBER", "رقم_الوطنية"));
+      const ref = cleanText(xmlTag(block, "REFERENCE", "reference", "ID", "id", "DATAID", "uid", "UID", "رقم_المرجع"));
+
+      const identifiers: Record<string, string> = {};
+      if (passport) identifiers["passport"] = passport;
+      if (nationalId) identifiers["national_id"] = nationalId;
+
+      results.push({
+        name: latinName || arabicName,
+        nameArabic: arabicName || undefined,
+        aliases: [],
+        type: "individual",
+        nationalities: nat ? [nat] : [],
+        dateOfBirth: dob || undefined,
+        identifiers,
+        reference: ref || undefined,
+        isRemoved: false,
+      });
+    }
+    if (results.length > 0) break; // found entries with this tag — stop trying others
+  }
+
+  // ── Entity / organisation entries ──────────────────────────────────────────
+  const entityTags = ["ENTITY", "entity", "organisation", "ORGANISATION", "organization", "ORGANIZATION", "company", "COMPANY", "كيان", "تنظيم"];
+  const entityResults: EocnParsedEntity[] = [];
+  for (const tag of entityTags) {
+    const blocks = xmlAll(xml, tag);
+    if (blocks.length === 0) continue;
+    for (const block of blocks) {
+      if (/removed|مرفوع|delisted/i.test(xmlAttr(block, "status") + xmlAttr(block, "type"))) continue;
+
+      const latinName = cleanText(xmlTag(block, "FULL_NAME", "fullName", "NAME", "name", "latinName", "ENTITY_NAME", "entityName") || "");
+      const arabicName = cleanText(xmlTag(block, "arabicName", "ARABIC_NAME", "الاسم") || "");
+      if (!latinName && !arabicName) continue;
+
+      const aliasBlocks = xmlAll(block, "alias").concat(xmlAll(block, "AKA")).concat(xmlAll(block, "aka"));
+      const aliases = aliasBlocks.map((a) => cleanText(xmlTag(a, "NAME", "name", "fullName") || a)).filter(Boolean);
+      const ref = cleanText(xmlTag(block, "REFERENCE", "reference", "ID", "id", "DATAID") || "");
+
+      entityResults.push({
+        name: latinName || arabicName,
+        nameArabic: arabicName || undefined,
+        aliases,
+        type: "entity",
+        nationalities: [],
+        identifiers: {},
+        reference: ref || undefined,
+        isRemoved: false,
+      });
+    }
+    if (entityResults.length > 0) break;
+  }
+
+  return [...results, ...entityResults];
+}
+
 // ── Main parse entry point ────────────────────────────────────────────────────
 
 export async function parseEocnBuffer(buf: Buffer): Promise<EocnParsedEntity[]> {

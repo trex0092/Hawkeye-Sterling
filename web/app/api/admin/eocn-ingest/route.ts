@@ -23,7 +23,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { invalidateCandidateCache } from "@/lib/server/candidates-loader";
-import { parseEocnBuffer } from "@/lib/server/eocn-parser";
+import { parseEocnBuffer, parseEocnXml } from "@/lib/server/eocn-parser";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -318,12 +318,14 @@ export async function POST(req: Request): Promise<NextResponse> {
     listIdOverride === "uae_ltl" ? "uae_ltl" : "uae_eocn";
 
   const ext = fileName.split(".").pop()?.toLowerCase() ?? "";
-  const isPdf = ext === "pdf" || file.type === "application/pdf";
-  const isExcel = ext === "xls" || ext === "xlsx" || file.type.includes("excel") || file.type.includes("spreadsheet");
+  const isPdf   = ext === "pdf"  || file.type === "application/pdf";
+  const isExcel = ext === "xls"  || ext === "xlsx"
+    || file.type.includes("excel") || file.type.includes("spreadsheet");
+  const isXml   = ext === "xml"  || file.type === "application/xml" || file.type === "text/xml";
 
-  if (!isPdf && !isExcel) {
+  if (!isPdf && !isExcel && !isXml) {
     return NextResponse.json(
-      { ok: false, error: "Unsupported file type — upload .xls, .xlsx, or .pdf" },
+      { ok: false, error: "Unsupported file type — upload .xls, .xlsx, .xml, or .pdf" },
       { status: 415, headers: gate.headers },
     );
   }
@@ -334,7 +336,48 @@ export async function POST(req: Request): Promise<NextResponse> {
   let parseMethod: IngestResult["parseMethod"] = "none";
   let entities: NormalisedEntity[] = [];
 
-  // ── 1. Structural parse (XLS/XLSX only) ───────────────────────────────────
+  // ── 1a. Structural parse — XML ─────────────────────────────────────────────
+  if (isXml && entities.length === 0) {
+    try {
+      const xmlText = buf.toString("utf-8");
+      const parsed = parseEocnXml(xmlText);
+      if (parsed.length > 0) {
+        parseMethod = "structural";
+        entities = parsed.map((p, i) => {
+          const ref = p.reference ?? String(i + 1);
+          const out: NormalisedEntity = {
+            id: `${listId}:${ref}:${p.name.slice(0, 30).replace(/\s+/g, "_")}`,
+            name: p.name,
+            aliases: p.aliases,
+            type: p.type,
+            nationalities: p.nationalities,
+            jurisdictions: ["AE"],
+            identifiers: p.identifiers,
+            addresses: [],
+            listings: [
+              {
+                source: listId,
+                program: listId === "uae_ltl" ? "UAE Local Terrorist List" : "UAE EOCN TFS",
+                reference: ref,
+                authorityUrl: "https://www.uaeiec.gov.ae/en-us/un-page",
+              },
+            ],
+            source: listId,
+            fetchedAt: now,
+          };
+          if (p.nameArabic) out.notes = p.nameArabic;
+          if (p.dateOfBirth) out.identifiers["dob"] = p.dateOfBirth;
+          return out;
+        });
+      } else {
+        warnings.push("XML structural parser found 0 entities — falling back to AI extraction");
+      }
+    } catch (err) {
+      warnings.push(`XML parse failed (${err instanceof Error ? err.message : String(err)}) — falling back to AI extraction`);
+    }
+  }
+
+  // ── 1b. Structural parse — XLS/XLSX ───────────────────────────────────────
   if (isExcel) {
     try {
       const parsed = await parseEocnBuffer(buf);
