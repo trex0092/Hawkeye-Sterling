@@ -300,6 +300,13 @@ export function makeUaeIecXlsxAdapter(config: UaeIecXlsxAdapterConfig): SourceAd
           if (ent) entities.push(ent);
         }
 
+        if (entities.length === 0) {
+          throw new Error(
+            `${config.listId}: parsed 0 entities from XLSX (${sheet.rowCount} rows) — ` +
+            `the column layout may have changed or the file is empty. ` +
+            `Set ${config.seedPathEnvVar} to a JSON seed file path as a fallback.`,
+          );
+        }
         return { entities, rawChecksum };
       };
 

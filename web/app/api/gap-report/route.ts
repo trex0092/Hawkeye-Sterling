@@ -1,5 +1,6 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import type { GovernanceGapResult } from "@/app/api/governance-gap/route";

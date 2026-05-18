@@ -117,6 +117,13 @@ async function handleGet(req: Request): Promise<NextResponse> {
 async function handlePost(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+  const contentLength = Number(req.headers.get("content-length") ?? "0");
+  if (contentLength > 10 * 1024 * 1024) {
+    return NextResponse.json(
+      { ok: false, error: "request body too large (max 10 MB)" },
+      { status: 413, headers: gate.headers },
+    );
+  }
   const tenant = tenantIdFromGate(gate);
   let body: { cases?: CaseRecord[] };
   try {

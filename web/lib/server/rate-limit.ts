@@ -1,27 +1,97 @@
 // Hawkeye Sterling — per-API-key rate limiter.
 //
-// Fixed-window counters in Netlify Blobs. Two windows per key:
-//   second-resolution cap (burst)
-//   minute-resolution cap (sustained)
-// Limits come from the tier definition so commercial tiers are published
-// in one place.
+// Two enforcement paths:
 //
-// Soft-limit caveat: Netlify Blobs has no atomic compare-and-swap. Two
-// concurrent requests arriving within the same blob round-trip (~50 ms)
-// can both read count=N, both pass the check, and both write count=N+1,
-// effectively allowing count=N+2. In the worst case a burst of P parallel
-// requests in the same second window can slip through up to P×rps calls
-// before any counter is written back.
+// 1. Upstash Redis (hard enforcement): when UPSTASH_REDIS_REST_URL and
+//    UPSTASH_REDIS_REST_TOKEN are set, uses atomic INCR + EXPIRE via the
+//    Upstash REST API. Provides strict per-second and per-minute limits
+//    with no race conditions across Lambda instances.
 //
-// This is acceptable for short-window burst limits at low concurrency.
-// For strict enforcement, replace this module with @upstash/ratelimit
-// backed by a Redis instance — it uses MULTI/EXEC pipelines that provide
-// the atomic increment Blobs lacks. Required env vars:
+// 2. Netlify Blobs (soft enforcement): fallback when Redis is unavailable.
+//    Fixed-window counters with no CAS — concurrent requests in the same
+//    blob round-trip can slip through. Acceptable at low concurrency.
+//
+// Required env vars for hard enforcement:
 //   UPSTASH_REDIS_REST_URL   – e.g. https://<id>.upstash.io
 //   UPSTASH_REDIS_REST_TOKEN – service account token
 
 import { getJson, setJson } from "./store";
 import { tierFor, type TierDefinition } from "@/lib/data/tiers";
+
+// ── Upstash Redis path ────────────────────────────────────────────────────────
+
+async function redisIncr(key: string, ttlSeconds: number): Promise<number | null> {
+  const url = process.env["UPSTASH_REDIS_REST_URL"];
+  const token = process.env["UPSTASH_REDIS_REST_TOKEN"];
+  if (!url || !token) return null;
+  try {
+    // INCR key — atomic increment
+    const incrRes = await fetch(`${url}/incr/${encodeURIComponent(key)}`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!incrRes.ok) return null;
+    const incrBody = await incrRes.json() as { result?: number };
+    const count = incrBody.result ?? 0;
+    // Only set TTL on first write (count === 1) to avoid resetting the window
+    if (count === 1) {
+      await fetch(`${url}/expire/${encodeURIComponent(key)}/${ttlSeconds}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      }).catch(() => undefined);
+    }
+    return count;
+  } catch {
+    return null;
+  }
+}
+
+async function consumeRedis(
+  keyId: string,
+  tier: TierDefinition,
+): Promise<RateLimitResult | null> {
+  const nowSec = Math.floor(Date.now() / 1000);
+  const secWindow = Math.floor(nowSec);
+  const minWindow = Math.floor(nowSec / 60);
+  const secKey = `rl:${keyId}:s:${secWindow}`;
+  const minKey = `rl:${keyId}:m:${minWindow}`;
+
+  const [secCount, minCount] = await Promise.all([
+    redisIncr(secKey, 2),
+    redisIncr(minKey, 62),
+  ]);
+  if (secCount === null || minCount === null) return null; // Redis unavailable
+
+  const secAllowed = secCount <= tier.rateLimitPerSecond;
+  const minAllowed = minCount <= tier.rateLimitPerMinute;
+
+  if (!secAllowed) {
+    return {
+      allowed: false,
+      retryAfterSec: 1,
+      remainingSecond: 0,
+      remainingMinute: Math.max(0, tier.rateLimitPerMinute - minCount),
+      tier,
+    };
+  }
+  if (!minAllowed) {
+    const secsToNextMinute = 60 - (nowSec % 60);
+    return {
+      allowed: false,
+      retryAfterSec: Math.max(1, secsToNextMinute),
+      remainingSecond: Math.max(0, tier.rateLimitPerSecond - secCount),
+      remainingMinute: 0,
+      tier,
+    };
+  }
+  return {
+    allowed: true,
+    retryAfterSec: 0,
+    remainingSecond: Math.max(0, tier.rateLimitPerSecond - secCount),
+    remainingMinute: Math.max(0, tier.rateLimitPerMinute - minCount),
+    tier,
+  };
+}
 
 interface Window {
   startMs: number;
@@ -52,6 +122,10 @@ export async function consumeRateLimit(
   tierId: string,
 ): Promise<RateLimitResult> {
   const tier = tierFor(tierId);
+
+  // Prefer Redis atomic enforcement when configured.
+  const redisResult = await consumeRedis(keyId, tier);
+  if (redisResult !== null) return redisResult;
   const now = Date.now();
   const storageKey = `${PREFIX}${keyId}`;
   const prior = (await getJson<LimitState>(storageKey)) ?? {

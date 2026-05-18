@@ -10,6 +10,7 @@ import { classifyMlroQuestion } from "../../../../dist/src/brain/mlro-question-c
 import { enforce } from "@/lib/server/enforce";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 
 const CORS: Record<string, string> = {
   "access-control-allow-origin": process.env["NEXT_PUBLIC_APP_URL"] ?? "https://hawkeye-sterling.netlify.app",

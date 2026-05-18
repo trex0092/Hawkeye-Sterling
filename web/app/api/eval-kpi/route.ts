@@ -18,6 +18,7 @@ import path from "node:path";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 
 const SNAPSHOT_PATH = path.resolve(process.cwd(), "..", "data/eval/kpi-snapshot.json");
 

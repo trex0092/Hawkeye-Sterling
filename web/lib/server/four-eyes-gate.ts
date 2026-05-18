@@ -15,7 +15,7 @@
 // regulator JWT before invoking this gate.
 
 import { getJson, setJson, listKeys } from "@/lib/server/store";
-import { createHash } from "crypto";
+import { createHash, randomBytes } from "crypto";
 
 export interface ApprovalEntry {
   approvalId: string;
@@ -85,7 +85,7 @@ export async function recordApproval(input: {
     };
   }
 
-  const approvalId = `appr_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  const approvalId = `appr_${Date.now()}_${randomBytes(4).toString("hex")}`;
   const entry: ApprovalEntry = {
     approvalId,
     caseId: input.caseId,

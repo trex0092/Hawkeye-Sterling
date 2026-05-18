@@ -303,7 +303,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         const updated: ExistingProfile = {
           ...base,
           updatedAt: nowIso,
-          snapshots: [...base.snapshots.slice(-199), snap],
+          snapshots: [...base.snapshots.slice(-999), snap],
           hitsEverSeen: Array.from(fingerprints).slice(-500),
         };
         await setJson(profileKey, updated);

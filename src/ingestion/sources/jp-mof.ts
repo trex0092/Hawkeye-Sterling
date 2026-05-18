@@ -221,6 +221,12 @@ export const jpMofAdapter: SourceAdapter = {
     if (errors.length > 0 && all.length === 0) {
       throw new Error(`jp_mof: all ${urls.length} feed URL(s) failed — ${errors.join('; ')}`);
     }
+    if (all.length === 0) {
+      throw new Error(
+        `jp_mof: parsed 0 entities across ${urls.length} feed URL(s) — ` +
+        `refusing to overwrite existing list. The XLSX column layout may have changed.`,
+      );
+    }
     const rawChecksum = await sha256Hex(JSON.stringify({ urls, count: all.length }));
     return { entities: all, rawChecksum };
   },

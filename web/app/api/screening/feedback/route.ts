@@ -10,6 +10,7 @@ import { submitFeedback, listFeedback, stats, type Verdict } from "@/lib/server/
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);

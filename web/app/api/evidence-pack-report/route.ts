@@ -1,5 +1,6 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 import { enforce } from "@/lib/server/enforce";
 import type { EvidencePackEntry } from "@/lib/evidencePack";
 import {

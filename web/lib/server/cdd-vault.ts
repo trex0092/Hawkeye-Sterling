@@ -8,6 +8,7 @@
 //   medium risk  → 180 days
 //   standard     → 365 days
 
+import { randomBytes } from "node:crypto";
 import { getJson, setJson, del, listKeys } from "@/lib/server/store";
 
 export interface CddReviewRecord {
@@ -111,5 +112,5 @@ export async function deleteCddReview(tenantId: string, id: string): Promise<voi
 }
 
 export function newCddReviewId(): string {
-  return `crr-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+  return `crr-${Date.now()}-${randomBytes(4).toString("hex")}`;
 }

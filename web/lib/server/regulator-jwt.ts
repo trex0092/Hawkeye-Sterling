@@ -21,7 +21,7 @@
 // compliance-report and audit-certificate flows already use. Verifiers
 // fetch the public key from /.well-known/hawkeye-pubkey.pem.
 
-import { createHash, createPrivateKey, createPublicKey, sign as cryptoSign, verify as cryptoVerify, type KeyObject } from "crypto";
+import { createHash, createPrivateKey, createPublicKey, randomBytes, sign as cryptoSign, verify as cryptoVerify, type KeyObject } from "crypto";
 
 export interface RegulatorTokenClaims {
   iss: "hawkeye-sterling";
@@ -108,7 +108,7 @@ export function issueRegulatorToken(opts: IssueOptions): {
   for (const c of opts.scope.cases ?? []) scope.push(`case:${c}`);
   if (scope.length === 0) throw new Error("regulator-jwt: scope must include at least one tenant or case");
 
-  const jti = `reg_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+  const jti = `reg_${Date.now()}_${randomBytes(6).toString("hex")}`;
   const claims: RegulatorTokenClaims = {
     iss: "hawkeye-sterling",
     sub: `regulator:${opts.examinerId}`,

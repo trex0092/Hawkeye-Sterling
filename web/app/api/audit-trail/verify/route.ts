@@ -105,8 +105,20 @@ async function handleGet(_req: Request): Promise<Response> {
   let broken = false;
   let firstBreakAt: number | null = null;
   let prevEntryHash: string | undefined = undefined;
+  let prevSeq: number | undefined = undefined;
+  let deletedEntries = 0;
 
   for (const entry of sorted) {
+    // 0. Detect sequence gaps — a missing seq number means an entry was deleted.
+    if (prevSeq !== undefined && entry.seq !== prevSeq + 1) {
+      const gap = entry.seq - prevSeq - 1;
+      deletedEntries += gap;
+      if (!broken) {
+        broken = true;
+        firstBreakAt = prevSeq + 1;
+      }
+    }
+
     // 1. Recompute this entry's hash and verify it matches the stored value.
     const expected = computeEntryHash(entry.prevHash, entry.payload, entry.at, entry.seq);
     const hashMismatch = expected !== entry.entryHash;
@@ -121,6 +133,7 @@ async function handleGet(_req: Request): Promise<Response> {
     }
 
     prevEntryHash = entry.entryHash;
+    prevSeq = entry.seq;
   }
 
   const compositeHash = prevEntryHash ?? fnv1a("");
@@ -130,6 +143,7 @@ async function handleGet(_req: Request): Promise<Response> {
     chainIntegrity: broken ? "broken" : "intact",
     entriesVerified: sorted.length,
     firstBreakAt,
+    deletedEntries,
     compositeHash,
     verifiedAt: new Date().toISOString(),
   });

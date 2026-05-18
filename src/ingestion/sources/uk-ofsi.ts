@@ -89,6 +89,12 @@ export const ukOfsiAdapter: SourceAdapter = {
       if (groupId) byGroup.set(groupId, ent);
       entities.push(ent);
     }
+    if (entities.length === 0) {
+      throw new Error(
+        `[uk_ofsi] parsed 0 entities from ${SOURCE_URL} — ` +
+        `the CSV schema may have changed or the file is empty.`,
+      );
+    }
     return { entities, rawChecksum };
   },
 };

@@ -4,6 +4,7 @@ import { enforce } from "@/lib/server/enforce";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 
 // Reporting-entity dropdown for the STR/SAR form. Only id + name are
 // returned; goAML rentity IDs and branch codes stay server-side. Auth-

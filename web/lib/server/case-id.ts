@@ -25,8 +25,6 @@ function utcDateStamp(): string {
 }
 
 function randomHex4(): string {
-  // Use crypto.getRandomValues when available (Edge + modern Node), otherwise
-  // fall back to Math.random (Node environments without crypto global).
   if (
     typeof globalThis !== "undefined" &&
     globalThis.crypto &&
@@ -36,11 +34,10 @@ function randomHex4(): string {
     globalThis.crypto.getRandomValues(buf);
     return ((buf[0] ?? 0) & 0xffff).toString(16).padStart(4, "0");
   }
-
-  // Fallback: Math.random — acceptable for non-cryptographic uniqueness.
-  return Math.floor(Math.random() * 0x10000)
-    .toString(16)
-    .padStart(4, "0");
+  // Node.js crypto fallback — always available in the serverless runtime.
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { randomBytes } = require("node:crypto") as { randomBytes: (n: number) => Buffer };
+  return randomBytes(2).readUInt16LE(0).toString(16).padStart(4, "0");
 }
 
 // ---------------------------------------------------------------------------

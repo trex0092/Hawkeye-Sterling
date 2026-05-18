@@ -9,6 +9,7 @@
 // Phase 13 additions: Next.js route helpers for uniform HTTP error responses,
 // 405 Method Not Allowed with Allow header, and OPTIONS preflight.
 
+import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 
 export function httpError(
@@ -106,7 +107,7 @@ export function makeError(
     errorCode,
     errorType,
     message,
-    requestId: Math.random().toString(36).slice(2, 10),
+    requestId: randomBytes(6).toString("hex"),
     ...extra,
   };
 }

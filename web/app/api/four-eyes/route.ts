@@ -14,7 +14,7 @@
 //   DELETE /api/four-eyes?id=<id>      → remove (auditable; usually leave it)
 
 import { NextResponse } from "next/server";
-import { withGuard } from "@/lib/server/guard";
+import { withGuard, type RequestContext } from "@/lib/server/guard";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { del, getJson, listKeys, setJson } from "@/lib/server/store";
 import { getAnthropicClient } from "@/lib/server/llm";
@@ -318,7 +318,7 @@ async function reportToAsana(item: FourEyesItem, decision: "approve" | "reject",
   }
 }
 
-async function handlePatch(req: Request): Promise<NextResponse> {
+async function handlePatch(req: Request, ctx: RequestContext): Promise<NextResponse> {
   const url = new URL(req.url);
   const id = safeId(url.searchParams.get("id"));
   if (!id) return NextResponse.json({ ok: false, error: "id required" }, { status: 400 , headers: {} });
@@ -330,8 +330,10 @@ async function handlePatch(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "body must be a JSON object" }, { status: 400 , headers: {} });
   }
   const action = stringField(raw["decision"]); // "approve" | "reject"
-  const operator = stringField(raw["operator"]);
-  if (!operator) return NextResponse.json({ ok: false, error: "operator required" }, { status: 400 , headers: {} });
+  // Use the authenticated identity from ctx — not the body-supplied field — so
+  // a caller cannot impersonate another operator to bypass the four-eyes check.
+  const operator = ctx.apiKey.name || ctx.apiKey.email;
+  if (!operator) return NextResponse.json({ ok: false, error: "operator identity could not be resolved from auth context" }, { status: 403 , headers: {} });
   if (action !== "approve" && action !== "reject") {
     return NextResponse.json({ ok: false, error: "decision must be 'approve' or 'reject'" }, { status: 400 , headers: {} });
   }

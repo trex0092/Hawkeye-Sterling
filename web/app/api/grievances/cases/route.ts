@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 
 // Grievance cases are stored in Netlify Blobs under the key
 // "hawkeye-grievances" / "cases.json". When the store is unavailable

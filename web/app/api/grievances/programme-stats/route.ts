@@ -3,6 +3,7 @@ import { enforce } from "@/lib/server/enforce";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 
 export async function GET(req: Request) {
   const gate = await enforce(req);

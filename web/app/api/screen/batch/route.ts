@@ -154,6 +154,11 @@ export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
 
+  const contentLength = Number(req.headers.get("content-length") ?? "0");
+  if (contentLength > 2 * 1024 * 1024) {
+    return NextResponse.json({ ok: false, error: "request body too large (max 2 MB)" }, { status: 413 });
+  }
+
   let raw: unknown;
   try {
     raw = await req.json();
