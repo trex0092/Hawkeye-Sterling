@@ -160,6 +160,10 @@ function deriveDisposition(body: ReportInput): SCRDisposition {
   const amTotal = sb?.adverseMediaScored?.total ?? (sb?.adverseMedia?.length ?? 0);
   if (amScore > 0 || amTotal > 0) return "edd_continuance";
 
+  // Composite score ≥ 70 (HIGH band) → EDD required even without direct hits
+  const compositeScore = sb?.composite?.score ?? 0;
+  if (compositeScore >= 70) return "edd_continuance";
+
   return "standard_cdd";
 }
 
@@ -218,15 +222,16 @@ function buildSCR(body: ReportInput, now: Date): ScreeningComplianceReport {
     ? `Legal entity (${s.entityType ?? "LLC"})`
     : "Natural person";
 
-  // EWRA risk tier
+  // Composite score
+  const composite = sb?.composite?.score ?? r.topScore;
+
+  // EWRA risk tier — derived from disposition + composite score band
   const ewraTier = disposition === "prohibited"
     ? "HIGH · escalated"
     : disposition === "edd_continuance"
-    ? "MEDIUM · elevated"
+    ? (composite >= 85 ? "HIGH · elevated" : "MEDIUM · elevated")
+    : composite >= 50 ? "LOW · 12 / 25"
     : "LOW · 03 / 25";
-
-  // Composite score
-  const composite = sb?.composite?.score ?? r.topScore;
 
   // ── Section 02 cells ──────────────────────────────────────────────────────
   const sorCells: SCRDataCell[] = [

@@ -262,45 +262,12 @@ async function fetchLocaleFeed(
   locale: (typeof LOCALES)[number],
   variants: string[],
 ): Promise<Article[]> {
-  // Do NOT append LOCALE_MODIFIERS to the URL query — embedding adversarial
-  // crime keywords (fraud, arrest, laundering…) into the RSS search URL
-  // causes Google News to return zero results for regulatory/compliance
-  // topic queries. Adverse keyword classification is applied post-fetch by
-  // classifyAdverseKeywords() in parseRss(), which does not need the URL
-  // modifiers to work correctly.
-  //
-  // Quote behaviour: a previous revision wrapped `q` in literal quotes
-  // (forcing exact-phrase match). That works for single-name subjects
-  // ("Vladimir Putin") but returns zero results for multi-word topic
-  // queries ("UAE money laundering 2026") because Google News doesn't
-  // index that exact phrase. The post-fetch fuzzy gate
-  // (fuzzyScore >= 55 OR keywordGroups.length > 0) is the relevance
-  // filter — it works for both names and topics — so quoting is
-  // redundant and actively harmful for topic queries. Quote only when
-  // q is a likely person/entity name: ≤4 words, every word starts
-  // with an uppercase letter, no digits, and no common AML topic
-  // keywords (which would suggest a topic search even if capitalised).
-  const TOPIC_KEYWORDS = new Set([
-    "sanctions", "sanction", "laundering", "fraud", "corruption",
-    "bribery", "terrorism", "trafficking", "smuggling", "embezzlement",
-    "ml", "tf", "cft", "aml", "kyc", "edd", "cdd", "str", "sar",
-    "ofac", "fatf", "ofsi", "eu", "un", "unsc", "cbu", "cbuae",
-    "compliance", "regulatory", "investigation", "indictment", "freeze",
-    "designation", "wmd", "proliferation", "russia", "iran", "syria",
-    "yemen", "korea", "ukraine", "narcotics", "cartel", "scandal",
-  ]);
-  const words = q.split(/\s+/).filter(Boolean);
-  const lowered = q.toLowerCase();
-  const containsTopicKeyword = [...TOPIC_KEYWORDS].some((kw) => {
-    const rx = new RegExp(`(?:^|[^\\p{L}])${kw}(?:[^\\p{L}]|$)`, "iu");
-    return rx.test(lowered);
-  });
-  const looksLikeName =
-    words.length <= 4 &&
-    /^(\p{Lu}[\p{L}'’-]*)(\s+\p{Lu}[\p{L}'’-]*)*$/u.test(q) &&
-    !/\d/.test(q) &&
-    !containsTopicKeyword;
-  const queryParam = looksLikeName ? `"${q}"` : q;
+  // Post-fetch fuzzy scoring (fuzzyScore ≥ 75, or ≥ 55 + adverse keywords)
+  // is the relevance gate. Do not quote the query — exact-phrase quoting
+  // causes zero results when a subject’s name has common spelling variants
+  // (e.g. GIANUZZI vs GIANNUZZI). Google’s token matching handles near-miss
+  // spellings; the post-fetch filter handles precision.
+  const queryParam = q;
   const feed = `https://news.google.com/rss/search?q=${encodeURIComponent(queryParam)}&hl=${locale.hl}&gl=${locale.gl}&ceid=${locale.ceid}`;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FEED_TIMEOUT_MS);
