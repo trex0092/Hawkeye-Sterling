@@ -29,10 +29,11 @@ const nextConfig = {
   },
 
   typescript: {
-    // JSX implicit-any errors (TS7026/TS2741) are pre-existing across the entire
-    // codebase due to React types not being in the tsconfig lib. Runtime behaviour
-    // is correct; suppress them during build consistent with the ESLint pattern above.
-    ignoreBuildErrors: true,
+    // Previously set ignoreBuildErrors: true for TS7026/TS2741 JSX implicit-any
+    // errors. Verified 2026-05-18 those errors no longer exist (bare
+    // `npx tsc --noEmit -p tsconfig.json` exits 0); flag removed so build-time
+    // type errors are surfaced and fail the build, not silently shipped.
+    ignoreBuildErrors: false,
   },
 
   eslint: {
