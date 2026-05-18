@@ -68,6 +68,7 @@ function projectGidForModule(module: string): string {
     case "heatmap":
     case "telemetry":
     case "red-team":
+    case "security-audit":
       return asanaGids.mlro();
     case "vessel-check":
     case "rmi":

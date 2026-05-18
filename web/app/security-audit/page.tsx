@@ -431,6 +431,7 @@ export default function SecurityAuditPage() {
               value={code}
               onChange={(e) => setCode(e.target.value)}
               placeholder="Paste code here…"
+              aria-label="Code to analyse"
               className="w-full h-52 bg-bg-1 border border-hair-2 rounded text-ink-0 font-mono text-[12px] p-4 resize-y outline-none focus:border-brand/40 leading-relaxed placeholder:text-ink-4 transition-colors"
             />
 
@@ -618,7 +619,7 @@ export default function SecurityAuditPage() {
               </div>
               <div className="h-1.5 rounded-full bg-bg-3 overflow-hidden">
                 <div
-                  className={`h-full rounded-full transition-all duration-400 ${postureColor}`}
+                  className={`h-full rounded-full transition-all duration-500 ${postureColor}`}
                   style={{ width: `${pct}%` }}
                 />
               </div>
@@ -655,10 +656,12 @@ export default function SecurityAuditPage() {
                           aria-checked={done}
                           tabIndex={0}
                           onClick={() => toggleItem(item.id)}
-                          onKeyDown={(e) =>
-                            (e.key === "Enter" || e.key === " ") &&
-                            toggleItem(item.id)
-                          }
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              toggleItem(item.id);
+                            }
+                          }}
                           className={`flex items-start gap-3 px-3.5 py-2.5 cursor-pointer transition-colors border ${
                             done
                               ? "bg-green-dim border-green/20"
