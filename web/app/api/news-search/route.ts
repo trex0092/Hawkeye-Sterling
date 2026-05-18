@@ -132,6 +132,17 @@ const LOCALES: Array<{ code: string; hl: string; gl: string; ceid: string }> = [
   { code: "sw", hl: "sw", gl: "KE", ceid: "KE:sw" },
   { code: "bn", hl: "bn", gl: "BD", ceid: "BD:bn" },
   { code: "fa", hl: "fa", gl: "IR", ceid: "IR:fa" },
+  // Tier-4 — remaining jurisdictions
+  { code: "tl", hl: "tl", gl: "PH", ceid: "PH:tl" },
+  { code: "is", hl: "is", gl: "IS", ceid: "IS:is" },
+  { code: "mt", hl: "mt", gl: "MT", ceid: "MT:mt" },
+  { code: "be", hl: "be", gl: "BY", ceid: "BY:be" },
+  { code: "bs", hl: "bs", gl: "BA", ceid: "BA:bs" },
+  { code: "ne", hl: "ne", gl: "NP", ceid: "NP:ne" },
+  { code: "si", hl: "si", gl: "LK", ceid: "LK:si" },
+  { code: "mn", hl: "mn", gl: "MN", ceid: "MN:mn" },
+  { code: "my", hl: "my", gl: "MM", ceid: "MM:my" },
+  { code: "km", hl: "km", gl: "KH", ceid: "KH:km" },
 ];
 
 // Multi-language adverse-media modifiers so each locale returns relevant
@@ -186,6 +197,16 @@ const LOCALE_MODIFIERS: Record<string, string> = {
   sw: "vikwazo OR ulaghai OR ufisadi OR rushwa OR kukamatwa OR utakatishaji wa pesa OR ugaidi",
   bn: "নিষেধাজ্ঞা OR জালিয়াতি OR দুর্নীতি OR ঘুষ OR গ্রেফতার OR অর্থ পাচার OR সন্ত্রাসবাদ",
   fa: "تحریم OR تقلب OR فساد OR رشوه OR دستگیری OR پولشویی OR تروریسم",
+  tl: "parusa OR pandaraya OR korapsyon OR suhol OR pagkakahuli OR paglalaba ng pera OR terorismo",
+  is: "refsingar OR svik OR spillingur OR mútur OR handtaka OR peningaþvætti OR hryðjuverk",
+  mt: "sanzjonijiet OR frodi OR korruzzjoni OR ħlas ta' flus OR arrest OR ħasil tal-flus OR terroriżmu",
+  be: "санкцыі OR махлярства OR карупцыя OR хабар OR затрыманне OR адмыванне грошай OR тэрарызм",
+  bs: "sankcije OR prijevara OR korupcija OR mito OR uhićenje OR pranje novca OR terorizam",
+  ne: "प्रतिबन्ध OR ठगी OR भ्रष्टाचार OR घुस OR पक्राउ OR हराम धन OR आतंकवाद",
+  si: "සිරකිරීම OR වංචාව OR දූෂණය OR අල්ලස OR අත්අඩංගුවට OR මුදල් විශුද්ධිකරණය OR ත්‍රස්තවාදය",
+  mn: "хоригийн арга хэмжээ OR луйвар OR авлига OR хахуул OR баривчлах OR мөнгө угаах OR терроризм",
+  my: "အပြစ်ပေးမှု OR လိမ်ညာမှု OR အဂတိ OR လာဘ်ငွေ OR ဖမ်းဆီး OR ငွေကြေးဖောက်ပြန်မှု OR အကြမ်းဖက်",
+  km: "ទណ្ឌកម្ម OR ការបន្លំ OR អំពើពុករលួយ OR សំណូក OR ចាប់ខ្លួន OR ការលាងប្រាក់ OR អំពើភេរវកម្ម",
 };
 
 interface NewsResponse {

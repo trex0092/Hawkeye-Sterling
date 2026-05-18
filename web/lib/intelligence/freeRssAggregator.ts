@@ -435,6 +435,179 @@ const FREE_RSS_FEEDS: RssFeed[] = [
   { source: "libyaobserver-rss", outlet: "libyaobserver.ly", url: "https://libyaobserver.ly/rss.xml" },
   { source: "syriadirect-rss", outlet: "syriadirect.org", url: "https://syriadirect.org/feed/" },
   { source: "arabweekly-rss", outlet: "thearabweekly.com", url: "https://thearabweekly.com/rss.xml" },
+
+  // ── Pacific / Oceania
+  { source: "nzherald-rss", outlet: "nzherald.co.nz", url: "https://www.nzherald.co.nz/arc/outboundfeeds/rss/section/business/" },
+  { source: "rnz-rss", outlet: "rnz.co.nz", url: "https://www.rnz.co.nz/rss/business.xml" },
+  { source: "stuff-nz-rss", outlet: "stuff.co.nz", url: "https://www.stuff.co.nz/rss/national" },
+  { source: "smh-rss", outlet: "smh.com.au", url: "https://www.smh.com.au/rss/business.xml" },
+  { source: "theaustralian-rss", outlet: "theaustralian.com.au", url: "https://www.theaustralian.com.au/feed/rss" },
+  { source: "afr-rss", outlet: "afr.com", url: "https://www.afr.com/rss" },
+  { source: "abc-au-business-rss", outlet: "abc.net.au", url: "https://www.abc.net.au/news/feed/51892/rss.xml" },
+  { source: "fijitimes-rss", outlet: "fijitimes.com", url: "https://www.fijitimes.com/feed/" },
+  { source: "rnzpacific-rss", outlet: "rnz.co.nz", url: "https://www.rnz.co.nz/rss/pacific.xml" },
+  { source: "pngpost-rss", outlet: "postcourier.com.pg", url: "https://www.postcourier.com.pg/feed/" },
+
+  // ── Israel / Palestine
+  { source: "haaretz-rss", outlet: "haaretz.com", url: "https://www.haaretz.com/cmlink/1.628765" },
+  { source: "jpost-rss", outlet: "jpost.com", url: "https://www.jpost.com/rss/rssfeedsfrontpage.aspx" },
+  { source: "timesofisrael-rss", outlet: "timesofisrael.com", url: "https://www.timesofisrael.com/feed/" },
+  { source: "i24news-rss", outlet: "i24news.tv", url: "https://www.i24news.tv/en/rss" },
+  { source: "ynetnews-rss", outlet: "ynetnews.com", url: "https://www.ynetnews.com/category/3082" },
+
+  // ── Gulf states (UAE, Saudi, Qatar, Kuwait)
+  { source: "arabnews-rss", outlet: "arabnews.com", url: "https://www.arabnews.com/rss.xml" },
+  { source: "saudigazette-rss", outlet: "saudigazette.com.sa", url: "https://saudigazette.com.sa/rss/home" },
+  { source: "khaleejtimes-rss", outlet: "khaleejtimes.com", url: "https://www.khaleejtimes.com/feed" },
+  { source: "gulfnews-rss", outlet: "gulfnews.com", url: "https://gulfnews.com/rss" },
+  { source: "gulftimes-rss", outlet: "gulf-times.com", url: "https://www.gulf-times.com/rss" },
+  { source: "arabtimes-rss", outlet: "arabtimesonline.com", url: "https://www.arabtimesonline.com/news/feed/" },
+  { source: "gulfbusiness-rss", outlet: "gulfbusiness.com", url: "https://gulfbusiness.com/feed/" },
+  { source: "zawya-rss", outlet: "zawya.com", url: "https://www.zawya.com/rss/mena/news" },
+
+  // ── EU financial regulators (CRITICAL for AML compliance intelligence)
+  { source: "eba-rss", outlet: "eba.europa.eu", url: "https://www.eba.europa.eu/rss.xml" },
+  { source: "esma-rss", outlet: "esma.europa.eu", url: "https://www.esma.europa.eu/rss" },
+  { source: "eiopa-rss", outlet: "eiopa.europa.eu", url: "https://www.eiopa.europa.eu/rss.xml" },
+  { source: "bafin-rss", outlet: "bafin.de", url: "https://www.bafin.de/SiteGlobals/Functions/RSSFeed/EN/RSSNewsfeed_en.xml" },
+  { source: "cssf-rss", outlet: "cssf.lu", url: "https://www.cssf.lu/en/feed/" },
+  { source: "amf-fr-rss", outlet: "amf-france.org", url: "https://www.amf-france.org/en/rss.xml" },
+  { source: "acpr-rss", outlet: "acpr.banque-france.fr", url: "https://acpr.banque-france.fr/rss.xml" },
+  { source: "afm-nl-rss", outlet: "afm.nl", url: "https://www.afm.nl/en/rss" },
+  { source: "fma-at-rss", outlet: "fma.gv.at", url: "https://www.fma.gv.at/en/rss.xml" },
+  { source: "mfsa-mt-rss", outlet: "mfsa.mt", url: "https://www.mfsa.mt/feed/" },
+  { source: "knf-pl-rss", outlet: "knf.gov.pl", url: "https://www.knf.gov.pl/rss/rss_newsy_en.xml" },
+  { source: "bancaditalia-rss", outlet: "bancaditalia.it", url: "https://www.bancaditalia.it/media/comunicati/rss-en.xml" },
+  { source: "bancaespana-rss", outlet: "bde.es", url: "https://www.bde.es/rss/en/noticias.xml" },
+  { source: "cnmv-rss", outlet: "cnmv.es", url: "https://www.cnmv.es/portal/rss/RSSNoticias.ashx?lang=en" },
+  { source: "dnb-nl-rss", outlet: "dnb.nl", url: "https://www.dnb.nl/en/rss/" },
+  { source: "sfb-ch-rss", outlet: "finma.ch", url: "https://www.finma.ch/en/rss.xml" },
+  { source: "fma-li-rss", outlet: "fma-li.li", url: "https://www.fma-li.li/en/rss.xml" },
+
+  // ── More US regulatory / enforcement
+  { source: "occ-rss", outlet: "occ.gov", url: "https://www.occ.gov/news-issuances/news-releases/rss.xml" },
+  { source: "federalreserve-rss", outlet: "federalreserve.gov", url: "https://www.federalreserve.gov/feeds/press_all.xml" },
+  { source: "finra-rss", outlet: "finra.org", url: "https://www.finra.org/rss/news-releases" },
+  { source: "dhs-rss", outlet: "dhs.gov", url: "https://www.dhs.gov/dhs-updates/rss.xml" },
+  { source: "state-dept-rss", outlet: "state.gov", url: "https://www.state.gov/rss-feeds/press-releases/" },
+  { source: "usaid-rss", outlet: "usaid.gov", url: "https://www.usaid.gov/rss/press-releases" },
+  { source: "treasury-rss", outlet: "home.treasury.gov", url: "https://home.treasury.gov/system/files/126/treasury.xml" },
+  { source: "ice-hsi-rss", outlet: "ice.gov", url: "https://www.ice.gov/rss/news.xml" },
+  { source: "dea-rss", outlet: "dea.gov", url: "https://www.dea.gov/rss-feeds" },
+
+  // ── Balkan investigative
+  { source: "birn-rss", outlet: "balkaninsight.com", url: "https://balkaninsight.com/feed/" },
+  { source: "risemoldova-rss", outlet: "rise.md", url: "https://www.rise.md/rss" },
+  { source: "occrp-investigations-rss", outlet: "occrp.org", url: "https://www.occrp.org/en/investigations/feed/rss" },
+  { source: "balkaneu-rss", outlet: "balkaneu.com", url: "https://balkaneu.com/feed/" },
+  { source: "exit-al-rss", outlet: "exit.al", url: "https://exit.al/en/feed/" },
+  { source: "euobserver-rss", outlet: "euobserver.com", url: "https://euobserver.com/rss/feed.xml" },
+
+  // ── Crypto / digital asset intelligence (financial crime focus)
+  { source: "chainalysis-rss", outlet: "chainalysis.com", url: "https://www.chainalysis.com/blog/feed/" },
+  { source: "elliptic-rss", outlet: "elliptic.co", url: "https://www.elliptic.co/blog/rss.xml" },
+  { source: "trmlabs-rss", outlet: "trmlabs.com", url: "https://www.trmlabs.com/post/rss.xml" },
+  { source: "ciphertrace-rss", outlet: "ciphertrace.com", url: "https://ciphertrace.com/feed/" },
+  { source: "coindesk-policy-rss", outlet: "coindesk.com", url: "https://www.coindesk.com/arc/outboundfeeds/rss/category/policy/" },
+  { source: "bitcoinmagazine-rss", outlet: "bitcoinmagazine.com", url: "https://bitcoinmagazine.com/.rss/full/" },
+  { source: "cryptoslate-rss", outlet: "cryptoslate.com", url: "https://cryptoslate.com/feed/" },
+  { source: "dlnews-rss", outlet: "dlnews.com", url: "https://www.dlnews.com/rss" },
+
+  // ── More Latin America gaps
+  { source: "semana-co-rss", outlet: "semana.com", url: "https://www.semana.com/rss.xml" },
+  { source: "elcomercio-ec-rss", outlet: "elcomercio.com", url: "https://www.elcomercio.com/feed" },
+  { source: "elpais-uy-rss", outlet: "elpais.com.uy", url: "https://www.elpais.com.uy/rss/inicio.rss" },
+  { source: "prensalibre-rss", outlet: "prensalibre.com", url: "https://www.prensalibre.com/feed/" },
+  { source: "laprensa-hn-rss", outlet: "laprensa.hn", url: "https://www.laprensa.hn/feed/" },
+  { source: "elnuevoherald-rss", outlet: "elnuevoherald.com", url: "https://www.elnuevoherald.com/latest-news/rss2.0.xml" },
+  { source: "pagina12-rss", outlet: "pagina12.com.ar", url: "https://www.pagina12.com.ar/rss/portada" },
+  { source: "perfil-rss", outlet: "perfil.com", url: "https://www.perfil.com/rss.html" },
+  { source: "elpulso-ve-rss", outlet: "elpulso.net", url: "https://elpulso.net/feed/" },
+  { source: "runrunes-rss", outlet: "runrun.es", url: "https://runrun.es/feed/" },
+  { source: "correobolivia-rss", outlet: "correodelsur.com", url: "https://correodelsur.com/feed.xml" },
+  { source: "larazon-bo-rss", outlet: "la-razon.com", url: "https://www.la-razon.com/feed/" },
+
+  // ── India investigative + regional
+  { source: "thewire-in-rss", outlet: "thewire.in", url: "https://thewire.in/rss" },
+  { source: "theprint-rss", outlet: "theprint.in", url: "https://theprint.in/feed/" },
+  { source: "scroll-in-rss", outlet: "scroll.in", url: "https://scroll.in/rss" },
+  { source: "ndtv-rss", outlet: "ndtv.com", url: "https://feeds.feedburner.com/ndtvnews-top-stories" },
+  { source: "newslaundry-rss", outlet: "newslaundry.com", url: "https://www.newslaundry.com/feed" },
+  { source: "thequint-rss", outlet: "thequint.com", url: "https://www.thequint.com/rss/news" },
+
+  // ── Nepal / Sri Lanka
+  { source: "nepalitimes-rss", outlet: "nepalitimes.com", url: "https://www.nepalitimes.com/feed/" },
+  { source: "kathmandupost-rss", outlet: "kathmandupost.com", url: "https://kathmandupost.com/rss" },
+  { source: "dailymirrorlk-rss", outlet: "dailymirror.lk", url: "https://www.dailymirror.lk/business-news/rss.xml" },
+  { source: "colombopage-rss", outlet: "colombopage.com", url: "https://www.colombopage.com/rss_feed.xml" },
+
+  // ── Southeast Asia gaps
+  { source: "jakartapost-rss", outlet: "thejakartapost.com", url: "https://www.thejakartapost.com/rss/business.xml" },
+  { source: "vnexpress-rss", outlet: "vnexpress.net", url: "https://vnexpress.net/rss/business.rss" },
+  { source: "malaymail-rss", outlet: "malaymail.com", url: "https://www.malaymail.com/feed" },
+  { source: "freemsia-rss", outlet: "freemalaysiatoday.com", url: "https://www.freemalaysiatoday.com/feed/" },
+  { source: "coconuts-rss", outlet: "coconuts.co", url: "https://coconuts.co/feed/" },
+  { source: "nationth-rss", outlet: "nationthailand.com", url: "https://www.nationthailand.com/rss/politics" },
+  { source: "manilatimes-rss", outlet: "manilatimes.net", url: "https://www.manilatimes.net/feed/" },
+  { source: "abs-cbn-rss", outlet: "abs-cbn.com", url: "https://www.abs-cbn.com/rss/news" },
+  { source: "businessmirror-rss", outlet: "businessmirror.com.ph", url: "https://businessmirror.com.ph/feed/" },
+
+  // ── More East Asia
+  { source: "shanghaidaily-rss", outlet: "shine.cn", url: "https://www.shine.cn/rss/news/nation/" },
+  { source: "sixthtone-rss", outlet: "sixthtone.com", url: "https://www.sixthtone.com/rss" },
+  { source: "caixin-rss", outlet: "caixinglobal.com", url: "https://www.caixinglobal.com/rss/en/rss.xml" },
+  { source: "scmp-hk-rss", outlet: "scmp.com", url: "https://www.scmp.com/rss/5/feed" },
+  { source: "hkfp-rss", outlet: "hongkongfp.com", url: "https://hongkongfp.com/feed/" },
+  { source: "nikkei-rss", outlet: "asia.nikkei.com", url: "https://asia.nikkei.com/rss/feed/nar" },
+
+  // ── Ukraine / Belarus / Moldova (active conflict/sanctions zone)
+  { source: "kyivindependent-rss", outlet: "kyivindependent.com", url: "https://kyivindependent.com/feed/" },
+  { source: "ukrainianpravda-rss", outlet: "pravda.com.ua", url: "https://www.pravda.com.ua/eng/rss/" },
+  { source: "ukrinform-rss", outlet: "ukrinform.net", url: "https://www.ukrinform.net/rss/block-lastnews.xml" },
+  { source: "eurasianet-rss", outlet: "eurasianet.org", url: "https://eurasianet.org/rss.xml" },
+  { source: "naviny-rss", outlet: "naviny.online", url: "https://naviny.online/rss" },
+  { source: "euroradio-rss", outlet: "euroradio.fm", url: "https://euroradio.fm/rss" },
+
+  // ── More Nordic / Baltic
+  { source: "svt-rss", outlet: "svt.se", url: "https://www.svt.se/nyheter/rss.xml" },
+  { source: "kauppalehti-rss", outlet: "kauppalehti.fi", url: "https://www.kauppalehti.fi/xml/feed" },
+  { source: "borsen-dk-rss", outlet: "borsen.dk", url: "https://borsen.dk/nyheder/rss" },
+  { source: "dagbladet-rss", outlet: "dagbladet.no", url: "https://www.dagbladet.no/feed/rss" },
+  { source: "e24-no-rss", outlet: "e24.no", url: "https://e24.no/rss/2" },
+  { source: "diena-lt-rss", outlet: "en.diena.lt", url: "https://en.diena.lt/rss" },
+
+  // ── AML / compliance specialized trade press
+  { source: "complianceweek-rss", outlet: "complianceweek.com", url: "https://www.complianceweek.com/rss" },
+  { source: "risknet-rss", outlet: "risk.net", url: "https://www.risk.net/rss" },
+  { source: "amlwatchdog-rss", outlet: "amlwatchdog.com", url: "https://amlwatchdog.com/feed/" },
+  { source: "acamstoday-rss", outlet: "acamstoday.org", url: "https://www.acamstoday.org/feed/" },
+  { source: "kycaml-rss", outlet: "financialcrimenews.com", url: "https://financialcrimenews.com/feed/" },
+  { source: "tookitaki-rss", outlet: "tookitaki.com", url: "https://tookitaki.com/blog/feed/" },
+  { source: "jdsupra-fin-rss", outlet: "jdsupra.com", url: "https://www.jdsupra.com/topics/financial-regulation/rss" },
+  { source: "globcompliancenews-rss", outlet: "globalcompliancenews.com", url: "https://globalcompliancenews.com/feed/" },
+  { source: "mlro-rss", outlet: "themoneylaundering.com", url: "https://www.themoneylaundering.com/feed/" },
+  { source: "lexology-finreg-rss", outlet: "lexology.com", url: "https://www.lexology.com/rss?topic=anti-money-laundering" },
+
+  // ── More Africa (Central / Southern / Horn)
+  { source: "zimbabwesituation-rss", outlet: "zimbabwesituation.com", url: "https://www.zimbabwesituation.com/feed/" },
+  { source: "lusakatimes-rss", outlet: "lusakatimes.com", url: "https://www.lusakatimes.com/feed/" },
+  { source: "malawi24-rss", outlet: "malawi24.com", url: "https://malawi24.com/feed/" },
+  { source: "namnews-rss", outlet: "namibian.com.na", url: "https://www.namibian.com.na/rss" },
+  { source: "mofax-rss", outlet: "mofax.co.mz", url: "https://www.mofax.co.mz/feed/" },
+  { source: "africareport-rss", outlet: "theafricareport.com", url: "https://www.theafricareport.com/feed/" },
+  { source: "modernghana-rss", outlet: "modernghana.com", url: "https://www.modernghana.com/rss/" },
+  { source: "herald-zw-rss", outlet: "herald.co.zw", url: "https://www.herald.co.zw/feed/" },
+  { source: "almerijadaily-rss", outlet: "algeriapress.dz", url: "https://www.aps.dz/en/rss" },
+  { source: "tunis-afrique-rss", outlet: "tap.info.tn", url: "https://www.tap.info.tn/en/rss" },
+
+  // ── Trade finance / shipping (TBML — trade-based money laundering)
+  { source: "gtr-rss", outlet: "gtreview.com", url: "https://www.gtreview.com/feed/" },
+  { source: "tfg-rss", outlet: "tradefinanceglobal.com", url: "https://www.tradefinanceglobal.com/feed/" },
+  { source: "lloydslist-rss", outlet: "lloydslist.com", url: "https://www.lloydslist.com/rss.xml" },
+  { source: "tradewinds-rss", outlet: "tradewindsnews.com", url: "https://www.tradewindsnews.com/rss" },
+  { source: "offshore-energy-rss", outlet: "offshore-energy.biz", url: "https://www.offshore-energy.biz/feed/" },
+  { source: "gcaptain-rss", outlet: "gcaptain.com", url: "https://gcaptain.com/feed/" },
+  { source: "maritimeexec-rss", outlet: "maritime-executive.com", url: "https://maritime-executive.com/rss" },
 ];
 
 // Cheap RSS / Atom parser — extracts <item> or <entry> blocks; we don't
