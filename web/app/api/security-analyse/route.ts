@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
       ],
     });
 
-    const raw = message.content.find((b: { type: string; text?: string }) => b.type === "text")?.text ?? "";
+    const raw = message.content[0]?.type === "text" ? message.content[0].text : "";
     const clean = raw.replace(/```json\n?|\n?```/g, "").trim();
     const result = JSON.parse(clean) as AnalysisResult;
     return NextResponse.json(result, { headers: gate.headers });
