@@ -237,6 +237,9 @@ describe('jp-mof zero-entity guard', () => {
     expect(result.entities).toHaveLength(0);
   });
 
+  // 30s timeout: the adapter performs a dynamic `import('exceljs')` (~1.5 MB
+  // package) on the first call, which can exceed vitest's 5s default on
+  // cold-start CI agents even though the mocked fetch throws immediately.
   it('throws when FEED_JP_MOF is set but fetch fails (all URLs fail)', async () => {
     process.env['FEED_JP_MOF'] = 'https://example.com/fake.xlsx';
     const orig = global.fetch;
@@ -245,7 +248,7 @@ describe('jp-mof zero-entity guard', () => {
     const { jpMofAdapter } = await import('../../src/ingestion/sources/jp-mof.js');
     await expect(jpMofAdapter.fetch()).rejects.toThrow(/jp_mof.*failed|exceljs/i);
     global.fetch = orig;
-  });
+  }, 30_000);
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

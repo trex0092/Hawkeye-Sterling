@@ -194,8 +194,12 @@ export async function GET(req: Request): Promise<NextResponse> {
   }
 
   // Only expose deployment details (buildId, commitRef) to authenticated callers.
+  // enforce() sets keyId to "anon_<sha-prefix>" for anonymous callers (not the
+  // literal "anonymous"), so the previous `keyId !== "anonymous"` check matched
+  // every anon caller and leaked build metadata. Check the "anon_" prefix
+  // instead — admin/cron/JWT callers all have non-"anon_" identifiers.
   const gate = await enforce(req, { requireAuth: false });
-  const authenticated = gate.ok && gate.keyId !== "anonymous";
+  const authenticated = gate.ok && !gate.keyId.startsWith("anon_");
 
   return NextResponse.json(
     {
