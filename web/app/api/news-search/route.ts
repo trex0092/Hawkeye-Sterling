@@ -6,6 +6,7 @@ import {
   type AdverseKeywordGroup,
 } from "@/lib/data/adverse-keywords";
 import { classifyEsg } from "@/lib/data/esg";
+import { searchAllNewsWithStatus } from "@/lib/intelligence/newsAdapters";
 // Dynamic imports from dist/ to prevent hard module-load failures when the
 // brain compilation hasn't run yet (cold Lambda, partial build). Falls back
 // to no-op implementations that return minimal scores so the route degrades
@@ -112,6 +113,25 @@ const LOCALES: Array<{ code: string; hl: string; gl: string; ceid: string }> = [
   { code: "sk", hl: "sk", gl: "SK", ceid: "SK:sk" },
   { code: "th", hl: "th", gl: "TH", ceid: "TH:th" },
   { code: "ur", hl: "ur", gl: "PK", ceid: "PK:ur" },
+  // Tier-3 — Baltic, Nordic, Caucasus, Africa, MENA extended
+  { code: "lt", hl: "lt", gl: "LT", ceid: "LT:lt" },
+  { code: "lv", hl: "lv", gl: "LV", ceid: "LV:lv" },
+  { code: "et", hl: "et", gl: "EE", ceid: "EE:et" },
+  { code: "fi", hl: "fi", gl: "FI", ceid: "FI:fi" },
+  { code: "da", hl: "da", gl: "DK", ceid: "DK:da" },
+  { code: "nb", hl: "no", gl: "NO", ceid: "NO:no" },
+  { code: "az", hl: "az", gl: "AZ", ceid: "AZ:az" },
+  { code: "ka", hl: "ka", gl: "GE", ceid: "GE:ka" },
+  { code: "hy", hl: "hy", gl: "AM", ceid: "AM:hy" },
+  { code: "kk", hl: "kk", gl: "KZ", ceid: "KZ:kk" },
+  { code: "uz", hl: "uz", gl: "UZ", ceid: "UZ:uz" },
+  { code: "mk", hl: "mk", gl: "MK", ceid: "MK:mk" },
+  { code: "sq", hl: "sq", gl: "AL", ceid: "AL:sq" },
+  { code: "sl", hl: "sl", gl: "SI", ceid: "SI:sl" },
+  { code: "af", hl: "af", gl: "ZA", ceid: "ZA:af" },
+  { code: "sw", hl: "sw", gl: "KE", ceid: "KE:sw" },
+  { code: "bn", hl: "bn", gl: "BD", ceid: "BD:bn" },
+  { code: "fa", hl: "fa", gl: "IR", ceid: "IR:fa" },
 ];
 
 // Multi-language adverse-media modifiers so each locale returns relevant
@@ -148,6 +168,24 @@ const LOCALE_MODIFIERS: Record<string, string> = {
   sk: "sankcie OR podvod OR korupcia OR úplatok OR zatýkanie OR pranie peňazí OR terorizmus",
   th: "มาตรการคว่ำบาตร OR การฉ้อโกง OR การทุจริต OR สินบน OR การจับกุม OR การฟอกเงิน OR การก่อการร้าย",
   ur: "پابندیاں OR دھوکہ دہی OR بدعنوانی OR رشوت OR گرفتاری OR منی لانڈرنگ OR اسمگلنگ OR دہشت گردی",
+  lt: "sankcijos OR sukčiavimas OR korupcija OR kyšininkavimas OR suėmimas OR pinigų plovimas OR terorizmas",
+  lv: "sankcijas OR krāpšana OR korupcija OR kukuļošana OR arests OR naudas atmazgāšana OR terorisms",
+  et: "sanktsioonid OR pettus OR korruptsioon OR altkäemaks OR arreteerimine OR rahapesu OR terrorism",
+  fi: "pakotteet OR petos OR korruptio OR lahjonta OR pidätys OR rahanpesu OR terrorismi",
+  da: "sanktioner OR svig OR korruption OR bestikkelse OR anholdelse OR hvidvask OR terrorisme",
+  nb: "sanksjoner OR svindel OR korrupsjon OR bestikkelse OR pågripelse OR hvitvasking OR terrorisme",
+  az: "sanksiyalar OR dələduzluq OR korrupsiya OR rüşvətxorluq OR həbs OR pul yuyulması OR terrorizm",
+  ka: "სანქციები OR თაღლითობა OR კორუფცია OR ქრთამი OR დაკავება OR ფულის გათეთრება OR ტერორიზმი",
+  hy: "պատժամիջոցներ OR խարդախություն OR կոռուպցիա OR կաշառք OR ձերբակալություն OR փողերի լվացում OR ահաբեկչություն",
+  kk: "санкциялар OR алдау OR сыбайластық OR пара алу OR тұтқындау OR ақша жуу OR терроризм",
+  uz: "sanksiyalar OR firibgarlik OR korrupsiya OR pora OR hibsga olish OR pul yuvish OR terrorizm",
+  mk: "санкции OR измама OR корупција OR поткуп OR апсење OR перење пари OR тероризам",
+  sq: "sanksione OR mashtrim OR korrupsion OR ryshfet OR arrest OR pastrim parash OR terrorizëm",
+  sl: "sankcije OR goljufija OR korupcija OR podkupovanje OR aretacija OR pranje denarja OR terorizem",
+  af: "sanksies OR bedrog OR korrupsie OR omkopery OR arrestasie OR geldwassery OR terrorisme",
+  sw: "vikwazo OR ulaghai OR ufisadi OR rushwa OR kukamatwa OR utakatishaji wa pesa OR ugaidi",
+  bn: "নিষেধাজ্ঞা OR জালিয়াতি OR দুর্নীতি OR ঘুষ OR গ্রেফতার OR অর্থ পাচার OR সন্ত্রাসবাদ",
+  fa: "تحریم OR تقلب OR فساد OR رشوه OR دستگیری OR پولشویی OR تروریسم",
 };
 
 interface NewsResponse {
@@ -481,19 +519,26 @@ export async function GET(req: Request): Promise<NextResponse> {
     if (turkishVariant !== q.toLowerCase()) rawVariants.push(turkishVariant);
     const variants = Array.from(new Set(rawVariants)).slice(0, 10);
 
-    // Fan out to all locales in parallel. Each
-    // returns up to ~30 articles; we dedupe by URL and fuzzy-filter. Use
-    // allSettled so one rejected fetch never rejects the whole batch —
-    // combined with the per-feed AbortSignal and the overall timebox
-    // this guarantees the function always returns within ~7.5s, well
-    // inside the 30s maxDuration budget.
+    // Fan out to all locales + all configured news API adapters in parallel.
+    // allSettled + per-feed AbortSignal + overall timebox ensures the function
+    // always returns within ~7.5s, well inside the 30s maxDuration budget.
     const fanOut = Promise.allSettled(
       LOCALES.map((loc) => fetchLocaleFeed(q, loc, variants)),
     );
     const timebox = new Promise<PromiseSettledResult<Article[]>[]>((resolve) => {
       setTimeout(() => resolve(LOCALES.map(() => ({ status: "fulfilled", value: [] }))), OVERALL_TIMEBOX_MS);
     });
-    const settled = await Promise.race([fanOut, timebox]);
+    // Run news API adapters (NewsAPI, GNews, Mediastack, OCCRP, etc.) in parallel
+    // with the Google News RSS fan-out. Falls back to empty if no keys configured.
+    const adapterSearch = searchAllNewsWithStatus(q, { limit: 30 }).catch(() => ({
+      articles: [],
+      sourcesSucceeded: [] as string[],
+      sourcesFailed: [] as Array<{ name: string; error: string }>,
+    }));
+    const [settled, adapterResult] = await Promise.all([
+      Promise.race([fanOut, timebox]),
+      adapterSearch,
+    ]);
     const perLocale: Article[][] = settled.map((r) =>
       r.status === "fulfilled" ? r.value : [],
     );
@@ -503,6 +548,45 @@ export async function GET(req: Request): Promise<NextResponse> {
         const key = a.link || a.title;
         if (!merged.has(key)) merged.set(key, a);
       }
+    }
+    // Convert NewsArticle (adapter shape) → Article (internal shape) and merge.
+    for (const na of adapterResult.articles) {
+      const key = na.url || na.title;
+      if (merged.has(key)) continue;
+      const fullText = `${na.title} ${na.snippet ?? ""}`;
+      const kwHits = classifyAdverseKeywords(fullText);
+      const esgHits = classifyEsg(fullText);
+      const fullTextLower = fullText.toLowerCase();
+      let fuzzyScore = 0;
+      let fuzzyMethod = "token_presence";
+      for (const v of variants) {
+        const m = matchEnsemble(v, na.title);
+        if (m?.best && m.best.score > fuzzyScore) {
+          fuzzyScore = m.best.score;
+          fuzzyMethod = m.best.method;
+        }
+        if (fuzzyScore < 0.72) {
+          const vTokens = v.toLowerCase().split(/\s+/).filter((t) => t.length >= 3);
+          if (vTokens.length > 0) {
+            const hits = vTokens.filter((t) => fullTextLower.includes(t)).length;
+            const ts = (hits / vTokens.length) * 0.72;
+            if (ts > fuzzyScore) { fuzzyScore = ts; fuzzyMethod = "token_presence"; }
+          }
+        }
+      }
+      merged.set(key, {
+        title: na.title,
+        link: na.url,
+        pubDate: na.publishedAt,
+        source: `${na.source}/${na.outlet}`,
+        snippet: na.snippet ?? "",
+        keywordGroups: kwHits.map((k) => k.group),
+        esgCategories: Array.from(new Set(esgHits.map((e) => e.categoryId))),
+        severity: classifyArticleSeverity(kwHits),
+        fuzzyScore: Math.round(fuzzyScore * 100),
+        fuzzyMethod,
+        lang: na.language ?? "en",
+      });
     }
     const filtered = Array.from(merged.values())
       // Fuzzy gate: require either a strong name match (≥75) OR a weak name
@@ -540,7 +624,7 @@ export async function GET(req: Request): Promise<NextResponse> {
       })),
       esgDomains,
       articles: parsed,
-      source: "google-news-rss",
+      source: adapterResult.sourcesSucceeded.length > 0 ? "newsapi" : "google-news-rss",
       languages: langCoverage,
       fetchMode: "live",
       fetchedAt,
