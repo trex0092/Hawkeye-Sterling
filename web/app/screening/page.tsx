@@ -1480,7 +1480,7 @@ export default function ScreeningPage() {
                   // Force a full sanctions list re-ingestion server-side.
                   // Lists can take ~15-30 s to refresh; the response is awaited.
                   try {
-                    const res = await fetch("/api/sanctions/operator-refresh", { method: "POST" });
+                    const res = await fetch("/api/sanctions/operator-refresh", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
                     if (res.ok) {
                       const data = (await res.json().catch(() => null)) as { ok_count?: number; failed_count?: number } | null;
                       const okCount = data?.ok_count ?? 0;

@@ -45,10 +45,12 @@ export async function enforce(
   const requireJson = opts.requireJsonBody !== false && bodyMethod;
   if (requireJson) {
     const ct = req.headers.get("content-type") ?? "";
-    const hasBody =
-      req.headers.has("content-length")
-        ? (parseInt(req.headers.get("content-length") ?? "0", 10) > 0)
-        : req.headers.has("transfer-encoding");
+    // Determine body presence via content-length only. Netlify's reverse proxy
+    // strips content-length and adds transfer-encoding: chunked on all proxied
+    // POST requests, even body-less ones — relying on transfer-encoding alone
+    // produces false 415s for legitimate body-less POSTs from the UI.
+    const cl = req.headers.get("content-length");
+    const hasBody = cl !== null && parseInt(cl, 10) > 0;
     if (hasBody && !ct.toLowerCase().includes("application/json")) {
       return {
         ok: false,
