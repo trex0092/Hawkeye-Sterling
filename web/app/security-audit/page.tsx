@@ -560,6 +560,7 @@ export default function SecurityAuditPage() {
             {/* Tool detail */}
             {(() => {
               const t = TOOLS[activeTool];
+              if (!t) return null;
               return (
                 <div className={`border ${t.borderClass} p-5 space-y-4`}>
                   <div>

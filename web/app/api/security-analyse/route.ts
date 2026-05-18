@@ -38,7 +38,7 @@ const SYSTEM_PROMPT = `You are a senior security researcher specialising in AML/
 }`;
 
 export async function POST(req: NextRequest) {
-  const gate = await enforce(req, { requireAuth: false });
+  const gate = await enforce(req);
   if (!gate.ok) return gate.response;
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
       ],
     });
 
-    const raw = message.content.find((b: { type: string; text?: string }) => b.type === "text")?.text ?? "";
+    const raw = (message.content.find((b) => b.type === "text") as { type: "text"; text: string } | undefined)?.text ?? "";
     const clean = raw.replace(/```json|```/g, "").trim();
     const result = JSON.parse(clean) as AnalysisResult;
     return NextResponse.json(result, { headers: gate.headers });
