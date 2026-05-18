@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createHash, createHmac } from "node:crypto";
 import { withGuard } from "@/lib/server/guard";
 import { getJson, listKeys, setJson } from "@/lib/server/store";
-import { deriveChainKey } from "@/lib/server/audit-chain";
+import { getChainSecret } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -76,19 +76,10 @@ const ROLE_POWER: Record<string, number> = {
   managing_director:    3,
 };
 
-// Derive or retrieve the per-tenant signing key for the HMAC-signed chain.
-// Priority: AUDIT_CHAIN_SECRET_<TENANTID> env var > derived from root secret.
-// Different tenants produce different HMAC keys even from the same root, so a
-// compromise of one tenant's derived key does not affect others.
-function getSigningKey(tenantId: string): string | null {
-  const envKey = `AUDIT_CHAIN_SECRET_${tenantId.toUpperCase().replace(/[^A-Z0-9]/g, "_")}`;
-  const perTenant = process.env[envKey];
-  if (perTenant && perTenant.length >= 32) return perTenant;
-
-  const root = process.env["AUDIT_CHAIN_SECRET"];
-  if (!root || root.length < 32) return null;
-  return deriveChainKey(root, tenantId);
-}
+// Alias so the rest of this file is unchanged. getChainSecret derives
+// HMAC-SHA256(root, "hawkeye-audit-chain-v1:<tenantId>") — the same key
+// the verify route uses, ensuring sign and verify are always consistent.
+const getSigningKey = getChainSecret;
 
 interface SignBody {
   action: string;
