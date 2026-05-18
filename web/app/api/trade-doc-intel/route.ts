@@ -12,6 +12,7 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -149,10 +150,10 @@ export async function POST(req: Request): Promise<NextResponse> {
     }, { headers: gate.headers });
   }
 
-  const client = getAnthropicClient(apiKey, 22_000, "trade-doc-intel");
+  const client = getAnthropicClient(apiKey, 40_000, "trade-doc-intel");
   const response = await client.messages.create({
     model: "claude-haiku-4-5-20251001",
-    max_tokens: 1200,
+    max_tokens: 600,
     system: `You are a TBML (Trade-Based Money Laundering) intelligence specialist with expertise in precious metals, gold trading, and UAE DPMS compliance under FDL 10/2025 and FATF R.14.
 
 Analyse the trade document for:
@@ -195,16 +196,16 @@ Return ONLY valid JSON:
 }`,
     messages: [{
       role: "user",
-      content: `Document Type: ${body.documentType}
+      content: `Document Type: ${sanitizeField(body.documentType, 100)}
 
 Document Text:
-${body.documentText}
+${sanitizeText(body.documentText, 2000)}
 
-${body.commodity ? `Declared Commodity: ${body.commodity}` : ""}
-${body.declaredValue ? `Declared Value: ${body.declaredValue} ${body.currency ?? ""}` : ""}
-${body.unitPrice ? `Unit Price: ${body.unitPrice} ${body.currency ?? ""}` : ""}
-${body.originCountry ? `Origin: ${body.originCountry}` : ""}
-${body.destinationCountry ? `Destination: ${body.destinationCountry}` : ""}
+${body.commodity ? `Declared Commodity: ${sanitizeField(body.commodity, 100)}` : ""}
+${body.declaredValue ? `Declared Value: ${body.declaredValue} ${sanitizeField(body.currency, 10) ?? ""}` : ""}
+${body.unitPrice ? `Unit Price: ${body.unitPrice} ${sanitizeField(body.currency, 10) ?? ""}` : ""}
+${body.originCountry ? `Origin: ${sanitizeField(body.originCountry, 100)}` : ""}
+${body.destinationCountry ? `Destination: ${sanitizeField(body.destinationCountry, 100)}` : ""}
 
 Pre-identified static flags: ${JSON.stringify(staticFlags)}
 Benchmark assessment: ${JSON.stringify(benchmarkAssessment)}
@@ -216,6 +217,16 @@ Analyse for TBML risk.`,
   const raw = response.content[0]?.type === "text" ? (response.content[0] as { type: "text"; text: string }).text : "{}";
   try {
     const aiResult = JSON.parse(raw.match(/\{[\s\S]*\}/)?.[0] ?? "{}");
+    if (!Array.isArray(aiResult.tbmlIndicators)) aiResult.tbmlIndicators = [];
+    if (!Array.isArray(aiResult.missingDocuments)) aiResult.missingDocuments = [];
+    if (!Array.isArray(aiResult.sanctionsNexus)) aiResult.sanctionsNexus = [];
+    if (!Array.isArray(aiResult.recommendedActions)) aiResult.recommendedActions = [];
+    if (aiResult.cahraAssessment) {
+      if (!Array.isArray(aiResult.cahraAssessment.certificationGaps)) aiResult.cahraAssessment.certificationGaps = [];
+      if (!Array.isArray(aiResult.cahraAssessment.requiredActions)) aiResult.cahraAssessment.requiredActions = [];
+    }
+    if (aiResult.extractedFields && !Array.isArray(aiResult.extractedFields.routingCountries)) aiResult.extractedFields.routingCountries = [];
+    if (aiResult.extractedFields && !Array.isArray(aiResult.extractedFields.certifications)) aiResult.extractedFields.certifications = [];
     return NextResponse.json({
       ok: true,
       documentType: body.documentType,

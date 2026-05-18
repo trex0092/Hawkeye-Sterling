@@ -256,7 +256,7 @@ export default function InspectionRoomPage() {
     const coverData: CoverData = {
       reportId,
       regs,
-      module: "MODULE 30 · INSPECTION ROOM",
+      module: "INSPECTION ROOM",
       title: "Regulator-Ready Evidence Dossier",
       subtitle: "Six evidence areas aggregated for CBUAE / MoE / FIU inspection.",
       subjectLabel: "INSTITUTION",
@@ -367,7 +367,7 @@ export default function InspectionRoomPage() {
   return (
     <ModuleLayout asanaModule="inspection-room" asanaLabel="Inspection Room">
       <ModuleHero
-        moduleNumber={30}
+
         eyebrow="Module · Inspection Room"
         title="Regulator-ready"
         titleEm="evidence."

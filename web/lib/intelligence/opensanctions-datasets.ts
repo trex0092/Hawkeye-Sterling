@@ -37,7 +37,7 @@ const DEFAULT_DATASETS = [
 export function resolveDatasetList(): string[] {
   const env = process.env["OPENSANCTIONS_DATASETS"];
   if (!env) return DEFAULT_DATASETS;
-  return env.split(",").map((s) => s.trim()).filter(Boolean);
+  return env.split(",").map((s: string) => s.trim()).filter(Boolean);
 }
 
 // OpenSanctions `targets.simple.json` record shape. Subset of the full

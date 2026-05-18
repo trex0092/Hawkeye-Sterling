@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export interface SarTriageResult {
   decision: "file_str" | "no_file" | "more_info" | "escalate_mlro";
@@ -80,18 +81,18 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
-  if (!body.suspiciousActivity?.trim()) return NextResponse.json({ ok: false, error: "suspiciousActivity required" }, { status: 400 , headers: gate.headers});
+  if (!body.suspiciousActivity?.trim()) return NextResponse.json({ ok: false, error: "suspiciousActivity required" }, { status: 400 , headers: gate.headers });
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "sar-triage temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "sar-triage temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 55_000);
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 1400,
+        max_tokens: 700,
         system: `You are a UAE MLRO (Money Laundering Reporting Officer) making an STR triage decision under UAE FDL 10/2025 and FATF R.20.
 
 Your role: determine whether to file an STR (Suspicious Transaction Report) via UAE FIU goAML system, request more information, or close without filing. Apply the UAE standard precisely:
@@ -129,22 +130,25 @@ Respond ONLY with valid JSON — no markdown fences:
 }`,
         messages: [{
           role: "user",
-          content: `Suspicious Activity Description: ${body.suspiciousActivity}
-Subject Name: ${body.subjectName ?? "not specified"}
-Subject Type: ${body.subjectType ?? "not specified"}
-Account Reference: ${body.accountRef ?? "not specified"}
-Transaction Summary: ${body.transactionSummary ?? "not specified"}
-Existing CDD Notes: ${body.existingCddNotes ?? "none"}
-MLRO Notes: ${body.mlroNotes ?? "none"}
-Additional Context: ${body.context ?? "none"}
+          content: `Suspicious Activity Description: ${sanitizeText(body.suspiciousActivity, 2000)}
+Subject Name: ${sanitizeField(body.subjectName, 500) || "not specified"}
+Subject Type: ${sanitizeField(body.subjectType, 100) || "not specified"}
+Account Reference: ${sanitizeField(body.accountRef, 100) || "not specified"}
+Transaction Summary: ${sanitizeText(body.transactionSummary, 2000) || "not specified"}
+Existing CDD Notes: ${sanitizeText(body.existingCddNotes, 2000) || "none"}
+MLRO Notes: ${sanitizeText(body.mlroNotes, 2000) || "none"}
+Additional Context: ${sanitizeText(body.context, 2000) || "none"}
 
 Make an STR triage decision.`,
         }],
       });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as SarTriageResult;
+    if (!Array.isArray(result.requiredFields)) result.requiredFields = [];
+    if (!Array.isArray(result.missingInformation)) result.missingInformation = [];
+    if (!Array.isArray(result.narrativeSuggestions)) result.narrativeSuggestions = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "sar-triage temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "sar-triage temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

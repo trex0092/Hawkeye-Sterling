@@ -1,5 +1,6 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 import { enforce } from "@/lib/server/enforce";
 import type { EvidencePackEntry } from "@/lib/evidencePack";
 import {
@@ -91,5 +92,5 @@ ${hsFinis(reportId, 2, 2)}`;
     ],
   });
 
-  return new Response(html, { headers: { "content-type": "text/html; charset=utf-8" } });
+  return new Response(html, { headers: { "content-type": "text/html; charset=utf-8", ...gate.headers } });
 }

@@ -106,12 +106,16 @@ function levenshteinSim(a: string, b: string): number {
   );
   for (let i = 1; i <= m; i++) {
     for (let j = 1; j <= n; j++) {
-      dp[i]![j] = a[i - 1] === b[j - 1]
-        ? dp[i - 1]![j - 1]!
-        : 1 + Math.min(dp[i - 1]![j]!, dp[i]![j - 1]!, dp[i - 1]![j - 1]!);
+      const row = dp[i];
+      const prevRow = dp[i - 1];
+      if (row && prevRow) {
+        row[j] = a[i - 1] === b[j - 1]
+          ? (prevRow[j - 1] ?? 0)
+          : 1 + Math.min(prevRow[j] ?? 0, row[j - 1] ?? 0, prevRow[j - 1] ?? 0);
+      }
     }
   }
-  return 1 - (dp[m]![n]! / Math.max(m, n));
+  return 1 - ((dp[m]?.[n] ?? 0) / Math.max(m, n));
 }
 
 // ── Token match classifier ────────────────────────────────────────────────────
@@ -153,7 +157,7 @@ function alignTokens(queryName: string, candidateName: string): TokenMatch[] {
 
     for (let ci = 0; ci < cTokens.length; ci++) {
       if (usedC.has(ci)) continue;
-      const { matchType, similarity } = classifyTokenMatch(qt, cTokens[ci]!);
+      const { matchType, similarity } = classifyTokenMatch(qt, cTokens[ci] ?? '');
       if (similarity > bestSim) {
         bestSim = similarity;
         bestIdx = ci;
@@ -170,7 +174,7 @@ function alignTokens(queryName: string, candidateName: string): TokenMatch[] {
 
     results.push({
       queryToken: qt,
-      candidateToken: bestIdx >= 0 ? cTokens[bestIdx]! : '—',
+      candidateToken: bestIdx >= 0 ? (cTokens[bestIdx] ?? '—') : '—',
       matchType: bestType,
       similarity: bestSim,
       contribution: bestSim > 0 ? contribution * bestSim : 0,

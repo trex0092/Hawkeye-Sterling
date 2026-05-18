@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 export interface TrustStructuresResult {
   opacityScore: number;
   riskRating: "critical" | "high" | "medium" | "low";
@@ -55,18 +56,18 @@ export async function POST(req: Request) {
   } catch {
     return NextResponse.json(
       { ok: false, error: "Invalid JSON" },
-      { status: 400 }
+      { status: 400, headers: gate.headers }
     );
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "trust-structures temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "trust-structures temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
-    const client = getAnthropicClient(apiKey, 22_000);
+    const client = getAnthropicClient(apiKey, 55_000);
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 1500,
+      max_tokens: 700,
       system: [
         {
           type: "text",
@@ -77,21 +78,23 @@ export async function POST(req: Request) {
       messages: [{
         role: "user",
         content: `Analyse the following trust/legal structure:
-- Entity Name: ${body.entityName}
-- Structure Type: ${body.structureType}
-- Jurisdictions: ${body.jurisdictions}
-- Number of Layers: ${body.layerCount}
-- Stated Purpose: ${body.purposeStated}
-- Additional Context: ${body.context}`,
+- Entity Name: ${sanitizeField(body.entityName)}
+- Structure Type: ${sanitizeField(body.structureType)}
+- Jurisdictions: ${sanitizeField(body.jurisdictions)}
+- Number of Layers: ${sanitizeField(body.layerCount)}
+- Stated Purpose: ${sanitizeText(body.purposeStated)}
+- Additional Context: ${sanitizeText(body.context)}`,
       }],
     });
     const text = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) return NextResponse.json({ ok: false, error: "trust-structures temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    if (!jsonMatch) return NextResponse.json({ ok: false, error: "trust-structures temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
     const parsed = JSON.parse(jsonMatch[0]) as TrustStructuresResult;
+    if (!Array.isArray(parsed.structureRedFlags)) parsed.structureRedFlags = [];
+    if (!Array.isArray(parsed.uboVerificationSteps)) parsed.uboVerificationSteps = [];
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "trust-structures temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "trust-structures temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

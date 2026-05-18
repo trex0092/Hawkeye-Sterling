@@ -11,6 +11,34 @@ import type {
   QuickScreenSubject,
 } from "@/lib/api/quickScreen.types";
 import { loadCandidates } from "@/lib/server/candidates-loader";
+import { classifyAdverseKeywords } from "@/lib/data/adverse-keywords";
+
+const KEYWORD_GROUP_WEIGHT: Record<string, number> = {
+  "terrorism-financing": 20,
+  "proliferation-wmd": 20,
+  "regulatory-action": 14,
+  "bribery-corruption": 14,
+  "money-laundering": 14,
+  "organised-crime": 14,
+  "environmental-crime": 12,
+  "human-trafficking": 12,
+  "fraud-forgery": 12,
+  "market-abuse": 10,
+  "tax-crime": 10,
+  "cybercrime": 10,
+  "insider-threat": 10,
+  "ai-misuse": 10,
+  "law-enforcement": 6,
+  "political-exposure": 2,
+};
+
+function scoreToBand(score: number): string {
+  if (score >= 85) return "critical";
+  if (score >= 70) return "high";
+  if (score >= 50) return "medium";
+  if (score >= 25) return "low";
+  return "clear";
+}
 
 type QuickScreenFn = (
   subject: QuickScreenSubject,
@@ -20,6 +48,8 @@ const quickScreen = _quickScreen as QuickScreenFn;
 import { getJson, listKeys, setJson } from "@/lib/server/store";
 import { postWebhook } from "@/lib/server/webhook";
 import { ESCALATION_DELTA, shouldEscalate } from "@/lib/server/ongoing-escalation";
+import { asanaGids } from "@/lib/server/asanaConfig";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -116,6 +146,11 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
   }
 
+  const asanaToken = process.env["ASANA_TOKEN"];
+  if (!asanaToken) {
+    console.warn("[ongoing/run] ASANA_TOKEN not set — all Asana task creation will be skipped. Compliance audit trail may be incomplete.");
+  }
+
   const keys = await listKeys("ongoing/subject/");
   // Load subjects in parallel — sequential awaits would time out for large portfolios.
   const loadedSubjects = await Promise.all(keys.map((key) => getJson<EnrolledSubject>(key)));
@@ -132,6 +167,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     subjectId: string;
     subjectName: string;
     topScore: number;
+    rawScore: number;
     severity: string;
     scoreDelta: number;
     escalated: boolean;
@@ -148,11 +184,12 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const nowMs = Date.now();
 
-  // Process all subjects in parallel — each writes to its own blob keys
-  // (ongoing/last/${id}, profile/${id}, etc.) so there are no conflicts.
-  // Sequential processing timed out on portfolios > ~20 subjects due to
-  // the 15s news-search call per subject adding up serially.
-  await Promise.all(subjects.map(async (s) => {
+  // Process subjects in concurrency-limited batches — firing all subjects
+  // concurrently bursts Asana API rate limits and risks the 30s Lambda timeout.
+  // Batch size 8 keeps parallelism high while staying within API rate limits.
+  const CONCURRENCY = 8;
+  for (let i = 0; i < subjects.length; i += CONCURRENCY) {
+  await Promise.all(subjects.slice(i, i + CONCURRENCY).map(async (s) => {
     try {
       // Respect per-subject schedule. If a schedule exists and the next
       // run isn't due yet, skip this subject. Subjects without a
@@ -172,6 +209,17 @@ export async function POST(req: Request): Promise<NextResponse> {
         subject,
         CANDIDATES as Parameters<typeof quickScreen>[1],
       );
+
+      // Keyword-adjusted composite score — adverse-media keywords must factor
+      // into risk severity so a subject with terrorism-financing or
+      // money-laundering coverage cannot score "clear".
+      const kwHaystack = [s.name, ...(s.aliases ?? [])].join(" ");
+      const kw = classifyAdverseKeywords(kwHaystack);
+      const kwGroups = Array.from(new Set(kw.map((k) => k.group)));
+      const kwBoost = Math.min(30, kwGroups.reduce((sum, g) => sum + (KEYWORD_GROUP_WEIGHT[g] ?? 0), 0));
+      const adjustedScore = Math.min(100, screen.topScore + kwBoost);
+      const adjustedSeverity = scoreToBand(adjustedScore);
+
       const prev = await getJson<LastSnapshot>(`ongoing/last/${s.id}`);
       const prevFps = prev ? fingerprints(prev.hits) : new Set<string>();
       const newHits = screen.hits.filter(
@@ -182,14 +230,16 @@ export async function POST(req: Request): Promise<NextResponse> {
       // ESCALATION_DELTA between runs, emit a dedicated escalation
       // webhook so the MLRO is paged rather than waiting on the next
       // four-eyes review.
-      const scoreDelta = prev ? screen.topScore - prev.topScore : 0;
-      const escalated = shouldEscalate(prev?.topScore, screen.topScore);
+      // Compare keyword-adjusted score (the value that gets persisted)
+      // so the threshold and the snapshot agree.
+      const scoreDelta = prev ? adjustedScore - prev.topScore : 0;
+      const escalated = shouldEscalate(prev?.topScore, adjustedScore);
 
-      // Persist the fresh snapshot.
+      // Persist the fresh snapshot (using keyword-adjusted score/severity).
       const snapshot: LastSnapshot = {
         runAt,
-        topScore: screen.topScore,
-        severity: screen.severity,
+        topScore: adjustedScore,
+        severity: adjustedSeverity,
         hits: screen.hits.map((h) => ({
           listRef: h.listRef,
           candidateName: h.candidateName,
@@ -221,8 +271,9 @@ export async function POST(req: Request): Promise<NextResponse> {
         const nowIso = runAt;
         const snap = {
           at: nowIso,
-          topScore: screen.topScore,
-          severity: screen.severity,
+          topScore: adjustedScore,
+          rawScore: screen.topScore,
+          severity: adjustedSeverity,
           hits: screen.hits.map((h) => ({
             listId: h.listId,
             listRef: h.listRef,
@@ -252,7 +303,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         const updated: ExistingProfile = {
           ...base,
           updatedAt: nowIso,
-          snapshots: [...base.snapshots.slice(-199), snap],
+          snapshots: [...base.snapshots.slice(-999), snap],
           hitsEverSeen: Array.from(fingerprints).slice(-500),
         };
         await setJson(profileKey, updated);
@@ -260,11 +311,9 @@ export async function POST(req: Request): Promise<NextResponse> {
         console.warn("[ongoing] profile snapshot update failed — monitoring history may be incomplete:", err instanceof Error ? err.message : err);
       }
 
-      // Adverse-media sweep — hit Google News RSS for the subject's name.
-      // The /api/news-search route classifies each article (737-keyword
-      // taxonomy across 8 categories), scores for severity, and returns
-      // a summarised list. A high/critical severity article that we
-      // haven't already seen triggers a dedicated Asana alert.
+      // Adverse-media sweep (Google News RSS) and Taranis AI analysis run in
+      // parallel — they are fully independent and together account for the
+      // majority of per-subject latency on each monitoring tick.
       const appBaseForNews =
         process.env["NEXT_PUBLIC_APP_URL"] ?? "http://localhost:3000";
       interface NewsArticle {
@@ -285,146 +334,163 @@ export async function POST(req: Request): Promise<NextResponse> {
       }
       let newsAlertTaskUrl: string | undefined;
       let newAdverseArticles: NewsArticle[] = [];
-      try {
-        const newsRes = await fetch(
-          new URL(
-            `/api/news-search?q=${encodeURIComponent(s.name)}`,
-            appBaseForNews,
-          ).toString(),
-          {
-            signal: AbortSignal.timeout(15_000),
-            headers: { accept: "application/json" },
-          },
-        );
-        if (newsRes.ok) {
-          const newsPayload = (await newsRes.json().catch((err: unknown) => { console.warn("[hawkeye] ongoing/run JSON parse failed:", err); return null; })) as
-            | NewsResponseShape
-            | null;
-          const articles = newsPayload?.articles ?? [];
-          // Find articles whose severity is high/critical AND whose URL
-          // we haven't already logged for this subject.
-          const seen = await getJson<{ urls: string[] }>(
-            `ongoing/adverse-seen/${s.id}`,
-          );
-          const seenUrls = new Set(seen?.urls ?? []);
-          newAdverseArticles = articles.filter(
-            (a) =>
-              (a.severity === "high" || a.severity === "critical") &&
-              a.url &&
-              !seenUrls.has(a.url),
-          );
-          if (articles.length > 0) {
-            const allUrls = new Set<string>(seenUrls);
-            for (const a of articles) {
-              if (a.url) allUrls.add(a.url);
-            }
-            // Cap the seen list so it doesn't grow unbounded.
-            const capped = Array.from(allUrls).slice(-500);
-            await setJson(`ongoing/adverse-seen/${s.id}`, { urls: capped });
-          }
-          if (newAdverseArticles.length > 0) {
-            const asanaToken = process.env["ASANA_TOKEN"];
-            const inboxProject = process.env["ASANA_SCREENING_PROJECT_GID"] ?? process.env["ASANA_PROJECT_GID"];
-            if (asanaToken && inboxProject) {
-              try {
-                const topSeverity = newAdverseArticles.some(
-                  (a) => a.severity === "critical",
-                )
-                  ? "CRITICAL"
-                  : "HIGH";
-                const lines: string[] = [];
-                lines.push(
-                  `HAWKEYE STERLING · ADVERSE-MEDIA ALERT`,
-                );
-                lines.push(`Subject     : ${s.name} (${s.id})`);
-                lines.push(`Jurisdiction: ${s.jurisdiction ?? "—"}`);
-                lines.push(`Severity    : ${topSeverity}`);
-                lines.push(`Tick        : ${runAt}`);
-                lines.push(`New items   : ${newAdverseArticles.length}`);
-                lines.push("");
-                lines.push(`── ARTICLES ──`);
-                for (const a of newAdverseArticles.slice(0, 10)) {
-                  lines.push(`• [${a.severity.toUpperCase()}] ${a.title}`);
-                  if (a.source) lines.push(`    source: ${a.source}`);
-                  if (a.pubDate) lines.push(`    date  : ${a.pubDate}`);
-                  lines.push(`    url   : ${a.url}`);
+      let adverseMediaRiskTier: string | undefined;
+      let sarRecommended: boolean | undefined;
+
+      // Run news-search and Taranis adverse-media in parallel.
+      await Promise.all([
+        // ── News-search sweep ──────────────────────────────────────────────
+        (async () => {
+          try {
+            const adminToken = process.env["ADMIN_TOKEN"];
+            const newsRes = await fetch(
+              new URL(
+                `/api/news-search?q=${encodeURIComponent(s.name)}`,
+                appBaseForNews,
+              ).toString(),
+              {
+                signal: AbortSignal.timeout(8_000),
+                headers: {
+                  accept: "application/json",
+                  ...(adminToken ? { authorization: `Bearer ${adminToken}` } : {}),
+                },
+              },
+            );
+            if (!newsRes.ok) {
+              console.warn(`[ongoing/run] news-search failed for ${s.id}: HTTP ${newsRes.status}`);
+            } else {
+            const newsPayload = (await newsRes.json().catch((err: unknown) => { console.warn("[hawkeye] ongoing/run JSON parse failed:", err); return null; })) as
+                | NewsResponseShape
+                | null;
+              const articles = newsPayload?.articles ?? [];
+              // Find articles whose severity is high/critical AND whose URL
+              // we haven't already logged for this subject.
+              const seen = await getJson<{ urls: string[] }>(
+                `ongoing/adverse-seen/${s.id}`,
+              );
+              const seenUrls = new Set(seen?.urls ?? []);
+              newAdverseArticles = articles.filter(
+                (a) =>
+                  (a.severity === "high" || a.severity === "critical") &&
+                  a.url &&
+                  !seenUrls.has(a.url),
+              );
+              if (articles.length > 0) {
+                const allUrls = new Set<string>(seenUrls);
+                for (const a of articles) {
+                  if (a.url) allUrls.add(a.url);
                 }
-                if (newAdverseArticles.length > 10) {
-                  lines.push(`  … and ${newAdverseArticles.length - 10} more`);
-                }
-                lines.push("");
-                lines.push(
-                  `Hawkeye     : https://hawkeye-sterling.netlify.app/screening?open=${s.id}`,
-                );
-                const body = {
-                  data: {
-                    name: `🟥 [ADVERSE-MEDIA · ${topSeverity}] ${s.name} (${s.id}) · ${newAdverseArticles.length} new`,
-                    notes: lines.join("\n"),
-                    projects: [inboxProject],
-                    workspace:
-                      process.env["ASANA_WORKSPACE_GID"] ?? "1213645083721316",
-                    assignee:
-                      process.env["ASANA_ASSIGNEE_GID"] ?? "1213645083721304",
-                  },
-                };
-                const r = await fetch("https://app.asana.com/api/1.0/tasks", {
-                  signal: AbortSignal.timeout(10_000),
-                  method: "POST",
-                  headers: {
-                    "content-type": "application/json",
-                    accept: "application/json",
-                    authorization: `Bearer ${asanaToken}`,
-                  },
-                  body: JSON.stringify(body),
-                });
-                if (!r.ok) {
-                  const detail = await r.text().catch(() => "");
-                  console.warn(
-                    `[ongoing/run] adverse-media alert POST rejected for ${s.id}: HTTP ${r.status}${detail ? ` — ${detail.slice(0, 200)}` : ""}`,
-                  );
-                } else {
-                  const data = (await r.json().catch((err: unknown) => { console.warn("[hawkeye] ongoing/run JSON parse failed:", err); return null; })) as
-                    | { data?: { permalink_url?: string } }
-                    | null;
-                  if (data?.data?.permalink_url) {
-                    newsAlertTaskUrl = data.data.permalink_url;
-                  } else {
+                // Cap the seen list so it doesn't grow unbounded.
+                const capped = Array.from(allUrls).slice(-500);
+                await setJson(`ongoing/adverse-seen/${s.id}`, { urls: capped });
+              }
+              if (newAdverseArticles.length > 0) {
+                const asanaToken = process.env["ASANA_TOKEN"];
+                const inboxProject = asanaGids.screening();
+                if (asanaToken && inboxProject) {
+                  try {
+                    const topSeverity = newAdverseArticles.some(
+                      (a) => a.severity === "critical",
+                    )
+                      ? "CRITICAL"
+                      : "HIGH";
+                    const lines: string[] = [];
+                    lines.push(
+                      `HAWKEYE STERLING · ADVERSE-MEDIA ALERT`,
+                    );
+                    lines.push(`Subject     : ${s.name} (${s.id})`);
+                    lines.push(`Jurisdiction: ${s.jurisdiction ?? "—"}`);
+                    lines.push(`Severity    : ${topSeverity}`);
+                    lines.push(`Tick        : ${runAt}`);
+                    lines.push(`New items   : ${newAdverseArticles.length}`);
+                    lines.push("");
+                    lines.push(`── ARTICLES ──`);
+                    for (const a of newAdverseArticles.slice(0, 10)) {
+                      lines.push(`• [${a.severity.toUpperCase()}] ${a.title}`);
+                      if (a.source) lines.push(`    source: ${a.source}`);
+                      if (a.pubDate) lines.push(`    date  : ${a.pubDate}`);
+                      lines.push(`    url   : ${a.url}`);
+                    }
+                    if (newAdverseArticles.length > 10) {
+                      lines.push(`  … and ${newAdverseArticles.length - 10} more`);
+                    }
+                    lines.push("");
+                    lines.push(
+                      `Hawkeye     : https://hawkeye-sterling.netlify.app/screening?open=${s.id}`,
+                    );
+                    const body = {
+                      data: {
+                        name: `🟥 [ADVERSE-MEDIA · ${topSeverity}] ${s.name} (${s.id}) · ${newAdverseArticles.length} new`,
+                        notes: lines.join("\n"),
+                        projects: [inboxProject],
+                        workspace: asanaGids.workspace(),
+                        assignee: asanaGids.assignee(),
+                      },
+                    };
+                    const r = await fetch("https://app.asana.com/api/1.0/tasks", {
+                      signal: AbortSignal.timeout(10_000),
+                      method: "POST",
+                      headers: {
+                        "content-type": "application/json",
+                        accept: "application/json",
+                        authorization: `Bearer ${asanaToken}`,
+                      },
+                      body: JSON.stringify(body),
+                    });
+                    if (!r.ok) {
+                      const detail = await r.text().catch(() => "");
+                      console.warn(
+                        `[ongoing/run] adverse-media alert POST rejected for ${s.id}: HTTP ${r.status}${detail ? ` — ${detail.slice(0, 200)}` : ""}`,
+                      );
+                    } else {
+                      const data = (await r.json().catch((err: unknown) => { console.warn("[hawkeye] ongoing/run JSON parse failed:", err); return null; })) as
+                        | { data?: { permalink_url?: string } }
+                        | null;
+                      if (data?.data?.permalink_url) {
+                        newsAlertTaskUrl = data.data.permalink_url;
+                      } else {
+                        console.warn(
+                          `[ongoing/run] adverse-media alert POST returned 2xx with no permalink_url for ${s.id}`,
+                        );
+                      }
+                    }
+                  } catch (err) {
                     console.warn(
-                      `[ongoing/run] adverse-media alert POST returned 2xx with no permalink_url for ${s.id}`,
+                      `[ongoing/run] adverse-media alert POST failed for ${s.id}:`,
+                      err,
                     );
                   }
                 }
-              } catch (err) {
-                console.warn(
-                  `[ongoing/run] adverse-media alert POST failed for ${s.id}:`,
-                  err,
-                );
               }
-            }
+            } // end else (newsRes.ok)
+          } catch (err) {
+            console.warn(
+              `[ongoing/run] adverse-media sweep failed for ${s.id}:`,
+              err,
+            );
           }
-        }
-      } catch (err) {
-        console.warn(
-          `[ongoing/run] adverse-media sweep failed for ${s.id}:`,
-          err,
-        );
-      }
+        })(),
 
-      // Weaponized adverse-media analysis via Taranis AI (fail-soft).
-      // Runs the full MLRO pipeline: FATF predicate mapping, severity scoring,
-      // SAR trigger (R.20), counterfactual, investigation narrative.
-      let adverseMediaRiskTier: string | undefined;
-      let sarRecommended: boolean | undefined;
-      try {
-        const taranisResult = await searchAdverseMedia(s.name, { limit: 30, minRelevance: 0 });
-        if (taranisResult.ok && taranisResult.items.length > 0) {
-          const verdict = analyseAdverseMediaItems(s.name, taranisResult.items);
-          adverseMediaRiskTier = verdict.riskTier;
-          sarRecommended = verdict.sarRecommended;
-        }
-      } catch (err) {
-        console.warn("[ongoing] adverse media (Taranis) failed:", err instanceof Error ? err.message : err);
-      }
+        // ── Taranis AI adverse-media analysis ─────────────────────────────
+        // Weaponized adverse-media analysis via Taranis AI (fail-soft).
+        // Runs the full MLRO pipeline: FATF predicate mapping, severity scoring,
+        // SAR trigger (R.20), counterfactual, investigation narrative.
+        (async () => {
+          try {
+            const taranisResult = await Promise.race([
+              searchAdverseMedia(s.name, { limit: 30, minRelevance: 0 }),
+              new Promise<never>((_, reject) => setTimeout(() => reject(new Error("searchAdverseMedia timeout")), 20_000)),
+            ]);
+            if (taranisResult.ok && taranisResult.items.length > 0) {
+              const verdict = analyseAdverseMediaItems(s.name, taranisResult.items);
+              adverseMediaRiskTier = verdict.riskTier;
+              sarRecommended = verdict.sarRecommended;
+            }
+          } catch (err) {
+            console.warn("[ongoing] adverse media (Taranis) failed:", err instanceof Error ? err.message : err);
+          }
+        })(),
+      ]);
 
       let asanaTaskUrl: string | undefined;
       let asanaSkipReason: string | undefined;
@@ -513,22 +579,32 @@ export async function POST(req: Request): Promise<NextResponse> {
       // detected an escalation but had nowhere to file it".
       let escalationTaskUrl: string | undefined;
       let escalationSkipReason: string | undefined;
-      const escalationsProject = process.env["ASANA_ESCALATIONS_PROJECT_GID"];
+      const escalationsProject = asanaGids.escalations();
       const asanaToken = process.env["ASANA_TOKEN"];
       // Keep our branch's detailed skip-reason logging (so ops sees WHY an
       // escalation was dropped) AND pick up the assignee field that main
       // added — every Asana task now lands on Luisa's queue by default
       // via ASANA_ASSIGNEE_GID (overridable via env).
       if (escalated) {
-        if (!asanaToken) {
+        // Deduplication: only fire escalation task when severity bucket changes,
+        // not on every tick where the score stays elevated (which would flood
+        // the escalations board with duplicate tasks for the same subject).
+        const escKey = `ongoing/escalation-seen/${s.id}`;
+        const lastEsc = await getJson<{ severity: string; firedAt: string }>(escKey);
+        const currentSeverity = adjustedSeverity; // e.g. "high", "critical"
+        const escalationIsDuplicate = Boolean(lastEsc && lastEsc.severity === currentSeverity);
+
+        if (escalationIsDuplicate) {
+          escalationSkipReason = `already filed for severity=${currentSeverity} at ${lastEsc!.firedAt}`;
+        } else if (!asanaToken) {
           escalationSkipReason = "ASANA_TOKEN not set";
           console.warn(
             `[ongoing/run] escalation detected for ${s.id} but ASANA_TOKEN is not set — no task filed`,
           );
         } else if (!escalationsProject) {
-          escalationSkipReason = "ASANA_ESCALATIONS_PROJECT_GID not set";
+          escalationSkipReason = "escalations project not configured";
           console.warn(
-            `[ongoing/run] escalation detected for ${s.id} but ASANA_ESCALATIONS_PROJECT_GID is not set — no task filed`,
+            `[ongoing/run] escalation detected for ${s.id} but escalations project GID is not set — no task filed`,
           );
         } else {
           try {
@@ -539,15 +615,15 @@ export async function POST(req: Request): Promise<NextResponse> {
                   `Subject: ${s.name} (${s.id})`,
                   `Jurisdiction: ${s.jurisdiction ?? "—"}`,
                   `Previous top score: ${prev?.topScore ?? "n/a"}`,
-                  `New top score: ${screen.topScore}`,
+                  `New top score: ${adjustedScore} (raw: ${screen.topScore}, kw boost: +${kwBoost})`,
                   `Delta: +${scoreDelta} (threshold ≥ ${ESCALATION_DELTA})`,
-                  `Severity: ${screen.severity}`,
+                  `Severity: ${adjustedSeverity}`,
                   `New hits: ${newHits.length}`,
                   `Triggered at: ${runAt}`,
                 ].join("\n"),
                 projects: [escalationsProject],
-                workspace: process.env["ASANA_WORKSPACE_GID"] ?? "1213645083721316",
-                assignee: process.env["ASANA_ASSIGNEE_GID"] ?? "1213645083721304",
+                workspace: asanaGids.workspace(),
+                assignee: asanaGids.assignee(),
               },
             };
             const r = await fetch("https://app.asana.com/api/1.0/tasks", {
@@ -583,6 +659,9 @@ export async function POST(req: Request): Promise<NextResponse> {
                 | null;
               if (data?.data?.permalink_url) {
                 escalationTaskUrl = data.data.permalink_url;
+                // Persist fingerprint so future ticks with same severity
+                // bucket don't re-create a duplicate escalation task.
+                await setJson(escKey, { severity: currentSeverity, firedAt: runAt });
               } else {
                 escalationSkipReason = "asana 2xx with no permalink_url";
                 console.error(
@@ -600,6 +679,43 @@ export async function POST(req: Request): Promise<NextResponse> {
         }
       }
 
+      // Write audit chain entry for every monitoring run so a regulator can
+      // verify continuous coverage — not just when new hits are found.
+      // No-change runs use event "ongoing.monitor_tick" (a lightweight
+      // heartbeat); new-hit runs use "new_hits_alert" with full hit detail.
+      if (newHits.length > 0) {
+        void writeAuditChainEntry({
+          event: "new_hits_alert",
+          actor: "cron_internal",
+          subjectId: s.id,
+          subjectName: s.name,
+          severity: adjustedSeverity,
+          topScore: adjustedScore,
+          scoreDelta,
+          newHitCount: newHits.length,
+          runAt,
+          newHits: newHits.slice(0, 10).map((h) => ({
+            listId: h.listId,
+            listRef: h.listRef,
+            candidateName: h.candidateName,
+          })),
+        });
+      } else {
+        // Heartbeat entry: proves the subject was screened even with no new hits.
+        // Regulators can audit the complete monitoring cadence from these entries.
+        void writeAuditChainEntry({
+          event: "ongoing.monitor_tick",
+          actor: "cron_internal",
+          subjectId: s.id,
+          subjectName: s.name,
+          severity: adjustedSeverity,
+          topScore: adjustedScore,
+          scoreDelta: 0,
+          newHitCount: 0,
+          runAt,
+        });
+      }
+
       const webhookType: "screening.escalated" | "screening.delta" | "ongoing.rerun" =
         escalated
           ? "screening.escalated"
@@ -611,8 +727,8 @@ export async function POST(req: Request): Promise<NextResponse> {
         type: webhookType,
         subjectId: s.id,
         subjectName: s.name,
-        severity: screen.severity,
-        topScore: screen.topScore,
+        severity: adjustedSeverity,
+        topScore: adjustedScore,
         scoreDelta,
         escalated,
         newHits: newHits.map((h) => ({
@@ -644,8 +760,9 @@ export async function POST(req: Request): Promise<NextResponse> {
       results.push({
         subjectId: s.id,
         subjectName: s.name,
-        topScore: screen.topScore,
-        severity: screen.severity,
+        topScore: adjustedScore,
+        rawScore: screen.topScore,
+        severity: adjustedSeverity,
         scoreDelta,
         escalated,
         newHits: newHits.map((h) => ({
@@ -667,17 +784,20 @@ export async function POST(req: Request): Promise<NextResponse> {
         subjectId: s.id,
         subjectName: s.name ?? "",
         topScore: 0,
+        rawScore: 0,
         severity: "error",
         scoreDelta: 0,
         escalated: false,
         newHits: [],
         webhook: {
           delivered: false,
-          error: err instanceof Error ? err.message : String(err),
+          error: "Webhook delivery failed — please retry.",
         },
       });
+      console.error("[ongoing/run] subject processing failed:", err instanceof Error ? err.message : err);
     }
   }));
+  } // end CONCURRENCY batch loop
 
   return NextResponse.json({
     ok: true,

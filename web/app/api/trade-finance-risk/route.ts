@@ -161,17 +161,17 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "trade-finance-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "trade-finance-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
     const client = getAnthropicClient(apiKey, 55_000);
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 3000,
+      max_tokens: 800,
       system: [
         {
           type: "text",
@@ -280,8 +280,13 @@ Perform a comprehensive TBML risk assessment. Identify all applicable FATF typol
 
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as TradeFinanceRiskResult;
+    if (!Array.isArray(result.identifiedSchemes)) result.identifiedSchemes = [];
+    if (!Array.isArray(result.documentaryRisk)) result.documentaryRisk = [];
+    if (!Array.isArray(result.redFlags)) result.redFlags = [];
+    if (!Array.isArray(result.immediateActions)) result.immediateActions = [];
+    if (!Array.isArray(result.regulatoryObligations)) result.regulatoryObligations = [];
     return NextResponse.json(result, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "trade-finance-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "trade-finance-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

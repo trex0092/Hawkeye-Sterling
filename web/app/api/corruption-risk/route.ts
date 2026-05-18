@@ -238,17 +238,17 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "corruption-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "corruption-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
     const client = getAnthropicClient(apiKey, 55_000);
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 3000,
+      max_tokens: 800,
       system: [
         {
           type: "text",
@@ -267,7 +267,7 @@ Jurisdiction: ${body.jurisdiction ?? "Not specified"}
 Sector: ${body.sector ?? "Not specified"}
 PEP Status: ${body.pepStatus ? "YES" : "NO"}
 PEP Tier: ${body.pepTier ?? "none"}
-Contract Types: ${(body.contractTypes ?? []).join(", ") || "Not specified"}
+Contract Types: ${( Array.isArray(body.contractTypes) ? body.contractTypes : []).join(", ") || "Not specified"}
 Source of Wealth: ${body.sourceOfWealth ?? "Not disclosed"}
 Beneficial Owner Opacity: ${body.beneficialOwnerOpacity ? "YES — structure obscures UBO" : "NO"}
 Adverse Media (Corruption): ${body.adverseMediaCorruption ? "YES — adverse media present" : "NO"}
@@ -280,8 +280,13 @@ Produce a fully weaponized corruption risk assessment covering FATF R.12 PEP obl
     });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as CorruptionRiskResult;
+    if (!Array.isArray(result.contractRedFlags)) result.contractRedFlags = [];
+    if (!Array.isArray(result.regulatoryRequirements)) result.regulatoryRequirements = [];
+    if (!Array.isArray(result.redFlags)) result.redFlags = [];
+    if (!Array.isArray(result.requiredApprovals)) result.requiredApprovals = [];
+    if (!Array.isArray(result.reportingObligations)) result.reportingObligations = [];
     return NextResponse.json(result, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "corruption-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "corruption-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

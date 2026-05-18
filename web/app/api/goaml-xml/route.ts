@@ -13,9 +13,11 @@
 // UAE FIU goAML Technical Guide v3.1; goAML XML schema v4.0/5.x.
 
 import { NextResponse } from "next/server";
+import { enforce } from "@/lib/server/enforce";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 
 // ────────────────────────────────────────────────────────────────────
 //  Public type contracts
@@ -365,6 +367,9 @@ const SUBMISSION_CHECKLIST = [
 ];
 
 export async function POST(req: Request): Promise<Response> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
+
   let body: GoAmlXmlInput;
   try {
     body = (await req.json()) as GoAmlXmlInput;

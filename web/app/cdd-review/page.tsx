@@ -306,7 +306,7 @@ export default function CddReviewPage() {
   const eddTotalItems = eddResult
     ? eddResult.documents.length + eddResult.questions.length + eddResult.verifications.length + eddResult.redFlagsToMonitor.length
     : 0;
-  const eddDoneItems = Object.values(eddChecks).filter(Boolean).length;
+  const eddDoneItems = (Object.values(eddChecks) as boolean[]).filter(Boolean).length;
   const eddPct = eddTotalItems > 0 ? Math.round((eddDoneItems / eddTotalItems) * 100) : 0;
 
   // ── Enriched + sorted records ────────────────────────────────────────────
@@ -461,7 +461,7 @@ export default function CddReviewPage() {
     <ModuleLayout asanaModule="cdd-review" asanaLabel="CDD Review">
       {/* ── Section 1: Module Header & KPIs ── */}
       <ModuleHero
-        moduleNumber={22}
+
         eyebrow="Module 22 · CDD Lifecycle"
         title="Periodic CDD"
         titleEm="review."

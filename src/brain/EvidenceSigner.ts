@@ -270,7 +270,8 @@ export function verifyBundle(bundle: SignedBundle): {
   const expectedHash = sha256Hex(bundleContent);
   if (expectedHash !== bundle.bundleHash) errors.push('Bundle hash mismatch');
 
-  const key = KEY_REGISTRY.get(bundle.signingKeyId)!;
+  const key = KEY_REGISTRY.get(bundle.signingKeyId);
+  if (!key) { errors.push('Unknown signing key'); return { ok: false, errors, envelopeCount: 0 }; }
   const expectedSig = key.algorithm === 'HMAC-SHA256'
     ? sha256Hex(keyRaw + bundle.bundleHash)
     : fnv1aChain(bundle.bundleHash, keyRaw);

@@ -373,7 +373,8 @@ function buildProhibitionChecks(
   }
 
   const mark = (id: ProhibitionId, status: ProhibitionCheck['status'], evidence: string) => {
-    const cur = byId.get(id)!;
+    const cur = byId.get(id);
+    if (!cur) return;
     // Upgrade severity: violation > concern > pass.
     const rank: Record<ProhibitionCheck['status'], number> = {
       not_applicable: 0, pass: 1, concern: 2, violation: 3,

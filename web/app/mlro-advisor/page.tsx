@@ -1275,7 +1275,7 @@ const VERDICT_TONE: Record<string, string> = {
 
 function StructuredAdvisorView({ response }: { response: AdvisorResponseV1 }) {
   const tone = VERDICT_TONE[response.decision.verdict] ?? "bg-gray-100 text-gray-700 border-gray-300";
-  const citationGroups = Object.entries(response.frameworkCitations.byClass).filter(([, list]) => (list?.length ?? 0) > 0);
+  const citationGroups = (Object.entries(response.frameworkCitations.byClass) as [string, string[] | undefined][]).filter(([, list]) => (list?.length ?? 0) > 0);
   return (
     <div className="bg-bg-panel border border-brand/40 rounded-lg p-4 space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
@@ -1393,6 +1393,17 @@ function Section({ label, children }: { label: string; children: React.ReactNode
   );
 }
 
+// ── Module-scope constants ────────────────────────────────────────────────────
+
+const ADVISOR_STORAGE = "hawkeye.mlro.advisor.v1";
+
+const CLIENT_TIMEOUTS: Record<ReasoningMode, number> = {
+  quick: 15_000,
+  speed: 9_000,
+  balanced: 45_000,
+  multi_perspective: 600_000,
+};
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function MlroAdvisorPage() {
@@ -1403,11 +1414,13 @@ export default function MlroAdvisorPage() {
   const [mode, setMode] = useState<ReasoningMode>("quick");
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const ADVISOR_STORAGE = "hawkeye.mlro.advisor.v1";
+  // Advisor conversation history is stored in sessionStorage (not localStorage)
+  // because MLRO conversations may contain case PII — they should clear when
+  // the tab closes and not be readable by other sessions on a shared workstation.
   const [advisorHistory, setAdvisorHistory] = useState<AdvisorHistoryEntry[]>(() => {
     if (typeof window === "undefined") return [];
     try {
-      const raw = window.localStorage.getItem("hawkeye.mlro.advisor.v1");
+      const raw = window.sessionStorage.getItem("hawkeye.mlro.advisor.v1");
       return raw ? (JSON.parse(raw) as AdvisorHistoryEntry[]) : [];
     } catch (err) {
       console.error("[hawkeye] mlro-advisor: history parse failed — returning empty:", err);
@@ -1415,23 +1428,16 @@ export default function MlroAdvisorPage() {
     }
   });
   useEffect(() => {
-    try { window.localStorage.setItem(ADVISOR_STORAGE, JSON.stringify(advisorHistory.slice(0, 50))); }
+    try { window.sessionStorage.setItem(ADVISOR_STORAGE, JSON.stringify(advisorHistory.slice(0, 50))); }
     catch (err) {
       console.warn("[hawkeye] mlro-advisor: history persist failed (storage quota):", err);
     }
-  }, [advisorHistory, ADVISOR_STORAGE]);
+  }, [advisorHistory]);
 
   /** ID of the entry currently being streamed (Quick mode). null when idle. */
   const [streamingEntryId, setStreamingEntryId] = useState<string | null>(null);
   /** Advisor entry currently open in the goAML draft modal (null = closed). */
   const [strDraftFor, setStrDraftFor] = useState<AdvisorHistoryEntry | null>(null);
-
-  const CLIENT_TIMEOUTS: Record<ReasoningMode, number> = {
-    quick: 15_000,
-    speed: 9_000,
-    balanced: 45_000,
-    multi_perspective: 600_000,
-  };
 
   const recordAdvisorEntry = useCallback((q: string, m: ReasoningMode, data: AdvisorResult) => {
     setAdvisorHistory((prev) => [
@@ -2676,7 +2682,7 @@ export default function MlroAdvisorPage() {
     setCtrLoading(true); setCtrResult(null);
     setToolErrors((p) => { const n = {...p}; delete n["ctrStructuring"]; return n; });
     try {
-      const res = await fetch("/api/ctr-structuring", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ amounts: ctrAmounts, periodDays: parseInt(ctrPeriodDays) || 30, subjectName: ctrSubject }) });
+      const res = await fetch("/api/ctr-structuring", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ amounts: ctrAmounts, periodDays: parseInt(ctrPeriodDays, 10) || 30, subjectName: ctrSubject }) });
       if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json() as CtrStructuringResult;
       if (!mountedRef.current) return;
@@ -3344,7 +3350,7 @@ export default function MlroAdvisorPage() {
   return (
     <ModuleLayout asanaModule="mlro-advisor" asanaLabel="MLRO Advisor" engineLabel="MLRO Advisor">
       <ModuleHero
-        moduleNumber={7}
+
         eyebrow="Module 09 · Deep Reasoning"
         title="MLRO"
         titleEm="advisor."
@@ -5709,8 +5715,8 @@ export default function MlroAdvisorPage() {
                   const decisionCls = (m.decision === "file_str" || m.decision === "escalate_senior") ? "bg-red text-white" : m.decision === "enhanced_cdd" ? "bg-amber-dim text-amber" : m.decision === "monitor_and_review" ? "bg-brand-dim text-brand" : "bg-green-dim text-green";
                   const qScore = m.qualityScore;
                   const qCls = qScore >= 80 ? "bg-green-dim text-green" : qScore >= 55 ? "bg-amber-dim text-amber" : "bg-red-dim text-red";
-                  const auditPassed = Object.values(m.auditElements).filter(Boolean).length;
-                  const auditTotal = Object.values(m.auditElements).length;
+                  const auditPassed = (Object.values(m.auditElements) as boolean[]).filter(Boolean).length;
+                  const auditTotal = (Object.values(m.auditElements) as boolean[]).length;
                   return (
                     <div className="space-y-4 border border-hair-2 rounded-lg p-4 bg-bg-1">
                       <div className="flex items-center gap-3 flex-wrap">
@@ -5725,7 +5731,7 @@ export default function MlroAdvisorPage() {
                         <pre className="text-11 text-ink-0 whitespace-pre-wrap leading-relaxed font-mono">{m.memo}</pre>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-10">
-                        {Object.entries(m.auditElements).map(([k, v]) => (
+                        {(Object.entries(m.auditElements) as [string, boolean][]).map(([k, v]) => (
                           <div key={k} className={`flex items-center gap-1.5 px-2 py-1 rounded border ${v ? "border-green/30 bg-green-dim text-green" : "border-red/30 bg-red-dim text-red"}`}>
                             <span className="font-bold">{v ? "✓" : "✗"}</span>
                             <span className="font-mono">{k.replace(/([A-Z])/g, " $1").trim()}</span>
@@ -6259,7 +6265,7 @@ export default function MlroAdvisorPage() {
                       {jr.cahraStatus && <div className="px-3 py-1.5 bg-amber-dim border border-amber/30 rounded text-11 text-amber"><span className="font-semibold">CAHRA:</span> {jr.cahraStatus}</div>}
                       {jr.fatfDetail && <p className="text-12 text-ink-1">{jr.fatfDetail}</p>}
                       <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-                        {Object.entries(jr.sanctionsExposure).map(([k, v]) => v ? (
+                        {(Object.entries(jr.sanctionsExposure) as [string, string][]).map(([k, v]) => v ? (
                           <div key={k} className="px-2 py-1.5 bg-red-dim border border-red/20 rounded text-center">
                             <div className="text-10 font-mono text-red uppercase">{k}</div>
                             <div className="text-10 text-ink-2 truncate">{v}</div>

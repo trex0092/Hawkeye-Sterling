@@ -673,7 +673,7 @@ export default function TypologyLibraryPage() {
         eyebrow="AI-Powered AML Knowledge Base"
         title="Typology"
         titleEm="library."
-        moduleNumber={38}
+
         kpis={[
           { value: "500+", label: "Typologies indexed" },
           { value: "52", label: "Categories" },

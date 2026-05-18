@@ -16,8 +16,7 @@
 //   const gate = await enforce(req, { requireAuth: false });
 
 import { NextResponse } from "next/server";
-import { extractKey, validateAndConsume } from "./api-keys";
-import type { ApiKeyRecord } from "./api-keys";
+import { extractKey, validateAndConsume, type ApiKeyRecord } from "./api-keys";
 import { consumeRateLimit, rateLimitHeaders } from "./rate-limit";
 import { tierFor } from "@/lib/data/tiers";
 import { createHash, timingSafeEqual } from "node:crypto";
@@ -36,8 +35,30 @@ export type EnforcementResult = EnforcementAllow | { ok: false; response: NextRe
 
 export async function enforce(
   req: Request,
-  opts: { requireAuth?: boolean } = { requireAuth: true },
+  opts: { requireAuth?: boolean; requireJsonBody?: boolean } = { requireAuth: true },
 ): Promise<EnforcementResult> {
+  // Content-Type guard — for JSON-body methods, callers must declare
+  // application/json so the handler can safely call req.json().
+  // Skip GET/HEAD/DELETE/OPTIONS which have no body by convention.
+  // Set requireJsonBody: false to bypass (e.g. multipart upload routes).
+  const bodyMethod = ["POST", "PUT", "PATCH"].includes(req.method);
+  const requireJson = opts.requireJsonBody !== false && bodyMethod;
+  if (requireJson) {
+    const ct = req.headers.get("content-type") ?? "";
+    const hasBody =
+      req.headers.has("content-length")
+        ? (parseInt(req.headers.get("content-length") ?? "0", 10) > 0)
+        : req.headers.has("transfer-encoding");
+    if (hasBody && !ct.toLowerCase().includes("application/json")) {
+      return {
+        ok: false,
+        response: NextResponse.json(
+          { ok: false, error: "Content-Type: application/json required for POST/PUT/PATCH requests with a body", code: "UNSUPPORTED_MEDIA_TYPE" },
+          { status: 415 },
+        ),
+      };
+    }
+  }
   const plaintext = extractKey(req);
   const anonymous = plaintext === null;
 
@@ -64,6 +85,30 @@ export async function enforce(
       };
     }
     return { ok: true, tier: rl.tier, keyId: "portal_admin", record: null, remainingMonthly: null, headers: rateLimitHeaders(rl) };
+  }
+
+  // Cron bypass: SANCTIONS_CRON_TOKEN allows internal scheduled functions
+  // (health-monitor, sanctions-daily-report, refresh-lists) to call protected
+  // API routes without consuming an API key quota. Same constant-time compare.
+  const cronToken = process.env["SANCTIONS_CRON_TOKEN"];
+  const cronMatch = cronToken && plaintext !== null && (() => {
+    const enc = new TextEncoder();
+    const a = enc.encode(cronToken);
+    const b = enc.encode(plaintext);
+    return a.byteLength === b.byteLength && timingSafeEqual(a, b);
+  })();
+  if (cronMatch) {
+    const rl = await consumeRateLimit("cron_internal", "enterprise");
+    if (!rl.allowed) {
+      return {
+        ok: false,
+        response: NextResponse.json(
+          { ok: false, error: "rate limit exceeded", retryAfterSec: rl.retryAfterSec },
+          { status: 429, headers: rateLimitHeaders(rl) },
+        ),
+      };
+    }
+    return { ok: true, tier: rl.tier, keyId: "cron_internal", record: null, remainingMonthly: null, headers: rateLimitHeaders(rl) };
   }
 
   if (anonymous && opts.requireAuth) {

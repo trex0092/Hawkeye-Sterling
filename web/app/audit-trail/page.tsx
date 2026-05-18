@@ -109,6 +109,9 @@ export default function AuditTrailPage() {
       });
       if (res.ok) {
         const data = (await res.json()) as AuditAnomaly;
+        // Ensure anomalies array is present before storing — a malformed
+        // response (null/missing) would crash the useMemo iterators below.
+        if (!Array.isArray(data?.anomalies)) data.anomalies = [];
         if (mountedRef.current) setAnomaly(data);
       } else {
         if (!mountedRef.current) return;
@@ -168,9 +171,6 @@ export default function AuditTrailPage() {
     <ModuleLayout asanaModule="audit-trail" asanaLabel="Audit Trail">
       <div>
         <div className="mb-8">
-          <div className="font-mono text-10 font-semibold text-amber tracking-wide-4 uppercase mb-1">
-            MODULE 28
-          </div>
           <div className="flex items-center gap-1.5 font-mono text-11 tracking-wide-8 uppercase text-brand mb-2">
             <span className="w-1.5 h-1.5 rounded-full bg-brand shrink-0 shadow-[0_0_6px_var(--brand)] opacity-80" />
             IMMUTABLE RECORD

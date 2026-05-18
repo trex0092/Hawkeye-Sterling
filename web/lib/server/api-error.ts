@@ -5,6 +5,42 @@
 //   error:   { ok: false, tool, errorCode, errorType, message, requestId, ... }
 //
 // F-08: commitRef and engineVersion are sourced from env vars at runtime.
+//
+// Phase 13 additions: Next.js route helpers for uniform HTTP error responses,
+// 405 Method Not Allowed with Allow header, and OPTIONS preflight.
+
+import { randomBytes } from "node:crypto";
+import { NextResponse } from "next/server";
+
+export function httpError(
+  message: string,
+  status = 400,
+  code?: string,
+  extra?: Record<string, unknown>,
+): NextResponse {
+  return NextResponse.json(
+    { ok: false, error: message, ...(code ? { code } : {}), ...extra },
+    { status },
+  );
+}
+
+export function methodNotAllowed(allowedMethods: string[]): NextResponse {
+  return NextResponse.json(
+    { ok: false, error: "Method not allowed", code: "METHOD_NOT_ALLOWED" },
+    { status: 405, headers: { Allow: allowedMethods.join(", ") } },
+  );
+}
+
+export function optionsResponse(allowedMethods: string[]): NextResponse {
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      Allow: allowedMethods.join(", "),
+      "Access-Control-Allow-Methods": allowedMethods.join(", "),
+      "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Request-ID",
+    },
+  });
+}
 
 export type ErrorCode =
   | "LISTS_MISSING"
@@ -71,7 +107,7 @@ export function makeError(
     errorCode,
     errorType,
     message,
-    requestId: Math.random().toString(36).slice(2, 10),
+    requestId: randomBytes(6).toString("hex"),
     ...extra,
   };
 }

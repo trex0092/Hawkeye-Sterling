@@ -101,6 +101,8 @@ function entityToCandidate(e: NormalisedEntity): QuickScreenCandidate {
 let _cached: QuickScreenCandidate[] | null = null;
 let _cachedAt = 0;
 const CACHE_TTL_MS = 5 * 60 * 1_000; // 5 minutes
+// In-flight promise deduplication — prevents cache stampede on first cold load.
+let _loadInFlight: Promise<QuickScreenCandidate[]> | null = null;
 
 async function loadFromBlobs(): Promise<QuickScreenCandidate[] | null> {
   let blobsMod: typeof import("@netlify/blobs") | null = null;
@@ -111,49 +113,67 @@ async function loadFromBlobs(): Promise<QuickScreenCandidate[] | null> {
   }
 
   const { getStore } = blobsMod;
-  // On Netlify's own runtime, trust the auto-injected NETLIFY_BLOBS_CONTEXT.
-  // Using explicit NETLIFY_BLOBS_TOKEN (a custom non-PAT value) overrides the
-  // injection and causes every read to 401 → silent fallback to the 50-entry
-  // demo fixture — real OFAC/UN/EU/UAE designees are never screened.
-  const onNetlify = Boolean(process.env["NETLIFY"]) || Boolean(process.env["NETLIFY_LOCAL"]);
+  // Next.js API routes do NOT receive NETLIFY_BLOBS_CONTEXT auto-injection —
+  // explicit credentials are always required. NETLIFY_BLOBS_TOKEN is the
+  // confirmed working token (v8 audit).
+  //
+  // Dual-store strategy: try hawkeye-list-reports first (ingestion now writes
+  // entities there too). If a list has no entity data there yet (pre-first-
+  // ingestion-after-deploy), fall back to hawkeye-lists where entities are
+  // written by the native Netlify Function. This ensures screening works both
+  // before and after the new ingestion path is populated.
   const siteID = process.env["NETLIFY_SITE_ID"] ?? process.env["SITE_ID"];
   const token =
+    process.env["NETLIFY_BLOBS_TOKEN"] ??
     process.env["NETLIFY_API_TOKEN"] ??
-    process.env["NETLIFY_AUTH_TOKEN"] ??
-    process.env["NETLIFY_BLOBS_TOKEN"];
+    process.env["NETLIFY_AUTH_TOKEN"];
 
-  const storeOpts =
-    !onNetlify && siteID && token
-      ? ({ name: "hawkeye-lists", siteID, token, consistency: "strong" } as Parameters<typeof getStore>[0])
-      : ({ name: "hawkeye-lists" } as Parameters<typeof getStore>[0]);
+  function makeStore(name: string) {
+    return siteID && token
+      ? getStore({ name, siteID, token, consistency: "strong" } as Parameters<typeof getStore>[0])
+      : getStore({ name } as Parameters<typeof getStore>[0]);
+  }
 
-  let store: ReturnType<typeof getStore>;
+  let storeReports: ReturnType<typeof getStore>;
+  let storeLists: ReturnType<typeof getStore>;
   try {
-    store = getStore(storeOpts);
+    storeReports = makeStore("hawkeye-list-reports");
+    storeLists   = makeStore("hawkeye-lists");
   } catch {
     return null;
   }
 
+  // Read all adapter blobs in parallel — try hawkeye-list-reports first,
+  // fall back to hawkeye-lists per adapter if no entity data found.
+  const PER_KEY_TIMEOUT_MS = 1_200;
+  const results = await Promise.all(
+    ADAPTER_IDS.map(async (adapterId) => {
+      const key = `${adapterId}/latest.json`;
+      for (const store of [storeReports, storeLists]) {
+        try {
+          const raw = await Promise.race([
+            store.get(key, { type: "json" }) as Promise<{ entities: NormalisedEntity[] } | null>,
+            new Promise<null>((_, reject) => setTimeout(() => reject(new Error("blob read timeout")), PER_KEY_TIMEOUT_MS)),
+          ]);
+          if (raw?.entities?.length) return raw.entities;
+        } catch { /* try next store */ }
+      }
+      return null;
+    }),
+  );
+
   const live: QuickScreenCandidate[] = [];
   let anyLoaded = false;
-
-  for (const adapterId of ADAPTER_IDS) {
-    try {
-      const raw = (await store.get(`${adapterId}/latest.json`, {
-        type: "json",
-      })) as { entities: NormalisedEntity[] } | null;
-      if (!raw?.entities?.length) continue;
-      anyLoaded = true;
-      for (const e of raw.entities) {
-        try {
-          live.push(entityToCandidate(e));
-        } catch {
-          // malformed entity — skip and continue
-        }
-      }
-    } catch {
-      // individual list failure — degrade gracefully, try others
+  let totalMalformed = 0;
+  for (const entities of results) {
+    if (!entities?.length) continue;
+    anyLoaded = true;
+    for (const e of entities) {
+      try { live.push(entityToCandidate(e)); } catch { totalMalformed++; }
     }
+  }
+  if (totalMalformed > 0) {
+    console.warn(`[candidates-loader] Skipped ${totalMalformed} malformed entities — screening corpus is incomplete`);
   }
 
   return anyLoaded ? live : null;
@@ -169,7 +189,14 @@ async function loadFromBlobs(): Promise<QuickScreenCandidate[] | null> {
 export async function loadCandidates(): Promise<QuickScreenCandidate[]> {
   const now = Date.now();
   if (_cached && now - _cachedAt < CACHE_TTL_MS) return _cached;
+  if (_loadInFlight) return _loadInFlight;
 
+  _loadInFlight = _doLoad().finally(() => { _loadInFlight = null; });
+  return _loadInFlight;
+}
+
+async function _doLoad(): Promise<QuickScreenCandidate[]> {
+  const now = Date.now();
   try {
     const live = await loadFromBlobs();
 
@@ -213,3 +240,7 @@ export function invalidateCandidateCache(): void {
   _cached = null;
   _cachedAt = 0;
 }
+
+// Eagerly start loading on module import so the first real request hits a warm
+// cache instead of waiting for the full Blobs fetch inline.
+void loadCandidates().catch(() => {/* silent — cache will load on first real request */});

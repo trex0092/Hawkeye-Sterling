@@ -14,6 +14,7 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 import { stats as feedbackStats, adjustScore } from "@/lib/server/feedback";
 import {
   normalizeName,
@@ -97,7 +98,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400, headers: gate.headers });
   }
 
-  const subjectName = body.subject?.name ?? "";
+  const subjectName = sanitizeField(body.subject?.name ?? "", 500);
   if (!subjectName) {
     return NextResponse.json({ ok: false, error: "subject.name is required" }, { status: 400, headers: gate.headers });
   }
@@ -120,7 +121,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   // Deduplicate aliases: original + all script variants
-  const existingAliases: string[] = (body.subject?.aliases ?? []) as string[];
+  const existingAliases: string[] = Array.isArray(body.subject?.aliases) ? (body.subject.aliases as string[]) : [];
   const expandedAliases = Array.from(new Set([
     ...existingAliases,
     ...normalized.variants.filter((v) => v.toLowerCase() !== subjectName.toLowerCase()),
@@ -138,8 +139,9 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     screenResult = await callScreeningRun({ ...body, subject: enhancedSubject });
   } catch (err) {
+    console.error("[screening/enhanced] screening engine error:", err instanceof Error ? err.message : err);
     return NextResponse.json(
-      { ok: false, error: `screening engine unavailable: ${err instanceof Error ? err.message : String(err)}` },
+      { ok: false, error: "Screening engine temporarily unavailable — please retry." },
       { status: 503, headers: gate.headers },
     );
   }
@@ -176,7 +178,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   });
 
   if (apiKey && possibleHits.length > 0) {
-    const client = getAnthropicClient(apiKey, 20_000, "screening/enhanced");
+    const client = getAnthropicClient(apiKey, 55_000, "screening/enhanced");
     const TRIAGE_SYSTEM = `You are an AML sanctions-screening specialist. For each watchlist hit, assess if it is a true match or false positive. Return ONLY JSON: {"confidenceScore":<0-100>,"recommendation":"clear"|"escalate"|"file_str"|"manual_review","reasoning":"<1-2 sentences>"}`;
 
     await Promise.allSettled(possibleHits.map(async (hit) => {
@@ -187,7 +189,7 @@ export async function POST(req: Request): Promise<NextResponse> {
           system: TRIAGE_SYSTEM,
           messages: [{
             role: "user",
-            content: `Subject: "${subjectName}" (${body.subject?.nationality ?? "nationality unknown"}, DOB: ${body.subject?.dob ?? "not provided"})
+            content: `Subject: "${subjectName}" (${sanitizeField(body.subject?.nationality ?? "nationality unknown", 100)}, DOB: ${sanitizeField(body.subject?.dob ?? "not provided", 50)})
 Hit: "${hit.name}" on list ${hit.listId ?? "unknown"} (ref: ${hit.listRef ?? "unknown"})
 Match score: ${hit.score ?? 0}/100
 Rationale: ${hit.matchRationale ?? "none provided"}

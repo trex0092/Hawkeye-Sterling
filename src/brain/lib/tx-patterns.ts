@@ -94,7 +94,7 @@ export function smurfingScan(txs: unknown, threshold = 10_000, windowMs = 24 * 3
   let i = 0;
   while (i < events.length) {
     let j = i;
-    while (j < events.length && events[j]!.t - events[i]!.t <= windowMs) j++;
+    while (j < events.length && (events[j]?.t ?? 0) - (events[i]?.t ?? 0) <= windowMs) j++;
     const size = j - i;
     if (size >= 3) { windows++; if (size > burstSize) burstSize = size; }
     i = j;

@@ -115,15 +115,14 @@ export function ActivityFeed({ label = "Screening engine" }: { label?: string })
     setEntries(seedEntries());
   }, []);
 
-  // Live SSE connection to /api/activity-stream. EventSource auto-reconnects
-  // when the Lambda recycles a 60s segment; if the browser doesn't support
-  // EventSource (or the route 502s), we fall back to the cosmetic
-  // local-heartbeat that originally lived here so the panel never goes
-  // silent.
+  // Poll /api/activity-stream?since=<lastSeenIso> every 3 seconds.
+  // Falls back to the cosmetic local-heartbeat on auth errors or fetch
+  // failures so the panel never goes silent.
   useEffect(() => {
     let cancelled = false;
     let fallbackTimer: ReturnType<typeof setTimeout> | undefined;
-    let es: EventSource | null = null;
+    let pollInterval: ReturnType<typeof setInterval> | undefined;
+    let lastSeenIso = new Date(Date.now() - 30_000).toISOString();
 
     const pushEntry = (e: FeedEntry) => {
       if (cancelled) return;
@@ -151,44 +150,43 @@ export function ActivityFeed({ label = "Screening engine" }: { label?: string })
       fallbackTimer = setTimeout(tick, 1_500);
     };
 
-    if (typeof window === "undefined" || typeof window.EventSource === "undefined") {
-      startFallback();
-    } else {
+    const poll = async () => {
+      if (cancelled) return;
       try {
-        es = new EventSource("/api/activity-stream");
-        es.addEventListener("engine-event", (raw) => {
-          try {
-            const ev = JSON.parse((raw as MessageEvent).data) as {
-              id: string; at: string; kind: FeedEntry["kind"]; text: string;
-            };
-            pushEntry({
-              id: ev.id,
-              time: fmtTime(Date.parse(ev.at)),
-              kind: ev.kind,
-              text: ev.text,
-              fresh: true,
-            });
-          } catch {
-            /* malformed event - ignore */
-          }
-        });
-        es.onerror = () => {
-          // EventSource auto-reconnects; if it stays in CONNECTING for
-          // long the SSE route is dead — drop to the cosmetic fallback so
-          // the panel still feels alive.
-          if (es && es.readyState === EventSource.CLOSED && !fallbackTimer) {
-            startFallback();
-          }
+        const res = await fetch(
+          `/api/activity-stream?since=${encodeURIComponent(lastSeenIso)}`
+        );
+        if (res.status === 401 || res.status === 403 || !res.ok) {
+          if (pollInterval) { clearInterval(pollInterval); pollInterval = undefined; }
+          if (!fallbackTimer) startFallback();
+          return;
+        }
+        const data = (await res.json()) as {
+          events: Array<{ id: string; at: string; kind: FeedEntry["kind"]; text: string }>;
+          serverTime: string;
         };
+        // Push events newest-last (they arrive oldest-first from the API)
+        for (const ev of data.events) {
+          pushEntry({
+            id: ev.id,
+            time: fmtTime(Date.parse(ev.at)),
+            kind: ev.kind,
+            text: ev.text,
+            fresh: true,
+          });
+        }
+        lastSeenIso = data.serverTime;
       } catch {
-        startFallback();
+        // Network error — keep polling, don't start fallback
       }
-    }
+    };
+
+    pollInterval = setInterval(() => { void poll(); }, 3_000);
 
     return () => {
       cancelled = true;
+      if (pollInterval) clearInterval(pollInterval);
       if (fallbackTimer) clearTimeout(fallbackTimer);
-      if (es) es.close();
     };
   }, []);
 

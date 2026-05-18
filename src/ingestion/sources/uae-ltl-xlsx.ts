@@ -18,4 +18,5 @@ export const uaeLtlXlsxAdapter = makeUaeIecXlsxAdapter({
   displayName: 'UAE Terrorist List (XLSX)',
   fileIdEnvVar: 'FEED_UAE_TL_FILE_ID',
   defaultFileId: 'c2b2f915-da02-4dac-bb9d-0144bd35a07d',
+  seedPathEnvVar: 'UAE_LTL_SEED_PATH',
 });

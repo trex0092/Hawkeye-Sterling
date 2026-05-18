@@ -1,5 +1,6 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 
 import { NextRequest, NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
@@ -22,22 +23,22 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
     body = (await req.json()) as OverrideBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON body" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON body" }, { status: 400 , headers: gate.headers });
   }
 
   const { aiModule, aiRecommendation, humanDecision, humanReason, operator } = body;
 
   if (!aiModule || typeof aiModule !== "string") {
-    return NextResponse.json({ ok: false, error: "aiModule is required" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "aiModule is required" }, { status: 400 , headers: gate.headers });
   }
   if (!aiRecommendation || typeof aiRecommendation !== "string") {
-    return NextResponse.json({ ok: false, error: "aiRecommendation is required" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "aiRecommendation is required" }, { status: 400 , headers: gate.headers });
   }
   if (!humanDecision || !["approved", "overridden", "escalated_further"].includes(humanDecision)) {
-    return NextResponse.json({ ok: false, error: "humanDecision must be approved | overridden | escalated_further" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "humanDecision must be approved | overridden | escalated_further" }, { status: 400 , headers: gate.headers });
   }
   if (!humanReason || typeof humanReason !== "string") {
-    return NextResponse.json({ ok: false, error: "humanReason is required" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "humanReason is required" }, { status: 400 , headers: gate.headers });
   }
 
   const actor = operator ?? gate.keyId ?? "mlro";

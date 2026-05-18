@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 
 interface ReqBody {
   currentEvidence: string[];
@@ -90,12 +91,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as ReqBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const { currentEvidence = [], targetDisposition, riskScore } = body;
   if (!targetDisposition || riskScore === undefined) {
-    return NextResponse.json({ ok: false, error: "targetDisposition and riskScore are required" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "targetDisposition and riskScore are required" }, { status: 400 , headers: gate.headers });
   }
 
   const dispositionKey = targetDisposition.toUpperCase();
@@ -129,5 +130,5 @@ export async function POST(req: Request): Promise<NextResponse> {
     missingEvidence,
     requiredActions,
     readyToDispose,
-  });
+  }, { headers: gate.headers });
 }

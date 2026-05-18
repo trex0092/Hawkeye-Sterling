@@ -274,9 +274,10 @@ async function fetchUpstream(): Promise<{
     }));
     return { ok: true, updates, url };
   } catch (err) {
+    console.error("[eocn-list-updates] fetchUpstream failed:", err instanceof Error ? err.message : err);
     return {
       ok: false,
-      error: err instanceof Error ? err.message : String(err),
+      error: "EOCN upstream fetch failed — falling back to cached data.",
       url,
     };
   }
@@ -286,9 +287,9 @@ async function fetchUpstream(): Promise<{
 async function handleGet(_req: Request): Promise<NextResponse> {
   const cached = await getJson<EocnFeedPayload>(BLOB_KEY);
   if (cached && cached.listUpdates && cached.listUpdates.length > 0) {
-    return NextResponse.json(cached, { status: 200 });
+    return NextResponse.json(cached, { status: 200, headers: {} });
   }
-  return NextResponse.json(fixturePayload(), { status: 200 });
+  return NextResponse.json(fixturePayload(), { status: 200, headers: {} });
 }
 
 // Constant-time token comparison — rejects timing oracles on the
@@ -312,7 +313,7 @@ function safeTokenEqual(got: string, expected: string): boolean {
 async function handlePost(req: Request): Promise<NextResponse> {
   const cronToken = process.env["SANCTIONS_CRON_TOKEN"];
   if (!cronToken) {
-    return NextResponse.json({ ok: false, error: "service unavailable" }, { status: 503 });
+    return NextResponse.json({ ok: false, error: "service unavailable" }, { status: 503, headers: {} });
   }
   const presented = req.headers
     .get("authorization")

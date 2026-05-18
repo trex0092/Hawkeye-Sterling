@@ -68,7 +68,7 @@ export function detectRings(population: readonly SubjectFingerprint[], minSize =
   function find(a: string): string {
     let cur = a;
     while ((parent.get(cur) ?? cur) !== cur) {
-      const next = parent.get(cur)!;
+      const next = parent.get(cur) ?? cur;
       parent.set(cur, parent.get(next) ?? next);
       cur = next;
     }
@@ -81,8 +81,8 @@ export function detectRings(population: readonly SubjectFingerprint[], minSize =
   for (const entry of index.values()) {
     if (entry.subjectIds.size < 2) continue;
     const ids = [...entry.subjectIds];
-    const head = ids[0]!;
-    for (let i = 1; i < ids.length; i++) union(head, ids[i]!);
+    const head = ids[0] ?? '';
+    for (let i = 1; i < ids.length; i++) union(head, ids[i] ?? '');
   }
 
   // Group subjects by root.

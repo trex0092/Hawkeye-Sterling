@@ -22,16 +22,16 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
-  const countries = (body.countries ?? []).slice(0, 5).map((c) => c.trim()).filter(Boolean);
-  if (countries.length < 2) {
+  if (!Array.isArray(body.countries) || body.countries.length < 2) {
     return NextResponse.json(
       { ok: false, error: "At least 2 countries required for comparison" },
-      { status: 400 },
+      { status: 400, headers: gate.headers }
     );
   }
+  const countries = body.countries.slice(0, 5).map((c) => c.trim()).filter(Boolean);
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
@@ -41,12 +41,12 @@ export async function POST(req: Request) {
   }
 
   try {
-    const client = getAnthropicClient(apiKey, 22_000);
+    const client = getAnthropicClient(apiKey, 55_000);
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
       // 4500 tokens covers up to 5 country profiles concisely; 6000 routinely
       // pushed Sonnet past the 55s budget.
-      max_tokens: 2000,
+      max_tokens: 700,
       system: [
         {
           type: "text",
@@ -98,18 +98,24 @@ For each country provide complete risk scoring, FATF status, sanctions profile (
 
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "[]";
     const results = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as CountryRiskResult[];
+    // Normalize arrays in each country result — LLM may return null instead of [].
+    for (const r of Array.isArray(results) ? results : []) {
+      if (!Array.isArray(r.keyRisks)) r.keyRisks = [];
+      if (!Array.isArray(r.recentDevelopments)) r.recentDevelopments = [];
+      if (!Array.isArray(r.regulatoryObligations)) r.regulatoryObligations = [];
+    }
     return NextResponse.json({
       ok: true,
       countries: results,
       comparedAt: new Date().toISOString(),
-    });
+    }, { headers: gate.headers });
   } catch {
     return NextResponse.json(
       {
         ok: false,
         error: `Real-time comparison temporarily unavailable for: ${countries.join(", ")}. Please retry in a moment.`,
       },
-      { status: 503 },
+      { status: 503, headers: gate.headers }
     );
   }
 }

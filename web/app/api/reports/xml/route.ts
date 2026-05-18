@@ -20,8 +20,7 @@ import { NextResponse } from "next/server";
 import { createHash } from "node:crypto";
 import { enforce } from "@/lib/server/enforce";
 import { serialiseGoamlXml } from "../../../../../dist/src/integrations/goaml-xml.js";
-import { validateGoamlEnvelope } from "../../../../../dist/src/brain/goaml-shapes.js";
-import type { GoAmlEnvelope } from "../../../../../dist/src/brain/goaml-shapes.js";
+import { validateGoamlEnvelope, type GoAmlEnvelope } from "../../../../../dist/src/brain/goaml-shapes.js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -46,7 +45,7 @@ export async function POST(req: Request): Promise<NextResponse | Response> {
   try {
     raw = await req.json();
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid_json", message: "Request body is not valid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "invalid_json", message: "Request body is not valid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const validation = validateRequest(raw);
@@ -59,7 +58,7 @@ export async function POST(req: Request): Promise<NextResponse | Response> {
         errors: validation.errors,
         hint: "See /api/goaml for the full goAML submission workflow with auto-population. This endpoint accepts a pre-built GoAmlEnvelope.",
       },
-      { status: 400 },
+      { status: 400, headers: gate.headers }
     );
   }
 
@@ -73,7 +72,7 @@ export async function POST(req: Request): Promise<NextResponse | Response> {
     console.error("[reports/xml] serialiseGoamlXml failed", { internalRef: envelope.internalReference, detail });
     return NextResponse.json(
       { ok: false, error: "xml_generation_failed", detail },
-      { status: 500 },
+      { status: 500, headers: gate.headers }
     );
   }
 

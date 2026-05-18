@@ -38,7 +38,7 @@ export const maxDuration = 60;
 
 const DEFAULT_MODEL = "claude-opus-4-7";
 const MAX_OUTPUT_TOKENS = 4096;
-const BUDGET_MS = 45_000;
+const BUDGET_MS = 4_500;
 
 type Schema =
   | "corporate_registry"
@@ -199,8 +199,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     });
 
     const text = response.content
-      .filter((c) => c.type === "text")
-      .map((c) => (c.type === "text" ? c.text : ""))
+      .filter((c: { type: string; text?: string }) => c.type === "text")
+      .map((c: { type: string; text?: string }) => (c.type === "text" ? c.text : ""))
       .join("\n");
 
     let extracted: Record<string, unknown> = {};

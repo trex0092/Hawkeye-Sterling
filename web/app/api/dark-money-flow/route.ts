@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 
 interface ReqBody {
   subjectName: string;
@@ -32,12 +33,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as ReqBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const { subjectName, entityCount = 1, jurisdictions = [] } = body;
   if (!subjectName) {
-    return NextResponse.json({ ok: false, error: "subjectName is required" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "subjectName is required" }, { status: 400 , headers: gate.headers });
   }
 
   const hash = hashStr(subjectName);
@@ -83,5 +84,5 @@ export async function POST(req: Request): Promise<NextResponse> {
     structuralRisk,
     riskLevel,
     methodology: "Structural capacity analysis based on entity count, jurisdiction risk weighting, and known typology throughput rates. Not a transaction-level analysis.",
-  });
+  }, { headers: gate.headers });
 }

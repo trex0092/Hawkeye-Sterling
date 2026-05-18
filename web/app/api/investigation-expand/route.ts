@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -22,7 +23,7 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
   const { subject, knownNodes, knownEdges } = body;
 
@@ -30,15 +31,15 @@ export async function POST(req: Request) {
   if (!apiKey) {
     return NextResponse.json(
       { ok: false, error: "Investigation expand unavailable — ANTHROPIC_API_KEY not configured." },
-      { status: 503 },
+      { status: 503, headers: gate.headers }
     );
   }
 
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 55_000);
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 2048,
+        max_tokens: 700,
         system: `You are an AML/CFT link-analysis intelligence engine. Given a subject and their known network, infer additional entities that investigators should look for. Base your reasoning on:
 - Corporate naming / holding patterns common to UAE/MENA structures
 - UBO residual tranches and nominee arrangements
@@ -52,8 +53,8 @@ Respond ONLY with valid JSON — no markdown fences, no explanation outside the 
 Limit to 5 entities. Be specific, AML-grounded, and plausible.`,
         messages: [{
           role: "user",
-          content: `Subject: ${subject}
-Known nodes: ${knownNodes.join(", ")}
+          content: `Subject: ${sanitizeField(subject)}
+Known nodes: ${knownNodes.map((n) => sanitizeField(n)).join(", ")}
 Known edges: ${JSON.stringify(knownEdges)}
 
 What additional entities should investigators look for?`,
@@ -63,11 +64,11 @@ What additional entities should investigators look for?`,
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const cleaned = raw.replace(/```json\n?|\n?```/g, "").trim();
     const result = JSON.parse(cleaned) as { discovered: DiscoveredEntity[] };
-    return NextResponse.json({ ok: true, discovered: result.discovered ?? [] }, { headers: gate.headers });
+    return NextResponse.json({ ok: true, discovered: Array.isArray(result.discovered) ? result.discovered : [] }, { headers: gate.headers });
   } catch {
     return NextResponse.json(
       { ok: false, error: "Investigation expand temporarily unavailable — please retry." },
-      { status: 503 },
+      { status: 503, headers: gate.headers }
     );
   }
 }

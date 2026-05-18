@@ -40,11 +40,13 @@ const CACHED_NAME_KEY = "hawkeye.four-eyes-operator";
 
 function loadCachedName(): string {
   if (typeof window === "undefined") return "";
-  return window.localStorage.getItem(CACHED_NAME_KEY) ?? "";
+  // Use sessionStorage so the MLRO name is not persisted across sessions
+  // on a shared workstation — it clears when the tab closes.
+  return window.sessionStorage.getItem(CACHED_NAME_KEY) ?? "";
 }
 
 function saveCachedName(name: string) {
-  try { window.localStorage.setItem(CACHED_NAME_KEY, name); }
+  try { window.sessionStorage.setItem(CACHED_NAME_KEY, name); }
   catch (err) { console.warn("[hawkeye] four-eyes cached-name persist failed:", err); }
 }
 
@@ -128,7 +130,6 @@ export default function FourEyesPage() {
       <Header />
       <main className="max-w-5xl mx-auto px-10 py-8">
         <div className="mb-6">
-          <div className="font-mono text-10 font-semibold text-amber tracking-wide-4 uppercase mb-1">MODULE 48</div>
           <div className="flex items-center gap-1.5 font-mono text-11 tracking-wide-8 uppercase text-brand mb-2">
             <span className="w-1.5 h-1.5 rounded-full bg-brand shrink-0 shadow-[0_0_6px_var(--brand)] opacity-80" />
             BUREAU II · FOUR-EYES QUEUE

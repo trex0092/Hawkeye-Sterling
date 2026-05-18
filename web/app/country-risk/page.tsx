@@ -454,7 +454,7 @@ export default function CountryRiskPage() {
         eyebrow="AML/CFT Intelligence · Basel AML · FATF · Sanctions"
         title="Country"
         titleEm="risk."
-        moduleNumber={35}
+
         kpis={[
           { value: "195+", label: "Countries screened" },
           { value: "23", label: "High-risk flagged", tone: "red" },

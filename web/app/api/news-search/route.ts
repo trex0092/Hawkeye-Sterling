@@ -86,6 +86,32 @@ const LOCALES: Array<{ code: string; hl: string; gl: string; ceid: string }> = [
   { code: "zh", hl: "zh-Hans", gl: "CN", ceid: "CN:zh-Hans" },
   { code: "ar", hl: "ar", gl: "AE", ceid: "AE:ar" },
   { code: "pt", hl: "pt-BR", gl: "BR", ceid: "BR:pt-419" },
+  // Extended coverage — critical for subjects from these jurisdictions
+  { code: "tr", hl: "tr", gl: "TR", ceid: "TR:tr" },
+  { code: "de", hl: "de", gl: "DE", ceid: "DE:de" },
+  { code: "it", hl: "it", gl: "IT", ceid: "IT:it" },
+  { code: "ja", hl: "ja", gl: "JP", ceid: "JP:ja" },
+  { code: "ko", hl: "ko", gl: "KR", ceid: "KR:ko" },
+  { code: "nl", hl: "nl", gl: "NL", ceid: "NL:nl" },
+  { code: "pl", hl: "pl", gl: "PL", ceid: "PL:pl" },
+  { code: "uk", hl: "uk", gl: "UA", ceid: "UA:uk" },
+  // Tier-2 jurisdictions — high-value for global AML coverage
+  { code: "sv", hl: "sv", gl: "SE", ceid: "SE:sv" },
+  { code: "el", hl: "el", gl: "GR", ceid: "GR:el" },
+  { code: "hi", hl: "hi", gl: "IN", ceid: "IN:hi" },
+  { code: "id", hl: "id", gl: "ID", ceid: "ID:id" },
+  { code: "vi", hl: "vi", gl: "VN", ceid: "VN:vi" },
+  { code: "ms", hl: "ms", gl: "MY", ceid: "MY:ms" },
+  { code: "he", hl: "iw", gl: "IL", ceid: "IL:iw" },
+  { code: "ro", hl: "ro", gl: "RO", ceid: "RO:ro" },
+  { code: "hu", hl: "hu", gl: "HU", ceid: "HU:hu" },
+  { code: "cs", hl: "cs", gl: "CZ", ceid: "CZ:cs" },
+  { code: "bg", hl: "bg", gl: "BG", ceid: "BG:bg" },
+  { code: "sr", hl: "sr", gl: "RS", ceid: "RS:sr" },
+  { code: "hr", hl: "hr", gl: "HR", ceid: "HR:hr" },
+  { code: "sk", hl: "sk", gl: "SK", ceid: "SK:sk" },
+  { code: "th", hl: "th", gl: "TH", ceid: "TH:th" },
+  { code: "ur", hl: "ur", gl: "PK", ceid: "PK:ur" },
 ];
 
 // Multi-language adverse-media modifiers so each locale returns relevant
@@ -98,6 +124,30 @@ const LOCALE_MODIFIERS: Record<string, string> = {
   zh: "制裁 OR 欺诈 OR 腐败 OR 贿赂 OR 逮捕 OR 洗钱 OR 贩运 OR 恐怖主义",
   ar: "عقوبات OR احتيال OR فساد OR رشوة OR اعتقال OR غسل OR تهريب OR إرهاب",
   pt: "sanções OR fraude OR corrupção OR suborno OR prisão OR lavagem OR tráfico OR terrorismo",
+  tr: "yaptırım OR dolandırıcılık OR yolsuzluk OR rüşvet OR tutuklama OR kara para OR kaçakçılık OR terör",
+  de: "Sanktionen OR Betrug OR Korruption OR Bestechung OR Verhaftung OR Geldwäsche OR Schmuggel OR Terrorismus",
+  it: "sanzioni OR frode OR corruzione OR arresto OR riciclaggio OR traffico OR terrorismo",
+  ja: "制裁 OR 詐欺 OR 汚職 OR 賄賂 OR 逮捕 OR マネーロンダリング OR 密輸 OR テロ",
+  ko: "제재 OR 사기 OR 부패 OR 뇌물 OR 체포 OR 자금세탁 OR 밀수 OR 테러",
+  nl: "sancties OR fraude OR corruptie OR omkoping OR arrestatie OR witwassen OR smokkel OR terrorisme",
+  pl: "sankcje OR oszustwo OR korupcja OR łapówka OR aresztowanie OR pranie pieniędzy OR przemyt OR terroryzm",
+  uk: "санкції OR шахрайство OR корупція OR хабар OR арешт OR відмивання OR тероризм",
+  sv: "sanktioner OR bedrägeri OR korruption OR mutor OR gripna OR penningtvätt OR smuggling OR terrorism",
+  el: "κυρώσεις OR απάτη OR διαφθορά OR δωροδοκία OR σύλληψη OR ξέπλυμα OR λαθρεμπόριο OR τρομοκρατία",
+  hi: "प्रतिबंध OR धोखाधड़ी OR भ्रष्टाचार OR रिश्वत OR गिरफ्तारी OR मनी लॉन्ड्रिंग OR तस्करी OR आतंकवाद",
+  id: "sanksi OR penipuan OR korupsi OR suap OR penangkapan OR pencucian uang OR penyelundupan OR terorisme",
+  vi: "trừng phạt OR gian lận OR tham nhũng OR hối lộ OR bắt giữ OR rửa tiền OR buôn lậu OR khủng bố",
+  ms: "sekatan OR penipuan OR rasuah OR rasuah OR tangkapan OR pengubahan wang haram OR penyeludupan OR keganasan",
+  he: "סנקציות OR הונאה OR שחיתות OR שוחד OR מעצר OR הלבנת הון OR סחר OR טרור",
+  ro: "sancțiuni OR fraudă OR corupție OR mită OR arest OR spălare de bani OR trafic OR terorism",
+  hu: "szankciók OR csalás OR korrupció OR vesztegetés OR letartóztatás OR pénzmosás OR csempészet OR terrorizmus",
+  cs: "sankce OR podvod OR korupce OR úplatek OR zatčení OR praní peněz OR pašování OR terorismus",
+  bg: "санкции OR измама OR корупция OR подкуп OR арест OR изпиране на пари OR тероризъм",
+  sr: "санкције OR превара OR корупција OR мито OR хапшење OR прање новца OR тероризам",
+  hr: "sankcije OR prijevara OR korupcija OR mito OR uhićenje OR pranje novca OR terorizam",
+  sk: "sankcie OR podvod OR korupcia OR úplatok OR zatýkanie OR pranie peňazí OR terorizmus",
+  th: "มาตรการคว่ำบาตร OR การฉ้อโกง OR การทุจริต OR สินบน OR การจับกุม OR การฟอกเงิน OR การก่อการร้าย",
+  ur: "پابندیاں OR دھوکہ دہی OR بدعنوانی OR رشوت OR گرفتاری OR منی لانڈرنگ OR اسمگلنگ OR دہشت گردی",
 };
 
 interface NewsResponse {
@@ -247,10 +297,10 @@ function parseRss(xml: string, subject: string, variants: string[], lang: string
 }
 
 // Per-locale RSS timeout. With 7 locales fanning out in parallel, any single
-// stalled feed would otherwise hold up the whole response. A 4-second
+// stalled feed would otherwise hold up the whole response. A 2-second
 // AbortSignal bounds each feed so the slowest locale is skipped rather than
 // blocking the others.
-const FEED_TIMEOUT_MS = 4_000;
+const FEED_TIMEOUT_MS = 2_000;
 
 // Overall timebox for the whole fan-out. We return with whatever articles
 // have arrived by this deadline so a slow Google News cluster never burns
@@ -262,45 +312,12 @@ async function fetchLocaleFeed(
   locale: (typeof LOCALES)[number],
   variants: string[],
 ): Promise<Article[]> {
-  // Do NOT append LOCALE_MODIFIERS to the URL query — embedding adversarial
-  // crime keywords (fraud, arrest, laundering…) into the RSS search URL
-  // causes Google News to return zero results for regulatory/compliance
-  // topic queries. Adverse keyword classification is applied post-fetch by
-  // classifyAdverseKeywords() in parseRss(), which does not need the URL
-  // modifiers to work correctly.
-  //
-  // Quote behaviour: a previous revision wrapped `q` in literal quotes
-  // (forcing exact-phrase match). That works for single-name subjects
-  // ("Vladimir Putin") but returns zero results for multi-word topic
-  // queries ("UAE money laundering 2026") because Google News doesn't
-  // index that exact phrase. The post-fetch fuzzy gate
-  // (fuzzyScore >= 55 OR keywordGroups.length > 0) is the relevance
-  // filter — it works for both names and topics — so quoting is
-  // redundant and actively harmful for topic queries. Quote only when
-  // q is a likely person/entity name: ≤4 words, every word starts
-  // with an uppercase letter, no digits, and no common AML topic
-  // keywords (which would suggest a topic search even if capitalised).
-  const TOPIC_KEYWORDS = new Set([
-    "sanctions", "sanction", "laundering", "fraud", "corruption",
-    "bribery", "terrorism", "trafficking", "smuggling", "embezzlement",
-    "ml", "tf", "cft", "aml", "kyc", "edd", "cdd", "str", "sar",
-    "ofac", "fatf", "ofsi", "eu", "un", "unsc", "cbu", "cbuae",
-    "compliance", "regulatory", "investigation", "indictment", "freeze",
-    "designation", "wmd", "proliferation", "russia", "iran", "syria",
-    "yemen", "korea", "ukraine", "narcotics", "cartel", "scandal",
-  ]);
-  const words = q.split(/\s+/).filter(Boolean);
-  const lowered = q.toLowerCase();
-  const containsTopicKeyword = [...TOPIC_KEYWORDS].some((kw) => {
-    const rx = new RegExp(`(?:^|[^\\p{L}])${kw}(?:[^\\p{L}]|$)`, "iu");
-    return rx.test(lowered);
-  });
-  const looksLikeName =
-    words.length <= 4 &&
-    /^(\p{Lu}[\p{L}'’-]*)(\s+\p{Lu}[\p{L}'’-]*)*$/u.test(q) &&
-    !/\d/.test(q) &&
-    !containsTopicKeyword;
-  const queryParam = looksLikeName ? `"${q}"` : q;
+  // Post-fetch fuzzy scoring (fuzzyScore ≥ 75, or ≥ 55 + adverse keywords)
+  // is the relevance gate. Do not quote the query — exact-phrase quoting
+  // causes zero results when a subject’s name has common spelling variants
+  // (e.g. GIANUZZI vs GIANNUZZI). Google’s token matching handles near-miss
+  // spellings; the post-fetch filter handles precision.
+  const queryParam = q;
   const feed = `https://news.google.com/rss/search?q=${encodeURIComponent(queryParam)}&hl=${locale.hl}&gl=${locale.gl}&ceid=${locale.ceid}`;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FEED_TIMEOUT_MS);
@@ -312,8 +329,7 @@ async function fetchLocaleFeed(
         accept: "application/rss+xml,application/xml,text/xml,*/*;q=0.8",
       },
       signal: controller.signal,
-      next: { revalidate: 300 },
-    });
+    } as RequestInit);
     if (!res.ok) {
       console.warn(`[hawkeye] news-search/fetchLocaleFeed ${locale.code} HTTP ${res.status}`);
       return [];
@@ -453,9 +469,19 @@ export async function GET(req: Request): Promise<NextResponse> {
     } catch (err) {
       console.warn("[hawkeye] news-search/variantsOf failed — using base query only:", err);
     }
-    const variants = Array.from(new Set(rawVariants)).slice(0, 8);
+    // Turkish diacritic expansion: terminal 'c'→'ç' and 'öz' prefix are the two
+    // most reliable heuristics for Turkish Latin names. Google News Turkish locale
+    // normalises queries anyway, but explicit variants improve post-fetch fuzzy scoring.
+    const turkishVariant = q
+      .toLowerCase()
+      .replace(/\boz/g, "öz")
+      .replace(/c\b/g, "ç")
+      .replace(/\bgul/g, "gül")
+      .replace(/\bgun/g, "gün");
+    if (turkishVariant !== q.toLowerCase()) rawVariants.push(turkishVariant);
+    const variants = Array.from(new Set(rawVariants)).slice(0, 10);
 
-    // Fan out to 7 locales in parallel (EN, ES, FR, RU, ZH, AR, PT). Each
+    // Fan out to all locales in parallel. Each
     // returns up to ~30 articles; we dedupe by URL and fuzzy-filter. Use
     // allSettled so one rejected fetch never rejects the whole batch —
     // combined with the per-feed AbortSignal and the overall timebox
@@ -479,8 +505,12 @@ export async function GET(req: Request): Promise<NextResponse> {
       }
     }
     const filtered = Array.from(merged.values())
-      // Fuzzy gate: drop articles whose title doesn't resemble the subject.
-      .filter((a) => a.fuzzyScore >= 55 || a.keywordGroups.length > 0)
+      // Fuzzy gate: require either a strong name match (≥75) OR a weak name
+      // match (≥55) combined with at least one adverse keyword group. The OR-only
+      // form (fuzzyScore≥55 OR keywords>0) was too permissive: generic gold-market
+      // articles with no name match passed via keywords alone, polluting the
+      // dossier with unrelated content and causing false-positive composite scores.
+      .filter((a) => a.fuzzyScore >= 75 || (a.fuzzyScore >= 55 && a.keywordGroups.length > 0))
       .sort((a, b) => b.fuzzyScore - a.fuzzyScore);
     // Cluster near-duplicate articles into events. Two articles belong
     // to the same event when their normalised titles share ≥ 70% of
@@ -527,7 +557,7 @@ export async function GET(req: Request): Promise<NextResponse> {
       "Returning empty dossier; investigate variantsOf / keyword classification.",
       err,
     );
-    return NextResponse.json({ ...emptyResponse(q, "static_fallback", Date.now() - t0), fetchedAt }, { headers: gateHeaders });
+    return NextResponse.json({ ...emptyResponse(q, "static_fallback", Date.now() - t0), fetchedAt, degraded: true }, { headers: gateHeaders });
   }
 }
 

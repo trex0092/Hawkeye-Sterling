@@ -70,7 +70,7 @@ export function assessPEP(freeText: string, subjectName = ''): PEPAssessment {
     return { isLikelyPEP: false, highestTier: 'none', matchedRoles: [], riskScore: 0 };
   }
   const highestTier = matched.reduce((best, r) =>
-    TIER_WEIGHTS[r.tier] > TIER_WEIGHTS[best] ? r.tier : best, matched[0]!.tier);
+    TIER_WEIGHTS[r.tier] > TIER_WEIGHTS[best] ? r.tier : best, matched[0]?.tier ?? 'none');
   return {
     isLikelyPEP: true,
     highestTier,

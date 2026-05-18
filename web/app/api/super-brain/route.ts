@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { getJson, setJson } from "@/lib/server/store";
 // Import each brain function from its concrete module rather than the
 // index.js barrel. The barrel re-exports 80+ modules (~20k lines of
 // catalogues); pulling it in at the top of a Netlify Function route was
@@ -91,6 +92,19 @@ interface Body {
   adverseMediaText?: string;
 }
 
+// Local mirror of AdverseMediaHit from src/brain/adverse-media.ts
+interface AdverseMediaHit {
+  categoryId: string;
+  keyword: string;
+  offset: number;
+}
+
+// Local mirror of SanctionRegime from src/brain/sanction-regimes.ts
+interface SanctionRegime {
+  id: string;
+  [key: string]: unknown;
+}
+
 // Audit-trail constants — surfaced in the response so the compliance
 // report can carry a defensible record of which weights produced the
 // composite score. If any of these are tuned the report's audit trail
@@ -136,9 +150,38 @@ const BUILD_SHA =
   "local";
 
 function makeRunId(): string {
-  // 8 hex chars is enough collision-resistance for an audit-trail id;
-  // we don't need crypto-strong uniqueness.
   return `sb_${Math.random().toString(16).slice(2, 10)}`;
+}
+
+// ── Result cache (cost reduction) ────────────────────────────────────────────
+// Super-brain is compute + I/O heavy (watchlist read, OpenSanctions, LSEG).
+// Cache full results for 4 hours keyed on the normalised input hash.
+// The ongoing thrice-daily screen cadence (08:30 / 15:00 / 17:30) has a 2.5h
+// gap between runs 2 and 3 — run 3 is always a cache hit, saving ~33% of calls.
+const SUPER_BRAIN_CACHE_TTL_MS = 4 * 60 * 60 * 1_000; // 4 hours
+
+function cacheHash(s: string): string {
+  let h = 5381;
+  for (let i = 0; i < s.length; i++) h = (Math.imul(h, 33) + s.charCodeAt(i)) | 0;
+  return (h >>> 0).toString(16).padStart(8, "0");
+}
+
+interface CachedSuperBrain {
+  cachedAt: string;
+  ttlMs: number;
+  result: Record<string, unknown>;
+}
+
+function buildCacheKey(body: Body): string {
+  const norm = JSON.stringify({
+    n: body.subject.name.trim().toLowerCase(),
+    a: (body.subject.aliases ?? []).map((x) => x.trim().toLowerCase()).sort(),
+    e: body.subject.entityType ?? "individual",
+    j: (body.subject.jurisdiction ?? "").trim().toLowerCase(),
+    r: (body.roleText ?? "").trim().toLowerCase(),
+    m: (body.adverseMediaText ?? "").trim().toLowerCase(),
+  });
+  return `super-brain-cache/${cacheHash(norm)}`;
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
@@ -167,6 +210,27 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   }
 
+  // Cache check — skip when caller explicitly opts out via ?nocache=1
+  const { searchParams } = new URL(req.url);
+  const bypassCache = searchParams.get("nocache") === "1";
+  const cacheKey = buildCacheKey(body);
+  if (!bypassCache) {
+    try {
+      const cached = await getJson<CachedSuperBrain>(cacheKey);
+      if (cached && cached.cachedAt && cached.result) {
+        const age = Date.now() - new Date(cached.cachedAt).getTime();
+        if (age < cached.ttlMs) {
+          return NextResponse.json(
+            { ...cached.result, _cached: true, _cachedAt: cached.cachedAt, _cacheAgeMs: age },
+            { headers: gateHeaders },
+          );
+        }
+      }
+    } catch {
+      // Cache miss / error — fall through to full pipeline
+    }
+  }
+
   try {
     // Track every module that degraded — surfaced in the response so the
     // MLRO and the compliance report show "this run was incomplete in
@@ -193,11 +257,16 @@ export async function POST(req: Request): Promise<NextResponse> {
     // Adverse-media lookup now consults the LSEG CFS adverse index as well
     // as the static curated fixture. First non-null wins; the static
     // fixture remains canonical for backward compat with existing tests.
-    const [staticPep, livePep, cfsPep, cfsAdverse] = await Promise.all([
+    const _subj = body.subject as { name?: string; passportNumber?: string; identifier?: string };
+    const [staticPep, livePep, cfsPep, cfsAdverse, _openSanctionsEarly] = await Promise.all([
       Promise.resolve(lookupKnownPEP(body.subject.name)),
       lookupKnownPEPLive(body.subject.name).catch(() => null),
       lookupLsegPepIndex(body.subject.name).catch(() => null),
       lookupLsegAdverseIndex(body.subject.name).catch(() => null),
+      enrichOpenSanctions({
+        name: _subj.name,
+        identifier: _subj.passportNumber ?? _subj.identifier,
+      }).catch((err) => { noteDegradation("openSanctions", err); return null; }),
     ]);
     const knownPep = staticPep ?? livePep ?? cfsPep;
     const staticAdverse = lookupKnownAdverse(body.subject.name);
@@ -254,18 +323,42 @@ export async function POST(req: Request): Promise<NextResponse> {
     // 4 · Jurisdiction profile.
     const jurisdiction = resolveJurisdiction(body.subject.jurisdiction);
 
-    // 5 · Redlines (charter prohibitions triggered by name/alias keywords).
-    const redlineKeywords = [
-      body.subject.name,
-      ...(body.subject.aliases ?? []),
-      body.roleText ?? "",
-      body.adverseMediaText ?? "",
-    ]
-      .join(" ")
-      .toLowerCase()
-      .split(/\W+/)
-      .filter((t) => t.length >= 3);
-    const redlines = evaluateRedlines(redlineKeywords);
+    // 5 · Redlines — derive fired redline IDs from screening results.
+    // evaluateRedlines() takes canonical redline IDs (e.g. "rl_ofac_sdn_confirmed"),
+    // NOT keyword tokens. Build the fired-ID list from confirmed sanctions hits
+    // (score ≥ 0.85 on the 0-1 hit score scale), jurisdiction risk, and PEP state.
+    // This runs before hitsByList is built so we do the map here inline.
+    const _redlineHitsByList = new Map<string, typeof screen.hits>();
+    for (const h of screen.hits) {
+      const arr = _redlineHitsByList.get(h.listId);
+      if (arr) arr.push(h); else _redlineHitsByList.set(h.listId, [h]);
+    }
+    const firedRedlineIds: string[] = [];
+    const SANCTIONS_REDLINE_MAP: Array<[string, string]> = [
+      ["ofac_sdn", "rl_ofac_sdn_confirmed"],
+      ["un_consolidated", "rl_un_consolidated_confirmed"],
+      ["eu_fsf", "rl_eu_cfsp_confirmed"],
+      ["uk_ofsi", "rl_uk_ofsi_confirmed"],
+    ];
+    for (const [listId, redlineId] of SANCTIONS_REDLINE_MAP) {
+      if ((_redlineHitsByList.get(listId) ?? []).some((h) => h.score >= 0.85)) {
+        firedRedlineIds.push(redlineId);
+      }
+    }
+    // UAE EOCN + Local Terrorist List → same redline
+    const uaeHitsForRedline = [
+      ...(_redlineHitsByList.get("uae_eocn") ?? []),
+      ...(_redlineHitsByList.get("uae_ltl") ?? []),
+    ];
+    if (uaeHitsForRedline.some((h) => h.score >= 0.85)) firedRedlineIds.push("rl_eocn_confirmed");
+    // LSEG supplements for Canada + Australia
+    if ((_redlineHitsByList.get("lseg_ca_osfi") ?? []).some((h) => h.score >= 0.85)) firedRedlineIds.push("rl_canada_osfi_confirmed");
+    if ((_redlineHitsByList.get("lseg_au_dfat") ?? []).some((h) => h.score >= 0.85)) firedRedlineIds.push("rl_australia_dfat_confirmed");
+    // CAHRA jurisdiction — subject country is a Conflict-Affected and High-Risk Area
+    if (jurisdiction?.cahra) firedRedlineIds.push("rl_dpms_cahra_without_oecd");
+    // PEP without EDD — high-salience political exposure with no enhanced DD indicator
+    if (pep && pep.salience > 0.5) firedRedlineIds.push("rl_pep_edd_not_completed");
+    const redlines = evaluateRedlines(firedRedlineIds);
 
     // 5b · Cross-regime conflict detection. Builds per-regime designation
     // status from the quickScreen hits across the six core authoritative
@@ -276,12 +369,12 @@ export async function POST(req: Request): Promise<NextResponse> {
     // override its own composite outcome based on it (the MLRO Advisor +
     // disposition flow consume `crossRegimeConflict` to escalate).
     const REGIME_LIST_IDS = [
-      "un_1267",
+      "un_consolidated",
       "ofac_sdn",
-      "eu_consolidated",
+      "eu_fsf",
       "uk_ofsi",
       "uae_eocn",
-      "uae_local_terrorist",
+      "uae_ltl",
     ] as const;
     const hitsByList = new Map<string, typeof screen.hits>();
     for (const h of screen.hits) {
@@ -334,7 +427,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     // NOTE: We use adverseMediaScoredPenalty ONLY (not the raw count-based
     // adverseMediaPenalty) to avoid double-counting the same adverse signal and
     // inflating the composite by up to 70 pts for a single arrest article.
-    const mediaTextEarly = [body.adverseMediaText ?? "", ...adverseMedia.map((a: any) => a.keyword)]
+    const mediaTextEarly = [body.adverseMediaText ?? "", ...adverseMedia.map((a: AdverseMediaHit) => a.keyword)]
       .filter((s) => s.length > 0)
       .join("\n");
     const adverseMediaScoredEarly = mediaTextEarly
@@ -360,7 +453,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       if (!adverseMediaScoredEarly) return 0;
       const base = Math.round(adverseMediaScoredEarly.compositeScore * 40);
       const tripsHighSeverity = adverseMediaScoredEarly.categoriesTripped
-        .some((c: any) => HIGH_SEVERITY_CATS.has(c));
+        .some((c: string) => HIGH_SEVERITY_CATS.has(c));
       const minWhenTripped = tripsHighSeverity && adverseMediaScoredEarly.compositeScore > 0 ? 8 : 0;
       return Math.max(base, minWhenTripped);
     })();
@@ -443,7 +536,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       environmental_crime:              { id: "env_am_cat",        name: "Environmental crime (adverse-media)",            family: "ml",         weight: 0.60 },
     };
 
-    const textHitIds = new Set(rawTypologyHits.map((h: any) => h.typology.id));
+    const textHitIds = new Set(rawTypologyHits.map((h) => h.typology.id));
     const syntheticTypologyHits = adverseKeywordGroups
       .filter((g) => g.group in KW_TO_TYPOLOGY)
       .map((g) => {
@@ -458,15 +551,16 @@ export async function POST(req: Request): Promise<NextResponse> {
       ...textHitIds,
       ...syntheticTypologyHits.map((h) => h.typology.id),
     ]);
+    type AmTypologyEntry = { id: string; name: string; family: "ml" | "tf" | "pf" | "fraud" | "corruption" | "cyber"; weight: number };
     const amCategoryTypologyHits = adverseMedia
-      .map((am: any) => AM_CAT_TO_TYPOLOGY[am.categoryId])
-      .filter((t: any): t is NonNullable<typeof t> => Boolean(t))
-      .filter((t: any) => {
+      .map((am: AdverseMediaHit) => AM_CAT_TO_TYPOLOGY[am.categoryId])
+      .filter((t): t is AmTypologyEntry => Boolean(t))
+      .filter((t: AmTypologyEntry) => {
         if (seenTypologyIds.has(t.id)) return false;
         seenTypologyIds.add(t.id);
         return true;
       })
-      .map((t: any) => ({
+      .map((t: AmTypologyEntry) => ({
         typology: t,
         snippet: `Adverse-media category · ${t.name.split(" (")[0]} signal detected`,
       }));
@@ -486,7 +580,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         // hit weights on top to ensure the keyword-bridge raises the score.
         const baseScore = typologyCompositeScore(rawTypologyHits);
         const syntheticBoost = syntheticTypologyHits.reduce((acc, h) => acc + h.typology.weight * 100, 0);
-        const amCatBoost = amCategoryTypologyHits.reduce((acc: any, h: any) => acc + h.typology.weight * 100, 0);
+        const amCatBoost = amCategoryTypologyHits.reduce((acc: number, h) => acc + h.typology.weight * 100, 0);
         return Math.min(100, baseScore + syntheticBoost * 0.5 + amCatBoost * 0.4);
       } catch (err) {
         noteDegradation("typologyCompositeScore", err);
@@ -587,30 +681,14 @@ export async function POST(req: Request): Promise<NextResponse> {
       }
     })();
 
-    // OpenSanctions enrichment — secondary source of sanctions matches
-    // that complements Hawkeye's primary regulator-direct feeds. Closes
-    // the audit gap on Canada OSFI + Australia DFAT (both included in
-    // OpenSanctions' aggregation) and adds depth for UAE / Switzerland
-    // / Japan etc. When this matches, the subject is sanctioned by at
-    // least one regime — surfaces in the verdict's risk signals.
-    // Async because the dataset is loaded from Netlify Blobs lazily on
-    // first call per warm Lambda — see openSanctions.ts header for the
-    // bundle-size history that forced the Blobs architecture.
-    const openSanctions = await (async () => {
-      try {
-        const subj = body.subject as { name?: string; passportNumber?: string; identifier?: string };
-        const enr = await enrichOpenSanctions({
-          name: subj.name,
-          identifier: subj.passportNumber ?? subj.identifier,
-        });
-        return enr.match ? enr : null;
-      } catch (err) {
-        noteDegradation("openSanctions", err);
-        return null;
-      }
+    // OpenSanctions enrichment — result was already fetched in parallel with
+    // the PEP lookups above (see _openSanctionsEarly in Promise.all).
+    const openSanctions = (() => {
+      if (!_openSanctionsEarly) return null;
+      return _openSanctionsEarly.match ? _openSanctionsEarly : null;
     })();
 
-    return NextResponse.json({
+    const responseBody = {
       ok: true,
       // When non-empty, downstream consumers (compliance report, MLRO UI)
       // MUST surface this list. Each entry means a brain module silently
@@ -650,7 +728,16 @@ export async function POST(req: Request): Promise<NextResponse> {
         },
       },
       latencyMs: Date.now() - t0,
-    }, { headers: gateHeaders });
+    };
+
+    // Fire-and-forget cache write — never blocks the response.
+    void setJson<CachedSuperBrain>(cacheKey, {
+      cachedAt: new Date().toISOString(),
+      ttlMs: SUPER_BRAIN_CACHE_TTL_MS,
+      result: responseBody as unknown as Record<string, unknown>,
+    }).catch(() => { /* cache write failures are silent */ });
+
+    return NextResponse.json(responseBody, { headers: gateHeaders });
   } catch (err) {
     // Brain pipeline crashed — DO NOT return score:0 (CLEAR). A CLEAR
     // disposition on a crashed analysis would let a sanctioned entity
@@ -671,7 +758,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         adverseKeywords: [],
         adverseKeywordGroups: [],
         jurisdiction: null,
-        redlines: { fired: [], checked: 0 },
+        redlines: { fired: [], action: null, summary: "No redlines fired." },
         variants: { aliasExpansion: [], nameVariants: [], doubleMetaphone: [], soundex: "" },
         jurisdictionRich: null,
         typologies: { hits: [], compositeScore: 0 },
@@ -723,7 +810,7 @@ function resolveJurisdiction(
     : byName?.iso2 ?? COMMON_NAME_ISO2[raw.toLowerCase()] ?? raw.toUpperCase();
   const regimes = (() => {
     try {
-      return regimesForJurisdiction(iso2Guess).map((r: any) => r.id ?? String(r));
+      return regimesForJurisdiction(iso2Guess).map((r) => r.id);
     } catch {
       return [];
     }

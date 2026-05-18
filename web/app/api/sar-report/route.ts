@@ -3,8 +3,7 @@ import { enforce } from "@/lib/server/enforce";
 import { postWebhook } from "@/lib/server/webhook";
 import { getEntity } from "@/lib/config/entities";
 import { serialiseGoamlXml } from "../../../../dist/src/integrations/goaml-xml.js";
-import { validateGoamlEnvelope } from "../../../../dist/src/brain/goaml-shapes.js";
-import type { GoAmlEnvelope, GoAmlPerson, GoAmlEntity, GoAmlReportCode } from "../../../../dist/src/brain/goaml-shapes.js";
+import { validateGoamlEnvelope, type GoAmlEnvelope, type GoAmlPerson, type GoAmlEntity, type GoAmlReportCode } from "../../../../dist/src/brain/goaml-shapes.js";
 import {
   buildHtmlDoc,
   hsCover,
@@ -21,11 +20,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-// Luisa's SAR/STR board — "05 · STR/SAR/CTR/PMR GoAML Filings".
-// Overridable via ASANA_SAR_PROJECT_GID / ASANA_ASSIGNEE_GID env vars.
-const DEFAULT_SAR_PROJECT_GID = "1214148631336502";
-const DEFAULT_WORKSPACE_GID   = "1213645083721316";
-const DEFAULT_ASSIGNEE_GID    = "1213645083721304"; // Luisa Fernanda — primary MLRO
+import { asanaGids } from "@/lib/server/asanaConfig";
 
 type FilingType =
   | "STR"
@@ -132,7 +127,7 @@ interface Body {
   entityId?: string;
 }
 
-async function handleSarReport(req: Request): Promise<Response> {
+async function handleSarReport(req: Request, gateHeaders: Record<string, string>): Promise<Response> {
   const _handlerStart = Date.now();
   try {
   const token = process.env["ASANA_TOKEN"];
@@ -142,12 +137,12 @@ async function handleSarReport(req: Request): Promise<Response> {
   try {
     body = (await req.json()) as Body;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gateHeaders });
   }
   if (!body?.subject?.name || !body?.filingType) {
     return NextResponse.json(
       { ok: false, error: "subject and filingType are required" },
-      { status: 400 },
+      { status: 400, headers: gateHeaders }
     );
   }
 
@@ -157,7 +152,7 @@ async function handleSarReport(req: Request): Promise<Response> {
     if (tipOff) {
       return NextResponse.json(
         { ok: false, error: "tipping_off_detected", detail: `Narrative contains potential tipping-off language (pattern: ${tipOff}). Remove the disclosure before filing.` },
-        { status: 422 },
+        { status: 422, headers: gateHeaders }
       );
     }
   }
@@ -167,13 +162,13 @@ async function handleSarReport(req: Request): Promise<Response> {
   if (!body.approver?.trim()) {
     return NextResponse.json(
       { ok: false, error: "four_eyes_required", detail: "A second approver (four-eyes) is required before this filing can proceed." },
-      { status: 422 },
+      { status: 422, headers: gateHeaders }
     );
   }
   if (body.approver.trim().toLowerCase() === mlro.trim().toLowerCase()) {
     return NextResponse.json(
       { ok: false, error: "four_eyes_same_person", detail: "The approver must be a different person from the MLRO filing this report." },
-      { status: 422 },
+      { status: 422, headers: gateHeaders }
     );
   }
   // ENH-04: persist both approvals to the canonical four-eyes ledger so
@@ -206,10 +201,8 @@ async function handleSarReport(req: Request): Promise<Response> {
     );
   }
 
-  const projectGid =
-    process.env["ASANA_SAR_PROJECT_GID"] ?? DEFAULT_SAR_PROJECT_GID;
-  const workspaceGid =
-    process.env["ASANA_WORKSPACE_GID"] ?? DEFAULT_WORKSPACE_GID;
+  const projectGid = asanaGids.sar();
+  const workspaceGid = asanaGids.workspace();
   const now = new Date().toISOString();
 
   const name = `[${body.filingType}] DRAFT · ${body.subject.name}${
@@ -374,7 +367,7 @@ async function handleSarReport(req: Request): Promise<Response> {
         detail: "goAML envelope failed validation — fix the listed warnings and re-submit. The FIU rejects malformed XML; filing was NOT created.",
         validationWarnings: goamlValidationWarnings,
       },
-      { status: 422 },
+      { status: 422, headers: gateHeaders }
     );
   }
 
@@ -414,7 +407,7 @@ async function handleSarReport(req: Request): Promise<Response> {
 
     const coverData: CoverData = {
       reportId, regs,
-      module: `MODULE · ${body.filingType} FILING`,
+      module: `${body.filingType} FILING`,
       title: `${body.filingType} Filing Dossier`,
       subtitle: `${body.filingType} draft prepared for goAML submission. MLRO review required before lodgement.`,
       subjectLabel: "SUBJECT",
@@ -518,6 +511,7 @@ async function handleSarReport(req: Request): Promise<Response> {
     return new Response(html, {
       status: 200,
       headers: {
+        ...gateHeaders,
         "content-type": "text/html; charset=utf-8",
         "content-disposition": `inline; filename="hawkeye-${body.filingType.toLowerCase()}-${body.subject.id}.html"`,
         "cache-control": "no-store",
@@ -539,7 +533,7 @@ async function handleSarReport(req: Request): Promise<Response> {
         validationWarnings: goamlValidationWarnings,
         xmlBase64: goamlXml ? Buffer.from(goamlXml, "utf8").toString("base64") : null,
       },
-    });
+    }, { headers: gateHeaders });
   }
 
   // Wrap the Asana call in try-catch so a network failure returns a clean
@@ -568,7 +562,7 @@ async function handleSarReport(req: Request): Promise<Response> {
           notes: lines.join("\n"),
           projects: [projectGid],
           workspace: workspaceGid,
-          assignee: process.env["ASANA_ASSIGNEE_GID"] ?? DEFAULT_ASSIGNEE_GID,
+          assignee: asanaGids.assignee(),
         },
       }),
       signal: asanaCtl.signal,
@@ -592,7 +586,7 @@ async function handleSarReport(req: Request): Promise<Response> {
         validationWarnings: goamlValidationWarnings,
         xmlBase64: goamlXml ? Buffer.from(goamlXml, "utf8").toString("base64") : null,
       },
-    });
+    }, { headers: gateHeaders });
   } finally {
     clearTimeout(asanaTimer);
   }
@@ -609,7 +603,7 @@ async function handleSarReport(req: Request): Promise<Response> {
         validationWarnings: goamlValidationWarnings,
         xmlBase64: goamlXml ? Buffer.from(goamlXml, "utf8").toString("base64") : null,
       },
-    });
+    }, { headers: gateHeaders });
   }
 
   void postWebhook({
@@ -643,26 +637,26 @@ async function handleSarReport(req: Request): Promise<Response> {
       xmlBase64: goamlXml ? Buffer.from(goamlXml, "utf8").toString("base64") : null,
     },
     latencyMs,
-  }, { status: 201 });
+  }, { status: 201 , headers: gateHeaders });
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
+    console.error("[sar-report] unhandled exception:", err);
     return NextResponse.json({
       ok: false,
       errorCode: "HANDLER_EXCEPTION",
       errorType: "internal",
       tool: "generate_sar_report",
-      message,
+      message: "SAR generation failed — please retry or contact support",
       retryAfterSeconds: null,
       requestId: Math.random().toString(36).slice(2, 10),
       latencyMs: Date.now() - _handlerStart,
-    }, { status: 500 });
+    }, { status: 500 , headers: gateHeaders });
   }
 }
 
 export async function POST(req: Request) {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
-  return handleSarReport(req);
+  return handleSarReport(req, gate.headers);
 }
 
 function autoNarrative(body: Body): string {

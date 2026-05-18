@@ -226,7 +226,7 @@ export function buildDecision(input: BuildDecisionInput): Decision {
     reviewer: input.reviewer,
     rationale: input.rationale,
     evidenceReferences: input.evidenceReferences ?? [],
-    policyReferences: input.policyReferences ?? [STANDARD_POLICIES.FATF_R11!],
+    policyReferences: input.policyReferences ?? (STANDARD_POLICIES.FATF_R11 ? [STANDARD_POLICIES.FATF_R11] : []),
     overriddenAlerts: input.overriddenAlerts ?? [],
     riskScoreAtDecision: input.riskScoreAtDecision,
     confidenceAtDecision: input.confidenceAtDecision ?? 'UNKNOWN',

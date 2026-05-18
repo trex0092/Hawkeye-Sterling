@@ -36,19 +36,16 @@ interface SessionPayload {
 
 function getSecret(): string {
   const explicit = process.env["SESSION_SECRET"];
-  if (explicit) return explicit;
-
-  // AUDIT_CHAIN_SECRET is operator-set and non-public — safe as a fallback
-  // anchor. NETLIFY_SITE_ID and SITE_ID were previously accepted here but are
-  // discoverable (visible in build logs and Netlify dashboard URLs), so they
-  // are no longer permitted as session-key anchors.
-  const anchor = process.env["AUDIT_CHAIN_SECRET"];
-  if (anchor && anchor.length >= 32) {
-    console.warn(
-      "[hawkeye] SESSION_SECRET not set — deriving session key from AUDIT_CHAIN_SECRET. " +
-      "Set SESSION_SECRET in Netlify env vars for production security.",
-    );
-    return createHmac("sha256", anchor).update("hawkeye-session-secret-v1").digest("hex");
+  if (explicit) {
+    // Enforce a minimum of 32 bytes so the HMAC-SHA256 key has adequate
+    // entropy. A shorter secret is trivially brute-forced offline.
+    if (explicit.length < 32) {
+      throw new Error(
+        `SESSION_SECRET is only ${explicit.length} characters — minimum is 32. ` +
+        "Generate a 64-character random hex string: openssl rand -hex 32",
+      );
+    }
+    return explicit;
   }
 
   throw new Error(
@@ -83,7 +80,8 @@ export function verifySession(token: string): SessionPayload | null {
   if (!timingSafeEqual(new Uint8Array(expBuf), new Uint8Array(sigBuf)) || sigRaw.length !== expBuf.length) return null;
   try {
     const payload = JSON.parse(Buffer.from(encoded, "base64url").toString()) as SessionPayload;
-    if (payload.exp < Math.floor(Date.now() / 1000)) return null;
+    // RFC 7519 §4.1.4: token is valid only if exp is strictly after now.
+    if (payload.exp <= Math.floor(Date.now() / 1000)) return null;
     return payload;
   } catch {
     return null;

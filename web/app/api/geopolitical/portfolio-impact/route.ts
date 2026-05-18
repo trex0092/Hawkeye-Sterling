@@ -42,17 +42,17 @@ export async function POST(req: Request) {
   } catch {
     return NextResponse.json(
       { ok: false, error: "Invalid JSON" },
-      { status: 400 }
+      { status: 400, headers: gate.headers }
     );
   }
 
-  const events = body.events ?? [];
-  const portfolio = body.portfolio ?? [];
+  const events = Array.isArray(body.events) ? body.events : [];
+  const portfolio = Array.isArray(body.portfolio) ? body.portfolio : [];
 
   if (!events.length || !portfolio.length) {
     return NextResponse.json(
       { ok: false, error: "events and portfolio are required" },
-      { status: 400 }
+      { status: 400, headers: gate.headers }
     );
   }
 
@@ -115,14 +115,14 @@ export async function POST(req: Request) {
         "File STR if any sanctions links confirmed",
       ],
       summary: `Portfolio analysis complete. ${exposed.length} of ${portfolio.length} clients have geopolitical exposure.`,
-    });
+    }, { headers: gate.headers });
   }
 
   try {
-    const client = getAnthropicClient(apiKey, 22_000);
+    const client = getAnthropicClient(apiKey, 55_000);
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 3000,
+      max_tokens: 800,
       system: [
         {
           type: "text",
@@ -174,6 +174,8 @@ Assess which portfolio clients are exposed to which geopolitical events. Conside
     const result = JSON.parse(
       raw.replace(/```json\n?|\n?```/g, "").trim()
     ) as PortfolioImpactResult;
+    if (!Array.isArray(result.exposedClients)) result.exposedClients = [];
+    if (!Array.isArray(result.immediateActions)) result.immediateActions = [];
     return NextResponse.json(result, { headers: gate.headers });
   } catch {
     // API call failed — return a rule-based fallback matching the no-key path
@@ -229,6 +231,6 @@ Assess which portfolio clients are exposed to which geopolitical events. Conside
         "File STR if any sanctions links confirmed",
       ],
       summary: `Portfolio analysis complete. ${exposed.length} of ${portfolio.length} clients have geopolitical exposure.`,
-    } satisfies PortfolioImpactResult);
+    } satisfies PortfolioImpactResult, { headers: gate.headers });
   }
 }

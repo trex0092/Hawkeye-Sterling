@@ -23,7 +23,7 @@ export const maxDuration = 30;
 
 const DEFAULT_MODEL = "claude-opus-4-7";
 const MAX_OUTPUT_TOKENS = 4096;
-const BUDGET_MS = 22_000;
+const BUDGET_MS = 4_500;
 
 interface Body {
   verdict: { outcome: string; [k: string]: unknown };
@@ -132,8 +132,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     });
 
     const text = response.content
-      .filter((c) => c.type === "text")
-      .map((c) => (c.type === "text" ? c.text : ""))
+      .filter((c: { type: string; text?: string }) => c.type === "text")
+      .map((c: { type: string; text?: string }) => (c.type === "text" ? c.text : ""))
       .join("\n");
 
     let scenarios: unknown = [];
@@ -143,8 +143,8 @@ export async function POST(req: Request): Promise<NextResponse> {
       const e = text.lastIndexOf("}");
       if (s >= 0 && e > s) {
         const parsed = JSON.parse(text.slice(s, e + 1)) as { scenarios?: unknown; mitigations?: unknown };
-        scenarios = parsed.scenarios ?? [];
-        mitigations = parsed.mitigations ?? [];
+        scenarios = Array.isArray(parsed.scenarios) ? parsed.scenarios : [];
+        mitigations = Array.isArray(parsed.mitigations) ? parsed.mitigations : [];
       }
     } catch (perr) {
       console.warn("[agent/premortem] parse failed", perr);

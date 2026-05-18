@@ -24,7 +24,7 @@ export async function GET(req: Request): Promise<NextResponse> {
       void _hash;
       return rest;
     }),
-  });
+  }, { headers: gate.headers });
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
@@ -35,7 +35,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as CreateKeyBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers });
   }
   const name = body.name?.trim();
   const email = body.email?.trim();
@@ -43,11 +43,23 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (!name || !email) {
     return NextResponse.json(
       { ok: false, error: "name and email required" },
-      { status: 400 },
+      { status: 400, headers: gate.headers }
+    );
+  }
+  if (name.length > 500) {
+    return NextResponse.json(
+      { ok: false, error: "name exceeds 500-character limit" },
+      { status: 400, headers: gate.headers },
+    );
+  }
+  if (email.length > 500) {
+    return NextResponse.json(
+      { ok: false, error: "email exceeds 500-character limit" },
+      { status: 400, headers: gate.headers },
     );
   }
   if (!TIERS[tier]) {
-    return NextResponse.json({ ok: false, error: "unknown tier" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "unknown tier" }, { status: 400 , headers: gate.headers });
   }
   const issued = await issueKey({ name, email, tier });
   return NextResponse.json({
@@ -56,5 +68,5 @@ export async function POST(req: Request): Promise<NextResponse> {
     apiKey: issued.plaintext,
     warning: "Store this key securely — it will never be shown again.",
     tier: issued.tier,
-  });
+  }, { headers: gate.headers });
 }

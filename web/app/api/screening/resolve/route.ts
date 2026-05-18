@@ -35,6 +35,7 @@ import { setJson } from "@/lib/server/store";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 
 interface ResolveBody {
   subjectId?: string;

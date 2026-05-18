@@ -7,8 +7,7 @@
 // Once the operator drops a key into Netlify env vars and pushes a
 // deploy, these wrappers light up automatically — no code change needed.
 
-import type { CorporateRegistryAdapter, CorporateRecord } from "./externalAdapters";
-import { NULL_CORPORATE_ADAPTER } from "./externalAdapters";
+import { NULL_CORPORATE_ADAPTER, type CorporateRegistryAdapter, type CorporateRecord } from "./externalAdapters";
 
 const FETCH_TIMEOUT_MS = 12_000;
 
@@ -84,11 +83,15 @@ function sayariAdapter(): CorporateRegistryAdapter {
 // rate-limiting, and retries; this adapter just talks JSON-RPC to it.
 // Falls back transparently to lsegWorldCheckAdapter() when the env var is absent.
 function lsegWc1McpAdapter(): CorporateRegistryAdapter {
-  const mcpUrl = process.env["LSEG_WC1_MCP_URL"];
-  if (!mcpUrl) return NULL_CORPORATE_ADAPTER;
+  const mcpUrlRaw = process.env["LSEG_WC1_MCP_URL"];
+  if (!mcpUrlRaw) return NULL_CORPORATE_ADAPTER;
+  if (!mcpUrlRaw.startsWith("https://")) {
+    console.warn("[commercialAdapters] LSEG_WC1_MCP_URL must use HTTPS — adapter disabled");
+    return NULL_CORPORATE_ADAPTER;
+  }
   // Narrowing of `process.env[...]` from `string | undefined` does not propagate
   // into closures below; bind to a typed local so fetch() arguments stay typed.
-  const url: string = mcpUrl;
+  const url: string = mcpUrlRaw;
 
   let _toolName: string | null | undefined = undefined; // undefined = not yet discovered
 
@@ -366,6 +369,10 @@ function quantexaAdapter(): CorporateRegistryAdapter {
   const key = process.env["QUANTEXA_API_KEY"];
   const baseUrl = process.env["QUANTEXA_BASE_URL"];
   if (!key || !baseUrl) return NULL_CORPORATE_ADAPTER;
+  if (!baseUrl.startsWith("https://")) {
+    console.warn("[commercialAdapters] QUANTEXA_BASE_URL must use HTTPS — adapter disabled");
+    return NULL_CORPORATE_ADAPTER;
+  }
   return {
     isAvailable: () => true,
     lookup: async (name: string, jurisdiction?: string): Promise<CorporateRecord[]> => {

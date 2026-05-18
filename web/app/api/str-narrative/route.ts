@@ -83,14 +83,14 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
   if (!body.subjectName?.trim() || !body.activityDescription?.trim()) {
-    return NextResponse.json({ ok: false, error: "subjectName and activityDescription required" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "subjectName and activityDescription required" }, { status: 400 , headers: gate.headers });
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "str-narrative temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "str-narrative temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   const QUALITY_THRESHOLD = 80;
   const MAX_ITERATIONS = 3;
@@ -142,7 +142,7 @@ Respond ONLY with valid JSON — no markdown fences:
     while (iterations < MAX_ITERATIONS) {
       const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 2000,
+        max_tokens: 700,
         system: SYSTEM,
         messages: [{ role: "user", content: userContent }],
       });
@@ -152,6 +152,8 @@ Respond ONLY with valid JSON — no markdown fences:
       let candidate: StrNarrativeResult | null = null;
       try {
         candidate = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as StrNarrativeResult;
+        if (!Array.isArray(candidate.fatfR20Coverage)) candidate.fatfR20Coverage = [];
+        if (!Array.isArray(candidate.missingElements)) candidate.missingElements = [];
       } catch {
         break; // parse failure — keep best from prior iterations
       }

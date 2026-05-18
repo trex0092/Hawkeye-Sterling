@@ -19,6 +19,7 @@ import { enforce } from "@/lib/server/enforce";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 
 interface StreamSubject {
   name: string;
@@ -38,7 +39,7 @@ export async function GET(req: Request): Promise<Response> {
 
   const url = new URL(req.url);
   const name = url.searchParams.get("name");
-  if (!name) return new Response("name query param required", { status: 400 });
+  if (!name) return new Response("name query param required", { status: 400, headers: gate.headers });
   const subject: StreamSubject = {
     name,
     type: url.searchParams.get("type") ?? undefined,
@@ -69,19 +70,29 @@ export async function GET(req: Request): Promise<Response> {
           send({ phase: "pep", pep }, "phase");
         }
 
-        // Phase 3 — redlines
-        const keywords = [subject.name, ...(subject.aliases ?? [])]
-          .join(" ").toLowerCase().split(/\W+/).filter((t) => t.length >= 3);
-        const redlines = evaluateRedlines(keywords);
-        send({ phase: "redlines", fired: redlines.fired.map((r: { id: string }) => r.id), action: redlines.action }, "phase");
-
-        // Phase 4 — cross-regime
-        const REGIMES = ["un_1267", "ofac_sdn", "eu_consolidated", "uk_ofsi", "uae_eocn", "uae_local_terrorist"] as const;
+        // Phase 4 — cross-regime (build hitsByList first; Phase 3 redlines need it)
+        const REGIMES = ["un_consolidated", "ofac_sdn", "eu_consolidated", "uk_ofsi", "uae_eocn", "uae_local_terrorist"] as const;
         const hitsByList = new Map<string, typeof screen.hits>();
         for (const h of screen.hits ?? []) {
           const arr = hitsByList.get(h.listId);
           if (arr) arr.push(h); else hitsByList.set(h.listId, [h]);
         }
+
+        // Phase 3 — redlines (IDs derived from confirmed screening hits; score is 0-1 scale)
+        const firedRedlineIds: string[] = [];
+        const SANCTIONS_REDLINE_MAP: Array<[string, string]> = [
+          ["ofac_sdn", "rl_ofac_sdn_confirmed"],
+          ["un_consolidated", "rl_un_consolidated_confirmed"],
+          ["eu_consolidated", "rl_eu_cfsp_confirmed"],
+          ["uk_ofsi", "rl_uk_ofsi_confirmed"],
+        ];
+        for (const [lid, rid] of SANCTIONS_REDLINE_MAP) {
+          if ((hitsByList.get(lid) ?? []).some((h) => h.score >= 0.85)) firedRedlineIds.push(rid);
+        }
+        const uaeHits = [...(hitsByList.get("uae_eocn") ?? []), ...(hitsByList.get("uae_local_terrorist") ?? [])];
+        if (uaeHits.some((h) => h.score >= 0.85)) firedRedlineIds.push("rl_eocn_confirmed");
+        const redlines = evaluateRedlines(firedRedlineIds);
+        send({ phase: "redlines", fired: redlines.fired.map((r: { id: string }) => r.id), action: redlines.action }, "phase");
         const statuses: RegimeStatus[] = REGIMES.map((listId) => {
           const list = hitsByList.get(listId);
           let hit: RegimeStatus["hit"] = "not_designated";
@@ -101,7 +112,8 @@ export async function GET(req: Request): Promise<Response> {
         send({ phase: "done", at: new Date().toISOString() }, "phase");
         controller.close();
       } catch (err) {
-        send({ phase: "error", message: err instanceof Error ? err.message : String(err) }, "error");
+        console.error("[agent/stream-screen] stream error:", err instanceof Error ? err.message : err);
+        send({ phase: "error", message: "Screening failed — please retry." }, "error");
         controller.close();
       }
     },
@@ -113,6 +125,7 @@ export async function GET(req: Request): Promise<Response> {
       "cache-control": "no-cache, no-transform",
       connection: "keep-alive",
       "x-accel-buffering": "no",
+      ...gate.headers,
     },
   });
 }

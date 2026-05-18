@@ -3,8 +3,8 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
-
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export interface CddRefreshTriggerResult {
   refreshRequired: boolean;
@@ -79,20 +79,20 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
   if (!body.triggerEvents?.trim() && !body.adverseMediaHit?.trim() && !body.transactionPatternChange?.trim()) {
-    return NextResponse.json({ ok: false, error: "At least one trigger event, adverseMediaHit, or transactionPatternChange required" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "At least one trigger event, adverseMediaHit, or transactionPatternChange required" }, { status: 400 , headers: gate.headers });
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) return NextResponse.json({ ok: true, degraded: true, ...FALLBACK }, { headers: gate.headers });
 
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 55_000);
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 1200,
+        max_tokens: 600,
         system: `You are a UAE CDD/EDD specialist determining whether a customer due diligence refresh is legally required under UAE FDL 10/2025.
 
 CDD refresh triggers (UAE law):
@@ -127,23 +127,26 @@ Respond ONLY with valid JSON — no markdown fences:
 }`,
         messages: [{
           role: "user",
-          content: `Customer Name: ${body.customerName ?? "not specified"}
-Customer Type: ${body.customerType ?? "not specified"}
-Current Risk Tier: ${body.currentRiskTier ?? "not specified"}
-Last CDD Date: ${body.lastCddDate ?? "not specified"}
-Reported Trigger Events: ${body.triggerEvents ?? "none specified"}
-Transaction Pattern Change: ${body.transactionPatternChange ?? "none noted"}
-Adverse Media Hit: ${body.adverseMediaHit ?? "none"}
-Ownership Change: ${body.ownershipChange ?? "none reported"}
-Additional Context: ${body.context ?? "none"}
+          content: `Customer Name: ${sanitizeField(body.customerName ?? "not specified", 500)}
+Customer Type: ${sanitizeField(body.customerType ?? "not specified", 100)}
+Current Risk Tier: ${sanitizeField(body.currentRiskTier ?? "not specified", 100)}
+Last CDD Date: ${sanitizeField(body.lastCddDate ?? "not specified", 50)}
+Reported Trigger Events: ${sanitizeText(body.triggerEvents ?? "none specified", 2000)}
+Transaction Pattern Change: ${sanitizeText(body.transactionPatternChange ?? "none noted", 2000)}
+Adverse Media Hit: ${sanitizeText(body.adverseMediaHit ?? "none", 2000)}
+Ownership Change: ${sanitizeText(body.ownershipChange ?? "none reported", 1000)}
+Additional Context: ${sanitizeText(body.context ?? "none", 2000)}
 
 Determine if CDD refresh is required.`,
         }],
       });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as CddRefreshTriggerResult;
+    if (!Array.isArray(result.triggerEvents)) result.triggerEvents = [];
+    if (!Array.isArray(result.fieldsToReverify)) result.fieldsToReverify = [];
+    if (!Array.isArray(result.additionalDocumentsRequired)) result.additionalDocumentsRequired = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "cdd-refresh-trigger temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "cdd-refresh-trigger temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

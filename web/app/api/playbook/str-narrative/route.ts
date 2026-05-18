@@ -39,17 +39,23 @@ export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "playbook/str-narrative temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "playbook/str-narrative temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   let body: Body;
   try {
     body = (await req.json()) as Body;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   if (!body?.playbookTitle?.trim()) {
-    return NextResponse.json({ ok: false, error: "playbookTitle is required" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "playbookTitle is required" }, { status: 400 , headers: gate.headers });
+  }
+  if (!Array.isArray(body.completedChecks)) {
+    return NextResponse.json({ ok: false, error: "completedChecks must be an array" }, { status: 400, headers: gate.headers });
+  }
+  if (!Array.isArray(body.incompleteChecks)) {
+    return NextResponse.json({ ok: false, error: "incompleteChecks must be an array" }, { status: 400, headers: gate.headers });
   }
 
   const systemPrompt = [
@@ -81,10 +87,10 @@ export async function POST(req: Request): Promise<NextResponse> {
   ].filter(Boolean).join("\n");
 
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 55_000);
     const res = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 1500,
+        max_tokens: 700,
         system: systemPrompt,
         messages: [{ role: "user", content: userContent }],
       });
@@ -94,6 +100,9 @@ export async function POST(req: Request): Promise<NextResponse> {
     const raw = (first?.type === "text" ? first.text : undefined) ?? "";
     const cleaned = raw.replace(/^```json?\s*/i, "").replace(/\s*```$/i, "").trim();
     const result = JSON.parse(cleaned) as STRNarrativeResult;
+    if (!Array.isArray(result.suspiciousBehaviours)) result.suspiciousBehaviours = [];
+    if (!Array.isArray(result.regulatoryBasis)) result.regulatoryBasis = [];
+    if (!Array.isArray(result.missingElements)) result.missingElements = [];
 
     try {
       writeAuditEvent("mlro", "playbook.str-narrative", `${body.playbookTitle} → ${result.recommendedDisposition} (${body.completedChecks.length} checks completed)`);
@@ -101,6 +110,6 @@ export async function POST(req: Request): Promise<NextResponse> {
 
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "playbook/str-narrative temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "playbook/str-narrative temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

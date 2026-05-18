@@ -10,6 +10,7 @@ import { submitFeedback, listFeedback, stats, type Verdict } from "@/lib/server/
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
@@ -58,6 +59,12 @@ export async function GET(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
 
-  const [records, summary] = await Promise.all([listFeedback(), stats()]);
-  return NextResponse.json({ ok: true, records, summary }, { headers: gate.headers });
+  try {
+    const [records, summary] = await Promise.all([listFeedback(), stats()]);
+    return NextResponse.json({ ok: true, records, summary }, { headers: gate.headers });
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : String(err);
+    console.error("[screening/feedback] GET failed:", detail);
+    return NextResponse.json({ ok: false, error: "feedback data unavailable" }, { status: 503, headers: gate.headers });
+  }
 }

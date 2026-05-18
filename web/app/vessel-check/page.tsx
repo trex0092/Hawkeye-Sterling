@@ -161,7 +161,7 @@ export default function VesselCheckPage() {
   return (
     <ModuleLayout asanaModule="vessel-check" asanaLabel="Vessel Check" engineLabel="Vessel Check">
       <ModuleHero
-        moduleNumber={38}
+
         eyebrow="Module · Maritime Intelligence"
         title="Vessel sanctions"
         titleEm="check."

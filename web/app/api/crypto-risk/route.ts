@@ -4,8 +4,7 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
-import { scoreWallet } from "../../../../dist/src/integrations/cryptoRisk.js";
-import type { CryptoChain, WalletRiskResult } from "../../../../dist/src/integrations/cryptoRisk.js";
+import { scoreWallet, type CryptoChain, type WalletRiskResult } from "../../../../dist/src/integrations/cryptoRisk.js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -53,11 +52,11 @@ export async function POST(req: Request): Promise<NextResponse> {
       ? { ...raw.subject, ...raw, subject: undefined }
       : raw;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400, headers: CORS });
+    return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400, headers: { ...gate.headers, ...CORS } });
   }
 
   if (!body.address?.trim()) {
-    return NextResponse.json({ ok: false, error: "address is required" }, { status: 400, headers: CORS });
+    return NextResponse.json({ ok: false, error: "address is required" }, { status: 400, headers: { ...gate.headers, ...CORS } });
   }
 
   const address = body.address.trim();
@@ -96,6 +95,6 @@ export async function POST(req: Request): Promise<NextResponse> {
       retryAfterSeconds: null,
       requestId: Math.random().toString(36).slice(2, 10),
       latencyMs: Date.now() - _handlerStart,
-    }, { status: 500 });
+    }, { status: 500, headers: { ...CORS } });
   }
 }

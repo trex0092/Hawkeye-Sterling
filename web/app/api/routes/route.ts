@@ -16,6 +16,7 @@ import { enforce } from "@/lib/server/enforce";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 
 type Method = "GET" | "POST" | "DELETE";
 type AuthScope = "operator" | "mlro" | "admin" | "public";

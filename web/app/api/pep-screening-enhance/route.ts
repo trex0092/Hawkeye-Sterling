@@ -4,6 +4,7 @@ export const maxDuration = 60;import { NextResponse } from "next/server";
 
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export interface PepScreeningEnhanceResult {
   pepClassification: "PEP-1" | "PEP-2" | "PEP-3" | "Former-PEP" | "Not-PEP";
@@ -55,22 +56,22 @@ export async function POST(req: Request) {
   } catch {
     return NextResponse.json(
       { ok: false, error: "Invalid JSON" },
-      { status: 400 }
+      { status: 400, headers: gate.headers }
     );
   }
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "pep-screening-enhance temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "pep-screening-enhance temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 55_000);
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 1500,
+        max_tokens: 700,
         system:
           "You are a UAE AML/CFT compliance expert specialising in enhanced PEP screening and EDD. Classify PEP status and generate EDD requirements under UAE FDL and FATF standards. Return valid JSON only matching the PepScreeningEnhanceResult interface.",
         messages: [
           {
             role: "user",
-            content: `Perform enhanced PEP screening and classification.\n\nSubject: ${body.subjectName}\nCurrent Role: ${body.currentRole}\nJurisdiction: ${body.jurisdiction}\nWealth Estimate: ${body.wealthEstimate}\nKnown Connections: ${body.knownConnections}\nContext: ${body.context}\n\nReturn JSON with fields: pepClassification, riskRating, pepRole, corruptionExposure, eddChecklist[], monitoringPlan, exitCriteria, regulatoryBasis.`,
+            content: `Perform enhanced PEP screening and classification.\n\nSubject: ${sanitizeField(body.subjectName)}\nCurrent Role: ${sanitizeField(body.currentRole)}\nJurisdiction: ${sanitizeField(body.jurisdiction)}\nWealth Estimate: ${sanitizeField(body.wealthEstimate)}\nKnown Connections: ${sanitizeField(body.knownConnections)}\nContext: ${sanitizeText(body.context)}\n\nReturn JSON with fields: pepClassification, riskRating, pepRole, corruptionExposure, eddChecklist[], monitoringPlan, exitCriteria, regulatoryBasis.`,
           },
         ],
       });
@@ -79,8 +80,9 @@ export async function POST(req: Request) {
     const result = JSON.parse(
       raw.replace(/```json\n?|\n?```/g, "").trim()
     ) as PepScreeningEnhanceResult;
+    if (!Array.isArray(result.eddChecklist)) result.eddChecklist = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "pep-screening-enhance temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "pep-screening-enhance temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

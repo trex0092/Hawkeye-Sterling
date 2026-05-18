@@ -244,11 +244,12 @@ export async function POST(req: Request): Promise<Response> {
           allResults.push(result);
           send({ type: "progress", index: i, total: rows.length, result });
         } catch (err) {
+          console.error("[batch-screen-stream] row processing failed:", err instanceof Error ? err.message : err);
           const result: RowResult = {
             name: row?.name ?? "",
             topScore: 0, severity: "error", hitCount: 0,
             listCoverage: [], keywordGroups: [], esgCategories: [], durationMs: 0,
-            error: err instanceof Error ? err.message : String(err),
+            error: "Screening failed — please retry.",
           };
           allResults.push(result);
           send({ type: "progress", index: i, total: rows.length, result });

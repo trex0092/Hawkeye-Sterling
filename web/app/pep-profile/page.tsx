@@ -109,7 +109,7 @@ export default function PepProfilePage() {
   return (
     <ModuleLayout asanaModule="pep-profile" asanaLabel="PEP Profile Builder" engineLabel="PEP risk engine">
       <ModuleHero
-        moduleNumber={36}
+
         eyebrow="Module 36 · Enhanced Due Diligence"
         title="PEP"
         titleEm="profiles."

@@ -184,7 +184,7 @@ export default function GoAmlExportPage() {
   return (
     <ModuleLayout asanaModule="goaml" asanaLabel="goAML XML Export">
       <ModuleHero
-        moduleNumber={50}
+
         eyebrow="Module · goAML XML Export"
         title="goAML"
         titleEm="export wizard."

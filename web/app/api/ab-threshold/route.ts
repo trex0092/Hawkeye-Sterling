@@ -63,14 +63,14 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   let body: Body;
   try { body = (await req.json()) as Body; } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400, headers });
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400, headers: gate.headers });
   }
   const subjects = Array.isArray(body.subjects) ? body.subjects : [];
   if (subjects.length === 0) {
-    return NextResponse.json({ ok: false, error: "subjects[] required" }, { status: 400, headers });
+    return NextResponse.json({ ok: false, error: "subjects[] required" }, { status: 400, headers: gate.headers });
   }
   if (subjects.length > MAX_SUBJECTS) {
-    return NextResponse.json({ ok: false, error: `subjects exceed ${MAX_SUBJECTS}-row cap` }, { status: 400, headers });
+    return NextResponse.json({ ok: false, error: `subjects exceed ${MAX_SUBJECTS}-row cap` }, { status: 400, headers: gate.headers });
   }
   const thresholds = (Array.isArray(body.thresholds) && body.thresholds.length > 0
     ? body.thresholds
@@ -78,7 +78,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     .filter((t): t is number => typeof t === "number" && t > 0 && t <= 1)
     .slice(0, MAX_ARMS);
   if (thresholds.length === 0) {
-    return NextResponse.json({ ok: false, error: "thresholds must be in (0, 1]" }, { status: 400, headers });
+    return NextResponse.json({ ok: false, error: "thresholds must be in (0, 1]" }, { status: 400, headers: gate.headers });
   }
 
   const candidates = await loadCandidates();
@@ -122,7 +122,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const strict = arms[arms.length - 1];
   if (strict) {
     const strictHits = new Set(
-      strict.perSubject.filter((s) => s.hitCount > 0).map((s) => s.name.toLowerCase()),
+      strict.perSubject.filter((s) => s.hitCount > 0).map((s) => s.name.toLowerCase())
     );
     for (const arm of arms) {
       arm.falsePositiveProxy = arm.perSubject.filter(
@@ -133,6 +133,6 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   return NextResponse.json(
     { ok: true, subjectCount: subjects.length, arms, generatedAt: new Date().toISOString() },
-    { headers },
+    { headers: gate.headers },
   );
 }

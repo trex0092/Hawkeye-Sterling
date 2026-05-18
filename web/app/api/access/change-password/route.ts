@@ -6,6 +6,7 @@
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 
 import { NextResponse } from "next/server";
 import { loadUsers, saveUsers } from "../_store";

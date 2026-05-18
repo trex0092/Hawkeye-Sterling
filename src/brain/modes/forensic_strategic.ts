@@ -53,7 +53,7 @@ function typedEvidence<T>(ctx: BrainContext, key: string): T[] {
 
 function singleEvidence<T>(ctx: BrainContext, key: string): T | undefined {
   const v = (ctx.evidence as Record<string, unknown> | undefined)?.[key];
-  return v == null ? undefined : (v as T);
+  return v === null || v === undefined ? undefined : (v as T);
 }
 
 // ──────────────────────────────────────────────────────────────────────
@@ -193,7 +193,7 @@ export const time_seriesApply = async (ctx: BrainContext): Promise<Finding> => {
   const yMean = values.reduce((s, v) => s + v, 0) / n;
   let num = 0, den = 0;
   for (let i = 0; i < n; i++) {
-    num += (i - xMean) * (values[i]! - yMean);
+    num += (i - xMean) * ((values[i] ?? 0) - yMean);
     den += (i - xMean) ** 2;
   }
   const slope = den === 0 ? 0 : num / den;

@@ -1,5 +1,6 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 
 import { NextResponse } from "next/server";
 
@@ -56,12 +57,12 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
-  if (!body.amounts?.trim()) return NextResponse.json({ ok: false, error: "amounts required" }, { status: 400 , headers: gate.headers});
+  if (!body.amounts?.trim()) return NextResponse.json({ ok: false, error: "amounts required" }, { status: 400 , headers: gate.headers });
 
   const amounts = parseCash(body.amounts);
-  if (amounts.length === 0) return NextResponse.json({ ok: false, error: "No valid amounts parsed" }, { status: 400 , headers: gate.headers});
+  if (amounts.length === 0) return NextResponse.json({ ok: false, error: "No valid amounts parsed" }, { status: 400 , headers: gate.headers });
 
   const periodDays = body.periodDays ?? 30;
   const totalValueAed = amounts.reduce((s, a) => s + a, 0);

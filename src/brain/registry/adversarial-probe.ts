@@ -84,7 +84,7 @@ export function parseProbeOutcomes(text: string, finalVerdict: Verdict): ProbeOu
 function extractVerdict(text: string, rx: RegExp): Verdict | null {
   const m = text.match(rx);
   if (!m) return null;
-  const v = m[1]!.toLowerCase() as Verdict;
+  const v = (m[1] ?? '').toLowerCase() as Verdict;
   return VALID.has(v) ? v : null;
 }
 

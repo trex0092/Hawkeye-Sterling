@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
+import { asanaGids } from "@/lib/server/asanaConfig";
+import { enforce } from "@/lib/server/enforce";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 const API = "https://app.asana.com/api/1.0";
-const DEFAULT_WORKSPACE_GID = "1213645083721316";
 
 // One known-existing project — used to discover the team GID that all
 // new projects must inherit (Asana Organisations require team on POST).
@@ -132,7 +133,10 @@ interface Result {
   error?:    string;
 }
 
-export async function POST(): Promise<NextResponse> {
+export async function POST(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
+
   const token = process.env["ASANA_TOKEN"];
   if (!token) {
     return NextResponse.json(
@@ -140,7 +144,7 @@ export async function POST(): Promise<NextResponse> {
       { status: 503 },
     );
   }
-  const workspace = process.env["ASANA_WORKSPACE_GID"] ?? DEFAULT_WORKSPACE_GID;
+  const workspace = asanaGids.workspace();
 
   // Verify token first — fail fast with a helpful message if it's invalid.
   const me = await fetch(`${API}/users/me`, {

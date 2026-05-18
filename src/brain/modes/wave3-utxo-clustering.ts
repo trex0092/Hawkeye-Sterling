@@ -50,7 +50,7 @@ function detectCommonInputOwnership(txns: UtxoTxn[]): { hits: SignalHit[]; clust
   function find(a: string): string {
     let cur = a;
     while (parent.get(cur) !== cur && parent.has(cur)) {
-      const next = parent.get(cur)!;
+      const next = parent.get(cur) ?? cur;
       parent.set(cur, parent.get(next) ?? next);
       cur = next;
     }
@@ -65,10 +65,10 @@ function detectCommonInputOwnership(txns: UtxoTxn[]): { hits: SignalHit[]; clust
   for (const t of txns) {
     const ins = (t.inputAddresses ?? []).filter(Boolean);
     if (ins.length < 2) continue;
-    const head = ins[0]!;
+    const head = ins[0] ?? '';
     if (!parent.has(head)) parent.set(head, head);
     for (let i = 1; i < ins.length; i++) {
-      const a = ins[i]!;
+      const a = ins[i] ?? '';
       if (!parent.has(a)) parent.set(a, a);
       union(head, a);
     }

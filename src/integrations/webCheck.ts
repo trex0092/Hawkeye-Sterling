@@ -82,7 +82,7 @@ function daysBetween(dateStr: string): number {
   return Math.floor(ms / 86_400_000);
 }
 
-function scoreRisk(data: WebCheckResponse, domain: string): { score: number; factors: string[] } {
+function scoreRisk(data: WebCheckResponse, _domain: string): { score: number; factors: string[] } {
   let score = 0;
   const factors: string[] = [];
 
@@ -161,11 +161,11 @@ export async function domainIntel(
   ]);
 
   const combined: WebCheckResponse = {
-    ...(whois != null ? { whois } : {}),
-    ...(malware != null ? { malware } : {}),
-    ...(mail != null ? { mail } : {}),
-    ...(ssl != null ? { ssl } : {}),
-    ...(rank != null ? { rank } : {}),
+    ...(whois !== null && whois !== undefined ? { whois } : {}),
+    ...(malware !== null && malware !== undefined ? { malware } : {}),
+    ...(mail !== null && mail !== undefined ? { mail } : {}),
+    ...(ssl !== null && ssl !== undefined ? { ssl } : {}),
+    ...(rank !== null && rank !== undefined ? { rank } : {}),
   };
   const { score, factors } = scoreRisk(combined, domain);
 

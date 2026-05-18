@@ -193,19 +193,9 @@ export async function listAlerts(onlyUnread = false): Promise<DesignationAlert[]
         results.push(alert);
       } catch { /* skip corrupt */ }
     }
-    // Fall back to demo seed when store is empty (no cron has fired yet)
-    // OR when no unread items exist — keeps the bell useful for operators
-    // even after they've dismissed everything from a prior session.
-    const hasUnread = results.some((a) => !a.read);
-    if (results.length === 0 || !hasUnread) {
-      const demos = getDemoAlerts();
-      const merged = [...results, ...demos.filter((d) => !results.some((r) => r.id === d.id))];
-      return onlyUnread ? merged.filter((a) => !a.read) : merged;
-    }
-    return results;
+    return onlyUnread ? results.filter((a) => !a.read) : results;
   } catch {
-    const demos = getDemoAlerts();
-    return onlyUnread ? demos.filter((a) => !a.read) : demos;
+    return [];
   }
 }
 

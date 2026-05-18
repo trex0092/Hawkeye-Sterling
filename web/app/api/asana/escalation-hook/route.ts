@@ -213,7 +213,8 @@ async function triggerSar(task: AsanaTask, origin: string): Promise<{ goamlXmlBa
     if (xml) return { ok: true, goamlXmlBase64: xml };
     return { ok: true };
   } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : String(err) };
+    console.error("[asana/escalation-hook] triggerSar failed:", err instanceof Error ? err.message : err);
+    return { ok: false, error: "SAR generation temporarily unavailable — please trigger manually." };
   }
 }
 

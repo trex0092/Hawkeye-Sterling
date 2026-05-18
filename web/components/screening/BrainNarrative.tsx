@@ -54,7 +54,7 @@ function buildNarrative(r: SuperBrainResult, name: string, id: string, news?: Ne
     const t = pepTier ?? pepAssessmentTier;
     const saliencePct = r.pep ? Math.round(r.pep.salience * 100) : null;
     paragraphs.push(
-      `Subject classified as PEP ${t}${saliencePct != null ? ` with ${saliencePct}% salience` : ""}${r.pep?.rationale ? ` — ${r.pep.rationale}` : ""}. Enhanced due-diligence (EDD) applies under FATF Recommendation 12 / FDL 10/2025 Art.17.`,
+      `Subject classified as PEP ${t}${saliencePct !== null ? ` with ${saliencePct}% salience` : ""}${r.pep?.rationale ? ` — ${r.pep.rationale}` : ""}. Enhanced due-diligence (EDD) applies under FATF Recommendation 12 / FDL 10/2025 Art.17.`,
     );
   } else {
     paragraphs.push(`No PEP classification was raised by the brain on this screen.`);

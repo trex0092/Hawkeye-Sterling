@@ -49,6 +49,7 @@ export async function callAnthropic(opts: AnthropicOptions): Promise<AnthropicRe
         "anthropic-version": "2023-06-01",
         "content-type": "application/json",
       },
+      signal: AbortSignal.timeout(55_000),
       body: JSON.stringify({
         model: opts.model ?? "claude-haiku-4-5-20251001",
         max_tokens: opts.maxTokens ?? 800,

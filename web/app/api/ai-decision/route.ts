@@ -7,6 +7,8 @@ import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
 import { getJson } from "@/lib/server/store";
 import { randomBytes } from "node:crypto";
+import { asanaGids } from "@/lib/server/asanaConfig";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -66,7 +68,17 @@ interface ListsIntegrityResult {
   listsQueried: ListInfo[];
 }
 
+// Module-level cache so repeated requests within a Lambda warm window skip
+// the Netlify Blobs round-trips (saves 1-2 s per call after the first).
+let _integrityCache: { result: ListsIntegrityResult; checkedAt: number } | null = null;
+const INTEGRITY_TTL_MS = 60 * 60 * 1_000; // 1 hour
+
 async function checkListsIntegrity(): Promise<ListsIntegrityResult> {
+  // Return cached result when it's still fresh (1-hour TTL).
+  if (_integrityCache && Date.now() - _integrityCache.checkedAt < INTEGRITY_TTL_MS) {
+    return _integrityCache.result;
+  }
+
   const result: ListsIntegrityResult = {
     listsVerified: false,
     missingLists: [],
@@ -84,16 +96,15 @@ async function checkListsIntegrity(): Promise<ListsIntegrityResult> {
   }
 
   const { getStore } = blobsMod;
-  const onNetlify = Boolean(process.env["NETLIFY"]) || Boolean(process.env["NETLIFY_LOCAL"]);
   const siteID = process.env["NETLIFY_SITE_ID"] ?? process.env["SITE_ID"];
   const token =
+    process.env["NETLIFY_BLOBS_TOKEN"] ??
     process.env["NETLIFY_API_TOKEN"] ??
-    process.env["NETLIFY_AUTH_TOKEN"] ??
-    process.env["NETLIFY_BLOBS_TOKEN"];
+    process.env["NETLIFY_AUTH_TOKEN"];
 
   let store: ReturnType<typeof getStore>;
   try {
-    const opts = !onNetlify && siteID && token
+    const opts = siteID && token
       ? { name: "hawkeye-lists", siteID, token, consistency: "strong" as const }
       : { name: "hawkeye-lists" };
     store = getStore(opts);
@@ -134,6 +145,9 @@ async function checkListsIntegrity(): Promise<ListsIntegrityResult> {
   result.missingLists = missing;
   result.listsQueried = queried;
   result.listsVerified = missing.length === 0;
+  // Populate the module-level cache so the next request within 1 hour skips
+  // the Blobs round-trips entirely.
+  _integrityCache = { result, checkedAt: Date.now() };
   return result;
 }
 
@@ -228,35 +242,33 @@ function buildUserMessage(req: DecisionRequest): string {
     ? req.sanctionsHits.map((h) => `${h.list} (score: ${h.score}${h.details ? `, ${h.details}` : ""})`).join("; ")
     : "None";
   return `SUBJECT FOR DECISION:
-Name: ${req.name}
-Entity type: ${req.entityType}
-Country: ${req.country}
+Name: ${sanitizeField(req.name, 500)}
+Entity type: ${sanitizeField(req.entityType, 100)}
+Country: ${sanitizeField(req.country, 100)}
 Risk score: ${req.riskScore}/100
 Sanctions hits: ${hits}
-Lists checked: ${req.listCoverage.join(", ") || "N/A"}
-Adverse media: ${req.adverseMedia || "None identified"}
-PEP status: ${req.pepTier || "Not a PEP"}
-Exposure (AED): ${req.exposureAED || "Unknown"}
-CDD posture: ${req.cddPosture || "CDD"}
+Lists checked: ${req.listCoverage.map((l) => sanitizeField(l, 100)).join(", ") || "N/A"}
+Adverse media: ${sanitizeText(req.adverseMedia, 2000) || "None identified"}
+PEP status: ${sanitizeField(req.pepTier, 100) || "Not a PEP"}
+Exposure (AED): ${sanitizeField(req.exposureAED, 50) || "Unknown"}
+CDD posture: ${sanitizeField(req.cddPosture, 50) || "CDD"}
 Screening top score: ${req.screeningTopScore ?? req.riskScore}/100
-Screening severity: ${req.screeningSeverity || "unknown"}
-Notes: ${req.notes || "None"}
+Screening severity: ${sanitizeField(req.screeningSeverity, 50) || "unknown"}
+Notes: ${sanitizeText(req.notes, 1000) || "None"}
 
 Make your decision now.`;
 }
 
 // ── Auto-Asana task creation ──────────────────────────────────────────────────
 
-const DECISION_PROJECT_MAP: Record<AIDecision, string> = {
-  str: "ASANA_SAR_PROJECT_GID",
-  escalate: "ASANA_MLRO_PROJECT_GID",
-  edd: "ASANA_KYC_PROJECT_GID",
-  approve: "ASANA_SCREENING_PROJECT_GID",
-};
-
-const MASTER_INBOX = "1214148630166524";
-const DEFAULT_WORKSPACE = "1213645083721316";
-const DEFAULT_ASSIGNEE = "1213645083721304";
+function decisionProjectGid(decision: AIDecision): string {
+  switch (decision) {
+    case "str":      return asanaGids.sar();
+    case "escalate": return asanaGids.mlro();
+    case "edd":      return asanaGids.kyc();
+    case "approve":  return asanaGids.screening();
+  }
+}
 
 async function createAsanaTask(
   req: DecisionRequest,
@@ -276,8 +288,7 @@ async function createAsanaTask(
     str: "STR — FILE IMMEDIATELY",
   };
 
-  const projectGidEnv = DECISION_PROJECT_MAP[decision];
-  const projectGid = process.env[projectGidEnv] ?? MASTER_INBOX;
+  const projectGid = decisionProjectGid(decision);
   const listsVerified = integrity?.listsVerified ?? true;
   const missingLists = integrity?.missingLists ?? [];
   const taskName = `[AI DECISION — ${decisionLabel[decision]}] ${req.name} · ${new Date().toISOString().slice(0, 10)}`;
@@ -341,8 +352,8 @@ async function createAsanaTask(
             name: taskName,
             notes,
             projects: [projectGid],
-            workspace: process.env["ASANA_WORKSPACE_GID"] ?? DEFAULT_WORKSPACE,
-            assignee: process.env["ASANA_ASSIGNEE_GID"] ?? DEFAULT_ASSIGNEE,
+            workspace: asanaGids.workspace(),
+            assignee: asanaGids.assignee(),
           },
         }),
         signal: ctl.signal,
@@ -414,7 +425,7 @@ async function createMlroReviewSubtask(
           data: {
             name: "MLRO REVIEW REQUIRED — Four-eyes sign-off before any compliance action",
             notes: subtaskNotes,
-            assignee: process.env["ASANA_ASSIGNEE_GID"] ?? DEFAULT_ASSIGNEE,
+            assignee: asanaGids.assignee(),
           },
         }),
         signal: ctl.signal,
@@ -440,11 +451,11 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as DecisionRequest;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   if (!body.name || !body.subjectId) {
-    return NextResponse.json({ ok: false, error: "name and subjectId are required" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "name and subjectId are required" }, { status: 400 , headers: gate.headers });
   }
 
   // ── Data integrity gate (FDL 10/2025 Art.18) ─────────────────────────────
@@ -498,10 +509,10 @@ export async function POST(req: Request) {
 
   if (apiKey) {
     try {
-      const client = getAnthropicClient(apiKey);
+      const client = getAnthropicClient(apiKey, 20_000);
       const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 2048,
+        max_tokens: 700,
         system: buildSystemBlocks(learningCtx),
         messages: [{ role: "user", content: buildUserMessage(body) }],
       });
@@ -519,8 +530,8 @@ export async function POST(req: Request) {
       confidence = parsed.confidence ?? 70;
       urgency = (parsed.urgency as "low" | "medium" | "high" | "critical") ?? "medium";
       rationale = parsed.rationale ?? "Decision based on risk profile analysis.";
-      keyFactors = parsed.keyFactors ?? [];
-      nextSteps = parsed.nextSteps ?? [];
+      keyFactors = Array.isArray(parsed.keyFactors) ? parsed.keyFactors : [];
+      nextSteps = Array.isArray(parsed.nextSteps) ? parsed.nextSteps : [];
       regulatoryBasis = parsed.regulatoryBasis ?? "FDL 10/2025";
     } catch {
       // Fallback to rule-based
@@ -545,11 +556,18 @@ export async function POST(req: Request) {
   // Auto-create Asana task (fire in parallel with response)
   // Skip task creation in test/sandbox mode
   let asana: { taskUrl?: string; taskGid?: string } = {};
+  let fourEyesWarning = false;
   if (body.test !== true) {
     asana = await createAsanaTask(body, decision, rationale, nextSteps, decisionId, integrity);
-    // ADD-03: Immediately create a blocking MLRO review subtask (four-eyes enforcement).
+    // ADD-03: Await the blocking MLRO review subtask (four-eyes enforcement per FDL 10/2025 Art.18).
     if (asana.taskGid) {
-      void createMlroReviewSubtask(asana.taskGid, decisionId, body.name, integrity.listsVerified);
+      const subtaskResult = await createMlroReviewSubtask(asana.taskGid, decisionId, body.name, integrity.listsVerified).catch((err: unknown) => {
+        console.error("[ai-decision] MLRO four-eyes subtask failed — compliance gate may be missing:", err);
+        return null;
+      });
+      if (subtaskResult === null) {
+        fourEyesWarning = true;
+      }
     }
   }
 
@@ -561,6 +579,7 @@ export async function POST(req: Request) {
       generatedAt: string;
     };
     _governance: { humanReviewRequired: boolean; reviewNote: string };
+    fourEyesWarning?: boolean;
   } = {
     ok: true,
     decisionId,
@@ -588,11 +607,12 @@ export async function POST(req: Request) {
           ...(asana.taskUrl ? { asanaTaskUrl: asana.taskUrl } : {}),
           ...(asana.taskGid ? { asanaTaskGid: asana.taskGid } : {}),
         }),
+    ...(fourEyesWarning ? { fourEyesWarning: true } : {}),
   };
 
   const latencyMs = Date.now() - t0;
   if (latencyMs > 5000) console.warn(`[ai-decision] slow response latencyMs=${latencyMs}`);
-  return NextResponse.json({ ...responseBody, latencyMs }, { status: 200 , headers: gate.headers});
+  return NextResponse.json({ ...responseBody, latencyMs }, { status: 200 , headers: gate.headers });
 }
 
 // ── Rule-based fallback ───────────────────────────────────────────────────────
@@ -601,7 +621,7 @@ function deriveRuleBasedDecision(req: DecisionRequest): AIDecision {
   const hasConfirmedHit = req.sanctionsHits.some((h) => h.score >= 0.85);
   if (hasConfirmedHit) return "str";
   const isPEP12 = req.pepTier === "1" || req.pepTier === "2" || req.pepTier === "Tier 1" || req.pepTier === "Tier 2";
-  const highExposure = parseInt(req.exposureAED?.replace(/[^\d]/g, "") || "0") > 100000;
+  const highExposure = parseInt(req.exposureAED?.replace(/[^\d]/g, "") || "0", 10) > 100000;
   if (isPEP12 && highExposure) return "escalate";
   if (req.riskScore >= 80 && req.adverseMedia) return "escalate";
   if (req.riskScore >= 65 || req.sanctionsHits.length > 0) return "edd";

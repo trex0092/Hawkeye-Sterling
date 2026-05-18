@@ -185,7 +185,7 @@ export default function WeaponizedBrainPage() {
         <div className="mb-8">
           <div className="flex items-center gap-1.5 font-mono text-11 tracking-wide-8 uppercase text-brand mb-2">
             <span className="w-1.5 h-1.5 rounded-full bg-brand shrink-0 shadow-[0_0_6px_var(--brand)] opacity-80" />
-            MODULE 06 · WEAPONIZED BRAIN
+            WEAPONIZED BRAIN
           </div>
           <h1 className="font-display font-normal text-48 leading-[1.1] tracking-tightest m-0 mb-2 text-ink-0">
             The full <em className="italic text-brand">arsenal.</em>

@@ -70,13 +70,13 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   if (!body.subject?.name || !body.hit?.listName) {
     return NextResponse.json(
       { ok: false, error: "subject.name and hit.listName are required" },
-      { status: 400 },
+      { status: 400, headers: gate.headers },
     );
   }
 
@@ -106,7 +106,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const client = getAnthropicClient(apiKey, 22_000);
+    const client = getAnthropicClient(apiKey, 55_000);
 
     const userContent = `Subject Details:
 - Name: ${body.subject.name}
@@ -145,6 +145,7 @@ Assess whether this is a true sanctions/PEP/watchlist match or a false positive.
     const result = JSON.parse(
       raw.replace(/```json\n?|\n?```/g, "").trim(),
     ) as ConfidenceScoreResult;
+    if (!Array.isArray(result.keyFactors)) result.keyFactors = [];
 
     // Apply historical false-positive feedback to adjust the LLM score
     const listId = body.hit?.listName ?? "unknown";
@@ -166,6 +167,6 @@ Assess whether this is a true sanctions/PEP/watchlist match or a false positive.
       ...buildTemplate(),
       degraded: true,
       degradedReason: `LLM call failed: ${err instanceof Error ? err.message : String(err)}`,
-    });
+    }, { headers: gate.headers });
   }
 }

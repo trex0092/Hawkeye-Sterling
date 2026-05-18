@@ -3,6 +3,7 @@ import { enforce } from "@/lib/server/enforce";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 
 interface Redline {
   id: string;
@@ -42,7 +43,7 @@ function evaluateCondition(condition: string, data: Record<string, unknown>): { 
   // Check for numeric thresholds in condition
   const riskMatch = condLower.match(/risk[_\s]?score\s*[>>=]+\s*(\d+)/);
   if (riskMatch) {
-    const threshold = parseInt(riskMatch[1]!);
+    const threshold = parseInt(riskMatch[1]!, 10);
     const riskScore = typeof data.riskScore === "number" ? data.riskScore : typeof data.risk_score === "number" ? data.risk_score : null;
     if (riskScore !== null && riskScore >= threshold) {
       return { triggered: true, evidence: `Risk score ${riskScore} exceeds threshold ${threshold}` };
@@ -59,12 +60,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as ReqBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const { subjectId, redlines = [], currentData = {} } = body;
   if (!subjectId) {
-    return NextResponse.json({ ok: false, error: "subjectId is required" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "subjectId is required" }, { status: 400 , headers: gate.headers });
   }
 
   const triggered: TriggeredRedline[] = [];
@@ -89,5 +90,5 @@ export async function POST(req: Request): Promise<NextResponse> {
     triggered,
     clear,
     total: redlines.length,
-  });
+  }, { headers: gate.headers });
 }

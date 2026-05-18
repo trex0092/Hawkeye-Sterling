@@ -134,13 +134,13 @@ function tokenPermutations(name: string): string[] {
   // All 2-token swaps
   for (let i = 0; i < tokens.length - 1; i++) {
     const swapped = [...tokens];
-    [swapped[i], swapped[i + 1]] = [swapped[i + 1]!, swapped[i]!];
+    [swapped[i], swapped[i + 1]] = [swapped[i + 1] ?? '', swapped[i] ?? ''];
     results.add(swapped.join(' '));
   }
   // First-last swap
   if (tokens.length >= 2) {
     const flipped = [...tokens];
-    [flipped[0], flipped[tokens.length - 1]] = [flipped[tokens.length - 1]!, flipped[0]!];
+    [flipped[0], flipped[tokens.length - 1]] = [flipped[tokens.length - 1] ?? '', flipped[0] ?? ''];
     results.add(flipped.join(' '));
   }
   return [...results];
@@ -169,7 +169,8 @@ function bestFuzzyScore(
     if (best && best.best.score >= 1) break;
   }
 
-  return { best: best!, bestSubject: bestSub, bestCandidate: bestCand };
+  if (!best) best = matchEnsemble('', '');
+  return { best, bestSubject: bestSub, bestCandidate: bestCand };
 }
 
 // ── Stage 5: Phonetic Cross-Check ────────────────────────────────────────────
@@ -244,7 +245,7 @@ function buildDisambiguatorState(
   const contextualPresent: DisambiguatorState['contextual']['present'] = [];
   const contextualAbsent: DisambiguatorState['contextual']['absent'] = [];
   if (subject.programs?.length && candidate.programs?.length) {
-    const overlap = subject.programs.some((p) => candidate.programs!.includes(p));
+    const overlap = subject.programs.some((p) => (candidate.programs ?? []).includes(p));
     if (overlap) contextualPresent.push('listed_alias');
     else contextualAbsent.push('listed_alias');
   }
@@ -387,8 +388,8 @@ export function runEntityResolutionPipeline(
       disambig,
     );
 
-    stageTrace[stageTrace.length - 1]!.output = [cal.level];
-    stageTrace[stageTrace.length - 1]!.score = penalizedScore;
+    const lastStage = stageTrace[stageTrace.length - 1];
+    if (lastStage) { lastStage.output = [cal.level]; lastStage.score = penalizedScore; }
 
     const manualReviewReasons: string[] = [];
     if (contradiction.requiresManualReview) {
@@ -411,7 +412,7 @@ export function runEntityResolutionPipeline(
       candidateName: candidate.name,
       bestSubjectVariant: bestSubject,
       bestCandidateVariant: bestCandidate,
-      ensembleMatch: ensembleMatch!,
+      ensembleMatch: ensembleMatch ?? matchEnsemble('', ''),
       contextualScore: ctx.adjustedScore,
       contextualBoosters: ctx.boosters,
       contextualPenalties: ctx.penalties,

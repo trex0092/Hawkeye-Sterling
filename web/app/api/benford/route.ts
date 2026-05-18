@@ -36,14 +36,14 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as BenfordBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400, headers: CORS });
+    return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400, headers: { ...gate.headers, ...CORS } });
   }
 
   if (!Array.isArray(body.amounts) || body.amounts.length === 0) {
-    return NextResponse.json({ ok: false, error: "amounts array is required" }, { status: 400, headers: CORS });
+    return NextResponse.json({ ok: false, error: "amounts array is required" }, { status: 400, headers: { ...gate.headers, ...CORS } });
   }
   if (!body.amounts.every((a) => typeof a === "number" && isFinite(a))) {
-    return NextResponse.json({ ok: false, error: "amounts must be finite numbers" }, { status: 400, headers: CORS });
+    return NextResponse.json({ ok: false, error: "amounts must be finite numbers" }, { status: 400, headers: { ...gate.headers, ...CORS } });
   }
 
   const result = analyseBenford({

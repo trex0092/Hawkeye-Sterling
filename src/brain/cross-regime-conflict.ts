@@ -75,8 +75,9 @@ export function detectCrossRegimeConflict(
   // Pairwise only where one says designated and another says not_designated / delisted.
   for (let i = 0; i < statuses.length; i++) {
     for (let j = i + 1; j < statuses.length; j++) {
-      const a = statuses[i]!;
-      const b = statuses[j]!;
+      const a = statuses[i];
+      const b = statuses[j];
+      if (!a || !b) continue;
       if (a.hit === b.hit) continue;
       if ((a.hit === 'designated' && (b.hit === 'not_designated' || b.hit === 'delisted')) ||
           (b.hit === 'designated' && (a.hit === 'not_designated' || a.hit === 'delisted'))) {

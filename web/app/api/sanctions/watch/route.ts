@@ -16,6 +16,7 @@
 // (Netlify function limit).
 
 import { NextResponse } from "next/server";
+import { invalidateCandidateCache } from "@/lib/server/candidates-loader";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -76,7 +77,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (!expected) {
     // Env var not configured on this Netlify site — lock the endpoint.
     return NextResponse.json(
-      { ok: false, error: "service unavailable — SANCTIONS_CRON_TOKEN not set" },
+      { ok: false, error: "service unavailable" },
       { status: 503 },
     );
   }
@@ -185,6 +186,15 @@ export async function POST(req: Request): Promise<NextResponse> {
   );
 
   const failedAdapters = summary.filter((r) => r.errors.length > 0);
+
+  // Invalidate the in-process candidate cache so subsequent screenings in
+  // this Lambda instance reload from the blobs we just wrote, rather than
+  // serving stale pre-refresh data for up to the 5-minute cache TTL.
+  // Every other route that writes new entity data (operator-refresh,
+  // eocn-ingest, import-cfs) does this — omitting it here was a silent bug
+  // that let post-refresh screenings match against the previous list version.
+  invalidateCandidateCache();
+
   return NextResponse.json(
     {
       ok: failedAdapters.length === 0,

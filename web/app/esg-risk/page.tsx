@@ -283,7 +283,7 @@ export default function EsgRiskPage() {
   return (
     <ModuleLayout engineLabel="ESG risk engine">
       <ModuleHero
-        moduleNumber={41}
+
         eyebrow="Hawkeye Sterling · Sustainability & Governance"
         title="ESG"
         titleEm="risk."

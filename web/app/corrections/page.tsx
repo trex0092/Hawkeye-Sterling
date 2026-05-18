@@ -72,7 +72,7 @@ export default function CorrectionsPage() {
     <ModuleLayout asanaModule="corrections" asanaLabel="Corrections">
       <div>
         <ModuleHero
-          moduleNumber={19}
+
           eyebrow="Module · Data Subject Rights · FDL Art.30"
           title="Record correction"
           titleEm="request."

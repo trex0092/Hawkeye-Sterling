@@ -86,7 +86,14 @@ function loadTxs(): TxRow[] {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw) as unknown;
-    return Array.isArray(parsed) ? (parsed as TxRow[]) : [];
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(
+      (row): row is TxRow =>
+        row !== null &&
+        typeof row === "object" &&
+        typeof (row as Record<string, unknown>).amount === "string" &&
+        typeof (row as Record<string, unknown>).occurredOn === "string",
+    );
   } catch {
     return [];
   }
@@ -354,9 +361,6 @@ export default function TransactionMonitorPage() {
 
   return (
     <ModuleLayout asanaModule="transaction-monitor" asanaLabel="Transaction Monitor">
-      <div className="font-mono text-10 font-semibold text-amber tracking-wide-4 uppercase mb-1">
-        MODULE 04
-      </div>
       <ModuleHeader
             title="Transaction"
             titleEm="Monitor"
@@ -415,7 +419,7 @@ export default function TransactionMonitorPage() {
           )}
           {(() => {
             const counts: Partial<Record<TypologyKind, number>> = {};
-            for (const tag of Object.values(typologyTags)) {
+            for (const tag of Object.values(typologyTags) as TxTypologyTag[]) {
               if (tag.typology !== "none") {
                 counts[tag.typology] = (counts[tag.typology] ?? 0) + 1;
               }

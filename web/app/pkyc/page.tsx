@@ -32,10 +32,10 @@ function Badge({ label, cls }: { label: string; cls: string }) {
 }
 
 function authHeaders(): Record<string, string> {
-  const h: Record<string, string> = { "content-type": "application/json" };
-  const t = typeof window !== "undefined" ? (localStorage.getItem("hawkeye.adminToken") ?? "") : "";
-  if (t) h.authorization = `Bearer ${t}`;
-  return h;
+  // Same-origin requests: the middleware injects the admin Bearer token
+  // server-side for portal requests, so no client-side token handling is
+  // needed. Storing tokens in localStorage would expose them to XSS.
+  return { "content-type": "application/json" };
 }
 
 interface PKycStats {
@@ -76,8 +76,11 @@ export default function PKycPage() {
     setLoading(true);
     try {
       const res = await fetch("/api/pkyc", { headers: authHeaders() });
-      const data = await res.json();
-      if (data.ok) { setSubjects(data.subjects ?? []); setStats(data.stats); }
+      if (!res.ok) throw new Error(`pKYC load failed (HTTP ${res.status})`);
+      const data = (await res.json()) as { ok: boolean; subjects?: PKycSubject[]; stats?: PKycStats };
+      if (data.ok) { setSubjects(data.subjects ?? []); setStats(data.stats ?? null); }
+    } catch (err) {
+      console.error("[hawkeye] pkyc load failed:", err);
     } finally { setLoading(false); }
   }, []);
 
@@ -85,11 +88,16 @@ export default function PKycPage() {
 
   async function handleRunAll() {
     setRunning(true); setRunResult(null);
-    const res = await fetch("/api/pkyc/run", { method: "POST", headers: authHeaders() });
-    const data = await res.json();
-    setRunResult(`Ran ${data.ran ?? 0} subjects · ${data.changed ?? 0} changes · ${data.errors ?? 0} errors`);
-    setRunning(false);
-    void load();
+    try {
+      const res = await fetch("/api/pkyc/run", { method: "POST", headers: authHeaders() });
+      const data = (await res.json()) as { ran?: number; changed?: number; errors?: number };
+      setRunResult(`Ran ${data.ran ?? 0} subjects · ${data.changed ?? 0} changes · ${data.errors ?? 0} errors`);
+      void load();
+    } catch (err) {
+      setRunResult(`Run failed: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setRunning(false);
+    }
   }
 
   async function handleForceRun(id: string) {

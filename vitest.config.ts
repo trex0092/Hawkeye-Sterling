@@ -15,6 +15,9 @@ export default defineConfig({
       // Next.js path-alias resolution (`@/...`) cannot run from this config.
       'web/lib/**/__tests__/**/*.test.ts',
     ],
+    // Exclude web API integration tests — they need Next.js path aliases and
+    // are run separately with:  vitest run --config vitest.integration.ts
+    exclude: ['src/__integration__/**'],
     passWithNoTests: true,
   },
   resolve: {

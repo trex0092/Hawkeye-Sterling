@@ -62,7 +62,8 @@ export function scoreCbddq(
   }
   const sectionScores: Partial<Record<CbddqSection, number>> = {};
   for (const key of Object.keys(sectionSums)) {
-    const v = sectionSums[key]!;
+    const v = sectionSums[key];
+    if (!v) continue;
     sectionScores[key as CbddqSection] = v.n === 0 ? 0 : v.sum / v.n;
   }
   let overall = 0;

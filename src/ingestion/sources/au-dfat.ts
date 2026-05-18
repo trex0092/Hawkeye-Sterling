@@ -12,8 +12,7 @@
 //
 // Override URL via FEED_AU_DFAT.
 
-import type { SourceAdapter, NormalisedEntity, EntityType } from '../types.js';
-import { mkListing } from '../types.js';
+import { type SourceAdapter, type NormalisedEntity, type EntityType, mkListing } from '../types.js';
 import { sha256Hex } from '../fetch-util.js';
 
 const SOURCE_URL = process.env['FEED_AU_DFAT']
@@ -226,6 +225,13 @@ export const auDfatAdapter: SourceAdapter = {
       primary.aliases = aliases;
       entities.push(primary);
     }
+    if (entities.length === 0) {
+      throw new Error(
+        `[au_dfat] parsed 0 entities from XLSX (${sheet.rowCount} rows, header at row ${headerRowNum}) — ` +
+        `the column layout may have changed. Check ${SOURCE_URL}.`,
+      );
+    }
+    console.info(`[au_dfat] parsed ${entities.length} entities`);
     return { entities, rawChecksum };
   },
 };

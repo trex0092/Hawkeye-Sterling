@@ -161,7 +161,7 @@ export const LIVE_GLEIF_ADAPTER: GleifAdapter = {
       if (apiKey) headers["x-gleif-api-key"] = apiKey;
 
       const url = `https://api.gleif.org/api/v1/fuzzycompletions?field=entity.legalName&q=${encodeURIComponent(legalName)}&page%5Bsize%5D=10`;
-      const res = await fetch(url, { headers });
+      const res = await fetch(url, { headers, signal: AbortSignal.timeout(10_000) });
       if (!res.ok) return [];
 
       // Fuzzy completions → collect LEIs, then fetch full records.
@@ -174,7 +174,7 @@ export const LIVE_GLEIF_ADAPTER: GleifAdapter = {
 
       // Batch fetch full LEI records.
       const filter = leis.map((l) => `filter[lei]=${encodeURIComponent(l)}`).join("&");
-      const recordsRes = await fetch(`https://api.gleif.org/api/v1/lei-records?${filter}&page%5Bsize%5D=10`, { headers });
+      const recordsRes = await fetch(`https://api.gleif.org/api/v1/lei-records?${filter}&page%5Bsize%5D=10`, { headers, signal: AbortSignal.timeout(10_000) });
       if (!recordsRes.ok) return [];
 
       const records = (await recordsRes.json()) as {
@@ -252,7 +252,7 @@ export const LIVE_CORPORATE_ADAPTER: CorporateRegistryAdapter = {
 
       const params = new URLSearchParams({ q: name, limit: "10", schema: "Company" });
       if (jurisdiction) params.set("countries", jurisdiction.toUpperCase());
-      const res = await fetch(`https://api.opensanctions.org/search/entities?${params}`, { headers });
+      const res = await fetch(`https://api.opensanctions.org/search/entities?${params}`, { headers, signal: AbortSignal.timeout(10_000) });
       if (!res.ok) return [];
 
       const data = (await res.json()) as {
@@ -421,6 +421,7 @@ export const LIVE_ONCHAIN_ADAPTER: OnChainAdapter = {
       try {
         const res = await fetch(
           `https://api.etherscan.io/api?module=account&action=txlist&address=${normalised}&startblock=0&endblock=99999999&page=1&offset=20&sort=desc&apikey=${etherscanKey}`,
+          { signal: AbortSignal.timeout(10_000) },
         );
         if (!res.ok) return null;
         const data = (await res.json()) as { status?: string; result?: Array<{ to?: string; from?: string; value?: string }> };

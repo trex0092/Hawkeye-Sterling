@@ -13,6 +13,7 @@
 import type { Config } from "@netlify/functions";
 import { getStore } from "@netlify/blobs";
 import { emit } from "../../dist/src/integrations/webhook-emitter.js";
+import { writeHeartbeat } from "../lib/heartbeat.js";
 
 const STORE_NAME = "hawkeye-pep";
 const RUN_LABEL = "pep-refresh";
@@ -81,6 +82,8 @@ function arrayString(v: unknown): string[] {
   return [];
 }
 
+const LOCK_TTL_MS = 10 * 60 * 1000;
+
 export default async function handler(_req: Request): Promise<Response> {
   const startedAt = Date.now();
   const feedUrl = process.env["FEED_PEP_URL"] ?? DEFAULT_FEED_URL;
@@ -91,6 +94,18 @@ export default async function handler(_req: Request): Promise<Response> {
   } catch (err) {
     return jsonResponse({ ok: false, label: RUN_LABEL, error: err instanceof Error ? err.message : String(err) }, 503);
   }
+
+  // Idempotency lock — prevents overlapping runs under Lambda warm-instance reuse.
+  const hbStore = getStore("hawkeye-function-heartbeats");
+  const existingLock = await hbStore.get(`${RUN_LABEL}/lock`, { type: "json" }).catch(() => null) as { lockedAt: string } | null;
+  if (existingLock) {
+    const lockAge = Date.now() - new Date(existingLock.lockedAt).getTime();
+    if (lockAge < LOCK_TTL_MS) {
+      console.info(`[${RUN_LABEL}] already running (lock age ${Math.round(lockAge / 1000)}s) — skipping`);
+      return jsonResponse({ ok: true, skipped: true, reason: "lock_active", lockAgeMs: lockAge });
+    }
+  }
+  await hbStore.setJSON(`${RUN_LABEL}/lock`, { lockedAt: new Date().toISOString() }).catch(() => undefined);
 
   const res = await fetchWithTimeout(feedUrl);
   if (!res || !res.ok) {
@@ -160,6 +175,9 @@ export default async function handler(_req: Request): Promise<Response> {
       }
     }
   }
+
+  await writeHeartbeat(RUN_LABEL);
+  await hbStore.delete(`${RUN_LABEL}/lock`).catch(() => undefined);
 
   return jsonResponse({
     ok: true,

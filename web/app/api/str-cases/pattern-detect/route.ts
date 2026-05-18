@@ -55,24 +55,24 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
-  const cases = body.cases ?? [];
+  const cases = Array.isArray(body.cases) ? body.cases : [];
 
   if (cases.length < 2) {
-    return NextResponse.json({ ok: false, error: "str-cases/pattern-detect temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "str-cases/pattern-detect temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "str-cases/pattern-detect temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "str-cases/pattern-detect temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
     const client = getAnthropicClient(apiKey, 55_000);
 
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 2500,
+      max_tokens: 800,
       system: [
         {
           type: "text",
@@ -128,8 +128,10 @@ Identify all statistically significant or operationally relevant patterns across
     const result = JSON.parse(
       raw.replace(/```json\n?|\n?```/g, "").trim(),
     ) as PatternDetectResult;
+    if (!Array.isArray(result.patterns)) result.patterns = [];
+    else for (const p of result.patterns) { if (!Array.isArray(p.caseIds)) p.caseIds = []; }
     return NextResponse.json(result, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "str-cases/pattern-detect temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "str-cases/pattern-detect temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

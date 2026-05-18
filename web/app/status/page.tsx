@@ -163,9 +163,11 @@ function fmtUptime(sec: number): string {
 // fabricate a false 0% historical uptime. Only actual "down" events
 // are represented as outage days in the history.
 function synth90d(current: Check["status"]): Check["status"][] {
-  const hist: Check["status"] = current === "down" ? "down" : "operational";
-  const samples: Check["status"][] = Array.from({ length: 90 }, () => hist);
-  // Mark only today (last bar) with the real current status
+  // Historical bars are always "operational" — we don't have 90 days of
+  // durable availability data. Showing "down" for all historical bars
+  // when the current status is "down" would falsely imply 0% historical
+  // uptime when the outage may have started minutes ago.
+  const samples: Check["status"][] = Array.from({ length: 90 }, () => "operational" as const);
   samples[89] = current;
   return samples;
 }
@@ -226,8 +228,7 @@ export default function StatusPage() {
   return (
     <ModuleLayout asanaModule="status" asanaLabel="Status">
         <ModuleHero
-          moduleNumber={46}
-          eyebrow="MODULE 07 · LIVE ENDPOINT HEALTH"
+          eyebrow="LIVE ENDPOINT HEALTH"
           title="System"
           titleEm="status."
           intro={
@@ -505,21 +506,21 @@ export default function StatusPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1 text-11 font-mono">
                     {data.sanctions.lists.map((l) => {
                       const tone =
-                        l.ageH == null
+                        l.ageH === null
                           ? "text-ink-3"
                           : l.ageH > 48
                             ? "text-red"
                             : l.ageH > 24
                               ? "text-amber"
                               : "text-green";
-                      const nextRefreshH = l.ageH != null ? Math.max(0, 24 - l.ageH) : null;
+                      const nextRefreshH = l.ageH !== null ? Math.max(0, 24 - l.ageH) : null;
                       return (
                         <div key={l.id} className="flex justify-between gap-2">
                           <span className="text-ink-2">{l.id}</span>
                           <span className={tone}>
-                            {l.ageH == null
+                            {l.ageH === null
                               ? "not fetched yet"
-                              : `${l.ageH}h ago${l.recordCount ? ` · ${l.recordCount.toLocaleString()} records` : ""}${nextRefreshH === 0 ? " · refresh due" : nextRefreshH != null ? ` · next in ${nextRefreshH}h` : ""}`}
+                              : `${l.ageH}h ago${l.recordCount ? ` · ${l.recordCount.toLocaleString()} records` : ""}${nextRefreshH === 0 ? " · refresh due" : nextRefreshH !== null ? ` · next in ${nextRefreshH}h` : ""}`}
                           </span>
                         </div>
                       );

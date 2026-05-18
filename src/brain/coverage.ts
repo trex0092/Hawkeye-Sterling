@@ -50,8 +50,6 @@ export interface PlaybookSatisfaction {
   status: "satisfied" | "partial" | "unmet";
 }
 
-type DoctrineSatisfaction = PlaybookSatisfaction;
-
 export interface CoverageReport {
   modeIds: string[];
   taxonomyIdsActivated: string[];

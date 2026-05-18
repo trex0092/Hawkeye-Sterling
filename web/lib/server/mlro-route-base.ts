@@ -27,8 +27,7 @@
 //   });
 
 import { NextResponse } from "next/server";
-import type { EnforcementAllow } from "@/lib/server/enforce";
-import { enforce } from "@/lib/server/enforce";
+import { enforce, type EnforcementAllow } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 
 export interface MlroBuildRequest {

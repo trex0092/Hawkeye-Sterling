@@ -103,7 +103,6 @@ interface ModuleHeroProps {
   eyebrow: string;
   title: string;
   titleEm?: string | undefined; // italic trailing word (e.g. "trail.", "standard.")
-  moduleNumber?: number | undefined; // amber MODULE XX chip above eyebrow
   kpis?:
     | Array<{
         value: string;
@@ -118,17 +117,11 @@ export function ModuleHero({
   eyebrow,
   title,
   titleEm,
-  moduleNumber,
   kpis,
   intro,
 }: ModuleHeroProps) {
   return (
     <div className="mb-8">
-      {moduleNumber !== undefined && (
-        <div className="font-mono text-10 font-semibold text-amber tracking-wide-4 uppercase mb-1">
-          MODULE {String(moduleNumber).padStart(2, "0")}
-        </div>
-      )}
       <div className="flex items-center gap-1.5 font-mono text-11 tracking-wide-8 uppercase text-brand mb-2">
         <span className="w-1.5 h-1.5 rounded-full bg-brand shrink-0 shadow-[0_0_6px_var(--brand)] opacity-80" />
         {eyebrow}

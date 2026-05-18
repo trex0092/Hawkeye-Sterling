@@ -22,8 +22,9 @@ import {
   PROBE_PROMPTS,
   parseProbeOutcomes,
   applyProbeOverride,
+  type ProbeOutcome,
+  type Verdict,
 } from "../../../dist/src/brain/registry/index.js";
-import type { ProbeOutcome, Verdict } from "../../../dist/src/brain/registry/index.js";
 
 const PROBE_BLOCK =
   "\n\nADVERSARIAL PROBE — append the following two markers verbatim at the end of your answer, " +

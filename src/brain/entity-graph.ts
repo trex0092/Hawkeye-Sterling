@@ -60,8 +60,8 @@ export class EntityGraph {
   addEdge(edge: GraphEdge): void {
     if (!this.nodesById.has(edge.from)) throw new Error(`unknown from-node: ${edge.from}`);
     if (!this.nodesById.has(edge.to)) throw new Error(`unknown to-node: ${edge.to}`);
-    this.outgoing.get(edge.from)!.push({ ...edge });
-    this.incoming.get(edge.to)!.push({ ...edge });
+    this.outgoing.get(edge.from)?.push({ ...edge });
+    this.incoming.get(edge.to)?.push({ ...edge });
   }
 
   node(id: string): GraphNode | undefined { return this.nodesById.get(id); }
@@ -91,7 +91,9 @@ export class EntityGraph {
     depths.set(start, 0);
     const queue: Array<[string, number]> = [[start, 0]];
     while (queue.length > 0) {
-      const [id, d] = queue.shift()!;
+      const shifted = queue.shift();
+      if (!shifted) break;
+      const [id, d] = shifted;
       if (d >= maxDepth) continue;
       const out = this.out(id, kinds);
       const inn = this.in(id, kinds);
@@ -113,7 +115,8 @@ export class EntityGraph {
     const visited = new Set<string>([fromId]);
     const queue = [fromId];
     while (queue.length > 0) {
-      const curr = queue.shift()!;
+      const curr = queue.shift();
+      if (!curr) break;
       const neigh = [
         ...this.out(curr, kinds).map((e) => e.to),
         ...this.in(curr, kinds).map((e) => e.from),
@@ -175,7 +178,7 @@ export class EntityGraph {
       }
     }
     return [...agg.entries()]
-      .map(([personId, v]) => ({ personId, percent: Math.min(100, v.percent), chain: v.chains[0]!, viaNominee: v.viaNominee }))
+      .map(([personId, v]) => ({ personId, percent: Math.min(100, v.percent), chain: v.chains[0] ?? [], viaNominee: v.viaNominee }))
       .sort((a, b) => b.percent - a.percent);
   }
 

@@ -1,5 +1,6 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 import { enforce } from "@/lib/server/enforce";
 import {
   buildHtmlDoc, hsPage, hsCover, hsSection, hsPill, hsKvGrid,
@@ -21,7 +22,7 @@ export async function POST(req: Request) {
   };
 
   if (!body?.subjectName?.trim()) {
-    return new Response(JSON.stringify({ ok: false, error: "subjectName required" }), { status: 400 });
+    return new Response(JSON.stringify({ ok: false, error: "subjectName required" }), { status: 400, headers: gate.headers });
   }
   if (!Array.isArray(body.subjectDetails)) body.subjectDetails = [];
   if (!Array.isArray(body.findings)) body.findings = [];
@@ -98,5 +99,5 @@ ${hsFinis(reportId, 2, 2)}`;
     ],
   });
 
-  return new Response(html, { headers: { "content-type": "text/html; charset=utf-8" } });
+  return new Response(html, { headers: { "content-type": "text/html; charset=utf-8", ...gate.headers } });
 }

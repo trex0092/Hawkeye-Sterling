@@ -77,7 +77,7 @@ const GUARDRAIL_RULES: GuardrailRule[] = [
       ];
       for (const p of patterns) {
         const m = text.match(p);
-        if (m) return { ruleId: 'NO_GUILT_ASSERTION', ruleName: 'No Guilt Assertions', severity: 'block', detectedText: m[0]!, remediation: 'Use passive/alleged form', position: text.indexOf(m[0]!) };
+        if (m) return { ruleId: 'NO_GUILT_ASSERTION', ruleName: 'No Guilt Assertions', severity: 'block', detectedText: m[0] ?? '', remediation: 'Use passive/alleged form', position: text.indexOf(m[0] ?? '') };
       }
       return null;
     },
@@ -101,7 +101,7 @@ const GUARDRAIL_RULES: GuardrailRule[] = [
       ];
       for (const p of patterns) {
         const m = text.match(p);
-        if (m) return { ruleId: 'NO_LEGAL_CONCLUSION', ruleName: 'No Legal Conclusions', severity: 'block', detectedText: m[0]!, remediation: 'Describe facts; refer legal conclusions to counsel', position: text.indexOf(m[0]!) };
+        if (m) return { ruleId: 'NO_LEGAL_CONCLUSION', ruleName: 'No Legal Conclusions', severity: 'block', detectedText: m[0] ?? '', remediation: 'Describe facts; refer legal conclusions to counsel', position: text.indexOf(m[0] ?? '') };
       }
       return null;
     },
@@ -120,7 +120,7 @@ const GUARDRAIL_RULES: GuardrailRule[] = [
       const m = text.match(sanctionsClaim);
       if (m) {
         // This is a WARNING at output level — caller must verify citation backing
-        return { ruleId: 'NO_UNSUPPORTED_SANCTIONS', ruleName: 'No Unsupported Sanctions Claims', severity: 'warn', detectedText: m[0]!, remediation: 'Verify claim is backed by official list citation', position: text.indexOf(m[0]!) };
+        return { ruleId: 'NO_UNSUPPORTED_SANCTIONS', ruleName: 'No Unsupported Sanctions Claims', severity: 'warn', detectedText: m[0] ?? '', remediation: 'Verify claim is backed by official list citation', position: text.indexOf(m[0] ?? '') };
       }
       return null;
     },
@@ -144,7 +144,7 @@ const GUARDRAIL_RULES: GuardrailRule[] = [
       ];
       for (const p of patterns) {
         const m = text.match(p);
-        if (m) return { ruleId: 'NO_TIPPING_OFF', ruleName: 'Tipping-Off Prevention', severity: 'block', detectedText: m[0]!, remediation: 'Remove STR/SAR reference from customer-facing output' };
+        if (m) return { ruleId: 'NO_TIPPING_OFF', ruleName: 'Tipping-Off Prevention', severity: 'block', detectedText: m[0] ?? '', remediation: 'Remove STR/SAR reference from customer-facing output' };
       }
       return null;
     },
@@ -167,7 +167,7 @@ const GUARDRAIL_RULES: GuardrailRule[] = [
       ];
       for (const p of patterns) {
         const m = text.match(p);
-        if (m) return { ruleId: 'NO_PII_IN_PUBLIC_OUTPUT', ruleName: 'No PII in Public Output', severity: 'redact', detectedText: m[0]!, remediation: 'Mask identifier: [REDACTED]' };
+        if (m) return { ruleId: 'NO_PII_IN_PUBLIC_OUTPUT', ruleName: 'No PII in Public Output', severity: 'redact', detectedText: m[0] ?? '', remediation: 'Mask identifier: [REDACTED]' };
       }
       return null;
     },
@@ -185,7 +185,7 @@ const GUARDRAIL_RULES: GuardrailRule[] = [
       // Flag very specific amounts without apparent citation
       const amountWithoutCitation = /\$[\d,]+(?:\.\d+)?\s*(?:million|billion)?\s+(?:was\s+)?(?:laundered|transferred|embezzled|stolen)\b/gi;
       const m = text.match(amountWithoutCitation);
-      if (m) return { ruleId: 'NO_HALLUCINATED_FIGURES', ruleName: 'No Unverified Financial Figures', severity: 'warn', detectedText: m[0]!, remediation: 'Cite source for financial figure' };
+      if (m) return { ruleId: 'NO_HALLUCINATED_FIGURES', ruleName: 'No Unverified Financial Figures', severity: 'warn', detectedText: m[0] ?? '', remediation: 'Cite source for financial figure' };
       return null;
     },
   },
@@ -209,7 +209,7 @@ const GUARDRAIL_RULES: GuardrailRule[] = [
       ];
       for (const p of injectionPatterns) {
         const m = text.match(p);
-        if (m) return { ruleId: 'PROMPT_INJECTION_GUARD', ruleName: 'Prompt Injection Prevention', severity: 'block', detectedText: m[0]!, remediation: 'Reject input as potential prompt injection' };
+        if (m) return { ruleId: 'PROMPT_INJECTION_GUARD', ruleName: 'Prompt Injection Prevention', severity: 'block', detectedText: m[0] ?? '', remediation: 'Reject input as potential prompt injection' };
       }
       return null;
     },

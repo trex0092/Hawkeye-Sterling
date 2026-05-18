@@ -10,6 +10,7 @@ import type { Config } from "@netlify/functions";
 import { runIngestionAll } from "../../src/ingestion/run-all.js";
 import { getBlobsStore } from "../../src/ingestion/blobs-store.js";
 import { acquireCronLock } from "../../src/ingestion/cron-lock.js";
+import { writeHeartbeat } from "../lib/heartbeat.js";
 
 const LABEL = "sanctions-watch-cron";
 // Daily cadence (04:30 UTC) — 23h lock window blocks Netlify retries
@@ -25,7 +26,7 @@ async function alertOnStaleBlobs(): Promise<void> {
     const now = Date.now();
     for (const listId of CRITICAL_LISTS) {
       try {
-        const blob = await store.get(`${listId}/latest.json`, { type: "json" }) as { fetchedAt?: number } | null;
+        const blob = await store.getReport(listId);
         if (!blob?.fetchedAt) {
           console.error(`[${LABEL}] CRITICAL_ALERT list=${listId} status=missing_blob age=unknown`);
           continue;
@@ -63,9 +64,8 @@ export default async (_req: Request): Promise<Response> => {
       );
     }
     const result = await runIngestionAll(LABEL);
-    // Always check for stale blobs after the run — catches cases where the
-    // run itself succeeded but a prior failure left a critical list stale.
     await alertOnStaleBlobs();
+    if (result.ok) await writeHeartbeat(LABEL);
     return new Response(JSON.stringify({ cadence: "0430", ...result }), {
       status: result.ok ? 200 : 502,
       headers: { "content-type": "application/json" },

@@ -33,6 +33,7 @@
 // env to flip the badge without redeploying.
 
 import type { Config } from "@netlify/functions";
+import { getStore } from "@netlify/blobs";
 
 export default async (_req: Request) => {
   const base =
@@ -62,6 +63,16 @@ export default async (_req: Request) => {
     } catch {
       /* non-JSON upstream — kept as raw body */
     }
+    // Write heartbeat on successful poll so health-monitor can detect silent failures.
+    if (res.ok) {
+      try {
+        const hbStore = getStore("hawkeye-function-heartbeats");
+        await hbStore.setJSON("eocn-poll", { lastSuccess: new Date().toISOString(), label: "eocn-poll" });
+      } catch (hbErr) {
+        console.warn("[eocn-poll] heartbeat write failed (non-critical):", hbErr instanceof Error ? hbErr.message : String(hbErr));
+      }
+    }
+
     return new Response(
       JSON.stringify({
         triggered: true,

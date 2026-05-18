@@ -14,6 +14,7 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -88,7 +89,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: true, jurisdiction: body.jurisdiction, ...staticProfile, aiEnriched: false }, { headers: gate.headers });
   }
 
-  const client = getAnthropicClient(apiKey, 20_000, "geo-intelligence");
+  const client = getAnthropicClient(apiKey, 25_000, "geo-intelligence");
   const response = await client.messages.create({
     model: "claude-haiku-4-5-20251001",
     max_tokens: 800,
@@ -106,13 +107,16 @@ Return ONLY valid JSON:
 }`,
     messages: [{
       role: "user",
-      content: `Provide AML geopolitical intelligence for: ${body.jurisdiction}\n\nKnown static profile: ${JSON.stringify(staticProfile, null, 2)}`,
+      content: `Provide AML geopolitical intelligence for: ${sanitizeField(body.jurisdiction, 100)}\n\nKnown static profile: ${JSON.stringify(staticProfile, null, 2)}`,
     }],
   });
 
   const raw = response.content[0]?.type === "text" ? (response.content[0] as { type: "text"; text: string }).text : "{}";
   try {
-    const aiResult = JSON.parse(raw.match(/\{[\s\S]*\}/)?.[0] ?? "{}");
+    const aiResult = JSON.parse(raw.match(/\{[\s\S]*\}/)?.[0] ?? "{}") as Record<string, unknown>;
+    if (!Array.isArray(aiResult["keyRisks"])) aiResult["keyRisks"] = [];
+    if (!Array.isArray(aiResult["recentEnforcementActions"])) aiResult["recentEnforcementActions"] = [];
+    if (!Array.isArray(aiResult["uaeSpecificObligations"])) aiResult["uaeSpecificObligations"] = [];
     return NextResponse.json({
       ok: true,
       jurisdiction: body.jurisdiction,

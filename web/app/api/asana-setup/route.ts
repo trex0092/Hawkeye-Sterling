@@ -7,7 +7,7 @@ export const maxDuration = 15;
 
 const WORKSPACE_GID     = "1213645083721316";
 const API               = "https://app.asana.com/api/1.0";
-const MASTER_INBOX_GID  = "1214148630166524";
+const MASTER_INBOX_GID  = "1214828087238181";
 
 // ── Project matching + workflow sections ────────────────────────────────────
 const PROJECT_MAP = [

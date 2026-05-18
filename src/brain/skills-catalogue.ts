@@ -219,7 +219,7 @@ export function skillsCatalogueSummary(opts: SkillsSummaryOptions = {}): string 
   lines.push(`By layer: ${layerBits}.`);
   lines.push('By domain (descending):');
   const domains = Object.keys(SKILLS_BY_DOMAIN) as SkillDomain[];
-  domains.sort((a, b) => SKILLS_DOMAIN_COUNTS[b]! - SKILLS_DOMAIN_COUNTS[a]!);
+  domains.sort((a, b) => (SKILLS_DOMAIN_COUNTS[b] ?? 0) - (SKILLS_DOMAIN_COUNTS[a] ?? 0));
   for (const d of domains) {
     const count = SKILLS_DOMAIN_COUNTS[d] ?? 0;
     const sampleLabels = SKILLS_BY_DOMAIN[d]

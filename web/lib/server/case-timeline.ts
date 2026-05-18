@@ -92,7 +92,7 @@ export function buildInvestigationTimeline(c: CaseRecord): BrainTimelineEvent[] 
 
   // Re-tag note phases based on event text since brain treats all notes
   // as 'other'. This restores phase signal so the UI can colour-code.
-  return built.map((e) =>
+  return built.map((e: BrainTimelineEvent) =>
     e.sourceKind === "note"
       ? { ...e, phase: phaseFromEvent(e.summary) }
       : e,

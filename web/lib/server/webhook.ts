@@ -55,6 +55,7 @@ export async function postWebhook(event: WebhookEvent): Promise<WebhookResult> {
         "user-agent": "HawkeyeSterling/0.2 (+https://hawkeye-sterling.netlify.app)",
       },
       body,
+      signal: AbortSignal.timeout(8_000),
     });
     return {
       delivered: res.ok,

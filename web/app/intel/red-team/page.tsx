@@ -114,11 +114,11 @@ export default function RedTeamPage() {
   const stats = useMemo(() => {
     const total = RED_TEAM_PROMPTS.length;
     const tested = Object.keys(results).length;
-    const passed = Object.values(results).filter((r) => r.verdict === "pass").length;
-    const failed = Object.values(results).filter((r) => r.verdict === "fail").length;
-    const errors = Object.values(results).filter((r) => r.verdict === "error").length;
+    const passed = Object.values(results).filter((r) => (r as ResultRow).verdict === "pass").length;
+    const failed = Object.values(results).filter((r) => (r as ResultRow).verdict === "fail").length;
+    const errors = Object.values(results).filter((r) => (r as ResultRow).verdict === "error").length;
     const passPct = tested > 0 ? Math.round((passed / tested) * 100) : 0;
-    const lastRun = Object.values(results).reduce((max, r) => Math.max(max, r.testedAt), 0);
+    const lastRun = (Object.values(results) as ResultRow[]).reduce((max, r) => Math.max(max, r.testedAt), 0);
     return { total, tested, passed, failed, errors, passPct, lastRun };
   }, [results]);
 
@@ -160,7 +160,7 @@ export default function RedTeamPage() {
   return (
     <ModuleLayout asanaModule="red-team" asanaLabel="Red-Team Prompt Tests">
       <ModuleHero
-        moduleNumber={45}
+
         eyebrow="Module · Red-Team Prompt Tests"
         title="Adversarial"
         titleEm="catalogue."

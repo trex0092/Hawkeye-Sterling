@@ -15,8 +15,7 @@
 // `generate_report`, `mlro_analyze`, `disposition`, `relationship_graph`.
 
 import { AsyncLocalStorage } from "node:async_hooks";
-import { getToolLevel } from "@/lib/mcp/tool-manifest";
-import type { ConsequenceLevel } from "@/lib/mcp/tool-manifest";
+import { getToolLevel, type ConsequenceLevel } from "@/lib/mcp/tool-manifest";
 import { getSanctionsHealth, GATE_BLOCKED_TOOLS } from "@/lib/mcp/sanctions-gate";
 import {
   checkAndIncrementRate,
@@ -357,6 +356,7 @@ const _callCtx = new AsyncLocalStorage<CallCtx>();
 
 const CALLAPI_MAX_ATTEMPTS = 3;
 const CALLAPI_RETRY_BACKOFF_MS = [100, 250]; // applied before attempt 2, 3
+const CALLAPI_RATE_LIMIT_BACKOFF_MS = [2_000, 4_000]; // 429/503 backoff before attempts 2, 3
 
 function isTransientFetchError(err: unknown): boolean {
   if (!(err instanceof Error)) return false;
@@ -437,6 +437,15 @@ async function callApi(
             ? `Report generated (${text.length} bytes). Open the Hawkeye Sterling web interface to view the full rendered report.`
             : `Upstream returned HTTP ${res.status} (${text.length} bytes).`,
         };
+      }
+      // Retry 429 (rate limit) and 503 (service unavailable) with backoff.
+      if ((res.status === 429 || res.status === 503) && attempt < CALLAPI_MAX_ATTEMPTS) {
+        const retryAfterHeader = res.headers.get("retry-after");
+        const backoffMs = retryAfterHeader
+          ? Math.min(parseInt(retryAfterHeader, 10) * 1_000, 8_000)
+          : (CALLAPI_RATE_LIMIT_BACKOFF_MS[attempt - 1] ?? 4_000);
+        await new Promise((r) => setTimeout(r, backoffMs));
+        continue;
       }
       return await res.json().catch(() => ({ ok: res.ok, status: res.status }));
     } catch (err) {
@@ -1232,6 +1241,28 @@ const TOOLS: ToolDef[] = [
     handler: async (args) => callApi("/api/open-banking-check", "POST", args),
   },
 
+  // ── FREE SANCTIONS — MOOV WATCHMAN ───────────────────────────────────────────
+  {
+    name: "watchman_check",
+    description:
+      "Free sanctions screening via Moov Watchman (moov-io/watchman). Covers OFAC SDN, BIS Entity List, Military End-User, UK Consolidated Sanctions, EU Consolidated Sanctions, and OFAC SSI — no API key required. Complements the core screen tool's UAE EOCN/LTL coverage.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        name: { type: "string", description: "Subject name (person or organisation)" },
+        limit: { type: "number", minimum: 1, maximum: 100, description: "Max results per list (default 20)" },
+      },
+      required: ["name"],
+    },
+    handler: async (args) => {
+      const a = args as Record<string, unknown>;
+      return callApi("/api/watchman-check", "POST", {
+        name: String(a["name"] ?? ""),
+        ...(typeof a["limit"] === "number" ? { limit: a["limit"] } : {}),
+      });
+    },
+  },
+
   // ── GENERIC PROXY ────────────────────────────────────────────────────────────
   {
     name: "call_api",
@@ -1468,7 +1499,10 @@ export async function OPTIONS(): Promise<Response> {
   return new Response(null, { status: 204, headers: CORS });
 }
 
-export async function GET(): Promise<Response> {
+export async function GET(req: Request): Promise<Response> {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
+
   // Claude.ai sends a GET to discover the MCP endpoint.
   // Return a minimal SSE stream that immediately closes.
   const body = new ReadableStream({
@@ -1540,7 +1574,7 @@ export async function POST(req: Request): Promise<Response> {
     const results = await _callCtx.run({ authHeader, sessionId }, () =>
       Promise.all(body.map((msg) => dispatch(msg as Parameters<typeof dispatch>[0]))),
     );
-    const responses = results.filter((r) => r !== null);
+    const responses = results.filter((r: unknown) => r !== null);
     return json(responses);
   }
 

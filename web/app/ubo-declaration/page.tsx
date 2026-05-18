@@ -239,7 +239,7 @@ export default function UboDeclarationPage() {
     <ModuleLayout asanaModule="ubo-declaration" asanaLabel="UBO Declaration">
       <div>
         <ModuleHero
-          moduleNumber={13}
+
           eyebrow="Module 21 · Public-facing form"
           title="Beneficial owner"
           titleEm="declaration."

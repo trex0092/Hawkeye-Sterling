@@ -7,8 +7,7 @@ import { KNOWN_PEPS, KNOWN_ADVERSE } from "@/lib/data/known-entities";
 import { getJson, isInMemoryFallback } from "@/lib/server/store";
 import { gdeltCacheStats, gdeltBreakerStats } from "@/lib/intelligence/gdelt-cache";
 import { isRedisConfigured } from "@/lib/cache/redis";
-import { enforce } from "@/lib/server/enforce";
-import type { EnforcementAllow } from "@/lib/server/enforce";
+import { enforce, type EnforcementAllow } from "@/lib/server/enforce";
 
 // Brain modules are compiled separately; dynamic import so the route module
 // loads even when the dist/ folder hasn't been built yet (local dev).
@@ -305,15 +304,20 @@ async function checkGdelt(): Promise<Check> {
           },
         },
       );
-      if (res.status >= 500) throw new Error(`HTTP ${res.status}`);
       await res.text().catch(() => "");
-      // 429 = rate-limited but reachable — not a system outage.
-      if (res.status === 429) return { degraded: false as const, note: "rate-limited (cached)" };
-      if (res.status >= 400) return { degraded: true as const, note: `GDELT HTTP ${res.status}` };
+      // GDELT is a free public API — rate-limits and 4xx responses are
+      // common and do NOT mean our adverse-media service is broken (the
+      // gdelt-cache layer returns cached results on any upstream failure).
+      // Only 5xx confirmed server errors count as degraded.
+      if (res.status >= 500) return { degraded: true as const, note: `GDELT server error HTTP ${res.status}` };
+      if (res.status === 429) return { degraded: false as const, note: "rate-limited (cached fallback active)" };
+      if (res.status >= 400) return { degraded: false as const, note: `GDELT HTTP ${res.status} (cached fallback active)` };
       return { degraded: false as const };
     } catch (err) {
       const isTimeout = err instanceof Error && (err.name === "AbortError" || err.message.includes("aborted"));
-      if (isTimeout) return { degraded: true as const, note: "GDELT timeout (>8s)" };
+      // Timeout on the free GDELT API is expected under load — cached results
+      // are still served. Surface as operational with a note, not degraded.
+      if (isTimeout) return { degraded: false as const, note: "GDELT slow (>8s); cached fallback active" };
       throw err;
     } finally {
       clearTimeout(t);
@@ -699,17 +703,13 @@ async function checkSanctionsFreshness(): Promise<SanctionsFreshness> {
     }
     if (!blobsMod) return null;
     const { getStore } = blobsMod;
-    // On Netlify's runtime, trust the auto-injected NETLIFY_BLOBS_CONTEXT.
-    // Providing explicit credentials overrides the injection and causes 401s
-    // when NETLIFY_BLOBS_TOKEN is a custom (non-PAT) value.
-    const onNetlify = Boolean(process.env["NETLIFY"]) || Boolean(process.env["NETLIFY_LOCAL"]);
     const blobSiteId = process.env["NETLIFY_SITE_ID"] ?? process.env["SITE_ID"];
     const blobToken =
+      process.env["NETLIFY_BLOBS_TOKEN"] ??
       process.env["NETLIFY_API_TOKEN"] ??
-      process.env["NETLIFY_AUTH_TOKEN"] ??
-      process.env["NETLIFY_BLOBS_TOKEN"];
+      process.env["NETLIFY_AUTH_TOKEN"];
     const reportsOpts =
-      !onNetlify && blobSiteId && blobToken
+      blobSiteId && blobToken
         ? { name: "hawkeye-list-reports", siteID: blobSiteId, token: blobToken, consistency: "strong" as const }
         : { name: "hawkeye-list-reports" };
     const reports = getStore(reportsOpts);
@@ -741,7 +741,7 @@ async function checkSanctionsFreshness(): Promise<SanctionsFreshness> {
       void reports.setJSON("freshness/snapshot.json", {
         savedAt: now,
         lists: per,
-      }).catch((err) => console.warn("[status] freshness snapshot persist failed:", err instanceof Error ? err.message : err));
+      }).catch((err: unknown) => console.warn("[status] freshness snapshot persist failed:", err instanceof Error ? err.message : err));
     }
 
     // Cold start — all blobs empty (no cron has run yet). Fall back to snapshot.
@@ -885,17 +885,17 @@ export async function GET(req: Request): Promise<NextResponse> {
   const isAdmin = okGate.keyId === "portal_admin" || okGate.tier?.id === "enterprise";
 
   try {
-    return await _handleGet(isAdmin);
+    return await _handleGet(isAdmin, gate.headers);
   } catch (err) {
     console.error("[status] unhandled top-level error:", err instanceof Error ? err.message : err);
     return NextResponse.json(
       { ok: false, status: "down", error: "Status check failed — please retry.", degraded: true },
-      { status: 503 },
+      { status: 503, headers: gate.headers }
     );
   }
 }
 
-async function _handleGet(isAdmin: boolean): Promise<NextResponse> {
+async function _handleGet(isAdmin: boolean, gateHeaders: Record<string, string> = {}): Promise<NextResponse> {
   const [
     screening,
     superBrain,
@@ -1056,7 +1056,7 @@ async function _handleGet(isAdmin: boolean): Promise<NextResponse> {
   );
   const feedVersions = {
     brain: process.env["BRAIN_VERSION"] ?? "wave-5",
-    commitSha: (process.env["NEXT_PUBLIC_COMMIT_SHA"] ?? process.env["NEXT_PUBLIC_COMMIT_REF"] ?? process.env["COMMIT_REF"] ?? process.env["NETLIFY_COMMIT_REF"] ?? "dev").slice(0, 7),
+    commitSha: process.env["NEXT_PUBLIC_COMMIT_SHA"] ?? process.env["NEXT_PUBLIC_COMMIT_REF"] ?? process.env["COMMIT_REF"] ?? process.env["NETLIFY_COMMIT_REF"] ?? "dev",
     adverseMediaCategories: ADVERSE_KEYWORDS.length,
     adverseMediaKeywords: ADVERSE_KEYWORDS.reduce((n, r) => n + r.terms.length, 0),
     knownPepEntries,
@@ -1172,9 +1172,9 @@ async function _handleGet(isAdmin: boolean): Promise<NextResponse> {
     if (heatBlobsMod) {
       const heatSiteID = process.env["NETLIFY_SITE_ID"] ?? process.env["SITE_ID"];
       const heatToken =
+        process.env["NETLIFY_BLOBS_TOKEN"] ??
         process.env["NETLIFY_API_TOKEN"] ??
-        process.env["NETLIFY_AUTH_TOKEN"] ??
-        process.env["NETLIFY_BLOBS_TOKEN"];
+        process.env["NETLIFY_AUTH_TOKEN"];
       const actStore = heatSiteID && heatToken
         ? heatBlobsMod.getStore({ name: "mcp-activity-logs", siteID: heatSiteID, token: heatToken, consistency: "strong" })
         : heatBlobsMod.getStore({ name: "mcp-activity-logs" });
@@ -1289,11 +1289,30 @@ async function _handleGet(isAdmin: boolean): Promise<NextResponse> {
     }).catch((err: unknown) => console.warn("[status] alert webhook failed:", err instanceof Error ? err.message : err));
   }
 
-  const warnings = [sanctionsAgeWarning, pepCountWarning, brainCatalogueWarning].filter(Boolean) as string[];
+  const redisAvailable = isRedisConfigured();
+  const redisWarning = !redisAvailable
+    ? "Redis not configured (UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN unset) — GDELT adverse-media cache is in-memory only; cache will not persist across Lambda cold starts."
+    : undefined;
+
+  // Section 1.4: UAE mandatory list warnings
+  const uaeEocnWarning = !process.env["UAE_EOCN_SEED_PATH"]
+    ? (
+      "UAE_EOCN_SEED_PATH not set — UAE EOCN list using bundled seed fallback. " +
+      "Regulatory risk: FDL No.10/2025 Art.10(1). Set UAE_EOCN_SEED_PATH in Netlify to the path of the current EOCN seed JSON."
+    )
+    : undefined;
+  const uaeLtlWarning = !process.env["UAE_LTL_SEED_PATH"]
+    ? (
+      "UAE_LTL_SEED_PATH not set — UAE Local Terrorist List using bundled seed fallback. " +
+      "Regulatory risk: FDL No.10/2025 Art.10(1). Set UAE_LTL_SEED_PATH in Netlify to the path of the current LTL seed JSON."
+    )
+    : undefined;
+
+  const warnings = [sanctionsAgeWarning, pepCountWarning, brainCatalogueWarning, redisWarning, uaeEocnWarning, uaeLtlWarning].filter(Boolean) as string[];
 
   const gdeltCache = {
     ...gdeltCacheStats(),
-    redisConfigured: isRedisConfigured(),
+    redisConfigured: redisAvailable,
     // Circuit-breaker state lets operators see when GDELT is being
     // short-circuited (OPEN) vs. probing (HALF_OPEN) vs. healthy
     // (CLOSED). msUntilProbe shows when the next half-open probe is
@@ -1309,13 +1328,27 @@ async function _handleGet(isAdmin: boolean): Promise<NextResponse> {
   const servicesDown = [...internalChecks, ...externalChecks]
     .filter((c) => c.status !== "operational")
     .map((c) => ({ name: c.name, status: c.status, note: c.note }));
+  // Adapters that legitimately return 0 entities (seed/supplement only) — exempt
+  // from the "degraded" check so they don't create false-positive red signals.
+  // Mirrors emptyEntityCountExpected() in /api/sanctions/status.
+  const EXEMPT_ZERO_ENTITY = new Set(["uae_eocn", "uae_ltl"]);
   const listsFreshness: Record<string, { lastRefreshed: string | null; ageHours: number | null; entityCount: number | null; status: string }> = {};
   for (const l of sanctions.lists) {
+    let listStatus: string;
+    if (l.ageH === null) {
+      listStatus = "missing";
+    } else if (l.ageH > 48) {
+      listStatus = "stale";
+    } else if (l.recordCount === 0 && !EXEMPT_ZERO_ENTITY.has(l.id)) {
+      listStatus = "degraded";
+    } else {
+      listStatus = "healthy";
+    }
     listsFreshness[l.id] = {
       lastRefreshed: l.ageH !== null ? new Date(Date.now() - l.ageH * 3_600_000).toISOString() : null,
       ageHours: l.ageH,
       entityCount: l.recordCount,
-      status: l.ageH === null ? "missing" : l.ageH > 48 ? "stale" : "healthy",
+      status: listStatus,
     };
   }
 
@@ -1381,5 +1414,5 @@ async function _handleGet(isAdmin: boolean): Promise<NextResponse> {
       rolling: currentSla(worstStatus),
       url: "/status",
     },
-  });
+  }, { headers: gateHeaders });
 }

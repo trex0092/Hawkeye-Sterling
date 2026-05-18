@@ -28,7 +28,7 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
   // Reflect dir on <html> when locale changes.
   useEffect(() => {
     if (typeof document !== "undefined") {
-      document.documentElement.dir = LOCALES[locale].dir;
+      document.documentElement.dir = LOCALES[locale as Locale].dir;
       document.documentElement.lang = locale;
     }
   }, [locale]);
@@ -36,9 +36,9 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
   const value = useMemo<LocaleCtx>(
     () => ({
       locale,
-      strings: LOCALES[locale].strings,
-      dir: LOCALES[locale].dir,
-      setLocale: (l) => {
+      strings: LOCALES[locale as Locale].strings,
+      dir: LOCALES[locale as Locale].dir,
+      setLocale: (l: Locale) => {
         setLocaleState(l);
         persistLocale(l);
       },

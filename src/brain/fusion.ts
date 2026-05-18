@@ -13,12 +13,10 @@ import type {
   Finding, FindingConflict, FusionResult, Hypothesis, LikelihoodRatio,
   Verdict,
 } from './types.js';
-import type { EvidenceItem } from './evidence.js';
-import { credibilityScore, freshnessFactor } from './evidence.js';
+import { type EvidenceItem, credibilityScore, freshnessFactor } from './evidence.js';
 import { bayesUpdate } from './bayesian-update.js';
 import { FACULTIES } from './faculties.js';
-import { corroborate } from './evidence-corroboration.js';
-import type { CorroborationResult } from './evidence-corroboration.js';
+import { type CorroborationResult, corroborate } from './evidence-corroboration.js';
 
 const EPS = 1e-9;
 const DEFAULT_PRIOR = 0.10;             // base rate for illicit_risk absent strong signal
@@ -77,7 +75,7 @@ export function fuseFindings(findings: Finding[], opts: FuseOptions = {}): Fusio
   for (const f of contributors) {
     const h = f.hypothesis ?? primary;
     if (!byH.has(h)) byH.set(h, []);
-    byH.get(h)!.push(f);
+    (byH.get(h) ?? []).push(f);
   }
 
   const posteriorsByHypothesis: Partial<Record<Hypothesis, number>> = {};
@@ -288,7 +286,7 @@ function detectConflicts(findings: Finding[], delta: number): FindingConflict[] 
   for (const f of findings) {
     const h: Hypothesis = f.hypothesis ?? 'illicit_risk';
     if (!byH.has(h)) byH.set(h, []);
-    byH.get(h)!.push(f);
+    (byH.get(h) ?? []).push(f);
   }
   for (const [h, arr] of byH.entries()) {
     const sorted = [...arr].sort((a, b) => b.score - a.score);

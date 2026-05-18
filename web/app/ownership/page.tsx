@@ -104,7 +104,7 @@ export default function OwnershipPage() {
       const name = m[1]!.replace(/\[(?:SANCTIONED|OFAC|UN|EOCN|EU|UK)\]/gi, "").trim();
       const pct = Number(m[2]) / 100;
       const designated = /\[(?:SANCTIONED|OFAC|UN|EOCN|EU|UK)\]/i.test(line);
-      const regimes = Array.from(line.matchAll(/\[(SANCTIONED|OFAC|UN|EOCN|EU|UK)\]/gi)).map((x) => x[1] ?? "");
+      const regimes = Array.from(line.matchAll(/\[(SANCTIONED|OFAC|UN|EOCN|EU|UK)\]/gi)).map((x) => (x as RegExpMatchArray)[1] ?? "");
       const id = `sh-${i}`;
       nodes.push({
         id,
@@ -125,7 +125,7 @@ export default function OwnershipPage() {
       engineLabel="Ownership analysis engine"
     >
       <ModuleHero
-        moduleNumber={37}
+
         eyebrow="Module 37 · KYC / Beneficial Ownership"
         title="Ownership"
         titleEm="explorer."

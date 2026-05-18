@@ -29,26 +29,6 @@ function freeTextOf(ctx: BrainContext): string {
   return parts.join(' ').toLowerCase();
 }
 
-function amountsOf(ctx: BrainContext): number[] {
-  const out: number[] = [];
-  const txs = ctx.evidence.transactions;
-  if (Array.isArray(txs)) {
-    for (const t of txs) {
-      if (t && typeof t === 'object' && 'amount' in t) {
-        const a = (t as { amount: unknown }).amount;
-        if (typeof a === 'number' && a > 0) out.push(a);
-        else if (typeof a === 'string' && /^[\d.,]+$/.test(a)) {
-          const n = Number(a.replace(/,/g, ''));
-          if (Number.isFinite(n) && n > 0) out.push(n);
-        }
-      } else if (typeof t === 'number' && t > 0) {
-        out.push(t);
-      }
-    }
-  }
-  return out;
-}
-
 /** Factory: returns an async apply function that searches freeText + prior
  *  rationales for the given keyword list and maps hit-count to a verdict. */
 function linguisticApply(
@@ -106,7 +86,7 @@ async function expectedValueDecisionApply(ctx: BrainContext): Promise<Finding> {
     { action: 'block', ev: evBlock },
   ];
   options.sort((a, b) => b.ev - a.ev);
-  const dominant = options[0]!;
+  const dominant = options[0] ?? { action: 'flag', ev: 0 };
   const verdictMap: Record<string, Finding['verdict']> = {
     escalate: 'escalate', clear: 'clear', block: 'block',
   };
@@ -149,7 +129,7 @@ async function regretMinimizationApply(ctx: BrainContext): Promise<Finding> {
     }),
   );
   regrets.sort((a, b) => a.maxRegret - b.maxRegret);
-  const best = regrets[0]!;
+  const best = regrets[0] ?? { action: 'flag', maxRegret: 0 };
   const verdictMap: Record<string, Finding['verdict']> = {
     escalate: 'escalate', clear: 'clear', block: 'block',
   };
@@ -456,7 +436,7 @@ async function nashEquilibriumApply(ctx: BrainContext): Promise<Finding> {
   let timingSignal = 0;
   if (timestamps.length >= 2) {
     timestamps.sort((a, b) => a - b);
-    const spanDays = (timestamps[timestamps.length - 1]! - timestamps[0]!) / 86_400_000;
+    const spanDays = ((timestamps[timestamps.length - 1] ?? 0) - (timestamps[0] ?? 0)) / 86_400_000;
     if (spanDays > 0 && spanDays < 30) timingSignal = 0.4;
   }
 
@@ -620,7 +600,7 @@ async function entryExitTimingApply(ctx: BrainContext): Promise<Finding> {
   }
 
   timestamps.sort((a, b) => a - b);
-  const spanDays = (timestamps[timestamps.length - 1]! - timestamps[0]!) / 86_400_000;
+  const spanDays = ((timestamps[timestamps.length - 1] ?? 0) - (timestamps[0] ?? 0)) / 86_400_000;
   const rapid = spanDays < 90;
   const highVolume = txs.length >= 5;
   const maxAmt = amounts.length > 0 ? Math.max(...amounts) : 0;
@@ -805,7 +785,7 @@ async function temporalSignalSequencingApply(ctx: BrainContext): Promise<Finding
   timestamps.sort((a, b) => a - b);
   const gaps: number[] = [];
   for (let i = 1; i < timestamps.length; i++) {
-    gaps.push((timestamps[i]! - timestamps[i - 1]!) / 3_600_000); // gaps in hours
+    gaps.push(((timestamps[i] ?? 0) - (timestamps[i - 1] ?? 0)) / 3_600_000); // gaps in hours
   }
 
   const burstGaps = gaps.filter((g) => g < 24);

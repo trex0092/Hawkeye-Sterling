@@ -6,8 +6,7 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
-import { domainIntel } from "../../../../dist/src/integrations/webCheck.js";
-import type { DomainIntelResult } from "../../../../dist/src/integrations/webCheck.js";
+import { domainIntel, type DomainIntelResult } from "../../../../dist/src/integrations/webCheck.js";
 import { lookupProviderByDomain, deriveRiskSignals } from "@/lib/intelligence/openBankingTracker";
 
 export const runtime = "nodejs";
@@ -155,11 +154,14 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as DomainIntelBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400, headers: CORS });
+    return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400, headers: { ...gate.headers, ...CORS } });
   }
 
   if (!body.domain?.trim()) {
-    return NextResponse.json({ ok: false, error: "domain is required" }, { status: 400, headers: CORS });
+    return NextResponse.json({ ok: false, error: "domain is required" }, { status: 400, headers: { ...gate.headers, ...CORS } });
+  }
+  if (body.domain.length > 2000) {
+    return NextResponse.json({ ok: false, error: "domain exceeds 2000-character limit" }, { status: 400, headers: { ...gate.headers, ...CORS } });
   }
 
   const domain = body.domain.trim();
@@ -202,6 +204,6 @@ export async function POST(req: Request): Promise<NextResponse> {
       retryAfterSeconds: null,
       requestId: Math.random().toString(36).slice(2, 10),
       latencyMs: Date.now() - _handlerStart,
-    }, { status: 500 });
+    }, { status: 500, headers: { ...CORS } });
   }
 }

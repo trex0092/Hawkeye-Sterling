@@ -206,7 +206,7 @@ export class AuditLogStore {
   append(input: AuditEntryInput, opts?: { now?: () => string }): AuditEntryV1 {
     const now = opts?.now ?? (() => new Date().toISOString());
     const seq = this.entries.length + 1;
-    const prevHash = this.entries.length === 0 ? '0'.repeat(64) : this.entries[this.entries.length - 1]!.entryHash;
+    const prevHash = this.entries.length === 0 ? '0'.repeat(64) : (this.entries[this.entries.length - 1]?.entryHash ?? '0'.repeat(64));
     const verdict = input.finalAnswer?.decision.verdict;
     const confidence = input.finalAnswer?.confidence.score;
     const escalated = verdict ? ESCALATING_VERDICTS.has(verdict) : false;
@@ -232,16 +232,18 @@ export class AuditLogStore {
   setFeedback(seq: number, feedback: UserFeedback): AuditEntryV1 {
     const idx = this.entries.findIndex((e) => e.seq === seq);
     if (idx < 0) throw new Error(`audit-log: seq ${seq} not found`);
-    const original = this.entries[idx]!;
-    const prevHash = idx === 0 ? '0'.repeat(64) : this.entries[idx - 1]!.entryHash;
+    const original = this.entries[idx];
+    if (!original) throw new Error(`audit-log: entry at index ${idx} unexpectedly missing`);
+    const prevHash = idx === 0 ? '0'.repeat(64) : (this.entries[idx - 1]?.entryHash ?? '0'.repeat(64));
     const partial: Omit<AuditEntryV1, 'entryHash'> = { ...original, feedback, prevHash };
     const updated: AuditEntryV1 = { ...partial, entryHash: hashEntry(partial) };
     this.entries[idx] = updated;
     // Re-hash forward chain from idx+1 onwards — every downstream
     // entry's prevHash now points at the new updated.entryHash.
     for (let i = idx + 1; i < this.entries.length; i++) {
-      const e = this.entries[i]!;
-      const newPrev = this.entries[i - 1]!.entryHash;
+      const e = this.entries[i];
+      if (!e) continue;
+      const newPrev = this.entries[i - 1]?.entryHash ?? '0'.repeat(64);
       const partialFwd: Omit<AuditEntryV1, 'entryHash'> = { ...e, prevHash: newPrev };
       this.entries[i] = { ...partialFwd, entryHash: hashEntry(partialFwd) };
     }
@@ -276,19 +278,19 @@ export class AuditLogStore {
       if (toTs && e.timestamp > toTs) continue;
       if (q.modes && !q.modes.includes(e.mode)) continue;
       if (q.verdicts && (!e.verdict || !q.verdicts.includes(e.verdict))) continue;
-      if (q.confidenceBelow != null && (e.confidence == null || e.confidence >= q.confidenceBelow)) continue;
-      if (q.confidenceAbove != null && (e.confidence == null || e.confidence <= q.confidenceAbove)) continue;
+      if (q.confidenceBelow !== null && q.confidenceBelow !== undefined && (e.confidence === null || e.confidence === undefined || e.confidence >= q.confidenceBelow)) continue;
+      if (q.confidenceAbove !== null && q.confidenceAbove !== undefined && (e.confidence === null || e.confidence === undefined || e.confidence <= q.confidenceAbove)) continue;
       if (q.userId && e.userId !== q.userId) continue;
-      if (q.completionGateTripped != null) {
-        const tripped = e.finalAnswer == null;
+      if (q.completionGateTripped !== null && q.completionGateTripped !== undefined) {
+        const tripped = e.finalAnswer === null || e.finalAnswer === undefined;
         if (tripped !== q.completionGateTripped) continue;
       }
-      if (q.validationFailed != null) {
+      if (q.validationFailed !== null && q.validationFailed !== undefined) {
         const failed = !!(e.validation && !e.validation.passed);
         if (failed !== q.validationFailed) continue;
       }
-      if (q.hasFeedback != null) {
-        const has = e.feedback != null;
+      if (q.hasFeedback !== null && q.hasFeedback !== undefined) {
+        const has = e.feedback !== null && e.feedback !== undefined;
         if (has !== q.hasFeedback) continue;
       }
       if (q.feedbackVerdicts && (!e.feedback || !q.feedbackVerdicts.includes(e.feedback.verdict))) continue;

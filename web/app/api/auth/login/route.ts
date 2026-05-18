@@ -1,32 +1,26 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 
 import { NextResponse } from "next/server";
 import { createHash } from "node:crypto";
 import { loadUsers, saveUsers } from "@/app/api/access/_store";
 import { verifyPassword, issueSession, SESSION_COOKIE, SESSION_TTL_S } from "@/lib/server/auth";
+import { getJson, setJson, del } from "@/lib/server/store";
 
 // ── Per-username brute-force protection ──────────────────────────────────────
 // Tracks failed attempts per normalised username. Hard-locks after
-// MAX_FAILURES within WINDOW_MS. Lock persists in this function instance.
-// For cross-instance protection in production, replace failureMap with
-// Upstash Redis (set UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN).
+// MAX_FAILURES within WINDOW_MS. Lock persisted in Netlify Blobs so it
+// survives Lambda cold-starts and is enforced across all concurrent instances.
 
 const MAX_FAILURES = 10;
 const WINDOW_MS = 15 * 60 * 1000; // 15-minute sliding window
+const LOCK_PREFIX = "ratelimit/login-lock/";
 
-// Bound the failure map so a username-probing attacker cannot exhaust
-// Lambda memory. At ~80 bytes per entry the 10 000 cap = ~800 KB —
-// well under Lambda limits — and is far higher than any legitimate
-// active-attempt churn (15-min window × realistic concurrent users).
-const FAILURE_MAP_CAP = 10_000;
-
-// Every Nth set() pass we sweep expired entries so legitimate users
-// don't anchor capacity needlessly. 64 is cheap (cap/64 ≈ 156 passes
-// per fill cycle) yet keeps the map free of stale entries between
-// the rare cold-start resets.
-const SWEEP_EVERY_N_SETS = 64;
-let _setCounter = 0;
+// Note: a previous in-memory `failureMap` with FIFO eviction lived here
+// (commit 52004ff3). Superseded on this merge by the Blobs-backed
+// `LOCK_PREFIX` counter above — Blobs persist across Lambdas and cold
+// starts, so the per-instance memory-bounded map is no longer needed.
 
 interface AttemptRecord {
   count: number;
@@ -34,69 +28,41 @@ interface AttemptRecord {
   lockedUntil: number;
 }
 
-const failureMap = new Map<string, AttemptRecord>();
-
-/** Drop entries whose window has fully expired AND whose lock has elapsed. */
-function sweepExpired(now: number): void {
-  for (const [k, rec] of failureMap) {
-    if (rec.lockedUntil > now) continue;
-    if (now - rec.windowStart > WINDOW_MS) failureMap.delete(k);
-  }
-}
-
-/**
- * Insert/update with bounded-FIFO eviction. Map iteration order in V8
- * is insertion order, so deleting the oldest key is O(1). Combined
- * with periodic sweep, the map size is hard-bounded at FAILURE_MAP_CAP.
- */
-function safeSet(key: string, value: AttemptRecord, now: number): void {
-  _setCounter = (_setCounter + 1) % SWEEP_EVERY_N_SETS;
-  if (_setCounter === 0) sweepExpired(now);
-  if (!failureMap.has(key) && failureMap.size >= FAILURE_MAP_CAP) {
-    // FIFO evict the oldest entry. We tolerate the (tiny) chance that
-    // an unexpired locked attacker gets evicted under sustained probing —
-    // the alternative is bursting memory.
-    const oldest = failureMap.keys().next().value;
-    if (oldest !== undefined) failureMap.delete(oldest);
-  }
-  failureMap.set(key, value);
-}
-
 function usernameKey(username: string): string {
   return createHash("sha256").update(username.toLowerCase().trim()).digest("hex").slice(0, 16);
 }
 
-function checkRateLimit(key: string): { allowed: boolean; retryAfterSec?: number } {
+async function checkRateLimit(key: string): Promise<{ allowed: boolean; retryAfterSec?: number }> {
   const now = Date.now();
-  const rec = failureMap.get(key);
+  const rec = await getJson<AttemptRecord>(`${LOCK_PREFIX}${key}`).catch(() => null);
   if (!rec) return { allowed: true };
   if (rec.lockedUntil > now) {
     return { allowed: false, retryAfterSec: Math.ceil((rec.lockedUntil - now) / 1000) };
   }
   if (now - rec.windowStart > WINDOW_MS) {
-    failureMap.delete(key);
+    await del(`${LOCK_PREFIX}${key}`).catch(() => undefined);
     return { allowed: true };
   }
   if (rec.count >= MAX_FAILURES) {
     const lockUntil = now + WINDOW_MS;
-    safeSet(key, { ...rec, lockedUntil: lockUntil }, now);
+    await setJson(`${LOCK_PREFIX}${key}`, { ...rec, lockedUntil: lockUntil }).catch(() => undefined);
     return { allowed: false, retryAfterSec: Math.ceil(WINDOW_MS / 1000) };
   }
   return { allowed: true };
 }
 
-function recordFailure(key: string): void {
+async function recordFailure(key: string): Promise<void> {
   const now = Date.now();
-  const rec = failureMap.get(key);
+  const rec = await getJson<AttemptRecord>(`${LOCK_PREFIX}${key}`).catch(() => null);
   if (!rec || now - rec.windowStart > WINDOW_MS) {
-    safeSet(key, { count: 1, windowStart: now, lockedUntil: 0 }, now);
+    await setJson(`${LOCK_PREFIX}${key}`, { count: 1, windowStart: now, lockedUntil: 0 }).catch(() => undefined);
   } else {
-    safeSet(key, { ...rec, count: rec.count + 1 }, now);
+    await setJson(`${LOCK_PREFIX}${key}`, { ...rec, count: rec.count + 1 }).catch(() => undefined);
   }
 }
 
-function recordSuccess(key: string): void {
-  failureMap.delete(key);
+async function recordSuccess(key: string): Promise<void> {
+  await del(`${LOCK_PREFIX}${key}`).catch(() => undefined);
 }
 
 function clientIp(req: Request): string {
@@ -124,7 +90,7 @@ export async function POST(req: Request) {
   const key = usernameKey(username);
   const ip = clientIp(req);
 
-  const rl = checkRateLimit(key);
+  const rl = await checkRateLimit(key);
   if (!rl.allowed) {
     console.warn("[auth/login] rate-limited", { key, ip, retryAfterSec: rl.retryAfterSec });
     return NextResponse.json(
@@ -146,12 +112,12 @@ export async function POST(req: Request) {
   ) {
     // Uniform delay to prevent user enumeration via timing side-channel
     await new Promise((r) => setTimeout(r, 400));
-    recordFailure(key);
+    await recordFailure(key);
     console.warn("[auth/login] failed attempt", { key, ip, userFound: !!user });
     return NextResponse.json({ ok: false, error: "Invalid username or password" }, { status: 401 });
   }
 
-  recordSuccess(key);
+  await recordSuccess(key);
   const token = issueSession(user.id, user.username!, user.role);
 
   const isSecure = process.env["NODE_ENV"] === "production";

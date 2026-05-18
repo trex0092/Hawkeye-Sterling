@@ -4,6 +4,7 @@ export const maxDuration = 60;import { NextResponse } from "next/server";
 
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export interface PepCorporateResult {
   pepExposureLevel: "direct" | "indirect" | "none";
@@ -59,22 +60,22 @@ export async function POST(req: Request) {
   } catch {
     return NextResponse.json(
       { ok: false, error: "Invalid JSON" },
-      { status: 400 }
+      { status: 400, headers: gate.headers }
     );
   }
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "pep-corporate temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "pep-corporate temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 55_000);
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 1500,
+        max_tokens: 700,
         system:
           "You are a UAE AML/CFT compliance expert specialising in PEP exposure for corporate customers. Assess PEP-linked corporate risk and EDD requirements under UAE FDL and FATF standards. Return valid JSON only matching the PepCorporateResult interface.",
         messages: [
           {
             role: "user",
-            content: `Assess PEP exposure for this corporate customer.\n\nCompany: ${body.companyName}\nPEP Name: ${body.pepName}\nPEP Role: ${body.pepRole}\nOwnership %: ${body.ownershipPct}\nIndustry Context: ${body.industryContext}\nContext: ${body.context}\n\nReturn JSON with fields: pepExposureLevel, riskRating, politicalConnections[], corruptionRiskFactors[], eddMeasures[], approvalRequired, regulatoryBasis.`,
+            content: `Assess PEP exposure for this corporate customer.\n\nCompany: ${sanitizeField(body.companyName)}\nPEP Name: ${sanitizeField(body.pepName)}\nPEP Role: ${sanitizeField(body.pepRole)}\nOwnership %: ${sanitizeField(body.ownershipPct)}\nIndustry Context: ${sanitizeField(body.industryContext)}\nContext: ${sanitizeText(body.context)}\n\nReturn JSON with fields: pepExposureLevel, riskRating, politicalConnections[], corruptionRiskFactors[], eddMeasures[], approvalRequired, regulatoryBasis.`,
           },
         ],
       });
@@ -83,8 +84,11 @@ export async function POST(req: Request) {
     const result = JSON.parse(
       raw.replace(/```json\n?|\n?```/g, "").trim()
     ) as PepCorporateResult;
+    if (!Array.isArray(result.politicalConnections)) result.politicalConnections = [];
+    if (!Array.isArray(result.corruptionRiskFactors)) result.corruptionRiskFactors = [];
+    if (!Array.isArray(result.eddMeasures)) result.eddMeasures = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "pep-corporate temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "pep-corporate temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

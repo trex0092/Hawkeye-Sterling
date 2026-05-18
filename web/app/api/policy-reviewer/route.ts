@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export interface PolicyReviewResult {
   overallCompliance: "compliant" | "partially_compliant" | "non_compliant";
@@ -108,34 +109,38 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
-  if (!body.policyText?.trim()) return NextResponse.json({ ok: false, error: "policyText required" }, { status: 400 , headers: gate.headers});
+  if (!body.policyText?.trim()) return NextResponse.json({ ok: false, error: "policyText required" }, { status: 400 , headers: gate.headers });
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "policy-reviewer temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+  if (!apiKey) return NextResponse.json({ ok: false, error: "policy-reviewer temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
-    const client = getAnthropicClient(apiKey, 55000);
+    const client = getAnthropicClient(apiKey, 55_000);
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 1500,
+        max_tokens: 700,
         system: `You are a UAE AML policy specialist with expertise in UAE FDL 10/2025 requirements, CBUAE AML/CFT Guidelines, and FATF Recommendations. Review AML/CFT policy documents for compliance with current UAE law, identify missing mandatory provisions (especially PF, UBO, EWRA, tipping off), flag outdated regulatory references (FDL 20/2018 → FDL 10/2025), and provide specific suggested text for gaps. Score overall compliance on a 0-100 scale. Identify both strengths and weaknesses. Respond ONLY with valid JSON matching the PolicyReviewResult interface — no markdown fences.`,
         messages: [{
           role: "user",
-          content: `Policy Text: ${body.policyText}
-Policy Type: ${body.policyType ?? "AML/CFT Policy"}
-Institution Type: ${body.institutionType ?? "UAE licensed financial institution"}
-Last Review Date: ${body.lastReviewDate ?? "not specified"}
-Additional Context: ${body.context ?? "none"}
+          content: `Policy Text: ${sanitizeText(body.policyText, 2000)}
+Policy Type: ${sanitizeField(body.policyType ?? "AML/CFT Policy", 100)}
+Institution Type: ${sanitizeField(body.institutionType ?? "UAE licensed financial institution", 100)}
+Last Review Date: ${sanitizeField(body.lastReviewDate ?? "not specified", 50)}
+Additional Context: ${sanitizeText(body.context ?? "none", 2000)}
 
 Review this AML policy for compliance with UAE FDL 10/2025. Return complete PolicyReviewResult JSON.`,
         }],
       });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as PolicyReviewResult;
+    if (!Array.isArray(result.missingProvisions)) result.missingProvisions = [];
+    if (!Array.isArray(result.outdatedReferences)) result.outdatedReferences = [];
+    if (!Array.isArray(result.strengths)) result.strengths = [];
+    if (!Array.isArray(result.recommendations)) result.recommendations = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
-    return NextResponse.json({ ok: false, error: "policy-reviewer temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "policy-reviewer temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

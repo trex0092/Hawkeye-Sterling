@@ -207,7 +207,7 @@ export default function StrCasesPage() {
       cancelled = true;
     };
   }, []);
-  const [noTippingOff, setNoTippingOff] = useState(true);
+  const [noTippingOff, setNoTippingOff] = useState(false);
   const [flash, setFlash] = useState<Flash | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [briefing, setBriefing] = useState<MlroBriefing | null>(null);
@@ -409,9 +409,6 @@ export default function StrCasesPage() {
   if (!roleLoaded)
     return (
       <ModuleLayout asanaModule="str-cases" asanaLabel="STR / SAR Cases">
-        <div className="font-mono text-10 font-semibold text-amber tracking-wide-4 uppercase mb-1">
-          MODULE 05
-        </div>
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-12 text-ink-3 font-mono animate-pulse">
             Loading STR module…
@@ -423,13 +420,10 @@ export default function StrCasesPage() {
 
   return (
     <ModuleLayout asanaModule="str-cases" asanaLabel="STR / SAR Cases">
-      <div className="font-mono text-10 font-semibold text-amber tracking-wide-4 uppercase mb-1">
-        MODULE 05
-      </div>
       <ModuleHeader
             title="STR Case"
             titleEm="Management"
-            subtitle="Module 05 · file without delay · no tipping-off"
+            subtitle="file without delay · no tipping-off"
             dotColor="brand"
             badge={{
               label: "FDL Art. 26–27 · File without delay",

@@ -104,7 +104,7 @@ async function handlePost(
     runId: body.runId,
     at: new Date().toISOString(),
     caseId: id,
-    modeIds: body.modeIds ?? [],
+    modeIds: Array.isArray(body.modeIds) ? body.modeIds : [],
     autoProposed: body.autoProposed,
     autoConfidence: body.autoConfidence,
     mlroDecided: body.mlroDecided,

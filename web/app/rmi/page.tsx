@@ -367,7 +367,7 @@ export default function RmiPage() {
   return (
     <ModuleLayout asanaModule="rmi" asanaLabel="Risk Management Information" engineLabel="Supply-chain compliance engine">
       <ModuleHero
-        moduleNumber={23}
+
         eyebrow="Module 26 · Supply Chain"
         title="Responsible Minerals Initiative"
         titleEm="RMAP."

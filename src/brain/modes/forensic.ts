@@ -49,7 +49,11 @@ function walkUbo(g: EntityGraph, rootId: string, maxDepth = 8): { paths: UboWalk
     }
     const next = new Set(visited).add(id);
     for (const e of owners) {
-      const w = typeof e.weight === 'number' ? e.weight : 1;
+      // Normalise percentage weights (e.g. 51 for 51%) to fractions, consistent
+      // with belief-propagation.ts effectiveEdgeWeight(). Without this, a weight
+      // of 51 would multiply the cumulative share by 51× rather than 0.51×.
+      const raw = typeof e.weight === 'number' ? e.weight : 1;
+      const w = raw > 1 ? raw / 100 : raw;
       walk(e.to, next, [...trail, id], share * w, depth + 1);
     }
   };
@@ -145,8 +149,8 @@ export const timelineReconstructionApply = async (ctx: BrainContext): Promise<Fi
   // Gaps: intervals between consecutive events in days.
   const gaps: number[] = [];
   for (let i = 1; i < ts.length; i++) {
-    const prev = ts[i - 1]!;
-    const cur = ts[i]!;
+    const prev = ts[i - 1] ?? 0;
+    const cur = ts[i] ?? 0;
     gaps.push((cur - prev) / 86_400_000);
   }
   gaps.sort((a, b) => b - a);
@@ -232,8 +236,8 @@ export const linkAnalysisApply = async (ctx: BrainContext): Promise<Finding> => 
   const links: Array<[string, string, string]> = [];
   for (let i = 0; i < p.length; i++) {
     for (let j = i + 1; j < p.length; j++) {
-      const a = p[i]!;
-      const b = p[j]!;
+      const a = p[i] as Finding;
+      const b = p[j] as Finding;
       const sharedEvid = a.evidence.filter((e) => b.evidence.includes(e));
       const sharedFac = a.faculties.filter((x) => b.faculties.includes(x));
       if (sharedEvid.length >= 1) links.push([a.modeId, b.modeId, `shares evidence: ${sharedEvid.join(',')}`]);
@@ -243,8 +247,8 @@ export const linkAnalysisApply = async (ctx: BrainContext): Promise<Finding> => 
   const components = new Map<string, Set<string>>();
   for (const f of p) components.set(f.modeId, new Set([f.modeId]));
   for (const [a, b] of links) {
-    const ca = components.get(a)!;
-    const cb = components.get(b)!;
+    const ca = components.get(a) ?? new Set<string>([a]);
+    const cb = components.get(b) ?? new Set<string>([b]);
     if (ca !== cb) {
       for (const x of cb) ca.add(x);
       for (const x of cb) components.set(x, ca);

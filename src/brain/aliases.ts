@@ -24,9 +24,9 @@ function permuteOrder(tokens: string[]): string[] {
   const out = new Set<string>();
   out.add(tokens.join(' '));
   // Flip: last-name-first and first-name-first.
-  const flipped = [tokens[tokens.length - 1]!, ...tokens.slice(0, -1)];
+  const flipped = [tokens[tokens.length - 1] ?? '', ...tokens.slice(0, -1)];
   out.add(flipped.join(' '));
-  const first = [...tokens.slice(1), tokens[0]!];
+  const first = [...tokens.slice(1), tokens[0] ?? ''];
   out.add(first.join(' '));
   return [...out];
 }
@@ -44,7 +44,7 @@ export function expandAliases(input: string): AliasExpansion {
 
   // For each token that has a known romanisation family, inject every variant.
   for (let i = 0; i < baseTokens.length; i++) {
-    const vs = variantsOf(baseTokens[i]!);
+    const vs = variantsOf(baseTokens[i] ?? '');
     if (vs.length <= 1) continue;
     for (const v of vs) {
       const swapped = [...baseTokens];

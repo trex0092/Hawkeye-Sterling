@@ -234,7 +234,7 @@ async function runScreenViaApi(draft: Draft): Promise<{ hits: ScreeningHit[]; so
     const json = (await res.json()) as QuickScreenResponse;
     if (json.ok) {
       return {
-        hits: json.hits.map((h) => ({
+        hits: (Array.isArray(json.hits) ? json.hits : []).map((h) => ({
           listId: h.listId,
           candidateName: h.candidateName,
           score: h.score,
@@ -558,7 +558,7 @@ export default function OnboardingWizardPage() {
   if (submitted) {
     return (
       <ModuleLayout asanaModule="onboarding" asanaLabel="Onboarding Wizard">
-        <ModuleHero moduleNumber={11} eyebrow="Module · Onboarding Wizard" title="Subject" titleEm="onboarded." />
+        <ModuleHero eyebrow="Onboarding Wizard" title="Subject" titleEm="onboarded." />
         <div className="bg-emerald-50 border border-emerald-300 rounded-lg p-6 text-center">
           <div className="text-14 font-semibold text-emerald-700 mb-2">
             ✓ Onboarding complete and signed off by MLRO
@@ -582,7 +582,7 @@ export default function OnboardingWizardPage() {
   return (
     <ModuleLayout asanaModule="onboarding" asanaLabel="Onboarding Wizard">
       <ModuleHero
-        moduleNumber={11}
+
         eyebrow="Module · Onboarding Wizard"
         title="Guided new-customer"
         titleEm="onboarding."
@@ -1011,7 +1011,7 @@ export default function OnboardingWizardPage() {
             })()}
 
             {/* Show adaptive EDD answers as read-only context */}
-            {draft.adaptiveAnswers && Object.values(draft.adaptiveAnswers).some(Boolean) && (
+            {draft.adaptiveAnswers && (Object.values(draft.adaptiveAnswers) as (string | boolean | undefined)[]).some(Boolean) && (
               <div className="mt-3 border border-amber-200 rounded p-3 bg-amber-50 text-12">
                 <div className="text-10 font-mono uppercase text-amber-700 mb-2">EDD answers from step 3</div>
                 {draft.adaptiveAnswers.eddJustification && (
@@ -1158,7 +1158,7 @@ function AdvisorNarrativePanel({ response }: { response: AdvisorResponseV1 }) {
       )}
       <div className="font-mono text-10 uppercase text-ink-3">3 · Citations</div>
       <div className="ml-2">
-        {Object.entries(response.frameworkCitations.byClass)
+        {(Object.entries(response.frameworkCitations.byClass) as [string, string[] | undefined][])
           .filter(([, list]) => (list?.length ?? 0) > 0)
           .map(([cls, list]) => (
             <div key={cls}><span className="font-mono text-10 text-ink-3">Class {cls}:</span> {(list ?? []).join(" · ")}</div>

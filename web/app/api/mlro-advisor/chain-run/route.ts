@@ -26,7 +26,7 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const { subject = "Unknown Subject", jurisdiction = "UAE", riskScore = 50, transactionPattern = "" } = body;
@@ -41,18 +41,19 @@ export async function POST(req: Request) {
         strRecommendation: `[Demo] Recommendation: FILE STR. The subject presents a composite risk score of ${riskScore}/100 with indicators meeting the reasonable suspicion threshold under UAE FDL 10/2025 Art.26. Recommended narrative opening: "This report concerns [${subject}], a [entity type] operating in [${jurisdiction}], whose account activity has given rise to suspicion of money laundering pursuant to UAE FDL 10/2025."`,
         chainDuration: 0,
       } satisfies ChainRunResult,
+      { headers: gate.headers },
     );
   }
 
   const chainStart = Date.now();
 
   try {
-    const client = getAnthropicClient(apiKey, 22_000);
+    const client = getAnthropicClient(apiKey, 55_000);
 
     // ── Step 1: Subject Brief ──────────────────────────────────────────────
     const step1 = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 1500,
+      max_tokens: 700,
       system: [
         {
           type: "text",
@@ -81,7 +82,7 @@ Respond in plain prose only — no bullet points, no headers.`,
     // ── Step 2: Typology Match ─────────────────────────────────────────────
     const step2 = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 1500,
+      max_tokens: 700,
       system: [
         {
           type: "text",
@@ -109,7 +110,7 @@ Transaction Pattern: ${transactionPattern || "Not provided"}`,
     // ── Step 3: STR Recommendation ────────────────────────────────────────
     const step3 = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 2048,
+      max_tokens: 700,
       system: [
         {
           type: "text",
@@ -144,7 +145,7 @@ Risk Score: ${riskScore}/100`,
       typologyMatch,
       strRecommendation,
       chainDuration,
-    } satisfies ChainRunResult);
+    } satisfies ChainRunResult, { headers: gate.headers });
   } catch (err) {
     console.error("chain-run error", err);
     return NextResponse.json({
@@ -153,6 +154,6 @@ Risk Score: ${riskScore}/100`,
       typologyMatch: `[Fallback] Typology match unavailable — manual review required.`,
       strRecommendation: `[Fallback] STR recommendation unavailable — manual review required.`,
       chainDuration: 0,
-    } satisfies ChainRunResult);
+    } satisfies ChainRunResult, { headers: gate.headers });
   }
 }

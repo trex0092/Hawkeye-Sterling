@@ -405,7 +405,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   } catch {
     return NextResponse.json(
       { ok: false, error: "Invalid JSON body" },
-      { status: 400, headers: CORS },
+      { status: 400, headers: { ...gate.headers, ...CORS } }
     );
   }
 
@@ -413,7 +413,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (!companyName) {
     return NextResponse.json(
       { ok: false, error: "companyName is required" },
-      { status: 400, headers: CORS },
+      { status: 400, headers: { ...gate.headers, ...CORS } }
     );
   }
 
@@ -483,7 +483,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         simulationWarning: "⚠ DATA IS SIMULATED — NO REAL REGISTRY API IS CONNECTED. DO NOT USE THIS OUTPUT FOR ANY COMPLIANCE DECISION. Source: internal fallback dataset. Not verified against any live corporate registry.",
         coverageHint: `No corporate registry data found for "${companyName}"${body.jurisdiction ? ` in ${body.jurisdiction}` : ""}. Configure UAE_DED_API_KEY (UAE DED), SAYARI_API_KEY (commercial UBO), or DNB_API_KEY (D&B) for fuller coverage.`,
       },
-      { status: 200, headers: CORS },
+      { status: 200, headers: { ...gate.headers, ...CORS } }
     );
   }
 
@@ -728,7 +728,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const latencyMs = Date.now() - _handlerStart;
   if (latencyMs > 5000) console.warn(`[entity_graph] latencyMs=${latencyMs} exceeds 5000ms`);
-  return NextResponse.json({ ...result, latencyMs }, { status: 200, headers: CORS });
+  return NextResponse.json({ ...result, latencyMs }, { status: 200, headers: { ...gate.headers, ...CORS } });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     return NextResponse.json({
@@ -740,6 +740,6 @@ export async function POST(req: Request): Promise<NextResponse> {
       retryAfterSeconds: null,
       requestId: Math.random().toString(36).slice(2, 10),
       latencyMs: Date.now() - _handlerStart,
-    }, { status: 500 });
+    }, { status: 500, headers: { ...CORS } });
   }
 }

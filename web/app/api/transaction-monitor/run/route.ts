@@ -7,6 +7,7 @@ import {
   extractFeatures,
 } from "../../../../../dist/src/brain/streaming-anomaly.js";
 import { analyseBenford, type BenfordRisk } from "../../../../../dist/src/brain/benford.js";
+import { asanaGids } from "@/lib/server/asanaConfig";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -304,12 +305,8 @@ async function postDailyTMReport(args: {
     return { delivered: false, error: "ASANA_TOKEN not set" };
   }
 
-  // TM reports route to the "08 · Transaction Monitoring" board, not the
-  // screening inbox. Override via ASANA_TM_PROJECT_GID if the board moves.
-  const projectGid =
-    process.env["ASANA_TM_PROJECT_GID"] ?? "1214148661083263";
-  const workspaceGid =
-    process.env["ASANA_WORKSPACE_GID"] ?? "1213645083721316";
+  const projectGid = asanaGids.tm();
+  const workspaceGid = asanaGids.workspace();
 
   const date = new Date(args.runAt);
   const ymd = date.toISOString().slice(0, 10);
@@ -362,7 +359,7 @@ async function postDailyTMReport(args: {
           notes: lines.join("\n"),
           projects: [projectGid],
           workspace: workspaceGid,
-          assignee: process.env["ASANA_ASSIGNEE_GID"] ?? "1213645083721304",
+          assignee: asanaGids.assignee(),
         },
       }),
     });
@@ -392,9 +389,10 @@ async function postDailyTMReport(args: {
       ...(payload?.data?.permalink_url ? { url: payload.data.permalink_url } : {}),
     };
   } catch (err) {
+    console.error("[transaction-monitor/run] webhook failed:", err instanceof Error ? err.message : err);
     return {
       delivered: false,
-      error: err instanceof Error ? err.message : String(err),
+      error: "Webhook delivery failed — please retry.",
     };
   }
 }

@@ -9,7 +9,8 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "test:reports": "tsx scripts/test-compliance-report.ts",
-    "check:pii-guard": "bash -c 'if grep -rn \"new Anthropic\" app --include=\"*.ts\" --include=\"*.tsx\" 2>/dev/null | grep -v \"//\"; then echo \"PII GUARD BYPASS DETECTED: use getAnthropicClient() from @/lib/server/llm\" && exit 1; fi'"
+    "check:pii-guard": "bash -c 'if grep -rn \"new Anthropic\" app --include=\"*.ts\" --include=\"*.tsx\" 2>/dev/null | grep -v \"//\"; then echo \"PII GUARD BYPASS DETECTED: use getAnthropicClient() from @/lib/server/llm\" && exit 1; fi'",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.92.0",
@@ -32,6 +33,7 @@
   },
   "devDependencies": {
     "@netlify/plugin-nextjs": "5.15.11",
+    "@playwright/test": "^1.60.0",
     "@types/node": "20.14.10",
     "@types/papaparse": "^5.5.2",
     "@types/react": "19.2.14",

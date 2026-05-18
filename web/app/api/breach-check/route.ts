@@ -14,6 +14,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 
 interface BreachCheckBody {
   name: string;
@@ -73,12 +74,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as BreachCheckBody;
   } catch {
-    return NextResponse.json({ error: "invalid JSON body" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ error: "invalid JSON body" }, { status: 400 , headers: gate.headers });
   }
 
   const { name, email } = body;
   if (!name || typeof name !== "string" || !name.trim()) {
-    return NextResponse.json({ error: "name is required" }, { status: 400 , headers: gate.headers});
+    return NextResponse.json({ error: "name is required" }, { status: 400 , headers: gate.headers });
   }
 
   const hibpKey = process.env.HIBP_API_KEY;

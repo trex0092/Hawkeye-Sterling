@@ -385,7 +385,7 @@ export default function ClientPortalPage() {
     <ModuleLayout asanaModule="client-portal" asanaLabel="Client Portal">
       <div>
         <ModuleHero
-          moduleNumber={12}
+
           eyebrow="Module 13 · Self-service KYC"
           title="Client"
           titleEm="portal."
