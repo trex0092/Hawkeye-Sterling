@@ -47,6 +47,7 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "📦 Shipments", href: "/shipments", hint: "Bullion chain-of-custody + AI TBML scan" },
       { label: "🏭 RMI / RMAP", href: "/rmi", hint: "Responsible Minerals + AI supply chain assessment" },
       { label: "🇦🇪 EOCN", href: "/eocn", hint: "UAE targeted financial sanctions + NAS/ARS registration + control list" },
+      { label: "🚨 TFS Alerts", href: "/tfs-alerts", hint: "EOCN subscription alerts · Gmail monitor · Asana compliance tasks" },
       { label: "📝 CNMR", href: "/cnmr", hint: "Confirmed Name Match Report · CD74/2020 Art.21 · 5-day deadline" },
       { label: "💵 DPMSR", href: "/dpmsr", hint: "DPMS cash reporting ≥ AED 55,000 · CR134/2025 Art.3" },
       { label: "📋 MoE Survey", href: "/moe-survey", hint: "Mandatory AML/CFT survey MOET/AML/001/2026 · all DNFBPs" },
