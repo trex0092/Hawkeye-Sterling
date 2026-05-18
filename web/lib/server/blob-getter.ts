@@ -25,7 +25,7 @@ export interface NamedBlobStore {
 }
 
 interface BlobsModuleShape {
-  getStore: (opts: {
+  getStore: (_opts: {
     name: string;
     siteID?: string;
     token?: string;

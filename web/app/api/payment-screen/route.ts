@@ -121,6 +121,7 @@ async function handlePaymentScreen(req: Request): Promise<NextResponse> {
       : Promise.resolve(null),
   ]);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const yenteSummary = yenteResults?.map((r: any, i: number) => ({
     name: namesToMatch[i],
     topScore: r.hits[0]?.score ?? 0,

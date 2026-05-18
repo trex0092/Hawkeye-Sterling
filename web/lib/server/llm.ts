@@ -91,6 +91,12 @@ function autoCacheSystem(
 // Timeout is set to 4_500ms leaving 500ms for HTTP overhead and JSON parsing.
 const DEFAULT_ANTHROPIC_TIMEOUT_MS = 4_500;
 
+type InnerBatchesShape = {
+  create: (..._args: unknown[]) => Promise<Anthropic.Messages.MessageBatch>;
+  retrieve: (_id: string, _opts?: Anthropic.RequestOptions) => Promise<Anthropic.Messages.MessageBatch>;
+  results: (_id: string, _opts?: Anthropic.RequestOptions) => Promise<AsyncIterable<Anthropic.Messages.MessageBatchIndividualResponse>>;
+};
+
 export class AnthropicGuard {
   private inner: Anthropic;
   private route: string;
@@ -142,7 +148,7 @@ export class AnthropicGuard {
         });
 
         // Fire-and-forget telemetry
-        const u = response.usage as any;
+        const u = response.usage as Anthropic.Messages.Usage;
         void recordCall({
           route,
           model: response.model,
@@ -175,9 +181,9 @@ export class AnthropicGuard {
       // rehydrate it before exposing it anywhere a human reads.
       batches: {
         create: async (
-          opts: { requests: Array<{ custom_id: string; params: any }> },
-          requestOptions?: any,
-        ): Promise<any & { _redactionMaps: Record<string, RedactionMap> }> => {
+          opts: { requests: Array<{ custom_id: string; params: Anthropic.Messages.MessageCreateParamsNonStreaming }> },
+          requestOptions?: Anthropic.RequestOptions,
+        ): Promise<Anthropic.Messages.MessageBatch & { _redactionMaps: Record<string, RedactionMap> }> => {
           const maps: Record<string, RedactionMap> = {};
           const safeRequests = opts.requests.map((r) => {
             const map: RedactionMap = {};
@@ -195,19 +201,19 @@ export class AnthropicGuard {
             };
           });
 
-          const innerBatches = (inner.messages as any).batches;
+          const innerBatches = (inner.messages as unknown as { batches?: InnerBatchesShape }).batches;
           if (!innerBatches?.create) {
             throw new Error("Anthropic SDK does not expose messages.batches.create on this client. Upgrade @anthropic-ai/sdk.");
           }
           const response = await innerBatches.create({ requests: safeRequests }, requestOptions);
           return { ...response, _redactionMaps: maps };
         },
-        retrieve: async (batchId: string, requestOptions?: any): Promise<any> => {
-          const innerBatches = (inner.messages as any).batches;
+        retrieve: async (batchId: string, requestOptions?: Anthropic.RequestOptions): Promise<Anthropic.Messages.MessageBatch> => {
+          const innerBatches = (inner.messages as unknown as { batches: InnerBatchesShape }).batches;
           return innerBatches.retrieve(batchId, requestOptions);
         },
-        results: async (batchId: string, requestOptions?: any): Promise<any> => {
-          const innerBatches = (inner.messages as any).batches;
+        results: async (batchId: string, requestOptions?: Anthropic.RequestOptions): Promise<AsyncIterable<Anthropic.Messages.MessageBatchIndividualResponse>> => {
+          const innerBatches = (inner.messages as unknown as { batches: InnerBatchesShape }).batches;
           return innerBatches.results(batchId, requestOptions);
         },
       },

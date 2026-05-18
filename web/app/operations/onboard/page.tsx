@@ -462,15 +462,7 @@ export default function OnboardingWizardPage() {
     return () => {
       cancelled = true;
     };
-  }, [
-    draft.registeredCountry,
-    draft.occupation,
-    draft.sourceOfFunds,
-    draft.expectedProfile,
-    draft.fullName,
-    draft.screeningHits,
-    draft.relationshipTypes,
-  ]);
+  }, [draft]);
 
   // Which redlines would fire based on current screening hits?
   const firedRedlines = (draft.screeningHits ?? [])

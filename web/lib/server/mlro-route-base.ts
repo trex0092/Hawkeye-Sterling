@@ -31,7 +31,7 @@ import { enforce, type EnforcementAllow } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 
 export interface MlroBuildRequest {
-  system: string | Array<{ type: "text"; text: string; cache_control?: unknown }>;
+  system: string | Array<{ type: "text"; text: string; cache_control?: { type: "ephemeral" } | null }>;
   userContent: string;
   /** Optional explicit override of model / max_tokens for one call. */
   modelOverride?: string;
@@ -67,7 +67,7 @@ export interface MlroRouteOptions<TBody, TResult> {
    * body. Must NOT throw — exceptions are swallowed so the response
    * pipeline is never blocked by audit-log failures.
    */
-  onSuccess?: (result: TResult, body: TBody) => void;
+  onSuccess?: (_result: TResult, _body: TBody) => void;
 }
 
 /**

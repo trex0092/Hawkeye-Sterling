@@ -89,11 +89,16 @@ function osEntityToCandidate(entity: OSEntity): SanctionsCandidate {
 
 // ── Blob helpers ─────────────────────────────────────────────────────────────
 
-async function getBlobs(): Promise<unknown | null> {
+interface BlobStore {
+  get(_key: string, _opts?: { type?: string }): Promise<unknown>;
+  setJSON(_key: string, _value: unknown): Promise<void>;
+}
+
+async function getBlobs(): Promise<BlobStore | null> {
   try {
     const mod = await import("@netlify/blobs").catch(() => null);
     if (!mod) return null;
-    return mod.getStore({ name: "os-sanctions" });
+    return mod.getStore({ name: "os-sanctions" }) as unknown as BlobStore;
   } catch {
     return null;
   }

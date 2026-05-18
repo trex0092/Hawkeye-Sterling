@@ -114,7 +114,7 @@ function parseIndividualRow(row: string[], headers: string[]): EocnParsedEntity 
   const passportNum     = findCol(headers, /رقم جواز|رقم الجواز|جواز\s*سفر/);
   const nationalId      = findCol(headers, /رقم الوطنية|الرقم الوطني/);
   const otherInfo       = findCol(headers, /معلومات أخرى/);
-  const classification  = findCol(headers, /التصنيف/);
+  const _classification  = findCol(headers, /التصنيف/);
 
   // Primary name preference: Latin full name → Latin family name → Arabic
   let name = cell(row, latinFullName);

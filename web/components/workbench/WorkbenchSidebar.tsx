@@ -10,7 +10,7 @@ import type { FacultyFilter, FacultyFilterKey } from "@/lib/types";
 interface WorkbenchSidebarProps {
   filters: FacultyFilter[];
   activeFilter: FacultyFilterKey;
-  onFilterChange: (key: FacultyFilterKey) => void;
+  onFilterChange: (_key: FacultyFilterKey) => void;
 }
 
 export function WorkbenchSidebar({

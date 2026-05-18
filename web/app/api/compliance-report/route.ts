@@ -755,6 +755,7 @@ async function handleComplianceReport(req: Request): Promise<Response> {
   // When no prior screening result is supplied, inject a placeholder that
   // clearly marks the report as unscreened — never a CLEAR verdict.
   if (!body.result) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (body as any).result = { topScore: 0, severity: "pending", hits: [], _unscreened: true };
   } else if (!Array.isArray(body.result.hits)) {
     body.result.hits = [];

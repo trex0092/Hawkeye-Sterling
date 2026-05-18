@@ -10,7 +10,7 @@
 // post to /api/screening/resolve which writes to audit and — for
 // Positive — auto-creates the ongoing-monitoring task.
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 export interface TriageHit {
   id: string;                       // unique within this screening
@@ -128,7 +128,7 @@ export function HitTriagePanel({ subjectId, subjectName, hits, resolutions = {},
     [filteredHits, page],
   );
   // Reset page on filter change
-  useMemo(() => { setPage(0); }, [activeTab, filterType, filterCitizenship, filterMinStrength]);
+  useEffect(() => { setPage(0); }, [activeTab, filterType, filterCitizenship, filterMinStrength]);
 
   async function handleResolve(hitId: string, resolution: Resolution) {
     if (!onResolve) return;

@@ -1545,7 +1545,7 @@ export default function MlroAdvisorPage() {
       clearTimeout(killTimer);
       if (mountedRef.current) setStreamingEntryId(null);
     }
-  }, [CLIENT_TIMEOUTS.quick, mountedRef]);
+  }, [mountedRef]);
 
   // multi_perspective is offloaded to the Netlify Background Function so it
   // is not killed by Netlify's ~26 s edge inactivity timeout. Speed and
@@ -1606,7 +1606,7 @@ export default function MlroAdvisorPage() {
       // status === "running" → keep polling
     }
     throw new Error("Multi (Deep) timed out — check Netlify function logs.");
-  }, [CLIENT_TIMEOUTS.multi_perspective, recordAdvisorEntry, mountedRef]);
+  }, [recordAdvisorEntry, mountedRef]);
 
   const runSynchronous = useCallback(async (q: string, m: ReasoningMode): Promise<void> => {
     const ctl = new AbortController();
@@ -1647,7 +1647,7 @@ export default function MlroAdvisorPage() {
     } finally {
       clearTimeout(timer);
     }
-  }, [CLIENT_TIMEOUTS, recordAdvisorEntry, mountedRef]);
+  }, [recordAdvisorEntry, mountedRef]);
 
   const handleAsk = useCallback(async () => {
     const q = question.trim();

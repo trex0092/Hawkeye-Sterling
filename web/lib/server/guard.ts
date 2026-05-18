@@ -130,7 +130,7 @@ export interface AuditRecord {
   at: string;
 }
 
-type AuditSink = (record: AuditRecord) => void;
+type AuditSink = (_record: AuditRecord) => void;
 
 // Fixed-capacity ring buffer with O(1) insert via index wraparound.
 // Serves same-instance "recent access" queries quickly. Records are also

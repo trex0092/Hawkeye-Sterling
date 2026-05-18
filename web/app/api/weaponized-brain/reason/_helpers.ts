@@ -189,8 +189,10 @@ export async function runReasoning(body: ReasonInput): Promise<ReasoningResult> 
   // 5 · Redlines
   const tE = performance.now();
   const redlineKeywords = fullText.toLowerCase();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const firedRedlineIds = REDLINES.filter((r: any) =>
     redlineKeywordsMatch(redlineKeywords, r.id, r.precondition ?? r.label ?? ""),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ).map((r: any) => r.id);
   const redlines = evaluateRedlines(firedRedlineIds);
   for (const r of redlines.fired) {
@@ -204,6 +206,7 @@ export async function runReasoning(body: ReasonInput): Promise<ReasoningResult> 
 
   // 6 · Doctrines
   const tF = performance.now();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const doctrineHits = DOCTRINES.filter((d: any) => doctrineApplies(d, body.subject, jurisdiction)).slice(0, 6);
   for (const d of doctrineHits) {
     cited.push({ kind: "doctrine", id: d.id, label: d.title, detail: d.authority });
@@ -211,7 +214,9 @@ export async function runReasoning(body: ReasonInput): Promise<ReasoningResult> 
   if (doctrineHits.length > 0) {
     steps.push({
       step: "Doctrines in scope",
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       cited: doctrineHits.map((d: any) => d.id),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       finding: `${doctrineHits.length} doctrine(s) apply: ${doctrineHits.map((d: any) => d.title).join("; ")}.`,
     });
     if (jurisdiction?.cahra) firedModeIds.add("oecd_ddg_annex");
@@ -223,6 +228,7 @@ export async function runReasoning(body: ReasonInput): Promise<ReasoningResult> 
   // 7 · Meta-cognition
   const tG = performance.now();
   const metaCtx = `${fullText} ${redlines.fired.length > 0 ? "redline" : ""} ${pep ? "pep" : ""} ${jurisdiction?.cahra ? "cahra" : ""}`.toLowerCase();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const metaHits = META_COGNITION.filter((m: any) => metaCognitionApplies(m, metaCtx)).slice(0, 6);
   for (const m of metaHits) {
     cited.push({ kind: "meta-cognition", id: m.id, label: m.label, detail: m.directive });
@@ -230,7 +236,9 @@ export async function runReasoning(body: ReasonInput): Promise<ReasoningResult> 
   if (metaHits.length > 0) {
     steps.push({
       step: "Meta-cognition activation",
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       cited: metaHits.map((m: any) => m.id),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       finding: `${metaHits.length} primitive(s) active: ${metaHits.map((m: any) => m.label).join("; ")}.`,
     });
   }
@@ -300,6 +308,7 @@ export async function runReasoning(body: ReasonInput): Promise<ReasoningResult> 
     pep,
     adverseMedia,
     typologies: {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       hits: rawTypologyHits.slice(0, 12).map((h: any) => ({
         id: h.typology.id, name: h.typology.name, family: h.typology.family,
         weight: h.typology.weight, snippet: h.snippet,
@@ -322,6 +331,7 @@ export async function runReasoning(body: ReasonInput): Promise<ReasoningResult> 
       composite: round(tComposite),
       total: round(total),
     },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     firedModeIds: [...firedModeIds].filter((id: any) => REASONING_MODES.some((m: any) => m.id === id)),
   };
 }
@@ -420,6 +430,7 @@ export function generateSteelman(result: ReasoningResult): SteelmanArgument[] {
   }
   if (result.redlines.fired.length > 0) {
     out.push({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       finding: `${result.redlines.fired.length} redline(s) fired: ${result.redlines.fired.map((r: any) => r.label).join(", ")}`,
       counterArgument:
         "Keyword bleeding — narrative contains the redline trigger string in a quoted news headline, " +
@@ -487,6 +498,7 @@ export interface ModeCoverage {
 
 export function generateModeCoverage(firedModeIds: string[]): ModeCoverage {
   const fired = firedModeIds
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .map((id: any) => REASONING_MODES.find((m: any) => m.id === id))
     .filter((m): m is NonNullable<typeof m> => m !== undefined);
   const byFaculty = new Map<string, ModeCoverage["byFaculty"][number]["modes"]>();
@@ -536,7 +548,9 @@ export function generateNarrative(input: ReasonInput, result: ReasoningResult): 
       : "(no narrative supplied — facts to be supplemented from primary records before filing)");
 
   const redFlags = [
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ...result.redlines.fired.map((r: any) => `REDLINE · ${r.label} (${r.action.toUpperCase()})`),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ...result.adverseMedia.map((a: any) => `ADVERSE MEDIA · ${a.categoryId.replace(/_/g, " ")} — keyword "${a.keyword}"`),
     ...result.typologies.hits.slice(0, 5).map((t) => `TYPOLOGY · ${t.name} (${t.family}) — "${t.snippet.slice(0, 140)}"`),
   ];
@@ -625,6 +639,7 @@ function resolveJurisdiction(input?: string): {
   const byName = jurisdictionByName(raw);
   const iso2Guess = raw.length === 2 ? raw.toUpperCase() : byName?.iso2 ?? raw.toUpperCase();
   const regimes = (() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     try { return regimesForJurisdiction(iso2Guess).map((r: any) => r.id ?? String(r)); }
     catch { return []; }
   })();

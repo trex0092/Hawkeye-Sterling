@@ -373,7 +373,7 @@ export default function EocnPage() {
 
   const liveMatches = useMemo(
     () => [...MATCHES.filter((m) => !deletedMatchIds.includes(m.id)), ...customMatches.filter((m) => !deletedMatchIds.includes(m.id))],
-    [deletedMatchIds, customMatches],
+    [MATCHES, deletedMatchIds, customMatches],
   );
 
   const pendingScreening = LIST_UPDATES.filter((u) => u.screeningStatus === "pending").length;
