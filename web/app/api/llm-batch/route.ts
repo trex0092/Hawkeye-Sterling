@@ -80,7 +80,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       model: r.model ?? DEFAULT_MODEL,
       max_tokens: r.maxTokens ?? 1024,
       system: r.system ?? DEFAULT_SYSTEM,
-      messages: [{ role: "user", content: r.userMessage }],
+      messages: [{ role: "user" as const, content: r.userMessage }],
     },
   }));
 
