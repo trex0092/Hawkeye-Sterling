@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
   try {
     const message = await client.messages.create({
       model: "claude-sonnet-4-20250514",
-      max_tokens: 1024,
+      max_tokens: 2048,
       system: SYSTEM_PROMPT,
       messages: [
         {
@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
     });
 
     const raw = message.content.find((b: { type: string; text?: string }) => b.type === "text")?.text ?? "";
-    const clean = raw.replace(/```json|```/g, "").trim();
+    const clean = raw.replace(/```json\n?|\n?```/g, "").trim();
     const result = JSON.parse(clean) as AnalysisResult;
     return NextResponse.json(result, { headers: gate.headers });
   } catch (e) {
