@@ -320,7 +320,7 @@ async function createAsanaTask(
     `Exposure    : AED ${req.exposureAED ?? "unknown"}`,
     ``,
     `AI DECISION : ${decisionLabel[decision]}`,
-    `Confidence  : ${typeof (arguments[5] as unknown) === "undefined" ? "n/a" : "see response"}`,
+    `Confidence  : ${integrity === undefined ? "n/a" : "see response"}`,
     ``,
     `SANCTIONS LISTS QUERIED`,
     ...(listsQueriedLines.length ? listsQueriedLines : ["    (none)"]),

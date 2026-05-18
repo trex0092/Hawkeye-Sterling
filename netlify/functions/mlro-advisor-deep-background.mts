@@ -22,6 +22,7 @@
 // `advisor-jobs/<jobId>` so the client (or the GET poll endpoint at
 // /api/advisor-job/[jobId]) can pick it up.
 
+import type { Config } from "@netlify/functions";
 import { getStore } from "@netlify/blobs";
 import { timingSafeEqual } from "node:crypto";
 // Compiled at build time by `tsc` at the repo root.
@@ -239,3 +240,5 @@ export default async (req: Request): Promise<Response> => {
     headers: { "content-type": "application/json" },
   });
 };
+
+export const config: Config = {};

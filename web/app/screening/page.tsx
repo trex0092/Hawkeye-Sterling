@@ -893,7 +893,7 @@ export default function ScreeningPage() {
           setNlSearchActive(true);
         }
       }
-    } catch { /* keep current state */ }
+    } catch (err) { console.warn("[hawkeye] NL search failed:", err); }
     finally { setNlSearchLoading(false); }
   }, [subjects]);
 
