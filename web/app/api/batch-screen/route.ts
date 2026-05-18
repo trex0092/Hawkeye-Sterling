@@ -40,6 +40,7 @@ function scoreToBand(score: number): string {
 import { classifyEsg } from "@/lib/data/esg";
 import { enforce } from "@/lib/server/enforce";
 import { postWebhook } from "@/lib/server/webhook";
+import { getIdempotencyKey, getIdempotent, storeIdempotent } from "@/lib/server/idempotency";
 // Optional cross-validation services (all fail-soft — no env var = no-op).
 import { checkWatchman } from "@/lib/server/watchman-client";   // moov-io/watchman
 import { checkMarble } from "@/lib/server/marble-client";       // checkmarble/marble
@@ -138,6 +139,28 @@ export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
   const gateHeaders: Record<string, string> = gate.ok ? gate.headers : {};
+
+  // D6 - idempotency-key support. If the caller passes
+  // `Idempotency-Key: <token>` and we have a prior cached response
+  // for that key, return it without re-running the screen + Asana
+  // task fanout. Prevents duplicate Asana tasks on automatic retry
+  // (RULE 12 / RULE 6 retry safety).
+  const idemKey = getIdempotencyKey(req);
+  if (idemKey) {
+    const cached = await getIdempotent(idemKey);
+    if (cached) {
+      return new NextResponse(cached.body, {
+        status: cached.status,
+        headers: {
+          ...gateHeaders,
+          "content-type": "application/json; charset=utf-8",
+          "x-idempotent-replay": "true",
+          "x-idempotent-original-request-id": cached.originalRequestId,
+          "x-idempotent-original-at": cached.at,
+        },
+      });
+    }
+  }
 
   // Load live watchlist corpus once per batch request (cached in-process).
   const CANDIDATES = await loadCandidates();
@@ -418,8 +441,25 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const latencyMs = Date.now() - t0;
   if (latencyMs > 5000) console.warn(`[batch-screen] slow response latencyMs=${latencyMs}`);
-  return NextResponse.json(
-    { ok: true, summary, results, latencyMs, ...(asanaTaskUrl ? { asanaTaskUrl } : {}) },
-    { headers: gateHeaders },
-  );
+  const responseBody = { ok: true, summary, results, latencyMs, ...(asanaTaskUrl ? { asanaTaskUrl } : {}) };
+  const responseBodyJson = JSON.stringify(responseBody);
+
+  // Persist the response under the idempotency key so retries within
+  // the 24h cache window get the same body without re-creating Asana
+  // tasks. Fire-and-forget so the original caller doesn't wait on the
+  // Blobs write.
+  if (idemKey) {
+    const requestId = req.headers.get("x-request-id") ?? "unknown";
+    void storeIdempotent(idemKey, {
+      at: new Date().toISOString(),
+      status: 200,
+      body: responseBodyJson,
+      originalRequestId: requestId,
+    }).catch(() => undefined);
+  }
+
+  return new NextResponse(responseBodyJson, {
+    status: 200,
+    headers: { ...gateHeaders, "content-type": "application/json; charset=utf-8" },
+  });
 }

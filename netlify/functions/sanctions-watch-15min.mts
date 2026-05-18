@@ -24,6 +24,11 @@ import { runIngestionAll } from "../../src/ingestion/run-all.js";
 
 const LABEL = "sanctions-watch-15min";
 
+// Cron-lock + diff-alert flow below supersedes the simple acquireCronLock
+// wrapper this branch added — main's LOCK_TTL_MS heartbeat-based lock
+// + snapshotLists/diffSnapshots covers the same dedup intent with richer
+// observability (designation changes alert webhook).
+
 const WATCHED_LIST_IDS = [
   "un_consolidated", "ofac_sdn", "ofac_cons", "eu_fsf", "uk_ofsi",
   "uae_eocn", "uae_ltl", "ca_osfi", "ch_seco", "au_dfat", "fatf",

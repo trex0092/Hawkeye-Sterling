@@ -5,7 +5,7 @@ import path from "node:path";
 import { classifyAdverseKeywords, ADVERSE_KEYWORDS } from "@/lib/data/adverse-keywords";
 import { KNOWN_PEPS, KNOWN_ADVERSE } from "@/lib/data/known-entities";
 import { getJson, isInMemoryFallback } from "@/lib/server/store";
-import { gdeltCacheStats } from "@/lib/intelligence/gdelt-cache";
+import { gdeltCacheStats, gdeltBreakerStats } from "@/lib/intelligence/gdelt-cache";
 import { isRedisConfigured } from "@/lib/cache/redis";
 import { enforce, type EnforcementAllow } from "@/lib/server/enforce";
 
@@ -1313,6 +1313,12 @@ async function _handleGet(isAdmin: boolean, gateHeaders: Record<string, string> 
   const gdeltCache = {
     ...gdeltCacheStats(),
     redisConfigured: redisAvailable,
+    // Circuit-breaker state lets operators see when GDELT is being
+    // short-circuited (OPEN) vs. probing (HALF_OPEN) vs. healthy
+    // (CLOSED). msUntilProbe shows when the next half-open probe is
+    // allowed, so on-call doesn't waste a manual refresh during the
+    // cooldown.
+    breaker: gdeltBreakerStats(),
   };
 
   // Structured service arrays required by system_status MCP tool

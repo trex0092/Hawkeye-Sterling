@@ -17,9 +17,17 @@
 // curl-based refreshes continue to work; only the crons are moved.
 
 import { SOURCE_ADAPTERS } from './index.js';
-import { getBlobsStore } from './blobs-store.js';
+import { getBlobsStore, EmptyOverwriteRefusedError } from './blobs-store.js';
 import { logIngestError } from './error-log.js';
+import { installGlobalAsyncSafetyNet } from './safe-async.js';
 import type { IngestionReport } from './types.js';
+
+// Idempotent process-level safety net: any unhandled rejection or
+// uncaught exception in this Lambda's lifetime gets a structured
+// log entry instead of an opaque Netlify-log stack trace. Every
+// `void logIngestError(...)` fire-and-forget in this module relies
+// on this net to catch rejection failures.
+installGlobalAsyncSafetyNet();
 
 // Raised from 12 s to 20 s after observing eu_fsf and ca_osfi consistently
 // timing out at 13-14 s in admin-trigger-refresh runs (webgate.ec.europa.eu
@@ -147,18 +155,40 @@ export async function runIngestionAll(label: string): Promise<IngestRunSummary> 
         }
       } catch (writeErr) {
         const msg = writeErr instanceof Error ? writeErr.message : String(writeErr);
-        console.error(
-          `[${label}] BLOB WRITE FAILED list=${adapter.id} key=${blobKey} error=${msg}`,
-        );
-        report.errors.push(`blob write failed: ${msg}`);
-        writeFailed = true;
-        void logIngestError({
-          at: new Date().toISOString(),
-          source: label,
-          adapterId: adapter.id,
-          phase: 'write',
-          message: msg,
-        });
+        // Distinguish a deliberate integrity-guard refusal from a
+        // transport failure. The refusal is the system working as
+        // intended — last-healthy snapshot preserved, regulator-grade
+        // data integrity maintained — and on-call should not respond
+        // with a "blobs storage is down" runbook.
+        if (writeErr instanceof EmptyOverwriteRefusedError) {
+          console.error(
+            `[${label}] EMPTY-WRITE REFUSED list=${adapter.id} key=${blobKey} priorEntityCount=${writeErr.priorEntityCount} (last-healthy snapshot preserved)`,
+          );
+          report.errors.push(
+            `empty-write refused: parser returned 0 entities; preserved prior snapshot (${writeErr.priorEntityCount} entities)`,
+          );
+          writeFailed = true;
+          void logIngestError({
+            at: new Date().toISOString(),
+            source: label,
+            adapterId: adapter.id,
+            phase: 'integrity-guard',
+            message: msg,
+          });
+        } else {
+          console.error(
+            `[${label}] BLOB WRITE FAILED list=${adapter.id} key=${blobKey} error=${msg}`,
+          );
+          report.errors.push(`blob write failed: ${msg}`);
+          writeFailed = true;
+          void logIngestError({
+            at: new Date().toISOString(),
+            source: label,
+            adapterId: adapter.id,
+            phase: 'write',
+            message: msg,
+          });
+        }
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);

@@ -21,8 +21,43 @@
 
 import type { NormalisedEntity, IngestionReport } from './types.js';
 
+// Sentinel thrown by `putDataset` when the feed-integrity guard refuses
+// to overwrite a non-empty snapshot with an empty one. The ingestion
+// runner catches this and surfaces it as `writeFailed` so the existing
+// alert / status pipeline lights up without confusing it with a
+// transport failure.
+export class EmptyOverwriteRefusedError extends Error {
+  readonly listId: string;
+  readonly priorEntityCount: number;
+  constructor(listId: string, priorEntityCount: number) {
+    super(
+      `feed-integrity guard: refused to overwrite ${listId}/latest.json ` +
+      `(prior entityCount=${priorEntityCount}, new entityCount=0). ` +
+      `Last healthy snapshot preserved. Investigate the upstream parser ` +
+      `before retrying.`,
+    );
+    this.name = 'EmptyOverwriteRefusedError';
+    this.listId = listId;
+    this.priorEntityCount = priorEntityCount;
+  }
+}
+
+export interface PutDatasetOptions {
+  /**
+   * Override the refuse-empty-write integrity guard. Default false.
+   * Only set this for a deliberate operator-driven reset where the
+   * intent really is to wipe a previously-healthy list.
+   */
+  allowEmpty?: boolean;
+}
+
 export interface BlobsStore {
-  putDataset: (listId: string, entities: NormalisedEntity[], report: IngestionReport) => Promise<void>;
+  putDataset: (
+    listId: string,
+    entities: NormalisedEntity[],
+    report: IngestionReport,
+    opts?: PutDatasetOptions,
+  ) => Promise<void>;
   getLatest: (listId: string) => Promise<{ entities: NormalisedEntity[]; report: IngestionReport } | null>;
   getReport: (listId: string) => Promise<IngestionReport | null>;
 }
@@ -81,7 +116,38 @@ export async function getBlobsStore(): Promise<BlobsStore> {
   const data = getStore(dataOpts);
   const reports = getStore(reportOpts);
   cached = {
-    async putDataset(listId, entities, report) {
+    async putDataset(listId, entities, report, opts) {
+      // Feed-integrity guard (RULE 12 / Mandatory Feed Integrity):
+      // refuse to overwrite a healthy snapshot with an empty parse.
+      // A zero-entity parse is almost always a parser regression, a
+      // transient upstream 5xx that produced an empty payload, or a
+      // schema drift — NEVER what the regulator-facing screening engine
+      // should match against. Preserve the last-known-good snapshot
+      // and surface the refusal as a structured error so the alert
+      // webhook fires.
+      if (entities.length === 0 && !opts?.allowEmpty) {
+        const prior = await data
+          .get(`${listId}/latest.json`, { type: 'json' })
+          .catch(() => null) as { entities?: NormalisedEntity[] } | null;
+        const priorCount = prior?.entities?.length ?? 0;
+        if (priorCount > 0) {
+          // Forensic side-channel: persist the rejected report so the
+          // dashboard + audit chain retain evidence of the refused write.
+          const rejectedKey = `${listId}/latest.rejected.json`;
+          try {
+            await reports.setJSON(rejectedKey, {
+              ...report,
+              errors: [
+                ...(report.errors ?? []),
+                `empty-overwrite refused at ${new Date().toISOString()}; priorEntityCount=${priorCount}`,
+              ],
+            });
+          } catch {
+            // Forensic write best-effort — never block the refusal on it.
+          }
+          throw new EmptyOverwriteRefusedError(listId, priorCount);
+        }
+      }
       await data.setJSON(`${listId}/latest.json`, { entities, report });
       // Mirror entity data into hawkeye-list-reports so Next.js API routes
       // (which cannot read hawkeye-lists without auto-injection) can load
@@ -103,11 +169,21 @@ export async function getBlobsStore(): Promise<BlobsStore> {
 }
 
 // In-memory fallback for dev / test — keeps the same interface without Netlify.
-function inMemoryStore(): BlobsStore {
+// Same feed-integrity guard applies so tests exercise the production
+// refusal path. Exported for test files that need a clean store without
+// Netlify Blobs creds; production code should continue to use getBlobsStore().
+export function inMemoryStore(): BlobsStore {
   const datasets = new Map<string, { entities: NormalisedEntity[]; report: IngestionReport }>();
   const reports = new Map<string, IngestionReport>();
   return {
-    async putDataset(listId, entities, report) {
+    async putDataset(listId, entities, report, opts) {
+      if (entities.length === 0 && !opts?.allowEmpty) {
+        const prior = datasets.get(listId);
+        const priorCount = prior?.entities?.length ?? 0;
+        if (priorCount > 0) {
+          throw new EmptyOverwriteRefusedError(listId, priorCount);
+        }
+      }
       datasets.set(listId, { entities, report });
       reports.set(listId, report);
     },

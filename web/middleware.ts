@@ -68,14 +68,6 @@ function generateNonce(): string {
 // `public, max-age=300, must-revalidate` so verifiers can cache the
 // signing keys per RFC. The route's setting takes precedence; routes
 // that handle dynamic auth-gated data set their own no-store.
-function generateRequestId(): string {
-  const buf = new Uint8Array(12);
-  crypto.getRandomValues(buf);
-  let hex = "";
-  for (const b of buf) hex += b.toString(16).padStart(2, "0");
-  return hex;
-}
-
 function applySecurityHeaders(response: NextResponse, isApi: boolean, requestId?: string): void {
   response.headers.set("X-Content-Type-Options", "nosniff");
   response.headers.set("X-Frame-Options", "SAMEORIGIN");
@@ -90,6 +82,23 @@ function applySecurityHeaders(response: NextResponse, isApi: boolean, requestId?
       response.headers.set("X-Request-ID", requestId);
     }
   }
+  // Reflect request-id on the response so external callers + log
+  // aggregators can correlate every request lifecycle event.
+  if (requestId) {
+    response.headers.set("x-request-id", requestId);
+  }
+}
+
+// Request-id propagation (RULE 5/9/10). Mint a fresh id when the caller
+// did not pass one. Reflect the resolved id back on the response so log
+// correlation works across the full request lifecycle. Edge runtime
+// has `crypto.randomUUID()` per WHATWG spec.
+function resolveRequestId(req: NextRequest): string {
+  const incoming = req.headers.get("x-request-id");
+  if (incoming && incoming.length > 0 && incoming.length <= 128 && /^[\x21-\x7E]+$/.test(incoming)) {
+    return incoming;
+  }
+  return crypto.randomUUID();
 }
 
 function buildCspHeader(_nonce: string): string {
@@ -165,6 +174,7 @@ function corsResponse(): NextResponse {
 
 export function middleware(req: NextRequest): NextResponse {
   const { pathname } = req.nextUrl;
+  const requestId = resolveRequestId(req);
 
   // ── CORS preflight — handle OPTIONS before any auth/redirect logic ──────
   // This single handler covers all /api/* routes so individual route files
@@ -210,11 +220,12 @@ export function middleware(req: NextRequest): NextResponse {
 
   // ── 2. API token injection (same-origin only) ─────────────────────────────
   if (pathname.startsWith("/api/") && !isPublic(pathname)) {
-    const reqId = req.headers.get("x-request-id") ?? generateRequestId();
     // External callers supply their own auth — don't override.
     if (req.headers.get("authorization") || req.headers.get("x-api-key")) {
-      const r = NextResponse.next();
-      applySecurityHeaders(r, true, reqId);
+      const requestHeaders = new Headers(req.headers);
+      requestHeaders.set("x-request-id", requestId);
+      const r = NextResponse.next({ request: { headers: requestHeaders } });
+      applySecurityHeaders(r, true, requestId);
       return r;
     }
 
@@ -240,14 +251,17 @@ export function middleware(req: NextRequest): NextResponse {
       if (isSameOrigin) {
         const requestHeaders = new Headers(req.headers);
         requestHeaders.set("authorization", `Bearer ${adminToken}`);
+        requestHeaders.set("x-request-id", requestId);
         const r = NextResponse.next({ request: { headers: requestHeaders } });
-        applySecurityHeaders(r, true, reqId);
+        applySecurityHeaders(r, true, requestId);
         return r;
       }
     }
     // Non-same-origin API call — pass through with security headers.
-    const r = NextResponse.next();
-    applySecurityHeaders(r, true, reqId);
+    const requestHeaders = new Headers(req.headers);
+    requestHeaders.set("x-request-id", requestId);
+    const r = NextResponse.next({ request: { headers: requestHeaders } });
+    applySecurityHeaders(r, true, requestId);
     return r;
   }
 
@@ -256,9 +270,11 @@ export function middleware(req: NextRequest): NextResponse {
   // abandoned because Next.js App Router injects hydration scripts that do
   // not carry a nonce, causing 17+ CSP violations that block client-side
   // navigation entirely. Use 'unsafe-inline' (consistent with netlify.toml).
-  const response = NextResponse.next();
+  const requestHeaders = new Headers(req.headers);
+  requestHeaders.set("x-request-id", requestId);
+  const response = NextResponse.next({ request: { headers: requestHeaders } });
   response.headers.set("Content-Security-Policy", buildCspHeader(""));
-  applySecurityHeaders(response, false);
+  applySecurityHeaders(response, false, requestId);
   return response;
 }
 

@@ -30,66 +30,27 @@
 // computationally infeasible. This route makes that property auditable.
 
 import { NextResponse } from "next/server";
-import { createHash, createHmac } from "node:crypto";
 import { enforce } from "@/lib/server/enforce";
 import { getJson, listKeys } from "@/lib/server/store";
+import {
+  GENESIS_HASH,
+  computeId,
+  computeSignature as expectedSignature,
+  type AuditEntry,
+  type VerificationFault,
+  type SequenceGap,
+} from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
-
-interface AuditEntry {
-  sequence: number;
-  id: string;
-  at: string;
-  actor: { role: string; name?: string };
-  action: string;
-  target: string;
-  body: Record<string, unknown>;
-  previousHash: string;
-  signature: string;
-}
 
 interface AuditHead {
   sequence: number;
   hash: string;
 }
 
-interface SequenceGap {
-  expected: number;
-  got: number;
-}
-
-interface VerificationFault {
-  sequence: number;
-  expected: string;
-  got: string;
-}
-
-const GENESIS_HASH = "0".repeat(64);
 const DEFAULT_MAX = 5_000;
-
-function sha256Hex(input: string): string {
-  return createHash("sha256").update(input).digest("hex");
-}
-
-function canonicalPayload(e: AuditEntry): string {
-  return JSON.stringify({
-    action: e.action,
-    target: e.target,
-    actor: e.actor,
-    body: e.body ?? {},
-    at: e.at,
-  });
-}
-
-function expectedSignature(e: AuditEntry, secret: string): string {
-  return createHmac("sha256", secret)
-    .update(e.previousHash)
-    .update(e.id)
-    .update(e.at)
-    .digest("hex");
-}
 
 function entryInWindow(
   e: AuditEntry,
@@ -177,7 +138,7 @@ async function handleGet(req: Request): Promise<Response> {
     }
 
     // 1. id == sha256(canonicalPayload).
-    const recomputedId = sha256Hex(canonicalPayload(e));
+    const recomputedId = computeId(e);
     if (recomputedId !== e.id) {
       invalidIds.push({
         sequence: e.sequence,

@@ -65,6 +65,135 @@ const REDIS_TTL_SECONDS = 6 * 3_600;
 // must surface within 48 h to satisfy FDL Art.19 current-data obligation.
 const STALE_OK_SECONDS = 2 * 24 * 3_600;
 
+// ─── Circuit breaker ────────────────────────────────────────────────────────
+// GDELT regularly suffers multi-minute brownouts where every request 502s or
+// hits the 20 s timeout. Without a breaker, every screening run pays the full
+// 20 s wait, then retries once for another 3 s + 20 s — three back-to-back
+// brownout calls = 60+ s of wall-clock latency before falling back to stale
+// Redis. The breaker collapses that to ~0 ms once it's tripped.
+//
+// State machine:
+//   CLOSED    — normal operation; failures increment a counter.
+//   OPEN      — N consecutive failures observed; liveFetch() is short-
+//                circuited to { serviceError: true } until COOLDOWN_MS elapses.
+//   HALF_OPEN — cooldown elapsed; the NEXT call is allowed through as a probe.
+//                Success → CLOSED, counter reset. Failure → OPEN, cooldown
+//                restarts (with mild exponential backoff capped at MAX_COOLDOWN_MS).
+//
+// State is per-Lambda. Across many warm Lambdas the breaker may be at different
+// stages, which is fine — each instance independently decides whether to probe
+// upstream. Worst case, every Lambda probes once per cooldown window; far
+// better than every request probing.
+const BREAKER_FAILURE_THRESHOLD = 5;
+const BREAKER_COOLDOWN_MS = 60_000;          // 1 minute base cooldown
+const BREAKER_MAX_COOLDOWN_MS = 10 * 60_000; // 10 minute cap on backoff
+
+type BreakerState = "closed" | "open" | "half_open";
+interface Breaker {
+  state: BreakerState;
+  consecutiveFailures: number;
+  openedAt: number;          // ms epoch when state became "open"
+  cooldownMs: number;        // current cooldown duration (grows on repeat trip)
+  consecutiveTrips: number;  // resets to 0 on a successful HALF_OPEN→CLOSED
+}
+
+const _breaker: Breaker = {
+  state: "closed",
+  consecutiveFailures: 0,
+  openedAt: 0,
+  cooldownMs: BREAKER_COOLDOWN_MS,
+  consecutiveTrips: 0,
+};
+
+/**
+ * Returns true when the caller is allowed to attempt a live upstream
+ * fetch. Side-effect: transitions OPEN → HALF_OPEN once the cooldown
+ * window has elapsed so exactly one probe is permitted per window.
+ */
+function breakerAllowsLive(): boolean {
+  if (_breaker.state === "closed") return true;
+  if (_breaker.state === "half_open") return false; // probe already in flight
+  // state === "open"
+  const elapsed = Date.now() - _breaker.openedAt;
+  if (elapsed >= _breaker.cooldownMs) {
+    _breaker.state = "half_open";
+    return true; // allow the probe through
+  }
+  return false;
+}
+
+function breakerOnSuccess(): void {
+  if (_breaker.state !== "closed") {
+    console.log(
+      `[gdelt-cache] circuit breaker → CLOSED after ${_breaker.consecutiveTrips} trip(s)`,
+    );
+  }
+  _breaker.state = "closed";
+  _breaker.consecutiveFailures = 0;
+  _breaker.openedAt = 0;
+  _breaker.cooldownMs = BREAKER_COOLDOWN_MS;
+  _breaker.consecutiveTrips = 0;
+}
+
+function breakerOnFailure(): void {
+  if (_breaker.state === "half_open") {
+    // Probe failed — re-open with exponential backoff (cap at MAX_COOLDOWN_MS).
+    _breaker.consecutiveTrips += 1;
+    _breaker.cooldownMs = Math.min(
+      _breaker.cooldownMs * 2,
+      BREAKER_MAX_COOLDOWN_MS,
+    );
+    _breaker.state = "open";
+    _breaker.openedAt = Date.now();
+    console.warn(
+      `[gdelt-cache] circuit breaker probe failed → OPEN (trip #${_breaker.consecutiveTrips}, cooldown=${_breaker.cooldownMs}ms)`,
+    );
+    return;
+  }
+  _breaker.consecutiveFailures += 1;
+  if (
+    _breaker.state === "closed" &&
+    _breaker.consecutiveFailures >= BREAKER_FAILURE_THRESHOLD
+  ) {
+    _breaker.state = "open";
+    _breaker.openedAt = Date.now();
+    _breaker.consecutiveTrips = 1;
+    console.warn(
+      `[gdelt-cache] circuit breaker tripped → OPEN after ${_breaker.consecutiveFailures} consecutive failures (cooldown=${_breaker.cooldownMs}ms)`,
+    );
+  }
+}
+
+/** Diagnostic snapshot — surfaced via `/api/integrations/status`. */
+export function gdeltBreakerStats(): {
+  state: BreakerState;
+  consecutiveFailures: number;
+  cooldownMs: number;
+  consecutiveTrips: number;
+  msUntilProbe: number | null;
+} {
+  const msUntilProbe =
+    _breaker.state === "open"
+      ? Math.max(0, _breaker.cooldownMs - (Date.now() - _breaker.openedAt))
+      : null;
+  return {
+    state: _breaker.state,
+    consecutiveFailures: _breaker.consecutiveFailures,
+    cooldownMs: _breaker.cooldownMs,
+    consecutiveTrips: _breaker.consecutiveTrips,
+    msUntilProbe,
+  };
+}
+
+/** Reset the breaker — test / admin use only. */
+export function resetGdeltBreaker(): void {
+  _breaker.state = "closed";
+  _breaker.consecutiveFailures = 0;
+  _breaker.openedAt = 0;
+  _breaker.cooldownMs = BREAKER_COOLDOWN_MS;
+  _breaker.consecutiveTrips = 0;
+}
+
 // ─── In-memory layer ────────────────────────────────────────────────────────
 
 interface MemEntry { value: Omit<GdeltCachedResult, "source" | "stale">; expiresAt: number }
@@ -243,9 +372,13 @@ async function fetchOneQuery(
         signal: ctrl.signal,
       });
       clearTimeout(timer);
-      if (res.status === 429) continue;
-      if (!res.ok) return null; // HTTP failure — distinguishable from empty results
+      if (res.status === 429) continue; // rate-limited, retry once
+      if (!res.ok) {
+        breakerOnFailure();
+        return null; // HTTP failure — distinguishable from empty results
+      }
       const data = (await res.json()) as { articles?: GdeltArticle[] };
+      breakerOnSuccess();
       return (Array.isArray(data.articles) ? data.articles : [])
         .filter((a) => a.url && a.title)
         .map((a) => ({
@@ -258,10 +391,18 @@ async function fetchOneQuery(
       clearTimeout(timer);
     }
   }
+  // Both attempts exhausted with timeout / abort — count as a failure.
+  breakerOnFailure();
   return null; // network failure
 }
 
-async function liveFetch(subjectName: string, customQuery?: string, budgetMs?: number): Promise<{ articles: GdeltArticle[]; serviceError: boolean }> {
+async function liveFetch(subjectName: string, customQuery?: string, budgetMs?: number): Promise<{ articles: GdeltArticle[]; serviceError: boolean; breakerOpen?: boolean }> {
+  // Short-circuit when the breaker is OPEN and the cooldown hasn't yet
+  // elapsed. Returns serviceError=true so fetchGdeltCached() falls into
+  // the stale-Redis recovery path without any upstream network call.
+  if (!breakerAllowsLive()) {
+    return { articles: [], serviceError: true, breakerOpen: true };
+  }
   const end = new Date();
   const start = new Date(end);
   start.setUTCFullYear(start.getUTCFullYear() - ART19_LOOKBACK_YEARS);

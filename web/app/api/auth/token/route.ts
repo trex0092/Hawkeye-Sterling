@@ -30,17 +30,24 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const check = await validateAndConsume(plaintext);
   if (!check.ok || !check.record) {
+    const isQuotaExceeded = check.reason === "quota_exceeded";
+    // Monthly quota resets at the start of the next calendar month.
+    // The exact retry timing depends on tenant config, but a coarse
+    // upper bound (24 h) gives well-behaved clients a Retry-After to
+    // honour. RULE 9: every 429 must carry Retry-After.
+    const headers: Record<string, string> = {};
+    if (isQuotaExceeded) headers["retry-after"] = String(24 * 60 * 60);
     return NextResponse.json(
       {
         ok: false,
-        error:
-          check.reason === "quota_exceeded"
-            ? "monthly quota exceeded"
-            : check.reason === "revoked"
-              ? "API key revoked"
-              : "invalid API key",
+        error: isQuotaExceeded
+          ? "monthly quota exceeded"
+          : check.reason === "revoked"
+            ? "API key revoked"
+            : "invalid API key",
+        ...(isQuotaExceeded ? { retryAfterSec: 24 * 60 * 60 } : {}),
       },
-      { status: check.reason === "quota_exceeded" ? 429 : 401 },
+      { status: isQuotaExceeded ? 429 : 401, headers },
     );
   }
 
