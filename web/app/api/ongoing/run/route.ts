@@ -19,6 +19,7 @@ type QuickScreenFn = (
 const quickScreen = _quickScreen as QuickScreenFn;
 import { getJson, listKeys, setJson } from "@/lib/server/store";
 import { postWebhook } from "@/lib/server/webhook";
+import { ESCALATION_DELTA, shouldEscalate } from "@/lib/server/ongoing-escalation";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -86,11 +87,8 @@ function nextThriceDailyRun(from: Date): Date {
   return candidates[0]!;
 }
 
-// Threshold at which a score increase between runs is considered an
-// automatic escalation. 15 / 100 points (= 0.15 in normalised terms)
-// is large enough to clear noise from feedback-loop rescoring but
-// small enough to catch a subject moving from "possible" to "strong".
-const ESCALATION_DELTA = 15;
+// ESCALATION_DELTA + shouldEscalate moved to @/lib/server/ongoing-escalation
+// so the threshold is unit-testable and can't drift silently. Imported above.
 
 function fingerprints(hits: LastHit[]): Set<string> {
   return new Set(hits.map((h) => `${h.listRef}|${h.candidateName}`));
@@ -185,7 +183,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       // webhook so the MLRO is paged rather than waiting on the next
       // four-eyes review.
       const scoreDelta = prev ? screen.topScore - prev.topScore : 0;
-      const escalated = scoreDelta >= ESCALATION_DELTA;
+      const escalated = shouldEscalate(prev?.topScore, screen.topScore);
 
       // Persist the fresh snapshot.
       const snapshot: LastSnapshot = {

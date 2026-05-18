@@ -7,7 +7,14 @@ export default defineConfig({
   test: {
     globals: false,
     environment: 'node',
-    include: ['src/**/__tests__/**/*.test.ts', 'src/**/*.test.ts'],
+    include: [
+      'src/**/__tests__/**/*.test.ts',
+      'src/**/*.test.ts',
+      // Web-tree unit tests for pure helpers (escalation policy, audit chain
+      // verifiers, etc.) that use only relative imports. Tests requiring
+      // Next.js path-alias resolution (`@/...`) cannot run from this config.
+      'web/lib/**/__tests__/**/*.test.ts',
+    ],
     passWithNoTests: true,
   },
   resolve: {
