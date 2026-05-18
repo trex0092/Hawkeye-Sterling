@@ -1,7 +1,6 @@
 // POST /api/tfs-alerts/search
 // Searches Gmail for TFS alert emails from EOCN (sanctions@eocn.gov.ae).
-// Requires GMAIL_ACCESS_TOKEN env var (Google OAuth access token with
-// gmail.readonly scope).
+// Access token is managed automatically via gmail-token.ts (auto-refresh).
 //
 // Runs three queries, deduplicates by threadId, returns new alert candidates.
 
@@ -10,6 +9,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
 import { NextResponse } from "next/server";
+import { getGmailAccessToken } from "@/lib/server/gmail-token";
 
 const GMAIL_BASE = "https://www.googleapis.com/gmail/v1/users/me";
 
@@ -124,13 +124,18 @@ export interface TFSAlertCandidate {
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
-  const token = process.env["GMAIL_ACCESS_TOKEN"] ?? process.env["GMAIL_MCP_TOKEN"] ?? "";
-
-  if (!token) {
-    return NextResponse.json(
-      { ok: false, error: "GMAIL_NOT_CONFIGURED" },
-      { status: 503 },
-    );
+  let token: string;
+  try {
+    token = await getGmailAccessToken();
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg === "GMAIL_NOT_CONFIGURED") {
+      return NextResponse.json({ ok: false, error: "GMAIL_NOT_CONFIGURED" }, { status: 503 });
+    }
+    if (msg.startsWith("GMAIL_REFRESH_FAILED")) {
+      return NextResponse.json({ ok: false, error: "GMAIL_AUTH_FAILED" }, { status: 401 });
+    }
+    return NextResponse.json({ ok: false, error: "GMAIL_AUTH_FAILED" }, { status: 401 });
   }
 
   let body: { knownThreadIds?: string[] } = {};
