@@ -1,8 +1,10 @@
 // Structural parser for UAE EOCN / Local Terrorist List XLS and XLSX files.
 //
 // The EOCN body distributes updates as email attachments in the old OLE/BIFF8
-// (.xls) format.  ExcelJS cannot read that format; this module uses SheetJS
-// (xlsx npm package) which handles both .xls and .xlsx transparently.
+// (.xls) format. ExcelJS cannot read that format; this module uses SheetJS
+// (via the maintained `@e965/xlsx` fork at 0.20.3, which carries the upstream
+// SheetJS security patches for prototype-pollution / ReDoS that the abandoned
+// `xlsx` npm package does not). Same API, supports both .xls and .xlsx.
 //
 // Document structure observed from EOCN distributions (May 2026):
 //
@@ -190,10 +192,10 @@ function parseOrgRow(row: string[], headers: string[]): EocnParsedEntity | null 
 export async function parseEocnBuffer(buf: Buffer): Promise<EocnParsedEntity[]> {
   let XLSX: XlsxModule;
   try {
-    XLSX = (await import("xlsx" as string)) as unknown as XlsxModule;
+    XLSX = (await import("@e965/xlsx" as string)) as unknown as XlsxModule;
   } catch (err) {
     throw new Error(
-      `EOCN structural parser requires the 'xlsx' npm package. ` +
+      `EOCN structural parser requires the '@e965/xlsx' npm package. ` +
       `Underlying error: ${err instanceof Error ? err.message : String(err)}`,
     );
   }
