@@ -13,6 +13,11 @@ export const maxDuration = 15;
 import { NextRequest, NextResponse } from 'next/server';
 import { getJson, setJson } from '@/lib/server/store';
 import { enforce } from '@/lib/server/enforce';
+import { writeAuditChainEntry } from '@/lib/server/audit-chain';
+import { tenantIdFromGate } from '@/lib/server/tenant';
+
+const SAFE_ID_RE = /^[a-zA-Z0-9_\-.:]+$/;
+const MAX_ID_LENGTH = 128;
 
 export type LawfulBasis =
   | 'legitimate_interest_aml'     // PDPL Art.6(c) — AML/CFT legal obligation
@@ -52,6 +57,10 @@ export async function POST(req: NextRequest) {
   if (!subjectId?.trim() || !subjectName?.trim() || !lawfulBasis || !purpose?.trim() || !recordedBy?.trim()) {
     return NextResponse.json({ error: 'subjectId, subjectName, lawfulBasis, purpose, recordedBy are required' }, { status: 400 });
   }
+  const trimmedSubjectId = subjectId.trim();
+  if (trimmedSubjectId.length > MAX_ID_LENGTH || !SAFE_ID_RE.test(trimmedSubjectId)) {
+    return NextResponse.json({ error: 'subjectId must be alphanumeric/._-: and max 128 chars' }, { status: 400 });
+  }
 
   const validBases: LawfulBasis[] = ['legitimate_interest_aml', 'legal_obligation', 'vital_interest', 'consent'];
   if (!validBases.includes(lawfulBasis)) {
@@ -70,19 +79,36 @@ export async function POST(req: NextRequest) {
   }
 
   const record: ConsentRecord = {
-    subjectId,
-    subjectName,
+    subjectId: trimmedSubjectId,
+    subjectName: subjectName.trim(),
     lawfulBasis,
-    purpose,
+    purpose: purpose.trim(),
     recordedAt: new Date().toISOString(),
-    recordedBy,
+    recordedBy: recordedBy.trim(),
     ...(rawExpiresAt ? { expiresAt: rawExpiresAt } : {}),
     legalReference: lawfulBasis === 'legal_obligation' || lawfulBasis === 'legitimate_interest_aml'
       ? 'UAE PDPL FDL 45/2021 Art.6; CBUAE AML/CFT Standards'
       : 'UAE PDPL FDL 45/2021 Art.6(a)',
   };
 
-  await setJson(consentKey(subjectId), record);
+  await setJson(consentKey(trimmedSubjectId), record);
+
+  // PDPL Art.6 — recording of lawful basis for processing PII is a
+  // compliance-significant event; must be on the tamper-evident chain.
+  void writeAuditChainEntry(
+    {
+      event: 'pdpl.consent_recorded',
+      actor: gate.keyId,
+      subjectId: trimmedSubjectId,
+      lawfulBasis,
+      recordedBy: recordedBy.trim(),
+      purpose: purpose.trim().slice(0, 256),
+    },
+    tenantIdFromGate(gate),
+  ).catch((err) =>
+    console.warn('[pdpl/consent] audit chain write failed:', err instanceof Error ? err.message : String(err)),
+  );
+
   return NextResponse.json({ ok: true, record }, { headers: gate.headers });
 }
 
@@ -90,9 +116,12 @@ export async function GET(req: NextRequest) {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
 
-  const subjectId = req.nextUrl.searchParams.get('subjectId');
-  if (!subjectId?.trim()) {
+  const subjectId = req.nextUrl.searchParams.get('subjectId')?.trim();
+  if (!subjectId) {
     return NextResponse.json({ error: 'subjectId query param required' }, { status: 400 });
+  }
+  if (subjectId.length > MAX_ID_LENGTH || !SAFE_ID_RE.test(subjectId)) {
+    return NextResponse.json({ error: 'subjectId must be alphanumeric/._-: and max 128 chars' }, { status: 400 });
   }
   const record = await getJson<ConsentRecord>(consentKey(subjectId));
   if (!record) {

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { deleteKey, revokeKey } from "@/lib/server/api-keys";
 import { adminAuth } from "@/lib/server/admin-auth";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -18,6 +19,12 @@ export async function POST(
   if (!ok) {
     return NextResponse.json({ ok: false, error: "unknown key" }, { status: 404 });
   }
+  void writeAuditChainEntry(
+    { event: "api_key.revoked", actor: "admin", keyId: id },
+    "admin",
+  ).catch((err) =>
+    console.warn("[keys/revoke] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+  );
   return NextResponse.json({ ok: true, id, revoked: true });
 }
 
@@ -30,5 +37,11 @@ export async function DELETE(
 
   const { id } = await params;
   await deleteKey(id);
+  void writeAuditChainEntry(
+    { event: "api_key.deleted", actor: "admin", keyId: id },
+    "admin",
+  ).catch((err) =>
+    console.warn("[keys/delete] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+  );
   return NextResponse.json({ ok: true, id, deleted: true });
 }

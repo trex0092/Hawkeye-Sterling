@@ -8,6 +8,8 @@ import { NextResponse } from "next/server";
 import { writeAuditEvent } from "@/lib/audit";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -119,6 +121,21 @@ export async function POST(req: Request): Promise<NextResponse> {
       "mlro",
       "cdd.ai-adequacy-check",
       `${reviews.length} subjects assessed — portfolio: ${parsed.portfolioStatus} · critical: ${(parsed.criticalSubjects ?? []).length}`,
+    );
+
+    // FDL 10/2025 Art.11 / FATF R.10 — CDD adequacy assessment is a
+    // compliance-critical event; must be on the tamper-evident chain.
+    void writeAuditChainEntry(
+      {
+        event: "cdd.adequacy_assessed",
+        actor: gate.keyId,
+        reviewCount: reviews.length,
+        portfolioStatus: parsed.portfolioStatus,
+        criticalSubjectCount: (parsed.criticalSubjects ?? []).length,
+      },
+      tenantIdFromGate(gate),
+    ).catch((err) =>
+      console.warn("[cdd-adequacy] audit chain write failed:", err instanceof Error ? err.message : String(err)),
     );
 
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });

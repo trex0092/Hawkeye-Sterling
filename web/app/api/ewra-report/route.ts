@@ -7,6 +7,8 @@ import { enforce } from "@/lib/server/enforce";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
 import { withLlmFallback } from "@/lib/server/llm-fallback";
 import { writeAuditEvent } from "@/lib/audit";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export interface EwraBoardReportResult {
   overallRisk: "critical" | "high" | "medium" | "low";
@@ -176,6 +178,21 @@ Generate the board EWRA report.`,
     },
   });
 
+  // FATF R.1 / FDL 10/2025 Art.4 — board EWRA report generation is a
+  // compliance-critical event that must appear on the tamper-evident chain.
+  void writeAuditChainEntry(
+    {
+      event: "ewra.board_report_generated",
+      actor: gate.keyId,
+      overallRisk: fallback.result.overallRisk,
+      institutionName: body.institutionName,
+      reportingPeriod: body.reportingPeriod,
+      degraded: fallback.degraded ?? false,
+    },
+    tenantIdFromGate(gate),
+  ).catch((err) =>
+    console.warn("[ewra-report] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+  );
   return NextResponse.json({
     ok: true,
     ...fallback.result,

@@ -18,6 +18,8 @@ import { getJson, setJson, del, listKeys } from '@/lib/server/store';
 import { randomBytes } from 'crypto';
 import { enforce } from '@/lib/server/enforce';
 import { adminAuth } from '@/lib/server/admin-auth';
+import { writeAuditChainEntry } from '@/lib/server/audit-chain';
+import { tenantIdFromGate } from '@/lib/server/tenant';
 
 export type ErasureStatus = 'pending' | 'approved' | 'rejected' | 'completed';
 
@@ -71,6 +73,22 @@ export async function POST(req: NextRequest) {
   };
 
   await setJson(erasureKey(requestId), request);
+
+  // PDPL Art.17 right-to-erasure requests are legally significant events —
+  // must be on the tamper-evident chain for regulatory accountability.
+  void writeAuditChainEntry(
+    {
+      event: 'pdpl.erasure_request_submitted',
+      actor: gate.keyId,
+      requestId,
+      subjectId,
+      requestedBy,
+      grounds: grounds.slice(0, 256),
+    },
+    tenantIdFromGate(gate),
+  ).catch((err) =>
+    console.warn('[pdpl/erasure] audit chain write failed:', err instanceof Error ? err.message : String(err)),
+  );
 
   return NextResponse.json({
     ok: true,
@@ -147,6 +165,22 @@ export async function PATCH(req: NextRequest) {
     reviewNotes,
   };
   await setJson(erasureKey(requestId), updated);
+
+  // PDPL Art.17 erasure decision (approve/reject) must be on the
+  // tamper-evident chain — this is a legally binding admin action.
+  void writeAuditChainEntry(
+    {
+      event: 'pdpl.erasure_decision',
+      actor: reviewedBy,
+      requestId,
+      subjectId: request.subjectId,
+      decision,
+      erasedKeyCount: erasedKeys.length,
+    },
+    'admin',
+  ).catch((err) =>
+    console.warn('[pdpl/erasure] audit chain write failed:', err instanceof Error ? err.message : String(err)),
+  );
 
   return NextResponse.json({
     ok: true,

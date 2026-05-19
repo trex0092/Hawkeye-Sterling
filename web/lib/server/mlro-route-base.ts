@@ -29,6 +29,8 @@
 import { NextResponse } from "next/server";
 import { enforce, type EnforcementAllow } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export interface MlroBuildRequest {
   system: string | Array<{ type: "text"; text: string; cache_control?: { type: "ephemeral" } | null }>;
@@ -162,6 +164,20 @@ export async function withMlroLlm<TBody, TResult>(
         console.warn(`[${opts.route}] onSuccess hook threw (non-blocking): ${hookErr instanceof Error ? hookErr.message : String(hookErr)}`);
       }
     }
+    // Cabinet Res 134/2025 Art.19 — every MLRO advisor invocation is a
+    // compliance-significant event; log centrally so no individual route
+    // can be accidentally omitted from the tamper-evident chain.
+    void writeAuditChainEntry(
+      {
+        event: "mlro.advisor_call",
+        actor: okGate.keyId,
+        route: opts.route,
+        model: reqShape.modelOverride ?? opts.model,
+      },
+      tenantIdFromGate(okGate),
+    ).catch((err) =>
+      console.warn(`[${opts.route}] audit chain write failed:`, err instanceof Error ? err.message : String(err)),
+    );
     return NextResponse.json({ ok: true, ...(parsed as Record<string, unknown>) }, { headers });
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);

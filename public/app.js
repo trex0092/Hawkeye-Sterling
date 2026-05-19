@@ -550,31 +550,6 @@ function bindAdvisor() {
 
   if (!modal || !openBtn) return;
 
-  const showModal = () => {
-    if (typeof modal.showModal === 'function') modal.showModal();
-    else modal.setAttribute('open', 'true');
-    setTimeout(() => question?.focus(), 50);
-  };
-  const hideModal = () => {
-    if (typeof modal.close === 'function') modal.close();
-    else modal.removeAttribute('open');
-  };
-
-  const setState = (s) => {
-    if (card) card.setAttribute('data-advisor-state', s);
-    if (stateEl) stateEl.textContent =
-      s === 'idle' ? 'READY' :
-      s === 'thinking' ? 'SONNET · EXECUTING' :
-      s === 'reviewing' ? 'OPUS · REVIEWING' :
-      s === 'approved' ? 'APPROVED' :
-      s === 'blocked' ? 'BLOCKED' : 'READY';
-  };
-
-  const setCoverage = (s) => {
-    if (!coverage) return;
-    coverage.querySelectorAll('li').forEach((li) => li.setAttribute('data-ok', s));
-  };
-
   openBtn.addEventListener('click', showModal);
   closeBtn?.addEventListener('click', hideModal);
   cancelBtn?.addEventListener('click', hideModal);

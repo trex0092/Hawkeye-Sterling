@@ -3,7 +3,8 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
-
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
@@ -88,6 +89,21 @@ Generate a comprehensive EWRA for this institution. Return complete EwraResult J
     if (result.productRisk && !Array.isArray(result.productRisk.keyFactors)) result.productRisk.keyFactors = [];
     if (result.geographicRisk && !Array.isArray(result.geographicRisk.keyFactors)) result.geographicRisk.keyFactors = [];
     if (result.channelRisk && !Array.isArray(result.channelRisk.keyFactors)) result.channelRisk.keyFactors = [];
+    // FATF R.1 / FDL 10/2025 Art.4 — EWRA generation is a compliance-critical
+    // event that must appear on the tamper-evident audit chain.
+    void writeAuditChainEntry(
+      {
+        event: "ewra.generated",
+        actor: gate.keyId,
+        institutionType: body.institutionType,
+        overallRisk: result.overallRisk,
+        controlEffectiveness: result.controlEffectiveness,
+        residualRisk: result.residualRisk,
+      },
+      tenantIdFromGate(gate),
+    ).catch((err) =>
+      console.warn("[ewra-generator] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+    );
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "ewra-generator temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });

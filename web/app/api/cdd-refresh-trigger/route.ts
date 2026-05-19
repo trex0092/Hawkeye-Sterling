@@ -5,6 +5,8 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export interface CddRefreshTriggerResult {
   refreshRequired: boolean;
@@ -145,6 +147,22 @@ Determine if CDD refresh is required.`,
     if (!Array.isArray(result.triggerEvents)) result.triggerEvents = [];
     if (!Array.isArray(result.fieldsToReverify)) result.fieldsToReverify = [];
     if (!Array.isArray(result.additionalDocumentsRequired)) result.additionalDocumentsRequired = [];
+    // FDL 10/2025 Art.14-15 — CDD refresh determination is a compliance
+    // event; must appear on the tamper-evident audit chain.
+    void writeAuditChainEntry(
+      {
+        event: "cdd.refresh_trigger_assessed",
+        actor: gate.keyId,
+        customerName: body.customerName,
+        currentRiskTier: result.currentRiskTier,
+        refreshRequired: result.refreshRequired,
+        urgency: result.urgency,
+        eddRequired: result.eddRequired,
+      },
+      tenantIdFromGate(gate),
+    ).catch((err) =>
+      console.warn("[cdd-refresh-trigger] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+    );
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "cdd-refresh-trigger temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
