@@ -62,6 +62,13 @@ export interface QuickScreenHit {
   // Derived from discriminator signals (DOB, nationality, phonetics).
   disambiguationConfidence?: number;
   recommendation?: 'match' | 'review' | 'dismiss';
+  // Entity-type transparency — always present so callers can distinguish
+  // a direct personal designation from an entity-association hit.
+  candidateEntityType?: EntityType;
+  // True when the subject entity type and candidate entity type differ
+  // (e.g. screening an individual whose name appears within a sanctioned
+  // organisation's record). Score is penalised; hit is labelled indirect.
+  entityTypeMismatch?: boolean;
 }
 
 export interface QuickScreenOptions {
@@ -286,6 +293,22 @@ export function quickScreen(
       if (cand.programs !== undefined) hit.programs = cand.programs;
       if (dobMatchResult !== 'none') hit.dobMatch = dobMatchResult;
       if (nationalityMatch !== undefined) hit.nationalityMatch = nationalityMatch;
+      // Entity-type transparency — always record candidate entity type so
+      // callers can distinguish direct designations from entity-association hits.
+      if (cand.entityType !== undefined) hit.candidateEntityType = cand.entityType;
+      // Entity-type mismatch penalty — applied AFTER threshold so the hit still
+      // surfaces (for MLRO review) but score is penalised to reflect the
+      // indirect nature of the match (e.g. individual named within an org record).
+      if (subject.entityType && cand.entityType && subject.entityType !== cand.entityType) {
+        const personVsOrg =
+          (subject.entityType === 'individual' && cand.entityType === 'organisation') ||
+          (subject.entityType === 'organisation' && cand.entityType === 'individual');
+        if (personVsOrg) {
+          hit.score = Math.round(hit.score * 0.6 * 1e6) / 1e6; // ×0.6, avoid float noise
+          hit.entityTypeMismatch = true;
+          hit.reason = `entity-association · ${hit.reason}`;
+        }
+      }
       if (breakdown && bestEns) {
         const seen = new Set<string>();
         const scoreMap: Partial<Record<MatchingMethod, number>> = {};
