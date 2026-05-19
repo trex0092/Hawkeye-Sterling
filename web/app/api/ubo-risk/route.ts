@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { writeAuditEvent } from "@/lib/audit";
 import { enforce } from "@/lib/server/enforce";
-
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
@@ -82,6 +83,17 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (!Array.isArray(parsed.nationalityRisks)) parsed.nationalityRisks = [];
     if (!Array.isArray(parsed.cddGaps)) parsed.cddGaps = [];
     if (!Array.isArray(parsed.recommendedActions)) parsed.recommendedActions = [];
+    void writeAuditChainEntry(
+      {
+        event: "ubo.risk_assessed",
+        actor: gate.keyId,
+        entity,
+        overallRisk: (parsed as { overallRisk?: string }).overallRisk,
+      },
+      tenantIdFromGate(gate),
+    ).catch((err) =>
+      console.warn("[ubo-risk] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+    );
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "ubo-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
