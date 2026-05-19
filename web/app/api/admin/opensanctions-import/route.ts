@@ -21,6 +21,7 @@
 //   { ok: true, count, sizeBytes, sample: { id, name, schema } }
 
 import { NextResponse } from "next/server";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -126,6 +127,19 @@ export async function POST(req: Request): Promise<NextResponse> {
     const store = mod.getStore(opts);
     // Write the validated text (already JSON-parsed once for validation).
     await store.set(BLOB_KEY, text);
+    // OpenSanctions import is a high-impact compliance operation — must be on
+    // the tamper-evident chain so data provenance is traceable.
+    void writeAuditChainEntry(
+      {
+        event: "sanctions.opensanctions_import",
+        actor: "admin",
+        count: records.length,
+        sizeBytes: text.length,
+      },
+      "admin",
+    ).catch((err) =>
+      console.warn("[admin/opensanctions-import] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+    );
     return NextResponse.json({
       ok: true,
       count: records.length,

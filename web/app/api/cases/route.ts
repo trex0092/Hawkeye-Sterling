@@ -8,6 +8,7 @@ import {
 } from "@/lib/server/case-vault";
 import { generateCaseId, CASE_ID_RE } from "@/lib/server/case-id";
 import { verifyRegulatorToken, tokenCoversScope } from "@/lib/server/regulator-jwt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import type { CaseRecord } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -192,6 +193,18 @@ async function handlePut(req: Request): Promise<NextResponse> {
     }
   }
   await saveAllCases(tenant, body.cases);
+  // Authoritative case-register replace is a high-impact operation —
+  // must be on the tamper-evident chain so any bulk modification is traceable.
+  void writeAuditChainEntry(
+    {
+      event: "cases.register_replaced",
+      actor: gate.keyId,
+      caseCount: body.cases.length,
+    },
+    tenant,
+  ).catch((err) =>
+    console.warn("[cases] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+  );
   const saved = await loadAllCases(tenant);
   return NextResponse.json(
     { ok: true, tenant, cases: saved },

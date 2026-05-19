@@ -6,6 +6,8 @@ import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
 import { loadUsers, saveUsers, appendPermissionLog, ROLE_MODULES, type UserRole } from "../_store";
 import { adminAuth } from "@/lib/server/admin-auth";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 const FALLBACK_ASSESSMENT: Record<string, string> = {
   "trading→compliance": "Upgrading from Trading to Compliance Department grants full platform access including MLRO Advisor, STR Cases, Playbook and Access Control. Verify the user's AML certification and obtain senior management approval before activation per FDL 10/2025 Art.20.",
@@ -67,6 +69,25 @@ export async function POST(req: Request) {
     reason,
   };
   await appendPermissionLog(logEntry);
+
+  // FDL 10/2025 Art.20 — role assignments are privileged access-control events;
+  // must be on the tamper-evident server-side chain.
+  const tenant = tenantIdFromGate(gate);
+  void writeAuditChainEntry(
+    {
+      event: "access.role_assigned",
+      actor: gate.keyId,
+      assignedBy,
+      userId,
+      targetUserName: user.name,
+      oldRole,
+      newRole,
+      reason,
+    },
+    tenant,
+  ).catch((err) =>
+    console.warn("[access/assign-role] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+  );
 
   // Generate AI impact assessment with prompt caching
   const apiKey = process.env["ANTHROPIC_API_KEY"];

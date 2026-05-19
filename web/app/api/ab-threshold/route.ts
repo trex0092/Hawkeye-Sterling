@@ -9,6 +9,8 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { loadCandidates } from "@/lib/server/candidates-loader";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { quickScreen as _quickScreen } from "../../../../dist/src/brain/quick-screen.js";
 import type {
   QuickScreenCandidate,
@@ -129,6 +131,19 @@ export async function POST(req: Request): Promise<NextResponse> {
       ).length;
     }
   }
+
+  void writeAuditChainEntry(
+    {
+      event: "screening.threshold_calibration",
+      actor: gate.keyId,
+      subjectCount: subjects.length,
+      thresholds,
+      armCount: arms.length,
+    },
+    tenantIdFromGate(gate),
+  ).catch((err) =>
+    console.warn("[ab-threshold] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+  );
 
   return NextResponse.json(
     { ok: true, subjectCount: subjects.length, arms, generatedAt: new Date().toISOString() },

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { issueKey, listApiKeys } from "@/lib/server/api-keys";
 import { adminAuth } from "@/lib/server/admin-auth";
 import { TIERS, type TierId } from "@/lib/data/tiers";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -62,6 +63,13 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "unknown tier" }, { status: 400 });
   }
   const issued = await issueKey({ name, email, tier });
+  // API key issuance is a privileged admin action — must be on the tamper-evident chain.
+  void writeAuditChainEntry(
+    { event: "api_key.issued", actor: "admin", keyId: issued.id, name, email, tier },
+    "admin",
+  ).catch((err) =>
+    console.warn("[keys] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+  );
   return NextResponse.json({
     ok: true,
     id: issued.id,
