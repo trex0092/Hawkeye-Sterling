@@ -248,7 +248,6 @@ export function middleware(req: NextRequest): NextResponse {
     if (adminToken) {
       const host = req.headers.get("host") ?? "";
       const origin = req.headers.get("origin");
-      const referer = req.headers.get("referer");
 
       const hostHostname = hostnameOf(host);
       // Same-origin is determined by the httpOnly session cookie only.
