@@ -305,6 +305,12 @@ export async function writeAuditChainEntry(event: AuditChainEvent, tenantId = "d
 
   // Tenant chains are stored in separate blobs for namespace isolation.
   // The "default" tenant keeps "chain.json" for backward compatibility.
+  // Reserved names ("chain") that would collide with the default blob are
+  // rejected to prevent cross-tenant data corruption.
+  if (tenantId !== "default" && tenantId === "chain") {
+    console.error("[audit-chain] tenantId 'chain' is reserved and cannot be used as a tenant identifier");
+    return false;
+  }
   const chainFile = tenantId === "default" ? "chain.json" : `${tenantId}.json`;
 
   const MAX_ATTEMPTS = 3;
