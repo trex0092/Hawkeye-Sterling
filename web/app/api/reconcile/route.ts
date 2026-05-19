@@ -57,9 +57,9 @@ async function reconcileQuery(query: ReconcileQuery): Promise<ReconcileResponse>
   const limit = Math.min(query.limit ?? 5, 10);
 
   // Extract additional properties for disambiguation
-  const dob = query.properties?.find((p) => p.pid === 'date_of_birth')?.v;
-  const nationality = query.properties?.find((p) => p.pid === 'nationality')?.v;
-  const regNo = query.properties?.find((p) => p.pid === 'registration_number')?.v;
+  const _dob = query.properties?.find((p) => p.pid === 'date_of_birth')?.v;
+  const _nationality = query.properties?.find((p) => p.pid === 'nationality')?.v;
+  const _regNo = query.properties?.find((p) => p.pid === 'registration_number')?.v;
 
   // Simulate a two-stage search+score pipeline (Yente pattern):
   // Stage 1: Fast phonetic/token expansion
