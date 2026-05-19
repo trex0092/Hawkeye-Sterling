@@ -121,7 +121,7 @@ function computeCheckpoints(
 
   const allEntityAssociation =
     screen.hits.length > 0 &&
-    screen.hits.every((h) => (h as { entityTypeMismatch?: boolean }).entityTypeMismatch === true);
+    screen.hits.every((h) => h.entityTypeMismatch === true);
   if (screen.hits.length > 0) flags.push(allEntityAssociation ? "entity-association" : "sanctions-hit");
   if (lists.some((l) => l.toLowerCase().includes("pep"))) flags.push("pep-flag");
   if (kwGroups.length > 0) flags.push("adverse-media");

@@ -148,10 +148,6 @@ const CRITICAL_LIST_IDS = new Set([
   'un_consolidated', 'un_1267', 'ofac_sdn', 'uae_eocn', 'uae_ltl',
 ]);
 
-// Informational / lower-weight lists — eligible for auto-dismissal
-const INFORMATIONAL_LIST_IDS = new Set([
-  'jp_mof', 'ca_osfi', 'au_dfat',
-]);
 
 const BUILTIN_PROFILES: Record<string, AutoResolveRule[]> = {
   conservative: [
@@ -420,8 +416,9 @@ export function quickScreen(
 
     // Per-list threshold override — allows tighter thresholds for high-signal
     // lists (e.g. OFAC SDN at 0.85) and looser for informational lists (0.78).
-    const effectiveThreshold = listThresholds[cand.listId] !== undefined
-      ? Math.max(0, Math.min(1, listThresholds[cand.listId] as number))
+    const _overrideThreshold = listThresholds[cand.listId];
+    const effectiveThreshold = _overrideThreshold !== undefined
+      ? Math.max(0, Math.min(1, _overrideThreshold))
       : threshold;
 
     if (adjScore >= effectiveThreshold) {

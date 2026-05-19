@@ -516,7 +516,10 @@ export function matchInitials(a: string, b: string): MatchScore {
       }
     }
   }
-  const score = withInitials.length === 0 ? 0 : matches / withInitials.length;
+  // Cap at 0.92 so that an exact alias match (score=1.0) always outranks an
+  // initials match against the primary name, preserving correct matchedAlias tracking.
+  const raw = withInitials.length === 0 ? 0 : matches / withInitials.length;
+  const score = raw > 0 ? Math.min(0.92, raw) : 0;
   const threshold = 0.85;
   return { method: 'jaro_winkler', score, threshold, pass: score >= threshold };
 }
@@ -553,7 +556,7 @@ const ROMAN_FAMILIES: Record<string, string> = {
   mohamed: 'muhammad', mohammed: 'muhammad', mohammad: 'muhammad',
   mohamad: 'muhammad', mohd: 'muhammad', mehmed: 'muhammad',
   mehmet: 'muhammad', muhammet: 'muhammad', mahomet: 'muhammad',
-  muhammed: 'muhammad', muhamad: 'muhammad', muhamad: 'muhammad',
+  muhammed: 'muhammad', muhamad: 'muhammad',
   // Ahmad/Ahmed variants
   ahmed: 'ahmad', ahmet: 'ahmad', ahmad: 'ahmad',
   // Hussein/Hassan variants
@@ -588,7 +591,7 @@ const ROMAN_FAMILIES: Record<string, string> = {
   // Fatima variants
   fatimah: 'fatima', fatma: 'fatima', fatemeh: 'fatima', fatme: 'fatima',
   // Aisha variants
-  ayesha: 'aisha', aicha: 'aisha', aaisha: 'aisha', aysha: 'aisha', ayesha: 'aisha',
+  ayesha: 'aisha', aicha: 'aisha', aaisha: 'aisha', aysha: 'aisha',
   // Umar variants
   omar: 'umar', omer: 'umar', umar: 'umar', amr: 'amr',
   // Said/Saeed variants
@@ -598,7 +601,7 @@ const ROMAN_FAMILIES: Record<string, string> = {
   // Ismail variants
   ismail: 'ismail', esmail: 'ismail', ismael: 'ismail', ismaeel: 'ismail',
   // Mustafa variants
-  mustafa: 'mustafa', mostafa: 'mustafa', moustafa: 'mustafa', mustafa: 'mustafa',
+  mustafa: 'mustafa', mostafa: 'mustafa', moustafa: 'mustafa',
   // Sulayman variants
   suleiman: 'sulayman', suleyman: 'sulayman', suleman: 'sulayman',
   solomon: 'sulayman', salman: 'salman',
