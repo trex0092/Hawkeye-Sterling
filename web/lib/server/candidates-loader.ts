@@ -12,6 +12,11 @@
 //
 // Results are cached in-process for CACHE_TTL_MS to avoid per-request
 // Blobs reads on high-traffic endpoints.
+//
+// Data source health:
+//   Every load produces a CandidateLoadHealth record that callers can
+//   embed in screening results so compliance analysts and audit trails
+//   can see whether a screen ran against live or static data.
 
 import type { QuickScreenCandidate } from "@/lib/api/quickScreen.types";
 import { CANDIDATES as STATIC_CANDIDATES } from "@/lib/data/candidates";
@@ -44,6 +49,57 @@ const ADAPTER_IDS = [
   "lseg_uae_ltl",
 ] as const;
 
+// Cache TTL — configurable via env for environments that refresh more
+// frequently or need immediate invalidation after a cron run.
+// Default: 5 minutes. Set CANDIDATES_CACHE_TTL_MS to override.
+function getCacheTtlMs(): number {
+  const raw = process.env["CANDIDATES_CACHE_TTL_MS"];
+  if (raw) {
+    const parsed = Number(raw);
+    if (Number.isFinite(parsed) && parsed > 0) return parsed;
+  }
+  return 5 * 60 * 1_000;
+}
+
+// Per-request Blobs read timeout. Set CANDIDATES_BLOB_TIMEOUT_MS to override.
+function getBlobTimeoutMs(): number {
+  const raw = process.env["CANDIDATES_BLOB_TIMEOUT_MS"];
+  if (raw) {
+    const parsed = Number(raw);
+    if (Number.isFinite(parsed) && parsed > 0) return parsed;
+  }
+  return 1_200;
+}
+
+/**
+ * Describes the health of the data source used for the most recent load.
+ * Callers should embed this in screening API responses so compliance
+ * analysts can see whether a screen ran against live or stale/static data.
+ */
+export interface CandidateLoadHealth {
+  /** "live" = loaded from Netlify Blobs; "static" = fell back to seed corpus. */
+  source: "live" | "static";
+  /** ISO-8601 timestamp of when the candidates were loaded. */
+  loadedAt: string;
+  /** Total candidate count available for matching. */
+  candidateCount: number;
+  /**
+   * True only when source === "live" AND all primary adapters responded.
+   * False when any primary feed timed out, errored, or returned no entities.
+   */
+  healthy: boolean;
+  /**
+   * Adapters that failed to load (timed out, errored, or empty).
+   * Empty when source === "live" and all adapters succeeded.
+   */
+  failedAdapters: string[];
+  /**
+   * Human-readable degradation note. Present whenever healthy === false or
+   * source === "static". Callers MUST surface this to analysts and audit logs.
+   */
+  degradationNote?: string;
+}
+
 // Ingestion NormalisedEntity shape (mirrors src/ingestion/types.ts without
 // importing across the web/ boundary — avoids bundling the full ingestion
 // module into Netlify Functions).
@@ -71,7 +127,25 @@ function mapType(t: string): EntityType {
   if (t === "entity") return "organisation";
   if (t === "vessel") return "vessel";
   if (t === "aircraft") return "aircraft";
+  if (t !== "wallet" && t !== "unknown" && t !== "other") {
+    // Log unexpected type strings — they indicate schema drift in the ingestion
+    // pipeline. Do not throw; map to "other" so screening can still run.
+    console.warn(`[candidates-loader] Unmapped entity type "${t}" — defaulting to "other". Check ingestion pipeline for schema drift.`);
+  }
   return "other";
+}
+
+function isValidEntity(e: unknown): e is NormalisedEntity {
+  if (!e || typeof e !== "object") return false;
+  const obj = e as Record<string, unknown>;
+  return (
+    typeof obj["id"] === "string" &&
+    typeof obj["name"] === "string" &&
+    obj["name"].length > 0 &&
+    Array.isArray(obj["aliases"]) &&
+    Array.isArray(obj["listings"]) &&
+    typeof obj["source"] === "string"
+  );
 }
 
 function entityToCandidate(e: NormalisedEntity): QuickScreenCandidate {
@@ -83,7 +157,8 @@ function entityToCandidate(e: NormalisedEntity): QuickScreenCandidate {
   const primaryListing = e.listings[0];
   const listId = primaryListing?.source ?? e.source;
   const listRef = primaryListing?.reference ?? e.id;
-  const jurisdiction = e.nationalities[0] ?? e.jurisdictions[0];
+  const nationality = Array.isArray(e.nationalities) ? e.nationalities[0] : undefined;
+  const jurisdiction = nationality ?? (Array.isArray(e.jurisdictions) ? e.jurisdictions[0] : undefined);
 
   const candidate: QuickScreenCandidate = {
     listId,
@@ -91,7 +166,7 @@ function entityToCandidate(e: NormalisedEntity): QuickScreenCandidate {
     name: e.name,
     entityType: mapType(e.type),
   };
-  if (e.aliases.length > 0) candidate.aliases = e.aliases;
+  if (Array.isArray(e.aliases) && e.aliases.length > 0) candidate.aliases = e.aliases;
   if (jurisdiction) candidate.jurisdiction = jurisdiction;
   if (programs.length > 0) candidate.programs = programs;
   return candidate;
@@ -100,15 +175,22 @@ function entityToCandidate(e: NormalisedEntity): QuickScreenCandidate {
 // Per-process cache.
 let _cached: QuickScreenCandidate[] | null = null;
 let _cachedAt = 0;
-const CACHE_TTL_MS = 5 * 60 * 1_000; // 5 minutes
+let _cachedHealth: CandidateLoadHealth | null = null;
 // In-flight promise deduplication — prevents cache stampede on first cold load.
-let _loadInFlight: Promise<QuickScreenCandidate[]> | null = null;
+let _loadInFlight: Promise<{ candidates: QuickScreenCandidate[]; health: CandidateLoadHealth }> | null = null;
 
-async function loadFromBlobs(): Promise<QuickScreenCandidate[] | null> {
+interface BlobsLoadResult {
+  candidates: QuickScreenCandidate[];
+  failedAdapters: string[];
+  malformedCount: number;
+}
+
+async function loadFromBlobs(): Promise<BlobsLoadResult | null> {
   let blobsMod: typeof import("@netlify/blobs") | null = null;
   try {
     blobsMod = await import("@netlify/blobs");
   } catch {
+    console.warn("[candidates-loader] @netlify/blobs not available — not in a Netlify context");
     return null; // not in a Netlify context
   }
 
@@ -139,99 +221,205 @@ async function loadFromBlobs(): Promise<QuickScreenCandidate[] | null> {
   try {
     storeReports = makeStore("hawkeye-list-reports");
     storeLists   = makeStore("hawkeye-lists");
-  } catch {
+  } catch (err) {
+    console.error("[candidates-loader] Failed to open Blobs stores:", err instanceof Error ? err.message : String(err));
     return null;
   }
 
   // Read all adapter blobs in parallel — try hawkeye-list-reports first,
   // fall back to hawkeye-lists per adapter if no entity data found.
-  const PER_KEY_TIMEOUT_MS = 1_200;
-  const results = await Promise.all(
-    ADAPTER_IDS.map(async (adapterId) => {
+  const perKeyTimeoutMs = getBlobTimeoutMs();
+  const adapterResults = await Promise.all(
+    ADAPTER_IDS.map(async (adapterId): Promise<{ adapterId: string; entities: NormalisedEntity[] | null; error?: string }> => {
       const key = `${adapterId}/latest.json`;
-      for (const store of [storeReports, storeLists]) {
+      for (const [storeIdx, store] of ([storeReports, storeLists] as const).entries()) {
         try {
           const raw = await Promise.race([
             store.get(key, { type: "json" }) as Promise<{ entities: NormalisedEntity[] } | null>,
-            new Promise<null>((_, reject) => setTimeout(() => reject(new Error("blob read timeout")), PER_KEY_TIMEOUT_MS)),
+            new Promise<null>((_, reject) =>
+              setTimeout(() => reject(new Error(`blob read timeout after ${perKeyTimeoutMs}ms`)), perKeyTimeoutMs),
+            ),
           ]);
-          if (raw?.entities?.length) return raw.entities;
-        } catch { /* try next store */ }
+          if (raw?.entities?.length) {
+            return { adapterId, entities: raw.entities };
+          }
+          // null or empty — try next store
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          // Log the error from the first (primary) store for observability but
+          // still try the fallback store before marking this adapter failed.
+          if (storeIdx === 0) {
+            console.warn(`[candidates-loader] Blobs read failed adapterId=${adapterId} store=hawkeye-list-reports key=${key}: ${msg}`);
+          }
+        }
       }
-      return null;
+      // Both stores failed or returned empty for this adapter.
+      return { adapterId, entities: null, error: `no entities found in either store for ${adapterId}` };
     }),
   );
 
   const live: QuickScreenCandidate[] = [];
+  const failedAdapters: string[] = [];
   let anyLoaded = false;
   let totalMalformed = 0;
-  for (const entities of results) {
-    if (!entities?.length) continue;
+
+  for (const result of adapterResults) {
+    if (!result.entities?.length) {
+      // Only count primary adapters (non-LSEG) as failures for health reporting.
+      // LSEG supplements are optional and only present after import-cfs.
+      if (!result.adapterId.startsWith("lseg_")) {
+        failedAdapters.push(result.adapterId);
+      }
+      continue;
+    }
     anyLoaded = true;
-    for (const e of entities) {
-      try { live.push(entityToCandidate(e)); } catch { totalMalformed++; }
+    for (const e of result.entities) {
+      if (!isValidEntity(e)) {
+        totalMalformed++;
+        continue;
+      }
+      try {
+        live.push(entityToCandidate(e));
+      } catch (err) {
+        totalMalformed++;
+        console.warn(
+          `[candidates-loader] entityToCandidate failed adapterId=${result.adapterId}: ` +
+          (err instanceof Error ? err.message : String(err)),
+        );
+      }
     }
   }
+
   if (totalMalformed > 0) {
-    console.warn(`[candidates-loader] Skipped ${totalMalformed} malformed entities — screening corpus is incomplete`);
+    console.warn(
+      `[candidates-loader] Skipped ${totalMalformed} malformed entities across all adapters. ` +
+      "Screening corpus is incomplete. Check ingestion pipeline for schema drift.",
+    );
   }
 
-  return anyLoaded ? live : null;
+  if (failedAdapters.length > 0) {
+    console.warn(
+      `[candidates-loader] ${failedAdapters.length} primary adapter(s) produced no data: ` +
+      failedAdapters.join(", ") +
+      ". These lists are NOT covered in the current screening corpus.",
+    );
+  }
+
+  return anyLoaded ? { candidates: live, failedAdapters, malformedCount: totalMalformed } : null;
 }
 
 /**
- * Returns the best available candidate list for screening.
+ * Returns the best available candidate list for screening, along with health metadata.
  *
  * Priority: live Blobs data → static seed corpus.
  * Merges both: live list entries take precedence; seed corpus entries not
  * present in the live data are appended so known demo subjects always render.
  */
-export async function loadCandidates(): Promise<QuickScreenCandidate[]> {
+export async function loadCandidatesWithHealth(): Promise<{ candidates: QuickScreenCandidate[]; health: CandidateLoadHealth }> {
   const now = Date.now();
-  if (_cached && now - _cachedAt < CACHE_TTL_MS) return _cached;
+  const cacheTtlMs = getCacheTtlMs();
+  if (_cached && _cachedHealth && now - _cachedAt < cacheTtlMs) {
+    return { candidates: _cached, health: _cachedHealth };
+  }
   if (_loadInFlight) return _loadInFlight;
 
   _loadInFlight = _doLoad().finally(() => { _loadInFlight = null; });
   return _loadInFlight;
 }
 
-async function _doLoad(): Promise<QuickScreenCandidate[]> {
-  const now = Date.now();
-  try {
-    const live = await loadFromBlobs();
+/** Returns the candidate list only (backwards-compatible wrapper). */
+export async function loadCandidates(): Promise<QuickScreenCandidate[]> {
+  const { candidates } = await loadCandidatesWithHealth();
+  return candidates;
+}
 
-    if (!live || live.length === 0) {
+/** Returns the most recently loaded health status without triggering a reload. */
+export function getCandidateLoadHealth(): CandidateLoadHealth | null {
+  return _cachedHealth;
+}
+
+async function _doLoad(): Promise<{ candidates: QuickScreenCandidate[]; health: CandidateLoadHealth }> {
+  const now = Date.now();
+  const loadedAt = new Date(now).toISOString();
+
+  try {
+    const blobsResult = await loadFromBlobs();
+
+    if (!blobsResult || blobsResult.candidates.length === 0) {
       // Blobs not yet populated (fresh deploy, cron hasn't run) or load failed.
       // Log prominently — using the static seed corpus means real OFAC/UN/EU/UAE
       // designees added after the last build will NOT be screened.
-      console.warn(
-        "[candidates-loader] Live sanctions lists unavailable — screening against static seed corpus " +
-        `(${STATIC_CANDIDATES.length} entries). Newly designated entities since last build will NOT be matched. ` +
-        "Ensure refresh-lists cron has run and Netlify Blobs is bound.",
-      );
+      const degradationNote =
+        "Live sanctions lists unavailable — screening against static seed corpus " +
+        `(${STATIC_CANDIDATES.length} entries). Entities designated since last build will NOT be matched. ` +
+        "Ensure refresh-lists cron has run and Netlify Blobs is bound.";
+      console.warn(`[candidates-loader] ${degradationNote}`);
+
+      const health: CandidateLoadHealth = {
+        source: "static",
+        loadedAt,
+        candidateCount: STATIC_CANDIDATES.length,
+        healthy: false,
+        failedAdapters: [...ADAPTER_IDS].filter((id) => !id.startsWith("lseg_")),
+        degradationNote,
+      };
       _cached = STATIC_CANDIDATES;
       _cachedAt = now;
-      return _cached;
+      _cachedHealth = health;
+      return { candidates: _cached, health };
     }
 
     // Append static seed entries not already covered by the live data.
-    const liveKeys = new Set(live.map((c) => `${c.listId}|${c.listRef}`));
+    const liveKeys = new Set(blobsResult.candidates.map((c) => `${c.listId}|${c.listRef}`));
     const extras = STATIC_CANDIDATES.filter(
       (c) => !liveKeys.has(`${c.listId}|${c.listRef}`),
     );
 
-    _cached = [...live, ...extras];
+    const merged = [...blobsResult.candidates, ...extras];
+    const isFullyHealthy = blobsResult.failedAdapters.length === 0 && blobsResult.malformedCount === 0;
+
+    const health: CandidateLoadHealth = {
+      source: "live",
+      loadedAt,
+      candidateCount: merged.length,
+      healthy: isFullyHealthy,
+      failedAdapters: blobsResult.failedAdapters,
+      ...(isFullyHealthy
+        ? {}
+        : {
+            degradationNote:
+              blobsResult.failedAdapters.length > 0
+                ? `${blobsResult.failedAdapters.length} primary feed(s) missing: ${blobsResult.failedAdapters.join(", ")}. Coverage is degraded.`
+                : `${blobsResult.malformedCount} malformed entities skipped. Corpus may be incomplete.`,
+          }),
+    };
+
+    _cached = merged;
     _cachedAt = now;
-    return _cached;
+    _cachedHealth = health;
+    return { candidates: merged, health };
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);
     const staleSec = _cachedAt > 0 ? Math.round((Date.now() - _cachedAt) / 1000) : null;
-    console.error(
-      `[candidates-loader] Unexpected error loading candidates: ${detail}. ` +
-      `Returning static seed corpus (${STATIC_CANDIDATES.length} entries). ` +
-      (staleSec !== null ? `Cache is ${staleSec}s old.` : "Cache was never populated."),
-    );
-    return STATIC_CANDIDATES;
+    const degradationNote =
+      `Unexpected error loading candidates: ${detail}. ` +
+      `Falling back to static seed corpus (${STATIC_CANDIDATES.length} entries). ` +
+      (staleSec !== null ? `Cache was ${staleSec}s old.` : "Cache was never populated.");
+
+    console.error(`[candidates-loader] ${degradationNote}`);
+
+    const health: CandidateLoadHealth = {
+      source: "static",
+      loadedAt,
+      candidateCount: STATIC_CANDIDATES.length,
+      healthy: false,
+      failedAdapters: [...ADAPTER_IDS].filter((id) => !id.startsWith("lseg_")),
+      degradationNote,
+    };
+    _cached = STATIC_CANDIDATES;
+    _cachedAt = Date.now();
+    _cachedHealth = health;
+    return { candidates: STATIC_CANDIDATES, health };
   }
 }
 
@@ -239,8 +427,11 @@ async function _doLoad(): Promise<QuickScreenCandidate[]> {
 export function invalidateCandidateCache(): void {
   _cached = null;
   _cachedAt = 0;
+  _cachedHealth = null;
 }
 
 // Eagerly start loading on module import so the first real request hits a warm
 // cache instead of waiting for the full Blobs fetch inline.
-void loadCandidates().catch(() => {/* silent — cache will load on first real request */});
+void loadCandidatesWithHealth().catch((err) => {
+  console.warn("[candidates-loader] Eager pre-load failed:", err instanceof Error ? err.message : String(err));
+});
