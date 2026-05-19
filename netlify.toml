@@ -12,15 +12,13 @@
   # Step markers (>>> HS-STEP-N) make the failing step instantly findable
   # in the Netlify deploy log. Whichever marker is the LAST printed before
   # exit identifies the step that failed. Each step's exit code is also
-  # echoed so a non-zero from a piped command is visible. `set -o pipefail`
-  # ensures pipe failures (not just final command) propagate.
-  # HS-STEP-1 uses `npm install` (not `npm ci`) so that adding/removing
-  # a root-only dep — most notably the optional `exceljs` for the
-  # XLSX-format sanctions adapters (UAE EOCN / AU DFAT / JP MOF) — does
-  # NOT require committing a regenerated package-lock.json. Trade-off
-  # accepted: builds may pull slightly different transitive versions
-  # between deploys. The Next.js step (HS-STEP-4) keeps `npm ci` for
-  # the web tree where reproducibility matters more.
+  # echoed so a non-zero from a piped command is visible. `set -euo pipefail`
+  # ensures any unset variable or pipe failure propagates.
+  # Both HS-STEP-1 (root) and HS-STEP-4 (web/) use `npm ci` for fully
+  # reproducible builds against the committed package-lock.json. Previous
+  # use of `npm install` caused non-deterministic ERESOLVE failures (same
+  # commit succeeded then failed minutes later as npm resolved different
+  # transitive dep versions). Switch to `npm ci` verified 2026-05-18.
   command = "bash scripts/build.sh"
   publish = "web/.next"
 
@@ -36,6 +34,12 @@
   # build-agent ceiling and gives webpack room to grow further before
   # we have to do another bundle-shrink pass.
   NODE_OPTIONS = "--max-old-space-size=8192"
+  # Disable Next.js telemetry in the build agent. Without this, next build
+  # attempts a network call to telemetry.nextjs.org on every compilation;
+  # if the Netlify build agent's outbound network is slow or the endpoint
+  # is unreachable, the call blocks for several seconds and can contribute
+  # to timeout-related build failures (exit code 4).
+  NEXT_TELEMETRY_DISABLED = "1"
   # NEXT_PUBLIC_COMMIT_SHA is injected via the build command (NEXT_PUBLIC_COMMIT_SHA=$COMMIT_REF npm run build)
   # because TOML [build.environment] values are NOT shell-expanded — "$COMMIT_REF" would be
   # stored as the literal 7-char string, making .slice(0,7) return "$COMMIT".
