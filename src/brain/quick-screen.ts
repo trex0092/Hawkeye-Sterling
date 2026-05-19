@@ -350,10 +350,21 @@ export function quickScreen(
           bestScore = ens.best.score;
           bestMethod = ens.best.method;
           bestAlias = cn === cand.name ? undefined : cn;
-          phonetic = ens.phoneticAgreement;
+          // Accumulate phonetic agreement across comparisons: once a phonetically
+          // related pair is found, retain that signal even if the final best-scoring
+          // pair (e.g. an initials expansion) doesn't itself pass Soundex/Metaphone.
+          phonetic = phonetic || ens.phoneticAgreement;
           bestEns = ens;
-        } else if (ens.best.score === bestScore && ens.phoneticAgreement) {
-          phonetic = true;
+        } else if (ens.best.score === bestScore) {
+          if (ens.phoneticAgreement) phonetic = true;
+          // On a score tie, prefer alias names over the primary candidate name so
+          // that matchedAlias is set when the subject input directly matches a listed
+          // alias (e.g. 'D. Volkov' → alias 'D. Volkov' rather than staying undefined
+          // because initials expansion also scored 1.0 against the primary name).
+          // Among aliases, the 'exact' method is authoritative and wins any tie.
+          if (cn !== cand.name && (bestAlias === undefined || ens.best.method === 'exact')) {
+            bestAlias = cn;
+          }
         }
       }
     }
