@@ -131,7 +131,7 @@ jobs:
       - name: Web typecheck
         run: cd web && npm run typecheck
       - name: ESLint (root)
-        run: npx eslint src/ --max-warnings=0 || true
+        run: npx eslint src/ --max-warnings=0
 
   nextjs-build:
     runs-on: ubuntu-latest
