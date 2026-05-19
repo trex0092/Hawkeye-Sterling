@@ -7,6 +7,7 @@ import { randomBytes } from "node:crypto";
 import { loadUsers, saveUsers, appendPermissionLog, ROLE_MODULES, type UserRole } from "../_store";
 import { generateSalt, hashPassword } from "@/lib/server/auth";
 import { adminAuth } from "@/lib/server/admin-auth";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export async function POST(req: Request) {
   const deny = adminAuth(req);
@@ -70,6 +71,22 @@ export async function POST(req: Request) {
     reason: `User account created with ${role} role. Login: ${derivedUsername}`,
   };
   await appendPermissionLog(logEntry);
+
+  // FDL 10/2025 Art.20 — user creation is a privileged access-control event;
+  // must be on the tamper-evident server-side chain.
+  void writeAuditChainEntry(
+    {
+      event: "access.user_added",
+      actor: addedBy,
+      newUserId: id,
+      targetUserName: name.trim(),
+      email: emailLower,
+      role,
+    },
+    "admin",
+  ).catch((err) =>
+    console.warn("[access/add-user] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+  );
 
   // Return user without exposing hash/salt to the client
   const { passwordHash: _h, passwordSalt: _s, ...safeUser } = newUser;

@@ -24,6 +24,8 @@ import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { invalidateCandidateCache } from "@/lib/server/candidates-loader";
 import { parseEocnBuffer } from "@/lib/server/eocn-parser";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -447,6 +449,24 @@ export async function POST(req: Request): Promise<NextResponse> {
     parseMethod,
     warnings,
   };
+
+  // Sanctions list ingest is a high-impact compliance operation (UAE EOCN/LTL);
+  // must be on the tamper-evident chain per FDL 10/2025 Art.15.
+  void writeAuditChainEntry(
+    {
+      event: "sanctions.eocn_ingest",
+      actor: gate.keyId,
+      listId,
+      entitiesExtracted: entities.length,
+      entitiesWritten: result.entitiesWritten,
+      parseMethod,
+      fileName,
+      fileBytes,
+    },
+    tenantIdFromGate(gate),
+  ).catch((err) =>
+    console.warn("[admin/eocn-ingest] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+  );
 
   return NextResponse.json(result, { headers: gate.headers });
 }

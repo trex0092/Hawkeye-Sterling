@@ -17,6 +17,7 @@
 import { NextResponse } from "next/server";
 import { withGuard, type RequestContext } from "@/lib/server/guard";
 import { invalidateCandidateCache } from "@/lib/server/candidates-loader";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -26,7 +27,7 @@ export const maxDuration = 60;
 
 async function handleRefreshSanctions(
   _req: Request,
-  _ctx: RequestContext,
+  ctx: RequestContext,
 ): Promise<NextResponse> {
   const triggeredAt = new Date().toISOString();
 
@@ -67,6 +68,19 @@ async function handleRefreshSanctions(
   // Invalidate the in-process candidate cache so subsequent screening requests
   // pick up the freshly ingested data without waiting for the TTL to expire.
   invalidateCandidateCache();
+
+  // Manual sanctions refresh is a high-impact admin operation — must be on
+  // the tamper-evident chain so any list modification is traceable.
+  void writeAuditChainEntry(
+    {
+      event: "sanctions.refresh_triggered",
+      actor: ctx.apiKey.id,
+      triggeredAt,
+    },
+    ctx.tenantId,
+  ).catch((err) =>
+    console.warn("[admin/refresh-sanctions] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+  );
 
   return NextResponse.json(
     {

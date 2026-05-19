@@ -26,6 +26,7 @@ import { NextResponse } from "next/server";
 import { adminAuth } from "@/lib/server/admin-auth";
 import { setJson } from "@/lib/server/store";
 import { issueRegulatorToken, tokenFingerprint } from "@/lib/server/regulator-jwt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -114,6 +115,24 @@ export async function POST(req: Request): Promise<NextResponse> {
     fingerprint,
     issuedAt: new Date().toISOString(),
   });
+
+  // Regulator token issuance is a privileged admin action that grants
+  // external read access — must be on the tamper-evident chain (FDL Art.20).
+  void writeAuditChainEntry(
+    {
+      event: "regulator_token.issued",
+      actor: issuedBy,
+      examinerId,
+      jti: issued.claims.jti,
+      fingerprint,
+      tenants,
+      cases,
+      exp: issued.claims.exp,
+    },
+    "admin",
+  ).catch((err) =>
+    console.warn("[admin/issue-regulator-token] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+  );
 
   return NextResponse.json({
     ok: true,

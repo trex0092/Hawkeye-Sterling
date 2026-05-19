@@ -5,6 +5,7 @@ export const maxDuration = 30;
 import { NextResponse } from "next/server";
 import { loadUsers, saveUsers, appendPermissionLog } from "../_store";
 import { adminAuth } from "@/lib/server/admin-auth";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export async function POST(req: Request) {
   const deny = adminAuth(req);
@@ -44,6 +45,21 @@ export async function POST(req: Request) {
     reason,
   };
   await appendPermissionLog(logEntry);
+
+  // FDL 10/2025 Art.20 — session revocation is a privileged access-control event;
+  // must be on the tamper-evident server-side chain.
+  void writeAuditChainEntry(
+    {
+      event: "access.session_revoked",
+      actor: revokedBy,
+      userId,
+      targetUserName: user.name,
+      reason,
+    },
+    "admin",
+  ).catch((err) =>
+    console.warn("[access/revoke-session] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+  );
 
   return NextResponse.json({ ok: true, user: updatedUsers[userIdx], logEntry });
 }

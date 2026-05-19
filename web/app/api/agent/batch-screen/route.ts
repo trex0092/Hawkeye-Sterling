@@ -19,6 +19,8 @@ import { quickScreen } from "../../../../../dist/src/brain/quick-screen.js";
 import { evaluateRedlines } from "../../../../../dist/src/brain/redlines.js";
 import { detectCrossRegimeConflict, type RegimeStatus } from "../../../../../dist/src/brain/cross-regime-conflict.js";
 import { loadCandidates } from "@/lib/server/candidates-loader";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -163,6 +165,25 @@ async function handlePost(req: Request): Promise<NextResponse> {
     }),
   );
 
+  const totalMs = Date.now() - startedAt;
+  // Charter P9 — batch-screen results are auditable verdicts; must be on the
+  // tamper-evident chain so any bulk screening run is traceable.
+  void writeAuditChainEntry(
+    {
+      event: "screening.batch_completed",
+      actor: gate.keyId,
+      mode,
+      total: body.subjects.length,
+      processed: results.length,
+      successCount: results.filter((r) => r.ok).length,
+      errorCount: results.filter((r) => !r.ok).length,
+      totalMs,
+    },
+    tenantIdFromGate(gate),
+  ).catch((err) =>
+    console.warn("[agent/batch-screen] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+  );
+
   return NextResponse.json(
     {
       ok: true,
@@ -170,7 +191,7 @@ async function handlePost(req: Request): Promise<NextResponse> {
       total: body.subjects.length,
       processed: results.length,
       results,
-      totalMs: Date.now() - startedAt,
+      totalMs,
     },
     { headers: gateHeaders },
   );
