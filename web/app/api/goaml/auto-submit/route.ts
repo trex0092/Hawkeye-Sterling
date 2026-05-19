@@ -29,6 +29,8 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { tenantIdFromGate } from "@/lib/server/tenant";
+import { findSubmittedBySha256, recordSubmittedSha256 } from "@/lib/server/goaml-vault";
 import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 
 export const runtime = "nodejs";
@@ -147,6 +149,25 @@ async function handlePost(req: Request): Promise<NextResponse> {
     );
   }
 
+  // Idempotency guard — prevent duplicate live submissions to the UAE FIU gateway.
+  // If this exact XML was already submitted and accepted, return the original ref.
+  const tenant = tenantIdFromGate(gate);
+  const existingRef = await findSubmittedBySha256(tenant, draftSha256).catch(() => null);
+  if (existingRef) {
+    console.warn(`[goaml/auto-submit] duplicate live submission blocked — sha256 already recorded as ${existingRef}`);
+    return NextResponse.json(
+      {
+        ok: false,
+        error: "duplicate_submission",
+        detail: "This exact XML envelope was already submitted live. Use the existing submission reference.",
+        existingSubmissionRef: existingRef,
+        draftSha256,
+        twoEyesVerified,
+      },
+      { status: 409, headers: gateHeaders },
+    );
+  }
+
   const endpoint = process.env[GOAML_ENDPOINT_ENV];
   const apiKey = process.env[GOAML_API_KEY_ENV];
   if (!endpoint || !apiKey) {
@@ -174,6 +195,10 @@ async function handlePost(req: Request): Promise<NextResponse> {
       console.error("[goaml/auto-submit] upstream rejected submission:", upstream.status, upstreamText.slice(0, 500));
     } else {
       console.info("[goaml/auto-submit] submission accepted:", upstream.status);
+      // Record the sha256 so retries are blocked (best-effort: don't fail the response if this write fails).
+      await recordSubmittedSha256(tenant, draftSha256, submissionRef).catch((err) =>
+        console.warn("[goaml/auto-submit] sha256 idempotency record write failed:", err instanceof Error ? err.message : String(err)),
+      );
     }
     return NextResponse.json(
       {
