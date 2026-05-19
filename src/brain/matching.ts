@@ -553,7 +553,7 @@ const ROMAN_FAMILIES: Record<string, string> = {
   mohamed: 'muhammad', mohammed: 'muhammad', mohammad: 'muhammad',
   mohamad: 'muhammad', mohd: 'muhammad', mehmed: 'muhammad',
   mehmet: 'muhammad', muhammet: 'muhammad', mahomet: 'muhammad',
-  muhammed: 'muhammad', muhamad: 'muhammad', muhamad: 'muhammad',
+  muhammed: 'muhammad', muhamad: 'muhammad',
   // Ahmad/Ahmed variants
   ahmed: 'ahmad', ahmet: 'ahmad', ahmad: 'ahmad',
   // Hussein/Hassan variants
