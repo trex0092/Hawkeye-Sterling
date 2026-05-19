@@ -1,17 +1,12 @@
 // Hawkeye Sterling — GDELT pre-warming scheduled function.
 //
-// Runs every 6 hours and pre-fetches GDELT adverse-media articles for a
-// configured list of active watchlist subjects, storing results in the
-// `gdelt-cache` Netlify Blobs store under keys `gdelt:{subjectName}`.
+// Runs every 6 hours. Pulls active subjects from MoonDB (status=active,
+// sorted by risk_score DESC) and pre-fetches GDELT adverse-media articles
+// for each one, storing results in the `gdelt-cache` Netlify Blobs store
+// under keys `gdelt:{subjectName}`.
 //
 // The /api/adverse-media route reads from Blobs first and skips the live
-// GDELT call entirely — eliminating the 8 000+ ms synchronous latency that
-// previously blocked every user-facing screening request.
-//
-// HOW TO POPULATE SUBJECTS:
-//   Replace the empty SUBJECTS array below with the names of entities in
-//   your active watchlist. You can generate this list dynamically by
-//   querying your database, or hardcode it for a fixed set of subjects.
+// GDELT call entirely — eliminating the 8 000+ ms synchronous latency.
 //
 // Schedule: every 6 hours ("0 */6 * * *").
 
@@ -24,9 +19,59 @@ const FETCH_TIMEOUT_MS = 25_000;
 const GDELT_MAX_RECORDS = 250;
 const ART19_LOOKBACK_YEARS = 10;
 
-// TODO: populate with active watchlist subjects from your database.
-// Example: const SUBJECTS = ["John Smith", "Acme Corp Ltd", "Jane Doe"];
-const SUBJECTS: string[] = [];
+// Max subjects to pre-fetch per run (highest risk_score first).
+// Keeps the scheduled run well within the Lambda time ceiling.
+const MAX_SUBJECTS = 100;
+// Process this many subjects in parallel per batch.
+const BATCH_SIZE = 20;
+
+// ── MoonDB subject loader ────────────────────────────────────────────────────
+
+async function fetchActiveSubjects(): Promise<string[]> {
+  const projectId = process.env["MOONDB_PROJECT_ID"];
+  const adminKey  = process.env["MOONDB_ADMIN_KEY"];
+  if (!projectId || !adminKey) {
+    console.warn("[gdelt-prefetch] MOONDB_PROJECT_ID or MOONDB_ADMIN_KEY not set — skipping DB lookup");
+    return [];
+  }
+
+  const base = `https://moondb.ai/p/${projectId}/api/subjects`;
+  const headers = { "X-Admin-Key": adminKey, "Content-Type": "application/json" };
+  const names = new Set<string>();
+  let offset = 0;
+  const limit = 500;
+
+  try {
+    while (names.size < MAX_SUBJECTS) {
+      const params = new URLSearchParams({
+        status: "eq.active",
+        sort:   "risk_score:desc",
+        select: "name",
+        limit:  String(limit),
+        offset: String(offset),
+      });
+      const res = await fetch(`${base}?${params}`, {
+        headers,
+        signal: AbortSignal.timeout(10_000),
+      });
+      if (!res.ok) {
+        console.warn(`[gdelt-prefetch] MoonDB subjects query failed: HTTP ${res.status}`);
+        break;
+      }
+      const json = await res.json() as { data?: { name: string }[]; meta?: { has_more: boolean } };
+      for (const row of json.data ?? []) {
+        if (row.name) names.add(row.name);
+        if (names.size >= MAX_SUBJECTS) break;
+      }
+      if (!json.meta?.has_more) break;
+      offset += limit;
+    }
+  } catch (err) {
+    console.warn("[gdelt-prefetch] MoonDB fetch error:", err instanceof Error ? err.message : String(err));
+  }
+
+  return Array.from(names);
+}
 
 interface GdeltArticle {
   url?: string;
@@ -122,9 +167,11 @@ async function fetchGdeltForSubject(subjectName: string): Promise<GdeltArticle[]
 export default async function handler(_req: Request): Promise<Response> {
   const startedAt = Date.now();
 
-  if (SUBJECTS.length === 0) {
-    console.info("[gdelt-prefetch] SUBJECTS list is empty — nothing to pre-warm. Populate the SUBJECTS array in netlify/functions/gdelt-prefetch.mts.");
-    return new Response(JSON.stringify({ ok: true, refreshed: 0, skipped: "SUBJECTS list empty", durationMs: Date.now() - startedAt }), {
+  const subjects = await fetchActiveSubjects();
+
+  if (subjects.length === 0) {
+    console.info("[gdelt-prefetch] no active subjects found — nothing to pre-warm.");
+    return new Response(JSON.stringify({ ok: true, refreshed: 0, skipped: "no active subjects", durationMs: Date.now() - startedAt }), {
       headers: { "content-type": "application/json" },
     });
   }
@@ -142,27 +189,33 @@ export default async function handler(_req: Request): Promise<Response> {
   let refreshed = 0;
   const errors: string[] = [];
 
-  for (const subject of SUBJECTS) {
-    try {
-      const articles = await fetchGdeltForSubject(subject);
-      await store.setJSON(`gdelt:${subject}`, {
-        articles,
-        cachedAt: new Date().toISOString(),
-        articleCount: articles.length,
-      });
-      refreshed++;
-      console.info(`[gdelt-prefetch] cached ${articles.length} articles for subject (redacted)`);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      errors.push(`subject ${refreshed + errors.length + 1}: ${msg}`);
-      console.warn(`[gdelt-prefetch] failed for subject (redacted): ${msg}`);
-    }
+  // Process in parallel batches to stay within Lambda time ceiling.
+  for (let i = 0; i < subjects.length; i += BATCH_SIZE) {
+    const batch = subjects.slice(i, i + BATCH_SIZE);
+    await Promise.allSettled(
+      batch.map(async (subject) => {
+        try {
+          const articles = await fetchGdeltForSubject(subject);
+          await store.setJSON(`gdelt:${subject}`, {
+            articles,
+            cachedAt: new Date().toISOString(),
+            articleCount: articles.length,
+          });
+          refreshed++;
+          console.info(`[gdelt-prefetch] cached ${articles.length} articles for subject (redacted)`);
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          errors.push(`subject ${i}: ${msg}`);
+          console.warn(`[gdelt-prefetch] failed for subject (redacted): ${msg}`);
+        }
+      }),
+    );
   }
 
-  console.info(`[gdelt-prefetch] done — refreshed ${refreshed}/${SUBJECTS.length} subjects in ${Date.now() - startedAt}ms`);
+  console.info(`[gdelt-prefetch] done — refreshed ${refreshed}/${subjects.length} subjects in ${Date.now() - startedAt}ms`);
 
   return new Response(
-    JSON.stringify({ ok: errors.length === 0, refreshed, total: SUBJECTS.length, errors, durationMs: Date.now() - startedAt }),
+    JSON.stringify({ ok: errors.length === 0, refreshed, total: subjects.length, errors, durationMs: Date.now() - startedAt }),
     { headers: { "content-type": "application/json" } },
   );
 }
