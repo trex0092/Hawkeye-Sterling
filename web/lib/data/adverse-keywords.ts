@@ -25,7 +25,12 @@ export type AdverseKeywordGroup =
   | "political-exposure"
   | "ai-misuse"
   | "insider-threat"
-  | "environmental-crime";
+  | "environmental-crime"
+  | "precious-metals-crime"
+  | "real-estate-crime"
+  | "crypto-asset-crime"
+  | "counterfeiting"
+  | "illicit-trade";
 
 export interface AdverseKeywordRule {
   group: AdverseKeywordGroup;
@@ -617,6 +622,237 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
       "adversarial attack",
       "model theft", "training data leak",
       "shadow ai", "unauthorized ai",
+    ],
+  },
+  // UAE DPMS critical category: gold, diamonds and precious metals/stones
+  // crimes. Dedicated group so hits always surface under their own label
+  // rather than being buried inside money-laundering or organised-crime.
+  // Covers the full trade chain: mining → refinery → export → retail.
+  {
+    group: "precious-metals-crime",
+    label: "Precious metals & stones crime",
+    terms: [
+      // Gold — refinery and processing crimes
+      "gold refinery", "gold refinery operation", "gold refinery raid",
+      "gold refinery arrested", "gold refinery seized", "gold refinery fraud",
+      "illegal gold refinery", "unlicensed refinery",
+      "gold smelting illegal", "illegal gold smelting",
+      "gold assay fraud", "assay fraud", "assay falsification",
+      "gold hallmark fraud", "hallmark forgery",
+      "tungsten-filled gold", "fake gold bar", "counterfeit gold bar",
+      "gold-plated tungsten", "salted gold bar",
+      // Gold trading and transportation
+      "gold smuggling", "smuggled gold", "gold traffick", "gold trafficking",
+      "illegal gold trade", "illicit gold trade", "black market gold",
+      "undeclared gold", "unreported gold", "concealed gold",
+      "gold in luggage", "gold hidden in luggage", "gold at airport",
+      "gold at border", "customs gold seizure", "gold bar seizure",
+      "gold vault fraud", "gold storage fraud",
+      "gold certificate fraud", "gold lease fraud",
+      "gold investment fraud", "gold investment scam",
+      "gold ponzi", "gold scheme fraud",
+      // Mining crimes
+      "illegal gold mining", "artisanal gold mining crime",
+      "galamsey", "conflict gold", "blood gold",
+      "gold mine fraud", "mining licence fraud",
+      "illegal alluvial gold", "unregistered gold mine",
+      // Cash-for-gold and scrap-gold
+      "cash for gold fraud", "cash for gold scheme",
+      "scrap gold fraud", "gold dealer arrested", "gold dealer raided",
+      "gold dealer seized", "gold dealer investigation",
+      // Diamonds and precious stones
+      "diamond smuggling", "diamond trafficking", "illegal diamond trade",
+      "blood diamond", "conflict diamond", "kimberley process violation",
+      "rough diamond smuggling", "diamond fraud", "diamond certificate fraud",
+      "diamond grading fraud",
+      "gemstone smuggling", "gem trafficking", "illicit gemstone",
+      "ruby smuggling", "emerald smuggling", "sapphire smuggling",
+      "precious stone fraud", "counterfeit gemstone",
+      // Precious metals — broader
+      "silver smuggling", "platinum smuggling",
+      "precious metals trafficking", "precious metals seizure",
+      "precious metals seized", "precious metals arrested",
+      "precious metal fraud", "precious metal scam",
+      "palladium theft", "rhodium theft",
+      // Jewellery as ML vehicle
+      "jewellery laundering", "jewellery fraud", "fake jewellery fraud",
+      "jewellery as payment illegal",
+    ],
+  },
+  // Real estate is the second-largest global ML sector after cash.
+  // UAE property market is a documented high-risk ML environment per
+  // FATF UAE mutual evaluation 2020 and MER 2024 update.
+  {
+    group: "real-estate-crime",
+    label: "Real estate crime & property laundering",
+    terms: [
+      // Core ML through property
+      "real estate laundering", "property laundering", "property money laundering",
+      "real estate money laundering", "property-based laundering",
+      "real estate fraud", "property fraud", "land fraud",
+      "title fraud", "deed fraud", "property title fraud",
+      "mortgage fraud", "property mortgage fraud",
+      // Shell and nominee structures
+      "real estate through shell", "property through shell company",
+      "shell company property", "nominee property",
+      "beneficial owner concealed property", "hidden property ownership",
+      "trust property concealment", "offshore property ownership",
+      // UAE and Dubai specific
+      "dubai property fraud", "uae real estate fraud",
+      "off-plan fraud", "off plan scam",
+      "developer fraud", "property developer fraud",
+      // Valuation manipulation
+      "property over-valuation", "property under-valuation",
+      "inflated property price", "property price manipulation",
+      "false property appraisal", "fake property valuation",
+      // Foreclosure and rental fraud
+      "foreclosure fraud", "rental fraud", "rent fraud",
+      "landlord fraud", "tenant fraud",
+      // Land and title crimes
+      "land grabbing", "illegal land acquisition",
+      "property confiscation illegal", "land registry fraud",
+      "duplicate title deed", "forged title deed",
+      // High-value property as ML
+      "luxury property laundering", "high-end property fraud",
+      "mansion money laundering", "offshore villa",
+      // Real estate investment fraud
+      "reit fraud", "real estate investment fraud",
+      "property crowdfunding fraud",
+    ],
+  },
+  // Virtual assets and DeFi have become primary ML/TF vectors since
+  // FATF Recommendation 15 (2019) and UAE VASP regulations (2023).
+  // Dedicated group ensures crypto crimes aren't buried in cybercrime.
+  {
+    group: "crypto-asset-crime",
+    label: "Crypto asset crime & VASP violations",
+    terms: [
+      // Unregistered / unlicensed VASP
+      "unlicensed crypto exchange", "unregistered crypto exchange",
+      "unlicensed vasp", "unregistered vasp",
+      "crypto exchange shut down", "crypto exchange raided",
+      "crypto exchange arrested", "crypto exchange seized",
+      // Crypto laundering techniques
+      "crypto money laundering", "bitcoin laundering", "crypto laundering",
+      "crypto tumbler", "crypto mixer", "bitcoin mixer",
+      "tornado cash", "chain hopping", "chain-hopping",
+      "crypto obfuscation", "layering crypto",
+      "peer-to-peer crypto fraud", "p2p crypto fraud",
+      // Crypto fraud and scams
+      "crypto fraud", "bitcoin fraud", "crypto scam",
+      "rug pull", "exit scam crypto", "crypto ponzi",
+      "pig butchering", "pig butchering scam", "sha zhu pan",
+      "crypto romance scam", "crypto investment fraud",
+      "fake crypto exchange", "fake crypto wallet",
+      "initial coin offering fraud", "ico fraud",
+      "token fraud", "altcoin scam",
+      // Crypto theft and hacking
+      "crypto theft", "bitcoin theft", "exchange hacked",
+      "exchange hack", "wallet stolen", "wallet hack",
+      "private key stolen", "crypto heist",
+      "defi exploit", "defi hack", "flash loan attack",
+      "smart contract exploit", "nft fraud",
+      // Dark web crypto
+      "dark web crypto", "darknet market crypto",
+      "silk road", "alphabay", "darknet marketplace",
+      "drug payment crypto", "crypto drug payment",
+      // Sanctions / VASP compliance
+      "crypto sanctions violation", "vasp sanctions breach",
+      "crypto sanctions evasion", "bitcoin sanctions evasion",
+      "monero sanctions", "privacy coin sanctions",
+      // Ransomware and extortion
+      "ransomware payment", "ransom crypto", "bitcoin ransom",
+      "extortion crypto", "crypto extortion",
+      // Stablecoins and CBDC crime
+      "stablecoin fraud", "stablecoin laundering", "tether fraud",
+      "usdt laundering", "usdc fraud",
+    ],
+  },
+  // Counterfeiting covers two distinct ML predicates under FATF R.3:
+  // (1) currency counterfeiting (FATF Art.3(e)) and
+  // (2) counterfeiting/piracy of products (FATF Art.3(f)).
+  {
+    group: "counterfeiting",
+    label: "Counterfeiting & product piracy",
+    terms: [
+      // Currency counterfeiting
+      "counterfeit currency", "counterfeit banknote", "counterfeit money",
+      "forged banknote", "forged currency", "fake banknote",
+      "fake money", "fake bills", "counterfeit bills",
+      "currency forgery", "currency fraud",
+      "passing counterfeit", "circulating counterfeit",
+      "counterfeit dollar", "counterfeit euro", "counterfeit dirham",
+      "counterfeit pound", "counterfeit yen",
+      "printing press money", "illegal printing press",
+      // Product counterfeiting
+      "counterfeit goods", "counterfeit product", "fake goods",
+      "fake product", "counterfeit brand", "counterfeit luxury",
+      "fake luxury goods", "fake watches", "fake handbags",
+      "counterfeit electronics", "counterfeit medicines",
+      "fake medicines", "counterfeit pharmaceuticals",
+      "fake drugs", "counterfeit drugs",
+      "pirated software", "software piracy",
+      "counterfeit clothing", "fake designer",
+      "intellectual property theft",
+      "trademark infringement", "copyright infringement",
+      "brand counterfeiting", "logo counterfeiting",
+      // Certificates and documents
+      "counterfeit certificate", "fake certificate",
+      "counterfeit passport", "fake passport",
+      "counterfeit visa", "fake visa",
+      "document forgery", "identity document forgery",
+      "forged documents", "fake identity document",
+      // Specific goods
+      "counterfeit gold coin", "fake gold coin",
+      "counterfeit precious metals certificate",
+      "fake assay certificate",
+    ],
+  },
+  // Illicit trade covers smuggling of goods subject to export controls,
+  // trade embargoes, or prohibition — distinct from drug trafficking and
+  // weapons smuggling which have their own groups.
+  {
+    group: "illicit-trade",
+    label: "Illicit trade & smuggling",
+    terms: [
+      // General smuggling
+      "smuggling", "smuggle", "contraband",
+      "illicit trade", "illegal trade", "black market",
+      "grey market", "parallel import", "grey import",
+      "illicit goods", "illegal goods", "prohibited goods",
+      // Tobacco and alcohol
+      "tobacco smuggling", "cigarette smuggling", "illicit tobacco",
+      "illicit cigarettes", "alcohol smuggling", "illicit alcohol",
+      // Food and agricultural
+      "food fraud", "food adulteration", "counterfeit food",
+      "agricultural goods smuggling",
+      // Cultural property and antiquities
+      "antiquities smuggling", "antiquities trafficking",
+      "cultural property theft", "looted antiquities",
+      "illicit antiquities", "illegal antiquities trade",
+      "artifact smuggling", "archaeological theft",
+      "looted artefact", "stolen heritage",
+      // Fuel and energy
+      "fuel smuggling", "petrol smuggling", "oil smuggling",
+      "fuel fraud", "fuel adulteration", "oil theft",
+      "petroleum smuggling",
+      // Textiles and garments
+      "textiles smuggling", "garment fraud",
+      // Hazardous and controlled substances
+      "chemical smuggling", "hazardous goods smuggling",
+      "precursor chemical smuggling", "controlled substance smuggling",
+      // Trade diversion and embargo evasion
+      "embargo evasion", "embargo violation", "trade embargo breach",
+      "export control evasion", "export ban violation",
+      "re-export fraud", "transshipment fraud", "transit fraud",
+      "false country of origin", "origin fraud",
+      "false declaration customs", "customs fraud",
+      "undervalued imports", "undervalued goods customs",
+      // Specific high-risk sectors
+      "timber smuggling", "illegal timber", "illegal lumber",
+      "fish smuggling", "illegal fish trade",
+      "waste trafficking", "e-waste trafficking",
+      "recycling fraud",
     ],
   },
 ];
