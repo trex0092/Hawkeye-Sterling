@@ -50,7 +50,7 @@ const FETCH_TIMEOUT_MS = 25_000;
 interface FeedSpec {
   listId: string;          // e.g. "un_1267"
   url: string;             // upstream authoritative URL
-  format: "json" | "xml";
+  format: "json" | "xml" | "csv";
   // Optional headers for auth / API keys — read from env at runtime.
   headerEnvKeys?: string[];
 }
@@ -106,6 +106,35 @@ const FEEDS: FeedSpec[] = [
     listId: "uae_eocn",
     url: process.env["FEED_UAE_EOCN"] ?? process.env["UAE_EOCN_URL"] ?? "",
     format: "json",
+  },
+  {
+    // Canada OSFI / SEMA consolidated sanctions list (CSV format).
+    // Published by Global Affairs Canada — covers UN and autonomous Canadian sanctions.
+    // Override via FEED_CA_OSFI if OSFI/GA Canada migrates this URL.
+    // If OSFI's own consolidated XML becomes available at a stable URL, set
+    // FEED_CA_OSFI to that XML URL and update the format to "xml".
+    listId: "ca_osfi",
+    url: process.env["FEED_CA_OSFI"] ?? "https://www.international.gc.ca/world-monde/assets/csv/sanctions/sema_dnu.csv",
+    format: "csv",
+  },
+  {
+    // Australia DFAT Consolidated Sanctions List (CSV format).
+    // Published by DFAT at a stable URL. Override via FEED_AU_DFAT.
+    // A second XLSX-format feed exists at regulation8_consolidated.xlsx —
+    // that format is handled by src/ingestion/sources/au-dfat.ts (requires exceljs).
+    listId: "au_dfat",
+    url: process.env["FEED_AU_DFAT"] ?? "https://www.dfat.gov.au/sites/default/files/australian-sanctions-consolidated-list.csv",
+    format: "csv",
+  },
+  {
+    // Switzerland SECO consolidated sanctions XML.
+    // The SESAM portal URL (previously default) now returns an XHTML portal page.
+    // Set FEED_CH_SECO to the direct XML download URL from:
+    //   https://www.sesam.search.admin.ch/sesam-search-web/pages/downloadXmlGesamtliste.xhtml
+    // or use the SECO data delivery service. Skipped when URL is empty.
+    listId: "ch_seco",
+    url: process.env["FEED_CH_SECO"] ?? "",
+    format: "xml",
   },
 ];
 
@@ -288,6 +317,71 @@ function normaliseXml(listId: string, raw: string): NormalisedListEntry[] {
   return out;
 }
 
+// ── CSV normalisation for CA OSFI and AU DFAT ──────────────────────────────
+
+function parseCsvRows(text: string): string[][] {
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let field = "";
+  let inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i] ?? "";
+    if (inQuotes) {
+      if (c === '"' && i + 1 < text.length && text[i + 1] === '"') { field += '"'; i++; }
+      else if (c === '"') inQuotes = false;
+      else field += c;
+    } else {
+      if (c === '"') inQuotes = true;
+      else if (c === ',') { row.push(field); field = ""; }
+      else if (c === '\n') { row.push(field); rows.push(row); row = []; field = ""; }
+      else if (c === '\r') { /* skip */ }
+      else field += c;
+    }
+  }
+  if (field.length > 0 || row.length > 0) { row.push(field); rows.push(row); }
+  return rows;
+}
+
+function normaliseCsv(listId: string, raw: string): NormalisedListEntry[] {
+  const rows = parseCsvRows(raw);
+  if (rows.length < 2) return [];
+  const now = new Date().toISOString();
+  const header = (rows[0] ?? []).map((h) => h.trim().toLowerCase());
+  const idx = (...candidates: string[]): number => {
+    for (const c of candidates) {
+      const i = header.indexOf(c);
+      if (i >= 0) return i;
+    }
+    return -1;
+  };
+  const iName = idx("name", "last name, first name", "entity", "entity name", "name of listed item");
+  const iRef = idx("item", "reference", "group id", "dfat ref");
+  const iProgram = idx("schedule", "regulation", "listing information", "committees");
+  const iAlias = idx("aliases", "alias");
+  if (iName < 0) return [];
+  const out: NormalisedListEntry[] = [];
+  for (let i = 1; i < rows.length; i++) {
+    const r = rows[i] ?? [];
+    const name = (r[iName] ?? "").trim();
+    if (!name) continue;
+    const ref = (iRef >= 0 ? r[iRef] : "") ?? "";
+    const program = (iProgram >= 0 ? r[iProgram] : "") ?? "";
+    const aliasStr = (iAlias >= 0 ? r[iAlias] : "") ?? "";
+    const aliases = aliasStr ? aliasStr.split(/[;|]/).map((s) => s.trim()).filter(Boolean) : [];
+    out.push({
+      listId,
+      sourceRef: ref.trim() || `${listId}:${i}`,
+      primaryName: name,
+      entityType: name.includes(",") ? "individual" : "entity",
+      programs: program.trim() ? [program.trim()] : [],
+      aliases,
+      identifiers: [],
+      publishedAt: now,
+    });
+  }
+  return out;
+}
+
 interface IngestOutcome {
   listId: string;
   ok: boolean;
@@ -316,7 +410,9 @@ async function ingestOne(spec: FeedSpec, store: ReturnType<typeof getStore>): Pr
     }
     const text = await res.text();
     const current: NormalisedListEntry[] =
-      spec.format === "json" ? normaliseJson(spec.listId, safeParseJson(text)) : normaliseXml(spec.listId, text);
+      spec.format === "json" ? normaliseJson(spec.listId, safeParseJson(text))
+      : spec.format === "csv" ? normaliseCsv(spec.listId, text)
+      : normaliseXml(spec.listId, text);
 
     // Read prior snapshot.
     let previous: NormalisedListEntry[] = [];

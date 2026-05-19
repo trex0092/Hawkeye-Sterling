@@ -8,8 +8,13 @@
 //
 // This adapter accepts one or more comma-separated FEED_JP_MOF URLs (XLSX
 // only) and aggregates the rows. If no URL is supplied via env, the
-// adapter returns empty without error so deployments without a JP MOF
-// subscription don't break the pipeline.
+// adapter is disabled so it does not write a 0-entity blob.
+//
+// TODO: the MOF list page (https://www.mof.go.jp/policy/international_policy/
+// gaitame_kawase/gaitame/economic_sanctions/list.html) publishes per-country
+// XLSX files but there is no single consolidated XML/CSV download URL. Set
+// FEED_JP_MOF to a comma-separated list of the XLSX file URLs for the
+// countries you need to cover (e.g. Russia, Iran, North Korea, Belarus).
 //
 // Same opt-in exceljs pattern as au_dfat and uae_eocn.
 

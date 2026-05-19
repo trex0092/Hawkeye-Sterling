@@ -10,18 +10,34 @@
 // kill the whole adapter.
 //
 // Override via FEED_CH_SECO env var.
+//
+// IMPORTANT — URL MUST BE SET VIA FEED_CH_SECO:
+// The previously hardcoded SESAM URL now returns an XHTML portal page
+// instead of the XML list (audit flag H-03). Set FEED_CH_SECO to the
+// direct XML download URL from the SESAM portal:
+//   https://www.sesam.search.admin.ch/sesam-search-web/pages/downloadXmlGesamtliste.xhtml
+// Contact SECO or use OpenSanctions data delivery for a stable API endpoint.
 
 import { type SourceAdapter, type NormalisedEntity, type EntityType, mkListing } from '../types.js';
 import { fetchText, sha256Hex } from '../fetch-util.js';
 
-const SOURCE_URL = process.env['FEED_CH_SECO']
-  ?? 'https://www.sesam.search.admin.ch/sesam-search-web/pages/downloadXmlGesamtliste.xhtml?lang=en';
+const SOURCE_URL = process.env['FEED_CH_SECO'] ?? '';
 
 export const chSecoAdapter: SourceAdapter = {
   id: 'ch_seco',
   displayName: 'Switzerland SECO Sanctions',
-  sourceUrl: SOURCE_URL,
+  sourceUrl: SOURCE_URL || 'https://www.sesam.search.admin.ch/sesam-search-web/pages/downloadXmlGesamtliste.xhtml',
+  // Require FEED_CH_SECO to be explicitly set — the old default SESAM URL
+  // returns XHTML (audit H-03). An empty URL means the adapter is dormant.
+  isEnabled: () => Boolean(process.env['FEED_CH_SECO']),
   async fetch() {
+    if (!SOURCE_URL) {
+      throw new Error(
+        '[ch_seco] FEED_CH_SECO is not set. ' +
+        'Set it to the direct XML download URL from the SECO/SESAM portal. ' +
+        'See src/ingestion/sources/ch-seco.ts for details.',
+      );
+    }
     const xml = await fetchText(SOURCE_URL, { accept: 'application/xml' });
     const rawChecksum = await sha256Hex(xml);
     const fetchedAt = Date.now();

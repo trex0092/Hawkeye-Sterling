@@ -1,0 +1,12 @@
+{
+  "_meta": {
+    "schema_version": "1.0",
+    "list_id": "uae_ltl",
+    "source": "UAE Ministry of Interior — Local Terrorist List",
+    "authority_url": "https://www.moi.gov.ae/",
+    "update_method": "Manual — received via Gmail from EOCN",
+    "last_updated": "YYYY-MM-DD",
+    "note": "Set UAE_LTL_SEED_PATH=data/seeds/uae_ltl_seed.json in Netlify env vars"
+  },
+  "entities": []
+}
