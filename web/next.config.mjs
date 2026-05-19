@@ -103,6 +103,16 @@ const nextConfig = {
       );
     }
 
+    // src/brain/**/*.ts files use NodeNext-style `.js` extension imports
+    // (e.g. `import { X } from './y.js'`). Webpack 5's extensionAlias
+    // transparently tries `.ts` before `.js` so brain modules imported by
+    // web/app/api/** routes resolve correctly without extension changes.
+    config.resolve.extensionAlias = {
+      ...config.resolve.extensionAlias,
+      ".js": [".ts", ".js"],
+      ".jsx": [".tsx", ".jsx"],
+    };
+
     return config;
   },
 
