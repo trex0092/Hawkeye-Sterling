@@ -124,7 +124,7 @@ function breakerAllowsLive(): boolean {
 
 function breakerOnSuccess(): void {
   if (_breaker.state !== "closed") {
-    console.log(
+    console.info(
       `[gdelt-cache] circuit breaker → CLOSED after ${_breaker.consecutiveTrips} trip(s)`,
     );
   }

@@ -19,6 +19,7 @@
     "no-return-assign": "error",
     "no-sequences": "error",
     "radix": "error",
+    "no-console": ["error", { "allow": ["warn", "error", "info"] }],
     "no-unused-vars": ["warn", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_", "caughtErrorsIgnorePattern": "^_" }]
   },
   "overrides": [
