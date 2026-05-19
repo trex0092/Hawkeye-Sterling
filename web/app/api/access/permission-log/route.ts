@@ -23,9 +23,16 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
   }
 
+  const ALLOWED_ACTIONS: PermissionLogEntry["action"][] = ["role_assigned", "role_revoked", "session_revoked", "manual"];
   if (!body.actor || !body.action || !body.targetUserId || !body.targetUserName || !body.reason) {
     return NextResponse.json(
       { ok: false, error: "actor, action, targetUserId, targetUserName and reason are required" },
+      { status: 400 },
+    );
+  }
+  if (!(ALLOWED_ACTIONS as string[]).includes(body.action)) {
+    return NextResponse.json(
+      { ok: false, error: `action must be one of: ${ALLOWED_ACTIONS.join(", ")}` },
       { status: 400 },
     );
   }

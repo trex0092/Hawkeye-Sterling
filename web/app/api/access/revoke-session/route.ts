@@ -29,7 +29,9 @@ export async function POST(req: Request) {
 
   const user = users[userIdx]!;
   const updatedUsers = [...users];
-  updatedUsers[userIdx] = { ...user, active: false };
+  // Bump pwVersion so auth/me's pwv check immediately rejects any current
+  // session token — without this, the old JWT remains valid for up to 8h.
+  updatedUsers[userIdx] = { ...user, active: false, pwVersion: (user.pwVersion ?? 0) + 1 };
   await saveUsers(updatedUsers);
 
   const logEntry = {
