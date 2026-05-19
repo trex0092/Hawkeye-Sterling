@@ -13,7 +13,8 @@ import { writeHeartbeat } from "../lib/heartbeat.js";
 
 const STORE_NAME = "hawkeye-sanctions-feeds";
 const RUN_LABEL = "delta-prune";
-const PRUNE_AGE_DAYS = parseInt(process.env["DELTA_PRUNE_DAYS"] ?? "30", 10);
+const _parsedAge = parseInt(process.env["DELTA_PRUNE_DAYS"] ?? "30", 10);
+const PRUNE_AGE_DAYS = isNaN(_parsedAge) || _parsedAge <= 0 ? 30 : _parsedAge;
 
 export default async function handler(_req: Request): Promise<Response> {
   const startedAt = Date.now();
