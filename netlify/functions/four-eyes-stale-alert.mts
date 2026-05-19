@@ -93,8 +93,8 @@ export default async function handler(_req: Request): Promise<Response> {
       } else if (age >= ALERT_AFTER_HOURS) {
         stale.push({ id, ageHours: Math.round(age), action: raw.action, initiatedBy: raw.initiatedBy, caseId: raw.caseId });
       }
-    } catch {
-      // Skip unreadable blobs
+    } catch (err) {
+      console.warn(`[four-eyes-stale-alert] unreadable blob at ${key} — skipping:`, err instanceof Error ? err.message : String(err));
     }
   }
 

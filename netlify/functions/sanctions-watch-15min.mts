@@ -51,7 +51,8 @@ async function snapshotLists(store: ReturnType<typeof getStore>): Promise<ListSn
         if (listRef && e.name) m.set(listRef, e.name);
       }
       snap.set(listId, m);
-    } catch {
+    } catch (err) {
+      console.warn(`[sanctions-watch-15min] snapshot load failed for ${listId} — changes against this list won't be detected:`, err instanceof Error ? err.message : String(err));
       snap.set(listId, new Map());
     }
   }));

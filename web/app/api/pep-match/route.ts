@@ -81,8 +81,8 @@ async function loadCorpus(): Promise<PepRecord[]> {
         return records;
       }
     }
-  } catch {
-    // Blobs unavailable (local dev, first deploy) — fall through to CDN.
+  } catch (err) {
+    console.warn("[pep-match] blob store unavailable — falling through to CDN:", err instanceof Error ? err.message : String(err));
   }
 
   // Direct CDN fetch as fallback (line-delimited JSON, no auth needed).
@@ -91,7 +91,10 @@ async function loadCorpus(): Promise<PepRecord[]> {
       signal: AbortSignal.timeout(CDN_TIMEOUT_MS),
       headers: { accept: "application/json" },
     });
-    if (!res.ok) return [];
+    if (!res.ok) {
+      console.warn(`[pep-match] CDN fetch returned ${res.status} — PEP records unavailable`);
+      return [];
+    }
     const text = await res.text();
     const records: PepRecord[] = [];
     for (const line of text.split(/\n+/)) {
@@ -104,7 +107,8 @@ async function loadCorpus(): Promise<PepRecord[]> {
       cacheSource = "cdn";
     }
     return records;
-  } catch {
+  } catch (err) {
+    console.warn("[pep-match] CDN fallback failed — PEP screening will return zero hits:", err instanceof Error ? err.message : String(err));
     return [];
   }
 }
