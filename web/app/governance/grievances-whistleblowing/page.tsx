@@ -541,7 +541,7 @@ export default function GrievancesWhistleblowingPage() {
 
   return (
     <>
-      <style dangerouslySetInnerHTML={{ __html: PAGE_CSS }} />
+      <style>{PAGE_CSS}</style>
 
       {/* Toast notification */}
       {toast && (
