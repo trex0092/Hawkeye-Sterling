@@ -17,7 +17,7 @@ import { detectCrossRegimeConflict, type RegimeStatus } from "../../../../dist/s
 import { variantsOf } from "../../../../dist/src/brain/translit.js";
 import { expandAliases } from "../../../../dist/src/brain/aliases.js";
 import { doubleMetaphone, soundex } from "../../../../dist/src/brain/matching.js";
-import { loadCandidates } from "@/lib/server/candidates-loader";
+import { loadCandidatesWithHealth, type CandidateLoadHealth } from "@/lib/server/candidates-loader";
 import { classifyEsg } from "@/lib/data/esg";
 // Wave 4 enhancements — richer brain modules landed via PR #49.
 import { jurisdictionProfile } from "../../../../dist/src/brain/lib/jurisdictions.js";
@@ -52,6 +52,7 @@ import type {
 type QuickScreenFn = (
   _subject: QuickScreenSubject,
   _candidates: QuickScreenCandidate[],
+  _opts?: { scoreThreshold?: number; includeScoreBreakdown?: boolean },
 ) => QuickScreenResult;
 const quickScreen = _quickScreen as QuickScreenFn;
 
@@ -270,8 +271,16 @@ export async function POST(req: Request): Promise<NextResponse> {
 
     // 1 · Quick screen — against the live ingested watchlists (OFAC, UN, EU,
     //     UK, UAE-EOCN/LTL) merged with the static seed corpus as fallback.
-    const liveCandidates = await loadCandidates();
-    const screen = quickScreen(body.subject, liveCandidates);
+    // Use loadCandidatesWithHealth so data-source provenance is embedded in
+    // the super-brain response for audit-trail and MLRO review purposes.
+    const { candidates: liveCandidates, health: corpusHealth } = await loadCandidatesWithHealth();
+    if (!corpusHealth.healthy) {
+      noteDegradation(
+        "candidatesLoader",
+        corpusHealth.degradationNote ?? `Sanctions lists unavailable (source=${corpusHealth.source}; candidates=${corpusHealth.candidateCount})`,
+      );
+    }
+    const screen = quickScreen(body.subject, liveCandidates, { scoreThreshold: 0.82 });
 
     // 2 · PEP classification. Prefer supplied roleText; otherwise fall back
     //     to the known-PEP fixture's synthetic role, which lets recognised
@@ -707,6 +716,14 @@ export async function POST(req: Request): Promise<NextResponse> {
       ...(intelligence ? { intelligence } : {}),
       ...(openBanking ? { openBanking } : {}),
       ...(openSanctions ? { openSanctions } : {}),
+      dataSourceHealth: {
+        source: corpusHealth.source,
+        healthy: corpusHealth.healthy,
+        candidateCount: corpusHealth.candidateCount,
+        loadedAt: corpusHealth.loadedAt,
+        ...(corpusHealth.failedAdapters.length > 0 ? { failedAdapters: corpusHealth.failedAdapters } : {}),
+        ...(corpusHealth.degradationNote ? { degradationNote: corpusHealth.degradationNote } : {}),
+      },
       audit,
       screen,
       pep,
