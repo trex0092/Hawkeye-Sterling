@@ -800,9 +800,12 @@ export default function TFSAlertsPage() {
             </div>
             {!process.env["NEXT_PUBLIC_GMAIL_CONFIGURED"] && (
               <div className="mt-3 text-11 text-orange bg-orange-dim px-3 py-2 rounded inline-block">
-                Note: Set <span className="font-mono">GMAIL_ACCESS_TOKEN</span> and{" "}
-                <span className="font-mono">ASANA_PAT</span> in Netlify environment variables to
-                enable live email monitoring.
+                Note: Set <span className="font-mono">GMAIL_REFRESH_TOKEN</span>,{" "}
+                <span className="font-mono">GMAIL_CLIENT_ID</span>, and{" "}
+                <span className="font-mono">GMAIL_CLIENT_SECRET</span> in Netlify environment
+                variables to enable live email monitoring. Also set{" "}
+                <span className="font-mono">NEXT_PUBLIC_GMAIL_CONFIGURED=true</span> to hide this
+                notice.
               </div>
             )}
           </div>
