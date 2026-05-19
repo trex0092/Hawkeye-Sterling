@@ -4,7 +4,7 @@ import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 
 function Section({ children }: { children: React.ReactNode }) {
   return (
-    <div className="bg-panel border border-hair-2 rounded-xl p-5 mb-5">
+    <div className="bg-bg-panel border border-hair-2 rounded-xl p-5 mb-5">
       {children}
     </div>
   );
@@ -128,7 +128,7 @@ export default function SystemCardPage() {
               "132 machine-enforceable compliance directives",
               "HMAC-signed immutable audit trail with build-time SHA in every provenance block",
               "Arabic, Cyrillic, and CJK phonetic name matching",
-            ].map(c => <ListItem key={c} tone="neutral">✓ {c}</ListItem>)}
+            ].map(c => <ListItem key={c} tone="green">✓ {c}</ListItem>)}
           </div>
           <div>
             <div className="text-12 font-semibold font-mono uppercase tracking-wide-4 text-amber mb-3">Known Limitations</div>

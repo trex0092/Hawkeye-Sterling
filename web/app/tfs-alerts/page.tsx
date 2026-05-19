@@ -427,13 +427,17 @@ export default function TFSAlertsPage() {
 
       if (!searchRes.ok) {
         const err = (await searchRes.json()) as { error?: string };
-        if (err.error === "GMAIL_AUTH_FAILED") {
+        if (err.error === "GMAIL_REFRESH_FAILED") {
           setErrorMsg(
-            "Gmail connection failed. Please re-authenticate Gmail in your MCP settings.",
+            "Gmail OAuth credentials are invalid or revoked. Update GMAIL_REFRESH_TOKEN, GMAIL_CLIENT_ID, and GMAIL_CLIENT_SECRET in your Netlify environment variables.",
+          );
+        } else if (err.error === "GMAIL_AUTH_FAILED") {
+          setErrorMsg(
+            "Gmail access token has expired. Add GMAIL_REFRESH_TOKEN, GMAIL_CLIENT_ID, and GMAIL_CLIENT_SECRET for automatic renewal, or set a fresh GMAIL_ACCESS_TOKEN in Netlify.",
           );
         } else if (err.error === "GMAIL_NOT_CONFIGURED") {
           setErrorMsg(
-            "Gmail is not configured. Set the GMAIL_ACCESS_TOKEN environment variable in Netlify.",
+            "Gmail is not configured. Set GMAIL_REFRESH_TOKEN + GMAIL_CLIENT_ID + GMAIL_CLIENT_SECRET (recommended) or GMAIL_ACCESS_TOKEN in your Netlify environment variables.",
           );
         } else if (err.error === "NETWORK_TIMEOUT") {
           setErrorMsg("Search timed out. Please try again.");
@@ -796,9 +800,12 @@ export default function TFSAlertsPage() {
             </div>
             {!process.env["NEXT_PUBLIC_GMAIL_CONFIGURED"] && (
               <div className="mt-3 text-11 text-orange bg-orange-dim px-3 py-2 rounded inline-block">
-                Note: Set <span className="font-mono">GMAIL_ACCESS_TOKEN</span> and{" "}
-                <span className="font-mono">ASANA_PAT</span> in Netlify environment variables to
-                enable live email monitoring.
+                Note: Set <span className="font-mono">GMAIL_REFRESH_TOKEN</span>,{" "}
+                <span className="font-mono">GMAIL_CLIENT_ID</span>, and{" "}
+                <span className="font-mono">GMAIL_CLIENT_SECRET</span> in Netlify environment
+                variables to enable live email monitoring. Also set{" "}
+                <span className="font-mono">NEXT_PUBLIC_GMAIL_CONFIGURED=true</span> to hide this
+                notice.
               </div>
             )}
           </div>

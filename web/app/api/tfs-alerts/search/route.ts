@@ -136,7 +136,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       return NextResponse.json({ ok: false, error: "GMAIL_NOT_CONFIGURED" }, { status: 503 });
     }
     if (msg.startsWith("GMAIL_REFRESH_FAILED")) {
-      return NextResponse.json({ ok: false, error: "GMAIL_AUTH_FAILED" }, { status: 401 });
+      return NextResponse.json({ ok: false, error: "GMAIL_REFRESH_FAILED" }, { status: 401 });
     }
     return NextResponse.json({ ok: false, error: "GMAIL_AUTH_FAILED" }, { status: 401 });
   }
