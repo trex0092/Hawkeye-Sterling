@@ -107,6 +107,8 @@ import { ceoImpersonationSignalApply } from './wave3-ceo-impersonation.js';
 // Wave-4 batch implementations — converts all remaining stubs to real algorithms.
 import { WAVE4_BATCH_A_APPLIES } from './wave4-batch-a.js';
 import { WAVE4_BATCH_B_APPLIES } from './wave4-batch-b.js';
+import { WAVE4_BATCH_C_APPLIES } from './wave4-batch-c.js';
+import { WAVE4_BATCH_D_APPLIES } from './wave4-batch-d.js';
 
 export type ModeApply = (ctx: BrainContext) => Promise<Finding>;
 
@@ -244,6 +246,8 @@ export const MODE_OVERRIDES: Record<string, ModeApply> = {
   ...WAVE3_MODE_APPLIES,
   ...WAVE4_BATCH_A_APPLIES,
   ...WAVE4_BATCH_B_APPLIES,
+  ...WAVE4_BATCH_C_APPLIES,
+  ...WAVE4_BATCH_D_APPLIES,
 };
 
 /** Register (or replace) a real apply() for a mode at runtime. */
