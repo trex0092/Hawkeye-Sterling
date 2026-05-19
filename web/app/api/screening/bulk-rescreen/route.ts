@@ -29,10 +29,12 @@ export interface BulkRescreenResult {
   newHits: NewHit[];
   cleared: ClearedSubject[];
   summary: string;
+  /** Always true — this entire endpoint returns AI-simulated results.
+   *  UI MUST show a banner so analysts never treat these hits as a real
+   *  sanctions-list screening result. */
+  simulated: true;
   /** True when the response is the illustrative fallback (no API key
-   *  configured OR the AI call threw / produced unparseable output).
-   *  UI MUST show a degraded-mode banner when this is true so analysts
-   *  don't treat the placeholder hits as a real screening result. */
+   *  configured OR the AI call threw / produced unparseable output). */
   fallback?: boolean;
   /** Why the fallback was returned. 'no_api_key' when ANTHROPIC_API_KEY
    *  is unset; 'ai_error' when the LLM call or JSON parse failed. */
@@ -67,6 +69,7 @@ const buildFallback = (
   reason: 'no_api_key' | 'ai_error' = 'no_api_key',
 ): BulkRescreenResult => ({
   ok: true,
+  simulated: true,
   rescreened: subjects.length,
   newHits: subjects.length > 3
     ? [
@@ -162,6 +165,8 @@ Simulate a full portfolio re-screen against the new list version. Generate reali
     // Enforce rescreened count equals actual subject count regardless of
     // what the model returns — prevents confusing UX.
     result.rescreened = subjects.length;
+    // Always mark as simulated — this endpoint never screens against a real list.
+    result.simulated = true;
     return NextResponse.json(result, { headers: gate.headers });
   } catch (err) {
     console.error(
