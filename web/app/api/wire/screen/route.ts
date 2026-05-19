@@ -25,6 +25,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { parseMt103, type Mt103 } from "@/lib/server/mt103";
 import { loadCandidates } from "@/lib/server/candidates-loader";
+import type { QuickScreenCandidate } from "@/lib/api/quickScreen.types";
 import { quickScreen } from "../../../../../dist/src/brain/quick-screen.js";
 
 export const runtime = "nodejs";
@@ -45,31 +46,26 @@ interface PartyResult {
 
 function partyToScreen(
   party: { name?: string; account?: string },
-  candidates: unknown[],
+  candidates: QuickScreenCandidate[],
 ): PartyResult {
   if (!party.name) {
     return { hits: [], riskTier: "clear", ...(party.account ? { account: party.account } : {}) };
   }
-  // quickScreen returns { hits: Array<{ listId, listRef, name, score, ... }> }
-  // — see web/lib/api/quickScreen.types.ts for shape.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const screened = (quickScreen as any)({ name: party.name }, candidates, { maxHits: 12 });
-  const rawHits = Array.isArray(screened?.hits) ? screened.hits : [];
-  interface NormalizedHit { listId: string; reference?: string; program?: string; score: number }
-  const hits: NormalizedHit[] = rawHits.map((h: Record<string, unknown>) => ({
-    listId: String(h["listId"] ?? "unknown"),
-    ...(typeof h["listRef"] === "string" ? { reference: h["listRef"] as string } : {}),
-    ...(Array.isArray(h["programs"]) && h["programs"].length > 0 ? { program: String(h["programs"][0]) } : {}),
-    score: typeof h["score"] === "number" ? (h["score"] as number) : 0,
+  const screened = quickScreen({ name: party.name }, candidates, { maxHits: 12 });
+  const hits = screened.hits.map((h) => ({
+    listId: h.listId,
+    ...(h.listRef ? { reference: h.listRef } : {}),
+    ...(h.programs && h.programs.length > 0 ? { program: h.programs[0]! } : {}),
+    score: h.score,
   }));
   // Risk tier from top hit + list type.
-  const topHits = hits.filter((h: NormalizedHit) => h.score >= 80);
+  const topHits = hits.filter((h) => h.score >= 80);
   const blockingLists = ["ofac_sdn", "un_consolidated", "lseg_ofac_sdn", "lseg_un_consolidated", "uae_eocn", "lseg_uae_eocn"];
-  const isBlocked = topHits.some((h: NormalizedHit) => blockingLists.includes(h.listId));
+  const isBlocked = topHits.some((h) => blockingLists.includes(h.listId));
   const riskTier: PartyResult["riskTier"] =
     isBlocked ? "blocked"
       : topHits.length > 0 ? "high"
-      : hits.some((h: NormalizedHit) => h.score >= 60) ? "elevated"
+      : hits.some((h) => h.score >= 60) ? "elevated"
       : "clear";
   return {
     name: party.name,

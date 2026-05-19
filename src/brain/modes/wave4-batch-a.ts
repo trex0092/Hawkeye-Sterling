@@ -53,10 +53,6 @@ function evArr<T>(ctx: BrainContext, key: string): T[] {
   return Array.isArray(v) ? (v as T[]) : [];
 }
 
-function evVal<T>(ctx: BrainContext, key: string): T | undefined {
-  return (ctx.evidence as Record<string, unknown>)[key] as T | undefined;
-}
-
 function subjectJurisdictions(ctx: BrainContext): string[] {
   const out = new Set<string>();
   if (ctx.subject.jurisdiction) out.add(ctx.subject.jurisdiction.toUpperCase());
