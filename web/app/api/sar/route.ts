@@ -30,6 +30,7 @@ import type { ApiKeyRecord } from "@/lib/server/api-keys";
 import { getJson, setJson, listKeys } from "@/lib/server/store";
 import { getEntity } from "@/lib/config/entities";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -120,7 +121,7 @@ async function handleGet(req: Request): Promise<NextResponse> {
   return NextResponse.json({ ok: true, count: filtered.length, records: filtered });
 }
 
-async function handlePost(req: Request, callerRecord: ApiKeyRecord | null, gateHeaders: Record<string, string> = {}): Promise<NextResponse> {
+async function handlePost(req: Request, callerRecord: ApiKeyRecord | null, gateHeaders: Record<string, string> = {}, tenant: string = "default", actorKeyId?: string): Promise<NextResponse> {
   let raw: unknown;
   try {
     raw = await req.json();
@@ -277,6 +278,24 @@ async function handlePost(req: Request, callerRecord: ApiKeyRecord | null, gateH
       console.warn("[sar] record persist failed (non-critical):", err);
     });
 
+    // FDL 10/2025 Art.17 — SAR generation is a regulatory filing event;
+    // must be on the tamper-evident server-side chain.
+    void writeAuditChainEntry(
+      {
+        event: "sar.generated",
+        actor: actorKeyId ?? generatedBy,
+        sarId,
+        caseId,
+        filingType,
+        subjectName,
+        fourEyesVerified: !bypassFourEyes,
+        approvers: record.approvers,
+      },
+      tenant,
+    ).catch((err) =>
+      console.warn("[sar] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+    );
+
     return NextResponse.json({
       ok: true,
       sarId,
@@ -301,5 +320,6 @@ export async function GET(req: Request): Promise<NextResponse> {
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
-  return handlePost(req, gate.record, gate.headers);
+  const tenant = tenantIdFromGate(gate);
+  return handlePost(req, gate.record, gate.headers, tenant, gate.keyId);
 }
