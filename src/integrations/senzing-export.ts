@@ -65,8 +65,8 @@ export function subjectToSenzingRecord(subject: HawkeyeSubject, recordId: string
   // Primary name feature
   const nameFeature: SenzingFeature = { FULL_NAME: subject.name, ENTITY_TYPE: entityType };
   if (entityType === 'PERSON' && nameParts.length >= 2) {
-    nameFeature.NAME_FIRST = nameParts[0];
-    nameFeature.NAME_LAST = nameParts[nameParts.length - 1] ?? '';
+    nameFeature.NAME_FIRST = nameParts[0]!;
+    nameFeature.NAME_LAST = nameParts[nameParts.length - 1]!;
     if (nameParts.length > 2) {
       nameFeature.NAME_MIDDLE = nameParts.slice(1, -1).join(' ');
     }
@@ -80,7 +80,10 @@ export function subjectToSenzingRecord(subject: HawkeyeSubject, recordId: string
 
   // Identifiers
   if (subject.passportNumber) {
-    features.push({ PASSPORT_NUMBER: subject.passportNumber, PASSPORT_COUNTRY: subject.nationality });
+    features.push({
+      PASSPORT_NUMBER: subject.passportNumber,
+      ...(subject.nationality ? { PASSPORT_COUNTRY: subject.nationality } : {}),
+    });
   }
   if (subject.nationalId) {
     features.push({ NATIONAL_ID: subject.nationalId });
@@ -97,12 +100,12 @@ export function subjectToSenzingRecord(subject: HawkeyeSubject, recordId: string
 
   // Addresses
   for (const addr of subject.addresses ?? []) {
-    features.push({
-      ADDR_LINE1: addr.line1,
-      ADDR_CITY: addr.city,
-      ADDR_COUNTRY: addr.country,
-      ADDR_POSTAL_CODE: addr.zip,
-    });
+    const addrFeature: SenzingFeature = {};
+    if (addr.line1) addrFeature.ADDR_LINE1 = addr.line1;
+    if (addr.city) addrFeature.ADDR_CITY = addr.city;
+    if (addr.country) addrFeature.ADDR_COUNTRY = addr.country;
+    if (addr.zip) addrFeature.ADDR_POSTAL_CODE = addr.zip;
+    if (Object.keys(addrFeature).length > 0) features.push(addrFeature);
   }
 
   // Contact
