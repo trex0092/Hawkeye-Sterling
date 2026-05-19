@@ -156,6 +156,9 @@ async function handlePost(req: Request, callerRecord: ApiKeyRecord | null, gateH
   if (!narrative) {
     return NextResponse.json({ ok: false, error: "narrative required" }, { status: 400, headers: gateHeaders });
   }
+  if (narrative.length > 5000) {
+    return NextResponse.json({ ok: false, error: "narrative exceeds 5000-character limit (goAML schema constraint)" }, { status: 400, headers: gateHeaders });
+  }
 
   // ── Reporting entity sanity check ─────────────────────────────────────────
   // Block SAR generation when the entity hasn't been configured with a real

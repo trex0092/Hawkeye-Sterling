@@ -52,7 +52,7 @@ function caseToGoAmlBody(c: StrCaseRecord): Record<string, unknown> {
     subjectPassportCountry: c.jurisdiction ?? "AE",
     subjectCountry: c.jurisdiction ?? "AE",
     accountNumber: "",
-    narrativeText: c.notes ?? `Suspicious activity involving ${c.subject}. Typology: ${c.typology ?? "Unknown"}. Amount: ${c.amount ?? "Unknown"} ${c.currency ?? "AED"}.`,
+    narrativeText: (c.notes ?? `Suspicious activity involving ${c.subject}. Typology: ${c.typology ?? "Unknown"}. Amount: ${c.amount ?? "Unknown"} ${c.currency ?? "AED"}.`).slice(0, 4999),
     transactions: c.amount
       ? [
           {

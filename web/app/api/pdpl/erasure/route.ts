@@ -14,9 +14,10 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 15;
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getJson, setJson } from '@/lib/server/store';
+import { getJson, setJson, del, listKeys } from '@/lib/server/store';
 import { randomBytes } from 'crypto';
 import { enforce } from '@/lib/server/enforce';
+import { adminAuth } from '@/lib/server/admin-auth';
 
 export type ErasureStatus = 'pending' | 'approved' | 'rejected' | 'completed';
 
@@ -88,4 +89,71 @@ export async function GET(req: NextRequest) {
   const request = await getJson<ErasureRequest>(erasureKey(requestId));
   if (!request) return NextResponse.json({ error: 'Erasure request not found' }, { status: 404 });
   return NextResponse.json({ ok: true, request }, { headers: gate.headers });
+}
+
+// PATCH /api/pdpl/erasure — Admin: approve/reject and execute erasure of
+// non-AML discretionary data. AML records (cases, SAR, audit-trail, ongoing
+// subjects, str-cases) are exempt from erasure per FDL 10/2025 Art.20.
+export async function PATCH(req: NextRequest) {
+  const deny = adminAuth(req);
+  if (deny) return deny;
+
+  let body: unknown;
+  try { body = await req.json(); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
+  const raw = (body ?? {}) as Record<string, unknown>;
+  const requestId = (raw['requestId'] as string | undefined)?.trim();
+  const decision = raw['decision'] as string | undefined;
+  const reviewedBy = (raw['reviewedBy'] as string | undefined)?.trim();
+  const reviewNotes = (raw['reviewNotes'] as string | undefined)?.trim();
+
+  if (!requestId || !decision || !reviewedBy) {
+    return NextResponse.json({ error: 'requestId, decision, reviewedBy are required' }, { status: 400 });
+  }
+  if (decision !== 'approved' && decision !== 'rejected') {
+    return NextResponse.json({ error: 'decision must be approved or rejected' }, { status: 400 });
+  }
+
+  const request = await getJson<ErasureRequest>(erasureKey(requestId));
+  if (!request) return NextResponse.json({ error: 'Erasure request not found' }, { status: 404 });
+  if (request.status !== 'pending') {
+    return NextResponse.json({ error: `Erasure request is already ${request.status}` }, { status: 409 });
+  }
+
+  let erasedKeys: string[] = [];
+  if (decision === 'approved') {
+    // Erase non-AML discretionary PII for this subject.
+    // AML-exempt prefixes (FDL 10/2025 Art.20 10-year retention):
+    //   ongoing/subject/, cases/, str-cases/, sar/, audit-trail/, pkyc/subject/
+    const discretionaryPrefixes = [
+      `pdpl/consent/${request.subjectId}`,
+      `feedback/${request.subjectId}`,
+      `corrections/${request.subjectId}`,
+      `screening-history/${request.subjectId}`,
+    ];
+    for (const prefix of discretionaryPrefixes) {
+      const keys = await listKeys(prefix).catch(() => [] as string[]);
+      for (const key of keys) {
+        await del(key).catch(() => undefined);
+        erasedKeys.push(key);
+      }
+    }
+  }
+
+  const updated: ErasureRequest = {
+    ...request,
+    status: decision === 'approved' ? 'completed' : 'rejected',
+    reviewedAt: new Date().toISOString(),
+    reviewedBy,
+    reviewNotes,
+  };
+  await setJson(erasureKey(requestId), updated);
+
+  return NextResponse.json({
+    ok: true,
+    request: updated,
+    erasedKeys: decision === 'approved' ? erasedKeys : [],
+    notice: decision === 'approved'
+      ? `Discretionary non-AML PII erased (${erasedKeys.length} record(s)). AML records retained per FDL 10/2025 Art.20.`
+      : 'Erasure request rejected. No data was deleted.',
+  });
 }

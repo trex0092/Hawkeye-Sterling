@@ -58,6 +58,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: `lawfulBasis must be one of: ${validBases.join(', ')}` }, { status: 400 });
   }
 
+  const rawExpiresAt = (raw['expiresAt'] as string | undefined)?.trim();
+  // PDPL Art.6(a): explicit consent must have a defined expiry date.
+  if (lawfulBasis === 'consent') {
+    if (!rawExpiresAt) {
+      return NextResponse.json({ error: 'expiresAt is required for lawfulBasis: consent (PDPL Art.6(a))' }, { status: 400 });
+    }
+    if (isNaN(Date.parse(rawExpiresAt)) || new Date(rawExpiresAt) <= new Date()) {
+      return NextResponse.json({ error: 'expiresAt must be a valid future ISO 8601 date' }, { status: 400 });
+    }
+  }
+
   const record: ConsentRecord = {
     subjectId,
     subjectName,
@@ -65,6 +76,7 @@ export async function POST(req: NextRequest) {
     purpose,
     recordedAt: new Date().toISOString(),
     recordedBy,
+    ...(rawExpiresAt ? { expiresAt: rawExpiresAt } : {}),
     legalReference: lawfulBasis === 'legal_obligation' || lawfulBasis === 'legitimate_interest_aml'
       ? 'UAE PDPL FDL 45/2021 Art.6; CBUAE AML/CFT Standards'
       : 'UAE PDPL FDL 45/2021 Art.6(a)',
@@ -86,5 +98,6 @@ export async function GET(req: NextRequest) {
   if (!record) {
     return NextResponse.json({ error: 'No consent record found for this subject' }, { status: 404 });
   }
-  return NextResponse.json({ ok: true, record }, { headers: gate.headers });
+  const isExpired = record.expiresAt ? new Date(record.expiresAt) <= new Date() : false;
+  return NextResponse.json({ ok: true, record, expired: isExpired }, { headers: gate.headers });
 }

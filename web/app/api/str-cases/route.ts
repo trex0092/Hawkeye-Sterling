@@ -138,8 +138,35 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   // Single case upsert
   const now = new Date().toISOString();
+  const VALID_STATUSES: StrCase["status"][] = ["draft", "pending_review", "filed", "closed", "escalated"];
+  const ALLOWED_TRANSITIONS: Record<StrCase["status"], StrCase["status"][]> = {
+    draft:          ["pending_review", "escalated"],
+    pending_review: ["draft", "filed", "escalated"],
+    filed:          ["closed"],
+    escalated:      ["pending_review", "filed", "closed"],
+    closed:         [],
+  };
+
+  if (body.status && !(VALID_STATUSES as string[]).includes(body.status)) {
+    return NextResponse.json({ ok: false, error: `status must be one of: ${VALID_STATUSES.join(", ")}` }, { status: 400, headers: gate.headers });
+  }
+
+  // Validate state transition when updating an existing case
+  if (body.id && body.status) {
+    const existing = await getJson<StrCase>(strKey(tenant, body.id));
+    if (existing && existing.status !== body.status) {
+      const allowed = ALLOWED_TRANSITIONS[existing.status];
+      if (!allowed.includes(body.status)) {
+        return NextResponse.json(
+          { ok: false, error: `Invalid status transition: ${existing.status} → ${body.status}. Allowed: ${allowed.join(", ") || "none (terminal state)"}` },
+          { status: 422, headers: gate.headers },
+        );
+      }
+    }
+  }
+
   const record: StrCase = {
-    subject: body.subject ?? "Unknown Subject",
+    subject: body.subject?.trim() || "Unknown Subject",
     status: body.status ?? "draft",
     ...body,
     id: body.id ?? generateStrId(),
