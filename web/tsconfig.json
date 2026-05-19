@@ -16,8 +16,8 @@
     "plugins": [{ "name": "next" }],
     "paths": {
       "@/*": ["./*"],
-      "@brain/*": ["../src/brain/*", "../dist/src/brain/*"],
-      "@integrations/*": ["../src/integrations/*"]
+      "@brain/*": ["../dist/src/brain/*"],
+      "@integrations/*": ["../dist/src/integrations/*"]
     },
     "noUncheckedIndexedAccess": true
   },
