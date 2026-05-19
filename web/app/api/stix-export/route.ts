@@ -3,7 +3,7 @@
 // Exports AML typologies as STIX 2.1 bundle or ATT&CK Navigator layer.
 
 import { NextRequest, NextResponse } from 'next/server';
-import { buildStixBundle, buildNavigatorLayer, type AmlTypology } from '@/../../src/integrations/stix-export';
+import { buildStixBundle, buildNavigatorLayer, type AmlTypology } from '../../../../src/integrations/stix-export';
 
 // Core AML typologies mapped to AMLTRIX domains
 const HAWKEYE_TYPOLOGIES: AmlTypology[] = [

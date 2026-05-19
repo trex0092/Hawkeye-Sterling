@@ -3,7 +3,18 @@
 // compatible with AMLTRIX, MITRE ATT&CK Navigator, and FATF intel sharing.
 // STIX spec: https://docs.oasis-open.org/cti/stix/v2.1/os/stix-v2.1-os.html
 
-import { randomUUID } from 'crypto';
+// Use Web Crypto API (available in Node 22+ and all modern runtimes) to avoid
+// requiring @types/node in contexts that target browser/edge environments.
+function randomUUID(): string {
+  if (typeof globalThis.crypto?.randomUUID === 'function') {
+    return globalThis.crypto.randomUUID();
+  }
+  // Fallback: RFC 4122 v4 UUID via Math.random (non-cryptographic, dev only)
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
+  });
+}
 
 export type StixType =
   | 'bundle'

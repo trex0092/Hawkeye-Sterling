@@ -4,7 +4,7 @@
 // GET  /api/rule-engine/builtin   — list built-in rules
 
 import { NextRequest, NextResponse } from 'next/server';
-import { parseRule, evaluateRuleString, evaluateAllRules, BUILTIN_RULES, type RuleContext } from '@/../../src/brain/rule-engine';
+import { parseRule, evaluateRuleString, evaluateAllRules, BUILTIN_RULES, type RuleContext } from '../../../../src/brain/rule-engine';
 
 export async function GET(_req: NextRequest) {
   return NextResponse.json({ rules: BUILTIN_RULES, count: BUILTIN_RULES.length });

@@ -4,7 +4,7 @@
 // Returns Senzing G2 JSONL for bulk entity resolution import.
 
 import { NextRequest, NextResponse } from 'next/server';
-import { buildSenzingExport, toSenzingJsonl, type HawkeyeSubject } from '@/../../src/integrations/senzing-export';
+import { buildSenzingExport, toSenzingJsonl, type HawkeyeSubject } from '../../../../src/integrations/senzing-export';
 
 export async function POST(req: NextRequest) {
   let body: unknown;
