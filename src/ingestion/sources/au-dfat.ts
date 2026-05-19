@@ -95,20 +95,27 @@ function detectColumns(headers: string[]): ColumnMap {
   };
 }
 
-async function fetchXlsxBuffer(url: string): Promise<Buffer> {
-  const controller = new AbortController();
-  const t = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
-  try {
-    const res = await fetch(url, {
-      headers: { accept: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/octet-stream' },
-      signal: controller.signal,
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status} from ${url}`);
-    const arrayBuf = await res.arrayBuffer();
-    return Buffer.from(arrayBuf);
-  } finally {
-    clearTimeout(t);
+async function fetchXlsxBuffer(url: string, retries = 2, backoffMs = 2000): Promise<Buffer> {
+  let lastErr: unknown;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const controller = new AbortController();
+    const t = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+    try {
+      const res = await fetch(url, {
+        headers: { accept: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/octet-stream' },
+        signal: controller.signal,
+      });
+      clearTimeout(t);
+      if (!res.ok) throw new Error(`HTTP ${res.status} from ${url}`);
+      const arrayBuf = await res.arrayBuffer();
+      return Buffer.from(arrayBuf);
+    } catch (err) {
+      clearTimeout(t);
+      lastErr = err;
+      if (attempt < retries) await new Promise((r) => setTimeout(r, backoffMs * (attempt + 1)));
+    }
   }
+  throw lastErr instanceof Error ? lastErr : new Error(`fetchXlsxBuffer failed for ${url}`);
 }
 
 export const auDfatAdapter: SourceAdapter = {
