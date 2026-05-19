@@ -81,6 +81,18 @@ const nextConfig = {
           : ["node_modules"]),
         path.resolve(__dirname, "node_modules"),
       ];
+
+      // OpenTelemetry packages are optional peer deps loaded dynamically in
+      // instrumentation.ts. Mark them as externals so webpack stops emitting
+      // "Module not found" warnings for packages that intentionally may not
+      // be installed.
+      config.externals = [
+        ...(Array.isArray(config.externals) ? config.externals : []),
+        "@opentelemetry/sdk-node",
+        "@opentelemetry/auto-instrumentations-node",
+        "@opentelemetry/resources",
+        "@opentelemetry/semantic-conventions",
+      ];
     }
 
     // AsyncLocalStorage.snapshot() was added in Node.js 22.3.0.

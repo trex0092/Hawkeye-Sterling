@@ -267,6 +267,38 @@ const FALLBACK: CountryRiskResult = {
     "The UAE presents a medium risk profile following its removal from the FATF grey list in February 2024. Significant regulatory reforms under FDL 10/2025 have strengthened the AML/CFT framework. However, structural vulnerabilities persist including gold/real estate sector exposure, free zone opacity, and regional proximity risks. Enhanced Due Diligence with senior oversight is recommended for UAE-based counterparties.",
 };
 
+// GET /api/country-risk?country=XX
+// Quick static lookup — returns cached risk profile without LLM call.
+// Use POST for full AI-powered real-time analysis.
+export async function GET(req: Request) {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
+  const url = new URL(req.url);
+  const country = (url.searchParams.get("country") ?? "").trim();
+  if (!country) {
+    return NextResponse.json(
+      { ok: false, error: "country query param is required. Example: ?country=UAE" },
+      { status: 400, headers: gate.headers },
+    );
+  }
+  const staticEntry = lookupStaticCountry(country);
+  if (staticEntry) {
+    return NextResponse.json(
+      { ...staticEntryToResult(staticEntry), source: "static_cache" },
+      { headers: gate.headers },
+    );
+  }
+  // Not in static dataset — prompt caller to use POST for full AI assessment
+  return NextResponse.json(
+    {
+      ok: false,
+      error: `No static profile for "${country}". Use POST /api/country-risk with body { "country": "${country}" } for full AI assessment.`,
+      hint: "POST body: { country: string; analysisDepth?: 'quick' | 'full' }",
+    },
+    { status: 404, headers: gate.headers },
+  );
+}
+
 export async function POST(req: Request) {
   const t0 = Date.now();
   const gate = await enforce(req);

@@ -5,7 +5,7 @@
 // sanctions exposure propagation (FtM FollowTheMoney-inspired graph traversal).
 
 import { NextRequest, NextResponse } from 'next/server';
-import { EntityGraph, type GraphNode } from '../../../../src/brain/entity-graph';
+import { EntityGraph } from '../../../../src/brain/entity-graph';
 import { buildBoGraphFromRegistry, type CorporateRegistryRecord } from '../../../../src/brain/bo-graph-builder';
 
 export async function POST(req: NextRequest) {
