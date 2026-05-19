@@ -118,10 +118,16 @@ async function runSubject(subject: PKycSubject, force = false): Promise<RunSubje
       jurisdiction: subject.jurisdiction,
       aliases: subject.aliases,
       dob: subject.dob,
-    }) as { ok?: boolean; topScore?: number; severity?: string; hits?: unknown[] } | null;
+    }) as { ok?: boolean; topScore?: number; severity?: string; hits?: unknown[]; error?: string } | null;
 
-    const hits = (screenResult as { hits?: unknown[] })?.hits?.length ?? 0;
-    const topScore = (screenResult as { topScore?: number })?.topScore ?? 0;
+    // Fail loudly — a silent "ok: false" would be treated as "no hits / clear"
+    // and the subject could be stamped safe when screening actually failed.
+    if (!screenResult?.ok) {
+      throw new Error(`quick-screen failed: ${screenResult?.error ?? "no response"}`);
+    }
+
+    const hits = screenResult.hits?.length ?? 0;
+    const topScore = screenResult.topScore ?? 0;
 
     const sbResult = await callInternal("/api/super-brain", {
       name: subject.name,

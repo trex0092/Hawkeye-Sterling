@@ -5,10 +5,18 @@
 // Note: AML records subject to FDL 10/2025 Art.20 10-year retention CANNOT
 // be erased. Erasure is limited to non-AML PII fields within discretionary
 // data stores.
+//
+// Auth: API key required (enforce). Erasure requests contain PII (subjectName)
+// and must not be submitted or read by unauthenticated callers.
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+export const maxDuration = 15;
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getJson, setJson } from '@/lib/server/store';
 import { randomBytes } from 'crypto';
+import { enforce } from '@/lib/server/enforce';
 
 export type ErasureStatus = 'pending' | 'approved' | 'rejected' | 'completed';
 
@@ -32,6 +40,9 @@ function erasureKey(requestId: string): string {
 }
 
 export async function POST(req: NextRequest) {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
+
   let body: unknown;
   try { body = await req.json(); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
 
@@ -65,13 +76,16 @@ export async function POST(req: NextRequest) {
     requestId,
     request,
     notice: 'Erasure request logged. AML records are subject to 10-year mandatory retention (FDL 10/2025 Art.20) and cannot be erased. Non-AML discretionary PII will be reviewed within 30 days per PDPL Art.17.',
-  }, { status: 202 });
+  }, { status: 202, headers: gate.headers });
 }
 
 export async function GET(req: NextRequest) {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
+
   const requestId = req.nextUrl.searchParams.get('requestId');
   if (!requestId?.trim()) return NextResponse.json({ error: 'requestId query param required' }, { status: 400 });
   const request = await getJson<ErasureRequest>(erasureKey(requestId));
   if (!request) return NextResponse.json({ error: 'Erasure request not found' }, { status: 404 });
-  return NextResponse.json({ ok: true, request });
+  return NextResponse.json({ ok: true, request }, { headers: gate.headers });
 }
