@@ -309,18 +309,78 @@ const RISK_QUERIES: RiskQueryDef[] = [
     keywords: ["short seller", "Hindenburg", "Muddy Waters", "Citron", "investigative report*", "ICIJ", "OCCRP", "Panama Papers", "Pandora Papers", "money mule", "shell compan*", "beneficial owner*"],
     categories: ["adverse_media", "dpms"],
   },
+  {
+    // Regional / multilingual catch-all — no English keyword requirement.
+    // Catches Turkish, Arabic, Persian, CJK, and other local-language news
+    // that mentions the subject with native-language crime terms.
+    // Uses a broad set of transliterated and native-script crime signals.
+    label: "regional_multilingual",
+    keywords: [
+      // Turkish
+      "tutukland*", "gözalt*", "soruşturma", "yolsuzluk", "kara para", "kaçakçılık",
+      // Arabic (transliterated for GDELT ASCII index)
+      "ihtial", "ghassil amwal", "fasad", "irhab",
+      // Persian
+      "polshuyi", "fasad", "kahlahbardari",
+      // Russian (transliterated)
+      "otmyvanie", "korruptsiya", "moshennichestvo",
+      // Chinese (transliterated pinyin)
+      "xiqian", "fubai", "zhapian",
+      // Hindi (transliterated)
+      "bhrshtachar", "dhokhadhadi",
+      // Indonesian/Malay
+      "pencucian uang", "korupsi", "penipuan", "penyelundupan",
+      // French
+      "blanchiment", "corruption", "détournement",
+      // Spanish / Portuguese
+      "lavado de dinero", "lavagem de dinheiro", "corrupción", "corrupção",
+      // German
+      "Geldwäsche", "Korruption",
+      // Italian
+      "riciclaggio", "corruzione",
+      // Ukrainian / Polish
+      "vidmyvannia", "pranie pieniędzy",
+      // Swahili
+      "utakatishaji", "ufisadi",
+    ],
+    categories: ["adverse_media", "regional"],
+  },
 ];
 
 // High-reputation news domains — articles from these sources score higher.
 // Mirrors how Taranis weights its 38 vetted outlets.
 const HIGH_REP_DOMAINS = new Set([
+  // Global wire services & tier-1 financial press
   "reuters.com", "ft.com", "bloomberg.com", "wsj.com", "theguardian.com",
   "bbc.com", "bbc.co.uk", "nytimes.com", "apnews.com", "france24.com",
   "aljazeera.com", "dw.com", "euronews.com", "themoscowtimes.com",
   "scmp.com", "channelnewsasia.com", "arabnews.com", "thenationalnews.com",
   "gulfnews.com", "zawya.com", "middleeasteye.net",
+  // Investigative / compliance
   "occrp.org", "icij.org", "globalwitness.org", "transparency.org",
   "fatf-gafi.org", "un.org", "worldbank.org", "imf.org",
+  // Turkish national press
+  "hurriyet.com.tr", "sabah.com.tr", "milliyet.com.tr", "cumhuriyet.com.tr",
+  "haberturk.com", "sozcu.com.tr", "diken.com.tr", "bianet.org",
+  // Middle East & Gulf
+  "khaleejionline.com", "albawaba.com", "dailysabah.com", "aa.com.tr",
+  "alarabiya.net", "asharqalawsat.com", "trtworld.com",
+  // South & Southeast Asia
+  "hindustantimes.com", "thehindu.com", "ndtv.com", "dawn.com",
+  "thedailystar.net", "straitstimes.com", "thestar.com.my", "bangkokpost.com",
+  // CIS / Eastern Europe
+  "kyivindependent.com", "meduza.io", "currenttime.tv", "bellingcat.com",
+  "novaiagazeta.ru",
+  // Africa
+  "dailymaverick.co.za", "allafrica.com", "theafricareport.com",
+  "premiumtimesng.com", "nation.africa",
+  // Latin America
+  "infobae.com", "folha.uol.com.br", "estadao.com.br", "clarin.com",
+  "larepublica.co", "eltiempo.com",
+  // China
+  "caixin.com", "sixthtone.com",
+  // Japan / Korea
+  "japantimes.co.jp", "koreaherald.com", "koreatimes.co.kr",
 ]);
 const MED_REP_DOMAINS = new Set([
   "cnbc.com", "forbes.com", "businessinsider.com", "marketwatch.com",
@@ -328,6 +388,15 @@ const MED_REP_DOMAINS = new Set([
   "telegraph.co.uk", "lemonde.fr", "lefigaro.fr", "spiegel.de", "faz.net",
   "corriere.it", "elpais.com", "rtve.es", "nrc.nl", "svd.se",
   "haaretz.com", "timesofisrael.com", "arabtimesonline.com",
+  // Additional regional
+  "thepeninsulaqatar.com", "gulf-times.com", "timesofoman.com",
+  "kuwaittimes.com", "bahrainpost.com", "oman-tribune.com",
+  "swissinfo.ch", "rtbf.be", "tvn24.pl", "rtbf.be",
+  "zdf.de", "sueddeutsche.de", "welt.de", "handelsblatt.com",
+  "leparisien.fr", "liberation.fr", "nouvelobs.com",
+  "ansa.it", "repubblica.it", "sole24ore.com",
+  "reuters.com.mx", "univision.com", "telemundo.com",
+  "voanews.com", "rferl.org", "eurasianet.org",
 ]);
 
 function sourceScore(domain?: string): number {

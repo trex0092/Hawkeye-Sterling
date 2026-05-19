@@ -236,7 +236,7 @@ export function auditBrain(print = true): AuditReport {
   }
 
   const amkw = ADVERSE_MEDIA_CATEGORIES.reduce((n, c) => n + c.keywords.length, 0);
-  const coverage = implementationCoverage(REASONING_MODES.length);
+  const coverage = implementationCoverage(REASONING_MODES.map((m) => m.id));
   const implementedModes = listImplementedModeIds();
 
   const report: AuditReport = {

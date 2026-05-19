@@ -250,16 +250,24 @@ export function listImplementedModeIds(): string[] {
   return Object.keys(MODE_OVERRIDES).sort();
 }
 
-/** Count real implementations vs a total mode count. Used by auditBrain. */
-export function implementationCoverage(totalModes: number): {
+/** Count real implementations vs a total mode count. Used by auditBrain.
+ *  Pass the full list of REASONING_MODE IDs so aliases that aren't registered
+ *  mode IDs don't inflate the numerator beyond totalModes. */
+export function implementationCoverage(modeIdsOrTotal: string[] | number): {
   implemented: number;
   total: number;
   percent: number;
 } {
-  const implemented = Object.keys(MODE_OVERRIDES).length;
+  if (typeof modeIdsOrTotal === 'number') {
+    // Legacy path — clamp so aliases can't push above 100 %.
+    const implemented = Math.min(Object.keys(MODE_OVERRIDES).length, modeIdsOrTotal);
+    return { implemented, total: modeIdsOrTotal, percent: modeIdsOrTotal === 0 ? 0 : Math.round((implemented / modeIdsOrTotal) * 100) };
+  }
+  const modeIds = modeIdsOrTotal;
+  const implemented = modeIds.filter((id) => id in MODE_OVERRIDES).length;
   return {
     implemented,
-    total: totalModes,
-    percent: totalModes === 0 ? 0 : Math.round((implemented / totalModes) * 100),
+    total: modeIds.length,
+    percent: modeIds.length === 0 ? 0 : Math.round((implemented / modeIds.length) * 100),
   };
 }
