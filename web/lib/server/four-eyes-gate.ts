@@ -14,7 +14,7 @@
 // route handler is responsible for resolving it from session / API key /
 // regulator JWT before invoking this gate.
 
-import { getJson, setJson, listKeys } from "@/lib/server/store";
+import { getJson, setJson, listKeys, del } from "@/lib/server/store";
 import { createHash, randomBytes } from "crypto";
 
 export interface ApprovalEntry {
@@ -51,7 +51,7 @@ const FOUR_EYES_ESCALATION_HOURS = 72; // Cases pending > 72h trigger escalation
 
 export function isCaseOverdue(firstApprovalAt: string, nowMs = Date.now()): boolean {
   const ageHours = (nowMs - Date.parse(firstApprovalAt)) / 3_600_000;
-  return ageHours > FOUR_EYES_TTL_HOURS;
+  return ageHours >= FOUR_EYES_TTL_HOURS;
 }
 
 export function isCaseRequiresEscalation(firstApprovalAt: string, nowMs = Date.now()): boolean {
@@ -118,8 +118,21 @@ export async function recordApproval(input: {
   };
   await setJson(approvalKey(input.caseId, approvalId), entry);
 
-  // Re-load post-write for fresh status.
+  // Post-write duplicate check: guards against TOCTOU race where two
+  // concurrent requests both passed the pre-write same-actor check.
+  // Re-read the full decision set and verify our actor only appears once.
   const status = await getCaseApprovals(input.caseId);
+  const actorDecisions = status.decisions.filter((d) => d.actor === input.actor);
+  if (actorDecisions.length > 1) {
+    // We lost the race — delete our entry and surface the earlier one.
+    await del(approvalKey(input.caseId, approvalId)).catch(() => undefined);
+    const earlier = actorDecisions[0]!;
+    return {
+      status: await getCaseApprovals(input.caseId),
+      entry: earlier,
+      conflict: `actor ${input.actor} already recorded a ${earlier.decision} on this case at ${earlier.approvedAt} (concurrent write detected and rolled back)`,
+    };
+  }
   return { status, entry };
 }
 
