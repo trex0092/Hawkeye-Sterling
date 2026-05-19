@@ -576,6 +576,10 @@ async function handleSarReport(req: Request, gateHeaders: Record<string, string>
           projects: [projectGid],
           workspace: workspaceGid,
           assignee: asanaGids.assignee(),
+          // UAE FDL 10/2025 Art.22 — STR/SAR must be submitted within 30 days
+          // of forming suspicion. Set due_on so the MLRO inbox shows the
+          // regulatory deadline and automated overdue alerts fire in time.
+          due_on: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
         },
       }),
       signal: asanaCtl.signal,
