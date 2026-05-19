@@ -427,13 +427,17 @@ export default function TFSAlertsPage() {
 
       if (!searchRes.ok) {
         const err = (await searchRes.json()) as { error?: string };
-        if (err.error === "GMAIL_AUTH_FAILED") {
+        if (err.error === "GMAIL_REFRESH_FAILED") {
           setErrorMsg(
-            "Gmail connection failed. Please re-authenticate Gmail in your MCP settings.",
+            "Gmail OAuth credentials are invalid or revoked. Update GMAIL_REFRESH_TOKEN, GMAIL_CLIENT_ID, and GMAIL_CLIENT_SECRET in your Netlify environment variables.",
+          );
+        } else if (err.error === "GMAIL_AUTH_FAILED") {
+          setErrorMsg(
+            "Gmail access token has expired. Add GMAIL_REFRESH_TOKEN, GMAIL_CLIENT_ID, and GMAIL_CLIENT_SECRET for automatic renewal, or set a fresh GMAIL_ACCESS_TOKEN in Netlify.",
           );
         } else if (err.error === "GMAIL_NOT_CONFIGURED") {
           setErrorMsg(
-            "Gmail is not configured. Set the GMAIL_ACCESS_TOKEN environment variable in Netlify.",
+            "Gmail is not configured. Set GMAIL_REFRESH_TOKEN + GMAIL_CLIENT_ID + GMAIL_CLIENT_SECRET (recommended) or GMAIL_ACCESS_TOKEN in your Netlify environment variables.",
           );
         } else if (err.error === "NETWORK_TIMEOUT") {
           setErrorMsg("Search timed out. Please try again.");
