@@ -164,23 +164,27 @@ const BUILTIN_PROFILES: Record<string, AutoResolveRule[]> = {
     },
   ],
   standard: [
-    // Dismiss ID conflicts everywhere except critical lists
-    { requireNationalIdConflict: true, maxBaseScore: 0.92, action: 'auto-dismissed' },
-    // Dismiss DOB conflicts on non-critical lists
-    { requireDobConflict: true, maxBaseScore: 0.90, action: 'auto-dismissed' },
-    // Flag DOB conflicts on critical lists
+    // Dismiss ID conflicts everywhere except critical lists (guard in applyAutoResolveRule)
+    { requireNationalIdConflict: true, action: 'auto-dismissed' },
+    // Dismiss DOB conflicts on non-critical lists — no maxBaseScore constraint because
+    // a DOB conflict on an exact name match is the most dangerous false positive pattern
+    // (same name, different person). The critical list guard prevents OFAC/UN/UAE dismissal.
+    { requireDobConflict: true, action: 'auto-dismissed' },
+    // Flag DOB conflicts that survive the dismiss rule (i.e., critical list hits)
     { requireDobConflict: true, action: 'flagged' },
-    // Flag nationality conflicts
+    // Flag nationality conflicts on lower-confidence hits
     { requireNationalityConflict: true, maxBaseScore: 0.88, action: 'flagged' },
   ],
   strict: [
     // Dismiss ID conflicts on any non-critical list
-    { requireNationalIdConflict: true, maxBaseScore: 0.95, action: 'auto-dismissed' },
+    { requireNationalIdConflict: true, action: 'auto-dismissed' },
     // Dismiss DOB or nationality conflicts on non-critical lists
-    { requireDobConflict: true, maxBaseScore: 0.92, action: 'auto-dismissed' },
-    { requireNationalityConflict: true, maxBaseScore: 0.90, action: 'auto-dismissed' },
-    // Flag entity-type mismatches
+    { requireDobConflict: true, action: 'auto-dismissed' },
+    { requireNationalityConflict: true, maxBaseScore: 0.92, action: 'auto-dismissed' },
+    // Flag entity-type mismatches (always surface for MLRO)
     { requireEntityMismatch: true, action: 'flagged' },
+    // Flag remaining nationality conflicts on critical lists
+    { requireNationalityConflict: true, action: 'flagged' },
   ],
 };
 
