@@ -16,7 +16,8 @@ import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
 import { searchAdverseMedia, type TaranisItem } from "../../../../dist/src/integrations/taranisAi.js";
 import { analyseAdverseMediaResult, analyseAdverseMediaItems } from "../../../../dist/src/brain/adverse-media-analyser.js";
-import { fetchGdeltCached, type GdeltArticle } from "@/lib/intelligence/gdelt-cache";
+import { type GdeltArticle } from "@/lib/intelligence/gdelt-cache";
+import { getStore } from "@netlify/blobs";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -159,10 +160,11 @@ export async function POST(req: Request): Promise<NextResponse> {
   );
 }
 
-// ─── GDELT live-news — routed through shared 3-layer cache ──────────────────
-// Direct GDELT calls removed; all reads go through fetchGdeltCached()
-// (web/lib/intelligence/gdelt-cache.ts) which provides in-memory + optional
-// Upstash Redis caching and stale-fallback on GDELT outages.
+// ─── GDELT — served from Netlify Blobs cache only ────────────────────────────
+// Live GDELT calls removed from the request path. Articles are now pre-warmed
+// by netlify/functions/gdelt-prefetch.mts (every 6 h) and read from Blobs.
+// If no cached result exists for a subject, GDELT is skipped entirely so the
+// route never pays the 8 000+ ms live-fetch penalty.
 
 function _parseSeen(s: string | undefined): string {
   if (!s) return new Date().toISOString().slice(0, 10);
@@ -192,62 +194,33 @@ function gdeltToTaranisItem(a: GdeltArticle, index: number): TaranisItem {
   } as TaranisItem;
 }
 
-// Fetch REAL live articles from GDELT, then analyse them.
-// Primary path: Claude provides narrative + structured findings.
+// Serve GDELT articles from Netlify Blobs cache (pre-warmed by gdelt-prefetch.mts).
+// Primary analysis path: Claude provides narrative + structured findings.
 // Fallback path: when ANTHROPIC_API_KEY is absent, the deterministic
-// 737-keyword classifier runs directly on the GDELT articles — no LLM needed.
-// This ensures the route always returns a meaningful verdict (not "unknown")
-// even before an Anthropic key is configured.
-async function liveAdverseMedia(subject: string, budgetMs = 20_000) {
+// 737-keyword classifier runs directly on whatever articles are cached.
+async function liveAdverseMedia(subject: string, _budgetMs = 20_000) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
 
-  // 1. Pull live articles via shared 3-layer cache (memory → Redis → GDELT live).
-  // Forward remaining budget so GDELT doesn't overrun the route deadline.
-  const gdeltResult = await fetchGdeltCached(subject, { budgetMs });
-  const items = gdeltResult.articles;
-
-  // If GDELT itself failed (timeout / HTTP error), we must NOT return CLEAR.
-  // Return an explicit degraded verdict so the operator knows the lookup was
-  // incomplete — the MLRO must perform a manual adverse-media check.
-  if (gdeltResult.serviceError) {
-    console.warn(`[adverse-media] GDELT unavailable (subject redacted): serviceError`);
-    const now = new Date().toISOString();
-    const degraded: ReturnType<typeof analyseAdverseMediaResult> & {
-      gdeltSource: boolean;
-      gdeltArticleCount: number;
-      gdeltFailed: boolean;
-      gdeltError?: string;
-    } = {
-      subject,
-      riskTier: "unknown",
-      riskDetail: `Adverse media search incomplete — GDELT live feed unavailable (serviceError${gdeltResult.stale ? ", stale fallback unavailable" : ""}). Manual MLRO review required.`,
-      totalItems: 0,
-      adverseItems: 0,
-      criticalCount: 0,
-      highCount: 0,
-      mediumCount: 0,
-      lowCount: 0,
-      sarRecommended: false,
-      sarBasis: "Cannot determine — live news feed unavailable",
-      confidenceTier: "low",
-      confidenceBasis: "GDELT query failed; no articles analysed",
-      counterfactual: "Restore GDELT connectivity and re-run to get a reliable assessment",
-      investigationLines: ["Perform manual adverse-media search via Google, Reuters, Bloomberg"],
-      findings: [],
-      fatfRecommendations: ["R.10", "R.20"],
-      categoryBreakdown: [],
-      analysedAt: now,
-      modesCited: [],
-      gdeltSource: true,
-      gdeltArticleCount: 0,
-      gdeltFailed: true,
-    };
-    return degraded;
+  // 1. Read GDELT articles from Netlify Blobs cache.
+  //    The gdelt-prefetch.mts scheduled function (every 6 h) pre-warms this cache.
+  //    If no cached result exists for this subject, GDELT is skipped entirely —
+  //    no live network call, zero latency impact.
+  let items: GdeltArticle[] = [];
+  try {
+    const blobStore = getStore({ name: "gdelt-cache" });
+    const cached = await blobStore.get(`gdelt:${subject}`, { type: "json" }) as {
+      articles: GdeltArticle[];
+      cachedAt: string;
+    } | null;
+    if (cached?.articles && Array.isArray(cached.articles)) {
+      items = cached.articles;
+    }
+  } catch {
+    // Blobs unavailable or key not yet cached for this subject — GDELT skipped.
   }
 
   // When no Anthropic key is configured, run the deterministic 737-keyword
-  // classifier directly on the GDELT articles. This is the "no-LLM" fallback
-  // that keeps screening functional without requiring a Claude API key.
+  // classifier directly on the (possibly empty) cached articles.
   if (!apiKey) {
     const taranisItems = items.slice(0, 50).map(gdeltToTaranisItem);
     const verdict = analyseAdverseMediaItems(subject, taranisItems);

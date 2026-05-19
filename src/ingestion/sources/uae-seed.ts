@@ -34,11 +34,17 @@ function makeAdapter(id: string, displayName: string, envVar: string, portal: st
       try { raw = await readFile(path, 'utf8'); }
       catch { return { entities: [], rawChecksum: await sha256Hex('') }; }
       const rawChecksum = await sha256Hex(raw);
-      let records: unknown[];
-      try { records = JSON.parse(raw) as unknown[]; }
+      let parsed: unknown;
+      try { parsed = JSON.parse(raw); }
       catch { return { entities: [], rawChecksum }; }
+      // Accept both a plain array and the { _meta, entities } envelope shape.
+      const records: unknown[] = Array.isArray(parsed)
+        ? parsed
+        : (parsed && typeof parsed === 'object' && Array.isArray((parsed as Record<string, unknown>)['entities']))
+          ? ((parsed as Record<string, unknown>)['entities'] as unknown[])
+          : [];
       const entities: NormalisedEntity[] = [];
-      for (const r of Array.isArray(records) ? records : []) {
+      for (const r of records) {
         if (!r || typeof r !== 'object') continue;
         const o = r as Record<string, unknown>;
         const name = typeof o.name === 'string' ? o.name : '';

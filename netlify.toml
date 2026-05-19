@@ -43,6 +43,11 @@
   # any incidental appearance of credentials in build logs or docs doesn't
   # block the deploy.  The actual values are never committed to source.
   SECRETS_SCAN_OMIT_KEYS = "LSEG_USERNAME,LSEG_PASSWORD,LSEG_APP_KEY,LSEG_SQS_ENDPOINT"
+  # UAE seed file paths (non-sensitive paths — actual JSON files are committed to the repo).
+  # The JSON files are empty templates; populate them manually from EOCN email updates.
+  # Do NOT set these here if they differ per deploy context — use Netlify env vars instead.
+  UAE_EOCN_SEED_PATH = "data/seeds/uae_eocn_seed.json"
+  UAE_LTL_SEED_PATH = "data/seeds/uae_ltl_seed.json"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"

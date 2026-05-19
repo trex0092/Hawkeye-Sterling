@@ -1,0 +1,12 @@
+{
+  "_meta": {
+    "schema_version": "1.0",
+    "list_id": "uae_eocn",
+    "source": "UAE Executive Office for Control and Non-Proliferation",
+    "authority_url": "https://www.uaeiec.gov.ae/",
+    "update_method": "Manual — received via Gmail from EOCN",
+    "last_updated": "YYYY-MM-DD",
+    "note": "Set UAE_EOCN_SEED_PATH=data/seeds/uae_eocn_seed.json in Netlify env vars"
+  },
+  "entities": []
+}

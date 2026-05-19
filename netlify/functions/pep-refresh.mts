@@ -21,6 +21,29 @@ const FETCH_TIMEOUT_MS = 30_000;
 const DEFAULT_FEED_URL =
   "https://data.opensanctions.org/datasets/latest/peps/entities.ftm.json";
 
+// If OPENSANCTIONS_DATA_TOKEN is set, use the authenticated Data Delivery Service
+// endpoint. If unset, fall back to the public URL (requires a commercial license
+// for business use — see https://www.opensanctions.org/licensing/).
+function resolveFeedUrl(): string {
+  const override = process.env["FEED_PEP_URL"];
+  if (override) return override;
+  const token = process.env["OPENSANCTIONS_DATA_TOKEN"];
+  if (!token) {
+    console.warn(
+      "[pep-refresh] OPENSANCTIONS_DATA_TOKEN is not set — using the public OpenSanctions URL. " +
+      "A commercial license is required for business use: https://www.opensanctions.org/licensing/",
+    );
+  }
+  return DEFAULT_FEED_URL;
+}
+
+function buildFeedHeaders(): Record<string, string> {
+  const token = process.env["OPENSANCTIONS_DATA_TOKEN"];
+  const headers: Record<string, string> = { accept: "application/json" };
+  if (token) headers["authorization"] = `ApiKey ${token}`;
+  return headers;
+}
+
 interface PepRecord {
   id: string;
   name: string;
@@ -32,11 +55,11 @@ interface PepRecord {
   endDate?: string;
 }
 
-async function fetchWithTimeout(url: string, ms = FETCH_TIMEOUT_MS): Promise<Response | null> {
+async function fetchWithTimeout(url: string, ms = FETCH_TIMEOUT_MS, headers?: Record<string, string>): Promise<Response | null> {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), ms);
   try {
-    return await fetch(url, { signal: ctrl.signal, headers: { accept: "application/json" } });
+    return await fetch(url, { signal: ctrl.signal, headers: headers ?? { accept: "application/json" } });
   } catch {
     return null;
   } finally {
@@ -86,7 +109,8 @@ const LOCK_TTL_MS = 10 * 60 * 1000;
 
 export default async function handler(_req: Request): Promise<Response> {
   const startedAt = Date.now();
-  const feedUrl = process.env["FEED_PEP_URL"] ?? DEFAULT_FEED_URL;
+  const feedUrl = resolveFeedUrl();
+  const feedHeaders = buildFeedHeaders();
 
   let store: ReturnType<typeof getStore>;
   try {
@@ -107,7 +131,7 @@ export default async function handler(_req: Request): Promise<Response> {
   }
   await hbStore.setJSON(`${RUN_LABEL}/lock`, { lockedAt: new Date().toISOString() }).catch(() => undefined);
 
-  const res = await fetchWithTimeout(feedUrl);
+  const res = await fetchWithTimeout(feedUrl, FETCH_TIMEOUT_MS, feedHeaders);
   if (!res || !res.ok) {
     return jsonResponse({ ok: false, label: RUN_LABEL, error: `feed ${res?.status ?? "no-response"}`, durationMs: Date.now() - startedAt }, 503);
   }
