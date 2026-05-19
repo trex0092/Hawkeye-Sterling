@@ -11,6 +11,7 @@
 //   { "mcpServers": { "hawkeye-sterling": { "command": "node",
 //     "args": ["<repo>/dist/src/mcp/server.js"] } } }
 
+import { createHmac } from 'crypto';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import {
@@ -52,6 +53,7 @@ const TOOLS = [
   { name: 'hawkeye_sanction_delta', description: 'Diff two NormalisedListEntry snapshots.', inputSchema: { type: 'object', properties: { previous: { type: 'array' }, current: { type: 'array' } }, required: ['previous', 'current'] } },
   { name: 'hawkeye_analyse_adverse_media', description: 'FATF-mapped adverse-media analyser.', inputSchema: { type: 'object', properties: { subject: { type: 'string' }, items: { type: 'array' } }, required: ['subject', 'items'] } },
   { name: 'hawkeye_brain_manifest', description: 'Manifest counts + integrity hashes.', inputSchema: { type: 'object', properties: {} } },
+  { name: 'hawkeye_verify_attestation', description: 'Verify MCPS attestation signature for a previous tool response.', inputSchema: { type: 'object', properties: { tool: { type: 'string' }, ts: { type: 'string' }, sig: { type: 'string' }, args: { type: 'object' }, result: { type: 'object' } }, required: ['tool', 'ts', 'sig'] } },
 ] as const;
 
 const PROMPTS = [
@@ -63,12 +65,37 @@ const server = new Server({ name: PRODUCT_NAME, version: PRODUCT_VERSION }, { ca
 server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: TOOLS }));
 server.setRequestHandler(ListPromptsRequestSchema, async () => ({ prompts: PROMPTS }));
 
+function buildMcpsAttestation(tool: string, args: Record<string, unknown>, result: unknown): {
+  _mcps: {
+    tool: string;
+    ts: string;
+    sig: string | null;
+    alg: string;
+    warning?: string;
+  };
+} {
+  const ts = new Date().toISOString();
+  const key = process.env['MCP_SIGNING_KEY'];
+  if (!key) {
+    return { _mcps: { tool, ts, sig: null, alg: 'hmac-sha256', warning: 'MCP_SIGNING_KEY not set — attestation disabled' } };
+  }
+  const payload = `${tool}|${ts}|${JSON.stringify(args)}|${JSON.stringify(result)}`;
+  const sig = createHmac('sha256', key).update(payload).digest('hex');
+  return { _mcps: { tool, ts, sig, alg: 'hmac-sha256' } };
+}
+
 server.setRequestHandler(CallToolRequestSchema, async (req) => {
   const name = req.params.name;
   const args = (req.params.arguments ?? {}) as Record<string, unknown>;
   try {
     const result = await dispatch(name, args);
-    return { content: [{ type: 'text', text: typeof result === 'string' ? result : JSON.stringify(result, null, 2) }] };
+    const attestation = buildMcpsAttestation(name, args, result);
+    return {
+      content: [
+        { type: 'text', text: typeof result === 'string' ? result : JSON.stringify(result, null, 2) },
+        { type: 'text', text: JSON.stringify(attestation, null, 2) },
+      ]
+    };
   } catch (err) {
     throw new McpError(ErrorCode.InternalError, `${name} failed: ${err instanceof Error ? err.message : String(err)}`);
   }
@@ -114,6 +141,14 @@ async function dispatch(name: string, args: Record<string, unknown>): Promise<un
     case 'hawkeye_sanction_delta': return computeSanctionDelta((args['previous'] as NormalisedListEntry[]) ?? [], (args['current'] as NormalisedListEntry[]) ?? []);
     case 'hawkeye_analyse_adverse_media': return analyseAdverseMediaItems(String(args['subject'] ?? ''), (args['items'] as Parameters<typeof analyseAdverseMediaItems>[1]) ?? []);
     case 'hawkeye_brain_manifest': return { manifest: buildWeaponizedBrainManifest(), integrity: weaponizedIntegrity() };
+    case 'hawkeye_verify_attestation': {
+      const { tool, ts, sig, args: aArgs, result: aResult } = args as { tool: string; ts: string; sig: string; args?: unknown; result?: unknown };
+      const key = process.env['MCP_SIGNING_KEY'];
+      if (!key) return { valid: false, reason: 'MCP_SIGNING_KEY not configured' };
+      const payload = `${tool}|${ts}|${JSON.stringify(aArgs ?? {})}|${JSON.stringify(aResult ?? {})}`;
+      const expected = createHmac('sha256', key).update(payload).digest('hex');
+      return { valid: expected === sig, tool, ts };
+    }
     default: throw new McpError(ErrorCode.MethodNotFound, `unknown tool: ${name}`);
   }
 }

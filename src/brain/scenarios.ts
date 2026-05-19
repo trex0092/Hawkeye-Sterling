@@ -4,6 +4,20 @@
 
 import type { Scenario } from './types.js';
 
+export interface ScenarioVersion {
+  version: number;
+  publishedAt: string;
+  status: 'draft' | 'active' | 'deprecated';
+  changelog: string;
+}
+
+export interface VersionedScenario extends Scenario {
+  version: number;
+  status: 'draft' | 'active' | 'deprecated';
+  publishedAt: string;
+  changelog: string[];
+}
+
 const s = (
   id: string,
   name: string,
@@ -372,3 +386,34 @@ export const SCENARIOS: Scenario[] = [
 export const SCENARIO_BY_ID: Map<string, Scenario> = new Map(
   SCENARIOS.map((s) => [s.id, s]),
 );
+
+/** Current schema version for scenario versioning */
+export const SCENARIO_SCHEMA_VERSION = 1;
+
+/**
+ * Wraps SCENARIOS with version metadata.
+ * All scenarios start at version 1 (active) as of initial publication.
+ * Future rule changes increment version and append a changelog entry.
+ */
+export const VERSIONED_SCENARIOS: VersionedScenario[] = SCENARIOS.map((s) => ({
+  ...s,
+  version: 1,
+  status: 'active' as const,
+  publishedAt: '2026-01-01T00:00:00Z',
+  changelog: ['Initial publication — Hawkeye Sterling v3.0'],
+}));
+
+/** Look up a scenario by ID from the versioned registry */
+export function getScenario(id: string): VersionedScenario | undefined {
+  return VERSIONED_SCENARIOS.find((s) => s.id === id);
+}
+
+/** Get all active scenarios for a domain */
+export function getScenariosByDomain(domain: string): VersionedScenario[] {
+  return VERSIONED_SCENARIOS.filter((s) => s.domain === domain && s.status === 'active');
+}
+
+/** Get all active scenarios */
+export function getActiveScenarios(): VersionedScenario[] {
+  return VERSIONED_SCENARIOS.filter((s) => s.status === 'active');
+}

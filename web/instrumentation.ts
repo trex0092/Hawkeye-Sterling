@@ -76,4 +76,66 @@ export async function register() {
     applySnapshotPolyfill((globalThis as Record<string, unknown>).AsyncLocalStorage)
     validateSecrets();
   }
+
+  // OpenTelemetry SDK setup — only in Node.js runtime, not edge
+  if (process.env.NEXT_RUNTIME !== 'edge' && process.env.NODE_ENV !== 'test') {
+    try {
+      // Lazy imports to avoid bundling OTel in edge runtime
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore – optional peer dep, caught below
+      const { NodeSDK } = await import('@opentelemetry/sdk-node').catch(() => ({ NodeSDK: null }));
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore – optional peer dep, caught below
+      const { getNodeAutoInstrumentations } = await import('@opentelemetry/auto-instrumentations-node').catch(() => ({ getNodeAutoInstrumentations: () => [] }));
+      const { Resource } = await import('@opentelemetry/resources').catch(() => ({ Resource: null }));
+      const { SEMRESATTRS_SERVICE_NAME, SEMRESATTRS_SERVICE_VERSION } = await import('@opentelemetry/semantic-conventions').catch(() => ({ SEMRESATTRS_SERVICE_NAME: 'service.name', SEMRESATTRS_SERVICE_VERSION: 'service.version' }));
+
+      if (NodeSDK && Resource) {
+        const sdk = new NodeSDK({
+          resource: new Resource({
+            [SEMRESATTRS_SERVICE_NAME]: 'hawkeye-sterling',
+            [SEMRESATTRS_SERVICE_VERSION]: '3.0.0',
+            'deployment.environment': process.env.NODE_ENV ?? 'development',
+          }),
+          instrumentations: typeof getNodeAutoInstrumentations === 'function' ? getNodeAutoInstrumentations({
+            '@opentelemetry/instrumentation-fs': { enabled: false },
+          }) : [],
+        });
+        sdk.start();
+        console.info('[hawkeye] OpenTelemetry SDK started');
+
+        // Graceful shutdown
+        process.on('SIGTERM', () => {
+          sdk.shutdown().then(() => {
+            console.info('[hawkeye] OpenTelemetry SDK shut down');
+          }).catch((err: unknown) => {
+            console.error('[hawkeye] OpenTelemetry shutdown error:', err);
+          });
+        });
+      }
+    } catch (err) {
+      // OTel is optional — if packages are missing, continue without tracing
+      console.warn('[hawkeye] OpenTelemetry not available:', err instanceof Error ? err.message : String(err));
+    }
+  }
+}
+
+// Tracer singleton for use in route handlers
+// Usage: const span = getTracer().startSpan('operation-name');
+export function getTracer() {
+  try {
+    const { trace } = require('@opentelemetry/api') as typeof import('@opentelemetry/api');
+    return trace.getTracer('hawkeye-sterling', '3.0.0');
+  } catch {
+    // Return no-op tracer when OTel not available
+    return {
+      startSpan: () => ({
+        end: () => {},
+        setStatus: () => {},
+        setAttributes: () => {},
+        setAttribute: () => {},
+      }),
+      startActiveSpan: (_name: string, fn: (span: unknown) => unknown) => fn({ end: () => {}, setStatus: () => {}, setAttributes: () => {}, setAttribute: () => {} }),
+    };
+  }
 }

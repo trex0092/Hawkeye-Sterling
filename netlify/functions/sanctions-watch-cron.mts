@@ -54,7 +54,7 @@ export default async (_req: Request): Promise<Response> => {
   try {
     const lock = await acquireCronLock(LABEL, LOCK_INTERVAL_MS);
     if (!lock.acquired) {
-      console.log(`[${LABEL}] cron-lock held — skipping. priorAt=${lock.priorAt} ageMs=${lock.priorAgeMs}`);
+      console.info(`[${LABEL}] cron-lock held — skipping. priorAt=${lock.priorAt} ageMs=${lock.priorAgeMs}`);
       // Still run stale-blob alerting so a held lock doesn't mask a
       // genuinely stale snapshot from an earlier failed run.
       await alertOnStaleBlobs();

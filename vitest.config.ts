@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitest/config';
+import path from 'path';
 
 // Hawkeye Sterling uses NodeNext module resolution with `.js` extensions
 // pointing to `.ts` source files. Vitest needs to resolve those extensions
@@ -25,6 +26,9 @@ export default defineConfig({
     // Rewrite `.js` imports to resolve against `.ts` sources.
     alias: [
       { find: /^(\.{1,2}\/.*)\.js$/, replacement: '$1' },
+      // Provide a lightweight NextResponse shim so web/lib tests that import
+      // validate.ts (which uses next/server) run without the Next.js runtime.
+      { find: 'next/server', replacement: path.resolve(__dirname, 'src/__mocks__/next-server.ts') },
     ],
   },
 });

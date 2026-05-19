@@ -64,6 +64,25 @@ export default async function handler(_req: Request): Promise<Response> {
     10,
   );
 
+  // ── Audit chain health check (M-16) ─────────────────────────────────────────
+  // Verify the audit chain store is accessible. NEVER purges it — immutable per
+  // FDL 10/2025 Art.24. Logs entry count for operational monitoring.
+  let auditChainHealthy = false;
+  let auditChainEntryCount = 0;
+  try {
+    const auditStore = getStore("hawkeye-audit-chain");
+    const auditKeys = await auditStore.list({ limit: 10 });
+    auditChainEntryCount = auditKeys.blobs?.length ?? 0;
+    auditChainHealthy = true;
+    console.info(
+      `[retention-scheduler] Audit chain healthy — ${auditChainEntryCount} entries sampled (immutable per FDL 10/2025 Art.24)`
+    );
+  } catch (err) {
+    console.error(
+      `[retention-scheduler] Audit chain health check FAILED: ${err instanceof Error ? err.message : String(err)}`
+    );
+  }
+
   let store: ReturnType<typeof getStore>;
   try {
     store = getStore(STORE_NAME);
@@ -189,6 +208,12 @@ export default async function handler(_req: Request): Promise<Response> {
     sample: purged.slice(0, 10),  // first 10 for the log
     durationMs: Date.now() - startedAt,
     note: "FDL 10/2025 Art.20 retention enforced; audit chain entry written (Art.24).",
+    auditChain: {
+      healthy: auditChainHealthy,
+      sampledEntries: auditChainEntryCount,
+      immutable: true,
+      basis: "FDL 10/2025 Art.24 — audit chain is never purged",
+    },
   });
 }
 
