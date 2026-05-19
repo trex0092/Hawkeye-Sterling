@@ -258,8 +258,8 @@ export default function ProfilePage() {
             <div className="font-mono text-10 uppercase tracking-wide-4 text-ink-3 mb-1">Need help?</div>
             <p className="text-12 text-ink-2">
               If you are locked out or cannot remember your current password, contact your MLRO at{" "}
-              <a href="mailto:compliance@hawkeye-sterling.ae" className="text-brand hover:underline">
-                compliance@hawkeye-sterling.ae
+              <a href="mailto:hawkeye.sterling.v2@gmail.com" className="text-brand hover:underline">
+                hawkeye.sterling.v2@gmail.com
               </a>{" "}
               to have your password reset.
             </p>
