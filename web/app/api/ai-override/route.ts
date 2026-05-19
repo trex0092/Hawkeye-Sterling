@@ -5,6 +5,8 @@ export const maxDuration = 30;
 import { NextRequest, NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { writeAuditEvent } from "@/lib/audit";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 interface OverrideBody {
   aiModule: string;
@@ -42,12 +44,28 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   const actor = operator ?? gate.keyId ?? "mlro";
+  const tenant = tenantIdFromGate(gate);
 
-  // Log 1: high-level human override event
+  // Client-side audit trail (informational).
   writeAuditEvent(actor, "ai.human-override", aiModule);
-
-  // Log 2: full detail with recommendation excerpt
   writeAuditEvent(actor, `ai.${humanDecision}`, `${aiModule}: ${aiRecommendation.slice(0, 100)}`);
+
+  // Server-side tamper-evident chain (FDL 10/2025 Art.24 — regulators require
+  // verifiable record of human overrides of AI compliance decisions).
+  await writeAuditChainEntry(
+    {
+      event: "ai.human-override",
+      actor,
+      aiModule,
+      humanDecision,
+      humanReason: humanReason.slice(0, 500),
+      aiRecommendation: aiRecommendation.slice(0, 200),
+      subjectRef: body.subjectRef,
+    },
+    tenant,
+  ).catch((err) =>
+    console.warn("[ai-override] server audit chain write failed:", err instanceof Error ? err.message : String(err)),
+  );
 
   return NextResponse.json({ ok: true, logged: true, at: new Date().toISOString() }, { headers: gate.headers });
 }
