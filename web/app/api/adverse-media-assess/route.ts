@@ -3,6 +3,8 @@ import { writeAuditEvent } from "@/lib/audit";
 import { enforce } from "@/lib/server/enforce";
 
 import { getAnthropicClient } from "@/lib/server/llm";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -78,6 +80,17 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (!Array.isArray(parsed.topConcerns)) parsed.topConcerns = [];
     if (!Array.isArray(parsed.fatfTypologies)) parsed.fatfTypologies = [];
     if (!Array.isArray(parsed.uaeSpecificRisks)) parsed.uaeSpecificRisks = [];
+    void writeAuditChainEntry(
+      {
+        event: "adverse_media.assessed",
+        actor: gate.keyId,
+        overallRisk: parsed.overallRisk,
+        recommendedAction: parsed.recommendedAction,
+      },
+      tenantIdFromGate(gate),
+    ).catch((err) =>
+      console.warn("[adverse-media-assess] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+    );
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "adverse-media-assess temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });

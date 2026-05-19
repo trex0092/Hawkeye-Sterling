@@ -3,6 +3,8 @@ import { writeAuditEvent } from "@/lib/audit";
 import { enforce } from "@/lib/server/enforce";
 
 import { getAnthropicClient } from "@/lib/server/llm";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -107,6 +109,18 @@ export async function POST(req: Request): Promise<NextResponse> {
   } catch {
     return NextResponse.json({ ok: false, error: "crypto-threat temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
+
+  void writeAuditChainEntry(
+    {
+      event: "crypto.threat_assessed",
+      actor: gate.keyId,
+      complianceVerdict: result.complianceVerdict,
+      reportingObligation: result.reportingObligation,
+    },
+    tenantIdFromGate(gate),
+  ).catch((err) =>
+    console.warn("[crypto-threat] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+  );
 
   return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
 }

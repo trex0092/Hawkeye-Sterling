@@ -108,7 +108,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     {
       event: "goaml.xml_validated",
       actor: gate.keyId,
-      overallValid: result.overallValid,
+      grade: result.grade,
       fatalIssueCount: result.fatalIssues.length,
       missingElementCount: result.missingElements.length,
     },

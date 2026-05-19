@@ -7,6 +7,8 @@ import { NextResponse } from "next/server";
 import { writeAuditEvent } from "@/lib/audit";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -106,6 +108,18 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (!Array.isArray(parsed.nationalityDistribution)) parsed.nationalityDistribution = [];
     if (!Array.isArray(parsed.potentialBiasIndicators)) parsed.potentialBiasIndicators = [];
     if (!Array.isArray(parsed.recommendedActions)) parsed.recommendedActions = [];
+
+    void writeAuditChainEntry(
+      {
+        event: "ai.bias_monitored",
+        actor: gate.keyId,
+        biasRisk: parsed.biasRisk,
+        subjectCount: subjects.length,
+      },
+      tenantIdFromGate(gate),
+    ).catch((err) =>
+      console.warn("[ai-bias-monitor] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+    );
 
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch (err) {

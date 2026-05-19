@@ -7,6 +7,8 @@ import { writeAuditEvent } from "@/lib/audit";
 import { enforce } from "@/lib/server/enforce";
 
 import { getAnthropicClient } from "@/lib/server/llm";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 interface CaseInput {
   id: string;
@@ -84,6 +86,18 @@ export async function POST(req: NextRequest) {
   }
 
   writeAuditEvent("mlro", "str.briefing-generated", `cases: ${cases.length}`);
+
+  void writeAuditChainEntry(
+    {
+      event: "str.briefing_generated",
+      actor: gate.keyId,
+      caseCount: cases.length,
+      priorityCaseCount: briefing.priorityCases.length,
+    },
+    tenantIdFromGate(gate),
+  ).catch((err) =>
+    console.warn("[str-briefing] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+  );
 
   return NextResponse.json({ ok: true, briefing }, { headers: gate.headers });
 }

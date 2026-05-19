@@ -3,6 +3,8 @@ import { writeAuditEvent } from "@/lib/audit";
 import { enforce } from "@/lib/server/enforce";
 
 import { getAnthropicClient } from "@/lib/server/llm";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -143,6 +145,18 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     writeAuditEvent("mlro", "sanctions.ai-indirect-exposure", subject);
   } catch { /* non-blocking */ }
+
+  void writeAuditChainEntry(
+    {
+      event: "sanctions.indirect_assessed",
+      actor: gate.keyId,
+      overallSanctionsRisk: result.overallSanctionsRisk,
+      recommendedAction: result.recommendedAction,
+    },
+    tenantIdFromGate(gate),
+  ).catch((err) =>
+    console.warn("[sanctions-indirect] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+  );
 
   return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
 }

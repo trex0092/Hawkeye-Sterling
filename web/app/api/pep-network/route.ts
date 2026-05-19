@@ -233,8 +233,8 @@ Return ONLY valid JSON with this exact structure:
         event: "pep.network_intelligence_generated",
         actor: gate.keyId,
         pepName,
-        networkRiskLevel: output.networkRiskLevel,
-        totalConnections: output.connections?.length ?? 0,
+        pepRiskRating: output.pepRiskRating,
+        totalNodesDiscovered: output.totalNodesDiscovered,
       },
       tenantIdFromGate(gate),
     ).catch((err) =>

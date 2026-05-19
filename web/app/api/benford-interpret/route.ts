@@ -3,6 +3,8 @@ import { writeAuditEvent } from "@/lib/audit";
 import { enforce } from "@/lib/server/enforce";
 
 import { getAnthropicClient } from "@/lib/server/llm";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -110,6 +112,18 @@ export async function POST(req: Request): Promise<NextResponse> {
   } catch {
     return NextResponse.json({ ok: false, error: "benford-interpret temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
+
+  void writeAuditChainEntry(
+    {
+      event: "benford.analysis_interpreted",
+      actor: gate.keyId,
+      verdict: result.verdict,
+      confidence: result.confidence,
+    },
+    tenantIdFromGate(gate),
+  ).catch((err) =>
+    console.warn("[benford-interpret] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+  );
 
   return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
 }

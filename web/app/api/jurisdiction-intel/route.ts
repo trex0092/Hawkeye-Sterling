@@ -3,6 +3,8 @@ import { writeAuditEvent } from "@/lib/audit";
 
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -116,6 +118,18 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     writeAuditEvent("analyst", "jurisdiction.ai-intelligence", body.country.trim());
   } catch { /* non-blocking */ }
+
+  void writeAuditChainEntry(
+    {
+      event: "jurisdiction.intel_generated",
+      actor: gate.keyId,
+      country: result.countryName,
+      overallRisk: result.overallRisk,
+    },
+    tenantIdFromGate(gate),
+  ).catch((err) =>
+    console.warn("[jurisdiction-intel] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+  );
 
   return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
 }

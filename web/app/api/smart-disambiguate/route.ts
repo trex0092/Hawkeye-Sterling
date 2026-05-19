@@ -216,7 +216,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       {
         event: "screening.disambiguation_completed",
         actor: gate.keyId,
-        clientName: client.name,
+        clientName: sanitizedClient.name,
         verdict: (parsed as { verdict?: string }).verdict,
         hitCount: parsed.hits.length,
       },

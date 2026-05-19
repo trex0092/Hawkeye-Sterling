@@ -3,6 +3,8 @@ import { writeAuditEvent } from "@/lib/audit";
 import { enforce } from "@/lib/server/enforce";
 
 import { getAnthropicClient } from "@/lib/server/llm";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -339,6 +341,18 @@ export async function POST(req: Request): Promise<NextResponse> {
       `${body.subjectName?.trim() ?? "unknown"} → ${result.flags.length} flag(s), overallRisk: ${result.overallRisk}, disposition: ${result.recommendedDisposition}`,
     );
   } catch { /* non-blocking */ }
+
+  void writeAuditChainEntry(
+    {
+      event: "mlro.flags_extracted",
+      actor: gate.keyId,
+      flagCount: result.flags.length,
+      overallRisk: result.overallRisk,
+    },
+    tenantIdFromGate(gate),
+  ).catch((err) =>
+    console.warn("[mlro.flags_extracted] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+  );
 
   return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
 }
