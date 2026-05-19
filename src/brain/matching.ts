@@ -475,6 +475,52 @@ export function matchPartialRatio(a: string, b: string, threshold = 0.9): MatchS
   return { method: 'fuzzball_partial', score: best, threshold, pass: best >= threshold };
 }
 
+// ---------- initials expansion
+// Matches "M. Ahmed Hassan" against "Mohammed Ahmed Hassan" by checking whether
+// every single-letter token in one name is the initial of the corresponding
+// token in the other name. Scored as proportion of tokens that agree.
+// Only fires when at least one name contains an initial token (single letter).
+export function matchInitials(a: string, b: string): MatchScore {
+  const ta = normalise(a).split(' ').filter(Boolean);
+  const tb = normalise(b).split(' ').filter(Boolean);
+  const aHasInitial = ta.some((t) => t.length === 1);
+  const bHasInitial = tb.some((t) => t.length === 1);
+  if (!aHasInitial && !bHasInitial) {
+    return { method: 'exact', score: 0, threshold: 0.85, pass: false };
+  }
+  // Use the name with initials as the "short" side to align tokens.
+  const [withInitials, withFull] = aHasInitial ? [ta, tb] : [tb, ta];
+  if (withInitials.length === 0 || withFull.length === 0) {
+    return { method: 'exact', score: 0, threshold: 0.85, pass: false };
+  }
+  let matches = 0;
+  const usedFull = new Set<number>();
+  for (const token of withInitials) {
+    if (token.length === 1) {
+      // Single-letter token: look for a full token in the other name starting with this letter
+      for (let j = 0; j < withFull.length; j++) {
+        if (!usedFull.has(j) && (withFull[j] ?? '').startsWith(token)) {
+          matches++;
+          usedFull.add(j);
+          break;
+        }
+      }
+    } else {
+      // Full token: look for exact match in the other name
+      for (let j = 0; j < withFull.length; j++) {
+        if (!usedFull.has(j) && withFull[j] === token) {
+          matches++;
+          usedFull.add(j);
+          break;
+        }
+      }
+    }
+  }
+  const score = withInitials.length === 0 ? 0 : matches / withInitials.length;
+  const threshold = 0.85;
+  return { method: 'jaro_winkler', score, threshold, pass: score >= threshold };
+}
+
 // ---------- ensemble
 export interface EnsembleMatch {
   subject: string;
@@ -503,22 +549,93 @@ const CYRILLIC_LETTER_MAP: Record<string, string> = {
   'ъ': '', 'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya',
 };
 const ROMAN_FAMILIES: Record<string, string> = {
+  // Muhammad variants — the most common name in AML watchlists
   mohamed: 'muhammad', mohammed: 'muhammad', mohammad: 'muhammad',
-  mohamad: 'muhammad', mohd: 'muhammad',
-  ahmed: 'ahmad', ahmet: 'ahmad',
+  mohamad: 'muhammad', mohd: 'muhammad', mehmed: 'muhammad',
+  mehmet: 'muhammad', muhammet: 'muhammad', mahomet: 'muhammad',
+  muhammed: 'muhammad', muhamad: 'muhammad', muhamad: 'muhammad',
+  // Ahmad/Ahmed variants
+  ahmed: 'ahmad', ahmet: 'ahmad', ahmad: 'ahmad',
+  // Hussein/Hassan variants
   husain: 'hussein', husayn: 'hussein', hussain: 'hussein',
+  hossein: 'hussein', hosein: 'hussein',
+  hassan: 'hasan', hasson: 'hasan', hassen: 'hasan',
+  // Yusuf variants
   yousef: 'yusuf', youssef: 'yusuf', yousuf: 'yusuf',
-  abdulla: 'abdullah', abdallah: 'abdullah',
-  abdulaziz: 'abdul aziz', abdelaziz: 'abdul aziz',
-  abdulrahman: 'abdul rahman', abdurrahman: 'abdul rahman',
-  khaled: 'khalid', khaleed: 'khalid',
-  fatimah: 'fatima', fatma: 'fatima',
-  ayesha: 'aisha', aicha: 'aisha',
-  omar: 'umar', omer: 'umar',
-  said: 'saeed', sayed: 'saeed',
+  yusoff: 'yusuf', yosef: 'yusuf', yusup: 'yusuf',
+  // Abdullah variants
+  abdulla: 'abdullah', abdallah: 'abdullah', obaidallah: 'abdullah',
+  ubaidallah: 'abdullah', ubeid: 'ubaid',
+  // Abd-prefix compound names — normalise to canonical abd al X form
+  abdulaziz: 'abd al aziz', abdelaziz: 'abd al aziz', abdulazeez: 'abd al aziz',
+  abdulrahman: 'abd al rahman', abdurrahman: 'abd al rahman', abdelrahman: 'abd al rahman',
+  abderrahman: 'abd al rahman',
+  abdulhamid: 'abd al hamid', abdelhamid: 'abd al hamid',
+  abdulkarim: 'abd al karim', abdelkarim: 'abd al karim', abdelkrim: 'abd al karim',
+  abdullatif: 'abd al latif', abdellatif: 'abd al latif',
+  abdulmajid: 'abd al majid', abdelmajid: 'abd al majid',
+  abdulnasser: 'abd al nasser', abdelnasser: 'abd al nasser',
+  abdulwahab: 'abd al wahab', abdelwahab: 'abd al wahab',
+  abdulsalam: 'abd al salam', abdelsalam: 'abd al salam',
+  abdulfattah: 'abd al fattah', abdelfattah: 'abd al fattah',
+  abdulmonem: 'abd al monem', abdelmonem: 'abd al monem',
+  abdulqadir: 'abd al qadir', abdelkader: 'abd al qadir', abdalqadir: 'abd al qadir',
+  abdulhadi: 'abd al hadi', abdelhadi: 'abd al hadi',
+  abdulghani: 'abd al ghani', abdelghani: 'abd al ghani',
+  abdulali: 'abd al ali',
+  // Khalid variants
+  khaled: 'khalid', khaleed: 'khalid', khālid: 'khalid',
+  // Fatima variants
+  fatimah: 'fatima', fatma: 'fatima', fatemeh: 'fatima', fatme: 'fatima',
+  // Aisha variants
+  ayesha: 'aisha', aicha: 'aisha', aaisha: 'aisha', aysha: 'aisha', ayesha: 'aisha',
+  // Umar variants
+  omar: 'umar', omer: 'umar', umar: 'umar', amr: 'amr',
+  // Said/Saeed variants
+  said: 'saeed', sayed: 'saeed', sayid: 'saeed', sayyid: 'saeed',
+  // Ibrahim variants
+  ibrahim: 'ibrahim', ebrahim: 'ibrahim', ibraheem: 'ibrahim',
+  // Ismail variants
+  ismail: 'ismail', esmail: 'ismail', ismael: 'ismail', ismaeel: 'ismail',
+  // Mustafa variants
+  mustafa: 'mustafa', mostafa: 'mustafa', moustafa: 'mustafa', mustafa: 'mustafa',
+  // Sulayman variants
+  suleiman: 'sulayman', suleyman: 'sulayman', suleman: 'sulayman',
+  solomon: 'sulayman', salman: 'salman',
+  // Yasir variants
+  yasser: 'yasir', yaser: 'yasir', yaseer: 'yasir',
+  // Ali variants
+  aly: 'ali',
+  // Mariam/Maryam variants
+  maryam: 'maryam', mariam: 'maryam', myriam: 'maryam', miriam: 'maryam',
+  // Zahra/Zahraa
+  zahraa: 'zahra', zahara: 'zahra',
+  // Nour/Nur
+  nour: 'nur', noor: 'nur',
+  // Rachid/Rashid
+  rachid: 'rashid', rashed: 'rashid', rasheed: 'rashid',
+  // Hamid/Hamed
+  hamed: 'hamid', hameed: 'hamid',
+  // Kamal/Kamil
+  kamel: 'kamal', kameel: 'kamal',
+  // Nasr/Nasser
+  nasser: 'nasr', nasir: 'nasr', naser: 'nasr',
+  // Walid variants
+  waleed: 'walid', waled: 'walid',
+  // Tariq variants
+  tarek: 'tariq', tariq: 'tariq', thariq: 'tariq',
+  // Faisal variants
+  faysal: 'faisal', fayssal: 'faisal', feissal: 'faisal',
+  // Zaid/Zayd variants
+  zayd: 'zaid', zayed: 'zaid',
 };
 const MATCHER_PARTICLES: Set<string> = new Set([
-  'al', 'el', 'bin', 'ben', 'bint', 'abu', 'ibn',
+  // Arabic particles
+  'al', 'el', 'bin', 'ben', 'bint', 'abu', 'ibn', 'bou', 'bo',
+  // North/West African patronymics
+  'ould', 'wuld', 'ag', 'ait',
+  // European particles (relevant for EU sanctions lists)
+  'de', 'van', 'von', 'der', 'den', 'la', 'le', 'du', 'di',
 ]);
 
 // Normalise a name for comparison: lowercase, strip diacritics,
@@ -527,7 +644,22 @@ const MATCHER_PARTICLES: Set<string> = new Set([
 // contains no matchable characters.
 export function normaliseForMatch(input: string): string {
   if (!input) return '';
-  let s = input.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  let s = input.toLowerCase();
+  // Strip Arabic tashkeel (harakat diacritics), shadda, sukun, tatweel/kashida,
+  // and Arabic extended signs — all are invisible in handwritten/printed names
+  // but cause character-level mismatch when one source includes them and another
+  // doesn't (common when mixing OFAC/UN data with UAE EOCN/LTL data).
+  s = s.replace(/[ؐ-ًؚ-ٰٟـ]/g, '');
+  // Normalize alef variants (alef with hamza above/below, alef with madda) → bare alef.
+  // Phonetically distinct in grammar but AML lists are inconsistent about which to use.
+  s = s.replace(/[آأإ]/g, 'ا'); // أ إ آ → ا
+  // Normalize final-ya / alef maqsura → ya (ى → ي)
+  s = s.replace(/ى/g, 'ي');
+  // Normalize taa marbutah → ha (ة → ه) — relevant for female name suffixes
+  s = s.replace(/ة/g, 'ه');
+  // NFD + strip Latin combining diacritics (accents, umlauts, etc.)
+  s = s.normalize('NFD').replace(/[̀-ͯ]/g, '');
+  // Transliterate Arabic/Cyrillic to Latin
   s = s.replace(/./gu, (ch) => ARABIC_LETTER_MAP[ch] ?? ch);
   s = s.replace(/./gu, (ch) => CYRILLIC_LETTER_MAP[ch] ?? ch);
   s = s.replace(/[^a-z\s-]/g, ' ').replace(/-/g, ' ').replace(/\s+/g, ' ').trim();
@@ -556,6 +688,7 @@ export function matchEnsemble(subject: string, candidate: string): EnsembleMatch
     matchPartialTokenSet(subject, candidate),
     matchTokenSortRatio(subject, candidate),
     matchPartialRatio(subject, candidate),
+    matchInitials(subject, candidate),
   ];
 
   const subjectNorm = normaliseForMatch(subject);
@@ -582,6 +715,7 @@ export function matchEnsemble(subject: string, candidate: string): EnsembleMatch
         matchPartialTokenSet(subjectNorm, candidateNorm),
         matchTokenSortRatio(subjectNorm, candidateNorm),
         matchPartialRatio(subjectNorm, candidateNorm),
+        matchInitials(subjectNorm, candidateNorm),
       ]
     : [];
 
