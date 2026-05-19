@@ -30,7 +30,7 @@ interface FourEyesItem {
   status: "pending" | "approved" | "rejected" | "expired";
   action: string;
   initiatedBy: string;
-  createdAt?: string;
+  initiatedAt?: string;
   subjectName?: string;
   caseId?: string;
 }
@@ -85,8 +85,8 @@ export default async function handler(_req: Request): Promise<Response> {
   for (const key of keys) {
     try {
       const raw = await store.get(key, { type: "json" }) as FourEyesItem | null;
-      if (!raw || raw.status !== "pending" || !raw.createdAt) continue;
-      const age = ageHours(raw.createdAt, now);
+      if (!raw || raw.status !== "pending" || !raw.initiatedAt) continue;
+      const age = ageHours(raw.initiatedAt, now);
       const id = raw.id ?? key.replace(PREFIX, "");
       if (age >= EXPIRE_AFTER_HOURS) {
         expired.push({ id, ageHours: Math.round(age) });
