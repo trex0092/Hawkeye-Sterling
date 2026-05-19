@@ -876,21 +876,29 @@ export async function GET(req: Request): Promise<NextResponse> {
   // Auth-required after the enforce() default flip. Same-origin portal callers
   // get the ADMIN_TOKEN auto-injected by middleware.ts and pass through with
   // the enterprise tier; external monitors must present their own API key.
-  const gate = await enforce(req);
-  if (!gate.ok) return gate.response;
-  const okGate = gate as EnforcementAllow;
-  // Admin = portal callers (same-origin, middleware-injected ADMIN_TOKEN) or
-  // explicit enterprise-tier API keys. Only admins see env-var names, brain
-  // integrity hashes, build SHAs, and the full configHealth check list.
-  const isAdmin = okGate.keyId === "portal_admin" || okGate.tier?.id === "enterprise";
-
   try {
-    return await _handleGet(isAdmin, gate.headers);
+    const gate = await enforce(req);
+    if (!gate.ok) return gate.response;
+    const okGate = gate as EnforcementAllow;
+    // Admin = portal callers (same-origin, middleware-injected ADMIN_TOKEN) or
+    // explicit enterprise-tier API keys. Only admins see env-var names, brain
+    // integrity hashes, build SHAs, and the full configHealth check list.
+    const isAdmin = okGate.keyId === "portal_admin" || okGate.tier?.id === "enterprise";
+
+    try {
+      return await _handleGet(isAdmin, gate.headers);
+    } catch (err) {
+      console.error("[status] unhandled top-level error:", err instanceof Error ? err.message : err);
+      return NextResponse.json(
+        { ok: false, status: "down", error: "Status check failed — please retry.", degraded: true },
+        { status: 503, headers: gate.headers }
+      );
+    }
   } catch (err) {
-    console.error("[status] unhandled top-level error:", err instanceof Error ? err.message : err);
+    console.error("[status] enforce/gate error:", err instanceof Error ? err.message : err);
     return NextResponse.json(
-      { ok: false, status: "down", error: "Status check failed — please retry.", degraded: true },
-      { status: 503, headers: gate.headers }
+      { ok: false, status: "down", error: "Status temporarily unavailable.", degraded: true },
+      { status: 503 }
     );
   }
 }
