@@ -104,6 +104,10 @@ import { typosquatDomainDetectionApply } from './wave3-typosquat-domain.js';
 import { invoiceRedirectionTraceApply } from './wave3-invoice-redirection.js';
 import { ceoImpersonationSignalApply } from './wave3-ceo-impersonation.js';
 
+// Wave-4 batch implementations — converts all remaining stubs to real algorithms.
+import { WAVE4_BATCH_A_APPLIES } from './wave4-batch-a.js';
+import { WAVE4_BATCH_B_APPLIES } from './wave4-batch-b.js';
+
 export type ModeApply = (ctx: BrainContext) => Promise<Finding>;
 
 const WAVE3_MODE_APPLIES: Record<string, ModeApply> = {
@@ -238,6 +242,8 @@ export const MODE_OVERRIDES: Record<string, ModeApply> = {
   ...FORENSIC_STRATEGIC_MODE_APPLIES,
   ...GOVERNANCE_CRYPTO_MODE_APPLIES,
   ...WAVE3_MODE_APPLIES,
+  ...WAVE4_BATCH_A_APPLIES,
+  ...WAVE4_BATCH_B_APPLIES,
 };
 
 /** Register (or replace) a real apply() for a mode at runtime. */
