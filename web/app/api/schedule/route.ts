@@ -48,6 +48,9 @@ interface Schedule {
 
 const PREFIX = "schedule/";
 
+const SAFE_ID_RE = /^[a-zA-Z0-9_\-.:]+$/;
+const MAX_ID_LENGTH = 128;
+
 export async function GET(req: Request): Promise<NextResponse> {
   const gate = await enforce(req, { requireAuth: true });
   if (!gate.ok) return gate.response;
@@ -105,6 +108,12 @@ export async function POST(req: Request): Promise<NextResponse> {
       { status: 400, headers: gateHeaders },
     );
   }
+  if (subjectId.length > MAX_ID_LENGTH || !SAFE_ID_RE.test(subjectId)) {
+    return NextResponse.json(
+      { ok: false, error: "subjectId must be alphanumeric/._-: and max 128 chars" },
+      { status: 400, headers: gateHeaders },
+    );
+  }
   const cadence: Cadence = cadenceRaw;
   if (
     scoreThreshold !== undefined &&
@@ -136,10 +145,10 @@ export async function DELETE(req: Request): Promise<NextResponse> {
   if (!gate.ok) return gate.response;
 
   const url = new URL(req.url);
-  const id = url.searchParams.get("subjectId");
-  if (!id) {
+  const id = url.searchParams.get("subjectId")?.trim();
+  if (!id || id.length > MAX_ID_LENGTH || !SAFE_ID_RE.test(id)) {
     return NextResponse.json(
-      { ok: false, error: "subjectId required" },
+      { ok: false, error: "subjectId required (alphanumeric/._-:, max 128 chars)" },
       { status: 400, headers: gate.headers },
     );
   }
