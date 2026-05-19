@@ -62,8 +62,8 @@ function loadJsonMap(): AsanaGidMap {
 // + previous .env.example). When NO env var is set, the code routes
 // to these so screening/SAR/STR/TM still work without configuration.
 const HARDCODED: Required<AsanaGidMap> = {
-  master:         "1214148630166524",  // ASANA_PROJECT_GID
-  screening:      "1214148630166524",
+  master:         "1214828087238181",  // ASANA_PROJECT_GID
+  screening:      "1214828087238181",
   sar:            "1214148631336502",
   tm:             "1214148661083263",
   escalations:    "1214148643568798",
@@ -83,7 +83,7 @@ const HARDCODED: Required<AsanaGidMap> = {
   supplyChain:    "1214148630166524",
   regulator:      "1214148630166524",
   incidents:      "1214148630166524",
-  workspace:      "1213645083721318",  // ASANA_WORKSPACE_GID
+  workspace:      "1213645083721316",  // ASANA_WORKSPACE_GID
   assignee:       "1213645083721304",  // default MLRO assignee
   cfSubject:      "",
   cfEntityType:   "",
@@ -105,8 +105,8 @@ function maybeWarnMissingGids(): void {
   _startupChecked = true;
   const missing: string[] = [];
   if (!process.env["ASANA_TOKEN"])         missing.push("ASANA_TOKEN");
-  if (!process.env["ASANA_WORKSPACE_GID"]) missing.push("ASANA_WORKSPACE_GID (using fallback 1213645083721318)");
-  if (!process.env["ASANA_PROJECT_GID"])   missing.push("ASANA_PROJECT_GID (using fallback 1214148630166524)");
+  if (!process.env["ASANA_WORKSPACE_GID"]) missing.push("ASANA_WORKSPACE_GID (using fallback 1213645083721316)");
+  if (!process.env["ASANA_PROJECT_GID"])   missing.push("ASANA_PROJECT_GID (using fallback 1214828087238181)");
   if (missing.length > 0) {
     console.warn("[asanaConfig] missing env vars — falling back to hardcoded GIDs:", missing.join(", "));
   }
