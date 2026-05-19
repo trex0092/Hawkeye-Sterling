@@ -30,7 +30,9 @@ export interface QuickScreenSubject {
   dateOfBirth?: string;
   nationality?: string;
   passportNumber?: string;
-  nationalIdNumber?: string;
+  nationalIdNumber?: string; // legacy alias kept for existing callers
+  nationalId?: string;       // Emirates ID, CPR, NRIC, etc.
+  registrationNumber?: string; // company reg / trade licence (organisations)
 }
 
 export interface QuickScreenCandidate {
@@ -43,6 +45,9 @@ export interface QuickScreenCandidate {
   programs?: string[];
   dateOfBirth?: string;
   nationality?: string;
+  nationalId?: string;
+  passportNumber?: string;
+  registrationNumber?: string;
 }
 
 export type DobMatch = 'exact' | 'year' | 'conflict' | 'none';
@@ -60,15 +65,21 @@ export interface QuickScreenHit {
   reason: string;
   dobMatch?: DobMatch;
   nationalityMatch?: boolean;
+  nationalIdMatch?: boolean;
   scores?: Partial<Record<MatchingMethod, number>>;
   disambiguationConfidence?: number;
   recommendation?: 'match' | 'review' | 'dismiss';
+  candidateEntityType?: EntityType;
+  entityTypeMismatch?: boolean;
+  autoResolution?: 'auto-dismissed' | 'flagged';
 }
 
 export interface QuickScreenOptions {
   scoreThreshold?: number;
+  listThresholds?: Record<string, number>;
   maxHits?: number;
   includeScoreBreakdown?: boolean;
+  autoResolveRules?: 'conservative' | 'standard' | 'strict';
 }
 
 export interface QuickScreenResult {

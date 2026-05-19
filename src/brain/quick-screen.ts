@@ -148,10 +148,6 @@ const CRITICAL_LIST_IDS = new Set([
   'un_consolidated', 'un_1267', 'ofac_sdn', 'uae_eocn', 'uae_ltl',
 ]);
 
-// Informational / lower-weight lists — eligible for auto-dismissal
-const _INFORMATIONAL_LIST_IDS = new Set([
-  'jp_mof', 'ca_osfi', 'au_dfat',
-]);
 
 const BUILTIN_PROFILES: Record<string, AutoResolveRule[]> = {
   conservative: [
@@ -164,23 +160,27 @@ const BUILTIN_PROFILES: Record<string, AutoResolveRule[]> = {
     },
   ],
   standard: [
-    // Dismiss ID conflicts everywhere except critical lists
-    { requireNationalIdConflict: true, maxBaseScore: 0.92, action: 'auto-dismissed' },
-    // Dismiss DOB conflicts on non-critical lists
-    { requireDobConflict: true, maxBaseScore: 0.90, action: 'auto-dismissed' },
-    // Flag DOB conflicts on critical lists
+    // Dismiss ID conflicts everywhere except critical lists (guard in applyAutoResolveRule)
+    { requireNationalIdConflict: true, action: 'auto-dismissed' },
+    // Dismiss DOB conflicts on non-critical lists — no maxBaseScore constraint because
+    // a DOB conflict on an exact name match is the most dangerous false positive pattern
+    // (same name, different person). The critical list guard prevents OFAC/UN/UAE dismissal.
+    { requireDobConflict: true, action: 'auto-dismissed' },
+    // Flag DOB conflicts that survive the dismiss rule (i.e., critical list hits)
     { requireDobConflict: true, action: 'flagged' },
-    // Flag nationality conflicts
+    // Flag nationality conflicts on lower-confidence hits
     { requireNationalityConflict: true, maxBaseScore: 0.88, action: 'flagged' },
   ],
   strict: [
     // Dismiss ID conflicts on any non-critical list
-    { requireNationalIdConflict: true, maxBaseScore: 0.95, action: 'auto-dismissed' },
+    { requireNationalIdConflict: true, action: 'auto-dismissed' },
     // Dismiss DOB or nationality conflicts on non-critical lists
-    { requireDobConflict: true, maxBaseScore: 0.92, action: 'auto-dismissed' },
-    { requireNationalityConflict: true, maxBaseScore: 0.90, action: 'auto-dismissed' },
-    // Flag entity-type mismatches
+    { requireDobConflict: true, action: 'auto-dismissed' },
+    { requireNationalityConflict: true, maxBaseScore: 0.92, action: 'auto-dismissed' },
+    // Flag entity-type mismatches (always surface for MLRO)
     { requireEntityMismatch: true, action: 'flagged' },
+    // Flag remaining nationality conflicts on critical lists
+    { requireNationalityConflict: true, action: 'flagged' },
   ],
 };
 
@@ -427,8 +427,9 @@ export function quickScreen(
 
     // Per-list threshold override — allows tighter thresholds for high-signal
     // lists (e.g. OFAC SDN at 0.85) and looser for informational lists (0.78).
-    const effectiveThreshold = listThresholds[cand.listId] !== undefined
-      ? Math.max(0, Math.min(1, listThresholds[cand.listId] as number))
+    const _overrideThreshold = listThresholds[cand.listId];
+    const effectiveThreshold = _overrideThreshold !== undefined
+      ? Math.max(0, Math.min(1, _overrideThreshold))
       : threshold;
 
     if (adjScore >= effectiveThreshold) {
