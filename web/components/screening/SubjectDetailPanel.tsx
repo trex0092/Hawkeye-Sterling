@@ -447,6 +447,10 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
     );
     const redlinesFired = sb?.redlines?.fired?.length ?? 0;
     const cahra = sb?.jurisdiction?.cahra ?? false;
+    // Adverse media from initial scan (available immediately, no AI engine needed)
+    const hasInitialAdverseMedia = Boolean(subject.adverseMedia?.score && subject.adverseMedia.score > 0);
+    // Live news adverse media severity (available once the news search completes)
+    const newsSeverity = news.status === "success" ? news.result.topSeverity : null;
 
     const score = brainScore ?? screening.result.topScore;
     const order = ["clear", "low", "medium", "high", "critical"] as const;
@@ -469,9 +473,26 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
     if (pepFired) escalateTo("high");
     if (redlinesFired > 0) escalateTo("critical");
     if (cahra) escalateTo("medium");
+    // AML policy: any adverse media signal — initial scan or live news — must
+    // produce a non-zero severity band. Risk score cannot be zero when adverse
+    // media is detected (FATF R.10 / FDL 10/2025 Art.16).
+    if (hasInitialAdverseMedia) escalateTo("medium");
+    if (newsSeverity && newsSeverity !== "clear") escalateTo(newsSeverity);
     return band;
   })();
-  const effectiveScore = brainScore || subject.riskScore;
+  // Risk score floor from adverse media: the displayed score must never be zero
+  // when adverse media is found. Map news severity → minimum numeric score.
+  const adverseMediaScoreFloor = (() => {
+    if (news.status === "success" && news.result.topSeverity && news.result.topSeverity !== "clear") {
+      const floors: Record<string, number> = { low: 25, medium: 42, high: 58, critical: 75 };
+      return floors[news.result.topSeverity] ?? 0;
+    }
+    if (subject.adverseMedia?.score && subject.adverseMedia.score > 0) {
+      return Math.max(30, Math.round(subject.adverseMedia.score * 100));
+    }
+    return 0;
+  })();
+  const effectiveScore = Math.max(brainScore || subject.riskScore, adverseMediaScoreFloor);
   const barWidth = `${Math.min(effectiveScore, 100)}%`;
 
   const brainLists =
@@ -1320,10 +1341,14 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
               null
             }
             hasAdverseMedia={
-              superBrain.status === "success" &&
-              ((superBrain.result.adverseKeywordGroups?.length ?? 0) > 0 ||
-                (superBrain.result.adverseMedia?.length ?? 0) > 0 ||
-                (superBrain.result.adverseMediaScored?.total ?? 0) > 0)
+              (superBrain.status === "success" &&
+                ((superBrain.result.adverseKeywordGroups?.length ?? 0) > 0 ||
+                  (superBrain.result.adverseMedia?.length ?? 0) > 0 ||
+                  (superBrain.result.adverseMediaScored?.total ?? 0) > 0)) ||
+              Boolean(subject.adverseMedia?.score && subject.adverseMedia.score > 0) ||
+              (news.status === "success" &&
+                news.result.topSeverity != null &&
+                news.result.topSeverity !== "clear")
             }
             adverseMediaSeverity={
               news.status === "success" ? news.result.topSeverity : null
