@@ -52,7 +52,13 @@ export default [
   },
   {
     // CLI-only tooling — allow console.log for audit/debug output.
+    // Add TypeScript parser so these files are parsed correctly.
     files: ['src/brain/audit.ts', 'web/scripts/**/*.ts', 'src/ingestion/**/*.ts'],
+    languageOptions: {
+      parser: tsparser,
+      parserOptions: { ecmaVersion: 2022, sourceType: 'module' },
+    },
+    plugins: { '@typescript-eslint': tseslint },
     rules: {
       'no-console': 'off',
     },
@@ -68,6 +74,14 @@ export default [
     },
   },
   {
-    ignores: ['dist/**', 'node_modules/**', '.netlify/**', 'coverage/**', 'web/node_modules/**'],
+    ignores: [
+      'dist/**',
+      'node_modules/**',
+      '.netlify/**',
+      'coverage/**',
+      'web/node_modules/**',
+      // Next.js build output — generated JS is not subject to our lint rules.
+      'web/.next/**',
+    ],
   },
 ];
