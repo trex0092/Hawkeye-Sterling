@@ -44,8 +44,6 @@ export function writeAuditEvent(
   action: string,
   target: string,
 ): AuditEntry {
-  const entries = loadAuditEntries();
-  const prevHash = entries.length > 0 ? (entries[entries.length - 1]?.hash ?? GENESIS) : GENESIS;
   const partial: Omit<AuditEntry, "hash"> = {
     id: `ae-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
     timestamp: new Date().toISOString(),
@@ -53,6 +51,14 @@ export function writeAuditEvent(
     action,
     target,
   };
+  // Server-side (no window): return the entry without persisting.
+  // Server-side compliance events must use writeAuditChainEntry from
+  // @/lib/server/audit-chain instead — localStorage is client-only.
+  if (typeof window === "undefined") {
+    return { ...partial, hash: chainHash(partial, GENESIS) };
+  }
+  const entries = loadAuditEntries();
+  const prevHash = entries.length > 0 ? (entries[entries.length - 1]?.hash ?? GENESIS) : GENESIS;
   const entry: AuditEntry = { ...partial, hash: chainHash(partial, prevHash) };
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify([...entries, entry]));
