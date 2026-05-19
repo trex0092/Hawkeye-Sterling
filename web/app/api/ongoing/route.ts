@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { withGuard, type RequestContext } from "@/lib/server/guard";
 import { del, getJson, listKeys, setJson } from "@/lib/server/store";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -98,6 +99,22 @@ async function handlePost(req: Request, ctx: RequestContext): Promise<NextRespon
   };
   await setJson(`ongoing/subject/${id}`, record);
 
+  // Enrolment in the ongoing-monitoring register is a compliance event
+  // (FDL 10/2025 Art.16 — enhanced ongoing monitoring for high-risk subjects).
+  void writeAuditChainEntry(
+    {
+      event: "ongoing.subject_enrolled",
+      actor: ctx.apiKey.id,
+      subjectId: id,
+      subjectName: name,
+      entityType: record.entityType,
+      caseId: record.caseId,
+    },
+    ctx.tenantId,
+  ).catch((err) =>
+    console.warn("[ongoing] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+  );
+
   // Seed a thrice_daily schedule so the /api/ongoing/run cron produces
   // three Asana tasks per 24h for every newly enrolled subject, per
   // MLRO policy. Honour a caller-supplied cadence override when valid.
@@ -144,6 +161,17 @@ async function handleDelete(req: Request, ctx: RequestContext): Promise<NextResp
   // Remove the schedule entry so the cron job no longer attempts to
   // re-screen this subject after it has been un-enrolled.
   await del(`schedule/${id}`);
+  void writeAuditChainEntry(
+    {
+      event: "ongoing.subject_unenrolled",
+      actor: ctx.apiKey.id,
+      subjectId: id,
+      subjectName: existing.name,
+    },
+    ctx.tenantId,
+  ).catch((err) =>
+    console.warn("[ongoing] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+  );
   return NextResponse.json({ ok: true });
 }
 

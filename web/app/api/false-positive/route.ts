@@ -8,6 +8,8 @@ import { NextResponse } from "next/server";
 import { writeAuditEvent } from "@/lib/audit";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -131,6 +133,23 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (!Array.isArray(parsed.matchingFactors)) parsed.matchingFactors = [];
     if (!Array.isArray(parsed.differentiatingFactors)) parsed.differentiatingFactors = [];
     if (!Array.isArray(parsed.additionalChecksRequired)) parsed.additionalChecksRequired = [];
+    void writeAuditChainEntry(
+      {
+        event: "screening.false_positive_assessed",
+        actor: gate.keyId,
+        screenedName,
+        hitName,
+        hitCategory,
+        hitCountry,
+        verdict: parsed.verdict,
+        confidence: parsed.confidence,
+        confidenceScore: parsed.confidenceScore,
+        recommendedAction: parsed.recommendedAction,
+      },
+      tenantIdFromGate(gate),
+    ).catch((err) =>
+      console.warn("[false-positive] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+    );
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
