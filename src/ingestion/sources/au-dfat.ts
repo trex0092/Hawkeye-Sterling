@@ -137,7 +137,12 @@ export const auDfatAdapter: SourceAdapter = {
     const wb = new ExcelJS.Workbook();
     await wb.xlsx.load(buf);
     const sheet = wb.worksheets[0];
-    if (!sheet) return { entities: [], rawChecksum };
+    if (!sheet) {
+      throw new Error(
+        `[au_dfat] XLSX workbook contains no worksheets — the file may be corrupt or the ` +
+        `DFAT download URL has changed. Check ${SOURCE_URL}.`,
+      );
+    }
 
     // DFAT puts a title row in row 1 and headers in row 2 — scan first 4.
     let headerRowNum = 1;
@@ -158,7 +163,13 @@ export const auDfatAdapter: SourceAdapter = {
       headers = ((row.values ?? []) as unknown[]).slice(1).map((v) => cellText(v));
     }
     const cols = detectColumns(headers);
-    if (cols.name < 0) return { entities: [], rawChecksum };
+    if (cols.name < 0) {
+      throw new Error(
+        `[au_dfat] Could not find a name column in the XLSX (header row ${headerRowNum}, ` +
+        `detected headers: ${headers.slice(0, 6).join(', ')}) — ` +
+        `the DFAT spreadsheet layout may have changed. Check ${SOURCE_URL}.`,
+      );
+    }
 
     // DFAT groups individuals with multiple Name Type rows (Primary / aka).
     // Group by reference to merge aliases into the primary entity.

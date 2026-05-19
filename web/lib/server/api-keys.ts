@@ -183,13 +183,10 @@ export function extractKey(req: Request): string | null {
   }
   const header = req.headers.get("x-api-key");
   if (header) return header.trim();
-  // Query-param fallback for MCP clients that cannot set custom headers
-  // (e.g. Claude.ai connector URL). Keys in URLs do appear in server/CDN
-  // logs — prefer header auth where possible.
-  try {
-    const queryKey = new URL(req.url).searchParams.get("api_key");
-    if (queryKey) return queryKey.trim();
-  } catch { /* invalid URL — fall through */ }
+  // Query-param key extraction removed: keys in URLs appear in CDN/server logs
+  // and can be harvested by anyone with log read access, compromising all
+  // regulated-data requests made with that key. MCP callers must use the
+  // Authorization: Bearer or X-Api-Key header instead.
   return null;
 }
 

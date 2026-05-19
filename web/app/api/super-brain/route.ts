@@ -114,6 +114,7 @@ const MODULE_WEIGHTS = {
   adverseMediaScoredCap: 40,
   adverseMediaScoredFloorHighSeverity: 8,
   pepMaxFromSalience: 20,
+  adverseKeywordPenaltyCap: 40,
 } as const;
 
 // Static data sources — what the brain consulted to produce its
@@ -310,10 +311,16 @@ export async function POST(req: Request): Promise<NextResponse> {
     //      to the composite score per KEYWORD_GROUP_WEIGHT.
     const adverseKeywords = classifyAdverseKeywords(fullText);
     const adverseKeywordGroups = adverseKeywordGroupCounts(adverseKeywords);
-    const adverseKeywordPenalty = adverseKeywordGroups.reduce(
+    // Cap at 40 — same ceiling as the structured adverse-media scorer.
+    // Without the cap, all 16 keyword groups firing yields 180 pts, consuming the
+    // entire composite budget and zeroing out the relative contribution of every
+    // other signal. The breakdown records the raw sum so analysts can see how many
+    // groups fired; the capped value is what enters the formula.
+    const adverseKeywordPenaltyRaw = adverseKeywordGroups.reduce(
       (acc, g) => acc + (KEYWORD_GROUP_WEIGHT[g.group] ?? 0),
       0,
     );
+    const adverseKeywordPenalty = Math.min(adverseKeywordPenaltyRaw, 40);
 
     // 4 · Jurisdiction profile.
     const jurisdiction = resolveJurisdiction(body.subject.jurisdiction);
@@ -683,12 +690,20 @@ export async function POST(req: Request): Promise<NextResponse> {
       return _openSanctionsEarly.match ? _openSanctionsEarly : null;
     })();
 
+    const compositeLabel = (() => {
+      if (composite >= 85) return "critical";
+      if (composite >= 65) return "high";
+      if (composite >= 40) return "medium";
+      if (composite >= 20) return "low";
+      return "clear";
+    })();
+
     const responseBody = {
       ok: true,
       // When non-empty, downstream consumers (compliance report, MLRO UI)
       // MUST surface this list. Each entry means a brain module silently
       // degraded — the composite score is missing that signal.
-      ...(degradation.length > 0 ? { degradation } : {}),
+      ...(degradation.length > 0 ? { degraded: true, degradation } : {}),
       ...(intelligence ? { intelligence } : {}),
       ...(openBanking ? { openBanking } : {}),
       ...(openSanctions ? { openSanctions } : {}),
@@ -711,6 +726,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       crossRegimeConflict,
       composite: {
         score: composite,
+        label: compositeLabel,
         breakdown: {
           quickScreen: screen.topScore,
           jurisdictionPenalty,
@@ -718,6 +734,7 @@ export async function POST(req: Request): Promise<NextResponse> {
           redlinesPenalty,
           adverseMediaPenalty,
           adverseMediaScoredPenalty,
+          adverseKeywordPenaltyRaw,
           adverseKeywordPenalty,
           pepPenalty,
         },

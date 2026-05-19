@@ -251,17 +251,17 @@ export function middleware(req: NextRequest): NextResponse {
       const referer = req.headers.get("referer");
 
       const hostHostname = hostnameOf(host);
-      // A request carrying our HttpOnly session cookie must have originated
-      // from the same site — browsers cannot forge httpOnly cookies from
-      // cross-origin contexts, so this is a safe same-origin indicator
-      // even when origin/referer headers are absent (e.g. strict no-referrer
-      // browser policy or certain fetch modes).
+      // Same-origin is determined by the httpOnly session cookie only.
+      // The origin header is accepted as a secondary signal when the cookie
+      // is absent (some server-to-server calls). The referer header is NOT
+      // used — referer can be spoofed by fetch/XHR and opens a CSRF vector
+      // when the admin token is injected based solely on it.
       const hasSessionCookie = req.cookies.get(SESSION_COOKIE)?.value != null;
       const isSameOrigin =
         hasSessionCookie ||
         (hostHostname !== null &&
-          ((origin != null && hostnameOf(origin) === hostHostname) ||
-            (referer != null && hostnameOf(referer) === hostHostname)));
+          origin != null &&
+          hostnameOf(origin) === hostHostname);
 
       if (isSameOrigin) {
         const requestHeaders = new Headers(req.headers);
