@@ -4,6 +4,8 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 export interface ThreatTypology {
   name: string;
   trend: "rising" | "stable" | "declining";
@@ -112,6 +114,19 @@ Generate threat intelligence for the EWRA. Focus on the top 5 current ML/TF typo
       ...parsed,
       generatedAt: parsed.generatedAt ?? new Date().toISOString(),
     };
+    void writeAuditChainEntry(
+      {
+        event: "ewra.threat_intel_generated",
+        actor: gate.keyId,
+        sector,
+        jurisdiction,
+        typologyCount: result.typologies.length,
+        adjustmentCount: result.scoreAdjustments.length,
+      },
+      tenantIdFromGate(gate),
+    ).catch((err) =>
+      console.warn("[ewra/threat-intel] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+    );
     return NextResponse.json(result, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "ewra/threat-intel temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });

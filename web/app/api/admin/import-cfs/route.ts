@@ -19,6 +19,7 @@
 import { NextResponse } from "next/server";
 import { parseCfsPayload } from "@/lib/lseg/cfs-parser";
 import { invalidateCandidateCache } from "@/lib/server/candidates-loader";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import {
   classifyToSanctionsListIds,
   LSEG_SUPPLEMENT_LIST_IDS,
@@ -490,6 +491,20 @@ export async function POST(req: Request): Promise<NextResponse> {
   // Invalidate the in-process candidates cache so screening routes immediately
   // pick up the newly imported LSEG sanctions supplement instead of waiting for the TTL.
   invalidateCandidateCache();
+
+  void writeAuditChainEntry(
+    {
+      event: "sanctions.cfs_import_completed",
+      actor: "admin",
+      filesProcessed: perFile.length,
+      entitiesIndexed: allEntities.size,
+      adverseIndexed: adverseEntities.size,
+      vesselsIndexed: vesselByImo.size,
+    },
+    "admin",
+  ).catch((err) =>
+    console.warn("[import-cfs] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+  );
 
   return NextResponse.json({
     ok: true,

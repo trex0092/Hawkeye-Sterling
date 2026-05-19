@@ -2,6 +2,8 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import type { EwraBoardReportResult } from "@/app/api/ewra-report/route";
 import {
   buildHtmlDoc, hsPage, hsCover, hsSection, hsPill, hsNarrative,
@@ -91,5 +93,19 @@ ${hsFinis(reportId, 2, 2)}`;
     ],
   });
 
+  // FATF R.1 / FDL 10/2025 Art.4 — board EWRA report generation is a
+  // board-level compliance event; must be on the tamper-evident chain.
+  void writeAuditChainEntry(
+    {
+      event: "ewra.board_report_generated",
+      actor: gate.keyId,
+      reportId,
+      overallRisk: risk,
+      dimensionCount: dimensions.length,
+    },
+    tenantIdFromGate(gate),
+  ).catch((err) =>
+    console.warn("[ewra-board-report] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+  );
   return new Response(html, { headers: { "content-type": "text/html; charset=utf-8", ...gate.headers } });
 }

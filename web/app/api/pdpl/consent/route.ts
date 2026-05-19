@@ -13,6 +13,8 @@ export const maxDuration = 15;
 import { NextRequest, NextResponse } from 'next/server';
 import { getJson, setJson } from '@/lib/server/store';
 import { enforce } from '@/lib/server/enforce';
+import { writeAuditChainEntry } from '@/lib/server/audit-chain';
+import { tenantIdFromGate } from '@/lib/server/tenant';
 
 export type LawfulBasis =
   | 'legitimate_interest_aml'     // PDPL Art.6(c) — AML/CFT legal obligation
@@ -83,6 +85,23 @@ export async function POST(req: NextRequest) {
   };
 
   await setJson(consentKey(subjectId), record);
+
+  // PDPL Art.6 — recording of lawful basis for processing PII is a
+  // compliance-significant event; must be on the tamper-evident chain.
+  void writeAuditChainEntry(
+    {
+      event: 'pdpl.consent_recorded',
+      actor: gate.keyId,
+      subjectId,
+      lawfulBasis,
+      recordedBy,
+      purpose: purpose.slice(0, 256),
+    },
+    tenantIdFromGate(gate),
+  ).catch((err) =>
+    console.warn('[pdpl/consent] audit chain write failed:', err instanceof Error ? err.message : String(err)),
+  );
+
   return NextResponse.json({ ok: true, record }, { headers: gate.headers });
 }
 
