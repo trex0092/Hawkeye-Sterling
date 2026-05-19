@@ -36,7 +36,13 @@ function makeAdapter(id: string, displayName: string, envVar: string, portal: st
       const rawChecksum = await sha256Hex(raw);
       let records: unknown[];
       try { records = JSON.parse(raw) as unknown[]; }
-      catch { return { entities: [], rawChecksum }; }
+      catch (jsonErr) {
+        throw new Error(
+          `[${id}] Failed to parse JSON from seed file "${path}": ` +
+          `${jsonErr instanceof Error ? jsonErr.message : String(jsonErr)}. ` +
+          `The file may be corrupt. Set ${envVar} to point to a valid seed file.`,
+        );
+      }
       const entities: NormalisedEntity[] = [];
       for (const r of Array.isArray(records) ? records : []) {
         if (!r || typeof r !== 'object') continue;

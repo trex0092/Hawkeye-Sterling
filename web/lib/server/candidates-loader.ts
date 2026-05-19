@@ -342,6 +342,15 @@ async function _doLoad(): Promise<{ candidates: QuickScreenCandidate[]; health: 
   const now = Date.now();
   const loadedAt = new Date(now).toISOString();
 
+  // Guard against build-time import failure that leaves STATIC_CANDIDATES empty.
+  // An empty static corpus means screening would fabricate a "clear" result.
+  if (STATIC_CANDIDATES.length === 0) {
+    console.error(
+      "[candidates-loader] STATIC_CANDIDATES is empty — build-time candidate import failed. " +
+      "Screening corpus is zero-length. All screens will return LISTS_MISSING.",
+    );
+  }
+
   try {
     const blobsResult = await loadFromBlobs();
 
