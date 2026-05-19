@@ -2,11 +2,22 @@
 // POST /api/senzing-export
 // Body: { subjects: Array<{ id: string, name: string, entityType?, dateOfBirth?, ... }> }
 // Returns Senzing G2 JSONL for bulk entity resolution import.
+//
+// Auth: API key required (enforce). Subject PII (DOB, addresses, aliases) must
+// not be exportable by unauthenticated callers.
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 
 import { NextRequest, NextResponse } from 'next/server';
 import { buildSenzingExport, toSenzingJsonl, type HawkeyeSubject } from '../../../../src/integrations/senzing-export';
+import { enforce } from '@/lib/server/enforce';
 
 export async function POST(req: NextRequest) {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
+
   let body: unknown;
   try {
     body = await req.json();
@@ -34,13 +45,14 @@ export async function POST(req: NextRequest) {
   const batch = buildSenzingExport(subjects);
 
   if (format === 'json') {
-    return NextResponse.json(batch);
+    return NextResponse.json(batch, { headers: gate.headers });
   }
 
   // Default: JSONL
   const jsonl = toSenzingJsonl(batch);
   return new NextResponse(jsonl, {
     headers: {
+      ...gate.headers,
       'Content-Type': 'application/x-ndjson',
       'Content-Disposition': 'attachment; filename="hawkeye-senzing-export.jsonl"',
     },

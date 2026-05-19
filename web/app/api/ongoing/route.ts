@@ -133,8 +133,10 @@ async function handleDelete(req: Request, ctx: RequestContext): Promise<NextResp
     );
   }
   // Verify ownership — only the enrolling tenant may delete the subject.
+  // Strict equality check: if tenantId is missing on the record (legacy),
+  // treat as a different tenant to prevent cross-tenant deletion.
   const existing = await getJson<EnrolledSubject>(`ongoing/subject/${id}`);
-  if (!existing || (existing.tenantId && existing.tenantId !== ctx.tenantId)) {
+  if (!existing || existing.tenantId !== ctx.tenantId) {
     return NextResponse.json({ ok: false, error: "not found" }, { status: 404 });
   }
   await del(`ongoing/subject/${id}`);

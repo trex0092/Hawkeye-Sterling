@@ -1,14 +1,25 @@
 // Hawkeye Sterling — beneficial ownership chain traversal API.
-// GET /api/ownership-chain?entity=<name>&depth=<number>&sanctionsExposure=true
+// POST /api/ownership-chain
 //
 // Returns the full ownership/control tree for an entity, with optional
 // sanctions exposure propagation (FtM FollowTheMoney-inspired graph traversal).
+//
+// Auth: API key required (enforce). UBO/ownership graphs contain sensitive
+// corporate intelligence that must not be accessible to unauthenticated callers.
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 
 import { NextRequest, NextResponse } from 'next/server';
 import { EntityGraph } from '../../../../src/brain/entity-graph';
 import { buildBoGraphFromRegistry, type CorporateRegistryRecord } from '../../../../src/brain/bo-graph-builder';
+import { enforce } from '@/lib/server/enforce';
 
 export async function POST(req: NextRequest) {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
+
   let body: unknown;
   try {
     body = await req.json();
@@ -89,5 +100,5 @@ export async function POST(req: NextRequest) {
       ownedCount: owned.length,
       ownerCount: owners.length,
     },
-  });
+  }, { headers: gate.headers });
 }

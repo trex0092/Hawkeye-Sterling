@@ -84,7 +84,7 @@ export async function GET(req: Request): Promise<NextResponse> {
   const caseIndex = caseIndexResult.status === "fulfilled" ? caseIndexResult.value : null;
   const caseEntries = caseIndex?.entries ?? [];
   const casesByStatus: Record<string, number> = {};
-  for (const e of caseEntries) {
+  for (const _e of caseEntries) {
     // status not stored in index — just count totals
     casesByStatus["total"] = (casesByStatus["total"] ?? 0) + 1;
   }

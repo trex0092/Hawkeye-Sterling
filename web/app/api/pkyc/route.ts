@@ -20,9 +20,21 @@ function nextRunAt(cadence: PKycCadence, from = new Date()): string {
   switch (cadence) {
     case "daily":     d.setUTCDate(d.getUTCDate() + 1); break;
     case "weekly":    d.setUTCDate(d.getUTCDate() + 7); break;
-    case "monthly":   d.setUTCMonth(d.getUTCMonth() + 1); break;
-    case "quarterly": d.setUTCMonth(d.getUTCMonth() + 3); break;
-    case "annual":    d.setUTCFullYear(d.getUTCFullYear() + 1); break;
+    case "monthly":
+    case "quarterly":
+    case "annual": {
+      // setUTCMonth(m+N) overflows when the source day-of-month doesn't exist
+      // in the target month (e.g. Jan 31 + 1 month → Mar 2, skipping Feb).
+      // Clamp to the last day of the target month to stay in-month.
+      const monthsToAdd = cadence === "monthly" ? 1 : cadence === "quarterly" ? 3 : 12;
+      const srcDay = from.getUTCDate();
+      const targetTotalMonths = d.getUTCFullYear() * 12 + d.getUTCMonth() + monthsToAdd;
+      const targetYear = Math.floor(targetTotalMonths / 12);
+      const targetMonth = targetTotalMonths % 12;
+      const lastDayOfTarget = new Date(Date.UTC(targetYear, targetMonth + 1, 0)).getUTCDate();
+      d.setUTCFullYear(targetYear, targetMonth, Math.min(srcDay, lastDayOfTarget));
+      break;
+    }
   }
   return d.toISOString();
 }
