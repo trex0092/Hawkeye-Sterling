@@ -75,6 +75,11 @@ function escapeHtml(s: string): string {
     .replace(/'/g, "&#39;");
 }
 
+function safeFilenameSegment(s: string | undefined | null): string {
+  if (!s) return "unknown";
+  return s.replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 64) || "unknown";
+}
+
 function checkTippingOff(text: string): string | null {
   for (const pat of TIPPING_OFF_PATTERNS) {
     if (pat.test(text)) return pat.source;
@@ -514,7 +519,7 @@ async function handleSarReport(req: Request, gateHeaders: Record<string, string>
       headers: {
         ...gateHeaders,
         "content-type": "text/html; charset=utf-8",
-        "content-disposition": `inline; filename="hawkeye-${body.filingType.toLowerCase()}-${body.subject.id}.html"`,
+        "content-disposition": `inline; filename="hawkeye-${safeFilenameSegment(body.filingType)}-${safeFilenameSegment(body.subject.id)}.html"`,
         "cache-control": "no-store",
       },
     });

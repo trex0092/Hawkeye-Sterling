@@ -23,6 +23,11 @@ import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getJson } from "@/lib/server/store";
 import type { GoAmlXmlResult } from "@/app/api/goaml-xml/route";
 
+function safeFilenameSegment(s: string | undefined | null): string {
+  if (!s) return "unknown";
+  return s.replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 64) || "unknown";
+}
+
 interface StrCaseRecord {
   id: string;
   subject: string;
@@ -106,7 +111,7 @@ export async function GET(req: Request): Promise<NextResponse> {
   if (!data.ok) return NextResponse.json(data, { status: 503, headers: gate.headers });
 
   const headers = new Headers(gate.headers);
-  headers.set("Content-Disposition", `attachment; filename="${data.reportRef ?? caseId}.xml"`);
+  headers.set("Content-Disposition", `attachment; filename="${safeFilenameSegment(data.reportRef ?? caseId)}.xml"`);
   headers.set("Content-Type", "application/xml");
   return new NextResponse(data.xml, { status: 200, headers });
 }
@@ -145,7 +150,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const headers = new Headers(gate.headers);
   if (data.ok) {
-    headers.set("Content-Disposition", `attachment; filename="${data.reportRef ?? "str-export"}.xml"`);
+    headers.set("Content-Disposition", `attachment; filename="${safeFilenameSegment(data.reportRef ?? "str-export")}.xml"`);
   }
   return NextResponse.json(data, { status: xmlRes.status, headers });
 }
