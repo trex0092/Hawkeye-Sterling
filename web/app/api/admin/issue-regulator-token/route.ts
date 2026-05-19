@@ -56,11 +56,21 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (!examinerId) {
     return NextResponse.json({ ok: false, error: "examinerId required" }, { status: 400 });
   }
+  if (examinerId.length > 256) {
+    return NextResponse.json({ ok: false, error: "examinerId exceeds 256-character limit" }, { status: 400 });
+  }
   if (!issuedBy) {
     return NextResponse.json({ ok: false, error: "issuedBy required (operator audit-trail attribution)" }, { status: 400 });
   }
-  const tenants = (Array.isArray(body.tenants) ? body.tenants : []).filter((s) => typeof s === "string" && s.length > 0);
-  const cases = (Array.isArray(body.cases) ? body.cases : []).filter((s) => typeof s === "string" && s.length > 0);
+  if (issuedBy.length > 256) {
+    return NextResponse.json({ ok: false, error: "issuedBy exceeds 256-character limit" }, { status: 400 });
+  }
+  const tenants = (Array.isArray(body.tenants) ? body.tenants : [])
+    .filter((s): s is string => typeof s === "string" && s.length > 0 && s.length <= 256)
+    .slice(0, 100);
+  const cases = (Array.isArray(body.cases) ? body.cases : [])
+    .filter((s): s is string => typeof s === "string" && s.length > 0 && s.length <= 256)
+    .slice(0, 100);
   if (tenants.length === 0 && cases.length === 0) {
     return NextResponse.json(
       { ok: false, error: "at least one tenant or case must be supplied in scope" },
