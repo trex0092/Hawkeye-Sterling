@@ -119,7 +119,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: `Erasure request is already ${request.status}` }, { status: 409 });
   }
 
-  let erasedKeys: string[] = [];
+  const erasedKeys: string[] = [];
   if (decision === 'approved') {
     // Erase non-AML discretionary PII for this subject.
     // AML-exempt prefixes (FDL 10/2025 Art.20 10-year retention):
