@@ -368,15 +368,15 @@ export function AuditTrailViewer({
 
       {!data && loading ? <SkeletonRows /> : null}
 
-      {data && data.entries.length === 0 ? (
+      {data && (data.entries ?? []).length === 0 ? (
         <div className="text-center py-8 text-ink-2 text-12 border border-dashed border-hair-2 rounded-md">
           No audit entries match these filters. Try widening the time range or clearing the screening ID.
         </div>
       ) : null}
 
-      {data && data.entries.length > 0 ? (
+      {data && (data.entries ?? []).length > 0 ? (
         <div className="space-y-1.5">
-          {data.entries.map((entry) => {
+          {(data.entries ?? []).filter((e): e is AuditEntry => e != null).map((entry) => {
             const isOpen = expanded.has(entry.sequence);
             return (
               <article
@@ -465,7 +465,7 @@ export function AuditTrailViewer({
 
       {data ? (
         <footer className="mt-3 pt-2 border-t border-dashed border-hair-2 font-mono text-10 text-ink-2 flex items-center justify-between gap-2 flex-wrap">
-          <span>Chain head · sequence {data.head.sequence} · {SHORT_HASH(data.head.hash)}</span>
+          <span>Chain head · sequence {data.head?.sequence ?? "—"} · {data.head ? SHORT_HASH(data.head.hash) : "—"}</span>
           <span>Scanned {data.scanned} · matched {data.total}</span>
         </footer>
       ) : null}
