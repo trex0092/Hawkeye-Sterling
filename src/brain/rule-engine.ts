@@ -281,14 +281,17 @@ function evaluate(node: AstNode, ctx: RuleContext): boolean | number | string {
       return node.value as string | number | boolean;
 
     case 'Field': {
-      const v = resolveField(node.field!, ctx);
+      if (!node.field) throw new Error('Malformed AST: Field node missing field name');
+      const v = resolveField(node.field, ctx);
       if (v === undefined) throw new Error(`Unknown field: ${node.field}`);
       return v as string | number | boolean;
     }
 
     case 'Comparison': {
-      const left = resolveField(node.field!, ctx);
-      const right = evaluate(node.right!, ctx);
+      if (!node.field) throw new Error('Malformed AST: Comparison node missing field name');
+      if (!node.right) throw new Error('Malformed AST: Comparison node missing right operand');
+      const left = resolveField(node.field, ctx);
+      const right = evaluate(node.right, ctx);
       switch (node.operator) {
         case '>':  return (left as number) > (right as number);
         case '<':  return (left as number) < (right as number);
@@ -301,27 +304,34 @@ function evaluate(node: AstNode, ctx: RuleContext): boolean | number | string {
     }
 
     case 'Logical': {
-      const leftVal = evaluate(node.left!, ctx);
+      if (!node.left) throw new Error('Malformed AST: Logical node missing left operand');
+      if (!node.right) throw new Error('Malformed AST: Logical node missing right operand');
+      const leftVal = evaluate(node.left, ctx);
       if (node.operator === 'AND') {
-        return Boolean(leftVal) && Boolean(evaluate(node.right!, ctx));
+        return Boolean(leftVal) && Boolean(evaluate(node.right, ctx));
       }
       if (node.operator === 'OR') {
-        return Boolean(leftVal) || Boolean(evaluate(node.right!, ctx));
+        return Boolean(leftVal) || Boolean(evaluate(node.right, ctx));
       }
       throw new Error(`Unknown logical operator: ${node.operator}`);
     }
 
-    case 'Not':
-      return !Boolean(evaluate(node.left!, ctx));
+    case 'Not': {
+      if (!node.left) throw new Error('Malformed AST: Not node missing operand');
+      return !Boolean(evaluate(node.left, ctx));
+    }
 
     case 'InCheck': {
-      const fieldVal = resolveField(node.field!, ctx);
+      if (!node.field) throw new Error('Malformed AST: InCheck node missing field name');
+      const fieldVal = resolveField(node.field, ctx);
       return (node.items ?? []).some((item) => evaluate(item, ctx) === fieldVal);
     }
 
     case 'ContainsCheck': {
-      const fieldVal = String(resolveField(node.field!, ctx) ?? '');
-      const searchVal = String(evaluate(node.right!, ctx));
+      if (!node.field) throw new Error('Malformed AST: ContainsCheck node missing field name');
+      if (!node.right) throw new Error('Malformed AST: ContainsCheck node missing right operand');
+      const fieldVal = String(resolveField(node.field, ctx) ?? '');
+      const searchVal = String(evaluate(node.right, ctx));
       return fieldVal.includes(searchVal);
     }
 

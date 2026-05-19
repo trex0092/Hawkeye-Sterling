@@ -149,7 +149,7 @@ const CRITICAL_LIST_IDS = new Set([
 ]);
 
 // Informational / lower-weight lists — eligible for auto-dismissal
-const INFORMATIONAL_LIST_IDS = new Set([
+const _INFORMATIONAL_LIST_IDS = new Set([
   'jp_mof', 'ca_osfi', 'au_dfat',
 ]);
 

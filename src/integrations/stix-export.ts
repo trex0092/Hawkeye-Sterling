@@ -99,7 +99,7 @@ function buildAttackPattern(typology: AmlTypology): StixObject {
   };
 }
 
-function buildIndicator(typology: AmlTypology, attackPatternId: string): StixObject[] {
+function buildIndicator(typology: AmlTypology, _attackPatternId: string): StixObject[] {
   return (typology.indicators ?? []).map((indicator) => {
     const indicatorId = stixId('indicator');
     return {

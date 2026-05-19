@@ -65,8 +65,8 @@ export function subjectToSenzingRecord(subject: HawkeyeSubject, recordId: string
   // Primary name feature
   const nameFeature: SenzingFeature = { FULL_NAME: subject.name, ENTITY_TYPE: entityType };
   if (entityType === 'PERSON' && nameParts.length >= 2) {
-    nameFeature.NAME_FIRST = nameParts[0]!;
-    nameFeature.NAME_LAST = nameParts[nameParts.length - 1]!;
+    nameFeature.NAME_FIRST = nameParts[0] ?? '';
+    nameFeature.NAME_LAST = nameParts[nameParts.length - 1] ?? '';
     if (nameParts.length > 2) {
       nameFeature.NAME_MIDDLE = nameParts.slice(1, -1).join(' ');
     }

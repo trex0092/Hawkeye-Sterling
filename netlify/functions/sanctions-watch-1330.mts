@@ -13,7 +13,7 @@ export default async (_req: Request): Promise<Response> => {
   try {
     const lock = await acquireCronLock(LABEL, LOCK_INTERVAL_MS);
     if (!lock.acquired) {
-      console.log(`[${LABEL}] cron-lock held — skipping. priorAt=${lock.priorAt} ageMs=${lock.priorAgeMs}`);
+      console.info(`[${LABEL}] cron-lock held — skipping. priorAt=${lock.priorAt} ageMs=${lock.priorAgeMs}`);
       return new Response(
         JSON.stringify({ cadence: "1330", ok: true, skipped: true, reason: "cron-lock held", priorAt: lock.priorAt, priorAgeMs: lock.priorAgeMs, at: new Date().toISOString() }),
         { status: 200, headers: { "content-type": "application/json" } },
