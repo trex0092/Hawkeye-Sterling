@@ -59,20 +59,50 @@ const quickScreen = _quickScreen as QuickScreenFn;
 // Critical regimes (terrorism / WMD / proliferation / sanctions) dominate;
 // purely informational groups (political exposure) are near-zero.
 const KEYWORD_GROUP_WEIGHT: Record<AdverseKeywordGroup, number> = {
+  // Tier-1: zero-tolerance regimes — sanctions / WMD / terror
   "terrorism-financing": 20,
   "proliferation-wmd": 20,
+  "sanctions-circumvention": 18,
+  "war-crimes-human-rights": 16,
+  // Tier-2: high financial-crime risk
   "regulatory-action": 14,
   "bribery-corruption": 14,
   "money-laundering": 14,
   "organised-crime": 14,
+  "extortion-kidnapping": 14,
+  "crypto-asset-crime": 14,
+  "precious-metals-crime": 14,
+  // Tier-3: serious financial / physical crime
   "environmental-crime": 12,
   "human-trafficking": 12,
   "fraud-forgery": 12,
+  "banking-crime": 12,
+  "corporate-governance-crime": 12,
+  "real-estate-crime": 12,
+  "illicit-trade": 12,
+  // Tier-4: moderate risk
   "market-abuse": 10,
   "tax-crime": 10,
   "cybercrime": 10,
   "insider-threat": 10,
   "ai-misuse": 10,
+  "charity-npo-abuse": 10,
+  "immigration-border-crime": 10,
+  "healthcare-pharma-crime": 10,
+  "insurance-crime": 10,
+  "energy-crime": 10,
+  "labour-employment-crime": 10,
+  "bankruptcy-insolvency-fraud": 10,
+  "aviation-shipping-crime": 10,
+  "counterfeiting": 10,
+  "privacy-data-crime": 10,
+  // Tier-5: lower severity / informational
+  "gambling-crime": 8,
+  "sports-crime": 8,
+  "pension-benefits-fraud": 8,
+  "food-agriculture-crime": 8,
+  "education-credential-crime": 8,
+  "media-defamation-crime": 6,
   "law-enforcement": 6,
   "political-exposure": 2,
 };
