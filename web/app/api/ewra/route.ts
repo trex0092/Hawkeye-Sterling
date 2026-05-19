@@ -18,6 +18,8 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export interface EwraDimension {
   name: string;
@@ -157,6 +159,21 @@ Dimensions must include: Customer Risk, Product/Service Risk, Channel Risk, Geog
       generatedAt: new Date().toISOString(),
     };
 
+    // FATF R.1 / FDL 10/2025 Art.5 — EWRA generation is a board-level
+    // compliance event; must be on the tamper-evident chain.
+    void writeAuditChainEntry(
+      {
+        event: "ewra.generated",
+        actor: gate.keyId,
+        sector,
+        jurisdiction,
+        overallScore: result.overallScore,
+        overallRating: result.overallRating,
+      },
+      tenantIdFromGate(gate),
+    ).catch((err) =>
+      console.warn("[ewra] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+    );
     return NextResponse.json(result, { headers: gate.headers });
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);
