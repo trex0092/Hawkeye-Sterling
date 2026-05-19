@@ -18,6 +18,13 @@ export interface QuickScreenSubject {
   // common-name discrimination in high-volume AML/CFT workflows.
   dateOfBirth?: string;   // ISO 8601, partial ("YYYY"), or DD/MM/YYYY
   nationality?: string;   // ISO 3166-1 alpha-2 or country name
+  // Strong identity discriminators — definitive confirmation or conflict.
+  // National ID (Emirates ID, CPR, NRIC, etc.) and passport number.
+  // When present and matching, boost score +0.15; when conflicting, penalise -0.15.
+  nationalId?: string;
+  passportNumber?: string;
+  // Registration number for organisations (trade licence, company reg, etc.)
+  registrationNumber?: string;
 }
 
 export interface QuickScreenCandidate {
@@ -31,6 +38,9 @@ export interface QuickScreenCandidate {
   // Discriminator fields from source list — used to confirm or suppress matches.
   dateOfBirth?: string;
   nationality?: string;
+  nationalId?: string;
+  passportNumber?: string;
+  registrationNumber?: string;
 }
 
 export type QuickScreenSeverity = 'clear' | 'low' | 'medium' | 'high' | 'critical';
@@ -56,18 +66,52 @@ export interface QuickScreenHit {
   // Discriminator results (present only when applicable)
   dobMatch?: DobMatch;
   nationalityMatch?: boolean;
+  nationalIdMatch?: boolean;  // true = confirmed via ID/passport; false = ID conflict
   // Per-algorithm score breakdown (present when opts.includeScoreBreakdown = true)
   scores?: Partial<Record<MatchingMethod, number>>;
   // Disambiguation confidence 0..100 and resulting recommendation.
-  // Derived from discriminator signals (DOB, nationality, phonetics).
+  // Derived from discriminator signals (DOB, nationality, ID, phonetics).
   disambiguationConfidence?: number;
   recommendation?: 'match' | 'review' | 'dismiss';
+  // Entity-type transparency — always present so callers can distinguish
+  // a direct personal designation from an entity-association hit.
+  candidateEntityType?: EntityType;
+  // True when the subject entity type and candidate entity type differ
+  // (e.g. screening an individual whose name appears within a sanctioned
+  // organisation's record). Score is penalised; hit is labelled indirect.
+  entityTypeMismatch?: boolean;
+  // Set by auto-resolve rules. 'auto-dismissed' hits pass threshold but are
+  // tagged so the UI can collapse them; 'flagged' hits appear normally but carry
+  // the flag label. Absent = standard hit.
+  autoResolution?: 'auto-dismissed' | 'flagged';
+}
+
+// Auto-resolve rules reduce manual review load for low-confidence hits.
+// Rules are evaluated in order; first matching rule wins.
+// 'auto-dismissed' — hit is tagged and sorted to the bottom (MLRO can still see it).
+// 'flagged'        — hit is surfaced normally but carries a flag label.
+export interface AutoResolveRule {
+  listIdPattern?: string | RegExp; // match listId against this pattern (string = exact prefix)
+  entityTypes?: EntityType[];      // apply only when subject.entityType is in this set
+  maxBaseScore?: number;           // only apply when baseScore is at or below this value
+  requireDobConflict?: boolean;    // only apply when dobMatch === 'conflict'
+  requireNationalityConflict?: boolean; // only apply when nationalityMatch === false
+  requireNationalIdConflict?: boolean;  // only apply when nationalIdMatch === false
+  requireEntityMismatch?: boolean; // only apply when entityTypeMismatch === true
+  action: 'auto-dismissed' | 'flagged';
 }
 
 export interface QuickScreenOptions {
-  scoreThreshold?: number;          // default 0.82
+  scoreThreshold?: number;          // default 0.82 (global)
+  listThresholds?: Record<string, number>; // per-listId threshold overrides
   maxHits?: number;                 // default 25
   includeScoreBreakdown?: boolean;  // attach per-algorithm scores to each hit
+  // Auto-resolve rules evaluated against each hit after scoring.
+  // Pre-built profiles: 'conservative' | 'standard' | 'strict'.
+  // 'conservative' = dismiss DOB conflicts on informational lists only.
+  // 'standard'     = dismiss DOB/nationality conflicts on all lists below 0.90 base.
+  // 'strict'       = dismiss any conflict (DOB OR nationality) on non-critical lists.
+  autoResolveRules?: AutoResolveRule[] | 'conservative' | 'standard' | 'strict';
   clock?: () => number;
   now?: () => string;
 }
@@ -99,6 +143,76 @@ export interface QuickScreenResult {
 const DEFAULT_THRESHOLD = 0.82;
 const DEFAULT_MAX_HITS = 25;
 
+// Critical lists — never auto-dismiss hits regardless of profile
+const CRITICAL_LIST_IDS = new Set([
+  'un_consolidated', 'un_1267', 'ofac_sdn', 'uae_eocn', 'uae_ltl',
+]);
+
+// Informational / lower-weight lists — eligible for auto-dismissal
+const INFORMATIONAL_LIST_IDS = new Set([
+  'jp_mof', 'ca_osfi', 'au_dfat',
+]);
+
+const BUILTIN_PROFILES: Record<string, AutoResolveRule[]> = {
+  conservative: [
+    // Only dismiss DOB conflicts on informational lists with low base score
+    {
+      listIdPattern: /(jp_mof|ca_osfi|au_dfat|ch_seco)/,
+      maxBaseScore: 0.88,
+      requireDobConflict: true,
+      action: 'auto-dismissed',
+    },
+  ],
+  standard: [
+    // Dismiss ID conflicts everywhere except critical lists
+    { requireNationalIdConflict: true, maxBaseScore: 0.92, action: 'auto-dismissed' },
+    // Dismiss DOB conflicts on non-critical lists
+    { requireDobConflict: true, maxBaseScore: 0.90, action: 'auto-dismissed' },
+    // Flag DOB conflicts on critical lists
+    { requireDobConflict: true, action: 'flagged' },
+    // Flag nationality conflicts
+    { requireNationalityConflict: true, maxBaseScore: 0.88, action: 'flagged' },
+  ],
+  strict: [
+    // Dismiss ID conflicts on any non-critical list
+    { requireNationalIdConflict: true, maxBaseScore: 0.95, action: 'auto-dismissed' },
+    // Dismiss DOB or nationality conflicts on non-critical lists
+    { requireDobConflict: true, maxBaseScore: 0.92, action: 'auto-dismissed' },
+    { requireNationalityConflict: true, maxBaseScore: 0.90, action: 'auto-dismissed' },
+    // Flag entity-type mismatches
+    { requireEntityMismatch: true, action: 'flagged' },
+  ],
+};
+
+function resolveAutoRules(
+  opt: AutoResolveRule[] | 'conservative' | 'standard' | 'strict' | undefined,
+): AutoResolveRule[] {
+  if (!opt) return [];
+  if (typeof opt === 'string') return BUILTIN_PROFILES[opt] ?? [];
+  return opt;
+}
+
+function applyAutoResolveRule(
+  rule: AutoResolveRule,
+  hit: QuickScreenHit,
+  subject: QuickScreenSubject,
+): boolean {
+  // Never auto-dismiss critical list hits
+  if (rule.action === 'auto-dismissed' && CRITICAL_LIST_IDS.has(hit.listId)) return false;
+  if (rule.listIdPattern) {
+    const pat = rule.listIdPattern;
+    if (pat instanceof RegExp) { if (!pat.test(hit.listId)) return false; }
+    else { if (!hit.listId.startsWith(pat)) return false; }
+  }
+  if (rule.entityTypes && subject.entityType && !rule.entityTypes.includes(subject.entityType)) return false;
+  if (rule.maxBaseScore !== undefined && hit.baseScore > rule.maxBaseScore) return false;
+  if (rule.requireDobConflict && hit.dobMatch !== 'conflict') return false;
+  if (rule.requireNationalityConflict && hit.nationalityMatch !== false) return false;
+  if (rule.requireNationalIdConflict && hit.nationalIdMatch !== false) return false;
+  if (rule.requireEntityMismatch && !hit.entityTypeMismatch) return false;
+  return true;
+}
+
 // Regulatory weight per sanctions list.  Higher = more consequential for
 // the UAE AML/CFT framework.  Unknown lists default to 10.
 const LIST_WEIGHTS: Record<string, number> = {
@@ -119,13 +233,21 @@ function disambiguationConfidenceFor(
   dobMatch: DobMatch,
   nationalityMatch: boolean | undefined,
   phonetic: boolean,
+  nationalIdMatch?: boolean,
 ): number {
   let conf = 50; // neutral baseline
-  if (dobMatch === 'exact')    conf += 40;
-  else if (dobMatch === 'year') conf += 20;
-  else if (dobMatch === 'conflict') conf -= 40;
-  if (nationalityMatch === true)  conf += 20;
-  if (phonetic) conf += 10;
+  // National ID / passport — strongest single discriminator (definitive identity proof)
+  if (nationalIdMatch === true)  conf += 45;
+  else if (nationalIdMatch === false) conf -= 45;
+  // DOB — most important among demographic discriminators
+  if (dobMatch === 'exact')         conf += 35;
+  else if (dobMatch === 'year')     conf += 15;
+  else if (dobMatch === 'conflict') conf -= 35;
+  // Nationality
+  if (nationalityMatch === true)    conf += 15;
+  else if (nationalityMatch === false) conf -= 10;
+  // Phonetic agreement (corroborative, not definitive)
+  if (phonetic) conf += 8;
   return Math.min(100, Math.max(0, conf));
 }
 
@@ -201,6 +323,9 @@ export function quickScreen(
   const clock = opts.clock ?? (() => Date.now());
   const now = opts.now ?? (() => new Date().toISOString());
   const breakdown = opts.includeScoreBreakdown ?? false;
+  const autoRules = resolveAutoRules(opts.autoResolveRules);
+  // Pre-normalise per-list thresholds so every lookup is O(1)
+  const listThresholds = opts.listThresholds ?? {};
 
   const start = clock();
   const subjectNames = [subject.name, ...(subject.aliases ?? [])].filter((n) => n && n.trim());
@@ -241,8 +366,28 @@ export function quickScreen(
     let adjScore = bestScore;
     let dobMatchResult: DobMatch = 'none';
     let nationalityMatch: boolean | undefined;
+    let nationalIdMatch: boolean | undefined;
 
-    // DOB discriminator — most important for common-name disambiguation
+    // National ID / Passport — strongest discriminator (definitive identity proof)
+    // Boosts by +0.15 on match; penalises -0.15 on confirmed conflict.
+    const sNid = (subject.nationalId ?? '').replace(/[-\s]/g, '').toUpperCase();
+    const cNid = (cand.nationalId ?? '').replace(/[-\s]/g, '').toUpperCase();
+    const sPp = (subject.passportNumber ?? '').replace(/[-\s]/g, '').toUpperCase();
+    const cPp = (cand.passportNumber ?? '').replace(/[-\s]/g, '').toUpperCase();
+    const sReg = (subject.registrationNumber ?? '').replace(/[-\s]/g, '').toUpperCase();
+    const cReg = (cand.registrationNumber ?? '').replace(/[-\s]/g, '').toUpperCase();
+    if (sNid.length >= 5 && cNid.length >= 5) {
+      nationalIdMatch = sNid === cNid;
+      adjScore = Math.min(1, Math.max(0, adjScore + (nationalIdMatch ? 0.15 : -0.15)));
+    } else if (sPp.length >= 5 && cPp.length >= 5) {
+      nationalIdMatch = sPp === cPp;
+      adjScore = Math.min(1, Math.max(0, adjScore + (nationalIdMatch ? 0.15 : -0.15)));
+    } else if (sReg.length >= 4 && cReg.length >= 4) {
+      nationalIdMatch = sReg === cReg;
+      adjScore = Math.min(1, Math.max(0, adjScore + (nationalIdMatch ? 0.12 : -0.12)));
+    }
+
+    // DOB discriminator — most important demographic discriminator
     if (subject.dateOfBirth && cand.dateOfBirth) {
       const { match, boost } = matchDOB(subject.dateOfBirth, cand.dateOfBirth);
       dobMatchResult = match;
@@ -258,6 +403,7 @@ export function quickScreen(
         adjScore = Math.min(1, adjScore + 0.04);
       } else {
         nationalityMatch = false;
+        adjScore = Math.max(0, adjScore - 0.02); // mild penalty for nationality conflict
       }
     }
 
@@ -268,8 +414,14 @@ export function quickScreen(
       if (sj === cj && sj.length > 0) adjScore = Math.min(1, adjScore + 0.03);
     }
 
-    if (adjScore >= threshold) {
-      const disambConf = disambiguationConfidenceFor(dobMatchResult, nationalityMatch, phonetic);
+    // Per-list threshold override — allows tighter thresholds for high-signal
+    // lists (e.g. OFAC SDN at 0.85) and looser for informational lists (0.78).
+    const effectiveThreshold = listThresholds[cand.listId] !== undefined
+      ? Math.max(0, Math.min(1, listThresholds[cand.listId] as number))
+      : threshold;
+
+    if (adjScore >= effectiveThreshold) {
+      const disambConf = disambiguationConfidenceFor(dobMatchResult, nationalityMatch, phonetic, nationalIdMatch);
       const hit: QuickScreenHit = {
         listId: cand.listId,
         listRef: cand.listRef,
@@ -278,7 +430,7 @@ export function quickScreen(
         baseScore: bestScore,
         method: bestMethod,
         phoneticAgreement: phonetic,
-        reason: reasonFor(bestMethod, phonetic, subject, cand, dobMatchResult),
+        reason: reasonFor(bestMethod, phonetic, subject, cand, dobMatchResult, nationalIdMatch),
         disambiguationConfidence: disambConf,
         recommendation: recommendationFor(disambConf),
       };
@@ -286,6 +438,23 @@ export function quickScreen(
       if (cand.programs !== undefined) hit.programs = cand.programs;
       if (dobMatchResult !== 'none') hit.dobMatch = dobMatchResult;
       if (nationalityMatch !== undefined) hit.nationalityMatch = nationalityMatch;
+      if (nationalIdMatch !== undefined) hit.nationalIdMatch = nationalIdMatch;
+      // Entity-type transparency — always record candidate entity type so
+      // callers can distinguish direct designations from entity-association hits.
+      if (cand.entityType !== undefined) hit.candidateEntityType = cand.entityType;
+      // Entity-type mismatch penalty — applied AFTER threshold so the hit still
+      // surfaces (for MLRO review) but score is penalised to reflect the
+      // indirect nature of the match (e.g. individual named within an org record).
+      if (subject.entityType && cand.entityType && subject.entityType !== cand.entityType) {
+        const personVsOrg =
+          (subject.entityType === 'individual' && cand.entityType === 'organisation') ||
+          (subject.entityType === 'organisation' && cand.entityType === 'individual');
+        if (personVsOrg) {
+          hit.score = Math.round(hit.score * 0.6 * 1e6) / 1e6; // ×0.6, avoid float noise
+          hit.entityTypeMismatch = true;
+          hit.reason = `entity-association · ${hit.reason}`;
+        }
+      }
       if (breakdown && bestEns) {
         const seen = new Set<string>();
         const scoreMap: Partial<Record<MatchingMethod, number>> = {};
@@ -303,11 +472,37 @@ export function quickScreen(
   }
 
   hits.sort((a, b) => b.score - a.score);
+
+  // ── Auto-resolve rules ────────────────────────────────────────────────────
+  // Apply after sorting so baseScore/dobMatch/etc. are all set.
+  // Auto-dismissed hits are retained in the array (MLRO transparency) but
+  // sorted to the end and tagged so the UI can collapse them by default.
+  if (autoRules.length > 0) {
+    for (const hit of hits) {
+      if (hit.autoResolution) continue; // already resolved
+      for (const rule of autoRules) {
+        if (applyAutoResolveRule(rule, hit, subject)) {
+          hit.autoResolution = rule.action;
+          break;
+        }
+      }
+    }
+    // Re-sort: non-resolved hits first, then flagged, then auto-dismissed
+    hits.sort((a, b) => {
+      const rank = (h: QuickScreenHit) =>
+        h.autoResolution === 'auto-dismissed' ? 2 : h.autoResolution === 'flagged' ? 1 : 0;
+      const dr = rank(a) - rank(b);
+      return dr !== 0 ? dr : b.score - a.score;
+    });
+  }
+
   const clipped = hits.slice(0, maxHits);
 
-  const topRaw = clipped[0]?.score ?? 0;
+  // For severity/topScore, ignore auto-dismissed hits (they should not inflate risk)
+  const activeHits = clipped.filter((h) => h.autoResolution !== 'auto-dismissed');
+  const topRaw = activeHits[0]?.score ?? 0;
   const topScore = Math.round(topRaw * 100);
-  const severity = severityFromScore(topScore, clipped.length);
+  const severity = severityFromScore(topScore, activeHits.length);
 
   // ── Weighted scoring across all hits ──────────────────────────────────────
   // Build per-list summary; use the highest-scoring hit per list.
@@ -368,9 +563,12 @@ function reasonFor(
   subject: QuickScreenSubject,
   cand: QuickScreenCandidate,
   dobMatch: DobMatch = 'none',
+  nationalIdMatch?: boolean,
 ): string {
   const parts: string[] = [`${method} match`];
   if (phonetic) parts.push('phonetic agreement');
+  if (nationalIdMatch === true) parts.push('ID confirmed');
+  else if (nationalIdMatch === false) parts.push('ID conflict');
   if (dobMatch === 'exact') parts.push('DOB confirmed');
   else if (dobMatch === 'year') parts.push('birth year match');
   else if (dobMatch === 'conflict') parts.push('DOB conflict');

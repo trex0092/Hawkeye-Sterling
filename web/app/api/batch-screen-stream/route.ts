@@ -89,7 +89,10 @@ function computeCheckpoints(
   const flags: string[] = [];
   const lists = Array.from(new Set(screen.hits.map((h: QuickScreenHit) => h.listId)));
 
-  if (screen.hits.length > 0) flags.push("sanctions-hit");
+  const allEntityAssociation =
+    screen.hits.length > 0 &&
+    screen.hits.every((h: QuickScreenHit) => (h as { entityTypeMismatch?: boolean }).entityTypeMismatch === true);
+  if (screen.hits.length > 0) flags.push(allEntityAssociation ? "entity-association" : "sanctions-hit");
   if (lists.some((l) => l.toLowerCase().includes("pep"))) flags.push("pep-flag");
   if (kwGroups.length > 0) flags.push("adverse-media");
   if (esgCats.length > 0) flags.push("esg-concern");
