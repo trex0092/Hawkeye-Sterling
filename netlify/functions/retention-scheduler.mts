@@ -192,10 +192,9 @@ export default async function handler(_req: Request): Promise<Response> {
       schedulerLabel: RUN_LABEL,
       legalBasis: "FDL 10/2025 Art.20 (10-year retention); Art.24 (audit chain immutability)",
     }));
-  } catch {
-    // Audit write failure is logged but does not fail the purge response —
-    // the snapshot rewrite already succeeded and the purge must not be retried.
-    // Operators should monitor for missing audit entries separately.
+  } catch (err) {
+    // Non-fatal: snapshot rewrite already succeeded; purge must not be retried.
+    console.warn("[retention-scheduler] audit event write failed (FDL Art.24):", err instanceof Error ? err.message : String(err));
   }
 
   await writeHeartbeat(RUN_LABEL);

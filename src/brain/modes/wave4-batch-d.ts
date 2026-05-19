@@ -418,8 +418,8 @@ const bsConfirmationBiasAuditApply = async (ctx: BrainContext): Promise<Finding>
   let score = 0;
   const evidence: string[] = [];
   const first = findings[0];
-  const allSameVerdict = findings.length >= 3 && first != null && findings.every(f => f.verdict === first.verdict);
-  if (allSameVerdict && first != null && first.verdict === 'clear') { score += 0.35; evidence.push('All prior findings "clear" — possible confirmation of innocence bias'); }
+  const allSameVerdict = findings.length >= 3 && first !== undefined && findings.every(f => f.verdict === first.verdict);
+  if (allSameVerdict && first !== undefined && first.verdict === 'clear') { score += 0.35; evidence.push('All prior findings "clear" — possible confirmation of innocence bias'); }
   const lowVarianceScores = findings.length >= 3 && (Math.max(...findings.map(f => f.score)) - Math.min(...findings.map(f => f.score))) < 0.1;
   if (lowVarianceScores) { score += 0.25; evidence.push('Abnormally low score variance across findings — anchoring risk'); }
   if (/confirm|we expected|consistent.*hypothesis|discard.*contrary/.test(ft)) { score += 0.2; evidence.push('Confirmation-seeking language detected in narrative'); }
@@ -1227,7 +1227,7 @@ const qaBenfordLawAnalysisApply = async (ctx: BrainContext): Promise<Finding> =>
     const digitCounts = new Array(9).fill(0);
     for (const t of txns) {
       const stripped = String(Math.abs(t.amountAed ?? 0)).replace(/^0+/, '');
-      const firstDigit = stripped.length > 0 ? parseInt(stripped[0]!) : NaN;
+      const firstDigit = stripped.length > 0 ? parseInt(stripped[0]!, 10) : NaN;
       if (firstDigit >= 1 && firstDigit <= 9) digitCounts[firstDigit - 1]++;
     }
     const n = txns.length;

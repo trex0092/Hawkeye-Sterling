@@ -140,6 +140,16 @@ async function handlePost(req: Request): Promise<NextResponse> {
       { status: 400, headers: gate.headers },
     );
   }
+  const VALID_STATUSES = new Set(["active", "review", "reported", "closed"]);
+  for (let i = 0; i < body.cases.length; i++) {
+    const c = body.cases[i];
+    if (!c || typeof c !== "object") {
+      return NextResponse.json({ ok: false, error: `body.cases[${i}] must be an object` }, { status: 400, headers: gate.headers });
+    }
+    if ("status" in c && !VALID_STATUSES.has((c as { status?: unknown }).status as string)) {
+      return NextResponse.json({ ok: false, error: `body.cases[${i}].status must be one of: ${[...VALID_STATUSES].join(", ")}` }, { status: 400, headers: gate.headers });
+    }
+  }
   // Stamp server-format CASE-YYYYMMDD-xxxx IDs for any case that lacks one.
   // The client learns the authoritative ID from the POST response and updates localStorage.
   const stamped = body.cases.map((c) =>
@@ -170,6 +180,16 @@ async function handlePut(req: Request): Promise<NextResponse> {
       { ok: false, error: "body.cases must be an array" },
       { status: 400, headers: gate.headers },
     );
+  }
+  const VALID_STATUSES_PUT = new Set(["active", "review", "reported", "closed"]);
+  for (let i = 0; i < body.cases.length; i++) {
+    const c = body.cases[i];
+    if (!c || typeof c !== "object") {
+      return NextResponse.json({ ok: false, error: `body.cases[${i}] must be an object` }, { status: 400, headers: gate.headers });
+    }
+    if ("status" in c && !VALID_STATUSES_PUT.has((c as { status?: unknown }).status as string)) {
+      return NextResponse.json({ ok: false, error: `body.cases[${i}].status must be one of: ${[...VALID_STATUSES_PUT].join(", ")}` }, { status: 400, headers: gate.headers });
+    }
   }
   await saveAllCases(tenant, body.cases);
   const saved = await loadAllCases(tenant);

@@ -112,7 +112,8 @@ async function loadMonitoredSubjects(): Promise<Set<string>> {
         .map((e) => (typeof e.subject === "string" ? e.subject.toLowerCase().trim() : ""))
         .filter(Boolean),
     );
-  } catch {
+  } catch (err) {
+    console.warn("[designation-alert-check] loadMonitoredSubjects failed — portfolio cross-reference disabled for this run:", err instanceof Error ? err.message : String(err));
     return new Set();
   }
 }
@@ -249,13 +250,17 @@ export default async (_req: Request): Promise<Response> => {
               console.warn(`[designation-alert-check] /api/alerts POST returned ${res.status} for ${alertId} — queuing for retry`);
               await saveRetry(alertId, alertPayload);
             }
-          } catch {
+          } catch (err) {
             errors++;
+            console.warn(`[designation-alert-check] fetch failed for ${alertId} — queuing for retry:`, err instanceof Error ? err.message : String(err));
             await saveRetry(alertId, alertPayload);
           }
           finally { clearTimeout(deadline); }
         }
-      } catch { errors++; }
+      } catch (err) {
+        errors++;
+        console.warn("[designation-alert-check] failed to process delta blob:", err instanceof Error ? err.message : String(err));
+      }
     }
   } catch (err) {
     return new Response(

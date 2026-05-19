@@ -33,7 +33,8 @@ export interface ReportSubject {
 
 export interface ReportScreeningResult {
   topScore: number;
-  severity: "clear" | "low" | "medium" | "high" | "critical";
+  /** "pending" means screening was not performed before report generation */
+  severity: "clear" | "low" | "medium" | "high" | "critical" | "pending";
   hits: Array<{
     listId: string;
     listRef: string;
@@ -42,6 +43,8 @@ export interface ReportScreeningResult {
     programs?: string[];
     method: string;
   }>;
+  /** True when the result is a placeholder — no screening was run */
+  _unscreened?: boolean;
 }
 
 export interface ReportSuperBrain {

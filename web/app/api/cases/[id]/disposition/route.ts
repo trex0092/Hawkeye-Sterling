@@ -29,6 +29,7 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { recordCaseDisposition } from "../../../../../../dist/src/brain/feedback-journal-instance.js";
 import type { OutcomeRecord } from "../../../../../../dist/src/brain/outcome-feedback.js";
 import type { DispositionCode } from "../../../../../../dist/src/brain/dispositions.js";
@@ -128,6 +129,28 @@ async function handlePost(
       note: "disposition journal unavailable — record not persisted",
     }, { headers: gate.headers });
   }
+
+  // Cabinet Res 134/2025 Art.19 — MLRO disposition decisions must be on
+  // the tamper-evident server-side chain.
+  void writeAuditChainEntry(
+    {
+      event: "case.disposition.recorded",
+      actor: gate.keyId,
+      caseId: id,
+      runId: record.runId,
+      autoProposed: record.autoProposed,
+      mlroDecided: record.mlroDecided,
+      overridden: record.overridden,
+      overrideReason: record.overrideReason,
+      reviewerId: record.reviewerId,
+    },
+    tenant,
+  ).catch((err) =>
+    console.warn(
+      "[cases/disposition] audit chain write failed:",
+      err instanceof Error ? err.message : String(err),
+    ),
+  );
 
   return NextResponse.json(
     { ok: true, tenant, caseId: id, recorded: true, overridden },

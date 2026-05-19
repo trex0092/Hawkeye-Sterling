@@ -4,6 +4,7 @@
 // Storage layout:
 //   hawkeye-goaml/<tenant>/submissions/<reportRef>.json   SubmissionRecord
 //   hawkeye-goaml/<tenant>/_index.json                    lightweight index
+//   hawkeye-goaml/<tenant>/submitted-hashes.json          sha256 → submissionRef (idempotency)
 
 import { getJson, setJson, del, listKeys } from "@/lib/server/store";
 
@@ -118,4 +119,31 @@ export async function deleteGoAmlSubmission(tenantId: string, reportRef: string)
     idx.updatedAt = new Date().toISOString();
     await setJson(indexKey(tenantId), idx);
   }
+}
+
+// ── Idempotency helpers ───────────────────────────────────────────────────────
+//
+// Prevent duplicate live submissions to the UAE FIU goAML gateway.
+// Maps sha256(xml) → submissionRef for any live submission that completed.
+//
+// Not perfectly atomic under concurrent requests, but the two-eyes signature
+// requirement already serialises submissions in practice. This check catches
+// the common case: retry after network timeout or accidental double-click.
+
+function hashIndexKey(tenantId: string): string {
+  return `hawkeye-goaml/${safeTenant(tenantId)}/submitted-hashes.json`;
+}
+
+/** Returns the existing submissionRef if this sha256 was already submitted live, else null. */
+export async function findSubmittedBySha256(tenantId: string, draftSha256: string): Promise<string | null> {
+  const idx = await getJson<Record<string, string>>(hashIndexKey(tenantId));
+  return idx?.[draftSha256] ?? null;
+}
+
+/** Records a successful live submission so retries can be detected. */
+export async function recordSubmittedSha256(tenantId: string, draftSha256: string, submissionRef: string): Promise<void> {
+  const key = hashIndexKey(tenantId);
+  const idx = (await getJson<Record<string, string>>(key)) ?? {};
+  idx[draftSha256] = submissionRef;
+  await setJson(key, idx);
 }

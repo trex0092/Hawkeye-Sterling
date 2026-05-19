@@ -182,7 +182,9 @@ export async function POST(req: Request): Promise<NextResponse> {
 
     try {
       writeAuditEvent("mlro", "typology.ai-fingerprint", body.subjectType ?? "unknown");
-    } catch { /* browser-only audit */ }
+    } catch (err) {
+      console.warn("[hawkeye] typology-match: audit write failed", err instanceof Error ? err.message : String(err));
+    }
 
     const latencyMs = Date.now() - t0;
     if (latencyMs > 5000) console.warn(`[typology-match] slow response latencyMs=${latencyMs}`);

@@ -220,7 +220,11 @@ Return ONLY valid JSON with this exact structure:
       graphSummary: hopCounts,
     };
 
-    try { writeAuditEvent("mlro", "pep.deep-network-intelligence", pepName); } catch { /* non-blocking */ }
+    try {
+      writeAuditEvent("mlro", "pep.deep-network-intelligence", pepName);
+    } catch (err) {
+      console.warn("[hawkeye] pep-network: audit write failed", err instanceof Error ? err.message : String(err));
+    }
 
     const latencyMs = Date.now() - _handlerStart;
     if (latencyMs > 5000) console.warn(`[pep-network] latencyMs=${latencyMs} exceeds 5000ms`);

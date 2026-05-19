@@ -29,6 +29,9 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { tenantIdFromGate } from "@/lib/server/tenant";
+import { findSubmittedBySha256, recordSubmittedSha256 } from "@/lib/server/goaml-vault";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 
 export const runtime = "nodejs";
@@ -147,6 +150,25 @@ async function handlePost(req: Request): Promise<NextResponse> {
     );
   }
 
+  // Idempotency guard — prevent duplicate live submissions to the UAE FIU gateway.
+  // If this exact XML was already submitted and accepted, return the original ref.
+  const tenant = tenantIdFromGate(gate);
+  const existingRef = await findSubmittedBySha256(tenant, draftSha256).catch(() => null);
+  if (existingRef) {
+    console.warn(`[goaml/auto-submit] duplicate live submission blocked — sha256 already recorded as ${existingRef}`);
+    return NextResponse.json(
+      {
+        ok: false,
+        error: "duplicate_submission",
+        detail: "This exact XML envelope was already submitted live. Use the existing submission reference.",
+        existingSubmissionRef: existingRef,
+        draftSha256,
+        twoEyesVerified,
+      },
+      { status: 409, headers: gateHeaders },
+    );
+  }
+
   const endpoint = process.env[GOAML_ENDPOINT_ENV];
   const apiKey = process.env[GOAML_API_KEY_ENV];
   if (!endpoint || !apiKey) {
@@ -172,8 +194,41 @@ async function handlePost(req: Request): Promise<NextResponse> {
     // Log only on failure — success body may contain FIU-internal data.
     if (!upstream.ok) {
       console.error("[goaml/auto-submit] upstream rejected submission:", upstream.status, upstreamText.slice(0, 500));
+      void writeAuditChainEntry(
+        {
+          event: "goaml.live_submit.rejected",
+          actor: gate.keyId,
+          submitter: body.submitter.id,
+          authoriser: body.authoriser.id,
+          submissionRef,
+          draftSha256,
+          upstreamStatus: upstream.status,
+        },
+        tenant,
+      ).catch((err) =>
+        console.warn("[goaml/auto-submit] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+      );
     } else {
       console.info("[goaml/auto-submit] submission accepted:", upstream.status);
+      // Record the sha256 so retries are blocked (best-effort: don't fail the response if this write fails).
+      await recordSubmittedSha256(tenant, draftSha256, submissionRef).catch((err) =>
+        console.warn("[goaml/auto-submit] sha256 idempotency record write failed:", err instanceof Error ? err.message : String(err)),
+      );
+      // FDL 10/2025 Art.17 — live FIU submission must be on the tamper-evident chain.
+      void writeAuditChainEntry(
+        {
+          event: "goaml.live_submit.accepted",
+          actor: gate.keyId,
+          submitter: body.submitter.id,
+          authoriser: body.authoriser.id,
+          submissionRef,
+          draftSha256,
+          upstreamStatus: upstream.status,
+        },
+        tenant,
+      ).catch((err) =>
+        console.warn("[goaml/auto-submit] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+      );
     }
     return NextResponse.json(
       {

@@ -26,6 +26,8 @@ import { createHash, randomUUID } from "node:crypto";
 import { enforce } from "@/lib/server/enforce";
 import { loadCandidates } from "@/lib/server/candidates-loader";
 import { quickScreen as brainQuickScreen } from "../../../../../dist/src/brain/quick-screen.js";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import type {
   QuickScreenCandidate,
   QuickScreenOptions,
@@ -163,6 +165,7 @@ function buildNegativeEvidence(
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+  const tenant = tenantIdFromGate(gate);
 
   const t0 = Date.now();
 
@@ -247,6 +250,28 @@ export async function POST(req: Request): Promise<NextResponse> {
       { status: 500, headers: responseHeaders },
     );
   }
+
+  // FDL 10/2025 Art.15 — every screening invocation must be permanently logged.
+  void writeAuditChainEntry(
+    {
+      event: "screening.completed",
+      actor: gate.keyId,
+      resultId,
+      requestId: reqId,
+      subjectName: subject.name,
+      entityType: subject.entityType,
+      severity: result.severity,
+      topScore: result.topScore,
+      hitsCount: result.hits.length,
+      listsLoaded,
+    },
+    tenant,
+  ).catch((err) =>
+    console.warn(
+      "[screening/run] audit chain write failed:",
+      err instanceof Error ? err.message : String(err),
+    ),
+  );
 
   // Confidence calibration note — honest statement about what was and
   // wasn't checked. Never claim higher confidence than supported.

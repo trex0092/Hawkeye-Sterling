@@ -9,18 +9,18 @@ import {
 describe('structured-log', () => {
   let errorSpy: ReturnType<typeof vi.spyOn>;
   let warnSpy: ReturnType<typeof vi.spyOn>;
-  let logSpy: ReturnType<typeof vi.spyOn>;
+  let infoSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
-    logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    infoSpy = vi.spyOn(console, 'info').mockImplementation(() => undefined);
   });
 
   afterEach(() => {
     errorSpy.mockRestore();
     warnSpy.mockRestore();
-    logSpy.mockRestore();
+    infoSpy.mockRestore();
   });
 
   it('emits a single JSON line per call (error)', () => {
@@ -42,12 +42,12 @@ describe('structured-log', () => {
     logWarn({ module: 'm', operation: 'o', outcome: 'degraded' });
     expect(warnSpy).toHaveBeenCalledTimes(1);
     expect(errorSpy).not.toHaveBeenCalled();
-    expect(logSpy).not.toHaveBeenCalled();
+    expect(infoSpy).not.toHaveBeenCalled();
   });
 
-  it('info level routes to console.log', () => {
+  it('info level routes to console.info', () => {
     logInfo({ module: 'm', operation: 'o', outcome: 'ok' });
-    expect(logSpy).toHaveBeenCalledTimes(1);
+    expect(infoSpy).toHaveBeenCalledTimes(1);
     expect(errorSpy).not.toHaveBeenCalled();
     expect(warnSpy).not.toHaveBeenCalled();
   });
@@ -59,7 +59,7 @@ describe('structured-log', () => {
       outcome: 'ok',
       extras: { latencyMs: 42, adapterId: 'ofac_sdn' },
     });
-    const line = logSpy.mock.calls[0]?.[0] as string;
+    const line = infoSpy.mock.calls[0]?.[0] as string;
     const parsed = JSON.parse(line);
     expect(parsed.latencyMs).toBe(42);
     expect(parsed.adapterId).toBe('ofac_sdn');
@@ -67,7 +67,7 @@ describe('structured-log', () => {
 
   it('omits requestId when not provided', () => {
     logInfo({ module: 'm', operation: 'o', outcome: 'ok' });
-    const line = logSpy.mock.calls[0]?.[0] as string;
+    const line = infoSpy.mock.calls[0]?.[0] as string;
     const parsed = JSON.parse(line);
     expect(parsed.requestId).toBeUndefined();
   });

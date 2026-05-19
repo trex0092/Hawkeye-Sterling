@@ -741,13 +741,13 @@ async function handleComplianceReport(req: Request): Promise<Response> {
   const url = new URL(req.url);
   const format = (url.searchParams.get("format") ?? "html").toLowerCase();
 
-  let body: ReportInput;
+  let rawBody: Omit<ReportInput, "result"> & { result?: ReportInput["result"] };
   try {
-    body = (await req.json()) as ReportInput;
+    rawBody = (await req.json()) as typeof rawBody;
   } catch {
     return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400, headers: gateHeaders });
   }
-  if (!body?.subject?.name) {
+  if (!rawBody?.subject?.name) {
     return NextResponse.json(
       { ok: false, error: "subject.name is required" },
       { status: 400, headers: gateHeaders },
@@ -755,16 +755,14 @@ async function handleComplianceReport(req: Request): Promise<Response> {
   }
   // When no prior screening result is supplied, inject a placeholder that
   // clearly marks the report as unscreened — never a CLEAR verdict.
-  if (!body.result) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (body as any).result = { topScore: 0, severity: "pending", hits: [], _unscreened: true };
-  } else if (!Array.isArray(body.result.hits)) {
-    body.result.hits = [];
-  }
+  const resolvedResult: ReportInput["result"] = rawBody.result
+    ? { ...rawBody.result, hits: Array.isArray(rawBody.result.hits) ? rawBody.result.hits : [] }
+    : { topScore: 0, severity: "pending", hits: [], _unscreened: true };
   // Ensure subject.id is always present (filename and digest use it)
-  if (!body.subject.id) {
-    body.subject = { ...body.subject, id: body.subject.name.slice(0, 32).replace(/[^A-Za-z0-9]/g, "-") };
-  }
+  const resolvedSubject = rawBody.subject.id
+    ? rawBody.subject
+    : { ...rawBody.subject, id: rawBody.subject.name.slice(0, 32).replace(/[^A-Za-z0-9]/g, "-") };
+  const body: ReportInput = { ...rawBody, result: resolvedResult, subject: resolvedSubject };
   let report: string;
   try {
     report = buildComplianceReport(body);

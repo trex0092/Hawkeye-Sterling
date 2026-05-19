@@ -125,8 +125,8 @@ export default async function handler(_req: Request): Promise<Response> {
     // Keep last 365 entries (one per deploy, ~1/day).
     if (log.length > 365) log.splice(0, log.length - 365);
     await store.set(chainKey, JSON.stringify(log));
-  } catch {
-    // Non-fatal — primary record already written.
+  } catch (err) {
+    console.warn("[audit-config] audit chain append failed (non-fatal — primary record already written):", err instanceof Error ? err.message : String(err));
   }
 
   await writeHeartbeat('audit-config');

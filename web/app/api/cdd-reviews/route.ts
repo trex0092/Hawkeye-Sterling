@@ -10,6 +10,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { writeAuditEvent } from "@/lib/audit";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import {
   listCddReviews,
   getCddReview,
@@ -147,13 +148,26 @@ export async function POST(req: Request): Promise<NextResponse> {
   };
 
   await saveCddReview(tenant, record);
-  try {
-    writeAuditEvent(
-      "mlro",
-      "cdd.review.saved",
-      `${record.subject} — tier:${record.tier} status:${record.status} daysOverdue:${record.daysOverdue}`,
-    );
-  } catch { /* browser-only audit — best-effort on server */ }
+  writeAuditEvent(
+    "mlro",
+    "cdd.review.saved",
+    `${record.subject} — tier:${record.tier} status:${record.status} daysOverdue:${record.daysOverdue}`,
+  );
+  await writeAuditChainEntry(
+    {
+      event: "cdd.review.saved",
+      actor: gate.keyId,
+      caseId: record.caseId,
+      subject: record.subject,
+      tier: record.tier,
+      status: record.status,
+      reviewId: record.id,
+      daysOverdue: record.daysOverdue,
+    },
+    tenant,
+  ).catch((err) =>
+    console.warn("[cdd-reviews] server audit chain write failed:", err instanceof Error ? err.message : String(err)),
+  );
 
   return NextResponse.json(
     { ok: true, record },
@@ -178,6 +192,18 @@ export async function DELETE(req: Request): Promise<NextResponse> {
   }
 
   await deleteCddReview(tenant, id);
-  try { writeAuditEvent("mlro", "cdd.review.deleted", `${existing.subject} (${id})`); } catch { /* browser-only audit */ }
+  writeAuditEvent("mlro", "cdd.review.deleted", `${existing.subject} (${id})`);
+  await writeAuditChainEntry(
+    {
+      event: "cdd.review.deleted",
+      actor: gate.keyId,
+      subject: existing.subject,
+      reviewId: id,
+      deletedAt: new Date().toISOString(),
+    },
+    tenant,
+  ).catch((err) =>
+    console.warn("[cdd-reviews] server audit chain write failed on delete:", err instanceof Error ? err.message : String(err)),
+  );
   return NextResponse.json({ ok: true, deleted: id }, { headers: gate.headers });
 }

@@ -1294,7 +1294,7 @@ const dempsterShaferApply = async (ctx: BrainContext): Promise<Finding> => {
     // where K = m1_ill·m2_not + m1_not·m2_ill... simplified: K = conflict mass
     // In 2-hypothesis frame {illicit, ¬illicit}: conflict = mIllicit*(1-m2ill-m2theta) [=0 in 2-class]
     const unnorm = mIllicit * m2ill + mIllicit * m2theta + mTheta * m2ill;
-    const conflict = mIllicit * (1 - m2ill) + (1 - mIllicit) * m2ill; // approx
+    const _conflict = mIllicit * (1 - m2ill) + (1 - mIllicit) * m2ill; // approx — Dempster conflict mass, retained for reference
     const K = clamp(1 - (unnorm + mTheta * m2theta), 0, 0.99);
     if (K > 0.5) K_warnings.push(`high conflict at step ${i} (K=${K.toFixed(2)})`);
     const denom = 1 - K;

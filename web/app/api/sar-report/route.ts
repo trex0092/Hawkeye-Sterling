@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { postWebhook } from "@/lib/server/webhook";
 import { getEntity } from "@/lib/config/entities";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { serialiseGoamlXml } from "../../../../dist/src/integrations/goaml-xml.js";
 import { validateGoamlEnvelope, type GoAmlEnvelope, type GoAmlPerson, type GoAmlEntity, type GoAmlReportCode } from "../../../../dist/src/brain/goaml-shapes.js";
 import {
@@ -75,6 +77,11 @@ function escapeHtml(s: string): string {
     .replace(/'/g, "&#39;");
 }
 
+function safeFilenameSegment(s: string | undefined | null): string {
+  if (!s) return "unknown";
+  return s.replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 64) || "unknown";
+}
+
 function checkTippingOff(text: string): string | null {
   for (const pat of TIPPING_OFF_PATTERNS) {
     if (pat.test(text)) return pat.source;
@@ -128,7 +135,7 @@ interface Body {
   entityId?: string;
 }
 
-async function handleSarReport(req: Request, gateHeaders: Record<string, string>): Promise<Response> {
+async function handleSarReport(req: Request, gateHeaders: Record<string, string>, tenant: string = "default", actorKeyId?: string): Promise<Response> {
   const _handlerStart = Date.now();
   try {
   const token = process.env["ASANA_TOKEN"];
@@ -372,6 +379,25 @@ async function handleSarReport(req: Request, gateHeaders: Record<string, string>
     );
   }
 
+  // FDL 10/2025 Art.17 + Art.24 — every SAR/STR report generation must be
+  // permanently logged on the tamper-evident server-side chain.
+  void writeAuditChainEntry(
+    {
+      event: "sar.report.generated",
+      actor: actorKeyId ?? mlro,
+      subjectName: body.subject.name,
+      subjectId: body.subject.id,
+      filingType: body.filingType,
+      caseId: body.subject.caseId,
+      internalRef,
+      fourEyesApprover: body.approver,
+      goamlValidated: goamlValidationWarnings.length === 0,
+    },
+    tenant,
+  ).catch((err) =>
+    console.warn("[sar-report] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+  );
+
   lines.push("");
   lines.push("── goAML XML (serialised — MLRO to review before FIU submission) ──");
   if (goamlValidationWarnings.length > 0) {
@@ -514,7 +540,7 @@ async function handleSarReport(req: Request, gateHeaders: Record<string, string>
       headers: {
         ...gateHeaders,
         "content-type": "text/html; charset=utf-8",
-        "content-disposition": `inline; filename="hawkeye-${body.filingType.toLowerCase()}-${body.subject.id}.html"`,
+        "content-disposition": `inline; filename="hawkeye-${safeFilenameSegment(body.filingType)}-${safeFilenameSegment(body.subject.id)}.html"`,
         "cache-control": "no-store",
       },
     });
@@ -673,7 +699,8 @@ async function handleSarReport(req: Request, gateHeaders: Record<string, string>
 export async function POST(req: Request) {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
-  return handleSarReport(req, gate.headers);
+  const tenant = tenantIdFromGate(gate);
+  return handleSarReport(req, gate.headers, tenant, gate.keyId);
 }
 
 function autoNarrative(body: Body): string {

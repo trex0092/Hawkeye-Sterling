@@ -67,7 +67,7 @@ function emit(level: LogLevel, fields: LogFields): void {
   } else if (level === 'warn') {
     console.warn(json);
   } else {
-    console.log(json);
+    console.info(json);
   }
 }
 

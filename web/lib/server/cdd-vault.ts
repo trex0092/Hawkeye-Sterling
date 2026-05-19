@@ -9,7 +9,7 @@
 //   standard     → 365 days
 
 import { randomBytes } from "node:crypto";
-import { getJson, setJson, del, listKeys } from "@/lib/server/store";
+import { getJson, setJson, listKeys } from "@/lib/server/store";
 
 export interface CddReviewRecord {
   id: string;
@@ -29,6 +29,8 @@ export interface CddReviewRecord {
   caseId?: string;
   createdAt: string;
   updatedAt: string;
+  /** Soft-delete: set on logical deletion; record is retained for audit continuity */
+  deletedAt?: string;
 }
 
 const CADENCE_DAYS: Record<CddReviewRecord["tier"], number> = {
@@ -76,12 +78,13 @@ function deriveStatus(
   return computeDaysOverdue(nextReviewDate) > 0 ? "overdue" : "due";
 }
 
-export async function listCddReviews(tenantId: string): Promise<CddReviewRecord[]> {
+export async function listCddReviews(tenantId: string, includeDeleted = false): Promise<CddReviewRecord[]> {
   const prefix = reviewPrefix(tenantId);
   const keys = await listKeys(prefix);
   const records = await Promise.all(keys.map((k) => getJson<CddReviewRecord>(k)));
   return records
     .filter((r): r is CddReviewRecord => r !== null)
+    .filter((r) => includeDeleted || !r.deletedAt)
     .map((r) => ({
       ...r,
       daysOverdue: computeDaysOverdue(r.nextReviewDate),
@@ -107,8 +110,15 @@ export async function saveCddReview(tenantId: string, record: CddReviewRecord): 
   });
 }
 
+/** Soft-deletes a CDD review by stamping deletedAt; retains the blob for audit continuity. */
 export async function deleteCddReview(tenantId: string, id: string): Promise<void> {
-  await del(reviewKey(tenantId, id));
+  const existing = await getJson<CddReviewRecord>(reviewKey(tenantId, id));
+  if (!existing) return;
+  await setJson(reviewKey(tenantId, id), {
+    ...existing,
+    deletedAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  });
 }
 
 export function newCddReviewId(): string {

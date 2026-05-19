@@ -15,6 +15,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { writeAuditEvent } from "@/lib/audit";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import {
   listGoAmlSubmissions,
   getGoAmlSubmission,
@@ -119,13 +120,27 @@ export async function POST(req: Request): Promise<NextResponse> {
   };
 
   await saveGoAmlSubmission(tenant, updated);
-  try {
-    writeAuditEvent(
-      "mlro",
-      `goaml.submission.${body.status}`,
-      `${body.reportRef} — ${existing.reportCode} / ${existing.subjectName}${isResubmit ? ` (retry #${updated.retryCount})` : ""}`,
-    );
-  } catch { /* browser-only audit — best-effort on server */ }
+  writeAuditEvent(
+    "mlro",
+    `goaml.submission.${body.status}`,
+    `${body.reportRef} — ${existing.reportCode} / ${existing.subjectName}${isResubmit ? ` (retry #${updated.retryCount})` : ""}`,
+  );
+  // Server-side chain entry — STR/SAR status changes are FDL 10/2025 Art.17 events.
+  await writeAuditChainEntry(
+    {
+      event: `goaml.submission.${body.status}`,
+      actor: gate.keyId,
+      reportRef: body.reportRef,
+      reportCode: existing.reportCode,
+      subjectName: existing.subjectName,
+      retryCount: updated.retryCount,
+      isResubmit,
+      fiuResponseCode: body.fiuResponseCode,
+    },
+    tenant,
+  ).catch((err) =>
+    console.warn("[goaml-submissions] server audit chain write failed:", err instanceof Error ? err.message : String(err)),
+  );
 
   return NextResponse.json({ ok: true, record: updated }, { headers: gate.headers });
 }
@@ -147,6 +162,19 @@ export async function DELETE(req: Request): Promise<NextResponse> {
   }
 
   await deleteGoAmlSubmission(tenant, ref);
-  try { writeAuditEvent("mlro", "goaml.submission.deleted", `${ref} (${existing.reportCode} / ${existing.subjectName})`); } catch { /* browser-only audit */ }
+  writeAuditEvent("mlro", "goaml.submission.deleted", `${ref} (${existing.reportCode} / ${existing.subjectName})`);
+  await writeAuditChainEntry(
+    {
+      event: "goaml.submission.deleted",
+      actor: gate.keyId,
+      reportRef: ref,
+      reportCode: existing.reportCode,
+      subjectName: existing.subjectName,
+      deletedAt: new Date().toISOString(),
+    },
+    tenant,
+  ).catch((err) =>
+    console.warn("[goaml-submissions] server audit chain write failed on delete:", err instanceof Error ? err.message : String(err)),
+  );
   return NextResponse.json({ ok: true, deleted: ref }, { headers: gate.headers });
 }

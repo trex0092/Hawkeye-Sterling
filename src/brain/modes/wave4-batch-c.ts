@@ -403,7 +403,7 @@ const payableThroughAccountApply = async (ctx: BrainContext): Promise<Finding> =
 };
 
 const cbrDueDiligenceCascadeApply = async (ctx: BrainContext): Promise<Finding> => {
-  const ft = freeTextOf(ctx);
+  const _ft = freeTextOf(ctx);
   const banks = ev(ctx, 'correspondentBanks') as Array<{ bankId?: string; ddLevel?: string; lastReviewDays?: number; amlFrameworkScore?: number }>;
   const evidence: string[] = [];
   let score = 0;
@@ -484,7 +484,7 @@ const ftzOpacityScreenApply = async (ctx: BrainContext): Promise<Finding> => {
 };
 
 const reExportDiscrepancyApply = async (ctx: BrainContext): Promise<Finding> => {
-  const ft = freeTextOf(ctx);
+  const _ft = freeTextOf(ctx);
   const shipments = ev(ctx, 'reExportShipments') as Array<{ originCountry?: string; destinationCountry?: string; declaredValue?: number; marketValue?: number; commodity?: string }>;
   const evidence: string[] = [];
   let score = 0;
@@ -533,7 +533,7 @@ const invoiceFabricationPatternApply = async (ctx: BrainContext): Promise<Findin
 };
 
 const funnelMuleCascadeApply = async (ctx: BrainContext): Promise<Finding> => {
-  const ft = freeTextOf(ctx);
+  const _ft = freeTextOf(ctx);
   const accounts = ev(ctx, 'muleAccounts') as Array<{ accountId?: string; onwardTransferRate?: number; ownerAge?: number; recruitedVia?: string }>;
   const evidence: string[] = [];
   let score = 0;

@@ -58,7 +58,9 @@ export async function GET(req: Request): Promise<NextResponse> {
     }
 
     let records: OutcomeRecord[] = [];
-    try { records = JSON.parse(raw) as OutcomeRecord[]; } catch { /* ignore */ }
+    try { records = JSON.parse(raw) as OutcomeRecord[]; } catch (err) {
+      console.warn("[hawkeye] retention: feedback journal is not valid JSON — skipping purge", err instanceof Error ? err.message : String(err));
+    }
 
     const now = Date.now();
     const eligibleForPurge = records.filter((r) => {

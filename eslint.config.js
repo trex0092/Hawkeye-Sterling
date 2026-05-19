@@ -58,6 +58,16 @@ export default [
     },
   },
   {
+    // Brain mode files use non-null assertions (!) as intentional invariants —
+    // these are well-tested (2500+ tests) and the assertions encode algorithmic
+    // guarantees the type system can't express. Suppress the warning here so
+    // legitimate violations elsewhere stay visible.
+    files: ['src/brain/modes/**/*.ts'],
+    rules: {
+      '@typescript-eslint/no-non-null-assertion': 'off',
+    },
+  },
+  {
     ignores: ['dist/**', 'node_modules/**', '.netlify/**', 'coverage/**', 'web/node_modules/**'],
   },
 ];

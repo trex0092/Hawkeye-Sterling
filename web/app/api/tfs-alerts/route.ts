@@ -16,7 +16,8 @@ async function loadServerAlerts(): Promise<TFSAlert[]> {
   try {
     const raw = await getJson<{ alerts: TFSAlert[] }>(STORE_KEY);
     return raw?.alerts ?? [];
-  } catch {
+  } catch (err) {
+    console.warn("[tfs-alerts] failed to load server alerts — returning empty:", err instanceof Error ? err.message : String(err));
     return [];
   }
 }
