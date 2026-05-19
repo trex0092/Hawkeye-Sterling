@@ -16,7 +16,9 @@
 // Auth: withGuard (API key required)
 
 import { NextResponse } from "next/server";
+import { createHash, createHmac } from "crypto";
 import { withGuard } from "@/lib/server/guard";
+import { getChainSecret } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -26,6 +28,7 @@ interface ChainEntry {
   seq: number;
   prevHash?: string;
   entryHash: string;
+  hashAlg?: "sha256" | "fnv1a" | "hmac-sha256";
   payload: unknown;
   at: string;
 }
@@ -61,8 +64,25 @@ function fnv1a(input: string): string {
   return (hash >>> 0).toString(16).padStart(8, "0");
 }
 
-function computeEntryHash(prevHash: string | undefined, payload: unknown, at: string, seq: number): string {
-  return fnv1a(`${prevHash ?? ""}::${seq}::${at}::${JSON.stringify(payload)}`);
+function computeEntryHash(
+  prevHash: string | undefined,
+  payload: unknown,
+  at: string,
+  seq: number,
+  hashAlg?: string,
+  tenantId = "default",
+): string {
+  const material = `${prevHash ?? ""}::${seq}::${at}::${JSON.stringify(payload)}`;
+  if (hashAlg === "sha256") {
+    return createHash("sha256").update(material).digest("hex");
+  }
+  if (hashAlg === "hmac-sha256") {
+    const secret = getChainSecret(tenantId);
+    if (!secret) return createHash("sha256").update(material).digest("hex");
+    return createHmac("sha256", secret).update(material).digest("hex");
+  }
+  // Legacy FNV-1a (hashAlg absent or "fnv1a")
+  return fnv1a(material);
 }
 
 async function handleGet(_req: Request): Promise<Response> {
@@ -120,7 +140,7 @@ async function handleGet(_req: Request): Promise<Response> {
     }
 
     // 1. Recompute this entry's hash and verify it matches the stored value.
-    const expected = computeEntryHash(entry.prevHash, entry.payload, entry.at, entry.seq);
+    const expected = computeEntryHash(entry.prevHash, entry.payload, entry.at, entry.seq, entry.hashAlg);
     const hashMismatch = expected !== entry.entryHash;
 
     // 2. Verify prevHash link — the stored prevHash should equal the hash of

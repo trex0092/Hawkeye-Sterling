@@ -37,6 +37,9 @@ export async function POST(req: Request) {
       { status: 400, headers: gate.headers }
     );
   }
+  if (!body.allegation?.trim()) {
+    return NextResponse.json({ ok: false, error: "allegation is required" }, { status: 400, headers: gate.headers });
+  }
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) return NextResponse.json({ ok: false, error: "whistleblower temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   try {

@@ -86,13 +86,26 @@ const nextConfig = {
       // instrumentation.ts. Mark them as externals so webpack stops emitting
       // "Module not found" warnings for packages that intentionally may not
       // be installed.
-      config.externals = [
-        ...(Array.isArray(config.externals) ? config.externals : []),
+      //
+      // config.externals can be an array, a function, or undefined depending
+      // on the Next.js version and runtime. Preserve whatever is already there
+      // by normalising to an array before appending — a bare function must be
+      // kept as-is (wrapping it) so Next.js's own externalization logic runs.
+      const otelExternals = [
         "@opentelemetry/sdk-node",
         "@opentelemetry/auto-instrumentations-node",
         "@opentelemetry/resources",
         "@opentelemetry/semantic-conventions",
       ];
+      if (Array.isArray(config.externals)) {
+        config.externals = [...config.externals, ...otelExternals];
+      } else if (config.externals) {
+        // Bare function — wrap it in an array so both the original function
+        // and the OTel string patterns coexist.
+        config.externals = [config.externals, ...otelExternals];
+      } else {
+        config.externals = otelExternals;
+      }
     }
 
     // AsyncLocalStorage.snapshot() was added in Node.js 22.3.0.

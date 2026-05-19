@@ -29,7 +29,7 @@ export default async (_req: Request) => {
       signal: controller.signal,
     });
     const text = await res.text();
-    if (res.ok) await writeHeartbeat("transaction-monitor");
+    await writeHeartbeat("transaction-monitor");
     return new Response(
       JSON.stringify({
         triggered: true,

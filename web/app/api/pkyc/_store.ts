@@ -5,7 +5,7 @@
 // passing and in-memory fallback) rather than direct @netlify/blobs calls.
 // Key prefix: "pkyc/" — all pKYC data is namespaced within the main store.
 
-import { getJson, setJson, listKeys } from "@/lib/server/store";
+import { del, getJson, setJson, listKeys } from "@/lib/server/store";
 
 export type PKycCadence = "daily" | "weekly" | "monthly" | "quarterly" | "annual";
 export type PKycStatus = "active" | "pending_review" | "suspended" | "archived";
@@ -81,10 +81,7 @@ export async function saveSubject(subject: PKycSubject): Promise<void> {
 }
 
 export async function deleteSubject(id: string): Promise<void> {
-  // store.ts has no delete — overwrite with tombstone marker
-  await setJson(`pkyc/subject/${id}`, null).catch((err) =>
-    console.error("[pkyc] deleteSubject failed:", err instanceof Error ? err.message : err)
-  );
+  await del(`pkyc/subject/${id}`);
 }
 
 export async function saveDelta(delta: PKycDelta): Promise<void> {

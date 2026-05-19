@@ -12,6 +12,7 @@
 // Next.js function bundle; this scheduled function is just the heartbeat.
 
 import type { Config } from "@netlify/functions";
+import { writeHeartbeat } from "../lib/heartbeat.js";
 
 export default async (_req: Request) => {
   const base =
@@ -58,6 +59,7 @@ export default async (_req: Request) => {
     );
   } finally {
     clearTimeout(deadline);
+    await writeHeartbeat("ongoing-screen");
   }
 };
 

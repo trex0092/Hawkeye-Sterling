@@ -22,8 +22,15 @@ step() {
   echo ">>> HS-STEP: $*"
 }
 
-step "1 npm install root"
-npm install --include=dev --no-audit --no-fund
+step "1 npm ci root"
+# Use npm ci (not npm install) so the build is fully reproducible against
+# package-lock.json. npm install can pull newer dep versions between builds
+# and fail with ERESOLVE (exit code 2) when a new peer-dep conflict lands —
+# this was the root cause of the non-deterministic "exit code 2" Netlify
+# failures: the same commit succeeded at 3:46 PM and failed at 3:51 PM
+# because npm install resolved a different transitive dep version.
+# package-lock.json is committed (verified in sync) so npm ci is safe here.
+npm ci --include=dev --no-audit --no-fund
 echo ">>> HS-STEP-1 ok (exit $?)"
 
 step "2 tsc root"

@@ -395,6 +395,12 @@ async function callApi(
   } catch {
     return { ok: false, error: `URL construction failed: path="${path}" base="${BASE_URL}"` };
   }
+  // SSRF guard: reject any path that resolves to a different origin.
+  // new URL(absoluteUrl, base) ignores the base, so an absolute URL
+  // pointing at a different host would bypass the BASE_URL restriction.
+  if (url.origin !== BASE_URL) {
+    return { ok: false, error: "path must be a relative /api/* path within this deployment" };
+  }
   if (query) {
     for (const [k, v] of Object.entries(query)) url.searchParams.set(k, v);
   }

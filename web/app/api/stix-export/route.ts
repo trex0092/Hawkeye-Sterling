@@ -3,7 +3,12 @@
 // Exports AML typologies as STIX 2.1 bundle or ATT&CK Navigator layer.
 
 import { NextRequest, NextResponse } from 'next/server';
+import { enforce } from "@/lib/server/enforce";
 import { buildStixBundle, buildNavigatorLayer, type AmlTypology } from '../../../../src/integrations/stix-export';
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+export const maxDuration = 15;
 
 // Core AML typologies mapped to AMLTRIX domains
 const HAWKEYE_TYPOLOGIES: AmlTypology[] = [
@@ -136,6 +141,9 @@ const HAWKEYE_TYPOLOGIES: AmlTypology[] = [
 ];
 
 export async function GET(req: NextRequest) {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
+
   const format = req.nextUrl.searchParams.get('format') ?? 'bundle';
 
   if (format === 'navigator') {
