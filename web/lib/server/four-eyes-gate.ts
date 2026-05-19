@@ -40,9 +40,24 @@ export interface FourEyesStatus {
   rejectedAt?: string;
   rejectedBy?: string;
   rejectionReason?: string;
+  isExpired?: boolean;
+  expiresAt?: string;
+  overdueHours?: number;
 }
 
 const PREFIX = "four-eyes/approvals/";
+const FOUR_EYES_TTL_HOURS = 48; // Cases pending > 48h are flagged as overdue (FDL 10/2025 Art.16)
+const FOUR_EYES_ESCALATION_HOURS = 72; // Cases pending > 72h trigger escalation
+
+export function isCaseOverdue(firstApprovalAt: string, nowMs = Date.now()): boolean {
+  const ageHours = (nowMs - Date.parse(firstApprovalAt)) / 3_600_000;
+  return ageHours > FOUR_EYES_TTL_HOURS;
+}
+
+export function isCaseRequiresEscalation(firstApprovalAt: string, nowMs = Date.now()): boolean {
+  const ageHours = (nowMs - Date.parse(firstApprovalAt)) / 3_600_000;
+  return ageHours > FOUR_EYES_ESCALATION_HOURS;
+}
 
 function approvalKey(caseId: string, approvalId: string): string {
   return `${PREFIX}${caseId}/${approvalId}.json`;
@@ -117,6 +132,16 @@ export async function getCaseApprovals(caseId: string): Promise<FourEyesStatus> 
   );
   decisions.sort((a, b) => a.approvedAt.localeCompare(b.approvedAt));
 
+  // Compute expiry fields based on the first approval timestamp.
+  const firstApprovalAt = decisions[0]?.approvedAt;
+  const isExpired = firstApprovalAt ? isCaseOverdue(firstApprovalAt) : false;
+  const overdueHours = firstApprovalAt
+    ? Math.floor((Date.now() - Date.parse(firstApprovalAt)) / 3_600_000)
+    : 0;
+  const expiresAt = firstApprovalAt
+    ? new Date(Date.parse(firstApprovalAt) + FOUR_EYES_TTL_HOURS * 3_600_000).toISOString()
+    : undefined;
+
   // Any reject short-circuits the chain.
   const rejected = decisions.find((d) => d.decision === "reject");
   if (rejected) {
@@ -129,6 +154,9 @@ export async function getCaseApprovals(caseId: string): Promise<FourEyesStatus> 
       rejectedAt: rejected.approvedAt,
       rejectedBy: rejected.actor,
       rejectionReason: rejected.rationale,
+      isExpired,
+      expiresAt,
+      overdueHours,
     };
   }
   const distinctApprovers = Array.from(new Set(decisions.filter((d) => d.decision === "approve").map((d) => d.actor)));
@@ -138,6 +166,9 @@ export async function getCaseApprovals(caseId: string): Promise<FourEyesStatus> 
     approverGids: distinctApprovers,
     decisions,
     passed: distinctApprovers.length >= 2,
+    isExpired,
+    expiresAt,
+    overdueHours,
   };
 }
 
@@ -169,4 +200,40 @@ export async function requireFourEyes(caseId: string): Promise<{
       "CR No. 134/2025 Art.18 (MLRO sign-off review)",
     ],
   };
+}
+
+export async function expireCase(caseId: string, expiredBy: string): Promise<{ status: FourEyesStatus; expired: boolean }> {
+  const status = await getCaseApprovals(caseId);
+  if (status.passed) return { status, expired: false };
+  const expiry: ApprovalEntry = {
+    approvalId: `expiry_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    caseId,
+    actor: expiredBy,
+    decision: 'reject',
+    rationale: `Case expired automatically — pending > ${FOUR_EYES_TTL_HOURS}h without second approval (FDL 10/2025 Art.16)`,
+    approvedAt: new Date().toISOString(),
+    digest: digestApproval({ caseId, actor: expiredBy, decision: 'reject', rationale: 'auto-expire' }),
+  };
+  await setJson(approvalKey(caseId, expiry.approvalId), expiry);
+  const newStatus = await getCaseApprovals(caseId);
+  return { status: newStatus, expired: true };
+}
+
+export async function getOverdueCases(): Promise<Array<{ caseId: string; overdueHours: number; requiresEscalation: boolean }>> {
+  // List all case directories under four-eyes/approvals/
+  const allKeys = await listKeys(PREFIX);
+  const caseIds = Array.from(new Set(allKeys.map((k) => k.replace(PREFIX, '').split('/')[0] ?? '')));
+  const overdue: Array<{ caseId: string; overdueHours: number; requiresEscalation: boolean }> = [];
+  for (const caseId of caseIds) {
+    if (!caseId) continue;
+    const status = await getCaseApprovals(caseId);
+    if (!status.passed && !status.rejectedAt && status.isExpired) {
+      overdue.push({
+        caseId,
+        overdueHours: status.overdueHours ?? 0,
+        requiresEscalation: isCaseRequiresEscalation(status.decisions[0]?.approvedAt ?? new Date().toISOString()),
+      });
+    }
+  }
+  return overdue;
 }

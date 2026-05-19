@@ -47,6 +47,17 @@ export interface GoAmlPerson {
   addresses?: GoAmlAddress[];
   phones?: GoAmlPhone[];
   emails?: GoAmlEmail[];
+  participantRole?: 'BeneficialOwner' | 'Director' | 'Controller' | 'Signatory' | 'Authorised' | 'other';
+}
+
+export interface GoAmlCryptoWallet {
+  walletAddress: string;
+  blockchainType: 'BTC' | 'ETH' | 'USDT_ERC20' | 'USDT_TRC20' | 'XRP' | 'LTC' | 'BCH' | 'OTHER';
+  vaspName?: string;            // counterparty VASP name
+  vaspLeiOrBic?: string;        // LEI or BIC of VASP
+  custodyChain?: string[];      // wallet → exchange → custodian sequence
+  isExchange?: boolean;
+  exchangeName?: string;
 }
 
 export interface GoAmlEntity {
@@ -63,6 +74,7 @@ export interface GoAmlEntity {
   emails?: GoAmlEmail[];
   directors?: GoAmlPerson[];
   ubos?: GoAmlPerson[];
+  controllers?: GoAmlPerson[];
 }
 
 export type GoAmlReportCode = 'STR' | 'SAR' | 'AIF' | 'RFI' | 'FFR' | 'PNMR' | 'CTR' | 'EFT' | 'HRC';
@@ -78,6 +90,8 @@ export interface GoAmlTransaction {
   toMy?: GoAmlPerson | GoAmlEntity;
   counterpartyName?: string;
   comments?: string;
+  fromWallet?: GoAmlCryptoWallet;
+  toWallet?: GoAmlCryptoWallet;
 }
 
 export interface GoAmlReportingPerson {
@@ -125,6 +139,11 @@ export function validateGoamlEnvelope(env: GoAmlEnvelope): string[] {
   if (env.reportCode === 'FFR') {
     if (!env.involvedPersons?.length && !env.involvedEntities?.length) {
       errs.push('FFR must identify at least one frozen subject');
+    }
+  }
+  for (const tx of env.transactions ?? []) {
+    if (tx.type === 'crypto' && !tx.fromWallet && !tx.toWallet) {
+      errs.push(`Transaction ${tx.transactionNumber}: type is 'crypto' but neither fromWallet nor toWallet is present`);
     }
   }
   return errs;

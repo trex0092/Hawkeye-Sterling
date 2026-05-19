@@ -14,6 +14,7 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { validateGoamlXmlStructure } from "@/lib/goaml-xsd-validator";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -399,6 +400,21 @@ export async function POST(req: Request): Promise<Response> {
       console.error("[goaml-xml] serialise error", msg);
       xml = buildFallbackXml(reportRef, submissionDate);
       degradedReason = `XML serialisation failed (${msg}) — placeholder XML emitted; do NOT submit until fixed`;
+    }
+  }
+
+  // XSD structural validation — only run against successfully built XML (not fallback/degraded).
+  if (!degradedReason) {
+    const xsdErrors = validateGoamlXmlStructure(xml);
+    const xsdErrorsOnly = xsdErrors.filter(e => e.severity === 'error');
+    if (xsdErrorsOnly.length > 0) {
+      return Response.json({
+        error: 'GOAML_XSD_INVALID',
+        message: 'Generated XML fails structural validation. Correct the envelope data before filing.',
+        errors: xsdErrors,
+        errorCount: xsdErrorsOnly.length,
+        warningCount: xsdErrors.filter(e => e.severity === 'warning').length,
+      }, { status: 422 });
     }
   }
 

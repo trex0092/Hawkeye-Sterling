@@ -189,4 +189,97 @@ export class EntityGraph {
     for (const e of this.edges()) byEdgeKind[e.kind] = (byEdgeKind[e.kind] ?? 0) + 1;
     return { nodes: this.nodesById.size, edges: this.edges().length, byKind, byEdgeKind };
   }
+
+  /** Return all nodes the given node owns or controls (direct + transitive up to maxDepth). */
+  ownedBy(nodeId: string, maxDepth = 5): Array<{ node: GraphNode; path: string[]; depth: number; totalWeight: number }> {
+    const results: Array<{ node: GraphNode; path: string[]; depth: number; totalWeight: number }> = [];
+    const visited = new Set<string>();
+    const OWNERSHIP_EDGES: EdgeKind[] = ['owns', 'controls', 'shareholder_of', 'beneficiary_of', 'nominee_for'];
+
+    const dfs = (currentId: string, path: string[], depth: number, weightProduct: number) => {
+      if (depth > maxDepth || visited.has(currentId)) return;
+      visited.add(currentId);
+      const edges = this.outgoing.get(currentId) ?? [];
+      for (const edge of edges) {
+        if (!OWNERSHIP_EDGES.includes(edge.kind)) continue;
+        const targetNode = this.nodesById.get(edge.to);
+        if (!targetNode) continue;
+        const newWeight = weightProduct * (edge.weight ?? 1.0);
+        results.push({ node: targetNode, path: [...path, edge.to], depth: depth + 1, totalWeight: newWeight });
+        dfs(edge.to, [...path, edge.to], depth + 1, newWeight);
+      }
+    };
+
+    dfs(nodeId, [nodeId], 0, 1.0);
+    return results;
+  }
+
+  /** Return all entities that own or control the given node (reverse traversal). */
+  ownersOf(nodeId: string, maxDepth = 5): Array<{ node: GraphNode; path: string[]; depth: number; totalWeight: number }> {
+    const results: Array<{ node: GraphNode; path: string[]; depth: number; totalWeight: number }> = [];
+    const visited = new Set<string>();
+    const OWNERSHIP_EDGES: EdgeKind[] = ['owns', 'controls', 'shareholder_of', 'beneficiary_of', 'nominee_for'];
+
+    const dfs = (currentId: string, path: string[], depth: number, weightProduct: number) => {
+      if (depth > maxDepth || visited.has(currentId)) return;
+      visited.add(currentId);
+      const edges = this.incoming.get(currentId) ?? [];
+      for (const edge of edges) {
+        if (!OWNERSHIP_EDGES.includes(edge.kind)) continue;
+        const sourceNode = this.nodesById.get(edge.from);
+        if (!sourceNode) continue;
+        const newWeight = weightProduct * (edge.weight ?? 1.0);
+        results.push({ node: sourceNode, path: [edge.from, ...path], depth: depth + 1, totalWeight: newWeight });
+        dfs(edge.from, [edge.from, ...path], depth + 1, newWeight);
+      }
+    };
+
+    dfs(nodeId, [nodeId], 0, 1.0);
+    return results;
+  }
+
+  /** Find all nodes connected to nodeId by any edge type within maxHops. */
+  connectedComponents(nodeId: string, maxHops = 3): Array<{ node: GraphNode; hop: number; via: string }> {
+    const results: Array<{ node: GraphNode; hop: number; via: string }> = [];
+    const visited = new Set<string>([nodeId]);
+    const queue: Array<{ id: string; hop: number }> = [{ id: nodeId, hop: 0 }];
+
+    while (queue.length > 0) {
+      const item = queue.shift();
+      if (!item || item.hop >= maxHops) continue;
+      const allEdges = [
+        ...(this.outgoing.get(item.id) ?? []),
+        ...(this.incoming.get(item.id) ?? []).map(e => ({ ...e, from: e.to, to: e.from })),
+      ];
+      for (const edge of allEdges) {
+        if (visited.has(edge.to)) continue;
+        visited.add(edge.to);
+        const n = this.nodesById.get(edge.to);
+        if (!n) continue;
+        results.push({ node: n, hop: item.hop + 1, via: edge.kind });
+        queue.push({ id: edge.to, hop: item.hop + 1 });
+      }
+    }
+
+    return results;
+  }
+
+  /** Returns all nodes in the graph. */
+  allNodes(): GraphNode[] {
+    return Array.from(this.nodesById.values());
+  }
+
+  /** Returns all edges in the graph. */
+  allEdges(): GraphEdge[] {
+    const edges: GraphEdge[] = [];
+    for (const edgeList of this.outgoing.values()) {
+      edges.push(...edgeList);
+    }
+    return edges;
+  }
+
+  /** Export graph as adjacency list JSON for API responses. */
+  toJson(): { nodes: GraphNode[]; edges: GraphEdge[] } {
+    return { nodes: this.allNodes(), edges: this.allEdges() };
+  }
 }

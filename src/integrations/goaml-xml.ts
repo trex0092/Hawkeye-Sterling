@@ -7,7 +7,7 @@
 // The serialiser is pure + deterministic: same envelope always yields the
 // same bytes, so the audit chain can hash the output.
 
-import type { GoAmlEnvelope, GoAmlPerson, GoAmlEntity, GoAmlAddress, GoAmlPhone, GoAmlEmail, GoAmlTransaction } from '../brain/goaml-shapes.js';
+import type { GoAmlEnvelope, GoAmlPerson, GoAmlEntity, GoAmlAddress, GoAmlPhone, GoAmlEmail, GoAmlTransaction, GoAmlCryptoWallet } from '../brain/goaml-shapes.js';
 
 function escape(v: string | number | undefined): string {
   if (v === undefined || v === null) return '';
@@ -65,6 +65,7 @@ function personToXml(p: GoAmlPerson): string {
     el('expiry_date', i.expiryDate),
   ].join('')));
   return [
+    el('participant_role', p.participantRole),
     el('gender', p.gender),
     el('title', p.title),
     el('first_name', p.firstName),
@@ -99,7 +100,20 @@ function entityToXml(e: GoAmlEntity): string {
     (e.phones ?? []).map(phoneToXml).join(''),
     (e.emails ?? []).map(emailToXml).join(''),
     (e.directors ?? []).map((d) => wrap('director', personToXml(d))).join(''),
+    (e.controllers ?? []).map((c) => wrap('controller', personToXml(c))).join(''),
   ].join('');
+}
+
+function cryptoWalletToXml(w: GoAmlCryptoWallet): string {
+  return wrap('crypto_wallet', [
+    el('wallet_address', w.walletAddress),
+    el('blockchain_type', w.blockchainType),
+    el('vasp_name', w.vaspName),
+    el('vasp_lei_or_bic', w.vaspLeiOrBic),
+    el('is_exchange', w.isExchange ? 'true' : undefined),
+    el('exchange_name', w.exchangeName),
+    (w.custodyChain ?? []).map((step, i) => el(`custody_step_${i + 1}`, step)).join(''),
+  ].join(''));
 }
 
 function transactionToXml(t: GoAmlTransaction): string {
@@ -111,6 +125,8 @@ function transactionToXml(t: GoAmlTransaction): string {
     el('amount_foreign', t.amountForeign),
     el('foreign_currency_code', t.currency),
     el('comments', t.comments),
+    t.fromWallet ? cryptoWalletToXml(t.fromWallet) : '',
+    t.toWallet ? cryptoWalletToXml(t.toWallet) : '',
   ].join(''));
 }
 
@@ -152,4 +168,18 @@ export function serialiseGoamlXml(env: GoAmlEnvelope): string {
 export function serialiseBatch(envs: readonly GoAmlEnvelope[]): string {
   const sorted = [...envs].sort((a, b) => a.internalReference.localeCompare(b.internalReference));
   return sorted.map(serialiseGoamlXml).join('\n');
+}
+
+/** Merges two envelopes: base fields are preserved, addition fields are
+ *  appended (persons, entities, transactions) or de-duped (reportIndicators).
+ *  The addition's reason overrides base only when explicitly provided. */
+export function mergeEnvelopes(base: GoAmlEnvelope, addition: Partial<GoAmlEnvelope>): GoAmlEnvelope {
+  return {
+    ...base,
+    involvedPersons: [...(base.involvedPersons ?? []), ...(addition.involvedPersons ?? [])],
+    involvedEntities: [...(base.involvedEntities ?? []), ...(addition.involvedEntities ?? [])],
+    transactions: [...(base.transactions ?? []), ...(addition.transactions ?? [])],
+    reportIndicators: [...new Set([...(base.reportIndicators ?? []), ...(addition.reportIndicators ?? [])])],
+    reason: addition.reason ?? base.reason,
+  };
 }
