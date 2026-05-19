@@ -125,7 +125,9 @@ export async function POST(req: Request): Promise<NextResponse> {
       `goaml.submission.${body.status}`,
       `${body.reportRef} — ${existing.reportCode} / ${existing.subjectName}${isResubmit ? ` (retry #${updated.retryCount})` : ""}`,
     );
-  } catch { /* browser-only audit — best-effort on server */ }
+  } catch (err) {
+    console.warn("[hawkeye] goaml-submissions: audit write failed on status update", err instanceof Error ? err.message : String(err));
+  }
 
   return NextResponse.json({ ok: true, record: updated }, { headers: gate.headers });
 }
@@ -147,6 +149,10 @@ export async function DELETE(req: Request): Promise<NextResponse> {
   }
 
   await deleteGoAmlSubmission(tenant, ref);
-  try { writeAuditEvent("mlro", "goaml.submission.deleted", `${ref} (${existing.reportCode} / ${existing.subjectName})`); } catch { /* browser-only audit */ }
+  try {
+    writeAuditEvent("mlro", "goaml.submission.deleted", `${ref} (${existing.reportCode} / ${existing.subjectName})`);
+  } catch (err) {
+    console.warn("[hawkeye] goaml-submissions: audit write failed on delete", err instanceof Error ? err.message : String(err));
+  }
   return NextResponse.json({ ok: true, deleted: ref }, { headers: gate.headers });
 }

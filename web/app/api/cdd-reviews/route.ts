@@ -153,7 +153,9 @@ export async function POST(req: Request): Promise<NextResponse> {
       "cdd.review.saved",
       `${record.subject} — tier:${record.tier} status:${record.status} daysOverdue:${record.daysOverdue}`,
     );
-  } catch { /* browser-only audit — best-effort on server */ }
+  } catch (err) {
+    console.warn("[hawkeye] cdd-reviews: audit write failed on save", err instanceof Error ? err.message : String(err));
+  }
 
   return NextResponse.json(
     { ok: true, record },
@@ -178,6 +180,10 @@ export async function DELETE(req: Request): Promise<NextResponse> {
   }
 
   await deleteCddReview(tenant, id);
-  try { writeAuditEvent("mlro", "cdd.review.deleted", `${existing.subject} (${id})`); } catch { /* browser-only audit */ }
+  try {
+    writeAuditEvent("mlro", "cdd.review.deleted", `${existing.subject} (${id})`);
+  } catch (err) {
+    console.warn("[hawkeye] cdd-reviews: audit write failed on delete", err instanceof Error ? err.message : String(err));
+  }
   return NextResponse.json({ ok: true, deleted: id }, { headers: gate.headers });
 }
