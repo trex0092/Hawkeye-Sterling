@@ -25,6 +25,11 @@ jobs:
         # — these tests import production helpers that pull in `next/server`,
         # `zod`, etc. Web/ install is therefore required before `Tests` runs.
         run: cd web && npm ci --include=dev --no-audit --no-fund
+      - name: Compile TypeScript (root — produces dist/ for test imports)
+        # tsc must run before vitest so that any test importing dist/src/brain/*
+        # (e.g. integration tests using @brain alias) resolves against the
+        # freshly-compiled output, not a stale or absent dist/.
+        run: npm run build
       - name: Type check
         run: npm run typecheck
       - name: Tests

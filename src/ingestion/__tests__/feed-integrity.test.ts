@@ -1,6 +1,5 @@
 import { describe, expect, it, beforeEach } from 'vitest';
-import { inMemoryStore, EmptyOverwriteRefusedError } from '../blobs-store.js';
-import type { BlobsStore } from '../blobs-store.js';
+import { inMemoryStore, EmptyOverwriteRefusedError, type BlobsStore } from '../blobs-store.js';
 import type { IngestionReport, NormalisedEntity } from '../types.js';
 
 // Use inMemoryStore() directly so tests stay credential-free and exercise the

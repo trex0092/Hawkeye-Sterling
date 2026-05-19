@@ -105,6 +105,42 @@ export interface QuickScreenResult {
   enrichJobId?: string;
 }
 
+/**
+ * Data source health embedded in every screening response.
+ * Compliance analysts and audit trails MUST see this when source health
+ * is degraded (source === "static" or healthy === false).
+ */
+export interface ScreeningDataSourceHealth {
+  /** "live" = loaded from Netlify Blobs; "static" = fell back to seed corpus. */
+  source: "live" | "static";
+  /** ISO-8601 timestamp of when the candidates were last loaded. */
+  loadedAt: string;
+  /** Total candidate count available for matching at screen time. */
+  candidateCount: number;
+  /**
+   * True only when source === "live" AND all primary adapters responded.
+   * A "clear" result when healthy === false MUST be treated as INCONCLUSIVE
+   * by downstream compliance processes.
+   */
+  healthy: boolean;
+  /** Primary adapters that failed to load. */
+  failedAdapters: string[];
+  /**
+   * Human-readable degradation note. Surfaced in the UI and audit trail
+   * whenever healthy === false or source === "static".
+   */
+  degradationNote?: string;
+}
+
 export type QuickScreenResponse =
   | ({ ok: true } & QuickScreenResult)
   | { ok: false; error: string; detail?: string };
+
+/**
+ * Extended response type that includes data-source health provenance.
+ * All screening endpoints return this shape; clients can safely access
+ * dataSourceHealth regardless of ok/error status.
+ */
+export type QuickScreenResponseWithHealth =
+  | ({ ok: true; dataSourceHealth: ScreeningDataSourceHealth } & QuickScreenResult)
+  | { ok: false; error: string; detail?: string; dataSourceHealth?: ScreeningDataSourceHealth };

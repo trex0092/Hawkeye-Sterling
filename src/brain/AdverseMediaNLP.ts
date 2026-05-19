@@ -366,8 +366,13 @@ export function extractNLP(text: string): NLPExtractionResult {
   return {
     sourceText: text.slice(0, 2000), // truncate for storage
     wordCount: words.length,
-    persons: [],      // person NER requires ML — placeholder for integration
-    entities: [],     // entity NER requires ML — placeholder for integration
+    // NOTE: person and entity NER requires an ML/LLM pipeline not yet
+    // integrated. These fields are deliberately empty — callers that need
+    // named-entity extraction must use the LLM adverse-media adapter
+    // (web/lib/intelligence/llmAdverseMedia.ts) which invokes Claude.
+    // Do NOT treat an empty array here as "no persons/entities mentioned".
+    persons: [],
+    entities: [],
     crimes,
     penalties,
     dates,

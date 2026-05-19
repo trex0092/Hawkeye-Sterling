@@ -6,9 +6,10 @@ import type {
   QuickScreenResponse,
   QuickScreenResult,
   QuickScreenSubject,
+  ScreeningDataSourceHealth,
 } from "@/lib/api/quickScreen.types";
 import { enforce } from "@/lib/server/enforce";
-import { loadCandidates } from "@/lib/server/candidates-loader";
+import { loadCandidatesWithHealth, type CandidateLoadHealth } from "@/lib/server/candidates-loader";
 import { lookupWhitelist } from "@/lib/server/whitelist";
 import { LIVE_OPENSANCTIONS_ADAPTER, activeOnChainProviders } from "@/lib/intelligence/liveAdapters";
 import { bestCommercialAdapter, activeCommercialProvider, activeCommercialProviders } from "@/lib/intelligence/commercialAdapters";
@@ -297,6 +298,23 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   let candidates: QuickScreenCandidate[];
+  // Data source health — attached to every response so audit records and
+  // compliance analysts can see whether a screen ran against live or static data.
+  // When source === "static" or healthy === false, a "clear" verdict MUST be
+  // treated as INCONCLUSIVE by downstream compliance processes.
+  let corpusHealth: CandidateLoadHealth | null = null;
+
+  function toDataSourceHealth(h: CandidateLoadHealth): ScreeningDataSourceHealth {
+    return {
+      source: h.source,
+      loadedAt: h.loadedAt,
+      candidateCount: h.candidateCount,
+      healthy: h.healthy,
+      failedAdapters: h.failedAdapters,
+      ...(h.degradationNote ? { degradationNote: h.degradationNote } : {}),
+    };
+  }
+
   if (Array.isArray(callerCandidates)) {
     if (callerCandidates.length > MAX_CANDIDATES) {
       return respond(
@@ -309,13 +327,16 @@ export async function POST(req: Request): Promise<NextResponse> {
   } else {
     // No candidates provided → use the live watchlist corpus.
     try {
-      const loaded = await loadCandidates();
+      const loaded = await loadCandidatesWithHealth();
+      corpusHealth = loaded.health;
+      const rawCandidates = loaded.candidates;
+
       // Validate shape at runtime — a corrupt blob/static fixture must NOT
       // silently propagate into the matcher and produce nonsense hits.
-      if (!Array.isArray(loaded)) {
-        return respond(503, { ok: false, error: "watchlist corpus unavailable", detail: "loadCandidates returned non-array" }, gateHeaders);
+      if (!Array.isArray(rawCandidates)) {
+        return respond(503, { ok: false, error: "watchlist corpus unavailable", detail: "loadCandidatesWithHealth returned non-array" }, gateHeaders);
       }
-      candidates = loaded.filter(
+      candidates = rawCandidates.filter(
         (c): c is QuickScreenCandidate =>
           !!c && typeof c === "object" &&
           typeof (c as QuickScreenCandidate).listId === "string" &&
@@ -334,7 +355,8 @@ export async function POST(req: Request): Promise<NextResponse> {
           degraded: true,
           message: "Screening cannot proceed: one or more required sanctions lists are not loaded. Run sanctions refresh and retry.",
           requestId: Math.random().toString(36).slice(2, 10),
-        } as QuickScreenResponse & { errorCode: string; errorType: string; tool: string; missingLists: string[]; degraded: boolean; message: string; requestId: string }, gateHeaders);
+          dataSourceHealth: corpusHealth ? toDataSourceHealth(corpusHealth) : undefined,
+        } as QuickScreenResponse & { errorCode: string; errorType: string; tool: string; missingLists: string[]; degraded: boolean; message: string; requestId: string; dataSourceHealth?: ScreeningDataSourceHealth }, gateHeaders);
       }
 
       // Verify that the two most critical lists (OFAC SDN and UN Consolidated) are
@@ -354,10 +376,11 @@ export async function POST(req: Request): Promise<NextResponse> {
           degraded: true,
           message: "Screening cannot proceed: one or more required sanctions lists are not loaded. Run sanctions refresh and retry.",
           requestId: Math.random().toString(36).slice(2, 10),
-        } as QuickScreenResponse & { errorCode: string; errorType: string; tool: string; missingLists: string[]; degraded: boolean; message: string; requestId: string }, gateHeaders);
+          dataSourceHealth: corpusHealth ? toDataSourceHealth(corpusHealth) : undefined,
+        } as QuickScreenResponse & { errorCode: string; errorType: string; tool: string; missingLists: string[]; degraded: boolean; message: string; requestId: string; dataSourceHealth?: ScreeningDataSourceHealth }, gateHeaders);
       }
     } catch (err) {
-      console.error("[quick-screen] loadCandidates failed:", err instanceof Error ? err.message : String(err));
+      console.error("[quick-screen] loadCandidatesWithHealth failed:", err instanceof Error ? err.message : String(err));
       return respond(503, {
         ok: false,
         errorCode: "LISTS_MISSING",
@@ -638,6 +661,15 @@ export async function POST(req: Request): Promise<NextResponse> {
     ]);
     const screeningWarnings = listHealth ? buildScreeningWarnings(listHealth) : [];
 
+    // Corpus health warning — when screening used the static seed corpus
+    // (live Blobs unavailable), add a prominent warning so the MLRO knows
+    // the result may not reflect entities designated since last build.
+    if (corpusHealth && !corpusHealth.healthy) {
+      const corpusNote = corpusHealth.degradationNote
+        ?? `Data source degraded (source=${corpusHealth.source}). Results may be incomplete.`;
+      screeningWarnings.unshift(`DATA SOURCE DEGRADED: ${corpusNote}`);
+    }
+
     // _provenance — compact machine-readable summary of list health at
     // screening time. Used by MCP call_api and diagnostic tools.
     const missingLists = listHealth
@@ -851,6 +883,9 @@ export async function POST(req: Request): Promise<NextResponse> {
         // is a false clear, not a real one.
         ...(listHealth ? { listHealthAtScreeningTime: listHealth } : {}),
         ...(screeningWarnings.length > 0 ? { screeningWarnings } : {}),
+        // Data source health provenance — always present so clients and audit
+        // tools can verify whether a screen ran against live or static data.
+        dataSourceHealth: corpusHealth ? toDataSourceHealth(corpusHealth) : undefined,
         // Machine-readable provenance — list health at screening time.
         _provenance: {
           listsChecked: result.listsChecked,
