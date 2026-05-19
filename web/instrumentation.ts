@@ -81,7 +81,11 @@ export async function register() {
   if (process.env.NEXT_RUNTIME !== 'edge' && process.env.NODE_ENV !== 'test') {
     try {
       // Lazy imports to avoid bundling OTel in edge runtime
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore – optional peer dep, caught below
       const { NodeSDK } = await import('@opentelemetry/sdk-node').catch(() => ({ NodeSDK: null }));
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore – optional peer dep, caught below
       const { getNodeAutoInstrumentations } = await import('@opentelemetry/auto-instrumentations-node').catch(() => ({ getNodeAutoInstrumentations: () => [] }));
       const { Resource } = await import('@opentelemetry/resources').catch(() => ({ Resource: null }));
       const { SEMRESATTRS_SERVICE_NAME, SEMRESATTRS_SERVICE_VERSION } = await import('@opentelemetry/semantic-conventions').catch(() => ({ SEMRESATTRS_SERVICE_NAME: 'service.name', SEMRESATTRS_SERVICE_VERSION: 'service.version' }));
@@ -104,7 +108,7 @@ export async function register() {
         process.on('SIGTERM', () => {
           sdk.shutdown().then(() => {
             console.info('[hawkeye] OpenTelemetry SDK shut down');
-          }).catch((err) => {
+          }).catch((err: unknown) => {
             console.error('[hawkeye] OpenTelemetry shutdown error:', err);
           });
         });

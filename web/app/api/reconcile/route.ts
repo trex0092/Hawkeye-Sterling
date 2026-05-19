@@ -118,7 +118,7 @@ export async function POST(req: NextRequest) {
     const results = await Promise.all(
       keys.map(async (key) => {
         const q = queryMap[key];
-        if (!q) return [key, { result: [] }] as const;
+        if (!q) return [key, { result: [] as ReconcileResult[] }] as const;
         const res = await reconcileQuery(q);
         return [key, res] as const;
       })
