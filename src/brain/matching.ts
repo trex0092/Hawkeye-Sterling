@@ -516,7 +516,10 @@ export function matchInitials(a: string, b: string): MatchScore {
       }
     }
   }
-  const score = withInitials.length === 0 ? 0 : matches / withInitials.length;
+  // Cap at 0.92 so that an exact alias match (score=1.0) always outranks an
+  // initials match against the primary name, preserving correct matchedAlias tracking.
+  const raw = withInitials.length === 0 ? 0 : matches / withInitials.length;
+  const score = raw > 0 ? Math.min(0.92, raw) : 0;
   const threshold = 0.85;
   return { method: 'jaro_winkler', score, threshold, pass: score >= threshold };
 }
