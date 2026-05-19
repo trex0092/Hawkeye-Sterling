@@ -588,7 +588,7 @@ const ROMAN_FAMILIES: Record<string, string> = {
   // Fatima variants
   fatimah: 'fatima', fatma: 'fatima', fatemeh: 'fatima', fatme: 'fatima',
   // Aisha variants
-  ayesha: 'aisha', aicha: 'aisha', aaisha: 'aisha', aysha: 'aisha', ayesha: 'aisha',
+  ayesha: 'aisha', aicha: 'aisha', aaisha: 'aisha', aysha: 'aisha',
   // Umar variants
   omar: 'umar', omer: 'umar', umar: 'umar', amr: 'amr',
   // Said/Saeed variants
@@ -598,7 +598,7 @@ const ROMAN_FAMILIES: Record<string, string> = {
   // Ismail variants
   ismail: 'ismail', esmail: 'ismail', ismael: 'ismail', ismaeel: 'ismail',
   // Mustafa variants
-  mustafa: 'mustafa', mostafa: 'mustafa', moustafa: 'mustafa', mustafa: 'mustafa',
+  mustafa: 'mustafa', mostafa: 'mustafa', moustafa: 'mustafa',
   // Sulayman variants
   suleiman: 'sulayman', suleyman: 'sulayman', suleman: 'sulayman',
   solomon: 'sulayman', salman: 'salman',
