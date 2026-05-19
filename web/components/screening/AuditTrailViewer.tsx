@@ -340,11 +340,9 @@ export function AuditTrailViewer({
             className="px-2 py-1.5 text-12 bg-bg-1 border border-hair-2 rounded text-ink-0 focus-visible:outline-none focus-visible:border-brand focus-visible:ring-2 focus-visible:ring-brand/40"
           >
             <option value="">Any role</option>
-            <option value="analyst">analyst</option>
-            <option value="compliance_assistant">compliance_assistant</option>
-            <option value="co">co</option>
-            <option value="mlro">mlro</option>
-            <option value="managing_director">managing_director</option>
+            <option value="managing_director">Director</option>
+            <option value="compliance_assistant">Compliance Assistant</option>
+            <option value="co_mlro">CO/MLRO</option>
           </select>
         </label>
         <div className="flex items-end">
