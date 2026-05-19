@@ -734,18 +734,18 @@ export default function TFSAlertsPage() {
           type="button"
           onClick={() => void checkForAlerts()}
           disabled={loading}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded bg-brand text-brand-ink hover:bg-brand-hover transition-colors text-13 font-medium disabled:opacity-60"
+          className="inline-flex items-center gap-3 px-6 py-3 rounded-lg bg-brand text-white hover:bg-brand-hover transition-colors text-14 font-semibold shadow-lg disabled:opacity-60 border border-brand-hover"
         >
           {loading ? (
             <>
               <span
-                className="w-3.5 h-3.5 rounded-full border-2 border-brand-ink/30 border-t-brand-ink animate-spin"
+                className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin"
                 aria-hidden="true"
               />
-              {loadingMsg}
+              <span>{loadingMsg}</span>
             </>
           ) : (
-            "🔍 Check for New TFS Alerts"
+            <><span>🔍</span><span>Check for New TFS Alerts</span></>
           )}
         </button>
 
