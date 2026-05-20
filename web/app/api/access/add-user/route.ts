@@ -60,18 +60,16 @@ export async function POST(req: Request) {
 
   // Atomic check-then-write: re-load under the in-process lock so a concurrent
   // add-user request cannot sneak in a duplicate between our earlier check and save.
-  let lockError: { status: number; message: string } | null = null;
-  await withUsersLock(async () => {
+  const lockError = await withUsersLock(async () => {
     const freshUsers = await loadUsers();
     if (freshUsers.some((u) => u.email.toLowerCase() === emailLower)) {
-      lockError = { status: 409, message: "A user with this email already exists" };
-      return;
+      return { status: 409, message: "A user with this email already exists" };
     }
     if (freshUsers.some((u) => u.username?.toLowerCase() === derivedUsername.toLowerCase())) {
-      lockError = { status: 409, message: "Username already taken — choose a different one" };
-      return;
+      return { status: 409, message: "Username already taken — choose a different one" };
     }
     await saveUsers([...freshUsers, newUser]);
+    return null;
   });
   if (lockError) {
     return NextResponse.json({ ok: false, error: lockError.message }, { status: lockError.status });
