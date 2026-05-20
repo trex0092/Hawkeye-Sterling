@@ -14,7 +14,7 @@ interface Props {
   subjectId: string;
   hits: Hit[];
   severity: string;
-  onCaseOpened?: (caseId: string) => void;
+  onCaseOpened?: (_caseId: string) => void;
 }
 
 const CRITICAL_LISTS = new Set(["ofac_sdn", "uae_ltl", "uae_eocn", "un_consolidated"]);
