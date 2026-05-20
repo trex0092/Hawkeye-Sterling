@@ -28,6 +28,7 @@ import { activeKycProviders } from "@/lib/intelligence/kycVendorAdapters";
 import { ingestUrls } from "@/lib/intelligence/urlIngestion";
 import { llmAdverseMediaAdapter } from "@/lib/intelligence/llmAdverseMedia";
 import { groqAdverseMediaAdapter, geminiAdverseMediaAdapter } from "@/lib/intelligence/llmAdverseMediaAlt";
+import { googleAiModeAdapter } from "@/lib/intelligence/googleAiModeAdapter";
 import { assessCommonName } from "@/lib/intelligence/commonNames";
 import {
   runEnrichmentAdapters,
@@ -473,6 +474,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     });
     const groqAdapter = groqAdverseMediaAdapter();
     const geminiAdapter = geminiAdverseMediaAdapter();
+    const googleAdapter = googleAiModeAdapter();
     const warn = (err: unknown) => console.warn("[hawkeye] quick-screen: best-effort adapter failed:", err);
     const canAug = subject.name.length >= 3;
     const hitGated = (result.hits.length < 3 || isCommonName) && canAug;
@@ -519,14 +521,16 @@ export async function POST(req: Request): Promise<NextResponse> {
       canAug ? adapterTimeout(searchCountryRegistries(subject.name, subject.jurisdiction ?? undefined, ADAPTER_QUERY_LIMIT).catch((e): CRegResult => { warn(e); return { records: [], jurisdictions: [] }; }), { records: [], jurisdictions: [] } as CRegResult) : Promise.resolve<CRegResult>({ records: [], jurisdictions: [] }),
       canAug ? adapterTimeout(searchCountrySanctions(subject.name, subject.jurisdiction ?? undefined, ADAPTER_QUERY_LIMIT).catch((e): CSanResult => { warn(e); return { records: [], lists: [] }; }), { records: [], lists: [] } as CSanResult) : Promise.resolve<CSanResult>({ records: [], lists: [] }),
       canAug ? adapterTimeout(searchFreeAdapters(subject.name, subject.jurisdiction ?? undefined, ADAPTER_QUERY_LIMIT).catch((e): FreeResult => { warn(e); return { records: [], providersUsed: [] }; }), { records: [], providersUsed: [] } as FreeResult) : Promise.resolve<FreeResult>({ records: [], providersUsed: [] }),
-      // Group C — news velocity + LLM adverse-media recall (Claude + Groq + Gemini in parallel)
+      // Group C — news velocity + LLM adverse-media recall (Claude + Groq + Gemini + Google AI in parallel)
       canAug ? adapterTimeout(searchAllNews(subject.name, { limit: 50 }).catch((e): NewsResult => { warn(e); return { articles: [], providersUsed: [] }; }), { articles: [], providersUsed: [] } as NewsResult) : Promise.resolve<NewsResult>({ articles: [], providersUsed: [] }),
       canAug && llmAdapter.isAvailable() ? adapterTimeout(llmAdapter.search(subject.name, { limit: 15 }).catch((e): LlmResult => { warn(e); return []; }), [] as LlmResult) : Promise.resolve<LlmResult>([]),
       canAug && groqAdapter.isAvailable() ? adapterTimeout(groqAdapter.search(subject.name, { limit: 15 }).catch((e): LlmResult => { warn(e); return []; }), [] as LlmResult) : Promise.resolve<LlmResult>([]),
       canAug && geminiAdapter.isAvailable() ? adapterTimeout(geminiAdapter.search(subject.name, { limit: 15 }).catch((e): LlmResult => { warn(e); return []; }), [] as LlmResult) : Promise.resolve<LlmResult>([]),
+      // Group C+ — Google AI Mode search (synthesised OSINT)
+      canAug && googleAdapter.isAvailable() ? adapterTimeout(googleAdapter.search(subject.name, { limit: 10 }).catch((e): LlmResult => { warn(e); return []; }), [] as LlmResult) : Promise.resolve<LlmResult>([]),
       // Group D — public-API enrichment (IP / blockchain / breach / domain / phone / fraud)
       adapterTimeout(runEnrichmentAdapters(hints).catch((e): EnrichmentBundle => { warn(e); return NULL_ENRICHMENT; }), NULL_ENRICHMENT),
-      ]).then((r) => r as [OSResult, CommResult, RegResult, CRegResult, CSanResult, FreeResult, NewsResult, LlmResult, LlmResult, LlmResult, EnrichmentBundle]),
+      ]).then((r) => r as [OSResult, CommResult, RegResult, CRegResult, CSanResult, FreeResult, NewsResult, LlmResult, LlmResult, LlmResult, LlmResult, EnrichmentBundle]),
       deadlineP,
     ]);
     if (_deadlineTimer) clearTimeout(_deadlineTimer);
@@ -562,15 +566,16 @@ export async function POST(req: Request): Promise<NextResponse> {
     const [
       openSanctionsResults, commercialResults, registryResults,
       countryRegistryResults, countrySanctionsResults, freeAdapterResults,
-      rawNews, llmArts, groqArts, geminiArts, enrichmentBundle,
+      rawNews, llmArts, groqArts, geminiArts, googleArts, enrichmentBundle,
     ] = augRace;
 
-    // Merge LLM adverse-media articles from all three AI providers
-    const aiArts = [...llmArts, ...groqArts, ...geminiArts];
+    // Merge LLM adverse-media articles from all AI providers + Google AI Mode
+    const aiArts = [...llmArts, ...groqArts, ...geminiArts, ...googleArts];
     const aiProviders = [
       ...(llmArts.length > 0 ? ["claude-adverse-media"] : []),
       ...(groqArts.length > 0 ? ["groq-adverse-media"] : []),
       ...(geminiArts.length > 0 ? ["gemini-adverse-media"] : []),
+      ...(googleArts.length > 0 ? ["google-ai-mode"] : []),
     ];
     let newsArticles: NewsResult = aiArts.length > 0
       ? { articles: [...aiArts, ...rawNews.articles], providersUsed: [...rawNews.providersUsed, ...aiProviders] }
