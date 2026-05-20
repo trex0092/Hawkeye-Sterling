@@ -3,6 +3,8 @@ import { writeAuditEvent } from "@/lib/audit";
 import { enforce } from "@/lib/server/enforce";
 
 import { getAnthropicClient } from "@/lib/server/llm";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -114,6 +116,18 @@ Existing Flags: ${supplier.flags.length > 0 ? supplier.flags.join(", ") : "none"
   } catch {
     // Non-fatal — server-side localStorage is unavailable
   }
+
+  void writeAuditChainEntry(
+    {
+      event: "vendor.risk_assessed",
+      actor: gate.keyId,
+      riskLevel: result.riskLevel,
+      eddRequired: result.eddRequired,
+    },
+    tenantIdFromGate(gate),
+  ).catch((err) =>
+    console.warn("[vendor-risk] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+  );
 
   return NextResponse.json({ ok: true, result }, { headers: gate.headers });
 }

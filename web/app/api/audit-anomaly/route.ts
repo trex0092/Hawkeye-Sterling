@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { writeAuditEvent } from "@/lib/audit";
 import { enforce } from "@/lib/server/enforce";
-
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getAnthropicClient } from "@/lib/server/llm";
 
 export const runtime = "nodejs";
@@ -89,6 +90,17 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (!Array.isArray(parsed.anomalies)) parsed.anomalies = [];
     else for (const a of parsed.anomalies) { if (!Array.isArray(a.affectedActors)) a.affectedActors = []; }
     if (!Array.isArray(parsed.actorRisk)) parsed.actorRisk = [];
+    void writeAuditChainEntry(
+      {
+        event: "audit_trail.anomaly_scan_completed",
+        actor: gate.keyId,
+        anomalyCount: parsed.anomalies.length,
+        riskLevel: (parsed as { riskLevel?: string }).riskLevel,
+      },
+      tenantIdFromGate(gate),
+    ).catch((err) =>
+      console.warn("[audit-anomaly] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+    );
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "audit-anomaly temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });

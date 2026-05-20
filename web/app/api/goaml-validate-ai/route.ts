@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { writeAuditEvent } from "@/lib/audit";
 import { enforce } from "@/lib/server/enforce";
-
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
@@ -103,5 +104,17 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "goaml-validate-ai temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 
+  void writeAuditChainEntry(
+    {
+      event: "goaml.xml_validated",
+      actor: gate.keyId,
+      grade: result.grade,
+      fatalIssueCount: result.fatalIssues.length,
+      missingElementCount: result.missingElements.length,
+    },
+    tenantIdFromGate(gate),
+  ).catch((err) =>
+    console.warn("[goaml-validate-ai] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+  );
   return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
 }

@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { writeAuditEvent } from "@/lib/audit";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -185,6 +187,18 @@ export async function POST(req: Request): Promise<NextResponse> {
     } catch (err) {
       console.warn("[hawkeye] typology-match: audit write failed", err instanceof Error ? err.message : String(err));
     }
+
+    void writeAuditChainEntry(
+      {
+        event: "typology.match_completed",
+        actor: gate.keyId,
+        primaryTypology: result.primaryTypology?.name,
+        matchStrength: result.primaryTypology?.matchStrength,
+      },
+      tenantIdFromGate(gate),
+    ).catch((err) =>
+      console.warn("[typology-match] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+    );
 
     const latencyMs = Date.now() - t0;
     if (latencyMs > 5000) console.warn(`[typology-match] slow response latencyMs=${latencyMs}`);

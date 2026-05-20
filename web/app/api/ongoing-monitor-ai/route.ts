@@ -8,6 +8,8 @@ import { NextResponse } from "next/server";
 import { writeAuditEvent } from "@/lib/audit";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -126,6 +128,18 @@ export async function POST(req: Request): Promise<NextResponse> {
       "mlro",
       "ongoing-monitor.ai-analysis",
       `${subjects.length} subjects scanned — health: ${parsed.portfolioHealth} · alerts: ${(parsed.alerts ?? []).length} · escalations: ${(parsed.immediateEscalations ?? []).length}`,
+    );
+
+    void writeAuditChainEntry(
+      {
+        event: "ongoing.monitor_ai_completed",
+        actor: gate.keyId,
+        portfolioHealth: parsed.portfolioHealth,
+        alertCount: (parsed.alerts ?? []).length,
+      },
+      tenantIdFromGate(gate),
+    ).catch((err) =>
+      console.warn("[ongoing-monitor-ai] audit chain write failed:", err instanceof Error ? err.message : String(err)),
     );
 
     return NextResponse.json(parsed, { headers: gate.headers });

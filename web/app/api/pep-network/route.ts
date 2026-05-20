@@ -17,6 +17,8 @@
 import { NextResponse } from "next/server";
 import { writeAuditEvent } from "@/lib/audit";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getAnthropicClient } from "@/lib/server/llm";
 
 export const runtime = "nodejs";
@@ -225,6 +227,19 @@ Return ONLY valid JSON with this exact structure:
     } catch (err) {
       console.warn("[hawkeye] pep-network: audit write failed", err instanceof Error ? err.message : String(err));
     }
+
+    void writeAuditChainEntry(
+      {
+        event: "pep.network_intelligence_generated",
+        actor: gate.keyId,
+        pepName,
+        pepRiskRating: output.pepRiskRating,
+        totalNodesDiscovered: output.totalNodesDiscovered,
+      },
+      tenantIdFromGate(gate),
+    ).catch((err) =>
+      console.warn("[pep-network] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+    );
 
     const latencyMs = Date.now() - _handlerStart;
     if (latencyMs > 5000) console.warn(`[pep-network] latencyMs=${latencyMs} exceeds 5000ms`);

@@ -7,6 +7,8 @@
 import { NextResponse } from "next/server";
 import { writeAuditEvent } from "@/lib/audit";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
@@ -210,6 +212,18 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (!Array.isArray(parsed.clarificationQuestions)) parsed.clarificationQuestions = [];
     if (!Array.isArray(parsed.escalationItems)) parsed.escalationItems = [];
 
+    void writeAuditChainEntry(
+      {
+        event: "screening.disambiguation_completed",
+        actor: gate.keyId,
+        clientName: sanitizedClient.name,
+        verdict: (parsed as { verdict?: string }).verdict,
+        hitCount: parsed.hits.length,
+      },
+      tenantIdFromGate(gate),
+    ).catch((err) =>
+      console.warn("[smart-disambiguate] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+    );
     return NextResponse.json({ ok: true, ...parsed, latencyMs: Date.now() - t0 }, { headers: gate.headers });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);

@@ -3,6 +3,8 @@ import { writeAuditEvent } from "@/lib/audit";
 import { enforce } from "@/lib/server/enforce";
 
 import { getAnthropicClient } from "@/lib/server/llm";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -96,6 +98,17 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (!Array.isArray(parsed.highRiskNationalities)) parsed.highRiskNationalities = [];
     if (!Array.isArray(parsed.multiEntityRisk)) parsed.multiEntityRisk = [];
     if (!Array.isArray(parsed.immediateActions)) parsed.immediateActions = [];
+    void writeAuditChainEntry(
+      {
+        event: "employee.risk_assessed",
+        actor: gate.keyId,
+        portfolioStatus: parsed.portfolioStatus,
+        criticalExpiries: parsed.criticalExpiries?.length ?? 0,
+      },
+      tenantIdFromGate(gate),
+    ).catch((err) =>
+      console.warn("[employee-risk] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+    );
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "employee-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });

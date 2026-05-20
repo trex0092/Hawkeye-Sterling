@@ -9,6 +9,8 @@ import { writeAuditEvent } from "@/lib/audit";
 import { withLlmFallback } from "@/lib/server/llm-fallback";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -154,6 +156,18 @@ export async function POST(req: Request): Promise<NextResponse> {
   });
 
   if (fallback.degraded) writeAuditEvent("mlro", "ai.ethical-impact-assessment.degraded", fallback.degradedReason ?? "");
+
+  void writeAuditChainEntry(
+    {
+      event: "ethical.impact_assessed",
+      actor: gate.keyId,
+      impactLevel: fallback.result.impactLevel,
+      degraded: fallback.degraded,
+    },
+    tenantIdFromGate(gate),
+  ).catch((err) =>
+    console.warn("[ethical-impact] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+  );
 
   return NextResponse.json({
     ok: true,

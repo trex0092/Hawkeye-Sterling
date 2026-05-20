@@ -3,6 +3,8 @@ import { writeAuditEvent } from "@/lib/audit";
 import { enforce } from "@/lib/server/enforce";
 
 import { getAnthropicClient } from "@/lib/server/llm";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -98,6 +100,17 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (!Array.isArray(parsed.systemicRisks)) parsed.systemicRisks = [];
     if (!Array.isArray(parsed.lbmaGaps)) parsed.lbmaGaps = [];
     if (!Array.isArray(parsed.immediateHolds)) parsed.immediateHolds = [];
+    void writeAuditChainEntry(
+      {
+        event: "tbml.shipment_assessed",
+        actor: gate.keyId,
+        portfolioTbmlRisk: parsed.portfolioTbmlRisk,
+        flaggedShipmentCount: parsed.flaggedShipments?.length ?? 0,
+      },
+      tenantIdFromGate(gate),
+    ).catch((err) =>
+      console.warn("[shipment-tbml] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+    );
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch {
     return NextResponse.json({ ok: false, error: "shipment-tbml temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });

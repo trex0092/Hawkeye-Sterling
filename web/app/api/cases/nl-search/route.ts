@@ -16,6 +16,8 @@ import { writeAuditEvent } from "@/lib/audit";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -278,6 +280,18 @@ export async function POST(req: Request): Promise<NextResponse> {
         `query="${query}" → ${matchIds.length} matches · confidence ${(confidence * 100).toFixed(0)}%`,
       );
     } catch { /* non-blocking */ }
+
+    void writeAuditChainEntry(
+      {
+        event: "cases.nl_search_completed",
+        actor: gate.keyId,
+        matchCount: matchIds.length,
+        confidence,
+      },
+      tenantIdFromGate(gate),
+    ).catch((err) =>
+      console.warn("[cases.nl_search] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+    );
 
     return NextResponse.json({
       ok: true,

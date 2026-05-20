@@ -3,6 +3,8 @@ import { writeAuditEvent } from "@/lib/audit";
 import { enforce } from "@/lib/server/enforce";
 
 import { getAnthropicClient } from "@/lib/server/llm";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -152,6 +154,18 @@ Red Flags: ${redFlagsStr}`;
   } catch {
     // Non-fatal — server-side localStorage is unavailable
   }
+
+  void writeAuditChainEntry(
+    {
+      event: "sar.qa_scored",
+      actor: gate.keyId,
+      caseCount: scores.length,
+      avgScore: scores.length > 0 ? Math.round(scores.reduce((sum, s) => sum + s.score, 0) / scores.length) : 0,
+    },
+    tenantIdFromGate(gate),
+  ).catch((err) =>
+    console.warn("[sar-qa-score] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+  );
 
   return NextResponse.json({ ok: true, scores }, { headers: gate.headers });
 }

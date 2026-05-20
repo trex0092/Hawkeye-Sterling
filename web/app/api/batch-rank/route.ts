@@ -7,6 +7,8 @@ import { NextResponse } from "next/server";
 import { writeAuditEvent } from "@/lib/audit";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -115,6 +117,18 @@ export async function POST(req: Request): Promise<NextResponse> {
       "analyst",
       "batch.ai-priority-ranking",
       `${results.length} results ranked — immediate: ${parsed.immediateCount ?? 0} · urgent: ${parsed.urgentCount ?? 0} · topThreats: ${(parsed.topThreats ?? []).join(", ")}`,
+    );
+
+    void writeAuditChainEntry(
+      {
+        event: "screening.batch_rank_completed",
+        actor: gate.keyId,
+        immediateCount: parsed.immediateCount ?? 0,
+        urgentCount: parsed.urgentCount ?? 0,
+      },
+      tenantIdFromGate(gate),
+    ).catch((err) =>
+      console.warn("[batch-rank] audit chain write failed:", err instanceof Error ? err.message : String(err)),
     );
 
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });

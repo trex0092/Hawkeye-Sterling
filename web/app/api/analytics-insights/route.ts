@@ -7,6 +7,8 @@ import { NextResponse } from "next/server";
 import { writeAuditEvent } from "@/lib/audit";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -113,6 +115,18 @@ export async function POST(req: Request): Promise<NextResponse> {
       "analyst",
       "analytics.ai-insights",
       `period: ${period} · trend: ${parsed.riskTrend} · insights: ${(parsed.insights ?? []).length}`,
+    );
+
+    void writeAuditChainEntry(
+      {
+        event: "analytics.insights_generated",
+        actor: gate.keyId,
+        riskTrend: parsed.riskTrend,
+        insightCount: (parsed.insights ?? []).length,
+      },
+      tenantIdFromGate(gate),
+    ).catch((err) =>
+      console.warn("[analytics-insights] audit chain write failed:", err instanceof Error ? err.message : String(err)),
     );
 
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });

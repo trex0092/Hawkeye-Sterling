@@ -7,6 +7,8 @@ import { writeAuditEvent } from "@/lib/audit";
 import { enforce } from "@/lib/server/enforce";
 
 import { getAnthropicClient } from "@/lib/server/llm";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 interface QaAnswer {
   answer: string;
@@ -68,6 +70,18 @@ export async function POST(req: NextRequest) {
   }
 
   writeAuditEvent("playbook-qa", "playbook.qa-asked", question.slice(0, 200));
+
+  void writeAuditChainEntry(
+    {
+      event: "playbook.qa_completed",
+      actor: gate.keyId,
+      confidence: qaAnswer.confidence,
+      citationCount: qaAnswer.citations.length,
+    },
+    tenantIdFromGate(gate),
+  ).catch((err) =>
+    console.warn("[playbook-qa] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+  );
 
   return NextResponse.json({ ok: true, ...qaAnswer }, { headers: gate.headers });
 }

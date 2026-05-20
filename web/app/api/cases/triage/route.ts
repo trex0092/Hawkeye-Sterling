@@ -12,6 +12,8 @@
 import { NextResponse } from "next/server";
 import { writeAuditEvent } from "@/lib/audit";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getAnthropicClient, type AnthropicGuard } from "@/lib/server/llm";
 
 export const runtime = "nodejs";
@@ -182,6 +184,17 @@ export async function POST(req: Request): Promise<NextResponse> {
       `triaged ${triaged.length} cases`,
     );
   } catch { /* non-blocking */ }
+
+  void writeAuditChainEntry(
+    {
+      event: "cases.triage_completed",
+      actor: gate.keyId,
+      caseCount: triaged.length,
+    },
+    tenantIdFromGate(gate),
+  ).catch((err) =>
+    console.warn("[cases/triage] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+  );
 
   return NextResponse.json({ ok: true, triaged }, { headers: gate.headers });
 }
