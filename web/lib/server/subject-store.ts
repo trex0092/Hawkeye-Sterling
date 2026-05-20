@@ -21,6 +21,9 @@ export interface SubjectProfile {
   createdAt:          string;
   updatedAt:          string;
   notes?:             string;
+  riskScoreHistory?:  Array<{ ts: string; score: number; severity: string }>;
+  earlyWarning?:      boolean;
+  earlyWarningReason?: string;
 }
 
 type Tenant = string;
@@ -81,6 +84,38 @@ export async function patchSubject(
   const now = new Date().toISOString();
   const updated: SubjectProfile = { ...existing, ...patch, updatedAt: now };
   await setJson(key, updated);
+
+  // Early warning: flag subjects where risk score is trending upward
+  // over the last 3 screenings without a sanctions hit.
+  if (patch.lastScreenedAt && typeof (patch as Record<string, unknown>)["_riskScore"] === "number") {
+    const newScore = (patch as Record<string, unknown>)["_riskScore"] as number;
+    const newSeverity = (patch as Record<string, unknown>)["_severity"] as string ?? "unknown";
+    const history = [...(existing.riskScoreHistory ?? []), { ts: now, score: newScore, severity: newSeverity }]
+      .slice(-10); // keep last 10
+    updated.riskScoreHistory = history;
+    if (history.length >= 3) {
+      const last3 = history.slice(-3);
+      const rising = last3[0]!.score < last3[1]!.score && last3[1]!.score < last3[2]!.score;
+      const noHit  = last3.every((h) => h.severity === "clear" || h.severity === "low");
+      if (rising && !noHit) {
+        updated.earlyWarning = true;
+        updated.earlyWarningReason = `Risk score rising for 3 consecutive screenings (${last3.map((h) => h.score).join("→")}) without confirmed sanctions hit`;
+        void writeAuditChainEntry({
+          event: "subject.early_warning",
+          actor: "system",
+          subjectId,
+          subjectName: updated.subjectName,
+          reason: updated.earlyWarningReason,
+          scores: last3.map((h) => h.score),
+        }, tenant).catch(() => undefined);
+      } else if (updated.earlyWarning && !rising) {
+        updated.earlyWarning = false;
+        updated.earlyWarningReason = undefined;
+      }
+    }
+    await setJson(key, updated);
+  }
+
   void writeAuditChainEntry({
     event: "subject.profile_patched",
     actor,

@@ -9,6 +9,7 @@ import { getJson } from "@/lib/server/store";
 import { randomBytes } from "node:crypto";
 import { asanaGids } from "@/lib/server/asanaConfig";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -612,6 +613,16 @@ export async function POST(req: Request) {
 
   const latencyMs = Date.now() - t0;
   if (latencyMs > 5000) console.warn(`[ai-decision] slow response latencyMs=${latencyMs}`);
+
+  // Record verdict for drift monitoring (fire-and-forget — must not fail the response).
+  void (async () => {
+    try {
+      const { recordDecision } = await import("@/lib/server/drift-monitor");
+      const driftTenant = tenantIdFromGate(gate);
+      await recordDecision(driftTenant, responseBody.decision, responseBody.confidence, body.riskScore ?? 0);
+    } catch { /* non-critical */ }
+  })();
+
   return NextResponse.json({ ...responseBody, latencyMs }, { status: 200 , headers: gate.headers });
 }
 

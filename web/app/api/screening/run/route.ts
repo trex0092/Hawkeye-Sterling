@@ -28,6 +28,8 @@ import { loadCandidates } from "@/lib/server/candidates-loader";
 import { quickScreen as brainQuickScreen } from "../../../../../dist/src/brain/quick-screen.js";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { recordScreeningBias } from "@/lib/server/bias-monitor";
+import { checkAdversarialInput } from "@/lib/server/adversarial-guard";
 import type {
   QuickScreenCandidate,
   QuickScreenOptions,
@@ -258,6 +260,19 @@ export async function POST(req: Request): Promise<NextResponse> {
   const resultId = buildResultId(subject, ts, callerRequestId);
   const uaeStale = await isUaeListStale();
 
+  // Adversarial input check — log suspicious names before screening.
+  const adversarialCheck = await checkAdversarialInput(tenant, subject.name);
+  if (adversarialCheck.risk !== "none") {
+    void writeAuditChainEntry({
+      event: "screening.adversarial_input_suspected",
+      actor: gate.keyId,
+      resultId,
+      subjectName: subject.name,
+      risk: adversarialCheck.risk,
+      reasons: adversarialCheck.reasons,
+    }, tenant).catch(() => undefined);
+  }
+
   let result: QuickScreenResult;
   try {
     result = (brainQuickScreen as (_s: QuickScreenSubject, _c: QuickScreenCandidate[], _o?: QuickScreenOptions) => QuickScreenResult)(
@@ -356,6 +371,15 @@ export async function POST(req: Request): Promise<NextResponse> {
     })();
   }
 
+  // Record screening result for bias monitoring (fire-and-forget).
+  void recordScreeningBias(
+    tenant,
+    subject.name,
+    result.topScore,
+    result.severity,
+    result.hits.length,
+  ).catch(() => undefined);
+
   // Confidence calibration note — honest statement about what was and
   // wasn't checked. Never claim higher confidence than supported.
   const confidenceNote =
@@ -375,6 +399,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       requestId: reqId,
       ...result,
       provisionalScreening: uaeStale,
+      adversarialRisk: adversarialCheck.risk !== "none" ? adversarialCheck.risk : undefined,
       negativeEvidence,
       confidenceNote,
       latencyMs: Date.now() - t0,
