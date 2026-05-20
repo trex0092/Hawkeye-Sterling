@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 interface ToolConfig {
   title: string;
@@ -546,7 +547,7 @@ export async function POST(req: Request) {
   // Build user prompt from inputs
   const inputLines = Object.entries(inputs)
     .filter(([, v]) => v && v.trim())
-    .map(([k, v]) => `${k}: ${v}`)
+    .map(([k, v]) => `${sanitizeField(k, 100)}: ${sanitizeField(v, 1000)}`)
     .join("\n");
 
   const userPrompt = `Tool: ${toolTitle}\n\nInputs:\n${inputLines || "(no inputs provided)"}\n\nProvide a comprehensive AML/financial crime risk assessment. Return valid JSON with these fields:\n- riskRating: "critical" | "high" | "medium" | "low"\n- riskScore: number (0-100)\n- summary: string (2-3 sentence overview)\n- findings: string[] (3-6 key findings)\n- recommendations: string[] (3-5 actionable recommendations)\n- regulatoryBasis: string (applicable regulations and references)`;

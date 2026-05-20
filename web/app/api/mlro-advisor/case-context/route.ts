@@ -5,6 +5,7 @@ import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -57,11 +58,11 @@ export async function POST(req: Request): Promise<NextResponse> {
   const casesSummary = cases
     .map((c) =>
       [
-        `Case ID: ${c.id}`,
-        `Subject: ${c.subject}`,
-        `Meta: ${c.meta}`,
-        `Status: ${c.status}`,
-        `Opened: ${c.openedAt}`,
+        `Case ID: ${sanitizeField(c.id, 100)}`,
+        `Subject: ${sanitizeField(c.subject, 200)}`,
+        `Meta: ${sanitizeField(c.meta, 300)}`,
+        `Status: ${sanitizeField(c.status, 50)}`,
+        `Opened: ${sanitizeField(c.openedAt, 50)}`,
       ].join(" | "),
     )
     .join("\n");

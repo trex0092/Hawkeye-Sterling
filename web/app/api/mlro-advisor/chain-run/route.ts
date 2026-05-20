@@ -4,6 +4,7 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 export interface ChainRunResult {
   ok: true;
   subjectBrief: string;
@@ -29,7 +30,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
-  const { subject = "Unknown Subject", jurisdiction = "UAE", riskScore = 50, transactionPattern = "" } = body;
+  const subject = sanitizeField(body.subject ?? "Unknown Subject", 300);
+  const jurisdiction = sanitizeField(body.jurisdiction ?? "UAE", 100);
+  const riskScore = body.riskScore ?? 50;
+  const transactionPattern = sanitizeField(body.transactionPattern ?? "", 500);
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {

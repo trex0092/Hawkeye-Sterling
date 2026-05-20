@@ -20,6 +20,7 @@ import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export interface EwraDimension {
   name: string;
@@ -77,9 +78,9 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400, headers: gate.headers });
   }
 
-  const sector = (body.sector ?? "financial_services").trim();
-  const jurisdiction = (body.jurisdiction ?? "UAE").trim();
-  const reportingPeriod = body.reportingPeriod ?? new Date().getFullYear().toString();
+  const sector = sanitizeField((body.sector ?? "financial_services").trim(), 100);
+  const jurisdiction = sanitizeField((body.jurisdiction ?? "UAE").trim(), 100);
+  const reportingPeriod = sanitizeField(body.reportingPeriod ?? new Date().getFullYear().toString(), 50);
   const depth = body.analysisDepth ?? "full";
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
