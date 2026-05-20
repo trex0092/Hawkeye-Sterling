@@ -11,6 +11,7 @@
 //   ar — Arabic       (Right-to-left; Arabic-Indic digits)
 //   fr — French       (Latin; diacritics)
 //   ru — Russian      (Cyrillic)
+//   tr — Turkish      (Latin; distinctive chars İ ı Ğ ğ Ş ş)
 //   zh — Chinese      (CJK Unified; no whitespace tokens)
 //
 // The catalogues mirror the English risk topology (financial crime,
@@ -19,7 +20,7 @@
 // of tokenizer drives both recall (catching morphological variants) and
 // precision (avoiding false sub-string hits).
 
-export type SupportedLang = "ar" | "fr" | "ru" | "zh";
+export type SupportedLang = "ar" | "fr" | "ru" | "tr" | "zh";
 
 export interface LangKeywordPack {
   lang: SupportedLang;
@@ -120,6 +121,34 @@ const ZH_KEYWORDS = [
   "勒索软件", "网络攻击", "黑客攻击", "数据泄露",
 ];
 
+const TR_KEYWORDS = [
+  // Arrest / detention
+  "tutuklandı", "tutuklandığı", "tutuklama", "tutuklu", "gözaltı",
+  "gözaltına alındı", "gözaltına alındığı", "gözaltında",
+  "ifade verdi", "sorgulandı",
+  // Investigation / prosecution
+  "soruşturma", "kovuşturma", "dava açıldı", "dava",
+  "yargılama", "mahkeme", "suçlama", "iddianame",
+  "iddianamesinde", "beraat", "mahkumiyet", "mahkum edildi",
+  "hapis cezası", "cezaevine gönderildi",
+  // Police / law enforcement
+  "polis operasyonu", "operasyon", "baskın", "el konuldu",
+  "el koydu", "müsadere", "müsadere edildi",
+  // Financial crime / AML
+  "kara para aklama", "kara para", "karapara aklama",
+  "rüşvet", "yolsuzluk", "zimmet", "zimmet suçu",
+  "dolandırıcılık", "sahtecilik", "vergi kaçakçılığı",
+  "vergi kaçırma", "mali suç", "usulsüzlük",
+  // Smuggling / trafficking
+  "kaçakçılık", "insan ticareti", "uyuşturucu kaçakçılığı",
+  "uyuşturucu", "silah kaçakçılığı",
+  // Terrorism / sanctions
+  "terör", "terörüzm", "terör finansmanı", "terör örgütü",
+  "yaptırım", "yaptırımlar", "ambargo", "kara liste",
+  // Corruption
+  "rüşvet verdi", "rüşvet aldı", "ihaleye fesat",
+];
+
 // ─────────────────────────────────────────────────────────────────────────
 // Tokenisers
 // ─────────────────────────────────────────────────────────────────────────
@@ -186,16 +215,18 @@ const AR_KEYWORDS_NORM = AR_KEYWORDS.map((k) =>
 );
 
 // Mirror the apostrophe-folding the tokeniser applies, so multi-word
-// French entries with contractions ("blanchiment d'argent") match.
-const FR_KEYWORDS_NORM = FR_KEYWORDS.map((k) => k.toLowerCase().replace(/[’']/g, " ").replace(/\s+/g, " "));
+// French entries with contractions ("blanchiment d’argent") match.
+const FR_KEYWORDS_NORM = FR_KEYWORDS.map((k) => k.toLowerCase().replace(/[‘’]/g, " ").replace(/\s+/g, " "));
 const RU_KEYWORDS_NORM = RU_KEYWORDS.map((k) => k.toLowerCase());
+const TR_KEYWORDS_NORM = TR_KEYWORDS.map((k) => k.toLowerCase());
 const ZH_KEYWORDS_NORM = ZH_KEYWORDS; // CJK already case-insensitive
 
 export const I18N_PACKS: Record<SupportedLang, LangKeywordPack> = {
-  ar: { lang: "ar", displayName: "Arabic",  keywords: AR_KEYWORDS_NORM, tokenize: arabicTokenize },
-  fr: { lang: "fr", displayName: "French",  keywords: FR_KEYWORDS_NORM, tokenize: whitespaceTokenize },
-  ru: { lang: "ru", displayName: "Russian", keywords: RU_KEYWORDS_NORM, tokenize: whitespaceTokenize },
-  zh: { lang: "zh", displayName: "Chinese", keywords: ZH_KEYWORDS_NORM, tokenize: cjkTokenize },
+  ar: { lang: "ar", displayName: "Arabic",   keywords: AR_KEYWORDS_NORM, tokenize: arabicTokenize },
+  fr: { lang: "fr", displayName: "French",   keywords: FR_KEYWORDS_NORM, tokenize: whitespaceTokenize },
+  ru: { lang: "ru", displayName: "Russian",  keywords: RU_KEYWORDS_NORM, tokenize: whitespaceTokenize },
+  tr: { lang: "tr", displayName: "Turkish",  keywords: TR_KEYWORDS_NORM, tokenize: whitespaceTokenize },
+  zh: { lang: "zh", displayName: "Chinese",  keywords: ZH_KEYWORDS_NORM, tokenize: cjkTokenize },
 };
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -235,8 +266,11 @@ export function detectLanguage(text: string): SupportedLang | "en" | "unknown" {
   if (c.arabic / total > 0.30)   return "ar";
   if (c.cjk / total > 0.30)      return "zh";
   if (c.cyrillic / total > 0.30) return "ru";
-  // Latin script: try to disambiguate French via diacritic-density.
+  // Latin script: check Turkish first (İ ı Ğ ğ are unique to Turkish/Azerbaijani),
+  // then French via accent density, then fall back to English.
   if (c.latin / total > 0.50) {
+    // İ (U+0130) and ı (U+0131) and Ğ/ğ are essentially unique to Turkish.
+    if (/[İıĞğ]/u.test(text)) return "tr";
     const french = /[àâçéèêëîïôûùüÿœæ]/i.test(text);
     return french ? "fr" : "en";
   }
@@ -257,10 +291,11 @@ export interface I18nHit {
  *  (cross-lingual articles do exist). */
 export function classifyI18n(text: string): I18nHit[] {
   const detected = detectLanguage(text);
+  const ALL_LANGS: SupportedLang[] = ["ar", "fr", "ru", "tr", "zh"];
   const order: SupportedLang[] =
-    detected === "ar" || detected === "fr" || detected === "ru" || detected === "zh"
-      ? [detected, ...((["ar", "fr", "ru", "zh"] as SupportedLang[]).filter((l) => l !== detected))]
-      : ["ar", "fr", "ru", "zh"];
+    (ALL_LANGS as string[]).includes(detected)
+      ? [detected as SupportedLang, ...ALL_LANGS.filter((l) => l !== detected)]
+      : ALL_LANGS;
 
   const hits: I18nHit[] = [];
   for (const lang of order) {
