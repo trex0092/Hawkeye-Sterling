@@ -21,7 +21,6 @@ function clearAdapterKeys() {
 }
 
 describe('LIVE_GLEIF_ADAPTER', () => {
-
   it('isAvailable always returns true', async () => {
     const mod = await import('../liveAdapters.js');
     expect(mod.LIVE_GLEIF_ADAPTER.isAvailable()).toBe(true);
