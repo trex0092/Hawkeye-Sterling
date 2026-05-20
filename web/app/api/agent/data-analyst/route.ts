@@ -100,8 +100,23 @@ export async function POST(req: Request) {
       }
 
       if (ev.type === "session.error") {
+        // Best-effort: translate the raw Claude-Console error into an
+        // operator-actionable hint (MCP credential gap, agent-not-found,
+        // env misconfig, rate limit). When a pattern matches, the UI
+        // renders the hint below the raw error so the MLRO knows which
+        // dashboard / vault / config to touch instead of seeing only
+        // cryptic platform-side phrasing.
+        const { describeAgentError } = await import("@/lib/server/agent-error-hints");
+        const translated = describeAgentError(ev.error.message);
         return NextResponse.json(
-          { ok: false, error: ev.error.message },
+          translated
+            ? {
+                ok: false,
+                error: ev.error.message,
+                hint: translated.hint,
+                hintCategory: translated.category,
+              }
+            : { ok: false, error: ev.error.message },
           { status: 502, headers: gate.headers },
         );
       }
