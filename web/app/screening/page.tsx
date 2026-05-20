@@ -1621,7 +1621,7 @@ export default function ScreeningPage() {
                 hits={latestTriage.hits}
                 commonNameExpansion={latestTriage.commonNameExpansion}
                 resolutions={triageResolutions}
-                onResolve={async (hitId, resolution, reason) => {
+                onResolve={async (hitId, resolution, reason, reasonCode) => {
                   // Optimistic UI update
                   setTriageResolutions((p) => ({ ...p, [hitId]: resolution }));
                   // Find hit context for the audit trail
@@ -1635,6 +1635,9 @@ export default function ScreeningPage() {
                         subjectName: latestTriage.subjectName,
                         hitId,
                         resolution,
+                        // J-06 / G-05 — structured FP reason code. Server
+                        // enforces presence + validity when resolution === "false".
+                        ...(reasonCode ? { reasonCode } : {}),
                         reason,
                         hitContext: hit ? {
                           sourceList: hit.sourceList,
