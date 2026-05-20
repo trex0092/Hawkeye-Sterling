@@ -486,3 +486,4 @@ export function activeOnChainProviders(): OnChainProvider[] {
 }
 
 export { NULL_GLEIF_ADAPTER, NULL_CORPORATE_ADAPTER, NULL_ONCHAIN_ADAPTER, NULL_HS_CODE_ADAPTER };
+export type { GleifAdapter };
