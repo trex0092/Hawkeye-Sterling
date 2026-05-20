@@ -85,12 +85,15 @@ export async function run(options: RunOptions): Promise<BrainVerdict> {
       console.warn(`[engine] mode ${modeId} threw — recording error finding:`, err instanceof Error ? err.message : String(err));
       finding = {
         modeId: mode.id,
-        verdict: 'unclear' as const,
-        rationale: `Mode ${mode.name} failed: ${err instanceof Error ? err.message : String(err)}`,
+        category: mode.category,
+        faculties: mode.faculties,
+        score: 0,
         confidence: 0,
-        flags: [],
+        verdict: 'inconclusive' as const,
+        rationale: `Mode ${mode.name} failed: ${err instanceof Error ? err.message : String(err)}`,
+        evidence: [],
         producedAt: Date.now(),
-      } as Finding;
+      };
     }
     findings.push(finding);
     ctx.priorFindings.push(finding);
