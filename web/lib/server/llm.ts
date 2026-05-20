@@ -113,6 +113,12 @@ export class AnthropicGuard {
     this.route = route;
   }
 
+  /** Pass-through to the SDK beta namespace (managed agents, sessions, etc.).
+   *  Input must be sanitized by the caller before reaching this surface. */
+  get beta() {
+    return this.inner.beta;
+  }
+
   /** Proxy `messages` namespace with PII redaction on the way in, rehydration on the way out. */
   get messages() {
     const inner = this.inner;

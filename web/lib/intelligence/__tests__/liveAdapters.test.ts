@@ -1,7 +1,7 @@
 // Hawkeye Sterling — liveAdapters unit tests.
 // Covers adapter factory functions, env-gating, and the lookup/reference logic.
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 
 const ORIG_ENV = { ...process.env };
 
@@ -21,13 +21,6 @@ function clearAdapterKeys() {
 }
 
 describe('LIVE_GLEIF_ADAPTER', () => {
-  let LIVE_GLEIF_ADAPTER: import('../liveAdapters.js').GleifAdapter | undefined;
-
-  beforeEach(async () => {
-    // Import after potential env manipulation
-    const mod = await import('../liveAdapters.js');
-    LIVE_GLEIF_ADAPTER = mod.LIVE_GLEIF_ADAPTER as unknown as import('../liveAdapters.js').GleifAdapter;
-  });
 
   it('isAvailable always returns true', async () => {
     const mod = await import('../liveAdapters.js');
