@@ -130,7 +130,7 @@ Amount: ${sanitizeField(body.amount, 100) ?? "not specified"} ${sanitizeField(bo
 Destination Jurisdiction: ${sanitizeField(body.destinationJurisdiction, 100) ?? "not specified"}
 Goods / Services: ${sanitizeField(body.goods, 500) ?? "not specified"}
 Customer Type: ${sanitizeField(body.customerType, 100) ?? "not specified"}
-Existing Red Flags: ${body.existingRedFlags?.join("; ") ?? "none"}
+Existing Red Flags: ${body.existingRedFlags?.slice(0, 30).map((f) => sanitizeField(f, 200)).join("; ") ?? "none"}
 Additional Context: ${sanitizeText(body.context, 2000) ?? "none"}
 
 Assess for terrorism financing risk.`,

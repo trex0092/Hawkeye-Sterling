@@ -4,6 +4,7 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export interface StrNarrativeResult {
   narrative: string;
@@ -52,17 +53,17 @@ export async function POST(req: Request) {
   const QUALITY_THRESHOLD = 80;
   const MAX_ITERATIONS = 3;
 
-  const baseUserContent = `Subject Name: ${body.subjectName}
-Subject Type: ${body.subjectType ?? "not specified"}
-Nationality/Jurisdiction: ${body.subjectNationality ?? "not specified"}
-Activity Description: ${body.activityDescription}
-Amounts: ${body.amounts ?? "not specified"}
-Key Dates: ${body.dates ?? "not specified"}
-Counterparty: ${body.counterparty ?? "not specified"}
-Jurisdiction: ${body.jurisdiction ?? "not specified"}
-Red Flags Identified: ${body.redFlags?.join("; ") ?? "not specified"}
-Actions Taken: ${body.actionsTaken ?? "not specified"}
-Additional Facts: ${body.additionalFacts ?? "none"}
+  const baseUserContent = `Subject Name: ${sanitizeField(body.subjectName, 500)}
+Subject Type: ${sanitizeField(body.subjectType, 100) || "not specified"}
+Nationality/Jurisdiction: ${sanitizeField(body.subjectNationality, 100) || "not specified"}
+Activity Description: ${sanitizeText(body.activityDescription, 3000)}
+Amounts: ${sanitizeField(body.amounts, 200) || "not specified"}
+Key Dates: ${sanitizeField(body.dates, 200) || "not specified"}
+Counterparty: ${sanitizeField(body.counterparty, 500) || "not specified"}
+Jurisdiction: ${sanitizeField(body.jurisdiction, 100) || "not specified"}
+Red Flags Identified: ${body.redFlags?.slice(0, 20).map((f) => sanitizeField(f, 200)).join("; ") ?? "not specified"}
+Actions Taken: ${sanitizeText(body.actionsTaken, 1000) || "not specified"}
+Additional Facts: ${sanitizeText(body.additionalFacts, 2000) || "none"}
 
 Draft the STR narrative.`;
 

@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 export interface NpoRiskResult {
   riskRating: "critical" | "high" | "medium" | "low";
   keyRedFlags: string[];
@@ -51,12 +52,12 @@ export async function POST(req: Request) {
       messages: [{
         role: "user",
         content: `Analyse the following NPO for money laundering and terrorist financing risks:
-- NPO Name: ${body.npoName}
-- Country of Operation: ${body.country}
-- Sector: ${body.sector}
-- Funding Source: ${body.fundingSource}
-- Beneficiary Region: ${body.beneficiaryRegion}
-- Additional Context: ${body.context}`,
+- NPO Name: ${sanitizeField(body.npoName, 500)}
+- Country of Operation: ${sanitizeField(body.country, 100)}
+- Sector: ${sanitizeField(body.sector, 200)}
+- Funding Source: ${sanitizeField(body.fundingSource, 200)}
+- Beneficiary Region: ${sanitizeField(body.beneficiaryRegion, 200)}
+- Additional Context: ${sanitizeText(body.context, 2000)}`,
       }],
     });
     const text = response.content[0]?.type === "text" ? response.content[0].text : "{}";

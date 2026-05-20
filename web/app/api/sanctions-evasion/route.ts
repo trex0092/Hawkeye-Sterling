@@ -4,6 +4,7 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 export interface EvasionPattern {
   pattern:
     | "front_company"
@@ -191,12 +192,12 @@ export async function POST(req: Request) {
           role: "user",
           content: `Analyse this entity for sanctions evasion indicators:
 
-Entity Name: ${body.entity ?? "Unknown Entity"}
-Jurisdiction: ${body.jurisdiction ?? "Unknown"}
-Ownership Structure: ${body.ownershipStructure ?? "Not provided"}
-Counterparties: ${body.counterparties ?? "Not provided"}
-Commodities/Products: ${body.commodities ?? "Not provided"}
-Transaction Summary: ${body.transactions ?? "Not provided"}
+Entity Name: ${sanitizeField(body.entity, 500) || "Unknown Entity"}
+Jurisdiction: ${sanitizeField(body.jurisdiction, 100) || "Unknown"}
+Ownership Structure: ${sanitizeText(body.ownershipStructure, 2000) || "Not provided"}
+Counterparties: ${sanitizeText(body.counterparties, 2000) || "Not provided"}
+Commodities/Products: ${sanitizeField(body.commodities, 500) || "Not provided"}
+Transaction Summary: ${sanitizeText(body.transactions, 3000) || "Not provided"}
 
 Conduct a comprehensive sanctions evasion risk assessment. Identify all evasion patterns, calculate risk score, and provide immediate action recommendations.`,
         },

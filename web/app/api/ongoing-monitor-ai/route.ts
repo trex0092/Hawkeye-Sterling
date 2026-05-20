@@ -109,7 +109,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       messages: [
         {
           role: "user",
-          content: JSON.stringify(subjects),
+          content: JSON.stringify(subjects.slice(0, 50)),
         },
       ],
     });
