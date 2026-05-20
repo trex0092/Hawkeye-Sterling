@@ -276,7 +276,13 @@ Rules:
 // ── Route handler ─────────────────────────────────────────────────────────────
 
 export async function POST(req: Request): Promise<NextResponse> {
-  const gate = await enforce(req);
+  // This route accepts multipart/form-data file uploads (see formData() call
+  // below). Without `requireJsonBody: false` the enforce() guard returns 415
+  // "Content-Type: application/json required" before the handler can read the
+  // form — manual EOCN/LTL upload is completely broken in that state.
+  // Both options must be set explicitly because enforce()'s default param is
+  // an all-or-nothing replacement, not a per-property merge (see enforce.ts).
+  const gate = await enforce(req, { requireAuth: true, requireJsonBody: false });
   if (!gate.ok) return gate.response;
 
   const contentLength = Number(req.headers.get("content-length") ?? "0");

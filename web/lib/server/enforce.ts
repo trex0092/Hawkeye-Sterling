@@ -64,14 +64,22 @@ export type EnforcementResult = EnforcementAllow | { ok: false; response: NextRe
 
 export async function enforce(
   req: Request,
-  opts: { requireAuth?: boolean; requireJsonBody?: boolean } = { requireAuth: true },
+  opts: { requireAuth?: boolean; requireJsonBody?: boolean } = {},
 ): Promise<EnforcementResult> {
+  // Per-property defaulting so callers can override one option without
+  // accidentally clearing the other. The previous all-or-nothing default
+  // `opts = { requireAuth: true }` meant `enforce(req, { requireJsonBody: false })`
+  // silently turned off auth — caught when the EOCN multipart upload route
+  // tripped exactly that footgun. Always merge defaults at the property level.
+  const requireAuth = opts.requireAuth ?? true;
+  const requireJsonBody = opts.requireJsonBody ?? true;
+
   // Content-Type guard — for JSON-body methods, callers must declare
   // application/json so the handler can safely call req.json().
   // Skip GET/HEAD/DELETE/OPTIONS which have no body by convention.
   // Set requireJsonBody: false to bypass (e.g. multipart upload routes).
   const bodyMethod = ["POST", "PUT", "PATCH"].includes(req.method);
-  const requireJson = opts.requireJsonBody !== false && bodyMethod;
+  const requireJson = requireJsonBody && bodyMethod;
   if (requireJson) {
     const ct = req.headers.get("content-type") ?? "";
     // Determine body presence via content-length only. Netlify's reverse proxy
@@ -143,7 +151,7 @@ export async function enforce(
     return { ok: true, tier: rl.tier, keyId: "cron_internal", record: null, remainingMonthly: null, headers: rateLimitHeaders(rl) };
   }
 
-  if (anonymous && opts.requireAuth) {
+  if (anonymous && requireAuth) {
     logAuthFailure(req, "anonymous_request_rejected", 401);
     return {
       ok: false,
