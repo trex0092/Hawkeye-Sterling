@@ -16,13 +16,6 @@ export interface AdversarialCheckResult {
   reasons: string[];
 }
 
-// Unicode ranges that visually resemble Latin characters but are different code points.
-const HOMOGLYPH_RANGES: Array<[number, number, string]> = [
-  [0x0400, 0x04FF, "Cyrillic"],    // е, а, р, с look like Latin
-  [0x0370, 0x03FF, "Greek"],       // Α, Β look like A, B
-  [0x2000, 0x206F, "General Punctuation"],   // zero-width spaces, directional marks
-  [0xFEFF, 0xFEFF, "BOM/ZWNBSP"],
-];
 
 // Zero-width and invisible characters
 const INVISIBLE_CODEPOINTS = new Set([

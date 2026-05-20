@@ -10,7 +10,7 @@
 
 import { getJson, setJson, listKeys } from "./store";
 import { writeAuditChainEntry } from "./audit-chain";
-import { slaDeadline, type RiskCategory, type DueDiligenceLevel } from "./categorize";
+import { type RiskCategory, type DueDiligenceLevel } from "./categorize";
 
 export type HsCaseStatus =
   | "open" | "under_review" | "pending_approval" | "closed" | "escalated" | "frozen";
