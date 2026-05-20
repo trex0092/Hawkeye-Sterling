@@ -145,7 +145,22 @@ export async function POST(req: Request) {
     );
   }
 
-  const users = await loadUsers();
+  // loadUsers() can throw at seed time if the deployment is missing both
+  // LUISA_INITIAL_PASSWORD and AUDIT_CHAIN_SECRET (intentional fail-closed in
+  // _store.ts). Surface the misconfiguration in logs but return the uniform
+  // "Invalid username or password" 401 — never a 500 with a stack trace —
+  // so the response shape stays identical to a real bad-credentials attempt.
+  let users: Awaited<ReturnType<typeof loadUsers>>;
+  try {
+    users = await loadUsers();
+  } catch (err) {
+    console.error("[auth/login] loadUsers failed — login unavailable", {
+      ip,
+      reason: err instanceof Error ? err.message : String(err),
+    });
+    await new Promise((r) => setTimeout(r, 400));
+    return NextResponse.json({ ok: false, error: "Invalid username or password" }, { status: 401 });
+  }
   const user = users.find(
     (u) => u.active && u.username?.toLowerCase() === username.toLowerCase(),
   );

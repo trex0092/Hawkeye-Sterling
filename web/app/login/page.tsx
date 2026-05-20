@@ -7,8 +7,16 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  // Hydration gate: the submit button stays disabled until React has mounted
+  // client-side, so a click that lands before the onSubmit handler is attached
+  // can never trigger a native HTML form submission (which would lose the
+  // intended XHR path and reload the page with empty query params).
+  const [isHydrated, setIsHydrated] = useState(false);
   const mountedRef = useRef(true);
-  useEffect(() => () => { mountedRef.current = false; }, []);
+  useEffect(() => {
+    setIsHydrated(true);
+    return () => { mountedRef.current = false; };
+  }, []);
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -207,7 +215,7 @@ export default function LoginPage() {
           {/* Submit */}
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || !isHydrated}
             style={{
               width: "100%",
               padding: "12px",

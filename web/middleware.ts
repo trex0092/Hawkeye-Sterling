@@ -102,12 +102,24 @@ function resolveRequestId(req: NextRequest): string {
 }
 
 function buildCspHeader(_nonce: string): string {
+  // Next.js dev mode uses the `eval-source-map` webpack devtool, which loads
+  // every module via `eval()` for live-reloading and rich stack traces. Without
+  // 'unsafe-eval' the browser silently refuses every chunk, hydration never
+  // starts, and the entire client app appears frozen (forms fall back to
+  // native HTML submit, buttons gated behind useEffect stay disabled). This
+  // also breaks Playwright/E2E and any local manual testing. Production
+  // bundles emit plain script files — no eval — so 'unsafe-eval' stays out
+  // of the prod policy and the locked-down attack surface is preserved.
+  const isDev = process.env.NODE_ENV !== "production";
+  const scriptSrc = isDev
+    ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
+    : "script-src 'self' 'unsafe-inline'";
   return [
     "default-src 'self'",
     // 'unsafe-inline' is required — Next.js App Router injects many inline
     // scripts for hydration that do not carry a nonce. 'strict-dynamic' with
     // a nonce blocks them all and breaks client-side navigation entirely.
-    "script-src 'self' 'unsafe-inline'",
+    scriptSrc,
     "style-src 'self' 'unsafe-inline' https://fonts.bunny.net",
     "img-src 'self' data:",
     "font-src 'self' data: https://fonts.bunny.net",
