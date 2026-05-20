@@ -329,12 +329,14 @@ export async function invokeMlroAdvisor(
   const isMulti = (req.mode ?? "multi_perspective") === "multi_perspective" || req.mode === "all";
 
   // Single-perspective path (speed / balanced modes).
-  // speed → Haiku (fastest, cheapest) with reduced max_tokens for sub-3 s responses.
-  // balanced → Sonnet for higher quality; still cap tokens to keep latency reasonable.
+  // speed   → Haiku, 600 tokens — sub-3 s responses.
+  // balanced → Haiku, 1500 tokens — richer report, still ~3-5 s (was Sonnet/2000).
+  // deep    → Sonnet, 2000 tokens — for explicit deep-analysis requests only.
   if (!isMulti) {
+    const isDeep = req.mode === "deep";
     const isSpeed = req.mode === "speed";
-    const singleModel = isSpeed ? "claude-haiku-4-5-20251001" : "claude-sonnet-4-6";
-    const singleMaxTokens = isSpeed ? 400 : 2000;
+    const singleModel = isDeep ? "claude-sonnet-4-6" : "claude-haiku-4-5-20251001";
+    const singleMaxTokens = isDeep ? 2000 : isSpeed ? 600 : 1500;
     try {
       const client = getAnthropicClient(opts.apiKey, opts.budgetMs, "mlro-advisor");
       const response = await client.messages.create({

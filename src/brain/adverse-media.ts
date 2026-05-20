@@ -505,20 +505,49 @@ export function classifyAdverseMedia(text: string): AdverseMediaHit[] {
 }
 
 const SANCTIONS_FRAGMENTS = [
-  "عقوبات", "خرق العقوبات", "تجميد", "قائمة",
-  "sanctions", "embargo", "gel", "виола", "санк", "OFAC",
-  "制裁", "禁运", "冻结",
+  // Arabic / Persian
+  "عقوبات", "خرق العقوبات", "تجميد", "قائمة", "تحریم",
+  // European + English
+  "sanctions", "sanktionen", "sancties", "sankcje", "sanciones",
+  "sanções", "sanzioni", "κυρώσεις", "embargo",
+  // French + Italian
+  "gel des avoirs", "gel d'avoirs", "congelamento",
+  // Russian / Ukrainian
+  "санкции", "санкцій", "OFAC", "СДН",
+  // Turkish / Swahili
+  "yaptırım", "ambargo", "vikwazo",
+  // Hindi / Thai / Vietnamese / Indonesian
+  "प्रतिबंध", "มาตรการคว่ำบาตร", "lệnh trừng phạt", "sanksi",
+  // Hebrew / Polish / Korean / Japanese / Chinese
+  "סנקציות", "zamrożenie", "제재", "制裁", "禁運", "资产冻结", "禁运", "冻结",
 ];
 const TF_FRAGMENTS = [
-  "إرهاب", "تمويل الإرهاب", "تمويل إرهاب",
-  "terror", "финансирование терр", "терр",
-  "恐怖", "资助恐怖",
+  // Arabic / Persian
+  "إرهاب", "تمويل الإرهاب", "تمويل إرهاب", "تروریسم", "تامین مالی تروریسم",
+  // European + English
+  "terror", "terrorismus", "terrorisme", "terrorismo", "terroryzm",
+  "terrorismusfinanzierung", "terrorismefinanciering", "terrorisme",
+  "τρομοκρατ", "teforo", "terorism",
+  // Russian / Ukrainian
+  "терроризм", "тероризм", "финансирование терроризма", "фінансування тероризму",
+  // Turkish / Swahili / Hebrew / Hindi / Vietnamese / Indonesian
+  "terör", "ugaidi", "טרור", "आतंकवाद", "khủng bố", "terorisme",
+  // Korean / Japanese / Chinese / Thai
+  "테러", "テロ", "恐怖", "资助恐怖", "ก่อการร้าย",
 ];
 const CORRUPTION_FRAGMENTS = [
-  "رشوة", "فساد", "اختلاس",
-  "corruption", "pot-de-vin", "détournement",
-  "коррупц", "взятк", "хищение",
-  "腐败", "贪污", "贿赂", "受贿", "行贿",
+  // Arabic / Persian
+  "رشوة", "فساد", "اختلاس", "رشوه",
+  // European
+  "corruption", "korruption", "corruptie", "korupcja", "corrupcin", "corruzione",
+  "korrupsjon", "διαφθορ", "corrupção",
+  "pot-de-vin", "détournement", "tangente", "peculato",
+  // Russian / Ukrainian
+  "коррупция", "корупція", "взятка", "хабарництво", "хищение",
+  // Turkish / Swahili / Hebrew / Hindi / Vietnamese / Indonesian
+  "yolsuzluk", "rüşvet", "ufisadi", "שחיתות", "भ्रष्टाचार", "tham nhũng", "korupsi",
+  // Korean / Japanese / Chinese / Thai
+  "부패", "汚職", "腐败", "贪污", "贿赂", "受贿", "行贿", "ทุจริต",
 ];
 
 function i18nBucket(keyword: string): string {

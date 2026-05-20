@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useQuickScreen } from "@/lib/hooks/useQuickScreen";
 import { useAutoReport } from "@/lib/hooks/useAutoReport";
 import { useSuperBrain, type SuperBrainResult } from "@/lib/hooks/useSuperBrain";
@@ -404,7 +404,10 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
   // Sync super-brain composite score back to the parent list so the row
   // shows the full score (jurisdiction + adverse media + PEP + redlines)
   // instead of the quick-screen topScore (sanctions only, often 0).
-  useEffect(() => {
+  // useLayoutEffect fires synchronously after DOM mutations but before paint,
+  // eliminating the one-frame visual gap where the list shows 0 while the
+  // detail panel already shows the higher composite score.
+  useLayoutEffect(() => {
     if (superBrain.status === "success" && onUpdate) {
       onUpdate(subject.id, { riskScore: superBrain.result.composite.score });
     }
