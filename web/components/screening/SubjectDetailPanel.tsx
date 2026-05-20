@@ -68,6 +68,8 @@ import { ReScreenDiff } from "@/components/screening/ReScreenDiff";
 import { CrossSubjectLinks } from "@/components/screening/CrossSubjectLinks";
 import { ConfidenceBand } from "@/components/screening/ConfidenceBand";
 import { AIDecisionEngine } from "@/components/screening/AIDecisionEngine";
+import { CriticalBlockingPanel } from "@/components/screening/CriticalBlockingPanel";
+import { CategorizationOutput } from "@/components/screening/CategorizationOutput";
 import { writeAuditEvent } from "@/lib/audit";
 import {
   canPerform,
@@ -499,6 +501,25 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
   })();
   const effectiveScore = Math.max(brainScore || subject.riskScore, adverseMediaScoreFloor);
   const barWidth = `${Math.min(effectiveScore, 100)}%`;
+
+  // Compute compliance categorization from effective severity for display.
+  const categorizationDisplay = (() => {
+    const sev = brainSeverity ?? (screening.status === "success" ? screening.result.severity : null);
+    if (!sev || sev === "clear") return null;
+    const riskCategory =
+      sev === "critical" ? "CRITICAL" :
+      sev === "high"     ? "HIGH" :
+      sev === "medium"   ? "MEDIUM" : "LOW";
+    const dueDiligence: "CDD" | "SDD" | "EDD" =
+      riskCategory === "CRITICAL" || riskCategory === "HIGH" ? "EDD" :
+      riskCategory === "MEDIUM" ? "SDD" : "CDD";
+    const reviewMonths = riskCategory === "LOW" ? 12 : riskCategory === "MEDIUM" ? 6 : 3;
+    const slaDays     = riskCategory === "CRITICAL" || riskCategory === "HIGH" ? 5 : riskCategory === "MEDIUM" ? 10 : 30;
+    const now = new Date();
+    const nextReviewDate = new Date(now.getTime() + reviewMonths * 30 * 86_400_000).toISOString();
+    const slaDeadline    = new Date(now.getTime() + slaDays * 86_400_000).toISOString();
+    return { riskCategory, dueDiligence, nextReviewDate, slaDeadline } as const;
+  })();
 
   const brainLists =
     screening.status === "success"
@@ -1244,6 +1265,23 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
         )}
       </div>
 
+      {/* Critical sanctions blocking panel — shown when hits include OFAC SDN,
+          UAE LTL, UAE EOCN, or UN Consolidated. Required by Cabinet Resolution
+          74/2020 and FDL No.10/2025 Art.14. */}
+      {screening.status === "success" && screening.result.hits.length > 0 && (
+        <CriticalBlockingPanel
+          subjectName={subject.name}
+          subjectId={subject.id}
+          hits={screening.result.hits.map((h) => ({
+            listId: h.listId,
+            listRef: h.listRef,
+            candidateName: h.candidateName,
+            score: h.score,
+          }))}
+          severity={brainSeverity ?? screening.result.severity}
+        />
+      )}
+
       <Section title="Risk score">
         <div className="flex items-baseline gap-2 mb-2">
           <span className="font-display text-36 font-normal text-brand leading-none">
@@ -1275,6 +1313,17 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
           <ConfidenceBand score={effectiveScore} basis="brain calibration" />
         </div>
       </Section>
+
+      {/* Compliance categorization output — riskCategory, dueDiligence,
+          review schedule, SLA. FDL No.10/2025 Art.18. */}
+      {categorizationDisplay && (
+        <CategorizationOutput
+          riskCategory={categorizationDisplay.riskCategory}
+          dueDiligence={categorizationDisplay.dueDiligence}
+          nextReviewDate={categorizationDisplay.nextReviewDate}
+          slaDeadline={categorizationDisplay.slaDeadline}
+        />
+      )}
 
       {/* AI Decision Engine — auto-analyses subject and decides disposition */}
       <Section title="AI decision engine">

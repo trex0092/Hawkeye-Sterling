@@ -28,6 +28,8 @@ import { loadCandidates } from "@/lib/server/candidates-loader";
 import { quickScreen as brainQuickScreen } from "../../../../../dist/src/brain/quick-screen.js";
 import { ScreeningAuditWriter } from "@/lib/server/screening-audit";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { recordScreeningBias } from "@/lib/server/bias-monitor";
+import { checkAdversarialInput } from "@/lib/server/adversarial-guard";
 import type {
   QuickScreenCandidate,
   QuickScreenOptions,
@@ -162,6 +164,28 @@ function buildNegativeEvidence(
 
 // ── Route handler ─────────────────────────────────────────────────────────────
 
+async function isUaeListStale(): Promise<boolean> {
+  try {
+    const { getJson } = await import("@/lib/server/store");
+    const STALE_H = 36;
+    const [eocn, ltl] = await Promise.all([
+      getJson<{ fetchedAt?: number | string; generatedAt?: string }>("uae_eocn/latest.json").catch(() => null),
+      getJson<{ fetchedAt?: number | string; generatedAt?: string }>("uae_ltl/latest.json").catch(() => null),
+    ]);
+    const ageH = (meta: { fetchedAt?: number | string; generatedAt?: string } | null) => {
+      if (!meta) return Infinity;
+      const raw = meta.fetchedAt ?? meta.generatedAt;
+      if (!raw) return Infinity;
+      const t = typeof raw === "number" ? raw : Date.parse(raw as string);
+      if (!Number.isFinite(t)) return Infinity;
+      return (Date.now() - t) / 3_600_000;
+    };
+    return ageH(eocn) > STALE_H || ageH(ltl) > STALE_H;
+  } catch {
+    return false;
+  }
+}
+
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
@@ -234,6 +258,20 @@ export async function POST(req: Request): Promise<NextResponse> {
   // Run screening
   const ts = new Date().toISOString();
   const resultId = buildResultId(subject, ts, callerRequestId);
+  const uaeStale = await isUaeListStale();
+
+  // Adversarial input check — log suspicious names before screening.
+  const adversarialCheck = await checkAdversarialInput(tenant, subject.name);
+  if (adversarialCheck.risk !== "none") {
+    void writeAuditChainEntry({
+      event: "screening.adversarial_input_suspected",
+      actor: gate.keyId,
+      resultId,
+      subjectName: subject.name,
+      risk: adversarialCheck.risk,
+      reasons: adversarialCheck.reasons,
+    }, tenant).catch(() => undefined);
+  }
 
   let result: QuickScreenResult;
   try {
@@ -316,6 +354,75 @@ export async function POST(req: Request): Promise<NextResponse> {
     })();
   }
 
+  // Auto-create compliance case when hits are found (fire-and-forget).
+  if (result.hits.length > 0) {
+    void (async () => {
+      try {
+        const baseUrl = process.env["NEXT_PUBLIC_APP_URL"] ?? "http://localhost:3000";
+        const res = await fetch(`${baseUrl}/api/hs-cases`, {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "x-api-key": process.env["ADMIN_TOKEN"] ?? "",
+          },
+          body: JSON.stringify({
+            subjectName: subject.name,
+            subjectId: resultId,
+            severity: result.severity,
+            hits: result.hits.map((h) => ({
+              listId: h.listId,
+              listRef: h.listRef,
+              candidateName: h.candidateName,
+              matchScore: h.score,
+            })),
+            linkedAuditSeq: undefined,
+            createdBy: gate.keyId,
+          }),
+        });
+        if (!res.ok) {
+          const errBody = await res.text().catch(() => "");
+          console.warn("[screening/run] auto-case creation failed:", res.status, errBody.slice(0, 200));
+        } else {
+          const caseData = await res.json() as { ok: boolean; case?: { caseId: string }; deduplicated?: boolean };
+          if (caseData.ok && caseData.case?.caseId && !caseData.deduplicated) {
+            void fetch(`${baseUrl}/api/hs-cases/${caseData.case.caseId}/enrich`, {
+              method: "POST",
+              headers: { "x-api-key": process.env["ADMIN_TOKEN"] ?? "" },
+            }).catch((e: unknown) => {
+              console.warn("[screening/run] auto-enrich failed:", e instanceof Error ? e.message : String(e));
+            });
+          }
+          // If UAE lists are stale, queue subject for re-screen after refresh.
+          if (uaeStale) {
+            void fetch(`${baseUrl}/api/rescreen-queue`, {
+              method: "POST",
+              headers: {
+                "content-type": "application/json",
+                "x-api-key": process.env["ADMIN_TOKEN"] ?? "",
+              },
+              body: JSON.stringify({
+                subjectId: resultId,
+                subjectName: subject.name,
+                reason: "Screened while UAE EOCN or LTL list was stale (>36h). Re-screen required after refresh.",
+              }),
+            }).catch(() => undefined);
+          }
+        }
+      } catch (err) {
+        console.warn("[screening/run] auto-case creation error:", err instanceof Error ? err.message : String(err));
+      }
+    })();
+  }
+
+  // Record screening result for bias monitoring (fire-and-forget).
+  void recordScreeningBias(
+    tenant,
+    subject.name,
+    result.topScore,
+    result.severity,
+    result.hits.length,
+  ).catch(() => undefined);
+
   // Confidence calibration note — honest statement about what was and
   // wasn't checked. Never claim higher confidence than supported.
   const confidenceNote =
@@ -334,6 +441,8 @@ export async function POST(req: Request): Promise<NextResponse> {
       resultId,
       requestId: reqId,
       ...result,
+      provisionalScreening: uaeStale,
+      adversarialRisk: adversarialCheck.risk !== "none" ? adversarialCheck.risk : undefined,
       negativeEvidence,
       confidenceNote,
       latencyMs: Date.now() - t0,
