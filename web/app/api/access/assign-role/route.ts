@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
-import { loadUsers, saveUsers, appendPermissionLog, ROLE_MODULES, type UserRole } from "../_store";
+import { loadUsers, saveUsers, withUsersLock, appendPermissionLog, ROLE_MODULES, type UserRole, type AccessUser } from "../_store";
 import { adminAuth } from "@/lib/server/admin-auth";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
@@ -42,21 +42,36 @@ export async function POST(req: Request) {
     );
   }
 
-  const users = await loadUsers();
-  const userIdx = users.findIndex((u) => u.id === userId);
-  if (userIdx === -1) {
-    return NextResponse.json({ ok: false, error: "User not found" }, { status: 404 , headers: gate.headers });
+  type SavedData = { updatedUser: AccessUser; oldRole: UserRole };
+  let lockError: { status: number; message: string } | null = null;
+  let savedData: SavedData | null = null;
+  let users: AccessUser[] = [];
+
+  await withUsersLock(async () => {
+    users = await loadUsers();
+    const userIdx = users.findIndex((u) => u.id === userId);
+    if (userIdx === -1) {
+      lockError = { status: 404, message: "User not found" };
+      return;
+    }
+    const user = users[userIdx]!;
+    const oldRole = user.role;
+    const updatedUser = { ...user, role: newRole, modules: ROLE_MODULES[newRole] ?? user.modules };
+    const updatedUsers = [...users];
+    updatedUsers[userIdx] = updatedUser;
+    await saveUsers(updatedUsers);
+    savedData = { updatedUser, oldRole };
+  });
+
+  if (lockError || !savedData) {
+    return NextResponse.json(
+      { ok: false, error: lockError?.message ?? "User not found" },
+      { status: lockError?.status ?? 404, headers: gate.headers },
+    );
   }
 
-  const user = users[userIdx]!;
-  const oldRole = user.role;
-  const updatedUsers = [...users];
-  updatedUsers[userIdx] = {
-    ...user,
-    role: newRole,
-    modules: ROLE_MODULES[newRole] ?? user.modules,
-  };
-  await saveUsers(updatedUsers);
+  const { updatedUser, oldRole } = savedData as SavedData;
+  const user = users.find((u) => u.id === userId)!;
 
   const logEntry = {
     id: `log-${String(Date.now()).slice(-6)}`,
@@ -126,7 +141,7 @@ export async function POST(req: Request) {
     }
   }
 
-  const { passwordHash: _h, passwordSalt: _s, ...safeUser } = updatedUsers[userIdx]!;
+  const { passwordHash: _h, passwordSalt: _s, ...safeUser } = updatedUser;
   return NextResponse.json({
     ok: true,
     user: safeUser,

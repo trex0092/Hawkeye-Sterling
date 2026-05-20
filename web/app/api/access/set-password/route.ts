@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
 import { NextResponse } from "next/server";
-import { loadUsers, saveUsers } from "../_store";
+import { loadUsers, saveUsers, withUsersLock } from "../_store";
 import { generateSalt, hashPassword, verifySession, SESSION_COOKIE } from "@/lib/server/auth";
 import { cookies } from "next/headers";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
@@ -32,23 +32,31 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "Password must be at least 8 characters" }, { status: 400 });
   }
 
-  const users = await loadUsers();
-  const idx = users.findIndex((u) => u.id === userId);
-  if (idx === -1) {
+  let notFound = false;
+  let savedUsername: string | undefined;
+
+  await withUsersLock(async () => {
+    const users = await loadUsers();
+    const idx = users.findIndex((u) => u.id === userId);
+    if (idx === -1) { notFound = true; return; }
+
+    const salt = generateSalt();
+    const hash = hashPassword(newPassword, salt);
+    const updatedUsers = [...users];
+    updatedUsers[idx] = {
+      ...users[idx]!,
+      passwordHash: hash,
+      passwordSalt: salt,
+      pwVersion: (users[idx]!.pwVersion ?? 0) + 1,
+      ...(username ? { username } : {}),
+    };
+    await saveUsers(updatedUsers);
+    savedUsername = updatedUsers[idx]!.username;
+  });
+
+  if (notFound) {
     return NextResponse.json({ ok: false, error: "User not found" }, { status: 404 });
   }
-
-  const salt = generateSalt();
-  const hash = hashPassword(newPassword, salt);
-  const updatedUsers = [...users];
-  updatedUsers[idx] = {
-    ...users[idx]!,
-    passwordHash: hash,
-    passwordSalt: salt,
-    pwVersion: (users[idx]!.pwVersion ?? 0) + 1,
-    ...(username ? { username } : {}),
-  };
-  await saveUsers(updatedUsers);
 
   // FDL 10/2025 Art.24: privileged password reset must be in the tamper-evident
   // audit chain so regulators can review all access-control changes.
@@ -60,5 +68,5 @@ export async function POST(req: Request) {
     role: session.role,
   });
 
-  return NextResponse.json({ ok: true, username: updatedUsers[idx]!.username });
+  return NextResponse.json({ ok: true, username: savedUsername });
 }

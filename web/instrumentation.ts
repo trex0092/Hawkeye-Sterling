@@ -48,6 +48,15 @@ const REQUIRED_SECRETS: Array<{ key: string; minLen: number; genCmd: string }> =
   { key: "ADMIN_TOKEN", minLen: 16, genCmd: "openssl rand -hex 32" },
 ];
 
+// Required public env vars — not secrets, but routes break without them.
+const REQUIRED_PUBLIC_VARS: Array<{ key: string; hint: string }> = [
+  {
+    key: "NEXT_PUBLIC_APP_URL",
+    hint: "Set to the canonical deployment URL (e.g. https://hawkeye-sterling.netlify.app). " +
+      "Missing causes self-referential fetch() calls and CORS allowlist to fall back to the hardcoded default.",
+  },
+];
+
 function validateSecrets(): void {
   if (process.env.NEXT_RUNTIME === 'edge') return; // edge has limited env access
   const isProduction = process.env.NODE_ENV === 'production';
@@ -65,6 +74,11 @@ function validateSecrets(): void {
         `[startup] ${key} is too short (${val.length} chars, min ${minLen}). ` +
         `Generate a stronger value with: ${genCmd}`,
       );
+    }
+  }
+  for (const { key, hint } of REQUIRED_PUBLIC_VARS) {
+    if (!process.env[key]) {
+      console.warn(`[startup] ${key} is not set. ${hint}`);
     }
   }
 }

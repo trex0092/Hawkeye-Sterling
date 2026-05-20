@@ -224,11 +224,30 @@ function applyRedaction(text: string, violation: GuardrailViolation): string {
 
 // ── Guardrail engine ──────────────────────────────────────────────────────────
 
+const MAX_GUARDRAIL_INPUT = 50_000; // characters; prevents O(n×rules) cost on adversarial payloads
+
 export function applyGuardrails(
   text: string,
   type: GuardrailType,
   context?: GuardrailContext,
 ): GuardrailResult {
+  if (text.length > MAX_GUARDRAIL_INPUT) {
+    return {
+      passed: false,
+      blockedBy: [{
+        ruleId: 'INPUT_TOO_LARGE',
+        ruleName: 'Input Length Limit',
+        severity: 'block',
+        detectedText: `Input length ${text.length} exceeds maximum ${MAX_GUARDRAIL_INPUT} characters`,
+        remediation: 'Split input into smaller segments for guardrail evaluation',
+      }],
+      warnings: [],
+      redactions: [],
+      processedText: text,
+      appliedAt: new Date().toISOString(),
+    };
+  }
+
   const applicableRules = GUARDRAIL_RULES.filter(
     (r) => r.type === type || r.type === 'both'
   );

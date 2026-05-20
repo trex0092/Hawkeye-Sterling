@@ -4,7 +4,7 @@ export const maxDuration = 30;
 
 import { NextResponse } from "next/server";
 import { randomBytes } from "node:crypto";
-import { loadUsers, saveUsers, appendPermissionLog, ROLE_MODULES, type UserRole } from "../_store";
+import { loadUsers, saveUsers, withUsersLock, appendPermissionLog, ROLE_MODULES, type UserRole } from "../_store";
 import { generateSalt, hashPassword } from "@/lib/server/auth";
 import { adminAuth } from "@/lib/server/admin-auth";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
@@ -35,17 +35,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "A valid email address is required" }, { status: 400 });
   }
 
-  const users = await loadUsers();
-  if (users.some((u) => u.email.toLowerCase() === emailLower)) {
-    return NextResponse.json({ ok: false, error: "A user with this email already exists" }, { status: 409 });
-  }
-
   const derivedUsername = (username?.trim() || emailLower.split("@")[0]!.replace(/[^a-z0-9._-]/gi, "").toLowerCase()).slice(0, 64);
   if (!derivedUsername) {
     return NextResponse.json({ ok: false, error: "Could not derive a valid username from the email address" }, { status: 400 });
-  }
-  if (users.some((u) => u.username?.toLowerCase() === derivedUsername.toLowerCase())) {
-    return NextResponse.json({ ok: false, error: "Username already taken — choose a different one" }, { status: 409 });
   }
 
   const salt = generateSalt();
@@ -65,7 +57,25 @@ export async function POST(req: Request) {
     passwordHash: hash,
     passwordSalt: salt,
   };
-  await saveUsers([...users, newUser]);
+
+  // Atomic check-then-write: re-load under the in-process lock so a concurrent
+  // add-user request cannot sneak in a duplicate between our earlier check and save.
+  let lockError: { status: number; message: string } | null = null;
+  await withUsersLock(async () => {
+    const freshUsers = await loadUsers();
+    if (freshUsers.some((u) => u.email.toLowerCase() === emailLower)) {
+      lockError = { status: 409, message: "A user with this email already exists" };
+      return;
+    }
+    if (freshUsers.some((u) => u.username?.toLowerCase() === derivedUsername.toLowerCase())) {
+      lockError = { status: 409, message: "Username already taken — choose a different one" };
+      return;
+    }
+    await saveUsers([...freshUsers, newUser]);
+  });
+  if (lockError) {
+    return NextResponse.json({ ok: false, error: lockError.message }, { status: lockError.status });
+  }
 
   const logEntry = {
     id: `log-${String(Date.now()).slice(-6)}`,

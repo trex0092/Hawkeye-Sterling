@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
 import { NextResponse } from "next/server";
-import { loadUsers, saveUsers } from "../_store";
+import { loadUsers, saveUsers, withUsersLock } from "../_store";
 import {
   generateSalt,
   hashPassword,
@@ -55,34 +55,36 @@ export async function POST(req: Request) {
     );
   }
 
-  const users = await loadUsers();
-  const idx = users.findIndex((u) => u.id === session.userId);
-  if (idx === -1) {
-    return NextResponse.json({ ok: false, error: "User not found" }, { status: 404 });
-  }
+  type ChangeResult =
+    | { status: 'not_found' }
+    | { status: 'no_password' }
+    | { status: 'wrong_password' }
+    | { status: 'saved' };
 
-  const user = users[idx]!;
-  if (!user.passwordHash || !user.passwordSalt) {
-    return NextResponse.json(
-      { ok: false, error: "Account has no password set — contact your MLRO" },
-      { status: 400 },
-    );
-  }
+  let changeResult: ChangeResult = { status: 'not_found' };
 
-  if (!verifyPassword(currentPassword, user.passwordSalt, user.passwordHash)) {
-    return NextResponse.json({ ok: false, error: "Current password is incorrect" }, { status: 403 });
-  }
+  await withUsersLock(async () => {
+    const users = await loadUsers();
+    const idx = users.findIndex((u) => u.id === session.userId);
+    if (idx === -1) { changeResult = { status: 'not_found' }; return; }
 
-  const salt = generateSalt();
-  const hash = hashPassword(newPassword, salt);
-  const updatedUsers = [...users];
-  updatedUsers[idx] = {
-    ...user,
-    passwordHash: hash,
-    passwordSalt: salt,
-    pwVersion: (user.pwVersion ?? 0) + 1,
-  };
-  await saveUsers(updatedUsers);
+    const user = users[idx]!;
+    if (!user.passwordHash || !user.passwordSalt) { changeResult = { status: 'no_password' }; return; }
+    if (!verifyPassword(currentPassword, user.passwordSalt, user.passwordHash)) {
+      changeResult = { status: 'wrong_password' }; return;
+    }
+
+    const salt = generateSalt();
+    const hash = hashPassword(newPassword, salt);
+    const updatedUsers = [...users];
+    updatedUsers[idx] = { ...user, passwordHash: hash, passwordSalt: salt, pwVersion: (user.pwVersion ?? 0) + 1 };
+    await saveUsers(updatedUsers);
+    changeResult = { status: 'saved' };
+  });
+
+  if (changeResult.status === 'not_found') return NextResponse.json({ ok: false, error: "User not found" }, { status: 404 });
+  if (changeResult.status === 'no_password') return NextResponse.json({ ok: false, error: "Account has no password set — contact your MLRO" }, { status: 400 });
+  if (changeResult.status === 'wrong_password') return NextResponse.json({ ok: false, error: "Current password is incorrect" }, { status: 403 });
 
   // FDL 10/2025 Art.24: every access-control change must be in the audit chain.
   void writeAuditChainEntry({
