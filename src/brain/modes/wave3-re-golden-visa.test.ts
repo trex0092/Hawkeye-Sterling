@@ -61,7 +61,7 @@ describe('wave3-re-golden-visa', () => {
       }],
     }));
     // No sub_threshold hit; but might have other signals
-    const hasSubThreshold = r.evidence.includes('t1') && r.verdict === 'escalate';
+    const _hasSubThreshold = r.evidence.includes('t1') && r.verdict === 'escalate';
     // We mainly check no sub_threshold_marketed fires
     expect(r.rationale).not.toContain('sub_threshold_marketed');
   });

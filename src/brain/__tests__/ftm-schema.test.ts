@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ftmId, makeFtmEntity, toFtmNdjson, toFtmStream } from '../ftm-schema.js';
-import type { FtmEntity, FtmSchema } from '../ftm-schema.js';
+import { ftmId, makeFtmEntity, toFtmNdjson, toFtmStream, type FtmEntity, type FtmSchema } from '../ftm-schema.js';
 
 describe('ftmId', () => {
   it('returns an 8-character hex string', () => {

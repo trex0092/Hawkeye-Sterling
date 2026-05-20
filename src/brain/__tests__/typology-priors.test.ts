@@ -10,7 +10,7 @@ describe('TYPOLOGY_PRIORS catalogue', () => {
   });
 
   it('has valid probability values (0 < p <= 1) for all entries', () => {
-    for (const [id, p] of Object.entries(TYPOLOGY_PRIORS)) {
+    for (const [_id, p] of Object.entries(TYPOLOGY_PRIORS)) {
       expect(typeof p).toBe('number');
       expect(p).toBeGreaterThan(0);
       expect(p).toBeLessThanOrEqual(1);
