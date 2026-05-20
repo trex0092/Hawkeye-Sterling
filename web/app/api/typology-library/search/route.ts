@@ -308,7 +308,7 @@ export async function POST(req: Request) {
     const client = getAnthropicClient(apiKey, 55_000);
 
     const filterStr = body.filters
-      ? `Filters: sector=${body.filters.sector ?? "any"}, jurisdiction=${body.filters.jurisdictionType ?? "any"}, riskLevel=${body.filters.riskLevel ?? "any"}, fatfCategory=${body.filters.fatfCategory ?? "any"}`
+      ? `Filters: sector=${sanitizeField(body.filters.sector, 100) || "any"}, jurisdiction=${sanitizeField(body.filters.jurisdictionType, 100) || "any"}, riskLevel=${sanitizeField(body.filters.riskLevel, 50) || "any"}, fatfCategory=${sanitizeField(body.filters.fatfCategory, 100) || "any"}`
       : "";
 
     const response = await client.messages.create({

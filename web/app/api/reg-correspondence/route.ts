@@ -185,14 +185,14 @@ ${authority.address}
 ${authority.salutation}
 
 Subject: ${sanitizeField(body.subject, 200)}
-Urgency: ${body.urgency ?? "routine"}
+Urgency: ${sanitizeField(body.urgency, 20) || "routine"}
 Institution: ${sanitizeField(body.institutionName, 200) || "[Institution Name]"}
 MLRO: ${sanitizeField(body.mlroName, 200) || "[MLRO Name]"}
 Reference Number: ${sanitizeField(body.referenceNumber, 200) || "auto-generate"}
 ${body.caseId ? `Case ID: ${sanitizeField(body.caseId, 200)}` : ""}
 ${body.subjectName ? `Subject of Matter: ${sanitizeField(body.subjectName, 200)}` : ""}
 ${body.inResponseTo ? `In Response To: ${sanitizeField(body.inResponseTo, 200)}` : ""}
-${body.regulatoryDeadline ? `Regulatory Deadline: ${body.regulatoryDeadline}` : ""}
+${body.regulatoryDeadline ? `Regulatory Deadline: ${sanitizeField(body.regulatoryDeadline, 50)}` : ""}
 
 Key Facts to Include:
 ${body.keyFacts.map((f, i) => `${i + 1}. ${sanitizeField(f, 500)}`).join("\n")}
