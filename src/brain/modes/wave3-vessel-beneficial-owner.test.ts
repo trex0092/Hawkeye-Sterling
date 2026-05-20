@@ -242,4 +242,17 @@ describe('wave3-vessel-beneficial-owner', () => {
     expect(r.score).toBeGreaterThan(0);
     expect(r.verdict).toBe('escalate');
   });
+
+  it('does not flag chain_depth when ownershipChainDepth < CHAIN_DEPTH_FLAG (< 3)', async () => {
+    const r = await vesselBeneficialOwnerApply(makeCtx({
+      vessels: [{
+        imoNumber: '1234567',
+        ownershipChainDepth: 2,
+        beneficialOwnerDisclosed: true,
+        registeredOwnerImoCompanyNumber: 'CO1',
+      }],
+    }));
+    // depth=2 < CHAIN_DEPTH_FLAG=3, so neither chain_depth_extreme nor chain_depth_high fires
+    expect(r.verdict).toBe('clear');
+  });
 });
