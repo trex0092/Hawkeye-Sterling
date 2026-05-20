@@ -38,6 +38,11 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "Invalid JSON body" }, { status: 400 , headers: gate.headers });
   }
 
+  const bodyStr = JSON.stringify(body);
+  if (bodyStr.length > 50_000) {
+    return NextResponse.json({ ok: false, error: "request body exceeds 50,000 character limit" }, { status: 400, headers: gate.headers });
+  }
+
   let result: GapAnalysisResult;
   try {
     const client = getAnthropicClient(apiKey, 55_000);
@@ -45,7 +50,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       model: "claude-haiku-4-5-20251001",
       max_tokens: 700,
       system: SYSTEM_PROMPT,
-      messages: [{ role: "user", content: JSON.stringify(body) }],
+      messages: [{ role: "user", content: bodyStr }],
     });
     const text = (response.content.find(b => b.type === "text") as { text: string } | undefined)?.text ?? "{}";
     const jsonMatch = text.match(/\{[\s\S]*\}/);

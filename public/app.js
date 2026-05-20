@@ -561,8 +561,16 @@ function bindAdvisor() {
   // via localStorage key `hawkeye.api.brainReason` (default :8081/api/brain-reason).
   async function callBrainReason(payload) {
     const endpoint = (function () {
-      try { return localStorage.getItem('hawkeye.api.brainReason') || 'http://localhost:8081/api/brain-reason'; }
-      catch (_) { return 'http://localhost:8081/api/brain-reason'; }
+      try {
+        const override = localStorage.getItem('hawkeye.api.brainReason');
+        if (override) {
+          try {
+            const u = new URL(override);
+            if (u.origin === window.location.origin) return override;
+          } catch (_) { /* invalid URL */ }
+        }
+        return 'http://localhost:8081/api/brain-reason';
+      } catch (_) { return 'http://localhost:8081/api/brain-reason'; }
     })();
     try {
       const res = await fetch(endpoint, {

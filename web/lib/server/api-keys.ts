@@ -12,7 +12,7 @@
 // Keys issued before the index existed fall back to a linear scan and
 // then backfill the index for subsequent calls.
 
-import { createHash, randomBytes } from "node:crypto";
+import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { del, getJson, listKeys, setJson } from "./store";
 import { tierFor, type TierDefinition, type TierId } from "@/lib/data/tiers";
 
@@ -134,7 +134,13 @@ export async function validateAndConsume(plaintext: string | null): Promise<KeyV
   // Backward-compat fallback for keys issued before the index existed.
   if (!match) {
     const records = await listApiKeys();
-    const found = records.find((r) => r.hash === hash);
+    const found = records.find((r) => {
+      try {
+        const a = new Uint8Array(Buffer.from(r.hash, "hex"));
+        const b = new Uint8Array(Buffer.from(hash, "hex"));
+        return a.length > 0 && a.length === b.length && timingSafeEqual(a, b);
+      } catch { return false; }
+    });
     if (found) {
       match = found;
       // Backfill index so next call is O(1).

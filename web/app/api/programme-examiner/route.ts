@@ -133,7 +133,7 @@ Return ONLY valid JSON:
 }`,
     messages: [{
       role: "user",
-      content: `Programme Facts:\n${JSON.stringify(body, null, 2)}\n\nIO Descriptions for reference:\n${JSON.stringify(IO_DESCRIPTIONS, null, 2)}\n\nConduct the virtual assessment.`,
+      content: `Programme Facts:\n${JSON.stringify(body, null, 2).slice(0, 20_000)}\n\nIO Descriptions for reference:\n${JSON.stringify(IO_DESCRIPTIONS, null, 2)}\n\nConduct the virtual assessment.`,
     }],
   });
 

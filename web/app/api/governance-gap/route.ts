@@ -82,9 +82,9 @@ export async function POST(req: Request) {
         {
           role: "user",
           content: `Institution: ${sanitizeField(body.institutionName ?? "Hawkeye Sterling", 200)}
-Approvals: ${JSON.stringify(body.approvals ?? [], null, 2)}
-Meeting Minutes: ${JSON.stringify(body.minutes ?? [], null, 2)}
-Regulatory Circulars: ${JSON.stringify(body.circulars ?? [], null, 2)}
+Approvals: ${JSON.stringify((body.approvals ?? []).slice(0, 50), null, 2)}
+Meeting Minutes: ${JSON.stringify((body.minutes ?? []).slice(0, 50), null, 2)}
+Regulatory Circulars: ${JSON.stringify((body.circulars ?? []).slice(0, 50), null, 2)}
 
 Perform a comprehensive AML governance gap analysis. Identify all gaps, risks, and remediation actions.`,
         },

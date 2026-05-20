@@ -55,9 +55,13 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers });
     }
 
-  const { entries, periodDays } = body;
+  const { entries } = body;
+  const safePeriodDays = Math.max(1, Math.min(365, Math.round(Number(body.periodDays) || 30)));
   if (!entries || !Array.isArray(entries)) {
     return NextResponse.json({ ok: false, error: "entries array is required" }, { status: 400 , headers: gate.headers });
+  }
+  if (entries.length > 500) {
+    return NextResponse.json({ ok: false, error: "entries array must not exceed 500 items" }, { status: 400, headers: gate.headers });
   }
 
   try { writeAuditEvent("mlro", "audit-trail.ai-anomaly-scan", "trail"); }
@@ -78,7 +82,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         messages: [
           {
             role: "user",
-            content: `Audit trail (${periodDays} days, ${entries.length} entries): ${JSON.stringify(entries)}. Return ONLY this JSON: { "anomalyScore": number, "anomalyLevel": "critical"|"elevated"|"normal", "anomalies": [{ "type": "string", "description": "string", "severity": "high"|"medium"|"low", "affectedActors": ["string"], "recommendation": "string" }], "patternSummary": "string", "actorRisk": [{ "actor": "string", "riskFlag": "string", "actionCount": number }], "integrityNote": "string", "regulatoryNote": "string" }`,
+            content: `Audit trail (${safePeriodDays} days, ${entries.length} entries): ${JSON.stringify(entries)}. Return ONLY this JSON: { "anomalyScore": number, "anomalyLevel": "critical"|"elevated"|"normal", "anomalies": [{ "type": "string", "description": "string", "severity": "high"|"medium"|"low", "affectedActors": ["string"], "recommendation": "string" }], "patternSummary": "string", "actorRisk": [{ "actor": "string", "riskFlag": "string", "actionCount": number }], "integrityNote": "string", "regulatoryNote": "string" }`,
           },
         ],
       });
