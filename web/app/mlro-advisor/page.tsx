@@ -1412,6 +1412,11 @@ export default function MlroAdvisorPage() {
   const [daAnswer, setDaAnswer] = useState<string | null>(null);
   const [daLoading, setDaLoading] = useState(false);
   const [daError, setDaError] = useState<string | null>(null);
+  // Structured operator hint paired with daError when the server recognised
+  // the failure mode (MCP credential gap, agent-not-found, etc.). Rendered
+  // in a separate styled block below the raw error so the MLRO sees both
+  // the technical message AND the actionable next steps.
+  const [daHint, setDaHint] = useState<string | null>(null);
 
   // ── Advisor state ────────────────────────────────────────────────────────────
   const [question, setQuestion] = useState("");
@@ -12369,6 +12374,7 @@ export default function MlroAdvisorPage() {
                 onClick={async () => {
                   setDaLoading(true);
                   setDaError(null);
+                  setDaHint(null);
                   setDaAnswer(null);
                   try {
                     const res = await fetch("/api/agent/data-analyst", {
@@ -12376,9 +12382,13 @@ export default function MlroAdvisorPage() {
                       headers: { "content-type": "application/json" },
                       body: JSON.stringify({ question: daQuestion }),
                     });
-                    const data = await res.json();
-                    if (!data.ok) throw new Error(data.error ?? "Agent error");
-                    setDaAnswer(data.answer);
+                    const data = (await res.json()) as { ok: boolean; answer?: string; error?: string; hint?: string };
+                    if (!data.ok) {
+                      setDaError(data.error ?? "Agent error");
+                      if (typeof data.hint === "string" && data.hint.length > 0) setDaHint(data.hint);
+                      return;
+                    }
+                    setDaAnswer(data.answer ?? null);
                   } catch (err) {
                     setDaError(err instanceof Error ? err.message : "Unknown error");
                   } finally {
@@ -12392,7 +12402,7 @@ export default function MlroAdvisorPage() {
               {daAnswer && (
                 <button
                   type="button"
-                  onClick={() => { setDaAnswer(null); setDaQuestion(""); setDaError(null); }}
+                  onClick={() => { setDaAnswer(null); setDaQuestion(""); setDaError(null); setDaHint(null); }}
                   className="px-3 py-1.5 border border-hair-2 rounded-lg text-13 text-ink-2 hover:text-ink-0 transition-colors"
                 >
                   Clear
@@ -12403,6 +12413,12 @@ export default function MlroAdvisorPage() {
             {daError && (
               <div className="px-4 py-2.5 bg-red-dim text-red border border-red/30 rounded-lg text-13 mb-3">
                 {daError}
+              </div>
+            )}
+            {daHint && (
+              <div className="px-4 py-3 bg-amber-dim text-ink-1 border border-amber/30 rounded-lg text-13 mb-3 whitespace-pre-line">
+                <div className="text-11 font-semibold text-amber mb-1.5 uppercase tracking-wider">What to do</div>
+                {daHint}
               </div>
             )}
 
