@@ -62,6 +62,11 @@ describe('phonetic', () => {
     expect(a.length).toBeGreaterThan(0);
     expect(b.length).toBeGreaterThan(0);
   });
+  it('metaphone handles x → ks', () => {
+    // covers case "x" branch in the metaphone switch
+    const code = metaphone('alex');
+    expect(code).toContain('ks');
+  });
 });
 
 describe('tokenSetSimilarity', () => {

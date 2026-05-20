@@ -187,6 +187,23 @@ describe('wave3-vessel-ais-gap', () => {
     expect(r.verdict).toBe('clear');
   });
 
+  it('does not flag_hopping when hist has 3+ entries but all changes are old (> 24 months)', async () => {
+    // All flag changes are 3 years ago — outside the 24-month cutoff
+    const oldDate = new Date(Date.now() - 3 * 365 * 24 * 60 * 60 * 1000).toISOString();
+    const r = await vesselAisGapApply(makeCtx({
+      aisReports: [],
+      vessel: {
+        flagHistory: [
+          { flagState: 'PA', from: oldDate },
+          { flagState: 'LR', from: oldDate },
+          { flagState: 'MH', from: oldDate },
+        ],
+      },
+    }));
+    // hist.length = 3 >= FLAG_HOP_THRESHOLD+1=3, but recentChanges < 2 → no flag
+    expect(r.verdict).toBe('clear');
+  });
+
   it('does not flag when no vessel context', async () => {
     const r = await vesselAisGapApply(makeCtx({
       aisReports: [
@@ -221,5 +238,39 @@ describe('wave3-vessel-ais-gap', () => {
     const r = await vesselAisGapApply(makeCtx());
     expect(r.modeId).toBe('vessel_ais_gap');
     expect(r.category).toBe('sectoral_typology');
+  });
+
+  it('flags sanctioned_port with no timestamp on report (timestamp ?? fallback)', async () => {
+    const r = await vesselAisGapApply(makeCtx({
+      aisReports: [
+        { reportedDestination: 'BANDAR ABBAS' }, // no timestamp → uses '' in evidence
+      ],
+    }));
+    expect(r.score).toBeGreaterThan(0);
+    expect(r.evidence[0]).toContain('BANDAR ABBAS');
+  });
+
+  it('hoursBetween returns 0 for invalid timestamps (non-finite Date.parse)', async () => {
+    // Provide reports with truthy-but-invalid timestamp strings — pass the filter but yield NaN in Date.parse
+    const r = await vesselAisGapApply(makeCtx({
+      aisReports: [
+        { timestamp: 'INVALID_DATE' },
+        { timestamp: 'ALSO_INVALID' },
+      ],
+    }));
+    // hoursBetween returns 0, so no dark period flag fires
+    expect(r.verdict).toBe('clear');
+  });
+
+  it('triggers sort comparator with out-of-order timestamps', async () => {
+    const r = await vesselAisGapApply(makeCtx({
+      aisReports: [
+        { timestamp: '2024-03-01T00:00:00Z' },
+        { timestamp: '2024-01-01T00:00:00Z' }, // out of order
+        { timestamp: '2024-02-01T00:00:00Z' },
+      ],
+    }));
+    // After sort: Jan → Feb (31d gap → flag), Feb → Mar (28d gap → flag)
+    expect(r.score).toBeGreaterThan(0);
   });
 });

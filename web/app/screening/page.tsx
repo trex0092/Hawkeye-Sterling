@@ -1201,9 +1201,9 @@ export default function ScreeningPage() {
         if (!res.ok || !res.data?.ok) return;
         const v = res.data.verdict;
         const tier = v?.riskTier;
-        if (!tier) return;
+        if (!tier || tier === "clear") return;
         const sar = v?.sarRecommended === true;
-        const score = sar ? 95 : tier === "critical" ? 90 : tier === "high" ? 75 : 50;
+        const score = sar ? 95 : tier === "critical" ? 90 : tier === "high" ? 75 : tier === "medium" ? 50 : 30;
         setSubjects((prev) =>
           prev.map((s) =>
             s.id === subject.id

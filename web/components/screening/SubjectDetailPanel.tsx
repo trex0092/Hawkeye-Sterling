@@ -488,7 +488,8 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
       return floors[news.result.topSeverity] ?? 0;
     }
     if (subject.adverseMedia?.score && subject.adverseMedia.score > 0) {
-      return Math.max(30, Math.round(subject.adverseMedia.score * 100));
+      // score is stored on a 0-100 scale; clamp to [30, 100]
+      return Math.max(30, Math.min(100, Math.round(subject.adverseMedia.score)));
     }
     return 0;
   })();

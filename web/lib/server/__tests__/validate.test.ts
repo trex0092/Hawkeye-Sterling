@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import {
   validateBody,
+  validatePositiveInt,
   QuickScreenRequestSchema,
   FourEyesEnqueueSchema,
   FourEyesDecisionSchema,
@@ -185,5 +186,40 @@ describe('FourEyesDecisionSchema', () => {
       decision: 'approve',
     });
     expect(r.success).toBe(false);
+  });
+});
+
+describe('validatePositiveInt', () => {
+  it('returns null for non-number non-string types (covers the else branch)', () => {
+    expect(validatePositiveInt(null)).toBeNull();
+    expect(validatePositiveInt(true)).toBeNull();
+    expect(validatePositiveInt({})).toBeNull();
+    expect(validatePositiveInt([])).toBeNull();
+  });
+
+  it('returns null for an empty string', () => {
+    expect(validatePositiveInt('')).toBeNull();
+    expect(validatePositiveInt('   ')).toBeNull();
+  });
+
+  it('parses a valid positive integer string', () => {
+    expect(validatePositiveInt('5')).toBe(5);
+  });
+
+  it('returns null for a non-integer number string', () => {
+    expect(validatePositiveInt('1.5')).toBeNull();
+  });
+
+  it('returns null when exceeding max', () => {
+    expect(validatePositiveInt(10, { max: 5 })).toBeNull();
+  });
+
+  it('accepts a numeric value directly', () => {
+    expect(validatePositiveInt(3)).toBe(3);
+  });
+
+  it('returns null for zero or negative numbers', () => {
+    expect(validatePositiveInt(0)).toBeNull();
+    expect(validatePositiveInt(-1)).toBeNull();
   });
 });
