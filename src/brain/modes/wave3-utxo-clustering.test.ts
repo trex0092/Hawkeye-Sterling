@@ -235,4 +235,53 @@ describe('wave3-utxo-clustering', () => {
     // changeAddr is undefined → no hit pushed
     expect(r.verdict).toBe('clear');
   });
+
+  it('cluster with size < 3 not included in hits (only size >= 3 clusters)', async () => {
+    // 2 inputs: cluster size = 2 → NOT >= 3, so no cio_cluster hit
+    const r = await utxoClusteringApply(makeCtx({
+      transactions: [
+        { hash: 'tx1', inputAddresses: ['x1', 'x2'] },
+      ],
+    }));
+    expect(r.verdict).toBe('clear');
+    expect(r.score).toBe(0);
+  });
+
+  it('change address evidence omits txn ref when hash is missing', async () => {
+    // no hash → evidence should not include "(txn ..."
+    const r = await utxoClusteringApply(makeCtx({
+      transactions: [{
+        outputAddresses: ['addr_change2', 'addr_round2'],
+        outputValues: [0.12345, 1.00],
+        // no hash
+      }],
+    }));
+    expect(r.score).toBeGreaterThan(0);
+    expect(r.evidence[0]).not.toContain('txn');
+  });
+
+  it('outputValues with undefined entries treated as 0 (no change flag)', async () => {
+    // outputValues has items but they're sparse (edge case)
+    const r = await utxoClusteringApply(makeCtx({
+      transactions: [{
+        hash: 'tx1',
+        outputAddresses: ['addr1', 'addr2'],
+        outputValues: [undefined as unknown as number, 1.00],
+      }],
+    }));
+    // a = 0 (undefined ?? 0) → a <= 0 → skip
+    expect(r.verdict).toBe('clear');
+  });
+
+  it('handles missing outputAddresses (null coalescing [])', async () => {
+    const r = await utxoClusteringApply(makeCtx({
+      transactions: [{
+        hash: 'tx1',
+        // no outputAddresses
+        outputValues: [1.00, 0.12345],
+      }],
+    }));
+    // outputAddresses is undefined → [] → changeAddr = undefined
+    expect(r.verdict).toBe('clear');
+  });
 });

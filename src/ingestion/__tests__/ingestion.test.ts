@@ -43,6 +43,26 @@ describe('opensanctions', () => {
     const fake: FetchLike = async () => new Response('no', { status: 401 });
     await expect(searchOpenSanctions({ query: 'x', apiKey: 'bad', fetchImpl: fake })).rejects.toThrow(/HTTP 401/);
   });
+
+  it('includes national_id identifiers from idNumber property', async () => {
+    const fake: FetchLike = async () => jsonResponse({
+      results: [
+        {
+          id: 'Q-99999',
+          caption: 'Bob Test',
+          schema: 'Person',
+          datasets: ['ofac_sdn'],
+          properties: {
+            name: ['Bob Test'],
+            idNumber: ['NID-001', 'NID-002'],
+          },
+        },
+      ],
+    });
+    const entries = await searchOpenSanctions({ query: 'bob', apiKey: 'test', fetchImpl: fake });
+    expect(entries[0]!.identifiers.some((i) => i.kind === 'national_id' && i.number === 'NID-001')).toBe(true);
+    expect(entries[0]!.identifiers.some((i) => i.kind === 'national_id' && i.number === 'NID-002')).toBe(true);
+  });
 });
 
 describe('adverse-media — NewsAPI', () => {

@@ -187,6 +187,23 @@ describe('wave3-vessel-ais-gap', () => {
     expect(r.verdict).toBe('clear');
   });
 
+  it('does not flag_hopping when hist has 3+ entries but all changes are old (> 24 months)', async () => {
+    // All flag changes are 3 years ago — outside the 24-month cutoff
+    const oldDate = new Date(Date.now() - 3 * 365 * 24 * 60 * 60 * 1000).toISOString();
+    const r = await vesselAisGapApply(makeCtx({
+      aisReports: [],
+      vessel: {
+        flagHistory: [
+          { flagState: 'PA', from: oldDate },
+          { flagState: 'LR', from: oldDate },
+          { flagState: 'MH', from: oldDate },
+        ],
+      },
+    }));
+    // hist.length = 3 >= FLAG_HOP_THRESHOLD+1=3, but recentChanges < 2 → no flag
+    expect(r.verdict).toBe('clear');
+  });
+
   it('does not flag when no vessel context', async () => {
     const r = await vesselAisGapApply(makeCtx({
       aisReports: [

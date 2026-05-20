@@ -226,4 +226,20 @@ describe('wave3-vessel-beneficial-owner', () => {
     }));
     expect(r.evidence[0]).toBe('My Tanker');
   });
+
+  it('uses (unidentified) as ref when both imoNumber and vesselName missing', async () => {
+    const r = await vesselBeneficialOwnerApply(makeCtx({
+      vessels: [{ beneficialOwnerDisclosed: false }],
+    }));
+    expect(r.evidence[0]).toBe('(unidentified)');
+  });
+
+  it('uses ? in label when vesselName is missing on no_imo_number hit', async () => {
+    const r = await vesselBeneficialOwnerApply(makeCtx({
+      vessels: [{ beneficialOwnerDisclosed: true, registeredOwnerImoCompanyNumber: 'CO1' }],
+    }));
+    // No imoNumber, no vesselName → label should contain '"?"'
+    expect(r.score).toBeGreaterThan(0);
+    expect(r.verdict).toBe('escalate');
+  });
 });
