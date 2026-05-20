@@ -14,8 +14,7 @@
 // When neither is configured the adapter returns isAvailable()=false and
 // the screening pipeline skips it — no side effects, no errors.
 
-import type { NewsAdapter, NewsArticle } from "./newsAdapters";
-import { NULL_NEWS_ADAPTER } from "./newsAdapters";
+import { NULL_NEWS_ADAPTER, type NewsAdapter, type NewsArticle } from "./newsAdapters";
 
 const TIMEOUT_MS = 15_000;
 
