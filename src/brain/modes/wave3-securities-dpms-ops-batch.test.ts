@@ -35,6 +35,18 @@ describe('securities-dpms-ops: insurance_premium_dump', () => {
     const r = await apply(makeCtx({ insurancePolicies: [{ policyId: 'p1', premiumPaidAed: 99_999, surrenderedWithinDays: 30 }] }));
     expect(r.verdict).toBe('clear');
   });
+
+  it('does not flag when surrenderedWithinDays is undefined (defaults to Infinity)', async () => {
+    const r = await apply(makeCtx({ insurancePolicies: [{ policyId: 'p1', premiumPaidAed: 200_000 }] }));
+    // surrenderedWithinDays ?? Infinity → Infinity > 90 → no flag
+    expect(r.verdict).toBe('clear');
+  });
+
+  it('does not flag when premiumPaidAed is undefined (defaults to 0)', async () => {
+    const r = await apply(makeCtx({ insurancePolicies: [{ policyId: 'p1', surrenderedWithinDays: 30 }] }));
+    // premiumPaidAed ?? 0 → 0 < 100k → no flag
+    expect(r.verdict).toBe('clear');
+  });
 });
 
 describe('securities-dpms-ops: life_policy_third_party_assignment', () => {
@@ -93,6 +105,12 @@ describe('securities-dpms-ops: securities_swap_layering', () => {
     const r = await apply(makeCtx({ swapTrades: [{ tradeId: 't1', offsettingTrades: 5, counterpartyRelated: false }] }));
     expect(r.verdict).toBe('clear');
   });
+
+  it('does not flag when offsettingTrades is undefined (defaults to 0)', async () => {
+    const r = await apply(makeCtx({ swapTrades: [{ tradeId: 't1', counterpartyRelated: true }] }));
+    // offsettingTrades ?? 0 → 0 < 3 → no flag
+    expect(r.verdict).toBe('clear');
+  });
 });
 
 describe('securities-dpms-ops: wash_trading_securities', () => {
@@ -145,6 +163,42 @@ describe('securities-dpms-ops: spoofing_layering', () => {
   it('does not flag when spoofedQuoteCount < 10', async () => {
     const r = await apply(makeCtx({ orderBookEvents: [{ eventId: 'e1', cancellationRatio: 0.99, spoofedQuoteCount: 9 }] }));
     expect(r.verdict).toBe('clear');
+  });
+
+  it('does not flag when cancellationRatio and spoofedQuoteCount are undefined (default to 0)', async () => {
+    const r = await apply(makeCtx({ orderBookEvents: [{ eventId: 'e1' }] }));
+    // cancellationRatio ?? 0 → 0 < 0.95 → no flag
+    expect(r.verdict).toBe('clear');
+  });
+
+  it('does not flag when cancellationRatio >= 0.95 but spoofedQuoteCount undefined (defaults to 0)', async () => {
+    const r = await apply(makeCtx({ orderBookEvents: [{ eventId: 'e1', cancellationRatio: 0.97 }] }));
+    // cancellationRatio=0.97 >= 0.95 → true; spoofedQuoteCount ?? 0 → 0 < 10 → no flag
+    expect(r.verdict).toBe('clear');
+  });
+});
+
+describe('securities-dpms-ops: build() compression and flag verdict', () => {
+  // Use insurance_premium_dump to test build() branches since it has a single high-weight signal
+  const apply = SECURITIES_DPMS_OPS_BATCH_APPLIES['insurance_premium_dump']!;
+
+  it('produces flag verdict when score >= 0.3 but < 0.6', async () => {
+    // weight=0.45 → score=0.45 → flag
+    const r = await apply(makeCtx({ insurancePolicies: [{ policyId: 'p1', premiumPaidAed: 100_000, surrenderedWithinDays: 30 }] }));
+    expect(r.verdict).toBe('flag');
+  });
+
+  it('compresses score when raw > 0.7 (multiple signals)', async () => {
+    // 2 policies each with weight 0.45 = 0.90 raw > 0.7 → compressed
+    const r = await apply(makeCtx({
+      insurancePolicies: [
+        { policyId: 'p1', premiumPaidAed: 100_000, surrenderedWithinDays: 30 },
+        { policyId: 'p2', premiumPaidAed: 200_000, surrenderedWithinDays: 60 },
+      ],
+    }));
+    expect(r.score).toBeGreaterThan(0.7);
+    expect(r.score).toBeLessThan(1);
+    expect(r.verdict).toBe('escalate');
   });
 });
 
@@ -349,6 +403,18 @@ describe('securities-dpms-ops: dormant_company_reactivation', () => {
     const r = await apply(makeCtx({ companyReactivations: [{ entityId: 'e1', dormantYears: 3, recentReactivation: true, postReactivationVolumeAed: 499_999 }] }));
     expect(r.verdict).toBe('clear');
   });
+
+  it('does not flag when dormantYears and postReactivationVolumeAed are undefined (default to 0)', async () => {
+    const r = await apply(makeCtx({ companyReactivations: [{ entityId: 'e1', recentReactivation: true }] }));
+    // dormantYears ?? 0 → 0, not >= 2 → no flag
+    expect(r.verdict).toBe('clear');
+  });
+
+  it('does not flag when postReactivationVolumeAed is undefined (defaults to 0, not >= 500k)', async () => {
+    const r = await apply(makeCtx({ companyReactivations: [{ entityId: 'e1', dormantYears: 3, recentReactivation: true }] }));
+    // postReactivationVolumeAed ?? 0 → 0 < 500k → no flag
+    expect(r.verdict).toBe('clear');
+  });
 });
 
 describe('securities-dpms-ops: director_resignation_cluster', () => {
@@ -372,6 +438,12 @@ describe('securities-dpms-ops: director_resignation_cluster', () => {
   it('handles missing rolesAffected gracefully', async () => {
     const r = await apply(makeCtx({ resignationClusters: [{ entityId: 'e1', resignationsLast90d: 4 }] }));
     expect(r.score).toBeGreaterThan(0);
+  });
+
+  it('does not flag when resignationsLast90d is undefined (defaults to 0)', async () => {
+    const r = await apply(makeCtx({ resignationClusters: [{ entityId: 'e1' }] }));
+    // resignationsLast90d ?? 0 → 0, not >= 3 → no flag
+    expect(r.verdict).toBe('clear');
   });
 });
 
@@ -419,6 +491,12 @@ describe('securities-dpms-ops: mass_filing_same_day', () => {
 
   it('does not flag when sameAgent=false', async () => {
     const r = await apply(makeCtx({ massFilings: [{ filingDate: '2024-01-01', filingsCount: 50, sameAgent: false }] }));
+    expect(r.verdict).toBe('clear');
+  });
+
+  it('does not flag when filingsCount is undefined (defaults to 0)', async () => {
+    const r = await apply(makeCtx({ massFilings: [{ filingDate: '2024-01-01', sameAgent: true }] }));
+    // filingsCount ?? 0 → 0, not >= 20 → no flag
     expect(r.verdict).toBe('clear');
   });
 });

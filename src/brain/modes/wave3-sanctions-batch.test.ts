@@ -40,6 +40,13 @@ describe('sanctions-batch: dual_use_chemical_routing', () => {
     const r = await apply(makeCtx({ chemicalShipments: [{ shipmentId: 's1', precursorListed: 'none', endUserVerified: true }] }));
     expect(r.verdict).toBe('clear');
   });
+
+  it('flags unverified_end_user with missing endUserCountryIso2 (uses ? fallback)', async () => {
+    const r = await apply(makeCtx({ chemicalShipments: [{ shipmentId: 's1', endUserVerified: false }] }));
+    // endUserCountryIso2 is undefined → ?? '?' → evidence contains '?'
+    expect(r.score).toBeGreaterThan(0);
+    expect(r.evidence[0]).toContain('?');
+  });
 });
 
 describe('sanctions-batch: proliferation_finance_unscr1540', () => {
@@ -272,5 +279,11 @@ describe('sanctions-batch: fronting_company_indicator', () => {
     const r = await apply(makeCtx({ frontingProfiles: [{ entityId: 'e1', sharesAddressWithDesignated: true, sharesDirectorsWithDesignated: true, sharesIndustryWithDesignated: true, isNewlyIncorporated: true }] }));
     expect(r.score).toBeGreaterThan(0);
     expect(r.score).toBeLessThanOrEqual(0.45);
+  });
+
+  it('does not flag sharesAddressWithDesignated when it is false (false branch)', async () => {
+    const r = await apply(makeCtx({ frontingProfiles: [{ entityId: 'e1', sharesAddressWithDesignated: false, sharesDirectorsWithDesignated: true, sharesIndustryWithDesignated: true }] }));
+    // Only directors + industry → 2 flags → still flags
+    expect(r.score).toBeGreaterThan(0);
   });
 });
