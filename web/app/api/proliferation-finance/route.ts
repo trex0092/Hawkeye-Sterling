@@ -108,7 +108,7 @@ Transaction Type: ${sanitizeField(body.transactionType ?? "not specified", 100)}
 Amount: ${body.amount ?? "not specified"} ${sanitizeField(body.currency ?? "", 10)}
 End User: ${sanitizeField(body.endUser ?? "not specified", 500)}
 End User Country: ${sanitizeField(body.endUserCountry ?? "not specified", 100)}
-Existing Red Flags: ${body.existingRedFlags?.join("; ") ?? "none"}
+Existing Red Flags: ${body.existingRedFlags?.slice(0, 30).map((f: string) => sanitizeField(f, 200)).join("; ") ?? "none"}
 Additional Context: ${sanitizeText(body.context ?? "none", 2000)}
 
 Assess for proliferation financing risk.`,

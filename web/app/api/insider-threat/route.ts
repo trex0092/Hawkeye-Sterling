@@ -271,11 +271,11 @@ Role: ${body.role ?? "not specified"}
 Department: ${body.department ?? "not specified"}
 Access Level: ${body.accessLevel ?? "not specified"}
 Years at Firm: ${body.yearsAtFirm ?? "not specified"}
-Recent Life Events: ${JSON.stringify(body.recentLifeEvents ?? [])}
-Behavioural Indicators: ${JSON.stringify(body.behaviouralIndicators ?? [])}
-System Access Anomalies: ${JSON.stringify(body.systemAccessAnomalies ?? {})}
-Financial Indicators: ${JSON.stringify(body.financialIndicators ?? {})}
-Compliance History: ${JSON.stringify(body.complianceHistory ?? {})}
+Recent Life Events: ${JSON.stringify((body.recentLifeEvents ?? []).slice(0, 20))}
+Behavioural Indicators: ${JSON.stringify((body.behaviouralIndicators ?? []).slice(0, 30))}
+System Access Anomalies: ${JSON.stringify(body.systemAccessAnomalies ?? {}).slice(0, 5000)}
+Financial Indicators: ${JSON.stringify(body.financialIndicators ?? {}).slice(0, 5000)}
+Compliance History: ${JSON.stringify(body.complianceHistory ?? {}).slice(0, 5000)}
 Additional Context: ${body.context ?? "none"}
 ${mode === "monitor" && previousProfile ? `\nPREVIOUS ASSESSMENT (${previousProfile.lastAssessedAt}):\nPrevious Score: ${previousProfile.latestResult.insiderThreatScore}\nPrevious Risk Tier: ${previousProfile.latestResult.riskTier}\nPrevious Escalation Risk: ${previousProfile.latestResult.behaviouralRiskProfile.escalationRisk}` : ""}
 

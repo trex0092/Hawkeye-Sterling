@@ -74,7 +74,7 @@ async function handleBackfill(_req: Request): Promise<NextResponse> {
         enrichmentResultId: job.jobId,
         backfilled: true,
         backfilledAt: runAt,
-      });
+      }).catch((err) => console.warn("[enrichment-backfill] audit chain write failed:", err instanceof Error ? err.message : String(err)));
       backfilled++;
     }),
   );

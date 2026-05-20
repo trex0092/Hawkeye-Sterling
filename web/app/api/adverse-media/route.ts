@@ -68,8 +68,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     searchAdverseMedia(subject, {
       ...(body.dateFrom !== undefined ? { dateFrom: body.dateFrom } : {}),
       ...(body.dateTo !== undefined ? { dateTo: body.dateTo } : {}),
-      limit: body.limit ?? 50,
-      minRelevance: body.minRelevance ?? 0,
+      limit: typeof body.limit === "number" ? Math.max(1, Math.min(body.limit, 100)) : 50,
+      minRelevance: typeof body.minRelevance === "number" ? Math.max(0, Math.min(body.minRelevance, 1)) : 0,
     }),
     new Promise<{ ok: false; error: string }>((resolve) =>
       setTimeout(

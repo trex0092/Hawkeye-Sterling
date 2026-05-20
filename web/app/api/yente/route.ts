@@ -47,9 +47,10 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "max 100 queries per request" }, { status: 400, headers: { ...gate.headers, ...cors } });
   }
 
+  const rawLimit = typeof body.limit === "number" ? body.limit : undefined;
   const opts: YenteMatchOptions = {
     threshold: body.threshold,
-    limit: body.limit,
+    limit: rawLimit !== undefined ? Math.max(1, Math.min(rawLimit, 100)) : undefined,
     dataset: body.dataset,
   };
 

@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 export interface SanctionsBreachResult {
   breachSeverity: "critical" | "high" | "medium" | "low";
   voluntaryDisclosureRecommended: boolean;
@@ -32,12 +33,12 @@ export async function POST(req: Request) {
   } catch {
     return NextResponse.json(
       { ok: false, error: "Invalid JSON" },
-      { status: 400 }
+      { status: 400, headers: gate.headers }
     );
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "sanctions-breach temporarily unavailable - please retry." }, { status: 503 });
+  if (!apiKey) return NextResponse.json({ ok: false, error: "sanctions-breach temporarily unavailable - please retry." }, { status: 503, headers: gate.headers });
 
   try {
     const client = getAnthropicClient(apiKey, 55_000);
@@ -54,24 +55,25 @@ export async function POST(req: Request) {
       messages: [{
         role: "user",
         content: `Analyse the following sanctions breach scenario:
-- Counterparty: ${body.counterparty}
-- Transaction Amount: ${body.transactionAmount}
-- Sanctions List: ${body.sanctionsList}
-- Discovery Date: ${body.discoveryDate}
-- Breach Duration: ${body.breachDuration}
-- Additional Context: ${body.context}`,
+- Counterparty: ${sanitizeField(body.counterparty, 500)}
+- Transaction Amount: ${sanitizeField(body.transactionAmount, 100)}
+- Sanctions List: ${sanitizeField(body.sanctionsList, 200)}
+- Discovery Date: ${sanitizeField(body.discoveryDate, 50)}
+- Breach Duration: ${sanitizeField(body.breachDuration, 100)}
+- Additional Context: ${sanitizeText(body.context, 2000)}`,
       }],
     });
     const text = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) return NextResponse.json({ ok: false, error: "sanctions-breach temporarily unavailable - please retry." }, { status: 503 });
+    if (!jsonMatch) return NextResponse.json({ ok: false, error: "sanctions-breach temporarily unavailable - please retry." }, { status: 503, headers: gate.headers });
 
     const parsed = JSON.parse(jsonMatch[0]) as SanctionsBreachResult;
     if (!Array.isArray(parsed.mitigatingFactors)) parsed.mitigatingFactors = [];
     if (!Array.isArray(parsed.aggravatingFactors)) parsed.aggravatingFactors = [];
     if (!Array.isArray(parsed.immediateActions)) parsed.immediateActions = [];
-    return NextResponse.json({ ok: true, ...parsed });
-  } catch {
-    return NextResponse.json({ ok: false, error: "sanctions-breach temporarily unavailable - please retry." }, { status: 503 });
+    return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
+  } catch (err) {
+    console.warn("[sanctions-breach] LLM call failed:", err instanceof Error ? err.message : String(err));
+    return NextResponse.json({ ok: false, error: "sanctions-breach temporarily unavailable - please retry." }, { status: 503, headers: gate.headers });
   }
 }

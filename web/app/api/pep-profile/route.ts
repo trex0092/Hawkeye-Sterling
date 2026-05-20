@@ -284,7 +284,7 @@ Country: ${sanitizeField(body.country) || "Not specified"}
 Position: ${sanitizeField(body.position) || "Not specified"}
 Organization: ${sanitizeField(body.organization) || "Not specified"}
 Political Party: ${sanitizeField(body.politicalParty) || "Not specified"}
-Years in Office: ${body.yearsInOffice ?? "Not specified"}
+Years in Office: ${sanitizeField(String(body.yearsInOffice ?? "Not specified"), 50)}
 Family Members / Known Associates: ${sanitizeText(body.familyMembers) || "None declared"}
 Source of Wealth: ${sanitizeText(body.sourceOfWealth) || "Not declared"}
 Declared Assets: ${sanitizeText(body.declaredAssets) || "Not declared"}

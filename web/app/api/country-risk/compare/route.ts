@@ -89,7 +89,7 @@ Return ONLY valid JSON array — an array of country risk objects, one per reque
           role: "user",
           content: `Provide side-by-side country risk assessments for the following countries. Return a JSON array with one object per country in the same order as requested:
 
-Countries: ${countries.join(", ")}
+Countries: ${countries.map((c) => c.slice(0, 100)).join(", ")}
 
 For each country provide complete risk scoring, FATF status, sanctions profile (OFAC, EU, UN, UK), key risks, recent developments, regulatory obligations applicable to a UAE-based DNFBP, and recommendation. Keep summaries concise (2-3 sentences each) to fit the comparison format.`,
         },

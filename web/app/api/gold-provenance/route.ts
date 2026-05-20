@@ -149,6 +149,9 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (!body.commodity || !Array.isArray(body.chain) || body.chain.length === 0) {
     return NextResponse.json({ ok: false, error: "commodity and chain[] required" }, { status: 400, headers: gate.headers });
   }
+  if (body.chain.length > 100) {
+    return NextResponse.json({ ok: false, error: "chain array must not exceed 100 hops" }, { status: 400, headers: gate.headers });
+  }
 
   const staticAnalysis = analyzeChainStatically(body);
   const overallRisk = staticAnalysis.integrityScore < 40 ? "critical"

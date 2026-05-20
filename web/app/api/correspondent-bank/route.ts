@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 export interface CorrespondentBankResult {
   riskRating: "critical" | "high" | "medium" | "low";
   kycStatus: "pass" | "conditional" | "fail";
@@ -52,12 +53,12 @@ export async function POST(req: Request) {
       messages: [{
         role: "user",
         content: `Assess the following correspondent banking relationship:
-- Bank Name: ${body.bankName}
-- Country: ${body.country}
-- Regulatory Body: ${body.regulatoryBody}
-- Last KYC Date: ${body.lastKycDate}
-- AML Programme Status: ${body.amlProgrammeStatus}
-- Additional Context: ${body.context}`,
+- Bank Name: ${sanitizeField(body.bankName, 500)}
+- Country: ${sanitizeField(body.country, 100)}
+- Regulatory Body: ${sanitizeField(body.regulatoryBody, 200)}
+- Last KYC Date: ${sanitizeField(body.lastKycDate, 50)}
+- AML Programme Status: ${sanitizeField(body.amlProgrammeStatus, 200)}
+- Additional Context: ${sanitizeText(body.context, 2000)}`,
       }],
     });
     const text = response.content[0]?.type === "text" ? response.content[0].text : "{}";

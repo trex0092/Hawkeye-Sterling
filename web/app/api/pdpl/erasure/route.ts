@@ -151,8 +151,11 @@ export async function PATCH(req: NextRequest) {
     for (const prefix of discretionaryPrefixes) {
       const keys = await listKeys(prefix).catch(() => [] as string[]);
       for (const key of keys) {
-        await del(key).catch(() => undefined);
-        erasedKeys.push(key);
+        const deleted = await del(key).then(() => true).catch((err: unknown) => {
+          console.warn("[pdpl/erasure] key deletion failed:", key, err instanceof Error ? err.message : String(err));
+          return false;
+        });
+        if (deleted) erasedKeys.push(key);
       }
     }
   }

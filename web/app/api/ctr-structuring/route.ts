@@ -64,7 +64,7 @@ export async function POST(req: Request) {
   const amounts = parseCash(body.amounts);
   if (amounts.length === 0) return NextResponse.json({ ok: false, error: "No valid amounts parsed" }, { status: 400 , headers: gate.headers });
 
-  const periodDays = body.periodDays ?? 30;
+  const periodDays = Math.max(1, Math.min(365, Math.round(Number(body.periodDays) || 30)));
   const totalValueAed = amounts.reduce((s, a) => s + a, 0);
   const averageTransactionAed = totalValueAed / amounts.length;
   const ctrRequiredTxns = amounts.filter((a) => a >= CTR_THRESHOLD);
