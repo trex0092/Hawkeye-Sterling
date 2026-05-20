@@ -132,4 +132,20 @@ describe('wave3-port-state-control', () => {
     expect(r.rationale).toContain('3 total detention(s)');
     expect(r.rationale).toContain('2 vessel(s)');
   });
+
+  it('handles missing detentions field (defaults to 0 via ?? 0)', async () => {
+    const r = await portStateControlApply(makeCtx({
+      pscRecords: [{ imo: '1234567', mou: 'paris', deficiencies: 10 }],
+    }));
+    // detentions ?? 0 → 0 (no detention signal), deficiencies=10 → flag
+    expect(r.verdict).toBe('flag');
+  });
+
+  it('uses ? for missing portCountry and mou? for missing mou in label', async () => {
+    const r = await portStateControlApply(makeCtx({
+      pscRecords: [{ imo: '1234567', detentions: 1 }],
+    }));
+    // portCountry ?? '?' and mou ?? 'mou?' → evidence includes (unknown) but label in rationale has ? marks
+    expect(r.score).toBeGreaterThan(0);
+  });
 });

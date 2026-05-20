@@ -206,4 +206,12 @@ describe('wave3-real-estate-underpricing', () => {
     }));
     expect(r.score).toBeLessThanOrEqual(1);
   });
+
+  it('does not flag high_value_cash when declaredPriceAed is undefined (defaults to 0)', async () => {
+    const r = await realEstateUnderpricingApply(makeCtx({
+      realEstateDeals: [{ dealId: 'd1', paymentMethod: 'cash' }],
+    }));
+    // declaredPriceAed ?? 0 → 0 < 1M → no flag
+    expect(r.verdict).toBe('clear');
+  });
 });
