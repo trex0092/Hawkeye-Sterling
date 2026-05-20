@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 // Import from the concrete module, not the index barrel — see super-brain
 // route for why pulling in the 80-module barrel at cold-start kills these
 // Netlify Functions with 502s.
-import { quickScreen as _quickScreen } from "../../../../../dist/src/brain/quick-screen.js";
-import { searchAdverseMedia } from "../../../../../dist/src/integrations/taranisAi.js";
-import { analyseAdverseMediaItems } from "../../../../../dist/src/brain/adverse-media-analyser.js";
+import { quickScreen as _quickScreen } from "../../../../../src/brain/quick-screen.js";
+import { searchAdverseMedia } from "../../../../../src/integrations/taranisAi.js";
+import { analyseAdverseMediaItems } from "../../../../../src/brain/adverse-media-analyser.js";
 import type {
   QuickScreenCandidate,
   QuickScreenResult,

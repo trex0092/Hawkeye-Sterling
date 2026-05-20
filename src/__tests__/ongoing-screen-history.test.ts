@@ -64,7 +64,7 @@ vi.mock("@/lib/data/adverse-keywords", () => ({
 
 // quickScreen must return a result with zero hits (the zero-hit scenario).
 // Paths are relative from THIS test file (src/__tests__/) to the dist/ modules.
-vi.mock("../../dist/src/brain/quick-screen.js", () => ({
+vi.mock("../../src/brain/quick-screen.js", () => ({
   quickScreen: () => ({
     topScore: 0,
     hits: [],
@@ -72,11 +72,11 @@ vi.mock("../../dist/src/brain/quick-screen.js", () => ({
   }),
 }));
 
-vi.mock("../../dist/src/integrations/taranisAi.js", () => ({
+vi.mock("../../src/integrations/taranisAi.js", () => ({
   searchAdverseMedia: async () => ({ ok: false, items: [] }),
 }));
 
-vi.mock("../../dist/src/brain/adverse-media-analyser.js", () => ({
+vi.mock("../../src/brain/adverse-media-analyser.js", () => ({
   analyseAdverseMediaItems: () => ({ riskTier: "low", sarRecommended: false }),
 }));
 
