@@ -1,5 +1,5 @@
 import { writeAuditEvent } from "@/lib/audit";
-import { stripJsonFences, withMlroLlm } from "@/lib/server/mlro-route-base";
+import { parseLlmJson, withMlroLlm } from "@/lib/server/mlro-route-base";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
@@ -100,11 +100,9 @@ export const POST = (req: Request) => withMlroLlm<Body, EscalationDecision>(req,
     return { system: SYSTEM_PROMPT, userContent };
   },
   parseResult: (text): EscalationDecision => {
-    try {
-      return JSON.parse(stripJsonFences(text)) as EscalationDecision;
-    } catch {
-      return { ...FALLBACK, primaryTrigger: "Parse error", rationale: "AI response could not be parsed — manual review required." };
-    }
+    const parsed = parseLlmJson<EscalationDecision>(text);
+    if (parsed) return parsed;
+    return { ...FALLBACK, primaryTrigger: "Parse error", rationale: "AI response could not be parsed — manual review required." };
   },
   onSuccess: (decision, body) => {
     writeAuditEvent(

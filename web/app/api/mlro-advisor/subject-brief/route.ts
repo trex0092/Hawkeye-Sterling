@@ -1,5 +1,5 @@
 import { writeAuditEvent } from "@/lib/audit";
-import { stripJsonFences, withMlroLlm } from "@/lib/server/mlro-route-base";
+import { parseLlmJson, withMlroLlm } from "@/lib/server/mlro-route-base";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
@@ -89,14 +89,12 @@ export const POST = (req: Request) => withMlroLlm<Body, SubjectBriefResult>(req,
     };
   },
   parseResult: (text): SubjectBriefResult => {
-    try {
-      return JSON.parse(stripJsonFences(text)) as SubjectBriefResult;
-    } catch {
-      // Parse failures gracefully degrade to FALLBACK (preserves prior
-      // behaviour — the route always returned ok:true even when the
-      // model output was malformed).
-      return { ...FALLBACK, riskProfile: { ...FALLBACK.riskProfile, rationale: "AI response could not be parsed — manual review required." } };
-    }
+    const parsed = parseLlmJson<SubjectBriefResult>(text);
+    if (parsed) return parsed;
+    // Parse failures gracefully degrade to FALLBACK (preserves prior
+    // behaviour — the route always returned ok:true even when the
+    // model output was malformed).
+    return { ...FALLBACK, riskProfile: { ...FALLBACK.riskProfile, rationale: "AI response could not be parsed — manual review required." } };
   },
   onSuccess: (result, body) => {
     writeAuditEvent(

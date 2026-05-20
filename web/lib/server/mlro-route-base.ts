@@ -72,29 +72,13 @@ export interface MlroRouteOptions<TBody, TResult> {
   onSuccess?: (_result: TResult, _body: TBody) => void;
 }
 
-/**
- * Strip markdown code fences and re-trim — Claude occasionally wraps
- * JSON output in ```json ... ``` even when instructed not to.
- */
-export function stripJsonFences(text: string): string {
-  return text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
-}
-
-/**
- * Pull the first text block from an Anthropic Message. Returns "{}" when
- * the response has no text block (defensive — most parseResult callbacks
- * use JSON.parse and "{}" yields an empty object).
- */
-export function firstTextBlock(content: unknown): string {
-  if (!Array.isArray(content)) return "{}";
-  for (const block of content) {
-    if (block && typeof block === "object" && (block as { type?: string }).type === "text") {
-      const t = (block as { text?: string }).text;
-      if (typeof t === "string") return t;
-    }
-  }
-  return "{}";
-}
+// Pure parse helpers live in ./llm-parse so they can be unit-tested without
+// dragging the Next.js runtime (enforce / audit-chain / Anthropic SDK) into
+// the test graph. Imported for local use AND re-exported for backward
+// compatibility with existing route-side imports from
+// `@/lib/server/mlro-route-base`.
+import { stripJsonFences, parseLlmJson, firstTextBlock } from "./llm-parse";
+export { stripJsonFences, parseLlmJson, firstTextBlock };
 
 /** Per-route LLM call wrapper. See module docstring for the pattern. */
 export async function withMlroLlm<TBody, TResult>(
