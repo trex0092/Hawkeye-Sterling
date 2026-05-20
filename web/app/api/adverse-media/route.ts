@@ -19,6 +19,7 @@ import { searchAdverseMedia, type TaranisItem } from "../../../../dist/src/integ
 import { analyseAdverseMediaResult, analyseAdverseMediaItems } from "../../../../dist/src/brain/adverse-media-analyser.js";
 import { type GdeltArticle } from "@/lib/intelligence/gdelt-cache";
 import { getStore } from "@netlify/blobs";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -147,6 +148,21 @@ export async function POST(req: Request): Promise<NextResponse> {
   // Run the weaponized analyser — full MLRO-grade intelligence pipeline
   const verdict = analyseAdverseMediaResult(subject, taranisResult);
 
+  // Write audit chain entry — every adverse-media query is a compliance action.
+  // FDL 10/2025 Art.20 requires traceable records for SAR-triggering intelligence.
+  void writeAuditChainEntry({
+    event: "adverse_media.completed",
+    actor: gate.keyId,
+    subject,
+    riskTier: (verdict as unknown as Record<string, unknown>).riskTier ?? "unknown",
+    sarRecommended: (verdict as unknown as Record<string, unknown>).sarRecommended ?? false,
+    totalCount: taranisResult.totalCount,
+    adverseCount: taranisResult.adverseCount,
+    aiGenerated: true,
+  }).catch((err: unknown) => {
+    console.error("[adverse-media] audit chain write failed:", err instanceof Error ? err.message : String(err));
+  });
+
   return NextResponse.json(
     {
       ok: true,
@@ -156,6 +172,9 @@ export async function POST(req: Request): Promise<NextResponse> {
       highRelevanceCount: taranisResult.highRelevanceCount,
       // Weaponized analysis
       verdict,
+      // Compliance disclosure: AI-generated content (FDL 10/2025 Art.22)
+      aiGenerated: true,
+      aiModel: "keyword-classifier+mlro-analyser",
     },
     { status: 200, headers: { ...CORS, ...gateHeaders } },
   );

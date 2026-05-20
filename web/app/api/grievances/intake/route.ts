@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { randomBytes } from "node:crypto";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,9 +17,10 @@ interface IntakeBody {
 }
 
 function generateCaseRef(): string {
-  const now   = new Date();
-  const year  = now.getFullYear();
-  const seq   = String(Math.floor(Math.random() * 900) + 100);
+  const year = new Date().getFullYear();
+  // Use crypto.randomBytes for collision resistance — Math.random() with 900
+  // values risks collisions for orgs filing multiple grievances in a year.
+  const seq = randomBytes(3).readUIntBE(0, 3).toString(16).toUpperCase().slice(0, 6);
   return `FG-WB-${year}-${seq}`;
 }
 

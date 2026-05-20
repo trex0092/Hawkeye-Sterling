@@ -243,30 +243,33 @@ export function hsPage(opts: {
   content: string;
 }): string {
   const { reportId, pageNum, pageTotal, regs, label, content } = opts;
+  // reportId, regs, and label are operator-controlled metadata that can
+  // originate from user request bodies — escape them to prevent XSS when
+  // the generated HTML document is opened in a browser or sent as a PDF.
   return `
 <div class="hs-page">
-  <div class="hs-microprint">${microprint(reportId)}</div>
+  <div class="hs-microprint">${microprint(escHtml(reportId))}</div>
   <div class="hs-pgheader">
     <div class="hs-pgheader-l">
       <span class="hs-wm">HAWKEYE · STERLING</span>
-      <span class="hs-sc">${label}</span>
+      <span class="hs-sc">${escHtml(label)}</span>
     </div>
     <span class="hs-pgheader-conf hs-sc">CONFIDENTIAL · MLRO USE ONLY</span>
     <div class="hs-pgheader-r">
-      <span class="hs-mono-s">${reportId}</span>
+      <span class="hs-mono-s">${escHtml(reportId)}</span>
     </div>
   </div>
   <div class="hs-pg-body">
     ${content}
   </div>
   <div class="hs-pgfooter">
-    <div>${regs}</div>
+    <div>${escHtml(regs)}</div>
     <div class="hs-pgfooter-c">
       <span class="hs-pg-num">${String(pageNum).padStart(2,"0")}</span>
       <span class="hs-pg-sep"> / </span>
       <span class="hs-pg-tot">${String(pageTotal).padStart(2,"0")}</span>
     </div>
-    <div>${label}</div>
+    <div>${escHtml(label)}</div>
   </div>
 </div>`;
 }
@@ -295,7 +298,10 @@ export function hsCover(d: CoverData): string {
       <div class="hs-meta-sub">${escHtml(m.label)}</div>
     </div>`).join("");
 
-  const legal = d.footerLegal ?? `Issued in confidence to the addressee. Reproduction, transmission or storage outside the controlled domain of the recipient institution is prohibited under the terms of the engagement.`;
+  // Escape footerLegal: it can be caller-supplied via d.footerLegal and is
+  // inserted verbatim into the HTML document, creating an XSS vector if the
+  // caller embeds script tags or event handlers.
+  const legal = escHtml(d.footerLegal ?? `Issued in confidence to the addressee. Reproduction, transmission or storage outside the controlled domain of the recipient institution is prohibited under the terms of the engagement.`);
 
   return `
 <div class="hs-cover">
@@ -303,7 +309,7 @@ export function hsCover(d: CoverData): string {
     <div class="hs-monogram">${MONOGRAM_SVG}</div>
     <div class="hs-cover-bureau">
       <div class="hs-bureau-line">HAWKEYE  ·  STERLING</div>
-      <div class="hs-bureau-est">${d.module ?? "STR WORKBENCH"}</div>
+      <div class="hs-bureau-est">${escHtml(d.module ?? "STR WORKBENCH")}</div>
     </div>
     <div class="hs-cover-class">
       <div class="hs-class-stamp">
@@ -317,17 +323,17 @@ export function hsCover(d: CoverData): string {
 
   <div class="hs-cover-doctype">
     <div class="hs-sc">DOCUMENT TYPE</div>
-    <h1 class="hs-cover-title">${d.title}</h1>
-    <p class="hs-cover-sub">${d.subtitle}</p>
+    <h1 class="hs-cover-title">${escHtml(d.title)}</h1>
+    <p class="hs-cover-sub">${escHtml(d.subtitle)}</p>
   </div>
 
   <div class="hs-cover-grid">
     <div class="hs-cover-subject">
-      <div class="hs-sc">${d.subjectLabel}</div>
+      <div class="hs-sc">${escHtml(d.subjectLabel)}</div>
       <div class="hs-subject-name">${escHtml(d.subjectName)}</div>
       <div class="hs-subject-meta">${escHtml(d.subjectMeta)}</div>
     </div>
-    <div class="hs-cover-band hs-band-${d.verdictBand}">
+    <div class="hs-cover-band hs-band-${escHtml(d.verdictBand)}">
       <div class="hs-sc">VERDICT</div>
       <div class="hs-cover-band-row">
         <div class="hs-cover-band-tx">
@@ -357,16 +363,19 @@ export function hsSection(opts: {
   num: string;
   kicker: string;
   title: string;
+  // content is intentionally trusted HTML assembled by server-side report
+  // builders using other escaping helpers (hsKvGrid, hsTable, hsFindings…).
+  // num, kicker, and title are scalar metadata that must be escaped.
   content: string;
   tight?: boolean;
 }): string {
   return `
 <div class="hs-section${opts.tight ? " hs-section-tight" : ""}">
   <div class="hs-section-h">
-    <div class="hs-section-num">${opts.num}</div>
+    <div class="hs-section-num">${escHtml(opts.num)}</div>
     <div class="hs-section-titles">
-      <span class="hs-sc">${opts.kicker}</span>
-      <h2>${opts.title}</h2>
+      <span class="hs-sc">${escHtml(opts.kicker)}</span>
+      <h2>${escHtml(opts.title)}</h2>
     </div>
   </div>
   ${opts.content}
@@ -374,12 +383,19 @@ export function hsSection(opts: {
 }
 
 export function hsPill(tone: "ember"|"amber"|"sage"|"ink", text: string, large = false): string {
-  return `<span class="hs-pill hs-pill-${tone}${large ? " hs-pill-lg" : ""}"><span class="hs-pill-dot"></span>${text}</span>`;
+  // text is user-controlled (e.g. body.verdict from the API request body) —
+  // escape it to prevent XSS injection in the generated HTML report document.
+  return `<span class="hs-pill hs-pill-${tone}${large ? " hs-pill-lg" : ""}"><span class="hs-pill-dot"></span>${escHtml(text)}</span>`;
 }
 
 export function hsKvGrid(rows: Array<{k: string; v: string}>): string {
+  // k is always a plain label — escape it.
+  // v is treated as pre-escaped / trusted HTML: some callers embed
+  // HTML elements (hsSeverityCell spans, <span class="hs-mono-s">…</span>)
+  // directly in v. Callers that pass raw user strings must escape them
+  // with escHtml() before calling hsKvGrid.
   return `<div class="hs-kvgrid">${rows.map(r =>
-    `<div class="hs-kv-k">${r.k}</div><div class="hs-kv-v">${r.v}</div>`
+    `<div class="hs-kv-k">${escHtml(r.k)}</div><div class="hs-kv-v">${r.v}</div>`
   ).join("")}</div>`;
 }
 
@@ -412,13 +428,15 @@ export function hsNumList(items: string[]): string {
 }
 
 export function hsSignatureBlock(signers: Array<{name: string; role: string; lic: string; date: string}>): string {
+  // Signer fields are caller-supplied and must be escaped — a malicious API
+  // consumer could inject HTML via name/role/lic/date fields.
   return `<div class="hs-sigs">${signers.map(s => `
   <div class="hs-sig">
     <div class="hs-sig-line"></div>
-    <div class="hs-sig-name">${s.name}</div>
-    <div class="hs-sc">${s.role}</div>
-    <div class="hs-sig-lic">${s.lic}</div>
-    <div class="hs-sig-lic hs-sig-date">${s.date}</div>
+    <div class="hs-sig-name">${escHtml(s.name)}</div>
+    <div class="hs-sc">${escHtml(s.role)}</div>
+    <div class="hs-sig-lic">${escHtml(s.lic)}</div>
+    <div class="hs-sig-lic hs-sig-date">${escHtml(s.date)}</div>
   </div>`).join("")}</div>`;
 }
 
@@ -427,22 +445,28 @@ export function hsFinis(reportId: string, pageNum: number, pageTotal: number): s
   <div class="hs-rule"></div>
   <div class="hs-finis-row">
     <span class="hs-sc" style="font-family:var(--serif);font-style:italic;text-transform:lowercase;letter-spacing:0.3em;font-size:11px;color:var(--ink)">finis</span>
-    <div class="hs-finis-mono">${reportId} · END OF DOCUMENT · ${String(pageNum).padStart(2,"0")} of ${String(pageTotal).padStart(2,"0")}</div>
+    <div class="hs-finis-mono">${escHtml(reportId)} · END OF DOCUMENT · ${String(pageNum).padStart(2,"0")} of ${String(pageTotal).padStart(2,"0")}</div>
     <div class="hs-monogram-sm" style="justify-self:end">${MONOGRAM_SM}</div>
   </div>
 </div>`;
 }
 
 export function hsScorebox(n: string, label: string, tone: "ember"|"amber"|"sage"|""): string {
+  // n and label originate from AI responses or user request fields — escape
+  // both to prevent XSS in the rendered HTML report document.
   return `<div class="hs-scorebox">
-  <div class="hs-scorebox-n${tone ? ` is-${tone}` : ""}">${n}</div>
-  <div class="hs-scorebox-l">${label}</div>
+  <div class="hs-scorebox-n${tone ? ` is-${tone}` : ""}">${escHtml(n)}</div>
+  <div class="hs-scorebox-l">${escHtml(label)}</div>
 </div>`;
 }
 
 export function hsBar(value: number, tone: "pink"|"amber"|"sage"|"ink" = "pink"): string {
   const colors: Record<string,string> = { pink:"var(--pink)", amber:"var(--amber)", sage:"var(--sage)", ink:"var(--ink-2)" };
-  return `<span class="hs-bar-track"><span class="hs-bar-fill" style="width:${value}%;background:${colors[tone]??colors.pink}"></span></span><span class="hs-mono-s">${value}</span>`;
+  // value is typed as number so no string injection is possible via the
+  // percentage; clamp it to [0, 100] so a caller cannot inject a CSS
+  // expression (e.g. "100%; } body { display:none") via a malformed float.
+  const safeValue = Math.max(0, Math.min(100, Math.round(value)));
+  return `<span class="hs-bar-track"><span class="hs-bar-fill" style="width:${safeValue}%;background:${colors[tone]??colors.pink}"></span></span><span class="hs-mono-s">${safeValue}</span>`;
 }
 
 export function buildHtmlDoc(opts: {
@@ -451,12 +475,14 @@ export function buildHtmlDoc(opts: {
   autoprint?: boolean;
 }): string {
   const { title, pages, autoprint = true } = opts;
+  // title appears in the <title> element — escape it to prevent injection
+  // of </title><script>… payloads from user-supplied report identifiers.
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${title}</title>
+<title>${escHtml(title)}</title>
 <style>${REPORT_CSS}</style>
 </head>
 <body>

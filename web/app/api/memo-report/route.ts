@@ -48,7 +48,9 @@ export async function POST(req: Request) {
     ],
   };
 
-  // Escape all user-supplied values before passing to hsKvGrid
+  // v must be escaped before passing to hsKvGrid — hsKvGrid treats v as
+  // trusted HTML. k is escaped internally by hsKvGrid, but escaping it here
+  // too (for static strings) is harmless.
   const detailKv = [
     { k: "TO",   v: escHtml(body.toRole) },
     { k: "FROM", v: "L. Fernanda — MLRO" },

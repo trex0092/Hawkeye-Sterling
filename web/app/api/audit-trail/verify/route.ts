@@ -85,7 +85,34 @@ function computeEntryHash(
   return fnv1a(material);
 }
 
-async function handleGet(_req: Request): Promise<Response> {
+// Resolves the chain blob key for a given tenantId — must mirror the naming
+// logic in writeAuditChainEntry (audit-chain.ts). Two sources of truth here
+// means a mismatch would silently verify the wrong chain; keep in sync.
+function chainKeyForTenant(tenantId: string): string {
+  return tenantId === "default" ? "chain.json" : `${tenantId}.json`;
+}
+
+// Validates a caller-supplied tenantId so it cannot be used to traverse
+// the blob store (path traversal) or read another tenant's chain.
+// Allow alphanumeric, hyphen, underscore only — no dots, slashes, or unicode.
+const TENANT_ID_RE = /^[a-zA-Z0-9_-]{1,64}$/;
+
+async function handleGet(req: Request): Promise<Response> {
+  // Tenant-aware verification: accept optional ?tenantId= query parameter.
+  // Without it, default to "default" (the backwards-compatible chain key
+  // "chain.json"). Non-default tenant chains are stored under "${tenantId}.json"
+  // — not providing this param gives a false "intact" for non-default tenants.
+  const url = new URL(req.url);
+  const rawTenantId = url.searchParams.get("tenantId") ?? "default";
+  if (!TENANT_ID_RE.test(rawTenantId)) {
+    return NextResponse.json(
+      { ok: false, error: "tenantId must be alphanumeric with hyphens/underscores, max 64 chars" },
+      { status: 400 },
+    );
+  }
+  const tenantId = rawTenantId;
+  const chainKey = chainKeyForTenant(tenantId);
+
   const store = await loadAuditStore();
   if (!store) {
     return NextResponse.json(
@@ -96,7 +123,7 @@ async function handleGet(_req: Request): Promise<Response> {
 
   let chain: ChainEntry[] = [];
   try {
-    const raw = await store.get("chain.json", { type: "json" }) as ChainEntry[] | null;
+    const raw = await store.get(chainKey, { type: "json" }) as ChainEntry[] | null;
     if (!raw) {
       // Empty chain is trivially intact.
       return NextResponse.json({
@@ -105,11 +132,13 @@ async function handleGet(_req: Request): Promise<Response> {
         entriesVerified: 0,
         firstBreakAt: null,
         compositeHash: fnv1a(""),
+        tenantId,
+        chainKey,
         verifiedAt: new Date().toISOString(),
       });
     }
     if (!Array.isArray(raw)) {
-      return NextResponse.json({ ok: false, error: "chain.json is not an array" }, { status: 500 });
+      return NextResponse.json({ ok: false, error: `${chainKey} is not an array` }, { status: 500 });
     }
     chain = raw;
   } catch (err) {
@@ -140,7 +169,7 @@ async function handleGet(_req: Request): Promise<Response> {
     }
 
     // 1. Recompute this entry's hash and verify it matches the stored value.
-    const expected = computeEntryHash(entry.prevHash, entry.payload, entry.at, entry.seq, entry.hashAlg);
+    const expected = computeEntryHash(entry.prevHash, entry.payload, entry.at, entry.seq, entry.hashAlg, tenantId);
     const hashMismatch = expected !== entry.entryHash;
 
     // 2. Verify prevHash link — the stored prevHash should equal the hash of
@@ -165,6 +194,8 @@ async function handleGet(_req: Request): Promise<Response> {
     firstBreakAt,
     deletedEntries,
     compositeHash,
+    tenantId,
+    chainKey,
     verifiedAt: new Date().toISOString(),
   });
 }

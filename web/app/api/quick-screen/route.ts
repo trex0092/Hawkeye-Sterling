@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { randomUUID } from "node:crypto";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import type {
   QuickScreenCandidate,
@@ -354,7 +355,7 @@ export async function POST(req: Request): Promise<NextResponse> {
           missingLists: ["ofac_sdn", "un_consolidated", "eu_fsf", "uk_ofsi", "uae_eocn", "uae_ltl"],
           degraded: true,
           message: "Screening cannot proceed: one or more required sanctions lists are not loaded. Run sanctions refresh and retry.",
-          requestId: Math.random().toString(36).slice(2, 10),
+          requestId: randomUUID(),
           dataSourceHealth: corpusHealth ? toDataSourceHealth(corpusHealth) : undefined,
         } as QuickScreenResponse & { errorCode: string; errorType: string; tool: string; missingLists: string[]; degraded: boolean; message: string; requestId: string; dataSourceHealth?: ScreeningDataSourceHealth }, gateHeaders);
       }
@@ -375,7 +376,7 @@ export async function POST(req: Request): Promise<NextResponse> {
           missingLists: missingCritical,
           degraded: true,
           message: "Screening cannot proceed: one or more required sanctions lists are not loaded. Run sanctions refresh and retry.",
-          requestId: Math.random().toString(36).slice(2, 10),
+          requestId: randomUUID(),
           dataSourceHealth: corpusHealth ? toDataSourceHealth(corpusHealth) : undefined,
         } as QuickScreenResponse & { errorCode: string; errorType: string; tool: string; missingLists: string[]; degraded: boolean; message: string; requestId: string; dataSourceHealth?: ScreeningDataSourceHealth }, gateHeaders);
       }
@@ -389,7 +390,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         missingLists: ["ofac_sdn", "un_consolidated"],
         degraded: true,
         message: "Screening cannot proceed: watchlist corpus unavailable. Run sanctions refresh and retry.",
-        requestId: Math.random().toString(36).slice(2, 10),
+        requestId: randomUUID(),
       } as QuickScreenResponse & { errorCode: string; errorType: string; tool: string; missingLists: string[]; degraded: boolean; message: string; requestId: string }, gateHeaders);
     }
   }
@@ -928,7 +929,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (Date.now() - t0 > 3000) console.warn(`[quick-screen] slow response latencyMs=${Date.now() - t0}`);
     return respond(
       500,
-      { ok: false, errorCode: "HANDLER_EXCEPTION", errorType: "internal", tool: "screen_subject", error: "quick-screen failed", detail, requestId: Math.random().toString(36).slice(2, 10), latencyMs: Date.now() - t0 } as QuickScreenResponse & { errorCode: string; errorType: string; tool: string; requestId: string; latencyMs: number },
+      { ok: false, errorCode: "HANDLER_EXCEPTION", errorType: "internal", tool: "screen_subject", error: "quick-screen failed", detail, requestId: randomUUID(), latencyMs: Date.now() - t0 } as QuickScreenResponse & { errorCode: string; errorType: string; tool: string; requestId: string; latencyMs: number },
       gateHeaders,
     );
   }
