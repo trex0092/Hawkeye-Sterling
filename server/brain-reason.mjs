@@ -251,10 +251,11 @@ const server = http.createServer(async (req, res) => {
         { question, caseContext, mode: body.mode, audience: body.audience },
         { apiKey: API_KEY, executorModel: EXEC, advisorModel: ADV },
       );
-      const timeoutPromise = new Promise((_resolve, reject) =>
-        setTimeout(() => reject(new Error(`advisor timed out after ${ADVISOR_TIMEOUT_MS}ms`)), ADVISOR_TIMEOUT_MS),
-      );
-      const result = await Promise.race([advisorPromise, timeoutPromise]);
+      let _timeoutHandle;
+      const timeoutPromise = new Promise((_resolve, reject) => {
+        _timeoutHandle = setTimeout(() => reject(new Error(`advisor timed out after ${ADVISOR_TIMEOUT_MS}ms`)), ADVISOR_TIMEOUT_MS);
+      });
+      const result = await Promise.race([advisorPromise, timeoutPromise]).finally(() => clearTimeout(_timeoutHandle));
 
       appendAudit('server', 'brain.reason.response', {
         caseId: caseContext.caseId,

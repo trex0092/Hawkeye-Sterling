@@ -10,6 +10,8 @@
 // Satisfies FATF R.10 (record-keeping), R.11 (data retention),
 // and UAE CBUAE AML-CFT Standards Section 8 (documentation).
 
+import { createHash } from 'node:crypto';
+
 // ── Decision types ────────────────────────────────────────────────────────────
 
 export type DecisionOutcome =
@@ -125,17 +127,8 @@ function canonicaliseDecision(d: Omit<Decision, 'decisionHash'>): string {
   });
 }
 
-function fnv1a(input: string): string {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < input.length; i++) {
-    h ^= input.charCodeAt(i);
-    h = Math.imul(h, 0x01000193);
-  }
-  return (h >>> 0).toString(16).padStart(8, '0');
-}
-
 function hashDecision(d: Omit<Decision, 'decisionHash'>): string {
-  return fnv1a(canonicaliseDecision(d));
+  return createHash('sha256').update(canonicaliseDecision(d), 'utf8').digest('hex');
 }
 
 // ── Second approval requirements ──────────────────────────────────────────────
