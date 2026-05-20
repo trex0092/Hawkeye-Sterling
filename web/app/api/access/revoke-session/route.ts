@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
 import { NextResponse } from "next/server";
-import { loadUsers, saveUsers, appendPermissionLog } from "../_store";
+import { loadUsers, saveUsers, withUsersLock, appendPermissionLog } from "../_store";
 import { adminAuth } from "@/lib/server/admin-auth";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
@@ -22,18 +22,34 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "userId and reason are required" }, { status: 400 });
   }
 
-  const users = await loadUsers();
-  const userIdx = users.findIndex((u) => u.id === userId);
-  if (userIdx === -1) {
+  type RevokeResult =
+    | { status: 'not_found' }
+    | { status: 'revoked'; userName: string; safeUser: Record<string, unknown> };
+
+  let revokeResult: RevokeResult = { status: 'not_found' };
+
+  await withUsersLock(async () => {
+    const users = await loadUsers();
+    const userIdx = users.findIndex((u) => u.id === userId);
+    if (userIdx === -1) { revokeResult = { status: 'not_found' }; return; }
+
+    const user = users[userIdx]!;
+    const updatedUsers = [...users];
+    // Bump pwVersion so auth/me's pwv check immediately rejects any current
+    // session token — without this, the old JWT remains valid for up to 8h.
+    updatedUsers[userIdx] = { ...user, active: false, pwVersion: (user.pwVersion ?? 0) + 1 };
+    await saveUsers(updatedUsers);
+
+    // Strip credentials before surfacing to the caller.
+    const { passwordHash: _h, passwordSalt: _s, ...safeUser } = updatedUsers[userIdx]!;
+    revokeResult = { status: 'revoked', userName: user.name, safeUser };
+  });
+
+  if (revokeResult.status === 'not_found') {
     return NextResponse.json({ ok: false, error: "User not found" }, { status: 404 });
   }
 
-  const user = users[userIdx]!;
-  const updatedUsers = [...users];
-  // Bump pwVersion so auth/me's pwv check immediately rejects any current
-  // session token — without this, the old JWT remains valid for up to 8h.
-  updatedUsers[userIdx] = { ...user, active: false, pwVersion: (user.pwVersion ?? 0) + 1 };
-  await saveUsers(updatedUsers);
+  const { userName, safeUser } = revokeResult as { status: 'revoked'; userName: string; safeUser: Record<string, unknown> };
 
   const logEntry = {
     id: `log-${String(Date.now()).slice(-6)}`,
@@ -41,7 +57,7 @@ export async function POST(req: Request) {
     actor: revokedBy,
     action: "session_revoked" as const,
     targetUserId: userId,
-    targetUserName: user.name,
+    targetUserName: userName,
     reason,
   };
   await appendPermissionLog(logEntry);
@@ -53,7 +69,7 @@ export async function POST(req: Request) {
       event: "access.session_revoked",
       actor: revokedBy,
       userId,
-      targetUserName: user.name,
+      targetUserName: userName,
       reason,
     },
     "admin",
@@ -61,5 +77,5 @@ export async function POST(req: Request) {
     console.warn("[access/revoke-session] audit chain write failed:", err instanceof Error ? err.message : String(err)),
   );
 
-  return NextResponse.json({ ok: true, user: updatedUsers[userIdx], logEntry });
+  return NextResponse.json({ ok: true, user: safeUser, logEntry });
 }

@@ -17,6 +17,13 @@ data/registry/
 # may contain operator queries that are out of scope for the public
 # repo. Commit only the harness code, not the rolling output.
 data/eval/kpi-snapshot.json
+# Operator-enriched seed files may contain non-public FIU entity data
+# (real goAML entity IDs, internal watchlist additions). The public
+# regulatory seeds (EOCN, LTL) already in git are safe; any operator
+# additions should use the Netlify Blobs ingest pipeline, not committed JSON.
+data/seeds/operator-*.json
+data/seeds/private-*.json
+data/seeds/*-internal.json
 .DS_Store
 Thumbs.db
 .vscode/

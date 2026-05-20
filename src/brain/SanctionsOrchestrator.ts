@@ -1,4 +1,5 @@
 // Hawkeye Sterling — industrial-grade sanctions ingestion orchestrator.
+import { createHash } from 'node:crypto';
 // Manages scheduled ingestion of sanctions lists, checksum validation,
 // source verification, delta processing, corruption detection,
 // and rollback support.
@@ -161,22 +162,8 @@ export interface IngestionJob {
 
 // ── Checksum validation ───────────────────────────────────────────────────────
 
-function fnv1a64(input: string): string {
-  // FNV-1a for fast checksumming (not security-grade — use SHA-256 for audit)
-  let lo = 0x811c9dc5;
-  let hi = 0x84222325;
-  for (let i = 0; i < input.length; i++) {
-    const cp = input.charCodeAt(i);
-    lo ^= cp;
-    const result = Math.imul(lo, 0x01000193) + Math.imul(hi, 0x01000193) * 0x100000000;
-    hi = Math.imul(hi, 0x01000193) + Math.imul(lo, 0x01000193) >>> 16;
-    lo = result >>> 0;
-  }
-  return lo.toString(16).padStart(8, '0') + hi.toString(16).padStart(8, '0');
-}
-
 export function computeChecksum(rawData: string): string {
-  return fnv1a64(rawData);
+  return createHash('sha256').update(rawData, 'utf8').digest('hex');
 }
 
 export function validateChecksum(rawData: string, expectedChecksum: string): boolean {
@@ -368,6 +355,31 @@ export async function runIngestionJob(
   // 2. Checksum + snapshot
   job.status = 'validating';
   const checksum = computeChecksum(rawData);
+
+  // Verify against the authoritative remote checksum when configured.
+  // sha256sum file format: "<hex>  <filename>" — we take the first whitespace-delimited token.
+  if (source.urls.checksumUrl) {
+    try {
+      const cRes = await deps.fetch(source.urls.checksumUrl, config.fetchTimeoutMs);
+      if (cRes.ok) {
+        const remoteRaw = (await cRes.text()).trim();
+        const remoteChecksum = remoteRaw.split(/\s+/)[0] ?? '';
+        if (remoteChecksum && !validateChecksum(rawData, remoteChecksum)) {
+          job.status = 'failed';
+          job.errors.push(
+            `Remote checksum mismatch — computed ${checksum.slice(0, 16)}…, authoritative ${remoteChecksum.slice(0, 16)}…`,
+          );
+          job.completedAt = new Date().toISOString();
+          return job;
+        }
+      } else {
+        job.warnings.push(`Checksum URL returned HTTP ${cRes.status} — skipping remote verification`);
+      }
+    } catch (err) {
+      job.warnings.push(`Checksum URL fetch failed: ${String(err)} — skipping remote verification`);
+    }
+  }
+
   const previousSnapshot = getLatestSnapshot(source.id);
 
   const snapshot: IngestionSnapshot = {

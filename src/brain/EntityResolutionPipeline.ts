@@ -198,8 +198,12 @@ function buildDisambiguatorState(
 
   // DOB
   if (subject.dateOfBirth && candidate.dateOfBirth) {
-    const diffMs = Math.abs(Date.parse(subject.dateOfBirth) - Date.parse(candidate.dateOfBirth));
-    const diffDays = diffMs / 86_400_000;
+    const subjectTs = Date.parse(subject.dateOfBirth);
+    const candidateTs = Date.parse(candidate.dateOfBirth);
+    const diffMs = Number.isNaN(subjectTs) || Number.isNaN(candidateTs)
+      ? NaN
+      : Math.abs(subjectTs - candidateTs);
+    const diffDays = Number.isNaN(diffMs) ? NaN : diffMs / 86_400_000;
     if (diffDays <= 1) strongPresent.push('dob');
     else if (diffDays <= 365) {
       // within a year — check contradiction list

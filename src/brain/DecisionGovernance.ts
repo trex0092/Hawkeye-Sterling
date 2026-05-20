@@ -10,6 +10,8 @@
 // Satisfies FATF R.10 (record-keeping), R.11 (data retention),
 // and UAE CBUAE AML-CFT Standards Section 8 (documentation).
 
+import { createHash } from 'node:crypto';
+
 // ── Decision types ────────────────────────────────────────────────────────────
 
 export type DecisionOutcome =
@@ -125,17 +127,8 @@ function canonicaliseDecision(d: Omit<Decision, 'decisionHash'>): string {
   });
 }
 
-function fnv1a(input: string): string {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < input.length; i++) {
-    h ^= input.charCodeAt(i);
-    h = Math.imul(h, 0x01000193);
-  }
-  return (h >>> 0).toString(16).padStart(8, '0');
-}
-
 function hashDecision(d: Omit<Decision, 'decisionHash'>): string {
-  return fnv1a(canonicaliseDecision(d));
+  return createHash('sha256').update(canonicaliseDecision(d), 'utf8').digest('hex');
 }
 
 // ── Second approval requirements ──────────────────────────────────────────────
@@ -178,7 +171,9 @@ function calculateReviewDue(outcome: DecisionOutcome, riskScore: number): string
   if (outcome === 'clear') {
     // Annual review for low risk, 6 months for medium
     const months = riskScore < 0.25 ? 12 : riskScore < 0.50 ? 6 : 3;
-    return new Date(Date.now() + months * 30 * 86_400_000).toISOString();
+    const d = new Date();
+    d.setMonth(d.getMonth() + months);
+    return d.toISOString();
   }
   if (outcome === 'monitor') {
     // Enhanced monitoring: 30 days for high risk, 90 days for medium

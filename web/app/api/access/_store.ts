@@ -129,6 +129,27 @@ function buildDefaultLuisa(): AccessUser {
   };
 }
 
+// ── In-process write serializer ───────────────────────────────────────────────
+// Ensures at most one in-flight write per blob key within a single Lambda
+// instance. DOES NOT protect against concurrent writes across separate
+// Netlify Lambda instances; for full cross-instance safety, Netlify Blobs
+// ETag CAS or an external distributed lock (Redis, DynamoDB) is required.
+const _writeQueues = new Map<string, Promise<unknown>>();
+
+function withKeyLock<T>(key: string, fn: () => Promise<T>): Promise<T> {
+  const prev = _writeQueues.get(key) ?? Promise.resolve<unknown>(undefined);
+  // Run fn even if the previous queued operation failed.
+  const next: Promise<T> = prev.then(() => fn(), () => fn());
+  // Store a non-rejecting tail so future enqueues don't see a rejected promise.
+  _writeQueues.set(key, next.catch(() => {}));
+  return next;
+}
+
+/** Wrap a load→mutate→save sequence in an in-process users-blob lock. */
+export function withUsersLock<T>(fn: () => Promise<T>): Promise<T> {
+  return withKeyLock(USERS_BLOB_KEY, fn);
+}
+
 // ── User store helpers ────────────────────────────────────────────────────────
 
 export async function loadUsers(): Promise<AccessUser[]> {
@@ -152,8 +173,11 @@ export async function loadPermissionLog(): Promise<PermissionLogEntry[]> {
 }
 
 export async function appendPermissionLog(entry: PermissionLogEntry): Promise<void> {
-  const current = await loadPermissionLog();
-  // Cap at 10,000 entries — oldest entries are dropped when over limit.
-  const updated = [...current, entry].slice(-10_000);
-  await setJson(PERMLOGS_BLOB_KEY, updated);
+  // Use the per-key lock so concurrent calls don't overwrite each other's append.
+  return withKeyLock(PERMLOGS_BLOB_KEY, async () => {
+    const current = await loadPermissionLog();
+    // Cap at 10,000 entries — oldest entries are dropped when over limit.
+    const updated = [...current, entry].slice(-10_000);
+    await setJson(PERMLOGS_BLOB_KEY, updated);
+  });
 }

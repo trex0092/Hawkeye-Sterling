@@ -23,6 +23,24 @@ export const RISK_BAND_THRESHOLDS: Record<RiskBand, number> = {
   critical:  1.00,
 };
 
+// Allow operators to override specific band thresholds via env var without
+// a code deployment. Format: RISK_BAND_THRESHOLDS_JSON={"high":0.68,"very_high":0.82}
+// Only numeric values within (0,1] are accepted; invalid entries are silently skipped.
+(function applyThresholdOverrides() {
+  const raw = process.env['RISK_BAND_THRESHOLDS_JSON'];
+  if (!raw) return;
+  try {
+    const overrides = JSON.parse(raw) as Record<string, unknown>;
+    for (const [band, val] of Object.entries(overrides)) {
+      if (band in RISK_BAND_THRESHOLDS && typeof val === 'number' && val > 0 && val <= 1) {
+        RISK_BAND_THRESHOLDS[band as RiskBand] = val;
+      }
+    }
+  } catch {
+    console.warn('[RiskPolicyEngine] RISK_BAND_THRESHOLDS_JSON is not valid JSON — using defaults');
+  }
+})();
+
 export function scoreToRiskBand(score: number): RiskBand {
   if (score < RISK_BAND_THRESHOLDS.low)       return 'low';
   if (score < RISK_BAND_THRESHOLDS.medium)    return 'medium';
@@ -35,13 +53,16 @@ export function scoreToRiskBand(score: number): RiskBand {
 
 export type JurisdictionRiskLevel = 'sanctioned' | 'fatf_blacklist' | 'fatf_greylist' | 'high_risk' | 'elevated' | 'standard';
 
+// FATF greylist is updated quarterly. Update this table at each FATF plenary
+// (Feb, Jun, Oct) or use EXTRA_JURISDICTION_RISK_JSON to add/override entries
+// without a code deployment. See applyJurisdictionOverrides() below.
 export const JURISDICTION_RISK: Record<string, JurisdictionRiskLevel> = {
   // FATF blacklist / call for action
   IR: 'fatf_blacklist',   // Iran
   KP: 'fatf_blacklist',   // North Korea
   MM: 'fatf_blacklist',   // Myanmar
 
-  // FATF greylist (increased monitoring) — as of 2025
+  // FATF greylist (increased monitoring) — as of June 2025 plenary
   BD: 'fatf_greylist', BF: 'fatf_greylist', CM: 'fatf_greylist',
   CD: 'fatf_greylist', HT: 'fatf_greylist', JM: 'fatf_greylist',
   ML: 'fatf_greylist', MZ: 'fatf_greylist', NA: 'fatf_greylist',
@@ -63,6 +84,28 @@ export const JURISDICTION_RISK: Record<string, JurisdictionRiskLevel> = {
   AE: 'elevated',  // UAE — primary jurisdiction; elevated due to FATF observation
   LB: 'elevated', GT: 'elevated', KH: 'elevated',
 };
+
+const VALID_RISK_LEVELS = new Set<string>([
+  'sanctioned', 'fatf_blacklist', 'fatf_greylist', 'high_risk', 'elevated', 'standard',
+]);
+
+// Allow operators to add/override jurisdiction risk levels without a code
+// deployment. Used to apply mid-quarter FATF greylist updates or bilateral
+// policy decisions. Format: EXTRA_JURISDICTION_RISK_JSON={"VN":"fatf_greylist","XX":"standard"}
+(function applyJurisdictionOverrides() {
+  const raw = process.env['EXTRA_JURISDICTION_RISK_JSON'];
+  if (!raw) return;
+  try {
+    const overrides = JSON.parse(raw) as Record<string, unknown>;
+    for (const [iso, level] of Object.entries(overrides)) {
+      if (typeof iso === 'string' && iso.length === 2 && typeof level === 'string' && VALID_RISK_LEVELS.has(level)) {
+        JURISDICTION_RISK[iso.toUpperCase()] = level as JurisdictionRiskLevel;
+      }
+    }
+  } catch {
+    console.warn('[RiskPolicyEngine] EXTRA_JURISDICTION_RISK_JSON is not valid JSON — using defaults');
+  }
+})();
 
 const JURISDICTION_RISK_SCORES: Record<JurisdictionRiskLevel, number> = {
   sanctioned:      1.00,

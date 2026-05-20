@@ -1,20 +1,21 @@
 // Hawkeye Sterling — cryptographic evidence protection.
 // Signs reports, evidence bundles, exports, and audit records with a
-// tamper-evident envelope. Uses Web Crypto API (SubtleCrypto) when available,
-// falls back to FNV-1a chain hash when running without crypto context.
+// tamper-evident envelope. Uses node:crypto (SHA-256 / HMAC-SHA256).
 //
 // Every signed artefact carries:
-//   - A content hash (SHA-256 or FNV-1a fallback)
-//   - A signature (HMAC-SHA256 or derived tag)
+//   - A content hash (SHA-256)
+//   - A signature (HMAC-SHA256)
 //   - The signing key ID (never the key itself)
 //   - Signer identity and timestamp
 //   - Schema version for forward compatibility
+
+import { createHash, createHmac } from 'node:crypto';
 
 // ── Key registry (in-memory; production should use KMS) ───────────────────────
 
 export interface SigningKey {
   keyId: string;
-  algorithm: 'HMAC-SHA256' | 'FNV1A-CHAIN';
+  algorithm: 'HMAC-SHA256';
   createdAt: string;
   expiresAt?: string | undefined;
   owner: string;
@@ -27,7 +28,7 @@ const KEY_REGISTRY = new Map<string, SigningKey>();
 
 export function registerSigningKey(opts: {
   keyId: string;
-  algorithm?: 'HMAC-SHA256' | 'FNV1A-CHAIN';
+  algorithm?: 'HMAC-SHA256';
   owner: string;
   purpose: SigningKey['purpose'];
   rawKey: string;
@@ -35,7 +36,7 @@ export function registerSigningKey(opts: {
 }): SigningKey {
   const key: SigningKey = {
     keyId: opts.keyId,
-    algorithm: opts.algorithm ?? 'FNV1A-CHAIN',
+    algorithm: opts.algorithm ?? 'HMAC-SHA256',
     createdAt: new Date().toISOString(),
     expiresAt: opts.expiresAt,
     owner: opts.owner,
@@ -60,29 +61,12 @@ function getKey(keyId: string): SigningKey & { _rawKey: string } {
 
 // ── Hash functions ────────────────────────────────────────────────────────────
 
-function fnv1a(input: string): string {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < input.length; i++) {
-    h ^= input.charCodeAt(i);
-    h = Math.imul(h, 0x01000193);
-  }
-  return (h >>> 0).toString(16).padStart(8, '0');
-}
-
-function fnv1aChain(input: string, key: string): string {
-  // Combine key and input for a keyed hash — not cryptographically secure but
-  // provides integrity assurance in environments without Web Crypto.
-  return fnv1a(key + '::' + input + '::' + key.split('').reverse().join(''));
-}
-
 function sha256Hex(data: string): string {
-  // Use a deterministic multi-round FNV accumulation as a SHA-256 stand-in
-  // when SubtleCrypto is unavailable. 4 independent FNV variants.
-  const v1 = fnv1a(data);
-  const v2 = fnv1a(data.split('').reverse().join(''));
-  const v3 = fnv1a(data + data.length.toString(36));
-  const v4 = fnv1a(v1 + v2 + v3);
-  return `${v1}${v2}${v3}${v4}`;  // 32-char hex string
+  return createHash('sha256').update(data, 'utf8').digest('hex');
+}
+
+function hmacSha256Hex(key: string, data: string): string {
+  return createHmac('sha256', key).update(data, 'utf8').digest('hex');
 }
 
 // ── Signed envelope ───────────────────────────────────────────────────────────
@@ -128,8 +112,8 @@ export function signArtefact<T>(
   const contentHash = sha256Hex(serialised);
 
   const signature = key.algorithm === 'HMAC-SHA256'
-    ? sha256Hex(key._rawKey + contentHash)  // keyed
-    : fnv1aChain(contentHash, key._rawKey);
+    ? hmacSha256Hex(key._rawKey, contentHash)
+    : hmacSha256Hex(key._rawKey, contentHash);
 
   const envelope: SignedEnvelope = {
     envelopeId: generateEnvelopeId(),
@@ -193,9 +177,7 @@ export function verifyArtefact<T>(artefact: SignedArtefact<T>): VerificationResu
   if (!contentHashMatches) errors.push(`Content hash mismatch — artefact may have been tampered`);
 
   // Re-derive signature
-  const expectedSignature = envelope.algorithm === 'HMAC-SHA256'
-    ? sha256Hex(keyRaw + envelope.contentHash)
-    : fnv1aChain(envelope.contentHash, keyRaw);
+  const expectedSignature = hmacSha256Hex(keyRaw, envelope.contentHash);
   const signatureMatches = expectedSignature === envelope.signature;
   if (!signatureMatches) errors.push(`Signature mismatch — envelope may have been tampered`);
 
@@ -234,9 +216,7 @@ export function signBundle(
   const bundleId = `BND-${Date.now().toString(36).toUpperCase()}-${_envCounter++}`;
   const bundleContent = envelopes.map((e) => e.envelopeId + ':' + e.contentHash).join('|');
   const bundleHash = sha256Hex(bundleContent);
-  const signature = key.algorithm === 'HMAC-SHA256'
-    ? sha256Hex(key._rawKey + bundleHash)
-    : fnv1aChain(bundleHash, key._rawKey);
+  const signature = hmacSha256Hex(key._rawKey, bundleHash);
 
   return {
     bundleId,
@@ -272,9 +252,7 @@ export function verifyBundle(bundle: SignedBundle): {
 
   const key = KEY_REGISTRY.get(bundle.signingKeyId);
   if (!key) { errors.push('Unknown signing key'); return { ok: false, errors, envelopeCount: 0 }; }
-  const expectedSig = key.algorithm === 'HMAC-SHA256'
-    ? sha256Hex(keyRaw + bundle.bundleHash)
-    : fnv1aChain(bundle.bundleHash, keyRaw);
+  const expectedSig = hmacSha256Hex(keyRaw, bundle.bundleHash);
   if (expectedSig !== bundle.signature) errors.push('Bundle signature mismatch');
 
   return {
@@ -310,12 +288,6 @@ export function signAuditExport(
   return signArtefact('audit_export', exportId, entries, opts);
 }
 
-// ── Default system key (for development — replace in production) ──────────────
-
-registerSigningKey({
-  keyId: 'HAWKEYE_SYSTEM_DEFAULT',
-  algorithm: 'FNV1A-CHAIN',
-  owner: 'system',
-  purpose: 'audit',
-  rawKey: 'hawkeye-sterling-default-key-2025-replace-in-production',
-});
+// No default key is registered at module load time.
+// Call registerSigningKey() with a key from a secure source (env var, KMS)
+// before invoking signArtefact(). An unregistered keyId throws at call time.

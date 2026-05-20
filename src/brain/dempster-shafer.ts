@@ -177,7 +177,7 @@ export function combineDS(
     }
     const step = combinePair(acc, norm, attempted as "dempster" | "yager");
     acc = step.combined;
-    totalK = totalK + step.conflict - totalK * step.conflict; // probabilistic OR over chain
+    totalK = Math.min(1, totalK + step.conflict - totalK * step.conflict); // probabilistic OR, clamped to [0,1]
     if (attempted === "yager") actualRule = "yager";
     steps.push({
       sourceId: m.sourceId,

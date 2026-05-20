@@ -48,6 +48,15 @@ const REQUIRED_SECRETS: Array<{ key: string; minLen: number; genCmd: string }> =
   { key: "ADMIN_TOKEN", minLen: 16, genCmd: "openssl rand -hex 32" },
 ];
 
+// Required public env vars — not secrets, but routes break without them.
+const REQUIRED_PUBLIC_VARS: Array<{ key: string; hint: string }> = [
+  {
+    key: "NEXT_PUBLIC_APP_URL",
+    hint: "Set to the canonical deployment URL (e.g. https://hawkeye-sterling.netlify.app). " +
+      "Missing causes self-referential fetch() calls and CORS allowlist to fall back to the hardcoded default.",
+  },
+];
+
 function validateSecrets(): void {
   if (process.env.NEXT_RUNTIME === 'edge') return; // edge has limited env access
   const isProduction = process.env.NODE_ENV === 'production';
@@ -66,6 +75,48 @@ function validateSecrets(): void {
         `Generate a stronger value with: ${genCmd}`,
       );
     }
+  }
+  for (const { key, hint } of REQUIRED_PUBLIC_VARS) {
+    if (!process.env[key]) {
+      console.warn(`[startup] ${key} is not set. ${hint}`);
+    }
+  }
+
+  // AuditLedger persistence warning. The in-process AuditLedger is in-memory
+  // only — entries are lost on Lambda cold-start. A persistent audit store
+  // (Netlify Blobs 10-year or S3-equivalent) is required for FATF R.11 / UAE
+  // FDL 10/2025 Art.22 5-year retention. See HIGH-1 in SECURITY-NOTES.md.
+  if (isProduction) {
+    const hasAuditStorage =
+      Boolean(process.env['AUDIT_BLOBS_STORE']) ||
+      Boolean(process.env['AUDIT_S3_BUCKET']) ||
+      Boolean(process.env['NETLIFY_BLOBS_TOKEN'] ?? process.env['NETLIFY_API_TOKEN']);
+    if (!hasAuditStorage) {
+      console.error(
+        '[startup] AuditLedger has no confirmed durable storage binding. ' +
+        'In-process ledger entries are lost on Lambda cold-start. ' +
+        'Configure NETLIFY_BLOBS_TOKEN or an equivalent to satisfy FATF R.11 5-year retention.',
+      );
+    }
+  }
+
+  // goAML entity IDs: warn if still using placeholder value.
+  const goamlId =
+    process.env['GOAML_RENTITY_ID'] ??
+    (process.env['HAWKEYE_ENTITIES']
+      ? (() => {
+          try {
+            const arr = JSON.parse(process.env['HAWKEYE_ENTITIES']!) as Array<{ goamlRentityId?: string }>;
+            return Array.isArray(arr) ? arr.map((e) => e.goamlRentityId).join(',') : '';
+          } catch { return ''; }
+        })()
+      : '');
+  if (isProduction && (!goamlId || goamlId.includes('REPLACE_ME') || goamlId.includes('PENDING_FIU'))) {
+    console.error(
+      '[startup] goAML entity ID is missing or still set to a placeholder. ' +
+      'Set HAWKEYE_ENTITIES (or legacy GOAML_RENTITY_ID) to the FIU-assigned entity ID ' +
+      'before submitting any live STR/SAR filings via goAML.',
+    );
   }
 }
 

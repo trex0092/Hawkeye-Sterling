@@ -49,7 +49,8 @@ export async function GET(): Promise<NextResponse> {
   const hdrs = await headers();
   const ua = hdrs.get("user-agent") ?? "";
   const forwarded = hdrs.get("x-forwarded-for");
-  const ip = forwarded ? (forwarded.split(",")[0]?.trim() ?? "unknown") : "unknown";
+  const ips = forwarded ? forwarded.split(",").map((s) => s.trim()).filter(Boolean) : [];
+  const ip = ips.length > 0 ? (ips[ips.length - 1] ?? "unknown") : "unknown";
   const currentFp = computeRequestFingerprint(ip, ua);
   let ipChanged = false;
   if (session.fpHash && session.fpHash !== currentFp) {
