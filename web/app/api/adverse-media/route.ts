@@ -26,7 +26,13 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
 const CORS: Record<string, string> = {
-  "access-control-allow-origin": process.env["NEXT_PUBLIC_APP_URL"] ?? "https://hawkeye-sterling.netlify.app",
+  // Prefer explicit NEXT_PUBLIC_APP_URL, then Netlify's runtime DEPLOY_URL (preview builds),
+  // then the site canonical URL, then the hardcoded production fallback.
+  "access-control-allow-origin":
+    process.env["NEXT_PUBLIC_APP_URL"] ??
+    process.env["DEPLOY_URL"] ??
+    process.env["URL"] ??
+    "https://hawkeye-sterling.netlify.app",
   "access-control-allow-methods": "POST, OPTIONS",
   "access-control-allow-headers": "content-type, authorization, x-api-key",
 };

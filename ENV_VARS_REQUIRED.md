@@ -54,11 +54,11 @@ Never commit real values to the repository. `.env` is in `.gitignore`.
 | `ASANA_CF_ENTITY_TYPE_GID` | OPTIONAL | Asana custom field GID for entity type. | From Asana API |
 | `ASANA_CF_MODE_GID` | OPTIONAL | Asana custom field GID for screening mode. | From Asana API |
 | `ASANA_CF_TOTAL_MATCHES_GID` | OPTIONAL | Asana custom field GID for match count. | From Asana API |
-| `HAWKEYE_ENTITIES` | REQUIRED | JSON array of reporting entities for STR/SAR goAML submissions. Each must have a valid `goamlRentityId`. | See `.env.example` |
-| `HAWKEYE_DEFAULT_ENTITY_ID` | OPTIONAL | Default entity selected on STR/SAR form. Defaults to first entity in `HAWKEYE_ENTITIES`. | `entity-01` |
+| `HAWKEYE_ENTITIES` | REQUIRED | JSON array of **7 reporting entities** for STR/SAR goAML submissions. Each object must have `id`, `name`, and a valid `goamlRentityId`. **`goamlRentityId` is assigned by the UAE FIU on goAML registration — it cannot be auto-generated.** Contact the FIU at goaml.uaefiu.gov.ae for each entity. Do not file live STRs while any entry reads `FIU_PENDING_*`. See `.env.example` for the full 7-slot scaffold with field documentation. | See `.env.example` |
+| `HAWKEYE_DEFAULT_ENTITY_ID` | OPTIONAL | Default entity preselected on the STR/SAR form. Must match an `id` from `HAWKEYE_ENTITIES`. Defaults to first entity (`entity-01`) when unset. | `entity-01` |
 | `GOAML_RENTITY_ID` | OPTIONAL | Single-entity legacy fallback. Only used when `HAWKEYE_ENTITIES` is unset. | From UAE FIU |
 | `GOAML_RENTITY_BRANCH` | OPTIONAL | Branch code for single-entity fallback. | From UAE FIU |
-| `GOAML_MLRO_FULL_NAME` | REQUIRED | MLRO full name for goAML XML submissions. | `Luisa Fernanda` |
+| `GOAML_MLRO_FULL_NAME` | REQUIRED | MLRO full name embedded in every goAML XML submission. Single MLRO shared across all 7 entities. | `Luisa Fernanda` |
 | `GOAML_MLRO_EMAIL` | REQUIRED | MLRO email for goAML XML submissions. | — |
 | `GOAML_MLRO_PHONE` | REQUIRED | MLRO phone for goAML XML submissions. | — |
 

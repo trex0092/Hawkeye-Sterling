@@ -93,6 +93,13 @@
   environment = { NODE_ENV = "production" }
 
 [context.deploy-preview]
+  # NEXT_PUBLIC_APP_URL must be set in Netlify dashboard → Site settings →
+  # Environment variables → Context: Deploy previews.
+  # Set it to your preview domain pattern (e.g. https://deploy-preview-*--<site>.netlify.app)
+  # or to the canonical site URL. Without it, the CORS origin in adverse-media/route.ts
+  # falls back to the hardcoded production URL, which blocks CORS for preview deploy origins.
+  # Netlify injects DEPLOY_URL and URL at runtime — those are not available at build time
+  # so they cannot be used here; they must be read server-side from process.env instead.
   environment = { NODE_ENV = "production" }
 
 [context.branch-deploy]
