@@ -463,7 +463,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         listsDegraded: earlyDegraded1,
         enrichmentPending: true,
       });
-      const newJobId1 = `hwk-e-${crypto.randomUUID()}`;
+      const newJobId1 = `hwk-e-${randomUUID()}`;
       void saveEnrichmentJob(newJobId1, subject, { ok: true, ...result } as Record<string, unknown>);
       return respond(200, {
         ok: true, ...result,
@@ -568,7 +568,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         listsDegraded: earlyDegraded2,
         enrichmentPending: true,
       });
-      const newJobId2 = enrichJobId ?? `hwk-e-${crypto.randomUUID()}`;
+      const newJobId2 = enrichJobId ?? `hwk-e-${randomUUID()}`;
       if (!enrichJobId) {
         void saveEnrichmentJob(newJobId2, subject, { ok: true, ...result } as Record<string, unknown>);
       }
@@ -774,7 +774,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (finalResult.hits.length > 0 && finalResult.severity !== "clear") {
       const autoTenant = tenantIdFromGate(gate);
       const caseNow = new Date().toISOString();
-      const autoCaseId = `case-auto-${crypto.randomUUID()}`;
+      const autoCaseId = `case-auto-${randomUUID()}`;
       const badgeTone: CaseRecord["badgeTone"] =
         finalResult.severity === "critical" ? "violet" : "orange";
       const autoCase: CaseRecord = {

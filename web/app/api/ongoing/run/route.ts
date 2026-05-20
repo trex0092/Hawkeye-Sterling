@@ -154,7 +154,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const keys = await listKeys("ongoing/subject/");
   // Load subjects in parallel — sequential awaits would time out for large portfolios.
-  const loadedSubjects = await Promise.all(keys.map((key) => getJson<EnrolledSubject>(key)));
+  const loadedSubjects = await Promise.all(keys.map((key) => getJson<EnrolledSubject>(key).catch(() => null)));
   const subjects: EnrolledSubject[] = loadedSubjects.filter((s): s is EnrolledSubject => s !== null);
 
   // Live sanctions corpus (OFAC / UN / EU / UK / EOCN / UAE LTL) from the
@@ -492,10 +492,11 @@ export async function POST(req: Request): Promise<NextResponse> {
         // SAR trigger (R.20), counterfactual, investigation narrative.
         (async () => {
           try {
+            let _taranisTimer: ReturnType<typeof setTimeout>;
             const taranisResult = await Promise.race([
               searchAdverseMedia(s.name, { limit: 30, minRelevance: 0 }),
-              new Promise<never>((_, reject) => setTimeout(() => reject(new Error("searchAdverseMedia timeout")), 20_000)),
-            ]);
+              new Promise<never>((_, reject) => { _taranisTimer = setTimeout(() => reject(new Error("searchAdverseMedia timeout")), 20_000); }),
+            ]).finally(() => clearTimeout(_taranisTimer));
             if (taranisResult.ok && taranisResult.items.length > 0) {
               const verdict = analyseAdverseMediaItems(s.name, taranisResult.items);
               adverseMediaRiskTier = verdict.riskTier;

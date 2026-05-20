@@ -152,7 +152,7 @@ function parseOpenedDate(s: string): Date {
   );
 }
 
-const SANCTIONS_KEYWORDS = /ofac|sdn|un\b|eu\b|ofsi|eocn|sanction|cahra/i;
+const SANCTIONS_KEYWORDS = /\b(?:ofac|sdn|un|eu|ofsi|eocn|sanction|cahra)\b/i;
 
 function applyFilter(subjects: Subject[], filter: FilterKey, operatorName?: string): Subject[] {
   const now = Date.now();
