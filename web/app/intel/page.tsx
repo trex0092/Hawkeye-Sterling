@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import { RowActions } from "@/components/shared/RowActions";
 import type { RegulatoryItem } from "@/app/api/regulatory-feed/route";
 
@@ -648,6 +649,10 @@ export default function IntelPage() {
           { value: "5m", label: "live refresh cadence" },
         ]}
       />
+      <ModuleFamilyBar suiteName="Live Intelligence Feed" modules={[
+        { label: "Live Intel Feed", href: "/intel", icon: "🛰️" },
+        { label: "Live Adverse Media", href: "/adverse-media-live", icon: "📰" },
+      ]} />
 
       <div className="mt-6 space-y-6">
         <RegulatoryFeedPanel />

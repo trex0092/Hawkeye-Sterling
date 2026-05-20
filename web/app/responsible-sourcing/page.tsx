@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import { IsoDateInput } from "@/components/ui/IsoDateInput";
 import type { ResponsibleSourcingState } from "@/app/api/responsible-sourcing/route";
 
@@ -172,6 +173,11 @@ export default function ResponsibleSourcingPage() {
           </>
         }
       />
+      <ModuleFamilyBar suiteName="Supply Chain & Responsible Sourcing" modules={[
+        { label: "Supply Chain Risk", href: "/supply-chain", icon: "🔗" },
+        { label: "RMI / RMAP", href: "/rmi", icon: "🏭" },
+        { label: "Responsible Sourcing", href: "/responsible-sourcing", icon: "⛏️" },
+      ]} />
 
       {/* Entity setup */}
       <div className="bg-bg-panel border border-hair-2 rounded-lg p-4 mb-6">
