@@ -8,8 +8,10 @@
 //     subjectName: string,
 //     hitId: string,
 //     resolution: "positive" | "possible" | "false" | "unspecified",
-//     reason?: string,
-//     hitContext?: {                           // for the audit trail
+//     reasonCode?: "FP_01" | "FP_02" | "FP_03" | "FP_04" | "FP_05" | "FP_06",
+//                              // REQUIRED when resolution === "false" (J-06 / G-05)
+//     reason?: string,         // free-text, REQUIRED when reasonCode === "FP_06"
+//     hitContext?: {           // for the audit trail
 //       sourceList?: string,
 //       matchedName?: string,
 //       matchStrength?: number,
@@ -18,12 +20,17 @@
 //   }
 //
 // Behavior:
-//   - Always writes an immutable audit-trail event with the resolution
-//   - Resolution = "positive": auto-creates an ongoing-monitoring Asana
-//     task in ASANA_ESCALATIONS_PROJECT_GID (or hardcoded fallback) so
-//     the subject is permanently tracked + re-screened daily
-//   - Resolution = "false": writes the disambiguation rationale to the
-//     audit log (FATF R.10 / FDL Art.19 negative-finding evidence-of-search)
+//   - Always writes a HMAC-signed audit-chain entry (FDL 10/2025 Art.19,
+//     Art.24 — tamper-evident regulator evidence). J-06 + J-07 enrichment:
+//       · structured FP reason code (J-06)
+//       · canonical sanctions-entity snapshot at resolution time (J-07)
+//   - Resolution = "false": validates reasonCode + reason and writes the
+//     structured disposition to the chain. The MLRO can later query "all FP
+//     dispositions with reasonCode FP_01" without grepping free text.
+//   - Resolution = "positive": auto-creates an ongoing-monitoring Asana task
+//     so the subject is permanently tracked + re-screened daily.
+//   - The legacy plain-Blobs audit/hit-resolution/{auditId} write is kept
+//     for backward compatibility with the existing case-history reader.
 
 import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
@@ -32,6 +39,10 @@ import { asanaGids } from "@/lib/server/asanaConfig";
 import { corsHeaders, corsPreflight } from "@/lib/api/cors";
 import { submitFeedback } from "@/lib/server/feedback";
 import { setJson } from "@/lib/server/store";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
+import { validateFpDisposition, type FpReasonCode } from "@/lib/server/fp-reason-codes";
+import { captureMatchEvidence, type MatchEvidenceStore } from "@/lib/server/match-evidence";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -42,6 +53,8 @@ interface ResolveBody {
   subjectName?: string;
   hitId?: string;
   resolution?: "positive" | "possible" | "false" | "unspecified";
+  /** J-06 / G-05 — structured reason code. Required when resolution === "false". */
+  reasonCode?: FpReasonCode | string;
   reason?: string;
   hitContext?: {
     sourceList?: string;
@@ -49,6 +62,35 @@ interface ResolveBody {
     matchStrength?: number;
     listRef?: string;
   };
+}
+
+/** Open the hawkeye-lists Blobs store for J-07 match-evidence capture. Same
+ *  env-var precedence as the rest of the screening code. Returns null in
+ *  local dev or when Blobs isn't configured — captureMatchEvidence handles
+ *  that path with a storeUnavailable-style degraded snapshot. */
+async function openListStore(): Promise<MatchEvidenceStore | null> {
+  let mod: typeof import("@netlify/blobs");
+  try {
+    mod = await import("@netlify/blobs");
+  } catch {
+    return null;
+  }
+  const siteID = process.env["NETLIFY_SITE_ID"] ?? process.env["SITE_ID"];
+  const token =
+    process.env["NETLIFY_BLOBS_TOKEN"] ??
+    process.env["NETLIFY_API_TOKEN"] ??
+    process.env["NETLIFY_AUTH_TOKEN"];
+  try {
+    const raw =
+      siteID && token
+        ? mod.getStore({ name: "hawkeye-lists", siteID, token, consistency: "strong" })
+        : mod.getStore({ name: "hawkeye-lists" });
+    return {
+      get: (key, opts) => raw.get(key, opts as { type: "json" }) as Promise<unknown>,
+    };
+  } catch {
+    return null;
+  }
 }
 
 interface ResolveResponse {
@@ -110,12 +152,27 @@ export async function POST(req: Request): Promise<NextResponse> {
   } catch {
     return respond(400, { ok: false, resolution: "", auditId: "", error: "invalid JSON body" }, origin);
   }
-  const { subjectId, subjectName, hitId, resolution, reason, hitContext } = body;
+  const { subjectId, subjectName, hitId, resolution, reasonCode, reason, hitContext } = body;
   if (!subjectId || !subjectName || !hitId || !resolution) {
     return respond(400, { ok: false, resolution: "", auditId: "", error: "subjectId, subjectName, hitId, resolution all required" }, origin);
   }
   if (!["positive", "possible", "false", "unspecified"].includes(resolution)) {
     return respond(400, { ok: false, resolution, auditId: "", error: "resolution must be positive | possible | false | unspecified" }, origin);
+  }
+
+  // J-06 / G-05 — on false-positive dispositions, validate the structured
+  // reason code (and the free-text reason when reasonCode === "FP_06"). A
+  // missing or malformed reasonCode is a 400 — every FP must carry an
+  // immutable, queryable justification per FDL 10/2025 Art.19.
+  let validatedReasonCode: FpReasonCode | null = null;
+  let validatedReason: string | null = typeof reason === "string" && reason.trim().length > 0 ? reason.trim() : null;
+  if (resolution === "false") {
+    const v = validateFpDisposition({ reasonCode, reason });
+    if (!v.ok) {
+      return respond(400, { ok: false, resolution, auditId: "", error: v.error }, origin);
+    }
+    validatedReasonCode = v.value.reasonCode;
+    validatedReason = v.value.reason;
   }
 
   const auditId = `res_${randomUUID()}`;
@@ -157,7 +214,27 @@ export async function POST(req: Request): Promise<NextResponse> {
     }).catch(() => {/* feedback is best-effort */});
   }
 
-  // Persist immutable audit-trail event (FDL 10/2025 Art.19 — 10-year retention)
+  // J-07 — snapshot the canonical sanctions entity at this exact moment so
+  // a future regulator query "what did the list show for this entity on
+  // this date" has an authoritative answer pinned to the audit entry.
+  // Failure to capture (Blobs unavailable, listRef not found) is non-fatal:
+  // the snapshot carries entity:null and the regulator sees that ambiguity.
+  let matchEvidence: Awaited<ReturnType<typeof captureMatchEvidence>> | null = null;
+  if (hitContext?.sourceList && hitContext?.listRef) {
+    try {
+      const store = await openListStore();
+      matchEvidence = await captureMatchEvidence(store, hitContext.sourceList, hitContext.listRef);
+    } catch (err) {
+      console.warn("[resolve] match-evidence capture failed:", err instanceof Error ? err.message : err);
+    }
+  }
+
+  // Persist immutable audit-trail event (FDL 10/2025 Art.19 — 10-year retention).
+  // Two writes happen in parallel:
+  //   1. Plain Blobs at audit/hit-resolution/{auditId} — preserves the
+  //      existing case-history reader contract (backward compatible).
+  //   2. HMAC-signed audit chain — adds the disposition to the
+  //      tamper-evident regulator chain alongside screening events.
   const auditEvent = {
     auditId,
     eventType: "hit-resolution",
@@ -166,15 +243,39 @@ export async function POST(req: Request): Promise<NextResponse> {
     subjectName,
     hitId,
     resolution,
-    reason,
+    reasonCode: validatedReasonCode,
+    reason: validatedReason,
     hitContext,
+    matchEvidence,
     ongoingMonitorTaskId,
     analyst: gate.keyId ?? "system",
   };
   void setJson(`audit/hit-resolution/${auditId}`, auditEvent).catch((err) =>
     console.warn("[resolve] audit persist failed:", err instanceof Error ? err.message : err)
   );
-  console.info("[audit]", auditId, "hit-resolution persisted");
+
+  // HMAC-signed chain entry (J-06 + J-07 enrichment lives here).
+  void writeAuditChainEntry(
+    {
+      event: `screening.${resolution === "false" ? "false_positive" : resolution === "positive" ? "true_match" : `resolution_${resolution}`}`,
+      actor: gate.keyId ?? "system",
+      auditId,
+      subjectId,
+      subjectName,
+      hitId,
+      resolution,
+      reasonCode: validatedReasonCode,
+      reason: validatedReason,
+      hitContext: hitContext ?? null,
+      matchEvidence,
+      ongoingMonitorTaskId: ongoingMonitorTaskId ?? null,
+    },
+    tenantIdFromGate(gate),
+  ).catch((err) =>
+    console.warn("[resolve] HMAC audit-chain write failed:", err instanceof Error ? err.message : err),
+  );
+
+  console.info("[audit]", auditId, "hit-resolution persisted", { resolution, reasonCode: validatedReasonCode });
 
   return respond(200, {
     ok: true,
