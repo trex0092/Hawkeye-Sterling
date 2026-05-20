@@ -96,13 +96,15 @@ async function fetchListHealth(): Promise<ListHealthSnapshot> {
     return snapshot;
   }
 
+  const LIST_HEALTH_BLOB_TIMEOUT_MS = 1_200;
   await Promise.all(LIST_IDS.map(async (listId) => {
     const key = `${listId}/latest.json`;
     for (const store of stores) {
       try {
-        const raw = await store.get(key, { type: "json" }) as {
-          entities?: unknown[]; report?: { fetchedAt?: number }; fetchedAt?: number;
-        } | null;
+        const raw = await Promise.race([
+          store.get(key, { type: "json" }) as Promise<{ entities?: unknown[]; report?: { fetchedAt?: number }; fetchedAt?: number } | null>,
+          new Promise<null>((r) => setTimeout(() => r(null), LIST_HEALTH_BLOB_TIMEOUT_MS)),
+        ]);
         if (!raw || !Array.isArray(raw.entities)) continue;
         const entityCount = raw.entities.length;
         const fetchedAtMs = raw.report?.fetchedAt ?? raw.fetchedAt ?? null;
@@ -470,6 +472,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         enrichmentPending: true,
         enrichJobId: newJobId1,
         latencyMs: Date.now() - t0,
+        dataSourceHealth: corpusHealth ? toDataSourceHealth(corpusHealth) : undefined,
       } as QuickScreenResponse, gateHeaders);
     }
     // Budget remaining for the entire augmentation + response section.
@@ -496,14 +499,15 @@ export async function POST(req: Request): Promise<NextResponse> {
     const canAug = subject.name.length >= 3;
     const hitGated = (result.hits.length < 3 || isCommonName) && canAug;
 
-    type OSResult   = Awaited<ReturnType<typeof LIVE_OPENSANCTIONS_ADAPTER.lookup>>;
-    type CommResult = Awaited<ReturnType<ReturnType<typeof bestCommercialAdapter>["lookup"]>>;
-    type RegResult  = Awaited<ReturnType<typeof searchAllRegistries>>;
-    type CRegResult = Awaited<ReturnType<typeof searchCountryRegistries>>;
-    type CSanResult = Awaited<ReturnType<typeof searchCountrySanctions>>;
-    type FreeResult = Awaited<ReturnType<typeof searchFreeAdapters>>;
-    type NewsResult = Awaited<ReturnType<typeof searchAllNews>>;
-    type LlmResult  = Awaited<ReturnType<typeof llmAdapter.search>>;
+    type OSResult        = Awaited<ReturnType<typeof LIVE_OPENSANCTIONS_ADAPTER.lookup>>;
+    type CommResult      = Awaited<ReturnType<ReturnType<typeof bestCommercialAdapter>["lookup"]>>;
+    type RegResult       = Awaited<ReturnType<typeof searchAllRegistries>>;
+    type CRegResult      = Awaited<ReturnType<typeof searchCountryRegistries>>;
+    type CSanResult      = Awaited<ReturnType<typeof searchCountrySanctions>>;
+    type FreeResult      = Awaited<ReturnType<typeof searchFreeAdapters>>;
+    type NewsResult      = Awaited<ReturnType<typeof searchAllNews>>;
+    type LlmResult       = Awaited<ReturnType<typeof llmAdapter.search>>;
+    type UrlIngestResult = Awaited<ReturnType<typeof ingestUrls>>;
 
     // Per-adapter timeout: wrap each external lookup so any single slow
     // provider can't drag the whole screen past Netlify's 26s sync ceiling.
@@ -547,7 +551,14 @@ export async function POST(req: Request): Promise<NextResponse> {
       canAug && googleAdapter.isAvailable() ? adapterTimeout(googleAdapter.search(subject.name, { limit: 10 }).catch((e): LlmResult => { warn(e); return []; }), [] as LlmResult) : Promise.resolve<LlmResult>([]),
       // Group D — public-API enrichment (IP / blockchain / breach / domain / phone / fraud)
       adapterTimeout(runEnrichmentAdapters(hints).catch((e): EnrichmentBundle => { warn(e); return NULL_ENRICHMENT; }), NULL_ENRICHMENT),
-      ]).then((r) => r as [OSResult, CommResult, RegResult, CRegResult, CSanResult, FreeResult, NewsResult, LlmResult, LlmResult, LlmResult, LlmResult, EnrichmentBundle]),
+      // Group E — operator-supplied evidence URLs. Moved into the parallel race so
+      // ingestUrls never blocks the response after the augmentation deadline fires.
+      // Each URL fetch is already abortable at 12 s; adapterTimeout caps the whole
+      // batch at 2.5 s so one slow site cannot drag the response to 5+ seconds.
+      Array.isArray(body.evidenceUrls) && body.evidenceUrls.length > 0
+        ? adapterTimeout(ingestUrls(body.evidenceUrls).catch((): UrlIngestResult => []), [] as UrlIngestResult)
+        : Promise.resolve<UrlIngestResult>([]),
+      ]).then((r) => r as [OSResult, CommResult, RegResult, CRegResult, CSanResult, FreeResult, NewsResult, LlmResult, LlmResult, LlmResult, LlmResult, EnrichmentBundle, UrlIngestResult]),
       deadlineP,
     ]);
     if (_deadlineTimer) clearTimeout(_deadlineTimer);
@@ -577,13 +588,14 @@ export async function POST(req: Request): Promise<NextResponse> {
         enrichmentPending: true,
         enrichJobId: newJobId2,
         latencyMs: Date.now() - t0,
+        dataSourceHealth: corpusHealth ? toDataSourceHealth(corpusHealth) : undefined,
       } as QuickScreenResponse, gateHeaders);
     }
 
     const [
       openSanctionsResults, commercialResults, registryResults,
       countryRegistryResults, countrySanctionsResults, freeAdapterResults,
-      rawNews, llmArts, groqArts, geminiArts, googleArts, enrichmentBundle,
+      rawNews, llmArts, groqArts, geminiArts, googleArts, enrichmentBundle, ingestedUrls,
     ] = augRace;
 
     // Merge LLM adverse-media articles from all AI providers + Google AI Mode
@@ -598,21 +610,13 @@ export async function POST(req: Request): Promise<NextResponse> {
       ? { articles: [...aiArts, ...rawNews.articles], providersUsed: [...rawNews.providersUsed, ...aiProviders] }
       : rawNews;
 
-    // URL-direct ingestion: when the operator passes evidenceUrls[]
-    // the route fetches each URL, extracts metadata, and counts each
-    // as adverse-media evidence. Bypasses the discovery problem when
-    // the operator already knows the article (e.g. a niche outlet
-    // GDELT didn't index).
-    if (Array.isArray(body.evidenceUrls) && body.evidenceUrls.length > 0) {
-      try {
-        const ingested = await ingestUrls(body.evidenceUrls);
-        if (ingested.length > 0) {
-          newsArticles = {
-            articles: [...ingested, ...newsArticles.articles],
-            providersUsed: [...newsArticles.providersUsed, "url-ingest"],
-          };
-        }
-      } catch (err) { console.warn("[hawkeye] quick-screen: best-effort adapter failed:", err); }
+    // URL-direct ingestion result — already resolved in parallel with the adapter
+    // augRace above (Group E). No extra await needed; zero added latency.
+    if (ingestedUrls.length > 0) {
+      newsArticles = {
+        articles: [...ingestedUrls, ...newsArticles.articles],
+        providersUsed: [...newsArticles.providersUsed, "url-ingest"],
+      };
     }
     // ── Reasoning layer ────────────────────────────────────────────────
     // Multi-source consensus + contradiction + coverage gap + audit
