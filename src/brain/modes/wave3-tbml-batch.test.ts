@@ -40,6 +40,18 @@ describe('tbml-batch: phantom_shipment_detection', () => {
     const r = await apply(makeCtx({ phantomShipments: [{ invoiceId: 'i1', manifestExists: false, trackingExists: false, portInRecord: false, declaredValueAed: 50_000 }] }));
     expect(r.score).toBeGreaterThan(0);
   });
+
+  it('does not flag when >= 2 missing but declaredValueAed is undefined (defaults to 0)', async () => {
+    const r = await apply(makeCtx({ phantomShipments: [{ invoiceId: 'i1', manifestExists: false, trackingExists: false }] }));
+    // declaredValueAed ?? 0 → 0, not > 0 → no flag
+    expect(r.verdict).toBe('clear');
+  });
+
+  it('does not count manifest as missing when manifestExists is true', async () => {
+    const r = await apply(makeCtx({ phantomShipments: [{ invoiceId: 'i1', manifestExists: true, trackingExists: false, portInRecord: false, declaredValueAed: 50_000 }] }));
+    // missing = ['tracking', 'port_record'] → length=2 → flag
+    expect(r.score).toBeGreaterThan(0);
+  });
 });
 
 describe('tbml-batch: carousel_vat_fraud', () => {
@@ -98,6 +110,12 @@ describe('tbml-batch: circular_trade_pattern', () => {
     const r = await apply(makeCtx({ circularTrades: [{ tradeId: 't1', netInventoryChange: 0.05, partyChain: ['A', 'B', 'C', 'D'] }] }));
     expect(r.verdict).toBe('clear');
   });
+
+  it('flags closed_loop without partyChain (partyChain ?? [] defaults to [])', async () => {
+    const r = await apply(makeCtx({ circularTrades: [{ tradeId: 't1', closesLoop: true }] }));
+    // partyChain undefined → ?? [] → length=0 label says "Loop length 0", no_net_change needs >=4 so no
+    expect(r.score).toBeGreaterThan(0);
+  });
 });
 
 describe('tbml-batch: multi_invoicing_anomaly', () => {
@@ -120,6 +138,12 @@ describe('tbml-batch: multi_invoicing_anomaly', () => {
 
   it('clear when sameGoodsCount < 2', async () => {
     const r = await apply(makeCtx({ invoiceSets: [{ groupId: 'g1', sameGoodsCount: 1, valuesMatch: false, partiesOverlap: false }] }));
+    expect(r.verdict).toBe('clear');
+  });
+
+  it('clear when sameGoodsCount is undefined (defaults to 0)', async () => {
+    const r = await apply(makeCtx({ invoiceSets: [{ groupId: 'g1', valuesMatch: false, partiesOverlap: false }] }));
+    // sameGoodsCount undefined → ?? 0 → 0 < 2 → no flag
     expect(r.verdict).toBe('clear');
   });
 });
@@ -189,6 +213,12 @@ describe('tbml-batch: transfer_pricing_manipulation', () => {
   it('does not flag low_tax_jur when bench = 0', async () => {
     const r = await apply(makeCtx({ intraGroupTransactions: [{ transactionId: 't1', relatedParty: true, declaredPriceAed: 100, armsLengthBenchmarkAed: 0, jurisdictionTaxRatePct: 5 }] }));
     expect(r.score).toBeGreaterThan(0); // low_tax_jur still fires for <=5
+  });
+
+  it('handles undefined declaredPriceAed and armsLengthBenchmarkAed (defaults to 0)', async () => {
+    const r = await apply(makeCtx({ intraGroupTransactions: [{ transactionId: 't1', relatedParty: true }] }));
+    // declared=0, bench=0 → bench not > 0 → no non_arms_length; jurisdictionTaxRatePct ?? 100 → 100 > 5 → no low_tax_jur
+    expect(r.verdict).toBe('clear');
   });
 });
 
@@ -266,6 +296,12 @@ describe('tbml-batch: import_export_ratio_anomaly', () => {
 
   it('does not flag zero_margin when exp < 1M', async () => {
     const r = await apply(makeCtx({ importExportRatios: [{ entityId: 'e1', declaredMargin: 0, exportsAed: 500_000 }] }));
+    expect(r.verdict).toBe('clear');
+  });
+
+  it('handles undefined importsAed and exportsAed (defaults to 0)', async () => {
+    const r = await apply(makeCtx({ importExportRatios: [{ entityId: 'e1' }] }));
+    // imp=0, exp=0 → condition (imp>0 && exp>0) false; margin ?? 0 → no zero_margin_high_volume
     expect(r.verdict).toBe('clear');
   });
 });

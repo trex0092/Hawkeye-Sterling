@@ -109,4 +109,31 @@ describe('wave3-re-cash-purchase', () => {
     }));
     expect(r.rationale).toContain('all under cash thresholds');
   });
+
+  it('highestVerdict stays escalate when second txn hits flag range (false branch of highestVerdict===clear)', async () => {
+    // t1: cash >= 100k → escalate; t2: cash in flag range → tries to set flag but highestVerdict already escalate
+    const r = await reCashPurchaseCheckApply(makeCtx({
+      realEstateTransactions: [
+        { txnId: 't1', cashComponentAed: 100_000, propertyValueAed: 1_000_000 }, // escalate
+        { txnId: 't2', cashComponentAed: 75_000, propertyValueAed: 1_000_000 },  // flag-range cash; hits line 63 false branch
+      ],
+    }));
+    expect(r.verdict).toBe('escalate');
+  });
+
+  it('handles missing cashComponentAed (defaults to 0)', async () => {
+    const r = await reCashPurchaseCheckApply(makeCtx({
+      realEstateTransactions: [{ txnId: 't1', propertyValueAed: 500_000 }],
+    }));
+    // cash = 0, cashPct = 0 → clear
+    expect(r.verdict).toBe('clear');
+  });
+
+  it('derives total from cash only when both propertyValueAed and financingComponentAed missing', async () => {
+    // cash=200k, financing=undefined → total = max(200k, 1) = 200k; pct = 100% → escalate
+    const r = await reCashPurchaseCheckApply(makeCtx({
+      realEstateTransactions: [{ txnId: 't1', cashComponentAed: 200_000 }],
+    }));
+    expect(r.verdict).toBe('escalate');
+  });
 });

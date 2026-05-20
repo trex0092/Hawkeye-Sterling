@@ -65,6 +65,12 @@ describe('wave3-pep-predicate-batch: soe_executive_payout', () => {
     const r = await apply(makeCtx({ soeExecs: [{ execId: 'e1', payoutAed: 100_000, relatedToTender: false }] }));
     expect(r.verdict).toBe('clear');
   });
+
+  it('flags large_soe_payout with missing soeName (uses ? fallback in label)', async () => {
+    const r = await apply(makeCtx({ soeExecs: [{ execId: 'e1', payoutAed: 600_000 }] }));
+    // soeName ?? '?' → '?' in label
+    expect(r.score).toBeGreaterThan(0);
+  });
 });
 
 describe('wave3-pep-predicate-batch: electoral_window_anomaly', () => {
@@ -94,6 +100,12 @@ describe('wave3-pep-predicate-batch: electoral_window_anomaly', () => {
     const r = await apply(makeCtx({ electoralWindows: [{ jurisdictionIso2: 'AE', daysFromElection: -30, recipientPepLinked: true }] }));
     expect(r.score).toBeGreaterThan(0);
   });
+
+  it('clear when daysFromElection is undefined (defaults to 999, > 60)', async () => {
+    const r = await apply(makeCtx({ electoralWindows: [{ jurisdictionIso2: 'AE', recipientPepLinked: true }] }));
+    // daysFromElection ?? 999 → |999| > 60 → no flag
+    expect(r.verdict).toBe('clear');
+  });
 });
 
 describe('wave3-pep-predicate-batch: judicial_payment_correlation', () => {
@@ -116,6 +128,12 @@ describe('wave3-pep-predicate-batch: judicial_payment_correlation', () => {
 
   it('clear when not linked to bench', async () => {
     const r = await apply(makeCtx({ judicialPayments: [{ paymentId: 'p1', daysFromRulingFavoring: 5, recipientLinkedToBench: false }] }));
+    expect(r.verdict).toBe('clear');
+  });
+
+  it('clear when daysFromRulingFavoring is undefined (defaults to 999, > 30)', async () => {
+    const r = await apply(makeCtx({ judicialPayments: [{ paymentId: 'p1', recipientLinkedToBench: true }] }));
+    // daysFromRulingFavoring ?? 999 → |999| > 30 → no flag
     expect(r.verdict).toBe('clear');
   });
 });

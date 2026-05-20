@@ -140,4 +140,13 @@ describe('wave3-re-golden-visa', () => {
     expect(r.verdict).toBe('escalate');
     expect(r.evidence.length).toBeGreaterThan(1);
   });
+
+  it('defaults propertyValueAed to 0 when missing (no threshold-based signals)', async () => {
+    const r = await reGoldenVisaInvestmentApply(makeCtx({
+      realEstateGoldenVisaPurchases: [{ txnId: 't1' }],
+    }));
+    // value = 0 < threshold → sub_threshold check: isMarketedAsGoldenVisa is undefined → false → no hit
+    // No signals → clear
+    expect(r.verdict).toBe('clear');
+  });
 });

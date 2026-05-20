@@ -178,4 +178,64 @@ describe('wave3-shell-company', () => {
     }));
     expect(r.evidence[0]).toContain('TestCo');
   });
+
+  it('does not fire zero_employees flag when employeeCount is explicitly undefined', async () => {
+    const r = await shellCompanyApply(makeCtx({
+      corporateProfiles: [{
+        entityId: 'e1',
+        isMailboxAddress: true,
+        hasCommercialPremises: false,
+        employeeCount: undefined, // ?? -1 → -1 !== 0 → no flag
+        directorIsNominee: false,
+        beneficialOwnersDisclosed: true,
+      }],
+    }));
+    // Only 2 flags (mailbox + no_premises) < 3 → clear
+    expect(r.verdict).toBe('clear');
+  });
+
+  it('does not fire dormant_filings when filingsLastYear is explicitly undefined', async () => {
+    const r = await shellCompanyApply(makeCtx({
+      corporateProfiles: [{
+        entityId: 'e1',
+        isMailboxAddress: true,
+        hasCommercialPremises: false,
+        employeeCount: 0,
+        filingsLastYear: undefined, // ?? -1 → -1 !== 0 → no dormant_filings
+        yearsActive: 5,
+      }],
+    }));
+    // 3 flags (mailbox, no_premises, zero_employees) → flag
+    expect(r.score).toBeGreaterThan(0);
+  });
+
+  it('does not fire dormant_filings when filingsLastYear > 0', async () => {
+    const r = await shellCompanyApply(makeCtx({
+      corporateProfiles: [{
+        entityId: 'e1',
+        isMailboxAddress: true,
+        hasCommercialPremises: false,
+        employeeCount: 0,
+        filingsLastYear: 5, // defined, > 0 → ?? -1 gives 5, 5 !== 0 → no dormant_filings
+        yearsActive: 5,
+      }],
+    }));
+    // 3 flags (mailbox, no_premises, zero_employees) → flag but no dormant_filings
+    expect(r.score).toBeGreaterThan(0);
+  });
+
+  it('does not fire dormant_filings when yearsActive is undefined (defaults to 0, not > 1)', async () => {
+    const r = await shellCompanyApply(makeCtx({
+      corporateProfiles: [{
+        entityId: 'e1',
+        isMailboxAddress: true,
+        hasCommercialPremises: false,
+        employeeCount: 0,
+        filingsLastYear: 0,
+        // yearsActive undefined → ?? 0 → 0, not > 1 → no dormant_filings
+      }],
+    }));
+    // 3 flags (mailbox, no_premises, zero_employees) → flag but no dormant_filings
+    expect(r.score).toBeGreaterThan(0);
+  });
 });
