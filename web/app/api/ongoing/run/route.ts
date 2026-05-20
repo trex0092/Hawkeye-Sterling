@@ -46,6 +46,7 @@ type QuickScreenFn = (
 ) => QuickScreenResult;
 const quickScreen = _quickScreen as QuickScreenFn;
 import { getJson, listKeys, setJson } from "@/lib/server/store";
+import type { ScreeningHistoryEntry } from "@/lib/types";
 import { postWebhook } from "@/lib/server/webhook";
 import { ESCALATION_DELTA, shouldEscalate } from "@/lib/server/ongoing-escalation";
 import { asanaGids } from "@/lib/server/asanaConfig";
@@ -247,6 +248,20 @@ export async function POST(req: Request): Promise<NextResponse> {
         })),
       };
       await setJson(`ongoing/last/${s.id}`, snapshot);
+
+      // Write a screening-history entry so the ReScreenDiff component shows a
+      // populated timeline. Zero-hit runs MUST also write — the absence of hits
+      // is itself the compliance record (FDL 10/2025 Art.16 continuous monitoring).
+      // The key pattern screening-history/<id>/<iso-ts> matches the GET handler
+      // in /api/screening-history/route.ts which reads this namespace.
+      const historyEntry: ScreeningHistoryEntry = {
+        at: runAt,
+        topScore: adjustedScore,
+        severity: adjustedSeverity as ScreeningHistoryEntry["severity"],
+        lists: Array.from(new Set(screen.hits.map((h) => h.listId))),
+        hits: screen.hits.map((h) => `${h.listId}:${h.listRef}`),
+      };
+      await setJson(`screening-history/${s.id}/${runAt}`, historyEntry);
 
       // Structured subject profile — append the current-state snapshot
       // into the per-subject dossier so the Cases page / regulator

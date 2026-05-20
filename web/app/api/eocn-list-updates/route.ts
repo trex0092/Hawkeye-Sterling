@@ -342,6 +342,23 @@ async function handlePost(req: Request): Promise<NextResponse> {
       ]
     : fix.listUpdates;
 
+  // Zero-row guard: if merged is empty but prior blob has data, preserve the
+  // prior data rather than overwriting with an empty array. An empty merge
+  // result means both the upstream feed AND the fixture returned nothing —
+  // almost certainly a transient parse failure, not a genuine empty list.
+  if (merged.length === 0) {
+    const prior = await getJson<EocnFeedPayload>(BLOB_KEY);
+    if (prior && Array.isArray(prior.listUpdates) && prior.listUpdates.length > 0) {
+      console.error(
+        `[eocn-list-updates] zero-row guard triggered: merged=0, prior=${prior.listUpdates.length} — preserving prior data`,
+      );
+      return NextResponse.json(
+        { ...prior, upstreamError: upstream.error ?? "zero-row guard: merged empty, prior data preserved" },
+        { status: 200, headers: gateHeaders },
+      );
+    }
+  }
+
   const payload: EocnFeedPayload = {
     source: upstream.ok ? "live" : "fixture",
     lastSyncedAt: new Date().toISOString(),
@@ -356,8 +373,11 @@ async function handlePost(req: Request): Promise<NextResponse> {
     console.warn("[eocn-list-updates] blob write failed", e),
   );
 
+  // Return 200 even when upstream was unavailable — the fixture data was
+  // written successfully and the eocn-poll cron marks success/failure based
+  // on the ok field in the response body, not the HTTP status code.
   return NextResponse.json(payload, {
-    status: upstream.ok ? 200 : 502,
+    status: 200,
     headers: gateHeaders,
   });
 }
