@@ -82,12 +82,17 @@ async function getStore(): Promise<ReturnType<BlobsModuleShape["getStore"]> | nu
   const mod = await blobs();
   if (!mod) return null;
   const creds = credentials();
-  return mod.getStore({
-    name: STORE_NAME,
-    ...(creds.siteID ? { siteID: creds.siteID } : {}),
-    ...(creds.token ? { token: creds.token } : {}),
-    consistency: "strong",
-  });
+  try {
+    return mod.getStore({
+      name: STORE_NAME,
+      ...(creds.siteID ? { siteID: creds.siteID } : {}),
+      ...(creds.token ? { token: creds.token } : {}),
+      consistency: "strong",
+    });
+  } catch {
+    // MissingBlobsEnvironmentError — not running on Netlify; fall back to in-process state.
+    return null;
+  }
 }
 
 // ── Optional Upstash Redis path ──────────────────────────────────────────────
