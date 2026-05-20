@@ -28,7 +28,8 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-const AGENT_ID = "agent_011CaQnq1Sj7ZWPNtadiWCue";
+const AGENT_ID = "agent_01KWdhXyphDqQnN6ar56nrQb";
+const ENV_ID   = "env_01SnGQiAwuVGmipn1SynFmkx";
 const DEFAULT_TIMEOUT_MS = 60_000;
 const POLL_INTERVAL_MS = 1_500;
 
@@ -56,7 +57,7 @@ export async function POST(req: Request) {
 
   try {
     // 1. Create a single-use session bound to the managed agent.
-    const session = await beta.sessions.create({ agent: AGENT_ID });
+    const session = await beta.sessions.create({ agent: AGENT_ID, environment_id: ENV_ID });
     const sessionId: string = session.id;
 
     // 2. Send the user message (with optional context prepended).
