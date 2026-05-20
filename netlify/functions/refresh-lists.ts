@@ -10,6 +10,7 @@
 import type { Config } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
 import { runIngestionAll } from '../../src/ingestion/run-all.js';
+import { buildSanctionsMeta } from '../../src/ingestion/sanctions-meta.js';
 
 const LABEL = 'refresh-lists';
 // Idempotency uses main's heartbeat-based lock (see line ~197 below) which
@@ -279,6 +280,22 @@ export default async (): Promise<Response> => {
         await hbStore.setJSON(LABEL, { lastSuccess: new Date().toISOString(), label: LABEL });
       } catch (hbErr) {
         console.warn(`[${LABEL}] heartbeat write failed (non-critical):`, hbErr instanceof Error ? hbErr.message : hbErr);
+      }
+
+      // Write sanctions/meta.json to the default app store so /api/screening/health
+      // can detect corpus freshness. Without this key the health route reports
+      // CORPUS_MISSING permanently because the ingestion writes per-list data to
+      // `hawkeye-lists/<listId>/latest.json` but never updates the summary key
+      // that the read path expects. Schema must match the reader in
+      // web/app/api/screening/health/route.ts:checkSanctionsLists().
+      try {
+        const appStore = getStore('hawkeye-sterling');
+        await appStore.setJSON('sanctions/meta.json', buildSanctionsMeta(result, LABEL));
+      } catch (metaErr) {
+        console.warn(
+          `[${LABEL}] sanctions/meta.json write failed (non-critical):`,
+          metaErr instanceof Error ? metaErr.message : String(metaErr),
+        );
       }
     }
 
