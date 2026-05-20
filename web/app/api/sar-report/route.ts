@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { randomUUID } from "node:crypto";
 import { enforce } from "@/lib/server/enforce";
 import { postWebhook } from "@/lib/server/webhook";
 import { getEntity } from "@/lib/config/entities";
@@ -15,6 +16,7 @@ import {
   hsKvGrid,
   hsNarrative,
   hsSeverityCell,
+  escHtml,
   type CoverData,
 } from "@/lib/reportHtml";
 
@@ -514,9 +516,11 @@ async function handleSarReport(req: Request, gateHeaders: Record<string, string>
       <p class="hs-narrative">${escapeHtml(narrative).replace(/\n/g, "</p><p class='hs-narrative'>")}</p>
       <h2 class="hs-section-h" style="margin-top:14px">goAML envelope</h2>
       ${hsKvGrid([
-        { k: "Internal reference", v: internalRef },
-        { k: "Report code", v: body.filingType },
-        { k: "Reporting entity ID", v: reportingEntity.goamlRentityId },
+        // internalRef contains body.subject.id which is user-controlled —
+        // escape it since hsKvGrid treats v as trusted HTML.
+        { k: "Internal reference", v: escHtml(internalRef) },
+        { k: "Report code", v: escHtml(body.filingType) },
+        { k: "Reporting entity ID", v: escHtml(reportingEntity.goamlRentityId) },
         { k: "Validation", v: goamlValidationWarnings.length === 0 ? "PASSED" : `${goamlValidationWarnings.length} warnings` },
       ])}
       ${goamlValidationWarnings.length > 0 ? `
@@ -690,7 +694,7 @@ async function handleSarReport(req: Request, gateHeaders: Record<string, string>
       tool: "generate_sar_report",
       message: "SAR generation failed — please retry or contact support",
       retryAfterSeconds: null,
-      requestId: Math.random().toString(36).slice(2, 10),
+      requestId: randomUUID(),
       latencyMs: Date.now() - _handlerStart,
     }, { status: 500 , headers: gateHeaders });
   }

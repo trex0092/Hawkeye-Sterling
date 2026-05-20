@@ -23,6 +23,7 @@ Never commit real values to the repository. `.env` is in `.gitignore`.
 | `AUDIT_CHAIN_SECRET` | REQUIRED | HMAC-SHA256 key sealing the tamper-evident audit chain. Required for FDL 10/2025 Art. 24 10-year retention. If unset, `/api/audit/sign` returns 503. | `openssl rand -hex 64` |
 | `ONGOING_RUN_TOKEN` | REQUIRED | Bearer token protecting `/api/ongoing/run` from public invocation. If unset, returns 503 (fail-closed). | `openssl rand -hex 32` |
 | `SANCTIONS_CRON_TOKEN` | REQUIRED | Bearer token protecting `/api/sanctions/watch` scheduled ingestion. If unset, returns 503. | `openssl rand -hex 32` |
+| `JWT_SIGNING_SECRET` | REQUIRED | HMAC-SHA256 key for short-lived bearer JWTs issued by `/api/auth/token`. If unset or shorter than 32 bytes, the server throws at request time — all JWT-authenticated API calls fail with an unhandled exception. | `openssl rand -hex 32` |
 
 ---
 
@@ -31,6 +32,9 @@ Never commit real values to the repository. `.env` is in `.gitignore`.
 | Variable | Required | Description | Example |
 |----------|----------|-------------|---------|
 | `ANTHROPIC_API_KEY` | REQUIRED | Powers all Claude AI features (MLRO advisor, narrative reports, adverse-media analysis, screening verdicts). | `sk-ant-...` |
+| `MOONDB_PROJECT_ID` | REQUIRED | MoonDB project ID. All persistent data storage (cases, entities, audit records). If unset, all database operations fail silently and data is lost. | From MoonDB dashboard |
+| `MOONDB_ADMIN_KEY` | REQUIRED | MoonDB admin key for server-side database mutations. Treat as a root credential — restrict to server-side use only. | From MoonDB dashboard |
+| `MOONDB_PUBLIC_KEY` | REQUIRED | MoonDB public key for read operations. | From MoonDB dashboard |
 | `ASANA_TOKEN` | REQUIRED | Asana Personal Access Token. All task creation, triage, and STR filing flows. | From Asana: Settings → Apps → Developer → New Token |
 | `ASANA_WORKSPACE_GID` | REQUIRED | Asana workspace GID. All workspace-scoped API calls. | `1213645083721316` |
 | `ASANA_PROJECT_GID` | REQUIRED | Project 00 — Master Inbox GID. **All** screening submissions land here first. Do not change without MLRO approval. | `1214148630166524` |
@@ -50,11 +54,11 @@ Never commit real values to the repository. `.env` is in `.gitignore`.
 | `ASANA_CF_ENTITY_TYPE_GID` | OPTIONAL | Asana custom field GID for entity type. | From Asana API |
 | `ASANA_CF_MODE_GID` | OPTIONAL | Asana custom field GID for screening mode. | From Asana API |
 | `ASANA_CF_TOTAL_MATCHES_GID` | OPTIONAL | Asana custom field GID for match count. | From Asana API |
-| `HAWKEYE_ENTITIES` | REQUIRED | JSON array of reporting entities for STR/SAR goAML submissions. Each must have a valid `goamlRentityId`. | See `.env.example` |
-| `HAWKEYE_DEFAULT_ENTITY_ID` | OPTIONAL | Default entity selected on STR/SAR form. Defaults to first entity in `HAWKEYE_ENTITIES`. | `entity-01` |
+| `HAWKEYE_ENTITIES` | REQUIRED | JSON array of **7 reporting entities** for STR/SAR goAML submissions. Each object must have `id`, `name`, and a valid `goamlRentityId`. **`goamlRentityId` is assigned by the UAE FIU on goAML registration — it cannot be auto-generated.** Contact the FIU at goaml.uaefiu.gov.ae for each entity. Do not file live STRs while any entry reads `FIU_PENDING_*`. See `.env.example` for the full 7-slot scaffold with field documentation. | See `.env.example` |
+| `HAWKEYE_DEFAULT_ENTITY_ID` | OPTIONAL | Default entity preselected on the STR/SAR form. Must match an `id` from `HAWKEYE_ENTITIES`. Defaults to first entity (`entity-01`) when unset. | `entity-01` |
 | `GOAML_RENTITY_ID` | OPTIONAL | Single-entity legacy fallback. Only used when `HAWKEYE_ENTITIES` is unset. | From UAE FIU |
 | `GOAML_RENTITY_BRANCH` | OPTIONAL | Branch code for single-entity fallback. | From UAE FIU |
-| `GOAML_MLRO_FULL_NAME` | REQUIRED | MLRO full name for goAML XML submissions. | `Luisa Fernanda` |
+| `GOAML_MLRO_FULL_NAME` | REQUIRED | MLRO full name embedded in every goAML XML submission. Single MLRO shared across all 7 entities. | `Luisa Fernanda` |
 | `GOAML_MLRO_EMAIL` | REQUIRED | MLRO email for goAML XML submissions. | — |
 | `GOAML_MLRO_PHONE` | REQUIRED | MLRO phone for goAML XML submissions. | — |
 

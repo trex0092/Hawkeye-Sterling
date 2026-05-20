@@ -56,7 +56,9 @@ export async function POST(req: Request) {
     ],
   };
 
-  // Escape user-supplied subjectDetails values before passing to hsKvGrid
+  // v must be escaped before passing to hsKvGrid — hsKvGrid treats v as
+  // trusted HTML (some callers embed HTML spans in v). k is escaped by
+  // hsKvGrid itself, but escaping it here too is harmless.
   const safeSubjectDetails = body.subjectDetails.map(({ k, v }) => ({
     k: escHtml(k),
     v: escHtml(v),

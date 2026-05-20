@@ -14,7 +14,7 @@
 // When disabled (default) the function returns { allowed: true } immediately
 // with zero added latency or cost.
 
-import Anthropic from "@anthropic-ai/sdk";
+import { getAnthropicClient } from "@/lib/server/llm";
 
 export type EgressVerdict = "approved" | "held_tipping_off" | "held_incomplete" | "held_review";
 
@@ -51,7 +51,7 @@ async function llmEgressCheck(narrative: string, reportType: string): Promise<Eg
     return { allowed: true, verdict: "approved" };
   }
 
-  const client = new Anthropic({ apiKey });
+  const client = getAnthropicClient(apiKey, 30_000, "egress-check");
 
   let response: Awaited<ReturnType<typeof client.messages.create>>;
   try {

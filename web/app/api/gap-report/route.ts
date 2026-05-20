@@ -27,7 +27,8 @@ export async function POST(req: Request) {
     reportId, regs,
     module: "GOVERNANCE OVERSIGHT",
     title: "Governance Gap Analysis Report",
-    subtitle: `Assessment of AML/CFT governance framework for ${escHtml(institution)} against CBUAE AML Standards and UAE FDL 10/2025 requirements.`,
+    // hsCover() now escapes subtitle via escHtml() — pass the raw value.
+    subtitle: `Assessment of AML/CFT governance framework for ${institution} against CBUAE AML Standards and UAE FDL 10/2025 requirements.`,
     subjectLabel: "INSTITUTION",
     subjectName: institution,
     subjectMeta: `UAE · DMCC · ${reportId}`,
@@ -44,9 +45,10 @@ export async function POST(req: Request) {
     ],
   };
 
+  // hsKvGrid treats v as trusted HTML — escape user-supplied fields before use.
   const overallKv = [
-    { k: "INSTITUTION",   v: institution },
-    { k: "OVERALL GRADE", v: grade },
+    { k: "INSTITUTION",   v: escHtml(institution) },
+    { k: "OVERALL GRADE", v: escHtml(grade) },
     { k: "DATE ASSESSED", v: dateStr },
     { k: "ASSESSOR",      v: "L. Fernanda — CO/MLRO" },
   ];

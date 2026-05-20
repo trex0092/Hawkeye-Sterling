@@ -299,9 +299,10 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (!apiKey) {
     return NextResponse.json(
       {
-        ok: true,
-        finalText: "AI analysis unavailable — manual review required",
+        ok: false,
+        error: "Screening service unavailable: ANTHROPIC_API_KEY not configured",
         stopReason: "api_key_missing",
+        degraded: true,
         model: null,
         usage: null,
         transcript: [],
@@ -309,7 +310,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         budgetMs: DEFAULT_BUDGET_MS,
         maxIterations: DEFAULT_MAX_ITERATIONS,
       },
-      { headers: gateHeaders },
+      { status: 503, headers: gateHeaders },
     );
   }
 
@@ -467,8 +468,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     console.error("[agent/screen]", err instanceof Error ? err.message : String(err));
     return NextResponse.json(
       {
-        ok: true,
-        finalText: "Analysis unavailable",
+        ok: false,
+        error: "Screening service error: analysis could not be completed",
         stopReason: "error",
         model: null,
         usage: null,
@@ -478,7 +479,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         maxIterations,
         degraded: true,
       },
-      { headers: gateHeaders },
+      { status: 500, headers: gateHeaders },
     );
   }
 }

@@ -127,7 +127,10 @@ async function handler(req: Request): Promise<NextResponse> {
   try {
     keys = await listKeys("four-eyes/");
   } catch {
-    return NextResponse.json({ ok: true, expired: 0, itemIds: [], note: "store unavailable" });
+    return NextResponse.json(
+      { ok: false, error: "Blob store unavailable — four-eyes expiry could not run", expired: 0, itemIds: [] },
+      { status: 503 },
+    );
   }
 
   const allItems = (
