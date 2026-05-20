@@ -275,6 +275,7 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
   const [disambigResult, setDisambigResult] = useState<DisambiguationResult | null>(null);
   const [disambigLoading, setDisambigLoading] = useState(false);
   const [disambigError, setDisambigError] = useState<string | null>(null);
+
   const [disambigClient, setDisambigClient] = useState({
     name: subject.name,
     nationality: subject.country,
@@ -1730,6 +1731,7 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
             </div>
           );
         })()}
+
       </div>
 
       <NewsDossierPanel state={news} />

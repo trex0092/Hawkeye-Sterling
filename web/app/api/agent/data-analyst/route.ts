@@ -1,15 +1,15 @@
 // POST /api/agent/data-analyst
 //
 // Invokes the Claude Console "Data analyst" managed agent
-// (agent_011CaQnq1Sj7ZWPNtadiWCue) via the Anthropic Agents SDK.
+// (agent_01KWdhXyphDqQnN6ar56nrQb) via the Anthropic beta.sessions API.
 //
-// Flow: create ephemeral session → send user message → poll for
-// agent.end_turn or session idle → return final text + usage.
+// Flow: create ephemeral session → send user message → stream events until
+// agent.end_turn → archive session → return final text + usage.
 //
 // Body: {
 //   question: string,          // what to ask the data analyst
-//   context?:  string,         // optional dataset description / CSV snippet
-//   timeoutMs?: number,        // default 60000
+//   context?:  string,         // optional dataset description / context
+//   timeoutMs?: number,        // default 60000, max 60000
 // }
 //
 // Response: {
@@ -34,8 +34,16 @@ const DEFAULT_TIMEOUT_MS = 60_000;
 const POLL_INTERVAL_MS = 1_500;
 
 export async function POST(req: Request) {
-  const gate = enforce(req, { requireApiKey: true });
+  const gate = await enforce(req, { requireAuth: false });
   if (!gate.ok) return gate.response;
+
+  const apiKey = process.env["ANTHROPIC_API_KEY"];
+  if (!apiKey) {
+    return NextResponse.json(
+      { ok: false, error: "ANTHROPIC_API_KEY not configured" },
+      { status: 503, headers: gate.headers },
+    );
+  }
 
   let body: { question?: unknown; context?: unknown; timeoutMs?: unknown };
   try {
@@ -51,7 +59,7 @@ export async function POST(req: Request) {
   const context = body.context ? sanitizeText(String(body.context), 8000) : null;
   const timeoutMs = typeof body.timeoutMs === "number" ? Math.min(body.timeoutMs, DEFAULT_TIMEOUT_MS) : DEFAULT_TIMEOUT_MS;
 
-  const client = getAnthropicClient(gate.apiKey!);
+  const client = getAnthropicClient(apiKey, 55_000, "agent/data-analyst");
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const beta = (client as any).beta;
 
@@ -66,12 +74,7 @@ export async function POST(req: Request) {
       : question;
 
     await beta.sessions.events.send(sessionId, {
-      events: [
-        {
-          type: "user.message",
-          content: [{ type: "text", text: userText }],
-        },
-      ],
+      events: [{ type: "user.message", content: [{ type: "text", text: userText }] }],
     });
 
     // 3. Poll the event stream until the agent ends its turn or we time out.
@@ -80,7 +83,6 @@ export async function POST(req: Request) {
     let usage: { input_tokens: number; output_tokens: number } | undefined;
 
     while (Date.now() < deadline) {
-      // Stream remaining events from the session.
       const stream = await beta.sessions.events.stream(sessionId);
       let turnDone = false;
 
@@ -88,7 +90,6 @@ export async function POST(req: Request) {
         const type: string = event.type ?? "";
 
         if (type === "agent.message") {
-          // Accumulate text blocks from the agent reply.
           const content = Array.isArray(event.content) ? event.content : [];
           for (const block of content) {
             if (block.type === "text") answer += block.text;
@@ -107,20 +108,18 @@ export async function POST(req: Request) {
         }
 
         if (type === "session.error" || type === "session.deleted") {
-          const msg = event.error?.message ?? event.type;
           return NextResponse.json(
-            { ok: false, error: `Agent session error: ${msg}` },
+            { ok: false, error: `Agent session error: ${event.error?.message ?? type}` },
             { status: 502, headers: gate.headers },
           );
         }
       }
 
       if (turnDone) break;
-      // Brief pause before next poll iteration.
       await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
     }
 
-    // 4. Archive the ephemeral session (best-effort).
+    // 4. Archive the ephemeral session (best-effort cleanup).
     beta.sessions.archive(sessionId).catch(() => {});
 
     if (!answer) {
