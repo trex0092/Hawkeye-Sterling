@@ -9,6 +9,7 @@
 // This module adds: rich forensic fields, entry classification, retention
 // policy tagging, and export for regulator consumption.
 
+import { createHash } from 'node:crypto';
 import { AuditChain } from './audit-chain.js';
 
 // ── Entry types ───────────────────────────────────────────────────────────────
@@ -86,19 +87,20 @@ function selectRetentionPolicy(
   return 'standard_5yr';
 }
 
-// ── FNV-1a (no crypto dependency) ────────────────────────────────────────────
+// ── SHA-256 hashing (production-grade) ───────────────────────────────────────
 
-function fnv1a(input: string): string {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < input.length; i++) {
-    h ^= input.charCodeAt(i);
-    h = Math.imul(h, 0x01000193);
-  }
-  return (h >>> 0).toString(16).padStart(8, '0');
+function sha256(input: string): string {
+  return createHash('sha256').update(input, 'utf8').digest('hex');
 }
 
 function hashPayload(payload: Record<string, unknown>): string {
-  return fnv1a(JSON.stringify(payload, Object.keys(payload).sort()));
+  const sorted = JSON.stringify(
+    Object.keys(payload).sort().reduce<Record<string, unknown>>((acc, k) => {
+      acc[k] = payload[k];
+      return acc;
+    }, {}),
+  );
+  return sha256(sorted);
 }
 
 function hashEntry(entry: Omit<LedgerEntry, 'entryHash'>): string {
@@ -112,7 +114,7 @@ function hashEntry(entry: Omit<LedgerEntry, 'entryHash'>): string {
     actorId: entry.actor.actorId,
     payloadHash: entry.payloadHash,
   });
-  return fnv1a(canonical);
+  return sha256(canonical);
 }
 
 // ── Ledger class ──────────────────────────────────────────────────────────────

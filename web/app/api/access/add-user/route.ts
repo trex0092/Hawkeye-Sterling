@@ -30,13 +30,20 @@ export async function POST(req: Request) {
     );
   }
 
-  const users = await loadUsers();
   const emailLower = email.toLowerCase().trim();
+  if (!emailLower || !/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(emailLower)) {
+    return NextResponse.json({ ok: false, error: "A valid email address is required" }, { status: 400 });
+  }
+
+  const users = await loadUsers();
   if (users.some((u) => u.email.toLowerCase() === emailLower)) {
     return NextResponse.json({ ok: false, error: "A user with this email already exists" }, { status: 409 });
   }
 
-  const derivedUsername = username?.trim() || emailLower.split("@")[0]!.replace(/[^a-z0-9._-]/gi, "").toLowerCase();
+  const derivedUsername = (username?.trim() || emailLower.split("@")[0]!.replace(/[^a-z0-9._-]/gi, "").toLowerCase()).slice(0, 64);
+  if (!derivedUsername) {
+    return NextResponse.json({ ok: false, error: "Could not derive a valid username from the email address" }, { status: 400 });
+  }
   if (users.some((u) => u.username?.toLowerCase() === derivedUsername.toLowerCase())) {
     return NextResponse.json({ ok: false, error: "Username already taken — choose a different one" }, { status: 409 });
   }

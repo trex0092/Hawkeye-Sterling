@@ -170,7 +170,22 @@ async function alertDesignationChanges(
 interface SanctionsStatusList { listId: string; displayName: string; status: 'healthy' | 'degraded' | 'stale' | 'missing' | 'unconfigured'; entityCount: number | null }
 interface SanctionsStatusResponse { lists?: SanctionsStatusList[] }
 
-export default async (): Promise<Response> => {
+export default async (req: Request): Promise<Response> => {
+  // Auth guard — only Netlify scheduler (no body, no token) or callers with
+  // ADMIN_TOKEN are permitted. Prevents unauthenticated manual HTTP triggers
+  // from acquiring the idempotency lock and blocking scheduled runs.
+  const isScheduled = req.headers.get('x-netlify-scheduled-function') === 'true';
+  if (!isScheduled) {
+    const adminToken = process.env['ADMIN_TOKEN'];
+    const bearer = (req.headers.get('authorization') ?? '').replace(/^Bearer\s+/i, '');
+    if (!adminToken || bearer !== adminToken) {
+      return new Response(JSON.stringify({ ok: false, error: 'unauthorized' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json; charset=utf-8' },
+      });
+    }
+  }
+
   const alertWebhook = process.env['ALERT_WEBHOOK_URL'];
   const hbStore = getStore('hawkeye-function-heartbeats');
 

@@ -233,6 +233,9 @@ export default async function handler(_req: Request): Promise<Response> {
   // includes the offending seqs so the operator dashboard can render
   // them. Does NOT mutate the chain (that would itself be tampering).
   if (!ok) {
+    let markerWritten = false;
+    let webhookFired = false;
+
     try {
       await store.set(
         TAMPER_MARKER_KEY,
@@ -243,9 +246,14 @@ export default async function handler(_req: Request): Promise<Response> {
           totalEntries: entries.length,
         }),
       );
-    } catch {
-      // best-effort
+      markerWritten = true;
+    } catch (markerErr) {
+      console.error(
+        '[audit-chain-probe] CRITICAL: tamper marker write failed — tamper event may be lost.',
+        markerErr instanceof Error ? markerErr.message : String(markerErr),
+      );
     }
+
     try {
       await emit('audit_drift', {
         severity: 'critical',
@@ -254,8 +262,21 @@ export default async function handler(_req: Request): Promise<Response> {
         brokenLinkAt,
         totalEntries: entries.length,
       });
-    } catch {
-      // best-effort
+      webhookFired = true;
+    } catch (webhookErr) {
+      console.error(
+        '[audit-chain-probe] CRITICAL: tamper webhook failed — notification lost.',
+        webhookErr instanceof Error ? webhookErr.message : String(webhookErr),
+      );
+    }
+
+    if (!markerWritten && !webhookFired) {
+      return jsonResponse({
+        ok: false,
+        label: RUN_LABEL,
+        error: 'Tamper detected AND both notification channels failed — manual investigation required immediately',
+        ...outcome,
+      }, 503);
     }
   }
 

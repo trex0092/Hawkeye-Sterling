@@ -126,9 +126,10 @@ export async function POST(req: Request) {
     }
   }
 
+  const { passwordHash: _h, passwordSalt: _s, ...safeUser } = updatedUsers[userIdx]!;
   return NextResponse.json({
     ok: true,
-    user: updatedUsers[userIdx],
+    user: safeUser,
     logEntry,
     impactAssessment,
   }, { headers: gate.headers });

@@ -74,8 +74,24 @@ export async function run(options: RunOptions): Promise<BrainVerdict> {
 
   for (const modeId of modeIds) {
     const mode = REASONING_MODE_BY_ID.get(modeId);
-    if (!mode) continue;
-    const finding = await mode.apply(ctx);
+    if (!mode) {
+      console.warn(`[engine] mode not found in registry, skipping: ${modeId}`);
+      continue;
+    }
+    let finding: Finding;
+    try {
+      finding = await mode.apply(ctx);
+    } catch (err) {
+      console.warn(`[engine] mode ${modeId} threw — recording error finding:`, err instanceof Error ? err.message : String(err));
+      finding = {
+        modeId: mode.id,
+        verdict: 'unclear' as const,
+        rationale: `Mode ${mode.name} failed: ${err instanceof Error ? err.message : String(err)}`,
+        confidence: 0,
+        flags: [],
+        producedAt: Date.now(),
+      } as Finding;
+    }
     findings.push(finding);
     ctx.priorFindings.push(finding);
     for (const faculty of mode.faculties) {

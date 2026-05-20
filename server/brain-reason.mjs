@@ -246,10 +246,15 @@ const server = http.createServer(async (req, res) => {
     log('info', 'brain.reason.request', { ip, caseId: caseContext.caseId, mode: body.mode ?? 'multi_perspective' });
 
     try {
-      const result = await invokeMlroAdvisor(
+      const ADVISOR_TIMEOUT_MS = 120_000; // 2-minute hard ceiling on the advisor call
+      const advisorPromise = invokeMlroAdvisor(
         { question, caseContext, mode: body.mode, audience: body.audience },
         { apiKey: API_KEY, executorModel: EXEC, advisorModel: ADV },
       );
+      const timeoutPromise = new Promise((_resolve, reject) =>
+        setTimeout(() => reject(new Error(`advisor timed out after ${ADVISOR_TIMEOUT_MS}ms`)), ADVISOR_TIMEOUT_MS),
+      );
+      const result = await Promise.race([advisorPromise, timeoutPromise]);
 
       appendAudit('server', 'brain.reason.response', {
         caseId: caseContext.caseId,

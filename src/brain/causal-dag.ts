@@ -169,6 +169,7 @@ export function buildCausalDag(findings: readonly FindingLite[]): CausalDAG {
         const e = edges[i];
         if (!e) continue;
         if (e.toModeId === cn.modeId && !placed.has(e.fromModeId)) {
+          console.warn(`[causal-dag] cycle detected — dropping edge ${e.fromModeId} → ${e.toModeId}`);
           edges.splice(i, 1);
         }
       }

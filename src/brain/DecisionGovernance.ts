@@ -178,7 +178,9 @@ function calculateReviewDue(outcome: DecisionOutcome, riskScore: number): string
   if (outcome === 'clear') {
     // Annual review for low risk, 6 months for medium
     const months = riskScore < 0.25 ? 12 : riskScore < 0.50 ? 6 : 3;
-    return new Date(Date.now() + months * 30 * 86_400_000).toISOString();
+    const d = new Date();
+    d.setMonth(d.getMonth() + months);
+    return d.toISOString();
   }
   if (outcome === 'monitor') {
     // Enhanced monitoring: 30 days for high risk, 90 days for medium

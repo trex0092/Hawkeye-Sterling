@@ -17,8 +17,17 @@ export default async (_req: Request) => {
     process.env.CRON_SECRET ??
     process.env.ONGOING_RUN_TOKEN ??
     "";
-  const headers: Record<string, string> = { "content-type": "application/json" };
-  if (token) headers.authorization = `Bearer ${token}`;
+  if (!token) {
+    console.error("[transaction-monitor] CRON_SECRET / ONGOING_RUN_TOKEN not set — refusing to call unauthenticated");
+    return new Response(
+      JSON.stringify({ triggered: false, error: "auth token not configured" }),
+      { status: 503, headers: { "content-type": "application/json" } },
+    );
+  }
+  const headers: Record<string, string> = {
+    "content-type": "application/json",
+    authorization: `Bearer ${token}`,
+  };
 
   const controller = new AbortController();
   const deadline = setTimeout(() => controller.abort(), 55_000);

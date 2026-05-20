@@ -10,7 +10,7 @@ Wraps six OSINT/analysis tools behind a uniform REST API:
   AMLSim         — synthetic AML transaction pattern generator
 
 Auth: X-API-Key header, validated against OSINT_BRIDGE_API_KEY env var.
-      If the env var is unset, auth is skipped.
+      The env var is mandatory — the service refuses to start without it.
 
 Timeout: every subprocess call is killed after OSINT_BRIDGE_TIMEOUT_S
          seconds (default 30).  Callers can pass ?timeout=<seconds> to
@@ -43,6 +43,14 @@ app = FastAPI(
 )
 
 _API_KEY: str | None = os.environ.get("OSINT_BRIDGE_API_KEY")
+if not _API_KEY:
+    print(
+        "FATAL: OSINT_BRIDGE_API_KEY environment variable is not set. "
+        "Set it to a strong random secret before running this service.",
+        file=sys.stderr,
+    )
+    sys.exit(1)
+
 _DEFAULT_TIMEOUT: int = int(os.environ.get("OSINT_BRIDGE_TIMEOUT_S", "30"))
 _MAX_TIMEOUT: int = 300
 
@@ -52,9 +60,7 @@ _MAX_TIMEOUT: int = 300
 # ---------------------------------------------------------------------------
 
 async def verify_api_key(request: Request) -> None:
-    """Validate X-API-Key header when OSINT_BRIDGE_API_KEY is configured."""
-    if not _API_KEY:
-        return  # Auth disabled
+    """Validate X-API-Key header. OSINT_BRIDGE_API_KEY is mandatory at startup."""
     provided = request.headers.get("X-API-Key", "")
     if provided != _API_KEY:
         raise HTTPException(status_code=401, detail="Invalid or missing X-API-Key")
