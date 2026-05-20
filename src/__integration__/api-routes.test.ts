@@ -94,6 +94,14 @@ vi.mock('../../../../dist/src/integrations/cryptoRisk.js', () => ({
   })),
 }));
 
+// ─── Mock adminAuth — used by /api/access/* and other privileged routes ────
+// adminAuth() returns 503 when ADMIN_TOKEN is unset (fail-closed). Tests
+// shouldn't depend on env, so mock it to allow by default and override
+// per-test when a deny path needs to be exercised.
+vi.mock('@/lib/server/admin-auth', () => ({
+  adminAuth: vi.fn(() => null),
+}));
+
 // ─── Provide SESSION_SECRET so auth helpers don't throw ─────────────────────
 process.env['SESSION_SECRET'] = 'a'.repeat(64);
 
@@ -500,28 +508,25 @@ describe('GET /api/access/users', () => {
     }
   });
 
-  it('returns 401 when enforce() denies the request', async () => {
-    // Temporarily override the mock so enforce returns a 401
-    const { enforce } = await import('@/lib/server/enforce');
-    const enforceMock = enforce as ReturnType<typeof vi.fn>;
-    const originalImpl = enforceMock.getMockImplementation();
+  it('returns 401 when adminAuth() denies the request', async () => {
+    // The route uses adminAuth() (not enforce) for privilege gating. Override
+    // the mock with mockReturnValueOnce so it self-restores after the call —
+    // anything else risks leaking a queued deny into the next describe block.
+    const { adminAuth } = await import('@/lib/server/admin-auth');
+    const adminAuthMock = adminAuth as ReturnType<typeof vi.fn>;
 
-    enforceMock.mockImplementationOnce(async () => ({
-      ok: false,
-      response: new Response(JSON.stringify({ ok: false, error: 'API key required' }), {
+    adminAuthMock.mockReturnValueOnce(
+      new Response(JSON.stringify({ ok: false, error: 'Admin authorization required.' }), {
         status: 401,
         headers: { 'content-type': 'application/json' },
       }),
-    }));
+    );
 
     const req = makeRequest('http://localhost/api/access/users');
     const res = await GET(req);
     expect(res.status).toBe(401);
     const body = await jsonBody(res) as { ok: boolean };
     expect(body.ok).toBe(false);
-
-    // Restore original mock (mockImplementationOnce self-restores on next call)
-    if (originalImpl) enforceMock.mockImplementation(originalImpl);
   });
 });
 
