@@ -11,6 +11,11 @@
 //     reasonCode?: "FP_01" | "FP_02" | "FP_03" | "FP_04" | "FP_05" | "FP_06",
 //                              // REQUIRED when resolution === "false" (J-06 / G-05)
 //     reason?: string,         // free-text, REQUIRED when reasonCode === "FP_06"
+//                              // also REQUIRED when resolution === "unspecified" (I-10)
+//     evidenceReviewed?: string,
+//                              // REQUIRED when resolution === "unspecified" (I-10) —
+//                              // describe what the analyst inspected before deciding
+//                              // to take no action
 //     hitContext?: {           // for the audit trail
 //       sourceList?: string,
 //       matchedName?: string,
@@ -42,6 +47,7 @@ import { setJson } from "@/lib/server/store";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { validateFpDisposition, type FpReasonCode } from "@/lib/server/fp-reason-codes";
+import { validateNoActionDisposition } from "@/lib/server/no-action-disposition";
 import { captureMatchEvidence, type MatchEvidenceStore } from "@/lib/server/match-evidence";
 
 export const runtime = "nodejs";
@@ -56,6 +62,9 @@ interface ResolveBody {
   /** J-06 / G-05 — structured reason code. Required when resolution === "false". */
   reasonCode?: FpReasonCode | string;
   reason?: string;
+  /** I-10 — what the analyst inspected before deciding to take no action.
+   *  Required when resolution === "unspecified". */
+  evidenceReviewed?: string;
   hitContext?: {
     sourceList?: string;
     matchedName?: string;
@@ -152,7 +161,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   } catch {
     return respond(400, { ok: false, resolution: "", auditId: "", error: "invalid JSON body" }, origin);
   }
-  const { subjectId, subjectName, hitId, resolution, reasonCode, reason, hitContext } = body;
+  const { subjectId, subjectName, hitId, resolution, reasonCode, reason, evidenceReviewed, hitContext } = body;
   if (!subjectId || !subjectName || !hitId || !resolution) {
     return respond(400, { ok: false, resolution: "", auditId: "", error: "subjectId, subjectName, hitId, resolution all required" }, origin);
   }
@@ -173,6 +182,20 @@ export async function POST(req: Request): Promise<NextResponse> {
     }
     validatedReasonCode = v.value.reasonCode;
     validatedReason = v.value.reason;
+  }
+
+  // I-10 — on no-action dispositions, validate the analyst rationale +
+  // evidence-reviewed fields. The audit chain entry below carries both
+  // verbatim so a regulator can query "show me every unactioned alert and
+  // why" months later.
+  let validatedEvidenceReviewed: string | null = null;
+  if (resolution === "unspecified") {
+    const v = validateNoActionDisposition({ reason, evidenceReviewed });
+    if (!v.ok) {
+      return respond(400, { ok: false, resolution, auditId: "", error: v.error }, origin);
+    }
+    validatedReason = v.value.reason;
+    validatedEvidenceReviewed = v.value.evidenceReviewed;
   }
 
   const auditId = `res_${randomUUID()}`;
@@ -245,6 +268,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     resolution,
     reasonCode: validatedReasonCode,
     reason: validatedReason,
+    evidenceReviewed: validatedEvidenceReviewed,
     hitContext,
     matchEvidence,
     ongoingMonitorTaskId,
@@ -257,7 +281,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   // HMAC-signed chain entry (J-06 + J-07 enrichment lives here).
   void writeAuditChainEntry(
     {
-      event: `screening.${resolution === "false" ? "false_positive" : resolution === "positive" ? "true_match" : `resolution_${resolution}`}`,
+      event: `screening.${resolution === "false" ? "false_positive" : resolution === "positive" ? "true_match" : resolution === "unspecified" ? "no_action" : `resolution_${resolution}`}`,
       actor: gate.keyId ?? "system",
       auditId,
       subjectId,
@@ -266,6 +290,9 @@ export async function POST(req: Request): Promise<NextResponse> {
       resolution,
       reasonCode: validatedReasonCode,
       reason: validatedReason,
+      // I-10 — mandatory rationale fields for no-action dispositions.
+      // Null for other resolutions; present + non-empty for "unspecified".
+      evidenceReviewed: validatedEvidenceReviewed,
       hitContext: hitContext ?? null,
       matchEvidence,
       ongoingMonitorTaskId: ongoingMonitorTaskId ?? null,
