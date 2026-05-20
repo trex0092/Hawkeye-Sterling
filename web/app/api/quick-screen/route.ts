@@ -667,11 +667,15 @@ export async function POST(req: Request): Promise<NextResponse> {
       knownSanctioned: result.hits.map((h) => ({ name: h.candidateName, listId: h.listId })),
     });
 
-    // Collect list health — cap wait at 800ms so a slow blob read can't
-    // push past the function deadline. If not resolved, skip the snapshot.
+    // Collect list health — cap wait to whatever budget remains under the
+    // hard 2.8 s deadline. A fixed 800 ms cap would add to the augmentation
+    // time and push total response beyond 3 s when adapters resolve late.
+    // listHealthPromise started in parallel at t0, so it has already been
+    // running for the full augmentation window and is usually resolved.
+    const listHealthBudgetMs = Math.max(50, HARD_DEADLINE_MS - (Date.now() - t0) - 50);
     const listHealth = await Promise.race([
       listHealthPromise,
-      new Promise<null>((r) => setTimeout(() => r(null), 800)),
+      new Promise<null>((r) => setTimeout(() => r(null), listHealthBudgetMs)),
     ]);
     const screeningWarnings = listHealth ? buildScreeningWarnings(listHealth) : [];
 
