@@ -4,6 +4,7 @@ export const maxDuration = 60;
 import { enforce } from "@/lib/server/enforce";
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 export interface FiuFeedbackResult {
   feedbackType:
     | "acknowledgement"
@@ -55,11 +56,11 @@ export async function POST(req: Request) {
       messages: [{
         role: "user",
         content: `Process the following FIU feedback communication:
-- FIU Reference: ${body.fiuRef}
-- Feedback Date: ${body.feedbackDate}
-- Feedback Content: ${body.feedbackContent}
-- Original STR Reference: ${body.originalStrRef}
-- Additional Context: ${body.context}`,
+- FIU Reference: ${sanitizeField(body.fiuRef, 100)}
+- Feedback Date: ${sanitizeField(body.feedbackDate, 50)}
+- Feedback Content: ${sanitizeText(body.feedbackContent, 3000)}
+- Original STR Reference: ${sanitizeField(body.originalStrRef, 100)}
+- Additional Context: ${sanitizeText(body.context, 2000)}`,
       }],
     });
     const text = response.content[0]?.type === "text" ? response.content[0].text : "{}";

@@ -4,6 +4,7 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 export interface HumanTraffickingRequest {
   entity: string;
   entityType: "individual" | "corporate" | "network";
@@ -165,11 +166,11 @@ Score calibration: 0-25 = low (no significant indicators), 26-50 = medium (some 
           role: "user",
           content: `Analyse the following entity for human trafficking money laundering indicators:
 
-Entity: ${body.entity}
-Entity Type: ${body.entityType}
-Sector: ${body.sector}
+Entity: ${sanitizeField(body.entity, 300)}
+Entity Type: ${sanitizeField(body.entityType, 100)}
+Sector: ${sanitizeField(body.sector, 100)}
 Reported Indicators: ${body.indicators.length > 0 ? body.indicators.join("; ") : "None specified"}
-Transaction Patterns: ${body.transactionPatterns || "Not provided"}
+Transaction Patterns: ${sanitizeText(body.transactionPatterns, 2000) || "Not provided"}
 Origin Countries: ${body.geographicProfile.originCountries.join(", ") || "Not specified"}
 Destination Countries: ${body.geographicProfile.destinationCountries.join(", ") || "Not specified"}
 Transit Countries: ${body.geographicProfile.transitCountries.join(", ") || "Not specified"}
@@ -177,7 +178,7 @@ Cash Intensive Operations: ${body.cashIntensive ? "YES" : "NO"}
 Multiple Individuals Depositing to Single Account: ${body.multipleVictimAccounts ? "YES" : "NO"}
 Controlling Third Party Identified: ${body.controllingThirdParty ? "YES" : "NO"}
 Unusual Working Hours Indicator: ${body.unusualWorkingHours ? "YES" : "NO"}
-Additional Context: ${body.context || "None"}
+Additional Context: ${sanitizeText(body.context, 2000) || "None"}
 
 Perform a comprehensive human trafficking money laundering risk assessment. Apply all FATF HT typologies, ILO forced labour indicators, and UAE-specific intelligence. Identify all financial patterns, geographic risks, victim indicators, and controller network flags. Provide specific law enforcement referral guidance including relevant agencies.`,
         },

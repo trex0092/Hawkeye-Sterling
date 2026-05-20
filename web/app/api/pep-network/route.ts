@@ -20,6 +20,7 @@ import { enforce } from "@/lib/server/enforce";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -104,7 +105,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400, headers: gate.headers });
   }
 
-  const pepName = (body.pepName ?? body.subject)?.trim();
+  const pepName = sanitizeField(body.pepName ?? body.subject, 300);
   if (!pepName) {
     return NextResponse.json({ ok: false, error: "pepName is required" }, { status: 400, headers: gate.headers });
   }
@@ -180,11 +181,11 @@ Return ONLY valid JSON with this exact structure:
         role: "user",
         content: [
           `PEP Subject: ${pepName}`,
-          `Role/Position: ${body.role?.trim() ?? "unknown"}`,
-          `Country/Jurisdiction: ${body.country?.trim() ?? "unknown"}`,
-          body.party?.trim() ? `Party/Affiliation: ${body.party.trim()}` : "",
-          body.tenure?.trim() ? `Tenure/Period: ${body.tenure.trim()}` : "",
-          body.focusTypologies?.length ? `Focus Typologies: ${body.focusTypologies.join(", ")}` : "",
+          `Role/Position: ${sanitizeField(body.role, 200) || "unknown"}`,
+          `Country/Jurisdiction: ${sanitizeField(body.country, 100) || "unknown"}`,
+          body.party?.trim() ? `Party/Affiliation: ${sanitizeField(body.party, 200)}` : "",
+          body.tenure?.trim() ? `Tenure/Period: ${sanitizeField(body.tenure, 100)}` : "",
+          body.focusTypologies?.length ? `Focus Typologies: ${body.focusTypologies.slice(0, 20).map((t: string) => sanitizeField(t, 100)).join(", ")}` : "",
           "",
           `Build the full PEP network graph to ${networkDepth} hops. Enumerate ALL persons and entities requiring screening with specific risk indicators for each. Be comprehensive — include both generic node types (e.g., 'Spouse of senior official') and specific entities where known.`,
         ].filter(Boolean).join("\n"),

@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 export interface AuditResponseResult {
   overallRating: "satisfactory" | "needs-improvement" | "unsatisfactory";
   responses: Array<{
@@ -55,11 +56,11 @@ export async function POST(req: Request) {
       messages: [{
         role: "user",
         content: `Prepare management responses to the following audit findings:
-- Auditor Name: ${body.auditorName}
-- Audit Date: ${body.auditDate}
-- Findings: ${body.findings}
-- Institution Type: ${body.institutionType}
-- Additional Context: ${body.context}`,
+- Auditor Name: ${sanitizeField(body.auditorName, 200)}
+- Audit Date: ${sanitizeField(body.auditDate, 50)}
+- Findings: ${sanitizeText(body.findings, 3000)}
+- Institution Type: ${sanitizeField(body.institutionType, 100)}
+- Additional Context: ${sanitizeText(body.context, 2000)}`,
       }],
     });
     const text = response.content[0]?.type === "text" ? response.content[0].text : "{}";

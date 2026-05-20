@@ -5,6 +5,7 @@ import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -87,8 +88,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "country is required" }, { status: 400 , headers: gate.headers });
   }
 
-  const lines: string[] = [`Country: ${body.country.trim()}`];
-  if (body.context) lines.push(`Exposure context: ${body.context.slice(0, 300)}`);
+  const lines: string[] = [`Country: ${sanitizeField(body.country, 100)}`];
+  if (body.context) lines.push(`Exposure context: ${sanitizeText(body.context, 300)}`);
 
   const userContent = `${lines.join("\n")}\n\nProvide a comprehensive jurisdiction intelligence brief and output the structured JSON.`;
 

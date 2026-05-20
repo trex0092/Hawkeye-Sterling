@@ -5,6 +5,7 @@ import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -293,7 +294,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const text = body.text.trim();
   const truncated = text.slice(0, 3000);
   const subjectLine = body.subjectName?.trim()
-    ? `Subject: ${body.subjectName.trim()}\n\n`
+    ? `Subject: ${sanitizeField(body.subjectName, 300)}\n\n`
     : "";
 
   const userContent = `${subjectLine}ANALYST NOTES:\n${truncated}`;

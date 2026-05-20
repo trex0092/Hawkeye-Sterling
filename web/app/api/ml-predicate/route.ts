@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export interface PrimaryPredicate {
   offence: string;
@@ -85,12 +86,12 @@ Respond ONLY with valid JSON — no markdown fences:
           {
             role: "user",
             content: `Case Facts:
-${body.facts}
+${sanitizeText(body.facts, 5000)}
 
-Suspected Activity: ${body.suspectedActivity ?? "not specified"}
-Jurisdiction: ${body.jurisdiction ?? "UAE"}
-Subject Type: ${body.subjectType ?? "not specified"}
-Additional Context: ${body.context ?? "none"}
+Suspected Activity: ${sanitizeField(body.suspectedActivity, 500) || "not specified"}
+Jurisdiction: ${sanitizeField(body.jurisdiction, 100) || "UAE"}
+Subject Type: ${sanitizeField(body.subjectType, 100) || "not specified"}
+Additional Context: ${sanitizeText(body.context, 2000) || "none"}
 
 Map these facts to applicable UAE ML predicate offences with penalties.`,
           },

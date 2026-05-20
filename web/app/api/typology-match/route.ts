@@ -4,6 +4,7 @@ import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -155,7 +156,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     }
 
     const lines: string[] = [`Facts: ${body.facts.trim().slice(0, 2000)}`];
-    if (body.subjectType) lines.push(`Subject type: ${body.subjectType}`);
+    if (body.subjectType) lines.push(`Subject type: ${sanitizeField(body.subjectType, 100)}`);
     if (body.transactionTypes?.length) lines.push(`Transaction types: ${body.transactionTypes.join(", ")}`);
     if (body.jurisdictions?.length) lines.push(`Jurisdictions: ${body.jurisdictions.join(", ")}`);
     if (body.redFlags?.length) lines.push(`Reported red flags: ${body.redFlags.join(", ")}`);

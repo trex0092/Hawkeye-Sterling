@@ -4,6 +4,7 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 // Audit M-05: GET requests previously got the Next.js default bare 405 with no
 // body, leaving operators to guess the correct method. Return a friendly
@@ -105,11 +106,11 @@ Scoring guidance:
         {
           role: "user",
           content: `Vessel Details:
-- Name: ${body.vesselName ?? "Unknown"}
-- IMO: ${body.imo ?? "Not provided"}
-- Flag State: ${body.flag ?? "Unknown"}
-- Registered Owner: ${body.owner ?? "Unknown"}
-- Operator: ${body.operator ?? "Unknown"}
+- Name: ${sanitizeField(body.vesselName, 200) || "Unknown"}
+- IMO: ${sanitizeField(body.imo, 50) || "Not provided"}
+- Flag State: ${sanitizeField(body.flag, 100) || "Unknown"}
+- Registered Owner: ${sanitizeField(body.owner, 200) || "Unknown"}
+- Operator: ${sanitizeField(body.operator, 200) || "Unknown"}
 - Last Known Ports: ${body.lastPorts?.join(", ") || "No port history provided"}
 - Cargo Types: ${body.cargoTypes?.join(", ") || "Unknown"}
 - Sanctioned Connections: ${body.sanctionedConnections ? "Yes — direct sanctioned connection identified" : "No direct sanction connections identified"}

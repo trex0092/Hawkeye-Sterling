@@ -5,6 +5,7 @@ import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -57,11 +58,11 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   const userContent = [
-    `Address: ${body.address}`,
-    `Chain: ${body.chain}`,
+    `Address: ${sanitizeField(body.address, 200)}`,
+    `Chain: ${sanitizeField(body.chain, 50)}`,
     `Risk score: ${body.riskScore}`,
-    `Risk level: ${body.riskLevel}`,
-    body.riskCategory ? `Risk category: ${body.riskCategory}` : null,
+    `Risk level: ${sanitizeField(body.riskLevel, 50)}`,
+    body.riskCategory ? `Risk category: ${sanitizeField(body.riskCategory, 100)}` : null,
     `Labels: ${body.labels.length > 0 ? body.labels.join(", ") : "none"}`,
     `Direct sanctioned exposure: ${body.exposure.directSanctioned.toFixed(2)}%`,
     `Indirect sanctioned exposure: ${body.exposure.indirectSanctioned.toFixed(2)}%`,

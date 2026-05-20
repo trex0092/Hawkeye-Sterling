@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export interface PredicateOffence {
   offence: string;
@@ -80,11 +81,11 @@ Respond ONLY with valid JSON — no markdown fences:
           {
             role: "user",
             content: `Article / Report Text:
-${body.articleText}
+${sanitizeText(body.articleText, 5000)}
 
-Subject Name: ${body.subjectName ?? "not specified"}
-Jurisdiction: ${body.jurisdiction ?? "not specified"}
-Additional Context: ${body.context ?? "none"}
+Subject Name: ${sanitizeField(body.subjectName, 200) || "not specified"}
+Jurisdiction: ${sanitizeField(body.jurisdiction, 100) || "not specified"}
+Additional Context: ${sanitizeText(body.context, 2000) || "none"}
 
 Classify this adverse media against FATF predicate offences and assess SAR threshold.`,
           },
