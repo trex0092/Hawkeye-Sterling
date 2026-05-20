@@ -612,8 +612,15 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
     if (reportSaving) return;
     setReportSaving(true);
     try {
+      const qsSubject = {
+        name: subject.name,
+        ...(subject.entityType ? { entityType: subject.entityType } : {}),
+        ...(subject.jurisdiction ? { jurisdiction: subject.jurisdiction } : {}),
+        ...(subject.aliases ? { aliases: subject.aliases } : {}),
+      };
       const screenResult = screening.status === "success"
         ? {
+            subject: screening.result.subject ?? qsSubject,
             hits: screening.result.hits,
             topScore: screening.result.topScore,
             severity: screening.result.severity,
@@ -622,7 +629,7 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
             durationMs: screening.result.durationMs,
             generatedAt: screening.result.generatedAt,
           }
-        : { hits: [], topScore: subject.riskScore, severity: "medium" as const, listsChecked: 0, candidatesChecked: 0, durationMs: 0, generatedAt: new Date().toISOString() };
+        : { subject: qsSubject, hits: [], topScore: subject.riskScore, severity: "medium" as const, listsChecked: 0, candidatesChecked: 0, durationMs: 0, generatedAt: new Date().toISOString() };
       const res = await postScreeningReport({
         subject: {
           id: subject.id,
