@@ -81,6 +81,43 @@ function validateSecrets(): void {
       console.warn(`[startup] ${key} is not set. ${hint}`);
     }
   }
+
+  // AuditLedger persistence warning. The in-process AuditLedger is in-memory
+  // only — entries are lost on Lambda cold-start. A persistent audit store
+  // (Netlify Blobs 10-year or S3-equivalent) is required for FATF R.11 / UAE
+  // FDL 10/2025 Art.22 5-year retention. See HIGH-1 in SECURITY-NOTES.md.
+  if (isProduction) {
+    const hasAuditStorage =
+      Boolean(process.env['AUDIT_BLOBS_STORE']) ||
+      Boolean(process.env['AUDIT_S3_BUCKET']) ||
+      Boolean(process.env['NETLIFY_BLOBS_TOKEN'] ?? process.env['NETLIFY_API_TOKEN']);
+    if (!hasAuditStorage) {
+      console.error(
+        '[startup] AuditLedger has no confirmed durable storage binding. ' +
+        'In-process ledger entries are lost on Lambda cold-start. ' +
+        'Configure NETLIFY_BLOBS_TOKEN or an equivalent to satisfy FATF R.11 5-year retention.',
+      );
+    }
+  }
+
+  // goAML entity IDs: warn if still using placeholder value.
+  const goamlId =
+    process.env['GOAML_RENTITY_ID'] ??
+    (process.env['HAWKEYE_ENTITIES']
+      ? (() => {
+          try {
+            const arr = JSON.parse(process.env['HAWKEYE_ENTITIES']!) as Array<{ goamlRentityId?: string }>;
+            return Array.isArray(arr) ? arr.map((e) => e.goamlRentityId).join(',') : '';
+          } catch { return ''; }
+        })()
+      : '');
+  if (isProduction && (!goamlId || goamlId.includes('REPLACE_ME') || goamlId.includes('PENDING_FIU'))) {
+    console.error(
+      '[startup] goAML entity ID is missing or still set to a placeholder. ' +
+      'Set HAWKEYE_ENTITIES (or legacy GOAML_RENTITY_ID) to the FIU-assigned entity ID ' +
+      'before submitting any live STR/SAR filings via goAML.',
+    );
+  }
 }
 
 export async function register() {

@@ -4,7 +4,7 @@ export const maxDuration = 30;
 
 import { NextResponse } from "next/server";
 import { createHash } from "node:crypto";
-import { loadUsers, saveUsers } from "@/app/api/access/_store";
+import { loadUsers, saveUsers, withUsersLock } from "@/app/api/access/_store";
 import { verifyPassword, issueSession, computeRequestFingerprint, SESSION_COOKIE, SESSION_TTL_S } from "@/lib/server/auth";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { getJson, setJson, del } from "@/lib/server/store";
@@ -216,12 +216,20 @@ export async function POST(req: Request) {
   });
 
   // Persist last-login timestamp and IP hash for next-login geo-velocity check.
-  const updatedUsers = users.map((u) =>
-    u.id === user.id
-      ? { ...u, lastLogin: new Date().toISOString(), lastIpHash: iKey }
-      : u,
+  // Fire-and-forget: the response is already built; a failed update loses only
+  // the lastLogin timestamp — it must not block or fail the login response.
+  void withUsersLock(async () => {
+    const freshUsers = await loadUsers();
+    await saveUsers(
+      freshUsers.map((u) =>
+        u.id === user.id
+          ? { ...u, lastLogin: new Date().toISOString(), lastIpHash: iKey }
+          : u,
+      ),
+    );
+  }).catch((err) =>
+    console.warn("[auth/login] lastLogin persist failed:", err instanceof Error ? err.message : String(err)),
   );
-  await saveUsers(updatedUsers);
 
   return res;
 }
