@@ -7,11 +7,18 @@
 // have missed a niche outlet, but if the operator points us at the
 // URL we ingest it.
 //
-// SSRF protection: operator-supplied URLs are validated against a blocklist
-// of private ranges and cloud metadata endpoints before fetching. Only
-// public HTTPS URLs are accepted (HTTP is blocked to prevent redirect-based
-// SSRF to internal services). Redirects are followed but re-validated.
+// SSRF protection (defence-in-depth):
+//   1. URL-level: protocol must be HTTPS; hostname/path blocklist applied.
+//   2. DNS pre-resolution: hostname is resolved to IP(s) via node:dns before
+//      any network call; every resolved IP is validated against the private-
+//      range blocklist. This closes the DNS rebinding window — an attacker
+//      cannot use a hostname that resolves to a public IP at check-time but
+//      routes to 169.254.x (AWS metadata) or 10.x at fetch-time.
+//   3. Redirect validation: every Location header is re-checked through both
+//      URL-level and (where the Location is a hostname) DNS-level checks.
+// Only public HTTPS URLs survive all three gates.
 
+import { promises as dns } from "node:dns";
 import type { NewsArticle } from "./newsAdapters";
 
 const FETCH_TIMEOUT_MS = 12_000;
@@ -25,9 +32,35 @@ const BLOCKED_HOSTS = /^(localhost|ip6-localhost|ip6-loopback)$/i;
 const BLOCKED_PREFIXES = /^(127\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.|192\.168\.|169\.254\.|0\.|::1|fc|fd)/i;
 const BLOCKED_PATHS = /\/(latest\/meta-data|metadata\/v1|computeMetadata|instance)/i;
 
+// Validates a single IPv4 or IPv6 address string against the private-range blocklist.
+// Returns an error string if blocked, null if safe.
+function checkIpAddress(ip: string): string | null {
+  // IPv6 loopback + private
+  if (ip === "::1" || ip.startsWith("fc") || ip.startsWith("fd") || ip.startsWith("fe80")) {
+    return `private IPv6 address not permitted: ${ip}`;
+  }
+  const numericIp = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(ip);
+  if (!numericIp) return null; // non-numeric IPv6 (non-private forms already caught above)
+  const parts = numericIp.slice(1).map(Number);
+  const [a, b] = parts;
+  if (
+    a === 127 ||
+    a === 10 ||
+    a === 0 ||
+    (a === 172 && b !== undefined && b >= 16 && b <= 31) ||
+    (a === 192 && b === 168) ||
+    (a === 169 && b === 254) ||
+    (a === 100 && b !== undefined && b >= 64 && b <= 127) // RFC 6598 shared address space
+  ) {
+    return `private IP address not permitted: ${ip}`;
+  }
+  return null;
+}
+
 /**
  * Returns an error string if the URL is unsafe (SSRF risk), or null if safe.
- * Only HTTPS public URLs are accepted.
+ * Only HTTPS public URLs are accepted. This check covers the URL syntax only;
+ * call ssrfCheckWithDns() for full DNS rebinding protection.
  */
 function ssrfCheck(raw: string): string | null {
   let parsed: URL;
@@ -43,22 +76,52 @@ function ssrfCheck(raw: string): string | null {
   if (BLOCKED_HOSTS.test(host)) return `blocked host: ${host}`;
   if (BLOCKED_PREFIXES.test(host)) return `private/link-local address not permitted: ${host}`;
   if (BLOCKED_PATHS.test(parsed.pathname)) return `blocked path: ${parsed.pathname}`;
-  // Block numeric IPs that resolve to private ranges (best-effort; full
-  // resolution-time SSRF protection requires a DNS rebinding guard at the
-  // network layer — out of scope for this function-level check).
-  const numericIp = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(host);
-  if (numericIp) {
-    const [, a, b, _c] = numericIp.map(Number);
-    if (
-      a === 127 ||
-      a === 10 ||
-      (a === 172 && b !== undefined && b >= 16 && b <= 31) ||
-      (a === 192 && b === 168) ||
-      (a === 169 && b === 254) ||
-      a === 0
-    ) {
-      return `private IP address not permitted: ${host}`;
+  // If the hostname is already a numeric IP, validate it directly.
+  const ipErr = checkIpAddress(host);
+  if (ipErr) return ipErr;
+  return null;
+}
+
+/**
+ * Full SSRF check including DNS pre-resolution to defeat DNS rebinding.
+ * Resolves the hostname to all its IP addresses and validates each one.
+ * Returns an error string if any resolved address is in a private range.
+ */
+async function ssrfCheckWithDns(raw: string): Promise<string | null> {
+  const urlErr = ssrfCheck(raw);
+  if (urlErr) return urlErr;
+
+  let parsed: URL;
+  try {
+    parsed = new URL(raw);
+  } catch {
+    return "invalid URL";
+  }
+  const host = parsed.hostname.toLowerCase();
+
+  // Skip DNS resolution for already-numeric IPs — they were validated by ssrfCheck.
+  if (/^[\d.]+$/.test(host) || host.includes(":")) return null;
+
+  try {
+    const { address: ipv4s } = await Promise.race([
+      dns.resolve4(host).then((addrs) => ({ address: addrs })).catch(() => ({ address: [] as string[] })),
+      new Promise<{ address: string[] }>((resolve) => setTimeout(() => resolve({ address: [] }), 3_000)),
+    ]);
+    const { address: ipv6s } = await Promise.race([
+      dns.resolve6(host).then((addrs) => ({ address: addrs })).catch(() => ({ address: [] as string[] })),
+      new Promise<{ address: string[] }>((resolve) => setTimeout(() => resolve({ address: [] }), 3_000)),
+    ]);
+    const allIps = [...ipv4s, ...ipv6s];
+    if (allIps.length === 0) {
+      // DNS resolution failed — block the request conservatively.
+      return `hostname ${host} could not be resolved — request blocked`;
     }
+    for (const ip of allIps) {
+      const err = checkIpAddress(ip);
+      if (err) return `DNS rebinding guard: ${host} resolves to ${ip} — ${err}`;
+    }
+  } catch (err) {
+    return `DNS pre-resolution failed for ${host}: ${err instanceof Error ? err.message : String(err)}`;
   }
   return null;
 }
@@ -108,7 +171,8 @@ function extractFromHtml(html: string, url: string): NewsArticle | null {
  * fetch / parse / SSRF-check failure — caller treats it as "no evidence".
  */
 export async function ingestUrl(url: string): Promise<NewsArticle | null> {
-  const ssrfErr = ssrfCheck(url);
+  // Full SSRF check including DNS pre-resolution (DNS rebinding guard).
+  const ssrfErr = await ssrfCheckWithDns(url);
   if (ssrfErr) {
     console.warn("[url-ingest] SSRF check failed:", ssrfErr, url.slice(0, 100));
     return null;
@@ -125,12 +189,12 @@ export async function ingestUrl(url: string): Promise<NewsArticle | null> {
         redirect: "manual",
       }),
     );
-    // Handle redirects with SSRF re-validation.
+    // Handle redirects with SSRF re-validation including DNS.
     if (res.status >= 300 && res.status < 400) {
       const location = res.headers.get("location");
       if (!location) return null;
       const absoluteLocation = location.startsWith("http") ? location : new URL(location, url).href;
-      const redirectErr = ssrfCheck(absoluteLocation);
+      const redirectErr = await ssrfCheckWithDns(absoluteLocation);
       if (redirectErr) {
         console.warn("[url-ingest] SSRF check failed on redirect:", redirectErr, absoluteLocation.slice(0, 100));
         return null;
