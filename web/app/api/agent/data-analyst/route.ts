@@ -20,8 +20,8 @@
 // }
 
 import { NextResponse } from "next/server";
+import Anthropic from "@anthropic-ai/sdk";
 import { enforce } from "@/lib/server/enforce";
-import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
@@ -59,9 +59,9 @@ export async function POST(req: Request) {
   const context = body.context ? sanitizeText(String(body.context), 8000) : null;
   const timeoutMs = typeof body.timeoutMs === "number" ? Math.min(body.timeoutMs, DEFAULT_TIMEOUT_MS) : DEFAULT_TIMEOUT_MS;
 
-  const client = getAnthropicClient(apiKey, 55_000, "agent/data-analyst");
+  const rawClient = new Anthropic({ apiKey, timeout: 55_000, maxRetries: 0 });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const beta = (client as any).beta;
+  const beta = (rawClient as any).beta;
 
   try {
     // 1. Create a single-use session bound to the managed agent.
