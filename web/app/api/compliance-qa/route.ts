@@ -19,6 +19,7 @@ import { classifyMlroQuestion } from "../../../../dist/src/brain/mlro-question-c
 import { gateMlroQuestion } from "@/lib/server/mlro-input-gate";
 
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeText } from "@/lib/server/sanitize-prompt";
 
 // ── Citation extraction ───────────────────────────────────────────────────────
 
@@ -229,7 +230,13 @@ export async function POST(req: Request): Promise<NextResponse> {
       { status: gateResult.status, headers: { ...gate.headers, ...CORS } }
     );
   }
-  body.query = gateResult.question;
+  body.query = sanitizeText(gateResult.question, 2000);
+  if (Array.isArray(body.context)) {
+    body.context = body.context.map((p) => ({
+      q: sanitizeText(p.q, 2000),
+      a: sanitizeText(p.a, 2000),
+    }));
+  }
 
   // FAST PATH — Balanced depth (the default) routes through the same
   // Haiku 4.5 single-pass path that the MLRO Advisor "Quick" mode uses.

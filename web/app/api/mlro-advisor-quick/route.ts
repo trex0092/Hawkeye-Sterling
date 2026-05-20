@@ -28,6 +28,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { corsHeaders, corsPreflight } from "@/lib/api/cors";
 import { gateMlroQuestion } from "@/lib/server/mlro-input-gate";
+import { sanitizeText } from "@/lib/server/sanitize-prompt";
 // Dynamic imports — prevents hard 500 on cold Lambda if dist/ isn't compiled yet.
 type ClassifyFn = (_q: string) => {
   primaryTopic: string; topics: string[]; jurisdictions: string[]; regimes: string[];
@@ -314,7 +315,7 @@ export async function POST(req: Request): Promise<Response> {
   // Shared input gate — refuses empty / oversize / prompt-injection
   // inputs before we burn a Haiku call. Topic-scope filtering is off;
   // the Advisor must answer every compliance question.
-  const gateResult = gateMlroQuestion(body.question ?? "", {
+  const gateResult = gateMlroQuestion(sanitizeText(body.question ?? "", 5000), {
     maxChars: body.redTeamMode ? 4000 : 2000,
     allowInjectionPatterns: body.redTeamMode === true,
   });

@@ -4,6 +4,7 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 export interface BulkRescreenSubject {
   id: string;
   name: string;
@@ -125,11 +126,11 @@ export async function POST(req: Request) {
     // are the only differentiators the engine needs for a realistic simulation.
     const subjectLines = subjects
       .map((s) =>
-        `- ID: ${s.id} | Name: ${s.name}${s.nationality ? ` | Nationality: ${s.nationality}` : ""}${s.dob ? ` | DOB: ${s.dob}` : ""}`,
+        `- ID: ${sanitizeField(s.id, 100)} | Name: ${sanitizeField(s.name, 200)}${s.nationality ? ` | Nationality: ${sanitizeField(s.nationality, 100)}` : ""}${s.dob ? ` | DOB: ${sanitizeField(s.dob, 20)}` : ""}`,
       )
       .join("\n");
 
-    const userContent = `List Version: ${listVersion}
+    const userContent = `List Version: ${sanitizeField(listVersion, 100)}
 Total Subjects: ${subjects.length}
 
 Subject Portfolio:

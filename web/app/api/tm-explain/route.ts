@@ -5,6 +5,7 @@ import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -75,14 +76,14 @@ export async function POST(req: Request): Promise<NextResponse> {
         : "consider monitor or escalate";
 
   const userContent = [
-    `Transaction ref: ${t.ref}`,
-    `Counterparty: ${t.counterparty}`,
-    t.counterpartyCountry ? `Counterparty country: ${t.counterpartyCountry}` : null,
-    `Amount: ${t.currency} ${t.amount}`,
-    `Channel: ${t.channel}`,
-    `Direction: ${t.direction}`,
-    flagCount > 0 ? `Behavioural flags (${flagCount}): ${t.behaviouralFlags.join(", ")}` : `Behavioural flags: none`,
-    t.notes ? `Analyst notes: ${t.notes}` : null,
+    `Transaction ref: ${sanitizeField(t.ref, 100)}`,
+    `Counterparty: ${sanitizeField(t.counterparty, 200)}`,
+    t.counterpartyCountry ? `Counterparty country: ${sanitizeField(t.counterpartyCountry, 100)}` : null,
+    `Amount: ${sanitizeField(t.currency, 10)} ${sanitizeField(t.amount, 50)}`,
+    `Channel: ${sanitizeField(t.channel, 100)}`,
+    `Direction: ${sanitizeField(t.direction, 20)}`,
+    flagCount > 0 ? `Behavioural flags (${flagCount}): ${t.behaviouralFlags.map((f) => sanitizeField(f, 200)).join(", ")}` : `Behavioural flags: none`,
+    t.notes ? `Analyst notes: ${sanitizeText(t.notes, 1000)}` : null,
     `Disposition hint: ${dispositionHint}`,
   ]
     .filter(Boolean)

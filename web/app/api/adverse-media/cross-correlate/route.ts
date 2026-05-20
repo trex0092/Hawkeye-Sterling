@@ -4,6 +4,7 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 export type CrossCorrelateTheme =
   | "fraud"
   | "sanctions"
@@ -41,13 +42,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
-  const { subjectName, articles } = body;
-  if (!subjectName || !articles?.length) {
+  const { subjectName: rawSubjectName, articles } = body;
+  if (!rawSubjectName || !articles?.length) {
     return NextResponse.json(
       { ok: false, error: "subjectName and articles are required" },
       { status: 400, headers: gate.headers }
     );
   }
+
+  const subjectName = sanitizeField(rawSubjectName, 300);
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) return NextResponse.json({ ok: false, error: "adverse-media/cross-correlate temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });

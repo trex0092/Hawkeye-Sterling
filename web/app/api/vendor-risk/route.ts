@@ -5,6 +5,7 @@ import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -80,13 +81,13 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const userContent = `Assess the supply-chain risk for the following supplier:
 
-Supplier ID: ${supplier.id}
-Name: ${supplier.name}
-Jurisdiction: ${supplier.jurisdiction}
-Tier: ${supplier.tier}
+Supplier ID: ${sanitizeField(supplier.id, 100)}
+Name: ${sanitizeField(supplier.name, 200)}
+Jurisdiction: ${sanitizeField(supplier.jurisdiction, 100)}
+Tier: ${sanitizeField(supplier.tier, 50)}
 LBMA Good Delivery Listed: ${supplier.lbmaListed ? "Yes" : "No"}
 DGD (Dubai Good Delivery) Listed: ${supplier.dgdListed ? "Yes" : "No"}
-Existing Flags: ${supplier.flags.length > 0 ? supplier.flags.join(", ") : "none"}`;
+Existing Flags: ${supplier.flags.length > 0 ? supplier.flags.map((f) => sanitizeField(f, 200)).join(", ") : "none"}`;
 
   const client = getAnthropicClient(apiKey, 55_000);
   const claudeRes = await client.messages.create({

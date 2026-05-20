@@ -21,6 +21,7 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -313,7 +314,7 @@ ${pillars.map((p) => `${p.name}: ${p.score}/100 (${p.band})`).join("\n")}
 Top weaknesses:
 ${topWeaknesses.slice(0, 6).map((w) => `- ${w}`).join("\n")}
 
-Write a practical 4-6 bullet remediation plan focused on the weakest areas (${weakPillars.map((p) => p.name).join(", ")}). Each bullet should be actionable, time-bound, and cite the relevant UAE FDL 10/2025 article.`;
+Write a practical 4-6 bullet remediation plan focused on the weakest areas (${weakPillars.map((p) => sanitizeField(p.name, 100)).join(", ")}). Each bullet should be actionable, time-bound, and cite the relevant UAE FDL 10/2025 article.`;
 
       const msg = await anthropic.messages.create({
         model: "claude-haiku-4-5-20251001",

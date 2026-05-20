@@ -4,6 +4,7 @@ import { enforce } from "@/lib/server/enforce";
 
 import { getAnthropicClient } from "@/lib/server/llm";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
@@ -44,10 +45,12 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers });
     }
 
-  const { subject, entries } = body;
-  if (!subject) {
+  const { subject: rawSubject, entries } = body;
+  if (!rawSubject) {
     return NextResponse.json({ ok: false, error: "subject is required" }, { status: 400 , headers: gate.headers });
   }
+
+  const subject = sanitizeField(rawSubject, 300);
 
   // Non-blocking audit event
   try { writeAuditEvent("analyst", "adverse-media.ai-assessment", subject); }

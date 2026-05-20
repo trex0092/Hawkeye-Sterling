@@ -11,6 +11,7 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 import { searchAllNews } from "@/lib/intelligence/newsAdapters";
 import { gdeltKeywordOr } from "@/lib/intelligence/amlKeywords";
 import { fetchGdeltCached } from "@/lib/intelligence/gdelt-cache";
@@ -347,7 +348,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   }
 
-  const subjectName = body.subjectName?.trim();
+  const subjectName = sanitizeField(body.subjectName?.trim() ?? "", 300) || undefined;
   if (!subjectName) {
     return NextResponse.json(
       { ok: false, error: "subjectName is required" },
@@ -509,9 +510,10 @@ export async function POST(req: Request): Promise<NextResponse> {
   const riskRating = scoreToRating(riskScore);
 
   // Optionally enrich with Claude
+  const safeEntityType = body.entityType != null ? sanitizeField(body.entityType, 100) : undefined;
   const { summary, articlesWithCategories, enriched } = await enrichWithClaude(
     subjectName,
-    body.entityType,
+    safeEntityType,
     articles,
     riskScore,
     riskRating,

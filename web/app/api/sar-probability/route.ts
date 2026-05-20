@@ -12,6 +12,7 @@ import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { stats as feedbackStats } from "@/lib/server/feedback";
 import { getCurrentWeights } from "@/lib/server/risk-weight-calibrator";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -134,7 +135,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         system: "You are an AML analyst. Given a SAR probability score and key factors, write a 2-sentence rationale explaining the assessment. Be specific. Return plain text only.",
         messages: [{
           role: "user",
-          content: `SAR probability: ${calibratedScore}%. Key factors: ${factors.join("; ")}. Jurisdiction risk: ${signals.jurisdictionRisk}. Write the rationale.`,
+          content: `SAR probability: ${calibratedScore}%. Key factors: ${factors.join("; ")}. Jurisdiction risk: ${sanitizeField(signals.jurisdictionRisk, 20)}. Write the rationale.`,
         }],
       });
       narrative = res.content[0]?.type === "text" ? (res.content[0] as { type: "text"; text: string }).text : "";

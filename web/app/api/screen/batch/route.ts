@@ -156,14 +156,14 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const contentLength = Number(req.headers.get("content-length") ?? "0");
   if (contentLength > 2 * 1024 * 1024) {
-    return NextResponse.json({ ok: false, error: "request body too large (max 2 MB)" }, { status: 413 });
+    return NextResponse.json({ ok: false, error: "request body too large (max 2 MB)" }, { status: 413, headers: gate.headers });
   }
 
   let raw: unknown;
   try {
     raw = await req.json();
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400, headers: gate.headers });
   }
 
   const body = parseBody(raw);
@@ -174,13 +174,13 @@ export async function POST(req: Request): Promise<NextResponse> {
         error: "invalid_body",
         hint: "subjects must be a non-empty array of objects with a name field",
       },
-      { status: 400 },
+      { status: 400, headers: gate.headers },
     );
   }
 
   // Hard cap.
   if (body.subjects.length === 0) {
-    return NextResponse.json({ ok: false, error: "subjects array is empty" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "subjects array is empty" }, { status: 400, headers: gate.headers });
   }
   if (body.subjects.length > MAX_BATCH_SIZE) {
     return NextResponse.json(
@@ -191,7 +191,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         received: body.subjects.length,
         limit: MAX_BATCH_SIZE,
       },
-      { status: 400 },
+      { status: 400, headers: gate.headers },
     );
   }
 
@@ -211,7 +211,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         hint: "Each subject name must be unique within the batch (case-insensitive). Remove duplicates and retry.",
         duplicates,
       },
-      { status: 400 },
+      { status: 400, headers: gate.headers },
     );
   }
 
@@ -227,7 +227,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json(
       { ok: false, error: "screening_corpus_unavailable" },
-      { status: 503 },
+      { status: 503, headers: gate.headers },
     );
   }
 
@@ -245,7 +245,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json(
       { ok: false, error: "screening_engine_unavailable" },
-      { status: 503 },
+      { status: 503, headers: gate.headers },
     );
   }
 
@@ -282,7 +282,8 @@ export async function POST(req: Request): Promise<NextResponse> {
         lists: listIds,
         ...(topHit?.name ? { topHitName: topHit.name } : {}),
       });
-    } catch {
+    } catch (err) {
+      console.warn("[screen/batch] subject screening failed:", err instanceof Error ? err.message : String(err));
       results.push({
         name: subject.name,
         entityType: subject.entityType ?? "individual",
@@ -304,7 +305,9 @@ export async function POST(req: Request): Promise<NextResponse> {
     subjectCount: body.subjects.length,
     elevatedCount: elevated.length,
     topScore: Math.max(...results.map((r) => r.topScore), 0),
-  });
+  }).catch((err) =>
+    console.warn("[screen/batch] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+  );
 
   logRequest("/api/screen/batch", requestId, 200, Date.now() - t0, {
     count: results.length,
@@ -318,7 +321,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     count: results.length,
     elevatedCount: elevated.length,
     results,
-  });
+  }, { headers: gate.headers });
 }
 
 export async function OPTIONS(): Promise<NextResponse> {

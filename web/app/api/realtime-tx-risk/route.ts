@@ -21,6 +21,7 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -331,11 +332,11 @@ export async function POST(req: Request): Promise<NextResponse> {
       const prompt = `You are a UAE DPMS AML compliance specialist. A transaction has been scored ${score}/100 (${band} risk).
 
 Transaction details:
-- Amount: ${tx.amount} ${tx.currency ?? "AED"} (AED equivalent: ${Math.round(amountAed).toLocaleString()})
-- Type: ${tx.type ?? "unspecified"}
-- Direction: ${tx.direction ?? "unspecified"}
-- Counterparty: ${tx.counterpartyName ?? "unspecified"} (jurisdiction: ${tx.counterpartyJurisdiction ?? "unknown"})
-- Reference: ${tx.referenceNote ?? "none"}
+- Amount: ${tx.amount} ${sanitizeField(tx.currency, 10) || "AED"} (AED equivalent: ${Math.round(amountAed).toLocaleString()})
+- Type: ${sanitizeField(tx.type, 50) || "unspecified"}
+- Direction: ${sanitizeField(tx.direction, 10) || "unspecified"}
+- Counterparty: ${sanitizeField(tx.counterpartyName, 200) || "unspecified"} (jurisdiction: ${sanitizeField(tx.counterpartyJurisdiction, 10) || "unknown"})
+- Reference: ${sanitizeField(tx.referenceNote, 500) || "none"}
 
 Risk flags triggered:
 ${flags.map((f) => `- [${f.severity.toUpperCase()}] ${f.code}: ${f.description}`).join("\n")}

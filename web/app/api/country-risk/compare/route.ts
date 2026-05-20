@@ -7,6 +7,7 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 import type { CountryRiskResult } from "../route";
 
 export interface CountryCompareResult {
@@ -31,7 +32,7 @@ export async function POST(req: Request) {
       { status: 400, headers: gate.headers }
     );
   }
-  const countries = body.countries.slice(0, 5).map((c) => c.trim()).filter(Boolean);
+  const countries = body.countries.slice(0, 5).map((c) => sanitizeField(c.trim(), 100)).filter(Boolean);
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {

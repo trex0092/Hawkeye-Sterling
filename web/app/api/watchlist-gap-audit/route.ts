@@ -14,6 +14,7 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -103,13 +104,15 @@ async function handler(req: Request): Promise<NextResponse> {
         system: "You are a UAE AML compliance specialist. Given watchlist coverage gaps for a DPMS institution, provide prioritized remediation recommendations. Return JSON: { \"recommendations\": [\"<recommendation>\"] }",
         messages: [{
           role: "user",
-          content: `Institution: ${institutionType}\nCoverage: ${coveragePercent}%\nCritical gaps: ${criticalGaps.map((g) => g.name).join(", ")}\nHigh gaps: ${highGaps.map((g) => g.name).join(", ")}\n\nProvide top 5 remediation actions in priority order.`,
+          content: `Institution: ${sanitizeField(institutionType, 50)}\nCoverage: ${coveragePercent}%\nCritical gaps: ${criticalGaps.map((g) => g.name).join(", ")}\nHigh gaps: ${highGaps.map((g) => g.name).join(", ")}\n\nProvide top 5 remediation actions in priority order.`,
         }],
       });
       const raw = res.content[0]?.type === "text" ? (res.content[0] as { type: "text"; text: string }).text : "{}";
       const parsed = JSON.parse(raw.match(/\{[\s\S]*\}/)?.[0] ?? "{}");
       aiRecommendations = Array.isArray(parsed.recommendations) ? parsed.recommendations : [];
-    } catch { /* best effort */ }
+    } catch (err) {
+      console.warn("[watchlist-gap-audit] AI recommendations failed:", err instanceof Error ? err.message : String(err));
+    }
   }
 
   return NextResponse.json({
