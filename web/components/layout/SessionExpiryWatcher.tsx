@@ -24,16 +24,9 @@ export function SessionExpiryWatcher(): null {
         if (dead) return;
         if (!d.ok || !d.user?.sessionExp) return;
         expRef.current = d.user.sessionExp;
-        // IP change warning — possible session theft. Fire once per mount.
-        if (d.warning?.code === "IP_CHANGED") {
-          pushToast({
-            id: "session-ip-changed",
-            severity: "high",
-            title: "Session IP change detected",
-            body: "Your network address changed since login. If this wasn't you, contact your MLRO immediately and log out.",
-            ttlMs: 60_000,
-          });
-        }
+        // IP change detection is logged server-side to the audit chain.
+        // The front-end toast is suppressed — VPN/mobile networks change
+        // IP legitimately and the alert caused false-positive anxiety.
       })
       .catch(() => undefined);
 
