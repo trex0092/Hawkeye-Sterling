@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
-import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { ScreeningAuditWriter } from "@/lib/server/screening-audit";
 import type {
   QuickScreenCandidate,
   QuickScreenOptions,
@@ -225,6 +225,14 @@ export async function POST(req: Request): Promise<NextResponse> {
     return respond(400, { ok: false, error: "evidenceUrls exceeds 20-entry limit" }, gateHeaders);
   }
 
+  // J-04 + J-05 audit enrichment: every screening audit-chain entry written
+  // from this route includes the active list versions and the match-threshold
+  // value used. One writer per request; list-version capture is memoised
+  // inside so multiple audit writes within a request only read Blobs once.
+  const auditWriter = new ScreeningAuditWriter({
+    matchThreshold: body.options?.scoreThreshold,
+  });
+
   // Sanitize optional discriminator fields — coerce to string/undefined so
   // the brain engine never receives unexpected types from the MCP tool.
   const subject: QuickScreenSubject = {
@@ -275,7 +283,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         // Compliance: whitelist matches MUST still produce an audit-chain entry so
         // regulators can verify every screening event, including those that were
         // cleared via the tenant whitelist (UAE FDL Art. 20 traceability requirement).
-        void writeAuditChainEntry({
+        void auditWriter.write({
           event: "screening.whitelisted",
           actor: gate.record?.email ?? gate.keyId ?? "unknown",
           subject: subject.name,
@@ -427,7 +435,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       const earlyDegraded1 = peekHealth1
         ? Object.values(peekHealth1).filter((e) => e.entityCount === 0 && e.status !== "missing").length
         : 0;
-      void writeAuditChainEntry({
+      void auditWriter.write({
         event: "screening.completed",
         actor: gate.record?.email ?? gate.keyId ?? "unknown",
         subject: subject.name,
@@ -529,7 +537,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       const earlyDegraded2 = peekHealth2
         ? Object.values(peekHealth2).filter((e) => e.entityCount === 0 && e.status !== "missing").length
         : 0;
-      void writeAuditChainEntry({
+      void auditWriter.write({
         event: "screening.completed",
         actor: gate.record?.email ?? gate.keyId ?? "unknown",
         subject: subject.name,
@@ -725,7 +733,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     // block the screening response. Failure logged inside writeAuditChainEntry.
     // listsDegraded uses degradedListIds.length (consistent with early-return paths
     // which also count empty-entity non-missing lists, not screeningWarnings.length).
-    void writeAuditChainEntry({
+    void auditWriter.write({
       event: "screening.completed",
       actor: gate.record?.email ?? gate.keyId ?? "unknown",
       subject: subject.name,
