@@ -71,10 +71,60 @@ function EocnPdfUploadPanel() {
       fd.append("file", file);
       fd.append("listId", listId);
       const res = await fetch("/api/admin/eocn-ingest", { method: "POST", body: fd });
-      const json = await res.json() as typeof result;
-      setResult(json);
+
+      // Read the response as text first. Netlify's edge layer returns HTML
+      // bodies for 502/504/413 errors, and calling `res.json()` on those
+      // throws a cryptic "Unexpected token '<'" parse error that buries the
+      // real cause (the upload itself never reached the handler). Read text,
+      // try JSON, then surface a structured message that always includes
+      // the HTTP status and a human hint for known failure modes.
+      const text = await res.text();
+      const contentType = res.headers.get("content-type") ?? "";
+
+      let parsed: typeof result = null;
+      if (contentType.includes("application/json")) {
+        try {
+          parsed = JSON.parse(text) as typeof result;
+        } catch (parseErr) {
+          parsed = null;
+          console.warn("[eocn-upload] declared JSON but unparseable", parseErr);
+        }
+      }
+
+      if (parsed) {
+        setResult(parsed);
+        return;
+      }
+
+      // Non-JSON response. Build the most useful error we can — never the
+      // raw HTML body, never a cryptic parser exception.
+      const status = res.status;
+      const hint =
+        status === 504
+          ? "Upload timed out (Netlify Lambda 60s limit). Large PDFs with many designations can exceed the AI extraction budget — split the file or retry."
+          : status === 502
+          ? "Server returned 502 Bad Gateway. The function crashed mid-request; check Netlify Function logs for [eocn-ingest]."
+          : status === 413
+          ? "File too large for the Netlify request body limit. Maximum 50 MB; consider splitting the source PDF."
+          : status === 401
+          ? "Not authenticated. Sign back in and retry — the upload route is admin-gated."
+          : status === 415
+          ? "Server rejected the content-type. This usually means the form's multipart encoding was stripped by an intermediary — retry without browser extensions, or report to engineering."
+          : status >= 500
+          ? "Server error. The handler did not return JSON. Check Netlify Function logs for [eocn-ingest]."
+          : "The upload route returned a non-JSON response.";
+
+      setResult({
+        ok: false,
+        error: `Upload failed (HTTP ${status}). ${hint}`,
+      });
     } catch (err) {
-      setResult({ ok: false, error: err instanceof Error ? err.message : "Upload failed" });
+      // Genuine network / abort. fetch() throws, never the JSON parser
+      // (we handled that above).
+      setResult({
+        ok: false,
+        error: `Network error: ${err instanceof Error ? err.message : String(err)}. Retry, or check connectivity.`,
+      });
     } finally {
       setUploading(false);
     }
