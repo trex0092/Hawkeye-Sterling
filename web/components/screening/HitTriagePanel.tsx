@@ -83,6 +83,15 @@ export function HitTriagePanel({ subjectId, subjectName, hits, resolutions = {},
   // that this is one of FP_01..FP_06 when resolution === "false"; FP_06 ("Other")
   // additionally requires a non-empty resolveReason text.
   const [resolveReasonCode, setResolveReasonCode] = useState<Record<string, string>>({});
+  // G-04 — subject-level whitelist form state. Toggled by the "Whitelist
+  // subject" header button. Submits to /api/whitelist; quick-screen's
+  // lookupWhitelist short-circuits future screens of the same normalised
+  // name on this tenant.
+  const [showWhitelistForm, setShowWhitelistForm] = useState(false);
+  const [whitelistReason, setWhitelistReason] = useState("");
+  const [whitelistApproverRole, setWhitelistApproverRole] = useState<"co" | "mlro" | "admin">("co");
+  const [whitelistBusy, setWhitelistBusy] = useState(false);
+  const [whitelistFeedback, setWhitelistFeedback] = useState<{ ok: boolean; message: string } | null>(null);
   const [busyHitId, setBusyHitId] = useState<string | null>(null);
   const [page, setPage] = useState<number>(0);
   const PAGE_SIZE = 50;
@@ -191,8 +200,102 @@ export function HitTriagePanel({ subjectId, subjectName, hits, resolutions = {},
             Review each match against the subject&apos;s identity. Mark <strong className="text-red-300">Positive</strong> to auto-add to ongoing monitoring, <strong className="text-emerald-300">False</strong> to dismiss, <strong className="text-amber-300">Possible</strong> for MLRO review.
           </p>
         </div>
-        <div className="text-11 text-ink-3 font-mono">case#{subjectId}</div>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowWhitelistForm((v) => !v)}
+            className="text-11 px-2 py-1 rounded border border-violet-500/30 bg-violet-500/10 text-violet-300 hover:bg-violet-500/20"
+            title="Whitelist this subject so repeat screenings against the same identity skip these matches (G-04)."
+          >
+            {showWhitelistForm ? "Close whitelist" : "Whitelist subject"}
+          </button>
+          <div className="text-11 text-ink-3 font-mono">case#{subjectId}</div>
+        </div>
       </header>
+
+      {/* G-04 — Whitelist this subject (per-tenant FP suppression).
+          Submits to /api/whitelist; quick-screen's lookupWhitelist short-circuits
+          future screens of the same normalised name on the tenant. */}
+      {showWhitelistForm && (
+        <div className="mx-4 mt-3 rounded-md border border-violet-500/30 bg-violet-500/5 px-3 py-2.5">
+          <div className="text-10 uppercase tracking-wide text-violet-300 font-bold mb-1.5">
+            Whitelist subject — false-positive suppression
+          </div>
+          <p className="text-11 text-ink-2 mb-2">
+            Future screenings of <strong>{subjectName}</strong> on this tenant will skip these
+            hits. A reason is required for the audit trail.
+          </p>
+          <div className="flex items-center gap-2 flex-wrap">
+            <select
+              value={whitelistApproverRole}
+              onChange={(e) => setWhitelistApproverRole(e.target.value as "co" | "mlro" | "admin")}
+              className="text-11 bg-bg-1 border border-white/10 rounded px-2 py-1 text-ink-2"
+              title="Approver role"
+            >
+              <option value="co">Compliance Officer</option>
+              <option value="mlro">MLRO</option>
+              <option value="admin">Admin</option>
+            </select>
+            <input
+              type="text"
+              placeholder="Reason (required for the audit trail)…"
+              value={whitelistReason}
+              onChange={(e) => setWhitelistReason(e.target.value)}
+              className="flex-1 min-w-[260px] text-11 bg-bg-1 border border-white/10 rounded px-2 py-1 text-ink-2"
+            />
+            <button
+              type="button"
+              disabled={whitelistBusy || whitelistReason.trim().length === 0}
+              onClick={async () => {
+                setWhitelistBusy(true);
+                setWhitelistFeedback(null);
+                try {
+                  const res = await fetch("/api/whitelist", {
+                    method: "POST",
+                    headers: { "content-type": "application/json" },
+                    body: JSON.stringify({
+                      subjectName,
+                      subjectId,
+                      reason: whitelistReason.trim(),
+                      approverRole: whitelistApproverRole,
+                    }),
+                  });
+                  const text = await res.text();
+                  const ct = res.headers.get("content-type") ?? "";
+                  let parsed: { ok?: boolean; error?: string } | null = null;
+                  if (ct.includes("application/json")) {
+                    try { parsed = JSON.parse(text); } catch { /* fall through */ }
+                  }
+                  if (res.ok && parsed?.ok) {
+                    setWhitelistFeedback({ ok: true, message: "Subject whitelisted. Future screenings will skip these matches." });
+                    setWhitelistReason("");
+                  } else {
+                    setWhitelistFeedback({
+                      ok: false,
+                      message: parsed?.error ?? `Whitelist add failed (HTTP ${res.status}).`,
+                    });
+                  }
+                } catch (err) {
+                  setWhitelistFeedback({
+                    ok: false,
+                    message: `Network error: ${err instanceof Error ? err.message : String(err)}`,
+                  });
+                } finally {
+                  setWhitelistBusy(false);
+                }
+              }}
+              className="text-11 px-3 py-1 rounded border bg-violet-500/15 text-violet-200 border-violet-500/40 hover:bg-violet-500/25 disabled:opacity-50"
+            >
+              {whitelistBusy ? "Submitting…" : "Add to whitelist"}
+            </button>
+          </div>
+          {whitelistFeedback && (
+            <div className={`mt-2 text-11 ${whitelistFeedback.ok ? "text-emerald-300" : "text-red-300"}`}>
+              {whitelistFeedback.message}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Common-name expansion banner */}
       {commonNameExpansion && (
