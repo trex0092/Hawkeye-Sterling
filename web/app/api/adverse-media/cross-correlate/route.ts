@@ -4,6 +4,7 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 export type CrossCorrelateTheme =
   | "fraud"
   | "sanctions"
@@ -41,13 +42,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
-  const { subjectName, articles } = body;
-  if (!subjectName || !articles?.length) {
+  const { subjectName: rawSubjectName, articles } = body;
+  if (!rawSubjectName || !articles?.length) {
     return NextResponse.json(
       { ok: false, error: "subjectName and articles are required" },
       { status: 400, headers: gate.headers }
     );
   }
+
+  const subjectName = sanitizeField(rawSubjectName, 300);
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) return NextResponse.json({ ok: false, error: "adverse-media/cross-correlate temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
@@ -113,7 +116,8 @@ Perform entity disambiguation, theme grouping, trend analysis, score computation
     if (!Array.isArray(result.dismissed)) result.dismissed = [];
     if (result.themes == null || typeof result.themes !== "object" || Array.isArray(result.themes)) result.themes = {};
     return NextResponse.json(result, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "adverse-media/cross-correlate temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

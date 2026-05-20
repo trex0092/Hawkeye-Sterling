@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { stats as feedbackStats, adjustScore } from "@/lib/server/feedback";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export interface ConfidenceScoreResult {
   ok: true;
@@ -96,16 +97,16 @@ export async function POST(req: Request) {
     const client = getAnthropicClient(apiKey, 55_000);
 
     const userContent = `Subject Details:
-- Name: ${body.subject.name}
-- Date of Birth: ${body.subject.dob ?? "not provided"}
-- Nationality: ${body.subject.nationality ?? "not provided"}
-- ID Number: ${body.subject.idNumber ?? "not provided"}
+- Name: ${sanitizeField(body.subject.name, 200)}
+- Date of Birth: ${sanitizeField(body.subject.dob, 50) || "not provided"}
+- Nationality: ${sanitizeField(body.subject.nationality, 100) || "not provided"}
+- ID Number: ${sanitizeField(body.subject.idNumber, 100) || "not provided"}
 
 Watchlist Hit:
-- List: ${body.hit.listName}
-- Matched Name on List: ${body.hit.matchedName ?? body.subject.name}
+- List: ${sanitizeField(body.hit.listName, 200)}
+- Matched Name on List: ${sanitizeField(body.hit.matchedName ?? body.subject.name, 200)}
 - Fuzzy Match Score: ${body.hit.score != null ? `${body.hit.score}/100` : "not provided"}
-- Additional Details: ${body.hit.details ?? "none"}
+- Additional Details: ${sanitizeField(body.hit.details, 500) || "none"}
 
 Assess whether this is a true sanctions/PEP/watchlist match or a false positive. Return JSON only.`;
 

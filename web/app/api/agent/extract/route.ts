@@ -31,6 +31,7 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -69,7 +70,8 @@ const SCHEMA_INSTRUCTIONS: Record<Schema, string> = {
 };
 
 function buildPrompt(schema: Schema, hint?: string): string {
-  const tail = hint ? `\n\nAdditional hint from caller: ${hint}` : "";
+  const safeHint = hint ? sanitizeField(hint, 500) : undefined;
+  const tail = safeHint ? `\n\nAdditional hint from caller: ${safeHint}` : "";
   return `Extract structured data from the attached document.
 
 ${SCHEMA_INSTRUCTIONS[schema]}

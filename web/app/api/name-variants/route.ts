@@ -10,6 +10,7 @@ import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -89,7 +90,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: true, ...buildFallback(trimmedName) }, { headers: gate.headers });
   }
 
-  const userMessage = `Generate all name variants for AML screening: Name: ${trimmedName}, Nationality: ${nationality ?? "unknown"}, DOB: ${dob ?? "unknown"}, Context: ${context ?? "none"}`;
+  const userMessage = `Generate all name variants for AML screening: Name: ${sanitizeField(trimmedName, 300)}, Nationality: ${sanitizeField(nationality, 100) || "unknown"}, DOB: ${sanitizeField(dob, 50) || "unknown"}, Context: ${sanitizeField(context, 500) || "none"}`;
 
   try {
     const client = getAnthropicClient(apiKey, 55_000);

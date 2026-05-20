@@ -21,7 +21,8 @@ export async function GET(req: Request): Promise<NextResponse> {
   try {
     const [calls, summary] = await Promise.all([listCalls(limit), getSummary()]);
     return NextResponse.json({ ok: true, summary, calls, count: calls.length }, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "telemetry store unavailable — please retry." }, { status: 503, headers: gate.headers });
   }
 }

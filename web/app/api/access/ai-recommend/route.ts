@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
 import { adminAuth } from "@/lib/server/admin-auth";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 export interface RoleRecommendation {
   recommendedRole: string;
   rationale: string;
@@ -37,10 +38,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
-  const { userName, jobTitle, department, responsibilities } = body;
-  if (!userName || !jobTitle || !department || !responsibilities) {
+  const { userName: rawUserName, jobTitle: rawJobTitle, department: rawDepartment, responsibilities: rawResponsibilities } = body;
+  if (!rawUserName || !rawJobTitle || !rawDepartment || !rawResponsibilities) {
     return NextResponse.json({ ok: false, error: "userName, jobTitle, department and responsibilities are required" }, { status: 400 , headers: gate.headers });
   }
+
+  const userName = sanitizeField(rawUserName, 200);
+  const jobTitle = sanitizeField(rawJobTitle, 100);
+  const department = sanitizeField(rawDepartment, 100);
+  const responsibilities = sanitizeText(rawResponsibilities, 500);
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) return NextResponse.json({ ok: false, error: "access/ai-recommend temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
@@ -80,7 +86,8 @@ Return ONLY valid JSON (no markdown fences):
     if (!Array.isArray(result.suggestedModules)) result.suggestedModules = [];
     if (!Array.isArray(result.risks)) result.risks = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "access/ai-recommend temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

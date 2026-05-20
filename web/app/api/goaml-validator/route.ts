@@ -127,7 +127,8 @@ Validate this STR draft against UAE FIU goAML requirements.`,
     if (!Array.isArray(result.narrativeWeaknesses)) result.narrativeWeaknesses = [];
     if (!Array.isArray(result.goAmlSpecificRequirements)) result.goAmlSpecificRequirements = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "goaml-validator temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

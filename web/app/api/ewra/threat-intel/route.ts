@@ -6,6 +6,7 @@ import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 export interface ThreatTypology {
   name: string;
   trend: "rising" | "stable" | "declining";
@@ -45,7 +46,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
-  const { sector, jurisdiction, reportingPeriod } = body;
+  const sector = sanitizeField(body.sector, 100);
+  const jurisdiction = sanitizeField(body.jurisdiction, 100);
+  const reportingPeriod = sanitizeField(body.reportingPeriod, 50);
   if (!sector || !jurisdiction) {
     return NextResponse.json(
       { ok: false, error: "sector and jurisdiction are required" },
@@ -95,7 +98,7 @@ Return ONLY valid JSON with this exact structure (no markdown fences):
           role: "user",
           content: `Sector: ${sector}
 Jurisdiction: ${jurisdiction}
-Reporting period: ${reportingPeriod ?? new Date().getFullYear().toString()}
+Reporting period: ${reportingPeriod || new Date().getFullYear().toString()}
 
 Generate threat intelligence for the EWRA. Focus on the top 5 current ML/TF typologies, recent regulatory changes (last 90 days), and specific EWRA dimension score adjustment recommendations. Return JSON only.`,
         },
@@ -128,7 +131,8 @@ Generate threat intelligence for the EWRA. Focus on the top 5 current ML/TF typo
       console.warn("[ewra/threat-intel] audit chain write failed:", err instanceof Error ? err.message : String(err)),
     );
     return NextResponse.json(result, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "ewra/threat-intel temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

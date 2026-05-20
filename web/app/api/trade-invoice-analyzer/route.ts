@@ -79,7 +79,8 @@ Analyse this trade invoice for TBML indicators. Return complete TradeInvoiceResu
     if (!Array.isArray(result.indicators)) result.indicators = [];
     if (!Array.isArray(result.requiredDocumentation)) result.requiredDocumentation = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "trade-invoice-analyzer temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

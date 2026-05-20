@@ -62,7 +62,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (!Array.isArray(result.overdueItems)) result.overdueItems = [];
     if (!Array.isArray(result.breachRisks)) result.breachRisks = [];
     if (!Array.isArray(result.deadlines)) result.deadlines = [];
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "oversight-gap-analysis temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 

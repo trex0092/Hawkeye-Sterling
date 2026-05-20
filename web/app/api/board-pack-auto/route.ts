@@ -20,6 +20,7 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -116,9 +117,9 @@ export async function POST(req: Request): Promise<NextResponse> {
     : null;
 
   const dataContext = `
-Entity: ${metrics.entityName ?? "DPMS Entity"}
-Period: ${metrics.periodStart} to ${metrics.periodEnd}
-MLRO: ${metrics.mlroName ?? "Not specified"}
+Entity: ${sanitizeField(metrics.entityName, 200) || "DPMS Entity"}
+Period: ${sanitizeField(metrics.periodStart, 50)} to ${sanitizeField(metrics.periodEnd, 50)}
+MLRO: ${sanitizeField(metrics.mlroName, 200) || "Not specified"}
 
 CUSTOMER PORTFOLIO:
 - Total customers: ${metrics.totalCustomers ?? "N/A"}

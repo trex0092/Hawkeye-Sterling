@@ -4,6 +4,7 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 export interface EnvCrimeCategory {
   category: string;
   risk: "low" | "medium" | "high" | "critical";
@@ -146,8 +147,8 @@ export async function POST(req: Request) {
           role: "user",
           content: `Assess environmental crime money laundering risk for the following:
 
-Entity: ${body.entity ?? "Unknown"}
-Entity Type: ${body.entityType ?? "corporate"}
+Entity: ${sanitizeField(body.entity, 300) || "Unknown"}
+Entity Type: ${sanitizeField(body.entityType, 100) || "corporate"}
 Commodities Involved: ${( Array.isArray(body.commodities) ? body.commodities : []).join(", ") || "Not specified"}
 Trade Routes: ${( Array.isArray(body.tradeRoutes) ? body.tradeRoutes : []).join("; ") || "Not specified"}
 Jurisdictions: ${( Array.isArray(body.jurisdictions) ? body.jurisdictions : []).join(", ") || "Not specified"}
@@ -169,7 +170,8 @@ Produce a fully weaponized environmental crime risk assessment covering all appl
     if (!Array.isArray(result.redFlags)) result.redFlags = [];
     if (!Array.isArray(result.recommendedActions)) result.recommendedActions = [];
     return NextResponse.json(result);
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "environmental-crime temporarily unavailable - please retry." }, { status: 503 });
   }
 }

@@ -152,7 +152,8 @@ Perform a comprehensive supply chain risk assessment covering: geographic concen
     if (!Array.isArray(result.redFlags)) result.redFlags = [];
     if (!Array.isArray(result.actionPlan)) result.actionPlan = [];
     return NextResponse.json(result, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "supply-chain/risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

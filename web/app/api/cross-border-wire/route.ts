@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 export interface CrossBorderWireResult {
   corridorRisk: "critical" | "high" | "medium" | "low";
   r16ComplianceStatus: "compliant" | "partial" | "non-compliant";
@@ -58,14 +59,14 @@ export async function POST(req: Request) {
       messages: [{
         role: "user",
         content: `Assess the following cross-border wire transfer:
-- Originator Name: ${body.originatorName}
-- Beneficiary Name: ${body.beneficiaryName}
-- Amount: ${body.amount}
-- Currency: ${body.currency}
-- Origin Country: ${body.originCountry}
-- Destination Country: ${body.destinationCountry}
-- Purpose: ${body.purpose}
-- Additional Context: ${body.context}`,
+- Originator Name: ${sanitizeField(body.originatorName, 200)}
+- Beneficiary Name: ${sanitizeField(body.beneficiaryName, 200)}
+- Amount: ${sanitizeField(body.amount, 50)}
+- Currency: ${sanitizeField(body.currency, 10)}
+- Origin Country: ${sanitizeField(body.originCountry, 100)}
+- Destination Country: ${sanitizeField(body.destinationCountry, 100)}
+- Purpose: ${sanitizeField(body.purpose, 500)}
+- Additional Context: ${sanitizeText(body.context, 2000)}`,
       }],
     });
     const text = response.content[0]?.type === "text" ? response.content[0].text : "{}";
@@ -77,7 +78,8 @@ export async function POST(req: Request) {
     if (!Array.isArray(parsed.missingOriginatorInfo)) parsed.missingOriginatorInfo = [];
     if (!Array.isArray(parsed.missingBeneficiaryInfo)) parsed.missingBeneficiaryInfo = [];
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "cross-border-wire temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

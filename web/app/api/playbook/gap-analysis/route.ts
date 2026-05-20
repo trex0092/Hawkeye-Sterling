@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -61,7 +62,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   ].join("\n");
 
   const userContent = [
-    `Playbook: ${body.playbookTitle} (typology: ${body.typology})`,
+    `Playbook: ${sanitizeField(body.playbookTitle, 200)} (typology: ${sanitizeField(body.typology, 100)})`,
     "",
     `COMPLETED (${body.completedChecks.length}): ${body.completedChecks.slice(0, 20).join(" | ")}`,
     `INCOMPLETE (${body.incompleteChecks.length}): ${body.incompleteChecks.join(" | ")}`,
@@ -89,7 +90,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (!Array.isArray(result.priorityActions)) result.priorityActions = [];
 
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "playbook/gap-analysis temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

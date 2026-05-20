@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { writeAuditEvent } from "@/lib/audit";
 import { enforce } from "@/lib/server/enforce";
-
 import { getAnthropicClient } from "@/lib/server/llm";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -98,15 +98,16 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   const userContent = cases
+    .slice(0, 50)
     .map((c) => {
       const redFlagsStr =
         c.redFlags && c.redFlags.length > 0
-          ? c.redFlags.join("; ")
+          ? c.redFlags.slice(0, 20).map((f) => sanitizeField(f, 200)).join("; ")
           : "none documented";
-      return `Case ID: ${c.id}
-Subject: ${c.subject}
-Meta: ${c.meta}
-Narrative: ${c.narrative ?? "(empty)"}
+      return `Case ID: ${sanitizeField(c.id, 100)}
+Subject: ${sanitizeField(c.subject, 300)}
+Meta: ${sanitizeField(c.meta, 300)}
+Narrative: ${sanitizeText(c.narrative, 2000) || "(empty)"}
 Red Flags: ${redFlagsStr}`;
     })
     .join("\n\n---\n\n");
@@ -114,7 +115,7 @@ Red Flags: ${redFlagsStr}`;
   const client = getAnthropicClient(apiKey, 55_000);
   const claudeRes = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 700,
+      max_tokens: 1000,
       system: SYSTEM_PROMPT,
       messages: [
         {

@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 export interface MixedFundsResult {
   taintPercentage: number;
   taintRating: "critical" | "high" | "medium" | "low";
@@ -55,10 +56,10 @@ export async function POST(req: Request) {
       messages: [{
         role: "user",
         content: `Analyse the following mixed funds scenario:
-- Account Holder: ${body.accountHolder}
-- Total Balance: ${body.totalBalance}
-- Suspected Proceeds Amount: ${body.suspectedProceedsAmount}
-- Legitimate Funds Amount: ${body.legitimateFundsAmount}
+- Account Holder: ${sanitizeField(body.accountHolder, 200)}
+- Total Balance: ${sanitizeField(body.totalBalance, 50)}
+- Suspected Proceeds Amount: ${sanitizeField(body.suspectedProceedsAmount, 50)}
+- Legitimate Funds Amount: ${sanitizeField(body.legitimateFundsAmount, 50)}
 - Mixing Period: ${body.mixingPeriod}
 - Additional Context: ${body.context}`,
       }],
@@ -70,7 +71,8 @@ export async function POST(req: Request) {
     const parsed = JSON.parse(jsonMatch[0]) as MixedFundsResult;
     if (!Array.isArray(parsed.investigativeSteps)) parsed.investigativeSteps = [];
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "mixed-funds temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 export interface LegalPrivilegeResult {
   privilegeApplies: boolean;
   tippingOffRisk: "high" | "medium" | "low";
@@ -49,10 +50,10 @@ export async function POST(req: Request) {
       messages: [{
         role: "user",
         content: `Analyse the following legal privilege and tipping-off scenario:
-- Subject Type: ${body.subjectType}
-- Communication Type: ${body.communicationType}
-- Legal Relationship: ${body.legalRelationship}
-- Additional Context: ${body.context}`,
+- Subject Type: ${sanitizeField(body.subjectType, 100)}
+- Communication Type: ${sanitizeField(body.communicationType, 100)}
+- Legal Relationship: ${sanitizeField(body.legalRelationship, 200)}
+- Additional Context: ${sanitizeText(body.context, 2000)}`,
       }],
     });
     const text = response.content[0]?.type === "text" ? response.content[0].text : "{}";
@@ -62,7 +63,8 @@ export async function POST(req: Request) {
     const parsed = JSON.parse(jsonMatch[0]) as LegalPrivilegeResult;
     if (!Array.isArray(parsed.safeProcedureSteps)) parsed.safeProcedureSteps = [];
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "legal-privilege temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

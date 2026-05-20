@@ -4,6 +4,7 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 export interface ScenarioSimulateResult {
   chapters: string[];
   redFlags: string[];
@@ -92,10 +93,10 @@ Guidelines:
           role: "user",
           content: `Analyse this scenario and provide AML guidance:
 
-Scenario: ${body.scenario}
-Client Type: ${body.clientType ?? "Unknown"}
-Jurisdiction: ${body.jurisdiction ?? "UAE"}
-Risk Level: ${body.riskLevel ?? "Medium"}
+Scenario: ${sanitizeText(body.scenario, 2000)}
+Client Type: ${sanitizeField(body.clientType, 100) || "Unknown"}
+Jurisdiction: ${sanitizeField(body.jurisdiction, 100) || "UAE"}
+Risk Level: ${sanitizeField(body.riskLevel, 50) || "Medium"}
 
 Identify the relevant playbook chapters, red flags present, step-by-step recommended actions, specific regulatory citations, and determine the appropriate recommendation and urgency.`,
         },
@@ -109,7 +110,8 @@ Identify the relevant playbook chapters, red flags present, step-by-step recomme
     if (!Array.isArray(result.actions)) result.actions = [];
     if (!Array.isArray(result.regulatoryRefs)) result.regulatoryRefs = [];
     return NextResponse.json(result, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "playbook/scenario-simulate temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

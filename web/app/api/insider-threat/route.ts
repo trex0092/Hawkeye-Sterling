@@ -23,6 +23,7 @@ import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
 import { getJson, setJson } from "@/lib/server/store";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export interface MiceQuadrant {
   score: number;
@@ -266,10 +267,10 @@ Return ONLY valid JSON (no markdown fences) with this exact structure:
           content: `Assess this insider threat profile${mode === "monitor" && previousProfile ? " (MONITORING — compare against baseline)" : ""}:
 
 Employee ID: ${employeeId}
-Employee: ${body.employee ?? "not specified"}
-Role: ${body.role ?? "not specified"}
-Department: ${body.department ?? "not specified"}
-Access Level: ${body.accessLevel ?? "not specified"}
+Employee: ${sanitizeField(body.employee, 200) || "not specified"}
+Role: ${sanitizeField(body.role, 100) || "not specified"}
+Department: ${sanitizeField(body.department, 100) || "not specified"}
+Access Level: ${sanitizeField(body.accessLevel, 50) || "not specified"}
 Years at Firm: ${body.yearsAtFirm ?? "not specified"}
 Recent Life Events: ${JSON.stringify((body.recentLifeEvents ?? []).slice(0, 20))}
 Behavioural Indicators: ${JSON.stringify((body.behaviouralIndicators ?? []).slice(0, 30))}
@@ -334,7 +335,8 @@ Perform a comprehensive insider threat assessment using the MICE model and CERT 
       } : {}),
     }, { headers: gate.headers });
 
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "insider-threat temporarily unavailable - please retry." }, { status: 503, headers: gate.headers });
   }
 }

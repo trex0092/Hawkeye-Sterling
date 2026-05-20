@@ -4,6 +4,7 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 export interface PepRiskAssessment {
   pepExposure: string;
   pepTierRisk: string;
@@ -161,10 +162,10 @@ export async function POST(req: Request) {
           role: "user",
           content: `Assess corruption risk for the following entity:
 
-Entity: ${body.entity ?? "Unknown"}
-Entity Type: ${body.entityType ?? "corporate"}
-Jurisdiction: ${body.jurisdiction ?? "Not specified"}
-Sector: ${body.sector ?? "Not specified"}
+Entity: ${sanitizeField(body.entity, 500) || "Unknown"}
+Entity Type: ${sanitizeField(body.entityType, 100) || "corporate"}
+Jurisdiction: ${sanitizeField(body.jurisdiction, 100) || "Not specified"}
+Sector: ${sanitizeField(body.sector, 100) || "Not specified"}
 PEP Status: ${body.pepStatus ? "YES" : "NO"}
 PEP Tier: ${body.pepTier ?? "none"}
 Contract Types: ${( Array.isArray(body.contractTypes) ? body.contractTypes : []).join(", ") || "Not specified"}
@@ -186,7 +187,8 @@ Produce a fully weaponized corruption risk assessment covering FATF R.12 PEP obl
     if (!Array.isArray(result.requiredApprovals)) result.requiredApprovals = [];
     if (!Array.isArray(result.reportingObligations)) result.reportingObligations = [];
     return NextResponse.json(result, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "corruption-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

@@ -1,5 +1,6 @@
 import { writeAuditEvent } from "@/lib/audit";
 import { stripJsonFences, withMlroLlm } from "@/lib/server/mlro-route-base";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -87,14 +88,15 @@ export const POST = (req: Request) => withMlroLlm<Body, CasePatternsResult>(req,
   },
   buildRequest: (body) => {
     const casesSummary = body.cases
+      .slice(0, 100)
       .map((c) =>
         [
-          `Case ID: ${c.id}`,
-          `Subject: ${c.subject}`,
-          `Meta: ${c.meta}`,
-          `Status: ${c.status}`,
-          `Opened: ${c.openedAt}`,
-          ...(c.reportKind ? [`Report Kind: ${c.reportKind}`] : []),
+          `Case ID: ${sanitizeField(c.id, 100)}`,
+          `Subject: ${sanitizeField(c.subject, 200)}`,
+          `Meta: ${sanitizeField(c.meta, 300)}`,
+          `Status: ${sanitizeField(c.status, 50)}`,
+          `Opened: ${sanitizeField(c.openedAt, 50)}`,
+          ...(c.reportKind ? [`Report Kind: ${sanitizeField(c.reportKind, 50)}`] : []),
         ].join(" | "),
       )
       .join("\n");

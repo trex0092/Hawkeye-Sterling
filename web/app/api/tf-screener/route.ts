@@ -143,7 +143,8 @@ Assess for terrorism financing risk.`,
     if (!Array.isArray(result.applicableRegime)) result.applicableRegime = [];
     if (!Array.isArray(result.ctfObligations)) result.ctfObligations = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "tf-screener temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

@@ -59,9 +59,9 @@ export async function POST(req: Request): Promise<NextResponse> {
     const serverAlerts = await loadServerAlerts();
     const merged = mergeAlerts(serverAlerts, clientAlerts);
     await setJson(STORE_KEY, { alerts: merged });
-    return NextResponse.json({ ok: true, alerts: merged });
+    return NextResponse.json({ ok: true, alerts: merged }, { headers: gate.headers });
   } catch (err) {
     console.error("[tfs-alerts] POST failed:", err);
-    return NextResponse.json({ ok: false, error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ ok: false, error: "Internal server error" }, { status: 500, headers: gate.headers });
   }
 }

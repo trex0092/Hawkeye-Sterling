@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export interface PredicateOffence {
   offence: string;
@@ -80,11 +81,11 @@ Respond ONLY with valid JSON — no markdown fences:
           {
             role: "user",
             content: `Article / Report Text:
-${body.articleText}
+${sanitizeText(body.articleText, 5000)}
 
-Subject Name: ${body.subjectName ?? "not specified"}
-Jurisdiction: ${body.jurisdiction ?? "not specified"}
-Additional Context: ${body.context ?? "none"}
+Subject Name: ${sanitizeField(body.subjectName, 200) || "not specified"}
+Jurisdiction: ${sanitizeField(body.jurisdiction, 100) || "not specified"}
+Additional Context: ${sanitizeText(body.context, 2000) || "none"}
 
 Classify this adverse media against FATF predicate offences and assess SAR threshold.`,
           },
@@ -97,7 +98,8 @@ Classify this adverse media against FATF predicate offences and assess SAR thres
     if (!Array.isArray(result.corroborationRequired)) result.corroborationRequired = [];
     if (!Array.isArray(result.fatfR3Predicates)) result.fatfR3Predicates = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "adverse-classify temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

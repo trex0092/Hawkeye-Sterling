@@ -94,7 +94,8 @@ Assess this corporate structure for shell company red flags.`,
     if (!Array.isArray(result.structureIndicators)) result.structureIndicators = [];
     if (!Array.isArray(result.requiredDocumentation)) result.requiredDocumentation = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "shell-detector temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

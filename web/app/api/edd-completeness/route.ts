@@ -25,6 +25,7 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -285,9 +286,9 @@ export async function POST(req: Request): Promise<NextResponse> {
       const anthropic = getAnthropicClient(apiKey, 25_000, "edd-completeness");
       const prompt = `You are a UAE AML compliance officer reviewing an EDD file. The file has the following gaps:
 
-Subject: ${eddFile.subjectName ?? "Unknown"}
-Risk classification: ${eddFile.riskClassification ?? "unknown"}
-Type: ${eddFile.subjectType ?? "unknown"}
+Subject: ${sanitizeField(eddFile.subjectName, 300) || "Unknown"}
+Risk classification: ${sanitizeField(eddFile.riskClassification, 50) || "unknown"}
+Type: ${sanitizeField(eddFile.subjectType, 100) || "unknown"}
 Mandatory completeness: ${mandatory}%
 
 Missing mandatory items:

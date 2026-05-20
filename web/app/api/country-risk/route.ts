@@ -444,8 +444,7 @@ Provide a complete country risk intelligence assessment covering AML/CFT risk, F
       return NextResponse.json(
         {
           ok: false,
-          error: `Country-risk analysis returned invalid JSON for ${country}. Retry, or escalate if persistent.`,
-          detail: parseErr instanceof Error ? parseErr.message : String(parseErr),
+          error: "Country-risk analysis returned invalid data. Retry, or escalate if persistent.",
         },
         { status: 502, headers: gate.headers },
       );
@@ -478,8 +477,7 @@ Provide a complete country risk intelligence assessment covering AML/CFT risk, F
     return NextResponse.json(
       {
         ok: false,
-        error: `Real-time analysis temporarily unavailable for ${country}. ${detail.includes("timeout") ? "(timeout — try again with shorter depth)" : detail.includes("rate") ? "(rate limit — wait 60s)" : "Please retry in a moment."}`,
-        detail,
+        error: detail.includes("timeout") ? "Country-risk analysis timed out. Try again or use a shorter analysis depth." : detail.includes("rate") ? "Country-risk temporarily rate-limited. Wait 60s and retry." : "Real-time country-risk analysis temporarily unavailable. Please retry.",
         latencyMs: Date.now() - t0,
       },
       { status: 503, headers: gate.headers },

@@ -118,7 +118,8 @@ Assess these documents for fraud indicators.`,
     if (!Array.isArray(result.requiredVerificationSteps)) result.requiredVerificationSteps = [];
     if (!Array.isArray(result.externalVerificationSources)) result.externalVerificationSources = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "document-fraud temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

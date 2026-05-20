@@ -21,6 +21,7 @@ import { getAnthropicClient } from "@/lib/server/llm";
 // enforce is provided by withGuard; no direct import needed here.
 import type { FourEyesAction, FourEyesItem, FourEyesStatus } from "@/lib/types";
 import { asanaGids } from "@/lib/server/asanaConfig";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -65,10 +66,10 @@ async function generateApprovalSummary(
   if (!apiKey) return null;
 
   const userContent = [
-    `Action: ${action}`,
-    `Subject: ${subjectName}`,
-    `Reason: ${reason}`,
-    `Initiated by: ${initiatedBy}`,
+    `Action: ${sanitizeField(action, 50)}`,
+    `Subject: ${sanitizeField(subjectName, 200)}`,
+    `Reason: ${sanitizeField(reason, 500)}`,
+    `Initiated by: ${sanitizeField(initiatedBy, 100)}`,
   ].join("\n");
 
   const client = getAnthropicClient(apiKey, 10_000);

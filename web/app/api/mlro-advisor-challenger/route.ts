@@ -31,6 +31,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -208,6 +209,9 @@ export async function POST(req: Request): Promise<Response> {
     );
   }
 
+  const sanitizedQuestion = sanitizeText(question, 2000);
+  const sanitizedNarrative = sanitizeText(narrative, 10000);
+
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
     return NextResponse.json(
@@ -226,7 +230,12 @@ export async function POST(req: Request): Promise<Response> {
     );
   }
 
-  const userPrompt = buildUserPrompt(question, narrative, body.mode, body.classifierContext);
+  const userPrompt = buildUserPrompt(
+    sanitizedQuestion,
+    sanitizedNarrative,
+    body.mode !== undefined ? sanitizeField(body.mode, 50) : undefined,
+    body.classifierContext !== undefined ? sanitizeField(body.classifierContext, 500) : undefined,
+  );
 
   const upstreamCtl = new AbortController();
   const killTimer = setTimeout(() => upstreamCtl.abort(), HARD_TIMEOUT_MS);

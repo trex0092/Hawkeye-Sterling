@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 export interface HnwRiskResult {
   riskScore: number;
   riskRating: "critical" | "high" | "medium" | "low";
@@ -54,10 +55,10 @@ export async function POST(req: Request) {
       messages: [{
         role: "user",
         content: `Conduct an EDD risk assessment for the following HNW individual:
-- Subject Name: ${body.subjectName}
-- Nationality: ${body.nationality}
-- Wealth Estimate (AED): ${body.wealthEstimateAed}
-- Wealth Sources: ${body.wealthSources}
+- Subject Name: ${sanitizeField(body.subjectName, 200)}
+- Nationality: ${sanitizeField(body.nationality, 100)}
+- Wealth Estimate (AED): ${sanitizeField(body.wealthEstimateAed, 50)}
+- Wealth Sources: ${sanitizeText(body.wealthSources, 1000)}
 - PEP Status: ${body.pepStatus}
 - Jurisdictions: ${body.jurisdictions}
 - Additional Context: ${body.context}`,
@@ -72,7 +73,8 @@ export async function POST(req: Request) {
     if (!Array.isArray(parsed.keyRiskFactors)) parsed.keyRiskFactors = [];
     if (!Array.isArray(parsed.eddRequirements)) parsed.eddRequirements = [];
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "high-net-worth temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

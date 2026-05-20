@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 export interface DerisiskingImpactResult {
   justificationStrength: "strong" | "moderate" | "weak";
   fatfConformant: boolean;
@@ -52,10 +53,10 @@ export async function POST(req: Request) {
       messages: [{
         role: "user",
         content: `Assess the following de-risking decision:
-- Customer Segment: ${body.customerSegment}
-- Affected Customer Count: ${body.affectedCount}
-- Risk Justification: ${body.riskJustification}
-- Institution Type: ${body.institutionType}
+- Customer Segment: ${sanitizeField(body.customerSegment, 200)}
+- Affected Customer Count: ${sanitizeField(body.affectedCount, 50)}
+- Risk Justification: ${sanitizeText(body.riskJustification, 2000)}
+- Institution Type: ${sanitizeField(body.institutionType, 100)}
 - Additional Context: ${body.context}`,
       }],
     });
@@ -68,7 +69,8 @@ export async function POST(req: Request) {
     if (!Array.isArray(parsed.exitProcessRequirements)) parsed.exitProcessRequirements = [];
     if (!Array.isArray(parsed.documentationRequired)) parsed.documentationRequired = [];
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "derisking-impact temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export interface TbmlIndicator {
   indicator: string;
@@ -49,7 +50,13 @@ export async function POST(req: Request) {
   } catch {
     return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
-  const { invoiceDescription, supplierCountry, buyerCountry, declaredValue, commodity, paymentRoute, additionalContext } = body;
+  const invoiceDescription = sanitizeText(body.invoiceDescription, 2000);
+  const supplierCountry = sanitizeField(body.supplierCountry, 100);
+  const buyerCountry = sanitizeField(body.buyerCountry, 100);
+  const declaredValue = sanitizeField(body.declaredValue, 100);
+  const commodity = sanitizeField(body.commodity, 200);
+  const paymentRoute = sanitizeField(body.paymentRoute, 200);
+  const additionalContext = sanitizeText(body.additionalContext, 1000);
   if (!invoiceDescription?.trim()) {
     return NextResponse.json({ ok: false, error: "invoiceDescription required" }, { status: 400 , headers: gate.headers });
   }
@@ -118,7 +125,8 @@ Perform TBML risk analysis.`,
     if (!Array.isArray(result.documentationGaps)) result.documentationGaps = [];
     if (!Array.isArray(result.investigativeSteps)) result.investigativeSteps = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "tbml-analysis temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

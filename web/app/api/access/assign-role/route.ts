@@ -4,6 +4,7 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 import { loadUsers, saveUsers, appendPermissionLog, ROLE_MODULES, type UserRole } from "../_store";
 import { adminAuth } from "@/lib/server/admin-auth";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
@@ -94,6 +95,11 @@ export async function POST(req: Request) {
   let impactAssessment = FALLBACK_ASSESSMENT[`${oldRole}→${newRole}`] ?? FALLBACK_ASSESSMENT["default"]!;
 
   if (apiKey) {
+    const safeUserName = sanitizeField(user.name, 200);
+    const safeOldRole = sanitizeField(oldRole, 50);
+    const safeNewRole = sanitizeField(newRole, 50);
+    const safeReason = sanitizeText(reason, 500);
+    const safeAssignedBy = sanitizeField(assignedBy, 100);
     try {
       const client = getAnthropicClient(apiKey, 55_000);
       const response = await client.messages.create({
@@ -109,7 +115,7 @@ export async function POST(req: Request) {
         messages: [
           {
             role: "user",
-            content: `User: ${user.name} | Old role: ${oldRole} | New role: ${newRole} | Reason: ${reason} | Assigned by: ${assignedBy}. Provide a brief role change impact assessment.`,
+            content: `User: ${safeUserName} | Old role: ${safeOldRole} | New role: ${safeNewRole} | Reason: ${safeReason} | Assigned by: ${safeAssignedBy}. Provide a brief role change impact assessment.`,
           },
         ],
       });

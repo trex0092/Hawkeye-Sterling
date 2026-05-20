@@ -9,6 +9,7 @@ import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { sanitizeText } from "@/lib/server/sanitize-prompt";
 
 interface QaAnswer {
   answer: string;
@@ -33,7 +34,7 @@ export async function POST(req: NextRequest) {
   } catch {
     return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
-  const question = body.question ?? "";
+  const question = sanitizeText(body.question ?? "", 2000);
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {

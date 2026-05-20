@@ -5,6 +5,7 @@ export const maxDuration = 60;
 import { type NextRequest, NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeText } from "@/lib/server/sanitize-prompt";
 
 interface SecurityFinding {
   severity: "CRITICAL" | "HIGH" | "MEDIUM" | "LOW" | "INFO";
@@ -55,7 +56,7 @@ export async function POST(req: NextRequest) {
     if (typeof body.code !== "string" || !body.code.trim()) {
       return NextResponse.json({ error: "code field required" }, { status: 400, headers: gate.headers });
     }
-    code = body.code.slice(0, 40_000);
+    code = sanitizeText(body.code, 40_000);
   } catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400, headers: gate.headers });
   }

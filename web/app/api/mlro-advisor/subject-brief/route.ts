@@ -1,5 +1,6 @@
 import { writeAuditEvent } from "@/lib/audit";
 import { stripJsonFences, withMlroLlm } from "@/lib/server/mlro-route-base";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -78,10 +79,10 @@ export const POST = (req: Request) => withMlroLlm<Body, SubjectBriefResult>(req,
     return b as Body;
   },
   buildRequest: (body) => {
-    const lines: string[] = [`Subject name: ${body.subjectName.trim()}`];
-    if (body.jurisdiction) lines.push(`Jurisdiction: ${body.jurisdiction}`);
-    if (body.entityType) lines.push(`Entity type: ${body.entityType}`);
-    if (body.context) lines.push(`Context: ${body.context.slice(0, 500)}`);
+    const lines: string[] = [`Subject name: ${sanitizeField(body.subjectName, 300)}`];
+    if (body.jurisdiction) lines.push(`Jurisdiction: ${sanitizeField(body.jurisdiction, 100)}`);
+    if (body.entityType) lines.push(`Entity type: ${sanitizeField(body.entityType, 100)}`);
+    if (body.context) lines.push(`Context: ${sanitizeText(body.context, 500)}`);
     return {
       system: SYSTEM_PROMPT,
       userContent: `${lines.join("\n")}\n\nGenerate a pre-screening intelligence brief for this subject and output the structured JSON.`,

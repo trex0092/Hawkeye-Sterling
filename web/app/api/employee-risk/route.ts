@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { writeAuditEvent } from "@/lib/audit";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 import { getAnthropicClient } from "@/lib/server/llm";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
@@ -84,7 +85,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         messages: [
           {
             role: "user",
-            content: `Today: ${today}. Employees: ${JSON.stringify(employees)}. Return ONLY this JSON: { "portfolioStatus": "critical"|"attention_required"|"compliant", "summary": "string", "criticalExpiries": [{ "name": "string", "issue": "string", "urgency": "immediate"|"this_week"|"this_month", "action": "string" }], "screeningAlerts": [{ "name": "string", "reason": "string", "action": "string" }], "highRiskNationalities": ["string"], "multiEntityRisk": ["string"], "immediateActions": ["string"], "regulatoryNote": "string" }`,
+            content: `Today: ${sanitizeField(today, 50) || new Date().toISOString().slice(0, 10)}. Employees: ${JSON.stringify(employees)}. Return ONLY this JSON: { "portfolioStatus": "critical"|"attention_required"|"compliant", "summary": "string", "criticalExpiries": [{ "name": "string", "issue": "string", "urgency": "immediate"|"this_week"|"this_month", "action": "string" }], "screeningAlerts": [{ "name": "string", "reason": "string", "action": "string" }], "highRiskNationalities": ["string"], "multiEntityRisk": ["string"], "immediateActions": ["string"], "regulatoryNote": "string" }`,
           },
         ],
       });
@@ -110,7 +111,8 @@ export async function POST(req: Request): Promise<NextResponse> {
       console.warn("[employee-risk] audit chain write failed:", err instanceof Error ? err.message : String(err)),
     );
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "employee-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

@@ -84,7 +84,8 @@ Assess regulatory enforcement exposure for this AML violation. Return complete E
     if (!Array.isArray(result.precedentCases)) result.precedentCases = [];
     if (!Array.isArray(result.remedialActions)) result.remedialActions = [];
     return NextResponse.json({ ok: true, ...result });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "enforcement-exposure temporarily unavailable - please retry." }, { status: 503 });
   }
 }

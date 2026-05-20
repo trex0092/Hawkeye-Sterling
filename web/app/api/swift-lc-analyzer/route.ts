@@ -78,7 +78,8 @@ Analyse this SWIFT/LC for TBML indicators. Return complete SwiftLcResult JSON.`,
     if (!Array.isArray(result.fieldAnalysis)) result.fieldAnalysis = [];
     if (!Array.isArray(result.indicators)) result.indicators = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "swift-lc-analyzer temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

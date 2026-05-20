@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -67,7 +68,9 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
-  const { subjectName, riskScore, caseNotes } = body;
+  const { riskScore } = body;
+  const subjectName = sanitizeField(body.subjectName, 200);
+  const caseNotes = sanitizeText(body.caseNotes, 3000);
   if (!subjectName || riskScore === undefined || !caseNotes) {
     return NextResponse.json({ ok: false, error: "subjectName, riskScore, and caseNotes are required" }, { status: 400 , headers: gate.headers });
   }

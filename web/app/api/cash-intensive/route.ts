@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 export interface CashIntensiveResult {
   riskRating: "critical" | "high" | "medium" | "low";
   cashRiskScore: number;
@@ -53,10 +54,10 @@ export async function POST(req: Request) {
       messages: [{
         role: "user",
         content: `Assess the following cash-intensive business scenario:
-- Business Name: ${body.businessName}
-- Business Type: ${body.businessType}
-- Monthly Revenue: ${body.monthlyRevenue}
-- Cash Percentage: ${body.cashPct}
+- Business Name: ${sanitizeField(body.businessName, 200)}
+- Business Type: ${sanitizeField(body.businessType, 100)}
+- Monthly Revenue: ${sanitizeField(body.monthlyRevenue, 50)}
+- Cash Percentage: ${sanitizeField(body.cashPct, 20)}
 - Deposit Pattern: ${body.depositPattern}
 - Additional Context: ${body.context}`,
       }],
@@ -72,7 +73,8 @@ export async function POST(req: Request) {
     if (!Array.isArray(parsed.enhancedMeasures)) parsed.enhancedMeasures = [];
     if (!Array.isArray(parsed.reportingObligations)) parsed.reportingObligations = [];
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "cash-intensive temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

@@ -103,7 +103,8 @@ async function handlePost(req: Request): Promise<NextResponse> {
           { status: 503, headers: gateHeaders },
         );
       }
-    } catch {
+    } catch (err) {
+      console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
       // Malformed HAWKEYE_ENTITIES is a configuration error — block live submission.
       return NextResponse.json(
         { ok: false, error: "HAWKEYE_ENTITIES is not valid JSON — live submission blocked" },

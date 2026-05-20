@@ -143,7 +143,8 @@ Map the AML/CFT obligations for this DNFBP.`,
     if (!Array.isArray(result.keyObligations)) result.keyObligations = [];
     if (!Array.isArray(result.prohibitedActivities)) result.prohibitedActivities = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "dnfbp-obligations temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

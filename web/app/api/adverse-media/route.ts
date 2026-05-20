@@ -14,6 +14,7 @@
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 import { searchAdverseMedia, type TaranisItem } from "../../../../dist/src/integrations/taranisAi.js";
 import { analyseAdverseMediaResult, analyseAdverseMediaItems } from "../../../../dist/src/brain/adverse-media-analyser.js";
 import { type GdeltArticle } from "@/lib/intelligence/gdelt-cache";
@@ -57,7 +58,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "subject is required" }, { status: 400, headers: { ...gate.headers, ...CORS } });
   }
 
-  const subject = body.subject.trim();
+  const subject = sanitizeField(body.subject.trim(), 300);
   const routeStartMs = Date.now();
 
   // Bound the upstream call so a hung Taranis can't burn the whole 30s

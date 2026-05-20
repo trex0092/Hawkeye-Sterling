@@ -41,6 +41,7 @@ const MAX_OUTPUT_TOKENS = 4096;
 const BUDGET_MS = 4_500;
 
 type Outcome = "clear" | "flag" | "escalate" | "inconclusive" | "block";
+const VALID_OUTCOMES = new Set<string>(["clear", "flag", "escalate", "inconclusive", "block"]);
 
 interface Body {
   verdict: { outcome: Outcome; aggregateScore?: number; posterior?: number; [k: string]: unknown };
@@ -115,6 +116,18 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (!body?.verdict?.outcome || !body?.subject?.name) {
     return NextResponse.json(
       { ok: false, error: "verdict.outcome + subject.name required" },
+      { status: 400, headers: gateHeaders },
+    );
+  }
+  if (!VALID_OUTCOMES.has(body.verdict.outcome)) {
+    return NextResponse.json(
+      { ok: false, error: "verdict.outcome must be one of: clear, flag, escalate, inconclusive, block" },
+      { status: 400, headers: gateHeaders },
+    );
+  }
+  if (body.targetOutcome && !VALID_OUTCOMES.has(body.targetOutcome)) {
+    return NextResponse.json(
+      { ok: false, error: "targetOutcome must be one of: clear, flag, escalate, inconclusive, block" },
       { status: 400, headers: gateHeaders },
     );
   }

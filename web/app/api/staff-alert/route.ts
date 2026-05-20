@@ -4,6 +4,7 @@ export const maxDuration = 60;
 import { enforce } from "@/lib/server/enforce";
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 export interface StaffAlertResult {
   credibilityScore: number;
   urgencyLevel: "critical" | "high" | "medium" | "low";
@@ -54,12 +55,12 @@ export async function POST(req: Request) {
       messages: [{
         role: "user",
         content: `Assess the following staff alert/whistleblower report:
-- Alert Source: ${body.alertSource}
-- Employee Name: ${body.employeeName}
-- Employee Role: ${body.employeeRole}
-- Allegation: ${body.allegation}
-- Evidence Described: ${body.evidenceDescribed}
-- Additional Context: ${body.context}`,
+- Alert Source: ${sanitizeField(body.alertSource, 200)}
+- Employee Name: ${sanitizeField(body.employeeName, 200)}
+- Employee Role: ${sanitizeField(body.employeeRole, 200)}
+- Allegation: ${sanitizeText(body.allegation, 2000)}
+- Evidence Described: ${sanitizeText(body.evidenceDescribed, 2000)}
+- Additional Context: ${sanitizeText(body.context, 2000)}`,
       }],
     });
     const text = response.content[0]?.type === "text" ? response.content[0].text : "{}";
@@ -70,7 +71,8 @@ export async function POST(req: Request) {
     if (!Array.isArray(parsed.verificationSteps)) parsed.verificationSteps = [];
     if (!Array.isArray(parsed.mlroActions)) parsed.mlroActions = [];
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "staff-alert temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

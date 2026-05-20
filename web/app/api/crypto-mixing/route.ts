@@ -64,7 +64,8 @@ export async function POST(req: Request) {
     ) as CryptoMixingResult;
     if (!Array.isArray(result.mixingTechniques)) result.mixingTechniques = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "crypto-mixing temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

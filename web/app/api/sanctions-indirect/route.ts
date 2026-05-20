@@ -5,6 +5,7 @@ import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -97,11 +98,11 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const parts: string[] = [
     `Subject: ${subject}`,
-    `Country: ${body.country?.trim() ?? "unknown"}`,
+    `Country: ${sanitizeField(body.country, 100) || "unknown"}`,
   ];
-  if (body.counterpartyName?.trim()) parts.push(`Counterparty: ${body.counterpartyName.trim()}`);
-  if (body.counterpartyCountry?.trim()) parts.push(`Counterparty Country: ${body.counterpartyCountry.trim()}`);
-  if (body.transactionType?.trim()) parts.push(`Transaction Type: ${body.transactionType.trim()}`);
+  if (body.counterpartyName?.trim()) parts.push(`Counterparty: ${sanitizeField(body.counterpartyName, 300)}`);
+  if (body.counterpartyCountry?.trim()) parts.push(`Counterparty Country: ${sanitizeField(body.counterpartyCountry, 100)}`);
+  if (body.transactionType?.trim()) parts.push(`Transaction Type: ${sanitizeField(body.transactionType, 100)}`);
   if (body.amount != null) parts.push(`Amount: ${body.amount}${body.currency ? ` ${body.currency}` : ""}`);
   if (body.ownershipChain?.trim()) parts.push(`Ownership Chain: ${body.ownershipChain.trim()}`);
   if (body.bankingRelationships?.trim()) parts.push(`Banking Relationships: ${body.bankingRelationships.trim()}`);
@@ -133,7 +134,8 @@ export async function POST(req: Request): Promise<NextResponse> {
       if (!Array.isArray(result.indirectRisks)) result.indirectRisks = [];
       if (!Array.isArray(result.jurisdictionalExposure)) result.jurisdictionalExposure = [];
       if (!Array.isArray(result.requiredChecks)) result.requiredChecks = [];
-    } catch {
+    } catch (err) {
+      console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
       console.error("[sanctions-indirect] failed to parse AI response");
       return NextResponse.json({ ok: false, error: "sanctions-indirect temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
     }

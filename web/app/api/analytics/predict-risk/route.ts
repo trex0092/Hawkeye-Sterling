@@ -4,6 +4,7 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 interface HistoricalData {
   strFilingsThisMonth?: number;
   avgRiskScore?: number;
@@ -130,7 +131,7 @@ Always return exactly 3 interventions. The riskTrajectory must always have exact
 - EDD cases open: ${historicalData.eddCases ?? "N/A"}
 - SLA breaches this month: ${historicalData.slaBreaches ?? "N/A"}
 
-Requested forecast timeframe: ${timeframe} days
+Requested forecast timeframe: ${sanitizeField(timeframe, 20)} days
 Report date: ${new Date().toISOString().slice(0, 10)}
 
 Predict the risk trajectory. Identify which categories are accelerating. Suggest 3 proactive interventions that would most materially reduce predicted risk, with expected impact quantified where possible.`,
@@ -144,7 +145,8 @@ Predict the risk trajectory. Identify which categories are accelerating. Suggest
     if (!Array.isArray(result.acceleratingRisks)) result.acceleratingRisks = [];
     if (!Array.isArray(result.interventions)) result.interventions = [];
     return NextResponse.json(result, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "analytics/predict-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

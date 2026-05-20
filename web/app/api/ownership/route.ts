@@ -4,6 +4,7 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 export interface OwnershipResult {
   ok: true;
   uboIdentified: boolean;
@@ -85,11 +86,11 @@ export async function POST(req: Request) {
           role: "user",
           content: `Corporate Ownership Analysis Request:
 
-Entity Name: ${body.entityName ?? "Unknown"}
-Jurisdiction: ${body.jurisdiction ?? "Not specified"}
-Registration Number: ${body.registrationNumber ?? "Not provided"}
-Directors: ${body.directors ?? "Not provided"}
-Shareholders / Ownership Structure: ${body.shareholders ?? "Not provided"}
+Entity Name: ${sanitizeField(body.entityName, 300) || "Unknown"}
+Jurisdiction: ${sanitizeField(body.jurisdiction, 100) || "Not specified"}
+Registration Number: ${sanitizeField(body.registrationNumber, 100) || "Not provided"}
+Directors: ${sanitizeText(body.directors, 2000) || "Not provided"}
+Shareholders / Ownership Structure: ${sanitizeText(body.shareholders, 3000) || "Not provided"}
 
 Map the ownership structure, identify UBOs, assess shell company risk and jurisdiction layering, and flag all opacity red flags per FATF R.10 and UAE FDL 10/2025 Art.11.`,
         },
@@ -102,7 +103,8 @@ Map the ownership structure, identify UBOs, assess shell company risk and jurisd
     if (!Array.isArray(result.jurisdictionLayering)) result.jurisdictionLayering = [];
     if (!Array.isArray(result.beneficialOwners)) result.beneficialOwners = [];
     return NextResponse.json(result, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "ownership temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

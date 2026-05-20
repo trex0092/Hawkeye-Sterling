@@ -122,7 +122,8 @@ Analyse these decisions to identify false positive patterns, suggest threshold o
     if (!Array.isArray(result.thresholdSuggestions)) result.thresholdSuggestions = [];
     if (!Array.isArray(result.systemicIssues)) result.systemicIssues = [];
     return NextResponse.json(result, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "fp-optimizer/analyze temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

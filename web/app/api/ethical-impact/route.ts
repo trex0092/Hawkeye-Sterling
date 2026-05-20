@@ -11,6 +11,7 @@ import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -85,7 +86,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       score >= 60 ? "high" : score >= 30 ? "medium" : "low";
     return {
       impactLevel,
-      impactNarrative: `Automated ethical-impact assessment for "${subjectName}" (risk score ${score}/100, posture ${body.cddPosture ?? "CDD"}). Subject ${body.nationality ? `is a ${body.nationality} national. ` : ""}AI-driven decision-making materially affects this subject's access to financial services and warrants ${impactLevel}-impact governance.`,
+      impactNarrative: `Automated ethical-impact assessment for "${subjectName}" (risk score ${score}/100, posture ${sanitizeField(body.cddPosture, 50) || "CDD"}). Subject ${sanitizeField(body.nationality, 100) ? `is a ${sanitizeField(body.nationality, 100)} national. ` : ""}AI-driven decision-making materially affects this subject's access to financial services and warrants ${impactLevel}-impact governance.`,
       rightsImpacted: [
         "Right to non-discrimination (UAE PDPL Art.19, UNESCO Recommendation §22)",
         "Right to explanation of automated decision (UAE PDPL Art.20)",

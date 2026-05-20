@@ -63,7 +63,8 @@ export async function POST(req: Request) {
     if (!Array.isArray(result.redFlags)) result.redFlags = [];
     if (!Array.isArray(result.documentaryDiscrepancies)) result.documentaryDiscrepancies = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "trade-finance-rf temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

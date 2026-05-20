@@ -101,7 +101,8 @@ Generate a complete PEP EDD package for this individual.`,
     if (!Array.isArray(result.ongoingMonitoringMeasures)) result.ongoingMonitoringMeasures = [];
     if (!Array.isArray(result.screeningRequirements)) result.screeningRequirements = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "pep-edd-generator temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

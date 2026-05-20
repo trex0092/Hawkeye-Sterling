@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export interface TimelineEvent {
   date: string;
@@ -70,11 +71,11 @@ Respond ONLY with valid JSON — no markdown fences:
           {
             role: "user",
             content: `Case Events (chronological or unordered notes):
-${body.events}
+${sanitizeText(body.events, 5000)}
 
-Subject Name: ${body.subjectName ?? "not specified"}
-Account Reference: ${body.accountRef ?? "not specified"}
-Case Reference: ${body.caseRef ?? "not specified"}
+Subject Name: ${sanitizeField(body.subjectName, 200) || "not specified"}
+Account Reference: ${sanitizeField(body.accountRef, 100) || "not specified"}
+Case Reference: ${sanitizeField(body.caseRef, 100) || "not specified"}
 Additional Context: ${body.context ?? "none"}
 
 Build the STR timeline and goAML narrative block.`,
@@ -85,7 +86,8 @@ Build the STR timeline and goAML narrative block.`,
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as CaseTimelineResult;
     if (!Array.isArray(result.timeline)) result.timeline = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "case-timeline temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

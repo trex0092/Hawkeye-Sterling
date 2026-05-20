@@ -111,7 +111,8 @@ Synthesise all source intelligence into a coherent subject profile. Identify cor
     if (!Array.isArray(result.intelligenceGaps)) result.intelligenceGaps = [];
     if (!Array.isArray(result.recommendedActions)) result.recommendedActions = [];
     return NextResponse.json(result, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "osint/synthesize temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

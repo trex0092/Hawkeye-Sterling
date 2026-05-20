@@ -10,6 +10,7 @@ import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -104,12 +105,12 @@ export async function POST(req: Request): Promise<NextResponse> {
     `Hit Name: ${hitName}`,
     `Hit Category: ${hitCategory}`,
     `Hit Country: ${hitCountry}`,
-    body.hitDob ? `Hit DOB: ${body.hitDob}` : null,
-    body.hitRole ? `Hit Role/Title: ${body.hitRole}` : null,
-    body.clientNationality ? `Client Nationality: ${body.clientNationality}` : null,
-    body.clientDob ? `Client DOB: ${body.clientDob}` : null,
-    body.clientRole ? `Client Role: ${body.clientRole}` : null,
-    body.clientContext ? `Client Context: ${body.clientContext}` : null,
+    body.hitDob ? `Hit DOB: ${sanitizeField(body.hitDob, 50)}` : null,
+    body.hitRole ? `Hit Role/Title: ${sanitizeField(body.hitRole, 100)}` : null,
+    body.clientNationality ? `Client Nationality: ${sanitizeField(body.clientNationality, 100)}` : null,
+    body.clientDob ? `Client DOB: ${sanitizeField(body.clientDob, 50)}` : null,
+    body.clientRole ? `Client Role: ${sanitizeField(body.clientRole, 100)}` : null,
+    body.clientContext ? `Client Context: ${sanitizeText(body.clientContext, 2000)}` : null,
     body.matchScore !== undefined ? `Match Score: ${body.matchScore}/100` : null,
   ]
     .filter(Boolean)

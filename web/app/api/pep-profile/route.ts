@@ -311,7 +311,8 @@ Perform a comprehensive PEP risk assessment grounded in the PEP database data ab
       },
       { headers: gate.headers },
     );
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "pep-profile temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
   } catch (err) {

@@ -21,7 +21,8 @@ export async function GET(req: Request): Promise<NextResponse> {
   try {
     const [current, history] = await Promise.all([getCurrentWeights(), getWeightHistory()]);
     return NextResponse.json({ ok: true, current, defaults: DEFAULT_WEIGHTS, history }, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "weight store unavailable — please retry." }, { status: 503, headers: gate.headers });
   }
 }

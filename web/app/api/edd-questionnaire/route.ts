@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export interface EddQuestion {
   id: string;
@@ -176,8 +177,8 @@ Generate 10–15 questions. Be specific to the UAE gold/DPMS context and the cus
         system: systemPrompt,
         messages: [{
           role: "user",
-          content: `Customer Type: ${customerType}
-Risk Factors: ${riskFactors.join(", ")}${jurisdiction ? `\nJurisdiction: ${jurisdiction}` : ""}${productTypes?.length ? `\nProducts/Services: ${productTypes.join(", ")}` : ""}${context ? `\nAdditional Context: ${context}` : ""}${sbContext?.riskSignals.length ? `\nScreening Risk Signals (from super-brain): ${sbContext.riskSignals.join("; ")}` : ""}${sbContext ? `\nRecommended EDD Level (from screening): ${sbContext.eddLevel.toUpperCase()}` : ""}
+          content: `Customer Type: ${sanitizeField(customerType, 100)}
+Risk Factors: ${riskFactors.map(f => sanitizeField(f, 100)).join(", ")}${jurisdiction ? `\nJurisdiction: ${sanitizeField(jurisdiction, 100)}` : ""}${productTypes?.length ? `\nProducts/Services: ${productTypes.map(p => sanitizeField(p, 100)).join(", ")}` : ""}${context ? `\nAdditional Context: ${sanitizeText(context, 2000)}` : ""}${sbContext?.riskSignals.length ? `\nScreening Risk Signals (from super-brain): ${sbContext.riskSignals.join("; ")}` : ""}${sbContext ? `\nRecommended EDD Level (from screening): ${sbContext.eddLevel.toUpperCase()}` : ""}
 
 Generate the EDD questionnaire. ${sbContext?.eddLevel === "intensive" ? "This subject has INTENSIVE EDD indicators — include all mandatory questions plus additional deep-dive questions on each risk signal identified." : sbContext?.eddLevel === "enhanced" ? "This subject has ENHANCED EDD indicators — include all mandatory questions and tailor additional questions to the specific risk signals identified." : ""}`,
         }],
@@ -190,7 +191,8 @@ Generate the EDD questionnaire. ${sbContext?.eddLevel === "intensive" ? "This su
     if (!Array.isArray(result.categories)) result.categories = [];
     if (!Array.isArray(result.documentationRequired)) result.documentationRequired = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "edd-questionnaire temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

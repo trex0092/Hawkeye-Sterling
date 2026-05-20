@@ -5,6 +5,7 @@ import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -63,7 +64,7 @@ export async function POST(req: Request): Promise<NextResponse> {
           : "non-conformity (>0.015)";
 
   const userContent = [
-    `Dataset: ${body.label || "Unnamed"}`,
+    `Dataset: ${sanitizeField(body.label, 200) || "Unnamed"}`,
     `Sample size (n): ${body.n}`,
     `MAD: ${body.mad.toFixed(6)} — ${madCategory}`,
     `Chi-squared: ${body.chiSquared.toFixed(4)}`,
@@ -109,7 +110,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (!Array.isArray(result.financialCrimeIndicators)) result.financialCrimeIndicators = [];
     if (!Array.isArray(result.recommendedActions)) result.recommendedActions = [];
     if (!Array.isArray(result.mlTypologies)) result.mlTypologies = [];
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "benford-interpret temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 

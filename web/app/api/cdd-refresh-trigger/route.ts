@@ -164,7 +164,8 @@ Determine if CDD refresh is required.`,
       console.warn("[cdd-refresh-trigger] audit chain write failed:", err instanceof Error ? err.message : String(err)),
     );
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "cdd-refresh-trigger temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
   if (!gate.ok) return gate.response;
 
   let body: unknown;
-  try { body = await req.json(); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
+  try { body = await req.json(); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400, headers: gate.headers }); }
 
   const raw = (body ?? {}) as Record<string, unknown>;
   const subjectId = raw['subjectId'] as string | undefined;
@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
   const grounds = raw['grounds'] as string | undefined;
 
   if (!subjectId?.trim() || !subjectName?.trim() || !requestedBy?.trim() || !grounds?.trim()) {
-    return NextResponse.json({ error: 'subjectId, subjectName, requestedBy, grounds are required' }, { status: 400 });
+    return NextResponse.json({ error: 'subjectId, subjectName, requestedBy, grounds are required' }, { status: 400, headers: gate.headers });
   }
 
   const requestId = `era_${randomBytes(6).toString('hex')}`;
@@ -103,9 +103,9 @@ export async function GET(req: NextRequest) {
   if (!gate.ok) return gate.response;
 
   const requestId = req.nextUrl.searchParams.get('requestId');
-  if (!requestId?.trim()) return NextResponse.json({ error: 'requestId query param required' }, { status: 400 });
+  if (!requestId?.trim()) return NextResponse.json({ error: 'requestId query param required' }, { status: 400, headers: gate.headers });
   const request = await getJson<ErasureRequest>(erasureKey(requestId));
-  if (!request) return NextResponse.json({ error: 'Erasure request not found' }, { status: 404 });
+  if (!request) return NextResponse.json({ error: 'Erasure request not found' }, { status: 404, headers: gate.headers });
   return NextResponse.json({ ok: true, request }, { headers: gate.headers });
 }
 

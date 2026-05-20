@@ -105,7 +105,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const response = await client.messages.create({
     model: "claude-opus-4-7",
-    max_tokens: 800,
+    max_tokens: 2000,
     system: `You are a FATF Mutual Evaluation Team Leader with 20 years of experience conducting mutual evaluations under the 2013 FATF Methodology. You are conducting a virtual assessment of a UAE DPMS (gold and precious metals dealer) AML/CFT programme under FDL 10/2025 and CBUAE AML Standards.
 
 Score each of FATF's 11 Immediate Outcomes (IO.1–IO.11) from 0–100 based on the programme facts provided. For DPMS-specific obligations, focus on: IO.1 (risk understanding), IO.3 (supervision), IO.4 (STR quality), IO.11 (beneficial ownership).
@@ -145,7 +145,8 @@ Return ONLY valid JSON:
     if (!Array.isArray(result.remediationRoadmap)) result.remediationRoadmap = [];
     if (!Array.isArray(result.strengthAreas)) result.strengthAreas = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "examiner analysis failed — retry" }, { status: 500, headers: gate.headers });
   }
 }
