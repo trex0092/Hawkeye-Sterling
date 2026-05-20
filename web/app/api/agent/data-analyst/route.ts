@@ -3,8 +3,9 @@
 // Invokes the Claude Console "Data analyst" managed agent
 // (agent_01KWdhXyphDqQnN6ar56nrQb) via the Anthropic beta.sessions API.
 //
-// Flow: create ephemeral session → send user message → stream events until
-// agent.end_turn → archive session → return final text + usage.
+// Flow: create session → stream events → send user message → accumulate
+// agent.message text → break on session.status_idle / session.status_terminated
+// → archive session → return final text.
 //
 // Body: {
 //   question: string,          // what to ask the data analyst
@@ -16,12 +17,12 @@
 //   ok: true,
 //   answer: string,
 //   sessionId: string,
-//   usage?: { input_tokens: number; output_tokens: number }
 // }
 
 import { NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
+import type { Beta } from "@anthropic-ai/sdk/resources/index.js";
 import { enforce } from "@/lib/server/enforce";
+import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
@@ -31,7 +32,6 @@ export const maxDuration = 60;
 const AGENT_ID = "agent_01KWdhXyphDqQnN6ar56nrQb";
 const ENV_ID   = "env_01SnGQiAwuVGmipn1SynFmkx";
 const DEFAULT_TIMEOUT_MS = 60_000;
-const POLL_INTERVAL_MS = 1_500;
 
 export async function POST(req: Request) {
   const gate = await enforce(req, { requireAuth: false });
@@ -59,67 +59,62 @@ export async function POST(req: Request) {
   const context = body.context ? sanitizeText(String(body.context), 8000) : null;
   const timeoutMs = typeof body.timeoutMs === "number" ? Math.min(body.timeoutMs, DEFAULT_TIMEOUT_MS) : DEFAULT_TIMEOUT_MS;
 
-  const rawClient = new Anthropic({ apiKey, timeout: 55_000, maxRetries: 0 });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const beta = (rawClient as any).beta;
+  const client = getAnthropicClient(apiKey, 55_000, "agent/data-analyst");
+  const beta = client.beta;
 
   try {
     // 1. Create a single-use session bound to the managed agent.
     const session = await beta.sessions.create({ agent: AGENT_ID, environment_id: ENV_ID });
     const sessionId: string = session.id;
 
-    // 2. Send the user message (with optional context prepended).
+    // 2. Build the user message (with optional context prepended).
     const userText = context
       ? `Context / dataset:\n${context}\n\n---\n\n${question}`
       : question;
 
-    await beta.sessions.events.send(sessionId, {
-      events: [{ type: "user.message", content: [{ type: "text", text: userText }] }],
-    });
-
-    // 3. Poll the event stream until the agent ends its turn or we time out.
+    // 3. Stream-first: open the stream BEFORE sending so no events are missed.
     const deadline = Date.now() + timeoutMs;
     let answer = "";
-    let usage: { input_tokens: number; output_tokens: number } | undefined;
 
-    while (Date.now() < deadline) {
-      const stream = await beta.sessions.events.stream(sessionId);
-      let turnDone = false;
+    const [stream] = await Promise.all([
+      beta.sessions.events.stream(sessionId),
+      beta.sessions.events.send(sessionId, {
+        events: [{ type: "user.message", content: [{ type: "text", text: userText }] }],
+      }),
+    ]);
 
-      for await (const event of stream) {
-        const type: string = event.type ?? "";
+    // 4. Consume the event stream until the agent goes idle or we time out.
+    for await (const event of stream) {
+      if (Date.now() > deadline) break;
 
-        if (type === "agent.message") {
-          const content = Array.isArray(event.content) ? event.content : [];
-          for (const block of content) {
-            if (block.type === "text") answer += block.text;
-          }
-        }
+      const ev = event as Beta.Sessions.BetaManagedAgentsStreamSessionEvents;
 
-        if (type === "agent.end_turn" || type === "session.idle") {
-          if (event.usage) {
-            usage = {
-              input_tokens: event.usage.input_tokens ?? 0,
-              output_tokens: event.usage.output_tokens ?? 0,
-            };
-          }
-          turnDone = true;
-          break;
-        }
-
-        if (type === "session.error" || type === "session.deleted") {
-          return NextResponse.json(
-            { ok: false, error: `Agent session error: ${event.error?.message ?? type}` },
-            { status: 502, headers: gate.headers },
-          );
+      if (ev.type === "agent.message") {
+        for (const block of ev.content) {
+          if (block.type === "text") answer += block.text;
         }
       }
 
-      if (turnDone) break;
-      await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
+      if (ev.type === "session.status_idle" || ev.type === "session.status_terminated") {
+        break;
+      }
+
+      if (ev.type === "session.error") {
+        return NextResponse.json(
+          { ok: false, error: ev.error.message },
+          { status: 502, headers: gate.headers },
+        );
+      }
+
+      if (ev.type === "session.deleted") {
+        return NextResponse.json(
+          { ok: false, error: "Session was deleted unexpectedly" },
+          { status: 502, headers: gate.headers },
+        );
+      }
     }
 
-    // 4. Archive the ephemeral session (best-effort cleanup).
+    // 5. Archive the ephemeral session (best-effort cleanup).
     beta.sessions.archive(sessionId).catch(() => {});
 
     if (!answer) {
@@ -129,7 +124,7 @@ export async function POST(req: Request) {
       );
     }
 
-    return NextResponse.json({ ok: true, answer, sessionId, usage }, { headers: gate.headers });
+    return NextResponse.json({ ok: true, answer, sessionId }, { headers: gate.headers });
   } catch (err) {
     console.error("[agent/data-analyst]", err instanceof Error ? err.message : String(err));
     return NextResponse.json(

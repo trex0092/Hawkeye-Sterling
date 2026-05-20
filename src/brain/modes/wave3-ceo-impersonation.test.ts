@@ -78,7 +78,7 @@ describe('wave3-ceo-impersonation', () => {
     // personal_email fires but sender_domain_not_org does NOT fire
     // only 1 attackPatternMatch (from personal email), attackPatternMatches < 3
     expect(r.score).toBeGreaterThan(0);
-    const evidenceStr = r.evidence.join(' ');
+    const _evidenceStr = r.evidence.join(' ');
     // personal_email_for_exec_request should fire
     expect(r.verdict).toBe('escalate');
   });
@@ -202,7 +202,7 @@ describe('wave3-ceo-impersonation', () => {
     }));
     // Only 2 attackPatternMatches → no classic_attack_pattern
     expect(r.verdict).toBe('escalate'); // escalate from the other signals
-    const blockHit = r.evidence.length; // just verify some evidence
+    const _blockHit = r.evidence.length; // just verify some evidence
     expect(r.verdict).not.toBe('block');
   });
 

@@ -158,7 +158,7 @@ describe('wave3-bridge-crossing-trace', () => {
       ],
     }));
     // only check anonymity detection path is skipped
-    const hasAnonymity = r.rationale.includes('anonymity');
+    const _hasAnonymity = r.rationale.includes('anonymity');
     expect(r.score).toBe(0);
   });
 

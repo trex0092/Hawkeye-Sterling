@@ -86,7 +86,7 @@ describe('wave3-assay-certificate', () => {
       }],
     }));
     // 995.0 is exactly at LBMA min, not below it
-    const hasFinenessHit = result.evidence.includes('C005');
+    const _hasFinenessHit = result.evidence.includes('C005');
     // At exactly 995.0 it should not flag (< 995.0 required)
     expect(result.verdict).toBe('clear');
   });

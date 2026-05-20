@@ -948,7 +948,7 @@ describe('triadic_closure', () => {
 
   it('gives low score for sparse network', async () => {
     const nodes = [{ nodeId: 'A' }, { nodeId: 'B' }, { nodeId: 'C' }];
-    const edges = [{ from: 'A', to: 'B' }, { from: 'A', to: 'C' }, { from: 'B', to: 'C' }];
+    const _edges = [{ from: 'A', to: 'B' }, { from: 'A', to: 'C' }, { from: 'B', to: 'C' }];
     // Actually same graph as complete triangle — let's use a chain
     const chainEdges = [{ from: 'A', to: 'B' }, { from: 'B', to: 'C' }, { from: 'C', to: 'A' }];
     const r = await fn(makeCtx({ graphNodes: nodes, graphEdges: chainEdges }));

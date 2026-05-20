@@ -89,7 +89,7 @@ describe('wave3-art-provenance-gap', () => {
       }],
     }));
     // gap = 5 years — no gap signal
-    const gapHit = result.evidence.some(e => e.includes('Alice') || e.includes('Bob'));
+    const _gapHit = result.evidence.some(e => e.includes('Alice') || e.includes('Bob'));
     // Only gap signals would include owner names in evidence — no other reason
     // safe check: just verify score is 0 for this clean transaction
     expect(result.score).toBe(0);
