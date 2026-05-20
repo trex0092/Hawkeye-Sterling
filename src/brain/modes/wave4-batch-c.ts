@@ -179,7 +179,7 @@ const environmentalPredicateApply = async (ctx: BrainContext): Promise<Finding> 
   const payments = ev(ctx, 'cashPayments') as Array<{ amountUsd?: number; purpose?: string }>;
   const envPayments = payments.filter(p => /timber|mineral|gold|wildlife|forest/.test(p.purpose ?? ''));
   if (envPayments.length > 0) { score += 0.25; evidence.push(`${envPayments.length} payment(s) linked to environmental sectors`); }
-  if (/CITES|WWF.*report|Interpol.*environment/.test(ft)) { score += 0.15; evidence.push('Environmental crime enforcement reference'); }
+  if (/cites|wwf.*report|interpol.*environment/.test(ft)) { score += 0.15; evidence.push('Environmental crime enforcement reference'); }
   score = clamp(score, 0, 1);
   return build('environmental_predicate', 'predicate_crime', ['reasoning', 'intelligence'], score, 0.65,
     `Environmental predicate: illegal mining/logging/wildlife patterns. Anchors: FATF R.3 · UNODC Environmental Crime 2021 · CITES Appendix.`, evidence);
@@ -553,11 +553,11 @@ const varaRulebookCheckApply = async (ctx: BrainContext): Promise<Finding> => {
   const ft = freeTextOf(ctx);
   const evidence: string[] = [];
   let score = 0;
-  if (/VARA|Virtual.*Asset.*Regulatory|Dubai.*VASP.*licen/.test(ft)) { score += 0.1; evidence.push('VARA regulatory context identified'); }
+  if (/vara|virtual.*asset.*regulatory|dubai.*vasp.*licen/.test(ft)) { score += 0.1; evidence.push('VARA regulatory context identified'); }
   const gaps = ev(ctx, 'regulatoryGaps') as Array<{ requirement?: string; status?: string }>;
   const varaGaps = gaps.filter(g => g.status === 'missing' || g.status === 'partial');
   if (varaGaps.length > 0) { score += 0.4; evidence.push(`${varaGaps.length} VARA requirement gap(s) identified`); }
-  if (/unlicens.*VASP|operating.*without.*VARA.*approval|VARA.*breach/.test(ft)) { score += 0.3; evidence.push('VARA non-compliance language in narrative'); }
+  if (/unlicens.*vasp|operating.*without.*vara.*approval|vara.*breach/.test(ft)) { score += 0.3; evidence.push('VARA non-compliance language in narrative'); }
   score = clamp(score, 0, 1);
   return build('vara_rulebook_check', 'regulatory_aml', ['reasoning', 'reasoning'], score, 0.72,
     `VARA rulebook check: ${varaGaps.length} gap(s). Anchors: VARA Rulebook 2023 · UAE FDL 20/2018 · CBUAE VASP Framework.`, evidence);
@@ -600,7 +600,7 @@ const goamlSchemaPreflightApply = async (ctx: BrainContext): Promise<Finding> =>
   if (invalid.length > 0) { score += 0.4; evidence.push(`${invalid.length} goAML report(s) with schema validation errors`); }
   const late = reports.filter(r => r.filedLate);
   if (late.length > 0) { score += 0.2; evidence.push(`${late.length} goAML report(s) filed late`); }
-  if (/goAML|STR.*schema|SAR.*format.*error/.test(ft)) { score += 0.1; evidence.push('goAML schema context in narrative'); }
+  if (/goaml|str.*schema|sar.*format.*error/.test(ft)) { score += 0.1; evidence.push('goAML schema context in narrative'); }
   score = clamp(score, 0, 1);
   return build('goaml_schema_preflight', 'regulatory_aml', ['reasoning', 'data_analysis'], score, 0.75,
     `goAML schema preflight: ${reports.length} report(s), ${invalid.length} invalid, ${late.length} late. Anchors: UAE FIU goAML Schema v4.1 · UNODC goAML Technical Guide.`, evidence);

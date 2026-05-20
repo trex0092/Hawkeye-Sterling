@@ -56,16 +56,18 @@ function typedEvidence<T>(ctx: BrainContext, key: string): T[] {
 function detectKnownBridges(txns: BridgeTxn[]): SignalHit[] {
   const hits: SignalHit[] = [];
   for (const t of txns) {
-    const addr = (t.toAddress ?? t.fromAddress ?? '').trim();
-    if (!addr) continue;
-    for (const k of KNOWN_BRIDGE_CONTRACTS) {
-      if (k.rx.test(addr)) {
-        hits.push({
-          id: `known_bridge:${k.id}`,
-          label: `Known bridge contract: ${k.protocol}`,
-          weight: 0.25,
-          evidence: `${addr.slice(0, 10)}…${addr.slice(-6)}${t.hash ? ` (${t.hash.slice(0, 10)}…)` : ''}`,
-        });
+    // Prefer toAddress but fall back to fromAddress; empty strings are falsy
+    const addr = ((t.toAddress !== '' && t.toAddress) || (t.fromAddress !== '' && t.fromAddress) || '').trim();
+    if (addr) {
+      for (const k of KNOWN_BRIDGE_CONTRACTS) {
+        if (k.rx.test(addr)) {
+          hits.push({
+            id: `known_bridge:${k.id}`,
+            label: `Known bridge contract: ${k.protocol}`,
+            weight: 0.25,
+            evidence: `${addr.slice(0, 10)}…${addr.slice(-6)}${t.hash ? ` (${t.hash.slice(0, 10)}…)` : ''}`,
+          });
+        }
       }
     }
     if (t.bridgeProtocol) {
@@ -82,7 +84,7 @@ function detectKnownBridges(txns: BridgeTxn[]): SignalHit[] {
 
 function detectBridgeHopVelocity(txns: BridgeTxn[]): SignalHit[] {
   const sorted = [...txns]
-    .filter((t) => t.timestamp && (t.bridgeProtocol || t.destinationChain !== t.sourceChain))
+    .filter((t) => t.timestamp && (t.bridgeProtocol || (t.destinationChain !== undefined && t.destinationChain !== t.sourceChain)))
     .sort((a, b) => Date.parse(a.timestamp ?? '') - Date.parse(b.timestamp ?? ''));
   const hits: SignalHit[] = [];
   for (let i = 0; i + HIGH_VELOCITY_HOPS - 1 < sorted.length; i++) {
