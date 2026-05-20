@@ -1407,7 +1407,11 @@ const CLIENT_TIMEOUTS: Record<ReasoningMode, number> = {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function MlroAdvisorPage() {
-  const [pageTab, setPageTab] = useState<"advisor" | "regulatory-qa" | "super-tools">("advisor");
+  const [pageTab, setPageTab] = useState<"advisor" | "regulatory-qa" | "super-tools" | "data-analyst">("advisor");
+  const [daQuestion, setDaQuestion] = useState("");
+  const [daAnswer, setDaAnswer] = useState<string | null>(null);
+  const [daLoading, setDaLoading] = useState(false);
+  const [daError, setDaError] = useState<string | null>(null);
 
   // ── Advisor state ────────────────────────────────────────────────────────────
   const [question, setQuestion] = useState("");
@@ -3378,6 +3382,9 @@ export default function MlroAdvisorPage() {
           </button>
           <button type="button" onClick={() => setPageTab("super-tools")} className={tabCls(pageTab === "super-tools")}>
             Super Tools
+          </button>
+          <button type="button" onClick={() => setPageTab("data-analyst")} className={tabCls(pageTab === "data-analyst")}>
+            Data Analyst
           </button>
         </div>
 
@@ -12336,6 +12343,75 @@ export default function MlroAdvisorPage() {
               </div>
             )}
 
+          </div>
+        )}
+
+        {/* ── Data Analyst tab ──────────────────────────────────────────────── */}
+        {pageTab === "data-analyst" && (
+          <div className="mt-2">
+            <div className="text-11 text-ink-2 mb-4">
+              Ask the AI Data Analyst anything — transaction patterns, risk trends, Amplitude analytics. Powered by Claude Console with Amplitude MCP.
+            </div>
+
+            <textarea
+              className="w-full px-3 py-2 border border-hair-2 rounded-lg text-13 bg-bg-panel focus:outline-none focus:border-brand text-ink-0 resize-none mb-2"
+              rows={4}
+              placeholder="e.g. What are the top risk indicators for gold traders in Turkey? Summarise transaction anomalies from last 30 days."
+              value={daQuestion}
+              onChange={(e) => setDaQuestion(e.target.value)}
+              disabled={daLoading}
+            />
+
+            <div className="flex gap-2 mb-4">
+              <button
+                type="button"
+                disabled={!daQuestion.trim() || daLoading}
+                onClick={async () => {
+                  setDaLoading(true);
+                  setDaError(null);
+                  setDaAnswer(null);
+                  try {
+                    const res = await fetch("/api/agent/data-analyst", {
+                      method: "POST",
+                      headers: { "content-type": "application/json" },
+                      body: JSON.stringify({ question: daQuestion }),
+                    });
+                    const data = await res.json();
+                    if (!data.ok) throw new Error(data.error ?? "Agent error");
+                    setDaAnswer(data.answer);
+                  } catch (err) {
+                    setDaError(err instanceof Error ? err.message : "Unknown error");
+                  } finally {
+                    setDaLoading(false);
+                  }
+                }}
+                className="px-4 py-1.5 bg-brand text-white rounded-lg text-13 font-semibold hover:bg-brand/90 disabled:opacity-50 transition-colors"
+              >
+                {daLoading ? "Analysing…" : "Ask Data Analyst"}
+              </button>
+              {daAnswer && (
+                <button
+                  type="button"
+                  onClick={() => { setDaAnswer(null); setDaQuestion(""); setDaError(null); }}
+                  className="px-3 py-1.5 border border-hair-2 rounded-lg text-13 text-ink-2 hover:text-ink-0 transition-colors"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+
+            {daError && (
+              <div className="px-4 py-2.5 bg-red-dim text-red border border-red/30 rounded-lg text-13 mb-3">
+                {daError}
+              </div>
+            )}
+
+            {daAnswer && (
+              <div className="bg-bg-panel border border-brand/30 rounded-xl p-4">
+                <div className="text-10 uppercase tracking-wide-3 text-brand mb-2">Agent response</div>
+                <div className="text-13 text-ink-1 whitespace-pre-wrap leading-relaxed">{daAnswer}</div>
+              </div>
+            )}
           </div>
         )}
       </div>
