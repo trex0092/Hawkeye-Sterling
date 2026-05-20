@@ -4,6 +4,7 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 export interface RegChange {
   regulation: string;
   jurisdiction: string;
@@ -97,7 +98,7 @@ Sort upcomingChanges by effectiveDate ascending. immediateActions are those due 
         {
           role: "user",
           content: `Institution profile:
-Type: ${body.institution?.type ?? "Financial institution"}
+Type: ${sanitizeField(body.institution?.type, 100) || "Financial institution"}
 Jurisdictions: ${JSON.stringify(body.institution?.jurisdictions ?? [])}
 Products: ${JSON.stringify(body.institution?.products ?? [])}
 Client Types: ${JSON.stringify(body.institution?.clientTypes ?? [])}

@@ -5,6 +5,7 @@ import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -67,15 +68,15 @@ export async function POST(req: Request): Promise<NextResponse> {
   ].join("\n");
 
   const userContent = [
-    `Playbook: ${body.playbookTitle} (typology: ${body.typology})`,
-    body.subjectName ? `Subject: ${body.subjectName}` : "",
+    `Playbook: ${sanitizeField(body.playbookTitle, 200)} (typology: ${sanitizeField(body.typology, 100)})`,
+    body.subjectName ? `Subject: ${sanitizeField(body.subjectName, 200)}` : "",
     "",
     `COMPLETED CHECKS (${body.completedChecks.length}):`,
     body.completedChecks.map((c) => `✓ ${c}`).join("\n") || "None",
     "",
     `INCOMPLETE CHECKS (${body.incompleteChecks.length}):`,
     body.incompleteChecks.map((c) => `✗ ${c}`).join("\n") || "None",
-    body.notes ? `\nAnalyst notes: ${body.notes}` : "",
+    body.notes ? `\nAnalyst notes: ${sanitizeText(body.notes, 1000)}` : "",
     "",
     "Draft the STR narrative based on the completed checks above.",
   ].filter(Boolean).join("\n");

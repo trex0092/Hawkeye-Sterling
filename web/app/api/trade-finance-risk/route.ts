@@ -4,6 +4,7 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 export interface TbmlScheme {
   scheme: string;
   description: string;
@@ -183,12 +184,12 @@ Return ONLY valid JSON (no markdown fences) with this exact structure:
           role: "user",
           content: `Analyse this trade finance transaction for TBML risk:
 
-Transaction Type: ${body.transactionType ?? "not specified"}
+Transaction Type: ${sanitizeField(body.transactionType, 100) || "not specified"}
 Exporter: ${JSON.stringify(body.exporter ?? {})}
 Importer: ${JSON.stringify(body.importer ?? {})}
-Goods Description: ${body.goods ?? "not specified"}
-HS Code: ${body.hsCode ?? "not specified"}
-Declared Value: ${body.declaredValue ?? "not specified"}
+Goods Description: ${sanitizeField(body.goods, 500) || "not specified"}
+HS Code: ${sanitizeField(body.hsCode, 50) || "not specified"}
+Declared Value: ${sanitizeField(body.declaredValue, 100) || "not specified"}
 Quantity: ${body.quantity ?? "not specified"}
 Shipping Route: ${body.shippingRoute ?? "not specified"}
 Financing Bank: ${body.financingBank ?? "not specified"}

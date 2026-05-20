@@ -4,6 +4,7 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 export interface TaxEvasionRequest {
   entity: string;
   entityType: "individual" | "corporate" | "trust" | "foundation";
@@ -154,10 +155,10 @@ Score calibration: 0-25 = low (clean, minor issues), 26-50 = medium (some exposu
           role: "user",
           content: `Analyse the following entity for tax evasion risk as a money laundering predicate offence:
 
-Entity: ${body.entity}
-Entity Type: ${body.entityType}
-Home Jurisdiction: ${body.jurisdiction}
-Offshore Jurisdictions: ${body.offshoreJurisdictions.join(", ") || "None specified"}
+Entity: ${sanitizeField(body.entity, 300)}
+Entity Type: ${sanitizeField(body.entityType, 100)}
+Home Jurisdiction: ${sanitizeField(body.jurisdiction, 100)}
+Offshore Jurisdictions: ${body.offshoreJurisdictions.slice(0, 20).map((j: string) => sanitizeField(j, 100)).join(", ") || "None specified"}
 Structure Type: ${body.structureType}
 Declared Annual Income: ${body.declaredIncome || "Not provided"}
 Estimated Total Wealth: ${body.estimatedWealth || "Not provided"}

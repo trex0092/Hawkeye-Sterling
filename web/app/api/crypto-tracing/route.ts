@@ -4,6 +4,7 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 // ── Request Body ──────────────────────────────────────────────────────────────
 
 export interface CryptoTracingBody {
@@ -494,10 +495,10 @@ export async function POST(req: Request) {
 
     const userMessage = `BLOCKCHAIN FORENSICS REQUEST
 
-Wallet Address: ${body.walletAddress ?? "Not provided"}
-Blockchain: ${body.blockchain ?? "Not specified"}
-Entity Name: ${body.entityName ?? "Unknown"}
-Exchange of Origin: ${body.exchangeOrigin ?? "Unknown"}
+Wallet Address: ${sanitizeField(body.walletAddress, 200) || "Not provided"}
+Blockchain: ${sanitizeField(body.blockchain, 50) || "Not specified"}
+Entity Name: ${sanitizeField(body.entityName, 300) || "Unknown"}
+Exchange of Origin: ${sanitizeField(body.exchangeOrigin, 200) || "Unknown"}
 
 TRANSACTION HISTORY / DESCRIPTION:
 ${body.transactionHistory ?? "Not provided"}

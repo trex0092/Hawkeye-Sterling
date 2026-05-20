@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 export interface FreezeSeizureResult {
   legalBasis: string;
   eligibleAssets: string[];
@@ -53,10 +54,10 @@ export async function POST(req: Request) {
       messages: [{
         role: "user",
         content: `Analyse the following asset freeze/seizure scenario:
-- Subject Name: ${body.subjectName}
-- Asset Description: ${body.assetDescription}
-- Legal Basis Cited: ${body.legalBasisCited}
-- Estimated Value: ${body.estimatedValue}
+- Subject Name: ${sanitizeField(body.subjectName, 200)}
+- Asset Description: ${sanitizeText(body.assetDescription, 1000)}
+- Legal Basis Cited: ${sanitizeField(body.legalBasisCited, 300)}
+- Estimated Value: ${sanitizeField(body.estimatedValue, 50)}
 - Jurisdictions: ${body.jurisdictions}
 - Additional Context: ${body.context}`,
       }],

@@ -5,6 +5,7 @@ import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -97,11 +98,11 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const parts: string[] = [
     `Subject: ${subject}`,
-    `Country: ${body.country?.trim() ?? "unknown"}`,
+    `Country: ${sanitizeField(body.country, 100) || "unknown"}`,
   ];
-  if (body.counterpartyName?.trim()) parts.push(`Counterparty: ${body.counterpartyName.trim()}`);
-  if (body.counterpartyCountry?.trim()) parts.push(`Counterparty Country: ${body.counterpartyCountry.trim()}`);
-  if (body.transactionType?.trim()) parts.push(`Transaction Type: ${body.transactionType.trim()}`);
+  if (body.counterpartyName?.trim()) parts.push(`Counterparty: ${sanitizeField(body.counterpartyName, 300)}`);
+  if (body.counterpartyCountry?.trim()) parts.push(`Counterparty Country: ${sanitizeField(body.counterpartyCountry, 100)}`);
+  if (body.transactionType?.trim()) parts.push(`Transaction Type: ${sanitizeField(body.transactionType, 100)}`);
   if (body.amount != null) parts.push(`Amount: ${body.amount}${body.currency ? ` ${body.currency}` : ""}`);
   if (body.ownershipChain?.trim()) parts.push(`Ownership Chain: ${body.ownershipChain.trim()}`);
   if (body.bankingRelationships?.trim()) parts.push(`Banking Relationships: ${body.bankingRelationships.trim()}`);

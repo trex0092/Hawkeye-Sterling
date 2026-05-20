@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 export interface EddChecklistResult {
   documents: Array<{ item: string; regulatoryBasis: string }>;
   questions: Array<{ item: string; regulatoryBasis: string }>;
@@ -74,9 +75,9 @@ Guidelines:
           role: "user",
           content: `Generate a tailored EDD checklist for the following client profile:
 
-Client Name: ${body.clientName ?? "Undisclosed"}
-Client Type: ${body.clientType ?? "Individual"}
-Jurisdiction: ${body.jurisdiction ?? "UAE"}
+Client Name: ${sanitizeField(body.clientName, 200) || "Undisclosed"}
+Client Type: ${sanitizeField(body.clientType, 100) || "Individual"}
+Jurisdiction: ${sanitizeField(body.jurisdiction, 100) || "UAE"}
 Risk Score: ${body.riskScore ?? 75}/100
 Source of Wealth: ${body.sourceOfWealth ?? "Not declared"}
 PEP Status: ${body.pep ? "YES — Politically Exposed Person" : "No"}

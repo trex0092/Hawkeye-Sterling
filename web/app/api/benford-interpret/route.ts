@@ -5,6 +5,7 @@ import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -63,7 +64,7 @@ export async function POST(req: Request): Promise<NextResponse> {
           : "non-conformity (>0.015)";
 
   const userContent = [
-    `Dataset: ${body.label || "Unnamed"}`,
+    `Dataset: ${sanitizeField(body.label, 200) || "Unnamed"}`,
     `Sample size (n): ${body.n}`,
     `MAD: ${body.mad.toFixed(6)} — ${madCategory}`,
     `Chi-squared: ${body.chiSquared.toFixed(4)}`,

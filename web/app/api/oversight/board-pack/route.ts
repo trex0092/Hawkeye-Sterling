@@ -4,6 +4,7 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 export interface BoardPackInput {
   pendingApprovals: number;
   slaBreached: number;
@@ -85,8 +86,8 @@ Return ONLY valid JSON (no markdown fences) with exactly these keys. Be specific
           role: "user",
           content: `Generate a board pack for the following institution and compliance snapshot:
 
-Institution: ${body.institutionName ?? "Hawkeye Sterling DMCC"}
-Meeting Date: ${body.meetingDate ?? new Date().toLocaleDateString("en-GB")}
+Institution: ${sanitizeField(body.institutionName, 200) || "Hawkeye Sterling DMCC"}
+Meeting Date: ${sanitizeField(body.meetingDate, 50) || new Date().toLocaleDateString("en-GB")}
 
 Current Compliance Metrics:
 - Pending four-eyes approvals: ${body.pendingApprovals}

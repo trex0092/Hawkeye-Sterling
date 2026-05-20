@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 export interface MlScenarioResult {
   scenarioTitle: string;
   predicate: string;
@@ -55,10 +56,10 @@ export async function POST(req: Request) {
       messages: [{
         role: "user",
         content: `Construct a detailed money laundering scenario analysis for the following case:
-- Subject Name: ${body.subjectName}
-- Predicate Offence: ${body.predicateOffence}
-- Estimated Amount: ${body.estimatedAmount}
-- Jurisdictions: ${body.jurisdictions}
+- Subject Name: ${sanitizeField(body.subjectName, 200)}
+- Predicate Offence: ${sanitizeField(body.predicateOffence, 200)}
+- Estimated Amount: ${sanitizeField(body.estimatedAmount, 50)}
+- Jurisdictions: ${sanitizeField(body.jurisdictions, 200)}
 - Sectors Involved: ${body.sectors}
 - Additional Context: ${body.context}`,
       }],
