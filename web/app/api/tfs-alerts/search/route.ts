@@ -133,12 +133,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     if (msg === "GMAIL_NOT_CONFIGURED") {
-      return NextResponse.json({ ok: false, error: "GMAIL_NOT_CONFIGURED" }, { status: 503 });
+      return NextResponse.json({ ok: false, error: "GMAIL_NOT_CONFIGURED" }, { status: 503, headers: gate.headers });
     }
     if (msg.startsWith("GMAIL_REFRESH_FAILED")) {
-      return NextResponse.json({ ok: false, error: "GMAIL_REFRESH_FAILED" }, { status: 401 });
+      return NextResponse.json({ ok: false, error: "GMAIL_REFRESH_FAILED" }, { status: 401, headers: gate.headers });
     }
-    return NextResponse.json({ ok: false, error: "GMAIL_AUTH_FAILED" }, { status: 401 });
+    return NextResponse.json({ ok: false, error: "GMAIL_AUTH_FAILED" }, { status: 401, headers: gate.headers });
   }
 
   let body: { knownThreadIds?: string[] } = {};
@@ -160,7 +160,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         if (msg === "GMAIL_AUTH_FAILED") {
-          return NextResponse.json({ ok: false, error: "GMAIL_AUTH_FAILED" }, { status: 401 });
+          return NextResponse.json({ ok: false, error: "GMAIL_AUTH_FAILED" }, { status: 401, headers: gate.headers });
         }
         // Non-auth errors: log and continue to next query
         console.warn(`[tfs-search] query "${query}" failed:`, msg);
@@ -174,7 +174,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     }
 
     if (threadMap.size === 0) {
-      return NextResponse.json({ ok: true, candidates: [] });
+      return NextResponse.json({ ok: true, candidates: [] }, { headers: gate.headers });
     }
 
     // Filter to only NEW (not yet tracked) threads
@@ -209,13 +209,13 @@ export async function POST(req: Request): Promise<NextResponse> {
       }
     }
 
-    return NextResponse.json({ ok: true, candidates });
+    return NextResponse.json({ ok: true, candidates }, { headers: gate.headers });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     if (msg.includes("fetch") || msg.includes("network") || msg.includes("timeout")) {
-      return NextResponse.json({ ok: false, error: "NETWORK_TIMEOUT" }, { status: 504 });
+      return NextResponse.json({ ok: false, error: "NETWORK_TIMEOUT" }, { status: 504, headers: gate.headers });
     }
     console.error("[tfs-search] unexpected error:", err);
-    return NextResponse.json({ ok: false, error: "INTERNAL_ERROR" }, { status: 500 });
+    return NextResponse.json({ ok: false, error: "INTERNAL_ERROR" }, { status: 500, headers: gate.headers });
   }
 }

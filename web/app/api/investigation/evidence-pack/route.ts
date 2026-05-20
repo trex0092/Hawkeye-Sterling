@@ -4,6 +4,7 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 // ── Types ──────────────────────────────────────────────────────────────────────
 
 export interface EvidencePackEntity {
@@ -98,11 +99,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
-  const caseTitle = body.caseTitle ?? "Untitled Investigation";
-  const entities = Array.isArray(body.entities) ? body.entities : [];
-  const links = Array.isArray(body.links) ? body.links : [];
-  const narrative = body.narrative ?? "";
-  const analyst = body.analyst ?? "System";
+  const caseTitle = sanitizeField(body.caseTitle, 300) || "Untitled Investigation";
+  const entities = Array.isArray(body.entities) ? body.entities.slice(0, 100) : [];
+  const links = Array.isArray(body.links) ? body.links.slice(0, 200) : [];
+  const narrative = sanitizeText(body.narrative, 5000) || "";
+  const analyst = sanitizeField(body.analyst, 100) || "System";
   const generatedAt = new Date().toISOString();
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];

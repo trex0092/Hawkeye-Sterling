@@ -6,6 +6,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export interface WireR16Result {
   r16Compliant: boolean;
@@ -83,17 +84,17 @@ Respond ONLY with valid JSON — no markdown fences:
         messages: [{
           role: "user",
           content: `Wire Transfer Details:
-Originator Name: ${body.originatorName ?? "not provided"}
-Originator Account: ${body.originatorAccount ?? "not provided"}
-Originator Address: ${body.originatorAddress ?? "not provided"}
-Originator ID/Passport: ${body.originatorId ?? "not provided"}
-Originator Country: ${body.originatorCountry ?? "not provided"}
-Beneficiary Name: ${body.beneficiaryName ?? "not provided"}
-Beneficiary Account: ${body.beneficiaryAccount ?? "not provided"}
-Beneficiary Country: ${body.beneficiaryCountry ?? "not provided"}
-Amount: ${body.amount ?? "not provided"} ${body.currency ?? ""}
-Purpose: ${body.purpose ?? "not provided"}
-SWIFT Reference: ${body.swiftRef ?? "not provided"}
+Originator Name: ${sanitizeField(body.originatorName, 200) || "not provided"}
+Originator Account: ${sanitizeField(body.originatorAccount, 100) || "not provided"}
+Originator Address: ${sanitizeField(body.originatorAddress, 300) || "not provided"}
+Originator ID/Passport: ${sanitizeField(body.originatorId, 100) || "not provided"}
+Originator Country: ${sanitizeField(body.originatorCountry, 100) || "not provided"}
+Beneficiary Name: ${sanitizeField(body.beneficiaryName, 200) || "not provided"}
+Beneficiary Account: ${sanitizeField(body.beneficiaryAccount, 100) || "not provided"}
+Beneficiary Country: ${sanitizeField(body.beneficiaryCountry, 100) || "not provided"}
+Amount: ${sanitizeField(body.amount, 50) || "not provided"} ${sanitizeField(body.currency, 10) || ""}
+Purpose: ${sanitizeField(body.purpose, 500) || "not provided"}
+SWIFT Reference: ${sanitizeField(body.swiftRef, 50) || "not provided"}
 
 Assess FATF R.16 compliance.`,
         }],

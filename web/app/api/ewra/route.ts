@@ -179,7 +179,7 @@ Dimensions must include: Customer Risk, Product/Service Risk, Channel Risk, Geog
     const detail = err instanceof Error ? err.message : String(err);
     console.warn("[ewra] LLM call failed:", detail);
     return NextResponse.json(
-      { ok: false, error: "EWRA generation temporarily unavailable. Please retry.", detail },
+      { ok: false, error: "EWRA generation temporarily unavailable. Please retry." },
       { status: 503, headers: gate.headers },
     );
   }

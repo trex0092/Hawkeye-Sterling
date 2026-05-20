@@ -129,20 +129,20 @@ export async function POST(req: Request): Promise<NextResponse> {
     "";
 
   if (!token) {
-    return NextResponse.json({ ok: false, error: "ASANA_NOT_CONFIGURED" }, { status: 503 });
+    return NextResponse.json({ ok: false, error: "ASANA_NOT_CONFIGURED" }, { status: 503, headers: gate.headers });
   }
 
   let body: CreateTaskRequest;
   try {
     body = (await req.json()) as CreateTaskRequest;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid request body" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid request body" }, { status: 400, headers: gate.headers });
   }
 
   const { subject, sender, dateReceived, snippet, alertType } = body;
 
   if (!subject || !dateReceived) {
-    return NextResponse.json({ ok: false, error: "Missing required fields" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Missing required fields" }, { status: 400, headers: gate.headers });
   }
 
   const taskName = buildTaskName(alertType || "Sanctions List", dateReceived);
@@ -173,11 +173,11 @@ export async function POST(req: Request): Promise<NextResponse> {
       const errorText = await res.text();
       console.error("[tfs-create-task] Asana error:", res.status, errorText);
       if (res.status === 401 || res.status === 403) {
-        return NextResponse.json({ ok: false, error: "ASANA_AUTH_FAILED" }, { status: 401 });
+        return NextResponse.json({ ok: false, error: "ASANA_AUTH_FAILED" }, { status: 401, headers: gate.headers });
       }
       return NextResponse.json(
         { ok: false, error: `Asana API error ${res.status}` },
-        { status: 502 },
+        { status: 502, headers: gate.headers },
       );
     }
 
@@ -185,9 +185,9 @@ export async function POST(req: Request): Promise<NextResponse> {
     const taskId = data.data?.gid ?? "";
     const taskUrl = `https://app.asana.com/0/${ASANA_PROJECT_GID}/${taskId}`;
 
-    return NextResponse.json({ ok: true, taskId, taskUrl } satisfies CreateTaskResponse);
+    return NextResponse.json({ ok: true, taskId, taskUrl } satisfies CreateTaskResponse, { headers: gate.headers });
   } catch (err) {
     console.error("[tfs-create-task] fetch failed:", err);
-    return NextResponse.json({ ok: false, error: "NETWORK_ERROR" }, { status: 504 });
+    return NextResponse.json({ ok: false, error: "NETWORK_ERROR" }, { status: 504, headers: gate.headers });
   }
 }
