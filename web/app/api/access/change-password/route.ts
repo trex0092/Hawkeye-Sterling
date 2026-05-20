@@ -61,25 +61,21 @@ export async function POST(req: Request) {
     | { status: 'wrong_password' }
     | { status: 'saved' };
 
-  let changeResult: ChangeResult = { status: 'not_found' };
-
-  await withUsersLock(async () => {
+  const changeResult = await withUsersLock<ChangeResult>(async () => {
     const users = await loadUsers();
     const idx = users.findIndex((u) => u.id === session.userId);
-    if (idx === -1) { changeResult = { status: 'not_found' }; return; }
+    if (idx === -1) return { status: 'not_found' };
 
     const user = users[idx]!;
-    if (!user.passwordHash || !user.passwordSalt) { changeResult = { status: 'no_password' }; return; }
-    if (!verifyPassword(currentPassword, user.passwordSalt, user.passwordHash)) {
-      changeResult = { status: 'wrong_password' }; return;
-    }
+    if (!user.passwordHash || !user.passwordSalt) return { status: 'no_password' };
+    if (!verifyPassword(currentPassword, user.passwordSalt, user.passwordHash)) return { status: 'wrong_password' };
 
     const salt = generateSalt();
     const hash = hashPassword(newPassword, salt);
     const updatedUsers = [...users];
     updatedUsers[idx] = { ...user, passwordHash: hash, passwordSalt: salt, pwVersion: (user.pwVersion ?? 0) + 1 };
     await saveUsers(updatedUsers);
-    changeResult = { status: 'saved' };
+    return { status: 'saved' };
   });
 
   if (changeResult.status === 'not_found') return NextResponse.json({ ok: false, error: "User not found" }, { status: 404 });

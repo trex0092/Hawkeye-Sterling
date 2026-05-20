@@ -42,35 +42,31 @@ export async function POST(req: Request) {
     );
   }
 
-  type SavedData = { updatedUser: AccessUser; oldRole: UserRole };
-  let lockError: { status: number; message: string } | null = null;
-  let savedData: SavedData | null = null;
-  let users: AccessUser[] = [];
+  type LockResult =
+    | { kind: 'error'; status: number; message: string }
+    | { kind: 'ok'; updatedUser: AccessUser; oldRole: UserRole; users: AccessUser[] };
 
-  await withUsersLock(async () => {
-    users = await loadUsers();
-    const userIdx = users.findIndex((u) => u.id === userId);
-    if (userIdx === -1) {
-      lockError = { status: 404, message: "User not found" };
-      return;
-    }
-    const user = users[userIdx]!;
-    const oldRole = user.role;
-    const updatedUser = { ...user, role: newRole, modules: ROLE_MODULES[newRole] ?? user.modules };
-    const updatedUsers = [...users];
+  const lockResult = await withUsersLock<LockResult>(async () => {
+    const loadedUsers = await loadUsers();
+    const userIdx = loadedUsers.findIndex((u) => u.id === userId);
+    if (userIdx === -1) return { kind: 'error', status: 404, message: "User not found" };
+    const target = loadedUsers[userIdx]!;
+    const oldRole = target.role;
+    const updatedUser = { ...target, role: newRole, modules: ROLE_MODULES[newRole] ?? target.modules };
+    const updatedUsers = [...loadedUsers];
     updatedUsers[userIdx] = updatedUser;
     await saveUsers(updatedUsers);
-    savedData = { updatedUser, oldRole };
+    return { kind: 'ok', updatedUser, oldRole, users: updatedUsers };
   });
 
-  if (lockError || !savedData) {
+  if (lockResult.kind === 'error') {
     return NextResponse.json(
-      { ok: false, error: lockError?.message ?? "User not found" },
-      { status: lockError?.status ?? 404, headers: gate.headers },
+      { ok: false, error: lockResult.message },
+      { status: lockResult.status, headers: gate.headers },
     );
   }
 
-  const { updatedUser, oldRole } = savedData as SavedData;
+  const { updatedUser, oldRole, users } = lockResult;
   const user = users.find((u) => u.id === userId)!;
 
   const logEntry = {
