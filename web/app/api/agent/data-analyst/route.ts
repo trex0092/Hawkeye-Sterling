@@ -30,7 +30,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 const AGENT_ID = "agent_01KWdhXyphDqQnN6ar56nrQb";
-const ENV_ID   = "env_01SnGQiAwuVGmipn1SynFmkx";
+const ENV_ID   = "env_01SnGQiAwuVGmipniSynFmkx";
 const DEFAULT_TIMEOUT_MS = 60_000;
 
 export async function POST(req: Request) {
