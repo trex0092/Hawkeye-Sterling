@@ -18,6 +18,7 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -160,7 +161,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ error: "context is required" }, { status: 400 , headers: gate.headers });
   }
 
-  const examinerBody = ctx.examinerBody ?? "Regulatory Authority";
+  const examinerBody = sanitizeField(ctx.examinerBody ?? "Regulatory Authority", 100);
   const daysUntilExam = ctx.daysUntilExam ?? (
     ctx.scheduledDate
       ? Math.max(0, Math.round((new Date(ctx.scheduledDate).getTime() - Date.now()) / 86_400_000))
