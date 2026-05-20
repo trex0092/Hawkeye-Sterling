@@ -1,5 +1,5 @@
 import { writeAuditEvent } from "@/lib/audit";
-import { stripJsonFences, withMlroLlm } from "@/lib/server/mlro-route-base";
+import { parseLlmJson, withMlroLlm } from "@/lib/server/mlro-route-base";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
@@ -106,11 +106,9 @@ export const POST = (req: Request) => withMlroLlm<Body, CasePatternsResult>(req,
     };
   },
   parseResult: (text): CasePatternsResult => {
-    try {
-      return JSON.parse(stripJsonFences(text)) as CasePatternsResult;
-    } catch {
-      return { ...FALLBACK, summary: "AI response could not be parsed — manual review required." };
-    }
+    const parsed = parseLlmJson<CasePatternsResult>(text);
+    if (parsed) return parsed;
+    return { ...FALLBACK, summary: "AI response could not be parsed — manual review required." };
   },
   onSuccess: (result, body) => {
     writeAuditEvent(

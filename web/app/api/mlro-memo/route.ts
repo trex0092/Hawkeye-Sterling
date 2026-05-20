@@ -2,7 +2,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 import { createHash } from "node:crypto";
-import { stripJsonFences, withMlroLlm } from "@/lib/server/mlro-route-base";
+import { parseLlmJson, withMlroLlm } from "@/lib/server/mlro-route-base";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export interface MlroMemoResult {
@@ -180,5 +180,13 @@ Date: ${sanitizeField(body.date, 50) || new Date().toLocaleDateString("en-GB")}
 Draft the MLRO Decision Memorandum.`,
     };
   },
-  parseResult: (text) => JSON.parse(stripJsonFences(text)) as MlroMemoResult,
+  parseResult: (text): MlroMemoResult => {
+    const parsed = parseLlmJson<MlroMemoResult>(text);
+    if (parsed) return parsed;
+    // mlro-memo previously threw a SyntaxError on parse failure (which the
+    // withMlroLlm wrapper then surfaced as a 500). Preserve the loud-fail
+    // contract — callers depend on a thrown error to fall through to their
+    // operator escalation path — but throw a typed error with context.
+    throw new Error("mlro-memo: model output was not valid JSON and could not be extracted");
+  },
 });
