@@ -184,6 +184,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   // loading so it doesn't add latency to the critical path.
   const listHealthPromise = fetchListHealth().catch(() => null);
 
+  // Start corpus loading at t0 in parallel with auth + body parse + whitelist.
+  // On a warm Lambda the in-memory cache returns in <1ms; on a cold start
+  // Blobs reads take up to 2.4s — overlapping that with the serial auth/parse
+  // steps saves ~500ms and keeps total response under the 2.8s hard deadline.
+  const candidatesPromise = loadCandidatesWithHealth().catch(() => null);
+
   // Require authentication — UAE FDL Art. 20 requires every screening
   // action to be traceable to a natural person. Anonymous screening (free
   // tier without an API key) leaves audit chain entries with no operator
@@ -259,10 +265,16 @@ export async function POST(req: Request): Promise<NextResponse> {
   const tenantId = gate.record?.email;
   if (tenantId) {
     try {
-      const match = await lookupWhitelist(tenantId, {
-        name: subject.name,
-        ...(subject.jurisdiction ? { jurisdiction: subject.jurisdiction } : {}),
-      });
+      // Cap whitelist lookup at 400ms — a Blobs read should never exceed this
+      // on a healthy deployment. If it hangs we fall through to full screening
+      // (the safe default: the MLRO sees the hit again rather than missing it).
+      const match = await Promise.race([
+        lookupWhitelist(tenantId, {
+          name: subject.name,
+          ...(subject.jurisdiction ? { jurisdiction: subject.jurisdiction } : {}),
+        }),
+        new Promise<null>((r) => setTimeout(() => r(null), 400)),
+      ]);
       if (match) {
         const whitelistedResult: QuickScreenResult = {
           subject,
@@ -336,8 +348,13 @@ export async function POST(req: Request): Promise<NextResponse> {
     candidates = callerCandidates;
   } else {
     // No candidates provided → use the live watchlist corpus.
+    // Re-use the promise started at t0; loadCandidatesWithHealth's in-flight
+    // deduplication means only one Blobs read occurred regardless.
     try {
-      const loaded = await loadCandidatesWithHealth();
+      const loaded = await candidatesPromise;
+      if (!loaded) {
+        return respond(503, { ok: false, error: "watchlist corpus unavailable", detail: "loadCandidatesWithHealth failed" }, gateHeaders);
+      }
       corpusHealth = loaded.health;
       const rawCandidates = loaded.candidates;
 
