@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { writeAuditEvent } from "@/lib/audit";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 import { getAnthropicClient } from "@/lib/server/llm";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
@@ -84,7 +85,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         messages: [
           {
             role: "user",
-            content: `Today: ${today}. Employees: ${JSON.stringify(employees)}. Return ONLY this JSON: { "portfolioStatus": "critical"|"attention_required"|"compliant", "summary": "string", "criticalExpiries": [{ "name": "string", "issue": "string", "urgency": "immediate"|"this_week"|"this_month", "action": "string" }], "screeningAlerts": [{ "name": "string", "reason": "string", "action": "string" }], "highRiskNationalities": ["string"], "multiEntityRisk": ["string"], "immediateActions": ["string"], "regulatoryNote": "string" }`,
+            content: `Today: ${sanitizeField(today, 50) || new Date().toISOString().slice(0, 10)}. Employees: ${JSON.stringify(employees)}. Return ONLY this JSON: { "portfolioStatus": "critical"|"attention_required"|"compliant", "summary": "string", "criticalExpiries": [{ "name": "string", "issue": "string", "urgency": "immediate"|"this_week"|"this_month", "action": "string" }], "screeningAlerts": [{ "name": "string", "reason": "string", "action": "string" }], "highRiskNationalities": ["string"], "multiEntityRisk": ["string"], "immediateActions": ["string"], "regulatoryNote": "string" }`,
           },
         ],
       });
