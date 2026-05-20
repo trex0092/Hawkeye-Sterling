@@ -91,44 +91,29 @@ test.describe("API health checks", () => {
     expect(setCookie).toMatch(/max-age=0/i);
   });
 
-  test("POST /api/iban-risk with missing iban returns 400", async ({ request }) => {
-    const response = await request.post("/api/iban-risk", {
-      data: {},
-    });
-    expect(response.status()).toBe(400);
-    const body = await response.json() as { ok: boolean; error?: string };
-    expect(body.ok).toBe(false);
-  });
-
-  test("POST /api/iban-risk with UK IBAN returns 200 with low risk", async ({ request }) => {
+  // The /api/iban-risk and /api/country-risk routes call enforce(req) at the
+  // top, which defaults to requireAuth:true (see web/lib/server/enforce.ts).
+  // Unauthenticated E2E probes are therefore rejected at the auth gate before
+  // any body validation runs — earlier 400/200 assertions were stale relative
+  // to that hardening. Auth-gated success paths are covered by integration
+  // tests (src/__integration__/api-routes.test.ts) which mock enforce().
+  test("POST /api/iban-risk without API key is rejected at the auth gate", async ({ request }) => {
     const response = await request.post("/api/iban-risk", {
       data: { iban: "GB29NWBK60161331926819" },
     });
-    expect(response.status()).toBe(200);
-    const body = await response.json() as { ok: boolean; countryCode: string; riskLevel: string };
-    expect(body.ok).toBe(true);
-    expect(body.countryCode).toBe("GB");
-    expect(body.riskLevel).toBe("low");
-  });
-
-  test("POST /api/country-risk with missing country returns 400", async ({ request }) => {
-    const response = await request.post("/api/country-risk", {
-      data: {},
-    });
-    expect(response.status()).toBe(400);
+    expect(response.status()).toBe(401);
     const body = await response.json() as { ok: boolean; error?: string };
     expect(body.ok).toBe(false);
+    expect(body.error).toMatch(/API key required/i);
   });
 
-  test("POST /api/country-risk for UAE returns 200 with static data", async ({ request }) => {
+  test("POST /api/country-risk without API key is rejected at the auth gate", async ({ request }) => {
     const response = await request.post("/api/country-risk", {
       data: { country: "UAE" },
     });
-    expect(response.status()).toBe(200);
-    const body = await response.json() as { ok: boolean; country: string; fatfStatus: string };
-    expect(body.ok).toBe(true);
-    // Response should reference UAE or United Arab Emirates
-    expect(body.country).toMatch(/emirates|UAE/i);
-    expect(body.fatfStatus).toBe("member");
+    expect(response.status()).toBe(401);
+    const body = await response.json() as { ok: boolean; error?: string };
+    expect(body.ok).toBe(false);
+    expect(body.error).toMatch(/API key required/i);
   });
 });
