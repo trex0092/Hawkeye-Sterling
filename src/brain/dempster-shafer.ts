@@ -199,7 +199,7 @@ export function combineDS(
       if (isSubsetOf(focal, [h])) bel += v;
       if (focal.includes(h)) {
         pl += v;
-        bet += v / focal.length;
+        if (focal.length > 0) bet += v / focal.length;
       }
     }
     belief[h] = bel;

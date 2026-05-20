@@ -47,7 +47,7 @@ function validateNewsResponseArray<T>(
 ): T[] {
   // Some providers (Tiingo, certain RSS-derived feeds) return a bare
   // top-level array. The accessor doesn't apply — return as-is.
-  if (Array.isArray(raw)) return raw as T[];
+  if (Array.isArray(raw)) return (raw as unknown[]).filter((x) => x != null) as T[];
   if (!raw || typeof raw !== "object") {
     const sig = `${provider}:non-object`;
     if (!_driftLogged.has(sig)) {
@@ -75,7 +75,7 @@ function validateNewsResponseArray<T>(
     }
     return [];
   }
-  return value as T[];
+  return (value as unknown[]).filter((x) => x != null) as T[];
 }
 
 export interface NewsArticle {

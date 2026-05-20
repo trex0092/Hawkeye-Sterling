@@ -313,9 +313,12 @@ export async function POST(req: Request): Promise<Response> {
   // Shared input gate — refuses empty / oversize / prompt-injection
   // inputs before we burn a Haiku call. Topic-scope filtering is off;
   // the Advisor must answer every compliance question.
+  const callerIsMlroOrAdmin =
+    gate.keyId === "portal_admin" || gate.record?.role === "mlro";
+  const redTeamActive = body.redTeamMode === true && callerIsMlroOrAdmin;
   const gateResult = gateMlroQuestion(sanitizeText(body.question ?? "", 5000), {
-    maxChars: body.redTeamMode ? 4000 : 2000,
-    allowInjectionPatterns: body.redTeamMode === true,
+    maxChars: redTeamActive ? 4000 : 2000,
+    allowInjectionPatterns: redTeamActive,
   });
   if (!gateResult.ok) {
     return NextResponse.json(
