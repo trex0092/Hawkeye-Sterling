@@ -251,17 +251,26 @@ describe('wave3-vessel-ais-gap', () => {
   });
 
   it('hoursBetween returns 0 for invalid timestamps (non-finite Date.parse)', async () => {
-    // Provide reports with timestamps that pass filter but are invalid ISO strings
-    // Actually sorted filter uses r.timestamp truthiness, so we need truthy but invalid dates
-    // Use reports that have timestamps but with ordering to trigger sort comparator
+    // Provide reports with truthy-but-invalid timestamp strings — pass the filter but yield NaN in Date.parse
+    const r = await vesselAisGapApply(makeCtx({
+      aisReports: [
+        { timestamp: 'INVALID_DATE' },
+        { timestamp: 'ALSO_INVALID' },
+      ],
+    }));
+    // hoursBetween returns 0, so no dark period flag fires
+    expect(r.verdict).toBe('clear');
+  });
+
+  it('triggers sort comparator with out-of-order timestamps', async () => {
     const r = await vesselAisGapApply(makeCtx({
       aisReports: [
         { timestamp: '2024-03-01T00:00:00Z' },
-        { timestamp: '2024-01-01T00:00:00Z' }, // out of order → triggers sort
+        { timestamp: '2024-01-01T00:00:00Z' }, // out of order
         { timestamp: '2024-02-01T00:00:00Z' },
       ],
     }));
-    // 31 days gap max, all < 12h? No, 31 days >> 12h → 2 dark period flags
+    // After sort: Jan → Feb (31d gap → flag), Feb → Mar (28d gap → flag)
     expect(r.score).toBeGreaterThan(0);
   });
 });
