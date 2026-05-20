@@ -39,7 +39,7 @@ interface Props {
   subjectName: string;
   hits: TriageHit[];
   resolutions?: Record<string, Resolution>;
-  onResolve?: (_hitId: string, _resolution: Resolution, _reason?: string) => Promise<void>;
+  onResolve?: (_hitId: string, _resolution: Resolution, _reason?: string, _reasonCode?: string) => Promise<void>;
   /** True when the API expanded the hit caps because the subject name
    *  was detected as common (Mohamed Ali, John Smith, etc.). Triggers
    *  the "common-name expansion" banner above the table. */
@@ -79,6 +79,10 @@ export function HitTriagePanel({ subjectId, subjectName, hits, resolutions = {},
   const [filterCitizenship, setFilterCitizenship] = useState<string | "all">("all");
   const [filterMinStrength, setFilterMinStrength] = useState<number>(0);
   const [resolveReason, setResolveReason] = useState<Record<string, string>>({});
+  // J-06 / G-05 — per-hit false-positive reason code selection. Server validates
+  // that this is one of FP_01..FP_06 when resolution === "false"; FP_06 ("Other")
+  // additionally requires a non-empty resolveReason text.
+  const [resolveReasonCode, setResolveReasonCode] = useState<Record<string, string>>({});
   const [busyHitId, setBusyHitId] = useState<string | null>(null);
   const [page, setPage] = useState<number>(0);
   const PAGE_SIZE = 50;
@@ -132,13 +136,40 @@ export function HitTriagePanel({ subjectId, subjectName, hits, resolutions = {},
 
   async function handleResolve(hitId: string, resolution: Resolution) {
     if (!onResolve) return;
+    // Client-side guard for false-positive dispositions — keeps the
+    // operator from firing a POST that the server will reject with 400.
+    // The server is still the authoritative validator (defence in depth);
+    // this branch just surfaces the requirement at the click site.
+    if (resolution === "false") {
+      const code = resolveReasonCode[hitId];
+      if (!code) {
+        alert("Select a false-positive reason code before dismissing this hit.");
+        return;
+      }
+      if (code === "FP_06" && !(resolveReason[hitId] ?? "").trim()) {
+        alert('"Other" reason requires a free-text explanation in the audit note field.');
+        return;
+      }
+    }
     setBusyHitId(hitId);
     try {
-      await onResolve(hitId, resolution, resolveReason[hitId]);
+      await onResolve(hitId, resolution, resolveReason[hitId], resolveReasonCode[hitId]);
     } finally {
       setBusyHitId(null);
     }
   }
+
+  // J-06 / G-05 — false-positive reason codes (kept inline to avoid a
+  // server-module dependency in this client component). Schema mirrors
+  // web/lib/server/fp-reason-codes.ts:FP_REASON_CODES.
+  const FP_REASON_OPTIONS: ReadonlyArray<{ code: string; label: string }> = [
+    { code: "FP_01", label: "FP-01 · Different DOB confirmed" },
+    { code: "FP_02", label: "FP-02 · Different nationality confirmed" },
+    { code: "FP_03", label: "FP-03 · Different address confirmed" },
+    { code: "FP_04", label: "FP-04 · Name match only — insufficient similarity" },
+    { code: "FP_05", label: "FP-05 · Whitelisted — previously verified" },
+    { code: "FP_06", label: "FP-06 · Other (requires reason text)" },
+  ];
 
   if (hits.length === 0) {
     return (
@@ -379,9 +410,23 @@ export function HitTriagePanel({ subjectId, subjectName, hits, resolutions = {},
                           {/* Resolution actions */}
                           <div className="mt-3 pt-3 border-t border-white/5">
                             <div className="flex items-center gap-2 flex-wrap">
+                              {/* J-06 / G-05 — reason code dropdown.
+                                  Required when dismissing as "False"; server
+                                  enforces. UI lets the operator pre-select. */}
+                              <select
+                                value={resolveReasonCode[h.id] ?? ""}
+                                onChange={(e) => setResolveReasonCode((p) => ({ ...p, [h.id]: e.target.value }))}
+                                className="text-11 bg-bg-1 border border-white/10 rounded px-2 py-1 text-ink-2"
+                                title="False-positive reason code (required when dismissing as False)"
+                              >
+                                <option value="">FP reason…</option>
+                                {FP_REASON_OPTIONS.map((o) => (
+                                  <option key={o.code} value={o.code}>{o.label}</option>
+                                ))}
+                              </select>
                               <input
                                 type="text"
-                                placeholder="Optional reason / note for the audit trail…"
+                                placeholder="Reason / note (required for FP-06 Other)…"
                                 value={resolveReason[h.id] ?? ""}
                                 onChange={(e) => setResolveReason((p) => ({ ...p, [h.id]: e.target.value }))}
                                 className="flex-1 min-w-[200px] text-11 bg-bg-1 border border-white/10 rounded px-2 py-1 text-ink-2"
