@@ -107,7 +107,8 @@ Existing Flags: ${supplier.flags.length > 0 ? supplier.flags.join(", ") : "none"
     result = JSON.parse(cleaned) as VendorRiskResult;
     if (!Array.isArray(result.findings)) result.findings = [];
     if (!Array.isArray(result.redFlags)) result.redFlags = [];
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "vendor-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 

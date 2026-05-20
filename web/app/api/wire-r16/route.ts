@@ -104,7 +104,8 @@ Assess FATF R.16 compliance.`,
     if (result.originatorCheck && !Array.isArray(result.originatorCheck.missing)) result.originatorCheck.missing = [];
     if (result.beneficiaryCheck && !Array.isArray(result.beneficiaryCheck.missing)) result.beneficiaryCheck.missing = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "wire-r16 temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

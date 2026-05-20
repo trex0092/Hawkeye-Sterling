@@ -112,7 +112,8 @@ Make an STR triage decision.`,
     if (!Array.isArray(result.missingInformation)) result.missingInformation = [];
     if (!Array.isArray(result.narrativeSuggestions)) result.narrativeSuggestions = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "sar-triage temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

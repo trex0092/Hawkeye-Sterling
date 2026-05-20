@@ -62,7 +62,8 @@ export async function POST(req: Request) {
     const parsed = JSON.parse(jsonMatch[0]) as LegalPrivilegeResult;
     if (!Array.isArray(parsed.safeProcedureSteps)) parsed.safeProcedureSteps = [];
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "legal-privilege temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

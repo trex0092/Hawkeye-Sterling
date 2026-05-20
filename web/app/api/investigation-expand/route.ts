@@ -65,7 +65,8 @@ What additional entities should investigators look for?`,
     const cleaned = raw.replace(/```json\n?|\n?```/g, "").trim();
     const result = JSON.parse(cleaned) as { discovered: DiscoveredEntity[] };
     return NextResponse.json({ ok: true, discovered: Array.isArray(result.discovered) ? result.discovered : [] }, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json(
       { ok: false, error: "Investigation expand temporarily unavailable — please retry." },
       { status: 503, headers: gate.headers }

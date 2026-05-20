@@ -125,7 +125,8 @@ Generate a comprehensive vessel risk profile including AIS pattern anomaly analy
     ) as VesselRiskProfileResult;
     if (!Array.isArray(result.anomalies)) result.anomalies = [];
     return NextResponse.json(result, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "vessel-check/risk-profile temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

@@ -70,7 +70,8 @@ export async function POST(req: Request) {
     if (!Array.isArray(parsed.keyPoints)) parsed.keyPoints = [];
     if (!Array.isArray(parsed.requiredActions)) parsed.requiredActions = [];
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "fiu-feedback temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

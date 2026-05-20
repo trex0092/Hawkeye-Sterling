@@ -104,7 +104,8 @@ Assess proliferation financing risk.`,
     if (!Array.isArray(result.applicableUnscrs)) result.applicableUnscrs = [];
     if (!Array.isArray(result.requiredChecks)) result.requiredChecks = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "pf-screener temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

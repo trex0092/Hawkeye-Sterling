@@ -77,7 +77,8 @@ export async function POST(req: Request) {
     if (!Array.isArray(parsed.missingOriginatorInfo)) parsed.missingOriginatorInfo = [];
     if (!Array.isArray(parsed.missingBeneficiaryInfo)) parsed.missingBeneficiaryInfo = [];
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "cross-border-wire temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

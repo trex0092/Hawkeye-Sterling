@@ -100,7 +100,8 @@ Assess this VASP for onboarding risk.`,
     if (!Array.isArray(result.requiredDocumentation)) result.requiredDocumentation = [];
     if (!Array.isArray(result.regulatoryObligations)) result.regulatoryObligations = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "vasp-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

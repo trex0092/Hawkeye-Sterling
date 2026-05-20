@@ -69,7 +69,8 @@ export async function POST(req: Request) {
     if (!Array.isArray(parsed.eligibleAssets)) parsed.eligibleAssets = [];
     if (!Array.isArray(parsed.procedureSteps)) parsed.procedureSteps = [];
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "freeze-seizure temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

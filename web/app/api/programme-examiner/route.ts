@@ -145,7 +145,8 @@ Return ONLY valid JSON:
     if (!Array.isArray(result.remediationRoadmap)) result.remediationRoadmap = [];
     if (!Array.isArray(result.strengthAreas)) result.strengthAreas = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "examiner analysis failed — retry" }, { status: 500, headers: gate.headers });
   }
 }

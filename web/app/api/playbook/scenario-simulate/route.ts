@@ -109,7 +109,8 @@ Identify the relevant playbook chapters, red flags present, step-by-step recomme
     if (!Array.isArray(result.actions)) result.actions = [];
     if (!Array.isArray(result.regulatoryRefs)) result.regulatoryRefs = [];
     return NextResponse.json(result, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "playbook/scenario-simulate temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

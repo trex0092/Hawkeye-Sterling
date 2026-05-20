@@ -92,7 +92,8 @@ export async function POST(req: Request): Promise<NextResponse> {
       console.warn("[adverse-media-assess] audit chain write failed:", err instanceof Error ? err.message : String(err)),
     );
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "adverse-media-assess temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

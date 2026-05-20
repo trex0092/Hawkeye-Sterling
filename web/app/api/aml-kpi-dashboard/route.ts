@@ -65,7 +65,8 @@ export async function POST(req: Request) {
     if (!Array.isArray(result.topRisks)) result.topRisks = [];
     if (!Array.isArray(result.recommendations)) result.recommendations = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "aml-kpi-dashboard temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

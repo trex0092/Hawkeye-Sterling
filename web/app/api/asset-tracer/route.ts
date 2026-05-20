@@ -78,7 +78,8 @@ Trace these funds through money laundering stages and assess asset recovery pote
     if (!Array.isArray(result.evidenceGaps)) result.evidenceGaps = [];
     if (!Array.isArray(result.investigativeSteps)) result.investigativeSteps = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "asset-tracer temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

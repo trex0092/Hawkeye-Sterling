@@ -106,7 +106,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     result = JSON.parse(stripped) as CryptoThreat;
     if (!Array.isArray(result.typologies)) result.typologies = [];
     if (!Array.isArray(result.requiredActions)) result.requiredActions = [];
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "crypto-threat temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 

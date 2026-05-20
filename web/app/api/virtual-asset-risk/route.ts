@@ -53,7 +53,8 @@ Assess FATF R.15/R.16 compliance, travel rule status, DeFi exposure, mixer/tumbl
     // Normalize arrays — LLM occasionally returns null instead of [].
     if (!Array.isArray(result["redFlags"])) result["redFlags"] = [];
     return NextResponse.json(result, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "virtual-asset-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

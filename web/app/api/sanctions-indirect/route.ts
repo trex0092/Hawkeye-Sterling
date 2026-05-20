@@ -133,7 +133,8 @@ export async function POST(req: Request): Promise<NextResponse> {
       if (!Array.isArray(result.indirectRisks)) result.indirectRisks = [];
       if (!Array.isArray(result.jurisdictionalExposure)) result.jurisdictionalExposure = [];
       if (!Array.isArray(result.requiredChecks)) result.requiredChecks = [];
-    } catch {
+    } catch (err) {
+      console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
       console.error("[sanctions-indirect] failed to parse AI response");
       return NextResponse.json({ ok: false, error: "sanctions-indirect temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
     }

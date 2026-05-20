@@ -190,7 +190,8 @@ Generate the EDD questionnaire. ${sbContext?.eddLevel === "intensive" ? "This su
     if (!Array.isArray(result.categories)) result.categories = [];
     if (!Array.isArray(result.documentationRequired)) result.documentationRequired = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "edd-questionnaire temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

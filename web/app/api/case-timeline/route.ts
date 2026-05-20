@@ -85,7 +85,8 @@ Build the STR timeline and goAML narrative block.`,
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as CaseTimelineResult;
     if (!Array.isArray(result.timeline)) result.timeline = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "case-timeline temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

@@ -184,7 +184,8 @@ Perform a comprehensive tax evasion ML risk assessment. Identify all schemes, cl
     if (!Array.isArray(result.regulatoryRequirements)) result.regulatoryRequirements = [];
     if (!Array.isArray(result.redFlags)) result.redFlags = [];
     return NextResponse.json(result);
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "tax-evasion temporarily unavailable - please retry." }, { status: 503 });
   }
 }

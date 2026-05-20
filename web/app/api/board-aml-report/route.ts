@@ -85,7 +85,8 @@ Generate a comprehensive quarterly Board AML/CFT report. Return complete BoardAm
     if (!Array.isArray(result.upcomingObligations)) result.upcomingObligations = [];
     if (!Array.isArray(result.boardRecommendations)) result.boardRecommendations = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "board-aml-report temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

@@ -144,7 +144,8 @@ Predict the risk trajectory. Identify which categories are accelerating. Suggest
     if (!Array.isArray(result.acceleratingRisks)) result.acceleratingRisks = [];
     if (!Array.isArray(result.interventions)) result.interventions = [];
     return NextResponse.json(result, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "analytics/predict-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

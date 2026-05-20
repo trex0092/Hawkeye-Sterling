@@ -38,7 +38,8 @@ export async function GET(req: Request): Promise<NextResponse> {
       stats: s,
       records: records.slice(0, 100),
     }, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "feedback store unavailable — please retry." }, { status: 503, headers: gate.headers });
   }
 }

@@ -111,7 +111,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (!Array.isArray(result.dpmsSpecificRisks)) result.dpmsSpecificRisks = [];
     if (!Array.isArray(result.typologiesPrevalent)) result.typologiesPrevalent = [];
     if (!Array.isArray(result.riskMitigation)) result.riskMitigation = [];
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "jurisdiction-intel temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 

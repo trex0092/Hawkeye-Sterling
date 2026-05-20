@@ -61,7 +61,8 @@ export async function POST(req: Request) {
     if (!Array.isArray(result.ivtsIndicators)) result.ivtsIndicators = [];
     if (!Array.isArray(result.counterpartiesIdentified)) result.counterpartiesIdentified = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "hawala-detector temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

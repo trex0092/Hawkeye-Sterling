@@ -108,7 +108,8 @@ Return ONLY valid JSON:
     if (!Array.isArray(result.customerMatches)) result.customerMatches = [];
     if (!Array.isArray(result.proactiveActions)) result.proactiveActions = [];
     return NextResponse.json({ ok: true, ...result, customerCount: caseDigests.length }, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "delta analysis failed — retry" }, { status: 500, headers: gate.headers });
   }
 }

@@ -60,7 +60,8 @@ export async function POST(req: Request) {
     if (!Array.isArray(result.nomineeIndicators)) result.nomineeIndicators = [];
     if (!Array.isArray(result.verificationRequired)) result.verificationRequired = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "nominee-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

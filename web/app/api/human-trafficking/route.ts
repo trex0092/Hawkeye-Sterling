@@ -192,7 +192,8 @@ Perform a comprehensive human trafficking money laundering risk assessment. Appl
     if (!Array.isArray(result.controllerNetworkFlags)) result.controllerNetworkFlags = [];
     if (!Array.isArray(result.regulatoryObligations)) result.regulatoryObligations = [];
     return NextResponse.json(result);
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "human-trafficking temporarily unavailable - please retry." }, { status: 503 });
   }
 }

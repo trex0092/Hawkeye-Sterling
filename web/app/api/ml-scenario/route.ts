@@ -71,7 +71,8 @@ export async function POST(req: Request) {
     if (!Array.isArray(parsed.keyVehicles)) parsed.keyVehicles = [];
     if (!Array.isArray(parsed.redFlagSummary)) parsed.redFlagSummary = [];
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "ml-scenario temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

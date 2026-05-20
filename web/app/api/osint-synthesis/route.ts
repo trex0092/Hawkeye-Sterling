@@ -122,7 +122,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     let parsed: unknown;
     try {
       parsed = JSON.parse(clean);
-    } catch {
+    } catch (err) {
+      console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
       return NextResponse.json({ ok: false, error: "osint-synthesis temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
     }
 
@@ -139,7 +140,8 @@ export async function POST(req: Request): Promise<NextResponse> {
       recommendedNextSteps: toStringArray(raw["recommendedNextSteps"]),
       complianceNarrative: typeof raw["complianceNarrative"] === "string" ? raw["complianceNarrative"] : "",
     };
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "osint-synthesis temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 

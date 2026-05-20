@@ -109,7 +109,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (!Array.isArray(result.financialCrimeIndicators)) result.financialCrimeIndicators = [];
     if (!Array.isArray(result.recommendedActions)) result.recommendedActions = [];
     if (!Array.isArray(result.mlTypologies)) result.mlTypologies = [];
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "benford-interpret temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 

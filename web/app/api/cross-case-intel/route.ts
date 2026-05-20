@@ -119,7 +119,8 @@ Return ONLY valid JSON:
       summary: result.summary ?? "",
       organizedCrimeSignals: Array.isArray(result.organizedCrimeSignals) ? result.organizedCrimeSignals : [],
     }, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "pattern analysis failed — retry" }, { status: 500, headers: gate.headers });
   }
 }

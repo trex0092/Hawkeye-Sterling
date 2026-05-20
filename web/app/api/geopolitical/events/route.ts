@@ -79,7 +79,8 @@ Include a mix of: 2-3 critical events, 5-6 high events, 3-4 medium events. Make 
     ) as { ok: boolean; events: GeopoliticalEvent[] };
     if (!Array.isArray(result.events)) result.events = [];
     return NextResponse.json(result, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "geopolitical/events temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

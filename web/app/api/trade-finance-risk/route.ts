@@ -210,7 +210,8 @@ Perform a comprehensive TBML risk assessment. Identify all applicable FATF typol
     if (!Array.isArray(result.immediateActions)) result.immediateActions = [];
     if (!Array.isArray(result.regulatoryObligations)) result.regulatoryObligations = [];
     return NextResponse.json(result, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "trade-finance-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

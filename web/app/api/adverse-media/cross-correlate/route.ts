@@ -113,7 +113,8 @@ Perform entity disambiguation, theme grouping, trend analysis, score computation
     if (!Array.isArray(result.dismissed)) result.dismissed = [];
     if (result.themes == null || typeof result.themes !== "object" || Array.isArray(result.themes)) result.themes = {};
     return NextResponse.json(result, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "adverse-media/cross-correlate temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

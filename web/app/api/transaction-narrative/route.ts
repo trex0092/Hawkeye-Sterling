@@ -87,7 +87,8 @@ Respond ONLY with valid JSON — no markdown, no explanation:
     if (!Array.isArray(result.missingInformation)) result.missingInformation = [];
     if (!Array.isArray(result.investigativeQuestions)) result.investigativeQuestions = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "transaction-narrative temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

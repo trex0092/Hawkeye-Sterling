@@ -118,7 +118,8 @@ Generate a comprehensive regulatory change roadmap covering all material upcomin
     if (!Array.isArray(result.complianceRoadmap)) result.complianceRoadmap = [];
     else for (const m of result.complianceRoadmap) { if (!Array.isArray(m.actions)) m.actions = []; }
     return NextResponse.json(result, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "reg-change temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

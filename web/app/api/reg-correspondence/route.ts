@@ -219,7 +219,8 @@ Draft a formal, professional regulatory letter.`,
       ...letter,
       generatedAt: new Date().toISOString(),
     }, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "correspondence drafting failed — retry" }, { status: 500, headers: gate.headers });
   }
 }

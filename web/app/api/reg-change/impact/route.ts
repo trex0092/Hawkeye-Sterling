@@ -127,7 +127,8 @@ Produce a comprehensive impact assessment for how this regulation affects this s
     if (!Array.isArray(result.gaps)) result.gaps = [];
     if (!Array.isArray(result.quickWins)) result.quickWins = [];
     return NextResponse.json(result, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "reg-change/impact temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

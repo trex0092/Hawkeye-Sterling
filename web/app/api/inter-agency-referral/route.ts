@@ -81,7 +81,8 @@ Prepare a comprehensive inter-agency referral package. Return complete InterAgen
     if (!Array.isArray(result.parallelNotifications)) result.parallelNotifications = [];
     if (!Array.isArray(result.evidencePreservationSteps)) result.evidencePreservationSteps = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "inter-agency-referral temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

@@ -186,7 +186,8 @@ Produce a fully weaponized corruption risk assessment covering FATF R.12 PEP obl
     if (!Array.isArray(result.requiredApprovals)) result.requiredApprovals = [];
     if (!Array.isArray(result.reportingObligations)) result.reportingObligations = [];
     return NextResponse.json(result, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "corruption-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

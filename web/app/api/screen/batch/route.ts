@@ -223,7 +223,8 @@ export async function POST(req: Request): Promise<NextResponse> {
   let candidates: QuickScreenCandidate[];
   try {
     candidates = (await loadCandidates()) as QuickScreenCandidate[];
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json(
       { ok: false, error: "screening_corpus_unavailable" },
       { status: 503 },
@@ -240,7 +241,8 @@ export async function POST(req: Request): Promise<NextResponse> {
       quickScreen: QuickScreenFn;
     };
     quickScreen = mod.quickScreen;
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json(
       { ok: false, error: "screening_engine_unavailable" },
       { status: 503 },

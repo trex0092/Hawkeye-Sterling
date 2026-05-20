@@ -118,7 +118,8 @@ Perform TBML risk analysis.`,
     if (!Array.isArray(result.documentationGaps)) result.documentationGaps = [];
     if (!Array.isArray(result.investigativeSteps)) result.investigativeSteps = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "tbml-analysis temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

@@ -169,7 +169,8 @@ Produce a fully weaponized environmental crime risk assessment covering all appl
     if (!Array.isArray(result.redFlags)) result.redFlags = [];
     if (!Array.isArray(result.recommendedActions)) result.recommendedActions = [];
     return NextResponse.json(result);
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "environmental-crime temporarily unavailable - please retry." }, { status: 503 });
   }
 }

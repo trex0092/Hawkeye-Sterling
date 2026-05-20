@@ -334,7 +334,8 @@ Perform a comprehensive insider threat assessment using the MICE model and CERT 
       } : {}),
     }, { headers: gate.headers });
 
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "insider-threat temporarily unavailable - please retry." }, { status: 503, headers: gate.headers });
   }
 }

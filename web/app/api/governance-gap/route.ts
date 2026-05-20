@@ -97,7 +97,8 @@ Perform a comprehensive AML governance gap analysis. Identify all gaps, risks, a
     if (!Array.isArray(result.recommendations)) result.recommendations = [];
     if (!Array.isArray(result.regulatoryRisks)) result.regulatoryRisks = [];
     return NextResponse.json(result, { headers: gate.headers });
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "governance-gap temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

@@ -558,7 +558,8 @@ Perform a comprehensive blockchain forensics and crypto AML analysis. Assess all
     if (!Array.isArray(result.investigativeNextSteps)) result.investigativeNextSteps = [];
     if (!Array.isArray(result.blockchainForensicsTools)) result.blockchainForensicsTools = [];
     return NextResponse.json(result);
-  } catch {
+  } catch (err) {
+    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "crypto-tracing temporarily unavailable - please retry." }, { status: 503 });
   }
 }
