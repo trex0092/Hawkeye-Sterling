@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
+import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import { RowActions } from "@/components/shared/RowActions";
 import { formatDMYTimeSec } from "@/lib/utils/dateFormat";
 import {
@@ -169,6 +170,10 @@ export default function AuditTrailPage() {
 
   return (
     <ModuleLayout asanaModule="audit-trail" asanaLabel="Audit Trail">
+      <ModuleFamilyBar suiteName="Audit Trail & Operator Console" modules={[
+        { label: "Audit Trail", href: "/audit-trail", icon: "🔒" },
+        { label: "Operator Console", href: "/operator", icon: "🔭" },
+      ]} />
       <div>
         <div className="mb-8">
           <div className="flex items-center gap-1.5 font-mono text-11 tracking-wide-8 uppercase text-brand mb-2">

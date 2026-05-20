@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import {
   REPORT_CODES,
   REPORT_CODE_LABEL,
@@ -198,6 +199,10 @@ export default function GoAmlExportPage() {
           </>
         }
       />
+      <ModuleFamilyBar suiteName="STR/SAR Filing Suite" modules={[
+        { label: "SAR QA", href: "/sar-qa", icon: "🔍" },
+        { label: "goAML Export", href: "/goaml-export", icon: "📤" },
+      ]} />
 
       <div className="flex items-center gap-2 mb-6">
         {STEPS.map((s, i) => (

@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import type { CountryRiskResult } from "@/app/api/country-risk/route";
 import type { CountryCompareResult } from "@/app/api/country-risk/compare/route";
 
@@ -469,6 +470,10 @@ export default function CountryRiskPage() {
           </>
         }
       />
+      <ModuleFamilyBar suiteName="Country & Geopolitical Risk" modules={[
+        { label: "Country Risk", href: "/country-risk", icon: "🌍" },
+        { label: "Geopolitical", href: "/geopolitical", icon: "🌏" },
+      ]} />
 
       {/* Mode toggle */}
       <div className="flex items-center gap-2 mb-5">

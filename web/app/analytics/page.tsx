@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
+import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import { fetchJson } from "@/lib/api/fetchWithRetry";
 import { loadCases } from "@/lib/data/case-store";
 import type { CaseRecord } from "@/lib/types";
@@ -500,6 +501,10 @@ export default function AnalyticsPage() {
 
   return (
     <ModuleLayout asanaModule="analytics" asanaLabel="Analytics">
+      <ModuleFamilyBar suiteName="Analytics & KPI Dashboard" modules={[
+        { label: "Analytics", href: "/analytics", icon: "📈" },
+        { label: "Eval KPIs", href: "/eval-kpi", icon: "📊" },
+      ]} />
       <div className="print:bg-white">
         <div className="print:px-6 print:py-6">
           {/* Cover band */}

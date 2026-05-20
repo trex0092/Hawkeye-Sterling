@@ -13,6 +13,7 @@
 
 import { useEffect, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 
 interface KpiBreach {
   kpi: string;
@@ -143,6 +144,10 @@ export default function EvalKpiPage() {
           </>
         }
       />
+      <ModuleFamilyBar suiteName="Analytics & KPI Dashboard" modules={[
+        { label: "Analytics", href: "/analytics", icon: "📈" },
+        { label: "Eval KPIs", href: "/eval-kpi", icon: "📊" },
+      ]} />
 
       {loading ? (
         <div className="bg-bg-panel border border-hair-2 rounded-lg p-6 text-13 text-ink-2">

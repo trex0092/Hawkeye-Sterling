@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { ModuleLayout, ModuleHero } from "@/components/layout/ModuleLayout";
+import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import {
   loadAlerts,
   saveAlerts,
@@ -702,6 +703,10 @@ export default function TFSAlertsPage() {
           </>
         }
       />
+      <ModuleFamilyBar suiteName="Sanctions Alerts & Name Match" modules={[
+        { label: "TFS Alerts", href: "/tfs-alerts", icon: "🚨" },
+        { label: "CNMR", href: "/cnmr", icon: "📝" },
+      ]} />
 
       {/* ── Subscription status row ──────────────────────────────────────────── */}
       <div className="flex flex-wrap items-center gap-4 mb-6 p-4 rounded-lg border border-hair-2 bg-bg-0">

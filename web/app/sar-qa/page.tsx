@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import { deleteCase, loadCases } from "@/lib/data/case-store";
 import { RowActions } from "@/components/shared/RowActions";
 import { AsanaStatus } from "@/components/shared/AsanaStatus";
@@ -187,6 +188,10 @@ export default function SarQaPage() {
             { value: String(cases.length), label: "total filed" },
           ]}
         />
+        <ModuleFamilyBar suiteName="STR/SAR Filing Suite" modules={[
+          { label: "SAR QA", href: "/sar-qa", icon: "🔍" },
+          { label: "goAML Export", href: "/goaml-export", icon: "📤" },
+        ]} />
 
         {role !== "mlro" && (
           <div className="mt-6 rounded-lg p-3 bg-amber-dim text-amber text-12">

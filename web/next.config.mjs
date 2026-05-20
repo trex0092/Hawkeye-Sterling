@@ -56,6 +56,9 @@ const nextConfig = {
     return [
       { source: "/adverse-media", destination: "/screening", permanent: true },
       { source: "/compliance-qa", destination: "/mlro-advisor", permanent: true },
+      // Merged modules: secondary routes redirect to their canonical suite page.
+      // The canonical page shows a ModuleFamilyBar with links to all merged modules.
+      { source: "/weaponized-brain", destination: "/workbench", permanent: true },
     ];
   },
 
