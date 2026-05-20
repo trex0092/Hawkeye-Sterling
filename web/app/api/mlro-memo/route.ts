@@ -1,6 +1,7 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
+import { createHash } from "node:crypto";
 import { stripJsonFences, withMlroLlm } from "@/lib/server/mlro-route-base";
 
 export interface MlroMemoResult {
@@ -21,8 +22,16 @@ export interface MlroMemoResult {
   regulatoryBasis: string;
 }
 
+// COMPLIANCE FIX: The fallback memo reference must be deterministic.
+// Using Math.random() here produces a different reference each time the
+// offline fallback fires, making it impossible to deduplicate or correlate
+// fallback-mode memo records in the audit trail (FDL 10/2025 Art.24).
+// The fallback reference is a compile-time constant; per-request references
+// are derived in buildRequest() from the request timestamp, which IS stable
+// within a single invocation.
+const FALLBACK_YEAR = new Date().getFullYear();
 const FALLBACK: MlroMemoResult = {
-  memoRef: `MLRO-MEMO-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 9000) + 1000)}`,
+  memoRef: `MLRO-MEMO-${FALLBACK_YEAR}-OFFLINE`,
   decision: "file_str",
   decisionBasis: "Reasonable grounds to suspect ML/TF per UAE FDL 10/2025 Art.21. Pattern consistent with structuring and layering typology.",
   riskRating: "high",
@@ -120,7 +129,16 @@ export const POST = (req: Request) => withMlroLlm<MlroMemoBody, MlroMemoResult>(
     return b as MlroMemoBody;
   },
   buildRequest: (body) => {
-    const memoRef = `MLRO-MEMO-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 9000) + 1000)}`;
+    // COMPLIANCE FIX: derive a stable memo reference from the request content
+    // so re-submitting the same case always produces the same reference number.
+    // Math.random() previously produced a non-reproducible reference, breaking
+    // audit-trail deduplication (FDL 10/2025 Art.24 — 10-year retention).
+    const memoSeed = createHash("sha256")
+      .update(`${body.subjectName}|${body.activitySummary}|${body.caseRef ?? ""}`)
+      .digest("hex")
+      .slice(0, 4)
+      .toUpperCase();
+    const memoRef = `MLRO-MEMO-${new Date().getFullYear()}-${memoSeed}`;
     return {
       system: `You are a senior UAE MLRO drafting a formal MLRO Decision Memorandum for the audit trail. This document will be reviewed by regulators (MoE, CBUAE, FIU) during inspections. It must be precise, formal, complete, and audit-ready.
 

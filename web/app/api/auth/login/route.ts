@@ -94,7 +94,13 @@ async function recordSuccess(prefix: string, key: string): Promise<void> {
 }
 
 function clientIp(req: Request): string {
-  return req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  // Use the LAST value in x-forwarded-for: it is appended by the trusted
+  // Netlify CDN proxy and cannot be spoofed by the client.  The first value
+  // is client-controlled and could be forged to bypass per-IP brute-force
+  // protection by cycling through arbitrary source IPs.
+  const fwd = req.headers.get("x-forwarded-for");
+  const ips = fwd ? fwd.split(",").map((s) => s.trim()).filter(Boolean) : [];
+  return ips.length > 0 ? (ips[ips.length - 1] ?? "unknown") : "unknown";
 }
 
 export async function POST(req: Request) {

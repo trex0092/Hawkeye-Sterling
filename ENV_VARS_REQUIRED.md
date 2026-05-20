@@ -23,6 +23,7 @@ Never commit real values to the repository. `.env` is in `.gitignore`.
 | `AUDIT_CHAIN_SECRET` | REQUIRED | HMAC-SHA256 key sealing the tamper-evident audit chain. Required for FDL 10/2025 Art. 24 10-year retention. If unset, `/api/audit/sign` returns 503. | `openssl rand -hex 64` |
 | `ONGOING_RUN_TOKEN` | REQUIRED | Bearer token protecting `/api/ongoing/run` from public invocation. If unset, returns 503 (fail-closed). | `openssl rand -hex 32` |
 | `SANCTIONS_CRON_TOKEN` | REQUIRED | Bearer token protecting `/api/sanctions/watch` scheduled ingestion. If unset, returns 503. | `openssl rand -hex 32` |
+| `JWT_SIGNING_SECRET` | REQUIRED | HMAC-SHA256 key for short-lived bearer JWTs issued by `/api/auth/token`. If unset or shorter than 32 bytes, the server throws at request time — all JWT-authenticated API calls fail with an unhandled exception. | `openssl rand -hex 32` |
 
 ---
 
@@ -31,6 +32,9 @@ Never commit real values to the repository. `.env` is in `.gitignore`.
 | Variable | Required | Description | Example |
 |----------|----------|-------------|---------|
 | `ANTHROPIC_API_KEY` | REQUIRED | Powers all Claude AI features (MLRO advisor, narrative reports, adverse-media analysis, screening verdicts). | `sk-ant-...` |
+| `MOONDB_PROJECT_ID` | REQUIRED | MoonDB project ID. All persistent data storage (cases, entities, audit records). If unset, all database operations fail silently and data is lost. | From MoonDB dashboard |
+| `MOONDB_ADMIN_KEY` | REQUIRED | MoonDB admin key for server-side database mutations. Treat as a root credential — restrict to server-side use only. | From MoonDB dashboard |
+| `MOONDB_PUBLIC_KEY` | REQUIRED | MoonDB public key for read operations. | From MoonDB dashboard |
 | `ASANA_TOKEN` | REQUIRED | Asana Personal Access Token. All task creation, triage, and STR filing flows. | From Asana: Settings → Apps → Developer → New Token |
 | `ASANA_WORKSPACE_GID` | REQUIRED | Asana workspace GID. All workspace-scoped API calls. | `1213645083721316` |
 | `ASANA_PROJECT_GID` | REQUIRED | Project 00 — Master Inbox GID. **All** screening submissions land here first. Do not change without MLRO approval. | `1214148630166524` |

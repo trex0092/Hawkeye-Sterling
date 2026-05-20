@@ -2,8 +2,10 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 import { NextResponse } from "next/server";
+import { createHash } from "node:crypto";
 import { getStore } from "@netlify/blobs";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 // PEP matching against the local OpenSanctions bulk snapshot.
 // POST /api/pep-match  { name, birthYear?, aliases? }
@@ -120,7 +122,18 @@ function parseLine(line: string): PepRecord | null {
     const name = arrStr(props["name"])[0] ?? strVal(obj["caption"]);
     if (!name) return null;
     return {
-      id: String(obj["id"] ?? `pep_${Math.random().toString(36).slice(2, 9)}`),
+      // COMPLIANCE FIX: PEP entity IDs must be deterministic and reproducible.
+      // A random fallback ID breaks audit-chain traceability — the same record
+      // produces a different ID on every warm-instance load, making it
+      // impossible to deduplicate hits across screening runs or correlate
+      // entries in the audit trail. Use a SHA-256 digest of the record's name
+      // + caption + first position as a stable surrogate key when no id is
+      // present in the source data (FDL 10/2025 Art.24 — 10-year retention).
+      id: String(obj["id"] ?? `pep_${createHash("sha256").update([
+        String(obj["caption"] ?? ""),
+        arrStr((obj["properties"] as Record<string, unknown> | undefined)?.["name"])[0] ?? "",
+        arrStr((obj["properties"] as Record<string, unknown> | undefined)?.["position"])[0] ?? "",
+      ].join("|")).digest("hex").slice(0, 16)}`),
       name,
       aliases: arrStr(props["alias"]),
       countries: arrStr(props["country"]),
@@ -264,6 +277,20 @@ export async function POST(req: Request): Promise<NextResponse> {
     birthDate: rec.birthDate,
     datasets: rec.datasets ?? [],
   }));
+
+  // Write audit chain entry for PEP determinations — a PEP match can trigger
+  // EDD requirements; the compliance record must exist even for clear verdicts.
+  void writeAuditChainEntry({
+    event: "pep.match.completed",
+    actor: gate.keyId,
+    queriedName: name,
+    hitsCount: hits.length,
+    source,
+    corpus: corpus.length,
+    latencyMs: Date.now() - t0,
+  }).catch((err: unknown) => {
+    console.error("[pep-match] audit chain write failed:", err instanceof Error ? err.message : String(err));
+  });
 
   return NextResponse.json({
     ok: true,

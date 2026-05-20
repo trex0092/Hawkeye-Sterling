@@ -31,7 +31,10 @@ function logAuthFailure(
   extra?: Record<string, unknown>,
 ): void {
   const fwd = req.headers.get("x-forwarded-for");
-  const ip = fwd ? fwd.split(",")[0]?.trim() : "unknown";
+  // Use the last (proxy-appended) IP for consistency with the rate-limit
+  // bucketing below — avoids logging a different IP than the one being limited.
+  const ips = fwd ? fwd.split(",").map((s) => s.trim()).filter(Boolean) : [];
+  const ip = ips.length > 0 ? (ips[ips.length - 1] ?? "unknown") : "unknown";
   const requestId = req.headers.get("x-request-id") ?? "unset";
   const route = new URL(req.url).pathname;
   log({
@@ -240,10 +243,17 @@ export async function enforce(
     remainingMonthly = check.remainingMonthly ?? null;
     record = check.record ?? null;
   } else {
-    // Bucket anonymous callers by their remote IP (SHA-hashed for PII
-    // hygiene) so one burst-heavy guest doesn't starve the rest.
+    // Bucket anonymous callers by their remote IP (SHA-hashed for PII hygiene)
+    // so one burst-heavy guest doesn't starve the rest.
+    //
+    // SECURITY: Use the LAST value in x-forwarded-for, not the first.
+    // The last IP is appended by our trusted reverse proxy (Netlify CDN) and
+    // cannot be forged by the client — the first value is client-supplied and
+    // can be spoofed to an arbitrary IP, bypassing per-IP rate limiting.
+    // See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Forwarded-For
     const fwd = req.headers.get("x-forwarded-for");
-    const ip = (fwd ?? "anonymous").split(",")[0]?.trim() ?? "anonymous";
+    const ips = fwd ? fwd.split(",").map((s) => s.trim()).filter(Boolean) : [];
+    const ip = ips.length > 0 ? (ips[ips.length - 1] ?? "anonymous") : "anonymous";
     keyId = `anon_${createHash("sha256").update(ip).digest("hex").slice(0, 12)}`;
   }
 
