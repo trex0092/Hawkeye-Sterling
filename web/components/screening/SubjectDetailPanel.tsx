@@ -92,7 +92,7 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 // which made it visually identical to the Screening tab. Real
 // per-event timeline can return as its own panel when the engine
 // is wired.
-const TABS = ["Screening", "Intelligence", "Deep Intel", "CDD/EDD", "Ownership", "Live reasoning", "Evidence", "AI Ethics", "Disambiguate"] as const;
+const TABS = ["Screening", "Intelligence", "Deep Intel", "CDD/EDD", "Ownership", "Live reasoning", "Evidence", "AI Ethics", "Disambiguate", "Data Analyst"] as const;
 type Tab = (typeof TABS)[number];
 
 // ── Hit Disambiguator types ───────────────────────────────────────────────────
@@ -275,6 +275,11 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
   const [disambigResult, setDisambigResult] = useState<DisambiguationResult | null>(null);
   const [disambigLoading, setDisambigLoading] = useState(false);
   const [disambigError, setDisambigError] = useState<string | null>(null);
+
+  const [daQuestion, setDaQuestion] = useState("");
+  const [daAnswer, setDaAnswer] = useState<string | null>(null);
+  const [daLoading, setDaLoading] = useState(false);
+  const [daError, setDaError] = useState<string | null>(null);
   const [disambigClient, setDisambigClient] = useState({
     name: subject.name,
     nationality: subject.country,
@@ -1730,6 +1735,88 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
             </div>
           );
         })()}
+
+        {activeTab === "Data Analyst" && (
+          <div>
+            <div className="text-11 text-ink-2 mb-4">
+              Ask the AI Data Analyst anything about this subject — transaction patterns, risk trends, dataset queries. Powered by Claude Console with Amplitude MCP.
+            </div>
+            <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context auto-included</div>
+            <div className="text-11 text-ink-3 mb-3">
+              Subject: <span className="text-ink-1 font-medium">{subject.name}</span>
+              {subject.country ? ` · ${subject.country}` : ""}
+              {subject.type ? ` · ${subject.type}` : ""}
+            </div>
+
+            <textarea
+              className="w-full px-3 py-2 border border-hair-2 rounded text-12 bg-bg-1 focus:outline-none focus:border-brand text-ink-0 resize-none mb-2"
+              rows={3}
+              placeholder="e.g. What are the top risk indicators for this subject? Summarize transaction anomalies."
+              value={daQuestion}
+              onChange={(e) => setDaQuestion(e.target.value)}
+              disabled={daLoading}
+            />
+
+            <div className="flex gap-2 mb-4">
+              <button
+                type="button"
+                disabled={!daQuestion.trim() || daLoading}
+                onClick={async () => {
+                  setDaLoading(true);
+                  setDaError(null);
+                  setDaAnswer(null);
+                  try {
+                    const context = [
+                      `Subject name: ${subject.name}`,
+                      subject.type ? `Type: ${subject.type}` : null,
+                      subject.country ? `Country: ${subject.country}` : null,
+                      subject.riskScore != null ? `Risk score: ${subject.riskScore}/100` : null,
+                      subject.cddPosture ? `CDD posture: ${subject.cddPosture}` : null,
+                      subject.meta ? `Additional info: ${subject.meta}` : null,
+                    ].filter(Boolean).join("\n");
+                    const res = await fetch("/api/agent/data-analyst", {
+                      method: "POST",
+                      headers: { "content-type": "application/json" },
+                      body: JSON.stringify({ question: daQuestion, context }),
+                    });
+                    const data = await res.json();
+                    if (!data.ok) throw new Error(data.error ?? "Agent error");
+                    setDaAnswer(data.answer);
+                  } catch (err) {
+                    setDaError(err instanceof Error ? err.message : "Unknown error");
+                  } finally {
+                    setDaLoading(false);
+                  }
+                }}
+                className="px-4 py-1.5 bg-violet-600 text-white rounded text-12 font-semibold hover:bg-violet-700 disabled:opacity-50 transition-colors"
+              >
+                {daLoading ? "Analysing…" : "Ask Data Analyst"}
+              </button>
+              {daAnswer && (
+                <button
+                  type="button"
+                  onClick={() => { setDaAnswer(null); setDaQuestion(""); setDaError(null); }}
+                  className="px-3 py-1.5 border border-hair-2 rounded text-12 text-ink-2 hover:text-ink-0 transition-colors"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+
+            {daError && (
+              <div className="px-4 py-2.5 bg-red-dim text-red border border-red/30 rounded text-12 mb-3">
+                {daError}
+              </div>
+            )}
+
+            {daAnswer && (
+              <div className="bg-bg-1 border border-hair-2 rounded-lg p-4">
+                <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-2">Agent response</div>
+                <div className="text-12 text-ink-1 whitespace-pre-wrap leading-relaxed">{daAnswer}</div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <NewsDossierPanel state={news} />
