@@ -35,18 +35,11 @@
 import type { Config } from "@netlify/functions";
 import { getStore } from "@netlify/blobs";
 
-export default async (_req: Request) => {
-  const base =
-    process.env.URL ??
-    process.env.DEPLOY_PRIME_URL ??
-    "https://hawkeye-sterling.netlify.app";
-
-  const token = process.env.SANCTIONS_CRON_TOKEN ?? "";
-  const headers: Record<string, string> = { "content-type": "application/json" };
-  if (token) headers.authorization = `Bearer ${token}`;
-
-  // 24s deadline matches sanctions-watch-cron — leaves 2s of
-  // function budget for the response wrap below.
+// Single attempt to POST /api/eocn-list-updates with a 24s deadline.
+async function pollOnce(
+  base: string,
+  headers: Record<string, string>,
+): Promise<{ ok: boolean; status: number; text: string; parsed: unknown }> {
   const controller = new AbortController();
   const deadline = setTimeout(() => controller.abort(), 24_000);
   try {
@@ -61,56 +54,142 @@ export default async (_req: Request) => {
     try {
       parsed = JSON.parse(text);
     } catch {
-      /* non-JSON upstream — kept as raw body */
+      /* non-JSON upstream */
     }
-    // Write heartbeat on successful poll so health-monitor can detect silent failures.
-    if (res.ok) {
-      try {
-        const hbStore = getStore("hawkeye-function-heartbeats");
-        await hbStore.setJSON("eocn-poll", { lastSuccess: new Date().toISOString(), label: "eocn-poll" });
-      } catch (hbErr) {
-        console.warn("[eocn-poll] heartbeat write failed (non-critical):", hbErr instanceof Error ? hbErr.message : String(hbErr));
-      }
-    }
-
-    return new Response(
-      JSON.stringify({
-        triggered: true,
-        status: res.status,
-        ok: res.ok,
-        source:
-          parsed && typeof parsed === "object" && "source" in parsed
-            ? (parsed as { source?: string }).source
-            : null,
-        listUpdateCount:
-          parsed && typeof parsed === "object" && "listUpdates" in parsed
-            ? Array.isArray((parsed as { listUpdates?: unknown[] }).listUpdates)
-              ? (parsed as { listUpdates: unknown[] }).listUpdates.length
-              : null
-            : null,
-        body: text.slice(0, 2_000),
-        at: new Date().toISOString(),
-      }),
-      {
-        status: res.ok ? 200 : 502,
-        headers: { "content-type": "application/json" },
-      },
-    );
-  } catch (err) {
-    return new Response(
-      JSON.stringify({
-        triggered: false,
-        error: err instanceof Error ? err.message : String(err),
-        at: new Date().toISOString(),
-      }),
-      {
-        status: 500,
-        headers: { "content-type": "application/json" },
-      },
-    );
+    return { ok: res.ok, status: res.status, text, parsed };
   } finally {
     clearTimeout(deadline);
   }
+}
+
+export default async (_req: Request) => {
+  const base =
+    process.env.URL ??
+    process.env.DEPLOY_PRIME_URL ??
+    "https://hawkeye-sterling.netlify.app";
+
+  const token = process.env.SANCTIONS_CRON_TOKEN ?? "";
+  const headers: Record<string, string> = { "content-type": "application/json" };
+  if (token) headers.authorization = `Bearer ${token}`;
+
+  // Read prior stored count for zero-row guard BEFORE the API call so we
+  // know whether a 0-row response would represent a data-loss event.
+  let priorCount: number | null = null;
+  try {
+    const siteId = process.env["NETLIFY_SITE_ID"] ?? process.env["SITE_ID"] ?? "";
+    const blobToken =
+      process.env["NETLIFY_BLOBS_TOKEN"] ??
+      process.env["NETLIFY_API_TOKEN"] ??
+      process.env["NETLIFY_AUTH_TOKEN"] ??
+      "";
+    const mainStore =
+      siteId && blobToken
+        ? getStore({ name: "hawkeye-sterling", siteID: siteId, token: blobToken, consistency: "strong" })
+        : getStore("hawkeye-sterling");
+    const prior = await mainStore.get("hawkeye-eocn/list-updates/latest.json", { type: "json" }) as {
+      listUpdates?: unknown[];
+    } | null;
+    priorCount = Array.isArray(prior?.listUpdates) ? prior.listUpdates.length : null;
+    if (priorCount !== null) {
+      console.info(`[eocn-poll] prior stored count: ${priorCount}`);
+    }
+  } catch (priorErr) {
+    console.warn("[eocn-poll] prior count read failed (non-critical):", priorErr instanceof Error ? priorErr.message : String(priorErr));
+  }
+
+  // Two attempts separated by a 30 s back-off. Scheduled functions run as
+  // Netlify Background Functions (≤ 15 min), so 30 s is well within budget.
+  let result: { ok: boolean; status: number; text: string; parsed: unknown } | null = null;
+  let fetchError: string | null = null;
+
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    if (attempt === 2) {
+      console.info("[eocn-poll] retrying after 30 s (attempt 2)");
+      await new Promise<void>((r) => setTimeout(r, 30_000));
+    }
+    try {
+      result = await pollOnce(base, headers);
+      if (result.ok) {
+        console.info(`[eocn-poll] attempt ${attempt} succeeded: HTTP ${result.status}`);
+        break;
+      }
+      console.warn(`[eocn-poll] attempt ${attempt} returned HTTP ${result.status}`);
+    } catch (err) {
+      fetchError = err instanceof Error ? err.message : String(err);
+      console.warn(`[eocn-poll] attempt ${attempt} threw:`, fetchError);
+      result = null;
+    }
+  }
+
+  // Write heartbeat when the API call returned ok — even a 502 from the
+  // upstream (fixture fallback) means the cron and API pipeline are alive.
+  // Heartbeat on ok only; a double-failure means the pipeline itself is broken.
+  if (result?.ok) {
+    try {
+      const hbStore = getStore("hawkeye-function-heartbeats");
+      await hbStore.setJSON("eocn-poll", { lastSuccess: new Date().toISOString(), label: "eocn-poll" });
+    } catch (hbErr) {
+      console.warn("[eocn-poll] heartbeat write failed (non-critical):", hbErr instanceof Error ? hbErr.message : String(hbErr));
+    }
+  }
+
+  // Extract listUpdateCount from the API response.
+  const listUpdateCount =
+    result?.parsed &&
+    typeof result.parsed === "object" &&
+    "listUpdates" in result.parsed &&
+    Array.isArray((result.parsed as { listUpdates?: unknown[] }).listUpdates)
+      ? (result.parsed as { listUpdates: unknown[] }).listUpdates.length
+      : null;
+
+  // Zero-row guard: if the API returned 0 rows but prior stored count was > 0,
+  // this is a potential data-loss event. The API route's own guard will have
+  // preserved the prior data — log critical and alert.
+  if (listUpdateCount === 0 && priorCount !== null && priorCount > 0) {
+    console.error(
+      `[eocn-poll] CRITICAL: EOCN feed returned 0 list-updates but prior stored=${priorCount} — potential data-loss event. Prior data preserved by API zero-row guard.`,
+    );
+    const webhookUrl = process.env["ALERT_WEBHOOK_URL"];
+    if (webhookUrl) {
+      try {
+        await fetch(webhookUrl, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            alert: "EOCN poll returned 0 rows (data-loss risk)",
+            priorCount,
+            at: new Date().toISOString(),
+            source: "eocn-poll",
+          }),
+        });
+      } catch {
+        /* non-critical */
+      }
+    }
+  }
+
+  // Always return HTTP 200 — Netlify marks scheduled functions as failed
+  // when they return non-2xx, which floods the alerts dashboard with
+  // false "function crashed" notifications for expected API failures
+  // (e.g. EOCN_FEED_URL not set → fixture-only mode).
+  return new Response(
+    JSON.stringify({
+      triggered: result !== null,
+      status: result?.status ?? null,
+      ok: result?.ok ?? false,
+      source:
+        result?.parsed &&
+        typeof result.parsed === "object" &&
+        "source" in result.parsed
+          ? (result.parsed as { source?: string }).source
+          : null,
+      listUpdateCount,
+      priorCount,
+      error: fetchError,
+      at: new Date().toISOString(),
+    }),
+    { status: 200, headers: { "content-type": "application/json" } },
+  );
 };
 
 export const config: Config = {

@@ -1,61 +1,25 @@
 // Netlify Scheduled Function — HAWKEYE STERLING system health monitor.
 //
 // Schedule: every 6 hours ("0 */6 * * *").
-// Checks sanctions list freshness via /api/status; if fewer than 6 lists are
-// healthy or any critical list is older than 30 hours:
+// Checks sanctions list freshness directly from hawkeye-list-reports blobs
+// (not via /api/status HTTP call — one unreachable route must not make all
+// lists appear unhealthy). If fewer than REQUIRED_HEALTHY_COUNT lists are
+// current or any scheduled function is overdue:
 //   1. POSTs to ALERT_WEBHOOK_URL (if set)
 //   2. Creates an Asana task in the Master Inbox project assigned to the MLRO
 
 import type { Config } from "@netlify/functions";
 import { getStore } from "@netlify/blobs";
 import { writeHeartbeat } from "../lib/heartbeat.js";
+import { checkListSources } from "../lib/list-source-check.js";
+import type { ListSourceStatus } from "../lib/list-source-check.js";
 
 const MASTER_INBOX = "1214148630166524";
 const DEFAULT_WORKSPACE = "1213645083721316";
 const DEFAULT_ASSIGNEE = "1213645083721304";
 
 const ALERT_TITLE = "SYSTEM ALERT: Sanctions lists degraded — immediate action required";
-
-interface ListFreshness {
-  lastRefreshed?: string;
-  ageHours?: number;
-  entityCount?: number;
-  status?: string;
-}
-
-interface StatusResponse {
-  ok?: boolean;
-  listsFreshness?: Record<string, ListFreshness>;
-  servicesUp?: string[];
-  servicesDown?: Array<{ name: string; status: string; note?: string }>;
-}
-
-async function fetchStatus(baseUrl: string): Promise<StatusResponse | null> {
-  try {
-    const ctl = new AbortController();
-    const timer = setTimeout(() => ctl.abort(), 15_000);
-    try {
-      // Use SANCTIONS_CRON_TOKEN (or ADMIN_TOKEN as fallback) so enforce()
-      // allows this internal cron call — without auth the endpoint returns 401.
-      const cronToken =
-        process.env["SANCTIONS_CRON_TOKEN"] ?? process.env["ADMIN_TOKEN"];
-      const res = await fetch(`${baseUrl}/api/status`, {
-        headers: {
-          "content-type": "application/json",
-          ...(cronToken ? { authorization: `Bearer ${cronToken}` } : {}),
-        },
-        signal: ctl.signal,
-      });
-      if (!res.ok) return null;
-      return (await res.json()) as StatusResponse;
-    } finally {
-      clearTimeout(timer);
-    }
-  } catch (err) {
-    console.warn("[health-monitor] /api/status fetch failed:", err instanceof Error ? err.message : err);
-    return null;
-  }
-}
+const REQUIRED_HEALTHY_COUNT = 6;
 
 async function postWebhookAlert(webhookUrl: string, body: Record<string, unknown>): Promise<void> {
   try {
@@ -179,146 +143,128 @@ async function checkHeartbeats(): Promise<string[]> {
 }
 
 export default async (_req: Request): Promise<Response> => {
-  const baseUrl =
-    process.env["URL"] ??
-    process.env["DEPLOY_PRIME_URL"] ??
-    "https://hawkeye-sterling.netlify.app";
+  const timestamp = new Date().toISOString();
+  console.info("[health-monitor] entry at", timestamp);
 
-  const checkedAt = new Date().toISOString();
-  console.info("[health-monitor] starting health check at", checkedAt);
+  try {
+    // Fail fast if required env vars are absent — blob reads will fail anyway.
+    const missingEnv: string[] = [];
+    if (!process.env["NETLIFY_SITE_ID"] && !process.env["SITE_ID"]) missingEnv.push("NETLIFY_SITE_ID");
+    if (
+      !process.env["NETLIFY_BLOBS_TOKEN"] &&
+      !process.env["NETLIFY_API_TOKEN"] &&
+      !process.env["NETLIFY_AUTH_TOKEN"] &&
+      !process.env["NETLIFY_BLOBS_CONTEXT"]
+    ) {
+      missingEnv.push("NETLIFY_BLOBS_TOKEN");
+    }
+    if (missingEnv.length > 0) {
+      const reason = `missing_env: ${missingEnv.join(", ")}`;
+      console.error("[health-monitor]", reason);
+      return new Response(
+        JSON.stringify({ healthy: false, reason, lists: [], timestamp }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      );
+    }
 
-  // Run status fetch and heartbeat checks in parallel.
-  const [status, heartbeatAlerts] = await Promise.all([
-    fetchStatus(baseUrl),
-    checkHeartbeats(),
-  ]);
+    // Run source checks and heartbeat checks in parallel.
+    const [lists, heartbeatAlerts] = await Promise.all([
+      checkListSources(),
+      checkHeartbeats(),
+    ]);
 
-  if (!status) {
-    console.error("[health-monitor] could not reach /api/status — health check failed");
-    const alertBody = {
-      alert: ALERT_TITLE,
-      reason: "Could not reach /api/status endpoint",
-      checkedAt,
-      baseUrl,
-      heartbeatAlerts,
-    };
-    const webhookUrl = process.env["ALERT_WEBHOOK_URL"];
-    if (webhookUrl) await postWebhookAlert(webhookUrl, alertBody);
-    await createAsanaAlert(
-      [
-        `HAWKEYE STERLING — SYSTEM HEALTH ALERT`,
-        ``,
-        `Alert    : ${ALERT_TITLE}`,
-        `Time     : ${checkedAt}`,
-        `Reason   : Could not reach ${baseUrl}/api/status`,
-        ``,
-        ...(heartbeatAlerts.length > 0
-          ? [`SCHEDULED FUNCTION ALERTS`, ...heartbeatAlerts.map((a) => `  ${a}`), ``]
-          : []),
-        `ACTION REQUIRED: Verify Netlify deployment and function health dashboard.`,
-        `Auto-created by health-monitor scheduled function (0 */6 * * *)`,
-      ].join("\n"),
+    const healthyCount = lists.filter((l) => l.healthy).length;
+    const unhealthyLists = lists.filter((l) => !l.healthy);
+    const degraded = healthyCount < REQUIRED_HEALTHY_COUNT || heartbeatAlerts.length > 0;
+
+    console.info(
+      `[health-monitor] exit healthy=${healthyCount}/${REQUIRED_HEALTHY_COUNT} unhealthy=${unhealthyLists.length} heartbeatAlerts=${heartbeatAlerts.length} degraded=${degraded}`,
     );
-    return new Response(JSON.stringify({ ok: false, reason: "status endpoint unreachable", heartbeatAlerts, checkedAt }), {
-      status: 200,
-      headers: { "content-type": "application/json" },
-    });
-  }
 
-  const freshness = status.listsFreshness ?? {};
-  const staleThresholdHours = 30;
-  const requiredListCount = 6;
+    if (!degraded) {
+      await writeHeartbeat("health-monitor");
+      return new Response(
+        JSON.stringify({ ok: true, healthy: true, healthyCount, lists, heartbeatAlerts: [], timestamp }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      );
+    }
 
-  const listIds = Object.keys(freshness);
-  // /api/status emits status: "healthy" | "stale" | "missing" — not "ok"/"fresh".
-  const healthyLists = listIds.filter((id) => freshness[id]?.status === "healthy");
-  const staleLists = listIds.filter((id) => {
-    const f = freshness[id];
-    return f && typeof f.ageHours === "number" && f.ageHours > staleThresholdHours;
-  });
-  const missingLists = listIds.filter((id) => !freshness[id]?.lastRefreshed);
+    // System is degraded — send alerts.
+    const freshnessLines = lists.map((l) =>
+      `  ${l.id.padEnd(18)}: healthy=${l.healthy} ageHours=${l.ageHours ?? "null"} recordCount=${l.recordCount ?? "null"}${l.reason ? ` [${l.reason}]` : ""}`,
+    );
+    const staleLists = unhealthyLists.filter((l) => l.reason === "stale").map((l) => l.id);
+    const missingLists = unhealthyLists.filter((l) => l.reason === "never_fetched").map((l) => l.id);
 
-  const healthyCount = healthyLists.length;
-  const listsDegraded = healthyCount < requiredListCount || staleLists.length > 0;
-  const degraded = listsDegraded || heartbeatAlerts.length > 0;
+    const alertNotes = [
+      `⚠️  HAWKEYE STERLING — SYSTEM HEALTH DEGRADED`,
+      ``,
+      `Alert    : ${ALERT_TITLE}`,
+      `Time     : ${timestamp}`,
+      ``,
+      `HEALTH SUMMARY`,
+      `  Healthy lists  : ${healthyCount} / ${REQUIRED_HEALTHY_COUNT}`,
+      `  Stale lists    : ${staleLists.join(", ") || "none"}`,
+      `  Missing lists  : ${missingLists.join(", ") || "none"}`,
+      `  Function alerts: ${heartbeatAlerts.length}`,
+      ``,
+      `LIST FRESHNESS`,
+      ...freshnessLines,
+      ``,
+      ...(heartbeatAlerts.length > 0
+        ? [
+            `SCHEDULED FUNCTION ALERTS`,
+            ...heartbeatAlerts.map((a) => `  ${a}`),
+            ``,
+          ]
+        : []),
+      `IMPACT`,
+      `  Screening tools are blocked by the sanctions gate until all critical lists are loaded.`,
+      `  Affected tools: screen, super_brain, disposition, generate_report,`,
+      `                  generate_sar_report, pep, vessel_check`,
+      ``,
+      `REMEDIATION`,
+      `  1. Check Netlify Blobs for hawkeye-lists store`,
+      `  2. Trigger manual refresh: GET /api/admin/trigger-list-refresh with ADMIN_TOKEN`,
+      `  3. Verify NETLIFY_BLOBS_TOKEN is set and has write permissions`,
+      `  4. Check Netlify Functions dashboard for scheduled function failures`,
+      ``,
+      `Legal basis: FDL No. 10/2025 Art. 15 — screening is prohibited on incomplete corpus`,
+      `Auto-created by health-monitor scheduled function (0 */6 * * *)`,
+    ].join("\n");
 
-  console.info(
-    `[health-monitor] healthy=${healthyCount}/${requiredListCount} stale=${staleLists.length} missing=${missingLists.length} overdueHeartbeats=${heartbeatAlerts.length} degraded=${degraded}`,
-  );
+    const webhookUrl = process.env["ALERT_WEBHOOK_URL"];
+    const alertPayload = {
+      alert: ALERT_TITLE,
+      healthyCount,
+      requiredCount: REQUIRED_HEALTHY_COUNT,
+      staleLists,
+      missingLists,
+      heartbeatAlerts,
+      lists,
+      timestamp,
+    };
 
-  if (!degraded) {
+    const tasks: Promise<void>[] = [];
+    if (webhookUrl) tasks.push(postWebhookAlert(webhookUrl, alertPayload));
+    tasks.push(createAsanaAlert(alertNotes));
+    await Promise.allSettled(tasks);
+
     await writeHeartbeat("health-monitor");
     return new Response(
-      JSON.stringify({ ok: true, healthyLists: healthyCount, staleLists: staleLists.length, heartbeatAlerts: [], checkedAt }),
+      JSON.stringify({ ok: false, healthy: false, degraded: true, healthyCount, lists, heartbeatAlerts, timestamp }),
+      { status: 200, headers: { "content-type": "application/json" } },
+    );
+  } catch (err) {
+    const reason = err instanceof Error ? err.message : String(err);
+    console.error("[health-monitor] unhandled error:", reason);
+    // Best-effort heartbeat so health-monitor doesn't appear stale in its own report.
+    await writeHeartbeat("health-monitor").catch(() => {});
+    return new Response(
+      JSON.stringify({ healthy: false, reason, lists: [], timestamp }),
       { status: 200, headers: { "content-type": "application/json" } },
     );
   }
-
-  // System is degraded — send alerts
-  const freshnessLines = listIds.map((id) => {
-    const f = freshness[id];
-    return `  ${id.padEnd(18)}: status=${f?.status ?? "unknown"} ageHours=${f?.ageHours ?? "null"} entityCount=${f?.entityCount ?? "null"}`;
-  });
-
-  const alertNotes = [
-    `⚠️  HAWKEYE STERLING — SYSTEM HEALTH DEGRADED`,
-    ``,
-    `Alert    : ${ALERT_TITLE}`,
-    `Time     : ${checkedAt}`,
-    ``,
-    `HEALTH SUMMARY`,
-    `  Healthy lists  : ${healthyCount} / ${requiredListCount}`,
-    `  Stale lists    : ${staleLists.join(", ") || "none"}`,
-    `  Missing lists  : ${missingLists.join(", ") || "none"}`,
-    `  Function alerts: ${heartbeatAlerts.length}`,
-    ``,
-    `LIST FRESHNESS`,
-    ...freshnessLines,
-    ``,
-    ...(heartbeatAlerts.length > 0
-      ? [
-          `SCHEDULED FUNCTION ALERTS`,
-          ...heartbeatAlerts.map((a) => `  ${a}`),
-          ``,
-        ]
-      : []),
-    `IMPACT`,
-    `  Screening tools are blocked by the sanctions gate until all critical lists are loaded.`,
-    `  Affected tools: screen, super_brain, disposition, generate_report,`,
-    `                  generate_sar_report, pep, vessel_check`,
-    ``,
-    `REMEDIATION`,
-    `  1. Check Netlify Blobs for hawkeye-lists store`,
-    `  2. Trigger manual refresh: POST /api/sanctions/watch with SANCTIONS_CRON_TOKEN`,
-    `  3. Verify NETLIFY_BLOBS_TOKEN is set and has write permissions`,
-    `  4. Check Netlify Functions dashboard for scheduled function failures`,
-    ``,
-    `Legal basis: FDL No. 10/2025 Art. 15 — screening is prohibited on incomplete corpus`,
-    `Auto-created by health-monitor scheduled function (0 */6 * * *)`,
-  ].join("\n");
-
-  const webhookUrl = process.env["ALERT_WEBHOOK_URL"];
-  const alertPayload = {
-    alert: ALERT_TITLE,
-    healthyLists: healthyCount,
-    requiredListCount,
-    staleLists,
-    missingLists,
-    heartbeatAlerts,
-    freshness,
-    checkedAt,
-  };
-
-  const tasks: Promise<void>[] = [];
-  if (webhookUrl) tasks.push(postWebhookAlert(webhookUrl, alertPayload));
-  tasks.push(createAsanaAlert(alertNotes));
-  await Promise.allSettled(tasks);
-
-  await writeHeartbeat("health-monitor");
-  return new Response(
-    JSON.stringify({ ok: false, degraded: true, healthyLists: healthyCount, staleLists, missingLists, heartbeatAlerts, checkedAt }),
-    { status: 200, headers: { "content-type": "application/json" } },
-  );
 };
 
 export const config: Config = {

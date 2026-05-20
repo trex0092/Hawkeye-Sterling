@@ -240,6 +240,19 @@ export default async (): Promise<Response> => {
       console.warn(`[${LABEL}] sanctions_status call failed (non-critical):`, err instanceof Error ? err.message : String(err));
     }
 
+    // UAE mandatory lists (EOCN + LTL) must never ingest with zero entities.
+    // A zero-entity ingest means the XLSX download or parser failed completely —
+    // Cabinet Resolution 134/2025 Art.18 requires these lists to be current.
+    const uaeZeroLists = zeroEntityLists.filter(
+      (l) => l.startsWith("uae_eocn") || l.startsWith("uae_ltl"),
+    );
+    if (uaeZeroLists.length > 0) {
+      console.error(
+        `[${LABEL}] CRITICAL: UAE mandatory lists ingested with zero entities — screening corpus INCOMPLETE:`,
+        uaeZeroLists.join(", "),
+      );
+    }
+
     // Fire alert webhook on write failure OR zero-entity ingest.
     if (alertWebhook && (result.anyWriteFailed || zeroEntityLists.length > 0)) {
       try {
