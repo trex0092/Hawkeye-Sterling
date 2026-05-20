@@ -184,7 +184,7 @@ export async function withMlroLlm<TBody, TResult>(
     console.warn(`[${opts.route}] LLM call failed: ${detail}`);
     if (opts.offlineFallback !== undefined) {
       return NextResponse.json(
-        { ok: true, degraded: true, degradedReason: detail, ...(opts.offlineFallback as Record<string, unknown>) },
+        { ok: true, degraded: true, degradedReason: "LLM service temporarily unavailable.", ...(opts.offlineFallback as Record<string, unknown>) },
         { headers },
       );
     }

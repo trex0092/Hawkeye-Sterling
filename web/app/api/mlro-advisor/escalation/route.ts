@@ -1,5 +1,6 @@
 import { writeAuditEvent } from "@/lib/audit";
 import { stripJsonFences, withMlroLlm } from "@/lib/server/mlro-route-base";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -78,17 +79,17 @@ export const POST = (req: Request) => withMlroLlm<Body, EscalationDecision>(req,
   buildRequest: (body) => {
     const signals: string[] = [];
     if (body.riskScore !== null) signals.push(`Risk score: ${body.riskScore}/100`);
-    if (body.sanctionsHits?.length) signals.push(`Sanctions hits: ${body.sanctionsHits.join(", ")}`);
-    if (body.pepTier) signals.push(`PEP tier: ${body.pepTier}`);
+    if (body.sanctionsHits?.length) signals.push(`Sanctions hits: ${body.sanctionsHits.slice(0, 20).map((h) => sanitizeField(h, 100)).join(", ")}`);
+    if (body.pepTier) signals.push(`PEP tier: ${sanitizeField(body.pepTier, 50)}`);
     if (body.adverseMediaCount !== null) signals.push(`Adverse media hits: ${body.adverseMediaCount}`);
-    if (body.typologies?.length) signals.push(`Typologies: ${body.typologies.join(", ")}`);
-    if (body.jurisdictions?.length) signals.push(`Jurisdictions: ${body.jurisdictions.join(", ")}`);
+    if (body.typologies?.length) signals.push(`Typologies: ${body.typologies.slice(0, 20).map((t) => sanitizeField(t, 100)).join(", ")}`);
+    if (body.jurisdictions?.length) signals.push(`Jurisdictions: ${body.jurisdictions.slice(0, 20).map((j) => sanitizeField(j, 100)).join(", ")}`);
     if (body.amountAed != null) signals.push(`Amount (AED): ${body.amountAed.toLocaleString()}`);
-    if (body.cddPosture) signals.push(`CDD posture: ${body.cddPosture}`);
-    if (body.notes) signals.push(`Analyst notes: ${body.notes}`);
+    if (body.cddPosture) signals.push(`CDD posture: ${sanitizeField(body.cddPosture, 50)}`);
+    if (body.notes) signals.push(`Analyst notes: ${sanitizeText(body.notes, 1000)}`);
 
     const userContent = [
-      `Subject: ${body.subjectName.trim()}`,
+      `Subject: ${sanitizeField(body.subjectName, 300)}`,
       "",
       "RISK SIGNALS:",
       signals.length > 0 ? signals.join("\n") : "No signals provided.",
@@ -109,7 +110,7 @@ export const POST = (req: Request) => withMlroLlm<Body, EscalationDecision>(req,
     writeAuditEvent(
       "mlro",
       "advisor.escalation-decision",
-      `${body.subjectName.trim()} → ${decision.decision} (confidence ${decision.confidence}, urgency ${decision.urgency})`,
+      `${sanitizeField(body.subjectName, 300)} → ${decision.decision} (confidence ${decision.confidence}, urgency ${decision.urgency})`,
     );
   },
   offlineFallback: FALLBACK,

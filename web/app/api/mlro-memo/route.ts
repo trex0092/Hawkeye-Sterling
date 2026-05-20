@@ -2,6 +2,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 import { stripJsonFences, withMlroLlm } from "@/lib/server/mlro-route-base";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export interface MlroMemoResult {
   memoRef: string;
@@ -148,15 +149,15 @@ Respond ONLY with valid JSON — no markdown fences:
   "qualityScore": <0–100>,
   "regulatoryBasis": "<citation>"
 }`,
-      userContent: `Subject: ${body.subjectName}
-Type: ${body.subjectType ?? "not specified"}
-Case Reference: ${body.caseRef ?? "to be assigned"}
-Activity Summary: ${body.activitySummary}
-Red Flags: ${body.redFlags?.join("; ") ?? "not specified"}
-Investigation Steps: ${body.investigationSteps ?? "not specified"}
-Proposed Decision: ${body.proposedDecision ?? "MLRO to determine"}
-MLRO Name: ${body.mlroName ?? "[MLRO NAME]"}
-Date: ${body.date ?? new Date().toLocaleDateString("en-GB")}
+      userContent: `Subject: ${sanitizeField(body.subjectName, 300)}
+Type: ${sanitizeField(body.subjectType, 100) || "not specified"}
+Case Reference: ${sanitizeField(body.caseRef, 100) || "to be assigned"}
+Activity Summary: ${sanitizeText(body.activitySummary, 3000)}
+Red Flags: ${body.redFlags?.slice(0, 20).map((f: string) => sanitizeField(f, 200)).join("; ") ?? "not specified"}
+Investigation Steps: ${sanitizeText(body.investigationSteps, 2000) || "not specified"}
+Proposed Decision: ${sanitizeField(body.proposedDecision, 100) || "MLRO to determine"}
+MLRO Name: ${sanitizeField(body.mlroName, 100) || "[MLRO NAME]"}
+Date: ${sanitizeField(body.date, 50) || new Date().toLocaleDateString("en-GB")}
 
 Draft the MLRO Decision Memorandum.`,
     };
