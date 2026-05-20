@@ -1969,6 +1969,8 @@ export const MODES: ReasoningMode[] = [
         "CBP WRO Evidence Analysis",
         "ASM Cooperative DD Analysis",
         "RMI CMRT Reconciliation Analysis",
+        "Supply Chain Due Diligence Analysis",
+        "Suspicious Activity Analysis",
       ),
     ],
   },

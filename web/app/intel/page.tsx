@@ -651,7 +651,6 @@ export default function IntelPage() {
       />
       <ModuleFamilyBar suiteName="Live Intelligence Feed" modules={[
         { label: "Live Intel Feed", href: "/intel", icon: "🛰️" },
-        { label: "Live Adverse Media", href: "/adverse-media-live", icon: "📰" },
       ]} />
 
       <div className="mt-6 space-y-6">

@@ -1398,7 +1398,7 @@ function Section({ label, children }: { label: string; children: React.ReactNode
 const ADVISOR_STORAGE = "hawkeye.mlro.advisor.v1";
 
 const CLIENT_TIMEOUTS: Record<ReasoningMode, number> = {
-  quick: 15_000,
+  quick: 10_000,
   speed: 9_000,
   balanced: 45_000,
   multi_perspective: 600_000,

@@ -25,7 +25,7 @@ export function ModuleFamilyBar({ suiteName, modules }: Props) {
         {suiteName}
       </span>
       {modules.map((mod) => {
-        const isActive = pathname === mod.href || pathname.startsWith(`${mod.href}/`);
+        const isActive = pathname !== null && (pathname === mod.href || pathname.startsWith(`${mod.href}/`));
         return (
           <Link
             key={mod.href}

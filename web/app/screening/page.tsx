@@ -717,8 +717,7 @@ export default function ScreeningPage() {
         if (f.sanctionsHit && s.listCoverage.length === 0) return false;
         if (f.minListCount != null && s.listCoverage.length < f.minListCount) return false;
         if (f.slaBreach) {
-          const h = parseFloat(s.slaNotify);
-          if (isNaN(h) || h > 0) return false;
+          if (parseSlaHours(s.slaNotify) > SLA_BREACH_THRESHOLD_H) return false;
         }
         if (f.statuses?.length && !f.statuses.includes(s.status)) return false;
         if (f.cddPostures?.length && !f.cddPostures.includes(s.cddPosture)) return false;
@@ -1459,6 +1458,9 @@ export default function ScreeningPage() {
             avgRisk={avgRisk}
           />
 
+          {/* ── Intelligence Sources ──────────────────────────────────────── */}
+          <IntelligenceSourcesPanel />
+
           {/* ── Bulk Re-Screen Banner ─────────────────────────────────────── */}
           <div className="mb-4 bg-bg-panel border border-hair-2 rounded-xl px-4 py-3">
             <div className="flex items-center gap-3 flex-wrap">
@@ -2093,5 +2095,126 @@ export default function ScreeningPage() {
         </main>
       )}
     </>
+  );
+}
+
+// ── Intelligence Sources Panel ─────────────────────────────────────────────
+// Explains what type of information the screening engine captures, grouped by
+// category. Collapsed by default to keep the main queue clean.
+
+const INTEL_SOURCES = [
+  {
+    category: "Sanctions & Watchlists",
+    icon: "🚫",
+    color: "text-red border-red/30 bg-red-dim",
+    sources: [
+      { name: "OFAC SDN / Non-SDN", info: "US Treasury — primary designation authority" },
+      { name: "UN Consolidated List", info: "SC 1267/1989/2253/1988 — global asset-freeze" },
+      { name: "EU Asset Freeze", info: "Council Regulation 2580/2001 + CFSP measures" },
+      { name: "UK HM Treasury (OFSI)", info: "Post-Brexit standalone UK sanctions" },
+      { name: "UAE EOCN / Cabinet Res. 74", info: "Local targeted financial sanctions" },
+      { name: "OFAC 50% Rule", info: "Indirect beneficial ownership by SDN ≥50%" },
+      { name: "World Bank Debarment", info: "Ineligible firms & individuals — procurement fraud" },
+      { name: "INTERPOL Red Notices", info: "Fugitive persons subject to arrest warrants" },
+    ],
+  },
+  {
+    category: "PEP & Political Risk",
+    icon: "👤",
+    color: "text-amber border-amber/30 bg-amber-dim",
+    sources: [
+      { name: "OpenSanctions PEP Database", info: "Open-source, 1M+ political persons" },
+      { name: "Tier 1–3 PEP Classification", info: "FATF-aligned tier scoring (head of state → local)" },
+      { name: "Family & Close Associates", info: "Relatives and business associates of PEPs" },
+      { name: "Former PEPs (2-year rule)", info: "FATF Guidance — residual risk after leaving office" },
+    ],
+  },
+  {
+    category: "Adverse Media & Intelligence",
+    icon: "📰",
+    color: "text-orange border-orange/30 bg-orange/10",
+    sources: [
+      { name: "GDELT Real-Time News", info: "Global news corpus — 7 languages, 15-minute refresh" },
+      { name: "AI Adverse-Media Classifier", info: "NLP categorises ML / fraud / corruption / TF signals" },
+      { name: "10-Year Lookback Archive", info: "Historical adverse media per FDL Art.19" },
+      { name: "Typology Pattern Matching", info: "500+ FATF / MENAFATF ML typologies" },
+    ],
+  },
+  {
+    category: "Corporate & Ownership",
+    icon: "🏢",
+    color: "text-brand border-brand/30 bg-brand-dim",
+    sources: [
+      { name: "GLEIF / LEI Registry", info: "ISO 17442 legal entity identifiers — 2M+ entities" },
+      { name: "OpenCorporates", info: "Global company registry — 200+ jurisdictions" },
+      { name: "UBO Beneficial Ownership", info: "Ultimate beneficial owner chains (25%+ threshold)" },
+      { name: "UAE Commercial Registry", info: "DED / ADGM / DIFC local entity verification" },
+    ],
+  },
+  {
+    category: "Crypto & Blockchain",
+    icon: "₿",
+    color: "text-green border-green/30 bg-green-dim",
+    sources: [
+      { name: "On-Chain Wallet Analysis", info: "BTC / ETH / TRX AML taint scoring" },
+      { name: "Darknet Exposure Scoring", info: "Links to darknet markets, mixers, ransomware" },
+      { name: "Exchange Attribution", info: "Identifies likely exchange counterparties" },
+      { name: "VASP Registration Check", info: "Verified FATF Travel Rule compliant VASPs" },
+    ],
+  },
+  {
+    category: "OSINT & Open Sources",
+    icon: "🌐",
+    color: "text-ink-2 border-hair-2 bg-bg-2",
+    sources: [
+      { name: "Domain & IP Intelligence", info: "WHOIS, malware, email security (DMARC/SPF)" },
+      { name: "Vessel & Maritime (IMO)", info: "Ship ownership, flag state, sanctions exposure" },
+      { name: "SpiderFoot OSINT Engine", info: "Automated open-source subject enrichment" },
+      { name: "Google AI Search (MCP)", info: "Synthesised OSINT via Google AI Mode search" },
+    ],
+  },
+];
+
+function IntelligenceSourcesPanel() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="mb-4 bg-bg-panel border border-hair-2 rounded-xl overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="w-full flex items-center justify-between px-4 py-2.5 text-left hover:bg-bg-1 transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <span className="text-11 font-semibold text-ink-0">🛡️ Intelligence Sources</span>
+          <span className="text-10 text-ink-3">— what the screening engine captures</span>
+        </div>
+        <span className="text-10 text-ink-3">{open ? "▴ hide" : "▾ show"}</span>
+      </button>
+      {open && (
+        <div className="px-4 pb-4 border-t border-hair-2">
+          <p className="text-11 text-ink-3 mt-3 mb-3">
+            Every screen cross-references the following intelligence layers simultaneously. Results are merged into a single AI brain verdict with traceable provenance for each signal.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {INTEL_SOURCES.map((cat) => (
+              <div key={cat.category} className={`rounded-lg border p-3 ${cat.color}`}>
+                <div className="flex items-center gap-1.5 mb-2">
+                  <span>{cat.icon}</span>
+                  <span className="text-11 font-semibold uppercase tracking-wide-3">{cat.category}</span>
+                </div>
+                <ul className="space-y-1">
+                  {cat.sources.map((src) => (
+                    <li key={src.name} className="text-10">
+                      <span className="font-medium text-ink-0">{src.name}</span>
+                      <span className="text-ink-3"> — {src.info}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

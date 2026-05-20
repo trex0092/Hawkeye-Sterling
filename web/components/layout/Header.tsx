@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { RegulatoryTicker } from "./RegulatoryTicker";
-import { InstallAppButton } from "./InstallAppButton";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 
@@ -162,7 +161,7 @@ export function Header() {
 
         <div className="flex gap-0.5 ml-2 md:ml-8">
           {NAV_TABS_I18N.map((tab) => {
-            const active = isActive(pathname, tab.href);
+            const active = isActive(pathname ?? "", tab.href);
             return (
               <a
                 key={tab.href}
@@ -194,7 +193,7 @@ export function Header() {
                 setMoreOpen((v) => !v);
               }}
               className={`inline-flex items-center gap-1 px-3 py-1.5 text-12.5 rounded font-medium transition-colors whitespace-nowrap ${
-                MORE_GROUPS.some((g) => g.items.some((it) => isActive(pathname, it.href)))
+                MORE_GROUPS.some((g) => g.items.some((it) => isActive(pathname ?? "", it.href)))
                   ? "bg-bg-2 text-ink-0"
                   : "text-ink-2 hover:bg-bg-2 hover:text-ink-0"
               }`}
@@ -225,7 +224,7 @@ export function Header() {
                               href={it.href}
                               onClick={() => setMoreOpen(false)}
                               className={`block px-2 py-1.5 rounded no-underline transition-colors ${
-                                isActive(pathname, it.href)
+                                isActive(pathname ?? "", it.href)
                                   ? "bg-brand-dim text-brand-deep"
                                   : "text-ink-0 hover:bg-bg-1"
                               }`}
@@ -245,7 +244,6 @@ export function Header() {
         </div>
 
         <div className="ml-auto flex items-center gap-2 md:gap-4 font-mono text-10.5 text-ink-2 shrink-0">
-          <InstallAppButton />
           <a
             href="/profile"
             title="My profile & password"

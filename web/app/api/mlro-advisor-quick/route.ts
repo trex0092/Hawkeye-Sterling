@@ -100,12 +100,10 @@ const MODEL = "claude-haiku-4-5-20251001";
 // 350 tokens targets sub-3 s end-to-end with Haiku at ~150 tok/s output
 // while still delivering 3-6 substantive paragraphs of compliance guidance.
 const MAX_TOKENS = 350;
-// Hard cap inside the Lambda. Netlify's edge inactivity timeout is ~26 s,
-// so we abort upstream well before that to guarantee we always have time
-// to return a clean JSON response (rather than letting Netlify replace
-// our body with an HTML 502).
-// 22 s leaves ~8 s of response-marshalling buffer inside the 30 s maxDuration.
-const HARD_TIMEOUT_MS = 22_000;
+// Hard cap inside the Lambda. Haiku at 350 tokens targets ~3 s first-pass;
+// 8 s allows one retry pass while still enforcing near-3 s discipline.
+// Netlify's edge inactivity ceiling is ~26 s, so 8 s is well inside it.
+const HARD_TIMEOUT_MS = 8_000;
 
 
 interface ContextPair { q: string; a: string }
@@ -467,7 +465,7 @@ export async function POST(req: Request): Promise<Response> {
     // Haiku call. The rewrite prompt feeds the defects back as targeted
     // fix-it hints so Haiku knows exactly what to repair.
     const remainingBudgetMs = HARD_TIMEOUT_MS - (Date.now() - startedAt);
-    if (!verification.passed && remainingBudgetMs > 6_000) {
+    if (!verification.passed && remainingBudgetMs > 2_000) {
       try {
         const rewritePrompt = buildRewritePrompt(userPrompt, answer, verification.defects);
         const rewritten = await callHaiku(rewritePrompt);
