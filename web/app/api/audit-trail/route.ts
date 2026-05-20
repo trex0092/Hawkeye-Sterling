@@ -20,6 +20,7 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { verifyRegulatorToken } from "@/lib/server/regulator-jwt";
+import { filterAuditEntries, type AuditTrailFilter } from "@/lib/server/audit-trail-filters";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -88,6 +89,18 @@ async function handleGet(req: Request): Promise<NextResponse> {
   const pageSize = parsePositiveInt(url.searchParams.get("pageSize"), 50, 200);
   const includeVerified = url.searchParams.get("verified") === "true";
 
+  // J-08 — date-based + subject + event-type filtering. Applied AFTER the
+  // chain is loaded but BEFORE pagination so page/pageSize remain meaningful
+  // against the filtered result set. Empty filter is a no-op (returns the
+  // full chain) so existing callers continue to work unchanged.
+  const filter: AuditTrailFilter = {
+    fromDate: url.searchParams.get("fromDate"),
+    toDate: url.searchParams.get("toDate"),
+    subjectId: url.searchParams.get("subjectId"),
+    subjectName: url.searchParams.get("subjectName"),
+    eventType: url.searchParams.get("eventType"),
+  };
+
   const store = await loadAuditStore();
   if (!store) {
     return NextResponse.json(
@@ -122,9 +135,12 @@ async function handleGet(req: Request): Promise<NextResponse> {
 
   // Newest entries first.
   const sorted = [...chain].reverse();
-  const total = sorted.length;
+  // J-08 — apply optional filters (date range, subject, event type) before
+  // paginating. `totalEntries` in the response reflects the filtered count.
+  const filtered = filterAuditEntries(sorted, filter);
+  const total = filtered.length;
   const start = (page - 1) * pageSize;
-  const page_entries = sorted.slice(start, start + pageSize);
+  const page_entries = filtered.slice(start, start + pageSize);
 
   // Optionally annotate each entry with HMAC verification status.
   type EntryWithVerification = ChainEntry & { hashValid?: boolean };
