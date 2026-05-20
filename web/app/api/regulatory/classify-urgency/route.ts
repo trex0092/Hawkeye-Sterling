@@ -2,6 +2,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 import { NextResponse } from "next/server";
+import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 interface InputItem {
@@ -33,16 +34,18 @@ Urgency levels:
 Respond ONLY with a valid JSON array (no markdown fences). Each element must have: "index" (0-based), "urgency" ("critical"|"high"|"medium"|"low"), "reason" (one sentence, max 15 words).`;
 
 export async function POST(req: Request) {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   let body: { items?: InputItem[] };
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400, headers: gate.headers });
   }
 
   const items = Array.isArray(body.items) ? body.items : [];
   if (items.length === 0) {
-    return NextResponse.json({ ok: true, classified: [] } satisfies ClassifyUrgencyResult);
+    return NextResponse.json({ ok: true, classified: [] } satisfies ClassifyUrgencyResult, { headers: gate.headers });
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
@@ -83,7 +86,7 @@ export async function POST(req: Request) {
       }
       return { ...item, urgency, reason };
     });
-    return NextResponse.json({ ok: true, classified } satisfies ClassifyUrgencyResult);
+    return NextResponse.json({ ok: true, classified } satisfies ClassifyUrgencyResult, { headers: gate.headers });
   }
 
   try {
@@ -135,15 +138,15 @@ ${itemsList}`,
       };
     });
 
-    return NextResponse.json({ ok: true, classified } satisfies ClassifyUrgencyResult);
+    return NextResponse.json({ ok: true, classified } satisfies ClassifyUrgencyResult, { headers: gate.headers });
   } catch (err) {
-    console.error("classify-urgency error", err);
+    console.warn("[classify-urgency] classification failed:", err instanceof Error ? err.message : String(err));
     // Graceful fallback — return items with medium urgency
     const classified: ClassifiedItem[] = items.map((item) => ({
       ...item,
       urgency: "medium" as const,
       reason: "Classification service temporarily unavailable.",
     }));
-    return NextResponse.json({ ok: true, classified } satisfies ClassifyUrgencyResult);
+    return NextResponse.json({ ok: true, classified } satisfies ClassifyUrgencyResult, { headers: gate.headers });
   }
 }
