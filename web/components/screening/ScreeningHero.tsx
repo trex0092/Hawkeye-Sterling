@@ -1,4 +1,5 @@
 import { WatchlistHealthBadges } from "@/components/screening/WatchlistHealthBadges";
+import { HsCasesDashboard } from "@/components/screening/HsCasesDashboard";
 
 interface ScreeningHeroProps {
   inQueue: number;
@@ -35,6 +36,7 @@ export function ScreeningHero({ inQueue, critical, slaRisk, avgRisk }: Screening
           green/amber/red by freshness SLO so a stale feed surfaces on
           the dashboard instead of being papered over. */}
       <WatchlistHealthBadges />
+      <HsCasesDashboard />
 
     </div>
   );
