@@ -90,7 +90,7 @@ jobs:
         run: |
           # After enforce() defaults to requireAuth:true (web/lib/server/enforce.ts),
           # any route that explicitly opts out with `{ requireAuth: false }` must
-          # be deliberately reviewed. The current allowed count is 1 — bump this
+          # be deliberately reviewed. The current allowed count is 2 — bump this
           # number when adding a deliberate public/sandbox route, and document why.
           # Allowed opt-outs:
           #   1. web/app/api/health/route.ts — public liveness probe, no data exposed.
