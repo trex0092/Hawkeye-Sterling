@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { RegulatoryTicker } from "./RegulatoryTicker";
-import { InstallAppButton } from "./InstallAppButton";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 
@@ -245,7 +244,6 @@ export function Header() {
         </div>
 
         <div className="ml-auto flex items-center gap-2 md:gap-4 font-mono text-10.5 text-ink-2 shrink-0">
-          <InstallAppButton />
           <a
             href="/profile"
             title="My profile & password"
