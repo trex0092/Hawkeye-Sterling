@@ -50,7 +50,12 @@ async function refreshAccessToken(
     body: body.toString(),
   });
 
-  const data = (await res.json()) as RefreshResponse;
+  let data: RefreshResponse;
+  try {
+    data = (await res.json()) as RefreshResponse;
+  } catch {
+    throw new Error(`GMAIL_REFRESH_FAILED: HTTP ${res.status} — non-JSON response from Google`);
+  }
 
   if (!res.ok || data.error) {
     const detail = data.error_description ?? data.error ?? `HTTP ${res.status}`;

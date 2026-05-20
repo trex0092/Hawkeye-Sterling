@@ -188,6 +188,6 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: true, taskId, taskUrl } satisfies CreateTaskResponse, { headers: gate.headers });
   } catch (err) {
     console.error("[tfs-create-task] fetch failed:", err);
-    return NextResponse.json({ ok: false, error: "NETWORK_ERROR" }, { status: 504, headers: gate.headers });
+    return NextResponse.json({ ok: false, error: "NETWORK_ERROR" }, { status: 503, headers: gate.headers });
   }
 }

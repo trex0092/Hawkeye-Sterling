@@ -427,10 +427,11 @@ export default function TFSAlertsPage() {
       if (!mountedRef.current) return;
 
       if (!searchRes.ok) {
-        const err = (await searchRes.json()) as { error?: string };
+        let err: { error?: string } = {};
+        try { err = (await searchRes.json()) as { error?: string }; } catch { /* non-JSON error body */ }
         if (err.error === "GMAIL_REFRESH_FAILED") {
           setErrorMsg(
-            "Gmail OAuth credentials are invalid or revoked. Update GMAIL_REFRESH_TOKEN, GMAIL_CLIENT_ID, and GMAIL_CLIENT_SECRET in your Netlify environment variables.",
+            "Google rejected the Gmail refresh token. This usually means the token was revoked in Google Account settings or the OAuth app permissions changed. Re-authorize the app at myaccount.google.com/permissions or generate a new GMAIL_REFRESH_TOKEN in Netlify.",
           );
         } else if (err.error === "GMAIL_AUTH_FAILED") {
           setErrorMsg(

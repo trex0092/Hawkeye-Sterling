@@ -102,6 +102,7 @@ export default function SarQaPage() {
   const [reasonDraft, setReasonDraft] = useState<Record<string, ChallengeReason>>({});
   const [aiScores, setAiScores] = useState<Record<string, QaScore>>({});
   const [aiScoreLoading, setAiScoreLoading] = useState(false);
+  const [aiScoreError, setAiScoreError] = useState<string | null>(null);
   const mountedRef = useRef(true);
   useEffect(() => () => { mountedRef.current = false; }, []);
 
@@ -113,6 +114,7 @@ export default function SarQaPage() {
 
   const runAiQa = async () => {
     setAiScoreLoading(true);
+    setAiScoreError(null);
     try {
       const payload = cases.map((c) => ({
         id: c.id,
@@ -125,15 +127,25 @@ export default function SarQaPage() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ cases: payload }),
       });
-      if (res.ok) {
-        const data = (await res.json()) as { ok: boolean; scores: QaScore[] };
-        const map: Record<string, QaScore> = {};
-        for (const s of data.scores) {
-          map[s.id] = s;
-        }
-        if (!mountedRef.current) return;
-        setAiScores(map);
+      if (!mountedRef.current) return;
+      if (!res.ok) {
+        setAiScoreError(`AI scoring failed (HTTP ${res.status}). Please try again.`);
+        return;
       }
+      const data = (await res.json()) as { ok: boolean; scores?: QaScore[] };
+      if (!mountedRef.current) return;
+      if (!Array.isArray(data.scores)) {
+        setAiScoreError("AI scoring returned an unexpected response. Please try again.");
+        return;
+      }
+      const map: Record<string, QaScore> = {};
+      for (const s of data.scores) {
+        map[s.id] = s;
+      }
+      setAiScores(map);
+    } catch (err) {
+      if (!mountedRef.current) return;
+      setAiScoreError(err instanceof Error ? err.message : "AI scoring failed. Please try again.");
     } finally {
       if (mountedRef.current) setAiScoreLoading(false);
     }
@@ -200,7 +212,10 @@ export default function SarQaPage() {
           </div>
         )}
 
-        <div className="mt-4 flex justify-end">
+        <div className="mt-4 flex items-center justify-end gap-3">
+          {aiScoreError && (
+            <span className="text-11 text-red">{aiScoreError}</span>
+          )}
           <button type="button" onClick={() => void runAiQa()} disabled={aiScoreLoading || cases.length === 0}
             className="text-11 font-semibold px-3 py-1.5 rounded bg-brand text-white hover:bg-brand/90 disabled:opacity-40">
             {aiScoreLoading ? "Scoring…" : "✦AI"}

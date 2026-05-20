@@ -194,6 +194,8 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
   const [activeTab, setActiveTab] = useState<Tab>("Screening");
   const [escalated, setEscalated] = useState(false);
   const [strRaised, setStrRaised] = useState(false);
+  const [reportSaving, setReportSaving] = useState(false);
+  const [reportSaved, setReportSaved] = useState(false);
   const [role, setRole] = useState<OperatorRole>("analyst");
 
   useEffect(() => {
@@ -603,6 +605,55 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
         timelineEvent: "Escalated to MLRO and registered in Asana",
       });
       showFlash("Escalated to MLRO — registering in Asana…");
+    }
+  };
+
+  const handleSaveReport = async () => {
+    if (reportSaving) return;
+    setReportSaving(true);
+    try {
+      const screenResult = screening.status === "success"
+        ? {
+            hits: screening.result.hits,
+            topScore: screening.result.topScore,
+            severity: screening.result.severity,
+            listsChecked: screening.result.listsChecked,
+            candidatesChecked: screening.result.candidatesChecked,
+            durationMs: screening.result.durationMs,
+            generatedAt: screening.result.generatedAt,
+          }
+        : { hits: [], topScore: subject.riskScore, severity: "medium" as const, listsChecked: 0, candidatesChecked: 0, durationMs: 0, generatedAt: new Date().toISOString() };
+      const res = await postScreeningReport({
+        subject: {
+          id: subject.id,
+          name: subject.name,
+          entityType: subject.entityType,
+          jurisdiction: subject.jurisdiction,
+          ...(subject.aliases ? { aliases: subject.aliases } : {}),
+          caseId: subject.id,
+        },
+        result: screenResult,
+        trigger: "save",
+      });
+      if (!mountedRef.current) return;
+      if (res.ok) {
+        setReportSaved(true);
+        attachEvidenceToSubject(subject.name, {
+          category: "screening-report",
+          title: "Compliance report saved & filed to Asana",
+          meta: new Date().toISOString(),
+          detail: res.taskUrl ? `Asana task: ${res.taskUrl}` : "Report saved (Asana task created)",
+          timelineEvent: "Compliance report saved",
+        });
+        showFlash(res.taskUrl ? `Report filed to Asana ✓` : "Report saved ✓");
+      } else {
+        showFlash(res.error ?? "Report save failed — check Asana configuration");
+      }
+    } catch (err) {
+      if (!mountedRef.current) return;
+      showFlash(err instanceof Error ? err.message : "Report save failed");
+    } finally {
+      if (mountedRef.current) setReportSaving(false);
     }
   };
 
@@ -1172,6 +1223,20 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
               style={{ color: "#7c3aed", borderColor: "#7c3aed", background: "rgba(124,58,237,0.07)" }}
             >
               PDF
+            </button>
+            <button
+              type="button"
+              onClick={() => void handleSaveReport()}
+              disabled={reportSaving}
+              title="Save compliance report & file to Asana"
+              className="inline-flex items-center gap-1.5 rounded border px-2.5 py-[5px] text-11.5 font-semibold transition-colors cursor-pointer disabled:opacity-50"
+              style={
+                reportSaved
+                  ? { color: "#16a34a", borderColor: "#16a34a", background: "rgba(22,163,74,0.07)" }
+                  : { color: "#0369a1", borderColor: "#0369a1", background: "rgba(3,105,161,0.07)" }
+              }
+            >
+              {reportSaving ? "Saving…" : reportSaved ? "✓ Saved" : "💾 Save"}
             </button>
             <PanelBtn onClick={handleDownloadGoaml} title="Download goAML STR XML">
               goAML
