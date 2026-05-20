@@ -46,6 +46,7 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeText } from "@/lib/server/sanitize-prompt";
 import { weaponizedSystemPrompt } from "../../../../../dist/src/brain/weaponized.js";
 import { evaluateRedlines } from "../../../../../dist/src/brain/redlines.js";
 import { classifyPepRole } from "../../../../../dist/src/brain/pep-classifier.js";
@@ -334,9 +335,11 @@ export async function POST(req: Request): Promise<NextResponse> {
   );
   const model = typeof body.model === "string" ? body.model : DEFAULT_MODEL;
 
-  const question =
+  const question = sanitizeText(
     body.question ??
-    "Screen the subject and produce a regulator-facing verdict. Use the available tools to gather and verify evidence; cite mode_id, doctrine, and regulatory anchor in every claim per the charter.";
+    "Screen the subject and produce a regulator-facing verdict. Use the available tools to gather and verify evidence; cite mode_id, doctrine, and regulatory anchor in every claim per the charter.",
+    2000,
+  );
 
   const systemPrompt = weaponizedSystemPrompt({
     taskRole:

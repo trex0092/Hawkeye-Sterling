@@ -111,6 +111,13 @@ export async function POST(req: Request): Promise<NextResponse> {
       { status: 400, headers: gateHeaders },
     );
   }
+  const VALID_OUTCOMES = new Set(["clear", "flag", "escalate", "inconclusive", "block"]);
+  if (!VALID_OUTCOMES.has(body.verdict.outcome)) {
+    return NextResponse.json(
+      { ok: false, error: "verdict.outcome must be one of: clear, flag, escalate, inconclusive, block" },
+      { status: 400, headers: gateHeaders },
+    );
+  }
 
   const model = body.model ?? DEFAULT_MODEL;
   const systemPrompt = weaponizedSystemPrompt({
