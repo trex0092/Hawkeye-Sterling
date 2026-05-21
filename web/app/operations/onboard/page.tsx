@@ -231,6 +231,7 @@ async function runScreenViaApi(draft: Draft): Promise<{ hits: ScreeningHit[]; so
       headers: { "content-type": "application/json" },
       body: JSON.stringify(payload),
     });
+    if (!res.ok) return { ...localFallback(draft), error: `HTTP ${res.status}` };
     const json = (await res.json()) as QuickScreenResponse;
     if (json.ok) {
       return {
@@ -286,6 +287,7 @@ async function computeTier(draft: Draft): Promise<RiskTierResult | null> {
         screeningHits: draft.screeningHits ?? [],
       }),
     });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const json = (await res.json()) as { ok: boolean } & RiskTierResult;
     if (json.ok) {
       const { tier, score, factors, rationale, jurisdictionHits } = json;
@@ -379,6 +381,7 @@ async function generateAdvisorNarrative(draft: Draft): Promise<AdvisorResponseV1
         structured: true,
       }),
     });
+    if (!res.ok) return null;
     const json = (await res.json()) as { ok: boolean; structured?: AdvisorResponseV1 | null };
     return json.ok && json.structured ? json.structured : null;
   } catch {
