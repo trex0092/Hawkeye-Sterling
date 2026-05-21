@@ -3,8 +3,8 @@ import { withGuard } from "@/lib/server/guard";
 import {
   buildWeaponizedBrainManifest,
   weaponizedIntegrity,
-} from "../../../../dist/src/brain/weaponized.js";
-import * as brain from "../../../../dist/src/brain/index.js";
+} from "../../../../src/brain/weaponized.js";
+import * as brain from "../../../../src/brain/index.js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

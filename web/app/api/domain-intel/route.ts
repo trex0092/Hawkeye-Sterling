@@ -6,7 +6,7 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
-import { domainIntel, type DomainIntelResult } from "../../../../dist/src/integrations/webCheck.js";
+import { domainIntel, type DomainIntelResult } from "../../../../src/integrations/webCheck.js";
 import { lookupProviderByDomain, deriveRiskSignals } from "@/lib/intelligence/openBankingTracker";
 
 export const runtime = "nodejs";

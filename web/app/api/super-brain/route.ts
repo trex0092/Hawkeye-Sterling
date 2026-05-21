@@ -6,28 +6,28 @@ import { getJson, setJson } from "@/lib/server/store";
 // catalogues); pulling it in at the top of a Netlify Function route was
 // blowing cold-start past the 10s cap and returning 502s on every
 // subject-detail open.
-import { quickScreen as _quickScreen } from "../../../../dist/src/brain/quick-screen.js";
-import { classifyPepRole } from "../../../../dist/src/brain/pep-classifier.js";
-import { classifyAdverseMedia } from "../../../../dist/src/brain/adverse-media.js";
-import { jurisdictionByName } from "../../../../dist/src/brain/jurisdictions-full.js";
-import { isCahra } from "../../../../dist/src/brain/cahra.js";
-import { regimesForJurisdiction } from "../../../../dist/src/brain/sanction-regimes.js";
-import { evaluateRedlines } from "../../../../dist/src/brain/redlines.js";
-import { detectCrossRegimeConflict, type RegimeStatus } from "../../../../dist/src/brain/cross-regime-conflict.js";
-import { variantsOf } from "../../../../dist/src/brain/translit.js";
-import { expandAliases } from "../../../../dist/src/brain/aliases.js";
-import { doubleMetaphone, soundex } from "../../../../dist/src/brain/matching.js";
+import { quickScreen as _quickScreen } from "../../../../src/brain/quick-screen.js";
+import { classifyPepRole } from "../../../../src/brain/pep-classifier.js";
+import { classifyAdverseMedia } from "../../../../src/brain/adverse-media.js";
+import { jurisdictionByName } from "../../../../src/brain/jurisdictions-full.js";
+import { isCahra } from "../../../../src/brain/cahra.js";
+import { regimesForJurisdiction } from "../../../../src/brain/sanction-regimes.js";
+import { evaluateRedlines } from "../../../../src/brain/redlines.js";
+import { detectCrossRegimeConflict, type RegimeStatus } from "../../../../src/brain/cross-regime-conflict.js";
+import { variantsOf } from "../../../../src/brain/translit.js";
+import { expandAliases } from "../../../../src/brain/aliases.js";
+import { doubleMetaphone, soundex } from "../../../../src/brain/matching.js";
 import { loadCandidates } from "@/lib/server/candidates-loader";
 import { classifyEsg } from "@/lib/data/esg";
 // Wave 4 enhancements — richer brain modules landed via PR #49.
-import { jurisdictionProfile } from "../../../../dist/src/brain/lib/jurisdictions.js";
+import { jurisdictionProfile } from "../../../../src/brain/lib/jurisdictions.js";
 import {
   matchTypologies,
   typologyCompositeScore,
-} from "../../../../dist/src/brain/lib/typologies.js";
-import { scoreAdverseMedia } from "../../../../dist/src/brain/lib/adverse-media-scorer.js";
-import { assessPEP } from "../../../../dist/src/brain/lib/pep.js";
-import { analyseText } from "../../../../dist/src/brain/lib/stylometry.js";
+} from "../../../../src/brain/lib/typologies.js";
+import { scoreAdverseMedia } from "../../../../src/brain/lib/adverse-media-scorer.js";
+import { assessPEP } from "../../../../src/brain/lib/pep.js";
+import { analyseText } from "../../../../src/brain/lib/stylometry.js";
 import {
   classifyAdverseKeywords,
   adverseKeywordGroupCounts,

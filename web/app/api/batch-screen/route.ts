@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 // Import from the concrete module, not the index barrel — see super-brain
 // route for why pulling in the 80-module barrel at cold-start kills these
 // Netlify Functions with 502s.
-import { quickScreen as _quickScreen } from "../../../../dist/src/brain/quick-screen.js";
+import { quickScreen as _quickScreen } from "../../../../src/brain/quick-screen.js";
 import type {
   QuickScreenCandidate,
   QuickScreenResult,
@@ -45,7 +45,7 @@ import { getIdempotencyKey, getIdempotent, storeIdempotent } from "@/lib/server/
 import { checkWatchman } from "@/lib/server/watchman-client";   // moov-io/watchman
 import { checkMarble } from "@/lib/server/marble-client";       // checkmarble/marble
 import { checkJube } from "@/lib/server/jube-client";           // jube AML
-import { yenteMatch } from "../../../../dist/src/integrations/yente.js"; // opensanctions/yente FtM matching
+import { yenteMatch } from "../../../../src/integrations/yente.js"; // opensanctions/yente FtM matching
 import { asanaGids } from "@/lib/server/asanaConfig";
 import { runEgressCheck } from "@/lib/server/egress-check";
 

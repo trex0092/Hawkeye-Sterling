@@ -24,7 +24,7 @@ import {
   type AdvisorResponseV1,
   type CompletionDefect,
   type FailClosedResponse,
-} from "../../../dist/src/brain/registry/index.js";
+} from "../../../src/brain/registry/index.js";
 
 /** System-prompt addendum that instructs the model to emit JSON.
  *  Inserted at the END of the system message so the prior guidance

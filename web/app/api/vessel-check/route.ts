@@ -6,7 +6,7 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
-import { checkVessel, screenVessels } from "../../../../dist/src/integrations/vesselCheck.js";
+import { checkVessel, screenVessels } from "../../../../src/integrations/vesselCheck.js";
 import { withRetry } from "@/lib/server/circuitBreaker";
 import { lookupLsegVesselByImo } from "@/lib/lseg/vessel-index";
 

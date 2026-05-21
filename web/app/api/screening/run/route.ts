@@ -25,7 +25,7 @@ import { NextResponse } from "next/server";
 import { createHash, randomUUID } from "node:crypto";
 import { enforce } from "@/lib/server/enforce";
 import { loadCandidates } from "@/lib/server/candidates-loader";
-import { quickScreen as brainQuickScreen } from "../../../../../dist/src/brain/quick-screen.js";
+import { quickScreen as brainQuickScreen } from "../../../../../src/brain/quick-screen.js";
 import { ScreeningAuditWriter } from "@/lib/server/screening-audit";
 // Bare writer used for one-off adversarial-input audit events that fire
 // BEFORE the per-request ScreeningAuditWriter is constructed. These events

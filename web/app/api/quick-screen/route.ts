@@ -40,7 +40,7 @@ import {
 // Compiled backend entry point. The root `tsc` build (npm run build at the repo root)
 // must run before this API route is bundled. Netlify build order is encoded in
 // netlify.toml; local dev runs `npm run build` at the root once to produce dist/.
-// @brain/* is resolved via web/tsconfig.json paths → ../dist/src/brain/*.
+// @brain/* is resolved via web/tsconfig.json paths → ../src/brain/*.
 import { quickScreen as brainQuickScreen } from "@brain/quick-screen.js";
 import { getCountryRisk } from "@/lib/server/high-risk-countries";
 import { insertCaseRecord } from "@/lib/server/case-vault";

@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
-import * as brain from "../../../../../dist/src/brain/index.js";
+import * as brain from "../../../../../src/brain/index.js";
 import { getJson, listKeys } from "@/lib/server/store";
 import { postWebhook } from "@/lib/server/webhook";
 import {
   StreamingAnomalyGate,
   extractFeatures,
-} from "../../../../../dist/src/brain/streaming-anomaly.js";
-import { analyseBenford, type BenfordRisk } from "../../../../../dist/src/brain/benford.js";
+} from "../../../../../src/brain/streaming-anomaly.js";
+import { analyseBenford, type BenfordRisk } from "../../../../../src/brain/benford.js";
 import { asanaGids } from "@/lib/server/asanaConfig";
 
 export const runtime = "nodejs";

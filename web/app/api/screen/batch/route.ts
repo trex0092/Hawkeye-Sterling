@@ -237,7 +237,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   let quickScreen: QuickScreenFn;
 
   try {
-    const mod = (await import("../../../../../dist/src/brain/quick-screen.js")) as {
+    const mod = (await import("../../../../../src/brain/quick-screen.js")) as {
       quickScreen: QuickScreenFn;
     };
     quickScreen = mod.quickScreen;

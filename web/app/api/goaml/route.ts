@@ -5,13 +5,13 @@ import { getEntity } from "@/lib/config/entities";
 import { saveGoAmlSubmission } from "@/lib/server/goaml-vault";
 // Pull the compiled brain + integrations from dist — the other screening
 // routes do the same to keep cold-start below the 10s Netlify Function cap.
-import { serialiseGoamlXml } from "../../../../dist/src/integrations/goaml-xml.js";
+import { serialiseGoamlXml } from "../../../../src/integrations/goaml-xml.js";
 import type {
   GoAmlEnvelope,
   GoAmlPerson,
   GoAmlEntity,
   GoAmlReportCode,
-} from "../../../../dist/src/brain/goaml-shapes.js";
+} from "../../../../src/brain/goaml-shapes.js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

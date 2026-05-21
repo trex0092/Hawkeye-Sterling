@@ -25,8 +25,8 @@
 import { NextResponse } from "next/server";
 import { createHash } from "node:crypto";
 import { enforce } from "@/lib/server/enforce";
-import { renderEvidencePack } from "../../../../../dist/src/brain/pdf-evidence-pack.js";
-import type { BrainVerdict } from "../../../../../dist/src/brain/types.js";
+import { renderEvidencePack } from "../../../../../src/brain/pdf-evidence-pack.js";
+import type { BrainVerdict } from "../../../../../src/brain/types.js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

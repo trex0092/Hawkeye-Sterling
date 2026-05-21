@@ -17,7 +17,7 @@ import {
   extractFeatures,
   type AnomalyFeatureVector,
   type AnomalyTier,
-} from "../../../../dist/src/brain/streaming-anomaly.js";
+} from "../../../../src/brain/streaming-anomaly.js";
 
 export interface TxnFlagRecord {
   flagId: string;

@@ -6,7 +6,7 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
-import { analyseBenford } from "../../../../dist/src/brain/benford.js";
+import { analyseBenford } from "../../../../src/brain/benford.js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

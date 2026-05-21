@@ -30,8 +30,8 @@ let variantsOf: VariantsOfFn = (name) => [name];
 (async () => {
   try {
     const [m, t] = await Promise.all([
-      import("../../../../dist/src/brain/matching.js"),
-      import("../../../../dist/src/brain/translit.js"),
+      import("../../../../src/brain/matching.js"),
+      import("../../../../src/brain/translit.js"),
     ]);
     if (typeof (m as { matchEnsemble?: unknown }).matchEnsemble === "function")
       matchEnsemble = (m as { matchEnsemble: MatchEnsembleFn }).matchEnsemble;

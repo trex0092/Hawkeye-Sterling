@@ -58,7 +58,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   let runIngestionAll: (_label: string) => Promise<unknown>;
   try {
     const mod = (await import(
-      "../../../../../dist/src/ingestion/run-all.js" as string
+      "../../../../../src/ingestion/run-all.js" as string
     )) as { runIngestionAll: typeof runIngestionAll };
     runIngestionAll = mod.runIngestionAll;
   } catch (err) {

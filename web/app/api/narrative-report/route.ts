@@ -12,7 +12,7 @@ function escapeHtml(s: string): string {
 import {
   generateNarrativeReport,
   type NarrativeReportRequest,
-} from "../../../../dist/src/integrations/claudeAgent.js";
+} from "../../../../src/integrations/claudeAgent.js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

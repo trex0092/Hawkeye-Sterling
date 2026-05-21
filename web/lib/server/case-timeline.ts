@@ -19,7 +19,7 @@ import {
   buildTimeline,
   type TimelineEvent as BrainTimelineEvent,
   type TimelinePhase,
-} from "../../../dist/src/brain/investigation-timeline.js";
+} from "../../../src/brain/investigation-timeline.js";
 
 const ACTION_PHASE_HINT: Record<string, TimelinePhase> = {
   "subject.added":          "intake",

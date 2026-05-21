@@ -9,13 +9,13 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
-import { askComplianceQuestion } from "../../../../dist/src/integrations/complianceRag.js";
+import { askComplianceQuestion } from "../../../../src/integrations/complianceRag.js";
 import {
   invokeMlroAdvisor,
   type MlroAdvisorRequest,
-} from "../../../../dist/src/integrations/mlroAdvisor.js";
-import { scoreAdvisorAnswer } from "../../../../dist/src/integrations/qualityGates.js";
-import { classifyMlroQuestion } from "../../../../dist/src/brain/mlro-question-classifier.js";
+} from "../../../../src/integrations/mlroAdvisor.js";
+import { scoreAdvisorAnswer } from "../../../../src/integrations/qualityGates.js";
+import { classifyMlroQuestion } from "../../../../src/brain/mlro-question-classifier.js";
 import { gateMlroQuestion } from "@/lib/server/mlro-input-gate";
 
 import { getAnthropicClient } from "@/lib/server/llm";

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { withGuard } from "@/lib/server/guard";
-import { quickScreen as _quickScreen } from "../../../../dist/src/brain/quick-screen.js";
+import { quickScreen as _quickScreen } from "../../../../src/brain/quick-screen.js";
 import { parseMt103 } from "@/lib/server/mt103";
 import { loadCandidates } from "@/lib/server/candidates-loader";
 import type {
@@ -8,8 +8,8 @@ import type {
   QuickScreenResult,
   QuickScreenSubject,
 } from "@/lib/api/quickScreen.types";
-import { yenteMatch } from "../../../../dist/src/integrations/yente.js";
-import { scoreWallet } from "../../../../dist/src/integrations/cryptoRisk.js";
+import { yenteMatch } from "../../../../src/integrations/yente.js";
+import { scoreWallet } from "../../../../src/integrations/cryptoRisk.js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

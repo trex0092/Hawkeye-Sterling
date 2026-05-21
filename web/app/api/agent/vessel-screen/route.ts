@@ -8,8 +8,8 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
-import { vesselAisGapApply } from "../../../../../dist/src/brain/modes/wave3-vessel-ais-gap.js";
-import type { BrainContext } from "../../../../../dist/src/brain/types.js";
+import { vesselAisGapApply } from "../../../../../src/brain/modes/wave3-vessel-ais-gap.js";
+import type { BrainContext } from "../../../../../src/brain/types.js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

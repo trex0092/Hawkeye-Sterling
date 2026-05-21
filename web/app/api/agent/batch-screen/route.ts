@@ -15,9 +15,9 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
-import { quickScreen } from "../../../../../dist/src/brain/quick-screen.js";
-import { evaluateRedlines } from "../../../../../dist/src/brain/redlines.js";
-import { detectCrossRegimeConflict, type RegimeStatus } from "../../../../../dist/src/brain/cross-regime-conflict.js";
+import { quickScreen } from "../../../../../src/brain/quick-screen.js";
+import { evaluateRedlines } from "../../../../../src/brain/redlines.js";
+import { detectCrossRegimeConflict, type RegimeStatus } from "../../../../../src/brain/cross-regime-conflict.js";
 import { loadCandidates } from "@/lib/server/candidates-loader";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";

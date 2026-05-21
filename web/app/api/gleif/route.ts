@@ -4,7 +4,7 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
-import { lookupLei, searchGleif } from "../../../../dist/src/integrations/gleif.js";
+import { lookupLei, searchGleif } from "../../../../src/integrations/gleif.js";
 import { LIVE_GLEIF_ADAPTER } from "@/lib/intelligence/liveAdapters";
 import { withRetry } from "@/lib/server/circuitBreaker";
 

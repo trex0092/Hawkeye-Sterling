@@ -101,12 +101,12 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   try {
     const ingestion = await import(
-      "../../../../../dist/src/ingestion/index.js" as string
+      "../../../../../src/ingestion/index.js" as string
     ) as { SOURCE_ADAPTERS: typeof SOURCE_ADAPTERS };
     SOURCE_ADAPTERS = ingestion.SOURCE_ADAPTERS as typeof SOURCE_ADAPTERS;
 
     const blobsMod = await import(
-      "../../../../../dist/src/ingestion/blobs-store.js" as string
+      "../../../../../src/ingestion/blobs-store.js" as string
     ) as { getBlobsStore: typeof getBlobsStore };
     getBlobsStore = blobsMod.getBlobsStore;
   } catch (err) {

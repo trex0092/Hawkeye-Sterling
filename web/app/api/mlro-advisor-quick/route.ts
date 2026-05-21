@@ -50,8 +50,8 @@ let scoreAdvisorAnswer: ScoreFn = (_answer, _mode) => ({ passedQualityGate: true
 (async () => {
   try {
     const [cls, qg] = await Promise.all([
-      import("../../../../dist/src/brain/mlro-question-classifier.js"),
-      import("../../../../dist/src/integrations/qualityGates.js"),
+      import("../../../../src/brain/mlro-question-classifier.js"),
+      import("../../../../src/integrations/qualityGates.js"),
     ]);
     if (typeof (cls as { classifyMlroQuestion?: unknown }).classifyMlroQuestion === "function")
       classifyMlroQuestion = (cls as { classifyMlroQuestion: ClassifyFn }).classifyMlroQuestion;

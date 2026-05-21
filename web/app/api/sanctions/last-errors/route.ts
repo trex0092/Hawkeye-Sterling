@@ -49,7 +49,7 @@ export async function GET(req: Request): Promise<NextResponse> {
   let entries: IngestErrorEntry[] = [];
   try {
     const mod = (await import(
-      "../../../../../dist/src/ingestion/error-log.js" as string
+      "../../../../../src/ingestion/error-log.js" as string
     )) as {
       listRecentIngestErrors: (_limit?: number) => Promise<IngestErrorEntry[]>;
     };

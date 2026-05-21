@@ -13,7 +13,7 @@
 // jurisdictionHits[]
 
 import { NextResponse } from "next/server";
-import { classifyOnboardingRiskTier } from "../../../../dist/src/brain/onboarding-risk-tier.js";
+import { classifyOnboardingRiskTier } from "../../../../src/brain/onboarding-risk-tier.js";
 
 import { enforce } from "@/lib/server/enforce";
 export const runtime = "nodejs";
