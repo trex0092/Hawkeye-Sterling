@@ -372,11 +372,11 @@ export default function OngoingMonitorPage() {
           enableOsint,
         }),
       });
+      const body = await res.json().catch(() => ({})) as ({ error?: string } & Partial<EnrichResult>);
       if (!res.ok) {
-        const body = await res.json().catch(() => ({})) as { error?: string };
-        throw new Error(body.error ?? `Request failed (HTTP ${res.status}) — please retry`);
+        throw new Error((body as { error?: string }).error ?? `Request failed (HTTP ${res.status}) — please retry`);
       }
-      const data = await res.json() as EnrichResult;
+      const data = body as EnrichResult;
       if (!mountedRef.current) return;
       if (!data.ok) setEnrichError(data.error ?? "Enrichment failed — please retry");
       else setEnrichResult(data);

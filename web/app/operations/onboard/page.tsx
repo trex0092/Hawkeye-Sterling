@@ -461,6 +461,8 @@ export default function OnboardingWizardPage() {
       if (cancelled) return;
       setTierInfo(res);
       setTierLoading(false);
+    }).catch(() => {
+      if (!cancelled) setTierLoading(false);
     });
     return () => {
       cancelled = true;

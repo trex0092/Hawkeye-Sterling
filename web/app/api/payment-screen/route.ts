@@ -62,7 +62,10 @@ async function handlePaymentScreen(req: Request): Promise<NextResponse> {
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);
     console.error("[payment-screen] loadCandidates failed", detail);
-    candidates = [];
+    return NextResponse.json(
+      { ok: false, error: "Screening corpus unavailable — cannot perform payment screening. Please retry." },
+      { status: 503 },
+    );
   }
 
   const orderingName = parsed.ordering?.name;

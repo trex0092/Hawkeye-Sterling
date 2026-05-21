@@ -633,6 +633,7 @@ export default function ScreeningPage() {
   const [nlInterpretation, setNlInterpretation] = useState<string>("");
   const [nlConfidence, setNlConfidence] = useState<number>(0);
   const [nlReasoning, setNlReasoning] = useState<string>("");
+  const [nlError, setNlError] = useState<string | null>(null);
 
   const searchInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -859,6 +860,7 @@ export default function ScreeningPage() {
   const handleNLSearch = useCallback(async (q: string) => {
     if (!q.trim()) return;
     setNlSearchLoading(true);
+    setNlError(null);
     try {
       const slim = subjects.map((s) => ({
         id: s.id,
@@ -880,7 +882,10 @@ export default function ScreeningPage() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ query: q, subjects: slim }),
       });
-      if (res.ok) {
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({})) as { error?: string };
+        setNlError(body.error ?? `AI search failed (HTTP ${res.status}) — please retry`);
+      } else {
         const data = (await res.json()) as { ok: boolean; matchIds?: string[]; interpretation?: string; confidence?: number; reasoning?: string };
         if (data.ok && data.matchIds) {
           setNlMatchIds(new Set(data.matchIds));
@@ -888,9 +893,14 @@ export default function ScreeningPage() {
           setNlConfidence(typeof data.confidence === "number" ? data.confidence : 0);
           setNlReasoning(data.reasoning ?? "");
           setNlSearchActive(true);
+        } else {
+          setNlError("AI search returned no results — try rephrasing your query");
         }
       }
-    } catch (err) { console.warn("[hawkeye] NL search failed:", err); }
+    } catch (err) {
+      console.warn("[hawkeye] NL search failed:", err);
+      setNlError("AI search failed — please retry");
+    }
     finally { setNlSearchLoading(false); }
   }, [subjects]);
 
@@ -900,6 +910,7 @@ export default function ScreeningPage() {
     setNlInterpretation("");
     setNlConfidence(0);
     setNlReasoning("");
+    setNlError(null);
   }, []);
 
   // Export the filtered queue as a CSV the user downloads. Lets the
@@ -1722,6 +1733,15 @@ export default function ScreeningPage() {
                 onSave={(data) => handleSubmit(data, false)}
                 onCancel={() => setFormOpen(false)}
               />
+            </div>
+          )}
+
+          {/* NL search error banner */}
+          {nlError && (
+            <div className="mb-3 flex items-center gap-2 px-4 py-2.5 bg-red/10 border border-red/30 rounded-lg text-12">
+              <span className="text-red font-semibold">AI search failed</span>
+              <span className="text-ink-1 flex-1">{nlError}</span>
+              <button type="button" onClick={() => setNlError(null)} className="text-ink-3 hover:text-ink-0 text-12">✕</button>
             </div>
           )}
 

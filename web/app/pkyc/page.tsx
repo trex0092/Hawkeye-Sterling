@@ -114,8 +114,12 @@ export default function PKycPage() {
   async function handleForceRun(id: string) {
     try {
       const res = await fetch(`/api/pkyc/run?id=${encodeURIComponent(id)}&force=true`, { method: "POST", headers: authHeaders() });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(body.error ?? `HTTP ${res.status}`);
+      }
       const data = (await res.json()) as { ok?: boolean; error?: string; results?: { name: string; band?: string; composite?: number; changed?: boolean }[] };
-      if (!res.ok || data.ok === false) throw new Error(data.error ?? `HTTP ${res.status}`);
+      if (data.ok === false) throw new Error(data.error ?? `HTTP ${res.status}`);
       const r = data.results?.[0];
       setRunResult(r ? `${r.name}: ${r.band?.toUpperCase()} (${r.composite}/100) · ${r.changed ? "⚡ CHANGED" : "no change"}` : "done");
       void load();
@@ -146,8 +150,12 @@ export default function PKycPage() {
         apiDob = `${yyyy}-${mm}-${dd}`;
       }
       const res = await fetch("/api/pkyc", { method: "POST", headers: authHeaders(), body: JSON.stringify({ ...form, dob: apiDob }) });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(body.error ?? `HTTP ${res.status}`);
+      }
       const data = (await res.json()) as { ok?: boolean; error?: string };
-      if (!res.ok || data.ok === false) throw new Error(data.error ?? `HTTP ${res.status}`);
+      if (data.ok === false) throw new Error(data.error ?? `HTTP ${res.status}`);
       setShowEnroll(false);
       setForm({ name: "", entityType: "individual", jurisdiction: "", dob: "", cadence: "monthly", notes: "", mlro: "" });
       void load();

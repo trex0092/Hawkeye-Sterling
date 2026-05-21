@@ -38,6 +38,8 @@ interface WatchmanResponse {
   source: "watchman-moov";
   latencyMs: number;
   fetchedAt: string;
+  degraded?: boolean;
+  degradedReason?: string;
 }
 
 // Normalise a raw Watchman SDN entity into our standard hit shape.
@@ -100,7 +102,7 @@ async function fetchWatchman(name: string, limit: number): Promise<WatchmanRespo
 
     if (!res.ok) {
       console.warn(`[watchman-check] Watchman API HTTP ${res.status}`);
-      return { ok: true, subject: name, hits: [], totalHits: 0, listsChecked: [], aboveThreshold: 0, source: "watchman-moov", latencyMs: Date.now() - t0, fetchedAt };
+      return { ok: true, subject: name, hits: [], totalHits: 0, listsChecked: [], aboveThreshold: 0, source: "watchman-moov", latencyMs: Date.now() - t0, fetchedAt, degraded: true, degradedReason: `Watchman API returned HTTP ${res.status}` };
     }
 
     const data = await res.json() as Record<string, unknown>;
@@ -171,7 +173,8 @@ async function fetchWatchman(name: string, limit: number): Promise<WatchmanRespo
   } catch (err) {
     const isAbort = err instanceof Error && err.name === "AbortError";
     if (!isAbort) console.warn("[watchman-check] fetch failed:", err instanceof Error ? err.message : err);
-    return { ok: true, subject: name, hits: [], totalHits: 0, listsChecked: [], aboveThreshold: 0, source: "watchman-moov", latencyMs: Date.now() - t0, fetchedAt };
+    const degradedReason = isAbort ? "Watchman API timed out" : `Watchman API unreachable: ${err instanceof Error ? err.message : String(err)}`;
+    return { ok: true, subject: name, hits: [], totalHits: 0, listsChecked: [], aboveThreshold: 0, source: "watchman-moov", latencyMs: Date.now() - t0, fetchedAt, degraded: true, degradedReason };
   } finally {
     clearTimeout(timer);
   }

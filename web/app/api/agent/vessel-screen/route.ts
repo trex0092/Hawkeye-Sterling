@@ -78,7 +78,14 @@ async function handlePost(req: Request): Promise<NextResponse> {
     domains: ["sanctions", "tf"],
   };
 
-  const finding = await vesselAisGapApply(ctx);
+  let finding: Awaited<ReturnType<typeof vesselAisGapApply>>;
+  try {
+    finding = await vesselAisGapApply(ctx);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[vessel-screen] vesselAisGapApply failed:", msg);
+    return NextResponse.json({ ok: false, error: `Vessel analysis failed: ${msg}` }, { status: 500, headers: gateHeaders });
+  }
 
   // HS-code high-risk overlay.
   const dualUseFlags: string[] = [];

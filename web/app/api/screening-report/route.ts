@@ -283,7 +283,7 @@ function buildInitialScreeningNotes(b: ReportBody): string {
   if (hits.length > 0) {
     lines.push(`6. HITS DETAIL (${hits.length})`);
     for (const h of hits) {
-      const pct = Math.round(h.score * 100);
+      const pct = Math.round(h.score);
       lines.push(
         `• [${h.listId}] ${h.candidateName} — ${pct}% (${h.method})${h.phoneticAgreement ? " · phonetic" : ""}`,
       );
@@ -359,7 +359,7 @@ function buildOngoingSnapshotNotes(b: ReportBody): string {
   } else {
     lines.push(`Sanctions hits            : ${hits.length} across ${Array.from(new Set(hits.map((h) => h.listId))).length} list(s)`);
     for (const h of hits.slice(0, 6)) {
-      const pct = Math.round(h.score * 100);
+      const pct = Math.round(h.score);
       lines.push(
         `  • [${h.listId}] ${h.candidateName} — ${pct}% (${h.method})`,
       );

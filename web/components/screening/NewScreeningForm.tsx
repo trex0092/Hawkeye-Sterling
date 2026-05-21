@@ -136,6 +136,10 @@ export function NewScreeningForm({
             ...(form.alternateNames.length > 0 ? { aliases: form.alternateNames } : {}),
           }),
         });
+        if (!res.ok) {
+          if (!cancelled) setPepStatus("error");
+          return;
+        }
         const data = (await res.json()) as PepMatchResponse;
         if (cancelled) return;
         if (data.ok && data.hits.length > 0) {
