@@ -95,7 +95,7 @@ Generate a comprehensive, tailored EDD checklist with specific documents to obta
     if (!Array.isArray(result.questions)) result.questions = [];
     if (!Array.isArray(result.verifications)) result.verifications = [];
     if (!Array.isArray(result.redFlagsToMonitor)) result.redFlagsToMonitor = [];
-    return NextResponse.json(result, { headers: gate.headers });
+    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "cdd-review/edd-checklist temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });

@@ -61,6 +61,29 @@ interface CddAdequacy {
   summary: string;
 }
 
+// ── Policy Reviewer types ─────────────────────────────────────────────────────
+interface PolicyMissingProvision {
+  provision: string;
+  legalBasis: string;
+  severity: "critical" | "high" | "medium" | "low";
+  suggestedText: string;
+}
+interface PolicyOutdatedReference {
+  reference: string;
+  currentLaw: string;
+  detail: string;
+}
+interface PolicyReviewResult {
+  overallCompliance: "compliant" | "partially_compliant" | "non_compliant";
+  complianceScore: number;
+  missingProvisions: PolicyMissingProvision[];
+  outdatedReferences: PolicyOutdatedReference[];
+  strengths: string[];
+  recommendations: string[];
+  nextReviewDate: string;
+  regulatoryBasis: string;
+}
+
 // ── Review record types ───────────────────────────────────────────────────────
 type ReviewTier = "high" | "medium" | "standard";
 type ReviewStatus = "overdue" | "due-soon" | "current" | "unknown";
@@ -234,6 +257,16 @@ export default function CddReviewPage() {
   });
   const eddRef = useRef<HTMLDivElement>(null);
 
+  // Policy Reviewer state
+  const [policyOpen, setPolicyOpen] = useState(false);
+  const [policyText, setPolicyText] = useState("");
+  const [policyType, setPolicyType] = useState("AML/CFT Policy");
+  const [institutionType, setInstitutionType] = useState("UAE DPMS");
+  const [policyLastReview, setPolicyLastReview] = useState("");
+  const [policyResult, setPolicyResult] = useState<PolicyReviewResult | null>(null);
+  const [policyLoading, setPolicyLoading] = useState(false);
+  const [policyError, setPolicyError] = useState<string | null>(null);
+
   const mountedRef = useRef(true);
   useEffect(() => () => { mountedRef.current = false; }, []);
 
@@ -241,6 +274,7 @@ export default function CddReviewPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [sortCol, setSortCol] = useState<SortCol>("status");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => { setEddChecks(loadEddChecks()); }, []);
   useEffect(() => {
@@ -262,6 +296,40 @@ export default function CddReviewPage() {
     setEddError(null);
     setEddChecks({});
     saveEddChecks({});
+  };
+
+  const runPolicyReview = async () => {
+    setPolicyLoading(true);
+    setPolicyResult(null);
+    setPolicyError(null);
+    try {
+      const res = await fetch("/api/policy-reviewer", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          policyText,
+          policyType,
+          institutionType,
+          lastReviewDate: policyLastReview || undefined,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({})) as { error?: string };
+        if (mountedRef.current) setPolicyError(err.error ?? `Server error ${res.status} — please retry`);
+        return;
+      }
+      const data = await res.json() as PolicyReviewResult & { ok?: boolean };
+      if (!mountedRef.current) return;
+      if (typeof data.complianceScore !== "number") {
+        setPolicyError("Unexpected response from server — please retry");
+        return;
+      }
+      setPolicyResult(data);
+    } catch (err) {
+      if (mountedRef.current) setPolicyError(err instanceof Error ? err.message : "Network error — please retry");
+    } finally {
+      if (mountedRef.current) setPolicyLoading(false);
+    }
   };
 
   const runEddChecklist = async () => {
@@ -314,9 +382,13 @@ export default function CddReviewPage() {
   const enriched = useMemo<EnrichedRecord[]>(() => all.map((r) => ({ ...r, ...deriveStatus(r) })), [all]);
 
   const filtered = useMemo<EnrichedRecord[]>(() => {
-    if (statusFilter === "all") return enriched;
-    return enriched.filter((r) => r.status === statusFilter);
-  }, [enriched, statusFilter]);
+    let result = statusFilter === "all" ? enriched : enriched.filter((r) => r.status === statusFilter);
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter((r) => r.subject.toLowerCase().includes(q));
+    }
+    return result;
+  }, [enriched, statusFilter, searchQuery]);
 
   const sorted = useMemo<EnrichedRecord[]>(() => {
     return [...filtered].sort((a, b) => {
@@ -374,12 +446,35 @@ export default function CddReviewPage() {
     const today = formatDMY(nowIso);
     const update = (r: ReviewRecord) =>
       r.id === id ? { ...r, lastReview: today, lastOutcome: outcome, lastOutcomeAt: nowIso } : r;
+    const target = all.find((r) => r.id === id);
     if (id.startsWith("manual-")) {
       const next = manualRecords.map(update);
       saveManual(next);
       setManualRecords(next);
     } else {
       setCaseRecords((prev) => prev.map(update));
+    }
+    if (target) {
+      const outcomeMap: Record<ReviewOutcome, "adequate" | "marginal" | "inadequate"> = {
+        passed: "adequate",
+        deferred: "marginal",
+        escalated: "marginal",
+        exited: "inadequate",
+      };
+      void fetch("/api/cdd-reviews", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          id: id.startsWith("manual-") ? id : undefined,
+          subject: target.subject,
+          tier: target.tier,
+          reviewDate: new Date().toISOString().split("T")[0],
+          notes: target.notes,
+          outcome: outcomeMap[outcome],
+          status: "completed",
+          caseId: id.startsWith("case-") ? id.slice(5) : undefined,
+        }),
+      }).catch((err) => console.warn("[cdd-review] server sync failed:", err));
     }
   };
 
@@ -866,6 +961,255 @@ export default function CddReviewPage() {
         )}
       </div>
 
+      {/* ── Section 3.5: AML Policy Reviewer ── */}
+      <div className="mt-6 bg-bg-panel border border-hair-2 rounded-xl overflow-hidden">
+        <div className="px-4 py-3 border-b border-hair-2 bg-bg-1 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-14">📜</span>
+            <span className="text-13 font-semibold text-ink-0">AML Policy Reviewer</span>
+            <span className="text-10 font-mono text-ink-3 ml-1">AI compliance gap analysis · FDL 10/2025</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setPolicyOpen((v) => !v)}
+            className="flex items-center gap-1 text-11 font-medium px-3 py-1 rounded border border-hair-2 text-ink-2 hover:border-brand hover:text-brand transition-colors"
+          >
+            {policyOpen ? "Collapse" : "Expand"} <ChevronIcon open={policyOpen} />
+          </button>
+        </div>
+
+        {policyOpen && (
+          <div className="p-4 space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="flex flex-col gap-1">
+                <label className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3">Policy Type</label>
+                <select
+                  value={policyType}
+                  onChange={(e) => setPolicyType(e.target.value)}
+                  className="text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand transition-colors"
+                >
+                  <option>AML/CFT Policy</option>
+                  <option>KYC / CDD Procedures</option>
+                  <option>EDD Procedure</option>
+                  <option>STR / SAR Procedure</option>
+                  <option>Sanctions Policy</option>
+                  <option>PF / EWRA Policy</option>
+                  <option>MLRO Terms of Reference</option>
+                </select>
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3">Institution Type</label>
+                <select
+                  value={institutionType}
+                  onChange={(e) => setInstitutionType(e.target.value)}
+                  className="text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand transition-colors"
+                >
+                  <option>UAE DPMS</option>
+                  <option>UAE Financial Institution</option>
+                  <option>DNFBP</option>
+                  <option>VASP / Crypto Exchange</option>
+                  <option>Correspondent Bank</option>
+                  <option>NPO / Charity</option>
+                </select>
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3">
+                  Last Policy Review <span className="font-normal normal-case text-ink-4">(optional)</span>
+                </label>
+                <input
+                  type="text"
+                  value={policyLastReview}
+                  onChange={(e) => setPolicyLastReview(e.target.value)}
+                  placeholder="e.g. January 2024"
+                  className="text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand transition-colors"
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3">
+                Policy Text <span className="text-red">*</span>
+              </label>
+              <textarea
+                value={policyText}
+                onChange={(e) => setPolicyText(e.target.value)}
+                rows={8}
+                placeholder="Paste your AML/CFT policy document text here. The AI will analyse it against FDL 10/2025, CBUAE AML Standards, and FATF Recommendations…"
+                className="w-full text-12 px-3 py-2 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand transition-colors resize-y font-mono leading-relaxed"
+              />
+              <div className="flex justify-end">
+                <span className="text-9 font-mono text-ink-3">{policyText.length.toLocaleString()} chars</span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => { void runPolicyReview(); }}
+                disabled={policyLoading || !policyText.trim()}
+                className="text-12 font-semibold px-5 py-2 rounded bg-brand text-white border border-brand hover:bg-brand-hover hover:border-brand-hover disabled:opacity-40 transition-colors flex items-center gap-2"
+              >
+                {policyLoading ? (
+                  <>
+                    <svg className="animate-spin w-3.5 h-3.5" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                    </svg>
+                    Analysing policy…
+                  </>
+                ) : "✦ Review Policy →"}
+              </button>
+              {policyResult && (
+                <button
+                  type="button"
+                  onClick={() => { setPolicyResult(null); setPolicyError(null); }}
+                  className="text-11 font-medium px-3 py-2 rounded border border-hair-2 text-ink-3 hover:text-red hover:border-red/40 transition-colors"
+                >
+                  Clear results
+                </button>
+              )}
+            </div>
+
+            {policyError && (
+              <div className="rounded-lg border border-red/30 bg-red-dim px-4 py-3 flex items-start gap-2">
+                <span className="text-red text-14 shrink-0">⚠</span>
+                <div>
+                  <p className="text-12 font-semibold text-red">Policy review failed</p>
+                  <p className="text-11 text-ink-2 mt-0.5">{policyError}</p>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {policyResult && (
+          <div className="border-t border-hair-2 p-4 space-y-5">
+            {/* Score + status row */}
+            <div className="flex items-center gap-6 flex-wrap">
+              <div className="flex items-center gap-4">
+                <div className={`w-16 h-16 rounded-full border-4 flex flex-col items-center justify-center ${
+                  policyResult.complianceScore >= 80
+                    ? "border-green text-green"
+                    : policyResult.complianceScore >= 60
+                      ? "border-amber text-amber"
+                      : "border-red text-red"
+                }`}>
+                  <span className="text-18 font-bold leading-none">{policyResult.complianceScore}</span>
+                  <span className="text-8 font-mono text-ink-3 mt-0.5">/ 100</span>
+                </div>
+                <div>
+                  <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-1">Compliance Score</div>
+                  <span className={`font-mono text-11 font-semibold px-2.5 py-1 rounded uppercase ${
+                    policyResult.overallCompliance === "compliant"
+                      ? "bg-green-dim text-green border border-green/30"
+                      : policyResult.overallCompliance === "partially_compliant"
+                        ? "bg-amber-dim text-amber border border-amber/30"
+                        : "bg-red-dim text-red border border-red/30"
+                  }`}>
+                    {policyResult.overallCompliance.replace(/_/g, " ")}
+                  </span>
+                </div>
+              </div>
+              {policyResult.regulatoryBasis && (
+                <div className="flex-1 text-11 text-ink-2 leading-relaxed">{policyResult.regulatoryBasis}</div>
+              )}
+              {policyResult.nextReviewDate && (
+                <div className="text-right shrink-0">
+                  <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-0.5">Next Policy Review</div>
+                  <span className="font-mono text-11 font-semibold text-brand">{policyResult.nextReviewDate}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Missing Provisions */}
+            {policyResult.missingProvisions.length > 0 && (
+              <div>
+                <p className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-2">
+                  Missing Provisions <span className="text-red ml-1">({policyResult.missingProvisions.length})</span>
+                </p>
+                <div className="space-y-2">
+                  {policyResult.missingProvisions.map((p, i) => {
+                    const sevCls = p.severity === "critical"
+                      ? "bg-red text-white"
+                      : p.severity === "high"
+                        ? "bg-red-dim text-red border border-red/30"
+                        : p.severity === "medium"
+                          ? "bg-amber-dim text-amber border border-amber/30"
+                          : "bg-bg-2 text-ink-2 border border-hair-2";
+                    return (
+                      <div key={i} className="bg-bg-1 border border-hair-2 rounded-lg p-3 space-y-1">
+                        <div className="flex items-start gap-2 flex-wrap">
+                          <span className={`shrink-0 font-mono text-9 font-semibold px-1.5 py-px rounded uppercase ${sevCls}`}>
+                            {p.severity}
+                          </span>
+                          <span className="text-12 font-semibold text-ink-0 flex-1">{p.provision}</span>
+                        </div>
+                        <div className="font-mono text-9 px-1.5 py-px inline-flex rounded bg-brand-dim text-brand-deep border border-brand/10">
+                          {p.legalBasis}
+                        </div>
+                        {p.suggestedText && (
+                          <p className="text-11 text-ink-2 italic mt-1 pl-2 border-l-2 border-brand/30">{p.suggestedText}</p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Outdated References */}
+            {policyResult.outdatedReferences.length > 0 && (
+              <div>
+                <p className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-2">
+                  Outdated References <span className="text-amber ml-1">({policyResult.outdatedReferences.length})</span>
+                </p>
+                <div className="space-y-2">
+                  {policyResult.outdatedReferences.map((r, i) => (
+                    <div key={i} className="bg-bg-1 border border-hair-2 rounded-lg p-3">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-mono text-11 line-through text-ink-3">{r.reference}</span>
+                        <span className="text-ink-3 text-10">→</span>
+                        <span className="font-mono text-11 font-semibold text-ink-0">{r.currentLaw}</span>
+                      </div>
+                      {r.detail && <p className="text-11 text-ink-2 mt-1">{r.detail}</p>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {policyResult.strengths.length > 0 && (
+                <div>
+                  <p className="text-10 font-semibold uppercase tracking-wide-3 text-green mb-2">Strengths</p>
+                  <ul className="space-y-1.5">
+                    {policyResult.strengths.map((s, i) => (
+                      <li key={i} className="flex items-start gap-1.5">
+                        <span className="text-green mt-0.5 shrink-0">✓</span>
+                        <span className="text-12 text-ink-1">{s}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {policyResult.recommendations.length > 0 && (
+                <div>
+                  <p className="text-10 font-semibold uppercase tracking-wide-3 text-amber mb-2">Recommendations</p>
+                  <ul className="space-y-1.5">
+                    {policyResult.recommendations.map((r, i) => (
+                      <li key={i} className="flex items-start gap-1.5">
+                        <span className="text-amber mt-0.5 shrink-0">→</span>
+                        <span className="text-12 text-ink-1">{r}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* ── Section 4: Add Subject Form ── */}
       <div className="bg-bg-panel border border-hair-2 rounded-lg p-4 mt-6">
         <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2 mb-3">Add subject to review register</div>
@@ -911,7 +1255,13 @@ export default function CddReviewPage() {
       <div className="mt-4 space-y-2">
         {/* Filter bar + export */}
         <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div className="flex items-center gap-1 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap">
+            <input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search subjects…"
+              className="text-11 px-3 py-1 rounded border border-hair-2 bg-bg-panel text-ink-0 focus:outline-none focus:border-brand transition-colors min-w-[150px]"
+            />
             {(["all", "overdue", "due-soon", "current", "unknown"] as StatusFilter[]).map((f) => (
               <button
                 key={f}
