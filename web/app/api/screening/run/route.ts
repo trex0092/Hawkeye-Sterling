@@ -350,41 +350,6 @@ export async function POST(req: Request): Promise<NextResponse> {
           }),
         });
         if (!res.ok) {
-          const body = await res.text().catch(() => "");
-          console.warn("[screening/run] auto-case creation failed:", res.status, body.slice(0, 200));
-        }
-      } catch (err) {
-        console.warn("[screening/run] auto-case creation error:", err instanceof Error ? err.message : String(err));
-      }
-    })();
-  }
-
-  // Auto-create compliance case when hits are found (fire-and-forget).
-  if (result.hits.length > 0) {
-    void (async () => {
-      try {
-        const baseUrl = process.env["NEXT_PUBLIC_APP_URL"] ?? "http://localhost:3000";
-        const res = await fetch(`${baseUrl}/api/hs-cases`, {
-          method: "POST",
-          headers: {
-            "content-type": "application/json",
-            "x-api-key": process.env["ADMIN_TOKEN"] ?? "",
-          },
-          body: JSON.stringify({
-            subjectName: subject.name,
-            subjectId: resultId,
-            severity: result.severity,
-            hits: result.hits.map((h) => ({
-              listId: h.listId,
-              listRef: h.listRef,
-              candidateName: h.candidateName,
-              matchScore: h.score,
-            })),
-            linkedAuditSeq: undefined,
-            createdBy: gate.keyId,
-          }),
-        });
-        if (!res.ok) {
           const errBody = await res.text().catch(() => "");
           console.warn("[screening/run] auto-case creation failed:", res.status, errBody.slice(0, 200));
         } else {

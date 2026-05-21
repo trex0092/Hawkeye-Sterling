@@ -106,10 +106,10 @@ function normaliseSubjectName(name: string): string {
 }
 
 function scoreToBand(score: number): string {
-  if (score >= 85) return "critical";
-  if (score >= 70) return "high";
-  if (score >= 50) return "medium";
-  if (score >= 25) return "low";
+  if (score >= 95) return "critical";
+  if (score >= 85) return "high";
+  if (score >= 70) return "medium";
+  if (score > 0) return "low";
   return "clear";
 }
 
@@ -264,8 +264,8 @@ export async function POST(req: Request): Promise<NextResponse> {
       );
 
       const topScore = (raw as { topScore?: number }).topScore ?? 0;
-      type HitLike = { score?: number; listId?: string; name?: string };
-      const hits = ((raw as { results?: HitLike[] }).results ?? []).filter((r) => (r.score ?? 0) >= threshold);
+      type HitLike = { score?: number; listId?: string; candidateName?: string };
+      const hits = ((raw as { hits?: HitLike[] }).hits ?? []).filter((r) => (r.score ?? 0) >= threshold);
       const listIds = [...new Set(hits.map((h) => h.listId ?? "unknown").filter(Boolean))];
       const topHit = hits.reduce<HitLike | null>(
         (best, h) => (!best || (h.score ?? 0) > (best.score ?? 0) ? h : best),
@@ -280,7 +280,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         hitCount: hits.length,
         recommendation: scoreToRecommendation(topScore),
         lists: listIds,
-        ...(topHit?.name ? { topHitName: topHit.name } : {}),
+        ...(topHit?.candidateName ? { topHitName: topHit.candidateName } : {}),
       });
     } catch (err) {
       console.warn("[screen/batch] subject screening failed:", err instanceof Error ? err.message : String(err));

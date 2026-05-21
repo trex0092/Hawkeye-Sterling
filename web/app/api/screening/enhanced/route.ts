@@ -33,7 +33,7 @@ const _ADMIN_TOKEN = process.env.ADMIN_TOKEN ?? "";
 interface ScreeningHit {
   listId?: string;
   listRef?: string;
-  name?: string;
+  candidateName?: string;
   score?: number;
   matchRationale?: string;
   sourceRef?: string;
@@ -157,7 +157,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     for (const hit of hits) {
       const listId = hit.listId ?? "unknown";
       // EN-2: use same key formula in both storage and lookup
-      const hitKey = hit.listRef ?? hit.name ?? "unknown";
+      const hitKey = hit.listRef ?? hit.candidateName ?? "unknown";
       const candidate = subjectName;
       const rawScore = (hit.score ?? 0) / 100;
       const adj = adjustScore(rawScore, listId, hitKey, candidate, fbStats);
@@ -190,7 +190,7 @@ export async function POST(req: Request): Promise<NextResponse> {
           messages: [{
             role: "user",
             content: `Subject: "${subjectName}" (${sanitizeField(body.subject?.nationality ?? "nationality unknown", 100)}, DOB: ${sanitizeField(body.subject?.dob ?? "not provided", 50)})
-Hit: "${hit.name}" on list ${hit.listId ?? "unknown"} (ref: ${hit.listRef ?? "unknown"})
+Hit: "${hit.candidateName}" on list ${hit.listId ?? "unknown"} (ref: ${hit.listRef ?? "unknown"})
 Match score: ${hit.score ?? 0}/100
 Rationale: ${hit.matchRationale ?? "none provided"}
 Assess: true match or false positive?`,
@@ -198,9 +198,9 @@ Assess: true match or false positive?`,
         });
         const raw = res.content[0]?.type === "text" ? (res.content[0] as { type: "text"; text: string }).text : "{}";
         const parsed = JSON.parse(raw.match(/\{[\s\S]*\}/)?.[0] ?? "{}") as { confidenceScore?: number; recommendation?: string; reasoning?: string };
-        const fbAdj = feedbackAdjustments[hit.listRef ?? hit.name ?? "unknown"];
+        const fbAdj = feedbackAdjustments[hit.listRef ?? hit.candidateName ?? "unknown"];
         triageResults.push({
-          hitRef: hit.listRef ?? hit.name ?? String(hit.score),
+          hitRef: hit.listRef ?? hit.candidateName ?? String(hit.score),
           confidenceScore: parsed.confidenceScore ?? (hit.score ?? 50),
           recommendation: (parsed.recommendation as LlmTriageResult["recommendation"]) ?? "manual_review",
           reasoning: parsed.reasoning ?? "",
@@ -216,7 +216,7 @@ Assess: true match or false positive?`,
   // EN-3: collect ALL listRef values per deduplicated entry, not just the first
   const merged: Record<string, { hit: ScreeningHit; lists: string[]; refs: string[] }> = {};
   for (const hit of hits) {
-    const key = (hit.name ?? "").toLowerCase().replace(/\s+/g, " ").trim();
+    const key = (hit.candidateName ?? "").toLowerCase().replace(/\s+/g, " ").trim();
     if (merged[key]) {
       merged[key]!.lists.push(hit.listId ?? "unknown");
       if (hit.listRef) merged[key]!.refs.push(hit.listRef);
