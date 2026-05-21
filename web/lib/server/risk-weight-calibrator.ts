@@ -112,6 +112,9 @@ export async function calibrateWeights(): Promise<{ current: RiskWeights; propos
 
   // Re-normalise to sum=1
   const total = Object.values(proposed).reduce((s, v) => s + v, 0);
+  if (total === 0) {
+    return { current, proposed: current, changed: false, note: "All proposed weights summed to zero — normalisation skipped, keeping current weights" };
+  }
   const keys = Object.keys(proposed) as (keyof RiskWeights)[];
   keys.forEach((k) => { proposed[k] = +(proposed[k]! / total).toFixed(4); });
 
