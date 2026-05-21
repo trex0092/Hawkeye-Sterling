@@ -94,7 +94,7 @@ export async function GET(req: Request): Promise<NextResponse> {
           : `CFS index contains ${cfsEntities.toLocaleString("en-US")} entities from ${cfsIndexed} files.`,
       },
     },
-  });
+  }, { headers: gate.headers });
 }
 
 export async function OPTIONS(): Promise<NextResponse> {

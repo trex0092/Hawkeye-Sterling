@@ -20,7 +20,7 @@ export async function GET(req: Request): Promise<NextResponse> {
   if (!subjectName) {
     return NextResponse.json(
       { ok: false, error: "subject query param required. Example: ?subject=John+Doe" },
-      { status: 400 },
+      { status: 400, headers: gate.headers },
     );
   }
   const body = {

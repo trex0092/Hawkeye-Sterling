@@ -141,7 +141,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (!token) {
     return NextResponse.json(
       { ok: false, error: "ASANA_TOKEN is not set in Netlify environment variables." },
-      { status: 503 },
+      { status: 503, headers: gate.headers },
     );
   }
   const workspace = asanaGids.workspace();
@@ -156,7 +156,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (!me?.data?.name) {
     return NextResponse.json(
       { ok: false, error: "ASANA_TOKEN is invalid or expired." },
-      { status: 401 },
+      { status: 401, headers: gate.headers },
     );
   }
 

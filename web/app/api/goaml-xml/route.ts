@@ -375,7 +375,7 @@ export async function POST(req: Request): Promise<Response> {
   try {
     body = (await req.json()) as GoAmlXmlInput;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON body." }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid JSON body." }, { status: 400, headers: gate.headers });
   }
 
   const now = new Date();

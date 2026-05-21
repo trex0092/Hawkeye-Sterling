@@ -481,11 +481,11 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as Partial<CryptoTracingBody>;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400, headers: gate.headers });
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "crypto-tracing temporarily unavailable - please retry." }, { status: 503 });
+  if (!apiKey) return NextResponse.json({ ok: false, error: "crypto-tracing temporarily unavailable - please retry." }, { status: 503, headers: gate.headers });
 
   try {
     const client = getAnthropicClient(apiKey, 55_000);
@@ -558,9 +558,9 @@ Perform a comprehensive blockchain forensics and crypto AML analysis. Assess all
     if (!Array.isArray(result.immediateActions)) result.immediateActions = [];
     if (!Array.isArray(result.investigativeNextSteps)) result.investigativeNextSteps = [];
     if (!Array.isArray(result.blockchainForensicsTools)) result.blockchainForensicsTools = [];
-    return NextResponse.json(result);
+    return NextResponse.json(result, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
-    return NextResponse.json({ ok: false, error: "crypto-tracing temporarily unavailable - please retry." }, { status: 503 });
+    return NextResponse.json({ ok: false, error: "crypto-tracing temporarily unavailable - please retry." }, { status: 503, headers: gate.headers });
   }
 }

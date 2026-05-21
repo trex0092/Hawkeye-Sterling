@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ ok: false, error: 'Invalid JSON body' }, { status: 400 });
+    return NextResponse.json({ ok: false, error: 'Invalid JSON body' }, { status: 400, headers: gate.headers });
   }
 
   const raw = (body ?? {}) as Record<string, unknown>;
@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
   const anchorEntity = raw['anchorEntity'] as string | undefined;
 
   if (!Array.isArray(records) || records.length === 0) {
-    return NextResponse.json({ ok: false, error: 'records array of CorporateRegistryRecord required' }, { status: 400 });
+    return NextResponse.json({ ok: false, error: 'records array of CorporateRegistryRecord required' }, { status: 400, headers: gate.headers });
   }
 
   // Build graph from registry records
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
     : rootIds[0];
 
   if (!anchorId) {
-    return NextResponse.json({ ok: false, error: 'Could not establish anchor entity in graph' }, { status: 422 });
+    return NextResponse.json({ ok: false, error: 'Could not establish anchor entity in graph' }, { status: 422, headers: gate.headers });
   }
 
   const anchorNode = graph.node(anchorId);

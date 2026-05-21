@@ -212,6 +212,6 @@ export async function GET(req: Request): Promise<NextResponse> {
       runtime: "nodejs",
       ...(authenticated ? { buildId: BUILD_ID, commitRef: COMMIT_REF } : {}),
     },
-    { status: httpStatus },
+    { status: httpStatus, headers: gate.ok ? gate.headers : {} },
   );
 }

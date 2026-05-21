@@ -32,22 +32,22 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   let body: Record<string, unknown>;
   try { body = (await req.json()) as Record<string, unknown>; }
-  catch { return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 }); }
+  catch { return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400, headers: gate.headers }); }
 
   const { subjectId, subjectName, currentRiskCategory, dueDiligence, nextReviewDate,
           activeCaseId, lastScreenedAt, isPep, hasStrSarOnRecord, notes } = body;
 
   if (!subjectId || typeof subjectId !== "string") {
-    return NextResponse.json({ ok: false, error: "subjectId required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "subjectId required" }, { status: 400, headers: gate.headers });
   }
   if (!subjectName || typeof subjectName !== "string") {
-    return NextResponse.json({ ok: false, error: "subjectName required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "subjectName required" }, { status: 400, headers: gate.headers });
   }
   if (!currentRiskCategory || !["LOW","MEDIUM","HIGH","CRITICAL"].includes(currentRiskCategory as string)) {
-    return NextResponse.json({ ok: false, error: "currentRiskCategory required: LOW, MEDIUM, HIGH, CRITICAL" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "currentRiskCategory required: LOW, MEDIUM, HIGH, CRITICAL" }, { status: 400, headers: gate.headers });
   }
   if (!nextReviewDate || typeof nextReviewDate !== "string") {
-    return NextResponse.json({ ok: false, error: "nextReviewDate required (ISO)" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "nextReviewDate required (ISO)" }, { status: 400, headers: gate.headers });
   }
 
   const profile = await upsertSubject(tenant, subjectId as string, {

@@ -44,7 +44,7 @@ export async function GET(req: Request): Promise<NextResponse> {
         ? "Upstash Redis connected — GDELT cache persists across Lambda cold starts."
         : "Redis not configured — GDELT cache is in-memory only (resets on cold start).",
     },
-  });
+  }, { headers: gate.headers });
 }
 
 export async function OPTIONS(): Promise<NextResponse> {

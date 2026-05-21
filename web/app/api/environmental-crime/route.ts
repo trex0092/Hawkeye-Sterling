@@ -124,11 +124,11 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400, headers: gate.headers });
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "environmental-crime temporarily unavailable - please retry." }, { status: 503 });
+  if (!apiKey) return NextResponse.json({ ok: false, error: "environmental-crime temporarily unavailable - please retry." }, { status: 503, headers: gate.headers });
 
   try {
     const client = getAnthropicClient(apiKey, 55_000);
@@ -169,9 +169,9 @@ Produce a fully weaponized environmental crime risk assessment covering all appl
     if (!Array.isArray(result.regulatoryObligations)) result.regulatoryObligations = [];
     if (!Array.isArray(result.redFlags)) result.redFlags = [];
     if (!Array.isArray(result.recommendedActions)) result.recommendedActions = [];
-    return NextResponse.json(result);
+    return NextResponse.json(result, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
-    return NextResponse.json({ ok: false, error: "environmental-crime temporarily unavailable - please retry." }, { status: 503 });
+    return NextResponse.json({ ok: false, error: "environmental-crime temporarily unavailable - please retry." }, { status: 503, headers: gate.headers });
   }
 }
