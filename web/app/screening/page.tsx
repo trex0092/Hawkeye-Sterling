@@ -886,7 +886,7 @@ export default function ScreeningPage() {
         const body = await res.json().catch(() => ({})) as { error?: string };
         setNlError(body.error ?? `AI search failed (HTTP ${res.status}) — please retry`);
       } else {
-        const data = (await res.json()) as { ok: boolean; matchIds?: string[]; interpretation?: string; confidence?: number; reasoning?: string };
+        const data = await res.json().catch(() => ({})) as { ok: boolean; matchIds?: string[]; interpretation?: string; confidence?: number; reasoning?: string };
         if (data.ok && data.matchIds) {
           setNlMatchIds(new Set(data.matchIds));
           setNlInterpretation(data.interpretation ?? q);
@@ -1385,7 +1385,7 @@ export default function ScreeningPage() {
         if (mountedRef.current) setRescreenError(`Re-screen failed — server ${res.status}`);
         return;
       }
-      const data = (await res.json()) as BulkRescreenResult;
+      const data = await res.json().catch(() => ({})) as BulkRescreenResult;
       if (!mountedRef.current) return;
       if (data.ok) {
         setRescreenResult(data);

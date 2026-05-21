@@ -51,7 +51,7 @@ async function runTypologyMatch(record: TxnFlagRecord): Promise<TypologyResult |
       signal: AbortSignal.timeout(20_000),
     });
     if (!res.ok) return null;
-    return (await res.json()) as TypologyResult;
+    return await res.json().catch(() => ({})) as TypologyResult;
   } catch {
     return null;
   }

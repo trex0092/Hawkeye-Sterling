@@ -119,7 +119,7 @@ export function AIDecisionEngine({
           notes: subject.notes,
         }),
       });
-      const data = (await res.json()) as DecisionResponse | { ok: false; error: string };
+      const data = await res.json().catch(() => ({})) as DecisionResponse | { ok: false; error: string };
       if (!res.ok || !data.ok) {
         setState({ phase: "error", message: (data as { error?: string }).error ?? "Decision engine error" });
         return;
@@ -160,7 +160,7 @@ export function AIDecisionEngine({
           notes,
         }),
       });
-      const d = (await res.json()) as { total?: number; acceptanceRate?: number | null };
+      const d = await res.json().catch(() => ({})) as { total?: number; acceptanceRate?: number | null };
       if (typeof d.total === "number") {
         setLearningStats({ total: d.total, acceptanceRate: d.acceptanceRate ?? null });
       }

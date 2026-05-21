@@ -131,7 +131,7 @@ export default function CryptoRiskPage() {
         console.error(`[hawkeye] crypto-threat HTTP ${res.status}`);
         return;
       }
-      const data = await res.json() as { ok: boolean } & CryptoThreat;
+      const data = await res.json().catch(() => ({})) as { ok: boolean } & CryptoThreat;
       if (!mountedRef.current) return;
       if (data.ok) setThreat(data);
     } catch (err) {
@@ -152,7 +152,7 @@ export default function CryptoRiskPage() {
         const body = await res.json().catch(() => ({})) as { error?: string };
         throw new Error(body.error ?? `Request failed (HTTP ${res.status}) — please retry`);
       }
-      const data = await res.json() as WalletRisk;
+      const data = await res.json().catch(() => ({})) as WalletRisk;
       if (!mountedRef.current) return;
       if (!data.ok) setError(data.error ?? `HTTP ${res.status}`);
       else setResult(data);

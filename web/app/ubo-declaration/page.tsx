@@ -88,7 +88,7 @@ export default function UboDeclarationPage() {
         body: JSON.stringify({ entity: entityName, registered: registeredIn, ubos: uboList }),
       });
       if (res.ok) {
-        const data = (await res.json()) as UboRisk;
+        const data = await res.json().catch(() => ({})) as UboRisk;
         if (!mountedRef.current) return;
         setUboRisk(data);
       } else {

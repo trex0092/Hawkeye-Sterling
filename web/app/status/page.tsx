@@ -906,7 +906,7 @@ function AsanaRebuildSection() {
       const res = await fetch("/api/asana-create-missing", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
       let json: { ok: boolean; results?: CmResult[]; envBlock?: string; summary?: { created: number; alreadyExists: number; failed: number }; error?: string };
       try {
-        json = await res.json() as typeof json;
+        json = await res.json().catch(() => ({})) as typeof json;
       } catch {
         if (mountedRef.current) {
           setCmErr(`Server error (HTTP ${res.status}) — check Netlify function logs.`);
@@ -937,7 +937,7 @@ function AsanaRebuildSection() {
       const res = await fetch("/api/asana-rebuild-sections", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
       let data: { ok: boolean; results?: typeof results; error?: string; authenticatedAs?: string };
       try {
-        data = await res.json() as typeof data;
+        data = await res.json().catch(() => ({})) as typeof data;
       } catch {
         if (mountedRef.current) {
           setErrMsg(`Server error (HTTP ${res.status}) — the function may have timed out. Check Netlify function logs.`);

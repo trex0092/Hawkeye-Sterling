@@ -240,7 +240,7 @@ export default function AdverseMediaLookbackPage() {
         body: JSON.stringify({ subject, entries: subjectEntries }),
       });
       if (res.ok) {
-        const data = (await res.json()) as AmAssessment;
+        const data = await res.json().catch(() => ({})) as AmAssessment;
         if (!mountedRef.current) return;
         setAssessment((prev) => ({ ...prev, [subject]: data }));
       } else {
@@ -274,7 +274,7 @@ export default function AdverseMediaLookbackPage() {
         body: JSON.stringify({ subjectName: subject, articles }),
       });
       if (res.ok) {
-        const data = (await res.json()) as CrossCorrelateResult;
+        const data = await res.json().catch(() => ({})) as CrossCorrelateResult;
         if (!mountedRef.current) return;
         setCorrelations((prev) => ({ ...prev, [subject]: data }));
       } else {

@@ -195,7 +195,7 @@ export default function EmployeesPage() {
         body: JSON.stringify({ employees: mapped, today: new Date().toISOString().slice(0, 10) }),
       });
       if (res.ok) {
-        const data = (await res.json()) as EmployeeRisk;
+        const data = await res.json().catch(() => ({})) as EmployeeRisk;
         if (mountedRef.current) setEmpRisk(data);
       } else {
         const body = await res.text().catch(() => "");

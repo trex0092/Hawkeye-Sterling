@@ -5865,7 +5865,7 @@ export default function PlaybookPage() {
         const body = await res.json().catch(() => ({})) as { error?: string };
         throw new Error(body.error ?? `Simulation failed (HTTP ${res.status}) — please retry`);
       }
-      const data = await res.json() as ScenarioSimulateResult;
+      const data = await res.json().catch(() => ({})) as ScenarioSimulateResult;
       if (!mountedRef.current) return;
       setSimResult(data);
     } catch (err) {
@@ -5914,7 +5914,7 @@ export default function PlaybookPage() {
         const body = await res.json().catch(() => ({})) as { error?: string };
         throw new Error(body.error ?? `Playbook QA failed (HTTP ${res.status}) — please retry`);
       }
-      const data = await res.json() as { ok: boolean; answer: string; citations: string[]; confidence: number; relatedPlaybooks: string[] };
+      const data = await res.json().catch(() => ({})) as { ok: boolean; answer: string; citations: string[]; confidence: number; relatedPlaybooks: string[] };
       if (!mountedRef.current) return;
       if (data.ok) setQaAnswer(data);
     } catch (err) {

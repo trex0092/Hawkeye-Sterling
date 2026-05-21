@@ -126,7 +126,7 @@ export default function OsintPage() {
         console.error(`[hawkeye] osint/synthesis HTTP ${res.status}`);
         return;
       }
-      const data = await res.json() as { ok: boolean } & OsintSynthesis;
+      const data = await res.json().catch(() => ({})) as { ok: boolean } & OsintSynthesis;
       if (!mountedRef.current) return;
       if (data.ok) setSynthesis(data);
     } catch (err) {
@@ -185,7 +185,7 @@ export default function OsintPage() {
         console.error(`[hawkeye] osint/intel-synthesize HTTP ${res.status}`);
         return;
       }
-      const data = (await res.json()) as IntelSynthesis;
+      const data = await res.json().catch(() => ({})) as IntelSynthesis;
       if (!mountedRef.current) return;
       if (data.ok) setIntelSynthesis(data);
     } catch (err) {

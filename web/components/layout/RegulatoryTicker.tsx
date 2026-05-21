@@ -60,7 +60,7 @@ export function RegulatoryTicker() {
           console.warn(`[hawkeye] regulatory-feed HTTP ${res.status} — ticker stays on static items`);
           return;
         }
-        const data = await res.json() as { ok: boolean; items?: Array<{ title: string; source: string; tone: string }> };
+        const data = await res.json().catch(() => ({})) as { ok: boolean; items?: Array<{ title: string; source: string; tone: string }> };
         if (cancelled) return;
         if (!data.ok || !Array.isArray(data.items)) return;
         const top = data.items

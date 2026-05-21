@@ -110,7 +110,7 @@ export default function EvalKpiPage() {
           if (!cancelled) setError(`HTTP ${res.status}`);
           return;
         }
-        const json = (await res.json()) as ApiResponse;
+        const json = await res.json().catch(() => ({})) as ApiResponse;
         if (cancelled) return;
         setData(json);
       } catch (err) {

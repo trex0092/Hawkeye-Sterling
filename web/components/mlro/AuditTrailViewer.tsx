@@ -354,7 +354,7 @@ export function AuditTrailViewer({
           if (res.status === 404) throw new Error("No audit record found for this screening ID.");
           throw new Error(`HTTP ${res.status}: ${res.statusText}`);
         }
-        const json = (await res.json()) as AuditViewResponse;
+        const json = await res.json().catch(() => ({})) as AuditViewResponse;
         if (!cancelled) setData(json);
       } catch (err) {
         if (!cancelled)
@@ -385,7 +385,7 @@ export function AuditTrailViewer({
         }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const json = (await res.json()) as VerifyResponse;
+      const json = await res.json().catch(() => ({})) as VerifyResponse;
       if (!mountedRef.current) return;
       setHmacStatus(json.valid ? "valid" : "invalid");
     } catch (err) {

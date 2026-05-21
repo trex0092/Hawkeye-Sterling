@@ -326,7 +326,7 @@ export default function StrCasesPage() {
         const body = await res.json().catch(() => ({})) as { error?: string };
         throw new Error(body.error ?? `Briefing generation failed (HTTP ${res.status}) — please retry`);
       }
-      const data = await res.json() as { ok: boolean; briefing: MlroBriefing };
+      const data = await res.json().catch(() => ({})) as { ok: boolean; briefing: MlroBriefing };
       if (data.ok) setBriefing(data.briefing);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Briefing generation failed — please retry";
@@ -357,7 +357,7 @@ export default function StrCasesPage() {
         const body = await res.json().catch(() => ({})) as { error?: string };
         throw new Error(body.error ?? `Pattern detection failed (HTTP ${res.status}) — please retry`);
       }
-      const data = await res.json() as PatternDetectResult;
+      const data = await res.json().catch(() => ({})) as PatternDetectResult;
       setPatternResult(data);
       setPatternExpanded(true);
     } catch (err) {
@@ -393,7 +393,7 @@ export default function StrCasesPage() {
         const body = await res.json().catch(() => ({})) as { error?: string };
         throw new Error(body.error ?? `Triage failed (HTTP ${res.status}) — please retry`);
       }
-      const data = await res.json() as InboxTriageResult & { ok?: boolean };
+      const data = await res.json().catch(() => ({})) as InboxTriageResult & { ok?: boolean };
       if (!data.triaged) throw new Error("Unexpected response — please retry");
       setTriageResult(data);
       setTriageExpanded(true);
@@ -430,7 +430,7 @@ export default function StrCasesPage() {
         const body = await res.json().catch(() => ({})) as { error?: string };
         throw new Error(body.error ?? `SAR scoring failed (HTTP ${res.status}) — please retry`);
       }
-      const data = await res.json() as SarResult;
+      const data = await res.json().catch(() => ({})) as SarResult;
       if (!data.ok) throw new Error(data.error ?? "SAR scoring failed — please retry");
       setSarResult(data);
     } catch (err) {

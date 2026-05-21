@@ -66,7 +66,7 @@ export function ChainReplayPanel(): JSX.Element {
     setData(null);
     try {
       const res = await fetch(`/api/cases/${encodeURIComponent(caseId.trim())}`);
-      const json = (await res.json()) as VerdictResponse;
+      const json = await res.json().catch(() => ({})) as VerdictResponse;
       if (!mountedRef.current) return;
       if (!res.ok || !json.ok) {
         setErrorText(json.error ?? `HTTP ${res.status}`);

@@ -135,7 +135,7 @@ export function AuditTrailViewer({
         if (!res.ok) {
           throw new Error(`Audit view failed: HTTP ${res.status}`);
         }
-        const json = (await res.json()) as ViewResponse;
+        const json = await res.json().catch(() => ({})) as ViewResponse;
         if (mountedRef.current) setData(json);
       } catch (e) {
         if (mountedRef.current) setError(e instanceof Error ? e.message : "Failed to load audit trail.");
@@ -167,7 +167,7 @@ export function AuditTrailViewer({
       const res = await fetch(`/api/audit/verify?${q.toString()}`, {
         headers: { accept: "application/json" },
       });
-      const json = (await res.json()) as VerifyResponse;
+      const json = await res.json().catch(() => ({})) as VerifyResponse;
       if (mountedRef.current) setVerifyResult(json);
     } catch (e) {
       if (mountedRef.current) setVerifyResult({

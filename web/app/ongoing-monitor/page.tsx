@@ -225,7 +225,7 @@ export default function OngoingMonitorPage() {
       try {
         const res = await fetch("/api/ongoing");
         if (!res.ok || cancelled) return;
-        const data = (await res.json()) as {
+        const data = await res.json().catch(() => ({})) as {
           ok: boolean;
           subjects?: Array<{ id: string; name: string; caseId?: string; jurisdiction?: string; enrolledAt: string }>;
         };
@@ -340,7 +340,7 @@ export default function OngoingMonitorPage() {
       if (!res.ok) {
         throw new Error(`Screening failed for "${s.name}" (HTTP ${res.status})`);
       }
-      const data = (await res.json()) as { ok: boolean; topScore?: number; severity?: string };
+      const data = await res.json().catch(() => ({})) as { ok: boolean; topScore?: number; severity?: string };
       const nowStr = fmtDateTime(new Date().toISOString());
       const next = subjects.map((sub) =>
         sub.id === s.id ? { ...sub, lastRun: nowStr, nextDue: computeNextDue(nowStr, sub.cadence), status: "active" as const } : sub,
@@ -408,7 +408,7 @@ export default function OngoingMonitorPage() {
         setBgError(`AI health check failed (HTTP ${res.status}). Portfolio alerts were not updated.`);
         return;
       }
-      const data = (await res.json()) as MonitorAlertsResult;
+      const data = await res.json().catch(() => ({})) as MonitorAlertsResult;
       if (mountedRef.current) setMonitorAlerts(data);
     } catch (err) {
       if (!mountedRef.current) return;

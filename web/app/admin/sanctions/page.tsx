@@ -64,7 +64,7 @@ async function loadStatus(headersList: Headers): Promise<SanctionsStatusList[]> 
       headers: { cookie: headersList.get("cookie") ?? "" },
     });
     if (!res.ok) return [];
-    const j = (await res.json()) as { lists?: SanctionsStatusList[] };
+    const j = await res.json().catch(() => ({})) as { lists?: SanctionsStatusList[] };
     return j.lists ?? [];
   } catch {
     return [];
@@ -78,7 +78,7 @@ async function loadRecentErrors(headersList: Headers): Promise<IngestErrorEntry[
       headers: { cookie: headersList.get("cookie") ?? "" },
     });
     if (!res.ok) return [];
-    const j = (await res.json()) as { entries?: IngestErrorEntry[] };
+    const j = await res.json().catch(() => ({})) as { entries?: IngestErrorEntry[] };
     return j.entries ?? [];
   } catch {
     return [];

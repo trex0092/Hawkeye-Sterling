@@ -353,7 +353,7 @@ export async function POST(req: Request): Promise<NextResponse> {
           const errBody = await res.text().catch(() => "");
           console.warn("[screening/run] auto-case creation failed:", res.status, errBody.slice(0, 200));
         } else {
-          const caseData = await res.json() as { ok: boolean; case?: { caseId: string }; deduplicated?: boolean };
+          const caseData = await res.json().catch(() => ({})) as { ok: boolean; case?: { caseId: string }; deduplicated?: boolean };
           if (caseData.ok && caseData.case?.caseId && !caseData.deduplicated) {
             void fetch(`${baseUrl}/api/hs-cases/${caseData.case.caseId}/enrich`, {
               method: "POST",

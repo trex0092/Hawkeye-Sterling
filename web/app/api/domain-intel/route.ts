@@ -62,7 +62,7 @@ async function fetchRdap(domain: string): Promise<{
       signal: AbortSignal.timeout(8_000),
     });
     if (!res.ok) return null;
-    const data = (await res.json()) as RdapResponse;
+    const data = await res.json().catch(() => ({})) as RdapResponse;
     const created = data.events?.find((e) => e.eventAction === "registration")?.eventDate;
     const expires = data.events?.find((e) => e.eventAction === "expiration")?.eventDate;
     return { created, expires };

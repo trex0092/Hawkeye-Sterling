@@ -49,7 +49,7 @@ async function checkHibpEmail(
     if (res.status === 404) return [];
     if (!res.ok) return [];
 
-    const data = (await res.json()) as Array<{
+    const data = await res.json().catch(() => ({})) as Array<{
       Name: string;
       Domain: string;
       BreachDate: string;

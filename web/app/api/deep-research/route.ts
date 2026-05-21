@@ -83,7 +83,7 @@ async function tavilySearch(query: string, apiKey: string): Promise<SearchResult
     }),
   });
   if (!res.ok) return [];
-  const json = (await res.json()) as { results?: Array<{ title?: string; url?: string; content?: string; score?: number }> };
+  const json = await res.json().catch(() => ({})) as { results?: Array<{ title?: string; url?: string; content?: string; score?: number }> };
   return (json.results ?? []).map((r) => ({
     title: r.title ?? "",
     url: r.url ?? "",
@@ -105,7 +105,7 @@ async function exaSearch(query: string, apiKey: string): Promise<SearchResult[]>
     }),
   });
   if (!res.ok) return [];
-  const json = (await res.json()) as { results?: Array<{ title?: string; url?: string; text?: string; score?: number }> };
+  const json = await res.json().catch(() => ({})) as { results?: Array<{ title?: string; url?: string; text?: string; score?: number }> };
   return (json.results ?? []).map((r) => ({
     title: r.title ?? "",
     url: r.url ?? "",
@@ -118,7 +118,7 @@ async function serpSearch(query: string, apiKey: string): Promise<SearchResult[]
   const params = new URLSearchParams({ api_key: apiKey, q: query, tbm: "nws", num: "8" });
   const res = await fetch(`https://serpapi.com/search.json?${params.toString()}`, { signal: AbortSignal.timeout(8_000) });
   if (!res.ok) return [];
-  const json = (await res.json()) as { news_results?: Array<{ title?: string; link?: string; snippet?: string }> };
+  const json = await res.json().catch(() => ({})) as { news_results?: Array<{ title?: string; link?: string; snippet?: string }> };
   return (json.news_results ?? []).map((r) => ({
     title: r.title ?? "",
     url: r.link ?? "",

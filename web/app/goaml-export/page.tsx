@@ -112,7 +112,7 @@ export default function GoAmlExportPage() {
         if (mountedRef.current) setAiValidateError(`AI validation failed (HTTP ${res.status}). Please try again.`);
         return;
       }
-      const data = await res.json() as { ok: boolean; score: number; grade: string; missingElements: string[]; tippingOffRisk: boolean; tippingOffFlags: string[]; suggestions: string[]; fatalIssues: string[]; fiuReadiness: string };
+      const data = await res.json().catch(() => ({})) as { ok: boolean; score: number; grade: string; missingElements: string[]; tippingOffRisk: boolean; tippingOffFlags: string[]; suggestions: string[]; fatalIssues: string[]; fiuReadiness: string };
       if (!mountedRef.current) return;
       if (data.ok) {
         setAiValidation(data);
@@ -154,7 +154,7 @@ export default function GoAmlExportPage() {
       if (!res.ok) {
         let detail: string = `HTTP ${res.status}`;
         try {
-          const j = (await res.json()) as { error?: string };
+          const j = await res.json().catch(() => ({})) as { error?: string };
           if (j?.error) detail = j.error;
         } catch { /* response was XML or empty */ }
         if (mountedRef.current) setSubmission({ status: "error", error: detail });

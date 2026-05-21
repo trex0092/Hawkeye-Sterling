@@ -161,7 +161,7 @@ export function ActivityFeed({ label = "Screening engine" }: { label?: string })
           if (!fallbackTimer) startFallback();
           return;
         }
-        const data = (await res.json()) as {
+        const data = await res.json().catch(() => ({})) as {
           events: Array<{ id: string; at: string; kind: FeedEntry["kind"]; text: string }>;
           serverTime: string;
         };

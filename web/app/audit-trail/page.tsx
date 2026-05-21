@@ -109,7 +109,7 @@ export default function AuditTrailPage() {
         body: JSON.stringify({ events: payload }),
       });
       if (res.ok) {
-        const data = (await res.json()) as AuditAnomaly;
+        const data = await res.json().catch(() => ({})) as AuditAnomaly;
         // Ensure anomalies array is present before storing — a malformed
         // response (null/missing) would crash the useMemo iterators below.
         if (!Array.isArray(data?.anomalies)) data.anomalies = [];

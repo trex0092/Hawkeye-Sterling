@@ -134,7 +134,7 @@ function FiuDpmsSection() {
         if (mountedRef.current) setError(`Failed to load coverage matrix (HTTP ${res.status})`);
         return;
       }
-      const json = (await res.json()) as FiuCoverageResponse;
+      const json = await res.json().catch(() => ({})) as FiuCoverageResponse;
       if (!mountedRef.current) return;
       setData(json);
       setOpen(true);
@@ -323,7 +323,7 @@ function DeepDiveModal({
         console.error("[hawkeye] typology-library detail fetch HTTP", res.status);
         if (mountedRef.current) setDetailError(`Could not load typology detail (HTTP ${res.status}).`);
       } else {
-        const json = (await res.json()) as TypologyDetailResult;
+        const json = await res.json().catch(() => ({})) as TypologyDetailResult;
         if (!mountedRef.current) return;
         setData(json);
       }

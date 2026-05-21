@@ -141,7 +141,7 @@ async function asanaGet(token: string, path: string) {
     signal: AbortSignal.timeout(8000),
   });
   if (!res.ok) throw new Error(`Asana ${res.status} on ${path}`);
-  const json = await res.json() as { data: unknown };
+  const json = await res.json().catch(() => ({})) as { data: unknown };
   return json.data;
 }
 
@@ -157,7 +157,7 @@ async function asanaPost(token: string, path: string, data: unknown) {
     signal: AbortSignal.timeout(8000),
   });
   let json: { data: unknown } | null = null;
-  try { json = await res.json() as { data: unknown }; } catch { /* non-JSON error response */ }
+  try { json = await res.json().catch(() => ({})) as { data: unknown }; } catch { /* non-JSON error response */ }
   return { ok: res.ok, data: json?.data };
 }
 

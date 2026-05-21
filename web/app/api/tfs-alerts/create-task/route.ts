@@ -181,7 +181,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       );
     }
 
-    const data = (await res.json()) as { data?: { gid?: string } };
+    const data = await res.json().catch(() => ({})) as { data?: { gid?: string } };
     const taskId = data.data?.gid ?? "";
     const taskUrl = `https://app.asana.com/0/${ASANA_PROJECT_GID}/${taskId}`;
 

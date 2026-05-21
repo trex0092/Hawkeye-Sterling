@@ -253,7 +253,7 @@ async function handlePost(req: Request, callerRecord: ApiKeyRecord | null, gateH
         signal: ctrl.signal,
       });
       if (res.ok) {
-        sarReportResult = (await res.json()) as Record<string, unknown>;
+        sarReportResult = await res.json().catch(() => ({})) as Record<string, unknown>;
       } else {
         const errBody = await res.text().catch(() => "");
         console.warn(`[sar] sar-report returned HTTP ${res.status}: ${errBody.slice(0, 200)}`);

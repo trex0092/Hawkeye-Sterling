@@ -76,7 +76,7 @@ export default function MoeSurveyPage() {
     try {
       const res = await fetch("/api/moe-survey");
       if (res.ok) {
-        const data = (await res.json()) as { ok: boolean; survey: MoeSurveyState };
+        const data = await res.json().catch(() => ({})) as { ok: boolean; survey: MoeSurveyState };
         if (!mountedRef.current) return;
         if (data.ok) { setSurvey(data.survey); return; }
       }

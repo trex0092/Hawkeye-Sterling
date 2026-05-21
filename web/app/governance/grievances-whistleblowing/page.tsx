@@ -517,7 +517,7 @@ export default function GrievancesWhistleblowingPage() {
         body: JSON.stringify({ mode, concern, dateObs: (() => { const [d,m,y] = dateObs.split("/"); return `${y}-${(m||"").padStart(2,"0")}-${(d||"").padStart(2,"0")}`; })(), location, reporterName, description, severity, language }),
       });
       if (res.ok) {
-        const data = await res.json() as { caseRef: string };
+        const data = await res.json().catch(() => ({})) as { caseRef: string };
         if (!mountedRef.current) return;
         setToast(`Disclosure submitted · Case ref: ${data.caseRef}`);
         setConcern(""); setLocation(""); setName(""); setDesc("");

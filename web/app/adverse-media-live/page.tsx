@@ -100,7 +100,7 @@ function RegulatoryFeedPanel() {
         if (mountedRef.current) setFeedError(`Regulatory feed unavailable (HTTP ${res.status}) — retrying automatically`);
         return;
       }
-      const data = (await res.json()) as {
+      const data = await res.json().catch(() => ({})) as {
         ok: boolean;
         items: RegulatoryItem[];
         sources: string[];
@@ -336,7 +336,7 @@ export default function AdverseMediaLivePage() {
           }),
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = (await res.json()) as AdverseMediaLiveResult;
+        const data = await res.json().catch(() => ({})) as AdverseMediaLiveResult;
         if (!mountedRefPage.current) return;
         setResult(data);
         setLastSearched(params);

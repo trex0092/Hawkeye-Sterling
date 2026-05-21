@@ -160,7 +160,7 @@ async function queryOpenCorporates(
         signal: controller.signal,
       });
       if (!res.ok) return [];
-      const data = (await res.json()) as {
+      const data = await res.json().catch(() => ({})) as {
         results?: { companies?: OCCompany[]; company?: OCCompany["company"] };
       };
       if (data.results?.company) {
@@ -196,7 +196,7 @@ async function queryGleifFuzzy(companyName: string): Promise<GleifCompletion[]> 
         signal: controller.signal,
       });
       if (!res.ok) return [];
-      const data = (await res.json()) as {
+      const data = await res.json().catch(() => ({})) as {
         data?: Array<{
           lei?: string;
           name?: string;
@@ -384,7 +384,7 @@ async function fetchGleifLeiRecord(lei: string): Promise<GleifLeiRecordResponse 
         signal: controller.signal,
       });
       if (!res.ok) return null;
-      return (await res.json()) as GleifLeiRecordResponse;
+      return await res.json().catch(() => ({})) as GleifLeiRecordResponse;
     } finally {
       clearTimeout(timer);
     }

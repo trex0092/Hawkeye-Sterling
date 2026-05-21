@@ -105,14 +105,14 @@ async function searchMessages(query: string, token: string): Promise<GmailMessag
     if (res.status === 401) throw new Error("GMAIL_AUTH_FAILED");
     throw new Error(`Gmail search error ${res.status}`);
   }
-  const data = (await res.json()) as GmailSearchResult;
+  const data = await res.json().catch(() => ({})) as GmailSearchResult;
   return data.messages ?? [];
 }
 
 async function getMessage(id: string, token: string): Promise<GmailMessage> {
   const res = await gmailFetch(`/messages/${id}?format=full`, token);
   if (!res.ok) throw new Error(`Gmail message fetch error ${res.status}`);
-  return (await res.json()) as GmailMessage;
+  return await res.json().catch(() => ({})) as GmailMessage;
 }
 
 export interface TFSAlertCandidate {

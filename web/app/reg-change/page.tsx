@@ -135,7 +135,7 @@ function ImpactPanel({
         console.error(`[hawkeye] reg-change/impact HTTP ${res.status}`);
         return;
       }
-      const d = (await res.json()) as ImpactAssessmentResult;
+      const d = await res.json().catch(() => ({})) as ImpactAssessmentResult;
       if (!mountedRef.current) return;
       setData(d);
     } catch (err) {
@@ -309,7 +309,7 @@ export default function RegChangePage() {
         body: JSON.stringify({ institution }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const d = (await res.json()) as RegChangeResult;
+      const d = await res.json().catch(() => ({})) as RegChangeResult;
       if (!mountedRef.current) return;
       setResult(d);
     } catch (e) {

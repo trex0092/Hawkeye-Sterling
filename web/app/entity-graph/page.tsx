@@ -406,7 +406,7 @@ export default function EntityGraphPage() {
         const body = await res.json().catch(() => ({})) as { error?: string };
         throw new Error(body.error ?? `Request failed (HTTP ${res.status}) — please retry`);
       }
-      const data = (await res.json()) as EntityGraphResult & { error?: string };
+      const data = await res.json().catch(() => ({})) as EntityGraphResult & { error?: string };
       if (!mountedRef.current) return;
       if (!data.ok) {
         setError((data as unknown as { error?: string }).error ?? `HTTP ${res.status}`);
@@ -437,7 +437,7 @@ export default function EntityGraphPage() {
         const body = await res.json().catch(() => ({})) as { error?: string };
         throw new Error(body.error ?? `Request failed (HTTP ${res.status}) — please retry`);
       }
-      const data = (await res.json()) as LeiLookupResult & { error?: string };
+      const data = await res.json().catch(() => ({})) as LeiLookupResult & { error?: string };
       if (!mountedRef.current) return;
       if (!data.ok) {
         setLeiError((data as unknown as { error?: string }).error ?? `HTTP ${res.status}`);

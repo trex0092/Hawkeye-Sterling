@@ -121,7 +121,7 @@ export default function SupplierDdPage() {
         body: JSON.stringify({ supplier: v }),
       });
       if (res.ok) {
-        const data = (await res.json()) as { ok: boolean; result: VendorRisk };
+        const data = await res.json().catch(() => ({})) as { ok: boolean; result: VendorRisk };
         if (!mountedRef.current) return;
         setRiskMap((prev) => ({ ...prev, [v.id]: data.result }));
       } else {

@@ -79,7 +79,7 @@ export default function PKycPage() {
       if (!res.ok) throw new Error(`pKYC load failed (HTTP ${res.status})`);
       let data: { ok: boolean; subjects?: PKycSubject[]; stats?: PKycStats };
       try {
-        data = (await res.json()) as { ok: boolean; subjects?: PKycSubject[]; stats?: PKycStats };
+        data = await res.json().catch(() => ({})) as { ok: boolean; subjects?: PKycSubject[]; stats?: PKycStats };
       } catch {
         throw new Error("pKYC returned a malformed response — please retry");
       }
@@ -98,7 +98,7 @@ export default function PKycPage() {
       if (!res.ok) throw new Error(`pKYC run failed (HTTP ${res.status}) — please retry`);
       let data: { ran?: number; changed?: number; errors?: number };
       try {
-        data = (await res.json()) as { ran?: number; changed?: number; errors?: number };
+        data = await res.json().catch(() => ({})) as { ran?: number; changed?: number; errors?: number };
       } catch {
         throw new Error("pKYC run returned a malformed response — please retry");
       }
@@ -118,7 +118,7 @@ export default function PKycPage() {
         const body = await res.json().catch(() => ({})) as { error?: string };
         throw new Error(body.error ?? `HTTP ${res.status}`);
       }
-      const data = (await res.json()) as { ok?: boolean; error?: string; results?: { name: string; band?: string; composite?: number; changed?: boolean }[] };
+      const data = await res.json().catch(() => ({})) as { ok?: boolean; error?: string; results?: { name: string; band?: string; composite?: number; changed?: boolean }[] };
       if (data.ok === false) throw new Error(data.error ?? `HTTP ${res.status}`);
       const r = data.results?.[0];
       setRunResult(r ? `${r.name}: ${r.band?.toUpperCase()} (${r.composite}/100) · ${r.changed ? "⚡ CHANGED" : "no change"}` : "done");
@@ -154,7 +154,7 @@ export default function PKycPage() {
         const body = await res.json().catch(() => ({})) as { error?: string };
         throw new Error(body.error ?? `HTTP ${res.status}`);
       }
-      const data = (await res.json()) as { ok?: boolean; error?: string };
+      const data = await res.json().catch(() => ({})) as { ok?: boolean; error?: string };
       if (data.ok === false) throw new Error(data.error ?? `HTTP ${res.status}`);
       setShowEnroll(false);
       setForm({ name: "", entityType: "individual", jurisdiction: "", dob: "", cadence: "monthly", notes: "", mlro: "" });

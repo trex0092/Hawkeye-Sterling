@@ -181,7 +181,7 @@ export default function InvestigationPage() {
       });
       let narrative = "";
       if (res.ok) {
-        const d = await res.json() as { narrative?: string };
+        const d = await res.json().catch(() => ({})) as { narrative?: string };
         narrative = d.narrative ?? "";
       } else {
         console.error(`[hawkeye] investigation brain (mlro-advisor) HTTP ${res.status}`);

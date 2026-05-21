@@ -174,7 +174,7 @@ export default function CasesPage() {
         const body = await res.json().catch(() => ({})) as { error?: string };
         throw new Error(body.error ?? `Request failed (HTTP ${res.status}) — please retry`);
       }
-      const data = await res.json() as TriageResult & { error?: string };
+      const data = await res.json().catch(() => ({})) as TriageResult & { error?: string };
       if (!mountedRef.current) return;
       if (data.ok) setTriageResult(data);
       else setTriageError(data.error ?? "AI triage returned an error — please retry.");

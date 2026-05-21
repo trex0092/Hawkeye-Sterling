@@ -162,7 +162,7 @@ export function GoamlExportModal({ open, onClose, prefill, onExportComplete }: G
       if (!res.ok) {
         let detail: string = `HTTP ${res.status}`;
         try {
-          const j = (await res.json()) as { error?: string };
+          const j = await res.json().catch(() => ({})) as { error?: string };
           if (j?.error) detail = j.error;
         } catch { /* */ }
         setSubmission({ status: "error", error: detail });

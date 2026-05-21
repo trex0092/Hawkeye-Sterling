@@ -55,7 +55,7 @@ export function CriticalBlockingPanel({ subjectName, subjectId, hits, severity, 
           })),
         }),
       });
-      const data = (await res.json()) as { ok: boolean; case?: { caseId: string }; error?: string };
+      const data = await res.json().catch(() => ({})) as { ok: boolean; case?: { caseId: string }; error?: string };
       if (!data.ok) {
         setError(data.error ?? "Failed to open case");
       } else {

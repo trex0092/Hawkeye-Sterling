@@ -130,7 +130,7 @@ export default function GeopoliticalPage() {
     try {
       const res = await fetch("/api/geopolitical/events");
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json() as GeopoliticalEvent[] | { ok: boolean; events: GeopoliticalEvent[] };
+      const data = await res.json().catch(() => ({})) as GeopoliticalEvent[] | { ok: boolean; events: GeopoliticalEvent[] };
       if (!mountedRef.current) return;
       if (Array.isArray(data)) {
         setEvents(data);
@@ -196,7 +196,7 @@ export default function GeopoliticalPage() {
         const body = await res.json().catch(() => ({})) as { error?: string };
         throw new Error(body.error ?? `Impact assessment failed (HTTP ${res.status}) — please retry`);
       }
-      const data = await res.json() as PortfolioImpactResult;
+      const data = await res.json().catch(() => ({})) as PortfolioImpactResult;
       if (mountedRef.current) setImpactResult(data);
     } catch (err) {
       if (mountedRef.current) setImpactError(err instanceof Error ? err.message : "Impact assessment failed — please retry");

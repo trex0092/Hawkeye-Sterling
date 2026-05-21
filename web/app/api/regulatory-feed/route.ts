@@ -430,7 +430,7 @@ async function fetchGdelt(query: string): Promise<GdeltFetchResult> {
       signal,
     });
     if (!res.ok) return { items: cached?.items ?? [], timedOut: false };
-    const data = (await res.json()) as GdeltResponse;
+    const data = await res.json().catch(() => ({})) as GdeltResponse;
     if (!Array.isArray(data.articles)) return { items: [], timedOut: false };
     const items = data.articles
       .filter((a) => a.url && a.title)

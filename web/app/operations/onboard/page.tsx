@@ -232,7 +232,7 @@ async function runScreenViaApi(draft: Draft): Promise<{ hits: ScreeningHit[]; so
       body: JSON.stringify(payload),
     });
     if (!res.ok) return { ...localFallback(draft), error: `HTTP ${res.status}` };
-    const json = (await res.json()) as QuickScreenResponse;
+    const json = await res.json().catch(() => ({})) as QuickScreenResponse;
     if (json.ok) {
       return {
         hits: (Array.isArray(json.hits) ? json.hits : []).map((h) => ({
@@ -288,7 +288,7 @@ async function computeTier(draft: Draft): Promise<RiskTierResult | null> {
       }),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const json = (await res.json()) as { ok: boolean } & RiskTierResult;
+    const json = await res.json().catch(() => ({})) as { ok: boolean } & RiskTierResult;
     if (json.ok) {
       const { tier, score, factors, rationale, jurisdictionHits } = json;
       return { tier, score, factors, rationale, jurisdictionHits };
@@ -382,7 +382,7 @@ async function generateAdvisorNarrative(draft: Draft): Promise<AdvisorResponseV1
       }),
     });
     if (!res.ok) return null;
-    const json = (await res.json()) as { ok: boolean; structured?: AdvisorResponseV1 | null };
+    const json = await res.json().catch(() => ({})) as { ok: boolean; structured?: AdvisorResponseV1 | null };
     return json.ok && json.structured ? json.structured : null;
   } catch {
     return null;

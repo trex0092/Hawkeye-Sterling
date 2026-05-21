@@ -80,7 +80,7 @@ export default function GleifPage() {
         const body = await res.json().catch(() => ({})) as { error?: string };
         throw new Error(body.error ?? `LEI lookup failed (HTTP ${res.status}) — please retry`);
       }
-      const data = await res.json() as GleifResult;
+      const data = await res.json().catch(() => ({})) as GleifResult;
       if (!mountedRef.current) return;
       if (!data.ok) setError(data.error ?? "LEI not found");
       else setLeiResult(data);
@@ -98,7 +98,7 @@ export default function GleifPage() {
         const body = await res.json().catch(() => ({})) as { error?: string };
         throw new Error(body.error ?? `GLEIF search failed (HTTP ${res.status}) — please retry`);
       }
-      const data = await res.json() as { ok: boolean; results: SearchResult[]; error?: string };
+      const data = await res.json().catch(() => ({})) as { ok: boolean; results: SearchResult[]; error?: string };
       if (!mountedRef.current) return;
       if (!data.ok) setError(data.error ?? "Search failed");
       else setSearchResults(Array.isArray(data.results) ? data.results : []);

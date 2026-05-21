@@ -181,7 +181,7 @@ export default function DpmsrPage() {
     try {
       const res = await fetch("/api/dpmsr-trigger");
       if (res.ok) {
-        const data = (await res.json()) as { ok: boolean; obligations: DpmsrObligation[] };
+        const data = await res.json().catch(() => ({})) as { ok: boolean; obligations: DpmsrObligation[] };
         if (!mountedRef.current) return;
         if (data.ok) setObligations(data.obligations);
       } else {

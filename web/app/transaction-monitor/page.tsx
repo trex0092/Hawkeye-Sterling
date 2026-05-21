@@ -225,7 +225,7 @@ export default function TransactionMonitorPage() {
         const body = await res.json().catch(() => ({})) as { error?: string };
         throw new Error(body.error ?? `Explanation failed (HTTP ${res.status}) — please retry`);
       }
-      const data = await res.json() as { ok: boolean; explanation: string; disposition: TmExplanation["disposition"]; dispositionReason: string; regulatoryBasis: string; typologies: string[] };
+      const data = await res.json().catch(() => ({})) as { ok: boolean; explanation: string; disposition: TmExplanation["disposition"]; dispositionReason: string; regulatoryBasis: string; typologies: string[] };
       if (!mountedRef.current) return;
       if (data.ok) setExplanations((prev) => ({ ...prev, [t.id]: data }));
     } catch (err) {
@@ -261,7 +261,7 @@ export default function TransactionMonitorPage() {
         const body = await res.json().catch(() => ({})) as { error?: string };
         throw new Error(body.error ?? `Typology tagging failed (HTTP ${res.status}) — please retry`);
       }
-      const data = await res.json() as {
+      const data = await res.json().catch(() => ({})) as {
         tagged: (TxTypologyTag & { id: string })[];
         highRiskCount: number;
         summary: string;
@@ -389,7 +389,7 @@ export default function TransactionMonitorPage() {
         const body = await res.json().catch(() => ({})) as { error?: string };
         throw new Error(body.error ?? `Analysis failed (HTTP ${res.status})`);
       }
-      const data = await res.json() as StructuringResult;
+      const data = await res.json().catch(() => ({})) as StructuringResult;
       if (!mountedRef.current) return;
       if (!data.ok) throw new Error(data.error ?? "Analysis failed — please retry");
       setStructuringResult(data);

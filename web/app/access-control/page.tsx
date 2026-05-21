@@ -230,7 +230,7 @@ function UserSidePanel({ user, onClose, onRoleChanged }: SidePanelProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: user.id, newPassword: newPassword.trim(), username: newUsername.trim() || undefined }),
       });
-      const data = (await resp.json()) as { ok: boolean; error?: string };
+      const data = await resp.json().catch(() => ({})) as { ok: boolean; error?: string };
       if (!mountedRef.current) return;
       if (!resp.ok || !data.ok) {
         setPwMsg({ ok: false, text: data.error ?? `HTTP ${resp.status}` });
@@ -261,7 +261,7 @@ function UserSidePanel({ user, onClose, onRoleChanged }: SidePanelProps) {
           responsibilities: `Current role: ${user.role}. Modules: ${user.modules.join(", ")}.`,
         }),
       });
-      const data = (await resp.json()) as RoleRecommendation & { ok?: boolean };
+      const data = await resp.json().catch(() => ({})) as RoleRecommendation & { ok?: boolean };
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       if (mountedRef.current) setAiResult(data);
     } catch {
@@ -288,7 +288,7 @@ function UserSidePanel({ user, onClose, onRoleChanged }: SidePanelProps) {
           assignedBy: "Luisa Fernanda",
         }),
       });
-      const data = (await resp.json()) as { ok: boolean; user?: AccessUser; impactAssessment?: string; error?: string };
+      const data = await resp.json().catch(() => ({})) as { ok: boolean; user?: AccessUser; impactAssessment?: string; error?: string };
       if (!mountedRef.current) return;
       if (!resp.ok || !data.ok || !data.user) {
         console.error("[hawkeye] access-control role-change rejected:", data);
@@ -533,7 +533,7 @@ export default function AccessControlPage() {
     setLoadingUsers(true);
     try {
       const resp = await fetch("/api/access/users");
-      const data = (await resp.json()) as { ok: boolean; users?: AccessUser[] } | null;
+      const data = await resp.json().catch(() => ({})) as { ok: boolean; users?: AccessUser[] } | null;
       if (resp.ok && data?.ok && Array.isArray(data.users) && mountedRef.current) {
         setUsers(data.users);
         sessionStorage.setItem("hawkeye.access.users", JSON.stringify(data.users));
@@ -552,7 +552,7 @@ export default function AccessControlPage() {
     setLoadingLog(true);
     try {
       const resp = await fetch("/api/access/permission-log");
-      const data = (await resp.json()) as { ok: boolean; log?: PermissionLogEntry[] };
+      const data = await resp.json().catch(() => ({})) as { ok: boolean; log?: PermissionLogEntry[] };
       if (resp.ok && data.ok && data.log && mountedRef.current) {
         setLog(data.log);
         sessionStorage.setItem("hawkeye.access.log", JSON.stringify(data.log));
@@ -600,7 +600,7 @@ export default function AccessControlPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(addForm),
       });
-      const data = (await resp.json()) as { ok: boolean; user?: AccessUser; error?: string; initialPassword?: string };
+      const data = await resp.json().catch(() => ({})) as { ok: boolean; user?: AccessUser; error?: string; initialPassword?: string };
       if (!mountedRef.current) return;
       if (!resp.ok || !data.ok) { setAddError(data.error ?? `HTTP ${resp.status}`); return; }
       if (data.user) {

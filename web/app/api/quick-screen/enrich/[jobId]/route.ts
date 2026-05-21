@@ -71,7 +71,7 @@ export async function GET(
       signal: controller.signal,
     });
 
-    const enriched = await res.json() as Record<string, unknown>;
+    const enriched = await res.json().catch(() => ({})) as Record<string, unknown>;
     return NextResponse.json(
       { ok: true, complete: true, enrichJobId: jobId, result: enriched },
       { status: res.ok ? 200 : 502, headers: gate.headers },

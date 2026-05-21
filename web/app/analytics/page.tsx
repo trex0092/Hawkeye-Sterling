@@ -295,7 +295,7 @@ export default function AnalyticsPage() {
       });
       let result: { ok: boolean } & AnalyticsInsights;
       try {
-        result = await res.json() as { ok: boolean } & AnalyticsInsights;
+        result = await res.json().catch(() => ({})) as { ok: boolean } & AnalyticsInsights;
       } catch {
         throw new Error(`AI insights failed (HTTP ${res.status}) — please retry`);
       }
@@ -330,7 +330,7 @@ export default function AnalyticsPage() {
         const body = await res.json().catch(() => ({})) as { error?: string };
         throw new Error(body.error ?? `Bias monitor failed (HTTP ${res.status}) — please retry`);
       }
-      const result = (await res.json()) as { ok: boolean } & BiasMonitor;
+      const result = await res.json().catch(() => ({})) as { ok: boolean } & BiasMonitor;
       if (result.ok && mountedRef.current) setBiasMonitor(result);
     } catch (e) {
       if (!mountedRef.current) return;
@@ -367,7 +367,7 @@ export default function AnalyticsPage() {
         const body = await res.json().catch(() => ({})) as { error?: string };
         throw new Error(body.error ?? `Risk prediction failed (HTTP ${res.status}) — please retry`);
       }
-      const result = (await res.json()) as PredictRiskResult;
+      const result = await res.json().catch(() => ({})) as PredictRiskResult;
       if (result.ok && mountedRef.current) setPredictRisk(result);
     } catch (e) {
       if (!mountedRef.current) return;

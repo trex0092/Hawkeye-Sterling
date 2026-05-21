@@ -223,7 +223,7 @@ async function callGroqAdvisor(
       const errText = await res.text().catch(() => "");
       return { ok: false, error: `Groq API ${res.status}: ${errText.slice(0, 200)}` };
     }
-    const data = await res.json() as Record<string, unknown>;
+    const data = await res.json().catch(() => ({})) as Record<string, unknown>;
     const content = (data["choices"] as Array<{ message: { content: string } }>)?.[0]?.message?.content ?? "";
     if (!content) return { ok: false, error: "Groq returned empty response" };
     return { ok: true, narrative: content, complianceReview: { verdict: "approved" }, _provider: "groq", _model: GROQ_MODEL };

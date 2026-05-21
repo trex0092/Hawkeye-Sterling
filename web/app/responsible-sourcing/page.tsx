@@ -100,7 +100,7 @@ export default function ResponsibleSourcingPage() {
     try {
       const res = await fetch("/api/responsible-sourcing");
       if (res.ok) {
-        const data = (await res.json()) as { ok: boolean; workflow: ResponsibleSourcingState };
+        const data = await res.json().catch(() => ({})) as { ok: boolean; workflow: ResponsibleSourcingState };
         if (!mountedRef.current) return;
         if (data.ok) { setWorkflow(data.workflow); return; }
       }

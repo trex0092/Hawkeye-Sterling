@@ -91,7 +91,7 @@ async function fetchTriage(items: RegulatoryItem[]): Promise<Record<string, Tria
   });
 
   if (!res.ok) throw new Error(`Triage API error: ${res.status}`);
-  const data = await res.json() as {
+  const data = await res.json().catch(() => ({})) as {
     ok: boolean;
     results: Array<{ id: string; relevance: number; impact: "high" | "medium" | "low"; actionRequired: string; deadline: string }>;
     error?: string;
@@ -146,7 +146,7 @@ function RegulatoryFeedPanel() {
         setFeedError(`Feed unavailable (HTTP ${res.status}) — retrying automatically`);
         return;
       }
-      const data = await res.json() as { ok: boolean; items: RegulatoryItem[]; sources: string[]; fetchedAt: string };
+      const data = await res.json().catch(() => ({})) as { ok: boolean; items: RegulatoryItem[]; sources: string[]; fetchedAt: string };
       if (!mountedRef.current) return;
       if (!data.ok) {
         setFeedError("Feed returned an error — retrying automatically");
@@ -355,7 +355,7 @@ function AdverseMediaPanel() {
       for (const name of watch) {
         const res = await fetch(`/api/news-search?q=${encodeURIComponent(name)}`, { headers: { accept: "application/json" } });
         if (!res.ok) continue;
-        const body = (await res.json()) as { articles?: Article[] };
+        const body = await res.json().catch(() => ({})) as { articles?: Article[] };
         for (const a of body.articles ?? []) all.push(a);
       }
       all.sort((a, b) => {
@@ -486,7 +486,7 @@ function JurisdictionIntelPanel() {
         body: JSON.stringify({ country: country.trim(), context: context.trim() }),
       });
       if (res.ok) {
-        const data = await res.json() as JurisdictionIntel;
+        const data = await res.json().catch(() => ({})) as JurisdictionIntel;
         if (!mountedRef.current) return;
         if (data.ok) setIntel(data);
       } else {

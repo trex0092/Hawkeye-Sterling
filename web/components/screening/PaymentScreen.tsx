@@ -96,7 +96,7 @@ export function PaymentScreen() {
         body: JSON.stringify({ message }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const payload = (await res.json()) as PaymentVerdict;
+      const payload = await res.json().catch(() => ({})) as PaymentVerdict;
       if (mountedRef.current) setResult(payload);
     } catch (err) {
       if (mountedRef.current) setResult({

@@ -416,7 +416,7 @@ export default function CddReviewPage() {
         const body = await res.json().catch(() => ({})) as { error?: string };
         throw new Error(body.error ?? `EDD completeness check failed (HTTP ${res.status}) — please retry`);
       }
-      const data = await res.json() as EddCompletenessResult & { ok?: boolean; error?: string };
+      const data = await res.json().catch(() => ({})) as EddCompletenessResult & { ok?: boolean; error?: string };
       if (!mountedRef.current) return;
       setEddComplResult(data);
     } catch (err) {
@@ -447,7 +447,7 @@ export default function CddReviewPage() {
         if (mountedRef.current) setPolicyError(err.error ?? `Server error ${res.status} — please retry`);
         return;
       }
-      const data = await res.json() as PolicyReviewResult & { ok?: boolean };
+      const data = await res.json().catch(() => ({})) as PolicyReviewResult & { ok?: boolean };
       if (!mountedRef.current) return;
       if (typeof data.complianceScore !== "number") {
         setPolicyError("Unexpected response from server — please retry");
@@ -485,7 +485,7 @@ export default function CddReviewPage() {
         if (mountedRef.current) setExitError(err.error ?? `Server error ${res.status} — please retry`);
         return;
       }
-      const data = await res.json() as ExitLetterResult & { ok?: boolean };
+      const data = await res.json().catch(() => ({})) as ExitLetterResult & { ok?: boolean };
       if (!mountedRef.current) return;
       if (!data.letterText) {
         setExitError("No letter generated — please retry");
@@ -523,7 +523,7 @@ export default function CddReviewPage() {
         if (mountedRef.current) setEddError(err.error ?? `Server error ${res.status} — please retry`);
         return;
       }
-      const data = await res.json() as EddChecklistResult;
+      const data = await res.json().catch(() => ({})) as EddChecklistResult;
       if (!mountedRef.current) return;
       if (!data.documents || !data.questions) {
         setEddError("Unexpected response from server — please retry");
@@ -696,7 +696,7 @@ export default function CddReviewPage() {
         if (mountedRef.current) setAdequacyError(err.error ?? `Assessment failed (${res.status}) — please retry`);
         return;
       }
-      const data = await res.json() as CddAdequacy;
+      const data = await res.json().catch(() => ({})) as CddAdequacy;
       if (!mountedRef.current) return;
       if (!data.assessments || !data.portfolioStatus) {
         setAdequacyError("Unexpected response — please retry");

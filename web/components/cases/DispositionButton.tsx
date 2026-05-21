@@ -84,7 +84,7 @@ export function DispositionButton({
         headers: { "content-type": "application/json" },
         body: JSON.stringify(body),
       });
-      const data = (await res.json()) as {
+      const data = await res.json().catch(() => ({})) as {
         ok?: boolean;
         recorded?: boolean;
         overridden?: boolean;

@@ -1053,7 +1053,7 @@ export default function OversightPage() {
         const body = await res.json().catch(() => ({})) as { error?: string };
         throw new Error(body.error ?? `Governance gap analysis failed (HTTP ${res.status}) — please retry`);
       }
-      const data = (await res.json()) as GovernanceGapResult;
+      const data = await res.json().catch(() => ({})) as GovernanceGapResult;
       if (!mountedRef.current) return;
       setGapResult(data);
       setGapOpen(true);
@@ -1083,7 +1083,7 @@ export default function OversightPage() {
         const body = await res.json().catch(() => ({})) as { error?: string };
         throw new Error(body.error ?? `Board AML report failed (HTTP ${res.status}) — please retry`);
       }
-      const data = (await res.json()) as BoardAmlReportResult & { ok: boolean };
+      const data = await res.json().catch(() => ({})) as BoardAmlReportResult & { ok: boolean };
       if (mountedRef.current) setBoardResult(data);
     } catch (e) {
       if (mountedRef.current) setBoardError(e instanceof Error ? e.message : "Unknown error");
@@ -1121,7 +1121,7 @@ export default function OversightPage() {
         const body = await res.json().catch(() => ({})) as { error?: string };
         throw new Error(body.error ?? `Board pack generation failed (HTTP ${res.status}) — please retry`);
       }
-      const data = await res.json() as BoardPackResult;
+      const data = await res.json().catch(() => ({})) as BoardPackResult;
       if (!mountedRef.current) return;
       setPackResult(data);
       setPackExpandedSection("executiveSummary");
@@ -1160,7 +1160,7 @@ export default function OversightPage() {
         const body = await res.json().catch(() => ({})) as { error?: string };
         throw new Error(body.error ?? `Gap analysis failed (HTTP ${res.status}) — please retry`);
       }
-      const data = await res.json() as { ok: boolean; result: QueueGapResult; error?: string };
+      const data = await res.json().catch(() => ({})) as { ok: boolean; result: QueueGapResult; error?: string };
       if (!mountedRef.current) return;
       if (!data.ok) throw new Error(data.error ?? "Gap analysis failed — please retry");
       setQueueGapResult(data.result);
@@ -1191,7 +1191,7 @@ export default function OversightPage() {
         const body = await res.json().catch(() => ({})) as { error?: string };
         throw new Error(body.error ?? `Deadline engine failed (HTTP ${res.status}) — please retry`);
       }
-      const data = await res.json() as DeadlineEngineResult & { ok: boolean; error?: string };
+      const data = await res.json().catch(() => ({})) as DeadlineEngineResult & { ok: boolean; error?: string };
       if (!mountedRef.current) return;
       if (!data.ok) throw new Error(data.error ?? "Deadline engine failed — please retry");
       setDeadlineResult(data);

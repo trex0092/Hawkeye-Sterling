@@ -103,7 +103,7 @@ export const ScreeningToolbar = forwardRef<HTMLInputElement, ScreeningToolbarPro
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ query: aiQuery.trim() }),
       });
-      const data = (await res.json()) as { ok: boolean; interpreted?: string; filters?: NlSearchFilter; clarification?: string; error?: string };
+      const data = await res.json().catch(() => ({})) as { ok: boolean; interpreted?: string; filters?: NlSearchFilter; clarification?: string; error?: string };
       if (!mountedRef.current) return;
       if (!data.ok || !data.filters) {
         setAiError(data.error ?? "Could not interpret query");

@@ -255,7 +255,7 @@ export default function GoAmlSubmissionPage() {
         setGen({ status: "error", message: j.error ?? `HTTP ${res.status}` });
         return;
       }
-      const data = (await res.json()) as GoAmlXmlResult;
+      const data = await res.json().catch(() => ({})) as GoAmlXmlResult;
       if (!mountedRef.current) return;
       setGen({ status: "done", result: data });
     } catch (err) {

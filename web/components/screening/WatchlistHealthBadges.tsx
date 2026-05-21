@@ -47,7 +47,7 @@ export function WatchlistHealthBadges() {
           if (!cancelled) setError(`status ${res.status}`);
           return;
         }
-        const json = (await res.json()) as StatusResponse;
+        const json = await res.json().catch(() => ({})) as StatusResponse;
         if (!cancelled) { setData(json); setError(null); }
       } catch {
         if (!cancelled) setError("status unreachable");

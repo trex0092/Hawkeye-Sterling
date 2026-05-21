@@ -194,7 +194,7 @@ export default function SanctionsEvasionPage() {
         }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const json = (await res.json()) as SanctionsEvasionResult;
+      const json = await res.json().catch(() => ({})) as SanctionsEvasionResult;
       if (!mountedRef.current) return;
       setResult(json);
     } catch (err) {

@@ -336,7 +336,7 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
         setDisambigError(msg);
         return;
       }
-      const data = (await res.json()) as DisambiguationResult;
+      const data = await res.json().catch(() => ({})) as DisambiguationResult;
       if (!mountedRef.current) return;
       if (data.ok) setDisambigResult(data);
       else setDisambigError("Disambiguation returned ok:false");
@@ -2348,7 +2348,7 @@ function HitRow({ hit, subjectCtx }: { hit: QuickScreenHit; subjectCtx?: Subject
       });
       if (!hitMountedRef.current) return;
       if (!res.ok) { setCsError("API error — please retry"); return; }
-      const data = (await res.json()) as ConfidenceScoreResult;
+      const data = await res.json().catch(() => ({})) as ConfidenceScoreResult;
       if (!hitMountedRef.current) return;
       if (data.ok) setCsResult(data);
     } catch { if (hitMountedRef.current) setCsError("Request failed"); }

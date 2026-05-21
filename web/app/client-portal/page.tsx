@@ -314,7 +314,7 @@ export default function ClientPortalPage() {
         }),
       });
       if (res.ok) {
-        const data = (await res.json()) as ClientRisk;
+        const data = await res.json().catch(() => ({})) as ClientRisk;
         if (!mountedRef.current) return;
         setClientRisk(data);
       } else {

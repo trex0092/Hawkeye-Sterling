@@ -105,7 +105,7 @@ async function fetchWatchman(name: string, limit: number): Promise<WatchmanRespo
       return { ok: true, subject: name, hits: [], totalHits: 0, listsChecked: [], aboveThreshold: 0, source: "watchman-moov", latencyMs: Date.now() - t0, fetchedAt, degraded: true, degradedReason: `Watchman API returned HTTP ${res.status}` };
     }
 
-    const data = await res.json() as Record<string, unknown>;
+    const data = await res.json().catch(() => ({})) as Record<string, unknown>;
     const allHits: WatchmanHit[] = [];
     const listsChecked: string[] = [];
 

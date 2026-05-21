@@ -1087,7 +1087,7 @@ export default function ShipmentsPage() {
         const body = await res.json().catch(() => ({})) as { error?: string };
         throw new Error(body.error ?? `TBML scan failed (HTTP ${res.status}) — please retry`);
       }
-      const data = (await res.json()) as ShipmentTbml;
+      const data = await res.json().catch(() => ({})) as ShipmentTbml;
       if (!mountedRef.current) return;
       setTbml(data);
     } catch (err) {

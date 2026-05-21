@@ -229,7 +229,7 @@ async function fetchLeiRecordLive(lei: string): Promise<LeiLookupResult | null> 
       if (res.status >= 500) throw new Error(`gleif 5xx: ${res.status}`);
       if (res.status === 404) return null;
       if (!res.ok) return null;
-      const raw = (await res.json()) as GleifLeiRecord;
+      const raw = await res.json().catch(() => ({})) as GleifLeiRecord;
       const d = raw.data;
       if (!d?.attributes) return null;
       const attr = d.attributes;
@@ -328,7 +328,7 @@ async function searchByName(
         signal: controller.signal,
       });
       if (!res.ok) return [];
-      const data = (await res.json()) as GleifFuzzyResponse;
+      const data = await res.json().catch(() => ({})) as GleifFuzzyResponse;
       return (data.data ?? []).map((d) => ({
         lei: d.lei ?? "",
         legalName: d.name ?? "",

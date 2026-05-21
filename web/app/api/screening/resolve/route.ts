@@ -142,7 +142,7 @@ async function createAsanaTask(opts: {
       console.warn("[resolve] asana task create failed:", res.status, await res.text());
       return undefined;
     }
-    const json = (await res.json()) as { data?: { gid?: string } };
+    const json = await res.json().catch(() => ({})) as { data?: { gid?: string } };
     return json.data?.gid;
   } catch (err) {
     console.warn("[resolve] asana task create threw:", err instanceof Error ? err.message : err);

@@ -395,7 +395,7 @@ export default function CountryRiskPage() {
         body: JSON.stringify({ country: country.trim(), analysisDepth: depth }),
       });
       if (!res.ok) throw new Error(`API error ${res.status} — please try again`);
-      const data = (await res.json()) as CountryRiskResult & { ok?: boolean; error?: string };
+      const data = await res.json().catch(() => ({})) as CountryRiskResult & { ok?: boolean; error?: string };
       if (!mountedRef.current) return;
       if (data.error) throw new Error(data.error);
       setResult(data as CountryRiskResult);
@@ -438,7 +438,7 @@ export default function CountryRiskPage() {
         body: JSON.stringify({ countries: compareList }),
       });
       if (!res.ok) throw new Error(`API error ${res.status} — please try again`);
-      const data = (await res.json()) as CountryCompareResult & { ok?: boolean; error?: string };
+      const data = await res.json().catch(() => ({})) as CountryCompareResult & { ok?: boolean; error?: string };
       if (!mountedRef.current) return;
       if (data.error) throw new Error(data.error);
       setCompareResult(data as CountryCompareResult);

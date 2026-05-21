@@ -885,7 +885,7 @@ export function PerformanceMonitoringDashboard() {
     try {
       const res = await fetch("/api/mlro/brier");
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const json = (await res.json()) as BrierResponse;
+      const json = await res.json().catch(() => ({})) as BrierResponse;
       if (mountedRef.current) setBrierData(json);
     } catch (err) {
       if (mountedRef.current) setBrierError(err instanceof Error ? err.message : "Failed to load calibration data");
@@ -901,7 +901,7 @@ export function PerformanceMonitoringDashboard() {
     try {
       const res = await fetch("/api/mlro/mode-performance");
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const json = (await res.json()) as ModePerformanceResponse;
+      const json = await res.json().catch(() => ({})) as ModePerformanceResponse;
       if (!mountedRef.current) return;
       setModeData(json);
       setModeFetched(true);
@@ -919,7 +919,7 @@ export function PerformanceMonitoringDashboard() {
     try {
       const res = await fetch("/api/mlro/fairness");
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const json = (await res.json()) as FairnessResponse;
+      const json = await res.json().catch(() => ({})) as FairnessResponse;
       if (!mountedRef.current) return;
       setFairnessData(json);
       setFairnessFetched(true);
@@ -936,7 +936,7 @@ export function PerformanceMonitoringDashboard() {
     try {
       const res = await fetch("/api/mlro/drift-alerts");
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const json = (await res.json()) as DriftAlertsResponse;
+      const json = await res.json().catch(() => ({})) as DriftAlertsResponse;
       if (!mountedRef.current) return;
       setAlertsData(json);
       setLastRefreshed(new Date());

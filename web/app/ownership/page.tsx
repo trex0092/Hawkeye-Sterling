@@ -71,7 +71,7 @@ export default function OwnershipPage() {
         setError(`Request failed — HTTP ${res.status}`);
         return;
       }
-      const data = (await res.json()) as OwnershipResult;
+      const data = await res.json().catch(() => ({})) as OwnershipResult;
       if (!mountedRef.current) return;
       setResult(data);
     } catch (err) {

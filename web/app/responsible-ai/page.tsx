@@ -1420,7 +1420,7 @@ export default function ResponsibleAIPage() {
       });
 
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = (await res.json()) as EthicsAssessmentResult & { ok?: boolean };
+      const data = await res.json().catch(() => ({})) as EthicsAssessmentResult & { ok?: boolean };
       if (!mountedRef.current) return;
       setAssessmentResult(data);
     } catch (e) {

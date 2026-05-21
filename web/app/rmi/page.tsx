@@ -347,7 +347,7 @@ export default function RmiPage() {
         body: JSON.stringify({ smelters: payload }),
       });
       if (res.ok) {
-        const data = (await res.json()) as RmiAssessment;
+        const data = await res.json().catch(() => ({})) as RmiAssessment;
         if (!mountedRef.current) return;
         setRmiAssess(data);
       } else {

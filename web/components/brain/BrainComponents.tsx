@@ -551,7 +551,7 @@ export function BrainConsole({ initialValues }: { initialValues?: BrainConsoleIn
           adverseMediaText: combinedNarrative || undefined,
         }),
       });
-      const data = (await res.json()) as ReasonResponse;
+      const data = await res.json().catch(() => ({})) as ReasonResponse;
       if (!res.ok || !data.ok) {
         setError(data.error ?? `HTTP ${res.status}`);
       } else {

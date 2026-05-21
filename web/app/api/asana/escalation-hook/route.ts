@@ -141,7 +141,7 @@ async function asanaFetch<T = unknown>(path: string, init?: RequestInit): Promis
       console.warn(`[asana-hook] ${path} returned ${res.status}`);
       return null;
     }
-    return (await res.json()) as T;
+    return await res.json().catch(() => ({})) as T;
   } catch (err) {
     console.warn(`[asana-hook] ${path} failed:`, err instanceof Error ? err.message : err);
     return null;
@@ -208,7 +208,7 @@ async function triggerSar(task: AsanaTask, origin: string): Promise<{ goamlXmlBa
     if (!res.ok) {
       return { ok: false, error: `SAR endpoint returned HTTP ${res.status}` };
     }
-    const body = await res.json() as { goaml?: { xmlBase64?: string } };
+    const body = await res.json().catch(() => ({})) as { goaml?: { xmlBase64?: string } };
     const xml = body.goaml?.xmlBase64;
     if (xml) return { ok: true, goamlXmlBase64: xml };
     return { ok: true };

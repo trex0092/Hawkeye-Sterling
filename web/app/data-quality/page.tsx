@@ -105,7 +105,7 @@ export default function DataQualityPage() {
         body: JSON.stringify({ rows: payload }),
       });
       if (res.ok) {
-        const data = (await res.json()) as DataQualityPlan;
+        const data = await res.json().catch(() => ({})) as DataQualityPlan;
         if (!mountedRef.current) return;
         setPlan(data);
       } else {

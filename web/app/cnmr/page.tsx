@@ -230,7 +230,7 @@ export default function CnmrPage() {
     try {
       const res = await fetch("/api/cnmr");
       if (res.ok) {
-        const data = (await res.json()) as { ok: boolean; cases: CnmrCase[] };
+        const data = await res.json().catch(() => ({})) as { ok: boolean; cases: CnmrCase[] };
         if (!mountedRef.current) return;
         if (data.ok) setCases(data.cases);
       }

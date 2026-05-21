@@ -108,7 +108,7 @@ export default function FpOptimizerPage() {
         if (mountedRef.current) setError(`Pattern analysis failed (HTTP ${res.status}). Please try again.`);
         return;
       }
-      const data = await res.json() as FpAnalysisResult;
+      const data = await res.json().catch(() => ({})) as FpAnalysisResult;
       if (!mountedRef.current) return;
       setAnalysisResult(data);
     } catch (err) {
@@ -133,7 +133,7 @@ export default function FpOptimizerPage() {
         if (mountedRef.current) setError(`FP prediction failed (HTTP ${res.status}). Please try again.`);
         return;
       }
-      const data = await res.json() as PredictResult;
+      const data = await res.json().catch(() => ({})) as PredictResult;
       if (!mountedRef.current) return;
       setPredictResult(data);
     } catch (err) {

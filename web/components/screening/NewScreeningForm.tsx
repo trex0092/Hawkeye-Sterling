@@ -140,7 +140,7 @@ export function NewScreeningForm({
           if (!cancelled) setPepStatus("error");
           return;
         }
-        const data = (await res.json()) as PepMatchResponse;
+        const data = await res.json().catch(() => ({})) as PepMatchResponse;
         if (cancelled) return;
         if (data.ok && data.hits.length > 0) {
           setPepHits(data.hits);

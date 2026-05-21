@@ -132,7 +132,7 @@ export default function SarQaPage() {
         setAiScoreError(`AI scoring failed (HTTP ${res.status}). Please try again.`);
         return;
       }
-      const data = (await res.json()) as { ok: boolean; scores?: QaScore[] };
+      const data = await res.json().catch(() => ({})) as { ok: boolean; scores?: QaScore[] };
       if (!mountedRef.current) return;
       if (!Array.isArray(data.scores)) {
         setAiScoreError("AI scoring returned an unexpected response. Please try again.");

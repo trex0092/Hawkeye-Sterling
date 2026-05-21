@@ -92,7 +92,7 @@ export default function PepProfilePage() {
         setError(`Request failed (HTTP ${res.status})${body ? ` — ${body}` : ""} — please try again.`);
         return;
       }
-      const data = (await res.json()) as PepProfileResult;
+      const data = await res.json().catch(() => ({})) as PepProfileResult;
       if (!mountedRef.current) return;
       setResult(data);
     } catch (err) {
