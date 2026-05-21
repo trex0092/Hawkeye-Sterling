@@ -3170,7 +3170,8 @@ export default function MlroAdvisorPage() {
         context: tradeFinRiskInput.context,
       };
       const r = await fetch("/api/trade-finance-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
-      const d = await r.json();
+      const d = await r.json() as { ok?: boolean; error?: string };
+      if (!r.ok || d.ok === false) throw new Error(d.error ?? "API error");
       if (!mountedRef.current) return;
       setTradeFinRiskResult(d);
     } catch { if (mountedRef.current) setTradeFinRiskResult({ ok: false, error: "Network error" }); }
@@ -3212,7 +3213,8 @@ export default function MlroAdvisorPage() {
         context: itInput.context,
       };
       const r = await fetch("/api/insider-threat", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
-      const d = await r.json();
+      const d = await r.json() as { ok?: boolean; error?: string };
+      if (!r.ok || d.ok === false) throw new Error(d.error ?? "API error");
       if (!mountedRef.current) return;
       setItResult(d);
     } catch { if (mountedRef.current) setItResult({ ok: false, error: "Network error" }); }
