@@ -225,5 +225,7 @@ export function downloadEvidencePack(entry: EvidencePackEntry): void {
     const w = window.open(url, "_blank", "noopener,noreferrer");
     setTimeout(() => URL.revokeObjectURL(url), 30_000);
     if (!w) alert("Pop-up blocked — allow pop-ups to open the PDF report.");
+  }).catch((err: unknown) => {
+    console.error("[hawkeye] evidence-pack-report fetch failed:", err instanceof Error ? err.message : String(err));
   });
 }

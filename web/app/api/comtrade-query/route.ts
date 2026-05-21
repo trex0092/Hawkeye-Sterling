@@ -75,12 +75,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     raw = await req.json();
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON body" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid JSON body" }, { status: 400, headers: gate.headers });
   }
 
   const validated = validateBody(raw);
   if (!validated.ok) {
-    return NextResponse.json({ ok: false, errors: validated.errors }, { status: 400 });
+    return NextResponse.json({ ok: false, errors: validated.errors }, { status: 400, headers: gate.headers });
   }
 
   const { reporterCode, cmdCode, flowCode, period, partnerCode } = validated.value;
@@ -120,17 +120,17 @@ export async function POST(req: Request): Promise<NextResponse> {
           error: `Comtrade API returned HTTP ${apiRes.status}`,
           detail: errText.slice(0, 200),
         },
-        { status: 502 },
+        { status: 502, headers: gate.headers },
       );
     }
 
     const apiData = await apiRes.json() as ComtradeApiResponse;
-    return NextResponse.json({ ok: true, count: apiData.count ?? 0, data: apiData.data ?? [] });
+    return NextResponse.json({ ok: true, count: apiData.count ?? 0, data: apiData.data ?? [] }, { headers: gate.headers });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json(
       { ok: false, error: `Comtrade fetch failed — ${msg}` },
-      { status: 502 },
+      { status: 502, headers: gate.headers },
     );
   }
 }

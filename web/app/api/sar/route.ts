@@ -107,7 +107,7 @@ async function checkFourEyes(caseId: string, req: Request): Promise<{
   };
 }
 
-async function handleGet(req: Request): Promise<NextResponse> {
+async function handleGet(req: Request, gateHeaders: Record<string, string> = {}): Promise<NextResponse> {
   const url = new URL(req.url);
   const caseId = url.searchParams.get("caseId")?.trim();
 
@@ -118,7 +118,7 @@ async function handleGet(req: Request): Promise<NextResponse> {
   const filtered = caseId ? records.filter((r) => r.caseId === caseId) : records;
   filtered.sort((a, b) => b.generatedAt.localeCompare(a.generatedAt));
 
-  return NextResponse.json({ ok: true, count: filtered.length, records: filtered });
+  return NextResponse.json({ ok: true, count: filtered.length, records: filtered }, { headers: gateHeaders });
 }
 
 async function handlePost(req: Request, callerRecord: ApiKeyRecord | null, gateHeaders: Record<string, string> = {}, tenant: string = "default", actorKeyId?: string): Promise<NextResponse> {
@@ -316,7 +316,7 @@ async function handlePost(req: Request, callerRecord: ApiKeyRecord | null, gateH
 export async function GET(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
-  return handleGet(req);
+  return handleGet(req, gate.headers);
 }
 
 export async function POST(req: Request): Promise<NextResponse> {

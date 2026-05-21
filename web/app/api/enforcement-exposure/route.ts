@@ -46,12 +46,12 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400, headers: gate.headers });
   }
-  if (!body.violation?.trim()) return NextResponse.json({ ok: false, error: "violation required" }, { status: 400 });
+  if (!body.violation?.trim()) return NextResponse.json({ ok: false, error: "violation required" }, { status: 400, headers: gate.headers });
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "enforcement-exposure temporarily unavailable - please retry." }, { status: 503 });
+  if (!apiKey) return NextResponse.json({ ok: false, error: "enforcement-exposure temporarily unavailable - please retry." }, { status: 503, headers: gate.headers });
 
   try {
     const client = getAnthropicClient(apiKey, 55_000);
@@ -83,9 +83,9 @@ Assess regulatory enforcement exposure for this AML violation. Return complete E
     if (!Array.isArray(result.aggravatingFactors)) result.aggravatingFactors = [];
     if (!Array.isArray(result.precedentCases)) result.precedentCases = [];
     if (!Array.isArray(result.remedialActions)) result.remedialActions = [];
-    return NextResponse.json({ ok: true, ...result });
+    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
-    return NextResponse.json({ ok: false, error: "enforcement-exposure temporarily unavailable - please retry." }, { status: 503 });
+    return NextResponse.json({ ok: false, error: "enforcement-exposure temporarily unavailable - please retry." }, { status: 503, headers: gate.headers });
   }
 }
