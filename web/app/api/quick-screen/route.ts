@@ -307,7 +307,7 @@ export async function POST(req: Request): Promise<NextResponse> {
           whitelistEntryId: match.id,
           approvedBy: match.approvedBy,
           approverRole: match.approverRole,
-        });
+        }).catch((err: unknown) => console.warn("[quick-screen] whitelist audit write failed:", err instanceof Error ? err.message : String(err)));
         return respond(200, { ok: true, ...whitelistedResult }, gateHeaders);
       }
     } catch (err) {
@@ -464,9 +464,9 @@ export async function POST(req: Request): Promise<NextResponse> {
         listsChecked: result.listsChecked,
         listsDegraded: earlyDegraded1,
         enrichmentPending: true,
-      });
+      }).catch((err: unknown) => console.warn("[quick-screen] audit write failed:", err instanceof Error ? err.message : String(err)));
       const newJobId1 = `hwk-e-${randomUUID()}`;
-      void saveEnrichmentJob(newJobId1, subject, { ok: true, ...result } as Record<string, unknown>);
+      void saveEnrichmentJob(newJobId1, subject, { ok: true, ...result } as Record<string, unknown>).catch((err: unknown) => console.warn("[quick-screen] saveEnrichmentJob failed:", err instanceof Error ? err.message : String(err)));
       return respond(200, {
         ok: true, ...result,
         enrichmentPending: true,
@@ -578,10 +578,10 @@ export async function POST(req: Request): Promise<NextResponse> {
         listsChecked: result.listsChecked,
         listsDegraded: earlyDegraded2,
         enrichmentPending: true,
-      });
+      }).catch((err: unknown) => console.warn("[quick-screen] audit write failed:", err instanceof Error ? err.message : String(err)));
       const newJobId2 = enrichJobId ?? `hwk-e-${randomUUID()}`;
       if (!enrichJobId) {
-        void saveEnrichmentJob(newJobId2, subject, { ok: true, ...result } as Record<string, unknown>);
+        void saveEnrichmentJob(newJobId2, subject, { ok: true, ...result } as Record<string, unknown>).catch((err: unknown) => console.warn("[quick-screen] saveEnrichmentJob failed:", err instanceof Error ? err.message : String(err)));
       }
       return respond(200, {
         ok: true, ...result,
@@ -771,7 +771,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       hitsCount: finalResult.hits.length,
       listsChecked: finalResult.listsChecked,
       listsDegraded: degradedListIds.length,
-    });
+    }).catch((err: unknown) => console.warn("[quick-screen] audit write failed:", err instanceof Error ? err.message : String(err)));
 
     // Auto-open a server-side case record when the screening yields hits.
     // Fire-and-forget — never blocks the response.
@@ -959,7 +959,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     // If this was a re-enrichment poll call, persist the full result so
     // subsequent polls return the cached enriched data without re-running adapters.
     if (enrichJobId) {
-      void completeEnrichmentJob(enrichJobId, fullPayload as Record<string, unknown>);
+      void completeEnrichmentJob(enrichJobId, fullPayload as Record<string, unknown>).catch((err: unknown) => console.warn("[quick-screen] completeEnrichmentJob failed:", err instanceof Error ? err.message : String(err)));
     }
     return respond(200, fullPayload, gateHeaders);
   } catch (err) {

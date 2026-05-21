@@ -1376,7 +1376,7 @@ async function dispatch(msg: {
         outputSummary: `BLOCKED: prompt injection detected in field "${injectedField}"`,
         durationMs: 0,
         isError: true,
-      });
+      }).catch((e: unknown) => console.warn("[mcp] logToolCall failed:", e instanceof Error ? e.message : String(e)));
       return err(id, -32004, `Request blocked: potential prompt injection detected in input field "${injectedField}".`);
     }
 
@@ -1441,7 +1441,7 @@ async function dispatch(msg: {
       );
       const durationMs = Date.now() - t0;
       // Fire-and-forget — breaker state shouldn't block the response.
-      void recordBreakerSuccess(toolName);
+      void recordBreakerSuccess(toolName).catch((e: unknown) => console.warn("[mcp] recordBreakerSuccess failed:", e instanceof Error ? e.message : String(e)));
       const wrapped = wrapWithGovernance(
         toolName, level, result, durationMs,
         sanctionsHealth.listsVerified, sanctionsHealth.missingCritical,
@@ -1456,14 +1456,14 @@ async function dispatch(msg: {
         durationMs,
         isError: false,
         ...(anomaly ? { anomalyNote: anomaly } : {}),
-      });
+      }).catch((e: unknown) => console.warn("[mcp] logToolCall failed:", e instanceof Error ? e.message : String(e)));
       return ok(id, {
         content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
       });
     } catch (e) {
       const durationMs = Date.now() - t0;
       // Fire-and-forget — breaker write shouldn't block the error response.
-      void recordBreakerFailure(toolName);
+      void recordBreakerFailure(toolName).catch((e2: unknown) => console.warn("[mcp] recordBreakerFailure failed:", e2 instanceof Error ? e2.message : String(e2)));
       const requestId = Math.random().toString(36).slice(2, 10);
       const errMsg = e instanceof Error ? e.message : String(e);
       void logToolCall({
@@ -1475,7 +1475,7 @@ async function dispatch(msg: {
         outputSummary: errMsg,
         durationMs,
         isError: true,
-      });
+      }).catch((e2: unknown) => console.warn("[mcp] logToolCall failed:", e2 instanceof Error ? e2.message : String(e2)));
       // F-07 standardised error schema
       return ok(id, {
         content: [{ type: "text", text: JSON.stringify({

@@ -296,7 +296,7 @@ async function fetchLeiRecordLive(lei: string): Promise<LeiLookupResult | null> 
 async function fetchLeiRecord(lei: string): Promise<LeiLookupResult | null> {
   const live = await fetchLeiRecordLive(lei);
   if (live) {
-    void writeLeiCache(lei, live);
+    void writeLeiCache(lei, live).catch((err: unknown) => console.warn("[lei-lookup] cache write failed:", err instanceof Error ? err.message : String(err)));
     return live;
   }
   const cached = await readLeiCache(lei);
