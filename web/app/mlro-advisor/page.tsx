@@ -1522,7 +1522,7 @@ export default function MlroAdvisorPage() {
         verification?: AdvisorResult["verification"];
         classifierHits?: AdvisorResult["classifierHits"];
       };
-      if (!data.ok || !data.answer) {
+      if (!res.ok || !data.ok || !data.answer) {
         throw new Error(data.error ?? `HTTP ${res.status}`);
       }
       if (!mountedRef.current) return;

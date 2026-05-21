@@ -225,7 +225,7 @@ export default function EwraPage() {
       });
       const data = (await res.json()) as { ok: boolean; error?: string } & ThreatIntelResult;
       if (!mountedRef.current) return;
-      if (!data.ok) { setThreatError(data.error ?? "Threat intel generation failed"); return; }
+      if (!res.ok || !data.ok) { setThreatError(data.error ?? `HTTP ${res.status}`); return; }
       setThreatIntel(data);
       setThreatOpen(true);
     } catch {

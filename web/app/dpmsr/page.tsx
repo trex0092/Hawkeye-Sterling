@@ -76,7 +76,7 @@ function EvaluateForm({ onResult }: EvaluateFormProps) {
       });
       const data = (await res.json()) as { ok: boolean; obligationsFound: number; obligations: DpmsrObligation[]; error?: string };
       if (!mountedRef.current) return;
-      if (!data.ok) { setError(data.error ?? "Evaluation failed"); return; }
+      if (!res.ok || !data.ok) { setError(data.error ?? `HTTP ${res.status}`); return; }
       setEvalResult(data);
       if (save && data.obligations.length > 0) { onResult(data.obligations); setTransactions([]); setEvalResult(null); }
     } catch { if (mountedRef.current) setError("Network error"); }
@@ -200,7 +200,7 @@ export default function DpmsrPage() {
       const res = await fetch("/api/dpmsr-trigger", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ patch: { id, ...patch } }) });
       const data = (await res.json()) as { ok: boolean; obligation?: DpmsrObligation };
       if (!mountedRef.current) return;
-      if (data.ok && data.obligation) setObligations((prev) => prev.map((o) => o.id === id ? data.obligation! : o));
+      if (res.ok && data.ok && data.obligation) setObligations((prev) => prev.map((o) => o.id === id ? data.obligation! : o));
     } finally { if (mountedRef.current) setSaving(null); }
   };
 

@@ -335,6 +335,7 @@ export default function AdverseMediaLivePage() {
             jurisdiction: params.jurisdiction || undefined,
           }),
         });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = (await res.json()) as AdverseMediaLiveResult;
         if (!mountedRefPage.current) return;
         setResult(data);

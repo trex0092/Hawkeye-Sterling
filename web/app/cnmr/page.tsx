@@ -90,7 +90,7 @@ function NewCnmrForm({ onCreated, onCancel }: NewCnmrFormProps) {
       });
       const data = (await res.json()) as { ok: boolean; case?: CnmrCase; error?: string };
       if (!mountedRef.current) return;
-      if (!data.ok) { setError(data.error ?? "Failed to create case"); return; }
+      if (!res.ok || !data.ok) { setError(data.error ?? `HTTP ${res.status}`); return; }
       onCreated(data.case!);
     } catch { if (mountedRef.current) setError("Network error"); }
     finally { if (mountedRef.current) setSaving(false); }
@@ -153,7 +153,7 @@ function CaseDetail({ c, onUpdate }: CaseDetailProps) {
       const res = await fetch("/api/cnmr", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ id: c.id, ...patch }) });
       const data = (await res.json()) as { ok: boolean; case?: CnmrCase };
       if (!mountedRef.current) return;
-      if (data.ok && data.case) onUpdate(data.case);
+      if (res.ok && data.ok && data.case) onUpdate(data.case);
     } finally { if (mountedRef.current) setSaving(false); }
   };
 
