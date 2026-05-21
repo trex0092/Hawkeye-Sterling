@@ -101,33 +101,50 @@ export default function PKycPage() {
   }
 
   async function handleForceRun(id: string) {
-    const res = await fetch(`/api/pkyc/run?id=${encodeURIComponent(id)}&force=true`, { method: "POST", headers: authHeaders() });
-    const data = await res.json();
-    const r = data.results?.[0];
-    setRunResult(r ? `${r.name}: ${r.band?.toUpperCase()} (${r.composite}/100) · ${r.changed ? "⚡ CHANGED" : "no change"}` : "done");
-    void load();
+    try {
+      const res = await fetch(`/api/pkyc/run?id=${encodeURIComponent(id)}&force=true`, { method: "POST", headers: authHeaders() });
+      const data = (await res.json()) as { ok?: boolean; error?: string; results?: { name: string; band?: string; composite?: number; changed?: boolean }[] };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? `HTTP ${res.status}`);
+      const r = data.results?.[0];
+      setRunResult(r ? `${r.name}: ${r.band?.toUpperCase()} (${r.composite}/100) · ${r.changed ? "⚡ CHANGED" : "no change"}` : "done");
+      void load();
+    } catch (err) {
+      setRunResult(`Force run failed: ${err instanceof Error ? err.message : String(err)}`);
+    }
   }
 
   async function handleDelete(id: string) {
     if (!confirm("Remove subject from pKYC monitoring?")) return;
-    await fetch(`/api/pkyc?id=${encodeURIComponent(id)}`, { method: "DELETE", headers: authHeaders() });
-    void load();
+    try {
+      const res = await fetch(`/api/pkyc?id=${encodeURIComponent(id)}`, { method: "DELETE", headers: authHeaders() });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      void load();
+    } catch (err) {
+      setRunResult(`Delete failed: ${err instanceof Error ? err.message : String(err)}`);
+    }
   }
 
   async function handleEnroll(e: React.FormEvent) {
     e.preventDefault();
     setEnrolling(true);
-    // Convert DD/MM/YYYY → YYYY-MM-DD for the API
-    let apiDob = form.dob;
-    if (/^\d{2}\/\d{2}\/\d{4}$/.test(form.dob)) {
-      const [dd, mm, yyyy] = form.dob.split("/");
-      apiDob = `${yyyy}-${mm}-${dd}`;
+    try {
+      // Convert DD/MM/YYYY → YYYY-MM-DD for the API
+      let apiDob = form.dob;
+      if (/^\d{2}\/\d{2}\/\d{4}$/.test(form.dob)) {
+        const [dd, mm, yyyy] = form.dob.split("/");
+        apiDob = `${yyyy}-${mm}-${dd}`;
+      }
+      const res = await fetch("/api/pkyc", { method: "POST", headers: authHeaders(), body: JSON.stringify({ ...form, dob: apiDob }) });
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? `HTTP ${res.status}`);
+      setShowEnroll(false);
+      setForm({ name: "", entityType: "individual", jurisdiction: "", dob: "", cadence: "monthly", notes: "", mlro: "" });
+      void load();
+    } catch (err) {
+      setRunResult(`Enroll failed: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setEnrolling(false);
     }
-    await fetch("/api/pkyc", { method: "POST", headers: authHeaders(), body: JSON.stringify({ ...form, dob: apiDob }) });
-    setShowEnroll(false);
-    setForm({ name: "", entityType: "individual", jurisdiction: "", dob: "", cadence: "monthly", notes: "", mlro: "" });
-    setEnrolling(false);
-    void load();
   }
 
   const now = new Date();
