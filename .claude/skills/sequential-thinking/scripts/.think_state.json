@@ -1,53 +1,59 @@
 {
   "thoughtHistory": [
     {
-      "thought": "Starting a deep review of the screening section. I need to map all screening-related files first, then inspect each for bugs, broken integrations, incorrect responses, missing logic, and import issues. Screening involves: quick-screen (name matching), batch-screen, screening/run, ongoing/run, screen/batch, payment-screen, wire/screen, and the brain modules (quickScreen, matching, translit, redlines, cognitive-amplifier). Let me enumerate all relevant files.",
+      "thought": "Starting comprehensive audit. I need to: (1) Check TypeScript correctness of all recently modified files, (2) Audit the new panels for logic bugs, (3) Find remaining APIs with no UI, (4) Check all pages for missing !res.ok guards, (5) Produce a prioritized action list. Let me begin by checking TS and the recently modified files.",
       "thoughtNumber": 1,
-      "totalThoughts": 12,
+      "totalThoughts": 10,
       "nextThoughtNeeded": true
     },
     {
-      "thought": "50+ screening-related files found. Priority targets for deep review:\n1. Core routes: quick-screen/route.ts, screening/run/route.ts, screen/batch/route.ts, batch-screen/route.ts, ongoing/run/route.ts\n2. Brain modules: quick-screen.ts, matching.ts, translit.ts, redlines.ts, cognitive-amplifier.ts\n3. Specialized: payment-screen, wire/screen, pep-screening-enhance, pf-screener, tf-screener\n\nStrategy: Read the core screening routes first (quick-screen, screening/run, screen/batch), then brain engine, then specialized routes. Check for: import correctness, response shape consistency, error handling, missing fields, auth, logic flaws.",
+      "thought": "TypeScript check passes clean — zero errors across the entire codebase. Now let me audit the logic of each new panel for correctness.",
       "thoughtNumber": 2,
-      "totalThoughts": 12,
+      "totalThoughts": 10,
       "nextThoughtNeeded": true
     },
     {
-      "thought": "Findings so far in quick-screen/route.ts and screening/run/route.ts:\n\nBUG 1 — screening/run/route.ts has DUPLICATE auto-case creation block (lines 328-360 and 362-420). The same fire-and-forget fetch to /api/hs-cases runs TWICE per screening hit. The second block (lines 362-420) is the more complete version (it handles enrich + rescreen-queue). The first block (lines 328-360) is a dupe and must be removed.\n\nBUG 2 — screening/run/route.ts: import at line 28 still uses relative src/ path:\n  import { quickScreen as brainQuickScreen } from '../../../../../src/brain/quick-screen.js';\nThis is fine (we fixed dist/src → src), but it should ideally use the @brain alias like quick-screen/route.ts does. NOT a bug per se — just inconsistency. Low priority.\n\nBUG 3 — quick-screen/route.ts line 955: listIds referenced as finalResult.listIds but QuickScreenResult does not appear to have a listIds field. Let me verify this.\n\nNext: check the QuickScreenResult type and screen/batch/route.ts.",
+      "thought": "Logic audit of new panels:\n  \n  cdd-review EXIT LETTER: \n  - !res.ok guard present ✓\n  - mountedRef guards on all state setters ✓  \n  - exitChecklist uses Record<number,boolean> — OK for 0-7 items\n  - navigator.clipboard.writeText wrapped in void ✓\n  - EXIT_REASON_LABELS used correctly with Object.entries cast ✓\n  - One potential issue: runExitLetter missing finally block — setExitLoading(false) only in finally is missing. Let me verify.\n  \n  cdd-review POLICY REVIEWER:\n  - !res.ok guard present ✓\n  - mountedRef guards ✓\n  \n  str-cases TRIAGE:\n  - !res.ok guard present ✓\n  - triageNarrativeEnabled fed to API ✓\n  - cases.length=0 early-return guard present ✓\n  - Missing: setTriageLoading(false) in the cases.length=0 path — there IS a return but setTriageLoading(false) is set before the return. Let me verify.",
       "thoughtNumber": 3,
-      "totalThoughts": 14,
+      "totalThoughts": 10,
+      "nextThoughtNeeded": true
+    },
+    {
+      "thought": "Both runExitLetter and runTriage have proper finally blocks. The early return in runTriage also sets setTriageLoading(false) before returning — that's correct. All loading states are properly cleaned up.\n\nNow let me check: what major APIs remain without any UI coverage? I need to scan all API routes and check if they're referenced anywhere in client-facing code (not just page.tsx but also components and lib).",
+      "thoughtNumber": 4,
+      "totalThoughts": 10,
+      "nextThoughtNeeded": true
+    },
+    {
+      "thought": "There are ~100+ APIs with no client references. Most fall into clear categories:\n  \n  INFRASTRUCTURE/ADMIN (skip): admin/*, keys, routes, schedule, well-known/*, cron/*, mcp, feedback, metrics, llm-telemetry, asana/*, auth/*\n  \n  BACKGROUND/JOB (skip): ctr-autopilot, str-autopilot, rescreen-queue, ongoing-screen, live-sanctions-sweep, board-pack-auto, evidence-pack-auto\n  \n  HIGH-VALUE missing UI on existing pages:\n  1. aml-health-score - no page at all - oversight page or new\n  2. oversight-gap-analysis - oversight page exists\n  3. sar-probability - str-cases page would benefit\n  4. regulatory-deadline-engine - compliance pages \n  5. playbook/gap-analysis - playbook page exists\n  6. edd-completeness - cdd-review page\n  7. structuring-predict - transaction-monitor or batch page\n  8. deep-research - investigation page?\n  \n  Let me check sizes of pages that could host these new features to decide where to integrate.",
+      "thoughtNumber": 5,
+      "totalThoughts": 12,
       "nextThoughtNeeded": true,
       "needsMoreThoughts": true
     },
     {
-      "thought": "screen/batch/route.ts BUG: Line 268 accesses raw.results instead of raw.hits. QuickScreenResult has hits[], not results[]. The correct field is hits, not results. Also hits[0].name is wrong — it should be hits[0].candidateName. This means the screen/batch endpoint always returns hitCount=0 and lists=[] because it reads the wrong field from the result object.\n\nSpecifically at line 268:\n  const hits = ((raw as { results?: HitLike[] }).results ?? []).filter(...)\nShould be:\n  const hits = ((raw as { hits?: HitLike[] }).hits ?? []).filter(...)\n\nAnd at line 283, topHit?.name should be topHit?.candidateName since QuickScreenHit has candidateName not name.\n\nAlso at line 267, raw.topScore is accessed correctly.\n\nLet me verify the QuickScreenHit type.",
-      "thoughtNumber": 4,
-      "totalThoughts": 14,
-      "nextThoughtNeeded": true
-    },
-    {
-      "thought": "More findings:\n\nBUG 4 — screening/run/route.ts DUPLICATE auto-case block confirmed. Lines 328-360 and 362-420 are completely duplicated. The first block (328-360) creates a case but never triggers the enrich step or rescreen-queue. The second block (362-420) is more complete. The first block must be removed.\n\nwire/screen/route.ts looks correct — uses quickScreen with .hits properly.\nscreening-history/route.ts looks correct.\nscreening/health/route.ts looks correct — uses static import for quickScreen (good, no cold-start dynamic import needed for health probes).\npayment-screen/route.ts looks correct so far.\n\nNext: check the pep-screening-enhance, pf-screener, tf-screener, and pf-screener for issues. Also check batch-screen/route.ts more thoroughly (it has the score mapping at lines 33-39 using threshold 50 which doesn't match quick-screen/route.ts's tier thresholds). Let me check if scoreToBand is consistent with QuickScreenResult.severity.",
-      "thoughtNumber": 5,
-      "totalThoughts": 14,
-      "nextThoughtNeeded": true
-    },
-    {
-      "thought": "Severity thresholds confirmed: clear=0 hits, critical>=95, high>=85, medium>=70, low=anything below 70 with hits.\n\nBUG 5 — screen/batch/route.ts scoreToBand at lines 33-39:\n  if (score >= 85) return 'critical';  — WRONG (should be 95)\n  if (score >= 70) return 'high';      — WRONG (should be 85)\n  if (score >= 50) return 'medium';    — WRONG (should be 70)\n  if (score >= 25) return 'low';       — WRONG (should be <70 with any hits)\n\nThe thresholds in screen/batch are inconsistent with the brain engine. This means batch subjects will have inflated severity bands (things that are 'medium' by brain standards become 'low', etc.). Must align to: critical>=95, high>=85, medium>=70, low<70.\n\nAlso batch-screen/route.ts lines 33-39 has the same scoreToBand — let me check.\n\nNow let me check pf-screener, tf-screener, and the ongoing-screen.",
+      "thought": "Now I have a clear picture of the high-value APIs. Let me plan what to build:\n\nTIER 1 — Highest value, clear integration targets:\n1. oversight-gap-analysis → oversight/page.tsx (2081 lines, manageable)\n   - The oversight page already manages approvals/circulars/actions — this API takes that data and returns gaps\n   - Just add a 'Run Gap Analysis' button that sends the current queue\n\n2. sar-probability → str-cases/page.tsx (now ~1060 lines)\n   - Takes case signals and returns STR probability 0-100 with drivers\n   - When a user opens a case/row, show SAR probability score\n   - Or: add a 'Score Cases' button that runs sar-probability for each case\n\n3. edd-completeness → cdd-review/page.tsx (now ~1750 lines - getting large)\n   - Takes EDD file items and returns completeness score + gaps\n   - Natural fit in the EDD Checklist section\n\n4. regulatory-deadline-engine → oversight/page.tsx or reg-change/page.tsx\n   - Takes entity profile, returns upcoming deadline list\n   - Very high value for compliance calendar\n\n5. structuring-predict → transaction-monitor/page.tsx (692 lines, good size)\n   - Takes 30-day transaction list, returns structuring probability\n\nTIER 2 — Medium value:\n6. aml-health-score → new section in oversight or standalone dashboard\n7. playbook/gap-analysis → playbook/page.tsx (6335 lines - too large to touch)\n\nSTRATEGY: Focus on Tier 1 first. The four strongest additions are:\nA. oversight-gap-analysis in oversight page\nB. sar-probability in str-cases \nC. edd-completeness in cdd-review\nD. regulatory-deadline-engine in oversight page (two features in one page)\n\nThis is 3 pages to modify. Let me check oversight page first to understand its structure.",
       "thoughtNumber": 6,
-      "totalThoughts": 14,
+      "totalThoughts": 12,
       "nextThoughtNeeded": true
     },
     {
-      "thought": "BUG 6 — screening/enhanced/route.ts uses hit.name throughout (lines 160, 193, 201, 203, 219, 221, 224) but QuickScreenHit has 'candidateName' not 'name'. However, the ScreeningHit interface defined in this file (line 37) uses 'name?: string' and the route calls /api/screening/run first then processes the result — the response from screening/run includes the raw QuickScreenHit objects where the field IS candidateName. So if screening/run returns hits with candidateName, but enhanced tries to access hit.name, it will always be undefined. The dedup at line 219 will key everything under '' (empty string after lowercasing undefined).\n\nBUT wait — the route calls callScreeningRun which calls /api/screening/run, and that route returns the result from brainQuickScreen which uses candidateName. The enhanced route then accesses hit.name — this is broken.\n\nLet me now check all the bugs I've found and compile the fix list. I'll also quickly check the ongoing/run route for screening-history writing correctness.",
+      "thought": "The oversight page ALREADY calls governance-gap and board-aml-report. I need to add oversight-gap-analysis and regulatory-deadline-engine.\n  \n  The oversight-gap-analysis takes the pending approvals + open circulars + action items (all of which the oversight page has in its state) and returns { gaps, overdueItems, breachRisks, deadlines, recommendation }.\n  \n  The regulatory-deadline-engine returns upcoming AML deadlines from entity profile inputs.\n  \n  For SAR probability in str-cases: I need to check what the API needs (CaseSignals) vs what the str-cases page has. Cases have: riskScore=unknown (not stored), sanctionsHits=0, pepStatus=unknown, jurisdictionRisk=unknown. The problem is the str-cases page doesn't store rich signals. \n  \n  ALTERNATIVE for sar-probability: Add a 'Quick Score' button in each case row that shows a probability based on minimal signals. Or add a form where you can input case signals for a specific case.\n  \n  BETTER APPROACH: Add sar-probability as a case assessment panel in str-cases where users enter the signals for the active case they're working on, then see the probability. This is more useful than auto-scoring all cases with empty signals.\n\n  For edd-completeness in cdd-review: This fits perfectly in the EDD Checklist section - after generating the EDD checklist, user can check off what they have, then run completeness check.\n\n  FINAL PLAN for this session:\n  A. oversight page: oversight-gap-analysis + regulatory-deadline-engine (both new AI panels)\n  B. str-cases page: sar-probability panel (new AI panel with signal inputs)\n  C. transaction-monitor page: structuring-predict panel\n  D. cdd-review page: edd-completeness panel in EDD section\n  \n  That's 4 pages. Let me read transaction-monitor first to understand its structure.",
       "thoughtNumber": 7,
-      "totalThoughts": 14,
+      "totalThoughts": 12,
       "nextThoughtNeeded": true
     },
     {
-      "thought": "ongoing/run/route.ts looks correct — uses candidateName properly throughout, correctly writes to screening-history/<id>/<runAt> with correct shape {at, topScore, severity, lists, hits}. No bugs here.\n\nLet me now compile my full bug list and implement fixes:\n\nCONFIRMED BUGS:\n1. screening/run/route.ts — DUPLICATE auto-case block (lines 328-360 = dupe of 362-420). Remove first block.\n2. screen/batch/route.ts — reads raw.results instead of raw.hits (line 268). Also topHit?.name should be topHit?.candidateName (line 283).\n3. screen/batch/route.ts — scoreToBand thresholds wrong: should be >=95 critical, >=85 high, >=70 medium, else low.\n4. screening/enhanced/route.ts — uses hit.name instead of hit.candidateName throughout. Need to update ScreeningHit interface to use candidateName and update all references.\n\nLet me now implement these fixes.",
+      "thought": "Transaction-monitor page has existing txs (TxRow[]) with: counterparty, amount, currency, occurredOn, channel, direction, behaviouralFlags. It DOES track structuring via typologyTags. \n\n  For structuring-predict: the API takes Transaction[] with {date, amount, currency, type} and returns structuring probability + patterns. The txs in the monitor already have this data! I can convert txs -> Transaction[] and run structuring analysis on the full history.\n\n  Now let me check the sar-probability API more carefully to see what minimal signals are needed, then check oversight page bottom to find insertion points.\n\n  KEY DECISION: Which pages to enhance in this session to maximize coverage while keeping quality high:\n  \n  1. oversight/page.tsx → add: (a) oversight-gap-analysis panel, (b) regulatory-deadline-engine panel\n  2. str-cases/page.tsx → add: sar-probability case assessment panel  \n  3. transaction-monitor/page.tsx → add: structuring-predict analysis panel\n  4. cdd-review/page.tsx → add: edd-completeness panel (fits in EDD section)\n  \n  Let me look at what the oversight page bottom looks like and where to insert.",
       "thoughtNumber": 8,
-      "totalThoughts": 14,
+      "totalThoughts": 12,
       "nextThoughtNeeded": true
+    },
+    {
+      "thought": "FINAL ANALYSIS:\n  \n  The oversight page already has governance-gap analysis and board-aml-report. I should add:\n  1. oversight-gap-analysis (different from governance-gap — this one takes the actual queue state)\n  2. regulatory-deadline-engine (new deadline calendar feature)\n  \n  The oversight page ends with the boardResult section and then </ModuleLayout>. I should append these as new collapsible panels before </ModuleLayout>.\n  \n  Now I have full clarity. Time to implement. Key technical details:\n  \n  oversight-gap-analysis:\n  - Takes: { approvals[], circulars[], actionItems[] }\n  - Returns: { gaps[], overdueItems[], breachRisks[], deadlines[], recommendation }\n  - The page has APPROVALS, CIRCULARS, ACTIONS arrays in state\n  \n  regulatory-deadline-engine:\n  - Takes: EntityProfile { entityType, riskClassification, licenseType, ... }\n  - Returns: deadline list with dates and types\n  - Simple form: entityType select, riskClassification select, licenseType select → compute deadlines\n  \n  Let me now implement all 4 features across all 4 pages efficiently.",
+      "thoughtNumber": 9,
+      "totalThoughts": 10,
+      "nextThoughtNeeded": false
     }
   ],
   "branches": {}
