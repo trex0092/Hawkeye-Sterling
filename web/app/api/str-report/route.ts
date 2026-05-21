@@ -12,13 +12,15 @@ export async function POST(req: Request) {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
 
-  const body = await req.json() as {
+  let body: {
     subject: string;
     narrative: string;
     transactions: Array<{ date: string; amount: number; desc: string }>;
     composite: number;
     jurisdiction: string;
   };
+  try { body = await req.json() as typeof body; }
+  catch { return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400, headers: gate.headers }); }
 
   if (!body?.subject || !body?.jurisdiction) {
     return NextResponse.json({ ok: false, error: "subject and jurisdiction are required" }, { status: 400, headers: gate.headers });

@@ -12,7 +12,7 @@ export async function POST(req: Request) {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
 
-  const body = await req.json() as {
+  let body: {
     totalScreened: number;
     criticalHits: number;
     highRisk: number;
@@ -24,6 +24,8 @@ export async function POST(req: Request) {
       severity: string; disposition: string; date: string;
     }>;
   };
+  try { body = await req.json() as typeof body; }
+  catch { return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400, headers: gate.headers }); }
 
   if (!Array.isArray(body?.results)) {
     return NextResponse.json({ ok: false, error: "results must be an array" }, { status: 400, headers: gate.headers });
