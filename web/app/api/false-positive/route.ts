@@ -88,7 +88,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const { screenedName, hitName, hitCategory, hitCountry } = body;
   if (!screenedName || !hitName || !hitCategory || !hitCountry) {
     return NextResponse.json(
-      { error: "screenedName, hitName, hitCategory, and hitCountry are required" },
+      { ok: false, error: "screenedName, hitName, hitCategory, and hitCountry are required" },
       { status: 400, headers: gate.headers }
     );
   }

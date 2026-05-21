@@ -24,9 +24,9 @@ export async function POST(
   try { body = (await req.json()) as Record<string, unknown>; } catch { /* optional */ }
 
   const existing = await loadCase(tenant, caseId);
-  if (!existing) return NextResponse.json({ ok: false, error: "not found" }, { status: 404 });
+  if (!existing) return NextResponse.json({ ok: false, error: "not found" }, { status: 404, headers: gate.headers });
   if (existing.status === "frozen") {
-    return NextResponse.json({ ok: false, error: "case already frozen" }, { status: 409 });
+    return NextResponse.json({ ok: false, error: "case already frozen" }, { status: 409, headers: gate.headers });
   }
 
   const reason = typeof body["reason"] === "string"

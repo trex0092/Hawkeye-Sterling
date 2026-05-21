@@ -60,7 +60,7 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400, headers: gate.headers });
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
@@ -104,7 +104,7 @@ export async function POST(req: Request) {
     };
   };
   if (!apiKey) {
-    return NextResponse.json({ ...buildTemplate(), degraded: true, degradedReason: "ANTHROPIC_API_KEY not configured — deterministic ESG baseline used." });
+    return NextResponse.json({ ...buildTemplate(), degraded: true, degradedReason: "ANTHROPIC_API_KEY not configured — deterministic ESG baseline used." }, { headers: gate.headers });
   }
 
   try {
@@ -184,13 +184,13 @@ Generate a comprehensive ESG risk assessment with ML risk overlay for this entit
     }
     if (!Array.isArray(result.regulatoryExposure)) result.regulatoryExposure = [];
     if (!Array.isArray(result.redFlags)) result.redFlags = [];
-    return NextResponse.json(result);
+    return NextResponse.json(result, { headers: gate.headers });
   } catch (err) {
     console.warn("[esg-risk] LLM failed:", err instanceof Error ? err.message : err);
     return NextResponse.json({
       ...buildTemplate(),
       degraded: true,
       degradedReason: `ESG AI call failed: ${err instanceof Error ? err.message : String(err)}.`,
-    });
+    }, { headers: gate.headers });
   }
 }

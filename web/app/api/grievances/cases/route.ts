@@ -49,7 +49,7 @@ export async function GET(req: Request) {
     : allCases;
   const cases = filtered.slice(0, limit);
 
-  return NextResponse.json({ cases, total: filtered.length }, {
+  return NextResponse.json({ ok: true, cases, total: filtered.length }, {
     headers: { ...gate.headers, "Cache-Control": "no-store" } });
 }
 

@@ -73,9 +73,9 @@ export async function POST(
   const { caseId } = await ctx.params;
 
   const existing = await loadCase(tenant, caseId);
-  if (!existing) return NextResponse.json({ ok: false, error: "not found" }, { status: 404 });
+  if (!existing) return NextResponse.json({ ok: false, error: "not found" }, { status: 404, headers: gate.headers });
   if (!existing.enrichmentPending) {
-    return NextResponse.json({ ok: true, message: "enrichment already complete", case: existing });
+    return NextResponse.json({ ok: true, message: "enrichment already complete", case: existing }, { headers: gate.headers });
   }
 
   const baseUrl = process.env["NEXT_PUBLIC_APP_URL"] ?? "http://localhost:3000";

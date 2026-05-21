@@ -17,7 +17,7 @@ import { enforce } from '@/lib/server/enforce';
 export async function GET(req: NextRequest) {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
-  return NextResponse.json({ rules: BUILTIN_RULES, count: BUILTIN_RULES.length }, { headers: gate.headers });
+  return NextResponse.json({ ok: true, rules: BUILTIN_RULES, count: BUILTIN_RULES.length }, { headers: gate.headers });
 }
 
 export async function POST(req: NextRequest) {

@@ -27,32 +27,32 @@ export async function POST(
 
   let body: Record<string, unknown>;
   try { body = (await req.json()) as Record<string, unknown>; }
-  catch { return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 }); }
+  catch { return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400, headers: gate.headers }); }
 
   const { dispositionVerdict, dispositionRationale } = body;
 
   if (!dispositionVerdict || !VALID_VERDICTS.has(dispositionVerdict as DispositionVerdict)) {
     return NextResponse.json(
       { ok: false, error: `dispositionVerdict required: ${[...VALID_VERDICTS].join(", ")}` },
-      { status: 400 },
+      { status: 400, headers: gate.headers },
     );
   }
   if (!dispositionRationale || typeof dispositionRationale !== "string") {
     return NextResponse.json(
       { ok: false, error: "dispositionRationale required — MLRO must record reason for closure" },
-      { status: 400 },
+      { status: 400, headers: gate.headers },
     );
   }
 
   const existing = await loadCase(tenant, caseId);
-  if (!existing) return NextResponse.json({ ok: false, error: "not found" }, { status: 404 });
+  if (!existing) return NextResponse.json({ ok: false, error: "not found" }, { status: 404, headers: gate.headers });
   if (existing.status === "closed") {
-    return NextResponse.json({ ok: false, error: "case already closed" }, { status: 409 });
+    return NextResponse.json({ ok: false, error: "case already closed" }, { status: 409, headers: gate.headers });
   }
   if (existing.fourEyesRequired && existing.fourEyesStatus !== "approved") {
     return NextResponse.json(
       { ok: false, error: "four-eyes approval required before closing this case (FDL No.10/2025 Art.16)" },
-      { status: 403 },
+      { status: 403, headers: gate.headers },
     );
   }
 

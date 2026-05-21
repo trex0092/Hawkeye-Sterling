@@ -323,6 +323,7 @@ Perform a comprehensive insider threat assessment using the MICE model and CERT 
 
     return NextResponse.json({
       ...result,
+      ok: true,
       mode,
       employeeId,
       assessmentCount: updatedProfile.assessmentCount,
