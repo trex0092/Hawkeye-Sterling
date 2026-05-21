@@ -37,7 +37,7 @@ export default function EnvCheckPage() {
 
   useEffect(() => {
     fetch("/api/env-check")
-      .then((r) => r.json())
+      .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then((d) => {
         setData(d as EnvCheckResponse);
         setLoading(false);

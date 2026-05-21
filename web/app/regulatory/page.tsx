@@ -922,7 +922,7 @@ export default function RegulatoryPage() {
     setFeedStatus("loading");
     setClassifyStatus("idle");
     fetch("/api/regulatory-feed")
-      .then((r) => r.json())
+      .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then((data: FeedResult) => {
         const items = data.items ?? [];
         setFeedItems(items);
@@ -939,7 +939,7 @@ export default function RegulatoryPage() {
   const loadCalendar = useCallback(() => {
     setCalStatus("loading");
     fetch("/api/regulatory-calendar-live")
-      .then((r) => r.json())
+      .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then((data: RegCalendarLiveResult) => {
         setCalData(data);
         setCalStatus("ok");

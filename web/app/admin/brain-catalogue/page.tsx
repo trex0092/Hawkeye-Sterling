@@ -169,7 +169,7 @@ export default function BrainCataloguePage() {
         setSubmitResult({ ok: true, message: body.hint ?? "Review recorded. Page will reflect new date on next reload." });
         // Re-fetch status to update displayed date
         fetch("/api/status")
-          .then((r) => r.json())
+          .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
           .then((d: StatusSnapshot) => setSnapshot(d))
           .catch(() => null);
       } else {
