@@ -1640,6 +1640,16 @@ export default function MlroAdvisorPage() {
         signal: ctl.signal,
       });
       const rawText = await res.text();
+      if (!res.ok) {
+        let errBody: { error?: string } = {};
+        try { errBody = JSON.parse(rawText) as { error?: string }; } catch { /* ignore parse errors on non-ok */ }
+        throw new Error(
+          errBody.error ??
+          (res.status === 504 || res.status === 524
+            ? "Request timed out — try Speed or Balanced mode."
+            : `Server error ${res.status} — check ANTHROPIC_API_KEY is configured.`),
+        );
+      }
       let data: AdvisorResult | null = null;
       try { data = JSON.parse(rawText) as AdvisorResult; }
       catch {
@@ -1649,7 +1659,7 @@ export default function MlroAdvisorPage() {
             : `Server error ${res.status} — check ANTHROPIC_API_KEY is configured.`,
         );
       }
-      if (!res.ok || !data.ok) {
+      if (!data.ok) {
         throw new Error(data.error ?? data.guidance ?? `HTTP ${res.status}`);
       }
       if (mountedRef.current) recordAdvisorEntry(q, m, data);
