@@ -54,14 +54,14 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   let body: Record<string, unknown>;
   try { body = (await req.json()) as Record<string, unknown>; }
-  catch { return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 }); }
+  catch { return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400, headers: gate.headers }); }
 
   const { subjectId, subjectName, reason } = body;
   if (!subjectId || typeof subjectId !== "string") {
-    return NextResponse.json({ ok: false, error: "subjectId required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "subjectId required" }, { status: 400, headers: gate.headers });
   }
   if (!subjectName || typeof subjectName !== "string") {
-    return NextResponse.json({ ok: false, error: "subjectName required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "subjectName required" }, { status: 400, headers: gate.headers });
   }
 
   const item: RescreenItem = {

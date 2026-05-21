@@ -39,7 +39,7 @@ export async function GET(req: Request): Promise<Response> {
 
   const url = new URL(req.url);
   const name = url.searchParams.get("name");
-  if (!name) return new Response("name query param required", { status: 400, headers: gate.headers });
+  if (!name) return new Response(JSON.stringify({ ok: false, error: "name query param required" }), { status: 400, headers: { ...gate.headers, "content-type": "application/json" } });
   const subject: StreamSubject = {
     name,
     type: url.searchParams.get("type") ?? undefined,
