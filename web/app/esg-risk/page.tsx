@@ -325,12 +325,11 @@ export default function EsgRiskPage() {
                   redTeamMode: false,
                 }),
               });
+              const data = await res.json().catch(() => ({})) as { answer?: string; message?: string; error?: string };
               if (!res.ok) {
-                const b = await res.json().catch(() => ({})) as { error?: string };
                 if (!mountedRef.current) return;
-                throw new Error(b.error ?? `AI suggest failed (HTTP ${res.status}) — please retry`);
+                throw new Error(data.error ?? `AI suggest failed (HTTP ${res.status}) — please retry`);
               }
-              const data = (await res.json()) as { answer?: string; message?: string };
               if (!mountedRef.current) return;
               const text = data.answer ?? data.message ?? "";
               const jsonMatch = text.match(/\{[\s\S]*\}/);

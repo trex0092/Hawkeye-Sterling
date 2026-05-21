@@ -2514,11 +2514,9 @@ export default function MlroAdvisorPage() {
     setTfLoading(true); setTfResult(null);
     try {
       const res = await fetch("/api/tf-screener", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...tfInput, existingRedFlags: tfInput.existingRedFlags ? tfInput.existingRedFlags.split("\n").map((s) => s.trim()).filter(Boolean) : undefined }) });
-      const data = await res.json() as { ok: boolean; error?: string } & TfScreenerResult;
+      const data = await res.json().catch(() => ({})) as { ok: boolean; error?: string } & TfScreenerResult;
       if (!res.ok) {
-        let msg = `Request failed (HTTP ${res.status}) — please retry`;
-        try { const b = data as { error?: string }; if (b.error) msg = b.error; } catch { /* ignore */ }
-        throw new Error(msg);
+        throw new Error(data.error ?? `Request failed (HTTP ${res.status}) — please retry`);
       }
       if (!mountedRef.current) return;
       if (data.ok) setTfResult(data);
@@ -2636,9 +2634,9 @@ export default function MlroAdvisorPage() {
     setCryptoLoading(true); setCryptoResult(null); setCryptoError(null);
     try {
       const res = await fetch("/api/crypto-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ address: cryptoAddress, chain: cryptoChain }) });
-      const data = await res.json() as { ok: boolean; error?: string } & Record<string, unknown>;
+      const data = await res.json().catch(() => ({})) as { ok: boolean; error?: string } & Record<string, unknown>;
       if (!mountedRef.current) return;
-      if (!data.ok) { setCryptoError(data.error ?? "Service unavailable"); }
+      if (!res.ok || !data.ok) { setCryptoError(data.error ?? `HTTP ${res.status}`); }
       else { setCryptoResult(data); }
     } catch (err) { if (mountedRef.current) setToolErrors((p) => ({ ...p, ["cryptoWallet"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
     finally { if (mountedRef.current) setCryptoLoading(false); }
@@ -12406,9 +12404,9 @@ export default function MlroAdvisorPage() {
                       headers: { "content-type": "application/json" },
                       body: JSON.stringify({ question: daQuestion }),
                     });
-                    const data = (await res.json()) as { ok: boolean; answer?: string; error?: string; hint?: string };
-                    if (!data.ok) {
-                      setDaError(data.error ?? "Agent error");
+                    const data = await res.json().catch(() => ({})) as { ok: boolean; answer?: string; error?: string; hint?: string };
+                    if (!res.ok || !data.ok) {
+                      setDaError(data.error ?? `Agent error (HTTP ${res.status})`);
                       if (typeof data.hint === "string" && data.hint.length > 0) setDaHint(data.hint);
                       return;
                     }

@@ -61,7 +61,7 @@ export default function OperatorConsolePage() {
     setError(null);
     try {
       const res = await fetch("/api/operator/logs?limit=200");
-      const data = await res.json() as { ok: boolean; entries?: McpLogEntry[]; error?: string; note?: string };
+      const data = await res.json().catch(() => ({})) as { ok: boolean; entries?: McpLogEntry[]; error?: string; note?: string };
       if (!mountedRef.current) return;
       if (!res.ok || !data.ok) { setError(data.error ?? `HTTP ${res.status}`); return; }
       setEntries(data.entries ?? []);

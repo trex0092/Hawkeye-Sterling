@@ -88,7 +88,7 @@ function NewCnmrForm({ onCreated, onCancel }: NewCnmrFormProps) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ subjectName, sourceList, listEntry, matchScore: parseInt(matchScore, 10) || 100, freezeDate: new Date(freezeDate).toISOString(), narrativeDraft, supervisoryAuthority }),
       });
-      const data = (await res.json()) as { ok: boolean; case?: CnmrCase; error?: string };
+      const data = await res.json().catch(() => ({})) as { ok: boolean; case?: CnmrCase; error?: string };
       if (!mountedRef.current) return;
       if (!res.ok || !data.ok) { setError(data.error ?? `HTTP ${res.status}`); return; }
       onCreated(data.case!);
@@ -151,7 +151,7 @@ function CaseDetail({ c, onUpdate }: CaseDetailProps) {
     setSaving(true);
     try {
       const res = await fetch("/api/cnmr", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ id: c.id, ...patch }) });
-      const data = (await res.json()) as { ok: boolean; case?: CnmrCase };
+      const data = await res.json().catch(() => ({})) as { ok: boolean; case?: CnmrCase };
       if (!mountedRef.current) return;
       if (res.ok && data.ok && data.case) onUpdate(data.case);
     } finally { if (mountedRef.current) setSaving(false); }

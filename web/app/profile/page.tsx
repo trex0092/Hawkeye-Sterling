@@ -73,7 +73,7 @@ export default function ProfilePage() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ currentPassword, newPassword }),
       });
-      const json = (await res.json()) as { ok: boolean; error?: string; sessionInvalidated?: boolean };
+      const json = await res.json().catch(() => ({})) as { ok: boolean; error?: string; sessionInvalidated?: boolean };
       if (!res.ok || !json.ok) {
         setSaveError(json.error ?? `HTTP ${res.status}`);
       } else {

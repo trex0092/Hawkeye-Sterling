@@ -74,7 +74,7 @@ function EvaluateForm({ onResult }: EvaluateFormProps) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ transactions, save }),
       });
-      const data = (await res.json()) as { ok: boolean; obligationsFound: number; obligations: DpmsrObligation[]; error?: string };
+      const data = await res.json().catch(() => ({})) as { ok: boolean; obligationsFound: number; obligations: DpmsrObligation[]; error?: string };
       if (!mountedRef.current) return;
       if (!res.ok || !data.ok) { setError(data.error ?? `HTTP ${res.status}`); return; }
       setEvalResult(data);
@@ -198,7 +198,7 @@ export default function DpmsrPage() {
     setSaving(id);
     try {
       const res = await fetch("/api/dpmsr-trigger", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ patch: { id, ...patch } }) });
-      const data = (await res.json()) as { ok: boolean; obligation?: DpmsrObligation };
+      const data = await res.json().catch(() => ({})) as { ok: boolean; obligation?: DpmsrObligation };
       if (!mountedRef.current) return;
       if (res.ok && data.ok && data.obligation) setObligations((prev) => prev.map((o) => o.id === id ? data.obligation! : o));
     } finally { if (mountedRef.current) setSaving(null); }

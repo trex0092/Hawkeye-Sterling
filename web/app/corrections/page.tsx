@@ -52,7 +52,7 @@ export default function CorrectionsPage() {
             : undefined,
         }),
       });
-      const payload = (await res.json()) as
+      const payload = await res.json().catch(() => ({})) as
         | { ok: true; id: string; dueBy: string; message: string }
         | { ok: false; error?: string };
       if (!mountedRef.current) return;

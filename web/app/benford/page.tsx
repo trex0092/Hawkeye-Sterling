@@ -133,12 +133,11 @@ export default function BenfordPage() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify(body),
       });
+      const data = await res.json().catch(() => ({})) as BenfordResult & { error?: string };
       if (!res.ok) {
-        const errBody = await res.json().catch(() => ({})) as { error?: string };
         if (!mountedRef.current) return;
-        throw new Error(errBody.error ?? `Analysis failed (HTTP ${res.status}) — please retry`);
+        throw new Error(data.error ?? `Analysis failed (HTTP ${res.status}) — please retry`);
       }
-      const data = await res.json() as BenfordResult;
       if (!mountedRef.current) return;
       setResult(data);
     } catch (e) { if (mountedRef.current) setError(e instanceof Error ? e.message : "Request failed"); }

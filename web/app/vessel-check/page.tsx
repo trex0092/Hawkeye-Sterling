@@ -127,7 +127,7 @@ export default function VesselCheckPage() {
           sanctionedConnections: rpSanctioned || (vessel?.sanctionHits?.length ?? 0) > 0,
         }),
       });
-      const data = (await res.json()) as VesselRiskProfile;
+      const data = await res.json().catch(() => ({})) as VesselRiskProfile;
       if (res.ok && data.ok && mountedRef.current) setRiskProfile(data);
     } catch (err) {
       console.error("[hawkeye] vessel risk-profile threw:", err);
@@ -145,9 +145,9 @@ export default function VesselCheckPage() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify(body),
       });
-      const data = await res.json() as ApiResponse;
+      const data = await res.json().catch(() => ({})) as ApiResponse;
       if (!mountedRef.current) return;
-      if (!res.ok || !data.ok) setError(data.error ?? `HTTP ${res.status}`);
+      if (!res.ok || !data.ok) setError((data as { error?: string }).error ?? `HTTP ${res.status}`);
       else setResult(data);
     } catch (err) {
       if (!mountedRef.current) return;

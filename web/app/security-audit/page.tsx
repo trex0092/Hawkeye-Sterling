@@ -325,11 +325,10 @@ export default function SecurityAuditPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code }),
       });
+      const data = await res.json().catch(() => ({})) as AnalysisResult & { error?: string };
       if (!res.ok) {
-        const data = (await res.json()) as { error?: string };
         throw new Error(data.error ?? `HTTP ${res.status}`);
       }
-      const data = (await res.json()) as AnalysisResult;
       setResult(data);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Analysis failed");

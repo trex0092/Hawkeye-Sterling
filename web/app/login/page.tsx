@@ -28,7 +28,7 @@ export default function LoginPage() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ username, password }),
       });
-      const json = (await res.json()) as { ok: boolean; error?: string };
+      const json = await res.json().catch(() => ({})) as { ok: boolean; error?: string };
       if (!res.ok || !json.ok) {
         if (!mountedRef.current) return;
         setError(json.error ?? "Invalid credentials");

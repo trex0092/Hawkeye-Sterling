@@ -56,9 +56,9 @@ export default function DomainIntelPage() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ domain: domain.trim().toLowerCase() }),
       });
-      const data = await res.json() as DomainIntelResult;
+      const data = await res.json().catch(() => ({})) as DomainIntelResult;
       if (!mountedRef.current) return;
-      if (!res.ok || !data.ok) setError(data.error ?? `HTTP ${res.status}`);
+      if (!res.ok || !data.ok) setError((data as { error?: string }).error ?? `HTTP ${res.status}`);
       else setResult(data);
     } catch (err) {
       console.error("[hawkeye] domain-intel threw:", err);

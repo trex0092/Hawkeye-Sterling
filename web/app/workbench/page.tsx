@@ -196,7 +196,7 @@ export default function WorkbenchPage() {
         signal: ac.signal,
       });
       if (ac.signal.aborted) return;
-      const data = (await res.json()) as BrainResult & { error?: string };
+      const data = await res.json().catch(() => ({})) as BrainResult & { error?: string };
       if (ac.signal.aborted) return;
       if (!mountedRef.current) return;
       if (!res.ok || !data.ok) {

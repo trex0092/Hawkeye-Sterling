@@ -76,9 +76,9 @@ export default function OsintPage() {
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ tool: "harvester", domain: t }),
         });
-        const data = (await res.json()) as HarvesterResult;
+        const data = await res.json().catch(() => ({})) as HarvesterResult;
         if (!mountedRef.current) return;
-        if (!res.ok || !data.ok) setError(data.error ?? `HTTP ${res.status}`);
+        if (!res.ok || !data.ok) setError((data as { error?: string }).error ?? `HTTP ${res.status}`);
         else { setDomainResult(data); setScannedAt(new Date().toLocaleTimeString()); }
       } else {
         const [sh, sa] = await Promise.allSettled([
