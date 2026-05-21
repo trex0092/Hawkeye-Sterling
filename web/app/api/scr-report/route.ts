@@ -701,10 +701,11 @@ function buildSCR(body: ReportInput, now: Date): ScreeningComplianceReport {
 
 async function handleScrReport(req: Request): Promise<Response> {
   const _handlerStart = Date.now();
+  let gateHeaders: Record<string, string> = {};
   try {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
-  const gateHeaders: Record<string, string> = gate.ok ? gate.headers : {};
+  gateHeaders = gate.ok ? gate.headers : {};
 
   let body: ReportInput;
   try {
