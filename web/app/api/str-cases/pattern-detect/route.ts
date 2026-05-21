@@ -116,7 +116,7 @@ Identify all statistically significant or operationally relevant patterns across
     ) as PatternDetectResult;
     if (!Array.isArray(result.patterns)) result.patterns = [];
     else for (const p of result.patterns) { if (!Array.isArray(p.caseIds)) p.caseIds = []; }
-    return NextResponse.json(result, { headers: gate.headers });
+    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "str-cases/pattern-detect temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });

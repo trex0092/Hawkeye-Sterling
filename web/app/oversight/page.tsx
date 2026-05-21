@@ -1049,7 +1049,10 @@ export default function OversightPage() {
           institutionName: "Hawkeye Sterling DMCC",
         }),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(body.error ?? `Governance gap analysis failed (HTTP ${res.status}) — please retry`);
+      }
       const data = (await res.json()) as GovernanceGapResult;
       if (!mountedRef.current) return;
       setGapResult(data);
@@ -1076,7 +1079,10 @@ export default function OversightPage() {
           strCount: liveApprovals.filter((a) => a.category === "STR Filing").length.toString(),
         }),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(body.error ?? `Board AML report failed (HTTP ${res.status}) — please retry`);
+      }
       const data = (await res.json()) as BoardAmlReportResult & { ok: boolean };
       if (mountedRef.current) setBoardResult(data);
     } catch (e) {
@@ -1111,7 +1117,10 @@ export default function OversightPage() {
           institutionName: "Hawkeye Sterling DMCC",
         }),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(body.error ?? `Board pack generation failed (HTTP ${res.status}) — please retry`);
+      }
       const data = await res.json() as BoardPackResult;
       if (!mountedRef.current) return;
       setPackResult(data);

@@ -533,8 +533,8 @@ export default function AccessControlPage() {
     setLoadingUsers(true);
     try {
       const resp = await fetch("/api/access/users");
-      const data = (await resp.json()) as { ok: boolean; users?: AccessUser[] };
-      if (resp.ok && data.ok && data.users && mountedRef.current) {
+      const data = (await resp.json()) as { ok: boolean; users?: AccessUser[] } | null;
+      if (resp.ok && data?.ok && Array.isArray(data.users) && mountedRef.current) {
         setUsers(data.users);
         sessionStorage.setItem("hawkeye.access.users", JSON.stringify(data.users));
       }

@@ -1511,6 +1511,10 @@ export default function MlroAdvisorPage() {
         body: JSON.stringify({ question: q }),
         signal: ctl.signal,
       });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(body.error ?? `Request failed (HTTP ${res.status}) — please retry`);
+      }
       const data = (await res.json()) as {
         ok: boolean;
         answer?: string;
@@ -1522,7 +1526,7 @@ export default function MlroAdvisorPage() {
         verification?: AdvisorResult["verification"];
         classifierHits?: AdvisorResult["classifierHits"];
       };
-      if (!res.ok || !data.ok || !data.answer) {
+      if (!data.ok || !data.answer) {
         throw new Error(data.error ?? `HTTP ${res.status}`);
       }
       if (!mountedRef.current) return;
@@ -1739,6 +1743,10 @@ export default function MlroAdvisorPage() {
             : undefined,
         }),
       });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(body.error ?? `Request failed (HTTP ${res.status}) — please retry`);
+      }
       const data = (await res.json()) as {
         ok: boolean;
         outcome?: ChallengeResult["outcome"];
@@ -2506,8 +2514,12 @@ export default function MlroAdvisorPage() {
     setTfLoading(true); setTfResult(null);
     try {
       const res = await fetch("/api/tf-screener", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...tfInput, existingRedFlags: tfInput.existingRedFlags ? tfInput.existingRedFlags.split("\n").map((s) => s.trim()).filter(Boolean) : undefined }) });
-      if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
-      const data = await res.json() as { ok: boolean } & TfScreenerResult;
+      const data = await res.json() as { ok: boolean; error?: string } & TfScreenerResult;
+      if (!res.ok) {
+        let msg = `Request failed (HTTP ${res.status}) — please retry`;
+        try { const b = data as { error?: string }; if (b.error) msg = b.error; } catch { /* ignore */ }
+        throw new Error(msg);
+      }
       if (!mountedRef.current) return;
       if (data.ok) setTfResult(data);
     } catch (err) { if (mountedRef.current) setToolErrors((p) => ({ ...p, ["tfScreener"]: err instanceof Error ? err.message : "Request failed — please retry" })); }

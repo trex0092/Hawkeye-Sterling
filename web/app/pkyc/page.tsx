@@ -77,7 +77,12 @@ export default function PKycPage() {
     try {
       const res = await fetch("/api/pkyc", { headers: authHeaders() });
       if (!res.ok) throw new Error(`pKYC load failed (HTTP ${res.status})`);
-      const data = (await res.json()) as { ok: boolean; subjects?: PKycSubject[]; stats?: PKycStats };
+      let data: { ok: boolean; subjects?: PKycSubject[]; stats?: PKycStats };
+      try {
+        data = (await res.json()) as { ok: boolean; subjects?: PKycSubject[]; stats?: PKycStats };
+      } catch {
+        throw new Error("pKYC returned a malformed response — please retry");
+      }
       if (data.ok) { setSubjects(data.subjects ?? []); setStats(data.stats ?? null); }
     } catch (err) {
       console.error("[hawkeye] pkyc load failed:", err);
@@ -90,7 +95,13 @@ export default function PKycPage() {
     setRunning(true); setRunResult(null);
     try {
       const res = await fetch("/api/pkyc/run", { method: "POST", headers: authHeaders() });
-      const data = (await res.json()) as { ran?: number; changed?: number; errors?: number };
+      if (!res.ok) throw new Error(`pKYC run failed (HTTP ${res.status}) — please retry`);
+      let data: { ran?: number; changed?: number; errors?: number };
+      try {
+        data = (await res.json()) as { ran?: number; changed?: number; errors?: number };
+      } catch {
+        throw new Error("pKYC run returned a malformed response — please retry");
+      }
       setRunResult(`Ran ${data.ran ?? 0} subjects · ${data.changed ?? 0} changes · ${data.errors ?? 0} errors`);
       void load();
     } catch (err) {

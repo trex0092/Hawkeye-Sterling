@@ -148,13 +148,17 @@ export default function CryptoRiskPage() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ address: address.trim() }),
       });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(body.error ?? `Request failed (HTTP ${res.status}) — please retry`);
+      }
       const data = await res.json() as WalletRisk;
       if (!mountedRef.current) return;
-      if (!res.ok || !data.ok) setError(data.error ?? `HTTP ${res.status}`);
+      if (!data.ok) setError(data.error ?? `HTTP ${res.status}`);
       else setResult(data);
     } catch (err) {
       console.error("[hawkeye] crypto-risk scoring threw:", err);
-      if (mountedRef.current) setError("Request failed");
+      if (mountedRef.current) setError(err instanceof Error ? err.message : "Request failed");
     } finally { if (mountedRef.current) setLoading(false); }
   }
 

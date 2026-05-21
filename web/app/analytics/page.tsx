@@ -293,11 +293,15 @@ export default function AnalyticsPage() {
           period: formatPeriod(now),
         }),
       });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({})) as { error?: string };
-        throw new Error(body.error ?? `AI insights failed (HTTP ${res.status}) — please retry`);
+      let result: { ok: boolean } & AnalyticsInsights;
+      try {
+        result = await res.json() as { ok: boolean } & AnalyticsInsights;
+      } catch {
+        throw new Error(`AI insights failed (HTTP ${res.status}) — please retry`);
       }
-      const result = await res.json() as { ok: boolean } & AnalyticsInsights;
+      if (!res.ok || !result.ok) {
+        throw new Error((result as { error?: string }).error ?? `AI insights failed (HTTP ${res.status}) — please retry`);
+      }
       if (result.ok && mountedRef.current) setAiInsights(result);
     } catch (e) {
       if (!mountedRef.current) return;

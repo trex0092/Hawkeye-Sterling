@@ -101,11 +101,11 @@ export default function BenfordPage() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ label: r.label, n: r.n, mad: r.mad, chiSquared: r.chiSquared, risk: r.risk, riskDetail: r.riskDetail, flaggedDigits: r.flaggedDigits, digits: r.digits }),
       });
+      const body = await res.json().catch(() => ({})) as { ok: boolean; error?: string } & BenfordInterpretation;
       if (!res.ok) {
-        const body = await res.json().catch(() => ({})) as { error?: string };
         throw new Error(body.error ?? `AI interpretation failed (HTTP ${res.status}) — please retry`);
       }
-      const data = await res.json() as { ok: boolean } & BenfordInterpretation;
+      const data = body;
       if (!mountedRef.current) return;
       if (data.ok) setAiInterp(data);
     } catch (err) {

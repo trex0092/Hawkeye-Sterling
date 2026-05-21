@@ -308,5 +308,5 @@ Write a 3-4 sentence gap analysis memo suitable for MLRO review. Be specific abo
     }
   }
 
-  return NextResponse.json(result, { headers: gate.headers });
+  return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
 }

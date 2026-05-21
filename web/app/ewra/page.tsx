@@ -223,9 +223,16 @@ export default function EwraPage() {
             : new Date().getFullYear().toString(),
         }),
       });
-      const data = (await res.json()) as { ok: boolean; error?: string } & ThreatIntelResult;
+      const raw = await res.text();
+      if (!res.ok) {
+        let msg = `Request failed (HTTP ${res.status}) — please retry`;
+        try { const b = JSON.parse(raw) as { error?: string }; if (b.error) msg = b.error; } catch { /* ignore */ }
+        if (mountedRef.current) setThreatError(msg);
+        return;
+      }
+      const data = JSON.parse(raw) as { ok: boolean; error?: string } & ThreatIntelResult;
       if (!mountedRef.current) return;
-      if (!res.ok || !data.ok) { setThreatError(data.error ?? `HTTP ${res.status}`); return; }
+      if (!data.ok) { setThreatError(data.error ?? `HTTP ${res.status}`); return; }
       setThreatIntel(data);
       setThreatOpen(true);
     } catch {

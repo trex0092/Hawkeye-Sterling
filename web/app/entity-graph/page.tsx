@@ -402,15 +402,19 @@ export default function EntityGraphPage() {
           companyNumber: companyNumber.trim() || undefined,
         }),
       });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(body.error ?? `Request failed (HTTP ${res.status}) — please retry`);
+      }
       const data = (await res.json()) as EntityGraphResult & { error?: string };
       if (!mountedRef.current) return;
-      if (!res.ok || !data.ok) {
+      if (!data.ok) {
         setError((data as unknown as { error?: string }).error ?? `HTTP ${res.status}`);
       } else {
         setResult(data);
       }
-    } catch {
-      if (mountedRef.current) setError("Request failed — check network connection");
+    } catch (err) {
+      if (mountedRef.current) setError(err instanceof Error ? err.message : "Request failed — check network connection");
     } finally {
       if (mountedRef.current) setLoading(false);
     }
@@ -429,15 +433,19 @@ export default function EntityGraphPage() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify(body),
       });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(body.error ?? `Request failed (HTTP ${res.status}) — please retry`);
+      }
       const data = (await res.json()) as LeiLookupResult & { error?: string };
       if (!mountedRef.current) return;
-      if (!res.ok || !data.ok) {
+      if (!data.ok) {
         setLeiError((data as unknown as { error?: string }).error ?? `HTTP ${res.status}`);
       } else {
         setLeiResult(data);
       }
-    } catch {
-      if (mountedRef.current) setLeiError("Request failed");
+    } catch (err) {
+      if (mountedRef.current) setLeiError(err instanceof Error ? err.message : "Request failed");
     } finally {
       if (mountedRef.current) setLeiLoading(false);
     }

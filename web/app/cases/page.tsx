@@ -171,10 +171,8 @@ export default function CasesPage() {
         body: JSON.stringify({ cases: activeCases }),
       });
       if (!res.ok) {
-        const body = await res.text().catch(() => "");
-        console.error(`[hawkeye] cases/triage HTTP ${res.status}`);
-        if (mountedRef.current) setTriageError(`AI triage failed (HTTP ${res.status})${body ? ` — ${body}` : ""}`);
-        return;
+        const body = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(body.error ?? `Request failed (HTTP ${res.status}) — please retry`);
       }
       const data = await res.json() as TriageResult & { error?: string };
       if (!mountedRef.current) return;
