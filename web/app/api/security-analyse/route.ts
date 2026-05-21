@@ -54,11 +54,11 @@ export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as { code?: unknown };
     if (typeof body.code !== "string" || !body.code.trim()) {
-      return NextResponse.json({ error: "code field required" }, { status: 400, headers: gate.headers });
+      return NextResponse.json({ ok: false, error: "code field required" }, { status: 400, headers: gate.headers });
     }
     code = sanitizeText(body.code, 40_000);
   } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400, headers: gate.headers });
+    return NextResponse.json({ ok: false, error: "Invalid JSON body" }, { status: 400, headers: gate.headers });
   }
 
   const client = getAnthropicClient(apiKey, 55_000, "security-analyse");
@@ -85,6 +85,6 @@ export async function POST(req: NextRequest) {
       e instanceof SyntaxError
         ? "Model returned non-JSON — try again"
         : "Analysis failed";
-    return NextResponse.json({ error: msg }, { status: 500, headers: gate.headers });
+    return NextResponse.json({ ok: false, error: msg }, { status: 500, headers: gate.headers });
   }
 }

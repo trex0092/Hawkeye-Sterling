@@ -105,7 +105,7 @@ export async function POST(req: NextRequest) {
       body = await req.json();
     }
   } catch {
-    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
+    return NextResponse.json({ ok: false, error: 'Invalid request body' }, { status: 400 });
   }
 
   const raw = (body ?? {}) as Record<string, unknown>;
@@ -142,7 +142,7 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  return NextResponse.json({ error: 'Provide queries object or query string' }, { status: 400 });
+  return NextResponse.json({ ok: false, error: 'Provide queries object or query string' }, { status: 400 });
 }
 
 export async function OPTIONS() {

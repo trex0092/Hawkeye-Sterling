@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
   if (!gate.ok) return gate.response;
 
   let body: unknown;
-  try { body = await req.json(); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400, headers: gate.headers }); }
+  try { body = await req.json(); } catch { return NextResponse.json({ ok: false, error: 'Invalid JSON' }, { status: 400, headers: gate.headers }); }
 
   const raw = (body ?? {}) as Record<string, unknown>;
   const subjectId = raw['subjectId'] as string | undefined;
@@ -55,26 +55,26 @@ export async function POST(req: NextRequest) {
   const recordedBy = raw['recordedBy'] as string | undefined;
 
   if (!subjectId?.trim() || !subjectName?.trim() || !lawfulBasis || !purpose?.trim() || !recordedBy?.trim()) {
-    return NextResponse.json({ error: 'subjectId, subjectName, lawfulBasis, purpose, recordedBy are required' }, { status: 400, headers: gate.headers });
+    return NextResponse.json({ ok: false, error: 'subjectId, subjectName, lawfulBasis, purpose, recordedBy are required' }, { status: 400, headers: gate.headers });
   }
   const trimmedSubjectId = subjectId.trim();
   if (trimmedSubjectId.length > MAX_ID_LENGTH || !SAFE_ID_RE.test(trimmedSubjectId)) {
-    return NextResponse.json({ error: 'subjectId must be alphanumeric/._-: and max 128 chars' }, { status: 400, headers: gate.headers });
+    return NextResponse.json({ ok: false, error: 'subjectId must be alphanumeric/._-: and max 128 chars' }, { status: 400, headers: gate.headers });
   }
 
   const validBases: LawfulBasis[] = ['legitimate_interest_aml', 'legal_obligation', 'vital_interest', 'consent'];
   if (!validBases.includes(lawfulBasis)) {
-    return NextResponse.json({ error: `lawfulBasis must be one of: ${validBases.join(', ')}` }, { status: 400, headers: gate.headers });
+    return NextResponse.json({ ok: false, error: `lawfulBasis must be one of: ${validBases.join(', ')}` }, { status: 400, headers: gate.headers });
   }
 
   const rawExpiresAt = (raw['expiresAt'] as string | undefined)?.trim();
   // PDPL Art.6(a): explicit consent must have a defined expiry date.
   if (lawfulBasis === 'consent') {
     if (!rawExpiresAt) {
-      return NextResponse.json({ error: 'expiresAt is required for lawfulBasis: consent (PDPL Art.6(a))' }, { status: 400, headers: gate.headers });
+      return NextResponse.json({ ok: false, error: 'expiresAt is required for lawfulBasis: consent (PDPL Art.6(a))' }, { status: 400, headers: gate.headers });
     }
     if (isNaN(Date.parse(rawExpiresAt)) || new Date(rawExpiresAt) <= new Date()) {
-      return NextResponse.json({ error: 'expiresAt must be a valid future ISO 8601 date' }, { status: 400, headers: gate.headers });
+      return NextResponse.json({ ok: false, error: 'expiresAt must be a valid future ISO 8601 date' }, { status: 400, headers: gate.headers });
     }
   }
 
@@ -118,14 +118,14 @@ export async function GET(req: NextRequest) {
 
   const subjectId = req.nextUrl.searchParams.get('subjectId')?.trim();
   if (!subjectId) {
-    return NextResponse.json({ error: 'subjectId query param required' }, { status: 400, headers: gate.headers });
+    return NextResponse.json({ ok: false, error: 'subjectId query param required' }, { status: 400, headers: gate.headers });
   }
   if (subjectId.length > MAX_ID_LENGTH || !SAFE_ID_RE.test(subjectId)) {
-    return NextResponse.json({ error: 'subjectId must be alphanumeric/._-: and max 128 chars' }, { status: 400, headers: gate.headers });
+    return NextResponse.json({ ok: false, error: 'subjectId must be alphanumeric/._-: and max 128 chars' }, { status: 400, headers: gate.headers });
   }
   const record = await getJson<ConsentRecord>(consentKey(subjectId));
   if (!record) {
-    return NextResponse.json({ error: 'No consent record found for this subject' }, { status: 404, headers: gate.headers });
+    return NextResponse.json({ ok: false, error: 'No consent record found for this subject' }, { status: 404, headers: gate.headers });
   }
   const isExpired = record.expiresAt ? new Date(record.expiresAt) <= new Date() : false;
   return NextResponse.json({ ok: true, record, expired: isExpired }, { headers: gate.headers });

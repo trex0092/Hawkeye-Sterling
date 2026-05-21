@@ -22,12 +22,12 @@ export async function POST(req: NextRequest) {
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    return NextResponse.json({ ok: false, error: 'Invalid JSON body' }, { status: 400 });
   }
 
   const raw = body as Record<string, unknown>;
   if (!Array.isArray(raw['subjects']) || raw['subjects'].length === 0) {
-    return NextResponse.json({ error: 'subjects array required' }, { status: 400 });
+    return NextResponse.json({ ok: false, error: 'subjects array required' }, { status: 400 });
   }
 
   const subjects = (raw['subjects'] as Array<{ id?: string; name?: string } & HawkeyeSubject>)
@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
     }));
 
   if (subjects.length === 0) {
-    return NextResponse.json({ error: 'No valid subjects with name field' }, { status: 400 });
+    return NextResponse.json({ ok: false, error: 'No valid subjects with name field' }, { status: 400 });
   }
 
   const format = req.nextUrl.searchParams.get('format') ?? 'jsonl';

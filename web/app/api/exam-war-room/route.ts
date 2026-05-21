@@ -153,12 +153,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const { context: ctx, mode = "full_war_room" } = body;
   if (!ctx) {
-    return NextResponse.json({ error: "context is required" }, { status: 400 , headers: gate.headers });
+    return NextResponse.json({ ok: false, error: "context is required" }, { status: 400 , headers: gate.headers });
   }
 
   const examinerBody = sanitizeField(ctx.examinerBody ?? "Regulatory Authority", 100);

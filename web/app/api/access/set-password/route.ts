@@ -66,6 +66,8 @@ export async function POST(req: Request) {
     target: userId,
     usernameChanged: !!username,
     role: session.role,
+  }).catch((err: unknown) => {
+    console.warn("[set-password] audit chain write failed:", err instanceof Error ? err.message : String(err));
   });
 
   return NextResponse.json({ ok: true, username: savedUsername });

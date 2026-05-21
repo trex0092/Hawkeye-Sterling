@@ -294,12 +294,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const { transaction: tx, enrichWithAI = false } = body;
   if (!tx || typeof tx.amount !== "number") {
-    return NextResponse.json({ error: "transaction.amount is required" }, { status: 400 , headers: gate.headers });
+    return NextResponse.json({ ok: false, error: "transaction.amount is required" }, { status: 400 , headers: gate.headers });
   }
 
   const { score, flags } = scoreTransaction(tx);

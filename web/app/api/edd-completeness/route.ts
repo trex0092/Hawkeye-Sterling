@@ -231,12 +231,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const { eddFile, generateNarrative = false } = body;
   if (!eddFile) {
-    return NextResponse.json({ error: "eddFile is required" }, { status: 400 , headers: gate.headers });
+    return NextResponse.json({ ok: false, error: "eddFile is required" }, { status: 400 , headers: gate.headers });
   }
 
   const reqs = buildRequirements(eddFile);

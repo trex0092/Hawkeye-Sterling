@@ -27,11 +27,11 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   if (!body.scenario?.trim()) {
-    return NextResponse.json({ error: "scenario is required" }, { status: 400 , headers: gate.headers });
+    return NextResponse.json({ ok: false, error: "scenario is required" }, { status: 400 , headers: gate.headers });
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];

@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400, headers: gate.headers });
+    return NextResponse.json({ ok: false, error: 'Invalid JSON body' }, { status: 400, headers: gate.headers });
   }
 
   const raw = (body ?? {}) as Record<string, unknown>;
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
 
   if (action === 'parse') {
     const rule = raw['rule'] as string | undefined;
-    if (!rule?.trim()) return NextResponse.json({ error: 'rule string required' }, { status: 400, headers: gate.headers });
+    if (!rule?.trim()) return NextResponse.json({ ok: false, error: 'rule string required' }, { status: 400, headers: gate.headers });
     try {
       const compiled = parseRule(rule);
       return NextResponse.json({ ok: true, ast: compiled.ast, rule: compiled.source }, { headers: gate.headers });
@@ -67,5 +67,5 @@ export async function POST(req: NextRequest) {
     }, { headers: gate.headers });
   }
 
-  return NextResponse.json({ error: `Unknown action: ${action}. Use 'parse', 'evaluate', or omit for evaluate-all.` }, { status: 400, headers: gate.headers });
+  return NextResponse.json({ ok: false, error: `Unknown action: ${action}. Use 'parse', 'evaluate', or omit for evaluate-all.` }, { status: 400, headers: gate.headers });
 }

@@ -202,6 +202,8 @@ export async function POST(req: Request) {
       userId: user.id,
       prevIpHash: user.lastIpHash,
       currIpHash: iKey,
+    }).catch((err: unknown) => {
+      console.warn("[auth/login] audit chain write failed:", err instanceof Error ? err.message : String(err));
     });
   }
 

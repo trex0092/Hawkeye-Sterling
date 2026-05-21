@@ -216,6 +216,8 @@ async function handlePost(req: Request, callerRecord: ApiKeyRecord | null, gateH
       bypassReason: "role_override",
       bypassRole: callerRole,
       filingType,
+    }).catch((err: unknown) => {
+      console.warn("[sar] four_eyes.bypass audit write failed:", err instanceof Error ? err.message : String(err));
     });
   }
 

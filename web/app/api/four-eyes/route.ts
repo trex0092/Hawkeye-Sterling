@@ -232,6 +232,8 @@ async function handlePost(req: Request): Promise<NextResponse> {
     subjectName: enrichedItem.subjectName,
     fourEyesAction: enrichedItem.action,
     reason: enrichedItem.reason,
+  }).catch((err: unknown) => {
+    console.warn("[four-eyes] enqueued audit write failed:", err instanceof Error ? err.message : String(err));
   });
 
   return NextResponse.json({ ok: true, item: enrichedItem }, { headers: {} });
@@ -364,6 +366,8 @@ async function handlePatch(req: Request, ctx: RequestContext): Promise<NextRespo
     fourEyesAction: updated.action,
     initiatedBy: updated.initiatedBy,
     ...(action === "reject" && updated.rejectionReason ? { rejectionReason: updated.rejectionReason } : {}),
+  }).catch((err: unknown) => {
+    console.warn("[four-eyes] action audit write failed:", err instanceof Error ? err.message : String(err));
   });
 
   // Report to Asana Four-Eyes board — non-blocking, best effort

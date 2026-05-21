@@ -70,7 +70,7 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as TaxEvasionRequest;
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
