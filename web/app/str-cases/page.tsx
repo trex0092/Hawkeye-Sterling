@@ -77,6 +77,19 @@ interface InboxTriageResult {
   processedAt: string;
 }
 
+interface SarResult {
+  ok: boolean;
+  sarProbability: number;
+  deterministicScore: number;
+  queuePriority: "urgent" | "standard" | "low";
+  recommendation: string;
+  keyFactors: string[];
+  narrative: string;
+  confidence: "high" | "medium" | "low";
+  feedbackSignals: number;
+  error?: string;
+}
+
 interface CaseRow {
   id: string;
   title: string;
@@ -249,18 +262,6 @@ export default function StrCasesPage() {
   const [triageExpanded, setTriageExpanded] = useState(false);
 
   // SAR Probability Scorer state
-  interface SarResult {
-    ok: boolean;
-    sarProbability: number;
-    deterministicScore: number;
-    queuePriority: "urgent" | "standard" | "low";
-    recommendation: string;
-    keyFactors: string[];
-    narrative: string;
-    confidence: "high" | "medium" | "low";
-    feedbackSignals: number;
-    error?: string;
-  }
   const [sarResult, setSarResult] = useState<SarResult | null>(null);
   const [sarLoading, setSarLoading] = useState(false);
   const [sarError, setSarError] = useState<string | null>(null);

@@ -44,6 +44,33 @@ interface TxRow {
   asanaTaskUrl?: string;
 }
 
+interface StructuringPattern {
+  pattern: string;
+  severity: "high" | "medium" | "low";
+  evidence: string;
+  transactions: string[];
+}
+interface SmurfingGroup {
+  window: string;
+  total: number;
+  percentOfThreshold: number;
+  transactions: { date: string; amount: number; currency: string }[];
+}
+interface StructuringResult {
+  ok: boolean;
+  subjectName: string;
+  structuringProbability: number;
+  recommendation: string;
+  ctrObligation: string | null;
+  detectedPatterns: StructuringPattern[];
+  smurfingGroups: SmurfingGroup[];
+  statistics: { totalVolume: number; txnCount: number; averageAmount: number; reportingThreshold: number };
+  fatfTypologies: string[];
+  sarNarrative?: string;
+  aiEnriched: boolean;
+  error?: string;
+}
+
 const THRESHOLD_AED = 55_000;
 const STORAGE_KEY = "hawkeye.transaction-monitor.v1";
 
@@ -147,32 +174,6 @@ export default function TransactionMonitorPage() {
   const [tagSummary, setTagSummary] = useState<{ text: string; highRiskCount: number } | null>(null);
 
   // ── Structuring Analysis state ────────────────────────────────────────────
-  interface StructuringPattern {
-    pattern: string;
-    severity: "high" | "medium" | "low";
-    evidence: string;
-    transactions: string[];
-  }
-  interface SmurfingGroup {
-    window: string;
-    total: number;
-    percentOfThreshold: number;
-    transactions: { date: string; amount: number; currency: string }[];
-  }
-  interface StructuringResult {
-    ok: boolean;
-    subjectName: string;
-    structuringProbability: number;
-    recommendation: string;
-    ctrObligation: string | null;
-    detectedPatterns: StructuringPattern[];
-    smurfingGroups: SmurfingGroup[];
-    statistics: { totalVolume: number; txnCount: number; averageAmount: number; reportingThreshold: number };
-    fatfTypologies: string[];
-    sarNarrative?: string;
-    aiEnriched: boolean;
-    error?: string;
-  }
   const [structuringResult, setStructuringResult] = useState<StructuringResult | null>(null);
   const [structuringLoading, setStructuringLoading] = useState(false);
   const [structuringError, setStructuringError] = useState<string | null>(null);
