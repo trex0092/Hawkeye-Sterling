@@ -114,7 +114,7 @@ ${JSON.stringify(events, null, 2)}`,
   } catch (err) {
     console.error("[hawkeye] audit-trail/anomaly-detect: LLM call or parse failed — returning empty fallback:", err);
     return NextResponse.json(
-      { anomalies: [], riskScore: 0, degraded: true, error: "anomaly-detection-unavailable" },
+      { ok: false, anomalies: [], riskScore: 0, degraded: true, error: "anomaly-detection-unavailable" },
       { status: 503, headers: gate.headers },
     );
   }
