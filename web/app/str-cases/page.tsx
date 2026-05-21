@@ -56,6 +56,27 @@ interface MlroBriefing {
   mlroSignoff: string;
 }
 
+// ── MLRO Inbox Triage types ───────────────────────────────────────────────────
+type TriagePriority = "critical" | "high" | "medium" | "low";
+interface TriagedItem {
+  id: string;
+  type: string;
+  subject: string;
+  priority: TriagePriority;
+  priorityReason: string;
+  timeToAct: string;
+  recommendedAction: string;
+  regulatoryBasis?: string;
+  suggestedAssignee?: string;
+}
+interface InboxTriageResult {
+  triaged: TriagedItem[];
+  summary: { critical: number; high: number; medium: number; low: number; total: number };
+  urgentActions: string[];
+  triageNarrative?: string;
+  processedAt: string;
+}
+
 interface CaseRow {
   id: string;
   title: string;
@@ -220,6 +241,13 @@ export default function StrCasesPage() {
   const [patternExpanded, setPatternExpanded] = useState(false);
   const [patternError, setPatternError] = useState<string | null>(null);
 
+  // MLRO Inbox Triage state
+  const [triageResult, setTriageResult] = useState<InboxTriageResult | null>(null);
+  const [triageLoading, setTriageLoading] = useState(false);
+  const [triageError, setTriageError] = useState<string | null>(null);
+  const [triageNarrativeEnabled, setTriageNarrativeEnabled] = useState(false);
+  const [triageExpanded, setTriageExpanded] = useState(false);
+
   const open = cases.filter(
     (c) => c.status !== "Submitted" && c.status !== "Closed",
   ).length;
@@ -306,6 +334,43 @@ export default function StrCasesPage() {
       const msg = err instanceof Error ? err.message : "Pattern detection failed — please retry";
       setPatternError(msg);
     } finally { setPatternLoading(false); }
+  };
+
+  const runTriage = async () => {
+    setTriageLoading(true);
+    setTriageResult(null);
+    setTriageError(null);
+    try {
+      if (cases.length === 0) {
+        setTriageError("No STR cases to triage — file a case first");
+        setTriageLoading(false);
+        return;
+      }
+      const items = cases.map((c) => ({
+        id: c.id,
+        type: "str_referral",
+        subject: `${c.reportKind} — ${c.subject}`,
+        subjectName: c.subject,
+        createdAt: c.openedAt || undefined,
+        source: "str-cases",
+      }));
+      const res = await fetch("/api/mlro-inbox-triage", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ items, generateNarrative: triageNarrativeEnabled }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(body.error ?? `Triage failed (HTTP ${res.status}) — please retry`);
+      }
+      const data = await res.json() as InboxTriageResult & { ok?: boolean };
+      if (!data.triaged) throw new Error("Unexpected response — please retry");
+      setTriageResult(data);
+      setTriageExpanded(true);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Triage failed — please retry";
+      setTriageError(msg);
+    } finally { setTriageLoading(false); }
   };
 
   const openCase = async (e: React.FormEvent) => {
@@ -604,6 +669,116 @@ export default function StrCasesPage() {
                 })}
               </div>
             )}
+          </div>
+        )}
+      </div>
+
+      {/* MLRO Inbox Triage */}
+      <div className="mt-4 mb-2 bg-bg-panel border border-hair-2 rounded-xl p-4">
+        <div className="flex items-center justify-between mb-2">
+          <div>
+            <span className="text-11 font-semibold uppercase tracking-wide-3 text-ink-1">
+              📥 MLRO Inbox Triage
+            </span>
+            <span className="ml-2 text-11 text-ink-3">
+              Priority-sort STR queue · time-to-act · assignee routing
+            </span>
+          </div>
+          <div className="flex items-center gap-3">
+            {triageResult && !triageLoading && (
+              <button type="button" onClick={() => setTriageExpanded((v) => !v)}
+                className="text-11 text-ink-3 hover:text-ink-1">
+                {triageExpanded ? "Hide ▲" : `Show ${triageResult.triaged.length} item(s) ▾`}
+              </button>
+            )}
+            <label className="flex items-center gap-1.5 text-11 text-ink-3 cursor-pointer select-none">
+              <input type="checkbox" checked={triageNarrativeEnabled}
+                onChange={(e) => setTriageNarrativeEnabled(e.target.checked)} className="accent-brand" />
+              Narrative
+            </label>
+            <button type="button" onClick={() => void runTriage()}
+              disabled={triageLoading || cases.length === 0}
+              className="text-11 font-semibold px-3 py-1.5 rounded bg-brand text-white hover:bg-brand/90 disabled:opacity-50 transition-colors">
+              {triageLoading ? "Triaging…" : "Triage STR Queue"}
+            </button>
+          </div>
+        </div>
+
+        {triageError && (
+          <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 text-11 text-red">⚠ {triageError}</div>
+        )}
+
+        {triageResult && triageExpanded && (
+          <div className="mt-3 border-t border-hair-2 pt-3 space-y-3">
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className="text-11 text-ink-3">{triageResult.summary.total} item(s):</span>
+              {triageResult.summary.critical > 0 && (
+                <span className="font-mono text-10 font-semibold px-2 py-px rounded bg-red text-white">{triageResult.summary.critical} critical</span>
+              )}
+              {triageResult.summary.high > 0 && (
+                <span className="font-mono text-10 font-semibold px-2 py-px rounded bg-amber-dim text-amber border border-amber/30">{triageResult.summary.high} high</span>
+              )}
+              {triageResult.summary.medium > 0 && (
+                <span className="font-mono text-10 font-semibold px-2 py-px rounded bg-bg-2 text-ink-2 border border-hair-2">{triageResult.summary.medium} medium</span>
+              )}
+              {triageResult.summary.low > 0 && (
+                <span className="font-mono text-10 font-semibold px-2 py-px rounded bg-bg-2 text-ink-3 border border-hair-2">{triageResult.summary.low} low</span>
+              )}
+            </div>
+
+            {triageResult.urgentActions.length > 0 && (
+              <div className="rounded-lg bg-red-dim border border-red/20 px-3 py-2.5">
+                <p className="text-10 font-semibold uppercase tracking-wide-3 text-red mb-1">Urgent Actions</p>
+                <ul className="space-y-0.5">
+                  {triageResult.urgentActions.map((a, i) => (
+                    <li key={i} className="text-11 text-ink-1 leading-relaxed">{a}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {triageResult.triageNarrative && (
+              <p className="text-12 text-ink-1 leading-relaxed bg-bg-1 border border-hair-2 rounded-lg px-3 py-2.5">{triageResult.triageNarrative}</p>
+            )}
+
+            <div className="rounded-lg border border-hair-2 overflow-hidden">
+              <table className="w-full text-11">
+                <thead className="bg-bg-1 border-b border-hair-2">
+                  <tr>
+                    <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono">Priority</th>
+                    <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono">Subject</th>
+                    <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono">Time to Act</th>
+                    <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono">Recommended Action</th>
+                    <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono">Assignee</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {triageResult.triaged.map((t, i) => {
+                    const priCls = t.priority === "critical"
+                      ? "bg-red text-white"
+                      : t.priority === "high"
+                        ? "bg-amber-dim text-amber border border-amber/30"
+                        : t.priority === "medium"
+                          ? "bg-bg-2 text-ink-2 border border-hair-2"
+                          : "bg-bg-2 text-ink-3 border border-hair-2";
+                    return (
+                      <tr key={t.id} className={i < triageResult.triaged.length - 1 ? "border-b border-hair" : ""}>
+                        <td className="px-3 py-2.5">
+                          <span className={`font-mono text-10 font-semibold px-1.5 py-px rounded uppercase ${priCls}`}>{t.priority}</span>
+                        </td>
+                        <td className="px-3 py-2.5 text-ink-0 font-medium">
+                          <div>{t.subject}</div>
+                          <div className="text-9 text-ink-3 font-mono mt-0.5 leading-relaxed">{t.priorityReason}</div>
+                        </td>
+                        <td className="px-3 py-2.5 font-mono text-10 text-ink-2 whitespace-nowrap">{t.timeToAct}</td>
+                        <td className="px-3 py-2.5 text-10 text-ink-1 max-w-[220px] leading-relaxed">{t.recommendedAction}</td>
+                        <td className="px-3 py-2.5 font-mono text-10 text-ink-3 whitespace-nowrap">{t.suggestedAssignee ?? "—"}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>

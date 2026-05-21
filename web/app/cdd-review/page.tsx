@@ -84,6 +84,27 @@ interface PolicyReviewResult {
   regulatoryBasis: string;
 }
 
+// ── Exit Letter types ─────────────────────────────────────────────────────────
+type ExitReason =
+  | "aml_risk"
+  | "sanctions_risk"
+  | "edd_failure"
+  | "unacceptable_risk"
+  | "pep_not_accepted"
+  | "business_exit"
+  | "other";
+
+interface ExitLetterResult {
+  customerName: string;
+  exitDate: string;
+  noticePeriodDays: number;
+  tippingOffRisk: boolean;
+  letterText: string;
+  internalCoverNote: string;
+  complianceChecklist: Array<{ item: string; status: "required" | "recommended"; done: boolean }>;
+  generatedAt: string;
+}
+
 // ── Review record types ───────────────────────────────────────────────────────
 type ReviewTier = "high" | "medium" | "standard";
 type ReviewStatus = "overdue" | "due-soon" | "current" | "unknown";
@@ -129,6 +150,16 @@ const STATUS_TONE: Record<ReviewStatus, string> = {
   "due-soon": "bg-amber-dim text-amber",
   current: "bg-green-dim text-green",
   unknown: "bg-bg-2 text-ink-3",
+};
+
+const EXIT_REASON_LABELS: Record<ExitReason, string> = {
+  aml_risk: "Elevated AML risk",
+  sanctions_risk: "Potential sanctions exposure",
+  edd_failure: "Failed to provide EDD documentation",
+  unacceptable_risk: "Risk outside appetite",
+  pep_not_accepted: "PEP not accepted per policy",
+  business_exit: "Geographic / product exit (non-AML)",
+  other: "Other",
 };
 
 function deriveStatus(record: ReviewRecord): { status: ReviewStatus; daysOverdue: number; nextDue: string; nextDueTs: number } {
@@ -267,6 +298,21 @@ export default function CddReviewPage() {
   const [policyLoading, setPolicyLoading] = useState(false);
   const [policyError, setPolicyError] = useState<string | null>(null);
 
+  // Exit Letter state
+  const [exitOpen, setExitOpen] = useState(false);
+  const [exitCustomerName, setExitCustomerName] = useState("");
+  const [exitCustomerType, setExitCustomerType] = useState<"individual" | "corporate">("individual");
+  const [exitReason, setExitReason] = useState<ExitReason>("edd_failure");
+  const [exitStrFiled, setExitStrFiled] = useState(false);
+  const [exitNoticeDays, setExitNoticeDays] = useState(30);
+  const [exitMlroName, setExitMlroName] = useState("");
+  const [exitNotes, setExitNotes] = useState("");
+  const [exitResult, setExitResult] = useState<ExitLetterResult | null>(null);
+  const [exitLoading, setExitLoading] = useState(false);
+  const [exitError, setExitError] = useState<string | null>(null);
+  const [exitChecklist, setExitChecklist] = useState<Record<number, boolean>>({});
+  const [exitCoverOpen, setExitCoverOpen] = useState(false);
+
   const mountedRef = useRef(true);
   useEffect(() => () => { mountedRef.current = false; }, []);
 
@@ -329,6 +375,44 @@ export default function CddReviewPage() {
       if (mountedRef.current) setPolicyError(err instanceof Error ? err.message : "Network error — please retry");
     } finally {
       if (mountedRef.current) setPolicyLoading(false);
+    }
+  };
+
+  const runExitLetter = async () => {
+    setExitLoading(true);
+    setExitResult(null);
+    setExitError(null);
+    setExitChecklist({});
+    try {
+      const res = await fetch("/api/exit-letter-gen", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          customerName: exitCustomerName,
+          customerType: exitCustomerType,
+          exitReason,
+          strFiled: exitStrFiled,
+          noticePeriodDays: exitNoticeDays,
+          mlroName: exitMlroName || undefined,
+          internalNotes: exitNotes || undefined,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({})) as { error?: string };
+        if (mountedRef.current) setExitError(err.error ?? `Server error ${res.status} — please retry`);
+        return;
+      }
+      const data = await res.json() as ExitLetterResult & { ok?: boolean };
+      if (!mountedRef.current) return;
+      if (!data.letterText) {
+        setExitError("No letter generated — please retry");
+        return;
+      }
+      setExitResult(data);
+    } catch (err) {
+      if (mountedRef.current) setExitError(err instanceof Error ? err.message : "Network error — please retry");
+    } finally {
+      if (mountedRef.current) setExitLoading(false);
     }
   };
 
@@ -1206,6 +1290,216 @@ export default function CddReviewPage() {
                 </div>
               )}
             </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── Section 3.6: Exit Letter Generator ── */}
+      <div className="mt-6 bg-bg-panel border border-hair-2 rounded-xl overflow-hidden">
+        <div className="px-4 py-3 border-b border-hair-2 bg-bg-1 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-14">📮</span>
+            <span className="text-13 font-semibold text-ink-0">Exit Letter Generator</span>
+            <span className="text-10 font-mono text-ink-3 ml-1">Tipping-off safe · FDL 10/2025 Art.17</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setExitOpen((v) => !v)}
+            className="flex items-center gap-1 text-11 font-medium px-3 py-1 rounded border border-hair-2 text-ink-2 hover:border-brand hover:text-brand transition-colors"
+          >
+            {exitOpen ? "Collapse" : "Expand"} <ChevronIcon open={exitOpen} />
+          </button>
+        </div>
+
+        {exitOpen && (
+          <div className="p-4 space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="flex flex-col gap-1">
+                <label className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3">Customer Name <span className="text-red">*</span></label>
+                <input
+                  value={exitCustomerName}
+                  onChange={(e) => setExitCustomerName(e.target.value)}
+                  placeholder="Full name or entity name"
+                  className="text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand transition-colors"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3">Customer Type</label>
+                <select
+                  value={exitCustomerType}
+                  onChange={(e) => setExitCustomerType(e.target.value as "individual" | "corporate")}
+                  className="text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand transition-colors"
+                >
+                  <option value="individual">Individual</option>
+                  <option value="corporate">Corporate</option>
+                </select>
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3">
+                  Exit Reason <span className="font-normal normal-case text-ink-4">(internal only — not disclosed)</span>
+                </label>
+                <select
+                  value={exitReason}
+                  onChange={(e) => setExitReason(e.target.value as ExitReason)}
+                  className="text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand transition-colors"
+                >
+                  {(Object.entries(EXIT_REASON_LABELS) as [ExitReason, string][]).map(([k, v]) => (
+                    <option key={k} value={k}>{v}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3">
+                  MLRO Name <span className="font-normal normal-case text-ink-4">(optional)</span>
+                </label>
+                <input
+                  value={exitMlroName}
+                  onChange={(e) => setExitMlroName(e.target.value)}
+                  placeholder="e.g. Luisa Fernanda"
+                  className="text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand transition-colors"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-8 flex-wrap">
+              <div className="flex flex-col gap-1">
+                <label className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3">Notice Period (days)</label>
+                <input
+                  type="number" min={1} max={180} value={exitNoticeDays}
+                  onChange={(e) => setExitNoticeDays(Number(e.target.value))}
+                  className="text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand transition-colors w-24"
+                />
+              </div>
+              <label className="flex items-center gap-2 cursor-pointer select-none mt-4">
+                <input type="checkbox" checked={exitStrFiled} onChange={(e) => setExitStrFiled(e.target.checked)} className="accent-brand w-4 h-4" />
+                <span className="text-12 text-ink-1">STR / SAR has been filed</span>
+                {exitStrFiled && (
+                  <span className="font-mono text-10 px-1.5 py-px rounded bg-red-dim text-red border border-red/20">
+                    Tipping-off prohibition applies
+                  </span>
+                )}
+              </label>
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3">
+                Internal Notes <span className="font-normal normal-case text-ink-4">(not disclosed to customer)</span>
+              </label>
+              <input
+                value={exitNotes}
+                onChange={(e) => setExitNotes(e.target.value)}
+                placeholder="Additional context for the AI (internal use only)…"
+                className="text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand transition-colors"
+              />
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => { void runExitLetter(); }}
+                disabled={exitLoading || !exitCustomerName.trim()}
+                className="text-12 font-semibold px-5 py-2 rounded bg-brand text-white border border-brand hover:bg-brand-hover hover:border-brand-hover disabled:opacity-40 transition-colors flex items-center gap-2"
+              >
+                {exitLoading ? (
+                  <>
+                    <svg className="animate-spin w-3.5 h-3.5" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                    </svg>
+                    Generating letter…
+                  </>
+                ) : "✦ Generate Exit Letter"}
+              </button>
+              {exitResult && (
+                <button type="button" onClick={() => { setExitResult(null); setExitError(null); setExitChecklist({}); }}
+                  className="text-11 font-medium px-3 py-2 rounded border border-hair-2 text-ink-3 hover:text-red hover:border-red/40 transition-colors">
+                  Clear
+                </button>
+              )}
+            </div>
+
+            {exitError && (
+              <div className="rounded-lg border border-red/30 bg-red-dim px-4 py-3 flex items-start gap-2">
+                <span className="text-red text-14 shrink-0">⚠</span>
+                <div>
+                  <p className="text-12 font-semibold text-red">Generation failed</p>
+                  <p className="text-11 text-ink-2 mt-0.5">{exitError}</p>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {exitResult && (
+          <div className="border-t border-hair-2 p-4 space-y-4">
+            {exitResult.tippingOffRisk && (
+              <div className="rounded-lg border border-red/40 bg-red-dim px-4 py-3 flex items-start gap-2">
+                <span className="text-red text-14 shrink-0">🚨</span>
+                <div>
+                  <p className="text-12 font-semibold text-red">TIPPING-OFF WARNING — STR filed</p>
+                  <p className="text-11 text-ink-2 mt-0.5">This letter has been drafted to avoid disclosing AML/STR details per FDL 10/2025 Art.17. Review carefully before sending. Legal review recommended.</p>
+                </div>
+              </div>
+            )}
+
+            <div className="flex items-center gap-4 flex-wrap text-11 text-ink-2">
+              <span>Exit date: <strong className="text-ink-0">{exitResult.exitDate}</strong></span>
+              <span>Notice: <strong className="text-ink-0">{exitResult.noticePeriodDays} days</strong></span>
+              <span>Customer: <strong className="text-ink-0">{exitResult.customerName}</strong></span>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center justify-between">
+                <span className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3">Generated Letter</span>
+                <button type="button"
+                  onClick={() => { void navigator.clipboard.writeText(exitResult.letterText); }}
+                  className="text-10 font-mono px-2.5 py-1 rounded border border-hair-2 text-ink-2 hover:border-brand hover:text-brand transition-colors">
+                  Copy text
+                </button>
+              </div>
+              <pre className="text-11 font-mono leading-relaxed bg-bg-1 border border-hair-2 rounded-lg p-4 whitespace-pre-wrap break-words overflow-auto max-h-80 text-ink-1">
+                {exitResult.letterText}
+              </pre>
+            </div>
+
+            <div className="rounded-lg border border-amber/30 bg-amber-dim overflow-hidden">
+              <button type="button" onClick={() => setExitCoverOpen((v) => !v)}
+                className="w-full flex items-center justify-between px-4 py-2.5 text-left hover:bg-amber/5 transition-colors">
+                <span className="text-11 font-semibold text-amber uppercase tracking-wide-3">
+                  🔒 Internal Cover Note — Not for Customer Disclosure
+                </span>
+                <ChevronIcon open={exitCoverOpen} />
+              </button>
+              {exitCoverOpen && (
+                <pre className="text-10 font-mono leading-relaxed px-4 pb-4 whitespace-pre-wrap break-words text-ink-1 border-t border-amber/20">
+                  {exitResult.internalCoverNote}
+                </pre>
+              )}
+            </div>
+
+            {exitResult.complianceChecklist.length > 0 && (
+              <div>
+                <p className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-2">Pre-send Compliance Checklist</p>
+                <div className="space-y-1.5">
+                  {exitResult.complianceChecklist.map((item, i) => (
+                    <label key={i} className={`flex items-start gap-2.5 cursor-pointer rounded-lg px-3 py-2 border transition-colors ${exitChecklist[i] ? "bg-green-dim/40 border-green/20" : "bg-bg-1 border-hair-2 hover:border-brand/30"}`}>
+                      <input type="checkbox" checked={exitChecklist[i] ?? false}
+                        onChange={() => setExitChecklist((prev) => ({ ...prev, [i]: !prev[i] }))}
+                        className="mt-0.5 accent-brand shrink-0" />
+                      <div className="flex-1">
+                        <span className={`text-11 ${exitChecklist[i] ? "text-ink-3 line-through" : "text-ink-1"}`}>{item.item}</span>
+                        <span className={`ml-2 font-mono text-9 px-1 py-px rounded ${item.status === "required" ? "bg-red-dim text-red" : "bg-bg-2 text-ink-3"}`}>
+                          {item.status}
+                        </span>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+                <p className="text-10 text-ink-3 mt-2">
+                  {Object.values(exitChecklist).filter(Boolean).length} / {exitResult.complianceChecklist.filter((c) => c.status === "required").length} required items checked
+                </p>
+              </div>
+            )}
           </div>
         )}
       </div>
