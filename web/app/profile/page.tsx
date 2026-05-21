@@ -74,8 +74,8 @@ export default function ProfilePage() {
         body: JSON.stringify({ currentPassword, newPassword }),
       });
       const json = (await res.json()) as { ok: boolean; error?: string; sessionInvalidated?: boolean };
-      if (!json.ok) {
-        setSaveError(json.error ?? "Password change failed");
+      if (!res.ok || !json.ok) {
+        setSaveError(json.error ?? `HTTP ${res.status}`);
       } else {
         setSaveSuccess(true);
         setCurrentPassword("");

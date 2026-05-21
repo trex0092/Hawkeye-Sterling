@@ -404,8 +404,8 @@ export default function EntityGraphPage() {
       });
       const data = (await res.json()) as EntityGraphResult & { error?: string };
       if (!mountedRef.current) return;
-      if (!data.ok) {
-        setError((data as unknown as { error?: string }).error ?? "Search failed");
+      if (!res.ok || !data.ok) {
+        setError((data as unknown as { error?: string }).error ?? `HTTP ${res.status}`);
       } else {
         setResult(data);
       }
@@ -431,8 +431,8 @@ export default function EntityGraphPage() {
       });
       const data = (await res.json()) as LeiLookupResult & { error?: string };
       if (!mountedRef.current) return;
-      if (!data.ok) {
-        setLeiError((data as unknown as { error?: string }).error ?? "LEI lookup failed");
+      if (!res.ok || !data.ok) {
+        setLeiError((data as unknown as { error?: string }).error ?? `HTTP ${res.status}`);
       } else {
         setLeiResult(data);
       }

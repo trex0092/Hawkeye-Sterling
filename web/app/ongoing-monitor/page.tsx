@@ -344,7 +344,7 @@ export default function OngoingMonitorPage() {
       );
       save(next);
       if (mountedRef.current) setSubjects(next);
-      if (data.ok && data.topScore !== undefined && mountedRef.current) {
+      if (res.ok && data.ok && data.topScore !== undefined && mountedRef.current) {
         setLastResults((prev) => ({ ...prev, [s.id]: { severity: data.severity ?? "low", topScore: data.topScore ?? 0 } }));
         writeAuditEvent("system", "screening.completed", `${s.name} (${s.id}) — score ${data.topScore} · ${data.severity ?? "low"}`);
       }
@@ -371,7 +371,7 @@ export default function OngoingMonitorPage() {
       });
       const data = await res.json() as EnrichResult;
       if (!mountedRef.current) return;
-      if (!data.ok) setEnrichError(data.error ?? "Enrichment failed");
+      if (!res.ok || !data.ok) setEnrichError(data.error ?? `HTTP ${res.status}`);
       else setEnrichResult(data);
     } catch { if (mountedRef.current) setEnrichError("Request failed"); }
     finally { if (mountedRef.current) setEnrichLoading(false); }

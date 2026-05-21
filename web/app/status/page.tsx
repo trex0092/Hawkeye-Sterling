@@ -710,11 +710,11 @@ function SanctionsRefreshButton() {
       const res = await fetch("/api/sanctions/refresh", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
       const json = await res.json() as { ok?: boolean; message?: string; error?: string };
       if (!mountedRef.current) return;
-      if (json.ok) {
+      if (res.ok && json.ok) {
         setMsg(json.message ?? "Cache invalidated — live lists reload on next screen.");
         setState("done");
       } else {
-        setMsg(json.error ?? "Refresh failed.");
+        setMsg(json.error ?? `Refresh failed (HTTP ${res.status}).`);
         setState("error");
       }
     } catch (e) {
