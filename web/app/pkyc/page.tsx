@@ -4,7 +4,7 @@
 // Enroll subjects, view monitoring status, review change alerts, force rescreens.
 // Controls: 3.01 (ongoing CDD), 3.04 (periodic review), 20.09
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import type { PKycSubject, PKycCadence } from "@/app/api/pkyc/_store";
 
@@ -58,6 +58,9 @@ const INPUT_CLS = "w-full px-3 py-2 bg-bg-1 border border-hair-2 rounded text-13
 const SELECT_CLS = "w-full px-3 py-2 bg-bg-1 border border-hair-2 rounded text-13 text-ink-0 focus:outline-none focus:border-brand";
 
 export default function PKycPage() {
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
+
   const [subjects, setSubjects] = useState<PKycSubject[]>([]);
   const [stats, setStats] = useState<PKycStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -83,11 +86,11 @@ export default function PKycPage() {
       } catch {
         throw new Error("pKYC returned a malformed response — please retry");
       }
-      if (data.ok) { setSubjects(data.subjects ?? []); setStats(data.stats ?? null); }
+      if (data.ok && mountedRef.current) { setSubjects(data.subjects ?? []); setStats(data.stats ?? null); }
     } catch (err) {
       console.error("[hawkeye] pkyc load failed:", err);
-    } finally { setLoading(false); }
-  }, []);
+    } finally { if (mountedRef.current) setLoading(false); }
+  }, [mountedRef]);
 
   useEffect(() => { void load(); }, [load]);
 

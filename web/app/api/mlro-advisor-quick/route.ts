@@ -298,10 +298,12 @@ export async function OPTIONS(req: Request): Promise<Response> {
 export async function POST(req: Request): Promise<Response> {
   const _handlerStart = Date.now();
   const startedAt = _handlerStart;
+  let gateHeaders: Record<string, string> = {};
   try {
   const origin = req.headers.get("origin");
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+  gateHeaders = gate.headers;
 
   let body: Body;
   try {
@@ -687,6 +689,6 @@ export async function POST(req: Request): Promise<Response> {
       retryAfterSeconds: null,
       requestId: Math.random().toString(36).slice(2, 10),
       latencyMs: Date.now() - _handlerStart,
-    }, { status: 500, headers: { ...corsHeaders(origin) } });
+    }, { status: 500, headers: { ...gateHeaders, ...corsHeaders(origin) } });
   }
 }

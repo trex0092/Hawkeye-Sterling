@@ -29,7 +29,7 @@ export async function PATCH(
 
   let body: Record<string, unknown>;
   try { body = (await req.json()) as Record<string, unknown>; }
-  catch { return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 }); }
+  catch { return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400, headers: gate.headers }); }
 
   const VALID_STATUSES = new Set(["open", "remediation_in_progress", "closed"]);
   const { status, closureEvidence, owner, dueDate } = body;
@@ -37,7 +37,7 @@ export async function PATCH(
   if (status !== undefined && !VALID_STATUSES.has(status as string)) {
     return NextResponse.json(
       { ok: false, error: "status must be: open | remediation_in_progress | closed" },
-      { status: 400 },
+      { status: 400, headers: gate.headers },
     );
   }
 

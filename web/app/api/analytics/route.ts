@@ -28,9 +28,11 @@ async function safe<T>(label: string, fn: () => Promise<T>, fallback: T): Promis
 }
 
 export async function GET(req: Request): Promise<NextResponse> {
+  let gateHeaders: Record<string, string> = {};
   try {
   const gate = await enforce(req, { requireAuth: true });
   if (!gate.ok) return gate.response;
+  gateHeaders = gate.headers;
 
   const [keys, feedback, scheduleKeys, ongoingKeys, feedbackRecords] =
     await Promise.all([
@@ -133,7 +135,7 @@ export async function GET(req: Request): Promise<NextResponse> {
         message,
         generatedAt: new Date().toISOString(),
       },
-      { status: 503 },
+      { status: 503, headers: gateHeaders },
     );
   }
 }

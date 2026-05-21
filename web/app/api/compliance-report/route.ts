@@ -728,6 +728,7 @@ function renderHtmlReport(text: string, input: ReportInput): string {
 
 async function handleComplianceReport(req: Request): Promise<Response> {
   const _handlerStart = Date.now();
+  let gateHeaders: Record<string, string> = {};
   try {
   const gate = await enforce(req);
   // Rate-limit (429) is a hard stop; auth failures (401) fall through as
@@ -736,7 +737,7 @@ async function handleComplianceReport(req: Request): Promise<Response> {
   // between NEXT_PUBLIC_ADMIN_TOKEN and ADMIN_TOKEN shouldn't block MLRO
   // officers from generating compliance reports.
   if (!gate.ok) return gate.response;
-  const gateHeaders: Record<string, string> = gate.ok ? gate.headers : {};
+  gateHeaders = gate.ok ? gate.headers : {};
 
   const url = new URL(req.url);
   const format = (url.searchParams.get("format") ?? "html").toLowerCase();
@@ -833,7 +834,7 @@ async function handleComplianceReport(req: Request): Promise<Response> {
       retryAfterSeconds: null,
       requestId: Math.random().toString(36).slice(2, 10),
       latencyMs: Date.now() - _handlerStart,
-    }, { status: 500 });
+    }, { status: 500, headers: gateHeaders });
   }
 }
 

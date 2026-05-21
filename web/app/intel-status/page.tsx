@@ -45,21 +45,23 @@ export default function IntelStatusPage(): React.ReactElement {
   const [tierFilter, setTierFilter] = useState<"all" | Provider["tier"]>("all");
 
   useEffect(() => {
+    let cancelled = false;
     fetch("/api/intel-status", { cache: "no-store" })
       .then((r) => {
-        if (!r.ok) {
-          console.error(`[hawkeye] intel-status HTTP ${r.status}`);
-        }
+        if (!r.ok) console.error(`[hawkeye] intel-status HTTP ${r.status}`);
         return r.json();
       })
       .then((j: IntelStatus | { ok: false; error?: string }) => {
+        if (cancelled) return;
         if (j.ok) setData(j);
         else setError("error" in j ? j.error ?? "load failed" : "load failed");
       })
       .catch((e: unknown) => {
+        if (cancelled) return;
         console.error("[hawkeye] intel-status threw:", e);
         setError(e instanceof Error ? e.message : String(e));
       });
+    return () => { cancelled = true; };
   }, []);
 
   const filtered = data?.providers.filter((p) => {

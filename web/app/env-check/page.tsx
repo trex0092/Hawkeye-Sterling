@@ -36,16 +36,20 @@ export default function EnvCheckPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
     fetch("/api/env-check")
       .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then((d) => {
+        if (cancelled) return;
         setData(d as EnvCheckResponse);
         setLoading(false);
       })
       .catch((e) => {
+        if (cancelled) return;
         setError(e instanceof Error ? e.message : String(e));
         setLoading(false);
       });
+    return () => { cancelled = true; };
   }, []);
 
   const groups = data

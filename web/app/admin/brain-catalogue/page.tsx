@@ -129,10 +129,12 @@ export default function BrainCataloguePage() {
   const [submitResult, setSubmitResult] = useState<{ ok: boolean; message: string } | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
     fetch("/api/status")
       .then((r) => r.json())
-      .then((d: StatusSnapshot) => setSnapshot(d))
-      .catch((e: Error) => setLoadError(e.message));
+      .then((d: StatusSnapshot) => { if (!cancelled) setSnapshot(d); })
+      .catch((e: Error) => { if (!cancelled) setLoadError(e.message); });
+    return () => { cancelled = true; };
   }, []);
 
   const catalogue = snapshot?.brainSoul?.catalogue;

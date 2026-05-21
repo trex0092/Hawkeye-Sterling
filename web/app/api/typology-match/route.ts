@@ -120,10 +120,11 @@ Output ONLY valid JSON, no markdown fences, in this exact shape:
 
 export async function POST(req: Request): Promise<NextResponse> {
   const t0 = Date.now();
+  let gateHeaders: Record<string, string> = {};
   try {
     const gate = await enforce(req);
     if (!gate.ok) return gate.response;
-    const gateHeaders = gate.headers;
+    gateHeaders = gate.headers;
     const apiKey = process.env["ANTHROPIC_API_KEY"];
     if (!apiKey) {
       return NextResponse.json({ ok: true, degraded: true, ...FALLBACK }, { headers: gateHeaders });
@@ -216,7 +217,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         requestId: Math.random().toString(36).slice(2, 10),
         latencyMs: Date.now() - t0,
       },
-      { status: 500 }
+      { status: 500, headers: gateHeaders }
     );
   }
 }

@@ -27,7 +27,7 @@ export async function GET(
 
   const { jobId } = await params;
   if (!jobId || typeof jobId !== "string") {
-    return NextResponse.json({ ok: false, error: "jobId required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "jobId required" }, { status: 400, headers: gate.headers });
   }
 
   const job = await getEnrichmentJob(jobId);

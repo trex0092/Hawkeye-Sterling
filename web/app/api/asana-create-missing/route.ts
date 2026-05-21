@@ -224,5 +224,5 @@ export async function POST(req: Request): Promise<NextResponse> {
       "2. Trigger a new Netlify deploy so the new env vars reach the running functions.",
       "3. POST /api/asana-rebuild-sections to wipe and rebuild section workflows on all 17 boards.",
     ],
-  });
+  }, { headers: gate.headers });
 }
