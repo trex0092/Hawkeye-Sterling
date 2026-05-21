@@ -1,15 +1,52 @@
 {
   "thoughtHistory": [
     {
-      "thought": "Starting full production audit of Hawkeye-Sterling. Need to: (1) run all CI checks locally to find every failure, (2) check runtime behavior of the Data Analyst feature, (3) identify all remaining issues. Known issues going in: SBOM generation fails due to React 19 peer dependency conflicts in npm sbom. All other CI checks were passing on the last push. Let me enumerate what to check: TypeScript compile, ESLint (root + web), tests, Next.js build, PII guard, npm audit, SBOM, auth gate, secret leak check, env var exposure check.",
+      "thought": "Starting a deep review of the screening section. I need to map all screening-related files first, then inspect each for bugs, broken integrations, incorrect responses, missing logic, and import issues. Screening involves: quick-screen (name matching), batch-screen, screening/run, ongoing/run, screen/batch, payment-screen, wire/screen, and the brain modules (quickScreen, matching, translit, redlines, cognitive-amplifier). Let me enumerate all relevant files.",
       "thoughtNumber": 1,
-      "totalThoughts": 8,
+      "totalThoughts": 12,
       "nextThoughtNeeded": true
     },
     {
-      "thought": "SBOM analysis complete. Root cause: npm sbom fails with ESBOMPROBLEMS because transitive deps of swagger-ui-react@5.32.4 declare React peer deps that exclude React 19. Specifically: react-copy-to-clipboard@5.1.0 (requires ^15.3.0||16||17||18), react-debounce-input@3.3.0 (requires ^15.3.0||16||17||18), react-inspector@6.0.2 (requires ^16.8.4||^17||^18). Fix plan: (1) upgrade swagger-ui-react to 5.32.6 — its own peer dep now says >=16.8.0 <20 which includes React 19. (2) Add npm override for react-copy-to-clipboard to 5.1.1 which has no upper bound. (3) react-debounce-input has no newer version — override to force install anyway won't change its peer dep declaration. (4) react-inspector 6→9 is major version change that may break swagger-ui-react. So safest: fix what we can with overrides, then make SBOM CI step continue-on-error with a fallback empty SBOM so the artifact upload doesn't fail. This is honest: SBOM generation is best-effort for audit evidence; we document the known React 19 compat gap in transitive deps.",
+      "thought": "50+ screening-related files found. Priority targets for deep review:\n1. Core routes: quick-screen/route.ts, screening/run/route.ts, screen/batch/route.ts, batch-screen/route.ts, ongoing/run/route.ts\n2. Brain modules: quick-screen.ts, matching.ts, translit.ts, redlines.ts, cognitive-amplifier.ts\n3. Specialized: payment-screen, wire/screen, pep-screening-enhance, pf-screener, tf-screener\n\nStrategy: Read the core screening routes first (quick-screen, screening/run, screen/batch), then brain engine, then specialized routes. Check for: import correctness, response shape consistency, error handling, missing fields, auth, logic flaws.",
       "thoughtNumber": 2,
-      "totalThoughts": 6,
+      "totalThoughts": 12,
+      "nextThoughtNeeded": true
+    },
+    {
+      "thought": "Findings so far in quick-screen/route.ts and screening/run/route.ts:\n\nBUG 1 — screening/run/route.ts has DUPLICATE auto-case creation block (lines 328-360 and 362-420). The same fire-and-forget fetch to /api/hs-cases runs TWICE per screening hit. The second block (lines 362-420) is the more complete version (it handles enrich + rescreen-queue). The first block (lines 328-360) is a dupe and must be removed.\n\nBUG 2 — screening/run/route.ts: import at line 28 still uses relative src/ path:\n  import { quickScreen as brainQuickScreen } from '../../../../../src/brain/quick-screen.js';\nThis is fine (we fixed dist/src → src), but it should ideally use the @brain alias like quick-screen/route.ts does. NOT a bug per se — just inconsistency. Low priority.\n\nBUG 3 — quick-screen/route.ts line 955: listIds referenced as finalResult.listIds but QuickScreenResult does not appear to have a listIds field. Let me verify this.\n\nNext: check the QuickScreenResult type and screen/batch/route.ts.",
+      "thoughtNumber": 3,
+      "totalThoughts": 14,
+      "nextThoughtNeeded": true,
+      "needsMoreThoughts": true
+    },
+    {
+      "thought": "screen/batch/route.ts BUG: Line 268 accesses raw.results instead of raw.hits. QuickScreenResult has hits[], not results[]. The correct field is hits, not results. Also hits[0].name is wrong — it should be hits[0].candidateName. This means the screen/batch endpoint always returns hitCount=0 and lists=[] because it reads the wrong field from the result object.\n\nSpecifically at line 268:\n  const hits = ((raw as { results?: HitLike[] }).results ?? []).filter(...)\nShould be:\n  const hits = ((raw as { hits?: HitLike[] }).hits ?? []).filter(...)\n\nAnd at line 283, topHit?.name should be topHit?.candidateName since QuickScreenHit has candidateName not name.\n\nAlso at line 267, raw.topScore is accessed correctly.\n\nLet me verify the QuickScreenHit type.",
+      "thoughtNumber": 4,
+      "totalThoughts": 14,
+      "nextThoughtNeeded": true
+    },
+    {
+      "thought": "More findings:\n\nBUG 4 — screening/run/route.ts DUPLICATE auto-case block confirmed. Lines 328-360 and 362-420 are completely duplicated. The first block (328-360) creates a case but never triggers the enrich step or rescreen-queue. The second block (362-420) is more complete. The first block must be removed.\n\nwire/screen/route.ts looks correct — uses quickScreen with .hits properly.\nscreening-history/route.ts looks correct.\nscreening/health/route.ts looks correct — uses static import for quickScreen (good, no cold-start dynamic import needed for health probes).\npayment-screen/route.ts looks correct so far.\n\nNext: check the pep-screening-enhance, pf-screener, tf-screener, and pf-screener for issues. Also check batch-screen/route.ts more thoroughly (it has the score mapping at lines 33-39 using threshold 50 which doesn't match quick-screen/route.ts's tier thresholds). Let me check if scoreToBand is consistent with QuickScreenResult.severity.",
+      "thoughtNumber": 5,
+      "totalThoughts": 14,
+      "nextThoughtNeeded": true
+    },
+    {
+      "thought": "Severity thresholds confirmed: clear=0 hits, critical>=95, high>=85, medium>=70, low=anything below 70 with hits.\n\nBUG 5 — screen/batch/route.ts scoreToBand at lines 33-39:\n  if (score >= 85) return 'critical';  — WRONG (should be 95)\n  if (score >= 70) return 'high';      — WRONG (should be 85)\n  if (score >= 50) return 'medium';    — WRONG (should be 70)\n  if (score >= 25) return 'low';       — WRONG (should be <70 with any hits)\n\nThe thresholds in screen/batch are inconsistent with the brain engine. This means batch subjects will have inflated severity bands (things that are 'medium' by brain standards become 'low', etc.). Must align to: critical>=95, high>=85, medium>=70, low<70.\n\nAlso batch-screen/route.ts lines 33-39 has the same scoreToBand — let me check.\n\nNow let me check pf-screener, tf-screener, and the ongoing-screen.",
+      "thoughtNumber": 6,
+      "totalThoughts": 14,
+      "nextThoughtNeeded": true
+    },
+    {
+      "thought": "BUG 6 — screening/enhanced/route.ts uses hit.name throughout (lines 160, 193, 201, 203, 219, 221, 224) but QuickScreenHit has 'candidateName' not 'name'. However, the ScreeningHit interface defined in this file (line 37) uses 'name?: string' and the route calls /api/screening/run first then processes the result — the response from screening/run includes the raw QuickScreenHit objects where the field IS candidateName. So if screening/run returns hits with candidateName, but enhanced tries to access hit.name, it will always be undefined. The dedup at line 219 will key everything under '' (empty string after lowercasing undefined).\n\nBUT wait — the route calls callScreeningRun which calls /api/screening/run, and that route returns the result from brainQuickScreen which uses candidateName. The enhanced route then accesses hit.name — this is broken.\n\nLet me now check all the bugs I've found and compile the fix list. I'll also quickly check the ongoing/run route for screening-history writing correctness.",
+      "thoughtNumber": 7,
+      "totalThoughts": 14,
+      "nextThoughtNeeded": true
+    },
+    {
+      "thought": "ongoing/run/route.ts looks correct — uses candidateName properly throughout, correctly writes to screening-history/<id>/<runAt> with correct shape {at, topScore, severity, lists, hits}. No bugs here.\n\nLet me now compile my full bug list and implement fixes:\n\nCONFIRMED BUGS:\n1. screening/run/route.ts — DUPLICATE auto-case block (lines 328-360 = dupe of 362-420). Remove first block.\n2. screen/batch/route.ts — reads raw.results instead of raw.hits (line 268). Also topHit?.name should be topHit?.candidateName (line 283).\n3. screen/batch/route.ts — scoreToBand thresholds wrong: should be >=95 critical, >=85 high, >=70 medium, else low.\n4. screening/enhanced/route.ts — uses hit.name instead of hit.candidateName throughout. Need to update ScreeningHit interface to use candidateName and update all references.\n\nLet me now implement these fixes.",
+      "thoughtNumber": 8,
+      "totalThoughts": 14,
       "nextThoughtNeeded": true
     }
   ],

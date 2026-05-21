@@ -18,7 +18,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getStore } from "@netlify/blobs";
-import { redactPdplObject } from "../../../../../dist/src/brain/pdpl-guard.js";
+import { redactPdplObject } from "../../../../../src/brain/pdpl-guard.js";
 import { createHash } from "node:crypto";
 
 export const runtime = "nodejs";

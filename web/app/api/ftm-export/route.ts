@@ -11,8 +11,8 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
-import { entriesToFtmStream } from "../../../../dist/src/ingestion/ftm-mapper.js";
-import type { NormalisedListEntry } from "../../../../dist/src/brain/watchlist-adapters.js";
+import { entriesToFtmStream } from "../../../../src/ingestion/ftm-mapper.js";
+import type { NormalisedListEntry } from "../../../../src/brain/watchlist-adapters.js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

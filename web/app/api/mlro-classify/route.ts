@@ -5,7 +5,7 @@
 // flags) update live without burning Anthropic budget.
 
 import { NextResponse } from "next/server";
-import { classifyMlroQuestion } from "../../../../dist/src/brain/mlro-question-classifier.js";
+import { classifyMlroQuestion } from "../../../../src/brain/mlro-question-classifier.js";
 
 import { enforce } from "@/lib/server/enforce";
 export const runtime = "nodejs";

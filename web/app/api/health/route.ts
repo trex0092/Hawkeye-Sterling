@@ -48,7 +48,7 @@ let brainDetail: string | null = null;
 async function checkBrain(): Promise<{ ok: boolean; detail: string }> {
   if (brainOk !== null) return { ok: brainOk, detail: brainDetail ?? "" };
   try {
-    const mod = await import("../../../../dist/src/brain/quick-screen.js").catch(() => null);
+    const mod = await import("../../../../src/brain/quick-screen.js").catch(() => null);
     const quickScreen = (mod as { quickScreen?: unknown } | null)?.quickScreen;
     if (typeof quickScreen !== "function") {
       brainOk = false;

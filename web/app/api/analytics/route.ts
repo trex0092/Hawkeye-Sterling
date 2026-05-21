@@ -3,7 +3,7 @@ import { listApiKeys } from "@/lib/server/api-keys";
 import { enforce } from "@/lib/server/enforce";
 import { stats as feedbackStats, listFeedback } from "@/lib/server/feedback";
 import { getJson, listKeys } from "@/lib/server/store";
-import { DPMS_KPIS } from "../../../../dist/src/brain/dpms-kpis.js";
+import { DPMS_KPIS } from "../../../../src/brain/dpms-kpis.js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

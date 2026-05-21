@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 // Import from the concrete module, not the index barrel — see super-brain
 // route for why pulling in the 80-module barrel at cold-start kills these
 // Netlify Functions with 502s.
-import { quickScreen as _quickScreen } from "../../../../dist/src/brain/quick-screen.js";
+import { quickScreen as _quickScreen } from "../../../../src/brain/quick-screen.js";
 import type {
   QuickScreenCandidate,
   QuickScreenResult,
@@ -31,10 +31,10 @@ const KEYWORD_GROUP_WEIGHT: Record<string, number> = {
 };
 
 function scoreToBand(score: number): string {
-  if (score >= 85) return "critical";
-  if (score >= 70) return "high";
-  if (score >= 50) return "medium";
-  if (score >= 25) return "low";
+  if (score >= 95) return "critical";
+  if (score >= 85) return "high";
+  if (score >= 70) return "medium";
+  if (score > 0) return "low";
   return "clear";
 }
 import { classifyEsg } from "@/lib/data/esg";
@@ -45,7 +45,7 @@ import { getIdempotencyKey, getIdempotent, storeIdempotent } from "@/lib/server/
 import { checkWatchman } from "@/lib/server/watchman-client";   // moov-io/watchman
 import { checkMarble } from "@/lib/server/marble-client";       // checkmarble/marble
 import { checkJube } from "@/lib/server/jube-client";           // jube AML
-import { yenteMatch } from "../../../../dist/src/integrations/yente.js"; // opensanctions/yente FtM matching
+import { yenteMatch } from "../../../../src/integrations/yente.js"; // opensanctions/yente FtM matching
 import { asanaGids } from "@/lib/server/asanaConfig";
 import { runEgressCheck } from "@/lib/server/egress-check";
 
@@ -443,7 +443,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     topScore: Math.max(...results.map((r) => r.topScore), 0),
     newHits: elevated.slice(0, 10).map((r) => ({
       listId: r.listCoverage[0] ?? "unknown",
-      listRef: r.name,
+      listRef: r.listCoverage[0] ?? "unknown",
       candidateName: r.name,
     })),
     ...(asanaTaskUrl ? { asanaTaskUrl } : {}),

@@ -12,10 +12,10 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
-import { getJournal } from "../../../../../dist/src/brain/feedback-journal-instance.js";
-import { hydrateJournalFromBlobs } from "../../../../../dist/src/brain/feedback-journal-blobs.js";
-import { brierScore, logScore } from "../../../../../dist/src/brain/bayesian-update.js";
-import type { OutcomeRecord } from "../../../../../dist/src/brain/outcome-feedback.js";
+import { getJournal } from "../../../../../src/brain/feedback-journal-instance.js";
+import { hydrateJournalFromBlobs } from "../../../../../src/brain/feedback-journal-blobs.js";
+import { brierScore, logScore } from "../../../../../src/brain/bayesian-update.js";
+import type { OutcomeRecord } from "../../../../../src/brain/outcome-feedback.js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

@@ -12,7 +12,7 @@
 
 import { NextResponse } from "next/server";
 import { getJson } from "@/lib/server/store";
-import { quickScreen } from "../../../../../dist/src/brain/quick-screen.js";
+import { quickScreen } from "../../../../../src/brain/quick-screen.js";
 import { loadCandidates } from "@/lib/server/candidates-loader";
 
 export const runtime = "nodejs";

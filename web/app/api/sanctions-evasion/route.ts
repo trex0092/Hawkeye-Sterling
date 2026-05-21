@@ -212,7 +212,7 @@ Conduct a comprehensive sanctions evasion risk assessment. Identify all evasion 
     if (!Array.isArray(result.nameVariationFlags)) result.nameVariationFlags = [];
     if (!Array.isArray(result.splitPaymentPatterns)) result.splitPaymentPatterns = [];
     if (!Array.isArray(result.immediateActions)) result.immediateActions = [];
-    return NextResponse.json(result, { headers: gate.headers });
+    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "sanctions-evasion temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });

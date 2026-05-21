@@ -28,8 +28,8 @@ import {
   type ReasoningTurn,
   type PersistedSource,
   type AdvisorResponseV1,
-} from "../../../dist/src/brain/registry/index.js";
-import { persistedSourceFromChunk, AuditLogStore } from "../../../dist/src/brain/registry/audit-log.js";
+} from "../../../src/brain/registry/index.js";
+import { persistedSourceFromChunk, AuditLogStore } from "../../../src/brain/registry/audit-log.js";
 import { setJson, listKeys } from "./store";
 
 const REGISTRY = buildSeedRegistry();

@@ -30,9 +30,9 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
-import { recordCaseDisposition } from "../../../../../../dist/src/brain/feedback-journal-instance.js";
-import type { OutcomeRecord } from "../../../../../../dist/src/brain/outcome-feedback.js";
-import type { DispositionCode } from "../../../../../../dist/src/brain/dispositions.js";
+import { recordCaseDisposition } from "../../../../../../src/brain/feedback-journal-instance.js";
+import type { OutcomeRecord } from "../../../../../../src/brain/outcome-feedback.js";
+import type { DispositionCode } from "../../../../../../src/brain/dispositions.js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

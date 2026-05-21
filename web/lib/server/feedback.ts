@@ -34,7 +34,7 @@ export interface FeedbackStats {
 }
 
 function pairKey(listId: string, listRef: string, candidate: string): string {
-  return `${listId}|${listRef}|${candidate.toLowerCase()}`;
+  return `${listId.toLowerCase()}|${listRef.toLowerCase()}|${candidate.toLowerCase()}`;
 }
 
 export async function submitFeedback(

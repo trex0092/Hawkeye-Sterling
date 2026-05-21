@@ -4,10 +4,10 @@ import {
   invokeMlroAdvisor,
   type MlroAdvisorRequest,
   type ReasoningMode,
-} from "../../../../dist/src/integrations/mlroAdvisor.js";
-import { askComplianceQuestion } from "../../../../dist/src/integrations/complianceRag.js";
+} from "../../../../src/integrations/mlroAdvisor.js";
+import { askComplianceQuestion } from "../../../../src/integrations/complianceRag.js";
 import { gateMlroQuestion } from "@/lib/server/mlro-input-gate";
-import { scoreAdvisorAnswer } from "../../../../dist/src/integrations/qualityGates.js";
+import { scoreAdvisorAnswer } from "../../../../src/integrations/qualityGates.js";
 import { verifyCitations } from "@/lib/server/citation-verifier";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import {

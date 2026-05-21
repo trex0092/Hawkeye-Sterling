@@ -11,7 +11,7 @@ import { enforce } from "@/lib/server/enforce";
 import { loadCandidates } from "@/lib/server/candidates-loader";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
-import { quickScreen as _quickScreen } from "../../../../dist/src/brain/quick-screen.js";
+import { quickScreen as _quickScreen } from "../../../../src/brain/quick-screen.js";
 import type {
   QuickScreenCandidate,
   QuickScreenOptions,

@@ -13,13 +13,13 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
-import { lookupLei, searchGleif } from "../../../../dist/src/integrations/gleif.js";
-import { domainIntel } from "../../../../dist/src/integrations/webCheck.js";
-import { spiderFootScan } from "../../../../dist/src/integrations/spiderfoot.js";
-import { yenteMatch } from "../../../../dist/src/integrations/yente.js";
-import { searchAdverseMedia } from "../../../../dist/src/integrations/taranisAi.js";
-import { harvesterScan } from "../../../../dist/src/integrations/osintBridge.js";
-import { analyseAdverseMediaResult } from "../../../../dist/src/brain/adverse-media-analyser.js";
+import { lookupLei, searchGleif } from "../../../../src/integrations/gleif.js";
+import { domainIntel } from "../../../../src/integrations/webCheck.js";
+import { spiderFootScan } from "../../../../src/integrations/spiderfoot.js";
+import { yenteMatch } from "../../../../src/integrations/yente.js";
+import { searchAdverseMedia } from "../../../../src/integrations/taranisAi.js";
+import { harvesterScan } from "../../../../src/integrations/osintBridge.js";
+import { analyseAdverseMediaResult } from "../../../../src/brain/adverse-media-analyser.js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

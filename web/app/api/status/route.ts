@@ -14,9 +14,9 @@ import { enforce, type EnforcementAllow } from "@/lib/server/enforce";
 async function loadBrain() {
   try {
     const [qs, rl, ca] = await Promise.all([
-      import("../../../../dist/src/brain/quick-screen.js").catch(() => null),
-      import("../../../../dist/src/brain/redlines.js").catch(() => null),
-      import("../../../../dist/src/brain/cognitive-amplifier.js").catch(() => null),
+      import("../../../../src/brain/quick-screen.js").catch(() => null),
+      import("../../../../src/brain/redlines.js").catch(() => null),
+      import("../../../../src/brain/cognitive-amplifier.js").catch(() => null),
     ]);
     return {
       quickScreen: (qs as { quickScreen?: unknown } | null)?.quickScreen ?? null,

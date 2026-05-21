@@ -26,7 +26,7 @@ import { enforce } from "@/lib/server/enforce";
 import { parseMt103, type Mt103 } from "@/lib/server/mt103";
 import { loadCandidates } from "@/lib/server/candidates-loader";
 import type { QuickScreenCandidate } from "@/lib/api/quickScreen.types";
-import { quickScreen } from "../../../../../dist/src/brain/quick-screen.js";
+import { quickScreen } from "../../../../../src/brain/quick-screen.js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

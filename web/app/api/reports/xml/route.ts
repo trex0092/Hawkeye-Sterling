@@ -19,8 +19,8 @@
 import { NextResponse } from "next/server";
 import { createHash } from "node:crypto";
 import { enforce } from "@/lib/server/enforce";
-import { serialiseGoamlXml } from "../../../../../dist/src/integrations/goaml-xml.js";
-import { validateGoamlEnvelope, type GoAmlEnvelope } from "../../../../../dist/src/brain/goaml-shapes.js";
+import { serialiseGoamlXml } from "../../../../../src/integrations/goaml-xml.js";
+import { validateGoamlEnvelope, type GoAmlEnvelope } from "../../../../../src/brain/goaml-shapes.js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

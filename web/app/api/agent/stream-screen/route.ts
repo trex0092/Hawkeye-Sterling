@@ -10,10 +10,10 @@
 //
 // Uses the deterministic in-process pipeline; not LLM-streaming.
 
-import { quickScreen } from "../../../../../dist/src/brain/quick-screen.js";
-import { evaluateRedlines } from "../../../../../dist/src/brain/redlines.js";
-import { detectCrossRegimeConflict, type RegimeStatus } from "../../../../../dist/src/brain/cross-regime-conflict.js";
-import { classifyPepRole } from "../../../../../dist/src/brain/pep-classifier.js";
+import { quickScreen } from "../../../../../src/brain/quick-screen.js";
+import { evaluateRedlines } from "../../../../../src/brain/redlines.js";
+import { detectCrossRegimeConflict, type RegimeStatus } from "../../../../../src/brain/cross-regime-conflict.js";
+import { classifyPepRole } from "../../../../../src/brain/pep-classifier.js";
 import { loadCandidates } from "@/lib/server/candidates-loader";
 import { enforce } from "@/lib/server/enforce";
 
@@ -39,7 +39,7 @@ export async function GET(req: Request): Promise<Response> {
 
   const url = new URL(req.url);
   const name = url.searchParams.get("name");
-  if (!name) return new Response("name query param required", { status: 400, headers: gate.headers });
+  if (!name) return new Response(JSON.stringify({ ok: false, error: "name query param required" }), { status: 400, headers: { ...gate.headers, "content-type": "application/json" } });
   const subject: StreamSubject = {
     name,
     type: url.searchParams.get("type") ?? undefined,

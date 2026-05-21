@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
-import { auditBrain } from "../../../../../dist/src/brain/audit.js";
-import { weaponizedIntegrity } from "../../../../../dist/src/brain/weaponized.js";
+import { auditBrain } from "../../../../../src/brain/audit.js";
+import { weaponizedIntegrity } from "../../../../../src/brain/weaponized.js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

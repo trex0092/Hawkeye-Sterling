@@ -5,21 +5,21 @@
 // counterfactual sensitivity, adversarial steelman, mode-coverage map,
 // SAR/STR narrative.
 
-import { quickScreen as _quickScreen } from "../../../../../dist/src/brain/quick-screen.js";
-import { classifyPepRole } from "../../../../../dist/src/brain/pep-classifier.js";
-import { classifyAdverseMedia } from "../../../../../dist/src/brain/adverse-media.js";
-import { jurisdictionByName } from "../../../../../dist/src/brain/jurisdictions-full.js";
-import { isCahra } from "../../../../../dist/src/brain/cahra.js";
-import { regimesForJurisdiction } from "../../../../../dist/src/brain/sanction-regimes.js";
-import { evaluateRedlines, REDLINES } from "../../../../../dist/src/brain/redlines.js";
-import { variantsOf } from "../../../../../dist/src/brain/translit.js";
-import { expandAliases } from "../../../../../dist/src/brain/aliases.js";
-import { doubleMetaphone, soundex } from "../../../../../dist/src/brain/matching.js";
-import { matchTypologies, typologyCompositeScore } from "../../../../../dist/src/brain/lib/typologies.js";
-import { META_COGNITION } from "../../../../../dist/src/brain/meta-cognition.js";
-import { DOCTRINES } from "../../../../../dist/src/brain/doctrines.js";
-import { weaponizedSystemPrompt } from "../../../../../dist/src/brain/weaponized.js";
-import { REASONING_MODES } from "../../../../../dist/src/brain/reasoning-modes.js";
+import { quickScreen as _quickScreen } from "../../../../../src/brain/quick-screen.js";
+import { classifyPepRole } from "../../../../../src/brain/pep-classifier.js";
+import { classifyAdverseMedia } from "../../../../../src/brain/adverse-media.js";
+import { jurisdictionByName } from "../../../../../src/brain/jurisdictions-full.js";
+import { isCahra } from "../../../../../src/brain/cahra.js";
+import { regimesForJurisdiction } from "../../../../../src/brain/sanction-regimes.js";
+import { evaluateRedlines, REDLINES } from "../../../../../src/brain/redlines.js";
+import { variantsOf } from "../../../../../src/brain/translit.js";
+import { expandAliases } from "../../../../../src/brain/aliases.js";
+import { doubleMetaphone, soundex } from "../../../../../src/brain/matching.js";
+import { matchTypologies, typologyCompositeScore } from "../../../../../src/brain/lib/typologies.js";
+import { META_COGNITION } from "../../../../../src/brain/meta-cognition.js";
+import { DOCTRINES } from "../../../../../src/brain/doctrines.js";
+import { weaponizedSystemPrompt } from "../../../../../src/brain/weaponized.js";
+import { REASONING_MODES } from "../../../../../src/brain/reasoning-modes.js";
 import { loadCandidates } from "@/lib/server/candidates-loader";
 import type {
   QuickScreenCandidate,

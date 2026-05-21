@@ -30,7 +30,7 @@ import type {
   QuickScreenSubject,
   QuickScreenResult,
 } from "@/lib/api/quickScreen.types";
-import { quickScreen as _quickScreen } from "../../../../../dist/src/brain/quick-screen.js";
+import { quickScreen as _quickScreen } from "../../../../../src/brain/quick-screen.js";
 
 type QuickScreenFn = (
   _subject: QuickScreenSubject,

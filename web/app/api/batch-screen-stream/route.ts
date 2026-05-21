@@ -8,7 +8,7 @@
 //   data: {"type":"complete","summary":{...}}\n\n
 //   data: {"type":"error","error":"..."}\n\n
 
-import { quickScreen as _quickScreen } from "../../../../dist/src/brain/quick-screen.js";
+import { quickScreen as _quickScreen } from "../../../../src/brain/quick-screen.js";
 import type {
   QuickScreenCandidate,
   QuickScreenHit,

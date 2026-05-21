@@ -5,8 +5,8 @@ import { postWebhook } from "@/lib/server/webhook";
 import { getEntity } from "@/lib/config/entities";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
-import { serialiseGoamlXml } from "../../../../dist/src/integrations/goaml-xml.js";
-import { validateGoamlEnvelope, type GoAmlEnvelope, type GoAmlPerson, type GoAmlEntity, type GoAmlReportCode } from "../../../../dist/src/brain/goaml-shapes.js";
+import { serialiseGoamlXml } from "../../../../src/integrations/goaml-xml.js";
+import { validateGoamlEnvelope, type GoAmlEnvelope, type GoAmlPerson, type GoAmlEntity, type GoAmlReportCode } from "../../../../src/brain/goaml-shapes.js";
 import {
   buildHtmlDoc,
   hsCover,

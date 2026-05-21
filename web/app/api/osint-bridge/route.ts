@@ -16,7 +16,7 @@ import {
   socialAnalyzerSearch,
   detectAnomalies,
   amlSimPatterns,
-} from "../../../../dist/src/integrations/osintBridge.js";
+} from "../../../../src/integrations/osintBridge.js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
