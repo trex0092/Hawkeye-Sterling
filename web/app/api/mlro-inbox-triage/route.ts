@@ -299,7 +299,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     .filter((t) => t.priority === "critical")
     .map((t) => `[CRITICAL] ${t.subject}: ${t.recommendedAction}`);
 
-  const result: TriageResult = {
+  const result: TriageResult & { ok: true } = {
+    ok: true,
     triaged,
     summary: { ...counts, total: items.length },
     urgentActions,

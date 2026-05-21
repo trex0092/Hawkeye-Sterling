@@ -133,7 +133,7 @@ async function handleGet(req: Request): Promise<NextResponse> {
     asOf: new Date().toISOString(),
   };
 
-  return NextResponse.json(report, { headers: gate.headers });
+  return NextResponse.json({ ok: true, ...report }, { headers: gate.headers });
 }
 
 export const GET = handleGet;

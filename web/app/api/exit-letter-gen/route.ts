@@ -206,7 +206,8 @@ Generate the complete letter text only — no commentary, no additional explanat
     const block = msg.content[0];
     const letterText = block?.type === "text" ? (block as { type: "text"; text: string }).text.trim() : "";
 
-    const result: ExitLetterResult = {
+    const result: ExitLetterResult & { ok: true } = {
+      ok: true,
       customerName,
       exitDate,
       noticePeriodDays,
@@ -221,7 +222,7 @@ Generate the complete letter text only — no commentary, no additional explanat
   } catch (err) {
     console.error("[exit-letter-gen] unhandled exception:", err instanceof Error ? err.message : err);
     return NextResponse.json(
-      { error: "Letter generation failed — please retry or contact support." },
+      { ok: false, error: "Letter generation failed — please retry or contact support." },
       { status: 500, headers: gate.headers }
     );
   }
