@@ -296,6 +296,7 @@ export async function POST(req: Request) {
   });
   if (!apiKey) {
     return NextResponse.json({
+      ok: true,
       ...buildTemplate(),
       degraded: true,
       degradedReason: "ANTHROPIC_API_KEY not configured — typology-library AI search disabled. Set the key on the deployment to enable.",
@@ -348,10 +349,11 @@ Find the most relevant AML/CFT typologies matching this search. Return comprehen
     const result = JSON.parse(jsonStr) as TypologySearchResponse;
     if (!Array.isArray(result.results)) result.results = [];
     if (!Array.isArray(result.relatedCategories)) result.relatedCategories = [];
-    return NextResponse.json(result, { headers: gate.headers });
+    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch (err) {
     console.warn("[typology-library/search] LLM failed:", err instanceof Error ? err.message : err);
     return NextResponse.json({
+      ok: true,
       ...buildTemplate(),
       degraded: true,
       degradedReason: `Typology search AI call failed: ${err instanceof Error ? err.message : String(err)}.`,
