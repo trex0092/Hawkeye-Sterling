@@ -11,7 +11,7 @@ export async function POST(req: Request) {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
 
-  const body = await req.json() as {
+  let body: {
     subjectName: string;
     jurisdiction: string;
     verdict: string;
@@ -20,6 +20,8 @@ export async function POST(req: Request) {
     findings: string[];
     listCoverage: Array<{list:string; result:string; match:string; date:string}>;
   };
+  try { body = await req.json() as typeof body; }
+  catch { return new Response(JSON.stringify({ ok: false, error: "invalid JSON body" }), { status: 400, headers: { "content-type": "application/json", ...gate.headers } }); }
 
   if (!body?.subjectName?.trim()) {
     return new Response(JSON.stringify({ ok: false, error: "subjectName required" }), { status: 400, headers: gate.headers });

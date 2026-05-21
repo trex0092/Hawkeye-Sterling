@@ -232,11 +232,11 @@ function UserSidePanel({ user, onClose, onRoleChanged }: SidePanelProps) {
       });
       const data = (await resp.json()) as { ok: boolean; error?: string };
       if (!mountedRef.current) return;
-      if (data.ok) {
+      if (!resp.ok || !data.ok) {
+        setPwMsg({ ok: false, text: data.error ?? `HTTP ${resp.status}` });
+      } else {
         setPwMsg({ ok: true, text: "Credentials updated successfully." });
         setNewPassword("");
-      } else {
-        setPwMsg({ ok: false, text: data.error ?? "Failed to update credentials." });
       }
     } catch {
       if (mountedRef.current) setPwMsg({ ok: false, text: "Network error — please try again." });
@@ -262,6 +262,7 @@ function UserSidePanel({ user, onClose, onRoleChanged }: SidePanelProps) {
         }),
       });
       const data = (await resp.json()) as RoleRecommendation & { ok?: boolean };
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       if (mountedRef.current) setAiResult(data);
     } catch {
       if (mountedRef.current) setAiError("AI recommendation unavailable.");
@@ -289,12 +290,12 @@ function UserSidePanel({ user, onClose, onRoleChanged }: SidePanelProps) {
       });
       const data = (await resp.json()) as { ok: boolean; user?: AccessUser; impactAssessment?: string; error?: string };
       if (!mountedRef.current) return;
-      if (data.ok && data.user) {
+      if (!resp.ok || !data.ok || !data.user) {
+        console.error("[hawkeye] access-control role-change rejected:", data);
+        setRoleError(data.error ?? `HTTP ${resp.status}`);
+      } else {
         setImpact(data.impactAssessment ?? null);
         onRoleChanged(data.user);
-      } else {
-        console.error("[hawkeye] access-control role-change rejected:", data);
-        setRoleError(data.error ?? "Role change was rejected by the server.");
       }
     } catch (err) {
       console.error("[hawkeye] access-control role-change threw — UI may show stale role:", err);
@@ -533,7 +534,7 @@ export default function AccessControlPage() {
     try {
       const resp = await fetch("/api/access/users");
       const data = (await resp.json()) as { ok: boolean; users?: AccessUser[] };
-      if (data.ok && data.users && mountedRef.current) {
+      if (resp.ok && data.ok && data.users && mountedRef.current) {
         setUsers(data.users);
         sessionStorage.setItem("hawkeye.access.users", JSON.stringify(data.users));
       }
@@ -552,7 +553,7 @@ export default function AccessControlPage() {
     try {
       const resp = await fetch("/api/access/permission-log");
       const data = (await resp.json()) as { ok: boolean; log?: PermissionLogEntry[] };
-      if (data.ok && data.log && mountedRef.current) {
+      if (resp.ok && data.ok && data.log && mountedRef.current) {
         setLog(data.log);
         sessionStorage.setItem("hawkeye.access.log", JSON.stringify(data.log));
       }
@@ -601,7 +602,7 @@ export default function AccessControlPage() {
       });
       const data = (await resp.json()) as { ok: boolean; user?: AccessUser; error?: string; initialPassword?: string };
       if (!mountedRef.current) return;
-      if (!data.ok) { setAddError(data.error ?? "Failed to add user."); return; }
+      if (!resp.ok || !data.ok) { setAddError(data.error ?? `HTTP ${resp.status}`); return; }
       if (data.user) {
         setUsers((prev) => [...prev, data.user!]);
         setNewUserCreds({ username: data.user!.username ?? "", password: data.initialPassword ?? "" });

@@ -52,21 +52,21 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   let body: Record<string, unknown>;
   try { body = (await req.json()) as Record<string, unknown>; }
-  catch { return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 }); }
+  catch { return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400, headers: gate.headers }); }
 
   const { category, description, regulatoryBasis, linkedCaseId, linkedAuditSeq, owner } = body;
 
   if (!category || !VALID_CATEGORIES.has(category as BreachCategory)) {
     return NextResponse.json(
       { ok: false, error: `category must be one of: ${[...VALID_CATEGORIES].join(", ")}` },
-      { status: 400 },
+      { status: 400, headers: gate.headers },
     );
   }
   if (!description || typeof description !== "string") {
-    return NextResponse.json({ ok: false, error: "description required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "description required" }, { status: 400, headers: gate.headers });
   }
   if (!regulatoryBasis || typeof regulatoryBasis !== "string") {
-    return NextResponse.json({ ok: false, error: "regulatoryBasis required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "regulatoryBasis required" }, { status: 400, headers: gate.headers });
   }
 
   const breach = await createBreach({

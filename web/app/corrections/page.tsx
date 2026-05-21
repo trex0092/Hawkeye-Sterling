@@ -56,8 +56,8 @@ export default function CorrectionsPage() {
         | { ok: true; id: string; dueBy: string; message: string }
         | { ok: false; error?: string };
       if (!mountedRef.current) return;
-      if (!payload.ok) {
-        setErr(payload.error ?? "submission failed");
+      if (!res.ok || !payload.ok) {
+        setErr((payload as { error?: string }).error ?? `HTTP ${res.status}`);
       } else {
         setReceipt(payload);
       }

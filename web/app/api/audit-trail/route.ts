@@ -83,7 +83,7 @@ function parsePositiveInt(raw: string | null, fallback: number, max?: number): n
   return max !== undefined ? Math.min(v, max) : v;
 }
 
-async function handleGet(req: Request): Promise<NextResponse> {
+async function handleGet(req: Request, responseHeaders: Record<string, string> = {}): Promise<NextResponse> {
   const url = new URL(req.url);
   const page = parsePositiveInt(url.searchParams.get("page"), 1);
   const pageSize = parsePositiveInt(url.searchParams.get("pageSize"), 50, 200);
@@ -105,7 +105,7 @@ async function handleGet(req: Request): Promise<NextResponse> {
   if (!store) {
     return NextResponse.json(
       { ok: false, error: "Blob store unavailable — check NETLIFY_SITE_ID and NETLIFY_BLOBS_TOKEN" },
-      { status: 503 },
+      { status: 503, headers: responseHeaders },
     );
   }
 
@@ -120,16 +120,16 @@ async function handleGet(req: Request): Promise<NextResponse> {
         pageSize,
         entries: [],
         message: "Audit chain is empty — no entries recorded yet",
-      });
+      }, { headers: responseHeaders });
     }
     if (!Array.isArray(raw)) {
-      return NextResponse.json({ ok: false, error: "chain.json is not an array" }, { status: 500 });
+      return NextResponse.json({ ok: false, error: "chain.json is not an array" }, { status: 500, headers: responseHeaders });
     }
     chain = raw;
   } catch (err) {
     return NextResponse.json(
       { ok: false, error: `chain read failed: ${err instanceof Error ? err.message : String(err)}` },
-      { status: 500 },
+      { status: 500, headers: responseHeaders },
     );
   }
 
@@ -176,7 +176,7 @@ async function handleGet(req: Request): Promise<NextResponse> {
     pageSize,
     entries: annotated,
     ...(tamperMarker ? { tamperMarker } : {}),
-  });
+  }, { headers: responseHeaders });
 }
 
 export const GET = (req: Request) => {
@@ -203,6 +203,6 @@ export const GET = (req: Request) => {
 
   return enforce(req as Parameters<typeof enforce>[0]).then((gate) => {
     if (!gate.ok) return gate.response as unknown as NextResponse;
-    return handleGet(req);
+    return handleGet(req, gate.headers);
   });
 };

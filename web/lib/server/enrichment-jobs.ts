@@ -85,6 +85,8 @@ export async function completeEnrichmentJob(
       enrichmentPending: false,
       enrichmentCompletedAt: job.completedAt,
       enrichmentResultId: jobId,
+    }).catch((err: unknown) => {
+      console.warn("[enrichment-jobs] audit write failed:", err instanceof Error ? err.message : String(err));
     });
   } catch (err) {
     console.warn("[enrichment-jobs] completeEnrichmentJob failed (non-critical):", err instanceof Error ? err.message : String(err));

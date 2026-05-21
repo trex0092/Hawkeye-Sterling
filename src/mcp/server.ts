@@ -157,4 +157,7 @@ void (async () => {
   const transport = new StdioServerTransport();
   await server.connect(transport);
   process.stderr.write(`[${PRODUCT_NAME}] connected (v${PRODUCT_VERSION})\n`);
-})();
+})().catch((err: unknown) => {
+  process.stderr.write(`[${PRODUCT_NAME}] fatal: ${err instanceof Error ? err.message : String(err)}\n`);
+  process.exit(1);
+});

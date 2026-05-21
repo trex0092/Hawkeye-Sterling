@@ -103,7 +103,7 @@ export async function GET(req: Request): Promise<NextResponse> {
       ? "ok"
       : result.anyWriteFailed
         ? "partial"
-        : "ok";
+        : "error";
 
     void writeAuditChainEntry(
       {
@@ -146,7 +146,7 @@ export async function GET(req: Request): Promise<NextResponse> {
         status: "error",
         error: `runIngestionAll threw — ${err instanceof Error ? err.message : String(err)}`,
       },
-      { status: 200 },
+      { status: 500 },
     );
   }
 }

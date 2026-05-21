@@ -150,7 +150,7 @@ export default function CryptoRiskPage() {
       });
       const data = await res.json() as WalletRisk;
       if (!mountedRef.current) return;
-      if (!data.ok) setError(data.error ?? "Scoring failed");
+      if (!res.ok || !data.ok) setError(data.error ?? `HTTP ${res.status}`);
       else setResult(data);
     } catch (err) {
       console.error("[hawkeye] crypto-risk scoring threw:", err);

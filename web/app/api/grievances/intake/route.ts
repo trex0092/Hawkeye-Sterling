@@ -29,14 +29,14 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as IntakeBody;
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
   }
 
   if (!body.concern) {
-    return NextResponse.json({ error: "concern is required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "concern is required" }, { status: 400 });
   }
   if (body.mode === "named" && !body.reporterName) {
-    return NextResponse.json({ error: "reporterName is required for named submissions" }, { status: 422 });
+    return NextResponse.json({ ok: false, error: "reporterName is required for named submissions" }, { status: 422 });
   }
 
   // Do NOT echo back reporter name or concern detail in the response —

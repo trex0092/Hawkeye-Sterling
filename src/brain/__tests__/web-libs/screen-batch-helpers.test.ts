@@ -13,10 +13,10 @@ function normaliseSubjectName(name: string): string {
 }
 
 function scoreToBand(score: number): string {
-  if (score >= 85) return "critical";
-  if (score >= 70) return "high";
-  if (score >= 50) return "medium";
-  if (score >= 25) return "low";
+  if (score >= 95) return "critical";
+  if (score >= 85) return "high";
+  if (score >= 70) return "medium";
+  if (score > 0) return "low";
   return "clear";
 }
 
@@ -65,54 +65,52 @@ describe("normaliseSubjectName", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("scoreToBand", () => {
-  it("score >= 85 → critical", () => {
-    expect(scoreToBand(85)).toBe("critical");
+  it("score >= 95 → critical", () => {
+    expect(scoreToBand(95)).toBe("critical");
     expect(scoreToBand(100)).toBe("critical");
-    expect(scoreToBand(90)).toBe("critical");
+    expect(scoreToBand(97)).toBe("critical");
   });
 
-  it("score in [70, 85) → high", () => {
-    expect(scoreToBand(70)).toBe("high");
-    expect(scoreToBand(84)).toBe("high");
-    expect(scoreToBand(75)).toBe("high");
+  it("score in [85, 95) → high", () => {
+    expect(scoreToBand(85)).toBe("high");
+    expect(scoreToBand(94)).toBe("high");
+    expect(scoreToBand(90)).toBe("high");
   });
 
-  it("score in [50, 70) → medium", () => {
-    expect(scoreToBand(50)).toBe("medium");
-    expect(scoreToBand(69)).toBe("medium");
-    expect(scoreToBand(60)).toBe("medium");
+  it("score in [70, 85) → medium", () => {
+    expect(scoreToBand(70)).toBe("medium");
+    expect(scoreToBand(84)).toBe("medium");
+    expect(scoreToBand(75)).toBe("medium");
   });
 
-  it("score in [25, 50) → low", () => {
-    expect(scoreToBand(25)).toBe("low");
-    expect(scoreToBand(49)).toBe("low");
+  it("score in (0, 70) → low", () => {
+    expect(scoreToBand(1)).toBe("low");
+    expect(scoreToBand(69)).toBe("low");
     expect(scoreToBand(35)).toBe("low");
   });
 
-  it("score < 25 → clear", () => {
+  it("score === 0 → clear", () => {
     expect(scoreToBand(0)).toBe("clear");
-    expect(scoreToBand(24)).toBe("clear");
-    expect(scoreToBand(10)).toBe("clear");
   });
 
-  it("boundary: 85 is critical, 84 is high", () => {
-    expect(scoreToBand(85)).toBe("critical");
-    expect(scoreToBand(84)).toBe("high");
+  it("boundary: 95 is critical, 94 is high", () => {
+    expect(scoreToBand(95)).toBe("critical");
+    expect(scoreToBand(94)).toBe("high");
   });
 
-  it("boundary: 70 is high, 69 is medium", () => {
-    expect(scoreToBand(70)).toBe("high");
-    expect(scoreToBand(69)).toBe("medium");
+  it("boundary: 85 is high, 84 is medium", () => {
+    expect(scoreToBand(85)).toBe("high");
+    expect(scoreToBand(84)).toBe("medium");
   });
 
-  it("boundary: 50 is medium, 49 is low", () => {
-    expect(scoreToBand(50)).toBe("medium");
-    expect(scoreToBand(49)).toBe("low");
+  it("boundary: 70 is medium, 69 is low", () => {
+    expect(scoreToBand(70)).toBe("medium");
+    expect(scoreToBand(69)).toBe("low");
   });
 
-  it("boundary: 25 is low, 24 is clear", () => {
-    expect(scoreToBand(25)).toBe("low");
-    expect(scoreToBand(24)).toBe("clear");
+  it("boundary: 1 is low, 0 is clear", () => {
+    expect(scoreToBand(1)).toBe("low");
+    expect(scoreToBand(0)).toBe("clear");
   });
 });
 

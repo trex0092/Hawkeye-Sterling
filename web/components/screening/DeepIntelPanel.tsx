@@ -1889,7 +1889,8 @@ function OsintSection({ subject }: { subject: Subject }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ tool: "sherlock", username: subject.name, entityType: subject.entityType }),
       });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
@@ -2009,7 +2010,8 @@ function SmartDisambiguateSection({ subject }: { subject: Subject }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ name: subject.name, context: `entityType:${subject.entityType} jurisdiction:${subject.jurisdiction || subject.country}` }),
       });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
@@ -2207,7 +2209,8 @@ function CryptoTracingSection({ subject }: { subject: Subject }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ walletAddress: wallet || subject.name, blockchain: "bitcoin", entityName: subject.name, transactionHistory: "", exchangeOrigin: "", transactionPatterns: { highFrequency: false, largeSingleTx: false, mixerUsed: false, privacyCoinConversion: false, peeling: false, consolidation: false, layering: false }, riskFlags: { darknetMarket: false, ransomware: false, scam: false, sanctions: false, childExploitation: false, terroristFinancing: false } }),
       });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
@@ -2255,7 +2258,8 @@ function CryptoMixingSection({ subject }: { subject: Subject }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ wallet: wallet || subject.name }),
       });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
@@ -2302,7 +2306,8 @@ function TradeFinanceSection({ subject }: { subject: Subject }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ subjectName: subject.name }),
       });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
@@ -2406,7 +2411,8 @@ function HawalaDetectorSection({ subject }: { subject: Subject }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ subjectName: subject.name }),
       });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
@@ -2446,7 +2452,8 @@ function LayeringDetectorSection({ subject }: { subject: Subject }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ subjectName: subject.name }),
       });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
@@ -2486,7 +2493,8 @@ function CashIntensiveSection({ subject }: { subject: Subject }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ subjectName: subject.name, industry: subject.riskCategory ?? subject.meta ?? "" }),
       });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
@@ -2526,7 +2534,8 @@ function GhostCompanySection({ subject }: { subject: Subject }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ entityName: subject.name }),
       });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
@@ -2570,7 +2579,8 @@ function SanctionsIndirectSection({ subject }: { subject: Subject }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ name: subject.name }),
       });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
@@ -2610,7 +2620,8 @@ function SanctionsExposureMapperSection({ subject }: { subject: Subject }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ name: subject.name }),
       });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
@@ -2650,7 +2661,8 @@ function DeRiskingImpactSection({ subject }: { subject: Subject }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ sector: subject.riskCategory ?? "general", jurisdiction: subject.jurisdiction || subject.country }),
       });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
@@ -2690,7 +2702,8 @@ function RmiAssessSection({ subject }: { subject: Subject }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ name: subject.name, commodities: "" }),
       });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
@@ -2730,7 +2743,8 @@ function JurisdictionIntelSection({ subject }: { subject: Subject }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ jurisdiction: subject.jurisdiction || subject.country }),
       });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
@@ -2770,7 +2784,8 @@ function SanctionsEvasionSection({ subject }: { subject: Subject }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ name: subject.name }),
       });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
@@ -3014,7 +3029,8 @@ function OsintSynthesisSection({ subject }: { subject: Subject }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ name: subject.name }),
       });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
@@ -3126,7 +3142,8 @@ function ReScreenSchedulerSection({ subject }: { subject: Subject }) {
     setError(null);
     try {
       const res = await fetch(`/api/screening-history?subjectId=${encodeURIComponent(subject.id)}`);
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
@@ -3166,7 +3183,8 @@ function FourEyesSection({ subject }: { subject: Subject }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ subjectId: subject.id, subjectName: subject.name, riskScore: subject.riskScore }),
       });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
@@ -3208,7 +3226,8 @@ function WhistleblowerSection({ subject }: { subject: Subject }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ subjectId: subject.id, subjectName: subject.name, tip }),
       });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
@@ -3254,7 +3273,8 @@ function InterAgencyReferralSection({ subject }: { subject: Subject }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ subjectId: subject.id, subjectName: subject.name, riskScore: subject.riskScore, jurisdiction: subject.jurisdiction || subject.country }),
       });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
@@ -3294,7 +3314,8 @@ function InvestigationExpandSection({ subject }: { subject: Subject }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ subjectId: subject.id }),
       });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
@@ -3419,7 +3440,8 @@ function OwnershipSection({ subject }: { subject: Subject }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ name: subject.name }),
       });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
@@ -3459,7 +3481,8 @@ function TrustStructuresSection({ subject }: { subject: Subject }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ name: subject.name }),
       });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
@@ -3499,7 +3522,8 @@ function NomineeRiskSection({ subject }: { subject: Subject }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ name: subject.name }),
       });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
@@ -3535,7 +3559,8 @@ function EocnListSection() {
     setError(null);
     try {
       const res = await fetch("/api/eocn-list-updates");
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
@@ -3575,7 +3600,8 @@ function CorruptionRiskSection({ subject }: { subject: Subject }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ name: subject.name, jurisdiction: subject.jurisdiction || subject.country }),
       });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
@@ -3615,7 +3641,8 @@ function HighNetWorthSection({ subject }: { subject: Subject }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ name: subject.name }),
       });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
@@ -3655,7 +3682,8 @@ function SowCalculatorSection({ subject }: { subject: Subject }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ name: subject.name }),
       });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
@@ -3767,7 +3795,8 @@ function FreezeSeizureSection({ subject }: { subject: Subject }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ name: subject.name, subjectId: subject.id }),
       });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
@@ -3811,7 +3840,8 @@ function EvidencePackSection({ subject }: { subject: Subject }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ subjectId: subject.id }),
       });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
@@ -3851,7 +3881,8 @@ function LegalPrivilegeSection({ subject }: { subject: Subject }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ subjectId: subject.id }),
       });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
@@ -3892,7 +3923,8 @@ function DomainIntelSection({ subject }: { subject: Subject }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ domain: domain.trim() || subject.name }),
       });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
@@ -3943,7 +3975,8 @@ function InsiderThreatSection({ subject }: { subject: Subject }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ name: subject.name }),
       });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
@@ -3983,7 +4016,8 @@ function HumanTraffickingSection({ subject }: { subject: Subject }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ name: subject.name }),
       });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data);
       setStatus("done");
@@ -4017,7 +4051,8 @@ function BehavioralBaselineSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/behavioral-baseline", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction, industry: subject.riskCategory }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -4044,7 +4079,8 @@ function LinguisticRiskSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/linguistic-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, narrative: subject.notes ?? subject.name }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -4071,7 +4107,8 @@ function LifestyleWealthGapSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/lifestyle-wealth-gap", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -4098,7 +4135,8 @@ function PlausibilityScoreSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/plausibility-score", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction, industry: subject.riskCategory, notes: subject.notes }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -4125,7 +4163,8 @@ function AssociationTimelineSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/association-timeline", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, associates: [] }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -4152,7 +4191,8 @@ function ConfidenceDecaySection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/confidence-decay", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, initialConfidence: 85, daysSinceLastReview: 180 }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -4179,7 +4219,8 @@ function ExaminerSimSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/examiner-sim", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -4206,7 +4247,8 @@ function BenfordSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/benford", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -4235,7 +4277,8 @@ function LitigationScanSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/litigation-scan", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, jurisdiction: subject.jurisdiction }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -4262,7 +4305,8 @@ function EnforcementActionsSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/enforcement-actions", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, jurisdiction: subject.jurisdiction }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -4289,7 +4333,8 @@ function TaxAuthoritySection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/tax-authority", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, jurisdiction: subject.jurisdiction, entityType: subject.entityType }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -4316,7 +4361,8 @@ function ExtraditionMapSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/extradition-map", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectCountry: subject.country ?? subject.jurisdiction, targetCountry: "AE" }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -4343,7 +4389,8 @@ function StatuteLimitationsSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/statute-limitations", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jurisdiction: subject.jurisdiction, offenceType: "money_laundering" }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -4370,7 +4417,8 @@ function RegArbitrageSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/reg-arbitrage", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ entityType: subject.entityType, jurisdictions: [subject.jurisdiction].filter(Boolean) }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -4397,7 +4445,8 @@ function AuditReadinessSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/audit-readiness", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, entityType: subject.entityType }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -4424,7 +4473,8 @@ function AmlProgrammeGapSection() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/aml-programme-gap", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({}) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -4453,7 +4503,8 @@ function ArtMarketSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/art-market", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -4480,7 +4531,8 @@ function LuxuryGoodsSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/luxury-goods", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -4507,7 +4559,8 @@ function AviationIntelSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/aviation-intel", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -4534,7 +4587,8 @@ function FreeZoneRiskSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/free-zone-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, freeZone: subject.jurisdiction }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -4561,7 +4615,8 @@ function GamingRiskSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/gaming-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -4588,7 +4643,8 @@ function GoldPreciousMetalsSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/gold-precious-metals", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -4615,7 +4671,8 @@ function NpoRiskSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/npo-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -4642,7 +4699,8 @@ function VaspRiskSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/vasp-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -4669,7 +4727,8 @@ function EnvironmentalCrimeSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/environmental-crime", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, industry: subject.riskCategory }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -4698,7 +4757,8 @@ function SixDegreesSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/six-degrees", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -4725,7 +4785,8 @@ function HiddenControllerSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/hidden-controller", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -4752,7 +4813,8 @@ function ClusterContaminationSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/cluster-contamination", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, entityType: subject.entityType }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -4779,7 +4841,8 @@ function TimingCorrelationSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/timing-correlation", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, entityType: subject.entityType }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -4806,7 +4869,8 @@ function DarkMoneyFlowSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/dark-money-flow", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -4833,7 +4897,8 @@ function BeneficialOwnerVerifySection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/beneficial-owner-verify", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -4860,7 +4925,8 @@ function PepCorporateNexusSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/pep-corporate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -4887,7 +4953,8 @@ function CrossBorderWireSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/cross-border-wire", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -4914,7 +4981,8 @@ function CtrStructuringSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/ctr-structuring", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -4943,7 +5011,8 @@ function CaseAnalogySection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/case-analogy", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -4970,7 +5039,8 @@ function EvidenceSufficiencySection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/evidence-sufficiency", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, entityType: subject.entityType, disposition: "STR" }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -4997,7 +5067,8 @@ function RedlineMonitorSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/redline-monitor", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, conditions: [] }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -5024,7 +5095,8 @@ function ProbabilityTreeSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/probability-tree", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, entityType: subject.entityType }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -5051,7 +5123,8 @@ function AutonomousInvestigateSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/autonomous-investigate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -5078,7 +5151,8 @@ function CompetitorScreenSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/competitor-screen", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, industry: subject.riskCategory }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -5105,7 +5179,8 @@ function AdverseClassifySection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/adverse-classify", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -5132,7 +5207,8 @@ function FalsePositiveOptimizerSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/false-positive", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -5159,7 +5235,8 @@ function MixedFundsSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/mixed-funds", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -5186,7 +5263,8 @@ function MlPredicateSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/ml-predicate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, industry: subject.riskCategory }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -5213,7 +5291,8 @@ function EsgRiskSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/esg-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, industry: subject.riskCategory }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -5240,7 +5319,8 @@ function CustomerLifecycleSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/customer-lifecycle", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -5267,7 +5347,8 @@ function OnboardingRiskTierSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/onboarding-risk-tier", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction, industry: subject.riskCategory }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -5294,7 +5375,8 @@ function CddAdequacySection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/cdd-adequacy", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -5321,7 +5403,8 @@ function PepEddGeneratorSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/pep-edd-generator", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, pepRole: subject.pep?.tier, jurisdiction: subject.jurisdiction }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -5348,7 +5431,8 @@ function VendorRiskSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/vendor-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction, industry: subject.riskCategory }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -5377,7 +5461,8 @@ function SyntheticIdentitySection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/smart-disambiguate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, checkSynthetic: true }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -5404,7 +5489,8 @@ function PhoneIntelSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/domain-intel", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, lookupType: "phone" }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -5431,7 +5517,8 @@ function SocialMediaIdentitySection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/osint", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, focus: "social_media" }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -5458,7 +5545,8 @@ function AddressHistorySection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/association-timeline", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, focus: "address_history" }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -5485,7 +5573,8 @@ function PassportDocRiskSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/document-fraud", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, country: subject.country }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -5512,7 +5601,8 @@ function NationalityRiskMatrixSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/country-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, country: subject.country, checkMultiNationality: true }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -5539,7 +5629,8 @@ function DigitalShadowSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/osint-bridge", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, deepSearch: true }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -5566,7 +5657,8 @@ function AliasNetworkMapperSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/name-variants", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, aliases: subject.aliases ?? [], crossCaseMap: true }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -5593,7 +5685,8 @@ function CorporateIdentityTheftSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/ghost-company", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, checkIdentityTheft: true }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -5620,7 +5713,8 @@ function NameFrequencySection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/false-positive", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, checkNameFrequency: true }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -5647,7 +5741,8 @@ function EntityDualitySection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/hidden-controller", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, checkDuality: true }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -5676,7 +5771,8 @@ function FatfGreyBlackSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/country-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, country: subject.country, jurisdiction: subject.jurisdiction, checkFatfList: true }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -5703,7 +5799,8 @@ function KleptocracyProximitySection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/corruption-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, jurisdiction: subject.jurisdiction, checkKleptocracy: true }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -5730,7 +5827,8 @@ function StateOwnedEnterpriseSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/pep-corporate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, checkSOE: true }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -5757,7 +5855,8 @@ function DualUseExportSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/proliferation-finance", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction, checkDualUse: true }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -5784,7 +5883,8 @@ function WarCrimesFinanceSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/sanctions-evasion", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, checkAtrocityFinance: true }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -5811,7 +5911,8 @@ function PoliticalInstabilitySection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/geopolitical", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, country: subject.country, checkInstabilityIndex: true }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -5838,7 +5939,8 @@ function FiuActivitySection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/jurisdiction-intel", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, jurisdiction: subject.jurisdiction, checkFiuActivity: true }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -5865,7 +5967,8 @@ function DiplomaticRiskSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/pep-match", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, checkDiplomatic: true }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -5892,7 +5995,8 @@ function OligarchOverlaySection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/pep-network", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, checkOligarchLists: true }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -5919,7 +6023,8 @@ function ProliferationFinanceSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/pf-screener", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -5946,7 +6051,8 @@ function NcctMonitorSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/regulatory-feed", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, jurisdiction: subject.jurisdiction, checkNcct: true }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -5973,7 +6079,8 @@ function DeforestationFinanceSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/environmental-crime", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, checkDeforestation: true }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -6002,7 +6109,8 @@ function RoundTripDetectorSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/layering-detector", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, checkRoundTrip: true }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -6029,7 +6137,8 @@ function MirrorTradingSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/transaction-anomaly", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, checkMirrorTrading: true }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -6056,7 +6165,8 @@ function OverUnderInvoicingSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/trade-finance-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, checkTbmlInvoicing: true }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -6083,7 +6193,8 @@ function VelocityAnomalySection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/transaction-anomaly", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, checkVelocity: true }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -6110,7 +6221,8 @@ function PrepaidCardAbuseSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/transaction-anomaly", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, checkPrepaidCard: true }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -6137,7 +6249,8 @@ function PayrollStructuringSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/ctr-structuring", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, checkPayroll: true }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -6164,7 +6277,8 @@ function InsuranceFraudSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/transaction-anomaly", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, checkInsurance: true }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -6191,7 +6305,8 @@ function CarbonCreditFraudSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/environmental-crime", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, checkCarbonFraud: true }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -6218,7 +6333,8 @@ function MicroTransactionStructuringSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/ctr-structuring", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, checkMicro: true }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -6245,7 +6361,8 @@ function CorrespondentAccountMisuseSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/correspondent-bank", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -6272,7 +6389,8 @@ function FundFlowReconstructionSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/asset-tracer", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, reconstructFlows: true }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -6299,7 +6417,8 @@ function PensionFundRiskSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/transaction-anomaly", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, checkPension: true }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -6326,7 +6445,8 @@ function InvoiceFactoringFraudSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/trade-finance-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, checkFactoring: true }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -6353,7 +6473,8 @@ function AtmWithdrawalPatternSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/cash-intensive", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, checkAtmPatterns: true }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -6382,7 +6503,8 @@ function MultiModelConsensusSection({ subject, superBrain }: { subject: Subject;
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/super-brain", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, multiModel: true, superBrainSummary: superBrain?.redlines?.summary ?? null }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -6409,7 +6531,8 @@ function ContradictoryEvidenceSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/plausibility-score", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, checkContradictions: true }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -6436,7 +6559,8 @@ function CounterfactualScenarioSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/agent/counterfactual", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -6463,7 +6587,8 @@ function HypothesisGeneratorSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/autonomous-investigate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction, mode: "hypothesis" }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -6490,7 +6615,8 @@ function ChainOfThoughtAuditSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/mlro-advisor-challenger", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, auditChainOfThought: true }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -6517,7 +6643,8 @@ function AiEthicsComplianceSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/ai-ethics-assessment", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -6544,7 +6671,8 @@ function HallucinationCalibrationSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/confidence-decay", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, initialConfidence: 80, checkCalibration: true }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -6571,7 +6699,8 @@ function AdversarialStressTestSection({ subject, screen }: { subject: Subject; s
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/agent/counterfactual", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction, screenScore: screen?.topScore ?? 0, mode: "adversarial_stress" }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -6598,7 +6727,8 @@ function NarrativeConsistencySection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/linguistic-risk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, narrative: subject.notes ?? "", checkConsistency: true }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -6625,7 +6755,8 @@ function RegulatoryQaChallengerSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/mlro-advisor-challenger", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -6654,7 +6785,8 @@ function BoardAmlReportSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/board-aml-report", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -6681,7 +6813,8 @@ function RegExamPrepSection() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/regulatory-exam-prep", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({}) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -6708,7 +6841,8 @@ function PolicyComplianceCheckerSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/compliance-qa", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -6735,7 +6869,8 @@ function PrecedentCaseLawSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/case-analogy", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction, mode: "case_law" }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -6762,7 +6897,8 @@ function TrainingGapSection() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/aml-training-gap", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({}) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -6789,7 +6925,8 @@ function GovernanceFailureSection() {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/governance-gap", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({}) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -6816,7 +6953,8 @@ function ScenarioStressNarrativeSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/examiner-sim", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction, mode: "scenario_stress" }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -6843,7 +6981,8 @@ function CrossBorderRegulatoryMappingSection({ subject }: { subject: Subject }) 
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/dnfbp-obligations", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, jurisdictions: [subject.jurisdiction, subject.country].filter(Boolean) }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -6870,7 +7009,8 @@ function AutomatedStrDraftSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/str-narrative", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction, notes: subject.notes, autoPopulate: true }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -6899,7 +7039,8 @@ function CausalInferenceSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/probability-tree", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, entityType: subject.entityType, mode: "causal" }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -6926,7 +7067,8 @@ function MonteCarloSimSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/probability-tree", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, entityType: subject.entityType, mode: "monte_carlo", iterations: 10000 }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -6953,7 +7095,8 @@ function GameTheorySection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/autonomous-investigate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction, mode: "game_theory" }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -6980,7 +7123,8 @@ function TemporalReasoningSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/timing-correlation", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, entityType: subject.entityType, mode: "temporal_consistency" }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -7007,7 +7151,8 @@ function MultiAgentDebateSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/examiner-sim", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction, mode: "multi_agent_debate" }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -7034,7 +7179,8 @@ function InductivePatternSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/cross-case-patterns", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, mode: "inductive" }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -7061,7 +7207,8 @@ function AbductiveInferenceSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/plausibility-score", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, entityType: subject.entityType, jurisdiction: subject.jurisdiction, mode: "abductive" }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -7088,7 +7235,8 @@ function RiskCrystallizationSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/redline-monitor", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, conditions: [], mode: "crystallization_forecast" }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -7115,7 +7263,8 @@ function RegulatoryPenaltyEstimatorSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/enforcement-actions", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: subject.name, jurisdiction: subject.jurisdiction, mode: "penalty_estimate" }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
@@ -7142,7 +7291,8 @@ function DeductiveLogicValidatorSection({ subject }: { subject: Subject }) {
     setStatus("loading"); setError("");
     try {
       const res = await fetch("/api/evidence-sufficiency", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subjectName: subject.name, entityType: subject.entityType, disposition: "STR", mode: "deductive_validate" }) });
-      const data = (await res.json()) as unknown;
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? "API error");
       if (!mountedRef.current) return;
       setResult(data); setStatus("done");
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }

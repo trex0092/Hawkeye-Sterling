@@ -11,7 +11,7 @@ export async function POST(req: Request) {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
 
-  const body = await req.json() as {
+  let body: {
     subject: string;
     toRole: string;
     fromRole: string;
@@ -21,6 +21,8 @@ export async function POST(req: Request) {
     details?: Array<{k: string; v: string}>;
     privilege?: string;
   };
+  try { body = await req.json() as typeof body; }
+  catch { return new Response(JSON.stringify({ ok: false, error: "invalid JSON body" }), { status: 400, headers: { "content-type": "application/json", ...gate.headers } }); }
 
   const { dateStr, time } = nowMeta();
   const dd = dateStr.slice(0,2), mm = dateStr.slice(3,5), yyyy = dateStr.slice(6);

@@ -74,6 +74,7 @@ export async function POST(req: Request) {
   const transactions = Array.isArray(body.transactions) ? body.transactions : [];
   if (transactions.length === 0) {
     return NextResponse.json({
+      ok: true,
       tagged: [],
       highRiskCount: 0,
       summary: "No transactions provided.",
@@ -81,7 +82,7 @@ export async function POST(req: Request) {
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json(buildFallback(transactions), { headers: gate.headers });
+  if (!apiKey) return NextResponse.json({ ok: true, ...buildFallback(transactions) }, { headers: gate.headers });
 
   try {
     const client = getAnthropicClient(apiKey, 55_000);
@@ -163,11 +164,12 @@ ${JSON.stringify(transactions, null, 2)}`,
     ).length;
 
     return NextResponse.json({
+      ok: true,
       tagged,
       highRiskCount,
       summary: parsed.summary ?? "",
-    } satisfies TypologyTagResult, { headers: gate.headers });
+    }, { headers: gate.headers });
   } catch {
-    return NextResponse.json(buildFallback(transactions), { headers: gate.headers });
+    return NextResponse.json({ ok: true, ...buildFallback(transactions) }, { headers: gate.headers });
   }
 }

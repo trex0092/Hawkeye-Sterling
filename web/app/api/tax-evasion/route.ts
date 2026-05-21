@@ -70,11 +70,11 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as TaxEvasionRequest;
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400, headers: gate.headers });
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "tax-evasion temporarily unavailable - please retry." }, { status: 503 });
+  if (!apiKey) return NextResponse.json({ ok: false, error: "tax-evasion temporarily unavailable - please retry." }, { status: 503, headers: gate.headers });
 
   try {
     const client = getAnthropicClient(apiKey, 55_000);
@@ -184,9 +184,9 @@ Perform a comprehensive tax evasion ML risk assessment. Identify all schemes, cl
     if (!Array.isArray(result.roundTrippingIndicators)) result.roundTrippingIndicators = [];
     if (!Array.isArray(result.regulatoryRequirements)) result.regulatoryRequirements = [];
     if (!Array.isArray(result.redFlags)) result.redFlags = [];
-    return NextResponse.json(result);
+    return NextResponse.json(result, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
-    return NextResponse.json({ ok: false, error: "tax-evasion temporarily unavailable - please retry." }, { status: 503 });
+    return NextResponse.json({ ok: false, error: "tax-evasion temporarily unavailable - please retry." }, { status: 503, headers: gate.headers });
   }
 }

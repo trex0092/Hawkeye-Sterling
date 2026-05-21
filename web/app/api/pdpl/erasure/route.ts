@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
   if (!gate.ok) return gate.response;
 
   let body: unknown;
-  try { body = await req.json(); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400, headers: gate.headers }); }
+  try { body = await req.json(); } catch { return NextResponse.json({ ok: false, error: 'Invalid JSON' }, { status: 400, headers: gate.headers }); }
 
   const raw = (body ?? {}) as Record<string, unknown>;
   const subjectId = raw['subjectId'] as string | undefined;
@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
   const grounds = raw['grounds'] as string | undefined;
 
   if (!subjectId?.trim() || !subjectName?.trim() || !requestedBy?.trim() || !grounds?.trim()) {
-    return NextResponse.json({ error: 'subjectId, subjectName, requestedBy, grounds are required' }, { status: 400, headers: gate.headers });
+    return NextResponse.json({ ok: false, error: 'subjectId, subjectName, requestedBy, grounds are required' }, { status: 400, headers: gate.headers });
   }
 
   const requestId = `era_${randomBytes(6).toString('hex')}`;
@@ -103,9 +103,9 @@ export async function GET(req: NextRequest) {
   if (!gate.ok) return gate.response;
 
   const requestId = req.nextUrl.searchParams.get('requestId');
-  if (!requestId?.trim()) return NextResponse.json({ error: 'requestId query param required' }, { status: 400, headers: gate.headers });
+  if (!requestId?.trim()) return NextResponse.json({ ok: false, error: 'requestId query param required' }, { status: 400, headers: gate.headers });
   const request = await getJson<ErasureRequest>(erasureKey(requestId));
-  if (!request) return NextResponse.json({ error: 'Erasure request not found' }, { status: 404, headers: gate.headers });
+  if (!request) return NextResponse.json({ ok: false, error: 'Erasure request not found' }, { status: 404, headers: gate.headers });
   return NextResponse.json({ ok: true, request }, { headers: gate.headers });
 }
 
@@ -117,7 +117,7 @@ export async function PATCH(req: NextRequest) {
   if (deny) return deny;
 
   let body: unknown;
-  try { body = await req.json(); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
+  try { body = await req.json(); } catch { return NextResponse.json({ ok: false, error: 'Invalid JSON' }, { status: 400 }); }
   const raw = (body ?? {}) as Record<string, unknown>;
   const requestId = (raw['requestId'] as string | undefined)?.trim();
   const decision = raw['decision'] as string | undefined;
@@ -125,16 +125,16 @@ export async function PATCH(req: NextRequest) {
   const reviewNotes = (raw['reviewNotes'] as string | undefined)?.trim();
 
   if (!requestId || !decision || !reviewedBy) {
-    return NextResponse.json({ error: 'requestId, decision, reviewedBy are required' }, { status: 400 });
+    return NextResponse.json({ ok: false, error: 'requestId, decision, reviewedBy are required' }, { status: 400 });
   }
   if (decision !== 'approved' && decision !== 'rejected') {
-    return NextResponse.json({ error: 'decision must be approved or rejected' }, { status: 400 });
+    return NextResponse.json({ ok: false, error: 'decision must be approved or rejected' }, { status: 400 });
   }
 
   const request = await getJson<ErasureRequest>(erasureKey(requestId));
-  if (!request) return NextResponse.json({ error: 'Erasure request not found' }, { status: 404 });
+  if (!request) return NextResponse.json({ ok: false, error: 'Erasure request not found' }, { status: 404 });
   if (request.status !== 'pending') {
-    return NextResponse.json({ error: `Erasure request is already ${request.status}` }, { status: 409 });
+    return NextResponse.json({ ok: false, error: `Erasure request is already ${request.status}` }, { status: 409 });
   }
 
   const erasedKeys: string[] = [];

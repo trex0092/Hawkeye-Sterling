@@ -23,9 +23,9 @@ export async function POST(
   try { body = (await req.json()) as Record<string, unknown>; } catch { /* body optional */ }
 
   const existing = await loadCase(tenant, caseId);
-  if (!existing) return NextResponse.json({ ok: false, error: "not found" }, { status: 404 });
+  if (!existing) return NextResponse.json({ ok: false, error: "not found" }, { status: 404, headers: gate.headers });
   if (existing.status === "closed") {
-    return NextResponse.json({ ok: false, error: "cannot escalate a closed case" }, { status: 409 });
+    return NextResponse.json({ ok: false, error: "cannot escalate a closed case" }, { status: 409, headers: gate.headers });
   }
 
   const reason = typeof body["reason"] === "string" ? body["reason"] : "Escalated to MD for review";

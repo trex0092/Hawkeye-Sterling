@@ -26,7 +26,7 @@ export async function GET(
   const { caseId } = await ctx.params;
 
   const found = await loadCase(tenant, caseId);
-  if (!found) return NextResponse.json({ ok: false, error: "not found" }, { status: 404 });
+  if (!found) return NextResponse.json({ ok: false, error: "not found" }, { status: 404, headers: gate.headers });
 
   // Compute SLA remaining for UI countdown.
   const slaRemainingMs = new Date(found.slaDeadline).getTime() - Date.now();
@@ -49,15 +49,15 @@ export async function PATCH(
 
   let body: Record<string, unknown>;
   try { body = (await req.json()) as Record<string, unknown>; }
-  catch { return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 }); }
+  catch { return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400, headers: gate.headers }); }
 
   const { status, dispositionVerdict, dispositionRationale, notes, goamlReportRef } = body;
 
   if (status !== undefined && !VALID_STATUSES.has(status as HsCaseStatus)) {
-    return NextResponse.json({ ok: false, error: `status must be one of: ${[...VALID_STATUSES].join(", ")}` }, { status: 400 });
+    return NextResponse.json({ ok: false, error: `status must be one of: ${[...VALID_STATUSES].join(", ")}` }, { status: 400, headers: gate.headers });
   }
   if (dispositionVerdict !== undefined && !VALID_VERDICTS.has(dispositionVerdict as DispositionVerdict)) {
-    return NextResponse.json({ ok: false, error: `dispositionVerdict must be one of: ${[...VALID_VERDICTS].join(", ")}` }, { status: 400 });
+    return NextResponse.json({ ok: false, error: `dispositionVerdict must be one of: ${[...VALID_VERDICTS].join(", ")}` }, { status: 400, headers: gate.headers });
   }
 
   const patch: Record<string, unknown> = {};
@@ -72,6 +72,6 @@ export async function PATCH(
   if (typeof goamlReportRef === "string") patch["goamlReportRef"] = goamlReportRef;
 
   const updated = await updateCase(tenant, caseId, patch, gate.keyId);
-  if (!updated) return NextResponse.json({ ok: false, error: "not found" }, { status: 404 });
+  if (!updated) return NextResponse.json({ ok: false, error: "not found" }, { status: 404, headers: gate.headers });
   return NextResponse.json({ ok: true, case: updated }, { headers: gate.headers });
 }

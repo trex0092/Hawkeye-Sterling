@@ -65,6 +65,8 @@ async function expireItem(
     fourEyesAction: item.action,
     initiatedBy: item.initiatedBy,
     reason,
+  }).catch((err: unknown) => {
+    console.warn("[four-eyes/expire] audit write failed:", err instanceof Error ? err.message : String(err));
   });
 }
 

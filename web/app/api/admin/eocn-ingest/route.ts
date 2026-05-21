@@ -438,7 +438,9 @@ export async function POST(req: Request): Promise<NextResponse> {
       const added   = entities.filter((e) => !existingIds.has(e.id));
       const removed = existingEntities.filter((e) => !newIds.has(e.id));
       if (existingEntities.length > 0) {
-        void fireDesignationAlert(listId, added, removed, gate.keyId ?? "MLRO");
+        void fireDesignationAlert(listId, added, removed, gate.keyId ?? "MLRO").catch((err: unknown) => {
+          console.warn("[admin/eocn-ingest] designation alert failed:", err instanceof Error ? err.message : String(err));
+        });
       }
     }
   }

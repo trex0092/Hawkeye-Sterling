@@ -115,17 +115,17 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as RequestBody;
   } catch {
-    return NextResponse.json({ error: "invalid JSON body" }, { status: 400 , headers: gate.headers });
+    return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400 , headers: gate.headers });
   }
 
   const { hits } = body;
   // Accept both { client: { name } } and { profile: { name } } shapes.
   const client: ClientInput = (body.client ?? body.profile) as ClientInput;
   if (!client?.name) {
-    return NextResponse.json({ error: "client.name or profile.name is required" }, { status: 400 , headers: gate.headers });
+    return NextResponse.json({ ok: false, error: "client.name or profile.name is required" }, { status: 400 , headers: gate.headers });
   }
   if (!Array.isArray(hits) || hits.length === 0) {
-    return NextResponse.json({ error: "hits array is required and must not be empty" }, { status: 400 , headers: gate.headers });
+    return NextResponse.json({ ok: false, error: "hits array is required and must not be empty" }, { status: 400 , headers: gate.headers });
   }
 
   writeAuditEvent("analyst", "screening.smart-disambiguate", client.name);
@@ -228,6 +228,6 @@ export async function POST(req: Request): Promise<NextResponse> {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     writeAuditEvent("analyst", "screening.smart-disambiguate.error", `${client.name} — ${msg}`);
-    return NextResponse.json({ ...buildTemplate(), degraded: true, degradedReason: `LLM call failed: ${msg}`, latencyMs: Date.now() - t0 }, { headers: gate.headers });
+    return NextResponse.json({ ok: true, ...buildTemplate(), degraded: true, degradedReason: `LLM call failed: ${msg}`, latencyMs: Date.now() - t0 }, { headers: gate.headers });
   }
 }

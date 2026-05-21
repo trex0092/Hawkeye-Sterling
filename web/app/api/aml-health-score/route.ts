@@ -256,12 +256,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const { programmeData, generateRemediationPlan = false } = body;
   if (!programmeData) {
-    return NextResponse.json({ error: "programmeData is required" }, { status: 400 , headers: gate.headers });
+    return NextResponse.json({ ok: false, error: "programmeData is required" }, { status: 400 , headers: gate.headers });
   }
 
   const pillars = [

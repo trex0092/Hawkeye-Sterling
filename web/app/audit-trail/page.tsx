@@ -414,10 +414,7 @@ export default function AuditTrailPage() {
                           label={`audit entry ${entry.id}`}
                           onDelete={() => {
                             const next = entries.filter((x) => x.id !== entry.id);
-                            window.localStorage.setItem(
-                              "hawkeye.audit-trail.v1",
-                              JSON.stringify(next),
-                            );
+                            try { window.localStorage.setItem("hawkeye.audit-trail.v1", JSON.stringify(next)); } catch { /* private mode or quota */ }
                             setEntries(next);
                           }}
                           deleteConfirmMessage={`Hide audit entry ${entry.id} from your local view? The sealed FDL Art.24 audit chain on the server is unaffected — this only removes it from your browser's view.`}

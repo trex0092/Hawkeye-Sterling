@@ -47,7 +47,7 @@ export async function GET(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
   const alerts = await loadServerAlerts();
-  return NextResponse.json({ ok: true, alerts });
+  return NextResponse.json({ ok: true, alerts }, { headers: gate.headers });
 }
 
 export async function POST(req: Request): Promise<NextResponse> {

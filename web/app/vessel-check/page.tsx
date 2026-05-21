@@ -128,7 +128,7 @@ export default function VesselCheckPage() {
         }),
       });
       const data = (await res.json()) as VesselRiskProfile;
-      if (data.ok && mountedRef.current) setRiskProfile(data);
+      if (res.ok && data.ok && mountedRef.current) setRiskProfile(data);
     } catch (err) {
       console.error("[hawkeye] vessel risk-profile threw:", err);
     } finally { if (mountedRef.current) setRiskProfileLoading(false); }
@@ -147,7 +147,7 @@ export default function VesselCheckPage() {
       });
       const data = await res.json() as ApiResponse;
       if (!mountedRef.current) return;
-      if (!data.ok) setError(data.error ?? "Check failed");
+      if (!res.ok || !data.ok) setError(data.error ?? `HTTP ${res.status}`);
       else setResult(data);
     } catch (err) {
       if (!mountedRef.current) return;

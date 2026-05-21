@@ -44,12 +44,12 @@ export async function POST(req: Request) {
   }
 
   if (!Array.isArray(body.events) || body.events.length === 0) {
-    return NextResponse.json({ anomalies: [], riskScore: 0 }, { headers: gate.headers });
+    return NextResponse.json({ ok: true, anomalies: [], riskScore: 0 }, { headers: gate.headers });
   }
   const events = body.events;
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json(buildFallback(), { headers: gate.headers });
+  if (!apiKey) return NextResponse.json({ ok: true, ...buildFallback() }, { headers: gate.headers });
 
   try {
     const client = getAnthropicClient(apiKey, 55_000);
@@ -107,13 +107,14 @@ ${JSON.stringify(events, null, 2)}`,
     ) as AnomalyDetectResult;
 
     return NextResponse.json({
+      ok: true,
       anomalies: Array.isArray(parsed.anomalies) ? parsed.anomalies : [],
       riskScore: typeof parsed.riskScore === "number" ? Math.min(100, Math.max(0, parsed.riskScore)) : 0,
-    } satisfies AnomalyDetectResult, { headers: gate.headers });
+    }, { headers: gate.headers });
   } catch (err) {
     console.error("[hawkeye] audit-trail/anomaly-detect: LLM call or parse failed — returning empty fallback:", err);
     return NextResponse.json(
-      { anomalies: [], riskScore: 0, degraded: true, error: "anomaly-detection-unavailable" },
+      { ok: false, anomalies: [], riskScore: 0, degraded: true, error: "anomaly-detection-unavailable" },
       { status: 503, headers: gate.headers },
     );
   }

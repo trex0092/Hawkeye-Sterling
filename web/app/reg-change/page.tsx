@@ -308,6 +308,7 @@ export default function RegChangePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ institution }),
       });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const d = (await res.json()) as RegChangeResult;
       if (!mountedRef.current) return;
       setResult(d);

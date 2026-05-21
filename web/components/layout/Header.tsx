@@ -141,7 +141,7 @@ export function Header() {
     const next = theme === "light" ? "dark" : "light";
     setTheme(next);
     applyTheme(next);
-    if (typeof localStorage !== "undefined") localStorage.setItem(THEME_KEY, next);
+    try { if (typeof localStorage !== "undefined") localStorage.setItem(THEME_KEY, next); } catch { /* private mode or quota */ }
   };
 
   return (

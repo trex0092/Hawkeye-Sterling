@@ -47,7 +47,7 @@ export async function GET(req: Request): Promise<NextResponse> {
     console.warn("[hawkeye] activity-stream listKeys best-effort failed:", err);
   }
 
-  return NextResponse.json({ events, serverTime }, { headers: gate.headers });
+  return NextResponse.json({ ok: true, events, serverTime }, { headers: gate.headers });
 }
 
 // POST /api/activity-stream — drop a real engine event into the blob queue.

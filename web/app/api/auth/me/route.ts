@@ -59,6 +59,8 @@ export async function GET(): Promise<NextResponse> {
       event: "auth.session_ip_change",
       actor: session.username,
       userId: session.userId,
+    }).catch((err: unknown) => {
+      console.warn("[auth/me] audit chain write failed:", err instanceof Error ? err.message : String(err));
     });
   }
 

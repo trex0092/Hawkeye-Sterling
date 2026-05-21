@@ -16,7 +16,9 @@ export async function POST(req: Request) {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
 
-  const body = await req.json() as { boardReport: EwraBoardReportResult; dimensions: Dimension[] };
+  let body: { boardReport: EwraBoardReportResult; dimensions: Dimension[] };
+  try { body = await req.json() as typeof body; }
+  catch { return new Response(JSON.stringify({ ok: false, error: "invalid JSON body" }), { status: 400, headers: { "content-type": "application/json", ...gate.headers } }); }
   const { boardReport, dimensions } = body;
 
   const { dateStr, time } = nowMeta();

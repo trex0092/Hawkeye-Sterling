@@ -66,7 +66,9 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (got.length !== token.length || !timingSafeEqual(expBuf, gotBuf)) {
       return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
     }
-    const body = (await req.json()) as Partial<DesignationAlert>;
+    let body: Partial<DesignationAlert>;
+    try { body = (await req.json()) as Partial<DesignationAlert>; }
+    catch { return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400 }); }
     if (!body.id || !body.listId || !body.matchedEntry) {
       return NextResponse.json({ ok: false, error: "id, listId, matchedEntry required" }, { status: 400 });
     }

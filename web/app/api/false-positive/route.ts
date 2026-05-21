@@ -82,13 +82,13 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as RequestBody;
   } catch {
-    return NextResponse.json({ error: "invalid JSON body" }, { status: 400 , headers: gate.headers });
+    return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400 , headers: gate.headers });
   }
 
   const { screenedName, hitName, hitCategory, hitCountry } = body;
   if (!screenedName || !hitName || !hitCategory || !hitCountry) {
     return NextResponse.json(
-      { error: "screenedName, hitName, hitCategory, and hitCountry are required" },
+      { ok: false, error: "screenedName, hitName, hitCategory, and hitCountry are required" },
       { status: 400, headers: gate.headers }
     );
   }

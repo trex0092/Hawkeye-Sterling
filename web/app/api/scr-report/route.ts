@@ -701,10 +701,11 @@ function buildSCR(body: ReportInput, now: Date): ScreeningComplianceReport {
 
 async function handleScrReport(req: Request): Promise<Response> {
   const _handlerStart = Date.now();
+  let gateHeaders: Record<string, string> = {};
   try {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
-  const gateHeaders: Record<string, string> = gate.ok ? gate.headers : {};
+  gateHeaders = gate.ok ? gate.headers : {};
 
   let body: ReportInput;
   try {
@@ -796,7 +797,7 @@ async function handleScrReport(req: Request): Promise<Response> {
       retryAfterSeconds: null,
       requestId: Math.random().toString(36).slice(2, 10),
       latencyMs: Date.now() - _handlerStart,
-    }, { status: 500 });
+    }, { status: 500, headers: gateHeaders });
   }
 }
 

@@ -261,12 +261,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400, headers: gate.headers });
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400, headers: gate.headers });
   }
 
   const { items = [], generateNarrative = false } = body;
   if (!Array.isArray(items) || items.length === 0) {
-    return NextResponse.json({ error: "items array is required and must be non-empty" }, { status: 400, headers: gate.headers });
+    return NextResponse.json({ ok: false, error: "items array is required and must be non-empty" }, { status: 400, headers: gate.headers });
   }
 
   const triaged: TriagedItem[] = items.map((item) => {

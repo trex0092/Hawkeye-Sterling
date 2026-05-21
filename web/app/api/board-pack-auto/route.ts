@@ -98,12 +98,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
   const { metrics } = body;
   if (!metrics || !metrics.periodStart || !metrics.periodEnd) {
-    return NextResponse.json({ error: "metrics with periodStart and periodEnd are required" }, { status: 400 , headers: gate.headers });
+    return NextResponse.json({ ok: false, error: "metrics with periodStart and periodEnd are required" }, { status: 400 , headers: gate.headers });
   }
 
   const strRate = metrics.totalTransactions && metrics.strsFiled

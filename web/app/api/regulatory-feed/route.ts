@@ -951,7 +951,7 @@ export async function GET(req: Request): Promise<NextResponse> {
     console.error("[regulatory-feed] unhandled top-level error:", err instanceof Error ? err.message : err);
     return NextResponse.json(
       { ok: false, error: "regulatory-feed temporarily unavailable — please retry.", degraded: true },
-      { status: 503 },
+      { status: 503, headers: gate.headers },
     );
   }
 }

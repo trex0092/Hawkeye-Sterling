@@ -209,6 +209,8 @@ async function handler(req: Request): Promise<NextResponse> {
       initiatedBy: updatedItem.initiatedBy,
       decision,
       rationale,
+    }).catch((err: unknown) => {
+      console.warn("[four-eyes/approve] audit write failed:", err instanceof Error ? err.message : String(err));
     });
   }
 

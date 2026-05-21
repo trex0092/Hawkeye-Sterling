@@ -375,7 +375,7 @@ export async function POST(req: Request): Promise<Response> {
   try {
     body = (await req.json()) as GoAmlXmlInput;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON body." }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid JSON body." }, { status: 400, headers: gate.headers });
   }
 
   const now = new Date();
@@ -408,13 +408,14 @@ export async function POST(req: Request): Promise<Response> {
     const xsdErrors = validateGoamlXmlStructure(xml);
     const xsdErrorsOnly = xsdErrors.filter(e => e.severity === 'error');
     if (xsdErrorsOnly.length > 0) {
-      return Response.json({
+      return NextResponse.json({
+        ok: false,
         error: 'GOAML_XSD_INVALID',
         message: 'Generated XML fails structural validation. Correct the envelope data before filing.',
         errors: xsdErrors,
         errorCount: xsdErrorsOnly.length,
         warningCount: xsdErrors.filter(e => e.severity === 'warning').length,
-      }, { status: 422 });
+      }, { status: 422, headers: gate.headers });
     }
   }
 

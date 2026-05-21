@@ -33,10 +33,10 @@ const KEYWORD_GROUP_WEIGHT: Record<string, number> = {
 };
 
 function scoreToBand(score: number): string {
-  if (score >= 85) return "critical";
-  if (score >= 70) return "high";
-  if (score >= 50) return "medium";
-  if (score >= 25) return "low";
+  if (score >= 95) return "critical";
+  if (score >= 85) return "high";
+  if (score >= 70) return "medium";
+  if (score > 0) return "low";
   return "clear";
 }
 

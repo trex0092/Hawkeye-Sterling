@@ -72,7 +72,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   let body: Record<string, unknown>;
   try { body = (await req.json()) as Record<string, unknown>; }
-  catch { return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 }); }
+  catch { return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400, headers: gate.headers }); }
 
   const {
     subjectName, subjectId, severity,
@@ -81,10 +81,10 @@ export async function POST(req: Request): Promise<NextResponse> {
   } = body;
 
   if (!subjectName || typeof subjectName !== "string") {
-    return NextResponse.json({ ok: false, error: "subjectName required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "subjectName required" }, { status: 400, headers: gate.headers });
   }
   if (!subjectId || typeof subjectId !== "string") {
-    return NextResponse.json({ ok: false, error: "subjectId required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "subjectId required" }, { status: 400, headers: gate.headers });
   }
 
   const VALID_SEVERITIES = new Set(["clear", "low", "medium", "high", "critical"]);

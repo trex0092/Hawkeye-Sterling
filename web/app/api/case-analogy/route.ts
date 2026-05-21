@@ -81,12 +81,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as ReqBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400, headers: gate.headers });
   }
 
   const { subjectProfile } = body;
   if (!subjectProfile) {
-    return NextResponse.json({ ok: false, error: "subjectProfile is required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "subjectProfile is required" }, { status: 400, headers: gate.headers });
   }
 
   const hash = hashObj(subjectProfile);
@@ -131,5 +131,5 @@ export async function POST(req: Request): Promise<NextResponse> {
     ok: true,
     topMatches,
     commonPatterns,
-  });
+  }, { headers: gate.headers });
 }

@@ -88,6 +88,8 @@ export async function POST(req: Request) {
     actor: session.username,
     target: session.userId,
     body: { role: session.role },
+  }).catch((err: unknown) => {
+    console.warn("[change-password] audit chain write failed:", err instanceof Error ? err.message : String(err));
   });
 
   // Invalidate the current session so the user must re-authenticate with the

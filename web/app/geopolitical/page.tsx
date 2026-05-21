@@ -129,6 +129,7 @@ export default function GeopoliticalPage() {
     setLoading(true);
     try {
       const res = await fetch("/api/geopolitical/events");
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json() as GeopoliticalEvent[] | { ok: boolean; events: GeopoliticalEvent[] };
       if (!mountedRef.current) return;
       if (Array.isArray(data)) {

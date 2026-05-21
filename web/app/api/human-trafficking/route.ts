@@ -70,11 +70,11 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as HumanTraffickingRequest;
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400, headers: gate.headers });
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "human-trafficking temporarily unavailable - please retry." }, { status: 503 });
+  if (!apiKey) return NextResponse.json({ ok: false, error: "human-trafficking temporarily unavailable - please retry." }, { status: 503, headers: gate.headers });
 
   try {
     const client = getAnthropicClient(apiKey, 55_000);
@@ -192,9 +192,9 @@ Perform a comprehensive human trafficking money laundering risk assessment. Appl
     if (!Array.isArray(result.victimProfileIndicators)) result.victimProfileIndicators = [];
     if (!Array.isArray(result.controllerNetworkFlags)) result.controllerNetworkFlags = [];
     if (!Array.isArray(result.regulatoryObligations)) result.regulatoryObligations = [];
-    return NextResponse.json(result);
+    return NextResponse.json(result, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
-    return NextResponse.json({ ok: false, error: "human-trafficking temporarily unavailable - please retry." }, { status: 503 });
+    return NextResponse.json({ ok: false, error: "human-trafficking temporarily unavailable - please retry." }, { status: 503, headers: gate.headers });
   }
 }
