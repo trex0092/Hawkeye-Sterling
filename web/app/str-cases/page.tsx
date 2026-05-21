@@ -248,6 +248,35 @@ export default function StrCasesPage() {
   const [triageNarrativeEnabled, setTriageNarrativeEnabled] = useState(false);
   const [triageExpanded, setTriageExpanded] = useState(false);
 
+  // SAR Probability Scorer state
+  interface SarResult {
+    ok: boolean;
+    sarProbability: number;
+    deterministicScore: number;
+    queuePriority: "urgent" | "standard" | "low";
+    recommendation: string;
+    keyFactors: string[];
+    narrative: string;
+    confidence: "high" | "medium" | "low";
+    feedbackSignals: number;
+    error?: string;
+  }
+  const [sarResult, setSarResult] = useState<SarResult | null>(null);
+  const [sarLoading, setSarLoading] = useState(false);
+  const [sarError, setSarError] = useState<string | null>(null);
+  const [sarRiskScore, setSarRiskScore] = useState("65");
+  const [sarSanctionsHits, setSarSanctionsHits] = useState("0");
+  const [sarPepStatus, setSarPepStatus] = useState(false);
+  const [sarAdverseMedia, setSarAdverseMedia] = useState("0");
+  const [sarJurisdictionRisk, setSarJurisdictionRisk] = useState<"low" | "medium" | "high" | "critical">("medium");
+  const [sarCashIntensity, setSarCashIntensity] = useState<"low" | "medium" | "high">("medium");
+  const [sarUboVerified, setSarUboVerified] = useState(true);
+  const [sarTmAlerts, setSarTmAlerts] = useState("0");
+  const [sarCddLevel, setSarCddLevel] = useState<"basic" | "standard" | "enhanced">("standard");
+  const [sarStrHistory, setSarStrHistory] = useState(false);
+  const [sarBehavioralDrift, setSarBehavioralDrift] = useState(false);
+  const [sarTypologyMatch, setSarTypologyMatch] = useState(false);
+
   const open = cases.filter(
     (c) => c.status !== "Submitted" && c.status !== "Closed",
   ).length;
@@ -371,6 +400,42 @@ export default function StrCasesPage() {
       const msg = err instanceof Error ? err.message : "Triage failed — please retry";
       setTriageError(msg);
     } finally { setTriageLoading(false); }
+  };
+
+  const runSarProbability = async () => {
+    setSarLoading(true);
+    setSarResult(null);
+    setSarError(null);
+    try {
+      const res = await fetch("/api/sar-probability", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          riskScore: Number(sarRiskScore) || 65,
+          sanctionsHits: Number(sarSanctionsHits) || 0,
+          pepStatus: sarPepStatus,
+          adverseMediaCount: Number(sarAdverseMedia) || 0,
+          jurisdictionRisk: sarJurisdictionRisk,
+          cashIntensity: sarCashIntensity,
+          uboVerified: sarUboVerified,
+          tmAlerts: Number(sarTmAlerts) || 0,
+          cddLevel: sarCddLevel,
+          strHistory: sarStrHistory,
+          behavioralDrift: sarBehavioralDrift,
+          typologyMatch: sarTypologyMatch,
+        }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(body.error ?? `SAR scoring failed (HTTP ${res.status}) — please retry`);
+      }
+      const data = await res.json() as SarResult;
+      if (!data.ok) throw new Error(data.error ?? "SAR scoring failed — please retry");
+      setSarResult(data);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "SAR scoring failed — please retry";
+      setSarError(msg);
+    } finally { setSarLoading(false); }
   };
 
   const openCase = async (e: React.FormEvent) => {
@@ -1051,6 +1116,151 @@ export default function StrCasesPage() {
               </table>
             </div>
       )}
+      {/* ── SAR Probability Scorer ───────────────────────────────────────────── */}
+      <div className="mt-6 bg-bg-panel border border-hair-2 rounded-xl p-5">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">SAR Probability Scorer</div>
+            <div className="text-10 text-ink-3 mt-0.5">Evidence-based STR filing probability · FDL 10/2025 Art.15 · FATF R.20</div>
+          </div>
+          {sarResult && (
+            <button type="button" onClick={() => setSarResult(null)} className="text-10 text-ink-3 hover:text-ink-1 underline">Clear</button>
+          )}
+        </div>
+
+        {/* Signal inputs */}
+        {(() => {
+          const iCls = "w-full bg-bg-1 border border-hair-2 rounded px-2 py-1.5 text-11 text-ink-0 focus:outline-none focus:border-brand";
+          const lCls = "block text-9 uppercase tracking-wide-3 text-ink-3 mb-0.5";
+          return (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+              <div>
+                <label className={lCls}>Risk Score (0–100)</label>
+                <input type="number" min="0" max="100" value={sarRiskScore} onChange={(e) => setSarRiskScore(e.target.value)} className={iCls} />
+              </div>
+              <div>
+                <label className={lCls}>Sanctions Hits</label>
+                <input type="number" min="0" value={sarSanctionsHits} onChange={(e) => setSarSanctionsHits(e.target.value)} className={iCls} />
+              </div>
+              <div>
+                <label className={lCls}>Adverse Media Count</label>
+                <input type="number" min="0" value={sarAdverseMedia} onChange={(e) => setSarAdverseMedia(e.target.value)} className={iCls} />
+              </div>
+              <div>
+                <label className={lCls}>TM Alerts</label>
+                <input type="number" min="0" value={sarTmAlerts} onChange={(e) => setSarTmAlerts(e.target.value)} className={iCls} />
+              </div>
+              <div>
+                <label className={lCls}>Jurisdiction Risk</label>
+                <select value={sarJurisdictionRisk} onChange={(e) => setSarJurisdictionRisk(e.target.value as "low" | "medium" | "high" | "critical")} className={iCls}>
+                  {(["low", "medium", "high", "critical"] as const).map((v) => <option key={v} value={v}>{v}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className={lCls}>Cash Intensity</label>
+                <select value={sarCashIntensity} onChange={(e) => setSarCashIntensity(e.target.value as "low" | "medium" | "high")} className={iCls}>
+                  {(["low", "medium", "high"] as const).map((v) => <option key={v} value={v}>{v}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className={lCls}>CDD Level</label>
+                <select value={sarCddLevel} onChange={(e) => setSarCddLevel(e.target.value as "basic" | "standard" | "enhanced")} className={iCls}>
+                  {(["basic", "standard", "enhanced"] as const).map((v) => <option key={v} value={v}>{v}</option>)}
+                </select>
+              </div>
+              <div className="flex flex-col gap-1.5 pt-1">
+                {([
+                  ["PEP", sarPepStatus, setSarPepStatus] as const,
+                  ["UBO Verified", sarUboVerified, setSarUboVerified] as const,
+                  ["Prior STR", sarStrHistory, setSarStrHistory] as const,
+                  ["Behavioral Drift", sarBehavioralDrift, setSarBehavioralDrift] as const,
+                  ["Typology Match", sarTypologyMatch, setSarTypologyMatch] as const,
+                ] as Array<[string, boolean, (v: boolean) => void]>).map(([label, val, setter]) => (
+                  <label key={label} className="flex items-center gap-1.5 text-10 text-ink-2 cursor-pointer">
+                    <input type="checkbox" checked={val} onChange={(e) => setter(e.target.checked)} className="accent-brand w-3 h-3" />
+                    {label}
+                  </label>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
+
+        {sarError && (
+          <div className="mb-3 rounded-lg border border-red/30 bg-red-dim px-4 py-2 text-11 text-red">⚠ {sarError}</div>
+        )}
+
+        <div className="flex items-center gap-3 mb-4">
+          <button
+            type="button"
+            onClick={() => void runSarProbability()}
+            disabled={sarLoading}
+            className="inline-flex items-center gap-2 text-11 font-semibold px-4 py-2 rounded-lg bg-brand text-white hover:bg-brand/90 disabled:opacity-60 transition-colors"
+          >
+            {sarLoading ? (
+              <><span className="inline-block w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />Scoring…</>
+            ) : "Score SAR Probability"}
+          </button>
+        </div>
+
+        {sarResult && (
+          <div className="flex flex-wrap gap-6 mt-2 border-t border-hair-2 pt-4">
+            {/* Probability ring */}
+            {(() => {
+              const prob = sarResult.sarProbability;
+              const color = prob >= 75 ? "#ef4444" : prob >= 50 ? "#f59e0b" : "#22c55e";
+              const circumference = 2 * Math.PI * 36;
+              const dashArray = `${(prob / 100) * circumference} ${circumference}`;
+              const priCls = sarResult.queuePriority === "urgent" ? "bg-red text-white" : sarResult.queuePriority === "standard" ? "bg-amber-dim text-amber border border-amber/30" : "bg-green-dim text-green border border-green/30";
+              const recLabel = sarResult.recommendation.replace(/_/g, " ");
+              return (
+                <div className="flex items-center gap-4">
+                  <div className="relative w-20 h-20 shrink-0">
+                    <svg viewBox="0 0 80 80" className="w-20 h-20 -rotate-90">
+                      <circle cx="40" cy="40" r="36" fill="none" stroke="var(--color-bg-2)" strokeWidth="7" />
+                      <circle cx="40" cy="40" r="36" fill="none" stroke={color} strokeWidth="7" strokeDasharray={dashArray} strokeLinecap="round" />
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span className="font-mono text-15 font-bold leading-none" style={{ color }}>{prob}%</span>
+                      <span className="text-9 text-ink-3 font-mono uppercase tracking-wide">SAR</span>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <div className="text-10 uppercase tracking-wide-3 font-semibold text-ink-2">Filing Probability</div>
+                    <div className="flex gap-2 flex-wrap">
+                      <span className={`font-mono text-10 font-bold uppercase px-2 py-px rounded ${priCls}`}>Queue: {sarResult.queuePriority}</span>
+                      <span className="font-mono text-10 px-2 py-px rounded bg-bg-2 text-ink-2 border border-hair-2 capitalize">{recLabel}</span>
+                    </div>
+                    <div className="text-9 text-ink-3 font-mono">Confidence: {sarResult.confidence} · {sarResult.feedbackSignals} feedback signals</div>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Key factors */}
+            <div className="flex-1 min-w-[240px]">
+              <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-2">Key Factors</div>
+              <ul className="space-y-1">
+                {sarResult.keyFactors.map((f, i) => (
+                  <li key={i} className="text-11 text-ink-1 flex gap-2">
+                    <span className="shrink-0 font-mono text-10 text-brand mt-0.5">·</span>
+                    {f}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Narrative */}
+            {sarResult.narrative && (
+              <div className="w-full mt-2">
+                <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-1">AI Rationale</div>
+                <div className="bg-bg-1 border border-hair-2 rounded p-3 text-11 text-ink-1 leading-relaxed">{sarResult.narrative}</div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
       <GoamlExportModal
         open={goamlPrefill != null}
         onClose={() => setGoamlPrefill(null)}

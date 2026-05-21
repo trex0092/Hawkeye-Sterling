@@ -146,6 +146,37 @@ export default function TransactionMonitorPage() {
   const [tagError, setTagError] = useState<string | null>(null);
   const [tagSummary, setTagSummary] = useState<{ text: string; highRiskCount: number } | null>(null);
 
+  // ── Structuring Analysis state ────────────────────────────────────────────
+  interface StructuringPattern {
+    pattern: string;
+    severity: "high" | "medium" | "low";
+    evidence: string;
+    transactions: string[];
+  }
+  interface SmurfingGroup {
+    window: string;
+    total: number;
+    percentOfThreshold: number;
+    transactions: { date: string; amount: number; currency: string }[];
+  }
+  interface StructuringResult {
+    ok: boolean;
+    subjectName: string;
+    structuringProbability: number;
+    recommendation: string;
+    ctrObligation: string | null;
+    detectedPatterns: StructuringPattern[];
+    smurfingGroups: SmurfingGroup[];
+    statistics: { totalVolume: number; txnCount: number; averageAmount: number; reportingThreshold: number };
+    fatfTypologies: string[];
+    sarNarrative?: string;
+    aiEnriched: boolean;
+    error?: string;
+  }
+  const [structuringResult, setStructuringResult] = useState<StructuringResult | null>(null);
+  const [structuringLoading, setStructuringLoading] = useState(false);
+  const [structuringError, setStructuringError] = useState<string | null>(null);
+
   useEffect(() => {
     setTxs(loadTxs());
     setHydrated(true);
@@ -335,6 +366,40 @@ export default function TransactionMonitorPage() {
     clear();
   };
 
+  const runStructuringAnalysis = async () => {
+    if (txs.length === 0) return;
+    setStructuringLoading(true);
+    setStructuringError(null);
+    try {
+      const payload = txs.map((t) => ({
+        date: t.occurredOn || new Date(t.loggedAt).toISOString().split("T")[0],
+        amount: Number.parseFloat(t.amount.replace(/,/g, "")) || 0,
+        currency: t.currency || "AED",
+        type: t.channel === "Cash (DPMS)" ? (t.direction === "Inbound" ? "cash_in" : "cash_out") : "other" as "cash_in" | "cash_out" | "other",
+        counterparty: t.counterparty || undefined,
+        reference: t.ref,
+      }));
+      const res = await fetch("/api/structuring-predict", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ transactions: payload, subjectName: "Portfolio", baseCurrency: "AED" }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(body.error ?? `Analysis failed (HTTP ${res.status})`);
+      }
+      const data = await res.json() as StructuringResult;
+      if (!mountedRef.current) return;
+      if (!data.ok) throw new Error(data.error ?? "Analysis failed — please retry");
+      setStructuringResult(data);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Structuring analysis failed — please retry";
+      if (mountedRef.current) setStructuringError(msg);
+    } finally {
+      if (mountedRef.current) setStructuringLoading(false);
+    }
+  };
+
   const runDailyScan = async () => {
     setRunning(true);
     try {
@@ -373,6 +438,9 @@ export default function TransactionMonitorPage() {
                 </Btn>
                 <Btn variant="ghost" onClick={() => void autoTagTypologies()} disabled={tagging || txs.length === 0}>
                   {tagging ? "Tagging…" : "🏷️ Auto-Tag Typologies"}
+                </Btn>
+                <Btn variant="ghost" onClick={() => void runStructuringAnalysis()} disabled={structuringLoading || txs.length === 0}>
+                  {structuringLoading ? "Analysing…" : "🔍 Structuring Analysis"}
                 </Btn>
                 <Btn variant="primary" onClick={focusForm}>
                   + Add transaction
@@ -663,6 +731,141 @@ export default function TransactionMonitorPage() {
               )}
             </div>
       )}
+      {/* ── Structuring Analysis Panel ─────────────────────────────────────── */}
+      {structuringError && (
+        <div className="mt-4 rounded-lg border border-red/30 bg-red-dim px-4 py-3 text-12 text-red">
+          ⚠ {structuringError}
+        </div>
+      )}
+      {structuringResult && (
+        <div className="mt-6 bg-bg-panel border border-hair-2 rounded-xl p-5">
+          <div className="flex items-start justify-between mb-4">
+            <div>
+              <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2 mb-0.5">Structuring Analysis</div>
+              <div className="text-10 text-ink-3 font-mono">UAE CTR threshold AED {structuringResult.statistics.reportingThreshold.toLocaleString()} · FDL 10/2025 Art.16 · FATF R.3</div>
+            </div>
+            <button type="button" onClick={() => setStructuringResult(null)} className="text-10 text-ink-3 hover:text-ink-1 underline">Clear</button>
+          </div>
+
+          {/* Score ring + stats */}
+          <div className="flex flex-wrap gap-6 mb-5 items-center">
+            {(() => {
+              const prob = structuringResult.structuringProbability;
+              const color = prob >= 70 ? "#ef4444" : prob >= 40 ? "#f59e0b" : "#22c55e";
+              const circumference = 2 * Math.PI * 36;
+              const dashArray = `${(prob / 100) * circumference} ${circumference}`;
+              const recCls = prob >= 70 ? "bg-red text-white" : prob >= 40 ? "bg-amber-dim text-amber border border-amber/30" : "bg-green-dim text-green border border-green/30";
+              return (
+                <div className="flex items-center gap-4">
+                  <div className="relative w-20 h-20 shrink-0">
+                    <svg viewBox="0 0 80 80" className="w-20 h-20 -rotate-90">
+                      <circle cx="40" cy="40" r="36" fill="none" stroke="var(--color-bg-2)" strokeWidth="7" />
+                      <circle cx="40" cy="40" r="36" fill="none" stroke={color} strokeWidth="7" strokeDasharray={dashArray} strokeLinecap="round" />
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span className="font-mono text-15 font-bold leading-none" style={{ color }}>{prob}</span>
+                      <span className="text-9 text-ink-3 font-mono uppercase tracking-wide">%</span>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <div className="text-10 uppercase tracking-wide-3 font-semibold text-ink-2">Structuring Probability</div>
+                    <span className={`font-mono text-10 font-bold uppercase px-2 py-px rounded w-fit ${recCls}`}>{structuringResult.recommendation.replace(/_/g, " ")}</span>
+                    {structuringResult.aiEnriched && <span className="text-9 text-ink-3 font-mono">AI-enriched</span>}
+                  </div>
+                </div>
+              );
+            })()}
+            <div className="flex gap-4 flex-wrap">
+              <div className="bg-bg-1 border border-hair-2 rounded p-3 min-w-[100px]">
+                <div className="text-9 uppercase tracking-wide-3 text-ink-3 mb-0.5">Total Volume</div>
+                <div className="font-mono text-13 font-bold text-ink-0">AED {structuringResult.statistics.totalVolume.toLocaleString()}</div>
+              </div>
+              <div className="bg-bg-1 border border-hair-2 rounded p-3 min-w-[80px]">
+                <div className="text-9 uppercase tracking-wide-3 text-ink-3 mb-0.5">Transactions</div>
+                <div className="font-mono text-13 font-bold text-ink-0">{structuringResult.statistics.txnCount}</div>
+              </div>
+              <div className="bg-bg-1 border border-hair-2 rounded p-3 min-w-[100px]">
+                <div className="text-9 uppercase tracking-wide-3 text-ink-3 mb-0.5">Avg Amount</div>
+                <div className="font-mono text-13 font-bold text-ink-0">AED {structuringResult.statistics.averageAmount.toLocaleString()}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* CTR obligation */}
+          {structuringResult.ctrObligation && (
+            <div className="mb-4 rounded-lg bg-red-dim border border-red/20 px-4 py-2.5">
+              <span className="font-mono text-10 font-bold uppercase text-red mr-2">CTR Required</span>
+              <span className="text-11 text-ink-1">{structuringResult.ctrObligation}</span>
+            </div>
+          )}
+
+          {/* Detected patterns */}
+          {structuringResult.detectedPatterns.length > 0 && (
+            <div className="mb-4">
+              <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-2">Detected Patterns</div>
+              <div className="flex flex-col gap-2">
+                {structuringResult.detectedPatterns.map((p, i) => {
+                  const sevCls = p.severity === "high" ? "bg-red-dim text-red border-red/30" : p.severity === "medium" ? "bg-amber-dim text-amber border-amber/30" : "bg-bg-2 text-ink-2 border-hair-2";
+                  return (
+                    <div key={i} className={`rounded-lg border px-4 py-3 ${sevCls}`}>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={`font-mono text-10 font-bold uppercase px-1.5 py-px rounded border ${sevCls}`}>{p.severity}</span>
+                        <span className="font-mono text-11 font-semibold text-ink-0">{p.pattern.replace(/_/g, " ")}</span>
+                      </div>
+                      <div className="text-11 text-ink-1">{p.evidence}</div>
+                      {p.transactions.length > 0 && (
+                        <div className="mt-1.5 flex flex-wrap gap-1">
+                          {p.transactions.slice(0, 4).map((tx, j) => (
+                            <span key={j} className="font-mono text-9 px-1.5 py-px rounded bg-bg-0 border border-hair-2 text-ink-3">{tx}</span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Smurfing groups */}
+          {structuringResult.smurfingGroups.length > 0 && (
+            <div className="mb-4">
+              <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-2">Smurfing Windows</div>
+              <div className="flex flex-col gap-2">
+                {structuringResult.smurfingGroups.map((g, i) => (
+                  <div key={i} className="bg-bg-1 border border-hair-2 rounded p-3 text-12">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-mono text-10 text-ink-3">{g.window}</span>
+                      <span className="font-mono text-11 font-bold text-red">AED {g.total.toLocaleString()} ({g.percentOfThreshold}% of threshold)</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* FATF typologies */}
+          {structuringResult.fatfTypologies.length > 0 && (
+            <div className="mb-4">
+              <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-2">FATF Typologies</div>
+              <div className="flex flex-wrap gap-2">
+                {structuringResult.fatfTypologies.map((t, i) => (
+                  <span key={i} className="font-mono text-10 px-2 py-px rounded-full border border-red/30 bg-red-dim text-red">{t}</span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* SAR narrative */}
+          {structuringResult.sarNarrative && (
+            <div>
+              <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-2">SAR Narrative Draft</div>
+              <div className="bg-bg-1 border border-hair-2 rounded p-4 text-12 text-ink-1 leading-relaxed whitespace-pre-wrap">{structuringResult.sarNarrative}</div>
+            </div>
+          )}
+        </div>
+      )}
+
       <PaymentScreen />
       <ReportModal
         open={reportTx !== null}

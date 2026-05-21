@@ -313,6 +313,54 @@ export default function CddReviewPage() {
   const [exitChecklist, setExitChecklist] = useState<Record<number, boolean>>({});
   const [exitCoverOpen, setExitCoverOpen] = useState(false);
 
+  // EDD File Completeness state
+  type EddSubjectType = "individual" | "corporate" | "trust" | "foundation";
+  type EddRiskClass = "medium" | "high" | "critical";
+  interface EddRequirementItem {
+    id: string;
+    label: string;
+    mandatory: boolean;
+    present: boolean;
+    regulatoryBasis: string;
+    guidance: string;
+  }
+  interface EddCompletenessResult {
+    completenessScore: number;
+    mandatoryScore: number;
+    status: "complete" | "minor_gaps" | "material_gaps" | "incomplete";
+    requirements: EddRequirementItem[];
+    missing: string[];
+    gapNarrative: string;
+    recommendations: string[];
+    aiGapAnalysis?: string;
+  }
+  const [eddComplOpen, setEddComplOpen] = useState(false);
+  const [eddComplSubjectName, setEddComplSubjectName] = useState("");
+  const [eddComplSubjectType, setEddComplSubjectType] = useState<EddSubjectType>("individual");
+  const [eddComplRisk, setEddComplRisk] = useState<EddRiskClass>("high");
+  const [eddComplIsPep, setEddComplIsPep] = useState(false);
+  const [eddComplHighRiskJuris, setEddComplHighRiskJuris] = useState(false);
+  const [eddComplFlags, setEddComplFlags] = useState<Record<string, boolean>>({
+    hasIdentityDocument: false,
+    hasSourceOfWealth: false,
+    hasSourceOfFunds: false,
+    hasBusinessPurpose: false,
+    hasBeneficialOwnership: false,
+    hasPepDeclaration: false,
+    hasAdverseMediaSearch: false,
+    hasSanctionsConfirmation: false,
+    hasSeniorManagementApproval: false,
+    hasGeoRiskJustification: false,
+    hasOngoingMonitoringPlan: false,
+    hasLastReviewDate: false,
+    hasFinancialStatements: false,
+    hasNetworkDiagram: false,
+  });
+  const [eddComplResult, setEddComplResult] = useState<EddCompletenessResult | null>(null);
+  const [eddComplLoading, setEddComplLoading] = useState(false);
+  const [eddComplError, setEddComplError] = useState<string | null>(null);
+  const [eddComplGenerateNarrative, setEddComplGenerateNarrative] = useState(false);
+
   const mountedRef = useRef(true);
   useEffect(() => () => { mountedRef.current = false; }, []);
 
@@ -342,6 +390,41 @@ export default function CddReviewPage() {
     setEddError(null);
     setEddChecks({});
     saveEddChecks({});
+  };
+
+  const runEddCompleteness = async () => {
+    setEddComplLoading(true);
+    setEddComplResult(null);
+    setEddComplError(null);
+    try {
+      const res = await fetch("/api/edd-completeness", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          eddFile: {
+            subjectName: eddComplSubjectName || undefined,
+            subjectType: eddComplSubjectType,
+            riskClassification: eddComplRisk,
+            isPep: eddComplIsPep,
+            hasHighRiskJurisdiction: eddComplHighRiskJuris,
+            ...eddComplFlags,
+          },
+          generateNarrative: eddComplGenerateNarrative,
+        }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(body.error ?? `EDD completeness check failed (HTTP ${res.status}) — please retry`);
+      }
+      const data = await res.json() as EddCompletenessResult & { ok?: boolean; error?: string };
+      if (!mountedRef.current) return;
+      setEddComplResult(data);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "EDD completeness check failed — please retry";
+      if (mountedRef.current) setEddComplError(msg);
+    } finally {
+      if (mountedRef.current) setEddComplLoading(false);
+    }
   };
 
   const runPolicyReview = async () => {
@@ -1041,6 +1124,201 @@ export default function CddReviewPage() {
                 );
               })}
             </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── Section 3.4: EDD File Completeness Check ── */}
+      <div className="mt-6 bg-bg-panel border border-hair-2 rounded-xl overflow-hidden">
+        <div className="px-4 py-3 border-b border-hair-2 bg-bg-1 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-14">✅</span>
+            <span className="text-13 font-semibold text-ink-0">EDD File Completeness Check</span>
+            <span className="text-10 font-mono text-ink-3 ml-1">Mandatory document checklist · FDL 10/2025 Art.8 · FATF R.10</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setEddComplOpen((v) => !v)}
+            className="flex items-center gap-1 text-11 font-medium px-3 py-1 rounded border border-hair-2 text-ink-2 hover:border-brand hover:text-brand transition-colors"
+          >
+            {eddComplOpen ? "Collapse" : "Expand"} <ChevronIcon open={eddComplOpen} />
+          </button>
+        </div>
+
+        {eddComplOpen && (
+          <div className="p-4 space-y-4">
+            {/* Profile inputs */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+              <div>
+                <label className="block text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-1">Subject name</label>
+                <input
+                  value={eddComplSubjectName}
+                  onChange={(e) => setEddComplSubjectName(e.target.value)}
+                  placeholder="Customer / entity name"
+                  className={inputCls}
+                />
+              </div>
+              <div>
+                <label className="block text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-1">Subject type</label>
+                <select value={eddComplSubjectType} onChange={(e) => setEddComplSubjectType(e.target.value as EddSubjectType)} className={inputCls}>
+                  {(["individual", "corporate", "trust", "foundation"] as const).map((v) => (
+                    <option key={v} value={v}>{v.charAt(0).toUpperCase() + v.slice(1)}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-1">Risk classification</label>
+                <select value={eddComplRisk} onChange={(e) => setEddComplRisk(e.target.value as EddRiskClass)} className={inputCls}>
+                  {(["medium", "high", "critical"] as const).map((v) => (
+                    <option key={v} value={v}>{v.charAt(0).toUpperCase() + v.slice(1)}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex flex-col gap-2 justify-end pb-1">
+                {([
+                  ["PEP", eddComplIsPep, setEddComplIsPep] as const,
+                  ["High-risk jurisdiction", eddComplHighRiskJuris, setEddComplHighRiskJuris] as const,
+                  ["AI gap analysis", eddComplGenerateNarrative, setEddComplGenerateNarrative] as const,
+                ] as Array<[string, boolean, (v: boolean) => void]>).map(([label, val, setter]) => (
+                  <label key={label} className="flex items-center gap-1.5 text-11 text-ink-2 cursor-pointer">
+                    <input type="checkbox" checked={val} onChange={(e) => setter(e.target.checked)} className="accent-brand w-3.5 h-3.5" />
+                    {label}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Document flags */}
+            <div>
+              <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-2">Document checklist — tick each item that is present and satisfactory</div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5">
+                {([
+                  ["hasIdentityDocument", "Identity document (passport / Emirates ID / trade licence)"],
+                  ["hasSourceOfFunds", "Source of funds (SoF) documentation"],
+                  ["hasSourceOfWealth", "Source of wealth (SoW) documentation"],
+                  ["hasBusinessPurpose", "Business purpose / transaction rationale"],
+                  ["hasBeneficialOwnership", "Beneficial ownership chain (UBO documentation)"],
+                  ["hasPepDeclaration", "PEP status declaration and enhanced checks"],
+                  ["hasAdverseMediaSearch", "Adverse media / negative news search"],
+                  ["hasSanctionsConfirmation", "Sanctions screening confirmation"],
+                  ["hasSeniorManagementApproval", "Senior management / MLRO approval"],
+                  ["hasGeoRiskJustification", "Geographic risk justification"],
+                  ["hasOngoingMonitoringPlan", "Ongoing monitoring plan / review schedule"],
+                  ["hasLastReviewDate", "Last EDD review date recorded"],
+                  ["hasFinancialStatements", "Financial statements (corporate / high-value)"],
+                  ["hasNetworkDiagram", "Corporate structure / network diagram"],
+                ] as Array<[string, string]>).map(([flag, label]) => (
+                  <label key={flag} className="flex items-start gap-2 text-12 text-ink-1 cursor-pointer bg-bg-1 rounded px-3 py-2 hover:bg-bg-2 transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={eddComplFlags[flag] ?? false}
+                      onChange={(e) => setEddComplFlags((prev) => ({ ...prev, [flag]: e.target.checked }))}
+                      className="accent-brand w-3.5 h-3.5 mt-0.5 shrink-0"
+                    />
+                    {label}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {eddComplError && (
+              <div className="rounded-lg border border-red/30 bg-red-dim px-4 py-2.5 text-11 text-red">⚠ {eddComplError}</div>
+            )}
+
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => void runEddCompleteness()}
+                disabled={eddComplLoading}
+                className="inline-flex items-center gap-2 text-12 font-semibold px-4 py-2 rounded-lg bg-brand text-white hover:bg-brand/90 disabled:opacity-60 transition-colors"
+              >
+                {eddComplLoading ? (
+                  <><span className="inline-block w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />Checking…</>
+                ) : "Check EDD File Completeness"}
+              </button>
+              {eddComplResult && (
+                <button type="button" onClick={() => setEddComplResult(null)} className="text-10 text-ink-3 hover:text-ink-1 underline">Clear result</button>
+              )}
+            </div>
+
+            {eddComplResult && (
+              <div className="border-t border-hair-2 pt-4 space-y-4">
+                {/* Score display */}
+                <div className="flex flex-wrap gap-4 items-center">
+                  {(() => {
+                    const score = eddComplResult.completenessScore;
+                    const mandatory = eddComplResult.mandatoryScore;
+                    const statusCls = eddComplResult.status === "complete" ? "bg-green text-white" : eddComplResult.status === "minor_gaps" ? "bg-blue-dim text-blue border border-blue/30" : eddComplResult.status === "material_gaps" ? "bg-amber-dim text-amber border border-amber/30" : "bg-red-dim text-red border border-red/30";
+                    const scoreColor = score >= 85 ? "#22c55e" : score >= 70 ? "#3b82f6" : score >= 50 ? "#f59e0b" : "#ef4444";
+                    const circumference = 2 * Math.PI * 32;
+                    const dashArray = `${(score / 100) * circumference} ${circumference}`;
+                    return (
+                      <div className="flex items-center gap-4">
+                        <div className="relative w-16 h-16 shrink-0">
+                          <svg viewBox="0 0 72 72" className="w-16 h-16 -rotate-90">
+                            <circle cx="36" cy="36" r="32" fill="none" stroke="var(--color-bg-2)" strokeWidth="6" />
+                            <circle cx="36" cy="36" r="32" fill="none" stroke={scoreColor} strokeWidth="6" strokeDasharray={dashArray} strokeLinecap="round" />
+                          </svg>
+                          <div className="absolute inset-0 flex flex-col items-center justify-center">
+                            <span className="font-mono text-13 font-bold leading-none" style={{ color: scoreColor }}>{score}</span>
+                            <span className="text-8 text-ink-3 font-mono">%</span>
+                          </div>
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                          <div className="text-10 uppercase tracking-wide-3 font-semibold text-ink-2">Overall Completeness</div>
+                          <span className={`font-mono text-10 font-bold uppercase px-2 py-px rounded w-fit ${statusCls}`}>{eddComplResult.status.replace(/_/g, " ")}</span>
+                          <div className="text-10 text-ink-3 font-mono">Mandatory: {mandatory}%</div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                {/* Gap narrative */}
+                <div className="bg-bg-1 border border-hair-2 rounded p-4 text-12 text-ink-1 leading-relaxed">
+                  {eddComplResult.gapNarrative}
+                </div>
+
+                {/* Requirements list */}
+                <div>
+                  <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-2">Requirements</div>
+                  <div className="flex flex-col gap-1">
+                    {eddComplResult.requirements.map((r) => (
+                      <div key={r.id} className={`flex items-start gap-3 px-3 py-2 rounded text-11 ${r.present ? "bg-green-dim/50" : r.mandatory ? "bg-red-dim/50" : "bg-bg-1"}`}>
+                        <span className={`shrink-0 font-mono text-12 font-bold mt-0.5 ${r.present ? "text-green" : r.mandatory ? "text-red" : "text-ink-3"}`}>{r.present ? "✓" : r.mandatory ? "✗" : "○"}</span>
+                        <div className="flex-1">
+                          <div className={`font-medium ${r.present ? "text-ink-1" : r.mandatory ? "text-red" : "text-ink-3"}`}>{r.label}</div>
+                          <div className="text-9 font-mono text-ink-3 mt-0.5">{r.regulatoryBasis}</div>
+                        </div>
+                        <span className={`shrink-0 font-mono text-9 uppercase px-1.5 py-px rounded ${r.mandatory ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-3"}`}>{r.mandatory ? "mandatory" : "optional"}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Recommendations */}
+                {eddComplResult.recommendations.length > 0 && (
+                  <div>
+                    <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-2">Recommendations</div>
+                    <ul className="space-y-1.5">
+                      {eddComplResult.recommendations.map((r, i) => (
+                        <li key={i} className="flex gap-2 text-11 text-ink-1">
+                          <span className="shrink-0 font-mono text-10 text-brand mt-0.5">{i + 1}.</span>{r}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* AI gap analysis */}
+                {eddComplResult.aiGapAnalysis && (
+                  <div>
+                    <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-1">AI Gap Analysis Memo</div>
+                    <div className="bg-bg-1 border border-brand/20 rounded p-4 text-12 text-ink-1 leading-relaxed whitespace-pre-wrap">{eddComplResult.aiGapAnalysis}</div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>

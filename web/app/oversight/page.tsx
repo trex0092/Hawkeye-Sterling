@@ -787,6 +787,45 @@ export default function OversightPage() {
   const [packError, setPackError] = useState("");
   const [packExpandedSection, setPackExpandedSection] = useState<string | null>("executiveSummary");
 
+  // Oversight Queue Gap Analysis state
+  interface QueueGapResult {
+    gaps: string[];
+    overdueItems: string[];
+    breachRisks: string[];
+    deadlines: string[];
+    recommendation: string;
+  }
+  const [queueGapLoading, setQueueGapLoading] = useState(false);
+  const [queueGapResult, setQueueGapResult] = useState<QueueGapResult | null>(null);
+  const [queueGapError, setQueueGapError] = useState("");
+
+  // Regulatory Deadline Engine state
+  interface DeadlineItem {
+    id: string;
+    title: string;
+    category: string;
+    dueDate: string;
+    daysRemaining: number;
+    priority: "urgent" | "soon" | "scheduled" | "planned";
+    status: "overdue" | "due_today" | "upcoming" | "planned";
+    regulatoryBasis: string;
+    penaltyExposure?: string;
+    action: string;
+  }
+  interface DeadlineEngineResult {
+    deadlines: DeadlineItem[];
+    summary: { totalDeadlines: number; overdue: number; urgent: number; soon: number };
+    generatedAt: string;
+  }
+  const [deadlineLoading, setDeadlineLoading] = useState(false);
+  const [deadlineResult, setDeadlineResult] = useState<DeadlineEngineResult | null>(null);
+  const [deadlineError, setDeadlineError] = useState("");
+  const [dlEntityType, setDlEntityType] = useState<"dpms">("dpms");
+  const [dlLicenseType, setDlLicenseType] = useState<"gold_trader" | "jeweller" | "refinery" | "broker" | "auction_house">("gold_trader");
+  const [dlRisk, setDlRisk] = useState<"low" | "medium" | "high" | "critical">("medium");
+  const [dlPendingCtrs, setDlPendingCtrs] = useState("0");
+  const [dlPendingStrs, setDlPendingStrs] = useState("0");
+
   const mountedRef = useRef(true);
   useEffect(() => () => { mountedRef.current = false; }, []);
 
@@ -1081,6 +1120,76 @@ export default function OversightPage() {
       if (mountedRef.current) setPackError(e instanceof Error ? e.message : "Unknown error");
     } finally {
       if (mountedRef.current) setPackLoading(false);
+    }
+  };
+
+  // ── Oversight Queue Gap Analysis ─────────────────────────────────────────
+  const runQueueGapAnalysis = async () => {
+    setQueueGapLoading(true);
+    setQueueGapError("");
+    try {
+      const payload = {
+        approvals: liveApprovals.filter((a) => a.status === "pending" || a.status === "escalated").map((a) => ({
+          id: a.id, title: a.title, category: a.category, status: a.status,
+          slaHours: a.slaHours, elapsedHours: a.elapsedHours,
+          requestedAt: a.requestedAt, notes: a.notes,
+        })),
+        circulars: liveCirculars.filter((c) => c.disposition !== "implemented").map((c) => ({
+          ref: c.ref, title: c.title, issuer: c.issuer, disposition: c.disposition,
+          dueDate: c.dueDate, notes: c.notes,
+        })),
+        actionItems: allActionItems.filter((ai) => !ai.closed).map((ai) => ({
+          id: ai.id, action: ai.action, owner: ai.owner, due: ai.due,
+        })),
+      };
+      const res = await fetch("/api/oversight-gap-analysis", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(body.error ?? `Gap analysis failed (HTTP ${res.status}) — please retry`);
+      }
+      const data = await res.json() as { ok: boolean; result: QueueGapResult; error?: string };
+      if (!mountedRef.current) return;
+      if (!data.ok) throw new Error(data.error ?? "Gap analysis failed — please retry");
+      setQueueGapResult(data.result);
+    } catch (e) {
+      if (mountedRef.current) setQueueGapError(e instanceof Error ? e.message : "Gap analysis failed — please retry");
+    } finally {
+      if (mountedRef.current) setQueueGapLoading(false);
+    }
+  };
+
+  // ── Regulatory Deadline Engine ────────────────────────────────────────────
+  const runDeadlineEngine = async () => {
+    setDeadlineLoading(true);
+    setDeadlineError("");
+    try {
+      const res = await fetch("/api/regulatory-deadline-engine", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          entityType: dlEntityType,
+          licenseType: dlLicenseType,
+          riskClassification: dlRisk,
+          pendingCtrs: Number(dlPendingCtrs) || 0,
+          pendingStrs: Number(dlPendingStrs) || 0,
+        }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(body.error ?? `Deadline engine failed (HTTP ${res.status}) — please retry`);
+      }
+      const data = await res.json() as DeadlineEngineResult & { ok: boolean; error?: string };
+      if (!mountedRef.current) return;
+      if (!data.ok) throw new Error(data.error ?? "Deadline engine failed — please retry");
+      setDeadlineResult(data);
+    } catch (e) {
+      if (mountedRef.current) setDeadlineError(e instanceof Error ? e.message : "Deadline engine failed — please retry");
+    } finally {
+      if (mountedRef.current) setDeadlineLoading(false);
     }
   };
 
@@ -2074,6 +2183,216 @@ export default function OversightPage() {
               </div>
             )}
           </div>
+
+          {/* ── Compliance Queue Gap Analysis ───────────────────────────────── */}
+          <div className="bg-bg-panel border border-hair-2 rounded-lg p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <div className="text-13 font-semibold text-ink-0">Compliance Queue Gap Analysis</div>
+                <div className="text-11 text-ink-3 mt-0.5">
+                  AI analysis of pending approvals, open circulars, and overdue action items.
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => void runQueueGapAnalysis()}
+                disabled={queueGapLoading}
+                className="inline-flex items-center gap-2 text-12 font-semibold px-4 py-2 rounded-lg bg-brand text-white hover:bg-brand/90 disabled:opacity-60 transition-colors whitespace-nowrap"
+              >
+                {queueGapLoading ? (
+                  <><span className="inline-block w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />Analysing…</>
+                ) : "Analyse Queue Gaps"}
+              </button>
+            </div>
+
+            {queueGapError && (
+              <div className="text-11 text-red bg-red-dim border border-red/20 rounded-lg px-4 py-2 mb-3">{queueGapError}</div>
+            )}
+
+            {queueGapResult && (
+              <div className="flex flex-col gap-4 border-t border-hair-2 pt-4 mt-2">
+                {/* Recommendation */}
+                <div className="rounded-lg bg-brand-dim border border-brand/20 px-4 py-3">
+                  <div className="text-10 font-semibold uppercase tracking-wide-3 text-brand mb-1">MLRO Top Priority</div>
+                  <div className="text-12 text-ink-0">{queueGapResult.recommendation}</div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Compliance Gaps */}
+                  {queueGapResult.gaps.length > 0 && (
+                    <div>
+                      <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-2">Compliance Gaps ({queueGapResult.gaps.length})</div>
+                      <ul className="space-y-1.5">
+                        {queueGapResult.gaps.map((g, i) => (
+                          <li key={i} className="flex gap-2 text-11 text-ink-1 bg-bg-1 rounded p-2.5">
+                            <span className="shrink-0 font-mono text-10 text-amber mt-0.5">⚠</span>{g}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Breach Risks */}
+                  {queueGapResult.breachRisks.length > 0 && (
+                    <div>
+                      <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-2">Breach Risks ({queueGapResult.breachRisks.length})</div>
+                      <ul className="space-y-1.5">
+                        {queueGapResult.breachRisks.map((r, i) => (
+                          <li key={i} className="flex gap-2 text-11 text-ink-1 bg-red-dim border border-red/20 rounded p-2.5">
+                            <span className="shrink-0 font-mono text-10 text-red mt-0.5">!</span>{r}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Overdue Items */}
+                  {queueGapResult.overdueItems.length > 0 && (
+                    <div>
+                      <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-2">Overdue Items ({queueGapResult.overdueItems.length})</div>
+                      <ul className="space-y-1.5">
+                        {queueGapResult.overdueItems.map((o, i) => (
+                          <li key={i} className="flex gap-2 text-11 text-ink-1 bg-bg-1 rounded p-2.5">
+                            <span className="shrink-0 font-mono text-10 text-red mt-0.5">↑</span>{o}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Deadlines */}
+                  {queueGapResult.deadlines.length > 0 && (
+                    <div>
+                      <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-2">Critical Deadlines ({queueGapResult.deadlines.length})</div>
+                      <ul className="space-y-1.5">
+                        {queueGapResult.deadlines.map((d, i) => (
+                          <li key={i} className="flex gap-2 text-11 text-ink-1 bg-bg-1 rounded p-2.5">
+                            <span className="shrink-0 font-mono text-10 text-brand mt-0.5">⏱</span>{d}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* ── Regulatory Deadline Calendar ─────────────────────────────────── */}
+          <div className="bg-bg-panel border border-hair-2 rounded-lg p-5">
+            <div className="flex items-start justify-between mb-3">
+              <div>
+                <div className="text-13 font-semibold text-ink-0">Regulatory Deadline Calendar</div>
+                <div className="text-11 text-ink-3 mt-0.5">
+                  Computed AML/CFT filing and review deadlines under UAE FDL 10/2025.
+                </div>
+              </div>
+            </div>
+
+            {/* Entity profile inputs */}
+            {(() => {
+              const iCls = "w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-11 text-ink-0 focus:outline-none focus:border-brand";
+              const lCls = "block text-9 uppercase tracking-wide-3 text-ink-3 mb-0.5";
+              return (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                  <div>
+                    <label className={lCls}>Risk Classification</label>
+                    <select value={dlRisk} onChange={(e) => setDlRisk(e.target.value as typeof dlRisk)} className={iCls}>
+                      {(["low", "medium", "high", "critical"] as const).map((v) => <option key={v} value={v}>{v}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className={lCls}>License Type</label>
+                    <select value={dlLicenseType} onChange={(e) => setDlLicenseType(e.target.value as typeof dlLicenseType)} className={iCls}>
+                      {(["gold_trader", "jeweller", "refinery", "broker", "auction_house"] as const).map((v) => <option key={v} value={v}>{v.replace(/_/g, " ")}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className={lCls}>Pending CTRs</label>
+                    <input type="number" min="0" value={dlPendingCtrs} onChange={(e) => setDlPendingCtrs(e.target.value)} className={iCls} />
+                  </div>
+                  <div>
+                    <label className={lCls}>Pending STRs</label>
+                    <input type="number" min="0" value={dlPendingStrs} onChange={(e) => setDlPendingStrs(e.target.value)} className={iCls} />
+                  </div>
+                </div>
+              );
+            })()}
+
+            <button
+              type="button"
+              onClick={() => void runDeadlineEngine()}
+              disabled={deadlineLoading}
+              className="inline-flex items-center gap-2 text-12 font-semibold px-4 py-2 rounded-lg bg-brand text-white hover:bg-brand/90 disabled:opacity-60 transition-colors mb-4"
+            >
+              {deadlineLoading ? (
+                <><span className="inline-block w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />Computing…</>
+              ) : "Compute Deadlines"}
+            </button>
+
+            {deadlineError && (
+              <div className="text-11 text-red bg-red-dim border border-red/20 rounded-lg px-4 py-2 mb-3">{deadlineError}</div>
+            )}
+
+            {deadlineResult && (
+              <div>
+                {/* Summary chips */}
+                <div className="flex gap-3 flex-wrap mb-4">
+                  {[
+                    { label: "Overdue", val: deadlineResult.summary.overdue, cls: "bg-red-dim text-red border-red/30" },
+                    { label: "Urgent", val: deadlineResult.summary.urgent, cls: "bg-amber-dim text-amber border-amber/30" },
+                    { label: "Soon", val: deadlineResult.summary.soon, cls: "bg-blue-dim text-blue border-blue/30" },
+                    { label: "Total", val: deadlineResult.summary.totalDeadlines, cls: "bg-bg-2 text-ink-2 border-hair-2" },
+                  ].map(({ label, val, cls }) => (
+                    <div key={label} className={`rounded-lg border px-3 py-2 text-center min-w-[80px] ${cls}`}>
+                      <div className="font-mono text-16 font-bold">{val}</div>
+                      <div className="text-9 uppercase tracking-wide-3 font-semibold">{label}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Deadline table */}
+                <div className="rounded-lg border border-hair-2 overflow-hidden">
+                  <table className="w-full text-11">
+                    <thead className="bg-bg-1 border-b border-hair-2">
+                      <tr>
+                        {["Priority", "Deadline", "Due Date", "Days", "Action", "Penalty"].map((h) => (
+                          <th key={h} className="text-left px-3 py-2 text-9 uppercase tracking-wide-3 text-ink-2 font-mono whitespace-nowrap">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {deadlineResult.deadlines.map((d, i) => {
+                        const priCls = d.priority === "urgent" ? "bg-red text-white" : d.priority === "soon" ? "bg-amber-dim text-amber border border-amber/30" : d.priority === "scheduled" ? "bg-blue-dim text-blue border border-blue/30" : "bg-bg-2 text-ink-3 border border-hair-2";
+                        const daysCls = d.daysRemaining < 0 ? "text-red font-bold" : d.daysRemaining <= 7 ? "text-amber font-semibold" : "text-ink-2";
+                        return (
+                          <tr key={d.id} className={i < deadlineResult.deadlines.length - 1 ? "border-b border-hair" : ""}>
+                            <td className="px-3 py-2.5">
+                              <span className={`font-mono text-9 font-bold uppercase px-1.5 py-px rounded ${priCls}`}>{d.priority}</span>
+                            </td>
+                            <td className="px-3 py-2.5 text-ink-0 max-w-[200px]">
+                              <div className="font-medium leading-snug">{d.title}</div>
+                              <div className="text-9 font-mono text-ink-3 mt-0.5">{d.regulatoryBasis}</div>
+                            </td>
+                            <td className="px-3 py-2.5 font-mono text-10 text-ink-2 whitespace-nowrap">{d.dueDate}</td>
+                            <td className={`px-3 py-2.5 font-mono text-11 whitespace-nowrap ${daysCls}`}>
+                              {d.daysRemaining < 0 ? `${Math.abs(d.daysRemaining)}d overdue` : `${d.daysRemaining}d`}
+                            </td>
+                            <td className="px-3 py-2.5 text-10 text-ink-1 max-w-[200px] leading-relaxed">{d.action}</td>
+                            <td className="px-3 py-2.5 text-9 font-mono text-ink-3 max-w-[140px]">{d.penaltyExposure ?? "—"}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="text-9 text-ink-3 font-mono mt-2">
+                  Generated {new Date(deadlineResult.generatedAt).toLocaleString("en-GB")} · {deadlineResult.deadlines.length} deadlines computed
+                </div>
+              </div>
+            )}
+          </div>
+
         </div>
       )}
     </ModuleLayout>
