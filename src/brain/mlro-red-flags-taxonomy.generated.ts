@@ -1,6 +1,6 @@
 // Hawkeye Sterling — MLRO red-flag taxonomy.
 // AUTO-GENERATED from operator input (scripts/gen-redflags.cjs).
-// 7 buckets × ~700 flags. Stable ids, human labels.
+// 7 buckets × 719 flags. Stable ids, human labels.
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 export type RedFlagBucket = 'transaction' | 'customer' | 'supplier' | 'geographic' | 'product' | 'behavioral' | 'regulatory';
