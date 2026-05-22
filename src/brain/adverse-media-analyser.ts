@@ -30,6 +30,52 @@ import type { TaranisItem } from '../integrations/taranisAi.js';
 
 export type AdverseMediaSeverity = 'critical' | 'high' | 'medium' | 'low' | 'clear';
 
+// G2: Source credibility tier.
+// tier1 = global wire services + government regulators (high evidential weight)
+// tier2 = major national press + established regional press
+// tier3 = trade/specialist publications
+// tier4 = unknown, blog, social media, paywalled (low evidential weight)
+export type SourceCredibilityTier = 'tier1' | 'tier2' | 'tier3' | 'tier4';
+
+// G2: Known source → credibility tier mapping.
+// Arabic-language tier1 sources are included (Al Jazeera, Al Arabiya,
+// Asharq Al-Awsat, Arab News) per FATF guidance on MENA media coverage.
+const SOURCE_TIER_MAP: Record<string, SourceCredibilityTier> = {
+  // Wire services / global (tier 1)
+  reuters: 'tier1', 'ap.org': 'tier1', apnews: 'tier1', afp: 'tier1',
+  bloomberg: 'tier1', 'ft.com': 'tier1', 'wsj.com': 'tier1',
+  'nytimes.com': 'tier1', bbc: 'tier1', 'theguardian.com': 'tier1',
+  // UAE/GCC regulators and government (tier 1)
+  'cbuae.gov.ae': 'tier1', 'moec.gov.ae': 'tier1', 'uaefiu.gov.ae': 'tier1',
+  'fatf-gafi.org': 'tier1', 'un.org': 'tier1', 'ofac.treas.gov': 'tier1',
+  'sec.gov': 'tier1', 'fca.org.uk': 'tier1', 'esma.europa.eu': 'tier1',
+  // Arabic tier 1 — established regional press
+  aljazeera: 'tier1', 'alarabiya.net': 'tier1', 'asharq-e.com': 'tier1',
+  'arabnews.com': 'tier1', 'thenationalnews.com': 'tier1',
+  // Tier 2 — major national/regional press
+  'khaleejionline.com': 'tier2', 'khaleejtimes.com': 'tier2',
+  'gulfnews.com': 'tier2', 'zawya.com': 'tier2', 'menafn.com': 'tier2',
+  'thehansindia.com': 'tier2', 'hindustantimes.com': 'tier2',
+  'dawn.com': 'tier2', 'thetimes.co.uk': 'tier2', 'telegraph.co.uk': 'tier2',
+  'spiegel.de': 'tier2', 'lemonde.fr': 'tier2', 'corriere.it': 'tier2',
+  // OCCRP/investigative (tier 2 — corroborate before escalating)
+  'occrp.org': 'tier2', 'icij.org': 'tier2', 'transparency.org': 'tier2',
+};
+
+/** G2: Classify source credibility tier from domain / source label. */
+export function sourceCredibilityTier(source: string): SourceCredibilityTier {
+  if (!source) return 'tier4';
+  const lower = source.toLowerCase();
+  for (const [key, tier] of Object.entries(SOURCE_TIER_MAP)) {
+    if (lower.includes(key)) return tier;
+  }
+  // Crude heuristics: .gov.* or .int domains are authoritative
+  if (/\.(gov|mil|int)(\/|\.|$)/.test(lower)) return 'tier1';
+  // Established TLDs with subpath suggest a real publication
+  if (/\.(com|net|org|co\.[a-z]{2})(\/|$)/.test(lower)) return 'tier3';
+  return 'tier4';
+}
+
 export interface AdverseMediaFinding {
   itemId: string;
   title: string;
@@ -37,6 +83,8 @@ export interface AdverseMediaFinding {
   published: string;
   url?: string;
   severity: AdverseMediaSeverity;
+  // G2: Source credibility tier — drives evidential weight in aggregate score.
+  sourceCredibilityTier: SourceCredibilityTier;
   categories: string[];                // matched ADVERSE_MEDIA_CATEGORIES ids
   keywords: string[];                  // specific keywords that fired
   fatfRecommendations: string[];       // e.g. ['R.3', 'R.6', 'R.20']
@@ -77,6 +125,8 @@ export interface AdverseMediaSubjectVerdict {
   highCount: number;
   mediumCount: number;
   lowCount: number;
+  // G2: count of adverse findings from tier-1 (wire service / regulator) sources.
+  tier1SourceCount?: number;
   sarRecommended: boolean;             // R.20 — filing trigger met
   sarBasis: string;                    // narrative basis for SAR recommendation
   confidenceTier: 'high' | 'medium' | 'low';
@@ -481,6 +531,7 @@ export function analyseAdverseMediaItems(
       published: item.published,
       ...(item.url !== undefined ? { url: item.url } : {}),
       severity,
+      sourceCredibilityTier: sourceCredibilityTier(item.source ?? item.url ?? ""),
       categories: categoryIds,
       keywords,
       fatfRecommendations: fatfRecs,
@@ -572,6 +623,7 @@ export function analyseAdverseMediaItems(
     highCount,
     mediumCount,
     lowCount,
+    tier1SourceCount: adverseFindings.filter((f) => f.sourceCredibilityTier === 'tier1').length,
     sarRecommended,
     sarBasis,
     confidenceTier,
