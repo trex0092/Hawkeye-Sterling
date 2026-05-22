@@ -2,7 +2,6 @@
   "compilerOptions": {
     "target": "ES2022",
     "lib": ["dom", "dom.iterable", "esnext"],
-    "types": ["node"],
     "allowJs": false,
     "skipLibCheck": true,
     "strict": true,
@@ -15,10 +14,13 @@
     "jsx": "preserve",
     "incremental": true,
     "plugins": [{ "name": "next" }],
+    "types": ["node"],
     "paths": {
       "@/*": ["./*"],
       "@brain/*": ["../src/brain/*"],
-      "@integrations/*": ["../src/integrations/*"]
+      "@integrations/*": ["../src/integrations/*"],
+      "@netlify/blobs": ["./node_modules/@netlify/blobs/dist/main.d.ts"],
+      "@netlify/blobs/server": ["./node_modules/@netlify/blobs/dist/server.d.ts"]
     },
     "noUncheckedIndexedAccess": true
   },

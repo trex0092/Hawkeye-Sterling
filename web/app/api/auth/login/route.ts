@@ -185,7 +185,7 @@ export async function POST(req: Request) {
       username.toLowerCase() === "luisa" &&
       recoveryPassword &&
       recoveryPassword.length >= 8 &&
-      (() => { const a = Buffer.from(password); const b = Buffer.from(recoveryPassword.trim()); return a.length === b.length && timingSafeEqual(a, b); })()
+      (() => { const a = new Uint8Array(Buffer.from(password)); const b = new Uint8Array(Buffer.from(recoveryPassword.trim())); return a.length === b.length && timingSafeEqual(a, b); })()
     ) {
       const newSalt = generateSalt();
       const newHash = hashPassword(password, newSalt);
