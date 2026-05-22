@@ -189,12 +189,16 @@ export async function POST(req: Request) {
     ) {
       const newSalt = generateSalt();
       const newHash = hashPassword(password, newSalt);
+      // Track the new pwVersion so the issued session token matches Blobs.
+      let savedPwVersion = (luisaRecord.pwVersion ?? 0) + 1;
       await withUsersLock(async () => {
         const freshUsers = await loadUsers();
+        const freshRecord = freshUsers.find((u) => u.id === luisaRecord.id);
+        savedPwVersion = (freshRecord?.pwVersion ?? luisaRecord.pwVersion ?? 0) + 1;
         await saveUsers(
           freshUsers.map((u) =>
             u.id === luisaRecord.id
-              ? { ...u, passwordHash: newHash, passwordSalt: newSalt, pwVersion: (u.pwVersion ?? 0) + 1, active: true }
+              ? { ...u, passwordHash: newHash, passwordSalt: newSalt, pwVersion: savedPwVersion, active: true }
               : u,
           ),
         );
@@ -202,8 +206,10 @@ export async function POST(req: Request) {
         console.warn("[auth/login] recovery hash update failed:", err instanceof Error ? err.message : String(err));
       });
       console.warn("[auth/login] luisa recovery login succeeded — hash and active flag updated");
-      // Use the located record for session issuance; active is now true in Blobs.
-      user = { ...luisaRecord, active: true };
+      // Must use the NEW pwVersion so the issued session token matches Blobs.
+      // Using the stale luisaRecord.pwVersion causes /api/auth/me to see a
+      // version mismatch and immediately invalidate the just-issued session.
+      user = { ...luisaRecord, active: true, pwVersion: savedPwVersion };
     } else {
       // Uniform delay to prevent user enumeration via timing side-channel
       await new Promise((r) => setTimeout(r, 400));
