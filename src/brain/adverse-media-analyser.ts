@@ -30,6 +30,57 @@ import type { TaranisItem } from '../integrations/taranisAi.js';
 
 export type AdverseMediaSeverity = 'critical' | 'high' | 'medium' | 'low' | 'clear';
 
+// G2: Source credibility tier.
+// tier1 = global wire services + government regulators (high evidential weight)
+// tier2 = major national press + established regional press
+// tier3 = trade/specialist publications
+// tier4 = unknown, blog, social media, paywalled (low evidential weight)
+export type SourceCredibilityTier = 'tier1' | 'tier2' | 'tier3' | 'tier4';
+
+// G2: Known source → credibility tier mapping.
+// Arabic-language tier1 sources are included (Al Jazeera, Al Arabiya,
+// Asharq Al-Awsat, Arab News) per FATF guidance on MENA media coverage.
+const SOURCE_TIER_MAP: Record<string, SourceCredibilityTier> = {
+  // Wire services / global (tier 1)
+  reuters: 'tier1', 'ap.org': 'tier1', apnews: 'tier1', afp: 'tier1',
+  bloomberg: 'tier1', 'ft.com': 'tier1', 'wsj.com': 'tier1',
+  'nytimes.com': 'tier1', bbc: 'tier1', 'theguardian.com': 'tier1',
+  // UAE/GCC regulators and government (tier 1)
+  'cbuae.gov.ae': 'tier1', 'moec.gov.ae': 'tier1', 'uaefiu.gov.ae': 'tier1',
+  'fatf-gafi.org': 'tier1', 'un.org': 'tier1', 'ofac.treas.gov': 'tier1',
+  'sec.gov': 'tier1', 'fca.org.uk': 'tier1', 'esma.europa.eu': 'tier1',
+  // Arabic tier 1 — established regional press
+  aljazeera: 'tier1', 'alarabiya.net': 'tier1', 'asharq-e.com': 'tier1',
+  'arabnews.com': 'tier1', 'thenationalnews.com': 'tier1',
+  // Tier 2 — major national/regional press
+  'khaleejionline.com': 'tier2', 'khaleejtimes.com': 'tier2',
+  'gulfnews.com': 'tier2', 'zawya.com': 'tier2', 'menafn.com': 'tier2',
+  'thehansindia.com': 'tier2', 'hindustantimes.com': 'tier2',
+  'dawn.com': 'tier2', 'thetimes.co.uk': 'tier2', 'telegraph.co.uk': 'tier2',
+  'spiegel.de': 'tier2', 'lemonde.fr': 'tier2', 'corriere.it': 'tier2',
+  // OCCRP/investigative (tier 2 — corroborate before escalating)
+  'occrp.org': 'tier2', 'icij.org': 'tier2', 'transparency.org': 'tier2',
+  // G2: Turkish-language press — relevant for Istanbul Gold Refinery AML typology
+  // and FATF grey-list coverage of Turkey (2021-2024 action plan).
+  'hurriyet.com.tr': 'tier2', 'sabah.com.tr': 'tier2', 'dunya.com': 'tier2',
+  'haberturk.com': 'tier2', 'trtworld.com': 'tier1', 'aljazeera.com.tr': 'tier2',
+  'cumhuriyet.com.tr': 'tier2', 'bianet.org': 'tier2', 'duvarenglish.com': 'tier2',
+};
+
+/** G2: Classify source credibility tier from domain / source label. */
+export function sourceCredibilityTier(source: string): SourceCredibilityTier {
+  if (!source) return 'tier4';
+  const lower = source.toLowerCase();
+  for (const [key, tier] of Object.entries(SOURCE_TIER_MAP)) {
+    if (lower.includes(key)) return tier;
+  }
+  // Crude heuristics: .gov.* or .int domains are authoritative
+  if (/\.(gov|mil|int)(\/|\.|$)/.test(lower)) return 'tier1';
+  // Established TLDs with subpath suggest a real publication
+  if (/\.(com|net|org|co\.[a-z]{2})(\/|$)/.test(lower)) return 'tier3';
+  return 'tier4';
+}
+
 export interface AdverseMediaFinding {
   itemId: string;
   title: string;
@@ -37,6 +88,8 @@ export interface AdverseMediaFinding {
   published: string;
   url?: string;
   severity: AdverseMediaSeverity;
+  // G2: Source credibility tier — drives evidential weight in aggregate score.
+  sourceCredibilityTier: SourceCredibilityTier;
   categories: string[];                // matched ADVERSE_MEDIA_CATEGORIES ids
   keywords: string[];                  // specific keywords that fired
   fatfRecommendations: string[];       // e.g. ['R.3', 'R.6', 'R.20']
@@ -46,6 +99,11 @@ export interface AdverseMediaFinding {
   narrative: string;                   // single MLRO-grade finding line
   relevanceScore: number;              // 0-1 from Taranis (or 1 if unavailable)
   isSarCandidate: boolean;             // meets R.20 reporting threshold
+  /** G4: GDELT sentiment tone for this article (-100 very negative, +100 very positive).
+   *  Present only when article originates from GDELT. More negative = stronger adverse signal. */
+  gdeltToneScore?: number;
+  /** G4: Tone-bias note surfaced when tone caused a severity upgrade or relevance boost. */
+  toneNote?: string;
   /** Sibling outlets that ran the same story (de-confliction). The lead
    *  outlet's source field stays in `source`; the rest are listed here so
    *  the operator can trace coverage breadth without inflating hit counts. */
@@ -77,6 +135,8 @@ export interface AdverseMediaSubjectVerdict {
   highCount: number;
   mediumCount: number;
   lowCount: number;
+  // G2: count of adverse findings from tier-1 (wire service / regulator) sources.
+  tier1SourceCount?: number;
   sarRecommended: boolean;             // R.20 — filing trigger met
   sarBasis: string;                    // narrative basis for SAR recommendation
   confidenceTier: 'high' | 'medium' | 'low';
@@ -93,6 +153,8 @@ export interface AdverseMediaSubjectVerdict {
   }>;
   analysedAt: string;
   modesCited: string[];                // all mode ids cited across findings
+  /** G4: Note when GDELT tone scores influenced severity upgrades in this batch. */
+  toneBiasNote?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -198,6 +260,22 @@ const CATEGORY_PROFILES: Record<string, CategoryProfile> = {
     predicates: ['ESG/responsible-sourcing controversy'],
     modes: ['environmental_predicate', 'oecd_ddg_annex', 'provenance_trace'],
     doctrines: ['oecd_ddg', 'fatf_r3_env_predicate'],
+  },
+  // G7: Reputational risk — non-criminal adverse coverage.
+  reputational: {
+    severity: 'low',
+    fatfRecs: ['R.10', 'R.11'],
+    predicates: ['Reputational risk / non-criminal adverse coverage'],
+    modes: ['completeness_audit', 'documentation_quality'],
+    doctrines: ['fatf_rba'],
+  },
+  // G7: PEP / Political Exposure adverse media — FATF R.12 / R.20.
+  pep_adverse: {
+    severity: 'medium',
+    fatfRecs: ['R.12', 'R.13', 'R.20'],
+    predicates: ['PEP / political exposure adverse media', 'Political risk predicate'],
+    modes: ['pep_domestic_minister', 'pep_soe_network', 'link_analysis'],
+    doctrines: ['uae_fdl_10_2025', 'fatf_rba', 'wolfsberg_faq'],
   },
 };
 
@@ -431,6 +509,48 @@ function deconflictItems(items: TaranisItem[]): {
 }
 
 // ---------------------------------------------------------------------------
+// G4: GDELT tone score as weighted secondary signal
+// ---------------------------------------------------------------------------
+// GDELT tone: -100 (very negative) to +100 (very positive).
+// Negative tone amplifies adverse signal confidence; positive dampens it.
+// Very negative tone (< -5) can upgrade severity by one level (max medium→high;
+// never forces critical — human MLRO review required for that threshold).
+
+function applyToneWeight(
+  severity: AdverseMediaSeverity,
+  relevanceScore: number,
+  tone: number | undefined,
+): { adjustedSeverity: AdverseMediaSeverity; adjustedRelevance: number; toneNote: string | undefined } {
+  if (tone === undefined || severity === 'clear') {
+    return { adjustedSeverity: severity, adjustedRelevance: relevanceScore, toneNote: undefined };
+  }
+
+  // Relevance multiplier: negative tone boosts confidence; positive dampens.
+  const amplifier = tone < 0
+    ? Math.min((-tone / 15) * 0.5, 0.5)   // up to +50% boost at tone = -15
+    : -(tone / 30) * 0.2;                  // up to -20% reduction at tone = +30
+  const adjustedRelevance = Math.min(Math.max(relevanceScore * (1 + amplifier), 0), 1);
+
+  // Severity upgrade: very negative tone bumps severity by one level (low→medium, medium→high).
+  let adjustedSeverity = severity;
+  let toneNote: string | undefined;
+
+  if (tone < -7 && (severity === 'low' || severity === 'medium')) {
+    if (severity === 'low') {
+      adjustedSeverity = 'medium';
+      toneNote = `Severity upgraded low→medium: GDELT tone ${tone.toFixed(1)} (strong negative sentiment corroborates adverse content).`;
+    } else if (severity === 'medium') {
+      adjustedSeverity = 'high';
+      toneNote = `Severity upgraded medium→high: GDELT tone ${tone.toFixed(1)} (very negative sentiment corroborates high-risk content — MLRO review required).`;
+    }
+  } else if (tone < 0) {
+    toneNote = `GDELT tone ${tone.toFixed(1)} (negative sentiment confirms adverse signal; relevance adjusted to ${adjustedRelevance.toFixed(2)}).`;
+  }
+
+  return { adjustedSeverity, adjustedRelevance, toneNote };
+}
+
+// ---------------------------------------------------------------------------
 // Main export
 // ---------------------------------------------------------------------------
 
@@ -468,10 +588,14 @@ export function analyseAdverseMediaItems(
       for (const d of profile.doctrines) if (!doctrines.includes(d)) doctrines.push(d);
     }
 
-    const narrative = buildFindingNarrative(subject, item, severity, categoryIds, keywords, fatfRecs);
+    // G4: Apply GDELT tone as weighted secondary signal.
+    const rawRelevance = item.relevanceScore ?? 1;
+    const { adjustedSeverity, adjustedRelevance, toneNote } = applyToneWeight(severity, rawRelevance, item.tone);
+
+    const narrative = buildFindingNarrative(subject, item, adjustedSeverity, categoryIds, keywords, fatfRecs);
 
     // FATF R.20 — individual item SAR candidate flag
-    const isSarCandidate = severity === 'critical' || severity === 'high';
+    const isSarCandidate = adjustedSeverity === 'critical' || adjustedSeverity === 'high';
 
     const sibling = alsoSeenIn.get(item.id) ?? [];
     adverseFindings.push({
@@ -480,7 +604,8 @@ export function analyseAdverseMediaItems(
       source: item.source,
       published: item.published,
       ...(item.url !== undefined ? { url: item.url } : {}),
-      severity,
+      severity: adjustedSeverity,
+      sourceCredibilityTier: sourceCredibilityTier(item.source ?? item.url ?? ""),
       categories: categoryIds,
       keywords,
       fatfRecommendations: fatfRecs,
@@ -488,8 +613,10 @@ export function analyseAdverseMediaItems(
       reasoningModes: modes,
       doctrineIds: doctrines,
       narrative,
-      relevanceScore: item.relevanceScore ?? 1,
+      relevanceScore: adjustedRelevance,
       isSarCandidate,
+      ...(item.tone !== undefined ? { gdeltToneScore: item.tone } : {}),
+      ...(toneNote ? { toneNote } : {}),
       ...(sibling.length > 0 ? { aggregatedSources: sibling, dedupeCount: sibling.length } : {}),
     } as AdverseMediaFinding);
   }
@@ -557,6 +684,12 @@ export function analyseAdverseMediaItems(
     };
   }).sort((a, b) => SEVERITY_ORDER[b.severity] - SEVERITY_ORDER[a.severity]);
 
+  // G4: Surface a batch-level note if any tone-based severity upgrade occurred.
+  const toneUpgrades = adverseFindings.filter((f) => f.toneNote?.includes('upgraded'));
+  const toneBiasNote = toneUpgrades.length > 0
+    ? `${toneUpgrades.length} finding(s) had severity upgraded based on GDELT tone signal. Review toneNote on individual findings.`
+    : undefined;
+
   return {
     subject,
     riskTier,
@@ -572,6 +705,7 @@ export function analyseAdverseMediaItems(
     highCount,
     mediumCount,
     lowCount,
+    tier1SourceCount: adverseFindings.filter((f) => f.sourceCredibilityTier === 'tier1').length,
     sarRecommended,
     sarBasis,
     confidenceTier,
@@ -583,6 +717,7 @@ export function analyseAdverseMediaItems(
     categoryBreakdown,
     analysedAt,
     modesCited: allModes,
+    ...(toneBiasNote ? { toneBiasNote } : {}),
   };
 }
 

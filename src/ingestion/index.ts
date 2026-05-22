@@ -16,23 +16,28 @@ import { caOsfiAdapter } from './sources/ca-osfi.js';
 import { chSecoAdapter } from './sources/ch-seco.js';
 import { auDfatAdapter } from './sources/au-dfat.js';
 import { jpMofAdapter } from './sources/jp-mof.js';
+import { jpMetiAdapter } from './sources/jp-meti.js';
+import { interpolRedAdapter } from './sources/interpol.js';
+import { bisEntityAdapter } from './sources/bis-entity.js';
+import { uaeMoeDesignatedAdapter } from './sources/uae-moe-designated.js';
+import { fincen314aAdapter } from './sources/fincen-314a.js';
 
 // Registry consumed by netlify/functions/refresh-lists.ts cron.
 // Order is informational; each adapter runs independently.
 //
 // Jurisdiction coverage as of 2026-05:
 //   · UN (Security Council Consolidated)
-//   · US (OFAC SDN + Consolidated Non-SDN)
+//   · US (OFAC SDN + Consolidated Non-SDN + BIS Entity List)
 //   · EU (CFSP consolidated)
 //   · UK (OFSI consolidated)
-//   · CA (OSFI / SEMA consolidated)        ← added
-//   · CH (SECO Gesamtliste)                ← added
+//   · CA (OSFI / SEMA consolidated)
+//   · CH (SECO Gesamtliste)
+//   · AU (DFAT Consolidated)
+//   · JP (MOF sanctions + METI export controls)
 //   · FATF (call-for-action / monitoring)
-//   · UAE (EOCN + Local Terrorist List)
-//
-// Australia (DFAT) and Japan (MOF) are documented system-card coverage
-// but require XLSX / PDF parsing to ingest — deferred until an
-// xlsx/pdf-parser dependency is added.
+//   · UAE (EOCN + Local Terrorist List + MoE Designated)
+//   · Interpol (Red Notices)
+//   · FinCEN (314a advisories)
 export const SOURCE_ADAPTERS: readonly SourceAdapter[] = [
   unConsolidatedAdapter,
   ofacSdnAdapter,
@@ -41,9 +46,14 @@ export const SOURCE_ADAPTERS: readonly SourceAdapter[] = [
   ukOfsiAdapter,
   caOsfiAdapter,
   chSecoAdapter,
-  auDfatAdapter,      // opt-in: requires 'exceljs' for XLSX parsing
-  jpMofAdapter,       // opt-in: requires 'exceljs' + FEED_JP_MOF env (per-country URLs)
+  auDfatAdapter,              // opt-in: requires 'exceljs' for XLSX parsing
+  jpMofAdapter,               // opt-in: requires 'exceljs' + FEED_JP_MOF env (per-country URLs)
+  jpMetiAdapter,              // opt-in: set FEED_JP_METI for live data; static seed active
   fatfAdapter,
-  uaeEocnXlsxAdapter,  // opt-in: XLSX-fetched EOCN list from uaeiec.gov.ae
-  uaeLtlXlsxAdapter,   // opt-in: XLSX-fetched UAE Terrorist List (FileID c2b2f915-...)
+  uaeEocnXlsxAdapter,         // opt-in: XLSX-fetched EOCN list from uaeiec.gov.ae
+  uaeLtlXlsxAdapter,          // opt-in: XLSX-fetched UAE Terrorist List
+  uaeMoeDesignatedAdapter,    // opt-in: set FEED_UAE_MOE_DESIGNATED for live data
+  interpolRedAdapter,         // live: Interpol public Red Notice API (no key required)
+  bisEntityAdapter,           // opt-in: set FEED_BIS_ENTITY for live BIS Entity List CSV
+  fincen314aAdapter,          // opt-in: set FINCEN_314A_API_KEY + FINCEN_314A_ENDPOINT
 ];

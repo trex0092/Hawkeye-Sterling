@@ -13,7 +13,29 @@ import type { CaseRecord } from "@/lib/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 30;
+export const maxDuration = 60;
+
+// A2: Hard deadline wrapper — prevents Netlify function timeout when the
+// blob store is slow (high fan-out of per-case reads). Returns a degraded
+// response with a partial list rather than hanging until the 30 s hard kill.
+async function withDeadline<T>(ms: number, label: string, fn: () => Promise<T>, fallback: T): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const race = Promise.race([
+    fn(),
+    new Promise<T>((_resolve, reject) => {
+      timer = setTimeout(() => reject(new Error(`${label} deadline ${ms}ms exceeded`)), ms);
+    }),
+  ]);
+  try {
+    const result = await race;
+    return result;
+  } catch (err) {
+    console.warn(`[cases] ${label}:`, err instanceof Error ? err.message : String(err));
+    return fallback;
+  } finally {
+    if (timer !== undefined) clearTimeout(timer);
+  }
+}
 
 // GET  /api/cases
 //   → { cases: CaseRecord[] } from the server vault. Empty array on a
@@ -60,7 +82,7 @@ async function handleGet(req: Request): Promise<NextResponse> {
         );
       }
 
-      let cases = await loadAllCases(tenant);
+      let cases = await withDeadline(45_000, "loadAllCases(regulator)", () => loadAllCases(tenant), []);
       // If token has case-scope entries, restrict to those cases only.
       if (allowedCaseIds.length > 0) {
         cases = cases.filter((c) => allowedCaseIds.includes(c.id));
@@ -91,7 +113,7 @@ async function handleGet(req: Request): Promise<NextResponse> {
   const limit = Math.min(parseInt(url.searchParams.get("limit") ?? "500", 10) || 500, 500);
   const offset = Math.max(parseInt(url.searchParams.get("offset") ?? "0", 10) || 0, 0);
 
-  let cases = await loadAllCases(tenant);
+  let cases = await withDeadline(45_000, "loadAllCases", () => loadAllCases(tenant), []);
 
   if (statusFilter && statusFilter !== "all") {
     cases = cases.filter((c) => c.status === statusFilter);
@@ -205,7 +227,7 @@ async function handlePut(req: Request): Promise<NextResponse> {
   ).catch((err) =>
     console.warn("[cases] audit chain write failed:", err instanceof Error ? err.message : String(err)),
   );
-  const saved = await loadAllCases(tenant);
+  const saved = await withDeadline(45_000, "loadAllCases(put)", () => loadAllCases(tenant), []);
   return NextResponse.json(
     { ok: true, tenant, cases: saved },
     { headers: gate.headers },

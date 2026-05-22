@@ -71,17 +71,33 @@ async function loadCorpus(): Promise<PepRecord[]> {
   }
 
   // Try Netlify Blobs (populated by daily pep-refresh scheduler).
+  // Also loads pep/archive.json — 12-month historical retention (E6).
+  // Archived PEPs are labelled with topic "former_pep" so callers can
+  // distinguish them from active designations (FATF R.12).
   try {
     const store = getStore(BLOBS_STORE);
-    const raw = await store.get("pep/current.json", { type: "text" });
+    const [raw, archRaw] = await Promise.all([
+      store.get("pep/current.json", { type: "text" }).catch(() => null),
+      store.get("pep/archive.json", { type: "text" }).catch(() => null),
+    ]);
+    const records: PepRecord[] = [];
     if (raw && raw.length > 100) {
-      const records = JSON.parse(raw) as PepRecord[];
-      if (records.length > 0) {
-        cachedRecords = records;
-        cacheLoadedAt = Date.now();
-        cacheSource = "blobs";
-        return records;
-      }
+      const current = JSON.parse(raw) as PepRecord[];
+      records.push(...current);
+    }
+    if (archRaw && archRaw.length > 2) {
+      const archived = (JSON.parse(archRaw) as Array<PepRecord & { removedAt?: string }>)
+        .map((a) => ({
+          ...a,
+          topics: [...(a.topics ?? []), "former_pep"],
+        }));
+      records.push(...archived);
+    }
+    if (records.length > 0) {
+      cachedRecords = records;
+      cacheLoadedAt = Date.now();
+      cacheSource = "blobs";
+      return records;
     }
   } catch (err) {
     console.warn("[pep-match] blob store unavailable — falling through to CDN:", err instanceof Error ? err.message : String(err));

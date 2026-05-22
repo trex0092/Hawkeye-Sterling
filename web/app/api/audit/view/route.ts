@@ -314,7 +314,11 @@ async function handleGet(req: Request): Promise<NextResponse> {
   // ── Per-screening-ID view path ────────────────────────────────────────────
   const secret = getChainSecret("default");
 
-  const allEntries = await loadAllEntries();
+  // A3: cap at 1 000 entries to prevent timeout on large chains. Entries are
+  // stored with zero-padded keys so the most-recent 1 000 are always fetched.
+  // If the screening ID predates this window, surface a diagnostic note.
+  const ENTRY_CAP = 1_000;
+  const allEntries = await loadAllEntries(ENTRY_CAP);
   // Filter to entries whose `target` matches the requested screening ID.
   const entries = allEntries.filter((e) => e.target === screeningId);
 
@@ -324,6 +328,9 @@ async function handleGet(req: Request): Promise<NextResponse> {
         ok: false,
         error: `No audit entries found for screeningId '${screeningId}'.`,
         screeningId,
+        note: allEntries.length >= ENTRY_CAP
+          ? `Search was limited to the ${ENTRY_CAP} most recent audit entries. The screening ID may exist in an older part of the chain. Use GET /api/audit-trail for full-chain export.`
+          : undefined,
       },
       { status: 404, headers: gateHeaders },
     );

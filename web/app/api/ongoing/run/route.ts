@@ -48,6 +48,7 @@ const quickScreen = _quickScreen as QuickScreenFn;
 import { getJson, listKeys, setJson } from "@/lib/server/store";
 import type { ScreeningHistoryEntry } from "@/lib/types";
 import { postWebhook } from "@/lib/server/webhook";
+import { deliverWebhookEvent } from "@/app/api/webhook/push/route";
 import { ESCALATION_DELTA, shouldEscalate } from "@/lib/server/ongoing-escalation";
 import { asanaGids } from "@/lib/server/asanaConfig";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
@@ -756,6 +757,27 @@ export async function POST(req: Request): Promise<NextResponse> {
         generatedAt: runAt,
         source: "hawkeye-sterling",
       });
+
+      // H1: Deliver to tenant-registered webhooks (multi-endpoint registry).
+      // Determine the most specific event type from the hit list IDs — EOCN
+      // hits require real-time delivery under Cabinet Resolution 74/2020 Art.4.
+      if (newHits.length > 0) {
+        const tenant = process.env["DEFAULT_TENANT"] ?? "default";
+        const hitListIds = new Set(newHits.map((h) => h.listId));
+        const isEocnHit = hitListIds.has("uae_eocn");
+        const eventType = isEocnHit ? "eocn_hit" : "sanctions_hit";
+        void deliverWebhookEvent(tenant, eventType, {
+          subject: s.name,
+          subjectId: s.id,
+          listId: newHits[0]?.listId ?? "",
+          listRef: newHits[0]?.listRef ?? "",
+          score: adjustedScore,
+          severity: adjustedSeverity,
+          caseId: s.caseId,
+          newHitCount: newHits.length,
+          escalated,
+        }).catch((err) => console.warn("[ongoing/run] deliverWebhookEvent failed:", err instanceof Error ? err.message : String(err)));
+      }
 
       // Advance the schedule clock. thrice_daily pins to the next fixed
       // Dubai slot (08:30 / 15:00 / 17:30); everything else uses a simple

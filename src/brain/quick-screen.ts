@@ -45,6 +45,13 @@ export interface QuickScreenCandidate {
 
 export type QuickScreenSeverity = 'clear' | 'low' | 'medium' | 'high' | 'critical';
 
+// D3: low-confidence flag threshold — results below this base-score are
+// never eligible for HIGH/CRITICAL classification.
+export const MIN_BASE_SCORE_FOR_HIGH = 0.60;
+// D4: alias fragments shorter than this character count trigger a cap at
+// MEDIUM regardless of composite score.
+export const MIN_ALIAS_LENGTH_FOR_HIGH = 4;
+
 // How well the subject's DOB aligns with the candidate's DOB.
 // 'exact'    — full year+month+day agreement → strong confirmation
 // 'year'     — year matches (partial info) → mild confirmation
@@ -125,6 +132,11 @@ export interface QuickScreenResult {
   candidatesChecked: number;
   durationMs: number;
   generatedAt: string;
+  // D3: true when the best hit's base name-match score is below MIN_BASE_SCORE_FOR_HIGH
+  // (0.60) or the match was driven by a short alias fragment (< 4 chars). Signals
+  // "PROBABLE FALSE POSITIVE — analyst review required" without blocking the hit.
+  lowConfidenceFlag?: boolean;
+  lowConfidenceReason?: string;
   // Structured list coverage — provides the detail behind `listsChecked`.
   // listIds:  every listId seen in the candidate pool (sorted).
   // listBreakdown is present only when there are hits (lists with matches).
@@ -302,10 +314,31 @@ function matchDOB(subjectDob: string, candidateDob: string): { match: DobMatch; 
 
 // ── Severity ──────────────────────────────────────────────────────────────────
 
-export function severityFromScore(topScore: number, hitCount: number): QuickScreenSeverity {
+export interface SeverityOpts {
+  // D1/D2: raw name-matching score (0..1) before discriminator adjustments.
+  // Results below MIN_BASE_SCORE_FOR_HIGH (0.60) are capped at MEDIUM.
+  bestBaseScore?: number;
+  // D4: length of the alias fragment that triggered the match. When < 4 chars
+  // the hit is capped at MEDIUM regardless of composite score.
+  aliasMatchLength?: number;
+}
+
+export function severityFromScore(
+  topScore: number,
+  hitCount: number,
+  opts?: SeverityOpts,
+): QuickScreenSeverity {
   if (hitCount === 0) return 'clear';
-  if (topScore >= 95) return 'critical';
-  if (topScore >= 85) return 'high';
+
+  // D1/D4 gate: HIGH and CRITICAL require either
+  //   (a) bestBaseScore >= 0.60  AND
+  //   (b) alias match on a fragment of >= 4 characters (or a primary-name match).
+  const baseScore = opts?.bestBaseScore ?? 1; // default 1 = no gate (backward compat)
+  const aliasLen = opts?.aliasMatchLength ?? 99; // default 99 = no gate
+  const canBeHighOrCritical = baseScore >= MIN_BASE_SCORE_FOR_HIGH && aliasLen >= MIN_ALIAS_LENGTH_FOR_HIGH;
+
+  if (topScore >= 95 && canBeHighOrCritical) return 'critical';
+  if (topScore >= 85 && canBeHighOrCritical) return 'high';
   if (topScore >= 70) return 'medium';
   return 'low';
 }
@@ -454,18 +487,24 @@ export function quickScreen(
       // Entity-type transparency — always record candidate entity type so
       // callers can distinguish direct designations from entity-association hits.
       if (cand.entityType !== undefined) hit.candidateEntityType = cand.entityType;
-      // Entity-type mismatch penalty — applied AFTER threshold so the hit still
-      // surfaces (for MLRO review) but score is penalised to reflect the
-      // indirect nature of the match (e.g. individual named within an org record).
+      // D5: Entity-type mismatch penalty — extended to cover all type pairs,
+      // not just person-vs-org. An organisation cannot be the same entity as
+      // an individual/vessel/aircraft. Apply a 0.6× penalty on any mismatch
+      // so the hit surfaces for MLRO review but cannot auto-escalate to HIGH.
       if (subject.entityType && cand.entityType && subject.entityType !== cand.entityType) {
-        const personVsOrg =
-          (subject.entityType === 'individual' && cand.entityType === 'organisation') ||
-          (subject.entityType === 'organisation' && cand.entityType === 'individual');
-        if (personVsOrg) {
-          hit.score = Math.round(hit.score * 0.6 * 1e6) / 1e6; // ×0.6, avoid float noise
-          hit.entityTypeMismatch = true;
-          hit.reason = `entity-association · ${hit.reason}`;
-        }
+        hit.score = Math.round(hit.score * 0.6 * 1e6) / 1e6;
+        hit.entityTypeMismatch = true;
+        hit.reason = `entity-type-mismatch(${subject.entityType}≠${cand.entityType}) · ${hit.reason}`;
+      }
+
+      // D2: Secondary identifier disambiguation gate before HIGH severity.
+      // If secondary identifiers are available but CONFLICT, downgrade the
+      // hit's effective score so it cannot reach HIGH without manual review.
+      // Conflicts already handled by DOB/nationality/nationalId discriminators
+      // above; this block adds an explicit note so the MLRO sees the conflict.
+      if (hit.dobMatch === 'conflict' || hit.nationalIdMatch === false) {
+        const conflictNote = hit.dobMatch === 'conflict' ? 'DOB conflict' : 'ID conflict';
+        hit.reason = `${conflictNote} (secondary identifier mismatch — review required) · ${hit.reason}`;
       }
       if (breakdown && bestEns) {
         const seen = new Set<string>();
@@ -514,7 +553,26 @@ export function quickScreen(
   const activeHits = clipped.filter((h) => h.autoResolution !== 'auto-dismissed');
   const topRaw = activeHits[0]?.score ?? 0;
   const topScore = Math.round(topRaw * 100);
-  const severity = severityFromScore(topScore, activeHits.length);
+  const topHit = activeHits[0];
+  const topBaseScore = topHit?.baseScore ?? 1;
+  const topAliasLen = topHit?.matchedAlias !== undefined ? (topHit.matchedAlias.length) : 99;
+  const severity = severityFromScore(topScore, activeHits.length, {
+    bestBaseScore: topBaseScore,
+    aliasMatchLength: topAliasLen,
+  });
+
+  // D3: compute lowConfidenceFlag — signals PROBABLE FALSE POSITIVE
+  let lowConfidenceFlag = false;
+  let lowConfidenceReason: string | undefined;
+  if (activeHits.length > 0) {
+    if (topBaseScore < MIN_BASE_SCORE_FOR_HIGH) {
+      lowConfidenceFlag = true;
+      lowConfidenceReason = `base name-match score ${Math.round(topBaseScore * 100)}% below ${Math.round(MIN_BASE_SCORE_FOR_HIGH * 100)}% minimum for HIGH classification`;
+    } else if (topAliasLen < MIN_ALIAS_LENGTH_FOR_HIGH) {
+      lowConfidenceFlag = true;
+      lowConfidenceReason = `match driven by short alias fragment (${topAliasLen} chars) — secondary identifier confirmation required`;
+    }
+  }
 
   // ── Weighted scoring across all hits ──────────────────────────────────────
   // Build per-list summary; use the highest-scoring hit per list.
@@ -563,6 +621,7 @@ export function quickScreen(
     candidatesChecked: candidates.length,
     durationMs: Math.max(0, clock() - start),
     generatedAt: now(),
+    ...(lowConfidenceFlag ? { lowConfidenceFlag, lowConfidenceReason } : {}),
     ...(totalWeightedScore !== undefined ? { totalWeightedScore } : {}),
     ...(confidenceScore !== undefined ? { confidenceScore } : {}),
     ...(clipped.length > 0 ? { listBreakdown } : {}),
