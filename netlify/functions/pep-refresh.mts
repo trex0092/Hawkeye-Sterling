@@ -165,6 +165,35 @@ export default async function handler(_req: Request): Promise<Response> {
   for (const r of records) if (!prevById.has(r.id)) additions.push(r);
   for (const p of previous) if (!currentIds.has(p.id)) removals.push(p);
 
+  // E6: 12-month historical PEP retention.
+  // Removed PEPs are moved to pep/archive.json with a removedAt timestamp.
+  // Records older than 12 months are pruned. The archive is loaded by
+  // pep-match alongside the live corpus so recently-departed PEPs remain
+  // flagged for the mandatory retention window (FATF R.12 — EDD must
+  // continue for 12 months after an individual leaves a PEP position).
+  interface ArchivedPepRecord extends PepRecord { removedAt: string }
+  const RETENTION_MS = 365 * 24 * 60 * 60 * 1_000;
+  const now12 = Date.now();
+  let archive: ArchivedPepRecord[] = [];
+  try {
+    const archRaw = await store.get("pep/archive.json", { type: "text" });
+    if (archRaw) archive = JSON.parse(archRaw) as ArchivedPepRecord[];
+  } catch { /* first run */ }
+  // Prune records past 12-month retention window.
+  archive = archive.filter((a) => now12 - Date.parse(a.removedAt) < RETENTION_MS);
+  // Add newly removed records (skip those already in the archive).
+  const archiveIds = new Set(archive.map((a) => a.id));
+  for (const r of removals) {
+    if (!archiveIds.has(r.id)) {
+      archive.push({ ...r, removedAt: new Date().toISOString() });
+    }
+  }
+  // Cap archive at 50,000 to guard against unbounded growth.
+  if (archive.length > 50_000) archive = archive.slice(-50_000);
+  try {
+    await store.set("pep/archive.json", JSON.stringify(archive));
+  } catch { /* best-effort */ }
+
   // Persist.
   try {
     await store.set("pep/current.json", JSON.stringify(records));
@@ -180,6 +209,7 @@ export default async function handler(_req: Request): Promise<Response> {
           at: new Date().toISOString(),
           additions: additions.length,
           removals: removals.length,
+          archivedTotal: archive.length,
           sampleAdditions: additions.slice(0, 25),
           sampleRemovals: removals.slice(0, 25),
         }),
@@ -209,6 +239,8 @@ export default async function handler(_req: Request): Promise<Response> {
     total: records.length,
     additions: additions.length,
     removals: removals.length,
+    archived: archive.length,
+    retentionMonths: 12,
     durationMs: Date.now() - startedAt,
   });
 }

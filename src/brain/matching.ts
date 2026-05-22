@@ -661,7 +661,9 @@ export function normaliseForMatch(input: string): string {
   // Normalize taa marbutah → ha (ة → ه) — relevant for female name suffixes
   s = s.replace(/ة/g, 'ه');
   // NFD + strip Latin combining diacritics (accents, umlauts, etc.)
+  // Also map Turkish dotless-i (ı U+0131) which NFD does not decompose.
   s = s.normalize('NFD').replace(/[̀-ͯ]/g, '');
+  s = s.replace(/ı/g, 'i').replace(/İ/g, 'i'); // Turkish: ı→i, İ→i
   // Transliterate Arabic/Cyrillic to Latin
   s = s.replace(/./gu, (ch) => ARABIC_LETTER_MAP[ch] ?? ch);
   s = s.replace(/./gu, (ch) => CYRILLIC_LETTER_MAP[ch] ?? ch);
