@@ -100,7 +100,7 @@ export async function GET(req: Request): Promise<NextResponse> {
         )
       );
       for (const ffr of ffrs) {
-        if (!ffr || ffr.status === "acknowledged" || ffr.status === "released") continue;
+        if (!ffr || ffr.status === "submitted" || ffr.status === "acknowledged" || ffr.status === "released") continue;
         const deadline = Date.parse(ffr.slaDeadline);
         const remaining = deadline - now;
         const breached = remaining <= 0;

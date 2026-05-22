@@ -452,7 +452,7 @@ export function BrainVerdictConsistency({ result }: { result: SuperBrainResult }
   // Only confirmed hits (identifier corroborated) are treated as actionable sanctions
   // entanglement; name-only fuzzy matches are POSSIBLE matches, not designations.
   const confirmedSanctionsHit = result.screen.hits.some(
-    (h) => (h.disambiguationConfidence ?? 50) >= 75,
+    (h) => h.score >= 0.85 && (h.disambiguationConfidence ?? 50) >= 75,
   );
   const hasAnyHit = result.screen.hits.length > 0;
   const pepFired = Boolean(result.pep && result.pep.salience > 0);
@@ -650,7 +650,7 @@ export function BrainRedFlagCombinator({ result }: { result: SuperBrainResult })
   // Name-only fuzzy matches never reach "Confirmed" classification and must not
   // be treated as confirmed sanctions entanglement in combinator logic.
   const confirmedHitCount = result.screen.hits.filter(
-    (h) => (h.disambiguationConfidence ?? 50) >= 75,
+    (h) => h.score >= 0.85 && (h.disambiguationConfidence ?? 50) >= 75,
   ).length;
   const pepFired = Boolean(result.pep && result.pep.salience > 0);
   const amFired = result.adverseMedia.length > 0;
@@ -964,10 +964,10 @@ export function BrainSoWPlausibility({ result }: { result: SuperBrainResult }) {
           : "No PEP classification — SoW cross-check not mandated",
     },
     {
-      ok: !result.screen.hits.some((h) => (h.disambiguationConfidence ?? 50) >= 75),
+      ok: !result.screen.hits.some((h) => h.score >= 0.85 && (h.disambiguationConfidence ?? 50) >= 75),
       text: (() => {
         if (result.screen.hits.length === 0) return "No sanctions hit — SoW path is unconstrained";
-        if (result.screen.hits.some((h) => (h.disambiguationConfidence ?? 50) >= 75))
+        if (result.screen.hits.some((h) => h.score >= 0.85 && (h.disambiguationConfidence ?? 50) >= 75))
           return "Confirmed sanctions entanglement — freeze pathway applies regardless of declared source";
         return "Unconfirmed name-similarity match only — SoW assessment not constrained pending identifier disambiguation";
       })(),

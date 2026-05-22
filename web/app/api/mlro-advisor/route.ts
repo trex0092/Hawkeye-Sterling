@@ -100,6 +100,7 @@ interface Body {
     jurisdiction?: { iso2?: string; name?: string; cahra?: boolean; regimes?: string[] } | null;
     adverseMediaScored?: { total?: number; categoriesTripped?: string[]; compositeScore?: number } | null;
     adverseKeywordGroups?: Array<{ label?: string; count?: number }>;
+    screen?: { hits?: Array<{ score?: number; disambiguationConfidence?: number }> } | null;
     redlines?: { fired?: Array<{ id?: string; label?: string }>; action?: string | null };
     typologies?: { hits?: Array<{ id?: string; name?: string; family?: string; weight?: number }>; compositeScore?: number } | null;
   };
@@ -379,7 +380,9 @@ export async function POST(req: Request): Promise<NextResponse> {
         (body.superBrain?.adverseMediaScored?.total ?? 0) > 0 ||
         (body.superBrain?.adverseKeywordGroups?.length ?? 0) > 0,
       hasSanctionsHit:
-        (body.superBrain?.redlines?.fired?.length ?? 0) > 0,
+        (body.superBrain?.screen?.hits ?? []).some(
+          (h) => (h.score ?? 0) >= 0.85 && (h.disambiguationConfidence ?? 50) >= 75,
+        ),
       topicHints: analysis.topics ?? [],
     }),
     buildRegulatoryUpdatePreamble(analysis.topics ?? []),
