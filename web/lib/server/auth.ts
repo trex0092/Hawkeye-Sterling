@@ -9,7 +9,10 @@ const SESSION_TTL_S = 8 * 60 * 60; // 8 hours
 
 // ── Password helpers ─────────────────────────────────────────────────────────
 
-const SCRYPT_OPTS = { N: 65536, r: 8, p: 1 } as const;
+// maxmem: Node.js's default (32 MB) is below the ~64 MB needed for N=65536, r=8.
+// Setting 128 MB is explicit and prevents ERR_CRYPTO_INVALID_SCRYPT_PARAMS on
+// environments where the default maxmem limit is hit (tests, constrained hosts).
+const SCRYPT_OPTS = { N: 65536, r: 8, p: 1, maxmem: 128 * 1024 * 1024 } as const;
 
 export function generateSalt(): string {
   return randomBytes(16).toString("hex");
