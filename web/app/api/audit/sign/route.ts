@@ -3,6 +3,7 @@ import { createHash, createHmac } from "node:crypto";
 import { withGuard } from "@/lib/server/guard";
 import { getJson, listKeys, setJson } from "@/lib/server/store";
 import { getChainSecret } from "@/lib/server/audit-chain";
+import { verifySession, SESSION_COOKIE } from "@/lib/server/auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -169,6 +170,31 @@ async function handleSign(req: Request): Promise<NextResponse> {
       },
       { status: 403 },
     );
+  }
+
+  // For session-authenticated callers (browser clients), body.actor.role must
+  // not exceed the authenticated session's actual role — prevents analysts from
+  // forging MLRO audit chain entries by supplying a higher role in the body.
+  // API-key-authenticated callers (server-to-server) are trusted and skipped.
+  const rawCookie = req.headers.get("cookie") ?? "";
+  const sessionToken = rawCookie.split(";").map((s) => s.trim())
+    .find((s) => s.startsWith(`${SESSION_COOKIE}=`))
+    ?.slice(SESSION_COOKIE.length + 1);
+  if (sessionToken) {
+    const session = verifySession(sessionToken);
+    if (session) {
+      const sessionPower = ROLE_POWER[session.role] ?? 0;
+      const claimedPower = ROLE_POWER[body.actor.role] ?? 0;
+      if (claimedPower > sessionPower) {
+        return NextResponse.json(
+          {
+            ok: false,
+            error: `actor.role '${body.actor.role}' exceeds authenticated session role '${session.role}'`,
+          },
+          { status: 403 },
+        );
+      }
+    }
   }
 
   // Namespace storage by tenant: "default" uses the legacy paths for backward

@@ -77,6 +77,7 @@ export async function POST(req: Request) {
     const year = new Date().getFullYear();
     const lastNum = existing
       .map((c) => parseInt(c.id.split("-").pop() ?? "0", 10))
+      .filter((n) => Number.isFinite(n))
       .reduce((max, n) => Math.max(max, n), 0);
     const newNum = String(lastNum + 1).padStart(3, "0");
     const newId = `FG-WB-${year}-${newNum}`;

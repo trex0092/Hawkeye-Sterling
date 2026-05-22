@@ -63,8 +63,15 @@ export default function FourEyesPage() {
   const [error, setError] = useState<string | null>(null);
   const [signingDraft, setSigningDraft] = useState<SigningDraft | null>(null);
   const [lastAsanaUrl, setLastAsanaUrl] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [role, setRole] = useState<string>(() => typeof window !== "undefined" ? loadOperatorRole() : "analyst");
   const mountedRef = useRef(true);
   useEffect(() => () => { mountedRef.current = false; }, []);
+  useEffect(() => {
+    const refreshRole = () => setRole(loadOperatorRole());
+    window.addEventListener("hawkeye:operator-role-updated", refreshRole);
+    return () => window.removeEventListener("hawkeye:operator-role-updated", refreshRole);
+  }, []);
 
   const refresh = async () => {
     setLoading(true);
@@ -85,7 +92,7 @@ export default function FourEyesPage() {
   };
 
   const decide = async () => {
-    if (!signingDraft) return;
+    if (!signingDraft || isSubmitting) return;
     const { id, action, name, reason } = signingDraft;
     if (!name.trim()) { setError("Enter your name to sign."); return; }
     if (action === "reject" && !reason.trim()) { setError("Add a rejection reason."); return; }
@@ -95,34 +102,38 @@ export default function FourEyesPage() {
     const body: Record<string, unknown> = { decision: action, operator: name.trim() };
     if (action === "reject") body.rejectionReason = reason.trim();
 
-    const res = await fetchJson<PatchResponse>(`/api/four-eyes?id=${encodeURIComponent(id)}`, {
-      method: "PATCH",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(body),
-      label: "Four-eyes decision failed",
-    });
+    setIsSubmitting(true);
+    try {
+      const res = await fetchJson<PatchResponse>(`/api/four-eyes?id=${encodeURIComponent(id)}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body),
+        label: "Four-eyes decision failed",
+      });
 
-    if (!mountedRef.current) return;
-    if (!res.ok || !res.data?.ok) { setError(res.error ?? "decision failed"); return; }
+      if (!mountedRef.current) return;
+      if (!res.ok || !res.data?.ok) { setError(res.error ?? "decision failed"); return; }
 
-    const item = res.data.item;
-    if (item) {
-      writeAuditEvent(
-        name.trim(),
-        action === "approve" ? "four-eyes.approved" : "four-eyes.rejected",
-        `${item.subjectName} (${item.subjectId}) — ${ACTION_LABEL[item.action]}`,
-      );
+      const item = res.data.item;
+      if (item) {
+        writeAuditEvent(
+          name.trim(),
+          action === "approve" ? "four-eyes.approved" : "four-eyes.rejected",
+          `${item.subjectName} (${item.subjectId}) — ${ACTION_LABEL[item.action]}`,
+        );
+      }
+      if (res.data.asanaTaskUrl) setLastAsanaUrl(res.data.asanaTaskUrl);
+
+      setSigningDraft(null);
+      setError(null);
+      void refresh();
+    } finally {
+      if (mountedRef.current) setIsSubmitting(false);
     }
-    if (res.data.asanaTaskUrl) setLastAsanaUrl(res.data.asanaTaskUrl);
-
-    setSigningDraft(null);
-    setError(null);
-    void refresh();
   };
 
   const pending = items.filter((i) => i.status === "pending");
   const decided = items.filter((i) => i.status !== "pending");
-  const role = typeof window !== "undefined" ? loadOperatorRole() : "analyst";
   const canApprove = role === "mlro" || role === "managing_director" || role === "co";
 
   return (
@@ -278,14 +289,14 @@ export default function FourEyesPage() {
                           <button
                             type="button"
                             onClick={() => { void decide(); }}
-                            disabled={!signingDraft.name.trim() || (signingDraft.action === "reject" && !signingDraft.reason.trim())}
+                            disabled={isSubmitting || !signingDraft.name.trim() || (signingDraft.action === "reject" && !signingDraft.reason.trim())}
                             className={`text-12 font-semibold px-4 py-1.5 rounded disabled:opacity-40 disabled:cursor-not-allowed ${
                               signingDraft.action === "approve"
                                 ? "bg-green text-white hover:opacity-90"
                                 : "bg-red text-white hover:opacity-90"
                             }`}
                           >
-                            {signingDraft.action === "approve" ? "Confirm approval →" : "Confirm rejection →"}
+                            {isSubmitting ? "Submitting…" : signingDraft.action === "approve" ? "Confirm approval →" : "Confirm rejection →"}
                           </button>
                         </div>
                       </div>

@@ -91,7 +91,7 @@ async function computeCharterHash(
 ): Promise<string> {
   try {
     const enc = new TextEncoder();
-    const payload = enc.encode(`${reportRef}|${generatedAt}|${narrative.slice(0, 512)}`);
+    const payload = enc.encode(`${reportRef}|${generatedAt}|${narrative}`);
     const signingSecret = process.env["GOAML_SIGNING_SECRET"];
     if (signingSecret) {
       const key = await crypto.subtle.importKey(

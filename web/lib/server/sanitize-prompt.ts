@@ -16,6 +16,7 @@ export function sanitizeField(value: string | undefined | null, maxLength = 500)
     .replace(/\x00/g, "")
     .replace(/\r?\n|\r/g, " ")
     .replace(/\t/g, " ")
+    .replace(/\\[nrt]/g, " ")
     .trim()
     .slice(0, maxLength);
 }

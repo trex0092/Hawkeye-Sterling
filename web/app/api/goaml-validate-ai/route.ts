@@ -100,6 +100,12 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (!Array.isArray(result.missingElements)) result.missingElements = [];
     if (!Array.isArray(result.suggestions)) result.suggestions = [];
     if (!Array.isArray(result.fatalIssues)) result.fatalIssues = [];
+    if (!Array.isArray(result.tippingOffFlags)) result.tippingOffFlags = [];
+    if (typeof result.tippingOffRisk !== "boolean") result.tippingOffRisk = result.tippingOffFlags.length > 0;
+    if (typeof result.grade !== "string" || !["PASS", "CONDITIONAL_PASS", "FAIL"].includes(result.grade)) {
+      result.grade = result.score >= 75 ? "PASS" : result.score >= 50 ? "CONDITIONAL_PASS" : "FAIL";
+    }
+    if (typeof result.fiuReadiness !== "string") result.fiuReadiness = "";
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "goaml-validate-ai temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });

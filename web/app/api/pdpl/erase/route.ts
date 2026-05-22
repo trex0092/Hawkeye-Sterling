@@ -34,7 +34,8 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
-const ERASURE_LEGAL_HOLD_DAYS = Number.parseInt(process.env["PDPL_ERASURE_HOLD_DAYS"] ?? "365", 10);
+const _rawHoldDays = Number.parseInt(process.env["PDPL_ERASURE_HOLD_DAYS"] ?? "365", 10);
+const ERASURE_LEGAL_HOLD_DAYS = Number.isFinite(_rawHoldDays) && _rawHoldDays > 0 ? _rawHoldDays : 365;
 const ERASURE_LOG_PREFIX = "pdpl/erasures/";
 
 // PII fields we hash-anonymise. Anything not in this set is left intact
