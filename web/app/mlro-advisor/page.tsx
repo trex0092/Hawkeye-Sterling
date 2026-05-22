@@ -2103,6 +2103,9 @@ export default function MlroAdvisorPage() {
   // Adverse Media Classifier
   const [adverseText, setAdverseText] = useState("");
   const [adverseSubject, setAdverseSubject] = useState("");
+  const [adverseUrl, setAdverseUrl] = useState("");
+  const [adverseFetchLoading, setAdverseFetchLoading] = useState(false);
+  const [adverseFetchNote, setAdverseFetchNote] = useState<string | null>(null);
   const [adverseResult, setAdverseResult] = useState<AdverseClassifyResult | null>(null);
   const [adverseLoading, setAdverseLoading] = useState(false);
 
@@ -2528,15 +2531,37 @@ export default function MlroAdvisorPage() {
     finally { if (mountedRef.current) setShellLoading(false); }
   };
 
+  const runFetchArticle = async () => {
+    if (!adverseUrl.trim()) return;
+    setAdverseFetchLoading(true); setAdverseFetchNote(null);
+    setToolErrors((p) => ({ ...p, ["adverseFetch"]: "" }));
+    try {
+      const res = await fetch("/api/fetch-article", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ url: adverseUrl.trim() }) });
+      const data = await res.json().catch(() => ({})) as { ok: boolean; text?: string; domain?: string; paywallSuspected?: boolean; paywallNote?: string | null; error?: string };
+      if (!mountedRef.current) return;
+      if (data.ok && data.text) {
+        setAdverseText(data.text);
+        setAdverseFetchNote(data.paywallNote ?? `Fetched from ${data.domain ?? adverseUrl} — review text above, then classify.`);
+      } else {
+        setToolErrors((p) => ({ ...p, ["adverseFetch"]: data.error ?? "Could not fetch article — paste text manually." }));
+      }
+    } catch (err) {
+      if (mountedRef.current) setToolErrors((p) => ({ ...p, ["adverseFetch"]: err instanceof Error ? err.message : "Fetch failed — paste text manually." }));
+    }
+    finally { if (mountedRef.current) setAdverseFetchLoading(false); }
+  };
+
   const runAdverseClassify = async () => {
     if (!adverseText.trim()) return;
     setAdverseLoading(true); setAdverseResult(null);
+    setToolErrors((p) => ({ ...p, ["adverseClassify"]: "" }));
     try {
       const res = await fetch("/api/adverse-classify", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ articleText: adverseText, subjectName: adverseSubject || undefined }) });
       if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
       const data = await res.json().catch(() => ({})) as { ok: boolean } & AdverseClassifyResult;
       if (!mountedRef.current) return;
       if (data.ok) setAdverseResult(data);
+      else throw new Error((data as unknown as { error?: string }).error ?? "Classification failed — please retry");
     } catch (err) { if (mountedRef.current) setToolErrors((p) => ({ ...p, ["adverseClassify"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
     finally { if (mountedRef.current) setAdverseLoading(false); }
   };
@@ -5990,10 +6015,36 @@ export default function MlroAdvisorPage() {
             {superToolsTab === "adverse-classify" && (
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
                 <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">Adverse Media Classifier — FATF R.3 · SAR Threshold</div>
-                <p className="text-11 text-ink-3">Paste raw news/article text. AI maps it to FATF R.3 predicate offences, assesses SAR threshold, and identifies key entities. Works with full articles, excerpts, or translated text.</p>
+                <p className="text-11 text-ink-3">Paste a news article URL to auto-fetch, or paste raw article text directly. AI maps it to FATF R.3 predicate offences, assesses SAR threshold, and identifies key entities.</p>
+                {/* URL fetch row */}
+                <div>
+                  <label className="block text-10 text-ink-3 mb-1">Article URL (optional — auto-fetch article text)</label>
+                  <div className="flex gap-2">
+                    <input
+                      value={adverseUrl}
+                      onChange={(e) => { setAdverseUrl(e.target.value); setAdverseFetchNote(null); }}
+                      placeholder="https://www.reuters.com/world/…"
+                      className="flex-1 text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => void runFetchArticle()}
+                      disabled={adverseFetchLoading || !adverseUrl.trim()}
+                      className="text-11 font-semibold px-3 py-1.5 rounded border border-brand text-brand hover:bg-brand/10 disabled:opacity-40 whitespace-nowrap"
+                    >
+                      {adverseFetchLoading ? "Fetching…" : "Fetch Article"}
+                    </button>
+                  </div>
+                  {toolErrors["adverseFetch"] && (
+                    <div className="mt-1 text-10 text-amber">⚠ {toolErrors["adverseFetch"]}</div>
+                  )}
+                  {adverseFetchNote && (
+                    <div className="mt-1 text-10 text-green">✓ {adverseFetchNote}</div>
+                  )}
+                </div>
                 <div>
                   <label className="block text-10 text-ink-3 mb-1">Article / News Text *</label>
-                  <textarea value={adverseText} onChange={(e) => setAdverseText(e.target.value)} rows={6} placeholder="Paste the full article text or relevant excerpt here…" className="w-full text-12 px-2.5 py-2 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand resize-none" />
+                  <textarea value={adverseText} onChange={(e) => setAdverseText(e.target.value)} rows={6} placeholder="Paste the full article text or relevant excerpt here… (or use Fetch Article above)" className="w-full text-12 px-2.5 py-2 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand resize-none" />
                 </div>
                 <div>
                   <label className="block text-10 text-ink-3 mb-1">Subject Name (optional — improves relevance scoring)</label>

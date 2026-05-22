@@ -1442,7 +1442,7 @@ export default function ResponsibleAIPage() {
         }
         kpis={[
           { value: "4", label: "Models registered" },
-          { value: "0", label: "Incidents open", tone: "green" },
+          { value: "0", label: "Incidents open" },
           { value: "4", label: "Bias audits completed" },
           { value: "100%", label: "UNESCO compliance" },
         ]}
