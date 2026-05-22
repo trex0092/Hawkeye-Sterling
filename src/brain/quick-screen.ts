@@ -487,18 +487,24 @@ export function quickScreen(
       // Entity-type transparency — always record candidate entity type so
       // callers can distinguish direct designations from entity-association hits.
       if (cand.entityType !== undefined) hit.candidateEntityType = cand.entityType;
-      // Entity-type mismatch penalty — applied AFTER threshold so the hit still
-      // surfaces (for MLRO review) but score is penalised to reflect the
-      // indirect nature of the match (e.g. individual named within an org record).
+      // D5: Entity-type mismatch penalty — extended to cover all type pairs,
+      // not just person-vs-org. An organisation cannot be the same entity as
+      // an individual/vessel/aircraft. Apply a 0.6× penalty on any mismatch
+      // so the hit surfaces for MLRO review but cannot auto-escalate to HIGH.
       if (subject.entityType && cand.entityType && subject.entityType !== cand.entityType) {
-        const personVsOrg =
-          (subject.entityType === 'individual' && cand.entityType === 'organisation') ||
-          (subject.entityType === 'organisation' && cand.entityType === 'individual');
-        if (personVsOrg) {
-          hit.score = Math.round(hit.score * 0.6 * 1e6) / 1e6; // ×0.6, avoid float noise
-          hit.entityTypeMismatch = true;
-          hit.reason = `entity-association · ${hit.reason}`;
-        }
+        hit.score = Math.round(hit.score * 0.6 * 1e6) / 1e6;
+        hit.entityTypeMismatch = true;
+        hit.reason = `entity-type-mismatch(${subject.entityType}≠${cand.entityType}) · ${hit.reason}`;
+      }
+
+      // D2: Secondary identifier disambiguation gate before HIGH severity.
+      // If secondary identifiers are available but CONFLICT, downgrade the
+      // hit's effective score so it cannot reach HIGH without manual review.
+      // Conflicts already handled by DOB/nationality/nationalId discriminators
+      // above; this block adds an explicit note so the MLRO sees the conflict.
+      if (hit.dobMatch === 'conflict' || hit.nationalIdMatch === false) {
+        const conflictNote = hit.dobMatch === 'conflict' ? 'DOB conflict' : 'ID conflict';
+        hit.reason = `${conflictNote} (secondary identifier mismatch — review required) · ${hit.reason}`;
       }
       if (breakdown && bestEns) {
         const seen = new Set<string>();
