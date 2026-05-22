@@ -823,7 +823,7 @@ export function BrainRedFlagCombinator({ result }: { result: SuperBrainResult })
         "Three or more typology signatures + adverse-media — subject straddles multiple fraud / laundering patterns.",
     });
   }
-  if (pepFired && !hitCount && !amFired) {
+  if (pepFired && confirmedHitCount === 0 && !amFired) {
     patterns.push({
       name: "Clean PEP (EDD path)",
       likelihood: 0.65,
