@@ -291,6 +291,95 @@ const SKILLS_RAW: readonly string[] = [
   "FATF R.16 Travel Rule Implementation",
   "Stablecoin Reserve Verification",
   "DeFi Protocol Exposure Assessment",
+  // ── Wave-4 expansion: UAE DNFBPs, Islamic finance, trade finance,
+  //    charity AML, fintech/neo-bank, CBDC, fraud nexus, internal audit,
+  //    correspondent banking advanced, international cooperation.
+  // UAE DNFBP sector-specific
+  "Precious Metals & Stones Dealer CDD",
+  "Gold Souk Transaction Monitoring",
+  "Real Estate Broker KYC",
+  "Property Transaction CDD",
+  "Legal Professional AML Obligations",
+  "Accountant/Auditor AML Obligations",
+  "Company Service Provider AML",
+  "Trust & Corporate Services AML",
+  "Notary AML Obligations",
+  // Islamic finance
+  "Islamic Finance AML/CFT",
+  "Murabaha Structure Risk Assessment",
+  "Sukuk Issuance AML Review",
+  "Waqf Asset Compliance",
+  "Zakat Fund Compliance",
+  "Sharia-Compliant Investment Screening",
+  // Nonprofit & charity
+  "Nonprofit Due Diligence",
+  "Charity Diversion Risk Management",
+  "NPO Field Programme Monitoring",
+  "Grant Disbursement Tracing",
+  "Humanitarian Organisation AML",
+  // Trade finance
+  "Documentary Credit Compliance",
+  "Letter of Credit Fraud Detection",
+  "Trade Finance AML Controls",
+  "Import/Export Licence Verification",
+  "Customs Valuation Analysis",
+  // Internal audit & assurance
+  "Compliance Audit Programme Design",
+  "Internal Audit Independence Assessment",
+  "Control Testing Design",
+  "Audit Finding Classification",
+  "Management Action Plan Tracking",
+  "Three Lines of Defence Framework Application",
+  "ISAE 3000 Attestation",
+  // Fintech / neo-bank / embedded finance
+  "Neo-Bank CDD Design",
+  "BaaS Sponsor Bank Oversight",
+  "BNPL Customer Risk Assessment",
+  "Embedded Finance AML Controls",
+  "API Banking Risk Management",
+  "Digital Onboarding Fraud Prevention",
+  // Open banking / PSD2
+  "PSD2 Strong Customer Authentication",
+  "Open Banking Consent Management",
+  "AISP Transaction Data Analysis",
+  "PISP Authorisation Verification",
+  // CBDC & tokenised assets
+  "CBDC AML Framework Design",
+  "Tokenised Asset Compliance",
+  "Algorithmic Stablecoin Risk Assessment",
+  // Physical currency & cash handling
+  "Bulk Cash Smuggling Detection",
+  "Cash Courier Declaration Compliance",
+  "Currency Exchange Business AML",
+  "Cash-Intensive Sector Monitoring",
+  // Fraud–AML nexus
+  "Fraud-AML Nexus Investigation",
+  "Identity Theft Investigation",
+  "Authorised Push Payment Fraud Analysis",
+  "Mule Account Network Investigation",
+  "Social Engineering Fraud Triage",
+  // Advanced CDD lifecycle
+  "Simplified CDD Eligibility Assessment",
+  "Enhanced CDD Trigger Management",
+  "Ongoing CDD Programme Design",
+  "CDD Refresh Trigger Management",
+  "Customer Risk Reclassification",
+  "Dormant Account Reactivation Review",
+  // Advanced correspondent banking
+  "Correspondent Bank Due Diligence",
+  "Respondent Bank Risk Assessment",
+  "Nostro/Vostro Account Monitoring",
+  "Nested Correspondent Identification",
+  // International cooperation
+  "Mutual Legal Assistance Application",
+  "Cross-Border Freeze Coordination",
+  "Asset Recovery Coordination",
+  "International FATF-Style Body Liaison",
+  // UAE regulatory framework
+  "FDL 10/2025 Implementation",
+  "UAE CBUAE Regulation Application",
+  "ADGM/DIFC Financial Free Zone AML",
+  "UAE Insurance Sector AML",
 ];
 
 const REASONING_RAW: readonly string[] = [
