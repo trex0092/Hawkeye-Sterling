@@ -14,6 +14,7 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -86,6 +87,28 @@ interface ListHealthCache {
 }
 
 let _listHealthCache: ListHealthCache | null = null;
+
+// A1: Debounce for MLRO down-list alerts — fire at most once per 10 minutes
+// per lambda instance to avoid alert spam on the audit chain.
+let _lastSanctionsAlertAt = 0;
+const SANCTIONS_ALERT_DEBOUNCE_MS = 10 * 60 * 1_000;
+
+function triggerSanctionsDownAlert(downListIds: string[]): void {
+  const now = Date.now();
+  if (now - _lastSanctionsAlertAt < SANCTIONS_ALERT_DEBOUNCE_MS) return;
+  _lastSanctionsAlertAt = now;
+  // Fire-and-forget audit chain entry so the MLRO dashboard surfaces the outage.
+  void writeAuditChainEntry({
+    event: "sanctions_list.mandatory_list_down",
+    actor: "system:health-probe",
+    downListIds,
+    severity: "critical",
+    message: `Mandatory sanctions list(s) down: ${downListIds.join(", ")}. Immediate refresh required.`,
+    regulatoryAnchor: "UAE FDL No.10/2025 Art.20 — continuous sanctions monitoring obligation",
+  }).catch((err) => {
+    console.error("[health] sanctions alert write failed:", err instanceof Error ? err.message : String(err));
+  });
+}
 
 async function checkMandatoryLists(): Promise<ListHealthEntry[]> {
   const now = Date.now();
@@ -175,6 +198,12 @@ export async function GET(req: Request): Promise<NextResponse> {
   const downLists = listResults.filter((l) => l.down);
   const sanctionsDown = downLists.length;
   const mandatoryListsHealthy = sanctionsDown === 0;
+  const downListIds = downLists.map((l) => l.id);
+
+  // A1: Trigger MLRO audit alert for any down mandatory list.
+  if (sanctionsDown > 0) {
+    triggerSanctionsDownAlert(downListIds);
+  }
 
   // Section 20: tiered HTTP status
   // 503 if 3+ mandatory lists are down OR brain is down
@@ -207,6 +236,12 @@ export async function GET(req: Request): Promise<NextResponse> {
       status: overallStatus,
       mandatoryListsHealthy,
       sanctionsDown,
+      // A1: expose which lists are down so MLRO can identify and restore them.
+      ...(sanctionsDown > 0 ? {
+        downListIds,
+        downListDetails: downLists.map((l) => ({ id: l.id, reason: l.reason })),
+        mlroAction: "Trigger GET /api/admin/trigger-list-refresh?list=" + downListIds.join(",") + " to restore. MLRO audit alert has been raised.",
+      } : {}),
       brain: { ok: brain.ok },
       ts: new Date().toISOString(),
       runtime: "nodejs",
