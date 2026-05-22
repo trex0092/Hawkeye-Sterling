@@ -102,7 +102,7 @@ function caseScore(c: CaseRecord, signals: CaseSearchSignals): number {
   const snapHasAm = !!(snapAm?.total && snapAm.total > 0);
   if (signals.hasAdverseMedia != null && snapHasAm === signals.hasAdverseMedia) score += 2;
   // Sanctions match
-  const snapHasSan = (snap.result.hits?.length ?? 0) > 0;
+  const snapHasSan = (snap.result.hits ?? []).some((h) => h.score >= 0.85);
   if (signals.hasSanctionsHit != null && snapHasSan === signals.hasSanctionsHit) score += 2;
   // Recency — lightly preferred
   if (c.lastActivity) {

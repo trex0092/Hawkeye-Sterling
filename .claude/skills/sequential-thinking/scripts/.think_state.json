@@ -1,9 +1,45 @@
 {
   "thoughtHistory": [
     {
-      "thought": "I need to do a comprehensive audit of the Hawkeye-Sterling codebase. The user wants EVERYTHING to work 100% perfectly. I should run TypeScript compilation, linting, tests, and manually inspect all recently changed files plus any known problem areas. Strategy: (1) run tsc/build to catch type errors, (2) run lint, (3) run tests, (4) inspect all changed files on the current branch, (5) grep for common bug patterns, (6) fix everything found. Let me start by understanding the project structure and running the build.",
+      "thought": "Deep double-check scope: I need to verify (1) the 8 fixes I just made are correct and didn't introduce new bugs, (2) the full changed codebase has no remaining critical bugs. Let me plan a systematic sweep: A) Verify each fix is logically sound, B) Check every new API route for auth/ok-field/gate.headers gaps, C) Check super-brain route for any remaining hallucination or logic issues, D) Check the sla-countdown route for the 'submitted FFR counts as open' bug found but not fixed, E) Check advisor-context.ts for the hasSanctionsHit inconsistency found but not fixed, F) Run typecheck/tests to confirm. My estimate: 12 thoughts.",
       "thoughtNumber": 1,
-      "totalThoughts": 10,
+      "totalThoughts": 12,
+      "nextThoughtNeeded": true
+    },
+    {
+      "thought": "Fix verification — eocn-list-updates: I moved priorVersions fetch BEFORE the setJson call. The new code reads the prior blob first, then writes the new payload, then does the comparison. This is correct. The priorVersions set is computed before the overwrite. However I introduced a subtle issue: I changed 'if (upstream.ok && upstream.updates)' into two separate blocks, and the condition for the webhook firing block is 'if (upstream.ok && upstream.updates && priorVersions !== null)' — but priorVersions is a Set, not null, it's initialized as 'new Set()' regardless. The null check is always true. This is harmless but misleading. The real condition should just be 'if (upstream.ok && upstream.updates)'. This is a minor code smell, not a bug — the webhook will still fire correctly.",
+      "thoughtNumber": 2,
+      "totalThoughts": 12,
+      "nextThoughtNeeded": true
+    },
+    {
+      "thought": "FFR fixes verified. (1) NaN guard: line 71 'if (isNaN(frozen))' returns a safe default with 'within' status when date is invalid — correct, no crash. (2) GET slaStatus recompute: line 168 '.map((r) => ({ ...r, ...computeSlaStatus(r.frozenAt) }))' — spreads fresh computeSlaStatus over every record — correct, live slaStatus. One concern: when a record has been 'submitted' or 'acknowledged', should the SLA still be shown as 'breached'? The FFR GET filter at line 163 does not exclude submitted records, so a submitted-FFR that passed its 24h window still shows breached. The sla-countdown route has the same issue (line 103: skips acknowledged/released but NOT submitted). These submitted records inflate the 'breached' count and trigger URGENT warnings even though the obligation was met by filing. This is Bug #9 from the sweep that was NOT fixed yet.",
+      "thoughtNumber": 3,
+      "totalThoughts": 14,
+      "nextThoughtNeeded": true
+    },
+    {
+      "thought": "DPMSR fix confirmed correct: line 131-132 now checks CUMULATIVE (60k) first, then SINGLE (55k). Amounts >= 60k get 'cumulative', 55k-59999 get 'single', below 55k get undefined. Logic is now correct. Note: thresholdBreached at line 130 still uses THRESHOLD_AED_SINGLE (55k) as the boolean gate — this is intentional: any transaction at or above 55k is a threshold breach regardless of whether it's single or cumulative. Correct. SLA-countdown bug: line 103 skips 'acknowledged' and 'released' but NOT 'submitted'. An FFR in 'submitted' state has already been filed with the FIU — its SLA obligation is met. Showing it as 'breached' in the URGENT summary is a false alarm. This must be fixed. Also the sla-countdown SlaRecord type (line 62) only has status values 'open' | 'breached' | 'submitted' — there is no 'acknowledged' or 'released' value in this type, even though those are valid FFRRecord statuses. This means if an FFR has status='acknowledged' the sla-countdown correctly skips it (line 103), but if it's 'submitted' it passes through. Fix: add 'submitted' to the skip condition at line 103.",
+      "thoughtNumber": 4,
+      "totalThoughts": 14,
+      "nextThoughtNeeded": true
+    },
+    {
+      "thought": "BrainNarrative fix confirmed: line 135 now has 'h.score >= 0.85 && (h.disambiguationConfidence ?? 50) >= 75'. Correct. Entity-type fix confirmed: personVsOrg guard restored, vessel/aircraft excluded from penalty. Now checking: is there a remaining bug with the 'other' entity type? EntityType includes 'other'. If subject.entityType='other' and cand.entityType='individual', that is NOT personVsOrg, so no penalty applied. This is correct — 'other' is an unknown type, penalizing would be wrong. SubjectDetailPanel fix: I set defaultConf=75 for non-individual entity types, meaning if an org/vessel has no disambiguationConfidence, it defaults to 75 which meets the >= 75 threshold, so hasSanctionsHit=true for org/vessel matches with score >= 0.85. This is the intended fix. Let me verify this logic is sound in the SubjectDetailPanel.",
+      "thoughtNumber": 5,
+      "totalThoughts": 14,
+      "nextThoughtNeeded": true
+    },
+    {
+      "thought": "SubjectDetailPanel fix verified. Line 1301: entityType = subject.entityType ?? 'individual'. Line 1302: defaultConf = entityType === 'individual' ? 50 : 75. Line 1303: (h.disambiguationConfidence ?? defaultConf) >= 75. This correctly treats missing disambiguationConfidence as 75 for org/vessel/aircraft, so h.score >= 0.85 is sufficient for non-individual types. Empty alias fix confirmed: line 565 now checks 'matchedAlias !== undefined && matchedAlias !== '''. Correct. Now let me check what else was found but NOT fixed: (1) sla-countdown submitted FFR bug, (2) mlro-advisor hasSanctionsHit inconsistency (redlines.fired.length vs score+conf gate), (3) advisor-context.ts hasSanctionsHit uses hits.length > 0 (any hit). These need to be fixed. Also: the kpi-metrics openFfrs count cap at 50 was flagged. Let me check what the current kpi-metrics code does.",
+      "thoughtNumber": 6,
+      "totalThoughts": 14,
+      "nextThoughtNeeded": true
+    },
+    {
+      "thought": "kpi-metrics analysis: the code at line 86 initially sets openFfrs = ffrIndexRaw.length (total index count), then line 97 overwrites it with ffrRecords.filter(r => r?.status === 'draft').length — which only looks at the first 50 records. So if there are more than 50 FFRs, the open count is undercounted. But more importantly, the slice(0, 50) at line 92 limits the breach check to 50 records too. This is a scalability issue. However, for a DPMS operator the FFR volume is expected to be low (compliance filings), so 50 is a reasonable cap. The initial assignment on line 86 IS dead code because line 97 always overwrites it. But this is a minor code quality issue, not a security/compliance bug. Note: kpi-metrics breachedFfrs already filters out 'submitted' and 'acknowledged' on line 95. So kpi-metrics is actually CORRECT about submitted FFRs. Only sla-countdown is wrong about submitted FFRs. Also: mlro-advisor hasSanctionsHit uses redlines.fired.length > 0, which fires on ANY redline (including PEP redlines), not just sanctions hits. This is semantically wrong — it affects case precedent retrieval quality but NOT compliance decisions directly. Let me assess severity: it's a data-quality bug affecting MLRO advisor context, not a false-freeze risk. Medium priority.",
+      "thoughtNumber": 7,
+      "totalThoughts": 14,
       "nextThoughtNeeded": true
     }
   ],
