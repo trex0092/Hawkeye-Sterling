@@ -5,9 +5,9 @@ import {
   MLRO_RED_FLAGS_TAXONOMY,
   searchRedFlags,
   type MlroRedFlag,
-} from "@brain/mlro-red-flags-taxonomy.generated.js";
-import { COMMON_SENSE_RULES } from "@brain/mlro-common-sense.js";
-import { PEER_BASELINES, type BenchmarkSector } from "@brain/mlro-peer-benchmark.js";
+} from "../../../../../src/brain/mlro-red-flags-taxonomy.generated.js";
+import { COMMON_SENSE_RULES } from "../../../../../src/brain/mlro-common-sense.js";
+import { PEER_BASELINES, type BenchmarkSector } from "../../../../../src/brain/mlro-peer-benchmark.js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
