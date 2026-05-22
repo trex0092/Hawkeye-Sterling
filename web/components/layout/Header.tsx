@@ -52,7 +52,6 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "📋 System Card", href: "/system-card", hint: "AI system disclosure · capabilities · safeguards · regulatory basis" },
       { label: "🤖 Responsible AI", href: "/responsible-ai", hint: "UNESCO AI ethics compliance · human oversight" },
       { label: "🔒 Audit Trail & Operator Console", href: "/audit-trail", hint: "Immutable HMAC audit chain + AI anomaly scan · MCP activity log · kill switch" },
-      { label: "🕰️ AM Lookback", href: "/adverse-media-lookback", hint: "10-year adverse media archive · FDL Art.19" },
       { label: "🏛️ Inspection Room", href: "/governance/inspection-room", hint: "Regulator-ready evidence pack" },
       { label: "📜 Regulatory Library", href: "/regulatory", hint: "Searchable UAE/FATF regulatory library" },
       { label: "📑 Policies & SOPs", href: "/policies", hint: "AML programme charter & procedures" },
