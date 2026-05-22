@@ -79,24 +79,28 @@ interface Article {
 // subject shows up in the local press of where events occur — English-only
 // coverage misses 70%+ of regional reporting.
 const LOCALES: Array<{ code: string; hl: string; gl: string; ceid: string }> = [
+  { code: "tr", hl: "tr", gl: "TR", ceid: "TR:tr" },
   { code: "en", hl: "en", gl: "US", ceid: "US:en" },
+  { code: "ar", hl: "ar", gl: "AE", ceid: "AE:ar" },
   { code: "es", hl: "es", gl: "ES", ceid: "ES:es" },
   { code: "fr", hl: "fr", gl: "FR", ceid: "FR:fr" },
+  { code: "de", hl: "de", gl: "DE", ceid: "DE:de" },
   { code: "ru", hl: "ru", gl: "RU", ceid: "RU:ru" },
   { code: "zh", hl: "zh-Hans", gl: "CN", ceid: "CN:zh-Hans" },
-  { code: "ar", hl: "ar", gl: "AE", ceid: "AE:ar" },
   { code: "pt", hl: "pt-BR", gl: "BR", ceid: "BR:pt-419" },
 ];
 
 // Multi-language adverse-media modifiers so each locale returns relevant
 // adverse articles. Expanded from the English AML keyword floor.
 const LOCALE_MODIFIERS: Record<string, string> = {
+  tr: "yaptırım OR dolandırıcılık OR yolsuzluk OR rüşvet OR tutuklama OR kara para aklama OR kaçakçılık OR terör",
   en: "sanctions OR fraud OR corruption OR bribery OR arrest OR laundering OR trafficking OR terrorism",
+  ar: "عقوبات OR احتيال OR فساد OR رشوة OR اعتقال OR غسل OR تهريب OR إرهاب",
   es: "sanciones OR fraude OR corrupción OR soborno OR arresto OR blanqueo OR narcotráfico OR terrorismo",
   fr: "sanctions OR fraude OR corruption OR pot-de-vin OR arrestation OR blanchiment OR trafic OR terrorisme",
+  de: "Sanktionen OR Betrug OR Korruption OR Bestechung OR Verhaftung OR Geldwäsche OR Schmuggel OR Terrorismus",
   ru: "санкции OR мошенничество OR коррупция OR взятка OR арест OR отмывание OR терроризм",
   zh: "制裁 OR 欺诈 OR 腐败 OR 贿赂 OR 逮捕 OR 洗钱 OR 贩运 OR 恐怖主义",
-  ar: "عقوبات OR احتيال OR فساد OR رشوة OR اعتقال OR غسل OR تهريب OR إرهاب",
   pt: "sanções OR fraude OR corrupção OR suborno OR prisão OR lavagem OR tráfico OR terrorismo",
 };
 
@@ -214,10 +218,12 @@ function parseRss(xml: string, subject: string, variants: string[], lang: string
     // articles where the person's name appears in the body but not the
     // headline. Cap at 0.72 so a genuine title match always outranks it.
     if (fuzzyScore < 0.72) {
+      const fullTextNorm = fullTextLower.normalize("NFD").replace(/[̀-ͯ]/g, "");
       for (const v of variants) {
-        const vTokens = v.toLowerCase().split(/\s+/).filter((t) => t.length >= 3);
+        const vNorm = v.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+        const vTokens = vNorm.split(/\s+/).filter((t) => t.length >= 3);
         if (vTokens.length === 0) continue;
-        const hits = vTokens.filter((t) => fullTextLower.includes(t)).length;
+        const hits = vTokens.filter((t) => fullTextNorm.includes(t)).length;
         const tokenScore = (hits / vTokens.length) * 0.72;
         if (tokenScore > fuzzyScore) {
           fuzzyScore = tokenScore;
@@ -255,7 +261,7 @@ const FEED_TIMEOUT_MS = 2_000;
 // Overall timebox for the whole fan-out. We return with whatever articles
 // have arrived by this deadline so a slow Google News cluster never burns
 // the full 30s maxDuration budget.
-const OVERALL_TIMEBOX_MS = 7_500;
+const OVERALL_TIMEBOX_MS = 2_500;
 
 async function fetchLocaleFeed(
   q: string,

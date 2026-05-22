@@ -88,7 +88,8 @@ const STATIC_COUNTRY_DATASET: StaticCountryEntry[] = [
   { iso2: "SS", iso3: "SSD", name: "South Sudan",       fatfStatus: "grey_list", cpiScore: 13, sanctionsRegime: "OFAC SDN, EU, UN",          dpmsRiskTier: "critical", lastUpdated: "2026-02-14" },
   { iso2: "SY", iso3: "SYR", name: "Syria",             fatfStatus: "grey_list", cpiScore: 13, sanctionsRegime: "OFAC SDN, EU, UN, UK",     dpmsRiskTier: "critical", lastUpdated: "2026-02-14" },
   { iso2: "TZ", iso3: "TZA", name: "Tanzania",          fatfStatus: "grey_list", cpiScore: 36, sanctionsRegime: "None",                       dpmsRiskTier: "high",     lastUpdated: "2026-02-14" },
-  { iso2: "TR", iso3: "TUR", name: "Turkey",            fatfStatus: "grey_list", cpiScore: 34, sanctionsRegime: "None",                       dpmsRiskTier: "high",     lastUpdated: "2026-02-14" },
+  // Turkey removed from FATF grey list at June 2024 plenary. Remains EU AML high-risk 3rd country.
+  { iso2: "TR", iso3: "TUR", name: "Turkey",            fatfStatus: "member",    cpiScore: 34, sanctionsRegime: "None",                       dpmsRiskTier: "high",     lastUpdated: "2024-06-28" },
   { iso2: "UG", iso3: "UGA", name: "Uganda",            fatfStatus: "grey_list", cpiScore: 27, sanctionsRegime: "None",                       dpmsRiskTier: "high",     lastUpdated: "2026-02-14" },
   { iso2: "VN", iso3: "VNM", name: "Vietnam",           fatfStatus: "grey_list", cpiScore: 41, sanctionsRegime: "None",                       dpmsRiskTier: "medium",   lastUpdated: "2026-02-14" },
   { iso2: "YE", iso3: "YEM", name: "Yemen",             fatfStatus: "grey_list", cpiScore: 16, sanctionsRegime: "OFAC SDN, EU, UN",          dpmsRiskTier: "critical", lastUpdated: "2026-02-14" },

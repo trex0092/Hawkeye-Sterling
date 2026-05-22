@@ -47,7 +47,8 @@ export const JURISDICTION_RISK: Record<string, JurisdictionRiskLevel> = {
   ML: 'fatf_greylist', MZ: 'fatf_greylist', NA: 'fatf_greylist',
   NG: 'fatf_greylist', PH: 'fatf_greylist', SA: 'fatf_greylist',
   SN: 'fatf_greylist', SS: 'fatf_greylist', SY: 'fatf_greylist',
-  TZ: 'fatf_greylist', TR: 'fatf_greylist', UG: 'fatf_greylist',
+  TZ: 'fatf_greylist', UG: 'fatf_greylist',
+  TR: 'high_risk',  // EU AML high-risk 3rd country + CAHRA; FATF member in good standing since Jun 2024
   YE: 'fatf_greylist', ZA: 'fatf_greylist',
 
   // OFAC/UN sanctioned countries

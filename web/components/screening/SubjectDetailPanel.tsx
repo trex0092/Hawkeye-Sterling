@@ -56,7 +56,6 @@ import {
   BrainDataCoverage,
   BrainCoverageGap,
 } from "@/components/screening/BrainIntelPack";
-import { OwnershipTab } from "@/components/screening/OwnershipTab";
 import { BrainIntelligencePack } from "@/components/screening/BrainIntelligencePack";
 import { DeepIntelPanel } from "@/components/screening/DeepIntelPanel";
 import { CrossRegimeConflictCard } from "@/components/screening/CrossRegimeConflictCard";
@@ -93,7 +92,7 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 // which made it visually identical to the Screening tab. Real
 // per-event timeline can return as its own panel when the engine
 // is wired.
-const TABS = ["Screening", "Intelligence", "Deep Intel", "CDD/EDD", "Ownership", "Live reasoning", "Evidence", "AI Ethics", "Disambiguate"] as const;
+const TABS = ["Screening", "Intelligence", "Deep Intel", "CDD/EDD", "Live reasoning", "Evidence"] as const;
 type Tab = (typeof TABS)[number];
 
 // ── Hit Disambiguator types ───────────────────────────────────────────────────
@@ -1388,19 +1387,12 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
           />
         )}
 
-        {activeTab === "Ownership" && <OwnershipTab subject={subject} />}
-
         {activeTab === "Live reasoning" && (
           <LiveReasoningTab
             superBrain={superBrain}
             subjectName={subject.name}
             subjectId={subject.id}
             news={news}
-            roleOverride={roleOverride}
-            setRoleOverride={setRoleOverride}
-            narrativeOverride={narrativeOverride}
-            setNarrativeOverride={setNarrativeOverride}
-            liveNarrativePreview={adverseMediaText}
           />
         )}
 
@@ -1412,15 +1404,6 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
           <EvidenceTab superBrain={superBrain} subject={subject} />
         )}
 
-        {activeTab === "AI Ethics" && (
-          <EthicsTab
-            subject={subject}
-            eiaResult={eiaResult}
-            eiaLoading={eiaLoading}
-            eiaError={eiaError}
-            onRun={() => void runEIA()}
-          />
-        )}
 
         {activeTab === "Disambiguate" && (() => {
           const verdictBadge: Record<string, string> = {
@@ -2822,165 +2805,145 @@ function LiveReasoningTab({
   subjectName,
   subjectId,
   news,
-  roleOverride,
-  setRoleOverride,
-  narrativeOverride,
-  setNarrativeOverride,
-  liveNarrativePreview,
 }: {
   superBrain: import("@/lib/hooks/useSuperBrain").SuperBrainState;
   subjectName: string;
   subjectId: string;
   news: NewsSearchState;
-  roleOverride: string;
-  setRoleOverride: (v: string) => void;
-  narrativeOverride: string;
-  setNarrativeOverride: (v: string) => void;
-  liveNarrativePreview: string;
 }) {
-  const [overridesOpen, setOverridesOpen] = useState(false);
-  const result =
-    superBrain.status === "success" ? superBrain.result : null;
+  const result = superBrain.status === "success" ? superBrain.result : null;
 
-  const articleCount =
-    news.status === "success" ? news.result.articles.length : 0;
-  const narrativeSource = narrativeOverride.trim()
-    ? "operator override"
-    : articleCount > 0
-      ? `${articleCount} live news article${articleCount === 1 ? "" : "s"}`
-      : "subject record";
-
-  const composite = result?.composite ?? null;
+  // Disposition banner
   const disposition = result?.redlines?.action ?? null;
-  const redlinesFired = result?.redlines?.fired?.length ?? 0;
-  const pepTier = (() => {
+  const redlines: string[] = result?.redlines?.fired ?? [];
+  const composite = result?.composite?.score ?? null;
+  const bannerTone =
+    disposition && /BLOCK|REJECT|FREEZE/i.test(disposition)
+      ? "bg-red-dim border-red/40 text-red"
+      : disposition && /ENHANCED|REVIEW|EDD/i.test(disposition)
+        ? "bg-amber-dim border-amber/40 text-amber"
+        : disposition
+          ? "bg-green-dim border-green/40 text-green"
+          : "bg-bg-2 border-hair-2 text-ink-2";
+
+  // Adverse media articles
+  const articles =
+    news.status === "success" ? news.result.articles.slice(0, 8) : [];
+  const newsLoading = news.status === "loading" || news.status === "idle";
+  const newsError = news.status === "error";
+
+  // PEP
+  const pepLabel = (() => {
     if (!result) return null;
     const t =
       (result.pep && result.pep.salience > 0 ? result.pep.tier : null) ??
-      (result.pepAssessment?.isLikelyPEP
-        ? result.pepAssessment.highestTier
-        : null);
-    return t ? t.replace(/^tier_/, "tier ").replace(/_/g, " ") : null;
+      (result.pepAssessment?.isLikelyPEP ? result.pepAssessment.highestTier : null);
+    return t ? t.replace(/^tier_/, "Tier ").replace(/_/g, " ") : null;
   })();
-  const jurisdictionLabel = result?.jurisdiction
-    ? `${result.jurisdiction.iso2}${result.jurisdiction.cahra ? " · CAHRA" : ""}`
-    : null;
-  const adverseCategories =
-    result?.adverseMediaScored?.categoriesTripped?.length ?? 0;
-  const typologyHits = result?.typologies?.hits?.length ?? 0;
-
-  const dispositionTone =
-    disposition && /BLOCK|REJECT|FREEZE/i.test(disposition)
-      ? "bg-red-dim text-red"
-      : disposition && /ENHANCED|REVIEW|EDD/i.test(disposition)
-        ? "bg-amber-dim text-amber"
-        : disposition
-          ? "bg-green-dim text-green"
-          : "bg-bg-2 text-ink-2";
 
   return (
-    <div>
-      <p className="text-11 text-ink-2 mb-3">
-        Live reasoning auto-fires against this subject and stays in sync with
-        screening, news, and operator overrides. Posture below is derived from
-        the same modules used by Super brain — no second engine, no second
-        click.
-      </p>
+    <div className="space-y-4">
 
-      {/* Posture strip */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-3 sm:grid-cols-3">
-        <PostureCell
-          label="Composite"
-          value={
-            composite
-              ? `${composite.score}/100`
-              : superBrain.status === "loading"
-                ? "…"
-                : "—"
-          }
-        />
-        <PostureCell
-          label="Disposition"
-          value={disposition ?? (superBrain.status === "loading" ? "…" : "—")}
-          toneClass={dispositionTone}
-        />
-        <PostureCell label="Redlines" value={String(redlinesFired)} />
-        <PostureCell label="PEP" value={pepTier ?? "—"} />
-        <PostureCell label="Jurisdiction" value={jurisdictionLabel ?? "—"} />
-        <PostureCell
-          label="Signals"
-          value={`${adverseCategories} adv · ${typologyHits} typ`}
-        />
-      </div>
-
-      <div className="text-10 text-ink-3 mb-3 font-mono">
-        narrative source: {narrativeSource}
-        {superBrain.status === "loading" && " · reasoning…"}
-        {superBrain.status === "error" && " · brain unavailable"}
-      </div>
-
-      {/* Override controls */}
-      <div className="mb-4 rounded border border-hair-2 bg-bg-panel">
-        <button
-          type="button"
-          onClick={() => setOverridesOpen((v) => !v)}
-          className="w-full flex items-center justify-between px-2.5 py-1.5 text-11 font-medium text-ink-1 bg-transparent border-none cursor-pointer hover:text-ink-0"
-        >
-          <span>
-            Operator override
-            {(roleOverride.trim() || narrativeOverride.trim()) && (
-              <span className="ml-2 inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 bg-violet-dim text-violet">
-                active
-              </span>
+      {/* Status banner */}
+      <div className={`rounded border px-3 py-2.5 ${bannerTone}`}>
+        {superBrain.status === "loading" && (
+          <div className="text-12 font-medium text-ink-2">Analysing {subjectName}…</div>
+        )}
+        {superBrain.status === "error" && (
+          <div className="text-12 font-medium text-red">Brain unavailable — {superBrain.error}</div>
+        )}
+        {disposition && (
+          <div className="flex items-center gap-3">
+            <span className="text-13 font-bold uppercase tracking-wide">{disposition}</span>
+            {composite !== null && (
+              <span className="text-11 font-mono opacity-70">score {composite}/100</span>
             )}
-          </span>
-          <span className="text-ink-3 font-mono">{overridesOpen ? "−" : "+"}</span>
-        </button>
-        {overridesOpen && (
-          <div className="px-2.5 pb-2.5 pt-1 border-t border-hair">
-            <Field label="Role text">
-              <input
-                type="text"
-                value={roleOverride}
-                onChange={(e) => setRoleOverride(e.target.value)}
-                placeholder="e.g. State leader, central bank governor, MP…"
-                className="w-full rounded border border-hair-2 bg-bg-1 px-2 py-1 text-12 text-ink-0 placeholder:text-ink-3"
-              />
-            </Field>
-            <Field label="Narrative">
-              <textarea
-                value={narrativeOverride}
-                onChange={(e) => setNarrativeOverride(e.target.value)}
-                placeholder={
-                  liveNarrativePreview
-                    ? `Override the live narrative (default: ${liveNarrativePreview.slice(0, 120)}${liveNarrativePreview.length > 120 ? "…" : ""})`
-                    : "Paste a narrative for the brain to reason against."
-                }
-                rows={3}
-                className="w-full rounded border border-hair-2 bg-bg-1 px-2 py-1 text-12 text-ink-0 placeholder:text-ink-3 resize-y"
-              />
-            </Field>
-            <div className="flex gap-2">
-              <PanelBtn
-                onClick={() => {
-                  setRoleOverride("");
-                  setNarrativeOverride("");
-                }}
-                disabled={!roleOverride && !narrativeOverride}
-              >
-                Reset to live
-              </PanelBtn>
-            </div>
           </div>
+        )}
+        {!disposition && superBrain.status === "success" && (
+          <div className="text-12 font-medium text-green">No action required</div>
+        )}
+        {!disposition && superBrain.status === "idle" && (
+          <div className="text-12 text-ink-2">Waiting for screening to complete…</div>
         )}
       </div>
 
-      <SuperBrainPanel
-        state={superBrain}
-        subjectName={subjectName}
-        subjectId={subjectId}
-        news={news}
-      />
+      {/* Redlines */}
+      {redlines.length > 0 && (
+        <div>
+          <div className="text-10 uppercase tracking-wide-4 text-ink-3 mb-1.5">
+            Redlines fired ({redlines.length})
+          </div>
+          <ul className="space-y-1">
+            {redlines.map((r, i) => (
+              <li key={i} className="flex items-start gap-2 text-11 text-ink-1">
+                <span className="mt-0.5 text-red font-bold">!</span>
+                <span>{r}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* PEP */}
+      {pepLabel && (
+        <div className="rounded border border-amber/40 bg-amber-dim px-3 py-2">
+          <span className="text-10 uppercase tracking-wide-4 text-amber mr-2">PEP</span>
+          <span className="text-11 text-ink-1">{pepLabel}</span>
+        </div>
+      )}
+
+      {/* Adverse media */}
+      <div>
+        <div className="text-10 uppercase tracking-wide-4 text-ink-3 mb-1.5">
+          Adverse media
+        </div>
+        {newsLoading && (
+          <div className="text-11 text-ink-3">Searching news sources…</div>
+        )}
+        {newsError && (
+          <div className="text-11 text-red">News search unavailable.</div>
+        )}
+        {!newsLoading && !newsError && articles.length === 0 && (
+          <div className="text-11 text-green">No adverse articles found.</div>
+        )}
+        {articles.length > 0 && (
+          <ul className="space-y-2">
+            {articles.map((a, i) => (
+              <li key={i} className="rounded border border-hair-2 bg-bg-panel px-3 py-2">
+                <a
+                  href={a.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-12 font-medium text-ink-0 hover:text-brand block mb-0.5"
+                >
+                  {a.title}
+                </a>
+                <div className="flex items-center gap-2 text-10 text-ink-3">
+                  <span className={`px-1.5 py-px rounded font-mono uppercase ${
+                    a.severity === "critical" || a.severity === "high"
+                      ? "bg-red-dim text-red"
+                      : a.severity === "medium"
+                        ? "bg-amber-dim text-amber"
+                        : "bg-bg-2 text-ink-3"
+                  }`}>{a.severity}</span>
+                  <span>{a.source}</span>
+                  {a.pubDate && <span>{a.pubDate}</span>}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {/* Brain narrative */}
+      {result?.narrative && (
+        <div>
+          <div className="text-10 uppercase tracking-wide-4 text-ink-3 mb-1.5">Assessment</div>
+          <p className="text-12 text-ink-1 leading-relaxed">{result.narrative}</p>
+        </div>
+      )}
+
     </div>
   );
 }
