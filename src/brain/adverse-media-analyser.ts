@@ -60,6 +60,11 @@ const SOURCE_TIER_MAP: Record<string, SourceCredibilityTier> = {
   'spiegel.de': 'tier2', 'lemonde.fr': 'tier2', 'corriere.it': 'tier2',
   // OCCRP/investigative (tier 2 — corroborate before escalating)
   'occrp.org': 'tier2', 'icij.org': 'tier2', 'transparency.org': 'tier2',
+  // G2: Turkish-language press — relevant for Istanbul Gold Refinery AML typology
+  // and FATF grey-list coverage of Turkey (2021-2024 action plan).
+  'hurriyet.com.tr': 'tier2', 'sabah.com.tr': 'tier2', 'dunya.com': 'tier2',
+  'haberturk.com': 'tier2', 'trtworld.com': 'tier1', 'aljazeera.com.tr': 'tier2',
+  'cumhuriyet.com.tr': 'tier2', 'bianet.org': 'tier2', 'duvarenglish.com': 'tier2',
 };
 
 /** G2: Classify source credibility tier from domain / source label. */
@@ -94,6 +99,11 @@ export interface AdverseMediaFinding {
   narrative: string;                   // single MLRO-grade finding line
   relevanceScore: number;              // 0-1 from Taranis (or 1 if unavailable)
   isSarCandidate: boolean;             // meets R.20 reporting threshold
+  /** G4: GDELT sentiment tone for this article (-100 very negative, +100 very positive).
+   *  Present only when article originates from GDELT. More negative = stronger adverse signal. */
+  gdeltToneScore?: number;
+  /** G4: Tone-bias note surfaced when tone caused a severity upgrade or relevance boost. */
+  toneNote?: string;
   /** Sibling outlets that ran the same story (de-confliction). The lead
    *  outlet's source field stays in `source`; the rest are listed here so
    *  the operator can trace coverage breadth without inflating hit counts. */
@@ -143,6 +153,8 @@ export interface AdverseMediaSubjectVerdict {
   }>;
   analysedAt: string;
   modesCited: string[];                // all mode ids cited across findings
+  /** G4: Note when GDELT tone scores influenced severity upgrades in this batch. */
+  toneBiasNote?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -248,6 +260,22 @@ const CATEGORY_PROFILES: Record<string, CategoryProfile> = {
     predicates: ['ESG/responsible-sourcing controversy'],
     modes: ['environmental_predicate', 'oecd_ddg_annex', 'provenance_trace'],
     doctrines: ['oecd_ddg', 'fatf_r3_env_predicate'],
+  },
+  // G7: Reputational risk — non-criminal adverse coverage.
+  reputational: {
+    severity: 'low',
+    fatfRecs: ['R.10', 'R.11'],
+    predicates: ['Reputational risk / non-criminal adverse coverage'],
+    modes: ['completeness_audit', 'documentation_quality'],
+    doctrines: ['fatf_rba'],
+  },
+  // G7: PEP / Political Exposure adverse media — FATF R.12 / R.20.
+  pep_adverse: {
+    severity: 'medium',
+    fatfRecs: ['R.12', 'R.13', 'R.20'],
+    predicates: ['PEP / political exposure adverse media', 'Political risk predicate'],
+    modes: ['pep_domestic_minister', 'pep_soe_network', 'link_analysis'],
+    doctrines: ['uae_fdl_10_2025', 'fatf_rba', 'wolfsberg_faq'],
   },
 };
 
@@ -481,6 +509,48 @@ function deconflictItems(items: TaranisItem[]): {
 }
 
 // ---------------------------------------------------------------------------
+// G4: GDELT tone score as weighted secondary signal
+// ---------------------------------------------------------------------------
+// GDELT tone: -100 (very negative) to +100 (very positive).
+// Negative tone amplifies adverse signal confidence; positive dampens it.
+// Very negative tone (< -5) can upgrade severity by one level (max medium→high;
+// never forces critical — human MLRO review required for that threshold).
+
+function applyToneWeight(
+  severity: AdverseMediaSeverity,
+  relevanceScore: number,
+  tone: number | undefined,
+): { adjustedSeverity: AdverseMediaSeverity; adjustedRelevance: number; toneNote: string | undefined } {
+  if (tone === undefined || severity === 'clear') {
+    return { adjustedSeverity: severity, adjustedRelevance: relevanceScore, toneNote: undefined };
+  }
+
+  // Relevance multiplier: negative tone boosts confidence; positive dampens.
+  const amplifier = tone < 0
+    ? Math.min((-tone / 15) * 0.5, 0.5)   // up to +50% boost at tone = -15
+    : -(tone / 30) * 0.2;                  // up to -20% reduction at tone = +30
+  const adjustedRelevance = Math.min(Math.max(relevanceScore * (1 + amplifier), 0), 1);
+
+  // Severity upgrade: very negative tone bumps severity by one level (low→medium, medium→high).
+  let adjustedSeverity = severity;
+  let toneNote: string | undefined;
+
+  if (tone < -7 && (severity === 'low' || severity === 'medium')) {
+    if (severity === 'low') {
+      adjustedSeverity = 'medium';
+      toneNote = `Severity upgraded low→medium: GDELT tone ${tone.toFixed(1)} (strong negative sentiment corroborates adverse content).`;
+    } else if (severity === 'medium') {
+      adjustedSeverity = 'high';
+      toneNote = `Severity upgraded medium→high: GDELT tone ${tone.toFixed(1)} (very negative sentiment corroborates high-risk content — MLRO review required).`;
+    }
+  } else if (tone < 0) {
+    toneNote = `GDELT tone ${tone.toFixed(1)} (negative sentiment confirms adverse signal; relevance adjusted to ${adjustedRelevance.toFixed(2)}).`;
+  }
+
+  return { adjustedSeverity, adjustedRelevance, toneNote };
+}
+
+// ---------------------------------------------------------------------------
 // Main export
 // ---------------------------------------------------------------------------
 
@@ -518,10 +588,14 @@ export function analyseAdverseMediaItems(
       for (const d of profile.doctrines) if (!doctrines.includes(d)) doctrines.push(d);
     }
 
-    const narrative = buildFindingNarrative(subject, item, severity, categoryIds, keywords, fatfRecs);
+    // G4: Apply GDELT tone as weighted secondary signal.
+    const rawRelevance = item.relevanceScore ?? 1;
+    const { adjustedSeverity, adjustedRelevance, toneNote } = applyToneWeight(severity, rawRelevance, item.tone);
+
+    const narrative = buildFindingNarrative(subject, item, adjustedSeverity, categoryIds, keywords, fatfRecs);
 
     // FATF R.20 — individual item SAR candidate flag
-    const isSarCandidate = severity === 'critical' || severity === 'high';
+    const isSarCandidate = adjustedSeverity === 'critical' || adjustedSeverity === 'high';
 
     const sibling = alsoSeenIn.get(item.id) ?? [];
     adverseFindings.push({
@@ -530,7 +604,7 @@ export function analyseAdverseMediaItems(
       source: item.source,
       published: item.published,
       ...(item.url !== undefined ? { url: item.url } : {}),
-      severity,
+      severity: adjustedSeverity,
       sourceCredibilityTier: sourceCredibilityTier(item.source ?? item.url ?? ""),
       categories: categoryIds,
       keywords,
@@ -539,8 +613,10 @@ export function analyseAdverseMediaItems(
       reasoningModes: modes,
       doctrineIds: doctrines,
       narrative,
-      relevanceScore: item.relevanceScore ?? 1,
+      relevanceScore: adjustedRelevance,
       isSarCandidate,
+      ...(item.tone !== undefined ? { gdeltToneScore: item.tone } : {}),
+      ...(toneNote ? { toneNote } : {}),
       ...(sibling.length > 0 ? { aggregatedSources: sibling, dedupeCount: sibling.length } : {}),
     } as AdverseMediaFinding);
   }
@@ -608,6 +684,12 @@ export function analyseAdverseMediaItems(
     };
   }).sort((a, b) => SEVERITY_ORDER[b.severity] - SEVERITY_ORDER[a.severity]);
 
+  // G4: Surface a batch-level note if any tone-based severity upgrade occurred.
+  const toneUpgrades = adverseFindings.filter((f) => f.toneNote?.includes('upgraded'));
+  const toneBiasNote = toneUpgrades.length > 0
+    ? `${toneUpgrades.length} finding(s) had severity upgraded based on GDELT tone signal. Review toneNote on individual findings.`
+    : undefined;
+
   return {
     subject,
     riskTier,
@@ -635,6 +717,7 @@ export function analyseAdverseMediaItems(
     categoryBreakdown,
     analysedAt,
     modesCited: allModes,
+    ...(toneBiasNote ? { toneBiasNote } : {}),
   };
 }
 

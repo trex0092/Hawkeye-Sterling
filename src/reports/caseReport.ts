@@ -9,7 +9,14 @@ export type AdverseMediaCategoryId =
   | 'legal_criminal_regulatory'
   | 'esg'
   | 'cybercrime'
-  | 'ai';
+  | 'ai'
+  | 'sanctions_violations'
+  | 'human_trafficking_modern_slavery'
+  | 'tax_crimes'
+  | 'environmental_crime'
+  | 'drug_trafficking'
+  | 'reputational'
+  | 'pep_adverse';
 
 export type CaseRating = 'Not Rated' | 'Low' | 'Medium' | 'High' | 'Critical';
 export type EntityType = 'Individual' | 'Organisation' | 'Vessel' | 'Aircraft' | 'Other';

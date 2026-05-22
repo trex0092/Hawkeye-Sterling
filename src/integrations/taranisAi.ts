@@ -27,6 +27,9 @@ export interface TaranisItem {
   tags: string[];
   entities: TaranisEntity[];
   relevanceScore?: number;       // 0–1, set by NLP bot if configured
+  /** G4: GDELT sentiment tone — -100 (very negative) to +100 (very positive).
+   *  Present only when the item originates from a GDELT article. */
+  tone?: number;
   attributes?: Record<string, string>;
 }
 

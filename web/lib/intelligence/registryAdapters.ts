@@ -824,6 +824,100 @@ function adgmRegistryAdapter(): RegistryAdapter {
   }};
 }
 
+// ── DMCC (Dubai Multi Commodities Centre) — critical for UAE DPMS gold traders ─
+// The DMCC is the world's largest free zone and the primary licensing authority
+// for gold/precious-metals traders in Dubai. Requires REGISTRY_DMCC_KEY.
+function dmccRegistryAdapter(): RegistryAdapter {
+  const key = process.env["REGISTRY_DMCC_KEY"];
+  if (!key) return NULL_REGISTRY_ADAPTER;
+  return { isAvailable: () => true, search: async (name, opts) => {
+    try {
+      const qs = new URLSearchParams({ companyName: name, pageSize: String(opts?.limit ?? 20) });
+      const res = await abortable(fetch(`https://api.dmcc.ae/registry/v1/companies/search?${qs}`, {
+        headers: { "x-api-key": key, accept: "application/json" },
+      }));
+      if (!res.ok) return [];
+      const j = (await res.json()) as { companies?: Array<{ companyName?: string; licenseNumber?: string; status?: string; licenseDate?: string; commodities?: string[] }> };
+      return (j.companies ?? []).filter((i) => i.companyName).map((i) => ({
+        source: "dmcc-registry", name: i.companyName!, jurisdiction: "AE-DU",
+        ...(i.licenseNumber ? { registrationNumber: i.licenseNumber } : {}),
+        ...(i.status ? { status: i.status } : {}),
+        ...(i.licenseDate ? { incorporationDate: i.licenseDate } : {}),
+        ...(i.licenseNumber ? { url: `https://mytradezone.dmcc.ae/company/${encodeURIComponent(i.licenseNumber)}` } : {}),
+      } satisfies RegistryRecord));
+    } catch (err) { console.warn("[dmcc-registry] failed:", err instanceof Error ? err.message : err); return []; }
+  }};
+}
+
+// ── Dubai DED (Department of Economic Development) — mainland Dubai trade register ─
+// Requires REGISTRY_DUBAI_DED_KEY.
+function dubaiDedAdapter(): RegistryAdapter {
+  const key = process.env["REGISTRY_DUBAI_DED_KEY"];
+  if (!key) return NULL_REGISTRY_ADAPTER;
+  return { isAvailable: () => true, search: async (name, opts) => {
+    try {
+      const qs = new URLSearchParams({ businessName: name, limit: String(opts?.limit ?? 20) });
+      const res = await abortable(fetch(`https://api.ded.ae/v1/businesses/search?${qs}`, {
+        headers: { Authorization: `Bearer ${key}`, accept: "application/json" },
+      }));
+      if (!res.ok) return [];
+      const j = (await res.json()) as { results?: Array<{ businessName?: string; licenseNo?: string; licenseStatus?: string; issueDate?: string; legalType?: string }> };
+      return (j.results ?? []).filter((i) => i.businessName).map((i) => ({
+        source: "dubai-ded", name: i.businessName!, jurisdiction: "AE-DU",
+        ...(i.licenseNo ? { registrationNumber: i.licenseNo } : {}),
+        ...(i.licenseStatus ? { status: i.licenseStatus } : {}),
+        ...(i.issueDate ? { incorporationDate: i.issueDate } : {}),
+      } satisfies RegistryRecord));
+    } catch (err) { console.warn("[dubai-ded] failed:", err instanceof Error ? err.message : err); return []; }
+  }};
+}
+
+// ── RAK ICC (Ras Al Khaimah International Corporate Centre) — offshore/IBC registry ─
+// Requires REGISTRY_RAK_ICC_KEY.
+function rakIccAdapter(): RegistryAdapter {
+  const key = process.env["REGISTRY_RAK_ICC_KEY"];
+  if (!key) return NULL_REGISTRY_ADAPTER;
+  return { isAvailable: () => true, search: async (name, opts) => {
+    try {
+      const qs = new URLSearchParams({ q: name, limit: String(opts?.limit ?? 20) });
+      const res = await abortable(fetch(`https://api.rakia.ae/v1/companies/search?${qs}`, {
+        headers: { "x-api-key": key, accept: "application/json" },
+      }));
+      if (!res.ok) return [];
+      const j = (await res.json()) as { companies?: Array<{ name?: string; registrationNumber?: string; status?: string; incorporationDate?: string }> };
+      return (j.companies ?? []).filter((i) => i.name).map((i) => ({
+        source: "rak-icc", name: i.name!, jurisdiction: "AE-RK",
+        ...(i.registrationNumber ? { registrationNumber: i.registrationNumber } : {}),
+        ...(i.status ? { status: i.status } : {}),
+        ...(i.incorporationDate ? { incorporationDate: i.incorporationDate } : {}),
+      } satisfies RegistryRecord));
+    } catch (err) { console.warn("[rak-icc] failed:", err instanceof Error ? err.message : err); return []; }
+  }};
+}
+
+// ── Ajman Free Zone — UAE northern emirate free zone registry ─────────────────
+// Requires REGISTRY_AJMAN_FZ_KEY.
+function ajmanFreeZoneAdapter(): RegistryAdapter {
+  const key = process.env["REGISTRY_AJMAN_FZ_KEY"];
+  if (!key) return NULL_REGISTRY_ADAPTER;
+  return { isAvailable: () => true, search: async (name, opts) => {
+    try {
+      const qs = new URLSearchParams({ companyName: name, pageSize: String(opts?.limit ?? 20) });
+      const res = await abortable(fetch(`https://api.afza.ae/v1/companies/search?${qs}`, {
+        headers: { Authorization: `Bearer ${key}`, accept: "application/json" },
+      }));
+      if (!res.ok) return [];
+      const j = (await res.json()) as { companies?: Array<{ companyName?: string; licenseNumber?: string; status?: string; issueDate?: string }> };
+      return (j.companies ?? []).filter((i) => i.companyName).map((i) => ({
+        source: "ajman-freezone", name: i.companyName!, jurisdiction: "AE-AJ",
+        ...(i.licenseNumber ? { registrationNumber: i.licenseNumber } : {}),
+        ...(i.status ? { status: i.status } : {}),
+        ...(i.issueDate ? { incorporationDate: i.issueDate } : {}),
+      } satisfies RegistryRecord));
+    } catch (err) { console.warn("[ajman-freezone] failed:", err instanceof Error ? err.message : err); return []; }
+  }};
+}
+
 // ── Aggregator ────────────────────────────────────────────────────────
 export function activeRegistryAdapters(): RegistryAdapter[] {
   return [
@@ -852,6 +946,10 @@ export function activeRegistryAdapters(): RegistryAdapter[] {
     uaeMoeAdapter(),
     difcRegistryAdapter(),
     adgmRegistryAdapter(),
+    dmccRegistryAdapter(),
+    dubaiDedAdapter(),
+    rakIccAdapter(),
+    ajmanFreeZoneAdapter(),
   ].filter((a) => a.isAvailable());
 }
 
@@ -880,6 +978,10 @@ export function activeRegistryProviders(): string[] {
     ["REGISTRY_UAE_MOE_KEY", "uae-moe"],
     ["REGISTRY_DIFC_KEY", "difc-registry"],
     ["REGISTRY_ADGM_KEY", "adgm-registry"],
+    ["REGISTRY_DMCC_KEY", "dmcc-registry"],
+    ["REGISTRY_DUBAI_DED_KEY", "dubai-ded"],
+    ["REGISTRY_RAK_ICC_KEY", "rak-icc"],
+    ["REGISTRY_AJMAN_FZ_KEY", "ajman-freezone"],
   ];
   const out: string[] = flags.filter(([on]) => on).map(([, n]) => n);
   for (const [envKey, name] of keys) {

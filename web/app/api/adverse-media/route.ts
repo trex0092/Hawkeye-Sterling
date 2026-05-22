@@ -217,6 +217,7 @@ function gdeltToTaranisItem(a: GdeltArticle, index: number): TaranisItem {
     tags: a.riskCategories ?? [],
     entities: [],
     ...(a.relevance !== undefined ? { relevanceScore: a.relevance } : {}),
+    ...(a.tone !== undefined ? { tone: a.tone } : {}),
   } as TaranisItem;
 }
 

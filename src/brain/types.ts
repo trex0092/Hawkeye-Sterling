@@ -210,7 +210,10 @@ export type AdverseMediaCategoryId =
   | 'human_trafficking_modern_slavery'
   | 'tax_crimes'
   | 'environmental_crime'
-  | 'drug_trafficking';
+  | 'drug_trafficking'
+  // G7: Seven-category framework additions.
+  | 'reputational'
+  | 'pep_adverse';
 
 export interface AdverseMediaCategory {
   id: AdverseMediaCategoryId;

@@ -23,11 +23,13 @@ const CATEGORY_WEIGHTS: Record<AdverseMediaCategoryId, number> = {
   cybercrime: 0.80,
   drug_trafficking: 0.80,
   ml_financial_crime: 0.75,
+  pep_adverse: 0.70,        // G7: PEP adverse media — FATF R.12/R.13
   environmental_crime: 0.70,
   ai: 0.65,
   tax_crimes: 0.60,
   legal_criminal_regulatory: 0.55,
   esg: 0.50,
+  reputational: 0.40,       // G7: Reputational risk — non-criminal
 };
 
 export function scoreAdverseMedia(
@@ -63,6 +65,8 @@ export function scoreAdverseMedia(
     tax_crimes: 0,
     environmental_crime: 0,
     drug_trafficking: 0,
+    reputational: 0,
+    pep_adverse: 0,
   };
   const keywordCounts = new Map<string, { cat: AdverseMediaCategoryId; count: number }>();
 

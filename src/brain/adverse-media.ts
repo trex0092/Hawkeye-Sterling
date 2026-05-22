@@ -41,6 +41,15 @@ const ML_PACK: Record<string, string[]> = {
     '洗钱', '恐怖融资', '腐败', '贿赂', '欺诈', '制裁', '毒品走私',
     '人口贩卖', '逃税', '被捕', '起诉', '定罪',
   ],
+  // G2: Turkish-language pack — covers Istanbul Gold Refinery AML typology
+  // and FATF grey-list press from Hürriyet, Sabah, Dünya, Haberturk, TRT.
+  tr: [
+    'kara para aklama', 'terör finansmanı', 'rüşvet', 'yolsuzluk',
+    'dolandırıcılık', 'kaçakçılık', 'vergi kaçakçılığı', 'yaptırım',
+    'tutuklandı', 'gözaltı', 'suçlama', 'iddianame', 'mali suç',
+    'insan ticareti', 'uyuşturucu kaçakçılığı', 'organize suç',
+    'sahtecilik', 'zimmet', 'rüşvet alma', 'kara borsa',
+  ],
 };
 
 export const ADVERSE_MEDIA_CATEGORIES: AdverseMediaCategory[] = [
@@ -431,6 +440,41 @@ export const ADVERSE_MEDIA_CATEGORIES: AdverseMediaCategory[] = [
       'trade-based drug laundering', 'real estate drug laundering',
       'cryptocurrency drug payment', 'crypto drug market',
       'UNODC drug report', 'DEA enforcement', 'Europol drug operation',
+    ],
+  },
+  // G7: Reputational risk category — non-criminal adverse coverage.
+  {
+    id: 'reputational',
+    displayName: 'Reputational Risk & Controversy',
+    keywords: [
+      'scandal', 'controversy', 'misconduct', 'disciplinary action', 'banned',
+      'disqualified', 'dismissed', 'resigned under pressure', 'forced resignation',
+      'reputational damage', 'adverse allegation', 'negative press', 'regulatory criticism',
+      'public censure', 'named and shamed', 'blacklisted', 'debarred',
+      'regulatory warning', 'compliance failure', 'governance failure',
+      'boardroom dispute', 'shareholder dispute', 'leadership crisis',
+      'whistleblower complaint', 'internal investigation', 'audit finding',
+      'conflict of interest allegation', 'undisclosed interest',
+      'market misconduct', 'professional misconduct', 'ethical violation',
+      'public controversy', 'media scrutiny', 'adverse media coverage',
+      'reputational risk', 'reputational concern', 'reputational threat',
+    ],
+  },
+  // G7: PEP (Politically Exposed Person) adverse media category.
+  {
+    id: 'pep_adverse',
+    displayName: 'PEP & Political Exposure',
+    keywords: [
+      'politically exposed person', 'PEP', 'political exposure', 'public official',
+      'government minister', 'cabinet minister', 'head of state', 'president',
+      'prime minister', 'governor', 'senator', 'MP', 'member of parliament',
+      'state official', 'public servant', 'government appointee',
+      'state-owned enterprise', 'SOE', 'government contract', 'public procurement',
+      'public office', 'political office', 'official position', 'diplomatic immunity',
+      'political connection', 'politically connected', 'political influence',
+      'kleptocrat', 'dictator', 'autocrat', 'oligarch', 'state capture',
+      'political risk', 'political sanction', 'political party funds',
+      'campaign finance', 'political donation', 'party financing',
     ],
   },
 ];
