@@ -17,7 +17,7 @@ import { enforce } from "@/lib/server/enforce";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
 import { searchAdverseMedia, type TaranisItem } from "../../../../src/integrations/taranisAi.js";
 import { analyseAdverseMediaResult, analyseAdverseMediaItems } from "../../../../src/brain/adverse-media-analyser.js";
-import { type GdeltArticle } from "@/lib/intelligence/gdelt-cache";
+import { type GdeltArticle, fetchGdeltCached } from "@/lib/intelligence/gdelt-cache";
 import { getStore } from "@netlify/blobs";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
@@ -242,7 +242,21 @@ async function liveAdverseMedia(subject: string, _budgetMs = 20_000) {
       items = cached.articles;
     }
   } catch {
-    // Blobs unavailable or key not yet cached for this subject — GDELT skipped.
+    // Blobs unavailable or key not yet cached for this subject — fall through to live GDELT.
+  }
+
+  // Blobs had nothing (new subject, not yet pre-warmed by the scheduled prefetch).
+  // Fall back to a live multi-query GDELT fetch so new subjects are never silently
+  // scored as "clear" just because the prefetch scheduler hasn't run yet.
+  if (items.length === 0) {
+    try {
+      const gdelt = await fetchGdeltCached(subject, { budgetMs: Math.max(5_000, _budgetMs - 2_000) });
+      if (!gdelt.serviceError && gdelt.articles.length > 0) {
+        items = gdelt.articles;
+      }
+    } catch {
+      // GDELT live fetch failed — proceed with empty items; Claude returns "unknown" not "clear".
+    }
   }
 
   // When no Anthropic key is configured, run the deterministic 737-keyword
@@ -279,12 +293,12 @@ async function liveAdverseMedia(subject: string, _budgetMs = 20_000) {
         type: "text",
         text: `You are an MLRO adverse-media intelligence system operating for a UAE-regulated financial institution. You have been given REAL live news articles fetched from the GDELT global news corpus (Art.19 FDL 10/2025 — 10-year lookback).
 
-CRITICAL INSTRUCTION: Base your assessment SOLELY on the articles provided by the user. Do NOT use your training knowledge to add, invent, or assume facts not present in the article list. If no articles were found, return riskTier "clear" with zero counts.
+CRITICAL INSTRUCTION: Base your assessment SOLELY on the articles provided by the user. Do NOT use your training knowledge to add, invent, or assume facts not present in the article list. If no articles were found, return riskTier "unknown" (not "clear") with zero counts — "clear" means data was found and was clean; "unknown" means data was unavailable.
 
 Return ONLY valid JSON matching this exact shape (no markdown, no explanation):
 {
   "subject": "string",
-  "riskTier": "clear|low|medium|high|critical",
+  "riskTier": "clear|low|medium|high|critical|unknown",
   "riskDetail": "one sentence summary citing specific article dates/sources found above",
   "totalItems": number,
   "adverseItems": number,
