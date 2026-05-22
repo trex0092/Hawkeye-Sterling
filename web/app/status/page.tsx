@@ -970,7 +970,6 @@ function AsanaRebuildSection() {
   const [showEnvRef, setShowEnvRef] = useState(false);
 
   const NEW_PROJECTS: Array<{ board: string; envVar: string }> = [
-    { board: "03 · Audit Log 10-Year Trail",          envVar: "ASANA_AUDIT_LOG_PROJECT_GID" },
     { board: "04 · Four-Eyes Approvals",               envVar: "ASANA_FOUR_EYES_PROJECT_GID" },
     { board: "09 · Compliance Ops — Daily & Weekly",  envVar: "ASANA_COMPLIANCE_OPS_PROJECT_GID" },
     { board: "11 · Employees",                         envVar: "ASANA_EMPLOYEES_PROJECT_GID" },
