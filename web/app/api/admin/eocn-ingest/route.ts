@@ -26,6 +26,7 @@ import { invalidateCandidateCache } from "@/lib/server/candidates-loader";
 import { parseEocnBuffer } from "@/lib/server/eocn-parser";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { getNamedStore } from "@/lib/server/blob-getter";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -70,29 +71,41 @@ interface IngestResult {
 }
 
 async function readExistingEntities(listId: string): Promise<NormalisedEntity[]> {
+  const store = await getNamedStore(BLOB_STORE_NAME);
+  if (!store) return [];
   try {
-    const { getStore } = await import("@netlify/blobs");
-    const store = getStore(BLOB_STORE_NAME);
     const raw = await store.get(`${listId}/latest.json`, { type: "json" }) as {
       entities?: NormalisedEntity[];
     } | null;
     return raw?.entities ?? [];
-  } catch {
+  } catch (err) {
+    console.warn("[eocn-ingest] readExistingEntities failed:", err instanceof Error ? err.message : String(err));
     return [];
   }
 }
 
-async function writeToBlobStore(listId: string, entities: NormalisedEntity[]): Promise<boolean> {
+async function writeToBlobStore(listId: string, entities: NormalisedEntity[]): Promise<{ ok: boolean; error?: string }> {
+  const store = await getNamedStore(BLOB_STORE_NAME);
+  if (!store) {
+    const msg = `Blobs store "${BLOB_STORE_NAME}" unavailable — NETLIFY_SITE_ID or NETLIFY_BLOBS_TOKEN may be missing`;
+    console.error("[eocn-ingest] writeToBlobStore:", msg);
+    return { ok: false, error: msg };
+  }
+  if (!store.set) {
+    const msg = `Blobs store "${BLOB_STORE_NAME}" does not expose set() — unexpected store shape`;
+    console.error("[eocn-ingest] writeToBlobStore:", msg);
+    return { ok: false, error: msg };
+  }
   try {
-    const { getStore } = await import("@netlify/blobs");
-    const store = getStore(BLOB_STORE_NAME);
     await store.set(
       `${listId}/latest.json`,
       JSON.stringify({ entities, ingestedAt: new Date().toISOString(), source: "manual_upload" }),
     );
-    return true;
-  } catch {
-    return false;
+    return { ok: true };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[eocn-ingest] writeToBlobStore set() failed:", msg);
+    return { ok: false, error: msg };
   }
 }
 
@@ -428,9 +441,11 @@ export async function POST(req: Request): Promise<NextResponse> {
   let written = false;
 
   if (entities.length > 0) {
-    written = await writeToBlobStore(listId, entities);
+    const writeResult = await writeToBlobStore(listId, entities);
+    written = writeResult.ok;
     if (!written) {
-      warnings.push("Blob store write failed — entities extracted but not persisted; retry or contact support");
+      const detail = writeResult.error ? ` (${writeResult.error})` : "";
+      warnings.push(`Blob store write failed — entities extracted but not persisted; retry or contact support${detail}`);
     } else {
       invalidateCandidateCache();
       const existingIds = new Set(existingEntities.map((e) => e.id));
