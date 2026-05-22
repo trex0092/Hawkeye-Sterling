@@ -217,6 +217,11 @@ export async function POST(req: Request) {
     }
   }
 
+  // TypeScript narrowing: user is guaranteed defined here — either normal auth
+  // succeeded (user was found) or the recovery block set user before falling
+  // through. The only other path returns 401 above.
+  if (!user) return NextResponse.json({ ok: false, error: "Invalid username or password" }, { status: 401 });
+
   // Clear the per-username counter on success (the IP counter intentionally
   // stays to limit rapid username cycling from the same address).
   await recordSuccess(USER_LOCK_PREFIX, uKey);
