@@ -83,10 +83,10 @@ interface RiskProfileSummaryResult {
 // ── Taxonomy context builder ──────────────────────────────────────────────────
 
 /**
- * Selects sector- and jurisdiction-relevant flags from the 719-flag taxonomy.
- * Runs targeted keyword searches across all 7 buckets, deduplicates, and caps
- * at 120 entries. Ordering matters: sector-specific flags are added first so
- * they always survive the cap; generic behavioral patterns come last.
+ * Orders and returns all 719 flags from the taxonomy.
+ * Sector- and jurisdiction-specific flags are added first (most relevant),
+ * followed by universal flags, then every remaining flag — guaranteeing
+ * the LLM always has the complete taxonomy available to choose from.
  */
 function buildFlagPool(sector: string, jurisdiction: string): MlroRedFlag[] {
   const s = sector.toLowerCase();
@@ -374,14 +374,12 @@ function buildFlagPool(sector: string, jurisdiction: string): MlroRedFlag[] {
   add(searchRedFlags("sudden"));               // sudden-change patterns (33 flags)
   add(searchRedFlags("pattern"));              // "Pattern of..." behavioral flags (69 flags)
 
-  // ── Geographic bucket: ensure full coverage ────────────────────────────────
+  // ── Fill all remaining flags — every one of the 719 is always present ────────
   for (const f of MLRO_RED_FLAGS_TAXONOMY) {
-    if (f.bucket === "geographic" && !seen.has(f.id)) {
-      seen.add(f.id); pool.push(f);
-    }
+    if (!seen.has(f.id)) { seen.add(f.id); pool.push(f); }
   }
 
-  return pool.slice(0, 120);
+  return pool; // all 719, sector/jurisdiction-relevant flags ordered first
 }
 
 // ── Common-sense rules context builder ───────────────────────────────────────
@@ -450,9 +448,9 @@ function buildSystemPrompt(
 
   return `You are a Senior MLRO and Compliance Specialist at a UAE-regulated financial institution. Generate a structured Risk Profile Summary. Apply UAE FDL 10/2025, FATF Recommendations, and CBUAE AML Standards.
 
-=== TAXONOMY FLAGS PRE-SELECTED FOR THIS SECTOR/JURISDICTION (${flagPool.length} flags from ${MLRO_RED_FLAGS_TAXONOMY.length} total) ===
-Your redFlagsToWatch MUST be drawn from this vetted list. Do not invent flags outside it.
-Select 10–14 of the most applicable entries and provide a specific rationale for each.
+=== FULL MLRO RED-FLAG TAXONOMY — ALL ${flagPool.length} FLAGS (ordered: sector-relevant first) ===
+Your redFlagsToWatch MUST be drawn from this list. Do not invent flags outside it.
+Select 10–14 of the most applicable entries for this specific entity and provide a precise rationale for each.
 
 ${flagLines}
 
