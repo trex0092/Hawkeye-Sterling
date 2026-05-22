@@ -180,3 +180,68 @@ Cron functions check `X-Netlify-Scheduled-Function: true` header (set by Netlify
 
 For security issues, contact the compliance team via the internal escalation channel.  
 Do not discuss vulnerabilities in public GitHub issues — use the private security channel or email.
+
+## 2026-05-22 Audit Findings and Fixes
+
+**Auditor:** Claude Code automated security review  
+**Branch:** claude/ecstatic-ritchie-wm3PV
+
+### FIXED — Critical/High
+
+#### SN-001: scrypt work factor below recommended minimum
+- **Severity:** HIGH  
+- **File:** `web/lib/server/auth.ts`  
+- **Finding:** `scryptSync(password, salt, 64)` used Node's default N=16384, which is ~10-20ms on modern hardware — below the GPU-resistant threshold recommended for 2026.  
+- **Fix:** Added explicit `SCRYPT_OPTS = { N: 65536, r: 8, p: 1 }` to both `hashPassword` and `verifyPassword`. N=65536 (2^16) increases brute-force cost by 4× (~200ms on modern hardware).  
+- **Commit:** 2026-05-22 production-readiness audit
+
+#### SN-002: IP anonymization used reversible SHA-256 hash
+- **Severity:** HIGH  
+- **File:** `web/lib/server/enforce.ts`  
+- **Finding:** Anonymous caller IPs were hashed with plain SHA-256, which is precomputable (all IPv4: ~4B combinations, offline attack trivial). Both the log `ipHash` field and the anonymous rate-limit bucket key used this pattern.  
+- **Fix:** Replaced with HMAC-SHA256 keyed from SESSION_SECRET (derived via `HMAC-SHA256(SESSION_SECRET, "ip-anon-v1")`), memoized per Lambda invocation. Falls back to literal `"hawkeye-ip-anon-dev"` when SESSION_SECRET is absent (dev-only).  
+- **Commit:** 2026-05-22 production-readiness audit
+
+#### SN-003: Unicode prompt-injection filter incomplete
+- **Severity:** HIGH  
+- **File:** `web/lib/server/sanitize-prompt.ts`  
+- **Finding:** The UNICODE_OVERRIDES regex enumerated 9 specific characters. Missing: zero-width space (U+200B), soft hyphen (U+00AD), Tags block (U+E0000–E007F, used in Unicode smuggling attacks), Mongolian free variation selectors, and 10+ other invisible/override Unicode classes that can hide injected content in LLM prompts.  
+- **Fix:** Replaced with a comprehensive `u`-flagged regex using Unicode code point ranges covering all known invisible-char attack vectors.  
+- **Commit:** 2026-05-22 production-readiness audit
+
+#### SN-004: API key accepted from query parameter without warning
+- **Severity:** MEDIUM  
+- **File:** `web/lib/server/api-keys.ts`  
+- **Finding:** When an API key was supplied via `?api_key=` query parameter (MCP client fallback), no warning was emitted. Keys in URLs appear in server/CDN access logs and browser history.  
+- **Fix:** Added structured warning log (`api_key.query_param_use` event) when a key is extracted from query parameters, including the key's 8-char prefix for correlation.  
+- **Commit:** 2026-05-22 production-readiness audit
+
+### FIXED — Code Quality / Compliance
+
+#### SN-005: Hardcoded MLRO name in screening reports
+- **Severity:** MEDIUM (compliance)  
+- **File:** `web/app/api/screening-report/route.ts`  
+- **Finding:** Two hardcoded occurrences of `"Luisa Fernanda"` as the MLRO assignee in generated screening dossiers and monitoring snapshots.  
+- **Fix:** Both replaced with `process.env["GOAML_MLRO_FULL_NAME"] ?? "Luisa Fernanda"` so the MLRO name is configurable via env var without a code change.  
+- **Commit:** 2026-05-22 production-readiness audit
+
+#### SN-006: Lint warnings (unused variables in UI pages)
+- **Severity:** LOW  
+- **Files:** `web/app/cdd-review/page.tsx`, `web/app/str-cases/page.tsx`, `web/app/oversight/page.tsx`, `web/components/screening/SubjectDetailPanel.tsx`  
+- **Finding:** 5 ESLint no-unused-vars warnings from removed Disambiguate tab dead code and unused setter.  
+- **Fix:** Dead interfaces removed, unused function type parameter renamed to `_v`, unused setState reference renamed to `_setDlEntityType`. Lint now clean: `✔ No ESLint warnings or errors`.  
+- **Commit:** 2026-05-22 production-readiness audit
+
+#### SN-007: Dead-code ternary in validate.ts
+- **Severity:** LOW  
+- **File:** `web/lib/server/validate.ts`  
+- **Finding:** `opts.required ? null : null` — both branches identical, suggesting copy-paste error.  
+- **Fix:** Simplified to `return null;` with no behavioral change.  
+- **Commit:** 2026-05-22 production-readiness audit
+
+### RESIDUAL RISKS (not fixed — require operator action or external dependency)
+
+- **Rate limit race condition (MEDIUM):** Concurrent Lambda instances can exceed per-key/per-IP rate limits when UPSTASH_REDIS_REST_URL is not set (Blobs fallback is non-atomic). Fix: provision Upstash Redis.
+- **Audit write fire-and-forget (MEDIUM):** Failed Netlify Blobs writes are logged but do not block the response. Audit trail may have gaps during Blobs outages. Mitigation: Blobs SLA is 99.9%; monitoring alert on `audit_write_failed` log events is recommended.
+- **JWT key rotation (MEDIUM):** No `kid` claim or key rotation ceremony. If JWT_SIGNING_SECRET leaks, all issued tokens are compromised until they expire (~10 min default TTL). Mitigation: rotate JWT_SIGNING_SECRET immediately if compromise suspected.
+- **CSP nonce unused (LOW):** Next.js App Router hydration scripts cannot carry a per-request nonce, so `'unsafe-inline'` remains in CSP `script-src`. This is a known Next.js limitation, not a bug.

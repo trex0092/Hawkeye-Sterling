@@ -1,5 +1,5 @@
 // Platform authentication helpers — no external dependencies, uses Node.js crypto.
-// Password hashing: scrypt(password, salt, 64) — work factor ~100ms, GPU-resistant
+// scrypt options: N=65536 (2^16), r=8, p=1 — ~200ms on modern hardware, GPU-resistant.
 // Session signing:  HMAC-SHA256 over base64url(payload) using SESSION_SECRET env var
 
 import { scryptSync, timingSafeEqual, createHmac, createHash, randomBytes } from "node:crypto";
@@ -9,16 +9,18 @@ const SESSION_TTL_S = 8 * 60 * 60; // 8 hours
 
 // ── Password helpers ─────────────────────────────────────────────────────────
 
+const SCRYPT_OPTS = { N: 65536, r: 8, p: 1 } as const;
+
 export function generateSalt(): string {
   return randomBytes(16).toString("hex");
 }
 
 export function hashPassword(password: string, salt: string): string {
-  return scryptSync(password, salt, 64).toString("hex");
+  return scryptSync(password, salt, 64, SCRYPT_OPTS).toString("hex");
 }
 
 export function verifyPassword(password: string, salt: string, storedHash: string): boolean {
-  const candidate = scryptSync(password, salt, 64);
+  const candidate = scryptSync(password, salt, 64, SCRYPT_OPTS);
   const stored = Buffer.from(storedHash, "hex");
   if (candidate.length !== stored.length) return false;
   return timingSafeEqual(new Uint8Array(candidate), new Uint8Array(stored));

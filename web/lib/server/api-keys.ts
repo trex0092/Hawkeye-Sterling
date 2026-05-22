@@ -15,6 +15,7 @@
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { del, getJson, listKeys, setJson } from "./store";
 import { tierFor, type TierDefinition, type TierId } from "@/lib/data/tiers";
+import { log } from "./logger";
 
 const PREFIX = "keys/";
 const HASH_IDX_PREFIX = "keyidx/";
@@ -194,7 +195,17 @@ export function extractKey(req: Request): string | null {
   // logs — prefer header auth where possible.
   try {
     const queryKey = new URL(req.url).searchParams.get("api_key");
-    if (queryKey) return queryKey.trim();
+    if (queryKey) {
+      const plaintext = queryKey.trim();
+      log({
+        level: "warn",
+        route: new URL(req.url).pathname,
+        event: "api_key.query_param_use",
+        detail: "API key supplied via query parameter — use Authorization or X-Api-Key header instead",
+        keyIdPrefix: plaintext.slice(0, 8),
+      });
+      return plaintext;
+    }
   } catch { /* invalid URL — fall through */ }
   return null;
 }

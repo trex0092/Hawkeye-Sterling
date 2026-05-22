@@ -19,9 +19,22 @@ import { NextResponse } from "next/server";
 import { extractKey, validateAndConsume, type ApiKeyRecord } from "./api-keys";
 import { consumeRateLimit, rateLimitHeaders } from "./rate-limit";
 import { tierFor } from "@/lib/data/tiers";
-import { createHash, timingSafeEqual } from "node:crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { looksLikeJwt, verifyJwt } from "./jwt";
 import { log } from "./logger";
+
+// Memoized HMAC key for IP anonymization. Derived once per deployment from
+// SESSION_SECRET so that the same IP always produces the same hash within a
+// deployment but cannot be reversed via a rainbow table of 4B IPv4 addresses.
+// Falls back to a fixed dev string when SESSION_SECRET is absent so that dev
+// behaviour is explicit rather than silently using bare SHA-256.
+let _anonIpKey: string | undefined;
+function anonIpKey(): string {
+  if (_anonIpKey) return _anonIpKey;
+  const secret = process.env["SESSION_SECRET"] ?? "hawkeye-ip-anon-dev";
+  _anonIpKey = createHmac("sha256", secret).update("ip-anon-v1").digest("hex");
+  return _anonIpKey;
+}
 
 /** Internal: emit a structured auth-failure log entry for every enforcement rejection. */
 function logAuthFailure(
@@ -44,8 +57,10 @@ function logAuthFailure(
     detail: reason,
     status,
     requestId,
-    // IP hashed for PII hygiene — raw IP not logged.
-    ipHash: createHash("sha256").update(ip ?? "").digest("hex").slice(0, 16),
+    // IP HMAC-hashed for PII hygiene — raw IP not logged.
+    // HMAC-SHA256 with a per-deployment key prevents rainbow-table reversal
+    // of the ~4B IPv4 address space that plain SHA-256 would allow.
+    ipHash: createHmac("sha256", anonIpKey()).update(ip ?? "").digest("hex").slice(0, 16),
     method: req.method,
     ...extra,
   });
@@ -262,7 +277,7 @@ export async function enforce(
     const fwd = req.headers.get("x-forwarded-for");
     const ips = fwd ? fwd.split(",").map((s) => s.trim()).filter(Boolean) : [];
     const ip = ips.length > 0 ? (ips[ips.length - 1] ?? "anonymous") : "anonymous";
-    keyId = `anon_${createHash("sha256").update(ip).digest("hex").slice(0, 12)}`;
+    keyId = `anon_${createHmac("sha256", anonIpKey()).update(ip).digest("hex").slice(0, 12)}`;
   }
 
   const rl = await consumeRateLimit(keyId, tierId);

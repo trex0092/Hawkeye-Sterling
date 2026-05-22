@@ -820,7 +820,7 @@ export default function OversightPage() {
   const [deadlineLoading, setDeadlineLoading] = useState(false);
   const [deadlineResult, setDeadlineResult] = useState<DeadlineEngineResult | null>(null);
   const [deadlineError, setDeadlineError] = useState("");
-  const [dlEntityType, setDlEntityType] = useState<"dpms">("dpms");
+  const [dlEntityType, _setDlEntityType] = useState<"dpms">("dpms");
   const [dlLicenseType, setDlLicenseType] = useState<"gold_trader" | "jeweller" | "refinery" | "broker" | "auction_house">("gold_trader");
   const [dlRisk, setDlRisk] = useState<"low" | "medium" | "high" | "critical">("medium");
   const [dlPendingCtrs, setDlPendingCtrs] = useState("0");

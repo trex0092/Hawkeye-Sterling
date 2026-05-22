@@ -1176,7 +1176,7 @@ export default function StrCasesPage() {
                   ["Prior STR", sarStrHistory, setSarStrHistory] as const,
                   ["Behavioral Drift", sarBehavioralDrift, setSarBehavioralDrift] as const,
                   ["Typology Match", sarTypologyMatch, setSarTypologyMatch] as const,
-                ] as Array<[string, boolean, (v: boolean) => void]>).map(([label, val, setter]) => (
+                ] as Array<[string, boolean, (_v: boolean) => void]>).map(([label, val, setter]) => (
                   <label key={label} className="flex items-center gap-1.5 text-10 text-ink-2 cursor-pointer">
                     <input type="checkbox" checked={val} onChange={(e) => setter(e.target.checked)} className="accent-brand w-3 h-3" />
                     {label}
