@@ -590,13 +590,19 @@ export function BrainCanaryBench() {
 // signals. Flags paradoxical outputs.
 export function BrainVerdictConsistency({ result }: { result: SuperBrainResult }) {
   const composite = result.composite.score;
-  const sanctionsHit = result.screen.hits.length > 0;
+  // Only confirmed hits (identifier corroborated) are treated as actionable sanctions
+  // entanglement; name-only fuzzy matches are POSSIBLE matches, not designations.
+  const confirmedSanctionsHit = result.screen.hits.some(
+    (h) => (h.disambiguationConfidence ?? 50) >= 75,
+  );
+  const hasAnyHit = result.screen.hits.length > 0;
   const pepFired = Boolean(result.pep && result.pep.salience > 0);
   const redline = result.redlines.fired.length > 0;
 
   let expected = "clear";
-  if (sanctionsHit && composite >= 85) expected = "critical";
-  else if (sanctionsHit || redline) expected = "high";
+  if (confirmedSanctionsHit && composite >= 85) expected = "critical";
+  else if (confirmedSanctionsHit || redline) expected = "high";
+  else if (hasAnyHit) expected = "medium"; // unconfirmed name-only hit → review
   else if (pepFired) expected = "medium";
   else if (composite > 0) expected = "low";
 
@@ -781,7 +787,12 @@ export function BrainCoherenceCheck({
 // specific typology beyond what individual flags show.
 export function BrainRedFlagCombinator({ result }: { result: SuperBrainResult }) {
   const patterns: Array<{ name: string; likelihood: number; rationale: string }> = [];
-  const hitCount = result.screen.hits.length;
+  // Only count hits with identifier confirmation (disambiguationConfidence ≥ 75).
+  // Name-only fuzzy matches never reach "Confirmed" classification and must not
+  // be treated as confirmed sanctions entanglement in combinator logic.
+  const confirmedHitCount = result.screen.hits.filter(
+    (h) => (h.disambiguationConfidence ?? 50) >= 75,
+  ).length;
   const pepFired = Boolean(result.pep && result.pep.salience > 0);
   const amFired = result.adverseMedia.length > 0;
   const cahra = Boolean(result.jurisdiction?.cahra);
@@ -796,12 +807,12 @@ export function BrainRedFlagCombinator({ result }: { result: SuperBrainResult })
         "PEP classification + CAHRA jurisdiction + adverse-media converge — classic kleptocracy pathway. Escalate to CEO/Board.",
     });
   }
-  if (hitCount > 0 && redlines >= 2) {
+  if (confirmedHitCount > 0 && redlines >= 2) {
     patterns.push({
       name: "Active sanctions-evasion pattern",
       likelihood: 0.92,
       rationale:
-        "Sanctions hit × multiple redlines — consistent with active evasion via shell-company or nominee structure.",
+        "Confirmed sanctions designation × multiple redlines — consistent with active evasion via shell-company or nominee structure.",
     });
   }
   if (typologies >= 3 && amFired) {
@@ -1038,12 +1049,22 @@ export function BrainSanctionsPathway({ result }: { result: SuperBrainResult }) 
   }
   const topHit = result.screen.hits[0]!;
   const confidence = topHit.score;
-  let pathway = "Direct match";
-  let action = "Freeze immediately — primary designation";
-  if (confidence < 0.92 && confidence >= 0.82) {
-    pathway = "High-similarity match (not exact)";
+  const disambConf = topHit.disambiguationConfidence ?? 50;
+  const isConfirmed = disambConf >= 75; // at least one corroborating identifier
+  let pathway: string;
+  let action: string;
+  if (isConfirmed && confidence >= 0.85) {
+    // EXACT or STRONG match with identifier confirmation — per compliance-policy taxonomy
+    pathway = "Confirmed match";
+    action = "Freeze immediately — primary designation";
+  } else if (confidence >= 0.92) {
+    // High name-similarity but NO identifier confirmation — name-only match
+    pathway = "High-similarity name match (unconfirmed)";
+    action = "Analyst review required — name similarity alone does not confirm designation; provide DOB / ID / nationality to disambiguate";
+  } else if (confidence >= 0.82) {
+    pathway = "Possible match — insufficient identifiers";
     action = "Analyst review required — possible alias or transliteration";
-  } else if (confidence < 0.82) {
+  } else {
     pathway = "Low-confidence fuzzy match";
     action = "Likely false-positive — document rationale, do not freeze";
   }
@@ -1084,11 +1105,13 @@ export function BrainSoWPlausibility({ result }: { result: SuperBrainResult }) {
           : "No PEP classification — SoW cross-check not mandated",
     },
     {
-      ok: result.screen.hits.length === 0,
-      text:
-        result.screen.hits.length === 0
-          ? "No sanctions entanglement — SoW path is unconstrained"
-          : "Sanctions-related SoW — freeze pathway applies regardless of declared source",
+      ok: !result.screen.hits.some((h) => (h.disambiguationConfidence ?? 50) >= 75),
+      text: (() => {
+        if (result.screen.hits.length === 0) return "No sanctions hit — SoW path is unconstrained";
+        if (result.screen.hits.some((h) => (h.disambiguationConfidence ?? 50) >= 75))
+          return "Confirmed sanctions entanglement — freeze pathway applies regardless of declared source";
+        return "Unconfirmed name-similarity match only — SoW assessment not constrained pending identifier disambiguation";
+      })(),
     },
   ];
   void j;

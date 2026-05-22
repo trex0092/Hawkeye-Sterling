@@ -1295,7 +1295,10 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
             brainSeverity={brainSeverity}
             brainScore={brainScore}
             hasSanctionsHit={
-              screening.status === "success" && screening.result.hits.length > 0
+              screening.status === "success" &&
+              screening.result.hits.some(
+                (h) => h.score >= 0.85 && (h.disambiguationConfidence ?? 50) >= 75,
+              )
             }
             hasRedline={
               superBrain.status === "success" &&

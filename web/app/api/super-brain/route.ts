@@ -365,8 +365,16 @@ export async function POST(req: Request): Promise<NextResponse> {
       ["eu_fsf", "rl_eu_cfsp_confirmed"],
       ["uk_ofsi", "rl_uk_ofsi_confirmed"],
     ];
+    // "Confirmed" redlines require BOTH score ≥ 0.85 AND at least one
+    // corroborating identifier (disambiguationConfidence ≥ 75, i.e.
+    // recommendation === 'match'). A name-only fuzzy match — even at 92%
+    // jaro_winkler — is at most POSSIBLE confidence per the match taxonomy
+    // and must NEVER fire a "Confirmed" freeze redline without identifier proof.
+    const isConfirmedHit = (h: (typeof screen.hits)[number]): boolean =>
+      h.score >= 0.85 && (h.disambiguationConfidence ?? 50) >= 75;
+
     for (const [listId, redlineId] of SANCTIONS_REDLINE_MAP) {
-      if ((_redlineHitsByList.get(listId) ?? []).some((h) => h.score >= 0.85)) {
+      if ((_redlineHitsByList.get(listId) ?? []).some(isConfirmedHit)) {
         firedRedlineIds.push(redlineId);
       }
     }
@@ -375,10 +383,10 @@ export async function POST(req: Request): Promise<NextResponse> {
       ...(_redlineHitsByList.get("uae_eocn") ?? []),
       ...(_redlineHitsByList.get("uae_ltl") ?? []),
     ];
-    if (uaeHitsForRedline.some((h) => h.score >= 0.85)) firedRedlineIds.push("rl_eocn_confirmed");
+    if (uaeHitsForRedline.some(isConfirmedHit)) firedRedlineIds.push("rl_eocn_confirmed");
     // LSEG supplements for Canada + Australia
-    if ((_redlineHitsByList.get("lseg_ca_osfi") ?? []).some((h) => h.score >= 0.85)) firedRedlineIds.push("rl_canada_osfi_confirmed");
-    if ((_redlineHitsByList.get("lseg_au_dfat") ?? []).some((h) => h.score >= 0.85)) firedRedlineIds.push("rl_australia_dfat_confirmed");
+    if ((_redlineHitsByList.get("lseg_ca_osfi") ?? []).some(isConfirmedHit)) firedRedlineIds.push("rl_canada_osfi_confirmed");
+    if ((_redlineHitsByList.get("lseg_au_dfat") ?? []).some(isConfirmedHit)) firedRedlineIds.push("rl_australia_dfat_confirmed");
     // CAHRA jurisdiction — subject country is a Conflict-Affected and High-Risk Area
     if (jurisdiction?.cahra) firedRedlineIds.push("rl_dpms_cahra_without_oecd");
     // PEP without EDD — high-salience political exposure with no enhanced DD indicator

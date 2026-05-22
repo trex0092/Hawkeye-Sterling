@@ -127,8 +127,15 @@ function buildNarrative(r: SuperBrainResult, name: string, id: string, news?: Ne
   }
 
   // Recommendation.
+  // A FREEZE recommendation requires a CONFIRMED sanctions designation (at least one
+  // identifier corroborated, disambiguationConfidence ≥ 75). Name-similarity alone —
+  // even at high score — is POSSIBLE confidence per the match taxonomy and must never
+  // trigger a freeze action; it routes to MLRO escalation for disambiguation instead.
+  const confirmedSanctionsHit = r.screen.hits.some(
+    (h) => (h.disambiguationConfidence ?? 50) >= 75,
+  );
   const rec = (() => {
-    if (r.screen.hits.length > 0 && severity === "CRITICAL") {
+    if (confirmedSanctionsHit && severity === "CRITICAL") {
       return "FREEZE relationship, file FFR + parallel SAR via goAML without delay, notify EOCN + MoE, escalate to CEO and Board Chair.";
     }
     if (r.screen.hits.length > 0 || severity === "HIGH") {
