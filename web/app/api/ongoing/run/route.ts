@@ -48,7 +48,7 @@ const quickScreen = _quickScreen as QuickScreenFn;
 import { getJson, listKeys, setJson } from "@/lib/server/store";
 import type { ScreeningHistoryEntry } from "@/lib/types";
 import { postWebhook } from "@/lib/server/webhook";
-import { deliverWebhookEvent } from "@/app/api/webhook/push/route";
+import { deliverWebhookEvent } from "@/lib/server/webhook-delivery";
 import { ESCALATION_DELTA, shouldEscalate } from "@/lib/server/ongoing-escalation";
 import { asanaGids } from "@/lib/server/asanaConfig";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";

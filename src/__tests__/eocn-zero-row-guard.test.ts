@@ -35,7 +35,7 @@ vi.mock("@/lib/server/enforce", () => ({
   enforce: async () => ({ ok: true, tier: "enterprise", keyId: "test", record: null, remainingMonthly: null, headers: {} }),
 }));
 
-vi.mock("@/app/api/webhook/push/route", () => ({
+vi.mock("@/lib/server/webhook-delivery", () => ({
   deliverWebhookEvent: vi.fn().mockResolvedValue(undefined),
 }));
 
