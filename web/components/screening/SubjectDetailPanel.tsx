@@ -98,19 +98,6 @@ type Tab = (typeof TABS)[number];
 
 // Disambiguate tab removed — its types were removed alongside it.
 
-interface EthicalImpact {
-  impactLevel: "high" | "medium" | "low";
-  impactNarrative: string;
-  rightsImpacted: string[];
-  proportionalityAssessment: string;
-  humanOversightStatus: string;
-  mitigationMeasures: string[];
-  subjectRights: string[];
-  documentationRequired: string[];
-  unescoAlignment: string;
-  reviewRecommendation: string;
-}
-
 const SEVERITY_LABEL: Record<QuickScreenSeverity, string> = {
   clear: "Clear",
   low: "Low",
@@ -251,70 +238,14 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
   // records.
   const [roleOverride, setRoleOverride] = useState("");
   const [narrativeOverride, setNarrativeOverride] = useState("");
-  const [eiaResult, setEiaResult] = useState<EthicalImpact | null>(null);
-  const [eiaLoading, setEiaLoading] = useState(false);
-  const [eiaError, setEiaError] = useState<string | null>(null);
   useEffect(() => {
     setRoleOverride("");
     setNarrativeOverride("");
-    setEiaResult(null);
-    setEiaError(null);
   }, [subject.id]);
 
   const mountedRef = useRef(true);
   useEffect(() => () => { mountedRef.current = false; }, []);
 
-  const runEIA = async () => {
-    setEiaLoading(true);
-    setEiaResult(null);
-    setEiaError(null);
-    try {
-      const res = await fetch("/api/ethical-impact", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          subjectName: subject.name,
-          riskScore: subject.riskScore,
-          cddPosture: subject.cddPosture,
-          nationality: subject.country,
-          aiDecisions: [],
-        }),
-        signal: AbortSignal.timeout(45_000),
-      });
-      // Parse the response body once — we may need its error message even on
-      // a non-OK status. Tolerate empty / non-JSON bodies (Lambda 502s).
-      const raw = await res.text().catch(() => "");
-      let payload: { ok?: boolean; error?: string; detail?: string } & Partial<EthicalImpact> = {};
-      if (raw) {
-        try { payload = JSON.parse(raw); } catch { /* leave empty */ }
-      }
-      if (!mountedRef.current) return;
-      if (!res.ok) {
-        const msg = payload.detail ?? payload.error ?? `Ethical Impact API returned HTTP ${res.status}`;
-        setEiaError(
-          res.status === 503
-            ? `${msg} — set ANTHROPIC_API_KEY on the deployment to enable EIA.`
-            : msg,
-        );
-        return;
-      }
-      if (payload.ok) {
-        setEiaResult(payload as EthicalImpact);
-      } else {
-        setEiaError(payload.error ?? "Ethical Impact returned ok:false");
-      }
-    } catch (err) {
-      const detail = err instanceof Error ? err.message : String(err);
-      const isTimeout = err instanceof Error && (err.name === "AbortError" || err.name === "TimeoutError");
-      if (mountedRef.current) setEiaError(
-        isTimeout
-          ? "Ethical Impact assessment timed out after 45s — please retry."
-          : `Ethical Impact request failed: ${detail}`,
-      );
-    } finally {
-      if (mountedRef.current) setEiaLoading(false);
-    }
-  };
   const effectiveAdverseMediaText =
     narrativeOverride.trim() || adverseMediaText;
   const superBrain = useSuperBrain(qsSubjectForBrain, {
@@ -2632,7 +2563,9 @@ function LiveReasoningTab({
 }) {
   const result = superBrain.status === "success" ? superBrain.result : null;
   const disposition = result?.redlines?.action ?? null;
-  const firedRedlines: string[] = result?.redlines?.fired ?? [];
+  const firedRedlines: string[] = (result?.redlines?.fired ?? []).map(
+    (r) => r.label ?? r.id ?? r.why ?? "",
+  ).filter(Boolean);
 
   const pepTier = (() => {
     if (!result) return null;
@@ -3270,185 +3203,3 @@ function NewsDossierPanel({ state }: { state: NewsSearchState }) {
   );
 }
 
-function EthicsTab({
-  subject,
-  eiaResult,
-  eiaLoading,
-  eiaError,
-  onRun,
-}: {
-  subject: Subject;
-  eiaResult: EthicalImpact | null;
-  eiaLoading: boolean;
-  eiaError: string | null;
-  onRun: () => void;
-}) {
-  const [copied, setCopied] = useState(false);
-
-  const ethicsMountedRef = useRef(true);
-  useEffect(() => () => { ethicsMountedRef.current = false; }, []);
-
-  const copyRights = async () => {
-    if (!eiaResult) return;
-    try {
-      await navigator.clipboard.writeText(eiaResult.subjectRights.join("\n"));
-      if (ethicsMountedRef.current) setCopied(true);
-      window.setTimeout(() => setCopied(false), 1800);
-    } catch (err) {
-      console.warn("[hawkeye] clipboard write failed:", err);
-    }
-  };
-
-  const impactColour =
-    eiaResult?.impactLevel === "high"
-      ? "bg-red-dim text-red"
-      : eiaResult?.impactLevel === "medium"
-        ? "bg-amber-dim text-amber"
-        : "bg-green-dim text-green";
-
-  return (
-    <div className="space-y-4">
-      {/* Header stacks on narrow panels (flex-col) and only goes side-by-
-          side on wider viewports (sm:flex-row) — stops the EIA button from
-          overflowing the right-hand subject panel. */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-        <div className="min-w-0">
-          <div className="text-11 font-semibold uppercase tracking-wide-4 text-ink-2 mb-0.5">
-            Ethical Impact Assessment
-          </div>
-          <div className="text-10 text-ink-3 font-mono">
-            UNESCO AI Ethics 2021 · UAE PDPL FDL 45/2021 · FDL 10/2025
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={onRun}
-          disabled={eiaLoading}
-          className="self-start sm:self-auto shrink-0 text-11 font-semibold px-3 py-1.5 rounded border border-violet/50 bg-violet-dim text-violet hover:bg-violet/20 disabled:opacity-40 whitespace-nowrap"
-        >
-          {eiaLoading ? "Assessing…" : eiaResult ? "Re-run EIA" : "Run EIA"}
-        </button>
-      </div>
-
-      {eiaLoading && (
-        <div className="text-12 text-ink-2 animate-pulse">Running assessment for {subject.name}…</div>
-      )}
-
-      {eiaError && !eiaLoading && (
-        <div className="rounded-lg border border-red/40 bg-red-dim/40 p-3">
-          <div className="text-11 font-semibold text-red mb-1">Ethical Impact Assessment failed</div>
-          <p className="text-11 text-ink-1 leading-relaxed">{eiaError}</p>
-          <button
-            type="button"
-            onClick={onRun}
-            className="mt-2 text-10 font-semibold px-2 py-1 rounded border border-red/40 text-red hover:bg-red/10"
-          >
-            Retry
-          </button>
-        </div>
-      )}
-
-      {eiaResult && (
-        <div className="space-y-4">
-          <div className="flex items-center gap-3 flex-wrap">
-            <span className={`font-mono text-10 px-2 py-1 rounded font-semibold ${impactColour}`}>
-              {eiaResult.impactLevel} impact
-            </span>
-          </div>
-
-          <div>
-            <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-1">Impact Assessment</div>
-            <p className="text-12 text-ink-1 leading-relaxed">{eiaResult.impactNarrative}</p>
-          </div>
-
-          {eiaResult.rightsImpacted.length > 0 && (
-            <div>
-              <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-2">Rights Potentially Affected</div>
-              <div className="flex flex-wrap gap-1.5">
-                {eiaResult.rightsImpacted.map((r, i) => (
-                  <span key={i} className="text-10 px-2 py-1 rounded bg-red-dim text-red font-medium">{r}</span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {eiaResult.proportionalityAssessment && (
-            <div>
-              <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-1">Proportionality</div>
-              <p className="text-12 text-ink-1">{eiaResult.proportionalityAssessment}</p>
-            </div>
-          )}
-
-          {eiaResult.humanOversightStatus && (
-            <div>
-              <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-1">Human Oversight Status</div>
-              <p className="text-12 text-ink-1">{eiaResult.humanOversightStatus}</p>
-            </div>
-          )}
-
-          {eiaResult.mitigationMeasures.length > 0 && (
-            <div>
-              <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-2">Mitigation Measures</div>
-              <ul className="space-y-1">
-                {eiaResult.mitigationMeasures.map((m, i) => (
-                  <li key={i} className="flex items-start gap-2 text-12 text-ink-1">
-                    <span className="text-violet mt-0.5 shrink-0">•</span>
-                    <span>{m}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {eiaResult.subjectRights.length > 0 && (
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3">Subject Rights</div>
-                <button
-                  type="button"
-                  onClick={() => void copyRights()}
-                  className="text-10 px-2 py-px rounded bg-bg-2 text-ink-2 hover:text-ink-0 font-mono"
-                >
-                  {copied ? "Copied ✓" : "Copy"}
-                </button>
-              </div>
-              <ul className="space-y-1">
-                {eiaResult.subjectRights.map((r, i) => (
-                  <li key={i} className="flex items-start gap-2 text-12 text-ink-1">
-                    <span className="text-green mt-0.5 shrink-0">•</span>
-                    <span>{r}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {eiaResult.documentationRequired.length > 0 && (
-            <div>
-              <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-2">Documentation Required</div>
-              <ul className="space-y-1">
-                {eiaResult.documentationRequired.map((d, i) => (
-                  <li key={i} className="flex items-start gap-2 text-11 font-mono text-ink-2">
-                    <span className="text-brand mt-0.5 shrink-0">→</span>
-                    <span>{d}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {eiaResult.unescoAlignment && (
-            <p className="font-mono text-10 text-ink-3 bg-bg-1 rounded px-3 py-2 leading-relaxed">{eiaResult.unescoAlignment}</p>
-          )}
-
-          {eiaResult.reviewRecommendation && (
-            <div className="flex items-center gap-2">
-              <span className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3">Review:</span>
-              <span className="font-mono text-10 px-2 py-px rounded bg-bg-2 text-ink-1">{eiaResult.reviewRecommendation}</span>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
