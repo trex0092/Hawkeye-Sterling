@@ -6,6 +6,7 @@ import {
   type EocnFeedPayload,
   type ListUpdate,
 } from "@/lib/data/eocn-fixture";
+import { deliverWebhookEvent } from "@/app/api/webhook/push/route";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -372,6 +373,35 @@ async function handlePost(req: Request): Promise<NextResponse> {
   await setJson(BLOB_KEY, payload).catch((e) =>
     console.warn("[eocn-list-updates] blob write failed", e),
   );
+
+  // H3: Fire real-time webhook if new EOCN designations were detected.
+  // Compare merged list versions against the prior snapshot — if there are
+  // versions not in the prior set that carry deltaAdded > 0, there are new
+  // designations. Fire to tenant-registered webhooks immediately so operators
+  // can initiate the 24-hour freeze clock (Cabinet Resolution 74/2020 Art.4).
+  if (upstream.ok && upstream.updates) {
+    try {
+      const prior = await getJson<EocnFeedPayload>(BLOB_KEY).catch(() => null);
+      const priorVersions = new Set((prior?.listUpdates ?? []).map((u) => u.version));
+      const newDesignations = upstream.updates.filter(
+        (u) => !priorVersions.has(u.version) && (u.deltaAdded ?? 0) > 0
+      );
+      if (newDesignations.length > 0) {
+        const tenant = process.env["DEFAULT_TENANT"] ?? "default";
+        const totalAdded = newDesignations.reduce((s, u) => s + (u.deltaAdded ?? 0), 0);
+        void deliverWebhookEvent(tenant, "eocn_hit", {
+          subject: "EOCN list update",
+          listId: "uae_eocn",
+          listRef: newDesignations[0]?.version ?? "",
+          score: 100,
+          severity: "critical",
+          newDesignationCount: totalAdded,
+          versions: newDesignations.map((u) => u.version),
+          regulatoryNote: "Cabinet Resolution 74/2020 Art.4 — 24-hour asset freeze mandatory. Screen all monitored subjects immediately.",
+        }).catch((err) => console.warn("[eocn-list-updates] deliverWebhookEvent failed:", err instanceof Error ? err.message : String(err)));
+      }
+    } catch { /* non-fatal */ }
+  }
 
   // Return 200 even when upstream was unavailable — the fixture data was
   // written successfully and the eocn-poll cron marks success/failure based
