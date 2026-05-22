@@ -14,7 +14,7 @@
 //   GMAIL_CLIENT_SECRET   — Google Cloud OAuth 2.0 client secret
 //   GMAIL_REFRESH_TOKEN   — long-lived refresh token (OR use the OAuth flow above)
 
-import { getJson, setJson } from "@/lib/server/store";
+import { getJson, setJson, del } from "@/lib/server/store";
 
 const TOKEN_CACHE_KEY = "hawkeye-gmail-token/v1.json";
 // Written by /api/auth/gmail/callback
@@ -101,16 +101,28 @@ export async function getGmailAccessToken(): Promise<string> {
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      // If the Blobs token was also revoked, fall through to env var
       if (!msg.startsWith("GMAIL_REFRESH_FAILED")) throw err;
+      // Revoked token — purge it from Blobs so future requests skip straight
+      // to the env-var token rather than retrying a permanently-dead credential.
+      await del(OAUTH_CREDS_KEY);
+      await del(TOKEN_CACHE_KEY);
     }
   }
 
   // ── 3. Refresh via GMAIL_REFRESH_TOKEN env var ───────────────────────────
   if (hasCredentials && envRefreshToken) {
-    const fresh = await refreshAccessToken(envRefreshToken, clientId!, clientSecret!);
-    try { await setJson(TOKEN_CACHE_KEY, fresh); } catch { /* non-fatal */ }
-    return fresh.accessToken;
+    try {
+      const fresh = await refreshAccessToken(envRefreshToken, clientId!, clientSecret!);
+      try { await setJson(TOKEN_CACHE_KEY, fresh); } catch { /* non-fatal */ }
+      return fresh.accessToken;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (!msg.startsWith("GMAIL_REFRESH_FAILED")) throw err;
+      // Env-var token also revoked — clear any stale cached access token so
+      // the static fallback or GMAIL_NOT_CONFIGURED error surfaces correctly.
+      await del(TOKEN_CACHE_KEY);
+      throw err;
+    }
   }
 
   // ── 4. Static fallback (expires in ~1h, no auto-refresh) ────────────────
