@@ -188,8 +188,8 @@ function pickBaseline(sector: string, entityType: string): BenchmarkSector {
   const s = sector.toLowerCase();
   const e = entityType.toLowerCase();
   if (/gold|precious|dpms|metal/.test(s)) {
-    if (/refin|wholesale|bulk/.test(e)) return "dpms_refinery";
-    if (/wholesale|dealer/.test(e)) return "bullion_wholesale";
+    if (/refin/.test(e)) return "dpms_refinery";
+    if (/wholesale|bulk|dealer/.test(e)) return "bullion_wholesale";
     return "dpms_retail";
   }
   if (/real estate|property/.test(s)) return "real_estate";
