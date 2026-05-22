@@ -507,7 +507,8 @@ interface RiskProfileForExport {
   residualRiskAssessment: Array<{ dimension: string; rating: string }>;
   overallResidualRisk: string;
   dueDiligenceActions: string[];
-  redFlagsToWatch: string[];
+  redFlagsToWatch: Array<{ id: string; label: string; bucket: string; rationale: string }>;
+  taxonomyCoverage?: { totalConsidered: number; flagsSelected: number };
   conclusion: { narrative: string; onboardingDecision: string; onboardingRationale: string };
 }
 
@@ -560,8 +561,15 @@ export function exportRiskProfileSummary(data: RiskProfileForExport): void {
     { type: "subheader", content: "Recommended Due Diligence Actions" },
     ...data.dueDiligenceActions.map((a, i): PdfSection => ({ type: "paragraph", content: `${i + 1}. ${a}` })),
     { type: "divider" },
-    { type: "subheader", content: "Key Red Flags to Watch For" },
-    ...data.redFlagsToWatch.map((f): PdfSection => ({ type: "paragraph", content: `• ${f}` })),
+    {
+      type: "subheader",
+      content: `Key Red Flags to Watch For${data.taxonomyCoverage ? ` (${data.taxonomyCoverage.flagsSelected} selected · ${data.taxonomyCoverage.totalConsidered} considered · 719 in taxonomy)` : ""}`,
+    },
+    {
+      type: "table",
+      columns: ["Flag", "Bucket", "Rationale"],
+      rows: data.redFlagsToWatch.map((f) => [f.label, f.bucket, f.rationale]),
+    },
     { type: "divider" },
     { type: "subheader", content: "Conclusion" },
     { type: "paragraph", content: data.conclusion.narrative },

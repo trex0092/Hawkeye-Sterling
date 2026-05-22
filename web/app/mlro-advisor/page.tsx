@@ -8,6 +8,10 @@ import { downloadEvidencePack, type EvidencePackEntry } from "@/lib/evidencePack
 import { exportMlroMemo, exportRiskProfileSummary } from "@/lib/pdf/exporters";
 import { findApplicableConflicts, type JurisdictionalConflict } from "@/lib/jurisdictionalConflicts";
 
+// Total flags in the MLRO taxonomy — displayed in the UI without importing the
+// full 1,492-line taxonomy file on the client bundle.
+const MLRO_RED_FLAGS_TAXONOMY_TOTAL = 719;
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 type ReasoningMode = "quick" | "speed" | "balanced" | "multi_perspective";
@@ -292,7 +296,16 @@ interface RiskProfileSummaryResult {
   }>;
   overallResidualRisk: "high" | "medium" | "low";
   dueDiligenceActions: string[];
-  redFlagsToWatch: string[];
+  redFlagsToWatch: Array<{
+    id: string;
+    label: string;
+    bucket: "transaction" | "customer" | "supplier" | "geographic" | "product" | "behavioral" | "regulatory";
+    rationale: string;
+  }>;
+  taxonomyCoverage: {
+    totalConsidered: number;
+    flagsSelected: number;
+  };
   conclusion: {
     narrative: string;
     onboardingDecision:
@@ -4860,7 +4873,7 @@ export default function MlroAdvisorPage() {
                               ...r.dueDiligenceActions.map((a, i) => `${i+1}. ${a}`),
                               "",
                               "RED FLAGS TO WATCH",
-                              ...r.redFlagsToWatch.map(f => `• ${f}`),
+                              ...r.redFlagsToWatch.map(f => `• [${f.bucket}] ${f.label} — ${f.rationale}`),
                               "",
                               "CONCLUSION",
                               r.conclusion.narrative,
@@ -5015,15 +5028,26 @@ export default function MlroAdvisorPage() {
                       {/* Red Flags */}
                       {r.redFlagsToWatch.length > 0 && (
                         <div>
-                          <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-2">⚠ Key Red Flags to Watch For</div>
-                          <div className="border-l-2 border-amber/50 pl-3 mb-2">
-                            <p className="text-11 text-ink-3">These have <strong>not</strong> been triggered but should be monitored:</p>
+                          <div className="flex items-center gap-2 mb-2 flex-wrap">
+                            <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2">⚠ Key Red Flags to Watch For</div>
+                            <span className="text-10 font-mono px-1.5 py-px rounded bg-amber-dim text-amber border border-amber/30">
+                              {r.taxonomyCoverage.flagsSelected} selected · {r.taxonomyCoverage.totalConsidered} considered · {MLRO_RED_FLAGS_TAXONOMY_TOTAL} in taxonomy
+                            </span>
                           </div>
-                          <ul className="space-y-1.5">
+                          <div className="border-l-2 border-amber/50 pl-3 mb-2">
+                            <p className="text-11 text-ink-3">Selected from the vetted 719-flag taxonomy — these have <strong>not</strong> been triggered but should be monitored:</p>
+                          </div>
+                          <ul className="space-y-2">
                             {r.redFlagsToWatch.map((f, i) => (
-                              <li key={i} className="text-12 text-ink-1 flex gap-2">
-                                <span className="shrink-0">🚩</span>
-                                <span>{f}</span>
+                              <li key={i} className="text-12 text-ink-1 flex gap-2 items-start">
+                                <span className="shrink-0 mt-0.5">🚩</span>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="font-medium">{f.label}</span>
+                                    <span className="text-10 font-mono px-1 py-px rounded bg-bg-panel border border-hair-2 text-ink-3 shrink-0">{f.bucket}</span>
+                                  </div>
+                                  <div className="text-11 text-ink-3 mt-0.5">{f.rationale}</div>
+                                </div>
                               </li>
                             ))}
                           </ul>
