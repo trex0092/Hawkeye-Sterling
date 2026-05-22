@@ -35,6 +35,10 @@ vi.mock("@/lib/server/enforce", () => ({
   enforce: async () => ({ ok: true, tier: "enterprise", keyId: "test", record: null, remainingMonthly: null, headers: {} }),
 }));
 
+vi.mock("@/app/api/webhook/push/route", () => ({
+  deliverWebhookEvent: vi.fn().mockResolvedValue(undefined),
+}));
+
 // Build a fixture payload with N list-update entries.
 function makeFixture(count: number) {
   const listUpdates = Array.from({ length: count }, (_, i) => ({

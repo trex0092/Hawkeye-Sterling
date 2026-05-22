@@ -36,6 +36,10 @@ vi.mock("@/lib/server/webhook", () => ({
   postWebhook: async () => ({ delivered: false }),
 }));
 
+vi.mock("@/app/api/webhook/push/route", () => ({
+  deliverWebhookEvent: vi.fn().mockResolvedValue(undefined),
+}));
+
 vi.mock("@/lib/server/ongoing-escalation", () => ({
   ESCALATION_DELTA: 20,
   shouldEscalate: () => false,
