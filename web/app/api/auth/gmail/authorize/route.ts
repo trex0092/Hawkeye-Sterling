@@ -16,7 +16,7 @@ export async function GET(): Promise<NextResponse> {
   const cookieStore = await cookies();
   const sessionToken = cookieStore.get("hs_session")?.value ?? "";
   if (!sessionToken || !verifyJwt(sessionToken).ok) {
-    return NextResponse.redirect("https://hawkeye-sterling.netlify.app/login");
+    return NextResponse.redirect("https://hawkeye-sterling.netlify.app/login?next=/api/auth/gmail/authorize");
   }
 
   const clientId = process.env["GMAIL_CLIENT_ID"];

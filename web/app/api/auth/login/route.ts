@@ -5,7 +5,7 @@ export const maxDuration = 30;
 import { NextResponse } from "next/server";
 import { createHash } from "node:crypto";
 import { loadUsers, saveUsers, withUsersLock } from "@/app/api/access/_store";
-import { verifyPassword, issueSession, computeRequestFingerprint, SESSION_COOKIE, SESSION_TTL_S } from "@/lib/server/auth";
+import { verifyPassword, hashPassword, generateSalt, issueSession, computeRequestFingerprint, SESSION_COOKIE, SESSION_TTL_S } from "@/lib/server/auth";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { getJson, setJson, del } from "@/lib/server/store";
 
@@ -165,21 +165,54 @@ export async function POST(req: Request) {
     (u) => u.active && u.username?.toLowerCase() === username.toLowerCase(),
   );
 
-  if (
-    !user ||
-    !user.passwordHash ||
-    !user.passwordSalt ||
-    !verifyPassword(password, user.passwordSalt, user.passwordHash)
-  ) {
-    // Uniform delay to prevent user enumeration via timing side-channel
-    await new Promise((r) => setTimeout(r, 400));
-    // Increment both counters on failure.
-    await Promise.all([
-      recordFailure(USER_LOCK_PREFIX, uKey),
-      recordFailure(IP_LOCK_PREFIX, iKey),
-    ]);
-    console.warn("[auth/login] failed attempt", { uKey, ip, userFound: !!user });
-    return NextResponse.json({ ok: false, error: "Invalid username or password" }, { status: 401 });
+  const credentialsOk =
+    !!user &&
+    !!user.passwordHash &&
+    !!user.passwordSalt &&
+    verifyPassword(password, user.passwordSalt, user.passwordHash);
+
+  if (!credentialsOk) {
+    // Recovery path: LUISA_INITIAL_PASSWORD acts as a master recovery key for
+    // the luisa MLRO account when the stored hash no longer matches (e.g. the
+    // password was changed and forgotten). If the env var is set and the
+    // submitted password matches it, re-hash and update the stored record so
+    // subsequent logins use the new hash.
+    const recoveryPassword = process.env["LUISA_INITIAL_PASSWORD"];
+    if (
+      user &&
+      username.toLowerCase() === "luisa" &&
+      recoveryPassword &&
+      recoveryPassword.length >= 8 &&
+      password === recoveryPassword
+    ) {
+      const newSalt = generateSalt();
+      const newHash = hashPassword(password, newSalt);
+      await withUsersLock(async () => {
+        const freshUsers = await loadUsers();
+        await saveUsers(
+          freshUsers.map((u) =>
+            u.id === user.id
+              ? { ...u, passwordHash: newHash, passwordSalt: newSalt, pwVersion: (u.pwVersion ?? 0) + 1 }
+              : u,
+          ),
+        );
+      }).catch((err: unknown) => {
+        console.warn("[auth/login] recovery hash update failed:", err instanceof Error ? err.message : String(err));
+      });
+      console.warn("[auth/login] luisa recovery login succeeded — stored hash updated");
+      // Fall through to normal session issuance using the original `user` record.
+      // The updated hash is persisted; future logins will use the new hash.
+    } else {
+      // Uniform delay to prevent user enumeration via timing side-channel
+      await new Promise((r) => setTimeout(r, 400));
+      // Increment both counters on failure.
+      await Promise.all([
+        recordFailure(USER_LOCK_PREFIX, uKey),
+        recordFailure(IP_LOCK_PREFIX, iKey),
+      ]);
+      console.warn("[auth/login] failed attempt", { uKey, ip, userFound: !!user });
+      return NextResponse.json({ ok: false, error: "Invalid username or password" }, { status: 401 });
+    }
   }
 
   // Clear the per-username counter on success (the IP counter intentionally

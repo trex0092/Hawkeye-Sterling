@@ -2934,7 +2934,10 @@ export default function MlroAdvisorPage() {
     setToolErrors((p) => { const n = {...p}; delete n["boardAmlReport"]; return n; });
     try {
       const res = await fetch("/api/board-aml-report", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(boardAmlInput) });
-      if (!res.ok) throw new Error(`Server error ${res.status}`);
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(errBody.error ?? `Server error ${res.status}`);
+      }
       const data = await res.json().catch(() => ({})) as Record<string, unknown>;
       if (!mountedRef.current) return;
       setBoardAmlResult(data);
