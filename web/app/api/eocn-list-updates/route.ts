@@ -6,7 +6,7 @@ import {
   type EocnFeedPayload,
   type ListUpdate,
 } from "@/lib/data/eocn-fixture";
-import { deliverWebhookEvent } from "@/app/api/webhook/push/route";
+import { deliverWebhookEvent } from "@/lib/server/webhook-delivery";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

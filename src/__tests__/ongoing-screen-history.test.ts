@@ -36,7 +36,7 @@ vi.mock("@/lib/server/webhook", () => ({
   postWebhook: async () => ({ delivered: false }),
 }));
 
-vi.mock("@/app/api/webhook/push/route", () => ({
+vi.mock("@/lib/server/webhook-delivery", () => ({
   deliverWebhookEvent: vi.fn().mockResolvedValue(undefined),
 }));
 
