@@ -31,6 +31,10 @@ jobs:
         run: npm run typecheck
       - name: Tests
         run: npx vitest run --reporter=default
+      - name: Integration tests (API route handlers)
+        # Imports Next.js route handlers directly with synthetic Request objects.
+        # Requires: dist/ (compiled above) + web/node_modules (@/ aliases, next/server).
+        run: npx vitest run --config vitest.integration.ts --reporter=default
       - name: Brain audit
         run: npm run brain:audit
       - name: Prefix extractor check
