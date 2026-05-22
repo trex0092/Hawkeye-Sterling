@@ -80,7 +80,7 @@ export async function POST(req: Request) {
   }
 
   const logEntry = {
-    id: `log-${String(Date.now()).slice(-6)}`,
+    id: `log-${randomBytes(4).toString("hex")}`,
     timestamp: new Date().toISOString(),
     actor: addedBy,
     action: "role_assigned" as const,

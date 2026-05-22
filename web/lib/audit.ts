@@ -87,10 +87,15 @@ export function verifyChain(entries: AuditEntry[]): { ok: boolean; brokenAt?: nu
   return { ok: true };
 }
 
+function csvCell(v: string): string {
+  const escaped = String(v ?? "").replace(/"/g, '""');
+  return `"${escaped}"`;
+}
+
 export function exportAuditCsv(entries: AuditEntry[]): string {
   const header = "id,timestamp,actor,action,target,hash";
   const rows = entries.map((e) =>
-    [e.id, e.timestamp, `"${e.actor}"`, `"${e.action.replace(/"/g, '""')}"`, `"${e.target}"`, e.hash].join(","),
+    [e.id, e.timestamp, csvCell(e.actor), csvCell(e.action), csvCell(e.target), e.hash].join(","),
   );
   return [header, ...rows].join("\n");
 }

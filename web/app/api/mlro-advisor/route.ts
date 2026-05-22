@@ -295,9 +295,13 @@ export async function POST(req: Request): Promise<NextResponse> {
   // Shared input gate — refuses empty / oversize / prompt-injection
   // inputs before they hit Claude. redTeamMode bypasses injection check
   // so adversarial test prompts can reach the model for refusal testing.
+  // Requires ALLOW_RED_TEAM_MODE=true in env to be active so this cannot
+  // be enabled by an API caller in production.
+  const redTeamAllowed = process.env["ALLOW_RED_TEAM_MODE"] === "true";
+  const redTeamActive = redTeamAllowed && body.redTeamMode === true;
   const gateResult = gateMlroQuestion(body.question, {
-    maxChars: body.redTeamMode ? 4000 : 2000,
-    allowInjectionPatterns: body.redTeamMode === true,
+    maxChars: redTeamActive ? 4000 : 2000,
+    allowInjectionPatterns: redTeamActive,
   });
   if (!gateResult.ok) {
     return NextResponse.json(

@@ -6,6 +6,7 @@ import { NextResponse } from "next/server";
 import { loadUsers, saveUsers, withUsersLock, appendPermissionLog } from "../_store";
 import { adminAuth } from "@/lib/server/admin-auth";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { randomBytes } from "node:crypto";
 
 export async function POST(req: Request) {
   const deny = adminAuth(req);
@@ -52,7 +53,7 @@ export async function POST(req: Request) {
   const { userName, safeUser } = revokeResult as { status: 'revoked'; userName: string; safeUser: Record<string, unknown> };
 
   const logEntry = {
-    id: `log-${String(Date.now()).slice(-6)}`,
+    id: `log-${randomBytes(4).toString("hex")}`,
     timestamp: new Date().toISOString(),
     actor: revokedBy,
     action: "session_revoked" as const,

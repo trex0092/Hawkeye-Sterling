@@ -9,6 +9,7 @@ import { loadUsers, saveUsers, withUsersLock, appendPermissionLog, ROLE_MODULES,
 import { adminAuth } from "@/lib/server/admin-auth";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { randomBytes } from "node:crypto";
 
 const FALLBACK_ASSESSMENT: Record<string, string> = {
   "trading→compliance": "Upgrading from Trading to Compliance Department grants full platform access including MLRO Advisor, STR Cases, Playbook and Access Control. Verify the user's AML certification and obtain senior management approval before activation per FDL 10/2025 Art.20.",
@@ -70,7 +71,7 @@ export async function POST(req: Request) {
   const user = users.find((u) => u.id === userId)!;
 
   const logEntry = {
-    id: `log-${String(Date.now()).slice(-6)}`,
+    id: `log-${randomBytes(4).toString("hex")}`,
     timestamp: new Date().toISOString(),
     actor: assignedBy,
     action: "role_assigned" as const,
