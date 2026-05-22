@@ -535,7 +535,7 @@ const FALLBACK: RiskProfileSummaryResult = {
   overallResidualRisk: "medium",
   dueDiligenceActions: [],
   redFlagsToWatch: [],
-  taxonomyCoverage: { totalConsidered: 0, flagsSelected: 0 },
+  taxonomyCoverage: { totalConsidered: MLRO_RED_FLAGS_TAXONOMY.length, flagsSelected: 0 },
   conclusion: {
     narrative: "API key not configured — manual risk assessment required.",
     onboardingDecision: "proceed_standard",
@@ -595,7 +595,7 @@ export const POST = (req: Request) =>
       return {
         ...parsed,
         taxonomyCoverage: {
-          totalConsidered: parsed.taxonomyCoverage?.totalConsidered ?? 0,
+          totalConsidered: MLRO_RED_FLAGS_TAXONOMY.length,
           flagsSelected,
         },
       };

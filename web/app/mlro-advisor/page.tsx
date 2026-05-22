@@ -3407,6 +3407,7 @@ export default function MlroAdvisorPage() {
     if (!rpsInput.entityName.trim()) return;
     setRpsLoading(true);
     setRpsResult(null);
+    setToolErrors((p) => { const n = { ...p }; delete n["riskProfileSummary"]; return n; });
     try {
       const res = await fetch("/api/mlro-advisor/risk-profile-summary", {
         method: "POST",
