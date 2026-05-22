@@ -2,7 +2,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { verifyJwt } from "@/lib/server/jwt";
+import { verifySession, SESSION_COOKIE } from "@/lib/server/auth";
 import { randomBytes } from "node:crypto";
 import { setJson } from "@/lib/server/store";
 
@@ -14,8 +14,8 @@ const OAUTH_STATE_KEY = "hawkeye-gmail-oauth-state/v1.json";
 export async function GET(): Promise<NextResponse> {
   // Check session cookie — browser navigation route, no enforce() needed
   const cookieStore = await cookies();
-  const sessionToken = cookieStore.get("hs_session")?.value ?? "";
-  if (!sessionToken || !verifyJwt(sessionToken).ok) {
+  const sessionToken = cookieStore.get(SESSION_COOKIE)?.value ?? "";
+  if (!sessionToken || !verifySession(sessionToken)) {
     return NextResponse.redirect("https://hawkeye-sterling.netlify.app/login?next=/api/auth/gmail/authorize");
   }
 

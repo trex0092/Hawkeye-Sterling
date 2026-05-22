@@ -2,7 +2,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { verifyJwt } from "@/lib/server/jwt";
+import { verifySession, SESSION_COOKIE } from "@/lib/server/auth";
 import { getJson, setJson, del } from "@/lib/server/store";
 
 const REDIRECT_URI = "https://hawkeye-sterling.netlify.app/api/auth/gmail/callback";
@@ -24,8 +24,8 @@ const BASE = "https://hawkeye-sterling.netlify.app";
 export async function GET(req: Request): Promise<NextResponse> {
   // Check session cookie — browser navigation route, no enforce() needed
   const cookieStore = await cookies();
-  const sessionToken = cookieStore.get("hs_session")?.value ?? "";
-  if (!sessionToken || !verifyJwt(sessionToken).ok) {
+  const sessionToken = cookieStore.get(SESSION_COOKIE)?.value ?? "";
+  if (!sessionToken || !verifySession(sessionToken)) {
     return NextResponse.redirect(`${BASE}/login`);
   }
 
