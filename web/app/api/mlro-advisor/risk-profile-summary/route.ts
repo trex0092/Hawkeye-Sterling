@@ -85,7 +85,8 @@ interface RiskProfileSummaryResult {
 /**
  * Selects sector- and jurisdiction-relevant flags from the 719-flag taxonomy.
  * Runs targeted keyword searches across all 7 buckets, deduplicates, and caps
- * at 90 entries so the system prompt stays within the Haiku token budget.
+ * at 120 entries. Ordering matters: sector-specific flags are added first so
+ * they always survive the cap; generic behavioral patterns come last.
  */
 function buildFlagPool(sector: string, jurisdiction: string): MlroRedFlag[] {
   const s = sector.toLowerCase();
@@ -101,7 +102,7 @@ function buildFlagPool(sector: string, jurisdiction: string): MlroRedFlag[] {
 
   // ── Sector-specific searches ────────────────────────────────────────────────
   if (/gold|precious|bullion|dpms|lbma|refin|metal/.test(s)) {
-    // Core precious-metals / DPMS flags
+    // Core precious-metals / DPMS transaction flags
     add(searchRedFlags("gold"));
     add(searchRedFlags("precious"));
     add(searchRedFlags("lbma"));
@@ -112,15 +113,16 @@ function buildFlagPool(sector: string, jurisdiction: string): MlroRedFlag[] {
     add(searchRedFlags("purity"));
     add(searchRedFlags("certificate"));
     // Extended physical-form coverage
-    add(searchRedFlags("scrap"));          // scrap gold origin / composition
-    add(searchRedFlags("dust"));           // dust/powder gold
-    add(searchRedFlags("jewelry"));        // jewelry gold purity / weight / origin
-    add(searchRedFlags("alloy"));          // alloys suspicious composition
-    add(searchRedFlags("coin"));           // coins vs. bullion inconsistency
-    add(searchRedFlags("weight"));         // weight certification absent / forged
-    add(searchRedFlags("chain"));          // chain-of-custody breaks
-    add(searchRedFlags("conflict mineral")); // diamonds / gemstones conflict minerals
-    // Supplier-chain coverage (critical for DPMS who source from third parties)
+    add(searchRedFlags("scrap"));
+    add(searchRedFlags("dust"));
+    add(searchRedFlags("jewelry"));
+    add(searchRedFlags("alloy"));
+    add(searchRedFlags("coin"));
+    add(searchRedFlags("weight"));
+    add(searchRedFlags("chain"));
+    add(searchRedFlags("conflict mineral"));
+    add(searchRedFlags("diamonds"));           // Diamonds / gemstones + Kimberley Process
+    // Supplier-chain (critical for DPMS sourcing from third parties)
     add(searchRedFlags("supplier lbma"));
     add(searchRedFlags("supplier refinery"));
     add(searchRedFlags("supplier conflict"));
@@ -128,6 +130,27 @@ function buildFlagPool(sector: string, jurisdiction: string): MlroRedFlag[] {
     add(searchRedFlags("supplier assay"));
     add(searchRedFlags("supplier site"));
     add(searchRedFlags("supplier certification"));
+    add(searchRedFlags("supplier financial"));    // financial statements / position
+    add(searchRedFlags("supplier corporate"));    // ownership / structure opaque
+    add(searchRedFlags("supplier capacity"));     // capacity undocumented / exceeded
+    add(searchRedFlags("supplier pricing"));      // pricing inconsistency / below cost
+    add(searchRedFlags("supplier contract"));     // contract absent / vague / renegotiated
+    add(searchRedFlags("supplier logistics"));    // transport / logistics partner high-risk
+    add(searchRedFlags("supplier communication")); // evasive / intermediary communication
+    add(searchRedFlags("supplier payment"));      // unusual payment terms / routing
+    add(searchRedFlags("supplier references"));   // unverifiable / internal-only references
+    add(searchRedFlags("supplier regulatory"));   // regulatory license absent / expired / forged
+    add(searchRedFlags("supplier ultimate"));     // ultimate owner undisclosed / sanctioned
+    add(searchRedFlags("supplier ownership"));    // ownership concealed through layers
+    add(searchRedFlags("supplier production"));   // production documentation absent / forged
+    add(searchRedFlags("supplier bank"));         // bank relationships undisclosed / weak
+    add(searchRedFlags("supplier related"));      // supplier related to customers / employees
+    add(searchRedFlags("supplier previously"));   // previously sanctioned / under regulatory action
+    add(searchRedFlags("supplier transport"));    // transport fleet / logistics arrangements
+    add(searchRedFlags("supplier market"));       // market share suspicious / dominance
+    add(searchRedFlags("supplier reputation"));   // reputation undocumented / poor
+    add(searchRedFlags("iso"));                   // Supplier ISO 9001 absent
+    add(searchRedFlags("cryptocurrency payment")); // crypto for precious metals / unverifiable
   }
   if (/real estate|property|mortgage/.test(s)) {
     add(searchRedFlags("real estate"));
@@ -147,7 +170,7 @@ function buildFlagPool(sector: string, jurisdiction: string): MlroRedFlag[] {
   if (/bank|finance|lending/.test(s)) {
     add(searchRedFlags("bank"));
     add(searchRedFlags("correspondent"));
-    add(searchRedFlags("vostro"));         // vostro/nostro account abuse
+    add(searchRedFlags("vostro"));
     add(searchRedFlags("wire transfer"));
   }
   if (/npo|charity|nonprofit|foundation/.test(s)) {
@@ -166,10 +189,25 @@ function buildFlagPool(sector: string, jurisdiction: string): MlroRedFlag[] {
   }
   if (/wealth|private bank|family office|hnwi|high net worth/.test(s)) {
     add(searchRedFlags("fund"));
+    add(searchRedFlags("fund manager"));         // fund manager experience / history
+    add(searchRedFlags("fund valuation"));       // valuation methodology opaque
+    add(searchRedFlags("fund redemption"));      // redemption restrictions / timing
     add(searchRedFlags("trust"));
     add(searchRedFlags("equity instruments"));
     add(searchRedFlags("loan instruments"));
     add(searchRedFlags("structured product"));
+    add(searchRedFlags("derivatives"));
+    add(searchRedFlags("debt instruments"));
+    add(searchRedFlags("annuity"));
+    add(searchRedFlags("futures"));
+    add(searchRedFlags("forwards"));
+    add(searchRedFlags("swaps"));
+    add(searchRedFlags("options instruments"));
+    add(searchRedFlags("syndication"));
+  }
+  if (/insurance/.test(s)) {
+    add(searchRedFlags("insurance instruments"));
+    add(searchRedFlags("annuity"));
   }
 
   // ── Jurisdiction-specific searches ─────────────────────────────────────────
@@ -200,8 +238,7 @@ function buildFlagPool(sector: string, jurisdiction: string): MlroRedFlag[] {
     add(searchRedFlags("unregulated mining"));
   }
 
-  // ── Universal cross-sector flags (always included) ─────────────────────────
-  // Fundamental ML transaction patterns
+  // ── Universal: core ML/TF/PF typology flags ────────────────────────────────
   add(searchRedFlags("hawala"));
   add(searchRedFlags("invoice"));
   add(searchRedFlags("beneficial owner"));
@@ -209,28 +246,123 @@ function buildFlagPool(sector: string, jurisdiction: string): MlroRedFlag[] {
   add(searchRedFlags("sanctions"));
   add(searchRedFlags("cash"));
   add(searchRedFlags("jurisdiction"));
-  // Structural red flags absent from the above
-  add(searchRedFlags("structuring"));       // sub-threshold / smurfing
-  add(searchRedFlags("layering"));          // cross-border layering patterns
-  add(searchRedFlags("shell"));             // shell company usage across all buckets
-  add(searchRedFlags("adverse media"));     // all 13+ adverse media subtypes
-  add(searchRedFlags("dormant"));           // dormant accounts suddenly active
-  add(searchRedFlags("ubo"));               // UBO chain / identity issues
-  add(searchRedFlags("wire"));              // wire transfer from sanctioned / high-risk
-  add(searchRedFlags("misdeclared"));       // misdeclared commodity / origin / end-use
-  add(searchRedFlags("third-party"));       // third-party payment routing
-  add(searchRedFlags("enforcement"));       // regulatory enforcement actions (15 flags)
-  add(searchRedFlags("examination"));       // regulatory examination flags (6 flags)
-  add(searchRedFlags("sudden"));            // behavioral sudden-change patterns (33 flags)
 
-  // ── Ensure all geographic bucket flags are in scope ────────────────────────
+  // ── Universal: transaction-level ML patterns ───────────────────────────────
+  add(searchRedFlags("structuring"));          // sub-threshold structuring
+  add(searchRedFlags("smurfing"));             // smurfing / coordinated deposits
+  add(searchRedFlags("layering"));             // cross-border layering patterns
+  add(searchRedFlags("velocity"));             // velocity spikes (200%+ increase)
+  add(searchRedFlags("circular"));             // circular flows / round-trip
+  add(searchRedFlags("invoicing"));            // over-invoicing / under-invoicing
+  add(searchRedFlags("placement"));            // placement through informal value transfer
+  add(searchRedFlags("integration"));          // integration into legitimate business
+  add(searchRedFlags("shell"));                // shell company usage across all buckets
+  add(searchRedFlags("dormant"));              // dormant accounts suddenly active
+  add(searchRedFlags("third-party"));          // third-party payment routing
+  add(searchRedFlags("misdeclared"));          // misdeclared commodity / origin / end-use
+  add(searchRedFlags("wire"));                 // wire transfer from sanctioned / high-risk
+  add(searchRedFlags("related-party"));        // related-party transaction concentration
+  add(searchRedFlags("transfer pricing"));     // transfer pricing manipulation
+  add(searchRedFlags("insurance"));            // insurance undervalued / overvalued
+  add(searchRedFlags("rapid"));                // rapid deposit-withdrawal cycles
+  add(searchRedFlags("round-dollar"));         // round-dollar transactions
+  add(searchRedFlags("payment method"));       // payment method inconsistency
+  add(searchRedFlags("avoidance"));            // avoidance of electronic trails
+  add(searchRedFlags("ultimate"));             // ultimate payer / payee undisclosed
+  add(searchRedFlags("mixed fund"));           // mixed-fund transactions (legitimate + suspicious)
+  add(searchRedFlags("underground"));          // underground banking indicators
+  add(searchRedFlags("same-day"));             // multiple same-day transactions
+  add(searchRedFlags("high-frequency"));       // high-frequency settlement changes
+  add(searchRedFlags("inconsistent transaction")); // inconsistent transaction size
+  add(searchRedFlags("delayed settlement"));   // delayed settlement beyond market standard
+  add(searchRedFlags("early settlement"));     // early settlement below fair value
+  add(searchRedFlags("frequent bank"));        // frequent bank / account changes
+
+  // ── Universal: customer due-diligence flags ────────────────────────────────
+  add(searchRedFlags("adverse media"));        // all 13+ adverse media subtypes (customer)
+  add(searchRedFlags("ubo"));                  // UBO chain exceeds transparency threshold
+  add(searchRedFlags("address"));              // no verifiable address / mail-forwarding
+  add(searchRedFlags("office"));               // office site visit refused / mail-forward
+  add(searchRedFlags("website"));              // absent / minimal / anonymized website
+  add(searchRedFlags("social media"));         // absent / recent / inconsistent presence
+  add(searchRedFlags("business license"));     // license absent / forged / expired
+  add(searchRedFlags("financial statements")); // absent / unaudited / inconsistent (customer + supplier)
+  add(searchRedFlags("balance sheet"));        // balance sheet inconsistent with volume
+  add(searchRedFlags("capital source"));       // undisclosed / sanctioned capital source
+  add(searchRedFlags("tax"));                  // tax filings absent / inconsistent
+  add(searchRedFlags("shareholder"));          // shareholder register absent
+  add(searchRedFlags("communication style"));  // evasive / threatening / manipulative
+  add(searchRedFlags("key person"));           // unavailable / problematic key persons
+  add(searchRedFlags("referral"));             // undisclosed / suspicious referral source
+  add(searchRedFlags("accounting records"));   // accounting records absent
+  add(searchRedFlags("employee roster"));      // roster absent / suspiciously sized
+  add(searchRedFlags("background check"));     // employee background checks absent
+  add(searchRedFlags("customer end-customer")); // end-customer undisclosed / high-risk
+  add(searchRedFlags("operating expenses"));   // suspiciously low operating costs
+  add(searchRedFlags("trade references"));     // trade references absent / unverifiable
+  add(searchRedFlags("email"));               // email domain inconsistent / anonymized
+  add(searchRedFlags("linkedin"));            // LinkedIn absent for key staff
+  add(searchRedFlags("phone"));              // no verifiable phone / shared across entities
+  add(searchRedFlags("credentials"));         // educational / professional credentials unverifiable
+  add(searchRedFlags("bank references"));     // bank references absent / from weak institutions
+  add(searchRedFlags("corporate documents")); // corporate documents forged / contradictory
+  add(searchRedFlags("inventory"));           // inventory inconsistency / turnover anomaly
+  add(searchRedFlags("warehouse"));           // warehouse capacity / access / documentation
+  add(searchRedFlags("employee reference"));  // employee reference checks absent / superficial
+  add(searchRedFlags("customer stated"));     // stated business / purpose mismatched to activity
+  add(searchRedFlags("incorporated recently")); // customer incorporated recently
+  add(searchRedFlags("prior employment"));    // prior employment / experience unverifiable
+  add(searchRedFlags("professional certifications")); // certifications unverifiable
+  add(searchRedFlags("customer profile"));    // customer profile inconsistent with transactions
+  add(searchRedFlags("unable to"));           // unable to articulate model / explain rationale
+  add(searchRedFlags("references all"));      // references all internal
+  add(searchRedFlags("customer language"));   // language / sophistication inconsistency
+
+  // ── Universal: regulatory action flags ────────────────────────────────────
+  add(searchRedFlags("enforcement"));          // regulatory enforcement actions (15 flags)
+  add(searchRedFlags("examination"));          // regulatory examination flags (6 flags)
+  add(searchRedFlags("sanction designation")); // recent / pending sanction designation
+  add(searchRedFlags("seizure"));              // asset seizure initiated
+  add(searchRedFlags("forfeiture"));           // asset forfeiture initiated
+  add(searchRedFlags("warrant"));              // warrant issued
+  add(searchRedFlags("license revocation"));   // business / professional license revocation
+  add(searchRedFlags("license suspension"));   // business / professional license suspension
+  add(searchRedFlags("travel ban"));           // travel ban imposed / lifted
+  add(searchRedFlags("cease"));                // regulatory cease-and-desist issued
+  add(searchRedFlags("injunction"));           // regulatory injunction issued
+  add(searchRedFlags("cooperation"));          // international / regulatory cooperation
+  add(searchRedFlags("remediation"));          // remediation plan overdue / not credible
+  add(searchRedFlags("reporting to"));         // regulatory reporting to FIU / prosecutor
+  add(searchRedFlags("credit facility"));      // credit facility termination / suspension
+  add(searchRedFlags("board removal"));        // board removal / restriction (regulatory)
+  add(searchRedFlags("extradition"));          // extradition request pending
+  add(searchRedFlags("subpoena"));             // subpoena / production order issued
+  add(searchRedFlags("warning"));              // recent regulatory warning / license warning
+  add(searchRedFlags("banking relationship")); // banking relationship termination / suspension
+  add(searchRedFlags("mutual legal"));         // mutual legal assistance request pending
+  add(searchRedFlags("visa"));                 // visa denial
+  add(searchRedFlags("passport"));             // passport revocation
+  add(searchRedFlags("financial restrictions")); // financial / payment / remittance restrictions
+  add(searchRedFlags("information sharing"));  // information sharing / regulatory cooperation
+  add(searchRedFlags("production order"));    // production order issued
+  add(searchRedFlags("employee termination")); // employee termination / suspension (regulatory cause)
+  add(searchRedFlags("export restrictions")); // export restrictions
+  add(searchRedFlags("import restrictions")); // import restrictions
+  add(searchRedFlags("trade restrictions"));  // trade restrictions
+  add(searchRedFlags("regulatory fine"));     // regulatory fine / sanction pending
+
+  // ── Universal: behavioral pattern flags ───────────────────────────────────
+  add(searchRedFlags("sudden"));               // sudden-change patterns (33 flags)
+  add(searchRedFlags("pattern"));              // "Pattern of..." behavioral flags (69 flags)
+
+  // ── Geographic bucket: ensure full coverage ────────────────────────────────
   for (const f of MLRO_RED_FLAGS_TAXONOMY) {
     if (f.bucket === "geographic" && !seen.has(f.id)) {
       seen.add(f.id); pool.push(f);
     }
   }
 
-  return pool.slice(0, 90);
+  return pool.slice(0, 120);
 }
 
 // ── Common-sense rules context builder ───────────────────────────────────────
@@ -301,7 +433,7 @@ function buildSystemPrompt(
 
 === TAXONOMY FLAGS PRE-SELECTED FOR THIS SECTOR/JURISDICTION (${flagPool.length} flags from ${MLRO_RED_FLAGS_TAXONOMY.length} total) ===
 Your redFlagsToWatch MUST be drawn from this vetted list. Do not invent flags outside it.
-Select 8–12 of the most applicable entries and provide a specific rationale for each.
+Select 10–14 of the most applicable entries and provide a specific rationale for each.
 
 ${flagLines}
 
@@ -365,7 +497,7 @@ Rules:
 - Exactly 3 inherentRiskFactors: Jurisdictional, Sector, Product/Transaction
 - 2–4 mitigatingFactors
 - 6–8 dueDiligenceActions citing the regulatory rules above
-- 8–12 redFlagsToWatch selected ONLY from the taxonomy list above
+- 10–14 redFlagsToWatch selected ONLY from the taxonomy list above
 - Set taxonomyCoverage.flagsSelected to the actual count of redFlagsToWatch entries
 - Do NOT fabricate adverse media, sanctions hits, or regulatory citations not in the rules block`;
 }
