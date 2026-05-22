@@ -199,11 +199,29 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
         a.score > b.score ? a : b,
       );
       if (topHit.score >= 0.85 && topHit.candidateName) {
-        return topHit.candidateName;
+        // Only substitute the sanctions-hit name for news search when it
+        // shares meaningful token overlap with the subject name — this
+        // handles real transliteration typos ("Vlademir Pootin" →
+        // "Vladimir Putin") while preventing cross-entity false-positive
+        // matches (subject="ISTANBUL GOLD REFINERY" matching a Haitian
+        // gang alias at 92% jaro-winkler) from hijacking the news search
+        // and returning 0 adverse-media results for the actual subject.
+        const subjectTokens = new Set(
+          subject.name.toLowerCase().split(/\s+/).filter((t) => t.length > 2),
+        );
+        const candidateTokens = topHit.candidateName
+          .toLowerCase()
+          .split(/\s+/)
+          .filter((t) => t.length > 2);
+        const shared = candidateTokens.filter((t) => subjectTokens.has(t)).length;
+        const overlap = subjectTokens.size > 0 ? shared / subjectTokens.size : 0;
+        if (overlap >= 0.3) {
+          return topHit.candidateName;
+        }
       }
     }
     return null;
-  }, [screening]);
+  }, [screening, subject.name]);
   const newsSearchName = canonicalName ?? subject.name;
   const news = useNewsSearch(newsSearchName);
   const adverseMediaText = useMemo(() => {
