@@ -775,6 +775,7 @@ const FREE_RSS_FEEDS: RssFeed[] = [
   { source: "gafilat-rss", outlet: "gafilat.org", url: "https://www.gafilat.org/index.php/en/rss" },
   { source: "menafatf-rss", outlet: "menafatf.org", url: "https://www.menafatf.org/en/rss" },
   { source: "esaamlg-rss", outlet: "esaamlg.org", url: "https://www.esaamlg.org/news/rss" },
+  { source: "fatf-rss", outlet: "fatf-gafi.org", url: "https://www.fatf-gafi.org/en/rss.xml" },
   { source: "wolfsberg-rss", outlet: "wolfsberg-principles.com", url: "https://www.wolfsberg-principles.com/feed/" },
   { source: "basil-rss", outlet: "baselgovernance.org", url: "https://baselgovernance.org/rss.xml" },
   { source: "u4-rss", outlet: "u4.no", url: "https://www.u4.no/rss" },

@@ -359,14 +359,16 @@ export async function POST(req: Request) {
 
 - Basel AML Index (annual country risk scoring 0-10, converted to 0-100 for output)
 - Transparency International Corruption Perceptions Index (CPI, 0-100 where 100 = very clean)
-- FATF grey list (Jurisdictions Under Increased Monitoring) and black list (High-Risk Jurisdictions Subject to a Call for Action)
+- FATF grey list and black list — authoritative source: https://www.fatf-gafi.org/en/topics/high-risk-and-other-monitored-jurisdictions.html (updated at each FATF plenary, typically February, June, October)
+- KnowYourCountry.com country risk ratings — covers 250 jurisdictions with AML/CFT risk colour-coding (High/Medium-High/Medium/Low)
 - OFAC country-level sanctions and Specially Designated Nationals lists
-- EU high-risk third countries (4AMLD/6AMLD lists)
+- EU high-risk third countries (4AMLD/6AMLD lists) — authoritative source: https://finance.ec.europa.eu/financial-crime/anti-money-laundering-and-countering-financing-terrorism_en
 - UN Security Council sanctions regimes
 - UK OFSI sanctions designations
 - Political stability and governance indicators (World Bank, Freedom House, EIU)
 - ML/TF risk indicators including cash economy size, narcotics trafficking, terrorist financing typologies
 - Regulatory obligations triggered by country risk under FATF Recommendations R.10, R.12, R.13, R.19
+- FATF Mutual Evaluation Reports (MERs) — country-specific AML/CFT effectiveness assessments at https://www.fatf-gafi.org/en/publications/Mutualevaluations.html
 
 For riskScore: 0-100 where 0=no risk, 100=maximum risk.
 For dimensions (all 0-100, higher = more risk):
