@@ -40,11 +40,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "Could not derive a valid username from the email address" }, { status: 400 });
   }
 
+  if (password && password.length > 1024) {
+    return NextResponse.json({ ok: false, error: "Password too long" }, { status: 400 });
+  }
+
   const salt = generateSalt();
   const initialPassword = password?.trim() || randomBytes(16).toString("base64url");
   const hash = hashPassword(initialPassword, salt);
 
-  const id = `usr-${String(Date.now()).slice(-6)}`;
+  const id = `usr-${randomBytes(4).toString("hex")}`;
   const newUser = {
     id,
     name: name.trim(),

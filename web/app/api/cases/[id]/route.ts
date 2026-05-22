@@ -6,6 +6,7 @@ import {
   loadCase,
 } from "@/lib/server/case-vault";
 import { buildInvestigationTimeline } from "@/lib/server/case-timeline";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -53,6 +54,12 @@ async function handleDelete(
   const tenant = tenantIdFromGate(gate);
   const { id } = await ctx.params;
   const cases = await deleteCaseById(tenant, id);
+  void writeAuditChainEntry(
+    { event: "cases.case_deleted", actor: gate.keyId, caseId: id, tenant },
+    tenant,
+  ).catch((err) =>
+    console.warn("[cases/[id]] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+  );
   return NextResponse.json(
     { ok: true, tenant, cases },
     { headers: gate.headers },

@@ -21,7 +21,7 @@ export async function GET(): Promise<NextResponse> {
   const users = await loadUsers();
   const user = users.find((u) => u.id === session.userId);
   if (!user) {
-    return NextResponse.json({ ok: false, error: "User not found" }, { status: 404 });
+    return NextResponse.json({ ok: false, error: "Session invalidated — please log in again" }, { status: 401 });
   }
 
   // Reject sessions issued before the most recent password change. This
