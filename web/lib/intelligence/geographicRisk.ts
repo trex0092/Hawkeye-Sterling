@@ -43,8 +43,10 @@ const COMPREHENSIVE: Record<string, string[]> = {
 // FATF lists — kept up to date against FATF plenary statements. These
 // move 2-3x per year; ops review on the next plenary.
 const FATF_BLACK = ["IR", "KP", "MM"]; // call-for-action
+// Turkey (TR) removed from FATF grey list June 2024 — FATF plenary decision.
+// TR remains in EU_AML_HIGH_RISK and CAHRA.
 const FATF_GREY = [
-  "AL","BG","BF","CM","HR","CD","HT","KE","LA","LB","MZ","MC","NA","NG","PH","RU","SN","ZA","SS","SY","TR","VE","VN","YE",
+  "AL","BG","BF","CM","HR","CD","HT","KE","LA","LB","MZ","MC","NA","NG","PH","RU","SN","ZA","SS","SY","VE","VN","YE",
 ];
 
 // EU AML high-risk third countries (Commission Delegated Regulation

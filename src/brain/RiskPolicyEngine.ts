@@ -63,13 +63,15 @@ export const JURISDICTION_RISK: Record<string, JurisdictionRiskLevel> = {
   MM: 'fatf_blacklist',   // Myanmar
 
   // FATF greylist (increased monitoring) — as of June 2025 plenary
+  // Turkey (TR) removed from FATF grey list at June 2024 plenary.
   BD: 'fatf_greylist', BF: 'fatf_greylist', CM: 'fatf_greylist',
   CD: 'fatf_greylist', HT: 'fatf_greylist', JM: 'fatf_greylist',
   ML: 'fatf_greylist', MZ: 'fatf_greylist', NA: 'fatf_greylist',
   NG: 'fatf_greylist', PH: 'fatf_greylist', SA: 'fatf_greylist',
   SN: 'fatf_greylist', SS: 'fatf_greylist', SY: 'fatf_greylist',
-  TZ: 'fatf_greylist', TR: 'fatf_greylist', UG: 'fatf_greylist',
+  TZ: 'fatf_greylist', UG: 'fatf_greylist',
   YE: 'fatf_greylist', ZA: 'fatf_greylist',
+  TR: 'high_risk',  // EU AML high-risk 3rd country + CAHRA; FATF member in good standing since Jun 2024
 
   // OFAC/UN sanctioned countries
   CU: 'sanctioned', VE: 'sanctioned', BY: 'sanctioned',

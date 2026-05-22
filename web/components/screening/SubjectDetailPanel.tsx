@@ -56,7 +56,6 @@ import {
   BrainDataCoverage,
   BrainCoverageGap,
 } from "@/components/screening/BrainIntelPack";
-import { OwnershipTab } from "@/components/screening/OwnershipTab";
 import { BrainIntelligencePack } from "@/components/screening/BrainIntelligencePack";
 import { DeepIntelPanel } from "@/components/screening/DeepIntelPanel";
 import { CrossRegimeConflictCard } from "@/components/screening/CrossRegimeConflictCard";
@@ -94,7 +93,7 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 // which made it visually identical to the Screening tab. Real
 // per-event timeline can return as its own panel when the engine
 // is wired.
-const TABS = ["Screening", "Intelligence", "Deep Intel", "CDD/EDD", "Ownership", "Live reasoning", "Evidence", "AI Ethics"] as const;
+const TABS = ["Screening", "Intelligence", "Deep Intel", "CDD/EDD", "Live reasoning", "Evidence", "AI Ethics"] as const;
 type Tab = (typeof TABS)[number];
 
 // Disambiguate tab removed — its types were removed alongside it.
@@ -1464,8 +1463,6 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
             superBrain={superBrain.status === "success" ? superBrain.result : null}
           />
         )}
-
-        {activeTab === "Ownership" && <OwnershipTab subject={subject} />}
 
         {activeTab === "Live reasoning" && (
           <LiveReasoningTab
