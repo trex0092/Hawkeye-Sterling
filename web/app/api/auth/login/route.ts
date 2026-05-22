@@ -253,7 +253,7 @@ export async function POST(req: Request) {
     });
   }
 
-  const isSecure = process.env["NODE_ENV"] === "production";
+  const isSecure = process.env["NODE_ENV"] !== "development";
   const res = NextResponse.json({ ok: true, name: user.name, role: user.role });
   res.cookies.set(SESSION_COOKIE, token, {
     httpOnly: true,

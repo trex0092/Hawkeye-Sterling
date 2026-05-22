@@ -514,18 +514,22 @@ export default function StrCasesPage() {
         );
 
         flashFor("success", "Filed to STR/SAR Asana board");
-        setCases((prev) => [
-      {
-            id: record.id,
-            title: title.trim() || subject.trim(),
-            reportKind,
-            subject: subject.trim(),
-            amountAed: amount,
-            status,
-            openedAt: record.opened,
-      },
-      ...prev,
-        ]);
+        // Re-read from the authoritative store so the in-page list reflects
+        // what was actually persisted (guards against silent quota failures
+        // where appendCase wrote nothing but the local variable still exists).
+        setCases(
+          loadCases()
+            .filter((c) => c.meta?.startsWith("STR") || c.meta?.startsWith("SAR"))
+            .map((c) => ({
+              id: c.id,
+              title: c.subject,
+              reportKind: c.meta?.split(" · ")[0] ?? "STR",
+              subject: c.subject,
+              amountAed: "",
+              status: c.statusLabel,
+              openedAt: c.opened,
+            })),
+        );
         clear();
       } else {
         flashFor("error", "Filing failed check Asana token");

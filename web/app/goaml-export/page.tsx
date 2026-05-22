@@ -346,12 +346,12 @@ export default function GoAmlExportPage() {
                     <span className="font-mono text-11 text-ink-2">{aiValidation.score}/100</span>
                     <span className="text-11 text-ink-3 italic">{aiValidation.fiuReadiness}</span>
                   </div>
-                  {aiValidation.fatalIssues.length > 0 && <div className="text-11 text-red font-semibold">Fatal: {aiValidation.fatalIssues.join(" · ")}</div>}
-                  {aiValidation.tippingOffRisk && <div className="text-11 text-red">Tipping-off risk detected: {aiValidation.tippingOffFlags.join(", ")}</div>}
-                  {aiValidation.missingElements.length > 0 && <div className="text-10 text-amber">Missing: {aiValidation.missingElements.join(" · ")}</div>}
-                  {aiValidation.suggestions.length > 0 && (
+                  {(aiValidation.fatalIssues ?? []).length > 0 && <div className="text-11 text-red font-semibold">Fatal: {(aiValidation.fatalIssues ?? []).join(" · ")}</div>}
+                  {aiValidation.tippingOffRisk && <div className="text-11 text-red">Tipping-off risk detected: {(aiValidation.tippingOffFlags ?? []).join(", ")}</div>}
+                  {(aiValidation.missingElements ?? []).length > 0 && <div className="text-10 text-amber">Missing: {(aiValidation.missingElements ?? []).join(" · ")}</div>}
+                  {(aiValidation.suggestions ?? []).length > 0 && (
                     <ul className="text-10 text-ink-2 list-disc list-inside space-y-0.5">
-                      {aiValidation.suggestions.map((s, i) => <li key={i}>{s}</li>)}
+                      {(aiValidation.suggestions ?? []).map((s, i) => <li key={i}>{s}</li>)}
                     </ul>
                   )}
                 </div>

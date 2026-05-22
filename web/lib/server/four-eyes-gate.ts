@@ -244,7 +244,7 @@ export async function getOverdueCases(): Promise<Array<{ caseId: string; overdue
       overdue.push({
         caseId,
         overdueHours: status.overdueHours ?? 0,
-        requiresEscalation: isCaseRequiresEscalation(status.decisions[0]?.approvedAt ?? new Date().toISOString()),
+        requiresEscalation: (status.overdueHours ?? 0) > FOUR_EYES_ESCALATION_HOURS,
       });
     }
   }

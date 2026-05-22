@@ -190,8 +190,9 @@ async function handler(req: Request): Promise<NextResponse> {
     };
     auditEvent = "four_eyes.completed";
   } else {
-    // 11. First approval — remain pending.
-    auditEvent = "";
+    // 11. First approval — item stays pending but the approval is audited so
+    //     the chain has an immutable record of who signed first.
+    auditEvent = "four_eyes.first_approval";
   }
 
   // 12. Persist updated item.
