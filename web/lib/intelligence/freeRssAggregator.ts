@@ -587,6 +587,7 @@ const FREE_RSS_FEEDS: RssFeed[] = [
   { source: "globcompliancenews-rss", outlet: "globalcompliancenews.com", url: "https://globalcompliancenews.com/feed/" },
   { source: "mlro-rss", outlet: "themoneylaundering.com", url: "https://www.themoneylaundering.com/feed/" },
   { source: "lexology-finreg-rss", outlet: "lexology.com", url: "https://www.lexology.com/rss?topic=anti-money-laundering" },
+  { source: "amlnetwork-rss", outlet: "amlnetwork.org", url: "https://amlnetwork.org/feed/" },
 
   // ── More Africa (Central / Southern / Horn)
   { source: "zimbabwesituation-rss", outlet: "zimbabwesituation.com", url: "https://www.zimbabwesituation.com/feed/" },
