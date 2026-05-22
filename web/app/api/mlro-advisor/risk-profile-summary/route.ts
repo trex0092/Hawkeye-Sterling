@@ -385,9 +385,9 @@ function buildFlagPool(sector: string, jurisdiction: string): MlroRedFlag[] {
 // ── Common-sense rules context builder ───────────────────────────────────────
 
 const SECTOR_TOPICS = {
-  precious_metals: ["dpms_precious_metals", "cahra_jurisdiction", "tbml", "cdd", "edd", "sanctions_screening"],
-  real_estate: ["real_estate_ml", "cdd", "edd", "sanctions_screening"],
-  crypto: ["vasp_crypto", "travel_rule", "cdd", "edd", "sanctions_screening"],
+  precious_metals: ["dpms_precious_metals", "cahra_jurisdiction", "trade_based_ml", "cdd", "edd", "sanctions_screening"],
+  real_estate: ["real_estate_aml", "cdd", "edd", "sanctions_screening"],
+  crypto: ["vasp_crypto", "wire_transfer_travel_rule", "cdd", "edd", "sanctions_screening"],
   bank: ["correspondent_banking", "cdd", "edd", "sanctions_screening"],
   npo: ["npo_risk", "cdd", "edd", "sanctions_screening"],
   default: ["cdd", "edd", "ongoing_monitoring", "sanctions_screening", "pep_handling"],
@@ -408,15 +408,15 @@ function pickTopics(sector: string): string[] {
 function pickBaseline(sector: string, entityType: string): BenchmarkSector {
   const s = sector.toLowerCase();
   const e = entityType.toLowerCase();
-  if (/gold|precious|dpms|metal/.test(s)) {
+  if (/gold|precious|bullion|lbma|dpms|metal/.test(s)) {
     if (/refin/.test(e)) return "dpms_refinery";
-    if (/wholesale|bulk|dealer/.test(e)) return "bullion_wholesale";
+    if (/wholesale|bulk/.test(e)) return "bullion_wholesale";
     return "dpms_retail";
   }
   if (/real estate|property/.test(s)) return "real_estate";
   if (/crypto|vasp|virtual/.test(s)) return "vasp";
-  if (/npo|charity/.test(s)) return "npo";
-  if (/bank/.test(s)) return "bank_corporate";
+  if (/npo|charity|nonprofit/.test(s)) return "npo";
+  if (/bank|finance/.test(s)) return "bank_corporate";
   return "dpms_retail";
 }
 
