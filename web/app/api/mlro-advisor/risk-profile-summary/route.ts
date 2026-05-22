@@ -84,8 +84,8 @@ interface RiskProfileSummaryResult {
 
 /**
  * Selects sector- and jurisdiction-relevant flags from the 719-flag taxonomy.
- * Runs multiple keyword searches, deduplicates, and caps at 60 entries so the
- * system prompt stays within the Haiku token budget.
+ * Runs targeted keyword searches across all 7 buckets, deduplicates, and caps
+ * at 90 entries so the system prompt stays within the Haiku token budget.
  */
 function buildFlagPool(sector: string, jurisdiction: string): MlroRedFlag[] {
   const s = sector.toLowerCase();
@@ -99,8 +99,9 @@ function buildFlagPool(sector: string, jurisdiction: string): MlroRedFlag[] {
     }
   };
 
-  // Sector-specific searches
+  // ── Sector-specific searches ────────────────────────────────────────────────
   if (/gold|precious|bullion|dpms|lbma|refin|metal/.test(s)) {
+    // Core precious-metals / DPMS flags
     add(searchRedFlags("gold"));
     add(searchRedFlags("precious"));
     add(searchRedFlags("lbma"));
@@ -110,39 +111,97 @@ function buildFlagPool(sector: string, jurisdiction: string): MlroRedFlag[] {
     add(searchRedFlags("cahra"));
     add(searchRedFlags("purity"));
     add(searchRedFlags("certificate"));
+    // Extended physical-form coverage
+    add(searchRedFlags("scrap"));          // scrap gold origin / composition
+    add(searchRedFlags("dust"));           // dust/powder gold
+    add(searchRedFlags("jewelry"));        // jewelry gold purity / weight / origin
+    add(searchRedFlags("alloy"));          // alloys suspicious composition
+    add(searchRedFlags("coin"));           // coins vs. bullion inconsistency
+    add(searchRedFlags("weight"));         // weight certification absent / forged
+    add(searchRedFlags("chain"));          // chain-of-custody breaks
+    add(searchRedFlags("conflict mineral")); // diamonds / gemstones conflict minerals
+    // Supplier-chain coverage (critical for DPMS who source from third parties)
+    add(searchRedFlags("supplier lbma"));
+    add(searchRedFlags("supplier refinery"));
+    add(searchRedFlags("supplier conflict"));
+    add(searchRedFlags("supplier purity"));
+    add(searchRedFlags("supplier assay"));
+    add(searchRedFlags("supplier site"));
+    add(searchRedFlags("supplier certification"));
   }
   if (/real estate|property|mortgage/.test(s)) {
     add(searchRedFlags("real estate"));
     add(searchRedFlags("property"));
+    add(searchRedFlags("mortgage"));
+    add(searchRedFlags("title"));
   }
   if (/crypto|vasp|bitcoin|virtual asset/.test(s)) {
     add(searchRedFlags("crypto"));
     add(searchRedFlags("vasp"));
     add(searchRedFlags("mixing"));
     add(searchRedFlags("wallet"));
+    add(searchRedFlags("virtual asset"));
+    add(searchRedFlags("blockchain"));
+    add(searchRedFlags("exchange"));
   }
   if (/bank|finance|lending/.test(s)) {
     add(searchRedFlags("bank"));
     add(searchRedFlags("correspondent"));
+    add(searchRedFlags("vostro"));         // vostro/nostro account abuse
+    add(searchRedFlags("wire transfer"));
   }
   if (/npo|charity|nonprofit|foundation/.test(s)) {
     add(searchRedFlags("npo"));
     add(searchRedFlags("charity"));
+    add(searchRedFlags("fund"));
+    add(searchRedFlags("donation"));
+  }
+  if (/trade finance|letter of credit|documentary credit|import export/.test(s)) {
+    add(searchRedFlags("trade finance"));
+    add(searchRedFlags("bill of lading"));
+    add(searchRedFlags("customs"));
+    add(searchRedFlags("incoterms"));
+    add(searchRedFlags("shipping"));
+    add(searchRedFlags("misdeclared"));
+  }
+  if (/wealth|private bank|family office|hnwi|high net worth/.test(s)) {
+    add(searchRedFlags("fund"));
+    add(searchRedFlags("trust"));
+    add(searchRedFlags("equity instruments"));
+    add(searchRedFlags("loan instruments"));
+    add(searchRedFlags("structured product"));
   }
 
-  // Jurisdiction-specific searches
+  // ── Jurisdiction-specific searches ─────────────────────────────────────────
   if (/turkey|tr\b/.test(j)) {
     add(searchRedFlags("transit"));
     add(searchRedFlags("grey"));
   }
   if (/iran|iraq|syria|north korea|dprk/.test(j)) {
     add(searchRedFlags("sanctioned"));
+    add(searchRedFlags("sanctions jurisdiction"));
   }
   if (/russia|rf\b/.test(j)) {
     add(searchRedFlags("russia"));
   }
+  if (/uae|united arab emirates|dubai|abu dhabi/.test(j)) {
+    add(searchRedFlags("free zone"));
+    add(searchRedFlags("cahra"));
+  }
+  if (/cayman|bvi|british virgin|panama|seychelles|belize|mauritius|samoa|vanuatu/.test(j)) {
+    add(searchRedFlags("shell company"));
+    add(searchRedFlags("privacy"));
+    add(searchRedFlags("offshore"));
+  }
+  if (/congo|drc|mali|ghana|nigeria|sudan|ethiopia|mozambique|zimbabwe|zambia|tanzania|kenya/.test(j)) {
+    add(searchRedFlags("artisanal"));
+    add(searchRedFlags("conflict mineral"));
+    add(searchRedFlags("conflict zone"));
+    add(searchRedFlags("unregulated mining"));
+  }
 
-  // Always include high-value cross-sector flags
+  // ── Universal cross-sector flags (always included) ─────────────────────────
+  // Fundamental ML transaction patterns
   add(searchRedFlags("hawala"));
   add(searchRedFlags("invoice"));
   add(searchRedFlags("beneficial owner"));
@@ -150,15 +209,28 @@ function buildFlagPool(sector: string, jurisdiction: string): MlroRedFlag[] {
   add(searchRedFlags("sanctions"));
   add(searchRedFlags("cash"));
   add(searchRedFlags("jurisdiction"));
+  // Structural red flags absent from the above
+  add(searchRedFlags("structuring"));       // sub-threshold / smurfing
+  add(searchRedFlags("layering"));          // cross-border layering patterns
+  add(searchRedFlags("shell"));             // shell company usage across all buckets
+  add(searchRedFlags("adverse media"));     // all 13+ adverse media subtypes
+  add(searchRedFlags("dormant"));           // dormant accounts suddenly active
+  add(searchRedFlags("ubo"));               // UBO chain / identity issues
+  add(searchRedFlags("wire"));              // wire transfer from sanctioned / high-risk
+  add(searchRedFlags("misdeclared"));       // misdeclared commodity / origin / end-use
+  add(searchRedFlags("third-party"));       // third-party payment routing
+  add(searchRedFlags("enforcement"));       // regulatory enforcement actions (15 flags)
+  add(searchRedFlags("examination"));       // regulatory examination flags (6 flags)
+  add(searchRedFlags("sudden"));            // behavioral sudden-change patterns (33 flags)
 
-  // Ensure all geographic bucket flags are in scope
+  // ── Ensure all geographic bucket flags are in scope ────────────────────────
   for (const f of MLRO_RED_FLAGS_TAXONOMY) {
     if (f.bucket === "geographic" && !seen.has(f.id)) {
       seen.add(f.id); pool.push(f);
     }
   }
 
-  return pool.slice(0, 60);
+  return pool.slice(0, 90);
 }
 
 // ── Common-sense rules context builder ───────────────────────────────────────
@@ -229,7 +301,7 @@ function buildSystemPrompt(
 
 === TAXONOMY FLAGS PRE-SELECTED FOR THIS SECTOR/JURISDICTION (${flagPool.length} flags from ${MLRO_RED_FLAGS_TAXONOMY.length} total) ===
 Your redFlagsToWatch MUST be drawn from this vetted list. Do not invent flags outside it.
-Select 6–10 of the most applicable entries and provide a specific rationale for each.
+Select 8–12 of the most applicable entries and provide a specific rationale for each.
 
 ${flagLines}
 
@@ -293,7 +365,7 @@ Rules:
 - Exactly 3 inherentRiskFactors: Jurisdictional, Sector, Product/Transaction
 - 2–4 mitigatingFactors
 - 6–8 dueDiligenceActions citing the regulatory rules above
-- 6–10 redFlagsToWatch selected ONLY from the taxonomy list above
+- 8–12 redFlagsToWatch selected ONLY from the taxonomy list above
 - Set taxonomyCoverage.flagsSelected to the actual count of redFlagsToWatch entries
 - Do NOT fabricate adverse media, sanctions hits, or regulatory citations not in the rules block`;
 }
