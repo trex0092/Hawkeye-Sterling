@@ -1,10 +1,10 @@
 {
   "ok": true,
-  "generatedAt": "2026-05-20T08:22:20+00:00",
+  "generatedAt": "2026-05-22T10:25:10+00:00",
   "manifest": {
     "product": "Hawkeye Sterling",
     "version": "0.2.0",
-    "generatedAt": "2026-05-20T08:22:20+00:00",
+    "generatedAt": "2026-05-22T10:25:10+00:00",
     "charter": {
       "prohibitions": [
         {
@@ -703,7 +703,7 @@
         ]
       },
       "playbooks": {
-        "total": 106,
+        "total": 158,
         "ids": [
           "pb_confirmed_sanctions_match",
           "pb_partial_sanctions_match",
@@ -810,7 +810,59 @@
           "pb_fiu_goaml_filing",
           "pb_sar_quality",
           "pb_customer_exit",
-          "pb_wildlife_trafficking"
+          "pb_wildlife_trafficking",
+          "pb_adgm_regulated_firm",
+          "pb_difc_dfsa_regulated",
+          "pb_mas_regulated_entity",
+          "pb_fca_regulated_entity",
+          "pb_fincen_sar_filing",
+          "pb_ecb_aml_assessment",
+          "pb_bnpl_credit_abuse",
+          "pb_embedded_finance_risk",
+          "pb_open_banking_aggregator",
+          "pb_carbon_credit_fraud",
+          "pb_emissions_trading_ml",
+          "pb_nft_ip_laundering",
+          "pb_pig_butchering_wire",
+          "pb_ceo_fraud_wire_recall",
+          "pb_ransomware_negotiation",
+          "pb_defi_rug_pull",
+          "pb_pump_and_dump_crypto",
+          "pb_spoofing_layering",
+          "pb_correspondent_payable_through",
+          "pb_unhosted_wallet_edd",
+          "pb_north_korea_it_worker",
+          "pb_russia_oligarch_asset_trace",
+          "pb_iran_oil_proceeds",
+          "pb_hawala_fiat_bridge",
+          "pb_authorised_push_payment",
+          "pb_sim_swap_fraud",
+          "pb_trade_based_sanctions_evasion",
+          "pb_dual_use_export_violation",
+          "pb_mobile_money_ml",
+          "pb_money_service_business_edd",
+          "pb_cybercrime_proceeds",
+          "pb_payroll_diversion",
+          "pb_charity_diversion",
+          "pb_enhanced_due_diligence_trigger",
+          "pb_cdd_refresh_trigger",
+          "pb_dormant_account_review",
+          "pb_round_tripping_alert",
+          "pb_real_estate_agent_dnfbp",
+          "pb_art_dealer_dnfbp",
+          "pb_examination_preparation",
+          "pb_regulatory_findings_remediation",
+          "pb_enforcement_action_response",
+          "pb_gdpr_erasure_aml_conflict",
+          "pb_pdpl_data_subject_request",
+          "pb_voluntary_self_disclosure",
+          "pb_crowd_funding_ml_risk",
+          "pb_insurtech_risk",
+          "pb_data_breach_aml_implications",
+          "pb_smurfing_alert",
+          "pb_cash_intensive_business_edd",
+          "pb_proliferation_financing_new",
+          "pb_unusual_transaction_large"
         ]
       },
       "redlines": {
@@ -1383,13 +1435,13 @@
     },
     "integrity": {
       "charterHash": "91d21d6b",
-      "catalogueHash": "ef1802eb"
+      "catalogueHash": "60b9afcc"
     }
   },
   "integrity": {
     "charterHash": "91d21d6b",
-    "catalogueHash": "ef1802eb",
-    "compositeHash": "ff26126e"
+    "catalogueHash": "60b9afcc",
+    "compositeHash": "0406dcb3"
   },
   "enhanced": {
     "extended": {

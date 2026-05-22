@@ -72,6 +72,23 @@ npm audit (web/)
 ```
 Both moderate vulnerabilities are in transitive dependencies with no available non-breaking fix. They do not affect the production security posture of the application (neither is in a path reachable from production code). Re-audit after next major dependency update cycle.
 
+## npm Scripts Reference
+
+| Script | Command | Purpose |
+|--------|---------|---------|
+| `npm test` / `test:unit` | `vitest run` | Run all 5507 unit tests |
+| `npm run test:integration` | `vitest run --config vitest.integration.ts` | Run 111 API route integration tests |
+| `npm run typecheck` | `tsc --noEmit` | TypeScript type-check (root) |
+| `npm run typecheck:web` | `cd web && npm run typecheck` | TypeScript type-check (web/) |
+| `npm run build` | `tsc` | Compile TypeScript to dist/ |
+| `npm run build:web` | `cd web && npm run build` | Build Next.js production app |
+| `npm run lint` | `eslint src/ netlify/ --max-warnings=0` | ESLint (root — src/ + netlify/) |
+| `npm run audit:high` | `npm audit --audit-level=high` | Fail on high/critical CVEs |
+| `npm run security:secrets` | `bash scripts/secret-scan.sh` | Scan for hardcoded secrets |
+| `npm run verify` | typecheck + lint + test + audit + secrets | Full verification gate |
+
 ## Build Notes
 - Netlify Blobs warning during build: `[candidates-loader] Failed to open Blobs stores` — expected in local dev without Netlify context. Runtime behavior is correct (in-memory fallback with logged warning).
 - `NEXT_TELEMETRY_DISABLED=1` required to prevent network calls during build in offline/CI environments.
+- Next.js build verified: `web/.next/server/app/api/` contains all 9 critical route files.
+- OpenAPI conformance: 17/17 declared paths in `OPENAPI.yaml` have implementations.

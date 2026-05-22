@@ -332,6 +332,20 @@ npm run security:secrets
 
 npm run verify
 # Result: EXIT 0, all above checks combined
+
+npx vitest run --config vitest.integration.ts
+# Result: EXIT 0, 4 test files, 111 tests passed (API route integration tests)
+
+# Web checks:
+cd web && npm run typecheck
+# Result: EXIT 0, 0 TypeScript errors in web/
+
+cd web && npm run build
+# Result: EXIT 0, compiled successfully (~32s), 88 static pages generated.
+# All 9 critical API route files present in web/.next/server/app/api/:
+#   health/route.js, screening/health/route.js, integrations/status/route.js,
+#   screening/run/route.js, reports/pdf/route.js, reports/xml/route.js,
+#   quick-screen/route.js, env-check/route.js, auth/login/route.js
 ```
 
 ---
@@ -339,10 +353,10 @@ npm run verify
 ## 10. CI RESULTS
 
 CI jobs in `.github/workflows/ci.yml`:
-1. **build** — install, tsc, vitest, brain:audit, lethal-trifecta check
+1. **build** — install, tsc, vitest (5507 unit tests), integration tests (111 tests), brain:audit, lethal-trifecta check
 2. **security-audit** — npm audit (root+web), PII guard, secret scan, auth coverage gate, SBOM generation
 3. **lint-web** — web typecheck, ESLint root (src/ + netlify/), Next.js lint
-4. **nextjs-build** — full Next.js 15 build, critical route verification
+4. **nextjs-build** — full Next.js 15 build, critical route verification (9 routes confirmed)
 
 All jobs pass on branch `claude/gracious-wright-2ACpz`.
 
@@ -369,7 +383,39 @@ The uuid vulnerability requires passing a user-controlled `buf` argument to uuid
 
 ---
 
-## 12. SECRET SCAN RESULTS
+## 12. OPENAPI SPEC CONFORMANCE
+
+**Specification file:** `OPENAPI.yaml` (OpenAPI 3.1.0)  
+**Declared paths:** 17  
+**Verified:** 2026-05-22
+
+| # | Declared Path | Methods | Implementation File | Status |
+|---|--------------|---------|-------------------|--------|
+| 1 | `/api/health` | GET | `web/app/api/health/route.ts` | ✅ |
+| 2 | `/api/screening/run` | POST | `web/app/api/screening/run/route.ts` | ✅ |
+| 3 | `/api/screening/health` | GET | `web/app/api/screening/health/route.ts` | ✅ |
+| 4 | `/api/quick-screen` | POST | `web/app/api/quick-screen/route.ts` | ✅ |
+| 5 | `/api/reports/pdf` | POST | `web/app/api/reports/pdf/route.ts` | ✅ |
+| 6 | `/api/reports/xml` | POST | `web/app/api/reports/xml/route.ts` | ✅ |
+| 7 | `/api/integrations/status` | GET | `web/app/api/integrations/status/route.ts` | ✅ |
+| 8 | `/api/auth/login` | POST | `web/app/api/auth/login/route.ts` | ✅ |
+| 9 | `/api/auth/logout` | POST | `web/app/api/auth/logout/route.ts` | ✅ |
+| 10 | `/api/auth/me` | GET | `web/app/api/auth/me/route.ts` | ✅ |
+| 11 | `/api/sanctions/status` | GET | `web/app/api/sanctions/status/route.ts` | ✅ |
+| 12 | `/api/sanctions/refresh` | POST | `web/app/api/sanctions/refresh/route.ts` | ✅ |
+| 13 | `/api/access/users` | GET, POST | `web/app/api/access/users/route.ts` | ✅ |
+| 14 | `/api/access/users/{userId}` | PUT, DELETE | `web/app/api/access/users/[userId]/route.ts` | ✅ |
+| 15 | `/api/four-eyes/pending` | GET | `web/app/api/four-eyes/pending/route.ts` | ✅ |
+| 16 | `/api/four-eyes/{reviewId}/approve` | POST | `web/app/api/four-eyes/[reviewId]/approve/route.ts` | ✅ |
+| 17 | `/api/four-eyes/{reviewId}/reject` | POST | `web/app/api/four-eyes/[reviewId]/reject/route.ts` | ✅ |
+
+**Result: 17/17 paths implemented. All declared HTTP methods present.**
+
+Note: Implementations also expose DELETE/PATCH on four-eyes and DELETE on ongoing-monitoring routes not yet documented in spec — these are internal admin operations not exposed to external consumers. Spec update deferred to next release cycle.
+
+---
+
+## 13. SECRET SCAN RESULTS
 
 Scan pattern: `sk-ant-[a-zA-Z0-9]{32,}` (Anthropic API keys), `AKIA[A-Z0-9]{16}` (AWS access keys)
 Scope: `src/`, `web/app/`, `web/lib/`, `netlify/`
@@ -382,18 +428,20 @@ Additional checks:
 
 ---
 
-## 13. MANUAL QA CHECKLIST
+## 14. MANUAL QA CHECKLIST
 
 | Check | Status | Evidence |
 |-------|--------|---------|
 | App starts locally | ✅ | `npm run dev` serves public/ on port 8080 |
 | TypeScript compiles | ✅ | `npm run build` → EXIT 0 |
 | All 5507 unit tests pass | ✅ | `npm test` → EXIT 0 |
+| All 111 integration tests pass | ✅ | `npm run test:integration` → EXIT 0 |
 | No high/critical CVEs | ✅ | `npm run audit:high` → EXIT 0 |
 | No hardcoded secrets | ✅ | `npm run security:secrets` → EXIT 0 |
 | ESLint clean | ✅ | `npm run lint` → 0 errors, 0 warnings |
-| Web typecheck clean | ✅ | `cd web && npm run typecheck` → EXIT 0 |
-| OpenAPI spec present | ✅ | `OPENAPI.yaml` in root |
+| Web typecheck clean | ✅ | `npm run typecheck:web` → EXIT 0 |
+| Next.js build passes | ✅ | `npm run build:web` → EXIT 0, 88 pages, 9 critical routes |
+| OpenAPI 17/17 paths implemented | ✅ | All declared paths verified (see section 12) |
 | netlify.toml valid | ✅ | All required sections present |
 | Security headers configured | ✅ | netlify.toml [[headers]] sections |
 | Auth enforced on routes | ✅ | enforce() gate, CI auth-coverage-gate |
@@ -407,7 +455,7 @@ Additional checks:
 
 ---
 
-## 14. RESIDUAL RISKS
+## 15. RESIDUAL RISKS
 
 | Risk | Severity | Mitigation | Owner |
 |------|----------|-----------|-------|
@@ -422,7 +470,7 @@ Additional checks:
 
 ---
 
-## 15. EVIDENCE FILE PATHS
+## 16. EVIDENCE FILE PATHS
 
 | Evidence | Path |
 |---------|------|
@@ -447,16 +495,20 @@ Additional checks:
 
 ---
 
-## 16. SIGN-OFF CHECKLIST
+## 17. SIGN-OFF CHECKLIST
 
 - [x] `npm ci` passes (0 high/critical CVEs)
 - [x] `npm run build` passes (TypeScript compiles)
 - [x] `npm run typecheck` passes (0 type errors)
 - [x] `npm run lint` passes (0 ESLint errors, 0 warnings)
-- [x] `npm test` passes (5507/5507 tests)
+- [x] `npm test` passes (5507/5507 unit tests)
+- [x] `npm run test:integration` passes (111/111 integration tests)
 - [x] `npm run audit:high` passes (no high/critical vulnerabilities)
 - [x] `npm run security:secrets` passes (no hardcoded secrets)
 - [x] `npm run verify` passes (all above combined)
+- [x] `npm run typecheck:web` passes (0 TypeScript errors in web/)
+- [x] `npm run build:web` passes (88 static pages, 9 critical routes in .next/)
+- [x] OpenAPI conformance: 17/17 declared paths implemented
 - [x] Secret scanning passes
 - [x] All protected APIs require auth (enforce() gate)
 - [x] All integrations are working, mocked, or feature-gated
