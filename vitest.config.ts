@@ -29,6 +29,8 @@ export default defineConfig({
       // Provide a lightweight NextResponse shim so web/lib tests that import
       // validate.ts (which uses next/server) run without the Next.js runtime.
       { find: 'next/server', replacement: path.resolve(__dirname, 'src/__mocks__/next-server.ts') },
+      // Resolve Next.js path alias `@/` → web/ so src/__tests__ can import web API routes.
+      { find: /^@\/(.*)$/, replacement: path.resolve(__dirname, 'web/$1') },
     ],
   },
 });

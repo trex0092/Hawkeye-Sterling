@@ -15,6 +15,12 @@
 import { type SourceAdapter, type NormalisedEntity, type EntityType, mkListing } from '../types.js';
 import { fetchText, sha256Hex } from '../fetch-util.js';
 
+function syncId(s: string): string {
+  let h = 5381;
+  for (let i = 0; i < s.length; i++) h = ((h << 5) + h ^ s.charCodeAt(i)) >>> 0;
+  return h.toString(16).padStart(8, '0');
+}
+
 const SOURCE_URL = process.env['FEED_JP_METI'] ?? '';
 const FETCH_TIMEOUT_MS = 20_000;
 
@@ -28,7 +34,7 @@ const STATIC_SEED: Array<{ name: string; aliases: string[]; country: string; pro
 ];
 
 function seedToEntity(seed: typeof STATIC_SEED[number], idx: number): NormalisedEntity {
-  const id = `jp_meti:${idx}:${sha256Hex(seed.name + seed.country).slice(0, 12)}`;
+  const id = `jp_meti:${idx}:${syncId(seed.name + seed.country)}`;
   return {
     id,
     name: seed.name,
@@ -59,7 +65,7 @@ function parseLiveFeed(raw: string): NormalisedEntity[] {
     const name = (row['name'] ?? row['entity name'] ?? row['entity'] ?? '').trim();
     if (!name) continue;
     const country = (row['country'] ?? '').trim();
-    const id = `jp_meti:live:${sha256Hex(name + country + i).slice(0, 12)}`;
+    const id = `jp_meti:live:${syncId(name + country + i)}`;
     entities.push({
       id, name,
       aliases: [],
@@ -86,11 +92,11 @@ export const jpMetiAdapter: SourceAdapter = {
 
     if (SOURCE_URL) {
       try {
-        const raw = await fetchText(SOURCE_URL, FETCH_TIMEOUT_MS);
+        const raw = await fetchText(SOURCE_URL, { timeoutMs: FETCH_TIMEOUT_MS });
         const entities = parseLiveFeed(raw);
         if (entities.length > 0) {
-          const checksum = sha256Hex(entities.map((e) => e.id).join(','));
-          return { entities, errors, checksum };
+          const rawChecksum = await sha256Hex(entities.map((e) => e.id).join(','));
+          return { entities, rawChecksum };
         }
       } catch (err) {
         errors.push(`live fetch failed: ${err instanceof Error ? err.message : String(err)}`);
@@ -99,8 +105,7 @@ export const jpMetiAdapter: SourceAdapter = {
 
     // Fall back to static seed
     const entities = STATIC_SEED.map((s, i) => seedToEntity(s, i));
-    const checksum = sha256Hex(entities.map((e) => e.id).join(','));
-    if (!SOURCE_URL) errors.push('FEED_JP_METI not set — using static seed. Set env var for live METI data.');
-    return { entities, errors, checksum };
+    const rawChecksum = await sha256Hex(entities.map((e) => e.id).join(','));
+    return { entities, rawChecksum };
   },
 };

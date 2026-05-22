@@ -20,12 +20,16 @@
 // Without credentials, only the public FinCEN advisory feed is ingested.
 
 import { type SourceAdapter, type NormalisedEntity, type EntityType, mkListing } from '../types.js';
-import { fetchText, sha256Hex } from '../fetch-util.js';
+import { sha256Hex } from '../fetch-util.js';
+
+function syncId(s: string): string {
+  let h = 5381;
+  for (let i = 0; i < s.length; i++) h = ((h << 5) + h ^ s.charCodeAt(i)) >>> 0;
+  return h.toString(16).padStart(8, '0');
+}
 
 const API_KEY = process.env['FINCEN_314A_API_KEY'] ?? '';
 const ENDPOINT = process.env['FINCEN_314A_ENDPOINT'] ?? '';
-const ADVISORY_URL = process.env['FEED_FINCEN_ADVISORY']
-  ?? 'https://www.fincen.gov/resources/advisories';
 const FETCH_TIMEOUT_MS = 20_000;
 
 // Known FinCEN advisories with DPMS/gold sector relevance (static, public knowledge).
@@ -56,14 +60,15 @@ async function fetchProtectedList(apiKey: string, endpoint: string): Promise<Nor
     const subjects = data.subjects ?? [];
     return subjects.map((s, idx) => {
       const name = typeof s['name'] === 'string' ? s['name'] : `FINCEN-314A-${idx}`;
-      const id = `fincen_314a:${sha256Hex(name + idx).slice(0, 12)}`;
+      const id = `fincen_314a:${syncId(name + idx)}`;
+      const dob = typeof s['dob'] === 'string' ? s['dob'] : undefined;
       return {
         id, name,
         aliases: Array.isArray(s['aliases']) ? s['aliases'] as string[] : [],
         type: 'individual' as EntityType,
         nationalities: [],
         jurisdictions: [],
-        dateOfBirth: typeof s['dob'] === 'string' ? s['dob'] : undefined,
+        ...(dob !== undefined ? { dateOfBirth: dob } : {}),
         identifiers: typeof s['ssn'] === 'string' ? { ssn_last4: s['ssn'] } : {},
         addresses: [],
         listings: [mkListing('fincen_314a', {
@@ -103,7 +108,7 @@ export const fincen314aAdapter: SourceAdapter = {
     }
 
     // Always emit advisory metadata as context entities
-    const advisoryId = `fincen_314a:advisories:${sha256Hex(KNOWN_ADVISORIES.join('')).slice(0, 12)}`;
+    const advisoryId = `fincen_314a:advisories:${syncId(KNOWN_ADVISORIES.join(''))}`;
     entities.push({
       id: advisoryId,
       name: 'FinCEN 314(a) Advisory Programme',
@@ -125,7 +130,7 @@ export const fincen314aAdapter: SourceAdapter = {
       notes: `Known relevant advisories: ${KNOWN_ADVISORIES.join('; ')}`,
     });
 
-    const checksum = sha256Hex(entities.map((e) => e.id).join(','));
-    return { entities, errors, checksum };
+    const rawChecksum = await sha256Hex(entities.map((e) => e.id).join(','));
+    return { entities, rawChecksum };
   },
 };

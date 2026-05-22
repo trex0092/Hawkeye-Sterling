@@ -14,6 +14,12 @@
 import { type SourceAdapter, type NormalisedEntity, type EntityType, mkListing } from '../types.js';
 import { fetchText, sha256Hex } from '../fetch-util.js';
 
+function syncId(s: string): string {
+  let h = 5381;
+  for (let i = 0; i < s.length; i++) h = ((h << 5) + h ^ s.charCodeAt(i)) >>> 0;
+  return h.toString(16).padStart(8, '0');
+}
+
 const SOURCE_URL = process.env['FEED_UAE_MOE_DESIGNATED'] ?? '';
 const FETCH_TIMEOUT_MS = 20_000;
 
@@ -25,7 +31,7 @@ const STATIC_SEED: Array<{ name: string; aliases: string[]; country: string; cat
 ];
 
 function seedToEntity(seed: typeof STATIC_SEED[number], idx: number): NormalisedEntity {
-  const id = `uae_moe_designated:${idx}:${sha256Hex(seed.name + (seed.reference ?? '')).slice(0, 12)}`;
+  const id = `uae_moe_designated:${idx}:${syncId(seed.name + (seed.reference ?? ''))}`;
   return {
     id,
     name: seed.name,
@@ -56,7 +62,7 @@ function parseLiveFeed(raw: string): NormalisedEntity[] {
     (arr as Array<Record<string, unknown>>).forEach((item, idx) => {
       const name = typeof item['name'] === 'string' ? item['name'].trim() : '';
       if (!name) return;
-      const id = `uae_moe_designated:live:${sha256Hex(name + idx).slice(0, 12)}`;
+      const id = `uae_moe_designated:live:${syncId(name + idx)}`;
       entities.push({
         id, name,
         aliases: Array.isArray(item['aliases']) ? item['aliases'] as string[] : [],
@@ -87,7 +93,7 @@ function parseLiveFeed(raw: string): NormalisedEntity[] {
     headers.forEach((h, idx) => { row[h] = vals[idx] ?? ''; });
     const name = (row['name'] ?? row['entity name'] ?? '').trim();
     if (!name) continue;
-    const id = `uae_moe_designated:csv:${sha256Hex(name + i).slice(0, 12)}`;
+    const id = `uae_moe_designated:csv:${syncId(name + i)}`;
     entities.push({
       id, name,
       aliases: [],
@@ -114,10 +120,10 @@ export const uaeMoeDesignatedAdapter: SourceAdapter = {
 
     if (SOURCE_URL) {
       try {
-        const raw = await fetchText(SOURCE_URL, FETCH_TIMEOUT_MS);
+        const raw = await fetchText(SOURCE_URL, { timeoutMs: FETCH_TIMEOUT_MS });
         const entities = parseLiveFeed(raw);
         if (entities.length > 0) {
-          return { entities, errors, checksum: sha256Hex(entities.map((e) => e.id).join(',')) };
+          return { entities, rawChecksum: await sha256Hex(entities.map((e) => e.id).join(',')) };
         }
       } catch (err) {
         errors.push(`live fetch failed: ${err instanceof Error ? err.message : String(err)}`);
@@ -126,8 +132,7 @@ export const uaeMoeDesignatedAdapter: SourceAdapter = {
 
     // Static seed (empty until MoE publishes a downloadable list)
     const entities = STATIC_SEED.map((s, i) => seedToEntity(s, i));
-    const checksum = sha256Hex(entities.map((e) => e.id).join(','));
-    if (!SOURCE_URL) errors.push('FEED_UAE_MOE_DESIGNATED not set — using static seed. Set env var for live MoE data.');
-    return { entities, errors, checksum };
+    const rawChecksum = await sha256Hex(entities.map((e) => e.id).join(','));
+    return { entities, rawChecksum };
   },
 };

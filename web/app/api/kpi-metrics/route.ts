@@ -113,8 +113,9 @@ export async function GET(req: Request): Promise<NextResponse> {
   let sanctionsListsDown = 0;
   try {
     const mandatoryIds = ["uae_eocn", "uae_ltl", "un_consolidated", "ofac_sdn"];
-    let blobsMod: { getStore: (_o: { name: string; siteID?: string; token?: string; consistency?: string }) => { get: (_k: string, _o?: { type?: string }) => Promise<unknown> } } | null = null;
-    try { blobsMod = (await import("@netlify/blobs")) as unknown as typeof blobsMod; } catch { /* no blobs */ }
+    type BlobsMod = { getStore: (_o: { name: string; siteID?: string; token?: string; consistency?: string }) => { get: (_k: string, _o?: { type?: string }) => Promise<unknown> } };
+    let blobsMod: BlobsMod | null = null;
+    try { blobsMod = (await import("@netlify/blobs")) as unknown as BlobsMod; } catch { /* no blobs */ }
     if (blobsMod) {
       const siteID = process.env["NETLIFY_SITE_ID"] ?? process.env["SITE_ID"];
       const token = process.env["NETLIFY_BLOBS_TOKEN"] ?? process.env["NETLIFY_API_TOKEN"] ?? process.env["NETLIFY_AUTH_TOKEN"];

@@ -621,7 +621,7 @@ export function quickScreen(
     candidatesChecked: candidates.length,
     durationMs: Math.max(0, clock() - start),
     generatedAt: now(),
-    ...(lowConfidenceFlag ? { lowConfidenceFlag, lowConfidenceReason } : {}),
+    ...(lowConfidenceFlag ? { lowConfidenceFlag, ...(lowConfidenceReason !== undefined ? { lowConfidenceReason } : {}) } : {}),
     ...(totalWeightedScore !== undefined ? { totalWeightedScore } : {}),
     ...(confidenceScore !== undefined ? { confidenceScore } : {}),
     ...(clipped.length > 0 ? { listBreakdown } : {}),

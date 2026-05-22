@@ -71,7 +71,7 @@ function noticeToEntity(notice: InterpolNotice): NormalisedEntity {
     type: 'individual',
     nationalities: notice.nationality ? [notice.nationality] : [],
     jurisdictions: notice.country_of_birth_id ? [notice.country_of_birth_id] : [],
-    dateOfBirth: notice.date_of_birth,
+    ...(notice.date_of_birth !== undefined ? { dateOfBirth: notice.date_of_birth } : {}),
     identifiers: { interpol_entity_id: notice.entity_id },
     addresses: [],
     listings: [mkListing('interpol_red', {
@@ -120,7 +120,7 @@ export const interpolRedAdapter: SourceAdapter = {
       nextUrl = nextHref ?? undefined;
     }
 
-    const checksum = sha256Hex(entities.map((e) => e.id).join(','));
-    return { entities, errors, checksum };
+    const rawChecksum = await sha256Hex(entities.map((e) => e.id).join(','));
+    return { entities, rawChecksum };
   },
 };

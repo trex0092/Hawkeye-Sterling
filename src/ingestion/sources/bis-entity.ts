@@ -13,6 +13,12 @@
 import { type SourceAdapter, type NormalisedEntity, type EntityType, mkListing } from '../types.js';
 import { fetchText, sha256Hex } from '../fetch-util.js';
 
+function syncId(s: string): string {
+  let h = 5381;
+  for (let i = 0; i < s.length; i++) h = ((h << 5) + h ^ s.charCodeAt(i)) >>> 0;
+  return h.toString(16).padStart(8, '0');
+}
+
 const SOURCE_URL = process.env['FEED_BIS_ENTITY']
   ?? 'https://www.bis.doc.gov/index.php/component/docman/?task=doc_download&gid=1282';
 
@@ -52,7 +58,7 @@ function rowToEntity(row: Record<string, string>, idx: number): NormalisedEntity
   const effectiveDate = (row['effective date'] ?? '').trim();
   const licenseReq = (row['license requirement'] ?? '').trim();
   const source = (row['source list'] ?? 'bis_entity').toLowerCase().replace(/\s+/g, '_');
-  const id = `bis_entity:${idx}:${sha256Hex(name + country + effectiveDate).slice(0, 12)}`;
+  const id = `bis_entity:${idx}:${syncId(name + country + effectiveDate)}`;
 
   return {
     id,
@@ -84,11 +90,11 @@ export const bisEntityAdapter: SourceAdapter = {
     const errors: string[] = [];
     let raw = '';
     try {
-      raw = await fetchText(SOURCE_URL, FETCH_TIMEOUT_MS);
+      raw = await fetchText(SOURCE_URL, { timeoutMs: FETCH_TIMEOUT_MS });
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       errors.push(`fetch failed: ${msg}`);
-      return { entities: [], errors, checksum: sha256Hex('') };
+      return { entities: [], rawChecksum: await sha256Hex('') };
     }
 
     const rows = parseCsv(raw);
@@ -102,7 +108,7 @@ export const bisEntityAdapter: SourceAdapter = {
       }
     });
 
-    const checksum = sha256Hex(entities.map((e) => e.id).join(','));
-    return { entities, errors, checksum };
+    const rawChecksum = await sha256Hex(entities.map((e) => e.id).join(','));
+    return { entities, rawChecksum };
   },
 };
