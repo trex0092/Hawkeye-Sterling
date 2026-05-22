@@ -134,7 +134,9 @@ Red Flags: ${redFlagsStr}`;
       .replace(/\s*```$/i, "")
       .trim();
     parsed = JSON.parse(cleaned) as typeof parsed;
-    if (!Array.isArray(parsed.scores)) parsed.scores = [];
+    if (!Array.isArray(parsed.scores)) {
+      return NextResponse.json({ ok: true, scores: fallbackScores(cases) }, { headers: gate.headers });
+    }
   } catch {
     return NextResponse.json({ ok: true, scores: fallbackScores(cases) }, { headers: gate.headers });
   }

@@ -41,16 +41,26 @@ export async function GET(req: Request): Promise<NextResponse> {
     return NextResponse.redirect(`${BASE}/tfs-alerts?gmail=error&reason=no_code`);
   }
 
-  // Verify CSRF state (non-fatal if Blobs unavailable)
+  // Verify CSRF state — strict: reject if state is absent, unverifiable, or wrong.
+  // Blobs failures are surfaced as errors rather than bypassed so an outage cannot
+  // be exploited to skip the CSRF check (OAuth state-parameter attack).
+  if (!stateReceived) {
+    return NextResponse.redirect(`${BASE}/tfs-alerts?gmail=error&reason=state_missing`);
+  }
   try {
     const stored = await getJson<StoredState>(OAUTH_STATE_KEY);
-    if (stored && stateReceived && stored.state !== stateReceived) {
+    if (!stored) {
+      return NextResponse.redirect(`${BASE}/tfs-alerts?gmail=error&reason=state_unverifiable`);
+    }
+    if (stored.state !== stateReceived) {
       return NextResponse.redirect(`${BASE}/tfs-alerts?gmail=error&reason=state_mismatch`);
     }
-    if (stored && Date.now() > stored.expiresAt) {
+    if (Date.now() > stored.expiresAt) {
       return NextResponse.redirect(`${BASE}/tfs-alerts?gmail=error&reason=state_expired`);
     }
-  } catch { /* Blobs unavailable — skip CSRF check */ }
+  } catch {
+    return NextResponse.redirect(`${BASE}/tfs-alerts?gmail=error&reason=state_check_failed`);
+  }
 
   const clientId = process.env["GMAIL_CLIENT_ID"];
   const clientSecret = process.env["GMAIL_CLIENT_SECRET"];

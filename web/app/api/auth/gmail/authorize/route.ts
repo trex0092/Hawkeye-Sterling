@@ -28,11 +28,13 @@ export async function GET(): Promise<NextResponse> {
   }
 
   const state = randomBytes(32).toString("hex");
-  // Store CSRF state — non-fatal if Blobs unavailable
+  // Store CSRF state — must succeed; callback rejects state it cannot verify.
   try {
     await setJson(OAUTH_STATE_KEY, { state, expiresAt: Date.now() + 10 * 60 * 1000 });
   } catch {
-    // continue without CSRF state — acceptable for internal tool
+    return NextResponse.redirect(
+      "https://hawkeye-sterling.netlify.app/tfs-alerts?gmail=error&reason=state_store_failed"
+    );
   }
 
   const params = new URLSearchParams({

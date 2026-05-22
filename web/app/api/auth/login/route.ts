@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
 import { NextResponse } from "next/server";
-import { createHash } from "node:crypto";
+import { createHash, timingSafeEqual } from "node:crypto";
 import { loadUsers, saveUsers, withUsersLock } from "@/app/api/access/_store";
 import { verifyPassword, hashPassword, generateSalt, issueSession, computeRequestFingerprint, SESSION_COOKIE, SESSION_TTL_S } from "@/lib/server/auth";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
@@ -185,7 +185,7 @@ export async function POST(req: Request) {
       username.toLowerCase() === "luisa" &&
       recoveryPassword &&
       recoveryPassword.length >= 8 &&
-      password === recoveryPassword.trim()
+      (() => { const a = Buffer.from(password); const b = Buffer.from(recoveryPassword.trim()); return a.length === b.length && timingSafeEqual(a, b); })()
     ) {
       const newSalt = generateSalt();
       const newHash = hashPassword(password, newSalt);
