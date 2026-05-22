@@ -447,8 +447,9 @@ async function callApi(
       // Retry 429 (rate limit) and 503 (service unavailable) with backoff.
       if ((res.status === 429 || res.status === 503) && attempt < CALLAPI_MAX_ATTEMPTS) {
         const retryAfterHeader = res.headers.get("retry-after");
-        const backoffMs = retryAfterHeader
-          ? Math.min(parseInt(retryAfterHeader, 10) * 1_000, 8_000)
+        const retryAfterSec = retryAfterHeader ? parseInt(retryAfterHeader, 10) : NaN;
+        const backoffMs = Number.isFinite(retryAfterSec) && retryAfterSec > 0
+          ? Math.min(retryAfterSec * 1_000, 8_000)
           : (CALLAPI_RATE_LIMIT_BACKOFF_MS[attempt - 1] ?? 4_000);
         await new Promise((r) => setTimeout(r, backoffMs));
         continue;
