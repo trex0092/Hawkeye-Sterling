@@ -290,7 +290,7 @@ export function buildCaseRecord(input: NewCaseInput): CaseRecord {
     opened,
     ...(input.goAMLReference ? { goAMLReference: input.goAMLReference } : {}),
     ...(input.mlroDisposition ? { mlroDisposition: input.mlroDisposition } : {}),
-    ...(input.status === "reported" ? { reported: opened } : {}),
+    ...(input.status === "reported" ? { reported: now.toISOString() } : {}),
     statusLabel: input.statusLabel,
     statusDetail: input.statusDetail,
     evidence: [],

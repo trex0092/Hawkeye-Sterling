@@ -107,9 +107,19 @@ export default function SarQaPage() {
   useEffect(() => () => { mountedRef.current = false; }, []);
 
   useEffect(() => {
-    setCases(loadCases().filter((c) => c.status === "reported"));
+    const refreshCases = () => setCases(loadCases().filter((c) => c.status === "reported"));
+    const refreshRole = () => setRole(loadOperatorRole());
+
+    refreshCases();
     setReviews(loadReviews());
-    setRole(loadOperatorRole());
+    refreshRole();
+
+    window.addEventListener("hawkeye:cases-updated", refreshCases);
+    window.addEventListener("hawkeye:operator-role-updated", refreshRole);
+    return () => {
+      window.removeEventListener("hawkeye:cases-updated", refreshCases);
+      window.removeEventListener("hawkeye:operator-role-updated", refreshRole);
+    };
   }, []);
 
   const runAiQa = async () => {
