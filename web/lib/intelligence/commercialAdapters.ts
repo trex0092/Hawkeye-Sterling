@@ -202,45 +202,67 @@ function lsegWc1McpAdapter(): CorporateRegistryAdapter {
 }
 
 // ── LSEG World-Check One ──────────────────────────────────────────────────
-// Auth: Basic (key:secret) when both vars are set; Bearer (key-only) when
-// only LSEG_WORLDCHECK_API_KEY is present — covers single-key deployments.
+// Uses LSEG OAuth2 client-credentials flow (expires_in: 3600s).
+// Set in Netlify: LSEG_WORLDCHECK_API_KEY = service-account-uuid
+//                 LSEG_WORLDCHECK_API_SECRET = service-account-password
+// The app fetches and caches the Bearer token automatically — never add
+// the short-lived access_token to Netlify env vars.
+
+const LSEG_TOKEN_URL = "https://api.risk.lseg.com/auth/oauth2/v1/token";
+const LSEG_SCREEN_URL = "https://api.risk.lseg.com/world-check/v1/cases/screeningRequest";
+let _lsegTokenCache: { token: string; expiresAt: number } | null = null;
+
+async function getLsegBearerToken(uuid: string, password: string): Promise<string> {
+  if (_lsegTokenCache && Date.now() < _lsegTokenCache.expiresAt - 60_000) {
+    return _lsegTokenCache.token;
+  }
+  const basic = Buffer.from(`${uuid}:${password}`).toString("base64");
+  const res = await fetch(LSEG_TOKEN_URL, {
+    method: "POST",
+    headers: { Authorization: `Basic ${basic}`, "Content-Type": "application/x-www-form-urlencoded" },
+    body: "grant_type=client_credentials",
+  });
+  if (!res.ok) throw new Error(`LSEG token fetch failed: HTTP ${res.status}`);
+  const data = (await res.json()) as { access_token: string; expires_in: number };
+  _lsegTokenCache = { token: data.access_token, expiresAt: Date.now() + data.expires_in * 1000 };
+  return _lsegTokenCache.token;
+}
+
 function lsegWorldCheckAdapter(): CorporateRegistryAdapter {
-  const key = process.env["LSEG_WORLDCHECK_API_KEY"];
-  if (!key) return NULL_CORPORATE_ADAPTER;
-  const secret = process.env["LSEG_WORLDCHECK_API_SECRET"];
-  const authHeader = secret
-    ? `Basic ${Buffer.from(`${key}:${secret}`).toString("base64")}`
-    : `Bearer ${key}`;
+  const uuid = process.env["LSEG_WORLDCHECK_API_KEY"];
+  if (!uuid) return NULL_CORPORATE_ADAPTER;
+  const password = process.env["LSEG_WORLDCHECK_API_SECRET"];
+  if (!password) return NULL_CORPORATE_ADAPTER;
   return {
     isAvailable: () => true,
     lookup: async (name: string, _jurisdiction?: string): Promise<CorporateRecord[]> => {
       void _jurisdiction;
       if (!name.trim()) return [];
       try {
+        const token = await getLsegBearerToken(uuid, password);
         const res = await abortable(
-          fetch("https://api-worldcheck.refinitiv.com/v2/cases", {
+          fetch(LSEG_SCREEN_URL, {
             method: "POST",
             headers: {
-              Authorization: authHeader,
-              "content-type": "application/json",
-              accept: "application/json",
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+              Accept: "application/json",
             },
             body: JSON.stringify({
               name,
-              entityType: "ORGANISATION",
-              providerTypes: ["WATCHLIST", "REGULATORY_ENFORCEMENT_LIST", "STATE_OWNED_COMPANY", "PEP", "SANCTIONS"],
+              entityType: "INDIVIDUAL_ENTITY",
+              providerTypes: ["WATCHLIST", "REGULATORY_ENFORCEMENT_LIST", "PEP", "SANCTIONS"],
             }),
           }),
         );
         if (!res.ok) {
-          console.warn(`[lseg-world-check] HTTP ${res.status} — check API key/secret validity`);
+          console.warn(`[lseg-world-check] HTTP ${res.status} — check credentials`);
           return [];
         }
         const json = (await res.json()) as {
           results?: Array<{
             name?: string;
             countryLinks?: string[];
-            categories?: string[];
             providers?: string[];
             references?: Array<{ name?: string }>;
           }>;
