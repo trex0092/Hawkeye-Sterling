@@ -759,6 +759,71 @@ function dataAxleAdapter(): RegistryAdapter {
   }};
 }
 
+// ── UAE official registries (F1) ──────────────────────────────────────
+// UAE MoE Trade Register (requires REGISTRY_UAE_MOE_URL + REGISTRY_UAE_MOE_KEY).
+function uaeMoeAdapter(): RegistryAdapter {
+  const url = process.env["REGISTRY_UAE_MOE_URL"];
+  const key = process.env["REGISTRY_UAE_MOE_KEY"];
+  if (!url || !key) return NULL_REGISTRY_ADAPTER;
+  return { isAvailable: () => true, search: async (name, opts) => {
+    try {
+      const qs = new URLSearchParams({ q: name, limit: String(opts?.limit ?? 20) });
+      const res = await abortable(fetch(`${url}/search?${qs}`, { headers: { Authorization: `Bearer ${key}`, accept: "application/json" } }));
+      if (!res.ok) return [];
+      const j = (await res.json()) as { results?: Array<{ name?: string; registrationNumber?: string; status?: string; incorporationDate?: string; officers?: Array<{ name: string; role?: string }> }> };
+      return (j.results ?? []).filter((i) => i.name).map((i) => ({
+        source: "uae-moe", name: i.name!, jurisdiction: "AE",
+        ...(i.registrationNumber ? { registrationNumber: i.registrationNumber } : {}),
+        ...(i.status ? { status: i.status } : {}),
+        ...(i.incorporationDate ? { incorporationDate: i.incorporationDate } : {}),
+        ...(i.officers ? { officers: i.officers } : {}),
+      } satisfies RegistryRecord));
+    } catch (err) { console.warn("[uae-moe-registry] failed:", err instanceof Error ? err.message : err); return []; }
+  }};
+}
+
+// DIFC (Dubai International Financial Centre) company registry.
+// Requires REGISTRY_DIFC_KEY.
+function difcRegistryAdapter(): RegistryAdapter {
+  const key = process.env["REGISTRY_DIFC_KEY"];
+  if (!key) return NULL_REGISTRY_ADAPTER;
+  return { isAvailable: () => true, search: async (name, opts) => {
+    try {
+      const qs = new URLSearchParams({ name, pageSize: String(opts?.limit ?? 20) });
+      const res = await abortable(fetch(`https://api.difc.ae/registry/v1/companies/search?${qs}`, { headers: { "x-api-key": key, accept: "application/json" } }));
+      if (!res.ok) return [];
+      const j = (await res.json()) as { companies?: Array<{ legalName?: string; registrationNumber?: string; status?: string; incorporationDate?: string }> };
+      return (j.companies ?? []).filter((i) => i.legalName).map((i) => ({
+        source: "difc-registry", name: i.legalName!, jurisdiction: "AE-DU",
+        ...(i.registrationNumber ? { registrationNumber: i.registrationNumber } : {}),
+        ...(i.status ? { status: i.status } : {}),
+        ...(i.incorporationDate ? { incorporationDate: i.incorporationDate } : {}),
+      } satisfies RegistryRecord));
+    } catch (err) { console.warn("[difc-registry] failed:", err instanceof Error ? err.message : err); return []; }
+  }};
+}
+
+// ADGM (Abu Dhabi Global Market) company registry.
+// Requires REGISTRY_ADGM_KEY.
+function adgmRegistryAdapter(): RegistryAdapter {
+  const key = process.env["REGISTRY_ADGM_KEY"];
+  if (!key) return NULL_REGISTRY_ADAPTER;
+  return { isAvailable: () => true, search: async (name, opts) => {
+    try {
+      const qs = new URLSearchParams({ companyName: name, limit: String(opts?.limit ?? 20) });
+      const res = await abortable(fetch(`https://register.adgm.com/api/v1/entities/search?${qs}`, { headers: { Authorization: `Bearer ${key}`, accept: "application/json" } }));
+      if (!res.ok) return [];
+      const j = (await res.json()) as { entities?: Array<{ name?: string; registrationNumber?: string; status?: string; incorporatedDate?: string }> };
+      return (j.entities ?? []).filter((i) => i.name).map((i) => ({
+        source: "adgm-registry", name: i.name!, jurisdiction: "AE-AZ",
+        ...(i.registrationNumber ? { registrationNumber: i.registrationNumber } : {}),
+        ...(i.status ? { status: i.status } : {}),
+        ...(i.incorporatedDate ? { incorporationDate: i.incorporatedDate } : {}),
+      } satisfies RegistryRecord));
+    } catch (err) { console.warn("[adgm-registry] failed:", err instanceof Error ? err.message : err); return []; }
+  }};
+}
+
 // ── Aggregator ────────────────────────────────────────────────────────
 export function activeRegistryAdapters(): RegistryAdapter[] {
   return [
@@ -784,6 +849,9 @@ export function activeRegistryAdapters(): RegistryAdapter[] {
     veridusAdapter(),
     corpwatchAdapter(),
     dataAxleAdapter(),
+    uaeMoeAdapter(),
+    difcRegistryAdapter(),
+    adgmRegistryAdapter(),
   ].filter((a) => a.isAvailable());
 }
 
@@ -809,6 +877,9 @@ export function activeRegistryProviders(): string[] {
     ["BOARDEX_API_KEY", "boardex"],
     ["MERGENT_API_KEY", "mergent"],
     ["REFINITIV_WORKSPACE_API_KEY", "refinitiv-workspace"],
+    ["REGISTRY_UAE_MOE_KEY", "uae-moe"],
+    ["REGISTRY_DIFC_KEY", "difc-registry"],
+    ["REGISTRY_ADGM_KEY", "adgm-registry"],
   ];
   const out: string[] = flags.filter(([on]) => on).map(([, n]) => n);
   for (const [envKey, name] of keys) {
