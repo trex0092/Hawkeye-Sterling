@@ -1,6 +1,6 @@
 # TEST REPORT
 **Date:** 2026-05-22  
-**Branch:** claude/ecstatic-ritchie-wm3PV  
+**Branch:** claude/gracious-wright-2ACpz  
 **Prepared by:** Automated CI + Claude Code audit  
 
 ## Commands Run
@@ -47,12 +47,20 @@ cd /home/user/Hawkeye-Sterling/web && npm run build
 ```
 **Result:** EXIT 0 — Compiled successfully in ~32s. 88 static pages generated. All API routes and dynamic pages built.
 
+### 8. Integration tests (API route handlers)
+```
+npx vitest run --config vitest.integration.ts
+```
+**Result:** EXIT 0 — 4 test files, 111 tests, all passed. Duration: ~4s.
+
 ## Test Coverage Summary
 
 | Suite | Files | Tests | Passed | Failed |
 |-------|-------|-------|--------|--------|
 | src/ unit tests | 230 | 5507 | 5507 | 0 |
 | web/lib/**/__tests__ | included in above | included | included | 0 |
+| src/__integration__ (API routes) | 4 | 111 | 111 | 0 |
+| **Total** | **234** | **5618** | **5618** | **0** |
 
 ## Known Skipped Tests
 - **E2E tests** (`web/e2e/*.spec.ts`): Playwright tests skipped — require a running server with valid env vars (ANTHROPIC_API_KEY, ASANA_TOKEN, etc.) that are not set in this environment. Run manually against a staging deployment.

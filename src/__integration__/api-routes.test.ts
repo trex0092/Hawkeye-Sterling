@@ -58,6 +58,7 @@ vi.mock('@/app/api/access/_store', async () => {
   return {
     loadUsers: vi.fn(async () => users),
     saveUsers: vi.fn(async (updated: typeof users) => { users = updated; }),
+    withUsersLock: vi.fn(async (fn: () => Promise<unknown>) => fn()),
     ROLE_LABEL: {},
     ROLE_MODULES: { mlro: [] },
   };
@@ -423,9 +424,7 @@ describe('GET /api/well-known/jwks.json', () => {
 
     process.env['REPORT_ED25519_PRIVATE_KEY'] = privateKey;
 
-    // Re-import the route module fresh so it picks up the new env var
-    // (vitest caches modules, so we clear the cache first)
-    vi.resetModules();
+    // publicKeyJwk() reads process.env at call time — no module reset needed.
     const { publicKeyJwk } = await import('@/lib/server/report-pubkey');
     const jwk = publicKeyJwk();
     // The module read the key; the route wraps it in { keys: [jwk] }
@@ -661,6 +660,7 @@ vi.mock('@/lib/intelligence/freeAlwaysOnAdapters', () => ({
 vi.mock('@/lib/intelligence/newsAdapters', () => ({
   activeNewsProviders: vi.fn(() => []),
   searchAllNews: vi.fn(async () => ({ articles: [], providersUsed: [] })),
+  NULL_NEWS_ADAPTER: { isAvailable: () => false, search: async () => [] },
 }));
 vi.mock('@/lib/intelligence/llmAdverseMedia', () => ({
   llmAdverseMediaAdapter: vi.fn(() => ({
@@ -690,6 +690,16 @@ vi.mock('@/lib/intelligence/kycVendorAdapters', () => ({
 }));
 vi.mock('@/lib/server/candidates-loader', () => ({
   loadCandidates: vi.fn(async () => []),
+  loadCandidatesWithHealth: vi.fn(async () => ({
+    candidates: [],
+    health: {
+      source: 'static' as const,
+      loadedAt: new Date().toISOString(),
+      candidateCount: 0,
+      healthy: false,
+      failedAdapters: [],
+    },
+  })),
 }));
 vi.mock('@/lib/server/whitelist', () => ({
   lookupWhitelist: vi.fn(async () => null),

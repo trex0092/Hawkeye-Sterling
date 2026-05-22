@@ -12,7 +12,6 @@ import type { Config } from "@netlify/functions";
 import { getStore } from "@netlify/blobs";
 import { writeHeartbeat } from "../lib/heartbeat.js";
 import { checkListSources } from "../lib/list-source-check.js";
-import type { ListSourceStatus } from "../lib/list-source-check.js";
 
 const MASTER_INBOX = "1214148630166524";
 const DEFAULT_WORKSPACE = "1213645083721316";
