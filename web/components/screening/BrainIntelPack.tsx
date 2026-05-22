@@ -223,49 +223,6 @@ export function BrainChainOfCustody({ result }: { result: SuperBrainResult }) {
   );
 }
 
-// ─── 7. BrainConfidenceInterval ────────────────────────────────────
-// Uncertainty quantification. Composite ± margin at 95% CI.
-export function BrainConfidenceInterval({ result }: { result: SuperBrainResult }) {
-  const composite = result.composite.score;
-  const breakdown = Object.values(result.composite.breakdown).filter((v) => v > 0);
-  // Uncertainty scales with how many signals contributed + how extreme
-  // the sanctions match was. Fewer signals = wider CI.
-  const margin = Math.max(
-    5,
-    Math.min(
-      25,
-      Math.round(15 - breakdown.length * 2 + (composite > 85 ? 3 : 0)),
-    ),
-  );
-  const lo = Math.max(0, composite - margin);
-  const hi = Math.min(100, composite + margin);
-  return (
-    <Card title="Confidence interval">
-      <div className="flex items-baseline justify-between mb-2">
-        <span className="font-mono text-14 font-semibold text-ink-0">
-          {composite} <span className="text-ink-3">±{margin}</span>
-        </span>
-        <span className="text-10 text-ink-3">95% CI · {breakdown.length} signals</span>
-      </div>
-      <div className="relative h-2 bg-bg-2 rounded-sm">
-        <div
-          className="absolute h-full bg-brand/30 rounded-sm"
-          style={{ left: `${lo}%`, width: `${hi - lo}%` }}
-        />
-        <div
-          className="absolute h-full w-0.5 bg-brand"
-          style={{ left: `${composite}%` }}
-        />
-      </div>
-      <div className="flex justify-between mt-1 text-10 font-mono text-ink-3">
-        <span>{lo}</span>
-        <span>Composite {composite}</span>
-        <span>{hi}</span>
-      </div>
-    </Card>
-  );
-}
-
 // ─── 8. BrainRegimeExposure ────────────────────────────────────────
 // All sanctions regimes the subject's jurisdiction is exposed to.
 export function BrainRegimeExposure({ result }: { result: SuperBrainResult }) {
@@ -392,92 +349,27 @@ export function BrainBiasCheck({ result }: { result: SuperBrainResult }) {
   );
 }
 
-// ─── 11. BrainPolicySimulator ──────────────────────────────────────
-// "If we change the risk-appetite weight, how would this score move?"
-export function BrainPolicySimulator({ result }: { result: SuperBrainResult }) {
-  const [pepWeight, setPepWeight] = useState(100);
-  const [amWeight, setAmWeight] = useState(100);
-  const b = result.composite.breakdown;
-  const simulated =
-    (b.quickScreen ?? 0) +
-    (b.jurisdictionPenalty ?? 0) +
-    (b.regimesPenalty ?? 0) +
-    (b.redlinesPenalty ?? 0) +
-    (b.adverseMediaPenalty ?? 0) * (amWeight / 100) +
-    (b.adverseKeywordPenalty ?? 0) * (amWeight / 100) +
-    (b.pepPenalty ?? 0) * (pepWeight / 100);
-  return (
-    <Card title="Policy simulator">
-      <div className="text-10.5 text-ink-3 mb-2">
-        Move sliders to re-weight signals and see how this subject&apos;s
-        composite would change. Changes are simulation-only — they don&apos;t
-        update the brain&apos;s configuration.
-      </div>
-      <Slider label="PEP weight" value={pepWeight} onChange={setPepWeight} />
-      <Slider label="Adverse-media weight" value={amWeight} onChange={setAmWeight} />
-      <div className="mt-2 flex items-baseline justify-between">
-        <span className="font-mono text-10 text-ink-3">
-          actual {result.composite.score}
-        </span>
-        <span className="font-mono text-14 font-semibold text-ink-0">
-          {Math.max(0, Math.min(100, Math.round(simulated)))}
-        </span>
-      </div>
-    </Card>
-  );
-}
-
 // ─── 12. BrainDataFreshness ────────────────────────────────────────
-// How stale each of the 15 source-category feeds is vs. its SLA.
+// Shows actual data-source freshness from the audit trail embedded in
+// the brain result. Every entry is real metadata produced by the
+// super-brain pipeline, not a hardcoded constant.
 export function BrainDataFreshness({ result }: { result: SuperBrainResult }) {
-  void result;
-  const feeds: Array<{ name: string; hours: number; sla: number; label: string }> = [
-    { name: "News & adverse media",           hours: 0,    sla: 1,    label: "real-time" },
-    { name: "US Gov't sanctions (OFAC/BIS)",  hours: 1,    sla: 4,    label: "1h ago" },
-    { name: "Crypto analytics",               hours: 1,    sla: 4,    label: "1h ago" },
-    { name: "Internal bureau lists",          hours: 1,    sla: 4,    label: "1h ago" },
-    { name: "Commercial AML platforms",       hours: 4,    sla: 24,   label: "4h ago" },
-    { name: "UAE & GCC",                      hours: 4,    sla: 24,   label: "4h ago" },
-    { name: "EU / UK / European",             hours: 4,    sla: 24,   label: "4h ago" },
-    { name: "UN / INTERPOL / Multilateral",   hours: 6,    sla: 24,   label: "6h ago" },
-    { name: "APAC & Americas authorities",    hours: 12,   sla: 48,   label: "12h ago" },
-    { name: "Open-source & civil society",    hours: 24,   sla: 168,  label: "24h ago" },
-    { name: "Regulatory enforcement",         hours: 24,   sla: 168,  label: "24h ago" },
-    { name: "Trade & maritime data",          hours: 24,   sla: 168,  label: "24h ago" },
-    { name: "MDB debarment lists",            hours: 168,  sla: 720,  label: "7d ago" },
-    { name: "Business intelligence & identity", hours: 168, sla: 720, label: "7d ago" },
-    { name: "Investigative leaks (archival)", hours: 720,  sla: 8760, label: "archival" },
-  ];
+  const df = result.audit?.dataFreshness;
+  if (!df) return null;
+  const rows = Object.entries(df) as Array<[string, string]>;
   return (
-    <Card title="Data-source freshness · 15 categories">
+    <Card title="Data-source freshness">
       <div className="space-y-1">
-        {feeds.map((f) => {
-          const pct = f.sla === 0 ? 0 : (f.hours / f.sla) * 100;
-          const barColor =
-            pct > 100 ? "bg-red" : pct > 75 ? "bg-amber" : "bg-green";
-          return (
-            <div
-              key={f.name}
-              className="grid grid-cols-[188px_1fr_68px] items-center gap-2 text-11"
-            >
-              <span className="text-ink-1 truncate">{f.name}</span>
-              <div className="h-1 bg-bg-2 rounded-sm">
-                <div
-                  className={`h-full ${barColor} rounded-sm`}
-                  style={{ width: `${Math.min(100, Math.max(2, pct))}%` }}
-                />
-              </div>
-              <span className="font-mono text-10 text-ink-2 text-right">
-                {f.label}
-              </span>
-            </div>
-          );
-        })}
+        {rows.map(([source, freshness]) => (
+          <div key={source} className="flex items-baseline justify-between text-11">
+            <span className="text-ink-1 capitalize">{source.replace(/_/g, " ")}</span>
+            <span className="font-mono text-10 text-ink-2">{freshness}</span>
+          </div>
+        ))}
       </div>
-      <div className="mt-2 pt-2 border-t border-hair-2 flex gap-4 text-10 font-mono text-ink-3">
-        <span className="flex items-center gap-1"><span className="w-2 h-1 bg-green rounded-sm inline-block" /> within SLA</span>
-        <span className="flex items-center gap-1"><span className="w-2 h-1 bg-amber rounded-sm inline-block" /> approaching SLA</span>
-        <span className="flex items-center gap-1"><span className="w-2 h-1 bg-red rounded-sm inline-block" /> SLA breached</span>
+      <div className="mt-1 text-10 text-ink-3">
+        Run ID: <span className="font-mono">{result.audit?.runId ?? "—"}</span>
+        {" · "}Engine: <span className="font-mono">{result.audit?.engineVersion ?? "—"}</span>
       </div>
     </Card>
   );
@@ -548,39 +440,6 @@ export function BrainModuleWeights() {
           </div>
         ))}
       </div>
-    </Card>
-  );
-}
-
-// ─── 15. BrainCanaryBench ──────────────────────────────────────────
-// Latest known-bad / known-good canary results. Proves the brain
-// didn't silently regress.
-export function BrainCanaryBench() {
-  const canaries = [
-    { id: "KNOWN-BAD-01", name: "Nicolas Maduro", expected: "critical", observed: "critical", ok: true },
-    { id: "KNOWN-BAD-02", name: "Vladimir Putin", expected: "critical", observed: "critical", ok: true },
-    { id: "KNOWN-PEP-03", name: "Donald Trump", expected: "high", observed: "high", ok: true },
-    { id: "KNOWN-GOOD-01", name: "John Doe (fixture)", expected: "clear", observed: "clear", ok: true },
-    { id: "KNOWN-GOOD-02", name: "Jane Smith (fixture)", expected: "clear", observed: "clear", ok: true },
-  ];
-  return (
-    <Card title="Canary benchmark · last run">
-      <div className="space-y-0.5 text-11">
-        {canaries.map((c) => (
-          <div key={c.id} className="flex justify-between">
-            <span className="text-ink-1">
-              {c.ok ? "✓" : "✗"} {c.name}
-            </span>
-            <span className="font-mono text-10 text-ink-2">
-              expected {c.expected} · observed {c.observed}
-            </span>
-          </div>
-        ))}
-      </div>
-      <p className="text-10 text-ink-3 mt-2">
-        Runs daily against a fixed set of known-bad / known-good subjects.
-        Any drift triggers a page to the MLRO + Board Audit Committee.
-      </p>
     </Card>
   );
 }
@@ -1176,104 +1035,6 @@ export function BrainAnomalyDetector({ result }: { result: SuperBrainResult }) {
   );
 }
 
-// ─── 26. BrainCounterfactual ───────────────────────────────────────
-// "If subject were in a different jurisdiction, what would happen?"
-export function BrainCounterfactual({ result }: { result: SuperBrainResult }) {
-  const b = result.composite.breakdown;
-  const base =
-    (b.quickScreen ?? 0) +
-    (b.redlinesPenalty ?? 0) +
-    (b.adverseMediaPenalty ?? 0) +
-    (b.adverseKeywordPenalty ?? 0) +
-    (b.pepPenalty ?? 0);
-  const scenarios = [
-    { jurisdiction: "AE (UAE, domestic)", add: 0 },
-    { jurisdiction: "GB (UK, standard)", add: 3 },
-    { jurisdiction: "CH (Switzerland)", add: 6 },
-    { jurisdiction: "RU (Russia, sanctioned)", add: 35 },
-    { jurisdiction: "KP (North Korea, CAHRA)", add: 45 },
-  ];
-  const current = result.composite.score;
-  return (
-    <Card title="Counterfactual: if jurisdiction changed">
-      <div className="space-y-1 text-11">
-        {scenarios.map((s) => {
-          const hypothetical = Math.min(100, Math.max(0, Math.round(base + s.add)));
-          const delta = hypothetical - current;
-          return (
-            <div key={s.jurisdiction} className="grid grid-cols-[180px_60px_1fr] gap-2 items-center">
-              <span className="text-ink-1">{s.jurisdiction}</span>
-              <span className="font-mono text-10 text-ink-0">{hypothetical}/100</span>
-              <span
-                className={`font-mono text-10 ${
-                  delta === 0 ? "text-ink-3" : delta < 0 ? "text-green" : "text-red"
-                }`}
-              >
-                {delta > 0 ? "+" : ""}
-                {delta} vs actual
-              </span>
-            </div>
-          );
-        })}
-      </div>
-    </Card>
-  );
-}
-
-// ─── 27. BrainOutcomeForecast ──────────────────────────────────────
-// Predicts likely MLRO dispositions with confidence %.
-export function BrainOutcomeForecast({ result }: { result: SuperBrainResult }) {
-  const c = result.composite.score;
-  const sanctions = result.screen.hits.length > 0;
-  const pep = Boolean(result.pep && result.pep.salience > 0);
-  // Simple rule-based forecast aligned with the charter.
-  const forecasts: Array<{ outcome: string; pct: number }> = sanctions
-    ? [
-        { outcome: "Freeze + FFR + SAR", pct: 68 },
-        { outcome: "Escalate to MLRO (pending)", pct: 22 },
-        { outcome: "Clear (false-positive)", pct: 10 },
-      ]
-    : c >= 60
-      ? [
-          { outcome: "Escalate to MLRO", pct: 62 },
-          { outcome: "File STR", pct: 22 },
-          { outcome: "Clear with EDD", pct: 16 },
-        ]
-      : c >= 35 || pep
-        ? [
-            { outcome: "Monitor under ongoing screening", pct: 58 },
-            { outcome: "Clear with EDD", pct: 34 },
-            { outcome: "Escalate", pct: 8 },
-          ]
-        : [
-            { outcome: "Clear (standard CDD)", pct: 92 },
-            { outcome: "Monitor", pct: 6 },
-            { outcome: "Escalate", pct: 2 },
-          ];
-  return (
-    <Card title="Outcome forecast">
-      <div className="space-y-1">
-        {forecasts.map((f) => (
-          <div key={f.outcome} className="grid grid-cols-[1fr_140px_40px] gap-2 items-center text-11">
-            <span className="text-ink-1">{f.outcome}</span>
-            <div className="h-1.5 bg-bg-2 rounded-sm">
-              <div
-                className="h-full bg-brand"
-                style={{ width: `${f.pct}%` }}
-              />
-            </div>
-            <span className="font-mono text-10 text-ink-2 text-right">{f.pct}%</span>
-          </div>
-        ))}
-      </div>
-      <p className="text-10 text-ink-3 mt-2">
-        Rule-based inference from the composite + signal set — calibrated
-        against historical MLRO dispositions.
-      </p>
-    </Card>
-  );
-}
-
 // ─── 28. BrainSourceTriangulation ─────────────────────────────────────
 // Cross-validate signals across all 15 independent source-group domains.
 // Flags when the verdict rests on a single source vs. multi-source
@@ -1499,59 +1260,6 @@ export function BrainSourceTriangulation({ result }: { result: SuperBrainResult 
                 </div>
               )}
             </div>
-          </div>
-        ))}
-      </div>
-    </Card>
-  );
-}
-
-// ─── 29. BrainTemporalPattern ──────────────────────────────────────────
-// Infers escalation / de-escalation trajectory from signal density.
-// Renders a mini bar-chart across four monitoring snapshots.
-export function BrainTemporalPattern({ result }: { result: SuperBrainResult }) {
-  const c = result.composite.score;
-  const redlines = result.redlines.fired.length;
-
-  const trend: "escalating" | "stable" | "de-escalating" =
-    redlines > 2 && c > 60
-      ? "escalating"
-      : c < 20 && redlines === 0
-        ? "de-escalating"
-        : "stable";
-
-  const snapshots = [
-    { label: "T-3", score: Math.max(0, c - 18 - redlines * 3) },
-    { label: "T-2", score: Math.max(0, c - 9 - redlines) },
-    { label: "T-1", score: Math.max(0, c - 3) },
-    { label: "Now", score: c },
-  ];
-
-  const toneMap: Record<typeof trend, "red" | "amber" | "brand"> = {
-    escalating: "red",
-    stable: "amber",
-    "de-escalating": "brand",
-  };
-
-  return (
-    <Card title="Temporal pattern">
-      <div className="flex items-center gap-2 mb-2">
-        <Chip tone={toneMap[trend]}>{trend}</Chip>
-        <span className="text-10.5 text-ink-3">
-          Inferred trajectory across the ongoing-monitoring window.
-        </span>
-      </div>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-1">
-        {snapshots.map((s, i) => (
-          <div key={s.label} className="text-center">
-            <div className="h-10 bg-bg-2 rounded-sm flex items-end justify-center pb-0.5">
-              <div
-                className={`w-4 rounded-sm ${i === snapshots.length - 1 ? "bg-brand" : "bg-ink-3/40"}`}
-                style={{ height: `${Math.max(4, Math.min(100, s.score))}%` }}
-              />
-            </div>
-            <div className="text-10 font-mono text-ink-3 mt-0.5">{s.label}</div>
-            <div className="text-10 font-mono text-ink-1">{s.score}</div>
           </div>
         ))}
       </div>
@@ -1973,168 +1681,6 @@ export function BrainDefensibility({
             </li>
           ))}
         </ul>
-      )}
-    </Card>
-  );
-}
-
-// ─── 36. BrainAlternativeHypotheses ───────────────────────────────────
-// Generates counter-hypotheses to stress-test a paranoid verdict and
-// surface false-positive risk before escalation.
-export function BrainAlternativeHypotheses({ result }: { result: SuperBrainResult }) {
-  const c = result.composite.score;
-  const sanctions = result.screen.hits.length > 0;
-  const pep = Boolean(result.pep);
-  const redlines = result.redlines.fired.length;
-
-  const hypotheses: Array<{ label: string; probability: number; reason: string }> = [];
-
-  if (sanctions) {
-    hypotheses.push({
-      label: "False-positive — name collision",
-      probability: 12,
-      reason:
-        "Common name or near-transliteration match without DOB/nationality confirmation",
-    });
-  }
-
-  if (pep && !result.jurisdiction?.cahra) {
-    hypotheses.push({
-      label: "Historical exposure — no current risk",
-      probability: 24,
-      reason:
-        "PEP role may be historical; current risk depends on post-mandate activity",
-    });
-  }
-
-  if (c > 40 && result.adverseMedia.length > 0 && !sanctions) {
-    hypotheses.push({
-      label: "Adverse media — unrelated namesake",
-      probability: 18,
-      reason:
-        "Adverse keywords may reference a different individual sharing the name",
-    });
-  }
-
-  if (redlines === 0 && c > 30) {
-    hypotheses.push({
-      label: "Elevated score — benign industry exposure",
-      probability: 31,
-      reason:
-        "High-risk industry (crypto, commodities) can inflate score absent misconduct",
-    });
-  }
-
-  const residual = Math.max(
-    10,
-    100 - hypotheses.reduce((s, h) => s + h.probability, 0),
-  );
-  hypotheses.push({
-    label: "Verified risk — no alternative explanation",
-    probability: residual,
-    reason:
-      "Signal convergence across multiple independent sources without innocent explanation",
-  });
-
-  return (
-    <Card title="Alternative hypotheses">
-      <div className="text-10.5 text-ink-3 mb-2">
-        Counter-hypotheses to stress-test the paranoid verdict.
-      </div>
-      <div className="space-y-1.5">
-        {hypotheses.map((h) => (
-          <div key={h.label} className="space-y-0.5">
-            <div className="flex items-center gap-2 text-11">
-              <span className="flex-1 text-ink-1">{h.label}</span>
-              <span className="font-mono text-10 text-ink-2 shrink-0">
-                {h.probability}%
-              </span>
-            </div>
-            <div className="text-10 text-ink-3">{h.reason}</div>
-          </div>
-        ))}
-      </div>
-    </Card>
-  );
-}
-
-// ─── 37. BrainSimilarityCorpus ─────────────────────────────────────────
-// Matches the subject against historical cases via signal-vector
-// similarity, surfacing precedents for the MLRO decision.
-export function BrainSimilarityCorpus({
-  result,
-  subjectName,
-}: {
-  result: SuperBrainResult;
-  subjectName: string;
-}) {
-  const c = result.composite.score;
-  const pep = Boolean(result.pep);
-  const cahra = result.jurisdiction?.cahra ?? false;
-  const typologyFamilies = [
-    ...new Set((result.typologies?.hits ?? []).map((h) => h.family)),
-  ];
-
-  const matches: Array<{ id: string; similarity: number; tags: string[] }> = [];
-
-  if (c > 60 && pep) {
-    matches.push({
-      id: "CORP-2024-0042",
-      similarity: 87,
-      tags: ["PEP", "High-composite", typologyFamilies[0] ?? "AML"],
-    });
-  }
-  if (cahra) {
-    matches.push({
-      id: "CORP-2023-1187",
-      similarity: 79,
-      tags: ["CAHRA", "Jurisdiction-risk"],
-    });
-  }
-  if (result.screen.hits.length > 0) {
-    matches.push({
-      id: "CORP-2024-0311",
-      similarity: 93,
-      tags: ["Sanctions-hit", "TFS-filed"],
-    });
-  }
-  if (result.adverseMedia.length > 3) {
-    matches.push({
-      id: "CORP-2023-0829",
-      similarity: 71,
-      tags: ["Adverse-media", "STR-filed"],
-    });
-  }
-
-  return (
-    <Card title="Similarity corpus">
-      <div className="text-10.5 text-ink-3 mb-2">
-        Nearest historical subjects in the signal-vector space for {subjectName}.
-      </div>
-      {matches.length === 0 ? (
-        <div className="text-11 text-ink-2">
-          No close corpus matches — subject signal profile is novel.
-        </div>
-      ) : (
-        <div className="space-y-1.5">
-          {matches.map((m) => (
-            <div key={m.id} className="flex items-start gap-2 text-11">
-              <span className="font-mono text-10 text-ink-3 shrink-0 mt-px">
-                {m.id}
-              </span>
-              <div className="flex flex-wrap gap-1 flex-1">
-                {m.tags.map((t) => (
-                  <Chip key={t} tone="bg">
-                    {t}
-                  </Chip>
-                ))}
-              </div>
-              <span className="font-mono text-10 text-brand shrink-0">
-                {m.similarity}%
-              </span>
-            </div>
-          ))}
-        </div>
       )}
     </Card>
   );

@@ -28,7 +28,6 @@ import {
   BrainRegimeExposure,
   BrainScenarioMatcher,
   BrainBiasCheck,
-  BrainDataFreshness,
   BrainInputValidator,
   BrainModuleWeights,
   BrainVerdictConsistency,
@@ -40,7 +39,6 @@ import {
   BrainSanctionsPathway,
   BrainSoWPlausibility,
   BrainAnomalyDetector,
-  BrainOutcomeForecast,
   BrainSourceTriangulation,
 
   BrainTypologyConfidence,
@@ -49,8 +47,6 @@ import {
   BrainContextualEnrichment,
   BrainChainAttribution,
   BrainDefensibility,
-  BrainAlternativeHypotheses,
-  BrainSimilarityCorpus,
   BrainSignalInterference,
   BrainEscalationLadder,
   BrainDataCoverage,
@@ -2906,7 +2902,6 @@ function SuperBrainPanel({
         newsDossier={news.status === "success" ? news.result : null}
       />
       <BrainReasoningChain result={r} />
-      <BrainOutcomeForecast result={r} />
       <BrainSourceTriangulation result={r} />
       <BrainTypologyConfidence result={r} />
       <BrainJurisdictionClusters result={r} />
@@ -2914,8 +2909,6 @@ function SuperBrainPanel({
       <BrainContextualEnrichment result={r} />
       <BrainChainAttribution result={r} />
       <BrainDefensibility result={r} subjectName={subjectName} />
-      <BrainAlternativeHypotheses result={r} />
-      <BrainSimilarityCorpus result={r} subjectName={subjectName} />
       <BrainSignalInterference result={r} />
       <BrainEscalationLadder result={r} />
       <BrainDecomposition result={r} />
@@ -2936,7 +2929,6 @@ function SuperBrainPanel({
       <BrainPolicyCitation result={r} />
       <BrainFATFAlignment result={r} />
       <BrainCapabilityAudit result={r} />
-      <BrainDataFreshness result={r} />
       <BrainCoverageGap result={r} />
       <BrainDataCoverage />
       <BrainChainOfCustody result={r} />

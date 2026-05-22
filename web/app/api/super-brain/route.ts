@@ -293,7 +293,9 @@ export async function POST(req: Request): Promise<NextResponse> {
         identifier: _subj.passportNumber ?? _subj.identifier,
       }).catch((err) => { noteDegradation("openSanctions", err); return null; }),
     ]);
-    const knownPep = staticPep ?? livePep ?? cfsPep;
+    // Live feeds take precedence over static fixture so real-world PEP status
+    // overrides any hardcoded seed data. Static fixture is last-resort fallback.
+    const knownPep = livePep ?? cfsPep ?? staticPep;
     const staticAdverse = lookupKnownAdverse(body.subject.name);
     const knownAdverse = staticAdverse ?? cfsAdverse;
 
