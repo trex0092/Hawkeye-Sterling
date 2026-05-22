@@ -161,7 +161,8 @@ export async function POST(req: Request) {
     await new Promise((r) => setTimeout(r, 400));
     return NextResponse.json({ ok: false, error: "Invalid username or password" }, { status: 401 });
   }
-  const user = users.find(
+  // Active-user lookup for normal authentication.
+  let user = users.find(
     (u) => u.active && u.username?.toLowerCase() === username.toLowerCase(),
   );
 
@@ -172,18 +173,19 @@ export async function POST(req: Request) {
     verifyPassword(password, user.passwordSalt, user.passwordHash);
 
   if (!credentialsOk) {
-    // Recovery path: LUISA_INITIAL_PASSWORD acts as a master recovery key for
-    // the luisa MLRO account when the stored hash no longer matches (e.g. the
-    // password was changed and forgotten). If the env var is set and the
-    // submitted password matches it, re-hash and update the stored record so
-    // subsequent logins use the new hash.
+    // Recovery path: LUISA_INITIAL_PASSWORD is a master recovery key for the
+    // luisa/MLRO account. Search without the active filter so a deactivated or
+    // corrupted account can still be recovered.
     const recoveryPassword = process.env["LUISA_INITIAL_PASSWORD"];
+    const luisaRecord =
+      user ?? users.find((u) => u.username?.toLowerCase() === "luisa") ?? users.find((u) => u.id === "usr-001");
+
     if (
-      user &&
+      luisaRecord &&
       username.toLowerCase() === "luisa" &&
       recoveryPassword &&
       recoveryPassword.length >= 8 &&
-      password === recoveryPassword
+      password === recoveryPassword.trim()
     ) {
       const newSalt = generateSalt();
       const newHash = hashPassword(password, newSalt);
@@ -191,17 +193,17 @@ export async function POST(req: Request) {
         const freshUsers = await loadUsers();
         await saveUsers(
           freshUsers.map((u) =>
-            u.id === user.id
-              ? { ...u, passwordHash: newHash, passwordSalt: newSalt, pwVersion: (u.pwVersion ?? 0) + 1 }
+            u.id === luisaRecord.id
+              ? { ...u, passwordHash: newHash, passwordSalt: newSalt, pwVersion: (u.pwVersion ?? 0) + 1, active: true }
               : u,
           ),
         );
       }).catch((err: unknown) => {
         console.warn("[auth/login] recovery hash update failed:", err instanceof Error ? err.message : String(err));
       });
-      console.warn("[auth/login] luisa recovery login succeeded — stored hash updated");
-      // Fall through to normal session issuance using the original `user` record.
-      // The updated hash is persisted; future logins will use the new hash.
+      console.warn("[auth/login] luisa recovery login succeeded — hash and active flag updated");
+      // Use the located record for session issuance; active is now true in Blobs.
+      user = { ...luisaRecord, active: true };
     } else {
       // Uniform delay to prevent user enumeration via timing side-channel
       await new Promise((r) => setTimeout(r, 400));
@@ -214,6 +216,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: false, error: "Invalid username or password" }, { status: 401 });
     }
   }
+
+  // TypeScript narrowing: user is guaranteed defined here — either normal auth
+  // succeeded (user was found) or the recovery block set user before falling
+  // through. The only other path returns 401 above.
+  if (!user) return NextResponse.json({ ok: false, error: "Invalid username or password" }, { status: 401 });
 
   // Clear the per-username counter on success (the IP counter intentionally
   // stays to limit rapid username cycling from the same address).

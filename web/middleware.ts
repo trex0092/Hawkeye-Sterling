@@ -21,6 +21,7 @@ const PUBLIC_PREFIXES = [
   "/login",
   "/api/auth/login",
   "/api/auth/logout",
+  "/api/auth/emergency-reset",
   "/_next",
   "/favicon",
   "/manifest.webmanifest",
@@ -43,16 +44,6 @@ const PUBLIC_PREFIXES = [
 
 function isPublic(pathname: string): boolean {
   return PUBLIC_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/") || pathname.startsWith(p + "?"));
-}
-
-// ── CSP nonce generation (Edge / Deno crypto) ────────────────────────────────
-// Crypto-quality random, hex-encoded. 16 bytes = 128 bits = enough entropy.
-function generateNonce(): string {
-  const buf = new Uint8Array(16);
-  crypto.getRandomValues(buf);
-  let hex = "";
-  for (const b of buf) hex += b.toString(16).padStart(2, "0");
-  return hex;
 }
 
 // Defense-in-depth security headers. We set these in middleware (not
