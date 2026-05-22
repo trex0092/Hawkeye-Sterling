@@ -203,6 +203,7 @@ function buildFlagPool(sector: string, jurisdiction: string): MlroRedFlag[] {
     add(searchRedFlags("forwards"));
     add(searchRedFlags("swaps"));
     add(searchRedFlags("options instruments"));
+    add(searchRedFlags("security instruments")); // security instruments collateral / valuation
     add(searchRedFlags("syndication"));
   }
   if (/insurance/.test(s)) {
@@ -272,6 +273,8 @@ function buildFlagPool(sector: string, jurisdiction: string): MlroRedFlag[] {
   add(searchRedFlags("mixed fund"));           // mixed-fund transactions (legitimate + suspicious)
   add(searchRedFlags("underground"));          // underground banking indicators
   add(searchRedFlags("same-day"));             // multiple same-day transactions
+  add(searchRedFlags("simultaneous"));        // simultaneous buy-sell at loss
+  add(searchRedFlags("competitor"));           // timing aligned with competitor difficulties
   add(searchRedFlags("high-frequency"));       // high-frequency settlement changes
   add(searchRedFlags("inconsistent transaction")); // inconsistent transaction size
   add(searchRedFlags("delayed settlement"));   // delayed settlement beyond market standard
@@ -317,6 +320,14 @@ function buildFlagPool(sector: string, jurisdiction: string): MlroRedFlag[] {
   add(searchRedFlags("unable to"));           // unable to articulate model / explain rationale
   add(searchRedFlags("references all"));      // references all internal
   add(searchRedFlags("customer language"));   // language / sophistication inconsistency
+  add(searchRedFlags("prior business"));      // prior business experience unverifiable
+  add(searchRedFlags("convicted"));           // customer introduced by convicted individual
+  add(searchRedFlags("customer regulatory")); // regulatory status unclear / prior action
+  add(searchRedFlags("regulatory license"));  // customer regulatory license revoked/suspended
+  add(searchRedFlags("bylaws"));              // customer corporate bylaws absent
+  add(searchRedFlags("board meeting"));       // customer board meeting minutes absent
+  add(searchRedFlags("debt-equity"));         // customer debt-equity ratio suspicious
+  add(searchRedFlags("transaction documentation")); // involvement in transaction documentation weak
 
   // ── Universal: regulatory action flags ────────────────────────────────────
   add(searchRedFlags("enforcement"));          // regulatory enforcement actions (15 flags)
@@ -349,7 +360,15 @@ function buildFlagPool(sector: string, jurisdiction: string): MlroRedFlag[] {
   add(searchRedFlags("export restrictions")); // export restrictions
   add(searchRedFlags("import restrictions")); // import restrictions
   add(searchRedFlags("trade restrictions"));  // trade restrictions
-  add(searchRedFlags("regulatory fine"));     // regulatory fine / sanction pending
+  add(searchRedFlags("regulatory fine"));     // regulatory fine pending
+  add(searchRedFlags("regulatory sanction")); // regulatory sanction pending
+  add(searchRedFlags("employee suspension")); // employee suspension (regulatory cause)
+  add(searchRedFlags("board restriction"));   // board restriction (regulatory cause)
+  add(searchRedFlags("payment restrictions")); // payment restrictions
+  add(searchRedFlags("remittance"));          // remittance restrictions
+  add(searchRedFlags("cross-border coordination")); // cross-border coordination
+  add(searchRedFlags("treaty"));              // treaty invocation
+  add(searchRedFlags("regulatory precedent")); // regulatory precedent in peer institutions
 
   // ── Universal: behavioral pattern flags ───────────────────────────────────
   add(searchRedFlags("sudden"));               // sudden-change patterns (33 flags)
