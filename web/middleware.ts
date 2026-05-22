@@ -21,6 +21,7 @@ const PUBLIC_PREFIXES = [
   "/login",
   "/api/auth/login",
   "/api/auth/logout",
+  "/api/auth/emergency-reset",
   "/_next",
   "/favicon",
   "/manifest.webmanifest",
