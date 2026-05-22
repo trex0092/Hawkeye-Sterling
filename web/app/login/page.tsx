@@ -3,16 +3,20 @@
 import { useState, FormEvent, useEffect, useRef } from "react";
 
 export default function LoginPage() {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  // Hydration gate: the submit button stays disabled until React has mounted
-  // client-side, so a click that lands before the onSubmit handler is attached
-  // can never trigger a native HTML form submission (which would lose the
-  // intended XHR path and reload the page with empty query params).
+  // Hydration gate: keeps the submit button disabled until React has mounted
+  // so a tap before the onSubmit handler is attached can't trigger a native
+  // form GET that would lose the XHR path and reload with empty query params.
   const [isHydrated, setIsHydrated] = useState(false);
+
+  // Uncontrolled refs — React never writes value back to the DOM, so iOS
+  // password-manager autofill (Face ID / Fill Password) is never overwritten
+  // by a React re-render. Values are read directly from the DOM on submit.
+  const usernameRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
   const mountedRef = useRef(true);
+
   useEffect(() => {
     setIsHydrated(true);
     return () => { mountedRef.current = false; };
@@ -22,16 +26,13 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
     setLoading(true);
-    // Read values from the DOM directly so iOS autofill (which sets DOM values
-    // without triggering React's onChange) always works alongside normal typing.
-    const form = e.currentTarget;
-    const usernameVal = (form.elements.namedItem("username") as HTMLInputElement | null)?.value ?? username;
-    const passwordVal = (form.elements.namedItem("password") as HTMLInputElement | null)?.value ?? password;
+    const username = usernameRef.current?.value.trim() ?? "";
+    const password = passwordRef.current?.value ?? "";
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ username: usernameVal.trim(), password: passwordVal }),
+        body: JSON.stringify({ username, password }),
       });
       const json = await res.json().catch(() => ({})) as { ok: boolean; error?: string };
       if (!res.ok || !json.ok) {
@@ -129,12 +130,11 @@ export default function LoginPage() {
               Username
             </label>
             <input
+              ref={usernameRef}
               type="text"
               name="username"
               autoComplete="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
+              defaultValue=""
               placeholder="e.g. luisa"
               style={{
                 width: "100%",
@@ -174,12 +174,11 @@ export default function LoginPage() {
               Password
             </label>
             <input
+              ref={passwordRef}
               type="password"
               name="password"
               autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
+              defaultValue=""
               placeholder="••••••••"
               style={{
                 width: "100%",
