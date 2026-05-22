@@ -487,14 +487,21 @@ export function quickScreen(
       // Entity-type transparency — always record candidate entity type so
       // callers can distinguish direct designations from entity-association hits.
       if (cand.entityType !== undefined) hit.candidateEntityType = cand.entityType;
-      // D5: Entity-type mismatch penalty — extended to cover all type pairs,
-      // not just person-vs-org. An organisation cannot be the same entity as
-      // an individual/vessel/aircraft. Apply a 0.6× penalty on any mismatch
-      // so the hit surfaces for MLRO review but cannot auto-escalate to HIGH.
+      // Entity-type mismatch penalty — applies only to person↔organisation
+      // cross-type matches. Vessel/aircraft records are commonly held under an
+      // owning organisation's name in sanctions lists (e.g. OFAC SDN vessel
+      // entries), so vessel↔org or aircraft↔org are expected and must not be
+      // penalised; the 0.6× factor would otherwise drop them below the hit
+      // threshold and silently discard legitimate sanctions matches.
       if (subject.entityType && cand.entityType && subject.entityType !== cand.entityType) {
-        hit.score = Math.round(hit.score * 0.6 * 1e6) / 1e6;
-        hit.entityTypeMismatch = true;
-        hit.reason = `entity-type-mismatch(${subject.entityType}≠${cand.entityType}) · ${hit.reason}`;
+        const personVsOrg =
+          (subject.entityType === 'individual' && cand.entityType === 'organisation') ||
+          (subject.entityType === 'organisation' && cand.entityType === 'individual');
+        if (personVsOrg) {
+          hit.score = Math.round(hit.score * 0.6 * 1e6) / 1e6;
+          hit.entityTypeMismatch = true;
+          hit.reason = `entity-association · ${hit.reason}`;
+        }
       }
 
       // D2: Secondary identifier disambiguation gate before HIGH severity.
@@ -555,7 +562,7 @@ export function quickScreen(
   const topScore = Math.round(topRaw * 100);
   const topHit = activeHits[0];
   const topBaseScore = topHit?.baseScore ?? 1;
-  const topAliasLen = topHit?.matchedAlias !== undefined ? (topHit.matchedAlias.length) : 99;
+  const topAliasLen = topHit?.matchedAlias !== undefined && topHit.matchedAlias !== '' ? topHit.matchedAlias.length : 99;
   const severity = severityFromScore(topScore, activeHits.length, {
     bestBaseScore: topBaseScore,
     aliasMatchLength: topAliasLen,

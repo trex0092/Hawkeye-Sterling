@@ -68,6 +68,10 @@ function ffrIndexKey(tenant: string): string {
 
 function computeSlaStatus(frozenAt: string): { slaDeadline: string; slaStatus: "within" | "breached" } {
   const frozen = Date.parse(frozenAt);
+  if (isNaN(frozen)) {
+    const now = Date.now();
+    return { slaDeadline: new Date(now + 24 * 60 * 60 * 1000).toISOString(), slaStatus: "within" };
+  }
   const deadline = new Date(frozen + 24 * 60 * 60 * 1000).toISOString();
   const slaStatus: "within" | "breached" = Date.now() <= frozen + 24 * 60 * 60 * 1000 ? "within" : "breached";
   return { slaDeadline: deadline, slaStatus };
@@ -160,7 +164,8 @@ export async function GET(req: Request): Promise<NextResponse> {
   const records = (await Promise.all(idx.slice(0, 100).map((id) => getJson<FFRRecord>(ffrKey(tenant, id)))))
     .filter((r): r is FFRRecord => r !== null);
 
-  const filtered = status ? records.filter((r) => r.status === status) : records;
+  const filtered = (status ? records.filter((r) => r.status === status) : records)
+    .map((r) => ({ ...r, ...computeSlaStatus(r.frozenAt) }));
   const breached = filtered.filter((r) => r.slaStatus === "breached");
 
   return NextResponse.json(

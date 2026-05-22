@@ -1292,9 +1292,16 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
             brainScore={brainScore}
             hasSanctionsHit={
               screening.status === "success" &&
-              screening.result.hits.some(
-                (h) => h.score >= 0.85 && (h.disambiguationConfidence ?? 50) >= 75,
-              )
+              screening.result.hits.some((h) => {
+                if (h.score < 0.85) return false;
+                // For non-individual entities (org, vessel, aircraft) disambiguation
+                // data is typically absent — their sanctions records are identified by
+                // name + program + entityType match, not personal identifiers. Treat
+                // absent confidence as confirmed for non-person entity types.
+                const entityType = subject.entityType ?? "individual";
+                const defaultConf = entityType === "individual" ? 50 : 75;
+                return (h.disambiguationConfidence ?? defaultConf) >= 75;
+              })
             }
             hasRedline={
               superBrain.status === "success" &&

@@ -132,7 +132,7 @@ function buildNarrative(r: SuperBrainResult, name: string, id: string, news?: Ne
   // even at high score — is POSSIBLE confidence per the match taxonomy and must never
   // trigger a freeze action; it routes to MLRO escalation for disambiguation instead.
   const confirmedSanctionsHit = r.screen.hits.some(
-    (h) => (h.disambiguationConfidence ?? 50) >= 75,
+    (h) => h.score >= 0.85 && (h.disambiguationConfidence ?? 50) >= 75,
   );
   const rec = (() => {
     if (confirmedSanctionsHit && severity === "CRITICAL") {

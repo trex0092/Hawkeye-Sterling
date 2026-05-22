@@ -370,19 +370,26 @@ async function handlePost(req: Request): Promise<NextResponse> {
     declarations: fix.declarations,
   };
 
-  await setJson(BLOB_KEY, payload).catch((e) =>
-    console.warn("[eocn-list-updates] blob write failed", e),
-  );
-
   // H3: Fire real-time webhook if new EOCN designations were detected.
+  // Read the prior snapshot BEFORE overwriting so we can compare versions.
   // Compare merged list versions against the prior snapshot — if there are
   // versions not in the prior set that carry deltaAdded > 0, there are new
   // designations. Fire to tenant-registered webhooks immediately so operators
   // can initiate the 24-hour freeze clock (Cabinet Resolution 74/2020 Art.4).
+  let priorVersions = new Set<string>();
   if (upstream.ok && upstream.updates) {
     try {
       const prior = await getJson<EocnFeedPayload>(BLOB_KEY).catch(() => null);
-      const priorVersions = new Set((prior?.listUpdates ?? []).map((u) => u.version));
+      priorVersions = new Set((prior?.listUpdates ?? []).map((u) => u.version));
+    } catch { /* non-fatal */ }
+  }
+
+  await setJson(BLOB_KEY, payload).catch((e) =>
+    console.warn("[eocn-list-updates] blob write failed", e),
+  );
+
+  if (upstream.ok && upstream.updates && priorVersions !== null) {
+    try {
       const newDesignations = upstream.updates.filter(
         (u) => !priorVersions.has(u.version) && (u.deltaAdded ?? 0) > 0
       );

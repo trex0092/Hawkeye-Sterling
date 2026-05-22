@@ -128,8 +128,8 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const amountAed = body.transactionAmountAed ?? 0;
   const thresholdBreached = amountAed >= THRESHOLD_AED_SINGLE;
-  const thresholdType: "single" | "cumulative" | undefined = amountAed >= THRESHOLD_AED_SINGLE ? "single"
-    : amountAed >= THRESHOLD_AED_CUMULATIVE ? "cumulative" : undefined;
+  const thresholdType: "single" | "cumulative" | undefined = amountAed >= THRESHOLD_AED_CUMULATIVE ? "cumulative"
+    : amountAed >= THRESHOLD_AED_SINGLE ? "single" : undefined;
 
   const id = `DPMSR-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
   const record: DPMSRRecord = {
