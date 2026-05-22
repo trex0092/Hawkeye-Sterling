@@ -56,7 +56,7 @@ export async function POST(req: Request) {
     const client = getAnthropicClient(apiKey, 55_000);
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 700,
+      max_tokens: 2500,
       system: [
         {
           type: "text",
@@ -78,7 +78,14 @@ Generate a comprehensive quarterly Board AML/CFT report. Return complete BoardAm
       }],
     });
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
-    const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as BoardAmlReportResult;
+    const cleaned = raw.replace(/```json\n?|\n?```/g, "").trim();
+    let result: BoardAmlReportResult;
+    try {
+      result = JSON.parse(cleaned) as BoardAmlReportResult;
+    } catch {
+      console.warn("[board-aml-report] JSON parse failed, raw length:", cleaned.length, "stop_reason:", response.stop_reason);
+      return NextResponse.json({ ok: false, error: "Report generation incomplete — the model response was truncated. Please retry." }, { status: 503, headers: gate.headers });
+    }
     if (!Array.isArray(result.keyMetrics)) result.keyMetrics = [];
     if (!Array.isArray(result.regulatoryHighlights)) result.regulatoryHighlights = [];
     if (!Array.isArray(result.openAuditFindings)) result.openAuditFindings = [];

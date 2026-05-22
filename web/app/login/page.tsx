@@ -34,7 +34,8 @@ export default function LoginPage() {
         setError(json.error ?? "Invalid credentials");
         return;
       }
-      window.location.href = "/";
+      const nextParam = new URLSearchParams(window.location.search).get("next");
+      window.location.href = nextParam && /^\/[^/]/.test(nextParam) ? nextParam : "/";
     } catch {
       if (mountedRef.current) setError("Network error — please try again");
     } finally {
