@@ -13,7 +13,7 @@ import { enforce } from "@/lib/server/enforce";
 import { getJson, setJson, del } from "@/lib/server/store";
 
 const OAUTH_STATE_KEY = "hawkeye-gmail-oauth-state/v1.json";
-export const GMAIL_OAUTH_TOKEN_KEY = "hawkeye-gmail-oauth/v1.json";
+const GMAIL_OAUTH_TOKEN_KEY = "hawkeye-gmail-oauth/v1.json";
 
 interface StoredState {
   state: string;

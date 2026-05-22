@@ -8,7 +8,7 @@ const ALLOWED_PROTOCOLS = ["https:", "http:"];
 
 function stripHtml(html: string): string {
   // Remove scripts, styles, nav, header, footer, aside
-  let text = html
+  const text = html
     .replace(/<script[\s\S]*?<\/script>/gi, " ")
     .replace(/<style[\s\S]*?<\/style>/gi, " ")
     .replace(/<(nav|header|footer|aside|figure|figcaption|noscript|button|form|input|label|select|option|meta|link)[^>]*>[\s\S]*?<\/\1>/gi, " ")
