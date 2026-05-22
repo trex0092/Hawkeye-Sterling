@@ -9,6 +9,12 @@
 
 import type { GoAmlEnvelope, GoAmlPerson, GoAmlEntity, GoAmlAddress, GoAmlPhone, GoAmlEmail, GoAmlTransaction, GoAmlCryptoWallet } from '../brain/goaml-shapes.js';
 
+// Format a number as a plain xs:decimal string (no scientific notation, no NaN/Infinity).
+function fmtDecimal(n: number): string {
+  if (!Number.isFinite(n) || n < 0) return '0.00';
+  return n.toFixed(2);
+}
+
 function escape(v: string | number | undefined): string {
   if (v === undefined || v === null) return '';
   const s = String(v);
@@ -120,9 +126,9 @@ function transactionToXml(t: GoAmlTransaction): string {
   return wrap('transaction', [
     el('transactionnumber', t.transactionNumber),
     el('date_transaction', t.date),
-    el('amount_local', t.amountLocal),
+    el('amount_local', typeof t.amountLocal === 'number' ? fmtDecimal(t.amountLocal) : t.amountLocal),
     el('transmode_code', t.type),
-    el('amount_foreign', t.amountForeign),
+    el('amount_foreign', typeof t.amountForeign === 'number' ? fmtDecimal(t.amountForeign) : t.amountForeign),
     el('foreign_currency_code', t.currency),
     el('comments', t.comments),
     t.fromWallet ? cryptoWalletToXml(t.fromWallet) : '',

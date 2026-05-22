@@ -76,7 +76,8 @@ async function handler(req: Request): Promise<NextResponse> {
   }
 
   // 1. Validate required fields using validate.ts helpers.
-  const itemId = validateString(raw["itemId"], { required: true });
+  const SAFE_ID_RE = /^[a-zA-Z0-9_\-:.]+$/;
+  const itemId = validateString(raw["itemId"], { required: true, maxLength: 96, pattern: SAFE_ID_RE });
   // Normalize actor to lowercase-trimmed so "Alice Smith" and "alice smith"
   // are treated as the same identity (prevents case-sensitivity bypass of
   // the self-approval and duplicate-approver guards).

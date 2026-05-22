@@ -144,6 +144,8 @@ export async function fetchJson<T = unknown>(
           status: 0,
           error: clean(`${label} request timed out`),
         };
+        // Own timeout fired — retrying would just hang again; bail immediately.
+        break;
       } else {
         lastResult = {
           ok: false,

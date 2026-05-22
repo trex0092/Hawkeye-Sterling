@@ -247,23 +247,25 @@ async function handleGoaml(req: Request): Promise<Response> {
     reason: body.narrative.slice(0, 4000),
     ...(involvedPersons.length > 0 ? { involvedPersons } : {}),
     ...(involvedEntities.length > 0 ? { involvedEntities } : {}),
-    ...(((body.amount ?? body.amountAed) ?? 0) > 0
-      ? {
-          transactions: [
-            {
-              transactionNumber: `${reportRef}-TXN-1`,
-              date: iso,
-              amountLocal: (body.amount ?? body.amountAed) as number,
-              currency: body.currency ?? "AED",
-              type: "cash" as const,
-              ...(body.counterparty ? { counterpartyName: body.counterparty } : {}),
-            },
-          ],
-        }
-      : {}),
+    ...(() => {
+      const rawAmt = body.amount ?? body.amountAed;
+      const safeAmt = Number.isFinite(rawAmt) && (rawAmt as number) > 0 ? (rawAmt as number) : 0;
+      return safeAmt > 0 ? {
+        transactions: [
+          {
+            transactionNumber: `${reportRef}-TXN-1`,
+            date: iso,
+            amountLocal: safeAmt,
+            currency: body.currency ?? "AED",
+            type: "cash" as const,
+            ...(body.counterparty ? { counterpartyName: body.counterparty } : {}),
+          },
+        ],
+      } : {};
+    })(),
     internalReference: reportRef,
     generatedAt: iso,
-    charterIntegrityHash: await computeCharterHash(reportRef, body.narrative, iso),
+    charterIntegrityHash: await computeCharterHash(reportRef, body.narrative.slice(0, 4000), iso),
   };
 
   let xml: string;

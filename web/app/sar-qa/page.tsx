@@ -286,15 +286,15 @@ export default function SarQaPage() {
                           <span className={`font-mono text-11 font-bold px-2 py-px rounded ${gradeCls}`}>{s.grade}</span>
                           <span className="text-11 font-mono text-ink-2">Quality score: {s.score}/100</span>
                         </div>
-                        {s.fatalIssues.length > 0 && (
-                          <div className="text-11 text-red font-semibold">Fatal: {s.fatalIssues.join(" · ")}</div>
+                        {(s.fatalIssues ?? []).length > 0 && (
+                          <div className="text-11 text-red font-semibold">Fatal: {(s.fatalIssues ?? []).join(" · ")}</div>
                         )}
-                        {s.missingElements.length > 0 && (
-                          <div className="text-10 text-amber">Missing: {s.missingElements.join(" · ")}</div>
+                        {(s.missingElements ?? []).length > 0 && (
+                          <div className="text-10 text-amber">Missing: {(s.missingElements ?? []).join(" · ")}</div>
                         )}
-                        {s.suggestions.length > 0 && (
+                        {(s.suggestions ?? []).length > 0 && (
                           <ul className="text-10 text-ink-2 space-y-0.5 list-disc list-inside">
-                            {s.suggestions.map((sg, i) => <li key={i}>{sg}</li>)}
+                            {(s.suggestions ?? []).map((sg, i) => <li key={i}>{sg}</li>)}
                           </ul>
                         )}
                       </div>

@@ -47,16 +47,16 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "narrative exceeds 10,000-character limit" }, { status: 400, headers: gate.headers });
   }
 
+  const apiKey = process.env["ANTHROPIC_API_KEY"];
+  if (!apiKey) {
+    return NextResponse.json({ ok: false, error: "goaml-validate-ai temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
+  }
+
   writeAuditEvent(
     "mlro",
     "goaml.ai-narrative-validated",
     `reportCode=${body.reportCode} subject=${body.subjectName}`,
   );
-
-  const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) {
-    return NextResponse.json({ ok: false, error: "goaml-validate-ai temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
-  }
 
   const userContent = [
     `Report code: ${sanitizeField(body.reportCode, 50)}`,

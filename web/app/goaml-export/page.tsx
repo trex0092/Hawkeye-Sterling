@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
+import { loadOperatorRole } from "@/lib/data/operator-role";
 import {
   REPORT_CODES,
   REPORT_CODE_LABEL,
@@ -66,7 +67,10 @@ interface SubmissionState {
   error?: string;
 }
 
+const GOAML_ALLOWED_ROLES = new Set(["mlro", "co", "compliance", "managing_director"]);
+
 export default function GoAmlExportPage() {
+  const [role, setRole] = useState<string>(() => typeof window !== "undefined" ? loadOperatorRole() : "analyst");
   const [step, setStep] = useState<Step>(1);
   const [draft, setDraft] = useState<DraftEnvelope>(BLANK);
   const [submission, setSubmission] = useState<SubmissionState>({ status: "idle" });
@@ -75,6 +79,12 @@ export default function GoAmlExportPage() {
   const [aiValidateError, setAiValidateError] = useState<string | null>(null);
   const mountedRef = useRef(true);
   useEffect(() => () => { mountedRef.current = false; }, []);
+
+  useEffect(() => {
+    const refreshRole = () => setRole(loadOperatorRole());
+    window.addEventListener("hawkeye:operator-role-updated", refreshRole);
+    return () => window.removeEventListener("hawkeye:operator-role-updated", refreshRole);
+  }, []);
 
   useEffect(() => { setDraft(loadDraft()); }, []);
   useEffect(() => { saveDraft(draft); }, [draft]);
@@ -181,6 +191,20 @@ export default function GoAmlExportPage() {
     document.body.removeChild(a);
     setTimeout(() => URL.revokeObjectURL(url), 5_000);
   };
+
+  if (!GOAML_ALLOWED_ROLES.has(role)) {
+    return (
+      <ModuleLayout asanaModule="goaml" asanaLabel="goAML XML Export">
+        <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4 text-center px-6">
+          <p className="text-16 font-semibold text-ink-1">Access restricted</p>
+          <p className="text-13 text-ink-3 max-w-md">
+            goAML XML filing is restricted to MLRO, Compliance Officer, and Managing Director roles.
+            Switch roles in the sidebar if you have the appropriate access.
+          </p>
+        </div>
+      </ModuleLayout>
+    );
+  }
 
   return (
     <ModuleLayout asanaModule="goaml" asanaLabel="goAML XML Export">

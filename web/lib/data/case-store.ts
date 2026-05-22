@@ -274,7 +274,7 @@ export interface NewCaseInput {
 // right-hand detail panel render without undefineds.
 export function buildCaseRecord(input: NewCaseInput): CaseRecord {
   const now = new Date();
-  const id = `CASE-${now.getFullYear()}-${String(now.getTime()).slice(-6)}`;
+  const id = `CASE-${now.getFullYear()}-${crypto.randomUUID().replace(/-/g, "").slice(0, 8)}`;
   const opened = formatDMY(now);
   return {
     id,

@@ -398,7 +398,7 @@ const db = {
     id: string
   ): Promise<TableRowMap[T] | null> {
     try {
-      return await request<TableRowMap[T]>("GET", `/api/${table}/${id}`);
+      return await request<TableRowMap[T]>("GET", `/api/${table}/${encodeURIComponent(id)}`);
     } catch (err) {
       if (err instanceof MoonDBClientError && err.status === 404) return null;
       throw err;
@@ -419,7 +419,7 @@ const db = {
     id: string,
     body: Omit<Partial<TableRowMap[T]>, "id" | "created_at" | "updated_at">
   ): Promise<TableRowMap[T]> {
-    return request<TableRowMap[T]>("PATCH", `/api/${table}/${id}`, body);
+    return request<TableRowMap[T]>("PATCH", `/api/${table}/${encodeURIComponent(id)}`, body);
   },
 
   /** Delete a row by ID. */
@@ -427,7 +427,7 @@ const db = {
     table: T,
     id: string
   ): Promise<void> {
-    await request<void>("DELETE", `/api/${table}/${id}`);
+    await request<void>("DELETE", `/api/${table}/${encodeURIComponent(id)}`);
   },
 
   /** Bulk-create multiple rows in a single request. */

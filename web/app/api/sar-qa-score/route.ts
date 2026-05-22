@@ -90,6 +90,9 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
   const { cases } = body;
+  if (!Array.isArray(cases) || cases.length === 0) {
+    return NextResponse.json({ ok: false, error: "cases must be a non-empty array" }, { status: 400, headers: gate.headers });
+  }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
 
@@ -113,7 +116,9 @@ Red Flags: ${redFlagsStr}`;
     .join("\n\n---\n\n");
 
   const client = getAnthropicClient(apiKey, 55_000);
-  const claudeRes = await client.messages.create({
+  let claudeRes: Awaited<ReturnType<typeof client.messages.create>>;
+  try {
+    claudeRes = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 1000,
       system: SYSTEM_PROMPT,
@@ -124,6 +129,10 @@ Red Flags: ${redFlagsStr}`;
         },
       ],
     });
+  } catch (err) {
+    console.warn("[sar-qa-score] Anthropic API error:", err instanceof Error ? err.message : String(err));
+    return NextResponse.json({ ok: true, scores: fallbackScores(cases) }, { headers: gate.headers });
+  }
 
   const rawText = (claudeRes.content.find(b => b.type === "text") as { text: string } | undefined)?.text ?? "";
 

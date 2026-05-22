@@ -303,7 +303,7 @@ export default function StrCasesPage() {
     setApprover("");
     setStatus("Draft");
     setReportKind("STR");
-    setNoTippingOff(true);
+    setNoTippingOff(false);
   };
 
   const flashFor = (tone: FlashTone, msg: string) => {
@@ -358,6 +358,7 @@ export default function StrCasesPage() {
         throw new Error(body.error ?? `Pattern detection failed (HTTP ${res.status}) — please retry`);
       }
       const data = await res.json().catch(() => ({})) as PatternDetectResult;
+      if (!Array.isArray(data.patterns)) data.patterns = [];
       setPatternResult(data);
       setPatternExpanded(true);
     } catch (err) {

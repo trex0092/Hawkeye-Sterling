@@ -118,7 +118,12 @@ export function issueRegulatorToken(opts: IssueOptions): {
     exp,
     jti,
     issuedBy: opts.issuedBy,
-    ...(opts.notBefore ? { nbf: Math.floor(Date.parse(opts.notBefore) / 1000) } : {}),
+    ...(() => {
+      if (!opts.notBefore) return {};
+      const ms = Date.parse(opts.notBefore);
+      if (!Number.isFinite(ms)) return {};
+      return { nbf: Math.floor(ms / 1000) };
+    })(),
   };
 
   const header = { alg: "EdDSA", typ: "JWT", kid: TOKEN_VERSION };

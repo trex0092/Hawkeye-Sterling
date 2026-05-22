@@ -2805,7 +2805,7 @@ function LiveReasoningTab({
                     {a.severity}
                   </span>
                   <a
-                    href={a.link}
+                    href={/^https?:\/\//i.test(a.link) ? a.link : "#"}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-12 text-brand hover:underline leading-snug"
@@ -3171,7 +3171,7 @@ function SuperBrainPanel({
         )}
 
       {r.adverseKeywordGroups.length > 0 && (
-        <Field label={`Adverse-keyword signals (${r.adverseKeywords.length})`}>
+        <Field label={`Adverse-keyword signals (${(r.adverseKeywords ?? []).length})`}>
           <div className="flex flex-wrap gap-1 mb-2">
             {r.adverseKeywordGroups.map((g) => (
               <span
@@ -3184,8 +3184,8 @@ function SuperBrainPanel({
             ))}
           </div>
           <div className="text-10.5 text-ink-3 font-mono truncate">
-            Terms: {r.adverseKeywords.slice(0, 12).map((k) => k.term).join(" · ")}
-            {r.adverseKeywords.length > 12 && ` · +${r.adverseKeywords.length - 12} more`}
+            Terms: {(r.adverseKeywords ?? []).slice(0, 12).map((k) => k.term).join(" · ")}
+            {(r.adverseKeywords ?? []).length > 12 && ` · +${(r.adverseKeywords ?? []).length - 12} more`}
           </div>
         </Field>
       )}

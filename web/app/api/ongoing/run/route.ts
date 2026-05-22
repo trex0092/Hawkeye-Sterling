@@ -122,6 +122,23 @@ function nextThriceDailyRun(from: Date): Date {
 // ESCALATION_DELTA + shouldEscalate moved to @/lib/server/ongoing-escalation
 // so the threshold is unit-testable and can't drift silently. Imported above.
 
+// Validate NEXT_PUBLIC_APP_URL before using it for internal server→server calls.
+// Rejects URLs with credentials, unexpected schemes, or path prefixes that could
+// redirect the ADMIN_TOKEN to an attacker-controlled host.
+function safeAppBase(): string {
+  const raw = process.env["NEXT_PUBLIC_APP_URL"];
+  if (!raw) return "http://localhost:3000";
+  try {
+    const u = new URL(raw);
+    if (u.protocol !== "http:" && u.protocol !== "https:") return "http://localhost:3000";
+    if (u.username || u.password) return "http://localhost:3000";
+    if (u.pathname !== "/" && u.pathname !== "") return "http://localhost:3000";
+    return `${u.protocol}//${u.host}`;
+  } catch {
+    return "http://localhost:3000";
+  }
+}
+
 function fingerprints(hits: LastHit[]): Set<string> {
   return new Set(hits.map((h) => `${h.listRef}|${h.candidateName}`));
 }
@@ -330,8 +347,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       // Adverse-media sweep (Google News RSS) and Taranis AI analysis run in
       // parallel — they are fully independent and together account for the
       // majority of per-subject latency on each monitoring tick.
-      const appBaseForNews =
-        process.env["NEXT_PUBLIC_APP_URL"] ?? "http://localhost:3000";
+      const appBaseForNews = safeAppBase();
       interface NewsArticle {
         url: string;
         title: string;
@@ -527,7 +543,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         );
       } else {
         try {
-          const appBase = process.env["NEXT_PUBLIC_APP_URL"] ?? "http://localhost:3000";
+          const appBase = safeAppBase();
           const asanaRes = await fetch(
             new URL("/api/screening-report", appBase).toString(),
             {
