@@ -356,6 +356,8 @@ export default function TFSAlertsPage() {
   const [lastChecked, setLastChecked] = useState<string | null>(null);
   const [resultMsg, setResultMsg] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [gmailReAuthNeeded, setGmailReAuthNeeded] = useState(false);
+  const [gmailReAuthSuccess, setGmailReAuthSuccess] = useState(false);
   const [asanaRetrying, setAsanaRetrying] = useState<string | null>(null);
   const mountedRef = useRef(true);
 
@@ -386,6 +388,25 @@ export default function TFSAlertsPage() {
 
     window.addEventListener("hawkeye:tfs-alerts-updated", refresh);
     return () => window.removeEventListener("hawkeye:tfs-alerts-updated", refresh);
+  }, []);
+
+  // Handle ?gmail=authorized / ?gmail=error from OAuth callback redirect
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const gmail = params.get("gmail");
+    if (gmail === "authorized") {
+      setGmailReAuthSuccess(true);
+      setGmailReAuthNeeded(false);
+      setErrorMsg(null);
+      // Clean URL
+      const clean = window.location.pathname;
+      window.history.replaceState({}, "", clean);
+    } else if (gmail === "error") {
+      const reason = params.get("reason") ?? "unknown";
+      setErrorMsg(`Gmail re-authorization failed: ${reason.replace(/_/g, " ")}. Please try again or contact support.`);
+      setGmailReAuthNeeded(true);
+      window.history.replaceState({}, "", window.location.pathname);
+    }
   }, []);
 
   // ── Stats ─────────────────────────────────────────────────────────────────
@@ -430,16 +451,19 @@ export default function TFSAlertsPage() {
         let err: { error?: string } = {};
         try { err = (await searchRes.json()) as { error?: string }; } catch { /* non-JSON error body */ }
         if (err.error === "GMAIL_REFRESH_FAILED") {
+          setGmailReAuthNeeded(true);
           setErrorMsg(
-            "Google rejected the Gmail refresh token. This usually means the token was revoked in Google Account settings or the OAuth app permissions changed. Re-authorize the app at myaccount.google.com/permissions or generate a new GMAIL_REFRESH_TOKEN in Netlify.",
+            "Google rejected the Gmail refresh token — it may have been revoked or expired. Click \"Re-authorize Gmail\" below to reconnect in one click.",
           );
         } else if (err.error === "GMAIL_AUTH_FAILED") {
+          setGmailReAuthNeeded(true);
           setErrorMsg(
-            "Gmail access token has expired. Add GMAIL_REFRESH_TOKEN, GMAIL_CLIENT_ID, and GMAIL_CLIENT_SECRET for automatic renewal, or set a fresh GMAIL_ACCESS_TOKEN in Netlify.",
+            "Gmail access token has expired. Click \"Re-authorize Gmail\" below to reconnect.",
           );
         } else if (err.error === "GMAIL_NOT_CONFIGURED") {
+          setGmailReAuthNeeded(true);
           setErrorMsg(
-            "Gmail is not configured. Set GMAIL_REFRESH_TOKEN + GMAIL_CLIENT_ID + GMAIL_CLIENT_SECRET (recommended) or GMAIL_ACCESS_TOKEN in your Netlify environment variables.",
+            "Gmail is not configured. Ensure GMAIL_CLIENT_ID and GMAIL_CLIENT_SECRET are set in Netlify, then click \"Re-authorize Gmail\" below.",
           );
         } else if (err.error === "NETWORK_TIMEOUT") {
           setErrorMsg("Search timed out. Please try again.");
@@ -767,6 +791,36 @@ export default function TFSAlertsPage() {
           <span className="text-12 text-red">{errorMsg}</span>
         )}
       </div>
+
+      {/* ── Gmail re-authorization banner ────────────────────────────────────── */}
+      {gmailReAuthSuccess && (
+        <div className="mb-4 flex items-center gap-3 rounded-lg border border-green/40 bg-green-dim px-4 py-3">
+          <span className="text-green text-13">✓</span>
+          <div>
+            <div className="text-12 font-semibold text-green">Gmail re-authorized successfully</div>
+            <div className="text-11 text-ink-2">Click &quot;Check for New TFS Alerts&quot; to search your inbox.</div>
+          </div>
+          <button type="button" onClick={() => setGmailReAuthSuccess(false)} className="ml-auto text-10 text-ink-3 hover:text-ink-1">✕</button>
+        </div>
+      )}
+
+      {gmailReAuthNeeded && !loading && (
+        <div className="mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-red/40 bg-red-dim px-4 py-3">
+          <div className="flex-1 min-w-0">
+            <div className="text-12 font-semibold text-red">Gmail connection lost</div>
+            <div className="text-11 text-ink-2">
+              Click the button to reconnect in one step. You will be redirected to Google&apos;s consent screen and back.
+            </div>
+          </div>
+          <a
+            href="/api/auth/gmail/authorize"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-red text-white text-12 font-semibold hover:bg-red/80 transition-colors whitespace-nowrap"
+          >
+            <span>🔗</span>
+            <span>Re-authorize Gmail</span>
+          </a>
+        </div>
+      )}
 
       {/* ── Stats panel ─────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">

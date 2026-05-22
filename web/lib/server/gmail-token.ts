@@ -2,20 +2,23 @@
 //
 // Priority order:
 //   1. Netlify Blobs cache — used if not expired (fast path, no network call)
-//   2. Refresh via GMAIL_REFRESH_TOKEN + GMAIL_CLIENT_ID + GMAIL_CLIENT_SECRET
-//   3. Fallback to GMAIL_ACCESS_TOKEN env var (static, expires in 1h)
+//   2. Refresh via Blobs-stored refresh token (written by /api/auth/gmail/callback)
+//   3. Refresh via GMAIL_REFRESH_TOKEN + GMAIL_CLIENT_ID + GMAIL_CLIENT_SECRET env vars
+//   4. Fallback to GMAIL_ACCESS_TOKEN env var (static, expires in 1h)
+//
+// Re-authorization: visit /api/auth/gmail/authorize to get a new refresh token
+// stored in Blobs. No manual Netlify env var update needed.
 //
 // Required env vars for permanent auto-refresh:
-//   GMAIL_REFRESH_TOKEN   — long-lived refresh token (never expires if using own credentials)
 //   GMAIL_CLIENT_ID       — Google Cloud OAuth 2.0 client ID
 //   GMAIL_CLIENT_SECRET   — Google Cloud OAuth 2.0 client secret
-//
-// Optional (temporary / testing only):
-//   GMAIL_ACCESS_TOKEN    — static access token, valid ~1 hour, no auto-refresh
+//   GMAIL_REFRESH_TOKEN   — long-lived refresh token (OR use the OAuth flow above)
 
 import { getJson, setJson } from "@/lib/server/store";
 
 const TOKEN_CACHE_KEY = "hawkeye-gmail-token/v1.json";
+// Written by /api/auth/gmail/callback
+const OAUTH_CREDS_KEY = "hawkeye-gmail-oauth/v1.json";
 // Refresh 5 minutes before actual expiry to avoid races
 const REFRESH_BUFFER_MS = 5 * 60 * 1000;
 
@@ -69,15 +72,14 @@ async function refreshAccessToken(
 }
 
 export async function getGmailAccessToken(): Promise<string> {
-  const refreshToken = process.env["GMAIL_REFRESH_TOKEN"];
   const clientId = process.env["GMAIL_CLIENT_ID"];
   const clientSecret = process.env["GMAIL_CLIENT_SECRET"];
+  const envRefreshToken = process.env["GMAIL_REFRESH_TOKEN"];
   const staticToken = process.env["GMAIL_ACCESS_TOKEN"];
+  const hasCredentials = Boolean(clientId && clientSecret);
 
-  const canAutoRefresh = Boolean(refreshToken && clientId && clientSecret);
-
-  // ── 1. Check Netlify Blobs cache ────────────────────────────────────────
-  if (canAutoRefresh) {
+  // ── 1. Check Netlify Blobs access-token cache ────────────────────────────
+  if (hasCredentials) {
     try {
       const cached = await getJson<CachedToken>(TOKEN_CACHE_KEY);
       if (cached?.accessToken && Date.now() < cached.expiresAt - REFRESH_BUFFER_MS) {
@@ -88,19 +90,30 @@ export async function getGmailAccessToken(): Promise<string> {
     }
   }
 
-  // ── 2. Auto-refresh via refresh token ───────────────────────────────────
-  if (canAutoRefresh) {
-    const fresh = await refreshAccessToken(refreshToken!, clientId!, clientSecret!);
-    // Store in Blobs so subsequent calls within the same hour skip the refresh
+  // ── 2. Refresh via Blobs-stored refresh token (set by OAuth flow) ────────
+  if (hasCredentials) {
     try {
-      await setJson(TOKEN_CACHE_KEY, fresh);
-    } catch {
-      // Cache write failure is non-fatal — we still have the token for this request
+      const stored = await getJson<{ refreshToken: string }>(OAUTH_CREDS_KEY);
+      if (stored?.refreshToken) {
+        const fresh = await refreshAccessToken(stored.refreshToken, clientId!, clientSecret!);
+        try { await setJson(TOKEN_CACHE_KEY, fresh); } catch { /* non-fatal */ }
+        return fresh.accessToken;
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      // If the Blobs token was also revoked, fall through to env var
+      if (!msg.startsWith("GMAIL_REFRESH_FAILED")) throw err;
     }
+  }
+
+  // ── 3. Refresh via GMAIL_REFRESH_TOKEN env var ───────────────────────────
+  if (hasCredentials && envRefreshToken) {
+    const fresh = await refreshAccessToken(envRefreshToken, clientId!, clientSecret!);
+    try { await setJson(TOKEN_CACHE_KEY, fresh); } catch { /* non-fatal */ }
     return fresh.accessToken;
   }
 
-  // ── 3. Static fallback (expires in ~1h, no auto-refresh) ────────────────
+  // ── 4. Static fallback (expires in ~1h, no auto-refresh) ────────────────
   if (staticToken) {
     return staticToken;
   }
