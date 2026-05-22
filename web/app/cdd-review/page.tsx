@@ -1179,7 +1179,7 @@ export default function CddReviewPage() {
                   ["PEP", eddComplIsPep, setEddComplIsPep] as const,
                   ["High-risk jurisdiction", eddComplHighRiskJuris, setEddComplHighRiskJuris] as const,
                   ["AI gap analysis", eddComplGenerateNarrative, setEddComplGenerateNarrative] as const,
-                ] as Array<[string, boolean, (v: boolean) => void]>).map(([label, val, setter]) => (
+                ] as Array<[string, boolean, (_v: boolean) => void]>).map(([label, val, setter]) => (
                   <label key={label} className="flex items-center gap-1.5 text-11 text-ink-2 cursor-pointer">
                     <input type="checkbox" checked={val} onChange={(e) => setter(e.target.checked)} className="accent-brand w-3.5 h-3.5" />
                     {label}

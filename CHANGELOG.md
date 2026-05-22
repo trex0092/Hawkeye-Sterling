@@ -1,5 +1,26 @@
 # Hawkeye Sterling — Changelog
 
+## [0.2.1] — 2026-05-22
+
+### Security
+- **auth.ts**: Increased scrypt work factor from N=16384 (default) to N=65536 for GPU-resistant password hashing (~200ms on modern hardware)
+- **enforce.ts**: Replaced reversible SHA-256 IP hash with HMAC-SHA256 keyed from SESSION_SECRET for anonymization of log and rate-limit bucket keys
+- **sanitize-prompt.ts**: Expanded Unicode prompt-injection filter from 9 literal chars to comprehensive u-flag regex covering zero-width space, soft hyphen, Tags block (U+E0000-E007F), and all known invisible/override Unicode attack vectors
+- **api-keys.ts**: Added structured warning log when API key supplied via query parameter (encourages header auth)
+
+### Fixed
+- **screening-report/route.ts**: MLRO name now read from `GOAML_MLRO_FULL_NAME` env var instead of hardcoded "Luisa Fernanda"
+- **validate.ts**: Removed dead-code ternary where both branches returned null
+- **SubjectDetailPanel.tsx**: Removed orphaned `DisambiguationHitInput` and `DisambiguationResult` types (Disambiguate tab was removed in prior commit)
+- **ESLint**: Cleared all 5 no-unused-vars warnings across cdd-review, str-cases, oversight pages and SubjectDetailPanel
+
+### Build
+- Web ESLint: 0 warnings, 0 errors (previously 5 warnings)
+- TypeScript: 0 errors in both root and web packages
+- All 5507 unit tests pass
+
+---
+
 ## [v3-remediation] — 2026-05-17
 
 FATF 5th Round Mutual Evaluation readiness — 19-section V3 Definitive Remediation.

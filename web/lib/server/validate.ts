@@ -292,7 +292,7 @@ export function validateString(
   const trimmed = v.trim();
 
   if (trimmed.length === 0) {
-    return opts.required ? null : null;
+    return null;
   }
 
   const min = opts.minLength ?? 0;

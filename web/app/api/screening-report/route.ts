@@ -245,7 +245,7 @@ function buildInitialScreeningNotes(b: ReportBody): string {
   lines.push(`HAWKEYE STERLING · INITIAL SCREENING DOSSIER`);
   lines.push(`Report ID           : ${reportId}`);
   lines.push(`Generated           : ${gen.toUTCString().replace(" GMT", " UTC")}`);
-  lines.push(`MLRO assigned       : Luisa Fernanda`);
+  lines.push(`MLRO assigned       : ${process.env["GOAML_MLRO_FULL_NAME"] ?? "Luisa Fernanda"}`);
   if (b.subject.caseId) lines.push(`Case                : ${b.subject.caseId}`);
   if (b.subject.group) lines.push(`Group               : ${b.subject.group}`);
   lines.push("");
@@ -338,7 +338,7 @@ function buildOngoingSnapshotNotes(b: ReportBody): string {
   if (b.subject.caseId) lines.push(`Case              : ${b.subject.caseId}`);
   if (b.subject.group) lines.push(`Group             : ${b.subject.group}`);
   lines.push(`Cadence           : thrice-daily · 08:30 / 15:00 / 17:30 Dubai`);
-  lines.push(`MLRO assigned     : Luisa Fernanda`);
+  lines.push(`MLRO assigned     : ${process.env["GOAML_MLRO_FULL_NAME"] ?? "Luisa Fernanda"}`);
   lines.push("");
   lines.push(
     `Tick              : ${fmt(gen)} ${slot.label} (${slot.utc})`,

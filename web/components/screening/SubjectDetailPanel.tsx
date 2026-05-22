@@ -97,38 +97,7 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 const TABS = ["Screening", "Intelligence", "Deep Intel", "CDD/EDD", "Ownership", "Live reasoning", "Evidence", "AI Ethics"] as const;
 type Tab = (typeof TABS)[number];
 
-// ── (Disambiguate tab removed) ────────────────────────────────────────────────
-interface DisambiguationHitInput {
-  hitId: string;
-  hitName: string;
-  hitCategory: string;
-  hitCountry?: string;
-  hitDob?: string;
-  hitRole?: string;
-  matchScore?: number;
-}
-interface DisambiguatedHit {
-  hitId: string;
-  verdict: "confirmed_false_positive" | "likely_false_positive" | "possible_match" | "likely_true_match";
-  confidenceScore: number;
-  primaryDifferentiator: string;
-  canAutoDispose: boolean;
-  dispositionText: string;
-  requiresClientClarification: boolean;
-  clarificationQuestion?: string;
-}
-interface DisambiguationResult {
-  ok: boolean;
-  overallAssessment: string;
-  clientRiskProfile: string;
-  disambiguationStrategy: string;
-  hits: DisambiguatedHit[];
-  clarificationQuestions: string[];
-  bulkDispositionText: string;
-  escalationItems: string[];
-  regulatoryNote: string;
-  processingTime: string;
-}
+// Disambiguate tab removed — its types were removed alongside it.
 
 interface EthicalImpact {
   impactLevel: "high" | "medium" | "low";

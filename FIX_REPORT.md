@@ -183,3 +183,35 @@
 | S2-4 Asana taskGid guard | `src/integrations/asana.ts` | 139–144 |
 | S2-5 Input validation hardening | `web/app/api/agent/batch-screen/route.ts`, `web/app/api/feedback/route.ts` | 91, 70–107 |
 | S2-6 Phonetic tie flag | `src/brain/quick-screen.ts` | 104 |
+
+---
+
+## 2026-05-22 Production Readiness Audit — Fix Batch
+
+**Branch:** claude/ecstatic-ritchie-wm3PV  
+**Auditor:** Claude Code  
+
+### Files Changed
+
+| File | Change | Reason |
+|------|--------|--------|
+| `web/lib/server/auth.ts` | Added `SCRYPT_OPTS = { N: 65536, r: 8, p: 1 }` to `hashPassword` and `verifyPassword` | scrypt work factor was at minimum (N=16384); increased 4× for GPU-resistance |
+| `web/lib/server/sanitize-prompt.ts` | Replaced 9-char literal regex with comprehensive `u`-flagged Unicode range regex | Filter was incomplete — missing zero-width space, soft hyphen, Tags block (U+E0000-E007F), and other prompt-injection vectors |
+| `web/lib/server/enforce.ts` | Replaced `createHash("sha256")` with `createHmac("sha256", anonIpKey())` for IP anonymization; removed unused `createHash` import | Plain SHA-256 over IPv4 is reversible via rainbow tables; HMAC-SHA256 is irreversible without the key |
+| `web/lib/server/api-keys.ts` | Added structured warning log when API key extracted from query param | Keys in URLs appear in access logs; callers should use Authorization header |
+| `web/lib/server/validate.ts` | Simplified dead-code ternary `opts.required ? null : null` to `return null` | Both branches were identical — confusing and misleading |
+| `web/app/api/screening-report/route.ts` | Replaced hardcoded `"Luisa Fernanda"` (×2) with `process.env["GOAML_MLRO_FULL_NAME"] ?? "Luisa Fernanda"` | MLRO name must be configurable per deployment |
+| `web/app/cdd-review/page.tsx` | Renamed `(v: boolean) => void` to `(_v: boolean) => void` in type annotation | no-unused-vars lint warning |
+| `web/app/str-cases/page.tsx` | Same rename as cdd-review | no-unused-vars lint warning |
+| `web/app/oversight/page.tsx` | Renamed `setDlEntityType` to `_setDlEntityType` | Setter never called; no-unused-vars lint warning |
+| `web/components/screening/SubjectDetailPanel.tsx` | Removed dead `DisambiguationHitInput` and `DisambiguationResult` interfaces | Disambiguate tab was removed; types were orphaned |
+| `AUDIT-READINESS.md` | Created | Required audit deliverable |
+| `TEST_REPORT.md` | Created | Required audit deliverable |
+| `SECURITY-NOTES.md` | Updated with 2026-05-22 findings section | Required audit deliverable |
+
+### Build Results After Fixes
+- Root TypeScript: ✓ 0 errors
+- Web TypeScript: ✓ 0 errors
+- Web ESLint: ✓ 0 warnings, 0 errors
+- Web Next.js build: ✓ Compiled successfully
+- Root test suite: ✓ 230 files, 5507 tests, all passed

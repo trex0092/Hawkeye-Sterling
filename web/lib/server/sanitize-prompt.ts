@@ -4,8 +4,10 @@
  * Does NOT strip newlines from multi-line fields (narrative, context) — use
  * sanitizeMultiLine for those, which only strips leading/trailing whitespace.
  */
-// Unicode direction overrides and zero-width chars that can hide injected content
-const UNICODE_OVERRIDES = /[‮‭‬‫‪​‌‍﻿]/g;
+// Comprehensive Unicode injection filter: direction overrides, zero-width chars,
+// invisible separators, and other chars that can hide injected content in LLM prompts.
+const UNICODE_OVERRIDES =
+  /[​‌‍‎‏‪‫‬‭‮⁠⁡⁢⁣⁤﻿­͏ᅟᅠ឴឵᠋-᠍᠏ㅤﾠ\u{E0000}-\u{E007F}]/gu;
 
 export function sanitizeField(value: string | undefined | null, maxLength = 500): string {
   if (!value) return "";
