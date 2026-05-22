@@ -28,7 +28,6 @@ import {
   BrainRegimeExposure,
   BrainScenarioMatcher,
   BrainBiasCheck,
-  BrainDataFreshness,
   BrainInputValidator,
   BrainModuleWeights,
   BrainVerdictConsistency,
@@ -40,7 +39,6 @@ import {
   BrainSanctionsPathway,
   BrainSoWPlausibility,
   BrainAnomalyDetector,
-  BrainOutcomeForecast,
   BrainSourceTriangulation,
 
   BrainTypologyConfidence,
@@ -49,8 +47,6 @@ import {
   BrainContextualEnrichment,
   BrainChainAttribution,
   BrainDefensibility,
-  BrainAlternativeHypotheses,
-  BrainSimilarityCorpus,
   BrainSignalInterference,
   BrainEscalationLadder,
   BrainDataCoverage,
@@ -1295,7 +1291,10 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
             brainSeverity={brainSeverity}
             brainScore={brainScore}
             hasSanctionsHit={
-              screening.status === "success" && screening.result.hits.length > 0
+              screening.status === "success" &&
+              screening.result.hits.some(
+                (h) => h.score >= 0.85 && (h.disambiguationConfidence ?? 50) >= 75,
+              )
             }
             hasRedline={
               superBrain.status === "success" &&
@@ -1376,6 +1375,8 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
               name: subject.name,
               nationality: subject.country || subject.jurisdiction || undefined,
             }}
+            superBrain={superBrain}
+            news={news}
           />
         )}
 
@@ -1427,16 +1428,152 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
   );
 }
 
+function AdverseMediaEvidenceSection({
+  superBrain,
+  news,
+}: {
+  superBrain: import("@/lib/hooks/useSuperBrain").SuperBrainState;
+  news: NewsSearchState;
+}) {
+  const sbResult = superBrain.status === "success" ? superBrain.result : null;
+
+  // Brain-classified adverse media categories (from super-brain text classifier)
+  const amCategories = sbResult?.adverseMedia ?? [];
+  const amKeywordGroups = sbResult?.adverseKeywordGroups ?? [];
+
+  // Live news articles with severity != clear
+  const sevColor = (s: string) =>
+    s === "critical" || s === "high"
+      ? "bg-red-dim text-red"
+      : s === "medium"
+        ? "bg-amber-dim text-amber"
+        : "bg-bg-2 text-ink-3";
+
+  const articles =
+    news.status === "success"
+      ? news.result.articles.filter((a) => a.severity !== "clear").slice(0, 8)
+      : [];
+
+  const hasEvidence =
+    amCategories.length > 0 ||
+    amKeywordGroups.length > 0 ||
+    articles.length > 0;
+
+  if (!hasEvidence) {
+    if (superBrain.status === "loading" || news.status === "loading") {
+      return (
+        <div className="mt-3 pt-3 border-t border-hair">
+          <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2 mb-1.5">
+            Adverse media
+          </div>
+          <div className="text-11 text-ink-3 italic">Scanning live sources…</div>
+        </div>
+      );
+    }
+    return (
+      <div className="mt-3 pt-3 border-t border-hair">
+        <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2 mb-1.5">
+          Adverse media
+        </div>
+        <div className="text-11 text-green">✓ No adverse media found</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-3 pt-3 border-t border-hair space-y-3">
+      <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">
+        Adverse media evidence
+      </div>
+
+      {/* Brain-classified categories */}
+      {amCategories.length > 0 && (
+        <div>
+          <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">
+            Classified categories ({amCategories.length})
+          </div>
+          <div className="flex flex-wrap gap-1">
+            {amCategories.map((am, i) => (
+              <span
+                key={`${am.categoryId}-${i}`}
+                className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 bg-red-dim text-red tracking-wide-1"
+                title={`keyword: ${am.keyword}`}
+              >
+                {am.categoryId.replace(/_/g, " ")}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Adverse keyword groups */}
+      {amKeywordGroups.length > 0 && (
+        <div>
+          <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">
+            Keyword signals ({amKeywordGroups.length})
+          </div>
+          <div className="flex flex-wrap gap-1">
+            {amKeywordGroups.map((g) => (
+              <span
+                key={g.group}
+                className="inline-flex items-center gap-1 px-1.5 py-px rounded-sm font-mono text-10 bg-amber-dim text-amber tracking-wide-1"
+              >
+                {g.group.replace(/-/g, " ")}
+                <span className="bg-amber/20 px-1 rounded-sm">{g.count}</span>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Live news articles */}
+      {articles.length > 0 && (
+        <div>
+          <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1.5">
+            Live news ({articles.length})
+          </div>
+          <ul className="space-y-2">
+            {articles.map((a, i) => (
+              <li key={i} className="rounded border border-hair-2 bg-bg-panel px-2.5 py-2">
+                <div className="flex items-start gap-2 mb-0.5">
+                  <span className={`shrink-0 mt-0.5 inline-flex items-center px-1.5 py-px rounded-sm text-10 font-mono uppercase ${sevColor(a.severity)}`}>
+                    {a.severity}
+                  </span>
+                  <a
+                    href={/^https?:\/\//i.test(a.link) ? a.link : "#"}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-11 text-brand hover:underline leading-snug"
+                  >
+                    {a.title}
+                  </a>
+                </div>
+                <div className="text-10 text-ink-3 font-mono">
+                  {a.source}{a.pubDate ? ` · ${a.pubDate.slice(0, 10)}` : ""}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ScreeningTab({
   state,
   adverseMedia,
   rca,
   subjectCtx,
+  superBrain,
+  news,
 }: {
   state: ReturnType<typeof useQuickScreen>;
   adverseMedia?: AdverseMediaMatch | undefined;
   rca?: { screened: boolean; linkedAssociates?: string[] } | undefined;
   subjectCtx?: SubjectContext;
+  superBrain: import("@/lib/hooks/useSuperBrain").SuperBrainState;
+  news: NewsSearchState;
 }) {
   const title = (
     <div className="text-11 font-semibold tracking-wide-4 uppercase text-ink-2 mb-2.5">
@@ -1455,6 +1592,7 @@ function ScreeningTab({
           <SkeletonRow />
         </div>
         {adverseMedia && <AdverseMediaRow item={adverseMedia} />}
+        <AdverseMediaEvidenceSection superBrain={superBrain} news={news} />
         <RcaRow rca={rca} />
       </>
     );
@@ -1474,6 +1612,7 @@ function ScreeningTab({
           {state.error}
         </div>
         {adverseMedia && <AdverseMediaRow item={adverseMedia} />}
+        <AdverseMediaEvidenceSection superBrain={superBrain} news={news} />
         <RcaRow rca={rca} />
       </>
     );
@@ -1486,6 +1625,7 @@ function ScreeningTab({
       <BrainDiagnostics result={state.result} />
       <HitsList hits={state.result.hits} subjectCtx={subjectCtx} />
       {adverseMedia && <AdverseMediaRow item={adverseMedia} />}
+      <AdverseMediaEvidenceSection superBrain={superBrain} news={news} />
       <RcaRow rca={rca} />
     </>
   );
@@ -2762,7 +2902,6 @@ function SuperBrainPanel({
         newsDossier={news.status === "success" ? news.result : null}
       />
       <BrainReasoningChain result={r} />
-      <BrainOutcomeForecast result={r} />
       <BrainSourceTriangulation result={r} />
       <BrainTypologyConfidence result={r} />
       <BrainJurisdictionClusters result={r} />
@@ -2770,8 +2909,6 @@ function SuperBrainPanel({
       <BrainContextualEnrichment result={r} />
       <BrainChainAttribution result={r} />
       <BrainDefensibility result={r} subjectName={subjectName} />
-      <BrainAlternativeHypotheses result={r} />
-      <BrainSimilarityCorpus result={r} subjectName={subjectName} />
       <BrainSignalInterference result={r} />
       <BrainEscalationLadder result={r} />
       <BrainDecomposition result={r} />
@@ -2792,7 +2929,6 @@ function SuperBrainPanel({
       <BrainPolicyCitation result={r} />
       <BrainFATFAlignment result={r} />
       <BrainCapabilityAudit result={r} />
-      <BrainDataFreshness result={r} />
       <BrainCoverageGap result={r} />
       <BrainDataCoverage />
       <BrainChainOfCustody result={r} />

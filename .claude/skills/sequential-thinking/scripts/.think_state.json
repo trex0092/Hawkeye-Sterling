@@ -1,27 +1,9 @@
 {
   "thoughtHistory": [
     {
-      "thought": "Plan the audit. Six bug categories to check systematically across the codebase:\n1. API routes: missing gate.headers on NextResponse.json() paths\n2. UI pages: missing error display when API returns ok:false\n3. API routes: returning ok:true on error/degraded paths\n4. UI: useEffect without mountedRef causing state-after-unmount\n5. Any remaining raw res.json() without .catch()\n6. TypeScript errors\n\nStrategy: run targeted Python/grep scripts for each category. Each scan must produce exact file:line results. Then fix in batches. Start with the fastest checks (grep-based) then move to heavier analysis.",
+      "thought": "I need to do a comprehensive audit of the Hawkeye-Sterling codebase. The user wants EVERYTHING to work 100% perfectly. I should run TypeScript compilation, linting, tests, and manually inspect all recently changed files plus any known problem areas. Strategy: (1) run tsc/build to catch type errors, (2) run lint, (3) run tests, (4) inspect all changed files on the current branch, (5) grep for common bug patterns, (6) fix everything found. Let me start by understanding the project structure and running the build.",
       "thoughtNumber": 1,
-      "totalThoughts": 8,
-      "nextThoughtNeeded": true
-    },
-    {
-      "thought": "Category 1 results: 68 instances across 47 API route files are missing gate.headers. These all use enforce() but don't include headers on some NextResponse.json() call paths. The fix pattern is uniform: add 'headers: gate.headers' to every NextResponse.json() call that lacks it.\n\nHowever, I need to verify these are real bugs vs false positives. Some routes use variable aliases like 'gateHeaders' or destructure into a local. Let me verify a sample and then do a bulk fix using sed to inject 'headers: gate.headers' where missing.\n\nActually, the safest approach: for each affected file, check what variable holds gate.headers, then add it to all missing NextResponse.json() calls. The common patterns are:\n- gate.headers (direct)\n- gateHeaders (alias: const gateHeaders = gate.headers)\n- { ...gate.headers } (spread)\n\nI'll run a targeted per-file fix script.",
-      "thoughtNumber": 2,
-      "totalThoughts": 8,
-      "nextThoughtNeeded": true
-    },
-    {
-      "thought": "64 confirmed real missing gate.headers instances across ~45 files. Some are false positives I need to verify (e.g. screening/run uses responseHeaders which includes gate.headers; sanctions-watch POST uses token auth not enforce). \n\nBefore bulk fixing, I need to handle some nuanced cases:\n- alerts/route.ts lines 57,67,71,73: these are in the POST handler which uses a cron token, not enforce() — gate.headers doesn't exist here. SKIP.\n- sanctions-watch lines 69,94,96: similar — token-gated POST handler without enforce(). SKIP.\n- goaml-export:155: uses a local 'headers' variable built from gate.headers — need to check if it includes them.\n- screening/run:407: uses responseHeaders which includes gate.headers — already correct.\n\nStrategy: run a more surgical Python script that reads each file, finds where gate is declared in each function, and only adds gate.headers to functions that actually have it. This avoids wrongly adding gate.headers to cron-token routes.",
-      "thoughtNumber": 3,
-      "totalThoughts": 8,
-      "nextThoughtNeeded": true
-    },
-    {
-      "thought": "Summary of all bugs found:\n- Cat 1 (missing gate.headers): 48 confirmed instances across 46 API route files\n- Cat 2 (no error display): 3 UI pages — moe-survey:78, responsible-sourcing:102, cnmr:232\n- Cat 3 (ok:true on degraded): intentional design pattern (watchman, smart-disambiguate, edd-questionnaire all return ok:true with degraded:true so callers can use the data — this is correct behavior)\n- Cat 4 (useEffect without guard): 12 instances — some may be false positives (env-check, SessionExpiryWatcher intentionally simple)\n- Cat 5 (raw res.json without .catch): 0 — already fully fixed\n- Cat 6 (TypeScript): CLEAN\n\nFix plan:\n1. Cat 1: Python script to add gate.headers to all 48 instances\n2. Cat 2: 3 files — add else branches with error state updates\n3. Cat 4: verify each of the 12 instances, add cancelled guard to real bugs\nThen build to verify.",
-      "thoughtNumber": 4,
-      "totalThoughts": 8,
+      "totalThoughts": 10,
       "nextThoughtNeeded": true
     }
   ],
