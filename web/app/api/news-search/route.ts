@@ -76,160 +76,25 @@ interface Article {
   lang: string;              // locale the article was fetched from (en, es, fr, ru, zh, ar, pt)
 }
 
-// Locales we poll Google News from. Adverse-media coverage for the same
-// subject shows up in the local press of where events occur — English-only
-// coverage misses 70%+ of regional reporting.
+// Locales we poll Google News from. Scoped to the 15 highest-value languages
+// for AML adverse-media coverage — enough to catch regional press without
+// the connection-pool overhead of 100+ parallel fetches.
 const LOCALES: Array<{ code: string; hl: string; gl: string; ceid: string }> = [
   { code: "en", hl: "en", gl: "US", ceid: "US:en" },
-  { code: "es", hl: "es", gl: "ES", ceid: "ES:es" },
-  { code: "fr", hl: "fr", gl: "FR", ceid: "FR:fr" },
-  { code: "ru", hl: "ru", gl: "RU", ceid: "RU:ru" },
-  { code: "zh", hl: "zh-Hans", gl: "CN", ceid: "CN:zh-Hans" },
-  { code: "ar", hl: "ar", gl: "AE", ceid: "AE:ar" },
-  { code: "pt", hl: "pt-BR", gl: "BR", ceid: "BR:pt-419" },
-  // Extended coverage — critical for subjects from these jurisdictions
   { code: "tr", hl: "tr", gl: "TR", ceid: "TR:tr" },
+  { code: "ar", hl: "ar", gl: "AE", ceid: "AE:ar" },
   { code: "de", hl: "de", gl: "DE", ceid: "DE:de" },
+  { code: "fr", hl: "fr", gl: "FR", ceid: "FR:fr" },
+  { code: "es", hl: "es", gl: "ES", ceid: "ES:es" },
+  { code: "ru", hl: "ru", gl: "RU", ceid: "RU:ru" },
+  { code: "pt", hl: "pt-BR", gl: "BR", ceid: "BR:pt-419" },
   { code: "it", hl: "it", gl: "IT", ceid: "IT:it" },
-  { code: "ja", hl: "ja", gl: "JP", ceid: "JP:ja" },
-  { code: "ko", hl: "ko", gl: "KR", ceid: "KR:ko" },
+  { code: "zh", hl: "zh-Hans", gl: "CN", ceid: "CN:zh-Hans" },
   { code: "nl", hl: "nl", gl: "NL", ceid: "NL:nl" },
   { code: "pl", hl: "pl", gl: "PL", ceid: "PL:pl" },
   { code: "uk", hl: "uk", gl: "UA", ceid: "UA:uk" },
-  // Tier-2 jurisdictions — high-value for global AML coverage
-  { code: "sv", hl: "sv", gl: "SE", ceid: "SE:sv" },
-  { code: "el", hl: "el", gl: "GR", ceid: "GR:el" },
-  { code: "hi", hl: "hi", gl: "IN", ceid: "IN:hi" },
-  { code: "id", hl: "id", gl: "ID", ceid: "ID:id" },
-  { code: "vi", hl: "vi", gl: "VN", ceid: "VN:vi" },
-  { code: "ms", hl: "ms", gl: "MY", ceid: "MY:ms" },
-  { code: "he", hl: "iw", gl: "IL", ceid: "IL:iw" },
-  { code: "ro", hl: "ro", gl: "RO", ceid: "RO:ro" },
-  { code: "hu", hl: "hu", gl: "HU", ceid: "HU:hu" },
-  { code: "cs", hl: "cs", gl: "CZ", ceid: "CZ:cs" },
-  { code: "bg", hl: "bg", gl: "BG", ceid: "BG:bg" },
-  { code: "sr", hl: "sr", gl: "RS", ceid: "RS:sr" },
-  { code: "hr", hl: "hr", gl: "HR", ceid: "HR:hr" },
-  { code: "sk", hl: "sk", gl: "SK", ceid: "SK:sk" },
-  { code: "th", hl: "th", gl: "TH", ceid: "TH:th" },
-  { code: "ur", hl: "ur", gl: "PK", ceid: "PK:ur" },
-  // Tier-3 — Baltic, Nordic, Caucasus, Africa, MENA extended
-  { code: "lt", hl: "lt", gl: "LT", ceid: "LT:lt" },
-  { code: "lv", hl: "lv", gl: "LV", ceid: "LV:lv" },
-  { code: "et", hl: "et", gl: "EE", ceid: "EE:et" },
-  { code: "fi", hl: "fi", gl: "FI", ceid: "FI:fi" },
-  { code: "da", hl: "da", gl: "DK", ceid: "DK:da" },
-  { code: "nb", hl: "no", gl: "NO", ceid: "NO:no" },
-  { code: "az", hl: "az", gl: "AZ", ceid: "AZ:az" },
-  { code: "ka", hl: "ka", gl: "GE", ceid: "GE:ka" },
-  { code: "hy", hl: "hy", gl: "AM", ceid: "AM:hy" },
-  { code: "kk", hl: "kk", gl: "KZ", ceid: "KZ:kk" },
-  { code: "uz", hl: "uz", gl: "UZ", ceid: "UZ:uz" },
-  { code: "mk", hl: "mk", gl: "MK", ceid: "MK:mk" },
-  { code: "sq", hl: "sq", gl: "AL", ceid: "AL:sq" },
-  { code: "sl", hl: "sl", gl: "SI", ceid: "SI:sl" },
-  { code: "af", hl: "af", gl: "ZA", ceid: "ZA:af" },
-  { code: "sw", hl: "sw", gl: "KE", ceid: "KE:sw" },
-  { code: "bn", hl: "bn", gl: "BD", ceid: "BD:bn" },
-  { code: "fa", hl: "fa", gl: "IR", ceid: "IR:fa" },
-  // Tier-4 — remaining jurisdictions
-  { code: "tl", hl: "tl", gl: "PH", ceid: "PH:tl" },
-  { code: "is", hl: "is", gl: "IS", ceid: "IS:is" },
-  { code: "mt", hl: "mt", gl: "MT", ceid: "MT:mt" },
-  { code: "be", hl: "be", gl: "BY", ceid: "BY:be" },
-  { code: "bs", hl: "bs", gl: "BA", ceid: "BA:bs" },
-  { code: "ne", hl: "ne", gl: "NP", ceid: "NP:ne" },
-  { code: "si", hl: "si", gl: "LK", ceid: "LK:si" },
-  { code: "mn", hl: "mn", gl: "MN", ceid: "MN:mn" },
-  { code: "my", hl: "my", gl: "MM", ceid: "MM:my" },
-  { code: "km", hl: "km", gl: "KH", ceid: "KH:km" },
-  // Tier-5 — remaining world languages
-  { code: "lo", hl: "lo", gl: "LA", ceid: "LA:lo" },
-  { code: "tg", hl: "tg", gl: "TJ", ceid: "TJ:tg" },
-  { code: "am", hl: "am", gl: "ET", ceid: "ET:am" },
-  { code: "so", hl: "so", gl: "SO", ceid: "SO:so" },
-  { code: "ta", hl: "ta", gl: "IN", ceid: "IN:ta" },
-  { code: "te", hl: "te", gl: "IN", ceid: "IN:te" },
-  { code: "ml", hl: "ml", gl: "IN", ceid: "IN:ml" },
-  { code: "gu", hl: "gu", gl: "IN", ceid: "IN:gu" },
-  { code: "mr", hl: "mr", gl: "IN", ceid: "IN:mr" },
-  { code: "pa", hl: "pa", gl: "IN", ceid: "IN:pa" },
-  { code: "cy", hl: "cy", gl: "GB", ceid: "GB:cy" },
-  { code: "ga", hl: "ga", gl: "IE", ceid: "IE:ga" },
-  { code: "eu", hl: "eu", gl: "ES", ceid: "ES:eu" },
-  { code: "ca", hl: "ca", gl: "ES", ceid: "ES:ca" },
-  { code: "gl", hl: "gl", gl: "ES", ceid: "ES:gl" },
-  { code: "zu", hl: "zu", gl: "ZA", ceid: "ZA:zu" },
-  { code: "ky", hl: "ky", gl: "KG", ceid: "KG:ky" },
-  { code: "tk", hl: "tk", gl: "TM", ceid: "TM:tk" },
-  // Tier-6 — Indian regional + African languages + remaining
-  { code: "or", hl: "or", gl: "IN", ceid: "IN:or" },
-  { code: "kn", hl: "kn", gl: "IN", ceid: "IN:kn" },
-  { code: "as", hl: "as", gl: "IN", ceid: "IN:as" },
-  { code: "rw", hl: "rw", gl: "RW", ceid: "RW:rw" },
-  { code: "yo", hl: "yo", gl: "NG", ceid: "NG:yo" },
-  { code: "ha", hl: "ha", gl: "NG", ceid: "NG:ha" },
-  { code: "ps", hl: "ps", gl: "AF", ceid: "AF:ps" },
-  { code: "zh-TW", hl: "zh-TW", gl: "TW", ceid: "TW:zh-TW" },
-  { code: "jv", hl: "jv", gl: "ID", ceid: "ID:jv" },
-  { code: "ceb", hl: "ceb", gl: "PH", ceid: "PH:ceb" },
-  { code: "ig", hl: "ig", gl: "NG", ceid: "NG:ig" },
-  { code: "ny", hl: "ny", gl: "MW", ceid: "MW:ny" },
-  // Tier-7 — African languages + remaining world coverage
-  { code: "sn", hl: "sn", gl: "ZW", ceid: "ZW:sn" },
-  { code: "st", hl: "st", gl: "ZA", ceid: "ZA:st" },
-  { code: "ti", hl: "ti", gl: "ET", ceid: "ET:ti" },
-  { code: "om", hl: "om", gl: "ET", ceid: "ET:om" },
-  { code: "wo", hl: "wo", gl: "SN", ceid: "SN:wo" },
-  { code: "ln", hl: "ln", gl: "CD", ceid: "CD:ln" },
-  { code: "mg", hl: "mg", gl: "MG", ceid: "MG:mg" },
-  { code: "xh", hl: "xh", gl: "ZA", ceid: "ZA:xh" },
-  { code: "ee", hl: "ee", gl: "GH", ceid: "GH:ee" },
-  { code: "tw", hl: "tw", gl: "GH", ceid: "GH:tw" },
-  { code: "ky", hl: "ky", gl: "KG", ceid: "KG:ky" },
-  { code: "tg2", hl: "tg", gl: "AF", ceid: "AF:tg" },
-  // Tier-8: Central Asia / Caucasus
-  { code: "kk", hl: "kk", gl: "KZ", ceid: "KZ:kk" },
-  { code: "uz", hl: "uz", gl: "UZ", ceid: "UZ:uz" },
-  { code: "tk", hl: "tk", gl: "TM", ceid: "TM:tk" },
-  { code: "az", hl: "az", gl: "AZ", ceid: "AZ:az" },
-  { code: "ka", hl: "ka", gl: "GE", ceid: "GE:ka" },
-  { code: "hy", hl: "hy", gl: "AM", ceid: "AM:hy" },
-  { code: "tg", hl: "tg", gl: "TJ", ceid: "TJ:tg" },
-  // Tier-8: South Asia
-  { code: "bn", hl: "bn", gl: "BD", ceid: "BD:bn" },
-  { code: "ur", hl: "ur", gl: "PK", ceid: "PK:ur" },
-  { code: "ne", hl: "ne", gl: "NP", ceid: "NP:ne" },
-  { code: "si", hl: "si", gl: "LK", ceid: "LK:si" },
-  { code: "ta", hl: "ta", gl: "IN", ceid: "IN:ta" },
-  { code: "te", hl: "te", gl: "IN", ceid: "IN:te" },
-  { code: "ml", hl: "ml", gl: "IN", ceid: "IN:ml" },
-  { code: "kn", hl: "kn", gl: "IN", ceid: "IN:kn" },
-  { code: "gu", hl: "gu", gl: "IN", ceid: "IN:gu" },
-  { code: "mr", hl: "mr", gl: "IN", ceid: "IN:mr" },
-  { code: "pa", hl: "pa", gl: "IN", ceid: "IN:pa" },
-  // Tier-8: Southeast Asia
-  { code: "km", hl: "km", gl: "KH", ceid: "KH:km" },
-  { code: "my", hl: "my", gl: "MM", ceid: "MM:my" },
-  { code: "lo", hl: "lo", gl: "LA", ceid: "LA:lo" },
-  { code: "km2", hl: "km", gl: "KH", ceid: "KH:km" },
-  // Tier-8: East Asia
   { code: "ja", hl: "ja", gl: "JP", ceid: "JP:ja" },
   { code: "ko", hl: "ko", gl: "KR", ceid: "KR:ko" },
-  { code: "zh-TW", hl: "zh-TW", gl: "TW", ceid: "TW:zh-TW" },
-  // Tier-8: Eastern Europe
-  { code: "uk", hl: "uk", gl: "UA", ceid: "UA:uk" },
-  { code: "be", hl: "be", gl: "BY", ceid: "BY:be" },
-  { code: "sr", hl: "sr", gl: "RS", ceid: "RS:sr" },
-  { code: "hr", hl: "hr", gl: "HR", ceid: "HR:hr" },
-  { code: "bs", hl: "bs", gl: "BA", ceid: "BA:bs" },
-  { code: "mk", hl: "mk", gl: "MK", ceid: "MK:mk" },
-  { code: "sq", hl: "sq", gl: "AL", ceid: "AL:sq" },
-  { code: "sl", hl: "sl", gl: "SI", ceid: "SI:sl" },
-  { code: "sk", hl: "sk", gl: "SK", ceid: "SK:sk" },
-  { code: "lv", hl: "lv", gl: "LV", ceid: "LV:lv" },
-  { code: "lt", hl: "lt", gl: "LT", ceid: "LT:lt" },
-  { code: "et", hl: "et", gl: "EE", ceid: "EE:et" },
 ];
 
 
@@ -292,6 +157,12 @@ function stripHtml(s: string): string {
   return s.replace(/<[^>]*>/g, " ").replace(/&[a-z]+;/gi, " ").replace(/\s+/g, " ").trim();
 }
 
+// Strip diacritics so "halac" matches "Halaç", "ozcan" matches "Özcan", etc.
+function normalizeDiacritics(s: string): string {
+  // eslint-disable-next-line no-control-regex
+  return s.normalize("NFD").replace(/[̀-ͯ]/g, "");
+}
+
 // Sanitize RSS link fields: only allow https/http URLs — block javascript:,
 // data: and other dangerous schemes that could execute as href values.
 function sanitizeLink(raw: string): string {
@@ -346,11 +217,13 @@ function parseRss(xml: string, subject: string, variants: string[], lang: string
     // Supplement: token presence in full text (title + snippet) catches
     // articles where the person's name appears in the body but not the
     // headline. Cap at 0.72 so a genuine title match always outranks it.
+    // Diacritics are stripped so "halac" matches "Halaç", "ozcan" → "Özcan".
     if (fuzzyScore < 0.72) {
+      const fullTextNorm = normalizeDiacritics(fullTextLower);
       for (const v of variants) {
-        const vTokens = v.toLowerCase().split(/\s+/).filter((t) => t.length >= 3);
+        const vTokens = normalizeDiacritics(v.toLowerCase()).split(/\s+/).filter((t) => t.length >= 3);
         if (vTokens.length === 0) continue;
-        const hits = vTokens.filter((t) => fullTextLower.includes(t)).length;
+        const hits = vTokens.filter((t) => fullTextNorm.includes(t)).length;
         const tokenScore = (hits / vTokens.length) * 0.72;
         if (tokenScore > fuzzyScore) {
           fuzzyScore = tokenScore;
@@ -385,10 +258,9 @@ function parseRss(xml: string, subject: string, variants: string[], lang: string
 // blocking the others.
 const FEED_TIMEOUT_MS = 2_000;
 
-// Overall timebox for the whole fan-out. We return with whatever articles
-// have arrived by this deadline so a slow Google News cluster never burns
-// the full 30s maxDuration budget.
-const OVERALL_TIMEBOX_MS = 7_500;
+// Overall timebox for the whole fan-out. 15 locales × 2s per feed run in
+// parallel — 2.5s is enough for all healthy feeds to complete.
+const OVERALL_TIMEBOX_MS = 2_500;
 
 async function fetchLocaleFeed(
   q: string,
@@ -611,9 +483,10 @@ export async function GET(req: Request): Promise<NextResponse> {
           fuzzyMethod = m.best.method;
         }
         if (fuzzyScore < 0.72) {
-          const vTokens = v.toLowerCase().split(/\s+/).filter((t) => t.length >= 3);
+          const fullTextNorm2 = normalizeDiacritics(fullTextLower);
+          const vTokens = normalizeDiacritics(v.toLowerCase()).split(/\s+/).filter((t) => t.length >= 3);
           if (vTokens.length > 0) {
-            const hits = vTokens.filter((t) => fullTextLower.includes(t)).length;
+            const hits = vTokens.filter((t) => fullTextNorm2.includes(t)).length;
             const ts = (hits / vTokens.length) * 0.72;
             if (ts > fuzzyScore) { fuzzyScore = ts; fuzzyMethod = "token_presence"; }
           }
@@ -634,12 +507,11 @@ export async function GET(req: Request): Promise<NextResponse> {
       });
     }
     const filtered = Array.from(merged.values())
-      // Fuzzy gate: require either a strong name match (≥75) OR a weak name
-      // match (≥55) combined with at least one adverse keyword group. The OR-only
-      // form (fuzzyScore≥55 OR keywords>0) was too permissive: generic gold-market
-      // articles with no name match passed via keywords alone, polluting the
-      // dossier with unrelated content and causing false-positive composite scores.
-      .filter((a) => a.fuzzyScore >= 75 || (a.fuzzyScore >= 55 && a.keywordGroups.length > 0))
+      // Fuzzy gate: require either a strong name match (≥70) OR a weak name
+      // match (≥55) combined with at least one adverse keyword group.
+      // Threshold lowered to 70: token_presence caps at 0.72 (→ score 72) so
+      // a full two-token name match was blocked at the old 75 threshold.
+      .filter((a) => a.fuzzyScore >= 70 || (a.fuzzyScore >= 55 && a.keywordGroups.length > 0))
       .sort((a, b) => b.fuzzyScore - a.fuzzyScore);
     // Cluster near-duplicate articles into events. Two articles belong
     // to the same event when their normalised titles share ≥ 70% of

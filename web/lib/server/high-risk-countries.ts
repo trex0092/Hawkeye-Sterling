@@ -51,7 +51,7 @@ const COUNTRY_RISK_MAP = new Map<string, CountryRiskEntry>([
   ["SS", { iso2: "SS", name: "South Sudan", tier: "greylist", basis: ["FATF greylist"] }],
   ["SY", { iso2: "SY", name: "Syria", tier: "greylist", basis: ["FATF greylist", "UN sanctions"] }],
   ["TN", { iso2: "TN", name: "Tunisia", tier: "greylist", basis: ["FATF greylist"] }],
-  ["TR", { iso2: "TR", name: "Turkey", tier: "greylist", basis: ["FATF greylist"] }],
+  ["TR", { iso2: "TR", name: "Turkey", tier: "elevated", basis: ["EU AML high-risk third country", "CAHRA"] }],
   ["TZ", { iso2: "TZ", name: "Tanzania", tier: "greylist", basis: ["FATF greylist"] }],
   ["UG", { iso2: "UG", name: "Uganda", tier: "greylist", basis: ["FATF greylist"] }],
   ["VN", { iso2: "VN", name: "Vietnam", tier: "greylist", basis: ["FATF greylist"] }],

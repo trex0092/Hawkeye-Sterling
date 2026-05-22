@@ -34,7 +34,8 @@ const HIGH_RISK_ISSUER_COUNTRIES = new Set([
   'IR', 'KP',                     // FATF call-for-action
   'MM',                            // FATF call-for-action (Myanmar)
   'AF', 'AL', 'BB', 'BF', 'KH', 'CD', 'GI', 'HT', 'JM', 'JO', 'ML',
-  'MZ', 'NI', 'PA', 'PH', 'SN', 'SS', 'SY', 'TZ', 'TR', 'UG', 'AE_FZ_HIGH', 'YE',
+  'MZ', 'NI', 'PA', 'PH', 'SN', 'SS', 'SY', 'TZ', 'UG', 'AE_FZ_HIGH', 'YE',
+  'TR',  // EU AML high-risk 3rd country + CAHRA; removed from FATF grey list Jun 2024
 ]);
 
 export const lcConfirmationGapApply = async (ctx: BrainContext): Promise<Finding> => {
