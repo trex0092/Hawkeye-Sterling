@@ -167,7 +167,7 @@ jobs:
       - name: Web typecheck
         run: cd web && npm run typecheck
       - name: ESLint (root)
-        run: npx eslint src/ --max-warnings=0
+        run: npm run lint
       - name: ESLint (web app + lib)
         # next lint covers app/, lib/, components/ using web/.eslintrc.json.
         # This catches prefer-const, no-explicit-any, and other violations
