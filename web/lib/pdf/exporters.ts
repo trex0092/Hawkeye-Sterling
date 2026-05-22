@@ -496,3 +496,87 @@ export function exportMlroMemo(memo: MlroMemoInput): void {
     sections,
   });
 }
+
+// ─── Risk Profile Summary ────────────────────────────────────────────────────
+
+interface RiskProfileForExport {
+  entityName: string;
+  entityOverview: { entityType: string; sector: string; jurisdiction: string; riskScore: number; adverseMedia: boolean };
+  inherentRiskFactors: Array<{ title: string; level: string; bullets: string[] }>;
+  mitigatingFactors: Array<{ factor: string; impact: string }>;
+  residualRiskAssessment: Array<{ dimension: string; rating: string }>;
+  overallResidualRisk: string;
+  dueDiligenceActions: string[];
+  redFlagsToWatch: string[];
+  conclusion: { narrative: string; onboardingDecision: string; onboardingRationale: string };
+}
+
+export function exportRiskProfileSummary(data: RiskProfileForExport): void {
+  const ratingLabel = (r: string) =>
+    r === "high" ? "HIGH" : r === "medium" ? "MEDIUM" : r === "low" ? "LOW" : "N/A";
+  const levelLabel = (l: string) => l.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  const decisionLabel = (d: string) =>
+    d === "proceed_standard" ? "Proceed — Standard Due Diligence"
+    : d === "proceed_standard_plus" ? "Proceed — Standard + Enhanced Monitoring"
+    : d === "proceed_edd" ? "Proceed — Enhanced Due Diligence Required"
+    : d === "escalate" ? "Escalate — Senior Management Approval Required"
+    : "Decline — Do Not Onboard";
+
+  const sections: PdfSection[] = [
+    { type: "header", content: `Risk Profile Summary: ${data.entityName}` },
+    { type: "subheader", content: "Entity Overview" },
+    {
+      type: "keyvalue",
+      pairs: [
+        { label: "Entity Type", value: data.entityOverview.entityType },
+        { label: "Sector", value: data.entityOverview.sector },
+        { label: "Jurisdiction", value: data.entityOverview.jurisdiction },
+        { label: "Risk Score", value: `${data.entityOverview.riskScore} / 100` },
+        { label: "Adverse Media", value: data.entityOverview.adverseMedia ? "Detected" : "None Detected" },
+      ],
+    },
+    { type: "divider" },
+    { type: "subheader", content: "Inherent Risk Factors" },
+    ...data.inherentRiskFactors.flatMap((f, i): PdfSection[] => [
+      { type: "paragraph", content: `${i + 1}. ${f.title} [${levelLabel(f.level)}]` },
+      ...f.bullets.map((b): PdfSection => ({ type: "paragraph", content: `   • ${b}` })),
+    ]),
+    { type: "divider" },
+    { type: "subheader", content: "Mitigating Factors" },
+    {
+      type: "table",
+      columns: ["Factor", "Impact"],
+      rows: data.mitigatingFactors.map((m) => [m.factor, m.impact]),
+    },
+    { type: "divider" },
+    { type: "subheader", content: "Residual Risk Assessment" },
+    {
+      type: "table",
+      columns: ["Risk Dimension", "Rating"],
+      rows: data.residualRiskAssessment.map((r) => [r.dimension, ratingLabel(r.rating)]),
+    },
+    { type: "paragraph", content: `Overall Residual Risk: ${ratingLabel(data.overallResidualRisk)}` },
+    { type: "divider" },
+    { type: "subheader", content: "Recommended Due Diligence Actions" },
+    ...data.dueDiligenceActions.map((a, i): PdfSection => ({ type: "paragraph", content: `${i + 1}. ${a}` })),
+    { type: "divider" },
+    { type: "subheader", content: "Key Red Flags to Watch For" },
+    ...data.redFlagsToWatch.map((f): PdfSection => ({ type: "paragraph", content: `• ${f}` })),
+    { type: "divider" },
+    { type: "subheader", content: "Conclusion" },
+    { type: "paragraph", content: data.conclusion.narrative },
+    { type: "paragraph", content: `Recommended Onboarding Decision: ${decisionLabel(data.conclusion.onboardingDecision)}` },
+    { type: "paragraph", content: data.conclusion.onboardingRationale },
+  ];
+
+  exportToPdf({
+    title: "Risk Profile Summary",
+    subtitle: data.entityName,
+    moduleName: "MLRO Advisory",
+    reportRef: `RPS-${Date.now()}`,
+    institution: "Hawkeye Sterling DPMS",
+    regulatoryBasis: "UAE FDL 10/2025 · FATF Recommendations · CBUAE AML Standards",
+    confidential: true,
+    sections,
+  });
+}

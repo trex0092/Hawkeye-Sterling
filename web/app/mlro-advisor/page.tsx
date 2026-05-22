@@ -5,7 +5,7 @@ import { ModuleLayout, ModuleHero } from "@/components/layout/ModuleLayout";
 import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 import { StrDraftModal } from "@/components/shared/StrDraftModal";
 import { downloadEvidencePack, type EvidencePackEntry } from "@/lib/evidencePack";
-import { exportMlroMemo } from "@/lib/pdf/exporters";
+import { exportMlroMemo, exportRiskProfileSummary } from "@/lib/pdf/exporters";
 import { findApplicableConflicts, type JurisdictionalConflict } from "@/lib/jurisdictionalConflicts";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -270,6 +270,39 @@ interface SubjectBrief {
   keyQuestions: string[];
   dueDiligenceChecklist: string[];
   regulatoryContext: string;
+}
+
+interface RiskProfileSummaryResult {
+  entityOverview: {
+    entityType: string;
+    sector: string;
+    jurisdiction: string;
+    riskScore: number;
+    adverseMedia: boolean;
+  };
+  inherentRiskFactors: Array<{
+    title: string;
+    level: "elevated" | "high" | "medium-high" | "medium" | "low";
+    bullets: string[];
+  }>;
+  mitigatingFactors: Array<{ factor: string; impact: string }>;
+  residualRiskAssessment: Array<{
+    dimension: string;
+    rating: "high" | "medium" | "low" | "not_indicated";
+  }>;
+  overallResidualRisk: "high" | "medium" | "low";
+  dueDiligenceActions: string[];
+  redFlagsToWatch: string[];
+  conclusion: {
+    narrative: string;
+    onboardingDecision:
+      | "proceed_standard"
+      | "proceed_standard_plus"
+      | "proceed_edd"
+      | "escalate"
+      | "decline";
+    onboardingRationale: string;
+  };
 }
 
 interface PepPersonToScreen {
@@ -1853,7 +1886,7 @@ export default function MlroAdvisorPage() {
   }, [qaQuery, qaDepth, qaUseTools, mountedRef]);
 
   // ── Super Tools state ────────────────────────────────────────────────────────
-  const [superToolsTab, setSuperToolsTab] = useState<"escalation"|"flags"|"patterns"|"brief"|"pep-network"|"sanctions-nexus"|"typology-match"|"txn-narrative"|"edd-questionnaire"|"tbml"|"str-narrative"|"wire-r16"|"pf-screener"|"mlro-memo"|"tf-screener"|"shell-detector"|"adverse-classify"|"case-timeline"|"ml-predicate"|"client-risk"|"jurisdiction-intel"|"ubo-risk"|"benford"|"crypto-wallet"|"onboarding-tier"|"prolif-finance"|"sar-triage"|"doc-fraud"|"ctr-structuring"|"dnfbp-obligations"|"cdd-refresh"|"vasp-risk"|"goaml-validator"|"pep-edd"|"sanctions-mapper"|"layering-detector"|"real-estate-ml"|"asset-tracer"|"sow-calculator"|"insider-threat-screen"|"board-aml-report"|"enforcement-exposure"|"inter-agency-referral"|"policy-reviewer"|"compliance-test-planner"|"swift-lc-analyzer"|"regulatory-calendar"|"ewra-generator"|"aml-programme-gap"|"trade-invoice-analyzer"|"network-mapper"|"risk-appetite-builder"|"regulatory-exam-prep"|"npo-risk"|"correspondent-bank"|"mixed-funds"|"sanctions-breach"|"freeze-seizure"|"audit-response"|"high-net-worth"|"cash-intensive"|"trust-structures"|"cross-border-wire"|"fiu-feedback"|"derisking-impact"|"legal-privilege"|"ml-scenario"|"staff-alert"|"str-quality"|"hawala-detector"|"nominee-risk"|"pep-corporate"|"crypto-mixing"|"ghost-company"|"pkeyc-planner"|"whistleblower"|"trade-finance-rf"|"sanctions-exposure-calc"|"customer-lifecycle"|"pep-screening-enhance"|"aml-training-gap"|"beneficial-owner-verify"|"aml-kpi-dashboard"|"trade-finance-risk"|"insider-threat"|"crypto-tracing"|"investment-fraud"|"bec-fraud"|"cash-courier"|"nft-wash"|"carbon-fraud"|"darknet-exposure"|"drug-trafficking"|"human-trafficking-fin"|"arms-trafficking"|"corruption-bribery"|"tax-evasion-fin"|"cybercrime-proceeds"|"market-manipulation"|"insurance-fraud"|"mortgage-fraud"|"identity-theft"|"elder-fraud"|"ransomware-response"|"fraud-network"|"fatf-evaluation-prep"|"vara-compliance"|"cbuae-exam"|"eu-amla"|"mica-compliance"|"dora-resilience"|"aml-framework-gap"|"regulatory-breach-notice"|"remediation-planner"|"mou-treaty"|"finma-compliance"|"mas-compliance"|"fca-compliance"|"bafin-compliance"|"basel-aml-index"|"egmont-fiu"|"wolfsberg-principles"|"palermo-convention"|"vienna-convention"|"fatf-grey-impact"|"digital-identity"|"synthetic-identity"|"deepfake-kyc"|"adverse-media-deep"|"sow-substantiator"|"corporate-registry"|"entity-resolution"|"politically-sensitive"|"dual-nationality"|"high-risk-profession"|"local-kyc-requirements"|"ekyc-risk"|"perpetual-kyc"|"beneficial-ownership-calc"|"corporate-complexity"|"velocity-analyzer"|"peer-group-anomaly"|"round-trip-detector"|"funnel-account"|"dormant-reactivation"|"currency-mismatch"|"ach-fraud"|"wire-transfer-risk"|"high-freq-trading"|"payment-routing"|"refund-arbitrage"|"correspondent-chain"|"remittance-risk"|"atm-pattern"|"casino-chip"|"luxury-goods"|"art-provenance"|"superyacht-jet"|"agri-commodities"|"precious-stones"|"gaming-sector"|"fintech-risk"|"fund-administration"|"private-equity"|"hedge-fund"|"family-office"|"free-zone"|"foundation-risk"|"crowdfunding"|"p2p-lending"|"geopolitical-risk"|"network-centrality"|"follow-the-money"|"causal-chain"|"evidence-assessment"|"witness-statement"|"open-source-intel"|"court-order-drafter"|"law-enforcement-liaison"|"mutual-legal-assistance"|"asset-recovery"|"forfeiture-analysis"|"whistleblower-protect"|"regtech-assessment"|"aml-innovation">("escalation");
+  const [superToolsTab, setSuperToolsTab] = useState<"escalation"|"flags"|"patterns"|"brief"|"risk-profile-summary"|"pep-network"|"sanctions-nexus"|"typology-match"|"txn-narrative"|"edd-questionnaire"|"tbml"|"str-narrative"|"wire-r16"|"pf-screener"|"mlro-memo"|"tf-screener"|"shell-detector"|"adverse-classify"|"case-timeline"|"ml-predicate"|"client-risk"|"jurisdiction-intel"|"ubo-risk"|"benford"|"crypto-wallet"|"onboarding-tier"|"prolif-finance"|"sar-triage"|"doc-fraud"|"ctr-structuring"|"dnfbp-obligations"|"cdd-refresh"|"vasp-risk"|"goaml-validator"|"pep-edd"|"sanctions-mapper"|"layering-detector"|"real-estate-ml"|"asset-tracer"|"sow-calculator"|"insider-threat-screen"|"board-aml-report"|"enforcement-exposure"|"inter-agency-referral"|"policy-reviewer"|"compliance-test-planner"|"swift-lc-analyzer"|"regulatory-calendar"|"ewra-generator"|"aml-programme-gap"|"trade-invoice-analyzer"|"network-mapper"|"risk-appetite-builder"|"regulatory-exam-prep"|"npo-risk"|"correspondent-bank"|"mixed-funds"|"sanctions-breach"|"freeze-seizure"|"audit-response"|"high-net-worth"|"cash-intensive"|"trust-structures"|"cross-border-wire"|"fiu-feedback"|"derisking-impact"|"legal-privilege"|"ml-scenario"|"staff-alert"|"str-quality"|"hawala-detector"|"nominee-risk"|"pep-corporate"|"crypto-mixing"|"ghost-company"|"pkeyc-planner"|"whistleblower"|"trade-finance-rf"|"sanctions-exposure-calc"|"customer-lifecycle"|"pep-screening-enhance"|"aml-training-gap"|"beneficial-owner-verify"|"aml-kpi-dashboard"|"trade-finance-risk"|"insider-threat"|"crypto-tracing"|"investment-fraud"|"bec-fraud"|"cash-courier"|"nft-wash"|"carbon-fraud"|"darknet-exposure"|"drug-trafficking"|"human-trafficking-fin"|"arms-trafficking"|"corruption-bribery"|"tax-evasion-fin"|"cybercrime-proceeds"|"market-manipulation"|"insurance-fraud"|"mortgage-fraud"|"identity-theft"|"elder-fraud"|"ransomware-response"|"fraud-network"|"fatf-evaluation-prep"|"vara-compliance"|"cbuae-exam"|"eu-amla"|"mica-compliance"|"dora-resilience"|"aml-framework-gap"|"regulatory-breach-notice"|"remediation-planner"|"mou-treaty"|"finma-compliance"|"mas-compliance"|"fca-compliance"|"bafin-compliance"|"basel-aml-index"|"egmont-fiu"|"wolfsberg-principles"|"palermo-convention"|"vienna-convention"|"fatf-grey-impact"|"digital-identity"|"synthetic-identity"|"deepfake-kyc"|"adverse-media-deep"|"sow-substantiator"|"corporate-registry"|"entity-resolution"|"politically-sensitive"|"dual-nationality"|"high-risk-profession"|"local-kyc-requirements"|"ekyc-risk"|"perpetual-kyc"|"beneficial-ownership-calc"|"corporate-complexity"|"velocity-analyzer"|"peer-group-anomaly"|"round-trip-detector"|"funnel-account"|"dormant-reactivation"|"currency-mismatch"|"ach-fraud"|"wire-transfer-risk"|"high-freq-trading"|"payment-routing"|"refund-arbitrage"|"correspondent-chain"|"remittance-risk"|"atm-pattern"|"casino-chip"|"luxury-goods"|"art-provenance"|"superyacht-jet"|"agri-commodities"|"precious-stones"|"gaming-sector"|"fintech-risk"|"fund-administration"|"private-equity"|"hedge-fund"|"family-office"|"free-zone"|"foundation-risk"|"crowdfunding"|"p2p-lending"|"geopolitical-risk"|"network-centrality"|"follow-the-money"|"causal-chain"|"evidence-assessment"|"witness-statement"|"open-source-intel"|"court-order-drafter"|"law-enforcement-liaison"|"mutual-legal-assistance"|"asset-recovery"|"forfeiture-analysis"|"whistleblower-protect"|"regtech-assessment"|"aml-innovation">("escalation");
 
   // Escalation engine
   const [escSubject, setEscSubject] = useState("");
@@ -1882,6 +1915,19 @@ export default function MlroAdvisorPage() {
   const [briefEntityType, setBriefEntityType] = useState("");
   const [briefResult, setBriefResult] = useState<SubjectBrief | null>(null);
   const [briefLoading, setBriefLoading] = useState(false);
+
+  // Risk Profile Summary
+  const [rpsInput, setRpsInput] = useState({
+    entityName: "",
+    entityType: "",
+    sector: "",
+    jurisdiction: "",
+    riskScore: 45,
+    adverseMedia: false,
+    context: "",
+  });
+  const [rpsResult, setRpsResult] = useState<RiskProfileSummaryResult | null>(null);
+  const [rpsLoading, setRpsLoading] = useState(false);
 
   // PEP Network
   const [pepNet, setPepNet] = useState<PepNetwork | null>(null);
@@ -3344,6 +3390,24 @@ export default function MlroAdvisorPage() {
     finally { if (mountedRef.current) setBriefLoading(false); }
   };
 
+  const runRiskProfileSummary = async () => {
+    if (!rpsInput.entityName.trim()) return;
+    setRpsLoading(true);
+    setRpsResult(null);
+    try {
+      const res = await fetch("/api/mlro-advisor/risk-profile-summary", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(rpsInput),
+      });
+      if (!res.ok) { const b = await res.json().catch(() => ({})) as { error?: string }; throw new Error(b.error ?? `Request failed (HTTP ${res.status}) — please retry`); }
+      const data = await res.json().catch(() => ({})) as { ok: boolean } & RiskProfileSummaryResult;
+      if (!mountedRef.current) return;
+      if (data.ok) setRpsResult(data);
+    } catch (err) { if (mountedRef.current) setToolErrors((p) => ({ ...p, ["riskProfileSummary"]: err instanceof Error ? err.message : "Request failed — please retry" })); }
+    finally { if (mountedRef.current) setRpsLoading(false); }
+  };
+
   const runPepNetwork = async () => {
     if (!pepInput.name.trim()) return;
     setPepNetLoading(true);
@@ -4170,6 +4234,7 @@ export default function MlroAdvisorPage() {
               <option value="flags">🚩 Red Flag Extractor</option>
               <option value="patterns">📊 Case Patterns</option>
               <option value="brief">📋 Subject Brief</option>
+              <option value="risk-profile-summary">🛡 Risk Profile Summary</option>
               <option value="pep-network">🕸 PEP Network</option>
               <option value="sanctions-nexus">🔒 Sanctions Nexus</option>
               <option value="typology-match">🎯 Typology Match</option>
@@ -4608,6 +4673,376 @@ export default function MlroAdvisorPage() {
                         </div>
                       )}
                       <div className="text-10 font-mono text-ink-3">{b.regulatoryContext}</div>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
+            {/* Risk Profile Summary */}
+            {superToolsTab === "risk-profile-summary" && (
+              <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-4">
+                <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">Risk Profile Summary</div>
+                <p className="text-11 text-ink-3">AI-generated structured risk profile — entity overview, inherent risk factors, mitigating factors, residual risk assessment, due diligence actions, red flags, and onboarding decision.</p>
+
+                {/* Input form */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="md:col-span-2">
+                    <label className="block text-10 text-ink-3 mb-1">Entity name *</label>
+                    <input
+                      value={rpsInput.entityName}
+                      onChange={(e) => setRpsInput((p) => ({ ...p, entityName: e.target.value }))}
+                      placeholder="Full name or entity name"
+                      className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-10 text-ink-3 mb-1">Entity type</label>
+                    <select
+                      value={rpsInput.entityType}
+                      onChange={(e) => setRpsInput((p) => ({ ...p, entityType: e.target.value }))}
+                      className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0"
+                    >
+                      <option value="">— select —</option>
+                      <option value="Individual Trader">Individual Trader</option>
+                      <option value="Individual / Commodity Dealer">Individual / Commodity Dealer</option>
+                      <option value="Corporate">Corporate</option>
+                      <option value="Financial Institution">Financial Institution</option>
+                      <option value="VASP">Virtual Asset Service Provider (VASP)</option>
+                      <option value="DPMS">Precious Metals Dealer (DPMS)</option>
+                      <option value="Non-Profit Organization">Non-Profit Organization (NPO)</option>
+                      <option value="Fund / Investment Vehicle">Fund / Investment Vehicle</option>
+                      <option value="Real Estate Entity">Real Estate Entity</option>
+                      <option value="Trust / Foundation">Trust / Foundation</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-10 text-ink-3 mb-1">Sector</label>
+                    <input
+                      value={rpsInput.sector}
+                      onChange={(e) => setRpsInput((p) => ({ ...p, sector: e.target.value }))}
+                      placeholder="e.g. Precious Metals — Gold, Real Estate, Crypto…"
+                      className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-10 text-ink-3 mb-1">Jurisdiction</label>
+                    <input
+                      value={rpsInput.jurisdiction}
+                      onChange={(e) => setRpsInput((p) => ({ ...p, jurisdiction: e.target.value }))}
+                      placeholder="e.g. Turkey, AE, Iran…"
+                      className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-10 text-ink-3 mb-1">Risk score: {rpsInput.riskScore} / 100</label>
+                    <input
+                      type="range"
+                      min={0}
+                      max={100}
+                      value={rpsInput.riskScore}
+                      onChange={(e) => setRpsInput((p) => ({ ...p, riskScore: Number(e.target.value) }))}
+                      className="w-full accent-brand"
+                    />
+                    <div className="flex justify-between text-10 text-ink-3 mt-0.5">
+                      <span>0 · Low</span><span>50 · Medium</span><span>100 · High</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 pt-3">
+                    <label className="block text-10 text-ink-3">Adverse media detected?</label>
+                    <button
+                      type="button"
+                      onClick={() => setRpsInput((p) => ({ ...p, adverseMedia: !p.adverseMedia }))}
+                      className={`px-3 py-1 rounded border text-11 font-semibold transition-colors ${
+                        rpsInput.adverseMedia
+                          ? "bg-red-dim text-red border-red/40"
+                          : "bg-green-dim text-green border-green/40"
+                      }`}
+                    >
+                      {rpsInput.adverseMedia ? "Yes — Detected" : "None Detected"}
+                    </button>
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-10 text-ink-3 mb-1">Additional context (optional)</label>
+                    <textarea
+                      value={rpsInput.context}
+                      onChange={(e) => setRpsInput((p) => ({ ...p, context: e.target.value }))}
+                      rows={2}
+                      placeholder="Business description, transaction history, counterparties, key concerns…"
+                      className="w-full text-12 px-2.5 py-2 rounded border border-hair-2 bg-bg-1 text-ink-0 resize-y focus:outline-none focus:border-brand"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => void runRiskProfileSummary()}
+                  disabled={rpsLoading || !rpsInput.entityName.trim()}
+                  className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40"
+                >
+                  {rpsLoading ? "Generating…" : "Generate Risk Profile Summary"}
+                </button>
+
+                {toolErrors["riskProfileSummary"] && (
+                  <div className="rounded border border-red/30 bg-red-dim px-3 py-2 text-11 text-red">
+                    ⚠ {toolErrors["riskProfileSummary"]}
+                  </div>
+                )}
+
+                {/* Output */}
+                {rpsResult && (() => {
+                  const r = rpsResult;
+                  const ratingCls = (rating: string) =>
+                    rating === "high" ? "bg-red-dim text-red" :
+                    rating === "medium" ? "bg-amber-dim text-amber" :
+                    rating === "low" ? "bg-green-dim text-green" :
+                    "bg-bg-1 text-ink-3";
+                  const ratingDot = (rating: string) =>
+                    rating === "high" ? "🔴" :
+                    rating === "medium" ? "🟡" :
+                    rating === "low" ? "🟢" : "⚪";
+                  const levelCls = (level: string) =>
+                    level === "elevated" || level === "high" ? "text-red" :
+                    level === "medium-high" || level === "medium" ? "text-amber" :
+                    "text-green";
+                  const decisionCls = (d: string) =>
+                    d === "proceed_standard" || d === "proceed_standard_plus" ? "bg-green-dim text-green border-green/40" :
+                    d === "proceed_edd" ? "bg-amber-dim text-amber border-amber/40" :
+                    "bg-red-dim text-red border-red/40";
+                  const decisionLabel = (d: string) =>
+                    d === "proceed_standard" ? "✅ Proceed — Standard Due Diligence" :
+                    d === "proceed_standard_plus" ? "✅ Proceed — Standard + Enhanced Monitoring" :
+                    d === "proceed_edd" ? "🟡 Proceed — Enhanced Due Diligence Required" :
+                    d === "escalate" ? "🔴 Escalate — Senior Management Approval Required" :
+                    "🔴 Decline — Do Not Onboard";
+
+                  return (
+                    <div className="space-y-4 border border-hair-2 rounded-lg p-4 bg-bg-1">
+
+                      {/* Export bar */}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-11 font-semibold text-ink-0">Risk Profile Summary: {r.entityOverview.entityType || rpsInput.entityName}</span>
+                        <button
+                          type="button"
+                          onClick={() => exportRiskProfileSummary({ entityName: rpsInput.entityName, ...r })}
+                          className="ml-auto text-11 font-semibold px-2.5 py-1 rounded border transition-colors"
+                          style={{ color: "#7c3aed", borderColor: "#7c3aed", background: "rgba(124,58,237,0.07)" }}
+                        >PDF</button>
+                        <AsanaReportButton payload={{
+                          module: "mlro-advisor",
+                          label: `Risk Profile Summary · ${rpsInput.entityName} · ${r.overallResidualRisk.toUpperCase()} risk`,
+                          summary: `Entity: ${rpsInput.entityName} | Type: ${r.entityOverview.entityType} | Sector: ${r.entityOverview.sector} | Jurisdiction: ${r.entityOverview.jurisdiction} | Risk score: ${r.entityOverview.riskScore}/100 | Overall residual risk: ${r.overallResidualRisk} | Decision: ${r.conclusion.onboardingDecision}`,
+                          metadata: { overallRisk: r.overallResidualRisk, decision: r.conclusion.onboardingDecision, riskScore: r.entityOverview.riskScore },
+                        }} />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const lines = [
+                              `RISK PROFILE SUMMARY — ${rpsInput.entityName}`,
+                              "=".repeat(60),
+                              `Entity Type: ${r.entityOverview.entityType}`,
+                              `Sector: ${r.entityOverview.sector}`,
+                              `Jurisdiction: ${r.entityOverview.jurisdiction}`,
+                              `Risk Score: ${r.entityOverview.riskScore}/100`,
+                              `Adverse Media: ${r.entityOverview.adverseMedia ? "Detected" : "None Detected"}`,
+                              "",
+                              "INHERENT RISK FACTORS",
+                              ...r.inherentRiskFactors.flatMap((f, i) => [`${i+1}. ${f.title} [${f.level.toUpperCase()}]`, ...f.bullets.map(b => `   • ${b}`), ""]),
+                              "MITIGATING FACTORS",
+                              ...r.mitigatingFactors.map(m => `• ${m.factor}: ${m.impact}`),
+                              "",
+                              "RESIDUAL RISK ASSESSMENT",
+                              ...r.residualRiskAssessment.map(d => `${d.dimension}: ${d.rating.toUpperCase()}`),
+                              `Overall Residual Risk: ${r.overallResidualRisk.toUpperCase()}`,
+                              "",
+                              "DUE DILIGENCE ACTIONS",
+                              ...r.dueDiligenceActions.map((a, i) => `${i+1}. ${a}`),
+                              "",
+                              "RED FLAGS TO WATCH",
+                              ...r.redFlagsToWatch.map(f => `• ${f}`),
+                              "",
+                              "CONCLUSION",
+                              r.conclusion.narrative,
+                              `Decision: ${r.conclusion.onboardingDecision.replace(/_/g, " ")}`,
+                              r.conclusion.onboardingRationale,
+                            ];
+                            void navigator.clipboard.writeText(lines.join("\n"));
+                          }}
+                          className="text-10 font-mono text-brand hover:text-brand-deep border border-brand/30 px-2 py-px rounded"
+                        >Copy</button>
+                      </div>
+
+                      {/* Entity Overview */}
+                      <div>
+                        <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-2">📋 Entity Overview</div>
+                        <table className="w-full text-12 border-collapse">
+                          <thead>
+                            <tr className="bg-bg-panel">
+                              <th className="text-left px-3 py-2 border border-hair-2 text-10 font-semibold text-ink-2 w-40">Field</th>
+                              <th className="text-left px-3 py-2 border border-hair-2 text-10 font-semibold text-ink-2">Detail</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr><td className="px-3 py-2 border border-hair-2 text-ink-2 font-medium">Entity Type</td><td className="px-3 py-2 border border-hair-2 text-brand">{r.entityOverview.entityType}</td></tr>
+                            <tr><td className="px-3 py-2 border border-hair-2 text-ink-2 font-medium">Sector</td><td className="px-3 py-2 border border-hair-2 text-brand">{r.entityOverview.sector}</td></tr>
+                            <tr><td className="px-3 py-2 border border-hair-2 text-ink-2 font-medium">Jurisdiction</td><td className="px-3 py-2 border border-hair-2 text-brand">{r.entityOverview.jurisdiction}</td></tr>
+                            <tr>
+                              <td className="px-3 py-2 border border-hair-2 text-ink-2 font-medium">Risk Score</td>
+                              <td className="px-3 py-2 border border-hair-2">
+                                <span className={`font-mono font-bold text-11 ${r.entityOverview.riskScore >= 70 ? "text-red" : r.entityOverview.riskScore >= 40 ? "text-amber" : "text-green"}`}>
+                                  {r.entityOverview.riskScore} / 100
+                                </span>
+                                <span className="text-10 text-ink-3 ml-2 italic">
+                                  ({r.entityOverview.riskScore >= 70 ? "High" : r.entityOverview.riskScore >= 40 ? "Medium" : "Low"})
+                                </span>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td className="px-3 py-2 border border-hair-2 text-ink-2 font-medium">Adverse Media</td>
+                              <td className="px-3 py-2 border border-hair-2">
+                                <span className={r.entityOverview.adverseMedia ? "text-red" : "text-green"}>
+                                  {r.entityOverview.adverseMedia ? "⚠ Detected" : "✅ None Detected"}
+                                </span>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Inherent Risk Factors */}
+                      {r.inherentRiskFactors.length > 0 && (
+                        <div>
+                          <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-2">🔴 Inherent Risk Factors</div>
+                          <p className="text-11 text-ink-3 mb-3">These are structural risks that apply regardless of the individual&apos;s conduct:</p>
+                          <div className="space-y-3">
+                            {r.inherentRiskFactors.map((f, i) => (
+                              <div key={i}>
+                                <div className="text-12 font-semibold text-ink-0 mb-1">
+                                  {i + 1}.{" "}
+                                  <span className={levelCls(f.level)}>
+                                    {f.title}
+                                  </span>
+                                </div>
+                                <ul className="ml-4 space-y-1">
+                                  {f.bullets.map((b, j) => (
+                                    <li key={j} className="text-12 text-ink-1 flex gap-2">
+                                      <span className="text-ink-3 mt-0.5">•</span>
+                                      <span dangerouslySetInnerHTML={{ __html: b.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>") }} />
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Mitigating Factors */}
+                      {r.mitigatingFactors.length > 0 && (
+                        <div>
+                          <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-2">🟢 Mitigating Factors</div>
+                          <table className="w-full text-12 border-collapse">
+                            <thead>
+                              <tr className="bg-bg-panel">
+                                <th className="text-left px-3 py-2 border border-hair-2 text-10 font-semibold text-ink-2 w-1/3">Factor</th>
+                                <th className="text-left px-3 py-2 border border-hair-2 text-10 font-semibold text-ink-2">Impact</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {r.mitigatingFactors.map((m, i) => (
+                                <tr key={i}>
+                                  <td className="px-3 py-2 border border-hair-2 text-ink-1 font-medium">{m.factor}</td>
+                                  <td className="px-3 py-2 border border-hair-2 text-ink-2">{m.impact}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+
+                      {/* Residual Risk Assessment */}
+                      <div>
+                        <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-2">🟡 Residual Risk Assessment</div>
+                        <table className="w-full text-12 border-collapse">
+                          <thead>
+                            <tr className="bg-bg-panel">
+                              <th className="text-left px-3 py-2 border border-hair-2 text-10 font-semibold text-ink-2">Risk Dimension</th>
+                              <th className="text-left px-3 py-2 border border-hair-2 text-10 font-semibold text-ink-2 w-32">Rating</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {r.residualRiskAssessment.map((d, i) => (
+                              <tr key={i}>
+                                <td className="px-3 py-2 border border-hair-2 text-ink-1">{d.dimension}</td>
+                                <td className="px-3 py-2 border border-hair-2">
+                                  <span className={`inline-flex items-center gap-1.5 font-mono text-11 font-semibold px-2 py-px rounded ${ratingCls(d.rating)}`}>
+                                    {ratingDot(d.rating)} {d.rating === "not_indicated" ? "N/A" : d.rating.charAt(0).toUpperCase() + d.rating.slice(1)}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                            <tr className="bg-bg-panel">
+                              <td className="px-3 py-2 border border-hair-2 text-ink-0 font-bold">Overall Residual Risk</td>
+                              <td className="px-3 py-2 border border-hair-2">
+                                <span className={`inline-flex items-center gap-1.5 font-mono text-11 font-bold px-2 py-px rounded ${ratingCls(r.overallResidualRisk)}`}>
+                                  {ratingDot(r.overallResidualRisk)} {r.overallResidualRisk.charAt(0).toUpperCase() + r.overallResidualRisk.slice(1)}
+                                </span>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Due Diligence Actions */}
+                      {r.dueDiligenceActions.length > 0 && (
+                        <div>
+                          <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-2">📋 Recommended Due Diligence Actions</div>
+                          <p className="text-11 text-ink-3 mb-2">
+                            Based on a <strong className="text-ink-1">{r.overallResidualRisk.charAt(0).toUpperCase() + r.overallResidualRisk.slice(1)} risk score ({r.entityOverview.riskScore}/100)</strong>{r.entityOverview.adverseMedia ? " with adverse media detected" : " with no adverse media"}, the following due diligence steps are advised:
+                          </p>
+                          <ol className="space-y-2">
+                            {r.dueDiligenceActions.map((a, i) => (
+                              <li key={i} className="text-12 text-ink-1 flex gap-2">
+                                <span className="font-mono text-10 font-bold text-brand mt-0.5 w-5 shrink-0">{i + 1}.</span>
+                                <span dangerouslySetInnerHTML={{ __html: a.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>") }} />
+                              </li>
+                            ))}
+                          </ol>
+                        </div>
+                      )}
+
+                      {/* Red Flags */}
+                      {r.redFlagsToWatch.length > 0 && (
+                        <div>
+                          <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-2">⚠ Key Red Flags to Watch For</div>
+                          <div className="border-l-2 border-amber/50 pl-3 mb-2">
+                            <p className="text-11 text-ink-3">These have <strong>not</strong> been triggered but should be monitored:</p>
+                          </div>
+                          <ul className="space-y-1.5">
+                            {r.redFlagsToWatch.map((f, i) => (
+                              <li key={i} className="text-12 text-ink-1 flex gap-2">
+                                <span className="shrink-0">🚩</span>
+                                <span>{f}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* Conclusion */}
+                      <div>
+                        <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-2">✅ Conclusion</div>
+                        <p className="text-12 text-ink-1 mb-3"
+                          dangerouslySetInnerHTML={{ __html: r.conclusion.narrative.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>") }}
+                        />
+                        <div className={`border rounded-lg px-4 py-3 ${decisionCls(r.conclusion.onboardingDecision)}`}>
+                          <div className="text-11 font-semibold mb-1">Recommended Onboarding Decision:</div>
+                          <div className="text-12 font-bold">{decisionLabel(r.conclusion.onboardingDecision)}</div>
+                          <p className="text-11 mt-1 opacity-90">{r.conclusion.onboardingRationale}</p>
+                        </div>
+                      </div>
+
                     </div>
                   );
                 })()}
