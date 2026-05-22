@@ -18,15 +18,20 @@ export default function LoginPage() {
     return () => { mountedRef.current = false; };
   }, []);
 
-  const submit = async (e: FormEvent) => {
+  const submit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
     setLoading(true);
+    // Read values from the DOM directly so iOS autofill (which sets DOM values
+    // without triggering React's onChange) always works alongside normal typing.
+    const form = e.currentTarget;
+    const usernameVal = (form.elements.namedItem("username") as HTMLInputElement | null)?.value ?? username;
+    const passwordVal = (form.elements.namedItem("password") as HTMLInputElement | null)?.value ?? password;
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username: usernameVal.trim(), password: passwordVal }),
       });
       const json = await res.json().catch(() => ({})) as { ok: boolean; error?: string };
       if (!res.ok || !json.ok) {
@@ -125,6 +130,7 @@ export default function LoginPage() {
             </label>
             <input
               type="text"
+              name="username"
               autoComplete="username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
@@ -169,6 +175,7 @@ export default function LoginPage() {
             </label>
             <input
               type="password"
+              name="password"
               autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
