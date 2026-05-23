@@ -6514,6 +6514,11 @@ export default function MlroAdvisorPage() {
                   {adverseFetchNote && (
                     <div className="mt-1 text-10 text-green">✓ {adverseFetchNote}</div>
                   )}
+                  {paywallSuspected && (
+                    <div className="rounded border border-yellow-400 bg-yellow-50 px-3 py-2 text-sm text-yellow-800">
+                      Limited text extracted — this article may be paywalled. Verify the full article before making a compliance decision.
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label className="block text-10 text-ink-3 mb-1">Article / News Text *</label>

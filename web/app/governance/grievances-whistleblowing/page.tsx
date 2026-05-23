@@ -32,7 +32,7 @@ interface ProgrammeStats {
 
 // ── Static data ────────────────────────────────────────────────────────────────
 
-const MOCK_STATS: ProgrammeStats = { open: 14, resolved: 31, escalated: 2, slaHitPct: 100 };
+// MOCK_STATS removed — live statistics not yet connected
 
 const _MOCK_CASES: GwCase[] = [
   { id: "FG-WB-2026-014", receivedAt: "02 MAY · 09:14", channel: "EMAIL",   category: "AML/CFT",    categoryVariant: "aml",     stage: "Investigation",    stageStatus: "open",      slaPct: 36,  slaVariant: "warn",   owner: "Compliance Dpt" },
@@ -481,7 +481,7 @@ export default function GrievancesWhistleblowingPage() {
   const [submitting, setSubmitting] = useState(false);
   const [toast, setToast]         = useState<string | null>(null);
   const [toastErr, setToastErr]   = useState<string | null>(null);
-  const [stats]                   = useState<ProgrammeStats>(MOCK_STATS);
+  const [stats]                   = useState<ProgrammeStats | null>(null);
 
   const formRef     = useRef<HTMLDivElement>(null);
   const registerRef = useRef<HTMLDivElement>(null);
@@ -758,12 +758,12 @@ export default function GrievancesWhistleblowingPage() {
 
             {/* Programme Stats */}
             <div style={mono({ fontSize: 8, letterSpacing: ".18em", textTransform: "uppercase", color: V.muted, marginBottom: 7 })}>Programme · 30 Days</div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 5, marginBottom: 12 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 5, marginBottom: 4 }}>
               {[
-                { n: stats.open,        l: "Cases · Open" },
-                { n: stats.resolved,    l: "Resolved"     },
-                { n: stats.escalated,   l: "Escalated"    },
-                { n: `${stats.slaHitPct}%`, l: "SLA Hit"  },
+                { n: stats?.open        ?? "—", l: "Cases · Open" },
+                { n: stats?.resolved    ?? "—", l: "Resolved"     },
+                { n: stats?.escalated   ?? "—", l: "Escalated"    },
+                { n: stats != null ? `${stats.slaHitPct}%` : "—", l: "SLA Hit" },
               ].map((s) => (
                 <div key={s.l} style={{ border: `1px solid ${V.line}`, padding: "6px 7px", background: V.panel }}>
                   <div style={serif({ fontWeight: 600, fontSize: 16, color: V.ink, lineHeight: 1 })}>{s.n}</div>
@@ -771,6 +771,7 @@ export default function GrievancesWhistleblowingPage() {
                 </div>
               ))}
             </div>
+            <div style={mono({ fontSize: 7.5, color: V.muted, marginBottom: 12, fontStyle: "italic" })}>Sample data — live statistics not yet connected</div>
 
             {/* Anti-Retaliation */}
             <div style={{ border: `1px solid ${V.line}`, borderLeft: `2px solid oklch(74% 0.18 350)`, background: "linear-gradient(90deg,var(--gw-ember-soft),transparent 70%)", padding: "7px 8px" }}>
@@ -788,17 +789,17 @@ export default function GrievancesWhistleblowingPage() {
                 payload={{
                   module: "grievances-whistleblowing",
                   label: "Grievances & Whistleblowing",
-                  summary: `Grievances & Whistleblowing programme report — FG/GVW/004 v004. Programme stats (30d): ${stats.open} open · ${stats.resolved} resolved · ${stats.escalated} escalated · ${stats.slaHitPct}% SLA hit. Routed to 19 · Incidents & Grievances board.`,
+                  summary: `Grievances & Whistleblowing programme report — FG/GVW/004 v004. Programme stats (30d): live statistics not yet connected. Routed to 19 · Incidents & Grievances board.`,
                   url: "/governance/grievances-whistleblowing",
                   metadata: {
                     policyCode: "FG/GVW/004",
                     version: "004",
                     effective: "28 NOV 2025",
                     owner: "Compliance Dpt",
-                    openCases: stats.open,
-                    resolvedCases: stats.resolved,
-                    escalatedCases: stats.escalated,
-                    slaHitPct: stats.slaHitPct,
+                    openCases: stats?.open ?? null,
+                    resolvedCases: stats?.resolved ?? null,
+                    escalatedCases: stats?.escalated ?? null,
+                    slaHitPct: stats?.slaHitPct ?? null,
                   },
                 }}
               />
