@@ -75,6 +75,44 @@ interface Article {
   matchedVariant?: string;   // variant that produced the top score
   lang: string;              // locale the article was fetched from (en, es, fr, ru, zh, ar, pt)
   relevanceScore?: number;   // fuzzyScore + adverse-term boost, 0..100
+  sourceTier: "tier1" | "tier2" | "tier3" | "unknown";  // credibility classification
+  sourceCategory?: "wire" | "investigative" | "regulatory" | "regional" | "social";  // editorial category
+}
+
+// ── Source credibility tiers ────────────────────────────────────────────────
+// Tier 1: major international wire services, authoritative MENA outlets,
+// investigative journalism organisations, and financial regulatory bodies.
+const TIER1_DOMAINS = new Set([
+  // Major international wire services
+  "reuters.com", "apnews.com", "bloomberg.com", "ft.com", "wsj.com",
+  "bbc.com", "bbc.co.uk", "theguardian.com", "nytimes.com",
+  "lemonde.fr", "spiegel.de", "elpais.com", "lavanguardia.com",
+  // UAE/MENA authoritative sources
+  "gulfnews.com", "thenationalnews.com", "khaleejtimes.com",
+  "arabnews.com", "alarabiya.net", "albawaba.com",
+  // Investigative / regulatory
+  "occrp.org", "icij.org", "transparency.org",
+  // Financial regulators' own publications
+  "fatf-gafi.org", "bis.org", "imf.org",
+]);
+
+// Tier 2: well-known international broadcasters and business press with
+// editorial standards but lower primary-source status than tier 1.
+const TIER2_DOMAINS = new Set([
+  "cnbc.com", "cnn.com", "nbcnews.com", "abcnews.go.com",
+  "economist.com", "forbes.com", "businessinsider.com",
+  "aljazeera.com", "middleeasteye.net", "haaretz.com",
+  "scmp.com", "straitstimes.com", "channelnewsasia.com",
+]);
+
+function classifySource(url: string): "tier1" | "tier2" | "tier3" | "unknown" {
+  if (!url) return "unknown";
+  try {
+    const domain = new URL(url).hostname.replace(/^www\./, "");
+    if (TIER1_DOMAINS.has(domain)) return "tier1";
+    if (TIER2_DOMAINS.has(domain)) return "tier2";
+    return "tier3";
+  } catch { return "unknown"; }
 }
 
 // Locales we poll Google News from. Expanded to 35 languages covering the
@@ -278,6 +316,10 @@ function parseRss(xml: string, subject: string, variants: string[], lang: string
     const baseScore = Math.round(fuzzyScore * 100);
     const adjustedScore = Math.min(100, baseScore + boost);
 
+    const tier = classifySource(link);
+    const tierBoost = tier === "tier1" ? 20 : tier === "tier2" ? 10 : 0;
+    const tieredScore = Math.min(100, adjustedScore + tierBoost);
+
     const article: Article = {
       title,
       link,
@@ -290,7 +332,8 @@ function parseRss(xml: string, subject: string, variants: string[], lang: string
       fuzzyScore: baseScore,
       fuzzyMethod,
       lang,
-      relevanceScore: adjustedScore,
+      relevanceScore: tieredScore,
+      sourceTier: tier,
     };
     if (matchedVariant) article.matchedVariant = matchedVariant;
     out.push(article);
@@ -298,8 +341,8 @@ function parseRss(xml: string, subject: string, variants: string[], lang: string
   return out;
 }
 
-// Per-locale RSS timeout. 30 locales fan out in parallel; any single stalled feed is aborted after 2s.
-const FEED_TIMEOUT_MS = 2_000;
+// Per-locale feed timeout. 1.5s per feed with overall 4s timebox keeps P99 response under 5s.
+const FEED_TIMEOUT_MS = 1_500;
 
 // Overall timebox for the whole fan-out. 35 locales × 2s per feed run in parallel — 4s covers all healthy feeds.
 const OVERALL_TIMEBOX_MS = 4_000;
@@ -413,13 +456,16 @@ function emptyResponse(q: string, fetchMode: NewsResponse["fetchMode"] = "live",
 
 const MAX_Q_LENGTH = 500;
 
+// 2-minute in-memory cache to avoid hammering Google News RSS for repeated queries
+const NEWS_CACHE = new Map<string, { data: NewsResponse; expires: number }>();
+
 export async function GET(req: Request): Promise<NextResponse> {
   const t0 = Date.now();
   // Gate the 7-locale RSS fan-out behind the per-key rate limiter.
   // Anonymous callers still get the free-tier burst window; without
   // this, a single user could trivially pin a Netlify Function into a
   // quota-exhaustion loop.
-  const gate = await enforce(req, { requireAuth: false });
+  const gate = await enforce(req, { requireAuth: false, cost: 3 });
   if (!gate.ok) return gate.response;
   const gateHeaders: Record<string, string> = gate.ok ? gate.headers : {};
 
@@ -436,6 +482,12 @@ export async function GET(req: Request): Promise<NextResponse> {
       { ok: false, error: "query `q` too long" },
       { status: 400, headers: gateHeaders },
     );
+  }
+
+  const cacheKey = q.toLowerCase().trim();
+  const cached = NEWS_CACHE.get(cacheKey);
+  if (cached && cached.expires > Date.now()) {
+    return NextResponse.json({ ...cached.data, fetchMode: "cached" as const }, { headers: gateHeaders });
   }
 
   // From here down, any internal failure returns a well-formed empty
@@ -547,6 +599,24 @@ export async function GET(req: Request): Promise<NextResponse> {
           }
         }
       }
+      // Boost score for high-signal adverse media terms in title (adapter path)
+      const adverseTermBoostsAdapter: Record<string, number> = {
+        "convicted": 15, "arrested": 12, "charged": 12, "indicted": 12,
+        "sanctioned": 15, "designated": 10, "fraud": 10, "corruption": 10,
+        "laundering": 15, "bribery": 12, "embezzlement": 12, "terrorist": 15,
+        "wanted": 12, "fugitive": 10, "banned": 8, "debarred": 8,
+      };
+      const adapterTitleLower = na.title.toLowerCase();
+      let adapterBoost = 0;
+      for (const [term, pts] of Object.entries(adverseTermBoostsAdapter)) {
+        if (adapterTitleLower.includes(term)) adapterBoost += pts;
+      }
+      const adapterBaseScore = Math.round(fuzzyScore * 100);
+      const adapterAdjustedScore = Math.min(100, adapterBaseScore + adapterBoost);
+      const adapterTier = classifySource(na.url ?? "");
+      const adapterTierBoost = adapterTier === "tier1" ? 20 : adapterTier === "tier2" ? 10 : 0;
+      const adapterTieredScore = Math.min(100, adapterAdjustedScore + adapterTierBoost);
+
       merged.set(key, {
         title: na.title,
         link: na.url,
@@ -556,9 +626,11 @@ export async function GET(req: Request): Promise<NextResponse> {
         keywordGroups: kwHits.map((k) => k.group),
         esgCategories: Array.from(new Set(esgHits.map((e) => e.categoryId))),
         severity: classifyArticleSeverity(kwHits),
-        fuzzyScore: Math.round(fuzzyScore * 100),
+        fuzzyScore: adapterBaseScore,
         fuzzyMethod,
         lang: na.language ?? "en",
+        relevanceScore: adapterTieredScore,
+        sourceTier: adapterTier,
       });
     }
     const filtered = Array.from(merged.values())
@@ -567,12 +639,21 @@ export async function GET(req: Request): Promise<NextResponse> {
       // Threshold lowered to 70: token_presence caps at 0.72 (→ score 72) so
       // a full two-token name match was blocked at the old 75 threshold.
       .filter((a) => a.fuzzyScore >= 70 || (a.fuzzyScore >= 55 && a.keywordGroups.length > 0))
-      .sort((a, b) => b.fuzzyScore - a.fuzzyScore);
-    // Cluster near-duplicate articles into events. Two articles belong
-    // to the same event when their normalised titles share ≥ 70% of
-    // their token set — this collapses the same Reuters story syndicated
-    // across Le Monde, RT and Reuters Arabic into a single dossier row.
-    const parsed = clusterArticles(filtered).slice(0, 20);
+      .sort((a, b) => (b.relevanceScore ?? b.fuzzyScore) - (a.relevanceScore ?? a.fuzzyScore));
+    // Phase 1: URL-based exact dedup — strips protocol and query-string so
+    // the same Reuters article appearing at both https://reuters.com/… and
+    // http://reuters.com/…?utm_source=… collapses to one entry.
+    const seenUrls = new Set<string>();
+    const urlDeduped = filtered.filter((a) => {
+      if (!a.link) return true;
+      const key = a.link.replace(/^https?:\/\//, "").replace(/\?.*$/, "");
+      if (seenUrls.has(key)) return false;
+      seenUrls.add(key);
+      return true;
+    });
+    // Phase 2: Jaccard title dedup — collapses translated / rephrased
+    // versions of the same story across locales (existing clusterArticles).
+    const parsed = clusterArticles(urlDeduped).slice(0, 20);
     const topSeverity: Article["severity"] =
       parsed.reduce(
         (acc, a) => (severityOrder(a.severity) > severityOrder(acc) ? a.severity : acc),
@@ -602,7 +683,23 @@ export async function GET(req: Request): Promise<NextResponse> {
       fetchedAt,
       latencyMs: Date.now() - t0,
     };
-    return NextResponse.json(payload, { headers: gateHeaders });
+    // Cache successful results for 2 minutes
+    if (payload.articleCount > 0) {
+      NEWS_CACHE.set(cacheKey, { data: payload, expires: Date.now() + 2 * 60 * 1000 });
+      // Evict oldest entries if cache grows too large
+      if (NEWS_CACHE.size > 500) {
+        const oldest = Array.from(NEWS_CACHE.entries()).sort((a, b) => a[1].expires - b[1].expires)[0];
+        if (oldest) NEWS_CACHE.delete(oldest[0]);
+      }
+    }
+    const responseTimeMs = Date.now() - t0;
+    return NextResponse.json(payload, {
+      headers: {
+        ...gateHeaders,
+        "X-Response-Time": `${responseTimeMs}ms`,
+        "X-Locales-Searched": String(LOCALES.length),
+      },
+    });
   } catch (err) {
     // Last-resort safety net. The fan-out already uses allSettled +
     // per-feed timeouts so this branch should be unreachable, but if
