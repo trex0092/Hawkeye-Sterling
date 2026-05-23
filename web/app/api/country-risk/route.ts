@@ -18,7 +18,7 @@ export interface CountryRiskResult {
   countryName: string;
   riskScore: number;                       // 0-100 composite
   riskLevel: "low" | "medium" | "high" | "critical";
-  fatfStatus: "blacklist" | "greylist" | "monitored" | "compliant";
+  fatfStatus: "blacklist" | "greylist" | "monitored" | "compliant" | "member" | "grey_list" | "black_list" | "non_member";
   cahraListed: boolean;
   activeSanctionsRegimes: string[];        // e.g. ["US OFAC", "EU", "UN SC"]
   corruptionIndex?: number;               // TI CPI 0-100 (higher = cleaner)
@@ -26,6 +26,15 @@ export interface CountryRiskResult {
   riskDimensions: Record<string, number>; // per-dimension additive scores
   geopoliticalFlags: string[];            // e.g. ["recurring_grey_list","high_risk_neighbors"]
   recommendation: "standard_dd" | "enhanced_dd" | "senior_approval" | "prohibited";
+  // Legacy display fields (optional, returned by LLM)
+  country?: string;
+  overallRisk?: "low" | "medium" | "high" | "critical";
+  dimensions?: { amlRisk: number; baselScore: number; cpiScore: number; politicalRisk: number; sanctionsRisk: number; tfRisk: number };
+  sanctionsProfile?: { ofac: boolean; eu: boolean; un: boolean; uk: boolean; details: string[] };
+  keyRisks?: string[];
+  recentDevelopments?: string[];
+  regulatoryObligations?: Array<{ obligation: string; regulation: string }>;
+  summary?: string;
 }
 
 // Legacy interface retained for backward compat (used by static fallback helper)

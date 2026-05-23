@@ -33,6 +33,31 @@ export interface SanctionsEvasionResponse {
   recommendation: string;
   regulatoryBasis: string[];
   ruleFlags: string[];
+  jurisdictionLayering: Array<{ layer: number; jurisdiction: string; flag?: string; risk: string; entity?: string; purpose?: string }>;
+  // Extended display fields
+  evasionRiskScore?: number;
+  evasionTier?: string;
+  summary?: string;
+  detectedPatterns?: EvasionPattern[];
+  nameVariationFlags?: string[];
+  splitPaymentPatterns?: Array<{ description: string; amount?: number; currency?: string }>;
+  frontCompanyIndicators?: string[];
+  ultimateBeneficiary?: string;
+  sanctionedPartyConnection?: string;
+  immediateActions?: string[];
+}
+export type SanctionsEvasionResult = SanctionsEvasionResponse;
+export interface EvasionPattern {
+  pattern: "front_company" | "jurisdiction_layering" | "shelf_company" | "name_variation" | "split_payments" | "third_party_intermediary" | "vessel_flag_hopping" | "commodity_substitution" | "crypto_conversion" | "correspondent_banking_exploitation" | string;
+  confidence: number;
+  description?: string;
+  fatfRef?: string;
+  examples?: string[];
+  indicators?: string[];
+  evidence?: string[];
+  riskScore?: number;
+  affectedJurisdictions?: string[];
+  mitigation?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -438,6 +463,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     recommendation,
     regulatoryBasis,
     ruleFlags,
+    jurisdictionLayering: [],
   };
 
   return NextResponse.json(responseBody, { headers: gate.headers });

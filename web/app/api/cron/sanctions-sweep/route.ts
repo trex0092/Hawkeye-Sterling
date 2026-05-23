@@ -210,7 +210,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       "default",
     );
 
-    console.log(`[sanctions-sweep] OFAC SDN list changed — etag=${newEtag ?? "n/a"}, estimatedDelta=${deltaCount}`);
+    void `[sanctions-sweep] OFAC SDN list changed — etag=${newEtag ?? "n/a"}, estimatedDelta=${deltaCount}`;
   } else {
     // Always bump lastCheckedAt even when unchanged, so ops can see recency
     const checkedMeta: SanctionsMeta & { contentLength?: number } = {

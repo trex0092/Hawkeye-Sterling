@@ -205,7 +205,7 @@ export default function SanctionsEvasionPage() {
     }
   };
 
-  const recCfg = result ? RECOMMENDATION_CONFIG[result.recommendation] : null;
+  const recCfg = result ? RECOMMENDATION_CONFIG[result.recommendation as keyof typeof RECOMMENDATION_CONFIG] ?? null : null;
 
   return (
     <ModuleLayout engineLabel="Sanctions engine" asanaModule="sanctions-evasion" asanaLabel="Sanctions Evasion">
@@ -347,7 +347,7 @@ export default function SanctionsEvasionPage() {
             <div className="space-y-6">
               {/* Risk Score + Tier */}
               <div className="rounded-xl border border-hair p-5 bg-bg-panel">
-                <ScoreMeter score={result.evasionRiskScore} tier={result.evasionTier} />
+                <ScoreMeter score={result.evasionRiskScore ?? result.riskScore} tier={(result.evasionTier ?? "possible") as keyof typeof TIER_CONFIG} />
               </div>
 
               {/* Recommendation */}
@@ -368,13 +368,13 @@ export default function SanctionsEvasionPage() {
               </div>
 
               {/* Detected Patterns */}
-              {result.detectedPatterns.length > 0 && (
+              {(result.detectedPatterns ?? []).length > 0 && (
                 <div>
                   <h3 className="font-mono text-11 uppercase tracking-wide-4 text-ink-3 mb-3">
-                    Detected Evasion Patterns ({result.detectedPatterns.length})
+                    Detected Evasion Patterns ({(result.detectedPatterns ?? []).length})
                   </h3>
                   <div className="space-y-3">
-                    {result.detectedPatterns.map((p, i) => (
+                    {(result.detectedPatterns ?? []).map((p, i) => (
                       <PatternCard key={i} pattern={p} />
                     ))}
                   </div>
@@ -392,13 +392,13 @@ export default function SanctionsEvasionPage() {
               )}
 
               {/* Name Variation Flags */}
-              {result.nameVariationFlags.length > 0 && (
+              {(result.nameVariationFlags ?? []).length > 0 && (
                 <div>
                   <h3 className="font-mono text-11 uppercase tracking-wide-4 text-ink-3 mb-2">
                     Name Variation Flags
                   </h3>
                   <div className="space-y-2">
-                    {result.nameVariationFlags.map((flag, i) => (
+                    {(result.nameVariationFlags ?? []).map((flag, i) => (
                       <div key={i} className="flex items-start gap-2 p-2.5 rounded-lg bg-amber-dim/50 border border-amber/20">
                         <span className="text-amber shrink-0 mt-0.5">⚠</span>
                         <span className="text-12.5 text-ink-1">{flag}</span>
@@ -409,16 +409,16 @@ export default function SanctionsEvasionPage() {
               )}
 
               {/* Split Payment Patterns */}
-              {result.splitPaymentPatterns.length > 0 && (
+              {(result.splitPaymentPatterns ?? []).length > 0 && (
                 <div>
                   <h3 className="font-mono text-11 uppercase tracking-wide-4 text-ink-3 mb-2">
                     Split Payment Patterns
                   </h3>
                   <div className="space-y-1.5">
-                    {result.splitPaymentPatterns.map((pattern, i) => (
+                    {(result.splitPaymentPatterns ?? []).map((pattern, i) => (
                       <div key={i} className="flex items-start gap-2 p-2.5 rounded-lg bg-bg-1 border border-hair">
                         <span className="text-brand shrink-0 mt-0.5 font-mono text-10">#{i + 1}</span>
-                        <span className="text-12.5 text-ink-1">{pattern}</span>
+                        <span className="text-12.5 text-ink-1">{typeof pattern === "string" ? pattern : pattern.description}</span>
                       </div>
                     ))}
                   </div>
@@ -426,13 +426,13 @@ export default function SanctionsEvasionPage() {
               )}
 
               {/* Front Company Indicators */}
-              {result.frontCompanyIndicators.length > 0 && (
+              {(result.frontCompanyIndicators ?? []).length > 0 && (
                 <div>
                   <h3 className="font-mono text-11 uppercase tracking-wide-4 text-ink-3 mb-2">
                     Front Company Indicators
                   </h3>
                   <div className="space-y-1.5">
-                    {result.frontCompanyIndicators.map((ind, i) => (
+                    {(result.frontCompanyIndicators ?? []).map((ind, i) => (
                       <div key={i} className="flex items-start gap-2 p-2.5 rounded-lg bg-red-dim/50 border border-red/15">
                         <span className="text-red shrink-0 mt-0.5">▲</span>
                         <span className="text-12.5 text-ink-1">{ind}</span>
@@ -459,7 +459,7 @@ export default function SanctionsEvasionPage() {
               )}
 
               {/* Immediate Actions */}
-              {result.immediateActions.length > 0 && (
+              {(result.immediateActions ?? []).length > 0 && (
                 <div className="rounded-xl border-2 border-red/40 bg-red-dim/30 p-5">
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-16">🚨</span>
@@ -468,7 +468,7 @@ export default function SanctionsEvasionPage() {
                     </h3>
                   </div>
                   <ol className="space-y-2">
-                    {result.immediateActions.map((action, i) => (
+                    {(result.immediateActions ?? []).map((action, i) => (
                       <li key={i} className="flex items-start gap-3">
                         <span className="w-6 h-6 rounded-full bg-red/20 border border-red/30 flex items-center justify-center font-mono text-11 font-semibold text-red shrink-0">
                           {i + 1}

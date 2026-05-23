@@ -1095,6 +1095,9 @@ function emptyResponse(q: string, fetchMode: NewsResponse["fetchMode"] = "live",
     fetchMode,
     fetchedAt: new Date().toISOString(),
     latencyMs,
+    sourceDiversityScore: 0,
+    crossCorroboratedCount: 0,
+    propagandaSourceCount: 0,
   };
 }
 
@@ -1469,6 +1472,9 @@ export async function GET(req: Request): Promise<NextResponse> {
       fetchMode: "live",
       fetchedAt,
       latencyMs: Date.now() - t0,
+      sourceDiversityScore: 0,
+      crossCorroboratedCount: 0,
+      propagandaSourceCount: 0,
     };
     // Cache successful results for 2 minutes
     if (payload.articleCount > 0) {

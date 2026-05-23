@@ -123,9 +123,10 @@ function SanctionChip({
 }
 
 function RiskCard({ result }: { result: CountryRiskResult }) {
-  const riskClass = RISK_COLORS[result.overallRisk] ?? RISK_COLORS.medium;
+  const displayRisk = result.overallRisk ?? result.riskLevel ?? "medium";
+  const riskClass = RISK_COLORS[displayRisk as keyof typeof RISK_COLORS] ?? RISK_COLORS.medium;
   const recClass = RECOMMENDATION_COLORS[result.recommendation] ?? RECOMMENDATION_COLORS.enhanced_dd;
-  const fatfClass = FATF_COLORS[result.fatfStatus] ?? FATF_COLORS.non_member;
+  const fatfClass = FATF_COLORS[result.fatfStatus as keyof typeof FATF_COLORS] ?? FATF_COLORS.non_member;
 
   return (
     <div className="space-y-6">
@@ -133,11 +134,11 @@ function RiskCard({ result }: { result: CountryRiskResult }) {
       <div className="flex items-start justify-between gap-4">
         <div>
           <h2 className="font-display text-32 font-normal text-ink-0 leading-tight mb-1">
-            {result.country}
+            {result.country ?? result.countryName}
           </h2>
           <div className="flex items-center gap-2 flex-wrap">
             <span className={`px-2.5 py-0.5 rounded-full text-11 font-semibold border ${fatfClass}`}>
-              {FATF_LABELS[result.fatfStatus]}
+              {FATF_LABELS[result.fatfStatus as keyof typeof FATF_LABELS] ?? result.fatfStatus}
             </span>
             <span className={`px-2.5 py-0.5 rounded-full text-11 font-semibold border ${recClass}`}>
               {RECOMMENDATION_LABELS[result.recommendation]}
@@ -152,7 +153,7 @@ function RiskCard({ result }: { result: CountryRiskResult }) {
             Risk Score / 100
           </div>
           <span className={`inline-block mt-1 px-3 py-1 rounded-full text-12 font-bold border uppercase tracking-wide ${riskClass}`}>
-            {result.overallRisk} risk
+            {displayRisk} risk
           </span>
         </div>
       </div>
@@ -169,12 +170,12 @@ function RiskCard({ result }: { result: CountryRiskResult }) {
           <div className="text-11 uppercase tracking-wide-4 text-ink-2 font-semibold mb-3 pb-2 border-b border-hair">
             Risk Dimensions
           </div>
-          <ScoreBar label="AML Risk" score={result.dimensions.amlRisk} />
-          <ScoreBar label="Basel AML Index" score={result.dimensions.baselScore} />
-          <ScoreBar label="Corruption (CPI)" score={result.dimensions.cpiScore} />
-          <ScoreBar label="Political Risk" score={result.dimensions.politicalRisk} />
-          <ScoreBar label="Sanctions Exposure" score={result.dimensions.sanctionsRisk} />
-          <ScoreBar label="TF Risk" score={result.dimensions.tfRisk} />
+          <ScoreBar label="AML Risk" score={result.dimensions?.amlRisk ?? result.riskDimensions?.["aml"] ?? 50} />
+          <ScoreBar label="Basel AML Index" score={result.dimensions?.baselScore ?? result.riskDimensions?.["basel"] ?? 50} />
+          <ScoreBar label="Corruption (CPI)" score={result.dimensions?.cpiScore ?? result.riskDimensions?.["corruption"] ?? 50} />
+          <ScoreBar label="Political Risk" score={result.dimensions?.politicalRisk ?? result.riskDimensions?.["political"] ?? 50} />
+          <ScoreBar label="Sanctions Exposure" score={result.dimensions?.sanctionsRisk ?? result.riskDimensions?.["sanctions"] ?? 20} />
+          <ScoreBar label="TF Risk" score={result.dimensions?.tfRisk ?? result.riskDimensions?.["tf"] ?? 45} />
         </div>
 
         {/* Sanctions profile */}
@@ -184,14 +185,14 @@ function RiskCard({ result }: { result: CountryRiskResult }) {
               Sanctions Profile
             </div>
             <div className="flex flex-wrap gap-2 mb-3">
-              <SanctionChip label="OFAC" active={result.sanctionsProfile.ofac} />
-              <SanctionChip label="EU" active={result.sanctionsProfile.eu} />
-              <SanctionChip label="UN" active={result.sanctionsProfile.un} />
-              <SanctionChip label="UK" active={result.sanctionsProfile.uk} />
+              <SanctionChip label="OFAC" active={result.sanctionsProfile?.ofac ?? result.activeSanctionsRegimes?.includes("US OFAC")} />
+              <SanctionChip label="EU" active={result.sanctionsProfile?.eu ?? result.activeSanctionsRegimes?.includes("EU")} />
+              <SanctionChip label="UN" active={result.sanctionsProfile?.un ?? result.activeSanctionsRegimes?.includes("UN SC")} />
+              <SanctionChip label="UK" active={result.sanctionsProfile?.uk ?? result.activeSanctionsRegimes?.includes("UK OFSI")} />
             </div>
-            {result.sanctionsProfile.details.length > 0 && (
+            {(result.sanctionsProfile?.details?.length ?? 0) > 0 && (
               <ul className="space-y-1">
-                {result.sanctionsProfile.details.map((d, i) => (
+                {result.sanctionsProfile!.details.map((d, i) => (
                   <li key={i} className="text-11 text-ink-1 flex items-start gap-1.5">
                     <span className="text-ink-3 mt-0.5 shrink-0">•</span>
                     {d}
@@ -207,7 +208,7 @@ function RiskCard({ result }: { result: CountryRiskResult }) {
               Regulatory Obligations
             </div>
             <ul className="space-y-2">
-              {result.regulatoryObligations.map((ob, i) => (
+              {(result.regulatoryObligations ?? []).map((ob, i) => (
                 <li key={i} className="text-11 leading-snug">
                   <div className="text-ink-0 font-medium">{ob.obligation}</div>
                   <div className="text-ink-3 font-mono text-10">{ob.regulation}</div>
@@ -225,7 +226,7 @@ function RiskCard({ result }: { result: CountryRiskResult }) {
             Key Risks
           </div>
           <ul className="space-y-2">
-            {result.keyRisks.map((r, i) => (
+            {(result.keyRisks ?? result.geopoliticalFlags ?? []).map((r, i) => (
               <li key={i} className="flex items-start gap-2 text-12 text-ink-1">
                 <span className="text-red mt-0.5 shrink-0 font-bold">▸</span>
                 {r}
@@ -238,11 +239,11 @@ function RiskCard({ result }: { result: CountryRiskResult }) {
             Recent Developments
           </div>
           <div className="space-y-3">
-            {result.recentDevelopments.map((d, i) => (
+            {(result.recentDevelopments ?? []).map((d, i) => (
               <div key={i} className="flex items-start gap-2.5">
                 <div className="flex flex-col items-center shrink-0 mt-0.5">
                   <span className="w-2 h-2 rounded-full bg-brand shrink-0" />
-                  {i < result.recentDevelopments.length - 1 && (
+                  {i < (result.recentDevelopments?.length ?? 0) - 1 && (
                     <span className="w-px flex-1 bg-hair-2 mt-1" style={{ minHeight: 16 }} />
                   )}
                 </div>
@@ -288,11 +289,11 @@ function CompareTable({ data }: { data: CountryCompareResult }) {
               Overall Risk
             </td>
             {data.countries.map((c) => (
-              <td key={c.country} className="py-2.5 px-3 text-center">
+              <td key={c.country ?? c.countryName} className="py-2.5 px-3 text-center">
                 <div className="flex flex-col items-center gap-1">
                   <span className="font-mono text-16 font-bold text-ink-0">{c.riskScore}</span>
-                  <span className={`px-2 py-0.5 rounded-full text-10 font-bold border uppercase ${RISK_COLORS[c.overallRisk]}`}>
-                    {c.overallRisk}
+                  <span className={`px-2 py-0.5 rounded-full text-10 font-bold border uppercase ${RISK_COLORS[(c.overallRisk ?? c.riskLevel) as keyof typeof RISK_COLORS] ?? RISK_COLORS.medium}`}>
+                    {c.overallRisk ?? c.riskLevel}
                   </span>
                 </div>
               </td>
@@ -303,10 +304,10 @@ function CompareTable({ data }: { data: CountryCompareResult }) {
             <tr key={dim.key} className="hover:bg-bg-1">
               <td className="py-2 pr-4 text-11 text-ink-2">{dim.label}</td>
               {data.countries.map((c) => {
-                const val = c.dimensions[dim.key];
+                const val = c.dimensions?.[dim.key as keyof typeof c.dimensions] ?? c.riskDimensions?.[dim.key] ?? 0;
                 const risk = scoreToRisk(val);
                 return (
-                  <td key={c.country} className="py-2 px-3 text-center">
+                  <td key={c.country ?? c.countryName} className="py-2 px-3 text-center">
                     <span className={`font-mono text-12 font-semibold ${
                       risk === "critical" ? "text-red" :
                       risk === "high" ? "text-orange" :
@@ -323,9 +324,9 @@ function CompareTable({ data }: { data: CountryCompareResult }) {
           <tr className="hover:bg-bg-1">
             <td className="py-2 pr-4 text-11 text-ink-2">FATF Status</td>
             {data.countries.map((c) => (
-              <td key={c.country} className="py-2 px-3 text-center">
-                <span className={`px-1.5 py-0.5 rounded text-10 font-semibold border ${FATF_COLORS[c.fatfStatus]}`}>
-                  {FATF_LABELS[c.fatfStatus]}
+              <td key={c.country ?? c.countryName} className="py-2 px-3 text-center">
+                <span className={`px-1.5 py-0.5 rounded text-10 font-semibold border ${FATF_COLORS[c.fatfStatus as keyof typeof FATF_COLORS] ?? FATF_COLORS.non_member}`}>
+                  {FATF_LABELS[c.fatfStatus as keyof typeof FATF_LABELS] ?? c.fatfStatus}
                 </span>
               </td>
             ))}
@@ -334,9 +335,16 @@ function CompareTable({ data }: { data: CountryCompareResult }) {
           <tr className="hover:bg-bg-1">
             <td className="py-2 pr-4 text-11 text-ink-2">Sanctions</td>
             {data.countries.map((c) => {
-              const active = [c.sanctionsProfile.ofac && "OFAC", c.sanctionsProfile.eu && "EU", c.sanctionsProfile.un && "UN", c.sanctionsProfile.uk && "UK"].filter(Boolean);
+              const sp = c.sanctionsProfile;
+              const regs = c.activeSanctionsRegimes ?? [];
+              const active = [
+                (sp?.ofac || regs.includes("US OFAC")) && "OFAC",
+                (sp?.eu || regs.includes("EU")) && "EU",
+                (sp?.un || regs.includes("UN SC")) && "UN",
+                (sp?.uk || regs.includes("UK OFSI")) && "UK",
+              ].filter(Boolean);
               return (
-                <td key={c.country} className="py-2 px-3 text-center">
+                <td key={c.country ?? c.countryName} className="py-2 px-3 text-center">
                   {active.length > 0 ? (
                     <span className="text-11 text-red font-semibold">{active.join(", ")}</span>
                   ) : (
