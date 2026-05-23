@@ -243,6 +243,33 @@ Return ONLY valid JSON with this exact structure:
       console.warn("[pep-network] audit chain write failed:", err instanceof Error ? err.message : String(err)),
     );
 
+    // Write pep.rca_identified audit chain entries for every RCA node discovered.
+    // FATF R.12 requires each identified relative or close associate to be
+    // individually recorded so the screening can be traced to a specific
+    // relationship hop and relationship type in the audit trail.
+    const tenantId = tenantIdFromGate(gate);
+    for (const node of nodes) {
+      // Hop 1 = immediate family (mandatory FATF R.12 screening);
+      // Hop 2+ = extended network — still record per FATF R.12 best practice.
+      void writeAuditChainEntry(
+        {
+          event: "pep.rca_identified",
+          actor: gate.keyId,
+          subjectId: pepName,
+          pepId: pepName,
+          relationship: node.relationship,
+          rcaName: node.name,
+          hopDistance: node.hopDistance,
+          screeningPriority: node.screeningPriority,
+          nodeType: node.nodeType,
+          eddRequired: node.eddRequired,
+        },
+        tenantId,
+      ).catch((err: unknown) =>
+        console.warn("[pep-network] pep.rca_identified audit chain write failed:", err instanceof Error ? err.message : String(err)),
+      );
+    }
+
     const latencyMs = Date.now() - _handlerStart;
     if (latencyMs > 5000) console.warn(`[pep-network] latencyMs=${latencyMs} exceeds 5000ms`);
     return NextResponse.json({ ok: true, ...output, latencyMs }, { headers: gate.headers });

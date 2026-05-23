@@ -135,6 +135,22 @@ interface Body {
   /** Slug of the reporting entity from HAWKEYE_ENTITIES. When omitted,
    *  resolves to HAWKEYE_DEFAULT_ENTITY_ID, then to the first entity. */
   entityId?: string;
+  /** FATF money laundering typology detected by brain/typology analysis. */
+  typologyName?: string;
+  /** Subject occupation / business relationship to the reporting institution. */
+  subjectOccupation?: string;
+  /** Relationship of subject to the reporting institution (e.g. customer, counterparty). */
+  subjectRelationship?: string;
+  /** Transaction details: amounts, dates, counterparties, accounts. */
+  transactionDetails?: {
+    amounts?: string[];
+    dates?: string[];
+    counterparties?: string[];
+    accounts?: string[];
+    instruments?: string[];
+  };
+  /** Steps taken by the institution to determine legitimacy (e.g. EDD, source-of-funds request). */
+  dueDiligenceStepsTaken?: string[];
 }
 
 async function handleSarReport(req: Request, gateHeaders: Record<string, string>, tenant: string = "default", actorKeyId?: string): Promise<Response> {
@@ -709,29 +725,119 @@ export async function POST(req: Request) {
 }
 
 function autoNarrative(body: Body): string {
-  const bits: string[] = [];
-  bits.push(
-    `Hawkeye Sterling flagged ${body.subject.name} (${body.subject.id}) as requiring a ${body.filingType} filing.`,
+  // UAE FIU requires SAR narratives to cover all 6 mandatory elements:
+  // 1. What happened (suspicious transaction/behaviour)
+  // 2. Why it is suspicious (specific indicators / typology links)
+  // 3. Subject details (full name, ID, occupation, relationship to institution)
+  // 4. Transaction details (amounts, dates, counterparties, accounts)
+  // 5. Why the institution could not determine legitimacy (steps taken)
+  // 6. Regulatory basis — FDL 10/2025 Art. 15 (reporting obligation)
+
+  const parts: string[] = [];
+
+  // ── 1. Subject details ─────────────────────────────────────────────────────
+  const entityDesc = body.subject.entityType === "organisation"
+    ? "legal entity"
+    : (body.subject.entityType ?? "individual");
+  const occupation = body.subjectOccupation ? ` (${body.subjectOccupation})` : "";
+  const relationship = body.subjectRelationship
+    ? ` The subject's relationship to the reporting institution is: ${body.subjectRelationship}.`
+    : "";
+  const aliases = body.subject.aliases?.length
+    ? ` Known aliases: ${body.subject.aliases.join("; ")}.`
+    : "";
+  const dob = body.subject.dob ? ` Date of birth/registration: ${body.subject.dob}.` : "";
+  const jurisdiction = body.subject.jurisdiction
+    ? ` Jurisdiction: ${body.subject.jurisdiction}.`
+    : "";
+  parts.push(
+    `SUBJECT DETAILS: ${body.subject.name}${occupation}, ${entityDesc}, ID: ${body.subject.id}.${aliases}${dob}${jurisdiction}${relationship}`,
   );
-  if (body.result) {
-    bits.push(
-      `Brain severity ${body.result.severity.toUpperCase()} · top score ${body.result.topScore}/100 across ${body.result.listsChecked} lists.`,
+
+  // ── 2. What happened ───────────────────────────────────────────────────────
+  const txDetails = body.transactionDetails;
+  const amounts = txDetails?.amounts?.length
+    ? `Amounts involved: ${txDetails.amounts.join(", ")}.`
+    : "";
+  const dates = txDetails?.dates?.length
+    ? `Transaction date(s): ${txDetails.dates.join(", ")}.`
+    : "";
+  const counterparties = txDetails?.counterparties?.length
+    ? `Counterparties: ${txDetails.counterparties.join(", ")}.`
+    : "";
+  const accounts = txDetails?.accounts?.length
+    ? `Accounts/instruments involved: ${txDetails.accounts.join(", ")}.`
+    : "";
+  const instruments = txDetails?.instruments?.length
+    ? `Payment instruments: ${txDetails.instruments.join(", ")}.`
+    : "";
+
+  if (amounts || dates || counterparties || accounts || instruments) {
+    parts.push(
+      `TRANSACTION DETAILS: ${[amounts, dates, counterparties, accounts, instruments].filter(Boolean).join(" ")}`,
+    );
+  } else if (body.result) {
+    parts.push(
+      `TRANSACTION DETAILS: Hawkeye Sterling automated screening flagged this subject with brain severity ${body.result.severity.toUpperCase()} (top score ${body.result.topScore}/100 across ${body.result.listsChecked} lists). Specific transaction amounts and dates are to be confirmed by the MLRO from case records.`,
     );
   }
+
+  // ── 3. Why it is suspicious ────────────────────────────────────────────────
+  const suspicionBits: string[] = [];
   if (body.result?.hits?.length) {
     const lists = Array.from(new Set(body.result.hits.map((h) => h.listId))).join(", ");
-    bits.push(`Hits on: ${lists}.`);
-  }
-  if (body.superBrain?.jurisdiction?.cahra) {
-    bits.push(`Jurisdiction flagged CAHRA.`);
-  }
-  if (body.superBrain?.adverseKeywordGroups?.length) {
-    bits.push(
-      `Adverse-media groups fired: ${body.superBrain.adverseKeywordGroups.map((g) => g.label).join(", ")}.`,
+    const topHit = body.result.hits[0];
+    suspicionBits.push(
+      `The subject returned hits on the following sanctions/watchlist(s): ${lists}. Highest-scoring match: ${topHit?.candidateName ?? "—"} at ${Math.round((topHit?.score ?? 0) * 100)}% via ${topHit?.method ?? "—"}.`,
     );
   }
-  bits.push(
-    `Constructive-knowledge standard (FDL 10/2025 Art.2(3)) assessed; MLRO to confirm before goAML submission.`,
+  if (body.superBrain?.pep && body.superBrain.pep.salience > 0) {
+    const p = body.superBrain.pep;
+    suspicionBits.push(
+      `Subject identified as a Politically Exposed Person (PEP): ${p.type.replace(/_/g, " ")}, tier ${p.tier}, salience ${Math.round(p.salience * 100)}%.`,
+    );
+  }
+  if (body.superBrain?.jurisdiction?.cahra) {
+    suspicionBits.push(
+      `Subject's jurisdiction (${body.superBrain.jurisdiction.name}, ${body.superBrain.jurisdiction.iso2}) is designated a Conflict-Affected and High-Risk Area (CAHRA).`,
+    );
+  }
+  if (body.superBrain?.jurisdiction?.regimes?.length) {
+    suspicionBits.push(
+      `Active sanctions/regulatory regimes applicable: ${body.superBrain.jurisdiction.regimes.join(", ")}.`,
+    );
+  }
+  if (body.superBrain?.adverseKeywordGroups?.length) {
+    suspicionBits.push(
+      `Adverse-media keyword groups fired: ${body.superBrain.adverseKeywordGroups.map((g) => g.label).join(", ")}.`,
+    );
+  }
+  if (suspicionBits.length > 0) {
+    parts.push(`BASIS FOR SUSPICION: ${suspicionBits.join(" ")}`);
+  }
+
+  // ── 4. FATF typology cross-reference ──────────────────────────────────────
+  if (body.typologyName) {
+    parts.push(
+      `TYPOLOGY: This activity pattern is consistent with the FATF typology: ${body.typologyName}.`,
+    );
+  }
+
+  // ── 5. Due diligence steps taken / why legitimacy could not be determined ──
+  if (body.dueDiligenceStepsTaken?.length) {
+    parts.push(
+      `DUE DILIGENCE STEPS TAKEN: The reporting institution undertook the following steps to determine whether the activity had a legitimate explanation, without success: ${body.dueDiligenceStepsTaken.join("; ")}. The institution was unable to satisfy itself as to the legitimacy of the activity.`,
+    );
+  } else {
+    parts.push(
+      `DUE DILIGENCE STEPS TAKEN: The reporting institution applied its standard KYC/CDD procedures and constructive-knowledge standard (FDL 10/2025 Art. 2(3)). Despite these steps, the institution was unable to determine a legitimate basis for the activity described above.`,
+    );
+  }
+
+  // ── 6. Regulatory basis ────────────────────────────────────────────────────
+  parts.push(
+    `REGULATORY BASIS: This report is filed pursuant to the obligation imposed on reporting entities under UAE Federal Decree-Law No. 10 of 2025 (FDL 10/2025) Art. 15 (reporting obligation). The reporting institution has reasonable grounds to suspect that the transactions constitute, or may constitute, money laundering, terrorist financing, or financing of illegal organisations. MLRO to review and confirm all details before goAML submission.`,
   );
-  return bits.join(" ");
+
+  return parts.join("\n\n");
 }

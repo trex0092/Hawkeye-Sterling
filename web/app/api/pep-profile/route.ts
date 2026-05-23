@@ -6,9 +6,10 @@ import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 export interface PepProfileResult {
   ok: true;
-  pepTier: "tier1" | "tier2" | "tier3" | "rca";
+  pepTier: "tier1" | "tier2" | "tier3" | "tier4" | "rca";
   riskScore: number;
   politicalExposure: {
     current: boolean;
@@ -245,10 +246,10 @@ export async function POST(req: Request) {
       system: [
         {
           type: "text",
-          text: `You are a specialist AML analyst focused on Politically Exposed Person (PEP) risk assessment under FATF Recommendation 12, UAE FDL 10/2025 Art.14, and CBUAE AML Standards. Analyse PEP profile data and produce a comprehensive risk assessment. Apply FATF PEP tier definitions: Tier 1 = heads of state/government, senior ministers, senior military/judiciary/central bank officials, senior officials of international organisations (UN Secretary-General, World Bank Group presidents, IMF Managing Director, ICC/ICJ officials, Arab League Secretary-General — SIE category); Tier 2 = senior regional/municipal officials, senior party officials, senior executives of SOEs (State-Owned Enterprise officers at board/C-suite level with material government ownership), mid-level international organisation staff; Tier 3 = mid-level officials, lower-ranking officials; RCA = relative or close associate of any PEP. Classify SIE (Senior International Organisation Exposed Person) within Tier 1. Return ONLY valid JSON with this exact structure (no markdown fences):
+          text: `You are a specialist AML analyst focused on Politically Exposed Person (PEP) risk assessment under FATF Recommendation 12, UAE FDL 10/2025 Art.14, and CBUAE AML Standards. Analyse PEP profile data and produce a comprehensive risk assessment. Apply FATF PEP tier definitions: Tier 1 = heads of state/government, senior ministers, senior military/judiciary/central bank officials, senior officials of international organisations (UN Secretary-General, World Bank Group presidents, IMF Managing Director, ICC/ICJ officials, Arab League Secretary-General — SIE category); Tier 2 = senior judicial officials, senior military officials, members of parliament/legislative bodies, senior political party officials; Tier 3 = mid-level government officials, lower-ranking officials; Tier 4 = senior executives of state-owned enterprises (SOE) at board/C-suite level with material government ownership, senior local/regional government officials; RCA = relative or close associate of any PEP tier — includes spouses, children, parents, and siblings of the PEP, plus known close business associates. Classify SIE (Senior International Organisation Exposed Person) within Tier 1. Return ONLY valid JSON with this exact structure (no markdown fences):
 {
   "ok": true,
-  "pepTier": "tier1"|"tier2"|"tier3"|"rca",
+  "pepTier": "tier1"|"tier2"|"tier3"|"tier4"|"rca",
   "riskScore": number (0-100),
   "politicalExposure": {
     "current": boolean,
@@ -301,6 +302,29 @@ Perform a comprehensive PEP risk assessment grounded in the PEP database data ab
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as PepProfileResult;
     if (!Array.isArray(result.networkMap)) result.networkMap = [];
     if (!Array.isArray(result.requiredMeasures)) result.requiredMeasures = [];
+
+    // Write pep.rca_identified audit chain entries for every RCA found in the
+    // network map. FATF R.12 requires explicit recording of PEP network
+    // relationships including family members and close associates so that
+    // downstream EDD measures can be traced back to the screening event.
+    const subjectName = sanitizeField(body.name) || "Unknown";
+    for (const node of result.networkMap) {
+      void writeAuditChainEntry(
+        {
+          event: "pep.rca_identified",
+          actor: gate.keyId,
+          subjectId: subjectName,
+          pepId: subjectName,
+          relationship: node.relationship,
+          rcaName: node.name,
+          riskLevel: node.riskLevel,
+        },
+        "compliance",
+      ).catch((err: unknown) =>
+        console.warn("[pep-profile] pep.rca_identified audit chain write failed:", err instanceof Error ? err.message : String(err)),
+      );
+    }
+
     const latencyMs = Date.now() - _handlerStart;
     if (latencyMs > 5000) console.warn(`[pep_profile] latencyMs=${latencyMs} exceeds 5000ms`);
     return NextResponse.json(

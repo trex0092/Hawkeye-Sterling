@@ -188,10 +188,13 @@ function buildXml(b: GoAmlXmlInput, reportRef: string, submissionDate: string): 
       const txType = escXml(tx.type?.trim() || "cash");
       const desc = escXml(tx.description?.trim() || "");
       return `      <transaction>
+        <transactionnumber>${escXml(txNum)}</transactionnumber>
         <transaction_number>${escXml(txNum)}</transaction_number>
         <transaction_date>${escXml(tx.date)}</transaction_date>
         <teller>1</teller>
         <transmode_code>C</transmode_code>
+        <transaction_location>UAE</transaction_location>
+        <t_from_my_client>1</t_from_my_client>
         <amount_local>${tx.amount.toFixed(2)}</amount_local>
         <transaction_type>${txType}</transaction_type>
         <currency_amount>
@@ -208,10 +211,14 @@ function buildXml(b: GoAmlXmlInput, reportRef: string, submissionDate: string): 
   <rentity_branch>HQ</rentity_branch>
   <submission_code>E</submission_code>
   <report_code>STR</report_code>
+  <action>new</action>
+  <internal_reference>${escXml(reportRef)}</internal_reference>
   <submission_date>${escXml(submissionDate)}</submission_date>
   <currency_code_local>AED</currency_code_local>
   <reporting_person>
     <title>Mr</title>
+    <first_name>${escXml(mlroFirst)}</first_name>
+    <last_name>${escXml(mlroLast)}</last_name>
     <firstname>${escXml(mlroFirst)}</firstname>
     <surname>${escXml(mlroLast)}</surname>
     <positions>
@@ -235,6 +242,7 @@ function buildXml(b: GoAmlXmlInput, reportRef: string, submissionDate: string): 
     <report_subject_id>1</report_subject_id>
     <report_subjects>
       <subject>
+        <subjectid>1</subjectid>
         <subject_id>1</subject_id>
         <subject_type>P</subject_type>
         <role>S</role>
@@ -281,10 +289,14 @@ function buildFallbackXml(reportRef: string, submissionDate: string): string {
   <rentity_branch>HQ</rentity_branch>
   <submission_code>E</submission_code>
   <report_code>STR</report_code>
+  <action>new</action>
+  <internal_reference>${reportRef}</internal_reference>
   <submission_date>${submissionDate}</submission_date>
   <currency_code_local>AED</currency_code_local>
   <reporting_person>
     <title>Mr</title>
+    <first_name>[REPLACE_BEFORE_FILING:MLRO_FIRSTNAME]</first_name>
+    <last_name>[REPLACE_BEFORE_FILING:MLRO_LASTNAME]</last_name>
     <firstname>[REPLACE_BEFORE_FILING:MLRO_FIRSTNAME]</firstname>
     <surname>[REPLACE_BEFORE_FILING:MLRO_LASTNAME]</surname>
     <positions>
@@ -308,6 +320,7 @@ function buildFallbackXml(reportRef: string, submissionDate: string): string {
     <report_subject_id>1</report_subject_id>
     <report_subjects>
       <subject>
+        <subjectid>1</subjectid>
         <subject_id>1</subject_id>
         <subject_type>P</subject_type>
         <role>S</role>
@@ -337,10 +350,13 @@ function buildFallbackXml(reportRef: string, submissionDate: string): string {
     </involved_accounts>
     <transactions>
       <transaction>
+        <transactionnumber>${reportRef}-TXN-1</transactionnumber>
         <transaction_number>${reportRef}-TXN-1</transaction_number>
         <transaction_date>[REPLACE_BEFORE_FILING:YYYY-MM-DD]</transaction_date>
         <teller>1</teller>
         <transmode_code>C</transmode_code>
+        <transaction_location>UAE</transaction_location>
+        <t_from_my_client>1</t_from_my_client>
         <amount_local>[REPLACE_BEFORE_FILING:AMOUNT]</amount_local>
         <transaction_type>[REPLACE_BEFORE_FILING:TX_TYPE]</transaction_type>
         <currency_amount>

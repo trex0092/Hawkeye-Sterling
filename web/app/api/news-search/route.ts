@@ -74,6 +74,7 @@ interface Article {
   fuzzyMethod: string;       // levenshtein | jaro_winkler | soundex | token_set | ...
   matchedVariant?: string;   // variant that produced the top score
   lang: string;              // locale the article was fetched from (en, es, fr, ru, zh, ar, pt)
+  relevanceScore?: number;   // fuzzyScore + adverse-term boost, 0..100
 }
 
 // Locales we poll Google News from. Expanded to 35 languages covering the
@@ -262,6 +263,21 @@ function parseRss(xml: string, subject: string, variants: string[], lang: string
       }
     }
 
+    // Boost score for high-signal adverse media terms in title
+    const adverseTermBoosts: Record<string, number> = {
+      "convicted": 15, "arrested": 12, "charged": 12, "indicted": 12,
+      "sanctioned": 15, "designated": 10, "fraud": 10, "corruption": 10,
+      "laundering": 15, "bribery": 12, "embezzlement": 12, "terrorist": 15,
+      "wanted": 12, "fugitive": 10, "banned": 8, "debarred": 8,
+    };
+    const titleLower = title.toLowerCase();
+    let boost = 0;
+    for (const [term, pts] of Object.entries(adverseTermBoosts)) {
+      if (titleLower.includes(term)) boost += pts;
+    }
+    const baseScore = Math.round(fuzzyScore * 100);
+    const adjustedScore = Math.min(100, baseScore + boost);
+
     const article: Article = {
       title,
       link,
@@ -271,9 +287,10 @@ function parseRss(xml: string, subject: string, variants: string[], lang: string
       keywordGroups: Array.from(new Set(kwHits.map((h) => h.group))),
       esgCategories: Array.from(new Set(esgHits.map((e) => e.categoryId))),
       severity: classifyArticleSeverity(kwHits),
-      fuzzyScore: Math.round(fuzzyScore * 100),
+      fuzzyScore: baseScore,
       fuzzyMethod,
       lang,
+      relevanceScore: adjustedScore,
     };
     if (matchedVariant) article.matchedVariant = matchedVariant;
     out.push(article);

@@ -12,6 +12,7 @@ const TIER_CONFIG = {
   tier1: { label: "Tier 1 PEP", color: "text-red", bg: "bg-red/10 border-red/30", dot: "bg-red" },
   tier2: { label: "Tier 2 PEP", color: "text-amber", bg: "bg-amber/10 border-amber/30", dot: "bg-amber" },
   tier3: { label: "Tier 3 PEP", color: "text-blue", bg: "bg-blue/10 border-blue/30", dot: "bg-blue" },
+  tier4: { label: "Tier 4 PEP — SOE Executive", color: "text-orange", bg: "bg-orange/10 border-orange/30", dot: "bg-orange" },
   rca: { label: "RCA", color: "text-ink-2", bg: "bg-bg-2 border-hair-2", dot: "bg-ink-3" },
 } as const;
 

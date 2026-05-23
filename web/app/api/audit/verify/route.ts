@@ -124,12 +124,20 @@ async function handleGet(req: Request): Promise<Response> {
   let prevSequence = 0;
   let scanned = 0;
   let verified = 0;
+  let earliestAt: string | null = null;
+  let latestAt: string | null = null;
 
   for (const key of allKeys) {
     if (scanned >= max) break;
     const e = await getJson<AuditEntry>(key);
     if (!e) continue;
     scanned++;
+
+    // Track date range across all scanned entries.
+    if (e.at) {
+      if (earliestAt === null || e.at < earliestAt) earliestAt = e.at;
+      if (latestAt === null || e.at > latestAt) latestAt = e.at;
+    }
 
     // Sequence contiguity is a chain-wide check — applied even when
     // a target filter is in effect, because gaps anywhere break the
@@ -203,6 +211,11 @@ async function handleGet(req: Request): Promise<Response> {
       ok,
       totalScanned: scanned,
       totalVerified: verified,
+      entryCount: scanned,
+      dateRange: {
+        earliest: earliestAt,
+        latest: latestAt,
+      },
       brokenLinks,
       invalidIds,
       invalidSignatures,

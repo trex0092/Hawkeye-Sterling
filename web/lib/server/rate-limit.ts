@@ -49,6 +49,7 @@ async function redisIncr(key: string, ttlSeconds: number): Promise<number | null
 async function consumeRedis(
   keyId: string,
   tier: TierDefinition,
+  cost = 1,
 ): Promise<RateLimitResult | null> {
   const nowSec = Math.floor(Date.now() / 1000);
   const secWindow = Math.floor(nowSec);
@@ -56,9 +57,21 @@ async function consumeRedis(
   const secKey = `rl:${keyId}:s:${secWindow}`;
   const minKey = `rl:${keyId}:m:${minWindow}`;
 
+  // For cost > 1 we issue cost increments but only one TTL set. Use sequential
+  // INCR calls so the final count reflects the full cost of this request.
+  async function incrBy(key: string, ttlSec: number, n: number): Promise<number | null> {
+    let last: number | null = null;
+    for (let i = 0; i < n; i++) {
+      const v = await redisIncr(key, ttlSec);
+      if (v === null) return null;
+      last = v;
+    }
+    return last;
+  }
+
   const [secCount, minCount] = await Promise.all([
-    redisIncr(secKey, 2),
-    redisIncr(minKey, 62),
+    incrBy(secKey, 2, cost),
+    incrBy(minKey, 62, cost),
   ]);
   if (secCount === null || minCount === null) return null; // Redis unavailable
 
@@ -120,11 +133,15 @@ function bucketStart(now: number, widthMs: number): number {
 export async function consumeRateLimit(
   keyId: string,
   tierId: string,
+  cost = 1,
 ): Promise<RateLimitResult> {
   const tier = tierFor(tierId);
+  // Clamp cost to a positive integer so a misconfigured caller can't
+  // zero-out the counter or overflow it.
+  const effectiveCost = Math.max(1, Math.floor(cost));
 
   // Prefer Redis atomic enforcement when configured.
-  const redisResult = await consumeRedis(keyId, tier);
+  const redisResult = await consumeRedis(keyId, tier, effectiveCost);
   if (redisResult !== null) return redisResult;
   const now = Date.now();
   const storageKey = `${PREFIX}${keyId}`;
@@ -142,8 +159,8 @@ export async function consumeRateLimit(
     prior.minute = { startMs: minuteStart, count: 0 };
   }
 
-  const nextSecond = prior.second.count + 1;
-  const nextMinute = prior.minute.count + 1;
+  const nextSecond = prior.second.count + effectiveCost;
+  const nextMinute = prior.minute.count + effectiveCost;
 
   if (nextSecond > tier.rateLimitPerSecond) {
     return {
@@ -192,12 +209,21 @@ export async function consumeRateLimit(
 }
 
 export function rateLimitHeaders(r: RateLimitResult): Record<string, string> {
+  // x-ratelimit-reset: Unix timestamp (seconds) when the most-constrained
+  // window resets. Clients use this to schedule the next retry precisely.
+  const resetTimestamp = Math.floor(Date.now() / 1000) + (r.allowed ? 0 : r.retryAfterSec);
   return {
     "x-ratelimit-tier": r.tier.id,
+    // Per-minute window (the primary capacity window)
+    "x-ratelimit-limit": String(r.tier.rateLimitPerMinute),
+    "x-ratelimit-remaining": String(r.remainingMinute),
+    "x-ratelimit-reset": String(resetTimestamp),
+    // Granular windows for clients that want sub-minute visibility
     "x-ratelimit-limit-minute": String(r.tier.rateLimitPerMinute),
     "x-ratelimit-remaining-minute": String(r.remainingMinute),
     "x-ratelimit-limit-second": String(r.tier.rateLimitPerSecond),
     "x-ratelimit-remaining-second": String(r.remainingSecond),
+    // Retry-After on 429 responses (RFC 7231 §7.1.3)
     ...(r.allowed ? {} : { "retry-after": String(r.retryAfterSec) }),
   };
 }

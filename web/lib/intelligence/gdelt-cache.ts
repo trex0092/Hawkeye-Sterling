@@ -637,3 +637,95 @@ export function gdeltCacheStats(): { entries: number; oldestAgeMs: number | null
   }
   return { entries: _mem.size, oldestAgeMs: Date.now() - oldest };
 }
+
+// ─── GDELT GKG (Global Knowledge Graph) ────────────────────────────────────
+//
+// The GKG V2 API returns structured entity-level data derived from GDELT's
+// knowledge graph: themes, tones, and co-occurring entities linked to news
+// events. Unlike the DOC API (article-list mode), GKG data is pre-parsed by
+// GDELT's NLP pipeline and exposes CAMEO/GDELT theme codes directly — making
+// crime-signal detection more precise than keyword search alone.
+//
+// We use this as an additive layer: the DOC API query (above) identifies
+// adverse articles; the GKG query confirms crime-related *themes* and
+// supplies an average tone independent of our keyword filters.
+
+export interface GkgEntity {
+  name: string;
+  type: string;  // PERSON, ORG, COUNTRY, etc.
+  count: number;
+  tone: number;  // negative = bad news
+  themes: string[];
+  locations: string[];
+}
+
+export interface GkgResult {
+  entities: GkgEntity[];
+  averageTone: number;
+  crimeThemes: string[];
+  fetchedAt: string;
+}
+
+const GDELT_GKG_BASE = "https://api.gdeltproject.org/api/v2/gkg/gkg";
+const GKG_TIMEOUT_MS = 5_000;
+
+/** Crime-related GDELT/CAMEO theme prefixes we care about. */
+const CRIME_THEME_PATTERNS = [
+  "CRIME", "CORRUPTION", "FRAUD", "TERROR", "SANCTION", "LAUNDER", "BRIBE",
+];
+
+/**
+ * Query the GDELT GKG API for a subject name.
+ * Returns crime-related themes and average tone across recent articles.
+ * Returns null on any network/HTTP error (designed to be non-blocking).
+ */
+export async function queryGdeltGkg(subjectName: string): Promise<GkgResult | null> {
+  const url = new URL(GDELT_GKG_BASE);
+  url.searchParams.set("query", `"${subjectName}"`);
+  url.searchParams.set("mode", "artlist");
+  url.searchParams.set("format", "json");
+  url.searchParams.set("maxrecords", "50");
+  url.searchParams.set("timespan", "LAST365DAYS");
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), GKG_TIMEOUT_MS);
+
+  try {
+    const res = await fetch(url.toString(), { signal: controller.signal });
+    if (!res.ok) return null;
+    const data = await res.json() as { articles?: Array<{ tone?: string; themes?: string; persons?: string }> };
+
+    // Extract crime-related themes and compute average tone
+    const crimeThemes: string[] = [];
+    let totalTone = 0;
+    let count = 0;
+
+    for (const article of (data.articles ?? [])) {
+      if (article.tone) {
+        const tone = parseFloat(article.tone.split(",")[0] ?? "0");
+        if (Number.isFinite(tone)) { totalTone += tone; count++; }
+      }
+      for (const theme of (article.themes ?? "").split(";")) {
+        const trimmed = theme.trim();
+        if (!trimmed) continue;
+        if (
+          CRIME_THEME_PATTERNS.some((p) => trimmed.includes(p)) &&
+          !crimeThemes.includes(trimmed)
+        ) {
+          crimeThemes.push(trimmed);
+        }
+      }
+    }
+
+    return {
+      entities: [],
+      averageTone: count > 0 ? totalTone / count : 0,
+      crimeThemes: crimeThemes.slice(0, 20),
+      fetchedAt: new Date().toISOString(),
+    };
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}

@@ -16,6 +16,8 @@ interface CaseInput {
   meta: string;
   narrative?: string;
   redFlags?: string[];
+  /** FATF typology detected for this case — used to score typology match. */
+  detectedTypology?: string;
 }
 
 interface QaScore {

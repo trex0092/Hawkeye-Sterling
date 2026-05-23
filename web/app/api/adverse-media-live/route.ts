@@ -14,7 +14,7 @@ import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
 import { searchAllNews } from "@/lib/intelligence/newsAdapters";
 import { gdeltKeywordOr } from "@/lib/intelligence/amlKeywords";
-import { fetchGdeltCached } from "@/lib/intelligence/gdelt-cache";
+import { fetchGdeltCached, queryGdeltGkg } from "@/lib/intelligence/gdelt-cache";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 45;

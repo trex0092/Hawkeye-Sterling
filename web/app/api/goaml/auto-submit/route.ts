@@ -83,6 +83,33 @@ async function handlePost(req: Request): Promise<NextResponse> {
   if (!body?.xml || typeof body.xml !== "string" || body.xml.length === 0) {
     return NextResponse.json({ ok: false, error: "xml required" }, { status: 400, headers: gateHeaders });
   }
+
+  // Pre-flight: validate mandatory goAML fields before sending to FIU.
+  // Operates on the raw XML string — avoids a full XML parser dependency.
+  {
+    const missingFields: string[] = [];
+    const xml = body.xml;
+    if (!/<rentity_id>[^<]+<\/rentity_id>/.test(xml)) missingFields.push("rentity_id");
+    if (!/<action>(new|update)<\/action>/.test(xml)) missingFields.push("action");
+    if (!/<transaction>/.test(xml)) missingFields.push("transactions");
+    // Accept either <first_name>+<last_name> or <firstname>+<surname> (both appear in spec variants)
+    const hasSubjectName =
+      (/<first_name>[^<]+<\/first_name>/.test(xml) && /<last_name>[^<]+<\/last_name>/.test(xml)) ||
+      (/<firstname>[^<]+<\/firstname>/.test(xml) && /<surname>[^<]+<\/surname>/.test(xml));
+    if (!hasSubjectName) missingFields.push("subject.name");
+    if (!/<transaction_location>[^<]+<\/transaction_location>/.test(xml)) missingFields.push("transaction_location");
+    if (!/<t_from_my_client>[01]<\/t_from_my_client>/.test(xml)) missingFields.push("t_from_my_client");
+    if (missingFields.length > 0) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: `goAML submission missing mandatory fields: ${missingFields.join(", ")}. Cannot submit to FIU.`,
+        },
+        { status: 400, headers: gateHeaders },
+      );
+    }
+  }
+
   if (!body.submitter?.id || !body.submitter.signature || !body.authoriser?.id || !body.authoriser.signature) {
     return NextResponse.json({ ok: false, error: "submitter + authoriser id+signature required" }, { status: 400, headers: gateHeaders });
   }
