@@ -217,7 +217,7 @@ export async function enforce(
     // A JWT holder whose tier was downgraded must get the new (lower) rate limits.
     const liveRecord = await getJson<ApiKeyRecord>(`keys/${keyId}`).catch(() => null);
     tierId = liveRecord?.tier ?? v.payload.tier ?? "free";
-    const rl = await consumeRateLimit(keyId, tierId);
+    const rl = await consumeRateLimit(keyId, tierId, cost);
     if (!rl.allowed) {
       return {
         ok: false,
@@ -285,7 +285,7 @@ export async function enforce(
     keyId = `anon_${createHmac("sha256", anonIpKey()).update(ip).digest("hex").slice(0, 12)}`;
   }
 
-  const rl = await consumeRateLimit(keyId, tierId);
+  const rl = await consumeRateLimit(keyId, tierId, cost);
   if (!rl.allowed) {
     return {
       ok: false,

@@ -215,7 +215,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   // blast megabytes of junk into a free-tier endpoint. gateHeaders is
   // threaded through every exit path so clients always see their
   // remaining quota and rate-limit window.
-  const gate = await enforce(req);
+  const gate = await enforce(req, { cost: 10 });
   if (!gate.ok) return gate.response;
   const gateHeaders: Record<string, string> = gate.ok ? gate.headers : {};
 

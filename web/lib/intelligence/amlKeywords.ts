@@ -175,15 +175,151 @@ export const AML_KEYWORDS_MULTILINGUAL: Record<string, string[]> = {
   // Norwegian
   no: ["hvitvasking", "korrupsjon", "svindel", "pågrepet",
        "smugling", "sanksjoner", "terrorisme", "organisert kriminalitet"],
-  // Swahili
-  sw: ["utakatishaji fedha", "ufisadi", "udanganyifu", "kukamatwa",
-       "magendo", "vikwazo", "ugaidi", "uhalifu"],
-  // Urdu
-  ur: ["منی لانڈرنگ", "بدعنوانی", "دھوکہ دہی", "گرفتاری",
-       "سمگلنگ", "پابندیاں", "دہشت گردی"],
-  // Bengali
-  bn: ["অর্থ পাচার", "দুর্নীতি", "জালিয়াতি", "গ্রেফতার",
+  // Swahili — East Africa
+  sw: ["utakatishaji fedha", "ufisadi", "udanganyifu", "rushwa",
+       "kukamatwa", "magendo", "vikwazo", "ugaidi", "uhalifu"],
+  // Hausa — West Africa
+  ha: ["wankin kudi",        // money laundering
+       "cin hanci",           // bribery/corruption
+       "zamba"],              // fraud
+  // Amharic — Ethiopia
+  am: ["ብሩን ማጠብ",  // money laundering
+       "ሙስና",        // corruption
+       "ማጭበርበር"],   // fraud
+  // Urdu — Pakistan
+  ur: ["منی لانڈرنگ",   // money laundering
+       "بدعنوانی",      // corruption
+       "دھوکہ دہی",     // fraud
+       "پابندیاں",      // sanctions
+       "گرفتاری", "سمگلنگ", "دہشت گردی"],
+  // Bengali — Bangladesh
+  bn: ["মানি লন্ডারিং",  // money laundering
+       "দুর্নীতি",       // corruption
+       "প্রতারণা",       // fraud
+       "অর্থ পাচার", "জালিয়াতি", "গ্রেফতার",
        "চোরাচালান", "নিষেধাজ্ঞা", "সন্ত্রাসবাদ"],
+  // Tagalog — Philippines
+  tl: ["pagpapalaba ng pera",  // money laundering
+       "katiwalian",           // corruption
+       "pandaraya",            // fraud
+       "suhulan"],             // bribery
+  // Georgian — Georgia (Caucasus)
+  ka: ["ფულის გათეთრება",  // money laundering
+       "კორუფცია",           // corruption
+       "თაღლითობა",          // fraud
+       "დაკავება",            // arrest
+       "სანქციები",           // sanctions
+       "კონტრაბანდა"],        // smuggling
+  // Armenian — Armenia (Caucasus)
+  hy: ["գումարի լվացում",  // money laundering
+       "կոռուպցիա",          // corruption
+       "խարդախություն",      // fraud
+       "ձերբակալություն",    // arrest
+       "պատժամիջոցներ",      // sanctions
+       "մաքսանենգություն"],   // smuggling
+  // Azerbaijani — Azerbaijan (Caucasus)
+  az: ["pul yuyulması",       // money laundering
+       "korrupsiya",           // corruption
+       "dələduzluq",           // fraud
+       "həbs",                 // arrest
+       "sanksiyalar",          // sanctions
+       "qaçaqmalçılıq"],       // smuggling
+  // Kazakh — Kazakhstan
+  kk: ["ақшаны жылыстату",  // money laundering
+       "сыбайлас жемқорлық", // corruption
+       "алаяқтық",           // fraud
+       "тұтқындау",          // arrest
+       "санкциялар",         // sanctions
+       "контрабанда"],        // smuggling
+  // Uzbek — Uzbekistan
+  uz: ["pullarni yuvish",     // money laundering
+       "korrupsiya",           // corruption
+       "firibgarlik",          // fraud
+       "hibsga olish",         // arrest
+       "sanksiyalar",          // sanctions
+       "kontrabanda"],         // smuggling
+  // Nepali — Nepal
+  ne: ["मनी लाउन्डरिङ",  // money laundering
+       "भ्रष्टाचार",       // corruption
+       "ठगी",               // fraud
+       "गिरफ्तारी",        // arrest
+       "प्रतिबन्ध",         // sanctions
+       "तस्करी"],           // smuggling
+  // Sinhala — Sri Lanka
+  si: ["මුදල් විශුද්ධිකරණය",  // money laundering
+       "දූෂණය",                // corruption
+       "වංචාව",                // fraud
+       "අත්අඩංගුවට ගැනීම",    // arrest
+       "මුදල් ජාවාරම"],        // financial crime
+  // Estonian — Estonia
+  et: ["rahapesu",            // money laundering
+       "korruptsioon",         // corruption
+       "pettus",               // fraud
+       "vahistamine",          // arrest
+       "sanktsioonid",         // sanctions
+       "salakaubavedu"],        // smuggling
+  // Latvian — Latvia
+  lv: ["naudas atmazgāšana",  // money laundering
+       "korupcija",            // corruption
+       "krāpšana",             // fraud
+       "aizturēšana",          // arrest
+       "sankcijas",            // sanctions
+       "kontrabanda"],         // smuggling
+  // Lithuanian — Lithuania
+  lt: ["pinigų plovimas",     // money laundering
+       "korupcija",            // corruption
+       "sukčiavimas",          // fraud
+       "suėmimas",             // arrest
+       "sankcijos",            // sanctions
+       "kontrabanda"],         // smuggling
+  // Finnish — Finland
+  fi: ["rahanpesu",           // money laundering
+       "korruptio",            // corruption
+       "petos",                // fraud
+       "pidätys",              // arrest
+       "pakotteet",            // sanctions
+       "salakuljetus"],         // smuggling
+  // Norwegian — Norway
+  no: ["hvitvasking",         // money laundering
+       "korrupsjon",           // corruption
+       "svindel",              // fraud
+       "pågripelse",           // arrest
+       "sanksjoner",           // sanctions
+       "smugling"],            // smuggling
+  // Danish — Denmark
+  da: ["hvidvaskning",        // money laundering
+       "korruption",           // corruption
+       "bedrageri",            // fraud
+       "anholdelse",           // arrest
+       "sanktioner",           // sanctions
+       "smugleri"],            // smuggling
+  // Macedonian — North Macedonia
+  mk: ["перење пари",         // money laundering
+       "корупција",            // corruption
+       "измама",               // fraud
+       "апсење",               // arrest
+       "санкции",              // sanctions
+       "шверц"],               // smuggling
+  // Albanian — Albania
+  sq: ["pastrimi i parave",   // money laundering
+       "korrupsion",           // corruption
+       "mashtrim",             // fraud
+       "arrestim",             // arrest
+       "sanksione",            // sanctions
+       "kontrabandë"],         // smuggling
+  // Slovenian — Slovenia
+  sl: ["pranje denarja",      // money laundering
+       "korupcija",            // corruption
+       "goljufija",            // fraud
+       "aretacija",            // arrest
+       "sankcije",             // sanctions
+       "tihotapstvo"],          // smuggling
+  // Mongolian — Mongolia
+  mn: ["мөнгө угаах",        // money laundering
+       "авлига",               // corruption
+       "залилан мэхлэх",      // fraud
+       "баривчлах",            // arrest
+       "хориг арга хэмжээ"],   // sanctions
 };
 
 /** Flat list of every keyword across every language. */

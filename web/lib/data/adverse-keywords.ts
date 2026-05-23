@@ -206,6 +206,25 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
       "corrupt practices", "secret commission",
       "regulatory capture", "revolving door corruption",
       "undue advantage", "improper benefit",
+      // ── Multilingual equivalents ────────────────────────────────────────────
+      // Arabic
+      "رشوة", "فساد", "اختلاس", "احتيال",
+      // French
+      "fraude", "corruption", "détournement", "pot-de-vin",
+      // Spanish
+      "fraude", "corrupción", "soborno", "malversación",
+      // Russian
+      "мошенничество", "коррупция", "взятка", "хищение",
+      // German
+      "Betrug", "Korruption", "Bestechung", "Veruntreuung",
+      // Turkish
+      "yolsuzluk", "rüşvet", "zimmet", "dolandırıcılık",
+      // Chinese
+      "腐败", "贿赂", "贪污", "欺诈",
+      // Indonesian
+      "korupsi", "suap", "penipuan", "penggelapan",
+      // Hindi
+      "भ्रष्टाचार", "रिश्वत", "घोटाला", "धोखाधड़ी",
     ],
   },
   {
@@ -446,6 +465,25 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
       "gold in luggage", "gold in their luggage", "gold in his luggage",
       "undeclared gold", "unreported gold", "undisclosed gold",
       "customs with gold", "airport with gold", "border with gold",
+      // ── Multilingual equivalents ────────────────────────────────────────────
+      // Arabic
+      "جريمة منظمة", "تهريب المخدرات", "عصابة إجرامية",
+      // French
+      "crime organisé", "trafic de drogues", "organisation criminelle",
+      // Spanish
+      "crimen organizado", "tráfico de drogas", "banda criminal",
+      // Russian
+      "организованная преступность", "наркоторговля", "преступная группировка",
+      // German
+      "organisierte Kriminalität", "Drogenhandel", "kriminelle Organisation",
+      // Turkish
+      "organize suç", "uyuşturucu kaçakçılığı", "suç örgütü",
+      // Chinese
+      "有组织犯罪", "贩毒", "犯罪集团",
+      // Indonesian
+      "kejahatan terorganisir", "perdagangan narkoba", "sindikat kriminal",
+      // Hindi
+      "संगठित अपराध", "मादक पदार्थ तस्करी", "अपराधी गिरोह",
     ],
   },
   {
@@ -471,6 +509,25 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
       "escort fraud", "escort scam",
       "child marriage",
       "underage exploitation",
+      // ── Multilingual equivalents ────────────────────────────────────────────
+      // Arabic
+      "الاتجار بالبشر", "العبودية الحديثة", "استغلال جنسي",
+      // French
+      "traite des êtres humains", "esclavage moderne", "exploitation sexuelle",
+      // Spanish
+      "trata de personas", "esclavitud moderna", "explotación sexual",
+      // Russian
+      "торговля людьми", "современное рабство", "сексуальная эксплуатация",
+      // German
+      "Menschenhandel", "moderne Sklaverei", "sexuelle Ausbeutung",
+      // Turkish
+      "insan ticareti", "modern kölelik", "cinsel istismar",
+      // Chinese
+      "人口贩卖", "现代奴隶制", "性剥削",
+      // Indonesian
+      "perdagangan manusia", "perbudakan modern", "eksploitasi seksual",
+      // Hindi
+      "मानव तस्करी", "आधुनिक दासता", "यौन शोषण",
     ],
   },
   {
@@ -559,6 +616,25 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
       "social security fraud",
       // Payroll / employee fraud
       "payroll fraud", "ghost employee",
+      // ── Multilingual equivalents ────────────────────────────────────────────
+      // Arabic
+      "احتيال", "تزوير", "سرقة الهوية", "مخطط احتيال",
+      // French
+      "fraude", "escroquerie", "falsification", "usurpation d'identité",
+      // Spanish
+      "fraude", "estafa", "falsificación", "robo de identidad",
+      // Russian
+      "мошенничество", "подделка", "кража личных данных", "схема мошенничества",
+      // German
+      "Betrug", "Urkundenfälschung", "Identitätsdiebstahl", "Betrugssystem",
+      // Turkish
+      "dolandırıcılık", "sahtekarlık", "kimlik hırsızlığı", "sahtecilik",
+      // Chinese
+      "欺诈", "伪造", "身份盗窃", "诈骗",
+      // Indonesian
+      "penipuan", "pemalsuan", "pencurian identitas", "penipuan skema",
+      // Hindi
+      "धोखाधड़ी", "जालसाजी", "पहचान चोरी",
     ],
   },
   {
@@ -990,6 +1066,25 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
       "tantalum smuggling", "tin smuggling", "tungsten smuggling",
       "coltan smuggling", "coltan conflict", "illegal cobalt",
       "rare earth smuggling", "rare earth fraud",
+      // ── Multilingual equivalents ────────────────────────────────────────────
+      // Arabic
+      "جريمة بيئية", "تعدين غير قانوني", "تهريب الأخشاب",
+      // French
+      "crime environnemental", "exploitation minière illégale", "trafic de bois",
+      // Spanish
+      "delito ambiental", "minería ilegal", "tráfico de madera",
+      // Russian
+      "экологическое преступление", "незаконная добыча", "незаконная вырубка",
+      // German
+      "Umweltkriminalität", "illegaler Bergbau", "illegaler Holzeinschlag",
+      // Turkish
+      "çevre suçu", "yasadışı madencilik", "yasadışı ağaç kesimi",
+      // Chinese
+      "环境犯罪", "非法采矿", "非法伐木",
+      // Indonesian
+      "kejahatan lingkungan", "penambangan ilegal", "penebangan ilegal",
+      // Hindi
+      "पर्यावरण अपराध", "अवैध खनन", "अवैध वनकटाई",
     ],
   },
   // AI-misuse / algorithmic-harm floor, informed by Hartono et al., "The Dual

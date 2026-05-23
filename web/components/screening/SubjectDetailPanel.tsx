@@ -3367,6 +3367,11 @@ function NewsDossierPanel({ state }: { state: NewsSearchState }) {
               {a.sourceTier === "tier1" && (
                 <span className="rounded bg-emerald-100 px-1 py-0.5 text-[9px] font-semibold text-emerald-700">T1</span>
               )}
+              {a.requiresTranslation && (
+                <span className="ml-1 rounded bg-amber-100 px-1 py-0.5 text-9 font-medium text-amber-700" title="Non-English article — may require translation">
+                  {a.lang?.toUpperCase() ?? "Non-EN"}
+                </span>
+              )}
               <span>· {a.pubDate ? formatDMY(a.pubDate) : "—"}</span>
               <span>· <span className="uppercase text-violet">{a.lang}</span></span>
               <span>· fuzzy <span className="text-ink-0">{a.fuzzyScore}%</span> ({a.fuzzyMethod})</span>
