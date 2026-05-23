@@ -12,6 +12,7 @@
 // that happened earlier today before this endpoint existed).
 
 import { NextResponse } from "next/server";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -110,6 +111,17 @@ export async function POST(req: Request): Promise<NextResponse> {
       { status: 503 },
     );
   }
+
+  // FDL 10/2025: governance actions must appear on the tamper-evident audit chain.
+  void writeAuditChainEntry({
+    event: "admin.catalogue_reviewed",
+    actor: reviewer,
+    reviewedAt: entry.reviewedAt,
+    recordedAt: entry.recordedAt,
+    note: note || undefined,
+  }, "admin").catch((err) =>
+    console.warn("[mark-catalogue-reviewed] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+  );
 
   return NextResponse.json({
     ok: true,

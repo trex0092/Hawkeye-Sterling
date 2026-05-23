@@ -42,7 +42,8 @@ async function callInternal(path: string, body: unknown): Promise<unknown> {
     });
     return res.json().catch(() => ({ ok: false }));
   } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : String(err) };
+    console.error("[pkyc/run] callInternal error:", err instanceof Error ? err.message : String(err));
+    return { ok: false, error: "internal service error" };
   }
 }
 

@@ -33,9 +33,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
-  const { userId, newRole, reason, assignedBy } = body;
-  if (!userId || !newRole || !reason || !assignedBy) {
-    return NextResponse.json({ ok: false, error: "userId, newRole, reason and assignedBy are required" }, { status: 400 , headers: gate.headers });
+  const { userId, newRole, reason } = body;
+  // FDL 10/2025 Art.20: assignedBy MUST be derived from the authenticated
+  // gate identity — never from caller-supplied body to prevent IDOR / non-repudiation bypass.
+  const assignedBy = gate.record?.email ?? gate.keyId;
+  if (!userId || !newRole || !reason) {
+    return NextResponse.json({ ok: false, error: "userId, newRole and reason are required" }, { status: 400 , headers: gate.headers });
   }
 
   if (!(newRole in ROLE_MODULES)) {

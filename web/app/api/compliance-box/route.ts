@@ -32,6 +32,7 @@
 import { NextResponse } from "next/server";
 import { Box, ClaudeCode, Agent } from "@upstash/box";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeText, sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -153,12 +154,21 @@ export async function POST(req: Request): Promise<NextResponse> {
       },
     });
 
+    const safePrompt = sanitizeText(body.prompt, 5000);
+    const safeSubject = body.subject
+      ? Object.fromEntries(
+          Object.entries(body.subject).map(([k, v]) => [
+            sanitizeField(k, 100),
+            typeof v === "string" ? sanitizeField(v, 500) : v,
+          ])
+        )
+      : undefined;
     const run = await box.agent.run({
       prompt: `${SYSTEM_PROMPT}\n\n${buildPrompt({
         task_type: body.task_type,
-        prompt: body.prompt,
+        prompt: safePrompt,
         case_id: body.case_id,
-        subject: body.subject,
+        subject: safeSubject,
       })}`,
     });
 

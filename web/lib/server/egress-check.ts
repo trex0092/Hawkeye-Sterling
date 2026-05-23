@@ -24,8 +24,6 @@ export interface EgressCheckResult {
   reason?: string;
 }
 
-const GATE_ENABLED = process.env["EGRESS_GATE_ENABLED"] === "true";
-
 // Tipping-off patterns: phrases that could alert a subject that an STR/SAR
 // has been filed about them. Under UAE FDL 10/2025 Art.17 and FATF R.21
 // disclosing that a suspicious transaction report has been filed (or is
@@ -110,7 +108,9 @@ export async function runEgressCheck(
   narrative: string,
   reportType: string,
 ): Promise<EgressCheckResult> {
-  if (!GATE_ENABLED) return { allowed: true, verdict: "approved" };
+  // Read per-call so env-var changes take effect without a cold-start restart.
+  const gateEnabled = process.env["EGRESS_GATE_ENABLED"] === "true";
+  if (!gateEnabled) return { allowed: true, verdict: "approved" };
 
   // Fast path: regex tipping-off check (no LLM cost).
   if (hasTippingOff(narrative)) {
