@@ -7,6 +7,12 @@
 // Storage layout (all under the "hawkeye-sterling" Blobs store):
 //   hs-compliance/<tenant>/counter.json        → { next: number }
 //   hs-compliance/<tenant>/cases/<caseId>.json → HsCase
+//
+// Enhanced with:
+//   • Risk re-scoring on update        — updateCaseRiskScore()
+//   • Escalation timeline tracker      — escalationHistory field + appendEscalationHistory()
+//   • Regulatory deadline tracking     — filingDeadline + overdueSar flag + checkOverdueSar()
+//   • Cross-case pattern detection     — detectLinkedCases()
 
 import { getJson, setJson, listKeys } from "./store";
 import { writeAuditChainEntry } from "./audit-chain";

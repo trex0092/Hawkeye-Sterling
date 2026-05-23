@@ -289,8 +289,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     const candidates: QuickScreenCandidate[] = await loadCandidates();
     screenResult = quickScreen(subject, candidates);
   } catch (err) {
-    screenError = err instanceof Error ? err.message : String(err);
-    console.warn("[v2/intake] quick-screen failed:", screenError);
+    console.warn("[v2/intake] quick-screen failed:", err);
+    screenError = "screening service temporarily unavailable";
   }
 
   // ── 2. Create Asana task ─────────────────────────────────────────────────
@@ -312,8 +312,8 @@ export async function POST(req: Request): Promise<NextResponse> {
         console.warn(`[v2/intake] ${asanaTaskError}`);
       }
     } catch (err) {
-      asanaTaskError = err instanceof Error ? err.message : String(err);
-      console.warn("[v2/intake] Asana task creation threw:", asanaTaskError);
+      console.warn("[v2/intake] Asana task creation threw:", err);
+      asanaTaskError = "Asana task creation failed — check server logs";
     }
   } else {
     asanaSkipped = true;
@@ -329,8 +329,8 @@ export async function POST(req: Request): Promise<NextResponse> {
         asanaCommentError = "Asana comment POST returned non-2xx";
       }
     } catch (err) {
-      asanaCommentError = err instanceof Error ? err.message : String(err);
-      console.warn("[v2/intake] Asana comment POST threw:", asanaCommentError);
+      console.warn("[v2/intake] Asana comment POST threw:", err);
+      asanaCommentError = "Asana comment creation failed — check server logs";
     }
   }
 

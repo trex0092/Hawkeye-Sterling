@@ -61,13 +61,12 @@ export async function POST(req: Request): Promise<NextResponse> {
     // unambiguously triggers REVIEW_REQUIRED (≥60) in every downstream consumer.
     // Score 50 was previously ambiguous — some dispositions mapped it to
     // PROCEED_STANDARD, letting a subject pass on a crashed analysis.
-    const detail = err instanceof Error ? err.message.slice(0, 200) : String(err);
-    console.error("[weaponized-brain/reason] Pipeline crashed:", detail);
+    console.error("[weaponized-brain/reason] Pipeline crashed:", err);
     return NextResponse.json(
       {
         ok: true,
         degraded: true,
-        degradedReason: detail,
+        degradedReason: "Reasoning pipeline unavailable — risk assessment defaulted to REVIEW_REQUIRED",
         subject: body.subject,
         severity: "high",
         // Score 75 → unambiguous REVIEW_REQUIRED in all disposition maps.
