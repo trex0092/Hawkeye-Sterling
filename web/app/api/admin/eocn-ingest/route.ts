@@ -104,9 +104,8 @@ async function writeToBlobStore(listId: string, entities: NormalisedEntity[]): P
     );
     return { ok: true };
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error("[eocn-ingest] writeToBlobStore set() failed:", msg);
-    return { ok: false, error: msg };
+    console.error("[eocn-ingest] writeToBlobStore set() failed:", err);
+    return { ok: false, error: "blob store write failed — check storage configuration" };
   }
 }
 
@@ -396,7 +395,8 @@ export async function POST(req: Request): Promise<NextResponse> {
         warnings.push("Structural parser found 0 entities — falling back to AI extraction");
       }
     } catch (err) {
-      warnings.push(`Structural parse failed (${err instanceof Error ? err.message : String(err)}) — falling back to AI extraction`);
+      console.warn("[eocn-ingest] structural parse failed:", err);
+      warnings.push("Structural parse failed — falling back to AI extraction");
     }
   }
 
@@ -426,10 +426,11 @@ export async function POST(req: Request): Promise<NextResponse> {
         warnings.push("Used Claude AI extraction (structural parser yielded 0 entities)");
       }
     } catch (err) {
+      console.error("[eocn-ingest] AI extraction failed:", err);
       return NextResponse.json(
         {
           ok: false,
-          error: `AI extraction failed: ${err instanceof Error ? err.message : String(err)}`,
+          error: "AI extraction failed — please retry or verify the uploaded file is a valid EOCN/LTL document",
           warnings,
         },
         { status: 502, headers: gate.headers },
