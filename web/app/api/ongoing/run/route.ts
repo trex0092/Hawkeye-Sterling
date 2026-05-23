@@ -835,6 +835,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         ...(sarRecommended !== undefined ? { sarRecommended } : {}),
       });
     } catch (err) {
+      const errMsg = err instanceof Error ? err.message : String(err);
       results.push({
         subjectId: s.id,
         subjectName: s.name ?? "",
@@ -849,7 +850,17 @@ export async function POST(req: Request): Promise<NextResponse> {
           error: "Webhook delivery failed — please retry.",
         },
       });
-      console.error("[ongoing/run] subject processing failed:", err instanceof Error ? err.message : err);
+      console.error("[ongoing/run] subject processing failed:", errMsg);
+      // Record the processing failure in the audit chain so the regulator can
+      // identify subjects that were skipped due to errors in a given run.
+      void writeAuditChainEntry({
+        event: "ongoing.monitor_error",
+        actor: "cron_internal",
+        subjectId: s.id,
+        subjectName: s.name ?? "",
+        error: errMsg,
+        runAt,
+      }).catch((e) => console.warn("[ongoing/run] audit chain write failed (monitor_error):", e instanceof Error ? e.message : String(e)));
     }
   }));
   } // end CONCURRENCY batch loop
