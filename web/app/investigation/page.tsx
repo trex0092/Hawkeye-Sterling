@@ -142,7 +142,7 @@ export default function InvestigationPage() {
   function addParty() {
     if (!newName.trim()) return;
     setParties((prev) => [...prev, {
-      id: `p-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
+      id: `p-${Date.now()}-${crypto.randomUUID().slice(0, 6)}`,
       name: newName.trim(),
       kind: newKind,
       relationship: newRel.trim() || PARTY_LABEL[newKind].toLowerCase(),

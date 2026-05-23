@@ -66,7 +66,7 @@ const BLANK_ENTITY: EntityForm = {
 
 function blankShareholder(): Shareholder {
   return {
-    id: `sh-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    id: `sh-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
     designation: "",
     name: "",
     sharesPct: "",

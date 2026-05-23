@@ -1611,9 +1611,7 @@ export default function MlroAdvisorPage() {
   // is not killed by Netlify's ~26 s edge inactivity timeout. Speed and
   // Balanced still use the synchronous route.
   const runDeepBackground = useCallback(async (q: string, m: ReasoningMode): Promise<void> => {
-    const jobId = (typeof crypto !== "undefined" && "randomUUID" in crypto)
-      ? crypto.randomUUID()
-      : `job-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    const jobId = `job-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`;
     const startResp = await fetch("/.netlify/functions/mlro-advisor-deep-background", {
       method: "POST",
       headers: { "content-type": "application/json" },

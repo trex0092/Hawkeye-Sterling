@@ -61,7 +61,7 @@ const SUSPECTED_OFFENCES = [
 ];
 
 const BLANK_TX = (): TxRow => ({
-  id: `tx-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+  id: `tx-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
   date: "",
   amount: "",
   currency: "AED",

@@ -933,7 +933,7 @@ function AddDeadlineForm({ onAdd }: { onAdd: (_d: Deadline) => void }) {
     if (!authority.trim()) return setError("Authority is required");
     if (!/^\d{4}-\d{2}-\d{2}$/.test(due)) return setError("Due date must be YYYY-MM-DD");
     if (Number.isNaN(Date.parse(due))) return setError("Due date is not a valid calendar date");
-    const id = `custom-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const id = `custom-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`;
     const entry: Deadline = {
       id,
       title: title.trim(),
