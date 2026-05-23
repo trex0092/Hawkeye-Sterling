@@ -261,7 +261,7 @@ interface StaticCountryEntry {
   iso2: string;
   iso3: string;
   name: string;
-  fatfStatus: "blacklist" | "greylist" | "monitored" | "compliant";
+  fatfStatus: "blacklist" | "greylist" | "monitored" | "compliant" | "member";
   dpmsRiskTier: "low" | "medium" | "high" | "critical";
   lastUpdated: string;
 }
@@ -274,7 +274,7 @@ const STATIC_COUNTRY_DATASET: StaticCountryEntry[] = [
   // FATF Greylist — May 2026
   { iso2: "AF", iso3: "AFG", name: "Afghanistan",       fatfStatus: "greylist",   dpmsRiskTier: "critical", lastUpdated: "2026-02-14" },
   { iso2: "AL", iso3: "ALB", name: "Albania",           fatfStatus: "greylist",   dpmsRiskTier: "high",     lastUpdated: "2026-02-14" },
-  { iso2: "AE", iso3: "ARE", name: "United Arab Emirates", fatfStatus: "greylist", dpmsRiskTier: "medium",  lastUpdated: "2026-05-01" },
+  { iso2: "AE", iso3: "ARE", name: "United Arab Emirates", fatfStatus: "member",   dpmsRiskTier: "medium",  lastUpdated: "2026-05-01" },
   { iso2: "BB", iso3: "BRB", name: "Barbados",          fatfStatus: "greylist",   dpmsRiskTier: "medium",   lastUpdated: "2026-02-14" },
   { iso2: "BF", iso3: "BFA", name: "Burkina Faso",      fatfStatus: "greylist",   dpmsRiskTier: "high",     lastUpdated: "2026-02-14" },
   { iso2: "BJ", iso3: "BEN", name: "Benin",             fatfStatus: "greylist",   dpmsRiskTier: "high",     lastUpdated: "2026-05-01" },
@@ -481,9 +481,9 @@ function levelToRecommendation(
   fatfStatus: string,
   sanctionsCount: number,
 ): "standard_dd" | "enhanced_dd" | "senior_approval" | "prohibited" {
-  if (level === "critical" || fatfStatus === "blacklist" || sanctionsCount >= 4) return "prohibited";
+  if (level === "critical" || fatfStatus === "blacklist" || fatfStatus === "black_list" || sanctionsCount >= 4) return "prohibited";
   if (level === "high" || sanctionsCount >= 2) return "senior_approval";
-  if (level === "medium" || fatfStatus === "greylist" || fatfStatus === "monitored") return "enhanced_dd";
+  if (level === "medium" || fatfStatus === "greylist" || fatfStatus === "grey_list" || fatfStatus === "monitored") return "enhanced_dd";
   return "standard_dd";
 }
 
@@ -499,13 +499,21 @@ function staticEntryToResult(entry: StaticCountryEntry): CountryRiskResult {
   const riskLevel = scoreToLevel(riskScore);
   const recommendation = levelToRecommendation(riskLevel, entry.fatfStatus, activeSanctions.length);
 
+  // Normalize fatfStatus to underscore-separated format for API consumers.
+  const fatfStatus: CountryRiskResult["fatfStatus"] =
+    entry.fatfStatus === "blacklist" ? "black_list" :
+    entry.fatfStatus === "greylist"  ? "grey_list"  :
+    entry.fatfStatus as CountryRiskResult["fatfStatus"];
+
   return {
     ok: true,
     countryCode: iso,
     countryName: entry.name,
+    country: entry.name,       // legacy alias
+    overallRisk: riskLevel,    // legacy alias
     riskScore,
     riskLevel,
-    fatfStatus: entry.fatfStatus,
+    fatfStatus,
     cahraListed,
     activeSanctionsRegimes: activeSanctions,
     corruptionIndex: cpiData?.cpi,
@@ -517,9 +525,10 @@ function staticEntryToResult(entry: StaticCountryEntry): CountryRiskResult {
 }
 
 // ── Fallback result (UAE) ─────────────────────────────────────────────────────
+// UAE was removed from the FATF grey list in February 2024; status reverts to member.
 const UAE_ENTRY: StaticCountryEntry = {
   iso2: "AE", iso3: "ARE", name: "United Arab Emirates",
-  fatfStatus: "greylist", dpmsRiskTier: "medium", lastUpdated: "2026-05-01",
+  fatfStatus: "member", dpmsRiskTier: "medium", lastUpdated: "2026-05-01",
 };
 
 // GET /api/country-risk?country=XX

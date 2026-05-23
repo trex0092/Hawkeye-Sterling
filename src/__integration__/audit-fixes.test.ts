@@ -131,7 +131,7 @@ describe('crypto.randomBytes — IDs no longer use Math.random', () => {
 
 describe('GET /api/audit-trail/verify — seq gap detection', () => {
   async function callVerify(chain: unknown[]): Promise<Record<string, unknown>> {
-    memStore.set('chain.json', JSON.stringify(chain));
+    memStore.set('alice@example.com.json', JSON.stringify(chain));
     const mod = await import('@/app/api/audit-trail/verify/route');
     const GET = mod.GET as (req: Request) => Promise<Response>;
     const res = await GET(new Request('http://localhost/api/audit-trail/verify'));
