@@ -95,29 +95,35 @@ export const AML_KEYWORDS_MULTILINGUAL: Record<string, string[]> = {
   // Turkish
   tr: ["tutuklandı", "gözaltı", "soruşturma", "yolsuzluk", "kara para", "rüşvet",
        "dolandırıcılık", "iddianame", "kaçakçılık", "zimmet", "sahtecilik",
-       "uyuşturucu", "terör", "yasadışı", "suç örgütü", "kara para aklama"],
+       "uyuşturucu", "terör", "yasadışı", "suç örgütü", "kara para aklama",
+       "yaptırım"],
   // Portuguese
   pt: ["preso", "lavagem de dinheiro", "investigação", "corrupção", "fraude",
        "denúncia", "operação", "indiciado", "ouro ilegal", "tráfico",
-       "desvio de verbas", "suborno", "propina", "crime organizado"],
+       "desvio de verbas", "suborno", "propina", "crime organizado",
+       "sanções"],
   // Spanish
   es: ["detenido", "lavado de dinero", "investigación", "corrupción", "fraude",
        "denuncia", "operativo", "imputado", "narcotráfico", "soborno",
-       "malversación", "blanqueo", "crimen organizado", "contrabando"],
+       "malversación", "blanqueo", "crimen organizado", "contrabando",
+       "sanciones"],
   // Russian
   ru: ["арест", "коррупция", "отмывание", "следствие", "мошенничество", "взятка",
-       "преступление", "уголовное дело", "контрабанда", "санкции", "обыск"],
+       "преступление", "уголовное дело", "контрабанда", "санкции", "обыск",
+       "отмывание денег"],
   // French
   fr: ["arrêté", "blanchiment", "corruption", "fraude", "enquête",
        "mise en examen", "trafic", "détournement", "pot-de-vin", "crime organisé",
-       "saisie", "contrebande", "financement du terrorisme"],
+       "saisie", "contrebande", "financement du terrorisme",
+       "sanctions"],
   // German
   de: ["verhaftet", "Geldwäsche", "Korruption", "Betrug", "Ermittlung",
        "Anklage", "Schmuggel", "Steuerhinterziehung", "Veruntreuung",
        "Bestechung", "organisierte Kriminalität", "Sanktionen"],
   // Arabic
   ar: ["اعتقال", "غسيل أموال", "فساد", "احتيال", "تحقيق", "رشوة",
-       "تهريب", "جريمة", "عقوبات", "تمويل الإرهاب", "صفقة مشبوهة"],
+       "تهريب", "جريمة", "عقوبات", "تمويل الإرهاب", "صفقة مشبوهة",
+       "تمويل إرهاب"],
   // Italian
   it: ["arrestato", "riciclaggio", "corruzione", "frode", "indagine",
        "mafia", "camorra", "ndrangheta", "evasione fiscale", "contrabbando"],
