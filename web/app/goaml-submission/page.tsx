@@ -454,36 +454,42 @@ export default function GoAmlSubmissionPage() {
                 value={form.subjectName}
                 onChange={(v) => upd({ subjectName: v })}
                 placeholder="Ahmad Mohammed Al-Mansouri"
+                required
               />
               <Inp
                 label="Date of Birth (YYYY-MM-DD)"
                 value={form.subjectDob}
                 onChange={(v) => upd({ subjectDob: v })}
                 placeholder="1985-04-12"
+                required
               />
               <Inp
                 label="Nationality (ISO-2 or full)"
                 value={form.subjectNationality}
                 onChange={(v) => upd({ subjectNationality: v })}
                 placeholder="AE"
+                required
               />
               <Inp
                 label="Passport / Emirates ID Number"
                 value={form.subjectPassport}
                 onChange={(v) => upd({ subjectPassport: v })}
                 placeholder="A12345678"
+                required
               />
               <Inp
                 label="Passport Issuing Country (ISO-2)"
                 value={form.subjectPassportCountry}
                 onChange={(v) => upd({ subjectPassportCountry: v })}
                 placeholder="AE"
+                required
               />
               <Inp
                 label="Country of Residence (ISO-2)"
                 value={form.subjectCountry}
                 onChange={(v) => upd({ subjectCountry: v })}
                 placeholder="AE"
+                required
               />
             </div>
             <Inp
@@ -491,6 +497,7 @@ export default function GoAmlSubmissionPage() {
               value={form.accountNumber}
               onChange={(v) => upd({ accountNumber: v })}
               placeholder="DPMS-2024-00891"
+              required
             />
           </div>
         )}
@@ -526,6 +533,7 @@ export default function GoAmlSubmissionPage() {
                 onChange={(e) => upd({ narrativeText: e.target.value })}
                 rows={10}
                 maxLength={4000}
+                aria-required="true"
                 placeholder="On [DATE], Hawkeye Sterling DPMS identified suspicious activity in account [ACCOUNT_NO] held by [CUSTOMER NAME]. Review of account activity from [START_DATE] to [END_DATE] revealed [DESCRIBE PATTERN]. The activity is inconsistent with the customer's stated business profile. Suspicion crystallised on [DATE] upon MLRO review. This STR is filed pursuant to UAE FDL 10/2025 Art.17 within 48 hours of crystallisation."
                 className={`${inputCls} leading-relaxed`}
               />

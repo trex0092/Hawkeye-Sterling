@@ -1784,7 +1784,7 @@ function CddPostureBadge({
   return (
     <div>
       <div className="flex items-center gap-2">
-        <span className="text-13 font-semibold text-ink-0">{display}</span>
+        <span role="status" aria-live="polite" aria-atomic="true" className="text-13 font-semibold text-ink-0">{display}</span>
         {upgraded && (
           <span
             className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 font-semibold tracking-wide-2 bg-amber-dim text-amber uppercase"

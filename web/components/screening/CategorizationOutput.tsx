@@ -55,11 +55,13 @@ export function CategorizationOutput({
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <CategStat
-          label="Risk Category"
-          value={riskCategory}
-          valueClass={tone.text}
-        />
+        <span role="status" aria-live="polite" aria-atomic="true">
+          <CategStat
+            label="Risk Category"
+            value={riskCategory}
+            valueClass={tone.text}
+          />
+        </span>
         <CategStat
           label="Due Diligence"
           value={DD_LABEL[dueDiligence] ?? dueDiligence}
