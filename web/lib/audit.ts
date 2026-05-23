@@ -95,7 +95,7 @@ function csvCell(v: string): string {
 export function exportAuditCsv(entries: AuditEntry[]): string {
   const header = "id,timestamp,actor,action,target,hash";
   const rows = entries.map((e) =>
-    [e.id, e.timestamp, csvCell(e.actor), csvCell(e.action), csvCell(e.target), e.hash].join(","),
+    [csvCell(e.id), csvCell(e.timestamp), csvCell(e.actor), csvCell(e.action), csvCell(e.target), csvCell(e.hash)].join(","),
   );
   return [header, ...rows].join("\n");
 }
