@@ -92,7 +92,7 @@ export async function POST(
       break;
     } catch (err) {
       lastError = err instanceof Error ? err.message : String(err);
-      console.warn(`[hs-cases/enrich] attempt ${attempt} failed:`, lastError);
+      console.warn(`[hs-cases/enrich] attempt ${attempt} failed:`, err);
     }
   }
 
@@ -102,7 +102,7 @@ export async function POST(
       actor: gate.keyId,
       caseId,
       subjectName: existing.subjectName,
-      error: lastError.slice(0, 200),
+      error: "enrichment service unavailable",
       attempts: 2,
     }, tenant).catch(() => undefined);
 
