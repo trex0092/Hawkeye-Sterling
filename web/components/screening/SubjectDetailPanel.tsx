@@ -535,10 +535,12 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
   };
 
   const handleRaiseSTR = async () => {
-    if (strRaised) return;
+    if (strRaised || isRaisingSTR) return;
     if (!window.confirm(`Raise STR for ${subject.name}? Item enters the four-eyes queue for second-approver sign-off.`)) {
       return;
     }
+    setIsRaisingSTR(true);
+    try {
     // Replace the inline window.prompt approver flow with a real
     // /api/four-eyes enqueue. The MLRO opens /screening/four-eyes,
     // approves, and on approval the original STR-filing pipeline runs.
@@ -623,7 +625,7 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
         body: JSON.stringify({
           action: "str",
           target: subject.id,
-          actor: { role, name: (() => { try { return window.localStorage.getItem("hawkeye.operator") || role; } catch { return role; } })() },
+          actor: { role },
           body: {
             subjectName: subject.name,
             asanaTaskUrl: res.data.taskUrl ?? null,
@@ -661,6 +663,9 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
       showFlash("STR filed — draft in STR/SAR board");
     } else {
       showFlash(res.error ?? "STR filing failed");
+    }
+    } finally {
+      if (mountedRef.current) setIsRaisingSTR(false);
     }
   };
 
@@ -1136,14 +1141,14 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
             <PanelBtn
               brand
               onClick={handleRaiseSTR}
-              disabled={strRaised || !canRaiseSTR}
+              disabled={strRaised || isRaisingSTR || !canRaiseSTR}
               title={
                 !canRaiseSTR
                   ? "MLRO role required to raise STR (toggle role in the sidebar)"
                   : undefined
               }
             >
-              {strRaised ? "STR raised" : "Raise STR"}
+              {strRaised ? "STR raised" : isRaisingSTR ? "Filing…" : "Raise STR"}
             </PanelBtn>
           </div>
         </div>
