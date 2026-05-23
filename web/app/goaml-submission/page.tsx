@@ -159,12 +159,14 @@ function Inp({
   onChange,
   placeholder,
   type = "text",
+  required = false,
 }: {
   label: string;
   value: string;
   onChange: (_v: string) => void;
   placeholder?: string;
   type?: string;
+  required?: boolean;
 }) {
   return (
     <FieldWrap label={label}>
@@ -174,6 +176,7 @@ function Inp({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         className={inputCls}
+        {...(required ? { "aria-required": true } : {})}
       />
     </FieldWrap>
   );
@@ -383,6 +386,7 @@ export default function GoAmlSubmissionPage() {
                 value={form.mlroName}
                 onChange={(v) => upd({ mlroName: v })}
                 placeholder="Luisa Fernanda Al-Rashid"
+                required
               />
               <Inp
                 label="MLRO Email"
@@ -390,18 +394,21 @@ export default function GoAmlSubmissionPage() {
                 onChange={(v) => upd({ mlroEmail: v })}
                 placeholder="mlro@entity.ae"
                 type="email"
+                required
               />
               <Inp
                 label="MLRO Phone"
                 value={form.mlroPhone}
                 onChange={(v) => upd({ mlroPhone: v })}
                 placeholder="+971-50-000-0000"
+                required
               />
               <Inp
                 label="Reporting Entity ID (FIU-issued goAML ID)"
                 value={form.reportingEntityId}
                 onChange={(v) => upd({ reportingEntityId: v })}
                 placeholder="AE-DPMS-00123"
+                required
               />
             </div>
             <div className="mt-2">

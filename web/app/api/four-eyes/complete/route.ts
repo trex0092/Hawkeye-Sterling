@@ -236,7 +236,7 @@ async function handleComplete(req: Request, ctx: RequestContext): Promise<NextRe
     initiatedBy: updated.initiatedBy,
     completionRoute: "/api/four-eyes/complete",
     ...(decision === "reject" && rejectionReason ? { rejectionReason } : {}),
-  });
+  }).catch((e) => console.warn("[four-eyes/complete] background task failed:", e instanceof Error ? e.message : String(e)));
 
   // Asana — best-effort.
   const asanaTaskUrl = await reportToAsana(updated, decision, operator).catch(() => null);

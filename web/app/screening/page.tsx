@@ -580,6 +580,7 @@ export default function ScreeningPage() {
   const [rescreenLoading, setRescreenLoading] = useState(false);
   const [rescreenResult, setRescreenResult] = useState<BulkRescreenResult | null>(null);
   const [rescreenError, setRescreenError] = useState<string | null>(null);
+  const [refreshMsg, setRefreshMsg] = useState<{ text: string; type: "ok" | "error" } | null>(null);
 
   const mountedRef = useRef(true);
   useEffect(() => () => { mountedRef.current = false; }, []);
@@ -1515,12 +1516,12 @@ export default function ScreeningPage() {
                       const data = (await res.json().catch(() => null)) as { ok_count?: number; failed_count?: number } | null;
                       const okCount = data?.ok_count ?? 0;
                       const failedCount = data?.failed_count ?? 0;
-                      alert(`Sanctions refresh complete — ${okCount} lists OK, ${failedCount} failed. Reload to see updated timestamps.`);
+                      setRefreshMsg({ text: `Sanctions refresh complete — ${okCount} lists OK, ${failedCount} failed. Reload to see updated timestamps.`, type: "ok" });
                     } else {
-                      alert(`Refresh failed (HTTP ${res.status}). Check /api/sanctions/last-errors for detail.`);
+                      setRefreshMsg({ text: `Refresh failed (HTTP ${res.status}). Check /api/sanctions/last-errors for detail.`, type: "error" });
                     }
                   } catch (err) {
-                    alert(`Sanctions refresh could not be reached — check your connection and try again. (${err instanceof Error ? err.message : "Network error"})`);
+                    setRefreshMsg({ text: `Sanctions refresh could not be reached — check your connection and try again. (${err instanceof Error ? err.message : "Network error"})`, type: "error" });
                   }
                 }}
                 className="text-11 font-semibold px-3 py-1.5 rounded border border-amber text-amber hover:bg-amber/10 transition-colors"
@@ -1538,6 +1539,24 @@ export default function ScreeningPage() {
                 </button>
               )}
             </div>
+
+            {refreshMsg && (
+              <div
+                role="alert"
+                aria-live="assertive"
+                className={`mt-2 text-sm p-2 rounded ${refreshMsg.type === "ok" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}
+              >
+                {refreshMsg.text}
+                <button
+                  type="button"
+                  onClick={() => setRefreshMsg(null)}
+                  className="ml-2 text-xs opacity-60 hover:opacity-100"
+                  aria-label="Dismiss notification"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
 
             {rescreenLoading && (
               <div className="mt-3 flex items-center gap-2 text-12 text-ink-2">

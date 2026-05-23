@@ -156,7 +156,16 @@ export function ScreeningTable({
             return (
               <tr
                 key={subject.id}
+                tabIndex={0}
+                role="button"
+                aria-label={`Open screening record for ${subject.name}`}
                 onClick={() => onSelect(subject.id)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    onSelect(subject.id);
+                  }
+                }}
                 className={`group cursor-pointer ${isSelected ? "bg-bg-1" : "hover:bg-bg-1"}`}
               >
                 {showCheckboxes && (
