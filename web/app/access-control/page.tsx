@@ -285,7 +285,6 @@ function UserSidePanel({ user, onClose, onRoleChanged }: SidePanelProps) {
           userId: user.id,
           newRole: selectedRole,
           reason: reason.trim(),
-          assignedBy: "Luisa Fernanda",
         }),
       });
       const data = await resp.json().catch(() => ({})) as { ok: boolean; user?: AccessUser; impactAssessment?: string; error?: string };

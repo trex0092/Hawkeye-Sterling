@@ -1450,6 +1450,16 @@ const CLIENT_TIMEOUTS: Record<ReasoningMode, number> = {
   multi_perspective: 600_000,
 };
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+/** Safely renders **bold** markdown without dangerouslySetInnerHTML. */
+function renderBold(text: string): React.ReactNode[] {
+  const parts = text.split(/\*\*([^*]+)\*\*/g);
+  return parts.map((part, i) =>
+    i % 2 === 1 ? <strong key={i}>{part}</strong> : <span key={i}>{part}</span>
+  );
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function MlroAdvisorPage() {
@@ -4942,7 +4952,7 @@ export default function MlroAdvisorPage() {
                                   {f.bullets.map((b, j) => (
                                     <li key={j} className="text-12 text-ink-1 flex gap-2">
                                       <span className="text-ink-3 mt-0.5">•</span>
-                                      <span dangerouslySetInnerHTML={{ __html: b.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>") }} />
+                                      <span>{renderBold(b)}</span>
                                     </li>
                                   ))}
                                 </ul>
@@ -5019,7 +5029,7 @@ export default function MlroAdvisorPage() {
                             {r.dueDiligenceActions.map((a, i) => (
                               <li key={i} className="text-12 text-ink-1 flex gap-2">
                                 <span className="font-mono text-10 font-bold text-brand mt-0.5 w-5 shrink-0">{i + 1}.</span>
-                                <span dangerouslySetInnerHTML={{ __html: a.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>") }} />
+                                <span>{renderBold(a)}</span>
                               </li>
                             ))}
                           </ol>
@@ -5058,9 +5068,7 @@ export default function MlroAdvisorPage() {
                       {/* Conclusion */}
                       <div>
                         <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-2">✅ Conclusion</div>
-                        <p className="text-12 text-ink-1 mb-3"
-                          dangerouslySetInnerHTML={{ __html: r.conclusion.narrative.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>") }}
-                        />
+                        <p className="text-12 text-ink-1 mb-3">{renderBold(r.conclusion.narrative)}</p>
                         <div className={`border rounded-lg px-4 py-3 ${decisionCls(r.conclusion.onboardingDecision)}`}>
                           <div className="text-11 font-semibold mb-1">Recommended Onboarding Decision:</div>
                           <div className="text-12 font-bold">{decisionLabel(r.conclusion.onboardingDecision)}</div>
