@@ -79,8 +79,9 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     mod = (await import("@netlify/blobs")) as unknown as BlobsModuleShape;
   } catch (err) {
+    console.error("[mark-catalogue-reviewed] @netlify/blobs unavailable:", err);
     return NextResponse.json(
-      { ok: false, error: `@netlify/blobs unavailable — ${err instanceof Error ? err.message : String(err)}` },
+      { ok: false, error: "@netlify/blobs unavailable — check NETLIFY_SITE_ID and NETLIFY_BLOBS_TOKEN environment variables" },
       { status: 503 },
     );
   }
@@ -106,8 +107,9 @@ export async function POST(req: Request): Promise<NextResponse> {
     const ts = entry.recordedAt.replace(/[:.]/g, "-");
     await store.setJSON(`catalogue-review-history/${ts}.json`, entry);
   } catch (err) {
+    console.error("[mark-catalogue-reviewed] blob write failed:", err);
     return NextResponse.json(
-      { ok: false, error: `blob write failed — ${err instanceof Error ? err.message : String(err)}` },
+      { ok: false, error: "blob write failed — please retry or contact support" },
       { status: 503 },
     );
   }
