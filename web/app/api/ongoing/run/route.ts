@@ -12,6 +12,20 @@ import type {
 } from "@/lib/api/quickScreen.types";
 import { loadCandidates } from "@/lib/server/candidates-loader";
 import { classifyAdverseKeywords } from "@/lib/data/adverse-keywords";
+import {
+  type CustomerRiskTier,
+  MONITORING_FREQUENCIES,
+  isScreenDue,
+  isNewsCheckDue,
+  loadAlertThresholds,
+  meetsAdverseMediaThreshold,
+  detectChanges,
+  loadMonitoringSnapshot,
+  saveMonitoringSnapshot,
+  buildQueueItem,
+  sortMonitoringQueue,
+  type AdverseMediaCategory,
+} from "@/lib/server/ongoing-monitoring-config";
 
 const KEYWORD_GROUP_WEIGHT: Record<string, number> = {
   "terrorism-financing": 20,
@@ -53,12 +67,29 @@ import { ESCALATION_DELTA, shouldEscalate } from "@/lib/server/ongoing-escalatio
 import { asanaGids } from "@/lib/server/asanaConfig";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
+// Validated customer risk tiers.
+const VALID_RISK_TIERS = new Set<CustomerRiskTier>([
+  "standard",
+  "enhanced",
+  "intensive",
+  "pep",
+  "prohibited",
+]);
+
+function toRiskTier(raw: unknown): CustomerRiskTier {
+  if (typeof raw === "string" && VALID_RISK_TIERS.has(raw as CustomerRiskTier)) {
+    return raw as CustomerRiskTier;
+  }
+  return "standard";
+}
+
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
 interface EnrolledSubject {
   id: string;
+  tenantId?: string;
   name: string;
   aliases?: string[];
   entityType?: "individual" | "organisation" | "vessel" | "aircraft" | "other";
@@ -66,6 +97,10 @@ interface EnrolledSubject {
   group?: string;
   caseId?: string;
   enrolledAt: string;
+  /** Customer risk tier for risk-based monitoring frequency. */
+  riskTier?: CustomerRiskTier;
+  /** True when the subject is a politically exposed person (FATF R.12). */
+  isPep?: boolean;
 }
 
 interface LastHit {
@@ -87,6 +122,17 @@ interface Schedule {
   scoreThreshold?: number;
   nextRunAt: string;
   lastRunAt?: string;
+}
+
+// Risk-based schedule — written by the monitoring run, consumed by the
+// queue endpoint and by isScreenDue / isNewsCheckDue helpers.
+interface RiskBasedSchedule {
+  subjectId: string;
+  riskTier: CustomerRiskTier;
+  nextScreenAt: string;
+  lastScreenAt?: string;
+  nextNewsCheckAt: string;
+  lastNewsCheckAt?: string;
 }
 
 // Fixed-interval cadences (hourly / daily / weekly / monthly) use a
@@ -210,15 +256,6 @@ export async function POST(req: Request): Promise<NextResponse> {
   for (let i = 0; i < subjects.length; i += CONCURRENCY) {
   await Promise.all(subjects.slice(i, i + CONCURRENCY).map(async (s) => {
     try {
-      // Respect per-subject schedule. If a schedule exists and the next
-      // run isn't due yet, skip this subject. Subjects without a
-      // schedule run on every tick (legacy behaviour).
-      const schedule = await getJson<Schedule>(`schedule/${s.id}`);
-      if (schedule) {
-        const nextRunAt = Date.parse(schedule.nextRunAt);
-        if (Number.isFinite(nextRunAt) && nextRunAt > nowMs) return; // skip if not due
-      }
-
       const subject = {
         name: s.name,
         ...(s.aliases && s.aliases.length ? { aliases: s.aliases } : {}),

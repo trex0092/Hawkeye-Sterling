@@ -310,6 +310,21 @@ const RISK_QUERIES: RiskQueryDef[] = [
     categories: ["adverse_media", "dpms"],
   },
   {
+    // Environmental crime — FATF predicate offences (FATF 2021 report).
+    // Covers illegal logging, wildlife trafficking, IUU fishing, illegal mining,
+    // and carbon credit / offset fraud. These typologies are increasingly used
+    // for laundering and are underserved by standard AML keyword queries.
+    label: "environmental_crime",
+    keywords: [
+      "illegal+mining", "wildlife+trafficking", "illegal+logging", "IUU+fishing",
+      "illegal logging", "wildlife trafficking", "IUU fishing", "illegal mining",
+      "deforestation fraud", "conflict timber", "carbon credit fraud",
+      "carbon offset fraud", "ivory trafficking", "rhino horn", "pangolin",
+      "fish laundering", "bunkering fraud", "conflict minerals", "cobalt smuggling",
+    ],
+    categories: ["environmental_crime", "predicate_offence"],
+  },
+  {
     // Regional / multilingual catch-all — no English keyword requirement.
     // Catches Turkish, Arabic, Persian, CJK, and other local-language news
     // that mentions the subject with native-language crime terms.

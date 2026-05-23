@@ -501,14 +501,26 @@ function parseRss(xml: string, subject: string, variants: string[], lang: string
     const adjustedScore = Math.min(100, baseScore + boost);
 
     const tier = classifySource(link);
+    const sourceCat = classifySourceCategory(link);
+    // Established sources (tier1/tier2) get 2× weight via a larger tier boost.
     const tierBoost = tier === "tier1" ? 20 : tier === "tier2" ? 10 : 0;
-    const tieredScore = Math.min(100, adjustedScore + tierBoost);
+    // For established sources, double the tier boost to reflect 2× authority weighting.
+    const authorityMult = sourceCat === "state_media" ? 0.5
+      : (tier === "tier1" || tier === "tier2") ? 2.0 : 1.0;
+    const tieredScore = Math.min(100, Math.round((adjustedScore + tierBoost) * authorityMult));
 
-    // Date decay: articles older than 2 years get a penalty
-    const pubMs = pubDate ? Date.parse(pubDate) : 0;
-    const ageYears = Number.isFinite(pubMs) ? (Date.now() - pubMs) / (365.25 * 24 * 3600 * 1000) : 5;
-    const decayFactor = ageYears > 5 ? 0.6 : ageYears > 2 ? 0.8 : 1.0;
-    const finalScore = Math.round(tieredScore * decayFactor);
+    // Paywall detection — reduce weight to 50% if article appears to be behind paywall
+    const paywalled = detectPaywall(description);
+
+    // Recency weight — applied as multiplier on relevance score
+    const recencyW = computeRecencyWeight(pubDate, sourceCat);
+
+    // Combined weight factor: recency × paywall penalty (0.5 if paywalled)
+    const weightFactor = recencyW * (paywalled ? 0.5 : 1.0);
+    const finalScore = Math.round(tieredScore * weightFactor);
+
+    const rawSeverity = classifyArticleSeverity(kwHits);
+    const severity = applyStateMediCap(rawSeverity, sourceCat);
 
     const script = detectScript(title);
     const article: Article = {
@@ -519,15 +531,18 @@ function parseRss(xml: string, subject: string, variants: string[], lang: string
       snippet,
       keywordGroups: Array.from(new Set(kwHits.map((h) => h.group))),
       esgCategories: Array.from(new Set(esgHits.map((e) => e.categoryId))),
-      severity: classifyArticleSeverity(kwHits),
+      severity,
       fuzzyScore: baseScore,
       fuzzyMethod,
       lang,
       relevanceScore: finalScore,
       sourceTier: tier,
-      sourceCategory: classifySourceCategory(link),
+      sourceCategory: sourceCat,
       script,
       requiresTranslation: script !== "latin",
+      sourceAuthority: classifySourceAuthority(link),
+      paywallLimited: paywalled || undefined,
+      recencyWeight: recencyW !== 1.0 ? recencyW : undefined,
     };
     if (matchedVariant) article.matchedVariant = matchedVariant;
     out.push(article);
@@ -1355,30 +1370,43 @@ export async function GET(req: Request): Promise<NextResponse> {
       const adapterBaseScore = Math.round(fuzzyScore * 100);
       const adapterAdjustedScore = Math.min(100, adapterBaseScore + adapterBoost);
       const adapterTier = classifySource(na.url ?? "");
+      const adapterSourceCat = classifySourceCategory(na.url ?? "");
       const adapterTierBoost = adapterTier === "tier1" ? 20 : adapterTier === "tier2" ? 10 : 0;
-      const adapterTieredScore = Math.min(100, adapterAdjustedScore + adapterTierBoost);
+      // Established sources get 2× authority weighting; state-media get 0.5×
+      const adapterAuthorityMult = adapterSourceCat === "state_media" ? 0.5
+        : (adapterTier === "tier1" || adapterTier === "tier2") ? 2.0 : 1.0;
+      const adapterTieredScore = Math.min(100, Math.round((adapterAdjustedScore + adapterTierBoost) * adapterAuthorityMult));
 
-      // Date decay: articles older than 2 years get a penalty (adapter path)
-      const adapterPubMs = na.publishedAt ? Date.parse(na.publishedAt) : 0;
-      const adapterAgeYears = Number.isFinite(adapterPubMs) ? (Date.now() - adapterPubMs) / (365.25 * 24 * 3600 * 1000) : 5;
-      const adapterDecayFactor = adapterAgeYears > 5 ? 0.6 : adapterAgeYears > 2 ? 0.8 : 1.0;
-      const adapterFinalScore = Math.round(adapterTieredScore * adapterDecayFactor);
+      // Paywall detection (adapter path)
+      const adapterSnippet = na.snippet ?? "";
+      const adapterPaywalled = detectPaywall(adapterSnippet);
+
+      // Recency weight (adapter path)
+      const adapterRecencyW = computeRecencyWeight(na.publishedAt ?? "", adapterSourceCat);
+      const adapterWeightFactor = adapterRecencyW * (adapterPaywalled ? 0.5 : 1.0);
+      const adapterFinalScore = Math.round(adapterTieredScore * adapterWeightFactor);
+
+      const adapterRawSeverity = classifyArticleSeverity(kwHits);
+      const adapterSeverity = applyStateMediCap(adapterRawSeverity, adapterSourceCat);
 
       merged.set(key, {
         title: na.title,
         link: na.url,
         pubDate: na.publishedAt,
         source: `${na.source}/${na.outlet}`,
-        snippet: na.snippet ?? "",
+        snippet: adapterSnippet,
         keywordGroups: kwHits.map((k) => k.group),
         esgCategories: Array.from(new Set(esgHits.map((e) => e.categoryId))),
-        severity: classifyArticleSeverity(kwHits),
+        severity: adapterSeverity,
         fuzzyScore: adapterBaseScore,
         fuzzyMethod,
         lang: na.language ?? "en",
         relevanceScore: adapterFinalScore,
         sourceTier: adapterTier,
-        sourceCategory: classifySourceCategory(na.url ?? ""),
+        sourceCategory: adapterSourceCat,
+        sourceAuthority: classifySourceAuthority(na.url ?? ""),
+        paywallLimited: adapterPaywalled || undefined,
+        recencyWeight: adapterRecencyW !== 1.0 ? adapterRecencyW : undefined,
       });
     }
     const filtered = Array.from(merged.values())

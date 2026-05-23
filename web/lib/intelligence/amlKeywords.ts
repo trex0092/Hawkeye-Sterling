@@ -65,6 +65,13 @@ export const AML_KEYWORDS_EN: string[] = [
   "BEC fraud", "crypto theft", "NFT fraud", "DeFi exploit",
   "rug pull", "exit scam", "pump and dump", "address poisoning",
   "data breach", "hacking", "malware", "spyware", "deepfake fraud",
+  // Ransomware groups & cybercrime taxonomy
+  "ransomware attack", "REvil", "Conti", "DarkSide", "LockBit", "Ryuk",
+  "CEO fraud", "phishing proceeds", "credential theft proceeds",
+  "darknet market", "dark web proceeds", "Hydra market", "Genesis Market",
+  "crypto extortion", "sextortion", "ransomware payment",
+  "hacker group", "APT group", "Lazarus Group", "Kimsuky", "Sandworm",
+  "stolen card data", "carding", "dumps", "CVV shop",
   // Regulatory & enforcement
   "debarred", "blacklisted", "regulatory breach", "enforcement action",
   "cease and desist", "license revoked", "regulatory fine",
@@ -132,7 +139,9 @@ export const AML_KEYWORDS_MULTILINGUAL: Record<string, string[]> = {
   // Russian
   ru: ["арест", "коррупция", "отмывание", "следствие", "мошенничество", "взятка",
        "преступление", "уголовное дело", "контрабанда", "санкции", "обыск",
-       "отмывание денег"],
+       "отмывание денег",
+       // Cybercrime (ru)
+       "программа-вымогатель", "кибератака", "хакерская группа", "дарквеб"],
   // French
   fr: ["arrêté", "blanchiment", "corruption", "fraude", "enquête",
        "mise en examen", "trafic", "détournement", "pot-de-vin", "crime organisé",
@@ -143,7 +152,9 @@ export const AML_KEYWORDS_MULTILINGUAL: Record<string, string[]> = {
   // German
   de: ["verhaftet", "Geldwäsche", "Korruption", "Betrug", "Ermittlung",
        "Anklage", "Schmuggel", "Steuerhinterziehung", "Veruntreuung",
-       "Bestechung", "organisierte Kriminalität", "Sanktionen"],
+       "Bestechung", "organisierte Kriminalität", "Sanktionen",
+       // Cybercrime (de)
+       "Ransomware", "Cyberkriminalität", "Darknet-Markt", "Hackergruppe"],
   // Arabic
   ar: ["اعتقال", "غسيل أموال", "فساد", "احتيال", "تحقيق", "رشوة",
        "تهريب", "جريمة", "عقوبات", "تمويل الإرهاب", "صفقة مشبوهة",
@@ -153,7 +164,9 @@ export const AML_KEYWORDS_MULTILINGUAL: Record<string, string[]> = {
        "mafia", "camorra", "ndrangheta", "evasione fiscale", "contrabbando"],
   // Chinese (Simplified)
   zh: ["洗钱", "腐败", "欺诈", "逮捕", "走私", "贿赂", "制裁",
-       "非法资金", "恐怖融资", "犯罪组织", "调查", "起诉"],
+       "非法资金", "恐怖融资", "犯罪组织", "调查", "起诉",
+       // Cybercrime (zh)
+       "勒索软件", "网络犯罪", "暗网", "黑客组织"],
   // Japanese
   ja: ["マネーロンダリング", "汚職", "詐欺", "逮捕", "密輸", "制裁",
        "テロ資金", "犯罪組織", "不正", "横領"],

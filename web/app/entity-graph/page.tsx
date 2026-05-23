@@ -348,7 +348,7 @@ function LeiPanel({ record }: { record: LeiLookupResult }) {
               <span className="text-10 uppercase tracking-wide-2 bg-brand-dim text-brand rounded px-1.5 py-px font-mono">
                 Direct Parent
               </span>
-              <span className="font-medium text-ink-0">{record.directParent.legalName}</span>
+              <span className="font-medium text-ink-0">{record.directParent.name}</span>
               <span className="font-mono text-10 text-ink-3">{record.directParent.lei}</span>
             </div>
           )}
@@ -357,7 +357,7 @@ function LeiPanel({ record }: { record: LeiLookupResult }) {
               <span className="text-10 uppercase tracking-wide-2 bg-amber-dim text-amber rounded px-1.5 py-px font-mono">
                 Ultimate Parent
               </span>
-              <span className="font-medium text-ink-0">{record.ultimateParent.legalName}</span>
+              <span className="font-medium text-ink-0">{record.ultimateParent.name}</span>
               <span className="font-mono text-10 text-ink-3">{record.ultimateParent.lei}</span>
             </div>
           )}
