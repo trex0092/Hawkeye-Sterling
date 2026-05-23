@@ -225,10 +225,16 @@ async function handleGoaml(req: Request): Promise<Response> {
   // GOAML_RENTITY_ID when HAWKEYE_ENTITIES is unset.
   const reportingEntity = getEntity(body.entityId);
 
-  const mlroName = process.env["GOAML_MLRO_FULL_NAME"] ?? "Luisa Fernanda";
+  const mlroName = process.env["GOAML_MLRO_FULL_NAME"];
+  if (!mlroName) {
+    return NextResponse.json(
+      { ok: false, error: "GOAML_MLRO_FULL_NAME environment variable is not set — cannot generate goAML XML without a valid MLRO name" },
+      { status: 503 }
+    );
+  }
   const mlroEmail = process.env["GOAML_MLRO_EMAIL"] ?? "mlro@fine-gold.ae";
   const mlroPhone = process.env["GOAML_MLRO_PHONE"] ?? "+971-000-000-0000";
-  const usingPlaceholderMlro = !process.env["GOAML_MLRO_FULL_NAME"] || !process.env["GOAML_MLRO_EMAIL"];
+  const usingPlaceholderMlro = !process.env["GOAML_MLRO_EMAIL"];
 
   const envelope: GoAmlEnvelope = {
     reportCode: body.reportCode,

@@ -463,7 +463,7 @@ export default function TFSAlertsPage() {
         } else if (err.error === "GMAIL_NOT_CONFIGURED") {
           setGmailReAuthNeeded(true);
           setErrorMsg(
-            "Gmail is not configured. Ensure GMAIL_CLIENT_ID and GMAIL_CLIENT_SECRET are set in Netlify, then click \"Re-authorize Gmail\" below.",
+            "Email integration is not configured — contact your system administrator to complete the Gmail OAuth setup.",
           );
         } else if (err.error === "NETWORK_TIMEOUT") {
           setErrorMsg("Search timed out. Please try again.");
@@ -860,12 +860,7 @@ export default function TFSAlertsPage() {
             </div>
             {!process.env["NEXT_PUBLIC_GMAIL_CONFIGURED"] && (
               <div className="mt-3 text-11 text-orange bg-orange-dim px-3 py-2 rounded inline-block">
-                Note: Set <span className="font-mono">GMAIL_REFRESH_TOKEN</span>,{" "}
-                <span className="font-mono">GMAIL_CLIENT_ID</span>, and{" "}
-                <span className="font-mono">GMAIL_CLIENT_SECRET</span> in Netlify environment
-                variables to enable live email monitoring. Also set{" "}
-                <span className="font-mono">NEXT_PUBLIC_GMAIL_CONFIGURED=true</span> to hide this
-                notice.
+                Email integration is not configured — contact your system administrator to complete the Gmail OAuth setup.
               </div>
             )}
           </div>

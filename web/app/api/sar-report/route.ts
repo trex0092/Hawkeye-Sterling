@@ -168,7 +168,7 @@ async function handleSarReport(req: Request, gateHeaders: Record<string, string>
   }
 
   // Four-eyes gate — approver must be set and differ from filer
-  const mlro = body.mlro ?? "Luisa Fernanda";
+  const mlro = body.mlro ?? "[MLRO NAME NOT CONFIGURED]";
   if (!body.approver?.trim()) {
     return NextResponse.json(
       { ok: false, error: "four_eyes_required", detail: "A second approver (four-eyes) is required before this filing can proceed." },

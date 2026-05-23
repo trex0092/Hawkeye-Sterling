@@ -94,10 +94,10 @@ async function fetchDossier(
     await new Promise((resolve) => setTimeout(resolve, delay));
     if (signal.aborted) throw new Error("aborted");
   }
-  // Retries exhausted — degrade to a neutral empty dossier so the UI
-  // never shows "News fetch unavailable: server 502" to operators.
-  void lastErr;
-  return emptyDossier(key);
+  // Retries exhausted — surface the error so the UI does not silently
+  // present a 502 or upstream failure as genuine absence of adverse media.
+  const msg = lastErr instanceof Error ? lastErr.message : String(lastErr ?? "unknown error");
+  throw new Error(`News service temporarily unavailable — manual search required (${msg})`);
 }
 
 export function useNewsSearch(subjectName: string | null): NewsSearchState {
@@ -118,11 +118,13 @@ export function useNewsSearch(subjectName: string | null): NewsSearchState {
       })
       .catch((err: unknown) => {
         if (ac.signal.aborted) return;
-        // Should be unreachable — fetchDossier always resolves to an
-        // empty dossier — but keep the guard so an abort mid-retry
-        // doesn't leave the panel stuck on "Crawling…".
-        setState({ status: "success", result: emptyDossier(key) });
-        void err;
+        // fetchDossier throws when retries are exhausted — surface the
+        // error so the UI doesn't show "no adverse media" on a 502.
+        const msg =
+          err instanceof Error
+            ? err.message
+            : "News service temporarily unavailable — manual search required";
+        setState({ status: "error", error: msg });
       });
     return () => ac.abort();
   }, [key]);

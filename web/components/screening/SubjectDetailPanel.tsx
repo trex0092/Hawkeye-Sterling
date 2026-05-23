@@ -146,7 +146,9 @@ interface SubjectDetailPanelProps {
 export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSubject, triageResolutions }: SubjectDetailPanelProps) {
   const [activeTab, setActiveTab] = useState<Tab>("Screening");
   const [escalated, setEscalated] = useState(false);
+  const [isEscalating, setIsEscalating] = useState(false);
   const [strRaised, setStrRaised] = useState(false);
+  const [isRaisingSTR, setIsRaisingSTR] = useState(false);
   const [reportSaving, setReportSaving] = useState(false);
   const [reportSaved, setReportSaved] = useState(false);
   const [role, setRole] = useState<OperatorRole>("analyst");
@@ -415,8 +417,9 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
   };
 
   const handleEscalate = () => {
-    if (escalated) return;
+    if (escalated || isEscalating) return;
     if (window.confirm(`Escalate ${subject.name} to MLRO?`)) {
+      setIsEscalating(true);
       setEscalated(true);
       const composite =
         superBrain.status === "success"
@@ -470,6 +473,8 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
         timelineEvent: "Escalated to MLRO and registered in Asana",
       });
       showFlash("Escalated to MLRO — registering in Asana…");
+    } else {
+      setIsEscalating(false);
     }
   };
 
@@ -1116,8 +1121,8 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
             <PanelBtn onClick={handleDownloadReport} title="Download .txt report">
               .txt
             </PanelBtn>
-            <PanelBtn onClick={handleEscalate} disabled={escalated}>
-              {escalated ? "Escalated" : "Escalate"}
+            <PanelBtn onClick={handleEscalate} disabled={escalated || isEscalating}>
+              {escalated ? "Escalated" : isEscalating ? "Escalating…" : "Escalate"}
             </PanelBtn>
             <a
               href={`/screening/replay/${encodeURIComponent(subject.id)}`}
