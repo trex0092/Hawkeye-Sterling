@@ -160,6 +160,25 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
       "informal money transfer", "informal funds transfer",
       "cryptocurrency otc laundering", "otc desk laundering",
       "fiat off-ramp laundering", "crypto off-ramp fraud",
+      // ── Multilingual equivalents ────────────────────────────────────────────
+      // Arabic
+      "غسيل أموال", "غسل الأموال", "جريمة مالية",
+      // French
+      "blanchiment", "blanchiment d'argent", "blanchiment de capitaux",
+      // Spanish
+      "lavado", "lavado de dinero", "lavado de activos",
+      // Russian
+      "отмывание", "отмывание денег", "финансовые преступления",
+      // German
+      "Geldwäsche", "Geldwäscherei", "Wirtschaftskriminalität",
+      // Turkish
+      "kara para aklama", "para aklama", "mali suç",
+      // Chinese
+      "洗钱", "洗钱罪", "金融犯罪",
+      // Indonesian
+      "pencucian uang", "money laundering", "kejahatan keuangan",
+      // Hindi
+      "मनी लॉन्ड्रिंग", "धन शोधन", "वित्तीय अपराध",
     ],
   },
   {
@@ -255,6 +274,25 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
       "counter-terrorism financing compliance failure",
       "terrorist property", "terrorist funds",
       "terrorist transaction", "suspicious terrorism transaction",
+      // ── Multilingual equivalents ────────────────────────────────────────────
+      // Arabic
+      "تمويل الإرهاب", "إرهاب", "إرهابي", "منظمة إرهابية",
+      // French
+      "terrorisme", "financement du terrorisme", "terroriste", "cellule terroriste",
+      // Spanish
+      "terrorismo", "financiación del terrorismo", "terrorista", "célula terrorista",
+      // Russian
+      "терроризм", "финансирование терроризма", "террорист", "террористическая ячейка",
+      // German
+      "Terrorismus", "Terrorismusfinanzierung", "Terrorist", "Terrorzelle",
+      // Turkish
+      "terörizm", "terör finansmanı", "terörist", "terör örgütü",
+      // Chinese
+      "恐怖主义", "恐怖主义融资", "恐怖分子", "恐怖组织",
+      // Indonesian
+      "terorisme", "pendanaan terorisme", "teroris", "jaringan teroris",
+      // Hindi
+      "आतंकवाद", "आतंकवाद वित्तपोषण", "आतंकवादी",
     ],
   },
   {
@@ -312,6 +350,25 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
       "nuclear suppliers group violation", "nsg violation",
       "australia group violation",
       "wassenaar arrangement violation",
+      // ── Multilingual equivalents ────────────────────────────────────────────
+      // Arabic
+      "مدرج على قوائم العقوبات", "أسلحة دمار شامل", "انتشار الأسلحة",
+      // French
+      "sanctionné", "armes de destruction massive", "prolifération",
+      // Spanish
+      "sancionado", "armas de destrucción masiva", "proliferación",
+      // Russian
+      "под санкциями", "оружие массового поражения", "распространение",
+      // German
+      "unter Sanktionen", "Massenvernichtungswaffen", "Proliferation",
+      // Turkish
+      "yaptırım listesi", "kitle imha silahları", "nükleer yayılma",
+      // Chinese
+      "受制裁", "大规模杀伤性武器", "扩散",
+      // Indonesian
+      "dikenai sanksi", "senjata pemusnah massal", "proliferasi",
+      // Hindi
+      "प्रतिबंध", "सामूहिक विनाश के हथियार",
       // Export control — US and multilateral regimes
       "itar violation", "ear violation", "ear99 diversion",
       "commerce control list violation", "ccl violation",
@@ -789,6 +846,25 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
       "north korea sanctions evasion",
       "russian sanctions evasion", "russia sanctions violation",
       "belarus sanctions",
+      // ── Multilingual equivalents ────────────────────────────────────────────
+      // Arabic
+      "عقوبات", "محظور", "قائمة العقوبات", "تجميد الأصول",
+      // French
+      "sanctions", "sanctionné", "interdit", "gel des avoirs",
+      // Spanish
+      "sanciones", "sancionado", "prohibido", "congelación de activos",
+      // Russian
+      "санкции", "под санкциями", "запрет", "заморозка активов",
+      // German
+      "Sanktionen", "unter Sanktionen", "verboten", "Einfrieren von Vermögen",
+      // Turkish
+      "yaptırımlar", "yasaklı", "yaptırım listesi", "varlık dondurma",
+      // Chinese
+      "制裁", "受制裁", "禁止", "冻结资产",
+      // Indonesian
+      "sanksi", "dikenai sanksi", "dilarang", "pembekuan aset",
+      // Hindi
+      "प्रतिबंध", "प्रतिबंधित", "संपत्ति जब्त",
     ],
   },
   {

@@ -54,20 +54,33 @@ function fallbackScores(cases: CaseInput[]): QaScore[] {
 
 const SYSTEM_PROMPT = `You are a UAE DPMS/VASP SAR/STR quality assurance reviewer with deep expertise in FATF Recommendation 20, UAE Federal Decree-Law No. 10 of 2025 (AML/CFT/CPF Law), FDL Art. 26 filing standards, and goAML submission requirements.
 
-For each case you will score the SAR/STR narrative quality and completeness. Evaluate:
+For each case you will score the SAR/STR narrative quality and completeness. Evaluate ALL of the following criteria:
 
-1. WHO: Is the subject clearly identified with full name, entity type, identification details?
-2. WHAT: Is the suspicious activity clearly described — transaction types, amounts, instruments?
-3. WHEN: Are dates, time periods, and timelines documented?
-4. WHERE: Are jurisdictions, accounts, and geographies identified?
-5. WHY: Is the basis for suspicion articulated with a typology link?
-6. Red flags: Are red flags documented with reference to FATF typologies or UAE AML guidelines?
-7. Typology link: Does the narrative connect the activity to a known ML/TF typology?
-8. Tipping-off risk: Is there any language that could constitute tipping-off under AML Law Art. 22?
-9. FDL Art. 26 standard: Does the narrative meet the minimum standard for FIU filing?
-10. FATF R.20 elements: Does it cover all mandatory elements for STR filing?
+── UAE FIU 6-PART COMPLETENESS (35 points total) ──
+1. WHAT HAPPENED (6 pts): Is the suspicious transaction/behaviour clearly described?
+2. WHY SUSPICIOUS (6 pts): Are specific indicators articulated that match known typologies?
+3. SUBJECT DETAILS (7 pts): Does the narrative include full name, ID/document number, occupation, AND relationship to the reporting institution? Partial credit for partial coverage.
+4. TRANSACTION DETAILS (8 pts): Are specific amounts (not vague "large sum"), dates, account numbers/instruments, and counterparties documented? Deduct heavily for vague language like "a large sum" or "recent transactions" with no specifics.
+5. LEGITIMACY DETERMINATION (4 pts): Does the narrative explain what steps the institution took to determine whether the activity was legitimate, and why it could not do so?
+6. REGULATORY BASIS (4 pts): Does the narrative explicitly cite FDL 10/2025 Art. 15 (reporting obligation) or another UAE AML law provision as the legal basis for filing?
 
-FATAL ISSUES (cause goAML rejection): empty narrative, missing subject identity, no red flag documented.
+── GENERAL QUALITY (35 points total) ──
+7. WHO (5 pts): Is the subject clearly identified with full name, entity type, identification details?
+8. WHEN (5 pts): Are dates, time periods, and timelines documented?
+9. WHERE (5 pts): Are jurisdictions, accounts, and geographies identified?
+10. Red flags (10 pts): Are red flags documented with reference to FATF typologies or UAE AML guidelines?
+11. Tipping-off risk (5 pts): Is the narrative free of language that could constitute tipping-off under FDL 10/2025 Art. 29? (Score 5 if clean, 0 if tipping-off language present — flag as fatal.)
+12. FATF R.20 elements (5 pts): Does it cover all mandatory elements for STR filing?
+
+── TYPOLOGY MATCH (15 points) ──
+13. TYPOLOGY MATCH: If a detected typology is provided for the case, does the narrative reference that specific FATF typology by name? Full credit (15 pts) for explicit named citation of the detected typology (e.g. "This activity pattern is consistent with the FATF typology: <name>"). Partial credit (8 pts) if a related typology is cited. Zero if no typology is cited at all.
+
+── SPECIFICITY PENALTY ──
+Deduct up to 15 points for vague language: "large sum", "significant amount", "recent transactions", "suspicious behaviour" with no quantification, "unusual activity" with no specifics. Each vague instance without supporting specifics deducts 3 points (max 15 pts total deduction).
+
+FATAL ISSUES (cause goAML rejection): empty narrative, missing subject identity, no red flag documented, tipping-off language present, no regulatory basis cited.
+
+Each case input includes: id, subject, meta, narrative, redFlags, and optionally detectedTypology.
 
 Respond ONLY with valid JSON (no markdown fences) in this exact format:
 {
@@ -89,7 +102,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as RequestBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400, headers: gate.headers });
   }
   const { cases } = body;
   if (!Array.isArray(cases) || cases.length === 0) {
@@ -109,11 +122,14 @@ export async function POST(req: Request): Promise<NextResponse> {
         c.redFlags && c.redFlags.length > 0
           ? c.redFlags.slice(0, 20).map((f) => sanitizeField(f, 200)).join("; ")
           : "none documented";
+      const typologyLine = c.detectedTypology
+        ? `\nDetected Typology: ${sanitizeField(c.detectedTypology, 200)}`
+        : "\nDetected Typology: (none provided)";
       return `Case ID: ${sanitizeField(c.id, 100)}
 Subject: ${sanitizeField(c.subject, 300)}
 Meta: ${sanitizeField(c.meta, 300)}
 Narrative: ${sanitizeText(c.narrative, 2000) || "(empty)"}
-Red Flags: ${redFlagsStr}`;
+Red Flags: ${redFlagsStr}${typologyLine}`;
     })
     .join("\n\n---\n\n");
 
@@ -122,7 +138,7 @@ Red Flags: ${redFlagsStr}`;
   try {
     claudeRes = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 1000,
+      max_tokens: 2000,
       system: SYSTEM_PROMPT,
       messages: [
         {

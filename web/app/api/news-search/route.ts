@@ -61,6 +61,31 @@ if (typeof process !== "undefined" && !guardHost[REJECTION_GUARD_KEY]) {
 // Free, no-key news crawl via Google News RSS.
 // Optional upgrade path: set NEWSAPI_KEY for higher-quality coverage.
 
+function detectScript(text: string): "latin" | "arabic" | "cyrillic" | "cjk" | "devanagari" | "thai" | "hebrew" | "georgian" | "armenian" | "other" {
+  const arabicCount = (text.match(/[؀-ۿ]/g) ?? []).length;
+  const cyrillicCount = (text.match(/[Ѐ-ӿ]/g) ?? []).length;
+  const cjkCount = (text.match(/[一-鿿㐀-䶿]/g) ?? []).length;
+  const devanagariCount = (text.match(/[ऀ-ॿ]/g) ?? []).length;
+  const thaiCount = (text.match(/[฀-๿]/g) ?? []).length;
+  const hebrewCount = (text.match(/[֐-׿]/g) ?? []).length;
+  const georgianCount = (text.match(/[Ⴀ-ჿ]/g) ?? []).length;
+  const armenianCount = (text.match(/[԰-֏]/g) ?? []).length;
+
+  const counts = [
+    { script: "arabic" as const, count: arabicCount },
+    { script: "cyrillic" as const, count: cyrillicCount },
+    { script: "cjk" as const, count: cjkCount },
+    { script: "devanagari" as const, count: devanagariCount },
+    { script: "thai" as const, count: thaiCount },
+    { script: "hebrew" as const, count: hebrewCount },
+    { script: "georgian" as const, count: georgianCount },
+    { script: "armenian" as const, count: armenianCount },
+  ];
+
+  const max = counts.reduce((a, b) => a.count > b.count ? a : b);
+  return max.count > 3 ? max.script : "latin";
+}
+
 interface Article {
   title: string;
   link: string;
@@ -77,6 +102,8 @@ interface Article {
   relevanceScore?: number;   // fuzzyScore + adverse-term boost, 0..100
   sourceTier: "tier1" | "tier2" | "tier3" | "unknown";  // credibility classification
   sourceCategory?: "wire" | "investigative" | "regulatory" | "regional" | "social";  // editorial category
+  script?: "latin" | "arabic" | "cyrillic" | "cjk" | "devanagari" | "thai" | "hebrew" | "georgian" | "armenian" | "other";
+  requiresTranslation?: boolean;
 }
 
 // ── Source credibility tiers ────────────────────────────────────────────────

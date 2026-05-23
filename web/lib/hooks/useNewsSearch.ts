@@ -15,6 +15,7 @@ export interface NewsArticle {
   fuzzyMethod: string;
   matchedVariant?: string;
   lang: string;
+  sourceTier?: "tier1" | "tier2" | "tier3" | "unknown";
 }
 
 export interface NewsDossier {

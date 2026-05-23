@@ -2834,6 +2834,9 @@ function LiveReasoningTab({
                 </div>
                 <div className="text-10 text-ink-3 font-mono">
                   {a.source}{a.pubDate ? ` · ${a.pubDate.slice(0, 10)}` : ""}
+                  {a.sourceTier === "tier1" && (
+                    <span className="ml-1 rounded bg-emerald-100 px-1 py-0.5 text-[9px] font-semibold text-emerald-700">T1</span>
+                  )}
                 </div>
               </li>
             ))}
@@ -3250,6 +3253,25 @@ const SEVERITY_BG: Record<string, string> = {
 // The 60+ language and regional locales polled by /api/news-search — all 7 continents
 const NEWS_SEARCH_LOCALES = "EN · DE · FR · ES · PT · IT · NL · PL · RO · HU · CS · SK · HR · SR · BG · SV · EL · RU · UK · AR · TR · HE · HI · ID · MS · VI · TH · ZH · JA · KO · EN-GB · EN-AE · EN-IN · EN-SG · EN-AU · AM · AF · FA · BN · UR · TA · TL · MY · AZ · KA · HY · KK · ES-MX · ES-AR · FR-CA · EN-NG · EN-ZA";
 
+const CONTINENT_LOCALES: Record<string, string[]> = {
+  "North America": ["en", "en-CA", "fr-CA", "es-MX"],
+  "South America": ["pt", "es", "es-AR", "es-CO", "es-MX"],
+  "Europe": ["de", "fr", "es", "it", "nl", "pl", "ro", "hu", "cs", "sk", "hr", "sr", "bg", "sv", "el", "ru", "uk", "en-GB"],
+  "Africa": ["ar", "ar-EG", "sw", "am", "af", "fr-SN", "pt-AO", "en-NG", "en-ZA"],
+  "Middle East": ["ar", "ar-SA", "fa", "tr", "he"],
+  "Asia": ["hi", "bn", "ur", "ta", "id", "ms", "vi", "th", "my", "tl", "zh", "ja", "ko", "kk", "az", "ka", "hy"],
+  "Oceania": ["en-AU", "en-NZ"],
+};
+
+function getContinentCoverage(languages: string[]): Record<string, boolean> {
+  const langSet = new Set(languages.map(l => l.toLowerCase()));
+  const coverage: Record<string, boolean> = {};
+  for (const [continent, locales] of Object.entries(CONTINENT_LOCALES)) {
+    coverage[continent] = locales.some(l => langSet.has(l.toLowerCase()));
+  }
+  return coverage;
+}
+
 function NewsDossierPanel({ state }: { state: NewsSearchState }) {
   if (state.status === "idle") return null;
   if (state.status === "loading") {
@@ -3340,8 +3362,11 @@ function NewsDossierPanel({ state }: { state: NewsSearchState }) {
                 {a.severity}
               </span>
             </div>
-            <div className="text-10 text-ink-3 font-mono flex flex-wrap gap-x-2">
+            <div className="text-10 text-ink-3 font-mono flex flex-wrap gap-x-2 items-center">
               <span>{a.source || "—"}</span>
+              {a.sourceTier === "tier1" && (
+                <span className="rounded bg-emerald-100 px-1 py-0.5 text-[9px] font-semibold text-emerald-700">T1</span>
+              )}
               <span>· {a.pubDate ? formatDMY(a.pubDate) : "—"}</span>
               <span>· <span className="uppercase text-violet">{a.lang}</span></span>
               <span>· fuzzy <span className="text-ink-0">{a.fuzzyScore}%</span> ({a.fuzzyMethod})</span>
@@ -3373,6 +3398,30 @@ function NewsDossierPanel({ state }: { state: NewsSearchState }) {
       <div className="mt-3 pt-2 border-t border-hair text-10 text-ink-3 font-mono">
         Worldwide search · 60+ locales · All 7 continents · {NEWS_SEARCH_LOCALES} · FATF R.10 lookback applied
       </div>
+      {/* Continent coverage badges */}
+      {(() => {
+        const coverage = getContinentCoverage(r.languages ?? []);
+        const continents = Object.entries(coverage);
+        return (
+          <div className="mt-1 flex flex-wrap gap-1">
+            {continents.map(([continent, covered]) => (
+              <span
+                key={continent}
+                className={`rounded px-1.5 py-0.5 text-9 font-medium ${
+                  covered
+                    ? "bg-emerald-100 text-emerald-700"
+                    : "bg-slate-100 text-slate-400"
+                }`}
+              >
+                {continent.split(" ").map(w => w[0]).join("")}
+              </span>
+            ))}
+            <span className="text-9 text-ink-3 ml-1">
+              {continents.filter(([, c]) => c).length}/7 continents
+            </span>
+          </div>
+        );
+      })()}
     </Section>
   );
 }

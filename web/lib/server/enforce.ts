@@ -80,7 +80,7 @@ export type EnforcementResult = EnforcementAllow | { ok: false; response: NextRe
 
 export async function enforce(
   req: Request,
-  opts: { requireAuth?: boolean; requireJsonBody?: boolean } = {},
+  opts: { requireAuth?: boolean; requireJsonBody?: boolean; cost?: number } = {},
 ): Promise<EnforcementResult> {
   // Per-property defaulting so callers can override one option without
   // accidentally clearing the other. The previous all-or-nothing default
@@ -89,6 +89,7 @@ export async function enforce(
   // tripped exactly that footgun. Always merge defaults at the property level.
   const requireAuth = opts.requireAuth ?? true;
   const requireJsonBody = opts.requireJsonBody ?? true;
+  const cost = opts.cost ?? 1;
 
   // Content-Type guard — for JSON-body methods, callers must declare
   // application/json so the handler can safely call req.json().

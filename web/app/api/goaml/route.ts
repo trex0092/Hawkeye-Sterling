@@ -255,7 +255,7 @@ async function handleGoaml(req: Request): Promise<Response> {
     ...(involvedEntities.length > 0 ? { involvedEntities } : {}),
     ...(() => {
       const rawAmt = body.amount ?? body.amountAed;
-      const safeAmt = Number.isFinite(rawAmt) && (rawAmt as number) > 0 ? (rawAmt as number) : 0;
+      const safeAmt = typeof rawAmt === "number" && Number.isFinite(rawAmt) && rawAmt > 0 ? rawAmt : 0;
       return safeAmt > 0 ? {
         transactions: [
           {
