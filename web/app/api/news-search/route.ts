@@ -76,14 +76,19 @@ interface Article {
   lang: string;              // locale the article was fetched from (en, es, fr, ru, zh, ar, pt)
 }
 
-// Locales we poll Google News from. Expanded to 30 languages covering the
+// Locales we poll Google News from. Expanded to 35 languages covering the
 // highest-value AML jurisdictions globally — FATF high-risk, MENA, South &
 // Southeast Asia, Caucasus, Western Balkans, Nordics, East Africa.
-// All feeds run in parallel under a 3.5s overall timebox so latency does
+// All feeds run in parallel under a 4s overall timebox so latency does
 // not grow with locale count.
 const LOCALES: Array<{ code: string; hl: string; gl: string; ceid: string }> = [
   // Core Western / Global
-  { code: "en",  hl: "en",      gl: "US", ceid: "US:en"       },
+  { code: "en",    hl: "en",      gl: "US", ceid: "US:en"       },
+  { code: "en-GB", hl: "en-GB",   gl: "GB", ceid: "GB:en"       },
+  { code: "en-AE", hl: "en",      gl: "AE", ceid: "AE:en"       },
+  { code: "en-IN", hl: "en-IN",   gl: "IN", ceid: "IN:en"       },
+  { code: "en-SG", hl: "en-SG",   gl: "SG", ceid: "SG:en"       },
+  { code: "en-AU", hl: "en-AU",   gl: "AU", ceid: "AU:en"       },
   { code: "de",  hl: "de",      gl: "DE", ceid: "DE:de"       },
   { code: "fr",  hl: "fr",      gl: "FR", ceid: "FR:fr"       },
   { code: "es",  hl: "es",      gl: "ES", ceid: "ES:es"       },
@@ -279,8 +284,8 @@ function parseRss(xml: string, subject: string, variants: string[], lang: string
 // Per-locale RSS timeout. 30 locales fan out in parallel; any single stalled feed is aborted after 2s.
 const FEED_TIMEOUT_MS = 2_000;
 
-// Overall timebox for the whole fan-out. 30 locales × 2s per feed run in parallel — 3.5s covers all healthy feeds.
-const OVERALL_TIMEBOX_MS = 3_500;
+// Overall timebox for the whole fan-out. 35 locales × 2s per feed run in parallel — 4s covers all healthy feeds.
+const OVERALL_TIMEBOX_MS = 4_000;
 
 async function fetchLocaleFeed(
   q: string,
