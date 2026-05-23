@@ -38,6 +38,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getJson, setJson, del } from "@/lib/server/store";
+import { assertSafeWebhookUrl } from "@/lib/server/webhook";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
@@ -83,8 +84,13 @@ export async function POST(req: Request): Promise<NextResponse> {
   catch { return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400, headers: gate.headers }); }
 
   const url = body.url?.trim();
-  if (!url || !url.startsWith("https://")) {
-    return NextResponse.json({ ok: false, error: "url must be a valid HTTPS endpoint" }, { status: 400, headers: gate.headers });
+  if (!url) {
+    return NextResponse.json({ ok: false, error: "url is required" }, { status: 400, headers: gate.headers });
+  }
+  try {
+    assertSafeWebhookUrl(url);
+  } catch (e) {
+    return NextResponse.json({ ok: false, error: e instanceof Error ? e.message : "invalid url" }, { status: 400, headers: gate.headers });
   }
 
   const events = Array.isArray(body.events) ? body.events.filter((e): e is string => ALLOWED_EVENTS.has(e)) : ["all"];

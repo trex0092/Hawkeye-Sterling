@@ -251,10 +251,9 @@ export async function POST(req: Request): Promise<NextResponse> {
       );
       listsLoaded = candidates.length;
     } catch (err) {
-      const detail = err instanceof Error ? err.message : String(err);
-      console.error("[screening/run] loadCandidates failed", { reqId, detail });
+      console.error("[screening/run] loadCandidates failed", { reqId, detail: err instanceof Error ? err.message : String(err) });
       return NextResponse.json(
-        { ok: false, error: "corpus_unavailable", message: "Failed to load watchlist corpus", detail, requestId: reqId, degraded: true, latencyMs: Date.now() - t0 },
+        { ok: false, error: "corpus_unavailable", message: "Failed to load watchlist corpus", requestId: reqId, degraded: true, latencyMs: Date.now() - t0 },
         { status: 503, headers: responseHeaders },
       );
     }
@@ -286,10 +285,9 @@ export async function POST(req: Request): Promise<NextResponse> {
       options,
     );
   } catch (err) {
-    const detail = err instanceof Error ? err.message : String(err);
-    console.error("[screening/run] quickScreen threw", { reqId, resultId, detail });
+    console.error("[screening/run] quickScreen threw", { reqId, resultId, detail: err instanceof Error ? err.message : String(err) });
     return NextResponse.json(
-      { ok: false, error: "screening_failed", message: "Screening engine error", detail, requestId: reqId, resultId, latencyMs: Date.now() - t0 },
+      { ok: false, error: "screening_failed", message: "Screening engine error", requestId: reqId, resultId, latencyMs: Date.now() - t0 },
       { status: 500, headers: responseHeaders },
     );
   }

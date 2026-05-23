@@ -120,6 +120,9 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   // Batch upsert
   if (Array.isArray(body.cases)) {
+    if (body.cases.length > 500) {
+      return NextResponse.json({ ok: false, error: "batch size must not exceed 500 items" }, { status: 413, headers: gate.headers });
+    }
     const now = new Date().toISOString();
     const saved: StrCase[] = [];
     for (const c of body.cases) {
@@ -190,6 +193,9 @@ export async function PUT(req: Request): Promise<NextResponse> {
   }
   if (!Array.isArray(body.cases)) {
     return NextResponse.json({ ok: false, error: "body.cases must be an array" }, { status: 400, headers: gate.headers });
+  }
+  if (body.cases.length > 500) {
+    return NextResponse.json({ ok: false, error: "batch size must not exceed 500 items" }, { status: 413, headers: gate.headers });
   }
 
   const now = new Date().toISOString();

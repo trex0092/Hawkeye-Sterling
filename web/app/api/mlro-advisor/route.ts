@@ -226,7 +226,8 @@ async function callGroqAdvisor(
     } as RequestInit);
     if (!res.ok) {
       const errText = await res.text().catch(() => "");
-      return { ok: false, error: `Groq API ${res.status}: ${errText.slice(0, 200)}` };
+      console.error(`[mlro-advisor] Groq API ${res.status}:`, errText.slice(0, 500));
+      return { ok: false, error: "LLM provider returned an error" };
     }
     const data = await res.json().catch(() => ({})) as Record<string, unknown>;
     const content = (data["choices"] as Array<{ message: { content: string } }>)?.[0]?.message?.content ?? "";
