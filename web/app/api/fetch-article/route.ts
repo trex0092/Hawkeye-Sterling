@@ -6,6 +6,17 @@ import { enforce } from "@/lib/server/enforce";
 
 const ALLOWED_PROTOCOLS = ["https:", "http:"];
 
+// Block private/loopback IP ranges to prevent SSRF attacks.
+// Mirrors the blocklist in lib/server/webhook.ts.
+const BLOCKED_HOSTS = /^(localhost|.*\.local|metadata\.google\.internal)$/i;
+const PRIVATE_IP = /^(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|127\.|169\.254\.|::1$|0\.0\.0\.0)/;
+
+function assertSafeArticleUrl(parsed: URL): void {
+  if (BLOCKED_HOSTS.test(parsed.hostname) || PRIVATE_IP.test(parsed.hostname)) {
+    throw new Error("URL hostname is in a blocked range");
+  }
+}
+
 function stripHtml(html: string): string {
   // Remove scripts, styles, nav, header, footer, aside
   const text = html
@@ -65,6 +76,12 @@ export async function POST(req: Request) {
 
   if (!ALLOWED_PROTOCOLS.includes(parsed.protocol)) {
     return NextResponse.json({ ok: false, error: "Only http/https URLs are supported" }, { status: 400, headers: gate.headers });
+  }
+
+  try {
+    assertSafeArticleUrl(parsed);
+  } catch {
+    return NextResponse.json({ ok: false, error: "URL hostname is not allowed" }, { status: 400, headers: gate.headers });
   }
 
   try {

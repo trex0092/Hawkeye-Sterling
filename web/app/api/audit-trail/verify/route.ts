@@ -129,8 +129,9 @@ async function handleGet(req: Request, ctx: RequestContext): Promise<Response> {
     }
     chain = raw;
   } catch (err) {
+    console.error("[audit-trail/verify] chain read failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json(
-      { ok: false, error: `chain read failed: ${err instanceof Error ? err.message : String(err)}` },
+      { ok: false, error: "Audit chain temporarily unavailable — check Blobs connectivity" },
       { status: 500 },
     );
   }
