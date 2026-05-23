@@ -87,7 +87,8 @@ export async function GET(req: Request): Promise<NextResponse> {
       return NextResponse.redirect(`${BASE}/tfs-alerts?gmail=error&reason=${reason}`);
     }
   } catch (err) {
-    const reason = encodeURIComponent(err instanceof Error ? err.message : "token_exchange_failed");
+    console.error("[gmail/callback] token exchange failed:", err);
+    const reason = encodeURIComponent("token_exchange_failed");
     return NextResponse.redirect(`${BASE}/tfs-alerts?gmail=error&reason=${reason}`);
   }
 

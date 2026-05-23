@@ -125,7 +125,8 @@ Return ONLY valid JSON:
       aiEnriched: true,
       generatedAt: new Date().toISOString(),
     }, { headers: gate.headers });
-  } catch {
-    return NextResponse.json({ ok: true, jurisdiction: body.jurisdiction, ...staticProfile, aiEnriched: false }, { headers: gate.headers });
+  } catch (err) {
+    console.warn("[geo-intelligence] AI enrichment failed, serving static profile:", err);
+    return NextResponse.json({ ok: true, jurisdiction: body.jurisdiction, ...staticProfile, aiEnriched: false, degraded: true }, { headers: gate.headers });
   }
 }

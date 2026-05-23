@@ -421,19 +421,19 @@ export async function POST(req: Request): Promise<NextResponse> {
             content: serialised,
           });
         } catch (err) {
-          const msg = err instanceof Error ? err.message : String(err);
+          console.error(`[agent/screen] tool ${tu.name} execution failed:`, err);
           transcript.push({
             iteration: i + 1,
             toolName: tu.name,
             input: tu.input,
-            output: { error: msg },
+            output: { error: "tool execution failed — see server logs" },
             durationMs: Date.now() - startedAt,
             isError: true,
           });
           toolResults.push({
             type: "tool_result",
             tool_use_id: tu.id,
-            content: `Tool error: ${msg}`,
+            content: "Tool execution failed — please retry.",
             is_error: true,
           });
         }

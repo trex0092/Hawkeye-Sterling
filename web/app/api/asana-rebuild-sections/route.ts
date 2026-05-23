@@ -253,7 +253,8 @@ export async function POST(req: Request): Promise<NextResponse> {
           await delay(50);
         }
       } catch (err) {
-        errors.push(String(err));
+        console.error(`[asana-rebuild-sections] project processing failed for ${project.name}:`, err);
+        errors.push("project processing failed — see server logs");
       }
       return { name: project.name, deleted, created, errors };
     }),
