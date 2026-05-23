@@ -621,11 +621,12 @@ async function handleSarReport(req: Request, gateHeaders: Record<string, string>
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);
     const isAbort = err instanceof Error && (err.name === "AbortError" || asanaCtl.signal.aborted);
+    console.error("[sar-report] Asana request failed:", detail);
     return NextResponse.json({
       ok: true,
       filingType: body.filingType,
       asanaSkipped: true,
-      asanaNote: `Asana request ${isAbort ? `timed out after ${ASANA_TIMEOUT_MS}ms` : "failed"}: ${detail}. Report generated successfully.`,
+      asanaNote: "Asana filing task creation failed — report generated successfully",
       reportText: lines.join("\n"),
       goaml: {
         internalReference: internalRef,

@@ -64,7 +64,7 @@ async function readJsonBlob(store: string, key: string): Promise<BlobReadResult>
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error(`[soc2-export] readJsonBlob(${store}/${key}) failed:`, message);
-    return { records: [], error: `${store}/${key}: ${message}` };
+    return { records: [], error: "blob-read-failed" };
   }
 }
 

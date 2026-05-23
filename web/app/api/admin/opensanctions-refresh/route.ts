@@ -55,10 +55,11 @@ export async function POST(req: Request): Promise<NextResponse> {
     const result = await refreshOpenSanctionsBlob();
     return NextResponse.json(result, { status: result.ok ? 200 : 502 });
   } catch (err) {
+    console.error("[admin/opensanctions-refresh] refresh threw:", err instanceof Error ? err.message : String(err));
     return NextResponse.json(
       {
         ok: false,
-        error: `refresh threw — ${err instanceof Error ? err.message : String(err)}`,
+        error: "opensanctions refresh failed",
         at: new Date().toISOString(),
       },
       { status: 500 },

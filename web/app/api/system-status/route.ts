@@ -157,7 +157,8 @@ async function checkBrainModules(): Promise<ComponentCheck> {
       note: `quickScreen=${qsOk ? "ok" : "MISSING"} redlines=${rlOk ? "ok" : "MISSING"}`,
     };
   } catch (err) {
-    return { name: "brain", status: "down", latencyMs: Date.now() - start, note: err instanceof Error ? err.message : String(err) };
+    console.error("[system-status] checkBrainModules failed:", err instanceof Error ? err.message : String(err));
+    return { name: "brain", status: "down", latencyMs: Date.now() - start, note: "component probe failed" };
   }
 }
 
@@ -179,7 +180,8 @@ async function checkAuditChain(): Promise<ComponentCheck> {
       note: `chain length ${head.sequence} entries, HMAC active`,
     };
   } catch (err) {
-    return { name: "auditChain", status: "down", latencyMs: Date.now() - start, note: err instanceof Error ? err.message : String(err) };
+    console.error("[system-status] checkAuditChain failed:", err instanceof Error ? err.message : String(err));
+    return { name: "auditChain", status: "down", latencyMs: Date.now() - start, note: "component probe failed" };
   }
 }
 
@@ -198,7 +200,8 @@ async function checkStorage(): Promise<ComponentCheck> {
       note: "Netlify Blobs connected",
     };
   } catch (err) {
-    return { name: "storage", status: "down", latencyMs: Date.now() - start, note: err instanceof Error ? err.message : String(err) };
+    console.error("[system-status] checkStorage failed:", err instanceof Error ? err.message : String(err));
+    return { name: "storage", status: "down", latencyMs: Date.now() - start, note: "component probe failed" };
   }
 }
 
@@ -212,7 +215,8 @@ async function checkExternalService(name: string, url: string, timeoutMs = 5_000
     const status: ComponentStatus = res?.ok ? "operational" : res ? "degraded" : "down";
     return { name, status, latencyMs: Date.now() - start, note: res ? `HTTP ${res.status}` : "timeout or network error" };
   } catch (err) {
-    return { name, status: "down", latencyMs: Date.now() - start, note: err instanceof Error ? err.message : String(err) };
+    console.error(`[system-status] checkExternalService(${name}) failed:`, err instanceof Error ? err.message : String(err));
+    return { name, status: "down", latencyMs: Date.now() - start, note: "component probe failed" };
   }
 }
 

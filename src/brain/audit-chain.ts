@@ -104,7 +104,7 @@ export class AuditChain {
     const seq = this.entries.length + 1;
     const timestamp = new Date().toISOString();
     const prev = this.entries[this.entries.length - 1];
-    const prevHash = prev?.entryHash ?? '0'.repeat(8);
+    const prevHash = prev?.entryHash ?? '0'.repeat(64);
     const body = `${seq}|${timestamp}|${actor}|${action}|${canonicalise(payload)}|${prevHash}`;
     const entryHash = this.hasher(body);
     const entry: AuditEntry = { seq, timestamp, actor, action, payload, prevHash, entryHash };
@@ -124,7 +124,7 @@ export class AuditChain {
     for (let i = 0; i < this.entries.length; i++) {
       const e = this.entries[i];
       if (!e) continue;
-      const expectedPrev = i === 0 ? '0'.repeat(8) : (this.entries[i - 1]?.entryHash ?? '0'.repeat(8));
+      const expectedPrev = i === 0 ? '0'.repeat(64) : (this.entries[i - 1]?.entryHash ?? '0'.repeat(64));
       if (e.prevHash !== expectedPrev) return { ok: false, firstBreakAt: e.seq };
       const body = `${e.seq}|${e.timestamp}|${e.actor}|${e.action}|${canonicalise(e.payload)}|${e.prevHash}`;
       if (this.hasher(body) !== e.entryHash) return { ok: false, firstBreakAt: e.seq };

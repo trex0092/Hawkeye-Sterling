@@ -93,8 +93,9 @@ export async function POST(req: Request): Promise<NextResponse> {
     const payload = await res.json().catch(() => null);
     return NextResponse.json(payload ?? { ok: false, error: "upstream parse failed" }, { status: res.status });
   } catch (err) {
+    console.error("[sanctions-watch POST] upstream delegation failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json(
-      { ok: false, error: err instanceof Error ? err.message : String(err) },
+      { ok: false, error: "upstream sanctions service unavailable" },
       { status: 502 },
     );
   }

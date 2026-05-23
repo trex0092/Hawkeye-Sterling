@@ -194,7 +194,10 @@ async function triggerSar(task: AsanaTask, origin: string): Promise<{ goamlXmlBa
     const subjectName = task.name ?? "Unknown subject";
     const res = await fetch(`${origin}/api/sar-report`, {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: {
+        "content-type": "application/json",
+        "authorization": `Bearer ${process.env["ADMIN_TOKEN"] ?? ""}`,
+      },
       body: JSON.stringify({
         subject: {
           id: task.gid,

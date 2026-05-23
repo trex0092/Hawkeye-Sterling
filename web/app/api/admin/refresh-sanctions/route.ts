@@ -41,11 +41,12 @@ async function handleRefreshSanctions(
     )) as { runIngestionAll: typeof runIngestionAll };
     runIngestionAll = mod.runIngestionAll;
   } catch (err) {
+    console.error("[admin/refresh-sanctions] ingestion runner import failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json(
       {
         ok: false,
         triggeredAt,
-        error: `ingestion runner unavailable — ${err instanceof Error ? err.message : String(err)}`,
+        error: "ingestion runner unavailable",
       },
       { status: 500 },
     );
@@ -55,11 +56,12 @@ async function handleRefreshSanctions(
   try {
     results = await runIngestionAll("admin-refresh-sanctions");
   } catch (err) {
+    console.error("[admin/refresh-sanctions] runIngestionAll threw:", err instanceof Error ? err.message : String(err));
     return NextResponse.json(
       {
         ok: false,
         triggeredAt,
-        error: `runIngestionAll threw — ${err instanceof Error ? err.message : String(err)}`,
+        error: "sanctions refresh failed",
       },
       { status: 500 },
     );

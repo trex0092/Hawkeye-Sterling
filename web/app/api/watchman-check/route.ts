@@ -172,8 +172,8 @@ async function fetchWatchman(name: string, limit: number): Promise<WatchmanRespo
     };
   } catch (err) {
     const isAbort = err instanceof Error && err.name === "AbortError";
-    if (!isAbort) console.warn("[watchman-check] fetch failed:", err instanceof Error ? err.message : err);
-    const degradedReason = isAbort ? "Watchman API timed out" : `Watchman API unreachable: ${err instanceof Error ? err.message : String(err)}`;
+    if (!isAbort) console.error("[watchman-check] fetch failed:", err instanceof Error ? err.message : err);
+    const degradedReason = isAbort ? "Watchman API timed out" : "Watchman API unreachable";
     return { ok: true, subject: name, hits: [], totalHits: 0, listsChecked: [], aboveThreshold: 0, source: "watchman-moov", latencyMs: Date.now() - t0, fetchedAt, degraded: true, degradedReason };
   } finally {
     clearTimeout(timer);
