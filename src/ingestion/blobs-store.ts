@@ -18,6 +18,14 @@
 //   The fallback to inMemoryStore() is preserved for local dev /
 //   vitest, but the production path now always uses an explicitly
 //   authenticated store.
+//
+// Ingest timestamp tracking:
+//   After every successful putDataset, we record the completion time in
+//   the `hawkeye-list-ingest-meta` blob store under
+//   `last-successful-ingest.json`. This allows /api/sanctions/status to
+//   report per-list "last time a full successful ingest completed" — a
+//   separate signal from the snapshot's own lastModified timestamp, which
+//   reflects upstream data age rather than our own pipeline health.
 
 import type { NormalisedEntity, IngestionReport } from './types.js';
 
@@ -115,6 +123,35 @@ export async function getBlobsStore(): Promise<BlobsStore> {
   }
   const data = getStore(dataOpts);
   const reports = getStore(reportOpts);
+
+  // Ingest-meta store: tracks per-list last successful ingest timestamps.
+  const metaOpts: ExplicitOpts = { name: 'hawkeye-list-ingest-meta', consistency: 'strong' };
+  if (creds.siteID) metaOpts.siteID = creds.siteID;
+  if (creds.token) metaOpts.token = creds.token;
+  const ingestMeta = getStore(metaOpts) as unknown as {
+    get: (_key: string, _opts?: { type?: string }) => Promise<unknown>;
+    setJSON: (_key: string, _value: unknown) => Promise<void>;
+  };
+
+  const INGEST_META_KEY = 'last-successful-ingest.json';
+
+  /** Best-effort: record a successful ingest for `listId` without blocking the pipeline. */
+  async function recordIngestTimestamp(listId: string): Promise<void> {
+    try {
+      const raw = await ingestMeta.get(INGEST_META_KEY, { type: 'json' }).catch(() => null) as {
+        lastFullIngestAt: string | null;
+        perList: Record<string, string>;
+        updatedAt: string;
+      } | null;
+      const existing = raw ?? { lastFullIngestAt: null, perList: {}, updatedAt: new Date().toISOString() };
+      existing.perList[listId] = new Date().toISOString();
+      existing.updatedAt = new Date().toISOString();
+      await ingestMeta.setJSON(INGEST_META_KEY, existing);
+    } catch {
+      // Best-effort — never fail a putDataset because metadata tracking failed.
+    }
+  }
+
   cached = {
     async putDataset(listId, entities, report, opts) {
       // Feed-integrity guard (RULE 12 / Mandatory Feed Integrity):
@@ -153,6 +190,8 @@ export async function getBlobsStore(): Promise<BlobsStore> {
       // (which cannot read hawkeye-lists without auto-injection) can load
       // the candidate list for screening. fetchedAt is top-level for compat.
       await reports.setJSON(`${listId}/latest.json`, { ...report, entities });
+      // Track the last successful ingest timestamp for this list. Fire-and-forget.
+      void recordIngestTimestamp(listId);
     },
     async getLatest(listId) {
       const v = await data.get(`${listId}/latest.json`, { type: 'json' }) as {
