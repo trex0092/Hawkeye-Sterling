@@ -41,6 +41,13 @@ export const AML_KEYWORDS_EN: string[] = [
   "bribery", "embezzlement", "nepotism", "cronyism", "influence peddling",
   "illicit enrichment", "political corruption", "official misconduct",
   "abuse of office", "defalcation", "misappropriation",
+  // Bribery & corruption — FCPA / UK Bribery Act / GRECO / UNCAC terms
+  "kickback", "facilitation payment", "grease payment",
+  "government contract fraud", "procurement corruption", "tender rigging",
+  "looting of public funds", "abuse of public office", "revolving door",
+  "slush fund", "off-book payments", "secret commissions",
+  "FCPA violation", "UK Bribery Act", "GRECO", "UN Convention Against Corruption",
+  "politically exposed person", "politically connected", "state official",
   // Predicate offences
   "organised crime", "drug trafficking", "narcotics", "cartel",
   "human trafficking", "people smuggling", "forced labour",
@@ -48,6 +55,14 @@ export const AML_KEYWORDS_EN: string[] = [
   "illegal logging", "environmental crime", "illegal mining",
   "poaching", "endangered species", "trafficking in persons",
   "child exploitation", "sexual exploitation", "labour exploitation",
+  // Human trafficking / modern slavery — FATF predicate offence
+  // (FATF Report: Financial Flows from Human Trafficking, 2018)
+  "sex trafficking", "labor trafficking", "forced labor",
+  "debt bondage", "human smuggling", "TIP",
+  "victim exploitation", "escort services",
+  "adult entertainment proceeds", "massage parlor",
+  "domestic servitude", "child labor",
+  "migrant smuggling", "people mover", "coyote payment",
   // Environmental crime — FATF predicate offences (FATF 2021 report)
   "deforestation", "timber fraud", "conflict timber", "carbon credit fraud",
   "ivory", "rhino horn", "pangolin",
@@ -158,7 +173,9 @@ export const AML_KEYWORDS_MULTILINGUAL: Record<string, string[]> = {
   // Arabic
   ar: ["اعتقال", "غسيل أموال", "فساد", "احتيال", "تحقيق", "رشوة",
        "تهريب", "جريمة", "عقوبات", "تمويل الإرهاب", "صفقة مشبوهة",
-       "تمويل إرهاب"],
+       "تمويل إرهاب",
+       // Bribery & corruption (ar)
+       "الرشوة", "الفساد", "عمولة سرية", "نهب المال العام", "الاستيلاء على الدولة"],
   // Italian
   it: ["arrestato", "riciclaggio", "corruzione", "frode", "indagine",
        "mafia", "camorra", "ndrangheta", "evasione fiscale", "contrabbando"],
