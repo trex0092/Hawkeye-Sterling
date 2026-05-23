@@ -23,6 +23,9 @@ export async function GET(): Promise<NextResponse> {
   if (!user) {
     return NextResponse.json({ ok: false, error: "Session invalidated — please log in again" }, { status: 401 });
   }
+  if (!user.active) {
+    return NextResponse.json({ ok: false, error: "Account deactivated — contact your administrator" }, { status: 403 });
+  }
 
   // Reject sessions issued before the most recent password change. This
   // catches the admin-reset case where the target user's cookie was not

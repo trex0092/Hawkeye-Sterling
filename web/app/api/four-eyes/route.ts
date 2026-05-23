@@ -379,11 +379,24 @@ async function handlePatch(req: Request, ctx: RequestContext): Promise<NextRespo
   return NextResponse.json({ ok: true, item: updated, ...(asanaTaskUrl ? { asanaTaskUrl } : {}) });
 }
 
-async function handleDelete(req: Request): Promise<NextResponse> {
+async function handleDelete(req: Request, ctx: RequestContext): Promise<NextResponse> {
   const url = new URL(req.url);
   const id = safeId(url.searchParams.get("id"));
   if (!id) return NextResponse.json({ ok: false, error: "id required" }, { status: 400 });
+  const existing = await getJson<FourEyesItem>(`four-eyes/${id}`);
+  if (!existing) return NextResponse.json({ ok: false, error: "not found" }, { status: 404 });
+  const actor = ctx.apiKey.name || ctx.apiKey.email || ctx.apiKey.id;
   await del(`four-eyes/${id}`);
+  void writeAuditChainEntry({
+    event: "four_eyes.deleted",
+    actor,
+    itemId: id,
+    subjectName: existing.subjectName,
+    fourEyesAction: existing.action,
+    priorStatus: existing.status,
+  }).catch((err: unknown) => {
+    console.warn("[four-eyes] delete audit write failed:", err instanceof Error ? err.message : String(err));
+  });
   return NextResponse.json({ ok: true });
 }
 

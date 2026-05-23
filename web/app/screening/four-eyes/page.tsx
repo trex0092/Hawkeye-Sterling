@@ -164,7 +164,7 @@ export default function FourEyesPage() {
           <div className="bg-red-dim border border-red/30 rounded-lg p-3 text-12 text-red mb-4">{error}</div>
         )}
 
-        {lastAsanaUrl && (
+        {lastAsanaUrl && /^https:\/\//.test(lastAsanaUrl) && (
           <div className="bg-green-dim border border-green/30 rounded-lg p-3 text-12 text-green mb-4 flex items-center justify-between gap-3">
             <span>Decision recorded and reported to Asana.</span>
             <a href={lastAsanaUrl} target="_blank" rel="noopener noreferrer"
@@ -224,7 +224,7 @@ export default function FourEyesPage() {
                         >
                           Reject
                         </button>
-                        {it.contextUrl && (
+                        {it.contextUrl && /^https?:\/\//.test(it.contextUrl) && (
                           <a href={it.contextUrl} target="_blank" rel="noopener noreferrer"
                             className="px-3 py-1.5 text-12 font-medium border border-hair-2 rounded text-ink-1 hover:text-brand hover:border-brand">
                             Open context
