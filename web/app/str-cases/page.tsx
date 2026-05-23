@@ -31,10 +31,8 @@ import { RowActions } from "@/components/shared/RowActions";
 import { GoamlExportModal, type CasePrefill } from "@/components/goaml/GoamlExportModal";
 import {
   loadOperatorRole,
-  saveOperatorRole,
   canPerform,
   ROLE_LABEL,
-  ALL_ROLES,
   type OperatorRole,
 } from "@/lib/data/operator-role";
 import { writeAuditEvent } from "@/lib/audit";
@@ -102,17 +100,10 @@ interface CaseRow {
 
 function AccessDeniedScreen({
   role,
-  onRoleChange,
 }: {
   role: OperatorRole;
-  onRoleChange: (_r: OperatorRole) => void;
+  onRoleChange?: (_r: OperatorRole) => void;
 }) {
-  const elevate = (r: OperatorRole) => {
-    saveOperatorRole(r);
-    window.dispatchEvent(new Event("hawkeye:operator-role-updated"));
-    onRoleChange(r);
-  };
-
   return (
     <ModuleLayout asanaModule="str-cases" asanaLabel="STR / SAR Cases">
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -127,20 +118,8 @@ function AccessDeniedScreen({
             risks tipping-off the subject under investigation.
           </p>
           <div className="bg-red/10 border border-red/30 rounded-lg px-4 py-3 text-13 text-red font-medium mb-5">
-            Your current role is <strong>{ROLE_LABEL[role]}</strong>. Switch
-            to CO or MLRO to proceed.
-          </div>
-          <div className="flex justify-center gap-2 mb-5">
-            {ALL_ROLES.filter((r) => canPerform(r, "str_read")).map((r) => (
-              <button
-                key={r}
-                type="button"
-                onClick={() => elevate(r)}
-                className="px-4 py-1.5 rounded border border-brand text-brand text-12 font-semibold hover:bg-brand hover:text-white transition-colors"
-              >
-                Switch to {ROLE_LABEL[r]}
-              </button>
-            ))}
+            Your current role is <strong>{ROLE_LABEL[role]}</strong>. Contact
+            your administrator to request CO or MLRO access.
           </div>
           <p className="text-11 text-ink-3">
             This access attempt has been logged to the immutable audit chain.
@@ -552,7 +531,7 @@ export default function StrCasesPage() {
         </div>
       </ModuleLayout>
     );
-  if (!canPerform(role, "str_read")) return <AccessDeniedScreen role={role} onRoleChange={setRole} />;
+  if (!canPerform(role, "str_read")) return <AccessDeniedScreen role={role} />;
 
   return (
     <ModuleLayout asanaModule="str-cases" asanaLabel="STR / SAR Cases">

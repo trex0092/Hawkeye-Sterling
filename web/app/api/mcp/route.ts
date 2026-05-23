@@ -1425,9 +1425,8 @@ async function dispatch(msg: {
     // _sessionId, then fall back to the per-request sessionId captured in
     // AsyncLocalStorage (derived from X-Forwarded-For at POST entry), and
     // finally "anonymous" so a missing IP doesn't coalesce unrelated callers.
-    const explicitSessionId = (params as Record<string, unknown>)["_sessionId"] as string | undefined;
     const ctxSessionId = _callCtx.getStore()?.sessionId;
-    const sessionId = explicitSessionId ?? ctxSessionId ?? "anonymous";
+    const sessionId = ctxSessionId ?? "anonymous";
     const anomaly = trackAndDetectAnomaly(sessionId, toolName, level);
 
     const t0 = Date.now();
@@ -1567,12 +1566,9 @@ export async function POST(req: Request): Promise<Response> {
   // Thread caller's auth + derived sessionId into all internal callApi
   // requests via AsyncLocalStorage so each concurrent request has its own
   // isolated context.
-  const { searchParams } = new URL(req.url);
-  const queryKey = searchParams.get('api_key');
   const authHeader =
     req.headers.get('authorization') ||
     req.headers.get('x-api-key') ||
-    (queryKey ? `Bearer ${queryKey}` : null) ||
     undefined;
   const sessionId = deriveSessionId(req);
 

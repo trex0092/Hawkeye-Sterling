@@ -618,7 +618,7 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
         body: JSON.stringify({
           action: "str",
           target: subject.id,
-          actor: { role, name: subject.id },
+          actor: { role, name: (() => { try { return window.localStorage.getItem("hawkeye.operator") || role; } catch { return role; } })() },
           body: {
             subjectName: subject.name,
             asanaTaskUrl: res.data.taskUrl ?? null,

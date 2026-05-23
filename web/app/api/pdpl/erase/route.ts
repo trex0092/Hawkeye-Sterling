@@ -29,6 +29,7 @@ import { NextResponse } from "next/server";
 import { createHash } from "crypto";
 import { getJson, listKeys, setJson } from "@/lib/server/store";
 import { adminAuth } from "@/lib/server/admin-auth";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -193,6 +194,17 @@ export async function POST(req: Request): Promise<NextResponse> {
   };
   if (!body.dryRun) {
     await setJson(`${ERASURE_LOG_PREFIX}${erasureId}`, logEntry);
+    void writeAuditChainEntry({
+      event: "pdpl.erasure",
+      actor: requesterEmail,
+      erasureId,
+      ...(subjectId ? { subjectId } : {}),
+      keysAnonymised: keysAffected.length,
+      legalBasis: logEntry.legalBasis,
+      holdExpiresAt: logEntry.holdExpiresAt,
+    }).catch((err: unknown) => {
+      console.warn("[pdpl/erase] audit chain write failed:", err instanceof Error ? err.message : String(err));
+    });
   }
 
   return NextResponse.json({

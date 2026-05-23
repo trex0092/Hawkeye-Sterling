@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -96,6 +97,15 @@ export async function POST(req: Request) {
     };
 
     await store.set("cases.json", JSON.stringify([newCase, ...existing]));
+    void writeAuditChainEntry({
+      event: "grievance.case_created",
+      actor: gate.keyId,
+      caseId: newId,
+      channel: newCase.channel,
+      category: newCase.category,
+    }).catch((err: unknown) => {
+      console.warn("[grievances/cases] audit chain write failed:", err instanceof Error ? err.message : String(err));
+    });
     return NextResponse.json({ ok: true, case: newCase }, { status: 201, headers: gate.headers });
   } catch (err) {
     console.error("[grievances/cases] store error:", err instanceof Error ? err.message : err);
