@@ -559,6 +559,19 @@ export function quickScreen(
         }
         hit.scores = scoreMap;
       }
+      // ── Multi-factor disambiguation enrichment ────────────────────────────
+      // Compute the explicit additive disambiguation score (0-100), confidence
+      // tier, factor breakdown, false-positive flag, and SDN program context.
+      // Runs after all score adjustments are finalised so baseScore is stable.
+      const enriched = enrichHitWithDisambiguation(hit, subject, cand);
+      Object.assign(hit, {
+        disambiguationScore: enriched.disambiguationScore,
+        confidenceTier: enriched.confidenceTier,
+        disambiguationFactors: enriched.disambiguationFactors,
+        ...(enriched.falsePositiveFlag ? { falsePositiveFlag: enriched.falsePositiveFlag } : {}),
+        ...(enriched.falsePositiveExplanation ? { falsePositiveExplanation: enriched.falsePositiveExplanation } : {}),
+        ...(enriched.sdnPrograms ? { sdnPrograms: enriched.sdnPrograms } : {}),
+      });
       hits.push(hit);
     }
   }
@@ -652,9 +665,28 @@ export function quickScreen(
     }
   }
 
+  // ── Look-alike name clustering ─────────────────────────────────────────────
+  // Group hits whose candidateNames are >= 95% similar (trigram Jaccard) so
+  // the analyst sees "N variants of the same listing" rather than confusing
+  // near-duplicates. Only runs when there are >= 2 hits.
+  let finalHits: QuickScreenHit[] = clipped;
+  let lookalikeClusters: ClusterSummary[] | undefined;
+  if (clipped.length >= 2) {
+    const clustered = clusterLookalikes(clipped);
+    finalHits = clustered.hits as QuickScreenHit[];
+    if (clustered.clusters.length > 0) {
+      lookalikeClusters = clustered.clusters;
+    }
+  }
+
+  // Count hits auto-flagged as likely false positives.
+  const likelyFalsePositiveCount = finalHits.filter(
+    (h) => (h as QuickScreenHit & { falsePositiveFlag?: string }).falsePositiveFlag === 'likely_false_positive',
+  ).length;
+
   return {
     subject,
-    hits: clipped,
+    hits: finalHits,
     topScore,
     severity,
     listsChecked: listsSeen.size,
@@ -666,6 +698,8 @@ export function quickScreen(
     ...(totalWeightedScore !== undefined ? { totalWeightedScore } : {}),
     ...(confidenceScore !== undefined ? { confidenceScore } : {}),
     ...(clipped.length > 0 ? { listBreakdown } : {}),
+    ...(lookalikeClusters ? { lookalikeClusters } : {}),
+    ...(likelyFalsePositiveCount > 0 ? { likelyFalsePositiveCount } : {}),
   };
 }
 

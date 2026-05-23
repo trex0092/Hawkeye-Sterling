@@ -767,6 +767,10 @@ const INVESTIGATIVE_FEEDS: Array<{
   { url: "https://www.ilo.org/global/topics/forced-labour/news/lang--en/rss.xml", lang: "en", sourceTier: "tier1", sourceCategory: "regulatory", name: "ILO-ForcedLabour" },
   // UNODC — UN Office on Drugs and Crime (human trafficking / TIP)
   { url: "https://www.unodc.org/unodc/en/human-trafficking/news.rss",        lang: "en", sourceTier: "tier1", sourceCategory: "regulatory",    name: "UNODC-TIP" },
+  // SEC Enforcement — US Securities & Exchange Commission litigation releases
+  { url: "https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=litigation&dateb=&owner=include&count=40&search_text=&output=atom", lang: "en", sourceTier: "tier1", sourceCategory: "regulatory", name: "SEC-Enforcement" },
+  // ESMA — European Securities and Markets Authority news
+  { url: "https://www.esma.europa.eu/press-news/esma-news-feed",              lang: "en", sourceTier: "tier1", sourceCategory: "regulatory",    name: "ESMA" },
 ];
 
 // ── Africa RSS feeds ────────────────────────────────────────────────────────

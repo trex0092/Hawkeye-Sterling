@@ -703,6 +703,16 @@ export default function TypologyLibraryPage() {
     void handleSearch(undefined, key);
   };
 
+  const handleFatfFilterClick = (key: FatfFilterKey) => {
+    setActiveFatfFilter(key);
+    void handleSearch(undefined, undefined, key);
+  };
+
+  const handleRiskFilterClick = (key: RiskFilterKey) => {
+    setActiveRiskFilter(key);
+    void handleSearch(undefined, undefined, undefined, key);
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") void handleSearch();
   };
@@ -752,22 +762,79 @@ export default function TypologyLibraryPage() {
         </div>
       </div>
 
-      {/* Filter Chips */}
-      <div className="flex flex-wrap gap-2 mb-6">
-        {FILTER_CATEGORIES.map((cat) => (
-          <button
-            key={cat.key}
-            type="button"
-            onClick={() => handleFilterClick(cat.key)}
-            className={`px-3.5 py-1.5 rounded-full text-12 font-medium transition-colors border ${
-              activeFilter === cat.key
-                ? "bg-brand text-white border-brand"
-                : "bg-bg-1 text-ink-2 border-hair hover:border-brand/40 hover:text-ink-0"
-            }`}
-          >
-            {cat.label}
-          </button>
-        ))}
+      {/* FATF Category Filters */}
+      <div className="mb-3">
+        <div className="font-mono text-10 uppercase tracking-wide text-ink-3 mb-1.5">FATF Category</div>
+        <div className="flex flex-wrap gap-2">
+          {FATF_CATEGORY_FILTERS.map((cat) => (
+            <button
+              key={cat.key}
+              type="button"
+              onClick={() => handleFatfFilterClick(cat.key)}
+              className={`px-3.5 py-1.5 rounded-full text-12 font-medium transition-colors border ${
+                activeFatfFilter === cat.key
+                  ? cat.key === "ml"
+                    ? "bg-brand text-white border-brand"
+                    : cat.key === "tf"
+                      ? "bg-red text-white border-red"
+                      : cat.key === "pf"
+                        ? "bg-orange text-white border-orange"
+                        : "bg-brand text-white border-brand"
+                  : "bg-bg-1 text-ink-2 border-hair hover:border-brand/40 hover:text-ink-0"
+              }`}
+            >
+              {cat.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Risk Level Filters */}
+      <div className="mb-3">
+        <div className="font-mono text-10 uppercase tracking-wide text-ink-3 mb-1.5">Risk Level</div>
+        <div className="flex flex-wrap gap-2">
+          {RISK_FILTERS.map((r) => (
+            <button
+              key={r.key}
+              type="button"
+              onClick={() => handleRiskFilterClick(r.key)}
+              className={`px-3.5 py-1.5 rounded-full text-12 font-medium transition-colors border ${
+                activeRiskFilter === r.key
+                  ? r.key === "critical"
+                    ? "bg-red text-white border-red"
+                    : r.key === "high"
+                      ? "bg-orange text-white border-orange"
+                      : r.key === "medium"
+                        ? "bg-amber text-white border-amber"
+                        : "bg-green text-white border-green"
+                  : "bg-bg-1 text-ink-2 border-hair hover:border-brand/40 hover:text-ink-0"
+              }`}
+            >
+              {r.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Sector Filter Chips */}
+      <div className="mb-6">
+        <div className="font-mono text-10 uppercase tracking-wide text-ink-3 mb-1.5">Sector</div>
+        <div className="flex flex-wrap gap-2">
+          {FILTER_CATEGORIES.map((cat) => (
+            <button
+              key={cat.key}
+              type="button"
+              onClick={() => handleFilterClick(cat.key)}
+              className={`px-3.5 py-1.5 rounded-full text-12 font-medium transition-colors border ${
+                activeFilter === cat.key
+                  ? "bg-brand text-white border-brand"
+                  : "bg-bg-1 text-ink-2 border-hair hover:border-brand/40 hover:text-ink-0"
+              }`}
+            >
+              {cat.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Results */}

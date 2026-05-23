@@ -302,6 +302,55 @@ export async function POST(req: Request): Promise<NextResponse> {
       : undefined,
   };
 
+  // UN Security Council 1267 designated entity pre-screen ───────────────────
+  // If the subject name (or any alias) has token-set similarity > 0.80 to a
+  // known UN 1267 designated group, immediately return critical severity with
+  // flag "un_1267_designated_entity_match". This fires BEFORE the whitelist
+  // check so designated terrorist groups cannot be whitelisted past this gate.
+  const un1267Check = checkUn1267Match(subject.name, subject.aliases ?? []);
+  if (un1267Check.matched) {
+    const un1267Hit: import("@/lib/api/quickScreen.types").QuickScreenHit = {
+      listId: "un_1267",
+      listRef: `UNSCR-1267:${un1267Check.entity}`,
+      candidateName: un1267Check.entity,
+      score: un1267Check.similarity,
+      baseScore: un1267Check.similarity,
+      method: "token_set",
+      phoneticAgreement: false,
+      programs: ["UNSCR 1267 — Terrorism Financing"],
+      reason: `UN 1267 designated entity match: token-set similarity ${(un1267Check.similarity * 100).toFixed(1)}% to "${un1267Check.entity}"`,
+      autoResolution: "flagged",
+    };
+    const un1267Result: QuickScreenResult = {
+      subject,
+      hits: [un1267Hit],
+      topScore: un1267Check.similarity,
+      severity: "critical",
+      listsChecked: 1,
+      candidatesChecked: UN_1267_DESIGNATED_ENTITIES.length,
+      durationMs: Date.now() - t0,
+      generatedAt: new Date().toISOString(),
+    };
+    void auditWriter.write({
+      event: "screening.completed",
+      actor: gate.record?.email ?? gate.keyId ?? "unknown",
+      subject: subject.name,
+      severity: "critical",
+      hitsCount: 1,
+      listsChecked: 1,
+      listsDegraded: 0,
+      note: `UN 1267 pre-screen match: ${un1267Check.entity} (similarity=${un1267Check.similarity.toFixed(3)})`,
+    }).catch((err: unknown) => console.warn("[quick-screen] UN 1267 audit write failed:", err instanceof Error ? err.message : String(err)));
+    // Attach the UN 1267 flag as a top-level field on the response payload
+    return respond(200, {
+      ok: true,
+      ...un1267Result,
+      un1267DesignatedEntityMatch: true,
+      matchedDesignatedEntity: un1267Check.entity,
+      matchSimilarity: un1267Check.similarity,
+    } as QuickScreenResponse, gateHeaders);
+  }
+
   // Whitelist short-circuit — if the operator's tenant has previously
   // cleared this subject (false-positive disposition recorded via
   // /api/whitelist), skip the expensive list match and surface a clean
