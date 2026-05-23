@@ -119,7 +119,7 @@ function validate(b: GoAmlXmlInput): {
     errors.push("Subject date of birth must be in YYYY-MM-DD format.");
   } else {
     const dob = Date.parse(b.subjectDob.trim());
-    if (Number.isNaN(dob)) {
+    if (!Number.isFinite(dob)) {
       errors.push("Subject date of birth is not a valid date.");
     } else if (dob > Date.now()) {
       errors.push("Subject date of birth cannot be in the future.");
@@ -396,10 +396,9 @@ export async function POST(req: Request): Promise<Response> {
     try {
       xml = buildXml(body, reportRef, submissionDate);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      console.error("[goaml-xml] serialise error", msg);
+      console.error("[goaml-xml] serialise error", err instanceof Error ? err.message : String(err));
       xml = buildFallbackXml(reportRef, submissionDate);
-      degradedReason = `XML serialisation failed (${msg}) — placeholder XML emitted; do NOT submit until fixed`;
+      degradedReason = "XML serialisation failed — placeholder XML emitted; do NOT submit until fixed";
     }
   }
 
