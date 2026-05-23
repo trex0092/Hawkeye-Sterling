@@ -13,7 +13,7 @@ export async function GET(
   req: Request,
   ctx: { params: Promise<{ subjectId: string }> },
 ): Promise<NextResponse> {
-  const gate = await enforce(req, { requireAuth: false });
+  const gate = await enforce(req);
   if (!gate.ok) return gate.response;
   const tenant = tenantIdFromGate(gate);
   const { subjectId } = await ctx.params;

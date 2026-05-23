@@ -721,6 +721,32 @@ async function handleScrReport(req: Request): Promise<Response> {
       { status: 400, headers: gateHeaders },
     );
   }
+  if (body.subject.name.length > 500) {
+    return NextResponse.json(
+      { ok: false, error: "subject.name exceeds 500-character limit" },
+      { status: 400, headers: gateHeaders },
+    );
+  }
+  if (body.subject.id && body.subject.id.length > 256) {
+    return NextResponse.json(
+      { ok: false, error: "subject.id exceeds 256-character limit" },
+      { status: 400, headers: gateHeaders },
+    );
+  }
+  // Cap aliases array to prevent DoS via huge alias lists.
+  if (Array.isArray(body.subject.aliases) && body.subject.aliases.length > 50) {
+    body.subject.aliases = body.subject.aliases.slice(0, 50);
+  }
+  // Cap adverseMedia array and article list to prevent DoS via huge payloads.
+  if (body.superBrain?.adverseMedia && Array.isArray(body.superBrain.adverseMedia) && body.superBrain.adverseMedia.length > 500) {
+    body.superBrain.adverseMedia = body.superBrain.adverseMedia.slice(0, 500);
+  }
+  if (body.superBrain?.newsDossier?.articles && Array.isArray(body.superBrain.newsDossier.articles)) {
+    body.superBrain.newsDossier.articles = body.superBrain.newsDossier.articles.slice(0, 200).map((a) => ({
+      ...a,
+      snippet: typeof a.snippet === "string" && a.snippet.length > 500 ? a.snippet.slice(0, 500) : a.snippet,
+    }));
+  }
 
   // BUG-04 fix: ensure result and subject.id are always present
   if (!body.result) {

@@ -81,7 +81,10 @@ export function issueSession(userId: string, username: string, role: string, pwV
  *  Embeds in the session token at login; compared on each /api/auth/me
  *  call to detect possible session token theft via IP change. */
 export function computeRequestFingerprint(ip: string, userAgent: string): string {
-  return createHash("sha256").update(`${ip}:${userAgent}`).digest("hex").slice(0, 16);
+  return createHmac("sha256", getSecret())
+    .update(`${ip}:${userAgent}`)
+    .digest("hex")
+    .slice(0, 16);
 }
 
 export function verifySession(token: string): SessionPayload | null {

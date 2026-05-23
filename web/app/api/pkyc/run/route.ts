@@ -251,16 +251,27 @@ async function handlePost(req: Request): Promise<NextResponse> {
   const force = url.searchParams.get("force") === "true";
 
   if (id) {
+    if (id.length > 256) {
+      return NextResponse.json({ ok: false, error: "id query parameter exceeds 256-character limit" }, { status: 400 });
+    }
     const subject = await getSubject(id);
     if (!subject) return NextResponse.json({ ok: false, error: "Subject not found" }, { status: 404 });
+    if (!subject.name || typeof subject.name !== "string" || subject.name.trim().length === 0) {
+      return NextResponse.json({ ok: false, error: "Subject record has an invalid or missing name" }, { status: 422 });
+    }
+    if (subject.name.length > 500) {
+      return NextResponse.json({ ok: false, error: "Subject name exceeds 500-character limit" }, { status: 422 });
+    }
     const result = await runSubject(subject, true);
     return NextResponse.json({ ok: true, ran: 1, results: [result] });
   }
 
   const subjects = await listSubjects();
+  // Skip subjects with invalid names to prevent downstream API errors.
+  const validSubjects = subjects.filter((s) => s.name && typeof s.name === "string" && s.name.trim().length > 0 && s.name.length <= 500);
   const due = force
-    ? subjects.filter((s) => s.status === "active")
-    : subjects.filter((s) => s.status === "active" && new Date(s.nextRunAt) <= new Date());
+    ? validSubjects.filter((s) => s.status === "active")
+    : validSubjects.filter((s) => s.status === "active" && new Date(s.nextRunAt) <= new Date());
 
   if (due.length === 0) {
     return NextResponse.json({ ok: true, ran: 0, skipped: subjects.length, results: [] });
@@ -275,7 +286,7 @@ async function handlePost(req: Request): Promise<NextResponse> {
     ran: results.length,
     changed,
     errors,
-    skipped: subjects.length - due.length,
+    skipped: validSubjects.length - due.length,
     results,
   });
 }

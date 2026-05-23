@@ -17,6 +17,7 @@
 
 import { NextResponse } from "next/server";
 import { extractKey, validateAndConsume, type ApiKeyRecord } from "./api-keys";
+import { getJson } from "./store";
 import { consumeRateLimit, rateLimitHeaders } from "./rate-limit";
 import { tierFor } from "@/lib/data/tiers";
 import { createHmac, timingSafeEqual } from "node:crypto";
@@ -211,7 +212,10 @@ export async function enforce(
       };
     }
     keyId = v.payload.sub;
-    tierId = v.payload.tier;
+    // Look up live record to get current tier — don't trust JWT-embedded tier claim.
+    // A JWT holder whose tier was downgraded must get the new (lower) rate limits.
+    const liveRecord = await getJson<ApiKeyRecord>(`keys/${keyId}`).catch(() => null);
+    tierId = liveRecord?.tier ?? v.payload.tier ?? "free";
     const rl = await consumeRateLimit(keyId, tierId);
     if (!rl.allowed) {
       return {

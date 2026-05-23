@@ -87,9 +87,7 @@ async function reconcileQuery(query: ReconcileQuery): Promise<ReconcileResponse>
 export async function GET(req: NextRequest) {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
-  return NextResponse.json(SERVICE_MANIFEST, {
-    headers: { 'Access-Control-Allow-Origin': '*' },
-  });
+  return NextResponse.json(SERVICE_MANIFEST);
 }
 
 export async function POST(req: NextRequest) {
@@ -134,28 +132,21 @@ export async function POST(req: NextRequest) {
       response[key] = res;
     }
 
-    return NextResponse.json(response, {
-      headers: { 'Access-Control-Allow-Origin': '*' },
-    });
+    return NextResponse.json(response);
   }
 
   // Single query
   if (typeof raw['query'] === 'string') {
     const res = await reconcileQuery({ query: raw['query'] as string, type: raw['type'] as string | undefined });
-    return NextResponse.json(res, {
-      headers: { 'Access-Control-Allow-Origin': '*' },
-    });
+    return NextResponse.json(res);
   }
 
   return NextResponse.json({ ok: false, error: 'Provide queries object or query string' }, { status: 400 });
 }
 
+// OPTIONS preflights for /api/* are handled centrally in middleware.ts.
+// The middleware corsResponse() function applies the correct origin-restricted
+// CORS headers (driven by NEXT_PUBLIC_APP_URL) before this handler is reached.
 export async function OPTIONS() {
-  return new NextResponse(null, {
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
-    },
-  });
+  return new NextResponse(null, { status: 204 });
 }

@@ -8,6 +8,7 @@ import {
 } from "../../../../../src/brain/streaming-anomaly.js";
 import { analyseBenford, type BenfordRisk } from "../../../../../src/brain/benford.js";
 import { asanaGids } from "@/lib/server/asanaConfig";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -186,7 +187,15 @@ export async function POST(req: Request): Promise<NextResponse> {
     }),
   );
 
-  for (const { s, txs } of perSubjectTxs) {
+  for (const { s, txs: rawTxs } of perSubjectTxs) {
+    // Reject transactions with invalid amounts — must be a positive finite number.
+    const txs = rawTxs.filter((t) => {
+      if (typeof t.amount !== "number" || !Number.isFinite(t.amount) || t.amount <= 0) {
+        console.warn(`[tm-run] skipping transaction ${t.id} for subject ${s.id}: invalid amount ${t.amount}`);
+        return false;
+      }
+      return true;
+    });
     const structuringAlerts = detectStructuring(txs);
     const smurfingAlerts = detectSmurfing(txs, s);
     const anomalies = detectAnomalies(txs);

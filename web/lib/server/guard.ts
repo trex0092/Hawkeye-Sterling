@@ -174,10 +174,19 @@ export function setAuditSink(fn: AuditSink): void {
 }
 
 export function recentAudit(): ReadonlyArray<AuditRecord> {
-  if (RING_SIZE < RING_CAPACITY) return RING.slice(0, RING_SIZE);
-  // Return entries in chronological order, starting from the oldest slot.
-  const start = RING_HEAD % RING_CAPACITY;
-  return [...RING.slice(start, RING_CAPACITY), ...RING.slice(0, start)].filter(Boolean);
+  const records =
+    RING_SIZE < RING_CAPACITY
+      ? RING.slice(0, RING_SIZE)
+      : (() => {
+          const start = RING_HEAD % RING_CAPACITY;
+          return [...RING.slice(start, RING_CAPACITY), ...RING.slice(0, start)];
+        })();
+  // Sort by timestamp descending (most recent first)
+  return [...records].filter(Boolean).sort((a, b) => {
+    const ta = Date.parse(a.at);
+    const tb = Date.parse(b.at);
+    return (Number.isFinite(tb) ? tb : 0) - (Number.isFinite(ta) ? ta : 0);
+  });
 }
 
 function auditAccess(record: AuditRecord): void {

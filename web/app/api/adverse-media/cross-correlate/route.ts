@@ -33,7 +33,7 @@ export interface CrossCorrelateResult {
 }
 
 export async function POST(req: Request) {
-  const gate = await enforce(req, { requireAuth: false });
+  const gate = await enforce(req);
   if (!gate.ok) return gate.response;
   let body: { subjectName?: string; articles?: CrossCorrelateArticle[] };
   try {

@@ -19,7 +19,7 @@ const VALID_CATEGORIES = new Set<BreachCategory>(["minor", "moderate", "signific
 const VALID_STATUSES   = new Set<BreachStatus>(["open", "remediation_in_progress", "closed"]);
 
 export async function GET(req: Request): Promise<NextResponse> {
-  const gate = await enforce(req, { requireAuth: false });
+  const gate = await enforce(req);
   if (!gate.ok) return gate.response;
 
   // Seed 7 confirmed live-system breaches on first call (idempotent).

@@ -11,7 +11,7 @@ export async function GET(
   req: Request,
   ctx: { params: Promise<{ breachId: string }> },
 ): Promise<NextResponse> {
-  const gate = await enforce(req, { requireAuth: false });
+  const gate = await enforce(req);
   if (!gate.ok) return gate.response;
   const { breachId } = await ctx.params;
   const breach = await loadBreach(breachId);

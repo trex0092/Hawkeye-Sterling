@@ -158,6 +158,14 @@ export async function getBlobsStore(): Promise<BlobsStore> {
       const v = await data.get(`${listId}/latest.json`, { type: 'json' }) as {
         entities: NormalisedEntity[]; report: IngestionReport;
       } | null;
+      if (v) {
+        const MAX_SANCTIONS_AGE_MS = 48 * 60 * 60 * 1000; // 48 hours
+        const fetchedAt = v.report?.fetchedAt;
+        const ageMs = typeof fetchedAt === 'number' ? Date.now() - fetchedAt : NaN;
+        if (Number.isFinite(ageMs) && ageMs > MAX_SANCTIONS_AGE_MS) {
+          console.warn(`[sanctions] corpus is stale — last fetched ${Math.round(ageMs / 3600000)}h ago. Screening may miss recently designated entities.`);
+        }
+      }
       return v;
     },
     async getReport(listId) {

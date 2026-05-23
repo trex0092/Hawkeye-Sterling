@@ -65,6 +65,8 @@ function applySecurityHeaders(response: NextResponse, isApi: boolean, requestId?
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
   response.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()");
   response.headers.set("Cross-Origin-Opener-Policy", "same-origin");
+  response.headers.set("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
+  response.headers.set("X-DNS-Prefetch-Control", "off");
   if (isApi) {
     // Attach CORS headers to all API responses so browser callers (dashboard,
     // regulator portal) receive them on non-preflight requests too.

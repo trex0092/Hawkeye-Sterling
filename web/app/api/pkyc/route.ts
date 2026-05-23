@@ -6,11 +6,12 @@
 
 import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
-import { withGuard } from "@/lib/server/guard";
+import { withGuard, type RequestContext } from "@/lib/server/guard";
 import {
   listSubjects, getSubject, saveSubject, deleteSubject,
   type PKycSubject, type PKycCadence,
 } from "./_store";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -61,7 +62,7 @@ async function handleGet(req: Request): Promise<NextResponse> {
   return NextResponse.json({ ok: true, stats, subjects });
 }
 
-async function handlePost(req: Request): Promise<NextResponse> {
+async function handlePost(req: Request, ctx: RequestContext): Promise<NextResponse> {
   let body: Partial<PKycSubject>;
   try { body = await req.json(); }
   catch { return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 }); }
@@ -97,6 +98,13 @@ async function handlePost(req: Request): Promise<NextResponse> {
   };
 
   await saveSubject(subject);
+
+  // FDL 10/2025 Art.24: pKYC enrollment triggers ongoing CDD monitoring — must be in the tamper-evident chain.
+  void writeAuditChainEntry(
+    { event: "pkyc.run_triggered", subjectId: id, actor: ctx.tenantId },
+    "compliance",
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
+
   return NextResponse.json({ ok: true, subject }, { status: 201 });
 }
 
