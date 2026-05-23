@@ -102,7 +102,7 @@ function canAdvance(step: Step, f: FormState): boolean {
   if (step === 1) {
     return (
       f.mlroName.trim().length >= 2 &&
-      f.mlroEmail.trim().includes("@") &&
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.mlroEmail.trim()) &&
       f.mlroPhone.trim().length >= 5 &&
       f.reportingEntityId.trim().length >= 1
     );
@@ -119,7 +119,10 @@ function canAdvance(step: Step, f: FormState): boolean {
     );
   }
   if (step === 3) {
-    return f.narrativeText.trim().length >= 100;
+    const allAmountsValid = f.transactions.every(
+      (t) => !t.amount.trim() || parseFloat(t.amount) > 0,
+    );
+    return f.narrativeText.trim().length >= 100 && allAmountsValid;
   }
   return true;
 }

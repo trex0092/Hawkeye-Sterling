@@ -144,17 +144,13 @@ export default function StrCasesPage() {
     // The server enforces str_read >= co — a 403 back here for analyst
     // is expected and harmless; the denied attempt is still visible in
     // the chain via the 403 status code being returned.
-    const operatorName =
-      typeof window !== "undefined"
-        ? (window.localStorage.getItem("hawkeye.operator") ?? undefined)
-        : undefined;
     fetch("/api/audit/sign", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         action: "str_read",
         target: "str-cases-page",
-        actor: { role: r, name: operatorName },
+        actor: { role: r },
         body: { at: new Date().toISOString() },
       }),
     }).catch((err: unknown) => {

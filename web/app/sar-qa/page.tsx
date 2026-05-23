@@ -164,13 +164,10 @@ export default function SarQaPage() {
   const stamp = (caseId: string, state: QaState) => {
     const note = noteDraft[caseId] ?? "";
     const reason = reasonDraft[caseId];
-    const reviewerName = (() => {
-      try { return window.localStorage.getItem("hawkeye.operator") ?? "mlro"; } catch { return "mlro"; }
-    })();
     const entry: QaReview = {
       caseId,
       state,
-      reviewer: reviewerName,
+
       at: new Date().toISOString(),
       ...(note ? { note } : {}),
       ...(state === "challenged" && reason ? { challengeReason: reason } : {}),

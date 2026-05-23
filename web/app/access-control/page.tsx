@@ -512,7 +512,7 @@ export default function AccessControlPage() {
   const [activeTab, setActiveTab] = useState<Tab>("👥 Users");
   const [users, setUsers] = useState<AccessUser[]>([]);
   const [log, setLog] = useState<PermissionLogEntry[]>([]);
-  const [sessions, setSessions] = useState<Session[]>(DEMO_SESSIONS);
+  const [sessions, setSessions] = useState<Session[]>([]);
   const [selectedUser, setSelectedUser] = useState<AccessUser | null>(null);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [loadingLog, setLoadingLog] = useState(false);
@@ -909,58 +909,8 @@ export default function AccessControlPage() {
         <div>
           <div className="mb-4">
             <h2 className="text-14 font-semibold text-ink-0 mb-1">Active sessions</h2>
-            <p className="text-12 text-ink-2">
-              {sessions.filter((s) => s.active).length} active of {sessions.length} total sessions.
-            </p>
           </div>
-          {revokeError && (
-            <div className="mb-3 text-12 px-3 py-2 rounded border bg-red-dim text-red border-red/20">
-              {revokeError}
-            </div>
-          )}
-          <div className="flex flex-col gap-3">
-            {sessions.map((session) => (
-              <div
-                key={session.id}
-                className={`border rounded-md p-4 flex items-center gap-4 ${
-                  session.active ? "border-hair-2 bg-bg-panel" : "border-hair bg-bg-2 opacity-50"
-                }`}
-              >
-                <div
-                  className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
-                    session.active ? "bg-green" : "bg-red"
-                  }`}
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-medium text-ink-0 text-13">{session.userName}</span>
-                    <span className="text-10 font-mono text-ink-2 bg-bg-2 px-1.5 py-0.5 rounded">
-                      {session.ip}
-                    </span>
-                    {session.active ? (
-                      <span className="text-10 font-mono text-green uppercase tracking-wide">live</span>
-                    ) : (
-                      <span className="text-10 font-mono text-red uppercase tracking-wide">revoked</span>
-                    )}
-                  </div>
-                  <div className="flex gap-4 mt-1 text-11 text-ink-2 flex-wrap">
-                    <span>Started {fmtDate(session.started)}</span>
-                    <span>Last active {fmtDate(session.lastActive)}</span>
-                    <span className="font-mono text-ink-3">{session.id}</span>
-                  </div>
-                </div>
-                {session.active && (
-                  <button
-                    onClick={() => void handleRevokeSession(session)}
-                    disabled={revokingId === session.id}
-                    className="flex-shrink-0 px-3 py-1.5 rounded border border-red text-red text-11 font-mono font-semibold hover:bg-red-dim transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {revokingId === session.id ? "Revoking…" : "Revoke"}
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
+          <p className="text-sm text-muted-foreground">Live session tracking not yet implemented.</p>
         </div>
       )}
 
