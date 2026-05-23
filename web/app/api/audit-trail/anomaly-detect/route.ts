@@ -46,6 +46,13 @@ export async function POST(req: Request) {
   if (!Array.isArray(body.events) || body.events.length === 0) {
     return NextResponse.json({ ok: true, anomalies: [], riskScore: 0 }, { headers: gate.headers });
   }
+  const MAX_EVENTS = 500;
+  if (body.events.length > MAX_EVENTS) {
+    return NextResponse.json(
+      { ok: false, error: `events array must not exceed ${MAX_EVENTS} items` },
+      { status: 400, headers: gate.headers },
+    );
+  }
   const events = body.events;
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];

@@ -85,7 +85,7 @@ async function handler(req: Request, ctx: RequestContext): Promise<NextResponse>
   const itemId = validateString(raw["itemId"], { required: true, maxLength: 96, pattern: SAFE_ID_RE });
   // actor is resolved from authenticated context above — body-supplied actor is ignored.
   const decision = validateEnum(raw["decision"], ["approve", "reject"] as const);
-  const rationale = validateString(raw["rationale"], { required: true });
+  const rationale = validateString(raw["rationale"], { required: true, maxLength: 4_000 });
 
   // Minimum rationale: 20 characters — matches four-eyes-gate.ts enforcement.
   // Prevents trivially empty sign-offs per UAE FDL 10/2025 Art.16.

@@ -98,10 +98,11 @@ export function withGuard(handler: Handler): (_req: Request) => Promise<Response
         headers: merged,
       });
     } catch (err) {
+      console.error("[guard] unhandled handler error:", err instanceof Error ? err.message : err);
       return new Response(
         JSON.stringify({
           code: "internal_error",
-          message: err instanceof Error ? err.message : "handler failed",
+          message: "Internal server error",
           traceId,
         } satisfies ErrorEnvelope),
         {

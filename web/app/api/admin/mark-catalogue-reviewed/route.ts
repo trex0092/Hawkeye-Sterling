@@ -68,7 +68,8 @@ export async function POST(req: Request): Promise<NextResponse> {
   const url = new URL(req.url);
   const today = new Date().toISOString().slice(0, 10);
   const requestedDate = url.searchParams.get("date") ?? "";
-  const isValidDate = /^\d{4}-\d{2}-\d{2}$/.test(requestedDate);
+  const isValidDateFormat = /^\d{4}-\d{2}-\d{2}$/.test(requestedDate);
+  const isValidDate = isValidDateFormat && Number.isFinite(Date.parse(requestedDate));
   const date = isValidDate ? requestedDate : today;
   const reviewer = url.searchParams.get("reviewer")?.slice(0, 200) ?? "anonymous";
   const note = url.searchParams.get("note")?.slice(0, 1_000) ?? "";

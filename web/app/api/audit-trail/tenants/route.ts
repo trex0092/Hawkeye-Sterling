@@ -25,7 +25,7 @@
 //   }
 
 import { NextResponse } from "next/server";
-import { withGuard } from "@/lib/server/guard";
+import { adminAuth } from "@/lib/server/admin-auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -76,7 +76,12 @@ function tenantIdFromKey(key: string): string {
   return key.replace(/\.json$/, "");
 }
 
-async function handleGet(_req: Request): Promise<Response> {
+async function handleGet(req: Request): Promise<Response> {
+  // Enumeration of all tenant chains is an admin/regulator-only operation —
+  // a regular API key holder must not be able to discover other tenants.
+  const deny = adminAuth(req);
+  if (deny) return deny;
+
   const store = await loadAuditStore();
   if (!store) {
     return NextResponse.json(
@@ -137,4 +142,4 @@ async function handleGet(_req: Request): Promise<Response> {
   });
 }
 
-export const GET = withGuard(handleGet);
+export const GET = handleGet;
