@@ -325,6 +325,19 @@ const RISK_QUERIES: RiskQueryDef[] = [
     categories: ["environmental_crime", "predicate_offence"],
   },
   {
+    // Cybercrime, ransomware & darknet — CISA/FBI tracked threat actors,
+    // BEC fraud, darknet market busts, and state-sponsored APT activity.
+    label: "cybercrime",
+    keywords: [
+      "ransomware OR cybercrime+proceeds OR BEC+fraud OR darknet+market+bust",
+      "ransomware", "ransomware+proceeds", "BEC+fraud", "darknet+market+bust",
+      "cybercrime+proceeds", "REvil", "Conti", "LockBit", "DarkSide", "Ryuk",
+      "Lazarus+Group", "APT28", "APT29", "Sandworm", "business+email+compromise",
+      "crypto+extortion", "darknet+market", "Genesis+Market", "Hydra+market",
+    ],
+    categories: ["cybercrime", "ransomware", "adverse_media"],
+  },
+  {
     // Regional / multilingual catch-all — no English keyword requirement.
     // Catches Turkish, Arabic, Persian, CJK, and other local-language news
     // that mentions the subject with native-language crime terms.

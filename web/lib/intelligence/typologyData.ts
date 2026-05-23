@@ -1759,6 +1759,55 @@ export const TYPOLOGY_LIBRARY: Typology[] = [
     sectors: ["Banking", "Corporate Finance", "Syndicated Lending"],
     jurisdictions: ["UAE", "Luxembourg", "UK", "Singapore"],
   },
+  // ─────────────────────────────────────────────────────────────────────────
+  // ML-056 — BRIBERY & CORRUPTION PROCEEDS
+  // ─────────────────────────────────────────────────────────────────────────
+  {
+    id: "ML-056",
+    name: "Bribery and Corruption Proceeds Laundering",
+    category: "ML",
+    riskLevel: "critical",
+    description:
+      "Laundering of proceeds derived from bribery, kickbacks, facilitation payments, and public-sector corruption. PEPs and state officials receive illicit payments via shell companies, offshore accounts, or real estate investments to conceal the corrupt origin of funds. Typology covers FCPA (US Foreign Corrupt Practices Act) and UK Bribery Act violation proceeds, state-capture schemes, procurement corruption in defence/oil/infrastructure, and kleptocracy asset flows. Primary reference: FATF Recommendation 12 (PEPs), FATF 2011 Laundering the Proceeds of Corruption, UNCAC (UN Convention Against Corruption) Articles 23–24, GRECO evaluation reports.",
+    redFlags: [
+      "PEP or state official receiving payments via shell company or trust with no legitimate commercial purpose",
+      "Proceeds from government contracts or concessions flowing to PEP-linked entities",
+      "Significant asset accumulation inconsistent with public-sector salary (unexplained wealth indicators)",
+      "Offshore structures in secrecy jurisdictions registered contemporaneously with government role",
+      "Facilitation payments or 'commission' payments to agents in high-risk public procurement sectors",
+      "Round-sum cash deposits or wire transfers from state-owned enterprise to PEP-connected account",
+      "Tender or contract awards to entities beneficially owned by PEP family members or close associates",
+      "Rapid real estate acquisitions in luxury segments financed by unverified sources of wealth",
+      "Payments routed through intermediary jurisdictions with no commercial nexus to contract country",
+      "Use of professional gatekeepers (lawyers, accountants) to layer corrupt proceeds through client accounts",
+      "Discrepancy between declared assets in public disclosure and lifestyle or observable wealth",
+      "Defence procurement, oil/gas licensing, or telecoms spectrum award to politically connected bidder",
+    ],
+    fatfReference:
+      "FATF Recommendation 12 (Politically Exposed Persons); FATF Recommendation 3 (ML offence — predicate includes corruption per FATF 40+9); FATF 2011 Laundering the Proceeds of Corruption; FATF 2016 Guidance on Correspondent Banking; UNCAC Articles 15–25; GRECO Evaluation Reports; Transparency International Corruption Perceptions Index; UK Bribery Act 2010; US FCPA 15 U.S.C. §§ 78dd-1 et seq.",
+    indicators: [
+      "PEP-linked entity receiving contract or licence award from the PEP's own ministry or agency",
+      "Source of wealth declared as 'investments' or 'business income' without auditable commercial trail",
+      "Beneficial ownership gap — PEP or RCA hidden behind multi-layer offshore structure",
+      "Transaction patterns consistent with kickback receipt: inbound wire matching percentage of government contract value",
+      "Jurisdictions used overlap with high-corruption-risk countries per TI CPI < 40",
+      "No EDD or senior approval documented for Tier 1/2 PEP prior to onboarding",
+      "Adverse media referencing procurement irregularities, GRECO findings, or FCPA/UK Bribery Act investigation",
+    ],
+    relatedTypologies: ["ML-003", "ML-006", "ML-012", "ML-024", "ML-048"],
+    sectors: [
+      "Defence Procurement",
+      "Oil & Gas",
+      "Infrastructure Mega-Projects",
+      "Mining & Extractives",
+      "Telecoms",
+      "Government Banking",
+      "Public Construction",
+      "Real Estate",
+      "Banking",
+    ],
+    jurisdictions: ["Global", "UAE", "USA", "UK", "EU", "Africa", "MENA", "CIS"],
+  },
 ];
 
 /**
