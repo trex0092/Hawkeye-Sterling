@@ -481,8 +481,20 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   if (articles.length === 0) {
+    // When GDELT could not complete (timeout/unavailable), returning "clear" is
+    // a false-clear: the search did not succeed so we cannot assert no findings.
+    // Use "unknown" to force MLRO review. Only return "clear" when all sources
+    // succeeded and genuinely found nothing (FATF R.10 / FDL 10/2025 Art.19).
+    const emptyRiskRating: AdverseMediaLiveResult["riskRating"] =
+      gdeltStatus === "ok" ? "clear" : "unknown";
+    const emptySummary =
+      gdeltStatus === "ok"
+        ? FALLBACK.summary
+        : `Adverse media search for "${subjectName}" could not be completed — GDELT was ${gdeltStatus === "timeout" ? "unavailable" : "returning stale data"} at screening time. Cannot confirm clear status. Manual MLRO review required per FDL 10/2025 Art.19.`;
     return NextResponse.json({
       ...FALLBACK,
+      riskRating: emptyRiskRating,
+      summary: emptySummary,
       subject: subjectName,
       gdeltStatus,
       ...(gdeltStatus !== "ok" ? {
@@ -491,8 +503,8 @@ export async function POST(req: Request): Promise<NextResponse> {
             results: [],
             status: gdeltStatus,
             message: gdeltStatus === "timeout"
-              ? "GDELT unavailable at screening time — results may be incomplete"
-              : `GDELT cache stale at screening time — results may not reflect recent news`,
+              ? "GDELT unavailable at screening time — results may be incomplete. Risk rating set to UNKNOWN — manual review required."
+              : `GDELT cache stale at screening time — results may not reflect recent news. Risk rating set to UNKNOWN.`,
           },
         },
       } : {}),

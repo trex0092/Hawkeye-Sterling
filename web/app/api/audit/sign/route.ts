@@ -276,9 +276,12 @@ async function handleSign(req: Request, ctx: RequestContext): Promise<NextRespon
   return NextResponse.json({ ok: true, entry });
 }
 
-async function handleList(req: Request): Promise<NextResponse> {
-  const url = new URL(req.url);
-  const tenantId = ((url.searchParams.get("tenantId") ?? "default").replace(/[^a-zA-Z0-9_-]/g, "") || "default").slice(0, 64);
+async function handleList(req: Request, ctx: import("@/lib/server/guard").RequestContext): Promise<NextResponse> {
+  // Tenant isolation: always use the authenticated context tenantId — never
+  // a caller-supplied query param. A caller-supplied ?tenantId= allows any
+  // authenticated key to read another tenant's audit chain (IDOR).
+  const tenantId = ctx.tenantId;
+  void req; // required for the withGuard handler signature
   const listPrefix = tenantId === "default" ? "audit/entry/" : `audit/${tenantId}/entry/`;
   const keys = await listKeys(listPrefix);
   const sorted = keys.sort(); // lexical sort = sequence order

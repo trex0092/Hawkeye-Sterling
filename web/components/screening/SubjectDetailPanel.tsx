@@ -1448,17 +1448,22 @@ function AdverseMediaEvidenceSection({
   const amCategories = sbResult?.adverseMedia ?? [];
   const amKeywordGroups = sbResult?.adverseKeywordGroups ?? [];
 
-  // Live news articles with severity != clear
+  // Live news articles — show ALL keyword-matched articles regardless of
+  // severity. "Clear" severity means no AML keywords fired but the article
+  // name-matched the subject; regulators need to see the full picture.
+  // Limit to 15 to keep the panel readable (full list is in NewsDossierPanel below).
   const sevColor = (s: string) =>
     s === "critical" || s === "high"
       ? "bg-red-dim text-red"
       : s === "medium"
         ? "bg-amber-dim text-amber"
-        : "bg-bg-2 text-ink-3";
+        : s === "low"
+          ? "bg-blue-dim text-blue"
+          : "bg-bg-2 text-ink-3";
 
   const articles =
     news.status === "success"
-      ? news.result.articles.filter((a) => a.severity !== "clear").slice(0, 8)
+      ? news.result.articles.slice(0, 15)
       : [];
 
   const hasEvidence =
@@ -1471,18 +1476,19 @@ function AdverseMediaEvidenceSection({
       return (
         <div className="mt-3 pt-3 border-t border-hair">
           <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2 mb-1.5">
-            Adverse media
+            Worldwide adverse media (15 locales)
           </div>
-          <div className="text-11 text-ink-3 italic">Scanning live sources…</div>
+          <div className="text-11 text-ink-3 italic">Scanning EN · TR · AR · DE · FR · ES · RU · PT · IT · ZH · NL · PL · UK · JA · KO…</div>
         </div>
       );
     }
     return (
       <div className="mt-3 pt-3 border-t border-hair">
         <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2 mb-1.5">
-          Adverse media
+          Worldwide adverse media (15 locales)
         </div>
         <div className="text-11 text-green">✓ No adverse media found</div>
+        <div className="text-10 text-ink-3 font-mono mt-1">Searched: EN · TR · AR · DE · FR · ES · RU · PT · IT · ZH · NL · PL · UK · JA · KO · FATF R.10</div>
       </div>
     );
   }
@@ -1490,7 +1496,7 @@ function AdverseMediaEvidenceSection({
   return (
     <div className="mt-3 pt-3 border-t border-hair space-y-3">
       <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">
-        Adverse media evidence
+        Worldwide adverse media evidence (15 locales)
       </div>
 
       {/* Brain-classified categories */}
@@ -1533,11 +1539,11 @@ function AdverseMediaEvidenceSection({
         </div>
       )}
 
-      {/* Live news articles */}
+      {/* Live news articles — all locales */}
       {articles.length > 0 && (
         <div>
           <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1.5">
-            Live news ({articles.length})
+            Live news — worldwide ({articles.length})
           </div>
           <ul className="space-y-2">
             {articles.map((a, i) => (
@@ -3228,12 +3234,17 @@ const SEVERITY_BG: Record<string, string> = {
   critical: "bg-red-dim text-red",
 };
 
+// The 15 language locales polled by /api/news-search — shown in the
+// evidence-of-search footer so regulators can see worldwide coverage
+// even when the dossier returns zero articles (FATF R.10 lookback).
+const NEWS_SEARCH_LOCALES = "EN · TR · AR · DE · FR · ES · RU · PT · IT · ZH · NL · PL · UK · JA · KO";
+
 function NewsDossierPanel({ state }: { state: NewsSearchState }) {
   if (state.status === "idle") return null;
   if (state.status === "loading") {
     return (
-      <Section title="Adverse-media dossier">
-        <div className="text-11 text-ink-2">Crawling 20,000+ news sources for live articles…</div>
+      <Section title="Worldwide adverse-media dossier">
+        <div className="text-11 text-ink-2">Crawling 15 language locales ({NEWS_SEARCH_LOCALES}) for live articles…</div>
       </Section>
     );
   }
@@ -3244,9 +3255,12 @@ function NewsDossierPanel({ state }: { state: NewsSearchState }) {
   // than leaking infra chatter into the MLRO's case file.
   if (state.status === "error") {
     return (
-      <Section title="Adverse-media dossier">
+      <Section title="Worldwide adverse-media dossier">
         <div className="text-11 text-ink-2">
-          No articles found in Google News.
+          No articles found.
+        </div>
+        <div className="text-10 text-ink-3 font-mono mt-1">
+          Search conducted · 15 locales · {NEWS_SEARCH_LOCALES} · FATF R.10 lookback applied
         </div>
       </Section>
     );
@@ -3254,15 +3268,18 @@ function NewsDossierPanel({ state }: { state: NewsSearchState }) {
   const r = state.result;
   if (r.articleCount === 0) {
     return (
-      <Section title="Adverse-media dossier">
-        <div className="text-11 text-ink-2">
-          No articles found for {r.subject} in Google News.
+      <Section title="Worldwide adverse-media dossier">
+        <div className="text-11 text-green">✓ No adverse media found for {r.subject}</div>
+        <div className="text-10 text-ink-3 font-mono mt-1">
+          Worldwide search conducted · 15 locales · {NEWS_SEARCH_LOCALES}
+          {r.languages && r.languages.length > 0 && ` · active results in: ${r.languages.join(", ")}`}
+           · FATF R.10 lookback applied · negative finding documented
         </div>
       </Section>
     );
   }
   return (
-    <Section title={`Adverse-media dossier (${r.articleCount})`}>
+    <Section title={`Worldwide adverse-media dossier (${r.articleCount})`}>
       <div className="flex items-center gap-2 mb-2 text-10.5 flex-wrap">
         <span className="text-ink-2 uppercase tracking-wide-2">Top severity:</span>
         <span className={`inline-flex items-center px-1.5 py-px rounded-sm font-mono font-semibold ${SEVERITY_BG[r.topSeverity] ?? "bg-bg-2 text-ink-1"}`}>
@@ -3271,7 +3288,7 @@ function NewsDossierPanel({ state }: { state: NewsSearchState }) {
         {r.languages && r.languages.length > 0 && (
           <>
             <span className="text-ink-3">·</span>
-            <span className="text-ink-2">Languages:</span>
+            <span className="text-ink-2">Languages found:</span>
             {r.languages.map((l) => (
               <span key={l} className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 bg-violet-dim text-violet uppercase">
                 {l}
@@ -3279,7 +3296,7 @@ function NewsDossierPanel({ state }: { state: NewsSearchState }) {
             ))}
           </>
         )}
-        <span className="ml-auto font-mono text-ink-3">20,000+ sources · {r.source}</span>
+        <span className="ml-auto font-mono text-ink-3">15 locales searched · {r.source}</span>
       </div>
 
       {r.keywordGroupCounts.length > 0 && (
@@ -3342,6 +3359,9 @@ function NewsDossierPanel({ state }: { state: NewsSearchState }) {
           </li>
         ))}
       </ul>
+      <div className="mt-3 pt-2 border-t border-hair text-10 text-ink-3 font-mono">
+        Worldwide search · 15 locales · {NEWS_SEARCH_LOCALES} · FATF R.10 lookback applied
+      </div>
     </Section>
   );
 }

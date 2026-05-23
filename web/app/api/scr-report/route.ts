@@ -488,7 +488,7 @@ function buildSCR(body: ReportInput, now: Date): ScreeningComplianceReport {
   const regBadges = [
     "RETENTION ACTIVE",
     "CABINET RES. 134/2025 ART. 17 – ONGOING SCREEN",
-    ...(disposition === "prohibited" ? ["CABINET RES. 134/2025 ART. 1S – STR IMMEDIATE-NOTIFY"] : []),
+    ...(disposition === "prohibited" ? ["CABINET RES. 134/2025 ART. 15 – STR IMMEDIATE-NOTIFY"] : []),
   ];
 
   // ── Assemble the full SCR ─────────────────────────────────────────────────
@@ -592,7 +592,7 @@ function buildSCR(body: ReportInput, now: Date): ScreeningComplianceReport {
       ],
       ...(pepHits.length > 0 ? { pepHits } : {}),
       adverseMediaCorpora: [
-        { corpus: "Global news (multi-source)", scope: "EN · AR · FR · DE · RU", hits: amTotal },
+        { corpus: "Global news (multi-source)", scope: "EN · TR · AR · DE · FR · ES · RU · PT · IT · ZH · NL · PL · UK · JA · KO", hits: amTotal },
         { corpus: "Regulatory announcements", scope: "UAE · EU · UK · US", hits: 0 },
       ],
       ...(amHits.length > 0 ? { adverseMediaHits: amHits } : {}),
