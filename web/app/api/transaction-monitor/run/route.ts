@@ -251,6 +251,28 @@ export async function POST(req: Request): Promise<NextResponse> {
                 : anomalies > 0
                   ? { rule: "anomaly", detail: `${anomalies} z-score > 3 outlier(s)` }
                   : null;
+    // Write to audit chain when anomalies are detected for a subject so a
+    // regulator can verify the monitoring loop flagged the activity in real time.
+    if (subjectAlerts > 0 || benfordRisk === 'suspicious') {
+      void writeAuditChainEntry({
+        event: "tm.anomaly_detected",
+        actor: "cron_internal",
+        subjectId: s.id,
+        subjectName: s.name,
+        anomalyType: top?.rule ?? "composite",
+        structuringAlerts,
+        smurfingAlerts,
+        anomalies,
+        streamingAnomalies,
+        heldTransactions,
+        thresholdBreaches,
+        benfordRisk: benfordRisk !== 'insufficient-data' ? benfordRisk : undefined,
+        totalAlertCount: subjectAlerts,
+        txCount: txs.length,
+        runAt: new Date().toISOString(),
+      }).catch((err) => console.warn("[tm-run] audit chain write failed:", err instanceof Error ? err.message : String(err)));
+    }
+
     rolls.push({
       subjectId: s.id,
       subjectName: s.name,

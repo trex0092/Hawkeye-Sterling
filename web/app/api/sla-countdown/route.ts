@@ -15,6 +15,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getJson, listKeys } from "@/lib/server/store";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -140,11 +141,18 @@ export async function GET(req: Request): Promise<NextResponse> {
       );
       for (const c of cases) {
         if (!c || c.status === "closed" || c.status === "reported") continue;
-        const created = new Date(c.createdAt);
-        const deadline = c.reportingDeadline
-          ? new Date(c.reportingDeadline)
-          : addBusinessDays(created, 5);
-        const remaining = deadline.getTime() - now;
+        const createdMs = Date.parse(c.createdAt);
+        if (!Number.isFinite(createdMs)) continue; // skip records with unparseable createdAt
+        const created = new Date(createdMs);
+        let deadlineMs: number;
+        if (c.reportingDeadline) {
+          deadlineMs = Date.parse(c.reportingDeadline);
+          if (!Number.isFinite(deadlineMs)) deadlineMs = addBusinessDays(created, 5).getTime();
+        } else {
+          deadlineMs = addBusinessDays(created, 5).getTime();
+        }
+        const deadline = new Date(deadlineMs);
+        const remaining = deadlineMs - now;
         const breached = remaining <= 0;
         records.push({
           id: c.id,
@@ -176,6 +184,22 @@ export async function GET(req: Request): Promise<NextResponse> {
 
   const breachedCount = filtered.filter((r) => r.breached).length;
   const criticalCount = filtered.filter((r) => r.urgencyBand === "critical" && !r.breached).length;
+
+  // Write to audit chain for each newly detected SLA breach so the regulator
+  // can verify that the system flagged overdue obligations in real time.
+  const breachedRecords = filtered.filter((r) => r.breached);
+  for (const br of breachedRecords) {
+    void writeAuditChainEntry({
+      event: "sla.breach_detected",
+      actor: "system",
+      caseId: br.caseId,
+      slaType: br.slaType,
+      subject: br.subject,
+      deadline: br.deadline,
+      regulatoryAnchor: br.regulatoryAnchor,
+      detectedAt: new Date().toISOString(),
+    }, tenant).catch((err) => console.warn("[sla-countdown] audit chain write failed:", err instanceof Error ? err.message : String(err)));
+  }
 
   return NextResponse.json(
     {

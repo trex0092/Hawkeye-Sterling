@@ -62,8 +62,9 @@ async function handleGet(req: Request): Promise<NextResponse> {
   const authHeader = req.headers.get("authorization") ?? "";
   const rawToken = authHeader.replace(/^Bearer\s+/i, "").trim();
   if (rawToken && !rawToken.startsWith("hks_live_")) {
-    const regClaims = verifyRegulatorToken(rawToken);
-    if (regClaims) {
+    const regResult = await verifyRegulatorToken(rawToken);
+    if (regResult.ok) {
+      const regClaims = regResult.claims;
       // Determine tenant from scope (first tenant: entry, or "portal" default).
       const tenantEntry = regClaims.scope.find((s) => s.startsWith("tenant:"));
       const tenant = tenantEntry ? tenantEntry.slice(7) : "portal";
