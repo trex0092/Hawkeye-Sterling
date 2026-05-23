@@ -236,13 +236,13 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (latencyMs > 5000) console.warn(`[vessel-check] latencyMs=${latencyMs} exceeds 5000ms`);
   return NextResponse.json({ ...result, latencyMs }, { status: 200, headers: { ...CORS, ...gateHeaders } });
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
+    console.error("[vessel-check] unhandled exception:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({
       ok: false,
       errorCode: "HANDLER_EXCEPTION",
       errorType: "internal",
       tool: "vessel_check",
-      message,
+      message: "Internal screening error",
       retryAfterSeconds: null,
       requestId: Math.random().toString(36).slice(2, 10),
       latencyMs: Date.now() - _handlerStart,

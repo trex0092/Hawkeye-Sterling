@@ -245,8 +245,9 @@ async function handlePost(req: Request): Promise<NextResponse> {
     );
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
+    console.error("[goaml/auto-submit] upstream fetch error:", msg);
     return NextResponse.json(
-      { ok: false, submissionRef, draftSha256, twoEyesVerified, error: `upstream fetch failed: ${msg}` },
+      { ok: false, submissionRef, draftSha256, twoEyesVerified, error: "goAML upstream service unavailable" },
       { status: 502, headers: gateHeaders },
     );
   }

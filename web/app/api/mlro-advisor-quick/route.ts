@@ -664,12 +664,13 @@ export async function POST(req: Request): Promise<Response> {
   } catch (err) {
     const aborted = upstreamCtl.signal.aborted;
     const msg = err instanceof Error ? err.message : String(err);
+    console.error("[mlro-advisor-quick] upstream catch:", msg);
     return NextResponse.json(
       {
         ok: false,
         error: aborted
           ? `Quick mode budget exceeded (>${Math.round(HARD_TIMEOUT_MS / 1000)} s) — try Balanced.`
-          : `upstream connect failed: ${msg}`,
+          : "upstream service unavailable",
         elapsedMs: Date.now() - startedAt,
       },
       { status: aborted ? 504 : 502, headers: { ...gate.headers, ...corsHeaders(origin) } }

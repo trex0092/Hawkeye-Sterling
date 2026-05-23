@@ -432,13 +432,13 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (latencyMs > 5000) console.warn(`[lei_lookup] latencyMs=${latencyMs} exceeds 5000ms`);
   return NextResponse.json({ ...minimal, latencyMs }, { status: 200, headers: { ...gate.headers, ...CORS } });
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
+    console.error("[lei-lookup] unhandled exception:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({
       ok: false,
       errorCode: "HANDLER_EXCEPTION",
       errorType: "internal",
       tool: "lei_lookup",
-      message,
+      message: "LEI lookup failed",
       retryAfterSeconds: null,
       requestId: Math.random().toString(36).slice(2, 10),
       latencyMs: Date.now() - _handlerStart,

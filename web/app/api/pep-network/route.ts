@@ -246,13 +246,13 @@ Return ONLY valid JSON with this exact structure:
     if (latencyMs > 5000) console.warn(`[pep-network] latencyMs=${latencyMs} exceeds 5000ms`);
     return NextResponse.json({ ok: true, ...output, latencyMs }, { headers: gate.headers });
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
+    console.error("[pep-network] unhandled exception:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({
       ok: false,
       errorCode: "HANDLER_EXCEPTION",
       errorType: "internal",
       tool: "pep_network",
-      message,
+      message: "PEP network service unavailable",
       retryAfterSeconds: null,
       requestId: Math.random().toString(36).slice(2, 10),
       latencyMs: Date.now() - _handlerStart,
