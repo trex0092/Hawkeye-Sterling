@@ -76,25 +76,49 @@ interface Article {
   lang: string;              // locale the article was fetched from (en, es, fr, ru, zh, ar, pt)
 }
 
-// Locales we poll Google News from. Scoped to the 15 highest-value languages
-// for AML adverse-media coverage — enough to catch regional press without
-// the connection-pool overhead of 100+ parallel fetches.
+// Locales we poll Google News from. Expanded to 30 languages covering the
+// highest-value AML jurisdictions globally — FATF high-risk, MENA, South &
+// Southeast Asia, Caucasus, Western Balkans, Nordics, East Africa.
+// All feeds run in parallel under a 3.5s overall timebox so latency does
+// not grow with locale count.
 const LOCALES: Array<{ code: string; hl: string; gl: string; ceid: string }> = [
-  { code: "en", hl: "en", gl: "US", ceid: "US:en" },
-  { code: "tr", hl: "tr", gl: "TR", ceid: "TR:tr" },
-  { code: "ar", hl: "ar", gl: "AE", ceid: "AE:ar" },
-  { code: "de", hl: "de", gl: "DE", ceid: "DE:de" },
-  { code: "fr", hl: "fr", gl: "FR", ceid: "FR:fr" },
-  { code: "es", hl: "es", gl: "ES", ceid: "ES:es" },
-  { code: "ru", hl: "ru", gl: "RU", ceid: "RU:ru" },
-  { code: "pt", hl: "pt-BR", gl: "BR", ceid: "BR:pt-419" },
-  { code: "it", hl: "it", gl: "IT", ceid: "IT:it" },
-  { code: "zh", hl: "zh-Hans", gl: "CN", ceid: "CN:zh-Hans" },
-  { code: "nl", hl: "nl", gl: "NL", ceid: "NL:nl" },
-  { code: "pl", hl: "pl", gl: "PL", ceid: "PL:pl" },
-  { code: "uk", hl: "uk", gl: "UA", ceid: "UA:uk" },
-  { code: "ja", hl: "ja", gl: "JP", ceid: "JP:ja" },
-  { code: "ko", hl: "ko", gl: "KR", ceid: "KR:ko" },
+  // Core Western / Global
+  { code: "en",  hl: "en",      gl: "US", ceid: "US:en"       },
+  { code: "de",  hl: "de",      gl: "DE", ceid: "DE:de"       },
+  { code: "fr",  hl: "fr",      gl: "FR", ceid: "FR:fr"       },
+  { code: "es",  hl: "es",      gl: "ES", ceid: "ES:es"       },
+  { code: "pt",  hl: "pt-BR",   gl: "BR", ceid: "BR:pt-419"   },
+  { code: "it",  hl: "it",      gl: "IT", ceid: "IT:it"       },
+  { code: "nl",  hl: "nl",      gl: "NL", ceid: "NL:nl"       },
+  // CEE / Balkans / Nordics
+  { code: "pl",  hl: "pl",      gl: "PL", ceid: "PL:pl"       },
+  { code: "ro",  hl: "ro",      gl: "RO", ceid: "RO:ro"       },
+  { code: "hu",  hl: "hu",      gl: "HU", ceid: "HU:hu"       },
+  { code: "cs",  hl: "cs",      gl: "CZ", ceid: "CZ:cs"       },
+  { code: "sk",  hl: "sk",      gl: "SK", ceid: "SK:sk"       },
+  { code: "hr",  hl: "hr",      gl: "HR", ceid: "HR:hr"       },
+  { code: "sr",  hl: "sr",      gl: "RS", ceid: "RS:sr"       },
+  { code: "bg",  hl: "bg",      gl: "BG", ceid: "BG:bg"       },
+  { code: "sv",  hl: "sv",      gl: "SE", ceid: "SE:sv"       },
+  { code: "el",  hl: "el",      gl: "GR", ceid: "GR:el"       },
+  // CIS / Eastern Europe
+  { code: "ru",  hl: "ru",      gl: "RU", ceid: "RU:ru"       },
+  { code: "uk",  hl: "uk",      gl: "UA", ceid: "UA:uk"       },
+  // MENA
+  { code: "ar",  hl: "ar",      gl: "AE", ceid: "AE:ar"       },
+  { code: "tr",  hl: "tr",      gl: "TR", ceid: "TR:tr"       },
+  { code: "he",  hl: "iw",      gl: "IL", ceid: "IL:iw"       },
+  // South Asia
+  { code: "hi",  hl: "hi",      gl: "IN", ceid: "IN:hi"       },
+  // Southeast Asia
+  { code: "id",  hl: "id",      gl: "ID", ceid: "ID:id"       },
+  { code: "ms",  hl: "ms",      gl: "MY", ceid: "MY:ms"       },
+  { code: "vi",  hl: "vi",      gl: "VN", ceid: "VN:vi"       },
+  { code: "th",  hl: "th",      gl: "TH", ceid: "TH:th"       },
+  // East Asia
+  { code: "zh",  hl: "zh-Hans", gl: "CN", ceid: "CN:zh-Hans"  },
+  { code: "ja",  hl: "ja",      gl: "JP", ceid: "JP:ja"       },
+  { code: "ko",  hl: "ko",      gl: "KR", ceid: "KR:ko"       },
 ];
 
 
@@ -252,15 +276,11 @@ function parseRss(xml: string, subject: string, variants: string[], lang: string
   return out;
 }
 
-// Per-locale RSS timeout. With 7 locales fanning out in parallel, any single
-// stalled feed would otherwise hold up the whole response. A 2-second
-// AbortSignal bounds each feed so the slowest locale is skipped rather than
-// blocking the others.
+// Per-locale RSS timeout. 30 locales fan out in parallel; any single stalled feed is aborted after 2s.
 const FEED_TIMEOUT_MS = 2_000;
 
-// Overall timebox for the whole fan-out. 15 locales × 2s per feed run in
-// parallel — 2.5s is enough for all healthy feeds to complete.
-const OVERALL_TIMEBOX_MS = 2_500;
+// Overall timebox for the whole fan-out. 30 locales × 2s per feed run in parallel — 3.5s covers all healthy feeds.
+const OVERALL_TIMEBOX_MS = 3_500;
 
 async function fetchLocaleFeed(
   q: string,
