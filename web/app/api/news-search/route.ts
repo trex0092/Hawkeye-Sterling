@@ -377,7 +377,7 @@ export async function GET(req: Request): Promise<NextResponse> {
   // Anonymous callers still get the free-tier burst window; without
   // this, a single user could trivially pin a Netlify Function into a
   // quota-exhaustion loop.
-  const gate = await enforce(req);
+  const gate = await enforce(req, { requireAuth: false });
   if (!gate.ok) return gate.response;
   const gateHeaders: Record<string, string> = gate.ok ? gate.headers : {};
 

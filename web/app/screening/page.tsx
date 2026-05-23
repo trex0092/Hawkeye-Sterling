@@ -1219,6 +1219,9 @@ export default function ScreeningPage() {
             s.id === subject.id
               ? {
                   ...s,
+                  // Adverse media risk lifts the displayed score so the queue
+                  // reflects the composite risk — not just sanctions-list hits.
+                  riskScore: Math.max(s.riskScore, score),
                   adverseMedia: {
                     source: "Taranis AI",
                     score,
@@ -1315,6 +1318,21 @@ export default function ScreeningPage() {
         setAmError(data.error ?? "Search failed");
       } else {
         setAmResult(data);
+        // Propagate adverse media risk into the subject's displayed risk score
+        // so the queue reflects the composite risk. Only raise, never lower —
+        // a subsequent sanctions-list clear doesn't erase an adverse media finding.
+        const tier = data.verdict?.riskTier;
+        if (tier && tier !== "clear" && tier !== "unknown" && selected) {
+          const sar = data.verdict?.sarRecommended === true;
+          const amScore = sar ? 95 : tier === "critical" ? 90 : tier === "high" ? 75 : tier === "medium" ? 50 : 30;
+          setSubjects((prev) =>
+            prev.map((s) =>
+              s.id === selected.id
+                ? { ...s, riskScore: Math.max(s.riskScore, amScore) }
+                : s,
+            ),
+          );
+        }
       }
     } catch (err) {
       if (!mountedRef.current) return;

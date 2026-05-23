@@ -50,7 +50,7 @@ interface AdverseMediaBody {
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
-  const gate = await enforce(req);
+  const gate = await enforce(req, { requireAuth: false });
   if (!gate.ok) return gate.response;
   const gateHeaders = gate.ok ? gate.headers : {};
 
