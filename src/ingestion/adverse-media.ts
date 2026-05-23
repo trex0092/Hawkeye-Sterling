@@ -69,7 +69,7 @@ export async function searchGdelt(opts: SearchOptions): Promise<AdverseMediaArti
   url.searchParams.set('mode', 'artlist');
   url.searchParams.set('format', 'json');
   url.searchParams.set('maxrecords', String(Math.min(opts.limit ?? 25, 250)));
-  const res = await fetchImpl(url.toString());
+  const res = await fetchImpl(url.toString(), { signal: AbortSignal.timeout(10_000) });
   if (!res.ok) throw new Error(`GDELT HTTP ${res.status}`);
   const json = (await res.json()) as { articles?: Array<{ title?: string; url?: string; seendate?: string; language?: string; domain?: string; sourcecountry?: string }> };
   return (json.articles ?? []).map((a) => {
@@ -113,7 +113,7 @@ export async function searchGoogleCse(
     url.searchParams.set('num', String(Math.min(10, want - (start - 1))));
     url.searchParams.set('start', String(start));
     if (opts.dateRestrict) url.searchParams.set('dateRestrict', opts.dateRestrict);
-    const res = await fetchImpl(url.toString());
+    const res = await fetchImpl(url.toString(), { signal: AbortSignal.timeout(10_000) });
     if (!res.ok) {
       // 429 = quota exhausted; 400 = bad query — return what we have.
       if (out.length > 0) break;

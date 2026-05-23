@@ -57,7 +57,7 @@ export async function deliverWebhookEvent(
     const bodyStr = JSON.stringify(body);
     const signature = reg.secret
       ? createHmac("sha256", reg.secret).update(bodyStr).digest("hex")
-      : "";
+      : null;
     try {
       const ctrl = new AbortController();
       const tid = setTimeout(() => ctrl.abort(), 8_000);
@@ -66,7 +66,7 @@ export async function deliverWebhookEvent(
         headers: {
           "Content-Type": "application/json",
           "X-Hawkeye-Event": event,
-          "X-Hawkeye-Signature": signature,
+          ...(signature ? { "X-Hawkeye-Signature": signature } : {}),
           "X-Hawkeye-Delivery": `${reg.id}-${Date.now()}`,
         },
         body: bodyStr,

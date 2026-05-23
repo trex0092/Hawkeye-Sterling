@@ -35,6 +35,7 @@
 //   }
 
 import { NextResponse } from "next/server";
+import { randomBytes } from "node:crypto";
 import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getJson, setJson, del } from "@/lib/server/store";
@@ -98,7 +99,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: `events must include at least one of: ${[...ALLOWED_EVENTS].join(", ")}` }, { status: 400, headers: gate.headers });
   }
 
-  const id = `wh-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const id = `wh-${Date.now()}-${randomBytes(4).toString("hex")}`;
   const reg: WebhookRegistration = {
     id,
     url,

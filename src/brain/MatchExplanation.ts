@@ -9,6 +9,7 @@
 // This is a regulatory requirement under FATF R.10 (record-keeping)
 // and forms part of the evidence pack attached to every STR/SAR.
 
+import { randomBytes } from 'node:crypto';
 import type { MatchConfidenceLevel } from '../policy/systemPrompt.js';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -183,7 +184,7 @@ export interface BuildExplanationInput {
 
 export function buildMatchExplanation(input: BuildExplanationInput): MatchExplanation {
   const generatedAt = new Date().toISOString();
-  const matchId = input.matchId ?? `MATCH-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+  const matchId = input.matchId ?? `MATCH-${Date.now()}-${randomBytes(4).toString("hex").toUpperCase()}`;
 
   // Determine what's missing for higher confidence
   const whyNotExact: string[] = [];

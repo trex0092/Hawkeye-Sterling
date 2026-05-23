@@ -66,8 +66,7 @@ function approvalKey(caseId: string, approvalId: string): string {
 function digestApproval(input: { caseId: string; actor: string; decision: string; rationale: string }): string {
   return createHash("sha256")
     .update(`${input.caseId}|${input.actor}|${input.decision}|${input.rationale}`)
-    .digest("hex")
-    .slice(0, 24);
+    .digest("hex");
 }
 
 /**
@@ -219,7 +218,7 @@ export async function expireCase(caseId: string, expiredBy: string): Promise<{ s
   const status = await getCaseApprovals(caseId);
   if (status.passed) return { status, expired: false };
   const expiry: ApprovalEntry = {
-    approvalId: `expiry_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    approvalId: `expiry_${Date.now()}_${randomBytes(4).toString("hex")}`,
     caseId,
     actor: expiredBy,
     decision: 'reject',

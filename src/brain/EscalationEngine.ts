@@ -10,6 +10,8 @@
 //   L4: Legal review
 //   L5: Regulator escalation (SAR/STR filing)
 
+import { randomBytes } from 'node:crypto';
+
 export type EscalationTier =
   | 'L1_analyst'
   | 'L2_senior'
@@ -154,7 +156,7 @@ function generateCaseId(): string {
 }
 
 function generateEventId(): string {
-  return `EVT-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+  return `EVT-${Date.now().toString(36).toUpperCase()}-${randomBytes(2).toString("hex").toUpperCase()}`;
 }
 
 // ── SLA deadline calculation ──────────────────────────────────────────────────

@@ -161,7 +161,11 @@ export function verifyChain(
     }
 
     if (recomputedId === e.id && recomputedSig === e.signature) verified++;
-    prevHash = e.id;
+    // Only advance anchor when entry is fully clean — prevents re-chained entries
+    // after a tamper from silently passing verification.
+    if (e.previousHash === prevHash && recomputedId === e.id) {
+      prevHash = e.id;
+    }
   }
 
   return {

@@ -11,7 +11,7 @@
 
 import type { BrainVerdict } from './types.js';
 import type { EvidenceItem } from './evidence.js';
-import { fnv1a } from './audit-chain.js';
+import { sha256hex } from './audit-chain.js';
 
 export interface EvidencePackOptions {
   title?: string;                           // document title in the PDF metadata
@@ -100,8 +100,8 @@ function composeLines(v: BrainVerdict, opts: EvidencePackOptions): string[] {
   out.push(`claim above into a hash-chained log. A change in any line invalidates`);
   out.push(`the anchor. Regulators can replay the chain to re-verify.`);
   out.push('');
-  const packHash = fnv1a(out.join('\n'));
-  out.push(`Pack hash (fnv-1a): ${packHash}`);
+  const packHash = sha256hex(out.join('\n'));
+  out.push(`Pack hash (sha-256): ${packHash}`);
   if (opts.chainAnchor) out.push(`Chain anchor:       ${opts.chainAnchor}`);
   return out;
 }
