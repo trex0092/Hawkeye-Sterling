@@ -608,6 +608,24 @@ const INVESTIGATIVE_FEEDS: Array<{
   { url: "https://www.lemonde.fr/rss/une.xml",                             lang: "fr", sourceTier: "tier1", sourceCategory: "wire",          name: "LeMonde" },
   // Der Spiegel — Germany investigative
   { url: "https://www.spiegel.de/schlagzeilen/index.rss",                  lang: "de", sourceTier: "tier1", sourceCategory: "wire",          name: "Spiegel" },
+  // RFERL — Radio Free Europe / Radio Liberty
+  { url: "https://www.rferl.org/api/zikhiqmr_qp_puz/",                     lang: "en", sourceTier: "tier2", sourceCategory: "investigative", name: "RFERL" },
+  // Bellingcat — open-source investigative journalism
+  { url: "https://www.bellingcat.com/feed/",                                lang: "en", sourceTier: "tier2", sourceCategory: "investigative", name: "Bellingcat" },
+  // The Sentry — African financial crime
+  { url: "https://thesentry.org/feed/",                                     lang: "en", sourceTier: "tier2", sourceCategory: "investigative", name: "TheSentry" },
+  // Finance Uncovered — tax & financial transparency
+  { url: "https://www.financeuncovered.org/feed/",                          lang: "en", sourceTier: "tier2", sourceCategory: "investigative", name: "FinanceUncovered" },
+  // CFTC — US Commodity Futures Trading Commission enforcement
+  { url: "https://www.cftc.gov/rss/pressreleases.xml",                      lang: "en", sourceTier: "tier1", sourceCategory: "regulatory",    name: "CFTC" },
+  // FinCEN — US Financial Crimes Enforcement Network
+  { url: "https://www.fincen.gov/news/news-releases/feed",                  lang: "en", sourceTier: "tier1", sourceCategory: "regulatory",    name: "FinCEN" },
+  // INTERPOL — international law enforcement
+  { url: "https://www.interpol.int/News-and-Events/News/rss.xml",           lang: "en", sourceTier: "tier1", sourceCategory: "regulatory",    name: "INTERPOL" },
+  // EBA — European Banking Authority
+  { url: "https://www.eba.europa.eu/rss/news.rss",                          lang: "en", sourceTier: "tier1", sourceCategory: "regulatory",    name: "EBA" },
+  // GRECO — Council of Europe anti-corruption body
+  { url: "https://www.coe.int/en/web/greco/evaluations/news",               lang: "en", sourceTier: "tier1", sourceCategory: "regulatory",    name: "GRECO" },
 ];
 
 // ── Africa RSS feeds ────────────────────────────────────────────────────────
@@ -629,6 +647,16 @@ const AFRICA_FEEDS: Array<{
   { url: "https://www.businessdayonline.com/feed/",                          lang: "en-NG", name: "BusinessDay NG",    sourceTier: "tier2" },
   { url: "https://www.moneyweb.co.za/feed/",                                 lang: "en-ZA", name: "Moneyweb ZA",       sourceTier: "tier2" },
   { url: "https://www.africanews.com/feed/rss2/",                            lang: "en",    name: "Africanews",        sourceTier: "tier2" },
+  // Pan-African
+  { url: "https://thecontinent.org/feed/",                                   lang: "en",    name: "TheContinent",      sourceTier: "tier2" },
+  // Sahel Eye — French-language Sahel region coverage
+  { url: "https://saheleye.net/feed/",                                        lang: "fr",    name: "SahelEye",          sourceTier: "tier2" },
+  // Africa Report — pan-African business and politics
+  { url: "https://www.theafricareport.com/feed/",                            lang: "en",    name: "AfricaReport",      sourceTier: "tier2" },
+  // Business Live ZA — South African business news
+  { url: "https://www.businesslive.co.za/rss/latest.rss",                    lang: "en-ZA", name: "BusinessLiveZA",    sourceTier: "tier2" },
+  // Financial Nigeria
+  { url: "https://financialnigeria.com/feed/",                               lang: "en-NG", name: "FinancialNigeria",  sourceTier: "tier2" },
 ];
 
 // ── Latin America RSS feeds ─────────────────────────────────────────────────
@@ -648,6 +676,14 @@ const LATAM_FEEDS: Array<{
   { url: "https://elcomercio.pe/rss/",                                       lang: "es-PE", name: "El Comercio PE",    sourceTier: "tier2" },
   { url: "https://www.laprensa.hn/rss/",                                    lang: "es",    name: "La Prensa HN",      sourceTier: "tier2" },
   { url: "https://www.prensa.com/feed/",                                     lang: "es",    name: "La Prensa PA",      sourceTier: "tier2" },
+  // El País América — Spain/LatAm edition
+  { url: "https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/section/america/portada", lang: "es", name: "ElPaisAmerica", sourceTier: "tier1" },
+  // Agencia EFE — Spanish wire service Americas
+  { url: "https://www.efe.com/efe/america/portada/rss.xml",                  lang: "es",    name: "EFE",               sourceTier: "tier1" },
+  // O Globo — Brazil
+  { url: "https://oglobo.globo.com/rss.xml",                                 lang: "pt",    name: "OGlobo",            sourceTier: "tier2" },
+  // Voz de América Español
+  { url: "https://www.vozdeamerica.com/rss.xml",                             lang: "es",    name: "VOA-ES",            sourceTier: "tier2" },
 ];
 
 // ── Oceania / Pacific RSS feeds ─────────────────────────────────────────────
@@ -754,6 +790,18 @@ const ASIAN_FEEDS: Array<{
   { url: "https://www.irrawaddy.com/feed",                           lang: "en-MM", name: "The Irrawaddy",        sourceTier: "tier2" },
   // Singapore — CNA
   { url: "https://www.channelnewsasia.com/rssfeeds/8395986",         lang: "en-SG", name: "CNA Singapore",        sourceTier: "tier2" },
+  // Pakistan — Dawn
+  { url: "https://www.dawn.com/feeds/home",                          lang: "en-PK", name: "Dawn Pakistan",        sourceTier: "tier2" },
+  // India — The Hindu
+  { url: "https://www.thehindu.com/news/feeder/default.rss",         lang: "en-IN", name: "The Hindu",            sourceTier: "tier2" },
+  // Singapore — Straits Times Asia
+  { url: "https://www.straitstimes.com/news/asia/rss.xml",           lang: "en-SG", name: "Straits Times",        sourceTier: "tier2" },
+  // Greater China — SCMP Asia section
+  { url: "https://www.scmp.com/rss/5/feed",                          lang: "en-CN", name: "SCMP Asia",            sourceTier: "tier2" },
+  // Japan — Nikkei Markets
+  { url: "https://asia.nikkei.com/rss/feed/markets",                 lang: "en-JP", name: "Nikkei Markets",       sourceTier: "tier2" },
+  // Radio Free Asia
+  { url: "https://www.rfa.org/english/news/rss2.xml",                lang: "en",    name: "RadioFreeAsia",        sourceTier: "tier2" },
 ];
 
 // Generic regional feed fetcher — reused by Asia, Africa, LatAm, Oceania.
