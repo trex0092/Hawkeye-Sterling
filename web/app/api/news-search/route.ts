@@ -379,6 +379,7 @@ function parseRss(xml: string, subject: string, variants: string[], lang: string
     const tierBoost = tier === "tier1" ? 20 : tier === "tier2" ? 10 : 0;
     const tieredScore = Math.min(100, adjustedScore + tierBoost);
 
+    const script = detectScript(title);
     const article: Article = {
       title,
       link,
@@ -394,6 +395,8 @@ function parseRss(xml: string, subject: string, variants: string[], lang: string
       relevanceScore: tieredScore,
       sourceTier: tier,
       sourceCategory: classifySourceCategory(link),
+      script,
+      requiresTranslation: script !== "latin",
     };
     if (matchedVariant) article.matchedVariant = matchedVariant;
     out.push(article);
@@ -827,10 +830,13 @@ export async function GET(req: Request): Promise<NextResponse> {
     }));
     // Fetch investigative/regulatory RSS feeds in parallel with everything else.
     const investigativeSearch = fetchInvestigativeFeeds(q, variants);
-    const [settled, adapterResult, investigativeArticles] = await Promise.all([
+    // Fetch East/Southeast Asian regional feeds in parallel.
+    const asianSearch = fetchAsianFeeds(q, variants);
+    const [settled, adapterResult, investigativeArticles, asianArticles] = await Promise.all([
       Promise.race([fanOut, timebox]),
       adapterSearch,
       investigativeSearch,
+      asianSearch,
     ]);
     const perLocale: Article[][] = settled.map((r) =>
       r.status === "fulfilled" ? r.value : [],
@@ -847,6 +853,11 @@ export async function GET(req: Request): Promise<NextResponse> {
     for (const ia of investigativeArticles) {
       const key = ia.link || ia.title;
       if (!merged.has(key)) merged.set(key, ia);
+    }
+    // Merge East/Southeast Asian regional feed articles.
+    for (const aa of asianArticles) {
+      const key = aa.link || aa.title;
+      if (!merged.has(key)) merged.set(key, aa);
     }
     // Convert NewsArticle (adapter shape) → Article (internal shape) and merge.
     for (const na of adapterResult.articles) {
