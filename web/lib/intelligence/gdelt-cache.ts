@@ -345,6 +345,113 @@ const RISK_QUERIES: RiskQueryDef[] = [
     ],
     categories: ["adverse_media", "regional"],
   },
+  // ── Native-script multilingual queries ─────────────────────────────────────
+  // GDELT indexes Arabic, Cyrillic, CJK, and Devanagari text verbatim, so
+  // native-script keywords reach a distinct corpus that transliterated terms
+  // miss entirely. These four queries fire in parallel with the English set,
+  // adding zero wall-clock latency while expanding global coverage ~5×.
+  {
+    // Arabic-script adverse media — covers MENA, Gulf, North Africa press.
+    // Key FATF high-risk jurisdictions: UAE, Saudi Arabia, Egypt, Libya, Iraq.
+    label: "arabic_native",
+    keywords: [
+      "اعتقال",           // arrest
+      "غسيل أموال",       // money laundering
+      "غسيل",             // laundering (short form)
+      "فساد",             // corruption
+      "احتيال",           // fraud
+      "رشوة",             // bribery
+      "تهريب",            // smuggling/trafficking
+      "عقوبات",           // sanctions
+      "تحقيق",            // investigation
+      "تمويل الإرهاب",    // terrorist financing
+      "جريمة",            // crime
+      "صفقة مشبوهة",      // suspicious transaction
+    ],
+    categories: ["adverse_media", "regional"],
+  },
+  {
+    // Cyrillic-script adverse media — covers Russia, Ukraine, Belarus, Central
+    // Asia (Kazakhstan, Uzbekistan), Georgia, Armenia, Azerbaijan press.
+    label: "russian_cyrillic",
+    keywords: [
+      "арест",            // arrest
+      "коррупция",        // corruption
+      "отмывание",        // laundering
+      "отмывание денег",  // money laundering
+      "мошенничество",    // fraud
+      "взятка",           // bribery
+      "контрабанда",      // smuggling
+      "санкции",          // sanctions
+      "следствие",        // investigation
+      "уголовное дело",   // criminal case
+      "обыск",            // search/raid
+      "преступление",     // crime
+    ],
+    categories: ["adverse_media", "regional"],
+  },
+  {
+    // Spanish & Portuguese native-script — covers LatAm, Iberian press.
+    // High-risk jurisdictions: Mexico, Colombia, Brazil, Venezuela, Panama.
+    label: "spanish_portuguese",
+    keywords: [
+      "lavado de dinero",   // money laundering (ES)
+      "lavagem de dinheiro", // money laundering (PT)
+      "corrupción",         // corruption (ES)
+      "corrupção",          // corruption (PT)
+      "fraude",             // fraud
+      "detenido",           // detained/arrested (ES)
+      "preso",              // arrested (PT)
+      "tráfico",            // trafficking (ES)
+      "tráfico de drogas",  // drug trafficking
+      "blanqueo",           // laundering (ES)
+      "lavagem",            // laundering (PT)
+      "malversación",       // embezzlement (ES)
+      "desvio de verbas",   // misappropriation (PT)
+      "soborno",            // bribery (ES)
+      "suborno",            // bribery (PT)
+      "sanciones",          // sanctions (ES)
+      "sanções",            // sanctions (PT)
+      "narcotráfico",       // narcotics trafficking
+      "contrabando",        // smuggling
+      "crimen organizado",  // organised crime (ES)
+      "crime organizado",   // organised crime (PT)
+    ],
+    categories: ["adverse_media", "regional"],
+  },
+  {
+    // CJK (Chinese, Japanese, Korean) native-script — covers China, Hong Kong,
+    // Taiwan, Japan, South Korea press. High-risk: PRC state-linked entities,
+    // crypto exchanges, hawala networks, offshore structures.
+    label: "cjk_native",
+    keywords: [
+      // Chinese (Simplified)
+      "洗钱",              // money laundering
+      "腐败",              // corruption
+      "欺诈",              // fraud
+      "逮捕",              // arrest
+      "走私",              // smuggling
+      "贿赂",              // bribery
+      "制裁",              // sanctions
+      "调查",              // investigation
+      "犯罪",              // crime
+      "非法资金",           // illegal funds
+      // Japanese
+      "マネーロンダリング",  // money laundering
+      "汚職",              // corruption
+      "詐欺",              // fraud
+      "逮捕",              // arrest (shared CJK)
+      "密輸",              // smuggling
+      // Korean
+      "자금세탁",           // money laundering
+      "부패",              // corruption
+      "사기",              // fraud
+      "체포",              // arrest
+      "밀수",              // smuggling
+      "제재",              // sanctions
+    ],
+    categories: ["adverse_media", "regional"],
+  },
 ];
 
 // High-reputation news domains — articles from these sources score higher.

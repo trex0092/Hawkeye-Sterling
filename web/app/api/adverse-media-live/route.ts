@@ -13,7 +13,6 @@ import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
 import { searchAllNews } from "@/lib/intelligence/newsAdapters";
-import { gdeltKeywordOr } from "@/lib/intelligence/amlKeywords";
 import { fetchGdeltCached, queryGdeltGkg } from "@/lib/intelligence/gdelt-cache";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -140,9 +139,15 @@ function inferCategories(title: string, domain: string): string[] {
 // any other call site simultaneously. The cache also serves stale results on
 // upstream failure (tagged stale=true), which previously surfaced as a hard
 // "service unavailable" response here.
+//
+// We no longer pass a customQuery override. Without it, fetchGdeltCached() runs
+// the full parallel multi-query strategy from gdelt-cache.ts: 11 simultaneous
+// GDELT queries covering English risk categories PLUS native-script multilingual
+// queries (Arabic, Russian/Cyrillic, Spanish/Portuguese, CJK). This gives ~5×
+// the article coverage of the old single-English-query approach at zero added
+// latency — all queries fire in parallel via Promise.allSettled.
 async function queryGdelt(subjectName: string): Promise<{ articles: GdeltArticle[]; serviceError: boolean; stale?: boolean }> {
-  const customQuery = `"${subjectName}" AND (${gdeltKeywordOr()})`;
-  const cached = await fetchGdeltCached(subjectName, { query: customQuery });
+  const cached = await fetchGdeltCached(subjectName);
   return {
     articles: cached.articles,
     serviceError: cached.serviceError,
