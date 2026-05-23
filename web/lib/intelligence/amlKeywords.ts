@@ -87,6 +87,19 @@ export const AML_KEYWORDS_EN: string[] = [
   "real estate money laundering", "cash purchase", "straw buyer",
   "shell company", "beneficial ownership", "nominee director",
   "bearer share", "offshore company", "tax-haven company",
+  // Beneficial ownership & UBO
+  "beneficial ownership register", "UBO", "ultimate beneficial owner",
+  "beneficial owner", "nominee shareholder",
+  // Informal value transfer
+  "hawala", "hundi", "informal value transfer",
+  // Crypto obfuscation
+  "cryptocurrency mixing", "tumbler", "chain-hopping",
+  // PEP
+  "politically exposed person", "PEP", "senior official",
+  // Virtual assets
+  "virtual asset service provider", "VASP",
+  // KYC / CDD
+  "know your customer", "customer due diligence", "CDD",
 ];
 
 // Multilingual keywords — surface adverse media in non-English outlets
@@ -177,7 +190,8 @@ export const AML_KEYWORDS_MULTILINGUAL: Record<string, string[]> = {
        "smugling", "sanksjoner", "terrorisme", "organisert kriminalitet"],
   // Swahili — East Africa
   sw: ["utakatishaji fedha", "ufisadi", "udanganyifu", "rushwa",
-       "kukamatwa", "magendo", "vikwazo", "ugaidi", "uhalifu"],
+       "kukamatwa", "magendo", "vikwazo", "ugaidi", "uhalifu",
+       "fedha haramu", "biashara ya dawa", "uhalifu wa fedha"],
   // Hausa — West Africa
   ha: ["wankin kudi",        // money laundering
        "cin hanci",           // bribery/corruption
@@ -312,7 +326,47 @@ export const AML_KEYWORDS_MULTILINGUAL: Record<string, string[]> = {
        "авлига",               // corruption
        "залилан мэхлэх",      // fraud
        "баривчлах",            // arrest
-       "хориг арга хэмжээ"],   // sanctions
+       "хориг арга хэмжээ",   // sanctions
+       "хар зах"],             // black market
+  // Somali — East Africa / Horn of Africa
+  so: ["samaynta lacagta",    // money laundering
+       "musuqmaasuq",          // corruption
+       "sixir",                // fraud
+       "xukun",                // arrest
+       "xayiraad",             // sanctions
+       "smugling"],            // smuggling
+  // Burmese — Myanmar
+  my: ["ငွေချောင်ချောင်စီးဆင်းမှု",  // money laundering
+       "အဂတိလိုက်စားမှု",              // corruption
+       "လိမ်လည်မှု",                   // fraud
+       "ဖမ်းဆီးမှု",                    // arrest
+       "တားမြစ်ချက်"],                  // sanctions
+  // Khmer — Cambodia
+  km: ["លាងលុយ",             // money laundering
+       "អំពើពុករលួយ",         // corruption
+       "ការបោកប្រាស់",        // fraud
+       "ចាប់ខ្លួន",            // arrest
+       "ទណ្ឌកម្ម"],           // sanctions
+  // Lao — Laos
+  lo: ["ຟອກເງິນ",            // money laundering
+       "ການສໍ້ລາດບັງຫລວງ",    // corruption
+       "ການສໍ້ໂກງ",           // fraud
+       "ການຈັບກຸມ",           // arrest
+       "ການລົງໂທດ"],          // sanctions
+  // Tamil — India/Sri Lanka
+  ta: ["பண மோசடி",           // money laundering
+       "ஊழல்",                // corruption
+       "மோசடி",               // fraud
+       "கைது",                // arrest
+       "தடை",                 // sanctions
+       "கடத்தல்",             // smuggling
+       "பயங்கரவாதம்"],        // terrorism
+  // Pashto — Afghanistan/Pakistan
+  ps: ["د پیسو مینځل",       // money laundering
+       "فساد",                // corruption
+       "درغلي",               // fraud
+       "نیول",                // arrest
+       "بندیزونه"],           // sanctions
 };
 
 /** Flat list of every keyword across every language. */
