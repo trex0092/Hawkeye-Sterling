@@ -57,6 +57,14 @@ export const AML_KEYWORDS_EN: string[] = [
   "politically exposed person", "politically connected", "state official",
   // Predicate offences
   "organised crime", "drug trafficking", "narcotics", "cartel",
+  // Drug trafficking — expanded (FATF predicate; UNODC/DEA typologies)
+  "narcotics proceeds", "cocaine proceeds", "heroin proceeds",
+  "cartel money", "narco funds", "drug cartel",
+  "Sinaloa cartel", "Gulf cartel",
+  "fentanyl trafficking", "opioid trafficking", "methamphetamine proceeds",
+  "drug money laundering", "smurfing for narcos", "bulk cash smuggling",
+  "precursor chemicals", "drug lab", "clandestine laboratory",
+  "UNODC narcotics", "DEA enforcement", "drug seizure",
   "human trafficking", "people smuggling", "forced labour",
   "modern slavery", "wildlife trafficking", "illegal fishing",
   "illegal logging", "environmental crime", "illegal mining",
@@ -81,6 +89,15 @@ export const AML_KEYWORDS_EN: string[] = [
   "terrorist organisation", "terror cell", "jihadist", "extremist group",
   "foreign fighter", "terror attack", "bomb plot", "explosive device",
   "bioweapon", "nerve agent", "radiological", "dirty bomb",
+  // Terrorism financing — CFT / FATF R.5 / UNSCR 1267 typologies
+  "terrorism financing", "terrorist financing", "CFT", "counter terrorism",
+  "foreign terrorist fighter", "FTF", "returning fighter", "lone wolf",
+  "suicide bombing financing", "vehicle attack financing",
+  "charities for jihad", "mosque collections for terrorists",
+  "ISIS financing", "ISIL financing", "Al-Qaeda financing", "Boko Haram",
+  "Hezbollah financing", "Hamas financing", "PIJ financing",
+  "small amount financing",
+  "cryptocurrency for terrorism", "prepaid cards terrorism",
   // Cyber & digital
   "cybercrime", "ransomware", "darknet", "dark web",
   "phishing", "social engineering", "business email compromise",
@@ -138,6 +155,48 @@ export const AML_KEYWORDS_EN: string[] = [
   "know your customer", "customer due diligence", "CDD",
 ];
 
+/**
+ * UN Security Council Resolution 1267 Consolidated Sanctions List —
+ * 20 most significant currently designated terrorist entities.
+ * Used for token-set similarity matching in screening routes.
+ * Source: UNSC 1267/1989/2253 Committee List (as of 2025).
+ */
+export const UN_1267_DESIGNATED_ENTITIES: string[] = [
+  // Core global jihadi networks
+  "Al-Qaida",
+  "Islamic State",
+  "ISIL",
+  "ISIS",
+  "Jabhat al-Nusra",
+  "Al-Shabaab",
+  "Boko Haram",
+  // Regional Al-Qaeda affiliates
+  "Al-Qaeda in the Islamic Maghreb",
+  "AQIM",
+  "Al-Qaeda in the Arabian Peninsula",
+  "AQAP",
+  "Tehrik-e Taliban Pakistan",
+  "TTP",
+  // South Asia
+  "Haqqani Network",
+  "Lashkar-e-Tayyiba",
+  "Jaish-e-Mohammed",
+  "Lashkar-e-Jhangvi",
+  // Sahel / West Africa / Central Africa
+  "Ansar al-Islam",
+  "Ansar Dine",
+  "MUJAO",
+  "Al-Mourabitoun",
+  "Jama'at Nusrat al-Islam wal-Muslimin",
+  "JNIM",
+  "Islamic State in the Greater Sahara",
+  "ISGS",
+  "Islamic State West Africa Province",
+  "ISWAP",
+  "Allied Democratic Forces",
+  "ADF",
+];
+
 // Multilingual keywords — surface adverse media in non-English outlets
 // across all major world languages. GDELT indexes 65+ languages.
 export const AML_KEYWORDS_MULTILINGUAL: Record<string, string[]> = {
@@ -145,19 +204,25 @@ export const AML_KEYWORDS_MULTILINGUAL: Record<string, string[]> = {
   tr: ["tutuklandı", "gözaltı", "soruşturma", "yolsuzluk", "kara para", "rüşvet",
        "dolandırıcılık", "iddianame", "kaçakçılık", "zimmet", "sahtecilik",
        "uyuşturucu", "terör", "yasadışı", "suç örgütü", "kara para aklama",
-       "yaptırım"],
+       "yaptırım",
+       // Bribery & corruption (tr)
+       "yolsuzluk", "kamu ihale yolsuzluğu", "devlet soygunculuğu"],
   // Portuguese
   pt: ["preso", "lavagem de dinheiro", "investigação", "corrupção", "fraude",
        "denúncia", "operação", "indiciado", "ouro ilegal", "tráfico",
        "desvio de verbas", "suborno", "propina", "crime organizado",
        "sanções",
        // Environmental crime (pt)
-       "extração ilegal", "tráfico de animais", "pesca ilegal", "mineração ilegal"],
+       "extração ilegal", "tráfico de animais", "pesca ilegal", "mineração ilegal",
+       // Drug trafficking (pt)
+       "narcotráfico", "lavagem de dinheiro do narcotráfico", "cartel de drogas"],
   // Spanish
   es: ["detenido", "lavado de dinero", "investigación", "corrupción", "fraude",
        "denuncia", "operativo", "imputado", "narcotráfico", "soborno",
        "malversación", "blanqueo", "crimen organizado", "contrabando",
-       "sanciones"],
+       "sanciones",
+       // Drug trafficking (es)
+       "carteles de droga", "lavado de narcos", "dinero del cartel", "tráfico de fentanilo"],
   // Russian
   ru: ["арест", "коррупция", "отмывание", "следствие", "мошенничество", "взятка",
        "преступление", "уголовное дело", "контрабанда", "санкции", "обыск",
@@ -186,7 +251,9 @@ export const AML_KEYWORDS_MULTILINGUAL: Record<string, string[]> = {
        // Bribery & corruption (ar)
        "الرشوة", "الفساد", "عمولة سرية", "نهب المال العام", "الاستيلاء على الدولة",
        // Human trafficking (ar)
-       "الاتجار بالبشر", "العمالة القسرية", "الرق الحديث", "تهريب الأشخاص"],
+       "الاتجار بالبشر", "العمالة القسرية", "الرق الحديث", "تهريب الأشخاص",
+       // TF / CFT (ar) — terrorism financing and UNSCR 1267 designated groups
+       "تمويل الإرهاب", "جهاد", "داعش", "القاعدة", "حزب الله"],
   // Italian
   it: ["arrestato", "riciclaggio", "corruzione", "frode", "indagine",
        "mafia", "camorra", "ndrangheta", "evasione fiscale", "contrabbando"],
@@ -196,7 +263,9 @@ export const AML_KEYWORDS_MULTILINGUAL: Record<string, string[]> = {
        // Cybercrime (zh)
        "勒索软件", "网络犯罪", "暗网", "黑客组织",
        // Securities fraud (zh)
-       "内幕交易", "操纵市场", "证券欺诈", "庞氏骗局"],
+       "内幕交易", "操纵市场", "证券欺诈", "庞氏骗局",
+       // Bribery & corruption (zh)
+       "行贿", "回扣", "政府采购舞弊", "国有资产侵吞"],
   // Japanese
   ja: ["マネーロンダリング", "汚職", "詐欺", "逮捕", "密輸", "制裁",
        "テロ資金", "犯罪組織", "不正", "横領",
@@ -217,7 +286,13 @@ export const AML_KEYWORDS_MULTILINGUAL: Record<string, string[]> = {
        "pembalakan liar", "perdagangan satwa liar", "penambangan ilegal"],
   // Persian / Farsi
   fa: ["پولشویی", "فساد", "کلاهبرداری", "بازداشت", "قاچاق",
-       "تحریم", "تروریسم", "جرم سازمان‌یافته", "رشوه"],
+       "تحریم", "تروریسم", "جرم سازمان‌یافته", "رشوه",
+       // Drug trafficking (fa) — Iran is a major trafficking corridor
+       "قاچاق مواد مخدر", "پول کثیف", "مواد مخدر",
+       // Bribery & corruption (fa) — high-risk jurisdiction
+       "رشوه", "فساد", "سوء استفاده از قدرت", "اختلاس",
+       // TF / CFT (fa) — terrorism financing and IRGC-linked entities
+       "تأمین مالی تروریسم", "سپاه پاسداران", "حزب الله", "جهاد"],
   // Vietnamese
   vi: ["rửa tiền", "tham nhũng", "gian lận", "bắt giữ", "buôn lậu",
        "trừng phạt", "khủng bố", "tội phạm có tổ chức",
@@ -271,7 +346,9 @@ export const AML_KEYWORDS_MULTILINGUAL: Record<string, string[]> = {
        "بدعنوانی",      // corruption
        "دھوکہ دہی",     // fraud
        "پابندیاں",      // sanctions
-       "گرفتاری", "سمگلنگ", "دہشت گردی"],
+       "گرفتاری", "سمگلنگ", "دہشت گردی",
+       // TF / CFT (ur) — terrorism financing and designated groups
+       "دہشت گردی کی مالی اعانت", "جہاد کے لیے رقم", "القاعدہ"],
   // Bengali — Bangladesh
   bn: ["মানি লন্ডারিং",  // money laundering
        "দুর্নীতি",       // corruption
@@ -435,7 +512,10 @@ export const AML_KEYWORDS_MULTILINGUAL: Record<string, string[]> = {
        "فساد",                // corruption
        "درغلي",               // fraud
        "نیول",                // arrest
-       "بندیزونه"],           // sanctions
+       "بندیزونه",            // sanctions
+       // Drug trafficking (ps) — Afghanistan is the world's largest opium producer
+       "د نشه‌یي توکو قاچاق", // drug trafficking
+       "د نشه‌یي توکو پیسې"], // drug money
 };
 
 /** Flat list of every keyword across every language. */

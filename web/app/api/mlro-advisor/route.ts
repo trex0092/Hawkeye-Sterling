@@ -63,6 +63,178 @@ if (typeof process !== "undefined" && !guardHost[REJECTION_GUARD_KEY]) {
 
 interface ContextPair { q: string; a: string }
 
+// ── Structured MLRO decision framework ───────────────────────────────────────
+// Deterministic pre-processing: derives boolean signal flags from the
+// superBrain snapshot and maps them to a preliminary MLRO decision before
+// the LLM call, so the model is anchored on a concrete recommendation.
+
+type MlroDecision = "freeze" | "escalate" | "edd" | "monitor" | "clear";
+
+interface MlroDecisionFramework {
+  hasConfirmedSanctionsHit: boolean;
+  hasPepTier1: boolean;
+  hasHighAdverseMedia: boolean;
+  hasRedlineViolations: boolean;
+  mlroDecision: MlroDecision;
+  requiresFourEyes: boolean;
+  recommendedTimeline: {
+    suspicionFormedAt: string;
+    sarDeadlineAt: string;
+    escalationDeadlineAt: string | null;
+  };
+  decisionConfidence: number;
+  confidenceReason: string;
+}
+
+const HIGH_AM_SEVERITY_LABELS = ["critical", "high"];
+
+function computeMlroDecisionFramework(sb: Body["superBrain"] | undefined): MlroDecisionFramework {
+  // Signal computation
+  const hits = sb?.screen?.hits ?? [];
+  const hasConfirmedSanctionsHit = hits.some(
+    (h) => (h.score ?? 0) >= 0.85 && (h.disambiguationConfidence ?? 0) >= 75,
+  );
+
+  const pepTier = sb?.pep?.tier ?? "";
+  const hasPepTier1 = ["tier_1", "tier1", "1"].includes(pepTier.toLowerCase().trim());
+
+  const amGroups = sb?.adverseKeywordGroups ?? [];
+  const amCats = sb?.adverseMediaScored?.categoriesTripped ?? [];
+  const hasHighAdverseMedia =
+    amGroups.some((g) => HIGH_AM_SEVERITY_LABELS.some((sev) => (g.label ?? "").toLowerCase().includes(sev))) ||
+    amCats.some((c) => HIGH_AM_SEVERITY_LABELS.some((sev) => c.toLowerCase().includes(sev)));
+
+  const hasRedlineViolations = (sb?.redlines?.fired ?? []).length > 0;
+
+  // Decision ladder (most severe wins)
+  let mlroDecision: MlroDecision;
+  if (hasConfirmedSanctionsHit) {
+    mlroDecision = "freeze";
+  } else if (hasPepTier1 || hasRedlineViolations) {
+    mlroDecision = "escalate";
+  } else if (hasHighAdverseMedia) {
+    mlroDecision = "edd";
+  } else if ((sb?.composite?.score ?? 0) >= 50 || (sb?.pep?.salience ?? 0) > 0) {
+    mlroDecision = "monitor";
+  } else {
+    mlroDecision = "clear";
+  }
+
+  // Four-eyes: required when decision is FREEZE or ESCALATE (STR territory)
+  const requiresFourEyes = mlroDecision === "freeze" || mlroDecision === "escalate";
+
+  // Escalation timeline
+  const now = new Date();
+  const plus48h = new Date(now.getTime() + 48 * 60 * 60 * 1000);
+  const plus2h  = new Date(now.getTime() +  2 * 60 * 60 * 1000);
+  const recommendedTimeline = {
+    suspicionFormedAt: now.toISOString(),
+    sarDeadlineAt:     plus48h.toISOString(),
+    escalationDeadlineAt: mlroDecision === "freeze" ? plus2h.toISOString() : null,
+  };
+
+  // Confidence scoring: each confirmed signal adds weight; multiple signals
+  // increase certainty. Low evidence → low confidence.
+  const signalCount = [
+    hasConfirmedSanctionsHit,
+    hasPepTier1,
+    hasHighAdverseMedia,
+    hasRedlineViolations,
+  ].filter(Boolean).length;
+
+  let decisionConfidence: number;
+  let confidenceReason: string;
+
+  if (!sb) {
+    decisionConfidence = 30;
+    confidenceReason = "No superBrain snapshot supplied; decision based on question text only.";
+  } else if (hasConfirmedSanctionsHit && signalCount >= 2) {
+    decisionConfidence = 97;
+    confidenceReason = "Confirmed sanctions hit (score ≥0.85, disambiguation ≥75%) corroborated by additional signals.";
+  } else if (hasConfirmedSanctionsHit) {
+    decisionConfidence = 92;
+    confidenceReason = "Confirmed sanctions hit (score ≥0.85, disambiguation ≥75%).";
+  } else if (signalCount >= 3) {
+    decisionConfidence = 85;
+    confidenceReason = "Multiple corroborating high-risk signals (PEP Tier 1, adverse media, redlines).";
+  } else if (signalCount === 2) {
+    decisionConfidence = 72;
+    confidenceReason = "Two corroborating risk signals detected.";
+  } else if (signalCount === 1) {
+    decisionConfidence = 58;
+    confidenceReason = "Single risk signal present; additional investigation recommended before final decision.";
+  } else {
+    decisionConfidence = 42;
+    confidenceReason = "No high-severity signals detected; decision based on composite risk score.";
+  }
+
+  return {
+    hasConfirmedSanctionsHit,
+    hasPepTier1,
+    hasHighAdverseMedia,
+    hasRedlineViolations,
+    mlroDecision,
+    requiresFourEyes,
+    recommendedTimeline,
+    decisionConfidence,
+    confidenceReason,
+  };
+}
+
+// UAE regulatory citations by action type — injected verbatim into the system
+// prompt so every LLM response is anchored to the correct legal references.
+const UAE_REGULATORY_CITATIONS = `
+UAE REGULATORY CITATIONS — cite these for every applicable action:
+
+FREEZE (Asset Freezing):
+  • FDL No.10/2025 Art.24 — immediate asset freeze obligation upon confirmed sanctions match
+  • Cabinet Decision 74/2023 — UAE National AML/CFT Action Plan, freeze execution procedures
+  • goAML mandatory STR submission within 24 hours of freeze decision
+
+STR / Suspicious Transaction Report:
+  • FDL No.10/2025 Art.17 — 48-hour STR submission deadline from suspicion formation
+  • CBUAE AML/CFT Standard 4 — STR content, goAML XML format, confidentiality obligations
+  • goAML XML format required for all electronic STR filings to NAMLCFTC/FIU
+
+EDD (Enhanced Due Diligence):
+  • FDL No.10/2025 Art.7 — EDD triggers, source-of-wealth documentation requirements
+  • CBUAE AML/CFT Standard 3 — CDD/EDD procedures, ongoing monitoring frequency
+
+PEP Monitoring:
+  • FATF Recommendation 12 — PEP identification, enhanced scrutiny, senior management approval
+  • FDL No.10/2025 Art.32 — PEP definition under UAE law, enhanced monitoring obligations
+
+Ongoing Monitoring:
+  • FDL No.10/2025 Art.14 — transaction monitoring, record-keeping (5-year minimum)
+  • CBUAE AML/CFT Standard 4 — risk-based monitoring thresholds and escalation triggers
+
+Four-Eyes Principle (FREEZE / STR):
+  • UAE law requires two authorised signatories for freeze execution and STR filing
+  • CR 134/2025 Art.18 — MLRO human review and dual-authorisation requirement
+`.trim();
+
+// Builds a decision framework preamble for the LLM system prompt so the
+// model is anchored on the deterministic pre-computed recommendation.
+function buildDecisionFrameworkPreamble(fw: MlroDecisionFramework): string {
+  const lines = [
+    "PRELIMINARY MLRO DECISION FRAMEWORK (deterministic pre-analysis — ground your response on these signals):",
+    `  · Confirmed sanctions hit:  ${fw.hasConfirmedSanctionsHit ? "YES" : "no"}`,
+    `  · PEP Tier 1 (head of state/govt): ${fw.hasPepTier1 ? "YES" : "no"}`,
+    `  · High/critical adverse media:     ${fw.hasHighAdverseMedia ? "YES" : "no"}`,
+    `  · Redline violations fired:        ${fw.hasRedlineViolations ? "YES" : "no"}`,
+    `  · Suggested preliminary decision:  ${fw.mlroDecision.toUpperCase()}`,
+    `  · Requires four-eyes (dual authorisation): ${fw.requiresFourEyes ? "YES — two authorised signatories required" : "no"}`,
+    `  · Decision confidence: ${fw.decisionConfidence}/100 — ${fw.confidenceReason}`,
+    `  · Suspicion formed at: ${fw.recommendedTimeline.suspicionFormedAt}`,
+    `  · STR deadline (48h):  ${fw.recommendedTimeline.sarDeadlineAt}`,
+    fw.recommendedTimeline.escalationDeadlineAt
+      ? `  · Freeze escalation deadline (2h): ${fw.recommendedTimeline.escalationDeadlineAt}`
+      : "",
+    "",
+  ].filter((l) => l !== "  · ").join("\n");
+  return lines + "\n";
+}
+
 interface Body {
   question: string;
   subjectName: string;
@@ -208,7 +380,8 @@ async function callGroqAdvisor(
     "Guidelines: cite specific UAE laws, FATF Recs, and Cabinet Resolutions; aim for 300-500 words;",
     "flag when EDD / STR reporting obligations apply; note that final decisions require human MLRO",
     "review per CR 134/2025 Art.18.",
-  ].join(" ");
+    UAE_REGULATORY_CITATIONS,
+  ].join("\n");
   try {
     const res = await fetch(GROQ_URL, {
       method: "POST",
@@ -406,13 +579,18 @@ export async function POST(req: Request): Promise<NextResponse> {
   const preamble = buildContextPreamble(mergedContext);
   const subjectPreamble = buildSubjectPreamble(body.superBrain);
 
-  // Order: session continuity → subject posture → case precedent →
-  // regulatory updates → jurisdiction directive → classifier
-  // anchors → question. Tier-2 blocks sit between subject posture
-  // (concrete) and topic anchors (general) so the model anchors on
-  // operator-specific context before drifting to framework-level
-  // guidance.
-  let enrichedQuestion = `${preamble}${subjectPreamble}${casePrecedent}${regulatoryUpdates}${jurisdictionDirective}${analysis.enrichedPreamble}\n\n${body.question.trim()}`.slice(0, 4500);
+  // ── Structured MLRO decision framework (deterministic pre-processing) ────
+  // Computed BEFORE the LLM call so the model is anchored on the
+  // deterministic recommendation derived from signal flags.
+  const mlroFramework = computeMlroDecisionFramework(body.superBrain);
+  const decisionFrameworkPreamble = buildDecisionFrameworkPreamble(mlroFramework);
+
+  // Order: session continuity → subject posture → decision framework →
+  // case precedent → regulatory updates → jurisdiction directive →
+  // classifier anchors → question. Decision framework sits immediately
+  // after subject posture so the model sees the deterministic
+  // recommendation before broader context.
+  let enrichedQuestion = `${preamble}${subjectPreamble}${decisionFrameworkPreamble}${casePrecedent}${regulatoryUpdates}${jurisdictionDirective}${analysis.enrichedPreamble}\n\n${body.question.trim()}`.slice(0, 4500);
 
   // Layer 3 — opt-in structured-output mode. Appends the 8-section
   // schema instruction so the model emits a single JSON object instead
@@ -733,6 +911,18 @@ export async function POST(req: Request): Promise<NextResponse> {
           : {}),
         auditEntrySeq: audit.seq,
         latencyMs: Date.now() - t0,
+        // ── Structured MLRO decision framework ──────────────────────────────
+        mlroDecision: mlroFramework.mlroDecision,
+        requiresFourEyes: mlroFramework.requiresFourEyes,
+        recommendedTimeline: mlroFramework.recommendedTimeline,
+        decisionConfidence: mlroFramework.decisionConfidence,
+        confidenceReason: mlroFramework.confidenceReason,
+        mlroSignals: {
+          hasConfirmedSanctionsHit: mlroFramework.hasConfirmedSanctionsHit,
+          hasPepTier1: mlroFramework.hasPepTier1,
+          hasHighAdverseMedia: mlroFramework.hasHighAdverseMedia,
+          hasRedlineViolations: mlroFramework.hasRedlineViolations,
+        },
       },
       { headers: gateHeaders },
     );

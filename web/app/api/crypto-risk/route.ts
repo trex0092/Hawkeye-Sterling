@@ -253,10 +253,13 @@ const CHAIN_RISK_MODIFIERS: Record<string, ChainRiskModifier> = {
 // ---------------------------------------------------------------------------
 interface LocalEnrichment {
   sanctionedWallet: boolean;
+  ransomwareWallet: boolean;
   mixerDetected: boolean;
   mixerMatches: string[];
   darkwebDetected: boolean;
   darkwebMatches: string[];
+  aptGroupMatch: string | null;
+  aptGroupCountry: string | null;
   vaspTier: VaspTierInfo | null;
   vaspScoreDelta: number;
   chainModifier: ChainRiskModifier | null;
@@ -285,11 +288,13 @@ function buildLocalEnrichment(
   baseScore: number,
   chain: string,
   vasp?: string,
+  subjectName?: string,
 ): LocalEnrichment {
-  const addrLower  = address.toLowerCase();
-  const labelsLow  = labels.map((l) => l.toLowerCase());
-  const chainLower = chain.toLowerCase();
-  const vaspLower  = vasp?.toLowerCase().trim() ?? "";
+  const addrLower    = address.toLowerCase();
+  const labelsLow    = labels.map((l) => l.toLowerCase());
+  const chainLower   = chain.toLowerCase();
+  const vaspLower    = vasp?.toLowerCase().trim() ?? "";
+  const subjectLower = subjectName?.toLowerCase().trim() ?? "";
 
   const flags: string[] = [];
 
@@ -297,7 +302,11 @@ function buildLocalEnrichment(
   const sanctionedWallet = SANCTIONED_WALLETS.has(addrLower);
   if (sanctionedWallet) flags.push("OFAC_SANCTIONED_WALLET");
 
-  // -- 2. Mixer / tumbler detection -----------------------------------------
+  // -- 2. Ransomware wallet check -------------------------------------------
+  const ransomwareWallet = RANSOMWARE_IDENTIFIERS.has(addrLower);
+  if (ransomwareWallet) flags.push("RANSOMWARE_PROCEEDS");
+
+  // -- 3. Mixer / tumbler detection -----------------------------------------
   const mixerMatches: string[] = [];
   for (const id of MIXER_IDENTIFIERS) {
     if (addrLower === id || labelsLow.some((l) => l.includes(id))) {
@@ -307,7 +316,7 @@ function buildLocalEnrichment(
   const mixerDetected = mixerMatches.length > 0;
   if (mixerDetected) flags.push("MIXER_TUMBLER_DETECTED");
 
-  // -- 3. Dark web marketplace detection ------------------------------------
+  // -- 4. Dark web marketplace detection ------------------------------------
   const darkwebMatches: string[] = [];
   for (const id of DARKWEB_IDENTIFIERS) {
     if (addrLower === id || labelsLow.some((l) => l.includes(id))) {
@@ -317,7 +326,20 @@ function buildLocalEnrichment(
   const darkwebDetected = darkwebMatches.length > 0;
   if (darkwebDetected) flags.push("DARKWEB_MARKET_DETECTED");
 
-  // -- 4. VASP tier lookup ---------------------------------------------------
+  // -- 5. APT group detection -----------------------------------------------
+  let aptGroupMatch: string | null = null;
+  let aptGroupCountry: string | null = null;
+  const aptSearchText = [subjectLower, vaspLower, ...labelsLow].join(" ");
+  for (const [groupName, country] of APT_GROUPS) {
+    if (aptSearchText.includes(groupName)) {
+      aptGroupMatch = groupName;
+      aptGroupCountry = country;
+      flags.push("APT_GROUP_MATCH");
+      break;
+    }
+  }
+
+  // -- 6. VASP tier lookup ---------------------------------------------------
   let vaspTier: VaspTierInfo | null = null;
   if (vaspLower) {
     // Try exact key match, then substring match across all keys
@@ -337,15 +359,18 @@ function buildLocalEnrichment(
   if (vaspTier?.tier === "tier3") flags.push("HIGH_RISK_VASP");
   if (vaspTier?.tier === "tier2") flags.push("LIGHTLY_REGULATED_VASP");
 
-  // -- 5. Chain risk modifier -----------------------------------------------
+  // -- 7. Chain risk modifier -----------------------------------------------
   const chainModifier = CHAIN_RISK_MODIFIERS[chainLower] ?? null;
   if (chainModifier && chainModifier.delta > 0) flags.push("PRIVACY_CHAIN_MODIFIER");
 
-  // -- 6. Adjusted score & level --------------------------------------------
+  // -- 8. Adjusted score & level --------------------------------------------
   let adjustedRiskScore = baseScore;
 
   if (sanctionedWallet) {
     // Sanctioned wallet always resolves to critical (score ≥ 95)
+    adjustedRiskScore = Math.max(adjustedRiskScore, 95);
+  } else if (ransomwareWallet) {
+    // Ransomware proceeds wallet → critical immediately
     adjustedRiskScore = Math.max(adjustedRiskScore, 95);
   } else if (mixerDetected) {
     // Known mixer → at least 90 (critical)
@@ -354,19 +379,24 @@ function buildLocalEnrichment(
     adjustedRiskScore += vaspScoreDelta;
     adjustedRiskScore += chainModifier?.delta ?? 0;
     if (darkwebDetected) adjustedRiskScore = Math.max(adjustedRiskScore, 85);
+    // APT group match raises sanctions risk by +50
+    if (aptGroupMatch) adjustedRiskScore = Math.min(100, adjustedRiskScore + 50);
   }
 
   adjustedRiskScore = Math.min(100, Math.max(0, adjustedRiskScore));
-  const adjustedRiskLevel = sanctionedWallet || mixerDetected
+  const adjustedRiskLevel = sanctionedWallet || ransomwareWallet || mixerDetected
     ? "critical"
     : scoreToLevel(adjustedRiskScore);
 
   return {
     sanctionedWallet,
+    ransomwareWallet,
     mixerDetected,
     mixerMatches,
     darkwebDetected,
     darkwebMatches,
+    aptGroupMatch,
+    aptGroupCountry,
     vaspTier,
     vaspScoreDelta,
     chainModifier,
@@ -389,10 +419,12 @@ interface CryptoRiskBody {
   chain?: CryptoChain;
   /** Counterparty VASP name for tier-based risk adjustment */
   vasp?: string;
+  /** Subject or counterparty name — used for APT group matching */
+  subjectName?: string;
   /** Explicit mixer/service identifiers associated with this transaction */
   txMixers?: string[];
   // Subject-wrapped form (from MCP tool): { subject: { address, chain } }
-  subject?: { address?: string; chain?: CryptoChain; vasp?: string };
+  subject?: { address?: string; chain?: CryptoChain; vasp?: string; subjectName?: string };
 }
 
 type AddressFormat = "BTC-P2PKH" | "BTC-P2SH" | "BTC-bech32" | "ETH" | "unknown";
@@ -429,10 +461,11 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const address = body.address.trim();
   const addressFormat = detectAddressFormat(address);
+  const subjectName = body.subjectName?.trim();
 
   // ── Fast-path: OFAC sanctioned wallet — no provider call needed ───────────
   if (SANCTIONED_WALLETS.has(address.toLowerCase())) {
-    const enrichment = buildLocalEnrichment(address, [], 0, body.chain ?? "unknown", body.vasp);
+    const enrichment = buildLocalEnrichment(address, [], 0, body.chain ?? "unknown", body.vasp, subjectName);
     const sanctionedResponse = {
       ok: true,
       address,
@@ -450,6 +483,26 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json(sanctionedResponse, { headers: { ...CORS, ...gateHeaders } });
   }
 
+  // ── Fast-path: known ransomware proceeds wallet — no provider call needed ──
+  if (RANSOMWARE_IDENTIFIERS.has(address.toLowerCase())) {
+    const enrichment = buildLocalEnrichment(address, [], 0, body.chain ?? "unknown", body.vasp, subjectName);
+    const ransomwareResponse = {
+      ok: true,
+      address,
+      chain: body.chain ?? "unknown",
+      provider: "local-screening" as const,
+      riskScore: enrichment.adjustedRiskScore,
+      riskLevel: enrichment.adjustedRiskLevel,
+      riskCategory: "ransomware_proceeds",
+      exposure: { directSanctioned: 0, indirectSanctioned: 0, mixing: 0, darknet: 100 },
+      labels: ["RANSOMWARE-PROCEEDS", "CISA-TRACKED"],
+      addressFormat,
+      localEnrichment: enrichment,
+      latencyMs: Date.now() - _handlerStart,
+    };
+    return NextResponse.json(ransomwareResponse, { headers: { ...CORS, ...gateHeaders } });
+  }
+
   const result = await scoreWallet(address, { chain: body.chain });
 
   if (!result.ok) {
@@ -461,6 +514,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       0,
       body.chain ?? "unknown",
       body.vasp,
+      subjectName,
     );
     const fallback: WalletRiskResult & {
       offline: boolean;
@@ -496,6 +550,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     result.riskScore,
     result.chain,
     body.vasp,
+    subjectName,
   );
 
   const latencyMs = Date.now() - _handlerStart;
