@@ -1486,19 +1486,19 @@ function AdverseMediaEvidenceSection({
       return (
         <div className="mt-3 pt-3 border-t border-hair">
           <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2 mb-1.5">
-            Worldwide adverse media (15 locales)
+            Worldwide adverse media (30 locales)
           </div>
-          <div className="text-11 text-ink-3 italic">Scanning EN · TR · AR · DE · FR · ES · RU · PT · IT · ZH · NL · PL · UK · JA · KO…</div>
+          <div className="text-11 text-ink-3 italic">Scanning EN · DE · FR · ES · PT · IT · NL · PL · RO · HU · CS · SK · HR · SR · BG · SV · EL · RU · UK · AR · TR · HE · HI · ID · MS · VI · TH · ZH · JA · KO…</div>
         </div>
       );
     }
     return (
       <div className="mt-3 pt-3 border-t border-hair">
         <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2 mb-1.5">
-          Worldwide adverse media (15 locales)
+          Worldwide adverse media (30 locales)
         </div>
         <div className="text-11 text-green">✓ No adverse media found</div>
-        <div className="text-10 text-ink-3 font-mono mt-1">Searched: EN · TR · AR · DE · FR · ES · RU · PT · IT · ZH · NL · PL · UK · JA · KO · FATF R.10</div>
+        <div className="text-10 text-ink-3 font-mono mt-1">Searched: EN · DE · FR · ES · PT · IT · NL · PL · RO · HU · CS · SK · HR · SR · BG · SV · EL · RU · UK · AR · TR · HE · HI · ID · MS · VI · TH · ZH · JA · KO · FATF R.10</div>
       </div>
     );
   }
@@ -1506,7 +1506,7 @@ function AdverseMediaEvidenceSection({
   return (
     <div className="mt-3 pt-3 border-t border-hair space-y-3">
       <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">
-        Worldwide adverse media evidence (15 locales)
+        Worldwide adverse media evidence (30 locales)
       </div>
 
       {/* Brain-classified categories */}
@@ -3244,17 +3244,17 @@ const SEVERITY_BG: Record<string, string> = {
   critical: "bg-red-dim text-red",
 };
 
-// The 15 language locales polled by /api/news-search — shown in the
+// The 30 language locales polled by /api/news-search — shown in the
 // evidence-of-search footer so regulators can see worldwide coverage
 // even when the dossier returns zero articles (FATF R.10 lookback).
-const NEWS_SEARCH_LOCALES = "EN · TR · AR · DE · FR · ES · RU · PT · IT · ZH · NL · PL · UK · JA · KO";
+const NEWS_SEARCH_LOCALES = "EN · DE · FR · ES · PT · IT · NL · PL · RO · HU · CS · SK · HR · SR · BG · SV · EL · RU · UK · AR · TR · HE · HI · ID · MS · VI · TH · ZH · JA · KO";
 
 function NewsDossierPanel({ state }: { state: NewsSearchState }) {
   if (state.status === "idle") return null;
   if (state.status === "loading") {
     return (
       <Section title="Worldwide adverse-media dossier">
-        <div className="text-11 text-ink-2">Crawling 15 language locales ({NEWS_SEARCH_LOCALES}) for live articles…</div>
+        <div className="text-11 text-ink-2">Crawling 30 language locales ({NEWS_SEARCH_LOCALES}) for live articles…</div>
       </Section>
     );
   }
@@ -3270,7 +3270,7 @@ function NewsDossierPanel({ state }: { state: NewsSearchState }) {
           No articles found.
         </div>
         <div className="text-10 text-ink-3 font-mono mt-1">
-          Search conducted · 15 locales · {NEWS_SEARCH_LOCALES} · FATF R.10 lookback applied
+          Search conducted · 30 locales · {NEWS_SEARCH_LOCALES} · FATF R.10 lookback applied
         </div>
       </Section>
     );
@@ -3281,7 +3281,7 @@ function NewsDossierPanel({ state }: { state: NewsSearchState }) {
       <Section title="Worldwide adverse-media dossier">
         <div className="text-11 text-green">✓ No adverse media found for {r.subject}</div>
         <div className="text-10 text-ink-3 font-mono mt-1">
-          Worldwide search conducted · 15 locales · {NEWS_SEARCH_LOCALES}
+          Worldwide search conducted · 30 locales · {NEWS_SEARCH_LOCALES}
           {r.languages && r.languages.length > 0 && ` · active results in: ${r.languages.join(", ")}`}
            · FATF R.10 lookback applied · negative finding documented
         </div>
@@ -3306,7 +3306,7 @@ function NewsDossierPanel({ state }: { state: NewsSearchState }) {
             ))}
           </>
         )}
-        <span className="ml-auto font-mono text-ink-3">15 locales searched · {r.source}</span>
+        <span className="ml-auto font-mono text-ink-3">30 locales searched · {r.source}</span>
       </div>
 
       {r.keywordGroupCounts.length > 0 && (
@@ -3370,7 +3370,7 @@ function NewsDossierPanel({ state }: { state: NewsSearchState }) {
         ))}
       </ul>
       <div className="mt-3 pt-2 border-t border-hair text-10 text-ink-3 font-mono">
-        Worldwide search · 15 locales · {NEWS_SEARCH_LOCALES} · FATF R.10 lookback applied
+        Worldwide search · 30 locales · {NEWS_SEARCH_LOCALES} · FATF R.10 lookback applied
       </div>
     </Section>
   );
