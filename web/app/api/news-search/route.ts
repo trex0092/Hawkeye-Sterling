@@ -341,6 +341,39 @@ function parseRss(xml: string, subject: string, variants: string[], lang: string
   return out;
 }
 
+// ── Source category classification ──────────────────────────────────────────
+// Maps domain patterns to editorial category so the UI can group/filter by
+// category (e.g. "Show only investigative sources").
+const WIRE_DOMAINS = new Set([
+  "reuters.com", "apnews.com", "bloomberg.com", "ft.com", "wsj.com",
+  "bbc.com", "bbc.co.uk", "theguardian.com", "nytimes.com",
+  "lemonde.fr", "spiegel.de", "elpais.com", "afp.com",
+]);
+const INVESTIGATIVE_DOMAINS = new Set([
+  "occrp.org", "icij.org", "transparency.org", "acfe.com",
+]);
+const REGULATORY_DOMAINS = new Set([
+  "fatf-gafi.org", "unodc.org", "bis.org", "imf.org",
+  "ec.europa.eu", "sec.gov", "justice.gov",
+]);
+const REGIONAL_DOMAINS = new Set([
+  "middleeasteye.net", "gulfnews.com", "thenationalnews.com",
+  "khaleejtimes.com", "arabnews.com", "alarabiya.net", "albawaba.com",
+  "aljazeera.com", "haaretz.com", "scmp.com", "straitstimes.com", "channelnewsasia.com",
+]);
+
+function classifySourceCategory(url: string): Article["sourceCategory"] {
+  if (!url) return undefined;
+  try {
+    const domain = new URL(url).hostname.replace(/^www\./, "");
+    if (INVESTIGATIVE_DOMAINS.has(domain)) return "investigative";
+    if (REGULATORY_DOMAINS.has(domain)) return "regulatory";
+    if (WIRE_DOMAINS.has(domain)) return "wire";
+    if (REGIONAL_DOMAINS.has(domain)) return "regional";
+    return undefined;
+  } catch { return undefined; }
+}
+
 // Per-locale feed timeout. 1.5s per feed with overall 4s timebox keeps P99 response under 5s.
 const FEED_TIMEOUT_MS = 1_500;
 
