@@ -6,7 +6,7 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
-import { loadCase, updateCase, type DispositionVerdict } from "@/lib/server/hs-case-store";
+import { loadCase, updateCase, appendEscalationHistory, type DispositionVerdict } from "@/lib/server/hs-case-store";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
@@ -57,7 +57,7 @@ export async function POST(
   }
 
   const now = new Date().toISOString();
-  const updated = await updateCase(tenant, caseId, {
+  let updated = await updateCase(tenant, caseId, {
     status: "closed",
     dispositionVerdict:  dispositionVerdict as DispositionVerdict,
     dispositionRationale: dispositionRationale as string,
@@ -65,6 +65,14 @@ export async function POST(
     dispositionAt:       now,
     enrichmentPending:   false,
   }, gate.keyId);
+
+  // Record the closure transition in the escalation timeline.
+  updated = await appendEscalationHistory(
+    tenant, caseId,
+    existing.status, "closed",
+    gate.keyId,
+    `Closed with verdict: ${String(dispositionVerdict)}. ${(dispositionRationale as string).slice(0, 200)}`,
+  ) ?? updated;
 
   void writeAuditChainEntry({
     event: "hs_case.closed",

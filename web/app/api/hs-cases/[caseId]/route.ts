@@ -61,7 +61,18 @@ export async function PATCH(
   try { body = (await req.json()) as Record<string, unknown>; }
   catch { return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400, headers: gate.headers }); }
 
-  const { status, dispositionVerdict, dispositionRationale, notes, goamlReportRef } = body;
+  const {
+    status,
+    dispositionVerdict,
+    dispositionRationale,
+    notes,
+    goamlReportRef,
+    riskFactors,
+    reason,
+    accountNumber,
+    counterparty,
+    ipAddress,
+  } = body;
 
   if (status !== undefined && !VALID_STATUSES.has(status as HsCaseStatus)) {
     return NextResponse.json({ ok: false, error: `status must be one of: ${[...VALID_STATUSES].join(", ")}` }, { status: 400, headers: gate.headers });
@@ -69,6 +80,10 @@ export async function PATCH(
   if (dispositionVerdict !== undefined && !VALID_VERDICTS.has(dispositionVerdict as DispositionVerdict)) {
     return NextResponse.json({ ok: false, error: `dispositionVerdict must be one of: ${[...VALID_VERDICTS].join(", ")}` }, { status: 400, headers: gate.headers });
   }
+
+  // Load existing case before patch so we can capture the pre-change status.
+  const existing = await loadCase(tenant, caseId);
+  if (!existing) return NextResponse.json({ ok: false, error: "not found" }, { status: 404, headers: gate.headers });
 
   const patch: Record<string, unknown> = {};
   if (status !== undefined) patch["status"] = status;
@@ -80,8 +95,38 @@ export async function PATCH(
   if (typeof dispositionRationale === "string") patch["dispositionRationale"] = dispositionRationale;
   if (typeof notes === "string") patch["notes"] = notes;
   if (typeof goamlReportRef === "string") patch["goamlReportRef"] = goamlReportRef;
+  if (typeof accountNumber === "string") patch["accountNumber"] = accountNumber;
+  if (typeof counterparty === "string") patch["counterparty"] = counterparty;
+  if (typeof ipAddress === "string") patch["ipAddress"] = ipAddress;
 
-  const updated = await updateCase(tenant, caseId, patch, gate.keyId);
+  let updated = await updateCase(tenant, caseId, patch, gate.keyId);
   if (!updated) return NextResponse.json({ ok: false, error: "not found" }, { status: 404, headers: gate.headers });
+
+  // ── Escalation history ──────────────────────────────────────────────────
+  if (status !== undefined && status !== existing.status) {
+    const escalationReason =
+      typeof reason === "string" ? reason
+      : typeof dispositionRationale === "string" ? dispositionRationale
+      : `Status changed to ${String(status)}`;
+    updated = await appendEscalationHistory(
+      tenant, caseId,
+      existing.status,
+      status as HsCaseStatus,
+      gate.keyId,
+      escalationReason,
+    ) ?? updated;
+
+    // ── Filing deadline (UAE FDL 10/2025 Art.17): set when entering "escalated" ──
+    if (status === "escalated" && !existing.filingDeadline) {
+      updated = await setFilingDeadline(tenant, caseId) ?? updated;
+    }
+  }
+
+  // ── Risk re-scoring when riskFactors are supplied ────────────────────────
+  if (riskFactors && typeof riskFactors === "object") {
+    const factors = riskFactors as CaseRiskFactors;
+    updated = await updateCaseRiskScore(tenant, caseId, factors, gate.keyId) ?? updated;
+  }
+
   return NextResponse.json({ ok: true, case: updated }, { headers: gate.headers });
 }
