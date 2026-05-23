@@ -169,6 +169,23 @@ You are an expert AML/CFT typology analyst with deep knowledge of over 500 money
 - Nature-based solution fraud
 - Voluntary carbon market manipulation
 
+## ENVIRONMENTAL CRIME PROCEEDS LAUNDERING
+id: env_crime_proceeds
+name: Environmental Crime Proceeds Laundering
+category: ML
+riskLevel: high
+description: Proceeds from illegal logging, wildlife trafficking, illegal mining, IUU fishing and carbon credit fraud laundered through commodity trading, cash businesses, and offshore accounts.
+fatfReference: FATF Report on ML from Environmental Crime (2021)
+redFlags:
+- Timber/wood products from high-deforestation corridors
+- Wildlife exports from known trafficking hubs
+- Cash-intensive commodity businesses in conflict zones
+- Carbon credit transactions without underlying project documentation
+- Payments routed through jurisdictions with weak forestry enforcement
+- Shell companies holding logging or mining concessions in high-risk areas
+- Rapid conversion of commodity proceeds into real estate or luxury assets
+- IUU-flagged vessels or fishing companies transacting at high volumes
+
 ## SANCTIONS EVASION TYPOLOGIES
 - Front company networks for sanctioned parties
 - Jurisdiction layering to obscure origin

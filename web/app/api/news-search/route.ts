@@ -101,9 +101,12 @@ interface Article {
   lang: string;              // locale the article was fetched from (en, es, fr, ru, zh, ar, pt)
   relevanceScore?: number;   // fuzzyScore + adverse-term boost, 0..100
   sourceTier: "tier1" | "tier2" | "tier3" | "unknown";  // credibility classification
-  sourceCategory?: "wire" | "investigative" | "regulatory" | "regional" | "social";  // editorial category
+  sourceCategory?: "wire" | "investigative" | "regulatory" | "regional" | "social" | "state_media";  // editorial category
   script?: "latin" | "arabic" | "cyrillic" | "cjk" | "devanagari" | "thai" | "hebrew" | "georgian" | "armenian" | "other";
   requiresTranslation?: boolean;
+  sourceAuthority?: "established" | "new" | "unknown";  // authority proxy based on tier lists
+  paywallLimited?: boolean;  // true when article description indicates a paywall
+  recencyWeight?: number;    // multiplier applied to this article's severity weight
 }
 
 // ── Source credibility tiers ────────────────────────────────────────────────
@@ -153,6 +156,24 @@ const TIER2_DOMAINS = new Set([
   // Gulf / Levant English press
   "alaraby.co.uk", "asharq.com", "thepeninsulaqatar.com", "timesofoman.com",
   "gulf-times.com", "jordantimes.com", "dailystar.com.lb", "dailynewsegypt.com",
+]);
+
+// ── State-controlled / propaganda media domains ─────────────────────────────
+// Articles from these outlets are tagged `sourceCategory: "state_media"` and
+// their severity contribution is capped at "medium" regardless of content.
+// Sources: Russia (RT, TASS, RIA, Sputnik), China (Xinhua, CGTN, China Daily,
+// Global Times), Iran (PressTV, Mehr), North Korea (KCNA, Rodong), others.
+const STATE_MEDIA_DOMAINS = new Set([
+  // Russia
+  "rt.com", "sputniknews.com", "tass.ru", "ria.ru",
+  // China
+  "xinhuanet.com", "cgtn.com", "chinadaily.com.cn", "globaltimes.cn",
+  // Iran
+  "presstv.ir", "mehrnews.com",
+  // North Korea
+  "kcna.kp", "rodong.rep.kp",
+  // Others
+  "venezuelanalysis.com", "cubanews.org",
 ]);
 
 function classifySource(url: string): "tier1" | "tier2" | "tier3" | "unknown" {
@@ -321,6 +342,10 @@ interface NewsResponse {
   fetchMode: "live" | "cached" | "static_fallback";
   fetchedAt: string;
   latencyMs: number;
+  // NewsDossier enrichment fields
+  sourceDiversityScore: number;       // 0–100: unique root domains / total articles × 100
+  crossCorroboratedCount: number;     // number of findings reported by ≥2 independent domains
+  propagandaSourceCount: number;      // number of articles from known state-media/propaganda outlets
 }
 
 function severityOrder(s: Article["severity"]): number {
@@ -554,12 +579,64 @@ function classifySourceCategory(url: string): Article["sourceCategory"] {
   if (!url) return undefined;
   try {
     const domain = new URL(url).hostname.replace(/^www\./, "");
+    if (STATE_MEDIA_DOMAINS.has(domain)) return "state_media";
     if (INVESTIGATIVE_DOMAINS.has(domain)) return "investigative";
     if (REGULATORY_DOMAINS.has(domain)) return "regulatory";
     if (WIRE_DOMAINS.has(domain)) return "wire";
     if (REGIONAL_DOMAINS.has(domain)) return "regional";
     return undefined;
   } catch { return undefined; }
+}
+
+// Extract root domain (hostname without www.) for diversity scoring
+function rootDomain(url: string): string {
+  if (!url) return "";
+  try { return new URL(url).hostname.replace(/^www\./, ""); } catch { return ""; }
+}
+
+// Detect paywall / unavailable article based on short description containing
+// access-restriction keywords.
+function detectPaywall(description: string): boolean {
+  if (description.length >= 100) return false;
+  const lower = description.toLowerCase();
+  return (
+    lower.includes("subscribe") ||
+    lower.includes("login required") ||
+    lower.includes("premium") ||
+    lower.includes("access denied")
+  );
+}
+
+// Compute per-article recency weight multiplier based on publication date.
+// Regulatory / official sources never decay (multiplier always 1).
+function computeRecencyWeight(pubDate: string, sourceCategory: Article["sourceCategory"]): number {
+  if (sourceCategory === "regulatory") return 1.0;
+  const pubMs = pubDate ? Date.parse(pubDate) : 0;
+  if (!Number.isFinite(pubMs) || pubMs === 0) return 1.0;
+  const ageMs = Date.now() - pubMs;
+  const ageDays = ageMs / (24 * 3600 * 1000);
+  if (ageDays <= 30) return 1.2;           // last 30 days: +20%
+  const ageYears = ageMs / (365.25 * 24 * 3600 * 1000);
+  if (ageYears <= 3) return 0.7;           // 1–3 years: -30%
+  return 0.4;                              // >3 years: -60%
+}
+
+// Classify source authority based on tier lists.
+function classifySourceAuthority(url: string): Article["sourceAuthority"] {
+  if (!url) return "unknown";
+  try {
+    const domain = new URL(url).hostname.replace(/^www\./, "");
+    if (TIER1_DOMAINS.has(domain) || TIER2_DOMAINS.has(domain)) return "established";
+    if (STATE_MEDIA_DOMAINS.has(domain)) return "new"; // treat as lower authority proxy
+    return "unknown";
+  } catch { return "unknown"; }
+}
+
+// Cap severity at "medium" for state-media sources, regardless of content.
+function applyStateMediCap(severity: Article["severity"], sourceCategory: Article["sourceCategory"]): Article["severity"] {
+  if (sourceCategory !== "state_media") return severity;
+  const capped: Article["severity"][] = ["clear", "low", "medium"];
+  return capped.includes(severity) ? severity : "medium";
 }
 
 // Per-locale feed timeout. 1.2s per feed keeps slow locales from dragging the timebox.

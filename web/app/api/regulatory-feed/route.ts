@@ -8,12 +8,25 @@
 //   6. FATF Latest News RSS — fatf-gafi.org
 //   7. OFAC Sanctions Actions XML — ofac.treasury.gov
 //   8. UN Security Council Press Releases — un.org
+//   9. FATF grey/blacklist parser — structured country lists from FATF HTML
+//  10. OFAC Recent Actions parser — designations/delistings with structured fields
+//  11. EU Sanctions Journal parser — EU restrictive measures from OJ RSS and API
+//  12. UAE EOCN change detection — hash-based polling for EOCN list mutations
 //
 // Each source is attempted independently; failures are silently dropped
 // so a single unavailable government portal never blocks the feed.
+//
+// The parsed FATF, OFAC, EU, and EOCN items are combined into a unified
+// RegulatoryUpdate[] digest persisted in Netlify Blobs under
+// hawkeye-regulatory/digest with a 6-hour TTL.
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import {
+  buildRegulatoryDigest,
+  readRegulatoryDigest,
+  type RegulatoryDigest,
+} from "@/lib/intelligence/regulatory-parsers";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -70,6 +83,8 @@ interface FeedResult {
   filterMetadata?: FilterMetadata;
   lowConfidence?: Array<{ id: string; reason: string }>;
   meta?: ResponseMeta;
+  /** Unified regulatory digest from FATF/OFAC/EU/EOCN parsers */
+  digest?: RegulatoryDigest;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -989,14 +1004,36 @@ async function _handleGet(req: Request): Promise<NextResponse> {
     }
     const { filtered, meta } = applyResponseFilters(items);
     const totalCount = filtered.length;
+    // Include cached digest or attempt a fast read from Blobs on cache hit
+    const cachedDigest = cached.payload.digest ?? await readRegulatoryDigest().catch(() => null);
     return NextResponse.json(
-      { ...cached.payload, items: filtered.slice(offset, offset + limit), totalCount, latencyMs: Date.now() - t0, meta },
+      {
+        ...cached.payload,
+        items: filtered.slice(offset, offset + limit),
+        totalCount,
+        latencyMs: Date.now() - t0,
+        meta,
+        digest: cachedDigest ?? undefined,
+      },
       { headers: { "Cache-Control": "s-maxage=900, stale-while-revalidate=1800", "X-Cache": "HIT" } },
     );
   }
 
   const errors: string[] = [];
   const sourcesHit = new Set<string>();
+
+  // ── Regulatory digest (FATF/OFAC/EU/EOCN) — check Blobs cache first.
+  // The digest has a 6-hour TTL; we serve the cached copy on cache-hits and
+  // kick off a fresh build in the background only when it has expired.
+  // This keeps route latency predictable (digest parsers can each take 4-8 s)
+  // and separates the structured digest lifecycle from the 30-min feed cache.
+  let regulatoryDigest: RegulatoryDigest | null = await readRegulatoryDigest();
+  let digestRefreshPromise: Promise<RegulatoryDigest> | null = null;
+  if (!regulatoryDigest) {
+    // Cold path — build synchronously so the first response includes a digest.
+    // Subsequent requests will be served from Blobs until TTL expires.
+    digestRefreshPromise = buildRegulatoryDigest();
+  }
 
   // Fan out: direct site scrapes + Google News RSS queries + GDELT + FATF RSS + OFAC + UN SC in parallel
   const [siteResults, gnewsResults, gdeltResults, fatfItems, ofacItems, unScItems] = await Promise.all([
@@ -1007,6 +1044,15 @@ async function _handleGet(req: Request): Promise<NextResponse> {
     fetchOfacXml(),
     fetchUnScFeed(),
   ]);
+
+  // Resolve digest (cold build or cached)
+  if (digestRefreshPromise) {
+    try {
+      regulatoryDigest = await digestRefreshPromise;
+    } catch (err) {
+      errors.push(`regulatory-digest: build failed — ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
 
   const live: RegulatoryItem[] = [];
 
@@ -1227,6 +1273,7 @@ async function _handleGet(req: Request): Promise<NextResponse> {
       filtersApplied,
     },
     lowConfidence: lowConfidence.length > 0 ? lowConfidence : undefined,
+    digest: regulatoryDigest ?? undefined,
   };
 
   // Write to cache (unfiltered full set — filters applied at response time only)

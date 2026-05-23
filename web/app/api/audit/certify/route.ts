@@ -22,7 +22,7 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
-import { listKeys, getJson } from "@/lib/server/store";
+import { listKeys, getJson, setJson } from "@/lib/server/store";
 import { buildAuditCertificate, type AuditSnapshotInput } from "@/lib/server/audit-certificate";
 
 export const runtime = "nodejs";
@@ -42,6 +42,10 @@ interface CertifyBody {
   caseId?: string;
   trigger?: AuditSnapshotInput["trigger"];
   digest?: Record<string, string | number | boolean>;
+  /** Subject identifier for HMAC binding (e.g. entity name or customer ID). */
+  subjectId?: string;
+  /** Filing-entity name recorded in the regulatory attestation block. */
+  filingEntity?: string;
 }
 
 const VALID_TRIGGERS = new Set([
@@ -115,6 +119,35 @@ export async function POST(req: Request): Promise<NextResponse> {
       ...(e.actor ? { actor: e.actor } : {}),
     })),
     digest: body.digest ?? {},
+    ...(body.subjectId ? { subjectId: body.subjectId } : {}),
+    ...(body.filingEntity ? { filingEntity: body.filingEntity } : {}),
+  });
+
+  // ── Audit chain entry: record that a certificate was issued ───────────────
+  // FDL 10/2025 Art.24 — the act of generating a compliance certificate is
+  // itself a regulated event and must be traceable in the audit trail.
+  const certAuditKey = `audit/mlro/${Date.now()}-cert-${certificate.serialNumber}`;
+  void setJson(certAuditKey, {
+    event: "audit.certificate_generated",
+    caseId,
+    tenantId,
+    serialNumber: certificate.serialNumber,
+    trigger: certificate.trigger,
+    contentHash: certificate.contentHash,
+    snapshotSha256: certificate.snapshotSha256,
+    hmacPresent: certificate.hmacSignature.length > 0,
+    signed: certificate.signed,
+    auditEntryCount: certificate.auditEntryCount,
+    issuedAt: certificate.issuedAt,
+    expiresAt: certificate.expiresAt,
+    actor: gate.keyId ?? "system",
+    at: new Date().toISOString(),
+  }).catch((err: unknown) => {
+    const detail = err instanceof Error ? err.message : String(err);
+    console.error(
+      `[audit/certify] certificate audit entry persist failed serial=${certificate.serialNumber} — ${detail}. ` +
+      "Investigate Blobs connectivity.",
+    );
   });
 
   return NextResponse.json(
@@ -123,7 +156,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       certificate,
       regulationBasis: [
         "UAE PDPL 45/2021 Art.13 (record retention)",
-        "UAE FDL 10/2025 Art.24 (10-year audit chain)",
+        "UAE FDL 10/2025 Art.19 (record keeping) + Art.24 (10-year audit chain)",
         "FATF R.11 (record-keeping)",
       ],
       hint: certificate.signed

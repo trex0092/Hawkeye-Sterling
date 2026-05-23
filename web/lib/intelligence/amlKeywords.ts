@@ -48,6 +48,13 @@ export const AML_KEYWORDS_EN: string[] = [
   "illegal logging", "environmental crime", "illegal mining",
   "poaching", "endangered species", "trafficking in persons",
   "child exploitation", "sexual exploitation", "labour exploitation",
+  // Environmental crime — FATF predicate offences (FATF 2021 report)
+  "deforestation", "timber fraud", "conflict timber", "carbon credit fraud",
+  "ivory", "rhino horn", "pangolin",
+  "IUU fishing", "fishing license fraud", "fish laundering",
+  "oil theft", "bunkering", "petroleum fraud", "illegal extraction",
+  "artisanal mining", "conflict minerals", "cobalt smuggling",
+  "environmental fraud", "carbon offset fraud", "green washing scheme",
   // Terrorism & proliferation
   "terrorist organisation", "terror cell", "jihadist", "extremist group",
   "foreign fighter", "terror attack", "bomb plot", "explosive device",
@@ -114,7 +121,9 @@ export const AML_KEYWORDS_MULTILINGUAL: Record<string, string[]> = {
   pt: ["preso", "lavagem de dinheiro", "investigação", "corrupção", "fraude",
        "denúncia", "operação", "indiciado", "ouro ilegal", "tráfico",
        "desvio de verbas", "suborno", "propina", "crime organizado",
-       "sanções"],
+       "sanções",
+       // Environmental crime (pt)
+       "extração ilegal", "tráfico de animais", "pesca ilegal", "mineração ilegal"],
   // Spanish
   es: ["detenido", "lavado de dinero", "investigación", "corrupción", "fraude",
        "denuncia", "operativo", "imputado", "narcotráfico", "soborno",
@@ -128,7 +137,9 @@ export const AML_KEYWORDS_MULTILINGUAL: Record<string, string[]> = {
   fr: ["arrêté", "blanchiment", "corruption", "fraude", "enquête",
        "mise en examen", "trafic", "détournement", "pot-de-vin", "crime organisé",
        "saisie", "contrebande", "financement du terrorisme",
-       "sanctions"],
+       "sanctions",
+       // Environmental crime (fr)
+       "exploitation forestière illégale", "trafic d'espèces", "braconnage", "pêche illicite"],
   // German
   de: ["verhaftet", "Geldwäsche", "Korruption", "Betrug", "Ermittlung",
        "Anklage", "Schmuggel", "Steuerhinterziehung", "Veruntreuung",
@@ -154,7 +165,9 @@ export const AML_KEYWORDS_MULTILINGUAL: Record<string, string[]> = {
        "तस्करी", "प्रतिबंध", "आतंकवाद", "अपराध"],
   // Indonesian / Malay
   id: ["pencucian uang", "korupsi", "penipuan", "ditangkap", "penyelundupan",
-       "sanksi", "terorisme", "kejahatan terorganisir", "suap"],
+       "sanksi", "terorisme", "kejahatan terorganisir", "suap",
+       // Environmental crime (id)
+       "pembalakan liar", "perdagangan satwa liar", "penambangan ilegal"],
   // Persian / Farsi
   fa: ["پولشویی", "فساد", "کلاهبرداری", "بازداشت", "قاچاق",
        "تحریم", "تروریسم", "جرم سازمان‌یافته", "رشوه"],
@@ -191,7 +204,9 @@ export const AML_KEYWORDS_MULTILINGUAL: Record<string, string[]> = {
   // Swahili — East Africa
   sw: ["utakatishaji fedha", "ufisadi", "udanganyifu", "rushwa",
        "kukamatwa", "magendo", "vikwazo", "ugaidi", "uhalifu",
-       "fedha haramu", "biashara ya dawa", "uhalifu wa fedha"],
+       "fedha haramu", "biashara ya dawa", "uhalifu wa fedha",
+       // Environmental crime (sw)
+       "ujangili wa wanyama", "ukataji haramu wa miti", "uvuvi haramu"],
   // Hausa — West Africa
   ha: ["wankin kudi",        // money laundering
        "cin hanci",           // bribery/corruption
