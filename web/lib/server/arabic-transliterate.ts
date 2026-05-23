@@ -225,6 +225,23 @@ export function nameVariants(rawName: string): Set<string> {
   const alSplit = transliterated.replace(/\bal(?!-)(\S)/g, "al-$1");
   add(alSplit);
 
+  // CJK (Chinese/Japanese/Korean): names written with Han characters typically
+  // have no word-spaces in one system but may be romanised with spaces. Add the
+  // space-stripped form so "张 伟" matches "张伟" and vice-versa.
+  const cjkRegex = /[㐀-鿿豈-﫿]/u;
+  if (cjkRegex.test(rawName)) {
+    // Add version without any spaces (Chinese/Japanese names don't use spaces)
+    variants.add(rawName.replace(/\s+/g, ""));
+  }
+
+  // Arabic: strip tashkeel (diacritical marks) for broader matching.
+  // Many databases and news sources omit vowel marks; searching without them
+  // improves recall for names like "مُحَمَّد" → "محمد".
+  const arabicDiacritics = /[ؐ-ًؚ-ٟ]/g;
+  if (/[؀-ۿ]/u.test(rawName)) {
+    variants.add(rawName.replace(arabicDiacritics, ""));
+  }
+
   return variants;
 }
 

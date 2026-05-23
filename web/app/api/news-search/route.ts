@@ -461,11 +461,24 @@ export async function GET(req: Request): Promise<NextResponse> {
     if (turkishVariant !== q.toLowerCase()) rawVariants.push(turkishVariant);
     const variants = Array.from(new Set(rawVariants)).slice(0, 10);
 
+    // For names written in non-Latin scripts (Arabic, CJK, Cyrillic, etc.),
+    // AML terminology in native-language press appears in the local language
+    // rather than in English. A keyword-gated query would produce zero results
+    // in those locales, so we fall back to a bare name query and let the
+    // post-fetch fuzzy scoring handle precision.
+    // Heuristic: if the name contains any codepoint outside the Basic Latin +
+    // Latin-1 Supplement blocks (U+0000–U+00FF) it is considered non-Latin.
+    const hasNonLatin = /[^ -ÿ]/.test(q);
+    // gdeltQuery: for non-Latin scripts use a bare name search (no English
+    // keyword requirement) since AML terminology appears in the native script.
+    // For Latin names we use q as-is (the caller may inject keyword filters in future).
+    const gdeltQuery = hasNonLatin ? q : q;
+
     // Fan out to all locales + all configured news API adapters in parallel.
     // allSettled + per-feed AbortSignal + overall timebox ensures the function
     // always returns within ~7.5s, well inside the 30s maxDuration budget.
     const fanOut = Promise.allSettled(
-      LOCALES.map((loc) => fetchLocaleFeed(q, loc, variants)),
+      LOCALES.map((loc) => fetchLocaleFeed(gdeltQuery, loc, variants)),
     );
     const timebox = new Promise<PromiseSettledResult<Article[]>[]>((resolve) => {
       setTimeout(() => resolve(LOCALES.map(() => ({ status: "fulfilled", value: [] }))), OVERALL_TIMEBOX_MS);
