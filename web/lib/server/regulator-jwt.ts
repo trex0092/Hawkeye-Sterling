@@ -120,6 +120,12 @@ export function issueRegulatorToken(opts: IssueOptions): {
     issuedBy: opts.issuedBy,
     ...(() => {
       if (!opts.notBefore) return {};
+      // Accept only ISO 8601 date strings (YYYY-MM-DD or full datetime).
+      // Non-ISO locale formats (e.g. "01/01/2026") silently NaN in Date.parse
+      // which would drop the nbf claim without error; reject them explicitly.
+      if (!/^\d{4}-\d{2}-\d{2}(T[\d:.Z+\-]+)?$/.test(opts.notBefore)) {
+        throw new Error(`regulator-jwt: notBefore must be ISO 8601 (YYYY-MM-DD), got: ${opts.notBefore}`);
+      }
       const ms = Date.parse(opts.notBefore);
       if (!Number.isFinite(ms)) return {};
       return { nbf: Math.floor(ms / 1000) };

@@ -122,10 +122,10 @@ async function handleGet(req: Request): Promise<NextResponse> {
     cases = cases.filter((c) => c.status !== "closed");
   }
   if (category) {
-    cases = cases.filter((c) => c.evidence?.some((e) => e.category === category));
+    cases = cases.filter((c) => c.badge === category || c.evidence?.some((e) => e.category === category));
   }
   if (sourceType) {
-    cases = cases.filter((c) => c.statusDetail?.toLowerCase().includes(sourceType.toLowerCase()));
+    cases = cases.filter((c) => c.badge === sourceType);
   }
 
   const totalCount = cases.length;

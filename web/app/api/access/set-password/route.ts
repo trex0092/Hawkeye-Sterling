@@ -13,7 +13,7 @@ export async function POST(req: Request) {
   const jar = await cookies();
   const token = jar.get(SESSION_COOKIE)?.value ?? "";
   const session = verifySession(token);
-  if (!session || (session.role !== "compliance" && session.role !== "mlro" && session.role !== "co" && session.role !== "managing_director")) {
+  if (!session || (session.role !== "compliance" && session.role !== "mlro" && session.role !== "management")) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
   }
 
@@ -37,7 +37,7 @@ export async function POST(req: Request) {
 
   // Role power: prevent lower-privilege user from resetting a higher-privilege account.
   const ROLE_POWER: Record<string, number> = {
-    analyst: 1, compliance_assistant: 1, co: 2, compliance: 2, mlro: 3, managing_director: 3,
+    analyst: 1, compliance_assistant: 1, co: 2, compliance: 2, mlro: 3, managing_director: 3, management: 3,
   };
   const callerPower = ROLE_POWER[session.role] ?? 0;
 
@@ -52,7 +52,7 @@ export async function POST(req: Request) {
 
     const target = users[idx]!;
     const targetPower = ROLE_POWER[target.role] ?? 0;
-    if (targetPower > callerPower) { privilegeViolation = true; return; }
+    if (targetPower >= callerPower && target.id !== session.userId) { privilegeViolation = true; return; }
 
     const salt = generateSalt();
     const hash = hashPassword(newPassword, salt);
