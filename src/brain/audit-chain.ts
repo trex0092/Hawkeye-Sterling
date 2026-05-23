@@ -94,9 +94,11 @@ function sortKeysDeep(value: unknown): unknown {
 export class AuditChain {
   private entries: AuditEntry[] = [];
   private hasher: Hasher;
+  private readonly genesisHash: string;
 
   constructor(hasher: Hasher = sha256hex, initialEntries: AuditEntry[] = []) {
     this.hasher = hasher;
+    this.genesisHash = '0'.repeat(hasher('').length);
     this.entries = initialEntries.map((e) => ({ ...e }));
   }
 
@@ -104,7 +106,7 @@ export class AuditChain {
     const seq = this.entries.length + 1;
     const timestamp = new Date().toISOString();
     const prev = this.entries[this.entries.length - 1];
-    const prevHash = prev?.entryHash ?? '0'.repeat(64);
+    const prevHash = prev?.entryHash ?? this.genesisHash;
     const body = `${seq}|${timestamp}|${actor}|${action}|${canonicalise(payload)}|${prevHash}`;
     const entryHash = this.hasher(body);
     const entry: AuditEntry = { seq, timestamp, actor, action, payload, prevHash, entryHash };
@@ -124,7 +126,7 @@ export class AuditChain {
     for (let i = 0; i < this.entries.length; i++) {
       const e = this.entries[i];
       if (!e) continue;
-      const expectedPrev = i === 0 ? '0'.repeat(64) : (this.entries[i - 1]?.entryHash ?? '0'.repeat(64));
+      const expectedPrev = i === 0 ? this.genesisHash : (this.entries[i - 1]?.entryHash ?? this.genesisHash);
       if (e.prevHash !== expectedPrev) return { ok: false, firstBreakAt: e.seq };
       const body = `${e.seq}|${e.timestamp}|${e.actor}|${e.action}|${canonicalise(e.payload)}|${e.prevHash}`;
       if (this.hasher(body) !== e.entryHash) return { ok: false, firstBreakAt: e.seq };

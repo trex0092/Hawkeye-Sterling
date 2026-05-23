@@ -406,10 +406,10 @@ export function clusterLookalikes(hits: QuickScreenHit[]): LookalikeClusters {
   const assignments: number[] = new Array(hits.length).fill(-1);
 
   for (let i = 0; i < hits.length; i++) {
-    const name = hits[i]!.candidateName;
+    const name = hits[i]?.candidateName ?? '';
     let assigned = false;
     for (let ci = 0; ci < centroids.length; ci++) {
-      const sim = trigramSimilarity(name, centroids[ci]!);
+      const sim = trigramSimilarity(name, centroids[ci] ?? '');
       if (sim >= CLUSTER_THRESHOLD) {
         assignments[i] = ci;
         assigned = true;
@@ -425,9 +425,9 @@ export function clusterLookalikes(hits: QuickScreenHit[]): LookalikeClusters {
   // Build per-cluster membership
   const clusterMap = new Map<number, number[]>(); // clusterIdx → [hitIdx, ...]
   for (let i = 0; i < assignments.length; i++) {
-    const ci = assignments[i]!;
+    const ci = assignments[i] ?? -1;
     if (!clusterMap.has(ci)) clusterMap.set(ci, []);
-    clusterMap.get(ci)!.push(i);
+    clusterMap.get(ci)?.push(i);
   }
 
   // Build cluster summaries and annotate hits
@@ -437,12 +437,16 @@ export function clusterLookalikes(hits: QuickScreenHit[]): LookalikeClusters {
   for (const [ci, members] of clusterMap.entries()) {
     if (members.length <= 1) continue; // singleton — no annotation needed
     const label = `cluster-${ci}`;
-    const primaryName = centroids[ci] ?? hits[members[0]!]!.candidateName;
-    const names = members.map((idx) => hits[idx]!.candidateName);
+    const firstIdx = members[0] ?? 0;
+    const primaryName = centroids[ci] ?? hits[firstIdx]?.candidateName ?? '';
+    const names = members.map((idx) => hits[idx]?.candidateName ?? '');
     clusters.push({ label, size: members.length, primaryName, names });
     for (const idx of members) {
-      annotated[idx]!.clusterLabel = label;
-      annotated[idx]!.clusterSize = members.length;
+      const a = annotated[idx];
+      if (a) {
+        a.clusterLabel = label;
+        a.clusterSize = members.length;
+      }
     }
   }
 

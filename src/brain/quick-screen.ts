@@ -10,7 +10,6 @@ import {
   clusterLookalikes,
   type ConfidenceTier,
   type DisambiguationFactors,
-  type AnnotatedHit,
   type ClusterSummary,
 } from './sanctions-disambiguation.js';
 
