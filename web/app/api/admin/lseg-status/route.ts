@@ -8,6 +8,7 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { adminAuth } from "@/lib/server/admin-auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,6 +22,8 @@ interface BlobsModuleShape {
 }
 
 export async function GET(req: Request): Promise<NextResponse> {
+  const deny = adminAuth(req);
+  if (deny) return deny;
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
 

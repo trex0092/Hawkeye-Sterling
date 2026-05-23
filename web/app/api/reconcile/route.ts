@@ -8,6 +8,7 @@
 // GET  /api/reconcile/suggest  → entity name autocomplete
 
 import { NextRequest, NextResponse } from 'next/server';
+import { enforce } from '@/lib/server/enforce';
 
 const SERVICE_MANIFEST = {
   name: 'Hawkeye Sterling Reconciliation',
@@ -83,13 +84,17 @@ async function reconcileQuery(query: ReconcileQuery): Promise<ReconcileResponse>
   return { result: filtered };
 }
 
-export async function GET(_req: NextRequest) {
+export async function GET(req: NextRequest) {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   return NextResponse.json(SERVICE_MANIFEST, {
     headers: { 'Access-Control-Allow-Origin': '*' },
   });
 }
 
 export async function POST(req: NextRequest) {
+  const gate = await enforce(req);
+  if (!gate.ok) return gate.response;
   let body: unknown;
   try {
     // Handle both JSON and form-encoded (OpenRefine sends form-encoded)

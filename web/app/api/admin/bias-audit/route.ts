@@ -3,6 +3,7 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { adminAuth } from "@/lib/server/admin-auth";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getBiasReport, computeBiasReport } from "@/lib/server/bias-monitor";
 
@@ -10,6 +11,8 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request): Promise<NextResponse> {
+  const deny = adminAuth(req);
+  if (deny) return deny;
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
   const tenant = tenantIdFromGate(gate);
@@ -25,6 +28,8 @@ export async function GET(req: Request): Promise<NextResponse> {
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
+  const deny = adminAuth(req);
+  if (deny) return deny;
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
   const tenant = tenantIdFromGate(gate);

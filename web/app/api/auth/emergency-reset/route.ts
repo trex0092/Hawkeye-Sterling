@@ -1,6 +1,7 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { generateSalt, hashPassword } from "@/lib/server/auth";
 import { loadUsers, saveUsers, withUsersLock } from "@/app/api/access/_store";
@@ -26,7 +27,9 @@ export async function GET(req: Request): Promise<NextResponse> {
   if (!expectedSecret) {
     return NextResponse.json({ ok: false, error: "LUISA_INITIAL_PASSWORD is not configured in Netlify env vars." }, { status: 503 });
   }
-  if (!secret || secret !== expectedSecret) {
+  const aBuf = Buffer.from(expectedSecret, "utf8");
+  const bBuf = Buffer.from(secret, "utf8");
+  if (!secret || secret.length !== expectedSecret.length || !timingSafeEqual(aBuf, bBuf)) {
     return NextResponse.json({ ok: false, error: "Invalid secret." }, { status: 403 });
   }
   if (!newPassword || newPassword.length < 8) {
