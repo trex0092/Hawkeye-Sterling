@@ -557,7 +557,8 @@ const WIRE_DOMAINS = new Set([
   "reuters.com", "apnews.com", "bloomberg.com", "ft.com", "wsj.com",
   "bbc.com", "bbc.co.uk", "theguardian.com", "nytimes.com",
   "lemonde.fr", "spiegel.de", "elpais.com", "afp.com",
-  "dpa-international.com", "kyodonews.net", "xinhuanet.com",
+  "dpa-international.com", "kyodonews.net",
+  // Note: xinhuanet.com removed from WIRE_DOMAINS — classified as state_media above
 ]);
 const INVESTIGATIVE_DOMAINS = new Set([
   "occrp.org", "icij.org", "transparency.org", "acfe.com",
