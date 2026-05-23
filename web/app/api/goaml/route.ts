@@ -301,8 +301,8 @@ async function handleGoaml(req: Request): Promise<Response> {
     if (prov.reportSha256) lines.push(`  screening.report.sha256   : ${safeStr(prov.reportSha256)}`);
     if (prov.signature) lines.push(`  screening.report.signature: ${safeStr(prov.signature)}`);
     if (prov.signingKeyFp) lines.push(`  signing.key_fp            : ${safeStr(prov.signingKeyFp)}`);
-    lines.push(`  goaml.envelope.generated  : ${iso}`);
-    lines.push(`  goaml.internal_reference  : ${reportRef}`);
+    lines.push(`  goaml.envelope.generated  : ${safeStr(iso)}`);
+    lines.push(`  goaml.internal_reference  : ${safeStr(reportRef)}`);
     lines.push("-->");
     const comment = lines.join("\n");
     // Insert after the <?xml ... ?> declaration so the comment is
@@ -332,9 +332,11 @@ async function handleGoaml(req: Request): Promise<Response> {
   }).catch((err) => console.error("[goaml] draft record save failed:", err));
 
   const filename = `goaml-${body.reportCode.toLowerCase()}-${safeFilenameSegment(reportRef)}.xml`;
-  const warningHeaders: Record<string, string> = usingPlaceholderMlro
-    ? { "X-Hawkeye-Warning": "GOAML_MLRO_FULL_NAME/GOAML_MLRO_EMAIL not set — placeholder MLRO values used. Set env vars before FIU submission." }
-    : {};
+  const narrativeTruncated = body.narrative.length > 4000;
+  const warningHeaders: Record<string, string> = {
+    ...(usingPlaceholderMlro ? { "X-Hawkeye-Warning": "GOAML_MLRO_FULL_NAME/GOAML_MLRO_EMAIL not set — placeholder MLRO values used. Set env vars before FIU submission." } : {}),
+    ...(narrativeTruncated ? { "X-Hawkeye-Narrative-Warning": `narrative truncated from ${body.narrative.length} to 4000 characters in XML reason field` } : {}),
+  };
   return new Response(xml, {
     status: 200,
     headers: {

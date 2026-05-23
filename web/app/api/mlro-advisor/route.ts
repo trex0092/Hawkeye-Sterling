@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 import {
   invokeMlroAdvisor,
   type MlroAdvisorRequest,
@@ -113,23 +114,25 @@ interface Body {
 // than producing textbook guidance. Empty string when no snapshot.
 function buildSubjectPreamble(sb?: Body["superBrain"]): string {
   if (!sb) return "";
+  const sf = (v: string | undefined | null, max = 80) => sanitizeField(v ?? "?", max);
   const lines: string[] = [];
   lines.push("SUBJECT POSTURE (what the brain has computed about THIS subject — reason against these signals, not generic guidance):");
   if (sb.composite?.score != null) {
     lines.push(`  · Composite risk: ${sb.composite.score}/100`);
   }
   if (sb.jurisdiction) {
+    const regimes = (sb.jurisdiction.regimes ?? []).slice(0, 4).map((r) => sf(r, 40)).join(", ");
     lines.push(
-      `  · Jurisdiction: ${sb.jurisdiction.name ?? "?"} (${sb.jurisdiction.iso2 ?? "?"})${sb.jurisdiction.cahra ? " · CAHRA" : ""}${sb.jurisdiction.regimes?.length ? ` · regimes: ${sb.jurisdiction.regimes.slice(0, 4).join(", ")}` : ""}`,
+      `  · Jurisdiction: ${sf(sb.jurisdiction.name)} (${sf(sb.jurisdiction.iso2, 10)})${sb.jurisdiction.cahra ? " · CAHRA" : ""}${regimes ? ` · regimes: ${regimes}` : ""}`,
     );
   }
   if (sb.pep?.salience && sb.pep.salience > 0) {
-    lines.push(`  · PEP: ${(sb.pep.tier ?? "").replace(/^tier_/, "tier ").replace(/_/g, " ")} (${sb.pep.type?.replace(/_/g, " ") ?? "?"}, salience ${Math.round(sb.pep.salience * 100)}%)`);
+    lines.push(`  · PEP: ${sf(sb.pep.tier).replace(/^tier_/, "tier ").replace(/_/g, " ")} (${sf(sb.pep.type).replace(/_/g, " ")}, salience ${Math.round(sb.pep.salience * 100)}%)`);
   } else {
     lines.push(`  · PEP: not classified`);
   }
   const amTotal = sb.adverseMediaScored?.total ?? 0;
-  const amCats = sb.adverseMediaScored?.categoriesTripped ?? [];
+  const amCats = (sb.adverseMediaScored?.categoriesTripped ?? []).map((c) => sf(c, 40));
   if (amTotal > 0 || (sb.adverseKeywordGroups?.length ?? 0) > 0) {
     lines.push(
       `  · Adverse media: ${amTotal} hit(s)${amCats.length ? ` across ${amCats.join(", ")}` : ""}${sb.adverseMediaScored?.compositeScore != null ? ` · vector score ${Math.round(sb.adverseMediaScored.compositeScore)}/100` : ""}`,
@@ -139,12 +142,13 @@ function buildSubjectPreamble(sb?: Body["superBrain"]): string {
   }
   const redlinesFired = sb.redlines?.fired ?? [];
   if (redlinesFired.length > 0) {
-    const labels = redlinesFired.slice(0, 5).map((r) => r.label ?? r.id ?? "redline").join(", ");
-    lines.push(`  · Redlines fired: ${labels}${sb.redlines?.action ? ` → ${sb.redlines.action}` : ""}`);
+    const labels = redlinesFired.slice(0, 5).map((r) => sf(r.label ?? r.id, 60)).join(", ");
+    const action = sb.redlines?.action ? ` → ${sf(sb.redlines.action, 60)}` : "";
+    lines.push(`  · Redlines fired: ${labels}${action}`);
   }
   const typHits = sb.typologies?.hits ?? [];
   if (typHits.length > 0) {
-    const t = typHits.slice(0, 4).map((h) => h.name ?? h.id ?? "doctrine").join(", ");
+    const t = typHits.slice(0, 4).map((h) => sf(h.name ?? h.id, 60)).join(", ");
     lines.push(`  · Typology fingerprints: ${t}${typHits.length > 4 ? "…" : ""}`);
   }
   lines.push("");
@@ -200,7 +204,7 @@ async function callGroqAdvisor(
     "You are a senior AML/CFT compliance officer and MLRO advisor specialising in UAE regulatory law",
     "(FDL No.10/2025, Cabinet Resolution 134/2025, FATF Recommendations 1-40).",
     "You provide concise, authoritative, citation-grounded compliance guidance.",
-    `Current subject under review: ${subjectName}.`,
+    `Current subject under review: ${sanitizeField(subjectName, 200)}.`,
     "Guidelines: cite specific UAE laws, FATF Recs, and Cabinet Resolutions; aim for 300-500 words;",
     "flag when EDD / STR reporting obligations apply; note that final decisions require human MLRO",
     "review per CR 134/2025 Art.18.",

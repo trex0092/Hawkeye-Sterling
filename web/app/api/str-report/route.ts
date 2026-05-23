@@ -57,10 +57,10 @@ export async function POST(req: Request) {
   };
 
   const details = [
-    { k: "SUBJECT",              v: body.subject },
-    { k: "JURISDICTION",         v: body.jurisdiction.toUpperCase() },
+    { k: "SUBJECT",              v: escHtml(body.subject) },
+    { k: "JURISDICTION",         v: escHtml(body.jurisdiction.toUpperCase()) },
     { k: "COMPOSITE RISK SCORE", v: `${body.composite} / 100` },
-    { k: "DATE PREPARED",        v: dateStr },
+    { k: "DATE PREPARED",        v: escHtml(dateStr) },
     { k: "REPORTING OFFICER",    v: "L. Fernanda — CO/MLRO" },
   ];
 

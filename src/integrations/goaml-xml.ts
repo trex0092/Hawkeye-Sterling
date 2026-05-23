@@ -130,6 +130,7 @@ function transactionToXml(t: GoAmlTransaction): string {
     el('transmode_code', t.type),
     el('amount_foreign', typeof t.amountForeign === 'number' ? fmtDecimal(t.amountForeign) : t.amountForeign),
     el('foreign_currency_code', t.currency),
+    el('counterparty_name', t.counterpartyName),
     el('comments', t.comments),
     t.fromWallet ? cryptoWalletToXml(t.fromWallet) : '',
     t.toWallet ? cryptoWalletToXml(t.toWallet) : '',
