@@ -593,7 +593,7 @@ export async function POST(req: Request): Promise<NextResponse> {
             }
           }
         } catch (err) {
-          asanaSkipReason = err instanceof Error ? err.message : String(err);
+          asanaSkipReason = "screening-report request failed";
           console.error(
             `[ongoing/run] /api/screening-report POST threw for ${s.id}:`,
             err,
@@ -704,7 +704,7 @@ export async function POST(req: Request): Promise<NextResponse> {
               }
             }
           } catch (err) {
-            escalationSkipReason = err instanceof Error ? err.message : String(err);
+            escalationSkipReason = "escalation task creation failed";
             console.error(
               `[ongoing/run] escalation POST threw for ${s.id}:`,
               err,
@@ -835,7 +835,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         ...(sarRecommended !== undefined ? { sarRecommended } : {}),
       });
     } catch (err) {
-      const errMsg = err instanceof Error ? err.message : String(err);
+      console.error("[ongoing/run] subject processing failed:", err);
       results.push({
         subjectId: s.id,
         subjectName: s.name ?? "",
@@ -850,7 +850,6 @@ export async function POST(req: Request): Promise<NextResponse> {
           error: "Webhook delivery failed — please retry.",
         },
       });
-      console.error("[ongoing/run] subject processing failed:", errMsg);
       // Record the processing failure in the audit chain so the regulator can
       // identify subjects that were skipped due to errors in a given run.
       void writeAuditChainEntry({
@@ -858,7 +857,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         actor: "cron_internal",
         subjectId: s.id,
         subjectName: s.name ?? "",
-        error: errMsg,
+        error: "subject processing failed — see server logs",
         runAt,
       }).catch((e) => console.warn("[ongoing/run] audit chain write failed (monitor_error):", e instanceof Error ? e.message : String(e)));
     }

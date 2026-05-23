@@ -382,11 +382,12 @@ export async function POST(req: Request): Promise<NextResponse> {
           }
         }
       } catch (err) {
+        console.error(`[import-cfs POST] parse failed for file ${key}:`, err);
         perFile.push({
           key,
           format: "unknown",
           entityCount: 0,
-          error: err instanceof Error ? err.message : String(err),
+          error: "file parse failed — check server logs for details",
         });
       }
     }));
@@ -417,12 +418,13 @@ export async function POST(req: Request): Promise<NextResponse> {
       perFile,
     });
   } catch (err) {
+    console.error("[import-cfs POST] index write failed:", err);
     return NextResponse.json(
       {
         ok: false,
         filesProcessed: perFile.length,
         entitiesParsed: allEntities.size,
-        error: `index write failed — ${err instanceof Error ? err.message : String(err)}`,
+        error: "index write failed — please retry or contact support",
         perFile,
       },
       { status: 503 },

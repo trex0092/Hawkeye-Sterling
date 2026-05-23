@@ -235,7 +235,8 @@ async function callGroqAdvisor(
     return { ok: true, narrative: content, complianceReview: { verdict: "approved" }, _provider: "groq", _model: GROQ_MODEL };
   } catch (err) {
     const isAbort = err instanceof Error && err.name === "AbortError";
-    return { ok: false, error: isAbort ? "Groq timed out" : String(err).slice(0, 200) };
+    console.error("[mlro-advisor] Groq call failed:", err);
+    return { ok: false, error: isAbort ? "Groq timed out" : "Groq service temporarily unavailable" };
   } finally {
     clearTimeout(timer);
   }

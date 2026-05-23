@@ -107,7 +107,7 @@ export async function POST(
     }, tenant).catch(() => undefined);
 
     return NextResponse.json(
-      { ok: false, error: "enrichment_failed", detail: lastError.slice(0, 200) },
+      { ok: false, error: "enrichment_failed", detail: "enrichment service unavailable — please retry" },
       { status: 502, headers: gate.headers },
     );
   }
