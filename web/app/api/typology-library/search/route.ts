@@ -351,12 +351,12 @@ Find the most relevant AML/CFT typologies matching this search. Return comprehen
     if (!Array.isArray(result.relatedCategories)) result.relatedCategories = [];
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch (err) {
-    console.warn("[typology-library/search] LLM failed:", err instanceof Error ? err.message : err);
+    console.warn("[typology-library/search] LLM failed:", err);
     return NextResponse.json({
       ok: true,
       ...buildTemplate(),
       degraded: true,
-      degradedReason: `Typology search AI call failed: ${err instanceof Error ? err.message : String(err)}.`,
+      degradedReason: "Typology search AI call failed — using static fallback.",
     }, { headers: gate.headers });
   }
 }

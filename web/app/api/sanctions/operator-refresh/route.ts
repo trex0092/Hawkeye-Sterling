@@ -25,12 +25,11 @@ async function handleOperatorRefresh(_req: Request): Promise<NextResponse> {
     )) as { runIngestionAll: typeof runIngestionAll };
     runIngestionAll = mod.runIngestionAll;
   } catch (err) {
+    console.error("[sanctions/operator-refresh] ingestion runner import failed:", err);
     return NextResponse.json(
       {
         ok: false,
-        error: `ingestion runner unavailable — ${
-          err instanceof Error ? err.message : String(err)
-        }`,
+        error: "ingestion runner unavailable — please check deployment build artifacts",
       },
       { status: 503 },
     );
@@ -63,13 +62,12 @@ async function handleOperatorRefresh(_req: Request): Promise<NextResponse> {
       { status: result.ok ? 200 : 502 },
     );
   } catch (err) {
+    console.error("[sanctions/operator-refresh] runIngestionAll threw:", err);
     return NextResponse.json(
       {
         ok: false,
         triggeredAt,
-        error: `runIngestionAll threw — ${
-          err instanceof Error ? err.message : String(err)
-        }`,
+        error: "Ingestion run failed — see server logs for details.",
       },
       { status: 500 },
     );

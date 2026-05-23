@@ -57,10 +57,11 @@ async function timedCheck<T>(
     const result = await fn();
     return { result, latencyMs: Date.now() - start };
   } catch (err) {
+    console.error(`[system-status] timedCheck(${name}) failed:`, err);
     return {
       result: fallback,
       latencyMs: Date.now() - start,
-      error: err instanceof Error ? err.message : String(err),
+      error: "component check failed",
     };
   }
 }

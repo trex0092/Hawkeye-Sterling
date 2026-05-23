@@ -461,7 +461,9 @@ Provide a complete country risk intelligence assessment covering AML/CFT risk, F
     return NextResponse.json({ ...result, latencyMs }, { headers: gate.headers });
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);
-    console.warn("[country-risk] LLM call failed:", detail);
+    console.error("[country-risk] LLM call failed:", err);
+    const isTimeout = detail.includes("timeout");
+    const isRateLimit = detail.includes("rate");
     // Serve static fallback on LLM failure so tool never returns empty
     const staticEntry = lookupStaticCountry(country);
     if (staticEntry) {
@@ -471,7 +473,7 @@ Provide a complete country risk intelligence assessment covering AML/CFT risk, F
           ...staticEntryToResult(staticEntry),
           source: "static_fallback",
           degraded: true,
-          degradedReason: detail.includes("timeout") ? "LLM timeout" : detail.includes("rate") ? "LLM rate limit" : "LLM unavailable",
+          degradedReason: isTimeout ? "LLM timeout" : isRateLimit ? "LLM rate limit" : "LLM unavailable",
           latencyMs: Date.now() - t0,
         },
         { status: 200, headers: gate.headers },
@@ -480,7 +482,7 @@ Provide a complete country risk intelligence assessment covering AML/CFT risk, F
     return NextResponse.json(
       {
         ok: false,
-        error: detail.includes("timeout") ? "Country-risk analysis timed out. Try again or use a shorter analysis depth." : detail.includes("rate") ? "Country-risk temporarily rate-limited. Wait 60s and retry." : "Real-time country-risk analysis temporarily unavailable. Please retry.",
+        error: isTimeout ? "Country-risk analysis timed out. Try again or use a shorter analysis depth." : isRateLimit ? "Country-risk temporarily rate-limited. Wait 60s and retry." : "Real-time country-risk analysis temporarily unavailable. Please retry.",
         latencyMs: Date.now() - t0,
       },
       { status: 503, headers: gate.headers },

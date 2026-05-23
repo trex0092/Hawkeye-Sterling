@@ -55,10 +55,11 @@ export async function GET(req: Request): Promise<NextResponse> {
     };
     entries = await mod.listRecentIngestErrors(limit);
   } catch (err) {
+    console.error("[sanctions/last-errors] ingest-error log module unavailable:", err);
     return NextResponse.json(
       {
         ok: false,
-        error: `ingest-error log unavailable — ${err instanceof Error ? err.message : String(err)}`,
+        error: "ingest-error log unavailable — please check deployment build artifacts",
         entries: [],
       },
       { status: 503, headers: gate.headers },

@@ -88,6 +88,7 @@ export interface NewsArticle {
   sentiment?: number;         // -1..+1 when provider supplies it
   language?: string;
   relevanceScore?: number;    // 0–1 relevance from provider (tavily, exa)
+  sourceCategory?: "wire" | "investigative" | "regulatory" | "regional" | "social"; // editorial category
 }
 
 export interface NewsAdapter {

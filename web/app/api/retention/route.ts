@@ -80,16 +80,14 @@ export async function GET(req: Request): Promise<NextResponse> {
       { headers: gate.headers },
     );
   } catch (err) {
-    const detail = err instanceof Error ? err.message : String(err);
-    console.warn("[retention GET]", detail);
+    console.error("[retention GET]", err);
     return NextResponse.json(
       {
         ok: false,
         errorCode: "STORE_READ_FAILED",
         retentionDays,
         total: null,
-        error: "Could not read feedback journal",
-        detail,
+        error: "Could not read feedback journal — please retry or contact support.",
       },
       { status: 503, headers: gate.headers },
     );
