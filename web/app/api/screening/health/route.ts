@@ -91,7 +91,8 @@ async function checkSanctionsLists(): Promise<ComponentCheck> {
         latencyMs: Date.now() - t0,
       };
     }
-    const ageMs = meta.updatedAt ? Date.now() - Date.parse(meta.updatedAt) : Infinity;
+    const updatedAt = meta.updatedAt ? Date.parse(meta.updatedAt) : NaN;
+    const ageMs = Number.isFinite(updatedAt) ? Date.now() - updatedAt : Infinity;
     const STALE_MS = 36 * 60 * 60 * 1000;
     const stale = ageMs > STALE_MS;
     return {

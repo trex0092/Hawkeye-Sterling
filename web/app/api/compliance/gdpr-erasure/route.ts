@@ -20,6 +20,7 @@ import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getStore } from "@netlify/blobs";
 import { redactPdplObject } from "../../../../../src/brain/pdpl-guard.js";
 import { createHash, randomBytes } from "node:crypto";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -166,6 +167,12 @@ async function handlePost(req: Request): Promise<NextResponse> {
   } catch {
     // best-effort
   }
+
+  // FDL 10/2025 Art.24: GDPR erasure requests are compliance events and must be in the tamper-evident chain.
+  void writeAuditChainEntry(
+    { event: "gdpr.erasure_request", receiptId, subjectId: body.caseId, actor: gate.keyId },
+    "compliance",
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
 
   return NextResponse.json({ ok: true, receipt }, { headers: gateHeaders });
 }

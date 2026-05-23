@@ -82,9 +82,28 @@ async function handlePost(req: Request, ctx: RequestContext): Promise<NextRespon
       { status: 400 },
     );
   }
+  if (subjectName.length > 500) {
+    return NextResponse.json(
+      { ok: false, error: "subjectName exceeds 500-character limit" },
+      { status: 400 },
+    );
+  }
   if (!reason) {
     return NextResponse.json(
       { ok: false, error: "reason required (audit-trail justification for the whitelist)" },
+      { status: 400 },
+    );
+  }
+  if (reason.length > 2000) {
+    return NextResponse.json(
+      { ok: false, error: "reason exceeds 2000-character limit" },
+      { status: 400 },
+    );
+  }
+  const rawSubjectId = str(raw["subjectId"]);
+  if (rawSubjectId !== undefined && rawSubjectId.length > 256) {
+    return NextResponse.json(
+      { ok: false, error: "subjectId exceeds 256-character limit" },
       { status: 400 },
     );
   }
@@ -114,7 +133,7 @@ async function handlePost(req: Request, ctx: RequestContext): Promise<NextRespon
     approverRole: (approverRoleRaw as WhitelistEntry["approverRole"]) ?? "co",
     approvedAt: new Date().toISOString(),
     reason,
-    ...(str(raw["subjectId"]) ? { subjectId: str(raw["subjectId"])! } : {}),
+    ...(rawSubjectId ? { subjectId: rawSubjectId } : {}),
     ...(str(raw["jurisdiction"])
       ? { jurisdiction: str(raw["jurisdiction"])!.toUpperCase() }
       : {}),

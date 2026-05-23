@@ -71,7 +71,7 @@ async function readJsonBlob(store: string, key: string): Promise<BlobReadResult>
 function inWindow(at: string | undefined, since: number, until: number): boolean {
   if (!at) return true;
   const t = Date.parse(at);
-  if (Number.isNaN(t)) return true;
+  if (!Number.isFinite(t)) return true;
   return t >= since && t <= until;
 }
 

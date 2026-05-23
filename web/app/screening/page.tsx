@@ -7,6 +7,7 @@ import { ScreeningHero } from "@/components/screening/ScreeningHero";
 import { ScreeningToolbar } from "@/components/screening/ScreeningToolbar";
 import { ScreeningTable } from "@/components/screening/ScreeningTable";
 import { SubjectDetailPanel } from "@/components/screening/SubjectDetailPanel";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ScreeningReasoningPanel, type ScreeningReasoning } from "@/components/screening/ScreeningReasoningPanel";
 import { HitTriagePanel, type TriageHit, type Resolution } from "@/components/screening/HitTriagePanel";
 import {
@@ -1840,13 +1841,15 @@ export default function ScreeningPage() {
                   }))
                 : undefined;
               return (
-                <SubjectDetailPanel
-                  subject={selected}
-                  onUpdate={handleUpdateSubject}
-                  allSubjects={subjects}
-                  onSelectSubject={setSelectedId}
-                  triageResolutions={triageForReport}
-                />
+                <ErrorBoundary>
+                  <SubjectDetailPanel
+                    subject={selected}
+                    onUpdate={handleUpdateSubject}
+                    allSubjects={subjects}
+                    onSelectSubject={setSelectedId}
+                    triageResolutions={triageForReport}
+                  />
+                </ErrorBoundary>
               );
             }
             return (

@@ -233,9 +233,11 @@ function buildCognitiveDepthSidecar(
     first_action_at: entries[0]?.at ?? null,
     last_action_at: entries.at(-1)?.at ?? null,
     retention_deadline: entries[0]
-      ? new Date(
-          Date.parse(entries[0].at) + 10 * 365.25 * 24 * 60 * 60 * 1000,
-        ).toISOString()
+      ? (() => {
+          const firstAt = Date.parse(entries[0]?.at ?? "");
+          const base = Number.isFinite(firstAt) ? firstAt : Date.now();
+          return new Date(base + 10 * 365.25 * 24 * 60 * 60 * 1000).toISOString();
+        })()
       : null,
   };
 }

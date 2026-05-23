@@ -68,10 +68,12 @@ async function handleHealth(_req: Request, ctx: RequestContext): Promise<NextRes
       const lastTs = snapshotTimestamp(last);
       const ageMs = lastTs !== null ? now - lastTs : null;
       const scheduled = schedule !== null;
-      const overdue =
-        scheduled && schedule.nextRunAt
-          ? Date.parse(schedule.nextRunAt) + STALE_THRESHOLD_MS < now
-          : false;
+      const overdue = (() => {
+        if (!scheduled || !schedule.nextRunAt) return false;
+        const t = Date.parse(schedule.nextRunAt);
+        if (!Number.isFinite(t)) return false;
+        return t + STALE_THRESHOLD_MS < now;
+      })();
       const stale = lastTs === null || (ageMs !== null && ageMs > STALE_THRESHOLD_MS);
       return {
         id: s.id,

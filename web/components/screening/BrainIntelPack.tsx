@@ -734,7 +734,8 @@ export function BrainCausalChain({ result }: { result: SuperBrainResult }) {
     );
   }
   if (result.screen.hits.length > 0) {
-    const top = result.screen.hits[0]!;
+    const top = result.screen.hits[0];
+    if (!top) return chain;
     chain.push(
       `Appears on ${top.listId} at ${Math.round(top.score * 100)}% match via ${top.method}.`,
     );
@@ -906,7 +907,8 @@ export function BrainSanctionsPathway({ result }: { result: SuperBrainResult }) 
       </Card>
     );
   }
-  const topHit = result.screen.hits[0]!;
+  const topHit = result.screen.hits[0];
+  if (!topHit) return null;
   const confidence = topHit.score;
   const disambConf = topHit.disambiguationConfidence ?? 50;
   const isConfirmed = disambConf >= 75; // at least one corroborating identifier
