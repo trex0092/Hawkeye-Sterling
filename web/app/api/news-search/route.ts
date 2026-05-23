@@ -122,7 +122,7 @@ const TIER1_DOMAINS = new Set([
   "occrp.org", "icij.org", "transparency.org",
   "globalwitness.org", "balkaninsight.com", "hrw.org",
   // Financial regulators' own publications
-  "fatf-gafi.org", "bis.org", "imf.org", "worldbank.org",
+  "fatf-gafi.org", "bis.org", "imf.org", "worldbank.org", "qatarfoundation.org",
   "unodc.org", "ec.europa.eu", "sec.gov", "justice.gov",
   "ofac.treas.gov", "fca.org.uk", "eba.europa.eu",
 ]);
@@ -150,6 +150,9 @@ const TIER2_DOMAINS = new Set([
   "reportingproject.net", "correctiv.org",
   // Additional MENA
   "al-monitor.com", "iranintl.com", "kurdistan24.net",
+  // Gulf / Levant English press
+  "alaraby.co.uk", "asharq.com", "thepeninsulaqatar.com", "timesofoman.com",
+  "gulf-times.com", "jordantimes.com", "dailystar.com.lb", "dailynewsegypt.com",
 ]);
 
 function classifySource(url: string): "tier1" | "tier2" | "tier3" | "unknown" {
@@ -663,6 +666,10 @@ const INVESTIGATIVE_FEEDS: Array<{
   { url: "https://www.eba.europa.eu/rss/news.rss",                          lang: "en", sourceTier: "tier1", sourceCategory: "regulatory",    name: "EBA" },
   // GRECO — Council of Europe anti-corruption body
   { url: "https://www.coe.int/en/web/greco/evaluations/news",               lang: "en", sourceTier: "tier1", sourceCategory: "regulatory",    name: "GRECO" },
+  // MENA investigative / regional
+  { url: "https://english.alarabiya.net/rss.xml",                            lang: "en", sourceTier: "tier2", sourceCategory: "regional",      name: "AlArabiya-EN" },
+  { url: "https://english.alaraby.co.uk/feed",                               lang: "en", sourceTier: "tier2", sourceCategory: "regional",      name: "TheNewArab" },
+  { url: "https://www.jpost.com/Rss/RssFeedsHeadlines.aspx",                 lang: "en-IL", sourceTier: "tier2", sourceCategory: "regional",  name: "JPost" },
 ];
 
 // ── Africa RSS feeds ────────────────────────────────────────────────────────
@@ -1048,6 +1055,65 @@ export async function GET(req: Request): Promise<NextResponse> {
     );
   }
 
+  function arabicToLatinVariants(name: string): string[] {
+    const variants: string[] = [];
+    // Common Arabic → Latin substitutions
+    const subst: Array<[RegExp, string]> = [
+      [/ال/g, "al-"],
+      [/ا|أ|إ|آ/g, "a"],
+      [/ب/g, "b"],
+      [/ت/g, "t"],
+      [/ث/g, "th"],
+      [/ج/g, "j"],
+      [/ح/g, "h"],
+      [/خ/g, "kh"],
+      [/د/g, "d"],
+      [/ذ/g, "dh"],
+      [/ر/g, "r"],
+      [/ز/g, "z"],
+      [/س/g, "s"],
+      [/ش/g, "sh"],
+      [/ص/g, "s"],
+      [/ض/g, "d"],
+      [/ط/g, "t"],
+      [/ظ/g, "z"],
+      [/ع/g, ""],
+      [/غ/g, "gh"],
+      [/ف/g, "f"],
+      [/ق/g, "q"],
+      [/ك/g, "k"],
+      [/ل/g, "l"],
+      [/م/g, "m"],
+      [/ن/g, "n"],
+      [/ه/g, "h"],
+      [/و/g, "w"],
+      [/ي|ى/g, "y"],
+      [/ة/g, "a"],
+    ];
+    let latin = name;
+    for (const [pattern, rep] of subst) latin = latin.replace(pattern, rep);
+    latin = latin.replace(/\s+/g, " ").trim();
+    if (latin && latin !== name) variants.push(latin);
+    // Also generate without al- prefix
+    if (latin.startsWith("al-")) variants.push(latin.slice(3));
+    return variants;
+  }
+
+  function cyrillicToLatinVariants(name: string): string[] {
+    const map: Record<string, string> = {
+      "А":"a","Б":"b","В":"v","Г":"g","Д":"d","Е":"e","Ё":"yo","Ж":"zh","З":"z","И":"i","Й":"y",
+      "К":"k","Л":"l","М":"m","Н":"n","О":"o","П":"p","Р":"r","С":"s","Т":"t","У":"u","Ф":"f",
+      "Х":"kh","Ц":"ts","Ч":"ch","Ш":"sh","Щ":"sch","Ъ":"","Ы":"y","Ь":"","Э":"e","Ю":"yu","Я":"ya",
+      "а":"a","б":"b","в":"v","г":"g","д":"d","е":"e","ё":"yo","ж":"zh","з":"z","и":"i","й":"y",
+      "к":"k","л":"l","м":"m","н":"n","о":"o","п":"p","р":"r","с":"s","т":"t","у":"u","ф":"f",
+      "х":"kh","ц":"ts","ч":"ch","ш":"sh","щ":"sch","ъ":"","ы":"y","ь":"","э":"e","ю":"yu","я":"ya",
+    };
+    let latin = name.split("").map(c => map[c] ?? c).join("");
+    latin = latin.replace(/\s+/g, " ").trim();
+    if (latin && latin !== name) return [latin];
+    return [];
+  }
+
   try {
     // Build a variant set (transliterated, phonetic, corp-suffix-stripped)
     // so foreign-script and alias mentions still match.
@@ -1068,7 +1134,15 @@ export async function GET(req: Request): Promise<NextResponse> {
       .replace(/\bgul/g, "gül")
       .replace(/\bgun/g, "gün");
     if (turkishVariant !== q.toLowerCase()) rawVariants.push(turkishVariant);
-    const variants = Array.from(new Set(rawVariants)).slice(0, 10);
+    // Arabic script variants
+    if (/[\u0600-\u06FF]/.test(q)) {
+      for (const v of arabicToLatinVariants(q)) if (v && !rawVariants.includes(v)) rawVariants.push(v);
+    }
+    // Cyrillic variants
+    if (/[\u0400-\u04FF]/.test(q)) {
+      for (const v of cyrillicToLatinVariants(q)) if (v && !rawVariants.includes(v)) rawVariants.push(v);
+    }
+    const variants = Array.from(new Set(rawVariants)).slice(0, 15);
 
     // For names written in non-Latin scripts (Arabic, CJK, Cyrillic, etc.),
     // AML terminology in native-language press appears in the local language
