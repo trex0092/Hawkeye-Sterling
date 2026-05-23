@@ -197,7 +197,18 @@ Return ONLY valid JSON with this exact structure:
     const cleaned = raw.replace(/^```json?\s*/i, "").replace(/\s*```$/i, "").trim();
     const result = JSON.parse(cleaned.match(/\{[\s\S]*\}/)?.[0] ?? "{}") as Omit<PepNetworkDeepResult, "pepName" | "networkDepth" | "totalNodesDiscovered" | "mandatoryScreeningCount" | "graphSummary">;
 
-    const nodes: NetworkNode[] = Array.isArray(result.networkNodes) ? result.networkNodes : [];
+    // Cap at 20 nodes to prevent result explosion from deep traversal (2+ hops).
+    // Prioritise mandatory screening nodes, then sort by hop distance ascending.
+    const allNodes: NetworkNode[] = Array.isArray(result.networkNodes) ? result.networkNodes : [];
+    const nodes: NetworkNode[] = allNodes
+      .sort((a, b) => {
+        const priorityOrder = { mandatory: 0, high: 1, recommended: 2, optional: 3 };
+        const pa = priorityOrder[a.screeningPriority] ?? 3;
+        const pb = priorityOrder[b.screeningPriority] ?? 3;
+        if (pa !== pb) return pa - pb;
+        return a.hopDistance - b.hopDistance;
+      })
+      .slice(0, 20);
     const hopCounts = { hop1Count: 0, hop2Count: 0, hop3Count: 0, hop4Count: 0 };
     for (const n of nodes) {
       const key = `hop${n.hopDistance}Count` as keyof typeof hopCounts;

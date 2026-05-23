@@ -212,10 +212,24 @@ const LOCALES: Array<{ code: string; hl: string; gl: string; ceid: string }> = [
   { code: "ar-MA", hl: "ar",      gl: "MA", ceid: "MA:ar"       },  // Arabic - Morocco
   { code: "ar-IQ", hl: "ar",      gl: "IQ", ceid: "IQ:ar"       },  // Arabic - Iraq
   { code: "ar-LY", hl: "ar",      gl: "LY", ceid: "LY:ar"       },  // Arabic - Libya
+  { code: "ar-KW", hl: "ar",      gl: "KW", ceid: "KW:ar"       },  // Arabic - Kuwait
+  { code: "ar-QA", hl: "ar",      gl: "QA", ceid: "QA:ar"       },  // Arabic - Qatar
+  { code: "ar-BH", hl: "ar",      gl: "BH", ceid: "BH:ar"       },  // Arabic - Bahrain
+  { code: "ar-OM", hl: "ar",      gl: "OM", ceid: "OM:ar"       },  // Arabic - Oman
+  { code: "ar-YE", hl: "ar",      gl: "YE", ceid: "YE:ar"       },  // Arabic - Yemen
+  { code: "ar-JO", hl: "ar",      gl: "JO", ceid: "JO:ar"       },  // Arabic - Jordan
+  { code: "ar-LB", hl: "ar",      gl: "LB", ceid: "LB:ar"       },  // Arabic - Lebanon
+  { code: "ar-SY", hl: "ar",      gl: "SY", ceid: "SY:ar"       },  // Arabic - Syria
+  { code: "ar-TN", hl: "ar",      gl: "TN", ceid: "TN:ar"       },  // Arabic - Tunisia
   { code: "tr",    hl: "tr",      gl: "TR", ceid: "TR:tr"       },  // Turkish
   { code: "he",    hl: "iw",      gl: "IL", ceid: "IL:iw"       },  // Hebrew
   { code: "fa",    hl: "fa",      gl: "IR", ceid: "IR:fa"       },  // Farsi - Iran
   { code: "en-AE", hl: "en",      gl: "AE", ceid: "AE:en"       },  // English - UAE
+  { code: "en-QA", hl: "en",      gl: "QA", ceid: "QA:en"       },  // English - Qatar
+  { code: "en-SA", hl: "en",      gl: "SA", ceid: "SA:en"       },  // English - Saudi Arabia
+  { code: "en-EG", hl: "en",      gl: "EG", ceid: "EG:en"       },  // English - Egypt
+  { code: "en-JO", hl: "en",      gl: "JO", ceid: "JO:en"       },  // English - Jordan
+  { code: "en-LB", hl: "en",      gl: "LB", ceid: "LB:en"       },  // English - Lebanon
   // ── SOUTH ASIA ───────────────────────────────────────────────────────────
   { code: "en-IN", hl: "en-IN",   gl: "IN", ceid: "IN:en"       },  // English - India
   { code: "hi",    hl: "hi",      gl: "IN", ceid: "IN:hi"       },  // Hindi
@@ -428,10 +442,27 @@ function parseRss(xml: string, subject: string, variants: string[], lang: string
 
     // Boost score for high-signal adverse media terms in title
     const adverseTermBoosts: Record<string, number> = {
-      "convicted": 15, "arrested": 12, "charged": 12, "indicted": 12,
-      "sanctioned": 15, "designated": 10, "fraud": 10, "corruption": 10,
-      "laundering": 15, "bribery": 12, "embezzlement": 12, "terrorist": 15,
-      "wanted": 12, "fugitive": 10, "banned": 8, "debarred": 8,
+      // Highest signal (criminal verdicts)
+      "convicted": 20, "sentenced": 20, "imprisoned": 18, "jailed": 18,
+      "extradited": 18, "guilty verdict": 18,
+      // Criminal process
+      "arrested": 15, "charged": 15, "indicted": 15, "sanctioned": 15,
+      "designated": 12, "warrant": 12, "fugitive": 12,
+      // Financial crime specific
+      "laundering": 18, "money laundering": 20, "bribery": 15, "embezzlement": 15,
+      "fraud": 12, "corruption": 12, "ponzi": 18, "pyramid scheme": 18,
+      "insider trading": 15, "market manipulation": 15,
+      // Terrorism / proliferation
+      "terrorist": 18, "terror financing": 20, "proliferation": 15,
+      // Enforcement
+      "debarred": 12, "blacklisted": 15, "banned": 10,
+      "regulatory fine": 12, "enforcement action": 12,
+      "cease and desist": 10, "asset freeze": 15,
+      // Sanctions
+      "ofac": 18, "sdn list": 18, "un sanctions": 15,
+      // Investigative
+      "leaked documents": 12, "pandora papers": 18, "panama papers": 18,
+      "fincen files": 18, "occrp": 12, "icij": 12,
     };
     const titleLower = title.toLowerCase();
     let boost = 0;
@@ -444,6 +475,12 @@ function parseRss(xml: string, subject: string, variants: string[], lang: string
     const tier = classifySource(link);
     const tierBoost = tier === "tier1" ? 20 : tier === "tier2" ? 10 : 0;
     const tieredScore = Math.min(100, adjustedScore + tierBoost);
+
+    // Date decay: articles older than 2 years get a penalty
+    const pubMs = pubDate ? Date.parse(pubDate) : 0;
+    const ageYears = Number.isFinite(pubMs) ? (Date.now() - pubMs) / (365.25 * 24 * 3600 * 1000) : 5;
+    const decayFactor = ageYears > 5 ? 0.6 : ageYears > 2 ? 0.8 : 1.0;
+    const finalScore = Math.round(tieredScore * decayFactor);
 
     const script = detectScript(title);
     const article: Article = {
@@ -458,7 +495,7 @@ function parseRss(xml: string, subject: string, variants: string[], lang: string
       fuzzyScore: baseScore,
       fuzzyMethod,
       lang,
-      relevanceScore: tieredScore,
+      relevanceScore: finalScore,
       sourceTier: tier,
       sourceCategory: classifySourceCategory(link),
       script,
@@ -895,6 +932,8 @@ function jaccard(a: Set<string>, b: Set<string>): number {
   return inter / (a.size + b.size - inter || 1);
 }
 
+function tierOrder(t: string): number { return t === "tier1" ? 3 : t === "tier2" ? 2 : 1; }
+
 function clusterArticles(articles: Article[]): Article[] {
   const clusters: Array<{ rep: Article; tokens: Set<string>; sources: Set<string> }> = [];
   for (const a of articles) {
@@ -910,7 +949,14 @@ function clusterArticles(articles: Article[]): Article[] {
         if (severityOrder(a.severity) > severityOrder(c.rep.severity)) {
           c.rep.severity = a.severity;
         }
-        if (a.source) c.sources.add(a.source);
+        // When absorbing: if absorbed article is higher tier than rep, make it the new rep
+        if (tierOrder(a.sourceTier) > tierOrder(c.rep.sourceTier)) {
+          const oldRep = c.rep;
+          c.rep = a;
+          if (oldRep.source) c.sources.add(oldRep.source);
+        } else {
+          if (a.source) c.sources.add(a.source);
+        }
         absorbed = true;
         break;
       }
@@ -1128,10 +1174,27 @@ export async function GET(req: Request): Promise<NextResponse> {
       }
       // Boost score for high-signal adverse media terms in title (adapter path)
       const adverseTermBoostsAdapter: Record<string, number> = {
-        "convicted": 15, "arrested": 12, "charged": 12, "indicted": 12,
-        "sanctioned": 15, "designated": 10, "fraud": 10, "corruption": 10,
-        "laundering": 15, "bribery": 12, "embezzlement": 12, "terrorist": 15,
-        "wanted": 12, "fugitive": 10, "banned": 8, "debarred": 8,
+        // Highest signal (criminal verdicts)
+        "convicted": 20, "sentenced": 20, "imprisoned": 18, "jailed": 18,
+        "extradited": 18, "guilty verdict": 18,
+        // Criminal process
+        "arrested": 15, "charged": 15, "indicted": 15, "sanctioned": 15,
+        "designated": 12, "warrant": 12, "fugitive": 12,
+        // Financial crime specific
+        "laundering": 18, "money laundering": 20, "bribery": 15, "embezzlement": 15,
+        "fraud": 12, "corruption": 12, "ponzi": 18, "pyramid scheme": 18,
+        "insider trading": 15, "market manipulation": 15,
+        // Terrorism / proliferation
+        "terrorist": 18, "terror financing": 20, "proliferation": 15,
+        // Enforcement
+        "debarred": 12, "blacklisted": 15, "banned": 10,
+        "regulatory fine": 12, "enforcement action": 12,
+        "cease and desist": 10, "asset freeze": 15,
+        // Sanctions
+        "ofac": 18, "sdn list": 18, "un sanctions": 15,
+        // Investigative
+        "leaked documents": 12, "pandora papers": 18, "panama papers": 18,
+        "fincen files": 18, "occrp": 12, "icij": 12,
       };
       const adapterTitleLower = na.title.toLowerCase();
       let adapterBoost = 0;
@@ -1143,6 +1206,12 @@ export async function GET(req: Request): Promise<NextResponse> {
       const adapterTier = classifySource(na.url ?? "");
       const adapterTierBoost = adapterTier === "tier1" ? 20 : adapterTier === "tier2" ? 10 : 0;
       const adapterTieredScore = Math.min(100, adapterAdjustedScore + adapterTierBoost);
+
+      // Date decay: articles older than 2 years get a penalty (adapter path)
+      const adapterPubMs = na.publishedAt ? Date.parse(na.publishedAt) : 0;
+      const adapterAgeYears = Number.isFinite(adapterPubMs) ? (Date.now() - adapterPubMs) / (365.25 * 24 * 3600 * 1000) : 5;
+      const adapterDecayFactor = adapterAgeYears > 5 ? 0.6 : adapterAgeYears > 2 ? 0.8 : 1.0;
+      const adapterFinalScore = Math.round(adapterTieredScore * adapterDecayFactor);
 
       merged.set(key, {
         title: na.title,
@@ -1156,7 +1225,7 @@ export async function GET(req: Request): Promise<NextResponse> {
         fuzzyScore: adapterBaseScore,
         fuzzyMethod,
         lang: na.language ?? "en",
-        relevanceScore: adapterTieredScore,
+        relevanceScore: adapterFinalScore,
         sourceTier: adapterTier,
         sourceCategory: classifySourceCategory(na.url ?? ""),
       });

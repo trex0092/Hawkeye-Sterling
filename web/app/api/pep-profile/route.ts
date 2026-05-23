@@ -180,9 +180,17 @@ export async function POST(req: Request) {
   // the LLM's tier classification).
   if (pepDataSource === "none" && body.name?.trim()) {
     try {
-      const osUrl = new URL("https://api.opensanctions.org/search/peps");
+      const osUrl = new URL("https://api.opensanctions.org/search/default");
       osUrl.searchParams.set("q", body.name.trim());
       osUrl.searchParams.set("limit", "5");
+      // Broaden coverage: every_politician (300k+ worldwide), eu_meps, gb_hoc_members
+      // plus the base PEP compound dataset and world leaders for complete global PEP coverage.
+      osUrl.searchParams.append("dataset", "every_politician");
+      osUrl.searchParams.append("dataset", "eu_meps");
+      osUrl.searchParams.append("dataset", "gb_hoc_members");
+      osUrl.searchParams.append("dataset", "us_cia_world_leaders");
+      osUrl.searchParams.append("dataset", "un_sc_resolutions");
+      osUrl.searchParams.append("dataset", "peps");
       const osHeaders: Record<string, string> = { accept: "application/json" };
       const osKey = process.env["OPENSANCTIONS_API_KEY"];
       if (osKey) osHeaders["Authorization"] = `Bearer ${osKey}`;
@@ -246,7 +254,7 @@ export async function POST(req: Request) {
       system: [
         {
           type: "text",
-          text: `You are a specialist AML analyst focused on Politically Exposed Person (PEP) risk assessment under FATF Recommendation 12, UAE FDL 10/2025 Art.14, and CBUAE AML Standards. Analyse PEP profile data and produce a comprehensive risk assessment. Apply FATF PEP tier definitions: Tier 1 = heads of state/government, senior ministers, senior military/judiciary/central bank officials, senior officials of international organisations (UN Secretary-General, World Bank Group presidents, IMF Managing Director, ICC/ICJ officials, Arab League Secretary-General — SIE category); Tier 2 = senior judicial officials, senior military officials, members of parliament/legislative bodies, senior political party officials; Tier 3 = mid-level government officials, lower-ranking officials; Tier 4 = senior executives of state-owned enterprises (SOE) at board/C-suite level with material government ownership, senior local/regional government officials; RCA = relative or close associate of any PEP tier — includes spouses, children, parents, and siblings of the PEP, plus known close business associates. Classify SIE (Senior International Organisation Exposed Person) within Tier 1. Return ONLY valid JSON with this exact structure (no markdown fences):
+          text: `You are a specialist AML analyst focused on Politically Exposed Person (PEP) risk assessment under FATF Recommendation 12, UAE FDL 10/2025 Art.14, and CBUAE AML Standards. Analyse PEP profile data and produce a comprehensive risk assessment. Apply FATF PEP tier definitions: Tier 1 = heads of state/government, senior ministers, senior military/judiciary/central bank officials, senior officials of international organisations (UN Secretary-General, World Bank Group presidents, IMF Managing Director, ICC/ICJ officials, Arab League Secretary-General — SIE category). Tier 1 also includes royalty and senior religious/political leaders recognised by these titles or their equivalents: Sheikh, Emir, Sultan, Caliph, Grand Mufti (MENA royalty and senior religious authority); Secretário, Ministro, Senador, Governador (LatAm government); Gouverneur, Sénateur, Directeur général (French-speaking Africa); Mkurugenzi, Waziri, Rais (Swahili East Africa); Olisenator, Gubernator, Prezident (Eastern European variants); and Arabic script titles الأمير (Prince/Emir), الوزير (Minister), الرئيس (President/Chairman), الأمين (Secretary-General); Tier 2 = senior judicial officials, senior military officials, members of parliament/legislative bodies, senior political party officials; Tier 3 = mid-level government officials, lower-ranking officials; Tier 4 = senior executives of state-owned enterprises (SOE) at board/C-suite level with material government ownership, senior local/regional government officials; RCA = relative or close associate of any PEP tier — includes spouses, children, parents, and siblings of the PEP, plus known close business associates. Classify SIE (Senior International Organisation Exposed Person) within Tier 1. Return ONLY valid JSON with this exact structure (no markdown fences):
 {
   "ok": true,
   "pepTier": "tier1"|"tier2"|"tier3"|"tier4"|"rca",
