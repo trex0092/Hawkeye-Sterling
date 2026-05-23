@@ -16,6 +16,7 @@ export interface NewsArticle {
   matchedVariant?: string;
   lang: string;
   sourceTier?: "tier1" | "tier2" | "tier3" | "unknown";
+  sourceCategory?: "wire" | "investigative" | "regulatory" | "regional" | "other";
 }
 
 export interface NewsDossier {

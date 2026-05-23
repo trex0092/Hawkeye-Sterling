@@ -1486,7 +1486,7 @@ function AdverseMediaEvidenceSection({
       return (
         <div className="mt-3 pt-3 border-t border-hair">
           <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2 mb-1.5">
-            Worldwide adverse media (60+ locales)
+            Worldwide adverse media (100+ locales)
           </div>
           <div className="text-11 text-ink-3 italic">Scanning {NEWS_SEARCH_LOCALES}…</div>
         </div>
@@ -1495,7 +1495,7 @@ function AdverseMediaEvidenceSection({
     return (
       <div className="mt-3 pt-3 border-t border-hair">
         <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2 mb-1.5">
-          Worldwide adverse media (60+ locales)
+          Worldwide adverse media (100+ locales)
         </div>
         <div className="text-11 text-green">✓ No adverse media found</div>
         <div className="text-10 text-ink-3 font-mono mt-1">Searched: {NEWS_SEARCH_LOCALES} · FATF R.10</div>
@@ -1506,7 +1506,7 @@ function AdverseMediaEvidenceSection({
   return (
     <div className="mt-3 pt-3 border-t border-hair space-y-3">
       <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">
-        Worldwide adverse media evidence (60+ locales)
+        Worldwide adverse media evidence (100+ locales)
       </div>
 
       {/* Brain-classified categories */}
@@ -3250,7 +3250,7 @@ const SEVERITY_BG: Record<string, string> = {
   critical: "bg-red-dim text-red",
 };
 
-// The 60+ language and regional locales polled by /api/news-search — all 7 continents
+// The 100+ language and regional locales polled by /api/news-search — all 7 continents
 const NEWS_SEARCH_LOCALES = "EN · DE · FR · ES · PT · IT · NL · PL · RO · HU · CS · SK · HR · SR · BG · SV · EL · RU · UK · AR · TR · HE · HI · ID · MS · VI · TH · ZH · JA · KO · EN-GB · EN-AE · EN-IN · EN-SG · EN-AU · AM · AF · FA · BN · UR · TA · TL · MY · AZ · KA · HY · KK · ES-MX · ES-AR · FR-CA · EN-NG · EN-ZA";
 
 const CONTINENT_LOCALES: Record<string, string[]> = {
@@ -3272,12 +3272,18 @@ function getContinentCoverage(languages: string[]): Record<string, boolean> {
   return coverage;
 }
 
+function severityOrder(s: string): number { return { clear: 0, low: 1, medium: 2, high: 3, critical: 4 }[s] ?? 0; }
+
 function NewsDossierPanel({ state }: { state: NewsSearchState }) {
+  const [severityFilter, setSeverityFilter] = useState<string>("all");
+  const [tierFilter, setTierFilter] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<"relevance" | "date" | "severity">("relevance");
+
   if (state.status === "idle") return null;
   if (state.status === "loading") {
     return (
       <Section title="Worldwide adverse-media dossier">
-        <div className="text-11 text-ink-2">Crawling 60+ locales across all continents ({NEWS_SEARCH_LOCALES}) for live articles…</div>
+        <div className="text-11 text-ink-2">Crawling 100+ locales across all continents ({NEWS_SEARCH_LOCALES}) for live articles…</div>
       </Section>
     );
   }
@@ -3293,7 +3299,7 @@ function NewsDossierPanel({ state }: { state: NewsSearchState }) {
           No articles found.
         </div>
         <div className="text-10 text-ink-3 font-mono mt-1">
-          Worldwide search · 60+ locales · All 7 continents · {NEWS_SEARCH_LOCALES} · FATF R.10 lookback applied
+          Worldwide search · 100+ locales · All 7 continents · {NEWS_SEARCH_LOCALES} · FATF R.10 lookback applied
         </div>
       </Section>
     );
@@ -3304,15 +3310,114 @@ function NewsDossierPanel({ state }: { state: NewsSearchState }) {
       <Section title="Worldwide adverse-media dossier">
         <div className="text-11 text-green">✓ No adverse media found for {r.subject}</div>
         <div className="text-10 text-ink-3 font-mono mt-1">
-          Worldwide search · 60+ locales · All 7 continents · {NEWS_SEARCH_LOCALES}
+          Worldwide search · 100+ locales · All 7 continents · {NEWS_SEARCH_LOCALES}
           {r.languages && r.languages.length > 0 && ` · active results in: ${r.languages.join(", ")}`}
            · FATF R.10 lookback applied · negative finding documented
         </div>
       </Section>
     );
   }
+
+  const filtered = r.articles
+    .filter(a => severityFilter === "all" || a.severity === severityFilter)
+    .filter(a => tierFilter === "all" || a.sourceTier === tierFilter);
+
+  const displayArticles = [...filtered].sort((a, b) => {
+    if (sortBy === "relevance") return (b.fuzzyScore ?? 0) - (a.fuzzyScore ?? 0);
+    if (sortBy === "severity") return severityOrder(b.severity) - severityOrder(a.severity);
+    if (sortBy === "date") {
+      const ta = Date.parse(a.pubDate ?? ""); const tb = Date.parse(b.pubDate ?? "");
+      return (Number.isFinite(tb) ? tb : 0) - (Number.isFinite(ta) ? ta : 0);
+    }
+    return 0;
+  });
+
   return (
     <Section title={`Worldwide adverse-media dossier (${r.articleCount})`}>
+      {/* Filter controls */}
+      <div className="flex flex-wrap items-center gap-2 mb-3">
+        {/* Severity filter tabs */}
+        <div className="flex gap-1 text-9">
+          {["all", "critical", "high", "medium", "low", "clear"].map(s => (
+            <button key={s} onClick={() => setSeverityFilter(s)}
+              className={`rounded px-2 py-0.5 capitalize ${severityFilter === s ? "bg-violet text-white" : "bg-ink-7 text-ink-2 hover:bg-ink-6"}`}>
+              {s}
+            </button>
+          ))}
+        </div>
+        {/* Source tier filter */}
+        <div className="flex gap-1 text-9">
+          {["all", "tier1", "tier2", "tier3"].map(t => (
+            <button key={t} onClick={() => setTierFilter(t)}
+              className={`rounded px-2 py-0.5 ${tierFilter === t ? "bg-emerald-600 text-white" : "bg-ink-7 text-ink-2 hover:bg-ink-6"}`}>
+              {t === "all" ? "All Sources" : t === "tier1" ? "⭐ Tier 1" : t === "tier2" ? "Tier 2" : "Tier 3+"}
+            </button>
+          ))}
+        </div>
+        {/* Sort control */}
+        <select value={sortBy} onChange={e => setSortBy(e.target.value as typeof sortBy)}
+          className="rounded border border-ink-6 bg-ink-8 px-2 py-0.5 text-9 text-ink-1">
+          <option value="relevance">Sort: Relevance</option>
+          <option value="date">Sort: Newest First</option>
+          <option value="severity">Sort: Severity</option>
+        </select>
+      </div>
+
+      {/* Coverage stats bar */}
+      <div className="flex flex-wrap gap-2 mb-3 text-xs">
+        <span className="rounded-full bg-ink-7 px-2 py-0.5 text-ink-1">
+          {state.result?.articleCount ?? 0} articles
+        </span>
+        <span className="rounded-full bg-ink-7 px-2 py-0.5 text-ink-1">
+          {state.result?.languages?.length ?? 0} languages
+        </span>
+        {state.result?.articles && (
+          <span className="rounded-full bg-ink-7 px-2 py-0.5 text-ink-1">
+            {state.result.articles.filter(a => a.sourceTier === "tier1").length} tier-1 sources
+          </span>
+        )}
+        <span className={`rounded-full px-2 py-0.5 font-semibold ${
+          state.result?.topSeverity === "critical" ? "bg-red-100 text-red-700" :
+          state.result?.topSeverity === "high" ? "bg-orange-100 text-orange-700" :
+          state.result?.topSeverity === "medium" ? "bg-yellow-100 text-yellow-700" :
+          state.result?.topSeverity === "low" ? "bg-blue-100 text-blue-700" :
+          "bg-green-100 text-green-700"
+        }`}>
+          {(state.result?.topSeverity ?? "clear").toUpperCase()}
+        </span>
+      </div>
+
+      {/* Language coverage pills */}
+      {state.result?.languages && state.result.languages.length > 0 && (
+        <div className="flex flex-wrap gap-1 mb-3">
+          <span className="text-9 text-ink-3 mr-1">Coverage:</span>
+          {state.result.languages.map(lang => (
+            <span key={lang} className="rounded bg-violet/10 px-1 py-0.5 text-[9px] font-mono text-violet uppercase">
+              {lang}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* Source category breakdown */}
+      {state.result?.articles && state.result.articles.length > 0 && (() => {
+        const cats = { wire: 0, investigative: 0, regulatory: 0, regional: 0, other: 0 };
+        for (const a of state.result.articles) {
+          const cat = (a as { sourceCategory?: string }).sourceCategory ?? "other";
+          if (cat in cats) cats[cat as keyof typeof cats]++;
+          else cats.other++;
+        }
+        return (
+          <div className="flex flex-wrap gap-1 mb-3 text-9">
+            {Object.entries(cats).filter(([, n]) => n > 0).map(([cat, n]) => (
+              <span key={cat} className="rounded bg-ink-7 px-1 py-0.5 text-ink-2">
+                {cat}: {n}
+              </span>
+            ))}
+          </div>
+        );
+      })()}
+
       <div className="flex items-center gap-2 mb-2 text-10.5 flex-wrap">
         <span className="text-ink-2 uppercase tracking-wide-2">Top severity:</span>
         <span className={`inline-flex items-center px-1.5 py-px rounded-sm font-mono font-semibold ${SEVERITY_BG[r.topSeverity] ?? "bg-bg-2 text-ink-1"}`}>
@@ -3329,7 +3434,7 @@ function NewsDossierPanel({ state }: { state: NewsSearchState }) {
             ))}
           </>
         )}
-        <span className="ml-auto font-mono text-ink-3">60+ locales searched · {r.source}</span>
+        <span className="ml-auto font-mono text-ink-3">100+ locales searched · {r.source}</span>
       </div>
 
       {r.keywordGroupCounts.length > 0 && (
@@ -3347,7 +3452,7 @@ function NewsDossierPanel({ state }: { state: NewsSearchState }) {
       )}
 
       <ul className="list-none p-0 m-0 space-y-2">
-        {r.articles.map((a, i) => (
+        {displayArticles.map((a, i) => (
           <li key={`${a.link}-${i}`} className="border-b border-hair pb-2 last:border-0">
             <div className="flex items-start justify-between gap-2 mb-0.5">
               <a
@@ -3401,7 +3506,7 @@ function NewsDossierPanel({ state }: { state: NewsSearchState }) {
         ))}
       </ul>
       <div className="mt-3 pt-2 border-t border-hair text-10 text-ink-3 font-mono">
-        Worldwide search · 60+ locales · All 7 continents · {NEWS_SEARCH_LOCALES} · FATF R.10 lookback applied
+        Worldwide search · 100+ locales · All 7 continents · {NEWS_SEARCH_LOCALES} · FATF R.10 lookback applied
       </div>
       {/* Continent coverage badges */}
       {(() => {
