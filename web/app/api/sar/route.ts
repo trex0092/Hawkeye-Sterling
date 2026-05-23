@@ -305,9 +305,9 @@ async function handlePost(req: Request, callerRecord: ApiKeyRecord | null, gateH
       ...(sarReportResult ? { report: sarReportResult } : {}),
     }, { headers: gateHeaders });
   } catch (err) {
-    const detail = err instanceof Error ? err.message : String(err);
+    console.error("[sar] SAR generation failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json(
-      { ok: false, error: "SAR generation failed", detail },
+      { ok: false, error: "SAR generation failed" },
       { status: 500, headers: gateHeaders },
     );
   }

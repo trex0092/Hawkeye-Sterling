@@ -183,11 +183,12 @@ async function parseQuery(query: string): Promise<ParseResult> {
       reasoning: parsed.reasoning ?? "Parsed by brain",
     };
   } catch (err) {
+    console.error("[nl-search] LLM parse failed:", err instanceof Error ? err.message : String(err));
     return {
       filters: {},
       interpretation: query,
       confidence: 0,
-      reasoning: err instanceof Error ? err.message : "parse failed",
+      reasoning: "parse error — manual filter applied",
     };
   }
 }

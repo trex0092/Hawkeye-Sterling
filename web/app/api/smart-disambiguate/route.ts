@@ -227,7 +227,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: true, ...parsed, latencyMs: Date.now() - t0 }, { headers: gate.headers });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    writeAuditEvent("analyst", "screening.smart-disambiguate.error", `${client.name} — ${msg}`);
-    return NextResponse.json({ ok: true, ...buildTemplate(), degraded: true, degradedReason: `LLM call failed: ${msg}`, latencyMs: Date.now() - t0 }, { headers: gate.headers });
+    console.error("[smart-disambiguate] LLM call failed:", msg);
+    writeAuditEvent("analyst", "screening.smart-disambiguate.error", `${client.name} — LLM service temporarily unavailable`);
+    return NextResponse.json({ ok: true, ...buildTemplate(), degraded: true, degradedReason: "LLM service temporarily unavailable", latencyMs: Date.now() - t0 }, { headers: gate.headers });
   }
 }

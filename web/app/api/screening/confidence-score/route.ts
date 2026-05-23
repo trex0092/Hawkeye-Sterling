@@ -150,11 +150,11 @@ Assess whether this is a true sanctions/PEP/watchlist match or a false positive.
 
     return NextResponse.json(result, { headers: gate.headers });
   } catch (err) {
-    console.warn("[confidence-score] LLM failed, using deterministic template:", err instanceof Error ? err.message : err);
+    console.error("[confidence-score] LLM failed, using deterministic template:", err instanceof Error ? err.message : err);
     return NextResponse.json({
       ...buildTemplate(),
       degraded: true,
-      degradedReason: `LLM call failed: ${err instanceof Error ? err.message : String(err)}`,
+      degradedReason: "LLM service temporarily unavailable",
     }, { headers: gate.headers });
   }
 }

@@ -62,10 +62,11 @@ export async function POST(req: Request): Promise<NextResponse> {
     )) as { runIngestionAll: typeof runIngestionAll };
     runIngestionAll = mod.runIngestionAll;
   } catch (err) {
+    console.error("[trigger-refresh] failed to load ingestion runner:", err instanceof Error ? err.message : String(err));
     return NextResponse.json(
       {
         ok: false,
-        error: `ingestion runner unavailable — ${err instanceof Error ? err.message : String(err)}`,
+        error: "ingestion service unavailable",
       },
       { status: 503 },
     );
@@ -113,11 +114,12 @@ export async function POST(req: Request): Promise<NextResponse> {
       { status: result.ok ? 200 : 502 },
     );
   } catch (err) {
+    console.error("[trigger-refresh] runIngestionAll threw:", err instanceof Error ? err.message : String(err));
     return NextResponse.json(
       {
         ok: false,
         triggeredAt,
-        error: `runIngestionAll threw — ${err instanceof Error ? err.message : String(err)}`,
+        error: "ingestion service unavailable",
       },
       { status: 500 },
     );
