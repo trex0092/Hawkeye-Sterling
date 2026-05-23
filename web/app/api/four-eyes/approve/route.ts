@@ -14,7 +14,7 @@
 //   • Two distinct "approve" decisions required to flip status to "approved"
 
 import { NextResponse } from "next/server";
-import { withGuard } from "@/lib/server/guard";
+import { withGuard, type RequestContext } from "@/lib/server/guard";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { getJson, setJson } from "@/lib/server/store";
 import { validateString, validateEnum } from "@/lib/server/validate";
@@ -54,8 +54,13 @@ function isRecord(v: unknown): v is Record<string, unknown> {
 // Handler
 // ---------------------------------------------------------------------------
 
-async function handler(req: Request): Promise<NextResponse> {
+async function handler(req: Request, ctx: RequestContext): Promise<NextResponse> {
   const t0 = Date.now();
+  // Actor identity comes from the authenticated API key, not the request body,
+  // to prevent impersonation and ensure the self-approval / duplicate-approver
+  // guards operate on a trusted identity.
+  const actor = (ctx.apiKey.email || ctx.apiKey.name || ctx.apiKey.id).toLowerCase().trim();
+
   let raw: unknown;
   try {
     raw = await req.json();
@@ -78,11 +83,7 @@ async function handler(req: Request): Promise<NextResponse> {
   // 1. Validate required fields using validate.ts helpers.
   const SAFE_ID_RE = /^[a-zA-Z0-9_\-:.]+$/;
   const itemId = validateString(raw["itemId"], { required: true, maxLength: 96, pattern: SAFE_ID_RE });
-  // Normalize actor to lowercase-trimmed so "Alice Smith" and "alice smith"
-  // are treated as the same identity (prevents case-sensitivity bypass of
-  // the self-approval and duplicate-approver guards).
-  const actorRaw = validateString(raw["actor"], { required: true });
-  const actor = actorRaw ? actorRaw.toLowerCase().trim() : actorRaw;
+  // actor is resolved from authenticated context above — body-supplied actor is ignored.
   const decision = validateEnum(raw["decision"], ["approve", "reject"] as const);
   const rationale = validateString(raw["rationale"], { required: true });
 

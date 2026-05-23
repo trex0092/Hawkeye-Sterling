@@ -289,7 +289,7 @@ export default function FourEyesPage() {
                           <button
                             type="button"
                             onClick={() => { void decide(); }}
-                            disabled={isSubmitting || !signingDraft.name.trim() || (signingDraft.action === "reject" && !signingDraft.reason.trim())}
+                            disabled={isSubmitting || isOwn || !signingDraft.name.trim() || (signingDraft.action === "reject" && !signingDraft.reason.trim())}
                             className={`text-12 font-semibold px-4 py-1.5 rounded disabled:opacity-40 disabled:cursor-not-allowed ${
                               signingDraft.action === "approve"
                                 ? "bg-green text-white hover:opacity-90"

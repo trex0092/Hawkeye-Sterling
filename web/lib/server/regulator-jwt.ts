@@ -159,6 +159,12 @@ export function verifyRegulatorToken(token: string): RegulatorTokenClaims | null
   if (parts.length !== 3) return null;
   const [headerB64, claimsB64, sigB64] = parts as [string, string, string];
 
+  let header: { alg?: string };
+  try {
+    header = JSON.parse(base64urlDecode(headerB64).toString("utf8")) as { alg?: string };
+  } catch { return null; }
+  if (header.alg !== "EdDSA") return null;
+
   let claims: RegulatorTokenClaims;
   try {
     claims = JSON.parse(base64urlDecode(claimsB64).toString("utf8")) as RegulatorTokenClaims;

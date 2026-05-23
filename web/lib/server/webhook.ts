@@ -4,6 +4,24 @@ import crypto from "node:crypto";
 // Does NOT retry on 4xx — those indicate a configuration problem.
 const RETRY_DELAYS_MS = [2_000, 4_000, 8_000] as const;
 
+// Private/loopback IP ranges and cloud metadata hostnames that must never
+// receive outbound webhook traffic (SSRF prevention).
+const BLOCKED_HOSTS = /^(localhost|.*\.local|metadata\.google\.internal)$/i;
+const PRIVATE_IP = /^(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|127\.|169\.254\.|::1$|0\.0\.0\.0)/;
+
+function assertSafeWebhookUrl(raw: string): void {
+  let u: URL;
+  try { u = new URL(raw); } catch {
+    throw new Error("HAWKEYE_WEBHOOK_URL is not a valid URL");
+  }
+  if (u.protocol !== "https:") {
+    throw new Error(`HAWKEYE_WEBHOOK_URL must use https, got: ${u.protocol}`);
+  }
+  if (BLOCKED_HOSTS.test(u.hostname) || PRIVATE_IP.test(u.hostname)) {
+    throw new Error("HAWKEYE_WEBHOOK_URL resolves to a blocked host");
+  }
+}
+
 export interface WebhookEvent {
   type:
     | "screening.completed"
@@ -35,6 +53,11 @@ export interface WebhookResult {
 export async function postWebhook(event: WebhookEvent): Promise<WebhookResult> {
   const url = process.env["HAWKEYE_WEBHOOK_URL"];
   if (!url) return { delivered: false, error: "HAWKEYE_WEBHOOK_URL not set" };
+  try { assertSafeWebhookUrl(url); } catch (e) {
+    const msg = e instanceof Error ? e.message : "invalid webhook URL";
+    console.error("[webhook]", msg);
+    return { delivered: false, error: msg };
+  }
 
   const secret = process.env["HAWKEYE_WEBHOOK_SECRET"];
   if (!secret) {

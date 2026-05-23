@@ -67,7 +67,7 @@ interface SubmissionState {
   error?: string;
 }
 
-const GOAML_ALLOWED_ROLES = new Set(["mlro", "co", "compliance", "managing_director"]);
+const GOAML_ALLOWED_ROLES = new Set(["mlro", "co", "managing_director"]);
 
 export default function GoAmlExportPage() {
   const [role, setRole] = useState<string>(() => typeof window !== "undefined" ? loadOperatorRole() : "analyst");

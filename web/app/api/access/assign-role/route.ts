@@ -10,6 +10,8 @@ import { adminAuth } from "@/lib/server/admin-auth";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { randomBytes } from "node:crypto";
+import { verifySession, SESSION_COOKIE } from "@/lib/server/auth";
+import { cookies } from "next/headers";
 
 const FALLBACK_ASSESSMENT: Record<string, string> = {
   "trading→compliance": "Upgrading from Trading to Compliance Department grants full platform access including MLRO Advisor, STR Cases, Playbook and Access Control. Verify the user's AML certification and obtain senior management approval before activation per FDL 10/2025 Art.20.",
@@ -46,6 +48,29 @@ export async function POST(req: Request) {
   type LockResult =
     | { kind: 'error'; status: number; message: string }
     | { kind: 'ok'; updatedUser: AccessUser; oldRole: UserRole; users: AccessUser[] };
+
+  // Privilege guard: callers acting via a browser session (middleware-injected
+  // ADMIN_TOKEN) may not assign a role with power >= their own session role.
+  // Direct server-to-server calls (pure ADMIN_TOKEN, no session cookie) are
+  // trusted as full-admin and bypass this check.
+  const ROLE_POWER: Record<string, number> = {
+    logistics: 1, trading: 1, accounts: 1,
+    compliance: 2, management: 3, mlro: 3,
+  };
+  const jar = await cookies();
+  const sessionToken = jar.get(SESSION_COOKIE)?.value ?? "";
+  const session = verifySession(sessionToken);
+  if (session) {
+    // Session-based caller: enforce privilege ceiling.
+    const callerPower = ROLE_POWER[session.role] ?? 0;
+    const newRolePower = ROLE_POWER[newRole] ?? 0;
+    if (newRolePower >= callerPower) {
+      return NextResponse.json(
+        { ok: false, error: "Cannot assign a role with equal or higher privilege than your own" },
+        { status: 403, headers: gate.headers },
+      );
+    }
+  }
 
   const lockResult = await withUsersLock<LockResult>(async () => {
     const loadedUsers = await loadUsers();

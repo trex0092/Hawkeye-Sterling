@@ -260,7 +260,9 @@ export function middleware(req: NextRequest): NextResponse {
       // cross-origin contexts, so this is a safe same-origin indicator
       // even when origin/referer headers are absent (e.g. strict no-referrer
       // browser policy or certain fetch modes).
-      const hasSessionCookie = req.cookies.get(SESSION_COOKIE)?.value != null;
+      // Validate the session token structure and expiry — mere cookie presence
+      // is insufficient because external callers can send arbitrary Cookie headers.
+      const hasSessionCookie = isValidSession(req.cookies.get(SESSION_COOKIE)?.value ?? "");
       const isSameOrigin =
         hasSessionCookie ||
         (hostHostname !== null &&

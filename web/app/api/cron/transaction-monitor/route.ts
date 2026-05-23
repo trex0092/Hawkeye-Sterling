@@ -16,11 +16,24 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-const BASE_URL =
-  process.env["URL"] ??
-  process.env["DEPLOY_PRIME_URL"] ??
-  process.env["NEXT_PUBLIC_APP_URL"] ??
-  "https://hawkeye-sterling.netlify.app";
+function safeAppBase(): string {
+  const candidates = [
+    process.env["URL"],
+    process.env["DEPLOY_PRIME_URL"],
+    process.env["NEXT_PUBLIC_APP_URL"],
+  ];
+  for (const raw of candidates) {
+    if (!raw) continue;
+    try {
+      const u = new URL(raw);
+      if (u.protocol !== "http:" && u.protocol !== "https:") continue;
+      if (u.username || u.password) continue;
+      if (u.pathname !== "/" && u.pathname !== "") continue;
+      return `${u.protocol}//${u.host}`;
+    } catch { /* skip invalid */ }
+  }
+  return "https://hawkeye-sterling.netlify.app";
+}
 
 interface TypologyResult {
   primaryTypology?: {
@@ -41,7 +54,7 @@ async function runTypologyMatch(record: TxnFlagRecord): Promise<TypologyResult |
   ].join("; ");
 
   try {
-    const res = await fetch(`${BASE_URL}/api/typology-match`, {
+    const res = await fetch(`${safeAppBase()}/api/typology-match`, {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -89,7 +102,7 @@ async function openCase(record: TxnFlagRecord, typology: TypologyResult): Promis
     }],
   }];
 
-  await fetch(`${BASE_URL}/api/cases`, {
+  await fetch(`${safeAppBase()}/api/cases`, {
     method: "POST",
     headers: {
       "content-type": "application/json",
@@ -101,7 +114,7 @@ async function openCase(record: TxnFlagRecord, typology: TypologyResult): Promis
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
-  const cronSecret = process.env["CRON_SECRET"] ?? process.env["ONGOING_RUN_TOKEN"] ?? "";
+  const cronSecret = process.env["CRON_SECRET"] ?? "";
   if (!cronSecret) {
     return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
   }

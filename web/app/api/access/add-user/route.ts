@@ -12,14 +12,16 @@ import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 export async function POST(req: Request) {
   const deny = adminAuth(req);
   if (deny) return deny;
-  let body: { name: string; email: string; role: UserRole; username?: string; password?: string; addedBy?: string };
+  let body: { name: string; email: string; role: UserRole; username?: string; password?: string };
   try {
     body = (await req.json()) as typeof body;
   } catch {
     return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { name, email, role, username, password, addedBy = "Luisa Fernanda" } = body;
+  const { name, email, role, username, password } = body;
+  // addedBy is derived from the Authorization header (ADMIN_TOKEN), never from the request body.
+  const addedBy = "admin";
   if (!name?.trim() || !email?.trim() || !role) {
     return NextResponse.json({ ok: false, error: "name, email, and role are required" }, { status: 400 });
   }

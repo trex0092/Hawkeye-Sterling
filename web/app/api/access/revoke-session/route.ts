@@ -11,14 +11,16 @@ import { randomBytes } from "node:crypto";
 export async function POST(req: Request) {
   const deny = adminAuth(req);
   if (deny) return deny;
-  let body: { userId: string; reason: string; revokedBy?: string };
+  let body: { userId: string; reason: string };
   try {
     body = (await req.json()) as typeof body;
   } catch {
     return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { userId, reason, revokedBy = "System Administrator" } = body;
+  const { userId, reason } = body;
+  // revokedBy is derived server-side from the admin credential, never from the request body.
+  const revokedBy = "admin";
   if (!userId || !reason) {
     return NextResponse.json({ ok: false, error: "userId and reason are required" }, { status: 400 });
   }

@@ -1,6 +1,18 @@
 import { getJson, setJson } from "@/lib/server/store";
 import { createHmac } from "node:crypto";
 
+const BLOCKED_HOSTS_RE = /^(localhost|.*\.local|metadata\.google\.internal)$/i;
+const PRIVATE_IP_RE = /^(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|127\.|169\.254\.|::1$|0\.0\.0\.0)/;
+
+function isSafeWebhookUrl(raw: string): boolean {
+  try {
+    const u = new URL(raw);
+    if (u.protocol !== "https:") return false;
+    if (BLOCKED_HOSTS_RE.test(u.hostname) || PRIVATE_IP_RE.test(u.hostname)) return false;
+    return true;
+  } catch { return false; }
+}
+
 interface WebhookRegistration {
   id: string;
   url: string;
@@ -35,7 +47,7 @@ export async function deliverWebhookEvent(
   )).filter((r): r is WebhookRegistration => r !== null && r.active);
 
   const matching = registrations.filter(
-    (r) => r.events.includes("all") || r.events.includes(event)
+    (r) => (r.events.includes("all") || r.events.includes(event)) && isSafeWebhookUrl(r.url)
   );
   if (matching.length === 0) return;
 
