@@ -53,7 +53,10 @@ const LEGAL_BASIS = "CR134/2025 Art.3 + MoE Circ.08/AML/2021";
 const STORE = "hawkeye-dpmsr";
 
 function daysBetween(a: string, b: string): number {
-  return Math.abs(Date.parse(a) - Date.parse(b)) / 86_400_000;
+  const ta = Date.parse(a);
+  const tb = Date.parse(b);
+  if (!Number.isFinite(ta) || !Number.isFinite(tb)) return Infinity;
+  return Math.abs(ta - tb) / 86_400_000;
 }
 
 function addHours(from: Date, h: number): Date {

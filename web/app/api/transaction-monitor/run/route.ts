@@ -79,16 +79,16 @@ function detectStructuring(txs: Transaction[]): number {
   // STRUCTURING_WINDOW_HOURS each 80–99% of the DPMS threshold.
   const sorted = [...txs]
     .filter((t) => t.amount >= DPMS_CASH_THRESHOLD_AED * 0.8 && t.amount < DPMS_CASH_THRESHOLD_AED)
-    .sort((a, b) => Date.parse(a.occurredAt) - Date.parse(b.occurredAt));
+    .sort((a, b) => (Number.isFinite(Date.parse(a.occurredAt)) ? Date.parse(a.occurredAt) : 0) - (Number.isFinite(Date.parse(b.occurredAt)) ? Date.parse(b.occurredAt) : 0));
   let hits = 0;
   let i = 0;
   while (i < sorted.length) {
     let cluster = 1;
     let j = i + 1;
     for (; j < sorted.length; j++) {
-      const deltaH =
-        (Date.parse(sorted[j]!.occurredAt) - Date.parse(sorted[i]!.occurredAt)) /
-        (1000 * 60 * 60);
+      const tj = Date.parse(sorted[j]!.occurredAt);
+      const ti = Date.parse(sorted[i]!.occurredAt);
+      const deltaH = (Number.isFinite(tj) && Number.isFinite(ti)) ? (tj - ti) / (1000 * 60 * 60) : Infinity;
       if (deltaH > STRUCTURING_WINDOW_HOURS) break;
       cluster++;
     }
@@ -207,7 +207,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       const amounts = txs.map((t) => t.amount);
       const mean = amounts.reduce((a, b) => a + b, 0) / amounts.length;
       const std = Math.max(1, Math.sqrt(amounts.map((a) => (a - mean) ** 2).reduce((a, b) => a + b, 0) / amounts.length));
-      const sorted = [...txs].sort((a, b) => Date.parse(a.occurredAt) - Date.parse(b.occurredAt));
+      const sorted = [...txs].sort((a, b) => (Number.isFinite(Date.parse(a.occurredAt)) ? Date.parse(a.occurredAt) : 0) - (Number.isFinite(Date.parse(b.occurredAt)) ? Date.parse(b.occurredAt) : 0));
       for (const tx of sorted) {
         const features = extractFeatures({
           amountUsd: tx.amount / 3.67, // AED → USD approx

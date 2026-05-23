@@ -102,6 +102,10 @@ export async function GET(req: Request): Promise<NextResponse> {
       for (const ffr of ffrs) {
         if (!ffr || ffr.status === "submitted" || ffr.status === "acknowledged" || ffr.status === "released") continue;
         const deadline = Date.parse(ffr.slaDeadline);
+        if (!Number.isFinite(deadline)) {
+          // SLA deadline is unknown — flag as review required, skip this clock
+          continue;
+        }
         const remaining = deadline - now;
         const breached = remaining <= 0;
         records.push({

@@ -214,8 +214,9 @@ export async function POST(req: Request): Promise<NextResponse> {
       // run isn't due yet, skip this subject. Subjects without a
       // schedule run on every tick (legacy behaviour).
       const schedule = await getJson<Schedule>(`schedule/${s.id}`);
-      if (schedule && Date.parse(schedule.nextRunAt) > nowMs) {
-        return;
+      if (schedule) {
+        const nextRunAt = Date.parse(schedule.nextRunAt);
+        if (Number.isFinite(nextRunAt) && nextRunAt > nowMs) return; // skip if not due
       }
 
       const subject = {
