@@ -172,8 +172,8 @@ export const AML_KEYWORDS_MULTILINGUAL: Record<string, string[]> = {
   // Swedish
   sv: ["penningtvätt", "korruption", "bedrägeri", "arresterad",
        "smuggling", "sanktioner", "terrorism", "organiserad brottslighet"],
-  // Norwegian
-  no: ["hvitvasking", "korrupsjon", "svindel", "pågrepet",
+  // Norwegian — Norway (merged)
+  no: ["hvitvasking", "korrupsjon", "svindel", "pågrepet", "pågripelse",
        "smugling", "sanksjoner", "terrorisme", "organisert kriminalitet"],
   // Swahili — East Africa
   sw: ["utakatishaji fedha", "ufisadi", "udanganyifu", "rushwa",
@@ -279,13 +279,6 @@ export const AML_KEYWORDS_MULTILINGUAL: Record<string, string[]> = {
        "pidätys",              // arrest
        "pakotteet",            // sanctions
        "salakuljetus"],         // smuggling
-  // Norwegian — Norway
-  no: ["hvitvasking",         // money laundering
-       "korrupsjon",           // corruption
-       "svindel",              // fraud
-       "pågripelse",           // arrest
-       "sanksjoner",           // sanctions
-       "smugling"],            // smuggling
   // Danish — Denmark
   da: ["hvidvaskning",        // money laundering
        "korruption",           // corruption
