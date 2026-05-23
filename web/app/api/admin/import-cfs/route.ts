@@ -90,8 +90,9 @@ export async function GET(req: Request): Promise<NextResponse> {
   try {
     mod = (await import("@netlify/blobs")) as unknown as BlobsModuleShape;
   } catch (err) {
+    console.error("[import-cfs GET] @netlify/blobs unavailable:", err);
     return NextResponse.json(
-      { ok: false, error: `@netlify/blobs unavailable — ${err instanceof Error ? err.message : String(err)}` },
+      { ok: false, error: "@netlify/blobs unavailable — check NETLIFY_SITE_ID and NETLIFY_BLOBS_TOKEN environment variables" },
       { status: 503 },
     );
   }
@@ -114,8 +115,9 @@ export async function GET(req: Request): Promise<NextResponse> {
     }
     return NextResponse.json({ ok: true, ran: true, manifest }, { status: 200 });
   } catch (err) {
+    console.error("[import-cfs GET] manifest read failed:", err);
     return NextResponse.json(
-      { ok: false, error: `manifest read failed — ${err instanceof Error ? err.message : String(err)}` },
+      { ok: false, error: "manifest read failed — please retry or contact support" },
       { status: 503 },
     );
   }
@@ -138,8 +140,9 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     mod = (await import("@netlify/blobs")) as unknown as BlobsModuleShape;
   } catch (err) {
+    console.error("[import-cfs POST] @netlify/blobs unavailable:", err);
     return NextResponse.json(
-      { ok: false, error: `@netlify/blobs unavailable — ${err instanceof Error ? err.message : String(err)}` },
+      { ok: false, error: "@netlify/blobs unavailable — check NETLIFY_SITE_ID and NETLIFY_BLOBS_TOKEN environment variables" },
       { status: 503 },
     );
   }
@@ -194,8 +197,9 @@ export async function POST(req: Request): Promise<NextResponse> {
     const listing = await cfsStore.list({ prefix: "files/" });
     fileKeys = (listing.blobs ?? []).map((b) => b.key);
   } catch (err) {
+    console.error("[import-cfs POST] cfs store list failed:", err);
     return NextResponse.json(
-      { ok: false, error: `cfs store list failed — ${err instanceof Error ? err.message : String(err)}` },
+      { ok: false, error: "cfs store list failed — please retry or contact support" },
       { status: 503 },
     );
   }
