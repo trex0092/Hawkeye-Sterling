@@ -703,7 +703,7 @@ function buildActionList(rec: string, riskLevel: string): string[] {
       "Notify relevant stakeholders of case closure.",
     ],
   };
-  return base[rec] ?? base.APPROVE;
+  return base[rec] ?? base["APPROVE"] ?? [];
 }
 
 function buildCertificationSection(body: GenerateReportBody, reportId: string, dateStr: string, sectionNum: string): string {

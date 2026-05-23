@@ -231,11 +231,13 @@ export async function POST(req: Request): Promise<NextResponse> {
   const results: Array<{
     subjectId: string;
     subjectName: string;
+    riskTier?: CustomerRiskTier;
     topScore: number;
     rawScore: number;
     severity: string;
     scoreDelta: number;
     escalated: boolean;
+    changeSummary?: string[];
     newHits: Array<{ listId: string; listRef: string; candidateName: string }>;
     webhook: Awaited<ReturnType<typeof postWebhook>>;
     asanaTaskUrl?: string;
@@ -788,7 +790,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       }
 
       const webhookType: "screening.escalated" | "screening.delta" | "ongoing.rerun" =
-        escalated
+        changeEscalated
           ? "screening.escalated"
           : newHits.length > 0
             ? "screening.delta"
@@ -801,7 +803,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         severity: adjustedSeverity,
         topScore: adjustedScore,
         scoreDelta,
-        escalated,
+        escalated: changeEscalated,
         newHits: newHits.map((h) => ({
           listId: h.listId,
           listRef: h.listRef,
@@ -829,13 +831,28 @@ export async function POST(req: Request): Promise<NextResponse> {
           severity: adjustedSeverity,
           caseId: s.caseId,
           newHitCount: newHits.length,
-          escalated,
+          escalated: changeEscalated,
         }).catch((err) => console.warn("[ongoing/run] deliverWebhookEvent failed:", err instanceof Error ? err.message : String(err)));
       }
 
-      // Advance the schedule clock. thrice_daily pins to the next fixed
-      // Dubai slot (08:30 / 15:00 / 17:30); everything else uses a simple
-      // now + interval advance.
+      // ── Advance schedules ────────────────────────────────────────────────────
+      // 1. Risk-based schedule: compute next screen / news-check timestamps from
+      //    the subject's risk tier interval. This is the authoritative schedule
+      //    used by the queue endpoint and the isScreenDue helper.
+      const nextScreenAtMs = nowMs + freq.screenIntervalDays * 24 * 60 * 60 * 1_000;
+      const nextNewsCheckAtMs = nowMs + freq.newsCheckIntervalDays * 24 * 60 * 60 * 1_000;
+      const updatedRiskSchedule: RiskBasedSchedule = {
+        subjectId: s.id,
+        riskTier,
+        nextScreenAt: new Date(nextScreenAtMs).toISOString(),
+        lastScreenAt: runAt,
+        nextNewsCheckAt: new Date(nextNewsCheckAtMs).toISOString(),
+        ...(newsCheckDue ? { lastNewsCheckAt: runAt } : riskSchedule?.lastNewsCheckAt ? { lastNewsCheckAt: riskSchedule.lastNewsCheckAt } : {}),
+      };
+      await setJson(`ongoing/risk-schedule/${s.id}`, updatedRiskSchedule);
+
+      // 2. Legacy cadence-based schedule — update for backward compatibility.
+      const schedule = await getJson<Schedule>(`schedule/${s.id}`);
       if (schedule) {
         const nextRunAt =
           schedule.cadence === "thrice_daily"
@@ -852,11 +869,13 @@ export async function POST(req: Request): Promise<NextResponse> {
       results.push({
         subjectId: s.id,
         subjectName: s.name,
+        riskTier,
         topScore: adjustedScore,
         rawScore: screen.topScore,
         severity: adjustedSeverity,
         scoreDelta,
-        escalated,
+        escalated: changeEscalated,
+        changeSummary: changeDetection.changeSummary,
         newHits: newHits.map((h) => ({
           listId: h.listId,
           listRef: h.listRef,

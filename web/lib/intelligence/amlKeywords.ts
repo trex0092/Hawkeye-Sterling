@@ -35,6 +35,13 @@ export const AML_KEYWORDS_EN: string[] = [
   "invoice fraud", "billing fraud", "payroll fraud", "procurement fraud",
   "financial misstatement", "earnings manipulation", "revenue fraud",
   "securities fraud", "investment fraud", "pension fraud", "mortgage fraud",
+  // Securities fraud & market abuse — FATF predicate offences
+  "pump and dump", "wash trading", "front running", "spoofing",
+  "layering orders", "quote stuffing", "short and distort",
+  "naked short selling", "bear raid",
+  "boiler room", "cold call fraud", "advance fee fraud", "419 fraud",
+  "unauthorized trading", "churning", "suitability violation",
+  "false prospectus", "IPO fraud",
   // Governance & corruption
   "corruption", "abuse of power", "conflict of interest",
   "misuse of funds", "kleptocracy", "state capture",
@@ -156,7 +163,9 @@ export const AML_KEYWORDS_MULTILINGUAL: Record<string, string[]> = {
        "преступление", "уголовное дело", "контрабанда", "санкции", "обыск",
        "отмывание денег",
        // Cybercrime (ru)
-       "программа-вымогатель", "кибератака", "хакерская группа", "дарквеб"],
+       "программа-вымогатель", "кибератака", "хакерская группа", "дарквеб",
+       // Bribery & corruption (ru)
+       "взяточничество", "коррупция", "откат", "мошенничество с госконтрактами", "хищение бюджетных средств"],
   // French
   fr: ["arrêté", "blanchiment", "corruption", "fraude", "enquête",
        "mise en examen", "trafic", "détournement", "pot-de-vin", "crime organisé",
@@ -175,7 +184,9 @@ export const AML_KEYWORDS_MULTILINGUAL: Record<string, string[]> = {
        "تهريب", "جريمة", "عقوبات", "تمويل الإرهاب", "صفقة مشبوهة",
        "تمويل إرهاب",
        // Bribery & corruption (ar)
-       "الرشوة", "الفساد", "عمولة سرية", "نهب المال العام", "الاستيلاء على الدولة"],
+       "الرشوة", "الفساد", "عمولة سرية", "نهب المال العام", "الاستيلاء على الدولة",
+       // Human trafficking (ar)
+       "الاتجار بالبشر", "العمالة القسرية", "الرق الحديث", "تهريب الأشخاص"],
   // Italian
   it: ["arrestato", "riciclaggio", "corruzione", "frode", "indagine",
        "mafia", "camorra", "ndrangheta", "evasione fiscale", "contrabbando"],
@@ -183,13 +194,19 @@ export const AML_KEYWORDS_MULTILINGUAL: Record<string, string[]> = {
   zh: ["洗钱", "腐败", "欺诈", "逮捕", "走私", "贿赂", "制裁",
        "非法资金", "恐怖融资", "犯罪组织", "调查", "起诉",
        // Cybercrime (zh)
-       "勒索软件", "网络犯罪", "暗网", "黑客组织"],
+       "勒索软件", "网络犯罪", "暗网", "黑客组织",
+       // Securities fraud (zh)
+       "内幕交易", "操纵市场", "证券欺诈", "庞氏骗局"],
   // Japanese
   ja: ["マネーロンダリング", "汚職", "詐欺", "逮捕", "密輸", "制裁",
-       "テロ資金", "犯罪組織", "不正", "横領"],
+       "テロ資金", "犯罪組織", "不正", "横領",
+       // Securities fraud (ja)
+       "インサイダー取引", "相場操縦", "証券詐欺", "ネズミ講"],
   // Korean
   ko: ["자금세탁", "부패", "사기", "체포", "밀수", "제재",
-       "테러자금", "범죄조직", "횡령", "뇌물"],
+       "테러자금", "범죄조직", "횡령", "뇌물",
+       // Securities fraud (ko)
+       "내부자거래", "시세조종", "증권사기", "다단계 사기"],
   // Hindi
   hi: ["मनी लॉन्ड्रिंग", "भ्रष्टाचार", "धोखाधड़ी", "गिरफ्तारी",
        "तस्करी", "प्रतिबंध", "आतंकवाद", "अपराध"],
@@ -203,10 +220,14 @@ export const AML_KEYWORDS_MULTILINGUAL: Record<string, string[]> = {
        "تحریم", "تروریسم", "جرم سازمان‌یافته", "رشوه"],
   // Vietnamese
   vi: ["rửa tiền", "tham nhũng", "gian lận", "bắt giữ", "buôn lậu",
-       "trừng phạt", "khủng bố", "tội phạm có tổ chức"],
+       "trừng phạt", "khủng bố", "tội phạm có tổ chức",
+       // Human trafficking (vi)
+       "buôn người", "lao động cưỡng bức", "nô lệ hiện đại"],
   // Thai
   th: ["ฟอกเงิน", "ทุจริต", "ฉ้อโกง", "จับกุม", "ลักลอบ",
-       "คว่ำบาตร", "ก่อการร้าย", "อาชญากรรมองค์กร"],
+       "คว่ำบาตร", "ก่อการร้าย", "อาชญากรรมองค์กร",
+       // Human trafficking (th) — major trafficking route
+       "การค้ามนุษย์", "แรงงานบังคับ", "การค้าประเวณี"],
   // Ukrainian
   uk: ["відмивання грошей", "корупція", "шахрайство", "арешт",
        "контрабанда", "санкції", "тероризм", "злочинна організація"],
@@ -261,7 +282,10 @@ export const AML_KEYWORDS_MULTILINGUAL: Record<string, string[]> = {
   tl: ["pagpapalaba ng pera",  // money laundering
        "katiwalian",           // corruption
        "pandaraya",            // fraud
-       "suhulan"],             // bribery
+       "suhulan",              // bribery
+       // Human trafficking (tl/fil)
+       "trafficking ng tao", "sapilitang paggawa",   // Filipino
+       "human trafficking", "sapilitang trabaho"],    // Tagalog duplicate-safety
   // Georgian — Georgia (Caucasus)
   ka: ["ფულის გათეთრება",  // money laundering
        "კორუფცია",           // corruption
