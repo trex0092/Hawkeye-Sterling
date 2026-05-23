@@ -12,7 +12,10 @@
 // ML risk indicators, source of wealth red flags, and regulatory basis.
 //
 // Also performs: FATF typology matching, jurisdiction risk overlay,
-// and produces a full EDD requirements checklist.
+// relationship classification with risk multipliers, shell company
+// detection, financial institution conflict-of-interest flagging,
+// cross-jurisdiction spread analysis, government contract nexus
+// detection, and a full EDD requirements checklist.
 
 import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
@@ -27,6 +30,115 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
+// ---------------------------------------------------------------------------
+// Relationship classifier types and risk multipliers
+// ---------------------------------------------------------------------------
+
+type RelationshipType =
+  | "spouse"
+  | "child"
+  | "parent"
+  | "sibling"
+  | "business_partner"
+  | "close_associate"
+  | "intermediary"
+  | "unknown";
+
+const RELATIONSHIP_RISK_MULTIPLIERS: Record<RelationshipType, number> = {
+  spouse: 10,
+  child: 8,
+  parent: 5,
+  sibling: 5,
+  business_partner: 15,
+  close_associate: 12,
+  intermediary: 20,
+  unknown: 0,
+};
+
+// Keywords used to classify a relationship string into a RelationshipType
+const RELATIONSHIP_KEYWORDS: Array<{ type: RelationshipType; patterns: RegExp }> = [
+  { type: "spouse", patterns: /\b(spouse|wife|husband|partner|consort|married)\b/i },
+  { type: "child", patterns: /\b(child|son|daughter|offspring)\b/i },
+  { type: "parent", patterns: /\b(parent|father|mother|dad|mom|mum)\b/i },
+  { type: "sibling", patterns: /\b(sibling|brother|sister)\b/i },
+  { type: "business_partner", patterns: /\b(business partner|co-founder|co-director|shareholder|co-owner|joint venture)\b/i },
+  { type: "close_associate", patterns: /\b(close associate|advisor|aide|chief of staff|confidant|friend|ally)\b/i },
+  { type: "intermediary", patterns: /\b(intermediary|nominee|proxy|trustee|agent|facilitator|straw man|front)\b/i },
+];
+
+function classifyRelationship(relationship: string): RelationshipType {
+  const lower = relationship.toLowerCase();
+  for (const { type, patterns } of RELATIONSHIP_KEYWORDS) {
+    if (patterns.test(lower)) return type;
+  }
+  return "unknown";
+}
+
+// ---------------------------------------------------------------------------
+// Shell company detection heuristics
+// ---------------------------------------------------------------------------
+
+const SHELL_GENERIC_TERMS = /\b(holdings?|investments?|group|partners?|ltd|limited|corp|inc|llc|gmbh|bv|sarl)\b/i;
+
+function isLikelyShellCompany(name: string, nodeType: string): boolean {
+  if (nodeType !== "entity") return false;
+  const matchesGeneric = SHELL_GENERIC_TERMS.test(name);
+  // Treat as shell if the name is short (≤ 4 words) and contains generic terms
+  const wordCount = name.trim().split(/\s+/).length;
+  return matchesGeneric && wordCount <= 4;
+}
+
+// ---------------------------------------------------------------------------
+// Financial institution detection heuristics
+// ---------------------------------------------------------------------------
+
+const FI_KEYWORDS = /\b(bank|banque|bancorp|financial|finance|credit union|savings|mortgage|insurance|capital markets|asset management|wealth management|brokerage|securities|exchange)\b/i;
+
+function isFinancialInstitution(name: string, nodeType: string, relationship: string): boolean {
+  if (nodeType !== "entity") return false;
+  return FI_KEYWORDS.test(name) || /\b(director|owner|chairman|president)\b/i.test(relationship);
+}
+
+function hasOwnershipOrDirectorship(relationship: string): boolean {
+  return /\b(owner|director|chairman|president|beneficial owner|controlling|shareholder|equity)\b/i.test(relationship);
+}
+
+// ---------------------------------------------------------------------------
+// Government contract / procurement heuristics
+// ---------------------------------------------------------------------------
+
+const GOV_CONTRACT_KEYWORDS = /\b(government contract|procurement|public tender|state contract|ministry contract|concession|license awarded|awarded by|public procurement|beneficiary of)\b/i;
+
+function hasGovernmentContractNexus(riskIndicators: string[], relationship: string, name: string): boolean {
+  const haystack = [...riskIndicators, relationship, name].join(" ").toLowerCase();
+  return GOV_CONTRACT_KEYWORDS.test(haystack);
+}
+
+// ---------------------------------------------------------------------------
+// Country extraction from nodes
+// ---------------------------------------------------------------------------
+
+const COUNTRY_PATTERNS = [
+  // Offshore / jurisdictional terms commonly found in node names or risk indicators
+  /\b(cayman islands?|british virgin islands?|bvi|isle of man|jersey|guernsey|panama|seychelles|mauritius|liechtenstein|andorra|monaco|bermuda|bahamas|vanuatu|samoa|nauru|marshall islands?)\b/i,
+  // ISO-like country names that appear in jurisdiction or risk indicator fields
+  /\b(uae|united arab emirates|saudi arabia|qatar|kuwait|bahrain|oman|jordan|egypt|iran|iraq|syria|russia|china|cyprus|malta|singapore|hong kong|switzerland|luxembourg|netherlands|delaware|wyoming|nevada)\b/i,
+];
+
+function extractCountriesFromNode(node: NetworkNode): string[] {
+  const text = [node.name, node.relationship, ...(node.riskIndicators ?? []), ...(node.mlTypologies ?? [])].join(" ");
+  const found = new Set<string>();
+  for (const pattern of COUNTRY_PATTERNS) {
+    const matches = text.match(new RegExp(pattern.source, "gi"));
+    if (matches) matches.forEach((m) => found.add(m.toLowerCase().trim()));
+  }
+  return Array.from(found);
+}
+
+// ---------------------------------------------------------------------------
+// Interfaces
+// ---------------------------------------------------------------------------
+
 interface NetworkNode {
   id: string;
   name: string;
@@ -38,6 +150,23 @@ interface NetworkNode {
   mlTypologies: string[];
   fatfBasis: string;
   eddRequired: boolean;
+  // Enhanced fields added by post-processing
+  relationshipType?: RelationshipType;
+  relationshipRiskMultiplier?: number;
+  isShellCompany?: boolean;
+  isFinancialInstitution?: boolean;
+  hasGovernmentContractNexus?: boolean;
+  networkFlags?: string[];
+}
+
+interface NetworkSummary {
+  totalNodes: number;
+  totalEdges: number;
+  countries: string[];
+  shellCompanyCount: number;
+  financialInstitutionCount: number;
+  maxHopDistance: number;
+  networkRiskScore: number;
 }
 
 interface PepNetworkDeepResult {
@@ -58,6 +187,8 @@ interface PepNetworkDeepResult {
   networkRiskNarrative: string;
   regulatoryBasis: string;
   graphSummary: { hop1Count: number; hop2Count: number; hop3Count: number; hop4Count: number };
+  networkFlags: string[];
+  networkSummary: NetworkSummary;
 }
 
 interface Body {
@@ -69,6 +200,130 @@ interface Body {
   tenure?: string;
   networkDepth?: 1 | 2 | 3 | 4;  // default 4
   focusTypologies?: string[];      // restrict LLM focus to specific ML typologies
+}
+
+// ---------------------------------------------------------------------------
+// Network enrichment — post-processes LLM nodes to add enhanced intelligence
+// ---------------------------------------------------------------------------
+
+function enrichNetworkNodes(nodes: NetworkNode[]): {
+  enrichedNodes: NetworkNode[];
+  networkFlags: string[];
+  networkSummary: NetworkSummary;
+} {
+  const networkFlags: string[] = [];
+  let relationshipRiskAddition = 0;
+  let shellCount = 0;
+  let fiCount = 0;
+  const allCountries = new Set<string>();
+
+  const enrichedNodes: NetworkNode[] = nodes.map((node) => {
+    const nodeFlags: string[] = [];
+
+    // 1. Relationship classifier
+    const relType = classifyRelationship(node.relationship);
+    const relMultiplier = RELATIONSHIP_RISK_MULTIPLIERS[relType];
+    relationshipRiskAddition += relMultiplier;
+
+    // 2. Shell company detection
+    const shell = isLikelyShellCompany(node.name, node.nodeType);
+    if (shell) {
+      shellCount++;
+      nodeFlags.push("potential_shell_company");
+    }
+
+    // 3. Financial institution conflict of interest
+    const isFI = isFinancialInstitution(node.name, node.nodeType, node.relationship);
+    const hasOwnership = hasOwnershipOrDirectorship(node.relationship);
+    if (isFI && hasOwnership) {
+      fiCount++;
+      nodeFlags.push("conflict_of_interest_fi");
+    }
+
+    // 4. Government contract nexus
+    const govContract = hasGovernmentContractNexus(node.riskIndicators ?? [], node.relationship, node.name);
+    if (govContract) {
+      nodeFlags.push("government_contract_nexus");
+    }
+
+    // 5. Extract countries
+    const nodeCountries = extractCountriesFromNode(node);
+    nodeCountries.forEach((c) => allCountries.add(c));
+
+    return {
+      ...node,
+      relationshipType: relType,
+      relationshipRiskMultiplier: relMultiplier,
+      isShellCompany: shell,
+      isFinancialInstitution: isFI && hasOwnership,
+      hasGovernmentContractNexus: govContract,
+      networkFlags: nodeFlags,
+    };
+  });
+
+  // Global flags
+
+  // Shell company flags (+15 per shell)
+  const shellRiskAddition = shellCount * 15;
+  if (shellCount > 0) {
+    networkFlags.push(`shell_company_detected:${shellCount}`);
+  }
+
+  // Financial institution conflict of interest (+25 per FI ownership/directorship)
+  const fiRiskAddition = fiCount * 25;
+  if (fiCount > 0) {
+    networkFlags.push("conflict_of_interest_fi");
+  }
+
+  // Cross-jurisdiction network spread (+20 if > 4 countries)
+  let multiJurisdictionAddition = 0;
+  const countriesArray = Array.from(allCountries);
+  if (countriesArray.length > 4) {
+    multiJurisdictionAddition = 20;
+    networkFlags.push("multi_jurisdiction_network");
+  }
+
+  // Government contract nexus — check if any node has the flag (+15 if any)
+  let govContractAddition = 0;
+  const hasAnyGovContract = enrichedNodes.some((n) => n.hasGovernmentContractNexus);
+  if (hasAnyGovContract) {
+    govContractAddition = 15;
+    networkFlags.push("government_contract_nexus");
+  }
+
+  // Compute network risk score (0-100)
+  // Base score: 30 (inherent PEP network risk)
+  // + relationship risk additions (capped at 30)
+  // + shell risk additions (capped at 20)
+  // + FI risk additions (capped at 20)
+  // + multi-jurisdiction addition (capped at 20)
+  // + gov contract addition (capped at 15)
+  const baseScore = 30;
+  const relContrib = Math.min(relationshipRiskAddition, 30);
+  const shellContrib = Math.min(shellRiskAddition, 20);
+  const fiContrib = Math.min(fiRiskAddition, 20);
+  const jurisdictionContrib = Math.min(multiJurisdictionAddition, 20);
+  const govContrib = Math.min(govContractAddition, 15);
+  const rawScore = baseScore + relContrib + shellContrib + fiContrib + jurisdictionContrib + govContrib;
+  const networkRiskScore = Math.min(rawScore, 100);
+
+  // Max hop distance
+  const maxHopDistance = nodes.length > 0
+    ? Math.max(...nodes.map((n) => n.hopDistance))
+    : 0;
+
+  const networkSummary: NetworkSummary = {
+    totalNodes: enrichedNodes.length,
+    // Edges approximation: each node has an edge back to its parent (or subject)
+    totalEdges: enrichedNodes.length,
+    countries: countriesArray,
+    shellCompanyCount: shellCount,
+    financialInstitutionCount: fiCount,
+    maxHopDistance,
+    networkRiskScore,
+  };
+
+  return { enrichedNodes, networkFlags, networkSummary };
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
@@ -98,6 +353,16 @@ export async function POST(req: Request): Promise<NextResponse> {
       networkRiskNarrative: "PEP network analysis unavailable — ANTHROPIC_API_KEY not configured.",
       regulatoryBasis: "FATF R.12; FDL 10/2025 Art.12; CBUAE AML Standards §6",
       graphSummary: { hop1Count: 0, hop2Count: 0, hop3Count: 0, hop4Count: 0 },
+      networkFlags: [],
+      networkSummary: {
+        totalNodes: 0,
+        totalEdges: 0,
+        countries: [],
+        shellCompanyCount: 0,
+        financialInstitutionCount: 0,
+        maxHopDistance: 0,
+        networkRiskScore: 0,
+      },
     }, { status: 200, headers: gate.headers });
   }
 
@@ -137,6 +402,9 @@ For EACH node, assess:
 - Source of wealth flags (government contracts, state-owned enterprise positions, concession rights)
 - Jurisdictional overlay (offshore registrations, FATF grey/black list exposure)
 - Historical adverse media or enforcement signals
+- Relationship type: use precise terms such as spouse, child, parent, sibling, business_partner, close_associate, intermediary, nominee director, beneficial owner, etc.
+- For entity nodes: indicate if the entity is a financial institution (bank, finance company, insurance, asset management) and whether the PEP holds ownership or a directorship
+- Include jurisdiction/country information in riskIndicators where applicable
 
 FATF TYPOLOGIES TO ASSESS:
 - Grand corruption proceeds (state-owned enterprise fraud, procurement manipulation)
@@ -188,19 +456,19 @@ Return ONLY valid JSON with this exact structure:
           body.tenure?.trim() ? `Tenure/Period: ${sanitizeField(body.tenure, 100)}` : "",
           body.focusTypologies?.length ? `Focus Typologies: ${body.focusTypologies.slice(0, 20).map((t: string) => sanitizeField(t, 100)).join(", ")}` : "",
           "",
-          `Build the full PEP network graph to ${networkDepth} hops. Enumerate ALL persons and entities requiring screening with specific risk indicators for each. Be comprehensive — include both generic node types (e.g., 'Spouse of senior official') and specific entities where known.`,
+          `Build the full PEP network graph to ${networkDepth} hops. Enumerate ALL persons and entities requiring screening with specific risk indicators for each. Be comprehensive — include both generic node types (e.g., 'Spouse of senior official') and specific entities where known. For each entity node, specify whether it is a financial institution and whether the PEP holds a directorship or ownership stake. Include country/jurisdiction context in riskIndicators.`,
         ].filter(Boolean).join("\n"),
       }],
     });
 
     const raw = response.content[0]?.type === "text" ? (response.content[0] as { type: "text"; text: string }).text : "{}";
     const cleaned = raw.replace(/^```json?\s*/i, "").replace(/\s*```$/i, "").trim();
-    const result = JSON.parse(cleaned.match(/\{[\s\S]*\}/)?.[0] ?? "{}") as Omit<PepNetworkDeepResult, "pepName" | "networkDepth" | "totalNodesDiscovered" | "mandatoryScreeningCount" | "graphSummary">;
+    const result = JSON.parse(cleaned.match(/\{[\s\S]*\}/)?.[0] ?? "{}") as Omit<PepNetworkDeepResult, "pepName" | "networkDepth" | "totalNodesDiscovered" | "mandatoryScreeningCount" | "graphSummary" | "networkFlags" | "networkSummary">;
 
     // Cap at 20 nodes to prevent result explosion from deep traversal (2+ hops).
     // Prioritise mandatory screening nodes, then sort by hop distance ascending.
     const allNodes: NetworkNode[] = Array.isArray(result.networkNodes) ? result.networkNodes : [];
-    const nodes: NetworkNode[] = allNodes
+    const sortedNodes: NetworkNode[] = allNodes
       .sort((a, b) => {
         const priorityOrder = { mandatory: 0, high: 1, recommended: 2, optional: 3 };
         const pa = priorityOrder[a.screeningPriority] ?? 3;
@@ -209,6 +477,10 @@ Return ONLY valid JSON with this exact structure:
         return a.hopDistance - b.hopDistance;
       })
       .slice(0, 20);
+
+    // Enrich nodes with relationship classification, shell detection, FI flags, etc.
+    const { enrichedNodes: nodes, networkFlags, networkSummary } = enrichNetworkNodes(sortedNodes);
+
     const hopCounts = { hop1Count: 0, hop2Count: 0, hop3Count: 0, hop4Count: 0 };
     for (const n of nodes) {
       const key = `hop${n.hopDistance}Count` as keyof typeof hopCounts;
@@ -233,6 +505,8 @@ Return ONLY valid JSON with this exact structure:
       networkRiskNarrative: result.networkRiskNarrative ?? "",
       regulatoryBasis: result.regulatoryBasis ?? "FATF R.12; FDL 10/2025 Art.12; CBUAE AML Standards §6",
       graphSummary: hopCounts,
+      networkFlags,
+      networkSummary,
     };
 
     try {
@@ -248,6 +522,11 @@ Return ONLY valid JSON with this exact structure:
         pepName,
         pepRiskRating: output.pepRiskRating,
         totalNodesDiscovered: output.totalNodesDiscovered,
+        networkFlags,
+        networkRiskScore: networkSummary.networkRiskScore,
+        shellCompanyCount: networkSummary.shellCompanyCount,
+        financialInstitutionCount: networkSummary.financialInstitutionCount,
+        multiJurisdiction: networkFlags.includes("multi_jurisdiction_network"),
       },
       tenantIdFromGate(gate),
     ).catch((err) =>
@@ -269,11 +548,17 @@ Return ONLY valid JSON with this exact structure:
           subjectId: pepName,
           pepId: pepName,
           relationship: node.relationship,
+          relationshipType: node.relationshipType,
+          relationshipRiskMultiplier: node.relationshipRiskMultiplier,
           rcaName: node.name,
           hopDistance: node.hopDistance,
           screeningPriority: node.screeningPriority,
           nodeType: node.nodeType,
           eddRequired: node.eddRequired,
+          isShellCompany: node.isShellCompany,
+          isFinancialInstitution: node.isFinancialInstitution,
+          hasGovernmentContractNexus: node.hasGovernmentContractNexus,
+          nodeFlags: node.networkFlags,
         },
         tenantId,
       ).catch((err: unknown) =>
