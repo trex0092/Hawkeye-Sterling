@@ -201,7 +201,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     executorRaw = executorMsg.content.map((b: { type: string; text?: string }) => (b.type === "text" ? (b.text ?? "") : "")).join("");
   } catch (err) {
     console.error("[mlro-analyze] executor failed:", err instanceof Error ? err.message : String(err));
-    return NextResponse.json({ ok: false, error: "executor analysis failed", detail: err instanceof Error ? err.message : String(err) }, { status: 502, headers: gate.headers });
+    return NextResponse.json({ ok: false, error: "executor analysis failed" }, { status: 502, headers: gate.headers });
   }
   const executorResult = safeParse(executorRaw);
 

@@ -112,7 +112,7 @@ async function runHaikuQuick(question: string, contextPairs: HaikuPair[], apiKey
     const aborted = ctl.signal.aborted;
     return {
       ok: false,
-      error: aborted ? `Quick budget exceeded (>${Math.round(HAIKU_TIMEOUT_MS / 1000)} s)` : (err instanceof Error ? err.message : String(err)),
+      error: aborted ? `Quick budget exceeded (>${Math.round(HAIKU_TIMEOUT_MS / 1000)} s)` : "LLM request failed",
       elapsedMs: Date.now() - startedAt,
     };
   } finally {
