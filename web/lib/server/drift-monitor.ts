@@ -36,6 +36,11 @@ export interface DriftReport {
   } | null;
   driftDetected:  boolean;
   driftReason?:   string;
+  // Composite risk score drift fields
+  rollingBaselineScore: number | null;   // 30-day rolling mean risk score
+  currentMeanScore:     number | null;   // mean risk score for this week
+  scoreDrift:           number | null;   // currentMeanScore - rollingBaselineScore
+  scoreDriftAlert:      boolean;         // true if |scoreDrift| > 15 points
 }
 
 function windowKey(tenant: string): string {
@@ -48,7 +53,8 @@ function reportKey(tenant: string): string {
 const WINDOW_MS   = 30 * 24 * 3_600_000;
 const WEEK_MS     = 7  * 24 * 3_600_000;
 const MAX_ENTRIES = 5_000;
-const DRIFT_APPROVE_DELTA = 0.20; // >20% increase in approve rate
+const DRIFT_APPROVE_DELTA   = 0.20; // >20% increase in approve rate
+const SCORE_DRIFT_THRESHOLD = 15;   // >15 point drift from 30-day rolling baseline
 
 export async function recordDecision(
   tenant: string,
@@ -120,13 +126,42 @@ export async function computeDriftReport(tenant: string, entries?: DriftEntry[])
     }
   }
 
+  // ── Composite risk score drift check ─────────────────────────────────────
+  // Compare this week's mean risk score against the 30-day rolling baseline.
+  // A drift of >15 points in either direction is flagged as a potential data
+  // drift or model miscalibration event.
+  const allRecent = window.filter((e) => now - e.ts < WINDOW_MS);
+  const rollingBaselineScore = allRecent.length >= 10
+    ? allRecent.reduce((s, e) => s + e.riskScore, 0) / allRecent.length
+    : null;
+  const currentMeanScore = thisWeekEntries.length >= 5
+    ? thisWeekEntries.reduce((s, e) => s + e.riskScore, 0) / thisWeekEntries.length
+    : null;
+
+  let scoreDrift: number | null = null;
+  let scoreDriftAlert = false;
+  if (rollingBaselineScore !== null && currentMeanScore !== null) {
+    scoreDrift = Math.round((currentMeanScore - rollingBaselineScore) * 10) / 10;
+    if (Math.abs(scoreDrift) > SCORE_DRIFT_THRESHOLD) {
+      scoreDriftAlert = true;
+      const direction = scoreDrift > 0 ? "upward" : "downward";
+      const driftMsg = `Composite risk score drifted ${direction} by ${Math.abs(scoreDrift).toFixed(1)} points from 30-day baseline (${rollingBaselineScore.toFixed(1)}) — possible data drift or model miscalibration`;
+      driftDetected = true;
+      driftReason = driftReason ? `${driftReason}; ${driftMsg}` : driftMsg;
+    }
+  }
+
   const report: DriftReport = {
-    generatedAt:   new Date().toISOString(),
-    sampleSize:    window.filter((e) => now - e.ts < WINDOW_MS).length,
-    thisWeek:      tw ?? { count: 0, approveRate: 0, eddRate: 0, escalateRate: 0, strRate: 0, meanConfidence: 0 },
-    lastWeek:      lw ? { count: lw.count, approveRate: lw.approveRate, meanConfidence: lw.meanConfidence } : null,
+    generatedAt:         new Date().toISOString(),
+    sampleSize:          allRecent.length,
+    thisWeek:            tw ?? { count: 0, approveRate: 0, eddRate: 0, escalateRate: 0, strRate: 0, meanConfidence: 0 },
+    lastWeek:            lw ? { count: lw.count, approveRate: lw.approveRate, meanConfidence: lw.meanConfidence } : null,
     driftDetected,
     ...(driftReason ? { driftReason } : {}),
+    rollingBaselineScore: rollingBaselineScore !== null ? Math.round(rollingBaselineScore * 10) / 10 : null,
+    currentMeanScore:     currentMeanScore !== null ? Math.round(currentMeanScore * 10) / 10 : null,
+    scoreDrift,
+    scoreDriftAlert,
   };
 
   await setJson(reportKey(tenant), report).catch(() => undefined);
@@ -138,6 +173,8 @@ export async function computeDriftReport(tenant: string, entries?: DriftEntry[])
       driftReason,
       thisWeekApproveRate: tw?.approveRate,
       lastWeekApproveRate: lw?.approveRate,
+      scoreDrift,
+      scoreDriftAlert,
     }, tenant).catch(() => undefined);
   }
 

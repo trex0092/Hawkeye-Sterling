@@ -4,13 +4,23 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
-import { loadCase, updateCase, type HsCaseStatus, type DispositionVerdict } from "@/lib/server/hs-case-store";
+import {
+  loadCase,
+  updateCase,
+  appendEscalationHistory,
+  setFilingDeadline,
+  updateCaseRiskScore,
+  type HsCaseStatus,
+  type DispositionVerdict,
+  type CaseRiskFactors,
+} from "@/lib/server/hs-case-store";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const VALID_STATUSES = new Set<HsCaseStatus>([
   "open", "under_review", "pending_approval", "closed", "escalated", "frozen",
+  "mlro_review", "filed_str",
 ]);
 const VALID_VERDICTS = new Set<DispositionVerdict>([
   "approve", "EDD", "escalate", "STR", "false_positive",
