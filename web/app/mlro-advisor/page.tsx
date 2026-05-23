@@ -2175,6 +2175,7 @@ export default function MlroAdvisorPage() {
   const [adverseUrl, setAdverseUrl] = useState("");
   const [adverseFetchLoading, setAdverseFetchLoading] = useState(false);
   const [adverseFetchNote, setAdverseFetchNote] = useState<string | null>(null);
+  const [paywallSuspected, setPaywallSuspected] = useState(false);
   const [adverseResult, setAdverseResult] = useState<AdverseClassifyResult | null>(null);
   const [adverseLoading, setAdverseLoading] = useState(false);
 
@@ -2602,7 +2603,7 @@ export default function MlroAdvisorPage() {
 
   const runFetchArticle = async () => {
     if (!adverseUrl.trim()) return;
-    setAdverseFetchLoading(true); setAdverseFetchNote(null);
+    setAdverseFetchLoading(true); setAdverseFetchNote(null); setPaywallSuspected(false);
     setToolErrors((p) => ({ ...p, ["adverseFetch"]: "" }));
     try {
       const res = await fetch("/api/fetch-article", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ url: adverseUrl.trim() }) });
@@ -2610,6 +2611,7 @@ export default function MlroAdvisorPage() {
       if (!mountedRef.current) return;
       if (data.ok && data.text) {
         setAdverseText(data.text);
+        setPaywallSuspected(data.paywallSuspected ?? false);
         setAdverseFetchNote(data.paywallNote ?? `Fetched from ${data.domain ?? adverseUrl} — review text above, then classify.`);
       } else {
         setToolErrors((p) => ({ ...p, ["adverseFetch"]: data.error ?? "Could not fetch article — paste text manually." }));
