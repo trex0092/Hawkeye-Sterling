@@ -199,6 +199,56 @@ export const FIU_DPMS_TYPOLOGIES_2025: FiuDpmsTypology[] = [
   },
 ];
 
+// ── Human Trafficking / Modern Slavery Typologies ─────────────────────────────
+// Distinct from the DPMS catalogue; encoded here as the closest structured
+// typology data file following the same FiuDpmsTypology schema.
+// Source: FATF Report — Financial Flows from Human Trafficking (2018).
+
+export interface TraffickingTypology {
+  id: string;
+  name: string;
+  category: "ML" | "TF" | "PF";
+  riskLevel: "critical" | "high" | "medium" | "low";
+  description: string;
+  fatfReference: string;
+  redFlags: string[];
+  transactionPatterns: string[];
+  mappedBrainModes: string[];
+}
+
+export const TRAFFICKING_TYPOLOGIES: TraffickingTypology[] = [
+  {
+    id: "human_trafficking_proceeds",
+    name: "Human Trafficking Proceeds Laundering",
+    category: "ML",
+    riskLevel: "critical",
+    description:
+      "Financial flows derived from the control, exploitation, and movement of trafficking victims. " +
+      "Proceeds are typically aggregated through controller accounts, laundered via cash-intensive " +
+      "front businesses (escort agencies, massage parlours, nail salons), and subsequently layered " +
+      "through wire transfers, prepaid cards, or hawala networks. A key indicator is many-to-one " +
+      "payment aggregation where multiple victim payments flow to a single controlling account.",
+    fatfReference: "FATF Report: Financial Flows from Human Trafficking (2018)",
+    redFlags: [
+      "Multiple small recurring cash or card payments from many senders to one recipient",
+      "Weekly cadence of inbound payments with >20 distinct sender accounts",
+      "Cash-intensive business receipts from escort, massage, or adult-entertainment MCCs",
+      "Victim proceeds deposited then rapidly transferred to third-party mule accounts",
+      "Use of prepaid cards, gift cards, or cryptocurrency to distance proceeds from victims",
+      "Business accounts for escort agencies, massage parlours, or nail salons with large cash turnover",
+      "International wire transfers to source countries of known trafficking corridors (SEA, MENA, Eastern Europe)",
+      "Payments originating from hotel, motel, or short-term rental addresses",
+    ],
+    transactionPatterns: [
+      "possible_trafficking_proceeds — >20 senders, weekly recurring to single payee",
+      "high_risk_cash_intensive — cash receipts from adult-entertainment MCC categories",
+      "funnel_account — rapid aggregation and disbursement",
+      "velocity_spike — sudden increase in inbound micro-payments",
+    ],
+    mappedBrainModes: ["pattern_of_life", "velocity_analysis", "community_detection", "link_analysis"],
+  },
+];
+
 export function getTypologyById(id: string): FiuDpmsTypology | undefined {
   return FIU_DPMS_TYPOLOGIES_2025.find((t) => t.id === id);
 }

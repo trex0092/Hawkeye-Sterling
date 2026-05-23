@@ -763,6 +763,10 @@ const INVESTIGATIVE_FEEDS: Array<{
   { url: "https://english.alarabiya.net/rss.xml",                            lang: "en", sourceTier: "tier2", sourceCategory: "regional",      name: "AlArabiya-EN" },
   { url: "https://english.alaraby.co.uk/feed",                               lang: "en", sourceTier: "tier2", sourceCategory: "regional",      name: "TheNewArab" },
   { url: "https://www.jpost.com/Rss/RssFeedsHeadlines.aspx",                 lang: "en-IL", sourceTier: "tier2", sourceCategory: "regional",  name: "JPost" },
+  // ILO — International Labour Organization (forced labour / modern slavery)
+  { url: "https://www.ilo.org/global/topics/forced-labour/news/lang--en/rss.xml", lang: "en", sourceTier: "tier1", sourceCategory: "regulatory", name: "ILO-ForcedLabour" },
+  // UNODC — UN Office on Drugs and Crime (human trafficking / TIP)
+  { url: "https://www.unodc.org/unodc/en/human-trafficking/news.rss",        lang: "en", sourceTier: "tier1", sourceCategory: "regulatory",    name: "UNODC-TIP" },
 ];
 
 // ── Africa RSS feeds ────────────────────────────────────────────────────────

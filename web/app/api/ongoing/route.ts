@@ -7,6 +7,8 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 15;
 
+type CustomerRiskTier = "standard" | "enhanced" | "intensive" | "pep" | "prohibited";
+
 interface EnrolledSubject {
   id: string;
   tenantId?: string;
@@ -17,6 +19,10 @@ interface EnrolledSubject {
   group?: string;
   caseId?: string;
   enrolledAt: string;
+  /** Customer risk tier determines monitoring frequency (FATF R.10/R.12). */
+  riskTier?: CustomerRiskTier;
+  /** True when the subject is a politically exposed person (FATF R.12). */
+  isPep?: boolean;
 }
 
 // Allowlist for subject IDs used as blob store keys — prevent key-namespace
@@ -86,6 +92,26 @@ async function handlePost(req: Request, ctx: RequestContext): Promise<NextRespon
     entityTypeRaw && allowedEntityTypes.has(entityTypeRaw)
       ? (entityTypeRaw as EnrolledSubject["entityType"])
       : undefined;
+
+  // Validate riskTier — determines monitoring frequency per FATF R.10/R.12.
+  const allowedRiskTiers = new Set<CustomerRiskTier>([
+    "standard",
+    "enhanced",
+    "intensive",
+    "pep",
+    "prohibited",
+  ]);
+  const riskTierRaw = stringField(raw["riskTier"]);
+  const riskTier: CustomerRiskTier | undefined =
+    riskTierRaw && allowedRiskTiers.has(riskTierRaw as CustomerRiskTier)
+      ? (riskTierRaw as CustomerRiskTier)
+      : undefined;
+
+  // isPep — PEP subjects are subject to FATF R.12 mandatory weekly screening.
+  const isPepRaw = raw["isPep"];
+  const isPep: boolean | undefined =
+    typeof isPepRaw === "boolean" ? isPepRaw : undefined;
+
   const record: EnrolledSubject = {
     id,
     tenantId: ctx.tenantId,
@@ -95,6 +121,8 @@ async function handlePost(req: Request, ctx: RequestContext): Promise<NextRespon
     ...(stringField(raw["jurisdiction"]) ? { jurisdiction: stringField(raw["jurisdiction"])! } : {}),
     ...(stringField(raw["group"]) ? { group: stringField(raw["group"])! } : {}),
     ...(stringField(raw["caseId"]) ? { caseId: stringField(raw["caseId"])! } : {}),
+    ...(riskTier ? { riskTier } : {}),
+    ...(isPep !== undefined ? { isPep } : {}),
     enrolledAt: new Date().toISOString(),
   };
   await setJson(`ongoing/subject/${id}`, record);
@@ -109,6 +137,8 @@ async function handlePost(req: Request, ctx: RequestContext): Promise<NextRespon
       subjectName: name,
       entityType: record.entityType,
       caseId: record.caseId,
+      riskTier: record.riskTier ?? "standard",
+      isPep: record.isPep ?? false,
     },
     ctx.tenantId,
   ).catch((err) =>

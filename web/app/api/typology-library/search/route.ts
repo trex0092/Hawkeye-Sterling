@@ -5,9 +5,17 @@ import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
+import {
+  searchTypologies,
+  type Typology,
+  type TypologyCategory,
+  type RiskLevel,
+} from "@/lib/intelligence/typologyData";
+
 export interface TypologyResult {
   id: string;
   name: string;
+  /** "ML" | "TF" | "PF" — FATF category */
   category: string;
   description: string;
   redFlags: string[];
@@ -25,6 +33,27 @@ export interface TypologySearchResponse {
   results: TypologyResult[];
   totalFound: number;
   relatedCategories: string[];
+  /** True when serving results from the static library (no AI). */
+  staticLibrary?: boolean;
+}
+
+/** Convert a static Typology into the API TypologyResult shape. */
+function toResult(t: Typology): TypologyResult {
+  return {
+    id: t.id,
+    name: t.name,
+    category: t.category,
+    description: t.description,
+    redFlags: t.redFlags,
+    realWorldExample: "",
+    fatfRef: t.fatfReference,
+    riskLevel: t.riskLevel,
+    sectors: t.sectors,
+    jurisdictions: t.jurisdictions,
+    relatedTypologies: t.relatedTypologies,
+    detectionMethods: t.indicators,
+    regulatoryResponse: t.fatfReference,
+  };
 }
 
 const TYPOLOGY_KNOWLEDGE_BASE = `
@@ -41,10 +70,6 @@ You are an expert AML/CFT typology analyst with deep knowledge of over 500 money
 - False documentation for trade finance
 - Import/export manipulation through free zones (especially UAE JAFZA, DMCC)
 - Gold and precious metals TBML
-- Diamond and gemstone TBML
-- Crude oil and petroleum TBML
-- Pharmaceutical TBML
-- Textile and garment sector TBML
 
 ## REAL ESTATE MONEY LAUNDERING
 - All-cash purchases to avoid bank scrutiny
@@ -52,231 +77,85 @@ You are an expert AML/CFT typology analyst with deep knowledge of over 500 money
 - PEP-linked real estate transactions
 - Rapid buy-sell of properties at inflated prices
 - Mortgage fraud and over-valuation
-- Real estate as collateral for loans
-- Commercial real estate layering
-- Offshore property holding structures
 - Dubai luxury property ML (common typology in UAE)
 - Rent-back arrangements for cash injection
-- Construction project over-invoicing
-- Property management company front
-- Title deed manipulation
 
 ## PROFESSIONAL MONEY LAUNDERING NETWORKS (PMLN)
 - Complicit lawyers and legal professionals
 - Accountant-facilitated ML through client accounts
-- Estate agent networks for property ML
 - Company formation agent abuse
 - Trust and company service provider (TCSP) networks
-- Gatekeepers enabling complex ML structures
-- TBML facilitated by freight forwarders
 - Money mule recruitment and management
-- Professional enablers in high-risk jurisdictions
 
 ## CRYPTOCURRENCY AND VIRTUAL ASSET ML
 - Bitcoin tumbling and mixing services
-- Peer-to-peer exchange exploitation
-- Unregulated crypto exchange use
 - Privacy coin (Monero, Zcash) layering
 - DeFi protocol exploitation for layering
 - NFT wash trading and price manipulation
-- NFT ML through artificial value inflation
 - Crypto ATM structuring and smurfing
-- Crypto lending and margin trading ML
-- Exchange hopping across jurisdictions
 - Ransomware proceeds laundering
 - Dark web marketplace proceeds
-- Crypto-to-crypto swaps avoiding KYC
-- Cross-chain bridge exploitation
-- Play-to-earn game exploitation for ML
 
 ## CASINO AND GAMING ML
 - Casino chip purchase and redemption
-- Online gaming account exploitation
-- Sports betting structuring
-- Poker tournament proceeds
-- Casino junket arrangements
 - VIP room cash-to-chip conversion
-- Slot machine ML (buy-in with cash, collect winnings)
-- Casino loan-back schemes
-- Online casino multi-account layering
 
 ## INSURANCE FRAUD AND ML
 - Life insurance policy purchase with illicit funds
-- Premium payment with criminal proceeds
 - Policy loan exploitation
-- Surrender value extraction
-- Insurance company capture
-- Annuity and pension product ML
-- Marine insurance fraud (vessel over-valuation)
-- Trade credit insurance fraud
 
 ## HAWALA AND INFORMAL VALUE TRANSFER
 - Classic hawala networks (Middle East, South Asia)
-- Fei-ch'ien (Chinese flying money)
-- Hundi systems (South Asian)
-- Digital hawala through mobile payments
-- Hybrid hawala-crypto systems
-- Commodity-based value transfer
 - Gold-based hawala in UAE
 - Unregistered money remittance operators
-- Hawala networks financing terrorism
 
 ## STRUCTURING AND SMURFING
 - Classic smurfing below reporting thresholds
 - Multiple account structuring
 - Cash structuring across multiple financial institutions
-- Time-based structuring (spreading over days/weeks)
-- Geographic structuring across branches
-- Currency exchange structuring
-- Wire transfer structuring
-- Reverse structuring (withdrawals below thresholds)
-- Structuring using money mules
 
 ## LAYERING THROUGH SHELL COMPANIES
 - British Virgin Islands (BVI) shell company chains
-- Panama shell companies (post-Panama Papers)
 - UAE offshore company structures
-- Delaware LLC exploitation
 - Nominee director and shareholder arrangements
-- Circular ownership structures
-- Layered trust arrangements
-- Orphan structures with no identifiable UBO
-- Foundation-based layering
-- Partnership and LP structures for ML
 
 ## LOAN-BACK SCHEMES
 - Self-lending through offshore entity
-- False loan documentation to justify cash
 - Back-to-back loan arrangements
-- Mortgage fraud for placement
-- Property loan-back using inflated collateral
-- Director loans from controlled entities
-- Loan repayment as placement mechanism
-
-## MIRROR TRADING
-- Deutsche Bank-style mirror trading
-- Stock exchange mirror trading
-- FX mirror trading (buy in one currency, sell in another)
-- Bond mirror trading across jurisdictions
-- Commodity futures mirror trading
 
 ## CARBON CREDIT FRAUD
 - Phantom carbon credit creation
-- Double-counting of carbon offsets
 - Carousel fraud using carbon credits
-- Carbon market price manipulation
-- False certification of green projects
-- Nature-based solution fraud
-- Voluntary carbon market manipulation
-
-## ENVIRONMENTAL CRIME PROCEEDS LAUNDERING
-id: env_crime_proceeds
-name: Environmental Crime Proceeds Laundering
-category: ML
-riskLevel: high
-description: Proceeds from illegal logging, wildlife trafficking, illegal mining, IUU fishing and carbon credit fraud laundered through commodity trading, cash businesses, and offshore accounts.
-fatfReference: FATF Report on ML from Environmental Crime (2021)
-redFlags:
-- Timber/wood products from high-deforestation corridors
-- Wildlife exports from known trafficking hubs
-- Cash-intensive commodity businesses in conflict zones
-- Carbon credit transactions without underlying project documentation
-- Payments routed through jurisdictions with weak forestry enforcement
-- Shell companies holding logging or mining concessions in high-risk areas
-- Rapid conversion of commodity proceeds into real estate or luxury assets
-- IUU-flagged vessels or fishing companies transacting at high volumes
 
 ## SANCTIONS EVASION TYPOLOGIES
 - Front company networks for sanctioned parties
-- Jurisdiction layering to obscure origin
-- Name variation and transliteration exploitation
-- Bulk cash smuggling to avoid sanctions
-- Correspondent banking exploitation
-- Oil-for-goods sanctions evasion (North Korea, Iran)
 - Ship-to-ship transfers in international waters
 - Flag hopping and vessel identity fraud
-- Petroleum sector sanctions evasion
-- Precious metals used for sanctions evasion
 - Crypto used for DPRK sanctions evasion
-- Third-country intermediary use
 
-## CORPORATE FRAUD ML
-- Round-tripping through related party transactions
-- Transfer pricing manipulation
-- Ponzi and pyramid scheme proceeds
-- Corporate account takeover
-- Invoice fraud (CEO/BEC fraud proceeds)
-- Fictitious employee payroll ML
-- Expense account manipulation
-- Corporate credit card abuse ML
-- Dividend stripping and tax fraud ML
-
-## CASH-INTENSIVE BUSINESS ML
-- Restaurant and food service cash ML
-- Car wash and parking ML
-- Retail business cash commingling
-- Construction company cash payments
-- Night club and entertainment venue ML
-- Taxi and ride-share cash ML
-- Market stall and bazaar cash ML
-- UAE gold souk cash transactions
-
-## DIGITAL PAYMENT AND FINTECH ML
-- E-wallet exploitation and mule accounts
-- Payment processor exploitation
-- BNPL (buy now pay later) fraud
-- Mobile payment structuring
-- Prepaid card layering
-- Digital bank account farming
-- KYC arbitrage across digital platforms
-
-## HUMAN TRAFFICKING PROCEEDS ML
-- Escort/sex work proceeds commingling
-- Labor trafficking wage theft ML
-- Shell service companies for HT proceeds
-- Property purchased with HT proceeds
-- Cash-intensive business fronts for HT
-
-## DRUG TRAFFICKING PROCEEDS ML
-- Bulk cash conversion
-- Cocaine proceeds through Latin American structures
-- Heroin proceeds through South Asian hawala
-- Cannabis dispensary proceeds (legal gray market)
-- Synthetic drug (fentanyl) proceeds
-- Cryptocurrency used for drug marketplace payments
-
-## TERRORIST FINANCING
-- Small-value fundraising across many donors
+## TERRORIST FINANCING (TF)
 - Charitable organization exploitation
-- Social media fundraising for terrorism
 - Crypto crowdfunding for terrorism
 - Hawala for terrorist fund movement
-- Self-financing through crime
-- State-sponsored terrorism financing
-- ISIL/Daesh financing typologies
+- Foreign terrorist fighter self-funding
+- Online crowdfunding for TF
+- Return from conflict zone financing
+- Procurement networks for weapons
+
+## PROLIFERATION FINANCING (PF)
+- Front company procurement for dual-use goods
+- Ship-to-ship transfer for sanctions evasion
+- False end-user certificates
+- Offshore shell company procurement chains
 
 ## UAE-SPECIFIC TYPOLOGIES
 - DMCC gold trader cash placement
 - Dubai real estate PEP purchases
 - UAE free zone company misuse
-- Emirati nominee arrangements
-- Dubai luxury goods (watches, jewelry) ML
-- Gold refinery TBML in UAE
-- UAE offshore company (RAK ICC, ADGM) misuse
-- Precious stones TBML through Dubai
-- UAE remittance operator exploitation
-- Dubai Expo 2020 contractor fraud
-- Camel trade invoicing manipulation
-
-## EMERGING TYPOLOGIES
-- Deepfake KYC bypass
-- AI-generated synthetic identity ML
-- Metaverse property and asset ML
-- Social token and fan token ML
-- Decentralized exchange (DEX) exploitation
-- Cross-border CBDC ML risks
-- IoT device payment exploitation
-- Satellite-based communication for ML coordination
+- Dubai gold souk cash transactions
+- UAE-based hawaladar networks
+- Dhow boat informal trade
+- Real estate developer payment structuring UAE
 
 Your task is to search this knowledge base and return the most relevant typologies matching the user's query and filters. For each typology, provide comprehensive detail including red flags, detection methods, real-world examples, and regulatory references.
 
@@ -294,6 +173,7 @@ export async function POST(req: Request) {
       jurisdictionType?: string;
       riskLevel?: string;
       fatfCategory?: string;
+      category?: string;
     };
   };
 
@@ -303,77 +183,152 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
-  const apiKey = process.env["ANTHROPIC_API_KEY"];
-  // Deterministic fallback — returns a minimal but valid empty-results
-  // response with a clear degraded note instead of 503ing the page.
-  const buildTemplate = (): TypologySearchResponse => ({
-    results: [],
-    totalFound: 0,
-    relatedCategories: [],
+  // ── Resolve category and riskLevel filters ──────────────────────────────
+  const rawCategory = sanitizeField(
+    body.filters?.category ?? body.filters?.fatfCategory ?? "",
+    20,
+  ).toUpperCase();
+  const resolvedCategory: TypologyCategory | undefined =
+    rawCategory === "ML" || rawCategory === "TF" || rawCategory === "PF"
+      ? rawCategory
+      : undefined;
+
+  const rawRisk = sanitizeField(body.filters?.riskLevel ?? "", 20).toLowerCase();
+  const resolvedRisk: RiskLevel | undefined =
+    rawRisk === "low" || rawRisk === "medium" || rawRisk === "high" || rawRisk === "critical"
+      ? rawRisk
+      : undefined;
+
+  const cleanQuery = sanitizeField(body.query ?? "", 500);
+
+  // ── Primary path: static library search ────────────────────────────────
+  const staticMatches = searchTypologies({
+    query: cleanQuery,
+    category: resolvedCategory,
+    riskLevel: resolvedRisk,
+    limit: 20,
   });
+
+  const staticRelatedCategories = Array.from(
+    new Set(staticMatches.map((t) => t.category)),
+  );
+
+  const SHORT_TERMS = new Set([
+    "ml", "tf", "pf", "all", "any",
+    "money laundering", "terrorist financing", "proliferation",
+    "most common", "show", "list",
+  ]);
+  const hasFreetextQuery = Boolean(
+    cleanQuery &&
+    cleanQuery.trim().length > 3 &&
+    !SHORT_TERMS.has(cleanQuery.trim().toLowerCase()),
+  );
+
+  const hasEnoughStaticResults = staticMatches.length >= 3;
+
+  if (hasEnoughStaticResults && !hasFreetextQuery) {
+    const staticResults: TypologyResult[] = staticMatches.map(toResult);
+    const response: TypologySearchResponse = {
+      results: staticResults,
+      totalFound: staticMatches.length,
+      relatedCategories: staticRelatedCategories,
+      staticLibrary: true,
+    };
+    return NextResponse.json({ ok: true, ...response }, { headers: gate.headers });
+  }
+
+  // ── Fallback / augmentation: AI search ─────────────────────────────────
+  const apiKey = process.env["ANTHROPIC_API_KEY"];
+
   if (!apiKey) {
+    const staticResults: TypologyResult[] = staticMatches.map(toResult);
     return NextResponse.json({
       ok: true,
-      ...buildTemplate(),
-      degraded: true,
-      degradedReason: "ANTHROPIC_API_KEY not configured — typology-library AI search disabled. Set the key on the deployment to enable.",
+      results: staticResults,
+      totalFound: staticMatches.length,
+      relatedCategories: staticRelatedCategories,
+      staticLibrary: true,
+      degraded: staticMatches.length === 0,
+      degradedReason: staticMatches.length === 0
+        ? "ANTHROPIC_API_KEY not configured — typology-library AI search disabled. Set the key on the deployment to enable."
+        : undefined,
     }, { headers: gate.headers });
   }
 
+  const buildFallback = (): TypologySearchResponse => ({
+    results: staticMatches.map(toResult),
+    totalFound: staticMatches.length,
+    relatedCategories: staticRelatedCategories,
+    staticLibrary: true,
+  });
+
   try {
-    // Netlify Functions cap at 26s gateway timeout; SDK timeout must
-    // sit comfortably below or callers see HTTP 504.
     const client = getAnthropicClient(apiKey, 55_000);
 
-    const filterStr = body.filters
-      ? `Filters: sector=${sanitizeField(body.filters.sector, 100) || "any"}, jurisdiction=${sanitizeField(body.filters.jurisdictionType, 100) || "any"}, riskLevel=${sanitizeField(body.filters.riskLevel, 50) || "any"}, fatfCategory=${sanitizeField(body.filters.fatfCategory, 100) || "any"}`
-      : "";
+    const filterParts = [
+      resolvedCategory ? `category=${resolvedCategory}` : "",
+      resolvedRisk ? `riskLevel=${resolvedRisk}` : "",
+      body.filters?.sector ? `sector=${sanitizeField(body.filters.sector, 100)}` : "",
+      body.filters?.jurisdictionType
+        ? `jurisdiction=${sanitizeField(body.filters.jurisdictionType, 100)}`
+        : "",
+    ].filter(Boolean);
+    const filterStr = filterParts.length > 0 ? `Filters: ${filterParts.join(", ")}` : "";
 
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      // Reduced from 4096 → 2000 to fit the 22s SDK budget. Each
-      // typology entry is ~200 tokens; 2000 covers 8-10 entries which
-      // is the cap requested in the system prompt anyway.
       max_tokens: 700,
       system: [
         {
           type: "text",
           text:
             TYPOLOGY_KNOWLEDGE_BASE +
-            `\n\nReturn ONLY valid JSON with this exact structure (no markdown fences):\n{\n  "results": [\n    {\n      "id": "CATEGORY-NNN",\n      "name": "string",\n      "category": "string",\n      "description": "string",\n      "redFlags": ["string"],\n      "realWorldExample": "string",\n      "fatfRef": "string",\n      "riskLevel": "low"|"medium"|"high"|"critical",\n      "sectors": ["string"],\n      "jurisdictions": ["string"],\n      "relatedTypologies": ["string"],\n      "detectionMethods": ["string"],\n      "regulatoryResponse": "string"\n    }\n  ],\n  "totalFound": number,\n  "relatedCategories": ["string"]\n}\n\nReturn 5-10 most relevant typologies. Be comprehensive and expert-level.`,
+            `\n\nReturn ONLY valid JSON with this exact structure (no markdown fences):\n{\n  "results": [\n    {\n      "id": "CATEGORY-NNN",\n      "name": "string",\n      "category": "ML"|"TF"|"PF",\n      "description": "string",\n      "redFlags": ["string"],\n      "realWorldExample": "string",\n      "fatfRef": "string",\n      "riskLevel": "low"|"medium"|"high"|"critical",\n      "sectors": ["string"],\n      "jurisdictions": ["string"],\n      "relatedTypologies": ["string"],\n      "detectionMethods": ["string"],\n      "regulatoryResponse": "string"\n    }\n  ],\n  "totalFound": number,\n  "relatedCategories": ["string"]\n}\n\nFor the category field use ONLY "ML", "TF", or "PF" (FATF categories).\nReturn 5-10 most relevant typologies. Be comprehensive and expert-level.`,
           cache_control: { type: "ephemeral" },
         },
       ],
       messages: [
         {
           role: "user",
-          content: `Search query: "${sanitizeField(body.query ?? "", 500)}"
+          content: `Search query: "${cleanQuery}"
 ${filterStr}
 
-Find the most relevant AML/CFT typologies matching this search. Return comprehensive detail for each typology.`,
+Find the most relevant AML/CFT typologies matching this search. Use category "ML" for money laundering, "TF" for terrorist financing, "PF" for proliferation financing. Return comprehensive detail for each typology.`,
         },
       ],
     });
 
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
-    // Defensive JSON extraction — strip code-fences and pull the first
-    // {...} block. Claude occasionally wraps the JSON in prose despite
-    // the system prompt; we don't want a parse failure to flag the
-    // whole search as 'degraded'.
     const cleaned = raw.replace(/```json\n?|\n?```/g, "").trim();
     const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
     const jsonStr = jsonMatch ? jsonMatch[0] : cleaned;
-    const result = JSON.parse(jsonStr) as TypologySearchResponse;
-    if (!Array.isArray(result.results)) result.results = [];
-    if (!Array.isArray(result.relatedCategories)) result.relatedCategories = [];
-    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
+    const aiResult = JSON.parse(jsonStr) as TypologySearchResponse;
+    if (!Array.isArray(aiResult.results)) aiResult.results = [];
+    if (!Array.isArray(aiResult.relatedCategories)) aiResult.relatedCategories = [];
+
+    // Merge: static library first (deduplicated), then AI results
+    const aiResultNames = new Set(aiResult.results.map((r) => r.name.toLowerCase()));
+    const staticNotInAi = staticMatches
+      .filter((s) => !aiResultNames.has(s.name.toLowerCase()))
+      .map(toResult);
+    const mergedResults = [...staticNotInAi, ...aiResult.results].slice(0, 15);
+    const mergedRelated = Array.from(
+      new Set([...staticRelatedCategories, ...aiResult.relatedCategories]),
+    );
+
+    return NextResponse.json({
+      ok: true,
+      results: mergedResults,
+      totalFound: mergedResults.length,
+      relatedCategories: mergedRelated,
+    }, { headers: gate.headers });
   } catch (err) {
     console.warn("[typology-library/search] LLM failed:", err);
     return NextResponse.json({
       ok: true,
-      ...buildTemplate(),
-      degraded: true,
-      degradedReason: "Typology search AI call failed — using static fallback.",
+      ...buildFallback(),
+      degraded: staticMatches.length === 0,
+      degradedReason: "Typology search AI call failed — using static library results.",
     }, { headers: gate.headers });
   }
 }

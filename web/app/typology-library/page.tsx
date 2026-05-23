@@ -228,6 +228,28 @@ function FiuDpmsSection() {
 // Module 38 — Typology Library
 // Comprehensive AML/CFT typology search engine powered by Claude.
 
+// FATF category filters — maps to the ML/TF/PF category field in the static library
+const FATF_CATEGORY_FILTERS = [
+  { key: "all-fatf", label: "All", fatfCategory: undefined as string | undefined },
+  { key: "ml", label: "ML — Money Laundering", fatfCategory: "ML" },
+  { key: "tf", label: "TF — Terrorist Financing", fatfCategory: "TF" },
+  { key: "pf", label: "PF — Proliferation Financing", fatfCategory: "PF" },
+] as const;
+
+type FatfFilterKey = (typeof FATF_CATEGORY_FILTERS)[number]["key"];
+
+// Risk level filters
+const RISK_FILTERS = [
+  { key: "all-risk", label: "All Risk Levels", riskLevel: undefined as string | undefined },
+  { key: "critical", label: "Critical", riskLevel: "critical" },
+  { key: "high", label: "High", riskLevel: "high" },
+  { key: "medium", label: "Medium", riskLevel: "medium" },
+  { key: "low", label: "Low", riskLevel: "low" },
+] as const;
+
+type RiskFilterKey = (typeof RISK_FILTERS)[number]["key"];
+
+// Sector-based filters (legacy — kept for AI augmentation path)
 const FILTER_CATEGORIES = [
   { key: "all", label: "All" },
   { key: "trade", label: "Trade" },
@@ -602,6 +624,8 @@ function TypologyCard({
 export default function TypologyLibraryPage() {
   const [query, setQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<FilterKey>("all");
+  const [activeFatfFilter, setActiveFatfFilter] = useState<FatfFilterKey>("all-fatf");
+  const [activeRiskFilter, setActiveRiskFilter] = useState<RiskFilterKey>("all-risk");
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<TypologySearchResponse | null>(null);
   const [searchError, setSearchError] = useState<string | null>(null);
@@ -609,9 +633,20 @@ export default function TypologyLibraryPage() {
   const mountedRef = useRef(true);
   useEffect(() => () => { mountedRef.current = false; }, []);
 
-  const handleSearch = async (overrideQuery?: string, overrideFilter?: FilterKey) => {
+  const handleSearch = async (
+    overrideQuery?: string,
+    overrideFilter?: FilterKey,
+    overrideFatf?: FatfFilterKey,
+    overrideRisk?: RiskFilterKey,
+  ) => {
     const q = overrideQuery ?? query;
     const f = overrideFilter ?? activeFilter;
+    const fatf = overrideFatf ?? activeFatfFilter;
+    const risk = overrideRisk ?? activeRiskFilter;
+
+    const fatfEntry = FATF_CATEGORY_FILTERS.find((c) => c.key === fatf);
+    const riskEntry = RISK_FILTERS.find((r) => r.key === risk);
+
     setLoading(true);
     setSearchError(null);
     try {
@@ -619,8 +654,12 @@ export default function TypologyLibraryPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          query: q || `Show ${f === "all" ? "most common" : f} typologies`,
-          filters: { sector: CATEGORY_SECTOR_MAP[f] },
+          query: q || `Show ${fatf !== "all-fatf" ? fatf.toUpperCase() : f === "all" ? "most common" : f} typologies`,
+          filters: {
+            sector: CATEGORY_SECTOR_MAP[f],
+            category: fatfEntry?.fatfCategory,
+            riskLevel: riskEntry?.riskLevel,
+          },
         }),
         signal: AbortSignal.timeout(45_000),
       });

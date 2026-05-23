@@ -116,6 +116,14 @@ interface HistoricalTransaction {
   timestampUtc: string;
   /** ISO 3166-1 alpha-2 country code of the transaction origin/destination. */
   countryCode?: string;
+  /** Entity identifier for wash-trading detection (buyer or seller). */
+  entityId?: string;
+  /** Asset identifier for wash-trading / pump-dump detection. */
+  assetId?: string;
+  /** Role of the entity in the transaction: "buyer" or "seller". */
+  role?: "buyer" | "seller";
+  /** Transaction volume for the asset on this date (used for pump-dump). */
+  assetVolumeUsd?: number;
 }
 
 interface TransactionPayload {
@@ -178,6 +186,69 @@ interface TransactionPayload {
    * Total transaction volume (USD) in the last 24 hours (for velocity spike detection).
    */
   txnVolumeUsd24h?: number;
+
+  // ── Securities fraud detection fields ─────────────────────────────────────
+
+  /**
+   * Entity identifier for the current transaction's initiating party (buyer or seller).
+   * Used for wash-trading detection when cross-referenced with recentTransactions.
+   */
+  entityId?: string;
+
+  /**
+   * Role of the current entity in this transaction: "buyer" or "seller".
+   * Used for wash-trading detection.
+   */
+  role?: "buyer" | "seller";
+
+  /**
+   * Asset identifier (ticker, ISIN, contract address, commodity code, etc.)
+   * for the asset being traded. Used for wash-trading and pump-dump detection.
+   */
+  assetId?: string;
+
+  /**
+   * Daily asset volume (USD) time series for the past N days.
+   * Element [0] is the most recent completed day; element [N-1] is the oldest.
+   * Used for pump-and-dump pattern detection (10× spike over 3 days then drop).
+   */
+  assetVolumeSeries?: number[];
+
+  // ── Human trafficking pattern fields ──────────────────────────────────────
+
+  /**
+   * Number of distinct sender counterparties funding this recipient in the
+   * current session / window. Used for possible_trafficking_proceeds detection.
+   */
+  distinctSenderCount?: number;
+
+  /**
+   * True when the payment recurs on a weekly (or near-weekly) cadence.
+   * Used together with distinctSenderCount for trafficking-proceeds pattern.
+   */
+  isWeeklyRecurring?: boolean;
+
+  /**
+   * Merchant Category Code (MCC) or business-type string for the counterparty.
+   * Adult-entertainment and similar high-cash-risk codes trigger
+   * high_risk_cash_intensive flagging.
+   */
+  merchantCategoryCode?: string;
+
+  /**
+   * Business category label for the receiving merchant / customer business.
+   * Used by cash_intensive_front_business_risk detection to identify
+   * drug-trafficking front businesses (nail salons, car washes, convenience
+   * stores, parking lots, restaurants with anomalously high cash receipts).
+   */
+  merchantBusinessCategory?: string;
+
+  /**
+   * Percentage of total receipts paid in cash (0–100).
+   * Used with merchantBusinessCategory to detect drug-front business patterns —
+   * legitimate nail salons / car washes rarely exceed ~40% cash.
+   */
+  cashReceiptPct?: number;
 }
 
 interface AnomalyRequestBody {
@@ -427,6 +498,102 @@ function detectCorrespondentLayering(tx: TransactionPayload): AnomalyFlag | null
   };
 }
 
+/**
+ * PATTERN G — Wash Trading Detection (FATF market-abuse / securities fraud predicate)
+ *
+ * If the same entity appears as both buyer and seller for the same asset
+ * within a 24-hour window, flag as "wash_trading".
+ * Score contribution: +0.35
+ */
+function detectWashTrading(tx: TransactionPayload, now: Date): AnomalyFlag | null {
+  const { entityId, assetId, role, recentTransactions } = tx;
+  if (!entityId || !assetId || !role) return null;
+  const recent = recentTransactions;
+  if (!recent || recent.length === 0) return null;
+
+  const windowMs = MS_PER_DAY; // 24 hours
+  const oppositeRole: "buyer" | "seller" = role === "buyer" ? "seller" : "buyer";
+
+  const matchingCounterTrade = recent.find((t) => {
+    const tDate = new Date(t.timestampUtc);
+    if (Math.abs(now.getTime() - tDate.getTime()) > windowMs) return false;
+    return (
+      t.entityId === entityId &&
+      t.assetId === assetId &&
+      t.role === oppositeRole
+    );
+  });
+
+  if (!matchingCounterTrade) return null;
+
+  return {
+    flagName: "wash_trading",
+    scoreContribution: 0.35,
+    description:
+      `Entity "${entityId}" appears as both buyer and seller for asset "${assetId}" ` +
+      `within a 24-hour window. Circular self-dealing in the same asset is a primary ` +
+      `indicator of wash trading — a securities fraud and market-manipulation predicate ` +
+      `offence under FATF Recommendation 3.`,
+    fatfReference:
+      "FATF Recommendation 3 (money laundering offence — predicate offences); " +
+      "IOSCO Report on Market Manipulation (2018); " +
+      "SEC Rule 10b-5 / MAR Article 12 analogues",
+  };
+}
+
+/**
+ * PATTERN H — Pump-and-Dump Pattern (FATF market-abuse / securities fraud predicate)
+ *
+ * If daily asset volume spikes >=10x the 3-day baseline average then drops back,
+ * flag as "pump_dump_pattern".
+ * Score contribution: +0.30
+ *
+ * Requires tx.assetVolumeSeries with at least 4 elements:
+ *   [0] current day's volume, [1..3] spike window, [4..] older baseline.
+ * The spike must be >=10x the baseline average, confirmed by a drop back below
+ * 50% of peak in the current observation.
+ */
+function detectPumpDumpPattern(tx: TransactionPayload): AnomalyFlag | null {
+  const series = tx.assetVolumeSeries;
+  if (!series || series.length < 4) return null;
+
+  // series[0] = most recent (current), series[1..3] = spike window, series[4+] = baseline
+  const currentVol = series[0]!;
+  const spikeWindow = series.slice(1, 4);
+  const baselineWindow = series.length > 4 ? series.slice(4) : series.slice(3);
+
+  if (baselineWindow.length === 0) return null;
+
+  const baselineAvg = baselineWindow.reduce((s, v) => s + v, 0) / baselineWindow.length;
+  if (baselineAvg <= 0) return null;
+
+  const spikeMax = Math.max(...spikeWindow);
+  const spikeRatio = spikeMax / baselineAvg;
+
+  // Must have spiked >=10x above baseline during spike window
+  if (spikeRatio < 10) return null;
+
+  // Confirm the dump: current volume must be less than 50% of peak spike
+  if (currentVol >= spikeMax * 0.5) return null;
+
+  return {
+    flagName: "pump_dump_pattern",
+    scoreContribution: 0.30,
+    description:
+      `Asset volume spiked ${spikeRatio.toFixed(1)}x above the ${baselineWindow.length}-day ` +
+      `baseline average (peak: USD ${spikeMax.toLocaleString()}, baseline avg: ` +
+      `USD ${Math.round(baselineAvg).toLocaleString()}), then dropped to ` +
+      `USD ${currentVol.toLocaleString()} — a classic pump-and-dump profile. ` +
+      `Coordinated volume inflation followed by rapid deflation is a market-manipulation ` +
+      `and securities fraud indicator; proceeds are a FATF predicate-offence ML risk.`,
+    fatfReference:
+      "FATF Recommendation 3 (predicate offences — securities fraud); " +
+      "IOSCO Objectives and Principles of Securities Regulation; " +
+      "SEC Release 34-44103 (pump-and-dump schemes); " +
+      "ESMA Guidelines on Market Manipulation (MAR Article 12)",
+  };
+}
+
 // ──────────────────────────────────────────────────────────────────────────────
 // DPMS compliance override layer (existing, unchanged logic).
 // ──────────────────────────────────────────────────────────────────────────────
@@ -478,8 +645,129 @@ function applyDpmsRules(
   return { score, tier, drivers };
 }
 
+/**
+ * PATTERN G — Possible Trafficking Proceeds (FATF Report 2018 typology)
+ *
+ * Multiple small recurring payments from many different senders to one
+ * recipient (>20 distinct senders, recurring weekly) → flag as
+ * "possible_trafficking_proceeds".
+ * Score contribution: +0.30
+ */
+function detectTraffickingProceeds(tx: TransactionPayload): AnomalyFlag | null {
+  const { distinctSenderCount, isWeeklyRecurring } = tx;
+  if (
+    typeof distinctSenderCount !== "number" ||
+    distinctSenderCount <= 20 ||
+    !isWeeklyRecurring
+  ) return null;
+
+  return {
+    flagName: "possible_trafficking_proceeds",
+    scoreContribution: 0.30,
+    description:
+      `${distinctSenderCount} distinct senders making weekly recurring payments to a single ` +
+      `recipient. This aggregation pattern — many payers, one payee, regular cadence — ` +
+      `is a documented indicator of trafficker control over victim earnings.`,
+    fatfReference:
+      "FATF Report: Financial Flows from Human Trafficking (2018), typology TIP-3: " +
+      "aggregation of victim proceeds through controller accounts",
+  };
+}
+
+/**
+ * PATTERN H — High-Risk Cash-Intensive Business (FATF Report 2018 / FinCEN FIN-2014-A008)
+ *
+ * Cash receipts from adult-entertainment business codes (MCCs 7273, 7297, 5994,
+ * and equivalent strings) → flag as "high_risk_cash_intensive".
+ * Score contribution: +0.20
+ */
+const ADULT_ENTERTAINMENT_MCCS = new Set([
+  "7273", // dating/escort services
+  "7297", // massage parlors
+  "5994", // news/tobacco stands (proxy for adult-entertainment venues)
+  "7993", // gambling establishments (overlap with sex-tourism venues)
+  "5813", // drinking places (overlap with trafficking front businesses)
+]);
+
+const ADULT_ENTERTAINMENT_STRINGS = [
+  "escort", "adult entertainment", "massage parlor", "massage parlour",
+  "strip club", "gentlemen club", "adult club",
+];
+
+function detectHighRiskCashIntensive(tx: TransactionPayload): AnomalyFlag | null {
+  const mcc = tx.merchantCategoryCode ?? "";
+  const isCash = tx.paymentMethod === "cash";
+  if (!isCash) return null;
+
+  const mccHit = ADULT_ENTERTAINMENT_MCCS.has(mcc.trim());
+  const stringHit = ADULT_ENTERTAINMENT_STRINGS.some((s) =>
+    mcc.toLowerCase().includes(s),
+  );
+  if (!mccHit && !stringHit) return null;
+
+  return {
+    flagName: "high_risk_cash_intensive",
+    scoreContribution: 0.20,
+    description:
+      `Cash receipt from a merchant categorised as adult entertainment / massage / escort ` +
+      `(category: "${mcc}"). Cash-intensive adult-entertainment businesses are a ` +
+      `primary placement vehicle for human-trafficking proceeds.`,
+    fatfReference:
+      "FATF Report: Financial Flows from Human Trafficking (2018), typology TIP-1; " +
+      "FinCEN Advisory FIN-2014-A008 (human trafficking red flags)",
+  };
+}
+
+/**
+ * PATTERN I — Cash-Intensive Drug Front Business Risk
+ *             (FATF Report on Drug Trafficking Proceeds 2014; FinCEN FIN-2014-A008)
+ *
+ * Very high cash receipt volumes from business types commonly used as drug
+ * trafficking fronts (nail salons, car washes, convenience stores, parking lots,
+ * restaurants). When cashReceiptPct > 70% for these business categories, flag
+ * as "cash_intensive_front_business_risk".
+ * Score contribution: +0.20
+ */
+const DRUG_FRONT_BUSINESS_CATEGORIES: string[] = [
+  "nail salon", "nail salons",
+  "car wash", "carwash",
+  "convenience store", "convenience stores",
+  "parking lot", "parking garage",
+  "restaurant", "restaurants",
+  "fast food", "takeaway",
+];
+
+function detectCashIntensiveFrontBusiness(tx: TransactionPayload): AnomalyFlag | null {
+  const { merchantBusinessCategory, cashReceiptPct, paymentMethod } = tx;
+  if (!merchantBusinessCategory || typeof cashReceiptPct !== "number") return null;
+  // Only triggers on cash transactions where cash receipt % is very high (>70%)
+  if (paymentMethod !== "cash" || cashReceiptPct <= 70) return null;
+
+  const categoryLower = merchantBusinessCategory.toLowerCase();
+  const isFrontBusinessType = DRUG_FRONT_BUSINESS_CATEGORIES.some((cat) =>
+    categoryLower.includes(cat),
+  );
+  if (!isFrontBusinessType) return null;
+
+  return {
+    flagName: "cash_intensive_front_business_risk",
+    scoreContribution: 0.20,
+    description:
+      `Business category "${merchantBusinessCategory}" has ${cashReceiptPct.toFixed(0)}% ` +
+      `cash receipts — well above the typical threshold for this sector. ` +
+      `Nail salons, car washes, convenience stores, parking lots, and restaurants ` +
+      `are documented fronts for drug trafficking proceeds placement. ` +
+      `Cash commingling with legitimate revenue is a primary laundering method ` +
+      `for retail narcotics networks.`,
+    fatfReference:
+      "FATF Report on Money Laundering from Drug Trafficking (2014), typology DT-5 " +
+      "(cash-intensive business fronts); FinCEN Advisory FIN-2014-A008; " +
+      "FATF NPML Guidance (2023) — cash placement through retail businesses",
+  };
+}
+
 // ──────────────────────────────────────────────────────────────────────────────
-// Advanced pattern detection — runs all 6 new rules and applies score additions.
+// Advanced pattern detection — runs all detection rules and applies score additions.
 // ──────────────────────────────────────────────────────────────────────────────
 
 function applyAdvancedPatterns(
@@ -498,6 +786,11 @@ function applyAdvancedPatterns(
     detectGeographicDispersion(tx, now),
     detectDormantReactivation(tx, now),
     detectCorrespondentLayering(tx),
+    detectTraffickingProceeds(tx),
+    detectHighRiskCashIntensive(tx),
+    detectCashIntensiveFrontBusiness(tx),
+    detectWashTrading(tx, now),
+    detectPumpDumpPattern(tx),
   ];
 
   for (const flag of detectors) {

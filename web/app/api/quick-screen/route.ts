@@ -48,6 +48,49 @@ import { tenantIdFromGate } from "@/lib/server/tenant";
 import { saveSubject, getSubject } from "../pkyc/_store";
 import type { CaseRecord } from "@/lib/types";
 import { saveEnrichmentJob, completeEnrichmentJob } from "@/lib/server/enrichment-jobs";
+import { UN_1267_DESIGNATED_ENTITIES } from "@/lib/intelligence/amlKeywords";
+
+// ── UN Security Council 1267 designated entity name matching ───────────────
+// Token-set similarity check: if the subject name shares >80% of word tokens
+// with any UN 1267 designated group, immediately flag with critical severity.
+// This is a lightweight pre-screen before the full watchlist engine runs.
+
+function tokenize(s: string): Set<string> {
+  return new Set(
+    s.toLowerCase()
+      .replace(/[^a-z0-9\s؀-ۿݐ-ݿ]/g, " ")
+      .split(/\s+/)
+      .filter((t) => t.length >= 2),
+  );
+}
+
+function tokenSetSimilarity(a: string, b: string): number {
+  const ta = tokenize(a);
+  const tb = tokenize(b);
+  if (ta.size === 0 || tb.size === 0) return 0;
+  let intersection = 0;
+  for (const t of ta) {
+    if (tb.has(t)) intersection++;
+  }
+  return intersection / Math.max(ta.size, tb.size);
+}
+
+function checkUn1267Match(
+  name: string,
+  aliases: string[] = [],
+): { matched: true; entity: string; similarity: number } | { matched: false } {
+  const THRESHOLD = 0.80;
+  const namesToCheck = [name, ...aliases];
+  for (const n of namesToCheck) {
+    for (const entity of UN_1267_DESIGNATED_ENTITIES) {
+      const sim = tokenSetSimilarity(n, entity);
+      if (sim >= THRESHOLD) {
+        return { matched: true, entity, similarity: sim };
+      }
+    }
+  }
+  return { matched: false };
+}
 
 // ── Sanctions list health snapshot ─────────────────────────────────────────
 // Attached to every screening response so audit records capture which lists

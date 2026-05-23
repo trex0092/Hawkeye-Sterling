@@ -15,7 +15,6 @@ import { classifyAdverseKeywords } from "@/lib/data/adverse-keywords";
 import {
   type CustomerRiskTier,
   MONITORING_FREQUENCIES,
-  isScreenDue,
   isNewsCheckDue,
   loadAlertThresholds,
   meetsAdverseMediaThreshold,
@@ -258,6 +257,36 @@ export async function POST(req: Request): Promise<NextResponse> {
   for (let i = 0; i < subjects.length; i += CONCURRENCY) {
   await Promise.all(subjects.slice(i, i + CONCURRENCY).map(async (s) => {
     try {
+      // ── Risk-based frequency check ──────────────────────────────────────────
+      // Determine whether a re-screen / news-check is due based on the subject's
+      // risk tier and the risk-based schedule stored from the previous run.
+      const riskTier = toRiskTier(s.riskTier);
+      const freq = MONITORING_FREQUENCIES[riskTier];
+      const riskSchedule = await getJson<RiskBasedSchedule>(`ongoing/risk-schedule/${s.id}`);
+
+      if (riskSchedule?.nextScreenAt) {
+        // Risk-based schedule takes precedence over the legacy cadence schedule.
+        const nextScreenMs = Date.parse(riskSchedule.nextScreenAt);
+        if (Number.isFinite(nextScreenMs) && nextScreenMs > nowMs) return; // not due yet
+      } else {
+        // Legacy cadence-based schedule fallback for subjects enrolled before
+        // risk-based scheduling was introduced.
+        const legacySchedule = await getJson<Schedule>(`schedule/${s.id}`);
+        if (legacySchedule) {
+          const nextRunAt = Date.parse(legacySchedule.nextRunAt);
+          if (Number.isFinite(nextRunAt) && nextRunAt > nowMs) return; // skip if not due
+        }
+      }
+
+      // Determine whether a news/adverse-media check is due on this tick.
+      const lastNewsCheckMs = riskSchedule?.lastNewsCheckAt
+        ? Date.parse(riskSchedule.lastNewsCheckAt)
+        : null;
+      const newsCheckDue = isNewsCheckDue(riskTier, lastNewsCheckMs, nowMs);
+
+      // Load per-customer alert thresholds (defaults apply if never configured).
+      const alertThresholds = await loadAlertThresholds(s.id);
+
       const subject = {
         name: s.name,
         ...(s.aliases && s.aliases.length ? { aliases: s.aliases } : {}),
@@ -293,6 +322,25 @@ export async function POST(req: Request): Promise<NextResponse> {
       // so the threshold and the snapshot agree.
       const scoreDelta = prev ? adjustedScore - prev.topScore : 0;
       const escalated = shouldEscalate(prev?.topScore, adjustedScore);
+
+      // ── Change detection ─────────────────────────────────────────────────────
+      // Load the previous monitoring snapshot to compare adverse-media categories
+      // and jurisdiction. detectChanges fires an automatic escalation when:
+      //   - Sanctions score increased by > 10 points
+      //   - A new adverse-media category emerged (not in prior snapshot)
+      //   - Jurisdiction changed to a CAHRA or FATF-blacklist country
+      const prevMonSnapshot = await loadMonitoringSnapshot(s.id);
+      const currentAdverseCategories = kwGroups as AdverseMediaCategory[];
+      const changeDetection = detectChanges({
+        previousScore: prevMonSnapshot?.topScore ?? prev?.topScore,
+        currentScore: adjustedScore,
+        previousAdverseCategories: prevMonSnapshot?.adverseMediaCategories ?? [],
+        currentAdverseCategories,
+        previousJurisdiction: prevMonSnapshot?.jurisdiction,
+        currentJurisdiction: s.jurisdiction ?? null,
+      });
+      // Escalate on either the legacy score-jump rule OR the new change-detection rules.
+      const changeEscalated = escalated || changeDetection.shouldEscalate;
 
       // Persist the fresh snapshot (using keyword-adjusted score/severity).
       const snapshot: LastSnapshot = {
