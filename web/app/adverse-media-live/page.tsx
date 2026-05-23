@@ -22,6 +22,7 @@ const RATING_STYLES: Record<
   medium: { badge: "bg-amber-dim text-amber border-amber/40", label: "MEDIUM" },
   low: { badge: "bg-blue-dim text-blue border-blue/40", label: "LOW" },
   clear: { badge: "bg-green-dim text-green border-green/40", label: "CLEAR" },
+  unknown: { badge: "bg-ink-dim text-ink-2 border-hair-2", label: "MANUAL REVIEW" },
 };
 
 const TONE_COLOR = (tone: number): string => {

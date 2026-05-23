@@ -28,7 +28,7 @@ export interface AdverseMediaLiveResult {
   subject: string;
   totalHits: number;
   riskScore: number; // 0-100
-  riskRating: "critical" | "high" | "medium" | "low" | "clear";
+  riskRating: "critical" | "high" | "medium" | "low" | "clear" | "unknown";
   articles: Array<{
     title: string;
     source: string;
