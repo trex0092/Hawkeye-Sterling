@@ -92,8 +92,9 @@ async function handleGet(_req: Request): Promise<Response> {
       .map((b) => b.key)
       .filter((k) => k.endsWith(".json") && k !== "tamper-detected.json");
   } catch (err) {
+    console.error("[audit-trail/tenants] blob store list failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json(
-      { ok: false, error: `Blob store list failed: ${err instanceof Error ? err.message : String(err)}` },
+      { ok: false, error: "audit chain store temporarily unavailable" },
       { status: 500 },
     );
   }

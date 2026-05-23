@@ -145,8 +145,9 @@ async function handleGet(req: Request): Promise<Response> {
       chain = raw;
     }
   } catch (err) {
+    console.error("[audit-trail/export] chain read failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json(
-      { ok: false, error: `chain read failed: ${err instanceof Error ? err.message : String(err)}` },
+      { ok: false, error: "audit chain temporarily unavailable" },
       { status: 500 },
     );
   }

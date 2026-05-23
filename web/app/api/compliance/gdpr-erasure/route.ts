@@ -76,6 +76,15 @@ async function handlePost(req: Request): Promise<NextResponse> {
     );
   }
 
+  // Validate caseId to prevent path traversal in blob keys.
+  const SAFE_CASE_ID_RE = /^[a-zA-Z0-9_\-:.]+$/;
+  if (!SAFE_CASE_ID_RE.test(body.caseId) || body.caseId.length > 128) {
+    return NextResponse.json(
+      { ok: false, error: "invalid caseId format" },
+      { status: 400, headers: gateHeaders },
+    );
+  }
+
   const scope = body.scope ?? "pii_only";
   const cases = getStore(CASES_STORE);
   const receipts = getStore(ERASURE_STORE);

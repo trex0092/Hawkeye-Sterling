@@ -83,8 +83,16 @@ async function handleGet(req: Request): Promise<NextResponse> {
   const url = new URL(req.url);
   const sinceParam = url.searchParams.get("since");
   const untilParam = url.searchParams.get("until");
-  const since = sinceParam ? Date.parse(sinceParam) : Number.NEGATIVE_INFINITY;
-  const until = untilParam ? Date.parse(untilParam) : Number.POSITIVE_INFINITY;
+  const sinceParsed = sinceParam ? Date.parse(sinceParam) : Number.NEGATIVE_INFINITY;
+  const untilParsed = untilParam ? Date.parse(untilParam) : Number.POSITIVE_INFINITY;
+  if (Number.isNaN(sinceParsed) || Number.isNaN(untilParsed)) {
+    return NextResponse.json(
+      { ok: false, error: "since and until must be valid ISO date strings" },
+      { status: 400, headers: gate.headers },
+    );
+  }
+  const since = sinceParsed;
+  const until = untilParsed;
 
   const allFeedback = await readJsonBlob(FEEDBACK_STORE, FEEDBACK_KEY);
   const allAudit = await readJsonBlob(AUDIT_STORE, AUDIT_KEY);
@@ -96,6 +104,7 @@ async function handleGet(req: Request): Promise<NextResponse> {
   // export — the regulator could file the empty bundle thinking nothing
   // happened. If either store failed, return 503 with the error surfaced.
   if (readErrors.length > 0) {
+    console.error("[soc2-export] blob read errors:", readErrors);
     return NextResponse.json(
       {
         ok: false,
@@ -103,7 +112,7 @@ async function handleGet(req: Request): Promise<NextResponse> {
         message:
           "One or more underlying Blobs stores failed to read. The audit bundle is incomplete; do not submit. " +
           "Retry or investigate Netlify Blobs connectivity.",
-        readErrors,
+        storeCount: readErrors.length,
       },
       { status: 503, headers: gate.headers },
     );
