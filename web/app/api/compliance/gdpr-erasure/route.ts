@@ -79,9 +79,26 @@ async function handlePost(req: Request): Promise<NextResponse> {
 
   // Validate caseId to prevent path traversal in blob keys.
   const SAFE_CASE_ID_RE = /^[a-zA-Z0-9_\-:.]+$/;
-  if (!SAFE_CASE_ID_RE.test(body.caseId) || body.caseId.length > 128) {
+  if (!SAFE_CASE_ID_RE.test(body.caseId) || body.caseId.length > 256) {
     return NextResponse.json(
-      { ok: false, error: "invalid caseId format" },
+      { ok: false, error: "invalid caseId format — must match [a-zA-Z0-9_\\-:.] and be at most 256 chars" },
+      { status: 400, headers: gateHeaders },
+    );
+  }
+
+  // Validate email format.
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!EMAIL_RE.test(body.requesterEmail) || body.requesterEmail.length > 320) {
+    return NextResponse.json(
+      { ok: false, error: "requesterEmail must be a valid email address (max 320 chars)" },
+      { status: 400, headers: gateHeaders },
+    );
+  }
+
+  // Cap reason field.
+  if (body.reason && body.reason.length > 2000) {
+    return NextResponse.json(
+      { ok: false, error: "reason exceeds 2000-character limit" },
       { status: 400, headers: gateHeaders },
     );
   }

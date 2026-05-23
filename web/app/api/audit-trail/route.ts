@@ -180,7 +180,7 @@ async function handleGet(req: Request, responseHeaders: Record<string, string> =
   }, { headers: responseHeaders });
 }
 
-export const GET = (req: Request) => {
+export const GET = async (req: Request) => {
   // Regulator read-only path: accept Ed25519-signed regulator JWT.
   // A tenant-scoped token grants read access to the audit trail.
   // Scope check: audit trail is tenant-wide; case-only scoped tokens are denied
@@ -188,14 +188,15 @@ export const GET = (req: Request) => {
   const authHeader = req.headers.get("authorization") ?? "";
   const rawToken = authHeader.replace(/^Bearer\s+/i, "").trim();
   if (rawToken && !rawToken.startsWith("hks_live_")) {
-    const regClaims = verifyRegulatorToken(rawToken);
-    if (regClaims) {
+    const regResult = await verifyRegulatorToken(rawToken);
+    if (regResult.ok) {
+      const regClaims = regResult.claims;
       const hasTenantScope = regClaims.scope.some((s) => s.startsWith("tenant:"));
       if (!hasTenantScope) {
-        return Promise.resolve(NextResponse.json(
+        return NextResponse.json(
           { ok: false, error: "scope_denied", hint: "Audit trail requires a tenant-scoped regulator token." },
           { status: 403 },
-        ));
+        );
       }
       // Token valid and has tenant scope — allow read.
       return handleGet(req);
