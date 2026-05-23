@@ -113,6 +113,13 @@ export async function POST(req: Request) {
       { status: 400, headers: gate.headers },
     );
   }
+  const MAX_BULK_SUBJECTS = 200;
+  if (subjects.length > MAX_BULK_SUBJECTS) {
+    return NextResponse.json(
+      { ok: false, error: `subjects array must not exceed ${MAX_BULK_SUBJECTS} items` },
+      { status: 413, headers: gate.headers },
+    );
+  }
 
   const listVersion = body.listVersion ?? "latest";
 

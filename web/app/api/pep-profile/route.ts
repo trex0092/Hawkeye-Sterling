@@ -316,13 +316,12 @@ Perform a comprehensive PEP risk assessment grounded in the PEP database data ab
     return NextResponse.json({ ok: false, error: "pep-profile temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
+    console.error("[hawkeye] pep_profile handler exception:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({
       ok: false,
       errorCode: "HANDLER_EXCEPTION",
       errorType: "internal",
       tool: "pep_profile",
-      message,
       retryAfterSeconds: null,
       requestId: Math.random().toString(36).slice(2, 10),
       latencyMs: Date.now() - _handlerStart,

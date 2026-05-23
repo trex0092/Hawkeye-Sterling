@@ -36,6 +36,16 @@ export async function POST(req: Request): Promise<NextResponse> {
       { status: 400, headers: gate.headers },
     );
   }
+  // Length caps prevent storage exhaustion.
+  const MAX_ID = 256, MAX_NAME = 512, MAX_REASON = 2000, MAX_ANALYST = 200;
+  if (subjectId.length > MAX_ID || listId.length > MAX_ID || listRef.length > MAX_ID ||
+      candidateName.length > MAX_NAME || analyst.length > MAX_ANALYST ||
+      (reason && reason.length > MAX_REASON)) {
+    return NextResponse.json(
+      { ok: false, error: "one or more fields exceed maximum length" },
+      { status: 400, headers: gate.headers },
+    );
+  }
   if (!["false_positive", "true_match", "needs_review"].includes(verdict)) {
     return NextResponse.json(
       { ok: false, error: "verdict must be false_positive | true_match | needs_review" },

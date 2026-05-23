@@ -97,6 +97,8 @@ function validateRequest(raw: unknown): { ok: true; value: ScreeningRunRequest }
       errors.push({ field: "subject.aliases", message: `aliases must not exceed ${MAX_ALIASES} entries` });
     } else if (!(subject["aliases"] as unknown[]).every((a) => typeof a === "string")) {
       errors.push({ field: "subject.aliases", message: "all aliases must be strings" });
+    } else if ((subject["aliases"] as string[]).some((a) => a.length > 512)) {
+      errors.push({ field: "subject.aliases", message: "each alias must not exceed 512 characters" });
     }
   }
 
