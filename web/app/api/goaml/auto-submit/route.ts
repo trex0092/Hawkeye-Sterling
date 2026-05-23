@@ -32,7 +32,7 @@ import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { findSubmittedBySha256, recordSubmittedSha256 } from "@/lib/server/goaml-vault";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
-import { createHash, createHmac, timingSafeEqual } from "node:crypto";
+import { createHash, createHmac, timingSafeEqual, randomBytes } from "node:crypto";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -134,7 +134,7 @@ async function handlePost(req: Request): Promise<NextResponse> {
   }
 
   const dryRun = body.mode !== "live";
-  const submissionRef = `hsg-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+  const submissionRef = `hsg-${Date.now().toString(36)}-${randomBytes(4).toString("hex")}`;
 
   if (dryRun) {
     return NextResponse.json(

@@ -19,7 +19,7 @@ import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getStore } from "@netlify/blobs";
 import { redactPdplObject } from "../../../../../src/brain/pdpl-guard.js";
-import { createHash } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -141,7 +141,7 @@ async function handlePost(req: Request): Promise<NextResponse> {
   }
 
   const caseShaAfter = createHash("sha256").update(JSON.stringify(safe)).digest("hex");
-  const receiptId = `er_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+  const receiptId = `er_${Date.now().toString(36)}_${randomBytes(4).toString("hex")}`;
   const receipt: ErasureReceipt = {
     receiptId,
     caseId: body.caseId,

@@ -28,6 +28,7 @@
 //     model, usage
 //   }
 
+import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
@@ -96,7 +97,7 @@ interface ExtractResult {
 
 function inferEvidenceMeta(schema: Schema, extracted: Record<string, unknown>): ExtractResult["evidenceItem"] {
   const observedAt = new Date().toISOString();
-  const id = `ext_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+  const id = `ext_${Date.now().toString(36)}_${randomBytes(4).toString("hex")}`;
   switch (schema) {
     case "corporate_registry":
       return {

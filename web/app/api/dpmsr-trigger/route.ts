@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getStore } from "@netlify/blobs";
@@ -93,7 +94,11 @@ function evaluateObligations(txns: DpmsrTransaction[]): Omit<DpmsrObligation, "i
   }
 
   for (const [customerId, cts] of byCustomer) {
-    const sorted = [...cts].sort((a, b) => Date.parse(a.at) - Date.parse(b.at));
+    const sorted = [...cts].sort((a, b) => {
+      const ta = Date.parse(a.at);
+      const tb = Date.parse(b.at);
+      return (Number.isFinite(ta) ? ta : 0) - (Number.isFinite(tb) ? tb : 0);
+    });
     for (let i = 0; i < sorted.length; i++) {
       const anchor = sorted[i]!;
       const window = [anchor];
@@ -220,7 +225,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     const obligations = await loadObligations(tenant);
     const newObs: DpmsrObligation[] = evalResults.map((r) => ({
       ...r,
-      id: `dpmsr-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      id: `dpmsr-${Date.now()}-${randomBytes(4).toString("hex")}`,
       createdAt: new Date().toISOString(),
       mlroSignedOff: false,
       status: "pending" as const,

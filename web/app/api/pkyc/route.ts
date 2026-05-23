@@ -4,6 +4,7 @@
 //
 // Controls: 3.01 (CDD ongoing), 3.04 (periodic review), 20.09 (telemetry)
 
+import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { withGuard } from "@/lib/server/guard";
 import {
@@ -68,7 +69,7 @@ async function handlePost(req: Request): Promise<NextResponse> {
   if (!body.name) return NextResponse.json({ ok: false, error: "name is required" }, { status: 400 });
   if (body.name.length > 500) return NextResponse.json({ ok: false, error: "name exceeds 500-character limit" }, { status: 400 });
 
-  const id = body.id ?? `pkyc-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const id = body.id ?? `pkyc-${Date.now()}-${randomBytes(4).toString("hex")}`;
   const now = new Date().toISOString();
   const cadence: PKycCadence = (body.cadence ?? "monthly") as PKycCadence;
 

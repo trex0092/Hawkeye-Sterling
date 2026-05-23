@@ -3,6 +3,7 @@
 // from a standard compliance-report payload. Replaces the old "Subject
 // Screening Dossier" format with the bureau-standard 14-section design.
 
+import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import type {
@@ -795,7 +796,7 @@ async function handleScrReport(req: Request): Promise<Response> {
       tool: "generate_screening_report",
       error: "An unexpected error occurred. Please retry or contact support.",
       retryAfterSeconds: null,
-      requestId: Math.random().toString(36).slice(2, 10),
+      requestId: randomBytes(5).toString("hex"),
       latencyMs: Date.now() - _handlerStart,
     }, { status: 500, headers: gateHeaders });
   }

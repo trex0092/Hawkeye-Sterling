@@ -240,10 +240,11 @@ async function handleTmReport(req: Request): Promise<NextResponse> {
       return null;
     })) as typeof payload;
   } catch (err) {
+    console.error("[tm-report] asana request failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({
       ok: true,
       asanaSkipped: true,
-      asanaNote: `Asana request failed: ${err instanceof Error ? err.message : String(err)}. Report generated successfully.`,
+      asanaNote: "Asana request failed — report generated successfully.",
       reportText: lines.join("\n"),
     });
   }

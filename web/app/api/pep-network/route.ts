@@ -14,6 +14,7 @@
 // Also performs: FATF typology matching, jurisdiction risk overlay,
 // and produces a full EDD requirements checklist.
 
+import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { writeAuditEvent } from "@/lib/audit";
 import { enforce } from "@/lib/server/enforce";
@@ -254,7 +255,7 @@ Return ONLY valid JSON with this exact structure:
       tool: "pep_network",
       message: "PEP network service unavailable",
       retryAfterSeconds: null,
-      requestId: Math.random().toString(36).slice(2, 10),
+      requestId: randomBytes(5).toString("hex"),
       latencyMs: Date.now() - _handlerStart,
     }, { status: 503, headers: gate.headers });
   }

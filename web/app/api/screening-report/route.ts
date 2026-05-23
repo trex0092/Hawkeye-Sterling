@@ -561,12 +561,11 @@ async function handleScreeningReport(req: Request): Promise<NextResponse> {
       ...(payload.data.permalink_url ? { taskUrl: payload.data.permalink_url } : {}),
     });
   } catch (err) {
-    const detail = err instanceof Error ? err.message : String(err);
-    console.error("[screening-report] asana request failed", detail);
+    console.error("[screening-report] asana request failed", err instanceof Error ? err.message : String(err));
     return respond(200, {
       ok: true,
       asanaSkipped: true,
-      asanaNote: `Asana request failed: ${detail} — report generated successfully.`,
+      asanaNote: "Asana request failed — report generated successfully.",
       reportName: name,
       reportNotes: notes,
     });

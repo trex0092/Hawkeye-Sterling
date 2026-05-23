@@ -13,6 +13,7 @@
 // roles are entered manually by the operator, per project memory. The
 // withGuard auth gate is the hard line.
 
+import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { withGuard, type RequestContext } from "@/lib/server/guard";
 import { getJson, setJson } from "@/lib/server/store";
@@ -24,6 +25,7 @@ import {
   validateEntryId,
   type WhitelistEntry,
 } from "@/lib/server/whitelist";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -95,7 +97,7 @@ async function handlePost(req: Request, ctx: RequestContext): Promise<NextRespon
 
   const id =
     str(raw["id"]) ??
-    `wl-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    `wl-${Date.now()}-${randomBytes(4).toString("hex")}`;
   if (!validateEntryId(id)) {
     return NextResponse.json(
       { ok: false, error: "id must match [a-zA-Z0-9_-.:] and be 1-128 chars" },
@@ -129,6 +131,12 @@ async function handlePost(req: Request, ctx: RequestContext): Promise<NextRespon
     reason: entry.reason,
   });
 
+  // FDL 10/2025 Art.24: whitelist additions are AML decisions and must be in the tamper-evident chain.
+  void writeAuditChainEntry(
+    { event: "whitelist.entry_added", subjectId: entry.id, subjectName: entry.subjectName, reason: entry.reason, actor: entry.approvedBy },
+    "compliance",
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
+
   return NextResponse.json({ ok: true, entry });
 }
 
@@ -151,6 +159,13 @@ async function handleDelete(req: Request, ctx: RequestContext): Promise<NextResp
     action: "remove",
     entryId: id,
   });
+
+  // FDL 10/2025 Art.24: whitelist removals are AML decisions and must be in the tamper-evident chain.
+  void writeAuditChainEntry(
+    { event: "whitelist.entry_removed", subjectId: id, actor: ctx.tenantId },
+    "compliance",
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
+
   return NextResponse.json({ ok: true });
 }
 

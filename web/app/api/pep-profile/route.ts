@@ -1,6 +1,7 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
+import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
@@ -323,7 +324,7 @@ Perform a comprehensive PEP risk assessment grounded in the PEP database data ab
       errorType: "internal",
       tool: "pep_profile",
       retryAfterSeconds: null,
-      requestId: Math.random().toString(36).slice(2, 10),
+      requestId: randomBytes(5).toString("hex"),
       latencyMs: Date.now() - _handlerStart,
     }, { status: 500 , headers: gate && gate.ok ? gate.headers : {} });
   }

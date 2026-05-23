@@ -24,6 +24,7 @@
 //   the request is rejected with 403 four_eyes_required.
 //   This implements UAE FDL 10/2025 Art.16 in code, not just governance policy.
 
+import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import type { ApiKeyRecord } from "@/lib/server/api-keys";
@@ -157,8 +158,14 @@ async function handlePost(req: Request, callerRecord: ApiKeyRecord | null, gateH
   if (!narrative) {
     return NextResponse.json({ ok: false, error: "narrative required" }, { status: 400, headers: gateHeaders });
   }
-  if (narrative.length > 5000) {
-    return NextResponse.json({ ok: false, error: "narrative exceeds 5000-character limit (goAML schema constraint)" }, { status: 400, headers: gateHeaders });
+  if (narrative.length > 50000) {
+    return NextResponse.json({ ok: false, error: "narrative exceeds 50000-character limit" }, { status: 400, headers: gateHeaders });
+  }
+  if (subjectName.length > 500) {
+    return NextResponse.json({ ok: false, error: "subjectName exceeds 500-character limit" }, { status: 400, headers: gateHeaders });
+  }
+  if (caseId.length > 256) {
+    return NextResponse.json({ ok: false, error: "caseId exceeds 256-character limit" }, { status: 400, headers: gateHeaders });
   }
 
   // ── Reporting entity sanity check ─────────────────────────────────────────
@@ -263,7 +270,7 @@ async function handlePost(req: Request, callerRecord: ApiKeyRecord | null, gateH
     }
 
     // Store a SAR record for listing via GET /api/sar.
-    const sarId = `sar-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    const sarId = `sar-${Date.now()}-${randomBytes(4).toString("hex")}`;
     const record: SarRecord = {
       sarId,
       caseId,

@@ -24,6 +24,7 @@
 // Response: { ok, answer, elapsedMs, advisorScore, citationReport,
 //             suggestedFollowUps, verification }
 
+import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { corsHeaders, corsPreflight } from "@/lib/api/cors";
@@ -688,7 +689,7 @@ export async function POST(req: Request): Promise<Response> {
       tool: "mlro_advisor_quick",
       error: "An unexpected error occurred. Please retry or contact support.",
       retryAfterSeconds: null,
-      requestId: Math.random().toString(36).slice(2, 10),
+      requestId: randomBytes(5).toString("hex"),
       latencyMs: Date.now() - _handlerStart,
     }, { status: 500, headers: { ...gateHeaders, ...corsHeaders(origin) } });
   }
