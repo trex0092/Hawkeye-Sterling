@@ -384,7 +384,7 @@ const SUBMISSION_CHECKLIST = [
 ];
 
 export async function POST(req: Request): Promise<Response> {
-  const gate = await enforce(req);
+  const gate = await enforce(req, { cost: 2 });
   if (!gate.ok) return gate.response;
 
   let body: GoAmlXmlInput;
