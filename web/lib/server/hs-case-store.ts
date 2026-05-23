@@ -19,7 +19,7 @@ import { writeAuditChainEntry } from "./audit-chain";
 import { type RiskCategory, type DueDiligenceLevel } from "./categorize";
 
 export type HsCaseStatus =
-  | "open" | "under_review" | "pending_approval" | "closed" | "escalated" | "frozen";
+  | "open" | "under_review" | "pending_approval" | "closed" | "escalated" | "frozen" | "mlro_review" | "filed_str";
 
 export type DispositionVerdict =
   | "approve" | "EDD" | "escalate" | "STR" | "false_positive";
@@ -32,6 +32,37 @@ export interface HsCaseHit {
   candidateName: string;
   matchScore: number;
   programs?: string[];
+}
+
+// ── Escalation timeline tracker ──────────────────────────────────────────────
+// One entry per status transition; appended by appendEscalationHistory().
+export interface EscalationHistoryEntry {
+  timestamp:  string;        // ISO-8601
+  fromStatus: HsCaseStatus;
+  toStatus:   HsCaseStatus;
+  byUserId:   string;
+  reason:     string;
+}
+
+// ── Cross-case pattern detection ─────────────────────────────────────────────
+// Result of detectLinkedCases(); matchedField identifies which attribute linked them.
+export type LinkedCaseMatchField =
+  | "subjectName" | "accountNumber" | "counterparty" | "ipAddress";
+
+export interface LinkedCaseMatch {
+  caseId:       string;
+  matchedField: LinkedCaseMatchField;
+  matchValue:   string;
+}
+
+// ── Composite risk score inputs ───────────────────────────────────────────────
+// Populated by callers when evidence is available; updateCaseRiskScore() reads them.
+export interface CaseRiskFactors {
+  sanctionsHitCount:   number;   // number of hard-hit sanctions matches
+  isPep:               boolean;
+  adverseMediaCount:   number;   // count of adverse media articles / signals
+  redlineViolations:   number;   // count of triggered redline rules
+  jurisdictionRisk:    number;   // 0–100 score derived from counterparty country tier
 }
 
 export interface HsCase {
@@ -68,6 +99,28 @@ export interface HsCase {
   provisionalScreening:boolean;
   overrideReasons:     string[];
   notes?:              string;
+
+  // ── Risk re-scoring ───────────────────────────────────────────────────────
+  // compositeRiskScore: 0–100 weighted score; updated by updateCaseRiskScore().
+  compositeRiskScore?: number;
+  riskFactors?:        CaseRiskFactors;
+
+  // ── Escalation timeline (b) ───────────────────────────────────────────────
+  escalationHistory:   EscalationHistoryEntry[];
+
+  // ── Regulatory deadline tracking (c) ─────────────────────────────────────
+  // UAE FDL 10/2025 Art.17: STR must be filed within 48 h of suspicion formation.
+  // filingDeadline is set when status transitions to "escalated".
+  // overdueSar is set true when the case remains "escalated" for >36 h without
+  // advancing to "filed_str".
+  filingDeadline?:     string;   // ISO-8601 timestamp (createdAt_of_escalation + 48 h)
+  overdueSar?:         boolean;
+
+  // ── Cross-case identifiers (d) ────────────────────────────────────────────
+  // Optional structured identifiers used by detectLinkedCases().
+  accountNumber?:      string;
+  counterparty?:       string;
+  ipAddress?:          string;
 }
 
 type Tenant = string;
@@ -97,7 +150,7 @@ export function formatCaseId(n: number): string {
 
 export async function createCase(
   tenant: Tenant,
-  input: Omit<HsCase, "caseId" | "createdAt" | "updatedAt" | "linkedAuditSeqs" | "breachLogged" | "slaBreach" | "fourEyesApprovers">,
+  input: Omit<HsCase, "caseId" | "createdAt" | "updatedAt" | "linkedAuditSeqs" | "breachLogged" | "slaBreach" | "fourEyesApprovers" | "escalationHistory">,
 ): Promise<HsCase> {
   const n = await nextCaseNumber(tenant);
   const caseId = formatCaseId(n);
@@ -105,12 +158,13 @@ export async function createCase(
   const rec: HsCase = {
     ...input,
     caseId,
-    createdAt:       now,
-    updatedAt:       now,
-    linkedAuditSeqs: [],
-    breachLogged:    false,
-    slaBreach:       false,
+    createdAt:        now,
+    updatedAt:        now,
+    linkedAuditSeqs:  [],
+    breachLogged:     false,
+    slaBreach:        false,
     fourEyesApprovers: [],
+    escalationHistory: [],
   };
   await setJson(caseKey(tenant, caseId), rec);
   void writeAuditChainEntry({
