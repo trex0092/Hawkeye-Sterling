@@ -115,9 +115,9 @@ function classifySource(url: string): "tier1" | "tier2" | "tier3" | "unknown" {
   } catch { return "unknown"; }
 }
 
-// Locales we poll Google News from. Expanded to 35 languages covering the
-// highest-value AML jurisdictions globally — FATF high-risk, MENA, South &
-// Southeast Asia, Caucasus, Western Balkans, Nordics, East Africa.
+// Locales we poll Google News from. 60+ language and regional locales covering
+// all 7 continents — FATF high-risk, MENA, South & Southeast Asia, Caucasus,
+// Western Balkans, Nordics, East Africa, Latin America regional editions.
 // All feeds run in parallel under a 4s overall timebox so latency does
 // not grow with locale count.
 const LOCALES: Array<{ code: string; hl: string; gl: string; ceid: string }> = [
@@ -163,6 +163,38 @@ const LOCALES: Array<{ code: string; hl: string; gl: string; ceid: string }> = [
   { code: "zh",  hl: "zh-Hans", gl: "CN", ceid: "CN:zh-Hans"  },
   { code: "ja",  hl: "ja",      gl: "JP", ceid: "JP:ja"       },
   { code: "ko",  hl: "ko",      gl: "KR", ceid: "KR:ko"       },
+  // Caucasus / Central Asia
+  { code: "az",    hl: "az",    gl: "AZ", ceid: "AZ:az"        },  // Azerbaijani
+  { code: "ka",    hl: "ka",    gl: "GE", ceid: "GE:ka"        },  // Georgian
+  { code: "hy",    hl: "hy",    gl: "AM", ceid: "AM:hy"        },  // Armenian
+  { code: "kk",    hl: "kk",    gl: "KZ", ceid: "KZ:kk"        },  // Kazakh
+  // Africa
+  { code: "am",    hl: "am",    gl: "ET", ceid: "ET:am"        },  // Amharic - Ethiopia
+  { code: "af",    hl: "af",    gl: "ZA", ceid: "ZA:af"        },  // Afrikaans - South Africa
+  { code: "fr-SN", hl: "fr",    gl: "SN", ceid: "SN:fr"        },  // French - Senegal/West Africa
+  { code: "ar-EG", hl: "ar",    gl: "EG", ceid: "EG:ar"        },  // Arabic - Egypt/North Africa
+  { code: "pt-AO", hl: "pt",    gl: "AO", ceid: "AO:pt-150"   },  // Portuguese - Angola/Mozambique
+  { code: "en-NG", hl: "en-NG", gl: "NG", ceid: "NG:en"        },  // English - Nigeria
+  { code: "en-ZA", hl: "en-ZA", gl: "ZA", ceid: "ZA:en"        },  // English - South Africa
+  // Middle East (additional)
+  { code: "fa",    hl: "fa",    gl: "IR", ceid: "IR:fa"        },  // Farsi - Iran
+  { code: "ar-SA", hl: "ar",    gl: "SA", ceid: "SA:ar"        },  // Arabic - Saudi Arabia
+  // South Asia (additional)
+  { code: "bn",    hl: "bn",    gl: "BD", ceid: "BD:bn"        },  // Bengali - Bangladesh
+  { code: "ur",    hl: "ur",    gl: "PK", ceid: "PK:ur"        },  // Urdu - Pakistan
+  { code: "ta",    hl: "ta",    gl: "IN", ceid: "IN:ta"        },  // Tamil - India/Sri Lanka
+  // Southeast Asia (additional)
+  { code: "tl",    hl: "tl",    gl: "PH", ceid: "PH:tl"       },  // Filipino/Tagalog - Philippines
+  { code: "my",    hl: "my",    gl: "MM", ceid: "MM:my"        },  // Burmese - Myanmar
+  { code: "km",    hl: "km",    gl: "KH", ceid: "KH:km"        },  // Khmer - Cambodia
+  // Latin America (regional editions)
+  { code: "es-MX", hl: "es-419", gl: "MX", ceid: "MX:es-419"  },  // Spanish - Mexico
+  { code: "es-AR", hl: "es-419", gl: "AR", ceid: "AR:es-419"  },  // Spanish - Argentina
+  { code: "es-CO", hl: "es-419", gl: "CO", ceid: "CO:es-419"  },  // Spanish - Colombia
+  // Oceania
+  { code: "en-NZ", hl: "en",    gl: "NZ", ceid: "NZ:en"        },  // English - New Zealand
+  // North America (French)
+  { code: "fr-CA", hl: "fr-CA", gl: "CA", ceid: "CA:fr"        },  // French - Canada
 ];
 
 
@@ -334,6 +366,7 @@ function parseRss(xml: string, subject: string, variants: string[], lang: string
       lang,
       relevanceScore: tieredScore,
       sourceTier: tier,
+      sourceCategory: classifySourceCategory(link),
     };
     if (matchedVariant) article.matchedVariant = matchedVariant;
     out.push(article);
@@ -377,7 +410,7 @@ function classifySourceCategory(url: string): Article["sourceCategory"] {
 // Per-locale feed timeout. 1.5s per feed with overall 4s timebox keeps P99 response under 5s.
 const FEED_TIMEOUT_MS = 1_500;
 
-// Overall timebox for the whole fan-out. 35 locales × 2s per feed run in parallel — 4s covers all healthy feeds.
+// Overall timebox for the whole fan-out. 60+ locales run in parallel — 4s covers all healthy feeds within budget.
 const OVERALL_TIMEBOX_MS = 4_000;
 
 async function fetchLocaleFeed(
@@ -415,6 +448,179 @@ async function fetchLocaleFeed(
   } finally {
     clearTimeout(timer);
   }
+}
+
+// ── Investigative / regulatory RSS feeds ────────────────────────────────────
+// Tier-1 investigative journalism and regulatory body feeds.  These are
+// fetched in parallel with the Google News locale fan-out and merged into the
+// main article list.  Subject-name filtering is done post-fetch (same fuzzy
+// scoring as the locale feeds) so we don't query Google at all for these
+// feeds.
+const INVESTIGATIVE_FEEDS: Array<{
+  url: string;
+  lang: string;
+  sourceTier: "tier1" | "tier2";
+  sourceCategory: NonNullable<Article["sourceCategory"]>;
+  name: string;
+}> = [
+  // Tier-1 investigative journalism
+  { url: "https://www.occrp.org/feed/",                                    lang: "en", sourceTier: "tier1", sourceCategory: "investigative", name: "OCCRP" },
+  { url: "https://www.icij.org/feed/",                                     lang: "en", sourceTier: "tier1", sourceCategory: "investigative", name: "ICIJ" },
+  // Financial crime specialist
+  { url: "https://www.fatf-gafi.org/media/fatf/rss/fatf-en.rss",          lang: "en", sourceTier: "tier1", sourceCategory: "regulatory",    name: "FATF" },
+  // Regional AML bodies
+  { url: "https://www.unodc.org/unodc/en/rss/news.xml",                   lang: "en", sourceTier: "tier1", sourceCategory: "regulatory",    name: "UNODC" },
+  // Transparency International
+  { url: "https://www.transparency.org/en/feed",                           lang: "en", sourceTier: "tier1", sourceCategory: "investigative", name: "TI" },
+  // Middle East Eye - investigative Middle East
+  { url: "https://www.middleeasteye.net/rss",                              lang: "en", sourceTier: "tier2", sourceCategory: "regional",      name: "MEE" },
+  // ACFE (Association of Certified Fraud Examiners)
+  { url: "https://www.acfe.com/rss/fraud-examiner-newsletter.xml",         lang: "en", sourceTier: "tier2", sourceCategory: "investigative", name: "ACFE" },
+];
+
+// 2-second timeout for each investigative feed — slightly more generous than
+// the 1.5s locale timeout since these are non-Google servers.
+const INVESTIGATIVE_FEED_TIMEOUT_MS = 2_000;
+
+async function fetchInvestigativeFeeds(subjectName: string, variants: string[]): Promise<Article[]> {
+  const results = await Promise.allSettled(
+    INVESTIGATIVE_FEEDS.map(async (feed) => {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), INVESTIGATIVE_FEED_TIMEOUT_MS);
+      try {
+        const res = await fetch(feed.url, {
+          headers: {
+            "user-agent":
+              "Mozilla/5.0 (compatible; HawkeyeSterling/0.2; +https://hawkeye-sterling.netlify.app)",
+            accept: "application/rss+xml,application/xml,text/xml,*/*;q=0.8",
+          },
+          signal: controller.signal,
+        } as RequestInit);
+        if (!res.ok) {
+          console.warn(`[hawkeye] investigative-feed/${feed.name} HTTP ${res.status}`);
+          return [] as Article[];
+        }
+        const xml = await res.text();
+        const articles = parseRss(xml, subjectName, variants, feed.lang);
+        // Override tier and category from feed config (parseRss uses classifySource
+        // on the article link; we want the feed-level classification to take precedence).
+        return articles.map((a) => ({
+          ...a,
+          sourceTier: feed.sourceTier,
+          sourceCategory: feed.sourceCategory,
+          // Re-apply tier boost since we're overriding the tier
+          relevanceScore: Math.min(100, (a.relevanceScore ?? a.fuzzyScore) + (feed.sourceTier === "tier1" ? 20 : 10)),
+          source: a.source || feed.name,
+        }));
+      } catch (err) {
+        console.warn(`[hawkeye] investigative-feed/${feed.name} threw:`, err);
+        return [] as Article[];
+      } finally {
+        clearTimeout(timer);
+      }
+    }),
+  );
+
+  const allArticles: Article[] = [];
+  const seenLinks = new Set<string>();
+  for (const r of results) {
+    if (r.status === "fulfilled") {
+      for (const a of r.value) {
+        const key = a.link || a.title;
+        if (!seenLinks.has(key)) {
+          seenLinks.add(key);
+          allArticles.push(a);
+        }
+      }
+    }
+  }
+  return allArticles;
+}
+
+// ── East / Southeast Asian RSS feeds ────────────────────────────────────────
+// Regional English-language news outlets covering Greater China, Japan, Korea,
+// South Asia, and Southeast Asia.  Fetched in parallel with the investigative
+// feed fan-out and the Google News locale fan-out.
+const ASIAN_FEEDS: Array<{
+  url: string;
+  lang: string;
+  name: string;
+  sourceTier: "tier1" | "tier2";
+}> = [
+  // Greater China
+  { url: "https://www.scmp.com/rss/91/feed",                         lang: "en-CN", name: "SCMP",                sourceTier: "tier2" },
+  // Japan — Nikkei Asia
+  { url: "https://asia.nikkei.com/rss/feed/nar",                     lang: "en-JP", name: "Nikkei Asia",         sourceTier: "tier2" },
+  // Korea — Korea Herald
+  { url: "https://www.koreaherald.com/common/rss.php",               lang: "en-KR", name: "Korea Herald",        sourceTier: "tier2" },
+  // India — investigative
+  { url: "https://thewire.in/feed",                                  lang: "en-IN", name: "The Wire India",       sourceTier: "tier2" },
+  // Philippines — investigative
+  { url: "https://www.rappler.com/feed",                             lang: "en-PH", name: "Rappler Philippines",  sourceTier: "tier2" },
+  // Indonesia
+  { url: "https://www.thejakartapost.com/feed",                      lang: "en-ID", name: "Jakarta Post",         sourceTier: "tier2" },
+  // Vietnam
+  { url: "https://e.vnexpress.net/rss/news.rss",                     lang: "en-VN", name: "VnExpress",            sourceTier: "tier2" },
+  // Thailand
+  { url: "https://www.bangkokpost.com/rss/data/topstories.xml",      lang: "en-TH", name: "Bangkok Post",         sourceTier: "tier2" },
+  // Malaysia
+  { url: "https://www.malaymail.com/feed",                           lang: "en-MY", name: "Malay Mail",           sourceTier: "tier2" },
+  // Myanmar — Irrawaddy (investigative)
+  { url: "https://www.irrawaddy.com/feed",                           lang: "en-MM", name: "The Irrawaddy",        sourceTier: "tier2" },
+  // Singapore — CNA
+  { url: "https://www.channelnewsasia.com/rssfeeds/8395986",         lang: "en-SG", name: "CNA Singapore",        sourceTier: "tier2" },
+];
+
+async function fetchAsianFeeds(subjectName: string, variants: string[]): Promise<Article[]> {
+  const results = await Promise.allSettled(
+    ASIAN_FEEDS.map(async (feed) => {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), INVESTIGATIVE_FEED_TIMEOUT_MS);
+      try {
+        const res = await fetch(feed.url, {
+          headers: {
+            "user-agent":
+              "Mozilla/5.0 (compatible; HawkeyeSterling/0.2; +https://hawkeye-sterling.netlify.app)",
+            accept: "application/rss+xml,application/xml,text/xml,*/*;q=0.8",
+          },
+          signal: controller.signal,
+        } as RequestInit);
+        if (!res.ok) {
+          console.warn(`[hawkeye] asian-feed/${feed.name} HTTP ${res.status}`);
+          return [] as Article[];
+        }
+        const xml = await res.text();
+        const articles = parseRss(xml, subjectName, variants, feed.lang);
+        return articles.map((a) => ({
+          ...a,
+          sourceTier: feed.sourceTier,
+          sourceCategory: "regional" as NonNullable<Article["sourceCategory"]>,
+          relevanceScore: Math.min(100, (a.relevanceScore ?? a.fuzzyScore) + 10),
+          source: a.source || feed.name,
+        }));
+      } catch (err) {
+        console.warn(`[hawkeye] asian-feed/${feed.name} threw:`, err);
+        return [] as Article[];
+      } finally {
+        clearTimeout(timer);
+      }
+    }),
+  );
+
+  const allArticles: Article[] = [];
+  const seenLinks = new Set<string>();
+  for (const r of results) {
+    if (r.status === "fulfilled") {
+      for (const a of r.value) {
+        const key = a.link || a.title;
+        if (!seenLinks.has(key)) {
+          seenLinks.add(key);
+          allArticles.push(a);
+        }
+      }
+    }
+  }
+  return allArticles;
 }
 
 function tokens(title: string): Set<string> {
@@ -592,9 +798,12 @@ export async function GET(req: Request): Promise<NextResponse> {
       sourcesSucceeded: [] as string[],
       sourcesFailed: [] as Array<{ name: string; error: string }>,
     }));
-    const [settled, adapterResult] = await Promise.all([
+    // Fetch investigative/regulatory RSS feeds in parallel with everything else.
+    const investigativeSearch = fetchInvestigativeFeeds(q, variants);
+    const [settled, adapterResult, investigativeArticles] = await Promise.all([
       Promise.race([fanOut, timebox]),
       adapterSearch,
+      investigativeSearch,
     ]);
     const perLocale: Article[][] = settled.map((r) =>
       r.status === "fulfilled" ? r.value : [],
@@ -605,6 +814,12 @@ export async function GET(req: Request): Promise<NextResponse> {
         const key = a.link || a.title;
         if (!merged.has(key)) merged.set(key, a);
       }
+    }
+    // Merge investigative/regulatory feed articles first — they are already in
+    // the internal Article shape and carry source-level tier/category overrides.
+    for (const ia of investigativeArticles) {
+      const key = ia.link || ia.title;
+      if (!merged.has(key)) merged.set(key, ia);
     }
     // Convert NewsArticle (adapter shape) → Article (internal shape) and merge.
     for (const na of adapterResult.articles) {
@@ -664,6 +879,7 @@ export async function GET(req: Request): Promise<NextResponse> {
         lang: na.language ?? "en",
         relevanceScore: adapterTieredScore,
         sourceTier: adapterTier,
+        sourceCategory: classifySourceCategory(na.url ?? ""),
       });
     }
     const filtered = Array.from(merged.values())
@@ -672,7 +888,13 @@ export async function GET(req: Request): Promise<NextResponse> {
       // Threshold lowered to 70: token_presence caps at 0.72 (→ score 72) so
       // a full two-token name match was blocked at the old 75 threshold.
       .filter((a) => a.fuzzyScore >= 70 || (a.fuzzyScore >= 55 && a.keywordGroups.length > 0))
-      .sort((a, b) => (b.relevanceScore ?? b.fuzzyScore) - (a.relevanceScore ?? a.fuzzyScore));
+      .sort((a, b) => {
+        // Investigative / regulatory sources sort first among equal-relevance articles.
+        const aIsHighValue = a.sourceCategory === "investigative" || a.sourceCategory === "regulatory";
+        const bIsHighValue = b.sourceCategory === "investigative" || b.sourceCategory === "regulatory";
+        if (aIsHighValue !== bIsHighValue) return aIsHighValue ? -1 : 1;
+        return (b.relevanceScore ?? b.fuzzyScore) - (a.relevanceScore ?? a.fuzzyScore);
+      });
     // Phase 1: URL-based exact dedup — strips protocol and query-string so
     // the same Reuters article appearing at both https://reuters.com/… and
     // http://reuters.com/…?utm_source=… collapses to one entry.
