@@ -185,7 +185,17 @@ export async function POST(req: Request) {
       username.toLowerCase() === "luisa" &&
       recoveryPassword &&
       recoveryPassword.length >= 8 &&
-      (() => { const a = new Uint8Array(Buffer.from(password)); const b = new Uint8Array(Buffer.from(recoveryPassword.trim())); return a.length === b.length && timingSafeEqual(a, b); })()
+      (() => {
+        const enc = new TextEncoder();
+        const a = enc.encode(password);
+        const b = enc.encode(recoveryPassword.trim());
+        // Always call timingSafeEqual (same-length padded buffers) before
+        // checking length equality to prevent a password-length timing oracle.
+        const maxLen = Math.max(a.length, b.length);
+        const ap = new Uint8Array(maxLen); ap.set(a);
+        const bp = new Uint8Array(maxLen); bp.set(b);
+        return timingSafeEqual(ap, bp) && a.length === b.length;
+      })()
     ) {
       const newSalt = generateSalt();
       const newHash = hashPassword(password, newSalt);

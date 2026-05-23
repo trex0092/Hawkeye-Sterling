@@ -172,6 +172,9 @@ export type FourEyesStatus = "pending" | "approved" | "rejected" | "expired";
 
 export interface FourEyesItem {
   id: string;
+  /** Tenant that owns this item. Absent on pre-multi-tenant items (visible
+   *  to all authenticated callers for backward compat). */
+  tenantId?: string;
   subjectId: string;
   /** Explicit case reference — stored separately from subjectId so the SAR
    *  gate and GET ?caseId filter can match without conflating two concepts. */

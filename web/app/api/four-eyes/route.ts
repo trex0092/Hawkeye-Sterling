@@ -91,7 +91,7 @@ async function generateApprovalSummary(
 
 const OVERDUE_THRESHOLD_MS = 24 * 60 * 60 * 1000; // 24 h
 
-async function handleGet(req: Request): Promise<NextResponse> {
+async function handleGet(req: Request, ctx: RequestContext): Promise<NextResponse> {
   const url = new URL(req.url);
   // Default to pending queue; caller can override with ?status=approved|rejected|expired
   const wantStatus = url.searchParams.get("status")?.trim() ?? "pending";
@@ -107,6 +107,9 @@ async function handleGet(req: Request): Promise<NextResponse> {
     keys.map((k) => getJson<FourEyesItem>(k).catch(() => null)),
   );
   let items = loaded.filter((s): s is FourEyesItem => s !== null);
+  // Tenant isolation: only return items belonging to this tenant.
+  // Items without tenantId are pre-multi-tenant legacy; shown to all for backward compat.
+  items = items.filter((i) => !i.tenantId || i.tenantId === ctx.tenantId);
   if (ALLOWED_STATUSES.has(wantStatus as FourEyesStatus)) {
     items = items.filter((i) => i.status === wantStatus);
   }
@@ -133,7 +136,7 @@ async function handleGet(req: Request): Promise<NextResponse> {
   );
 }
 
-async function handlePost(req: Request): Promise<NextResponse> {
+async function handlePost(req: Request, ctx: RequestContext): Promise<NextResponse> {
   // Auth is already enforced by withGuard — no second enforce() call needed.
   let raw: unknown;
   try { raw = await req.json(); } catch {
@@ -168,7 +171,8 @@ async function handlePost(req: Request): Promise<NextResponse> {
     existingKeys.map((k) => getJson<FourEyesItem>(k).catch(() => null)),
   )).filter((i): i is FourEyesItem => i !== null);
   const alreadySubmitted = existingItems.some(
-    (i) => i.subjectId === subjectId && i.initiatedBy === initiatedBy && i.status === "pending",
+    (i) => (!i.tenantId || i.tenantId === ctx.tenantId) &&
+      i.subjectId === subjectId && i.initiatedBy === initiatedBy && i.status === "pending",
   );
   if (alreadySubmitted) {
     return NextResponse.json(
@@ -189,6 +193,7 @@ async function handlePost(req: Request): Promise<NextResponse> {
   const id = `fe-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
   const item: FourEyesItem = {
     id,
+    tenantId: ctx.tenantId,
     subjectId,
     ...(explicitCaseId ? { caseId: explicitCaseId } : {}),
     subjectName,
