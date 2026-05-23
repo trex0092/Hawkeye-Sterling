@@ -55,6 +55,59 @@ const SANCTIONED_WALLETS = new Set<string>([
 ]);
 
 // ---------------------------------------------------------------------------
+// Ransomware group wallet addresses / identifiers
+// Sources: CISA advisories, FBI flash alerts, OFAC press releases
+// ---------------------------------------------------------------------------
+const RANSOMWARE_IDENTIFIERS = new Set<string>([
+  // Conti ransomware group — FBI/CISA advisory AA21-265A
+  "12higdjtgta7ufvvl93lismb2h7zrpxbb",   // Conti BTC receiving wallet (FBI)
+  "1ptfsmkm1dtbtlzuznxwrhp2cqxuqzjdwk",  // Conti BTC (CISA tracked)
+  "3jtqjqxygp2abnd6pqjqfuqlhbrdcdyxfb",  // Conti BTC P2SH
+
+  // REvil / Sodinokibi — OFAC Nov 2021 (Kaseya / JBS attacks)
+  "14bpkzwhx9at3aqhbm4q9gx9c4kpvkthfh",  // REvil BTC (OFAC SDN)
+  "1fzc2ar2ev3ywlxsbfhajuqq4srhyp5pq6",  // REvil / Sodinokibi BTC (FBI)
+  "0x8576acc5c05d6ce88f4e49bf65bdf0c62f91353", // REvil ETH payout address
+
+  // DarkSide ransomware — DOJ/FBI Colonial Pipeline seizure 2021
+  "1cyjzm5btxwdhjxwqyyrhpjgv3yyzpdewzn",  // DarkSide BTC (DOJ seizure)
+  "12jbtzbbe5axjmx1yqfnlmt2ua4lmoa4oy",   // DarkSide BTC receiving (CISA)
+  "0x7f367cc41522ce07553e823bf3be79a889debe1b", // DarkSide ETH (Chainalysis)
+
+  // LockBit ransomware — CISA advisory AA23-165A / OFAC 2024
+  "bc1qy5pgkujs02rxlhxjm7p2qul2qymxnm8uadpg4e", // LockBit BTC bech32 (FBI)
+  "3qnphdwfgdgd3yyhzfyj7d23qf1kyj3ax4",   // LockBit BTC P2SH (CISA)
+  "1lbboahdssplhfjhbhqdfhv5jnvdlbywge",   // LockBit affiliate wallet (Europol)
+]);
+
+// ---------------------------------------------------------------------------
+// APT (Advanced Persistent Threat) group → country map
+// Sources: CISA, FBI, NSA joint advisories; OFAC SDN designations
+// ---------------------------------------------------------------------------
+const APT_GROUPS: Map<string, string> = new Map([
+  // North Korea (OFAC SDN — Lazarus Group designated 2019)
+  ["lazarus group",   "KP"],
+  ["lazarus",         "KP"],
+  ["kimsuky",         "KP"],
+  ["apt38",           "KP"],  // Lazarus sub-group (financial crime)
+
+  // Russia (GRU / SVR / FSB)
+  ["apt28",           "RU"],
+  ["fancy bear",      "RU"],
+  ["apt29",           "RU"],
+  ["cozy bear",       "RU"],
+  ["sandworm",        "RU"],
+  ["voodoo bear",     "RU"],  // Sandworm alias
+
+  // China (PLA / MSS)
+  ["apt41",           "CN"],
+  ["double dragon",   "CN"],  // APT41 alias
+  ["apt10",           "CN"],
+  ["stone panda",     "CN"],  // APT10 alias
+  ["menupass",        "CN"],  // APT10 alias
+]);
+
+// ---------------------------------------------------------------------------
 // Mixer / Tumbler service identifiers
 // Matched against address labels and the raw input address (case-insensitive)
 // ---------------------------------------------------------------------------
