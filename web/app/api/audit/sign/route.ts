@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createHash, createHmac } from "node:crypto";
-import { withGuard } from "@/lib/server/guard";
+import { withGuard, type RequestContext } from "@/lib/server/guard";
 import { getJson, listKeys, setJson } from "@/lib/server/store";
 import { getChainSecret } from "@/lib/server/audit-chain";
 import { verifySession, SESSION_COOKIE } from "@/lib/server/auth";
@@ -116,7 +116,7 @@ function sha256Hex(input: string): string {
   return createHash("sha256").update(input).digest("hex");
 }
 
-async function handleSign(req: Request): Promise<NextResponse> {
+async function handleSign(req: Request, ctx: RequestContext): Promise<NextResponse> {
   let body: SignBody;
   try {
     body = (await req.json()) as SignBody;
@@ -124,8 +124,10 @@ async function handleSign(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
   }
 
-  // Sanitise tenantId: alphanumeric, hyphens, underscores only; max 64 chars.
-  const tenantId = ((body.tenantId ?? "default").replace(/[^a-zA-Z0-9_-]/g, "") || "default").slice(0, 64);
+  // tenantId is ALWAYS taken from the authenticated context — a caller cannot
+  // write audit entries to a different tenant's chain by supplying a foreign
+  // tenantId in the request body. Body-supplied tenantId is ignored.
+  const tenantId = ctx.tenantId || "default";
 
   const secret = getSigningKey(tenantId);
   if (!secret) {
