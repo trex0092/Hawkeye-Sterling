@@ -45,9 +45,9 @@ export async function POST(req: Request) {
   if (currentPassword.length > 1024 || newPassword.length > 1024) {
     return NextResponse.json({ ok: false, error: "Password too long" }, { status: 400 });
   }
-  if (newPassword.length < 8) {
+  if (newPassword.trim().length < 8) {
     return NextResponse.json(
-      { ok: false, error: "New password must be at least 8 characters" },
+      { ok: false, error: "New password must be at least 8 non-whitespace characters" },
       { status: 400 },
     );
   }

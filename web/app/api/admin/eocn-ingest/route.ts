@@ -27,6 +27,7 @@ import { parseEocnBuffer } from "@/lib/server/eocn-parser";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getNamedStore } from "@/lib/server/blob-getter";
+import { assertSafeWebhookUrl } from "@/lib/server/webhook";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -117,6 +118,10 @@ async function fireDesignationAlert(
 ): Promise<void> {
   const webhookUrl = process.env["ALERT_WEBHOOK_URL"];
   if (!webhookUrl || (added.length === 0 && removed.length === 0)) return;
+  try { assertSafeWebhookUrl(webhookUrl); } catch (err) {
+    console.error("[eocn-ingest] ALERT_WEBHOOK_URL is not a safe URL — aborting webhook:", err instanceof Error ? err.message : String(err));
+    return;
+  }
   const SAMPLE = 20;
   const lines = [
     `⚡ HAWKEYE STERLING — UAE SANCTIONS LIST UPDATED (MANUAL UPLOAD)`,

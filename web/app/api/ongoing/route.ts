@@ -43,7 +43,7 @@ async function handleGet(_req: Request, ctx: RequestContext): Promise<NextRespon
   const loaded = await Promise.all(keys.map((k) => getJson<EnrolledSubject>(k)));
   const subjects = loaded
     .filter((s): s is EnrolledSubject => s !== null)
-    .filter((s) => !s.tenantId || s.tenantId === ctx.tenantId);
+    .filter((s) => s.tenantId === ctx.tenantId);
   return NextResponse.json({ ok: true, count: subjects.length, subjects });
 }
 

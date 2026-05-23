@@ -9,7 +9,7 @@ const RETRY_DELAYS_MS = [2_000, 4_000, 8_000] as const;
 const BLOCKED_HOSTS = /^(localhost|.*\.local|metadata\.google\.internal)$/i;
 const PRIVATE_IP = /^(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|127\.|169\.254\.|::1$|0\.0\.0\.0)/;
 
-function assertSafeWebhookUrl(raw: string): void {
+export function assertSafeWebhookUrl(raw: string): void {
   let u: URL;
   try { u = new URL(raw); } catch {
     throw new Error("HAWKEYE_WEBHOOK_URL is not a valid URL");
