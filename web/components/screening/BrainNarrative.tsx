@@ -38,7 +38,7 @@ function buildNarrative(r: SuperBrainResult, name: string, id: string, news?: Ne
   // Sanctions verdict.
   if (r.screen.hits.length > 0) {
     const topHit = r.screen.hits[0];
-    if (!topHit) return paragraphs.join("\n\n");
+    if (!topHit) return paragraphs;
     const isExact = topHit.method === "exact" && topHit.score >= 0.95;
     const matchLabel = isExact ? "confirmed match" : "possible match requiring manual verification";
     paragraphs.push(
