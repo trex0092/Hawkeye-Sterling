@@ -364,8 +364,13 @@ export async function POST(req: Request): Promise<NextResponse> {
   // Fan-out GDELT queries — each name variant wrapped independently so a
   // timeout on one variant cannot abort the others. Each variant routes
   // through the GDELT cache layer (memory → Redis → live).
+  // GKG query runs in parallel with the DOC fan-out — independent timeout (5s),
+  // failure is non-blocking.
   const rawArticles: GdeltArticle[] = [];
-  const gdeltSettled = await Promise.allSettled(variants.map((v) => queryGdelt(v)));
+  const [gdeltSettled, gkgResult] = await Promise.all([
+    Promise.allSettled(variants.map((v) => queryGdelt(v))),
+    queryGdeltGkg(subjectName).catch(() => null),
+  ]);
 
   const seenGdeltUrls = new Set<string>();
   let anyGdeltSucceeded = false;
@@ -531,6 +536,16 @@ export async function POST(req: Request): Promise<NextResponse> {
     riskRating,
   );
 
+  // GKG metadata — attach crime themes and tone flag if present
+  const metadata: Record<string, unknown> = {};
+  if (gkgResult?.crimeThemes.length) {
+    metadata.gdeltGkgThemes = gkgResult.crimeThemes;
+    // If tone is very negative (< -5) and crime themes present, escalate to high risk
+    if (gkgResult.averageTone < -5) {
+      metadata.gdeltGkgToneFlag = "negative";
+    }
+  }
+
   const latencyMs = Date.now() - t0;
   if (latencyMs > 5000) console.warn(`[adverse-media-live] slow response latencyMs=${latencyMs}`);
   const result = {
@@ -544,6 +559,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     regulatoryBasis: "FATF R.10 (CDD), FDL 10/2025 Art.10 (ongoing monitoring)",
     enriched,
     gdeltStatus,
+    ...(Object.keys(metadata).length > 0 ? { metadata } : {}),
     ...(gdeltStatus !== "ok" ? {
       adverseMedia: {
         gdelt: {
