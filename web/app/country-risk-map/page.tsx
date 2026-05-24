@@ -261,7 +261,7 @@ function regionDims(region: string): { cols: number; rows: number } {
 interface CountryMapProps {
   riskMap: Record<string, { score: number; risk: string }>;
   highlighted: string;
-  onSelect: (iso2: string, name: string) => void;
+  onSelect: (_iso2: string, _name: string) => void;
 }
 
 function CountryMap({ riskMap, highlighted, onSelect }: CountryMapProps) {
@@ -378,7 +378,7 @@ const SEED_RISK: Record<string, { score: number; risk: "low" | "medium" | "high"
   PH:{ score:57, risk:"high" }, VN:{ score:56, risk:"high" }, KH:{ score:63, risk:"high" },
   PK:{ score:72, risk:"high" }, BD:{ score:61, risk:"high" }, LB:{ score:70, risk:"high" },
   JO:{ score:55, risk:"high" }, CO:{ score:65, risk:"high" }, PE:{ score:58, risk:"high" },
-  BO:{ score:56, risk:"high" }, PY:{ score:60, risk:"high" }, VE:{ score:74, risk:"high" },
+  BO:{ score:56, risk:"high" }, PY:{ score:60, risk:"high" },
   EG:{ score:62, risk:"high" }, MA:{ score:52, risk:"high" }, DZ:{ score:58, risk:"high" },
   TN:{ score:54, risk:"high" }, AZ:{ score:60, risk:"high" }, GE:{ score:52, risk:"high" },
   IQ:{ score:73, risk:"high" }, KZ:{ score:58, risk:"high" }, UZ:{ score:60, risk:"high" },
