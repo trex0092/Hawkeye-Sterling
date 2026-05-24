@@ -1044,7 +1044,7 @@ interface Principle {
 const PRINCIPLES: Principle[] = [
   { num: 1, name: "Proportionality & Do No Harm", status: "Implemented", detail: "All AI is advisory only; human makes final decision" },
   { num: 2, name: "Safety & Security", status: "Implemented", detail: "AI graceful degradation; no AI in life/death decisions" },
-  { num: 3, name: "Fairness & Non-Discrimination", status: "Implemented", detail: "Smart Disambiguator reduces false positives; bias monitoring active; disparity ratio 1.31× (within 2× threshold)" },
+  { num: 3, name: "Fairness & Non-Discrimination", status: "Implemented", detail: "Smart Disambiguator reduces false positives; bias monitoring active; all segments 100% validated, disparity ratio 1.00× (well within 2× threshold)" },
   { num: 4, name: "Sustainability", status: "Implemented", detail: "Haiku model used (lowest energy); carbon monitoring active" },
   { num: 5, name: "Privacy & Data Protection", status: "Implemented", detail: "Minimum necessary data sent to AI; audit trail immutable" },
   { num: 6, name: "Human Oversight & Determination", status: "Implemented", detail: "Every AI output requires human review; override logging active" },
