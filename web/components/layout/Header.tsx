@@ -78,6 +78,13 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
     ],
   },
   {
+    // Employee-facing approval tracker
+    title: "Approvals",
+    items: [
+      { label: "✅ Approvals", href: "/approvals", hint: "Entity approval tracker — status, risk score, country destinations" },
+    ],
+  },
+  {
     // Analytics, AI brain internals, investigation tools, system health
     title: "Intelligence",
     items: [
