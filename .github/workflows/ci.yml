@@ -98,28 +98,15 @@ jobs:
           # number when adding a deliberate public/sandbox route, and document why.
           # Allowed opt-outs:
           #   1. web/app/api/health/route.ts — public liveness probe, no data exposed.
-          #   2. web/app/api/agent/data-analyst/route.ts — internal MLRO tool called
-          #      from the authenticated web app; page-level auth gates access.
-          #   3. web/app/api/breaches/route.ts — GET only; internal case-mgmt route;
-          #      middleware injects ADMIN_TOKEN for same-origin requests.
-          #   4. web/app/api/breaches/[breachId]/route.ts — same as #3.
-          #   5. web/app/api/hs-cases/route.ts — GET only; same-origin admin-token.
-          #   6. web/app/api/hs-cases/[caseId]/route.ts — GET only; same as #5.
-          #   7. web/app/api/subjects/route.ts — GET only; same-origin admin-token.
-          #   8. web/app/api/subjects/[subjectId]/route.ts — GET only; same as #7.
-          #   9. web/app/api/rescreen-queue/route.ts — GET only; same-origin admin-token.
-          #  10. web/app/api/ai-governance/route.ts — GET only; public compliance
-          #      transparency endpoint (model registry, governance policy); no PII.
-          #  11. web/app/api/admin/bias-audit/route.ts — GET only; admin-token protected
-          #      via same-origin injection; audit report, no PII.
-          #  12. web/app/api/admin/model-drift/route.ts — GET only; same as #11.
-          OPTED_OUT=$(grep -rE "requireAuth:\s*false" web/app/api \
+          #   2. web/app/api/news-search/route.ts — unauthenticated RSS/GDELT proxy;
+          #      returns only public news metadata, no PII or case data.
+          OPTED_OUT=$(grep -rE "requireAuth:\s*false[^a-zA-Z]" web/app/api \
             --include="route.ts" 2>/dev/null | wc -l | tr -d ' ')
-          ALLOWED_COUNT=12
+          ALLOWED_COUNT=2
           echo "Routes with explicit requireAuth:false: $OPTED_OUT (allowed: $ALLOWED_COUNT)"
           if [ "$OPTED_OUT" -gt "$ALLOWED_COUNT" ]; then
             echo "FAIL: $OPTED_OUT route(s) have opted out of auth — review and bump ALLOWED_COUNT in this workflow with justification"
-            grep -rE "requireAuth:\s*false" web/app/api --include="route.ts" -l 2>/dev/null
+            grep -rE "requireAuth:\s*false[^a-zA-Z]" web/app/api --include="route.ts" -l 2>/dev/null
             exit 1
           fi
           echo "PASS"
