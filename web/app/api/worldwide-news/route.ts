@@ -166,7 +166,7 @@ async function fetchFeed(feed: FeedDef): Promise<NewsArticle[]> {
 
 // ── Main aggregator ──────────────────────────────────────────────────────────
 
-export async function fetchGlobalAmlNews(limit: number): Promise<NewsArticle[]> {
+async function fetchGlobalAmlNews(limit: number): Promise<NewsArticle[]> {
   const results = await Promise.allSettled(
     WORLDWIDE_AML_FEEDS.map((feed) => fetchFeed(feed)),
   );

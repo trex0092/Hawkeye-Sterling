@@ -74,6 +74,13 @@ function formatDate(iso: string | undefined): string {
   return new Date(iso).toLocaleDateString();
 }
 
+function getToken(): string { return typeof window !== "undefined" ? (localStorage.getItem("adminToken") ?? "") : ""; }
+function authHeaders(json?: boolean): Record<string, string> {
+  const h: Record<string, string> = { Authorization: `Bearer ${getToken()}` };
+  if (json) h["Content-Type"] = "application/json";
+  return h;
+}
+
 export default function OutsourcingRegisterPage() {
   const [arrangements, setArrangements] = useState<OutsourcingArrangement[]>([]);
   const [loading, setLoading] = useState(true);
@@ -100,7 +107,7 @@ export default function OutsourcingRegisterPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/outsourcing-register");
+      const res = await fetch("/api/outsourcing-register", { headers: authHeaders() });
       const data = await res.json() as { ok: boolean; records?: OutsourcingArrangement[]; error?: string };
       if (data.ok) {
         setArrangements(data.records ?? []);
@@ -125,7 +132,7 @@ export default function OutsourcingRegisterPage() {
     try {
       const res = await fetch("/api/outsourcing-register", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: authHeaders(true),
         body: JSON.stringify({
           vendorName: form.vendorName,
           vendorCountry: form.vendorCountry,
@@ -188,7 +195,7 @@ export default function OutsourcingRegisterPage() {
     try {
       const res = await fetch(`/api/outsourcing-register/${id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: authHeaders(true),
         body: JSON.stringify({
           ...(upd.lastAssessmentDate ? { lastAssessmentDate: upd.lastAssessmentDate } : {}),
           boardApproved: upd.boardApproved,

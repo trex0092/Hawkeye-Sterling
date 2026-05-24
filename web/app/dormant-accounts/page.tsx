@@ -56,6 +56,13 @@ function formatDate(iso: string | undefined): string {
   return new Date(iso).toLocaleDateString();
 }
 
+function getToken(): string { return typeof window !== "undefined" ? (localStorage.getItem("adminToken") ?? "") : ""; }
+function authHeaders(json?: boolean): Record<string, string> {
+  const h: Record<string, string> = { Authorization: `Bearer ${getToken()}` };
+  if (json) h["Content-Type"] = "application/json";
+  return h;
+}
+
 export default function DormantAccountsPage() {
   const [accounts, setAccounts] = useState<DormantAccount[]>([]);
   const [loading, setLoading] = useState(true);
@@ -79,7 +86,7 @@ export default function DormantAccountsPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/dormant-accounts");
+      const res = await fetch("/api/dormant-accounts", { headers: authHeaders() });
       const data = await res.json() as { ok: boolean; records?: DormantAccount[]; error?: string };
       if (data.ok) {
         setAccounts(data.records ?? []);
@@ -104,7 +111,7 @@ export default function DormantAccountsPage() {
     try {
       const res = await fetch("/api/dormant-accounts", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: authHeaders(true),
         body: JSON.stringify({
           customerName: form.customerName,
           accountRef: form.accountRef,
@@ -153,7 +160,7 @@ export default function DormantAccountsPage() {
     try {
       const res = await fetch(`/api/dormant-accounts/${id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: authHeaders(true),
         body: JSON.stringify({
           status: upd.status,
           reactivationReason: upd.reactivationReason || undefined,
@@ -182,7 +189,7 @@ export default function DormantAccountsPage() {
       const today = new Date().toISOString().slice(0, 10);
       const res = await fetch(`/api/dormant-accounts/${id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: authHeaders(true),
         body: JSON.stringify({ mlroNotified: true, mlroNotifiedDate: today }),
       });
       const data = await res.json() as { ok: boolean; error?: string };

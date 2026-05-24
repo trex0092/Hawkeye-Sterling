@@ -60,6 +60,13 @@ const STATUS_COLOURS: Record<string, string> = {
 
 const PIPELINE_STAGES = ["proposed", "testing", "pending_approval", "approved", "deployed"] as const;
 
+function getToken(): string { return typeof window !== "undefined" ? (localStorage.getItem("adminToken") ?? "") : ""; }
+function authHeaders(json?: boolean): Record<string, string> {
+  const h: Record<string, string> = { Authorization: `Bearer ${getToken()}` };
+  if (json) h["Content-Type"] = "application/json";
+  return h;
+}
+
 export default function TmRulesPage() {
   const [records, setRecords] = useState<TmRuleChange[]>([]);
   const [loading, setLoading] = useState(true);
@@ -82,7 +89,7 @@ export default function TmRulesPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/tm-rules");
+      const res = await fetch("/api/tm-rules", { headers: authHeaders() });
       const data = await res.json();
       if (data.ok) {
         setRecords(data.records ?? []);
@@ -118,7 +125,7 @@ export default function TmRulesPage() {
       }
       const res = await fetch("/api/tm-rules", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: authHeaders(true),
         body: JSON.stringify(body),
       });
       const data = await res.json();
@@ -148,7 +155,7 @@ export default function TmRulesPage() {
     try {
       const res = await fetch(`/api/tm-rules/${id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: authHeaders(true),
         body: JSON.stringify(patch),
       });
       const data = await res.json();

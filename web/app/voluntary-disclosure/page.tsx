@@ -66,6 +66,13 @@ const STATUS_COLOURS: Record<string, string> = {
 
 const STATUS_FLOW = ["draft", "pending_mlro", "pending_legal", "submitted", "acknowledged", "closed"];
 
+function getToken(): string { return typeof window !== "undefined" ? (localStorage.getItem("adminToken") ?? "") : ""; }
+function authHeaders(json?: boolean): Record<string, string> {
+  const h: Record<string, string> = { Authorization: `Bearer ${getToken()}` };
+  if (json) h["Content-Type"] = "application/json";
+  return h;
+}
+
 export default function VoluntaryDisclosurePage() {
   const [records, setRecords] = useState<VoluntaryDisclosure[]>([]);
   const [loading, setLoading] = useState(true);
@@ -87,7 +94,7 @@ export default function VoluntaryDisclosurePage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/voluntary-disclosure");
+      const res = await fetch("/api/voluntary-disclosure", { headers: authHeaders() });
       const data = await res.json();
       if (data.ok) {
         setRecords(data.records ?? []);
@@ -112,7 +119,7 @@ export default function VoluntaryDisclosurePage() {
     try {
       const res = await fetch("/api/voluntary-disclosure", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: authHeaders(true),
         body: JSON.stringify(form),
       });
       const data = await res.json();
@@ -141,7 +148,7 @@ export default function VoluntaryDisclosurePage() {
     try {
       const res = await fetch(`/api/voluntary-disclosure/${id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: authHeaders(true),
         body: JSON.stringify(patch),
       });
       const data = await res.json();
