@@ -102,6 +102,45 @@ export async function GET(req: Request): Promise<NextResponse> {
 
   const pkg = buildGdprExportPackage(subjectForExport, subjectCases);
 
+  // ── CSV export ────────────────────────────────────────────────────────────
+  if (format === "csv") {
+    // Emit a flat field/value CSV for the key personal-data fields.
+    // Cases are summarised as a count; the full JSON export contains case detail.
+    const rows: [string, string][] = [
+      ["field", "value"],
+      ["subjectId", subjectProfile.subjectId],
+      ["name", subjectProfile.subjectName],
+      ["createdAt", subjectProfile.createdAt ?? ""],
+      ["updatedAt", subjectProfile.updatedAt ?? ""],
+      ["riskScore", String(subjectForExport.riskScore)],
+      ["riskCategory", subjectProfile.currentRiskCategory ?? ""],
+      ["dueDiligence", subjectProfile.dueDiligence ?? ""],
+      ["nextReviewDate", subjectProfile.nextReviewDate ?? ""],
+      ["isPep", String(subjectProfile.isPep)],
+      ["hasStrSarOnRecord", String(subjectProfile.hasStrSarOnRecord)],
+      ["activeCaseId", subjectProfile.activeCaseId ?? ""],
+      ["lastScreenedAt", subjectProfile.lastScreenedAt ?? ""],
+      ["caseCount", String(subjectCases.length)],
+      ["notes", subjectProfile.notes ?? ""],
+      ["exportedAt", pkg.exportedAt],
+    ];
+
+    const csvContent = rows
+      .map((row) => row.map((cell) => escapeCsvCell(String(cell))).join(","))
+      .join("\n");
+
+    const csvFilename = `gdpr-export-${subjectId}.csv`;
+    return new NextResponse(csvContent, {
+      status: 200,
+      headers: {
+        ...gate.headers,
+        "Content-Type": "text/csv; charset=utf-8",
+        "Content-Disposition": `attachment; filename="${csvFilename}"`,
+      },
+    });
+  }
+
+  // ── JSON export (default) ─────────────────────────────────────────────────
   const filename = `gdpr-export-${subjectId}.json`;
   const responseHeaders: Record<string, string> = {
     ...gate.headers,
