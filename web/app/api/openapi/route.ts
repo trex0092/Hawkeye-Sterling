@@ -4,8 +4,8 @@
 // AML platform.  Every major API route is documented with request/response
 // schemas, security requirements, and FATF/regulatory context.
 //
-// Protected by enforce(req) — callers must supply a valid Bearer JWT or
-// x-api-key header.  The spec itself is returned as application/json.
+// requireAuth: false — the spec itself contains no secrets and is safe for
+// public consumption.  Callers do not need a Bearer JWT or x-api-key.
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
@@ -88,7 +88,8 @@ function buildSpec(baseUrl: string) {
       },
     },
     servers: [
-      { url: baseUrl, description: "Current deployment" },
+      { url: "/api", description: "Current deployment" },
+      { url: baseUrl, description: "Absolute base URL" },
       { url: "https://hawkeye-sterling.netlify.app", description: "Production" },
     ],
     tags: [
@@ -110,6 +111,50 @@ function buildSpec(baseUrl: string) {
       schemas: {
         Error: ErrorResponse,
         RiskLevel,
+        // ── Core entity schemas required by the platform spec ──────────────
+        Subject: {
+          type: "object",
+          required: ["name"],
+          properties: {
+            name: { type: "string", maxLength: 512, description: "Full legal name of the individual or organisation", example: "Ahmad Al-Rashid" },
+            dob:  { type: "string", format: "date", description: "Date of birth (YYYY-MM-DD) for individual subjects", example: "1975-03-15" },
+            nationality: { type: "string", maxLength: 3, description: "ISO 3166-1 alpha-2 or alpha-3 nationality code", example: "AE" },
+            type: { type: "string", enum: ["individual", "organisation", "vessel", "aircraft", "other"], description: "Entity type; defaults to individual if omitted" },
+            aliases:      { type: "array", items: { type: "string" }, maxItems: 50, description: "Alternative names or aliases for the subject" },
+            jurisdiction: { type: "string", description: "ISO 3166-1 alpha-2 jurisdiction code", example: "AE" },
+          },
+        },
+        Hit: {
+          type: "object",
+          required: ["listId", "listRef", "candidateName", "score", "method"],
+          properties: {
+            listId:        { type: "string", description: "Internal identifier of the sanctions or watchlist", example: "ofac_sdn" },
+            listRef:       { type: "string", description: "Reference identifier within the list", example: "OFAC-1234" },
+            candidateName: { type: "string", description: "Name of the matched candidate on the list" },
+            score:         { type: "number", minimum: 0, maximum: 1, description: "Fuzzy-match similarity score (0–1)" },
+            baseScore:     { type: "number", minimum: 0, maximum: 1, description: "Base phonetic/token score before boosting" },
+            method:        { type: "string", description: "Matching algorithm used", example: "token_set" },
+            programs:      { type: "array", items: { type: "string" }, description: "Sanction programmes the candidate is designated under" },
+            reason:        { type: "string", description: "Human-readable rationale for the match" },
+            autoResolution: { type: "string", enum: ["flagged", "whitelisted", "pending"], description: "Automated disposition of this hit" },
+            sourceList:    { type: "string", description: "Source list identifier (alias for listId)" },
+            sourceLabel:   { type: "string", description: "Human-readable name of the source list", example: "OFAC Specially Designated Nationals" },
+            riskCategory:  { type: "string", enum: ["sanctions", "pep", "adverse_media"], description: "Risk category of the match" },
+            matchedLists:  { type: "array", items: { type: "string" }, description: "All list IDs where this candidate was found (deduplication)" },
+          },
+        },
+        WebhookRegistration: {
+          type: "object",
+          required: ["url", "events"],
+          properties: {
+            id:          { type: "string", description: "Unique webhook registration identifier" },
+            url:         { type: "string", format: "uri", description: "HTTPS endpoint to deliver webhook payloads to", example: "https://your-system.example.com/webhooks/hawkeye" },
+            events:      { type: "array", items: { type: "string" }, description: "List of event types to subscribe to", example: ["screening.completed", "case.opened"] },
+            secret:      { type: "string", description: "HMAC signing secret for payload verification (write-only)" },
+            createdAt:   { type: "string", format: "date-time", description: "ISO 8601 timestamp when the webhook was registered" },
+            active:      { type: "boolean", description: "Whether the webhook is currently active" },
+          },
+        },
         ScreeningHit: {
           type: "object",
           description: "A single sanction list or watchlist match",
@@ -1579,6 +1624,438 @@ function buildSpec(baseUrl: string) {
           },
         },
       },
+
+      // ── /api/quick-screen ────────────────────────────────────────────────
+      "/api/quick-screen": {
+        post: {
+          tags: ["Screening"],
+          operationId: "quickScreen",
+          summary: "Real-time subject screening against global sanctions watchlists",
+          description: [
+            "Screens a subject against OFAC SDN, UN Consolidated, EU FSF,",
+            "UK OFSI, UAE EOCN/LTL, and additional watchlists.  Returns a",
+            "severity verdict and list of hits within the 5-second SLA.",
+            "Authentication required.",
+          ].join("\n"),
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["subject"],
+                  properties: {
+                    subject: { $ref: "#/components/schemas/Subject" },
+                    candidates: {
+                      type: "array",
+                      description: "Optional caller-supplied candidate list; if omitted the live watchlist corpus is used",
+                      items: {
+                        type: "object",
+                        properties: {
+                          listId:  { type: "string" },
+                          listRef: { type: "string" },
+                          name:    { type: "string" },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            "200": {
+              description: "Screening completed",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    required: ["ok", "severity", "hits", "durationMs"],
+                    properties: {
+                      ok:       { type: "boolean" },
+                      severity: { type: "string", enum: ["clear", "low", "medium", "high", "critical"] },
+                      hits:     { type: "array", items: { $ref: "#/components/schemas/Hit" } },
+                      durationMs: { type: "integer" },
+                      screeningWarnings: { type: "array", items: { type: "string" } },
+                    },
+                  },
+                },
+              },
+            },
+            ...standardResponses,
+          },
+        },
+      },
+
+      // ── /api/gdpr/erasure ────────────────────────────────────────────────
+      "/api/gdpr/erasure": {
+        post: {
+          tags: ["Compliance"],
+          operationId: "gdprErasure",
+          summary: "Pseudonymise a data subject (GDPR Art. 17 right to erasure)",
+          description: [
+            "Pseudonymises all stored personal data for the given subject ID.",
+            "The erasure is irreversible.  An audit record is created for",
+            "the erasure event.  Compliant with GDPR Art. 17.",
+          ].join("\n"),
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["subjectId"],
+                  properties: {
+                    subjectId: { type: "string", description: "Unique identifier of the data subject to erase", example: "sub-ae-123456" },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            "200": {
+              description: "Subject successfully pseudonymised",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    required: ["ok", "pseudonymized"],
+                    properties: {
+                      ok:            { type: "boolean" },
+                      pseudonymized: { type: "boolean", description: "True when pseudonymisation was applied" },
+                    },
+                  },
+                },
+              },
+            },
+            ...standardResponses,
+          },
+        },
+      },
+
+      // ── /api/gdpr/export ─────────────────────────────────────────────────
+      "/api/gdpr/export": {
+        get: {
+          tags: ["Compliance"],
+          operationId: "gdprExport",
+          summary: "Export all data held for a subject (GDPR Art. 15 right of access)",
+          description: [
+            "Returns a structured JSON export of all personal data held for the",
+            "specified subject, including screening records, audit entries, and",
+            "case records.  Compliant with GDPR Art. 15.",
+          ].join("\n"),
+          parameters: [
+            { name: "subjectId", in: "query", required: true, schema: { type: "string" }, description: "Unique identifier of the data subject" },
+          ],
+          responses: {
+            "200": {
+              description: "GDPR data export",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      subjectId:        { type: "string" },
+                      exportedAt:       { type: "string", format: "date-time" },
+                      screeningRecords: { type: "array", items: { type: "object" } },
+                      auditEntries:     { type: "array", items: { $ref: "#/components/schemas/AuditEntry" } },
+                      caseRecords:      { type: "array", items: { type: "object" } },
+                    },
+                  },
+                },
+              },
+            },
+            ...standardResponses,
+          },
+        },
+      },
+
+      // ── /api/sanctions/status ────────────────────────────────────────────
+      "/api/sanctions/status": {
+        get: {
+          tags: ["Compliance"],
+          operationId: "sanctionsStatus",
+          summary: "Get health and freshness status of all loaded sanctions lists",
+          description: [
+            "Returns per-list freshness, entity counts, and ingestion timestamps",
+            "for all configured sanctions lists.  Used by ops dashboards and",
+            "automated monitoring to verify list data is up-to-date.",
+          ].join("\n"),
+          responses: {
+            "200": {
+              description: "Sanctions list status",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    required: ["ok", "lists"],
+                    properties: {
+                      ok:          { type: "boolean" },
+                      lists: {
+                        type: "array",
+                        items: {
+                          type: "object",
+                          properties: {
+                            listId:       { type: "string" },
+                            displayName:  { type: "string" },
+                            configured:   { type: "boolean" },
+                            entityCount:  { type: "integer", nullable: true },
+                            lastModified: { type: "string", format: "date-time", nullable: true },
+                            ageHours:     { type: "number", nullable: true },
+                            status:       { type: "string", enum: ["healthy", "stale", "missing", "unconfigured", "degraded"] },
+                          },
+                        },
+                      },
+                      lastUpdated: { type: "string", format: "date-time", description: "Timestamp of the most recent successful list refresh" },
+                    },
+                  },
+                },
+              },
+            },
+            ...standardResponses,
+          },
+        },
+      },
+
+      // ── /api/webhooks ────────────────────────────────────────────────────
+      "/api/webhooks": {
+        get: {
+          tags: ["Case Management"],
+          operationId: "listWebhooks",
+          summary: "List all registered webhook endpoints",
+          description: "Returns all webhook registrations for the authenticated tenant.",
+          responses: {
+            "200": {
+              description: "List of registered webhooks",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    required: ["webhooks"],
+                    properties: {
+                      webhooks: { type: "array", items: { $ref: "#/components/schemas/WebhookRegistration" } },
+                    },
+                  },
+                },
+              },
+            },
+            ...standardResponses,
+          },
+        },
+        post: {
+          tags: ["Case Management"],
+          operationId: "registerWebhook",
+          summary: "Register a new webhook endpoint",
+          description: [
+            "Registers a new HTTPS webhook endpoint to receive compliance events.",
+            "Payloads are signed with HMAC-SHA256 using the provided secret.",
+            "Events include: screening.completed, case.opened, case.closed, sanctions.list.refreshed.",
+          ].join("\n"),
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["url", "events"],
+                  properties: {
+                    url:         { type: "string", format: "uri", description: "HTTPS endpoint URL", example: "https://your-system.example.com/webhooks/hawkeye" },
+                    events:      { type: "array", items: { type: "string" }, description: "Event types to subscribe to", example: ["screening.completed"] },
+                    secret:      { type: "string", description: "Signing secret for HMAC payload verification" },
+                    description: { type: "string", description: "Optional human-readable description" },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            "201": {
+              description: "Webhook registered successfully",
+              content: {
+                "application/json": { schema: { $ref: "#/components/schemas/WebhookRegistration" } },
+              },
+            },
+            ...standardResponses,
+          },
+        },
+      },
+
+      // ── /api/workflow/run ────────────────────────────────────────────────
+      "/api/workflow/run": {
+        post: {
+          tags: ["Case Management"],
+          operationId: "workflowRun",
+          summary: "Run workflow rules against a subject",
+          description: [
+            "Runs the configured workflow rule engine against the provided subject",
+            "and screening context.  Returns actions recommended by the rule set",
+            "(e.g. escalate, close, request documents).  Used for automated case",
+            "routing and triage.",
+          ].join("\n"),
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["subject"],
+                  properties: {
+                    subject: { $ref: "#/components/schemas/Subject" },
+                    screeningResult: {
+                      type: "object",
+                      description: "Optional prior screening result",
+                      properties: {
+                        severity: { type: "string", enum: ["clear", "low", "medium", "high", "critical"] },
+                        hits:     { type: "array", items: { $ref: "#/components/schemas/Hit" } },
+                      },
+                    },
+                    ruleSetId: { type: "string", description: "Optional specific rule set to evaluate; defaults to tenant default" },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            "200": {
+              description: "Workflow evaluation result",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      ok:    { type: "boolean" },
+                      actions: {
+                        type: "array",
+                        items: {
+                          type: "object",
+                          properties: {
+                            type:   { type: "string" },
+                            reason: { type: "string" },
+                            ruleId: { type: "string" },
+                          },
+                        },
+                      },
+                      rulesEvaluated: { type: "integer" },
+                      durationMs:     { type: "integer" },
+                    },
+                  },
+                },
+              },
+            },
+            ...standardResponses,
+          },
+        },
+      },
+
+      // ── /api/predictive-risk ─────────────────────────────────────────────
+      "/api/predictive-risk": {
+        get: {
+          tags: ["Risk Assessment"],
+          operationId: "predictiveRisk",
+          summary: "Get predictive risk score and signals for a subject",
+          description: [
+            "Returns an ML-derived predictive risk score for a subject along with",
+            "contributing signals and a natural-language explanation.  Scores are",
+            "based on behavioural baselines, transaction patterns, and history.",
+          ].join("\n"),
+          parameters: [
+            { name: "subjectId", in: "query", schema: { type: "string" }, description: "Subject identifier to score" },
+            { name: "name",      in: "query", schema: { type: "string" }, description: "Subject name (used when subjectId is not available)" },
+          ],
+          responses: {
+            "200": {
+              description: "Predictive risk assessment",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    required: ["score", "signals", "explanation"],
+                    properties: {
+                      score: { type: "number", minimum: 0, maximum: 1, description: "Composite risk score (0=lowest, 1=highest risk)" },
+                      signals: {
+                        type: "array",
+                        items: {
+                          type: "object",
+                          properties: {
+                            name:      { type: "string" },
+                            value:     { type: "number" },
+                            weight:    { type: "number" },
+                            direction: { type: "string", enum: ["up", "down", "neutral"] },
+                          },
+                        },
+                      },
+                      explanation:  { type: "string", description: "Natural-language explanation of the risk assessment" },
+                      tier:         { type: "string", enum: ["low", "medium", "high", "critical"] },
+                      generatedAt:  { type: "string", format: "date-time" },
+                    },
+                  },
+                },
+              },
+            },
+            ...standardResponses,
+          },
+        },
+      },
+
+      // ── /api/health ──────────────────────────────────────────────────────
+      "/api/health": {
+        get: {
+          tags: ["Compliance"],
+          operationId: "healthCheck",
+          summary: "Platform liveness and sanctions-list health probe",
+          description: [
+            "Returns the operational status of the platform including brain module",
+            "health and mandatory sanctions list freshness.  Returns 200 when fully",
+            "healthy, 207 when 1–2 mandatory lists are down, and 503 when 3+ lists",
+            "are down or the brain is unavailable.",
+          ].join("\n"),
+          security: [],
+          responses: {
+            "200": {
+              description: "Platform fully operational",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    required: ["ok", "status"],
+                    properties: {
+                      ok:                    { type: "boolean" },
+                      status:                { type: "string", enum: ["operational", "degraded", "down"] },
+                      mandatoryListsHealthy: { type: "boolean" },
+                      sanctionsDown:         { type: "integer" },
+                      brain:                 { type: "object", properties: { ok: { type: "boolean" } } },
+                      ts:                    { type: "string", format: "date-time" },
+                      runtime:               { type: "string" },
+                      version:               { type: "string" },
+                      uptime:                { type: "number", description: "Process uptime in seconds" },
+                    },
+                  },
+                },
+              },
+            },
+            "207": {
+              description: "Platform degraded — some mandatory sanctions lists unavailable",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      ok:            { type: "boolean" },
+                      status:        { type: "string", enum: ["degraded"] },
+                      sanctionsDown: { type: "integer" },
+                      downListIds:   { type: "array", items: { type: "string" } },
+                    },
+                  },
+                },
+              },
+            },
+            "503": {
+              description: "Platform down — brain or 3+ mandatory lists unavailable",
+              content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } },
+            },
+          },
+        },
+      },
     },
   };
 }
@@ -1586,7 +2063,8 @@ function buildSpec(baseUrl: string) {
 // ── Route handler ──────────────────────────────────────────────────────────
 
 export async function GET(req: Request): Promise<NextResponse> {
-  const gate = await enforce(req);
+  // requireAuth: false — the OpenAPI spec is a public document.
+  const gate = await enforce(req, { requireAuth: false });
   if (!gate.ok) return gate.response;
 
   const url = new URL(req.url);
