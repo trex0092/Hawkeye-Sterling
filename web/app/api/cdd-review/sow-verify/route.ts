@@ -28,7 +28,7 @@ interface SowRecord {
   supportingDocumentDescription: string;
   verifiedBy: string;
   verifiedAt: string;
-  sofVerified?: boolean;
+  sofVerified: boolean;
 }
 
 interface SowVerificationResponse {

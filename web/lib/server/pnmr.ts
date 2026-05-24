@@ -40,7 +40,7 @@ function addUaeBusinessDays(from: Date, days: number): Date {
   while (remaining > 0) {
     d.setUTCDate(d.getUTCDate() + 1);
     const dow = d.getUTCDay();
-    if (dow !== 0 && dow !== 6 && !UAE_HOLIDAYS.has(d.toISOString().slice(0, 10))) remaining--;
+    if (dow !== 5 && dow !== 6 && !UAE_HOLIDAYS.has(d.toISOString().slice(0, 10))) remaining--;
   }
   return d;
 }
