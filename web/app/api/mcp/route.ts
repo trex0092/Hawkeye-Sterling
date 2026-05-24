@@ -411,15 +411,19 @@ async function callApi(
     for (const [k, v] of Object.entries(query)) url.searchParams.set(k, v);
   }
   const ctx = _callCtx.getStore();
-  // Prefer the server-side API key for internal service-to-service calls so that
-  // MCP tools work regardless of which auth mechanism Claude.ai used at the boundary.
-  // Fall back to the caller's forwarded auth header if no env key is configured.
+  // Inject a server-side credential for internal service-to-service calls so
+  // MCP tools work regardless of which auth mechanism Claude.ai used at the
+  // MCP boundary. Priority: HAWKEYE_API_KEY/API_KEY (x-api-key) → ADMIN_TOKEN
+  // (Authorization: Bearer, accepted by enforce() bypass path) → caller header.
   const _internalApiKey = process.env["HAWKEYE_API_KEY"] ?? process.env["API_KEY"];
+  const _internalAdminToken = process.env["ADMIN_TOKEN"];
   const headers: Record<string, string> = {
     "content-type": "application/json",
     ...(_internalApiKey
       ? { "x-api-key": _internalApiKey }
-      : ctx?.authHeader ? { authorization: ctx.authHeader } : {}
+      : _internalAdminToken
+        ? { authorization: `Bearer ${_internalAdminToken}` }
+        : ctx?.authHeader ? { authorization: ctx.authHeader } : {}
     ),
   };
   const init: RequestInit = {
