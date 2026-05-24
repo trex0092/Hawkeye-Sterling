@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
-import { loadOecdDdgRecord, updateOecdDdgRecord, getStepCompletion } from "@/lib/server/oecd-ddg";
-import type { OecdDdgRecord } from "@/lib/server/oecd-ddg";
+import { loadOecdDdgRecord, updateOecdDdgRecord, getStepCompletion, type OecdDdgRecord } from "@/lib/server/oecd-ddg";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
