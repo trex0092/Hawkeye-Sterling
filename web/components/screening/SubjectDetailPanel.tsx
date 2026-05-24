@@ -2770,7 +2770,7 @@ function LiveReasoningTab({
         ? "bg-amber-dim text-amber"
         : "bg-bg-2 text-ink-3";
 
-  const narrative = (result as unknown as Record<string, unknown>)?.narrative ?? (result as unknown as Record<string, unknown>)?.executiveSummary ?? null;
+  const narrative = ((result as unknown as Record<string, unknown>)?.narrative ?? (result as unknown as Record<string, unknown>)?.executiveSummary ?? null) as string | null;
 
   return (
     <div className="space-y-4">
