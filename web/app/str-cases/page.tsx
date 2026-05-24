@@ -96,6 +96,64 @@ interface CaseRow {
   amountAed: string;
   status: string;
   openedAt: string;
+  fiuDeadline35Day?: string;
+  fiuDeadlineDay20Alert?: string;
+}
+
+// ── FIU countdown helpers ────────────────────────────────────────────────────
+function calcDaysRemaining(deadline?: string): number | null {
+  if (!deadline) return null;
+  const ms = new Date(deadline).getTime() - Date.now();
+  return Math.ceil(ms / (1000 * 60 * 60 * 24));
+}
+
+function fiuBarColor(days: number): string {
+  if (days <= 7) return "bg-red";
+  if (days <= 15) return "bg-amber";
+  return "bg-green";
+}
+
+function FiuCountdownBar({ fiuDeadline35Day, fiuDeadlineDay20Alert }: { fiuDeadline35Day?: string; fiuDeadlineDay20Alert?: string }) {
+  if (!fiuDeadline35Day) return null;
+  const days = calcDaysRemaining(fiuDeadline35Day);
+  if (days === null) return null;
+  const overdue = days < 0;
+  const pct = Math.min(100, Math.max(0, ((35 - days) / 35) * 100));
+  const barColor = overdue ? "bg-red" : fiuBarColor(days);
+  const day20Passed = fiuDeadlineDay20Alert ? calcDaysRemaining(fiuDeadlineDay20Alert) !== null && (calcDaysRemaining(fiuDeadlineDay20Alert) ?? 1) <= 0 : false;
+
+  return (
+    <div className="px-3 pb-2 pt-0.5">
+      {/* Progress track */}
+      <div className="relative h-1.5 bg-bg-2 rounded-full overflow-hidden">
+        <div
+          className={`absolute left-0 top-0 h-full rounded-full transition-all ${barColor}`}
+          style={{ width: `${pct}%` }}
+        />
+        {/* Day-20 milestone marker at 20/35 ≈ 57.1% */}
+        <div
+          className="absolute top-0 h-full w-px bg-amber/70"
+          style={{ left: `${(20 / 35) * 100}%` }}
+          title="Day 20 investigation deadline"
+        />
+      </div>
+      {/* Labels */}
+      <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+        {overdue ? (
+          <span className="text-10 font-bold text-red uppercase tracking-wide">
+            OVERDUE — {Math.abs(days)} day{Math.abs(days) !== 1 ? "s" : ""} past FIU deadline
+          </span>
+        ) : (
+          <span className={`text-10 font-mono ${days <= 7 ? "text-red font-semibold" : days <= 15 ? "text-amber" : "text-ink-3"}`}>
+            {days} day{days !== 1 ? "s" : ""} to FIU deadline
+          </span>
+        )}
+        {day20Passed && (
+          <span className="text-10 font-semibold text-amber">· Day 20 investigation deadline passed</span>
+        )}
+      </div>
+    </div>
+  );
 }
 
 function AccessDeniedScreen({
@@ -169,19 +227,29 @@ export default function StrCasesPage() {
   const [editCaseDraft, setEditCaseDraft] = useState({ title: "", subject: "", status: "" });
   useEffect(() => {
     if (!canPerform(role, "str_read")) return;
-    setCases(
-      loadCases()
-        .filter((c) => c.meta?.startsWith("STR") || c.meta?.startsWith("SAR"))
-        .map((c) => ({
-      id: c.id,
-      title: c.subject,
-      reportKind: c.meta?.split(" · ")[0] ?? "STR",
-      subject: c.subject,
-      amountAed: "",
-      status: c.statusLabel,
-      openedAt: c.opened,
-        })),
-    );
+    const rows = loadCases()
+      .filter((c) => c.meta?.startsWith("STR") || c.meta?.startsWith("SAR"))
+      .map((c) => ({
+        id: c.id,
+        title: c.subject,
+        reportKind: c.meta?.split(" · ")[0] ?? "STR",
+        subject: c.subject,
+        amountAed: "",
+        status: c.statusLabel,
+        openedAt: c.opened,
+        fiuDeadline35Day: (c as unknown as { fiuDeadline35Day?: string }).fiuDeadline35Day,
+        fiuDeadlineDay20Alert: (c as unknown as { fiuDeadlineDay20Alert?: string }).fiuDeadlineDay20Alert,
+      }));
+    // Sort ascending by days remaining — closest deadline first; no deadline goes last
+    rows.sort((a, b) => {
+      const da = calcDaysRemaining(a.fiuDeadline35Day);
+      const db = calcDaysRemaining(b.fiuDeadline35Day);
+      if (da === null && db === null) return 0;
+      if (da === null) return 1;
+      if (db === null) return -1;
+      return da - db;
+    });
+    setCases(rows);
   }, [role]);
 
   const [status, setStatus] = useState("Draft");
@@ -493,19 +561,28 @@ export default function StrCasesPage() {
         // Re-read from the authoritative store so the in-page list reflects
         // what was actually persisted (guards against silent quota failures
         // where appendCase wrote nothing but the local variable still exists).
-        setCases(
-          loadCases()
-            .filter((c) => c.meta?.startsWith("STR") || c.meta?.startsWith("SAR"))
-            .map((c) => ({
-              id: c.id,
-              title: c.subject,
-              reportKind: c.meta?.split(" · ")[0] ?? "STR",
-              subject: c.subject,
-              amountAed: "",
-              status: c.statusLabel,
-              openedAt: c.opened,
-            })),
-        );
+        const refreshed = loadCases()
+          .filter((c) => c.meta?.startsWith("STR") || c.meta?.startsWith("SAR"))
+          .map((c) => ({
+            id: c.id,
+            title: c.subject,
+            reportKind: c.meta?.split(" · ")[0] ?? "STR",
+            subject: c.subject,
+            amountAed: "",
+            status: c.statusLabel,
+            openedAt: c.opened,
+            fiuDeadline35Day: (c as unknown as { fiuDeadline35Day?: string }).fiuDeadline35Day,
+            fiuDeadlineDay20Alert: (c as unknown as { fiuDeadlineDay20Alert?: string }).fiuDeadlineDay20Alert,
+          }));
+        refreshed.sort((a, b) => {
+          const da = calcDaysRemaining(a.fiuDeadline35Day);
+          const db = calcDaysRemaining(b.fiuDeadline35Day);
+          if (da === null && db === null) return 0;
+          if (da === null) return 1;
+          if (db === null) return -1;
+          return da - db;
+        });
+        setCases(refreshed);
         clear();
       } else {
         flashFor("error", "Filing failed check Asana token");
@@ -1035,11 +1112,19 @@ export default function StrCasesPage() {
                         </td>
                       </tr>
                     ) : (
+                    <>
                     <tr
                       key={c.id}
-                      className="border-b border-hair last:border-0 hover:bg-bg-1"
+                      className={`border-b ${c.fiuDeadline35Day && (calcDaysRemaining(c.fiuDeadline35Day) ?? 1) < 0 ? "border-l-4 border-l-red-500 bg-red-50" : "border-hair last:border-0"} hover:bg-bg-1`}
                     >
-                      <td className="px-3 py-2 text-ink-0">{c.title}</td>
+                      <td className="px-3 py-2 text-ink-0">
+                        <div className="flex items-center gap-1.5">
+                          {c.fiuDeadline35Day && (calcDaysRemaining(c.fiuDeadline35Day) ?? 1) < 0 && (
+                            <span className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 font-bold bg-red text-white uppercase">OVERDUE</span>
+                          )}
+                          {c.title}
+                        </div>
+                      </td>
                       <td className="px-3 py-2 font-mono text-ink-2">
                         {c.reportKind}
                       </td>
@@ -1091,6 +1176,14 @@ export default function StrCasesPage() {
                         </div>
                       </td>
                     </tr>
+                    {c.fiuDeadline35Day && (
+                      <tr key={`${c.id}-fiu`} className={`${(calcDaysRemaining(c.fiuDeadline35Day) ?? 1) < 0 ? "border-l-4 border-l-red-500 bg-red-50" : ""} border-b border-hair last:border-0`}>
+                        <td colSpan={7} className="p-0">
+                          <FiuCountdownBar fiuDeadline35Day={c.fiuDeadline35Day} fiuDeadlineDay20Alert={c.fiuDeadlineDay20Alert} />
+                        </td>
+                      </tr>
+                    )}
+                    </>
                     )
                   ))}
                 </tbody>
