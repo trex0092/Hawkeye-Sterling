@@ -8,6 +8,30 @@ import { enforce } from "@/lib/server/enforce";
 export type EsgRating = "AAA" | "AA" | "A" | "BBB" | "BB" | "B" | "CCC";
 export type MlRiskLevel = "low" | "medium" | "high";
 
+export interface FatfTypology {
+  typology: string;
+  fatfRef: string;
+  recommendation: string;
+}
+
+export interface SdgViolation {
+  sdgNumber: number;
+  sdgName: string;
+  concern: string;
+}
+
+export interface SupplyChainRisk {
+  country: string;
+  riskLevel: "low" | "medium" | "high";
+  concern: string;
+}
+
+export interface SectorBenchmark {
+  sectorAvgScore: number;
+  entityVsAvg: "above" | "at" | "below";
+  percentile: number;
+}
+
 export interface EsgDimension {
   score: number; // 0-100
   risks: string[];
@@ -38,6 +62,10 @@ export interface EsgRiskResult {
   };
   mlRiskOverlay: MlRiskOverlay;
   regulatoryExposure: RegulatoryExposure[];
+  fatfTypologies: FatfTypology[];
+  sdgViolations: SdgViolation[];
+  supplyChainRisks: SupplyChainRisk[];
+  sectorBenchmark: SectorBenchmark;
   redFlags: string[];
   recommendation: string;
   summary: string;
@@ -95,6 +123,16 @@ export async function POST(req: Request) {
         { regulation: "UAE FDL 10/2025 Art.4 (EWRA)", jurisdiction: "UAE", compliance: "Required" },
         ...(sectorRisky ? [{ regulation: "OECD Due Diligence Guidance for Responsible Business Conduct", jurisdiction: "OECD", compliance: "Recommended" }] : []),
       ],
+      fatfTypologies: sectorRisky ? [
+        { typology: "Environmental crime proceeds", fatfRef: "FATF 2021 Environmental Crime Guidance", recommendation: "Apply enhanced due diligence for nature-based transactions." },
+      ] : [],
+      sdgViolations: (sectorRisky || jurRisky) ? [
+        { sdgNumber: 16, sdgName: "Peace, Justice and Strong Institutions", concern: "Governance gaps linked to weak rule-of-law jurisdictions." },
+      ] : [],
+      supplyChainRisks: sectorRisky ? [
+        { country: "Unknown", riskLevel: "medium" as const, concern: "Supply-chain due diligence not yet verified — OECD 5-step DDG applies." },
+      ] : [],
+      sectorBenchmark: { sectorAvgScore: 62, entityVsAvg: score >= 65 ? "above" as const : score >= 59 ? "at" as const : "below" as const, percentile: Math.min(99, Math.round((score / 100) * 100)) },
       redFlags: [
         ...(sectorRisky ? ["High-risk sector — verify supply-chain due diligence."] : []),
         ...(jurRisky ? ["High-risk jurisdiction — verify FATF posture and corruption controls."] : []),
@@ -111,7 +149,7 @@ export async function POST(req: Request) {
     const client = getAnthropicClient(apiKey, 4_500);
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 800,
+      max_tokens: 1400,
       system: [
         {
           type: "text",
@@ -145,6 +183,10 @@ Return ONLY valid JSON (no markdown fences):
     "overallMlRisk": "low"|"medium"|"high"
   },
   "regulatoryExposure": [{"regulation":"string","jurisdiction":"string","compliance":"string"}],
+  "fatfTypologies": [{"typology":"string","fatfRef":"string","recommendation":"string"}],
+  "sdgViolations": [{"sdgNumber":1,"sdgName":"string","concern":"string"}],
+  "supplyChainRisks": [{"country":"string","riskLevel":"low|medium|high","concern":"string"}],
+  "sectorBenchmark": {"sectorAvgScore":60,"entityVsAvg":"above|at|below","percentile":50},
   "redFlags": ["string"],
   "recommendation": "string",
   "summary": "string"
@@ -183,6 +225,10 @@ Generate a comprehensive ESG risk assessment with ML risk overlay for this entit
       if (!Array.isArray(result.dimensions.governance.opportunities)) result.dimensions.governance.opportunities = [];
     }
     if (!Array.isArray(result.regulatoryExposure)) result.regulatoryExposure = [];
+    if (!Array.isArray(result.fatfTypologies)) result.fatfTypologies = [];
+    if (!Array.isArray(result.sdgViolations)) result.sdgViolations = [];
+    if (!Array.isArray(result.supplyChainRisks)) result.supplyChainRisks = [];
+    if (!result.sectorBenchmark) result.sectorBenchmark = { sectorAvgScore: 62, entityVsAvg: "at", percentile: 50 };
     if (!Array.isArray(result.redFlags)) result.redFlags = [];
     return NextResponse.json(result, { headers: gate.headers });
   } catch (err) {
