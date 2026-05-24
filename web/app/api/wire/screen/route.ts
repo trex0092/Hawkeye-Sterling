@@ -122,7 +122,9 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   // Travel Rule June 2025 — FATF Rec 16 updated: address + DOB mandatory for cross-border >= USD 1,000
   const TRAVEL_RULE_THRESHOLD_USD = 1_000;
-  const amountRaw = typeof mt103.amount === "string" ? parseFloat(mt103.amount.replace(",", ".")) : 0;
+  const amountRaw = typeof mt103.amount === "string"
+    ? parseFloat((mt103.amount as string).replace(",", "."))
+    : Number(mt103.amount ?? 0);
   const amount = isNaN(amountRaw) ? (body.travelRule?.amount ?? 0) : (body.travelRule?.amount ?? amountRaw);
   const currency = mt103.currency ?? "";
   // Treat as cross-border if not AED (UAE domestic)
