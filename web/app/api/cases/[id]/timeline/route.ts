@@ -1,4 +1,4 @@
-// GET /api/cases/[caseId]/timeline
+// GET /api/cases/[id]/timeline
 //
 // Returns a CaseTimeline-compatible event array for a given case,
 // built from the case record's presentation-layer timeline + evidence +
@@ -41,13 +41,13 @@ function severityFromText(text: string): CaseTimelineEvent["severity"] {
 
 export async function GET(
   req: Request,
-  ctx: { params: Promise<{ caseId: string }> },
+  ctx: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
   const gate = await enforce(req, { requireAuth: true });
   if (!gate.ok) return gate.response;
 
   const tenant = tenantIdFromGate(gate);
-  const { caseId } = await ctx.params;
+  const { id: caseId } = await ctx.params;
 
   if (!caseId || typeof caseId !== "string") {
     return NextResponse.json({ ok: false, error: "caseId required" }, { status: 400 });

@@ -14,7 +14,7 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
-import { validateGoamlXmlStructure } from "@/lib/goaml-xsd-validator";
+import { validateGoamlXmlStructure, getGoamlSchemaVersion } from "@/lib/goaml-xsd-validator";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -640,6 +640,9 @@ export async function POST(req: Request): Promise<Response> {
 
   return NextResponse.json(result, {
     status: 200,
-    headers: { "cache-control": "no-store" },
+    headers: {
+      "cache-control": "no-store",
+      "x-goaml-schema-version": getGoamlSchemaVersion(),
+    },
   });
 }
