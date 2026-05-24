@@ -147,7 +147,7 @@ export async function loadOecdDdgRecord(
 export async function loadAllOecdDdgRecords(
   tenantId: string,
 ): Promise<OecdDdgRecord[]> {
-  const prefix = `oecd-ddg/${tenantId}/`;
+  const prefix = `oecd-ddg/${tenantId.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 64)}/`;
   const keys = await listKeys(prefix);
   const records = await Promise.all(
     keys.map((k) => getJson<OecdDdgRecord>(k)),

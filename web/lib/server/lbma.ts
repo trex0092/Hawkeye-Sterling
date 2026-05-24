@@ -94,7 +94,7 @@ export async function loadLbmaRecord(
 export async function loadAllLbmaRecords(
   tenantId: string,
 ): Promise<LbmaQuestionnaire[]> {
-  const prefix = `lbma/${tenantId}/`;
+  const prefix = `lbma/${tenantId.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 64)}/`;
   const keys = await listKeys(prefix);
   const records = await Promise.all(
     keys.map((k) => getJson<LbmaQuestionnaire>(k)),

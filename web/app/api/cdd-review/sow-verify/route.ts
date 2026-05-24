@@ -60,9 +60,6 @@ function recordsKey(tenant: string, subjectId: string): string {
   return `hs-sow-records/${safeId(tenant)}/${safeId(subjectId)}.json`;
 }
 
-function listPrefix(tenant: string): string {
-  return `hs-sow-records/${safeId(tenant)}/`;
-}
 
 async function loadRecords(tenant: string, subjectId: string): Promise<SowRecord[]> {
   const data = await getJson<SowRecord[]>(recordsKey(tenant, subjectId));

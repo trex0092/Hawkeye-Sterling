@@ -11,6 +11,7 @@ interface MinimalStore {
 
 // Survive Next.js dev-mode hot module reloads by anchoring the Map to
 // globalThis so re-evaluating this module doesn't reset stored data.
+// eslint-disable-next-line no-var
 declare global { var __hs_dev_store: Map<string, string> | undefined; }
 const memoryStore: Map<string, string> = globalThis.__hs_dev_store ?? (globalThis.__hs_dev_store = new Map());
 
@@ -34,6 +35,7 @@ function buildMemoryStore(): MinimalStore {
   };
 }
 
+// eslint-disable-next-line no-var
 declare global { var __hs_store_cached: MinimalStore | null | undefined; var __hs_store_inMemory: boolean | undefined; }
 let cached: MinimalStore | null = globalThis.__hs_store_cached ?? null;
 let usingInMemoryFallback: boolean = globalThis.__hs_store_inMemory ?? false;
