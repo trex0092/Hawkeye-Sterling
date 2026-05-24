@@ -135,10 +135,10 @@ function EocnPdfUploadPanel() {
       {/* Explainer */}
       <div className="bg-amber-dim border border-amber/30 rounded-lg px-4 py-3 text-12 text-ink-1 leading-relaxed">
         <span className="font-semibold text-amber">How this works: </span>
-        The EOCN body emails an Excel (.xls) or PDF when the UAE TFS list changes.
-        Upload that file here — Hawkeye parses all designated entities structurally
+        The EOCN body emails the UAE TFS list as an Excel (.xls), XML, or PDF file.
+        Upload that file here — Hawkeye extracts all designated entity names, deduplicates,
         and updates the screening watchlist immediately. No manual re-keying.
-        The list goes live for all subsequent screenings.
+        The list goes live for all subsequent screenings and resets the staleness clock.
       </div>
 
       {/* Form */}
@@ -164,10 +164,10 @@ function EocnPdfUploadPanel() {
 
         {/* File input */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-11 font-mono uppercase tracking-wide-3 text-ink-2">File (PDF or Excel)</label>
+          <label className="text-11 font-mono uppercase tracking-wide-3 text-ink-2">File (XML, PDF or Excel)</label>
           <input
             type="file"
-            accept=".pdf,.xlsx,.xls,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            accept=".xml,.pdf,.xlsx,.xls,text/xml,application/xml,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             onChange={(e) => { setFile(e.target.files?.[0] ?? null); setResult(null); }}
             className="text-12 text-ink-1 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border file:border-hair-2 file:text-12 file:font-medium file:bg-bg-1 file:text-ink-0 hover:file:bg-bg-2"
           />

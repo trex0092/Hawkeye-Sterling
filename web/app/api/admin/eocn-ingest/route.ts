@@ -97,16 +97,135 @@ async function writeToBlobStore(listId: string, entities: NormalisedEntity[]): P
     console.error("[eocn-ingest] writeToBlobStore:", msg);
     return { ok: false, error: msg };
   }
+  const now = Date.now();
+  // Include a `report` block with fetchedAt + recordCount so the
+  // sanctions/status and health endpoints mark this list as fresh (not stale).
+  const report = {
+    listId,
+    recordCount: entities.length,
+    fetchedAt: now,
+    source: "manual_upload",
+    ingestedAt: new Date(now).toISOString(),
+  };
   try {
     await store.set(
       `${listId}/latest.json`,
-      JSON.stringify({ entities, ingestedAt: new Date().toISOString(), source: "manual_upload" }),
+      JSON.stringify({ entities, report, source: "manual_upload", ingestedAt: report.ingestedAt }),
     );
     return { ok: true };
   } catch (err) {
     console.error("[eocn-ingest] writeToBlobStore set() failed:", err);
     return { ok: false, error: "blob store write failed — check storage configuration" };
   }
+}
+
+// ── XML parser (UN SC / UAE EOCN / OFAC SDN XML formats) ─────────────────────
+// Supports the three most common sanctions XML schemas without external deps.
+// Deduplication by normalised name prevents double-counting aliases/variants.
+
+function getText(xml: string, tag: string): string {
+  const m = xml.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, "i"));
+  return m ? m[1]!.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&#?\w+;/g, " ").trim() : "";
+}
+
+function getAllText(xml: string, tag: string): string[] {
+  const rx = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, "gi");
+  const out: string[] = [];
+  let m: RegExpExecArray | null;
+  while ((m = rx.exec(xml)) !== null) {
+    const v = m[1]!.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&#?\w+;/g, " ").replace(/<[^>]+>/g, " ").trim();
+    if (v) out.push(v);
+  }
+  return out;
+}
+
+interface XmlEntity {
+  name: string;
+  aliases: string[];
+  type: "individual" | "entity";
+  nationalities: string[];
+  dob?: string;
+  passport?: string;
+  reference?: string;
+}
+
+export function parseEocnXml(xml: string): XmlEntity[] {
+  const results: XmlEntity[] = [];
+
+  // ── UN Security Council XML (INDIVIDUAL / ENTITY blocks) ──────────────────
+  const unIndividuals = [...xml.matchAll(/<INDIVIDUAL>([\s\S]*?)<\/INDIVIDUAL>/gi)];
+  for (const m of unIndividuals) {
+    const block = m[1]!;
+    const parts = [
+      getText(block, "FIRST_NAME"),
+      getText(block, "SECOND_NAME"),
+      getText(block, "THIRD_NAME"),
+      getText(block, "FOURTH_NAME"),
+    ].filter(Boolean);
+    const name = parts.join(" ").trim();
+    if (!name) continue;
+    const aliases = getAllText(block, "ALIAS_NAME").filter((a) => a !== name);
+    results.push({
+      name,
+      aliases,
+      type: "individual",
+      nationalities: getAllText(block, "NATIONALITY").slice(0, 5),
+      dob: getText(block, "DATE_OF_BIRTH") || undefined,
+      reference: getText(block, "DATAID") || undefined,
+    });
+  }
+  const unEntities = [...xml.matchAll(/<ENTITY>([\s\S]*?)<\/ENTITY>/gi)];
+  for (const m of unEntities) {
+    const block = m[1]!;
+    const name = getText(block, "FIRST_NAME") || getText(block, "NAME");
+    if (!name) continue;
+    results.push({
+      name,
+      aliases: getAllText(block, "ALIAS_NAME").filter((a) => a !== name),
+      type: "entity",
+      nationalities: [],
+      reference: getText(block, "DATAID") || undefined,
+    });
+  }
+
+  // ── OFAC SDN XML (sdnEntry blocks) ────────────────────────────────────────
+  if (results.length === 0) {
+    const sdnEntries = [...xml.matchAll(/<sdnEntry>([\s\S]*?)<\/sdnEntry>/gi)];
+    for (const m of sdnEntries) {
+      const block = m[1]!;
+      const firstName = getText(block, "firstName");
+      const lastName = getText(block, "lastName");
+      const name = [firstName, lastName].filter(Boolean).join(" ").trim();
+      if (!name) continue;
+      const typeRaw = getText(block, "sdnType").toLowerCase();
+      const type: "individual" | "entity" = typeRaw.includes("individual") ? "individual" : "entity";
+      const aliases = getAllText(block, "aka")
+        .map((a) => [getText(a, "firstName"), getText(a, "lastName")].filter(Boolean).join(" ").trim())
+        .filter((a) => a && a !== name);
+      results.push({ name, aliases, type, nationalities: [], reference: getText(block, "uid") || undefined });
+    }
+  }
+
+  // ── Generic XML fallback: look for any <*Name*> / <fullName> / <name> ─────
+  if (results.length === 0) {
+    const nameBlocks = [...xml.matchAll(/<(?:fullName|displayName|entityName|name)>([^<]{3,200})<\/(?:fullName|displayName|entityName|name)>/gi)];
+    const seen = new Set<string>();
+    for (const m of nameBlocks) {
+      const name = m[1]!.trim();
+      if (!name || seen.has(name.toLowerCase())) continue;
+      seen.add(name.toLowerCase());
+      results.push({ name, aliases: [], type: "individual", nationalities: [] });
+    }
+  }
+
+  // Dedup by normalised name — same name from multiple elements (e.g. primary
+  // name also appears as an alias block) must not create two records.
+  const seen = new Map<string, XmlEntity>();
+  for (const e of results) {
+    const key = e.name.toLowerCase().replace(/\s+/g, " ").trim();
+    if (!seen.has(key)) seen.set(key, e);
+  }
+  return [...seen.values()];
 }
 
 async function fireDesignationAlert(
@@ -343,12 +462,13 @@ export async function POST(req: Request): Promise<NextResponse> {
     listIdOverride === "uae_ltl" ? "uae_ltl" : "uae_eocn";
 
   const ext = fileName.split(".").pop()?.toLowerCase() ?? "";
-  const isPdf = ext === "pdf" || file.type === "application/pdf";
-  const isExcel = ext === "xls" || ext === "xlsx" || file.type.includes("excel") || file.type.includes("spreadsheet");
+  const isPdf   = ext === "pdf"  || file.type === "application/pdf";
+  const isExcel = ext === "xls"  || ext === "xlsx" || file.type.includes("excel") || file.type.includes("spreadsheet");
+  const isXml   = ext === "xml"  || file.type.includes("xml");
 
-  if (!isPdf && !isExcel) {
+  if (!isPdf && !isExcel && !isXml) {
     return NextResponse.json(
-      { ok: false, error: "Unsupported file type — upload .xls, .xlsx, or .pdf" },
+      { ok: false, error: "Unsupported file type — upload .xml, .xls, .xlsx, or .pdf" },
       { status: 415, headers: gate.headers },
     );
   }
@@ -358,6 +478,49 @@ export async function POST(req: Request): Promise<NextResponse> {
   const now = Date.now();
   let parseMethod: IngestResult["parseMethod"] = "none";
   let entities: NormalisedEntity[] = [];
+
+  // ── 0. XML parse (UN SC / OFAC / generic) ────────────────────────────────
+  if (isXml) {
+    try {
+      const xmlText = buf.toString("utf-8");
+      const parsed = parseEocnXml(xmlText);
+      if (parsed.length > 0) {
+        parseMethod = "structural";
+        entities = parsed.map((p, i) => {
+          const ref = p.reference ?? String(i + 1);
+          const identifiers: Record<string, string> = {};
+          if (p.dob) identifiers["dob"] = p.dob;
+          if (p.passport) identifiers["passport"] = p.passport;
+          const out: NormalisedEntity = {
+            id: `${listId}:${ref}:${p.name.slice(0, 30).replace(/\s+/g, "_")}`,
+            name: p.name,
+            aliases: p.aliases,
+            type: p.type,
+            nationalities: p.nationalities,
+            jurisdictions: ["AE"],
+            identifiers,
+            addresses: [],
+            listings: [
+              {
+                source: listId,
+                program: listId === "uae_ltl" ? "UAE Local Terrorist List" : "UAE EOCN TFS",
+                reference: ref,
+                authorityUrl: "https://www.uaeiec.gov.ae/en-us/un-page",
+              },
+            ],
+            source: listId,
+            fetchedAt: now,
+          };
+          return out;
+        });
+      } else {
+        warnings.push("XML parser found 0 entities — falling back to AI extraction");
+      }
+    } catch (err) {
+      console.warn("[eocn-ingest] XML parse failed:", err);
+      warnings.push("XML parse failed — falling back to AI extraction");
+    }
+  }
 
   // ── 1. Structural parse (XLS/XLSX only) ───────────────────────────────────
   if (isExcel) {
@@ -440,6 +603,26 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   if (entities.length === 0) {
     warnings.push("No entities extracted — verify the file is the correct EOCN/LTL document");
+  }
+
+  // ── Deduplication — remove duplicate names within the uploaded file ────────
+  // ID and normalised-name dedup prevents double-counting when an XML/XLS has
+  // the same entity in multiple sections or with variant capitalisation.
+  if (entities.length > 0) {
+    const seenIds  = new Set<string>();
+    const seenNames = new Set<string>();
+    const deduped: NormalisedEntity[] = [];
+    for (const e of entities) {
+      const normName = e.name.toLowerCase().replace(/\s+/g, " ").trim();
+      if (seenIds.has(e.id) || seenNames.has(normName)) continue;
+      seenIds.add(e.id);
+      seenNames.add(normName);
+      deduped.push(e);
+    }
+    if (deduped.length < entities.length) {
+      warnings.push(`Deduplicated ${entities.length - deduped.length} duplicate entries from the uploaded file`);
+      entities = deduped;
+    }
   }
 
   // ── 3. Write to blob store ─────────────────────────────────────────────────
