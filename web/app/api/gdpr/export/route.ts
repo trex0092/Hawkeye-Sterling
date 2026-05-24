@@ -136,6 +136,7 @@ export async function GET(req: Request): Promise<NextResponse> {
         ...gate.headers,
         "Content-Type": "text/csv; charset=utf-8",
         "Content-Disposition": `attachment; filename="${csvFilename}"`,
+        "x-duration-ms": String(Date.now() - startMs),
       },
     });
   }

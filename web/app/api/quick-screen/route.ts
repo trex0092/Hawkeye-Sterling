@@ -581,6 +581,14 @@ export async function POST(req: Request): Promise<NextResponse> {
       if (!hit.matchReason) {
         hit.matchReason = hit.reason;
       }
+      if (!hit.confidenceTier) {
+        const s = hit.score ?? hit.baseScore ?? 0;
+        hit.confidenceTier =
+          s >= 0.95 ? "confirmed"
+          : s >= 0.80 ? "probable"
+          : s >= 0.60 ? "possible"
+          : "unlikely";
+      }
     }
 
     // Hard deadline SLA: if the enrichment adapters haven't resolved with

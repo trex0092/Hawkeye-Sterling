@@ -26,6 +26,7 @@ const VALID_EVENTS: WebhookEvent[] = [
   "screening.completed",
   "edd.triggered",
   "four_eyes.approved",
+  "maker_checker_pending",
 ];
 
 export async function GET(req: Request): Promise<NextResponse> {

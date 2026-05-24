@@ -48,7 +48,7 @@ interface _AggCacheEntry {
 }
 const _aggCache = new Map<string, _AggCacheEntry>();
 const _AGG_CACHE_TTL_MS = 60 * 60 * 1_000;  // 60 minutes
-const _AGG_CACHE_MAX = 500;
+const _AGG_CACHE_MAX = 1_000;
 
 function _cacheKey(name: string): string {
   return name.toLowerCase().trim().replace(/\s+/g, " ").slice(0, 200);
