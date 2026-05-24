@@ -16,7 +16,8 @@ export type WebhookEvent =
   | "subject.cleared"
   | "screening.completed"
   | "edd.triggered"
-  | "four_eyes.approved";
+  | "four_eyes.approved"
+  | "maker_checker_pending";
 
 export interface WebhookRegistration {
   id: string;
