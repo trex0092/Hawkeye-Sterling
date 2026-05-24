@@ -15,6 +15,12 @@
 //     resolveAdverseMedia?: boolean;
 //   }
 //
+// GET /api/relationship-graph?subjectId=<id>
+//
+// Builds a visual relationship graph for a screening subject identified by id.
+// Loads the target subject + all subjects from Blobs (hs-subjects store),
+// constructs and returns the RelationshipGraph. Auth required.
+//
 // Response:
 //   {
 //     ok, subjectName, nodes, edges, uboChain, pepNetwork,
@@ -28,6 +34,19 @@ import { matchEntity, type MatchQuery } from "@/lib/intelligence/openSanctionsAd
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
+import { listSubjects, loadSubject } from "@/lib/server/subject-store";
+import {
+  buildRelationshipGraph,
+  type SubjectWithUbos,
+} from "@/lib/server/relationship-graph";
+import type {
+  Subject,
+  SubjectType,
+  CDDPosture,
+  BadgeTone,
+  SubjectStatus,
+  SanctionSource,
+} from "@/lib/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -296,6 +315,140 @@ export async function POST(req: Request): Promise<NextResponse> {
         regulatoryContext: "UAE FDL No.10/2025 Art.11 — UBO identification requirement",
       },
     },
+    { headers: gate.headers },
+  );
+}
+
+// ─── GET /api/relationship-graph?subjectId=<id> ────────────────────────────
+//
+// Loads the target subject from the hs-subjects blob store (SubjectProfile)
+// and all peer subjects, then calls buildRelationshipGraph to produce a
+// node-edge graph suited for SVG rendering on the /network-graph page.
+//
+// Clients may also supply a `subjects` JSON array (base64-encoded) as the
+// `data` query param to overlay the richer screening-queue Subject shape
+// (which includes rca.linkedAssociates, aliases, etc.) on top of the blob
+// store data. When present, the data param takes precedence over the blob store.
+
+const SAFE_ID_RE_GET = /^[a-zA-Z0-9_\-.:]+$/;
+const MAX_ID_LEN_GET = 128;
+
+/** Map a SubjectProfile (server blob store) to the minimal Subject shape
+ *  required by buildRelationshipGraph.  Missing fields get safe defaults. */
+function profileToSubject(
+  profile: Awaited<ReturnType<typeof loadSubject>>,
+): Subject | null {
+  if (!profile) return null;
+  return {
+    id: profile.subjectId,
+    badge: profile.subjectId.slice(0, 6).toUpperCase(),
+    badgeTone: "dashed" as BadgeTone,
+    name: profile.subjectName,
+    meta: profile.notes ?? "",
+    country: "",
+    jurisdiction: "",
+    type: "Individual · Customer" as SubjectType,
+    entityType: "individual",
+    riskScore: (() => {
+      const hist = profile.riskScoreHistory;
+      if (hist && hist.length > 0) return hist[hist.length - 1]!.score;
+      return 0;
+    })(),
+    status: "active" as SubjectStatus,
+    cddPosture: (profile.dueDiligence ?? "CDD") as CDDPosture,
+    listCoverage: [] as SanctionSource[],
+    pep: profile.isPep ? { tier: "1" } : undefined,
+    exposureAED: "0",
+    slaNotify: "",
+    mostSerious: "",
+    openedAgo: profile.createdAt,
+  };
+}
+
+export async function GET(req: Request): Promise<NextResponse> {
+  const gate = await enforce(req, { requireAuth: true });
+  if (!gate.ok) return gate.response;
+  const tenant = tenantIdFromGate(gate);
+
+  const url = new URL(req.url);
+  const subjectId = url.searchParams.get("subjectId")?.trim() ?? "";
+
+  if (
+    !subjectId ||
+    subjectId.length > MAX_ID_LEN_GET ||
+    !SAFE_ID_RE_GET.test(subjectId)
+  ) {
+    return NextResponse.json(
+      { ok: false, error: "subjectId query parameter is required" },
+      { status: 400, headers: gate.headers },
+    );
+  }
+
+  // Optional: client may pass its richer Subject[] array encoded as a
+  // JSON string in the `data` query parameter (base64url-safe encoded).
+  let clientSubjects: Subject[] | null = null;
+  const dataParam = url.searchParams.get("data");
+  if (dataParam) {
+    try {
+      const decoded = Buffer.from(dataParam, "base64").toString("utf-8");
+      const parsed = JSON.parse(decoded) as unknown;
+      if (Array.isArray(parsed)) {
+        clientSubjects = parsed as Subject[];
+      }
+    } catch {
+      // ignore malformed data param — fall back to blob store
+    }
+  }
+
+  // Load all subjects from the blob store
+  const allProfiles = await listSubjects(tenant).catch(() => [] as Awaited<ReturnType<typeof listSubjects>>);
+  const allSubjectsFromBlob: Subject[] = allProfiles
+    .map(profileToSubject)
+    .filter((s): s is Subject => s !== null);
+
+  // Merge: client subjects take precedence (richer shape), blob store fills gaps
+  const subjectMap = new Map<string, Subject>();
+  for (const s of allSubjectsFromBlob) subjectMap.set(s.id, s);
+  if (clientSubjects) {
+    for (const s of clientSubjects) subjectMap.set(s.id, s);
+  }
+  const allSubjects = Array.from(subjectMap.values());
+
+  // Find the focal subject
+  let focalSubject: SubjectWithUbos | null =
+    (allSubjects.find((s) => s.id === subjectId) as SubjectWithUbos) ?? null;
+
+  if (!focalSubject) {
+    // Fall back to loading the subject profile from blob store directly
+    const profile = await loadSubject(tenant, subjectId).catch(() => null);
+    if (profile) {
+      focalSubject = profileToSubject(profile) as SubjectWithUbos;
+    }
+  }
+
+  if (!focalSubject) {
+    return NextResponse.json(
+      { ok: false, error: "Subject not found" },
+      { status: 404, headers: gate.headers },
+    );
+  }
+
+  const graph = buildRelationshipGraph(focalSubject, allSubjects);
+
+  void writeAuditChainEntry(
+    {
+      event: "relationship_graph.visual.queried",
+      actor: gate.keyId,
+      subjectId,
+      subjectName: focalSubject.name,
+      nodeCount: graph.nodes.length,
+      edgeCount: graph.edges.length,
+    },
+    tenant,
+  ).catch(() => undefined);
+
+  return NextResponse.json(
+    { ok: true, graph },
     { headers: gate.headers },
   );
 }
