@@ -59,7 +59,7 @@ export interface KycVerifyResult {
 }
 
 export interface KycConnector {
-  verifyIdentity(documentBase64: string, faceBase64?: string): Promise<KycVerifyResult>;
+  verifyIdentity(_documentBase64: string, _faceBase64?: string): Promise<KycVerifyResult>;
 }
 
 // ─── Known country list ───────────────────────────────────────────────────────

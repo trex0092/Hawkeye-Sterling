@@ -47,7 +47,7 @@ interface SanctionsListInfo {
   blobKey: string;
 }
 
-async function timedCheck<T>(
+async function _timedCheck<T>(
   name: string,
   fn: () => Promise<T>,
   fallback: T,
@@ -89,7 +89,7 @@ const SANCTIONS_LISTS: Array<{ id: string; displayName: string }> = [
 ];
 
 const STALE_THRESHOLD_HOURS = 36;
-const CRITICAL_STALE_HOURS = 72;
+const _CRITICAL_STALE_HOURS = 72;
 
 type BlobsModule = {
   getStore: (_opts: { name: string; siteID?: string; token?: string; consistency?: string }) => {

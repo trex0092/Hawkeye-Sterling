@@ -17,12 +17,12 @@ import {
   MONITORING_FREQUENCIES,
   isNewsCheckDue,
   loadAlertThresholds,
-  meetsAdverseMediaThreshold,
+  meetsAdverseMediaThreshold as _meetsAdverseMediaThreshold,
   detectChanges,
   loadMonitoringSnapshot,
-  saveMonitoringSnapshot,
-  buildQueueItem,
-  sortMonitoringQueue,
+  saveMonitoringSnapshot as _saveMonitoringSnapshot,
+  buildQueueItem as _buildQueueItem,
+  sortMonitoringQueue as _sortMonitoringQueue,
   type AdverseMediaCategory,
 } from "@/lib/server/ongoing-monitoring-config";
 
@@ -285,7 +285,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       const newsCheckDue = isNewsCheckDue(riskTier, lastNewsCheckMs, nowMs);
 
       // Load per-customer alert thresholds (defaults apply if never configured).
-      const alertThresholds = await loadAlertThresholds(s.id);
+      const _alertThresholds = await loadAlertThresholds(s.id);
 
       const subject = {
         name: s.name,

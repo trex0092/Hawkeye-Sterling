@@ -149,7 +149,7 @@ interface Session {
   active: boolean;
 }
 
-const DEMO_SESSIONS: Session[] = [
+const _DEMO_SESSIONS: Session[] = [
   {
     id: "sess-001",
     userId: "usr-001",
@@ -522,8 +522,8 @@ export default function AccessControlPage() {
   const [addingUser, setAddingUser] = useState(false);
   const [addError, setAddError] = useState("");
   const [newUserCreds, setNewUserCreds] = useState<{ username: string; password: string } | null>(null);
-  const [revokeError, setRevokeError] = useState<string | null>(null);
-  const [revokingId, setRevokingId] = useState<string | null>(null);
+  const [_revokeError, setRevokeError] = useState<string | null>(null);
+  const [_revokingId, setRevokingId] = useState<string | null>(null);
 
   const mountedRef = useRef(true);
   useEffect(() => () => { mountedRef.current = false; }, []);
@@ -617,7 +617,7 @@ export default function AccessControlPage() {
     }
   };
 
-  const handleRevokeSession = async (session: Session) => {
+  const _handleRevokeSession = async (session: Session) => {
     setRevokeError(null);
     setRevokingId(session.id);
     try {

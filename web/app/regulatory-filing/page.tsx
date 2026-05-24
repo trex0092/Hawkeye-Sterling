@@ -167,7 +167,7 @@ function BaseFormFields({
   onChange,
 }: {
   values: BaseFields;
-  onChange: (field: keyof BaseFields, value: string) => void;
+  onChange: (_field: keyof BaseFields, _value: string) => void;
 }) {
   return (
     <>

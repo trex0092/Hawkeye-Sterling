@@ -605,7 +605,7 @@ function classifySourceCategory(url: string): Article["sourceCategory"] {
 }
 
 // Extract root domain (hostname without www.) for diversity scoring
-function rootDomain(url: string): string {
+function _rootDomain(url: string): string {
   if (!url) return "";
   try { return new URL(url).hostname.replace(/^www\./, ""); } catch { return ""; }
 }

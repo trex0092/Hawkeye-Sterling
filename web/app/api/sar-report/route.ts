@@ -636,7 +636,7 @@ async function handleSarReport(req: Request, gateHeaders: Record<string, string>
     })) as typeof asanaPayload;
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);
-    const isAbort = err instanceof Error && (err.name === "AbortError" || asanaCtl.signal.aborted);
+    const _isAbort = err instanceof Error && (err.name === "AbortError" || asanaCtl.signal.aborted);
     console.error("[sar-report] Asana request failed:", detail);
     return NextResponse.json({
       ok: true,

@@ -374,7 +374,7 @@ export function matchEvasionPatterns(ctx: MatchContext): PatternMatch[] {
   const text = buildSearchText(ctx);
   const results: PatternMatch[] = [];
 
-  const patternMatchers: [string, (ctx: MatchContext, text: string) => string[]][] = [
+  const patternMatchers: [string, (_ctx: MatchContext, _text: string) => string[]][] = [
     ["transliteration_switch", (c, t) => matchTransliterationSwitch(c, t)],
     ["dob_shift",              (_c, t) => matchDobShift(t)],
     ["ubo_layering",           (c, t) => matchUboLayering(c, t)],

@@ -157,7 +157,7 @@ export async function POST(req: Request): Promise<Response> {
       };
 
       const allResults: RowResult[] = [];
-      const started = Date.now();
+      const _started = Date.now();
 
       // Process one row and emit a result line as soon as it finishes.
       async function processAndEmit(row: BatchRow, i: number): Promise<void> {

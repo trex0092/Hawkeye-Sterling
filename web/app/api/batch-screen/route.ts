@@ -11,7 +11,7 @@ import type {
 import { loadCandidates } from "@/lib/server/candidates-loader";
 import { classifyAdverseKeywords } from "@/lib/data/adverse-keywords";
 
-const BATCH_CONCURRENCY = 5; // max concurrent rows when using external validators
+const _BATCH_CONCURRENCY = 5; // max concurrent rows when using external validators
 
 const KEYWORD_GROUP_WEIGHT: Record<string, number> = {
   "terrorism-financing": 20,
@@ -64,7 +64,7 @@ function batchScreenProjectGid(): string {
 
 // Process up to 5 subjects in parallel to avoid overwhelming downstream APIs
 const CONCURRENCY = 5;
-async function processWithConcurrency<T>(items: T[], fn: (item: T) => Promise<unknown>) {
+async function processWithConcurrency<T>(items: T[], fn: (_item: T) => Promise<unknown>) {
   const results = [];
   for (let i = 0; i < items.length; i += CONCURRENCY) {
     const batch = items.slice(i, i + CONCURRENCY);

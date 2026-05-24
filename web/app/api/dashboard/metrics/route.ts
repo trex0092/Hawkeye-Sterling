@@ -36,7 +36,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { listCases } from "@/lib/server/hs-case-store";
-import { stats as feedbackStats, listFeedback } from "@/lib/server/feedback";
+import { stats as feedbackStats, listFeedback as _listFeedback } from "@/lib/server/feedback";
 import { getJson, listKeys, isInMemoryFallback } from "@/lib/server/store";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -338,7 +338,7 @@ interface ScreeningEntry {
 
 /** Pull all screening-history entries and derive throughput + hit-rate metrics. */
 async function deriveScreeningMetrics(
-  tenant: string,
+  _tenant: string,
 ): Promise<{
   throughput: ScreeningThroughput;
   sanctionsHitRate: SanctionsHitRate;
@@ -573,7 +573,7 @@ async function deriveCaseKpis(tenant: string): Promise<CaseManagementKpis | null
 
     const now = Date.now();
     const H24_MS = 24 * 60 * 60 * 1_000;
-    const H7D_MS = 7 * H24_MS;
+    const _H7D_MS = 7 * H24_MS;
 
     const openCases = cases.filter((c) => c.status !== "closed");
     const closedCases = cases.filter((c) => c.status === "closed");

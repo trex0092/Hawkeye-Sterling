@@ -60,7 +60,7 @@ function ActiveToggle({
   disabled,
 }: {
   active: boolean;
-  onChange: (v: boolean) => void;
+  onChange: (_v: boolean) => void;
   disabled: boolean;
 }) {
   return (
@@ -232,9 +232,9 @@ function WebhooksTable({
   loadingId,
 }: {
   webhooks: WebhookRegistration[];
-  onToggle: (id: string, active: boolean) => void;
-  onTest: (id: string) => void;
-  onDelete: (id: string) => void;
+  onToggle: (_id: string, _active: boolean) => void;
+  onTest: (_id: string) => void;
+  onDelete: (_id: string) => void;
   loadingId: string | null;
 }) {
   if (webhooks.length === 0) {

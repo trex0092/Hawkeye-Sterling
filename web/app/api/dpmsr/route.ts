@@ -33,7 +33,7 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
-import { getJson, setJson, listKeys } from "@/lib/server/store";
+import { getJson, setJson, listKeys as _listKeys } from "@/lib/server/store";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
 

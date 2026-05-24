@@ -247,7 +247,7 @@ function scoreToClientCategory(score: number, flags: string[]): PrivateClientCat
   return "standard";
 }
 
-function buildEddRequirements(flags: string[], category: PrivateClientCategory, body: RequestBody): string[] {
+function buildEddRequirements(flags: string[], category: PrivateClientCategory, _body: RequestBody): string[] {
   const reqs: string[] = [];
 
   if (category === "do_not_accept") {

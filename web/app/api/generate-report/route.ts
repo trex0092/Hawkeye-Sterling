@@ -37,11 +37,11 @@ import {
   hsKvGrid,
   hsNarrative,
   hsSeverityCell,
-  hsPill,
+  _hsPill,
   hsFindings,
   hsNumList,
   hsSignatureBlock,
-  hsScorebox,
+  _hsScorebox,
   hsBar,
   escHtml,
   nowMeta,
@@ -659,7 +659,7 @@ function buildConclusionSection(body: GenerateReportBody, riskScore: number, ris
   });
 }
 
-function buildActionList(rec: string, riskLevel: string): string[] {
+function buildActionList(rec: string, _riskLevel: string): string[] {
   const base: Record<string, string[]> = {
     APPROVE: [
       "File report in case management system with APPROVE disposition.",

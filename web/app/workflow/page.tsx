@@ -146,7 +146,7 @@ function ActionEditor({
   onRemove,
 }: {
   action: WorkflowAction;
-  onChange: (a: WorkflowAction) => void;
+  onChange: (_a: WorkflowAction) => void;
   onRemove: () => void;
 }) {
   const inputCls =
@@ -261,7 +261,7 @@ function ConditionEditor({
   onRemove,
 }: {
   condition: WorkflowCondition;
-  onChange: (c: WorkflowCondition) => void;
+  onChange: (_c: WorkflowCondition) => void;
   onRemove: () => void;
 }) {
   const inputCls =
@@ -822,7 +822,7 @@ export default function WorkflowPage() {
         {!loading && !fetchError && rules.length === 0 && (
           <div className="rounded-xl border border-dashed border-neutral-200 dark:border-neutral-800 py-16 text-center">
             <p className="text-neutral-500 dark:text-neutral-400 text-sm">
-              No workflow rules yet. Click "New rule" to get started.
+              No workflow rules yet. Click &quot;New rule&quot; to get started.
             </p>
           </div>
         )}

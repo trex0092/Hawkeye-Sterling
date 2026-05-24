@@ -38,7 +38,7 @@ export interface CountryRiskResult {
 }
 
 // Legacy interface retained for backward compat (used by static fallback helper)
-interface LegacyCountryRiskResult {
+interface _LegacyCountryRiskResult {
   ok: true;
   country: string;
   overallRisk: "low" | "medium" | "high" | "critical";
