@@ -3542,10 +3542,35 @@ export function activeNewsProviders(): string[] {
 }
 
 /** Run every active adapter in parallel against a subject name. */
+// In-process news result cache — 60-minute TTL, bounded at 1 000 entries.
+// Keyed on normalised subject name. Prevents redundant external API calls
+// for repeated screenings of the same subject within a Lambda warm window.
+interface _NewsCacheEntry {
+  articles: NewsArticle[];
+  providersUsed: string[];
+  cachedAt: number;
+}
+const _newsCache = new Map<string, _NewsCacheEntry>();
+const _NEWS_CACHE_TTL_MS = 60 * 60 * 1_000;   // 60 minutes
+const _NEWS_CACHE_MAX = 1_000;
+
+function _newsCacheKey(name: string): string {
+  return name.toLowerCase().trim().replace(/\s+/g, " ").slice(0, 200);
+}
+
 export async function searchAllNews(
   subjectName: string,
   opts?: { limit?: number; since?: string },
 ): Promise<{ articles: NewsArticle[]; providersUsed: string[] }> {
+  // Cache lookup — skip for since-bounded queries (caller wants fresh data).
+  if (!opts?.since) {
+    const key = _newsCacheKey(subjectName);
+    const cached = _newsCache.get(key);
+    if (cached && Date.now() - cached.cachedAt < _NEWS_CACHE_TTL_MS) {
+      return { articles: cached.articles, providersUsed: cached.providersUsed };
+    }
+  }
+
   const adapters = activeNewsAdapters();
   if (adapters.length === 0) return { articles: [], providersUsed: [] };
   const results = await Promise.all(adapters.map((a) => a.search(subjectName, opts)));
@@ -3558,7 +3583,19 @@ export async function searchAllNews(
     seen.add(k);
     return true;
   });
-  return { articles, providersUsed: activeNewsProviders() };
+  const providersUsed = activeNewsProviders();
+
+  // Cache the result (FIFO eviction when cap is reached).
+  if (!opts?.since) {
+    const key = _newsCacheKey(subjectName);
+    if (_newsCache.size >= _NEWS_CACHE_MAX) {
+      const firstKey = _newsCache.keys().next().value;
+      if (firstKey !== undefined) _newsCache.delete(firstKey);
+    }
+    _newsCache.set(key, { articles, providersUsed, cachedAt: Date.now() });
+  }
+
+  return { articles, providersUsed };
 }
 
 /**

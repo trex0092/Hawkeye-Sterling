@@ -136,6 +136,9 @@ export interface Subject {
   aircraftTail?: string;
   /** Last N screening runs for diff + replay. Bounded to ~10 entries. */
   screeningHistory?: ScreeningHistoryEntry[];
+  /** Warnings about degraded data sources at last screening time. Persisted
+   *  so analysts see stale-list warnings after page reload. */
+  listHealthWarnings?: string[];
 }
 
 // ─── Saved searches ────────────────────────────────────────────────────────

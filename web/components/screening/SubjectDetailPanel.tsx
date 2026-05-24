@@ -168,6 +168,11 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
     setEscalated(false);
     setStrRaised(false);
     setFlash(null);
+    // Clear in-flight loading states so buttons don't stay stuck when the
+    // analyst switches to a different subject before the previous action completes.
+    setIsEscalating(false);
+    setIsRaisingSTR(false);
+    setReportSaving(false);
   }, [subject.id]);
 
   const qsSubject = useMemo(() => toQuickScreenSubject(subject), [subject]);
