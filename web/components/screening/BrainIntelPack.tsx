@@ -559,7 +559,7 @@ function Chip({
   );
 }
 
-function Slider({
+function _Slider({
   label,
   value,
   onChange,

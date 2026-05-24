@@ -2770,7 +2770,7 @@ function LiveReasoningTab({
         ? "bg-amber-dim text-amber"
         : "bg-bg-2 text-ink-3";
 
-  const narrative = (result as any)?.narrative ?? (result as any)?.executiveSummary ?? null;
+  const narrative = (result as unknown as Record<string, unknown>)?.narrative ?? (result as unknown as Record<string, unknown>)?.executiveSummary ?? null;
 
   return (
     <div className="space-y-4">
@@ -2871,7 +2871,7 @@ function LiveReasoningTab({
   );
 }
 
-function PostureCell({
+function _PostureCell({
   label,
   value,
   toneClass,

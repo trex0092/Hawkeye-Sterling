@@ -83,7 +83,7 @@ export async function POST(
   const now     = new Date().toISOString();
 
   let enrichResult: { verdict: string; confidence: string; reasoning: string } | null = null;
-  let lastError = "";
+  let _lastError = "";
 
   // Try once, retry once on failure.
   for (let attempt = 1; attempt <= 2; attempt++) {
@@ -91,7 +91,7 @@ export async function POST(
       enrichResult = await runEnrichment(baseUrl, apiKey, existing);
       break;
     } catch (err) {
-      lastError = err instanceof Error ? err.message : String(err);
+      _lastError = err instanceof Error ? err.message : String(err);
       console.warn(`[hs-cases/enrich] attempt ${attempt} failed:`, err);
     }
   }

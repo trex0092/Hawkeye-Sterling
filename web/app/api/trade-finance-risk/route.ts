@@ -318,10 +318,9 @@ export async function POST(req: Request) {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let body: Record<string, any>;
+  let body: Record<string, unknown>;
   try {
-    body = (await req.json()) as Record<string, any>;
+    body = (await req.json()) as Record<string, unknown>;
   } catch {
     return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400, headers: gate.headers });
   }

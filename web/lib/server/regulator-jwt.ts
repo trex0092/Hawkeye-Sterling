@@ -202,7 +202,7 @@ export async function verifyRegulatorToken(token: string): Promise<VerifyRegulat
   const jti = claims.jti as string | undefined;
   if (jti) {
     try {
-      const { getStore } = await import("@netlify/blobs") as any;
+      const { getStore } = await import("@netlify/blobs") as unknown as { getStore: (..._args: unknown[]) => { get: (_key: string) => Promise<string | null> } };
       const store = getStore({ name: "hawkeye-revoked-tokens" });
       const revoked = await store.get(jti);
       if (revoked) {
@@ -224,7 +224,7 @@ export async function verifyRegulatorToken(token: string): Promise<VerifyRegulat
  * with the same jti will return { ok: false, reason: "token has been revoked" }.
  */
 export async function revokeRegulatorToken(jti: string): Promise<void> {
-  const { getStore } = await import("@netlify/blobs") as any;
+  const { getStore } = await import("@netlify/blobs") as unknown as { getStore: (..._args: unknown[]) => { set: (_key: string, _value: string) => Promise<void> } };
   const store = getStore({ name: "hawkeye-revoked-tokens" });
   await store.set(jti, JSON.stringify({ revokedAt: new Date().toISOString() }));
 }

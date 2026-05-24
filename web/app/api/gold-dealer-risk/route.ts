@@ -301,7 +301,7 @@ function buildUaeRegulatoryStatus(body: RequestBody, riskLevel: RiskLevel, flags
 function buildRecommendation(
   riskLevel: RiskLevel,
   reportingThreshold: ReportingThreshold,
-  flags: string[],
+  _flags: string[],
 ): string {
   switch (reportingThreshold) {
     case "STR":
