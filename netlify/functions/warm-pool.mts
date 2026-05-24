@@ -29,7 +29,11 @@ const PING_TIMEOUT_MS = 4_000;
 // HEAD is auto-derived but several handlers in this repo gate on `req.method`
 // equality and return 405 for HEAD even when the underlying logic is read-only.
 const KEEPALIVE_ROUTES: ReadonlyArray<{ path: string; method: 'GET' }> = [
-  { path: '/api/status', method: 'GET' },
+  { path: '/api/status',           method: 'GET' },
+  { path: '/api/health',           method: 'GET' },
+  { path: '/api/routes',           method: 'GET' },
+  { path: '/api/system-status',    method: 'GET' },
+  { path: '/api/sanctions/status', method: 'GET' },
 ];
 
 async function pingWithTimeout(

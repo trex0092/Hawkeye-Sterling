@@ -87,6 +87,10 @@ function wrapWithGovernance(
   if (typeof result !== "object" || result === null) return result;
 
   const r = result as Record<string, unknown>;
+  // Error responses are not compliance outputs — skip governance metadata so
+  // auth failures, 404s, and tool errors are not wrapped in misleading guidance.
+  if (r["ok"] === false) return result;
+
   let confidenceScore = 0.75;
   if (typeof r["confidence"] === "number")   confidenceScore = r["confidence"];
   else if (typeof r["riskScore"] === "number") {
@@ -126,6 +130,8 @@ function wrapWithGovernance(
   // well-formed body. listsVerified is the canonical signal from upstream.
   if (!listsVerified || missingLists.length > 0) {
     degradedServices.push("sanctions_lists");
+    // Cap confidence when sanctions corpus is incomplete (FDL 10/2025 Art.15).
+    confidenceScore = Math.min(confidenceScore, 0.70);
   }
 
   const engineVersion = resolveEngineVersion();
@@ -405,9 +411,16 @@ async function callApi(
     for (const [k, v] of Object.entries(query)) url.searchParams.set(k, v);
   }
   const ctx = _callCtx.getStore();
+  // Prefer the server-side API key for internal service-to-service calls so that
+  // MCP tools work regardless of which auth mechanism Claude.ai used at the boundary.
+  // Fall back to the caller's forwarded auth header if no env key is configured.
+  const _internalApiKey = process.env["HAWKEYE_API_KEY"] ?? process.env["API_KEY"];
   const headers: Record<string, string> = {
     "content-type": "application/json",
-    ...(ctx?.authHeader ? { authorization: ctx.authHeader } : {}),
+    ...(_internalApiKey
+      ? { "x-api-key": _internalApiKey }
+      : ctx?.authHeader ? { authorization: ctx.authHeader } : {}
+    ),
   };
   const init: RequestInit = {
     method,

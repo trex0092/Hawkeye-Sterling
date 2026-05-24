@@ -63,6 +63,23 @@ async function pollOnce(
 }
 
 export default async (_req: Request) => {
+  // Surface missing env vars immediately so the failure mode is visible in
+  // Netlify function logs rather than appearing as silent zero-entity state.
+  if (!process.env.EOCN_FEED_URL) {
+    console.warn(
+      "[eocn-poll] EOCN_FEED_URL not set — running in fixture/demo mode. " +
+      "UAE EOCN entity list will not be populated from a live source. " +
+      "Set EOCN_FEED_URL in Netlify environment variables to enable live polling.",
+    );
+  }
+  if (!process.env.SANCTIONS_CRON_TOKEN) {
+    console.warn(
+      "[eocn-poll] SANCTIONS_CRON_TOKEN not set — POST to /api/eocn-list-updates " +
+      "will be unauthenticated and may be rejected with 401. " +
+      "Set SANCTIONS_CRON_TOKEN in Netlify environment variables.",
+    );
+  }
+
   const base =
     process.env.URL ??
     process.env.DEPLOY_PRIME_URL ??

@@ -58,7 +58,8 @@ const ROUTES: readonly RouteEntry[] = [
   // ── Vessel / Vasp / Crypto ─────────────────────────────────────────────────
   { path: "/api/vessel-check",            method: "POST", description: "IMO vessel screening (single or batch).",                                          scope: "operator", mcpTools: ["vessel_check"] },
   { path: "/api/vessel-check/risk-profile", method: "POST", description: "Vessel risk profile (flag state, ownership, sanctions overlap).",                scope: "mlro" },
-  { path: "/api/crypto-tracing",          method: "POST", description: "On-chain address tracing.",                                                          scope: "mlro",     mcpTools: ["crypto_risk"] },
+  { path: "/api/crypto-risk",             method: "POST", description: "On-chain address risk via Claude (sanctions exposure, mixer links, exchange attribution).",   scope: "mlro",     mcpTools: ["crypto_risk"] },
+  { path: "/api/crypto-tracing",          method: "POST", description: "On-chain address tracing (detailed transaction-level FATF typology analysis).",              scope: "mlro" },
   { path: "/api/vasp-risk",               method: "POST", description: "Virtual Asset Service Provider risk profile.",                                      scope: "mlro" },
 
   // ── Entity / LEI / Identity ────────────────────────────────────────────────
@@ -93,7 +94,7 @@ const ROUTES: readonly RouteEntry[] = [
 ];
 
 export async function GET(req: Request): Promise<NextResponse> {
-  const gate = await enforce(req);
+  const gate = await enforce(req, { requireAuth: false });
   if (!gate.ok) return gate.response;
 
   const url = new URL(req.url);

@@ -192,8 +192,36 @@ async function checkMandatoryLists(): Promise<ListHealthEntry[]> {
   return results;
 }
 
+// Wrap a check function with a deadline. Resolves to `fallback` if the check
+// does not complete within `ms` milliseconds, preventing the health endpoint
+// from hanging on cold-start brain imports or unresponsive blob reads → 502.
+async function withTimeout<T>(
+  label: string,
+  fn: () => Promise<T>,
+  ms: number,
+  fallback: T,
+): Promise<T> {
+  return Promise.race([
+    fn(),
+    new Promise<T>((resolve) =>
+      setTimeout(() => {
+        console.warn(`[health] ${label} check timed out after ${ms}ms`);
+        resolve(fallback);
+      }, ms),
+    ),
+  ]);
+}
+
 export async function GET(req: Request): Promise<NextResponse> {
-  const [brain, listResults] = await Promise.all([checkBrain(), checkMandatoryLists()]);
+  const [brain, listResults] = await Promise.all([
+    withTimeout("brain", checkBrain, 4_000, { ok: false, detail: "timeout" }),
+    withTimeout(
+      "lists",
+      checkMandatoryLists,
+      5_000,
+      MANDATORY_LIST_IDS.map((id) => ({ id, down: true, reason: "timeout" })),
+    ),
+  ]);
 
   const downLists = listResults.filter((l) => l.down);
   const sanctionsDown = downLists.length;

@@ -48,15 +48,29 @@ async function readListRowCount(listId: string): Promise<number> {
 }
 
 export async function GET(req: Request): Promise<NextResponse> {
-  const expected = process.env["ADMIN_TOKEN"];
-  if (!expected) {
+  const adminToken = process.env["ADMIN_TOKEN"];
+  const apiKey = process.env["HAWKEYE_API_KEY"] ?? process.env["API_KEY"];
+
+  if (!adminToken && !apiKey) {
     return NextResponse.json(
-      { ok: false, error: "service unavailable — ADMIN_TOKEN not set" },
+      { ok: false, error: "service unavailable — no auth token configured" },
       { status: 503 },
     );
   }
-  const got = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "";
-  if (!got || !(await timingSafeTokenCheck(got, expected))) {
+
+  const got =
+    req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ??
+    req.headers.get("x-api-key") ??
+    "";
+
+  if (!got) {
+    return NextResponse.json({ ok: false, error: "forbidden" }, { status: 403 });
+  }
+
+  const adminOk  = adminToken ? await timingSafeTokenCheck(got, adminToken) : false;
+  const apiKeyOk = apiKey     ? await timingSafeTokenCheck(got, apiKey)     : false;
+
+  if (!adminOk && !apiKeyOk) {
     return NextResponse.json({ ok: false, error: "forbidden" }, { status: 403 });
   }
 
