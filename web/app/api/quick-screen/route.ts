@@ -598,14 +598,28 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
     if (pnmrHits.length > 0) {
       const { createPnmrRecord } = await import("@/lib/server/pnmr");
+      const { createEocnSlaRecord } = await import("@/lib/server/eocn-sla");
       const pnmrTenant = tenantIdFromGate(gate);
       for (const hit of pnmrHits) {
-        createPnmrRecord(pnmrTenant, {
+        void createPnmrRecord(pnmrTenant, {
           subjectName: subject.name,
           listId: hit.listId,
           listLabel: hit.sourceLabel ?? hit.listId,
           screeningHitId: hit.listRef,
           initiatedBy: "system/quick-screen",
+        }).then((pnmrRecord) => {
+          // Auto-create the three EOCN SLA obligation timers for each hit.
+          const slaTypes = ["EOCN_FREEZE_24H", "EOCN_PNMR_5BD", "EOCN_CUSTOMER_VERIFY_10BD"] as const;
+          for (const type of slaTypes) {
+            createEocnSlaRecord(pnmrTenant, {
+              type,
+              pnmrId: pnmrRecord.id,
+              subjectName: subject.name,
+              listId: hit.listId,
+            }).catch((err: unknown) =>
+              console.warn("[quick-screen] EOCN SLA auto-create failed:", err instanceof Error ? err.message : String(err))
+            );
+          }
         }).catch((err: unknown) =>
           console.warn("[quick-screen] PNMR auto-create failed:", err instanceof Error ? err.message : String(err))
         );
