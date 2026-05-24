@@ -152,6 +152,173 @@ function parseResults(bindings: SparqlResult[]): WikidataPepProfile[] {
   return Array.from(profileMap.values());
 }
 
+// ── PEP Family Network ────────────────────────────────────────────────────────
+
+export interface PepFamilyNetworkNode {
+  wikidataId: string;
+  name: string;
+  relationship: "self" | "spouse" | "child" | "parent" | "sibling" | "associate";
+  isPep: boolean;
+  positions?: string[];
+}
+
+export interface PepFamilyNetwork {
+  subject: string;
+  nodes: PepFamilyNetworkNode[];
+  edges: Array<{ from: string; to: string; relationship: string }>;
+  fetchedAt: string;
+}
+
+// ── SPARQL query for family network ──────────────────────────────────────────
+
+function buildFamilyNetworkQuery(name: string): string {
+  const safeName = name.replace(/"/g, '\\"');
+  return `
+SELECT DISTINCT ?person ?personLabel ?positionLabel ?relative ?relativeLabel ?relType WHERE {
+  ?person wdt:P31 wd:Q5 .
+  ?person rdfs:label "${safeName}"@en .
+  OPTIONAL { ?person wdt:P39 ?position }
+  {
+    ?person wdt:P26 ?relative .
+    BIND("spouse" AS ?relType)
+  } UNION {
+    ?person wdt:P40 ?relative .
+    BIND("child" AS ?relType)
+  } UNION {
+    ?person wdt:P22 ?relative .
+    BIND("parent" AS ?relType)
+  } UNION {
+    ?person wdt:P25 ?relative .
+    BIND("parent" AS ?relType)
+  } UNION {
+    ?person wdt:P3373 ?relative .
+    BIND("sibling" AS ?relType)
+  }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en" }
+} LIMIT 30
+`.trim();
+}
+
+interface FamilyNetworkBinding {
+  person?: SparqlBinding;
+  personLabel?: SparqlBinding;
+  positionLabel?: SparqlBinding;
+  relative?: SparqlBinding;
+  relativeLabel?: SparqlBinding;
+  relType?: SparqlBinding;
+}
+
+// Cache for family network results (60 minutes)
+const _familyCache = new Map<string, { data: PepFamilyNetwork; cachedAt: number }>();
+
+async function sparqlQuery(query: string): Promise<unknown[]> {
+  const sparqlEndpoint = "https://query.wikidata.org/sparql";
+  const params = new URLSearchParams({ query, format: "json" });
+  const response = await fetch(`${sparqlEndpoint}?${params.toString()}`, {
+    headers: {
+      Accept: "application/sparql-results+json",
+      "User-Agent": "HawkeyeSterling-AML/1.0 (https://hawkeye-sterling.netlify.app; contact@example.com)",
+    },
+    signal: AbortSignal.timeout(5_000),
+  });
+  if (!response.ok) return [];
+  const json = await response.json() as SparqlResponse;
+  return Array.isArray(json?.results?.bindings) ? (json.results!.bindings as unknown[]) : [];
+}
+
+/**
+ * Fetch the PEP family network for a given name from Wikidata.
+ * Returns a graph of the subject and their family relations with relationship labels.
+ */
+export async function fetchPepFamilyNetwork(
+  name: string,
+  options?: { maxDepth?: number; includeAssociates?: boolean },
+): Promise<PepFamilyNetwork> {
+  void options; // reserved for future depth traversal
+
+  const trimmedName = name.trim();
+
+  // Cache hit
+  const cached = _familyCache.get(trimmedName.toLowerCase());
+  if (cached && Date.now() - cached.cachedAt < CACHE_TTL_MS) {
+    return cached.data;
+  }
+
+  const fetchedAt = new Date().toISOString();
+  const emptyResult: PepFamilyNetwork = { subject: trimmedName, nodes: [], edges: [], fetchedAt };
+
+  if (!trimmedName) return emptyResult;
+
+  let bindings: unknown[];
+  try {
+    bindings = await sparqlQuery(buildFamilyNetworkQuery(trimmedName));
+  } catch (err) {
+    console.warn("[wikidata-pep] family network query failed:", err instanceof Error ? err.message : String(err));
+    return emptyResult;
+  }
+
+  const nodes = new Map<string, PepFamilyNetworkNode>();
+  const edges: Array<{ from: string; to: string; relationship: string }> = [];
+
+  // Process the subject's own positions across rows
+  let subjectWikidataId = "";
+  const subjectPositions: string[] = [];
+
+  for (const row of bindings as FamilyNetworkBinding[]) {
+    const personUri = row.person?.value ?? "";
+    if (!personUri) continue;
+
+    const personMatch = /\/entity\/(Q\d+)$/.exec(personUri);
+    const personId = personMatch ? personMatch[1]! : personUri;
+
+    // Register subject node (may appear multiple times across rows)
+    if (!subjectWikidataId) subjectWikidataId = personId;
+    const pos = row.positionLabel?.value;
+    if (pos && !subjectPositions.includes(pos)) subjectPositions.push(pos);
+
+    // Register relative node
+    const relUri = row.relative?.value ?? "";
+    if (!relUri) continue;
+    const relMatch = /\/entity\/(Q\d+)$/.exec(relUri);
+    const relId = relMatch ? relMatch[1]! : relUri;
+    const relLabel = row.relativeLabel?.value ?? relId;
+    const relType = (row.relType?.value ?? "associate") as PepFamilyNetworkNode["relationship"];
+
+    if (!nodes.has(relId)) {
+      nodes.set(relId, {
+        wikidataId: relId,
+        name: relLabel,
+        relationship: relType,
+        isPep: false, // enriched separately below
+        positions: [],
+      });
+    }
+
+    // Add directed edge
+    const edgeKey = `${personId}->${relId}`;
+    if (!edges.some((e) => e.from === personId && e.to === relId)) {
+      edges.push({ from: personId, to: relId, relationship: relType });
+    }
+    void edgeKey;
+  }
+
+  // Build subject node
+  const subjectId = subjectWikidataId || `local:${trimmedName}`;
+  const subjectNode: PepFamilyNetworkNode = {
+    wikidataId: subjectId,
+    name: trimmedName,
+    relationship: "self",
+    isPep: subjectPositions.length > 0,
+    positions: subjectPositions,
+  };
+
+  const allNodes: PepFamilyNetworkNode[] = [subjectNode, ...Array.from(nodes.values())];
+
+  const result: PepFamilyNetwork = { subject: trimmedName, nodes: allNodes, edges, fetchedAt };
+  _familyCache.set(trimmedName.toLowerCase(), { data: result, cachedAt: Date.now() });
+  return result;
+}
+
 // ── Main export ───────────────────────────────────────────────────────────────
 
 /**
