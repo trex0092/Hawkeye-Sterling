@@ -149,7 +149,7 @@ interface XmlEntity {
   reference?: string;
 }
 
-export function parseEocnXml(xml: string): XmlEntity[] {
+function parseEocnXml(xml: string): XmlEntity[] {
   const results: XmlEntity[] = [];
 
   // ── UN Security Council XML (INDIVIDUAL / ENTITY blocks) ──────────────────
