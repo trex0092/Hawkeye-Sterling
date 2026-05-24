@@ -2,7 +2,8 @@
 // POST /api/maker-checker/[id]            → approve or reject (body: { decision, note })
 
 import { NextResponse } from "next/server";
-import { withGuard, type RequestContext } from "@/lib/server/guard";
+import { enforce } from "@/lib/server/enforce";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import {
   getRequestById,
   approveMakerCheckerRequest,
@@ -28,26 +29,33 @@ function stringField(v: unknown): string | undefined {
   return typeof v === "string" && v.trim() ? v.trim() : undefined;
 }
 
-async function handleGet(
-  _req: Request,
-  ctx: RequestContext,
-  params: { id: string },
+export async function GET(
+  req: Request,
+  ctx: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
-  const id = safeId(params.id);
+  const gate = await enforce(req, { requireAuth: true });
+  if (!gate.ok) return gate.response;
+  const tenantId = tenantIdFromGate(gate);
+
+  const { id: rawId } = await ctx.params;
+  const id = safeId(rawId);
   if (!id) return NextResponse.json({ ok: false, error: "invalid id" }, { status: 400 });
 
-  const item = await getRequestById(id, ctx.tenantId);
+  const item = await getRequestById(id, tenantId);
   if (!item) return NextResponse.json({ ok: false, error: "not found" }, { status: 404 });
 
-  return NextResponse.json({ ok: true, item });
+  return NextResponse.json({ ok: true, item }, { headers: gate.headers });
 }
 
-async function handlePost(
+export async function POST(
   req: Request,
-  ctx: RequestContext,
-  params: { id: string },
+  ctx: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
-  const id = safeId(params.id);
+  const gate = await enforce(req, { requireAuth: true });
+  if (!gate.ok) return gate.response;
+
+  const { id: rawId } = await ctx.params;
+  const id = safeId(rawId);
   if (!id) return NextResponse.json({ ok: false, error: "invalid id" }, { status: 400 });
 
   let raw: unknown;
@@ -70,7 +78,7 @@ async function handlePost(
 
   // Resolve checker identity from the authenticated API key context — not the
   // request body — so the caller cannot impersonate another operator.
-  const checkerId = ctx.apiKey.name || ctx.apiKey.email || ctx.apiKey.id;
+  const checkerId = gate.keyId;
   if (!checkerId) {
     return NextResponse.json(
       { ok: false, error: "checker identity could not be resolved from auth context" },
@@ -84,7 +92,7 @@ async function handlePost(
         ? await approveMakerCheckerRequest(id, checkerId, note || undefined)
         : await rejectMakerCheckerRequest(id, checkerId, note);
 
-    return NextResponse.json({ ok: true, item: updated });
+    return NextResponse.json({ ok: true, item: updated }, { headers: gate.headers });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "operation failed";
     // Distinguish self-approval (403) from other errors (500)
@@ -92,20 +100,3 @@ async function handlePost(
     return NextResponse.json({ ok: false, error: msg }, { status });
   }
 }
-
-// Next.js App Router passes route params as { params: Promise<{ id }> }
-// We bridge to our internal handler pattern with an intermediate wrapper.
-
-type RouteCtx = { params: Promise<{ id: string }> };
-
-function makeHandler(
-  fn: (req: Request, ctx: RequestContext, params: { id: string }) => Promise<NextResponse>,
-) {
-  return withGuard(async (req: Request, ctx: RequestContext, routeCtx?: RouteCtx) => {
-    const params = routeCtx ? await routeCtx.params : { id: "" };
-    return fn(req, ctx, params);
-  });
-}
-
-export const GET  = makeHandler(handleGet);
-export const POST = makeHandler(handlePost);
