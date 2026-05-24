@@ -98,7 +98,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const record = await createBraRecord(tenantId, fields);
 
   return NextResponse.json(
-    { ok: true, ...withOverdueFlag(record) },
+    { ok: true, record: withOverdueFlag(record) },
     { status: 201, headers: gate.headers },
   );
 }

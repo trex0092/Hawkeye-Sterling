@@ -146,7 +146,8 @@ export const SEED_SMELTERS: RmapSmelter[] = [
 ];
 
 function smelterDbKey(tenantId: string): string {
-  return `rmap/${tenantId}/smelters.json`;
+  const t = tenantId.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 64);
+  return `rmap/${t}/smelters.json`;
 }
 
 export async function loadSmelterDatabase(tenantId: string): Promise<RmapSmelter[]> {

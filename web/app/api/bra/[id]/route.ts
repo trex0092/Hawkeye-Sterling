@@ -33,7 +33,7 @@ export async function GET(
   const isOverdueReview = new Date(record.nextReviewDate) < new Date();
 
   return NextResponse.json(
-    { ok: true, ...record, isOverdueReview },
+    { ok: true, record: { ...record, isOverdueReview } },
     { headers: gate.headers },
   );
 }
@@ -88,7 +88,7 @@ export async function PATCH(
   const isOverdueReview = new Date(record.nextReviewDate) < new Date();
 
   return NextResponse.json(
-    { ok: true, ...record, isOverdueReview },
+    { ok: true, record: { ...record, isOverdueReview } },
     { headers: gate.headers },
   );
 }

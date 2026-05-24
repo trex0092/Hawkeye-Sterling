@@ -641,6 +641,7 @@ export async function POST(req: Request): Promise<Response> {
   return NextResponse.json(result, {
     status: 200,
     headers: {
+      ...gate.headers,
       "cache-control": "no-store",
       "x-goaml-schema-version": getGoamlSchemaVersion(),
     },

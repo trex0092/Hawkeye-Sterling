@@ -36,11 +36,14 @@ interface WireScreenBody {
   mt103Text?: string;
   mt103?: Mt103;
   travelRule?: {
-    originatorAddress?: string;   // required for cross-border >= USD 1000 (June 2025)
-    originatorDob?: string;       // required for individuals (June 2025)
-    beneficiaryAddress?: string;  // required
-    amount?: number;              // USD equivalent (if not parseable from MT103)
-    isCrossBorder?: boolean;      // explicit flag; defaults to true if mt103.currency != "AED"
+    originatorAddress?: string;      // required for cross-border >= USD 1000 (June 2025)
+    originatorDob?: string;          // required for individuals (June 2025)
+    beneficiaryAddress?: string;     // required
+    amount?: number;                 // USD equivalent (if not parseable from MT103)
+    isCrossBorder?: boolean;         // explicit flag; defaults to true if mt103.currency != "AED"
+    legalEntityBic?: string;         // substitute for DOB for legal entities
+    legalEntityLei?: string;         // Legal Entity Identifier
+    legalEntityRegNumber?: string;   // official registration number
   };
 }
 

@@ -54,7 +54,9 @@ export interface LbmaQuestionnaire {
 }
 
 export function lbmaKey(tenantId: string, id: string): string {
-  return `lbma/${tenantId}/${id}.json`;
+  const t = tenantId.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 64);
+  const i = id.replace(/[^a-zA-Z0-9_\-.:]/g, "_").slice(0, 128);
+  return `lbma/${t}/${i}.json`;
 }
 
 function generateId(): string {

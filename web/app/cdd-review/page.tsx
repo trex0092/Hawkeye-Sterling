@@ -316,7 +316,7 @@ export default function CddReviewPage() {
 
   // EDD File Completeness state
   type EddSubjectType = "individual" | "corporate" | "trust" | "foundation";
-  type EddRiskClass = "medium" | "high" | "critical";
+  type EddRiskClass = "low" | "medium" | "high" | "critical";
   interface EddRequirementItem {
     id: string;
     label: string;
@@ -1170,7 +1170,7 @@ export default function CddReviewPage() {
               <div>
                 <label className="block text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-1">Risk classification</label>
                 <select value={eddComplRisk} onChange={(e) => setEddComplRisk(e.target.value as EddRiskClass)} className={inputCls}>
-                  {(["medium", "high", "critical"] as const).map((v) => (
+                  {(["low", "medium", "high", "critical"] as const).map((v) => (
                     <option key={v} value={v}>{v.charAt(0).toUpperCase() + v.slice(1)}</option>
                   ))}
                 </select>
