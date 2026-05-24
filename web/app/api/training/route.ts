@@ -14,8 +14,13 @@ export async function GET(req: Request): Promise<NextResponse> {
   if (!gate.ok) return gate.response;
   const tenant = tenantIdFromGate(gate);
 
-  const records = await listTrainingRecords(tenant);
-  return NextResponse.json({ ok: true, records, total: records.length }, { headers: gate.headers });
+  try {
+    const records = await listTrainingRecords(tenant);
+    return NextResponse.json({ ok: true, records, total: records.length }, { headers: gate.headers });
+  } catch (err) {
+    console.error("[training] listTrainingRecords failed:", err instanceof Error ? err.message : String(err));
+    return NextResponse.json({ ok: false, error: "Failed to load training records" }, { status: 500, headers: gate.headers });
+  }
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
@@ -81,17 +86,23 @@ export async function POST(req: Request): Promise<NextResponse> {
   const certificateRef =
     typeof body["certificateRef"] === "string" ? body["certificateRef"] : undefined;
 
-  const record = await addTrainingRecord({
-    tenantId: tenant,
-    staffId: staffId as string,
-    staffName: staffName as string,
-    courseCode: courseCode as string,
-    courseName: courseName as string,
-    completedAt,
-    expiresAt,
-    validityMonths,
-    ...(certificateRef ? { certificateRef } : {}),
-  });
+  let record: Awaited<ReturnType<typeof addTrainingRecord>>;
+  try {
+    record = await addTrainingRecord({
+      tenantId: tenant,
+      staffId: staffId as string,
+      staffName: staffName as string,
+      courseCode: courseCode as string,
+      courseName: courseName as string,
+      completedAt,
+      expiresAt,
+      validityMonths,
+      ...(certificateRef ? { certificateRef } : {}),
+    });
+  } catch (err) {
+    console.error("[training] addTrainingRecord failed:", err instanceof Error ? err.message : String(err));
+    return NextResponse.json({ ok: false, error: "Failed to save training record" }, { status: 500, headers: gate.headers });
+  }
 
   return NextResponse.json({ ok: true, record }, { status: 201, headers: gate.headers });
 }

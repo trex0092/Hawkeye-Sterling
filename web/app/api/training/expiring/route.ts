@@ -24,7 +24,14 @@ export async function GET(req: Request): Promise<NextResponse> {
     );
   }
 
-  const records = await getExpiringRecords(tenant, withinDays);
+  let records: Awaited<ReturnType<typeof getExpiringRecords>>;
+  try {
+    records = await getExpiringRecords(tenant, withinDays);
+  } catch (err) {
+    console.error("[training/expiring] getExpiringRecords failed:", err instanceof Error ? err.message : String(err));
+    return NextResponse.json({ ok: false, error: "Failed to load expiring training records" }, { status: 500, headers: gate.headers });
+  }
+
   return NextResponse.json(
     { ok: true, records, total: records.length, withinDays },
     { headers: gate.headers },

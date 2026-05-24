@@ -18,8 +18,13 @@ export async function GET(req: Request): Promise<NextResponse> {
   if (!gate.ok) return gate.response;
   const tenant = tenantIdFromGate(gate);
 
-  const config = await getRiskAppetite(tenant);
-  return NextResponse.json({ ok: true, config }, { headers: gate.headers });
+  try {
+    const config = await getRiskAppetite(tenant);
+    return NextResponse.json({ ok: true, config }, { headers: gate.headers });
+  } catch (err) {
+    console.error("[risk-appetite] getRiskAppetite failed:", err instanceof Error ? err.message : String(err));
+    return NextResponse.json({ ok: false, error: "Failed to load risk appetite config" }, { status: 500, headers: gate.headers });
+  }
 }
 
 export async function PUT(req: Request): Promise<NextResponse> {
@@ -142,6 +147,12 @@ export async function PUT(req: Request): Promise<NextResponse> {
     pepWeight,
   };
 
-  await saveRiskAppetite(config);
+  try {
+    await saveRiskAppetite(config);
+  } catch (err) {
+    console.error("[risk-appetite] saveRiskAppetite failed:", err instanceof Error ? err.message : String(err));
+    return NextResponse.json({ ok: false, error: "Failed to save risk appetite config" }, { status: 500, headers: gate.headers });
+  }
+
   return NextResponse.json({ ok: true, config }, { headers: gate.headers });
 }
