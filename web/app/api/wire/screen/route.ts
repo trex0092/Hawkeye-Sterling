@@ -131,7 +131,9 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (!body.travelRule?.originatorAddress) {
       travelRuleViolations.push("originator-address-required (FATF Rec 16 June 2025)");
     }
-    if (!body.travelRule?.originatorDob && !mt103.ordering?.account) {
+    // DOB required for individuals; legal entities substitute BIC/LEI/registration number
+    const isLegalEntity = !!(body.travelRule?.legalEntityBic || body.travelRule?.legalEntityLei || body.travelRule?.legalEntityRegNumber);
+    if (!body.travelRule?.originatorDob && !isLegalEntity) {
       travelRuleViolations.push("originator-dob-required-for-individuals (FATF Rec 16 June 2025)");
     }
     if (!body.travelRule?.beneficiaryAddress) {
