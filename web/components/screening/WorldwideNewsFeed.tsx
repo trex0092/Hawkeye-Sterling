@@ -103,6 +103,7 @@ export function WorldwideNewsFeed() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [hidden, setHidden] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -153,79 +154,93 @@ export function WorldwideNewsFeed() {
           <span className="text-11 font-semibold text-ink-0">Worldwide AML News</span>
           <span className="text-10 text-ink-3">— Live feed</span>
         </div>
-        <button
-          type="button"
-          onClick={() => { void load(); }}
-          disabled={loading}
-          className="text-10 text-ink-3 hover:text-ink-0 transition-colors disabled:opacity-40 px-2 py-0.5 rounded border border-hair-2 hover:bg-bg-1"
-          title="Refresh news feed"
-        >
-          {loading ? "Refreshing…" : "↻ Refresh"}
-        </button>
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => { void load(); }}
+            disabled={loading}
+            className="text-10 text-ink-3 hover:text-ink-0 transition-colors disabled:opacity-40 px-2 py-0.5 rounded border border-hair-2 hover:bg-bg-1"
+            title="Refresh news feed"
+          >
+            {loading ? "Refreshing…" : "↻ Refresh"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setHidden((h) => !h)}
+            className="text-10 text-ink-3 hover:text-ink-0 transition-colors px-2 py-0.5 rounded border border-hair-2 hover:bg-bg-1"
+            title={hidden ? "Show news feed" : "Hide news feed"}
+          >
+            {hidden ? "Show" : "Hide"}
+          </button>
+        </div>
       </div>
 
-      {/* Body */}
-      {loading && articles.length === 0 ? (
-        <div>
-          {[0, 1, 2, 3, 4].map((i) => <SkeletonRow key={i} />)}
-        </div>
-      ) : error && articles.length === 0 ? (
-        <div className="px-4 py-6 text-center text-12 text-ink-3">
-          {error}
-        </div>
-      ) : (
-        <div className="overflow-y-auto" style={{ maxHeight: "400px" }}>
-          {articles.map((article) => (
-            <div
-              key={article.url}
-              className="px-4 py-3 border-b border-hair-2 last:border-b-0 hover:bg-bg-1 transition-colors"
-            >
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-10 font-semibold text-ink-2">
-                  {outletLabel(article.outlet)}
-                </span>
-                <span className={`text-9 font-semibold px-1.5 py-px rounded ${categoryBadgeCls(article)}`}>
-                  {categoryLabel(article)}
-                </span>
-                <span className="text-10 text-ink-3 ml-auto flex-shrink-0">
-                  {timeAgo(article.publishedAt)}
-                </span>
-              </div>
-              <a
-                href={article.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-12 font-medium text-ink-0 hover:text-brand transition-colors leading-snug line-clamp-2 block"
-              >
-                {article.title}
-              </a>
-              {article.snippet && (
-                <p className="text-10 text-ink-3 mt-0.5 leading-relaxed">
-                  {article.snippet.slice(0, 80)}{article.snippet.length > 80 ? "…" : ""}
-                </p>
+      {!hidden && (
+        <>
+          {/* Body */}
+          {loading && articles.length === 0 ? (
+            <div>
+              {[0, 1, 2, 3, 4].map((i) => <SkeletonRow key={i} />)}
+            </div>
+          ) : error && articles.length === 0 ? (
+            <div className="px-4 py-6 text-center text-12 text-ink-3">
+              {error}
+            </div>
+          ) : (
+            <div className="overflow-y-auto" style={{ maxHeight: "400px" }}>
+              {articles.map((article) => (
+                <div
+                  key={article.url}
+                  className="px-4 py-3 border-b border-hair-2 last:border-b-0 hover:bg-bg-1 transition-colors"
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-10 font-semibold text-ink-2">
+                      {outletLabel(article.outlet)}
+                    </span>
+                    <span className={`text-9 font-semibold px-1.5 py-px rounded ${categoryBadgeCls(article)}`}>
+                      {categoryLabel(article)}
+                    </span>
+                    <span className="text-10 text-ink-3 ml-auto flex-shrink-0">
+                      {timeAgo(article.publishedAt)}
+                    </span>
+                  </div>
+                  <a
+                    href={article.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-12 font-medium text-ink-0 hover:text-brand transition-colors leading-snug line-clamp-2 block"
+                  >
+                    {article.title}
+                  </a>
+                  {article.snippet && (
+                    <p className="text-10 text-ink-3 mt-0.5 leading-relaxed">
+                      {article.snippet.slice(0, 80)}{article.snippet.length > 80 ? "…" : ""}
+                    </p>
+                  )}
+                </div>
+              ))}
+
+              {articles.length === 0 && (
+                <div className="px-4 py-6 text-center text-12 text-ink-3">
+                  No AML news articles available right now.
+                </div>
               )}
             </div>
-          ))}
-
-          {articles.length === 0 && (
-            <div className="px-4 py-6 text-center text-12 text-ink-3">
-              No AML news articles available right now.
-            </div>
           )}
-        </div>
-      )}
 
-      {/* Footer */}
-      <div className="px-4 py-2 border-t border-hair-2 flex items-center justify-between">
-        <span className="text-10 text-ink-3">
-          {articles.length > 0
-            ? `${articles.length} articles from OCCRP, ICIJ, Reuters, AP, BBC, Bellingcat`
-            : "Fetching from public RSS feeds — no API key required"}
-        </span>
-        {lastUpdatedLabel && (
-          <span className="text-10 text-ink-3">Updated {lastUpdatedLabel}</span>
-        )}
-      </div>
+          {/* Footer */}
+          <div className="px-4 py-2 border-t border-hair-2 flex items-center justify-between">
+            <span className="text-10 text-ink-3">
+              {articles.length > 0
+                ? `${articles.length} articles from OCCRP, ICIJ, Reuters, AP, BBC, Bellingcat`
+                : "Fetching from public RSS feeds — no API key required"}
+            </span>
+            {lastUpdatedLabel && (
+              <span className="text-10 text-ink-3">Updated {lastUpdatedLabel}</span>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }
