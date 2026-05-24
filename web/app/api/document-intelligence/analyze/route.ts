@@ -18,7 +18,7 @@ import { analyzeDocument } from "@/lib/server/document-intelligence";
 import type { Subject } from "@/lib/types";
 
 export async function POST(req: Request): Promise<NextResponse> {
-  const gate = await enforce(req, { requireAuth: true });
+  const gate = await enforce(req, { requireAuth: true, cost: 2 });
   if (!gate.ok) return gate.response;
 
   let body: { text?: unknown; subjectId?: unknown };

@@ -16,7 +16,7 @@ import { patchSubject } from "@/lib/server/subject-store";
 import { getActiveKycProvider } from "@/lib/server/document-intelligence";
 
 export async function POST(req: Request): Promise<NextResponse> {
-  const gate = await enforce(req, { requireAuth: true });
+  const gate = await enforce(req, { requireAuth: true, cost: 2 });
   if (!gate.ok) return gate.response;
 
   let body: { documentBase64?: unknown; faceBase64?: unknown; subjectId?: unknown };

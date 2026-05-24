@@ -19,6 +19,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
   }
 
+  if (!body.email?.includes("@") || body.email.length > 254) {
+    return NextResponse.json({ error: "Invalid email address" }, { status: 400 });
+  }
+
   const { name, email, role, username, password } = body;
   // addedBy is derived from the Authorization header (ADMIN_TOKEN), never from the request body.
   const addedBy = "admin";

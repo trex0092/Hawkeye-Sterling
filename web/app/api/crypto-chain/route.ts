@@ -28,7 +28,7 @@ interface BatchBody {
 type RequestBody = SingleBody | BatchBody;
 
 export async function POST(req: Request): Promise<NextResponse> {
-  const gate = await enforce(req);
+  const gate = await enforce(req, { cost: 2 });
   if (!gate.ok) return gate.response;
 
   let body: RequestBody;
