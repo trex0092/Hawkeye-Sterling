@@ -109,9 +109,13 @@ ${JSON.stringify(events, null, 2)}`,
 
     const raw =
       response.content[0]?.type === "text" ? response.content[0].text : "{}";
-    const parsed = JSON.parse(
-      raw.replace(/```json\n?|\n?```/g, "").trim(),
-    ) as AnomalyDetectResult;
+    const stripped = raw.replace(/```json\n?|\n?```/g, "").trim();
+    let parsed: AnomalyDetectResult;
+    try {
+      parsed = JSON.parse(stripped) as AnomalyDetectResult;
+    } catch {
+      return NextResponse.json({ error: "LLM returned malformed JSON" }, { status: 502, headers: gate.headers });
+    }
 
     return NextResponse.json({
       ok: true,
