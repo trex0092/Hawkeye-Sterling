@@ -591,6 +591,27 @@ export async function POST(req: Request): Promise<NextResponse> {
       }
     }
 
+    // Auto-create PNMR + SLA records for LTL and UN Consolidated hits
+    const PNMR_TRIGGER_LISTS = new Set(["uae_ltl", "uae_eocn", "un_consolidated", "un_1267"]);
+    const pnmrHits = result.hits.filter(
+      (h) => PNMR_TRIGGER_LISTS.has(h.listId) && (h.score ?? 0) >= 0.60
+    );
+    if (pnmrHits.length > 0) {
+      const { createPnmrRecord } = await import("@/lib/server/pnmr");
+      const pnmrTenant = tenantIdFromGate(gate);
+      for (const hit of pnmrHits) {
+        createPnmrRecord(pnmrTenant, {
+          subjectName: subject.name,
+          listId: hit.listId,
+          listLabel: hit.sourceLabel ?? hit.listId,
+          screeningHitId: hit.listRef,
+          initiatedBy: "system/quick-screen",
+        }).catch((err: unknown) =>
+          console.warn("[quick-screen] PNMR auto-create failed:", err instanceof Error ? err.message : String(err))
+        );
+      }
+    }
+
     // Hard deadline SLA: if the enrichment adapters haven't resolved with
     // enough budget remaining, return the deterministic list-match result
     // immediately. Sanctions hits are always present (local match is O(1));

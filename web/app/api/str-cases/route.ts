@@ -33,6 +33,8 @@ export interface StrCase {
   notes?: string;
   linkedCaseId?: string;
   assignee?: string;
+  fiuDeadline35Day?: string;    // ISO — 35 calendar days from createdAt
+  fiuDeadlineDay20Alert?: string; // ISO — day 20 milestone (internal investigation deadline)
 }
 
 const STR_KEY_PREFIX = "str-cases/";
@@ -92,8 +94,15 @@ export async function GET(req: Request): Promise<NextResponse> {
   const total = cases.length;
   const page = cases.slice(offset, offset + limit);
 
+  const enrichedPage = page.map((c) => {
+    const daysRemaining = c.fiuDeadline35Day
+      ? Math.ceil((Date.parse(c.fiuDeadline35Day) - Date.now()) / 86400000)
+      : null;
+    return { ...c, daysRemaining };
+  });
+
   return NextResponse.json(
-    { ok: true, tenant, cases: page, total, limit, offset },
+    { ok: true, tenant, cases: enrichedPage, total, limit, offset },
     { headers: gate.headers },
   );
 }
@@ -168,6 +177,15 @@ export async function POST(req: Request): Promise<NextResponse> {
     }
   }
 
+  const isNewCase = !body.id;
+  const caseCreatedAt = body.createdAt ? new Date(body.createdAt) : new Date();
+  const fiuDeadline35Day = isNewCase && !body.fiuDeadline35Day
+    ? new Date(caseCreatedAt.getTime() + 35 * 24 * 60 * 60 * 1000).toISOString()
+    : body.fiuDeadline35Day;
+  const fiuDeadlineDay20Alert = isNewCase && !body.fiuDeadlineDay20Alert
+    ? new Date(caseCreatedAt.getTime() + 20 * 24 * 60 * 60 * 1000).toISOString()
+    : body.fiuDeadlineDay20Alert;
+
   const record: StrCase = {
     subject: body.subject?.trim() || "Unknown Subject",
     status: body.status ?? "draft",
@@ -175,6 +193,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     id: body.id ?? generateStrId(),
     createdAt: body.createdAt ?? now,
     updatedAt: now,
+    ...(fiuDeadline35Day !== undefined ? { fiuDeadline35Day } : {}),
+    ...(fiuDeadlineDay20Alert !== undefined ? { fiuDeadlineDay20Alert } : {}),
   };
   await saveStrCase(tenant, record);
   return NextResponse.json({ ok: true, tenant, case: record }, { status: 201, headers: gate.headers });
