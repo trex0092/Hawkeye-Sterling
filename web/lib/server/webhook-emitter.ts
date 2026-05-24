@@ -39,6 +39,12 @@ export interface WebhookDelivery {
   statusCode?: number;
   success: boolean;
   responseMs?: number;
+  attempts: number;
+  finalStatus: "success" | "failed";
+}
+
+async function sleep(ms: number): Promise<void> {
+  return new Promise((r) => setTimeout(r, ms));
 }
 
 const REGISTRATIONS_KEY = "webhooks:registrations";
@@ -118,42 +124,64 @@ export async function emitWebhookEvent(
         payload,
         sentAt,
         success: false,
+        attempts: 0,
+        finalStatus: "failed",
       };
 
       const start = Date.now();
-      try {
-        const res = await fetch(reg.url, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Hawkeye-Event": event,
-            "X-Hawkeye-Delivery": deliveryId,
-            "X-Hawkeye-Signature": `sha256=${hmac}`,
-          },
-          body,
-          signal: AbortSignal.timeout(5000),
-        });
+      for (let attempt = 0; attempt <= 3; attempt++) {
+        delivery.attempts = attempt + 1;
+        try {
+          const res = await fetch(reg.url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Hawkeye-Event": event,
+              "X-Hawkeye-Delivery": deliveryId,
+              "X-Hawkeye-Signature": `sha256=${hmac}`,
+            },
+            body,
+            signal: AbortSignal.timeout(5000),
+          });
 
-        const responseMs = Date.now() - start;
-        delivery.statusCode = res.status;
-        delivery.success = res.ok;
-        delivery.responseMs = responseMs;
+          delivery.statusCode = res.status;
+          delivery.responseMs = Date.now() - start;
 
-        // Update registration stats
-        reg.lastDeliveryAt = sentAt;
-        reg.lastDeliveryStatus = res.status;
-        if (!res.ok) {
-          reg.failureCount = (reg.failureCount ?? 0) + 1;
+          if (res.ok) {
+            delivery.success = true;
+            delivery.finalStatus = "success";
+            reg.lastDeliveryAt = sentAt;
+            reg.lastDeliveryStatus = res.status;
+            break;
+          }
+
+          // Non-2xx response
+          reg.lastDeliveryStatus = res.status;
+          if (attempt < 3) {
+            await sleep(1000 * Math.pow(2, attempt));
+          } else {
+            delivery.finalStatus = "failed";
+            reg.lastDeliveryAt = sentAt;
+            reg.failureCount = (reg.failureCount ?? 0) + 1;
+          }
+        } catch (err) {
+          delivery.responseMs = Date.now() - start;
+          if (attempt < 3) {
+            console.warn(
+              `[webhook-emitter] Delivery ${deliveryId} attempt ${attempt + 1} failed, retrying:`,
+              err instanceof Error ? err.message : String(err),
+            );
+            await sleep(1000 * Math.pow(2, attempt));
+          } else {
+            delivery.finalStatus = "failed";
+            reg.lastDeliveryAt = sentAt;
+            reg.failureCount = (reg.failureCount ?? 0) + 1;
+            console.warn(
+              `[webhook-emitter] Delivery ${deliveryId} failed after ${delivery.attempts} attempts:`,
+              err instanceof Error ? err.message : String(err),
+            );
+          }
         }
-      } catch (err) {
-        delivery.responseMs = Date.now() - start;
-        delivery.success = false;
-        reg.lastDeliveryAt = sentAt;
-        reg.failureCount = (reg.failureCount ?? 0) + 1;
-        console.warn(
-          `[webhook-emitter] Delivery ${deliveryId} failed:`,
-          err instanceof Error ? err.message : String(err),
-        );
       }
 
       // Persist delivery record (never throw)

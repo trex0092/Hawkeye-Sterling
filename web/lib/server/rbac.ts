@@ -1,6 +1,8 @@
 // Hawkeye Sterling — Role-Based Access Control (RBAC)
 // Defines the 7-role permission matrix for the platform.
 
+import { NextResponse } from "next/server";
+
 export type UserRole =
   | "super_admin"        // full access, manage tenants
   | "mlro"               // MLRO — approve STR/freeze/EDD, see all cases
@@ -142,3 +144,32 @@ export function isValidRole(value: string): value is UserRole {
 
 /** Roles that can manage other users' roles. */
 export const ROLE_MANAGERS: UserRole[] = ["super_admin", "mlro", "it_admin"];
+
+/** Union type of all permission keys in the RBAC matrix. */
+export type Permission = keyof typeof ROLE_PERMISSIONS[UserRole];
+
+/**
+ * Middleware helper: checks whether the authenticated user (from an enforce
+ * gate) holds the requested permission. Returns `{ allowed: true }` on
+ * success, or `{ allowed: false, response }` with a 403 JSON response on
+ * failure. Roles absent from the gate default to `junior_analyst`.
+ */
+export function requirePermission(
+  gate: { ok: true; tenantId: string; userId: string; role?: string },
+  permission: Permission,
+): { allowed: true } | { allowed: false; response: Response } {
+  const role: UserRole =
+    gate.role && isValidRole(gate.role) ? gate.role : "junior_analyst";
+
+  if (hasPermission(role, permission)) {
+    return { allowed: true };
+  }
+
+  return {
+    allowed: false,
+    response: NextResponse.json(
+      { ok: false, error: "Insufficient permissions" },
+      { status: 403 },
+    ),
+  };
+}

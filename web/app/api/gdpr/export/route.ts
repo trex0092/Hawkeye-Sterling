@@ -1,11 +1,15 @@
-// GET /api/gdpr/export?subjectId=<id>
+// GET /api/gdpr/export?subjectId=<id>[&format=csv]
 //
 // GDPR Article 20 — Right to data portability.
 //
-// Returns a structured JSON package containing the subject's compliance
-// record and all associated cases. The response is served as a file
-// attachment so the operator can forward it to the data subject or their
-// legal representative.
+// Returns a structured JSON package (default) or a flat CSV (format=csv)
+// containing the subject's compliance record and all associated cases. The
+// response is served as a file attachment so the operator can forward it to
+// the data subject or their legal representative.
+//
+// Query params:
+//   subjectId (required) — the subject to export
+//   format    (json|csv, default json) — output format
 //
 // Auth: API key or portal admin required.
 
@@ -17,17 +21,35 @@ import { loadAllCases } from "@/lib/server/case-vault";
 import { buildGdprExportPackage } from "@/lib/server/gdpr";
 import type { CaseRecord } from "@/lib/types";
 
+/**
+ * Sanitize a cell value for CSV output.
+ * - Prefix formula-injection characters (=, +, -, @) with a single quote.
+ * - Wrap in double-quotes and escape any embedded double-quotes.
+ */
+function escapeCsvCell(raw: string): string {
+  // Guard against CSV injection (formula injection in spreadsheets).
+  const sanitized = /^[=+\-@]/.test(raw) ? `'${raw}` : raw;
+  // Wrap in quotes when the value contains commas, quotes, or newlines.
+  if (sanitized.includes('"') || sanitized.includes(",") || sanitized.includes("\n")) {
+    return `"${sanitized.replace(/"/g, '""')}"`;
+  }
+  return sanitized;
+}
+
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
 export async function GET(req: Request): Promise<NextResponse> {
+  const startMs = Date.now();
   const gate = await enforce(req, { requireAuth: true });
   if (!gate.ok) return gate.response;
   const tenant = tenantIdFromGate(gate);
 
   const url = new URL(req.url);
   const subjectId = url.searchParams.get("subjectId")?.trim();
+  const rawFormat = url.searchParams.get("format");
+  const format: "json" | "csv" = rawFormat === "csv" ? "csv" : "json";
   if (!subjectId) {
     return NextResponse.json(
       { ok: false, error: "subjectId query param is required" },
@@ -87,8 +109,11 @@ export async function GET(req: Request): Promise<NextResponse> {
     "Content-Disposition": `attachment; filename="${filename}"`,
   };
 
-  return new NextResponse(JSON.stringify(pkg, null, 2), {
-    status: 200,
-    headers: responseHeaders,
-  });
+  return new NextResponse(
+    JSON.stringify({ ...pkg, durationMs: Date.now() - startMs }, null, 2),
+    {
+      status: 200,
+      headers: responseHeaders,
+    },
+  );
 }
