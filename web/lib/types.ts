@@ -472,3 +472,77 @@ export interface CaseRecord {
     capturedAt: string;
   };
 }
+
+// ── Regulatory compliance types (GAP 4, 5, 6, 7) ────────────────────────────
+
+/** FATF Recommendation 16 (June 2025) — Travel Rule payload for wire transfers ≥ USD 1,000 */
+export interface TravelRulePayload {
+  isCrossBorder?: boolean;
+  amount?: number;
+  currency?: string;
+  originatorAddress?: string;
+  originatorDob?: string;
+  beneficiaryAddress?: string;
+  legalEntityBic?: string;
+  legalEntityLei?: string;
+  legalEntityRegNumber?: string;
+}
+
+/** Business Risk Assessment record (MOE Circular 6/2025 — 90-day mandatory review) */
+export interface BraRecord {
+  id: string;
+  tenantId: string;
+  status: "draft" | "active" | "archived";
+  inherentRisk: number;
+  controlsEffectiveness: number;
+  residualRisk: number;
+  customerRisk: number;
+  productRisk: number;
+  channelRisk: number;
+  geographyRisk: number;
+  isDnfbp: boolean;
+  aedThresholdApplies: boolean;
+  activityScope: string;
+  approvedBy?: string;
+  approvedAt?: string;
+  nextReviewDate: string;
+  createdAt: string;
+  updatedAt: string;
+  notes?: string;
+  isOverdueReview?: boolean;
+}
+
+/** RMI RMAP smelter/refiner conformance record */
+export interface RmapSmelter {
+  cid: string;
+  facilityName: string;
+  country: string;
+  countryCode: string;
+  products: string[];
+  rmapStatus: "conformant" | "active" | "non_conformant" | "suspended" | "unknown";
+  lastAuditDate?: string;
+  auditValidity?: string;
+  source: string;
+  updatedAt: string;
+}
+
+/** LBMA Responsible Gold V9 annual declaration */
+export interface LbmaDeclaration {
+  id: string;
+  tenantId: string;
+  reportingYear: number;
+  counterpartyName: string;
+  counterpartyCountry: string;
+  counterpartyType: string;
+  isGdlListed: boolean;
+  watchlistResult: string;
+  cahraSourcing: boolean;
+  supplyChainVerified: boolean;
+  ongoingMonitoringFrequency: string;
+  declarationSubmitted: boolean;
+  declarationDate?: string;
+  signedBy?: string;
+  status: "draft" | "submitted" | "approved";
+  createdAt: string;
+  updatedAt: string;
+}
