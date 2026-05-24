@@ -943,6 +943,68 @@ describe('POST /api/quick-screen', () => {
     const res = await POST(req);
     expect(res.status).toBe(401);
   });
+
+  it('no-match: fictional name returns severity:clear and empty hits', async () => {
+    const req = makeRequest('http://localhost/api/quick-screen', {
+      method: 'POST',
+      body: {
+        subject: { name: 'Zxqwvuty Nomatch Fictional' },
+        candidates: [
+          { listId: 'ofac_sdn', listRef: 'SDN-999', name: 'Completely Unrelated Entity' },
+        ],
+      },
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+    const body = await jsonBody(res) as { ok: boolean; severity: string; hits: unknown[] };
+    expect(body.ok).toBe(true);
+    expect(body.severity).toBe('clear');
+    expect(body.hits).toHaveLength(0);
+  });
+
+  it('alias match: hit is found when candidate alias matches subject name', async () => {
+    const req = makeRequest('http://localhost/api/quick-screen', {
+      method: 'POST',
+      body: {
+        subject: { name: 'Al-Rashid Trading' },
+        candidates: [
+          {
+            listId: 'ofac_sdn',
+            listRef: 'SDN-100',
+            name: 'Rashid Group International',
+            aliases: ['Al-Rashid Trading', 'Al Rashid Trading LLC'],
+          },
+        ],
+      },
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+    const body = await jsonBody(res) as { ok: boolean; hits: Array<{ matchedAlias?: string }> };
+    expect(body.ok).toBe(true);
+    expect(body.hits.length).toBeGreaterThan(0);
+    // At least one hit should carry the matched alias
+    const withAlias = body.hits.filter((h) => h.matchedAlias);
+    expect(withAlias.length).toBeGreaterThan(0);
+  });
+
+  it('performance: response time under 5 seconds for a typical screen', async () => {
+    const start = Date.now();
+    const req = makeRequest('http://localhost/api/quick-screen', {
+      method: 'POST',
+      body: {
+        subject: { name: 'Performance Test Subject' },
+        candidates: Array.from({ length: 50 }, (_, i) => ({
+          listId: 'ofac_sdn',
+          listRef: `SDN-PERF-${i}`,
+          name: `Test Candidate ${i} XYZ`,
+        })),
+      },
+    });
+    const res = await POST(req);
+    const durationMs = Date.now() - start;
+    expect(res.status).toBe(200);
+    expect(durationMs).toBeLessThan(5_000);
+  });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
