@@ -608,6 +608,7 @@ export default function ScreeningPage() {
 
   // Bulk import + saved searches + bulk actions + columns + minRisk
   const [bulkImportOpen, setBulkImportOpen] = useState(false);
+  const [mobileDetailOpen, setMobileDetailOpen] = useState(false);
   const [appliedSearchId, setAppliedSearchId] = useState<string | null>(null);
   const [minRisk, setMinRisk] = useState<number>(0);
   const [selectedRowIds, setSelectedRowIds] = useState<ReadonlySet<string>>(new Set());
@@ -682,6 +683,13 @@ export default function ScreeningPage() {
       setSelectedId(subjects[0]!.id);
     }
   }, [hydrated, selectedId, subjects]);
+
+  // Restore per-subject list health warnings from the subject object when
+  // the selected subject changes — ensures warnings survive page reload.
+  useEffect(() => {
+    const sel = subjects.find((s) => s.id === selectedId);
+    setListHealthWarnings(sel?.listHealthWarnings ?? []);
+  }, [selectedId, subjects]);
 
   const deferredQuery = useDeferredValue(query);
 
@@ -919,7 +927,12 @@ export default function ScreeningPage() {
   // weekly MLRO pack go out without a server round-trip.
   const exportFilteredCsv = useCallback(() => {
     const header = ["id", "name", "country", "entityType", "riskScore", "severity", "status", "cddPosture", "lists", "snoozedUntil"];
-    const escape = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    // CSV injection prevention: strip control chars, prepend ' to formula-trigger chars.
+    const escape = (v: unknown) => {
+      const raw = String(v ?? "").replace(/\x00/g, "").replace(/[\x01-\x08\x0B\x0C\x0E-\x1F]/g, " ");
+      const safe = /^[=+\-@\t\r]/.test(raw) ? `'${raw}` : raw;
+      return `"${safe.replace(/"/g, '""')}"`;
+    };
     const rows = filtered.map((s) => [
       s.id, s.name, s.country, s.entityType, s.riskScore, s.mostSerious, s.status, s.cddPosture,
       s.listCoverage.join("|"), s.snoozedUntil ?? "",
@@ -965,6 +978,9 @@ export default function ScreeningPage() {
     // Mark the subject as pending so the table shows a "Screening…" badge.
     if (screen) {
       setPendingIds((prev) => new Set([...prev, subject.id]));
+      // Capture subject.id before the async IIFE — prevents stale-closure
+      // bugs when multiple subjects are added in rapid succession.
+      const capturedSubjectId = subject.id;
       void (async () => {
         try {
           // Forward entityType + jurisdiction so the brain's matching
@@ -1045,6 +1061,14 @@ export default function ScreeningPage() {
           }
           if (res.ok && res.data?.screeningWarnings?.length) {
             setListHealthWarnings(res.data.screeningWarnings);
+            // Persist warnings to the subject so they survive page reload.
+            setSubjects((prev) =>
+              prev.map((s) =>
+                s.id === capturedSubjectId
+                  ? { ...s, listHealthWarnings: res.data!.screeningWarnings }
+                  : s,
+              ),
+            );
           }
           if (res.ok && res.data?.ok && res.data.reasoning) {
             setLatestReasoning({ subjectName: subject.name, reasoning: res.data.reasoning });
@@ -1091,7 +1115,7 @@ export default function ScreeningPage() {
                 });
               }
             }
-            setLatestTriage({ subjectId: subject.id, subjectName: subject.name, hits: triageHits, commonNameExpansion: res.data.commonNameExpansion });
+            setLatestTriage({ subjectId: capturedSubjectId, subjectName: subject.name, hits: triageHits, commonNameExpansion: res.data.commonNameExpansion });
             setTriageResolutions({});
           }
           if (res.ok && res.data?.ok && res.data.topScore !== undefined) {
@@ -1131,7 +1155,7 @@ export default function ScreeningPage() {
             const nextCoverage = Array.from(coverage);
             setSubjects((prev) =>
               prev.map((s) =>
-                s.id === subject.id
+                s.id === capturedSubjectId
                   ? {
                       ...s,
                       riskScore: res.data!.topScore ?? 0,
@@ -1151,11 +1175,11 @@ export default function ScreeningPage() {
               const sev = (res.data.topScore ?? 0) >= 80 ? "critical" : (res.data.topScore ?? 0) >= 60 ? "high" : "medium";
               const listId = sev === "critical" ? "ofac_sdn" : sev === "high" ? "un_1267" : "eu_consolidated";
               pushBellEvent({
-                id: `screen-${subject.id}-${Date.now()}`,
+                id: `screen-${capturedSubjectId}-${Date.now()}`,
                 listId,
                 listLabel: `Screening hit · ${res.data.severity ?? sev.toUpperCase()}`,
                 matchedEntry: subject.name,
-                sourceRef: subject.id,
+                sourceRef: capturedSubjectId,
                 severity: sev,
                 detectedAt: new Date().toISOString(),
                 firedRedlineId: sev === "critical" ? "rl_ofac_sdn_confirmed" : undefined,
@@ -1167,7 +1191,7 @@ export default function ScreeningPage() {
               headers: { "content-type": "application/json" },
               body: JSON.stringify({
                 action: "screening_completed",
-                target: `${subject.name} (${subject.id})`,
+                target: `${subject.name} (${capturedSubjectId})`,
                 actor: { role: "analyst" },
                 body: { topScore: res.data.topScore, severity: res.data.severity },
               }),
@@ -1177,18 +1201,18 @@ export default function ScreeningPage() {
             // add to errorIds so the table can show an error badge.
             setSubjects((prev) =>
               prev.map((s) =>
-                s.id === subject.id
+                s.id === capturedSubjectId
                   ? { ...s, mostSerious: "screening-error" }
                   : s,
               ),
             );
-            setErrorIds((prev) => new Set([...prev, subject.id]));
+            setErrorIds((prev) => new Set([...prev, capturedSubjectId]));
           }
         } finally {
           // Always clear the pending indicator regardless of success/failure.
           setPendingIds((prev) => {
             const next = new Set(prev);
-            next.delete(subject.id);
+            next.delete(capturedSubjectId);
             return next;
           });
         }
@@ -1240,6 +1264,8 @@ export default function ScreeningPage() {
           "adverse-media.auto-run",
           `${subject.name} - ${tier}${sar ? " (SAR R.20)" : ""}`,
         );
+      }).catch((err: unknown) => {
+        console.warn("[hawkeye] adverse-media auto-run failed:", err instanceof Error ? err.message : String(err));
       });
     }
 
@@ -1825,6 +1851,60 @@ export default function ScreeningPage() {
           />
         </main>
 
+        {/* Mobile "View Detail" floating button — only shown when a subject is selected */}
+        {selected && !formOpen && (
+          <button
+            className="fixed bottom-4 right-4 z-50 lg:hidden rounded-full bg-accent px-4 py-2 text-sm font-medium text-white shadow-lg"
+            onClick={() => setMobileDetailOpen(true)}
+            aria-label="View subject detail"
+          >
+            View Detail
+          </button>
+        )}
+
+        {/* Mobile full-screen overlay for detail panel */}
+        {mobileDetailOpen && selected && !formOpen && (
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-bg lg:hidden" role="dialog" aria-modal="true" aria-label="Subject detail">
+            <div className="flex items-center justify-between border-b border-hair-2 px-4 py-3">
+              <span className="text-sm font-semibold">{selected.name}</span>
+              <button
+                className="text-sm text-fg-muted underline"
+                onClick={() => setMobileDetailOpen(false)}
+                aria-label="Close detail panel"
+              >
+                Close
+              </button>
+            </div>
+            {(() => {
+              const triageForMobile = latestTriage && latestTriage.subjectId === selected.id
+                ? (latestTriage.hits ?? []).map((h) => ({
+                    hitId: h.id,
+                    matchedName: h.name,
+                    sourceList: h.sourceList,
+                    matchStrength: h.matchStrength,
+                    type: h.type,
+                    citizenship: h.citizenship,
+                    dob: h.dob,
+                    listRef: h.listRef,
+                    resolution: triageResolutions[h.id] ?? "unspecified" as const,
+                    resolvedAt: triageResolutions[h.id] ? new Date().toISOString() : undefined,
+                  }))
+                : undefined;
+              return (
+                <ErrorBoundary>
+                  <SubjectDetailPanel
+                    subject={selected}
+                    onUpdate={handleUpdateSubject}
+                    allSubjects={subjects}
+                    onSelectSubject={(id) => { setSelectedId(id); setMobileDetailOpen(false); }}
+                    triageResolutions={triageForMobile}
+                  />
+                </ErrorBoundary>
+              );
+            })()}
+          </div>
+        )}
+
         <div className="hidden lg:block">
           {(() => {
             if (compareIds.size === 2) {
@@ -1846,7 +1926,7 @@ export default function ScreeningPage() {
               // Build triage-resolutions payload for the report PDF —
               // only when the latest triage matches the selected subject.
               const triageForReport = latestTriage && latestTriage.subjectId === selected.id
-                ? latestTriage.hits.map((h) => ({
+                ? (latestTriage.hits ?? []).map((h) => ({
                     hitId: h.id,
                     matchedName: h.name,
                     sourceList: h.sourceList,

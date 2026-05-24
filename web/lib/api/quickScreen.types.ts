@@ -100,6 +100,13 @@ export interface QuickScreenHit {
   candidateEntityType?: EntityType;
   entityTypeMismatch?: boolean;
   autoResolution?: 'auto-dismissed' | 'flagged';
+  // Source attribution — surfaced in audit trail, UI, and export.
+  // Every hit MUST show where the match came from and why.
+  sourceList?: string;          // exact list ID e.g. "ofac_sdn"
+  sourceLabel?: string;         // human-readable e.g. "OFAC Specially Designated Nationals"
+  listingDate?: string;         // ISO date of designation when available
+  matchReason?: string;         // algorithms fired + discriminators (structured companion to reason)
+  riskCategory?: 'sanctions' | 'pep' | 'adverse_media';
 }
 
 export interface QuickScreenOptions {

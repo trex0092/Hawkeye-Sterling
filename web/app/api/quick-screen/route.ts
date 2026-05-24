@@ -240,7 +240,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   // tier without an API key) leaves audit chain entries with no operator
   // identity. For a public demo, use the separate /api/demo/quick-screen
   // path (if added) which logs actor: "public-demo" explicitly.
-  const gate = await enforce(req, { requireAuth: true });
+  const gate = await enforce(req, { requireAuth: true, cost: 2 });
   if (!gate.ok) return gate.response;
   const gateHeaders: Record<string, string> = gate.ok ? gate.headers : {};
 
@@ -359,7 +359,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const tenantId = gate.record?.email;
   if (tenantId) {
     try {
-      // Cap whitelist lookup at 400ms — a Blobs read should never exceed this
+      // Cap whitelist lookup at 200ms — a Blobs read should never exceed this
       // on a healthy deployment. If it hangs we fall through to full screening
       // (the safe default: the MLRO sees the hit again rather than missing it).
       const match = await Promise.race([
@@ -367,7 +367,7 @@ export async function POST(req: Request): Promise<NextResponse> {
           name: subject.name,
           ...(subject.jurisdiction ? { jurisdiction: subject.jurisdiction } : {}),
         }),
-        new Promise<null>((r) => setTimeout(() => r(null), 400)),
+        new Promise<null>((r) => setTimeout(() => r(null), 200)),
       ]);
       if (match) {
         const whitelistedResult: QuickScreenResult = {
@@ -531,14 +531,64 @@ export async function POST(req: Request): Promise<NextResponse> {
       ...(body.options ?? {}),
       maxHits: body.options?.maxHits ?? HIT_LIMIT_LOCAL,
     };
+
+    // Start news aggregation early — in parallel with the synchronous quickScreen()
+    // CPU-bound matcher — so news results are fetched while matching runs.
+    // quickScreen() is O(n·m) CPU-bound and non-async; the news promise begins
+    // here and is awaited later inside the augmentation Promise.all block.
+    type NewsResult = Awaited<ReturnType<typeof searchAllNews>>;
+    const earlyNewsPromise: Promise<NewsResult> =
+      subject.name.length >= 3
+        ? searchAllNews(subject.name, { limit: 50 }).catch((): NewsResult => ({ articles: [], providersUsed: [] }))
+        : Promise.resolve<NewsResult>({ articles: [], providersUsed: [] });
+
     const result = quickScreen(subject, candidates, screenOptions);
 
-    // Hard 3-second SLA: if the enrichment adapters haven't resolved with
+    // Source attribution: enrich each hit with a human-readable list label,
+    // risk category, and structured match reason. Additive — never overwrites
+    // existing fields, compatible with all existing callers.
+    const LIST_ID_TO_LABEL: Record<string, string> = {
+      ofac_sdn:       "OFAC Specially Designated Nationals",
+      ofac_cons:      "OFAC Consolidated Sanctions",
+      un_consolidated:"UN Consolidated Sanctions",
+      un_1267:        "UN ISIL/Al-Qaeda Sanctions (1267)",
+      eu_fsf:         "EU Frozen Funds & Financial Sanctions",
+      uk_ofsi:        "UK OFSI Consolidated Sanctions",
+      uae_eocn:       "UAE Executive Office for Control & Non-Proliferation",
+      uae_ltl:        "UAE Local Terrorist List",
+      ca_osfi:        "Canada OSFI Consolidated Sanctions",
+      ch_seco:        "Switzerland SECO Sanctions",
+      au_dfat:        "Australia DFAT Consolidated Sanctions",
+      jp_mof:         "Japan MoF Sanctions",
+      interpol:       "Interpol Red Notices",
+      fatf:           "FATF High-Risk Jurisdictions",
+      lseg_ofac_sdn:  "OFAC SDN (LSEG)",
+      lseg_eu_fsf:    "EU Frozen Funds (LSEG)",
+      lseg_uk_ofsi:   "UK OFSI (LSEG)",
+    };
+    for (const hit of result.hits) {
+      if (!hit.sourceList) hit.sourceList = hit.listId;
+      if (!hit.sourceLabel) {
+        hit.sourceLabel = LIST_ID_TO_LABEL[hit.listId] ?? hit.listId.toUpperCase().replace(/_/g, " ");
+      }
+      if (!hit.riskCategory) {
+        const lid = hit.listId.toLowerCase();
+        hit.riskCategory =
+          lid.includes("pep") ? "pep"
+          : lid.includes("media") || lid.includes("news") ? "adverse_media"
+          : "sanctions";
+      }
+      if (!hit.matchReason) {
+        hit.matchReason = hit.reason;
+      }
+    }
+
+    // Hard deadline SLA: if the enrichment adapters haven't resolved with
     // enough budget remaining, return the deterministic list-match result
     // immediately. Sanctions hits are always present (local match is O(1));
     // only the enrichment layer (news, registries, LLM) is deferred.
     // The client can re-poll for an enriched result if needed.
-    const HARD_DEADLINE_MS = 2_800;
+    const HARD_DEADLINE_MS = 4_500;
     const elapsedMs = Date.now() - t0;
     if (!enrichJobId && elapsedMs >= HARD_DEADLINE_MS - 100) {
       // Audit chain must fire even when the enrichment deadline is exceeded.
@@ -597,7 +647,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     type CRegResult      = Awaited<ReturnType<typeof searchCountryRegistries>>;
     type CSanResult      = Awaited<ReturnType<typeof searchCountrySanctions>>;
     type FreeResult      = Awaited<ReturnType<typeof searchFreeAdapters>>;
-    type NewsResult      = Awaited<ReturnType<typeof searchAllNews>>;
+    // NewsResult already declared above (earlyNewsPromise) — reuse the type alias.
     type LlmResult       = Awaited<ReturnType<typeof llmAdapter.search>>;
     type UrlIngestResult = Awaited<ReturnType<typeof ingestUrls>>;
 
@@ -635,7 +685,9 @@ export async function POST(req: Request): Promise<NextResponse> {
       canAug ? adapterTimeout(searchCountrySanctions(subject.name, subject.jurisdiction ?? undefined, ADAPTER_QUERY_LIMIT).catch((e): CSanResult => { warn(e); return { records: [], lists: [] }; }), { records: [], lists: [] } as CSanResult) : Promise.resolve<CSanResult>({ records: [], lists: [] }),
       canAug ? adapterTimeout(searchFreeAdapters(subject.name, subject.jurisdiction ?? undefined, ADAPTER_QUERY_LIMIT).catch((e): FreeResult => { warn(e); return { records: [], providersUsed: [] }; }), { records: [], providersUsed: [] } as FreeResult) : Promise.resolve<FreeResult>({ records: [], providersUsed: [] }),
       // Group C — news velocity + LLM adverse-media recall (Claude + Groq + Gemini + Google AI in parallel)
-      canAug ? adapterTimeout(searchAllNews(subject.name, { limit: 50 }).catch((e): NewsResult => { warn(e); return { articles: [], providersUsed: [] }; }), { articles: [], providersUsed: [] } as NewsResult) : Promise.resolve<NewsResult>({ articles: [], providersUsed: [] }),
+      // earlyNewsPromise was started before quickScreen() ran; here we wrap it
+      // in adapterTimeout so the whole augmentation race is still bounded.
+      adapterTimeout(earlyNewsPromise, { articles: [], providersUsed: [] } as NewsResult),
       canAug && llmAdapter.isAvailable() ? adapterTimeout(llmAdapter.search(subject.name, { limit: 15 }).catch((e): LlmResult => { warn(e); return []; }), [] as LlmResult) : Promise.resolve<LlmResult>([]),
       canAug && groqAdapter.isAvailable() ? adapterTimeout(groqAdapter.search(subject.name, { limit: 15 }).catch((e): LlmResult => { warn(e); return []; }), [] as LlmResult) : Promise.resolve<LlmResult>([]),
       canAug && geminiAdapter.isAvailable() ? adapterTimeout(geminiAdapter.search(subject.name, { limit: 15 }).catch((e): LlmResult => { warn(e); return []; }), [] as LlmResult) : Promise.resolve<LlmResult>([]),
