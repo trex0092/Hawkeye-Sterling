@@ -94,6 +94,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   // Single address — return the first result directly (no wrapping array)
+  if (!results[0]) {
+    return NextResponse.json(
+      { ok: false, error: "Analysis returned no result" },
+      { status: 500, headers: gate.headers },
+    );
+  }
   return NextResponse.json(
     { ok: true, ...results[0] },
     { headers: gate.headers },

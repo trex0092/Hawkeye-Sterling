@@ -117,10 +117,12 @@ export async function GET(req: Request): Promise<NextResponse> {
   // HTTP timing latency data is not persisted by the current sla-monitor
   // module (it classifies case deadline timers, not request durations).
   // Return null for p50/p95 and derive breach rates from case metrics only.
-  const breachRate =
-    caseMetrics && (caseMetrics.breachedCount + caseMetrics.approachingCount) > 0
-      ? caseMetrics.breachedCount / (caseMetrics.breachedCount + caseMetrics.approachingCount + caseMetrics.skipped)
-      : 0;
+  const denominator = caseMetrics
+    ? caseMetrics.breachedCount + caseMetrics.approachingCount + caseMetrics.skipped
+    : 0;
+  const breachRate = denominator > 0
+    ? caseMetrics!.breachedCount / denominator
+    : 0;
 
   const slaTargets: Record<EndpointKey, EndpointSla> = {
     quickScreen: {
