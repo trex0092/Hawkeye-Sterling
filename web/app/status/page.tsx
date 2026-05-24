@@ -830,7 +830,7 @@ function ServiceDependencyMap({ checks, externalChecks }: { checks: Check[]; ext
       </div>
       {/* Asana */}
       <div className="flex items-center gap-2 flex-wrap pl-6">
-        <DependencyNode label="Asana" status={find("Asana")} external />
+        <DependencyNode label="Asana" status={find("asana")} external />
         <Arrow />
         <DependencyNode label="19 workflow boards" external />
       </div>
