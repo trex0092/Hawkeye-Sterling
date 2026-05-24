@@ -105,9 +105,75 @@ export function validateGoamlXmlStructure(xml: string): XsdValidationError[] {
     }
   });
 
+  // ── goAML 5.0.1 enhanced validations ─────────────────────────────────────────
+
+  // goAML 5.0.1: report_code must be one of the official codes
+  const validReportCodes = ['STR', 'SAR', 'PNMR', 'CNMR', 'FFR', 'CTR'];
+  const reportCodeMatch501 = xml.match(/<report_code>([^<]+)<\/report_code>/);
+  if (reportCodeMatch501) {
+    if (!validReportCodes.includes(reportCodeMatch501[1]!.trim())) {
+      errors.push({
+        path: '/report/report_code',
+        message: `Invalid report_code "${reportCodeMatch501[1]}". Must be one of: ${validReportCodes.join(', ')}`,
+        severity: 'error',
+      });
+    }
+  }
+
+  // goAML 5.0.1: submission_code must be "E" (electronic) or "S" (supplementary) for portal submissions
+  const submissionCodeMatch501 = xml.match(/<submission_code>([^<]+)<\/submission_code>/);
+  if (submissionCodeMatch501 && !['E', 'S'].includes(submissionCodeMatch501[1]!.trim())) {
+    errors.push({
+      path: '/report/submission_code',
+      message: `submission_code must be "E" (electronic) or "S" (supplementary)`,
+      severity: 'error',
+    });
+  }
+
+  // goAML 5.0.1: reporting_person requires first_name, last_name, and occupation
+  const reportingPersonContent = xml.match(/<reporting_person>([\s\S]*?)<\/reporting_person>/)?.[1] ?? '';
+  if (reportingPersonContent) {
+    if (!reportingPersonContent.includes('<first_name>')) {
+      errors.push({ path: '/report/reporting_person/first_name', message: 'reporting_person must include <first_name>', severity: 'error' });
+    }
+    if (!reportingPersonContent.includes('<last_name>')) {
+      errors.push({ path: '/report/reporting_person/last_name', message: 'reporting_person must include <last_name>', severity: 'error' });
+    }
+    if (!reportingPersonContent.includes('<occupation>')) {
+      errors.push({ path: '/report/reporting_person/occupation', message: 'reporting_person must include <occupation> (e.g. "MLRO")', severity: 'warning' });
+    }
+  }
+
+  // goAML 5.0.1: transaction block requires t_from and t_to
+  const transactionContent = xml.match(/<transaction>([\s\S]*?)<\/transaction>/)?.[1] ?? '';
+  if (transactionContent) {
+    if (!transactionContent.includes('<t_from>') && !transactionContent.includes('<from_funds_code>')) {
+      errors.push({ path: '/report/transaction/t_from', message: 'Transaction must include <t_from> party block', severity: 'error' });
+    }
+    if (!transactionContent.includes('<t_to>') && !transactionContent.includes('<to_funds_code>')) {
+      errors.push({ path: '/report/transaction/t_to', message: 'Transaction must include <t_to> party block', severity: 'error' });
+    }
+    if (!transactionContent.includes('<date_transaction>')) {
+      errors.push({ path: '/report/transaction/date_transaction', message: 'Transaction must include <date_transaction>', severity: 'error' });
+    }
+    if (!transactionContent.includes('<tran_amount_local>')) {
+      errors.push({ path: '/report/transaction/tran_amount_local', message: 'Transaction must include <tran_amount_local>', severity: 'error' });
+    }
+  }
+
+  // goAML 5.0.1: PNMR-specific — requires scrn_res_type field
+  const isPnmr = xml.includes('<report_code>PNMR</report_code>');
+  if (isPnmr && !xml.includes('<scrn_res_type>')) {
+    errors.push({ path: '/report/scrn_res_type', message: 'PNMR report must include <scrn_res_type> (screening result type)', severity: 'error' });
+  }
+
   return errors;
 }
 
 export function isGoamlXmlValid(xml: string): boolean {
   return validateGoamlXmlStructure(xml).filter(e => e.severity === 'error').length === 0;
+}
+
+export function getGoamlSchemaVersion(): string {
+  return "5.0.1";
 }
