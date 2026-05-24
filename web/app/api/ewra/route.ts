@@ -123,7 +123,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       { status: 503, headers: gate.headers },
     );
   }
-  const anthropic = getAnthropicClient(apiKey, 55_000);
+  const anthropic = getAnthropicClient(apiKey, 4_500);
 
   // ── Pre-compute structured enhancements ─────────────────────────────────────
   // These run deterministically before the LLM call so the AI response can be

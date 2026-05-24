@@ -42,6 +42,15 @@ import {
 // netlify.toml; local dev runs `npm run build` at the root once to produce dist/.
 // @brain/* is resolved via web/tsconfig.json paths → ../src/brain/*.
 import { quickScreen as brainQuickScreen } from "@brain/quick-screen.js";
+
+// ── In-memory result cache ─────────────────────────────────────────────────
+// Survives Next.js HMR by anchoring to globalThis (same pattern as store.ts).
+// TTL: 3 minutes — sanctions lists refresh frequently so we can't cache longer.
+const SCREEN_CACHE_TTL_MS = 180_000;
+// eslint-disable-next-line no-var
+declare global { var __hs_screen_cache: Map<string, { result: unknown; cachedAt: number }> | undefined; }
+const _screenCache: Map<string, { result: unknown; cachedAt: number }> =
+  globalThis.__hs_screen_cache ?? (globalThis.__hs_screen_cache = new Map());
 import { getCountryRisk } from "@/lib/server/high-risk-countries";
 import { insertCaseRecord } from "@/lib/server/case-vault";
 import { tenantIdFromGate } from "@/lib/server/tenant";
@@ -410,6 +419,23 @@ export async function POST(req: Request): Promise<NextResponse> {
         "[quick-screen] whitelist lookup failed — falling through to full screen:",
         err instanceof Error ? err.message : err,
       );
+    }
+  }
+
+  // ── Cache check ───────────────────────────────────────────────────────────
+  // Skip cache when forceRefresh or enhanced screening is requested — deep
+  // enhanced runs must always be fresh (live adapter results change frequently).
+  const cacheBypass = body.options?.forceRefresh === true || body.options?.enhanced === true;
+  const normalizedName = subject.name.toLowerCase().trim().replace(/\s+/g, " ");
+  const cacheKey = `${tenantId ?? ""}|${normalizedName}`;
+
+  if (!cacheBypass) {
+    const cached = _screenCache.get(cacheKey);
+    if (cached && Date.now() - cached.cachedAt < SCREEN_CACHE_TTL_MS) {
+      return NextResponse.json(cached.result, {
+        status: 200,
+        headers: { ...CORS_HEADERS, ...gateHeaders, "x-cache": "HIT" },
+      });
     }
   }
 
@@ -1148,7 +1174,19 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (enrichJobId) {
       void completeEnrichmentJob(enrichJobId, fullPayload as Record<string, unknown>).catch((err: unknown) => console.warn("[quick-screen] completeEnrichmentJob failed:", err instanceof Error ? err.message : String(err)));
     }
-    return respond(200, fullPayload, gateHeaders);
+
+    // ── Cache SET ──────────────────────────────────────────────────────────
+    // Store the full payload for repeat callers. Sweep stale entries on every
+    // write so the Map doesn't grow unbounded during a long-running Lambda.
+    if (!cacheBypass) {
+      const now = Date.now();
+      for (const [k, v] of _screenCache) {
+        if (now - v.cachedAt >= SCREEN_CACHE_TTL_MS) _screenCache.delete(k);
+      }
+      _screenCache.set(cacheKey, { result: fullPayload, cachedAt: now });
+    }
+
+    return respond(200, fullPayload, { ...gateHeaders, "x-cache": "MISS" });
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);
     if (Date.now() - t0 > 3000) console.warn(`[quick-screen] slow response latencyMs=${Date.now() - t0}`);

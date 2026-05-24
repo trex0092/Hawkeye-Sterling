@@ -30,6 +30,7 @@ import { useKeyboardShortcuts } from "@/lib/hooks/useKeyboardShortcuts";
 import { pushBellEvent } from "@/lib/bell-events";
 import { loadColumnVisibility, persistColumnVisibility } from "@/components/screening/ColumnChooser";
 import { ComtradePanel } from "@/components/tbml/ComtradePanel";
+import { WorldwideNewsFeed } from "@/components/screening/WorldwideNewsFeed";
 
 // ── Bulk Re-Screen types ──────────────────────────────────────────────────────
 
@@ -1520,6 +1521,9 @@ export default function ScreeningPage() {
 
           {/* ── EOCN SLA Countdown ───────────────────────────────────────── */}
           <EocnSlaWidget />
+
+          {/* ── Worldwide AML News Feed ───────────────────────────────────── */}
+          <WorldwideNewsFeed />
 
           {/* ── Bulk Re-Screen Banner ─────────────────────────────────────── */}
           <div className="mb-4 bg-bg-panel border border-hair-2 rounded-xl px-4 py-3">

@@ -128,7 +128,7 @@ Respond ONLY with valid JSON — no markdown fences:
   "regulatoryBasis": "UAE Federal Decree-Law No. 10 of 2025 Art.14, Art.17; FATF Recommendation 20; FATF Predicate Offences Recommendation 3"
 }`;
 
-  const client = getAnthropicClient(apiKey, 55_000, "str-narrative");
+  const client = getAnthropicClient(apiKey, 4_500, "str-narrative");
 
   try {
     let best: StrNarrativeResult | null = null;

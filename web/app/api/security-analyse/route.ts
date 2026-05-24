@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: "Invalid JSON body" }, { status: 400, headers: gate.headers });
   }
 
-  const client = getAnthropicClient(apiKey, 55_000, "security-analyse");
+  const client = getAnthropicClient(apiKey, 4_500, "security-analyse");
 
   try {
     const message = await client.messages.create({

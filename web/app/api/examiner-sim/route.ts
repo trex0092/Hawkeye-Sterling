@@ -78,7 +78,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (apiKey) {
     try {
-      const client = getAnthropicClient(apiKey, 55_000);
+      const client = getAnthropicClient(apiKey, 4_500);
       const response = await client.messages.create({
         model: "claude-sonnet-4-6",
         max_tokens: 1024,

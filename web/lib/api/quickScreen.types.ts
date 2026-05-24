@@ -115,6 +115,10 @@ export interface QuickScreenOptions {
   maxHits?: number;
   includeScoreBreakdown?: boolean;
   autoResolveRules?: 'conservative' | 'standard' | 'strict';
+  /** Bypass the in-memory result cache and force a fresh screening run. */
+  forceRefresh?: boolean;
+  /** Run enhanced (deep) screening — always bypasses the cache. */
+  enhanced?: boolean;
 }
 
 export interface QuickScreenResult {

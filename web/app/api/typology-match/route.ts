@@ -129,7 +129,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (!apiKey) {
       return NextResponse.json({ ok: true, degraded: true, ...FALLBACK }, { headers: gateHeaders });
     }
-    const client = getAnthropicClient(apiKey, 55_000);
+    const client = getAnthropicClient(apiKey, 4_500);
 
     let rawBody: Body & { subject?: { facts?: string; subjectType?: string; transactionType?: string } };
     try {

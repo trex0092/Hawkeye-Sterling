@@ -403,7 +403,7 @@ export async function POST(req: Request): Promise<Response> {
    *  or a follow-up rewrite prompt with defect feedback. Returns the
    *  full text or throws on upstream / network / abort errors. */
   async function callHaiku(userMessage: string): Promise<string> {
-    const client = getAnthropicClient(apiKey!, 55000);
+    const client = getAnthropicClient(apiKey!, 4_500);
     const upstream = await client.messages.create({
         model: MODEL,
         max_tokens: MAX_TOKENS,

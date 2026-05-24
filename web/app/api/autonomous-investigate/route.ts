@@ -106,7 +106,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: true, ...heuristicInvestigation(subjectName, entityType, riskScore, jurisdiction) }, { headers: gate.headers });
   }
 
-  const client = getAnthropicClient(apiKey, 55_000, "autonomous-investigate");
+  const client = getAnthropicClient(apiKey, 4_500, "autonomous-investigate");
   const stages: StageResult[] = [];
   const ctxStr = additionalContext ? ` | Context: ${additionalContext}` : "";
 

@@ -179,7 +179,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     .filter(Boolean)
     .join("\n");
 
-  const client = getAnthropicClient(apiKey, 55_000, "sar-narrative");
+  const client = getAnthropicClient(apiKey, 4_500, "sar-narrative");
   const generatedAt = new Date().toISOString();
 
   try {

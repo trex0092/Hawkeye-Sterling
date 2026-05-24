@@ -187,7 +187,9 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (!apiKey) {
     return NextResponse.json({ ok: false, error: "ANTHROPIC_API_KEY not configured" }, { status: 503, headers: gate.headers });
   }
-  const client = getAnthropicClient(apiKey, 90_000, "mlro-analyze");
+  const client = getAnthropicClient(apiKey, 4_500, "mlro-analyze");
+  const _routeDeadline = Date.now() + 4_800;
+  function budgetLeft() { return Math.max(50, _routeDeadline - Date.now()); }
 
   // Step 1: Executor analysis
   const executorPrompt = buildExecutorPrompt(body);
@@ -205,9 +207,9 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
   const executorResult = safeParse(executorRaw);
 
-  // Step 2: Advisor review (skip in speed mode)
+  // Step 2: Advisor review — skip in speed mode or if route deadline exceeded
   let advisorResult: Record<string, unknown> = {};
-  if (mode !== "speed") {
+  if (mode !== "speed" && budgetLeft() > 800) {
     try {
       const advisorMsg = await client.messages.create({
         model: "claude-sonnet-4-6",
@@ -221,9 +223,9 @@ export async function POST(req: Request): Promise<NextResponse> {
     }
   }
 
-  // Step 3: Challenger (multi_perspective mode only)
+  // Step 3: Challenger — skip unless budget permits
   let challengerResult: Record<string, unknown> = {};
-  if (mode === "multi_perspective") {
+  if (mode === "multi_perspective" && budgetLeft() > 800) {
     try {
       const challengerMsg = await client.messages.create({
         model: "claude-sonnet-4-6",

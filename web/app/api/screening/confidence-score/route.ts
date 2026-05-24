@@ -94,7 +94,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const client = getAnthropicClient(apiKey, 55_000);
+    const client = getAnthropicClient(apiKey, 4_500);
 
     const userContent = `Subject Details:
 - Name: ${sanitizeField(body.subject.name, 200)}

@@ -133,7 +133,7 @@ Red Flags: ${redFlagsStr}${typologyLine}`;
     })
     .join("\n\n---\n\n");
 
-  const client = getAnthropicClient(apiKey, 55_000);
+  const client = getAnthropicClient(apiKey, 4_500);
   let claudeRes: Awaited<ReturnType<typeof client.messages.create>>;
   try {
     claudeRes = await client.messages.create({

@@ -141,7 +141,7 @@ export async function POST(req: Request) {
     const safeReason = sanitizeText(reason, 500);
     const safeAssignedBy = sanitizeField(assignedBy, 100);
     try {
-      const client = getAnthropicClient(apiKey, 55_000);
+      const client = getAnthropicClient(apiKey, 4_500);
       const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 1024,

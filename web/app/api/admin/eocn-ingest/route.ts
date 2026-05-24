@@ -172,7 +172,7 @@ async function extractWithClaude(
   listId: string,
   apiKey: string,
 ): Promise<NormalisedEntity[]> {
-  const anthropic = getAnthropicClient(apiKey, 55_000, "eocn-ingest");
+  const anthropic = getAnthropicClient(apiKey, 4_500, "eocn-ingest");
   const ext = fileName.split(".").pop()?.toLowerCase() ?? "";
   const isPdf = ext === "pdf" || fileName.includes(".pdf");
 

@@ -59,7 +59,7 @@ export async function POST(req: Request) {
   const context = body.context ? sanitizeText(String(body.context), 8000) : null;
   const timeoutMs = typeof body.timeoutMs === "number" ? Math.min(body.timeoutMs, DEFAULT_TIMEOUT_MS) : DEFAULT_TIMEOUT_MS;
 
-  const client = getAnthropicClient(apiKey, 55_000, "agent/data-analyst");
+  const client = getAnthropicClient(apiKey, 4_500, "agent/data-analyst");
   const beta = client.beta;
 
   try {
