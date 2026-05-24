@@ -4,10 +4,11 @@ import { useState, useEffect, useCallback } from "react";
 
 interface RmapSmelter {
   cid: string;
-  name: string;
+  facilityName: string;
   country: string;
+  countryCode: string;
   products: string[];
-  rmapStatus: "conformant" | "active" | "active_cross_recognized" | "not_assessed" | "non_conformant";
+  rmapStatus: "conformant" | "active_placement" | "not_assessed" | "suspended";
   lastAuditDate?: string;
   auditValidity?: string;
   source: string;
@@ -16,18 +17,16 @@ interface RmapSmelter {
 
 const STATUS_COLOURS: Record<RmapSmelter["rmapStatus"], string> = {
   conformant: "bg-green-100 text-green-800 border-green-200",
-  active: "bg-blue-100 text-blue-800 border-blue-200",
-  active_cross_recognized: "bg-teal-100 text-teal-800 border-teal-200",
+  active_placement: "bg-blue-100 text-blue-800 border-blue-200",
   not_assessed: "bg-gray-100 text-gray-700 border-gray-200",
-  non_conformant: "bg-red-100 text-red-800 border-red-200",
+  suspended: "bg-red-100 text-red-800 border-red-200",
 };
 
 const STATUS_LABELS: Record<RmapSmelter["rmapStatus"], string> = {
   conformant: "Conformant",
-  active: "Active",
-  active_cross_recognized: "Cross-Recognized",
+  active_placement: "Active Placement",
   not_assessed: "Not Assessed",
-  non_conformant: "Non-Conformant",
+  suspended: "Suspended",
 };
 
 export default function RmapPage() {
@@ -35,7 +34,6 @@ export default function RmapPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
-  const [filtered, setFiltered] = useState<RmapSmelter[]>([]);
 
   const fetchSmelters = useCallback(async (q?: string) => {
     setLoading(true);
@@ -46,7 +44,6 @@ export default function RmapPage() {
       const data = await res.json() as { ok: boolean; smelters?: RmapSmelter[]; error?: string };
       if (data.ok) {
         setSmelters(data.smelters ?? []);
-        setFiltered(data.smelters ?? []);
       } else {
         setError(data.error ?? "Failed to load RMAP data");
       }
@@ -57,29 +54,27 @@ export default function RmapPage() {
     }
   }, []);
 
-  useEffect(() => {
-    void fetchSmelters();
-  }, [fetchSmelters]);
+  useEffect(() => { void fetchSmelters(); }, [fetchSmelters]);
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
-    if (query.trim()) {
-      void fetchSmelters(query.trim());
-    } else {
-      setFiltered(smelters);
-    }
+    void fetchSmelters(query.trim() || undefined);
   }
 
   async function downloadCmrt() {
-    const res = await fetch("/api/rmap/export-cmrt");
-    if (!res.ok) { setError("CMRT export failed"); return; }
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `CMRT-v6.01-${new Date().getFullYear()}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    try {
+      const res = await fetch("/api/rmap/export-cmrt");
+      if (!res.ok) { setError("CMRT export failed"); return; }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `CMRT-v6.01-${new Date().getFullYear()}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      setError("CMRT download failed");
+    }
   }
 
   return (
@@ -99,76 +94,62 @@ export default function RmapPage() {
         </button>
       </div>
 
-      {/* Regulatory note */}
       <div className="mb-5 p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-800 font-mono">
-        RMI RMAP · OECD DDG Step 2 · UAE FDL 10/2025 Art.21 — Supply chain smelter/refiner
-        certification status must be verified annually. Non-conformant smelters trigger enhanced DD.
+        RMI RMAP · OECD DDG Step 2 · UAE FDL 10/2025 Art.21 — Smelter/refiner certification must
+        be verified annually. Non-conformant or suspended smelters require enhanced due diligence.
       </div>
 
-      {/* Search */}
       <form onSubmit={handleSearch} className="flex gap-2 mb-6">
         <input
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search by name or country…"
+          placeholder="Search by name, country, or CID…"
           className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
-        <button
-          type="submit"
-          className="bg-gray-700 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-800"
-        >
+        <button type="submit" className="bg-gray-700 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-800">
           Search
         </button>
         {query && (
-          <button
-            type="button"
-            onClick={() => { setQuery(""); void fetchSmelters(); }}
-            className="text-sm text-gray-500 hover:text-gray-700 px-2"
-          >
+          <button type="button" onClick={() => { setQuery(""); void fetchSmelters(); }}
+            className="text-sm text-gray-500 hover:text-gray-700 px-2">
             Clear
           </button>
         )}
       </form>
 
       {error && (
-        <div className="mb-4 p-3 rounded-md bg-red-50 border border-red-200 text-sm text-red-800">
-          {error}
-        </div>
+        <div className="mb-4 p-3 rounded-md bg-red-50 border border-red-200 text-sm text-red-800">{error}</div>
       )}
 
       {loading ? (
         <div className="text-center py-12 text-gray-500 text-sm">Loading smelter database…</div>
-      ) : filtered.length === 0 ? (
+      ) : smelters.length === 0 ? (
         <div className="text-center py-12 text-gray-400 text-sm">No smelters found.</div>
       ) : (
         <div className="overflow-x-auto rounded-lg border border-gray-200">
           <table className="min-w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                {["CID", "Name", "Country", "Products", "RMAP Status", "Last Audit"].map((h) => (
-                  <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                    {h}
-                  </th>
+                {["CID", "Facility Name", "Country", "Products", "RMAP Status", "Last Audit"].map((h) => (
+                  <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {filtered.map((s) => (
+              {smelters.map((s) => (
                 <tr key={s.cid} className="hover:bg-gray-50">
                   <td className="px-4 py-3 font-mono text-xs text-gray-500">{s.cid}</td>
-                  <td className="px-4 py-3 font-medium text-gray-900">{s.name}</td>
+                  <td className="px-4 py-3 font-medium text-gray-900">{s.facilityName}</td>
                   <td className="px-4 py-3 text-gray-700">{s.country}</td>
                   <td className="px-4 py-3 text-gray-600 text-xs">{s.products.join(", ")}</td>
                   <td className="px-4 py-3">
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${STATUS_COLOURS[s.rmapStatus]}`}>
-                      {STATUS_LABELS[s.rmapStatus]}
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${STATUS_COLOURS[s.rmapStatus] ?? "bg-gray-100 text-gray-600 border-gray-200"}`}>
+                      {STATUS_LABELS[s.rmapStatus] ?? s.rmapStatus}
                     </span>
                   </td>
                   <td className="px-4 py-3 font-mono text-xs text-gray-500">
-                    {s.lastAuditDate
-                      ? new Date(s.lastAuditDate).toLocaleDateString("en-GB")
-                      : "—"}
+                    {s.lastAuditDate ? new Date(s.lastAuditDate).toLocaleDateString("en-GB") : "—"}
                   </td>
                 </tr>
               ))}
@@ -178,7 +159,7 @@ export default function RmapPage() {
       )}
 
       <p className="mt-4 text-xs text-gray-400 font-mono">
-        Source: RMI public conformant smelter list · {filtered.length} smelters
+        Source: RMI public conformant smelter list · {smelters.length} smelters loaded
       </p>
     </div>
   );
