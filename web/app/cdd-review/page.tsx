@@ -6,6 +6,7 @@ import { loadCases } from "@/lib/data/case-store";
 import { RowActions } from "@/components/shared/RowActions";
 import type { CaseRecord } from "@/lib/types";
 import { formatDMY, parseDMY } from "@/lib/utils/dateFormat";
+import { SowVerificationPanel } from "@/components/cdd/SowVerificationPanel";
 
 // ── EDD Checklist types ──────────────────────────────────────────────────────
 interface EddItem { item: string; regulatoryBasis: string; }
@@ -1322,6 +1323,20 @@ export default function CddReviewPage() {
           </div>
         )}
       </div>
+
+      {/* ── Section 3.45: SOW / SOF Verification Panel (GAP 10) ── */}
+      {eddComplSubjectName.trim() && (
+        <SowVerificationPanel
+          subjectId={eddComplSubjectName.trim()}
+          riskLevel={eddComplRisk}
+          isPep={eddComplIsPep}
+          onVerificationComplete={() => {
+            // Trigger a re-run of EDD completeness if a result is already showing,
+            // so the hasSourceOfWealth flag can be reviewed in context.
+            if (eddComplResult) void runEddCompleteness();
+          }}
+        />
+      )}
 
       {/* ── Section 3.5: AML Policy Reviewer ── */}
       <div className="mt-6 bg-bg-panel border border-hair-2 rounded-xl overflow-hidden">
