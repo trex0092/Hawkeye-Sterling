@@ -90,7 +90,7 @@ export default function TmRulesPage() {
     setError(null);
     try {
       const res = await fetch("/api/tm-rules", { headers: authHeaders() });
-      const data = await res.json();
+      const data = await res.json() as { ok: boolean; records?: TmRuleChange[]; error?: string };
       if (data.ok) {
         setRecords(data.records ?? []);
       } else {
@@ -128,7 +128,7 @@ export default function TmRulesPage() {
         headers: authHeaders(true),
         body: JSON.stringify(body),
       });
-      const data = await res.json();
+      const data = await res.json() as { ok: boolean; record?: TmRuleChange; error?: string };
       if (data.ok) {
         setShowForm(false);
         setForm({
@@ -158,7 +158,7 @@ export default function TmRulesPage() {
         headers: authHeaders(true),
         body: JSON.stringify(patch),
       });
-      const data = await res.json();
+      const data = await res.json() as { ok: boolean; record?: TmRuleChange; error?: string };
       if (data.ok) {
         void fetchRecords();
       } else {

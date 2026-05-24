@@ -97,7 +97,13 @@ export async function loadAuditFinding(
   tenantId: string,
   id: string,
 ): Promise<AuditFinding | null> {
-  return getJson<AuditFinding>(auditFindingKey(tenantId, id));
+  const record = await getJson<AuditFinding>(auditFindingKey(tenantId, id));
+  if (!record) return null;
+  const today = new Date().toISOString().slice(0, 10);
+  if ((record.status === "open" || record.status === "in_progress") && record.dueDate < today) {
+    return { ...record, status: "overdue" };
+  }
+  return record;
 }
 
 export async function loadAllAuditFindings(tenantId: string): Promise<AuditFinding[]> {

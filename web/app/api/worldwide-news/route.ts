@@ -210,7 +210,7 @@ async function fetchGlobalAmlNews(limit: number): Promise<NewsArticle[]> {
 export async function GET(req: Request): Promise<NextResponse> {
   const gate = await enforce(req, { requireAuth: true });
   if (!gate.ok) return gate.response;
-  const headers: Record<string, string> = gate.ok ? gate.headers : {};
+  const headers: Record<string, string> = gate.headers;
 
   // Serve from cache if fresh.
   const cached = globalThis.__hsWorldwideNewsCache;

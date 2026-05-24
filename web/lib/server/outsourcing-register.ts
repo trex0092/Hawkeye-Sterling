@@ -117,7 +117,11 @@ export async function loadOutsourcingArrangement(
 ): Promise<OutsourcingArrangement | null> {
   const record = await getJson<OutsourcingArrangement>(outsourcingKey(tenantId, id));
   if (!record) return null;
-  return applyOverdueFlag(record);
+  const flagged = applyOverdueFlag(record);
+  if (flagged.status !== record.status) {
+    await setJson(outsourcingKey(tenantId, id), flagged);
+  }
+  return flagged;
 }
 
 export async function loadAllOutsourcingArrangements(
@@ -128,9 +132,16 @@ export async function loadAllOutsourcingArrangements(
   const records = await Promise.all(
     keys.map((key) => getJson<OutsourcingArrangement>(key)),
   );
-  return records
-    .filter((r): r is OutsourcingArrangement => r !== null)
-    .map(applyOverdueFlag);
+  const live = records.filter((r): r is OutsourcingArrangement => r !== null);
+  return Promise.all(
+    live.map(async (r) => {
+      const flagged = applyOverdueFlag(r);
+      if (flagged.status !== r.status) {
+        await setJson(outsourcingKey(tenantId, r.id), flagged);
+      }
+      return flagged;
+    }),
+  );
 }
 
 export async function updateOutsourcingArrangement(

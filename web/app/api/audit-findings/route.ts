@@ -49,6 +49,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     "auditDate",
     "severity",
     "finding",
+    "regulation",
     "owner",
     "dueDate",
   ] as const;
@@ -78,7 +79,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     auditDate: body.auditDate!.trim(),
     severity: body.severity as AuditFindingCreateFields["severity"],
     finding: body.finding!.trim(),
-    regulation: (body.regulation ?? "").trim(),
+    regulation: body.regulation!.trim(),
     owner: body.owner!.trim(),
     dueDate: body.dueDate!.trim(),
     ...(body.remediationPlan ? { remediationPlan: body.remediationPlan.trim() } : {}),

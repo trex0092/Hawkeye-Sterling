@@ -95,7 +95,7 @@ export default function VoluntaryDisclosurePage() {
     setError(null);
     try {
       const res = await fetch("/api/voluntary-disclosure", { headers: authHeaders() });
-      const data = await res.json();
+      const data = await res.json() as { ok: boolean; records?: VoluntaryDisclosure[]; error?: string };
       if (data.ok) {
         setRecords(data.records ?? []);
       } else {
@@ -122,7 +122,7 @@ export default function VoluntaryDisclosurePage() {
         headers: authHeaders(true),
         body: JSON.stringify(form),
       });
-      const data = await res.json();
+      const data = await res.json() as { ok: boolean; record?: VoluntaryDisclosure; error?: string };
       if (data.ok) {
         setShowForm(false);
         setForm({
@@ -151,7 +151,7 @@ export default function VoluntaryDisclosurePage() {
         headers: authHeaders(true),
         body: JSON.stringify(patch),
       });
-      const data = await res.json();
+      const data = await res.json() as { ok: boolean; record?: VoluntaryDisclosure; error?: string };
       if (data.ok) {
         void fetchRecords();
       } else {
