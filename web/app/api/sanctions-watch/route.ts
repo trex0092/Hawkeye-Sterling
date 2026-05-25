@@ -10,6 +10,7 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -91,6 +92,12 @@ export async function POST(req: Request): Promise<NextResponse> {
       signal: AbortSignal.timeout(55_000),
     });
     const payload = await res.json().catch(() => null);
+    if (res.ok) {
+      void writeAuditChainEntry(
+        { event: "sanctions_watch.updated", actor: "sanctions-cron", meta: { term: "scheduled-ingestion" } },
+        "default",
+      ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
+    }
     return NextResponse.json(payload ?? { ok: false, error: "upstream parse failed" }, { status: res.status });
   } catch (err) {
     console.error("[sanctions-watch POST] upstream delegation failed:", err instanceof Error ? err.message : String(err));

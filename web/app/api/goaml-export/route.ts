@@ -22,6 +22,7 @@ import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getJson } from "@/lib/server/store";
 import type { GoAmlXmlResult } from "@/app/api/goaml-xml/route";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 function safeFilenameSegment(s: string | undefined | null): string {
   if (!s) return "unknown";
@@ -110,6 +111,11 @@ export async function GET(req: Request): Promise<NextResponse> {
 
   if (!data.ok) return NextResponse.json(data, { status: 503, headers: gate.headers });
 
+  void writeAuditChainEntry(
+    { event: "goaml.export_generated", actor: gate.keyId, meta: { subjectName: stored.subject, caseId } },
+    tenantIdFromGate(gate),
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
+
   const headers = new Headers(gate.headers);
   headers.set("Content-Disposition", `attachment; filename="${safeFilenameSegment(data.reportRef ?? caseId)}.xml"`);
   headers.set("Content-Type", "application/xml");
@@ -151,6 +157,10 @@ export async function POST(req: Request): Promise<NextResponse> {
   const headers = new Headers(gate.headers);
   if (data.ok) {
     headers.set("Content-Disposition", `attachment; filename="${safeFilenameSegment(data.reportRef ?? "str-export")}.xml"`);
+    void writeAuditChainEntry(
+      { event: "goaml.export_generated", actor: gate.keyId, meta: { subjectName: typeof body["subjectName"] === "string" ? body["subjectName"] : undefined, reportRef: data.reportRef } },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
   }
   return NextResponse.json(data, { status: xmlRes.status, headers });
 }

@@ -14,6 +14,8 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { tenantIdFromGate } from "@/lib/server/tenant";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { validateGoamlXmlStructure, getGoamlSchemaVersion } from "@/lib/goaml-xsd-validator";
 
 export const runtime = "nodejs";
@@ -637,6 +639,11 @@ export async function POST(req: Request): Promise<Response> {
     submissionChecklist: SUBMISSION_CHECKLIST,
     ...(degradedReason ? { degraded: true as const, degradedReason } : {}),
   };
+
+  void writeAuditChainEntry(
+    { event: "goaml.xml_generated", actor: gate.keyId, meta: { reportRef, subjectName: body.subjectName } },
+    tenantIdFromGate(gate),
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
 
   return NextResponse.json(result, {
     status: 200,

@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { addTrainingRecord, listTrainingRecords } from "@/lib/server/training-records";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -103,6 +104,11 @@ export async function POST(req: Request): Promise<NextResponse> {
     console.error("[training] addTrainingRecord failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "Failed to save training record" }, { status: 500, headers: gate.headers });
   }
+
+  void writeAuditChainEntry(
+    { event: "training.record_saved", actor: gate.keyId, meta: { staffId: staffId as string, courseCode: courseCode as string } },
+    tenantIdFromGate(gate),
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
 
   return NextResponse.json({ ok: true, record }, { status: 201, headers: gate.headers });
 }

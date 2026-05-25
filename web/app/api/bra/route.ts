@@ -13,6 +13,7 @@ import {
   type BraRecord,
   type BraCreateFields,
 } from "@/lib/server/bra";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -96,6 +97,11 @@ export async function POST(req: Request): Promise<NextResponse> {
   };
 
   const record = await createBraRecord(tenantId, fields);
+
+  void writeAuditChainEntry(
+    { event: "bra.record_saved", actor: gate.keyId, meta: { id: record.id, entityName: fields.activityScope } },
+    tenantIdFromGate(gate),
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
 
   return NextResponse.json(
     { ok: true, record: withOverdueFlag(record) },
