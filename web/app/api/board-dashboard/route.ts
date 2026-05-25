@@ -1,9 +1,8 @@
 // GET /api/board-dashboard
 //
 // Aggregates platform-wide posture for the executive board dashboard.
-// Pulls data from: case vault, audit chain entry count, AI model health,
-// and the KRI summary.  Designed for a CRO / Board read — single request,
-// no pagination.
+// Pulls data from: case vault, AI model config, and the KRI summary.
+// Designed for a CRO / Board read — single request, no pagination.
 //
 // Auth: standard API key or session cookie (analyst+ role).
 
@@ -40,38 +39,48 @@ export interface BoardDashboardResponse {
 }
 
 function derivePosture(panels: BoardPanel[]): BoardDashboardResponse["overallPosture"] {
-  const hasCritical = panels.some((p) => p.metrics.some((m) => m.status === "critical"));
-  const hasWarn = panels.some((p) => p.metrics.some((m) => m.status === "warn"));
-  if (hasCritical) return "critical";
-  if (hasWarn) return "attention";
+  if (panels.some((p) => p.metrics.some((m) => m.status === "critical"))) return "critical";
+  if (panels.some((p) => p.metrics.some((m) => m.status === "warn"))) return "attention";
   return "healthy";
 }
 
+// CaseRecord uses `opened` as the creation timestamp, `lastActivity` for updates.
 function ageHours(isoDate: string): number {
   return (Date.now() - new Date(isoDate).getTime()) / 3_600_000;
 }
 
+function isOpen(c: CaseRecord): boolean {
+  return c.status !== "closed";
+}
+
+// Severity from the optional screeningSnapshot; falls back to badgeTone.
+function caseSeverity(c: CaseRecord): "critical" | "high" | "medium" | "low" | "unknown" {
+  const snap = c.screeningSnapshot?.result.severity;
+  if (snap && snap !== "clear") return snap;
+  if (c.badgeTone === "orange") return "medium";
+  return "unknown";
+}
+
 function buildCasePanel(cases: CaseRecord[]): BoardPanel {
-  const open = cases.filter((c) => c.status !== "closed" && c.status !== "cleared");
-  const critical = open.filter((c) => c.riskLevel === "critical");
-  const high = open.filter((c) => c.riskLevel === "high");
-  const overdue = open.filter((c) => ageHours(c.createdAt) > 24 * 15);
-  const closedThisWeek = cases.filter((c) => {
-    if (c.status !== "closed" && c.status !== "cleared") return false;
-    return ageHours(c.lastActivity ?? c.createdAt) < 24 * 7;
-  });
+  const open = cases.filter(isOpen);
+  const critical = open.filter((c) => caseSeverity(c) === "critical");
+  const high = open.filter((c) => caseSeverity(c) === "high");
+  const overdue = open.filter((c) => ageHours(c.opened) > 24 * 15);
+  const closedThisWeek = cases.filter(
+    (c) => c.status === "closed" && ageHours(c.lastActivity) < 24 * 7,
+  );
 
   return {
     id: "cases",
     title: "Case Backlog",
     icon: "🗂️",
     metrics: [
-      { label: "Open cases",        value: open.length,           status: open.length > 50 ? "warn" : "ok" },
-      { label: "Critical",          value: critical.length,       status: critical.length > 5 ? "critical" : critical.length > 0 ? "warn" : "ok" },
-      { label: "High",              value: high.length,           status: high.length > 10 ? "warn" : "ok" },
-      { label: "Overdue (>15d)",    value: overdue.length,        status: overdue.length > 0 ? "critical" : "ok" },
-      { label: "Closed this week",  value: closedThisWeek.length, status: "info" },
-      { label: "Total on record",   value: cases.length,          status: "info" },
+      { label: "Open cases",       value: open.length,            status: open.length > 50 ? "warn" : "ok" },
+      { label: "Critical",         value: critical.length,        status: critical.length > 5 ? "critical" : critical.length > 0 ? "warn" : "ok" },
+      { label: "High",             value: high.length,            status: high.length > 10 ? "warn" : "ok" },
+      { label: "Overdue (>15d)",   value: overdue.length,         status: overdue.length > 0 ? "critical" : "ok" },
+      { label: "Closed this week", value: closedThisWeek.length,  status: "info" },
+      { label: "Total on record",  value: cases.length,           status: "info" },
     ],
     summary:
       critical.length > 0
@@ -83,14 +92,19 @@ function buildCasePanel(cases: CaseRecord[]): BoardPanel {
 }
 
 function buildScreeningPanel(cases: CaseRecord[]): BoardPanel {
-  const lastScreened = cases.length
-    ? cases.sort((a, b) => new Date(b.lastActivity ?? b.createdAt).getTime() - new Date(a.lastActivity ?? a.createdAt).getTime())[0]
-    : null;
-  const freshnessHours = lastScreened ? ageHours(lastScreened.lastActivity ?? lastScreened.createdAt) : null;
-  const freshnessStatus = freshnessHours === null ? "warn" : freshnessHours < 24 ? "ok" : freshnessHours < 48 ? "warn" : "critical";
+  const sorted = [...cases].sort(
+    (a, b) => new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime(),
+  );
+  const last = sorted[0];
+  const freshnessHours = last ? ageHours(last.lastActivity) : null;
+  const freshnessStatus =
+    freshnessHours === null ? "warn"
+    : freshnessHours < 24  ? "ok"
+    : freshnessHours < 48  ? "warn"
+    : "critical";
 
-  const last7d = cases.filter((c) => ageHours(c.createdAt) < 24 * 7).length;
-  const last30d = cases.filter((c) => ageHours(c.createdAt) < 24 * 30).length;
+  const last7d  = cases.filter((c) => ageHours(c.opened) < 24 * 7).length;
+  const last30d = cases.filter((c) => ageHours(c.opened) < 24 * 30).length;
 
   return {
     id: "screening",
@@ -113,28 +127,28 @@ function buildScreeningPanel(cases: CaseRecord[]): BoardPanel {
 }
 
 function buildKriPanel(cases: CaseRecord[]): BoardPanel {
-  const open = cases.filter((c) => c.status !== "closed" && c.status !== "cleared");
-  const critical = open.filter((c) => c.riskLevel === "critical");
-  const overdue = open.filter((c) => ageHours(c.createdAt) > 24 * 15);
+  const open = cases.filter(isOpen);
+  const criticalCount = open.filter((c) => caseSeverity(c) === "critical").length;
+  const overdueCount  = open.filter((c) => ageHours(c.opened) > 24 * 15).length;
 
-  // Approximate KRI health from case data
-  const redCount = (critical.length > 0 ? 1 : 0) + (overdue.length > 0 ? 1 : 0);
+  const redCount   = (criticalCount > 0 ? 1 : 0) + (overdueCount > 0 ? 1 : 0);
   const amberCount = open.length > 50 ? 1 : 0;
-  const greenCount = 14 - redCount - amberCount;
-
-  const posture = redCount > 0 ? "critical" : amberCount > 0 ? "warn" : "ok";
+  // KRIs derivable from case vault: screening_freshness, pep_share, four_eyes, str_sla, alert_backlog = 5
+  // The remaining 9 need external feeds and show as no_data
+  const noDataCount = 9;
+  const greenCount  = Math.max(0, 14 - redCount - amberCount - noDataCount);
 
   return {
     id: "kri",
     title: "KRI Posture",
     icon: "📊",
     metrics: [
-      { label: "Green band",   value: greenCount, status: "ok" },
-      { label: "Amber band",   value: amberCount, status: amberCount > 0 ? "warn" : "ok" },
-      { label: "Red band",     value: redCount,   status: redCount > 0 ? "critical" : "ok" },
-      { label: "No data",      value: 14 - greenCount - amberCount - redCount, status: "info" },
+      { label: "Green band", value: greenCount,                   status: "ok" },
+      { label: "Amber band", value: amberCount,                   status: amberCount > 0 ? "warn" : "ok" },
+      { label: "Red band",   value: redCount,                     status: redCount > 0 ? "critical" : "ok" },
+      { label: "No data",    value: noDataCount,                                           status: "info" },
     ],
-    summary: `${greenCount} of 14 KRIs in green band. View full KRI dashboard for detail.`,
+    summary: `${greenCount} of 14 KRIs in green band. Full detail at /kri-dashboard.`,
   };
 }
 
@@ -142,19 +156,18 @@ function buildComplianceCalendarPanel(): BoardPanel {
   const now = new Date();
   const year = now.getFullYear();
 
-  // Static UAE/FATF compliance calendar milestones (always relevant)
-  const upcomingMilestones = [
-    { label: "EWRA annual review",         dueMonth: 12, recurring: true },
-    { label: "AML training completion",    dueMonth: 12, recurring: true },
-    { label: "Board AML programme review", dueMonth:  6, recurring: true },
-    { label: "DPMS annual reporting",      dueMonth:  3, recurring: true },
+  const milestones = [
+    { label: "EWRA annual review",         month: 12 },
+    { label: "AML training completion",    month: 12 },
+    { label: "Board AML programme review", month:  6 },
+    { label: "DPMS annual reporting",      month:  3 },
   ];
 
-  const upcoming = upcomingMilestones
+  const upcoming = milestones
     .map((m) => {
-      const dueDate = new Date(year, m.dueMonth - 1, 1);
-      if (dueDate < now) dueDate.setFullYear(year + 1);
-      const daysUntil = Math.ceil((dueDate.getTime() - now.getTime()) / 86_400_000);
+      const due = new Date(year, m.month - 1, 1);
+      if (due < now) due.setFullYear(year + 1);
+      const daysUntil = Math.ceil((due.getTime() - now.getTime()) / 86_400_000);
       return { ...m, daysUntil };
     })
     .sort((a, b) => a.daysUntil - b.daysUntil)
@@ -170,67 +183,50 @@ function buildComplianceCalendarPanel(): BoardPanel {
       unit: "days",
       status: m.daysUntil < 30 ? "warn" : "info",
     })),
-    summary: `Next obligation: ${upcoming[0]?.label ?? "—"} in ${upcoming[0]?.daysUntil ?? "—"} days.`,
+    summary: upcoming[0]
+      ? `Next: ${upcoming[0].label} in ${upcoming[0].daysUntil} days.`
+      : "No upcoming obligations found.",
   };
 }
 
 function buildAiSystemPanel(): BoardPanel {
-  const anthropicConfigured = Boolean(process.env["ANTHROPIC_API_KEY"]);
-  const auditChainSecretSet = Boolean(process.env["AUDIT_CHAIN_SECRET"]);
-  const sessionSecretSet = Boolean(process.env["SESSION_SECRET"]);
+  const claudeConfigured  = Boolean(process.env["ANTHROPIC_API_KEY"]);
+  const auditKeySet       = Boolean(process.env["AUDIT_CHAIN_SECRET"]);
+  const sessionKeySet     = Boolean(process.env["SESSION_SECRET"]);
 
   return {
     id: "ai_system",
     title: "AI System Health",
     icon: "🤖",
     metrics: [
-      {
-        label: "Claude API",
-        value: anthropicConfigured ? "configured" : "not configured",
-        status: anthropicConfigured ? "ok" : "critical",
-      },
-      {
-        label: "Audit chain key",
-        value: auditChainSecretSet ? "set" : "missing",
-        status: auditChainSecretSet ? "ok" : "critical",
-      },
-      {
-        label: "Session secret",
-        value: sessionSecretSet ? "set" : "missing",
-        status: sessionSecretSet ? "ok" : "critical",
-      },
-      {
-        label: "Compliance charter",
-        value: "P1–P10 active",
-        status: "ok",
-      },
+      { label: "Claude API",       value: claudeConfigured ? "configured" : "not configured", status: claudeConfigured ? "ok" : "critical" },
+      { label: "Audit chain key",  value: auditKeySet      ? "set"        : "missing",         status: auditKeySet     ? "ok" : "critical" },
+      { label: "Session secret",   value: sessionKeySet    ? "set"        : "missing",         status: sessionKeySet   ? "ok" : "critical" },
+      { label: "Compliance charter", value: "P1–P10 active",                                   status: "ok" },
     ],
-    summary: !anthropicConfigured
-      ? "Claude API key missing — AI screening degraded."
-      : "AI system operational. Compliance charter P1–P10 enforced.",
+    summary: claudeConfigured
+      ? "AI system operational. Compliance charter P1–P10 enforced."
+      : "Claude API key missing — AI-assisted screening degraded.",
   };
 }
 
 function buildAlertPanel(cases: CaseRecord[]): BoardPanel {
-  const critical = cases.filter((c) => c.riskLevel === "critical" && c.status !== "closed" && c.status !== "cleared");
-  const highOverdue = cases.filter(
-    (c) => c.riskLevel === "high" && c.status !== "closed" && ageHours(c.createdAt) > 24 * 7,
-  );
+  const critical  = cases.filter((c) => isOpen(c) && caseSeverity(c) === "critical");
+  const highOld   = cases.filter((c) => isOpen(c) && caseSeverity(c) === "high" && ageHours(c.opened) > 24 * 7);
 
   return {
     id: "alerts",
     title: "Active Alerts",
     icon: "🚨",
     metrics: [
-      { label: "Critical open cases",   value: critical.length,   status: critical.length > 0 ? "critical" : "ok" },
-      { label: "High-risk overdue >7d", value: highOverdue.length, status: highOverdue.length > 0 ? "warn" : "ok" },
-      { label: "AI charter violations", value: 0,                  status: "ok" },
-      { label: "4-eyes SoD alerts",     value: 0,                  status: "ok" },
+      { label: "Critical open cases",    value: critical.length,  status: critical.length > 0 ? "critical" : "ok" },
+      { label: "High-risk overdue >7d",  value: highOld.length,   status: highOld.length  > 0 ? "warn"     : "ok" },
+      { label: "AI charter violations",  value: 0,                status: "ok" },
+      { label: "4-eyes SoD alerts",      value: 0,                status: "ok" },
     ],
-    summary:
-      critical.length > 0
-        ? `${critical.length} critical alert${critical.length > 1 ? "s" : ""} require board awareness.`
-        : "No critical alerts. Regular monitoring active.",
+    summary: critical.length > 0
+      ? `${critical.length} critical alert${critical.length > 1 ? "s" : ""} require board awareness.`
+      : "No critical alerts. Regular monitoring active.",
   };
 }
 

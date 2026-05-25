@@ -1,10 +1,10 @@
 // GET /api/kri-dashboard
 //
 // Returns the full KRI registry enriched with computed live values where
-// derivable from the server-side case vault and audit chain.  KRIs whose
-// signals require external transaction data (cash intensity, UBO opacity,
-// mixer hops) return value: null and a derivation hint so the UI can
-// render an explicit "needs data feed" state rather than misleading zeros.
+// derivable from the server-side case vault.  KRIs whose signals require
+// external transaction data (cash intensity, UBO opacity, mixer hops)
+// return value: null and a derivation hint so the UI can render an
+// explicit "needs data feed" state rather than misleading zeros.
 //
 // KRI classification bands are defined in src/brain/kri-registry.ts
 // (green/amber/red per KRI).  This route mirrors the band definitions so
@@ -55,39 +55,52 @@ function classify(value: number | null, band: KriBand, direction: "lower_better"
   return "red";
 }
 
-function ageHours(isoDate: string): number {
-  return (Date.now() - new Date(isoDate).getTime()) / 3_600_000;
+// CaseRecord uses `opened` (ISO string) as the creation timestamp.
+function ageHours(openedDate: string): number {
+  return (Date.now() - new Date(openedDate).getTime()) / 3_600_000;
+}
+
+// Severity from the optional screeningSnapshot; falls back to badgeTone heuristic.
+function caseSeverity(c: CaseRecord): "critical" | "high" | "medium" | "low" | "unknown" {
+  const snap = c.screeningSnapshot?.result.severity;
+  if (snap && snap !== "clear") return snap;
+  if (c.badgeTone === "orange") return "medium";
+  return "unknown";
+}
+
+function isOpenCase(c: CaseRecord): boolean {
+  return c.status !== "closed";
 }
 
 async function computeKris(cases: CaseRecord[]): Promise<KriResult[]> {
   const now = Date.now();
-  const openCases = cases.filter((c) => c.status !== "closed" && c.status !== "cleared");
-  const criticalOpen = openCases.filter((c) => c.riskLevel === "critical" || c.riskLevel === "high");
+  const openCases = cases.filter(isOpenCase);
+  const criticalOpen = openCases.filter((c) => {
+    const sev = caseSeverity(c);
+    return sev === "critical" || sev === "high";
+  });
 
-  // Screening freshness: hours since the most recently screened case was updated
-  const lastScreened = cases.length
-    ? Math.min(...cases.map((c) => ageHours(c.lastActivity ?? c.createdAt)))
+  // Screening freshness: hours since the most recently active case
+  const lastActivityMs = cases.length
+    ? Math.max(...cases.map((c) => new Date(c.lastActivity).getTime()))
     : null;
+  const lastScreened = lastActivityMs !== null ? (now - lastActivityMs) / 3_600_000 : null;
 
-  // PEP share: % of open cases flagged as PEP
-  const pepShare =
-    openCases.length > 0
-      ? (openCases.filter((c) => c.subject?.toLowerCase().includes("pep") || c.riskLevel === "critical").length /
-          openCases.length) *
-        100
-      : null;
+  // PEP share: % of open cases where subject name contains "pep" (crude proxy)
+  const pepMatches = openCases.filter((c) => c.subject.toLowerCase().includes("pep")).length;
+  const pepShare = openCases.length > 0 ? (pepMatches / openCases.length) * 100 : null;
 
-  // Four-eyes violations: open cases with no four-eyes sign-off past 24h
+  // Four-eyes violations: critical/high cases open > 24 h without disposition
   const fourEyesViolations = criticalOpen.filter((c) => {
-    const ageDays = (now - new Date(c.createdAt).getTime()) / 86_400_000;
-    return ageDays > 1;
+    const ageDays = (now - new Date(c.opened).getTime()) / 86_400_000;
+    return ageDays > 1 && !c.mlroDisposition;
   }).length;
 
-  // STR SLA breaches: cases open > 15 days (UAE FDL Art.12 — STR within 30 days, escalate at 15)
+  // STR SLA breaches: open cases older than 15 days (escalation threshold)
   const strSlaBreaches =
     cases.length > 0
       ? (openCases.filter((c) => {
-          const ageDays = (now - new Date(c.createdAt).getTime()) / 86_400_000;
+          const ageDays = (now - new Date(c.opened).getTime()) / 86_400_000;
           return ageDays > 15;
         }).length /
           Math.max(openCases.length, 1)) *
@@ -96,7 +109,7 @@ async function computeKris(cases: CaseRecord[]): Promise<KriResult[]> {
 
   // Alert backlog: age in days of the oldest unresolved critical/high case
   const oldestOpenMs = criticalOpen.length
-    ? Math.max(...criticalOpen.map((c) => now - new Date(c.createdAt).getTime()))
+    ? Math.max(...criticalOpen.map((c) => now - new Date(c.opened).getTime()))
     : null;
   const alertBacklogDays = oldestOpenMs !== null ? oldestOpenMs / 86_400_000 : null;
 
@@ -126,7 +139,7 @@ async function computeKris(cases: CaseRecord[]): Promise<KriResult[]> {
       value: pepShare !== null ? Math.round(pepShare * 10) / 10 : null,
       band: { green: [0, 3], amber: [3, 5], red: [5, 100] },
       direction: "lower_better",
-      derivedFrom: "Case vault — % open cases with critical/PEP risk level",
+      derivedFrom: "Case vault — % open cases with 'pep' in subject name",
     },
     {
       id: "kri_cash_intensity",
@@ -180,7 +193,7 @@ async function computeKris(cases: CaseRecord[]): Promise<KriResult[]> {
       value: fourEyesViolations,
       band: { green: [0, 0], amber: [0, 1], red: [1, Infinity] },
       direction: "lower_better",
-      derivedFrom: "Case vault — critical/high cases open >24h without disposition",
+      derivedFrom: "Case vault — critical/high cases open >24h without MLRO disposition",
     },
     {
       id: "kri_str_sla_breaches",

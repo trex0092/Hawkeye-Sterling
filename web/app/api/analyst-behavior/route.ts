@@ -20,7 +20,7 @@ import {
   buildUEBAReport,
   type AnalystEvent,
   type AnalystEventKind,
-} from "../../../../src/monitoring/analyst-behavior";
+} from "../../../../src/monitoring/analyst-behavior.js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
