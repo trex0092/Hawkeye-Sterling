@@ -102,7 +102,7 @@ export function ChainReplayPanel(): JSX.Element {
         </button>
       </div>
 
-      {errorText && <div className="mt-2 text-xs text-red-600">{errorText}</div>}
+      {errorText && <div className="mt-2 text-xs text-red-400">{errorText}</div>}
 
       {data?.case && (
         <div className="mt-3">

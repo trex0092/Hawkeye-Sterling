@@ -200,8 +200,8 @@ export function DispositionButton({
         >
           {busy ? "Recording…" : overridden ? "Confirm override" : "Confirm"}
         </button>
-        {errorText && <span className="text-xs text-red-600">{errorText}</span>}
-        {doneText && <span className="text-xs text-emerald-600">{doneText}</span>}
+        {errorText && <span className="text-xs text-red-400">{errorText}</span>}
+        {doneText && <span className="text-xs text-emerald-400">{doneText}</span>}
       </div>
     </div>
   );
