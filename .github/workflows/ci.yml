@@ -94,7 +94,7 @@ jobs:
         run: |
           # After enforce() defaults to requireAuth:true (web/lib/server/enforce.ts),
           # any route that explicitly opts out with `{ requireAuth: false }` must
-          # be deliberately reviewed. The current allowed count is 10 — bump this
+          # be deliberately reviewed. The current allowed count is 6 — bump this
           # number when adding a deliberate public/sandbox route, and document why.
           # Allowed opt-outs (grep counts both code and inline comments):
           #   1. web/app/api/health/route.ts — public liveness probe, no data exposed.
@@ -103,12 +103,9 @@ jobs:
           #   3. web/app/api/openapi/route.ts — OpenAPI spec is a public document
           #      containing no secrets, credentials, or PII. 3 grep hits: 2 comments
           #      + 1 enforce() call.
-          #   4. web/app/api/approvals/route.ts — employee compliance approvals module
-          #      (GET + POST handlers). 2 grep hits.
-          #   5. web/app/api/approvals/[id]/route.ts — PATCH + DELETE for approvals.
-          #      2 grep hits.
-          #   6. web/app/api/routes/route.ts — public API route discovery index;
-          #      no secrets, no PII, enables MCP tool-name → path mapping.
+          #   4. web/app/api/routes/route.ts — public API route discovery index;
+          #      no secrets, no PII, enables MCP tool-name → path mapping. 2 grep hits.
+          # Note: approvals routes formerly opted out (4 hits). Now requireAuth:true.
           OPTED_OUT=$(grep -rE "requireAuth:\s*false[^a-zA-Z]" web/app/api \
             --include="route.ts" 2>/dev/null | wc -l | tr -d ' ')
           ALLOWED_COUNT=6
